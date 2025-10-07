@@ -577,82 +577,231 @@ CREATE POLICY tenant_isolation_notifications ON notifications
 
 To prevent overloading the database with automated jobs and impacting user experience:
 
-1. **S3 Concurrency Configuration**
+**1. S3 Concurrency Configuration**
    - Store job concurrency limits in S3: `s3://ffp-config-{env}/jobs/concurrency.json`
    - No database connection needed to read limits
    - Can update limits without code deployment
+   - Versioned structure from the start for easy evolution
 
-2. **EventBridge Scheduled Lambda** (runs every 1 minute)
+**2. EventBridge Scheduled Lambda** (runs every 1 minute)
    - Reads concurrency config from S3
    - Checks current in-progress job counts per type
    - Only triggers new jobs if under concurrency limit
    - Prevents database overload from automated processes
 
-3. **Example Concurrency Config** (`s3://ffp-config-prod/jobs/concurrency.json`):
-   ```json
-   {
-     "process_assessment": 50,
-     "generate_program": 30,
-     "send_email": 100,
-     "reschedule_sessions": 20,
-     "generate_report": 10
-   }
-   ```
+**3. Configuration Evolution Path**
 
-4. **Job Processor Lambda Logic**:
-   ```typescript
-   // 1. Read concurrency limits from S3 (no DB needed)
-   const limits = await s3.getObject({
-     Bucket: 'ffp-config-prod',
-     Key: 'jobs/concurrency.json'
-   }).then(data => JSON.parse(data.Body.toString()));
+**Phase 1 - Global Limits** (MVP - use this from the start):
+```json
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-10-07T10:00:00Z",
+  "globalLimits": {
+    "process_assessment": 50,
+    "generate_program": 30,
+    "send_email": 100,
+    "reschedule_sessions": 20,
+    "generate_report": 10
+  }
+}
+```
 
-   // 2. Check current in-progress counts per job type
-   const inProgressCounts = await db.query(`
-     SELECT type, COUNT(*) as count
-     FROM jobs
-     WHERE status = 'processing'
-     GROUP BY type
-   `);
+**Phase 2 - Reserved Capacity** (when one tenant >30% of jobs):
+```json
+{
+  "version": "2.0.0",
+  "lastUpdated": "2026-03-15T14:30:00Z",
+  "globalLimits": {
+    "process_assessment": 50,
+    "generate_program": 30,
+    "send_email": 100,
+    "reschedule_sessions": 20,
+    "generate_report": 10
+  },
+  "reservedCapacity": {
+    "tenant-large-clinic-uuid": {
+      "process_assessment": 20,
+      "generate_program": 10
+    }
+  }
+}
+```
 
-   // 3. For each job type, trigger jobs if under limit
-   for (const [jobType, limit] of Object.entries(limits)) {
-     const currentCount = inProgressCounts[jobType] || 0;
-     const available = limit - currentCount;
+**Phase 3 - Per-Tenant Quotas** (10K+ users, multiple large tenants):
+```json
+{
+  "version": "3.0.0",
+  "lastUpdated": "2027-06-20T09:00:00Z",
+  "globalLimits": {
+    "process_assessment": 100,
+    "generate_program": 60,
+    "send_email": 200,
+    "reschedule_sessions": 40,
+    "generate_report": 20
+  },
+  "tenantQuotas": {
+    "tenant-enterprise-1": {
+      "process_assessment": 30,
+      "generate_program": 15,
+      "priority": "high"
+    },
+    "tenant-enterprise-2": {
+      "process_assessment": 25,
+      "generate_program": 12,
+      "priority": "high"
+    }
+  },
+  "defaultTenantQuota": {
+    "process_assessment": 5,
+    "generate_program": 3,
+    "priority": "normal"
+  }
+}
+```
 
-     if (available > 0) {
-       // Get pending jobs of this type
-       const pendingJobs = await db.query(`
-         SELECT * FROM jobs
-         WHERE type = ? AND status = 'pending'
-         ORDER BY created_at ASC
-         LIMIT ?
-       `, [jobType, available]);
+**4. Job Processor Lambda Logic (Phase 1)**:
+```typescript
+// 1. Read concurrency config from S3 (no DB needed)
+const configData = await s3.getObject({
+  Bucket: 'ffp-config-prod',
+  Key: 'jobs/concurrency.json'
+}).then(data => JSON.parse(data.Body.toString()));
 
-       // Trigger Lambda for each job
-       for (const job of pendingJobs) {
-         await lambda.invoke({
-           FunctionName: `ffp-job-worker-${jobType}`,
-           InvocationType: 'Event',
-           Payload: JSON.stringify({ jobId: job.id })
-         });
-       }
-     }
-   }
-   ```
+const { version, globalLimits } = configData;
+console.log(`Using concurrency config version: ${version}`);
 
-5. **Benefits**:
+// 2. Check current in-progress counts per job type
+const inProgressCounts = await db.query(`
+  SELECT type, COUNT(*) as count
+  FROM jobs
+  WHERE status = 'processing'
+  GROUP BY type
+`);
+
+// 3. For each job type, trigger jobs if under global limit
+for (const [jobType, globalLimit] of Object.entries(globalLimits)) {
+  const currentCount = inProgressCounts[jobType] || 0;
+  const available = globalLimit - currentCount;
+
+  if (available > 0) {
+    // Get pending jobs of this type
+    const pendingJobs = await db.query(`
+      SELECT * FROM jobs
+      WHERE type = ? AND status = 'pending'
+      ORDER BY created_at ASC
+      LIMIT ?
+    `, [jobType, available]);
+
+    // Trigger Lambda for each job
+    for (const job of pendingJobs) {
+      await lambda.invoke({
+        FunctionName: `ffp-job-worker-${jobType}`,
+        InvocationType: 'Event',
+        Payload: JSON.stringify({ jobId: job.id })
+      });
+    }
+  }
+}
+```
+
+**5. Job Processor Lambda Logic (Phase 2 - Reserved Capacity)**:
+```typescript
+const { version, globalLimits, reservedCapacity = {} } = configData;
+
+// Check in-progress counts per job type AND per tenant
+const inProgressCounts = await db.query(`
+  SELECT 
+    type,
+    tenant_id,
+    COUNT(*) as count
+  FROM jobs
+  WHERE status = 'processing'
+  GROUP BY type, tenant_id
+`);
+
+for (const [jobType, globalLimit] of Object.entries(globalLimits)) {
+  // Calculate available capacity
+  const totalInProgress = inProgressCounts
+    .filter(c => c.type === jobType)
+    .reduce((sum, c) => sum + c.count, 0);
+  
+  let availableGlobal = globalLimit - totalInProgress;
+
+  // Process reserved capacity tenants first
+  for (const [tenantId, tenantLimits] of Object.entries(reservedCapacity)) {
+    if (!tenantLimits[jobType]) continue;
+
+    const tenantInProgress = inProgressCounts
+      .find(c => c.type === jobType && c.tenant_id === tenantId)
+      ?.count || 0;
+    
+    const tenantAvailable = tenantLimits[jobType] - tenantInProgress;
+
+    if (tenantAvailable > 0) {
+      const pendingJobs = await db.query(`
+        SELECT * FROM jobs
+        WHERE type = ? AND tenant_id = ? AND status = 'pending'
+        ORDER BY created_at ASC
+        LIMIT ?
+      `, [jobType, tenantId, tenantAvailable]);
+
+      // Trigger reserved capacity jobs
+      for (const job of pendingJobs) {
+        await lambda.invoke({
+          FunctionName: `ffp-job-worker-${jobType}`,
+          InvocationType: 'Event',
+          Payload: JSON.stringify({ jobId: job.id })
+        });
+        availableGlobal--;
+      }
+    }
+  }
+
+  // Process remaining capacity for non-reserved tenants
+  if (availableGlobal > 0) {
+    const reservedTenantIds = Object.keys(reservedCapacity);
+    const pendingJobs = await db.query(`
+      SELECT * FROM jobs
+      WHERE type = ?
+        AND status = 'pending'
+        AND (tenant_id NOT IN (?) OR tenant_id IS NULL)
+      ORDER BY created_at ASC
+      LIMIT ?
+    `, [jobType, reservedTenantIds, availableGlobal]);
+
+    for (const job of pendingJobs) {
+      await lambda.invoke({
+        FunctionName: `ffp-job-worker-${jobType}`,
+        InvocationType: 'Event',
+        Payload: JSON.stringify({ jobId: job.id })
+      });
+    }
+  }
+}
+```
+
+**6. Benefits**:
    - Prevents database connection exhaustion
    - Protects user-facing queries from slow background jobs
    - Configurable per job type without code changes
    - Easy to adjust limits based on system load
    - No database hit to check limits (S3 only)
+   - Versioned config supports evolution without breaking changes
+   - Clear upgrade path from Phase 1 → 2 → 3
 
-6. **Monitoring**:
+**7. Monitoring**:
    - Track job queue depth per type
+   - Track job queue depth per tenant (Phase 2+)
    - Alert if pending jobs exceed threshold
-   - CloudWatch metric: `JobQueueDepth` by job type
-   - CloudWatch metric: `JobConcurrency` by job type
+   - CloudWatch metrics:
+     - `JobQueueDepth` by job type
+     - `JobConcurrency` by job type
+     - `JobQueueDepth` by tenant (Phase 2+)
+     - `ConfigVersion` - track which version is active
+
+**8. When to Evolve**:
+   - **Phase 1 → Phase 2**: When one tenant represents >30% of total jobs OR large tenant onboarding (1000+ users)
+   - **Phase 2 → Phase 3**: When multiple large tenants (10K+ total users) OR need SLA guarantees per tenant
 
 **Notifications Table:**
 - Email/SMS/Push notification queue and log
