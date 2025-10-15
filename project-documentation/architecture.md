@@ -89,132 +89,6 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
   - Health checks
   - Failover configuration (future)
 
-## Drizzle ORM Integration
-
-### Database Connection
-
-```typescript
-// lib/database.ts
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
-import { sql } from 'drizzle-orm';
-
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  max: 10,
-});
-
-export const db = drizzle(pool);
-
-// RLS context wrapper
-export async function withRLS<T>(
-  tenantId: string,
-  userId: string | undefined,
-  callback: (tx: typeof db) => Promise<T>
-): Promise<T> {
-  return await db.transaction(async (tx) => {
-    await tx.execute(sql`SET app.tenant_id = ${tenantId}`);
-    if (userId) {
-      await tx.execute(sql`SET app.user_id = ${userId}`);
-    }
-    return await callback(tx);
-  });
-}
-```
-
-### Benefits for FFP Architecture
-
-1. **Type Safety End-to-End**
-   - Schema → Types → Validation
-   - Fully type-safe queries
-   - Auto-completion everywhere
-   - Catches errors at compile time
-
-2. **Serverless-Optimized**
-   - Lightweight bundle (~50KB)
-   - Fast cold starts in Lambda
-   - No code generation step
-   - Query builder overhead minimal
-
-3. **Developer Experience**
-   - Intuitive query builder
-   - Relational queries for nested data
-   - Visual database inspection with Drizzle Studio
-   - Auto-generated Zod schemas
-
-4. **Migration Management**
-   - Git-trackable SQL migrations
-   - Auto-generated from schema changes
-   - Point-in-time schema snapshots
-   - Easy to review and rollback
-
-5. **RLS Compatibility**
-   - Works seamlessly with PostgreSQL RLS
-   - Transaction-based context setting
-   - No special RLS handling required
-   - Full flexibility with raw SQL when needed
-
-### Schema Definition Example
-
-```typescript
-// schema/users.ts
-import { pgTable, uuid, varchar, timestamp, index } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { relations } from 'drizzle-orm';
-
-export const users = pgTable(
-  'users',
-  {
-    id: uuid('id').primaryKey(),
-    tenantId: uuid('tenant_id').notNull(),
-    email: varchar('email', { length: 255 }).notNull().unique(),
-    firstName: varchar('first_name', { length: 100 }).notNull(),
-    lastName: varchar('last_name', { length: 100 }).notNull(),
-    role: userRoleEnum('role').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  (table) => ({
-    tenantIdIdx: index('idx_users_tenant_id').on(table.tenantId),
-    emailIdx: index('idx_users_email').on(table.email),
-  })
-);
-
-// Auto-generated Zod schemas
-export const insertUserSchema = createInsertSchema(users);
-export const selectUserSchema = createSelectSchema(users);
-
-// TypeScript types
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
-```
-
-### Query Example
-
-```typescript
-// Type-safe query with Drizzle
-import { eq, and } from 'drizzle-orm';
-import { users } from '../schema/users';
-
-// All types are inferred automatically
-const [user] = await db
-  .select()
-  .from(users)
-  .where(
-    and(
-      eq(users.id, userId),
-      eq(users.tenantId, tenantId)
-    )
-  )
-  .limit(1);
-
-// user is typed as User | undefined
-```
-
 ## Architecture Diagram (Phase 1)
 
 ```
@@ -428,6 +302,7 @@ const [user] = await db
 **Region**: eu-west-2 (London)
 
 **Pricing Sources**:
+
 - [AWS RDS Pricing](https://aws.amazon.com/rds/postgresql/pricing/) (Last checked: October 2025)
 - [AWS S3 Pricing](https://aws.amazon.com/s3/pricing/) (Last checked: October 2025)
 - [AWS CloudFront Pricing](https://aws.amazon.com/cloudfront/pricing/) (Last checked: October 2025)
@@ -438,19 +313,19 @@ const [user] = await db
 - [AWS CloudWatch Pricing](https://aws.amazon.com/cloudwatch/pricing/) (Last checked: October 2025)
 - [AWS Pricing Calculator](https://calculator.aws/) - Use this for exact quotes
 
-| Service                       | Monthly Cost (GBP) | Notes                                                    |
-| ----------------------------- | ------------------ | -------------------------------------------------------- |
-| **Cognito**                   | £0                 | Free tier: 50,000 MAU                                    |
-| **RDS PostgreSQL (t3.small)** | £22-27             | Single AZ, ~£0.031/hour, 2 vCPU, 2GB RAM                |
-| **S3 + CloudFront**           | £4-15              | Video library (500GB-1TB storage + bandwidth)            |
-| **Lambda**                    | £0-4               | Free tier: 1M requests/month, 400,000 GB-seconds         |
-| **API Gateway**               | £0-4               | Free tier: 1M API calls/month (12 months for new accounts)|
-| **S3 (Frontend Hosting)**     | £0-1               | Static assets, CloudFront caching reduces costs          |
-| **CloudWatch**                | £0-4               | Basic logging/metrics, 5GB ingestion free tier          |
-| **Route53**                   | £0.40              | Hosted zone (~£0.50/month, 1M queries included)         |
-| **NAT Gateway**               | £27-32             | Required for Lambda VPC internet access (~£0.045/hour)   |
-| **Secrets Manager**           | £0.32              | ~5 secrets × £0.40/month per secret                      |
-| **Total (Estimated)**         | **£54-87**         | Actual costs will vary based on usage                    |
+| Service                       | Monthly Cost (GBP) | Notes                                                      |
+| ----------------------------- | ------------------ | ---------------------------------------------------------- |
+| **Cognito**                   | £0                 | Free tier: 50,000 MAU                                      |
+| **RDS PostgreSQL (t3.small)** | £22-27             | Single AZ, ~£0.031/hour, 2 vCPU, 2GB RAM                   |
+| **S3 + CloudFront**           | £4-15              | Video library (500GB-1TB storage + bandwidth)              |
+| **Lambda**                    | £0-4               | Free tier: 1M requests/month, 400,000 GB-seconds           |
+| **API Gateway**               | £0-4               | Free tier: 1M API calls/month (12 months for new accounts) |
+| **S3 (Frontend Hosting)**     | £0-1               | Static assets, CloudFront caching reduces costs            |
+| **CloudWatch**                | £0-4               | Basic logging/metrics, 5GB ingestion free tier             |
+| **Route53**                   | £0.40              | Hosted zone (~£0.50/month, 1M queries included)            |
+| **NAT Gateway**               | £27-32             | Required for Lambda VPC internet access (~£0.045/hour)     |
+| **Secrets Manager**           | £0.32              | ~5 secrets × £0.40/month per secret                        |
+| **Total (Estimated)**         | **£54-87**         | Actual costs will vary based on usage                      |
 
 ### Cost Notes
 
@@ -461,11 +336,13 @@ const [user] = await db
 **Drizzle ORM**: No additional cost - it's a lightweight library that runs in your Lambda functions. The minimal overhead (~50KB bundle size) has negligible impact on Lambda costs.
 
 **NAT Gateway**: The largest single cost driver in Phase 1. Required for Lambda functions in private subnets to access the internet (Cognito, external APIs, etc.). Consider:
+
 - **Phase 1**: Single NAT Gateway in one AZ (~£27-32/month)
 - **Phase 2**: Multi-AZ NAT Gateways for high availability (~£60/month)
 - **Alternative**: Lambda functions outside VPC (less secure, saves NAT costs)
 
 **Free Tier Benefits**:
+
 - **Cognito**: Always free up to 50,000 MAU
 - **Lambda**: 1M requests + 400,000 GB-seconds per month (always free)
 - **S3**: 5GB storage + 20,000 GET requests (12 months for new accounts)
@@ -474,6 +351,7 @@ const [user] = await db
 - **API Gateway**: 1M calls per month (12 months for new accounts)
 
 **Cost Optimization Tips**:
+
 1. Use t4g.small (ARM/Graviton) instead of t3.small for RDS (~20% cheaper)
 2. Enable S3 Intelligent-Tiering for video files
 3. Set CloudFront cache TTL appropriately (reduce origin requests)
@@ -483,12 +361,12 @@ const [user] = await db
 
 ### Scaling Cost Projections
 
-| User Count | Estimated Monthly Cost | Key Changes                             |
-| ---------- | --------------------- | --------------------------------------- |
-| <100       | £54-87                | Phase 1 baseline (free tiers active)    |
-| 100-1k     | £85-150               | RDS t3.medium, increased bandwidth      |
-| 1k-10k     | £300-600              | Multi-AZ RDS, ElastiCache, more Lambda  |
-| 10k-100k   | £1,200-3,000          | Read replicas, sharding considerations  |
+| User Count | Estimated Monthly Cost | Key Changes                            |
+| ---------- | ---------------------- | -------------------------------------- |
+| <100       | £54-87                 | Phase 1 baseline (free tiers active)   |
+| 100-1k     | £85-150                | RDS t3.medium, increased bandwidth     |
+| 1k-10k     | £300-600               | Multi-AZ RDS, ElastiCache, more Lambda |
+| 10k-100k   | £1,200-3,000           | Read replicas, sharding considerations |
 
 ## Security Layers
 
