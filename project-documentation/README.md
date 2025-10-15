@@ -45,6 +45,7 @@ This directory contains comprehensive documentation for the Fit For Purpose (FFP
 | **assessment-engine.md**     | Question flows, scoring algorithms  | Assessment logic                 |
 | **video-management.md**      | S3, CloudFront, streaming           | Video features                   |
 | **coding-standards.md**      | TypeScript patterns, best practices | Code reviews, new features       |
+| **testing-strategy.md**      | Unit, integration, E2E testing      | Writing tests, test patterns     |
 | **deployment.md**            | SST workflows, CI/CD                | Deployment procedures            |
 | **monitoring.md**            | CloudWatch, alerting                | Debugging, performance           |
 | **security.md**              | OWASP compliance, data protection   | Security reviews                 |
@@ -304,18 +305,100 @@ ffp/
 **"What's deferred to Phase 2?"**
 → Check `future-considerations.md`
 
+**"How do I write tests?"**
+→ Load `testing-strategy.md`
+
+---
+
+## Testing Strategy
+
+### Hybrid Approach
+
+**95% Fast Unit Tests** (Mocked DB):
+
+- Service layer business logic
+- Validation logic (Zod schemas)
+- Frontend components
+- Utility functions
+
+**5% Critical Integration Tests** (Real Dev DB):
+
+- RLS multi-tenant isolation
+- Database constraints
+- Authentication flows
+
+**Phase 1 Coverage Goal**: 30% overall, 80%+ on critical paths
+
+### Testing Stack
+
+- **Vitest** - Fast, TypeScript-native test runner
+- **@testing-library/react** - Component testing
+- **Playwright** - E2E tests (critical paths only)
+- **Dev Database** - RLS integration tests with transaction rollbacks
+
+### Sprint Planning Rule
+
+**MANDATORY**: Minimum of **2 functional tests** required per user story.
+
+- Small story (1-3 points): 2 unit tests
+- Medium story (4-6 points): 2 unit + 1 integration test
+- Large story (7+ points): 3 unit + 1 integration + 1 E2E test
+
+### Quick Commands
+
+```bash
+# Fast unit tests (during development)
+npm run test:unit
+
+# RLS tests (before commits)
+npm run test:rls
+
+# Watch mode (TDD)
+npm run test:watch
+
+# E2E tests (before deployments)
+npm run test:e2e
+
+# Coverage report
+npm run test:coverage
+```
+
+### Key Priorities
+
+✅ **Must Test**:
+
+- RLS policies (100% coverage)
+- Authentication/JWT parsing (100%)
+- Input validation (80%)
+- Assessment scoring (80%)
+
+⚠️ **Should Test**:
+
+- Repository CRUD operations
+- Service layer logic
+- Major UI components
+
+💡 **Nice-to-Have**:
+
+- Edge cases
+- Performance benchmarks
+- Accessibility
+
+See `testing-strategy.md` for full details and examples.
+
 ---
 
 ## Document Index
 
 - [Project State](./project-state.md) - **START HERE** - Current phase & context
-- [Custom Instructions (Optimized)](./custom-instructions-optimized.md) - For Claude Project setup
+- [Custom Instructions](./custom-instructions.md) - For Claude Project setup
 - [Architecture](./architecture.md) - AWS infrastructure overview
 - [Authentication](./authentication.md) - Cognito and multi-tenant auth
 - [Database Schema](./database-schema.md) - PostgreSQL design and RLS
 - [Assessment Engine](./assessment-engine.md) - Core feature documentation
 - [Video Management](./video-management.md) - S3, CloudFront, streaming
 - [Coding Standards](./coding-standards.md) - TypeScript patterns
+- [Testing Strategy](./testing-strategy.md) - Unit, integration, and E2E testing
 - [Deployment](./deployment.md) - SST and CI/CD workflows
 - [Monitoring](./monitoring.md) - CloudWatch setup and alerting
 - [Security](./security.md) - OWASP compliance and best practices
@@ -327,7 +410,7 @@ ffp/
 
 **Project Lead**: Christopher Tregaskis (Principal Engineer)  
 **Last Updated**: October 15, 2025  
-**Document Version**: 3.0 (Optimized)
+**Document Version**: 3.0
 
 ---
 
