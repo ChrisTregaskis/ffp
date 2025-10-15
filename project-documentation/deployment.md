@@ -122,58 +122,120 @@ export const handler = async (event) => {
 
 ## Database Migrations
 
-### Using Knex.js
+### Using Drizzle Kit
 
 ```bash
-# Create migration
-npm run db:migration:create add_video_tags
-
-# Run pending migrations
-npm run db:migrate
-
-# Rollback last migration
-npm run db:migrate:rollback
-
-# Check migration status
-npm run db:migrate:status
+# Install Drizzle
+npm install drizzle-orm pg
+npm install -D drizzle-kit drizzle-zod @types/pg
 ```
 
-### Migration Workflow
+### Package.json Scripts
 
-```typescript
-// package.json scripts
+```json
 {
   "scripts": {
-    "db:migrate": "knex migrate:latest",
-    "db:migrate:rollback": "knex migrate:rollback",
-    "db:migrate:status": "knex migrate:status",
-    "db:migration:create": "knex migrate:make",
-    "db:seed": "knex seed:run"
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:drop": "drizzle-kit drop",
+    "db:check": "drizzle-kit check"
   }
 }
 ```
 
-### Pre-Deployment Migration
+### Migration Workflow
+
+```bash
+# 1. Make changes to schema files (schema/*.ts)
+
+# 2. Generate migration from schema changes
+npm run db:generate
+
+# 3. Review generated SQL
+cat migrations/0001_add_user_preferences.sql
+
+# 4. Apply migrations to database
+npm run db:migrate
+
+# 5. Check migration status
+npm run db:check
+```
+
+### Development Workflow (db:push)
+
+```bash
+# Push schema changes directly to database (bypasses migrations)
+npm run db:push
+
+# ⚠️ WARNING: Only use in development
+# This doesn't create migration files
+# Production should always use db:generate + db:migrate
+```
+
+### Environment-Specific Migrations
+
+```bash
+# Development
+DB_HOST=localhost DB_NAME=ffp_dev npm run db:migrate
+
+# Staging
+DB_HOST=ffp-staging.xxx.rds.amazonaws.com DB_NAME=ffp_staging npm run db:migrate
+
+# Production
+DB_HOST=ffp-prod.xxx.rds.amazonaws.com DB_NAME=ffp_prod npm run db:migrate
+```
+
+### Pre-Deployment Migration Lambda
 
 ```typescript
 // functions/migrations/run.ts
-import { Knex } from "knex";
-import knexConfig from "../../knexfile";
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { Pool } from 'pg';
 
 export const handler = async () => {
-  const knex = Knex(knexConfig[process.env.STAGE || "development"]);
+  const pool = new Pool({
+    host: process.env.DB_HOST,
+    port: parseInt(process.env.DB_PORT || '5432'),
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+  });
+
+  const db = drizzle(pool);
 
   try {
-    await knex.migrate.latest();
-    console.log("Migrations completed successfully");
-    return { statusCode: 200, body: "Migrations complete" };
+    console.log('Starting migrations...');
+    await migrate(db, { migrationsFolder: './migrations' });
+    console.log('Migrations completed successfully');
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: 'Migrations complete' }),
+    };
   } catch (error) {
-    console.error("Migration failed:", error);
+    console.error('Migration failed:', error);
     throw error;
   } finally {
-    await knex.destroy();
+    await pool.end();
   }
 };
+```
+
+### Drizzle Studio
+
+```bash
+# Start Drizzle Studio (visual database GUI)
+npm run db:studio
+
+# Opens browser at https://local.drizzle.studio
+# Provides visual interface for:
+# - Browsing tables and data
+# - Running queries
+# - Inspecting schema
+# - Testing relationships
 ```
 
 ## Frontend Deployment (S3 + CloudFront + CircleCI)
@@ -381,22 +443,29 @@ git checkout -b feature/assessment-timer
 # 2. Develop with live Lambda reload
 npm run sst dev
 
-# 3. Run tests
+# 3. Make schema changes
+# Edit schema/users.ts
+
+# 4. Generate and apply migration
+npm run db:generate
+npm run db:migrate
+
+# 5. Run tests
 npm run test
 npm run test:e2e
 
-# 4. Deploy to personal dev environment
+# 6. Deploy to personal dev environment
 npm run sst deploy --stage dev
 
-# 5. Commit and push
+# 7. Commit and push
 git add .
 git commit -m "feat: add assessment timer"
 git push origin feature/assessment-timer
 
-# 6. Create pull request
+# 8. Create pull request
 # GitHub/Azure DevOps PR created
 
-# 7. After approval, merge to develop
+# 9. After approval, merge to develop
 # CircleCI auto-deploys backend + frontend to staging
 ```
 
@@ -407,7 +476,7 @@ git push origin feature/assessment-timer
 git checkout develop
 git pull
 
-# Deploy backend
+# Deploy backend (if manual deployment needed)
 npm run sst deploy --stage staging
 
 # Run database migrations
@@ -466,12 +535,29 @@ npm run sst deploy --stage prod
 
 ### Database Rollback
 
-```bash
-# Rollback last migration
-npm run db:migrate:rollback -- --env prod
+Drizzle doesn't have built-in rollback commands. You have two options:
 
-# Or restore from backup
-npm run db:restore -- --env prod --backup-id 2025-10-05-03-00
+**Option 1: Manual rollback SQL**
+```bash
+# Review the migration you want to rollback
+cat migrations/0005_problematic_migration.sql
+
+# Write a reverse migration manually
+# Create migrations/0006_rollback_previous.sql with reverse operations
+
+# Apply the rollback migration
+npm run db:migrate
+```
+
+**Option 2: Restore from backup**
+```bash
+# Restore from RDS snapshot
+aws rds restore-db-instance-from-db-snapshot \
+  --db-instance-identifier ffp-prod-db-restored \
+  --db-snapshot-identifier ffp-prod-db-2025-10-15-03-00
+
+# Update connection strings
+# Run health checks
 ```
 
 ### Frontend Rollback (S3 + CloudFront)
@@ -579,6 +665,9 @@ npm run logs:tail -- --stage prod --function assessments
 
 # Check CloudWatch alarms
 aws cloudwatch describe-alarms --state-value ALARM
+
+# Test Drizzle Studio connection (staging only)
+npm run db:studio
 ```
 
 ### Deployment Metrics
@@ -675,6 +764,7 @@ circleci trigger-pipeline --branch main
 **Infrastructure as Code**
 
 - All infrastructure in Git (SST)
+- All schema definitions in Git (Drizzle)
 - Can rebuild from scratch in <1 hour
 
 ### Recovery Procedures
@@ -685,7 +775,7 @@ circleci trigger-pipeline --branch main
 # Restore from latest snapshot
 aws rds restore-db-instance-from-db-snapshot \
   --db-instance-identifier ffp-prod-db-restored \
-  --db-snapshot-identifier ffp-prod-db-2025-10-05-03-00
+  --db-snapshot-identifier ffp-prod-db-2025-10-15-03-00
 
 # Update connection strings
 # Run health checks
@@ -703,6 +793,9 @@ npm run sst deploy -- --stage prod
 
 # Restore database from snapshot
 npm run db:restore -- --snapshot latest
+
+# Apply all migrations
+npm run db:migrate
 
 # Verify functionality
 npm run test:smoke
@@ -750,14 +843,35 @@ sst deploy --stage prod
 
 ```bash
 # Check migration status
-npm run db:migrate:status -- --env prod
+npm run db:check
 
-# Rollback failed migration
-npm run db:migrate:rollback -- --env prod
+# Review the problematic migration
+cat migrations/<failing-migration>.sql
 
-# Fix migration file
-# Redeploy
-npm run db:migrate -- --env prod
+# Options:
+# 1. Fix the migration file and re-run
+# 2. Drop the migration and regenerate
+npm run db:drop
+npm run db:generate
+
+# 3. Or restore from backup
+npm run db:restore -- --env prod --backup-id 2025-10-15-03-00
+```
+
+### Issue: Drizzle Studio Won't Connect
+
+```bash
+# Check database credentials
+echo $DB_HOST $DB_PORT $DB_NAME
+
+# Test direct connection
+psql -h $DB_HOST -U $DB_USER -d $DB_NAME
+
+# Verify drizzle.config.ts has correct credentials
+cat drizzle.config.ts
+
+# Try with explicit credentials
+DB_HOST=localhost DB_PORT=5432 npm run db:studio
 ```
 
 ### Issue: Frontend Build Fails (CircleCI)
@@ -780,6 +894,7 @@ npm run build
 - Tear down personal dev environments when not in use
 - Use smaller RDS instances for dev (t3.micro)
 - Limit Lambda provisioned concurrency
+- Use `db:push` for rapid schema iteration (no migration files)
 
 ### Production
 
@@ -794,7 +909,8 @@ npm run build
 
 - [ ] All tests passing
 - [ ] Code reviewed and approved
-- [ ] Database migrations tested
+- [ ] Database migrations tested locally
+- [ ] Migration SQL reviewed (check generated SQL files)
 - [ ] Secrets updated (if needed)
 - [ ] Deployment announcement sent
 - [ ] Rollback plan prepared
@@ -803,6 +919,7 @@ npm run build
 
 - [ ] Deploy to staging first
 - [ ] Run smoke tests
+- [ ] Review migration SQL before applying to production
 - [ ] Deploy to production
 - [ ] Monitor CloudWatch alarms
 - [ ] Check error rates
@@ -812,6 +929,7 @@ npm run build
 
 - [ ] Monitor for 30 minutes
 - [ ] Check user feedback
+- [ ] Verify database schema matches expectations (use `db:studio`)
 - [ ] Document any issues
 - [ ] Update deployment log
 - [ ] Send deployment completion notice

@@ -2,14 +2,16 @@
 
 ## Overview
 
-FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolation. All tenant-scoped tables enforce RLS policies to prevent cross-tenant data access.
+FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolation, accessed through Drizzle ORM for type-safe database operations. All tenant-scoped tables enforce RLS policies to prevent cross-tenant data access.
 
-## Why PostgreSQL + RLS
+## Why PostgreSQL + RLS + Drizzle ORM
 
 ### Benefits
 
 - **Single database**: Cost-effective, simpler operations
 - **Strong isolation**: Database-enforced security (not just application-level)
+- **Type-safe queries**: Drizzle provides end-to-end TypeScript type safety
+- **Serverless-optimized**: Lightweight ORM perfect for Lambda functions
 - **Easy analytics**: Query across tenants when needed
 - **ACID guarantees**: Full transaction support
 - **Proven at scale**: Used by major SaaS platforms
@@ -31,351 +33,472 @@ FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolatio
 - **Encryption**: At rest via KMS
 - **Connection limit**: ~100 connections (Lambda optimized)
 
-## Core Schema
+## Drizzle ORM Setup
 
-### Tenants Table
+### Installation
 
-```sql
-CREATE TABLE tenants (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  type VARCHAR(20) NOT NULL CHECK (type IN ('individual', 'business')),
-  name VARCHAR(255) NOT NULL,
-  settings JSONB DEFAULT '{}',
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_tenants_type ON tenants(type);
+```bash
+npm install drizzle-orm pg
+npm install -D drizzle-kit drizzle-zod @types/pg
 ```
 
-### Users Table
+### Configuration
 
-```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY,  -- Cognito sub
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  email VARCHAR(255) NOT NULL UNIQUE,
-  cognito_sub VARCHAR(255) NOT NULL UNIQUE,
-  first_name VARCHAR(100) NOT NULL,
-  last_name VARCHAR(100) NOT NULL,
-  role VARCHAR(50) NOT NULL CHECK (role IN (
-    'system_admin',
-    'business_owner',
-    'business_admin',
-    'business_user',
-    'individual_user'
-  )),
-  parent_business_id UUID REFERENCES users(id) ON DELETE SET NULL,
-  profile_image_url TEXT,
-  phone VARCHAR(20),
-  date_of_birth DATE,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
+```typescript
+// drizzle.config.ts
+import { defineConfig } from 'drizzle-kit';
 
-CREATE INDEX idx_users_tenant_id ON users(tenant_id);
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_parent_business_id ON users(parent_business_id)
-  WHERE parent_business_id IS NOT NULL;
-
--- Enable RLS
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-
--- RLS Policy: Users can only see their own tenant's users
-CREATE POLICY tenant_isolation_users ON users
-  FOR ALL
-  USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
+export default defineConfig({
+  schema: './schema/*',
+  out: './migrations',
+  dialect: 'postgresql',
+  dbCredentials: {
+    host: process.env.DB_HOST!,
+    port: parseInt(process.env.DB_PORT || '5432'),
+    user: process.env.DB_USER!,
+    password: process.env.DB_PASSWORD!,
+    database: process.env.DB_NAME!,
+  },
+});
 ```
 
-### Assessment Templates Table
-
-```sql
-CREATE TABLE assessment_templates (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  version INTEGER NOT NULL DEFAULT 1,
-  questions JSONB NOT NULL,  -- JSON schema defined questions
-  scoring_config JSONB NOT NULL,  -- Scoring algorithm configuration
-  is_active BOOLEAN NOT NULL DEFAULT true,
-  created_by UUID REFERENCES users(id) ON DELETE SET NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_assessment_templates_active ON assessment_templates(is_active)
-  WHERE is_active = true;
-
--- No RLS needed (system-managed, not tenant-specific)
-```
-
-### User Assessments Table
-
-```sql
-CREATE TABLE user_assessments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  template_id UUID NOT NULL REFERENCES assessment_templates(id) ON DELETE RESTRICT,
-  status VARCHAR(20) NOT NULL DEFAULT 'in_progress' CHECK (status IN (
-    'in_progress',
-    'completed',
-    'abandoned'
-  )),
-  answers JSONB DEFAULT '{}',
-  score JSONB,  -- Calculated scores
-  started_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  completed_at TIMESTAMP,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_user_assessments_tenant_user ON user_assessments(tenant_id, user_id);
-CREATE INDEX idx_user_assessments_status ON user_assessments(status);
-
--- Enable RLS
-ALTER TABLE user_assessments ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY tenant_isolation_assessments ON user_assessments
-  FOR ALL
-  USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
-```
-
-### Programs Table
-
-```sql
-CREATE TABLE programs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  assessment_id UUID NOT NULL REFERENCES user_assessments(id) ON DELETE CASCADE,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  duration_weeks INTEGER NOT NULL,
-  difficulty_level VARCHAR(20) NOT NULL CHECK (difficulty_level IN (
-    'beginner',
-    'intermediate',
-    'advanced'
-  )),
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_programs_tenant_user ON programs(tenant_id, user_id);
-CREATE INDEX idx_programs_assessment ON programs(assessment_id);
-
--- Enable RLS
-ALTER TABLE programs ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY tenant_isolation_programs ON programs
-  FOR ALL
-  USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
-```
-
-### Program Sessions Table
-
-```sql
-CREATE TABLE program_sessions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  program_id UUID NOT NULL REFERENCES programs(id) ON DELETE CASCADE,
-  session_number INTEGER NOT NULL,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  estimated_duration_minutes INTEGER NOT NULL,
-  UNIQUE(program_id, session_number)
-);
-
-CREATE INDEX idx_program_sessions_tenant_program ON program_sessions(tenant_id, program_id);
-
--- Enable RLS
-ALTER TABLE program_sessions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY tenant_isolation_sessions ON program_sessions
-  FOR ALL
-  USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
-```
-
-### Session Exercises Table
-
-```sql
-CREATE TABLE session_exercises (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id UUID NOT NULL REFERENCES program_sessions(id) ON DELETE CASCADE,
-  video_id UUID NOT NULL REFERENCES videos(id) ON DELETE RESTRICT,
-  exercise_order INTEGER NOT NULL,
-  sets INTEGER,
-  reps INTEGER,
-  duration_seconds INTEGER,
-  rest_seconds INTEGER,
-  notes TEXT,
-  UNIQUE(session_id, exercise_order)
-);
-
-CREATE INDEX idx_session_exercises_session ON session_exercises(session_id);
-CREATE INDEX idx_session_exercises_video ON session_exercises(video_id);
-
--- No RLS needed (inherits from session via FK)
-```
-
-### Videos Table
-
-```sql
-CREATE TABLE videos (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title VARCHAR(255) NOT NULL,
-  description TEXT,
-  s3_key VARCHAR(500) NOT NULL UNIQUE,
-  thumbnail_url TEXT,
-  duration_seconds INTEGER NOT NULL,
-  difficulty_level VARCHAR(20) NOT NULL CHECK (difficulty_level IN (
-    'beginner',
-    'intermediate',
-    'advanced'
-  )),
-  body_parts TEXT[] NOT NULL,  -- ['legs', 'core', 'upper_body']
-  equipment TEXT[],  -- ['dumbbells', 'resistance_band', 'none']
-  tags TEXT[],
-  is_active BOOLEAN NOT NULL DEFAULT true,
-  view_count INTEGER NOT NULL DEFAULT 0,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_videos_difficulty ON videos(difficulty_level);
-CREATE INDEX idx_videos_body_parts ON videos USING GIN(body_parts);
-CREATE INDEX idx_videos_equipment ON videos USING GIN(equipment);
-CREATE INDEX idx_videos_active ON videos(is_active) WHERE is_active = true;
-
--- No RLS needed (system-managed content library)
-```
-
-### User Progress Table
-
-```sql
-CREATE TABLE user_progress (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  session_id UUID NOT NULL REFERENCES program_sessions(id) ON DELETE CASCADE,
-  video_id UUID NOT NULL REFERENCES videos(id) ON DELETE RESTRICT,
-  status VARCHAR(20) NOT NULL DEFAULT 'not_started' CHECK (status IN (
-    'not_started',
-    'in_progress',
-    'completed',
-    'skipped'
-  )),
-  progress_percentage INTEGER NOT NULL DEFAULT 0 CHECK (
-    progress_percentage >= 0 AND progress_percentage <= 100
-  ),
-  completed_sets INTEGER DEFAULT 0,
-  notes TEXT,
-  started_at TIMESTAMP,
-  completed_at TIMESTAMP,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  UNIQUE(tenant_id, user_id, session_id, video_id)
-);
-
-CREATE INDEX idx_user_progress_tenant_user ON user_progress(tenant_id, user_id);
-CREATE INDEX idx_user_progress_session ON user_progress(session_id);
-CREATE INDEX idx_user_progress_status ON user_progress(status);
-
--- Enable RLS
-ALTER TABLE user_progress ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY tenant_isolation_progress ON user_progress
-  FOR ALL
-  USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
-```
-
-### Audit Log Table
-
-```sql
-CREATE TABLE audit_logs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID REFERENCES tenants(id) ON DELETE SET NULL,
-  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-  action VARCHAR(100) NOT NULL,  -- 'user.login', 'assessment.complete', etc.
-  resource_type VARCHAR(50),  -- 'user', 'assessment', 'program', etc.
-  resource_id UUID,
-  metadata JSONB DEFAULT '{}',
-  ip_address INET,
-  user_agent TEXT,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_audit_logs_tenant ON audit_logs(tenant_id);
-CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
-CREATE INDEX idx_audit_logs_action ON audit_logs(action);
-CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at DESC);
-
--- Audit logs viewable by system admins only (special RLS policy)
-ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY admin_only_audit_logs ON audit_logs
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM users
-      WHERE users.id = current_setting('app.user_id', true)::UUID
-      AND users.role = 'system_admin'
-    )
-  );
-```
-
-## Row-Level Security (RLS) Implementation
-
-### Setting Context Per Request
-
-Every Lambda function must set the tenant context before querying:
+### Database Client
 
 ```typescript
 // lib/database.ts
-import { Pool } from "pg";
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+import { sql } from 'drizzle-orm';
 
 const pool = new Pool({
   host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT || "5432"),
+  port: parseInt(process.env.DB_PORT || '5432'),
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   max: 10, // Connection pool size
 });
 
+export const db = drizzle(pool);
+
+// RLS context setting (PostgreSQL-specific, uses raw SQL)
 export async function setRLSContext(tenantId: string, userId?: string) {
-  const client = await pool.connect();
-  try {
-    await client.query("SET app.tenant_id = $1", [tenantId]);
-    if (userId) {
-      await client.query("SET app.user_id = $1", [userId]);
-    }
-    return client;
-  } catch (error) {
-    client.release();
-    throw error;
+  await db.execute(sql`SET app.tenant_id = ${tenantId}`);
+  if (userId) {
+    await db.execute(sql`SET app.user_id = ${userId}`);
   }
 }
 
-export async function query<T>(
-  sql: string,
-  params: any[],
+// Transaction wrapper with RLS
+export async function withRLS<T>(
   tenantId: string,
-  userId?: string
-): Promise<T[]> {
-  const client = await setRLSContext(tenantId, userId);
-  try {
-    const result = await client.query(sql, params);
-    return result.rows;
-  } finally {
-    client.release();
-  }
+  userId: string | undefined,
+  callback: (tx: typeof db) => Promise<T>
+): Promise<T> {
+  return await db.transaction(async (tx) => {
+    await tx.execute(sql`SET app.tenant_id = ${tenantId}`);
+    if (userId) {
+      await tx.execute(sql`SET app.user_id = ${userId}`);
+    }
+    return await callback(tx);
+  });
 }
+```
+
+## Core Schema Definitions
+
+### Tenants Table
+
+```typescript
+// schema/tenants.ts
+import { pgTable, uuid, varchar, timestamp, jsonb, pgEnum } from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { relations } from 'drizzle-orm';
+
+export const tenantTypeEnum = pgEnum('tenant_type', ['individual', 'business']);
+
+export const tenants = pgTable('tenants', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  type: tenantTypeEnum('type').notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  settings: jsonb('settings').default({}),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Relations
+export const tenantsRelations = relations(tenants, ({ many }) => ({
+  users: many(users),
+}));
+
+// Auto-generated Zod schemas
+export const insertTenantSchema = createInsertSchema(tenants);
+export const selectTenantSchema = createSelectSchema(tenants);
+
+// TypeScript types
+export type Tenant = typeof tenants.$inferSelect;
+export type NewTenant = typeof tenants.$inferInsert;
+```
+
+### Users Table
+
+```typescript
+// schema/users.ts
+import { 
+  pgTable, 
+  uuid, 
+  varchar, 
+  timestamp, 
+  date, 
+  text, 
+  pgEnum, 
+  index 
+} from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { relations } from 'drizzle-orm';
+import { tenants } from './tenants';
+
+export const userRoleEnum = pgEnum('user_role', [
+  'system_admin',
+  'business_owner',
+  'business_admin',
+  'business_user',
+  'individual_user',
+]);
+
+export const users = pgTable(
+  'users',
+  {
+    id: uuid('id').primaryKey(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    email: varchar('email', { length: 255 }).notNull().unique(),
+    cognitoSub: varchar('cognito_sub', { length: 255 }).notNull().unique(),
+    firstName: varchar('first_name', { length: 100 }).notNull(),
+    lastName: varchar('last_name', { length: 100 }).notNull(),
+    role: userRoleEnum('role').notNull(),
+    parentBusinessId: uuid('parent_business_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    profileImageUrl: text('profile_image_url'),
+    phone: varchar('phone', { length: 20 }),
+    dateOfBirth: date('date_of_birth'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    tenantIdIdx: index('idx_users_tenant_id').on(table.tenantId),
+    emailIdx: index('idx_users_email').on(table.email),
+    parentBusinessIdIdx: index('idx_users_parent_business_id').on(table.parentBusinessId),
+  })
+);
+
+// Relations
+export const usersRelations = relations(users, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [users.tenantId],
+    references: [tenants.id],
+  }),
+  parentBusiness: one(users, {
+    fields: [users.parentBusinessId],
+    references: [users.id],
+  }),
+  subUsers: many(users),
+  assessments: many(userAssessments),
+  programs: many(programs),
+}));
+
+// Auto-generated Zod schemas
+export const insertUserSchema = createInsertSchema(users);
+export const selectUserSchema = createSelectSchema(users);
+
+// TypeScript types
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+```
+
+### Assessment Templates Table
+
+```typescript
+// schema/assessment-templates.ts
+import { pgTable, uuid, varchar, text, integer, boolean, timestamp, jsonb, index } from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { users } from './users';
+
+export const assessmentTemplates = pgTable(
+  'assessment_templates',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: varchar('name', { length: 255 }).notNull(),
+    description: text('description'),
+    version: integer('version').notNull().default(1),
+    questions: jsonb('questions').notNull(),
+    scoringConfig: jsonb('scoring_config').notNull(),
+    isActive: boolean('is_active').notNull().default(true),
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    activeIdx: index('idx_assessment_templates_active').on(table.isActive),
+  })
+);
+
+// Auto-generated Zod schemas
+export const insertAssessmentTemplateSchema = createInsertSchema(assessmentTemplates);
+export const selectAssessmentTemplateSchema = createSelectSchema(assessmentTemplates);
+
+// TypeScript types
+export type AssessmentTemplate = typeof assessmentTemplates.$inferSelect;
+export type NewAssessmentTemplate = typeof assessmentTemplates.$inferInsert;
+
+// No RLS needed (system-managed, not tenant-specific)
+```
+
+### User Assessments Table
+
+```typescript
+// schema/user-assessments.ts
+import { pgTable, uuid, varchar, timestamp, jsonb, index } from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { relations } from 'drizzle-orm';
+import { tenants } from './tenants';
+import { users } from './users';
+import { assessmentTemplates } from './assessment-templates';
+
+export const assessmentStatusEnum = pgEnum('assessment_status', [
+  'in_progress',
+  'completed',
+  'abandoned',
+]);
+
+export const userAssessments = pgTable(
+  'user_assessments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    templateId: uuid('template_id')
+      .notNull()
+      .references(() => assessmentTemplates.id, { onDelete: 'restrict' }),
+    status: assessmentStatusEnum('status').notNull().default('in_progress'),
+    answers: jsonb('answers').default({}),
+    score: jsonb('score'),
+    startedAt: timestamp('started_at').defaultNow().notNull(),
+    completedAt: timestamp('completed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    tenantUserIdx: index('idx_user_assessments_tenant_user').on(table.tenantId, table.userId),
+    statusIdx: index('idx_user_assessments_status').on(table.status),
+  })
+);
+
+// Relations
+export const userAssessmentsRelations = relations(userAssessments, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [userAssessments.tenantId],
+    references: [tenants.id],
+  }),
+  user: one(users, {
+    fields: [userAssessments.userId],
+    references: [users.id],
+  }),
+  template: one(assessmentTemplates, {
+    fields: [userAssessments.templateId],
+    references: [assessmentTemplates.id],
+  }),
+}));
+
+// Auto-generated Zod schemas
+export const insertUserAssessmentSchema = createInsertSchema(userAssessments);
+export const selectUserAssessmentSchema = createSelectSchema(userAssessments);
+
+// TypeScript types
+export type UserAssessment = typeof userAssessments.$inferSelect;
+export type NewUserAssessment = typeof userAssessments.$inferInsert;
+
+// RLS enabled via migration (see below)
+```
+
+### Programs Table
+
+```typescript
+// schema/programs.ts
+import { pgTable, uuid, varchar, text, integer, timestamp, index } from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { relations } from 'drizzle-orm';
+import { tenants } from './tenants';
+import { users } from './users';
+import { userAssessments } from './user-assessments';
+
+export const difficultyLevelEnum = pgEnum('difficulty_level', [
+  'beginner',
+  'intermediate',
+  'advanced',
+]);
+
+export const programs = pgTable(
+  'programs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    assessmentId: uuid('assessment_id')
+      .notNull()
+      .references(() => userAssessments.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 255 }).notNull(),
+    description: text('description'),
+    durationWeeks: integer('duration_weeks').notNull(),
+    difficultyLevel: difficultyLevelEnum('difficulty_level').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    tenantUserIdx: index('idx_programs_tenant_user').on(table.tenantId, table.userId),
+    assessmentIdx: index('idx_programs_assessment').on(table.assessmentId),
+  })
+);
+
+// Relations
+export const programsRelations = relations(programs, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [programs.tenantId],
+    references: [tenants.id],
+  }),
+  user: one(users, {
+    fields: [programs.userId],
+    references: [users.id],
+  }),
+  assessment: one(userAssessments, {
+    fields: [programs.assessmentId],
+    references: [userAssessments.id],
+  }),
+  sessions: many(programSessions),
+}));
+
+// Auto-generated Zod schemas
+export const insertProgramSchema = createInsertSchema(programs);
+export const selectProgramSchema = createSelectSchema(programs);
+
+// TypeScript types
+export type Program = typeof programs.$inferSelect;
+export type NewProgram = typeof programs.$inferInsert;
+
+// RLS enabled via migration (see below)
+```
+
+### Videos Table
+
+```typescript
+// schema/videos.ts
+import { pgTable, uuid, varchar, text, integer, boolean, timestamp, index } from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+
+export const videos = pgTable(
+  'videos',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    title: varchar('title', { length: 255 }).notNull(),
+    description: text('description'),
+    s3Key: varchar('s3_key', { length: 500 }).notNull().unique(),
+    thumbnailUrl: text('thumbnail_url'),
+    durationSeconds: integer('duration_seconds').notNull(),
+    difficultyLevel: difficultyLevelEnum('difficulty_level').notNull(),
+    bodyParts: text('body_parts').array().notNull(),
+    equipment: text('equipment').array(),
+    tags: text('tags').array(),
+    isActive: boolean('is_active').notNull().default(true),
+    viewCount: integer('view_count').notNull().default(0),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    difficultyIdx: index('idx_videos_difficulty').on(table.difficultyLevel),
+    activeIdx: index('idx_videos_active').on(table.isActive),
+  })
+);
+
+// Auto-generated Zod schemas
+export const insertVideoSchema = createInsertSchema(videos);
+export const selectVideoSchema = createSelectSchema(videos);
+
+// TypeScript types
+export type Video = typeof videos.$inferSelect;
+export type NewVideo = typeof videos.$inferInsert;
+
+// No RLS needed (system-managed content library)
+```
+
+## Row-Level Security (RLS) Implementation
+
+### Enabling RLS via Migration
+
+```typescript
+// migrations/custom/enable-rls.sql.ts
+import { sql } from 'drizzle-orm';
+
+export const enableRLS = sql`
+  -- Enable RLS on tenant-scoped tables
+  ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE user_assessments ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE programs ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE program_sessions ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE user_progress ENABLE ROW LEVEL SECURITY;
+
+  -- Create RLS policies
+  CREATE POLICY tenant_isolation_users ON users
+    FOR ALL 
+    USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
+
+  CREATE POLICY tenant_isolation_assessments ON user_assessments
+    FOR ALL 
+    USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
+
+  CREATE POLICY tenant_isolation_programs ON programs
+    FOR ALL 
+    USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
+
+  CREATE POLICY tenant_isolation_sessions ON program_sessions
+    FOR ALL 
+    USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
+
+  CREATE POLICY tenant_isolation_progress ON user_progress
+    FOR ALL 
+    USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
+
+  -- Audit logs policy (system admins only)
+  ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+
+  CREATE POLICY admin_only_audit_logs ON audit_logs
+    FOR SELECT
+    USING (
+      EXISTS (
+        SELECT 1 FROM users
+        WHERE users.id = current_setting('app.user_id', true)::UUID
+        AND users.role = 'system_admin'
+      )
+    );
+`;
 ```
 
 ### Usage in Lambda Functions
 
 ```typescript
+import { withRLS } from '../lib/database';
+import { userAssessments } from '../schema/user-assessments';
+import { eq } from 'drizzle-orm';
+
 export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (
   event
 ) => {
@@ -383,13 +506,13 @@ export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (
   const tenantId = claims["custom:tenantId"] as string;
   const userId = claims.sub as string;
 
-  // RLS automatically applied to all queries
-  const assessments = await query(
-    "SELECT * FROM user_assessments WHERE user_id = $1",
-    [userId],
-    tenantId,
-    userId
-  );
+  // RLS automatically applied to all queries within this transaction
+  const assessments = await withRLS(tenantId, userId, async (tx) => {
+    return await tx
+      .select()
+      .from(userAssessments)
+      .where(eq(userAssessments.userId, userId));
+  });
 
   return {
     statusCode: 200,
@@ -398,122 +521,166 @@ export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (
 };
 ```
 
+## Repository Pattern with Drizzle
+
+### Repository Implementation
+
+```typescript
+// repositories/assessment.repository.impl.ts
+import { eq, and } from 'drizzle-orm';
+import { db, withRLS } from '../lib/database';
+import { userAssessments } from '../schema/user-assessments';
+import type { NewUserAssessment, UserAssessment } from '../schema/user-assessments';
+
+export class AssessmentRepositoryImpl implements AssessmentRepository {
+  async create(
+    data: NewUserAssessment, 
+    context: TenantContext
+  ): Promise<UserAssessment> {
+    return await withRLS(context.tenantId, context.userId, async (tx) => {
+      const [assessment] = await tx
+        .insert(userAssessments)
+        .values({
+          ...data,
+          tenantId: context.tenantId,
+        })
+        .returning();
+      
+      return assessment;
+    });
+  }
+
+  async getById(
+    id: string,
+    context: TenantContext
+  ): Promise<UserAssessment | null> {
+    return await withRLS(context.tenantId, context.userId, async (tx) => {
+      const [assessment] = await tx
+        .select()
+        .from(userAssessments)
+        .where(
+          and(
+            eq(userAssessments.id, id),
+            eq(userAssessments.tenantId, context.tenantId)
+          )
+        )
+        .limit(1);
+      
+      return assessment || null;
+    });
+  }
+
+  async findByUser(
+    userId: string,
+    context: TenantContext
+  ): Promise<UserAssessment[]> {
+    return await withRLS(context.tenantId, context.userId, async (tx) => {
+      return await tx
+        .select()
+        .from(userAssessments)
+        .where(
+          and(
+            eq(userAssessments.userId, userId),
+            eq(userAssessments.tenantId, context.tenantId)
+          )
+        );
+    });
+  }
+
+  async update(
+    id: string,
+    data: Partial<UserAssessment>,
+    context: TenantContext
+  ): Promise<UserAssessment> {
+    return await withRLS(context.tenantId, context.userId, async (tx) => {
+      const [updated] = await tx
+        .update(userAssessments)
+        .set({
+          ...data,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(userAssessments.id, id),
+            eq(userAssessments.tenantId, context.tenantId)
+          )
+        )
+        .returning();
+      
+      return updated;
+    });
+  }
+}
+```
+
 ## Migration Strategy
 
-### Using Knex.js
+### Using Drizzle Kit
 
 ```bash
-npm install knex pg
+# Generate migration from schema changes
+npm run db:generate
+
+# Review generated SQL
+cat migrations/0001_add_user_preferences.sql
+
+# Apply migrations to database
+npm run db:migrate
+
+# Check migration status
+npm run db:check
 ```
 
-```typescript
-// knexfile.ts
-import type { Knex } from "knex";
+### Example Package.json Scripts
 
-const config: { [key: string]: Knex.Config } = {
-  development: {
-    client: "postgresql",
-    connection: {
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT || "5432"),
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-    },
-    migrations: {
-      directory: "./migrations",
-      extension: "ts",
-    },
-    seeds: {
-      directory: "./seeds",
-    },
-  },
-  production: {
-    client: "postgresql",
-    connection: {
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT || "5432"),
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-    },
-    pool: {
-      min: 2,
-      max: 10,
-    },
-    migrations: {
-      directory: "./migrations",
-      extension: "ts",
-    },
-  },
+```json
+{
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:drop": "drizzle-kit drop",
+    "db:check": "drizzle-kit check"
+  }
+}
+```
+
+### Pre-Deployment Migration
+
+```typescript
+// functions/migrations/run.ts
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { Pool } from 'pg';
+
+export const handler = async () => {
+  const pool = new Pool({
+    host: process.env.DB_HOST,
+    port: parseInt(process.env.DB_PORT || '5432'),
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+  });
+
+  const db = drizzle(pool);
+
+  try {
+    console.log('Starting migrations...');
+    await migrate(db, { migrationsFolder: './migrations' });
+    console.log('Migrations completed successfully');
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: 'Migrations complete' }),
+    };
+  } catch (error) {
+    console.error('Migration failed:', error);
+    throw error;
+  } finally {
+    await pool.end();
+  }
 };
-
-export default config;
-```
-
-### Example Migration
-
-```typescript
-// migrations/20250101000000_create_tenants_and_users.ts
-import { Knex } from "knex";
-
-export async function up(knex: Knex): Promise<void> {
-  // Create tenants table
-  await knex.schema.createTable("tenants", (table) => {
-    table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
-    table.string("type", 20).notNullable();
-    table.string("name", 255).notNullable();
-    table.jsonb("settings").defaultTo("{}");
-    table.timestamp("created_at").notNullable().defaultTo(knex.fn.now());
-    table.timestamp("updated_at").notNullable().defaultTo(knex.fn.now());
-
-    table.check("type IN (?, ?)", ["individual", "business"]);
-  });
-
-  // Create users table
-  await knex.schema.createTable("users", (table) => {
-    table.uuid("id").primary();
-    table
-      .uuid("tenant_id")
-      .notNullable()
-      .references("id")
-      .inTable("tenants")
-      .onDelete("CASCADE");
-    table.string("email", 255).notNullable().unique();
-    table.string("cognito_sub", 255).notNullable().unique();
-    table.string("first_name", 100).notNullable();
-    table.string("last_name", 100).notNullable();
-    table.string("role", 50).notNullable();
-    table
-      .uuid("parent_business_id")
-      .references("id")
-      .inTable("users")
-      .onDelete("SET NULL");
-    table.text("profile_image_url");
-    table.string("phone", 20);
-    table.date("date_of_birth");
-    table.timestamp("created_at").notNullable().defaultTo(knex.fn.now());
-    table.timestamp("updated_at").notNullable().defaultTo(knex.fn.now());
-
-    table.index("tenant_id");
-    table.index("email");
-  });
-
-  // Enable RLS
-  await knex.raw("ALTER TABLE users ENABLE ROW LEVEL SECURITY");
-
-  // Create RLS policy
-  await knex.raw(`
-    CREATE POLICY tenant_isolation_users ON users
-    FOR ALL 
-    USING (tenant_id = current_setting('app.tenant_id', true)::UUID)
-  `);
-}
-
-export async function down(knex: Knex): Promise<void> {
-  await knex.schema.dropTableIfExists("users");
-  await knex.schema.dropTableIfExists("tenants");
-}
 ```
 
 ## Testing Data Isolation
@@ -522,7 +689,10 @@ export async function down(knex: Knex): Promise<void> {
 
 ```typescript
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { createTestTenant, createTestUser, query } from "./test-helpers";
+import { createTestTenant, createTestUser } from "./test-helpers";
+import { db, withRLS } from '../lib/database';
+import { userAssessments } from '../schema/user-assessments';
+import { eq } from 'drizzle-orm';
 
 describe("Multi-tenant data isolation", () => {
   let tenant1: any;
@@ -539,21 +709,24 @@ describe("Multi-tenant data isolation", () => {
 
   it("prevents cross-tenant data access", async () => {
     // Create assessment for tenant1
-    const assessment1 = await query(
-      "INSERT INTO user_assessments (tenant_id, user_id, template_id) VALUES ($1, $2, $3) RETURNING *",
-      [tenant1.id, user1.id, "template-id"],
-      tenant1.id
-    );
+    const [assessment1] = await withRLS(tenant1.id, user1.id, async (tx) => {
+      return await tx
+        .insert(userAssessments)
+        .values({
+          tenantId: tenant1.id,
+          userId: user1.id,
+          templateId: "template-id",
+        })
+        .returning();
+    });
 
     // Try to query from tenant2 context (should not see tenant1 data)
-    const assessments = await query(
-      "SELECT * FROM user_assessments",
-      [],
-      tenant2.id
-    );
+    const assessments = await withRLS(tenant2.id, user2.id, async (tx) => {
+      return await tx.select().from(userAssessments);
+    });
 
     expect(assessments).not.toContainEqual(
-      expect.objectContaining({ id: assessment1[0].id })
+      expect.objectContaining({ id: assessment1.id })
     );
   });
 
@@ -570,21 +743,24 @@ describe("Multi-tenant data isolation", () => {
     });
 
     // Owner creates assessment
-    const assessment = await query(
-      "INSERT INTO user_assessments (tenant_id, user_id, template_id) VALUES ($1, $2, $3) RETURNING *",
-      [businessTenant.id, owner.id, "template-id"],
-      businessTenant.id
-    );
+    const [assessment] = await withRLS(businessTenant.id, owner.id, async (tx) => {
+      return await tx
+        .insert(userAssessments)
+        .values({
+          tenantId: businessTenant.id,
+          userId: owner.id,
+          templateId: "template-id",
+        })
+        .returning();
+    });
 
     // Sub-user can see it (same tenant)
-    const subUserAssessments = await query(
-      "SELECT * FROM user_assessments",
-      [],
-      businessTenant.id
-    );
+    const subUserAssessments = await withRLS(businessTenant.id, subUser.id, async (tx) => {
+      return await tx.select().from(userAssessments);
+    });
 
     expect(subUserAssessments).toContainEqual(
-      expect.objectContaining({ id: assessment[0].id })
+      expect.objectContaining({ id: assessment.id })
     );
   });
 
@@ -598,7 +774,7 @@ describe("Multi-tenant data isolation", () => {
 
 ### Indexes
 
-All foreign keys have indexes for efficient joins:
+All foreign keys have indexes defined in schema:
 
 - `tenant_id` indexed on all multi-tenant tables
 - `user_id` indexed for user-specific queries
@@ -612,10 +788,27 @@ All foreign keys have indexes for efficient joins:
 
 ### Query Optimization
 
-- Use EXPLAIN ANALYZE for slow queries
-- Add indexes based on query patterns
-- Avoid SELECT \* (specify columns)
+- Use prepared statements for repeated queries
+- Add indexes based on query patterns in schema
+- Specify columns instead of `SELECT *`
 - Use LIMIT for large result sets
+
+### Prepared Statements Example
+
+```typescript
+import { sql } from 'drizzle-orm';
+import { users } from '../schema/users';
+
+// Prepare frequently-used query
+const getUserById = db
+  .select()
+  .from(users)
+  .where(eq(users.id, sql.placeholder('userId')))
+  .prepare('get_user_by_id');
+
+// Execute with parameters (more efficient for repeated queries)
+const user = await getUserById.execute({ userId: '123' });
+```
 
 ## Backup & Recovery
 

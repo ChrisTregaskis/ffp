@@ -2,7 +2,7 @@
 
 ## Overview
 
-Consistent coding standards ensure maintainability, readability, and collaboration across the FFP codebase. These standards apply to all TypeScript/JavaScript code in both frontend and backend.
+Consistent coding standards ensure maintainability, readability, and collaboration across the FFP codebase. These standards apply to all TypeScript/JavaScript code in both frontend and backend, with specific patterns for Drizzle ORM usage.
 
 ## General Principles
 
@@ -126,6 +126,274 @@ const pageSize = config.pageSize ?? 10;
 const name = user!.firstName;
 ```
 
+## Drizzle ORM Standards
+
+### Schema Definition Standards
+
+```typescript
+// ✅ Good: Use Drizzle's pgEnum for enums
+export const userRoleEnum = pgEnum('user_role', [
+  'system_admin',
+  'business_owner',
+  'individual_user',
+]);
+
+// ✅ Good: Define relations for type-safe joins
+export const usersRelations = relations(users, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [users.tenantId],
+    references: [tenants.id],
+  }),
+  assessments: many(userAssessments),
+}));
+
+// ✅ Good: Auto-generate Zod schemas
+export const insertUserSchema = createInsertSchema(users);
+export const selectUserSchema = createSelectSchema(users);
+
+// ✅ Good: Export TypeScript types
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+
+// ✅ Good: Add indexes in schema definition
+export const users = pgTable(
+  'users',
+  {
+    id: uuid('id').primaryKey(),
+    tenantId: uuid('tenant_id').notNull(),
+    email: varchar('email', { length: 255 }).notNull().unique(),
+    // ... other fields
+  },
+  (table) => ({
+    tenantIdIdx: index('idx_users_tenant_id').on(table.tenantId),
+    emailIdx: index('idx_users_email').on(table.email),
+  })
+);
+```
+
+### Query Patterns
+
+```typescript
+// ✅ Good: Use Drizzle query builder with type safety
+import { eq, and, desc } from 'drizzle-orm';
+import { users } from '../schema/users';
+
+const [user] = await db
+  .select()
+  .from(users)
+  .where(eq(users.id, userId))
+  .limit(1);
+
+// ✅ Good: Complex conditions with and/or
+const assessments = await db
+  .select()
+  .from(userAssessments)
+  .where(
+    and(
+      eq(userAssessments.userId, userId),
+      eq(userAssessments.status, 'completed')
+    )
+  );
+
+// ✅ Good: Joins with proper typing
+const assessmentsWithUsers = await db
+  .select({
+    assessment: userAssessments,
+    user: users,
+  })
+  .from(userAssessments)
+  .leftJoin(users, eq(userAssessments.userId, users.id));
+
+// ✅ Good: Use relational queries for nested data
+const program = await db.query.programs.findFirst({
+  where: (programs, { eq }) => eq(programs.id, programId),
+  with: {
+    sessions: {
+      with: {
+        exercises: {
+          with: {
+            video: true,
+          },
+        },
+      },
+    },
+  },
+});
+
+// ✅ Good: Use prepared statements for repeated queries
+const getUserById = db
+  .select()
+  .from(users)
+  .where(eq(users.id, sql.placeholder('userId')))
+  .prepare('get_user_by_id');
+
+const user = await getUserById.execute({ userId: '123' });
+
+// ❌ Bad: String concatenation (SQL injection risk)
+const query = `SELECT * FROM users WHERE id = '${userId}'`;
+```
+
+### RLS Context Pattern
+
+```typescript
+// ✅ Good: Always use withRLS wrapper for tenant-scoped queries
+import { withRLS } from '../lib/database';
+
+const assessments = await withRLS(tenantId, userId, async (tx) => {
+  return await tx
+    .select()
+    .from(userAssessments)
+    .where(eq(userAssessments.userId, userId));
+});
+
+// ✅ Good: Set RLS context for raw SQL
+import { sql } from 'drizzle-orm';
+
+await db.execute(sql`SET app.tenant_id = ${tenantId}`);
+await db.execute(sql`SET app.user_id = ${userId}`);
+
+// ❌ Bad: Forgetting to set RLS context
+const assessments = await db
+  .select()
+  .from(userAssessments); // Missing tenant context!
+```
+
+### Insert/Update Patterns
+
+```typescript
+// ✅ Good: Use .returning() to get inserted data
+const [newUser] = await db
+  .insert(users)
+  .values({
+    id: userId,
+    tenantId: tenantId,
+    email: email,
+    firstName: firstName,
+    lastName: lastName,
+    role: 'individual_user',
+  })
+  .returning();
+
+// ✅ Good: Partial updates with type safety
+const [updated] = await db
+  .update(userAssessments)
+  .set({
+    status: 'completed',
+    completedAt: new Date(),
+    updatedAt: new Date(),
+  })
+  .where(eq(userAssessments.id, assessmentId))
+  .returning();
+
+// ✅ Good: Upsert pattern (insert or update)
+await db
+  .insert(userProgress)
+  .values({
+    tenantId,
+    userId,
+    sessionId,
+    videoId,
+    status: 'completed',
+    progressPercentage: 100,
+  })
+  .onConflictDoUpdate({
+    target: [
+      userProgress.tenantId, 
+      userProgress.userId, 
+      userProgress.sessionId, 
+      userProgress.videoId
+    ],
+    set: {
+      status: 'completed',
+      progressPercentage: 100,
+      updatedAt: new Date(),
+    },
+  });
+
+// ✅ Good: Batch inserts
+const newUsers = await db
+  .insert(users)
+  .values([
+    { id: '1', tenantId, email: 'user1@test.com', /* ... */ },
+    { id: '2', tenantId, email: 'user2@test.com', /* ... */ },
+  ])
+  .returning();
+```
+
+### Transaction Patterns
+
+```typescript
+// ✅ Good: Use transactions for multiple related operations
+await db.transaction(async (tx) => {
+  const [assessment] = await tx
+    .insert(userAssessments)
+    .values({ ...assessmentData })
+    .returning();
+
+  await tx
+    .insert(programs)
+    .values({ ...programData, assessmentId: assessment.id });
+});
+
+// ✅ Good: Combine transactions with RLS
+await withRLS(tenantId, userId, async (tx) => {
+  // All operations in this callback are in a transaction with RLS context
+  const [assessment] = await tx
+    .insert(userAssessments)
+    .values({ ...assessmentData })
+    .returning();
+
+  await tx
+    .insert(programs)
+    .values({ ...programData, assessmentId: assessment.id });
+});
+
+// ✅ Good: Handle transaction errors
+try {
+  await db.transaction(async (tx) => {
+    // Multiple operations
+  });
+} catch (error) {
+  // Transaction automatically rolled back
+  logger.error('Transaction failed', { error });
+  throw new ApplicationError('Failed to complete operation', 'TRANSACTION_FAILED', 500);
+}
+```
+
+### Validation with Drizzle-Zod
+
+```typescript
+// ✅ Good: Use auto-generated schemas
+import { insertUserSchema } from '../schema/users';
+
+const validatedData = insertUserSchema.parse(input);
+
+// ✅ Good: Extend auto-generated schemas
+import { z } from 'zod';
+
+export const createUserSchema = insertUserSchema.extend({
+  password: z.string().min(8),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ['confirmPassword'],
+});
+
+// ✅ Good: Use for API validation
+export const handler = async (event) => {
+  const body = createUserSchema.parse(JSON.parse(event.body || '{}'));
+  // body is now type-safe and validated
+};
+
+// ✅ Good: Partial validation for updates
+export const updateUserSchema = insertUserSchema.partial();
+
+// ✅ Good: Omit fields not needed by client
+export const userResponseSchema = selectUserSchema.omit({ 
+  cognitoSub: true 
+});
+```
+
 ## Service Layer Pattern
 
 ### Interface Definition
@@ -201,7 +469,7 @@ export class AssessmentServiceImpl implements AssessmentService {
 ```typescript
 // types/repositories/assessment.repository.ts
 export interface AssessmentRepository {
-  create(data: CreateAssessmentDTO): Promise<Assessment>;
+  create(data: NewAssessment, context: TenantContext): Promise<Assessment>;
   update(
     id: string,
     data: Partial<Assessment>,
@@ -213,37 +481,93 @@ export interface AssessmentRepository {
 }
 ```
 
-### Implementation
+### Implementation with Drizzle
 
 ```typescript
 // repositories/assessment.repository.impl.ts
+import { eq, and } from 'drizzle-orm';
+import { db, withRLS } from '../lib/database';
+import { userAssessments } from '../schema/user-assessments';
+import type { NewUserAssessment, UserAssessment } from '../schema/user-assessments';
+
 export class AssessmentRepositoryImpl implements AssessmentRepository {
-  constructor(private readonly db: DatabaseClient) {}
-
-  async create(data: CreateAssessmentDTO): Promise<Assessment> {
-    const result = await this.db.query<Assessment>(
-      `INSERT INTO user_assessments (tenant_id, user_id, template_id, status, started_at)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING *`,
-      [data.tenantId, data.userId, data.templateId, data.status, data.startedAt]
-    );
-
-    return result.rows[0];
+  async create(
+    data: NewUserAssessment,
+    context: TenantContext
+  ): Promise<UserAssessment> {
+    return await withRLS(context.tenantId, context.userId, async (tx) => {
+      const [assessment] = await tx
+        .insert(userAssessments)
+        .values({
+          ...data,
+          tenantId: context.tenantId,
+        })
+        .returning();
+      
+      return assessment;
+    });
   }
 
   async getById(
     id: string,
     context: TenantContext
-  ): Promise<Assessment | null> {
-    const result = await this.db.query<Assessment>(
-      `SELECT * FROM user_assessments WHERE id = $1 AND tenant_id = $2`,
-      [id, context.tenantId]
-    );
-
-    return result.rows[0] || null;
+  ): Promise<UserAssessment | null> {
+    return await withRLS(context.tenantId, context.userId, async (tx) => {
+      const [assessment] = await tx
+        .select()
+        .from(userAssessments)
+        .where(
+          and(
+            eq(userAssessments.id, id),
+            eq(userAssessments.tenantId, context.tenantId)
+          )
+        )
+        .limit(1);
+      
+      return assessment || null;
+    });
   }
 
-  // Other methods...
+  async findByUser(
+    userId: string,
+    context: TenantContext
+  ): Promise<UserAssessment[]> {
+    return await withRLS(context.tenantId, context.userId, async (tx) => {
+      return await tx
+        .select()
+        .from(userAssessments)
+        .where(
+          and(
+            eq(userAssessments.userId, userId),
+            eq(userAssessments.tenantId, context.tenantId)
+          )
+        );
+    });
+  }
+
+  async update(
+    id: string,
+    data: Partial<UserAssessment>,
+    context: TenantContext
+  ): Promise<UserAssessment> {
+    return await withRLS(context.tenantId, context.userId, async (tx) => {
+      const [updated] = await tx
+        .update(userAssessments)
+        .set({
+          ...data,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(userAssessments.id, id),
+            eq(userAssessments.tenantId, context.tenantId)
+          )
+        )
+        .returning();
+      
+      return updated;
+    });
+  }
 }
 ```
 
@@ -340,55 +664,6 @@ export function withErrorHandling<T>(
     }
   };
 }
-```
-
-## Validation with Zod
-
-### Schema Definition
-
-```typescript
-// schemas/assessment.schema.ts
-import { z } from "zod";
-
-export const CreateAssessmentSchema = z.object({
-  templateId: z.string().uuid(),
-});
-
-export const SubmitAssessmentSchema = z.object({
-  answers: z.record(z.unknown()),
-});
-
-export const UpdateProgressSchema = z.object({
-  sessionId: z.string().uuid(),
-  progressPercentage: z.number().min(0).max(100),
-  status: z.enum(["not_started", "in_progress", "completed", "skipped"]),
-});
-
-export type CreateAssessmentDTO = z.infer<typeof CreateAssessmentSchema>;
-export type SubmitAssessmentDTO = z.infer<typeof SubmitAssessmentSchema>;
-export type UpdateProgressDTO = z.infer<typeof UpdateProgressSchema>;
-```
-
-### Usage in Lambda
-
-```typescript
-// functions/assessments/create.ts
-import { CreateAssessmentSchema } from "../../schemas/assessment.schema";
-
-export const handler = withErrorHandling(async (event) => {
-  const context = extractTenantContext(event);
-
-  // Validate request body
-  const body = CreateAssessmentSchema.parse(JSON.parse(event.body || "{}"));
-
-  const assessment = await assessmentService.create(
-    context.userId,
-    context.tenantId,
-    body.templateId
-  );
-
-  return assessment;
-});
 ```
 
 ## Logging Standards
@@ -765,9 +1040,9 @@ export const config = loadConfig();
 - [ ] TypeScript strict mode passes with 0 errors
 - [ ] All functions have explicit return types
 - [ ] No `any` types used
-- [ ] Zod schemas for all API inputs
+- [ ] Zod schemas for all API inputs (using Drizzle-Zod when possible)
 - [ ] Error handling with custom error classes
-- [ ] Tenant context validated in database queries
+- [ ] Tenant context validated in database queries (using withRLS)
 - [ ] Unit tests for business logic
 - [ ] Integration tests for critical paths
 - [ ] CloudWatch logging with structured JSON
@@ -775,13 +1050,25 @@ export const config = loadConfig();
 - [ ] Security headers applied
 - [ ] ESLint passes with 0 errors
 - [ ] Prettier formatting applied
+- [ ] Drizzle schema changes have corresponding migrations
 
 ### During Code Review
 
 - [ ] Code follows SOLID principles
 - [ ] Service layer properly separated from infrastructure
 - [ ] Repository pattern used for data access
-- [ ] Multi-tenant isolation verified
+- [ ] Drizzle ORM used correctly (no raw SQL unless necessary)
+- [ ] Multi-tenant isolation verified (RLS context set)
 - [ ] Error messages are user-friendly
 - [ ] Performance considerations addressed
 - [ ] Documentation updated (if needed)
+- [ ] Schema changes reviewed and indexes added where appropriate
+
+### Drizzle-Specific Checks
+
+- [ ] Schema changes use proper Drizzle types
+- [ ] Relations defined where appropriate
+- [ ] Indexes added for foreign keys and common queries
+- [ ] Auto-generated Zod schemas used for validation
+- [ ] Type exports included for schema types
+- [ ] Migrations generated and reviewed before applying

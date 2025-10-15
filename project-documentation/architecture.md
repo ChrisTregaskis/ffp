@@ -2,7 +2,7 @@
 
 ## Overview
 
-FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Phase 1 prioritizes simplicity and speed while establishing scalable patterns.
+FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Phase 1 prioritizes simplicity and speed while establishing scalable patterns. Database access is handled through Drizzle ORM for type-safe, efficient queries.
 
 ## Infrastructure Stack (Phase 1)
 
@@ -33,6 +33,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
   - Single AZ (Phase 1), Multi-AZ ready
   - 50GB SSD with auto-scaling
   - Multi-tenant via Row-Level Security (RLS)
+  - **Drizzle ORM**: Type-safe database access with TypeScript-first approach
   - Daily automated backups (7-day retention)
   - Encryption at rest via KMS
 - **S3 Buckets**: Object storage
@@ -88,6 +89,132 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
   - Health checks
   - Failover configuration (future)
 
+## Drizzle ORM Integration
+
+### Database Connection
+
+```typescript
+// lib/database.ts
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+import { sql } from 'drizzle-orm';
+
+const pool = new Pool({
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT || '5432'),
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  max: 10,
+});
+
+export const db = drizzle(pool);
+
+// RLS context wrapper
+export async function withRLS<T>(
+  tenantId: string,
+  userId: string | undefined,
+  callback: (tx: typeof db) => Promise<T>
+): Promise<T> {
+  return await db.transaction(async (tx) => {
+    await tx.execute(sql`SET app.tenant_id = ${tenantId}`);
+    if (userId) {
+      await tx.execute(sql`SET app.user_id = ${userId}`);
+    }
+    return await callback(tx);
+  });
+}
+```
+
+### Benefits for FFP Architecture
+
+1. **Type Safety End-to-End**
+   - Schema → Types → Validation
+   - Fully type-safe queries
+   - Auto-completion everywhere
+   - Catches errors at compile time
+
+2. **Serverless-Optimized**
+   - Lightweight bundle (~50KB)
+   - Fast cold starts in Lambda
+   - No code generation step
+   - Query builder overhead minimal
+
+3. **Developer Experience**
+   - Intuitive query builder
+   - Relational queries for nested data
+   - Visual database inspection with Drizzle Studio
+   - Auto-generated Zod schemas
+
+4. **Migration Management**
+   - Git-trackable SQL migrations
+   - Auto-generated from schema changes
+   - Point-in-time schema snapshots
+   - Easy to review and rollback
+
+5. **RLS Compatibility**
+   - Works seamlessly with PostgreSQL RLS
+   - Transaction-based context setting
+   - No special RLS handling required
+   - Full flexibility with raw SQL when needed
+
+### Schema Definition Example
+
+```typescript
+// schema/users.ts
+import { pgTable, uuid, varchar, timestamp, index } from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { relations } from 'drizzle-orm';
+
+export const users = pgTable(
+  'users',
+  {
+    id: uuid('id').primaryKey(),
+    tenantId: uuid('tenant_id').notNull(),
+    email: varchar('email', { length: 255 }).notNull().unique(),
+    firstName: varchar('first_name', { length: 100 }).notNull(),
+    lastName: varchar('last_name', { length: 100 }).notNull(),
+    role: userRoleEnum('role').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    tenantIdIdx: index('idx_users_tenant_id').on(table.tenantId),
+    emailIdx: index('idx_users_email').on(table.email),
+  })
+);
+
+// Auto-generated Zod schemas
+export const insertUserSchema = createInsertSchema(users);
+export const selectUserSchema = createSelectSchema(users);
+
+// TypeScript types
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+```
+
+### Query Example
+
+```typescript
+// Type-safe query with Drizzle
+import { eq, and } from 'drizzle-orm';
+import { users } from '../schema/users';
+
+// All types are inferred automatically
+const [user] = await db
+  .select()
+  .from(users)
+  .where(
+    and(
+      eq(users.id, userId),
+      eq(users.tenantId, tenantId)
+    )
+  )
+  .limit(1);
+
+// user is typed as User | undefined
+```
+
 ## Architecture Diagram (Phase 1)
 
 ```
@@ -123,6 +250,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
           │ (Register, etc)  │ │ (Assessments)    │ │ (Progress, etc)  │
           └────────┬─────────┘ └────────┬─────────┘ └────────┬─────────┘
                    │                    │                    │
+                   │       Drizzle ORM (Type-safe queries)   │
                    └────────────────────┼────────────────────┘
                                         │
                                         ↓
@@ -143,6 +271,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 ```
 /
 ├── sst.config.ts              # SST main configuration
+├── drizzle.config.ts          # Drizzle ORM configuration
 ├── stacks/
 │   ├── AuthStack.ts           # Cognito User Pool setup
 │   ├── DatabaseStack.ts       # RDS PostgreSQL configuration
@@ -150,6 +279,18 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 │   ├── ApiStack.ts            # API Gateway + Lambda functions
 │   ├── MonitoringStack.ts     # CloudWatch alarms
 │   └── VpcStack.ts            # VPC, subnets, security groups
+├── schema/                    # Drizzle schema definitions
+│   ├── tenants.ts
+│   ├── users.ts
+│   ├── assessments.ts
+│   ├── programs.ts
+│   ├── videos.ts
+│   └── index.ts
+├── migrations/                # Generated SQL migrations
+│   ├── 0000_initial.sql
+│   ├── 0001_add_preferences.sql
+│   └── meta/
+│       └── _journal.json
 ├── packages/
 │   ├── functions/             # Lambda function code
 │   │   ├── auth/              # Registration, login handlers
@@ -161,6 +302,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 │   │   ├── services/          # Service layer implementations
 │   │   ├── repositories/      # Data access layer
 │   │   ├── lib/               # Utilities, helpers
+│   │   │   └── database.ts    # Drizzle client and RLS helpers
 │   │   └── types/             # Shared TypeScript types
 │   └── web/                   # React frontend
 │       ├── src/
@@ -185,7 +327,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
    ↓
 4. Cognito: Create user with custom attributes
    ↓
-5. PostgreSQL: Insert user record with tenantId
+5. PostgreSQL: Insert user record with tenantId (via Drizzle)
    ↓
 6. Cognito: Send verification email
    ↓
@@ -203,7 +345,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
    ↓
 4. Lambda: Validate answers (Zod schema)
    ↓
-5. Set RLS context: SET app.tenant_id = 'uuid'
+5. Drizzle: Set RLS context in transaction
    ↓
 6. PostgreSQL: Save answers with tenant isolation
    ↓
@@ -211,7 +353,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
    ↓
 8. Lambda: Generate workout program
    ↓
-9. PostgreSQL: Save program with tenant isolation
+9. PostgreSQL: Save program with tenant isolation (via Drizzle)
    ↓
 10. Response: Program generated successfully
 ```
@@ -225,7 +367,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
    ↓
 3. JWT Authorizer: Validate token
    ↓
-4. Lambda: Check user has access (RLS query)
+4. Lambda: Check user has access (Drizzle RLS query)
    ↓
 5. Lambda: Generate CloudFront signed URL (5min expiry)
    ↓
@@ -235,7 +377,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
    ↓
 8. User watches video (progress tracked locally)
    ↓
-9. POST /videos/{id}/progress (periodic updates)
+9. POST /videos/{id}/progress (periodic updates via Drizzle)
 ```
 
 ## Environment Strategy
@@ -245,6 +387,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 - Personal developer environment
 - Hot-reload Lambda via `sst dev`
 - Isolated resources per developer
+- Use `drizzle-kit push` for rapid schema iteration
 - Cost: ~$10-20/month
 
 ### Staging (staging)
@@ -252,6 +395,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 - Shared testing environment
 - Matches production configuration
 - Used for QA and demo
+- Use `drizzle-kit generate` + `migrate` for controlled schema changes
 - Cost: ~$30-50/month
 
 ### Production (prod)
@@ -259,6 +403,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 - Customer-facing environment
 - Enhanced monitoring and alarms
 - Daily backups
+- Strict migration review process
 - Cost: ~$36-66/month (<1000 users)
 
 ## Scalability Considerations
@@ -269,12 +414,14 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 - **API requests**: ~1M/month
 - **Database**: 50GB storage, ~100 connections
 - **Video bandwidth**: ~500GB/month
+- **Drizzle**: Handles current load efficiently with minimal overhead
 
 ### When to Scale (Future)
 
 - **10k users**: Add read replicas, Multi-AZ RDS
 - **100k users**: ElastiCache, DynamoDB for rate limiting
 - **1M users**: Auto-scaling Lambda concurrency, database sharding
+- **Drizzle**: Continues to work efficiently at all scales
 
 ## Cost Breakdown (Phase 1)
 
@@ -311,6 +458,8 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 
 **Exchange Rate**: Estimates use approximate rate of £1 = $1.27 USD (October 2025). Actual billing depends on your AWS billing currency.
 
+**Drizzle ORM**: No additional cost - it's a lightweight library that runs in your Lambda functions. The minimal overhead (~50KB bundle size) has negligible impact on Lambda costs.
+
 **NAT Gateway**: The largest single cost driver in Phase 1. Required for Lambda functions in private subnets to access the internet (Cognito, external APIs, etc.). Consider:
 - **Phase 1**: Single NAT Gateway in one AZ (~£27-32/month)
 - **Phase 2**: Multi-AZ NAT Gateways for high availability (~£60/month)
@@ -330,6 +479,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 3. Set CloudFront cache TTL appropriately (reduce origin requests)
 4. Right-size Lambda memory allocation (higher memory can be more cost-effective)
 5. Use Reserved Instances for RDS after confirming instance type (~40% savings)
+6. Drizzle's lightweight nature means minimal Lambda execution time
 
 ### Scaling Cost Projections
 
@@ -352,8 +502,9 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 ### Application Security
 
 - JWT validation on all protected routes
-- Zod schema validation on all inputs
+- Zod schema validation on all inputs (auto-generated from Drizzle schemas)
 - RLS enforced at database level
+- Type-safe queries prevent SQL injection
 - Structured logging (no sensitive data)
 
 ### Data Security
@@ -362,6 +513,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 - Encryption in transit (TLS 1.3)
 - Secrets Manager for credentials
 - Regular backups (7-day retention)
+- Drizzle parameterized queries (SQL injection protection)
 
 ### Monitoring & Incident Response
 
@@ -378,6 +530,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 - Add ElastiCache for caching
 - Video transcoding pipeline
 - Enhanced monitoring (X-Ray)
+- Drizzle continues to handle increased load efficiently
 
 ### Phase 3 (10k-100k users)
 
@@ -385,6 +538,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 - DynamoDB for rate limiting
 - Advanced analytics pipeline
 - Real-time notifications
+- Consider connection pooling (RDS Proxy)
 
 ### Phase 4 (100k+ users)
 
@@ -392,3 +546,4 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 - Global deployment (multi-region)
 - Chaos engineering
 - Advanced observability
+- Drizzle works seamlessly with sharded architectures
