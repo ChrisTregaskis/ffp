@@ -278,17 +278,67 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 
 ## Cost Breakdown (Phase 1)
 
-| Service         | Monthly Cost | Notes                    |
-| --------------- | ------------ | ------------------------ |
-| Cognito         | $0           | Free tier (50k MAU)      |
-| RDS (t3.small)  | $30          | Single AZ                |
-| S3 + CloudFront | $5-20        | Video library dependent  |
-| Lambda          | $0-5         | Free tier covers Phase 1 |
-| API Gateway     | $0-5         | Free tier (1M requests)  |
-| S3 (Frontend)   | $0-1         | Static hosting           |
-| CloudWatch      | $0-5         | Basic logging/metrics    |
-| Route53         | $1           | Hosted zone              |
-| **Total**       | **$36-66**   |                          |
+**Region**: eu-west-2 (London)
+
+**Pricing Sources**:
+- [AWS RDS Pricing](https://aws.amazon.com/rds/postgresql/pricing/) (Last checked: October 2025)
+- [AWS S3 Pricing](https://aws.amazon.com/s3/pricing/) (Last checked: October 2025)
+- [AWS CloudFront Pricing](https://aws.amazon.com/cloudfront/pricing/) (Last checked: October 2025)
+- [AWS Lambda Pricing](https://aws.amazon.com/lambda/pricing/) (Last checked: October 2025)
+- [AWS API Gateway Pricing](https://aws.amazon.com/api-gateway/pricing/) (Last checked: October 2025)
+- [AWS Route53 Pricing](https://aws.amazon.com/route53/pricing/) (Last checked: October 2025)
+- [AWS Cognito Pricing](https://aws.amazon.com/cognito/pricing/) (Last checked: October 2025)
+- [AWS CloudWatch Pricing](https://aws.amazon.com/cloudwatch/pricing/) (Last checked: October 2025)
+- [AWS Pricing Calculator](https://calculator.aws/) - Use this for exact quotes
+
+| Service                       | Monthly Cost (GBP) | Notes                                                    |
+| ----------------------------- | ------------------ | -------------------------------------------------------- |
+| **Cognito**                   | £0                 | Free tier: 50,000 MAU                                    |
+| **RDS PostgreSQL (t3.small)** | £22-27             | Single AZ, ~£0.031/hour, 2 vCPU, 2GB RAM                |
+| **S3 + CloudFront**           | £4-15              | Video library (500GB-1TB storage + bandwidth)            |
+| **Lambda**                    | £0-4               | Free tier: 1M requests/month, 400,000 GB-seconds         |
+| **API Gateway**               | £0-4               | Free tier: 1M API calls/month (12 months for new accounts)|
+| **S3 (Frontend Hosting)**     | £0-1               | Static assets, CloudFront caching reduces costs          |
+| **CloudWatch**                | £0-4               | Basic logging/metrics, 5GB ingestion free tier          |
+| **Route53**                   | £0.40              | Hosted zone (~£0.50/month, 1M queries included)         |
+| **NAT Gateway**               | £27-32             | Required for Lambda VPC internet access (~£0.045/hour)   |
+| **Secrets Manager**           | £0.32              | ~5 secrets × £0.40/month per secret                      |
+| **Total (Estimated)**         | **£54-87**         | Actual costs will vary based on usage                    |
+
+### Cost Notes
+
+**⚠️ Important**: Prices shown are estimates based on eu-west-2 (London) region pricing as of October 2025. AWS pricing changes over time and varies by region. Always verify current pricing using the [AWS Pricing Calculator](https://calculator.aws/) before making budget decisions.
+
+**Exchange Rate**: Estimates use approximate rate of £1 = $1.27 USD (October 2025). Actual billing depends on your AWS billing currency.
+
+**NAT Gateway**: The largest single cost driver in Phase 1. Required for Lambda functions in private subnets to access the internet (Cognito, external APIs, etc.). Consider:
+- **Phase 1**: Single NAT Gateway in one AZ (~£27-32/month)
+- **Phase 2**: Multi-AZ NAT Gateways for high availability (~£60/month)
+- **Alternative**: Lambda functions outside VPC (less secure, saves NAT costs)
+
+**Free Tier Benefits**:
+- **Cognito**: Always free up to 50,000 MAU
+- **Lambda**: 1M requests + 400,000 GB-seconds per month (always free)
+- **S3**: 5GB storage + 20,000 GET requests (12 months for new accounts)
+- **RDS**: 750 hours of t3.micro/t4g.micro (12 months for new accounts) - t3.small not included
+- **CloudWatch**: 5GB logs + 10 metrics (always free)
+- **API Gateway**: 1M calls per month (12 months for new accounts)
+
+**Cost Optimization Tips**:
+1. Use t4g.small (ARM/Graviton) instead of t3.small for RDS (~20% cheaper)
+2. Enable S3 Intelligent-Tiering for video files
+3. Set CloudFront cache TTL appropriately (reduce origin requests)
+4. Right-size Lambda memory allocation (higher memory can be more cost-effective)
+5. Use Reserved Instances for RDS after confirming instance type (~40% savings)
+
+### Scaling Cost Projections
+
+| User Count | Estimated Monthly Cost | Key Changes                             |
+| ---------- | --------------------- | --------------------------------------- |
+| <100       | £54-87                | Phase 1 baseline (free tiers active)    |
+| 100-1k     | £85-150               | RDS t3.medium, increased bandwidth      |
+| 1k-10k     | £300-600              | Multi-AZ RDS, ElastiCache, more Lambda  |
+| 10k-100k   | £1,200-3,000          | Read replicas, sharding considerations  |
 
 ## Security Layers
 
