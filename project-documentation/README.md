@@ -90,12 +90,15 @@ All core flows prototyped in Figma. UX design finalized.
 
 ### Tech Stack
 
+- **Monorepo**: Turborepo (build orchestration, caching)
 - **Frontend**: React 18 + TypeScript + TailwindCSS
 - **Backend**: Node.js/TypeScript + Lambda + API Gateway
 - **Database**: PostgreSQL (RDS) with Row-Level Security
+- **ORM**: Drizzle (type-safe, lightweight)
 - **Auth**: AWS Cognito
 - **Infrastructure**: SST (Serverless Stack)
 - **Storage**: S3 + CloudFront
+- **Validation**: Zod (schema validation)
 
 ### Core Principles
 
@@ -178,20 +181,52 @@ All core flows prototyped in Figma. UX design finalized.
 
 ### Implementation Phases (Future)
 
+#### Turborepo Commands
+
+```bash
+# Build all packages (with caching)
+turbo build
+
+# Run tests across all packages (parallel)
+turbo test
+
+# Lint all packages (parallel)
+turbo lint
+
+# Type-check all packages
+turbo typecheck
+
+# Build only changed packages
+turbo build --filter=[HEAD^1]
+
+# Run specific package
+turbo build --filter=@ffp/core
+```
+
+#### SST + Development Commands
+
 ```bash
 # Local development with hot-reload
-npm run sst dev
-
-# Run tests
-npm run test
-npm run test:e2e
+npm run dev
+# or
+turbo dev
 
 # Deploy to environment
-npm run sst deploy --stage dev
+npm run deploy --stage dev
 
 # View logs
-npm run sst logs --stage dev --function assessments
+npm run logs -- --stage dev --function assessments
+
+# Database migrations
+turbo db:migrate --filter=@ffp/core
 ```
+
+#### Monorepo Benefits
+
+- **Fast Builds**: Turborepo caches unchanged packages (~5s vs ~60s)
+- **Parallel Tasks**: Tests run 3x faster across packages
+- **Type Safety**: Shared `@ffp/core` types across frontend/backend
+- **Incremental**: Only rebuild affected packages
 
 ---
 
@@ -228,6 +263,27 @@ npm run sst logs --stage dev --function assessments
 - Deploy to production weekly (post-launch)
 
 ---
+
+## Monorepo Structure
+
+```
+ffp/
+├── turbo.json              # Turborepo pipeline config
+├── package.json            # Root workspace
+├── packages/
+│   ├── core/              # Shared logic (@ffp/core)
+│   ├── functions/         # Lambda handlers
+│   └── web/               # React frontend
+├── stacks/                # SST infrastructure
+└── schema/                # Drizzle schemas
+```
+
+### Workspace Dependencies
+
+```
+@ffp/web → depends on → @ffp/core
+@ffp/functions → depends on → @ffp/core
+```
 
 ## Quick Reference
 

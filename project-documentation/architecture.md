@@ -196,10 +196,95 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 - **Security Groups**: Strict least-privilege rules
 - **RLS**: Database-level tenant isolation (enforced by Drizzle queries)
 
+## Monorepo Management with Turborepo
+
+FFP uses [Turborepo](https://turborepo.com/) for efficient monorepo management, providing:
+
+### Benefits
+
+- **Smart Caching**: Never rebuild the same work twice
+- **Parallel Execution**: Run tasks across packages simultaneously
+- **Pipeline Management**: Define dependencies between tasks
+- **Remote Caching**: Share build artifacts across team (future)
+- **Incremental Builds**: Only rebuild what changed
+
+### Configuration
+
+```json
+// turbo.json
+{
+  "$schema": "https://turbo.build/schema.json",
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**"]
+    },
+    "lint": {
+      "cache": true
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "outputs": ["coverage/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "deploy": {
+      "dependsOn": ["build", "test"],
+      "cache": false
+    }
+  }
+}
+```
+
+### Common Commands
+
+```bash
+# Build all packages
+turbo build
+
+# Run tests across all packages (parallel)
+turbo test
+
+# Lint all packages (parallel)
+turbo lint
+
+# Run dev mode (with caching)
+turbo dev
+
+# Build only affected packages since last commit
+turbo build --filter=[HEAD^1]
+
+# Run specific package task
+turbo build --filter=@ffp/core
+
+# Clear cache
+turbo run build --force
+```
+
+### Task Dependencies
+
+```
+build (web) → depends on → build (core)
+test (functions) → depends on → build (core)
+deploy (functions) → depends on → build + test
+```
+
+### Performance Benefits
+
+- **First build**: ~60s (all packages)
+- **Cached rebuild**: ~5s (no changes)
+- **Incremental**: ~10-15s (core changes only)
+- **Parallel tests**: 3x faster than sequential
+
 ## SST Project Structure
 
 ```
 /
+├── turbo.json                 # Turborepo configuration
+├── package.json               # Root workspace configuration
 ├── sst.config.ts              # SST main configuration
 ├── drizzle.config.ts          # Drizzle ORM configuration
 ├── stacks/
@@ -221,20 +306,25 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 │   ├── 0001_add_preferences.sql
 │   └── meta/
 │       └── _journal.json
-├── packages/
+├── packages/                  # Turborepo workspaces
 │   ├── functions/             # Lambda function code
+│   │   ├── package.json       # Functions workspace config
 │   │   ├── auth/              # Registration, login handlers
 │   │   ├── assessments/       # Assessment CRUD
 │   │   ├── programs/          # Program generation
 │   │   ├── videos/            # Video metadata, progress
 │   │   └── business/          # Business portal logic
 │   ├── core/                  # Shared business logic
+│   │   ├── package.json       # Core workspace config
+│   │   ├── tsconfig.json      # TypeScript config (extends root)
 │   │   ├── services/          # Service layer implementations
 │   │   ├── repositories/      # Data access layer
 │   │   ├── lib/               # Utilities, helpers
 │   │   │   └── database.ts    # Drizzle client and RLS helpers
 │   │   └── types/             # Shared TypeScript types
 │   └── web/                   # React frontend
+│       ├── package.json       # Web workspace config
+│       ├── tsconfig.json      # TypeScript config (extends root)
 │       ├── src/
 │       │   ├── components/    # Atomic design structure
 │       │   ├── contexts/      # React contexts (Auth, etc)

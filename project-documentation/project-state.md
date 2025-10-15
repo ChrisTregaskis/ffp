@@ -20,11 +20,12 @@
 - Plan Sprint 1 scope (application setup)
 
 ### Key Decisions Made
-1. **Tech Stack**: React + TypeScript + SST + PostgreSQL + Cognito
-2. **Multi-Tenancy**: Row-Level Security (RLS) approach
-3. **Phase 1 Scope**: Single quality videos, basic monitoring, 30% test coverage
-4. **Deferred**: Multi-AZ RDS, video transcoding, MFA, advanced analytics
-5. **Documentation**: Optimized for token efficiency - load docs on-demand only
+1. **Tech Stack**: React + TypeScript + SST + PostgreSQL + Cognito + Drizzle ORM
+2. **Monorepo**: Turborepo for build orchestration, caching, and parallel execution
+3. **Multi-Tenancy**: Row-Level Security (RLS) approach
+4. **Phase 1 Scope**: Single quality videos, basic monitoring, 30% test coverage
+5. **Deferred**: Multi-AZ RDS, video transcoding, MFA, advanced analytics
+6. **Documentation**: Optimized for token efficiency - load docs on-demand only
 
 ---
 
@@ -74,9 +75,9 @@ Will be added as: `Sprint [X] - [Title]`
 ## Recent Session Context
 _(Update this section as you work)_
 
-**Last worked on**: Optimizing Claude project instructions for token efficiency  
-**Current focus**: Ready to finalize planning and move to Sprint 1  
-**Next up**: Finalize database schema, plan Sprint 1 implementation
+**Last worked on**: Architecture documentation - Added VPC layer diagram and Turborepo monorepo setup  
+**Current focus**: Finalizing architecture decisions and planning  
+**Next up**: Database schema finalization, Sprint 1 planning
 
 ---
 
@@ -86,3 +87,6 @@ _(Update this section as you work)_
 - Optimized Claude project instructions (87% token reduction)
 - Created project-state.md for phase tracking
 - Established documentation-on-demand strategy
+- Updated architecture.md with VPC layer details (public/private subnets, security groups)
+- Added Turborepo as monorepo manager (build caching, parallel execution)
+- Updated README.md with Turborepo workflow and monorepo structure
