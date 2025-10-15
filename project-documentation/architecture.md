@@ -92,53 +92,109 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 ## Architecture Diagram (Phase 1)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        User/Browser                         │
-└────────────────────────┬────────────────────────────────────┘
-                         │ HTTPS
-                         ↓
-┌─────────────────────────────────────────────────────────────┐
-│            S3 + CloudFront (Frontend Hosting)               │
-│         React SPA + Static Assets (CI/CD deployed)          │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-         ┌───────────────┴───────────────┐
-         │                               │
-         ↓                               ↓
-┌────────────────────┐         ┌────────────────────┐
-│  CloudFront CDN    │         │   Cognito User     │
-│  (Videos, Assets)  │         │       Pool         │
-└────────────────────┘         └─────────┬──────────┘
-                                         │ JWT Token
-                                         ↓
-                               ┌────────────────────┐
-                               │   API Gateway      │
-                               │ (JWT Authorizer)   │
-                               └─────────┬──────────┘
-                                         │
-                    ┌────────────────────┼────────────────────┐
-                    │                    │                    │
-                    ↓                    ↓                    ↓
-          ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
-          │ Lambda: Auth     │ │ Lambda: Business │ │ Lambda: Video    │
-          │ (Register, etc)  │ │ (Assessments)    │ │ (Progress, etc)  │
-          └────────┬─────────┘ └────────┬─────────┘ └────────┬─────────┘
-                   │                    │                    │
-                   │       Drizzle ORM (Type-safe queries)   │
-                   └────────────────────┼────────────────────┘
-                                        │
-                                        ↓
-                              ┌──────────────────┐
-                              │   RDS Postgres   │
-                              │  (Multi-tenant)  │
-                              │   + RLS Policies │
-                              └──────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                            User/Browser                                 │
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │ HTTPS
+                                 ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│               S3 + CloudFront (Frontend + Video CDN)                    │
+│            React SPA + Static Assets + Video Streaming                  │
+└───────────────────┬─────────────────────────────────────────────────────┘
+                    │
+      ┌─────────────┴──────────────┐
+      │                            │
+      ↓                            ↓
+┌──────────────┐          ┌────────────────────┐
+│  Cognito     │          │  Internet Gateway  │
+│  User Pool   │          │                    │
+└──────┬───────┘          └─────────┬──────────┘
+       │ JWT Token                  │
+       └────────────────┬───────────┘
+                        │
+                        ↓
+              ┌────────────────────┐
+              │   API Gateway      │
+              │ (JWT Authorizer)   │
+              │ (Regional)         │
+              └─────────┬──────────┘
+                        │
+╔═══════════════════════╧═══════════════════════════════════════════════╗
+║                           AWS VPC                                     ║
+║  ┌─────────────────────────────────────────────────────────────────┐  ║
+║  │                    Public Subnets (Multi-AZ)                    │  ║
+║  │  ┌────────────────────┐          ┌────────────────────┐         │  ║
+║  │  │  NAT Gateway (AZ1) │          │  NAT Gateway (AZ2) │         │  ║
+║  │  │  Elastic IP        │          │  Elastic IP        │         │  ║
+║  │  └─────────┬──────────┘          └─────────┬──────────┘         │  ║
+║  └────────────┼───────────────────────────────┼────────────────────┘  ║
+║               │                               │                       ║
+║  ┌────────────┼───────────────────────────────┼────────────────────┐  ║
+║  │            │  Private Subnets (Multi-AZ)   │                    │  ║
+║  │            ↓                               ↓                    │  ║
+║  │  ┌─────────────────────┐      ┌─────────────────────┐           │  ║
+║  │  │ Lambda Functions    │      │ Lambda Functions    │           │  ║
+║  │  │ (Security Group:    │      │ (Security Group:    │           │  ║
+║  │  │  LambdaSG)          │      │  LambdaSG)          │           │  ║
+║  │  │                     │      │                     │           │  ║
+║  │  │ • Auth Handler      │      │ • Assessment Svc    │           │  ║
+║  │  │ • Video Handler     │      │ • Program Gen       │           │  ║
+║  │  └──────────┬──────────┘      └──────────┬──────────┘           │  ║
+║  │             │                            │                      │  ║
+║  │         Drizzle ORM (Type-safe, parameterized)                  │  ║
+║  │             │                            │                      │  ║
+║  │             └────────────┬───────────────┘                      │  ║
+║  │                          ↓                                      │  ║
+║  │             ┌──────────────────────────┐                        │  ║
+║  │             │   RDS PostgreSQL         │                        │  ║
+║  │             │   (Security Group: RDSSG)│                        │  ║
+║  │             │   • Multi-tenant + RLS   │                        │  ║
+║  │             │   • Port 5432            │                        │  ║
+║  │             │   • Encrypted at rest    │                        │  ║
+║  │             └──────────────────────────┘                        │  ║
+║  │                                                                 │  ║
+║  └─────────────────────────────────────────────────────────────────┘  ║
+║                                                                       ║
+║  Security Group Rules:                                                ║
+║  • RDSSG: Inbound port 5432 ONLY from LambdaSG                        ║
+║  • LambdaSG: Outbound to RDSSG (port 5432) + Internet via NAT         ║
+╚═══════════════════════════════════════════════════════════════════════╝
 
-┌────────────────────┐         ┌────────────────────┐
-│  S3: Video Files   │         │   CloudWatch       │
-│  (Private bucket)  │         │  (Logs + Metrics)  │
-└────────────────────┘         └────────────────────┘
+┌────────────────────────┐       ┌────────────────────────┐
+│  S3: Private Buckets   │       │   CloudWatch           │
+│  • Videos (encrypted)  │       │   • Logs (30d)         │
+│  • Assets              │       │   • Metrics            │
+│  • Backups             │       │   • Alarms             │
+└────────────────────────┘       └────────────────────────┘
+
+┌────────────────────────┐       ┌────────────────────────┐
+│  Secrets Manager       │       │   CloudTrail           │
+│  • DB Credentials      │       │   • Audit Logs         │
+│  • API Keys            │       │   • Compliance         │
+└────────────────────────┘       └────────────────────────┘
 ```
+
+### Network Flow Details
+
+**Public Traffic Flow:**
+
+1. User → CloudFront (Frontend/Videos) → S3
+2. User → Cognito (Authentication) → JWT Token
+3. User → API Gateway (with JWT) → Lambda Functions
+
+**VPC Internal Flow:**
+
+1. API Gateway invokes Lambda in Private Subnets
+2. Lambda (LambdaSG) → RDS (RDSSG) on port 5432 only
+3. Lambda → Internet (Cognito, external APIs) via NAT Gateway
+4. Lambda → S3 (via VPC Gateway Endpoint - no NAT charge)
+
+**Security Boundaries:**
+
+- **Public Subnet**: NAT Gateways only (no compute resources)
+- **Private Subnet**: All Lambda functions and RDS (no direct internet access)
+- **Security Groups**: Strict least-privilege rules
+- **RLS**: Database-level tenant isolation (enforced by Drizzle queries)
 
 ## SST Project Structure
 
