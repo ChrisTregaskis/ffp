@@ -97,8 +97,8 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
                          │ HTTPS
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                    AWS Amplify (Frontend)                   │
-│         React SPA + Static Assets (Auto-deployed)           │
+│            S3 + CloudFront (Frontend Hosting)               │
+│         React SPA + Static Assets (CI/CD deployed)          │
 └────────────────────────┬────────────────────────────────────┘
                          │
          ┌───────────────┴───────────────┐
@@ -285,7 +285,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 | S3 + CloudFront | $5-20        | Video library dependent  |
 | Lambda          | $0-5         | Free tier covers Phase 1 |
 | API Gateway     | $0-5         | Free tier (1M requests)  |
-| Amplify         | $0           | Free tier (1k build min) |
+| S3 (Frontend)   | $0-1         | Static hosting           |
 | CloudWatch      | $0-5         | Basic logging/metrics    |
 | Route53         | $1           | Hosted zone              |
 | **Total**       | **$36-66**   |                          |

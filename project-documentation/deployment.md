@@ -2,7 +2,7 @@
 
 ## Overview
 
-FFP uses SST (Serverless Stack) for infrastructure as code and AWS Amplify for frontend deployment. This document covers deployment workflows, environment management, and CI/CD pipelines.
+FFP uses SST (Serverless Stack) for infrastructure as code, S3 + CloudFront for frontend hosting, and CircleCI for CI/CD automation. This document covers deployment workflows, environment management, and CI/CD pipelines.
 
 ## Environment Strategy
 
@@ -176,61 +176,199 @@ export const handler = async () => {
 };
 ```
 
-## Frontend Deployment (Amplify)
+## Frontend Deployment (S3 + CloudFront + CircleCI)
 
-### Setup
+### S3 Bucket Setup
 
-```bash
-# Install Amplify CLI
-npm install -g @aws-amplify/cli
+```typescript
+// stacks/FrontendStack.ts
+import { Bucket } from "sst/constructs";
+import * as s3 from "aws-cdk-lib/aws-s3";
 
-# Configure Amplify
-amplify configure
+export function FrontendStack({ stack }: StackContext) {
+  const websiteBucket = new Bucket(stack, "Website", {
+    cdk: {
+      bucket: {
+        websiteIndexDocument: "index.html",
+        websiteErrorDocument: "index.html", // SPA routing
+        publicReadAccess: false,
+        blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      },
+    },
+  });
+
+  const distribution = new Distribution(stack, "CDN", {
+    defaultBehavior: {
+      origin: new S3Origin(websiteBucket.bucket, {
+        originAccessIdentity: oai,
+      }),
+      viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      cachePolicy: CachePolicy.CACHING_OPTIMIZED,
+    },
+    errorResponses: [
+      {
+        httpStatus: 404,
+        responseHttpStatus: 200,
+        responsePagePath: "/index.html",
+        ttl: Duration.minutes(5),
+      },
+    ],
+  });
+
+  return { websiteBucket, distribution };
+}
 ```
 
-### Amplify Configuration
+### CircleCI Configuration
 
 ```yaml
-# amplify.yml
-version: 1
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - npm ci
-    build:
-      commands:
-        - npm run build
-  artifacts:
-    baseDirectory: dist
-    files:
-      - "**/*"
-  cache:
-    paths:
-      - node_modules/**/*
+# .circleci/config.yml
+version: 2.1
+
+orbs:
+  node: circleci/node@5.1.0
+  aws-cli: circleci/aws-cli@4.0.0
+
+jobs:
+  test:
+    docker:
+      - image: cimg/node:18.17
+    steps:
+      - checkout
+      - node/install-packages
+      - run:
+          name: Run tests
+          command: npm run test
+      - run:
+          name: Run linter
+          command: npm run lint
+
+  build-and-deploy-frontend:
+    docker:
+      - image: cimg/node:18.17
+    parameters:
+      environment:
+        type: string
+    steps:
+      - checkout
+      - node/install-packages
+      - aws-cli/setup
+      - run:
+          name: Build frontend
+          command: |
+            npm run build
+          environment:
+            VITE_API_ENDPOINT: << parameters.api_endpoint >>
+            VITE_COGNITO_USER_POOL_ID: << parameters.cognito_pool_id >>
+            VITE_COGNITO_CLIENT_ID: << parameters.cognito_client_id >>
+      - run:
+          name: Deploy to S3
+          command: |
+            aws s3 sync dist/ s3://<< parameters.bucket_name >> --delete
+      - run:
+          name: Invalidate CloudFront cache
+          command: |
+            aws cloudfront create-invalidation \
+              --distribution-id << parameters.distribution_id >> \
+              --paths "/*"
+
+  deploy-backend:
+    docker:
+      - image: cimg/node:18.17
+    parameters:
+      stage:
+        type: string
+    steps:
+      - checkout
+      - node/install-packages
+      - aws-cli/setup
+      - run:
+          name: Deploy SST
+          command: npm run sst deploy -- --stage << parameters.stage >>
+      - run:
+          name: Run migrations
+          command: npm run db:migrate -- --env << parameters.stage >>
+
+workflows:
+  staging-deployment:
+    jobs:
+      - test:
+          filters:
+            branches:
+              only: develop
+      - deploy-backend:
+          stage: staging
+          requires:
+            - test
+          filters:
+            branches:
+              only: develop
+      - build-and-deploy-frontend:
+          environment: staging
+          api_endpoint: https://api-staging.ffp.app
+          cognito_pool_id: ${STAGING_COGNITO_POOL_ID}
+          cognito_client_id: ${STAGING_COGNITO_CLIENT_ID}
+          bucket_name: ffp-staging-website
+          distribution_id: ${STAGING_DISTRIBUTION_ID}
+          requires:
+            - deploy-backend
+          filters:
+            branches:
+              only: develop
+
+  production-deployment:
+    jobs:
+      - test:
+          filters:
+            branches:
+              only: main
+      - deploy-backend:
+          stage: prod
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+      - build-and-deploy-frontend:
+          environment: production
+          api_endpoint: https://api.ffp.app
+          cognito_pool_id: ${PROD_COGNITO_POOL_ID}
+          cognito_client_id: ${PROD_COGNITO_CLIENT_ID}
+          bucket_name: ffp-prod-website
+          distribution_id: ${PROD_DISTRIBUTION_ID}
+          requires:
+            - deploy-backend
+          filters:
+            branches:
+              only: main
 ```
 
-### Environment Variables (Amplify Console)
+### Environment Variables (CircleCI)
+
+Set these in CircleCI Project Settings → Environment Variables:
 
 ```bash
-# Staging environment
-VITE_API_ENDPOINT=https://api-staging.ffp.app
-VITE_COGNITO_USER_POOL_ID=us-east-1_ABC123
-VITE_COGNITO_CLIENT_ID=abc123def456
-VITE_CLOUDFRONT_DOMAIN=d123456789.cloudfront.net
+# Staging
+STAGING_COGNITO_POOL_ID=us-east-1_ABC123
+STAGING_COGNITO_CLIENT_ID=abc123def456
+STAGING_DISTRIBUTION_ID=E1234567890ABC
 
-# Production environment
-VITE_API_ENDPOINT=https://api.ffp.app
-VITE_COGNITO_USER_POOL_ID=us-east-1_XYZ789
-VITE_COGNITO_CLIENT_ID=xyz789abc123
-VITE_CLOUDFRONT_DOMAIN=d987654321.cloudfront.net
+# Production
+PROD_COGNITO_POOL_ID=us-east-1_XYZ789
+PROD_COGNITO_CLIENT_ID=xyz789abc123
+PROD_DISTRIBUTION_ID=E9876543210XYZ
+
+# AWS Credentials
+AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+AWS_DEFAULT_REGION=us-east-1
 ```
 
 ### Branch Mapping
 
-- `main` branch → production environment
-- `develop` branch → staging environment
-- Feature branches → PR previews (optional)
+- `main` branch → production environment (auto-deploy via CircleCI)
+- `develop` branch → staging environment (auto-deploy via CircleCI)
+- Feature branches → Manual deploy to dev environments
 
 ## Deployment Workflows
 
@@ -259,8 +397,7 @@ git push origin feature/assessment-timer
 # GitHub/Azure DevOps PR created
 
 # 7. After approval, merge to develop
-# Amplify auto-deploys frontend to staging
-# Run SST deploy to staging manually
+# CircleCI auto-deploys backend + frontend to staging
 ```
 
 ### Staging Deployment
@@ -276,7 +413,7 @@ npm run sst deploy --stage staging
 # Run database migrations
 npm run db:migrate -- --env staging
 
-# Frontend auto-deploys via Amplify
+# CircleCI auto-deploys frontend to staging
 
 # Smoke test
 npm run test:e2e -- --env staging
@@ -305,7 +442,7 @@ git push origin main
 git tag v1.2.0
 git push origin v1.2.0
 
-# Frontend auto-deploys via Amplify
+# CircleCI auto-deploys frontend to production
 
 # Monitor CloudWatch for errors
 npm run logs:watch -- --stage prod
@@ -337,16 +474,42 @@ npm run db:migrate:rollback -- --env prod
 npm run db:restore -- --env prod --backup-id 2025-10-05-03-00
 ```
 
-### Frontend Rollback (Amplify)
+### Frontend Rollback (S3 + CloudFront)
 
-1. Go to Amplify Console
-2. Select app → Environment (production)
-3. Click "Redeploy" on previous successful build
-4. Or revert commit and push:
+**Option 1: Redeploy previous version**
+```bash
+# Find previous successful git commit
+git log --oneline
 
+# Checkout previous version
+git checkout <commit-hash>
+
+# Build and deploy manually
+npm run build
+aws s3 sync dist/ s3://ffp-prod-website --delete
+aws cloudfront create-invalidation --distribution-id $PROD_DISTRIBUTION_ID --paths "/*"
+
+# Return to main branch
+git checkout main
+```
+
+**Option 2: Revert commit and trigger CircleCI**
 ```bash
 git revert HEAD
 git push origin main
+# CircleCI will automatically deploy the reverted version
+```
+
+**Option 3: S3 versioning (if enabled)**
+```bash
+# List previous versions
+aws s3api list-object-versions --bucket ffp-prod-website
+
+# Restore specific version
+aws s3api copy-object \
+  --copy-source ffp-prod-website/index.html?versionId=<version-id> \
+  --bucket ffp-prod-website \
+  --key index.html
 ```
 
 ## Secrets Management
@@ -435,44 +598,62 @@ Automatically rollback if:
 - Response time >2 seconds (p95)
 - Any critical CloudWatch alarm triggered
 
-## CI/CD Pipeline (Future)
+## CI/CD Pipeline (CircleCI)
 
-### GitHub Actions Example
+### Setup Steps
+
+1. **Connect Repository to CircleCI**
+   - Log into CircleCI
+   - Add your GitHub/Bitbucket repository
+   - CircleCI will detect `.circleci/config.yml`
+
+2. **Configure Environment Variables**
+   - Navigate to Project Settings → Environment Variables
+   - Add all required variables (see "Environment Variables" section above)
+   - Store AWS credentials securely
+
+3. **Configure Contexts (Optional)**
+   ```yaml
+   # For sharing variables across projects
+   workflows:
+     production-deployment:
+       jobs:
+         - deploy-backend:
+             context: aws-production
+   ```
+
+4. **Setup Status Badges**
+   ```markdown
+   ![CircleCI](https://circleci.com/gh/your-org/ffp.svg?style=svg)
+   ```
+
+### Manual Deployment Trigger
+
+```bash
+# Trigger a deployment from CLI
+circleci trigger-pipeline --branch main
+
+# Or use CircleCI web UI:
+# 1. Go to Pipelines
+# 2. Click "Trigger Pipeline"
+# 3. Select branch and parameters
+```
+
+### Build Optimization
 
 ```yaml
-# .github/workflows/deploy-staging.yml
-name: Deploy to Staging
+# Cache dependencies for faster builds
+- restore_cache:
+    keys:
+      - v1-dependencies-{{ checksum "package-lock.json" }}
+      - v1-dependencies-
 
-on:
-  push:
-    branches: [develop]
+- run: npm ci
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: "18"
-      - run: npm ci
-      - run: npm run test
-      - run: npm run lint
-
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: "18"
-      - run: npm ci
-      - run: npm run sst deploy -- --stage staging
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      - run: npm run db:migrate -- --env staging
+- save_cache:
+    paths:
+      - node_modules
+    key: v1-dependencies-{{ checksum "package-lock.json" }}
 ```
 
 ## Disaster Recovery
@@ -579,12 +760,18 @@ npm run db:migrate:rollback -- --env prod
 npm run db:migrate -- --env prod
 ```
 
-### Issue: Frontend Build Fails (Amplify)
+### Issue: Frontend Build Fails (CircleCI)
 
-1. Check build logs in Amplify Console
-2. Verify environment variables are set
-3. Check if API endpoint is correct
-4. Trigger manual rebuild
+1. Check build logs in CircleCI dashboard
+2. Verify environment variables are set in CircleCI project settings
+3. Check if API endpoint is correct in workflow parameters
+4. Re-run workflow from CircleCI dashboard
+5. Test build locally:
+
+```bash
+npm run build
+# Check for errors
+```
 
 ## Cost Optimization
 
