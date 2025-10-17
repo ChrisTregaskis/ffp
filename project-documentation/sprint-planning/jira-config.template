@@ -1,0 +1,23 @@
+# Jira Configuration Template
+
+**Copy this file to `jira-config.env` and add your values**
+
+```bash
+# DO NOT commit jira-config.env to git!
+# Add to .gitignore
+
+# Your Atlassian Cloud ID
+# Find at: https://developer.atlassian.com/cloud/confluence/oauth-2-3lo-apps/
+JIRA_CLOUD_ID=your-cloud-id-here
+
+# Your Jira site
+JIRA_SITE=https://your-site.atlassian.net
+
+# Your Jira project key
+JIRA_PROJECT_KEY=SCRUM
+```
+
+**Before using prompts:**
+1. Replace `{{JIRA_CLOUD_ID}}` with your actual Cloud ID
+2. Replace `{{JIRA_SITE}}` with your site URL
+3. Replace `{{JIRA_PROJECT_KEY}}` with your project key
