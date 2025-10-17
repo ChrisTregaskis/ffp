@@ -69,6 +69,7 @@ _Important Note:_ When updating local documentation, the files can be found at `
 - `sprint-planning/jira-integration-reference.md`
 - `sprint-planning/outputs/*.md` (any output summaries)
 - `custom-instructions.md` (this file)
+- `progress-log.md` (general logs of progress building app - summary found in)
 
 These files explain HOW to use Claude, not information Claude needs. If you encounter them, skip them.
 

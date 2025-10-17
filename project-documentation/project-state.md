@@ -86,7 +86,6 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 ### ✅ Chat 1: Ticket Standards (COMPLETE)
 
 **Created modular Jira standards** (token-optimized):
-
 - `jira-standards/LOAD-THIS-FIRST.md` - Loading guide
 - `jira-standards/epic-standards.md` - Epic template + 2 examples
 - `jira-standards/story-standards.md` - Story template + 2 examples
@@ -98,7 +97,6 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 - `jira-standards/jira-fields.md` - Labels, components, API examples
 
 **Token optimization achieved:**
-
 - Old approach: 17,000 tokens per chat (monolithic file)
 - New approach: 2,000-6,000 tokens per chat (load only what's needed)
 - **Savings: 65-88% per conversation** ✨
@@ -106,13 +104,11 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 ### 🔄 Chat 2: Sprint 1 Epic + Stories (NEXT)
 
 **Ready to create:**
-
 - Epic: Application Setup & Foundation
 - Stories: ~8-12 stories for Sprint 1 scope
 - Direct Jira API integration (create issues in real-time)
 
 **Files to load in Chat 2:**
-
 - `jira-standards/epic-standards.md` (~2,500 tokens)
 - `jira-standards/story-standards.md` (~3,000 tokens)
 - `jira-standards/story-points.md` (~1,000 tokens)
@@ -133,7 +129,6 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 - RDS PostgreSQL setup
 - API Gateway structure
 - Web application scaffold
-- Basic Login & Logout, session management
 - Basic testing patterns (Vitest, Playwright, MSW)
 - Environment configuration (.env patterns, AWS Parameter Store)
 - CI/CD foundation (GitHub Actions - test automation, PR checks)
@@ -157,6 +152,7 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 3. **project-state.md always loaded** - Current phase context (~800 tokens)
 4. **Domain docs on-demand** - Load only when query needs them
 5. **Meta-docs excluded** - Workflow guides, prompts not in Claude Knowledge
+6. **Progress log separated** - Detailed history in progress-log.md (not always loaded)
 
 ### Sprint Planning
 
@@ -177,44 +173,17 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 
 ---
 
-## Recent Session Context
+## Progress Summary
 
-**Last session**: Chat 1 - Defined modular Jira ticket standards  
-**Token optimization**: Achieved 65-88% reduction in context per chat  
-**Current focus**: Ready for Chat 2 (Sprint 1 Epic + Stories)  
-**Next up**: Start new Claude chat, load 3 Jira standards files, create Sprint 1 in Jira
+**Recent Work** (Oct 17, 2025):
+- ✅ Created token-optimized Jira standards (9 modular files, 65-88% savings)
+- ✅ Established sprint planning workflow with direct Jira API integration
+- ✅ Defined 6-sprint structure (Application Setup → Company Portal)
+- ✅ Optimized documentation structure (README, REFERENCE, Custom Instructions)
+- 🔄 Ready for Chat 2: Create Sprint 1 Epic + Stories in Jira
+
+**See `progress-log.md` for detailed session history.**
 
 ---
 
-## Update Log
-
-### October 17, 2025 (Session 2 - Token Optimization)
-
-- ✅ **Chat 1 COMPLETE**: Created modular Jira ticket standards
-- Token-optimized documentation structure (9 focused modules vs 1 monolithic file)
-- Updated Custom Instructions with "Files to NEVER Reference" list
-- Simplified README.md (removed implementation details to REFERENCE.md)
-- Created REFERENCE.md for commands, costs, quick refs (load on-demand)
-- Removed .claudeignore (instructions embedded in Custom Instructions instead)
-- Updated workflow-visual.md to reflect modular structure
-- **Ready for Chat 2**: Sprint 1 Epic + Stories creation
-
-### October 17, 2025 (Session 1 - Sprint Planning Setup)
-
-- Transitioned from Planning to Sprint Planning phase
-- Defined 6-sprint structure
-- Established sprint planning conversation flow with **direct Jira integration**
-- Confirmed Sprint 1 scope (Turborepo, SST, Auth, RDS, CI/CD, Testing, Logging, Error Handling, GitHub Copilot PR reviews)
-- Updated prompts for Jira API integration (create issues directly, not markdown)
-- Created Jira integration reference and workflow guides
-- Confirmed Jira project: SCRUM at ctregaskis.atlassian.net
-- Standards will be saved as reference docs in repo (`sprint-planning/jira-standards/`)
-
-### October 15, 2025
-
-- Optimized Claude project instructions (87% token reduction)
-- Created project-state.md for phase tracking
-- Established documentation-on-demand strategy
-- Updated architecture.md with VPC layer details
-- Added Turborepo as monorepo manager
-- Created testing-strategy.md with hybrid testing approach
+**Next Action**: Start new Claude chat, load 3 Jira standards files, create Sprint 1 in Jira
