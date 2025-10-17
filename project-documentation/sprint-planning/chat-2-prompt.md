@@ -1,6 +1,12 @@
 # Chat 2 Prompt: Create Epics in Jira (All 6 Sprints)
 
-**Context**: This is Chat 2 of the FFP sprint planning process. Chat 1 has defined our Jira ticket standards (see `sprint-planning/outputs/jira-ticket-standards.md`).
+**Before continuing, load these files for Sprint 1 planning context:**
+
+- jira-standards/epic-standards.md
+- jira-standards/story-standards.md
+- jira-standards/story-points.md
+
+**Context**: This is Chat 2 of the FFP sprint planning process. Chat 1 has defined our Jira ticket standards (see `project-documentation/sprint-planning/jira-standards`).
 
 **Project**: Solo developer building FFP - multi-tenant physiotherapy SaaS platform
 
@@ -41,6 +47,7 @@ Create **6 Epics directly in Jira** (one per sprint) using the Atlassian API.
 - RDS PostgreSQL setup
 - API Gateway structure
 - Web application scaffold
+- Basic web login/logout flow Web/API
 - Testing patterns (Vitest, Playwright, MSW)
 - Environment configuration (.env, AWS Parameter Store)
 - CI/CD foundation (GitHub Actions)

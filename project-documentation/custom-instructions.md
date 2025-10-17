@@ -55,6 +55,24 @@ _Important Note:_ When updating local documentation, the files can be found at `
 - Simple implementations, solid patterns
 - Don't over-engineer for scale you don't have yet
 
+## Files to NEVER Reference
+
+**Do not load or reference these files** (they are meta-documentation for humans):
+
+- `sprint-planning/README.md`
+- `sprint-planning/workflow-visual.md`
+- `sprint-planning/checklist.md`
+- `sprint-planning/index.md`
+- `sprint-planning/SETUP-COMPLETE.md`
+- `sprint-planning/troubleshooting.md`
+- `sprint-planning/chat-*.md` (any prompt templates)
+- `sprint-planning/jira-integration-reference.md`
+- `sprint-planning/outputs/*.md` (any output summaries)
+- `.claudeignore`
+- `custom-instructions.md` (this file)
+
+These files explain HOW to use Claude, not information Claude needs. If you encounter them, skip them.
+
 ## Documentation Index
 
 **Always check `project-state.md` first for current phase and context.**
@@ -71,7 +89,8 @@ Reference these docs only when query requires them:
 - `monitoring.md` - CloudWatch, alarms
 - `security.md` - OWASP compliance details
 - `future-considerations.md` - Deferred features
-- `sprint-planning/jira-standards/` - Jira ticket templates (modular)
+- `REFERENCE.md` - Commands, costs, quick refs
+- `sprint-planning/jira-standards/*.md` - Ticket templates (load selectively)
 
 ## Communication Style
 
@@ -107,4 +126,4 @@ Reference these docs only when query requires them:
 1. **Copy the entire content above** (excluding this section and the warning)
 2. **Paste into Claude Project → Settings → Custom Instructions**
 3. **DO NOT add this file to Project Knowledge** (it would be loaded twice)
-4. **Add all other documentation files to Project Knowledge** (except this one)
+4. **Add all other documentation files to Project Knowledge** (except those in "Files to NEVER Reference")

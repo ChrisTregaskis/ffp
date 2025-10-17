@@ -2,55 +2,67 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    SPRINT PLANNING WORKFLOW                      │
-│                    (Jira Direct Integration)                     │
+│                    SPRINT PLANNING WORKFLOW                     │
+│              (Jira Direct + Token-Optimized Standards)          │
 └─────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────────┐
-│ CHAT 1: Define Ticket Standards                                  │
+│ CHAT 1: Define Ticket Standards (COMPLETE ✅)                    │
 ├──────────────────────────────────────────────────────────────────┤
 │ Input:  chat-1-prompt.md                                         │
-│ Action: Claude defines Epic, Story, Task, Subtask, Bug templates│
-│ Output: jira-ticket-standards.md (saved to repo)                │
+│ Action: Claude defines Epic, Story, Task, Subtask, Bug templates │
+│ Output: jira-standards/ (modular structure for token efficiency) │
+│         ├── LOAD-THIS-FIRST.md (guide)                           │
+│         ├── epic-standards.md                                    │
+│         ├── story-standards.md                                   │
+│         ├── task-standards.md                                    │
+│         ├── subtask-standards.md                                 │
+│         ├── bug-standards.md                                     │
+│         ├── story-points.md                                      │
+│         ├── definition-of-done.md                                │
+│         └── jira-fields.md                                       │
 │ Time:   ~10 minutes                                              │
+│ Tokens: Saves 11,000+ tokens per future chat                     │
 └──────────────────────────────────────────────────────────────────┘
                             ↓
 ┌──────────────────────────────────────────────────────────────────┐
-│ CHAT 2: Create 6 Epics in Jira                                   │
+│ CHAT 2: Create Sprint 1 Epic + Stories                           │
 ├──────────────────────────────────────────────────────────────────┤
 │ Input:  chat-2-prompt.md                                         │
-│ Action: Claude creates Epics via Jira API                        │
-│ Output: SCRUM-1 through SCRUM-6 (in Jira)                       │
-│         epics-created-summary.md (reference doc)                 │
-│ Time:   ~15 minutes                                              │
+│         + Load: epic-standards.md, story-standards.md            │
+│ Action: Claude creates Epic + Stories via Jira API               │
+│ Output: SCRUM-1 (Epic) + SCRUM-2 through N (Stories) in Jira     │
+│         sprint-1-created-summary.md (reference doc)              │
+│ Time:   ~20 minutes                                              │
+│ Tokens: ~6,000 (vs 17,000 with old monolithic file)              │
 └──────────────────────────────────────────────────────────────────┘
                             ↓
-        ┌───────────────────┴───────────────────┐
-        ↓                                       ↓
-┌────────────────────┐               ┌────────────────────┐
-│  CHAT [E1-E3]      │               │  CHAT [E4-E6]      │
-│  Sprints 1-3       │               │  Sprints 4-6       │
-├────────────────────┤               ├────────────────────┤
-│ Create Stories     │               │ Create Stories     │
-│ Link to Epics      │               │ Link to Epics      │
-│ In Jira            │               │ In Jira            │
-└────────────────────┘               └────────────────────┘
-        │                                       │
-        └───────────────────┬───────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│ CHAT 3-7: Create Remaining Sprints                               │
+├──────────────────────────────────────────────────────────────────┤
+│ One chat per sprint (2-6)                                        │
+│ Load: epic-standards.md, story-standards.md                      │
+│ Creates: Epic + Stories for each sprint                          │
+│ Output: sprint-N-created-summary.md per sprint                   │
+│ Time:   ~15 minutes per sprint                                   │
+│ Tokens: ~6,000 per chat (modular loading)                        │
+└──────────────────────────────────────────────────────────────────┘
                             ↓
 ┌──────────────────────────────────────────────────────────────────┐
-│ CHAT [US]: Add Details to Stories (Batches)                      │
+│ CHAT [US]: Add Details to Stories (As Needed)                    │
 ├──────────────────────────────────────────────────────────────────┤
 │ Input:  Story keys to update                                     │
-│ Action: Claude adds acceptance criteria, subtasks                │
+│         + Load: story-standards.md, subtask-standards.md         │
+│ Action: Claude adds acceptance criteria, subtasks via API        │
 │ Output: Updated Jira stories + update log                        │
-│ Time:   ~10 minutes per batch of 3-5 stories                    │
+│ Time:   ~10 minutes per batch of 3-5 stories                     │
+│ Tokens: ~4,500 (load only what you need)                         │
 └──────────────────────────────────────────────────────────────────┘
                             ↓
 ┌──────────────────────────────────────────────────────────────────┐
-│ JIRA BOARD SETUP                                                  │
+│ JIRA BOARD SETUP                                                 │
 ├──────────────────────────────────────────────────────────────────┤
-│ • Create Sprint 1                                                │
+│ • Create Sprint 1 in Jira                                        │
 │ • Add Stories to sprint                                          │
 │ • Configure board columns                                        │
 │ • Ready to start development!                                    │
@@ -59,33 +71,91 @@
 
 ---
 
-## File Flow Diagram
+## File Flow Diagram (Updated)
 
 ```
 sprint-planning/
 │
 ├── chat-1-prompt.md ───────────┐
-│                               │
-├── chat-2-prompt.md ───────────┤
+├── chat-2-prompt.md            │
+├── chat-3-prompt.md            ├─── Prompts
+├── ...                         │    (What to ask Claude)
 │                               │
 ├── README.md                   │
-├── CHECKLIST.md                ├─── Reference Docs
-├── jira-integration-ref.md     │    (Read by you)
+├── CHECKLIST.md                │
+├── workflow-visual.md          ├─── Reference Docs
+├── jira-integration-ref.md     │    (How it works)
 ├── SETUP-COMPLETE.md ──────────┘
+│
+├── jira-standards/ ◄──────────────── MODULAR STRUCTURE (Token-Optimized)
+│   │
+│   ├── LOAD-THIS-FIRST.md (~500 tokens) ◄── START HERE per chat
+│   ├── README.md (~500 tokens)           ◄── Index/guide
+│   │
+│   ├── epic-standards.md (~2,500 tokens)    ◄── Load for Epic creation
+│   ├── story-standards.md (~3,000 tokens)   ◄── Load for Story creation
+│   ├── task-standards.md (~2,000 tokens)    ◄── Load for Task creation
+│   ├── subtask-standards.md (~1,500 tokens) ◄── Load for Subtask creation
+│   ├── bug-standards.md (~2,500 tokens)     ◄── Load for Bug triage
+│   │
+│   ├── story-points.md (~1,000 tokens)      ◄── Estimation reference
+│   ├── definition-of-done.md (~1,000 tokens)◄── DoD checklists
+│   └── jira-fields.md (~1,500 tokens)       ◄── Labels, components, API
 │
 └── outputs/
     │
-    ├── jira-ticket-standards.md ◄── Created by Chat 1
+    ├── jira-ticket-standards-ARCHIVED.md ◄── Original monolithic (17k tokens)
+    │                                         Now archived, use modular instead
     │
-    ├── epics-created-summary.md ◄── Created by Chat 2
-    │                                 (Links to SCRUM-1 through 6)
-    │
-    ├── sprint-1-stories-created.md ◄── Created by Chat [E1]
-    ├── sprint-2-stories-created.md ◄── Created by Chat [E2]
+    ├── sprint-1-created-summary.md ◄── Created by Chat 2
+    ├── sprint-2-created-summary.md ◄── Created by Chat 3
+    ├── sprint-3-created-summary.md ◄── Created by Chat 4
     ├── ...                           (And so on)
     │
     └── sprint-1-stories-updated-batch-1.md ◄── Created by Chat [US]
 ```
+
+---
+
+## Token Optimization Strategy
+
+```
+OLD WAY (Monolithic):
+┌────────────────────────────────────┐
+│ jira-ticket-standards.md           │
+│ (17,000 tokens - EVERYTHING)       │
+│                                    │
+│ Load for EVERY chat = WASTEFUL     │
+└────────────────────────────────────┘
+
+NEW WAY (Modular):
+┌────────────────────────────────────┐
+│ Load ONLY what you need per chat:  │
+│                                    │
+│ Epic planning:                     │
+│   └─ epic-standards.md (2,500)     │
+│                                    │
+│ Story planning:                    │
+│   ├─ story-standards.md (3,000)    │
+│   └─ story-points.md (1,000)       │
+│      = 4,000 tokens                │
+│                                    │
+│ Task creation:                     │
+│   └─ task-standards.md (2,000)     │
+│                                    │
+│ SAVINGS: 65-88% per chat! ✨       │
+└────────────────────────────────────┘
+```
+
+### Token Usage Comparison
+
+| Chat Type           | Old (Monolithic) | New (Modular) | Savings    |
+| ------------------- | ---------------- | ------------- | ---------- |
+| **Epic Planning**   | 17,000           | 2,500         | **85%** ✨ |
+| **Story Planning**  | 17,000           | 4,000         | **76%** ✨ |
+| **Sprint Planning** | 17,000           | 6,000         | **65%** ✨ |
+| **Task Creation**   | 17,000           | 2,000         | **88%** ✨ |
+| **Bug Triage**      | 17,000           | 2,500         | **85%** ✨ |
 
 ---
 
@@ -99,13 +169,17 @@ sprint-planning/
 │  sprint-planning/                                           │
 │  ├── Prompts (what to ask Claude)                           │
 │  ├── Reference guides (how it works)                        │
+│  ├── jira-standards/ (MODULAR - load selectively)           │
+│  │   ├── Templates per ticket type                          │
+│  │   ├── Examples for FFP project                           │
+│  │   └── Quick references                                   │
 │  └── outputs/                                               │
-│      ├── Standards document                                 │
 │      └── Summary docs (links to Jira)                       │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
                             ↓
                     Claude reads prompts
+                    + loads ONLY needed standards
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                      JIRA (SCRUM Project)                   │
@@ -129,12 +203,11 @@ sprint-planning/
 
 ```
 Week 1: Planning (Pre-Development)
-├── Day 1: Chat 1 (Standards)              [~30 min]
-├── Day 1: Chat 2 (Create Epics)           [~30 min]
-├── Day 2: Chat [E1] (Sprint 1 Stories)    [~1 hour]
-├── Day 3: Chat [E2-E6] (Remaining Stories)[~2 hours]
-├── Day 4: Chat [US] (Add details)         [~2 hours]
-└── Day 5: Jira board setup + review       [~1 hour]
+├── Day 1: Chat 1 (Standards) ✅ COMPLETE       [~30 min, ~6k tokens]
+├── Day 1: Chat 2 (Sprint 1)                    [~30 min, ~6k tokens]
+├── Day 2: Chat 3-7 (Sprints 2-6)               [~2 hours, ~6k tokens each]
+├── Day 3: Chat [US] (Add details as needed)    [~2 hours, ~4.5k tokens/batch]
+└── Day 4: Jira board setup + review            [~1 hour]
 
 Week 2+: Development
 ├── Daily standups (5-10 min)
@@ -149,24 +222,55 @@ Week 2+: Development
 
 After planning complete, you should have:
 
-✅ **Standards**: Reference doc in repo  
-✅ **6 Epics**: One per sprint in Jira  
+✅ **Standards**: Modular, token-optimized structure (jira-standards/)  
+✅ **6 Epics**: One per sprint in Jira (SCRUM-1 through SCRUM-6)  
 ✅ **~50-80 Stories**: Across all sprints  
 ✅ **Sprint 1 detailed**: Ready to start development  
 ✅ **Dependencies mapped**: Know what blocks what  
-✅ **Estimates done**: Story points assigned
+✅ **Estimates done**: Story points assigned  
+✅ **Token efficiency**: 65-88% reduction per chat
 
 ---
 
 ## Quick Reference
 
-| What                  | Where                              |
-| --------------------- | ---------------------------------- |
-| Prompts               | `sprint-planning/chat-X-prompt.md` |
-| Standards             | `outputs/jira-ticket-standards.md` |
-| Actual work items     | Jira SCRUM project                 |
-| Progress tracking     | Jira board + CHECKLIST.md          |
-| Sprint retrospectives | Update project-state.md            |
+| What                  | Where                                |
+| --------------------- | ------------------------------------ |
+| Prompts               | `sprint-planning/chat-X-prompt.md`   |
+| Standards (Modular)   | `jira-standards/` (load selectively) |
+| Standards Guide       | `jira-standards/LOAD-THIS-FIRST.md`  |
+| Actual work items     | Jira SCRUM project                   |
+| Progress tracking     | Jira board + CHECKLIST.md            |
+| Sprint retrospectives | Update project-state.md              |
+
+---
+
+## Module Loading Guide (Quick Ref)
+
+**For Chat 2 (Sprint 1 Planning):**
+
+```
+Load: jira-standards/epic-standards.md
+      jira-standards/story-standards.md
+      jira-standards/story-points.md
+Total: ~6,000 tokens
+```
+
+**For Adding Subtasks:**
+
+```
+Load: jira-standards/subtask-standards.md
+Total: ~1,500 tokens
+```
+
+**For Bug Triage:**
+
+```
+Load: jira-standards/bug-standards.md
+Total: ~2,500 tokens
+```
+
+See `jira-standards/LOAD-THIS-FIRST.md` for complete loading guide.
 
 ---
 
@@ -174,12 +278,16 @@ After planning complete, you should have:
 
 **Just want to get started NOW?**
 
-1. Copy `chat-1-prompt.md`
-2. Paste in new Claude chat
-3. Save output
-4. Copy `chat-2-prompt.md`
-5. Paste in new Claude chat
-6. Watch Epics appear in Jira
-7. Continue with Story creation
+1. ✅ Chat 1 already complete (modular standards created)
+2. Copy `chat-2-prompt.md`
+3. Paste in new Claude chat
+4. Mention: "Load epic-standards.md, story-standards.md, story-points.md"
+5. Watch Sprint 1 Epic + Stories appear in Jira
+6. Continue with remaining sprints
 
 **That's it!** 🚀
+
+---
+
+**Last Updated**: October 17, 2025  
+**Version**: 2.0 (Token-Optimized)
