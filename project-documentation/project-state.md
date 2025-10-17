@@ -86,6 +86,7 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 ### ✅ Chat 1: Ticket Standards (COMPLETE)
 
 **Created modular Jira standards** (token-optimized):
+
 - `jira-standards/LOAD-THIS-FIRST.md` - Loading guide
 - `jira-standards/epic-standards.md` - Epic template + 2 examples
 - `jira-standards/story-standards.md` - Story template + 2 examples
@@ -97,6 +98,7 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 - `jira-standards/jira-fields.md` - Labels, components, API examples
 
 **Token optimization achieved:**
+
 - Old approach: 17,000 tokens per chat (monolithic file)
 - New approach: 2,000-6,000 tokens per chat (load only what's needed)
 - **Savings: 65-88% per conversation** ✨
@@ -104,11 +106,13 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 ### 🔄 Chat 2: Sprint 1 Epic + Stories (NEXT)
 
 **Ready to create:**
+
 - Epic: Application Setup & Foundation
 - Stories: ~8-12 stories for Sprint 1 scope
 - Direct Jira API integration (create issues in real-time)
 
 **Files to load in Chat 2:**
+
 - `jira-standards/epic-standards.md` (~2,500 tokens)
 - `jira-standards/story-standards.md` (~3,000 tokens)
 - `jira-standards/story-points.md` (~1,000 tokens)
@@ -129,6 +133,7 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 - RDS PostgreSQL setup
 - API Gateway structure
 - Web application scaffold
+- Basic Login & Logout, session management
 - Basic testing patterns (Vitest, Playwright, MSW)
 - Environment configuration (.env patterns, AWS Parameter Store)
 - CI/CD foundation (GitHub Actions - test automation, PR checks)

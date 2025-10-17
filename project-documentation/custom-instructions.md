@@ -68,7 +68,6 @@ _Important Note:_ When updating local documentation, the files can be found at `
 - `sprint-planning/chat-*.md` (any prompt templates)
 - `sprint-planning/jira-integration-reference.md`
 - `sprint-planning/outputs/*.md` (any output summaries)
-- `.claudeignore`
 - `custom-instructions.md` (this file)
 
 These files explain HOW to use Claude, not information Claude needs. If you encounter them, skip them.
