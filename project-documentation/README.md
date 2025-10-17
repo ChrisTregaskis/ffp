@@ -8,22 +8,20 @@ This directory contains comprehensive documentation for the Fit For Purpose (FFP
 
 ### For New Conversations with Claude
 
-1. **Claude Project Instructions**: Use `custom-instructions.md`
-2. **Claude Project Knowledge**: Add `project-state.md` + all detailed docs
+1. **Claude Project Custom Instructions**: Already configured (no file needed, do _not_ load custom-instructions.md as already loaded)
+2. **Claude Project Knowledge**: This directory + `project-state.md` as always-loaded
 3. **Current Phase**: Check `project-state.md` to see where we are
 
 ### Token Optimisation Strategy
 
-**Always Loaded** (~1.2K tokens):
+**Always Loaded** (~800 tokens):
 
-- `custom-instructions.md` - Core context
 - `project-state.md` - Current phase & recent work
+- ~~`custom-instructions.md`~~ - Now in Claude Project settings (not duplicated)
 
 **Loaded On-Demand** (when query needs them):
 
 - All other detailed documentation files
-
-**Result**: 87% reduction in token usage per conversation
 
 ---
 
@@ -51,12 +49,20 @@ This directory contains comprehensive documentation for the Fit For Purpose (FFP
 | **security.md**              | OWASP compliance, data protection   | Security reviews                 |
 | **future-considerations.md** | Deferred features, roadmap          | Planning Phase 2+                |
 
+### 📋 Sprint Planning (Modular - Load Selectively)
+
+| Directory                           | Purpose               | When to Load                     |
+| ----------------------------------- | --------------------- | -------------------------------- |
+| **sprint-planning/jira-standards/** | Jira ticket templates | Sprint planning, ticket creation |
+
+See `sprint-planning/jira-standards/LOAD-THIS-FIRST.md` for token-optimized loading strategy.
+
 ---
 
 ## Current Project State
 
 **Phase**: Planning  
-**Status**: Architecture & ERD design  
+**Status**: Sprint planning preparation  
 **Next**: Sprint 1 - Application Setup
 
 See `project-state.md` for details.
@@ -71,10 +77,11 @@ All core flows prototyped in Figma. UX design finalized.
 
 ### 🔄 Planning Phase (CURRENT)
 
-- Finalize database schema
-- Document authentication patterns
-- Establish code standards
-- Plan Sprint 1 scope
+- ✅ Finalize database schema
+- ✅ Document authentication patterns
+- ✅ Establish code standards
+- ✅ Define Jira ticket standards (modular)
+- 🔄 Plan Sprint 1 scope
 
 ### ⏸️ Sprint Phases (UPCOMING)
 
@@ -286,28 +293,6 @@ ffp/
 @ffp/functions → depends on → @ffp/core
 ```
 
-## Quick Reference
-
-### Common Scenarios
-
-**"I need to understand the database design"**
-→ Load `database-schema.md`
-
-**"How should I structure authentication?"**
-→ Load `authentication.md`
-
-**"What are the security requirements?"**
-→ Load `security.md`
-
-**"Where are we in the project?"**
-→ Check `project-state.md`
-
-**"What's deferred to Phase 2?"**
-→ Check `future-considerations.md`
-
-**"How do I write tests?"**
-→ Load `testing-strategy.md`
-
 ---
 
 ## Testing Strategy
@@ -388,10 +373,37 @@ See `testing-strategy.md` for full details and examples.
 
 ---
 
+## Quick Reference
+
+### Common Scenarios
+
+**"I need to understand the database design"**  
+→ Load `database-schema.md`
+
+**"How should I structure authentication?"**  
+→ Load `authentication.md`
+
+**"What are the security requirements?"**  
+→ Load `security.md`
+
+**"Where are we in the project?"**  
+→ Check `project-state.md`
+
+**"What's deferred to Phase 2?"**  
+→ Check `future-considerations.md`
+
+**"How do I write tests?"**  
+→ Load `testing-strategy.md`
+
+**"How do I create Jira tickets?"**  
+→ Load `sprint-planning/jira-standards/LOAD-THIS-FIRST.md`
+
+---
+
 ## Document Index
 
 - [Project State](./project-state.md) - **START HERE** - Current phase & context
-- [Custom Instructions](./custom-instructions.md) - For Claude Project setup
+- ~~[Custom Instructions](./custom-instructions.md)~~ - **Now in Claude Project settings**
 - [Architecture](./architecture.md) - AWS infrastructure overview
 - [Authentication](./authentication.md) - Cognito and multi-tenant auth
 - [Database Schema](./database-schema.md) - PostgreSQL design and RLS
@@ -403,14 +415,15 @@ See `testing-strategy.md` for full details and examples.
 - [Monitoring](./monitoring.md) - CloudWatch setup and alerting
 - [Security](./security.md) - OWASP compliance and best practices
 - [Future Considerations](./future-considerations.md) - Deferred features
+- [Sprint Planning / Jira Standards](./sprint-planning/jira-standards/) - Ticket templates (modular)
 
 ---
 
 ## Project Contact
 
 **Project Lead**: Christopher Tregaskis (Principal Engineer)  
-**Last Updated**: October 15, 2025  
-**Document Version**: 3.0
+**Last Updated**: October 17, 2025  
+**Document Version**: 3.1
 
 ---
 

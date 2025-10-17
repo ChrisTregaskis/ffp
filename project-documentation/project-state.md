@@ -86,6 +86,7 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 ### Sprint 1: Application Setup
 
 **Confirmed scope:**
+
 - Turborepo setup (monorepo structure, build caching)
 - Linting, Prettier, TypeScript configuration
 - Pre-commit hooks (linting, type-checking)
@@ -103,6 +104,7 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 - GitHub Copilot + Actions for automated PR reviews
 
 **Deferred:**
+
 - Documentation standards (already covered in project-documentation/)
 - Manual code review process (solo dev, automated PR reviews via Copilot/Actions)
 
