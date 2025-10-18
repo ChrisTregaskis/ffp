@@ -43,8 +43,8 @@ All Epics successfully created with full descriptions and labels:
 
 **Files Created**:
 
-1. `prompts/chat-e1-sprint-1-stories.md` - User Story creation template for Sprint 1
-2. `prompts/chat-s1-template-subtasks.md` - Subtask creation template (reusable)
+1. `prompts/2025-10-17_2200_chat-e1-sprint-1-stories` - User Story creation template for Sprint 1
+2. `prompts/2025-10-17_2230_chat-s1-template-subtasks` - Subtask creation template (reusable)
 3. `prompts/README.md` - Usage guide for templates
 
 ### 5. ✅ Updated Documentation
@@ -100,8 +100,8 @@ project-documentation/sprint-planning/
 │   └── epics-created-summary.md (UPDATED)
 ├── prompts/
 │   ├── README.md (NEW)
-│   ├── chat-e1-sprint-1-stories.md (NEW)
-│   └── chat-s1-template-subtasks.md (NEW)
+│   ├── 2025-10-17_2200_chat-e1-sprint-1-stories (NEW)
+│   └── 2025-10-17_2230_chat-s1-template-subtasks (NEW)
 ```
 
 ---
@@ -118,7 +118,7 @@ project-documentation/sprint-planning/
 
 ### After User Stories (Chat S1)
 
-1. Use `prompts/chat-s1-template-subtasks.md` template
+1. Use `prompts/2025-10-17_2230_chat-s1-template-subtasks` template
 2. Create Subtasks for complex stories (5+ points)
 3. Break down into 1-4 hour chunks
 4. Track progress in Jira
@@ -159,7 +159,7 @@ project-documentation/sprint-planning/
 ### For User Story Creation
 
 **Step 1**: Open new Claude conversation  
-**Step 2**: Copy entire `chat-e1-sprint-1-stories.md` file  
+**Step 2**: Copy entire `2025-10-17_2200_chat-e1-sprint-1-stories` file  
 **Step 3**: Paste into Claude  
 **Step 4**: Claude creates 8-10 stories in Jira  
 **Step 5**: Review and verify in Jira board
@@ -168,7 +168,7 @@ project-documentation/sprint-planning/
 
 **Step 1**: Identify User Story needing breakdown (5+ points)  
 **Step 2**: Open new Claude conversation  
-**Step 3**: Copy `chat-s1-template-subtasks.md`  
+**Step 3**: Copy `2025-10-17_2230_chat-s1-template-subtasks`  
 **Step 4**: Add story-specific details (key, description)  
 **Step 5**: Claude creates 3-8 subtasks in Jira  
 **Step 6**: Review subtask order and estimates

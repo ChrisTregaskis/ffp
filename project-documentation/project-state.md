@@ -245,4 +245,4 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 
 ---
 
-**Next Action**: Start new Claude chat with `prompts/chat-s1-template-subtasks.md` template to create subtasks for FFP-7 (Turborepo Monorepo Setup)
+**Next Action**: Start new Claude chat with `prompts/2025-10-17_2230_chat-s1-template-subtasks` template to create subtasks for FFP-7 (Turborepo Monorepo Setup)

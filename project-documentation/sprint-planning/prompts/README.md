@@ -4,17 +4,17 @@ This directory contains prompt templates for creating Jira issues during FFP spr
 
 ## File Overview
 
-| File                           | Purpose                            | When to Use                    |
-| ------------------------------ | ---------------------------------- | ------------------------------ |
-| `chat-e1-sprint-1-stories.md`  | Create User Stories for Sprint 1   | After Epics are created        |
-| `chat-s1-template-subtasks.md` | Create Subtasks for any User Story | After User Stories are created |
+| File                                        | Purpose                            |
+| ------------------------------------------- | ---------------------------------- |
+| `2025-10-17_2200_chat-e1-sprint-1-stories`  | Create User Stories for Sprint 1   |
+| `2025-10-17_2230_chat-s1-template-subtasks` | Create Subtasks for any User Story |
 
 ## Usage
 
 ### Creating User Stories (Chat E1)
 
 1. **Open a new Claude conversation**
-2. **Load the prompt**: Copy content from `chat-e1-sprint-1-stories.md`
+2. **Load the prompt**: Copy content from `2025-10-17_2200_chat-e1-sprint-1-stories`
 3. **Paste into Claude**: Start conversation with the full prompt
 4. **Claude will**:
    - Create 8-10 User Stories in Jira for Sprint 1
@@ -26,7 +26,7 @@ This directory contains prompt templates for creating Jira issues during FFP spr
 
 1. **After User Stories exist in Jira**
 2. **Open a new Claude conversation**
-3. **Load the prompt**: Copy content from `chat-s1-template-subtasks.md`
+3. **Load the prompt**: Copy content from `2025-10-17_2230_chat-s1-template-subtasks`
 4. **Modify with specifics**:
    - Replace `[Story Key]` with actual story (e.g., FFP-7)
    - Add story context

@@ -22,11 +22,13 @@ yyyy-mm-dd_hhmm_descriptive-name.md
 ### Examples
 
 **Before:**
+
 - `FFP-13-rescope-summary.md`
 - `chat-e1-sprint-1-stories.md`
 - `epics-created-summary.md`
 
 **After:**
+
 - `2025-10-18_1505_FFP-13-rescope-summary.md`
 - `2025-10-18_0900_chat-e1-sprint-1-stories.md`
 - `2025-10-18_1400_epics-created-summary.md`
@@ -48,12 +50,15 @@ yyyy-mm-dd_hhmm_descriptive-name.md
 These files remain **without timestamps** (living documents):
 
 ### Core Reference Files
+
 - `sprint-1-stories-quick-ref.md` - Actively maintained quick reference
 - `sprint-1-stories-summary.md` - Living sprint summary
 - Any `README.md` files
 
 ### Standard Templates
+
 All files in `jira-standards/`:
+
 - `epic-standards.md`
 - `story-standards.md`
 - `task-standards.md`
@@ -68,6 +73,7 @@ All files in `jira-standards/`:
 ### Files Updated
 
 1. **LOAD-THIS-FIRST.md** ✅
+
    - Added "File Naming Convention" section at the top
    - Included format, examples, purpose, and exceptions
    - Placed before "Module Loading Guide" for visibility
@@ -80,13 +86,15 @@ All files in `jira-standards/`:
 When next editing these files, rename them:
 
 **outputs/ directory:**
+
 - `chat-2-completion-summary.md` → `2025-10-18_1400_chat-2-completion-summary.md`
 - `epics-created-summary.md` → `2025-10-18_1200_epics-created-summary.md`
 - `jira-ticket-standards.md` → `2025-10-18_1000_jira-ticket-standards.md` (or deprecate)
 
 **prompts/ directory:**
-- `chat-e1-sprint-1-stories.md` → `2025-10-18_0900_chat-e1-sprint-1-stories.md`
-- `chat-s1-template-subtasks.md` → `2025-10-18_1000_chat-s1-template-subtasks.md`
+
+- `chat-e1-sprint-1-stories.md` → `2025-10-17_2200_chat-e1-sprint-1-stories`
+- `chat-s1-template-subtasks.md` → `2025-10-17_2230_chat-s1-template-subtasks`
 
 **Note**: Only rename when next editing to avoid breaking existing references.
 
@@ -97,6 +105,7 @@ When next editing these files, rename them:
 ### When Creating New Files
 
 **Always include timestamp** for:
+
 - Chat completion summaries
 - Sprint planning outputs
 - Decision documents
@@ -104,6 +113,7 @@ When next editing these files, rename them:
 - Prompt templates (when saved for reference)
 
 **Example**:
+
 ```bash
 # Current datetime: October 18, 2025 15:05
 # New file: 2025-10-18_1505_sprint-2-planning-kickoff.md
@@ -112,6 +122,7 @@ When next editing these files, rename them:
 ### When to Use Current Time
 
 Use the time when:
+
 - File is first created
 - Major content change occurs (create new timestamped file)
 - Decision is made (use decision time, not file creation time)
