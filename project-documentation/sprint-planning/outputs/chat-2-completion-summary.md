@@ -12,14 +12,14 @@
 
 All Epics successfully created with full descriptions and labels:
 
-| Epic    | Title                               | URL                                                     | Status      |
-| ------- | ----------------------------------- | ------------------------------------------------------- | ----------- |
-| SCRUM-1 | Application Setup & Foundation      | [View](https://ctregaskis.atlassian.net/browse/SCRUM-1) | ✅ Complete |
-| SCRUM-2 | Assessment Engine Core              | [View](https://ctregaskis.atlassian.net/browse/SCRUM-2) | ✅ Complete |
-| SCRUM-3 | Video Management & Streaming        | [View](https://ctregaskis.atlassian.net/browse/SCRUM-3) | ✅ Complete |
-| SCRUM-4 | User Dashboards & Progress Tracking | [View](https://ctregaskis.atlassian.net/browse/SCRUM-4) | ✅ Complete |
-| SCRUM-5 | Business Portal                     | [View](https://ctregaskis.atlassian.net/browse/SCRUM-5) | ✅ Complete |
-| SCRUM-6 | Company Management Portal           | [View](https://ctregaskis.atlassian.net/browse/SCRUM-6) | ✅ Complete |
+| Epic  | Title                               | URL                                                   | Status      |
+| ----- | ----------------------------------- | ----------------------------------------------------- | ----------- |
+| FFP-1 | Application Setup & Foundation      | [View](https://ctregaskis.atlassian.net/browse/FFP-1) | ✅ Complete |
+| FFP-2 | Assessment Engine Core              | [View](https://ctregaskis.atlassian.net/browse/FFP-2) | ✅ Complete |
+| FFP-3 | Video Management & Streaming        | [View](https://ctregaskis.atlassian.net/browse/FFP-3) | ✅ Complete |
+| FFP-4 | User Dashboards & Progress Tracking | [View](https://ctregaskis.atlassian.net/browse/FFP-4) | ✅ Complete |
+| FFP-5 | Business Portal                     | [View](https://ctregaskis.atlassian.net/browse/FFP-5) | ✅ Complete |
+| FFP-6 | Company Management Portal           | [View](https://ctregaskis.atlassian.net/browse/FFP-6) | ✅ Complete |
 
 ### 2. ✅ Fixed Description Issue
 
@@ -111,9 +111,9 @@ project-documentation/sprint-planning/
 ### Immediate (Chat E1)
 
 1. Use `prompts/chat-e1-sprint-1-stories.md` prompt
-2. Create 8-10 User Stories for SCRUM-1
+2. Create 8-10 User Stories for FFP-1
 3. Estimate story points for each
-4. Link all stories to SCRUM-1 Epic
+4. Link all stories to FFP-1 Epic
 5. Generate sprint-1-stories-summary.md
 
 ### After User Stories (Chat S1)
@@ -189,7 +189,7 @@ project-documentation/sprint-planning/
 
 ## Resources
 
-**Jira Board**: https://ctregaskis.atlassian.net/jira/software/c/projects/SCRUM/boards/1  
+**Jira Board**: https://ctregaskis.atlassian.net/jira/software/c/projects/FFP/boards/1  
 **Documentation**: `/Users/christophertregaskis/Documents/FFP/ffp/project-documentation/`
 
 **Reference Documents**:
@@ -215,7 +215,7 @@ project-documentation/sprint-planning/
 ---
 
 **Status**: ✅ Chat 2 Complete  
-**Ready for**: Chat E1 - Create User Stories for Sprint 1 (SCRUM-1)
+**Ready for**: Chat E1 - Create User Stories for Sprint 1 (FFP-1)
 
 **Estimated Start Date for Sprint 1**: When ready (flexible)  
 **Estimated Completion of Sprint 1**: 8-10 weeks after start  

@@ -17,7 +17,7 @@ Epics represent large bodies of work spanning multiple sprints (4+ weeks) that d
 
 | Field          | Value                                                          |
 | -------------- | -------------------------------------------------------------- |
-| **Issue Type** | Epic (10001)                                                   |
+| **Issue Type** | Epic (10011)                                                   |
 | **Summary**    | Epic: [Feature Area]                                           |
 | **Epic Name**  | Short descriptor (2-4 words)                                   |
 | **Priority**   | Highest, High, Medium, Low                                     |
@@ -165,14 +165,14 @@ Establish core infrastructure for FFP, enabling rapid feature development with s
 
 ## User Stories
 
-- SCRUM-1: Setup Turborepo monorepo
-- SCRUM-2: Configure SST infrastructure
-- SCRUM-3: Implement Cognito authentication
-- SCRUM-4: Create PostgreSQL schema with RLS
-- SCRUM-5: Setup Drizzle ORM with migrations
-- SCRUM-6: Configure CI/CD pipelines
-- SCRUM-7: Implement testing framework
-- SCRUM-8: Configure CloudWatch monitoring
+- FFP-1: Setup Turborepo monorepo
+- FFP-2: Configure SST infrastructure
+- FFP-3: Implement Cognito authentication
+- FFP-4: Create PostgreSQL schema with RLS
+- FFP-5: Setup Drizzle ORM with migrations
+- FFP-6: Configure CI/CD pipelines
+- FFP-7: Implement testing framework
+- FFP-8: Configure CloudWatch monitoring
 
 ## Documentation Updates
 
@@ -251,15 +251,15 @@ Enable FFP to deliver personalized workout programs through dynamic, JSON-driven
 
 ## User Stories
 
-- SCRUM-10: Define assessment Zod schemas
-- SCRUM-11: Implement conditional logic engine
-- SCRUM-12: Create assessment service with save/resume
-- SCRUM-13: Implement weighted scoring strategy
-- SCRUM-14: Implement categorical scoring
-- SCRUM-15: Build program generation algorithm
-- SCRUM-16: Create frontend wizard component
-- SCRUM-17: Implement assessment history
-- SCRUM-18: Add multi-tenant isolation tests
+- FFP-10: Define assessment Zod schemas
+- FFP-11: Implement conditional logic engine
+- FFP-12: Create assessment service with save/resume
+- FFP-13: Implement weighted scoring strategy
+- FFP-14: Implement categorical scoring
+- FFP-15: Build program generation algorithm
+- FFP-16: Create frontend wizard component
+- FFP-17: Implement assessment history
+- FFP-18: Add multi-tenant isolation tests
 
 ## Documentation Updates
 

@@ -2,7 +2,7 @@
 
 **Created**: October 17, 2025  
 **Updated**: October 17, 2025 (Descriptions Added)  
-**Jira Project**: SCRUM  
+**Jira Project**: FFP  
 **Cloud ID**: 46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf  
 **Site**: https://ctregaskis.atlassian.net
 
@@ -17,14 +17,14 @@
 
 ## Epics Created
 
-| Epic Key    | Sprint   | Title                               | Jira URL                                                     | Labels                                                       | Status      |
-| ----------- | -------- | ----------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ----------- |
-| **SCRUM-1** | Sprint 1 | Application Setup & Foundation      | [View Epic](https://ctregaskis.atlassian.net/browse/SCRUM-1) | phase-1, sprint-1, infrastructure, security, setup           | ✅ Complete |
-| **SCRUM-2** | Sprint 2 | Assessment Engine Core              | [View Epic](https://ctregaskis.atlassian.net/browse/SCRUM-2) | phase-1, sprint-2, backend, frontend, assessment             | ✅ Complete |
-| **SCRUM-3** | Sprint 3 | Video Management & Streaming        | [View Epic](https://ctregaskis.atlassian.net/browse/SCRUM-3) | phase-1, sprint-3, backend, frontend, video, cloudfront      | ✅ Complete |
-| **SCRUM-4** | Sprint 4 | User Dashboards & Progress Tracking | [View Epic](https://ctregaskis.atlassian.net/browse/SCRUM-4) | phase-1, sprint-4, frontend, dashboard, progress             | ✅ Complete |
-| **SCRUM-5** | Sprint 5 | Business Portal                     | [View Epic](https://ctregaskis.atlassian.net/browse/SCRUM-5) | phase-1, sprint-5, backend, frontend, business, multi-tenant | ✅ Complete |
-| **SCRUM-6** | Sprint 6 | Company Management Portal           | [View Epic](https://ctregaskis.atlassian.net/browse/SCRUM-6) | phase-1, sprint-6, backend, frontend, admin, analytics       | ✅ Complete |
+| Epic Key  | Sprint   | Title                               | Jira URL                                                   | Labels                                                       | Status      |
+| --------- | -------- | ----------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------ | ----------- |
+| **FFP-1** | Sprint 1 | Application Setup & Foundation      | [View Epic](https://ctregaskis.atlassian.net/browse/FFP-1) | phase-1, sprint-1, infrastructure, security, setup           | ✅ Complete |
+| **FFP-2** | Sprint 2 | Assessment Engine Core              | [View Epic](https://ctregaskis.atlassian.net/browse/FFP-2) | phase-1, sprint-2, backend, frontend, assessment             | ✅ Complete |
+| **FFP-3** | Sprint 3 | Video Management & Streaming        | [View Epic](https://ctregaskis.atlassian.net/browse/FFP-3) | phase-1, sprint-3, backend, frontend, video, cloudfront      | ✅ Complete |
+| **FFP-4** | Sprint 4 | User Dashboards & Progress Tracking | [View Epic](https://ctregaskis.atlassian.net/browse/FFP-4) | phase-1, sprint-4, frontend, dashboard, progress             | ✅ Complete |
+| **FFP-5** | Sprint 5 | Business Portal                     | [View Epic](https://ctregaskis.atlassian.net/browse/FFP-5) | phase-1, sprint-5, backend, frontend, business, multi-tenant | ✅ Complete |
+| **FFP-6** | Sprint 6 | Company Management Portal           | [View Epic](https://ctregaskis.atlassian.net/browse/FFP-6) | phase-1, sprint-6, backend, frontend, admin, analytics       | ✅ Complete |
 
 ---
 
@@ -46,20 +46,20 @@ Each Epic now includes:
 ## Epic Dependencies Map
 
 ```
-Sprint 1 (SCRUM-1): Application Setup & Foundation
+Sprint 1 (FFP-1): Application Setup & Foundation
     ↓
-    ├─→ Sprint 2 (SCRUM-2): Assessment Engine Core
+    ├─→ Sprint 2 (FFP-2): Assessment Engine Core
     │       ↓
-    │       └─→ Sprint 4 (SCRUM-4): User Dashboards & Progress Tracking
+    │       └─→ Sprint 4 (FFP-4): User Dashboards & Progress Tracking
     │
-    ├─→ Sprint 3 (SCRUM-3): Video Management & Streaming
+    ├─→ Sprint 3 (FFP-3): Video Management & Streaming
     │       ↓
-    │       └─→ Sprint 4 (SCRUM-4): User Dashboards & Progress Tracking
+    │       └─→ Sprint 4 (FFP-4): User Dashboards & Progress Tracking
     │
-    ├─→ Sprint 5 (SCRUM-5): Business Portal
+    ├─→ Sprint 5 (FFP-5): Business Portal
     │       (depends on Sprints 1-4)
     │
-    └─→ Sprint 6 (SCRUM-6): Company Management Portal
+    └─→ Sprint 6 (FFP-6): Company Management Portal
             (depends on Sprints 1-3)
 ```
 
@@ -97,12 +97,12 @@ Sprint 1 (SCRUM-1): Application Setup & Foundation
 
 | Sprint    | Est. Points     | Duration        | Cumulative Weeks | Epic Key |
 | --------- | --------------- | --------------- | ---------------- | -------- |
-| Sprint 1  | ~34 points      | 8-10 weeks      | Weeks 1-10       | SCRUM-1  |
-| Sprint 2  | ~34 points      | 8-10 weeks      | Weeks 11-20      | SCRUM-2  |
-| Sprint 3  | ~21 points      | 5-6 weeks       | Weeks 21-26      | SCRUM-3  |
-| Sprint 4  | ~21 points      | 5-6 weeks       | Weeks 27-32      | SCRUM-4  |
-| Sprint 5  | ~21 points      | 5-6 weeks       | Weeks 33-38      | SCRUM-5  |
-| Sprint 6  | ~13 points      | 3-4 weeks       | Weeks 39-42      | SCRUM-6  |
+| Sprint 1  | ~34 points      | 8-10 weeks      | Weeks 1-10       | FFP-1    |
+| Sprint 2  | ~34 points      | 8-10 weeks      | Weeks 11-20      | FFP-2    |
+| Sprint 3  | ~21 points      | 5-6 weeks       | Weeks 21-26      | FFP-3    |
+| Sprint 4  | ~21 points      | 5-6 weeks       | Weeks 27-32      | FFP-4    |
+| Sprint 5  | ~21 points      | 5-6 weeks       | Weeks 33-38      | FFP-5    |
+| Sprint 6  | ~13 points      | 3-4 weeks       | Weeks 39-42      | FFP-6    |
 | **Total** | **~144 points** | **34-42 weeks** | **~9-10 months** |          |
 
 ### Capacity Calculation
@@ -143,12 +143,12 @@ Story points will be determined once User Stories are created and estimated. Eac
 
 **Rough Epic-level estimates** (high-level, to be refined):
 
-- SCRUM-1 (Application Setup): ~34 points (complex setup)
-- SCRUM-2 (Assessment Engine): ~34 points (core algorithm)
-- SCRUM-3 (Video Management): ~21 points (integration work)
-- SCRUM-4 (User Dashboards): ~21 points (frontend-heavy)
-- SCRUM-5 (Business Portal): ~21 points (business logic)
-- SCRUM-6 (Admin Portal): ~13 points (admin CRUD)
+- FFP-1 (Application Setup): ~34 points (complex setup)
+- FFP-2 (Assessment Engine): ~34 points (core algorithm)
+- FFP-3 (Video Management): ~21 points (integration work)
+- FFP-4 (User Dashboards): ~21 points (frontend-heavy)
+- FFP-5 (Business Portal): ~21 points (business logic)
+- FFP-6 (Admin Portal): ~13 points (admin CRUD)
 
 **Total Estimated**: ~144 story points
 
@@ -191,11 +191,11 @@ Story points will be determined once User Stories are created and estimated. Eac
 1. ✅ Epics created in Jira
 2. ✅ Descriptions and labels added
 3. ✅ Verify Epics visible in Jira board
-4. 🔄 **Next**: Create User Stories for Sprint 1 (SCRUM-1)
+4. 🔄 **Next**: Create User Stories for Sprint 1 (FFP-1)
 
 ### Sprint 1 Story Creation (Chat E1)
 
-**Ready to create detailed User Stories for SCRUM-1:**
+**Ready to create detailed User Stories for FFP-1:**
 
 Stories to create (~8-10 stories):
 
@@ -281,7 +281,7 @@ Project context from:
 
 ### 3. Sprint Planning
 
-- Start with Sprint 1 (SCRUM-1)
+- Start with Sprint 1 (FFP-1)
 - Estimate velocity after first sprint
 - Adjust subsequent sprint capacity based on velocity
 
@@ -295,12 +295,12 @@ Project context from:
 
 ## Epic URLs for Quick Access
 
-- **Sprint 1**: https://ctregaskis.atlassian.net/browse/SCRUM-1
-- **Sprint 2**: https://ctregaskis.atlassian.net/browse/SCRUM-2
-- **Sprint 3**: https://ctregaskis.atlassian.net/browse/SCRUM-3
-- **Sprint 4**: https://ctregaskis.atlassian.net/browse/SCRUM-4
-- **Sprint 5**: https://ctregaskis.atlassian.net/browse/SCRUM-5
-- **Sprint 6**: https://ctregaskis.atlassian.net/browse/SCRUM-6
+- **Sprint 1**: https://ctregaskis.atlassian.net/browse/FFP-1
+- **Sprint 2**: https://ctregaskis.atlassian.net/browse/FFP-2
+- **Sprint 3**: https://ctregaskis.atlassian.net/browse/FFP-3
+- **Sprint 4**: https://ctregaskis.atlassian.net/browse/FFP-4
+- **Sprint 5**: https://ctregaskis.atlassian.net/browse/FFP-5
+- **Sprint 6**: https://ctregaskis.atlassian.net/browse/FFP-6
 
 ---
 
@@ -310,19 +310,19 @@ Project context from:
 
 **What was accomplished:**
 
-1. Created 6 Epics (SCRUM-1 through SCRUM-6)
+1. Created 6 Epics (FFP-1 through FFP-6)
 2. Updated all Epics with comprehensive descriptions
 3. Added proper labels for filtering and organization
 4. Verified all Epics visible and complete in Jira
 
 **Ready for Chat E1:**
 
-- Create User Stories for Sprint 1 (SCRUM-1)
+- Create User Stories for Sprint 1 (FFP-1)
 - Break down Epic into 8-10 implementable stories
 - Estimate story points
-- Link stories to SCRUM-1 Epic
+- Link stories to FFP-1 Epic
 
 ---
 
 **Status**: ✅ All 6 Epics successfully created with full descriptions  
-**Next**: Chat E1 - Create User Stories for Sprint 1 (SCRUM-1)
+**Next**: Chat E1 - Create User Stories for Sprint 1 (FFP-1)

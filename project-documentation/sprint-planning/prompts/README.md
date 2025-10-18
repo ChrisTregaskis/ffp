@@ -18,7 +18,7 @@ This directory contains prompt templates for creating Jira issues during FFP spr
 3. **Paste into Claude**: Start conversation with the full prompt
 4. **Claude will**:
    - Create 8-10 User Stories in Jira for Sprint 1
-   - Link all stories to SCRUM-1 Epic
+   - Link all stories to FFP-1 Epic
    - Estimate story points
    - Generate summary document
 
@@ -28,7 +28,7 @@ This directory contains prompt templates for creating Jira issues during FFP spr
 2. **Open a new Claude conversation**
 3. **Load the prompt**: Copy content from `chat-s1-template-subtasks.md`
 4. **Modify with specifics**:
-   - Replace `[Story Key]` with actual story (e.g., SCRUM-7)
+   - Replace `[Story Key]` with actual story (e.g., FFP-7)
    - Add story context
 5. **Paste into Claude**: Start conversation
 6. **Claude will**:
@@ -39,17 +39,17 @@ This directory contains prompt templates for creating Jira issues during FFP spr
 
 ## Pattern for Remaining Sprints
 
-### Sprint 2 (SCRUM-2): Assessment Engine
+### Sprint 2 (FFP-2): Assessment Engine
 
 Copy `chat-e1-sprint-1-stories.md` and update:
 
-- Epic Link: SCRUM-2
+- Epic Link: FFP-2
 - Sprint number: Sprint 2
-- Story scope: From SCRUM-2 Epic description
+- Story scope: From FFP-2 Epic description
 
 ### Sprint 3-6: Similar Pattern
 
-Repeat for each Epic (SCRUM-3 through SCRUM-6)
+Repeat for each Epic (FFP-3 through FFP-6)
 
 ## Timeline Context
 
@@ -70,13 +70,13 @@ Repeat for each Epic (SCRUM-3 through SCRUM-6)
 
 **Cloud ID**: `46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf`  
 **Site**: https://ctregaskis.atlassian.net  
-**Project**: SCRUM
+**Project**: FFP
 
 **Issue Type IDs**:
 
-- Epic: `10001`
-- Story: `10004`
-- Subtask: `10005`
+- Epic: `10011`
+- Story: `10010`
+- Subtask: `10012`
 
 ## Related Documentation
 
@@ -111,7 +111,7 @@ Repeat for each Epic (SCRUM-3 through SCRUM-6)
 
 ## Status
 
-- ✅ Chat 2 Complete: All 6 Epics created (SCRUM-1 through SCRUM-6)
+- ✅ Chat 2 Complete: All 6 Epics created (FFP-1 through FFP-6)
 - 🔄 Next: Chat E1 - Create User Stories for Sprint 1
 - ⏳ Pending: Subtask creation (after User Stories)
 

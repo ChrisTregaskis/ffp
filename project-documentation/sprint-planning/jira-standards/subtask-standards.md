@@ -16,7 +16,7 @@ Subtasks break down User Stories or Tasks into smaller chunks (<4 hours). Not es
 
 | Field            | Value                             |
 | ---------------- | --------------------------------- |
-| **Issue Type**   | Subtask (10002)                   |
+| **Issue Type**   | Subtask (10012)                   |
 | **Summary**      | [Action verb]: [Specific outcome] |
 | **Parent Issue** | Link to parent Story/Task         |
 | **Story Points** | Not estimated                     |
@@ -52,7 +52,7 @@ Subtasks break down User Stories or Tasks into smaller chunks (<4 hours). Not es
 
 ````markdown
 **Summary**: Create Zod schema for registration validation
-**Parent**: SCRUM-5 (User Registration Story)
+**Parent**: FFP-5 (User Registration Story)
 
 ## Objective
 
@@ -102,7 +102,7 @@ npm run test packages/core/src/schemas/__tests__/auth.schema.test.ts
 
 ```markdown
 **Summary**: Create Lambda function for user registration
-**Parent**: SCRUM-3 (SST Infrastructure Task)
+**Parent**: FFP-3 (SST Infrastructure Task)
 
 ## Objective
 

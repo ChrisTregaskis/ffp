@@ -1,4 +1,4 @@
-# Chat E1: Create User Stories for Sprint 1 (SCRUM-1)
+# Chat E1: Create User Stories for Sprint 1 (FFP-1)
 
 **Context**: This is Chat E1 (Epic 1 User Stories) of the FFP sprint planning process. Chat 2 has created all 6 Epics in Jira.
 
@@ -12,27 +12,27 @@
 
 - Cloud ID: `46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf`
 - Site: `https://ctregaskis.atlassian.net`
-- Project Key: `SCRUM`
-- Epic: `SCRUM-1` (Application Setup & Foundation)
-- Story Issue Type ID: `10004`
+- Project Key: `FFP`
+- Epic: `FFP-1` (Application Setup & Foundation)
+- Story Issue Type ID: `10010`
 
 ---
 
 ## Objective
 
-Create **8-10 User Stories directly in Jira** for Sprint 1 (SCRUM-1: Application Setup & Foundation).
+Create **8-10 User Stories directly in Jira** for Sprint 1 (FFP-1: Application Setup & Foundation).
 
 **Important**:
 
 - Create actual Jira issues, NOT markdown files
 - Use story-standards.md template
-- Link all stories to SCRUM-1 Epic
+- Link all stories to FFP-1 Epic
 - Estimate story points (1, 2, 3, 5, 8, 13)
 - Include minimum 2 functional tests per story
 
 ---
 
-## Sprint 1 Scope (from SCRUM-1)
+## Sprint 1 Scope (from FFP-1)
 
 **Epic Goal**: Establish core infrastructure for FFP
 
@@ -114,9 +114,9 @@ For each story, create with:
 
 ### Required Fields
 
-- **Issue Type**: Story (10004)
+- **Issue Type**: Story (10010)
 - **Summary**: As a [user type], I want [action] so that [benefit]
-- **Epic Link**: SCRUM-1
+- **Epic Link**: FFP-1
 - **Story Points**: 1, 2, 3, 5, 8, or 13 (see story-points.md)
 - **Priority**: Highest, High, Medium, Low
 - **Labels**: `phase-1`, `sprint-1`, relevant tech tags
@@ -265,7 +265,7 @@ Include:
 ## Output Requirements
 
 - **Create in Jira**: Use `createJiraIssue` for each story
-- **Link to Epic**: Ensure all stories link to SCRUM-1
+- **Link to Epic**: Ensure all stories link to FFP-1
 - **Realistic estimates**: Solo developer with 8 hours/week
 - **Complete descriptions**: Follow story template
 - **Testing requirements**: Minimum 2 tests per story

@@ -7,9 +7,15 @@
 ## Jira Project Details
 
 - **Site**: `https://ctregaskis.atlassian.net`
+- **Project**: FFP (Fit For Purpose)
+- **Project Key**: `FFP`
 - **Cloud ID**: `46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf`
-- **Project Key**: `SCRUM`
-- **Project Name**: FFP
+- **Issue Types Available**:
+  - Epic (10011)
+  - Story (10010)
+  - Task (10008)
+  - Subtask (10012)
+  - Bug (10006)
 
 ---
 
@@ -17,10 +23,10 @@
 
 | Type    | ID    | Hierarchy Level | Usage                                   |
 | ------- | ----- | --------------- | --------------------------------------- |
-| Epic    | 10001 | 1               | Sprint-level container                  |
-| Story   | 10004 | 0               | User-facing functionality               |
-| Task    | 10003 | 0               | Technical work                          |
-| Subtask | 10002 | -1              | Breakdown of Stories/Tasks              |
+| Epic    | 10011 | 1               | Sprint-level container                  |
+| Story   | 10010 | 0               | User-facing functionality               |
+| Task    | 10008 | 0               | Technical work                          |
+| Subtask | 10012 | -1              | Breakdown of Stories/Tasks              |
 | Bug     | 10006 | 0               | Defects and issues                      |
 | Feature | 10005 | 0               | Available but not used in our structure |
 
@@ -34,7 +40,7 @@
 // Claude will use this API call internally
 createJiraIssue({
   cloudId: "46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf",
-  projectKey: "SCRUM",
+  projectKey: "FFP",
   issueTypeName: "Epic",
   summary: "Sprint 1: Application Setup",
   description: "Epic description in markdown format...",
@@ -45,7 +51,7 @@ createJiraIssue({
 });
 ```
 
-**Result**: Epic created with key like `SCRUM-1`
+**Result**: Epic created with key like `FFP-1`
 
 ---
 
@@ -55,12 +61,12 @@ createJiraIssue({
 // Claude creates story and links to parent Epic
 createJiraIssue({
   cloudId: "46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf",
-  projectKey: "SCRUM",
+  projectKey: "FFP",
   issueTypeName: "Story",
   summary: "Set up Turborepo monorepo structure",
   description: "User story description...",
   additional_fields: {
-    parent: { key: "SCRUM-1" }, // Links to Epic
+    parent: { key: "FFP-1" }, // Links to Epic
     labels: ["sprint-1", "monorepo"],
     priority: { name: "High" },
     customfield_10016: 5, // Story points (if field exists)
@@ -68,7 +74,7 @@ createJiraIssue({
 });
 ```
 
-**Result**: Story created with key like `SCRUM-7`, linked to Epic `SCRUM-1`
+**Result**: Story created with key like `FFP-7`, linked to Epic `FFP-1`
 
 ---
 
@@ -78,7 +84,7 @@ createJiraIssue({
 // Claude updates story with more details
 editJiraIssue({
   cloudId: "46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf",
-  issueIdOrKey: "SCRUM-7",
+  issueIdOrKey: "FFP-7",
   fields: {
     description: "Updated description with acceptance criteria...",
     labels: ["sprint-1", "monorepo", "turborepo"],
@@ -108,14 +114,14 @@ Epic (Sprint-level)
 ### Chat 2: Create Epics
 
 1. Claude creates 6 Epics via API
-2. Returns Epic keys (e.g., SCRUM-1, SCRUM-2, etc.)
+2. Returns Epic keys (e.g., FFP-1, FFP-2, etc.)
 3. Generates summary markdown with links
 4. You verify in Jira web interface
 
 ### Chat [E1]: Create Stories for Sprint 1
 
-1. Claude retrieves Epic SCRUM-1
-2. Creates Stories linked to SCRUM-1
+1. Claude retrieves Epic FFP-1
+2. Creates Stories linked to FFP-1
 3. Returns Story keys
 4. Generates summary doc
 
@@ -132,7 +138,7 @@ Epic (Sprint-level)
 
 After each chat creating issues:
 
-1. **Check Jira**: Visit `https://ctregaskis.atlassian.net/browse/SCRUM`
+1. **Check Jira**: Visit `https://ctregaskis.atlassian.net/browse/FFP`
 2. **Verify Count**: Confirm expected number of issues created
 3. **Check Hierarchy**: Ensure Stories linked to correct Epic
 4. **Review Content**: Check descriptions formatted correctly
@@ -146,7 +152,7 @@ After each chat creating issues:
 
 - Check Claude's response for error messages
 - Verify permissions in Jira
-- Check project key spelling (SCRUM)
+- Check project key spelling (FFP)
 
 ### Description Formatting Issues
 

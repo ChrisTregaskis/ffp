@@ -2,9 +2,16 @@
 
 ## Project Configuration
 
+- **Site**: `https://ctregaskis.atlassian.net`
+- **Project**: FFP (Fit For Purpose)
+- **Project Key**: `FFP`
 - **Cloud ID**: `46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf`
-- **Project Key**: `SCRUM`
-- **Base URL**: `https://christophertregaskis.atlassian.net`
+- **Issue Types Available**:
+  - Epic (10011)
+  - Story (10010)
+  - Task (10008)
+  - Subtask (10012)
+  - Bug (10006)
 
 ---
 
@@ -12,10 +19,10 @@
 
 | Type    | ID    |
 | ------- | ----- |
-| Epic    | 10001 |
-| Story   | 10004 |
-| Task    | 10003 |
-| Subtask | 10002 |
+| Epic    | 10011 |
+| Story   | 10010 |
+| Task    | 10008 |
+| Subtask | 10012 |
 | Bug     | 10006 |
 
 ---
@@ -69,10 +76,10 @@ curl -X POST https://christophertregaskis.atlassian.net/rest/api/3/issue \
   -H "Content-Type: application/json" \
   -d '{
     "fields": {
-      "project": { "key": "SCRUM" },
+      "project": { "key": "FFP" },
       "summary": "Epic: Application Setup",
       "description": "[Markdown content]",
-      "issuetype": { "id": "10001" },
+      "issuetype": { "id": "10011" },
       "priority": { "name": "Highest" },
       "labels": ["phase-1", "infrastructure"],
       "customfield_10011": "Application Setup"
@@ -88,11 +95,11 @@ curl -X POST https://christophertregaskis.atlassian.net/rest/api/3/issue \
   -H "Content-Type: application/json" \
   -d '{
     "fields": {
-      "project": { "key": "SCRUM" },
+      "project": { "key": "FFP" },
       "summary": "As a new user, I want to register",
       "description": "[Markdown content]",
-      "issuetype": { "id": "10004" },
-      "parent": { "key": "SCRUM-1" },
+      "issuetype": { "id": "10010" },
+      "parent": { "key": "FFP-1" },
       "priority": { "name": "High" },
       "labels": ["phase-1", "authentication"],
       "customfield_10016": 5
@@ -108,11 +115,11 @@ curl -X POST https://christophertregaskis.atlassian.net/rest/api/3/issue \
   -H "Content-Type: application/json" \
   -d '{
     "fields": {
-      "project": { "key": "SCRUM" },
+      "project": { "key": "FFP" },
       "summary": "Create Zod schema for registration",
       "description": "[Markdown content]",
-      "issuetype": { "id": "10002" },
-      "parent": { "key": "SCRUM-10" }
+      "issuetype": { "id": "10012" },
+      "parent": { "key": "FFP-10" }
     }
   }'
 ```
@@ -125,7 +132,7 @@ curl -X POST https://christophertregaskis.atlassian.net/rest/api/3/issue \
   -H "Content-Type: application/json" \
   -d '{
     "fields": {
-      "project": { "key": "SCRUM" },
+      "project": { "key": "FFP" },
       "summary": "[Bug] Assessment submission fails",
       "description": "[Markdown content]",
       "issuetype": { "id": "10006" },

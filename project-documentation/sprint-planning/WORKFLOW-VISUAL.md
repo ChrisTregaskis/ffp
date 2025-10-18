@@ -31,7 +31,7 @@
 │ Input:  chat-2-prompt.md                                         │
 │         + Load: epic-standards.md, story-standards.md            │
 │ Action: Claude creates Epic + Stories via Jira API               │
-│ Output: SCRUM-1 (Epic) + SCRUM-2 through N (Stories) in Jira     │
+│ Output: FFP-1 (Epic) + FFP-2 through N (Stories) in Jira     │
 │         sprint-1-created-summary.md (reference doc)              │
 │ Time:   ~20 minutes                                              │
 │ Tokens: ~6,000 (vs 17,000 with old monolithic file)              │
@@ -182,12 +182,12 @@ NEW WAY (Modular):
                     + loads ONLY needed standards
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                      JIRA (SCRUM Project)                   │
+│                      JIRA (FFP Project)                   │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  Epics: SCRUM-1 → SCRUM-6                                   │
+│  Epics: FFP-1 → FFP-6                                   │
 │    ↓                                                        │
-│  Stories: SCRUM-7, SCRUM-8, SCRUM-9...                      │
+│  Stories: FFP-7, FFP-8, FFP-9...                      │
 │    ↓                                                        │
 │  Subtasks: Under each Story                                 │
 │                                                             │
@@ -223,7 +223,7 @@ Week 2+: Development
 After planning complete, you should have:
 
 ✅ **Standards**: Modular, token-optimized structure (jira-standards/)  
-✅ **6 Epics**: One per sprint in Jira (SCRUM-1 through SCRUM-6)  
+✅ **6 Epics**: One per sprint in Jira (FFP-1 through FFP-6)  
 ✅ **~50-80 Stories**: Across all sprints  
 ✅ **Sprint 1 detailed**: Ready to start development  
 ✅ **Dependencies mapped**: Know what blocks what  
@@ -239,7 +239,7 @@ After planning complete, you should have:
 | Prompts               | `sprint-planning/chat-X-prompt.md`   |
 | Standards (Modular)   | `jira-standards/` (load selectively) |
 | Standards Guide       | `jira-standards/LOAD-THIS-FIRST.md`  |
-| Actual work items     | Jira SCRUM project                   |
+| Actual work items     | Jira FFP project                     |
 | Progress tracking     | Jira board + CHECKLIST.md            |
 | Sprint retrospectives | Update project-state.md              |
 

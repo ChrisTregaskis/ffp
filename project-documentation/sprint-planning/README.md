@@ -10,7 +10,7 @@ Structured approach to sprint planning using Claude with **direct Jira integrati
 
 **Key Change**: We create Jira issues directly via API, NOT markdown files.
 
-**Jira Project**: SCRUM at `https://ctregaskis.atlassian.net`
+**Jira Project**: FFP at `https://ctregaskis.atlassian.net`
 
 ---
 
@@ -30,7 +30,7 @@ Structured approach to sprint planning using Claude with **direct Jira integrati
 **Prompt**: `sprint-planning/chat-2-prompt.md`  
 **Output**:
 
-- 6 Epics created in Jira (SCRUM-1 through SCRUM-6)
+- 6 Epics created in Jira (FFP-1 through FFP-6)
 - `outputs/epics-created-summary.md` (reference doc)  
   **Status**: Pending Chat 1 completion  
   **Objective**: Create 6 Epics directly in Jira using API

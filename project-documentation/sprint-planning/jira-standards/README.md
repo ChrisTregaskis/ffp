@@ -5,8 +5,16 @@
 Jira ticket standards broken into focused modules to optimize token usage per chat.
 
 **Project**: FFP (Fit For Purpose) - Multi-tenant physiotherapy SaaS  
-**Jira Cloud ID**: `46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf`  
-**Project Key**: `SCRUM`
+**Site**: `https://ctregaskis.atlassian.net`
+**Project Key**: `FFP`
+**Cloud ID**: `46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf`
+**Issue Types Available**:
+
+- Epic (10011)
+- Story (10010)
+- Task (10008)
+- Subtask (10012)
+- Bug (10006)
 
 ---
 

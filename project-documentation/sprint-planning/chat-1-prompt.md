@@ -8,9 +8,16 @@
 
 **Jira Details**:
 
-- Cloud ID: `46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf`
-- Project Key: `SCRUM`
-- Available Issue Types: Epic (10001), Story (10004), Task (10003), Subtask (10002), Bug (10006)
+- **Site**: `https://ctregaskis.atlassian.net`
+- **Project**: FFP (Fit For Purpose)
+- **Project Key**: `FFP`
+- **Cloud ID**: `46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf`
+- **Issue Types Available**:
+  - Epic (10011)
+  - Story (10010)
+  - Task (10008)
+  - Subtask (10012)
+  - Bug (10006)
 
 ---
 

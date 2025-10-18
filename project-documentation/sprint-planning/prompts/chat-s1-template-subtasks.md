@@ -11,8 +11,8 @@
 
 - Cloud ID: `46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf`
 - Site: `https://ctregaskis.atlassian.net`
-- Project Key: `SCRUM`
-- Subtask Issue Type ID: `10005`
+- Project Key: `FFP`
+- Subtask Issue Type ID: `10012`
 
 ---
 
@@ -48,7 +48,7 @@ Use this prompt when:
 
 Before creating subtasks, provide:
 
-1. **Parent Story Key**: e.g., `SCRUM-7`
+1. **Parent Story Key**: e.g., `FFP-7`
 2. **Parent Story Title**: e.g., "Turborepo Monorepo Setup"
 3. **Story Points**: e.g., 3 points
 4. **Story Description**: (copy from Jira or reference)
@@ -65,11 +65,11 @@ Before creating subtasks, provide:
 
 **Examples**:
 
-- `SCRUM-7 - Initialize Turborepo configuration`
-- `SCRUM-7 - Setup workspace packages structure`
-- `SCRUM-7 - Configure TypeScript paths`
-- `SCRUM-7 - Add build caching pipeline`
-- `SCRUM-7 - Write tests for build system`
+- `FFP-7 - Initialize Turborepo configuration`
+- `FFP-7 - Setup workspace packages structure`
+- `FFP-7 - Configure TypeScript paths`
+- `FFP-7 - Add build caching pipeline`
+- `FFP-7 - Write tests for build system`
 
 ### Subtask Time Estimates
 
@@ -151,7 +151,7 @@ Break down stories into these categories:
 
 ## Example Breakdown
 
-### Example 1: Story SCRUM-7 (Turborepo Setup - 3 points)
+### Example 1: Story FFP-7 (Turborepo Setup - 3 points)
 
 **Parent Story**: "As a developer, I want to setup Turborepo monorepo..."
 
@@ -204,7 +204,7 @@ Break down stories into these categories:
 
 ---
 
-### Example 2: Story SCRUM-9 (Cognito Auth - 8 points)
+### Example 2: Story FFP-9 (Cognito Auth - 8 points)
 
 **Parent Story**: "As a user, I want to register and login..."
 
@@ -280,8 +280,8 @@ Break down stories into these categories:
 ```typescript
 {
   issueTypeName: "Sub-task",
-  projectKey: "SCRUM",
-  parent: "SCRUM-7", // Parent story key
+  projectKey: "FFP",
+  parent: "FFP-7", // Parent story key
   summary: "Initialize Turborepo configuration",
   description: `## Task Description
 

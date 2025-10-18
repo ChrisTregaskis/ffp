@@ -48,6 +48,7 @@ sprint-planning/
 ### Getting Started
 
 **SETUP-COMPLETE.md**
+
 - What's been created
 - Key changes vs original plan
 - Sprint 1 confirmed scope
@@ -55,6 +56,7 @@ sprint-planning/
 - **Read this first!**
 
 **README.md**
+
 - Complete chat flow guide
 - How to use each prompt
 - Output locations
@@ -65,18 +67,21 @@ sprint-planning/
 ### Prompts (Copy to Claude)
 
 **chat-1-prompt.md**
+
 - Defines Jira ticket standards
 - Creates reference doc in repo
 - ~10 minute chat
 - **Run this first**
 
 **chat-2-prompt.md**
+
 - Creates 6 Epics in Jira
 - Generates summary doc
 - ~15 minute chat
 - **Run after Chat 1**
 
 **Future prompts**: Will be created as you progress
+
 - Chat [E1-E6]: Create User Stories
 - Chat [US]: Add detailed requirements
 
@@ -85,6 +90,7 @@ sprint-planning/
 ### Reference Docs
 
 **jira-integration-reference.md**
+
 - Jira project details
 - Available issue types
 - How Claude creates issues
@@ -93,6 +99,7 @@ sprint-planning/
 - Verification steps
 
 **WORKFLOW-VISUAL.md**
+
 - Visual workflow diagram
 - File flow diagram
 - Data flow: where things live
@@ -101,6 +108,7 @@ sprint-planning/
 - Emergency quick start
 
 **TROUBLESHOOTING.md**
+
 - Common issues & solutions
 - Error codes explained
 - Jira formatting tips
@@ -112,6 +120,7 @@ sprint-planning/
 ### Tracking
 
 **CHECKLIST.md**
+
 - Track each chat completion
 - Record Epic/Story keys
 - Verification steps
@@ -131,7 +140,7 @@ sprint-planning/
    ↓
 4. Copy chat-2-prompt.md → New Claude chat
    ↓
-5. Verify Epics in Jira (SCRUM-1 through SCRUM-6)
+5. Verify Epics in Jira (FFP-1 through FFP-6)
    ↓
 6. Continue with Story creation (Chat [E1-E6])
    ↓
@@ -145,10 +154,12 @@ sprint-planning/
 ## 🔗 Quick Links
 
 ### External
-- **Jira Project**: https://ctregaskis.atlassian.net/browse/SCRUM
-- **Jira Board**: https://ctregaskis.atlassian.net/jira/software/projects/SCRUM/boards
+
+- **Jira Project**: https://ctregaskis.atlassian.net/browse/FFP
+- **Jira Board**: https://ctregaskis.atlassian.net/jira/software/projects/FFP/boards
 
 ### Local Paths
+
 ```bash
 # Sprint planning docs
 /Users/christophertregaskis/Documents/FFP/ffp/project-documentation/sprint-planning/
@@ -171,20 +182,24 @@ sprint-planning/outputs/
 ## 📊 Expected Outputs
 
 ### After Chat 1
+
 ```
 outputs/
 └── jira-ticket-standards.md
 ```
 
 ### After Chat 2
+
 ```
 outputs/
 ├── jira-ticket-standards.md
 └── epics-created-summary.md
 ```
-Plus 6 Epics in Jira: `SCRUM-1` through `SCRUM-6`
+
+Plus 6 Epics in Jira: `FFP-1` through `FFP-6`
 
 ### After Story Creation
+
 ```
 outputs/
 ├── jira-ticket-standards.md
@@ -196,9 +211,11 @@ outputs/
 ├── sprint-5-stories-created.md
 └── sprint-6-stories-created.md
 ```
+
 Plus ~50-80 Stories in Jira
 
 ### After Detail Pass
+
 ```
 outputs/
 ├── [previous files]
@@ -212,12 +229,14 @@ outputs/
 ## 🎓 Key Concepts
 
 ### Jira Integration
+
 - Claude creates issues directly via API
 - No manual data entry needed
 - Reference docs saved to repo
 - Actual work tracked in Jira
 
 ### Issue Hierarchy
+
 ```
 Epic (Sprint container)
 ├── Story (User functionality)
@@ -228,6 +247,7 @@ Epic (Sprint container)
 ```
 
 ### Sprint Structure
+
 1. **Sprint 1**: Application Setup (Infrastructure)
 2. **Sprint 2**: Assessment Engine Core (Core feature)
 3. **Sprint 3**: Video Management & Streaming (Media)
@@ -239,15 +259,15 @@ Epic (Sprint container)
 
 ## ⚡ Quick Reference
 
-| Need | See |
-|------|-----|
-| Get started | SETUP-COMPLETE.md |
-| Understand workflow | README.md |
-| Visual diagrams | WORKFLOW-VISUAL.md |
-| Track progress | CHECKLIST.md |
-| Solve issues | TROUBLESHOOTING.md |
-| Jira details | jira-integration-reference.md |
-| Create tickets | chat-1-prompt.md, chat-2-prompt.md |
+| Need                | See                                |
+| ------------------- | ---------------------------------- |
+| Get started         | SETUP-COMPLETE.md                  |
+| Understand workflow | README.md                          |
+| Visual diagrams     | WORKFLOW-VISUAL.md                 |
+| Track progress      | CHECKLIST.md                       |
+| Solve issues        | TROUBLESHOOTING.md                 |
+| Jira details        | jira-integration-reference.md      |
+| Create tickets      | chat-1-prompt.md, chat-2-prompt.md |
 
 ---
 
@@ -276,6 +296,7 @@ Epic (Sprint container)
 ## 📝 Document Updates
 
 When creating new prompts or docs:
+
 - [ ] Add to this index
 - [ ] Update CHECKLIST.md if needed
 - [ ] Update WORKFLOW-VISUAL.md if flow changes

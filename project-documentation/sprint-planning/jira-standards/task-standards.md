@@ -17,7 +17,7 @@ Tasks represent technical work without direct user-facing value (infrastructure,
 
 | Field            | Value                                                   |
 | ---------------- | ------------------------------------------------------- |
-| **Issue Type**   | Task (10003)                                            |
+| **Issue Type**   | Task (10008)                                            |
 | **Summary**      | [Action]: [Outcome]                                     |
 | **Story Points** | 1, 2, 3, 5, 8                                           |
 | **Labels**       | `infrastructure`, `refactor`, `devops`, `documentation` |

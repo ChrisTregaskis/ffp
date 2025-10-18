@@ -16,7 +16,7 @@ Error message: "Failed to create issue" or "Permission denied"
 
    ```bash
    # Verify you have create permission
-   # In Jira: Settings > Projects > SCRUM > Permissions
+   # In Jira: Settings > Projects > FFP > Permissions
    ```
 
    - Need: "Create Issues" permission
@@ -29,15 +29,16 @@ Error message: "Failed to create issue" or "Permission denied"
 
 3. **Check Project Key**
 
-   - Should be: `SCRUM` (uppercase)
-   - Not: `scrum` or `FFP`
+   - Should be: `FFP` (uppercase)
+   - Not: `ffp` or `FFP`
 
 4. **Verify Issue Type IDs**
-   - Epic: 10001
-   - Story: 10004
-   - Task: 10003
-   - Subtask: 10002
-   - Bug: 10006
+
+- Epic (10011)
+- Story (10010)
+- Task (10008)
+- Subtask (10012)
+- Bug (10006)
 
 ---
 
@@ -55,14 +56,14 @@ Story created but not showing under Epic in Jira
    // Correct format
    additional_fields: {
      parent: {
-       key: "SCRUM-1";
+       key: "FFP-1";
      } // Not "id"
    }
    ```
 
 2. **Verify Epic Key**
 
-   - Must use exact key from Jira (e.g., SCRUM-1)
+   - Must use exact key from Jira (e.g., FFP-1)
    - Check Epic exists before creating Story
 
 3. **Check Issue Hierarchy**
@@ -143,20 +144,20 @@ Claude says issues created but can't see them in Jira
 
 1. **Check Project Filter**
 
-   - In Jira, ensure viewing SCRUM project
+   - In Jira, ensure viewing FFP project
    - Remove any custom filters
 
 2. **Search by Key**
 
    ```
-   Navigate to: https://ctregaskis.atlassian.net/browse/SCRUM-X
+   Navigate to: https://ctregaskis.atlassian.net/browse/FFP-X
    (Replace X with issue number)
    ```
 
 3. **Use JQL Search**
 
    ```
-   project = SCRUM AND created >= -1d
+   project = FFP AND created >= -1d
    ```
 
 4. **Check All Issues**
@@ -238,14 +239,14 @@ Subtask created but not nested under Story
    // For Subtask creation
    additional_fields: {
      parent: {
-       key: "SCRUM-7";
+       key: "FFP-7";
      } // Story key
    }
    ```
 
 2. **Verify Issue Type**
 
-   - Must be Subtask type (10002)
+   - Must be Subtask type (10012)
    - Not Task type
 
 3. **Check in Jira**
@@ -329,7 +330,7 @@ Priority shows as default instead of specified
 
 **404 Not Found**
 
-- Verify project key (SCRUM)
+- Verify project key (FFP)
 - Check cloud ID correct
 - Ensure project exists
 
@@ -369,7 +370,7 @@ Can't copy full prompt, too many characters
 1. **Via Claude (Next Chat)**
 
    ```
-   "Update SCRUM-7 with new acceptance criteria"
+   "Update FFP-7 with new acceptance criteria"
    ```
 
 2. **Manual in Jira**

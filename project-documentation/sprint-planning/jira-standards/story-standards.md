@@ -17,7 +17,7 @@ User Stories describe features from end-user perspective, delivering tangible va
 
 | Field            | Value                                                    |
 | ---------------- | -------------------------------------------------------- |
-| **Issue Type**   | Story (10004)                                            |
+| **Issue Type**   | Story (10010)                                            |
 | **Summary**      | As a [user type], I want [action] so that [benefit]      |
 | **Epic Link**    | Parent epic                                              |
 | **Story Points** | 1, 2, 3, 5, 8, 13 (see story-points.md)                  |
@@ -135,7 +135,7 @@ Then User A only sees their own tenant's data (verified by integration test).
 ```markdown
 **Summary**: As a new user, I want to register an account so that I can access FFP
 
-**Epic Link**: SCRUM-EPIC-1 (Application Setup)
+**Epic Link**: FFP-EPIC-1 (Application Setup)
 **Story Points**: 5
 **Priority**: High
 **Labels**: phase-1, frontend, backend, authentication
@@ -232,7 +232,7 @@ Then each user has unique `tenantId` in Cognito custom attributes.
 ```markdown
 **Summary**: As a user, I want to answer dynamic assessment questions so that I receive a personalized program
 
-**Epic Link**: SCRUM-EPIC-2 (Assessment Engine)
+**Epic Link**: FFP-EPIC-2 (Assessment Engine)
 **Story Points**: 8
 **Priority**: High
 **Labels**: phase-1, frontend, backend

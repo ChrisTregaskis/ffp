@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: October 17, 2025  
+**Last Updated**: October 18, 2025  
 **Current Phase**: Sprint Planning  
 **Solo Developer**: Christopher Tregaskis
 
@@ -11,17 +11,19 @@
 ### Status
 
 ✅ **Complete**: Chat 1 - Jira ticket standards defined (modular structure)  
-✅ **Complete**: Chat 2 - Created all 6 Epics in Jira (SCRUM-1 to SCRUM-6)  
-🔄 **In Progress**: Ready for Chat E1 - Create User Stories for Sprint 1  
-⏸️ **Not Started**: User Stories for Sprints 2-6, Subtask creation, Code implementation
+✅ **Complete**: Chat 2 - Created all 6 Epics in Jira (FFP-1 to FFP-6)  
+✅ **Complete**: Chat E1 - Created 10 User Stories for Sprint 1 (FFP-7 to FFP-16)  
+🔄 **In Progress**: Ready for Chat S1 - Create Subtasks for Sprint 1 stories  
+⏸️ **Not Started**: User Stories for Sprints 2-6, Sprint 1 execution
 
 ### Focus Areas
 
-- ✅ Jira ticket standards (Epic, Story, Task, Sub-task, Bug) - Modular & token-optimized
+- ✅ Jira ticket standards (Epic, Story, Task, Sub-task, Bug) - Modular & token-optimised
 - ✅ Created all 6 Epics in Jira with full descriptions and realistic timeline
-- 🔄 Create User Stories for Sprint 1 (SCRUM-1) - Next step
-- ⏸️ Create User Stories for Sprints 2-6 (SCRUM-2 to SCRUM-6)
-- ⏸️ Create Subtasks for complex stories (5+ points)
+- ✅ Created 10 User Stories for Sprint 1 (FFP-7 to FFP-16) with comprehensive details
+- ✅ Migrated from SCRUM to FFP project key (clean FFP-X issue keys)
+- 🔄 Create Subtasks for Sprint 1 stories (starting with FFP-7)
+- ⏸️ Create User Stories for Sprints 2-6 (FFP-2 to FFP-6)
 - ⏸️ Sprint 1 execution (8-10 weeks)
 
 ### Sprint Planning Approach
@@ -29,15 +31,15 @@
 **Structured conversation flow:**
 
 1. ✅ **Chat 1**: Define ticket standards (COMPLETE - modular structure created)
-2. ✅ **Chat 2**: Create all 6 Epics in Jira (COMPLETE - SCRUM-1 to SCRUM-6)
-3. 🔄 **Chat E1**: Create User Stories for Sprint 1 (SCRUM-1) - Next
-4. ⏸️ **Chat E2-E6**: Create User Stories for Sprints 2-6
-5. ⏸️ **Chat S1**: Create Subtasks for stories as needed (5+ points)
+2. ✅ **Chat 2**: Create all 6 Epics in Jira (COMPLETE - FFP-1 to FFP-6)
+3. ✅ **Chat E1**: Create User Stories for Sprint 1 (COMPLETE - FFP-7 to FFP-16)
+4. 🔄 **Chat S1**: Create Subtasks for Sprint 1 stories (Next - starting with FFP-7)
+5. ⏸️ **Chat E2-E6**: Create User Stories for Sprints 2-6
 6. ⏸️ **Sprint 1 Execution**: Start coding!
 
 **Sprint Structure:**
 
-- **Sprint 1**: Application setup (Turborepo, SST, Auth, RDS, API, Web, Testing)
+- **Sprint 1**: Application setup (Turborepo, SST, Auth, RDS, API, Web, Testing) - **50 story points**
 - **Sprint 2**: Assessment engine core
 - **Sprint 3**: Video management & streaming
 - **Sprint 4**: User dashboards & progress tracking
@@ -55,7 +57,7 @@
 
 ### Planning Phase ✅ COMPLETE
 
-- Architecture decisions finalized
+- Architecture decisions finalised
 - ERDs and schemas defined
 - Patterns and standards established
 - Tech stack confirmed (React, TypeScript, SST, PostgreSQL, Cognito, Drizzle, Turborepo)
@@ -66,10 +68,10 @@
 **What to do:**
 
 - ✅ Define Jira ticket structure and standards (COMPLETE)
-- 🔄 Create Epics for all sprints in Jira
-- 🔄 Break down Epics into User Stories
-- ⏸️ Write detailed acceptance criteria
-- ⏸️ Estimate story points
+- ✅ Create Epics for all sprints in Jira (COMPLETE)
+- ✅ Break down Sprint 1 Epic into User Stories (COMPLETE)
+- 🔄 Create Subtasks for complex stories (5+ points)
+- ⏸️ Break down Sprints 2-6 Epics into User Stories
 - ⏸️ Set up Jira board for Sprint 1
 
 **What NOT to do:**
@@ -89,7 +91,7 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 
 ### ✅ Chat 1: Ticket Standards (COMPLETE)
 
-**Created modular Jira standards** (token-optimized):
+**Created modular Jira standards** (token-optimised):
 
 - `jira-standards/LOAD-THIS-FIRST.md` - Loading guide
 - `jira-standards/epic-standards.md` - Epic template + 2 examples
@@ -101,7 +103,7 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 - `jira-standards/definition-of-done.md` - DoD checklists
 - `jira-standards/jira-fields.md` - Labels, components, API examples
 
-**Token optimization achieved:**
+**Token optimisation achieved:**
 
 - Old approach: 17,000 tokens per chat (monolithic file)
 - New approach: 2,000-6,000 tokens per chat (load only what's needed)
@@ -109,72 +111,103 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 
 ### ✅ Chat 2: All 6 Epics Created (COMPLETE)
 
-**Epics created in Jira:**
+- Noted in progress-log
 
-- SCRUM-1: Application Setup & Foundation (Sprint 1)
-- SCRUM-2: Assessment Engine Core (Sprint 2)
-- SCRUM-3: Video Management & Streaming (Sprint 3)
-- SCRUM-4: User Dashboards & Progress Tracking (Sprint 4)
-- SCRUM-5: Business Portal (Sprint 5)
-- SCRUM-6: Company Management Portal (Sprint 6)
+### 🔄 Chat S1: Sprint 1 Subtasks (NEXT)
 
-**Key achievements:**
+**Ready to create subtasks for:**
 
-- All Epics have full descriptions (Business Value, Scope, Technical Approach, Security, Success Metrics)
-- Fixed initial API issue where descriptions were empty
-- Added proper labels to all Epics for filtering
+- FFP-7: Turborepo Monorepo Setup (3 points) - Starting with this
+- FFP-8: SST Infrastructure Foundation (5 points)
+- FFP-9: Cognito Authentication (8 points)
+- FFP-10: PostgreSQL Schema with RLS (8 points)
+- FFP-11: Drizzle ORM Setup (5 points)
+- FFP-12: Testing Framework Configuration (5 points)
+- FFP-13: CI/CD Pipeline (5 points)
+- FFP-16: Web Login/Logout Flow (5 points)
 
-**Timeline adjusted:**
+**Stories NOT needing subtasks** (3 points, simple enough):
 
-- **Old estimate**: 6 sprints × 2 weeks = 12 weeks
-- **Realistic estimate**: 6 sprints over 9-12 months (8 hours/week capacity)
-- Sprint 1 (34 points): 8-10 weeks
-- Sprint 2 (34 points): 8-10 weeks
-- Sprints 3-6 (21, 21, 21, 13 points): 3-6 weeks each
-
-### 🔄 Chat E1: Sprint 1 User Stories (NEXT)
-
-- User has prompt ready
+- FFP-14: CloudWatch Logging
+- FFP-15: Error Handling Patterns
 
 ---
 
 ## Sprint 1: Application Setup Scope
 
+**Total Story Points**: 50 (8-10 weeks estimated)
+
 **Confirmed scope:**
 
 - Turborepo setup (monorepo structure, build caching)
-- Linting, Prettier, TypeScript configuration
-- Pre-commit hooks (linting, type-checking)
-- Pre-push hooks (automated tests)
-- SST infrastructure foundation
-- Cognito authentication
-- RDS PostgreSQL setup
-- API Gateway structure
-- Web application scaffold
-- Basic testing patterns (Vitest, Playwright, MSW)
-- Environment configuration (.env patterns, AWS Parameter Store)
-- CI/CD foundation (GitHub Actions - test automation, PR checks)
-- Logging infrastructure foundation (CloudWatch structured logging)
-- Error handling patterns (custom error classes, React error boundaries)
-- GitHub Copilot + Actions for automated PR reviews
+- SST infrastructure foundation (AuthStack, DatabaseStack, ApiStack, MonitoringStack)
+- Cognito authentication (custom attributes: tenantId, role)
+- RDS PostgreSQL setup with Row-Level Security (RLS)
+- Drizzle ORM configuration
+- API Gateway structure with JWT authorisers
+- Web application scaffold (React + Vite + TailwindCSS)
+- Testing framework (Vitest, Playwright, MSW)
+- CI/CD foundation (GitHub Actions)
+- CloudWatch logging (structured JSON)
+- Error handling patterns (custom error classes)
+- Web login/logout flow (Amplify integration)
 
-**Deferred:**
+**Critical success criteria:**
 
-- Documentation standards (already covered in project-documentation/)
-- Manual code review process (solo dev, automated PR reviews via Copilot/Actions)
+- RLS integration tests pass (multi-tenant isolation verified)
+- JWT contains tenantId and role
+- E2E login test passes
+- All TypeScript strict mode, no errors
+
+---
+
+## Jira Project Details (Updated)
+
+### Current FFP Project
+
+- **Site**: `https://ctregaskis.atlassian.net`
+- **Project Key**: `FFP` ✅
+- **Project Name**: `Fit For Purpose`
+- **Project ID**: `10033`
+- **Cloud ID**: `46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf`
+
+### Issue Types Available
+
+- Epic (10011)
+- Story (10010)
+- Task (10008)
+- Subtask (10012)
+- Bug (10009)
+
+### Current Issues
+
+**Epics (FFP-1 to FFP-6)**:
+
+- FFP-1: Application Setup & Foundation
+- FFP-2: Assessment Engine Core
+- FFP-3: Video Management & Streaming
+- FFP-4: User Dashboards & Progress Tracking
+- FFP-5: Business Portal
+- FFP-6: Company Management Portal
+
+**Sprint 1 Stories (FFP-7 to FFP-16)**:
+
+- All 10 stories created with full descriptions
+- Linked to Epic FFP-1
+- Ready for subtask breakdown
 
 ---
 
 ## Key Decisions Made
 
-### Documentation & Token Optimization
+### Documentation & Token Optimisation
 
 1. **Modular Jira standards** - 65-88% token reduction per chat
 2. **Custom instructions** - Embedded file ignore list in Project settings
 3. **project-state.md always loaded** - Current phase context (~800 tokens)
 4. **Domain docs on-demand** - Load only when query needs them
 5. **Meta-docs excluded** - Workflow guides, prompts not in Claude Knowledge
-6. **Progress log separated** - Detailed history in progress-log.md (not always loaded)
+6. **Progress log separated** - Detailed history in process-log.md (not always loaded)
 
 ### Sprint Planning
 
@@ -182,6 +215,7 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 2. **One chat per sprint** - Create Epic + Stories together
 3. **Incremental detail** - High-level first, add details as needed
 4. **Token-conscious** - Load only necessary standards per chat type
+5. **Project migration** - Moved from SCRUM to FFP keys for consistency
 
 ---
 
@@ -189,26 +223,26 @@ Will begin after sprint planning complete. Each sprint will have its own phase t
 
 - **MVP Goal**: Ship functional product as solo developer
 - **Users**: Individual users + Business accounts (sub-users) + Company admin
-- **Core Value**: Dynamic assessments → Personalized programs → Video workouts
+- **Core Value**: Dynamic assessments → Personalised programs → Video workouts
 - **Critical**: Multi-tenant isolation, healthcare security, OWASP compliance
-- **Timeline**: Aiming for functional MVP (solo build)
+- **Timeline**: Aiming for functional MVP (solo build, 8 hours/week)
+- **Sprint 1**: 50 story points, 8-10 weeks estimated
 
 ---
 
 ## Progress Summary
 
-**Recent Work** (Oct 17, 2025):
+**Recent Work** (Oct 18, 2025):
 
-- ✅ Created token-optimized Jira standards (9 modular files, 65-88% savings)
-- ✅ Established sprint planning workflow with direct Jira API integration
-- ✅ Defined 6-sprint structure (Application Setup → Company Portal)
-- ✅ Created all 6 Epics in Jira (SCRUM-1 to SCRUM-6) with full descriptions
-- ✅ Updated realistic timeline: 9-12 months for Phase 1 (8 hours/week capacity)
-- ✅ Created prompt templates for User Stories and Subtasks
-- 🔄 Ready for Chat E1: Create User Stories for Sprint 1 (SCRUM-1)
+- ✅ Created 10 User Stories for Sprint 1 (FFP-7 to FFP-16)
+- ✅ Generated comprehensive sprint planning documentation
+- ✅ Migrated from SCRUM to FFP project key (clean FFP-X issues)
+- ✅ Archived old SCRUM project after migration
+- ✅ Updated all documentation to reference new FFP project
+- 🔄 Ready for Chat S1: Create Subtasks for Sprint 1 stories
 
-**See `progress-log.md` for detailed session history.**
+**See `process-log.md` for detailed session history.**
 
 ---
 
-**Next Action**: Start new Claude chat with `prompts/chat-e1-sprint-1-stories.md` template to create User Stories for Sprint 1
+**Next Action**: Start new Claude chat with `prompts/chat-s1-template-subtasks.md` template to create subtasks for FFP-7 (Turborepo Monorepo Setup)

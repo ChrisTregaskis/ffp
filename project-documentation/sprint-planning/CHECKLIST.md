@@ -26,19 +26,19 @@ _Add any adjustments or clarifications needed here_
 - [ ] Start new Claude chat (fresh tokens)
 - [ ] Paste prompt and run
 - [ ] Claude creates 6 Epics in Jira
-- [ ] Verify Epic keys returned (e.g., SCRUM-1 through SCRUM-6)
-- [ ] Check Epics in Jira: `https://ctregaskis.atlassian.net/browse/SCRUM`
+- [ ] Verify Epic keys returned (e.g., FFP-1 through FFP-6)
+- [ ] Check Epics in Jira: `https://ctregaskis.atlassian.net/browse/FFP`
 - [ ] Save summary doc to `outputs/epics-created-summary.md`
 - [ ] Copy Epic URLs for reference
 
 **Epic Keys Created:**
 
-- [ ] Sprint 1 (Application Setup): SCRUM-\_\_\_\_
-- [ ] Sprint 2 (Assessment Engine): SCRUM-\_\_\_\_
-- [ ] Sprint 3 (Video Management): SCRUM-\_\_\_\_
-- [ ] Sprint 4 (User Dashboards): SCRUM-\_\_\_\_
-- [ ] Sprint 5 (Business Portal): SCRUM-\_\_\_\_
-- [ ] Sprint 6 (Company Management): SCRUM-\_\_\_\_
+- [ ] Sprint 1 (Application Setup): FFP-\_\_\_\_
+- [ ] Sprint 2 (Assessment Engine): FFP-\_\_\_\_
+- [ ] Sprint 3 (Video Management): FFP-\_\_\_\_
+- [ ] Sprint 4 (User Dashboards): FFP-\_\_\_\_
+- [ ] Sprint 5 (Business Portal): FFP-\_\_\_\_
+- [ ] Sprint 6 (Company Management): FFP-\_\_\_\_
 
 ---
 
@@ -53,7 +53,7 @@ _Add any adjustments or clarifications needed here_
 - [ ] Count stories created: \_\_\_\_
 
 **Story Keys Created:**
-_List them as created: SCRUM-7, SCRUM-8, etc._
+_List them as created: FFP-7, FFP-8, etc._
 
 ---
 
@@ -107,11 +107,11 @@ _List them as created: SCRUM-7, SCRUM-8, etc._
 
 **Stories Detailed:**
 
-- [ ] SCRUM-\__\_\_: \_Story title_
-- [ ] SCRUM-\__\_\_: \_Story title_
-- [ ] SCRUM-\__\_\_: \_Story title_
-- [ ] SCRUM-\__\_\_: \_Story title_
-- [ ] SCRUM-\__\_\_: \_Story title_
+- [ ] FFP-\__\_\_: \_Story title_
+- [ ] FFP-\__\_\_: \_Story title_
+- [ ] FFP-\__\_\_: \_Story title_
+- [ ] FFP-\__\_\_: \_Story title_
+- [ ] FFP-\__\_\_: \_Story title_
 
 ---
 
@@ -182,7 +182,7 @@ _List them as created: SCRUM-7, SCRUM-8, etc._
 
 ## Quick Links
 
-- **Jira Project**: https://ctregaskis.atlassian.net/browse/SCRUM
+- **Jira Project**: https://ctregaskis.atlassian.net/browse/FFP
 - **Sprint Planning Docs**: `/Users/christophertregaskis/Documents/FFP/ffp/project-documentation/sprint-planning/`
 - **Chat Prompts**: `sprint-planning/chat-X-prompt.md`
 - **Output Docs**: `sprint-planning/outputs/`

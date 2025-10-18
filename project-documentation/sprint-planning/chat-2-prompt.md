@@ -14,10 +14,16 @@
 
 **Jira Details**:
 
-- Cloud ID: `46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf`
-- Site: `https://ctregaskis.atlassian.net`
-- Project Key: `SCRUM`
-- Epic Issue Type ID: `10001`
+- **Site**: `https://ctregaskis.atlassian.net`
+- **Project**: FFP (Fit For Purpose)
+- **Project Key**: `FFP`
+- **Cloud ID**: `46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf`
+- **Issue Types Available**:
+  - Epic (10011)
+  - Story (10010)
+  - Task (10008)
+  - Subtask (10012)
+  - Bug (10006)
 
 ---
 
@@ -161,8 +167,8 @@ For each sprint, create **one Epic** with:
 
 For each sprint, use `createJiraIssue` tool to create Epic with:
 
-- **Issue Type**: Epic (10001)
-- **Project**: SCRUM
+- **Issue Type**: Epic (10011)
+- **Project**: FFP
 - **Summary**: Clear Epic title (e.g., "Application Setup")
 - **Description**: Following Epic template from Chat 1
 - **Labels**: Relevant tags (e.g., `sprint-1`, `infrastructure`, `security`)
@@ -188,7 +194,7 @@ Include:
 - **Complete descriptions**: Follow Epic template from Chat 1
 - **Dependencies noted**: Add to Epic description
 - **Realistic estimates**: Solo developer context
-- **Confirm creation**: Show Jira Epic keys (e.g., SCRUM-1, SCRUM-2)
+- **Confirm creation**: Show Jira Epic keys (e.g., FFP-1, FFP-2)
 
 ---
 
