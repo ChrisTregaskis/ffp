@@ -23,7 +23,7 @@ Sprint 1 establishes the foundational infrastructure for FFP. All 10 stories foc
 | [FFP-10](https://ctregaskis.atlassian.net/browse/FFP-10) | PostgreSQL Schema with RLS      | 8            | Highest  | To Do  |
 | [FFP-11](https://ctregaskis.atlassian.net/browse/FFP-11) | Drizzle ORM Setup               | 5            | High     | To Do  |
 | [FFP-12](https://ctregaskis.atlassian.net/browse/FFP-12) | Testing Framework Configuration | 5            | High     | To Do  |
-| [FFP-13](https://ctregaskis.atlassian.net/browse/FFP-13) | CI/CD Pipeline                  | 5            | High     | To Do  |
+| [FFP-13](https://ctregaskis.atlassian.net/browse/FFP-13) | Automated Testing Pipeline      | 5            | High     | To Do  |
 | [FFP-14](https://ctregaskis.atlassian.net/browse/FFP-14) | CloudWatch Logging              | 3            | Medium   | To Do  |
 | [FFP-15](https://ctregaskis.atlassian.net/browse/FFP-15) | Error Handling Patterns         | 3            | Medium   | To Do  |
 | [FFP-16](https://ctregaskis.atlassian.net/browse/FFP-16) | Web Login/Logout Flow           | 5            | High     | To Do  |
@@ -110,7 +110,7 @@ FFP-7 (Foundation)
 │   │   └── FFP-11 (Drizzle)
 │   └── FFP-14 (Logging)
 ├── FFP-12 (Testing)
-│   └── FFP-13 (CI/CD)
+│   └── FFP-13 (Automated Testing Pipeline)
 └── FFP-15 (Error Handling)
 ```
 
@@ -301,8 +301,8 @@ For Sprint 1 to be considered complete, all stories must meet these criteria:
 
 2. **CI/CD Pipeline Configuration** (FFP-13)
    - **Risk**: GitHub Actions + AWS IAM can be complex
-   - **Mitigation**: Start with simple workflows, iterate
-   - **Contingency**: Manual deployments acceptable for Sprint 1
+   - **Mitigation**: Start with simple testing workflows for Phase 1, defer full automation to Phase 2+
+   - **Contingency**: Manual deployments acceptable for Sprint 1 (aligned with Phase 1 strategy)
 
 ### Low Risk Items
 
@@ -337,9 +337,10 @@ Sprint 1 will be considered successful when:
 
 4. **Testing Established**
 
-   - CI pipeline runs on every PR
+   - CI pipeline runs automated tests on every PR (Phase 1)
    - Critical paths have test coverage
    - E2E test for login flow passes
+   - Manual deployments documented (full automation deferred to Phase 2)
 
 5. **Code Quality**
    - TypeScript strict mode enforced

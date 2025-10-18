@@ -16,7 +16,7 @@
 | 4   | **FFP-10** | PostgreSQL Schema with RLS      | 8      | Highest  | FFP-8, FFP-11        | [View](https://ctregaskis.atlassian.net/browse/FFP-10) |
 | 5   | **FFP-11** | Drizzle ORM Setup               | 5      | High     | FFP-8                | [View](https://ctregaskis.atlassian.net/browse/FFP-11) |
 | 6   | **FFP-12** | Testing Framework Configuration | 5      | High     | FFP-7                | [View](https://ctregaskis.atlassian.net/browse/FFP-12) |
-| 7   | **FFP-13** | CI/CD Pipeline                  | 5      | High     | FFP-7, FFP-8, FFP-12 | [View](https://ctregaskis.atlassian.net/browse/FFP-13) |
+| 7   | **FFP-13** | Automated Testing Pipeline      | 5      | High     | FFP-7, FFP-8, FFP-12 | [View](https://ctregaskis.atlassian.net/browse/FFP-13) |
 | 8   | **FFP-14** | CloudWatch Logging              | 3      | Medium   | FFP-8                | [View](https://ctregaskis.atlassian.net/browse/FFP-14) |
 | 9   | **FFP-15** | Error Handling Patterns         | 3      | Medium   | FFP-14               | [View](https://ctregaskis.atlassian.net/browse/FFP-15) |
 | 10  | **FFP-16** | Web Login/Logout Flow           | 5      | High     | FFP-9, FFP-7         | [View](https://ctregaskis.atlassian.net/browse/FFP-16) |
@@ -41,7 +41,7 @@
 6. **FFP-11** (5 points) - Drizzle ORM
 7. **FFP-10** (8 points) - Database Schema + RLS
 8. **FFP-9** (8 points) - Cognito Authentication
-9. **FFP-13** (5 points) - CI/CD Pipeline
+9. **FFP-13** (5 points) - Automated Testing Pipeline (GitHub Actions)
 10. **FFP-16** (5 points) - Web Login Flow
 
 ---
@@ -57,7 +57,7 @@
 
 ### Should Have (High Priority)
 
-- ✅ FFP-13: CI/CD pipeline functional
+- ✅ FFP-13: Automated testing pipeline functional (Phase 1: testing only)
 - ✅ FFP-12: Testing framework operational
 - ✅ FFP-14: Structured logging implemented
 
@@ -70,12 +70,12 @@
 
 ## Risk Mitigation
 
-| Risk                      | Story  | Mitigation                      | Contingency                        |
-| ------------------------- | ------ | ------------------------------- | ---------------------------------- |
-| Cross-tenant data leakage | FFP-10 | Comprehensive integration tests | Manual security audit              |
-| JWT missing custom claims | FFP-9  | Early testing with jwt.io       | Database lookup fallback           |
-| CI/CD complexity          | FFP-13 | Start simple, iterate           | Manual deployments OK for Sprint 1 |
-| Solo dev capacity         | All    | 8-10 week buffer                | Defer FFP-13, FFP-14 if needed     |
+| Risk                      | Story  | Mitigation                                               | Contingency                                               |
+| ------------------------- | ------ | -------------------------------------------------------- | --------------------------------------------------------- |
+| Cross-tenant data leakage | FFP-10 | Comprehensive integration tests                          | Manual security audit                                     |
+| JWT missing custom claims | FFP-9  | Early testing with jwt.io                                | Database lookup fallback                                  |
+| CI/CD complexity          | FFP-13 | Phase 1: Testing only, defer deployment automation       | Manual deployments OK for Sprint 1 (documented strategy)  |
+| Solo dev capacity         | All    | 8-10 week buffer                                         | Defer FFP-13, FFP-14 if needed                            |
 
 ---
 
@@ -101,13 +101,13 @@
 ## Technology Stack
 
 ```
-Frontend:  React 18 + TypeScript + Vite + TailwindCSS + Amplify
+Frontend:  React 18 + TypeScript + Vite + TailwindCSS + S3/CloudFront
 Backend:   Node.js 18 + TypeScript + Lambda + API Gateway
 Database:  PostgreSQL 15 (RDS) + Drizzle ORM + Row-Level Security
 Auth:      AWS Cognito (custom attributes: tenantId, role)
 IaC:       SST (Serverless Stack)
 Testing:   Vitest + Playwright + MSW
-CI/CD:     GitHub Actions
+CI:        GitHub Actions (Phase 1: automated testing only)
 Monitoring: CloudWatch Logs
 Validation: Zod schemas
 ```
@@ -132,9 +132,13 @@ npm run sst deploy --stage dev        # Deploy to dev
 npm run sst remove --stage dev        # Remove all resources
 npm run db:migrate --stage dev        # Run database migrations
 
-# CI/CD
-git push origin develop      # Triggers CI tests
-git push origin develop      # Auto-deploys to dev (after FFP-13)
+# CI (Phase 1 - Testing Only)
+git push origin develop      # Triggers automated tests via GitHub Actions
+
+# Manual Deployments (Phase 1)
+npm run sst deploy --stage dev        # Deploy backend to dev
+npm run build && aws s3 sync dist/ s3://bucket  # Deploy frontend
+npm run db:migrate --stage dev        # Run database migrations
 
 # Monitoring
 npm run sst logs --stage dev --function auth-register  # View logs

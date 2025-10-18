@@ -1,8 +1,33 @@
 # 🎯 Quick Reference - Load This First!
 
-## Token-Optimized Jira Standards
+## Token-Optimised Jira Standards
 
 Standards broken into focused modules. **Load only what you need per chat.**
+
+---
+
+## 📝 File Naming Convention
+
+All files in `outputs/` and `prompts/` follow this format:
+
+```
+yyyy-mm-dd_hhmm_descriptive-name.md
+```
+
+**Examples:**
+- `2025-10-18_1505_FFP-13-rescope-summary.md`
+- `2025-10-18_1400_sprint-1-stories-summary.md`
+- `2025-10-18_0900_chat-e1-sprint-1-stories.md`
+
+**Purpose:**
+- Chronological sorting in file explorer
+- Clear timestamp for version tracking
+- Easy identification of latest outputs
+- Supports future file archival strategies
+
+**Exception:** Core reference files without dates:
+- `sprint-1-stories-quick-ref.md` (living document)
+- Standard templates in `jira-standards/`
 
 ---
 

@@ -16,6 +16,7 @@ _Important Note:_ When updating local documentation, the files can be found at `
 
 ## Tech Stack Essentials
 
+- **Version Control**: GitHub (private repository)
 - **Frontend**: React 18 + TypeScript (strict) + TailwindCSS
 - **Backend**: Node.js/TypeScript + Lambda + API Gateway
 - **Database**: PostgreSQL (RDS) with Row-Level Security (RLS)
@@ -23,6 +24,7 @@ _Important Note:_ When updating local documentation, the files can be found at `
 - **Infrastructure**: SST (Serverless Stack)
 - **Storage**: S3 + CloudFront
 - **Validation**: Zod schemas everywhere
+- **CI/CD**: GitHub Actions (Phase 1: automated testing only, Phase 2+: full automation)
 
 ## Core Principles (Non-Negotiable)
 

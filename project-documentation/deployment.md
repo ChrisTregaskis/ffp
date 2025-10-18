@@ -2,7 +2,11 @@
 
 ## Overview
 
-FFP uses SST (Serverless Stack) for infrastructure as code, S3 + CloudFront for frontend hosting, and CircleCI for CI/CD automation. This document covers deployment workflows, environment management, and CI/CD pipelines.
+FFP uses SST (Serverless Stack) for infrastructure as code, S3 + CloudFront for frontend hosting, and GitHub for version control. This document covers deployment workflows, environment management, and CI/CD pipelines.
+
+**Version Control Platform:** GitHub
+
+**Phase 1 Deployment Strategy:** Manual deployments with basic automated testing (GitHub Actions for CI only, not CD)
 
 ## Environment Strategy
 
@@ -281,133 +285,73 @@ export function FrontendStack({ stack }: StackContext) {
 }
 ```
 
-### CircleCI Configuration
+### GitHub Actions Configuration (Future - Phase 2+)
+
+Note: Full CI/CD is deferred to Phase 2. For Phase 1, we use manual deployments with basic automated testing only.
 
 ```yaml
-# .circleci/config.yml
-version: 2.1
+# .github/workflows/test.yml (Phase 1 - Testing Only)
+name: Test
 
-orbs:
-  node: circleci/node@5.1.0
-  aws-cli: circleci/aws-cli@4.0.0
+on: [push, pull_request]
 
 jobs:
   test:
-    docker:
-      - image: cimg/node:18.17
+    runs-on: ubuntu-latest
     steps:
-      - checkout
-      - node/install-packages
-      - run:
-          name: Run tests
-          command: npm run test
-      - run:
-          name: Run linter
-          command: npm run lint
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm ci
+      - run: npm run test
+      - run: npm run lint
 
-  build-and-deploy-frontend:
-    docker:
-      - image: cimg/node:18.17
-    parameters:
-      environment:
-        type: string
-    steps:
-      - checkout
-      - node/install-packages
-      - aws-cli/setup
-      - run:
-          name: Build frontend
-          command: |
-            npm run build
-          environment:
-            VITE_API_ENDPOINT: << parameters.api_endpoint >>
-            VITE_COGNITO_USER_POOL_ID: << parameters.cognito_pool_id >>
-            VITE_COGNITO_CLIENT_ID: << parameters.cognito_client_id >>
-      - run:
-          name: Deploy to S3
-          command: |
-            aws s3 sync dist/ s3://<< parameters.bucket_name >> --delete
-      - run:
-          name: Invalidate CloudFront cache
-          command: |
-            aws cloudfront create-invalidation \
-              --distribution-id << parameters.distribution_id >> \
-              --paths "/*"
-
-  deploy-backend:
-    docker:
-      - image: cimg/node:18.17
-    parameters:
-      stage:
-        type: string
-    steps:
-      - checkout
-      - node/install-packages
-      - aws-cli/setup
-      - run:
-          name: Deploy SST
-          command: npm run sst deploy -- --stage << parameters.stage >>
-      - run:
-          name: Run migrations
-          command: npm run db:migrate -- --env << parameters.stage >>
-
-workflows:
-  staging-deployment:
-    jobs:
-      - test:
-          filters:
-            branches:
-              only: develop
-      - deploy-backend:
-          stage: staging
-          requires:
-            - test
-          filters:
-            branches:
-              only: develop
-      - build-and-deploy-frontend:
-          environment: staging
-          api_endpoint: https://api-staging.ffp.app
-          cognito_pool_id: ${STAGING_COGNITO_POOL_ID}
-          cognito_client_id: ${STAGING_COGNITO_CLIENT_ID}
-          bucket_name: ffp-staging-website
-          distribution_id: ${STAGING_DISTRIBUTION_ID}
-          requires:
-            - deploy-backend
-          filters:
-            branches:
-              only: develop
-
-  production-deployment:
-    jobs:
-      - test:
-          filters:
-            branches:
-              only: main
-      - deploy-backend:
-          stage: prod
-          requires:
-            - test
-          filters:
-            branches:
-              only: main
-      - build-and-deploy-frontend:
-          environment: production
-          api_endpoint: https://api.ffp.app
-          cognito_pool_id: ${PROD_COGNITO_POOL_ID}
-          cognito_client_id: ${PROD_COGNITO_CLIENT_ID}
-          bucket_name: ffp-prod-website
-          distribution_id: ${PROD_DISTRIBUTION_ID}
-          requires:
-            - deploy-backend
-          filters:
-            branches:
-              only: main
 ```
 
-### Environment Variables (CircleCI)
+### GitHub Actions Configuration (Future - Phase 2+ Full CI/CD)
 
-Set these in CircleCI Project Settings → Environment Variables:
+This is an example of full automated deployment that will be implemented in Phase 2+:
+
+```yaml
+# .github/workflows/deploy-staging.yml (Future Phase 2+)
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm ci
+      - run: npm run test
+      - run: npm run lint
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm ci
+      - run: npm run sst deploy -- --stage staging
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - run: npm run db:migrate -- --env staging
+```
+
+### Environment Variables (GitHub Actions)
+
+Set these in GitHub Repository Settings → Secrets and variables → Actions:
 
 ```bash
 # Staging
@@ -462,11 +406,12 @@ git add .
 git commit -m "feat: add assessment timer"
 git push origin feature/assessment-timer
 
-# 8. Create pull request
-# GitHub/Azure DevOps PR created
+# 8. Create pull request on GitHub
+# GitHub PR created and reviewed
 
 # 9. After approval, merge to develop
-# CircleCI auto-deploys backend + frontend to staging
+# Manual deployment to staging (Phase 1)
+# Future: GitHub Actions auto-deploys (Phase 2+)
 ```
 
 ### Staging Deployment
@@ -482,7 +427,8 @@ npm run sst deploy --stage staging
 # Run database migrations
 npm run db:migrate -- --env staging
 
-# CircleCI auto-deploys frontend to staging
+# Manual frontend deployment (Phase 1)
+# Future: GitHub Actions auto-deploys (Phase 2+)
 
 # Smoke test
 npm run test:e2e -- --env staging
@@ -511,7 +457,8 @@ git push origin main
 git tag v1.2.0
 git push origin v1.2.0
 
-# CircleCI auto-deploys frontend to production
+# Manual frontend deployment (Phase 1)
+# Future: GitHub Actions auto-deploys (Phase 2+)
 
 # Monitor CloudWatch for errors
 npm run logs:watch -- --stage prod
@@ -687,62 +634,72 @@ Automatically rollback if:
 - Response time >2 seconds (p95)
 - Any critical CloudWatch alarm triggered
 
-## CI/CD Pipeline (CircleCI)
+## CI/CD Pipeline (GitHub Actions)
 
-### Setup Steps
+### Phase 1: Basic Automated Testing Only
 
-1. **Connect Repository to CircleCI**
-   - Log into CircleCI
-   - Add your GitHub/Bitbucket repository
-   - CircleCI will detect `.circleci/config.yml`
+For MVP/Phase 1, we implement **automated testing only** - deployments remain manual.
 
-2. **Configure Environment Variables**
-   - Navigate to Project Settings → Environment Variables
-   - Add all required variables (see "Environment Variables" section above)
-   - Store AWS credentials securely
+**Setup Steps:**
 
-3. **Configure Contexts (Optional)**
+1. **Create `.github/workflows/test.yml`**
    ```yaml
-   # For sharing variables across projects
-   workflows:
-     production-deployment:
-       jobs:
-         - deploy-backend:
-             context: aws-production
-   ```
+name: Test
 
-4. **Setup Status Badges**
-   ```markdown
-   ![CircleCI](https://circleci.com/gh/your-org/ffp.svg?style=svg)
-   ```
-
-### Manual Deployment Trigger
-
-```bash
-# Trigger a deployment from CLI
-circleci trigger-pipeline --branch main
-
-# Or use CircleCI web UI:
-# 1. Go to Pipelines
-# 2. Click "Trigger Pipeline"
-# 3. Select branch and parameters
+on: [push, pull_request]
+   
+   jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+  - uses: actions/setup-node@v3
+  with:
+node-version: '18'
+      - run: npm ci
+         - run: npm run test
+         - run: npm run lint
 ```
 
-### Build Optimization
+2. **Configure Repository Secrets**
+   - Navigate to Settings → Secrets and variables → Actions
+   - Add: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (for future use)
 
-```yaml
-# Cache dependencies for faster builds
-- restore_cache:
-    keys:
-      - v1-dependencies-{{ checksum "package-lock.json" }}
-      - v1-dependencies-
+3. **Setup Status Badge**
+   ```markdown
+   ![Tests](https://github.com/your-org/ffp/actions/workflows/test.yml/badge.svg)
+   ```
 
-- run: npm ci
+**Why Manual Deployments for Phase 1:**
+- Solo developer, 8-12 week MVP timeline
+- Learn SST deployment patterns hands-on first
+- Add automation when deployment frequency becomes painful (Phase 2)
+- Aligns with "Speed Over Perfection" principle
 
-- save_cache:
-    paths:
-      - node_modules
-    key: v1-dependencies-{{ checksum "package-lock.json" }}
+### Phase 2+: Full Automated Deployment
+
+**Future enhancements** (see example workflows above):
+- Automated staging deployments on `develop` branch merge
+- Automated production deployments on `main` branch merge
+- Database migration automation
+- Frontend build and S3 sync automation
+- CloudFront invalidation automation
+
+### Manual Deployment Commands (Phase 1)
+
+```bash
+# Backend deployment
+npm run sst deploy -- --stage staging
+npm run sst deploy -- --stage prod
+
+# Frontend deployment
+npm run build
+aws s3 sync dist/ s3://ffp-staging-website --delete
+aws cloudfront create-invalidation --distribution-id $STAGING_DISTRIBUTION_ID --paths "/*"
+
+# Database migrations
+npm run db:migrate -- --env staging
+npm run db:migrate -- --env prod
 ```
 
 ## Disaster Recovery
@@ -876,10 +833,10 @@ DB_HOST=localhost DB_PORT=5432 npm run db:studio
 
 ### Issue: Frontend Build Fails (CircleCI)
 
-1. Check build logs in CircleCI dashboard
+1. Check build logs in GitHub Actions dashboard
 2. Verify environment variables are set in CircleCI project settings
-3. Check if API endpoint is correct in workflow parameters
-4. Re-run workflow from CircleCI dashboard
+3. Check if API endpoint is correct in environment variables
+4. Re-run workflow from GitHub Actions dashboard
 5. Test build locally:
 
 ```bash

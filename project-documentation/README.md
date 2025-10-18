@@ -62,6 +62,7 @@ See `project-state.md` for full details.
 
 ## Tech Stack Quick Ref
 
+- **Version Control**: GitHub (private repository)
 - **Monorepo**: Turborepo
 - **Frontend**: React 18 + TypeScript + TailwindCSS
 - **Backend**: Node.js/TypeScript + Lambda + API Gateway
@@ -69,6 +70,7 @@ See `project-state.md` for full details.
 - **ORM**: Drizzle
 - **Auth**: Cognito
 - **Infrastructure**: SST
+- **CI/CD**: GitHub Actions (Phase 1: testing only, Phase 2+: full automation)
 
 See `architecture.md` for full stack details, `REFERENCE.md` for commands.
 
