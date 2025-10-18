@@ -1,7 +1,7 @@
 # Sprint 1 - Subtasks Summary
 
 **Generated**: 2025-10-18  
-**Updated**: 2025-10-18 22:00  
+**Updated**: 2025-10-18 22:30  
 **Project**: FFP (Fit For Purpose)  
 **Sprint**: Sprint 1 - Foundation Infrastructure
 
@@ -11,9 +11,9 @@
 
 This document summarises all subtasks created for Sprint 1 User Stories. Each story has been broken down into actionable subtasks with time estimates and clear acceptance criteria.
 
-**Total Stories**: 3  
-**Total Subtasks**: 30  
-**Estimated Time**: ~93 hours (~11.6 weeks at 8h/week)
+**Total Stories**: 5  
+**Total Subtasks**: 58  
+**Estimated Time**: ~151 hours (~18.9 weeks at 8h/week)
 
 ---
 
@@ -40,36 +40,6 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 | 8   | **FFP-24** | Document monorepo structure and commands            | 1h       | FFP-23       | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-24) |
 
 **Total Time**: 13 hours (~1.6 weeks at 8h/week)
-
-### Dependency Chain
-
-```
-FFP-17 (Initialize Turborepo)
-  ↓
-FFP-18 (Create packages)
-  ↓
-FFP-19 (Configure dependencies)
-  ↓
-FFP-20 (TypeScript paths)
-  ↓
-FFP-21 (ESLint/Prettier)
-  ↓
-FFP-22 (Build pipeline)
-  ↓
-FFP-23 (Tests)
-  ↓
-FFP-24 (Documentation)
-```
-
-### Definition of Done
-
-- [ ] All packages build successfully
-- [ ] Build caching works (second build <1s)
-- [ ] TypeScript paths resolve correctly
-- [ ] All tests pass
-- [ ] Documentation complete
-- [ ] Code committed to Git
-- [ ] FFP-7 moved to "Done"
 
 ---
 
@@ -99,35 +69,6 @@ FFP-24 (Documentation)
 
 **Total Time**: 27 hours (~3.4 weeks at 8h/week)
 
-### Dependency Chain
-
-```
-FFP-7 (Turborepo) → FFP-25 (Initialize SST)
-                          ↓
-    ┌─────────────────────┼─────────────────────┐
-    ↓                     ↓                     ↓
-FFP-26 (VPC)        FFP-27 (Auth)        FFP-29 (Storage)
-    ↓                     ↓
-FFP-28 (Database)   FFP-30 (API)
-    ↓                     ↓
-FFP-32 (Secrets)    FFP-31 (Monitoring)
-                          ↓
-                    FFP-33 (Config)
-                          ↓
-                    FFP-34 (Deploy & Test)
-```
-
-### Definition of Done
-
-- [ ] All stacks deploy successfully to dev
-- [ ] Health check endpoint returns 200
-- [ ] Cognito User Pool accessible
-- [ ] RDS database accessible from Lambda
-- [ ] CloudWatch logs being captured
-- [ ] All secrets configured in Secrets Manager
-- [ ] Documentation updated
-- [ ] FFP-8 moved to "Done"
-
 ---
 
 ## Story 3: FFP-9 - Cognito Authentication
@@ -139,7 +80,7 @@ FFP-32 (Secrets)    FFP-31 (Monitoring)
 
 **Story URL**: [FFP-9](https://ctregaskis.atlassian.net/browse/FFP-9)
 
-### Subtasks Summary (12 subtasks, ~40 hours)
+### Subtasks Summary (12 subtasks, ~34 hours)
 
 | #   | Key        | Title                                        | Estimate | Dependencies           | Status | URL                                                    |
 | --- | ---------- | -------------------------------------------- | -------- | ---------------------- | ------ | ------------------------------------------------------ |
@@ -158,130 +99,130 @@ FFP-32 (Secrets)    FFP-31 (Monitoring)
 
 **Total Time**: 34 hours (~4.3 weeks at 8h/week)
 
-### Dependency Chain
+---
 
-```
-FFP-8 (Infrastructure) → FFP-35 (Zod schemas)
-                              ↓
-                         FFP-36 (Tenant context)
-                              ↓
-                    ┌─────────┴─────────┐
-                    ↓                   ↓
-           FFP-37 (Register)    FFP-38 (Login)
-                    ↓                   ↓
-                    └─────────┬─────────┘
-                              ↓
-                         FFP-39 (Refresh)
-                              ↓
-                         FFP-40 (API routes)
-                              ↓
-                    ┌─────────┴─────────┐
-                    ↓                   ↓
-           FFP-41 (Unit tests)  FFP-42 (Integration)
+## Story 4: FFP-10 - PostgreSQL Schema with RLS
 
-           FFP-43 (Error handling)
-                    ↓
-           FFP-44 (Logging)
-                    ↓
-           FFP-45 (Deploy test)
-                    ↓
-           FFP-46 (Documentation)
-```
+**Story Points**: 8 points (~64 hours)  
+**Epic**: FFP-1 (Application Setup & Foundation)  
+**Priority**: Highest  
+**Status**: To Do
 
-### Key Deliverables
+**Story URL**: [FFP-10](https://ctregaskis.atlassian.net/browse/FFP-10)
 
-- [x] Zod validation schemas for registration/login
-- [x] Tenant context extraction from JWT
-- [x] Registration endpoint with unique tenantId generation
-- [x] Login endpoint returning JWT with custom claims
-- [x] Refresh token endpoint
-- [x] API Gateway routes configured
-- [x] Comprehensive unit and integration tests
-- [x] Error handling classes and middleware
-- [x] Structured logging for security events
-- [x] Complete API documentation
+### Subtasks Summary (9 subtasks, ~31 hours)
 
-### Definition of Done
+| #   | Key        | Title                                              | Estimate | Dependencies   | Status | URL                                                    |
+| --- | ---------- | -------------------------------------------------- | -------- | -------------- | ------ | ------------------------------------------------------ |
+| 1   | **FFP-47** | Create tenants table schema                        | 2h       | FFP-8 complete | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-47) |
+| 2   | **FFP-48** | Create users table schema                          | 3h       | FFP-47         | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-48) |
+| 3   | **FFP-49** | Enable RLS on users table                          | 2h       | FFP-48         | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-49) |
+| 4   | **FFP-50** | Create setRLSContext utility function              | 3h       | FFP-49         | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-50) |
+| 5   | **FFP-51** | Create database indexes                            | 2h       | FFP-48         | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-51) |
+| 6   | **FFP-52** | Write unit tests for RLS utilities                 | 3h       | FFP-50         | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-52) |
+| 7   | **FFP-53** | Write integration test for cross-tenant isolation  | 4h       | FFP-52         | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-53) |
+| 8   | **FFP-54** | Write integration test for RLS context application | 4h       | FFP-52         | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-54) |
+| 9   | **FFP-55** | Update documentation                               | 1h       | FFP-53, FFP-54 | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-55) |
 
-- [ ] Users can register with email/password
-- [ ] Users can login and receive JWT tokens
-- [ ] JWT contains custom claims (tenantId, role, parentBusinessId)
-- [ ] API Gateway validates JWT tokens
-- [ ] Tenant context extractable in Lambda functions
-- [ ] All tests pass (unit + integration)
-- [ ] Error handling works correctly
-- [ ] Security events logged to CloudWatch
-- [ ] API documentation complete
-- [ ] FFP-9 moved to "Done"
+**Total Time**: 24 hours (~3 weeks at 8h/week)
+
+**Key Focus**: Multi-tenant data isolation via Row-Level Security (RLS) - **Critical security requirement**
+
+---
+
+## Story 5: FFP-11 - Drizzle ORM Setup
+
+**Story Points**: 5 points (~40 hours)  
+**Epic**: FFP-1 (Application Setup & Foundation)  
+**Priority**: High  
+**Status**: To Do
+
+**Story URL**: [FFP-11](https://ctregaskis.atlassian.net/browse/FFP-11)
+
+### Subtasks Summary (9 subtasks, ~22 hours)
+
+| #   | Key        | Title                                  | Estimate | Dependencies    | Status | URL                                                    |
+| --- | ---------- | -------------------------------------- | -------- | --------------- | ------ | ------------------------------------------------------ |
+| 1   | **FFP-56** | Install and configure Drizzle packages | 1h       | FFP-8 complete  | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-56) |
+| 2   | **FFP-57** | Create drizzle.config.ts               | 2h       | FFP-56          | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-57) |
+| 3   | **FFP-58** | Define schema for tenants table        | 2h       | FFP-56, FFP-57  | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-58) |
+| 4   | **FFP-59** | Define schema for users table          | 2h       | FFP-58          | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-59) |
+| 5   | **FFP-60** | Setup migration system                 | 2h       | FFP-58, FFP-59  | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-60) |
+| 6   | **FFP-61** | Configure connection pooling           | 4h       | None (parallel) | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-61) |
+| 7   | **FFP-62** | Write unit tests                       | 4h       | All above       | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-62) |
+| 8   | **FFP-63** | Write integration tests                | 4h       | All above       | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-63) |
+| 9   | **FFP-64** | Documentation and usage guide          | 1h       | All above       | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-64) |
+
+**Total Time**: 22 hours (~2.75 weeks at 8h/week)
+
+**Key Focus**: Type-safe database access with Drizzle ORM, optimised connection pooling for Lambda
 
 ---
 
 ## Overall Sprint 1 Timeline
 
 **Capacity**: 8 hours/week  
-**Total Estimated Time**: ~74 hours (13h + 27h + 34h)  
-**Expected Duration**: ~9-10 weeks
+**Total Estimated Time**: ~151 hours  
+**Expected Duration**: ~18-19 weeks (~4-5 months)
 
-### Recommended Schedule
+### Story Completion Estimates
 
-#### Week 1 (8h) - Turborepo Setup
+| Story     | Title                      | Subtasks | Hours    | Weeks        |
+| --------- | -------------------------- | -------- | -------- | ------------ |
+| FFP-7     | Turborepo Monorepo         | 8        | 13h      | 1.6          |
+| FFP-8     | SST Infrastructure         | 10       | 27h      | 3.4          |
+| FFP-9     | Cognito Authentication     | 12       | 34h      | 4.3          |
+| FFP-10    | PostgreSQL Schema with RLS | 9        | 24h      | 3.0          |
+| FFP-11    | Drizzle ORM Setup          | 9        | 22h      | 2.75         |
+| **Total** |                            | **58**   | **120h** | **15 weeks** |
 
-- **Mon/Wed (2h)**: FFP-17 ✓ (1h) + Start FFP-18 (1h)
-- **Weekend (6h)**: Complete FFP-18 (1h), FFP-19 (1h), FFP-20 (2h), Start FFP-21 (2h)
+**Note**: Original estimate was 151h based on story points. Actual subtask estimates total 120h, which is more realistic. Sprint 1 will take approximately **15 weeks (~3.75 months)** at 8h/week capacity.
 
-#### Week 2 (8h) - Complete Turborepo + Start SST
+---
 
-- **Mon/Wed (4h)**: Complete FFP-21, FFP-22 (2h), Start FFP-23 (2h)
-- **Weekend (4h)**: Complete FFP-23, FFP-24 (1h), FFP-25 (1h), Start FFP-26 (2h)
+## Recommended Implementation Order
 
-#### Week 3 (8h) - Core Infrastructure
+### Phase 1: Foundation (Weeks 1-5, ~40 hours)
 
-- **Mon/Wed (4h)**: Complete FFP-26, Start FFP-27 (3h)
-- **Weekend (4h)**: Complete FFP-27, Start FFP-28 (4h)
+**Week 1-2: Turborepo Setup**
 
-#### Week 4 (8h) - Database & Storage
+- FFP-17 through FFP-24 (13 hours)
+- Establish monorepo structure
+- ✅ Checkpoint: All packages build successfully
 
-- **Mon/Wed (4h)**: Complete FFP-28, Start FFP-29 (3h)
-- **Weekend (4h)**: Complete FFP-29 (1h), FFP-30 (3h)
+**Week 3-5: Infrastructure Deployment**
 
-#### Week 5 (8h) - Monitoring & Deployment
+- FFP-25 through FFP-34 (27 hours)
+- Deploy all AWS infrastructure
+- ✅ Checkpoint: Infrastructure deployed and tested
 
-- **Mon/Wed (4h)**: Complete FFP-30, FFP-31 (3h)
-- **Weekend (4h)**: FFP-32 (2h), FFP-33 (2h)
+### Phase 2: Authentication (Weeks 6-9, ~34 hours)
 
-#### Week 6 (8h) - Test Infrastructure + Start Auth
+**Week 6-9: Cognito Authentication**
 
-- **Mon/Wed (4h)**: FFP-34 (4h) - Deploy and test
-- **Weekend (4h)**: FFP-35 (2h), FFP-36 (2h)
+- FFP-35 through FFP-46 (34 hours)
+- Implement registration and login
+- ✅ Checkpoint: Users can register and authenticate
 
-#### Week 7 (8h) - Authentication Core
+### Phase 3: Database Layer (Weeks 10-15, ~46 hours)
 
-- **Mon/Wed (4h)**: FFP-37 (4h) - Registration
-- **Weekend (4h)**: FFP-38 (3h), Start FFP-39 (1h)
+**Week 10-12: PostgreSQL Schema**
 
-#### Week 8 (8h) - Auth Routes & Testing
+- FFP-47 through FFP-55 (24 hours)
+- Implement RLS for multi-tenant isolation
+- ✅ Checkpoint: Database schema deployed with RLS working
 
-- **Mon/Wed (4h)**: Complete FFP-39 (1h), FFP-40 (2h), Start FFP-41 (1h)
-- **Weekend (4h)**: Complete FFP-41 (3h), Start FFP-42 (1h)
+**Week 13-15: Drizzle ORM**
 
-#### Week 9 (8h) - Error Handling & Logging
-
-- **Mon/Wed (4h)**: Complete FFP-42 (3h), Start FFP-43 (1h)
-- **Weekend (4h)**: Complete FFP-43 (2h), FFP-44 (2h)
-
-#### Week 10 (4h) - Final Testing & Documentation
-
-- **Weekend (4h)**: FFP-45 (4h) - Deploy test
-
-#### Week 11 (2h) - Documentation
-
-- **Weekend (2h)**: FFP-46 (2h) - Documentation
+- FFP-56 through FFP-64 (22 hours)
+- Type-safe database access
+- ✅ Checkpoint: ORM configured and tested
 
 ---
 
 ## Progress Tracking
 
-### FFP-7 Progress
+### FFP-7 Progress (Turborepo)
 
 - [ ] FFP-17: Initialize Turborepo
 - [ ] FFP-18: Create package structure
@@ -292,7 +233,7 @@ FFP-8 (Infrastructure) → FFP-35 (Zod schemas)
 - [ ] FFP-23: Write tests
 - [ ] FFP-24: Document structure
 
-### FFP-8 Progress
+### FFP-8 Progress (Infrastructure)
 
 - [ ] FFP-25: Initialize SST
 - [ ] FFP-26: Create VPC
@@ -305,7 +246,7 @@ FFP-8 (Infrastructure) → FFP-35 (Zod schemas)
 - [ ] FFP-33: Configure environments
 - [ ] FFP-34: Deploy and test
 
-### FFP-9 Progress
+### FFP-9 Progress (Authentication)
 
 - [ ] FFP-35: Create Zod schemas
 - [ ] FFP-36: Tenant context utility
@@ -319,6 +260,55 @@ FFP-8 (Infrastructure) → FFP-35 (Zod schemas)
 - [ ] FFP-44: Structured logging
 - [ ] FFP-45: Deploy and test
 - [ ] FFP-46: Documentation
+
+### FFP-10 Progress (Database Schema)
+
+- [ ] FFP-47: Create tenants table
+- [ ] FFP-48: Create users table
+- [ ] FFP-49: Enable RLS
+- [ ] FFP-50: Create setRLSContext utility
+- [ ] FFP-51: Create indexes
+- [ ] FFP-52: Unit tests
+- [ ] FFP-53: Cross-tenant isolation test
+- [ ] FFP-54: RLS context test
+- [ ] FFP-55: Documentation
+
+### FFP-11 Progress (Drizzle ORM)
+
+- [ ] FFP-56: Install packages
+- [ ] FFP-57: Create config
+- [ ] FFP-58: Define tenants schema
+- [ ] FFP-59: Define users schema
+- [ ] FFP-60: Setup migrations
+- [ ] FFP-61: Configure connection pooling
+- [ ] FFP-62: Unit tests
+- [ ] FFP-63: Integration tests
+- [ ] FFP-64: Documentation
+
+---
+
+## Key Milestones
+
+### Milestone 1: Foundation Complete (Week 5)
+
+✅ Turborepo configured  
+✅ All AWS infrastructure deployed  
+✅ Dev environment accessible
+
+### Milestone 2: Authentication Complete (Week 9)
+
+✅ User registration working  
+✅ Login with JWT tokens  
+✅ API Gateway validates tokens
+
+### Milestone 3: Database Complete (Week 15)
+
+✅ PostgreSQL schema deployed  
+✅ RLS enforcing multi-tenant isolation  
+✅ Drizzle ORM configured  
+✅ Type-safe database queries working
+
+**🎉 Sprint 1 Complete**: Foundation infrastructure ready for Sprint 2 (Assessment Engine)
 
 ---
 
@@ -362,6 +352,8 @@ If blocked on a subtask:
 - [SST Docs](https://docs.sst.dev/)
 - [AWS CDK Docs](https://docs.aws.amazon.com/cdk/)
 - [Cognito Docs](https://docs.aws.amazon.com/cognito/)
+- [Drizzle ORM Docs](https://orm.drizzle.team/)
+- [PostgreSQL RLS](https://www.postgresql.org/docs/current/ddl-rowsecurity.html)
 - Project docs: `/project-documentation/`
 
 ### Project Files
@@ -371,6 +363,7 @@ If blocked on a subtask:
 - `tsconfig.base.json` - TypeScript configuration
 - `stacks/` - Infrastructure stacks
 - `packages/api/` - Lambda functions
+- `packages/database/` - Database schemas and migrations
 
 ### Commands
 
@@ -384,7 +377,34 @@ pnpm lint         # Lint all packages
 pnpm sst dev      # Start dev mode
 pnpm sst deploy   # Deploy to AWS
 pnpm sst remove   # Remove all resources
+
+# Database
+pnpm db:generate  # Generate migration
+pnpm db:migrate   # Run migrations
+pnpm db:push      # Push schema (dev only)
 ```
+
+---
+
+## Critical Reminders
+
+### Security Non-Negotiables
+
+1. **RLS Must Be Tested**: Cross-tenant isolation tests are mandatory
+2. **Never Skip Tenant Context**: Always set `app.tenant_id` before queries
+3. **Test Data Isolation**: Integration tests must verify RLS blocking
+4. **Connection Pooling**: Max 10 connections for Lambda optimization
+
+### Quality Gates
+
+Before marking a story as "Done":
+
+- [ ] All subtasks completed
+- [ ] All tests passing (unit + integration)
+- [ ] Documentation updated
+- [ ] Code reviewed (self-review minimum)
+- [ ] Deployed and tested in dev environment
+- [ ] No critical security vulnerabilities
 
 ---
 
@@ -394,23 +414,15 @@ Once all subtasks are complete:
 
 1. ✅ **Review infrastructure** in AWS Console
 2. ✅ **Test all endpoints** with Postman/curl
-3. ✅ **Update project documentation** with deployment guide
-4. ✅ **Plan Sprint 2** - Database schema and migrations
-5. ✅ **Celebrate** 🎉 - Foundation complete!
-
----
-
-## Notes
-
-- All time estimates are based on solo part-time development (8h/week)
-- Actual time may vary; adjust schedule as needed
-- Some subtasks can be worked on in parallel
-- Authentication requires infrastructure to be deployed first
-- Keep detailed notes on AWS resource configuration
-- Test authentication flow thoroughly before moving to frontend
+3. ✅ **Verify RLS** with integration tests
+4. ✅ **Update project documentation** with deployment guide
+5. ✅ **Plan Sprint 2** - Assessment Engine Core
+6. ✅ **Celebrate** 🎉 - Foundation complete!
 
 ---
 
 **Document Status**: Active  
-**Last Updated**: 2025-10-18 22:00  
+**Last Updated**: 2025-10-18 22:30  
+**Total Stories**: 5  
+**Total Subtasks**: 58  
 **Next Review**: After completing FFP-24 (Turborepo setup)
