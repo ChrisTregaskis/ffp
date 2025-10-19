@@ -67,7 +67,6 @@ _Important Note:_ When updating local documentation, the files can be found at `
 - `sprint-planning/index.md`
 - `sprint-planning/SETUP-COMPLETE.md`
 - `sprint-planning/troubleshooting.md`
-- `sprint-planning/chat-*.md` (any prompt templates)
 - `sprint-planning/jira-integration-reference.md`
 - `sprint-planning/outputs/*.md` (any output summaries)
 - `sprint-planning/prompts/*.md` (any prompts for next chat sessions)

@@ -25,7 +25,7 @@ sprint-planning/
 │   ├── SETUP-COMPLETE.md        # What's ready, next steps
 │   └── README.md                # Workflow guide
 │
-├── 📝 PROMPTS (Copy these to Claude)
+├── 📝 PROMPTS (Copy these to Claude - moved to prompts dir)
 │   ├── chat-1-prompt.md         # Define ticket standards
 │   └── chat-2-prompt.md         # Create 6 Epics in Jira
 │
@@ -165,8 +165,8 @@ sprint-planning/
 /Users/christophertregaskis/Documents/FFP/ffp/project-documentation/sprint-planning/
 
 # Prompts
-sprint-planning/chat-1-prompt.md
-sprint-planning/chat-2-prompt.md
+sprint-planning/prompts/chat-1-prompt.md
+sprint-planning/prompts/chat-2-prompt.md
 
 # References
 sprint-planning/README.md
