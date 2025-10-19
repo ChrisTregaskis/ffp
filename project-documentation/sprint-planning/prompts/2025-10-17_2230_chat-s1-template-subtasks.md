@@ -326,9 +326,9 @@ For each subtask:
 - Include clear description with acceptance criteria
 - Add relevant labels
 
-### 2. Create Subtask Summary Document
+### 2. Update Subtask Summary Document
 
-Generate: `{story-key}-subtasks-summary.md`
+Location: `project-documentation/sprint-planning/outputs/2025-10-18_2200_sprint-1-subtasks-summary.md`
 
 Include:
 

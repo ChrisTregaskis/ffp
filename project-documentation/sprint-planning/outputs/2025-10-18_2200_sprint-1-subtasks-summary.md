@@ -11,9 +11,9 @@
 
 This document summarises all subtasks created for Sprint 1 User Stories. Each story has been broken down into actionable subtasks with time estimates and clear acceptance criteria.
 
-**Total Stories**: 5  
-**Total Subtasks**: 58  
-**Estimated Time**: ~151 hours (~18.9 weeks at 8h/week)
+**Total Stories**: 6  
+**Total Subtasks**: 68  
+**Estimated Time**: ~142 hours (~17.8 weeks at 8h/week)
 
 ---
 
@@ -159,6 +159,38 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 
 ---
 
+## Story 6: FFP-12 - Testing Framework Configuration
+
+**Story Points**: 5 points (~40 hours)  
+**Epic**: FFP-1 (Application Setup & Foundation)  
+**Priority**: High  
+**Status**: To Do
+
+**Story URL**: [FFP-12](https://ctregaskis.atlassian.net/browse/FFP-12)
+
+### Subtasks Summary (10 subtasks, ~22 hours)
+
+| #   | Key        | Title                                | Estimate | Dependencies        | Status | URL                                                    |
+| --- | ---------- | ------------------------------------ | -------- | ------------------- | ------ | ------------------------------------------------------ |
+| 1   | **FFP-65** | Install and Configure Vitest         | 2h       | None                | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-65) |
+| 2   | **FFP-66** | Create Vitest Configuration File     | 2h       | FFP-65              | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-66) |
+| 3   | **FFP-67** | Install and Configure Playwright     | 2h       | None                | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-67) |
+| 4   | **FFP-68** | Create Playwright Configuration File | 2h       | FFP-67              | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-68) |
+| 5   | **FFP-69** | Install Mock Service Worker (MSW)    | 1h       | None                | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-69) |
+| 6   | **FFP-70** | Configure MSW Server and Handlers    | 3h       | FFP-69, FFP-66      | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-70) |
+| 7   | **FFP-71** | Create Test Helper Utilities         | 4h       | Database setup      | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-71) |
+| 8   | **FFP-72** | Write Sample Unit Tests              | 2h       | FFP-66, FFP-71      | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-72) |
+| 9   | **FFP-73** | Write Sample E2E Test                | 2h       | FFP-68, FFP-8 (web) | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-73) |
+| 10  | **FFP-75** | Update Testing Documentation         | 2h       | All previous        | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-75) |
+
+**Total Time**: 22 hours (~2.75 weeks at 8h/week)
+
+**Note**: FFP-74 (Write Sample MSW Mock Test) may also exist - verify in Jira.
+
+**Key Focus**: Comprehensive testing infrastructure with Vitest (unit), Playwright (E2E), and MSW (API mocking) to achieve 30% coverage target
+
+---
+
 ## Overall Sprint 1 Timeline
 
 **Capacity**: 8 hours/week  
@@ -167,16 +199,17 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 
 ### Story Completion Estimates
 
-| Story     | Title                      | Subtasks | Hours    | Weeks        |
-| --------- | -------------------------- | -------- | -------- | ------------ |
-| FFP-7     | Turborepo Monorepo         | 8        | 13h      | 1.6          |
-| FFP-8     | SST Infrastructure         | 10       | 27h      | 3.4          |
-| FFP-9     | Cognito Authentication     | 12       | 34h      | 4.3          |
-| FFP-10    | PostgreSQL Schema with RLS | 9        | 24h      | 3.0          |
-| FFP-11    | Drizzle ORM Setup          | 9        | 22h      | 2.75         |
-| **Total** |                            | **58**   | **120h** | **15 weeks** |
+| Story     | Title                      | Subtasks | Hours    | Weeks          |
+| --------- | -------------------------- | -------- | -------- | -------------- |
+| FFP-7     | Turborepo Monorepo         | 8        | 13h      | 1.6            |
+| FFP-8     | SST Infrastructure         | 10       | 27h      | 3.4            |
+| FFP-9     | Cognito Authentication     | 12       | 34h      | 4.3            |
+| FFP-10    | PostgreSQL Schema with RLS | 9        | 24h      | 3.0            |
+| FFP-11    | Drizzle ORM Setup          | 9        | 22h      | 2.75           |
+| FFP-12    | Testing Framework          | 10       | 22h      | 2.75           |
+| **Total** |                            | **68**   | **142h** | **17.8 weeks** |
 
-**Note**: Original estimate was 151h based on story points. Actual subtask estimates total 120h, which is more realistic. Sprint 1 will take approximately **15 weeks (~3.75 months)** at 8h/week capacity.
+**Note**: Original estimate was 151h based on story points. Actual subtask estimates total 142h, which is more realistic. Sprint 1 will take approximately **17.8 weeks (~4.5 months)** at 8h/week capacity.
 
 ---
 
@@ -217,6 +250,14 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 - FFP-56 through FFP-64 (22 hours)
 - Type-safe database access
 - ✅ Checkpoint: ORM configured and tested
+
+### Phase 4: Testing Infrastructure (Weeks 16-18, ~22 hours)
+
+**Week 16-18: Testing Framework**
+
+- FFP-65 through FFP-75 (22 hours)
+- Vitest, Playwright, and MSW setup
+- ✅ Checkpoint: All testing frameworks configured and working
 
 ---
 
@@ -285,6 +326,20 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 - [ ] FFP-63: Integration tests
 - [ ] FFP-64: Documentation
 
+### FFP-12 Progress (Testing Framework)
+
+- [ ] FFP-65: Install Vitest
+- [ ] FFP-66: Vitest configuration
+- [ ] FFP-67: Install Playwright
+- [ ] FFP-68: Playwright configuration
+- [ ] FFP-69: Install MSW
+- [ ] FFP-70: Configure MSW handlers
+- [ ] FFP-71: Create test helpers
+- [ ] FFP-72: Sample unit tests
+- [ ] FFP-73: Sample E2E test
+- [ ] FFP-74: MSW mock test (verify in Jira)
+- [ ] FFP-75: Testing documentation
+
 ---
 
 ## Key Milestones
@@ -307,6 +362,15 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 ✅ RLS enforcing multi-tenant isolation  
 ✅ Drizzle ORM configured  
 ✅ Type-safe database queries working
+
+### Milestone 4: Testing Complete (Week 18)
+
+✅ Vitest configured for unit tests  
+✅ Playwright configured for E2E tests  
+✅ MSW configured for API mocking  
+✅ Test helpers created  
+✅ Sample tests passing  
+✅ 30% coverage target achievable
 
 **🎉 Sprint 1 Complete**: Foundation infrastructure ready for Sprint 2 (Assessment Engine)
 
@@ -422,7 +486,7 @@ Once all subtasks are complete:
 ---
 
 **Document Status**: Active  
-**Last Updated**: 2025-10-18 22:30  
-**Total Stories**: 5  
-**Total Subtasks**: 58  
+**Last Updated**: 2025-10-19 16:00  
+**Total Stories**: 6  
+**Total Subtasks**: 68  
 **Next Review**: After completing FFP-24 (Turborepo setup)
