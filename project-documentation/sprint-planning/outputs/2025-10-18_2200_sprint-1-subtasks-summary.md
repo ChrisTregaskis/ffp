@@ -1,7 +1,7 @@
 # Sprint 1 - Subtasks Summary
 
 **Generated**: 2025-10-18  
-**Updated**: 2025-10-18 22:30  
+**Updated**: 2025-10-19 16:15  
 **Project**: FFP (Fit For Purpose)  
 **Sprint**: Sprint 1 - Foundation Infrastructure
 
@@ -11,9 +11,9 @@
 
 This document summarises all subtasks created for Sprint 1 User Stories. Each story has been broken down into actionable subtasks with time estimates and clear acceptance criteria.
 
-**Total Stories**: 6  
-**Total Subtasks**: 68  
-**Estimated Time**: ~142 hours (~17.8 weeks at 8h/week)
+**Total Stories**: 7  
+**Total Subtasks**: 75  
+**Estimated Time**: ~156 hours (~19.5 weeks at 8h/week)
 
 ---
 
@@ -191,11 +191,38 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 
 ---
 
+## Story 7: FFP-14 - CloudWatch Logging
+
+**Story Points**: 3 points (~24 hours)  
+**Epic**: FFP-1 (Application Setup & Foundation)  
+**Priority**: High  
+**Status**: To Do
+
+**Story URL**: [FFP-14](https://ctregaskis.atlassian.net/browse/FFP-14)
+
+### Subtasks Summary (7 subtasks, ~14 hours)
+
+| #   | Key        | Title                                           | Estimate | Dependencies    | Status | URL                                                    |
+| --- | ---------- | ----------------------------------------------- | -------- | --------------- | ------ | ------------------------------------------------------ |
+| 1   | **FFP-76** | Create Logger Class with Structured JSON Output | 2h       | None            | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-76) |
+| 2   | **FFP-77** | Add Correlation ID Generation Helper            | 1h       | FFP-76          | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-77) |
+| 3   | **FFP-78** | Configure CloudWatch Log Groups and Retention   | 3h       | None (parallel) | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-78) |
+| 4   | **FFP-79** | Integrate Logger with Lambda Functions          | 3h       | FFP-76, FFP-77  | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-79) |
+| 5   | **FFP-80** | Write Unit Tests for Logger Class               | 2h       | FFP-76          | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-80) |
+| 6   | **FFP-81** | Write Integration Tests for CloudWatch Logging  | 2h       | FFP-78, FFP-79  | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-81) |
+| 7   | **FFP-82** | Update Documentation with Logging Patterns      | 1h       | FFP-76, FFP-78  | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-82) |
+
+**Total Time**: 14 hours (~1.75 weeks at 8h/week)
+
+**Key Focus**: Structured JSON logging with CloudWatch for debugging multi-tenant applications. Includes tenant/user context tracking and correlation IDs for request tracing.
+
+---
+
 ## Overall Sprint 1 Timeline
 
 **Capacity**: 8 hours/week  
-**Total Estimated Time**: ~151 hours  
-**Expected Duration**: ~18-19 weeks (~4-5 months)
+**Total Estimated Time**: ~156 hours  
+**Expected Duration**: ~19.5 weeks (~5 months)
 
 ### Story Completion Estimates
 
@@ -207,9 +234,10 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 | FFP-10    | PostgreSQL Schema with RLS | 9        | 24h      | 3.0            |
 | FFP-11    | Drizzle ORM Setup          | 9        | 22h      | 2.75           |
 | FFP-12    | Testing Framework          | 10       | 22h      | 2.75           |
-| **Total** |                            | **68**   | **142h** | **17.8 weeks** |
+| FFP-14    | CloudWatch Logging         | 7        | 14h      | 1.75           |
+| **Total** |                            | **75**   | **156h** | **19.5 weeks** |
 
-**Note**: Original estimate was 151h based on story points. Actual subtask estimates total 142h, which is more realistic. Sprint 1 will take approximately **17.8 weeks (~4.5 months)** at 8h/week capacity.
+**Note**: Actual subtask estimates total 156h. Sprint 1 will take approximately **19.5 weeks (~5 months)** at 8h/week capacity.
 
 ---
 
@@ -251,13 +279,19 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 - Type-safe database access
 - ✅ Checkpoint: ORM configured and tested
 
-### Phase 4: Testing Infrastructure (Weeks 16-18, ~22 hours)
+### Phase 4: Testing & Logging (Weeks 16-20, ~36 hours)
 
 **Week 16-18: Testing Framework**
 
 - FFP-65 through FFP-75 (22 hours)
 - Vitest, Playwright, and MSW setup
 - ✅ Checkpoint: All testing frameworks configured and working
+
+**Week 19-20: CloudWatch Logging**
+
+- FFP-76 through FFP-82 (14 hours)
+- Structured JSON logging with tenant/user context
+- ✅ Checkpoint: Logger class integrated with Lambda functions
 
 ---
 
@@ -340,6 +374,16 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 - [ ] FFP-74: MSW mock test (verify in Jira)
 - [ ] FFP-75: Testing documentation
 
+### FFP-14 Progress (CloudWatch Logging)
+
+- [ ] FFP-76: Create Logger Class
+- [ ] FFP-77: Add Correlation ID Helper
+- [ ] FFP-78: Configure CloudWatch Log Groups
+- [ ] FFP-79: Integrate Logger with Lambdas
+- [ ] FFP-80: Write Unit Tests
+- [ ] FFP-81: Write Integration Tests
+- [ ] FFP-82: Update Documentation
+
 ---
 
 ## Key Milestones
@@ -371,6 +415,14 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 ✅ Test helpers created  
 ✅ Sample tests passing  
 ✅ 30% coverage target achievable
+
+### Milestone 5: Logging Complete (Week 20)
+
+✅ Logger class with structured JSON output  
+✅ Correlation IDs for request tracing  
+✅ CloudWatch log groups configured  
+✅ Logger integrated with Lambda functions  
+✅ Tenant/user context in all logs
 
 **🎉 Sprint 1 Complete**: Foundation infrastructure ready for Sprint 2 (Assessment Engine)
 
@@ -486,7 +538,20 @@ Once all subtasks are complete:
 ---
 
 **Document Status**: Active  
-**Last Updated**: 2025-10-19 16:00  
-**Total Stories**: 6  
-**Total Subtasks**: 68  
+**Last Updated**: 2025-10-19 16:15  
+**Total Stories**: 7  
+**Total Subtasks**: 75  
 **Next Review**: After completing FFP-24 (Turborepo setup)
+
+---
+
+## Recent Updates
+
+### 2025-10-19 16:15 - FFP-14 Subtasks Created
+
+- Created 7 subtasks for FFP-14 (CloudWatch Logging)
+- Total time: 14 hours (~1.75 weeks)
+- Focus on structured JSON logging with tenant/user context
+- Dependencies: FFP-76 → FFP-77 → FFP-79 → FFP-81
+- FFP-78 can be done in parallel
+- Updated overall sprint estimates: 75 subtasks, 156 hours, 19.5 weeks
