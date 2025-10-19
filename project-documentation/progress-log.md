@@ -1,3 +1,87 @@
+### October 19, 2025 (Session 9 - FFP-15 Error Handling Patterns Subtasks)
+
+**Created FFP-15 Subtasks (7 subtasks, 15 hours):**
+
+**FFP-15 (Error Handling Patterns) - 7 subtasks:**
+
+- FFP-83: Create custom error classes (2h)
+- FFP-84: Implement error handler middleware (4h)
+- FFP-85: Add error logging with context (2h)
+- FFP-86: Write unit tests for error classes (2h)
+- FFP-87: Write unit tests for error middleware (2h)
+- FFP-88: Write integration tests for error handling (2h)
+- FFP-89: Update documentation with error handling patterns (1h)
+- **Total: 15 hours (~1.9 weeks)**
+
+**Key achievements:**
+
+- ✅ **FFP-15 fully broken down** into 7 actionable subtasks
+- ✅ **Custom error classes** (ApplicationError, NotFoundError, ValidationError, ForbiddenError, UnauthorizedError)
+- ✅ **Error handler middleware** (`withErrorHandling`) for Lambda functions
+- ✅ **Standardised error responses** with format: `{ error: string, message: string, details?: object }`
+- ✅ **Error logging with context** (tenantId, userId, correlationId)
+- ✅ **Comprehensive testing** (unit tests for classes and middleware, integration tests)
+- ✅ **Documentation update** with error handling patterns, usage examples, and error code reference
+- ✅ **Clear dependencies** mapped (FFP-83 → FFP-84 → FFP-85 → FFP-88)
+- ✅ **FFP-86 and FFP-87 can be done in parallel** after FFP-83
+- ✅ **Integration with FFP-14 (Logger)** for consistent error logging
+- ✅ **Security focus**: Never expose internal error details to clients, never log sensitive data
+
+**Sprint 1 Progress:**
+
+- **Total Stories Completed**: 8/13 (62%) - All core infrastructure stories have subtasks
+- **Total Subtasks Created**: 82 subtasks
+- **Total Estimated Time**: 171 hours (~21.4 weeks or ~5.4 months)
+- **Stories with Subtasks**: FFP-7, FFP-8, FFP-9, FFP-10, FFP-11, FFP-12, FFP-14, FFP-15
+- **Remaining Stories**: FFP-13 (CI/CD), FFP-16 (Web Login) - TBD
+
+**Documentation updated:**
+
+- ✅ Updated `outputs/2025-10-18_2200_sprint-1-subtasks-summary.md`
+- ✅ Added FFP-15 section with 7 subtasks breakdown
+- ✅ Updated overall timeline to 21.4 weeks (~5.4 months)
+- ✅ Added FFP-15 to Phase 4 (Testing, Logging & Error Handling)
+- ✅ Updated milestone tracking with Milestone 5 enhancements
+- ✅ Added FFP-15 progress checklist
+- ✅ Added recent updates section documenting this session
+
+**Error Handling Components:**
+
+1. **Error Classes**: Base `ApplicationError` class with 4 specialised error types
+2. **Error Middleware**: `withErrorHandling` wrapper for Lambda functions
+3. **Error Transformation**: Catches errors, logs with context, returns standardised responses
+4. **Error Logging**: Integrates with Logger (FFP-14) for structured JSON logs
+5. **Context Tracking**: Includes tenantId, userId, correlationId in error logs
+6. **Testing**: Unit tests for classes/middleware, integration tests for end-to-end flows
+7. **Documentation**: Error code reference, usage examples, best practices
+
+**Security Considerations:**
+
+- ✅ **Never expose internal errors**: Generic messages for unexpected errors
+- ✅ **Never log sensitive data**: Passwords, tokens, PHI excluded from logs
+- ✅ **Tenant/user context**: Always included for audit trail and debugging
+- ✅ **Correlation IDs**: Enable request tracing across Lambda invocations
+- ✅ **Structured responses**: Consistent format for all errors
+
+**Implementation Order:**
+
+1. FFP-83: Create error classes (2h) - No dependencies
+2. FFP-84: Implement middleware (4h) - Requires FFP-83, FFP-14
+3. FFP-85: Add error logging (2h) - Requires FFP-83, FFP-84, FFP-14
+4. FFP-86 + FFP-87: Write unit tests (4h) - Can be done in parallel after FFP-83, FFP-84
+5. FFP-88: Write integration tests (2h) - Requires FFP-83, FFP-84, FFP-85
+6. FFP-89: Update documentation (1h) - Requires implementation complete
+
+**Next steps:**
+
+- ✅ **Sprint 1 core planning almost complete** - 8 stories with subtasks (171 hours)
+- Decide on FFP-13 (CI/CD) and FFP-16 (Web Login)
+- Begin implementation with **FFP-17** (Initialize Turborepo) when ready
+- Focus on foundation infrastructure (FFP-7 through FFP-15)
+- Error handling requires FFP-14 (Logger) to be complete first
+
+---
+
 ### October 19, 2025 (Session 8 - FFP-14 CloudWatch Logging Subtasks)
 
 **Created FFP-14 Subtasks (7 subtasks, 14 hours):**

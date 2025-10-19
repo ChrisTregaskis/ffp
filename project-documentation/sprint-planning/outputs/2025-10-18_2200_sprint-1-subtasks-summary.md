@@ -11,9 +11,9 @@
 
 This document summarises all subtasks created for Sprint 1 User Stories. Each story has been broken down into actionable subtasks with time estimates and clear acceptance criteria.
 
-**Total Stories**: 7  
-**Total Subtasks**: 75  
-**Estimated Time**: ~156 hours (~19.5 weeks at 8h/week)
+**Total Stories**: 8  
+**Total Subtasks**: 82  
+**Estimated Time**: ~171 hours (~21.4 weeks at 8h/week)
 
 ---
 
@@ -218,11 +218,38 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 
 ---
 
+## Story 8: FFP-15 - Error Handling Patterns
+
+**Story Points**: 3 points (~24 hours)  
+**Epic**: FFP-1 (Application Setup & Foundation)  
+**Priority**: Medium  
+**Status**: To Do
+
+**Story URL**: [FFP-15](https://ctregaskis.atlassian.net/browse/FFP-15)
+
+### Subtasks Summary (7 subtasks, ~15 hours)
+
+| #   | Key        | Title                                               | Estimate | Dependencies        | Status | URL                                                    |
+| --- | ---------- | --------------------------------------------------- | -------- | ------------------- | ------ | ------------------------------------------------------ |
+| 1   | **FFP-83** | Create custom error classes                         | 2h       | None                | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-83) |
+| 2   | **FFP-84** | Implement error handler middleware                  | 4h       | FFP-83, FFP-14      | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-84) |
+| 3   | **FFP-85** | Add error logging with context                      | 2h       | FFP-83, FFP-84, FFP-14 | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-85) |
+| 4   | **FFP-86** | Write unit tests for error classes                  | 2h       | FFP-83              | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-86) |
+| 5   | **FFP-87** | Write unit tests for error middleware               | 2h       | FFP-83, FFP-84, FFP-14 | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-87) |
+| 6   | **FFP-88** | Write integration tests for error handling          | 2h       | FFP-83, FFP-84, FFP-85 | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-88) |
+| 7   | **FFP-89** | Update documentation with error handling patterns   | 1h       | FFP-83, FFP-84, FFP-85 | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-89) |
+
+**Total Time**: 15 hours (~1.9 weeks at 8h/week)
+
+**Key Focus**: Custom error classes with standardised HTTP responses, structured error logging with tenant/user context, and comprehensive testing. Integrates with FFP-14 (Logger) for consistent error handling patterns across all Lambda functions.
+
+---
+
 ## Overall Sprint 1 Timeline
 
 **Capacity**: 8 hours/week  
-**Total Estimated Time**: ~156 hours  
-**Expected Duration**: ~19.5 weeks (~5 months)
+**Total Estimated Time**: ~171 hours  
+**Expected Duration**: ~21.4 weeks (~5.4 months)
 
 ### Story Completion Estimates
 
@@ -235,9 +262,10 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 | FFP-11    | Drizzle ORM Setup          | 9        | 22h      | 2.75           |
 | FFP-12    | Testing Framework          | 10       | 22h      | 2.75           |
 | FFP-14    | CloudWatch Logging         | 7        | 14h      | 1.75           |
-| **Total** |                            | **75**   | **156h** | **19.5 weeks** |
+| FFP-15    | Error Handling Patterns    | 7        | 15h      | 1.9            |
+| **Total** |                            | **82**   | **171h** | **21.4 weeks** |
 
-**Note**: Actual subtask estimates total 156h. Sprint 1 will take approximately **19.5 weeks (~5 months)** at 8h/week capacity.
+**Note**: Actual subtask estimates total 171h. Sprint 1 will take approximately **21.4 weeks (~5.4 months)** at 8h/week capacity.
 
 ---
 
@@ -279,7 +307,7 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 - Type-safe database access
 - ✅ Checkpoint: ORM configured and tested
 
-### Phase 4: Testing & Logging (Weeks 16-20, ~36 hours)
+### Phase 4: Testing, Logging & Error Handling (Weeks 16-22, ~51 hours)
 
 **Week 16-18: Testing Framework**
 
@@ -292,6 +320,13 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 - FFP-76 through FFP-82 (14 hours)
 - Structured JSON logging with tenant/user context
 - ✅ Checkpoint: Logger class integrated with Lambda functions
+
+**Week 21-22: Error Handling Patterns**
+
+- FFP-83 through FFP-89 (15 hours)
+- Custom error classes and middleware
+- Error logging with tenant/user context
+- ✅ Checkpoint: Consistent error handling across all Lambda functions
 
 ---
 
@@ -384,6 +419,16 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 - [ ] FFP-81: Write Integration Tests
 - [ ] FFP-82: Update Documentation
 
+### FFP-15 Progress (Error Handling Patterns)
+
+- [ ] FFP-83: Create custom error classes
+- [ ] FFP-84: Implement error handler middleware
+- [ ] FFP-85: Add error logging with context
+- [ ] FFP-86: Write unit tests for error classes
+- [ ] FFP-87: Write unit tests for error middleware
+- [ ] FFP-88: Write integration tests for error handling
+- [ ] FFP-89: Update documentation with error handling patterns
+
 ---
 
 ## Key Milestones
@@ -416,13 +461,18 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 ✅ Sample tests passing  
 ✅ 30% coverage target achievable
 
-### Milestone 5: Logging Complete (Week 20)
+### Milestone 5: Logging & Error Handling Complete (Week 22)
 
 ✅ Logger class with structured JSON output  
 ✅ Correlation IDs for request tracing  
 ✅ CloudWatch log groups configured  
 ✅ Logger integrated with Lambda functions  
-✅ Tenant/user context in all logs
+✅ Tenant/user context in all logs  
+✅ Custom error classes created  
+✅ Error handler middleware implemented  
+✅ Error logging with context  
+✅ Comprehensive error handling tests  
+✅ Documentation updated with error patterns
 
 **🎉 Sprint 1 Complete**: Foundation infrastructure ready for Sprint 2 (Assessment Engine)
 
@@ -546,6 +596,15 @@ Once all subtasks are complete:
 ---
 
 ## Recent Updates
+
+### 2025-10-19 16:30 - FFP-15 Subtasks Created
+
+- Created 7 subtasks for FFP-15 (Error Handling Patterns)
+- Total time: 15 hours (~1.9 weeks)
+- Focus on custom error classes, middleware, and error logging
+- Dependencies: FFP-83 → FFP-84 → FFP-85 → FFP-88; FFP-86 and FFP-87 in parallel
+- Requires FFP-14 (Logger) complete before FFP-84 and FFP-85
+- Updated overall sprint estimates: 82 subtasks, 171 hours, 21.4 weeks
 
 ### 2025-10-19 16:15 - FFP-14 Subtasks Created
 
