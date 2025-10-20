@@ -14,8 +14,9 @@
 ✅ **Complete**: FFP-17 - Initialise Turborepo (1 hour)  
 ✅ **Complete**: FFP-18 - Create Package Structure (2 hours)  
 ✅ **Complete**: FFP-19 - Configure Workspace Dependencies (0.5 hours)  
-🔄 **In Progress**: FFP-7 - Turborepo Monorepo Setup (3/8 subtasks complete)  
-🎯 **Next**: FFP-20 - Setup TypeScript Paths and Configuration
+✅ **Complete**: FFP-20 - Setup TypeScript Paths and Configuration (1.5 hours)  
+🔄 **In Progress**: FFP-7 - Turborepo Monorepo Setup (4/8 subtasks complete)  
+🎯 **Next**: FFP-21 - Configure shared ESLint and Prettier
 
 ### Sprint 1 Progress
 
@@ -24,7 +25,7 @@
 - ✅ FFP-17: Initialise Turborepo and base configuration (1h) - COMPLETE
 - ✅ FFP-18: Create package structure (web, functions, core) (2h) - COMPLETE
 - ✅ FFP-19: Configure workspace dependencies (0.5h) - COMPLETE
-- ⏸️ FFP-20: Setup TypeScript paths and configuration (2h)
+- ✅ FFP-20: Setup TypeScript paths and configuration (1.5h) - COMPLETE
 - ⏸️ FFP-21: Configure shared ESLint and Prettier (2h)
 - ⏸️ FFP-22: Configure Turborepo build pipeline and caching (2h)
 - ⏸️ FFP-23: Write tests for monorepo setup (1h)
@@ -32,9 +33,9 @@
 
 **Time Tracking:**
 
-- Hours completed: 3.5/13 (27%)
-- Subtasks completed: 3/8 (38%)
-- **Status**: Ahead of schedule ✅ (saved 1.5h on FFP-19)
+- Hours completed: 5/13 (38%)
+- Subtasks completed: 4/8 (50%)
+- **Status**: Ahead of schedule ✅ (saved 1 hour total)
 
 ### Focus Areas
 
@@ -43,7 +44,8 @@
 - ✅ Created 10 User Stories for Sprint 1 (FFP-7 to FFP-16) with comprehensive details
 - ✅ Created all Subtasks for Sprint 1 stories (93 subtasks across 9 stories)
 - ✅ **First code written!** - Turborepo monorepo initialised and functional
-- 🔄 **Executing Sprint 1** - Building foundation infrastructure
+- ✅ **Path aliases configured** - Cleaner imports with @/ prefix
+- 🔄 **Executing Sprint 1** - Building foundation infrastructure (50% complete on FFP-7)
 - ⏸️ Create User Stories for Sprints 2-6 (after Sprint 1 complete)
 
 ### Sprint Planning Approach
@@ -54,7 +56,7 @@
 2. ✅ **Chat 2**: Create all 6 Epics in Jira (COMPLETE)
 3. ✅ **Chat E1**: Create User Stories for Sprint 1 (COMPLETE)
 4. ✅ **Chat S1-S9**: Create Subtasks for Sprint 1 stories (COMPLETE)
-5. ✅ **Sprint 1 Execution Started!** - FFP-17 and FFP-18 complete
+5. ✅ **Sprint 1 Execution Started!** - FFP-17, FFP-18, FFP-19, FFP-20 complete (50%)
 6. ⏸️ **Chat E2-E6**: Create User Stories for Sprints 2-6 (after Sprint 1)
 
 ---
@@ -93,22 +95,22 @@
 
 - ✅ FFP-17: Turborepo initialised with pnpm workspaces
 - ✅ FFP-18: Package structure created (web, functions, core)
+- ✅ FFP-19: Workspace dependencies configured (@ffp/core imports working)
+- ✅ FFP-20: TypeScript paths and internal aliases configured
 - ✅ Root TypeScript configuration with strict mode
-- ✅ Workspace dependencies configured (@ffp/core imports working)
+- ✅ Namespace-based path aliases (`@web/`, `@core/`, `@functions/`) for conflict-free imports
+- ✅ Fixed missing project reference (web → core)
+- ✅ Vite configuration updated with alias support
 - ✅ Turborepo pipeline with build, test, lint, typecheck tasks
 - ✅ Structure aligned with architecture.md
-
-**Current Work:**
-
-- 🔄 FFP-19: Configure workspace dependencies
-- Verifying builds and type checking across packages
-- Ensuring workspace protocol works correctly
+- ✅ All tests passing (build, typecheck, lint, dev server)
 
 **Next Up:**
 
-- FFP-20: TypeScript paths and configuration
-- FFP-21: ESLint and Prettier shared configs
-- FFP-22: Turborepo caching optimisation
+- FFP-21: ESLint and Prettier shared configs (2h)
+- FFP-22: Turborepo caching optimisation (2h)
+- FFP-23: Tests for monorepo setup (1h)
+- FFP-24: Documentation (1h)
 
 ---
 
@@ -120,7 +122,7 @@
 
 | Story     | Title                           | Subtasks | Hours    | Status               |
 | --------- | ------------------------------- | -------- | -------- | -------------------- |
-| FFP-7     | Turborepo Monorepo Setup        | 8        | 13h      | 🔄 In Progress (23%) |
+| FFP-7     | Turborepo Monorepo Setup        | 8        | 13h      | 🔄 In Progress (50%) |
 | FFP-8     | SST Infrastructure Foundation   | 10       | 27h      | ⏸️ Not Started       |
 | FFP-9     | Cognito Authentication          | 12       | 34h      | ⏸️ Not Started       |
 | FFP-10    | PostgreSQL Schema with RLS      | 9        | 24h      | ⏸️ Not Started       |
@@ -129,7 +131,7 @@
 | FFP-14    | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started       |
 | FFP-15    | Error Handling Patterns         | 7        | 15h      | ⏸️ Not Started       |
 | FFP-16    | Web Login/Logout Flow           | 11       | 27h      | ⏸️ Not Started       |
-| **Total** |                                 | **93**   | **198h** | **2/93 (2%)**        |
+| **Total** |                                 | **93**   | **198h** | **4/93 (4%)**        |
 
 **Note**: FFP-13 (CI/CD Pipeline) was intentionally skipped for now - can be added later if needed.
 
@@ -137,7 +139,7 @@
 
 **Sprint 1: Foundation (Weeks 1-5, ~40 hours)** 🔄 IN PROGRESS
 
-- FFP-17 through FFP-24: Turborepo setup (13h) - 23% complete
+- FFP-17 through FFP-24: Turborepo setup (13h) - 50% complete (saved 1h)
 - FFP-25 through FFP-34: SST infrastructure (27h) - Not started
 - ✅ Checkpoint: Infrastructure deployed and tested
 
@@ -208,10 +210,10 @@
 
 **Sprint 1-6 Stories (FFP-7 to FFP-16)**:
 
-- FFP-7: Turborepo Monorepo Setup (IN PROGRESS - 2/8 subtasks complete)
+- FFP-7: Turborepo Monorepo Setup (IN PROGRESS - 4/8 subtasks complete, 50%)
 - FFP-8 through FFP-16: Not started
-- Total: 93 subtasks, 2 complete (2%)
-- Current: FFP-19 (Configure workspace dependencies)
+- Total: 93 subtasks, 4 complete (4%)
+- Current: FFP-20 COMPLETE, next is FFP-21
 
 ---
 
@@ -248,6 +250,8 @@
 3. **Workspace protocol**: Using `workspace:*` for internal dependencies
 4. **Build order**: Core → Functions/Web (enforced by Turborepo)
 5. **TypeScript strict mode**: Enabled across all packages from day 1
+6. **Path aliases strategy**: TypeScript points to `dist`, Vite points to `src` for HMR
+7. **Namespace aliases**: `@web/`, `@core/`, `@functions/` for intra-package imports, `@ffp/` for cross-package
 
 ---
 
@@ -270,14 +274,15 @@
 - ✅ **FFP-17 COMPLETE**: Turborepo initialised with pipeline configuration
 - ✅ **FFP-18 COMPLETE**: Package structure created (web, functions, core)
 - ✅ **FFP-19 COMPLETE**: Workspace dependencies configured and verified
-- ✅ Root `tsconfig.base.json` with strict TypeScript config
-- ✅ All packages have TypeScript, ESLint, build scripts configured
-- ✅ Workspace imports working (`@ffp/core` accessible from web and functions)
-- ✅ Created health check handler in functions to test imports
-- ✅ Verified all four acceptance criteria for FFP-19
-- ✅ Documentation updated (verification doc created)
-- 🎯 **3.5 hours logged** - Ahead of schedule (saved 1.5h on FFP-19)
-- 🎯 **Next**: FFP-20 - Setup TypeScript paths and configuration
+- ✅ **FFP-20 COMPLETE**: TypeScript paths and namespace-based aliases configured
+- ✅ Namespace-based path aliases (`@web/`, `@core/`, `@functions/`) added to all packages
+- ✅ Fixed missing project reference (web → core)
+- ✅ Vite configuration updated with alias support
+- ✅ Created test files demonstrating aliases work
+- ✅ All tests passing (build, typecheck, lint, dev server)
+- ✅ Visual confirmation in browser with green success message
+- 🎯 **5 hours logged** - Ahead of schedule (saved 1 hour total)
+- 🎯 **Next**: FFP-21 - Configure shared ESLint and Prettier
 
 **See `progress-log.md` for detailed session-by-session history.**
 
@@ -285,25 +290,27 @@
 
 ## Current Work
 
-### Active Task: FFP-20 - Setup TypeScript Paths and Configuration
+### Active Task: FFP-21 - Configure Shared ESLint and Prettier
 
-**Objective:** Configure TypeScript path mappings and compiler options for optimal development experience.
+**Objective:** Setup shared ESLint and Prettier configurations for consistent code quality across all packages.
 
 **Acceptance Criteria:**
 
-- Path aliases configured in tsconfig.base.json
-- All packages extend base config correctly
-- IDE autocomplete works for @ffp/* imports
-- Strict mode enabled with no errors
-- Project references working for incremental builds
+- Shared ESLint config package created
+- Shared Prettier config package created
+- All packages use shared configs
+- Linting rules enforce project standards
+- Formatting rules consistent across codebase
+- Pre-commit hooks configured (optional)
 
 **Next Steps:**
 
-1. Review and optimise TypeScript path mappings
-2. Ensure all packages have correct extends configuration
-3. Verify IDE support for imports
-4. Test incremental builds
-5. Document configuration decisions
+1. Create shared config packages
+2. Define ESLint rules (TypeScript, React, Node)
+3. Define Prettier rules (2 spaces, line length, etc.)
+4. Update all packages to use shared configs
+5. Test linting across all packages
+6. Document configuration decisions
 
 ### Development Workflow
 
@@ -317,4 +324,4 @@
 
 ---
 
-**Sprint 1 is live! First code deployed to local. 🚀**
+**Sprint 1 is live! 50% through FFP-7. 🚀**

@@ -5,7 +5,24 @@
     "rootDir": "./src",
     "composite": true,
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+
+    // Internal path aliases for cleaner imports within this package
+    "baseUrl": "./src",
+    "paths": {
+      // Internal aliases for this package using @functions/ namespace
+      "@functions/auth/*": ["./auth/*"],
+      "@functions/assessments/*": ["./assessments/*"],
+      "@functions/business/*": ["./business/*"],
+      "@functions/programs/*": ["./programs/*"],
+      "@functions/videos/*": ["./videos/*"],
+
+      // Common directories (future-ready)
+      "@functions/utils/*": ["./utils/*"],
+      "@functions/types/*": ["./types/*"],
+      "@functions/lib/*": ["./lib/*"],
+      "@functions/services/*": ["./services/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"],

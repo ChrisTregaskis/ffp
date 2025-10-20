@@ -7,8 +7,26 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "noEmit": true
+    "noEmit": true,
+
+    // Internal path aliases for cleaner imports within this package
+    "baseUrl": "./src",
+    "paths": {
+      // Internal aliases for this package using @web/ namespace to avoid conflicts
+      "@web/components/*": ["./components/*"],
+      "@web/hooks/*": ["./hooks/*"],
+      "@web/pages/*": ["./pages/*"],
+      "@web/services/*": ["./services/*"],
+      "@web/utils/*": ["./utils/*"],
+      "@web/types/*": ["./types/*"],
+      "@web/lib/*": ["./lib/*"]
+    }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx"]
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx"],
+  "references": [
+    {
+      "path": "../core"
+    }
+  ]
 }

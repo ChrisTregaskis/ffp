@@ -5,7 +5,17 @@
     "rootDir": "./src",
     "composite": true,
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+
+    // Internal path aliases for cleaner imports within this package
+    "baseUrl": "./src",
+    "paths": {
+      "@core/lib/*": ["./lib/*"],
+      "@core/types/*": ["./types/*"],
+      "@core/utils/*": ["./utils/*"],
+      "@core/services/*": ["./services/*"],
+      "@core/repositories/*": ["./repositories/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
