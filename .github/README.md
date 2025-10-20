@@ -336,17 +336,6 @@ Settings → Branches → Add rule
 └── ✅ Do not allow bypassing the above settings
 ```
 
-## Future Enhancements
-
-Planned additions:
-
-- [ ] Code coverage reporting
-- [ ] Security scanning (Dependabot, CodeQL)
-- [ ] Automated deployments (after SST setup)
-- [ ] Release automation
-- [ ] Slack notifications
-- [ ] Performance benchmarks
-
 ## Resources
 
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)

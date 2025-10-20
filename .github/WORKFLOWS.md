@@ -219,29 +219,6 @@ gh run view <run-id> --log
 
 ---
 
-## GitHub CLI Setup (Optional)
-
-The workflows use `gh` CLI internally, but you can also use it locally:
-
-```bash
-# Install (macOS)
-brew install gh
-
-# Authenticate
-gh auth login
-
-# Create PR manually
-gh pr create --title "FFP-20: TypeScript paths" --body "Description here"
-
-# View your PRs
-gh pr list
-
-# Check workflow status
-gh run list
-```
-
----
-
 ## Next Steps
 
 ### After first push:
