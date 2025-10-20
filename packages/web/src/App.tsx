@@ -4,35 +4,43 @@ import { PathAliasTest } from "@/components/PathAliasTest";
 
 function App() {
   return (
-    <div style={{ padding: "2rem", fontFamily: "system-ui" }}>
-      <h1>{APP_NAME}</h1>
-      <p>Version: {APP_VERSION}</p>
-      <p>
-        Multi-tenant physiotherapy SaaS platform - Dynamic assessments,
-        personalised programmes, video workouts.
-      </p>
-      <p style={{ color: "#666", fontSize: "0.9rem", marginTop: "2rem" }}>
-        🎯 Phase: Sprint 1 - Application Setup & Foundation
-        <br />
-        ✅ FFP-17: Turborepo Initialised
-        <br />
-        ✅ FFP-18: Package Structure Created
-        <br />
-        ✅ FFP-19: Workspace Dependencies Configured
-        <br />
-        🔄 FFP-20: TypeScript Paths & Configuration
-      </p>
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-lg shadow-md p-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">{APP_NAME}</h1>
+          <p className="text-sm text-gray-500 mb-4">Version: {APP_VERSION}</p>
+          <p className="text-gray-700 mb-6">
+            Multi-tenant physiotherapy SaaS platform - Dynamic assessments,
+            personalised programmes, video workouts.
+          </p>
 
-      <hr
-        style={{
-          margin: "2rem 0",
-          border: "none",
-          borderTop: "1px solid #ddd",
-        }}
-      />
+          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-8">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <span className="text-2xl">🎯</span>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-blue-700">
+                  <strong>Phase:</strong> Sprint 1 - Application Setup &
+                  Foundation
+                </p>
+                <ul className="mt-2 text-sm text-blue-600 space-y-1">
+                  <li>✅ FFP-17: Turborepo Initialised</li>
+                  <li>✅ FFP-18: Package Structure Created</li>
+                  <li>✅ FFP-19: Workspace Dependencies Configured</li>
+                  <li>✅ FFP-20: TypeScript Paths & Configuration</li>
+                  <li>🎨 TailwindCSS: Configured & Working</li>
+                </ul>
+              </div>
+            </div>
+          </div>
 
-      {/* Test component demonstrating path aliases */}
-      <PathAliasTest />
+          <hr className="my-8 border-gray-200" />
+
+          {/* Test component demonstrating path aliases */}
+          <PathAliasTest />
+        </div>
+      </div>
     </div>
   );
 }

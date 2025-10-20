@@ -8,25 +8,25 @@ export function PathAliasTest() {
   const testData = testPathAliases();
 
   return (
-    <div style={{ padding: "20px", fontFamily: "monospace" }}>
-      <h2>TypeScript Path Alias Test</h2>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold text-gray-900">
+        TypeScript Path Alias Test
+      </h2>
 
-      <div style={{ marginTop: "20px" }}>
-        <h3>✅ Workspace Import (@ffp/core)</h3>
-        <p>
-          App Name: <strong>{APP_NAME}</strong>
+      <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+        <h3 className="text-lg font-medium text-green-900 mb-2">
+          ✅ Workspace Import (@ffp/core)
+        </h3>
+        <p className="text-green-700">
+          App Name: <strong className="font-semibold">{APP_NAME}</strong>
         </p>
       </div>
 
-      <div style={{ marginTop: "20px" }}>
-        <h3>✅ Internal Path Aliases</h3>
-        <pre
-          style={{
-            background: "#f5f5f5",
-            padding: "10px",
-            borderRadius: "4px",
-          }}
-        >
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h3 className="text-lg font-medium text-blue-900 mb-3">
+          ✅ Internal Path Aliases
+        </h3>
+        <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto text-sm">
           {JSON.stringify(
             {
               tenant: {
@@ -46,15 +46,18 @@ export function PathAliasTest() {
         </pre>
       </div>
 
-      <div
-        style={{
-          marginTop: "20px",
-          padding: "10px",
-          background: "#e8f5e9",
-          borderRadius: "4px",
-        }}
-      >
-        <strong>✅ All path aliases working correctly!</strong>
+      <div className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-lg p-6 shadow-lg">
+        <div className="flex items-center space-x-3">
+          <span className="text-3xl">✅</span>
+          <div>
+            <p className="text-lg font-semibold">
+              All path aliases working correctly!
+            </p>
+            <p className="text-sm text-green-50 mt-1">
+              TailwindCSS is also configured and rendering styles
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
