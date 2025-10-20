@@ -1,4 +1,6 @@
 import { APP_NAME, APP_VERSION } from "@ffp/core";
+// Test internal path alias
+import { PathAliasTest } from "@/components/PathAliasTest";
 
 function App() {
   return (
@@ -14,8 +16,23 @@ function App() {
         <br />
         ✅ FFP-17: Turborepo Initialised
         <br />
-        🔄 FFP-18: Package Structure Created
+        ✅ FFP-18: Package Structure Created
+        <br />
+        ✅ FFP-19: Workspace Dependencies Configured
+        <br />
+        🔄 FFP-20: TypeScript Paths & Configuration
       </p>
+
+      <hr
+        style={{
+          margin: "2rem 0",
+          border: "none",
+          borderTop: "1px solid #ddd",
+        }}
+      />
+
+      {/* Test component demonstrating path aliases */}
+      <PathAliasTest />
     </div>
   );
 }

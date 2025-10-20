@@ -1,14 +1,16 @@
-// Health check handler to verify workspace dependencies
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { APP_NAME, APP_VERSION, USER_ROLES } from "@ffp/core";
-
 /**
- * Simple health check endpoint
- * Tests that @ffp/core imports work correctly in functions package
+ * Health check handler
+ * Tests workspace imports (@ffp/core) and internal aliases
  */
-export const handler = async (
-  _event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+import type { APIGatewayProxyHandler } from "aws-lambda";
+import { APP_NAME, testPathAliases } from "@ffp/core";
+
+export const handler: APIGatewayProxyHandler = async (event) => {
+  console.log("Health check event:", event);
+
+  // Test internal path aliases by importing from @ffp/core
+  const pathTest = testPathAliases();
+
   return {
     statusCode: 200,
     headers: {
@@ -16,10 +18,13 @@ export const handler = async (
     },
     body: JSON.stringify({
       status: "healthy",
-      app: APP_NAME,
-      version: APP_VERSION,
-      roles: Object.values(USER_ROLES),
+      message: `${APP_NAME} Functions - Health Check OK`,
       timestamp: new Date().toISOString(),
+      pathAliasTest: {
+        appName: pathTest.appName,
+        tenantId: pathTest.tenant.id,
+        userId: pathTest.user.id,
+      },
     }),
   };
 };

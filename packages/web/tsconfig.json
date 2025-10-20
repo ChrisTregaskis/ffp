@@ -7,8 +7,29 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "noEmit": true
+    "noEmit": true,
+
+    // Internal path aliases for cleaner imports within this package
+    "baseUrl": "./src",
+    "paths": {
+      // Workspace imports (inherited from base, redeclared for clarity)
+      "@ffp/core": ["../../core/dist"],
+      "@ffp/core/*": ["../../core/dist/*"],
+
+      // Internal aliases for this package
+      "@/components/*": ["./components/*"],
+      "@/hooks/*": ["./hooks/*"],
+      "@/pages/*": ["./pages/*"],
+      "@/services/*": ["./services/*"],
+      "@/utils/*": ["./utils/*"],
+      "@/types/*": ["./types/*"]
+    }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx"]
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx"],
+  "references": [
+    {
+      "path": "../core"
+    }
+  ]
 }
