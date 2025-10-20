@@ -1,0 +1,148 @@
+name: Auto Create Pull Request
+
+on:
+  push:
+    branches:
+      - "feature/**"
+      - "fix/**"
+      - "chore/**"
+      - "FFP-*"
+      - "!main"
+      - "!develop"
+
+jobs:
+  create-pull-request:
+    runs-on: ubuntu-latest
+
+    # Only run if PR doesn't already exist for this branch
+    if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip-pr]')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for proper PR creation
+
+      - name: Check if PR already exists
+        id: check-pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the current branch name
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+
+          # Check if a PR already exists for this branch
+          PR_EXISTS=$(gh pr list --head "$BRANCH_NAME" --state open --json number --jq length)
+
+          echo "pr_exists=$PR_EXISTS" >> $GITHUB_OUTPUT
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+      - name: Extract ticket information
+        id: ticket-info
+        if: steps.check-pr.outputs.pr_exists == '0'
+        run: |
+          BRANCH_NAME="${{ steps.check-pr.outputs.branch_name }}"
+
+          # Extract FFP ticket number (e.g., FFP-19 from branch name)
+          TICKET=$(echo "$BRANCH_NAME" | grep -oE 'FFP-[0-9]+' || echo "")
+
+          # Generate PR title
+          if [ -n "$TICKET" ]; then
+            TITLE="$TICKET: $(echo $BRANCH_NAME | sed 's/.*FFP-[0-9]*[_-]*//' | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')"
+          else
+            TITLE="$(echo $BRANCH_NAME | sed 's/feature\///' | sed 's/fix\///' | sed 's/chore\///' | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')"
+          fi
+
+          echo "ticket=$TICKET" >> $GITHUB_OUTPUT
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        if: steps.check-pr.outputs.pr_exists == '0'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME="${{ steps.check-pr.outputs.branch_name }}"
+          TICKET="${{ steps.ticket-info.outputs.ticket }}"
+          TITLE="${{ steps.ticket-info.outputs.title }}"
+
+          # Generate PR body
+          BODY="## Description
+
+          Auto-generated PR for branch: \`$BRANCH_NAME\`
+          "
+
+          # Add Jira link if ticket found
+          if [ -n "$TICKET" ]; then
+            BODY="$BODY
+
+          **Jira Ticket:** [${TICKET}](https://ctregaskis.atlassian.net/browse/${TICKET})
+          "
+          fi
+
+          BODY="$BODY
+
+          ## Changes
+
+          - [ ] TODO: Add description of changes
+
+          ## Testing
+
+          - [ ] Tests pass locally
+          - [ ] Type checking passes
+          - [ ] Lint passes
+
+          ## Checklist
+
+          - [ ] Code follows project standards
+          - [ ] Documentation updated if needed
+          - [ ] Ready for review
+
+          ---
+
+          _This PR was automatically created by GitHub Actions._
+          _Add \`[skip-pr]\` to your commit message to prevent auto-PR creation._
+          "
+
+          # Create the PR
+          gh pr create \
+            --title "$TITLE" \
+            --body "$BODY" \
+            --base main \
+            --head "$BRANCH_NAME" \
+            --draft
+
+      - name: Comment on PR with useful info
+        if: steps.check-pr.outputs.pr_exists == '0'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME="${{ steps.check-pr.outputs.branch_name }}"
+
+          # Wait a moment for PR to be created
+          sleep 2
+
+          # Get PR number
+          PR_NUMBER=$(gh pr list --head "$BRANCH_NAME" --state open --json number --jq '.[0].number')
+
+          if [ -n "$PR_NUMBER" ]; then
+            gh pr comment "$PR_NUMBER" --body "### Quick Commands
+            
+            \`\`\`bash
+            # Pull latest changes
+            git pull origin $BRANCH_NAME
+            
+            # Run tests
+            pnpm test
+            
+            # Type check
+            pnpm typecheck
+            
+            # Build
+            pnpm build
+            \`\`\`
+            
+            **Remember to:**
+            1. Update the PR description with actual changes
+            2. Mark as ready for review when complete
+            3. Ensure all checklist items are ticked"
+          fi
