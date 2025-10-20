@@ -1,0 +1,21 @@
+{
+  "name": "@ffp/functions",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext ts --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "@ffp/core": "workspace:*",
+    "@aws-sdk/client-cognito-identity-provider": "^3.705.0",
+    "@aws-sdk/client-s3": "^3.705.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145",
+    "@types/node": "^22.9.0",
+    "typescript": "^5.6.3"
+  }
+}
