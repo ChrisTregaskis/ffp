@@ -1,6 +1,6 @@
 import type { APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda';
 
-export const handler: APIGatewayProxyHandler = (event): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler = async (event): Promise<APIGatewayProxyResult> => {
   console.log('Health check event:', event);
 
   try {
