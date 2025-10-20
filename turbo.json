@@ -1,16 +1,8 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "stream",
-  "globalEnv": [
-    "NODE_ENV",
-    "AWS_REGION",
-    "CI"
-  ],
-  "globalDependencies": [
-    "tsconfig.base.json",
-    ".eslintrc.js",
-    ".prettierrc.js"
-  ],
+  "globalEnv": ["NODE_ENV", "AWS_REGION", "CI"],
+  "globalDependencies": ["tsconfig.base.json", ".eslintrc.js", ".prettierrc.js"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -22,40 +14,24 @@
         "!**/*.spec.ts",
         "!**/*.spec.tsx"
       ],
-      "outputs": [
-        "dist/**",
-        ".next/**",
-        "!.next/cache/**",
-        "build/**"
-      ],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "build/**"],
       "cache": true
     },
     "typecheck": {
       "dependsOn": ["^build"],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "!**/*.md"
-      ],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
       "cache": true,
       "outputLogs": "errors-only"
     },
     "lint": {
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "!**/*.md"
-      ],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
       "cache": true,
       "outputLogs": "errors-only"
     },
     "test": {
       "dependsOn": ["build"],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "!**/*.md"
-      ],
-      "outputs": [
-        "coverage/**"
-      ],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
+      "outputs": ["coverage/**"],
       "cache": true,
       "outputLogs": "new-only"
     },
