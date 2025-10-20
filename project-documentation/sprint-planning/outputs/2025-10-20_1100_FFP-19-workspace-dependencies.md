@@ -66,8 +66,8 @@ core/src/
 ```json
 {
   "paths": {
-    "@ffp/core": ["./packages/core/src"],
-    "@ffp/core/*": ["./packages/core/src/*"]
+    "@ffp/core": ["./packages/core/dist"],
+    "@ffp/core/*": ["./packages/core/dist/*"]
   }
 }
 ```
