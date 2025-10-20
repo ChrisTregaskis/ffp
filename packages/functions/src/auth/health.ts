@@ -1,42 +1,37 @@
-import { APP_NAME, testPathAliases } from '@ffp/core';
+import type { APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda';
 
-import type { APIGatewayProxyHandler } from 'aws-lambda';
-
-interface HealthCheckResponse {
-  statusCode: number;
-  headers: Record<string, string>;
-  body: string;
-}
-
-/**
- * Health check handler
- * Tests workspace imports (@ffp/core) and internal aliases
- */
-export const handler: APIGatewayProxyHandler = async (event): Promise<HealthCheckResponse> => {
+export const handler: APIGatewayProxyHandler = async (event): Promise<APIGatewayProxyResult> => {
   console.log('Health check event:', event);
 
-  // Simulate async operation
-  await new Promise((resolve) => {
-    resolve(true);
-  });
-
-  // Test internal path aliases by importing from @ffp/core
-  const pathTest = testPathAliases();
-
-  return {
-    statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
+  try {
+    // Simple health check response
+    const response = {
       status: 'healthy',
-      message: `${APP_NAME} Functions - Health Check OK`,
+      message: 'FFP Functions - Health Check OK',
       timestamp: new Date().toISOString(),
-      pathAliasTest: {
-        appName: pathTest.appName,
-        tenantId: pathTest.tenant.id,
-        userId: pathTest.user.id,
+      service: 'auth',
+      version: '1.0.0',
+    };
+
+    return Promise.resolve({
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
       },
-    }),
-  };
+      body: JSON.stringify(response),
+    });
+  } catch (error) {
+    console.error('Health check error:', error);
+    return Promise.resolve({
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        status: 'error',
+        message: 'Health check failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }),
+    });
+  }
 };

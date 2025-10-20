@@ -1,3 +1,1 @@
-import { testPathAliases } from './pathAliasTest';
-
-export { testPathAliases };
+export * from './pathAliasTest';
