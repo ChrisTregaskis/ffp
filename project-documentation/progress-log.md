@@ -1,3 +1,153 @@
+### October 20, 2025 (Session 13 - FFP-21 Complete!)
+
+**Status**: 🚀 Sprint 1 Progress - 5/8 subtasks complete (63%)
+
+**Completed Subtask:**
+
+**FFP-21: Configure Shared ESLint and Prettier** ✅ COMPLETE (2.5 hours)
+
+- **Created shared ESLint config package** (`@ffp/eslint-config`):
+  - Base configuration with TypeScript strict rules
+  - React-specific configuration for web package
+  - Node.js-specific configuration for backend packages
+  - Import order and organisation rules with path groups for monorepo
+  - Installed `eslint-import-resolver-typescript` for path alias resolution
+- **Created shared Prettier config package** (`@ffp/prettier-config`):
+  - 2 spaces indentation, 100 character line length
+  - Single quotes, semicolons, trailing commas
+  - LF line endings for cross-platform consistency
+- **Fixed ESM/CommonJS conflicts**:
+  - Renamed `.eslintrc.js` → `.eslintrc.cjs` in all packages with `"type": "module"`
+  - Required for web, core, and functions packages
+- **Configured dual TypeScript projects** for web package:
+  - `tsconfig.json` → App source code (React, browser)
+  - `tsconfig.node.json` → Build tools and config files (Node.js)
+  - Solved "Cannot find module 'path'" error in Vite config files
+- **Added root-level ESLint config**:
+  - Lints root JavaScript config files (`.eslintrc.js`, `.prettierrc.js`)
+  - Uses standard ESLint (not TypeScript type-checked) for JS files
+  - Ignores all packages (they lint themselves)
+- **Fixed build output linting**:
+  - Added `ignorePatterns: ['dist', 'node_modules']` to all package configs
+  - Prevents ESLint from trying to lint generated `.d.ts` files
+- **Configured VS Code ESLint integration**:
+  - Added `.vscode/settings.json` with ESLint configuration
+  - Enabled auto-fix on save
+  - Set working directories to auto-mode for monorepo support
+- **Configured import order rules** for monorepo:
+  - `@ffp/**` → external group (workspace packages)
+  - `@web/**`, `@core/**` → internal group (intra-package aliases)
+  - Blank lines required between import groups
+  - Alphabetical sorting within groups
+
+**Challenges Solved:**
+
+1. ✅ **ESM vs CommonJS**: `.eslintrc.js` files failing in packages with `"type": "module"` - Fixed by renaming to `.cjs`
+2. ✅ **Path module not found**: Vite config files couldn't import Node.js modules - Fixed with dual `tsconfig.json` / `tsconfig.node.json` setup
+3. ✅ **Build artifacts linting**: ESLint trying to parse `dist/` folder - Fixed with `ignorePatterns`
+4. ✅ **Import resolver missing**: TypeScript path aliases not resolving - Fixed by installing `eslint-import-resolver-typescript`
+5. ✅ **VS Code cache conflict**: IDE showing different errors than terminal - Fixed with explicit VS Code settings and path groups configuration
+6. ✅ **Config files parsing errors**: `.eslintrc.cjs`, `postcss.config.js`, `tailwind.config.js` not in TypeScript project - Fixed by adding to `tsconfig.node.json` and using dual project references in ESLint
+
+**Configuration Structure:**
+
+```
+packages/
+  ├── eslint-config/           # Shared ESLint configurations
+  │   ├── base.js             # Base TypeScript config
+  │   ├── react.js            # React-specific rules
+  │   ├── node.js             # Node.js-specific rules
+  │   └── package.json
+  ├── prettier-config/         # Shared Prettier configuration
+  │   ├── index.js            # Formatting rules
+  │   └── package.json
+  ├── web/
+  │   ├── .eslintrc.cjs       # Extends @ffp/eslint-config/react
+  │   ├── tsconfig.json       # App code
+  │   └── tsconfig.node.json  # Build tools
+  ├── core/
+  │   └── .eslintrc.cjs       # Extends @ffp/eslint-config/node
+  └── functions/
+      └── .eslintrc.cjs       # Extends @ffp/eslint-config/node
+```
+
+**Root Configuration:**
+
+```
+.eslintrc.js                  # Lints root config files
+.prettierrc.js                # Uses @ffp/prettier-config
+package.json                  # Scripts: lint, lint:fix, format
+.vscode/settings.json         # ESLint auto-fix on save
+```
+
+**Acceptance Criteria Verified:**
+
+1. ✅ Shared ESLint config package created
+2. ✅ Shared Prettier config package created
+3. ✅ All packages use shared configs
+4. ✅ Linting rules enforce project standards (TypeScript strict, import order)
+5. ✅ Formatting rules consistent (2 spaces, 100 chars, single quotes)
+6. ✅ All packages lint successfully with `pnpm run lint`
+7. ✅ VS Code ESLint integration working with auto-fix
+8. ✅ Import order rules working correctly for monorepo structure
+
+**Testing Results:**
+
+```bash
+✓ pnpm run lint:root - Root config files pass
+✓ pnpm run lint - All packages pass (with Turborepo caching)
+✓ pnpm run lint:fix - Auto-fix works across all packages
+✓ pnpm run format - Prettier formats all files consistently
+✓ VS Code ESLint - No conflicting errors, auto-fix on save works
+✓ Import statements - Correctly grouped with blank lines
+```
+
+**Key Features:**
+
+- **TypeScript strict mode enforced**: No `any`, explicit return types, strict boolean expressions
+- **Import organisation**: Groups (builtin, external, internal, relative) with blank lines and alphabetical sorting
+- **Path alias support**: `@ffp/*`, `@web/*`, `@core/*`, `@functions/*` resolve correctly
+- **Monorepo-aware**: Different configs for React (web) vs Node.js (core, functions)
+- **Dual TypeScript projects**: Separate configs for app code vs build tools
+- **VS Code integration**: Auto-fix on save, working directories set for monorepo
+- **Turborepo caching**: Lint results cached, second run instant
+
+**Scripts Added:**
+
+```json
+// Root package.json
+{
+  "lint": "pnpm run lint:root && turbo lint",
+  "lint:root": "eslint . --ext js --max-warnings 0 --ignore-pattern 'packages/**'",
+  "lint:fix": "pnpm run lint:root --fix && turbo lint -- --fix",
+  "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+  "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+}
+```
+
+**Time Tracking:**
+
+- FFP-21: 2.5 hours (estimated 2h) ⚠️ Slightly over (+0.5h due to ESM/config file issues)
+- **Sprint 1 Progress**: 7.5/13 hours complete (58%)
+- **Subtasks Complete**: 5/8 (63%)
+- **Status**: Still ahead of schedule overall (saved 0.5h net)
+
+**Sprint 1 Velocity:**
+
+- Stories completed: 0/1 (FFP-7 still in progress)
+- Subtasks completed: 5/8 (63%)
+- Hours spent: 7.5/13 (58%)
+- **On track** ✅ (only 0.5h over budget, still manageable)
+
+**Next Steps:**
+
+- 🎯 **FFP-22**: Configure Turborepo build pipeline and caching (estimated 2 hours)
+- FFP-23: Write tests for monorepo setup (1 hour)
+- FFP-24: Document monorepo structure and commands (1 hour)
+- All infrastructure work progressing well
+
+---
+
 ### October 20, 2025 (Session 12 - FFP-19 & FFP-20 Complete!)
 
 **Status**: 🚀 Sprint 1 Progress - 4/8 subtasks complete (50%)

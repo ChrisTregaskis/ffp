@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: October 20, 2025  
+**Last Updated**: October 20, 2025 - Session 13  
 **Current Phase**: Sprint 1 Execution - IN PROGRESS 🚀  
 **Solo Developer**: Christopher Tregaskis
 
@@ -15,8 +15,9 @@
 ✅ **Complete**: FFP-18 - Create Package Structure (2 hours)  
 ✅ **Complete**: FFP-19 - Configure Workspace Dependencies (0.5 hours)  
 ✅ **Complete**: FFP-20 - Setup TypeScript Paths and Configuration (1.5 hours)  
-🔄 **In Progress**: FFP-7 - Turborepo Monorepo Setup (4/8 subtasks complete)  
-🎯 **Next**: FFP-21 - Configure shared ESLint and Prettier
+✅ **Complete**: FFP-21 - Configure shared ESLint and Prettier (2.5 hours)  
+🔄 **In Progress**: FFP-7 - Turborepo Monorepo Setup (5/8 subtasks complete - 63%)  
+🎯 **Next**: FFP-22 - Configure Turborepo build pipeline and caching
 
 ### Sprint 1 Progress
 
@@ -26,16 +27,16 @@
 - ✅ FFP-18: Create package structure (web, functions, core) (2h) - COMPLETE
 - ✅ FFP-19: Configure workspace dependencies (0.5h) - COMPLETE
 - ✅ FFP-20: Setup TypeScript paths and configuration (1.5h) - COMPLETE
-- ⏸️ FFP-21: Configure shared ESLint and Prettier (2h)
+- ✅ FFP-21: Configure shared ESLint and Prettier (2.5h) - COMPLETE
 - ⏸️ FFP-22: Configure Turborepo build pipeline and caching (2h)
 - ⏸️ FFP-23: Write tests for monorepo setup (1h)
 - ⏸️ FFP-24: Document monorepo structure and commands (1h)
 
 **Time Tracking:**
 
-- Hours completed: 5/13 (38%)
-- Subtasks completed: 4/8 (50%)
-- **Status**: Ahead of schedule ✅ (saved 1 hour total)
+- Hours completed: 7.5/13 (58%)
+- Subtasks completed: 5/8 (63%)
+- **Status**: On track ✅ (0.5h over budget on FFP-21, but manageable)
 
 ### Focus Areas
 
@@ -45,7 +46,8 @@
 - ✅ Created all Subtasks for Sprint 1 stories (93 subtasks across 9 stories)
 - ✅ **First code written!** - Turborepo monorepo initialised and functional
 - ✅ **Path aliases configured** - Cleaner imports with @/ prefix
-- 🔄 **Executing Sprint 1** - Building foundation infrastructure (50% complete on FFP-7)
+- ✅ **ESLint & Prettier configured** - Shared configs, strict rules, import order
+- 🔄 **Executing Sprint 1** - Building foundation infrastructure (63% complete on FFP-7)
 - ⏸️ Create User Stories for Sprints 2-6 (after Sprint 1 complete)
 
 ### Sprint Planning Approach
@@ -97,6 +99,7 @@
 - ✅ FFP-18: Package structure created (web, functions, core)
 - ✅ FFP-19: Workspace dependencies configured (@ffp/core imports working)
 - ✅ FFP-20: TypeScript paths and internal aliases configured
+- ✅ FFP-21: ESLint and Prettier shared configs (strict rules, import order)
 - ✅ Root TypeScript configuration with strict mode
 - ✅ Namespace-based path aliases (`@web/`, `@core/`, `@functions/`) for conflict-free imports
 - ✅ Fixed missing project reference (web → core)
@@ -104,10 +107,11 @@
 - ✅ Turborepo pipeline with build, test, lint, typecheck tasks
 - ✅ Structure aligned with architecture.md
 - ✅ All tests passing (build, typecheck, lint, dev server)
+- ✅ VS Code ESLint integration with auto-fix on save
+- ✅ Dual TypeScript projects for web (app + build tools)
 
 **Next Up:**
 
-- FFP-21: ESLint and Prettier shared configs (2h)
 - FFP-22: Turborepo caching optimisation (2h)
 - FFP-23: Tests for monorepo setup (1h)
 - FFP-24: Documentation (1h)
@@ -269,20 +273,22 @@
 
 ## Progress Summary
 
-**Recent Work** (Oct 20, 2025 - Session 12):
+**Recent Work** (Oct 20, 2025 - Session 13):
 
-- ✅ **FFP-17 COMPLETE**: Turborepo initialised with pipeline configuration
-- ✅ **FFP-18 COMPLETE**: Package structure created (web, functions, core)
-- ✅ **FFP-19 COMPLETE**: Workspace dependencies configured and verified
-- ✅ **FFP-20 COMPLETE**: TypeScript paths and namespace-based aliases configured
-- ✅ Namespace-based path aliases (`@web/`, `@core/`, `@functions/`) added to all packages
-- ✅ Fixed missing project reference (web → core)
-- ✅ Vite configuration updated with alias support
-- ✅ Created test files demonstrating aliases work
-- ✅ All tests passing (build, typecheck, lint, dev server)
-- ✅ Visual confirmation in browser with green success message
-- 🎯 **5 hours logged** - Ahead of schedule (saved 1 hour total)
-- 🎯 **Next**: FFP-21 - Configure shared ESLint and Prettier
+- ✅ **FFP-21 COMPLETE**: Shared ESLint and Prettier configurations
+- ✅ Created `@ffp/eslint-config` package (base, react, node configs)
+- ✅ Created `@ffp/prettier-config` package (2 spaces, 100 chars, single quotes)
+- ✅ Fixed ESM/CommonJS conflicts (renamed `.eslintrc.js` → `.eslintrc.cjs`)
+- ✅ Configured dual TypeScript projects for web (app + build tools)
+- ✅ Added root-level ESLint config for root config files
+- ✅ Fixed build output linting (added `ignorePatterns`)
+- ✅ Configured VS Code ESLint integration with auto-fix on save
+- ✅ Configured import order rules for monorepo with path groups
+- ✅ Installed `eslint-import-resolver-typescript` for path alias resolution
+- ✅ All packages lint successfully with Turborepo caching
+- ✅ Resolved 6 complex configuration issues (ESM/CommonJS, path module, etc.)
+- 🎯 **7.5 hours logged** - On track (0.5h over on FFP-21, but manageable)
+- 🎯 **Next**: FFP-22 - Configure Turborepo build pipeline and caching
 
 **See `progress-log.md` for detailed session-by-session history.**
 
@@ -290,27 +296,27 @@
 
 ## Current Work
 
-### Active Task: FFP-21 - Configure Shared ESLint and Prettier
+### Active Task: FFP-22 - Configure Turborepo Build Pipeline and Caching
 
-**Objective:** Setup shared ESLint and Prettier configurations for consistent code quality across all packages.
+**Objective:** Optimise Turborepo build pipeline with intelligent caching for faster development and CI/CD.
 
 **Acceptance Criteria:**
 
-- Shared ESLint config package created
-- Shared Prettier config package created
-- All packages use shared configs
-- Linting rules enforce project standards
-- Formatting rules consistent across codebase
-- Pre-commit hooks configured (optional)
+- Build pipeline properly configured with dependency graph
+- Caching enabled for build, test, lint, typecheck tasks
+- Remote caching setup prepared (optional for later)
+- Build times optimised with incremental builds
+- Cache invalidation working correctly
+- Documentation for cache debugging
 
 **Next Steps:**
 
-1. Create shared config packages
-2. Define ESLint rules (TypeScript, React, Node)
-3. Define Prettier rules (2 spaces, line length, etc.)
-4. Update all packages to use shared configs
-5. Test linting across all packages
-6. Document configuration decisions
+1. Review current `turbo.json` configuration
+2. Add cache outputs for all tasks
+3. Configure dependency graph (`dependsOn`)
+4. Test cache hits/misses
+5. Benchmark build times
+6. Document caching behaviour
 
 ### Development Workflow
 
