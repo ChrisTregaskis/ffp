@@ -10,12 +10,18 @@
     // Internal path aliases for cleaner imports within this package
     "baseUrl": "./src",
     "paths": {
-      // Internal aliases for this package
-      "@/auth/*": ["./auth/*"],
-      "@/assessments/*": ["./assessments/*"],
-      "@/business/*": ["./business/*"],
-      "@/programs/*": ["./programs/*"],
-      "@/videos/*": ["./videos/*"]
+      // Internal aliases for this package using @functions/ namespace
+      "@functions/auth/*": ["./auth/*"],
+      "@functions/assessments/*": ["./assessments/*"],
+      "@functions/business/*": ["./business/*"],
+      "@functions/programs/*": ["./programs/*"],
+      "@functions/videos/*": ["./videos/*"],
+
+      // Common directories (future-ready)
+      "@functions/utils/*": ["./utils/*"],
+      "@functions/types/*": ["./types/*"],
+      "@functions/lib/*": ["./lib/*"],
+      "@functions/services/*": ["./services/*"]
     }
   },
   "include": ["src/**/*"],

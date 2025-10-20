@@ -1,6 +1,6 @@
 import { APP_NAME, APP_VERSION } from "@ffp/core";
 // Test internal path alias
-import { PathAliasTest } from "@/components/PathAliasTest";
+import { PathAliasTest } from "@web/components/PathAliasTest";
 
 function App() {
   return (

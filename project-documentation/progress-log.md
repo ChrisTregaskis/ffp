@@ -24,25 +24,25 @@
 
 **FFP-20: Setup TypeScript Paths and Configuration** ✅ COMPLETE (1.5 hours - saved 0.5h!)
 
-- **Added internal path aliases** (`@/` prefix) to all packages for cleaner imports
+- **Added namespace-based path aliases** (`@web/`, `@core/`, `@functions/`) to all packages for conflict-free imports
 - **Fixed missing project reference**: Added `web → core` in `packages/web/tsconfig.json`
-- **Updated Vite configuration** to support internal aliases with HMR
-- **Created test files** demonstrating both workspace (`@ffp/core`) and internal (`@/`) imports work
+- **Updated Vite configuration** to support namespace aliases with HMR
+- **Created test files** demonstrating both workspace (`@ffp/core`) and namespace (`@web/`, `@core/`) imports work
 
 **Changes Made:**
 
 1. **Core Package** (`packages/core/tsconfig.json`):
-   - Added `@/lib/*`, `@/types/*`, `@/services/*`, `@/repositories/*` aliases
-   - Created `src/utils/pathAliasTest.ts` demonstrating internal aliases
+   - Added `@core/lib/*`, `@core/types/*`, `@core/services/*`, `@core/repositories/*` aliases
+   - Created `src/utils/pathAliasTest.ts` demonstrating namespace aliases
 2. **Functions Package** (`packages/functions/tsconfig.json`):
-   - Added `@/auth/*`, `@/assessments/*`, `@/business/*`, `@/programs/*`, `@/videos/*` aliases
+   - Added `@functions/auth/*`, `@functions/assessments/*`, `@functions/business/*`, `@functions/programs/*`, `@functions/videos/*` aliases
    - Updated `src/auth/health.ts` to import from `@ffp/core`
 3. **Web Package** (`packages/web/tsconfig.json`):
    - ✅ **Added missing project reference to core** (critical fix!)
-   - Added `@/components/*`, `@/hooks/*`, `@/pages/*`, `@/services/*`, `@/utils/*`, `@/types/*` aliases
+   - Added `@web/components/*`, `@web/hooks/*`, `@web/pages/*`, `@web/services/*`, `@web/utils/*`, `@web/types/*` aliases
    - Updated `vite.config.ts` with matching alias configuration
    - Created `src/components/PathAliasTest.tsx` visual test component
-   - Updated `src/App.tsx` to render test component using `@/components` alias
+   - Updated `src/App.tsx` to render test component using `@web/components` alias
 
 **Import Pattern Examples:**
 
@@ -51,14 +51,14 @@
 import { APP_NAME } from "@ffp/core";
 
 // Core package internal
-import type { User } from "@/types/user.types";
-import { APP_NAME } from "@/lib/constants";
+import type { User } from "@core/types/user.types";
+import { APP_NAME } from "@core/lib/constants";
 
 // Functions package internal
-import { handler } from "@/auth/login";
+import { handler } from "@functions/auth/login";
 
 // Web package internal
-import { PathAliasTest } from "@/components/PathAliasTest";
+import { PathAliasTest } from "@web/components/PathAliasTest";
 ```
 
 **Configuration Strategy:**
@@ -72,7 +72,7 @@ import { PathAliasTest } from "@/components/PathAliasTest";
 1. ✅ Path aliases configured in tsconfig.base.json
 2. ✅ All packages extend base config correctly
 3. ✅ IDE autocomplete works for @ffp/\* imports
-4. ✅ Internal @/ aliases work in all packages
+4. ✅ Namespace aliases work in all packages (@web/, @core/, @functions/)
 5. ✅ Strict mode enabled with no errors
 6. ✅ Project references working for incremental builds
 7. ✅ Vite aliases match TypeScript paths
@@ -96,11 +96,12 @@ import { PathAliasTest } from "@/components/PathAliasTest";
 
 **Key Achievements:**
 
-- ✅ **Cleaner imports** - No more `../../../types/user.types`
-- ✅ **Better DX** - IDE autocomplete for all paths
+- ✅ **Conflict-free imports** - No more namespace collisions between packages
+- ✅ **Better DX** - IDE autocomplete for all paths with clear ownership
 - ✅ **Incremental builds** - TypeScript project references working properly
 - ✅ **Visual confirmation** - Browser test component shows aliases work
 - ✅ **Production-ready** - Configuration strategy matches best practices
+- ✅ **Future-proof** - Namespace strategy scales to any package structure
 
 **Time Tracking:**
 
@@ -122,7 +123,7 @@ FFP-19:
 - All builds and type checks pass
 
 FFP-20:
-- Added internal path aliases (@/) for all packages
+- Added namespace-based path aliases (@web/, @core/, @functions/) for all packages
 - Fixed missing project reference (web → core)
 - Updated Vite config with alias support
 - Created test files demonstrating aliases work

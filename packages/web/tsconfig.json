@@ -12,13 +12,14 @@
     // Internal path aliases for cleaner imports within this package
     "baseUrl": "./src",
     "paths": {
-      // Internal aliases for this package
-      "@/components/*": ["./components/*"],
-      "@/hooks/*": ["./hooks/*"],
-      "@/pages/*": ["./pages/*"],
-      "@/services/*": ["./services/*"],
-      "@/utils/*": ["./utils/*"],
-      "@/types/*": ["./types/*"]
+      // Internal aliases for this package using @web/ namespace to avoid conflicts
+      "@web/components/*": ["./components/*"],
+      "@web/hooks/*": ["./hooks/*"],
+      "@web/pages/*": ["./pages/*"],
+      "@web/services/*": ["./services/*"],
+      "@web/utils/*": ["./utils/*"],
+      "@web/types/*": ["./types/*"],
+      "@web/lib/*": ["./lib/*"]
     }
   },
   "include": ["src/**/*"],

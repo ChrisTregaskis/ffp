@@ -1,16 +1,16 @@
-// Internal alias imports (using @/ prefix)
-import type { Tenant } from "@/types/tenant.types";
-import type { User } from "@/types/user.types";
+// Internal alias imports (using @core/ prefix)
+import type { Tenant } from "@core/types/tenant.types";
+import type { User } from "@core/types/user.types";
 import {
   APP_NAME,
   TENANT_STATUS,
   TENANT_TYPES,
   USER_ROLES,
-} from "@/lib/constants";
+} from "@core/lib/constants";
 
 /**
  * Test file to verify TypeScript path aliases work correctly
- * This file uses internal @/ aliases to import from other parts of core package
+ * This file uses internal @core/ aliases to import from other parts of core package
  */
 
 export interface PathAliasTest {

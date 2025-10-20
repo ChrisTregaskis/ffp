@@ -1,6 +1,6 @@
 /**
  * PathAliasTest Component
- * Demonstrates both workspace imports (@ffp/core) and internal aliases (@/) work correctly
+ * Demonstrates both workspace imports (@ffp/core) and internal aliases (@web/) work correctly
  */
 import { APP_NAME, testPathAliases } from "@ffp/core";
 

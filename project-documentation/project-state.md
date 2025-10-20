@@ -98,7 +98,7 @@
 - ✅ FFP-19: Workspace dependencies configured (@ffp/core imports working)
 - ✅ FFP-20: TypeScript paths and internal aliases configured
 - ✅ Root TypeScript configuration with strict mode
-- ✅ Internal path aliases (`@/`) for cleaner imports in all packages
+- ✅ Namespace-based path aliases (`@web/`, `@core/`, `@functions/`) for conflict-free imports
 - ✅ Fixed missing project reference (web → core)
 - ✅ Vite configuration updated with alias support
 - ✅ Turborepo pipeline with build, test, lint, typecheck tasks
@@ -251,7 +251,7 @@
 4. **Build order**: Core → Functions/Web (enforced by Turborepo)
 5. **TypeScript strict mode**: Enabled across all packages from day 1
 6. **Path aliases strategy**: TypeScript points to `dist`, Vite points to `src` for HMR
-7. **Internal aliases**: `@/` prefix for intra-package imports, `@ffp/` for cross-package
+7. **Namespace aliases**: `@web/`, `@core/`, `@functions/` for intra-package imports, `@ffp/` for cross-package
 
 ---
 
@@ -274,8 +274,8 @@
 - ✅ **FFP-17 COMPLETE**: Turborepo initialised with pipeline configuration
 - ✅ **FFP-18 COMPLETE**: Package structure created (web, functions, core)
 - ✅ **FFP-19 COMPLETE**: Workspace dependencies configured and verified
-- ✅ **FFP-20 COMPLETE**: TypeScript paths and internal aliases configured
-- ✅ Internal path aliases (`@/`) added to all packages
+- ✅ **FFP-20 COMPLETE**: TypeScript paths and namespace-based aliases configured
+- ✅ Namespace-based path aliases (`@web/`, `@core/`, `@functions/`) added to all packages
 - ✅ Fixed missing project reference (web → core)
 - ✅ Vite configuration updated with alias support
 - ✅ Created test files demonstrating aliases work

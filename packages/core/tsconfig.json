@@ -10,11 +10,11 @@
     // Internal path aliases for cleaner imports within this package
     "baseUrl": "./src",
     "paths": {
-      "@/lib/*": ["./lib/*"],
-      "@/types/*": ["./types/*"],
-      "@/utils/*": ["./utils/*"],
-      "@/services/*": ["./services/*"],
-      "@/repositories/*": ["./repositories/*"]
+      "@core/lib/*": ["./lib/*"],
+      "@core/types/*": ["./types/*"],
+      "@core/utils/*": ["./utils/*"],
+      "@core/services/*": ["./services/*"],
+      "@core/repositories/*": ["./repositories/*"]
     }
   },
   "include": ["src/**/*"],
