@@ -4,15 +4,8 @@
     "titleBar.activeBackground": "#224451",
     "titleBar.activeForeground": "#F9FBFD"
   },
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    "typescript",
-    "typescriptreact"
-  ],
-  "eslint.workingDirectories": [
-    { "mode": "auto" }
-  ],
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "eslint.workingDirectories": [{ "mode": "auto" }],
   "eslint.nodePath": null,
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
