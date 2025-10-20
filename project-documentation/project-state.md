@@ -13,8 +13,9 @@
 ✅ **Complete**: Sprint Planning (all 93 subtasks defined)  
 ✅ **Complete**: FFP-17 - Initialise Turborepo (1 hour)  
 ✅ **Complete**: FFP-18 - Create Package Structure (2 hours)  
-🔄 **In Progress**: FFP-7 - Turborepo Monorepo Setup (2/8 subtasks complete)  
-🎯 **Next**: FFP-19 - Configure Workspace Dependencies
+✅ **Complete**: FFP-19 - Configure Workspace Dependencies (0.5 hours)  
+🔄 **In Progress**: FFP-7 - Turborepo Monorepo Setup (3/8 subtasks complete)  
+🎯 **Next**: FFP-20 - Setup TypeScript Paths and Configuration
 
 ### Sprint 1 Progress
 
@@ -22,7 +23,7 @@
 
 - ✅ FFP-17: Initialise Turborepo and base configuration (1h) - COMPLETE
 - ✅ FFP-18: Create package structure (web, functions, core) (2h) - COMPLETE
-- ⏸️ FFP-19: Configure workspace dependencies (2h)
+- ✅ FFP-19: Configure workspace dependencies (0.5h) - COMPLETE
 - ⏸️ FFP-20: Setup TypeScript paths and configuration (2h)
 - ⏸️ FFP-21: Configure shared ESLint and Prettier (2h)
 - ⏸️ FFP-22: Configure Turborepo build pipeline and caching (2h)
@@ -31,9 +32,9 @@
 
 **Time Tracking:**
 
-- Hours completed: 3/13 (23%)
-- Subtasks completed: 2/8 (25%)
-- **Status**: On track ✅
+- Hours completed: 3.5/13 (27%)
+- Subtasks completed: 3/8 (38%)
+- **Status**: Ahead of schedule ✅ (saved 1.5h on FFP-19)
 
 ### Focus Areas
 
@@ -264,17 +265,19 @@
 
 ## Progress Summary
 
-**Recent Work** (Oct 20, 2025 - Session 11):
+**Recent Work** (Oct 20, 2025 - Session 12):
 
 - ✅ **FFP-17 COMPLETE**: Turborepo initialised with pipeline configuration
 - ✅ **FFP-18 COMPLETE**: Package structure created (web, functions, core)
+- ✅ **FFP-19 COMPLETE**: Workspace dependencies configured and verified
 - ✅ Root `tsconfig.base.json` with strict TypeScript config
 - ✅ All packages have TypeScript, ESLint, build scripts configured
 - ✅ Workspace imports working (`@ffp/core` accessible from web and functions)
-- ✅ Structure aligned with architecture.md (corrected README.md)
-- ✅ Documentation updated (progress-log.md, project-state.md)
-- 🎯 **3 hours logged** - On track for FFP-7 completion
-- 🎯 **Next**: FFP-19 - Configure workspace dependencies
+- ✅ Created health check handler in functions to test imports
+- ✅ Verified all four acceptance criteria for FFP-19
+- ✅ Documentation updated (verification doc created)
+- 🎯 **3.5 hours logged** - Ahead of schedule (saved 1.5h on FFP-19)
+- 🎯 **Next**: FFP-20 - Setup TypeScript paths and configuration
 
 **See `progress-log.md` for detailed session-by-session history.**
 
@@ -282,24 +285,25 @@
 
 ## Current Work
 
-### Active Task: FFP-19 - Configure Workspace Dependencies
+### Active Task: FFP-20 - Setup TypeScript Paths and Configuration
 
-**Objective:** Ensure workspace dependencies are correctly configured and all packages can import from each other.
+**Objective:** Configure TypeScript path mappings and compiler options for optimal development experience.
 
 **Acceptance Criteria:**
 
-- Workspace dependencies using `workspace:*` protocol
-- Type definitions properly exported from @ffp/core
-- Web and functions can import from @ffp/core without errors
-- pnpm install resolves all dependencies correctly
+- Path aliases configured in tsconfig.base.json
+- All packages extend base config correctly
+- IDE autocomplete works for @ffp/* imports
+- Strict mode enabled with no errors
+- Project references working for incremental builds
 
 **Next Steps:**
 
-1. Verify workspace dependencies in package.json files
-2. Test builds: `pnpm build`
-3. Test type checking: `pnpm typecheck`
-4. Test that web can import types from @ffp/core
-5. Commit changes when verified
+1. Review and optimise TypeScript path mappings
+2. Ensure all packages have correct extends configuration
+3. Verify IDE support for imports
+4. Test incremental builds
+5. Document configuration decisions
 
 ### Development Workflow
 

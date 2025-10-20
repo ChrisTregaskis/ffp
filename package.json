@@ -6,6 +6,9 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
+    "dev:core": "turbo dev --filter=@ffp/core",
+    "dev:functions": "turbo dev --filter=@ffp/functions",
+    "dev:web": "turbo dev --filter=@ffp/web",
     "lint": "turbo lint",
     "test": "turbo test",
     "typecheck": "turbo typecheck",
