@@ -12,10 +12,6 @@
     // Internal path aliases for cleaner imports within this package
     "baseUrl": "./src",
     "paths": {
-      // Workspace imports (inherited from base, redeclared for clarity)
-      "@ffp/core": ["../../core/dist"],
-      "@ffp/core/*": ["../../core/dist/*"],
-
       // Internal aliases for this package
       "@/components/*": ["./components/*"],
       "@/hooks/*": ["./hooks/*"],
