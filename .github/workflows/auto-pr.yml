@@ -3,12 +3,12 @@ name: Auto Create Pull Request
 on:
   push:
     branches:
-      - "feature/**"
-      - "fix/**"
-      - "chore/**"
-      - "FFP-*"
-      - "!main"
-      - "!develop"
+      - 'feature/**'
+      - 'fix/**'
+      - 'chore/**'
+      - 'FFP-*'
+      - '!main'
+      - '!develop'
 
 jobs:
   create-pull-request:

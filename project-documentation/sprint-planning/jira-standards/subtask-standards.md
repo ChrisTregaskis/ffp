@@ -63,20 +63,20 @@ Define Zod schema to validate registration payloads (email, password, names).
 File: `packages/core/src/schemas/auth.schema.ts`
 
 ```typescript
-import { z } from "zod";
+import { z } from 'zod';
 
 export const RegisterRequestSchema = z.object({
-  email: z.string().email("Invalid email"),
+  email: z.string().email('Invalid email'),
   password: z
     .string()
-    .min(8, "Min 8 characters")
-    .regex(/[A-Z]/, "Need uppercase")
-    .regex(/[a-z]/, "Need lowercase")
-    .regex(/[0-9]/, "Need digit")
-    .regex(/[^A-Za-z0-9]/, "Need special char"),
-  firstName: z.string().min(1, "Required"),
-  lastName: z.string().min(1, "Required"),
-  accountType: z.enum(["individual", "business"]),
+    .min(8, 'Min 8 characters')
+    .regex(/[A-Z]/, 'Need uppercase')
+    .regex(/[a-z]/, 'Need lowercase')
+    .regex(/[0-9]/, 'Need digit')
+    .regex(/[^A-Za-z0-9]/, 'Need special char'),
+  firstName: z.string().min(1, 'Required'),
+  lastName: z.string().min(1, 'Required'),
+  accountType: z.enum(['individual', 'business']),
 });
 
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;

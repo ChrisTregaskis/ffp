@@ -3,11 +3,13 @@
 ## 🎯 Quick Start
 
 **For Claude conversations:**
+
 1. Custom Instructions already configured (in Project settings)
 2. `project-state.md` set as always-loaded
 3. Load other docs only when query needs them
 
 **For humans:**
+
 - Start with `project-state.md` - current phase & context
 - Reference specific docs as needed
 
@@ -16,9 +18,11 @@
 ## Token Optimization
 
 **Always Loaded** (~800 tokens):
+
 - `project-state.md` - Current phase, status, recent work
 
 **Load On-Demand** (when query needs them):
+
 - All other documentation files
 
 **Result**: 90% token reduction per conversation
@@ -37,9 +41,11 @@ See `project-state.md` for full details.
 ## Document Index
 
 ### 🔄 Always Loaded
+
 - **project-state.md** - Current phase, status, decisions
 
 ### 📚 Core Documentation (Load On-Demand)
+
 - **architecture.md** - AWS infrastructure, system design
 - **authentication.md** - Cognito, multi-tenant auth
 - **database-schema.md** - PostgreSQL schema, RLS
@@ -53,9 +59,11 @@ See `project-state.md` for full details.
 - **future-considerations.md** - Deferred features
 
 ### 🔧 Implementation Reference (Load When Needed)
+
 - **REFERENCE.md** - Commands, costs, monorepo structure, quick refs
 
 ### 📋 Sprint Planning (Modular)
+
 - **sprint-planning/jira-standards/** - Load `LOAD-THIS-FIRST.md` for guide
 
 ---
@@ -88,12 +96,15 @@ See `architecture.md` for full stack details, `REFERENCE.md` for commands.
 ## Documentation Maintenance
 
 **After every session:**
+
 - Update `project-state.md` recent context
 
 **When starting new phase:**
+
 - Update `project-state.md` current phase
 
 **After major decisions:**
+
 - Add to `project-state.md` key decisions
 - Update relevant domain docs
 

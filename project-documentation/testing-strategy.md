@@ -75,28 +75,22 @@ npm install -D @playwright/test
 
 ```typescript
 // vitest.config.ts
-import { defineConfig } from "vitest/config";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
 
 export default {
   plugins: [react()],
   test: {
     globals: true,
-    environment: "jsdom",
-    setupFiles: ["./tests/setup.ts"],
-    include: ["**/*.{test,spec}.{ts,tsx}"],
-    exclude: ["**/node_modules/**", "**/dist/**", "**/*.integration.test.ts"],
+    environment: 'jsdom',
+    setupFiles: ['./tests/setup.ts'],
+    include: ['**/*.{test,spec}.{ts,tsx}'],
+    exclude: ['**/node_modules/**', '**/dist/**', '**/*.integration.test.ts'],
     coverage: {
-      provider: "v8",
-      reporter: ["text", "json", "html"],
-      include: ["src/**/*.{ts,tsx}", "packages/**/*.{ts,tsx}"],
-      exclude: [
-        "node_modules/",
-        "tests/",
-        "**/*.d.ts",
-        "**/*.config.*",
-        "**/dist/**",
-      ],
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      include: ['src/**/*.{ts,tsx}', 'packages/**/*.{ts,tsx}'],
+      exclude: ['node_modules/', 'tests/', '**/*.d.ts', '**/*.config.*', '**/dist/**'],
       thresholds: {
         lines: 30,
         functions: 30,
@@ -112,9 +106,9 @@ export default {
 
 ```typescript
 // tests/setup.ts
-import "@testing-library/jest-dom";
-import { afterEach } from "vitest";
-import { cleanup } from "@testing-library/react";
+import '@testing-library/jest-dom';
+import { afterEach } from 'vitest';
+import { cleanup } from '@testing-library/react';
 
 // Cleanup after each test
 afterEach(() => {
@@ -130,7 +124,7 @@ afterEach(() => {
 
 ```typescript
 // tests/mocks/db.mock.ts
-import { vi } from "vitest";
+import { vi } from 'vitest';
 
 export interface MockQueryResult<T = any> {
   rows: T[];
@@ -153,11 +147,11 @@ export const createMockDbClient = () => {
 
 ```typescript
 // services/__tests__/assessment.service.test.ts
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { AssessmentServiceImpl } from "../assessment.service.impl";
-import { createMockDbClient } from "../../tests/mocks/db.mock";
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { AssessmentServiceImpl } from '../assessment.service.impl';
+import { createMockDbClient } from '../../tests/mocks/db.mock';
 
-describe("AssessmentService", () => {
+describe('AssessmentService', () => {
   let service: AssessmentServiceImpl;
   let mockDb: ReturnType<typeof createMockDbClient>;
   let mockRepo: any;
@@ -172,43 +166,39 @@ describe("AssessmentService", () => {
     service = new AssessmentServiceImpl(mockRepo, mockDb as any);
   });
 
-  it("creates assessment with correct tenant context", async () => {
+  it('creates assessment with correct tenant context', async () => {
     const mockAssessment = {
-      id: "assessment-123",
-      tenant_id: "tenant-abc",
-      user_id: "user-xyz",
-      template_id: "template-001",
-      status: "in_progress",
+      id: 'assessment-123',
+      tenant_id: 'tenant-abc',
+      user_id: 'user-xyz',
+      template_id: 'template-001',
+      status: 'in_progress',
     };
 
     mockRepo.create.mockResolvedValue(mockAssessment);
 
-    const result = await service.create(
-      "user-xyz",
-      "tenant-abc",
-      "template-001"
-    );
+    const result = await service.create('user-xyz', 'tenant-abc', 'template-001');
 
     expect(mockRepo.create).toHaveBeenCalledWith({
-      userId: "user-xyz",
-      tenantId: "tenant-abc",
-      templateId: "template-001",
-      status: "in_progress",
+      userId: 'user-xyz',
+      tenantId: 'tenant-abc',
+      templateId: 'template-001',
+      status: 'in_progress',
       startedAt: expect.any(Date),
     });
     expect(result).toEqual(mockAssessment);
   });
 
-  it("validates answers before saving", async () => {
-    const invalidAnswers = { q1: "invalid-option" };
+  it('validates answers before saving', async () => {
+    const invalidAnswers = { q1: 'invalid-option' };
 
     await expect(
-      service.saveProgress("assessment-123", invalidAnswers, {
-        tenantId: "tenant-abc",
-        userId: "user-xyz",
-        role: "individual_user",
+      service.saveProgress('assessment-123', invalidAnswers, {
+        tenantId: 'tenant-abc',
+        userId: 'user-xyz',
+        role: 'individual_user',
       })
-    ).rejects.toThrow("Invalid option");
+    ).rejects.toThrow('Invalid option');
   });
 });
 ```
@@ -221,18 +211,18 @@ describe("AssessmentService", () => {
 
 ```typescript
 // tests/integration/helpers/db-test-helper.ts
-import { Pool, PoolClient } from "pg";
+import { Pool, PoolClient } from 'pg';
 
 let pool: Pool | null = null;
 
 export async function getTestDbPool(): Promise<Pool> {
   if (!pool) {
     pool = new Pool({
-      host: process.env.DB_HOST || "localhost",
-      port: parseInt(process.env.DB_PORT || "5432"),
-      database: process.env.DB_NAME || "ffp_dev",
-      user: process.env.DB_USER || "postgres",
-      password: process.env.DB_PASSWORD || "postgres",
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432'),
+      database: process.env.DB_NAME || 'ffp_dev',
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || 'postgres',
     });
   }
   return pool;
@@ -249,19 +239,17 @@ export async function closeTestDbPool() {
  * Runs test within a transaction that rolls back after completion.
  * Ensures RLS tests don't pollute the database.
  */
-export async function withTransaction<T>(
-  fn: (client: PoolClient) => Promise<T>
-): Promise<T> {
+export async function withTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
   const pool = await getTestDbPool();
   const client = await pool.connect();
 
   try {
-    await client.query("BEGIN");
+    await client.query('BEGIN');
     const result = await fn(client);
-    await client.query("ROLLBACK"); // Always rollback
+    await client.query('ROLLBACK'); // Always rollback
     return result;
   } catch (error) {
-    await client.query("ROLLBACK");
+    await client.query('ROLLBACK');
     throw error;
   } finally {
     client.release();
@@ -270,7 +258,7 @@ export async function withTransaction<T>(
 
 export async function createTestTenant(
   client: PoolClient,
-  data: { type: "individual" | "business"; name: string }
+  data: { type: 'individual' | 'business'; name: string }
 ) {
   const result = await client.query(
     `INSERT INTO tenants (type, name) VALUES ($1, $2) RETURNING *`,
@@ -296,28 +284,18 @@ export async function createTestUser(
       data.tenantId,
       data.email,
       data.cognitoSub || `cognito-${Date.now()}`,
-      "Test",
-      "User",
+      'Test',
+      'User',
       data.role,
     ]
   );
   return result.rows[0];
 }
 
-export async function setRLSContext(
-  client: PoolClient,
-  tenantId: string,
-  userId?: string
-) {
-  await client.query("SELECT set_config($1, $2, true)", [
-    "app.tenant_id",
-    tenantId,
-  ]);
+export async function setRLSContext(client: PoolClient, tenantId: string, userId?: string) {
+  await client.query('SELECT set_config($1, $2, true)', ['app.tenant_id', tenantId]);
   if (userId) {
-    await client.query("SELECT set_config($1, $2, true)", [
-      "app.user_id",
-      userId,
-    ]);
+    await client.query('SELECT set_config($1, $2, true)', ['app.user_id', userId]);
   }
 }
 ```
@@ -326,77 +304,77 @@ export async function setRLSContext(
 
 ```typescript
 // tests/integration/rls.test.ts
-import { describe, it, expect, afterAll } from "vitest";
+import { describe, it, expect, afterAll } from 'vitest';
 import {
   withTransaction,
   createTestTenant,
   createTestUser,
   setRLSContext,
   closeTestDbPool,
-} from "./helpers/db-test-helper";
+} from './helpers/db-test-helper';
 
-describe("RLS Multi-Tenant Isolation", () => {
+describe('RLS Multi-Tenant Isolation', () => {
   afterAll(async () => {
     await closeTestDbPool();
   });
 
-  it("prevents cross-tenant data access in user_assessments", async () => {
+  it('prevents cross-tenant data access in user_assessments', async () => {
     await withTransaction(async (client) => {
       // Create two separate tenants
       const tenant1 = await createTestTenant(client, {
-        type: "individual",
-        name: "Tenant 1",
+        type: 'individual',
+        name: 'Tenant 1',
       });
       const tenant2 = await createTestTenant(client, {
-        type: "individual",
-        name: "Tenant 2",
+        type: 'individual',
+        name: 'Tenant 2',
       });
 
       const user1 = await createTestUser(client, {
         tenantId: tenant1.id,
-        email: "user1@test.com",
-        role: "individual_user",
+        email: 'user1@test.com',
+        role: 'individual_user',
       });
       const user2 = await createTestUser(client, {
         tenantId: tenant2.id,
-        email: "user2@test.com",
-        role: "individual_user",
+        email: 'user2@test.com',
+        role: 'individual_user',
       });
 
       // Create assessment for tenant1
       await client.query(
         `INSERT INTO user_assessments (tenant_id, user_id, template_id, status)
          VALUES ($1, $2, $3, $4)`,
-        [tenant1.id, user1.id, "template-001", "in_progress"]
+        [tenant1.id, user1.id, 'template-001', 'in_progress']
       );
 
       // Set RLS context to tenant2
       await setRLSContext(client, tenant2.id, user2.id);
 
       // Try to query assessments - should NOT see tenant1's data
-      const result = await client.query("SELECT * FROM user_assessments");
+      const result = await client.query('SELECT * FROM user_assessments');
 
       expect(result.rows).toHaveLength(0); // Critical: Must be empty!
     });
   });
 
-  it("allows business sub-users to see shared tenant data", async () => {
+  it('allows business sub-users to see shared tenant data', async () => {
     await withTransaction(async (client) => {
       const businessTenant = await createTestTenant(client, {
-        type: "business",
-        name: "Acme Corp",
+        type: 'business',
+        name: 'Acme Corp',
       });
 
       const owner = await createTestUser(client, {
         tenantId: businessTenant.id,
-        email: "owner@acme.com",
-        role: "business_owner",
+        email: 'owner@acme.com',
+        role: 'business_owner',
       });
 
       const subUser = await createTestUser(client, {
         tenantId: businessTenant.id, // Same tenant!
-        email: "employee@acme.com",
-        role: "business_user",
+        email: 'employee@acme.com',
+        role: 'business_user',
       });
 
       // Owner creates assessment
@@ -404,12 +382,12 @@ describe("RLS Multi-Tenant Isolation", () => {
       await client.query(
         `INSERT INTO user_assessments (tenant_id, user_id, template_id, status)
          VALUES ($1, $2, $3, $4)`,
-        [businessTenant.id, owner.id, "template-001", "completed"]
+        [businessTenant.id, owner.id, 'template-001', 'completed']
       );
 
       // Sub-user queries assessments
       await setRLSContext(client, businessTenant.id, subUser.id);
-      const result = await client.query("SELECT * FROM user_assessments");
+      const result = await client.query('SELECT * FROM user_assessments');
 
       expect(result.rows).toHaveLength(1); // Can see owner's assessment
       expect(result.rows[0].user_id).toBe(owner.id);
@@ -486,29 +464,29 @@ npx playwright install
 
 ```typescript
 // playwright.config.ts
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: "./tests/e2e",
+  testDir: './tests/e2e',
   fullyParallel: false, // Sequential for data integrity
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 1, // Single worker for DB consistency
-  reporter: "html",
+  reporter: 'html',
   use: {
-    baseURL: process.env.E2E_BASE_URL || "http://localhost:3000",
-    trace: "on-first-retry",
-    screenshot: "only-on-failure",
+    baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
   },
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
     },
   ],
   webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
+    command: 'npm run dev',
+    url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
   },
 });
@@ -518,15 +496,15 @@ export default defineConfig({
 
 ```typescript
 // tests/e2e/assessment-flow.spec.ts
-import { test, expect } from "@playwright/test";
+import { test, expect } from '@playwright/test';
 
-test("complete assessment and generate program", async ({ page }) => {
+test('complete assessment and generate program', async ({ page }) => {
   // Login
-  await page.goto("/login");
-  await page.fill('[data-testid="email"]', "test@example.com");
-  await page.fill('[data-testid="password"]', "TestPass123!");
+  await page.goto('/login');
+  await page.fill('[data-testid="email"]', 'test@example.com');
+  await page.fill('[data-testid="password"]', 'TestPass123!');
   await page.click('[data-testid="login-btn"]');
-  await expect(page).toHaveURL("/dashboard");
+  await expect(page).toHaveURL('/dashboard');
 
   // Start assessment
   await page.click('[data-testid="start-assessment"]');
@@ -544,9 +522,7 @@ test("complete assessment and generate program", async ({ page }) => {
 
   // Verify program generated
   await expect(page.locator('[data-testid="program-title"]')).toBeVisible();
-  await expect(page.locator('[data-testid="session-list"]')).toContainText(
-    "Week 1"
-  );
+  await expect(page.locator('[data-testid="session-list"]')).toContainText('Week 1');
 });
 ```
 
@@ -631,31 +607,31 @@ Required Tests:
 ```typescript
 // tests/fixtures/assessment.fixtures.ts
 export const mockAssessmentTemplate = {
-  id: "template-001",
-  name: "Fitness Assessment",
+  id: 'template-001',
+  name: 'Fitness Assessment',
   version: 1,
   questions: [
     {
-      id: "q1",
-      type: "single-choice",
-      question: "What is your primary goal?",
+      id: 'q1',
+      type: 'single-choice',
+      question: 'What is your primary goal?',
       options: [
-        { value: "lose_weight", label: "Lose weight", score: 1 },
-        { value: "build_muscle", label: "Build muscle", score: 2 },
+        { value: 'lose_weight', label: 'Lose weight', score: 1 },
+        { value: 'build_muscle', label: 'Build muscle', score: 2 },
       ],
       validation: { required: true },
     },
   ],
   scoringConfig: {
-    strategy: "weighted",
+    strategy: 'weighted',
     weights: { q1: 1 },
   },
 };
 
 export const mockUserContext = {
-  tenantId: "tenant-abc",
-  userId: "user-xyz",
-  role: "individual_user" as const,
+  tenantId: 'tenant-abc',
+  userId: 'user-xyz',
+  role: 'individual_user' as const,
 };
 ```
 
@@ -705,8 +681,8 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: "18"
-          cache: "npm"
+          node-version: '18'
+          cache: 'npm'
 
       - run: npm ci
 

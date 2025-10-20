@@ -1,4 +1,4 @@
-import { UserRoleType } from "../lib";
+import { type UserRoleType } from '../lib';
 
 export interface User {
   id: string;
@@ -12,4 +12,4 @@ export interface User {
   updatedAt: Date;
 }
 
-export type UserRole = User["role"];
+export type UserRole = User['role'];

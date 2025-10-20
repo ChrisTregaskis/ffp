@@ -144,16 +144,7 @@ export type NewTenant = typeof tenants.$inferInsert;
 
 ```typescript
 // schema/users.ts
-import { 
-  pgTable, 
-  uuid, 
-  varchar, 
-  timestamp, 
-  date, 
-  text, 
-  pgEnum, 
-  index 
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, timestamp, date, text, pgEnum, index } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { relations } from 'drizzle-orm';
 import { tenants } from './tenants';
@@ -222,7 +213,17 @@ export type NewUser = typeof users.$inferInsert;
 
 ```typescript
 // schema/assessment-templates.ts
-import { pgTable, uuid, varchar, text, integer, boolean, timestamp, jsonb, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  integer,
+  boolean,
+  timestamp,
+  jsonb,
+  index,
+} from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { users } from './users';
 
@@ -402,7 +403,16 @@ export type NewProgram = typeof programs.$inferInsert;
 
 ```typescript
 // schema/videos.ts
-import { pgTable, uuid, varchar, text, integer, boolean, timestamp, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  integer,
+  boolean,
+  timestamp,
+  index,
+} from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 export const videos = pgTable(
@@ -499,19 +509,14 @@ import { withRLS } from '../lib/database';
 import { userAssessments } from '../schema/user-assessments';
 import { eq } from 'drizzle-orm';
 
-export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (
-  event
-) => {
+export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) => {
   const claims = event.requestContext.authorizer.jwt.claims;
-  const tenantId = claims["custom:tenantId"] as string;
+  const tenantId = claims['custom:tenantId'] as string;
   const userId = claims.sub as string;
 
   // RLS automatically applied to all queries within this transaction
   const assessments = await withRLS(tenantId, userId, async (tx) => {
-    return await tx
-      .select()
-      .from(userAssessments)
-      .where(eq(userAssessments.userId, userId));
+    return await tx.select().from(userAssessments).where(eq(userAssessments.userId, userId));
   });
 
   return {
@@ -533,10 +538,7 @@ import { userAssessments } from '../schema/user-assessments';
 import type { NewUserAssessment, UserAssessment } from '../schema/user-assessments';
 
 export class AssessmentRepositoryImpl implements AssessmentRepository {
-  async create(
-    data: NewUserAssessment, 
-    context: TenantContext
-  ): Promise<UserAssessment> {
+  async create(data: NewUserAssessment, context: TenantContext): Promise<UserAssessment> {
     return await withRLS(context.tenantId, context.userId, async (tx) => {
       const [assessment] = await tx
         .insert(userAssessments)
@@ -545,44 +547,30 @@ export class AssessmentRepositoryImpl implements AssessmentRepository {
           tenantId: context.tenantId,
         })
         .returning();
-      
+
       return assessment;
     });
   }
 
-  async getById(
-    id: string,
-    context: TenantContext
-  ): Promise<UserAssessment | null> {
+  async getById(id: string, context: TenantContext): Promise<UserAssessment | null> {
     return await withRLS(context.tenantId, context.userId, async (tx) => {
       const [assessment] = await tx
         .select()
         .from(userAssessments)
-        .where(
-          and(
-            eq(userAssessments.id, id),
-            eq(userAssessments.tenantId, context.tenantId)
-          )
-        )
+        .where(and(eq(userAssessments.id, id), eq(userAssessments.tenantId, context.tenantId)))
         .limit(1);
-      
+
       return assessment || null;
     });
   }
 
-  async findByUser(
-    userId: string,
-    context: TenantContext
-  ): Promise<UserAssessment[]> {
+  async findByUser(userId: string, context: TenantContext): Promise<UserAssessment[]> {
     return await withRLS(context.tenantId, context.userId, async (tx) => {
       return await tx
         .select()
         .from(userAssessments)
         .where(
-          and(
-            eq(userAssessments.userId, userId),
-            eq(userAssessments.tenantId, context.tenantId)
-          )
+          and(eq(userAssessments.userId, userId), eq(userAssessments.tenantId, context.tenantId))
         );
     });
   }
@@ -599,14 +587,9 @@ export class AssessmentRepositoryImpl implements AssessmentRepository {
           ...data,
           updatedAt: new Date(),
         })
-        .where(
-          and(
-            eq(userAssessments.id, id),
-            eq(userAssessments.tenantId, context.tenantId)
-          )
-        )
+        .where(and(eq(userAssessments.id, id), eq(userAssessments.tenantId, context.tenantId)))
         .returning();
-      
+
       return updated;
     });
   }
@@ -688,26 +671,26 @@ export const handler = async () => {
 ### Integration Test Example
 
 ```typescript
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { createTestTenant, createTestUser } from "./test-helpers";
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { createTestTenant, createTestUser } from './test-helpers';
 import { db, withRLS } from '../lib/database';
 import { userAssessments } from '../schema/user-assessments';
 import { eq } from 'drizzle-orm';
 
-describe("Multi-tenant data isolation", () => {
+describe('Multi-tenant data isolation', () => {
   let tenant1: any;
   let tenant2: any;
   let user1: any;
   let user2: any;
 
   beforeAll(async () => {
-    tenant1 = await createTestTenant({ type: "individual" });
-    tenant2 = await createTestTenant({ type: "individual" });
+    tenant1 = await createTestTenant({ type: 'individual' });
+    tenant2 = await createTestTenant({ type: 'individual' });
     user1 = await createTestUser({ tenantId: tenant1.id });
     user2 = await createTestUser({ tenantId: tenant2.id });
   });
 
-  it("prevents cross-tenant data access", async () => {
+  it('prevents cross-tenant data access', async () => {
     // Create assessment for tenant1
     const [assessment1] = await withRLS(tenant1.id, user1.id, async (tx) => {
       return await tx
@@ -715,7 +698,7 @@ describe("Multi-tenant data isolation", () => {
         .values({
           tenantId: tenant1.id,
           userId: user1.id,
-          templateId: "template-id",
+          templateId: 'template-id',
         })
         .returning();
     });
@@ -725,20 +708,18 @@ describe("Multi-tenant data isolation", () => {
       return await tx.select().from(userAssessments);
     });
 
-    expect(assessments).not.toContainEqual(
-      expect.objectContaining({ id: assessment1.id })
-    );
+    expect(assessments).not.toContainEqual(expect.objectContaining({ id: assessment1.id }));
   });
 
-  it("allows business sub-users to see shared data", async () => {
-    const businessTenant = await createTestTenant({ type: "business" });
+  it('allows business sub-users to see shared data', async () => {
+    const businessTenant = await createTestTenant({ type: 'business' });
     const owner = await createTestUser({
       tenantId: businessTenant.id,
-      role: "business_owner",
+      role: 'business_owner',
     });
     const subUser = await createTestUser({
       tenantId: businessTenant.id,
-      role: "business_user",
+      role: 'business_user',
       parentBusinessId: owner.id,
     });
 
@@ -749,7 +730,7 @@ describe("Multi-tenant data isolation", () => {
         .values({
           tenantId: businessTenant.id,
           userId: owner.id,
-          templateId: "template-id",
+          templateId: 'template-id',
         })
         .returning();
     });
@@ -759,9 +740,7 @@ describe("Multi-tenant data isolation", () => {
       return await tx.select().from(userAssessments);
     });
 
-    expect(subUserAssessments).toContainEqual(
-      expect.objectContaining({ id: assessment.id })
-    );
+    expect(subUserAssessments).toContainEqual(expect.objectContaining({ id: assessment.id }));
   });
 
   afterAll(async () => {

@@ -15,8 +15,10 @@
     "@aws-sdk/client-s3": "^3.705.0"
   },
   "devDependencies": {
+    "@ffp/eslint-config": "workspace:*",
     "@types/aws-lambda": "^8.10.145",
     "@types/node": "^22.9.0",
+    "eslint": "^8.57.1",
     "typescript": "^5.6.3"
   }
 }

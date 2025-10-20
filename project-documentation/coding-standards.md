@@ -59,13 +59,13 @@ interface User {
 
 // ✅ Good: Use enums for fixed sets
 enum UserRole {
-  SYSTEM_ADMIN = "system_admin",
-  BUSINESS_OWNER = "business_owner",
-  INDIVIDUAL_USER = "individual_user",
+  SYSTEM_ADMIN = 'system_admin',
+  BUSINESS_OWNER = 'business_owner',
+  INDIVIDUAL_USER = 'individual_user',
 }
 
 // ✅ Good: Use union types for simple sets
-type ProgressStatus = "not_started" | "in_progress" | "completed" | "skipped";
+type ProgressStatus = 'not_started' | 'in_progress' | 'completed' | 'skipped';
 
 // ❌ Bad: Using any type
 function processData(data: any) {
@@ -85,16 +85,11 @@ function processData(data: unknown) {
 ```typescript
 // Type guard functions
 function isString(value: unknown): value is string {
-  return typeof value === "string";
+  return typeof value === 'string';
 }
 
 function isUser(value: unknown): value is User {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "id" in value &&
-    "email" in value
-  );
+  return typeof value === 'object' && value !== null && 'id' in value && 'email' in value;
 }
 
 // Usage
@@ -111,13 +106,13 @@ function processInput(input: unknown) {
 // ✅ Good: Explicit null checks
 function getUserName(user: User | null): string {
   if (!user) {
-    return "Guest";
+    return 'Guest';
   }
   return `${user.firstName} ${user.lastName}`;
 }
 
 // ✅ Good: Optional chaining
-const userName = user?.profile?.displayName ?? "Guest";
+const userName = user?.profile?.displayName ?? 'Guest';
 
 // ✅ Good: Nullish coalescing
 const pageSize = config.pageSize ?? 10;
@@ -178,22 +173,13 @@ export const users = pgTable(
 import { eq, and, desc } from 'drizzle-orm';
 import { users } from '../schema/users';
 
-const [user] = await db
-  .select()
-  .from(users)
-  .where(eq(users.id, userId))
-  .limit(1);
+const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
 // ✅ Good: Complex conditions with and/or
 const assessments = await db
   .select()
   .from(userAssessments)
-  .where(
-    and(
-      eq(userAssessments.userId, userId),
-      eq(userAssessments.status, 'completed')
-    )
-  );
+  .where(and(eq(userAssessments.userId, userId), eq(userAssessments.status, 'completed')));
 
 // ✅ Good: Joins with proper typing
 const assessmentsWithUsers = await db
@@ -240,10 +226,7 @@ const query = `SELECT * FROM users WHERE id = '${userId}'`;
 import { withRLS } from '../lib/database';
 
 const assessments = await withRLS(tenantId, userId, async (tx) => {
-  return await tx
-    .select()
-    .from(userAssessments)
-    .where(eq(userAssessments.userId, userId));
+  return await tx.select().from(userAssessments).where(eq(userAssessments.userId, userId));
 });
 
 // ✅ Good: Set RLS context for raw SQL
@@ -253,9 +236,7 @@ await db.execute(sql`SET app.tenant_id = ${tenantId}`);
 await db.execute(sql`SET app.user_id = ${userId}`);
 
 // ❌ Bad: Forgetting to set RLS context
-const assessments = await db
-  .select()
-  .from(userAssessments); // Missing tenant context!
+const assessments = await db.select().from(userAssessments); // Missing tenant context!
 ```
 
 ### Insert/Update Patterns
@@ -298,10 +279,10 @@ await db
   })
   .onConflictDoUpdate({
     target: [
-      userProgress.tenantId, 
-      userProgress.userId, 
-      userProgress.sessionId, 
-      userProgress.videoId
+      userProgress.tenantId,
+      userProgress.userId,
+      userProgress.sessionId,
+      userProgress.videoId,
     ],
     set: {
       status: 'completed',
@@ -314,8 +295,8 @@ await db
 const newUsers = await db
   .insert(users)
   .values([
-    { id: '1', tenantId, email: 'user1@test.com', /* ... */ },
-    { id: '2', tenantId, email: 'user2@test.com', /* ... */ },
+    { id: '1', tenantId, email: 'user1@test.com' /* ... */ },
+    { id: '2', tenantId, email: 'user2@test.com' /* ... */ },
   ])
   .returning();
 ```
@@ -330,9 +311,7 @@ await db.transaction(async (tx) => {
     .values({ ...assessmentData })
     .returning();
 
-  await tx
-    .insert(programs)
-    .values({ ...programData, assessmentId: assessment.id });
+  await tx.insert(programs).values({ ...programData, assessmentId: assessment.id });
 });
 
 // ✅ Good: Combine transactions with RLS
@@ -343,9 +322,7 @@ await withRLS(tenantId, userId, async (tx) => {
     .values({ ...assessmentData })
     .returning();
 
-  await tx
-    .insert(programs)
-    .values({ ...programData, assessmentId: assessment.id });
+  await tx.insert(programs).values({ ...programData, assessmentId: assessment.id });
 });
 
 // ✅ Good: Handle transaction errors
@@ -371,13 +348,15 @@ const validatedData = insertUserSchema.parse(input);
 // ✅ Good: Extend auto-generated schemas
 import { z } from 'zod';
 
-export const createUserSchema = insertUserSchema.extend({
-  password: z.string().min(8),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-});
+export const createUserSchema = insertUserSchema
+  .extend({
+    password: z.string().min(8),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
 // ✅ Good: Use for API validation
 export const handler = async (event) => {
@@ -389,8 +368,8 @@ export const handler = async (event) => {
 export const updateUserSchema = insertUserSchema.partial();
 
 // ✅ Good: Omit fields not needed by client
-export const userResponseSchema = selectUserSchema.omit({ 
-  cognitoSub: true 
+export const userResponseSchema = selectUserSchema.omit({
+  cognitoSub: true,
 });
 ```
 
@@ -401,16 +380,8 @@ export const userResponseSchema = selectUserSchema.omit({
 ```typescript
 // types/services/assessment.service.ts
 export interface AssessmentService {
-  create(
-    userId: string,
-    tenantId: string,
-    templateId: string
-  ): Promise<Assessment>;
-  submit(
-    id: string,
-    answers: AnswerSet,
-    context: TenantContext
-  ): Promise<AssessmentResult>;
+  create(userId: string, tenantId: string, templateId: string): Promise<Assessment>;
+  submit(id: string, answers: AnswerSet, context: TenantContext): Promise<AssessmentResult>;
   getById(id: string, context: TenantContext): Promise<Assessment>;
   list(userId: string, context: TenantContext): Promise<Assessment[]>;
 }
@@ -427,34 +398,26 @@ export class AssessmentServiceImpl implements AssessmentService {
     private readonly logger: Logger
   ) {}
 
-  async create(
-    userId: string,
-    tenantId: string,
-    templateId: string
-  ): Promise<Assessment> {
-    this.logger.info("Creating assessment", { userId, tenantId, templateId });
+  async create(userId: string, tenantId: string, templateId: string): Promise<Assessment> {
+    this.logger.info('Creating assessment', { userId, tenantId, templateId });
 
     try {
       const assessment = await this.assessmentRepo.create({
         userId,
         tenantId,
         templateId,
-        status: "in_progress",
+        status: 'in_progress',
         startedAt: new Date(),
       });
 
       return assessment;
     } catch (error) {
-      this.logger.error("Failed to create assessment", {
+      this.logger.error('Failed to create assessment', {
         error,
         userId,
         tenantId,
       });
-      throw new ApplicationError(
-        "Failed to create assessment",
-        "ASSESSMENT_CREATE_FAILED",
-        500
-      );
+      throw new ApplicationError('Failed to create assessment', 'ASSESSMENT_CREATE_FAILED', 500);
     }
   }
 
@@ -470,11 +433,7 @@ export class AssessmentServiceImpl implements AssessmentService {
 // types/repositories/assessment.repository.ts
 export interface AssessmentRepository {
   create(data: NewAssessment, context: TenantContext): Promise<Assessment>;
-  update(
-    id: string,
-    data: Partial<Assessment>,
-    context: TenantContext
-  ): Promise<Assessment>;
+  update(id: string, data: Partial<Assessment>, context: TenantContext): Promise<Assessment>;
   getById(id: string, context: TenantContext): Promise<Assessment | null>;
   findByUser(userId: string, context: TenantContext): Promise<Assessment[]>;
   delete(id: string, context: TenantContext): Promise<void>;
@@ -491,10 +450,7 @@ import { userAssessments } from '../schema/user-assessments';
 import type { NewUserAssessment, UserAssessment } from '../schema/user-assessments';
 
 export class AssessmentRepositoryImpl implements AssessmentRepository {
-  async create(
-    data: NewUserAssessment,
-    context: TenantContext
-  ): Promise<UserAssessment> {
+  async create(data: NewUserAssessment, context: TenantContext): Promise<UserAssessment> {
     return await withRLS(context.tenantId, context.userId, async (tx) => {
       const [assessment] = await tx
         .insert(userAssessments)
@@ -503,44 +459,30 @@ export class AssessmentRepositoryImpl implements AssessmentRepository {
           tenantId: context.tenantId,
         })
         .returning();
-      
+
       return assessment;
     });
   }
 
-  async getById(
-    id: string,
-    context: TenantContext
-  ): Promise<UserAssessment | null> {
+  async getById(id: string, context: TenantContext): Promise<UserAssessment | null> {
     return await withRLS(context.tenantId, context.userId, async (tx) => {
       const [assessment] = await tx
         .select()
         .from(userAssessments)
-        .where(
-          and(
-            eq(userAssessments.id, id),
-            eq(userAssessments.tenantId, context.tenantId)
-          )
-        )
+        .where(and(eq(userAssessments.id, id), eq(userAssessments.tenantId, context.tenantId)))
         .limit(1);
-      
+
       return assessment || null;
     });
   }
 
-  async findByUser(
-    userId: string,
-    context: TenantContext
-  ): Promise<UserAssessment[]> {
+  async findByUser(userId: string, context: TenantContext): Promise<UserAssessment[]> {
     return await withRLS(context.tenantId, context.userId, async (tx) => {
       return await tx
         .select()
         .from(userAssessments)
         .where(
-          and(
-            eq(userAssessments.userId, userId),
-            eq(userAssessments.tenantId, context.tenantId)
-          )
+          and(eq(userAssessments.userId, userId), eq(userAssessments.tenantId, context.tenantId))
         );
     });
   }
@@ -557,14 +499,9 @@ export class AssessmentRepositoryImpl implements AssessmentRepository {
           ...data,
           updatedAt: new Date(),
         })
-        .where(
-          and(
-            eq(userAssessments.id, id),
-            eq(userAssessments.tenantId, context.tenantId)
-          )
-        )
+        .where(and(eq(userAssessments.id, id), eq(userAssessments.tenantId, context.tenantId)))
         .returning();
-      
+
       return updated;
     });
   }
@@ -594,29 +531,25 @@ export class ApplicationError extends Error {
 
 export class NotFoundError extends ApplicationError {
   constructor(resource: string, id?: string) {
-    super(
-      `${resource}${id ? ` with id ${id}` : ""} not found`,
-      "NOT_FOUND",
-      404
-    );
+    super(`${resource}${id ? ` with id ${id}` : ''} not found`, 'NOT_FOUND', 404);
   }
 }
 
 export class ValidationError extends ApplicationError {
   constructor(message: string, details?: Record<string, unknown>) {
-    super(message, "VALIDATION_ERROR", 400, undefined, undefined, details);
+    super(message, 'VALIDATION_ERROR', 400, undefined, undefined, details);
   }
 }
 
 export class ForbiddenError extends ApplicationError {
-  constructor(message: string = "Access denied") {
-    super(message, "FORBIDDEN", 403);
+  constructor(message: string = 'Access denied') {
+    super(message, 'FORBIDDEN', 403);
   }
 }
 
 export class UnauthorizedError extends ApplicationError {
-  constructor(message: string = "Authentication required") {
-    super(message, "UNAUTHORIZED", 401);
+  constructor(message: string = 'Authentication required') {
+    super(message, 'UNAUTHORIZED', 401);
   }
 }
 ```
@@ -625,24 +558,20 @@ export class UnauthorizedError extends ApplicationError {
 
 ```typescript
 // lib/lambda-wrapper.ts
-export function withErrorHandling<T>(
-  handler: (event: APIGatewayProxyEventV2) => Promise<T>
-) {
-  return async (
-    event: APIGatewayProxyEventV2
-  ): Promise<APIGatewayProxyResult> => {
+export function withErrorHandling<T>(handler: (event: APIGatewayProxyEventV2) => Promise<T>) {
+  return async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResult> => {
     try {
       const result = await handler(event);
       return {
         statusCode: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(result),
       };
     } catch (error) {
       if (error instanceof ApplicationError) {
         return {
           statusCode: error.statusCode,
-          headers: { "Content-Type": "application/json" },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             error: error.code,
             message: error.message,
@@ -652,13 +581,13 @@ export function withErrorHandling<T>(
       }
 
       // Unexpected errors
-      console.error("Unexpected error:", error);
+      console.error('Unexpected error:', error);
       return {
         statusCode: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          error: "INTERNAL_SERVER_ERROR",
-          message: "An unexpected error occurred",
+          error: 'INTERNAL_SERVER_ERROR',
+          message: 'An unexpected error occurred',
         }),
       };
     }
@@ -685,7 +614,7 @@ export class Logger {
   info(message: string, context?: LogContext) {
     console.log(
       JSON.stringify({
-        level: "INFO",
+        level: 'INFO',
         service: this.serviceName,
         message,
         timestamp: new Date().toISOString(),
@@ -697,7 +626,7 @@ export class Logger {
   error(message: string, context?: LogContext & { error?: Error }) {
     console.error(
       JSON.stringify({
-        level: "ERROR",
+        level: 'ERROR',
         service: this.serviceName,
         message,
         timestamp: new Date().toISOString(),
@@ -716,7 +645,7 @@ export class Logger {
   warn(message: string, context?: LogContext) {
     console.warn(
       JSON.stringify({
-        level: "WARN",
+        level: 'WARN',
         service: this.serviceName,
         message,
         timestamp: new Date().toISOString(),
@@ -726,10 +655,10 @@ export class Logger {
   }
 
   debug(message: string, context?: LogContext) {
-    if (process.env.LOG_LEVEL === "debug") {
+    if (process.env.LOG_LEVEL === 'debug') {
       console.log(
         JSON.stringify({
-          level: "DEBUG",
+          level: 'DEBUG',
           service: this.serviceName,
           message,
           timestamp: new Date().toISOString(),
@@ -741,8 +670,8 @@ export class Logger {
 }
 
 // Usage
-const logger = new Logger("AssessmentService");
-logger.info("Assessment created", {
+const logger = new Logger('AssessmentService');
+logger.info('Assessment created', {
   tenantId: context.tenantId,
   userId: context.userId,
   assessmentId: assessment.id,
@@ -826,11 +755,11 @@ export function useAssessment(assessmentId: string) {
     try {
       setLoading(true);
       const response = await fetch(`/api/assessments/${assessmentId}`);
-      if (!response.ok) throw new Error("Failed to load assessment");
+      if (!response.ok) throw new Error('Failed to load assessment');
       const data = await response.json();
       setAssessment(data);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Unknown error"));
+      setError(err instanceof Error ? err : new Error('Unknown error'));
     } finally {
       setLoading(false);
     }
@@ -838,12 +767,12 @@ export function useAssessment(assessmentId: string) {
 
   async function submitAssessment(answers: Record<string, unknown>) {
     const response = await fetch(`/api/assessments/${assessmentId}/submit`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ answers }),
     });
 
-    if (!response.ok) throw new Error("Failed to submit assessment");
+    if (!response.ok) throw new Error('Failed to submit assessment');
     return await response.json();
   }
 
@@ -863,10 +792,10 @@ export function useAssessment(assessmentId: string) {
 
 ```typescript
 // services/__tests__/assessment.service.test.ts
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { AssessmentServiceImpl } from "../assessment.service.impl";
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { AssessmentServiceImpl } from '../assessment.service.impl';
 
-describe("AssessmentService", () => {
+describe('AssessmentService', () => {
   let service: AssessmentServiceImpl;
   let mockRepo: any;
   let mockScoring: any;
@@ -888,44 +817,40 @@ describe("AssessmentService", () => {
     service = new AssessmentServiceImpl(mockRepo, mockScoring, mockLogger);
   });
 
-  describe("create", () => {
-    it("creates assessment with correct parameters", async () => {
+  describe('create', () => {
+    it('creates assessment with correct parameters', async () => {
       const mockAssessment = {
-        id: "assessment-123",
-        userId: "user-123",
-        tenantId: "tenant-123",
+        id: 'assessment-123',
+        userId: 'user-123',
+        tenantId: 'tenant-123',
       };
 
       mockRepo.create.mockResolvedValue(mockAssessment);
 
-      const result = await service.create(
-        "user-123",
-        "tenant-123",
-        "template-123"
-      );
+      const result = await service.create('user-123', 'tenant-123', 'template-123');
 
       expect(mockRepo.create).toHaveBeenCalledWith({
-        userId: "user-123",
-        tenantId: "tenant-123",
-        templateId: "template-123",
-        status: "in_progress",
+        userId: 'user-123',
+        tenantId: 'tenant-123',
+        templateId: 'template-123',
+        status: 'in_progress',
         startedAt: expect.any(Date),
       });
       expect(result).toEqual(mockAssessment);
     });
 
-    it("logs error when creation fails", async () => {
-      mockRepo.create.mockRejectedValue(new Error("Database error"));
+    it('logs error when creation fails', async () => {
+      mockRepo.create.mockRejectedValue(new Error('Database error'));
 
-      await expect(
-        service.create("user-123", "tenant-123", "template-123")
-      ).rejects.toThrow("Failed to create assessment");
+      await expect(service.create('user-123', 'tenant-123', 'template-123')).rejects.toThrow(
+        'Failed to create assessment'
+      );
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        "Failed to create assessment",
+        'Failed to create assessment',
         expect.objectContaining({
-          userId: "user-123",
-          tenantId: "tenant-123",
+          userId: 'user-123',
+          tenantId: 'tenant-123',
         })
       );
     });
@@ -937,10 +862,10 @@ describe("AssessmentService", () => {
 
 ```typescript
 // __tests__/integration/assessment-flow.test.ts
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { createTestTenant, createTestUser, cleanupDatabase } from "./helpers";
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { createTestTenant, createTestUser, cleanupDatabase } from './helpers';
 
-describe("Assessment Flow Integration", () => {
+describe('Assessment Flow Integration', () => {
   let tenant: any;
   let user: any;
 
@@ -953,17 +878,17 @@ describe("Assessment Flow Integration", () => {
     await cleanupDatabase();
   });
 
-  it("completes full assessment workflow", async () => {
+  it('completes full assessment workflow', async () => {
     // Start assessment
     const assessment = await createAssessment(user.id, tenant.id);
-    expect(assessment.status).toBe("in_progress");
+    expect(assessment.status).toBe('in_progress');
 
     // Submit answers
     const result = await submitAssessment(assessment.id, {
-      q1: "lose_weight",
-      q4: "3-4",
+      q1: 'lose_weight',
+      q4: '3-4',
     });
-    expect(result.status).toBe("completed");
+    expect(result.status).toBe('completed');
     expect(result.score).toBeDefined();
 
     // Verify program generated
@@ -978,7 +903,7 @@ describe("Assessment Flow Integration", () => {
 
 ```typescript
 // lib/config.ts
-import { z } from "zod";
+import { z } from 'zod';
 
 const ConfigSchema = z.object({
   database: z.object({
@@ -998,8 +923,8 @@ const ConfigSchema = z.object({
     cloudFrontDomain: z.string(),
   }),
   app: z.object({
-    logLevel: z.enum(["debug", "info", "warn", "error"]),
-    environment: z.enum(["dev", "staging", "prod"]),
+    logLevel: z.enum(['debug', 'info', 'warn', 'error']),
+    environment: z.enum(['dev', 'staging', 'prod']),
   }),
 });
 
@@ -1009,7 +934,7 @@ export function loadConfig(): Config {
   return ConfigSchema.parse({
     database: {
       host: process.env.DB_HOST!,
-      port: parseInt(process.env.DB_PORT || "5432"),
+      port: parseInt(process.env.DB_PORT || '5432'),
       name: process.env.DB_NAME!,
       user: process.env.DB_USER!,
       password: process.env.DB_PASSWORD!,
@@ -1019,13 +944,13 @@ export function loadConfig(): Config {
       clientId: process.env.COGNITO_CLIENT_ID!,
     },
     aws: {
-      region: process.env.AWS_REGION || "us-east-1",
+      region: process.env.AWS_REGION || 'us-east-1',
       s3Bucket: process.env.S3_VIDEOS_BUCKET!,
       cloudFrontDomain: process.env.CLOUDFRONT_DOMAIN!,
     },
     app: {
-      logLevel: (process.env.LOG_LEVEL as any) || "info",
-      environment: (process.env.ENVIRONMENT as any) || "dev",
+      logLevel: (process.env.LOG_LEVEL as any) || 'info',
+      environment: (process.env.ENVIRONMENT as any) || 'dev',
     },
   });
 }

@@ -23,12 +23,10 @@ Error message: "Failed to create issue" or "Permission denied"
    - Need: "Edit Issues" permission (for updates)
 
 2. **Verify Cloud ID**
-
    - Should be: `46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf`
    - Check in prompt file
 
 3. **Check Project Key**
-
    - Should be: `FFP` (uppercase)
    - Not: `ffp` or `FFP`
 
@@ -56,13 +54,12 @@ Story created but not showing under Epic in Jira
    // Correct format
    additional_fields: {
      parent: {
-       key: "FFP-1";
+       key: 'FFP-1';
      } // Not "id"
    }
    ```
 
 2. **Verify Epic Key**
-
    - Must use exact key from Jira (e.g., FFP-1)
    - Check Epic exists before creating Story
 
@@ -143,7 +140,6 @@ Claude says issues created but can't see them in Jira
 ### Solutions
 
 1. **Check Project Filter**
-
    - In Jira, ensure viewing FFP project
    - Remove any custom filters
 
@@ -175,13 +171,11 @@ Claude stops responding or truncates output
 ### Solutions
 
 1. **Start Fresh Chat**
-
    - Each major step in new chat
    - Copy prompt, paste, run
    - Don't continue long conversations
 
 2. **Batch Operations**
-
    - Create 3-5 Stories at a time
    - Don't try all sprints in one chat
 
@@ -239,13 +233,12 @@ Subtask created but not nested under Story
    // For Subtask creation
    additional_fields: {
      parent: {
-       key: "FFP-7";
+       key: 'FFP-7';
      } // Story key
    }
    ```
 
 2. **Verify Issue Type**
-
    - Must be Subtask type (10012)
    - Not Task type
 
@@ -268,7 +261,7 @@ Labels field empty in created issues
 
    ```javascript
    additional_fields: {
-     labels: ["sprint-1", "infrastructure"]; // Array of strings
+     labels: ['sprint-1', 'infrastructure']; // Array of strings
    }
    ```
 
@@ -292,7 +285,7 @@ Priority shows as default instead of specified
    ```javascript
    additional_fields: {
      priority: {
-       name: "High";
+       name: 'High';
      } // Not "high"
    }
    ```
@@ -352,7 +345,6 @@ Can't copy full prompt, too many characters
    ```
 
 2. **Copy in Sections**
-
    - Copy context + objective first
    - Then copy sprint structure
    - Finally copy requirements
@@ -374,7 +366,6 @@ Can't copy full prompt, too many characters
    ```
 
 2. **Manual in Jira**
-
    - Navigate to issue
    - Click Edit
    - Update fields

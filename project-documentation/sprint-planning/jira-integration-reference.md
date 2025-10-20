@@ -39,14 +39,14 @@
 ```javascript
 // Claude will use this API call internally
 createJiraIssue({
-  cloudId: "46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf",
-  projectKey: "FFP",
-  issueTypeName: "Epic",
-  summary: "Sprint 1: Application Setup",
-  description: "Epic description in markdown format...",
+  cloudId: '46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf',
+  projectKey: 'FFP',
+  issueTypeName: 'Epic',
+  summary: 'Sprint 1: Application Setup',
+  description: 'Epic description in markdown format...',
   additional_fields: {
-    labels: ["sprint-1", "infrastructure", "setup"],
-    priority: { name: "High" },
+    labels: ['sprint-1', 'infrastructure', 'setup'],
+    priority: { name: 'High' },
   },
 });
 ```
@@ -60,15 +60,15 @@ createJiraIssue({
 ```javascript
 // Claude creates story and links to parent Epic
 createJiraIssue({
-  cloudId: "46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf",
-  projectKey: "FFP",
-  issueTypeName: "Story",
-  summary: "Set up Turborepo monorepo structure",
-  description: "User story description...",
+  cloudId: '46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf',
+  projectKey: 'FFP',
+  issueTypeName: 'Story',
+  summary: 'Set up Turborepo monorepo structure',
+  description: 'User story description...',
   additional_fields: {
-    parent: { key: "FFP-1" }, // Links to Epic
-    labels: ["sprint-1", "monorepo"],
-    priority: { name: "High" },
+    parent: { key: 'FFP-1' }, // Links to Epic
+    labels: ['sprint-1', 'monorepo'],
+    priority: { name: 'High' },
     customfield_10016: 5, // Story points (if field exists)
   },
 });
@@ -83,11 +83,11 @@ createJiraIssue({
 ```javascript
 // Claude updates story with more details
 editJiraIssue({
-  cloudId: "46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf",
-  issueIdOrKey: "FFP-7",
+  cloudId: '46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf',
+  issueIdOrKey: 'FFP-7',
   fields: {
-    description: "Updated description with acceptance criteria...",
-    labels: ["sprint-1", "monorepo", "turborepo"],
+    description: 'Updated description with acceptance criteria...',
+    labels: ['sprint-1', 'monorepo', 'turborepo'],
   },
 });
 ```

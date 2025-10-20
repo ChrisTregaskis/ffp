@@ -28,13 +28,13 @@ FFP uses AWS Cognito for authentication with custom attributes to support multi-
 
 ```typescript
 // stacks/AuthStack.ts
-import { StackContext, Cognito } from "sst/constructs";
-import * as cognito from "aws-cdk-lib/aws-cognito";
-import { Duration } from "aws-cdk-lib";
+import { StackContext, Cognito } from 'sst/constructs';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
+import { Duration } from 'aws-cdk-lib';
 
 export function AuthStack({ stack }: StackContext) {
-  const auth = new Cognito(stack, "Auth", {
-    login: ["email"],
+  const auth = new Cognito(stack, 'Auth', {
+    login: ['email'],
     cdk: {
       userPool: {
         // Password requirements
@@ -115,21 +115,19 @@ When a user authenticates, Cognito returns a JWT with these claims:
 ### Accessing JWT Claims in Lambda
 
 ```typescript
-import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from "aws-lambda";
+import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
 
-export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (
-  event
-) => {
+export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) => {
   // JWT claims automatically available via API Gateway authorizer
   const claims = event.requestContext.authorizer.jwt.claims;
 
   // Extract tenant context
   const tenantContext = {
     userId: claims.sub as string,
-    tenantId: claims["custom:tenantId"] as string,
-    role: claims["custom:role"] as string,
+    tenantId: claims['custom:tenantId'] as string,
+    role: claims['custom:role'] as string,
     email: claims.email as string,
-    parentBusinessId: claims["custom:parentBusinessId"] as string | null,
+    parentBusinessId: claims['custom:parentBusinessId'] as string | null,
   };
 
   // Use for RLS queries
@@ -152,9 +150,9 @@ export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (
 import {
   CognitoIdentityProviderClient,
   SignUpCommand,
-} from "@aws-sdk/client-cognito-identity-provider";
-import { randomUUID } from "crypto";
-import { z } from "zod";
+} from '@aws-sdk/client-cognito-identity-provider';
+import { randomUUID } from 'crypto';
+import { z } from 'zod';
 
 const cognito = new CognitoIdentityProviderClient({});
 
@@ -163,7 +161,7 @@ const RegisterSchema = z.object({
   password: z.string().min(8),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  accountType: z.enum(["individual", "business"]),
+  accountType: z.enum(['individual', 'business']),
 });
 
 export const handler = async (event) => {
@@ -171,8 +169,7 @@ export const handler = async (event) => {
 
   // Generate unique tenant ID
   const tenantId = randomUUID();
-  const role =
-    body.accountType === "business" ? "business_owner" : "individual_user";
+  const role = body.accountType === 'business' ? 'business_owner' : 'individual_user';
 
   // Create user in Cognito
   const signUpResult = await cognito.send(
@@ -181,11 +178,11 @@ export const handler = async (event) => {
       Username: body.email,
       Password: body.password,
       UserAttributes: [
-        { Name: "email", Value: body.email },
-        { Name: "given_name", Value: body.firstName },
-        { Name: "family_name", Value: body.lastName },
-        { Name: "custom:tenantId", Value: tenantId },
-        { Name: "custom:role", Value: role },
+        { Name: 'email', Value: body.email },
+        { Name: 'given_name', Value: body.firstName },
+        { Name: 'family_name', Value: body.lastName },
+        { Name: 'custom:tenantId', Value: tenantId },
+        { Name: 'custom:role', Value: role },
       ],
     })
   );
@@ -206,7 +203,7 @@ export const handler = async (event) => {
     id: tenantId,
     type: body.accountType,
     name:
-      body.accountType === "business"
+      body.accountType === 'business'
         ? `${body.firstName} ${body.lastName}'s Business`
         : `${body.firstName} ${body.lastName}`,
     createdAt: new Date(),
@@ -215,7 +212,7 @@ export const handler = async (event) => {
   return {
     statusCode: 200,
     body: JSON.stringify({
-      message: "Registration successful. Check email for verification.",
+      message: 'Registration successful. Check email for verification.',
       userId: signUpResult.UserSub,
     }),
   };
@@ -229,8 +226,8 @@ export const handler = async (event) => {
 import {
   CognitoIdentityProviderClient,
   AdminCreateUserCommand,
-} from "@aws-sdk/client-cognito-identity-provider";
-import { z } from "zod";
+} from '@aws-sdk/client-cognito-identity-provider';
+import { z } from 'zod';
 
 const cognito = new CognitoIdentityProviderClient({});
 
@@ -238,7 +235,7 @@ const InviteUserSchema = z.object({
   email: z.string().email(),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  role: z.enum(["business_admin", "business_user"]),
+  role: z.enum(['business_admin', 'business_user']),
 });
 
 export const handler = async (event) => {
@@ -246,14 +243,14 @@ export const handler = async (event) => {
   const businessOwner = event.requestContext.authorizer.jwt.claims;
 
   // Only business owners can invite
-  if (businessOwner["custom:role"] !== "business_owner") {
+  if (businessOwner['custom:role'] !== 'business_owner') {
     return {
       statusCode: 403,
-      body: JSON.stringify({ error: "Only business owners can invite users" }),
+      body: JSON.stringify({ error: 'Only business owners can invite users' }),
     };
   }
 
-  const businessTenantId = businessOwner["custom:tenantId"] as string;
+  const businessTenantId = businessOwner['custom:tenantId'] as string;
   const businessOwnerId = businessOwner.sub as string;
 
   // Create user with temporary password (emailed to user)
@@ -262,15 +259,15 @@ export const handler = async (event) => {
       UserPoolId: process.env.COGNITO_USER_POOL_ID!,
       Username: body.email,
       UserAttributes: [
-        { Name: "email", Value: body.email },
-        { Name: "email_verified", Value: "true" },
-        { Name: "given_name", Value: body.firstName },
-        { Name: "family_name", Value: body.lastName },
-        { Name: "custom:tenantId", Value: businessTenantId }, // Same tenant!
-        { Name: "custom:role", Value: body.role },
-        { Name: "custom:parentBusinessId", Value: businessOwnerId },
+        { Name: 'email', Value: body.email },
+        { Name: 'email_verified', Value: 'true' },
+        { Name: 'given_name', Value: body.firstName },
+        { Name: 'family_name', Value: body.lastName },
+        { Name: 'custom:tenantId', Value: businessTenantId }, // Same tenant!
+        { Name: 'custom:role', Value: body.role },
+        { Name: 'custom:parentBusinessId', Value: businessOwnerId },
       ],
-      DesiredDeliveryMediums: ["EMAIL"], // Send temp password via email
+      DesiredDeliveryMediums: ['EMAIL'], // Send temp password via email
     })
   );
 
@@ -289,7 +286,7 @@ export const handler = async (event) => {
   return {
     statusCode: 200,
     body: JSON.stringify({
-      message: "Invitation sent successfully",
+      message: 'Invitation sent successfully',
       userId: result.User!.Username,
     }),
   };
@@ -302,7 +299,7 @@ export const handler = async (event) => {
 
 ```typescript
 // lib/auth.ts
-import { Amplify } from "aws-amplify";
+import { Amplify } from 'aws-amplify';
 import {
   signIn,
   signOut,
@@ -312,7 +309,7 @@ import {
   confirmResetPassword,
   getCurrentUser,
   fetchAuthSession,
-} from "aws-amplify/auth";
+} from 'aws-amplify/auth';
 
 // Configure Amplify
 Amplify.configure({
@@ -320,7 +317,7 @@ Amplify.configure({
     Cognito: {
       userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID,
       userPoolClientId: import.meta.env.VITE_COGNITO_CLIENT_ID,
-      signUpVerificationMethod: "code",
+      signUpVerificationMethod: 'code',
     },
   },
 });
@@ -369,11 +366,9 @@ export async function getCurrentUserWithContext() {
     userId: user.userId,
     email: user.signInDetails?.loginId,
     username: user.username,
-    tenantId: idToken?.payload["custom:tenantId"] as string,
-    role: idToken?.payload["custom:role"] as string,
-    parentBusinessId: idToken?.payload["custom:parentBusinessId"] as
-      | string
-      | null,
+    tenantId: idToken?.payload['custom:tenantId'] as string,
+    role: idToken?.payload['custom:role'] as string,
+    parentBusinessId: idToken?.payload['custom:parentBusinessId'] as string | null,
   };
 }
 
@@ -388,11 +383,7 @@ export async function forgotPassword(email: string) {
 }
 
 // Reset password
-export async function resetPasswordSubmit(
-  email: string,
-  code: string,
-  newPassword: string
-) {
+export async function resetPasswordSubmit(email: string, code: string, newPassword: string) {
   return await confirmResetPassword({
     username: email,
     confirmationCode: code,
@@ -468,16 +459,16 @@ export const useAuth = () => useContext(AuthContext);
 
 ```typescript
 // stacks/ApiStack.ts
-import { StackContext, Api, use } from "sst/constructs";
-import { AuthStack } from "./AuthStack";
+import { StackContext, Api, use } from 'sst/constructs';
+import { AuthStack } from './AuthStack';
 
 export function ApiStack({ stack }: StackContext) {
   const { auth } = use(AuthStack);
 
-  const api = new Api(stack, "Api", {
+  const api = new Api(stack, 'Api', {
     authorizers: {
       jwt: {
-        type: "user_pool",
+        type: 'user_pool',
         userPool: {
           id: auth.userPoolId,
           clientIds: [auth.userPoolClientId],
@@ -485,20 +476,20 @@ export function ApiStack({ stack }: StackContext) {
       },
     },
     defaults: {
-      authorizer: "jwt", // Protect all routes by default
+      authorizer: 'jwt', // Protect all routes by default
     },
     routes: {
       // Public routes (no auth required)
-      "POST /auth/register": {
-        function: "functions/auth/register.handler",
-        authorizer: "none",
+      'POST /auth/register': {
+        function: 'functions/auth/register.handler',
+        authorizer: 'none',
       },
 
       // Protected routes (JWT required)
-      "GET /assessments": "functions/assessments/list.handler",
-      "POST /assessments": "functions/assessments/create.handler",
-      "GET /programs": "functions/programs/list.handler",
-      "POST /business/invite": "functions/business/invite-user.handler",
+      'GET /assessments': 'functions/assessments/list.handler',
+      'POST /assessments': 'functions/assessments/create.handler',
+      'GET /programs': 'functions/programs/list.handler',
+      'POST /business/invite': 'functions/business/invite-user.handler',
     },
   });
 
@@ -523,9 +514,7 @@ export function ApiStack({ stack }: StackContext) {
 
 ```typescript
 // Log full claims object
-console.log(
-  JSON.stringify(event.requestContext.authorizer.jwt.claims, null, 2)
-);
+console.log(JSON.stringify(event.requestContext.authorizer.jwt.claims, null, 2));
 ```
 
 ### Issue: User Registration Fails
@@ -594,16 +583,16 @@ try {
 ### Unit Tests
 
 ```typescript
-describe("extractTenantContext", () => {
-  it("extracts tenant context from JWT claims", () => {
+describe('extractTenantContext', () => {
+  it('extracts tenant context from JWT claims', () => {
     const mockEvent = {
       requestContext: {
         authorizer: {
           jwt: {
             claims: {
-              sub: "user-123",
-              "custom:tenantId": "tenant-456",
-              "custom:role": "business_owner",
+              sub: 'user-123',
+              'custom:tenantId': 'tenant-456',
+              'custom:role': 'business_owner',
             },
           },
         },
@@ -612,9 +601,9 @@ describe("extractTenantContext", () => {
 
     const context = extractTenantContext(mockEvent);
 
-    expect(context.userId).toBe("user-123");
-    expect(context.tenantId).toBe("tenant-456");
-    expect(context.role).toBe("business_owner");
+    expect(context.userId).toBe('user-123');
+    expect(context.tenantId).toBe('tenant-456');
+    expect(context.role).toBe('business_owner');
   });
 });
 ```

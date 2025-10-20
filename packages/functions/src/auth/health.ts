@@ -1,12 +1,24 @@
+import { APP_NAME, testPathAliases } from '@ffp/core';
+
+import type { APIGatewayProxyHandler } from 'aws-lambda';
+
+interface HealthCheckResponse {
+  statusCode: number;
+  headers: Record<string, string>;
+  body: string;
+}
+
 /**
  * Health check handler
  * Tests workspace imports (@ffp/core) and internal aliases
  */
-import type { APIGatewayProxyHandler } from "aws-lambda";
-import { APP_NAME, testPathAliases } from "@ffp/core";
+export const handler: APIGatewayProxyHandler = async (event): Promise<HealthCheckResponse> => {
+  console.log('Health check event:', event);
 
-export const handler: APIGatewayProxyHandler = async (event) => {
-  console.log("Health check event:", event);
+  // Simulate async operation
+  await new Promise((resolve) => {
+    resolve(true);
+  });
 
   // Test internal path aliases by importing from @ffp/core
   const pathTest = testPathAliases();
@@ -14,10 +26,10 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   return {
     statusCode: 200,
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      status: "healthy",
+      status: 'healthy',
       message: `${APP_NAME} Functions - Health Check OK`,
       timestamp: new Date().toISOString(),
       pathAliasTest: {

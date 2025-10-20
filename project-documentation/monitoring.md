@@ -103,22 +103,19 @@ fields service, level
 
 ```typescript
 // lib/metrics.ts
-import {
-  CloudWatchClient,
-  PutMetricDataCommand,
-} from "@aws-sdk/client-cloudwatch";
+import { CloudWatchClient, PutMetricDataCommand } from '@aws-sdk/client-cloudwatch';
 
 const cloudwatch = new CloudWatchClient({ region: process.env.AWS_REGION });
 
 export async function trackMetric(
   metricName: string,
   value: number,
-  unit: string = "Count",
+  unit: string = 'Count',
   dimensions: Record<string, string> = {}
 ) {
   await cloudwatch.send(
     new PutMetricDataCommand({
-      Namespace: "FFP/Business",
+      Namespace: 'FFP/Business',
       MetricData: [
         {
           MetricName: metricName,
@@ -136,16 +133,16 @@ export async function trackMetric(
 }
 
 // Usage examples
-await trackMetric("AssessmentCompleted", 1, "Count", {
+await trackMetric('AssessmentCompleted', 1, 'Count', {
   tenantId: context.tenantId,
 });
 
-await trackMetric("VideoWatched", 1, "Count", {
+await trackMetric('VideoWatched', 1, 'Count', {
   videoId: video.id,
   difficulty: video.difficulty_level,
 });
 
-await trackMetric("ProgramGenerated", 1, "Count", {
+await trackMetric('ProgramGenerated', 1, 'Count', {
   assessmentType: template.name,
 });
 ```
@@ -177,48 +174,44 @@ await trackMetric("ProgramGenerated", 1, "Count", {
 
 ```typescript
 // stacks/MonitoringStack.ts
-import {
-  Alarm,
-  ComparisonOperator,
-  TreatMissingData,
-} from "aws-cdk-lib/aws-cloudwatch";
-import { SnsAction } from "aws-cdk-lib/aws-cloudwatch-actions";
+import { Alarm, ComparisonOperator, TreatMissingData } from 'aws-cdk-lib/aws-cloudwatch';
+import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions';
 
 // API Gateway 5xx Error Rate
-new Alarm(stack, "ApiServerErrors", {
+new Alarm(stack, 'ApiServerErrors', {
   metric: api.metricServerError({
     period: Duration.minutes(5),
-    statistic: "Sum",
+    statistic: 'Sum',
   }),
   threshold: 5,
   evaluationPeriods: 1,
   comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
-  alarmDescription: "API returning too many 5xx errors",
+  alarmDescription: 'API returning too many 5xx errors',
   actionsEnabled: true,
 }).addAlarmAction(new SnsAction(alertTopic));
 
 // Lambda Function Errors
-new Alarm(stack, "AssessmentFunctionErrors", {
+new Alarm(stack, 'AssessmentFunctionErrors', {
   metric: assessmentFunction.metricErrors({
     period: Duration.minutes(5),
-    statistic: "Sum",
+    statistic: 'Sum',
   }),
   threshold: 10,
   evaluationPeriods: 1,
   comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
-  alarmDescription: "Assessment function failing repeatedly",
+  alarmDescription: 'Assessment function failing repeatedly',
 }).addAlarmAction(new SnsAction(alertTopic));
 
 // RDS Connection Pool Exhaustion
-new Alarm(stack, "DatabaseConnectionsHigh", {
+new Alarm(stack, 'DatabaseConnectionsHigh', {
   metric: database.metricDatabaseConnections({
     period: Duration.minutes(5),
-    statistic: "Average",
+    statistic: 'Average',
   }),
   threshold: 80, // 80% of max connections
   evaluationPeriods: 2,
   comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
-  alarmDescription: "Database running out of connections",
+  alarmDescription: 'Database running out of connections',
 }).addAlarmAction(new SnsAction(alertTopic));
 ```
 
@@ -226,38 +219,38 @@ new Alarm(stack, "DatabaseConnectionsHigh", {
 
 ```typescript
 // API Latency High
-new Alarm(stack, "ApiLatencyHigh", {
+new Alarm(stack, 'ApiLatencyHigh', {
   metric: api.metricLatency({
     period: Duration.minutes(5),
-    statistic: "p95",
+    statistic: 'p95',
   }),
   threshold: 500, // 500ms
   evaluationPeriods: 3,
   comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
-  alarmDescription: "API response time degraded",
+  alarmDescription: 'API response time degraded',
   treatMissingData: TreatMissingData.NOT_BREACHING,
 }).addAlarmAction(new SnsAction(warningTopic));
 
 // RDS CPU High
-new Alarm(stack, "DatabaseCPUHigh", {
+new Alarm(stack, 'DatabaseCPUHigh', {
   metric: database.metricCPUUtilization({
     period: Duration.minutes(10),
-    statistic: "Average",
+    statistic: 'Average',
   }),
   threshold: 80, // 80%
   evaluationPeriods: 2,
   comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
-  alarmDescription: "Database CPU consistently high",
+  alarmDescription: 'Database CPU consistently high',
 }).addAlarmAction(new SnsAction(warningTopic));
 
 // Lambda Cold Starts High
-new Alarm(stack, "ColdStartsHigh", {
+new Alarm(stack, 'ColdStartsHigh', {
   metric: new MathExpression({
-    expression: "coldStarts / invocations * 100",
+    expression: 'coldStarts / invocations * 100',
     usingMetrics: {
-      coldStarts: assessmentFunction.metric("InitDuration", {
+      coldStarts: assessmentFunction.metric('InitDuration', {
         period: Duration.minutes(5),
-        statistic: "SampleCount",
+        statistic: 'SampleCount',
       }),
       invocations: assessmentFunction.metricInvocations({
         period: Duration.minutes(5),
@@ -267,7 +260,7 @@ new Alarm(stack, "ColdStartsHigh", {
   threshold: 20, // 20% of invocations
   evaluationPeriods: 2,
   comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
-  alarmDescription: "Too many Lambda cold starts",
+  alarmDescription: 'Too many Lambda cold starts',
 }).addAlarmAction(new SnsAction(warningTopic));
 ```
 
@@ -276,19 +269,19 @@ new Alarm(stack, "ColdStartsHigh", {
 ### Alert Topic (Critical)
 
 ```typescript
-const alertTopic = new Topic(stack, "AlertTopic", {
-  displayName: "FFP Critical Alerts",
+const alertTopic = new Topic(stack, 'AlertTopic', {
+  displayName: 'FFP Critical Alerts',
 });
 
 // Email subscription
-alertTopic.addSubscription(new EmailSubscription("alerts@ffp.app"));
+alertTopic.addSubscription(new EmailSubscription('alerts@ffp.app'));
 
 // SMS subscription (optional)
-alertTopic.addSubscription(new SmsSubscription("+1-555-0123"));
+alertTopic.addSubscription(new SmsSubscription('+1-555-0123'));
 
 // Slack webhook (via Lambda)
-const slackFunction = new Function(stack, "SlackAlert", {
-  handler: "functions/notifications/slack.handler",
+const slackFunction = new Function(stack, 'SlackAlert', {
+  handler: 'functions/notifications/slack.handler',
   environment: {
     SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL!,
   },
@@ -302,33 +295,27 @@ alertTopic.addSubscription(new LambdaSubscription(slackFunction));
 
 ```typescript
 // stacks/MonitoringStack.ts
-import {
-  Dashboard,
-  GraphWidget,
-  SingleValueWidget,
-} from "aws-cdk-lib/aws-cloudwatch";
+import { Dashboard, GraphWidget, SingleValueWidget } from 'aws-cdk-lib/aws-cloudwatch';
 
-const dashboard = new Dashboard(stack, "FFPDashboard", {
-  dashboardName: "FFP-Production-Overview",
+const dashboard = new Dashboard(stack, 'FFPDashboard', {
+  dashboardName: 'FFP-Production-Overview',
 });
 
 // API Metrics
 dashboard.addWidgets(
   new GraphWidget({
-    title: "API Request Count",
+    title: 'API Request Count',
     left: [api.metricCount({ period: Duration.minutes(5) })],
   }),
   new GraphWidget({
-    title: "API Latency (p95)",
-    left: [
-      api.metricLatency({ period: Duration.minutes(5), statistic: "p95" }),
-    ],
+    title: 'API Latency (p95)',
+    left: [api.metricLatency({ period: Duration.minutes(5), statistic: 'p95' })],
   }),
   new GraphWidget({
-    title: "API Errors",
+    title: 'API Errors',
     left: [
-      api.metricClientError({ period: Duration.minutes(5), label: "4xx" }),
-      api.metricServerError({ period: Duration.minutes(5), label: "5xx" }),
+      api.metricClientError({ period: Duration.minutes(5), label: '4xx' }),
+      api.metricServerError({ period: Duration.minutes(5), label: '5xx' }),
     ],
   })
 );
@@ -336,14 +323,14 @@ dashboard.addWidgets(
 // Lambda Metrics
 dashboard.addWidgets(
   new GraphWidget({
-    title: "Lambda Invocations",
+    title: 'Lambda Invocations',
     left: [
       assessmentFunction.metricInvocations({ period: Duration.minutes(5) }),
       videoFunction.metricInvocations({ period: Duration.minutes(5) }),
     ],
   }),
   new GraphWidget({
-    title: "Lambda Errors",
+    title: 'Lambda Errors',
     left: [
       assessmentFunction.metricErrors({ period: Duration.minutes(5) }),
       videoFunction.metricErrors({ period: Duration.minutes(5) }),
@@ -354,11 +341,11 @@ dashboard.addWidgets(
 // RDS Metrics
 dashboard.addWidgets(
   new GraphWidget({
-    title: "Database Connections",
+    title: 'Database Connections',
     left: [database.metricDatabaseConnections({ period: Duration.minutes(5) })],
   }),
   new GraphWidget({
-    title: "Database CPU",
+    title: 'Database CPU',
     left: [database.metricCPUUtilization({ period: Duration.minutes(5) })],
   })
 );
@@ -366,23 +353,23 @@ dashboard.addWidgets(
 // Business Metrics
 dashboard.addWidgets(
   new SingleValueWidget({
-    title: "Active Users Today",
+    title: 'Active Users Today',
     metrics: [
       new Metric({
-        namespace: "FFP/Business",
-        metricName: "ActiveUsers",
-        statistic: "Sum",
+        namespace: 'FFP/Business',
+        metricName: 'ActiveUsers',
+        statistic: 'Sum',
         period: Duration.hours(24),
       }),
     ],
   }),
   new SingleValueWidget({
-    title: "Assessments Completed Today",
+    title: 'Assessments Completed Today',
     metrics: [
       new Metric({
-        namespace: "FFP/Business",
-        metricName: "AssessmentCompleted",
-        statistic: "Sum",
+        namespace: 'FFP/Business',
+        metricName: 'AssessmentCompleted',
+        statistic: 'Sum',
         period: Duration.hours(24),
       }),
     ],
@@ -428,7 +415,7 @@ export const handler = async (event) => {
 **Enable Enhanced Monitoring:**
 
 ```typescript
-const database = new DatabaseInstance(stack, "Database", {
+const database = new DatabaseInstance(stack, 'Database', {
   // ... other config
   enablePerformanceInsights: true,
   performanceInsightRetention: PerformanceInsightRetention.DEFAULT, // 7 days
@@ -486,18 +473,18 @@ LIMIT 10;
 
 ```typescript
 // Generate correlation ID per request
-import { randomUUID } from "crypto";
+import { randomUUID } from 'crypto';
 
 export const handler = async (event) => {
   const correlationId = event.requestContext.requestId || randomUUID();
 
-  const logger = new Logger("AssessmentService");
+  const logger = new Logger('AssessmentService');
   logger.setCorrelationId(correlationId);
 
   try {
     // Process request
   } catch (error) {
-    logger.error("Request failed", { error, correlationId });
+    logger.error('Request failed', { error, correlationId });
     throw error;
   }
 };
@@ -531,7 +518,7 @@ export const handler = async () => {
   return {
     statusCode: healthy ? 200 : 503,
     body: JSON.stringify({
-      status: healthy ? "healthy" : "unhealthy",
+      status: healthy ? 'healthy' : 'unhealthy',
       checks,
       timestamp: new Date().toISOString(),
     }),
@@ -540,10 +527,10 @@ export const handler = async () => {
 
 async function checkDatabase(): Promise<HealthCheck> {
   try {
-    await db.query("SELECT 1");
-    return { healthy: true, message: "Database connected" };
+    await db.query('SELECT 1');
+    return { healthy: true, message: 'Database connected' };
   } catch (error) {
-    return { healthy: false, message: "Database connection failed" };
+    return { healthy: false, message: 'Database connection failed' };
   }
 }
 ```
@@ -552,10 +539,10 @@ async function checkDatabase(): Promise<HealthCheck> {
 
 ```typescript
 // Use CloudWatch Synthetics for uptime monitoring
-const canary = new Canary(stack, "ApiHealthCanary", {
+const canary = new Canary(stack, 'ApiHealthCanary', {
   test: Test.custom({
-    handler: "healthCheck.handler",
-    code: Code.fromAsset("canaries"),
+    handler: 'healthCheck.handler',
+    code: Code.fromAsset('canaries'),
   }),
   schedule: Schedule.rate(Duration.minutes(5)),
   runtime: Runtime.SYNTHETICS_NODEJS_PUPPETEER_3_9,
@@ -586,14 +573,14 @@ aws logs filter-log-events \
 Enable distributed tracing for complex request flows:
 
 ```typescript
-import { captureAWS } from "aws-xray-sdk-core";
-import AWS from "aws-sdk";
+import { captureAWS } from 'aws-xray-sdk-core';
+import AWS from 'aws-sdk';
 
 const capturedAWS = captureAWS(AWS);
 const s3 = new capturedAWS.S3();
 
 // X-Ray will trace this S3 call
-await s3.getObject({ Bucket: "videos", Key: "exercise-001.mp4" }).promise();
+await s3.getObject({ Bucket: 'videos', Key: 'exercise-001.mp4' }).promise();
 ```
 
 ## Incident Response Runbook

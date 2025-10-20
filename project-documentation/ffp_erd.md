@@ -5,6 +5,7 @@
 This document contains the complete ERD for the Fit For Purpose platform. The database uses PostgreSQL with Row-Level Security (RLS) for multi-tenant isolation.
 
 **Key Principles:**
+
 - All tenant-scoped tables include `tenant_id` for RLS policies
 - System-managed content (templates, videos) has no `tenant_id`
 - UUIDs used for all primary keys
@@ -18,7 +19,7 @@ This document contains the complete ERD for the Fit For Purpose platform. The da
 erDiagram
     tenants ||--o{ users : "has"
     users ||--o{ users : "manages (parent_business_id)"
-    
+
     global_config {
         uuid id PK
         varchar(62) key UK "theme|features|defaults"
@@ -58,12 +59,14 @@ erDiagram
 ```
 
 **Indexes:**
+
 - `idx_global_config_key` on global_config(key)
 - `idx_users_tenant_id` on users(tenant_id)
 - `idx_users_email` on users(email)
 - `idx_users_parent_business_id` on users(parent_business_id) WHERE parent_business_id IS NOT NULL
 
 **RLS Policy:**
+
 ```sql
 -- users table
 CREATE POLICY tenant_isolation_users ON users
@@ -75,6 +78,7 @@ CREATE POLICY tenant_isolation_users ON users
 ```
 
 **Tenant Settings Structure:**
+
 ```typescript
 tenants.settings = {
   // Theme overrides (falls back to global_config.theme)
@@ -83,21 +87,21 @@ tenants.settings = {
     secondary: '#6c757d',
     logo_url: 's3://...',
   },
-  
+
   // Missed session handling strategy
   missedSessionStrategy: 'reschedule' | 'accumulate' | 'flexible',
-  
+
   // Business-specific settings
   allowCustomVideos: false,
   requireAssessmentReview: true,
-  
+
   // Notification preferences
   notifications: {
     welcomeEmail: true,
     programReminders: true,
     weeklyDigest: false,
-  }
-}
+  },
+};
 ```
 
 ---
@@ -164,6 +168,7 @@ erDiagram
 ```
 
 **Indexes:**
+
 - `idx_assessment_templates_category` on assessment_templates(category_id)
 - `idx_assessment_templates_active` on assessment_templates(is_active) WHERE is_active = true
 - `idx_user_assessments_tenant_user` on user_assessments(tenant_id, user_id)
@@ -172,6 +177,7 @@ erDiagram
 - `idx_user_assessment_history_assessment` on user_assessment_history(assessment_id, event_at DESC)
 
 **RLS Policies:**
+
 ```sql
 -- user_assessments table
 CREATE POLICY tenant_isolation_assessments ON user_assessments
@@ -185,6 +191,7 @@ CREATE POLICY tenant_isolation_assessment_history ON user_assessment_history
 ```
 
 **Business Logic Notes:**
+
 - **CHANGED:** `program_id` added to user_assessments (nullable initially)
 - Users can complete multiple assessments that contribute to ONE active program
 - Assessment flow:
@@ -196,16 +203,17 @@ CREATE POLICY tenant_isolation_assessment_history ON user_assessment_history
 - History snapshots created on: assessment completion, score updates, major edits
 
 **Example Queries:**
+
 ```sql
 -- Get INITIAL score for a specific template
-SELECT score 
-FROM user_assessments 
-WHERE user_id = ? 
-  AND template_id = ? 
+SELECT score
+FROM user_assessments
+WHERE user_id = ?
+  AND template_id = ?
   AND is_initial = true;
 
 -- Get all assessments for a program
-SELECT 
+SELECT
   ua.*,
   at.name as template_name,
   at.category_id
@@ -216,7 +224,7 @@ WHERE ua.program_id = ?
 ORDER BY ua.completed_at DESC;
 
 -- Get user's assessment history across programs
-SELECT 
+SELECT
   ua.id,
   ua.attempt_number,
   ua.score,
@@ -286,6 +294,7 @@ erDiagram
 ```
 
 **Indexes:**
+
 - `idx_programs_tenant_user` on programs(tenant_id, user_id)
 - `idx_programs_active` on programs(is_active) WHERE is_active = true
 - `idx_programs_status` on programs(status)
@@ -295,11 +304,13 @@ erDiagram
 - `idx_session_exercises_video` on session_exercises(video_id)
 
 **Unique Constraints:**
+
 - `UNIQUE(tenant_id, user_id, is_active)` WHERE is_active = true - Only ONE active program per user
 - `UNIQUE(program_id, session_number)` on program_sessions
 - `UNIQUE(session_id, exercise_order)` on session_exercises
 
 **RLS Policies:**
+
 ```sql
 -- programs table
 CREATE POLICY tenant_isolation_programs ON programs
@@ -313,6 +324,7 @@ CREATE POLICY tenant_isolation_sessions ON program_sessions
 ```
 
 **Business Logic Notes:**
+
 - **CHANGED:** Removed `assessment_id` from programs - assessments now reference programs
 - **CHANGED:** Added `is_active` - users can only have ONE active program at a time
 - **CHANGED:** Added scheduling fields to `program_sessions`
@@ -329,9 +341,10 @@ CREATE POLICY tenant_isolation_sessions ON program_sessions
   - **flexible**: Smart rescheduling based on completion patterns
 
 **Example Queries:**
+
 ```sql
 -- Get user's ACTIVE program with current session
-SELECT 
+SELECT
   p.*,
   ps.session_number,
   ps.name as current_session_name,
@@ -339,7 +352,7 @@ SELECT
   ps.status as session_status
 FROM programs p
 LEFT JOIN program_sessions ps ON ps.id = p.current_session_id
-WHERE p.user_id = ? 
+WHERE p.user_id = ?
   AND p.tenant_id = ?
   AND p.is_active = true
 LIMIT 1;
@@ -353,7 +366,7 @@ WITH missed_sessions AS (
     AND scheduled_date < CURRENT_DATE
 )
 UPDATE program_sessions
-SET 
+SET
   status = 'missed',
   updated_at = NOW()
 WHERE id IN (SELECT id FROM missed_sessions)
@@ -361,7 +374,7 @@ RETURNING *;
 
 -- Reschedule remaining sessions (for 'reschedule' strategy)
 UPDATE program_sessions ps
-SET 
+SET
   scheduled_date = scheduled_date + INTERVAL '? days',
   status = 'rescheduled',
   updated_at = NOW()
@@ -376,7 +389,7 @@ WHERE ps.program_id = ?
 RETURNING ps.*;
 
 -- Get upcoming scheduled sessions
-SELECT 
+SELECT
   ps.*,
   COUNT(se.id) as total_exercises
 FROM program_sessions ps
@@ -390,7 +403,7 @@ LIMIT 7;
 
 -- Mark session as completed
 UPDATE program_sessions
-SET 
+SET
   status = 'completed',
   completed_date = CURRENT_DATE,
   updated_at = NOW()
@@ -427,15 +440,18 @@ erDiagram
 ```
 
 **Indexes:**
+
 - `idx_user_progress_tenant_user` on user_progress(tenant_id, user_id)
 - `idx_user_progress_session` on user_progress(session_id)
 - `idx_user_progress_program_user` on user_progress(program_id, user_id)
 - `idx_user_progress_status` on user_progress(status)
 
 **Unique Constraints:**
+
 - `UNIQUE(tenant_id, user_id, session_id, video_id)` - One record per exercise per session per user
 
 **RLS Policies:**
+
 ```sql
 -- user_progress table
 CREATE POLICY tenant_isolation_progress ON user_progress
@@ -444,6 +460,7 @@ CREATE POLICY tenant_isolation_progress ON user_progress
 ```
 
 **Business Logic Notes:**
+
 - Tracks completion of each exercise within each session
 - `status = 'completed'` means the exercise is done (regardless of sets/reps completion)
 - When all exercises in session completed → update `program_sessions.completed_date`
@@ -477,6 +494,7 @@ erDiagram
 ```
 
 **Indexes:**
+
 - `idx_videos_difficulty` on videos(difficulty_level)
 - `idx_videos_body_parts` on videos USING GIN(body_parts)
 - `idx_videos_equipment` on videos USING GIN(equipment)
@@ -485,6 +503,7 @@ erDiagram
 - `idx_videos_view_count` on videos(view_count DESC)
 
 **RLS Policies:**
+
 ```sql
 -- No RLS on videos table - system-managed content
 -- All users can read videos, only system admins can write
@@ -535,6 +554,7 @@ erDiagram
 ```
 
 **Indexes:**
+
 - `idx_jobs_status` on jobs(status) WHERE status IN ('pending', 'processing')
 - `idx_jobs_scheduled` on jobs(scheduled_for) WHERE scheduled_for IS NOT NULL
 - `idx_jobs_tenant_user` on jobs(tenant_id, user_id)
@@ -544,6 +564,7 @@ erDiagram
 - `idx_notifications_created` on notifications(created_at DESC)
 
 **RLS Policies:**
+
 ```sql
 -- jobs table
 CREATE POLICY tenant_isolation_jobs ON jobs
@@ -562,6 +583,7 @@ CREATE POLICY tenant_isolation_notifications ON notifications
 **Business Logic Notes:**
 
 **Jobs Table:**
+
 - Async background job processing (program generation, emails, etc.)
 - `tenant_id` nullable for system-wide jobs
 - Retry logic with exponential backoff
@@ -578,20 +600,23 @@ CREATE POLICY tenant_isolation_notifications ON notifications
 To prevent overloading the database with automated jobs and impacting user experience:
 
 **1. S3 Concurrency Configuration**
-   - Store job concurrency limits in S3: `s3://ffp-config-{env}/jobs/concurrency.json`
-   - No database connection needed to read limits
-   - Can update limits without code deployment
-   - Versioned structure from the start for easy evolution
+
+- Store job concurrency limits in S3: `s3://ffp-config-{env}/jobs/concurrency.json`
+- No database connection needed to read limits
+- Can update limits without code deployment
+- Versioned structure from the start for easy evolution
 
 **2. EventBridge Scheduled Lambda** (runs every 1 minute)
-   - Reads concurrency config from S3
-   - Checks current in-progress job counts per type
-   - Only triggers new jobs if under concurrency limit
-   - Prevents database overload from automated processes
+
+- Reads concurrency config from S3
+- Checks current in-progress job counts per type
+- Only triggers new jobs if under concurrency limit
+- Prevents database overload from automated processes
 
 **3. Configuration Evolution Path**
 
 **Phase 1 - Global Limits** (MVP - use this from the start):
+
 ```json
 {
   "version": "1.0.0",
@@ -607,6 +632,7 @@ To prevent overloading the database with automated jobs and impacting user exper
 ```
 
 **Phase 2 - Reserved Capacity** (when one tenant >30% of jobs):
+
 ```json
 {
   "version": "2.0.0",
@@ -628,6 +654,7 @@ To prevent overloading the database with automated jobs and impacting user exper
 ```
 
 **Phase 3 - Per-Tenant Quotas** (10K+ users, multiple large tenants):
+
 ```json
 {
   "version": "3.0.0",
@@ -660,12 +687,15 @@ To prevent overloading the database with automated jobs and impacting user exper
 ```
 
 **4. Job Processor Lambda Logic (Phase 1)**:
+
 ```typescript
 // 1. Read concurrency config from S3 (no DB needed)
-const configData = await s3.getObject({
-  Bucket: 'ffp-config-prod',
-  Key: 'jobs/concurrency.json'
-}).then(data => JSON.parse(data.Body.toString()));
+const configData = await s3
+  .getObject({
+    Bucket: 'ffp-config-prod',
+    Key: 'jobs/concurrency.json',
+  })
+  .then((data) => JSON.parse(data.Body.toString()));
 
 const { version, globalLimits } = configData;
 console.log(`Using concurrency config version: ${version}`);
@@ -685,19 +715,22 @@ for (const [jobType, globalLimit] of Object.entries(globalLimits)) {
 
   if (available > 0) {
     // Get pending jobs of this type
-    const pendingJobs = await db.query(`
+    const pendingJobs = await db.query(
+      `
       SELECT * FROM jobs
       WHERE type = ? AND status = 'pending'
       ORDER BY created_at ASC
       LIMIT ?
-    `, [jobType, available]);
+    `,
+      [jobType, available]
+    );
 
     // Trigger Lambda for each job
     for (const job of pendingJobs) {
       await lambda.invoke({
         FunctionName: `ffp-job-worker-${jobType}`,
         InvocationType: 'Event',
-        Payload: JSON.stringify({ jobId: job.id })
+        Payload: JSON.stringify({ jobId: job.id }),
       });
     }
   }
@@ -705,6 +738,7 @@ for (const [jobType, globalLimit] of Object.entries(globalLimits)) {
 ```
 
 **5. Job Processor Lambda Logic (Phase 2 - Reserved Capacity)**:
+
 ```typescript
 const { version, globalLimits, reservedCapacity = {} } = configData;
 
@@ -722,35 +756,37 @@ const inProgressCounts = await db.query(`
 for (const [jobType, globalLimit] of Object.entries(globalLimits)) {
   // Calculate available capacity
   const totalInProgress = inProgressCounts
-    .filter(c => c.type === jobType)
+    .filter((c) => c.type === jobType)
     .reduce((sum, c) => sum + c.count, 0);
-  
+
   let availableGlobal = globalLimit - totalInProgress;
 
   // Process reserved capacity tenants first
   for (const [tenantId, tenantLimits] of Object.entries(reservedCapacity)) {
     if (!tenantLimits[jobType]) continue;
 
-    const tenantInProgress = inProgressCounts
-      .find(c => c.type === jobType && c.tenant_id === tenantId)
-      ?.count || 0;
-    
+    const tenantInProgress =
+      inProgressCounts.find((c) => c.type === jobType && c.tenant_id === tenantId)?.count || 0;
+
     const tenantAvailable = tenantLimits[jobType] - tenantInProgress;
 
     if (tenantAvailable > 0) {
-      const pendingJobs = await db.query(`
+      const pendingJobs = await db.query(
+        `
         SELECT * FROM jobs
         WHERE type = ? AND tenant_id = ? AND status = 'pending'
         ORDER BY created_at ASC
         LIMIT ?
-      `, [jobType, tenantId, tenantAvailable]);
+      `,
+        [jobType, tenantId, tenantAvailable]
+      );
 
       // Trigger reserved capacity jobs
       for (const job of pendingJobs) {
         await lambda.invoke({
           FunctionName: `ffp-job-worker-${jobType}`,
           InvocationType: 'Event',
-          Payload: JSON.stringify({ jobId: job.id })
+          Payload: JSON.stringify({ jobId: job.id }),
         });
         availableGlobal--;
       }
@@ -760,20 +796,23 @@ for (const [jobType, globalLimit] of Object.entries(globalLimits)) {
   // Process remaining capacity for non-reserved tenants
   if (availableGlobal > 0) {
     const reservedTenantIds = Object.keys(reservedCapacity);
-    const pendingJobs = await db.query(`
+    const pendingJobs = await db.query(
+      `
       SELECT * FROM jobs
       WHERE type = ?
         AND status = 'pending'
         AND (tenant_id NOT IN (?) OR tenant_id IS NULL)
       ORDER BY created_at ASC
       LIMIT ?
-    `, [jobType, reservedTenantIds, availableGlobal]);
+    `,
+      [jobType, reservedTenantIds, availableGlobal]
+    );
 
     for (const job of pendingJobs) {
       await lambda.invoke({
         FunctionName: `ffp-job-worker-${jobType}`,
         InvocationType: 'Event',
-        Payload: JSON.stringify({ jobId: job.id })
+        Payload: JSON.stringify({ jobId: job.id }),
       });
     }
   }
@@ -781,29 +820,33 @@ for (const [jobType, globalLimit] of Object.entries(globalLimits)) {
 ```
 
 **6. Benefits**:
-   - Prevents database connection exhaustion
-   - Protects user-facing queries from slow background jobs
-   - Configurable per job type without code changes
-   - Easy to adjust limits based on system load
-   - No database hit to check limits (S3 only)
-   - Versioned config supports evolution without breaking changes
-   - Clear upgrade path from Phase 1 → 2 → 3
+
+- Prevents database connection exhaustion
+- Protects user-facing queries from slow background jobs
+- Configurable per job type without code changes
+- Easy to adjust limits based on system load
+- No database hit to check limits (S3 only)
+- Versioned config supports evolution without breaking changes
+- Clear upgrade path from Phase 1 → 2 → 3
 
 **7. Monitoring**:
-   - Track job queue depth per type
-   - Track job queue depth per tenant (Phase 2+)
-   - Alert if pending jobs exceed threshold
-   - CloudWatch metrics:
-     - `JobQueueDepth` by job type
-     - `JobConcurrency` by job type
-     - `JobQueueDepth` by tenant (Phase 2+)
-     - `ConfigVersion` - track which version is active
+
+- Track job queue depth per type
+- Track job queue depth per tenant (Phase 2+)
+- Alert if pending jobs exceed threshold
+- CloudWatch metrics:
+  - `JobQueueDepth` by job type
+  - `JobConcurrency` by job type
+  - `JobQueueDepth` by tenant (Phase 2+)
+  - `ConfigVersion` - track which version is active
 
 **8. When to Evolve**:
-   - **Phase 1 → Phase 2**: When one tenant represents >30% of total jobs OR large tenant onboarding (1000+ users)
-   - **Phase 2 → Phase 3**: When multiple large tenants (10K+ total users) OR need SLA guarantees per tenant
+
+- **Phase 1 → Phase 2**: When one tenant represents >30% of total jobs OR large tenant onboarding (1000+ users)
+- **Phase 2 → Phase 3**: When multiple large tenants (10K+ total users) OR need SLA guarantees per tenant
 
 **Notifications Table:**
+
 - Email/SMS/Push notification queue and log
 - Track delivery status and read receipts
 - Notification types:
@@ -815,6 +858,7 @@ for (const [jobType, globalLimit] of Object.entries(globalLimits)) {
   - `session_scheduled`: Upcoming session alerts
 
 **Example Queries:**
+
 ```sql
 -- Create program generation job
 INSERT INTO jobs (
@@ -841,7 +885,7 @@ FOR UPDATE SKIP LOCKED;
 
 -- Mark job as processing
 UPDATE jobs
-SET 
+SET
   status = 'processing',
   started_at = NOW(),
   updated_at = NOW()
@@ -850,7 +894,7 @@ RETURNING *;
 
 -- Complete job successfully
 UPDATE jobs
-SET 
+SET
   status = 'completed',
   result = ?::jsonb,
   completed_at = NOW(),
@@ -859,8 +903,8 @@ WHERE id = ?;
 
 -- Fail job with retry
 UPDATE jobs
-SET 
-  status = CASE 
+SET
+  status = CASE
     WHEN retry_count < max_retries THEN 'pending'
     ELSE 'failed'
   END,
@@ -898,7 +942,7 @@ LIMIT 20;
 
 -- Mark notification as read
 UPDATE notifications
-SET 
+SET
   status = 'read',
   read_at = NOW()
 WHERE id = ?
@@ -928,18 +972,21 @@ erDiagram
 ```
 
 **Indexes:**
+
 - `idx_support_articles_category` on support_articles(category)
 - `idx_support_articles_published` on support_articles(is_published) WHERE is_published = true
 - `idx_support_articles_tags` on support_articles USING GIN(tags)
 - `idx_support_articles_order` on support_articles(category, order)
 
 **RLS Policies:**
+
 ```sql
 -- No RLS on support_articles - public content
 -- All users can read, only system admins can write
 ```
 
 **Business Logic Notes:**
+
 - CMS for support documentation shown in business portal
 - Markdown or HTML content for rich formatting
 - Categorized for easy navigation
@@ -949,9 +996,10 @@ erDiagram
 - Categories: `getting-started`, `billing`, `users`, `programs`, `assessments`, `videos`, `troubleshooting`
 
 **Example Queries:**
+
 ```sql
 -- Get all published articles in a category
-SELECT 
+SELECT
   id, title, category, tags, view_count
 FROM support_articles
 WHERE is_published = true
@@ -977,7 +1025,7 @@ ORDER BY view_count DESC;
 
 -- Increment view count
 UPDATE support_articles
-SET 
+SET
   view_count = view_count + 1,
   updated_at = NOW()
 WHERE id = ?;
@@ -1008,6 +1056,7 @@ erDiagram
 ```
 
 **Indexes:**
+
 - `idx_audit_logs_tenant` on audit_logs(tenant_id)
 - `idx_audit_logs_user` on audit_logs(user_id)
 - `idx_audit_logs_action` on audit_logs(action)
@@ -1016,6 +1065,7 @@ erDiagram
 - `idx_audit_logs_severity` on audit_logs(severity) WHERE severity IN ('error', 'critical')
 
 **Partitioning Strategy (Phase 2+):**
+
 ```sql
 -- Partition by month for efficient archival and querying
 CREATE TABLE audit_logs_2025_01 PARTITION OF audit_logs
@@ -1023,6 +1073,7 @@ CREATE TABLE audit_logs_2025_01 PARTITION OF audit_logs
 ```
 
 **RLS Policies:**
+
 ```sql
 -- audit_logs table - system admins see all, business owners see their tenant
 CREATE POLICY audit_logs_system_admin ON audit_logs
@@ -1052,6 +1103,7 @@ CREATE POLICY audit_logs_business_owner ON audit_logs
 **Business Logic Notes:**
 
 **What to Audit:**
+
 1. **Authentication Events**
    - `auth.login` - Successful login
    - `auth.login_failed` - Failed login attempt
@@ -1096,12 +1148,14 @@ CREATE POLICY audit_logs_business_owner ON audit_logs
    - `consent.withdrawn` - User consent withdrawn
 
 **Severity Levels:**
+
 - `info`: Normal operations (login, view, etc.)
 - `warning`: Noteworthy events (failed login, access denied)
 - `error`: Errors that need investigation (system errors)
 - `critical`: Security incidents (multiple failed logins, unauthorized access attempts)
 
 **Metadata Examples:**
+
 ```typescript
 // Authentication
 metadata: {
@@ -1134,8 +1188,9 @@ metadata: {
 ```
 
 **Retention Policy:**
+
 - **Phase 1:** 90 days in hot storage (PostgreSQL)
-- **Phase 2+:** 
+- **Phase 2+:**
   - 90 days hot (PostgreSQL)
   - 1 year warm (S3 + Athena for queries)
   - 7 years cold (S3 Glacier for compliance)
@@ -1144,7 +1199,7 @@ metadata: {
 
 ```sql
 -- Get user's recent activity
-SELECT 
+SELECT
   action,
   resource_type,
   resource_id,
@@ -1157,7 +1212,7 @@ ORDER BY created_at DESC
 LIMIT 50;
 
 -- Security: Track failed login attempts
-SELECT 
+SELECT
   user_id,
   ip_address,
   COUNT(*) as attempt_count,
@@ -1170,7 +1225,7 @@ HAVING COUNT(*) >= 5
 ORDER BY attempt_count DESC;
 
 -- Audit: Who accessed a specific resource?
-SELECT 
+SELECT
   al.action,
   u.email,
   u.role,
@@ -1183,7 +1238,7 @@ WHERE al.resource_type = 'assessment'
 ORDER BY al.created_at DESC;
 
 -- Compliance: Data access report for a user
-SELECT 
+SELECT
   action,
   resource_type,
   resource_id,
@@ -1196,7 +1251,7 @@ WHERE user_id = ?
 ORDER BY created_at DESC;
 
 -- Security: Unauthorized access attempts
-SELECT 
+SELECT
   al.*,
   u.email,
   u.role
@@ -1208,7 +1263,7 @@ WHERE al.action = 'auth.access_denied'
 ORDER BY al.created_at DESC;
 
 -- Business Analytics: Most active users
-SELECT 
+SELECT
   u.email,
   u.first_name,
   u.last_name,
@@ -1224,7 +1279,7 @@ ORDER BY action_count DESC
 LIMIT 20;
 
 -- System Health: Error rate over time
-SELECT 
+SELECT
   DATE_TRUNC('hour', created_at) as hour,
   COUNT(*) FILTER (WHERE severity = 'error') as error_count,
   COUNT(*) FILTER (WHERE severity = 'critical') as critical_count,
@@ -1235,7 +1290,7 @@ GROUP BY hour
 ORDER BY hour DESC;
 
 -- Tenant activity summary
-SELECT 
+SELECT
   t.name as tenant_name,
   COUNT(DISTINCT al.user_id) as active_users,
   COUNT(*) as total_actions,
@@ -1263,9 +1318,10 @@ export async function logAudit({
   metadata = {},
   ipAddress,
   userAgent,
-  severity = 'info'
+  severity = 'info',
 }: AuditLogParams) {
-  await db.query(`
+  await db.query(
+    `
     INSERT INTO audit_logs (
       id, tenant_id, user_id, action, resource_type, resource_id,
       metadata, ip_address, user_agent, severity, created_at
@@ -1274,17 +1330,19 @@ export async function logAudit({
       gen_random_uuid(), ?, ?, ?, ?, ?,
       ?::jsonb, ?::inet, ?, ?, NOW()
     )
-  `, [
-    tenantId,
-    userId,
-    action,
-    resourceType,
-    resourceId,
-    JSON.stringify(metadata),
-    ipAddress,
-    userAgent,
-    severity
-  ]);
+  `,
+    [
+      tenantId,
+      userId,
+      action,
+      resourceType,
+      resourceId,
+      JSON.stringify(metadata),
+      ipAddress,
+      userAgent,
+      severity,
+    ]
+  );
 }
 
 // Usage in Lambda functions
@@ -1307,11 +1365,11 @@ export const handler = async (event) => {
       metadata: {
         templateId: assessment.template_id,
         score: assessment.score,
-        duration: assessment.completed_at - assessment.started_at
+        duration: assessment.completed_at - assessment.started_at,
       },
       ipAddress,
       userAgent,
-      severity: 'info'
+      severity: 'info',
     });
 
     return { statusCode: 200, body: JSON.stringify(assessment) };
@@ -1325,11 +1383,11 @@ export const handler = async (event) => {
       resourceId: id,
       metadata: {
         error: error.message,
-        stack: error.stack
+        stack: error.stack,
       },
       ipAddress,
       userAgent,
-      severity: 'error'
+      severity: 'error',
     });
 
     throw error;
@@ -1355,7 +1413,7 @@ export function withAuditLogging(handler, action, resourceType) {
         metadata: { duration: Date.now() - startTime },
         ipAddress: event.requestContext.identity.sourceIp,
         userAgent: event.requestContext.identity.userAgent,
-        severity: 'info'
+        severity: 'info',
       });
 
       return result;
@@ -1369,11 +1427,11 @@ export function withAuditLogging(handler, action, resourceType) {
         resourceId: event.pathParameters?.id,
         metadata: {
           error: error.message,
-          duration: Date.now() - startTime
+          duration: Date.now() - startTime,
         },
         ipAddress: event.requestContext.identity.sourceIp,
         userAgent: event.requestContext.identity.userAgent,
-        severity: 'error'
+        severity: 'error',
       });
 
       throw error;
@@ -1420,27 +1478,33 @@ export function withAuditLogging(handler, action, resourceType) {
 ## Breaking Changes (v1.0 → v2.0)
 
 ### 1. Programs ↔ Assessments Relationship (BREAKING)
+
 **Before:** `programs.assessment_id` → `user_assessments`
 **After:** `user_assessments.program_id` → `programs`
 
 **Migration Impact:**
+
 - Must migrate existing `programs.assessment_id` data
 - Create `user_assessments.program_id` column
 - Update application logic for assessment → program association
 
 ### 2. Programs: One Active Per User (BREAKING)
+
 **Before:** Multiple programs could be active
 **After:** Only ONE active program per user (`is_active` boolean)
 
 **Migration Impact:**
+
 - Add `is_active` column to programs
 - Add unique constraint: `UNIQUE(tenant_id, user_id, is_active) WHERE is_active = true`
 - Mark most recent program as active, others as archived
 
 ### 3. Session Scheduling (NEW FEATURE)
+
 **Added:** `scheduled_date`, `completed_date`, `status` to `program_sessions`
 
 **Migration Impact:**
+
 - Add new columns to program_sessions
 - Backfill scheduled_date for existing sessions
 - Default status to 'completed' for sessions with user_progress records

@@ -16,6 +16,7 @@
 ### Scope Clarification
 
 **Phase 1 (Sprint 1) - Current Scope:**
+
 - ✅ GitHub Actions workflow for automated testing
 - ✅ Run tests on every push/PR
 - ✅ Lint and type checking automation
@@ -23,6 +24,7 @@
 - ❌ **NOT** automated deployments (manual only)
 
 **Phase 2+ (Future) - Full CI/CD:**
+
 - Automated deployment to staging on `develop` merge
 - Automated deployment to production on `main` merge
 - Database migration automation
@@ -32,6 +34,7 @@
 ### Rationale
 
 This rescoping aligns FFP-13 with the documented Phase 1 strategy:
+
 - **deployment.md** explicitly states: "Phase 1 Deployment Strategy: Manual deployments with basic automated testing"
 - **Future Considerations** in deployment.md lists "CI/CD Pipeline" as deferred
 - Solo developer with 8-12 week MVP timeline benefits from learning deployment patterns manually first
@@ -42,6 +45,7 @@ This rescoping aligns FFP-13 with the documented Phase 1 strategy:
 ## Files Updated
 
 ### 1. deployment.md ✅
+
 - Changed from CircleCI to GitHub Actions
 - Added explicit "Version Control Platform: GitHub"
 - Added "Phase 1 Deployment Strategy" section
@@ -50,14 +54,17 @@ This rescoping aligns FFP-13 with the documented Phase 1 strategy:
 - Clarified manual deployment commands for Phase 1
 
 ### 2. custom-instructions.md ✅
+
 - Added "Version Control: GitHub (private repository)" to Tech Stack
 - Added "CI/CD: GitHub Actions (Phase 1: automated testing only, Phase 2+: full automation)"
 
 ### 3. README.md ✅
+
 - Added "Version Control: GitHub (private repository)" to Tech Stack Quick Ref
 - Added "CI/CD: GitHub Actions (Phase 1: testing only, Phase 2+: full automation)"
 
 ### 4. sprint-1-stories-summary.md ✅
+
 - Changed story title: "CI/CD Pipeline" → "Automated Testing Pipeline"
 - Updated dependency graph naming
 - Updated risk mitigation: "Start simple, iterate" → "Phase 1: Testing only, defer deployment automation"
@@ -65,6 +72,7 @@ This rescoping aligns FFP-13 with the documented Phase 1 strategy:
 - Updated CI/CD configuration risk contingency to reference Phase 1 strategy
 
 ### 5. sprint-1-stories-quick-ref.md ✅
+
 - Changed story title in table
 - Updated execution order description
 - Updated "Should Have" criteria: "CI/CD pipeline functional" → "Automated testing pipeline functional (Phase 1: testing only)"
@@ -78,21 +86,27 @@ This rescoping aligns FFP-13 with the documented Phase 1 strategy:
 ## What Stays the Same
 
 ### Story Points
+
 - **Still 5 points** - effort remains the same (setting up GitHub Actions workflow)
 
 ### Dependencies
+
 - Still depends on: FFP-7 (Turborepo), FFP-8 (SST), FFP-12 (Testing Framework)
 
 ### Testing Requirements
+
 - Still requires 2 unit tests
 - Still requires workflow execution integration test
 
 ### Priority
+
 - Still **High** priority
 - Still part of Sprint 1
 
 ### Acceptance Criteria
+
 The core acceptance criteria remain valid:
+
 - GitHub Actions workflow configured
 - Tests run on push/PR
 - Test results visible in GitHub
@@ -126,6 +140,7 @@ jobs:
 ```
 
 **Phase 2+ Implementation** (Future):
+
 ```yaml
 # .github/workflows/deploy-staging.yml
 # Full deployment automation (deferred)
@@ -152,12 +167,14 @@ npm run db:migrate --stage dev
 ## Benefits of This Approach
 
 ### For Solo Developer
+
 1. **Learn patterns first** - Manual deployments teach SST, AWS, Drizzle workflows
 2. **Faster initial setup** - Simple test workflow vs complex deployment automation
 3. **Flexibility** - Easy to adjust deployment process based on learnings
 4. **Lower risk** - Manual deployments less likely to break production accidentally
 
 ### For Project
+
 1. **Aligned with docs** - Matches documented Phase 1 strategy
 2. **Realistic timeline** - 8-12 week MVP stays achievable
 3. **Solid foundation** - Can add automation when it becomes painful (Phase 2)
@@ -168,6 +185,7 @@ npm run db:migrate --stage dev
 ## When to Revisit
 
 Add full CI/CD automation (Phase 2) when:
+
 - ✅ Sprint 1 complete (MVP foundation solid)
 - ✅ Manual deployments becoming tedious (multiple deploys per day)
 - ✅ More team members join (need consistency)
@@ -180,6 +198,7 @@ Add full CI/CD automation (Phase 2) when:
 ## Action Items
 
 ### Completed ✅
+
 - [x] Update deployment.md to clarify GitHub + Phase 1 strategy
 - [x] Update custom-instructions.md with GitHub
 - [x] Update README.md with GitHub
@@ -188,6 +207,7 @@ Add full CI/CD automation (Phase 2) when:
 - [x] Create this summary document
 
 ### Next Steps
+
 - [ ] Review Jira ticket FFP-13 and update title/description if needed
 - [ ] When starting FFP-13 work, create `.github/workflows/test.yml`
 - [ ] Document manual deployment commands in project README
