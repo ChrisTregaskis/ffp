@@ -17,12 +17,14 @@
     "test": "turbo test",
     "typecheck": "turbo typecheck",
     "clean": "turbo clean && rm -rf node_modules",
-    "preinstall": "npx only-allow pnpm"
+    "preinstall": "npx only-allow pnpm",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@ffp/eslint-config": "workspace:*",
     "@ffp/prettier-config": "workspace:*",
     "eslint": "^8.57.1",
+    "husky": "^9.1.7",
     "only-allow": "^1.2.1",
     "prettier": "^3.3.3",
     "turbo": "^2.1.3"
