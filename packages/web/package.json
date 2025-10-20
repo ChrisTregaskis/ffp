@@ -11,9 +11,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ffp/core": "workspace:*",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "@ffp/core": "workspace:*"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",
