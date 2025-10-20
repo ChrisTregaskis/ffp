@@ -39,61 +39,52 @@ Create **8-10 User Stories directly in Jira** for Sprint 1 (FFP-1: Application S
 **Stories to Create** (~8-10 stories):
 
 1. **Turborepo Monorepo Setup** (3 points)
-
    - Setup Turborepo with packages: web, api, core, database
    - Configure build caching and workspace dependencies
    - Setup TypeScript paths and shared configs
 
 2. **SST Infrastructure Foundation** (5 points)
-
    - Create SST stacks: AuthStack, DatabaseStack, ApiStack, MonitoringStack
    - Configure AWS resources in sst.config.ts
    - Setup environment variables and secrets
 
 3. **Cognito Authentication** (8 points)
-
    - Configure Cognito User Pool with custom attributes
    - Implement registration endpoint (SignUpCommand)
    - Implement login endpoint (InitiateAuthCommand)
    - Setup JWT authorizers on API Gateway
 
 4. **PostgreSQL Schema with RLS** (8 points)
-
    - Create tenants and users tables
    - Implement Row-Level Security policies
    - Setup RLS context per request
    - Create integration tests for tenant isolation
 
 5. **Drizzle ORM Setup** (5 points)
-
    - Configure Drizzle with PostgreSQL
    - Create type-safe schema definitions
    - Setup migration system
    - Implement database connection pooling
 
 6. **Testing Framework** (5 points)
-
    - Configure Vitest for unit tests
    - Setup Playwright for E2E tests
    - Configure MSW for API mocking
    - Create test helpers and utilities
 
 7. **CI/CD Pipeline** (5 points)
-
    - Setup GitHub Actions workflows
    - Configure dev/staging/prod environments
    - Implement automated testing in CI
    - Setup deployment to AWS via SST
 
 8. **CloudWatch Logging** (3 points)
-
    - Implement structured JSON logging
    - Configure log groups and retention
    - Setup correlation IDs for requests
    - Create logging utilities and patterns
 
 9. **Error Handling Patterns** (3 points)
-
    - Create custom error classes
    - Implement error handling middleware
    - Setup error logging with context

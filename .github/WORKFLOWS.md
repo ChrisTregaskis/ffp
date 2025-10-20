@@ -194,7 +194,6 @@ gh run view <run-id> --log
    ```
 
 2. **Let auto-PR create draft**:
-
    - Review generated PR
    - Update description with actual changes
    - Mark as "Ready for review"

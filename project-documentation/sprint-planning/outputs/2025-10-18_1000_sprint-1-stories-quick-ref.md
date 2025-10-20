@@ -70,12 +70,12 @@
 
 ## Risk Mitigation
 
-| Risk                      | Story  | Mitigation                                               | Contingency                                               |
-| ------------------------- | ------ | -------------------------------------------------------- | --------------------------------------------------------- |
-| Cross-tenant data leakage | FFP-10 | Comprehensive integration tests                          | Manual security audit                                     |
-| JWT missing custom claims | FFP-9  | Early testing with jwt.io                                | Database lookup fallback                                  |
-| CI/CD complexity          | FFP-13 | Phase 1: Testing only, defer deployment automation       | Manual deployments OK for Sprint 1 (documented strategy)  |
-| Solo dev capacity         | All    | 8-10 week buffer                                         | Defer FFP-13, FFP-14 if needed                            |
+| Risk                      | Story  | Mitigation                                         | Contingency                                              |
+| ------------------------- | ------ | -------------------------------------------------- | -------------------------------------------------------- |
+| Cross-tenant data leakage | FFP-10 | Comprehensive integration tests                    | Manual security audit                                    |
+| JWT missing custom claims | FFP-9  | Early testing with jwt.io                          | Database lookup fallback                                 |
+| CI/CD complexity          | FFP-13 | Phase 1: Testing only, defer deployment automation | Manual deployments OK for Sprint 1 (documented strategy) |
+| Solo dev capacity         | All    | 8-10 week buffer                                   | Defer FFP-13, FFP-14 if needed                           |
 
 ---
 

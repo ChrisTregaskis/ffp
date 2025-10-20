@@ -88,24 +88,20 @@ Before creating subtasks, provide:
 Break down stories into these categories:
 
 1. **Setup/Configuration** (0.5-1h each)
-
    - Initialize tools, install dependencies
    - Configure files (tsconfig, eslint, etc)
 
 2. **Implementation** (2-4h each)
-
    - Core feature development
    - API endpoints, UI components
    - Business logic
 
 3. **Testing** (1-2h each)
-
    - Unit tests
    - Integration tests
    - E2E tests
 
 4. **Documentation** (0.5-1h each)
-
    - Update README
    - Add code comments
    - Update architecture docs
@@ -158,13 +154,11 @@ Break down stories into these categories:
 **Subtasks** (7 tasks, ~3 points = 24 hours):
 
 1. **Initialize Turborepo** (1h)
-
    - Install turbo package
    - Create turbo.json configuration
    - Verify turbo CLI works
 
 2. **Setup Workspace Structure** (2h)
-
    - Create packages/ directory
    - Initialize web/ package (Vite + React)
    - Initialize api/ package
@@ -172,25 +166,21 @@ Break down stories into these categories:
    - Initialize database/ package
 
 3. **Configure Package Dependencies** (1h)
-
    - Setup workspace in root package.json
    - Configure package.json for each workspace
    - Install shared dependencies
 
 4. **Configure TypeScript Paths** (2h)
-
    - Create tsconfig.json for each package
    - Setup path aliases (@ffp/core, etc)
    - Verify imports resolve correctly
 
 5. **Configure Build Pipeline** (2h)
-
    - Add build scripts to each package
    - Configure turbo pipeline in turbo.json
    - Test build caching works
 
 6. **Write Tests** (2h)
-
    - Test workspace dependency resolution
    - Test build cache functionality
    - Test TypeScript path resolution
@@ -211,57 +201,48 @@ Break down stories into these categories:
 **Subtasks** (10 tasks, ~8 points = 64 hours):
 
 1. **Create Cognito User Pool** (2h)
-
    - Configure User Pool in AuthStack
    - Setup custom attributes (tenantId, role)
    - Configure password policy
 
 2. **Implement Registration Lambda** (4h)
-
    - Create Lambda function handler
    - Implement SignUpCommand
    - Generate unique tenantId
    - Set custom attributes
 
 3. **Implement Login Lambda** (2h)
-
    - Create Lambda function handler
    - Implement InitiateAuthCommand
    - Return JWT with claims
 
 4. **Configure API Gateway Authorizer** (2h)
-
    - Setup JWT authorizer
    - Configure allowed origins
    - Test authorization flow
 
 5. **Create Zod Validation Schemas** (2h)
-
    - Define RegisterSchema
    - Define LoginSchema
    - Add validation tests
 
 6. **Implement Database User Creation** (2h)
-
    - Create user record on registration
    - Create tenant record
    - Handle transaction rollback
 
 7. **Write Unit Tests** (4h)
-
    - Test registration logic
    - Test login logic
    - Test validation schemas
    - Test error handling
 
 8. **Write Integration Tests** (4h)
-
    - Test Cognito user creation
    - Test database record creation
    - Test multi-tenant tenantId uniqueness
 
 9. **Create Frontend Forms** (4h)
-
    - Registration form with react-hook-form
    - Login form
    - Error handling and display

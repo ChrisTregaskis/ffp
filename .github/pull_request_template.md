@@ -5,6 +5,7 @@
 ## Related Ticket
 
 <!-- Link to Jira ticket -->
+
 **Jira:** [FFP-XX](https://ctregaskis.atlassian.net/browse/FFP-XX)
 
 ## Type of Change
@@ -23,9 +24,9 @@
 
 <!-- Detailed list of changes -->
 
-- 
-- 
-- 
+-
+-
+-
 
 ## Testing
 

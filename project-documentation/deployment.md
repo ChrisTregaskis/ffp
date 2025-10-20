@@ -62,25 +62,25 @@ npm run sst remove --stage dev
 
 ```typescript
 // sst.config.ts
-import { SSTConfig } from "sst";
-import { AuthStack } from "./stacks/AuthStack";
-import { DatabaseStack } from "./stacks/DatabaseStack";
-import { StorageStack } from "./stacks/StorageStack";
-import { ApiStack } from "./stacks/ApiStack";
-import { MonitoringStack } from "./stacks/MonitoringStack";
+import { SSTConfig } from 'sst';
+import { AuthStack } from './stacks/AuthStack';
+import { DatabaseStack } from './stacks/DatabaseStack';
+import { StorageStack } from './stacks/StorageStack';
+import { ApiStack } from './stacks/ApiStack';
+import { MonitoringStack } from './stacks/MonitoringStack';
 
 export default {
   config(_input) {
     return {
-      name: "ffp",
-      region: "us-east-1",
+      name: 'ffp',
+      region: 'us-east-1',
     };
   },
   stacks(app) {
     // Set stage-specific configuration
     app.setDefaultFunctionProps({
-      runtime: "nodejs18.x",
-      timeout: "30 seconds",
+      runtime: 'nodejs18.x',
+      timeout: '30 seconds',
       environment: {
         STAGE: app.stage,
       },
@@ -103,19 +103,19 @@ SST automatically injects resource references:
 
 ```typescript
 // stacks/ApiStack.ts
-const api = new Api(stack, "Api", {
+const api = new Api(stack, 'Api', {
   defaults: {
     function: {
       bind: [auth, videosBucket, sessionsTable],
     },
   },
   routes: {
-    "GET /assessments": "functions/assessments/list.handler",
+    'GET /assessments': 'functions/assessments/list.handler',
   },
 });
 
 // In Lambda function
-import { Resource } from "sst";
+import { Resource } from 'sst';
 
 export const handler = async (event) => {
   const bucketName = Resource.Videos.name; // Type-safe!
@@ -248,22 +248,22 @@ npm run db:studio
 
 ```typescript
 // stacks/FrontendStack.ts
-import { Bucket } from "sst/constructs";
-import * as s3 from "aws-cdk-lib/aws-s3";
+import { Bucket } from 'sst/constructs';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 
 export function FrontendStack({ stack }: StackContext) {
-  const websiteBucket = new Bucket(stack, "Website", {
+  const websiteBucket = new Bucket(stack, 'Website', {
     cdk: {
       bucket: {
-        websiteIndexDocument: "index.html",
-        websiteErrorDocument: "index.html", // SPA routing
+        websiteIndexDocument: 'index.html',
+        websiteErrorDocument: 'index.html', // SPA routing
         publicReadAccess: false,
         blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       },
     },
   });
 
-  const distribution = new Distribution(stack, "CDN", {
+  const distribution = new Distribution(stack, 'CDN', {
     defaultBehavior: {
       origin: new S3Origin(websiteBucket.bucket, {
         originAccessIdentity: oai,
@@ -275,7 +275,7 @@ export function FrontendStack({ stack }: StackContext) {
       {
         httpStatus: 404,
         responseHttpStatus: 200,
-        responsePagePath: "/index.html",
+        responsePagePath: '/index.html',
         ttl: Duration.minutes(5),
       },
     ],
@@ -306,7 +306,6 @@ jobs:
       - run: npm ci
       - run: npm run test
       - run: npm run lint
-
 ```
 
 ### GitHub Actions Configuration (Future - Phase 2+ Full CI/CD)
@@ -485,6 +484,7 @@ npm run sst deploy --stage prod
 Drizzle doesn't have built-in rollback commands. You have two options:
 
 **Option 1: Manual rollback SQL**
+
 ```bash
 # Review the migration you want to rollback
 cat migrations/0005_problematic_migration.sql
@@ -497,6 +497,7 @@ npm run db:migrate
 ```
 
 **Option 2: Restore from backup**
+
 ```bash
 # Restore from RDS snapshot
 aws rds restore-db-instance-from-db-snapshot \
@@ -510,6 +511,7 @@ aws rds restore-db-instance-from-db-snapshot \
 ### Frontend Rollback (S3 + CloudFront)
 
 **Option 1: Redeploy previous version**
+
 ```bash
 # Find previous successful git commit
 git log --oneline
@@ -527,6 +529,7 @@ git checkout main
 ```
 
 **Option 2: Revert commit and trigger CircleCI**
+
 ```bash
 git revert HEAD
 git push origin main
@@ -534,6 +537,7 @@ git push origin main
 ```
 
 **Option 3: S3 versioning (if enabled)**
+
 ```bash
 # List previous versions
 aws s3api list-object-versions --bucket ffp-prod-website
@@ -570,24 +574,17 @@ aws secretsmanager create-secret \
 ### Access in Lambda
 
 ```typescript
-import {
-  SecretsManagerClient,
-  GetSecretValueCommand,
-} from "@aws-sdk/client-secrets-manager";
+import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 
-const client = new SecretsManagerClient({ region: "us-east-1" });
+const client = new SecretsManagerClient({ region: 'us-east-1' });
 
 export async function getSecret(secretName: string) {
-  const response = await client.send(
-    new GetSecretValueCommand({ SecretId: secretName })
-  );
+  const response = await client.send(new GetSecretValueCommand({ SecretId: secretName }));
   return JSON.parse(response.SecretString!);
 }
 
 // Usage
-const dbCredentials = await getSecret(
-  `ffp/${process.env.STAGE}/db-credentials`
-);
+const dbCredentials = await getSecret(`ffp/${process.env.STAGE}/db-credentials`);
 ```
 
 ### Rotation Policy
@@ -644,22 +641,21 @@ For MVP/Phase 1, we implement **automated testing only** - deployments remain ma
 
 1. **Create `.github/workflows/test.yml`**
    ```yaml
-name: Test
+   name: Test
+   ```
 
 on: [push, pull_request]
-   
-   jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-  - uses: actions/setup-node@v3
+
+jobs:
+test:
+runs-on: ubuntu-latest
+steps: - uses: actions/checkout@v3
+
+- uses: actions/setup-node@v3
   with:
-node-version: '18'
-      - run: npm ci
-         - run: npm run test
-         - run: npm run lint
-```
+  node-version: '18' - run: npm ci - run: npm run test - run: npm run lint
+
+````
 
 2. **Configure Repository Secrets**
    - Navigate to Settings → Secrets and variables → Actions
@@ -668,9 +664,10 @@ node-version: '18'
 3. **Setup Status Badge**
    ```markdown
    ![Tests](https://github.com/your-org/ffp/actions/workflows/test.yml/badge.svg)
-   ```
+````
 
 **Why Manual Deployments for Phase 1:**
+
 - Solo developer, 8-12 week MVP timeline
 - Learn SST deployment patterns hands-on first
 - Add automation when deployment frequency becomes painful (Phase 2)
@@ -679,6 +676,7 @@ node-version: '18'
 ### Phase 2+: Full Automated Deployment
 
 **Future enhancements** (see example workflows above):
+
 - Automated staging deployments on `develop` branch merge
 - Automated production deployments on `main` branch merge
 - Database migration automation

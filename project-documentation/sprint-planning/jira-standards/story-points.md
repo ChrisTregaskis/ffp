@@ -28,19 +28,16 @@ FFP uses Fibonacci (1, 2, 3, 5, 8, 13) for estimation because:
 Consider:
 
 1. **Technical Complexity**
-
    - Simple CRUD vs complex business logic
    - Existing patterns vs new patterns
    - Integration points
 
 2. **Unknowns & Research**
-
    - Well-understood vs exploratory
    - Familiar tech vs new tech
    - Documentation quality
 
 3. **Testing Requirements**
-
    - Unit tests only vs integration + E2E
    - Simple vs complex edge cases
    - Multi-tenant isolation tests

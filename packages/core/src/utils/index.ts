@@ -1,3 +1,3 @@
-import { testPathAliases } from "./pathAliasTest";
+import { testPathAliases } from './pathAliasTest';
 
 export { testPathAliases };

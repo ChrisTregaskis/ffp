@@ -157,25 +157,21 @@ FFP-7 (Foundation)
 All stories must adhere to these security principles:
 
 1. **Multi-Tenant Isolation** (FFP-10)
-
    - RLS policies on all tenant-scoped tables
    - Integration tests to verify cross-tenant access blocked
    - JWT claims validated in every Lambda function
 
 2. **Authentication Security** (FFP-9)
-
    - Cognito password policy: min 8 chars, mixed case, digits, symbols
    - JWT short-lived: 15 min access, 7 day refresh
    - Custom attributes: tenantId (immutable), role (mutable)
 
 3. **Input Validation** (All API stories)
-
    - Zod schemas on all endpoints
    - SQL injection prevention (parameterised queries)
    - XSS prevention (React auto-escaping)
 
 4. **Secrets Management** (FFP-8)
-
    - AWS Secrets Manager for all credentials
    - Never commit secrets to Git
    - Environment-specific secrets (dev/staging/prod)
@@ -275,13 +271,11 @@ For Sprint 1 to be considered complete, all stories must meet these criteria:
 ### High Risk Items
 
 1. **Database RLS Testing** (FFP-10)
-
    - **Risk**: Cross-tenant data leakage
    - **Mitigation**: Integration tests MUST be comprehensive
    - **Contingency**: Thorough manual testing before any production use
 
 2. **Solo Developer Capacity** (All Stories)
-
    - **Risk**: 8 hours/week may be optimistic with job + family
    - **Mitigation**: 8-10 week timeline includes buffer
    - **Contingency**: Reduce scope if needed (defer FFP-13, FFP-14)
@@ -294,7 +288,6 @@ For Sprint 1 to be considered complete, all stories must meet these criteria:
 ### Medium Risk Items
 
 1. **Drizzle ORM Learning Curve** (FFP-11)
-
    - **Risk**: New tool, may take longer than estimated
    - **Mitigation**: Excellent documentation available
    - **Contingency**: Extra 1-2 weeks if needed
@@ -318,25 +311,21 @@ For Sprint 1 to be considered complete, all stories must meet these criteria:
 Sprint 1 will be considered successful when:
 
 1. **Infrastructure Deployed**
-
    - All AWS resources created via SST
    - Dev environment fully functional
    - Can deploy with single command
 
 2. **Authentication Working**
-
    - Users can register and log in
    - JWT contains tenant context
    - Protected routes enforce authentication
 
 3. **Database Secure**
-
    - RLS policies prevent cross-tenant access
    - Integration tests verify isolation
    - Migrations run successfully
 
 4. **Testing Established**
-
    - CI pipeline runs automated tests on every PR (Phase 1)
    - Critical paths have test coverage
    - E2E test for login flow passes
@@ -399,18 +388,15 @@ All stories tagged with:
 ### Time Management Tips
 
 1. **Work in Focused Blocks**
-
    - 2-hour sessions preferred over 8-hour marathons
    - 4 sessions per week = 8 hours
 
 2. **Prioritise Critical Path**
-
    - Start with FFP-7 (foundation)
    - Then FFP-8 (infrastructure)
    - FFP-9 + FFP-10 are highest priority
 
 3. **Parallelize When Possible**
-
    - Testing framework can be set up anytime after FFP-7
    - Logging and error handling don't block other work
 

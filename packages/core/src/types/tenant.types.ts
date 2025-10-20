@@ -1,4 +1,4 @@
-import { TenantStatusType, TenantTypeType } from "../lib";
+import { type TenantStatusType, type TenantTypeType } from '../lib';
 
 export interface Tenant {
   id: string;
@@ -11,5 +11,5 @@ export interface Tenant {
   updatedAt: Date;
 }
 
-export type TenantType = Tenant["type"];
-export type TenantStatus = Tenant["status"];
+export type TenantType = Tenant['type'];
+export type TenantStatus = Tenant['status'];

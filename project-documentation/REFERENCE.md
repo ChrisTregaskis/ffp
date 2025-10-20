@@ -180,7 +180,6 @@ ffp/
   - RLS policies
   - Authentication/JWT parsing
 - **Should Test** (80%):
-
   - Input validation (Zod schemas)
   - Assessment scoring algorithms
   - Repository CRUD operations

@@ -449,31 +449,26 @@ Then User A should only see their own tenant's data (verified by integration tes
 **Fibonacci Scale**: 1, 2, 3, 5, 8, 13
 
 - **1 point**: Trivial (1-2 hours)
-
   - Update text, fix typo
   - Add simple validation rule
   - Update documentation
 
 - **2 points**: Simple (3-4 hours)
-
   - New API endpoint with basic CRUD
   - Simple React component
   - Basic Zod schema
 
 - **3 points**: Moderate (5-8 hours)
-
   - API endpoint with business logic
   - Component with state management
   - Database migration with RLS policy
 
 - **5 points**: Complex (1-2 days)
-
   - Multiple API endpoints with service layer
   - Complex component with multiple states
   - Integration with external service
 
 - **8 points**: Very Complex (2-3 days)
-
   - Feature requiring frontend + backend + database
   - Complex business logic with multiple edge cases
   - Significant refactoring
@@ -1063,20 +1058,20 @@ Define a Zod schema to validate user registration request payloads, ensuring ema
 File: `packages/core/src/schemas/auth.schema.ts`
 
 ```typescript
-import { z } from "zod";
+import { z } from 'zod';
 
 export const RegisterRequestSchema = z.object({
-  email: z.string().email("Invalid email format"),
+  email: z.string().email('Invalid email format'),
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain an uppercase letter")
-    .regex(/[a-z]/, "Password must contain a lowercase letter")
-    .regex(/[0-9]/, "Password must contain a digit")
-    .regex(/[^A-Za-z0-9]/, "Password must contain a special character"),
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  accountType: z.enum(["individual", "business"]),
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain an uppercase letter')
+    .regex(/[a-z]/, 'Password must contain a lowercase letter')
+    .regex(/[0-9]/, 'Password must contain a digit')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain a special character'),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  accountType: z.enum(['individual', 'business']),
 });
 
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;

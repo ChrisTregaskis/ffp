@@ -1,0 +1,27 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+dist
+build
+.next
+.turbo
+coverage
+
+# Logs
+*.log
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Temporary files
+*.tmp
+.cache

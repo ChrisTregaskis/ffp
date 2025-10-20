@@ -48,17 +48,17 @@
 
 ```typescript
 // Workspace imports (cross-package)
-import { APP_NAME } from "@ffp/core";
+import { APP_NAME } from '@ffp/core';
 
 // Core package internal
-import type { User } from "@core/types/user.types";
-import { APP_NAME } from "@core/lib/constants";
+import type { User } from '@core/types/user.types';
+import { APP_NAME } from '@core/lib/constants';
 
 // Functions package internal
-import { handler } from "@functions/auth/login";
+import { handler } from '@functions/auth/login';
 
 // Web package internal
-import { PathAliasTest } from "@web/components/PathAliasTest";
+import { PathAliasTest } from '@web/components/PathAliasTest';
 ```
 
 **Configuration Strategy:**

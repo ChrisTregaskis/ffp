@@ -23,8 +23,21 @@
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "vite.config.ts",
+    "vite-alias-config.ts",
+    ".eslintrc.cjs",
+    "postcss.config.js",
+    "tailwind.config.js"
+  ],
   "references": [
+    {
+      "path": "./tsconfig.node.json"
+    },
     {
       "path": "../core"
     }

@@ -55,7 +55,6 @@ sprint-planning/
 - **Project Key**: `FFP`
 - **Cloud ID**: `46fa81a7-bfe9-41ca-90f8-b11f80b8c2bf`
 - **Issue Types Available**:
-
   - Epic (10011)
   - Story (10010)
   - Task (10008)

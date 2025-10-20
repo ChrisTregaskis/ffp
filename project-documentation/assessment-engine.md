@@ -19,11 +19,11 @@ The assessment engine is the core value proposition of FFP. It uses dynamic JSON
 
 ```typescript
 // types/assessment.schema.ts
-import { z } from "zod";
+import { z } from 'zod';
 
 export const AssessmentQuestionSchema = z.object({
   id: z.string(),
-  type: z.enum(["single-choice", "multi-choice", "numeric", "text", "scale"]),
+  type: z.enum(['single-choice', 'multi-choice', 'numeric', 'text', 'scale']),
   question: z.string().min(1),
   description: z.string().optional(),
   options: z
@@ -48,7 +48,7 @@ export const AssessmentQuestionSchema = z.object({
     .array(
       z.object({
         condition: z.string(), // JSONPath or simple expression
-        action: z.enum(["show", "hide", "require", "skip"]),
+        action: z.enum(['show', 'hide', 'require', 'skip']),
         targetQuestionIds: z.array(z.string()),
       })
     )
@@ -63,7 +63,7 @@ export const AssessmentTemplateSchema = z.object({
   description: z.string().optional(),
   questions: z.array(AssessmentQuestionSchema),
   scoringConfig: z.object({
-    strategy: z.enum(["weighted", "categorical", "rule-based"]),
+    strategy: z.enum(['weighted', 'categorical', 'rule-based']),
     weights: z.record(z.number()).optional(),
     categories: z
       .array(
@@ -212,11 +212,7 @@ export type AssessmentTemplate = z.infer<typeof AssessmentTemplateSchema>;
 // services/assessment.service.ts
 export interface AssessmentService {
   getTemplate(templateId: string): Promise<AssessmentTemplate>;
-  startAssessment(
-    userId: string,
-    tenantId: string,
-    templateId: string
-  ): Promise<UserAssessment>;
+  startAssessment(userId: string, tenantId: string, templateId: string): Promise<UserAssessment>;
   saveProgress(
     assessmentId: string,
     answers: Record<string, any>,
@@ -227,10 +223,7 @@ export interface AssessmentService {
     answers: Record<string, any>,
     context: TenantContext
   ): Promise<AssessmentResult>;
-  getAssessmentHistory(
-    userId: string,
-    context: TenantContext
-  ): Promise<UserAssessment[]>;
+  getAssessmentHistory(userId: string, context: TenantContext): Promise<UserAssessment[]>;
 }
 ```
 
@@ -253,7 +246,7 @@ export class AssessmentServiceImpl implements AssessmentService {
     // Validate template exists
     const template = await this.templateRepo.getById(templateId);
     if (!template || !template.is_active) {
-      throw new NotFoundError("Assessment template");
+      throw new NotFoundError('Assessment template');
     }
 
     // Create new assessment
@@ -261,7 +254,7 @@ export class AssessmentServiceImpl implements AssessmentService {
       tenant_id: tenantId,
       user_id: userId,
       template_id: templateId,
-      status: "in_progress",
+      status: 'in_progress',
       answers: {},
       started_at: new Date(),
     });
@@ -312,7 +305,7 @@ export class AssessmentServiceImpl implements AssessmentService {
       {
         answers,
         score,
-        status: "completed",
+        status: 'completed',
         completed_at: new Date(),
       },
       context
@@ -334,60 +327,42 @@ export class AssessmentServiceImpl implements AssessmentService {
     };
   }
 
-  private validateAnswers(
-    answers: Record<string, any>,
-    template: AssessmentTemplate
-  ): void {
+  private validateAnswers(answers: Record<string, any>, template: AssessmentTemplate): void {
     for (const [questionId, answer] of Object.entries(answers)) {
       const question = template.questions.find((q) => q.id === questionId);
       if (!question) continue;
 
       // Validate based on question type
       switch (question.type) {
-        case "numeric":
-        case "scale":
-          if (
-            question.validation?.min !== undefined &&
-            answer < question.validation.min
-          ) {
+        case 'numeric':
+        case 'scale':
+          if (question.validation?.min !== undefined && answer < question.validation.min) {
             throw new ValidationError(`Answer for ${questionId} below minimum`);
           }
-          if (
-            question.validation?.max !== undefined &&
-            answer > question.validation.max
-          ) {
+          if (question.validation?.max !== undefined && answer > question.validation.max) {
             throw new ValidationError(`Answer for ${questionId} above maximum`);
           }
           break;
-        case "single-choice":
+        case 'single-choice':
           if (!question.options?.find((o) => o.value === answer)) {
             throw new ValidationError(`Invalid option for ${questionId}`);
           }
           break;
-        case "multi-choice":
+        case 'multi-choice':
           if (!Array.isArray(answer)) {
-            throw new ValidationError(
-              `Multi-choice answer must be array for ${questionId}`
-            );
+            throw new ValidationError(`Multi-choice answer must be array for ${questionId}`);
           }
           break;
       }
     }
   }
 
-  private validateCompleteness(
-    answers: Record<string, any>,
-    template: AssessmentTemplate
-  ): void {
-    const requiredQuestions = template.questions.filter(
-      (q) => q.validation?.required
-    );
+  private validateCompleteness(answers: Record<string, any>, template: AssessmentTemplate): void {
+    const requiredQuestions = template.questions.filter((q) => q.validation?.required);
 
     for (const question of requiredQuestions) {
       if (!(question.id in answers)) {
-        throw new ValidationError(
-          `Required question ${question.id} not answered`
-        );
+        throw new ValidationError(`Required question ${question.id} not answered`);
       }
     }
   }
@@ -401,10 +376,7 @@ export class AssessmentServiceImpl implements AssessmentService {
 ```typescript
 // services/scoring-engine.ts
 export interface ScoringStrategy {
-  calculate(
-    answers: Record<string, any>,
-    template: AssessmentTemplate
-  ): Promise<AssessmentScore>;
+  calculate(answers: Record<string, any>, template: AssessmentTemplate): Promise<AssessmentScore>;
 }
 
 // Weighted scoring (sum of weighted answers)
@@ -420,17 +392,17 @@ export class WeightedScoringStrategy implements ScoringStrategy {
       const question = template.questions.find((q) => q.id === questionId);
       const weight = weights[questionId] || 1;
 
-      if (question?.type === "single-choice") {
+      if (question?.type === 'single-choice') {
         const option = question.options?.find((o) => o.value === answer);
         totalScore += (option?.score || 0) * weight;
-      } else if (typeof answer === "number") {
+      } else if (typeof answer === 'number') {
         totalScore += answer * weight;
       }
     }
 
     return {
       totalScore,
-      strategy: "weighted",
+      strategy: 'weighted',
       breakdown: {},
     };
   }
@@ -455,7 +427,7 @@ export class CategoricalScoringStrategy implements ScoringStrategy {
       totalScore,
       category: category?.name,
       programRecommendation: category?.programRecommendation,
-      strategy: "categorical",
+      strategy: 'categorical',
     };
   }
 }
@@ -486,27 +458,21 @@ export class RuleBasedScoringStrategy implements ScoringStrategy {
       totalScore: 0,
       rules: applicableRules.map((r) => r.action),
       primaryAction: primaryRule?.action,
-      strategy: "rule-based",
+      strategy: 'rule-based',
     };
   }
 
-  private evaluateCondition(
-    condition: string,
-    answers: Record<string, any>
-  ): boolean {
+  private evaluateCondition(condition: string, answers: Record<string, any>): boolean {
     // Simple expression evaluation (e.g., "q1 == 'reduce_pain' && q2 > 5")
     // In production, use a proper expression evaluator like mathjs
-    const func = new Function(
-      "answers",
-      `return ${this.transformCondition(condition)}`
-    );
+    const func = new Function('answers', `return ${this.transformCondition(condition)}`);
     return func(answers);
   }
 
   private transformCondition(condition: string): string {
     // Transform "q1 == 'value'" to "answers['q1'] == 'value'"
     return condition.replace(/([a-zA-Z0-9_]+)/g, (match) => {
-      if (["true", "false", "null", "undefined"].includes(match)) return match;
+      if (['true', 'false', 'null', 'undefined'].includes(match)) return match;
       return `answers['${match}']`;
     });
   }
@@ -524,11 +490,11 @@ export class ScoringEngine {
 
   private getStrategy(strategyType: string): ScoringStrategy {
     switch (strategyType) {
-      case "weighted":
+      case 'weighted':
         return new WeightedScoringStrategy();
-      case "categorical":
+      case 'categorical':
         return new CategoricalScoringStrategy();
-      case "rule-based":
+      case 'rule-based':
         return new RuleBasedScoringStrategy();
       default:
         throw new Error(`Unknown scoring strategy: ${strategyType}`);
@@ -555,8 +521,7 @@ export class ProgramGenerator {
     template: AssessmentTemplate
   ): Promise<Program> {
     // Determine program parameters based on score
-    const { duration, difficulty, focusAreas, equipment } =
-      this.determineProgramParams(score);
+    const { duration, difficulty, focusAreas, equipment } = this.determineProgramParams(score);
 
     // Create program
     const program = await this.programRepo.create({
@@ -570,11 +535,7 @@ export class ProgramGenerator {
     });
 
     // Select appropriate exercises
-    const exercises = await this.selectExercises(
-      focusAreas,
-      difficulty,
-      equipment
-    );
+    const exercises = await this.selectExercises(focusAreas, difficulty, equipment);
 
     // Create sessions (e.g., 3 sessions per week for duration)
     const sessionsPerWeek = 3;
@@ -585,19 +546,13 @@ export class ProgramGenerator {
         tenant_id: tenantId,
         program_id: program.id,
         session_number: i + 1,
-        name: `Week ${Math.floor(i / sessionsPerWeek) + 1}, Session ${
-          (i % sessionsPerWeek) + 1
-        }`,
+        name: `Week ${Math.floor(i / sessionsPerWeek) + 1}, Session ${(i % sessionsPerWeek) + 1}`,
         description: this.generateSessionDescription(i, focusAreas),
         estimated_duration_minutes: 45,
       });
 
       // Add exercises to session
-      const sessionExercises = this.selectSessionExercises(
-        exercises,
-        i,
-        difficulty
-      );
+      const sessionExercises = this.selectSessionExercises(exercises, i, difficulty);
       for (let j = 0; j < sessionExercises.length; j++) {
         await this.programRepo.createSessionExercise({
           session_id: session.id,
@@ -618,19 +573,13 @@ export class ProgramGenerator {
     // Logic to determine duration, difficulty, focus areas based on score
     return {
       duration: 8, // weeks
-      difficulty: score.category?.includes("beginner")
-        ? "beginner"
-        : "intermediate",
-      focusAreas: ["core", "legs", "upper_body"],
-      equipment: ["dumbbells", "resistance_band"],
+      difficulty: score.category?.includes('beginner') ? 'beginner' : 'intermediate',
+      focusAreas: ['core', 'legs', 'upper_body'],
+      equipment: ['dumbbells', 'resistance_band'],
     };
   }
 
-  private async selectExercises(
-    focusAreas: string[],
-    difficulty: string,
-    equipment: string[]
-  ) {
+  private async selectExercises(focusAreas: string[], difficulty: string, equipment: string[]) {
     return await this.videoRepo.findByFilters({
       body_parts: focusAreas,
       difficulty_level: difficulty,
@@ -639,36 +588,27 @@ export class ProgramGenerator {
     });
   }
 
-  private selectSessionExercises(
-    exercises: Video[],
-    sessionIndex: number,
-    difficulty: string
-  ) {
+  private selectSessionExercises(exercises: Video[], sessionIndex: number, difficulty: string) {
     // Rotate through exercises, progressive overload
-    const exercisesPerSession = difficulty === "beginner" ? 5 : 8;
+    const exercisesPerSession = difficulty === 'beginner' ? 5 : 8;
     return exercises.slice(0, exercisesPerSession).map((e) => ({
       ...e,
-      sets: difficulty === "beginner" ? 2 : 3,
+      sets: difficulty === 'beginner' ? 2 : 3,
       reps: 12,
       duration_seconds: null,
     }));
   }
 
   private generateProgramName(score: AssessmentScore): string {
-    return `${score.category || "Custom"} Program`;
+    return `${score.category || 'Custom'} Program`;
   }
 
   private generateProgramDescription(score: AssessmentScore): string {
     return `Personalized program based on your assessment results.`;
   }
 
-  private generateSessionDescription(
-    sessionIndex: number,
-    focusAreas: string[]
-  ): string {
-    return `Focus on ${
-      focusAreas[sessionIndex % focusAreas.length]
-    } strength and mobility.`;
+  private generateSessionDescription(sessionIndex: number, focusAreas: string[]): string {
+    return `Focus on ${focusAreas[sessionIndex % focusAreas.length]} strength and mobility.`;
   }
 }
 ```
@@ -781,27 +721,27 @@ export function AssessmentPage() {
 ### Unit Tests for Scoring
 
 ```typescript
-describe("ScoringEngine", () => {
-  it("calculates weighted scores correctly", async () => {
+describe('ScoringEngine', () => {
+  it('calculates weighted scores correctly', async () => {
     const engine = new ScoringEngine();
-    const answers = { q1: "lose_weight", q4: "3-4" };
+    const answers = { q1: 'lose_weight', q4: '3-4' };
     const template = mockTemplate;
 
     const result = await engine.calculate(answers, template);
 
     expect(result.totalScore).toBeGreaterThan(0);
-    expect(result.strategy).toBe("weighted");
+    expect(result.strategy).toBe('weighted');
   });
 
-  it("categorizes users into correct program", async () => {
+  it('categorizes users into correct program', async () => {
     const engine = new ScoringEngine();
-    const answers = { q1: "reduce_pain", q2: 8, q3: ["lower_back"] };
+    const answers = { q1: 'reduce_pain', q2: 8, q3: ['lower_back'] };
     const template = mockTemplate;
 
     const result = await engine.calculate(answers, template);
 
-    expect(result.category).toBe("beginner_pain_management");
-    expect(result.programRecommendation).toBe("gentle_mobility_program");
+    expect(result.category).toBe('beginner_pain_management');
+    expect(result.programRecommendation).toBe('gentle_mobility_program');
   });
 });
 ```

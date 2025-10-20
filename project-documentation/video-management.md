@@ -40,15 +40,15 @@ s3://ffp-videos-{env}/
 
 ```typescript
 // stacks/StorageStack.ts
-import { StackContext, Bucket } from "sst/constructs";
+import { StackContext, Bucket } from 'sst/constructs';
 
 export function StorageStack({ stack }: StackContext) {
-  const videosBucket = new Bucket(stack, "Videos", {
+  const videosBucket = new Bucket(stack, 'Videos', {
     cors: [
       {
-        allowedMethods: ["GET", "HEAD"],
-        allowedOrigins: ["*"], // Restrict in production
-        allowedHeaders: ["*"],
+        allowedMethods: ['GET', 'HEAD'],
+        allowedOrigins: ['*'], // Restrict in production
+        allowedHeaders: ['*'],
       },
     ],
     cdk: {
@@ -58,7 +58,7 @@ export function StorageStack({ stack }: StackContext) {
         versioned: false, // Phase 1: No versioning
         lifecycleRules: [
           {
-            id: "archive-old-versions",
+            id: 'archive-old-versions',
             enabled: false, // Enable when adding transcoding
           },
         ],
@@ -76,13 +76,13 @@ export function StorageStack({ stack }: StackContext) {
 
 ```typescript
 // stacks/StorageStack.ts (continued)
-import { Distribution, OriginAccessIdentity } from "aws-cdk-lib/aws-cloudfront";
-import { S3Origin } from "aws-cdk-lib/aws-cloudfront-origins";
+import { Distribution, OriginAccessIdentity } from 'aws-cdk-lib/aws-cloudfront';
+import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
 
-const oai = new OriginAccessIdentity(stack, "VideoOAI");
+const oai = new OriginAccessIdentity(stack, 'VideoOAI');
 videosBucket.bucket.grantRead(oai);
 
-const distribution = new Distribution(stack, "VideoDistribution", {
+const distribution = new Distribution(stack, 'VideoDistribution', {
   defaultBehavior: {
     origin: new S3Origin(videosBucket.bucket, {
       originAccessIdentity: oai,
@@ -102,23 +102,20 @@ Generate time-limited URLs for secure video access:
 
 ```typescript
 // services/video.service.ts
-import { getSignedUrl } from "@aws-sdk/cloudfront-signer";
+import { getSignedUrl } from '@aws-sdk/cloudfront-signer';
 
 export class VideoService {
-  async getStreamingUrl(
-    videoId: string,
-    context: TenantContext
-  ): Promise<string> {
+  async getStreamingUrl(videoId: string, context: TenantContext): Promise<string> {
     // Verify user has access
     const video = await this.videoRepo.getById(videoId);
     if (!video || !video.is_active) {
-      throw new NotFoundError("Video");
+      throw new NotFoundError('Video');
     }
 
     // Check if user's program includes this video
     const hasAccess = await this.checkUserAccess(context.userId, videoId);
     if (!hasAccess) {
-      throw new ForbiddenError("Video access denied");
+      throw new ForbiddenError('Video access denied');
     }
 
     // Generate CloudFront signed URL (5 minutes)
@@ -136,10 +133,7 @@ export class VideoService {
     return signedUrl;
   }
 
-  private async checkUserAccess(
-    userId: string,
-    videoId: string
-  ): Promise<boolean> {
+  private async checkUserAccess(userId: string, videoId: string): Promise<boolean> {
     // Check if video is in any of user's active programs
     const result = await db.query(
       `
@@ -172,7 +166,6 @@ export class VideoService {
 ### Video Upload Flow (Manual - Phase 1)
 
 1. **Prepare video file**:
-
    - Format: MP4 (H.264 codec)
    - Resolution: 1080p or 720p
    - Frame rate: 30fps
@@ -194,15 +187,15 @@ await db.query(
   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 `,
   [
-    "uuid-here",
-    "Bodyweight Squats",
-    "Basic squat form and technique",
-    "library/exercise-001.mp4",
-    "library/exercise-001-thumb.jpg",
+    'uuid-here',
+    'Bodyweight Squats',
+    'Basic squat form and technique',
+    'library/exercise-001.mp4',
+    'library/exercise-001-thumb.jpg',
     120, // 2 minutes
-    "beginner",
-    ["legs", "core"],
-    ["none"],
+    'beginner',
+    ['legs', 'core'],
+    ['none'],
     true,
   ]
 );
@@ -218,7 +211,7 @@ export class VideoRepository {
     equipment?: string[];
     search?: string;
   }): Promise<Video[]> {
-    let query = "SELECT * FROM videos WHERE is_active = true";
+    let query = 'SELECT * FROM videos WHERE is_active = true';
     const params: any[] = [];
     let paramIndex = 1;
 
@@ -246,7 +239,7 @@ export class VideoRepository {
       paramIndex++;
     }
 
-    query += " ORDER BY created_at DESC";
+    query += ' ORDER BY created_at DESC';
 
     const result = await db.query(query, params);
     return result.rows;
@@ -260,10 +253,10 @@ export class VideoRepository {
 
 ```typescript
 export enum ProgressStatus {
-  NOT_STARTED = "not_started",
-  IN_PROGRESS = "in_progress",
-  COMPLETED = "completed",
-  SKIPPED = "skipped",
+  NOT_STARTED = 'not_started',
+  IN_PROGRESS = 'in_progress',
+  COMPLETED = 'completed',
+  SKIPPED = 'skipped',
 }
 
 export interface VideoProgress {
@@ -281,16 +274,14 @@ export interface VideoProgress {
 
 ```typescript
 // functions/videos/update-progress.ts
-export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (
-  event
-) => {
+export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) => {
   const { videoId } = event.pathParameters!;
   const body = JSON.parse(event.body!);
   const context = extractTenantContext(event);
 
   const UpdateProgressSchema = z.object({
     sessionId: z.string().uuid(),
-    status: z.enum(["in_progress", "completed", "skipped"]),
+    status: z.enum(['in_progress', 'completed', 'skipped']),
     progressPercentage: z.number().min(0).max(100).optional(),
     completedSets: z.number().min(0).optional(),
   });
@@ -320,14 +311,14 @@ export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (
       validated.status,
       validated.progressPercentage || 0,
       validated.completedSets || 0,
-      validated.status !== "not_started" ? new Date() : null,
-      validated.status === "completed" ? new Date() : null,
+      validated.status !== 'not_started' ? new Date() : null,
+      validated.status === 'completed' ? new Date() : null,
     ]
   );
 
   return {
     statusCode: 200,
-    body: JSON.stringify({ message: "Progress updated" }),
+    body: JSON.stringify({ message: 'Progress updated' }),
   };
 };
 ```

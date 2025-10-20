@@ -229,15 +229,15 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 
 ### Subtasks Summary (7 subtasks, ~15 hours)
 
-| #   | Key        | Title                                               | Estimate | Dependencies        | Status | URL                                                    |
-| --- | ---------- | --------------------------------------------------- | -------- | ------------------- | ------ | ------------------------------------------------------ |
-| 1   | **FFP-83** | Create custom error classes                         | 2h       | None                | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-83) |
-| 2   | **FFP-84** | Implement error handler middleware                  | 4h       | FFP-83, FFP-14      | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-84) |
-| 3   | **FFP-85** | Add error logging with context                      | 2h       | FFP-83, FFP-84, FFP-14 | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-85) |
-| 4   | **FFP-86** | Write unit tests for error classes                  | 2h       | FFP-83              | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-86) |
-| 5   | **FFP-87** | Write unit tests for error middleware               | 2h       | FFP-83, FFP-84, FFP-14 | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-87) |
-| 6   | **FFP-88** | Write integration tests for error handling          | 2h       | FFP-83, FFP-84, FFP-85 | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-88) |
-| 7   | **FFP-89** | Update documentation with error handling patterns   | 1h       | FFP-83, FFP-84, FFP-85 | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-89) |
+| #   | Key        | Title                                             | Estimate | Dependencies           | Status | URL                                                    |
+| --- | ---------- | ------------------------------------------------- | -------- | ---------------------- | ------ | ------------------------------------------------------ |
+| 1   | **FFP-83** | Create custom error classes                       | 2h       | None                   | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-83) |
+| 2   | **FFP-84** | Implement error handler middleware                | 4h       | FFP-83, FFP-14         | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-84) |
+| 3   | **FFP-85** | Add error logging with context                    | 2h       | FFP-83, FFP-84, FFP-14 | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-85) |
+| 4   | **FFP-86** | Write unit tests for error classes                | 2h       | FFP-83                 | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-86) |
+| 5   | **FFP-87** | Write unit tests for error middleware             | 2h       | FFP-83, FFP-84, FFP-14 | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-87) |
+| 6   | **FFP-88** | Write integration tests for error handling        | 2h       | FFP-83, FFP-84, FFP-85 | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-88) |
+| 7   | **FFP-89** | Update documentation with error handling patterns | 1h       | FFP-83, FFP-84, FFP-85 | To Do  | [View](https://ctregaskis.atlassian.net/browse/FFP-89) |
 
 **Total Time**: 15 hours (~1.9 weeks at 8h/week)
 

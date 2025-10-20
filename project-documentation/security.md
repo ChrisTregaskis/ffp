@@ -19,21 +19,15 @@ As a healthcare application handling personal health information (PHI), FFP impl
 
 ```typescript
 // ❌ BAD: SQL Injection vulnerable
-const result = await db.query(
-  `SELECT * FROM users WHERE email = '${userInput}'`
-);
+const result = await db.query(`SELECT * FROM users WHERE email = '${userInput}'`);
 
 // ✅ GOOD: Parameterized query
-const result = await db.query("SELECT * FROM users WHERE email = $1", [
-  userInput,
-]);
+const result = await db.query('SELECT * FROM users WHERE email = $1', [userInput]);
 
 // ✅ GOOD: Zod validation before query
 const EmailSchema = z.string().email().max(255);
 const validatedEmail = EmailSchema.parse(userInput);
-const result = await db.query("SELECT * FROM users WHERE email = $1", [
-  validatedEmail,
-]);
+const result = await db.query('SELECT * FROM users WHERE email = $1', [validatedEmail]);
 ```
 
 ### 2. Broken Authentication
@@ -75,7 +69,7 @@ passwordPolicy: {
 
 ```typescript
 // ✅ GOOD: Log without PHI
-logger.info("Assessment completed", {
+logger.info('Assessment completed', {
   userId: context.userId,
   tenantId: context.tenantId,
   assessmentId: assessment.id,
@@ -83,7 +77,7 @@ logger.info("Assessment completed", {
 });
 
 // ✅ GOOD: Encrypt sensitive fields (if needed)
-import { KMSClient, EncryptCommand } from "@aws-sdk/client-kms";
+import { KMSClient, EncryptCommand } from '@aws-sdk/client-kms';
 
 async function encryptSensitiveData(data: string): Promise<string> {
   const kms = new KMSClient({ region: process.env.AWS_REGION });
@@ -93,7 +87,7 @@ async function encryptSensitiveData(data: string): Promise<string> {
       Plaintext: Buffer.from(data),
     })
   );
-  return result.CiphertextBlob!.toString("base64");
+  return result.CiphertextBlob!.toString('base64');
 }
 ```
 
@@ -124,8 +118,8 @@ export const handler = async (event) => {
   const context = extractTenantContext(event);
 
   // Only business owners can invite users
-  if (context.role !== "business_owner") {
-    throw new ForbiddenError("Only business owners can invite users");
+  if (context.role !== 'business_owner') {
+    throw new ForbiddenError('Only business owners can invite users');
   }
 
   // Ensure RLS context is set
@@ -153,8 +147,8 @@ export const handler = async (event) => {
 
 ```typescript
 // Express security middleware
-import helmet from "helmet";
-import cors from "cors";
+import helmet from 'helmet';
+import cors from 'cors';
 
 app.use(
   helmet({
@@ -163,7 +157,7 @@ app.use(
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:"],
+        imgSrc: ["'self'", 'data:', 'https:'],
       },
     },
     hsts: {
@@ -176,7 +170,7 @@ app.use(
 
 app.use(
   cors({
-    origin: process.env.ALLOWED_ORIGINS?.split(",") || [],
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || [],
     credentials: true,
   })
 );
@@ -235,7 +229,7 @@ const SubmitAssessmentSchema = z.object({
 });
 
 export const handler = async (event) => {
-  const body = JSON.parse(event.body || "{}");
+  const body = JSON.parse(event.body || '{}');
   const validated = SubmitAssessmentSchema.parse(body);
 
   // Safe to process validated.answers
@@ -283,17 +277,17 @@ npm update package-name
 
 ```typescript
 // Security event logging
-logger.warn("Failed login attempt", {
+logger.warn('Failed login attempt', {
   email: email,
   ipAddress: event.requestContext.identity.sourceIp,
   userAgent: event.requestContext.identity.userAgent,
 });
 
-logger.error("Unauthorized access attempt", {
+logger.error('Unauthorized access attempt', {
   userId: context.userId,
   tenantId: context.tenantId,
   attemptedResource: resourceId,
-  action: "delete",
+  action: 'delete',
 });
 
 // Database audit log
@@ -305,8 +299,8 @@ await db.query(
   [
     context.tenantId,
     context.userId,
-    "assessment.submit",
-    "assessment",
+    'assessment.submit',
+    'assessment',
     assessmentId,
     JSON.stringify({ score: result.score }),
     ipAddress,
@@ -361,25 +355,22 @@ async function softDeleteUser(userId: string, context: TenantContext) {
 // Hard delete cascade (Phase 2 - future)
 async function hardDeleteUser(userId: string, context: TenantContext) {
   // Delete in order respecting foreign keys
-  await db.query(
-    "DELETE FROM user_progress WHERE user_id = $1 AND tenant_id = $2",
-    [userId, context.tenantId]
-  );
-  await db.query("DELETE FROM programs WHERE user_id = $1 AND tenant_id = $2", [
+  await db.query('DELETE FROM user_progress WHERE user_id = $1 AND tenant_id = $2', [
     userId,
     context.tenantId,
   ]);
-  await db.query(
-    "DELETE FROM user_assessments WHERE user_id = $1 AND tenant_id = $2",
-    [userId, context.tenantId]
-  );
-  await db.query("DELETE FROM users WHERE id = $1 AND tenant_id = $2", [
+  await db.query('DELETE FROM programs WHERE user_id = $1 AND tenant_id = $2', [
     userId,
     context.tenantId,
   ]);
+  await db.query('DELETE FROM user_assessments WHERE user_id = $1 AND tenant_id = $2', [
+    userId,
+    context.tenantId,
+  ]);
+  await db.query('DELETE FROM users WHERE id = $1 AND tenant_id = $2', [userId, context.tenantId]);
 
   // Log deletion
-  logger.info("User data permanently deleted", {
+  logger.info('User data permanently deleted', {
     userId,
     tenantId: context.tenantId,
   });
@@ -392,18 +383,18 @@ async function hardDeleteUser(userId: string, context: TenantContext) {
 
 ```typescript
 // stacks/VpcStack.ts
-const vpc = new Vpc(stack, "VPC", {
+const vpc = new Vpc(stack, 'VPC', {
   maxAzs: 2,
   natGateways: 1, // Cost optimization for Phase 1
   subnetConfiguration: [
     {
       cidrMask: 24,
-      name: "Public",
+      name: 'Public',
       subnetType: SubnetType.PUBLIC,
     },
     {
       cidrMask: 24,
-      name: "Private",
+      name: 'Private',
       subnetType: SubnetType.PRIVATE_WITH_EGRESS,
     },
   ],
@@ -414,24 +405,20 @@ const vpc = new Vpc(stack, "VPC", {
 
 ```typescript
 // RDS Security Group
-const dbSecurityGroup = new SecurityGroup(stack, "DatabaseSG", {
+const dbSecurityGroup = new SecurityGroup(stack, 'DatabaseSG', {
   vpc,
-  description: "Security group for RDS database",
+  description: 'Security group for RDS database',
   allowAllOutbound: false,
 });
 
 // Lambda Security Group
-const lambdaSG = new SecurityGroup(stack, "LambdaSG", {
+const lambdaSG = new SecurityGroup(stack, 'LambdaSG', {
   vpc,
-  description: "Security group for Lambda functions",
+  description: 'Security group for Lambda functions',
 });
 
 // Allow Lambda to connect to RDS
-dbSecurityGroup.addIngressRule(
-  lambdaSG,
-  Port.tcp(5432),
-  "Allow Lambda to access RDS"
-);
+dbSecurityGroup.addIngressRule(lambdaSG, Port.tcp(5432), 'Allow Lambda to access RDS');
 
 // No public access to RDS
 // RDS only accessible from private subnets via Lambda
@@ -441,44 +428,44 @@ dbSecurityGroup.addIngressRule(
 
 ```typescript
 // stacks/WafStack.ts
-const webAcl = new CfnWebACL(stack, "ApiWAF", {
+const webAcl = new CfnWebACL(stack, 'ApiWAF', {
   defaultAction: { allow: {} },
-  scope: "REGIONAL",
+  scope: 'REGIONAL',
   visibilityConfig: {
     cloudWatchMetricsEnabled: true,
-    metricName: "FFP-WAF",
+    metricName: 'FFP-WAF',
     sampledRequestsEnabled: true,
   },
   rules: [
     {
-      name: "RateLimitRule",
+      name: 'RateLimitRule',
       priority: 1,
       statement: {
         rateBasedStatement: {
           limit: 2000,
-          aggregateKeyType: "IP",
+          aggregateKeyType: 'IP',
         },
       },
       action: { block: {} },
       visibilityConfig: {
         cloudWatchMetricsEnabled: true,
-        metricName: "RateLimitRule",
+        metricName: 'RateLimitRule',
         sampledRequestsEnabled: true,
       },
     },
     {
-      name: "AWSManagedRulesCommonRuleSet",
+      name: 'AWSManagedRulesCommonRuleSet',
       priority: 2,
       statement: {
         managedRuleGroupStatement: {
-          vendorName: "AWS",
-          name: "AWSManagedRulesCommonRuleSet",
+          vendorName: 'AWS',
+          name: 'AWSManagedRulesCommonRuleSet',
         },
       },
       overrideAction: { none: {} },
       visibilityConfig: {
         cloudWatchMetricsEnabled: true,
-        metricName: "CommonRuleSet",
+        metricName: 'CommonRuleSet',
         sampledRequestsEnabled: true,
       },
     },
@@ -492,15 +479,15 @@ const webAcl = new CfnWebACL(stack, "ApiWAF", {
 
 ```typescript
 // API Gateway throttling
-const api = new Api(stack, "Api", {
+const api = new Api(stack, 'Api', {
   throttle: {
     rateLimit: 1000, // requests per second
     burstLimit: 2000, // concurrent requests
   },
   routes: {
     // Per-route rate limiting for expensive operations
-    "POST /assessments/{id}/submit": {
-      function: "functions/assessments/submit.handler",
+    'POST /assessments/{id}/submit': {
+      function: 'functions/assessments/submit.handler',
       throttle: {
         rateLimit: 100,
         burstLimit: 200,
@@ -514,19 +501,19 @@ const api = new Api(stack, "Api", {
 
 ```typescript
 // API Gateway request validation
-const requestValidator = api.addRequestValidator("Validator", {
+const requestValidator = api.addRequestValidator('Validator', {
   validateRequestBody: true,
   validateRequestParameters: true,
 });
 
 // Model for request body
-const assessmentModel = api.addModel("AssessmentModel", {
-  contentType: "application/json",
+const assessmentModel = api.addModel('AssessmentModel', {
+  contentType: 'application/json',
   schema: {
-    type: "object",
-    required: ["templateId"],
+    type: 'object',
+    required: ['templateId'],
     properties: {
-      templateId: { type: "string", format: "uuid" },
+      templateId: { type: 'string', format: 'uuid' },
     },
   },
 });
@@ -588,35 +575,30 @@ Before major launches or annually:
 ### Response Steps
 
 1. **Assess Severity** (5 min)
-
    - Critical: PHI exposed, active breach
    - High: Unauthorized access attempt successful
    - Medium: Vulnerability discovered, no exploitation
    - Low: Suspicious activity, under investigation
 
 2. **Contain** (15 min)
-
    - Revoke compromised tokens (invalidate Cognito sessions)
    - Block attacking IP addresses (WAF)
    - Disable affected user accounts
    - Enable additional logging
 
 3. **Investigate** (1 hour)
-
    - Review CloudWatch logs
    - Check audit_logs table
    - Identify scope of breach
    - Determine attack vector
 
 4. **Remediate** (varies)
-
    - Patch vulnerability
    - Force password resets for affected users
    - Update security rules
    - Deploy fixes
 
 5. **Notify** (24-72 hours)
-
    - Internal team notification (immediately)
    - Affected users (within 72 hours if PHI breach)
    - Regulatory bodies if required (GDPR, HIPAA)

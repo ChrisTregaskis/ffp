@@ -73,7 +73,6 @@ All files in `jira-standards/`:
 ### Files Updated
 
 1. **LOAD-THIS-FIRST.md** ✅
-
    - Added "File Naming Convention" section at the top
    - Included format, examples, purpose, and exceptions
    - Placed before "Module Loading Guide" for visibility

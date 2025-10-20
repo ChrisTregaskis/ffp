@@ -1,12 +1,6 @@
-// Internal alias imports (using @core/ prefix)
-import type { Tenant } from "@core/types/tenant.types";
-import type { User } from "@core/types/user.types";
-import {
-  APP_NAME,
-  TENANT_STATUS,
-  TENANT_TYPES,
-  USER_ROLES,
-} from "@core/lib/constants";
+import { APP_NAME, TENANT_STATUS, TENANT_TYPES, USER_ROLES } from '@core/lib/constants';
+import type { Tenant } from '@core/types/tenant.types';
+import type { User } from '@core/types/user.types';
 
 /**
  * Test file to verify TypeScript path aliases work correctly
@@ -24,10 +18,10 @@ export interface PathAliasTest {
  */
 export function testPathAliases(): PathAliasTest {
   const mockTenant: Tenant = {
-    id: "test-tenant-id",
-    name: "Test Tenant",
+    id: 'test-tenant-id',
+    name: 'Test Tenant',
     type: TENANT_TYPES.BUSINESS,
-    ownerUserId: "test-owner-id",
+    ownerUserId: 'test-owner-id',
     status: TENANT_STATUS.ACTIVE,
     settings: {},
     createdAt: new Date(),
@@ -35,10 +29,10 @@ export function testPathAliases(): PathAliasTest {
   };
 
   const mockUser: User = {
-    id: "test-user-id",
-    firstName: "Test",
-    lastName: "User",
-    email: "test@example.com",
+    id: 'test-user-id',
+    firstName: 'Test',
+    lastName: 'User',
+    email: 'test@example.com',
     tenantId: mockTenant.id,
     role: USER_ROLES.BUSINESS_USER,
     createdAt: new Date(),

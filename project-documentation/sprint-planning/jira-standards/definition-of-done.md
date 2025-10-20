@@ -3,21 +3,18 @@
 ## User Story DoD
 
 - [ ] **Code Quality**
-
   - TypeScript strict mode, no `any` types
   - No linting errors (ESLint + Prettier)
   - SOLID principles followed
   - Service layer + Repository pattern
 
 - [ ] **Validation & Security**
-
   - Zod schemas for all API inputs
   - RLS context set for all DB queries
   - Tenant context validated
   - No PHI/sensitive data in logs
 
 - [ ] **Testing**
-
   - Unit tests written and passing (min 2)
   - Integration test for multi-tenant isolation
   - E2E test for critical flow (if applicable)
@@ -25,7 +22,6 @@
   - 30% coverage threshold met
 
 - [ ] **Deployment**
-
   - Code merged to `develop`
   - Deployed to dev via SST
   - Manually tested in dev
@@ -33,7 +29,6 @@
   - API response <500ms (p95)
 
 - [ ] **Documentation**
-
   - Code comments for complex logic
   - API docs updated (if new endpoints)
   - Architecture docs updated (if new patterns)
@@ -50,19 +45,16 @@
 ## Task DoD
 
 - [ ] **Implementation**
-
   - Task objective completed
   - Configuration changes applied
   - All files created/modified
 
 - [ ] **Verification**
-
   - Verification steps executed
   - Deployed to dev (if applicable)
   - Manually validated
 
 - [ ] **Testing**
-
   - Unit tests passing (if applicable)
   - Integration tests passing (if applicable)
 
@@ -75,25 +67,21 @@
 ## Bug DoD
 
 - [ ] **Fix**
-
   - Root cause identified and documented
   - Fix implemented and tested
   - No regression introduced
 
 - [ ] **Testing**
-
   - Unit test added to prevent regression
   - Integration test (if multi-tenant issue)
   - Manual testing completed
 
 - [ ] **Verification**
-
   - Bug no longer reproducible
   - Original steps now pass
   - Related functionality works
 
 - [ ] **Deployment**
-
   - Deployed to dev
   - Deployed to staging (if critical)
   - Deployed to production (if blocker)

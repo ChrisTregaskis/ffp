@@ -1,0 +1,23 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+dist
+build
+.next
+.turbo
+coverage
+
+# Generated files
+*.config.js
+*.config.ts
+!eslint.config.js
+!prettier.config.js
+
+# Temporary files
+*.log
+.cache
+
+# OS files
+.DS_Store
