@@ -5,7 +5,7 @@
 module.exports = {
   extends: ['@ffp/eslint-config/node'],
   parserOptions: {
-    project: './tsconfig.json',
+    project: ['./tsconfig.json', './tsconfig.node.json', './tsconfig.test.json'],
     tsconfigRootDir: __dirname,
   },
   ignorePatterns: ['dist', 'node_modules'],

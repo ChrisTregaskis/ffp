@@ -1,0 +1,40 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "emitDeclarationOnly": true,
+    "types": ["vitest/globals", "@testing-library/jest-dom"],
+
+    // Test-specific path aliases
+    "baseUrl": "./src",
+    "paths": {
+      "@web/components/*": ["./components/*"],
+      "@web/hooks/*": ["./hooks/*"],
+      "@web/pages/*": ["./pages/*"],
+      "@web/services/*": ["./services/*"],
+      "@web/utils/*": ["./utils/*"],
+      "@web/types/*": ["./types/*"],
+      "@web/lib/*": ["./lib/*"]
+    }
+  },
+  "include": [
+    "tests/**/*",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.ts",
+    "src/**/*.spec.tsx",
+    "src/**/*"
+  ],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    {
+      "path": "../core"
+    }
+  ]
+}
