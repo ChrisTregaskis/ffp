@@ -200,6 +200,34 @@ importers:
         specifier: ^2.1.4
         version: 2.1.9(@types/node@22.18.11)(@vitest/ui@2.1.9)(jsdom@25.0.1)
 
+  tests:
+    dependencies:
+      '@ffp/core':
+        specifier: workspace:*
+        version: link:../packages/core
+    devDependencies:
+      '@ffp/eslint-config':
+        specifier: workspace:*
+        version: link:../packages/eslint-config
+      '@types/node':
+        specifier: ^22.9.0
+        version: 22.18.11
+      '@vitest/ui':
+        specifier: ^2.1.4
+        version: 2.1.9(vitest@2.1.9)
+      eslint:
+        specifier: ^8.57.1
+        version: 8.57.1
+      strip-json-comments:
+        specifier: ^5.0.3
+        version: 5.0.3
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.4
+        version: 2.1.9(@types/node@22.18.11)(@vitest/ui@2.1.9)(jsdom@25.0.1)
+
 packages:
 
   '@adobe/css-tools@4.4.4':
@@ -2722,6 +2750,10 @@ packages:
   strip-json-comments@3.1.1:
     resolution: {integrity: sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==}
     engines: {node: '>=8'}
+
+  strip-json-comments@5.0.3:
+    resolution: {integrity: sha512-1tB5mhVo7U+ETBKNf92xT4hrQa3pm0MZ0PQvuDnWgAAGHDsfp4lPSpiS6psrSiet87wyGPh9ft6wmhOMQ0hDiw==}
+    engines: {node: '>=14.16'}
 
   strnum@2.1.1:
     resolution: {integrity: sha512-7ZvoFTiCnGxBtDqJ//Cu6fWtZtc7Y3x+QOirG15wztbdngGSkht27o2pyGWrVy0b4WAy3jbKmnoK6g5VlVNUUw==}
@@ -6215,6 +6247,8 @@ snapshots:
       min-indent: 1.0.1
 
   strip-json-comments@3.1.1: {}
+
+  strip-json-comments@5.0.3: {}
 
   strnum@2.1.1: {}
 

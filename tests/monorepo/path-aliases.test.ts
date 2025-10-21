@@ -1,6 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { resolve } from 'path';
 import { existsSync, readFileSync } from 'fs';
+import { resolve } from 'path';
+
+import stripJsonComments from 'strip-json-comments';
+import { describe, it, expect } from 'vitest';
 
 /**
  * Tests to verify TypeScript path aliases are configured correctly
@@ -8,6 +10,14 @@ import { existsSync, readFileSync } from 'fs';
  * FFP-23: Monorepo Setup Tests
  * Validates path alias configuration in tsconfig files
  */
+
+/**
+ * Helper function to parse JSONC (JSON with Comments) files
+ */
+function parseJsonc(filePath: string): any {
+  const content = readFileSync(filePath, 'utf-8');
+  return JSON.parse(stripJsonComments(content));
+}
 
 describe('TypeScript Path Aliases', () => {
   const rootDir = resolve(__dirname, '../..');
@@ -20,18 +30,14 @@ describe('TypeScript Path Aliases', () => {
     });
 
     it('should define @ffp/* path aliases in base config', () => {
-      const tsconfigBase = JSON.parse(
-        readFileSync(resolve(rootDir, 'tsconfig.base.json'), 'utf-8')
-      );
+      const tsconfigBase = parseJsonc(resolve(rootDir, 'tsconfig.base.json'));
 
       expect(tsconfigBase.compilerOptions.paths).toBeDefined();
       expect(tsconfigBase.compilerOptions.paths['@ffp/core']).toBeDefined();
     });
 
     it('should have strict mode enabled', () => {
-      const tsconfigBase = JSON.parse(
-        readFileSync(resolve(rootDir, 'tsconfig.base.json'), 'utf-8')
-      );
+      const tsconfigBase = parseJsonc(resolve(rootDir, 'tsconfig.base.json'));
 
       expect(tsconfigBase.compilerOptions.strict).toBe(true);
       expect(tsconfigBase.compilerOptions.noUnusedLocals).toBe(true);
@@ -46,17 +52,13 @@ describe('TypeScript Path Aliases', () => {
     });
 
     it('core package should extend base config', () => {
-      const tsconfig = JSON.parse(
-        readFileSync(resolve(packagesDir, 'core', 'tsconfig.json'), 'utf-8')
-      );
+      const tsconfig = parseJsonc(resolve(packagesDir, 'core', 'tsconfig.json'));
 
       expect(tsconfig.extends).toBe('../../tsconfig.base.json');
     });
 
     it('core package should define @core/* aliases', () => {
-      const tsconfig = JSON.parse(
-        readFileSync(resolve(packagesDir, 'core', 'tsconfig.json'), 'utf-8')
-      );
+      const tsconfig = parseJsonc(resolve(packagesDir, 'core', 'tsconfig.json'));
 
       const paths = tsconfig.compilerOptions?.paths || {};
       expect(paths['@core/lib/*']).toBeDefined();
@@ -66,9 +68,7 @@ describe('TypeScript Path Aliases', () => {
     });
 
     it('functions package should define @functions/* aliases', () => {
-      const tsconfig = JSON.parse(
-        readFileSync(resolve(packagesDir, 'functions', 'tsconfig.json'), 'utf-8')
-      );
+      const tsconfig = parseJsonc(resolve(packagesDir, 'functions', 'tsconfig.json'));
 
       const paths = tsconfig.compilerOptions?.paths || {};
       expect(paths['@functions/auth/*']).toBeDefined();
@@ -84,9 +84,7 @@ describe('TypeScript Path Aliases', () => {
     });
 
     it('web package should define @web/* aliases', () => {
-      const tsconfig = JSON.parse(
-        readFileSync(resolve(packagesDir, 'web', 'tsconfig.json'), 'utf-8')
-      );
+      const tsconfig = parseJsonc(resolve(packagesDir, 'web', 'tsconfig.json'));
 
       const paths = tsconfig.compilerOptions?.paths || {};
       expect(paths['@web/components/*']).toBeDefined();
@@ -95,9 +93,7 @@ describe('TypeScript Path Aliases', () => {
     });
 
     it('web package should have project references to core', () => {
-      const tsconfig = JSON.parse(
-        readFileSync(resolve(packagesDir, 'web', 'tsconfig.json'), 'utf-8')
-      );
+      const tsconfig = parseJsonc(resolve(packagesDir, 'web', 'tsconfig.json'));
 
       expect(tsconfig.references).toBeDefined();
       expect(tsconfig.references).toContainEqual({ path: '../core' });
@@ -106,28 +102,25 @@ describe('TypeScript Path Aliases', () => {
 
   describe('Build Output Configuration', () => {
     it('core package should output to dist/', () => {
-      const tsconfig = JSON.parse(
-        readFileSync(resolve(packagesDir, 'core', 'tsconfig.json'), 'utf-8')
-      );
+      const tsconfig = parseJsonc(resolve(packagesDir, 'core', 'tsconfig.json'));
 
       expect(tsconfig.compilerOptions.outDir).toBe('./dist');
     });
 
     it('packages should generate declaration files', () => {
-      const coreTsconfig = JSON.parse(
-        readFileSync(resolve(packagesDir, 'core', 'tsconfig.json'), 'utf-8')
-      );
+      const coreTsconfig = parseJsonc(resolve(packagesDir, 'core', 'tsconfig.json'));
 
       expect(coreTsconfig.compilerOptions.declaration).toBe(true);
       expect(coreTsconfig.compilerOptions.declarationMap).toBe(true);
     });
 
-    it('packages should use ES2022 target', () => {
-      const tsconfig = JSON.parse(
-        readFileSync(resolve(packagesDir, 'core', 'tsconfig.json'), 'utf-8')
-      );
+    it('packages should use ES2020+ target', () => {
+      // Web package explicitly sets target, core inherits from base
+      const webTsconfig = parseJsonc(resolve(packagesDir, 'web', 'tsconfig.json'));
+      const baseTsconfig = parseJsonc(resolve(rootDir, 'tsconfig.base.json'));
 
-      expect(tsconfig.compilerOptions.target).toBe('ES2022');
+      expect(webTsconfig.compilerOptions.target).toBe('ES2020');
+      expect(baseTsconfig.compilerOptions.target).toBe('ES2022');
     });
   });
 
@@ -146,12 +139,13 @@ describe('TypeScript Path Aliases', () => {
     });
 
     it('should have moduleResolution set to bundler or node16', () => {
-      const tsconfig = JSON.parse(
-        readFileSync(resolve(packagesDir, 'core', 'tsconfig.json'), 'utf-8')
-      );
+      // Web package explicitly sets moduleResolution, core inherits from base
+      const webTsconfig = parseJsonc(resolve(packagesDir, 'web', 'tsconfig.json'));
+      const baseTsconfig = parseJsonc(resolve(rootDir, 'tsconfig.base.json'));
 
       const validOptions = ['bundler', 'node16', 'nodenext'];
-      expect(validOptions).toContain(tsconfig.compilerOptions.moduleResolution);
+      expect(validOptions).toContain(webTsconfig.compilerOptions.moduleResolution);
+      expect(validOptions).toContain(baseTsconfig.compilerOptions.moduleResolution);
     });
   });
 });

@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { resolve } from 'path';
-import { existsSync, readFileSync } from 'fs';
 import { execSync } from 'child_process';
+import { existsSync, readFileSync } from 'fs';
+import { resolve } from 'path';
+
+import { describe, it, expect } from 'vitest';
 
 /**
  * Tests to verify ESLint and Prettier configurations

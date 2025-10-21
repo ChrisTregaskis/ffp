@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { resolve } from 'path';
 import { existsSync, readdirSync, statSync } from 'fs';
+import { resolve } from 'path';
+
+import { describe, it, expect } from 'vitest';
 
 /**
  * Tests to verify build outputs are generated correctly
@@ -156,10 +157,24 @@ describe('Build Outputs', () => {
       expect(existsSync(distNodeModules)).toBe(false);
     });
 
-    it('should not have .turbo cache in packages', () => {
+    it('should only have turbo logs in .turbo directory (no cache artifacts)', () => {
       const turboCache = resolve(packagesDir, 'core', '.turbo');
 
-      expect(existsSync(turboCache)).toBe(false);
+      if (existsSync(turboCache)) {
+        const files = readdirSync(turboCache);
+
+        // Turborepo creates log files in .turbo directories, which is expected
+        // We just want to ensure there are no cache artifacts
+        const nonLogFiles = files.filter((f) => !f.endsWith('.log'));
+
+        expect(
+          nonLogFiles.length,
+          'Should only have .log files in .turbo directory, no cache artifacts'
+        ).toBe(0);
+      } else {
+        // If .turbo doesn't exist, that's also fine (clean state)
+        expect(true).toBe(true);
+      }
     });
   });
 });

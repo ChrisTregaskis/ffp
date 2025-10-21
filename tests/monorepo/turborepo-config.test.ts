@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { resolve } from 'path';
 import { existsSync, readFileSync } from 'fs';
+import { resolve } from 'path';
+
+import { describe, it, expect, beforeAll } from 'vitest';
 
 /**
  * Tests to verify Turborepo caching configuration
