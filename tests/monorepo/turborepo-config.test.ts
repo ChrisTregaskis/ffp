@@ -26,9 +26,7 @@ describe('Turborepo Configuration', () => {
   });
 
   describe('Pipeline Configuration', () => {
-    let turboConfig = {
-      tasks: { build: {}, test: {}, lint: {}, typecheck: {}, dev: {}, clean: {} },
-    };
+    let turboConfig: any;
 
     beforeAll(() => {
       turboConfig = JSON.parse(readFileSync(resolve(rootDir, 'turbo.json'), 'utf-8'));
