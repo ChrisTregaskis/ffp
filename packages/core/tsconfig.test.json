@@ -1,0 +1,32 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2020",
+    "lib": ["ES2020"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "emitDeclarationOnly": true,
+    "types": ["vitest/globals"],
+
+    // Test-specific path aliases
+    "baseUrl": "./src",
+    "paths": {
+      "@core/lib/*": ["./lib/*"],
+      "@core/types/*": ["./types/*"],
+      "@core/utils/*": ["./utils/*"],
+      "@core/services/*": ["./services/*"],
+      "@core/repositories/*": ["./repositories/*"]
+    }
+  },
+  "include": [
+    "tests/**/*",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.ts",
+    "src/**/*.spec.tsx",
+    "src/**/*"
+  ],
+  "exclude": ["node_modules", "dist"]
+}
