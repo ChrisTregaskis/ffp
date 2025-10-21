@@ -1,18 +1,19 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "composite": true,
     "target": "ES2020",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "noEmit": true,
+    "emitDeclarationOnly": true,
+    "types": ["vitest/globals", "@testing-library/jest-dom"],
 
-    // Internal path aliases for cleaner imports within this package
+    // Test-specific path aliases
     "baseUrl": "./src",
     "paths": {
-      // Internal aliases for this package using @web/ namespace to avoid conflicts
       "@web/components/*": ["./components/*"],
       "@web/hooks/*": ["./hooks/*"],
       "@web/pages/*": ["./pages/*"],
@@ -22,25 +23,15 @@
       "@web/lib/*": ["./lib/*"]
     }
   },
-  "include": ["src/**/*"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "vite.config.ts",
-    "vite-alias-config.ts",
-    ".eslintrc.cjs",
-    "postcss.config.js",
-    "tailwind.config.js"
+  "include": [
+    "tests/**/*",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.ts",
+    "src/**/*.spec.tsx"
   ],
+  "exclude": ["node_modules", "dist"],
   "references": [
-    {
-      "path": "./tsconfig.node.json"
-    },
-    {
-      "path": "./tsconfig.test.json"
-    },
     {
       "path": "../core"
     }
