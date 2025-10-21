@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { resolve } from 'path';
 import { existsSync, readFileSync } from 'fs';
+import { resolve } from 'path';
+
+import { describe, it, expect, beforeAll } from 'vitest';
 
 /**
  * Tests to verify Turborepo caching configuration
@@ -25,7 +26,9 @@ describe('Turborepo Configuration', () => {
   });
 
   describe('Pipeline Configuration', () => {
-    let turboConfig: any;
+    let turboConfig = {
+      tasks: { build: {}, test: {}, lint: {}, typecheck: {}, dev: {}, clean: {} },
+    };
 
     beforeAll(() => {
       turboConfig = JSON.parse(readFileSync(resolve(rootDir, 'turbo.json'), 'utf-8'));

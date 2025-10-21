@@ -1,0 +1,21 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "./",
+    "noEmit": true,
+    "composite": false,
+
+    // Test-specific configuration
+    "types": ["vitest/globals", "node"],
+
+    // Internal path aliases for tests
+    "baseUrl": "./",
+    "paths": {
+      "@tests/*": ["./*"],
+      "@ffp/core": ["../packages/core/src"],
+      "@ffp/core/*": ["../packages/core/src/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "dist"]
+}

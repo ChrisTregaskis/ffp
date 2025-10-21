@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
 import { execSync } from 'child_process';
-import { resolve } from 'path';
 import { existsSync } from 'fs';
+import { resolve } from 'path';
+
+import { describe, it, expect } from 'vitest';
 
 /**
  * Tests to verify workspace dependencies work correctly
