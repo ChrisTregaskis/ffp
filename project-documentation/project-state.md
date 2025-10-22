@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: October 21, 2025 - Session 15  
+**Last Updated**: October 22, 2025 - Session 16  
 **Current Phase**: Sprint 1 Execution - IN PROGRESS 🚀  
 **Solo Developer**: Christopher Tregaskis
 
@@ -11,34 +11,27 @@
 ### Status
 
 ✅ **Complete**: Sprint Planning (all 93 subtasks defined)  
-✅ **Complete**: FFP-17 - Initialise Turborepo (1 hour)  
-✅ **Complete**: FFP-18 - Create Package Structure (2 hours)  
-✅ **Complete**: FFP-19 - Configure Workspace Dependencies (0.5 hours)  
-✅ **Complete**: FFP-20 - Setup TypeScript Paths and Configuration (1.5 hours)  
-✅ **Complete**: FFP-21 - Configure shared ESLint and Prettier (2.5 hours)  
-✅ **Complete**: FFP-22 - Configure Turborepo build pipeline and caching (2 hours)  
-✅ **Complete**: FFP-23 - Write tests for monorepo setup (2 hours)  
-🔄 **In Progress**: FFP-7 - Turborepo Monorepo Setup (7/8 subtasks complete - 88%)  
-🎯 **Next**: FFP-24 - Document monorepo structure and commands
+✅ **Complete**: FFP-7 - Turborepo Monorepo Setup (8/8 subtasks, 13 hours) 🎉  
+🎯 **Next**: FFP-8 - SST Infrastructure Foundation (10 subtasks, 27 hours)
 
 ### Sprint 1 Progress
 
-**FFP-7: Turborepo Monorepo Setup (13 hours total)**
+**FFP-7: Turborepo Monorepo Setup** ✅ **COMPLETE** (13 hours total)
 
-- ✅ FFP-17: Initialise Turborepo and base configuration (1h) - COMPLETE
-- ✅ FFP-18: Create package structure (web, functions, core) (2h) - COMPLETE
-- ✅ FFP-19: Configure workspace dependencies (0.5h) - COMPLETE
-- ✅ FFP-20: Setup TypeScript paths and configuration (1.5h) - COMPLETE
-- ✅ FFP-21: Configure shared ESLint and Prettier (2.5h) - COMPLETE
-- ✅ FFP-22: Configure Turborepo build pipeline and caching (2h) - COMPLETE
-- ✅ FFP-23: Write tests for monorepo setup (2h) - COMPLETE
-- ⏸️ FFP-24: Document monorepo structure and commands (1h)
+- ✅ FFP-17: Initialise Turborepo and base configuration (1h)
+- ✅ FFP-18: Create package structure (web, functions, core) (2h)
+- ✅ FFP-19: Configure workspace dependencies (0.5h)
+- ✅ FFP-20: Setup TypeScript paths and configuration (1.5h)
+- ✅ FFP-21: Configure shared ESLint and Prettier (2.5h)
+- ✅ FFP-22: Configure Turborepo build pipeline and caching (2h)
+- ✅ FFP-23: Write tests for monorepo setup (2h)
+- ✅ FFP-24: Document monorepo structure and commands (1h)
 
 **Time Tracking:**
 
-- Hours completed: 11.5/13 (88%)
-- Subtasks completed: 7/8 (88%)
-- **Status**: Nearly complete! ✅ Only documentation remaining (1.5h remaining)
+- Hours completed: 13/13 (100%) ✅
+- Subtasks completed: 8/8 (100%) ✅
+- **Status**: COMPLETE! 🎉
 
 ### Focus Areas
 
@@ -46,11 +39,13 @@
 - ✅ Created all 6 Epics in Jira with full descriptions and realistic timeline
 - ✅ Created 10 User Stories for Sprint 1 (FFP-7 to FFP-16) with comprehensive details
 - ✅ Created all Subtasks for Sprint 1 stories (93 subtasks across 9 stories)
+- ✅ **FFP-7 COMPLETE** - Turborepo monorepo fully set up and documented! 🎉
 - ✅ **First code written!** - Turborepo monorepo initialised and functional
-- ✅ **Path aliases configured** - Cleaner imports with @/ prefix
+- ✅ **Path aliases configured** - Clean imports with @ffp/* and namespace aliases
 - ✅ **ESLint & Prettier configured** - Shared configs, strict rules, import order
 - ✅ **Comprehensive test suite** - 70+ tests covering all monorepo aspects
-- 🔄 **Executing Sprint 1** - Building foundation infrastructure (88% complete on FFP-7)
+- ✅ **Production-ready documentation** - 1000+ lines across 4 README files
+- 🔄 **Executing Sprint 1** - Moving to FFP-8 (SST Infrastructure)
 - ⏸️ Create User Stories for Sprints 2-6 (after Sprint 1 complete)
 
 ### Sprint Planning Approach
@@ -61,7 +56,7 @@
 2. ✅ **Chat 2**: Create all 6 Epics in Jira (COMPLETE)
 3. ✅ **Chat E1**: Create User Stories for Sprint 1 (COMPLETE)
 4. ✅ **Chat S1-S9**: Create Subtasks for Sprint 1 stories (COMPLETE)
-5. ✅ **Sprint 1 Execution Started!** - FFP-17, FFP-18, FFP-19, FFP-20 complete (50%)
+5. ✅ **Sprint 1 Execution Started!** - FFP-7 COMPLETE (100%) 🎉
 6. ⏸️ **Chat E2-E6**: Create User Stories for Sprints 2-6 (after Sprint 1)
 
 ---
@@ -96,7 +91,7 @@
 
 **Sprint 1 Started: October 20, 2025**
 
-**Completed Work:**
+**Completed Work (FFP-7):**
 
 - ✅ FFP-17: Turborepo initialised with pnpm workspaces
 - ✅ FFP-18: Package structure created (web, functions, core)
@@ -104,6 +99,8 @@
 - ✅ FFP-20: TypeScript paths and internal aliases configured
 - ✅ FFP-21: ESLint and Prettier shared configs (strict rules, import order)
 - ✅ FFP-22: Turborepo caching optimised (30-100x speed improvement)
+- ✅ FFP-23: Comprehensive test suite (70+ tests, all passing)
+- ✅ FFP-24: Production-ready documentation (1000+ lines)
 - ✅ Root TypeScript configuration with strict mode
 - ✅ Namespace-based path aliases (`@web/`, `@core/`, `@functions/`) for conflict-free imports
 - ✅ Fixed missing project reference (web → core)
@@ -118,8 +115,9 @@
 
 **Next Up:**
 
-- FFP-23: Tests for monorepo setup (1h)
-- FFP-24: Documentation (1h)
+- 🎯 FFP-8: SST Infrastructure Foundation (27h, 10 subtasks)
+- FFP-9: Cognito Authentication (34h, 12 subtasks)
+- FFP-10: PostgreSQL Schema with RLS (24h, 9 subtasks)
 
 ---
 
@@ -127,20 +125,20 @@
 
 ### Complete Breakdown
 
-**Total**: 9 stories, 93 subtasks, 198 hours (~24.8 weeks at 8h/week, ~6.2 months)
+**Total**: 10 stories, 93 subtasks, 198 hours (~24.8 weeks at 8h/week, ~6.2 months)
 
-| Story     | Title                           | Subtasks | Hours    | Status               |
-| --------- | ------------------------------- | -------- | -------- | -------------------- |
-| FFP-7     | Turborepo Monorepo Setup        | 8        | 13h      | 🔄 In Progress (88%) |
-| FFP-8     | SST Infrastructure Foundation   | 10       | 27h      | ⏸️ Not Started       |
-| FFP-9     | Cognito Authentication          | 12       | 34h      | ⏸️ Not Started       |
-| FFP-10    | PostgreSQL Schema with RLS      | 9        | 24h      | ⏸️ Not Started       |
-| FFP-11    | Drizzle ORM Setup               | 9        | 22h      | ⏸️ Not Started       |
-| FFP-12    | Testing Framework Configuration | 10       | 22h      | ⏸️ Not Started       |
-| FFP-14    | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started       |
-| FFP-15    | Error Handling Patterns         | 7        | 15h      | ⏸️ Not Started       |
-| FFP-16    | Web Login/Logout Flow           | 11       | 27h      | ⏸️ Not Started       |
-| **Total** |                                 | **93**   | **198h** | **7/93 (8%)**        |
+| Story     | Title                           | Subtasks | Hours    | Status          |
+| --------- | ------------------------------- | -------- | -------- | --------------- |
+| FFP-7     | Turborepo Monorepo Setup        | 8        | 13h      | ✅ COMPLETE     |
+| FFP-8     | SST Infrastructure Foundation   | 10       | 27h      | ⏸️ Not Started  |
+| FFP-9     | Cognito Authentication          | 12       | 34h      | ⏸️ Not Started  |
+| FFP-10    | PostgreSQL Schema with RLS      | 9        | 24h      | ⏸️ Not Started  |
+| FFP-11    | Drizzle ORM Setup               | 9        | 22h      | ⏸️ Not Started  |
+| FFP-12    | Testing Framework Configuration | 10       | 22h      | ⏸️ Not Started  |
+| FFP-14    | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started  |
+| FFP-15    | Error Handling Patterns         | 7        | 15h      | ⏸️ Not Started  |
+| FFP-16    | Web Login/Logout Flow           | 11       | 27h      | ⏸️ Not Started  |
+| **Total** |                                 | **93**   | **198h** | **8/93 (9%)**   |
 
 **Note**: FFP-13 (CI/CD Pipeline) was intentionally skipped for now - can be added later if needed.
 
@@ -148,9 +146,9 @@
 
 **Sprint 1: Foundation (Weeks 1-5, ~40 hours)** 🔄 IN PROGRESS
 
-- FFP-17 through FFP-24: Turborepo setup (13h) - 88% complete (on budget)
+- ✅ FFP-17 through FFP-24: Turborepo setup (13h) - COMPLETE 🎉
 - FFP-25 through FFP-34: SST infrastructure (27h) - Not started
-- ✅ Checkpoint: Infrastructure deployed and tested
+- ✅ Checkpoint: Infrastructure deployed and tested (Turborepo phase complete)
 
 **Sprint 2: Authentication (Weeks 6-9, ~34 hours)**
 
@@ -177,14 +175,14 @@
 
 ### Critical Success Criteria
 
-- ⏸️ All 93 subtasks completed
+- ⏸️ All 93 subtasks completed (8/93 done - 9%)
 - ⏸️ RLS integration tests pass (cross-tenant isolation verified)
 - ⏸️ JWT contains tenantId and role
 - ⏸️ E2E authentication tests pass (FFP-99 - CRITICAL)
 - ✅ All TypeScript strict mode, no errors
 - ⏸️ 30% test coverage achieved
 - ⏸️ Infrastructure deployed to dev environment
-- ⏸️ Documentation updated
+- ✅ Documentation updated (FFP-7 docs complete)
 
 ---
 
@@ -219,10 +217,10 @@
 
 **Sprint 1-6 Stories (FFP-7 to FFP-16)**:
 
-- FFP-7: Turborepo Monorepo Setup (IN PROGRESS - 4/8 subtasks complete, 50%)
+- ✅ FFP-7: Turborepo Monorepo Setup (COMPLETE - 8/8 subtasks, 13h) 🎉
 - FFP-8 through FFP-16: Not started
-- Total: 93 subtasks, 4 complete (4%)
-- Current: FFP-20 COMPLETE, next is FFP-21
+- **Total Progress**: 8/93 subtasks complete (9%), 13/198 hours (7%)
+- **Current**: FFP-7 COMPLETE, next is FFP-8
 
 ---
 
@@ -261,6 +259,7 @@
 5. **TypeScript strict mode**: Enabled across all packages from day 1
 6. **Path aliases strategy**: TypeScript points to `dist`, Vite points to `src` for HMR
 7. **Namespace aliases**: `@web/`, `@core/`, `@functions/` for intra-package imports, `@ffp/` for cross-package
+8. **Comprehensive documentation**: 1000+ lines across 4 README files with troubleshooting
 
 ---
 
@@ -278,20 +277,34 @@
 
 ## Progress Summary
 
-**Recent Work** (Oct 21, 2025 - Session 15):
+**Recent Work** (Oct 22, 2025 - Session 16):
 
-- ✅ **FFP-23 COMPLETE**: Comprehensive test suite for monorepo setup
-- ✅ Created 5 test files covering all configuration aspects
-- ✅ 70+ individual test cases in organised describe blocks
-- ✅ Turborepo configuration tests (pipeline, caching, dependencies)
-- ✅ Workspace dependencies tests (protocol, imports, resolution)
-- ✅ Path aliases tests (TypeScript configs, module resolution)
-- ✅ Code quality tests (ESLint, Prettier)
-- ✅ Build outputs tests (dist directories, declarations)
-- ✅ All tests passing with Vitest framework
-- ✅ Supporting documentation created (TURBOREPO_CACHING.md)
-- 🎯 **11.5 hours logged** - On track (88% complete on FFP-7)
-- 🎯 **Next**: FFP-24 - Document monorepo structure and commands
+- ✅ **FFP-24 COMPLETE**: Comprehensive documentation for monorepo
+- ✅ **FFP-7 COMPLETE**: All 8 subtasks finished! 🎉
+- ✅ Updated root README.md (400+ lines) with full monorepo guide
+- ✅ Created @ffp/core README (300+ lines) with package documentation
+- ✅ Enhanced @ffp/web README (200+ lines) with workflows
+- ✅ Enhanced @ffp/functions README (250+ lines) with Lambda patterns
+- ✅ Path alias rules documented (@ffp/\* vs @web/\* etc.)
+- ✅ Troubleshooting guide (8 common issues with solutions)
+- ✅ Common workflow examples (8 scenarios)
+- ✅ Turborepo command reference with examples
+- 🎯 **13 hours logged** - FFP-7 complete on time and on budget! ✅
+- 🎯 **Next**: FFP-8 - SST Infrastructure Foundation (27 hours, 10 subtasks)
+
+**What's Working:**
+
+- ✅ Turborepo with pnpm workspaces
+- ✅ 3 core packages (web, functions, core)
+- ✅ Workspace dependencies (@ffp/core imports)
+- ✅ Path aliases (TypeScript + Vite)
+- ✅ Shared ESLint + Prettier configs
+- ✅ Optimised caching (30-100x speed)
+- ✅ Comprehensive test suite (70+ tests)
+- ✅ Production-ready documentation (1000+ lines)
+- ✅ VS Code integration
+- ✅ Git hooks with Husky
+- ✅ TypeScript strict mode
 
 **See `progress-log.md` for detailed session-by-session history.**
 
@@ -299,27 +312,35 @@
 
 ## Current Work
 
-### Active Task: FFP-24 - Document Monorepo Structure and Commands
+### Active Story: FFP-8 - SST Infrastructure Foundation
 
-**Objective:** Create comprehensive documentation for the monorepo structure, commands, and workflows.
+**Objective:** Set up SST (Serverless Stack) infrastructure for AWS Lambda, API Gateway, and foundational AWS services.
 
-**Acceptance Criteria:**
+**Subtasks (10 total, 27 hours):**
 
-- Document package structure and dependencies
-- List all available Turborepo commands
-- Explain workspace protocol and imports
-- Document path aliases and how to use them
-- Provide examples of common workflows
-- Include troubleshooting section
-- Update README files
+1. FFP-25: Install SST and initialise project (2h)
+2. FFP-26: Configure base AWS resources (3h)
+3. FFP-27: Setup development environment (2h)
+4. FFP-28: Create Lambda function stacks (4h)
+5. FFP-29: Configure API Gateway (3h)
+6. FFP-30: Setup environment variables (2h)
+7. FFP-31: Configure deployment stages (3h)
+8. FFP-32: Create deployment scripts (2h)
+9. FFP-33: Write infrastructure tests (4h)
+10. FFP-34: Document infrastructure setup (2h)
+
+**Dependencies:**
+
+- Requires FFP-7 (Turborepo setup) - ✅ COMPLETE
+- Blocks FFP-9 (Cognito authentication)
+- Blocks FFP-10 (PostgreSQL schema)
 
 **Next Steps:**
 
-1. Create/update root README.md with project overview
-2. Document Turborepo commands and usage
-3. Explain workspace dependencies and path aliases
-4. Add common workflow examples
-5. Include troubleshooting guide
+1. Begin FFP-25 (Install SST)
+2. Set up AWS credentials
+3. Initialise SST project
+4. Configure base infrastructure
 
 ### Development Workflow
 
@@ -333,4 +354,4 @@
 
 ---
 
-**Sprint 1 is live! 88% through FFP-7 - Nearly complete! 🚀**
+**Sprint 1 Progress: 13/198 hours (7%) - FFP-7 COMPLETE! 🎉 Moving to FFP-8!**
