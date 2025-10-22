@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **IMPORTANT**: Always use **British English spelling** throughout the codebase and documentation.
 
 Examples:
+
 - ✅ optimise, prioritise, organise, realise, analyse, summarise
 - ❌ optimize, prioritize, organize, realize, analyze, summarize
 - ✅ colour, behaviour, favour, honour
@@ -294,12 +295,14 @@ await db.query.users.findMany(); // Leaks all tenants!
 ### Documentation Structure
 
 **Root level**:
+
 - `README.md` - Comprehensive guide: commands, workflows, project structure, troubleshooting
 - `CLAUDE.md` - This file: AI assistant guidance, essential commands, architecture overview
 - `project-documentation/project-state.md` - Current sprint status, next tasks, decisions
 - `project-documentation/architecture.md` - Full AWS architecture, cost breakdown, diagrams
 
 **Package level**:
+
 - `packages/core/README.md` - Package-specific: dependencies, design principles, usage examples
 - `packages/functions/README.md` - Package-specific: handler patterns, security checklist, dependencies
 - `packages/web/README.md` - Package-specific: tech stack, dependencies, testing patterns
@@ -307,6 +310,7 @@ await db.query.users.findMany(); // Leaks all tenants!
 **Note**: Package READMEs are intentionally concise and reference root README for common commands and workflows.
 
 **Configuration**:
+
 - `turbo.json` - Build pipeline configuration
 - `pnpm-workspace.yaml` - Workspace package definitions
 

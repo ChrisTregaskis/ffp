@@ -41,7 +41,7 @@
 - ✅ Created all Subtasks for Sprint 1 stories (93 subtasks across 9 stories)
 - ✅ **FFP-7 COMPLETE** - Turborepo monorepo fully set up and documented! 🎉
 - ✅ **First code written!** - Turborepo monorepo initialised and functional
-- ✅ **Path aliases configured** - Clean imports with @ffp/* and namespace aliases
+- ✅ **Path aliases configured** - Clean imports with @ffp/\* and namespace aliases
 - ✅ **ESLint & Prettier configured** - Shared configs, strict rules, import order
 - ✅ **Comprehensive test suite** - 70+ tests covering all monorepo aspects
 - ✅ **Production-ready documentation** - 1000+ lines across 4 README files
@@ -127,18 +127,18 @@
 
 **Total**: 10 stories, 93 subtasks, 198 hours (~24.8 weeks at 8h/week, ~6.2 months)
 
-| Story     | Title                           | Subtasks | Hours    | Status          |
-| --------- | ------------------------------- | -------- | -------- | --------------- |
-| FFP-7     | Turborepo Monorepo Setup        | 8        | 13h      | ✅ COMPLETE     |
-| FFP-8     | SST Infrastructure Foundation   | 10       | 27h      | ⏸️ Not Started  |
-| FFP-9     | Cognito Authentication          | 12       | 34h      | ⏸️ Not Started  |
-| FFP-10    | PostgreSQL Schema with RLS      | 9        | 24h      | ⏸️ Not Started  |
-| FFP-11    | Drizzle ORM Setup               | 9        | 22h      | ⏸️ Not Started  |
-| FFP-12    | Testing Framework Configuration | 10       | 22h      | ⏸️ Not Started  |
-| FFP-14    | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started  |
-| FFP-15    | Error Handling Patterns         | 7        | 15h      | ⏸️ Not Started  |
-| FFP-16    | Web Login/Logout Flow           | 11       | 27h      | ⏸️ Not Started  |
-| **Total** |                                 | **93**   | **198h** | **8/93 (9%)**   |
+| Story     | Title                           | Subtasks | Hours    | Status         |
+| --------- | ------------------------------- | -------- | -------- | -------------- |
+| FFP-7     | Turborepo Monorepo Setup        | 8        | 13h      | ✅ COMPLETE    |
+| FFP-8     | SST Infrastructure Foundation   | 10       | 27h      | ⏸️ Not Started |
+| FFP-9     | Cognito Authentication          | 12       | 34h      | ⏸️ Not Started |
+| FFP-10    | PostgreSQL Schema with RLS      | 9        | 24h      | ⏸️ Not Started |
+| FFP-11    | Drizzle ORM Setup               | 9        | 22h      | ⏸️ Not Started |
+| FFP-12    | Testing Framework Configuration | 10       | 22h      | ⏸️ Not Started |
+| FFP-14    | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started |
+| FFP-15    | Error Handling Patterns         | 7        | 15h      | ⏸️ Not Started |
+| FFP-16    | Web Login/Logout Flow           | 11       | 27h      | ⏸️ Not Started |
+| **Total** |                                 | **93**   | **198h** | **8/93 (9%)**  |
 
 **Note**: FFP-13 (CI/CD Pipeline) was intentionally skipped for now - can be added later if needed.
 
