@@ -4,18 +4,6 @@ Shared business logic, types, schemas, and utilities for the FFP platform. This 
 
 ---
 
-## 📋 Contents
-
-- [Overview](#overview)
-- [Structure](#structure)
-- [Usage](#usage)
-- [Development](#development)
-- [Path Aliases](#path-aliases)
-- [Exports](#exports)
-- [Dependencies](#dependencies)
-
----
-
 ## 🎯 Overview
 
 The `@ffp/core` package provides:
@@ -30,75 +18,41 @@ The `@ffp/core` package provides:
 
 ---
 
-## 📁 Structure
-
-```
-packages/core/
-├── src/
-│   ├── types/           # TypeScript interfaces and types
-│   │   ├── User.ts
-│   │   ├── Assessment.ts
-│   │   ├── Program.ts
-│   │   └── index.ts
-│   │
-│   ├── schemas/         # Zod validation schemas
-│   │   ├── userSchemas.ts
-│   │   ├── assessmentSchemas.ts
-│   │   └── index.ts
-│   │
-│   ├── services/        # Business logic services
-│   │   ├── UserService.ts
-│   │   ├── AssessmentService.ts
-│   │   └── README.md
-│   │
-│   ├── repositories/    # Data access layer
-│   │   ├── BaseRepository.ts
-│   │   ├── UserRepository.ts
-│   │   └── README.md
-│   │
-│   ├── utils/           # Utility functions
-│   │   ├── validation.ts
-│   │   ├── formatting.ts
-│   │   └── index.ts
-│   │
-│   ├── errors/          # Custom error classes
-│   │   ├── AppError.ts
-│   │   └── index.ts
-│   │
-│   └── index.ts         # Main export file
-│
-├── dist/                # Compiled JavaScript (gitignored)
-├── package.json
-├── tsconfig.json        # TypeScript configuration
-└── README.md
-```
-
----
-
 ## 🚀 Usage
 
-### In Other Packages
-
-Import from `@ffp/core` in `@ffp/web` or `@ffp/functions`:
+### Importing in Other Packages
 
 ```typescript
-// ✅ Import types
+// Import types
 import type { User, Assessment, Program } from '@ffp/core';
 
-// ✅ Import schemas
+// Import schemas
 import { UserSchema, AssessmentSchema } from '@ffp/core';
 
-// ✅ Import services
+// Import services
 import { UserService, AssessmentService } from '@ffp/core';
 
-// ✅ Import utilities
+// Import utilities
 import { validateEmail, formatDate } from '@ffp/core/utils';
 
-// ✅ Import custom errors
+// Import custom errors
 import { AppError, ValidationError } from '@ffp/core/errors';
 ```
 
-### Example: Using Schemas for Validation
+### Within This Package
+
+Use `@core/*` aliases for imports within this package:
+
+```typescript
+// ✅ Good - using intra-package alias
+import { UserRepository } from '@core/repositories/UserRepository';
+import type { User } from '@core/types/User';
+
+// ❌ Bad - using workspace dependency on itself
+import { UserRepository } from '@ffp/core/repositories/UserRepository';
+```
+
+### Example: Using Schemas
 
 ```typescript
 import { UserSchema } from '@ffp/core';
@@ -113,110 +67,6 @@ const userData = {
 const result = UserSchema.safeParse(userData);
 if (result.success) {
   console.log('Valid user:', result.data);
-} else {
-  console.error('Validation errors:', result.error);
-}
-```
-
-### Example: Using Services
-
-```typescript
-import { UserService } from '@ffp/core';
-
-const userService = new UserService(userRepository);
-const user = await userService.createUser({
-  email: 'user@example.com',
-  name: 'John Doe',
-  tenantId: 'tenant-123',
-});
-```
-
----
-
-## 💻 Development
-
-### Development Mode
-
-```bash
-# Watch for changes and rebuild automatically
-pnpm dev
-
-# Or from root
-cd ../..
-pnpm dev:core
-```
-
-### Build
-
-```bash
-# Build once
-pnpm build
-
-# Or from root
-cd ../..
-pnpm turbo build --filter=@ffp/core
-```
-
-### Testing
-
-```bash
-# Run tests
-pnpm test
-
-# Watch mode
-pnpm test:watch
-
-# With UI
-pnpm test:ui
-```
-
-### Type Checking
-
-```bash
-# Type check without building
-pnpm typecheck
-```
-
-### Linting
-
-```bash
-# Lint code
-pnpm lint
-
-# Auto-fix issues
-pnpm lint --fix
-```
-
----
-
-## 🔗 Path Aliases
-
-### Intra-Package Imports (Within @ffp/core)
-
-Use `@core/*` aliases for imports within this package:
-
-```typescript
-// ✅ Good - using intra-package alias
-import { UserRepository } from '@core/repositories/UserRepository';
-import type { User } from '@core/types/User';
-import { validateEmail } from '@core/utils/validation';
-
-// ❌ Bad - using workspace dependency on itself
-import { UserRepository } from '@ffp/core/repositories/UserRepository';
-
-// ❌ Bad - relative imports for distant files
-import { UserRepository } from '../../repositories/UserRepository';
-```
-
-**Configuration in `tsconfig.json`:**
-
-```json
-{
-  "compilerOptions": {
-    "paths": {
-      "@core/*": ["./src/*"]
-    }
-  }
 }
 ```
 
@@ -243,12 +93,6 @@ export * from './utils';
 export * from './errors';
 ```
 
-**Adding New Exports:**
-
-1. Create your file in the appropriate directory
-2. Export from the directory's `index.ts`
-3. Verify it's re-exported from `src/index.ts`
-
 ---
 
 ## 📦 Dependencies
@@ -261,7 +105,6 @@ export * from './errors';
 
 - **typescript** (^5.6.3) - TypeScript compiler
 - **vitest** (^2.1.4) - Unit testing framework
-- **eslint** (^8.57.1) - Code linting
 - **@ffp/eslint-config** - Shared ESLint configuration
 
 ---
@@ -309,81 +152,11 @@ Each module should have one clear purpose:
 
 ---
 
-## 🔄 Workflow
-
-### Adding a New Type
-
-```bash
-# 1. Create type file
-touch src/types/NewType.ts
-
-# 2. Define interface
-# In src/types/NewType.ts:
-export interface NewType {
-  id: string;
-  name: string;
-}
-
-# 3. Export from types/index.ts
-echo "export * from './NewType';" >> src/types/index.ts
-
-# 4. Rebuild
-pnpm build
-```
-
-### Adding a New Schema
-
-```bash
-# 1. Create schema file
-touch src/schemas/newSchemas.ts
-
-# 2. Define Zod schema
-# In src/schemas/newSchemas.ts:
-import { z } from 'zod';
-export const NewSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().min(1),
-});
-
-# 3. Export from schemas/index.ts
-echo "export * from './newSchemas';" >> src/schemas/index.ts
-
-# 4. Rebuild and test
-pnpm build
-pnpm test
-```
-
-### Adding a New Service
-
-```bash
-# 1. Create service file
-touch src/services/NewService.ts
-
-# 2. Implement service class
-# Follow patterns in existing services
-
-# 3. Export from services/index.ts
-echo "export * from './NewService';" >> src/services/index.ts
-
-# 4. Write tests
-touch src/services/__tests__/NewService.test.ts
-
-# 5. Test and build
-pnpm test
-pnpm build
-```
-
----
-
 ## 📚 Further Reading
 
-- **Root README**: `../../README.md` - Monorepo structure and commands
+For detailed commands, project structure, and workflows, see:
+
+- **Root README**: `../../README.md` - Development commands and monorepo structure
 - **Architecture**: `../../project-documentation/architecture.md`
 - **Coding Standards**: `../../project-documentation/coding-standards.md`
 - **Database Schema**: `../../project-documentation/database-schema.md`
-
----
-
-**Current Status**: ✅ Core package structure complete  
-**Last Updated**: October 22, 2025  
-**Maintained By**: FFP Development Team
