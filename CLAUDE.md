@@ -2,6 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Language & Spelling Preference
+
+**IMPORTANT**: Always use **British English spelling** throughout the codebase and documentation.
+
+Examples:
+
+- ✅ optimise, prioritise, organise, realise, analyse, summarise
+- ❌ optimize, prioritize, organize, realize, analyze, summarize
+- ✅ colour, behaviour, favour, honour
+- ❌ color, behavior, favor, honor
+- ✅ centre, licence (noun), defence
+- ❌ center, license (noun), defense
+
+This applies to all code comments, documentation, commit messages, and user-facing content.
+
 ## Project Overview
 
 **Fit For Purpose (FFP)** is a multi-tenant physiotherapy SaaS platform built as a monorepo. The platform uses dynamic assessment engines to generate personalised workout programmes from a curated video catalogue.
@@ -277,16 +292,32 @@ await db.query.users.findMany(); // Leaks all tenants!
 
 ## Important Files to Reference
 
+### Documentation Structure
+
+**Root level**:
+
+- `README.md` - Comprehensive guide: commands, workflows, project structure, troubleshooting
+- `CLAUDE.md` - This file: AI assistant guidance, essential commands, architecture overview
 - `project-documentation/project-state.md` - Current sprint status, next tasks, decisions
 - `project-documentation/architecture.md` - Full AWS architecture, cost breakdown, diagrams
-- `README.md` - Quick start guide, basic commands
+
+**Package level**:
+
+- `packages/core/README.md` - Package-specific: dependencies, design principles, usage examples
+- `packages/functions/README.md` - Package-specific: handler patterns, security checklist, dependencies
+- `packages/web/README.md` - Package-specific: tech stack, dependencies, testing patterns
+
+**Note**: Package READMEs are intentionally concise and reference root README for common commands and workflows.
+
+**Configuration**:
+
 - `turbo.json` - Build pipeline configuration
 - `pnpm-workspace.yaml` - Workspace package definitions
 
 ## Project Constraints
 
 - **Solo developer**: 8 hours/week capacity
-- **Phase 1 focus**: Foundation infrastructure (no premature optimization)
+- **Phase 1 focus**: Foundation infrastructure (no premature optimisation)
 - **Security first**: Healthcare data, OWASP compliance required
 - **Cost conscious**: Target ~£54-87/month AWS spend in Phase 1
 - **Test coverage**: 30% minimum (will increase in later phases)
