@@ -1,3 +1,13 @@
+# NOT ROOT LEVEL README!
+
+For some reason this GitHub repo insists on displaying .github/README.md instead of the ROOT level README.md.
+
+kmt
+
+Click on the ROOT level README.md for project overview, setup instructions etc.
+
+---
+
 # GitHub Configuration
 
 This directory contains GitHub-specific configuration files for the FFP project.

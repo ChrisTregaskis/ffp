@@ -2,14 +2,79 @@
 
 **Fit For Purpose (FFP)** is a multi-tenant physiotherapy SaaS platform built in partnership with a practising physiotherapist. The platform uses dynamic assessment engines to generate personalised workout programmes from a curated video catalogue.
 
+## Overview
+
+FFP combines evidence-based physiotherapy assessment with personalised exercise prescription. The platform enables physiotherapists to:
+
+- **Assess patients** using dynamic, branching question flows
+- **Generate programmes** from a curated library of exercise videos
+- **Track progress** with multi-tenant isolation and secure data management
+- **Scale efficiently** with serverless architecture
+
+Built as a Turborepo monorepo with strict TypeScript, the platform prioritises security (healthcare data compliance), multi-tenant isolation (PostgreSQL RLS), and developer experience (fast builds, HMR, comprehensive testing).
+
+**Current phase**: Sprint 1 (Foundation) - Setting up core infrastructure and development workflows.
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **Node.js**: >= 20.0.0
+- **pnpm**: >= 9.0.0
+
+### Installation
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd ffp
+
+# Install dependencies
+pnpm install
+
+# Build all packages
+pnpm build
+
+# Verify setup
+pnpm test
+pnpm typecheck
+pnpm lint
+```
+
+### Development
+
+```bash
+# Start all packages in development mode
+pnpm dev
+
+# This will:
+# - Build @ffp/core and watch for changes
+# - Start Vite dev server for @ffp/web (http://localhost:5173)
+# - Watch @ffp/functions for changes
+```
+
+### Before Your First Commit
+
+```bash
+# Lint and format all code
+pnpm lint-format
+
+# Run type checks
+pnpm typecheck
+
+# Run tests
+pnpm test
+```
+
 ---
 
 ## 📋 Table of Contents
 
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Development](#development)
+- [Development Commands](#development-commands)
 - [Turborepo Commands](#turborepo-commands)
 - [Workspace Dependencies](#workspace-dependencies)
 - [Path Aliases](#path-aliases)
@@ -98,35 +163,7 @@ ffp/
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- **Node.js**: >= 20.0.0
-- **pnpm**: >= 9.0.0
-
-### Installation
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd ffp
-
-# Install dependencies (uses pnpm workspaces)
-pnpm install
-
-# Build all packages
-pnpm build
-
-# Verify setup
-pnpm test
-pnpm typecheck
-pnpm lint
-```
-
----
-
-## 💻 Development
+## 💻 Development Commands
 
 ### Run All Packages in Development Mode
 
