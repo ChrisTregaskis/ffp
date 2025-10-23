@@ -66,6 +66,7 @@
 5. ✅ **Validated approach**: Reviewed against latest SST documentation via Context7
 
 **Cost Impact:**
+
 - Phase 1: £0/month (default VPC)
 - Production (FFP-101): +£30-45/month when revenue supports it
 
