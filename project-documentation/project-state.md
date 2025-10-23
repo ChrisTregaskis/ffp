@@ -319,7 +319,7 @@
 **Subtasks (10 total, 27 hours):**
 
 1. ✅ FFP-25: Install SST and initialise project (2h) - COMPLETE
-2. FFP-26: Configure base AWS resources (3h) - IN PROGRESS
+2. ✅ FFP-26: Configure default VPC for Phase 1 (3h) - COMPLETE
 3. FFP-27: Setup development environment (2h)
 4. FFP-28: Create Lambda function stacks (4h)
 5. FFP-29: Configure API Gateway (3h)
@@ -335,12 +335,19 @@
 - Blocks FFP-9 (Cognito authentication)
 - Blocks FFP-10 (PostgreSQL schema)
 
+**Implementation Notes (FFP-26):**
+
+- Phase 1 uses AWS default VPC automatically (no explicit VPC configuration needed)
+- Resources (RDS, Lambda) will use default VPC when `vpc` prop omitted
+- Custom VPC with private subnets deferred to FFP-101 (pre-production)
+- Validated against SST v3 Ion documentation via Context7 MCP server
+
 **Next Steps:**
 
 1. ✅ FFP-25 (Install SST) - COMPLETE
-2. Begin FFP-26 (Configure base AWS resources)
-3. Create stacks directory structure
-4. Define base infrastructure components
+2. ✅ FFP-26 (Configure default VPC) - COMPLETE
+3. Begin FFP-27 (Setup development environment)
+4. Configure SST dev mode and local development workflow
 
 ### Development Workflow
 
@@ -354,4 +361,4 @@
 
 ---
 
-**Sprint 1 Progress: 15/198 hours (8%) - FFP-7 COMPLETE! FFP-8 started (1/10)!**
+**Sprint 1 Progress: 18/198 hours (9%) - FFP-7 COMPLETE! FFP-8 in progress (2/10)!**
