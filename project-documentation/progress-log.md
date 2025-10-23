@@ -1,3 +1,38 @@
+### October 23, 2025 (Session 17 - FFP-25 Complete!)
+
+**Status**: ✅ FFP-25 COMPLETE! SST v3 initialised - Moving to FFP-26
+
+**Completed Subtask:**
+
+**FFP-25: Install SST and Initialise Project** ✅ COMPLETE (2 hours)
+
+- **Installed SST v3.17.21** as dev dependency
+- **Created sst.config.ts** with SST Ion syntax:
+  - Region: `eu-west-2` (London) for UK-based audience
+  - App name: `ffp`
+  - Dev and staging stages configured
+  - Production removal policy (retain resources)
+  - Ready for stacks to be added in FFP-26
+- **Added SST scripts** to root package.json:
+  - `pnpm sst:dev` - Start SST dev mode
+  - `pnpm sst:build` - Build infrastructure
+  - `pnpm sst:deploy` - Deploy to default stage
+  - `pnpm sst:deploy:dev` / `pnpm sst:deploy:staging` - Stage-specific deploys
+  - `pnpm sst:remove` - Remove infrastructure
+- **Verified AWS credentials** - Correct account (311376119361)
+- **Verified SST CLI** - Version 3.17.21 working
+
+**Key Decisions:**
+
+1. ✅ **Region**: Changed from `us-east-1` to `eu-west-2` (UK-based audience)
+2. ✅ **SST Version**: v3 Ion (latest, recommended)
+3. ✅ **Stages**: Dev + staging now, production to be added later (trivial to add)
+4. ✅ **Script naming**: Namespaced as `sst:*` to avoid Turborepo conflicts
+
+**Progress**: FFP-8 started - 1/10 subtasks complete (10%), 2/27 hours (7%)
+
+---
+
 ### October 22, 2025 (Session 16 - FFP-24 Complete!)
 
 **Status**: ✅ FFP-7 COMPLETE! All 8 subtasks finished - Sprint 1 moving to FFP-8

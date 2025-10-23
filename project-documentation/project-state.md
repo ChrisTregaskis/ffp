@@ -1,7 +1,7 @@
 # FFP - Project State
 
-**Last Updated**: October 22, 2025 - Session 16  
-**Current Phase**: Sprint 1 Execution - IN PROGRESS 🚀  
+**Last Updated**: October 23, 2025 - Session 17
+**Current Phase**: Sprint 1 Execution - IN PROGRESS 🚀
 **Solo Developer**: Christopher Tregaskis
 
 ---
@@ -318,8 +318,8 @@
 
 **Subtasks (10 total, 27 hours):**
 
-1. FFP-25: Install SST and initialise project (2h)
-2. FFP-26: Configure base AWS resources (3h)
+1. ✅ FFP-25: Install SST and initialise project (2h) - COMPLETE
+2. FFP-26: Configure base AWS resources (3h) - IN PROGRESS
 3. FFP-27: Setup development environment (2h)
 4. FFP-28: Create Lambda function stacks (4h)
 5. FFP-29: Configure API Gateway (3h)
@@ -337,10 +337,10 @@
 
 **Next Steps:**
 
-1. Begin FFP-25 (Install SST)
-2. Set up AWS credentials
-3. Initialise SST project
-4. Configure base infrastructure
+1. ✅ FFP-25 (Install SST) - COMPLETE
+2. Begin FFP-26 (Configure base AWS resources)
+3. Create stacks directory structure
+4. Define base infrastructure components
 
 ### Development Workflow
 
@@ -354,4 +354,4 @@
 
 ---
 
-**Sprint 1 Progress: 13/198 hours (7%) - FFP-7 COMPLETE! 🎉 Moving to FFP-8!**
+**Sprint 1 Progress: 15/198 hours (8%) - FFP-7 COMPLETE! FFP-8 started (1/10)!**
