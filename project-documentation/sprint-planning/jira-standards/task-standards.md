@@ -96,7 +96,7 @@ Setup SST infrastructure for API Gateway + Lambda, enabling serverless backend d
 
 ```bash
 npm run sst deploy -- --stage dev
-curl https://<api-id>.execute-api.eu-west-2.amazonaws.com/dev/health
+curl https://<api-id>.execute-api.us-east-1.amazonaws.com/dev/health
 ```
 ````
 
