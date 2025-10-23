@@ -862,7 +862,7 @@ Create SST stack definitions that provision:
 npm run sst deploy -- --stage dev
 
 # Verify API endpoint
-curl https://<api-id>.execute-api.us-east-1.amazonaws.com/dev/health
+curl https://<api-id>.execute-api.eu-west-2.amazonaws.com/dev/health
 
 # Check Lambda function logs
 npm run sst logs -- --stage dev --function auth-register
