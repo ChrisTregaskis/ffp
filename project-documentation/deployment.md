@@ -73,7 +73,7 @@ export default {
   config(_input) {
     return {
       name: 'ffp',
-      region: 'us-east-1',
+      region: 'eu-west-2',
     };
   },
   stacks(app) {
@@ -354,19 +354,19 @@ Set these in GitHub Repository Settings → Secrets and variables → Actions:
 
 ```bash
 # Staging
-STAGING_COGNITO_POOL_ID=us-east-1_ABC123
+STAGING_COGNITO_POOL_ID=eu-west-2_ABC123
 STAGING_COGNITO_CLIENT_ID=abc123def456
 STAGING_DISTRIBUTION_ID=E1234567890ABC
 
 # Production
-PROD_COGNITO_POOL_ID=us-east-1_XYZ789
+PROD_COGNITO_POOL_ID=eu-west-2_XYZ789
 PROD_COGNITO_CLIENT_ID=xyz789abc123
 PROD_DISTRIBUTION_ID=E9876543210XYZ
 
 # AWS Credentials
 AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
 AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-AWS_DEFAULT_REGION=us-east-1
+AWS_DEFAULT_REGION=eu-west-2
 ```
 
 ### Branch Mapping
@@ -558,7 +558,7 @@ aws s3api copy-object \
 aws secretsmanager create-secret \
   --name ffp/prod/db-credentials \
   --secret-string '{
-    "host": "ffp-prod-db.xxx.us-east-1.rds.amazonaws.com",
+    "host": "ffp-prod-db.xxx.eu-west-2.rds.amazonaws.com",
     "port": 5432,
     "username": "ffp_admin",
     "password": "super-secret-password",
@@ -576,7 +576,7 @@ aws secretsmanager create-secret \
 ```typescript
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 
-const client = new SecretsManagerClient({ region: 'us-east-1' });
+const client = new SecretsManagerClient({ region: 'eu-west-2' });
 
 export async function getSecret(secretName: string) {
   const response = await client.send(new GetSecretValueCommand({ SecretId: secretName }));
