@@ -6,6 +6,8 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 
 ## Infrastructure Stack (Phase 1)
 
+**Infrastructure-as-Code**: SST v3 Ion (Pulumi-based, TypeScript-first)
+
 ### Core Services
 
 #### Authentication & API Layer
@@ -48,11 +50,13 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 #### Security & Networking
 
 - **VPC**: Network isolation
-  - Public subnets: API Gateway, NAT Gateways
-  - Private subnets: Lambda, RDS
+  - **Phase 1**: AWS default VPC (cost optimisation - no NAT Gateway costs)
+  - **Production** (FFP-101): Custom VPC with private subnets and NAT Gateway
+  - Public subnets: API Gateway
+  - Private subnets: Lambda, RDS (production only)
 - **Security Groups**: Firewall rules
   - RDS: Only Lambda security group allowed
-  - Lambda: Outbound to RDS and internet (via NAT)
+  - Lambda: Outbound to RDS and internet
 - **Secrets Manager**: Credential storage
   - Database connection strings
   - JWT signing secrets
@@ -91,6 +95,8 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 
 ## Architecture Diagram (Phase 1)
 
+**Note**: Phase 1 uses AWS default VPC for cost optimisation (no NAT Gateway costs). Production will migrate to custom VPC with private subnets (FFP-101).
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                            User/Browser                                 │
@@ -120,18 +126,12 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
               └─────────┬──────────┘
                         │
 ╔═══════════════════════╧═══════════════════════════════════════════════╗
-║                           AWS VPC                                     ║
+║                   AWS Default VPC (Phase 1)                           ║
+║                   (Custom VPC in Production - FFP-101)                ║
+║                                                                       ║
 ║  ┌─────────────────────────────────────────────────────────────────┐  ║
-║  │                    Public Subnets (Multi-AZ)                    │  ║
-║  │  ┌────────────────────┐          ┌────────────────────┐         │  ║
-║  │  │  NAT Gateway (AZ1) │          │  NAT Gateway (AZ2) │         │  ║
-║  │  │  Elastic IP        │          │  Elastic IP        │         │  ║
-║  │  └─────────┬──────────┘          └─────────┬──────────┘         │  ║
-║  └────────────┼───────────────────────────────┼────────────────────┘  ║
-║               │                               │                       ║
-║  ┌────────────┼───────────────────────────────┼────────────────────┐  ║
-║  │            │  Private Subnets (Multi-AZ)   │                    │  ║
-║  │            ↓                               ↓                    │  ║
+║  │              Default Public Subnets (Multi-AZ)                  │  ║
+║  │                                                                 │  ║
 ║  │  ┌─────────────────────┐      ┌─────────────────────┐           │  ║
 ║  │  │ Lambda Functions    │      │ Lambda Functions    │           │  ║
 ║  │  │ (Security Group:    │      │ (Security Group:    │           │  ║
@@ -141,7 +141,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 ║  │  │ • Video Handler     │      │ • Program Gen       │           │  ║
 ║  │  └──────────┬──────────┘      └──────────┬──────────┘           │  ║
 ║  │             │                            │                      │  ║
-║  │         Drizzle ORM (Type-safe, parameterized)                  │  ║
+║  │         Drizzle ORM (Type-safe, parameterised)                  │  ║
 ║  │             │                            │                      │  ║
 ║  │             └────────────┬───────────────┘                      │  ║
 ║  │                          ↓                                      │  ║
@@ -157,7 +157,9 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 ║                                                                       ║
 ║  Security Group Rules:                                                ║
 ║  • RDSSG: Inbound port 5432 ONLY from LambdaSG                        ║
-║  • LambdaSG: Outbound to RDSSG (port 5432) + Internet via NAT         ║
+║  • LambdaSG: Outbound to RDSSG (port 5432) + Internet (direct)        ║
+║                                                                       ║
+║  Cost Savings: ~£30-35/month (no NAT Gateway in Phase 1)              ║
 ╚═══════════════════════════════════════════════════════════════════════╝
 
 ┌────────────────────────┐       ┌────────────────────────┐

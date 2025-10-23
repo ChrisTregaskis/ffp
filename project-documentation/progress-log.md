@@ -1,3 +1,79 @@
+### October 23, 2025 (Session 17 - FFP-25 & FFP-26 Complete!)
+
+**Status**: ✅ FFP-26 COMPLETE! Default VPC configured - Moving to FFP-27
+
+**Completed Subtasks:**
+
+**FFP-25: Install SST and Initialise Project** ✅ COMPLETE (2 hours)
+
+**FFP-26: Configure Default VPC for Phase 1** ✅ COMPLETE (3 hours)
+
+- **Installed SST v3.17.21** as dev dependency
+- **Created sst.config.ts** with SST Ion syntax:
+  - Region: `eu-west-2` (London) for UK-based audience
+  - App name: `ffp`
+  - Dev and staging stages configured
+  - Production removal policy (retain resources)
+  - Ready for stacks to be added in FFP-26
+- **Added SST scripts** to root package.json:
+  - `pnpm sst:dev` - Start SST dev mode
+  - `pnpm sst:build` - Build infrastructure
+  - `pnpm sst:deploy` - Deploy to default stage
+  - `pnpm sst:deploy:dev` / `pnpm sst:deploy:staging` - Stage-specific deploys
+  - `pnpm sst:remove` - Remove infrastructure
+- **Verified AWS credentials** - Correct account (311376119361)
+- **Verified SST CLI** - Version 3.17.21 working
+
+**Key Decisions:**
+
+1. ✅ **Region**: Changed from `us-east-1` to `eu-west-2` (UK-based audience)
+2. ✅ **SST Version**: v3 Ion (latest, recommended)
+3. ✅ **Stages**: Dev + staging now, production to be added later (trivial to add)
+4. ✅ **Script naming**: Namespaced as `sst:*` to avoid Turborepo conflicts
+
+**FFP-26: Configure Default VPC for Phase 1 (Cost Optimisation)** ✅ COMPLETE (3 hours)
+
+- **Updated FFP-26 Jira ticket** to reflect default VPC approach:
+  - Changed from custom VPC with NAT Gateway (£30-35/month cost)
+  - Now uses AWS default VPC for Phase 1 (£0/month)
+  - Detailed cost rationale documented
+- **Created backlog ticket FFP-101** for custom VPC implementation (pre-production):
+  - Comprehensive implementation plan
+  - Cost impact analysis (£30-45/month)
+  - Migration strategy documented
+  - Zero-downtime deployment plan
+- **Updated sst.config.ts** with VPC strategy documentation:
+  - Added clear comments explaining Phase 1 default VPC approach
+  - Documented that resources (RDS, Lambda) will auto-use default VPC when no `vpc` prop specified
+  - Reference to FFP-101 for future custom VPC migration
+  - Clean, minimal configuration (no unnecessary code)
+- **Verified configuration**:
+  - SST CLI working correctly (v3.17.21)
+  - No errors in configuration
+  - Reviewed against latest SST v3 Ion documentation via Context7 MCP server
+- **Implementation refinement** (post-Context7 review):
+  - Initially created `infra/vpc.ts` with plain object (incorrect for SST v3)
+  - Reviewed SST v3 Ion documentation and identified simpler pattern
+  - Removed unnecessary VPC helper file (resources use default VPC automatically)
+  - Simplified to pure SST v3 Ion pattern: omit `vpc` prop = use default VPC
+
+**Key Decisions:**
+
+1. ✅ **Cost optimisation**: Default VPC saves £30-35/month (40-65% of Phase 1 budget)
+2. ✅ **Security**: Still adequate with security groups in default VPC
+3. ✅ **Future-proof**: Migration to custom VPC (FFP-101) is straightforward
+4. ✅ **SST v3 Ion pattern**: Resources automatically use default VPC when `vpc` prop omitted
+5. ✅ **Validated approach**: Reviewed against latest SST documentation via Context7
+
+**Cost Impact:**
+
+- Phase 1: £0/month (default VPC)
+- Production (FFP-101): +£30-45/month when revenue supports it
+
+**Progress**: FFP-8 - 2/10 subtasks complete (20%), 5/27 hours (19%)
+
+---
+
 ### October 22, 2025 (Session 16 - FFP-24 Complete!)
 
 **Status**: ✅ FFP-7 COMPLETE! All 8 subtasks finished - Sprint 1 moving to FFP-8
