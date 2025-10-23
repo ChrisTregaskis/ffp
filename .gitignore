@@ -49,3 +49,7 @@ pnpm-debug.log*
 # Misc
 *.tsbuildinfo
 .eslintcache
+
+# Local config (personal, not shared)
+CLAUDE.local.md
+.claude.md
