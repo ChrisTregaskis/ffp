@@ -944,7 +944,7 @@ export function loadConfig(): Config {
       clientId: process.env.COGNITO_CLIENT_ID!,
     },
     aws: {
-      region: process.env.AWS_REGION || 'us-east-1',
+      region: process.env.AWS_REGION || 'eu-west-2',
       s3Bucket: process.env.S3_VIDEOS_BUCKET!,
       cloudFrontDomain: process.env.CLOUDFRONT_DOMAIN!,
     },
