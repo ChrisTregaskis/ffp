@@ -361,13 +361,19 @@ _Independent Resources (can work in parallel)_
 1. FFP-27: Cognito User Pool
 2. FFP-29: S3 + CloudFront Storage
 
-_Database & Secrets_ 3. FFP-28: RDS PostgreSQL Database 4. FFP-32: Secrets Manager
+_Database & Secrets_
+3. FFP-28: RDS PostgreSQL Database
+4. FFP-32: Secrets Manager
 
-_API Layer_ 5. FFP-30: API Gateway + JWT Authorizer
+_API Layer_
+5. FFP-30: API Gateway + JWT Authorizer
 
-_Observability & Config_ 6. FFP-31: CloudWatch Monitoring 7. FFP-33: Environment Settings
+_Observability & Config_
+6. FFP-31: CloudWatch Monitoring
+7. FFP-33: Environment Settings
 
-_Phase 5: Validation_ 8. FFP-34: Deploy & Test
+_Phase 5: Validation_
+8. FFP-34: Deploy & Test
 
 **Next Steps:**
 
