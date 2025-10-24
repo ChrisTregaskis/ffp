@@ -314,6 +314,38 @@ await db.query.users.findMany(); // Leaks all tenants!
 - `turbo.json` - Build pipeline configuration
 - `pnpm-workspace.yaml` - Workspace package definitions
 
+## MCP Server Usage (Context7)
+
+**CRITICAL**: When using the Context7 MCP server, be mindful of token consumption.
+
+### Token Budget Awareness
+
+- Context7 responses can be **very large** (10k-15k tokens per call)
+- Each response **fully consumes** those tokens from the context window
+- Multiple large calls can quickly fill up available context
+- The terminal warning `⚠ Large MCP response (~12.3k tokens)` indicates actual consumption
+
+### Best Practices
+
+**Request smaller token limits**:
+```
+Use tokens: 5000 instead of default 10000
+```
+
+**Be specific with topic parameter**:
+```
+// ❌ Too broad
+topic: "cognito user pool authentication custom attributes SST v3 Ion"
+
+// ✅ More focused
+topic: "cognito post authentication trigger SST Ion"
+```
+
+**Consider web_search as alternative**:
+- **Context7**: More reliable, comprehensive docs, but token-heavy
+- **web_search**: More token-efficient, but may require multiple searches or fetches
+- **Decision rule**: Use Context7 for definitive documentation, web_search for quick lookups or when context is running low
+
 ## Project Constraints
 
 - **Solo developer**: 8 hours/week capacity
