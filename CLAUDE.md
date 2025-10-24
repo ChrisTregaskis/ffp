@@ -220,6 +220,15 @@ All internal dependencies use `workspace:*` protocol:
 
 ### Git Workflow
 
+**IMPORTANT**: User controls all git operations (`git add`, `git commit`, `git push`)
+
+**Claude's Role**:
+- **NEVER** run `git add`, `git commit`, or `git push` commands
+- **DO** suggest when work is ready for commit
+- **DO** provide a brief summary of what was accomplished
+- **DO** wait for user to handle commit, review, and merge
+
+**Commit Format**:
 ```bash
 # Commit format for sprint work
 git commit -m "FFP-XX: Brief description of change"
@@ -227,6 +236,13 @@ git commit -m "FFP-XX: Brief description of change"
 # Example
 git commit -m "FFP-23: Add comprehensive monorepo tests"
 ```
+
+**Typical Workflow**:
+1. Claude completes work and suggests: "Session ready for commit"
+2. User reviews changes and runs `git add`, `git commit`, `git push`
+3. User reviews PR on GitHub (with Copilot assistance)
+4. User merges PR when satisfied
+5. User returns to Claude to continue next task
 
 ### When Adding New Features
 
