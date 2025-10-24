@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: October 23, 2025 - Session 17
+**Last Updated**: October 24, 2025 - Session 18
 **Current Phase**: Sprint 1 Execution - IN PROGRESS 🚀
 **Solo Developer**: Christopher Tregaskis
 
@@ -46,7 +46,7 @@
 - ✅ **Comprehensive test suite** - 70+ tests covering all monorepo aspects
 - ✅ **Production-ready documentation** - 1000+ lines across 4 README files
 - 🔄 **Executing Sprint 1** - Moving to FFP-8 (SST Infrastructure)
-- ⏸️ Create User Stories for Sprints 2-6 (after Sprint 1 complete)
+- ⏸️ Create User Stories for EPICs 2-6 (after EPIC 1 complete)
 
 ### Sprint Planning Approach
 
@@ -250,7 +250,7 @@
 3. **RLS testing mandatory** - Cross-tenant isolation verified via integration tests
 4. **Documentation as you go** - Update docs per subtask, not at end
 
-### Implementation Decisions (Sprint 1)
+### Implementation Decisions
 
 1. **Package naming**: `functions` not `api` per architecture.md
 2. **No database package**: Schemas/migrations at root level (added in FFP-10)
@@ -277,20 +277,19 @@
 
 ## Progress Summary
 
-**Recent Work** (Oct 22, 2025 - Session 16):
+**Recent Work** (Oct 24, 2025 - Session 18):
 
-- ✅ **FFP-24 COMPLETE**: Comprehensive documentation for monorepo
-- ✅ **FFP-7 COMPLETE**: All 8 subtasks finished! 🎉
-- ✅ Updated root README.md (400+ lines) with full monorepo guide
-- ✅ Created @ffp/core README (300+ lines) with package documentation
-- ✅ Enhanced @ffp/web README (200+ lines) with workflows
-- ✅ Enhanced @ffp/functions README (250+ lines) with Lambda patterns
-- ✅ Path alias rules documented (@ffp/\* vs @web/\* etc.)
-- ✅ Troubleshooting guide (8 common issues with solutions)
-- ✅ Common workflow examples (8 scenarios)
-- ✅ Turborepo command reference with examples
-- 🎯 **13 hours logged** - FFP-7 complete on time and on budget! ✅
-- 🎯 **Next**: FFP-8 - SST Infrastructure Foundation (27 hours, 10 subtasks)
+- ✅ **FFP-27 REWRITTEN**: Cognito User Pool updated for SST v3 Ion with Pulumi transforms
+- ✅ **FFP-28 REWRITTEN**: RDS PostgreSQL updated for SST v3, default VPC strategy, Aurora Serverless v2
+- ✅ **FFP-29 REWRITTEN**: S3 + CloudFront updated for SST v3 (sst.aws.Bucket, sst.aws.Cdn)
+- ✅ **FFP-30 REWRITTEN**: API Gateway updated for SST v3 (sst.aws.ApiGatewayV2, JWT authorizer)
+- ✅ **FFP-31 REWRITTEN**: CloudWatch monitoring updated for SST v3 (Pulumi aws.cloudwatch.\*)
+- ✅ **FFP-32 REWRITTEN**: Secrets Manager updated for SST v3 (Pulumi aws.secretsmanager.\*)
+- ✅ **FFP-33 REWRITTEN**: Environment settings updated for SST v3 ($app.stage conditional logic)
+- ✅ **FFP-34 REWRITTEN**: Deploy & test updated for SST v3 Ion deployment commands
+- ✅ **All tickets**: Region fixed (us-east-1 → eu-west-2), package paths fixed (api → functions)
+- ✅ **project-state.md**: Updated with corrected subtask descriptions and recommended execution order
+- 🎯 **All FFP-8 subtasks**: Ready for implementation with SST v3 Ion syntax!
 
 **What's Working:**
 
@@ -316,18 +315,18 @@
 
 **Objective:** Set up SST (Serverless Stack) infrastructure for AWS Lambda, API Gateway, and foundational AWS services.
 
-**Subtasks (10 total, 27 hours):**
+**Subtasks (10 total, 27 hours) - ALL UPDATED FOR SST v3 ION:**
 
 1. ✅ FFP-25: Install SST and initialise project (2h) - COMPLETE
 2. ✅ FFP-26: Configure default VPC for Phase 1 (3h) - COMPLETE
-3. FFP-27: Setup development environment (2h)
-4. FFP-28: Create Lambda function stacks (4h)
-5. FFP-29: Configure API Gateway (3h)
-6. FFP-30: Setup environment variables (2h)
-7. FFP-31: Configure deployment stages (3h)
-8. FFP-32: Create deployment scripts (2h)
-9. FFP-33: Write infrastructure tests (4h)
-10. FFP-34: Document infrastructure setup (2h)
+3. ✅ FFP-27: Create Cognito User Pool with custom attributes (2h) - REWRITTEN FOR SST v3
+4. FFP-28: Create RDS PostgreSQL database (4h) - REWRITTEN FOR SST v3
+5. FFP-29: Create S3 buckets and CloudFront CDN (3h) - REWRITTEN FOR SST v3
+6. FFP-30: Create API Gateway with JWT authorizer (3h) - REWRITTEN FOR SST v3
+7. FFP-31: Configure CloudWatch monitoring and alarms (3h) - REWRITTEN FOR SST v3
+8. FFP-32: Configure Secrets Manager for application secrets (2h) - REWRITTEN FOR SST v3
+9. FFP-33: Configure environment-specific settings (2h) - REWRITTEN FOR SST v3
+10. FFP-34: Deploy and test infrastructure to dev (4h) - REWRITTEN FOR SST v3
 
 **Dependencies:**
 
@@ -335,19 +334,54 @@
 - Blocks FFP-9 (Cognito authentication)
 - Blocks FFP-10 (PostgreSQL schema)
 
-**Implementation Notes (FFP-26):**
+**Implementation Notes:**
+
+_FFP-26 (VPC Strategy):_
 
 - Phase 1 uses AWS default VPC automatically (no explicit VPC configuration needed)
 - Resources (RDS, Lambda) will use default VPC when `vpc` prop omitted
 - Custom VPC with private subnets deferred to FFP-101 (pre-production)
 - Validated against SST v3 Ion documentation via Context7 MCP server
+- Cost saving: £30-35/month by avoiding NAT Gateway
+
+_FFP-27 through FFP-34 (SST v3 Ion Conversion):_
+
+- All remaining tickets rewritten for SST v3 Ion (Pulumi-based) syntax
+- Removed SST v2 patterns: StackContext, use(), sst/constructs imports
+- Updated to SST v3 patterns: sst.aws.\*, Pulumi transforms, direct references
+- Fixed region references: us-east-1 → eu-west-2 throughout
+- Fixed package paths: packages/api → packages/functions
+- Database credentials auto-managed by sst.aws.Postgres component
+- All resources configured in single sst.config.ts file (no separate stack files)
+
+**Recommended Execution Order:**
+
+_Independent Resources (can work in parallel)_
+
+1. FFP-27: Cognito User Pool
+2. FFP-29: S3 + CloudFront Storage
+
+_Database & Secrets_
+3. FFP-28: RDS PostgreSQL Database
+4. FFP-32: Secrets Manager
+
+_API Layer_
+5. FFP-30: API Gateway + JWT Authorizer
+
+_Observability & Config_
+6. FFP-31: CloudWatch Monitoring
+7. FFP-33: Environment Settings
+
+_Phase 5: Validation_
+8. FFP-34: Deploy & Test
 
 **Next Steps:**
 
 1. ✅ FFP-25 (Install SST) - COMPLETE
 2. ✅ FFP-26 (Configure default VPC) - COMPLETE
-3. Begin FFP-27 (Setup development environment)
-4. Configure SST dev mode and local development workflow
+3. ✅ FFP-27 through FFP-34 - ALL REWRITTEN FOR SST v3 ION
+4. 🎯 Begin FFP-27 implementation (Cognito User Pool)
+5. Or proceed with recommended execution order above
 
 ### Development Workflow
 
@@ -361,4 +395,4 @@
 
 ---
 
-**Sprint 1 Progress: 18/198 hours (9%) - FFP-7 COMPLETE! FFP-8 in progress (2/10)!**
+**Sprint 1 Progress: 18/198 hours (9%) - FFP-7 COMPLETE! FFP-8 in progress (2/10 complete, 8/10 rewritten for SST v3)!**

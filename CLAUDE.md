@@ -220,6 +220,17 @@ All internal dependencies use `workspace:*` protocol:
 
 ### Git Workflow
 
+**IMPORTANT**: User controls all git operations (`git add`, `git commit`, `git push`)
+
+**Claude's Role**:
+
+- **NEVER** run `git add`, `git commit`, or `git push` commands
+- **DO** suggest when work is ready for commit
+- **DO** provide a brief summary of what was accomplished
+- **DO** wait for user to handle commit, review, and merge
+
+**Commit Format**:
+
 ```bash
 # Commit format for sprint work
 git commit -m "FFP-XX: Brief description of change"
@@ -227,6 +238,14 @@ git commit -m "FFP-XX: Brief description of change"
 # Example
 git commit -m "FFP-23: Add comprehensive monorepo tests"
 ```
+
+**Typical Workflow**:
+
+1. Claude completes work and suggests: "Session ready for commit"
+2. User reviews changes and runs `git add`, `git commit`, `git push`
+3. User reviews PR on GitHub (with Copilot assistance)
+4. User merges PR when satisfied
+5. User returns to Claude to continue next task
 
 ### When Adding New Features
 
@@ -313,6 +332,41 @@ await db.query.users.findMany(); // Leaks all tenants!
 
 - `turbo.json` - Build pipeline configuration
 - `pnpm-workspace.yaml` - Workspace package definitions
+
+## MCP Server Usage (Context7)
+
+**CRITICAL**: When using the Context7 MCP server, be mindful of token consumption.
+
+### Token Budget Awareness
+
+- Context7 responses can be **very large** (10k-15k tokens per call)
+- Each response **fully consumes** those tokens from the context window
+- Multiple large calls can quickly fill up available context
+- The terminal warning `⚠ Large MCP response (~12.3k tokens)` indicates actual consumption
+
+### Best Practices
+
+**Request smaller token limits**:
+
+```
+Use tokens: 5000 instead of default 10000
+```
+
+**Be specific with topic parameter**:
+
+```
+// ❌ Too broad
+topic: "cognito user pool authentication custom attributes SST v3 Ion"
+
+// ✅ More focused
+topic: "cognito post authentication trigger SST Ion"
+```
+
+**Consider web_search as alternative**:
+
+- **Context7**: More reliable, comprehensive docs, but token-heavy
+- **web_search**: More token-efficient, but may require multiple searches or fetches
+- **Decision rule**: Use Context7 for definitive documentation, web_search for quick lookups or when context is running low
 
 ## Project Constraints
 
