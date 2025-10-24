@@ -334,18 +334,20 @@
 
 **Objective:** Set up SST (Serverless Stack) infrastructure for AWS Lambda, API Gateway, and foundational AWS services.
 
-**Subtasks (10 total, 27 hours) - ALL UPDATED FOR SST v3 ION:**
+**Subtasks (Originally 10, now 6 after restructure, 7 hours remaining):**
 
 1. ✅ FFP-25: Install SST and initialise project (2h) - COMPLETE
 2. ✅ FFP-26: Configure default VPC for Phase 1 (3h) - COMPLETE
 3. ✅ FFP-27: Create Cognito User Pool with custom attributes (2h) - COMPLETE
-4. FFP-28: Create RDS PostgreSQL database (4h) - REWRITTEN FOR SST v3
+4. ⏸️ FFP-28: Create RDS PostgreSQL database (4h) - **DEFERRED to FFP-102** (pre-staging)
 5. ✅ FFP-29: Create S3 buckets and CloudFront CDN (3h) - COMPLETE
-6. FFP-30: Create API Gateway with JWT authorizer (3h) - REWRITTEN FOR SST v3
-7. FFP-31: Configure CloudWatch monitoring and alarms (3h) - REWRITTEN FOR SST v3
-8. FFP-32: Configure Secrets Manager for application secrets (2h) - REWRITTEN FOR SST v3
-9. FFP-33: Configure environment-specific settings (2h) - REWRITTEN FOR SST v3
+6. 🎯 FFP-30: Create API Gateway with JWT authorizer (3h) - **NEXT**
+7. ➡️ FFP-31: CloudWatch monitoring (3h) - **MOVED to Production Readiness**
+8. ➡️ FFP-32: Secrets Manager (2h) - **MOVED to FFP-9** (auth-specific)
+9. ➡️ FFP-33: Environment settings (2h) - **MOVED to Staging Readiness**
 10. FFP-34: Deploy and test infrastructure to dev (4h) - REWRITTEN FOR SST v3
+
+**Remaining in FFP-8**: FFP-30, FFP-34 only! (7h remaining)
 
 **Dependencies:**
 
@@ -363,6 +365,19 @@ _FFP-26 (VPC Strategy):_
 - Validated against SST v3 Ion documentation via Context7 MCP server
 - Cost saving: £30-35/month by avoiding NAT Gateway
 
+_FFP-28 (Database Strategy - Cost Optimisation):_
+
+- **POSTPONED**: RDS database deployment deferred until staging testing needed
+- **Phase 1 Approach**: Use local PostgreSQL for all development work
+- **Rationale**:
+  - Aurora Serverless v2 costs ~£88/month minimum (cannot scale to zero)
+  - Provisioned t4g.micro costs ~£13/month (always running)
+  - Solo developer primarily using local database
+  - Migration is trivial: 15-30 minutes when needed for stakeholder testing
+- **When Needed**: Deploy db.t4g.micro RDS instance before staging demos
+- **Schema Setup**: Will mirror production schema via Drizzle migrations (FFP-10)
+- **Backlog Ticket**: Created for pre-staging deployment
+
 _FFP-27 through FFP-34 (SST v3 Ion Conversion):_
 
 - All remaining tickets rewritten for SST v3 Ion (Pulumi-based) syntax
@@ -370,7 +385,7 @@ _FFP-27 through FFP-34 (SST v3 Ion Conversion):_
 - Updated to SST v3 patterns: sst.aws.\*, Pulumi transforms, direct references
 - Fixed region references: us-east-1 → eu-west-2 throughout
 - Fixed package paths: packages/api → packages/functions
-- Database credentials auto-managed by sst.aws.Postgres component
+- Database credentials auto-managed by sst.aws.Postgres component (when deployed)
 - All resources configured in single sst.config.ts file (no separate stack files)
 
 **Recommended Execution Order:**
@@ -404,7 +419,14 @@ _Phase 5: Validation_
 2. ✅ FFP-26 (Configure default VPC) - COMPLETE
 3. ✅ FFP-27 (Cognito User Pool) - COMPLETE
 4. ✅ FFP-29 (S3 + CloudFront) - COMPLETE
-5. 🎯 Next: FFP-28 (RDS PostgreSQL Database) or FFP-30 (API Gateway)
+5. 🎯 **NEXT: FFP-30 (API Gateway with JWT authorizer)**
+6. Then: FFP-34 (Deploy & Test) → **Completes FFP-8!** 🎉
+
+**Deferred/Moved:**
+- FFP-28 → FFP-102 (deploy when needed for staging)
+- FFP-31 → Production Readiness story
+- FFP-32 → FFP-9 (Cognito Authentication)
+- FFP-33 → Staging Readiness story
 
 ### Development Workflow
 
