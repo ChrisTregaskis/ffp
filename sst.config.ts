@@ -125,11 +125,94 @@ export default $config({
       },
     });
 
-    // Export User Pool and Client details
+    // S3 Buckets for video and asset storage
+    const videosBucket = new sst.aws.Bucket('VideosBucket', {
+      cors: {
+        allowHeaders: ['*'],
+        allowMethods: ['GET', 'HEAD'],
+        allowOrigins: ['*'], // Will be restricted to specific origins in production
+      },
+      transform: {
+        bucket: (args: any) => {
+          // Enable AES256 encryption at rest
+          args.serverSideEncryptionConfiguration = {
+            rules: [
+              {
+                applyServerSideEncryptionByDefault: {
+                  sseAlgorithm: 'AES256',
+                },
+              },
+            ],
+          };
+        },
+      },
+    });
+
+    const assetsBucket = new sst.aws.Bucket('AssetsBucket', {
+      cors: {
+        allowHeaders: ['*'],
+        allowMethods: ['GET', 'HEAD'],
+        allowOrigins: ['*'], // Will be restricted to specific origins in production
+      },
+      transform: {
+        bucket: (args: any) => {
+          // Enable AES256 encryption at rest
+          args.serverSideEncryptionConfiguration = {
+            rules: [
+              {
+                applyServerSideEncryptionByDefault: {
+                  sseAlgorithm: 'AES256',
+                },
+              },
+            ],
+          };
+        },
+      },
+    });
+
+    // CloudFront CDN for video delivery
+    const videoCdn = new sst.aws.Cdn('VideoCdn', {
+      origins: [
+        {
+          domainName: videosBucket.domain,
+          originId: 'S3-Videos',
+        },
+      ],
+      defaultCacheBehavior: {
+        targetOriginId: 'S3-Videos',
+        viewerProtocolPolicy: 'redirect-to-https',
+        allowedMethods: ['GET', 'HEAD', 'OPTIONS'],
+        cachedMethods: ['GET', 'HEAD'],
+        compress: true,
+        defaultTtl: 86400, // 24 hours
+        minTtl: 0,
+        maxTtl: 31536000, // 1 year
+        forwardedValues: {
+          queryString: false,
+          cookies: {
+            forward: 'none',
+          },
+        },
+      },
+      transform: {
+        distribution: (args: any) => {
+          // Use only North America and Europe for cost optimisation
+          args.priceClass = 'PriceClass_100';
+        },
+      },
+    });
+
+    // Export resource identifiers
     return {
+      // Cognito resources
       userPoolId: userPool.id,
       userPoolArn: userPool.arn,
       userPoolClientId: userPoolClient.id,
+      // Storage resources
+      videosBucket: videosBucket.name,
+      assetsBucket: assetsBucket.name,
+      cdnUrl: videoCdn.url,
+      // General
       region: 'eu-west-2',
     };
   },

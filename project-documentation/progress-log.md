@@ -1,3 +1,81 @@
+### October 24, 2025 (Session 19 - FFP-27 & FFP-29 Complete!)
+
+**Status**: ✅ FFP-27 & FFP-29 COMPLETE! Cognito User Pool and S3/CloudFront CDN deployed
+
+**Completed Subtasks:**
+
+**FFP-27: Create Cognito User Pool with Custom Attributes** ✅ COMPLETE (2 hours)
+
+- **Created Cognito User Pool** with SST v3 Ion (`sst.aws.CognitoUserPool`):
+  - Email-based authentication
+  - Custom attributes for multi-tenant architecture: `tenantId`, `role`, `parentBusinessId`
+  - Password policy: 8 chars minimum, mixed case, numbers, symbols
+  - Auto-verify email addresses
+  - Email-based account recovery
+- **Created User Pool Client** using `userPool.addClient()`:
+  - OAuth2 Authorization Code flow
+  - Scopes: email, openid, profile
+  - Token validity: 60min (access/id), 30 days (refresh)
+  - Callback/logout URLs configured for localhost development
+- **Fixed SST v3 Ion type errors**:
+  - Changed from `new sst.aws.CognitoUserPoolClient()` to `userPool.addClient('Web')`
+  - Added type annotations to transform functions
+- **Resolved AWS Cognito limitation**:
+  - Discovered: Custom attributes cannot be `required: true` (AWS constraint)
+  - Updated all custom attributes to `required: false`
+  - Added documentation: validation must occur at application level
+- **Updated CLAUDE.md** with git workflow preference:
+  - User controls all git operations (add, commit, push)
+  - Claude suggests when ready for commit with summary
+- **Added `sst-env.d.ts` to `.gitignore`**:
+  - These are auto-generated SST type files
+  - Regenerated on each deploy/dev run
+
+**Deployed Resources:**
+
+- User Pool ID: `eu-west-2_q4P8Drtcv`
+- User Pool Client ID: `7ams44epvr3jgb9dnto3a94hmh`
+- Region: `eu-west-2` (London)
+
+**FFP-29: Create S3 Buckets and CloudFront CDN** ✅ COMPLETE (3 hours)
+
+- **Created Videos S3 Bucket** (`sst.aws.Bucket`):
+  - AES256 encryption at rest
+  - CORS configured (GET, HEAD methods)
+  - Public access blocked by default
+  - Bucket: `ffp-dev-videosbucketbucket-fhwfrwta`
+- **Created Assets S3 Bucket**:
+  - AES256 encryption at rest
+  - CORS configured (GET, HEAD methods)
+  - Public access blocked by default
+  - Bucket: `ffp-dev-assetsbucketbucket-dnvmaanu`
+- **Created CloudFront CDN** (`sst.aws.Cdn`):
+  - Connected to videos bucket for video delivery
+  - HTTPS redirect enforced (`redirect-to-https`)
+  - Cost optimised with `PriceClass_100` (North America & Europe only)
+  - Cache behaviour: 24hr default TTL, 1 year max TTL
+  - Compression enabled
+  - CDN URL: `https://d25o0th3bf9azm.cloudfront.net`
+- **Fixed CloudFront configuration issues**:
+  - Added required `ForwardedValues` parameter
+  - Added required cache behaviour properties (`allowedMethods`, `cachedMethods`)
+  - Corrected CDN export property (`url` instead of `domain`)
+- **Verified all resources**:
+  - ✅ Encryption active on both buckets
+  - ✅ CORS rules correctly applied
+  - ✅ CloudFront distribution operational
+
+**Key Decisions:**
+
+1. ✅ **AWS Cognito limitation**: Custom attributes cannot be required - enforced at app level
+2. ✅ **Git workflow**: User maintains control of all git operations
+3. ✅ **Cost optimisation**: CloudFront PriceClass_100 for Phase 1 (reduces costs)
+4. ✅ **CORS configuration**: Wildcards for dev, will restrict in production
+
+**Progress**: FFP-8 - 4/10 subtasks complete (40%), 10/27 hours (37%)
+
+---
+
 ### October 23, 2025 (Session 17 - FFP-25 & FFP-26 Complete!)
 
 **Status**: ✅ FFP-26 COMPLETE! Default VPC configured - Moving to FFP-27
