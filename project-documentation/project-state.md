@@ -423,6 +423,7 @@ _Phase 5: Validation_
 6. Then: FFP-34 (Deploy & Test) → **Completes FFP-8!** 🎉
 
 **Deferred/Moved:**
+
 - FFP-28 → FFP-102 (deploy when needed for staging)
 - FFP-31 → Production Readiness story
 - FFP-32 → FFP-9 (Cognito Authentication)
