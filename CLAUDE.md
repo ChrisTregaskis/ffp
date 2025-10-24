@@ -223,12 +223,14 @@ All internal dependencies use `workspace:*` protocol:
 **IMPORTANT**: User controls all git operations (`git add`, `git commit`, `git push`)
 
 **Claude's Role**:
+
 - **NEVER** run `git add`, `git commit`, or `git push` commands
 - **DO** suggest when work is ready for commit
 - **DO** provide a brief summary of what was accomplished
 - **DO** wait for user to handle commit, review, and merge
 
 **Commit Format**:
+
 ```bash
 # Commit format for sprint work
 git commit -m "FFP-XX: Brief description of change"
@@ -238,6 +240,7 @@ git commit -m "FFP-23: Add comprehensive monorepo tests"
 ```
 
 **Typical Workflow**:
+
 1. Claude completes work and suggests: "Session ready for commit"
 2. User reviews changes and runs `git add`, `git commit`, `git push`
 3. User reviews PR on GitHub (with Copilot assistance)
@@ -344,11 +347,13 @@ await db.query.users.findMany(); // Leaks all tenants!
 ### Best Practices
 
 **Request smaller token limits**:
+
 ```
 Use tokens: 5000 instead of default 10000
 ```
 
 **Be specific with topic parameter**:
+
 ```
 // ❌ Too broad
 topic: "cognito user pool authentication custom attributes SST v3 Ion"
@@ -358,6 +363,7 @@ topic: "cognito post authentication trigger SST Ion"
 ```
 
 **Consider web_search as alternative**:
+
 - **Context7**: More reliable, comprehensive docs, but token-heavy
 - **web_search**: More token-efficient, but may require multiple searches or fetches
 - **Decision rule**: Use Context7 for definitive documentation, web_search for quick lookups or when context is running low
