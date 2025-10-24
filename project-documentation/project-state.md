@@ -127,18 +127,18 @@
 
 **Total**: 10 stories, 93 subtasks, 198 hours (~24.8 weeks at 8h/week, ~6.2 months)
 
-| Story     | Title                           | Subtasks | Hours    | Status         |
-| --------- | ------------------------------- | -------- | -------- | -------------- |
-| FFP-7     | Turborepo Monorepo Setup        | 8        | 13h      | ✅ COMPLETE    |
-| FFP-8     | SST Infrastructure Foundation   | 10       | 27h      | ⏸️ Not Started |
-| FFP-9     | Cognito Authentication          | 12       | 34h      | ⏸️ Not Started |
-| FFP-10    | PostgreSQL Schema with RLS      | 9        | 24h      | ⏸️ Not Started |
-| FFP-11    | Drizzle ORM Setup               | 9        | 22h      | ⏸️ Not Started |
-| FFP-12    | Testing Framework Configuration | 10       | 22h      | ⏸️ Not Started |
-| FFP-14    | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started |
-| FFP-15    | Error Handling Patterns         | 7        | 15h      | ⏸️ Not Started |
-| FFP-16    | Web Login/Logout Flow           | 11       | 27h      | ⏸️ Not Started |
-| **Total** |                                 | **93**   | **198h** | **8/93 (9%)**  |
+| Story     | Title                           | Subtasks | Hours    | Status          |
+| --------- | ------------------------------- | -------- | -------- | --------------- |
+| FFP-7     | Turborepo Monorepo Setup        | 8        | 13h      | ✅ COMPLETE     |
+| FFP-8     | SST Infrastructure Foundation   | 10       | 27h      | 🔄 IN PROGRESS  |
+| FFP-9     | Cognito Authentication          | 12       | 34h      | ⏸️ Not Started  |
+| FFP-10    | PostgreSQL Schema with RLS      | 9        | 24h      | ⏸️ Not Started  |
+| FFP-11    | Drizzle ORM Setup               | 9        | 22h      | ⏸️ Not Started  |
+| FFP-12    | Testing Framework Configuration | 10       | 22h      | ⏸️ Not Started  |
+| FFP-14    | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started  |
+| FFP-15    | Error Handling Patterns         | 7        | 15h      | ⏸️ Not Started  |
+| FFP-16    | Web Login/Logout Flow           | 11       | 27h      | ⏸️ Not Started  |
+| **Total** |                                 | **93**   | **198h** | **18/93 (19%)** |
 
 **Note**: FFP-13 (CI/CD Pipeline) was intentionally skipped for now - can be added later if needed.
 
@@ -147,8 +147,11 @@
 **Sprint 1: Foundation (Weeks 1-5, ~40 hours)** 🔄 IN PROGRESS
 
 - ✅ FFP-17 through FFP-24: Turborepo setup (13h) - COMPLETE 🎉
-- FFP-25 through FFP-34: SST infrastructure (27h) - Not started
-- ✅ Checkpoint: Infrastructure deployed and tested (Turborepo phase complete)
+- 🔄 FFP-25 through FFP-34: SST infrastructure (10/27h complete, 37%) - IN PROGRESS
+  - ✅ FFP-25 & FFP-26: SST & VPC setup (5h)
+  - ✅ FFP-27: Cognito User Pool (2h)
+  - ✅ FFP-29: S3 + CloudFront (3h)
+- ⏸️ Checkpoint: Infrastructure deployed and tested (partial - 4/10 subtasks)
 
 **Sprint 2: Authentication (Weeks 6-9, ~34 hours)**
 
@@ -175,14 +178,14 @@
 
 ### Critical Success Criteria
 
-- ⏸️ All 93 subtasks completed (8/93 done - 9%)
+- 🔄 All 93 subtasks completed (18/93 done - 19%)
 - ⏸️ RLS integration tests pass (cross-tenant isolation verified)
-- ⏸️ JWT contains tenantId and role
+- 🔄 JWT contains tenantId and role (Cognito configured, app integration pending)
 - ⏸️ E2E authentication tests pass (FFP-99 - CRITICAL)
 - ✅ All TypeScript strict mode, no errors
 - ⏸️ 30% test coverage achieved
-- ⏸️ Infrastructure deployed to dev environment
-- ✅ Documentation updated (FFP-7 docs complete)
+- 🔄 Infrastructure deployed to dev environment (Cognito, S3, CloudFront deployed)
+- ✅ Documentation updated (FFP-7 docs + progress tracking current)
 
 ---
 
@@ -218,9 +221,10 @@
 **Sprint 1-6 Stories (FFP-7 to FFP-16)**:
 
 - ✅ FFP-7: Turborepo Monorepo Setup (COMPLETE - 8/8 subtasks, 13h) 🎉
-- FFP-8 through FFP-16: Not started
-- **Total Progress**: 8/93 subtasks complete (9%), 13/198 hours (7%)
-- **Current**: FFP-7 COMPLETE, next is FFP-8
+- 🔄 FFP-8: SST Infrastructure Foundation (IN PROGRESS - 4/10 subtasks, 10/27h)
+- FFP-9 through FFP-16: Not started
+- **Total Progress**: 18/93 subtasks complete (19%), 23/198 hours (12%)
+- **Current**: FFP-8 IN PROGRESS (4/10 complete)
 
 ---
 
@@ -277,21 +281,27 @@
 
 ## Progress Summary
 
-**Recent Work** (Oct 24, 2025 - Session 18):
+**Recent Work** (Oct 24, 2025 - Session 19):
 
-- ✅ **FFP-27 REWRITTEN**: Cognito User Pool updated for SST v3 Ion with Pulumi transforms
-- ✅ **FFP-28 REWRITTEN**: RDS PostgreSQL updated for SST v3, default VPC strategy, Aurora Serverless v2
-- ✅ **FFP-29 REWRITTEN**: S3 + CloudFront updated for SST v3 (sst.aws.Bucket, sst.aws.Cdn)
-- ✅ **FFP-30 REWRITTEN**: API Gateway updated for SST v3 (sst.aws.ApiGatewayV2, JWT authorizer)
-- ✅ **FFP-31 REWRITTEN**: CloudWatch monitoring updated for SST v3 (Pulumi aws.cloudwatch.\*)
-- ✅ **FFP-32 REWRITTEN**: Secrets Manager updated for SST v3 (Pulumi aws.secretsmanager.\*)
-- ✅ **FFP-33 REWRITTEN**: Environment settings updated for SST v3 ($app.stage conditional logic)
-- ✅ **FFP-34 REWRITTEN**: Deploy & test updated for SST v3 Ion deployment commands
-- ✅ **All tickets**: Region fixed (us-east-1 → eu-west-2), package paths fixed (api → functions)
-- ✅ **project-state.md**: Updated with corrected subtask descriptions and recommended execution order
-- 🎯 **All FFP-8 subtasks**: Ready for implementation with SST v3 Ion syntax!
+- ✅ **FFP-27 COMPLETE**: Cognito User Pool deployed with custom multi-tenant attributes
+- ✅ **FFP-29 COMPLETE**: S3 buckets and CloudFront CDN deployed for video delivery
+- ✅ **AWS Resources Deployed**:
+  - Cognito User Pool: `eu-west-2_q4P8Drtcv`
+  - Cognito Client: `7ams44epvr3jgb9dnto3a94hmh`
+  - Videos Bucket: `ffp-dev-videosbucketbucket-fhwfrwta` (AES256 encrypted)
+  - Assets Bucket: `ffp-dev-assetsbucketbucket-dnvmaanu` (AES256 encrypted)
+  - CloudFront CDN: `https://d25o0th3bf9azm.cloudfront.net`
+- ✅ **Key Discoveries**:
+  - AWS Cognito custom attributes cannot be `required` - enforced at app level
+  - CloudFront requires `ForwardedValues` and cache behaviour config
+- ✅ **Documentation Updated**:
+  - Added git workflow preference to CLAUDE.md
+  - Added `sst-env.d.ts` to .gitignore
+- 🎯 **FFP-8 Progress**: 4/10 subtasks complete (40%), 10/27 hours (37%)
 
 **What's Working:**
+
+**Monorepo & Development:**
 
 - ✅ Turborepo with pnpm workspaces
 - ✅ 3 core packages (web, functions, core)
@@ -304,6 +314,15 @@
 - ✅ VS Code integration
 - ✅ Git hooks with Husky
 - ✅ TypeScript strict mode
+
+**AWS Infrastructure (Deployed to eu-west-2):**
+
+- ✅ SST v3 Ion configured and working
+- ✅ Cognito User Pool with multi-tenant custom attributes
+- ✅ Cognito User Pool Client (OAuth2, email authentication)
+- ✅ S3 Videos Bucket (AES256 encrypted, CORS enabled)
+- ✅ S3 Assets Bucket (AES256 encrypted, CORS enabled)
+- ✅ CloudFront CDN for video delivery (HTTPS, cost-optimised)
 
 **See `progress-log.md` for detailed session-by-session history.**
 
@@ -319,9 +338,9 @@
 
 1. ✅ FFP-25: Install SST and initialise project (2h) - COMPLETE
 2. ✅ FFP-26: Configure default VPC for Phase 1 (3h) - COMPLETE
-3. ✅ FFP-27: Create Cognito User Pool with custom attributes (2h) - REWRITTEN FOR SST v3
+3. ✅ FFP-27: Create Cognito User Pool with custom attributes (2h) - COMPLETE
 4. FFP-28: Create RDS PostgreSQL database (4h) - REWRITTEN FOR SST v3
-5. FFP-29: Create S3 buckets and CloudFront CDN (3h) - REWRITTEN FOR SST v3
+5. ✅ FFP-29: Create S3 buckets and CloudFront CDN (3h) - COMPLETE
 6. FFP-30: Create API Gateway with JWT authorizer (3h) - REWRITTEN FOR SST v3
 7. FFP-31: Configure CloudWatch monitoring and alarms (3h) - REWRITTEN FOR SST v3
 8. FFP-32: Configure Secrets Manager for application secrets (2h) - REWRITTEN FOR SST v3
@@ -362,26 +381,30 @@ _Independent Resources (can work in parallel)_
 2. FFP-29: S3 + CloudFront Storage
 
 _Database & Secrets_
+
 3. FFP-28: RDS PostgreSQL Database
 4. FFP-32: Secrets Manager
 
 _API Layer_
+
 5. FFP-30: API Gateway + JWT Authorizer
 
 _Observability & Config_
+
 6. FFP-31: CloudWatch Monitoring
 7. FFP-33: Environment Settings
 
 _Phase 5: Validation_
-8. FFP-34: Deploy & Test
+
+8.  FFP-34: Deploy & Test
 
 **Next Steps:**
 
 1. ✅ FFP-25 (Install SST) - COMPLETE
 2. ✅ FFP-26 (Configure default VPC) - COMPLETE
-3. ✅ FFP-27 through FFP-34 - ALL REWRITTEN FOR SST v3 ION
-4. 🎯 Begin FFP-27 implementation (Cognito User Pool)
-5. Or proceed with recommended execution order above
+3. ✅ FFP-27 (Cognito User Pool) - COMPLETE
+4. ✅ FFP-29 (S3 + CloudFront) - COMPLETE
+5. 🎯 Next: FFP-28 (RDS PostgreSQL Database) or FFP-30 (API Gateway)
 
 ### Development Workflow
 
@@ -395,4 +418,4 @@ _Phase 5: Validation_
 
 ---
 
-**Sprint 1 Progress: 18/198 hours (9%) - FFP-7 COMPLETE! FFP-8 in progress (2/10 complete, 8/10 rewritten for SST v3)!**
+**Sprint 1 Progress: 23/198 hours (12%) - FFP-7 COMPLETE! FFP-8 in progress (4/10 complete, 37%)!**
