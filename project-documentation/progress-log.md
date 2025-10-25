@@ -1,3 +1,127 @@
+### October 25, 2025 (Session 21 - FFP-8 Complete!)
+
+**Status**: ✅ FFP-8 COMPLETE! SST Infrastructure Foundation finished - Moving to FFP-10
+
+**Completed Story:**
+
+**FFP-8: SST Infrastructure Foundation** ✅ COMPLETE (17 hours effective, 27h budgeted)
+
+**All Completed Subtasks:**
+
+1. ✅ FFP-25: Install SST and initialise project (2h) - COMPLETE
+2. ✅ FFP-26: Configure default VPC for Phase 1 (3h) - COMPLETE
+3. ✅ FFP-27: Create Cognito User Pool with custom attributes (2h) - COMPLETE
+4. ✅ FFP-29: Create S3 buckets and CloudFront CDN (3h) - COMPLETE
+5. ✅ FFP-30: Create API Gateway with JWT authoriser (3h) - COMPLETE
+6. ✅ FFP-34: Deploy and test infrastructure to dev (4h) - COMPLETE
+
+**Deferred/Moved Subtasks:**
+
+- ⏸️ FFP-28: RDS PostgreSQL database → **FFP-102** (pre-staging deployment)
+- ➡️ FFP-31: CloudWatch monitoring → **Production Readiness** story
+- ➡️ FFP-32: Secrets Manager → **FFP-9** (auth-specific secrets)
+- ➡️ FFP-33: Environment settings → **Staging Readiness** story
+
+**Key Achievements:**
+
+**Infrastructure Deployed:**
+
+- ✅ SST v3 Ion project configured (region: eu-west-2)
+- ✅ Cognito User Pool with multi-tenant custom attributes (`tenantId`, `role`, `parentBusinessId`)
+- ✅ Cognito User Pool Client (OAuth2, email authentication, 60min access tokens)
+- ✅ S3 Videos Bucket (AES256 encryption, CORS enabled)
+- ✅ S3 Assets Bucket (AES256 encryption, CORS enabled)
+- ✅ CloudFront CDN (HTTPS, cost-optimised PriceClass_100)
+- ✅ API Gateway v2 HTTP API with Cognito JWT authoriser
+- ✅ Health check Lambda endpoint (public, no auth required)
+
+**Development Tools Created:**
+
+- ✅ Automated smoke test suite (`scripts/smoke-test.sh`)
+  - Auto-detects stage from `.sst/outputs.json`
+  - Tests all deployed infrastructure components
+  - Stage-agnostic (personal/shared stages)
+  - Graceful `sst dev` mode handling
+- ✅ Comprehensive deployment documentation
+  - `scripts/DEPLOYMENT.md` - Full deployment guide
+- ✅ Postman workspace configured
+  - Health check endpoint pre-configured
+  - Development environment with SST variables
+  - Setup guide with troubleshooting
+
+**Strategic Decisions:**
+
+1. ✅ **Cost Optimisation**: Default VPC saves £30-35/month (Phase 1)
+2. ✅ **Database Strategy**: Local PostgreSQL for development, RDS deployment deferred until staging demos needed
+3. ✅ **Task Reorganisation**: Moved auth-specific tasks to FFP-9, production tasks to future stories
+4. ✅ **SST v3 Ion Migration**: All infrastructure using latest SST patterns
+5. ✅ **Stage Management**: Stage-aware CORS configuration (production/staging/dev)
+6. ✅ **Personal Stages**: `$app.stage` for developer-specific environments
+
+**Technical Discoveries:**
+
+- SST v3 Ion uses `$app.stage` for personal stages (not hardcoded "dev")
+- `$interpolate` required for Pulumi Outputs in template strings
+- Personal stages require `sst dev` running for endpoint access
+- CORS defaults to localhost for safety (production must be explicit)
+- Custom Cognito attributes cannot be `required: true` (AWS limitation)
+- CloudFront CDN URL property is `url` not `domain`
+
+**Infrastructure Cost Estimate (Phase 1):**
+
+- Cognito: ~£0/month (free tier)
+- S3: ~£1-2/month (minimal storage)
+- CloudFront: ~£5-10/month (PriceClass_100)
+- API Gateway: ~£1-2/month (low traffic)
+- Lambda: ~£0/month (free tier)
+- **Total: ~£7-14/month** (well under £54-87 budget)
+
+**Deployed Resources (eu-west-2):**
+
+- User Pool ID: `eu-west-2_q4P8Drtcv`
+- User Pool Client ID: `7ams44epvr3jgb9dnto3a94hmh`
+- Videos Bucket: `ffp-dev-videosbucketbucket-fhwfrwta`
+- Assets Bucket: `ffp-dev-assetsbucketbucket-dnvmaanu`
+- CloudFront URL: `https://d25o0th3bf9azm.cloudfront.net`
+- API Gateway URL: (varies by stage - see `.sst/outputs.json`)
+
+**Next Story Dependencies Analysis:**
+
+After FFP-8 completion, reviewed dependency chain:
+
+- **FFP-9** (Cognito Authentication) requires database layer (users/tenants tables)
+- **FFP-10** (PostgreSQL Schema with RLS) is now the correct next story
+- **FFP-11** (Drizzle ORM Setup) follows FFP-10
+- **FFP-9** (Cognito Authentication) follows FFP-11
+
+**Updated Implementation Order:**
+
+```
+FFP-7 (Turborepo) ✅ COMPLETE
+  ↓
+FFP-8 (SST Infrastructure) ✅ COMPLETE
+  ↓
+FFP-10 (PostgreSQL Schema with RLS) ← NEXT (24h, 9 subtasks)
+  ↓
+FFP-11 (Drizzle ORM Setup) (22h, 9 subtasks)
+  ↓
+FFP-9 (Cognito Authentication) (34h, 12 subtasks)
+```
+
+**Rationale**: FFP-9 registration endpoint must store user records in PostgreSQL, requiring database schema (FFP-10) and ORM (FFP-11) to be complete first.
+
+**Progress**:
+
+- **FFP-8**: 6/6 active subtasks complete (100%) 🎉
+- **Sprint 1**: 30/198 hours complete (15%)
+- **Epic 1**: 24/93 subtasks complete (26%)
+
+**🎉 Milestone: FFP-8 COMPLETE!**
+
+Foundation infrastructure deployed and verified. Ready to implement database layer.
+
+---
+
 ### October 24, 2025 (Session 19 - FFP-27 & FFP-29 Complete!)
 
 **Status**: ✅ FFP-27 & FFP-29 COMPLETE! Cognito User Pool and S3/CloudFront CDN deployed
