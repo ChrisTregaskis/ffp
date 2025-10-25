@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: October 25, 2025 - Session 19
+**Last Updated**: October 25, 2025 - Session 20
 **Current Phase**: Sprint 1 Execution - IN PROGRESS 🚀
 **Solo Developer**: Christopher Tregaskis
 
@@ -147,12 +147,13 @@
 **Sprint 1: Foundation (Weeks 1-5, ~40 hours)** 🔄 IN PROGRESS
 
 - ✅ FFP-17 through FFP-24: Turborepo setup (13h) - COMPLETE 🎉
-- 🔄 FFP-25 through FFP-34: SST infrastructure (13/27h complete, 48%) - IN PROGRESS
+- 🔄 FFP-25 through FFP-34: SST infrastructure (17/27h complete, 63%) - IN PROGRESS
   - ✅ FFP-25 & FFP-26: SST & VPC setup (5h)
   - ✅ FFP-27: Cognito User Pool (2h)
   - ✅ FFP-29: S3 + CloudFront (3h)
   - ✅ FFP-30: API Gateway + JWT authorizer (3h)
-- ⏸️ Checkpoint: Infrastructure deployed and tested (partial - 5/10 subtasks)
+  - ✅ FFP-34: Deploy and test infrastructure (4h)
+- ⏸️ Checkpoint: Infrastructure deployed and tested (partial - 6/10 subtasks)
 
 **Sprint 2: Authentication (Weeks 6-9, ~34 hours)**
 
@@ -179,14 +180,14 @@
 
 ### Critical Success Criteria
 
-- 🔄 All 93 subtasks completed (21/93 done - 23%)
+- 🔄 All 93 subtasks completed (24/93 done - 26%)
 - ⏸️ RLS integration tests pass (cross-tenant isolation verified)
 - 🔄 JWT contains tenantId and role (Cognito configured, app integration pending)
 - ⏸️ E2E authentication tests pass (FFP-99 - CRITICAL)
 - ✅ All TypeScript strict mode, no errors
 - ⏸️ 30% test coverage achieved
-- 🔄 Infrastructure deployed to dev environment (Cognito, S3, CloudFront, API Gateway deployed)
-- ✅ Documentation updated (FFP-7 docs + progress tracking current)
+- ✅ Infrastructure deployed to dev environment (Cognito, S3, CloudFront, API Gateway, smoke tests passing)
+- ✅ Documentation updated (FFP-7 docs + deployment guides + progress tracking current)
 
 ---
 
@@ -222,10 +223,10 @@
 **Sprint 1-6 Stories (FFP-7 to FFP-16)**:
 
 - ✅ FFP-7: Turborepo Monorepo Setup (COMPLETE - 8/8 subtasks, 13h) 🎉
-- 🔄 FFP-8: SST Infrastructure Foundation (IN PROGRESS - 5/10 subtasks, 13/27h)
+- 🔄 FFP-8: SST Infrastructure Foundation (IN PROGRESS - 6/10 subtasks, 17/27h)
 - FFP-9 through FFP-16: Not started
-- **Total Progress**: 21/93 subtasks complete (23%), 26/198 hours (13%)
-- **Current**: FFP-8 IN PROGRESS (5/10 complete)
+- **Total Progress**: 24/93 subtasks complete (26%), 30/198 hours (15%)
+- **Current**: FFP-8 IN PROGRESS (6/10 complete)
 
 ---
 
@@ -282,28 +283,33 @@
 
 ## Progress Summary
 
-**Recent Work** (Oct 25, 2025 - Session 19):
+**Recent Work** (Oct 25, 2025 - Session 20):
 
 - ✅ **FFP-30 COMPLETE**: API Gateway v2 with Cognito JWT authorizer
-- ✅ **AWS Resources Deployed**:
-  - API Gateway v2 (HTTP API): `https://abc123.execute-api.eu-west-2.amazonaws.com`
-  - Cognito JWT Authorizer configured with custom claims support
-  - Health check endpoint: `GET /health` (public, no auth)
-  - CORS enabled for localhost:5173 (Vite dev)
-  - Throttling: 1000 req/min, 2000 burst
-- ✅ **Key Discoveries**:
-  - SST v3 Ion requires `$interpolate` for Pulumi Output values in template strings
-  - Fixed issuer URL: `$interpolate` instead of regular template literals
-  - `sst dev` now working correctly after initial `sst deploy`
-- ✅ **Postman Workspace Created**:
+- ✅ **FFP-34 COMPLETE**: Deployment verification and smoke tests
+- ✅ **GitHub Copilot Feedback Implemented**:
+  - Stage-aware CORS configuration (production/staging/dev)
+  - Comprehensive throttle settings documentation
+  - Fixed personal stage defaulting to localhost (not production URLs)
+- ✅ **Smoke Test Suite Created**:
+  - Auto-detects stage from `.sst/outputs.json`
+  - Tests deployed infrastructure (Cognito, S3, API Gateway, Lambda, CloudWatch)
+  - Stage-agnostic - works with personal stages and shared stages
+  - Graceful handling of `sst dev` mode (warns instead of fails)
+- ✅ **Deployment Documentation**:
+  - `scripts/DEPLOYMENT.md` - Complete deployment guide
+  - `scripts/VERIFICATION-CHECKLIST.md` - Manual verification steps
+  - `scripts/smoke-test.sh` - Automated infrastructure verification
+- ✅ **Postman Workspace**:
   - Collection with health check endpoint pre-configured
   - Development environment with SST output variables
   - Complete setup guide with troubleshooting
-  - Located in `postman/` directory
-- ✅ **Documentation Updated**:
-  - Postman collection and environment JSON files
-  - Comprehensive Postman setup README
-- 🎯 **FFP-8 Progress**: 5/10 subtasks complete (50%), 13/27 hours (48%)
+- ✅ **Key Discoveries**:
+  - SST v3 Ion `$app.stage` for personal stages (not "dev")
+  - `$interpolate` required for Pulumi Outputs in template strings
+  - Personal stages require `sst dev` running for endpoint access
+  - CORS logic: default to localhost for safety (production must be explicit)
+- 🎉 **FFP-8 Progress**: 6/10 subtasks complete (60%), 17/27 hours (63%)
 
 **What's Working:**
 
@@ -342,7 +348,7 @@
 
 **Objective:** Set up SST (Serverless Stack) infrastructure for AWS Lambda, API Gateway, and foundational AWS services.
 
-**Subtasks (Originally 10, now 6 after restructure, 4 hours remaining):**
+**Subtasks (Originally 10, now 6 after restructure, 0 hours remaining - NEARLY COMPLETE!):**
 
 1. ✅ FFP-25: Install SST and initialise project (2h) - COMPLETE
 2. ✅ FFP-26: Configure default VPC for Phase 1 (3h) - COMPLETE
@@ -353,9 +359,9 @@
 7. ➡️ FFP-31: CloudWatch monitoring (3h) - **MOVED to Production Readiness**
 8. ➡️ FFP-32: Secrets Manager (2h) - **MOVED to FFP-9** (auth-specific)
 9. ➡️ FFP-33: Environment settings (2h) - **MOVED to Staging Readiness**
-10. 🎯 FFP-34: Deploy and test infrastructure to dev (4h) - **NEXT** (REWRITTEN FOR SST v3)
+10. ✅ FFP-34: Deploy and test infrastructure to dev (4h) - COMPLETE
 
-**Remaining in FFP-8**: FFP-34 only! (4h remaining)
+**Remaining in FFP-8**: 4 deferred/moved tasks will be addressed in future stories!
 
 **Dependencies:**
 
@@ -421,14 +427,16 @@ _Phase 5: Validation_
 
 8.  FFP-34: Deploy & Test
 
-**Next Steps:**
+**Completed:**
 
 1. ✅ FFP-25 (Install SST) - COMPLETE
 2. ✅ FFP-26 (Configure default VPC) - COMPLETE
 3. ✅ FFP-27 (Cognito User Pool) - COMPLETE
 4. ✅ FFP-29 (S3 + CloudFront) - COMPLETE
 5. ✅ FFP-30 (API Gateway with JWT authorizer) - COMPLETE
-6. 🎯 **NEXT: FFP-34 (Deploy & Test)** → **Completes FFP-8!** 🎉
+6. ✅ FFP-34 (Deploy & Test) - COMPLETE
+
+**🎉 FFP-8 Effectively Complete!** (Deferred tasks moved to appropriate future stories)
 
 **Deferred/Moved:**
 
@@ -449,4 +457,4 @@ _Phase 5: Validation_
 
 ---
 
-**Sprint 1 Progress: 26/198 hours (13%) - FFP-7 COMPLETE! FFP-8 in progress (5/10 complete, 48%)!**
+**Sprint 1 Progress: 30/198 hours (15%) - FFP-7 COMPLETE! FFP-8 EFFECTIVELY COMPLETE (6/10 tasks done, 4 deferred/moved)!**
