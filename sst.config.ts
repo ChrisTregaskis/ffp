@@ -202,6 +202,60 @@ export default $config({
       },
     });
 
+    // API Gateway with Cognito JWT Authorizer
+    // CORS origins are stage-aware to support different environments
+    // Any stage other than 'staging' or 'production' defaults to localhost (for dev and personal stages)
+    const allowedOrigins =
+      $app.stage === 'production'
+        ? ['https://app.fitforpurpose.app'] // TODO: Replace with actual production domain when available
+        : $app.stage === 'staging'
+          ? ['https://staging.fitforpurpose.app'] // TODO: Replace with actual staging domain when available
+          : ['http://localhost:5173']; // Dev server (for 'dev', personal stages, etc.)
+
+    const api = new sst.aws.ApiGatewayV2('Api', {
+      cors: {
+        allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+        allowOrigins: allowedOrigins,
+        allowHeaders: ['*'],
+        allowCredentials: true,
+      },
+      transform: {
+        api: (args: any) => {
+          // Global throttle settings apply to all routes
+          // 1000 requests/minute (~16 req/sec) is appropriate during development and staging
+          // Health check endpoint is public but these limits prevent abuse
+          // Per-route throttling can be added later if specific endpoints need different limits
+          args.throttleSettings = {
+            rateLimit: 1000, // Requests per minute
+            burstLimit: 2000, // Maximum burst capacity
+          };
+        },
+      },
+    });
+
+    // Add Cognito JWT authorizer
+    // Note: authorizer is created here but will be used in future
+    // for protected routes. Example: api.route('GET /users', { handler: '...', auth: { authorizer } })
+    const authorizer = api.addAuthorizer({
+      name: 'CognitoAuthorizer',
+      jwt: {
+        issuer: $interpolate`https://cognito-idp.eu-west-2.amazonaws.com/${userPool.id}`,
+        audiences: [userPoolClient.id],
+      },
+    });
+
+    // Health check endpoint (public, no auth)
+    api.route('GET /health', {
+      handler: 'packages/functions/src/auth/health.handler',
+    });
+
+    // Protected routes will use authorizer (to be added in future tickets)
+    // Example:
+    // api.route('GET /users', {
+    //   handler: 'packages/functions/src/users/list.handler',
+    //   auth: { authorizer },
+    // });
+
     // Export resource identifiers
     return {
       // Cognito resources
@@ -212,6 +266,8 @@ export default $config({
       videosBucket: videosBucket.name,
       assetsBucket: assetsBucket.name,
       cdnUrl: videoCdn.url,
+      // API Gateway
+      apiUrl: api.url,
       // General
       region: 'eu-west-2',
     };

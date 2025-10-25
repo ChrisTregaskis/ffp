@@ -1,0 +1,122 @@
+{
+  "info": {
+    "name": "FFP - Fit For Purpose API",
+    "description": "Multi-tenant physiotherapy assessment and workout programme platform.\n\n**Architecture:**\n- AWS Lambda + API Gateway v2 (HTTP API)\n- Region: eu-west-2 (London)\n- Authentication: Cognito JWT\n\n**Authentication:**\nProtected endpoints require JWT token with custom claims:\n- `custom:tenantId` - Tenant identifier\n- `custom:role` - User role\n- `custom:parentBusinessId` - Parent business ID\n\n**Phase:** Sprint 1 (Foundation Infrastructure)\n**Developer:** Christopher Tregaskis",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health & Status",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/health",
+              "host": ["{{apiUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Public health check endpoint - no authentication required.\n\nReturns:\n- `status`: Health status (\"healthy\")\n- `message`: Service identification\n- `timestamp`: Current server time (ISO 8601)\n- `service`: Service name\n- `version`: API version\n\n**Status Codes:**\n- `200`: Service is healthy\n- `500`: Service health check failed"
+          },
+          "response": [
+            {
+              "name": "Healthy Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/health",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"healthy\",\n  \"message\": \"FFP Functions - Health Check OK\",\n  \"timestamp\": \"2025-10-25T12:34:56.789Z\",\n  \"service\": \"auth\",\n  \"version\": \"1.0.0\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Health and status endpoints - no authentication required"
+    },
+    {
+      "name": "Authentication (Coming Soon)",
+      "item": [],
+      "description": "User registration, login, and token management.\n\n**Endpoints (to be added):**\n- POST /auth/register\n- POST /auth/login\n- POST /auth/refresh\n- POST /auth/logout\n- POST /auth/forgot-password\n- POST /auth/reset-password"
+    },
+    {
+      "name": "Assessments (Coming Soon)",
+      "item": [],
+      "description": "Patient assessment endpoints - JWT authentication required.\n\n**Endpoints (to be added):**\n- GET /assessments\n- POST /assessments\n- GET /assessments/{id}\n- PUT /assessments/{id}\n- DELETE /assessments/{id}\n- POST /assessments/{id}/submit"
+    },
+    {
+      "name": "Programmes (Coming Soon)",
+      "item": [],
+      "description": "Workout programme generation and management - JWT authentication required.\n\n**Endpoints (to be added):**\n- GET /programmes\n- GET /programmes/{id}\n- POST /programmes/generate\n- PUT /programmes/{id}\n- DELETE /programmes/{id}"
+    },
+    {
+      "name": "Videos (Coming Soon)",
+      "item": [],
+      "description": "Video metadata and streaming endpoints - JWT authentication required.\n\n**Endpoints (to be added):**\n- GET /videos\n- GET /videos/{id}\n- GET /videos/{id}/stream-url"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwtToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Pre-request script for all requests",
+          "// Add custom headers or logging here if needed"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "pm.test(\"Response time is less than 2000ms\", function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+          "});",
+          "",
+          "pm.test(\"Response has JSON content type\", function () {",
+          "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "});"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "apiUrl",
+      "value": "https://your-api-url.execute-api.eu-west-2.amazonaws.com",
+      "type": "string"
+    },
+    {
+      "key": "jwtToken",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
