@@ -154,19 +154,19 @@
 
 **Total**: 10 stories, 93 subtasks, 198 hours (~24.8 weeks at 8h/week, ~6.2 months)
 
-| Story        | Title                           | Subtasks | Hours    | Status              |
-| ------------ | ------------------------------- | -------- | -------- | ------------------- |
-| FFP-7        | Turborepo Monorepo Setup        | 8        | 13h      | ✅ COMPLETE         |
-| FFP-8        | SST Infrastructure Foundation   | 6        | 17h      | ✅ COMPLETE         |
-| FFP-10 + 11  | Database Layer (Interleaved)    | 16       | 46h      | 🎯 NEXT (Combined)  |
-| ↳ FFP-10     | PostgreSQL Schema with RLS      | 9        | 24h      | 🔄 Interleaved      |
-| ↳ FFP-11     | Drizzle ORM Setup               | 9        | 22h      | 🔄 Interleaved      |
-| FFP-9        | Cognito Authentication          | 12       | 34h      | ⏸️ Not Started      |
-| FFP-12       | Testing Framework Configuration | 10       | 22h      | ⏸️ Not Started      |
-| FFP-14       | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started      |
-| FFP-15       | Error Handling Patterns         | 7        | 15h      | ⏸️ Not Started      |
-| FFP-16       | Web Login/Logout Flow           | 11       | 27h      | ⏸️ Not Started      |
-| **Total**    |                                 | **93**   | **198h** | **30/93 (32%)**     |
+| Story       | Title                           | Subtasks | Hours    | Status             |
+| ----------- | ------------------------------- | -------- | -------- | ------------------ |
+| FFP-7       | Turborepo Monorepo Setup        | 8        | 13h      | ✅ COMPLETE        |
+| FFP-8       | SST Infrastructure Foundation   | 6        | 17h      | ✅ COMPLETE        |
+| FFP-10 + 11 | Database Layer (Interleaved)    | 16       | 46h      | 🎯 NEXT (Combined) |
+| ↳ FFP-10    | PostgreSQL Schema with RLS      | 9        | 24h      | 🔄 Interleaved     |
+| ↳ FFP-11    | Drizzle ORM Setup               | 9        | 22h      | 🔄 Interleaved     |
+| FFP-9       | Cognito Authentication          | 12       | 34h      | ⏸️ Not Started     |
+| FFP-12      | Testing Framework Configuration | 10       | 22h      | ⏸️ Not Started     |
+| FFP-14      | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started     |
+| FFP-15      | Error Handling Patterns         | 7        | 15h      | ⏸️ Not Started     |
+| FFP-16      | Web Login/Logout Flow           | 11       | 27h      | ⏸️ Not Started     |
+| **Total**   |                                 | **93**   | **198h** | **30/93 (32%)**    |
 
 **Note**: FFP-13 (CI/CD Pipeline) was intentionally skipped for now - can be added later if needed.
 
@@ -332,6 +332,7 @@
 - 🎯 **Ready for FFP-10**: PostgreSQL Schema with RLS (24h, 9 subtasks)
 
 **FFP-8 Final Summary:**
+
 - ✅ FFP-30: API Gateway v2 with Cognito JWT authoriser
 - ✅ FFP-34: Deployment verification and smoke tests
 - ✅ Smoke test suite with stage auto-detection
