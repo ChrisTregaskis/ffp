@@ -7,6 +7,7 @@ module.exports = {
   env: {
     node: true,
   },
+  ignorePatterns: ['sst-env.d.ts'],
   rules: {
     // Test files can be less strict with type safety
     '@typescript-eslint/no-explicit-any': 'off',

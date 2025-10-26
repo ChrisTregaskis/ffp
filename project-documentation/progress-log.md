@@ -1,3 +1,281 @@
+### October 25, 2025 (Session 21 - FFP-8 Complete!)
+
+**Status**: ✅ FFP-8 COMPLETE! SST Infrastructure Foundation finished - Moving to FFP-10
+
+**Completed Story:**
+
+**FFP-8: SST Infrastructure Foundation** ✅ COMPLETE (17 hours effective, 27h budgeted)
+
+**All Completed Subtasks:**
+
+1. ✅ FFP-25: Install SST and initialise project (2h) - COMPLETE
+2. ✅ FFP-26: Configure default VPC for Phase 1 (3h) - COMPLETE
+3. ✅ FFP-27: Create Cognito User Pool with custom attributes (2h) - COMPLETE
+4. ✅ FFP-29: Create S3 buckets and CloudFront CDN (3h) - COMPLETE
+5. ✅ FFP-30: Create API Gateway with JWT authoriser (3h) - COMPLETE
+6. ✅ FFP-34: Deploy and test infrastructure to dev (4h) - COMPLETE
+
+**Deferred/Moved Subtasks:**
+
+- ⏸️ FFP-28: RDS PostgreSQL database → **FFP-102** (pre-staging deployment)
+- ➡️ FFP-31: CloudWatch monitoring → **Production Readiness** story
+- ➡️ FFP-32: Secrets Manager → **FFP-9** (auth-specific secrets)
+- ➡️ FFP-33: Environment settings → **Staging Readiness** story
+
+**Key Achievements:**
+
+**Infrastructure Deployed:**
+
+- ✅ SST v3 Ion project configured (region: eu-west-2)
+- ✅ Cognito User Pool with multi-tenant custom attributes (`tenantId`, `role`, `parentBusinessId`)
+- ✅ Cognito User Pool Client (OAuth2, email authentication, 60min access tokens)
+- ✅ S3 Videos Bucket (AES256 encryption, CORS enabled)
+- ✅ S3 Assets Bucket (AES256 encryption, CORS enabled)
+- ✅ CloudFront CDN (HTTPS, cost-optimised PriceClass_100)
+- ✅ API Gateway v2 HTTP API with Cognito JWT authoriser
+- ✅ Health check Lambda endpoint (public, no auth required)
+
+**Development Tools Created:**
+
+- ✅ Automated smoke test suite (`scripts/smoke-test.sh`)
+  - Auto-detects stage from `.sst/outputs.json`
+  - Tests all deployed infrastructure components
+  - Stage-agnostic (personal/shared stages)
+  - Graceful `sst dev` mode handling
+- ✅ Comprehensive deployment documentation
+  - `scripts/DEPLOYMENT.md` - Full deployment guide
+- ✅ Postman workspace configured
+  - Health check endpoint pre-configured
+  - Development environment with SST variables
+  - Setup guide with troubleshooting
+
+**Strategic Decisions:**
+
+1. ✅ **Cost Optimisation**: Default VPC saves £30-35/month (Phase 1)
+2. ✅ **Database Strategy**: Local PostgreSQL for development, RDS deployment deferred until staging demos needed
+3. ✅ **Task Reorganisation**: Moved auth-specific tasks to FFP-9, production tasks to future stories
+4. ✅ **SST v3 Ion Migration**: All infrastructure using latest SST patterns
+5. ✅ **Stage Management**: Stage-aware CORS configuration (production/staging/dev)
+6. ✅ **Personal Stages**: `$app.stage` for developer-specific environments
+
+**Technical Discoveries:**
+
+- SST v3 Ion uses `$app.stage` for personal stages (not hardcoded "dev")
+- `$interpolate` required for Pulumi Outputs in template strings
+- Personal stages require `sst dev` running for endpoint access
+- CORS defaults to localhost for safety (production must be explicit)
+- Custom Cognito attributes cannot be `required: true` (AWS limitation)
+- CloudFront CDN URL property is `url` not `domain`
+
+**Infrastructure Cost Estimate (Phase 1):**
+
+- Cognito: ~£0/month (free tier)
+- S3: ~£1-2/month (minimal storage)
+- CloudFront: ~£5-10/month (PriceClass_100)
+- API Gateway: ~£1-2/month (low traffic)
+- Lambda: ~£0/month (free tier)
+- **Total: ~£7-14/month** (well under £54-87 budget)
+
+**Deployed Resources (eu-west-2):**
+
+- User Pool ID: `eu-west-2_q4P8Drtcv`
+- User Pool Client ID: `7ams44epvr3jgb9dnto3a94hmh`
+- Videos Bucket: `ffp-dev-videosbucketbucket-fhwfrwta`
+- Assets Bucket: `ffp-dev-assetsbucketbucket-dnvmaanu`
+- CloudFront URL: `https://d25o0th3bf9azm.cloudfront.net`
+- API Gateway URL: (varies by stage - see `.sst/outputs.json`)
+
+**Next Story Dependencies Analysis:**
+
+After FFP-8 completion, reviewed dependency chain:
+
+- **FFP-9** (Cognito Authentication) requires database layer (users/tenants tables)
+- **FFP-10** (PostgreSQL Schema with RLS) is now the correct next story
+- **FFP-11** (Drizzle ORM Setup) follows FFP-10
+- **FFP-9** (Cognito Authentication) follows FFP-11
+
+**Updated Implementation Order:**
+
+```
+FFP-7 (Turborepo) ✅ COMPLETE
+  ↓
+FFP-8 (SST Infrastructure) ✅ COMPLETE
+  ↓
+FFP-10 (PostgreSQL Schema with RLS) ← NEXT (24h, 9 subtasks)
+  ↓
+FFP-11 (Drizzle ORM Setup) (22h, 9 subtasks)
+  ↓
+FFP-9 (Cognito Authentication) (34h, 12 subtasks)
+```
+
+**Rationale**: FFP-9 registration endpoint must store user records in PostgreSQL, requiring database schema (FFP-10) and ORM (FFP-11) to be complete first.
+
+**Progress**:
+
+- **FFP-8**: 6/6 active subtasks complete (100%) 🎉
+- **Sprint 1**: 30/198 hours complete (15%)
+- **Epic 1**: 24/93 subtasks complete (26%)
+
+**🎉 Milestone: FFP-8 COMPLETE!**
+
+Foundation infrastructure deployed and verified. Ready to implement database layer.
+
+---
+
+### October 24, 2025 (Session 19 - FFP-27 & FFP-29 Complete!)
+
+**Status**: ✅ FFP-27 & FFP-29 COMPLETE! Cognito User Pool and S3/CloudFront CDN deployed
+
+**Completed Subtasks:**
+
+**FFP-27: Create Cognito User Pool with Custom Attributes** ✅ COMPLETE (2 hours)
+
+- **Created Cognito User Pool** with SST v3 Ion (`sst.aws.CognitoUserPool`):
+  - Email-based authentication
+  - Custom attributes for multi-tenant architecture: `tenantId`, `role`, `parentBusinessId`
+  - Password policy: 8 chars minimum, mixed case, numbers, symbols
+  - Auto-verify email addresses
+  - Email-based account recovery
+- **Created User Pool Client** using `userPool.addClient()`:
+  - OAuth2 Authorization Code flow
+  - Scopes: email, openid, profile
+  - Token validity: 60min (access/id), 30 days (refresh)
+  - Callback/logout URLs configured for localhost development
+- **Fixed SST v3 Ion type errors**:
+  - Changed from `new sst.aws.CognitoUserPoolClient()` to `userPool.addClient('Web')`
+  - Added type annotations to transform functions
+- **Resolved AWS Cognito limitation**:
+  - Discovered: Custom attributes cannot be `required: true` (AWS constraint)
+  - Updated all custom attributes to `required: false`
+  - Added documentation: validation must occur at application level
+- **Updated CLAUDE.md** with git workflow preference:
+  - User controls all git operations (add, commit, push)
+  - Claude suggests when ready for commit with summary
+- **Added `sst-env.d.ts` to `.gitignore`**:
+  - These are auto-generated SST type files
+  - Regenerated on each deploy/dev run
+
+**Deployed Resources:**
+
+- User Pool ID: `eu-west-2_q4P8Drtcv`
+- User Pool Client ID: `7ams44epvr3jgb9dnto3a94hmh`
+- Region: `eu-west-2` (London)
+
+**FFP-29: Create S3 Buckets and CloudFront CDN** ✅ COMPLETE (3 hours)
+
+- **Created Videos S3 Bucket** (`sst.aws.Bucket`):
+  - AES256 encryption at rest
+  - CORS configured (GET, HEAD methods)
+  - Public access blocked by default
+  - Bucket: `ffp-dev-videosbucketbucket-fhwfrwta`
+- **Created Assets S3 Bucket**:
+  - AES256 encryption at rest
+  - CORS configured (GET, HEAD methods)
+  - Public access blocked by default
+  - Bucket: `ffp-dev-assetsbucketbucket-dnvmaanu`
+- **Created CloudFront CDN** (`sst.aws.Cdn`):
+  - Connected to videos bucket for video delivery
+  - HTTPS redirect enforced (`redirect-to-https`)
+  - Cost optimised with `PriceClass_100` (North America & Europe only)
+  - Cache behaviour: 24hr default TTL, 1 year max TTL
+  - Compression enabled
+  - CDN URL: `https://d25o0th3bf9azm.cloudfront.net`
+- **Fixed CloudFront configuration issues**:
+  - Added required `ForwardedValues` parameter
+  - Added required cache behaviour properties (`allowedMethods`, `cachedMethods`)
+  - Corrected CDN export property (`url` instead of `domain`)
+- **Verified all resources**:
+  - ✅ Encryption active on both buckets
+  - ✅ CORS rules correctly applied
+  - ✅ CloudFront distribution operational
+
+**Key Decisions:**
+
+1. ✅ **AWS Cognito limitation**: Custom attributes cannot be required - enforced at app level
+2. ✅ **Git workflow**: User maintains control of all git operations
+3. ✅ **Cost optimisation**: CloudFront PriceClass_100 for Phase 1 (reduces costs)
+4. ✅ **CORS configuration**: Wildcards for dev, will restrict in production
+
+**Progress**: FFP-8 - 4/10 subtasks complete (40%), 10/27 hours (37%)
+
+---
+
+### October 23, 2025 (Session 17 - FFP-25 & FFP-26 Complete!)
+
+**Status**: ✅ FFP-26 COMPLETE! Default VPC configured - Moving to FFP-27
+
+**Completed Subtasks:**
+
+**FFP-25: Install SST and Initialise Project** ✅ COMPLETE (2 hours)
+
+**FFP-26: Configure Default VPC for Phase 1** ✅ COMPLETE (3 hours)
+
+- **Installed SST v3.17.21** as dev dependency
+- **Created sst.config.ts** with SST Ion syntax:
+  - Region: `eu-west-2` (London) for UK-based audience
+  - App name: `ffp`
+  - Dev and staging stages configured
+  - Production removal policy (retain resources)
+  - Ready for stacks to be added in FFP-26
+- **Added SST scripts** to root package.json:
+  - `pnpm sst:dev` - Start SST dev mode
+  - `pnpm sst:build` - Build infrastructure
+  - `pnpm sst:deploy` - Deploy to default stage
+  - `pnpm sst:deploy:dev` / `pnpm sst:deploy:staging` - Stage-specific deploys
+  - `pnpm sst:remove` - Remove infrastructure
+- **Verified AWS credentials** - Correct account (311376119361)
+- **Verified SST CLI** - Version 3.17.21 working
+
+**Key Decisions:**
+
+1. ✅ **Region**: Changed from `us-east-1` to `eu-west-2` (UK-based audience)
+2. ✅ **SST Version**: v3 Ion (latest, recommended)
+3. ✅ **Stages**: Dev + staging now, production to be added later (trivial to add)
+4. ✅ **Script naming**: Namespaced as `sst:*` to avoid Turborepo conflicts
+
+**FFP-26: Configure Default VPC for Phase 1 (Cost Optimisation)** ✅ COMPLETE (3 hours)
+
+- **Updated FFP-26 Jira ticket** to reflect default VPC approach:
+  - Changed from custom VPC with NAT Gateway (£30-35/month cost)
+  - Now uses AWS default VPC for Phase 1 (£0/month)
+  - Detailed cost rationale documented
+- **Created backlog ticket FFP-101** for custom VPC implementation (pre-production):
+  - Comprehensive implementation plan
+  - Cost impact analysis (£30-45/month)
+  - Migration strategy documented
+  - Zero-downtime deployment plan
+- **Updated sst.config.ts** with VPC strategy documentation:
+  - Added clear comments explaining Phase 1 default VPC approach
+  - Documented that resources (RDS, Lambda) will auto-use default VPC when no `vpc` prop specified
+  - Reference to FFP-101 for future custom VPC migration
+  - Clean, minimal configuration (no unnecessary code)
+- **Verified configuration**:
+  - SST CLI working correctly (v3.17.21)
+  - No errors in configuration
+  - Reviewed against latest SST v3 Ion documentation via Context7 MCP server
+- **Implementation refinement** (post-Context7 review):
+  - Initially created `infra/vpc.ts` with plain object (incorrect for SST v3)
+  - Reviewed SST v3 Ion documentation and identified simpler pattern
+  - Removed unnecessary VPC helper file (resources use default VPC automatically)
+  - Simplified to pure SST v3 Ion pattern: omit `vpc` prop = use default VPC
+
+**Key Decisions:**
+
+1. ✅ **Cost optimisation**: Default VPC saves £30-35/month (40-65% of Phase 1 budget)
+2. ✅ **Security**: Still adequate with security groups in default VPC
+3. ✅ **Future-proof**: Migration to custom VPC (FFP-101) is straightforward
+4. ✅ **SST v3 Ion pattern**: Resources automatically use default VPC when `vpc` prop omitted
+5. ✅ **Validated approach**: Reviewed against latest SST documentation via Context7
+
+**Cost Impact:**
+
+- Phase 1: £0/month (default VPC)
+- Production (FFP-101): +£30-45/month when revenue supports it
+
+**Progress**: FFP-8 - 2/10 subtasks complete (20%), 5/27 hours (19%)
+
+---
+
 ### October 22, 2025 (Session 16 - FFP-24 Complete!)
 
 **Status**: ✅ FFP-7 COMPLETE! All 8 subtasks finished - Sprint 1 moving to FFP-8
