@@ -53,7 +53,7 @@
 - **Updated all dependent files**:
   - `sst.config.ts`: Changed Cognito custom attribute from `parentBusinessId` to `customerId`
   - `packages/core/src/types/user.types.ts`: Updated User interface
-  - `packages/core/src/lib/constants.ts`: Changed USER*ROLES enum (business*_ → customer\__)
+  - `packages/core/src/lib/constants.ts`: Changed USER*ROLES enum (business*\_ → customer\_\_)
   - `packages/core/src/lib/seed.ts`: Added test customer data, updated user roles
   - `packages/core/src/lib/database.ts`: Environment-specific SSL configuration
 - **Documentation updates**:
