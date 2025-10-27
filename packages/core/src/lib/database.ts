@@ -1,0 +1,110 @@
+/**
+ * Database Connection Module
+ *
+ * Provides connection pooling and RLS utilities for multi-tenant PostgreSQL database.
+ * Follows serverless best practices by declaring connections outside handler scope.
+ *
+ * @module lib/database
+ */
+
+import { sql } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+
+/**
+ * Connection pool for PostgreSQL
+ * Declared at module scope for Lambda connection reuse
+ * Max 10 connections for Lambda optimisation
+ */
+const pool = new Pool({
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT ?? '5432'),
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  // SSL: disabled for development (local PostgreSQL), enabled for staging/production (RDS)
+  ssl: process.env.ENVIRONMENT === 'development' ? false : { rejectUnauthorized: true },
+  max: 10, // Lambda-optimised connection pool size
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+/**
+ * Drizzle ORM instance
+ * Reused across Lambda invocations for performance
+ */
+export const db = drizzle({ client: pool });
+
+/**
+ * Sets the Row-Level Security (RLS) context for the current transaction
+ *
+ * This function sets PostgreSQL session variables that are used by RLS policies
+ * to enforce multi-tenant data isolation.
+ *
+ * @param tx - Database transaction instance
+ * @param tenantId - UUID of the tenant
+ * @param userId - Optional UUID of the user
+ *
+ * @example
+ * ```typescript
+ * await db.transaction(async (tx) => {
+ *   await setRLSContext(tx, tenantId, userId);
+ *   return await tx.query.users.findMany();
+ * });
+ * ```
+ */
+export const setRLSContext = async (
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  tenantId: string,
+  userId?: string
+): Promise<void> => {
+  await tx.execute(sql`SET LOCAL app.tenant_id = ${tenantId}`);
+  if (userId) {
+    await tx.execute(sql`SET LOCAL app.user_id = ${userId}`);
+  }
+};
+
+/**
+ * Transaction wrapper that automatically sets RLS context
+ *
+ * This is the recommended way to perform database operations in the application.
+ * It ensures that all queries within the transaction are scoped to the tenant.
+ *
+ * @param tenantId - UUID of the tenant
+ * @param userId - Optional UUID of the user
+ * @param callback - Async function to execute within the transaction
+ * @returns Result of the callback function
+ *
+ * @example
+ * ```typescript
+ * const users = await withRLS(tenantId, userId, async (tx) => {
+ *   return await tx.query.users.findMany();
+ * });
+ * ```
+ */
+export const withRLS = async <T>(
+  tenantId: string,
+  userId: string | undefined,
+  callback: (tx: Parameters<Parameters<typeof db.transaction>[0]>[0]) => Promise<T>
+): Promise<T> => {
+  return await db.transaction(async (tx) => {
+    await setRLSContext(tx, tenantId, userId);
+    return await callback(tx);
+  });
+};
+
+/**
+ * Gracefully closes the database connection pool
+ * Should be called during application shutdown
+ */
+export async function closePool(): Promise<void> {
+  await pool.end();
+}
+
+/**
+ * Type for tenant context used throughout the application
+ */
+export interface TenantContext {
+  tenantId: string;
+  userId?: string;
+}

@@ -38,5 +38,6 @@ module.exports = {
     'dist/**',
     'build/**',
     'stacks/**',
+    'schema/**', // TypeScript schema files don't need root-level JS linting
   ],
 };

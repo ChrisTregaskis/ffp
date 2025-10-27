@@ -14,6 +14,10 @@ coverage
 *.config.ts
 !eslint.config.js
 !prettier.config.js
+!drizzle.config.ts
+
+# Database migrations (generated SQL)
+migrations/
 
 # Temporary files
 *.log
