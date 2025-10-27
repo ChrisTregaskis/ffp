@@ -8,6 +8,8 @@
 
 ## Current Phase: Sprint 1 Execution - IN PROGRESS 🚀
 
+**Current User Story/Stories Branch**: `feature/ffp-10-ffp-11-postgres-schema-drizzle-orm`
+
 ### Status
 
 ✅ **Complete**: Sprint Planning (all 93 subtasks defined)
