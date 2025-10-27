@@ -621,24 +621,24 @@ describe('Multi-tenant data isolation', () => {
     expect(assessments).not.toContainEqual(expect.objectContaining({ id: assessment1.id }));
   });
 
-  it('allows business sub-users to see shared data', async () => {
-    const businessTenant = await createTestTenant({ type: 'business' });
+  it('allows customer sub-users to see shared data', async () => {
+    const customerTenant = await createTestTenant({ type: 'customer' });
     const owner = await createTestUser({
-      tenantId: businessTenant.id,
-      role: 'business_owner',
+      tenantId: customerTenant.id,
+      role: 'customer_owner',
     });
     const subUser = await createTestUser({
-      tenantId: businessTenant.id,
-      role: 'business_user',
-      parentBusinessId: owner.id,
+      tenantId: customerTenant.id,
+      role: 'customer_user',
+      customerId: owner.id,
     });
 
     // Owner creates assessment
-    const [assessment] = await withRLS(businessTenant.id, owner.id, async (tx) => {
+    const [assessment] = await withRLS(customerTenant.id, owner.id, async (tx) => {
       return await tx
         .insert(userAssessments)
         .values({
-          tenantId: businessTenant.id,
+          tenantId: customerTenant.id,
           userId: owner.id,
           templateId: 'template-id',
         })
@@ -646,7 +646,7 @@ describe('Multi-tenant data isolation', () => {
     });
 
     // Sub-user can see it (same tenant)
-    const subUserAssessments = await withRLS(businessTenant.id, subUser.id, async (tx) => {
+    const subUserAssessments = await withRLS(customerTenant.id, subUser.id, async (tx) => {
       return await tx.select().from(userAssessments);
     });
 

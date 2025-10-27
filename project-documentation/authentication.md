@@ -57,8 +57,8 @@ export function AuthStack({ stack }: StackContext) {
           role: new cognito.StringAttribute({
             mutable: true, // Can be updated
           }),
-          parentBusinessId: new cognito.StringAttribute({
-            mutable: true, // For business sub-users
+          customerId: new cognito.StringAttribute({
+            mutable: true, // For users under customer organisations
           }),
         },
 
@@ -105,8 +105,8 @@ When a user authenticates, Cognito returns a JWT with these claims:
   "given_name": "John",
   "family_name": "Doe",
   "custom:tenantId": "550e8400-e29b-41d4-a716-446655440000",
-  "custom:role": "business_owner",
-  "custom:parentBusinessId": null,
+  "custom:role": "customer_owner",
+  "custom:customerId": null,
   "iat": 1234567890,
   "exp": 1234568790
 }
@@ -127,7 +127,7 @@ export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) 
     tenantId: claims['custom:tenantId'] as string,
     role: claims['custom:role'] as string,
     email: claims.email as string,
-    parentBusinessId: claims['custom:parentBusinessId'] as string | null,
+    customerId: claims['custom:customerId'] as string | null,
   };
 
   // Use for RLS queries
@@ -265,7 +265,7 @@ export const handler = async (event) => {
         { Name: 'family_name', Value: body.lastName },
         { Name: 'custom:tenantId', Value: businessTenantId }, // Same tenant!
         { Name: 'custom:role', Value: body.role },
-        { Name: 'custom:parentBusinessId', Value: businessOwnerId },
+        { Name: 'custom:customerId', Value: businessOwnerId },
       ],
       DesiredDeliveryMediums: ['EMAIL'], // Send temp password via email
     })
@@ -279,7 +279,7 @@ export const handler = async (event) => {
     firstName: body.firstName,
     lastName: body.lastName,
     role: body.role,
-    parentBusinessId: businessOwnerId,
+    customerId: businessOwnerId,
     createdAt: new Date(),
   });
 
@@ -368,7 +368,7 @@ export async function getCurrentUserWithContext() {
     username: user.username,
     tenantId: idToken?.payload['custom:tenantId'] as string,
     role: idToken?.payload['custom:role'] as string,
-    parentBusinessId: idToken?.payload['custom:parentBusinessId'] as string | null,
+    customerId: idToken?.payload['custom:customerId'] as string | null,
   };
 }
 
@@ -619,12 +619,12 @@ describe('User Registration', () => {
     expect(user1.tenantId).not.toBe(user2.tenantId);
   });
 
-  it('business sub-users share parent tenantId', async () => {
-    const owner = await registerBusinessOwner({ email: 'owner@test.com', ... });
-    const subUser = await inviteBusinessUser(owner, { email: 'sub@test.com', ... });
+  it('customer sub-users share parent tenantId', async () => {
+    const owner = await registerCustomerOwner({ email: 'owner@test.com', ... });
+    const subUser = await inviteCustomerUser(owner, { email: 'sub@test.com', ... });
 
     expect(subUser.tenantId).toBe(owner.tenantId);
-    expect(subUser.parentBusinessId).toBe(owner.id);
+    expect(subUser.customerId).toBe(owner.id);
   });
 });
 ```

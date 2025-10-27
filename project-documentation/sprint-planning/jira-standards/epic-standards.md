@@ -131,7 +131,7 @@ Establish core infrastructure for FFP, enabling rapid feature development with s
 - **Monorepo**: Turborepo for code sharing
 - **IaC**: SST for all AWS resources
 - **Database**: PostgreSQL 14+ with Drizzle + RLS
-- **Auth**: Cognito with custom attributes (tenantId, role, parentBusinessId)
+- **Auth**: Cognito with custom attributes (tenantId, role, customerId)
 - **API**: API Gateway + Lambda + JWT authorizers
 - **Testing**: Vitest (unit), Playwright (E2E), MSW (mocking)
 
