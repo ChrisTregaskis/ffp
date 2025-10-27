@@ -7,9 +7,34 @@
  * @module lib/database
  */
 
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
+
+/**
+ * Gets SSL configuration based on environment
+ *
+ * Development: SSL disabled (local PostgreSQL)
+ * Staging/Production: SSL enabled with AWS RDS CA certificate for explicit validation
+ *
+ * @returns SSL configuration for pg Pool
+ */
+const getSSLConfig = (): boolean | { rejectUnauthorized: boolean; ca: string } => {
+  if (process.env.ENVIRONMENT === 'development') {
+    return false;
+  }
+
+  // Load AWS RDS CA certificate bundle for staging/production
+  // This ensures we're connecting to a legitimate AWS RDS instance
+  const caPath = join(__dirname, '../../certs/rds-ca-bundle.pem');
+  return {
+    rejectUnauthorized: true,
+    ca: readFileSync(caPath, 'utf-8'),
+  };
+};
 
 /**
  * Connection pool for PostgreSQL
@@ -22,8 +47,7 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  // SSL: disabled for development (local PostgreSQL), enabled for staging/production (RDS)
-  ssl: process.env.ENVIRONMENT === 'development' ? false : { rejectUnauthorized: true },
+  ssl: getSSLConfig(),
   max: 10, // Lambda-optimised connection pool size
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
