@@ -109,105 +109,15 @@ export async function withRLS<T>(
 
 ### Tenants Table
 
-```typescript
-// schema/tenants.ts
-import { pgTable, uuid, varchar, timestamp, jsonb, pgEnum } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { relations } from 'drizzle-orm';
+_Now Implemented - View `schema/tenants.ts` for up-to-date schema`_
 
-export const tenantTypeEnum = pgEnum('tenant_type', ['individual', 'business']);
+### Customers Table
 
-export const tenants = pgTable('tenants', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  type: tenantTypeEnum('type').notNull(),
-  name: varchar('name', { length: 255 }).notNull(),
-  settings: jsonb('settings').default({}),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
-
-// Relations
-export const tenantsRelations = relations(tenants, ({ many }) => ({
-  users: many(users),
-}));
-
-// Auto-generated Zod schemas
-export const insertTenantSchema = createInsertSchema(tenants);
-export const selectTenantSchema = createSelectSchema(tenants);
-
-// TypeScript types
-export type Tenant = typeof tenants.$inferSelect;
-export type NewTenant = typeof tenants.$inferInsert;
-```
+_Now Implemented - View `schema/customers.ts` for up-to-date schema`_
 
 ### Users Table
 
-```typescript
-// schema/users.ts
-import { pgTable, uuid, varchar, timestamp, date, text, pgEnum, index } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { relations } from 'drizzle-orm';
-import { tenants } from './tenants';
-
-export const userRoleEnum = pgEnum('user_role', [
-  'system_admin',
-  'business_owner',
-  'business_admin',
-  'business_user',
-  'individual_user',
-]);
-
-export const users = pgTable(
-  'users',
-  {
-    id: uuid('id').primaryKey(),
-    tenantId: uuid('tenant_id')
-      .notNull()
-      .references(() => tenants.id, { onDelete: 'cascade' }),
-    email: varchar('email', { length: 255 }).notNull().unique(),
-    cognitoSub: varchar('cognito_sub', { length: 255 }).notNull().unique(),
-    firstName: varchar('first_name', { length: 100 }).notNull(),
-    lastName: varchar('last_name', { length: 100 }).notNull(),
-    role: userRoleEnum('role').notNull(),
-    parentBusinessId: uuid('parent_business_id').references(() => users.id, {
-      onDelete: 'set null',
-    }),
-    profileImageUrl: text('profile_image_url'),
-    phone: varchar('phone', { length: 20 }),
-    dateOfBirth: date('date_of_birth'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  (table) => ({
-    tenantIdIdx: index('idx_users_tenant_id').on(table.tenantId),
-    emailIdx: index('idx_users_email').on(table.email),
-    parentBusinessIdIdx: index('idx_users_parent_business_id').on(table.parentBusinessId),
-  })
-);
-
-// Relations
-export const usersRelations = relations(users, ({ one, many }) => ({
-  tenant: one(tenants, {
-    fields: [users.tenantId],
-    references: [tenants.id],
-  }),
-  parentBusiness: one(users, {
-    fields: [users.parentBusinessId],
-    references: [users.id],
-  }),
-  subUsers: many(users),
-  assessments: many(userAssessments),
-  programs: many(programs),
-}));
-
-// Auto-generated Zod schemas
-export const insertUserSchema = createInsertSchema(users);
-export const selectUserSchema = createSelectSchema(users);
-
-// TypeScript types
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
-```
+_Now Implemented - View `schema/users.ts` for up-to-date schema`_
 
 ### Assessment Templates Table
 
@@ -711,24 +621,24 @@ describe('Multi-tenant data isolation', () => {
     expect(assessments).not.toContainEqual(expect.objectContaining({ id: assessment1.id }));
   });
 
-  it('allows business sub-users to see shared data', async () => {
-    const businessTenant = await createTestTenant({ type: 'business' });
+  it('allows customer sub-users to see shared data', async () => {
+    const customerTenant = await createTestTenant({ type: 'customer' });
     const owner = await createTestUser({
-      tenantId: businessTenant.id,
-      role: 'business_owner',
+      tenantId: customerTenant.id,
+      role: 'customer_owner',
     });
     const subUser = await createTestUser({
-      tenantId: businessTenant.id,
-      role: 'business_user',
-      parentBusinessId: owner.id,
+      tenantId: customerTenant.id,
+      role: 'customer_user',
+      customerId: owner.id,
     });
 
     // Owner creates assessment
-    const [assessment] = await withRLS(businessTenant.id, owner.id, async (tx) => {
+    const [assessment] = await withRLS(customerTenant.id, owner.id, async (tx) => {
       return await tx
         .insert(userAssessments)
         .values({
-          tenantId: businessTenant.id,
+          tenantId: customerTenant.id,
           userId: owner.id,
           templateId: 'template-id',
         })
@@ -736,7 +646,7 @@ describe('Multi-tenant data isolation', () => {
     });
 
     // Sub-user can see it (same tenant)
-    const subUserAssessments = await withRLS(businessTenant.id, subUser.id, async (tx) => {
+    const subUserAssessments = await withRLS(customerTenant.id, subUser.id, async (tx) => {
       return await tx.select().from(userAssessments);
     });
 

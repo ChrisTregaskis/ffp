@@ -7,7 +7,7 @@ export interface User {
   firstName: string;
   lastName: string;
   role: UserRoleType;
-  parentBusinessId?: string;
+  customerId?: string;
   createdAt: Date;
   updatedAt: Date;
 }

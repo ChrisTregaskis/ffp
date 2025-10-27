@@ -13,7 +13,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 #### Authentication & API Layer
 
 - **AWS Cognito User Pool**: User authentication, JWT management
-  - Custom attributes: `tenantId`, `role`, `parentBusinessId`
+  - Custom attributes: `tenantId`, `role`, `customerId`
   - Access/refresh token handling (15min/7day expiry)
   - Email verification, password reset flows
   - Free tier: 50,000 MAU

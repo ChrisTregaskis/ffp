@@ -66,10 +66,10 @@ export default $config({
               },
             },
             {
-              name: 'parentBusinessId',
+              name: 'customerId',
               attributeDataType: 'String',
-              mutable: true, // Can be changed if user switches businesses
-              required: false, // Optional: only for sub-users under businesses
+              mutable: true, // Can be changed if user switches customers
+              required: false, // Optional: only for users under customer organisations
               stringAttributeConstraints: {
                 minLength: '1',
                 maxLength: '256',

@@ -168,7 +168,7 @@ Establish the core infrastructure and development environment for FFP, enabling 
 - **Monorepo**: Turborepo with shared packages for type safety and code reuse
 - **Infrastructure as Code**: SST for all AWS resources
 - **Database**: PostgreSQL 14+ with Drizzle ORM and RLS for tenant isolation
-- **Authentication**: Cognito User Pool with custom attributes (`tenantId`, `role`, `parentBusinessId`)
+- **Authentication**: Cognito User Pool with custom attributes (`tenantId`, `role`, `customerId`)
 - **API**: API Gateway + Lambda with JWT authorizers
 - **Testing**: Unit (Vitest), E2E (Playwright), API mocking (MSW)
 

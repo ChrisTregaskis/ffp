@@ -8,5 +8,5 @@ module.exports = {
     project: ['./tsconfig.json', './tsconfig.node.json', './tsconfig.test.json'],
     tsconfigRootDir: __dirname,
   },
-  ignorePatterns: ['dist', 'node_modules'],
+  ignorePatterns: ['dist', 'node_modules', 'sst-env.d.ts', '*.tsbuildinfo'],
 };

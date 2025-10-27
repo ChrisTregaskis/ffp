@@ -155,7 +155,7 @@ For each sprint, create **one Epic** with:
 **Architecture highlights:**
 
 - Serverless AWS (Lambda, API Gateway, RDS, S3, CloudFront)
-- Cognito with custom attributes (tenantId, role, parentBusinessId)
+- Cognito with custom attributes (tenantId, role, customerId)
 - PostgreSQL with Row-Level Security
 - React + TypeScript + Tailwind
 

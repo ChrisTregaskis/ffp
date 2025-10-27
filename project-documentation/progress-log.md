@@ -1,3 +1,143 @@
+### October 27, 2025 (Session 22 - Database Layer Phase 1 & 2 Complete!)
+
+**Status**: 🚀 Database Layer IN PROGRESS - Phases 1 & 2 COMPLETE (14/46 hours, ~30%)
+
+**Completed Work:**
+
+**Phase 1: Drizzle Foundation (FFP-56, FFP-57)** ✅ COMPLETE (6 hours)
+
+- **FFP-56**: Installed Drizzle packages (2h)
+  - Installed `drizzle-orm@0.44.7` and `drizzle-kit@0.31.5` at root level
+  - Added PostgreSQL driver (`pg@8.16.3` + `@types/pg@8.15.5`)
+  - Added `drizzle-zod@0.8.3` for Zod schema generation
+  - Updated `zod` to v3.25.0 to fix peer dependency warning
+  - Added database scripts to package.json (`db:generate`, `db:migrate`, `db:push`, `db:studio`, `db:drop`, `db:check`, `db:test`, `db:verify`)
+- **FFP-57**: Created drizzle.config.ts (4h)
+  - Configured environment-specific SSL (disabled for dev, enabled for staging/production)
+  - Added helper function for required environment variables
+  - Set schema paths (`./schema/*`) and migration output (`./migrations`)
+  - Created `.env.example` with database configuration template
+  - Successfully tested connection to local PostgreSQL (localhost:5432)
+  - Fixed PostgreSQL PATH issue (Intel Mac vs Apple Silicon)
+
+**Phase 2: Schema Definition with Major Architectural Refinement** ✅ COMPLETE (8 hours)
+
+- **FFP-58 + FFP-47**: Created tenants table schema (3h)
+  - Drizzle schema definition (`schema/tenants.ts`)
+  - Enum: `tenant_type` ('individual', 'business')
+  - Fields: id (uuid), type, name, settings (jsonb), timestamps
+  - Zod schemas for validation (insert/select)
+  - Relations defined to users and customers
+  - Generated and applied migration
+- **ARCHITECTURAL REDESIGN**: Introduced customers table (not in original plan)
+  - **Rationale**: Better separation of concerns - tenant → customer (billing) → users (access)
+  - **Previous approach**: Used `parentBusinessId` in users table for business hierarchy
+  - **New approach**: Dedicated `customers` table as billing entity
+  - **Benefits**: Clearer data model, better for future billing features, cleaner tenant isolation
+- **Created customers table schema** (`schema/customers.ts`)
+  - Enum: `customer_status` ('active', 'suspended', 'inactive')
+  - Fields: id (uuid), tenant_id (FK), name, account_code (unique), address (jsonb), status, timestamps
+  - Indexes: tenant_id, account_code, status
+  - Relations to tenant (parent) and users (children)
+  - Zod schemas for validation
+- **FFP-59 + FFP-48**: Updated users table schema (3h)
+  - Drizzle schema definition (`schema/users.ts`)
+  - Changed from `parentBusinessId` to `customerId` (references customers table)
+  - Updated role enum from `business_*` to `customer_*` roles
+  - Enum: `user_role` ('system_admin', 'customer_owner', 'customer_admin', 'customer_user', 'individual_user')
+  - Fields: id (uuid from Cognito), tenant_id (FK), email (unique), cognito_sub (unique), first_name, last_name, role, customer_id (FK, optional), profile_image_url, phone, date_of_birth, timestamps
+  - Indexes: tenant_id, email, customer_id
+  - Foreign keys: tenant_id → tenants, customer_id → customers (cascade delete)
+  - Zod schemas for validation
+  - Fixed pgTable index syntax (array format instead of object)
+- **Updated all dependent files**:
+  - `sst.config.ts`: Changed Cognito custom attribute from `parentBusinessId` to `customerId`
+  - `packages/core/src/types/user.types.ts`: Updated User interface
+  - `packages/core/src/lib/constants.ts`: Changed USER*ROLES enum (business*\_ → customer\_\_)
+  - `packages/core/src/lib/seed.ts`: Added test customer data, updated user roles
+  - `packages/core/src/lib/database.ts`: Environment-specific SSL configuration
+- **Documentation updates**:
+  - `project-documentation/architecture.md`: Updated custom attributes
+  - `project-documentation/database-schema.md`: Added customers table, updated users table
+- **FFP-60**: Finalised migration system (2h)
+  - Created migration verification script (`scripts/verify-migration.ts`)
+    - Checks all expected tables exist (tenants, customers, users)
+    - Verifies enums created (tenant_type, customer_status, user_role)
+    - Validates indexes and foreign keys
+    - Confirms RLS policies (when implemented)
+    - Environment-specific execution
+  - Added `db:verify` command to package.json
+  - Updated deployment.md with migration workflow
+  - Simplified by removing backup scripts (deferred to later)
+  - Clean migration strategy established (drop DB early in development)
+  - Added `.eslintignore` entry for `schema/**` (TypeScript files, not parseable by JS ESLint)
+
+**Technical Achievements:**
+
+- ✅ Environment-aware database configuration (SSL, connection settings)
+- ✅ Local PostgreSQL setup for development (£0/month vs £13/month RDS)
+- ✅ Type-safe schema definitions with Drizzle
+- ✅ Zod validation schemas auto-generated from Drizzle
+- ✅ Clean three-tier architecture: tenant → customer → users
+- ✅ Migration system with verification tooling
+- ✅ All schemas versioned and tracked
+
+**Key Decisions:**
+
+1. ✅ **Customers table architecture**: Separate billing entity instead of user hierarchy
+2. ✅ **Role naming**: `customer_*` roles (not `business_*`) for clarity
+3. ✅ **Environment-specific SSL**: Disabled for local dev, enabled for staging/production
+4. ✅ **Clean migrations**: Drop database when schema evolves significantly (no data yet)
+5. ✅ **Simple tooling**: Verification script only, backups deferred
+6. ✅ **Schema location**: Root `schema/` directory (shared across packages)
+
+**Migration Files Generated:**
+
+- `migrations/0000_spotty_makkari.sql` - Initial schema with tenants, customers, users tables
+- `migrations/meta/` - Drizzle metadata for tracking
+
+**Database Structure:**
+
+```
+tenants (root)
+  ├── id: uuid (PK)
+  ├── type: enum (individual, business)
+  ├── name: varchar
+  └── settings: jsonb
+
+customers (billing entities)
+  ├── id: uuid (PK)
+  ├── tenant_id: uuid (FK → tenants)
+  ├── name: varchar
+  ├── account_code: varchar (unique)
+  ├── address: jsonb
+  └── status: enum (active, suspended, inactive)
+
+users (application access)
+  ├── id: uuid (PK, from Cognito)
+  ├── tenant_id: uuid (FK → tenants)
+  ├── customer_id: uuid (FK → customers, optional)
+  ├── email: varchar (unique)
+  ├── cognito_sub: varchar (unique)
+  ├── role: enum (system_admin, customer_*, individual_user)
+  └── ... (profile fields)
+```
+
+**Progress**:
+
+- **Phase 1 & 2**: 14/14 hours complete (100%) 🎉
+- **Database Layer Overall**: 14/46 hours (30%)
+- **Sprint 1 Total**: 44/198 hours complete (22%)
+
+**Next Phase:**
+
+- 🎯 **Phase 3**: RLS Implementation (FFP-49, FFP-50, FFP-51) - 7 hours
+  - Enable RLS on users table
+  - Create setRLSContext utility
+  - Add database indexes
+
+---
+
 ### October 25, 2025 (Session 21 - FFP-8 Complete!)
 
 **Status**: ✅ FFP-8 COMPLETE! SST Infrastructure Foundation finished - Moving to FFP-10
