@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: October 25, 2025 - Session 20
+**Last Updated**: October 27, 2025 - Session 22
 **Current Phase**: Sprint 1 Execution - IN PROGRESS 🚀
 **Solo Developer**: Christopher Tregaskis
 
@@ -13,7 +13,7 @@
 ✅ **Complete**: Sprint Planning (all 93 subtasks defined)
 ✅ **Complete**: FFP-7 - Turborepo Monorepo Setup (8/8 subtasks, 13 hours) 🎉
 ✅ **Complete**: FFP-8 - SST Infrastructure Foundation (6/6 active subtasks, 17 hours) 🎉
-🎯 **Next**: FFP-10 - PostgreSQL Schema with RLS (9 subtasks, 24 hours)
+🔄 **In Progress**: FFP-10 + FFP-11 - Database Layer (Phases 1 & 2 complete: 14/46 hours, 30%)
 
 ### Sprint 1 Progress
 
@@ -154,25 +154,25 @@
 
 **Total**: 10 stories, 93 subtasks, 198 hours (~24.8 weeks at 8h/week, ~6.2 months)
 
-| Story       | Title                           | Subtasks | Hours    | Status             |
-| ----------- | ------------------------------- | -------- | -------- | ------------------ |
-| FFP-7       | Turborepo Monorepo Setup        | 8        | 13h      | ✅ COMPLETE        |
-| FFP-8       | SST Infrastructure Foundation   | 6        | 17h      | ✅ COMPLETE        |
-| FFP-10 + 11 | Database Layer (Interleaved)    | 16       | 46h      | 🎯 NEXT (Combined) |
-| ↳ FFP-10    | PostgreSQL Schema with RLS      | 9        | 24h      | 🔄 Interleaved     |
-| ↳ FFP-11    | Drizzle ORM Setup               | 9        | 22h      | 🔄 Interleaved     |
-| FFP-9       | Cognito Authentication          | 12       | 34h      | ⏸️ Not Started     |
-| FFP-12      | Testing Framework Configuration | 10       | 22h      | ⏸️ Not Started     |
-| FFP-14      | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started     |
-| FFP-15      | Error Handling Patterns         | 7        | 15h      | ⏸️ Not Started     |
-| FFP-16      | Web Login/Logout Flow           | 11       | 27h      | ⏸️ Not Started     |
-| **Total**   |                                 | **93**   | **198h** | **30/93 (32%)**    |
+| Story       | Title                           | Subtasks | Hours    | Status               |
+| ----------- | ------------------------------- | -------- | -------- | -------------------- |
+| FFP-7       | Turborepo Monorepo Setup        | 8        | 13h      | ✅ COMPLETE          |
+| FFP-8       | SST Infrastructure Foundation   | 6        | 17h      | ✅ COMPLETE          |
+| FFP-10 + 11 | Database Layer (Interleaved)    | 16       | 46h      | 🔄 IN PROGRESS (30%) |
+| ↳ FFP-10    | PostgreSQL Schema with RLS      | 9        | 24h      | 🔄 Phase 2 complete  |
+| ↳ FFP-11    | Drizzle ORM Setup               | 9        | 22h      | 🔄 Phase 2 complete  |
+| FFP-9       | Cognito Authentication          | 12       | 34h      | ⏸️ Not Started       |
+| FFP-12      | Testing Framework Configuration | 10       | 22h      | ⏸️ Not Started       |
+| FFP-14      | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started       |
+| FFP-15      | Error Handling Patterns         | 7        | 15h      | ⏸️ Not Started       |
+| FFP-16      | Web Login/Logout Flow           | 11       | 27h      | ⏸️ Not Started       |
+| **Total**   |                                 | **93**   | **198h** | **44/198h (22%)**    |
 
 **Note**: FFP-13 (CI/CD Pipeline) was intentionally skipped for now - can be added later if needed.
 
 ### Implementation Sprints
 
-**Sprint 1: Foundation (Weeks 1-5, ~40 hours)** 🔄 IN PROGRESS
+**Sprint 1: Foundation (Weeks 1-5, ~40 hours)** ✅ COMPLETE
 
 - ✅ FFP-17 through FFP-24: Turborepo setup (13h) - COMPLETE 🎉
 - ✅ FFP-25 through FFP-34: SST infrastructure (17h effective) - COMPLETE 🎉
@@ -185,16 +185,23 @@
   - ➡️ FFP-31, FFP-32, FFP-33: MOVED to appropriate future stories
 - ✅ Checkpoint: Infrastructure deployed and tested (6/6 active subtasks complete)
 
-**Sprint 2: Database Layer (Weeks 6-11, ~46 hours)** ⬅️ INTERLEAVED EXECUTION
+**Sprint 1.5: Database Foundation (Weeks 6-7, ~14 hours)** 🔄 IN PROGRESS (100% of Phase 1 & 2)
+
+- ✅ Phase 1: Drizzle Foundation (FFP-56, FFP-57) - 6h COMPLETE
+- ✅ Phase 2: Schema Definition (FFP-58+47, FFP-59+48, FFP-60) - 8h COMPLETE
+- ✅ Major architectural refinement: Introduced customers table
+- ✅ Checkpoint: Drizzle configured, schemas defined, migrations working
+
+**Sprint 2: Database Layer (Weeks 6-11, ~46 hours)** ⬅️ INTERLEAVED EXECUTION - 🔄 IN PROGRESS (30% complete)
 
 - FFP-10 + FFP-11: Database layer with interleaved subtasks (46h, 16 unique tasks)
-  - Phase 1: Drizzle foundation (FFP-56, FFP-57) - 6h
-  - Phase 2: Schema definition (FFP-58+47, FFP-59+48, FFP-60) - 8h
-  - Phase 3: RLS implementation (FFP-49, FFP-50, FFP-51) - 7h
+  - ✅ Phase 1: Drizzle foundation (FFP-56, FFP-57) - 6h COMPLETE
+  - ✅ Phase 2: Schema definition (FFP-58+47, FFP-59+48, FFP-60) - 8h COMPLETE (+ customers table redesign)
+  - 🎯 Phase 3: RLS implementation (FFP-49, FFP-50, FFP-51) - 7h ← NEXT
   - Phase 4: Connection layer (FFP-61) - 3h
   - Phase 5: Testing (FFP-52, FFP-53, FFP-54, FFP-62, FFP-63) - 15h
   - Phase 6: Documentation (FFP-55, FFP-64) - 7h
-- ✅ Checkpoint: Type-safe queries with RLS working, cross-tenant isolation verified
+- ⏸️ Checkpoint: Type-safe queries with RLS working, cross-tenant isolation verified
 
 **Sprint 3: Authentication (Weeks 12-16, ~34 hours)** ⬅️ REVISED ORDER
 
@@ -215,14 +222,16 @@
 
 ### Critical Success Criteria
 
-- 🔄 All 93 subtasks completed (30/93 done - 32%)
+- 🔄 All 93 subtasks completed (currently 44/198h done - 22%)
 - ⏸️ RLS integration tests pass (cross-tenant isolation verified)
-- ✅ JWT contains tenantId and role (Cognito configured with custom attributes)
+- ✅ JWT contains tenantId, role, customerId (Cognito configured with custom attributes)
 - ⏸️ E2E authentication tests pass (FFP-99 - CRITICAL)
 - ✅ All TypeScript strict mode, no errors
 - ⏸️ 30% test coverage achieved
 - ✅ Infrastructure deployed to dev environment (Cognito, S3, CloudFront, API Gateway, smoke tests passing)
-- ✅ Documentation updated (FFP-7 & FFP-8 docs + deployment guides + progress tracking current)
+- ✅ Database schemas defined (tenants, customers, users with Drizzle ORM)
+- ✅ Migration system established with verification tooling
+- ✅ Documentation updated (FFP-7, FFP-8, database layer docs + progress tracking current)
 
 ---
 
@@ -259,12 +268,12 @@
 
 - ✅ FFP-7: Turborepo Monorepo Setup (COMPLETE - 8/8 subtasks, 13h) 🎉
 - ✅ FFP-8: SST Infrastructure Foundation (COMPLETE - 6/6 active subtasks, 17h) 🎉
-- 🔄 FFP-10: PostgreSQL Schema with RLS (IN PROGRESS - 0/9 subtasks, 0/24h)
-- 🔄 FFP-11: Drizzle ORM Setup (IN PROGRESS - 0/9 subtasks, 0/22h)
-- **Interleaved Execution**: FFP-10 + FFP-11 = 16 unique subtasks, 46h total
+- 🔄 FFP-10: PostgreSQL Schema with RLS (IN PROGRESS - 3/9 subtasks, ~8/24h)
+- 🔄 FFP-11: Drizzle ORM Setup (IN PROGRESS - 3/9 subtasks, ~6/22h)
+- **Interleaved Execution**: FFP-10 + FFP-11 = 16 unique subtasks, 46h total (Phases 1 & 2 COMPLETE)
 - FFP-9, FFP-12, FFP-14, FFP-15, FFP-16: Not started
-- **Total Progress**: 30/93 subtasks complete (32%), 30/198 hours (15%)
-- **Current**: FFP-10 + FFP-11 Database Layer (Interleaved)
+- **Total Progress**: ~44/198 hours (22%)
+- **Current**: FFP-10 + FFP-11 Database Layer - Phase 3 (RLS Implementation) ← NEXT
 
 ---
 
@@ -323,25 +332,27 @@
 
 ## Progress Summary
 
-**Recent Work** (Oct 25, 2025 - Session 21):
+**Recent Work** (Oct 27, 2025 - Session 22):
 
-- 🎉 **FFP-8 COMPLETE!** SST Infrastructure Foundation finished (6/6 active subtasks, 17h)
-- ✅ **Dependency Analysis**: Identified FFP-9 requires database layer
-- ✅ **Implementation Order Revised**: FFP-10 → FFP-11 → FFP-9
-- ✅ **Documentation Updated**: progress-log.md and project-state.md current
-- 🎯 **Ready for FFP-10**: PostgreSQL Schema with RLS (24h, 9 subtasks)
+- 🎉 **Database Layer Phases 1 & 2 COMPLETE!** Foundation and schema definition finished (14/46h, 30%)
+- ✅ **Drizzle ORM configured**: Local PostgreSQL setup, environment-specific SSL
+- ✅ **Schema definitions complete**: tenants, customers (NEW!), users tables with Drizzle
+- ✅ **Major architectural refinement**: Introduced customers table (tenant → customer → users)
+- ✅ **Migration system established**: Generation, verification, clean migration strategy
+- ✅ **All dependencies updated**: SST config, types, constants, seed data
+- ✅ **Documentation updated**: architecture.md, database-schema.md, deployment.md, progress logs
+- 🎯 **Next**: Phase 3 - RLS Implementation (FFP-49, FFP-50, FFP-51) - 7 hours
 
-**FFP-8 Final Summary:**
+**Database Layer Phase 1 & 2 Summary:**
 
-- ✅ FFP-30: API Gateway v2 with Cognito JWT authoriser
-- ✅ FFP-34: Deployment verification and smoke tests
-- ✅ Smoke test suite with stage auto-detection
-- ✅ Comprehensive deployment documentation
-- ✅ Postman workspace configured
-- ✅ Stage-aware CORS configuration
-- ✅ SST v3 Ion patterns throughout
-- ⏸️ FFP-28 (RDS) deferred to FFP-102
-- ➡️ FFP-31, FFP-32, FFP-33 moved to appropriate future stories
+- ✅ FFP-56: Drizzle packages installed (drizzle-orm, drizzle-kit, pg, drizzle-zod)
+- ✅ FFP-57: drizzle.config.ts created with environment-specific configuration
+- ✅ FFP-58 + FFP-47: Tenants table schema (Drizzle definition + migration)
+- ✅ FFP-59 + FFP-48: Users table schema + customers table redesign
+- ✅ FFP-60: Migration system finalized (verification script, workflow documented)
+- ✅ Local PostgreSQL setup and tested
+- ✅ Clean migration generated: tenants, customers, users with indexes and foreign keys
+- ✅ Verification script working (checks tables, enums, indexes, FKs, RLS policies)
 
 **What's Working:**
 
@@ -362,13 +373,24 @@
 **AWS Infrastructure (Deployed to eu-west-2):**
 
 - ✅ SST v3 Ion configured and working
-- ✅ Cognito User Pool with multi-tenant custom attributes
+- ✅ Cognito User Pool with multi-tenant custom attributes (tenantId, role, customerId)
 - ✅ Cognito User Pool Client (OAuth2, email authentication)
 - ✅ S3 Videos Bucket (AES256 encrypted, CORS enabled)
 - ✅ S3 Assets Bucket (AES256 encrypted, CORS enabled)
 - ✅ CloudFront CDN for video delivery (HTTPS, cost-optimised)
 - ✅ API Gateway v2 (HTTP API) with Cognito JWT authorizer
 - ✅ Health check endpoint (public, no authentication)
+
+**Database Layer (Local PostgreSQL):**
+
+- ✅ Drizzle ORM configured (v0.44.7)
+- ✅ PostgreSQL schemas defined: tenants, customers, users
+- ✅ Type-safe schema definitions with Zod validation
+- ✅ Migration system with verification tooling
+- ✅ Environment-specific configuration (dev/staging/production)
+- ✅ Three-tier architecture: tenant → customer → users
+- ⏸️ Row-Level Security policies (Phase 3)
+- ⏸️ Connection pooling optimised (Phase 4)
 
 **See `progress-log.md` for detailed session-by-session history.**
 
@@ -510,9 +532,22 @@ _Key Requirements:_
 
 ### 📊 Progress Tracking
 
-**FFP-10 Progress:** 0/9 subtasks (0%)
-**FFP-11 Progress:** 0/9 subtasks (0%)
-**Combined Progress:** 0/16 unique subtasks (0%), 0/46 hours (0%)
+**FFP-10 Progress:** 3/9 subtasks complete (33%) - Phases 1 & 2 done
+**FFP-11 Progress:** 3/9 subtasks complete (33%) - Phases 1 & 2 done
+**Combined Progress:** 6/16 unique subtasks (38%), 14/46 hours (30%)
+
+**Completed Subtasks:**
+
+- ✅ FFP-56: Install Drizzle packages (2h)
+- ✅ FFP-57: Create drizzle.config.ts (4h)
+- ✅ FFP-58 + FFP-47: Define/Create tenants table (3h)
+- ✅ FFP-59 + FFP-48: Define/Create users table + customers table (3h)
+- ✅ FFP-60: Finalise migration system (2h)
+
+**Additional Work (not in original plan):**
+
+- ✅ Customers table schema and migration
+- ✅ Architectural redesign (parentBusinessId → customerId)
 
 **Note:** 2 subtasks are duplicates (FFP-58+FFP-47, FFP-59+FFP-48), so 18 total subtasks = 16 unique tasks
 
@@ -528,4 +563,4 @@ _Key Requirements:_
 
 ---
 
-**Sprint 1 Progress: 30/198 hours (15%) - FFP-7 & FFP-8 COMPLETE! Moving to FFP-10 (PostgreSQL Schema with RLS)!**
+**Sprint 1 Progress: 44/198 hours (22%) - FFP-7 & FFP-8 COMPLETE! Database Layer Phases 1 & 2 COMPLETE! Moving to Phase 3 (RLS Implementation)!**
