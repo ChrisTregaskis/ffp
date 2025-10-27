@@ -7,9 +7,6 @@
  * @module lib/database
  */
 
-import { readFileSync } from 'fs';
-import { join } from 'path';
-
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
@@ -20,6 +17,9 @@ import { Pool } from 'pg';
  * Development: SSL disabled (local PostgreSQL)
  * Staging/Production: SSL enabled with AWS RDS CA certificate for explicit validation
  *
+ * Note: Uses dynamic imports for Node.js modules (fs, path) to avoid bundling issues
+ * with browser-based build tools (Vite).
+ *
  * @returns SSL configuration for pg Pool
  */
 const getSSLConfig = (): boolean | { rejectUnauthorized: boolean; ca: string } => {
@@ -27,12 +27,19 @@ const getSSLConfig = (): boolean | { rejectUnauthorized: boolean; ca: string } =
     return false;
   }
 
+  // Dynamic import of Node.js modules to prevent Vite from trying to bundle them
+  // We use require() instead of import to avoid Vite bundling Node.js modules for browser
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const fs = require('fs') as { readFileSync: (path: string, encoding: string) => string };
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const path = require('path') as { join: (...paths: string[]) => string };
+
   // Load AWS RDS CA certificate bundle for staging/production
   // This ensures we're connecting to a legitimate AWS RDS instance
-  const caPath = join(__dirname, '../../certs/rds-ca-bundle.pem');
+  const caPath = path.join(__dirname, '../../certs/rds-ca-bundle.pem');
   return {
     rejectUnauthorized: true,
-    ca: readFileSync(caPath, 'utf-8'),
+    ca: fs.readFileSync(caPath, 'utf-8'),
   };
 };
 
