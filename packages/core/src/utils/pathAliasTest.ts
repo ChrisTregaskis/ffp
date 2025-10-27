@@ -34,7 +34,7 @@ export function testPathAliases(): PathAliasTest {
     lastName: 'User',
     email: 'test@example.com',
     tenantId: mockTenant.id,
-    role: USER_ROLES.BUSINESS_USER,
+    role: USER_ROLES.CUSTOMER_ADMIN,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
