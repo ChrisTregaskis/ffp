@@ -11,6 +11,27 @@ import { sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 /**
+ * Strict UUID validation regex (RFC 4122 compliant)
+ * Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+ * Where x is a hexadecimal digit (0-9, a-f, A-F)
+ */
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Validate that a string is a properly formatted UUID
+ * This is used to prevent SQL injection when setting RLS context
+ *
+ * @param value - String to validate
+ * @param paramName - Parameter name for error messages
+ * @throws {Error} If value is not a valid UUID format
+ */
+function validateUUID(value: string, paramName: string): void {
+  if (!UUID_REGEX.test(value)) {
+    throw new Error(`${paramName} must be a valid UUID format (got: ${value.substring(0, 20)}...)`);
+  }
+}
+
+/**
  * Set RLS context variables for multi-tenant isolation
  *
  * Sets the app.tenant_id session variable that RLS policies use to filter queries.
@@ -40,12 +61,17 @@ export async function setRLSContext(
     throw new Error('tenantId is required for RLS context');
   }
 
+  // Validate UUID format to prevent SQL injection
+  validateUUID(tenantId, 'tenantId');
+
   // Set tenant_id context variable (required for RLS filtering)
   // Note: SET requires literal values, not parameterised queries
+  // Safe to use sql.raw() here as tenantId has been validated
   await db.execute(sql.raw(`SET app.tenant_id = '${tenantId}'`));
 
   // Optionally set user_id context variable
   if (userId) {
+    validateUUID(userId, 'userId');
     await db.execute(sql.raw(`SET app.user_id = '${userId}'`));
   }
 }
@@ -91,6 +117,12 @@ export async function withRLS<T>(
 ): Promise<T> {
   if (!tenantId) {
     throw new Error('tenantId is required for RLS context');
+  }
+
+  // Validate UUID formats early (defence in depth)
+  validateUUID(tenantId, 'tenantId');
+  if (userId) {
+    validateUUID(userId, 'userId');
   }
 
   return await db.transaction(async (tx) => {

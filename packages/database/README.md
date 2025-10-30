@@ -114,10 +114,10 @@ await db.transaction(async (tx) => {
 Can check super users for local db running `psql -h localhost -U root_user -d postgres -l`
 
 1. Drop and recreate database:
-   psql -h localhost -U [replce-with-super-user] -d postgres -c "DROP DATABASE IF EXISTS ffp_dev;"
-   psql -h localhost -U [replce-with-super-user] -d postgres -c "CREATE DATABASE ffp_dev;"
-   psql -h localhost -U [replce-with-super-user] -d ffp_dev -c "GRANT CREATE ON DATABASE ffp_dev TO root_user;"
-   psql -h localhost -U [replce-with-super-user] -d ffp_dev -c "GRANT ALL ON SCHEMA public TO root_user;"
+   psql -h localhost -U [replace-with-super-user] -d postgres -c "DROP DATABASE IF EXISTS ffp_dev;"
+   psql -h localhost -U [replace-with-super-user] -d postgres -c "CREATE DATABASE ffp_dev;"
+   psql -h localhost -U [replace-with-super-user] -d ffp_dev -c "GRANT CREATE ON DATABASE ffp_dev TO root_user;"
+   psql -h localhost -U [replace-with-super-user] -d ffp_dev -c "GRANT ALL ON SCHEMA public TO root_user;"
 
 2. Run migrations:
    `pnpm db:migrate`

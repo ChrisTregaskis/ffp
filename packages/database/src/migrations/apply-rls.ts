@@ -61,11 +61,11 @@ export async function applyRLS(db: NodePgDatabase<any>): Promise<void> {
 
     // Force RLS in development/test environments (for testing with superuser)
     // In production, app_user will have RLS enforced naturally (non-superuser)
-    const currentDb = await tx.execute(sql`SELECT current_database()`);
-    const dbName = (currentDb.rows[0] as any).current_database;
+    const environment = process.env.ENVIRONMENT || 'development';
+    const isProduction = environment === 'production' || environment === 'prod';
 
-    if (!dbName.includes('prod')) {
-      console.log('  - Forcing RLS for test environment...');
+    if (!isProduction) {
+      console.log(`  - Forcing RLS for ${environment} environment...`);
       await tx.execute(sql`
         ALTER TABLE tenants FORCE ROW LEVEL SECURITY;
       `);
@@ -92,7 +92,7 @@ export async function applyRLS(db: NodePgDatabase<any>): Promise<void> {
       ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
     `);
 
-    if (!dbName.includes('prod')) {
+    if (!isProduction) {
       await tx.execute(sql`
         ALTER TABLE customers FORCE ROW LEVEL SECURITY;
       `);
@@ -118,7 +118,7 @@ export async function applyRLS(db: NodePgDatabase<any>): Promise<void> {
       ALTER TABLE users ENABLE ROW LEVEL SECURITY;
     `);
 
-    if (!dbName.includes('prod')) {
+    if (!isProduction) {
       await tx.execute(sql`
         ALTER TABLE users FORCE ROW LEVEL SECURITY;
       `);
