@@ -1,3 +1,131 @@
+### October 30, 2025 (Session 23 - Database Layer Planning & Ticket Refinement)
+
+**Status**: 📋 Planning & Ticket Refinement - Preparing for Phase 3 (RLS Implementation)
+
+**Session Focus**: Validate execution order, identify ticket misalignments, and create refactoring story
+
+**Completed Work:**
+
+**1. Execution Order Validation & Dependency Analysis** ✅
+
+- Reviewed all remaining FFP-10 and FFP-11 subtasks
+- Validated 6-phase interleaved approach against actual codebase
+- Discovered FFP-51 (Create database indexes) already complete
+  - All indexes generated automatically by Drizzle during Phase 2
+  - Saved 2 hours from original 7-hour Phase 3 estimate
+- Confirmed dependency chain: FFP-49 (RLS) → FFP-50 (utilities) can run in parallel
+- FFP-61 (connection pooling) benefits from RLS utilities but no hard dependency
+
+**2. Ticket Misalignment Discovery & Resolution** ✅
+
+**Key Misalignments Found:**
+- **FFP-51**: Already complete (indexes in migration file)
+- **Customers table**: Not mentioned in original Jira tickets (added during Session 22)
+- **Field naming**: Tickets reference `parent_business_id`, actual code uses `customer_id`
+- **Location references**: Tickets reference `packages/database/`, but code at root level
+
+**Actions Taken:**
+- ✅ **Marked FFP-51 as Done** in Jira with explanation comment
+- ✅ **Updated FFP-49** (Enable RLS): Added customers table requirements, three-tier architecture context
+- ✅ **Updated FFP-53** (Cross-tenant isolation tests): Added customers table testing, business tenant scenarios
+- ✅ **Updated FFP-54** (RLS context tests): Added customers table coverage, three-tier validation
+- ✅ **Updated FFP-55** (Documentation): Comprehensive three-tier architecture documentation scope
+
+**3. Database Package Refactoring Story Created** ✅
+
+**Problem Identified:**
+- Database files at root level (`schema/`, `migrations/`, `drizzle.config.ts`)
+- Conflicts with Jira ticket expectations (FFP-10/11 reference `packages/database/`)
+- Does not follow monorepo best practices
+- Prevents database-specific Turborepo caching
+
+**Solution: FFP-106 Created**
+- **Title**: Refactor Database Layer to Monorepo Package
+- **Goal**: Move database files to `packages/database/` structure
+- **Time Estimate**: 3 hours (low risk, no logic changes)
+- **Blocks**: FFP-49, FFP-50, FFP-61 (RLS utilities will use new structure)
+- **User Split Work**:
+  - **FFP-107**: File migration and verification (packages/database structure, moving files, testing)
+  - **FFP-108**: Documentation updates and cleanup (architecture.md, database-schema.md, root cleanup)
+
+**Proposed Structure:**
+```
+packages/database/
+├── src/
+│   ├── schema/          # Drizzle schemas (tenants, customers, users)
+│   ├── lib/             # RLS utilities (future), connection pooling (future)
+│   └── index.ts         # Clean exports
+├── migrations/          # SQL migration files
+├── drizzle.config.ts    # Drizzle configuration
+├── package.json         # @ffp/database package config
+├── tsconfig.json        # TypeScript config
+└── README.md            # Usage guide
+```
+
+**Benefits:**
+- ✅ Aligns with Jira ticket expectations
+- ✅ Follows monorepo best practices
+- ✅ Enables database-specific Turborepo caching
+- ✅ Creates explicit dependency graph (functions/web → database)
+- ✅ Matches existing package structure pattern
+
+**4. Sprint Progress Adjustments** ✅
+
+**Time Adjustments:**
+- **Saved**: 2 hours (FFP-51 already done)
+- **Added**: 3 hours (FFP-106/107/108 refactoring)
+- **Net change**: +1 hour overall
+
+**Revised Phase 3 Estimate:**
+- Original: 7 hours (FFP-49, FFP-50, FFP-51)
+- Revised: 5 hours (FFP-49, FFP-50 only - FFP-51 done)
+
+**Updated Remaining Work:**
+- FFP-106/107/108: 3h (database package refactoring) ← **NEXT**
+- Phase 3 (RLS): 5h (FFP-49, FFP-50)
+- Phase 4 (Connection): 3h (FFP-61)
+- Phase 5 (Testing): 13h (FFP-52, FFP-53, FFP-54, FFP-62, FFP-63)
+- Phase 6 (Documentation): 7h (FFP-55, FFP-64)
+- **Total remaining**: 31 hours
+
+**Key Decisions:**
+
+1. ✅ **Execute FFP-106/107/108 before RLS work** - Clean up structure first, then implement features
+2. ✅ **Split refactoring into two tickets** - FFP-107 (migration), FFP-108 (documentation)
+3. ✅ **Update all affected tickets now** - Prevent confusion during execution
+4. ✅ **Three-tier architecture** documented in all relevant tickets
+
+**Technical Notes:**
+
+- All indexes already exist in `migrations/0000_spotty_makkari.sql` (lines 67-77)
+- Customers table fully integrated into schema (tenant_id FK, indexes, RLS ready)
+- Field naming standardised to `customer_id` across codebase
+- Drizzle automatically generates indexes from schema definitions
+
+**Next Session Plan:**
+
+Execute FFP-106/107/108 in new Claude chat:
+1. Create `packages/database/` structure
+2. Move schema files, migrations, drizzle.config.ts
+3. Configure package.json, tsconfig.json, Turborepo
+4. Update import paths in drizzle.config.ts
+5. Verify build, typecheck, migration generation
+6. Update documentation (architecture.md, database-schema.md, READMEs)
+7. Clean up old root-level directories
+8. Commit changes: "FFP-106/107/108: Refactor database layer to monorepo package"
+
+**Files Modified:** None (planning session only)
+
+**Jira Updates:**
+- FFP-51: Marked as Done
+- FFP-49: Description updated (customers table, three-tier architecture)
+- FFP-53: Description updated (customers table testing)
+- FFP-54: Description updated (customers table coverage)
+- FFP-55: Description updated (three-tier documentation)
+- FFP-106: Created (database package refactoring story)
+
+---
+
 ### October 27, 2025 (Session 22 - Database Layer Phase 1 & 2 Complete!)
 
 **Status**: 🚀 Database Layer IN PROGRESS - Phases 1 & 2 COMPLETE (14/46 hours, ~30%)
