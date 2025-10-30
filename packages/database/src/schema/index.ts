@@ -1,0 +1,10 @@
+/**
+ * Database Schema Exports
+ *
+ * Centralised exports for all database schemas.
+ * @module schema
+ */
+
+export * from './tenants';
+export * from './customers';
+export * from './users';
