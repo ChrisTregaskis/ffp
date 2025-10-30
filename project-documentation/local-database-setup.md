@@ -179,7 +179,7 @@ GRANT ALL ON SCHEMA public TO root_user;
 
 Once your database connection is working:
 
-1. **Create schema definitions** in `/schema/` directory
+1. **Create schema definitions** in `packages/database/src/schema/` directory
 2. **Generate migrations** with `pnpm db:generate`
 3. **Run migrations** with `pnpm db:migrate`
 4. **View database** with `pnpm db:studio` (Drizzle Studio **OR** Setup GUI like DataGrip... notes above)
@@ -211,9 +211,9 @@ pnpm db:test
 
 ## Development Workflow
 
-1. Define/update schema in `/schema/*.ts`
+1. Define/update schema in `packages/database/src/schema/*.ts`
 2. Generate migration: `pnpm db:generate`
-3. Review generated SQL in `/migrations/`
+3. Review generated SQL in `packages/database/migrations/`
 4. Apply migration: `pnpm db:migrate`
 5. Test changes: `pnpm db:test`
 

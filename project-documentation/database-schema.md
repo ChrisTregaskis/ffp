@@ -62,6 +62,25 @@ export default defineConfig({
 });
 ```
 
+### Importing Schemas
+
+All database schemas are available through the `@ffp/database` package:
+
+```typescript
+// Importing all schemas
+import { users, customers, tenants } from '@ffp/database/schema';
+
+// Importing specific types
+import type { User, Customer, Tenant } from '@ffp/database/schema';
+
+// Importing everything from the package
+import * as database from '@ffp/database';
+```
+
+**Package Structure:**
+- Main exports: `@ffp/database` (all schemas and types)
+- Schema exports: `@ffp/database/schema` (specific schemas)
+
 ### Database Client
 
 ```typescript
@@ -109,15 +128,15 @@ export async function withRLS<T>(
 
 ### Tenants Table
 
-_Now Implemented - View `schema/tenants.ts` for up-to-date schema`_
+_Now Implemented - View `packages/database/src/schema/tenants.ts` for up-to-date schema`_
 
 ### Customers Table
 
-_Now Implemented - View `schema/customers.ts` for up-to-date schema`_
+_Now Implemented - View `packages/database/src/schema/customers.ts` for up-to-date schema`_
 
 ### Users Table
 
-_Now Implemented - View `schema/users.ts` for up-to-date schema`_
+_Now Implemented - View `packages/database/src/schema/users.ts` for up-to-date schema`_
 
 ### Assessment Templates Table
 
@@ -686,7 +705,7 @@ All foreign keys have indexes defined in schema:
 
 ```typescript
 import { sql } from 'drizzle-orm';
-import { users } from '../schema/users';
+import { users } from '@ffp/database/schema';
 
 // Prepare frequently-used query
 const getUserById = db
