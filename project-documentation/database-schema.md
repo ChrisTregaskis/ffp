@@ -78,6 +78,7 @@ import * as database from '@ffp/database';
 ```
 
 **Package Structure:**
+
 - Main exports: `@ffp/database` (all schemas and types)
 - Schema exports: `@ffp/database/schema` (specific schemas)
 

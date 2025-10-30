@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: October 30, 2025 - Session 23
+**Last Updated**: October 30, 2025 - Session 24
 **Current Phase**: Sprint 1 Execution - IN PROGRESS 🚀
 **Solo Developer**: Christopher Tregaskis
 
@@ -15,8 +15,9 @@
 ✅ **Complete**: Sprint Planning (all 93 subtasks defined)
 ✅ **Complete**: FFP-7 - Turborepo Monorepo Setup (8/8 subtasks, 13 hours) 🎉
 ✅ **Complete**: FFP-8 - SST Infrastructure Foundation (6/6 active subtasks, 17 hours) 🎉
-🔄 **In Progress**: FFP-10 + FFP-11 - Database Layer (Phases 1 & 2 complete: 14/46 hours, 30%)
-🎯 **Next**: FFP-106/107/108 - Database Package Refactoring (3 hours)
+✅ **Complete**: FFP-106/107/108 - Database Package Refactoring (3 hours) 🎉
+🔄 **In Progress**: FFP-10 + FFP-11 - Database Layer (Phases 1 & 2 & Refactoring complete: 17/46 hours, 37%)
+🎯 **Next**: Phase 3 - RLS Implementation (FFP-49, FFP-50 - 5 hours)
 
 ### Sprint 1 Progress
 
@@ -57,6 +58,36 @@
 - Deferred/moved: 4 subtasks to appropriate future stories
 - **Status**: COMPLETE! 🎉
 
+**FFP-106/107/108: Database Package Refactoring** ✅ **COMPLETE** (3 hours total)
+
+- ✅ FFP-106: Parent story - Refactor Database Layer to Monorepo Package
+- ✅ FFP-107: File Migration & Verification (2h)
+  - Created `packages/database/` structure
+  - Migrated all schema files, migrations, and drizzle config
+  - Updated Turborepo configuration
+  - Fixed TypeScript error in customers.ts
+  - Verified: install, build, typecheck, db commands
+- ✅ FFP-108: Documentation & Cleanup (1h)
+  - Updated architecture.md, database-schema.md, README.md
+  - Updated local-database-setup.md, CLAUDE.md
+  - Created packages/database/README.md
+  - Removed old root directories (schema/, migrations/)
+
+**Time Tracking:**
+
+- Hours completed: 3/3 (100%) ✅
+- Subtasks completed: 2/2 (100%) ✅
+- **Status**: COMPLETE! 🎉
+
+**Key Achievements:**
+
+- ✅ Monorepo best practices - Database now proper workspace package
+- ✅ Clean dependency graph - Explicit dependencies via @ffp/database
+- ✅ Turborepo integration - Database builds cached and optimised
+- ✅ Better organisation - All database code in one location
+- ✅ Future-ready - Structure supports RLS utilities and connection pooling
+- ✅ Import paths - Clean imports: `import { users } from '@ffp/database/schema'`
+
 ### Focus Areas
 
 - ✅ Jira ticket standards (Epic, Story, Task, Sub-task, Bug) - Modular & token-optimised
@@ -65,13 +96,15 @@
 - ✅ Created all Subtasks for Sprint 1 stories (93 subtasks across 9 stories)
 - ✅ **FFP-7 COMPLETE** - Turborepo monorepo fully set up and documented! 🎉
 - ✅ **FFP-8 COMPLETE** - SST Infrastructure Foundation deployed and verified! 🎉
+- ✅ **FFP-106/107/108 COMPLETE** - Database layer refactored to monorepo package! 🎉
 - ✅ **First code written!** - Turborepo monorepo initialised and functional
 - ✅ **Infrastructure deployed** - Cognito, S3, CloudFront, API Gateway operational
 - ✅ **Path aliases configured** - Clean imports with @ffp/\* and namespace aliases
 - ✅ **ESLint & Prettier configured** - Shared configs, strict rules, import order
 - ✅ **Comprehensive test suite** - 70+ tests covering all monorepo aspects
 - ✅ **Production-ready documentation** - 1000+ lines across 4 README files
-- 🔄 **Executing Sprint 1** - Moving to FFP-10 (PostgreSQL Schema with RLS)
+- ✅ **Database package structure** - @ffp/database ready for RLS utilities
+- 🔄 **Executing Sprint 1** - Moving to Phase 3: RLS Implementation (FFP-49, FFP-50)
 - ⏸️ Create User Stories for EPICs 2-6 (after EPIC 1 complete)
 
 ### Sprint Planning Approach
@@ -82,7 +115,7 @@
 2. ✅ **Chat 2**: Create all 6 Epics in Jira (COMPLETE)
 3. ✅ **Chat E1**: Create User Stories for Sprint 1 (COMPLETE)
 4. ✅ **Chat S1-S9**: Create Subtasks for Sprint 1 stories (COMPLETE)
-5. ✅ **Sprint 1 Execution!** - FFP-7 & FFP-8 COMPLETE (30/198h, 15%) 🎉
+5. ✅ **Sprint 1 Execution!** - FFP-7, FFP-8, FFP-106/107/108 COMPLETE (33/198h, 17%) 🎉
 6. ⏸️ **Chat E2-E6**: Create User Stories for Sprints 2-6 (after Sprint 1)
 
 ---
