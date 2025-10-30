@@ -262,10 +262,7 @@ describe('RLS Utility Functions', () => {
 
     it('should not return customers from other tenants', async () => {
       const result = await withRLS(db, tenantAId, undefined, async (tx) => {
-        return await tx
-          .select()
-          .from(customers)
-          .where(eq(customers.id, customerBId));
+        return await tx.select().from(customers).where(eq(customers.id, customerBId));
       });
 
       expect(result.length).toBe(0); // Customer B should not be visible

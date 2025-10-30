@@ -261,12 +261,14 @@ pnpm db:test
 In production (and recommended for local dev), use separate database users:
 
 **Migration User** (elevated permissions):
+
 - **Local**: Database owner or user with CREATE permissions
 - **RDS**: RDS master user (e.g., `ffp_admin`)
 - **Purpose**: Running migrations, creating schemas, applying RLS policies
 - **Used by**: CI/CD pipelines, `pnpm db:migrate`
 
 **Application User** (restricted permissions):
+
 - **Local/RDS**: `app_user` with SELECT, INSERT, UPDATE, DELETE only
 - **Purpose**: Lambda functions, API queries, day-to-day operations
 - **Used by**: Application code at runtime

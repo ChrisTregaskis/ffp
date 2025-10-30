@@ -50,8 +50,7 @@ async function runMigrations() {
     user: getRequiredEnv('DB_USER'),
     password: getRequiredEnv('DB_PASSWORD'),
     // SSL configuration based on environment
-    ssl:
-      process.env.ENVIRONMENT === 'development' ? false : { rejectUnauthorized: true },
+    ssl: process.env.ENVIRONMENT === 'development' ? false : { rejectUnauthorized: true },
   });
 
   const db = drizzle(pool);
