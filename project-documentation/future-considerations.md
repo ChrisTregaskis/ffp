@@ -623,8 +623,7 @@ await db.transaction(async (tx) => {
 });
 
 // ❌ WRONG: Missing RLS context
-const users = await db.select().from(users)
-  .where(eq(users.customer_id, 'customer-uuid-north'));
+const users = await db.select().from(users).where(eq(users.customer_id, 'customer-uuid-north'));
 // Could leak data from other tenants with same customer_id pattern!
 ```
 
