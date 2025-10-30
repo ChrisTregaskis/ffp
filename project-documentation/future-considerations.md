@@ -422,6 +422,275 @@ This document catalogs features, optimizations, and infrastructure improvements 
 
 ---
 
+## Multi-Tenant Architecture
+
+### Individual Retail Customers vs Business Customers (B2C vs B2B)
+
+**Context**: FFP's three-tier architecture supports both individual retail customers (B2C) and business customers (B2B) using the same tenant-based structure with Row-Level Security (RLS).
+
+---
+
+#### Individual Retail Customers (B2C)
+
+**Scenario**: Sarah signs up as an individual patient for physiotherapy assessments
+
+**Structure**:
+
+```
+Tenant (Sarah's account)
+├── type: 'individual'
+├── name: "Sarah Johnson"
+└── Users
+    └── Sarah (role: 'client', admin access to HER tenant)
+
+No customer record needed (billing via Stripe directly to tenant)
+```
+
+**Key characteristics**:
+
+- **One tenant per person** - Sarah gets her own tenant_id for complete data isolation
+- **No customer table involvement** - Individual tenants skip the middle tier
+- **Direct tenant → user relationship** - `user.tenant_id` points directly to tenant
+- **Billing at tenant level** - Stripe subscription/payments linked to tenant record
+- **Self-administered** - The user IS the tenant admin
+
+**Database records**:
+
+```typescript
+// Tenants table
+{
+  id: 'tenant-uuid-sarah',
+  type: 'individual',
+  name: 'Sarah Johnson',
+  stripe_customer_id: 'cus_...',
+  stripe_subscription_id: 'sub_...'
+}
+
+// Users table
+{
+  id: 'user-uuid-sarah',
+  tenant_id: 'tenant-uuid-sarah',  // Direct link to tenant
+  customer_id: null,                // Not used for individual tenants
+  email: 'sarah@example.com',
+  role: 'client'
+}
+
+// NO customers table record for individual tenants
+```
+
+**RLS filtering**:
+
+```sql
+-- Set context for Sarah's session
+SET app.tenant_id = 'tenant-uuid-sarah';
+
+-- Query users (Sarah can ONLY see her own user record)
+SELECT * FROM users;  -- Returns only Sarah's user (filtered by tenant_id)
+
+-- Query tenants (Sarah can ONLY see her own tenant)
+SELECT * FROM tenants;  -- Returns only Sarah's tenant (id = tenant_id)
+```
+
+---
+
+#### Business Customers (B2B)
+
+**Scenario**: Peak Performance Physiotherapy clinic signs up with 50 staff members
+
+**Structure**:
+
+```
+Tenant (Peak Performance Clinic)
+├── type: 'business'
+├── name: "Peak Performance Physiotherapy"
+└── Customers (billing entities within the clinic)
+    ├── Customer A: "North Branch"
+    │   └── Users (10 staff at North Branch)
+    └── Customer B: "South Branch"
+        └── Users (40 staff at South Branch)
+
+Multiple customer records (billing per branch or department)
+```
+
+**Key characteristics**:
+
+- **One tenant per clinic/organisation** - All branches/departments share one tenant_id
+- **Customer table for billing entities** - Branches, departments, or sub-organisations
+- **Tenant → customer → user hierarchy** - `user.customer_id` → customer → tenant
+- **Customers have tenant_id** - For RLS filtering (cannot see customers from other clinics)
+- **Billing at customer level** - Each branch/department can have own subscription
+- **Multi-level administration** - Tenant admin (clinic owner) + customer admin (branch manager)
+
+**Database records**:
+
+```typescript
+// Tenants table
+{
+  id: 'tenant-uuid-clinic',
+  type: 'business',
+  name: 'Peak Performance Physiotherapy',
+  // No direct Stripe link (billing at customer level)
+}
+
+// Customers table
+{
+  id: 'customer-uuid-north',
+  tenant_id: 'tenant-uuid-clinic',  // Links customer to tenant
+  name: 'North Branch',
+  stripe_customer_id: 'cus_...',
+  stripe_subscription_id: 'sub_...'
+},
+{
+  id: 'customer-uuid-south',
+  tenant_id: 'tenant-uuid-clinic',  // Same tenant, different customer
+  name: 'South Branch',
+  stripe_customer_id: 'cus_...',
+  stripe_subscription_id: 'sub_...'
+}
+
+// Users table
+{
+  id: 'user-uuid-john',
+  tenant_id: 'tenant-uuid-clinic',   // RLS filtering (ALL users have tenant_id)
+  customer_id: 'customer-uuid-north', // Which branch this user belongs to
+  email: 'john@peakperformance.com',
+  role: 'therapist'
+},
+{
+  id: 'user-uuid-mary',
+  tenant_id: 'tenant-uuid-clinic',   // Same tenant as John
+  customer_id: 'customer-uuid-south', // Different branch than John
+  email: 'mary@peakperformance.com',
+  role: 'therapist'
+}
+```
+
+**RLS filtering**:
+
+```sql
+-- Set context for Peak Performance clinic session
+SET app.tenant_id = 'tenant-uuid-clinic';
+
+-- Query users (returns ALL users within Peak Performance clinic)
+SELECT * FROM users;
+-- Returns: John, Mary, and 48 other staff (all filtered by tenant_id)
+
+-- Query customers (returns ALL branches within Peak Performance)
+SELECT * FROM customers;
+-- Returns: North Branch, South Branch (both filtered by tenant_id)
+
+-- Application-level filtering (not RLS, just WHERE clause)
+SELECT * FROM users WHERE customer_id = 'customer-uuid-north';
+-- Returns: John and 9 other North Branch staff
+```
+
+---
+
+#### RLS Security Boundary
+
+**Critical understanding**: RLS secures the **tenant boundary**, not customer boundary
+
+**tenant_id = THE security boundary**:
+
+- Prevents cross-tenant data access (Peak Performance CANNOT see Sarah's data)
+- Enforced at database level via PostgreSQL RLS policies
+- ALL tables filtered by `app.tenant_id` context variable
+- Even if someone tries to manipulate queries, RLS blocks cross-tenant access
+
+**customer_id = Application-level filtering**:
+
+- Filters data WITHIN a tenant (North Branch vs South Branch)
+- Just a WHERE clause in the query: `WHERE customer_id = 'X'`
+- No RLS policy needed
+- Used for business logic (billing, user assignment, permissions)
+
+**Example showing the difference**:
+
+```typescript
+// ✅ CORRECT: RLS secures tenant boundary
+await db.transaction(async (tx) => {
+  // Set RLS context (THE security boundary)
+  await tx.execute(sql`SET app.tenant_id = ${tenantId}`);
+
+  // Application-level filtering (business logic)
+  const northBranchUsers = await tx
+    .select()
+    .from(users)
+    .where(eq(users.customer_id, 'customer-uuid-north'));
+
+  // RLS ensures this query ONLY returns users from THIS tenant
+  // WHERE clause filters down to specific customer within tenant
+});
+
+// ❌ WRONG: Missing RLS context
+const users = await db.select().from(users).where(eq(users.customer_id, 'customer-uuid-north'));
+// Could leak data from other tenants with same customer_id pattern!
+```
+
+---
+
+#### Future Considerations: Family Plans
+
+**Scenario**: Sarah wants to add her family members to her account
+
+**Option 1: Keep as individual tenant, add multiple users**
+
+```
+Tenant (Sarah's family account)
+├── type: 'individual'
+├── name: "Johnson Family"
+└── Users
+    ├── Sarah (role: 'admin')
+    ├── Mike (role: 'client')
+    └── Emma (role: 'client')
+
+Billing: One subscription covering all family members
+```
+
+**Option 2: Upgrade to business tenant with customer record**
+
+```
+Tenant (Johnson Family)
+├── type: 'business'
+├── name: "Johnson Family"
+└── Customer: "Family Subscription"
+    └── Users (Sarah, Mike, Emma)
+
+Allows: Per-person billing, sub-accounts, more complex plans
+```
+
+**Recommendation**: Option 1 for simplicity (most families don't need billing complexity)
+
+---
+
+#### Implementation Notes
+
+**When to implement** (Phase 2+):
+
+- Individual retail customer signup is ALREADY supported by architecture
+- Just need to add:
+  - Public registration flow (vs business-only beta)
+  - Self-service billing UI
+  - Different onboarding UX for individual vs business
+  - Pricing tiers for individual plans
+
+**No architectural changes needed**:
+
+- ✅ RLS already works for both scenarios (filters by tenant_id)
+- ✅ Schema already supports both (tenant.type field exists)
+- ✅ Customers table already has tenant_id foreign key
+- ✅ Users table already has both tenant_id and customer_id
+
+**Testing requirements when implementing**:
+
+- ✅ Verify individual tenants CANNOT see business tenant data
+- ✅ Verify business tenant users CANNOT see individual tenant data
+- ✅ Verify customer filtering works within business tenants
+- ✅ Verify billing flows work for both tenant types
+- ✅ Test tenant_id isolation with integration tests
+
+---
+
 ## Features & Functionality
 
 ### White-Label Customization

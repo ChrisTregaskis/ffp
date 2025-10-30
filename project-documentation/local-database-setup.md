@@ -28,7 +28,7 @@ psql --version
 ### 2. Create Database and User
 
 ```bash
-# Connect to PostgreSQL as superuser
+# Connect to PostgreSQL as superuser (use your macOS username)
 psql postgres
 
 # In the PostgreSQL prompt, run the following commands:
@@ -41,12 +41,23 @@ GRANT ALL PRIVILEGES ON DATABASE ffp_dev TO root_user;
 # Connect to the database
 \c ffp_dev
 
-# Grant schema privileges
+# Grant schema privileges (required for tables and RLS)
 GRANT ALL ON SCHEMA public TO root_user;
 
 # Exit PostgreSQL
 \q
 ```
+
+**Alternative: Grant CREATE permission (required for migrations)**
+
+If you encounter permission errors when running migrations, grant CREATE permission on the database:
+
+```bash
+# Replace 'your_username' with your macOS username
+psql -h localhost -U your_username -d ffp_dev -c "GRANT CREATE ON DATABASE ffp_dev TO root_user;"
+```
+
+This allows `root_user` to create the `drizzle` schema that Drizzle ORM uses for tracking migrations.
 
 ### 3. Configure Environment Variables
 
@@ -167,13 +178,30 @@ GRANT ALL PRIVILEGES ON DATABASE ffp_dev TO root_user;
 
 ### Permission Issues
 
-If you see permission errors when running migrations:
+**Schema Permission Denied:**
+
+If you see `permission denied for schema public`:
 
 ```bash
-psql ffp_dev
-GRANT ALL ON SCHEMA public TO root_user;
-\q
+# Replace 'your_username' with your macOS username
+psql -h localhost -U your_username -d ffp_dev -c "GRANT ALL ON SCHEMA public TO root_user;"
 ```
+
+**Database Permission Denied (Migrations):**
+
+If you see `permission denied for database ffp_dev` when running `pnpm db:migrate`:
+
+```bash
+# Replace 'your_username' with your macOS username
+psql -h localhost -U your_username -d ffp_dev -c "GRANT CREATE ON DATABASE ffp_dev TO root_user;"
+```
+
+This error occurs because Drizzle needs to create a `drizzle` schema to track migrations. The CREATE permission allows this.
+
+**Why Two Permission Levels?**
+
+- `GRANT ALL ON SCHEMA public` - Allows creating/modifying tables within the public schema
+- `GRANT CREATE ON DATABASE` - Allows creating new schemas (needed for `drizzle` schema)
 
 ## Next Steps
 
@@ -228,11 +256,30 @@ pnpm db:test
 
 **Note:** This local setup is for development only. Production will use AWS RDS PostgreSQL (deployed in FFP-102).
 
+### Migration User vs Application User
+
+In production (and recommended for local dev), use separate database users:
+
+**Migration User** (elevated permissions):
+
+- **Local**: Database owner or user with CREATE permissions
+- **RDS**: RDS master user (e.g., `ffp_admin`)
+- **Purpose**: Running migrations, creating schemas, applying RLS policies
+- **Used by**: CI/CD pipelines, `pnpm db:migrate`
+
+**Application User** (restricted permissions):
+
+- **Local/RDS**: `app_user` with SELECT, INSERT, UPDATE, DELETE only
+- **Purpose**: Lambda functions, API queries, day-to-day operations
+- **Used by**: Application code at runtime
+
 Migration from local to RDS is straightforward:
 
-1. Update `.env` with RDS credentials
+1. Update `.env` with RDS master user credentials (for migrations)
 2. Run `pnpm db:migrate` against RDS
-3. All data schemas and RLS policies transfer seamlessly
+3. Migrations automatically create `app_user` with restricted permissions
+4. Configure Lambda to use `app_user` credentials from Secrets Manager
+5. All data schemas and RLS policies transfer seamlessly
 
 ## Resources
 

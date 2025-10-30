@@ -127,6 +127,9 @@ importers:
       '@types/pg':
         specifier: ^8.15.5
         version: 8.15.5
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
       drizzle-kit:
         specifier: ^0.31.5
         version: 0.31.5
@@ -136,6 +139,9 @@ importers:
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.18.11)(@vitest/ui@2.1.9)(jsdom@25.0.1)
 
   packages/eslint-config:
     dependencies:

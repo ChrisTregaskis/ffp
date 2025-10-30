@@ -35,10 +35,13 @@ From the project root:
 # Generate migration from schema changes
 pnpm db:generate
 
-# Apply migrations to database
+# Apply ALL migrations (schema + RLS + roles) - RECOMMENDED
 pnpm db:migrate
 
-# Push schema directly (dev only)
+# Apply schema migrations only (advanced)
+pnpm db:migrate:schema
+
+# Push schema directly (dev only, bypasses migrations)
 pnpm db:push
 
 # Open Drizzle Studio (visual database browser)
@@ -66,23 +69,66 @@ FFP uses a three-tier multi-tenant architecture:
 
 ### Row-Level Security
 
-All tenant-scoped tables use PostgreSQL Row-Level Security (RLS) for automatic data isolation:
+All tenant-scoped tables use PostgreSQL Row-Level Security (RLS) for automatic data isolation.
+
+**RLS is applied automatically** when you run `pnpm db:migrate` - no manual setup required!
+
+**RLS Policies:**
 
 ```sql
--- Example RLS policy (applied automatically)
-CREATE POLICY tenant_isolation ON users
+-- Applied automatically to all tenant-scoped tables
+CREATE POLICY tenant_isolation ON tenants
+  USING (id = current_setting('app.tenant_id')::uuid);
+
+CREATE POLICY customer_isolation ON customers
+  USING (tenant_id = current_setting('app.tenant_id')::uuid);
+
+CREATE POLICY user_isolation ON users
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ```
 
-**Important**: Always set RLS context before queries (implementation coming in FFP-49/50):
+**Environment Behaviour:**
+
+- **Development/Test**: FORCE RLS enabled (enforces RLS even for superusers - critical for testing)
+- **Production**: Standard RLS (superusers can bypass for analytics, but `app_user` role enforces RLS)
+
+**Usage in Application Code:**
 
 ```typescript
-// Future implementation
+import { withRLS, setRLSContext } from '@ffp/database';
+
+// Option 1: Use withRLS for automatic transaction handling (RECOMMENDED)
+const users = await withRLS(db, tenantId, undefined, async (tx) => {
+  return await tx.select().from(users);
+});
+
+// Option 2: Set context manually
 await db.transaction(async (tx) => {
-  await tx.execute(sql`SET app.tenant_id = ${tenantId}`);
-  return await tx.query.users.findMany();
+  await setRLSContext(tx, tenantId, userId);
+  return await tx.select().from(users);
 });
 ```
+
+## RLS Migration Test - Fresh Database
+
+Can check super users for local db running `psql -h localhost -U root_user -d postgres -l`
+
+1. Drop and recreate database:
+   psql -h localhost -U [replace-with-super-user] -d postgres -c "DROP DATABASE IF EXISTS ffp_dev;"
+   psql -h localhost -U [replace-with-super-user] -d postgres -c "CREATE DATABASE ffp_dev;"
+   psql -h localhost -U [replace-with-super-user] -d ffp_dev -c "GRANT CREATE ON DATABASE ffp_dev TO root_user;"
+   psql -h localhost -U [replace-with-super-user] -d ffp_dev -c "GRANT ALL ON SCHEMA public TO root_user;"
+
+2. Run migrations:
+   `pnpm db:migrate`
+
+3. Run RLS tests:
+   `pnpm test`
+
+4. Verify idempotency (run migrations again):
+   `pnpm db:migrate`
+
+⚠️ **Security Critical**: Never skip setting RLS context in production queries!
 
 ## Dependencies
 

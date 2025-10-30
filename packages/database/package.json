@@ -19,8 +19,12 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:migrate:schema": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:drop": "drizzle-kit drop",
@@ -36,8 +40,10 @@
   "devDependencies": {
     "@types/node": "^22.10.5",
     "@types/pg": "^8.15.5",
+    "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.5",
     "typescript": "^5.7.3",
-    "tsx": "^4.20.6"
+    "tsx": "^4.20.6",
+    "vitest": "^2.1.8"
   }
 }
