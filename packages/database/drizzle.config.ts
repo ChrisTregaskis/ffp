@@ -15,7 +15,7 @@ const getRequiredEnv = (key: string): string => {
 };
 
 export default defineConfig({
-  schema: './schema/*',
+  schema: './src/schema/**/*.ts',
   out: './migrations',
   dialect: 'postgresql',
   dbCredentials: {

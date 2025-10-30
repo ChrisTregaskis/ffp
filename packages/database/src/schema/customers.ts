@@ -57,7 +57,7 @@ export const customers = pgTable(
  * Relations definition for customers
  * A customer belongs to a tenant and has many users
  */
-export const customersRelations = relations(customers, ({ one, many }) => ({
+export const customersRelations = relations(customers, ({ one }) => ({
   tenant: one(tenants, {
     fields: [customers.tenantId],
     references: [tenants.id],

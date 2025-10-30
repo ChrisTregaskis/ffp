@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: October 27, 2025 - Session 22
+**Last Updated**: October 30, 2025 - Session 24
 **Current Phase**: Sprint 1 Execution - IN PROGRESS 🚀
 **Solo Developer**: Christopher Tregaskis
 
@@ -15,7 +15,9 @@
 ✅ **Complete**: Sprint Planning (all 93 subtasks defined)
 ✅ **Complete**: FFP-7 - Turborepo Monorepo Setup (8/8 subtasks, 13 hours) 🎉
 ✅ **Complete**: FFP-8 - SST Infrastructure Foundation (6/6 active subtasks, 17 hours) 🎉
-🔄 **In Progress**: FFP-10 + FFP-11 - Database Layer (Phases 1 & 2 complete: 14/46 hours, 30%)
+✅ **Complete**: FFP-106/107/108 - Database Package Refactoring (3 hours) 🎉
+🔄 **In Progress**: FFP-10 + FFP-11 - Database Layer (Phases 1 & 2 & Refactoring complete: 17/46 hours, 37%)
+🎯 **Next**: Phase 3 - RLS Implementation (FFP-49, FFP-50 - 5 hours)
 
 ### Sprint 1 Progress
 
@@ -56,6 +58,36 @@
 - Deferred/moved: 4 subtasks to appropriate future stories
 - **Status**: COMPLETE! 🎉
 
+**FFP-106/107/108: Database Package Refactoring** ✅ **COMPLETE** (3 hours total)
+
+- ✅ FFP-106: Parent story - Refactor Database Layer to Monorepo Package
+- ✅ FFP-107: File Migration & Verification (2h)
+  - Created `packages/database/` structure
+  - Migrated all schema files, migrations, and drizzle config
+  - Updated Turborepo configuration
+  - Fixed TypeScript error in customers.ts
+  - Verified: install, build, typecheck, db commands
+- ✅ FFP-108: Documentation & Cleanup (1h)
+  - Updated architecture.md, database-schema.md, README.md
+  - Updated local-database-setup.md, CLAUDE.md
+  - Created packages/database/README.md
+  - Removed old root directories (schema/, migrations/)
+
+**Time Tracking:**
+
+- Hours completed: 3/3 (100%) ✅
+- Subtasks completed: 2/2 (100%) ✅
+- **Status**: COMPLETE! 🎉
+
+**Key Achievements:**
+
+- ✅ Monorepo best practices - Database now proper workspace package
+- ✅ Clean dependency graph - Explicit dependencies via @ffp/database
+- ✅ Turborepo integration - Database builds cached and optimised
+- ✅ Better organisation - All database code in one location
+- ✅ Future-ready - Structure supports RLS utilities and connection pooling
+- ✅ Import paths - Clean imports: `import { users } from '@ffp/database/schema'`
+
 ### Focus Areas
 
 - ✅ Jira ticket standards (Epic, Story, Task, Sub-task, Bug) - Modular & token-optimised
@@ -64,13 +96,15 @@
 - ✅ Created all Subtasks for Sprint 1 stories (93 subtasks across 9 stories)
 - ✅ **FFP-7 COMPLETE** - Turborepo monorepo fully set up and documented! 🎉
 - ✅ **FFP-8 COMPLETE** - SST Infrastructure Foundation deployed and verified! 🎉
+- ✅ **FFP-106/107/108 COMPLETE** - Database layer refactored to monorepo package! 🎉
 - ✅ **First code written!** - Turborepo monorepo initialised and functional
 - ✅ **Infrastructure deployed** - Cognito, S3, CloudFront, API Gateway operational
 - ✅ **Path aliases configured** - Clean imports with @ffp/\* and namespace aliases
 - ✅ **ESLint & Prettier configured** - Shared configs, strict rules, import order
 - ✅ **Comprehensive test suite** - 70+ tests covering all monorepo aspects
 - ✅ **Production-ready documentation** - 1000+ lines across 4 README files
-- 🔄 **Executing Sprint 1** - Moving to FFP-10 (PostgreSQL Schema with RLS)
+- ✅ **Database package structure** - @ffp/database ready for RLS utilities
+- 🔄 **Executing Sprint 1** - Moving to Phase 3: RLS Implementation (FFP-49, FFP-50)
 - ⏸️ Create User Stories for EPICs 2-6 (after EPIC 1 complete)
 
 ### Sprint Planning Approach
@@ -81,7 +115,7 @@
 2. ✅ **Chat 2**: Create all 6 Epics in Jira (COMPLETE)
 3. ✅ **Chat E1**: Create User Stories for Sprint 1 (COMPLETE)
 4. ✅ **Chat S1-S9**: Create Subtasks for Sprint 1 stories (COMPLETE)
-5. ✅ **Sprint 1 Execution!** - FFP-7 & FFP-8 COMPLETE (30/198h, 15%) 🎉
+5. ✅ **Sprint 1 Execution!** - FFP-7, FFP-8, FFP-106/107/108 COMPLETE (33/198h, 17%) 🎉
 6. ⏸️ **Chat E2-E6**: Create User Stories for Sprints 2-6 (after Sprint 1)
 
 ---
@@ -138,15 +172,20 @@
 - ✅ Cache invalidation working correctly
 - ✅ Remote caching prepared for team usage
 
-**Next Up (Interleaved Approach for Database Layer):**
+**Next Up:**
 
-- 🎯 FFP-10 + FFP-11: Database Layer (46h total, 16 unique subtasks) ← NEXT
-  - FFP-10: PostgreSQL Schema with RLS (24h, 9 subtasks)
-  - FFP-11: Drizzle ORM Setup (22h, 9 subtasks)
+- 🎯 FFP-106/107/108: Database Package Refactoring (3h) ← **NEXT**
+  - **FFP-106**: Parent story for database package refactoring
+  - **FFP-107**: File migration and verification
+  - **FFP-108**: Documentation updates and cleanup
+  - **Rationale**: Align structure with Jira expectations, enable database-specific caching
+- 🔄 FFP-10 + FFP-11: Database Layer - Continue Phase 3 (31h remaining, 16 unique subtasks)
+  - FFP-10: PostgreSQL Schema with RLS (19h remaining, 6 subtasks)
+  - FFP-11: Drizzle ORM Setup (12h remaining, 6 subtasks)
   - **Approach:** Interleaved execution (schema tasks overlap)
 - FFP-9: Cognito Authentication (34h, 12 subtasks) - requires database layer complete
 
-**Rationale:** FFP-10 and FFP-11 have overlapping schema definition tasks (FFP-58/FFP-47 for tenants, FFP-59/FFP-48 for users). Using Drizzle schema definitions fulfils both stories' requirements. FFP-9 registration endpoint requires database layer complete.
+**Rationale:** Database package refactoring is low-risk, structural only, and blocks Phase 3 RLS utilities. FFP-10/11 have overlapping tasks. FFP-9 registration endpoint requires database layer complete.
 
 ---
 
@@ -160,15 +199,18 @@
 | ----------- | ------------------------------- | -------- | -------- | -------------------- |
 | FFP-7       | Turborepo Monorepo Setup        | 8        | 13h      | ✅ COMPLETE          |
 | FFP-8       | SST Infrastructure Foundation   | 6        | 17h      | ✅ COMPLETE          |
-| FFP-10 + 11 | Database Layer (Interleaved)    | 16       | 46h      | 🔄 IN PROGRESS (30%) |
-| ↳ FFP-10    | PostgreSQL Schema with RLS      | 9        | 24h      | 🔄 Phase 2 complete  |
-| ↳ FFP-11    | Drizzle ORM Setup               | 9        | 22h      | 🔄 Phase 2 complete  |
+| FFP-106     | Database Package Refactoring    | 2        | 3h       | 🎯 NEXT              |
+| ↳ FFP-107   | File Migration & Verification   | -        | 2h       | ⏸️ Not Started       |
+| ↳ FFP-108   | Documentation & Cleanup         | -        | 1h       | ⏸️ Not Started       |
+| FFP-10 + 11 | Database Layer (Interleaved)    | 13       | 31h      | 🔄 IN PROGRESS (45%) |
+| ↳ FFP-10    | PostgreSQL Schema with RLS      | 7        | 19h      | 🔄 Phase 2 complete  |
+| ↳ FFP-11    | Drizzle ORM Setup               | 6        | 12h      | 🔄 Phase 2 complete  |
 | FFP-9       | Cognito Authentication          | 12       | 34h      | ⏸️ Not Started       |
 | FFP-12      | Testing Framework Configuration | 10       | 22h      | ⏸️ Not Started       |
 | FFP-14      | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started       |
 | FFP-15      | Error Handling Patterns         | 7        | 15h      | ⏸️ Not Started       |
 | FFP-16      | Web Login/Logout Flow           | 11       | 27h      | ⏸️ Not Started       |
-| **Total**   |                                 | **93**   | **198h** | **44/198h (22%)**    |
+| **Total**   |                                 | **95**   | **201h** | **47/201h (23%)**    |
 
 **Note**: FFP-13 (CI/CD Pipeline) was intentionally skipped for now - can be added later if needed.
 
@@ -187,21 +229,30 @@
   - ➡️ FFP-31, FFP-32, FFP-33: MOVED to appropriate future stories
 - ✅ Checkpoint: Infrastructure deployed and tested (6/6 active subtasks complete)
 
-**Sprint 1.5: Database Foundation (Weeks 6-7, ~14 hours)** 🔄 IN PROGRESS (100% of Phase 1 & 2)
+**Sprint 1.5: Database Foundation (Weeks 6-7, ~14 hours)** ✅ COMPLETE
 
 - ✅ Phase 1: Drizzle Foundation (FFP-56, FFP-57) - 6h COMPLETE
 - ✅ Phase 2: Schema Definition (FFP-58+47, FFP-59+48, FFP-60) - 8h COMPLETE
 - ✅ Major architectural refinement: Introduced customers table
 - ✅ Checkpoint: Drizzle configured, schemas defined, migrations working
 
-**Sprint 2: Database Layer (Weeks 6-11, ~46 hours)** ⬅️ INTERLEAVED EXECUTION - 🔄 IN PROGRESS (30% complete)
+**Sprint 1.6: Database Package Refactoring (Week 8, ~3 hours)** 🎯 NEXT
 
-- FFP-10 + FFP-11: Database layer with interleaved subtasks (46h, 16 unique tasks)
+- FFP-106/107/108: Database package refactoring (3h)
+  - FFP-107: File migration and verification (2h)
+  - FFP-108: Documentation updates and cleanup (1h)
+- ✅ Checkpoint: Database layer in proper monorepo package structure
+
+**Sprint 2: Database Layer Continued (Weeks 8-11, ~31 hours)** ⬅️ INTERLEAVED EXECUTION - 🔄 IN PROGRESS (45% complete)
+
+- FFP-10 + FFP-11: Database layer with interleaved subtasks (31h, 13 unique tasks remaining)
   - ✅ Phase 1: Drizzle foundation (FFP-56, FFP-57) - 6h COMPLETE
   - ✅ Phase 2: Schema definition (FFP-58+47, FFP-59+48, FFP-60) - 8h COMPLETE (+ customers table redesign)
-  - 🎯 Phase 3: RLS implementation (FFP-49, FFP-50, FFP-51) - 7h ← NEXT
+  - ✅ Phase 2.5: Ticket refinement (FFP-51 marked Done, FFP-49/53/54/55 updated) - 0h (planning)
+  - 🎯 Phase 2.6: Database package refactoring (FFP-106/107/108) - 3h ← NEXT
+  - Phase 3: RLS implementation (FFP-49, FFP-50) - 5h (reduced from 7h, FFP-51 already done)
   - Phase 4: Connection layer (FFP-61) - 3h
-  - Phase 5: Testing (FFP-52, FFP-53, FFP-54, FFP-62, FFP-63) - 15h
+  - Phase 5: Testing (FFP-52, FFP-53, FFP-54, FFP-62, FFP-63) - 13h (reduced from 15h)
   - Phase 6: Documentation (FFP-55, FFP-64) - 7h
 - ⏸️ Checkpoint: Type-safe queries with RLS working, cross-tenant isolation verified
 
@@ -334,7 +385,16 @@
 
 ## Progress Summary
 
-**Recent Work** (Oct 27, 2025 - Session 22):
+**Recent Work** (Oct 30, 2025 - Session 23):
+
+- 📋 **Planning & Ticket Refinement Session** - Validated execution order, resolved misalignments
+- ✅ **FFP-51 marked Done**: Indexes already exist in migration (2h saved!)
+- ✅ **Tickets updated for three-tier architecture**: FFP-49, FFP-53, FFP-54, FFP-55 now include customers table
+- ✅ **FFP-106 created**: Database package refactoring story (3h)
+  - User split into FFP-107 (migration) and FFP-108 (documentation)
+- 🎯 **Next**: FFP-106/107/108 - Database Package Refactoring (3h) then Phase 3 RLS Implementation
+
+**Previous Work** (Oct 27, 2025 - Session 22):
 
 - 🎉 **Database Layer Phases 1 & 2 COMPLETE!** Foundation and schema definition finished (14/46h, 30%)
 - ✅ **Drizzle ORM configured**: Local PostgreSQL setup, environment-specific SSL
@@ -343,7 +403,6 @@
 - ✅ **Migration system established**: Generation, verification, clean migration strategy
 - ✅ **All dependencies updated**: SST config, types, constants, seed data
 - ✅ **Documentation updated**: architecture.md, database-schema.md, deployment.md, progress logs
-- 🎯 **Next**: Phase 3 - RLS Implementation (FFP-49, FFP-50, FFP-51) - 7 hours
 
 **Database Layer Phase 1 & 2 Summary:**
 
@@ -534,9 +593,9 @@ _Key Requirements:_
 
 ### 📊 Progress Tracking
 
-**FFP-10 Progress:** 3/9 subtasks complete (33%) - Phases 1 & 2 done
+**FFP-10 Progress:** 4/9 subtasks complete (44%) - Phases 1 & 2 done, FFP-51 marked Done
 **FFP-11 Progress:** 3/9 subtasks complete (33%) - Phases 1 & 2 done
-**Combined Progress:** 6/16 unique subtasks (38%), 14/46 hours (30%)
+**Combined Progress:** 7/16 unique subtasks (44%), 16/46 hours (35% - includes 2h saved from FFP-51)
 
 **Completed Subtasks:**
 
@@ -545,13 +604,30 @@ _Key Requirements:_
 - ✅ FFP-58 + FFP-47: Define/Create tenants table (3h)
 - ✅ FFP-59 + FFP-48: Define/Create users table + customers table (3h)
 - ✅ FFP-60: Finalise migration system (2h)
+- ✅ FFP-51: Create database indexes (0h - already done, marked complete)
+
+**Remaining Subtasks (13 unique tasks, 31h):**
+
+- 🎯 FFP-106/107/108: Database package refactoring (3h) ← NEXT
+- FFP-49: Enable RLS on users and customers tables (2h)
+- FFP-50: Create setRLSContext utility (3h)
+- FFP-61: Configure connection pooling (3h)
+- FFP-52: Unit tests for RLS utilities (2h)
+- FFP-53: Integration test - Cross-tenant isolation (4h)
+- FFP-54: Integration test - RLS context application (3h)
+- FFP-62: Unit tests for Drizzle setup (2h)
+- FFP-63: Integration tests for Drizzle queries (2h)
+- FFP-55: RLS documentation (3h)
+- FFP-64: Drizzle usage guide (4h)
 
 **Additional Work (not in original plan):**
 
-- ✅ Customers table schema and migration
-- ✅ Architectural redesign (parentBusinessId → customerId)
+- ✅ Customers table schema and migration (Session 22)
+- ✅ Architectural redesign (parentBusinessId → customerId) (Session 22)
+- ✅ Ticket refinement and misalignment resolution (Session 23)
+- 🎯 Database package refactoring (Session 24 - next)
 
-**Note:** 2 subtasks are duplicates (FFP-58+FFP-47, FFP-59+FFP-48), so 18 total subtasks = 16 unique tasks
+**Note:** 2 subtasks are duplicates (FFP-58+FFP-47, FFP-59+FFP-48), so 18 total subtasks = 16 unique tasks. FFP-51 completed automatically during Phase 2 (Drizzle generates indexes from schema).
 
 ### Development Workflow
 
@@ -565,4 +641,4 @@ _Key Requirements:_
 
 ---
 
-**Sprint 1 Progress: 44/198 hours (22%) - FFP-7 & FFP-8 COMPLETE! Database Layer Phases 1 & 2 COMPLETE! Moving to Phase 3 (RLS Implementation)!**
+**Sprint 1 Progress: 47/201 hours (23%) - FFP-7 & FFP-8 COMPLETE! Database Layer Phases 1 & 2 COMPLETE! Moving to Database Package Refactoring (FFP-106/107/108) then Phase 3 (RLS Implementation)!**
