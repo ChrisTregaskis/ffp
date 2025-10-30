@@ -1,5 +1,9 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
+import { resolve } from 'path';
 import { defineConfig } from 'drizzle-kit';
+
+// Load .env from monorepo root (two levels up from this file)
+config({ path: resolve(__dirname, '../../.env') });
 
 /**
  * Helper function to get required environment variable

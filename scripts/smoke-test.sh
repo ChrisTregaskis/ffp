@@ -13,23 +13,30 @@ echo ""
 
 REGION="eu-west-2"
 
+# Colour codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Colour
+
+# Terminal prefix helpers (matching TypeScript logger)
+prefix_info() { echo -e "${BLUE}[INFO]${NC}"; }
+prefix_success() { echo -e "${GREEN}[SUCCESS]${NC}"; }
+prefix_error() { echo -e "${RED}[ERROR]${NC}"; }
+prefix_warning() { echo -e "${YELLOW}[WARNING]${NC}"; }
+
 # Check if outputs file exists
 if [ ! -f ".sst/outputs.json" ]; then
-  echo "❌ Error: .sst/outputs.json not found"
+  echo -e "$(prefix_error) .sst/outputs.json not found"
   echo "   Please deploy infrastructure first with: pnpm sst:dev or pnpm sst:deploy:dev"
   exit 1
 fi
 
 # Read outputs from deployed infrastructure
 OUTPUTS_FILE=".sst/outputs.json"
-echo "📄 Reading deployment outputs from: $OUTPUTS_FILE"
+echo -e "$(prefix_info) Reading deployment outputs from: $OUTPUTS_FILE"
 echo ""
-
-# Colour codes for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Colour
 
 # Test counter
 TESTS_PASSED=0
@@ -37,18 +44,18 @@ TESTS_FAILED=0
 
 # Helper function for test results
 pass_test() {
-  echo -e "${GREEN}✓${NC} $1"
+  echo -e "$(prefix_success) $1"
   ((TESTS_PASSED++))
 }
 
 fail_test() {
-  echo -e "${RED}✗${NC} $1"
+  echo -e "$(prefix_error) $1"
   echo -e "${RED}  Error: $2${NC}"
   ((TESTS_FAILED++))
 }
 
 warn_test() {
-  echo -e "${YELLOW}⚠${NC} $1"
+  echo -e "$(prefix_warning) $1"
 }
 
 echo "Test Suite: Current Infrastructure"
@@ -71,8 +78,8 @@ else
     if echo "$HEALTH_RESPONSE" | grep -q "sst dev is not running"; then
       warn_test "Health Endpoint: sst dev not running"
       echo "   This is a personal stage deployment (requires sst dev)"
-      echo "   → Start 'pnpm sst:dev' in another terminal to enable endpoints"
-      echo "   → Or deploy to persistent stage: 'pnpm sst:deploy:dev'"
+      echo "   > Start 'pnpm sst:dev' in another terminal to enable endpoints"
+      echo "   > Or deploy to persistent stage: 'pnpm sst:deploy:dev'"
     else
       warn_test "Health Endpoint: Unable to connect or verify"
       echo "   URL: $API_URL/health"
@@ -113,12 +120,12 @@ ASSETS_BUCKET=$(grep -o '"assetsBucket":"[^"]*"' "$OUTPUTS_FILE" | cut -d'"' -f4
 BUCKET_COUNT=0
 if [ -n "$VIDEOS_BUCKET" ] && aws s3 ls "s3://$VIDEOS_BUCKET" >/dev/null 2>&1; then
   ((BUCKET_COUNT++))
-  echo "   ✓ Videos bucket: $VIDEOS_BUCKET"
+  echo -e "   ${GREEN}[OK]${NC} Videos bucket: $VIDEOS_BUCKET"
 fi
 
 if [ -n "$ASSETS_BUCKET" ] && aws s3 ls "s3://$ASSETS_BUCKET" >/dev/null 2>&1; then
   ((BUCKET_COUNT++))
-  echo "   ✓ Assets bucket: $ASSETS_BUCKET"
+  echo -e "   ${GREEN}[OK]${NC} Assets bucket: $ASSETS_BUCKET"
 fi
 
 if [ "$BUCKET_COUNT" -eq 2 ]; then
@@ -227,18 +234,18 @@ fi
 
 echo ""
 echo "=================================="
-echo "📊 Test Results"
+echo "Test Results"
 echo "=================================="
 echo -e "${GREEN}Passed: $TESTS_PASSED${NC}"
 echo -e "${RED}Failed: $TESTS_FAILED${NC}"
 echo ""
 
 if [ $TESTS_FAILED -eq 0 ]; then
-  echo -e "${GREEN}✓ All critical tests passed!${NC}"
+  echo -e "$(prefix_success) All critical tests passed!"
   echo "Infrastructure deployed successfully to eu-west-2"
   exit 0
 else
-  echo -e "${RED}✗ Some tests failed${NC}"
+  echo -e "$(prefix_error) Some tests failed"
   echo "Review failed tests above for details"
   exit 1
 fi
