@@ -16,15 +16,16 @@ This package provides:
 
 ### Importing Schemas
 
-```typescript
-// Import all schemas
-import { users, customers, tenants } from '@ffp/database/schema';
+**Recommended: Import from package root**
 
-// Import types
+```typescript
+// ✅ Import client and schemas from package root
+import { getDb, withDb, type DbClient } from '@ffp/database';
+import { users, customers, tenants } from '@ffp/database/schema';
 import type { User, Customer, Tenant } from '@ffp/database/schema';
 
-// Import everything
-import * as database from '@ffp/database';
+// ⚠️ Avoid: Direct client import (internal implementation detail)
+import { getDb } from '@ffp/database/client'; // Don't do this
 ```
 
 ### Connection Pooling
@@ -66,6 +67,21 @@ The connection pool uses the following environment variables:
 - `DB_USER` - Database user
 - `DB_PASSWORD` - Database password
 - `DB_SSL` - Enable SSL/TLS (set to 'true' for production RDS)
+- `NODE_ENV` - Environment (affects SSL certificate validation)
+
+**Connection Limits:**
+
+Each Lambda container creates up to 10 connections. Plan capacity to avoid exceeding RDS `max_connections`:
+
+- RDS `max_connections` depends on instance size (e.g., db.t4g.micro = 81 connections)
+- Calculate safe limit: `reserved_concurrency × 10 ≤ max_connections - 10 (buffer)`
+- Example: 5 concurrent Lambdas = 50 connections max (safe for db.t4g.micro)
+
+**Security:**
+
+- **Production**: SSL enabled with certificate verification (`DB_SSL=true`, `NODE_ENV=production`)
+- **Development**: SSL optional, allows self-signed certificates for local PostgreSQL
+- **Credentials**: Environment variables in Phase 1, migrating to AWS Secrets Manager in Phase 2
 
 ### Running Migrations
 
