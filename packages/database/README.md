@@ -61,7 +61,7 @@ export const handler = async (event: APIGatewayEvent) => {
 
 The connection pool uses the following environment variables:
 
-- `DB_HOST` - PostgreSQL host (default: localhost)
+- `DB_HOST` - PostgreSQL host
 - `DB_PORT` - PostgreSQL port (default: 5432)
 - `DB_NAME` - Database name
 - `DB_USER` - Database user
