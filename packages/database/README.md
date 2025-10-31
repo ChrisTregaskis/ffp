@@ -74,7 +74,7 @@ The connection pool uses the following environment variables:
 Each Lambda container creates up to 10 connections. Plan capacity to avoid exceeding RDS `max_connections`:
 
 - RDS `max_connections` depends on instance size (e.g., db.t4g.micro = 81 connections)
-- Calculate safe limit: `reserved_concurrency × 10 ≤ max_connections - 10 (buffer)`
+- Calculate safe limit: `reserved_concurrency * 10 <= max_connections - 10 (buffer)`
 - Example: 5 concurrent Lambdas = 50 connections max (safe for db.t4g.micro)
 
 **Security:**
