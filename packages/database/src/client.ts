@@ -34,12 +34,10 @@ export function getDb() {
   if (!db) {
     // Validate required environment variables
     const requiredEnvVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
-    const missing = requiredEnvVars.filter(key => !process.env[key]);
+    const missing = requiredEnvVars.filter((key) => !process.env[key]);
 
     if (missing.length > 0) {
-      throw new Error(
-        `Missing required database environment variables: ${missing.join(', ')}`
-      );
+      throw new Error(`Missing required database environment variables: ${missing.join(', ')}`);
     }
 
     // Validate DB_PORT is a valid number
@@ -80,9 +78,11 @@ export function getDb() {
       // SSL/TLS configuration
       // SECURITY: In production, always verify certificates to prevent MITM attacks
       // In development, allow self-signed certificates for local PostgreSQL
-      ssl: sslEnabled ? {
-        rejectUnauthorized: isProduction,
-      } : false,
+      ssl: sslEnabled
+        ? {
+            rejectUnauthorized: isProduction,
+          }
+        : false,
     });
 
     // Handle pool errors to prevent unhandled rejections

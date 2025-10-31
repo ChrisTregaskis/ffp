@@ -94,14 +94,18 @@ describe('Database Client', () => {
       delete process.env.DB_HOST;
       delete process.env.DB_NAME;
 
-      expect(() => getDb()).toThrow('Missing required database environment variables: DB_HOST, DB_NAME');
+      expect(() => getDb()).toThrow(
+        'Missing required database environment variables: DB_HOST, DB_NAME'
+      );
     });
 
     it('should throw error for invalid DB_PORT', async () => {
       await closeDb();
       process.env.DB_PORT = 'invalid';
 
-      expect(() => getDb()).toThrow('Invalid DB_PORT: invalid. Must be a number between 1 and 65535.');
+      expect(() => getDb()).toThrow(
+        'Invalid DB_PORT: invalid. Must be a number between 1 and 65535.'
+      );
     });
 
     it('should throw error for DB_PORT out of range (too low)', async () => {
@@ -115,7 +119,9 @@ describe('Database Client', () => {
       await closeDb();
       process.env.DB_PORT = '65536';
 
-      expect(() => getDb()).toThrow('Invalid DB_PORT: 65536. Must be a number between 1 and 65535.');
+      expect(() => getDb()).toThrow(
+        'Invalid DB_PORT: 65536. Must be a number between 1 and 65535.'
+      );
     });
 
     it('should use default port 5432 when DB_PORT not set', async () => {
@@ -255,7 +261,9 @@ describe('Database Client', () => {
 
       // Verify that credentials are NOT in the log output
       const logCalls = consoleLogSpy.mock.calls;
-      const poolCreationLog = logCalls.find(call => call[0] === 'Creating database connection pool');
+      const poolCreationLog = logCalls.find(
+        (call) => call[0] === 'Creating database connection pool'
+      );
 
       expect(poolCreationLog).toBeDefined();
       expect(poolCreationLog?.[1]).not.toHaveProperty('user');
