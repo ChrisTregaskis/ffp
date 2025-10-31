@@ -73,10 +73,7 @@ describe('Drizzle Integration Tests', () => {
 
       // Query it back
       const queriedTenant = await withRLS(db, tenantId, undefined, async (tx) => {
-        const [result] = await tx
-          .select()
-          .from(tenants)
-          .where(eq(tenants.id, tenantId));
+        const [result] = await tx.select().from(tenants).where(eq(tenants.id, tenantId));
 
         return result;
       });
@@ -91,11 +88,14 @@ describe('Drizzle Integration Tests', () => {
       // Create tenant and customer in transaction
       const { customer } = await withRLS(db, tenantId, undefined, async (tx) => {
         // Create tenant first
-        const [newTenant] = await tx.insert(tenants).values({
-          id: tenantId,
-          type: 'business',
-          name: 'Business Tenant',
-        }).returning();
+        const [newTenant] = await tx
+          .insert(tenants)
+          .values({
+            id: tenantId,
+            type: 'business',
+            name: 'Business Tenant',
+          })
+          .returning();
 
         // Create customer
         const [newCustomer] = await tx
@@ -117,10 +117,7 @@ describe('Drizzle Integration Tests', () => {
 
       // Query it back
       const queriedCustomer = await withRLS(db, tenantId, undefined, async (tx) => {
-        const [result] = await tx
-          .select()
-          .from(customers)
-          .where(eq(customers.id, customer.id));
+        const [result] = await tx.select().from(customers).where(eq(customers.id, customer.id));
 
         return result;
       });
@@ -136,11 +133,14 @@ describe('Drizzle Integration Tests', () => {
       // Create tenant and user
       const { user } = await withRLS(db, tenantId, undefined, async (tx) => {
         // Create tenant
-        const [newTenant] = await tx.insert(tenants).values({
-          id: tenantId,
-          type: 'individual',
-          name: 'Test Tenant',
-        }).returning();
+        const [newTenant] = await tx
+          .insert(tenants)
+          .values({
+            id: tenantId,
+            type: 'individual',
+            name: 'Test Tenant',
+          })
+          .returning();
 
         // Create user
         const [newUser] = await tx
@@ -165,10 +165,7 @@ describe('Drizzle Integration Tests', () => {
 
       // Query it back
       const queriedUser = await withRLS(db, tenantId, undefined, async (tx) => {
-        const [result] = await tx
-          .select()
-          .from(users)
-          .where(eq(users.id, userId));
+        const [result] = await tx.select().from(users).where(eq(users.id, userId));
 
         return result;
       });
@@ -191,18 +188,12 @@ describe('Drizzle Integration Tests', () => {
 
       // Update tenant
       await withRLS(db, tenantId, undefined, async (tx) => {
-        await tx
-          .update(tenants)
-          .set({ name: 'Updated Name' })
-          .where(eq(tenants.id, tenantId));
+        await tx.update(tenants).set({ name: 'Updated Name' }).where(eq(tenants.id, tenantId));
       });
 
       // Verify update
       const updated = await withRLS(db, tenantId, undefined, async (tx) => {
-        const [result] = await tx
-          .select()
-          .from(tenants)
-          .where(eq(tenants.id, tenantId));
+        const [result] = await tx.select().from(tenants).where(eq(tenants.id, tenantId));
 
         return result;
       });
@@ -236,17 +227,12 @@ describe('Drizzle Integration Tests', () => {
 
       // Delete customer
       await withRLS(db, tenantId, undefined, async (tx) => {
-        await tx
-          .delete(customers)
-          .where(eq(customers.id, customerId));
+        await tx.delete(customers).where(eq(customers.id, customerId));
       });
 
       // Verify deletion
       const deleted = await withRLS(db, tenantId, undefined, async (tx) => {
-        const result = await tx
-          .select()
-          .from(customers)
-          .where(eq(customers.id, customerId));
+        const result = await tx.select().from(customers).where(eq(customers.id, customerId));
 
         return result;
       });
@@ -269,11 +255,13 @@ describe('Drizzle Integration Tests', () => {
       });
 
       // Execute multiple queries in parallel
-      const queries = Array(5).fill(null).map(() =>
-        withRLS(db, tenantId, undefined, async (tx) => {
-          return await tx.select().from(tenants).limit(1);
-        })
-      );
+      const queries = Array(5)
+        .fill(null)
+        .map(() =>
+          withRLS(db, tenantId, undefined, async (tx) => {
+            return await tx.select().from(tenants).limit(1);
+          })
+        );
 
       const results = await Promise.all(queries);
 
@@ -297,21 +285,26 @@ describe('Drizzle Integration Tests', () => {
       });
 
       // Create 5 users concurrently
-      const userPromises = Array(5).fill(null).map((_, i) =>
-        withRLS(db, tenantId, undefined, async (tx) => {
-          const [user] = await tx.insert(users).values({
-            id: randomUUID(),
-            tenantId: tenantId,
-            email: `user${i}@test.com`,
-            cognitoSub: `cognito-${i}`,
-            firstName: `User${i}`,
-            lastName: 'Test',
-            role: 'individual_user',
-          }).returning();
+      const userPromises = Array(5)
+        .fill(null)
+        .map((_, i) =>
+          withRLS(db, tenantId, undefined, async (tx) => {
+            const [user] = await tx
+              .insert(users)
+              .values({
+                id: randomUUID(),
+                tenantId: tenantId,
+                email: `user${i}@test.com`,
+                cognitoSub: `cognito-${i}`,
+                firstName: `User${i}`,
+                lastName: 'Test',
+                role: 'individual_user',
+              })
+              .returning();
 
-          return user;
-        })
-      );
+            return user;
+          })
+        );
 
       const results = await Promise.all(userPromises);
 
@@ -444,10 +437,7 @@ describe('Drizzle Integration Tests', () => {
 
       // Verify user was also deleted
       // Note: After tenant deletion, we can't use RLS context, so use raw query
-      const [userCheck] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, userId));
+      const [userCheck] = await db.select().from(users).where(eq(users.id, userId));
 
       expect(userCheck).toBeUndefined();
     });
@@ -525,10 +515,7 @@ describe('Drizzle Integration Tests', () => {
 
       // Verify tenant was NOT created (transaction rolled back)
       // Use raw query since tenant doesn't exist
-      const [tenantCheck] = await db
-        .select()
-        .from(tenants)
-        .where(eq(tenants.id, tenantId));
+      const [tenantCheck] = await db.select().from(tenants).where(eq(tenants.id, tenantId));
 
       expect(tenantCheck).toBeUndefined();
     });
@@ -538,49 +525,64 @@ describe('Drizzle Integration Tests', () => {
 
       const result = await withRLS(db, tenantId, undefined, async (tx) => {
         // Create tenant
-        const [tenant] = await tx.insert(tenants).values({
-          id: tenantId,
-          type: 'business',
-          name: 'Nested Test',
-        }).returning();
+        const [tenant] = await tx
+          .insert(tenants)
+          .values({
+            id: tenantId,
+            type: 'business',
+            name: 'Nested Test',
+          })
+          .returning();
 
         // Create multiple customers
-        const [customer1] = await tx.insert(customers).values({
-          tenantId: tenantId,
-          name: 'Customer 1',
-          accountCode: 'NESTED-001',
-          status: 'active',
-        }).returning();
+        const [customer1] = await tx
+          .insert(customers)
+          .values({
+            tenantId: tenantId,
+            name: 'Customer 1',
+            accountCode: 'NESTED-001',
+            status: 'active',
+          })
+          .returning();
 
-        const [customer2] = await tx.insert(customers).values({
-          tenantId: tenantId,
-          name: 'Customer 2',
-          accountCode: 'NESTED-002',
-          status: 'active',
-        }).returning();
+        const [customer2] = await tx
+          .insert(customers)
+          .values({
+            tenantId: tenantId,
+            name: 'Customer 2',
+            accountCode: 'NESTED-002',
+            status: 'active',
+          })
+          .returning();
 
         // Create users for each customer
-        const [user1] = await tx.insert(users).values({
-          id: randomUUID(),
-          tenantId: tenantId,
-          customerId: customer1.id,
-          email: 'user1@nested.com',
-          cognitoSub: 'cognito-nested-1',
-          firstName: 'User',
-          lastName: 'One',
-          role: 'customer_user',
-        }).returning();
+        const [user1] = await tx
+          .insert(users)
+          .values({
+            id: randomUUID(),
+            tenantId: tenantId,
+            customerId: customer1.id,
+            email: 'user1@nested.com',
+            cognitoSub: 'cognito-nested-1',
+            firstName: 'User',
+            lastName: 'One',
+            role: 'customer_user',
+          })
+          .returning();
 
-        const [user2] = await tx.insert(users).values({
-          id: randomUUID(),
-          tenantId: tenantId,
-          customerId: customer2.id,
-          email: 'user2@nested.com',
-          cognitoSub: 'cognito-nested-2',
-          firstName: 'User',
-          lastName: 'Two',
-          role: 'customer_user',
-        }).returning();
+        const [user2] = await tx
+          .insert(users)
+          .values({
+            id: randomUUID(),
+            tenantId: tenantId,
+            customerId: customer2.id,
+            email: 'user2@nested.com',
+            cognitoSub: 'cognito-nested-2',
+            firstName: 'User',
+            lastName: 'Two',
+            role: 'customer_user',
+          })
+          .returning();
 
         return { tenant, customers: [customer1, customer2], users: [user1, user2] };
       });

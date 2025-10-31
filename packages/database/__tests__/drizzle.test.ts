@@ -263,7 +263,7 @@ describe('Migration System', () => {
       expect(files.length).toBeGreaterThan(0);
 
       // Migration files should be SQL files
-      const sqlFiles = files.filter(f => f.endsWith('.sql'));
+      const sqlFiles = files.filter((f) => f.endsWith('.sql'));
       expect(sqlFiles.length).toBeGreaterThan(0);
     } catch (error) {
       throw new Error(`Migrations directory not found: ${migrationsDir}`);
@@ -278,14 +278,11 @@ describe('Migration System', () => {
     const files = await fs.readdir(migrationsDir);
 
     // Read the first .sql migration file
-    const sqlFile = files.find(f => f.endsWith('.sql'));
+    const sqlFile = files.find((f) => f.endsWith('.sql'));
     expect(sqlFile).toBeDefined();
 
     if (sqlFile) {
-      const migrationContent = await fs.readFile(
-        path.join(migrationsDir, sqlFile),
-        'utf-8'
-      );
+      const migrationContent = await fs.readFile(path.join(migrationsDir, sqlFile), 'utf-8');
 
       // Verify migration contains table creation
       expect(migrationContent).toContain('CREATE TABLE');
@@ -328,14 +325,11 @@ describe('Migration System', () => {
     const migrationsDir = path.join(__dirname, '../migrations');
     const files = await fs.readdir(migrationsDir);
 
-    const sqlFile = files.find(f => f.endsWith('.sql'));
+    const sqlFile = files.find((f) => f.endsWith('.sql'));
     expect(sqlFile).toBeDefined();
 
     if (sqlFile) {
-      const migrationContent = await fs.readFile(
-        path.join(migrationsDir, sqlFile),
-        'utf-8'
-      );
+      const migrationContent = await fs.readFile(path.join(migrationsDir, sqlFile), 'utf-8');
 
       // Verify foreign key relationships
       expect(migrationContent).toContain('REFERENCES');
