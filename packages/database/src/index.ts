@@ -11,5 +11,6 @@ export * from './schema';
 // Re-export RLS utilities
 export * from './lib/rls';
 
-// Future exports (when implemented):
-// export * from './lib/client';
+// Re-export database client
+export { getDb, withDb, closeDb } from './client';
+export type { DbClient } from './client';

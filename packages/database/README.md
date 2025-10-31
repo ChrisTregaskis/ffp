@@ -9,23 +9,79 @@ This package provides:
 - **Drizzle ORM schemas** for tenants, customers, and users tables
 - **Type-safe database access** with automatic TypeScript type inference
 - **Migration management** via Drizzle Kit
-- **Row-Level Security (RLS)** utilities (future)
-- **Connection pooling** optimised for AWS Lambda (future)
+- **Row-Level Security (RLS)** utilities for multi-tenant data isolation
+- **Connection pooling** optimised for AWS Lambda
 
 ## Usage
 
 ### Importing Schemas
 
-```typescript
-// Import all schemas
-import { users, customers, tenants } from '@ffp/database/schema';
+**Recommended: Import from package root**
 
-// Import types
+```typescript
+// ✅ Import client and schemas from package root
+import { getDb, withDb, type DbClient } from '@ffp/database';
+import { users, customers, tenants } from '@ffp/database/schema';
 import type { User, Customer, Tenant } from '@ffp/database/schema';
 
-// Import everything
-import * as database from '@ffp/database';
+// ⚠️ Avoid: Direct client import (internal implementation detail)
+import { getDb } from '@ffp/database/client'; // Don't do this
 ```
+
+### Connection Pooling
+
+The database package uses a singleton connection pool optimised for AWS Lambda:
+
+```typescript
+import { getDb, withDb } from '@ffp/database';
+import { users } from '@ffp/database/schema';
+import { eq } from 'drizzle-orm';
+
+// Option 1: Direct database access
+const db = getDb();
+const user = await db.select().from(users).where(eq(users.id, userId));
+
+// Option 2: Using withDb helper (recommended for Lambda)
+export const handler = async (event: APIGatewayEvent) => {
+  return withDb(async (db) => {
+    const user = await db.select().from(users).where(eq(users.id, userId));
+    return { statusCode: 200, body: JSON.stringify(user) };
+  });
+};
+```
+
+**Lambda Best Practices:**
+
+- Connection pool is created once per Lambda container
+- Reused across multiple invocations (warm starts)
+- Automatically cleaned up when container shuts down
+- Maximum 10 connections per container prevents PostgreSQL exhaustion
+
+**Configuration:**
+
+The connection pool uses the following environment variables:
+
+- `DB_HOST` - PostgreSQL host
+- `DB_PORT` - PostgreSQL port (default: 5432)
+- `DB_NAME` - Database name
+- `DB_USER` - Database user
+- `DB_PASSWORD` - Database password
+- `DB_SSL` - Enable SSL/TLS (set to 'true' for production RDS)
+- `NODE_ENV` - Environment (affects SSL certificate validation)
+
+**Connection Limits:**
+
+Each Lambda container creates up to 10 connections. Plan capacity to avoid exceeding RDS `max_connections`:
+
+- RDS `max_connections` depends on instance size (e.g., db.t4g.micro = 81 connections)
+- Calculate safe limit: `reserved_concurrency * 10 <= max_connections - 10 (buffer)`
+- Example: 5 concurrent Lambdas = 50 connections max (safe for db.t4g.micro)
+
+**Security:**
+
+- **Production**: SSL enabled with certificate verification (`DB_SSL=true`, `NODE_ENV=production`)
+- **Development**: SSL optional, allows self-signed certificates for local PostgreSQL
+- **Credentials**: Environment variables in Phase 1, migrating to AWS Secrets Manager in Phase 2
 
 ### Running Migrations
 
