@@ -9,8 +9,8 @@ This package provides:
 - **Drizzle ORM schemas** for tenants, customers, and users tables
 - **Type-safe database access** with automatic TypeScript type inference
 - **Migration management** via Drizzle Kit
-- **Row-Level Security (RLS)** utilities (future)
-- **Connection pooling** optimised for AWS Lambda (future)
+- **Row-Level Security (RLS)** utilities for multi-tenant data isolation
+- **Connection pooling** optimised for AWS Lambda
 
 ## Usage
 
@@ -26,6 +26,46 @@ import type { User, Customer, Tenant } from '@ffp/database/schema';
 // Import everything
 import * as database from '@ffp/database';
 ```
+
+### Connection Pooling
+
+The database package uses a singleton connection pool optimised for AWS Lambda:
+
+```typescript
+import { getDb, withDb } from '@ffp/database';
+import { users } from '@ffp/database/schema';
+import { eq } from 'drizzle-orm';
+
+// Option 1: Direct database access
+const db = getDb();
+const user = await db.select().from(users).where(eq(users.id, userId));
+
+// Option 2: Using withDb helper (recommended for Lambda)
+export const handler = async (event: APIGatewayEvent) => {
+  return withDb(async (db) => {
+    const user = await db.select().from(users).where(eq(users.id, userId));
+    return { statusCode: 200, body: JSON.stringify(user) };
+  });
+};
+```
+
+**Lambda Best Practices:**
+
+- Connection pool is created once per Lambda container
+- Reused across multiple invocations (warm starts)
+- Automatically cleaned up when container shuts down
+- Maximum 10 connections per container prevents PostgreSQL exhaustion
+
+**Configuration:**
+
+The connection pool uses the following environment variables:
+
+- `DB_HOST` - PostgreSQL host (default: localhost)
+- `DB_PORT` - PostgreSQL port (default: 5432)
+- `DB_NAME` - Database name
+- `DB_USER` - Database user
+- `DB_PASSWORD` - Database password
+- `DB_SSL` - Enable SSL/TLS (set to 'true' for production RDS)
 
 ### Running Migrations
 
