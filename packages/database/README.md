@@ -107,6 +107,100 @@ pnpm db:studio
 pnpm db:check
 ```
 
+## Testing
+
+The database package includes comprehensive unit and integration tests.
+
+### Test Database Setup
+
+Integration tests require a separate test database. This is a **one-time setup** per development environment.
+
+#### One-Time Setup
+
+```bash
+# Create test database
+psql -h localhost -U [superuser] -d postgres -c "CREATE DATABASE ffp_test;"
+
+# Grant permissions to application user
+psql -h localhost -U [superuser] -d postgres -c "GRANT CREATE ON DATABASE ffp_test TO root_user;"
+psql -h localhost -U [superuser] -d ffp_test -c "GRANT ALL ON SCHEMA public TO root_user;"
+
+# Run migrations on test database
+cd packages/database
+DB_NAME=ffp_test pnpm db:migrate
+```
+
+**Note**: Replace `[superuser]` with your PostgreSQL superuser. Find your superuser with:
+
+```bash
+psql -h localhost -U root_user -d postgres -c "\du"
+```
+
+#### Running Tests
+
+```bash
+# All tests (unit + integration - 68 tests)
+pnpm --filter=@ffp/database test
+
+# Unit tests only (no database required)
+pnpm --filter=@ffp/database test drizzle.test
+
+# Integration tests only (requires test database)
+pnpm --filter=@ffp/database test integration.test
+
+# Watch mode for development
+pnpm --filter=@ffp/database test:watch
+
+# With coverage report
+pnpm --filter=@ffp/database test --coverage
+```
+
+#### Test Coverage
+
+- **Unit Tests** (`__tests__/drizzle.test.ts`) - 16 tests
+  - Connection pool configuration
+  - Schema type inference
+  - Migration structure validation
+  - No database connection required
+
+- **Integration Tests** (`__tests__/integration.test.ts`) - 15 tests
+  - CRUD operations with RLS enforcement
+  - Connection pool behaviour
+  - Database constraints (foreign keys, unique)
+  - Transaction handling (commit/rollback)
+  - Multi-tenant data isolation
+
+- **Client Tests** (`src/client.test.ts`) - 21 tests
+  - Connection pool singleton pattern
+  - Environment variable validation
+  - SSL configuration
+
+- **RLS Tests** (`src/lib/rls.test.ts`) - 16 tests
+  - RLS context utilities
+  - UUID validation
+  - Cross-tenant isolation
+
+**Total: 68 tests**
+
+#### Troubleshooting
+
+**Error: `database "ffp_test" does not exist`**
+
+- Run the one-time setup commands above to create the test database
+
+**Error: `permission denied to create database`**
+
+- Use a PostgreSQL superuser (not `root_user`) in the setup commands
+- Check superusers with: `psql -h localhost -U root_user -d postgres -c "\du"`
+
+**Tests fail with RLS policy errors**
+
+- Ensure migrations ran successfully: `DB_NAME=ffp_test pnpm db:migrate`
+- Check RLS status in test database:
+  ```bash
+  psql -h localhost -U root_user -d ffp_test -c "SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';"
+  ```
+
 ## Three-Tier Architecture
 
 FFP uses a three-tier multi-tenant architecture:
