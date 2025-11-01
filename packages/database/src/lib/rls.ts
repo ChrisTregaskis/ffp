@@ -32,6 +32,18 @@ function validateUUID(value: string, paramName: string): void {
 }
 
 /**
+ * Safely escape a string literal for use in SQL
+ * PostgreSQL's SET command requires literal values and doesn't support parameterised queries.
+ * This function escapes single quotes by doubling them (PostgreSQL standard).
+ *
+ * @param value - String to escape
+ * @returns Safely escaped string value
+ */
+function escapeLiteral(value: string): string {
+  return value.replace(/'/g, "''");
+}
+
+/**
  * Set RLS context variables for multi-tenant isolation
  *
  * Sets the app.tenant_id session variable that RLS policies use to filter queries.
@@ -65,14 +77,18 @@ export async function setRLSContext(
   validateUUID(tenantId, 'tenantId');
 
   // Set tenant_id context variable (required for RLS filtering)
-  // Note: SET requires literal values, not parameterised queries
-  // Safe to use sql.raw() here as tenantId has been validated
-  await db.execute(sql.raw(`SET app.tenant_id = '${tenantId}'`));
+  // Note: PostgreSQL's SET command doesn't support parameterised queries ($1, $2, etc.)
+  // We use sql.raw() with multiple layers of defence:
+  // 1. UUID format validation (only allows hexadecimal digits and hyphens)
+  // 2. SQL escaping (escape single quotes using PostgreSQL standard)
+  const escapedTenantId = escapeLiteral(tenantId);
+  await db.execute(sql.raw(`SET app.tenant_id = '${escapedTenantId}'`));
 
   // Optionally set user_id context variable
   if (userId) {
     validateUUID(userId, 'userId');
-    await db.execute(sql.raw(`SET app.user_id = '${userId}'`));
+    const escapedUserId = escapeLiteral(userId);
+    await db.execute(sql.raw(`SET app.user_id = '${escapedUserId}'`));
   }
 }
 
