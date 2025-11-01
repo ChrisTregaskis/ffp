@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "FFP - Fit For Purpose API",
-    "description": "Multi-tenant physiotherapy assessment and workout programme platform.\n\n**Architecture:**\n- AWS Lambda + API Gateway v2 (HTTP API)\n- Region: eu-west-2 (London)\n- Authentication: Cognito JWT\n\n**Authentication:**\nProtected endpoints require JWT token with custom claims:\n- `custom:tenantId` - Tenant identifier\n- `custom:role` - User role\n- `custom:parentBusinessId` - Parent business ID\n\n**Phase:** Sprint 1 (Foundation Infrastructure)\n**Developer:** Christopher Tregaskis",
+    "description": "Multi-tenant physiotherapy assessment and workout programme platform.\n\n**Architecture:**\n- AWS Lambda + API Gateway v2 (HTTP API)\n- Region: eu-west-2 (London)\n- Authentication: Cognito JWT\n\n**Authentication:**\nProtected endpoints require JWT token with custom claims:\n- `custom:tenantId` - Tenant identifier\n- `custom:role` - User role\n- `custom:customerId` - Customer identifier (for users under customer organisations)\n\n**Phase:** Sprint 1 (Foundation Infrastructure)\n**Developer:** Christopher Tregaskis",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [

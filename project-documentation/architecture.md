@@ -13,7 +13,7 @@ FFP uses a serverless-first AWS architecture optimized for multi-tenant SaaS. Ph
 #### Authentication & API Layer
 
 - **AWS Cognito User Pool**: User authentication, JWT management
-  - Custom attributes: `tenantId`, `role`, `parentBusinessId`
+  - Custom attributes: `tenantId`, `role`, `customerId`
   - Access/refresh token handling (15min/7day expiry)
   - Email verification, password reset flows
   - Free tier: 50,000 MAU
@@ -288,7 +288,6 @@ deploy (functions) → depends on → build + test
 ├── turbo.json                 # Turborepo configuration
 ├── package.json               # Root workspace configuration
 ├── sst.config.ts              # SST main configuration
-├── drizzle.config.ts          # Drizzle ORM configuration
 ├── stacks/
 │   ├── AuthStack.ts           # Cognito User Pool setup
 │   ├── DatabaseStack.ts       # RDS PostgreSQL configuration
@@ -296,19 +295,21 @@ deploy (functions) → depends on → build + test
 │   ├── ApiStack.ts            # API Gateway + Lambda functions
 │   ├── MonitoringStack.ts     # CloudWatch alarms
 │   └── VpcStack.ts            # VPC, subnets, security groups
-├── schema/                    # Drizzle schema definitions
-│   ├── tenants.ts
-│   ├── users.ts
-│   ├── assessments.ts
-│   ├── programs.ts
-│   ├── videos.ts
-│   └── index.ts
-├── migrations/                # Generated SQL migrations
-│   ├── 0000_initial.sql
-│   ├── 0001_add_preferences.sql
-│   └── meta/
-│       └── _journal.json
 ├── packages/                  # Turborepo workspaces
+│   ├── database/              # Database schemas and migrations
+│   │   ├── package.json       # Database workspace config
+│   │   ├── drizzle.config.ts  # Drizzle ORM configuration
+│   │   ├── src/
+│   │   │   ├── schema/        # Drizzle schema definitions
+│   │   │   │   ├── tenants.ts
+│   │   │   │   ├── users.ts
+│   │   │   │   ├── customers.ts
+│   │   │   │   └── index.ts
+│   │   │   └── index.ts
+│   │   └── migrations/        # Generated SQL migrations
+│   │       ├── 0000_spotty_makkari.sql
+│   │       └── meta/
+│   │           └── _journal.json
 │   ├── functions/             # Lambda function code
 │   │   ├── package.json       # Functions workspace config
 │   │   ├── auth/              # Registration, login handlers

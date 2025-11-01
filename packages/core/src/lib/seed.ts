@@ -892,19 +892,19 @@ Contact support@ffp.app with:
 ];
 
 // ============================================================================
-// TEST TENANT & USERS (Development Only)
+// TEST TENANT, CUSTOMER & USERS (Development Only)
 // ============================================================================
 
 const testTenantId = randomUUID();
-const testUserId = randomUUID();
-const testBusinessOwnerId = randomUUID();
-const testBusinessUserId = randomUUID();
+const testCustomerId = randomUUID();
+const testIndividualUserId = randomUUID();
+const testCustomerOwnerId = randomUUID();
+const testCustomerUserId = randomUUID();
 
 export const testTenant = {
   id: testTenantId,
   type: 'business',
   name: 'Test Physiotherapy Clinic',
-  installed_modules: ['assessments', 'programs', 'videos', 'business-portal'],
   settings: {
     theme: {
       primary: '#2563eb',
@@ -924,60 +924,72 @@ export const testTenant = {
   updated_at: new Date(),
 };
 
+export const testCustomer = {
+  id: testCustomerId,
+  tenant_id: testTenantId,
+  name: 'Test Physiotherapy Clinic',
+  account_code: 'TPC-001',
+  address: {
+    line1: '123 High Street',
+    line2: '',
+    city: 'London',
+    county: 'Greater London',
+    postcode: 'SW1A 1AA',
+    country: 'United Kingdom',
+  },
+  status: 'active',
+  created_at: new Date(),
+  updated_at: new Date(),
+};
+
 export const testUsers = [
-  // Individual user (separate tenant)
+  // Individual user (separate tenant, no customer)
   {
-    id: testUserId,
+    id: testIndividualUserId,
     tenant_id: randomUUID(), // Individual users get their own tenant
     email: 'individual@test.com',
     cognito_sub: 'cognito-sub-individual-123',
     first_name: 'John',
     last_name: 'Doe',
     role: 'individual_user',
-    parent_business_id: null,
+    customer_id: null, // Individual users have no customer
     profile_image_url: null,
     phone: '+44 7700 900123',
     date_of_birth: new Date('1989-05-15'),
-    status: 'active',
-    last_logged_in: new Date(),
     created_at: new Date(),
     updated_at: new Date(),
   },
 
-  // Business owner
+  // Customer owner
   {
-    id: testBusinessOwnerId,
+    id: testCustomerOwnerId,
     tenant_id: testTenantId,
     email: 'owner@testclinic.com',
     cognito_sub: 'cognito-sub-owner-123',
     first_name: 'Sarah',
     last_name: 'Johnson',
-    role: 'business_owner',
-    parent_business_id: null,
+    role: 'customer_owner',
+    customer_id: testCustomerId,
     profile_image_url: null,
     phone: '+44 7700 900456',
     date_of_birth: new Date('1985-08-22'),
-    status: 'active',
-    last_logged_in: new Date(),
     created_at: new Date(),
     updated_at: new Date(),
   },
 
-  // Business user (patient)
+  // Customer user (patient)
   {
-    id: testBusinessUserId,
+    id: testCustomerUserId,
     tenant_id: testTenantId,
     email: 'patient@testclinic.com',
     cognito_sub: 'cognito-sub-patient-123',
     first_name: 'Michael',
     last_name: 'Smith',
-    role: 'business_user',
-    parent_business_id: testBusinessOwnerId,
+    role: 'customer_user',
+    customer_id: testCustomerId,
     profile_image_url: null,
     phone: '+44 7700 900789',
     date_of_birth: new Date('1992-03-10'),
-    status: 'active',
-    last_logged_in: new Date(),
     created_at: new Date(),
     updated_at: new Date(),
   },
@@ -994,6 +1006,7 @@ export const seedData = {
   videos,
   supportArticles,
   testTenant,
+  testCustomer,
   testUsers,
 };
 

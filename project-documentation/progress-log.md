@@ -1,3 +1,807 @@
+### October 31, 2025 (Session 27 - Drizzle ORM Testing Complete!)
+
+**Status**: ✅ FFP-62/63 COMPLETE - Comprehensive Unit & Integration Tests for Drizzle ORM!
+
+**Branch**: `feature/ffp-62-63-tests`
+
+**Session Focus**: Complete comprehensive test coverage for Drizzle ORM database layer, including unit tests for configuration and integration tests for database operations with RLS enforcement
+
+**Completed Work:**
+
+**1. FFP-62: Unit Tests for Drizzle Setup** ✅ **2 hours**
+
+**Test File Created:**
+
+- ✅ Created `packages/database/__tests__/drizzle.test.ts` - 16 comprehensive unit tests
+  - Connection pool initialisation and singleton pattern verification
+  - Schema type inference tests for all tables (tenants, customers, users)
+  - Tests `$inferInsert` and `$inferSelect` types work correctly
+  - Migration file structure validation (SQL files exist, contain expected tables)
+  - RLS migration script verification (checks apply-rls.ts exists and contains RLS policies)
+  - Foreign key constraint validation in migration SQL
+  - Enum validation (tenant_type, customer_status, user_role)
+  - ✅ **All 16 tests passing** - No database connection required!
+
+**Key Test Coverage:**
+
+- ✅ Connection pool creates singleton instance correctly
+- ✅ Schema types match database structure for tenants table
+- ✅ Schema types match database structure for customers table
+- ✅ Schema types match database structure for users table
+- ✅ Migration files contain CREATE TABLE statements
+- ✅ Migration files contain CREATE TYPE for enums
+- ✅ Migration files contain REFERENCES for foreign keys
+- ✅ RLS script exists and contains ENABLE ROW LEVEL SECURITY
+- ✅ TypeScript type inference works for insert and select operations
+
+**2. FFP-63: Integration Tests for Drizzle Queries** ✅ **2 hours**
+
+**Test File Created:**
+
+- ✅ Created `packages/database/__tests__/integration.test.ts` - 15 comprehensive integration tests
+  - Tests against real PostgreSQL database (`ffp_test`)
+  - All operations use `withRLS()` helper for automatic RLS context
+  - `beforeEach` truncates all tables for test isolation
+  - ✅ **All 15 tests passing** - Full database operations verified!
+
+**Test Coverage by Category:**
+
+**Basic CRUD Operations (5 tests):**
+
+- ✅ Create and query tenant successfully
+- ✅ Create and query customer successfully
+- ✅ Create and query user successfully
+- ✅ Update tenant successfully
+- ✅ Delete customer successfully
+
+**Connection Pool Behaviour (2 tests):**
+
+- ✅ Reuse database connections from pool
+- ✅ Handle concurrent inserts correctly (5 parallel user inserts)
+
+**Database Constraints (4 tests):**
+
+- ✅ Enforce foreign key constraints (prevent orphaned records)
+- ✅ Enforce unique email constraint
+- ✅ Enforce unique account code constraint
+- ✅ Cascade delete when tenant is deleted (removes users/customers)
+
+**Transactions (3 tests):**
+
+- ✅ Handle transactions correctly (commit on success)
+- ✅ Rollback transaction on error (no partial writes)
+- ✅ Support nested operations in transaction (multiple tables)
+
+**Row-Level Security (1 test):**
+
+- ✅ Isolate data between tenants (Tenant A cannot see Tenant B's data) ⚠️ **CRITICAL**
+
+**3. Test Database Setup** ✅
+
+**Infrastructure Created:**
+
+- ✅ Created `ffp_test` database for integration testing
+- ✅ Granted permissions to `root_user` for test operations
+- ✅ Applied schema migrations and RLS policies to test database
+- ✅ Documented test database setup in `packages/database/README.md`
+
+**Test Database Commands:**
+
+```bash
+# Create test database
+psql -h localhost -U [superuser] -d postgres -c "CREATE DATABASE ffp_test;"
+
+# Grant permissions
+psql -h localhost -U [superuser] -d postgres -c "GRANT CREATE ON DATABASE ffp_test TO root_user;"
+psql -h localhost -U [superuser] -d ffp_test -c "GRANT ALL ON SCHEMA public TO root_user;"
+
+# Run migrations
+cd packages/database
+DB_NAME=ffp_test pnpm db:migrate
+```
+
+**4. Documentation Updates** ✅
+
+**README.md Enhanced:**
+
+- ✅ Added comprehensive "Testing" section to `packages/database/README.md`
+  - Test database setup instructions (one-time setup)
+  - Running tests commands (all, unit only, integration only)
+  - Test coverage breakdown (68 tests across 4 files)
+  - Troubleshooting section for common test errors
+- ✅ Updated `project-documentation/project-state.md`
+  - Marked FFP-62 and FFP-63 as complete
+  - Updated FFP-11 progress: 6/9 subtasks (67%)
+  - Updated combined FFP-10 + FFP-11: 16/16 unique subtasks (100%)
+  - Updated hours: 41.5/46 (90%)
+
+**Test Suite Summary:**
+
+**Total: 68 tests across 4 files, all passing!**
+
+1. **Unit Tests** (`__tests__/drizzle.test.ts`) - 16 tests
+   - No database required
+   - TypeScript type validation
+   - Migration structure checks
+
+2. **Integration Tests** (`__tests__/integration.test.ts`) - 15 tests
+   - Real database operations
+   - RLS enforcement verification
+   - Transaction and constraint testing
+
+3. **Client Tests** (`src/client.test.ts`) - 21 tests
+   - Connection pool singleton
+   - Environment validation
+   - SSL configuration
+
+4. **RLS Tests** (`src/lib/rls.test.ts`) - 16 tests
+   - RLS utilities
+   - UUID validation
+   - Cross-tenant isolation
+
+**Key Benefits Achieved:**
+
+✅ **Comprehensive Coverage** - 68 tests cover all critical database functionality
+✅ **Multi-Tenant Security Verified** - Integration tests confirm RLS isolates tenant data
+✅ **Type Safety Validated** - Unit tests confirm Drizzle schema types match database
+✅ **Transaction Safety** - Tests verify rollback on errors prevents partial writes
+✅ **Connection Pooling** - Tests confirm connection reuse and concurrent handling
+✅ **Well-Documented** - Complete setup guide in README with troubleshooting
+
+**Technical Achievements:**
+
+- ✅ Unit tests validate TypeScript types without database connection
+- ✅ Integration tests use real PostgreSQL database with RLS enabled
+- ✅ All tests use `withRLS()` helper for proper multi-tenant context
+- ✅ Test isolation via `beforeEach` table truncation
+- ✅ Concurrent operation testing (5 parallel inserts)
+- ✅ Foreign key cascade delete verification
+- ✅ Unique constraint enforcement validation
+- ✅ Transaction commit and rollback testing
+
+**Security Verification:**
+
+⚠️ **CRITICAL**: Integration tests confirm cross-tenant data isolation works correctly!
+⚠️ **CRITICAL**: RLS policies prevent Tenant A from accessing Tenant B's data!
+⚠️ **CRITICAL**: All database operations require RLS context to be set!
+
+**Time Tracking:**
+
+- **Estimated**: 4 hours (FFP-62: 2h, FFP-63: 2h)
+- **Actual**: ~4 hours (setup database, verify tests, update documentation)
+- **Status**: ✅ COMPLETE - On budget!
+
+**Technical Notes:**
+
+- Integration tests require `ffp_test` database to be created first
+- Test database setup is one-time per development environment
+- `beforeEach` truncates tables to ensure test isolation
+- All integration tests use `withRLS()` to enforce multi-tenant context
+- Unit tests validate types at compile time, no runtime execution needed
+- Migration validation checks SQL contains expected DDL statements
+
+**Next Steps:**
+
+- 🎯 FFP-61: Connection Pooling Configuration (4.5 hours remaining)
+- After FFP-61, FFP-11 (Drizzle ORM Setup) will be 100% complete
+- Then move to FFP-9: Cognito Authentication (34 hours, 12 subtasks)
+
+**Test Results:**
+
+```bash
+Test Files  4 passed (4)
+     Tests  68 passed (68)
+  Duration  2.35s
+```
+
+✅ **All tests passing!** Database layer testing (Phase 5) complete!
+
+---
+
+### October 30, 2025 (Session 25 - RLS Implementation Complete!)
+
+**Status**: ✅ FFP-49/50/52 COMPLETE - Row-Level Security Implementation Finished!
+
+**Branch**: `feature/ffp-49-50-52-rls-implementation`
+
+**Session Focus**: Implement Row-Level Security (RLS) policies, utilities, and comprehensive testing for multi-tenant data isolation
+
+**Completed Work:**
+
+**1. FFP-49: Enable RLS on All Tables** ✅ **2 hours**
+
+**Automatic RLS Migration System:**
+
+- ✅ Created `packages/database/src/migrations/apply-rls.ts` - Idempotent RLS application module
+  - Checks if RLS already enabled before applying
+  - Enables RLS on tenants, customers, users tables
+  - Creates tenant isolation policies using `app.tenant_id` context variable
+  - Environment-aware FORCE RLS (development/test only, not production)
+  - Verification output shows RLS status per table
+- ✅ Created `packages/database/scripts/migrate.ts` - Custom migration runner
+  - Orchestrates Drizzle schema migrations + RLS application
+  - Zero manual intervention required for new developers
+  - Works in CI/CD pipelines automatically
+  - ES module compatible (fileURLToPath for \_\_dirname)
+
+**RLS Policies Applied:**
+
+- ✅ `tenant_isolation` - Filters by `id = app.tenant_id` on tenants table
+- ✅ `customer_isolation` - Filters by `tenant_id = app.tenant_id` on customers table
+- ✅ `user_isolation` - Filters by `tenant_id = app.tenant_id` on users table
+- ✅ FORCE RLS enabled in dev/test (enforces RLS even for superusers)
+- ✅ Standard RLS in production (allows analytics_user bypass)
+
+**2. FFP-50: Create RLS Utility Functions** ✅ **3 hours**
+
+**RLS Utilities Created:**
+
+- ✅ `packages/database/src/lib/rls.ts` - RLS context management
+  - `setRLSContext(db, tenantId, userId?)` - Sets PostgreSQL session variables
+  - `withRLS(db, tenantId, userId, callback)` - Transaction wrapper with automatic context
+  - Uses `sql.raw()` for PostgreSQL SET command (doesn't support parameterized queries)
+  - Comprehensive error handling and validation
+
+**Usage Examples:**
+
+```typescript
+// Recommended: withRLS handles transactions automatically
+const users = await withRLS(db, tenantId, undefined, async (tx) => {
+  return await tx.select().from(users);
+});
+
+// Manual: Set context in transaction
+await db.transaction(async (tx) => {
+  await setRLSContext(tx, tenantId, userId);
+  return await tx.select().from(users);
+});
+```
+
+**3. FFP-52: Comprehensive RLS Testing** ✅ **2 hours**
+
+**Test Suite Created:**
+
+- ✅ `packages/database/src/lib/rls.test.ts` - 16 comprehensive integration tests
+  - Tests RLS context setting (tenantId required, userId optional)
+  - Tests withRLS transaction wrapper
+  - Tests cross-tenant isolation on tenants table
+  - Tests cross-tenant isolation on customers table
+  - Tests cross-tenant isolation on users table
+  - Uses randomUUID() for user IDs (explicit IDs required for users table)
+  - Sets RLS context during setup/teardown (required with FORCE RLS)
+  - ✅ **All 16 tests passing** - Multi-tenant isolation verified!
+
+**Key Test Coverage:**
+
+- ✅ setRLSContext requires tenantId
+- ✅ setRLSContext accepts optional userId
+- ✅ withRLS creates transaction with correct context
+- ✅ Tenants table filters by tenant_id correctly
+- ✅ Customers table filters by tenant_id correctly
+- ✅ Users table filters by tenant_id correctly
+- ✅ Cross-tenant data completely isolated
+
+**4. Terminal Logger Utility & Professional Output** ✅ **1.5 hours**
+
+**Shared Terminal Logger Created:**
+
+- ✅ `packages/database/src/lib/terminal-logger.ts` - Reusable colored output utility
+  - `TerminalPrefix` enum (INFO, MIGRATE, RLS, SUCCESS, ERROR, WARNING)
+  - `terminalPrefix()` function - Generate colored prefix tags
+  - `colorText()` function - Inline text coloring
+  - ANSI color codes for professional terminal output
+  - No emojis - strictly professional formatting
+
+**Scripts Refactored (4 files):**
+
+- ✅ `packages/database/scripts/migrate.ts` - Uses terminal logger
+- ✅ `packages/database/src/migrations/apply-rls.ts` - Uses terminal logger
+- ✅ `scripts/test-db-connection.ts` - Uses terminal logger
+- ✅ `scripts/verify-migration.ts` - Uses terminal logger
+- ✅ `scripts/smoke-test.sh` - Bash helper functions matching logger style
+- ✅ `scripts/verify-caching.sh` - Bash helper functions matching logger style
+
+**Consistent Output Format:**
+
+```
+[INFO] Starting database migrations...
+[MIGRATE] Running schema migrations...
+[SUCCESS] Schema migrations complete
+[RLS] Checking RLS status...
+[RLS] Applying RLS policies...
+[SUCCESS] RLS policies applied successfully
+[RLS] RLS Status:
+  - customers: Enabled
+  - tenants: Enabled
+  - users: Enabled
+[SUCCESS] All migrations completed successfully!
+```
+
+**5. Documentation & Configuration Updates** ✅
+
+**Documentation Enhanced:**
+
+- ✅ Updated `packages/database/README.md` - RLS usage examples, environment behavior
+- ✅ Updated `project-documentation/local-database-setup.md`
+  - Added permission requirements (CREATE on database for migrations)
+  - Added troubleshooting for schema/database permission errors
+  - Documented migration user vs application user separation
+  - Explained RDS behavior (master user has all permissions by default)
+
+**Configuration Improvements:**
+
+- ✅ Fixed environment detection in `apply-rls.ts` (uses `ENVIRONMENT` env var, not database name)
+- ✅ Updated migration runner to use ENVIRONMENT for SSL configuration
+- ✅ Removed database name checking (unreliable, replaced with explicit env var)
+
+**Key Benefits Achieved:**
+
+✅ **Zero Manual Intervention** - `pnpm db:migrate` applies everything automatically
+✅ **Multi-Tenant Security** - RLS enforces tenant isolation at database level
+✅ **Environment-Aware** - FORCE RLS in dev/test, standard RLS in production
+✅ **Idempotent Migrations** - Safe to run multiple times
+✅ **Comprehensive Testing** - 16 tests verify cross-tenant isolation works
+✅ **Professional Output** - Consistent colored terminal logging across all scripts
+✅ **Type-Safe Utilities** - Full TypeScript support with error handling
+✅ **Production Ready** - Works in CI/CD, handles RDS permissions correctly
+
+**Technical Achievements:**
+
+- ✅ PostgreSQL RLS policies on all three tables (tenants, customers, users)
+- ✅ Automatic RLS application via custom migration runner
+- ✅ Idempotent checks prevent duplicate policy creation
+- ✅ Environment-specific behavior (FORCE RLS only in dev/test)
+- ✅ Type-safe RLS utilities with transaction wrappers
+- ✅ Comprehensive test coverage (16 tests, all passing)
+- ✅ Professional terminal output across all database scripts
+- ✅ Clear documentation with security warnings
+
+**Security Notes:**
+
+⚠️ **CRITICAL**: Never skip setting RLS context in production queries!
+⚠️ **CRITICAL**: Always validate tenant context before queries!
+⚠️ **CRITICAL**: Test cross-tenant isolation thoroughly!
+
+**Migration User vs Application User Strategy:**
+
+**Local Development:**
+
+- Migration user: Database owner or user with CREATE permissions
+- Purpose: Running migrations, creating schemas, applying RLS policies
+- Used by: `pnpm db:migrate` command
+
+**Production (RDS):**
+
+- Migration user: RDS master user (has all permissions by default)
+- Application user: `app_user` with restricted permissions (SELECT, INSERT, UPDATE, DELETE)
+- Future: `analytics_user` with BYPASSRLS for cross-tenant reporting
+
+**Time Tracking:**
+
+- **Estimated**: 7 hours (FFP-49: 2h, FFP-50: 3h, FFP-52: 2h)
+- **Actual**: ~6.5 hours (5h RLS + 1.5h terminal logger refactoring)
+- **Status**: ✅ COMPLETE - Under budget!
+
+**Technical Notes:**
+
+- PostgreSQL SET command requires `sql.raw()` (doesn't support parameterized queries)
+- FORCE RLS determined by `ENVIRONMENT` env var, not database name
+- Tests use `randomUUID()` for user IDs (required for users table)
+- Drizzle creates `drizzle` schema for tracking migrations (requires CREATE permission)
+- RLS context must be set in transactions (session variables are connection-scoped)
+
+**Next Steps:**
+
+- ✅ Ready for Phase 4: Connection Layer (FFP-61) - 3 hours
+- Connection pooling will benefit from RLS utilities already in place
+- Database layer structure complete - all utilities in `packages/database/src/lib/`
+
+---
+
+### October 30, 2025 (Session 24 - Database Package Refactoring)
+
+**Status**: ✅ FFP-106/107/108 COMPLETE - Database Layer Refactored to Monorepo Package
+
+**Branch**: `feature/ffp-106-migrate-db-files-to-packages`
+
+**Session Focus**: Refactor database layer from root-level directories into proper monorepo package structure
+
+**Completed Work:**
+
+**1. Phase 1: File Migration & Verification (FFP-107)** ✅ **2 hours**
+
+**Directory Structure Created:**
+
+- ✅ `packages/database/` package structure
+- ✅ `packages/database/src/schema/` for Drizzle schemas
+- ✅ `packages/database/src/lib/` for future utilities
+- ✅ `packages/database/migrations/` for SQL files
+
+**Files Migrated:**
+
+- ✅ Moved `schema/tenants.ts` → `packages/database/src/schema/tenants.ts`
+- ✅ Moved `schema/customers.ts` → `packages/database/src/schema/customers.ts`
+- ✅ Moved `schema/users.ts` → `packages/database/src/schema/users.ts`
+- ✅ Moved `migrations/0000_spotty_makkari.sql` → `packages/database/migrations/`
+- ✅ Moved `drizzle.config.ts` → `packages/database/drizzle.config.ts`
+
+**Configuration Created:**
+
+- ✅ `packages/database/package.json` - @ffp/database workspace config
+- ✅ `packages/database/tsconfig.json` - TypeScript configuration
+- ✅ `packages/database/src/index.ts` - Main package exports
+- ✅ `packages/database/src/schema/index.ts` - Schema exports
+- ✅ Updated `drizzle.config.ts` paths (`./src/schema/**/*.ts`)
+- ✅ Updated `turbo.json` - Added `@ffp/database#build` task and db commands
+- ✅ Updated root `package.json` - Database scripts use turbo filter
+
+**Bug Fixed:**
+
+- ✅ Fixed TypeScript error in `customers.ts` (removed unused `many` parameter)
+
+**Verification Tests:**
+
+- ✅ `pnpm install` - Dependencies installed successfully
+- ✅ `pnpm build` - All packages build including database
+- ✅ `pnpm typecheck` - TypeScript checks pass (6 tasks successful)
+- ✅ `pnpm db:generate` - Drizzle config found at new location
+- ✅ Turborepo dry-run - Database package recognised in graph
+- ✅ Clean install test - Fresh install and build works perfectly
+
+**2. Phase 2: Documentation & Cleanup (FFP-108)** ✅ **1 hour**
+
+**Documentation Updated:**
+
+- ✅ `project-documentation/architecture.md` - Updated project structure
+- ✅ `project-documentation/database-schema.md` - Added import examples, updated paths
+- ✅ `README.md` - Updated monorepo structure with database package
+- ✅ `project-documentation/local-database-setup.md` - Updated file path references
+- ✅ `CLAUDE.md` - Updated monorepo layout
+
+**New Documentation:**
+
+- ✅ `packages/database/README.md` - Comprehensive package documentation
+  - Usage examples for importing schemas
+  - Database commands reference
+  - Three-tier architecture explanation
+  - RLS security notes
+  - Future features roadmap
+
+**Cleanup:**
+
+- ✅ Removed root `schema/` directory
+- ✅ Removed root `migrations/` directory
+- ✅ Final build verification - All tests pass
+
+**Key Benefits Achieved:**
+
+✅ **Monorepo Best Practices** - Database layer now a proper workspace package
+✅ **Clean Dependency Graph** - Explicit dependencies via `@ffp/database`
+✅ **Turborepo Integration** - Database builds cached and optimised
+✅ **Better Organisation** - All database code in one logical location
+✅ **Future-Ready** - Structure supports RLS utilities and connection pooling
+✅ **Import Paths** - Clean imports: `import { users } from '@ffp/database/schema'`
+
+**Final Structure:**
+
+```
+packages/database/
+├── src/
+│   ├── schema/
+│   │   ├── tenants.ts      # Tenant schema
+│   │   ├── customers.ts    # Customer schema
+│   │   ├── users.ts        # User schema
+│   │   └── index.ts        # Schema exports
+│   ├── lib/                # Empty (future RLS utilities)
+│   └── index.ts            # Main package exports
+├── migrations/
+│   └── 0000_spotty_makkari.sql
+├── drizzle.config.ts
+├── package.json
+├── tsconfig.json
+└── README.md
+```
+
+**Time Tracking:**
+
+- **Estimated**: 3 hours
+- **Actual**: 3 hours (2h Phase 1, 1h Phase 2)
+- **Status**: ✅ COMPLETE - On time and budget!
+
+**Technical Notes:**
+
+- No breaking changes - all database commands work exactly the same
+- Existing local database works without changes
+- Schema definitions unchanged - pure code refactoring
+- Turborepo cache working correctly for database package
+
+**Next Steps:**
+
+- ✅ Ready for Phase 3: RLS Implementation (FFP-49, FFP-50)
+- Database package structure prepared for RLS utilities (`src/lib/rls.ts`)
+- Database package structure prepared for connection pooling (`src/lib/client.ts`)
+
+---
+
+### October 30, 2025 (Session 23 - Database Layer Planning & Ticket Refinement)
+
+**Status**: 📋 Planning & Ticket Refinement - Preparing for Phase 3 (RLS Implementation)
+
+**Session Focus**: Validate execution order, identify ticket misalignments, and create refactoring story
+
+**Completed Work:**
+
+**1. Execution Order Validation & Dependency Analysis** ✅
+
+- Reviewed all remaining FFP-10 and FFP-11 subtasks
+- Validated 6-phase interleaved approach against actual codebase
+- Discovered FFP-51 (Create database indexes) already complete
+  - All indexes generated automatically by Drizzle during Phase 2
+  - Saved 2 hours from original 7-hour Phase 3 estimate
+- Confirmed dependency chain: FFP-49 (RLS) → FFP-50 (utilities) can run in parallel
+- FFP-61 (connection pooling) benefits from RLS utilities but no hard dependency
+
+**2. Ticket Misalignment Discovery & Resolution** ✅
+
+**Key Misalignments Found:**
+
+- **FFP-51**: Already complete (indexes in migration file)
+- **Customers table**: Not mentioned in original Jira tickets (added during Session 22)
+- **Field naming**: Tickets reference `parent_business_id`, actual code uses `customer_id`
+- **Location references**: Tickets reference `packages/database/`, but code at root level
+
+**Actions Taken:**
+
+- ✅ **Marked FFP-51 as Done** in Jira with explanation comment
+- ✅ **Updated FFP-49** (Enable RLS): Added customers table requirements, three-tier architecture context
+- ✅ **Updated FFP-53** (Cross-tenant isolation tests): Added customers table testing, business tenant scenarios
+- ✅ **Updated FFP-54** (RLS context tests): Added customers table coverage, three-tier validation
+- ✅ **Updated FFP-55** (Documentation): Comprehensive three-tier architecture documentation scope
+
+**3. Database Package Refactoring Story Created** ✅
+
+**Problem Identified:**
+
+- Database files at root level (`schema/`, `migrations/`, `drizzle.config.ts`)
+- Conflicts with Jira ticket expectations (FFP-10/11 reference `packages/database/`)
+- Does not follow monorepo best practices
+- Prevents database-specific Turborepo caching
+
+**Solution: FFP-106 Created**
+
+- **Title**: Refactor Database Layer to Monorepo Package
+- **Goal**: Move database files to `packages/database/` structure
+- **Time Estimate**: 3 hours (low risk, no logic changes)
+- **Blocks**: FFP-49, FFP-50, FFP-61 (RLS utilities will use new structure)
+- **User Split Work**:
+  - **FFP-107**: File migration and verification (packages/database structure, moving files, testing)
+  - **FFP-108**: Documentation updates and cleanup (architecture.md, database-schema.md, root cleanup)
+
+**Proposed Structure:**
+
+```
+packages/database/
+├── src/
+│   ├── schema/          # Drizzle schemas (tenants, customers, users)
+│   ├── lib/             # RLS utilities (future), connection pooling (future)
+│   └── index.ts         # Clean exports
+├── migrations/          # SQL migration files
+├── drizzle.config.ts    # Drizzle configuration
+├── package.json         # @ffp/database package config
+├── tsconfig.json        # TypeScript config
+└── README.md            # Usage guide
+```
+
+**Benefits:**
+
+- ✅ Aligns with Jira ticket expectations
+- ✅ Follows monorepo best practices
+- ✅ Enables database-specific Turborepo caching
+- ✅ Creates explicit dependency graph (functions/web → database)
+- ✅ Matches existing package structure pattern
+
+**4. Sprint Progress Adjustments** ✅
+
+**Time Adjustments:**
+
+- **Saved**: 2 hours (FFP-51 already done)
+- **Added**: 3 hours (FFP-106/107/108 refactoring)
+- **Net change**: +1 hour overall
+
+**Revised Phase 3 Estimate:**
+
+- Original: 7 hours (FFP-49, FFP-50, FFP-51)
+- Revised: 5 hours (FFP-49, FFP-50 only - FFP-51 done)
+
+**Updated Remaining Work:**
+
+- FFP-106/107/108: 3h (database package refactoring) ← **NEXT**
+- Phase 3 (RLS): 5h (FFP-49, FFP-50)
+- Phase 4 (Connection): 3h (FFP-61)
+- Phase 5 (Testing): 13h (FFP-52, FFP-53, FFP-54, FFP-62, FFP-63)
+- Phase 6 (Documentation): 7h (FFP-55, FFP-64)
+- **Total remaining**: 31 hours
+
+**Key Decisions:**
+
+1. ✅ **Execute FFP-106/107/108 before RLS work** - Clean up structure first, then implement features
+2. ✅ **Split refactoring into two tickets** - FFP-107 (migration), FFP-108 (documentation)
+3. ✅ **Update all affected tickets now** - Prevent confusion during execution
+4. ✅ **Three-tier architecture** documented in all relevant tickets
+
+**Technical Notes:**
+
+- All indexes already exist in `migrations/0000_spotty_makkari.sql` (lines 67-77)
+- Customers table fully integrated into schema (tenant_id FK, indexes, RLS ready)
+- Field naming standardised to `customer_id` across codebase
+- Drizzle automatically generates indexes from schema definitions
+
+**Next Session Plan:**
+
+Execute FFP-106/107/108 in new Claude chat:
+
+1. Create `packages/database/` structure
+2. Move schema files, migrations, drizzle.config.ts
+3. Configure package.json, tsconfig.json, Turborepo
+4. Update import paths in drizzle.config.ts
+5. Verify build, typecheck, migration generation
+6. Update documentation (architecture.md, database-schema.md, READMEs)
+7. Clean up old root-level directories
+8. Commit changes: "FFP-106/107/108: Refactor database layer to monorepo package"
+
+**Files Modified:** None (planning session only)
+
+**Jira Updates:**
+
+- FFP-51: Marked as Done
+- FFP-49: Description updated (customers table, three-tier architecture)
+- FFP-53: Description updated (customers table testing)
+- FFP-54: Description updated (customers table coverage)
+- FFP-55: Description updated (three-tier documentation)
+- FFP-106: Created (database package refactoring story)
+
+---
+
+### October 27, 2025 (Session 22 - Database Layer Phase 1 & 2 Complete!)
+
+**Status**: 🚀 Database Layer IN PROGRESS - Phases 1 & 2 COMPLETE (14/46 hours, ~30%)
+
+**Completed Work:**
+
+**Phase 1: Drizzle Foundation (FFP-56, FFP-57)** ✅ COMPLETE (6 hours)
+
+- **FFP-56**: Installed Drizzle packages (2h)
+  - Installed `drizzle-orm@0.44.7` and `drizzle-kit@0.31.5` at root level
+  - Added PostgreSQL driver (`pg@8.16.3` + `@types/pg@8.15.5`)
+  - Added `drizzle-zod@0.8.3` for Zod schema generation
+  - Updated `zod` to v3.25.0 to fix peer dependency warning
+  - Added database scripts to package.json (`db:generate`, `db:migrate`, `db:push`, `db:studio`, `db:drop`, `db:check`, `db:test`, `db:verify`)
+- **FFP-57**: Created drizzle.config.ts (4h)
+  - Configured environment-specific SSL (disabled for dev, enabled for staging/production)
+  - Added helper function for required environment variables
+  - Set schema paths (`./schema/*`) and migration output (`./migrations`)
+  - Created `.env.example` with database configuration template
+  - Successfully tested connection to local PostgreSQL (localhost:5432)
+  - Fixed PostgreSQL PATH issue (Intel Mac vs Apple Silicon)
+
+**Phase 2: Schema Definition with Major Architectural Refinement** ✅ COMPLETE (8 hours)
+
+- **FFP-58 + FFP-47**: Created tenants table schema (3h)
+  - Drizzle schema definition (`schema/tenants.ts`)
+  - Enum: `tenant_type` ('individual', 'business')
+  - Fields: id (uuid), type, name, settings (jsonb), timestamps
+  - Zod schemas for validation (insert/select)
+  - Relations defined to users and customers
+  - Generated and applied migration
+- **ARCHITECTURAL REDESIGN**: Introduced customers table (not in original plan)
+  - **Rationale**: Better separation of concerns - tenant → customer (billing) → users (access)
+  - **Previous approach**: Used `parentBusinessId` in users table for business hierarchy
+  - **New approach**: Dedicated `customers` table as billing entity
+  - **Benefits**: Clearer data model, better for future billing features, cleaner tenant isolation
+- **Created customers table schema** (`schema/customers.ts`)
+  - Enum: `customer_status` ('active', 'suspended', 'inactive')
+  - Fields: id (uuid), tenant_id (FK), name, account_code (unique), address (jsonb), status, timestamps
+  - Indexes: tenant_id, account_code, status
+  - Relations to tenant (parent) and users (children)
+  - Zod schemas for validation
+- **FFP-59 + FFP-48**: Updated users table schema (3h)
+  - Drizzle schema definition (`schema/users.ts`)
+  - Changed from `parentBusinessId` to `customerId` (references customers table)
+  - Updated role enum from `business_*` to `customer_*` roles
+  - Enum: `user_role` ('system_admin', 'customer_owner', 'customer_admin', 'customer_user', 'individual_user')
+  - Fields: id (uuid from Cognito), tenant_id (FK), email (unique), cognito_sub (unique), first_name, last_name, role, customer_id (FK, optional), profile_image_url, phone, date_of_birth, timestamps
+  - Indexes: tenant_id, email, customer_id
+  - Foreign keys: tenant_id → tenants, customer_id → customers (cascade delete)
+  - Zod schemas for validation
+  - Fixed pgTable index syntax (array format instead of object)
+- **Updated all dependent files**:
+  - `sst.config.ts`: Changed Cognito custom attribute from `parentBusinessId` to `customerId`
+  - `packages/core/src/types/user.types.ts`: Updated User interface
+  - `packages/core/src/lib/constants.ts`: Changed USER*ROLES enum (business*\_ → customer\_\_)
+  - `packages/core/src/lib/seed.ts`: Added test customer data, updated user roles
+  - `packages/core/src/lib/database.ts`: Environment-specific SSL configuration
+- **Documentation updates**:
+  - `project-documentation/architecture.md`: Updated custom attributes
+  - `project-documentation/database-schema.md`: Added customers table, updated users table
+- **FFP-60**: Finalised migration system (2h)
+  - Created migration verification script (`scripts/verify-migration.ts`)
+    - Checks all expected tables exist (tenants, customers, users)
+    - Verifies enums created (tenant_type, customer_status, user_role)
+    - Validates indexes and foreign keys
+    - Confirms RLS policies (when implemented)
+    - Environment-specific execution
+  - Added `db:verify` command to package.json
+  - Updated deployment.md with migration workflow
+  - Simplified by removing backup scripts (deferred to later)
+  - Clean migration strategy established (drop DB early in development)
+  - Added `.eslintignore` entry for `schema/**` (TypeScript files, not parseable by JS ESLint)
+
+**Technical Achievements:**
+
+- ✅ Environment-aware database configuration (SSL, connection settings)
+- ✅ Local PostgreSQL setup for development (£0/month vs £13/month RDS)
+- ✅ Type-safe schema definitions with Drizzle
+- ✅ Zod validation schemas auto-generated from Drizzle
+- ✅ Clean three-tier architecture: tenant → customer → users
+- ✅ Migration system with verification tooling
+- ✅ All schemas versioned and tracked
+
+**Key Decisions:**
+
+1. ✅ **Customers table architecture**: Separate billing entity instead of user hierarchy
+2. ✅ **Role naming**: `customer_*` roles (not `business_*`) for clarity
+3. ✅ **Environment-specific SSL**: Disabled for local dev, enabled for staging/production
+4. ✅ **Clean migrations**: Drop database when schema evolves significantly (no data yet)
+5. ✅ **Simple tooling**: Verification script only, backups deferred
+6. ✅ **Schema location**: Root `schema/` directory (shared across packages)
+
+**Migration Files Generated:**
+
+- `migrations/0000_spotty_makkari.sql` - Initial schema with tenants, customers, users tables
+- `migrations/meta/` - Drizzle metadata for tracking
+
+**Database Structure:**
+
+```
+tenants (root)
+  ├── id: uuid (PK)
+  ├── type: enum (individual, business)
+  ├── name: varchar
+  └── settings: jsonb
+
+customers (billing entities)
+  ├── id: uuid (PK)
+  ├── tenant_id: uuid (FK → tenants)
+  ├── name: varchar
+  ├── account_code: varchar (unique)
+  ├── address: jsonb
+  └── status: enum (active, suspended, inactive)
+
+users (application access)
+  ├── id: uuid (PK, from Cognito)
+  ├── tenant_id: uuid (FK → tenants)
+  ├── customer_id: uuid (FK → customers, optional)
+  ├── email: varchar (unique)
+  ├── cognito_sub: varchar (unique)
+  ├── role: enum (system_admin, customer_*, individual_user)
+  └── ... (profile fields)
+```
+
+**Progress**:
+
+- **Phase 1 & 2**: 14/14 hours complete (100%) 🎉
+- **Database Layer Overall**: 14/46 hours (30%)
+- **Sprint 1 Total**: 44/198 hours complete (22%)
+
+**Next Phase:**
+
+- 🎯 **Phase 3**: RLS Implementation (FFP-49, FFP-50, FFP-51) - 7 hours
+  - Enable RLS on users table
+  - Create setRLSContext utility
+  - Add database indexes
+
+---
+
 ### October 25, 2025 (Session 21 - FFP-8 Complete!)
 
 **Status**: ✅ FFP-8 COMPLETE! SST Infrastructure Foundation finished - Moving to FFP-10

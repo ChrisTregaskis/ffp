@@ -2,10 +2,11 @@ export const APP_NAME = 'FFP - Fitness & Physiotherapy Platform';
 export const APP_VERSION = '0.0.1';
 
 export const USER_ROLES = {
+  SYSTEM_ADMIN: 'system_admin',
+  CUSTOMER_OWNER: 'customer_owner',
+  CUSTOMER_ADMIN: 'customer_admin',
+  CUSTOMER_USER: 'customer_user',
   INDIVIDUAL_USER: 'individual_user',
-  BUSINESS_USER: 'business_user',
-  BUSINESS_ADMIN: 'business_admin',
-  COMPANY_ADMIN: 'company_admin',
 } as const;
 
 export type UserRoleType = (typeof USER_ROLES)[keyof typeof USER_ROLES];

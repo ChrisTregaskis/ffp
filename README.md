@@ -134,12 +134,23 @@ ffp/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
+│   ├── database/                # Database schemas and migrations (@ffp/database)
+│   │   ├── src/
+│   │   │   ├── schema/          # Drizzle database schemas
+│   │   │   │   ├── tenants.ts
+│   │   │   │   ├── customers.ts
+│   │   │   │   ├── users.ts
+│   │   │   │   └── index.ts
+│   │   │   └── index.ts         # Public exports
+│   │   ├── migrations/          # Generated SQL migrations
+│   │   ├── drizzle.config.ts    # Drizzle configuration
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
 │   ├── eslint-config/           # Shared ESLint config (@ffp/eslint-config)
 │   └── prettier-config/         # Shared Prettier config (@ffp/prettier-config)
 │
 ├── stacks/                      # SST v3 Ion infrastructure stacks (FFP-28 onwards)
-├── schema/                      # Drizzle database schemas (FFP-10 onwards)
-├── migrations/                  # SQL migration files (FFP-10 onwards)
 ├── tests/                       # Root-level integration tests
 │   ├── monorepo/                # Monorepo configuration tests
 │   └── ...
@@ -149,7 +160,6 @@ ffp/
 ├── .vscode/                     # VS Code settings
 │
 ├── sst.config.ts                # SST v3 Ion configuration ✅
-├── drizzle.config.ts           # Drizzle ORM config (FFP-11 onwards)
 ├── turbo.json                   # Turborepo pipeline configuration
 ├── tsconfig.base.json           # Base TypeScript config
 ├── pnpm-workspace.yaml          # pnpm workspace definition

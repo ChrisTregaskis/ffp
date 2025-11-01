@@ -158,12 +158,18 @@ npm install -D drizzle-kit drizzle-zod @types/pg
 npm run db:generate
 
 # 3. Review generated SQL
-cat migrations/0001_add_user_preferences.sql
+cat migrations/[auto-generated-name].sql
 
-# 4. Apply migrations to database
+# 4. Test connection
+npm run db:test
+
+# 5. Apply migrations to database
 npm run db:migrate
 
-# 5. Check migration status
+# 6. Verify migration succeeded
+npm run db:verify
+
+# 7. Check migration status
 npm run db:check
 ```
 
@@ -228,7 +234,9 @@ export const handler = async () => {
 };
 ```
 
-### Drizzle Studio
+### Database Utilities
+
+#### Drizzle Studio
 
 ```bash
 # Start Drizzle Studio (visual database GUI)
@@ -240,6 +248,22 @@ npm run db:studio
 # - Running queries
 # - Inspecting schema
 # - Testing relationships
+```
+
+#### Verify Migrations
+
+```bash
+# Run post-migration verification checks
+npm run db:verify
+
+# Verifies:
+# - All expected tables exist
+# - Indexes are created
+# - Foreign keys are correct
+# - RLS policies are applied (when implemented)
+
+# Environment-specific verification
+ENVIRONMENT=staging npm run db:verify
 ```
 
 ## Frontend Deployment (S3 + CloudFront + CircleCI)
@@ -423,8 +447,10 @@ git pull
 # Deploy backend (if manual deployment needed)
 npm run sst deploy --stage staging
 
-# Run database migrations
-npm run db:migrate -- --env staging
+# Run database migrations (with safety checks)
+ENVIRONMENT=staging npm run db:test       # Test connection
+ENVIRONMENT=staging npm run db:migrate    # Apply migrations
+ENVIRONMENT=staging npm run db:verify     # Verify success
 
 # Manual frontend deployment (Phase 1)
 # Future: GitHub Actions auto-deploys (Phase 2+)
@@ -443,9 +469,10 @@ git push origin release/v1.2.0
 # Deploy to production
 npm run sst deploy --stage prod
 
-# Run migrations (with backup first)
-npm run db:backup -- --env prod
-npm run db:migrate -- --env prod
+# Run migrations (with safety checks)
+ENVIRONMENT=production npm run db:test       # Test connection
+ENVIRONMENT=production npm run db:migrate    # Apply migrations
+ENVIRONMENT=production npm run db:verify     # Verify success
 
 # Merge to main
 git checkout main
@@ -873,6 +900,9 @@ npm run build
 ### During Deployment
 
 - [ ] Deploy to staging first
+- [ ] Test database connection
+- [ ] Run migrations
+- [ ] Verify migration success (run db:verify)
 - [ ] Run smoke tests
 - [ ] Review migration SQL before applying to production
 - [ ] Deploy to production
@@ -882,6 +912,7 @@ npm run build
 
 ### Post-Deployment
 
+- [ ] Run post-deployment verification (db:verify)
 - [ ] Monitor for 30 minutes
 - [ ] Check user feedback
 - [ ] Verify database schema matches expectations (use `db:studio`)

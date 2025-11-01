@@ -31,7 +31,7 @@ _Important Note:_ When updating local documentation, the files can be found at `
 ### 1. Multi-Tenant Architecture
 
 - Every table filtered by `tenant_id` (RLS enforced)
-- JWT contains: `custom:tenantId`, `custom:role`, `custom:parentBusinessId`
+- JWT contains: `custom:tenantId`, `custom:role`, `custom:customerId`
 - **Critical**: Test data isolation. Cross-tenant access = highest severity bug
 
 ### 2. Security First (Healthcare App)

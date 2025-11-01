@@ -14,10 +14,19 @@ coverage
 *.config.ts
 !eslint.config.js
 !prettier.config.js
+!drizzle.config.ts
+
+# SST generated files
+.sst
+sst-env.d.ts
+
+# Database migrations (generated SQL)
+migrations/
 
 # Temporary files
 *.log
 .cache
+*.tsbuildinfo
 
 # OS files
 .DS_Store

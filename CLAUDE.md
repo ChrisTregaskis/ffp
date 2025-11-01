@@ -119,11 +119,21 @@ ffp/
 │   │   │   ├── contexts/          # React contexts (future)
 │   │   │   └── pages/             # Page components (future)
 │   │   └── dist/
+│   ├── database/                  # Database schemas and migrations (@ffp/database)
+│   │   ├── src/
+│   │   │   ├── schema/            # Drizzle database schemas
+│   │   │   │   ├── tenants.ts
+│   │   │   │   ├── customers.ts
+│   │   │   │   ├── users.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── lib/               # RLS utilities (future)
+│   │   │   └── index.ts
+│   │   ├── migrations/            # Generated SQL migrations
+│   │   ├── drizzle.config.ts
+│   │   └── dist/
 │   ├── eslint-config/             # Shared ESLint configuration
 │   └── prettier-config/           # Shared Prettier configuration
 ├── stacks/                        # SST infrastructure-as-code (future)
-├── schema/                        # Drizzle database schemas (future)
-├── migrations/                    # SQL migration files (future)
 ├── tests/                         # Root-level monorepo tests
 └── project-documentation/         # Detailed docs (always check project-state.md)
 ```

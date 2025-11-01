@@ -17,6 +17,10 @@
       "outputs": ["dist/**", ".next/**", "!.next/cache/**", "build/**"],
       "cache": true
     },
+    "@ffp/database#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
     "typecheck": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
@@ -46,6 +50,28 @@
       "persistent": true
     },
     "clean": {
+      "cache": false
+    },
+    "db:generate": {
+      "cache": false
+    },
+    "db:migrate": {
+      "cache": false
+    },
+    "db:push": {
+      "cache": false
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true
+    },
+    "db:drop": {
+      "cache": false
+    },
+    "db:check": {
+      "cache": false
+    },
+    "db:verify": {
       "cache": false
     }
   },
