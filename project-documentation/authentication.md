@@ -220,32 +220,267 @@ When a user authenticates, Cognito returns a JWT with these claims:
 
 ### Accessing JWT Claims in Lambda
 
+JWT claims flow through the layered architecture from handler to service to repository. The system supports both **user-triggered requests** (from API Gateway with JWT) and **system-triggered requests** (from job queues, scheduled tasks).
+
+#### Actor-Based Context
+
 ```typescript
-import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
+// packages/core/lib/context.ts - Enhanced tenant context extraction
 
-export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) => {
-  // JWT claims automatically available via API Gateway authorizer
-  const claims = event.requestContext.authorizer.jwt.claims;
+import { APIGatewayProxyEvent } from 'aws-lambda';
+import { randomUUID } from 'crypto';
 
-  // Extract tenant context
-  const tenantContext = {
-    userId: claims.sub as string,
+// Actor types: User or System
+export interface UserActor {
+  type: 'user';
+  userId: string;
+  userRole: string;
+  email: string;
+}
+
+export interface SystemActor {
+  type: 'system';
+  systemId: string; // e.g., 'assessment-processor', 'daily-report-job'
+  triggeredBy?: string; // Original user ID if user-triggered
+  jobId?: string; // Queue job ID for traceability
+}
+
+export type Actor = UserActor | SystemActor;
+
+// Enhanced tenant context (supports both user and system actors)
+export interface TenantContext {
+  actor: Actor;
+  tenantId: string;
+  customerId: string | null;
+  requestId: string;
+  timestamp: Date;
+  settings?: PlatformSettings;
+  enabledModules?: string[];
+}
+
+/**
+ * Extract context from API Gateway user request
+ */
+export function extractUserContext(event: APIGatewayProxyEvent): TenantContext {
+  const claims = event.requestContext.authorizer?.jwt?.claims;
+
+  if (!claims) {
+    throw new UnauthorisedError('No JWT claims found');
+  }
+
+  return {
+    actor: {
+      type: 'user',
+      userId: claims.sub as string,
+      userRole: claims['custom:role'] as string,
+      email: claims.email as string,
+    },
     tenantId: claims['custom:tenantId'] as string,
-    role: claims['custom:role'] as string,
-    email: claims.email as string,
     customerId: claims['custom:customerId'] as string | null,
+    requestId: event.requestContext.requestId,
+    timestamp: new Date(),
   };
+}
 
-  // Use for RLS queries
-  await setRLSContext(tenantContext.tenantId);
-  const data = await repository.find(tenantContext);
+/**
+ * Create context for system-triggered operations
+ */
+export function createSystemContext(params: {
+  systemId: string;
+  tenantId: string;
+  customerId?: string | null;
+  triggeredBy?: string;
+  jobId?: string;
+}): TenantContext {
+  return {
+    actor: {
+      type: 'system',
+      systemId: params.systemId,
+      triggeredBy: params.triggeredBy,
+      jobId: params.jobId,
+    },
+    tenantId: params.tenantId,
+    customerId: params.customerId ?? null,
+    requestId: randomUUID(),
+    timestamp: new Date(),
+  };
+}
+
+/**
+ * Extract context from job queue message
+ */
+export function extractJobContext(jobMessage: {
+  tenantId: string;
+  customerId?: string;
+  userId?: string;
+  jobId: string;
+  jobType: string;
+}): TenantContext {
+  return createSystemContext({
+    systemId: jobMessage.jobType,
+    tenantId: jobMessage.tenantId,
+    customerId: jobMessage.customerId,
+    triggeredBy: jobMessage.userId,
+    jobId: jobMessage.jobId,
+  });
+}
+
+// Helper functions
+export function isUserActor(actor: Actor): actor is UserActor {
+  return actor.type === 'user';
+}
+
+export function isSystemActor(actor: Actor): actor is SystemActor {
+  return actor.type === 'system';
+}
+
+export function getActorDisplayName(actor: Actor): string {
+  if (isUserActor(actor)) {
+    return `${actor.email} (${actor.userRole})`;
+  }
+  return `System: ${actor.systemId}`;
+}
+```
+
+#### User Request Flow
+
+**Handler Layer** (extracts context and passes to service):
+
+```typescript
+// packages/functions/assessments/get-assessment.ts
+import { APIGatewayProxyEvent } from 'aws-lambda';
+import { extractUserContext } from '@ffp/core/lib/context';
+import { getAssessmentService } from '@ffp/core/assessments/assessment.service';
+import { withErrorHandling } from '@ffp/core/lib/errors';
+
+export const handler = withErrorHandling(async (event: APIGatewayProxyEvent) => {
+  // Extract user context from JWT
+  const context = extractUserContext(event);
+
+  // Get assessment ID from path
+  const assessmentId = event.pathParameters?.id;
+
+  // Call service (passes context down)
+  const assessment = await getAssessmentService(assessmentId, context);
 
   return {
     statusCode: 200,
-    body: JSON.stringify(data),
+    body: JSON.stringify(assessment),
   };
+});
+```
+
+**Service Layer** (receives context and passes to repository):
+
+```typescript
+// packages/core/assessments/assessment.service.ts
+import { assessmentRepository } from './assessment.repository';
+import { TenantContext } from '../lib/context';
+import { NotFoundError } from '../lib/errors';
+
+export const getAssessmentService = async (assessmentId: string, context: TenantContext) => {
+  // Call repository with tenant context
+  const assessment = await assessmentRepository.findById(assessmentId, context);
+
+  if (!assessment) {
+    throw new NotFoundError('Assessment', assessmentId);
+  }
+
+  // Could add business logic here if needed
+  return assessment;
 };
 ```
+
+**Repository Layer** (uses context to set RLS):
+
+```typescript
+// packages/core/assessments/assessment.repository.ts
+import { db } from '@ffp/database';
+import { assessments } from '@ffp/database/schema/assessments';
+import { eq } from 'drizzle-orm';
+import { setRLSContext } from '@ffp/database/lib/rls';
+import { TenantContext } from '../lib/context';
+
+export const assessmentRepository = {
+  async findById(id: string, context: TenantContext): Promise<Assessment | null> {
+    return await db.transaction(async (tx) => {
+      // Set RLS context for tenant isolation
+      await setRLSContext(tx, context.tenantId);
+
+      return await tx.query.assessments.findFirst({
+        where: eq(assessments.id, id),
+        // RLS ensures only assessments from this tenant are returned
+      });
+    });
+  },
+};
+```
+
+#### System Request Flow (Jobs & Scheduled Tasks)
+
+**Job Worker** (processes background jobs):
+
+```typescript
+// packages/functions/jobs/process-assessment.ts
+import { SQSEvent } from 'aws-lambda';
+import { extractJobContext } from '@ffp/core/lib/context';
+import { processAssessmentService } from '@ffp/core/assessments/assessment.service';
+import { withErrorHandling } from '@ffp/core/lib/errors';
+
+export const handler = withErrorHandling(async (event: SQSEvent) => {
+  for (const record of event.Records) {
+    const message = JSON.parse(record.body);
+
+    // Extract system context from job message
+    const context = extractJobContext({
+      tenantId: message.tenantId,
+      customerId: message.customerId,
+      userId: message.userId, // Original user who triggered this
+      jobId: record.messageId,
+      jobType: 'assessment-processor',
+    });
+
+    // Call service with system context
+    await processAssessmentService(message.assessmentId, context);
+  }
+});
+```
+
+**Scheduled Task** (runs on schedule):
+
+```typescript
+// packages/functions/scheduled/daily-report.ts
+import { ScheduledEvent } from 'aws-lambda';
+import { createSystemContext } from '@ffp/core/lib/context';
+import { generateDailyReportService } from '@ffp/core/reports/report.service';
+
+export const handler = async (event: ScheduledEvent) => {
+  // Get all active tenants
+  const tenants = await getTenantRepository().findAllActive();
+
+  for (const tenant of tenants) {
+    // Create system context for each tenant
+    const context = createSystemContext({
+      systemId: 'daily-report-job',
+      tenantId: tenant.id,
+      customerId: null, // Report spans all customers
+    });
+
+    // Generate report with system context
+    await generateDailyReportService(context);
+  }
+};
+```
+
+**Key Points**:
+
+- **User requests**: Extract context from JWT using `extractUserContext()`
+- **Job workers**: Extract context from message using `extractJobContext()`
+- **Scheduled tasks**: Create context explicitly using `createSystemContext()`
+- Context flows down through layers identically (Handler/Worker → Service → Repository)
+- Repository uses context.tenantId to set RLS (works for both user and system actors)
+- Audit logging uses `actor` field for traceability (user vs system)
+- System jobs retain original user ID via `triggeredBy` when applicable
 
 ## User Management Flows (MVP)
 
@@ -369,89 +604,196 @@ ts-node packages/functions/src/admin/create-business.ts \
 
 **Purpose:** Business owners invite staff/clients after their account is created.
 
+This demonstrates the **full layered architecture**: Handler → Service → Repository + External Service (Cognito).
+
+**Handler Layer** (HTTP interface only):
+
 ```typescript
-// packages/functions/src/auth/invite-user.ts
+// packages/functions/users/invite-user.ts
+import { APIGatewayProxyEvent } from 'aws-lambda';
+import { extractUserContext, isUserActor } from '@ffp/core/lib/context';
+import { inviteUserService } from '@ffp/core/users/user.service';
+import { withErrorHandling } from '@ffp/core/lib/errors';
+import { ForbiddenError } from '@ffp/core/lib/errors';
+
+export const handler = withErrorHandling(async (event: APIGatewayProxyEvent) => {
+  // Extract user context from JWT
+  const context = extractUserContext(event);
+
+  // Only customer owners can invite users
+  if (isUserActor(context.actor) && context.actor.userRole !== 'customer_owner') {
+    throw new ForbiddenError('Only business owners can invite users');
+  }
+
+  // Parse request body
+  const body = JSON.parse(event.body || '{}');
+
+  // Call service (all business logic)
+  const user = await inviteUserService(body, context);
+
+  return {
+    statusCode: 201,
+    body: JSON.stringify({
+      message: 'User invited successfully. They will receive an email with temporary password.',
+      userId: user.id,
+    }),
+  };
+});
+```
+
+**Service Layer** (business logic orchestration):
+
+```typescript
+// packages/core/users/user.service.ts
+import { inviteUserSchema } from './user.schema';
+import { userRepository } from './user.repository';
+import { TenantContext } from '../lib/context';
+import { CognitoService } from '../lib/cognito';
+import { ConflictError } from '../lib/errors';
+
+export const inviteUserService = async (data: unknown, context: TenantContext) => {
+  // 1. Validate input
+  const validated = inviteUserSchema.parse(data);
+
+  // 2. Business rule: Check if email already exists
+  const existing = await userRepository.findByEmail(validated.email, context);
+  if (existing) {
+    throw new ConflictError('User with this email already exists');
+  }
+
+  // 3. Coordinate with external service (Cognito)
+  const cognitoUser = await CognitoService.inviteUser({
+    email: validated.email,
+    firstName: validated.firstName,
+    lastName: validated.lastName,
+    tenantId: context.tenantId,
+    customerId: context.customerId!,
+    role: validated.role,
+  });
+
+  // 4. Persist to database via repository
+  const user = await userRepository.create(
+    {
+      id: cognitoUser.Username,
+      email: validated.email,
+      firstName: validated.firstName,
+      lastName: validated.lastName,
+      role: validated.role,
+      cognitoId: cognitoUser.Username,
+      emailVerified: true,
+      status: 'active',
+    },
+    context
+  );
+
+  return user;
+};
+```
+
+**Cognito Service** (external service wrapper):
+
+```typescript
+// packages/core/lib/cognito.ts
 import {
   CognitoIdentityProviderClient,
   AdminCreateUserCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
-import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
-import { z } from 'zod';
-import { db } from '@ffp/database';
-import { users } from '@ffp/database/schema';
-import { withRLS } from '@ffp/database/lib/rls';
-import { extractTenantContext } from '@ffp/core/lib/tenant-context';
 
 const cognito = new CognitoIdentityProviderClient({ region: 'eu-west-2' });
 
-const InviteUserSchema = z.object({
+export class CognitoService {
+  static async inviteUser(params: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    tenantId: string;
+    customerId: string;
+    role: string;
+  }) {
+    return await cognito.send(
+      new AdminCreateUserCommand({
+        UserPoolId: process.env.COGNITO_USER_POOL_ID!,
+        Username: params.email,
+        UserAttributes: [
+          { Name: 'email', Value: params.email },
+          { Name: 'email_verified', Value: 'true' },
+          { Name: 'given_name', Value: params.firstName },
+          { Name: 'family_name', Value: params.lastName },
+          { Name: 'custom:tenantId', Value: params.tenantId },
+          { Name: 'custom:customerId', Value: params.customerId },
+          { Name: 'custom:role', Value: params.role },
+        ],
+        DesiredDeliveryMediums: ['EMAIL'], // Sends temp password via email
+      })
+    );
+  }
+
+  // Other Cognito methods...
+}
+```
+
+**Repository Layer** (data access with RLS):
+
+```typescript
+// packages/core/users/user.repository.ts
+import { db } from '@ffp/database';
+import { users, NewUser, User } from '@ffp/database/schema/users';
+import { setRLSContext } from '@ffp/database/lib/rls';
+import { TenantContext } from '../lib/context';
+
+export const userRepository = {
+  async create(data: NewUser, context: TenantContext): Promise<User> {
+    return await db.transaction(async (tx) => {
+      await setRLSContext(tx, context.tenantId);
+
+      const [user] = await tx
+        .insert(users)
+        .values({
+          ...data,
+          tenantId: context.tenantId,
+          customerId: context.customerId,
+        })
+        .returning();
+
+      return user;
+    });
+  },
+
+  async findByEmail(email: string, context: TenantContext): Promise<User | null> {
+    return await db.transaction(async (tx) => {
+      await setRLSContext(tx, context.tenantId);
+
+      return await tx.query.users.findFirst({
+        where: eq(users.email, email),
+      });
+    });
+  },
+};
+```
+
+**Validation Schema**:
+
+```typescript
+// packages/core/users/user.schema.ts
+import { z } from 'zod';
+
+export const inviteUserSchema = z.object({
   email: z.string().email(),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   role: z.enum(['customer_admin', 'customer_user']),
 });
 
-export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) => {
-  // Extract tenant context from JWT
-  const context = extractTenantContext(event);
-
-  // Only customer owners can invite users
-  if (context.role !== 'customer_owner') {
-    return {
-      statusCode: 403,
-      body: JSON.stringify({
-        error: 'FORBIDDEN',
-        message: 'Only business owners can invite users',
-      }),
-    };
-  }
-
-  const body = InviteUserSchema.parse(JSON.parse(event.body || '{}'));
-
-  // Create user in Cognito with temporary password
-  const cognitoResult = await cognito.send(
-    new AdminCreateUserCommand({
-      UserPoolId: process.env.COGNITO_USER_POOL_ID!,
-      Username: body.email,
-      UserAttributes: [
-        { Name: 'email', Value: body.email },
-        { Name: 'email_verified', Value: 'true' },
-        { Name: 'given_name', Value: body.firstName },
-        { Name: 'family_name', Value: body.lastName },
-        { Name: 'custom:tenantId', Value: context.tenantId },
-        { Name: 'custom:customerId', Value: context.customerId! },
-        { Name: 'custom:role', Value: body.role },
-      ],
-      DesiredDeliveryMediums: ['EMAIL'], // Sends temp password via email
-    })
-  );
-
-  const newUserId = cognitoResult.User!.Username!;
-
-  // Store user in database with RLS context
-  await withRLS(context.tenantId, context.userId, async (tx) => {
-    await tx.insert(users).values({
-      id: newUserId,
-      tenantId: context.tenantId,
-      customerId: context.customerId!,
-      email: body.email,
-      cognitoSub: newUserId,
-      firstName: body.firstName,
-      lastName: body.lastName,
-      role: body.role,
-      status: 'active',
-    });
-  });
-
-  return {
-    statusCode: 200,
-    body: JSON.stringify({
-      message: 'User invited successfully. They will receive an email with temporary password.',
-      userId: newUserId,
-    }),
-  };
-};
+export type InviteUserInput = z.infer<typeof inviteUserSchema>;
 ```
+
+**Key Points**:
+
+- Handler only does HTTP plumbing
+- Service coordinates business logic (validation, Cognito, database)
+- External services wrapped in service classes
+- Repository handles data access with RLS
+- Each layer has single responsibility
 
 ### Future: Self-Service Business Registration (Phase 2)
 

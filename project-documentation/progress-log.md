@@ -1,3 +1,109 @@
+### November 2, 2025 (Session 29 - Backend Architecture Enhancements for FFP-9)
+
+**Status**: ✅ Architecture documentation enhanced, FFP-9 ready to implement
+
+**Branch**: No code changes - documentation and planning only
+
+**Session Focus**: Enhanced backend architecture with domain-organised layers and Actor-based context for FFP-9 implementation
+
+**Completed Work:**
+
+**1. Domain-Organised Backend Architecture** ✅
+
+- Documented comprehensive domain-organised structure (Handler → Service → Entity → Repository → Schema)
+- Created decision tree for when to use each layer
+- Optional entity layer (not required for simple CRUD)
+- Domain-based organisation over layer-based (users/, assessments/, programs/)
+- Updated `architecture.md` with 226 lines of detailed patterns and examples
+
+**2. Actor-Based Context Architecture** ✅
+
+- Designed UserActor and SystemActor interfaces
+- Enhanced TenantContext to support both user and system actors
+- Created context extraction functions:
+  - `extractUserContext()` for API Gateway requests
+  - `createSystemContext()` for system operations
+  - `extractJobContext()` for job queue messages
+- Helper functions: `isUserActor()`, `isSystemActor()`, `getActorDisplayName()`
+- Updated `authentication.md` with user vs system request flow examples
+
+**3. Enhanced Coding Patterns** ✅
+
+- Base Entity class for simple domains
+- Factory methods with validation (static create(), static fromDatabase())
+- Repository save() method for smart create-or-update
+- Explicit dependency passing (no globals)
+- Updated `coding-standards.md` with 170+ lines of enhanced patterns
+
+**4. FFP-9 Implementation Guide** ✅
+
+- Created comprehensive `FFP-9-implementation-guide.md`
+- Analyzed all 13 subtasks with decision tree
+- Determined layer requirements for each task
+- No entity layer needed (all simple CRUD)
+- Summary table showing layer usage across all tasks
+
+**5. Jira Ticket Updates** ✅
+
+- **FFP-43**: Added Cognito service wrapper scope (+0.5h)
+  - New: `packages/core/lib/cognito.ts` with CognitoService class
+  - Methods: inviteUser(), createUser(), login(), refreshToken()
+  - Time: 3h → 3.5h
+- **FFP-44**: Enhanced with actor-aware logging
+  - New: Logger.fromTenantContext() helper
+  - Logs actor type, display name, triggeredBy for system jobs
+  - Depends on FFP-36 (context extraction)
+- **FFP-36**: Enhanced TenantContext with Actor architecture
+  - New: UserActor and SystemActor interfaces
+  - Three context extraction functions
+  - Helper functions for type guards and display
+
+**6. Documentation Updates** ✅
+
+- `architecture.md`: Enhanced Context Architecture section
+- `authentication.md`: User vs System request flows
+- `coding-standards.md`: Enhanced Patterns section
+- `CLAUDE.md`: Actor-based context summary
+- `project-state.md`: Architecture enhancements noted, time updated
+
+**Key Insights:**
+
+**Layer Usage for FFP-9:**
+
+- **No entity layer needed** - All operations are simple CRUD
+- **Cognito service wrapper required** - Cleaner separation of concerns
+- **Thin handlers for auth endpoints** - FFP-38, FFP-39 (login, refresh token)
+- **Full stack for business logic** - FFP-112, FFP-37 (create business, invite user)
+
+**Architecture Benefits:**
+
+- Single TenantContext interface works for user and system actors
+- RLS enforcement works identically regardless of actor type
+- Audit logging gains traceability (who/what triggered action)
+- Job processors retain original user context via triggeredBy
+
+**Time Tracking:**
+
+- **FFP-9 Phase 1**: 9.5h → 10h (+0.5h for Cognito service wrapper)
+- **FFP-9 Total**: 29-30h → 30-30.5h
+- **Planning Session**: ~2h (architecture design and documentation)
+
+**Next Steps:**
+
+1. Start FFP-9 implementation in new chat session
+2. Follow execution order from FFP-9-implementation-guide.md
+3. Begin with Phase 1: Prerequisites (FFP-43, FFP-44, FFP-36, FFP-32)
+
+**Notable Achievements:**
+
+- ✅ **Comprehensive architecture documented** - Ready for immediate implementation
+- ✅ **Actor-based context** - Supports user requests AND system jobs
+- ✅ **Implementation guide** - Clear layer requirements for each subtask
+- ✅ **Jira tickets updated** - Enhanced scope captured for Phase 1 tasks
+- ✅ **Decision-ready** - No ambiguity in implementation approach
+
+---
+
 ### November 1, 2025 (Session 28 - FFP-10 & FFP-11 MERGED TO MAIN! 🎉)
 
 **Status**: ✅ FFP-10 & FFP-11 COMPLETE & MERGED - Database Layer Production Ready!

@@ -100,18 +100,45 @@ pnpm clean
 ffp/
 ├── packages/                      # Turborepo workspaces
 │   ├── core/                      # Shared business logic (@ffp/core)
-│   │   ├── src/                   # TypeScript source
-│   │   │   ├── services/          # Service layer (future)
-│   │   │   ├── repositories/      # Data access layer (future)
-│   │   │   ├── lib/               # Utilities, database helpers (future)
+│   │   ├── src/                   # TypeScript source (domain-organised)
+│   │   │   ├── users/             # User domain
+│   │   │   │   ├── user.service.ts      # Business logic orchestration
+│   │   │   │   ├── user.entity.ts       # Complex business behaviour (optional)
+│   │   │   │   ├── user.repository.ts   # Data access with RLS
+│   │   │   │   └── user.schema.ts       # Zod validation schemas
+│   │   │   ├── assessments/       # Assessment domain
+│   │   │   │   ├── assessment.service.ts
+│   │   │   │   ├── assessment.entity.ts
+│   │   │   │   ├── assessment.repository.ts
+│   │   │   │   └── assessment.schema.ts
+│   │   │   ├── programs/          # Program domain
+│   │   │   │   ├── program.service.ts
+│   │   │   │   ├── program.entity.ts
+│   │   │   │   ├── program.repository.ts
+│   │   │   │   └── program.schema.ts
+│   │   │   ├── lib/               # Cross-cutting utilities
+│   │   │   │   ├── context.ts     # Tenant context extraction
+│   │   │   │   ├── errors.ts      # Custom error classes
+│   │   │   │   ├── logger.ts      # Structured logging
+│   │   │   │   └── cognito.ts     # Cognito service wrapper
 │   │   │   └── types/             # Shared TypeScript types
 │   │   └── dist/                  # Built output
 │   ├── functions/                 # Lambda function handlers (@ffp/functions)
-│   │   ├── src/
-│   │   │   ├── auth/              # Registration, login (future)
-│   │   │   ├── assessments/       # Assessment CRUD (future)
-│   │   │   ├── programs/          # Program generation (future)
-│   │   │   └── videos/            # Video metadata (future)
+│   │   ├── src/                   # Domain-organised handlers
+│   │   │   ├── users/             # User management handlers
+│   │   │   │   ├── create-user.ts
+│   │   │   │   ├── get-user.ts
+│   │   │   │   └── invite-user.ts
+│   │   │   ├── assessments/       # Assessment handlers
+│   │   │   │   ├── create-assessment.ts
+│   │   │   │   ├── submit-assessment.ts
+│   │   │   │   └── get-assessment.ts
+│   │   │   ├── programs/          # Program handlers
+│   │   │   │   ├── create-program.ts
+│   │   │   │   └── get-program.ts
+│   │   │   └── videos/            # Video handlers
+│   │   │       ├── get-video.ts
+│   │   │       └── update-progress.ts
 │   │   └── dist/
 │   ├── web/                       # React frontend (@ffp/web)
 │   │   ├── src/
@@ -126,7 +153,8 @@ ffp/
 │   │   │   │   ├── customers.ts
 │   │   │   │   ├── users.ts
 │   │   │   │   └── index.ts
-│   │   │   ├── lib/               # RLS utilities (future)
+│   │   │   ├── lib/               # Database utilities
+│   │   │   │   └── rls.ts         # RLS helper functions
 │   │   │   └── index.ts
 │   │   ├── migrations/            # Generated SQL migrations
 │   │   ├── drizzle.config.ts
@@ -137,6 +165,28 @@ ffp/
 ├── tests/                         # Root-level monorepo tests
 └── project-documentation/         # Detailed docs (always check project-state.md)
 ```
+
+### Domain-Organised Backend Architecture
+
+FFP uses a domain-organised architecture with clear layer separation:
+
+**Flow:** `Handler → Service → Entity → Repository → Drizzle Schema`
+
+**Layers:**
+
+- **Handler** (`packages/functions/{domain}/{action}.ts`): HTTP/Lambda interface only, zero business logic
+- **Service** (`packages/core/{domain}/{domain}.service.ts`): Business logic orchestration, validates input, coordinates operations
+- **Entity** (`packages/core/{domain}/{domain}.entity.ts`): Complex business behaviour (optional), used for calculations, state transitions
+- **Repository** (`packages/core/{domain}/{domain}.repository.ts`): Data access with RLS, dumb data fetching/saving
+- **Schema** (`packages/core/{domain}/{domain}.schema.ts`): Zod validation schemas
+
+**When to use each layer:**
+
+- Simple GET: `Handler → Repository`
+- Business logic: `Handler → Service → Repository`
+- Complex behaviour: `Handler → Service → Entity → Repository`
+
+See `project-documentation/architecture.md` for detailed layer responsibilities and examples.
 
 ### Tech Stack
 
@@ -274,18 +324,38 @@ git commit -m "FFP-23: Add comprehensive monorepo tests"
 - All Drizzle queries MUST set RLS context before operations
 - Never trust client-provided tenantId - always use JWT value
 
-Example pattern (future implementation):
+### Actor-Based Context (User & System Requests)
+
+The system supports both **user-triggered requests** (API Gateway with JWT) and **system-triggered requests** (job queues, scheduled tasks):
+
+```typescript
+// User requests: Extract from JWT
+const context = extractUserContext(event);
+
+// Job workers: Extract from queue message
+const context = extractJobContext(jobMessage);
+
+// Scheduled tasks: Create explicitly
+const context = createSystemContext({
+  systemId: 'daily-report-job',
+  tenantId: tenant.id,
+});
+```
+
+All contexts flow through layers (Handler → Service → Repository) and enforce RLS:
 
 ```typescript
 // CORRECT: Set RLS context in transaction
 await db.transaction(async (tx) => {
-  await tx.execute(sql`SET app.current_tenant_id = ${tenantId}`);
+  await setRLSContext(tx, context.tenantId);
   return await tx.query.users.findMany();
 });
 
 // WRONG: Direct query without RLS context
 await db.query.users.findMany(); // Leaks all tenants!
 ```
+
+**See `architecture.md` for full actor architecture and `authentication.md` for context extraction patterns.**
 
 ## Common Issues & Troubleshooting
 
