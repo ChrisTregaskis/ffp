@@ -324,18 +324,38 @@ git commit -m "FFP-23: Add comprehensive monorepo tests"
 - All Drizzle queries MUST set RLS context before operations
 - Never trust client-provided tenantId - always use JWT value
 
-Example pattern (future implementation):
+### Actor-Based Context (User & System Requests)
+
+The system supports both **user-triggered requests** (API Gateway with JWT) and **system-triggered requests** (job queues, scheduled tasks):
+
+```typescript
+// User requests: Extract from JWT
+const context = extractUserContext(event);
+
+// Job workers: Extract from queue message
+const context = extractJobContext(jobMessage);
+
+// Scheduled tasks: Create explicitly
+const context = createSystemContext({
+  systemId: 'daily-report-job',
+  tenantId: tenant.id,
+});
+```
+
+All contexts flow through layers (Handler → Service → Repository) and enforce RLS:
 
 ```typescript
 // CORRECT: Set RLS context in transaction
 await db.transaction(async (tx) => {
-  await tx.execute(sql`SET app.current_tenant_id = ${tenantId}`);
+  await setRLSContext(tx, context.tenantId);
   return await tx.query.users.findMany();
 });
 
 // WRONG: Direct query without RLS context
 await db.query.users.findMany(); // Leaks all tenants!
 ```
+
+**See `architecture.md` for full actor architecture and `authentication.md` for context extraction patterns.**
 
 ## Common Issues & Troubleshooting
 

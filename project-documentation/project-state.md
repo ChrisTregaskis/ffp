@@ -176,7 +176,8 @@
 - ✅ **Database package structure** - @ffp/database ready for RLS utilities
 - ✅ **Phase 3 RLS Implementation** - Multi-tenant isolation with Row-Level Security policies (FFP-49, FFP-50, FFP-52)
 - ✅ **Database Layer COMPLETE & MERGED** - FFP-10 & FFP-11 fully implemented (46h, 16 subtasks)
-- 🔄 **Executing Sprint 1** - FFP-9 Cognito Authentication (29-30h, 13 subtasks)
+- ✅ **Architecture Enhancements** - Domain-organised backend with Actor-based context (User/System actors)
+- 🔄 **Executing Sprint 1** - FFP-9 Cognito Authentication (30-30.5h, 13 subtasks)
 - ⏸️ Create User Stories for EPICs 2-6 (after EPIC 1 complete)
 
 ### Sprint Planning Approach
@@ -246,13 +247,22 @@
 
 **Next Up: FFP-9 Cognito Authentication** 🚀
 
+**Architecture Enhancements (Pre-Implementation):**
+
+- ✅ Domain-organised backend architecture documented (Handler → Service → Entity → Repository → Schema)
+- ✅ Actor-based context architecture (User vs System actors)
+- ✅ Enhanced TenantContext with actor, requestId, timestamp, settings, enabledModules
+- ✅ Decision tree for layer requirements
+- ✅ Implementation guide created (FFP-9-implementation-guide.md)
+- ✅ Jira tickets updated with enhanced patterns (FFP-43, FFP-44, FFP-36)
+
 **Execution Order (5 Phases):**
 
-**Phase 1: Prerequisites (9.5h)**
+**Phase 1: Prerequisites (10h)** _(+0.5h for Cognito service wrapper)_
 
-1. FFP-43 - Error Handling Classes (3h)
-2. FFP-44 - Structured Logging (2h)
-3. FFP-36 - Tenant Context Extraction (2h)
+1. FFP-43 - Error Handling Classes + Cognito Service Wrapper (3.5h) ⚠️ _UPDATED: +0.5h_
+2. FFP-44 - Structured Logging with Actor Support (2h) ⚠️ _UPDATED: Actor-aware logging_
+3. FFP-36 - Enhanced Tenant Context Extraction (2h) ⚠️ _UPDATED: User/System actors_
 4. FFP-32 - Secrets Manager - JWT Only (2.5h)
 
 **Phase 2: Bootstrap + Core Auth (8.5h)** 5. Manual: Super User Setup - Bootstrap super admin (0.5h) ⚠️ **NEW** 6. FFP-112 - Admin CLI Script (1h) ⚠️ **NEEDS MANUAL JIRA CREATION** 7. FFP-35 - Zod Schemas (3h) ⚠️ **UPDATE: Add super_admin role support** 8. FFP-37 - Invite User Lambda (4h) ⚠️ **UPDATE: Allow super_admin role**
@@ -270,7 +280,7 @@
 - ⚠️ FFP-37 (Invite User) needs role expansion to allow super_admin
 - ⚠️ FFP-112 needs manual creation in Jira (MCP tool failed)
 
-**Time Estimate:** 29-30 hours (revised from 34h due to admin-only MVP approach)
+**Time Estimate:** 30-30.5 hours (revised from 34h due to admin-only MVP + 0.5h for Cognito service wrapper)
 
 ---
 
@@ -290,7 +300,7 @@
 | FFP-10 + 11 | Database Layer (Interleaved)    | 16       | 46h      | ✅ COMPLETE & MERGED |
 | ↳ FFP-10    | PostgreSQL Schema with RLS      | 9        | 24h      | ✅ COMPLETE & MERGED |
 | ↳ FFP-11    | Drizzle ORM Setup               | 9        | 22h      | ✅ COMPLETE & MERGED |
-| FFP-9       | Cognito Authentication          | 13       | 29-30h   | 🚀 IN PROGRESS       |
+| FFP-9       | Cognito Authentication          | 13       | 30-30.5h | 🚀 IN PROGRESS       |
 | FFP-12      | Testing Framework Configuration | 10       | 22h      | ⏸️ Not Started       |
 | FFP-14      | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started       |
 | FFP-15      | Error Handling Patterns         | 7        | 15h      | ⏸️ Not Started       |

@@ -220,21 +220,48 @@ When a user authenticates, Cognito returns a JWT with these claims:
 
 ### Accessing JWT Claims in Lambda
 
-JWT claims flow through the layered architecture from handler to service to repository:
+JWT claims flow through the layered architecture from handler to service to repository. The system supports both **user-triggered requests** (from API Gateway with JWT) and **system-triggered requests** (from job queues, scheduled tasks).
+
+#### Actor-Based Context
 
 ```typescript
-// packages/core/lib/context.ts - Tenant context extraction utility
-import { APIGatewayProxyEvent } from 'aws-lambda';
+// packages/core/lib/context.ts - Enhanced tenant context extraction
 
-export interface TenantContext {
+import { APIGatewayProxyEvent } from 'aws-lambda';
+import { randomUUID } from 'crypto';
+
+// Actor types: User or System
+export interface UserActor {
+  type: 'user';
   userId: string;
-  tenantId: string;
-  role: string;
+  userRole: string;
   email: string;
-  customerId: string | null;
 }
 
-export function extractTenantContext(event: APIGatewayProxyEvent): TenantContext {
+export interface SystemActor {
+  type: 'system';
+  systemId: string; // e.g., 'assessment-processor', 'daily-report-job'
+  triggeredBy?: string; // Original user ID if user-triggered
+  jobId?: string; // Queue job ID for traceability
+}
+
+export type Actor = UserActor | SystemActor;
+
+// Enhanced tenant context (supports both user and system actors)
+export interface TenantContext {
+  actor: Actor;
+  tenantId: string;
+  customerId: string | null;
+  requestId: string;
+  timestamp: Date;
+  settings?: PlatformSettings;
+  enabledModules?: string[];
+}
+
+/**
+ * Extract context from API Gateway user request
+ */
+export function extractUserContext(event: APIGatewayProxyEvent): TenantContext {
   const claims = event.requestContext.authorizer?.jwt?.claims;
 
   if (!claims) {
@@ -242,27 +269,93 @@ export function extractTenantContext(event: APIGatewayProxyEvent): TenantContext
   }
 
   return {
-    userId: claims.sub as string,
+    actor: {
+      type: 'user',
+      userId: claims.sub as string,
+      userRole: claims['custom:role'] as string,
+      email: claims.email as string,
+    },
     tenantId: claims['custom:tenantId'] as string,
-    role: claims['custom:role'] as string,
-    email: claims.email as string,
     customerId: claims['custom:customerId'] as string | null,
+    requestId: event.requestContext.requestId,
+    timestamp: new Date(),
   };
 }
+
+/**
+ * Create context for system-triggered operations
+ */
+export function createSystemContext(params: {
+  systemId: string;
+  tenantId: string;
+  customerId?: string | null;
+  triggeredBy?: string;
+  jobId?: string;
+}): TenantContext {
+  return {
+    actor: {
+      type: 'system',
+      systemId: params.systemId,
+      triggeredBy: params.triggeredBy,
+      jobId: params.jobId,
+    },
+    tenantId: params.tenantId,
+    customerId: params.customerId ?? null,
+    requestId: randomUUID(),
+    timestamp: new Date(),
+  };
+}
+
+/**
+ * Extract context from job queue message
+ */
+export function extractJobContext(jobMessage: {
+  tenantId: string;
+  customerId?: string;
+  userId?: string;
+  jobId: string;
+  jobType: string;
+}): TenantContext {
+  return createSystemContext({
+    systemId: jobMessage.jobType,
+    tenantId: jobMessage.tenantId,
+    customerId: jobMessage.customerId,
+    triggeredBy: jobMessage.userId,
+    jobId: jobMessage.jobId,
+  });
+}
+
+// Helper functions
+export function isUserActor(actor: Actor): actor is UserActor {
+  return actor.type === 'user';
+}
+
+export function isSystemActor(actor: Actor): actor is SystemActor {
+  return actor.type === 'system';
+}
+
+export function getActorDisplayName(actor: Actor): string {
+  if (isUserActor(actor)) {
+    return `${actor.email} (${actor.userRole})`;
+  }
+  return `System: ${actor.systemId}`;
+}
 ```
+
+#### User Request Flow
 
 **Handler Layer** (extracts context and passes to service):
 
 ```typescript
 // packages/functions/assessments/get-assessment.ts
 import { APIGatewayProxyEvent } from 'aws-lambda';
-import { extractTenantContext } from '@ffp/core/lib/context';
+import { extractUserContext } from '@ffp/core/lib/context';
 import { getAssessmentService } from '@ffp/core/assessments/assessment.service';
 import { withErrorHandling } from '@ffp/core/lib/errors';
 
 export const handler = withErrorHandling(async (event: APIGatewayProxyEvent) => {
-  // Extract tenant context from JWT
-  const context = extractTenantContext(event);
+  // Extract user context from JWT
+  const context = extractUserContext(event);
 
   // Get assessment ID from path
   const assessmentId = event.pathParameters?.id;
@@ -323,12 +416,71 @@ export const assessmentRepository = {
 };
 ```
 
+#### System Request Flow (Jobs & Scheduled Tasks)
+
+**Job Worker** (processes background jobs):
+
+```typescript
+// packages/functions/jobs/process-assessment.ts
+import { SQSEvent } from 'aws-lambda';
+import { extractJobContext } from '@ffp/core/lib/context';
+import { processAssessmentService } from '@ffp/core/assessments/assessment.service';
+import { withErrorHandling } from '@ffp/core/lib/errors';
+
+export const handler = withErrorHandling(async (event: SQSEvent) => {
+  for (const record of event.Records) {
+    const message = JSON.parse(record.body);
+
+    // Extract system context from job message
+    const context = extractJobContext({
+      tenantId: message.tenantId,
+      customerId: message.customerId,
+      userId: message.userId, // Original user who triggered this
+      jobId: record.messageId,
+      jobType: 'assessment-processor',
+    });
+
+    // Call service with system context
+    await processAssessmentService(message.assessmentId, context);
+  }
+});
+```
+
+**Scheduled Task** (runs on schedule):
+
+```typescript
+// packages/functions/scheduled/daily-report.ts
+import { ScheduledEvent } from 'aws-lambda';
+import { createSystemContext } from '@ffp/core/lib/context';
+import { generateDailyReportService } from '@ffp/core/reports/report.service';
+
+export const handler = async (event: ScheduledEvent) => {
+  // Get all active tenants
+  const tenants = await getTenantRepository().findAllActive();
+
+  for (const tenant of tenants) {
+    // Create system context for each tenant
+    const context = createSystemContext({
+      systemId: 'daily-report-job',
+      tenantId: tenant.id,
+      customerId: null, // Report spans all customers
+    });
+
+    // Generate report with system context
+    await generateDailyReportService(context);
+  }
+};
+```
+
 **Key Points**:
 
-- Handler extracts context once from JWT
-- Context flows down through layers (Handler → Service → Repository)
-- Repository uses context to set RLS before queries
-- Each layer has clear responsibility and passes context explicitly
+- **User requests**: Extract context from JWT using `extractUserContext()`
+- **Job workers**: Extract context from message using `extractJobContext()`
+- **Scheduled tasks**: Create context explicitly using `createSystemContext()`
+- Context flows down through layers identically (Handler/Worker → Service → Repository)
+- Repository uses context.tenantId to set RLS (works for both user and system actors)
+- Audit logging uses `actor` field for traceability (user vs system)
+- System jobs retain original user ID via `triggeredBy` when applicable
 
 ## User Management Flows (MVP)
 
@@ -459,17 +611,17 @@ This demonstrates the **full layered architecture**: Handler → Service → Rep
 ```typescript
 // packages/functions/users/invite-user.ts
 import { APIGatewayProxyEvent } from 'aws-lambda';
-import { extractTenantContext } from '@ffp/core/lib/context';
+import { extractUserContext, isUserActor } from '@ffp/core/lib/context';
 import { inviteUserService } from '@ffp/core/users/user.service';
 import { withErrorHandling } from '@ffp/core/lib/errors';
 import { ForbiddenError } from '@ffp/core/lib/errors';
 
 export const handler = withErrorHandling(async (event: APIGatewayProxyEvent) => {
-  // Extract tenant context from JWT
-  const context = extractTenantContext(event);
+  // Extract user context from JWT
+  const context = extractUserContext(event);
 
   // Only customer owners can invite users
-  if (context.role !== 'customer_owner') {
+  if (isUserActor(context.actor) && context.actor.userRole !== 'customer_owner') {
     throw new ForbiddenError('Only business owners can invite users');
   }
 

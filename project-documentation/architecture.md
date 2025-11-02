@@ -852,7 +852,7 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 ```
 
-### Domain Organization Benefits
+### Domain Organisation Benefits
 
 **Clear boundaries**: Each domain is self-contained with all its layers in one folder
 
@@ -863,6 +863,240 @@ export type NewUser = typeof users.$inferInsert;
 **Testing**: Each domain can be tested independently
 
 **Consistency**: All domains follow the same structure pattern
+
+---
+
+## Enhanced Context Architecture: User & System Requests
+
+FFP supports both **user-triggered requests** (API calls) and **system-triggered requests** (job queues, scheduled tasks).
+
+### Context Interfaces
+
+```typescript
+// packages/core/lib/context.ts
+
+/**
+ * Actor represents who/what is making the request
+ */
+export type ActorType = 'user' | 'system';
+
+export interface UserActor {
+  type: 'user';
+  userId: string;
+  userRole: string;
+  email: string;
+}
+
+export interface SystemActor {
+  type: 'system';
+  systemId: string; // e.g., 'export-worker', 'cleanup-job'
+  triggeredBy?: string; // Original user ID if job was queued by a user
+  jobId?: string; // For job queue processors
+}
+
+export type Actor = UserActor | SystemActor;
+
+/**
+ * Core tenant context required for all requests (user or system)
+ */
+export interface TenantContext {
+  // Actor (who/what is performing the action)
+  actor: Actor;
+
+  // Tenant info (required for RLS)
+  tenantId: string;
+  customerId: string | null;
+
+  // Request metadata
+  requestId: string;
+  timestamp: Date;
+
+  // Platform settings (loaded lazily if needed)
+  settings?: PlatformSettings;
+  enabledModules?: string[];
+}
+```
+
+### Context Extraction Functions
+
+```typescript
+/**
+ * Extract context from user request (JWT-authenticated API call)
+ */
+export function extractUserContext(event: APIGatewayProxyEvent): TenantContext {
+  const claims = event.requestContext.authorizer?.jwt?.claims;
+
+  if (!claims) {
+    throw new UnauthorisedError('No JWT claims found');
+  }
+
+  return {
+    actor: {
+      type: 'user',
+      userId: claims.sub as string,
+      userRole: claims['custom:role'] as string,
+      email: claims.email as string,
+    },
+    tenantId: claims['custom:tenantId'] as string,
+    customerId: claims['custom:customerId'] as string | null,
+    requestId: event.requestContext.requestId,
+    timestamp: new Date(),
+  };
+}
+
+/**
+ * Create context for system-triggered requests
+ * Used by: Job processors, scheduled tasks, internal services
+ */
+export function createSystemContext(params: {
+  systemId: string;
+  tenantId: string;
+  customerId?: string | null;
+  triggeredBy?: string;
+  jobId?: string;
+}): TenantContext {
+  return {
+    actor: {
+      type: 'system',
+      systemId: params.systemId,
+      triggeredBy: params.triggeredBy,
+      jobId: params.jobId,
+    },
+    tenantId: params.tenantId,
+    customerId: params.customerId ?? null,
+    requestId: `system-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    timestamp: new Date(),
+  };
+}
+
+/**
+ * Extract context from job queue message
+ */
+export function extractJobContext(jobMessage: {
+  tenantId: string;
+  customerId?: string;
+  triggeredBy?: string;
+  jobId: string;
+  systemId: string;
+}): TenantContext {
+  return createSystemContext(jobMessage);
+}
+```
+
+### Helper Functions
+
+```typescript
+/**
+ * Type guards for actor types
+ */
+export function isUserActor(actor: Actor): actor is UserActor {
+  return actor.type === 'user';
+}
+
+export function isSystemActor(actor: Actor): actor is SystemActor {
+  return actor.type === 'system';
+}
+
+/**
+ * Get display name for audit logs
+ */
+export function getActorDisplayName(actor: Actor): string {
+  if (isUserActor(actor)) {
+    return `${actor.email} (${actor.userRole})`;
+  }
+
+  return actor.triggeredBy
+    ? `${actor.systemId} (triggered by user ${actor.triggeredBy})`
+    : actor.systemId;
+}
+
+/**
+ * Check if actor has permission
+ */
+export function hasPermission(context: TenantContext, permission: string): boolean {
+  if (isUserActor(context.actor)) {
+    const rolePermissions = {
+      system_admin: ['*'],
+      customer_owner: ['users:*', 'assessments:*', 'programs:*'],
+      customer_admin: ['users:read', 'assessments:*', 'programs:read'],
+      customer_user: ['assessments:read', 'programs:read'],
+    };
+
+    const permissions = rolePermissions[context.actor.userRole] || [];
+    return permissions.includes('*') || permissions.includes(permission);
+  }
+
+  // System actors have elevated permissions
+  const systemPermissions = {
+    'export-worker': ['exports:*', 'assessments:read', 'programs:read'],
+    'cleanup-job': ['cleanup:*'],
+    'notification-service': ['notifications:*', 'users:read'],
+    'process-queue-worker': ['*'],
+  };
+
+  const permissions = systemPermissions[context.actor.systemId] || [];
+  return permissions.includes('*') || permissions.includes(permission);
+}
+```
+
+### Usage Examples
+
+**User-triggered API request:**
+
+```typescript
+// packages/functions/users/invite-user.ts
+export const handler = withErrorHandling(async (event: APIGatewayProxyEvent) => {
+  const context = extractUserContext(event); // User actor
+  const user = await inviteUserService(body, context);
+  return { statusCode: 201, body: JSON.stringify(user) };
+});
+```
+
+**System job queue worker:**
+
+```typescript
+// packages/functions/jobs/process-export.ts
+export const handler = async (event: SQSEvent) => {
+  for (const record of event.Records) {
+    const job: ExportJob = JSON.parse(record.body);
+
+    const context = extractJobContext({
+      systemId: 'export-worker',
+      tenantId: job.tenantId,
+      customerId: job.customerId,
+      triggeredBy: job.triggeredBy, // Original user
+      jobId: job.id,
+    });
+
+    await generateExportService(job, context); // System actor
+  }
+};
+```
+
+**Scheduled cleanup task:**
+
+```typescript
+// packages/functions/scheduled/cleanup.ts
+export const handler = async () => {
+  const tenants = await getAllTenants();
+
+  for (const tenant of tenants) {
+    const context = createSystemContext({
+      systemId: 'cleanup-job',
+      tenantId: tenant.id,
+    });
+
+    await cleanupExpiredSessionsService(context); // System actor
+  }
+};
+```
+
+**Key Points:**
+
+- Single `TenantContext` interface works for both user and system requests
+- RLS always enforced via `tenantId` regardless of actor type
+- Audit logs capture both user and system actions
+- System jobs retain original user ID when applicable (job traceability)
 
 ## Data Flow Examples
 

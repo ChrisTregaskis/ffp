@@ -933,6 +933,180 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 ```
 
+## Enhanced Patterns
+
+### Base Entity Class (Optional)
+
+For simple domains where you want consistency without complex behaviour, extend `BaseEntity`:
+
+```typescript
+// packages/core/lib/base-entity.ts
+export abstract class BaseEntity<T> {
+  protected data: T;
+
+  constructor(data: Partial<T>) {
+    this.data = data as T;
+  }
+
+  toDatabase(): T {
+    return this.data;
+  }
+
+  toJSON(): Partial<T> {
+    return this.data;
+  }
+}
+
+// Simple domain usage
+export class VideoEntity extends BaseEntity<Video> {
+  // Inherits basic serialisation
+  // Add custom methods only if needed
+
+  getDurationMinutes(): number {
+    return Math.floor(this.data.durationSeconds / 60);
+  }
+}
+```
+
+### Entity Factory Methods
+
+Use factory methods for validation and flexible construction:
+
+```typescript
+// packages/core/users/user.entity.ts
+import { createUserSchema } from './user.schema';
+
+export class UserEntity {
+  private data: User;
+
+  // Private constructor allows partial data for internal use
+  private constructor(data: Partial<User>) {
+    this.data = data as User;
+  }
+
+  // Factory method with validation
+  static create(data: unknown): UserEntity {
+    const validated = createUserSchema.parse(data);
+    return new UserEntity(validated);
+  }
+
+  // Factory method from database (no validation needed)
+  static fromDatabase(data: User): UserEntity {
+    return new UserEntity(data);
+  }
+
+  // Validate current state
+  validate(): void {
+    createUserSchema.parse(this.data);
+  }
+
+  // Business methods can check state
+  async setInitialPassword(tempPassword: string): Promise<void> {
+    if (!this.data.email) {
+      throw new Error('Email required before setting password');
+    }
+    // ... password logic
+  }
+
+  toDatabase(): User {
+    return this.data;
+  }
+
+  toJSON(): Partial<User> {
+    const { passwordHash, cognitoId, ...safe } = this.data;
+    return safe;
+  }
+}
+```
+
+**Service layer usage**:
+
+```typescript
+export const createUserService = async (data: unknown, context: TenantContext) => {
+  // Option 1: Explicit validation at service layer
+  const validated = createUserSchema.parse(data);
+  const entity = new UserEntity(validated);
+
+  // Option 2: Use factory method (validation built-in)
+  const entity = UserEntity.create(data);
+
+  // ... rest of logic
+};
+```
+
+### Repository save() Method
+
+Add a smart `save()` method to repositories for create-or-update convenience:
+
+```typescript
+// packages/core/users/user.repository.ts
+export const userRepository = {
+  /**
+   * Save user (creates or updates based on existence)
+   */
+  async save(data: NewUser, context: TenantContext): Promise<User> {
+    return await db.transaction(async (tx) => {
+      await setRLSContext(tx, context.tenantId);
+
+      // Check if user exists
+      if (data.id) {
+        const existing = await tx.query.users.findFirst({
+          where: eq(users.id, data.id),
+        });
+
+        if (existing) {
+          // Update existing
+          const [updated] = await tx
+            .update(users)
+            .set({ ...data, updatedAt: new Date() })
+            .where(eq(users.id, data.id))
+            .returning();
+          return updated;
+        }
+      }
+
+      // Create new
+      const [created] = await tx
+        .insert(users)
+        .values({
+          ...data,
+          tenantId: context.tenantId,
+          customerId: context.customerId,
+        })
+        .returning();
+
+      return created;
+    });
+  },
+
+  // Explicit methods still available
+  async create(data: NewUser, context: TenantContext): Promise<User> {
+    /* ... */
+  },
+  async update(id: string, data: Partial<User>, context: TenantContext): Promise<User> {
+    /* ... */
+  },
+};
+```
+
+**Service layer usage**:
+
+```typescript
+export const saveUserService = async (data: unknown, context: TenantContext) => {
+  const validated = saveUserSchema.parse(data);
+  const entity = UserEntity.create(validated);
+
+  // Repository handles create vs update automatically
+  return await userRepository.save(entity.toDatabase(), context);
+};
+```
+
+**Key benefits**:
+
+- Service doesn't need to know if it's create or update
+- Repository maintains separation of concerns
+- Explicit `create()` and `update()` methods still available when needed
+
 ## Error Handling
 
 ### Custom Error Classes
