@@ -373,139 +373,564 @@ export const userResponseSchema = selectUserSchema.omit({
 });
 ```
 
+## Domain-Organised Architecture Patterns
+
+FFP follows a domain-organised architecture with clear layer separation. Each domain (users, assessments, programs) contains its own service, entity, repository, and schema files.
+
+### Domain Organisation
+
+**Structure**:
+
+```
+packages/core/src/
+├── users/
+│   ├── user.service.ts       # Business logic orchestration
+│   ├── user.entity.ts        # Complex business behaviour (optional)
+│   ├── user.repository.ts    # Data access with RLS
+│   └── user.schema.ts        # Zod validation schemas
+├── assessments/
+│   ├── assessment.service.ts
+│   ├── assessment.entity.ts
+│   ├── assessment.repository.ts
+│   └── assessment.schema.ts
+└── programs/
+    ├── program.service.ts
+    ├── program.entity.ts
+    ├── program.repository.ts
+    └── program.schema.ts
+```
+
+### Decision Tree: When to Use Each Layer
+
+Use this decision tree to determine which layers your feature needs:
+
+```
+┌─────────────────────────────────────────┐
+│ Do you need business logic?             │
+└────────────┬─────────────┬──────────────┘
+             │             │
+          ┌──▼──┐       ┌──▼──┐
+          │ YES │       │ NO  │
+          └──┬──┘       └──┬──┘
+             │             │
+    ┌────────▼─────────┐   │
+    │ Complex logic?   │   │
+    │ (calculations,   │   │
+    │  state mgmt,     │   │
+    │  transformations)│   │
+    └──┬───────┬───────┘   │
+       │       │           │
+    ┌──▼──┐ ┌──▼──┐        │
+    │ YES │ │ NO  │        │
+    └──┬──┘ └──┬──┘        │
+       │       │           │
+       │       └───────────┼─────────┐
+       │                   │         │
+┌──────▼───────┐  ┌────────▼──────┐  │
+│ Use Entity   │  │ Skip Entity   │  │
+│ Handler →    │  │ Handler →     │  │
+│ Service →    │  │ Service →     │  │
+│ Entity →     │  │ Repository    │  │
+│ Repository   │  │               │  │
+└──────────────┘  └───────────────┘  │
+                                     │
+                           ┌─────────▼──────┐
+                           │ Skip Service   │
+                           │ Handler →      │
+                           │ Repository     │
+                           └────────────────┘
+```
+
+**Examples**:
+
+1. **Simple CRUD (No Service, No Entity)**
+   - Flow: `Handler → Repository`
+   - Example: Get user by ID
+   - When: No business rules, just data retrieval
+
+2. **Business Logic (Service, No Entity)**
+   - Flow: `Handler → Service → Repository`
+   - Example: Invite user (validate, create Cognito user, save to DB)
+   - When: Orchestration needed but logic is straightforward
+
+3. **Complex Business Behaviour (Full Stack)**
+   - Flow: `Handler → Service → Entity → Repository`
+   - Example: Complete assessment (validate, calculate scores, generate recommendations)
+   - When: Complex calculations, state transitions, or transformations
+
 ## Service Layer Pattern
 
-### Interface Definition
+### Location
 
-```typescript
-// types/services/assessment.service.ts
-export interface AssessmentService {
-  create(userId: string, tenantId: string, templateId: string): Promise<Assessment>;
-  submit(id: string, answers: AnswerSet, context: TenantContext): Promise<AssessmentResult>;
-  getById(id: string, context: TenantContext): Promise<Assessment>;
-  list(userId: string, context: TenantContext): Promise<Assessment[]>;
-}
-```
+`packages/core/{domain}/{domain}.service.ts`
+
+### Purpose
+
+Business logic orchestration - decides **WHAT** to do, not **HOW** to do it.
+
+### Responsibilities
+
+- Validate input using Zod schemas
+- Coordinate between multiple entities/repositories
+- Enforce business rules and constraints
+- Manage transactions
+- Call external services (Cognito, S3, etc.)
+- Transform data between layers
+
+### When to Skip
+
+- Simple CRUD operations with no business rules
+- Direct repository calls are sufficient
 
 ### Implementation
 
 ```typescript
-// services/assessment.service.impl.ts
-export class AssessmentServiceImpl implements AssessmentService {
-  constructor(
-    private readonly assessmentRepo: AssessmentRepository,
-    private readonly scoringEngine: ScoringEngine,
-    private readonly logger: Logger
-  ) {}
+// packages/core/users/user.service.ts
+import { createUserSchema } from './user.schema';
+import { userRepository } from './user.repository';
+import { UserEntity } from './user.entity';
+import { TenantContext } from '../lib/context';
+import { CognitoService } from '../lib/cognito';
+import { ConflictError } from '../lib/errors';
 
-  async create(userId: string, tenantId: string, templateId: string): Promise<Assessment> {
-    this.logger.info('Creating assessment', { userId, tenantId, templateId });
+export const createUserService = async (data: unknown, context: TenantContext) => {
+  // 1. Validate input
+  const validated = createUserSchema.parse(data);
 
-    try {
-      const assessment = await this.assessmentRepo.create({
-        userId,
-        tenantId,
-        templateId,
-        status: 'in_progress',
-        startedAt: new Date(),
-      });
-
-      return assessment;
-    } catch (error) {
-      this.logger.error('Failed to create assessment', {
-        error,
-        userId,
-        tenantId,
-      });
-      throw new ApplicationError('Failed to create assessment', 'ASSESSMENT_CREATE_FAILED', 500);
-    }
+  // 2. Business rule: Check if email already exists
+  const existing = await userRepository.findByEmail(validated.email, context);
+  if (existing) {
+    throw new ConflictError('User with this email already exists');
   }
 
-  // Other methods...
+  // 3. Coordinate with external service
+  const cognitoUser = await CognitoService.createUser({
+    email: validated.email,
+    tenantId: context.tenantId,
+    role: validated.role,
+  });
+
+  // 4. Create entity for complex logic (if needed)
+  const entity = new UserEntity({
+    ...validated,
+    cognitoId: cognitoUser.Username,
+    tenantId: context.tenantId,
+  });
+
+  // 5. Apply business logic via entity
+  await entity.setInitialPassword(validated.temporaryPassword);
+
+  // 6. Persist via repository
+  const user = await userRepository.create(entity.toDatabase(), context);
+
+  // 7. Return safe data
+  return entity.toJSON();
+};
+
+// Simpler example - when you DON'T need entity
+export const getUserService = async (userId: string, context: TenantContext) => {
+  // Direct repository call - no complex logic
+  return await userRepository.findById(userId, context);
+};
+```
+
+## Entity Layer Pattern (Optional)
+
+### Location
+
+`packages/core/{domain}/{domain}.entity.ts`
+
+### Purpose
+
+Business behaviour - encapsulates **HOW** complex logic works.
+
+### Use When You Have
+
+- Password hashing/validation logic
+- Score calculations with complex algorithms
+- State transitions with validation (draft → submitted → approved)
+- Permission checks based on user role
+- Derived data or calculations
+- Complex data transformations
+
+### Skip When You Have
+
+- Simple CRUD operations
+- Basic validation (use Zod instead)
+- No complex business behaviour
+
+### Implementation
+
+```typescript
+// packages/core/users/user.entity.ts
+import { hash, verify } from '@node-rs/argon2';
+import { User } from '@ffp/database/schema/users';
+import { UnauthorisedError } from '../lib/errors';
+
+export class UserEntity {
+  private data: User;
+  private passwordHash?: string;
+
+  constructor(data: Partial<User>) {
+    this.data = data as User;
+  }
+
+  // Business logic: Password management
+  async setInitialPassword(tempPassword: string): Promise<void> {
+    this.passwordHash = await hash(tempPassword);
+    this.data.passwordChangedAt = new Date();
+    this.data.mustChangePassword = true;
+  }
+
+  async changePassword(oldPassword: string, newPassword: string): Promise<void> {
+    if (!this.passwordHash) {
+      throw new Error('No password hash available');
+    }
+
+    const isValid = await verify(this.passwordHash, oldPassword);
+    if (!isValid) {
+      throw new UnauthorisedError('Current password is incorrect');
+    }
+
+    this.passwordHash = await hash(newPassword);
+    this.data.passwordChangedAt = new Date();
+    this.data.mustChangePassword = false;
+  }
+
+  // Business logic: Permission checks
+  hasPermission(permission: Permission): boolean {
+    const rolePermissions = {
+      admin: ['users:read', 'users:write', 'users:delete', 'assessments:*'],
+      staff: ['users:read', 'assessments:*'],
+      patient: ['assessments:read'],
+    };
+
+    return rolePermissions[this.data.role].includes(permission);
+  }
+
+  // Business logic: Derived state
+  isActive(): boolean {
+    return !this.data.deletedAt && !this.data.suspendedAt && this.data.emailVerified;
+  }
+
+  // Serialisation: What goes to database
+  toDatabase() {
+    return {
+      ...this.data,
+      passwordHash: this.passwordHash,
+    };
+  }
+
+  // Serialisation: What goes to API response (SAFE)
+  toJSON() {
+    const { passwordHash, cognitoId, ...safe } = this.data;
+    return {
+      ...safe,
+      isActive: this.isActive(),
+    };
+  }
+}
+```
+
+### Complex Entity Example: Assessment
+
+```typescript
+// packages/core/assessments/assessment.entity.ts
+import { Assessment } from '@ffp/database/schema/assessments';
+import { InvalidStateError } from '../lib/errors';
+
+export class AssessmentEntity {
+  private data: Assessment;
+  private scores: Map<string, number> = new Map();
+
+  constructor(data: Partial<Assessment>) {
+    this.data = data as Assessment;
+  }
+
+  // Business logic: State transitions
+  submitAnswers(answers: Record<string, unknown>): void {
+    if (this.data.status !== 'in_progress') {
+      throw new InvalidStateError(
+        `Cannot submit answers for assessment in ${this.data.status} state`
+      );
+    }
+
+    this.data.answers = answers;
+    this.data.status = 'submitted';
+    this.data.submittedAt = new Date();
+  }
+
+  // Business logic: Complex calculations
+  calculateScores(): void {
+    if (this.data.status !== 'submitted') {
+      throw new InvalidStateError('Cannot calculate scores before submission');
+    }
+
+    // Complex scoring algorithm
+    const painScore = this.calculatePainScore();
+    const mobilityScore = this.calculateMobilityScore();
+    const functionalScore = this.calculateFunctionalScore();
+
+    this.scores.set('pain', painScore);
+    this.scores.set('mobility', mobilityScore);
+    this.scores.set('functional', functionalScore);
+
+    this.data.totalScore = painScore + mobilityScore + functionalScore;
+  }
+
+  // Business logic: Recommendations based on scores
+  generateRecommendations(): string[] {
+    const recommendations: string[] = [];
+
+    if (this.scores.get('pain')! > 7) {
+      recommendations.push('Focus on pain management exercises');
+    }
+
+    if (this.scores.get('mobility')! < 5) {
+      recommendations.push('Emphasise mobility and flexibility work');
+    }
+
+    return recommendations;
+  }
+
+  // Business logic: Mark complete
+  markComplete(): void {
+    if (this.data.status !== 'submitted') {
+      throw new InvalidStateError('Cannot complete unsubmitted assessment');
+    }
+
+    this.data.status = 'completed';
+    this.data.completedAt = new Date();
+    this.data.recommendations = this.generateRecommendations();
+  }
+
+  private calculatePainScore(): number {
+    // Complex pain scoring logic
+    return 0;
+  }
+
+  private calculateMobilityScore(): number {
+    // Complex mobility scoring logic
+    return 0;
+  }
+
+  private calculateFunctionalScore(): number {
+    // Complex functional scoring logic
+    return 0;
+  }
+
+  toDatabase() {
+    return this.data;
+  }
+
+  toJSON() {
+    return {
+      ...this.data,
+      scores: Object.fromEntries(this.scores),
+    };
+  }
 }
 ```
 
 ## Repository Pattern
 
-### Interface
+### Location
 
-```typescript
-// types/repositories/assessment.repository.ts
-export interface AssessmentRepository {
-  create(data: NewAssessment, context: TenantContext): Promise<Assessment>;
-  update(id: string, data: Partial<Assessment>, context: TenantContext): Promise<Assessment>;
-  getById(id: string, context: TenantContext): Promise<Assessment | null>;
-  findByUser(userId: string, context: TenantContext): Promise<Assessment[]>;
-  delete(id: string, context: TenantContext): Promise<void>;
-}
-```
+`packages/core/{domain}/{domain}.repository.ts`
+
+### Purpose
+
+Data access layer with RLS - dumb data fetching/saving.
+
+### Responsibilities
+
+- CRUD operations
+- Database queries using Drizzle
+- RLS context management (CRITICAL for multi-tenancy)
+- Transaction management
+- Query composition
+- **No business logic** - just data operations
 
 ### Implementation with Drizzle
 
 ```typescript
-// repositories/assessment.repository.impl.ts
-import { eq, and } from 'drizzle-orm';
-import { db, withRLS } from '../lib/database';
-import { userAssessments } from '../schema/user-assessments';
-import type { NewUserAssessment, UserAssessment } from '../schema/user-assessments';
+// packages/core/users/user.repository.ts
+import { db } from '@ffp/database';
+import { users, NewUser, User } from '@ffp/database/schema/users';
+import { eq, and, sql } from 'drizzle-orm';
+import { setRLSContext } from '@ffp/database/lib/rls';
+import { TenantContext } from '../lib/context';
 
-export class AssessmentRepositoryImpl implements AssessmentRepository {
-  async create(data: NewUserAssessment, context: TenantContext): Promise<UserAssessment> {
-    return await withRLS(context.tenantId, context.userId, async (tx) => {
-      const [assessment] = await tx
-        .insert(userAssessments)
+export const userRepository = {
+  /**
+   * Create a user (with RLS context)
+   */
+  async create(data: NewUser, context: TenantContext): Promise<User> {
+    return await db.transaction(async (tx) => {
+      // Set RLS context for tenant isolation
+      await setRLSContext(tx, context.tenantId);
+
+      const [user] = await tx
+        .insert(users)
         .values({
           ...data,
           tenantId: context.tenantId,
+          customerId: context.customerId,
         })
         .returning();
 
-      return assessment;
+      return user;
     });
-  }
+  },
 
-  async getById(id: string, context: TenantContext): Promise<UserAssessment | null> {
-    return await withRLS(context.tenantId, context.userId, async (tx) => {
-      const [assessment] = await tx
-        .select()
-        .from(userAssessments)
-        .where(and(eq(userAssessments.id, id), eq(userAssessments.tenantId, context.tenantId)))
-        .limit(1);
+  /**
+   * Find user by ID (with RLS - automatically filtered)
+   */
+  async findById(id: string, context: TenantContext): Promise<User | null> {
+    return await db.transaction(async (tx) => {
+      await setRLSContext(tx, context.tenantId);
 
-      return assessment || null;
+      return await tx.query.users.findFirst({
+        where: eq(users.id, id),
+        // RLS ensures only users from this tenant are returned
+      });
     });
-  }
+  },
 
-  async findByUser(userId: string, context: TenantContext): Promise<UserAssessment[]> {
-    return await withRLS(context.tenantId, context.userId, async (tx) => {
-      return await tx
-        .select()
-        .from(userAssessments)
-        .where(
-          and(eq(userAssessments.userId, userId), eq(userAssessments.tenantId, context.tenantId))
-        );
+  /**
+   * Find user by email (with RLS)
+   */
+  async findByEmail(email: string, context: TenantContext): Promise<User | null> {
+    return await db.transaction(async (tx) => {
+      await setRLSContext(tx, context.tenantId);
+
+      return await tx.query.users.findFirst({
+        where: eq(users.email, email),
+      });
     });
-  }
+  },
 
-  async update(
-    id: string,
-    data: Partial<UserAssessment>,
-    context: TenantContext
-  ): Promise<UserAssessment> {
-    return await withRLS(context.tenantId, context.userId, async (tx) => {
-      const [updated] = await tx
-        .update(userAssessments)
-        .set({
-          ...data,
-          updatedAt: new Date(),
-        })
-        .where(and(eq(userAssessments.id, id), eq(userAssessments.tenantId, context.tenantId)))
-        .returning();
+  /**
+   * Update user (with RLS)
+   */
+  async update(id: string, data: Partial<User>, context: TenantContext): Promise<User> {
+    return await db.transaction(async (tx) => {
+      await setRLSContext(tx, context.tenantId);
+
+      const [updated] = await tx.update(users).set(data).where(eq(users.id, id)).returning();
 
       return updated;
     });
-  }
-}
+  },
+
+  /**
+   * List users for a customer (with pagination)
+   */
+  async listByCustomer(
+    customerId: string,
+    pagination: { offset: number; limit: number },
+    context: TenantContext
+  ): Promise<{ users: User[]; total: number }> {
+    return await db.transaction(async (tx) => {
+      await setRLSContext(tx, context.tenantId);
+
+      const usersList = await tx.query.users.findMany({
+        where: eq(users.customerId, customerId),
+        offset: pagination.offset,
+        limit: pagination.limit,
+      });
+
+      // Count total (for pagination)
+      const [{ count }] = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(users)
+        .where(eq(users.customerId, customerId));
+
+      return {
+        users: usersList,
+        total: Number(count),
+      };
+    });
+  },
+};
+```
+
+## Handler Layer Pattern
+
+### Location
+
+`packages/functions/{domain}/{action}.ts`
+
+### Purpose
+
+HTTP/Lambda interface - plumbing only, **zero business logic**.
+
+### Responsibilities
+
+- Extract data from API Gateway event
+- Extract tenant context from JWT claims
+- Call appropriate service method
+- Format HTTP response
+- Handle HTTP-level errors (400, 401, 403, 404, 500)
+
+### Implementation
+
+```typescript
+// packages/functions/users/create-user.ts
+import { APIGatewayProxyEvent } from 'aws-lambda';
+import { extractTenantContext } from '@ffp/core/lib/context';
+import { createUserService } from '@ffp/core/users/user.service';
+import { withErrorHandling } from '@ffp/core/lib/errors';
+
+export const handler = withErrorHandling(async (event: APIGatewayProxyEvent) => {
+  // 1. Extract context from JWT
+  const context = extractTenantContext(event);
+
+  // 2. Parse body
+  const body = JSON.parse(event.body || '{}');
+
+  // 3. Call service (business logic)
+  const user = await createUserService(body, context);
+
+  // 4. Return HTTP response
+  return {
+    statusCode: 201,
+    body: JSON.stringify(user),
+  };
+});
+```
+
+**Key Point**: Handler has ZERO business logic - just plumbing.
+
+## Schema Layer Pattern
+
+### Location
+
+`packages/core/{domain}/{domain}.schema.ts`
+
+### Purpose
+
+Input validation using Zod.
+
+### Implementation
+
+```typescript
+// packages/core/users/user.schema.ts
+import { z } from 'zod';
+
+export const createUserSchema = z.object({
+  email: z.string().email(),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  role: z.enum(['customer_owner', 'customer_admin', 'customer_user']),
+  customerId: z.string().uuid(),
+  temporaryPassword: z.string().min(8),
+});
+
+export const updateUserSchema = createUserSchema.partial();
+
+export type CreateUserInput = z.infer<typeof createUserSchema>;
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 ```
 
 ## Error Handling
