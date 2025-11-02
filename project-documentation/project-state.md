@@ -1,14 +1,15 @@
 # FFP - Project State
 
-**Last Updated**: November 1, 2025 - Session 28
+**Last Updated**: November 2, 2025 - Session 29
 **Current Phase**: Sprint 1 Execution - IN PROGRESS 🚀
 **Solo Developer**: Christopher Tregaskis
+**Time Remaining in Sprint 1**: ~1 week (ending ~November 9, 2025)
 
 ---
 
 ## Current Phase: Sprint 1 Execution - IN PROGRESS 🚀
 
-**Current User Story/Stories Branch**: `main` (FFP-10 & FFP-11 merged! ✅)
+**Current User Story/Stories Branch**: `feature/ffp-9-cognito-auth` (to be created)
 
 ### Status
 
@@ -18,7 +19,7 @@
 ✅ **Complete**: FFP-106/107/108 - Database Package Refactoring (3 hours) 🎉
 ✅ **Complete**: FFP-10 - PostgreSQL Schema with RLS (9/9 subtasks, 24 hours) 🎉 **MERGED TO MAIN**
 ✅ **Complete**: FFP-11 - Drizzle ORM Setup (9/9 subtasks, 22 hours) 🎉 **MERGED TO MAIN**
-🎯 **Next**: FFP-9 - Cognito Authentication (34 hours, 12 subtasks)
+🚀 **IN PROGRESS**: FFP-9 - Cognito Authentication (29-30 hours, 13 subtasks)
 
 ### Sprint 1 Progress
 
@@ -89,6 +90,74 @@
 - ✅ Future-ready - Structure supports RLS utilities and connection pooling
 - ✅ Import paths - Clean imports: `import { users } from '@ffp/database/schema'`
 
+**FFP-9: Cognito Authentication** 🚀 **IN PROGRESS** (29-30 hours total, revised from 34h)
+
+**Phase 1: Prerequisites (9.5h)**
+
+- ⏸️ FFP-43: Error Handling Classes (3h) - NOT STARTED
+- ⏸️ FFP-44: Structured Logging (2h) - NOT STARTED
+- ⏸️ FFP-36: Tenant Context Extraction (2h) - NOT STARTED
+- ⏸️ FFP-32: Secrets Manager - JWT Only (2.5h) - NOT STARTED
+
+**Phase 2: Bootstrap + Core Auth (8.5h)**
+
+- ⏸️ Manual: Super User Setup (0.5h) - **NEW PREREQUISITE** - NOT STARTED
+- ⏸️ FFP-112: Admin CLI Script (1h) - **NEEDS MANUAL CREATION IN JIRA** (spec ready)
+- ⏸️ FFP-35: Zod Schemas (3h) - **UPDATED** for super_admin role ✅
+- ⏸️ FFP-37: Invite User Lambda (4h) - **UPDATED** for super_admin role ✅
+
+**Phase 3: Authentication Endpoints (7h)**
+
+- ⏸️ FFP-38: Login Lambda (3h) - NOT STARTED
+- ⏸️ FFP-39: Refresh Token Lambda (2h) - NOT STARTED
+- ⏸️ FFP-40: API Gateway Routes (2h) - NOT STARTED
+
+**Phase 4: Testing (12h - can defer FFP-42/45)**
+
+- ⏸️ FFP-41: Unit Tests (4h) - NOT STARTED
+- ⏸️ FFP-42: Integration Tests (5h) - DEFERRABLE
+- ⏸️ FFP-45: Deployed Environment Tests (3h) - DEFERRABLE
+
+**Phase 5: Documentation (2h)**
+
+- ⏸️ FFP-46: API Documentation (2h) - NOT STARTED
+
+**Time Tracking:**
+
+- Hours completed: 0/29-30 (0%)
+- Subtasks completed: 0/13 (0%)
+- **Status**: READY TO START - Tickets updated, prerequisites documented
+
+**Manual Actions Required Before Implementation:**
+
+1. ⚠️ Create FFP-112 in Jira UI (spec file: `FFP-112-JIRA-TICKET.md`)
+2. ⚠️ Review super_admin enhancements in FFP-35 and FFP-37
+
+**Ticket Updates Complete:**
+
+- ✅ FFP-35: Updated with super_admin role support (optional tenantId/customerId fields)
+- ✅ FFP-37: Updated with dual role support (customer_owner OR super_admin)
+
+**Key Decisions:**
+
+- ✅ Admin-only business onboarding for MVP (no self-registration)
+- ✅ Three-tier architecture: tenant → customer → users
+- ✅ JWT claims: tenantId, customerId, role
+- ✅ Manual business setup via CLI script (FFP-112)
+- ✅ Invite-only user creation (FFP-37)
+- ✅ Super admin bootstrap prerequisite (one-time manual script)
+- ✅ Super admin role expansion for /invite-user endpoint (dual role support)
+
+**Super Admin Authentication Flow:**
+
+1. Bootstrap super admin user (manual script, run once)
+2. Super admin authenticates via `/auth/login`
+3. Super admin can:
+   - Create businesses via FFP-112 CLI (authenticated)
+   - Invite users to ANY tenant/customer via `/auth/invite-user`
+4. Customer owners can:
+   - Invite users to THEIR OWN tenant/customer via `/auth/invite-user`
+
 ### Focus Areas
 
 - ✅ Jira ticket standards (Epic, Story, Task, Sub-task, Bug) - Modular & token-optimised
@@ -106,7 +175,8 @@
 - ✅ **Production-ready documentation** - 1000+ lines across 4 README files
 - ✅ **Database package structure** - @ffp/database ready for RLS utilities
 - ✅ **Phase 3 RLS Implementation** - Multi-tenant isolation with Row-Level Security policies (FFP-49, FFP-50, FFP-52)
-- 🔄 **Executing Sprint 1** - Moving to Phase 4: Connection Layer (FFP-61)
+- ✅ **Database Layer COMPLETE & MERGED** - FFP-10 & FFP-11 fully implemented (46h, 16 subtasks)
+- 🔄 **Executing Sprint 1** - FFP-9 Cognito Authentication (29-30h, 13 subtasks)
 - ⏸️ Create User Stories for EPICs 2-6 (after EPIC 1 complete)
 
 ### Sprint Planning Approach
@@ -174,20 +244,33 @@
 - ✅ Cache invalidation working correctly
 - ✅ Remote caching prepared for team usage
 
-**Next Up:**
+**Next Up: FFP-9 Cognito Authentication** 🚀
 
-- 🎯 FFP-106/107/108: Database Package Refactoring (3h) ← **NEXT**
-  - **FFP-106**: Parent story for database package refactoring
-  - **FFP-107**: File migration and verification
-  - **FFP-108**: Documentation updates and cleanup
-  - **Rationale**: Align structure with Jira expectations, enable database-specific caching
-- 🔄 FFP-10 + FFP-11: Database Layer - Continue Phase 3 (31h remaining, 16 unique subtasks)
-  - FFP-10: PostgreSQL Schema with RLS (19h remaining, 6 subtasks)
-  - FFP-11: Drizzle ORM Setup (12h remaining, 6 subtasks)
-  - **Approach:** Interleaved execution (schema tasks overlap)
-- FFP-9: Cognito Authentication (34h, 12 subtasks) - requires database layer complete
+**Execution Order (5 Phases):**
 
-**Rationale:** Database package refactoring is low-risk, structural only, and blocks Phase 3 RLS utilities. FFP-10/11 have overlapping tasks. FFP-9 registration endpoint requires database layer complete.
+**Phase 1: Prerequisites (9.5h)**
+
+1. FFP-43 - Error Handling Classes (3h)
+2. FFP-44 - Structured Logging (2h)
+3. FFP-36 - Tenant Context Extraction (2h)
+4. FFP-32 - Secrets Manager - JWT Only (2.5h)
+
+**Phase 2: Bootstrap + Core Auth (8.5h)** 5. Manual: Super User Setup - Bootstrap super admin (0.5h) ⚠️ **NEW** 6. FFP-112 - Admin CLI Script (1h) ⚠️ **NEEDS MANUAL JIRA CREATION** 7. FFP-35 - Zod Schemas (3h) ⚠️ **UPDATE: Add super_admin role support** 8. FFP-37 - Invite User Lambda (4h) ⚠️ **UPDATE: Allow super_admin role**
+
+**Phase 3: Authentication Endpoints (7h)** 9. FFP-38 - Login Lambda (3h) 10. FFP-39 - Refresh Token Lambda (2h) 11. FFP-40 - API Gateway Routes (2h)
+
+**Phase 4: Testing (12h - can defer FFP-42/45)** 12. FFP-41 - Unit Tests (4h) 13. FFP-42 - Integration Tests (5h) - deferrable 14. FFP-45 - Deployed Environment Tests (3h) - deferrable
+
+**Phase 5: Documentation (2h)** 15. FFP-46 - API Documentation (2h)
+
+**Critical Prerequisites Identified:**
+
+- ⚠️ Super admin bootstrap script needed before FFP-112 can authenticate
+- ⚠️ FFP-35 (Zod schemas) needs update for super_admin role in InviteUserSchema
+- ⚠️ FFP-37 (Invite User) needs role expansion to allow super_admin
+- ⚠️ FFP-112 needs manual creation in Jira (MCP tool failed)
+
+**Time Estimate:** 29-30 hours (revised from 34h due to admin-only MVP approach)
 
 ---
 
@@ -207,12 +290,12 @@
 | FFP-10 + 11 | Database Layer (Interleaved)    | 16       | 46h      | ✅ COMPLETE & MERGED |
 | ↳ FFP-10    | PostgreSQL Schema with RLS      | 9        | 24h      | ✅ COMPLETE & MERGED |
 | ↳ FFP-11    | Drizzle ORM Setup               | 9        | 22h      | ✅ COMPLETE & MERGED |
-| FFP-9       | Cognito Authentication          | 12       | 34h      | 🎯 NEXT              |
+| FFP-9       | Cognito Authentication          | 13       | 29-30h   | 🚀 IN PROGRESS       |
 | FFP-12      | Testing Framework Configuration | 10       | 22h      | ⏸️ Not Started       |
 | FFP-14      | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started       |
 | FFP-15      | Error Handling Patterns         | 7        | 15h      | ⏸️ Not Started       |
 | FFP-16      | Web Login/Logout Flow           | 11       | 27h      | ⏸️ Not Started       |
-| **Total**   |                                 | **95**   | **201h** | **102/201h (51%)**   |
+| **Total**   |                                 | **96**   | **197h** | **102/197h (52%)**   |
 
 **Note**: FFP-13 (CI/CD Pipeline) was intentionally skipped for now - can be added later if needed.
 
@@ -259,10 +342,14 @@
   - ✅ Phase 6: Documentation (FFP-55, FFP-64) - 7h COMPLETE
 - ✅ Checkpoint: Type-safe queries with RLS working, cross-tenant isolation verified, documentation complete, **MERGED TO MAIN!**
 
-**Sprint 3: Authentication (Weeks 12-16, ~34 hours)** ⬅️ REVISED ORDER - 🎯 **NEXT**
+**Sprint 3: Authentication (Weeks 12-13, ~29-30 hours)** 🚀 **IN PROGRESS**
 
-- FFP-35 through FFP-46: Cognito authentication (34h) ← **STARTING NOW**
-- ✅ Checkpoint: Users can register and authenticate (database layer complete ✅)
+- FFP-9: Cognito authentication (29-30h, revised from 34h) ← **STARTED**
+  - 13 subtasks: FFP-35, 32, 43, 44, 36, 37, 112, 38, 39, 40, 41, 42, 45, 46
+  - Admin-only business onboarding MVP (no self-registration)
+  - Super admin bootstrap + role expansion for invite endpoint
+  - Time remaining in Sprint 1: ~1 week
+- ✅ Checkpoint: Users can authenticate and be invited (database layer complete ✅)
 
 **Sprint 4: Testing & Infrastructure (Weeks 16-22, ~51 hours)**
 
@@ -392,15 +479,25 @@
 
 ## Progress Summary
 
-**Recent Work** (Nov 1, 2025 - Session 28):
+**Recent Work** (Nov 2, 2025 - Session 29):
 
-- 🎉 **FFP-10 & FFP-11 MERGED TO MAIN!** Database Layer Complete (46h total) 🎉
+- 🚀 **FFP-9 STARTED!** Cognito Authentication (29-30h, 13 subtasks)
+- ✅ **Ticket updates complete**: All 12 FFP-9 subtasks updated in Jira
+- ⚠️ **Security enhancement identified**: Super admin bootstrap prerequisite
+- ⚠️ **Role expansion required**: FFP-35 and FFP-37 need super_admin role support
+- 📋 **Manual action needed**: FFP-112 needs manual creation in Jira UI
+- 📝 **Project state updated**: FFP-9 execution order documented
+- ⏱️ **Time remaining**: ~1 week in Sprint 1 (ending ~Nov 9, 2025)
+- 🎯 **Next**: Phase 1 Prerequisites (FFP-43, 44, 36, 32 - 9.5h)
+
+**Previous Work** (Nov 1, 2025 - Session 28):
+
+- 🎉 **FFP-10 & FFP-11 MERGED TO MAIN!** Database Layer Complete (46h total)
 - ✅ **All 16 unique subtasks merged**: Schema, RLS, connection pooling, testing, documentation
 - ✅ **68 comprehensive tests**: Unit, integration, and RLS validation all passing
 - ✅ **Production-ready database layer**: @ffp/database package with full multi-tenant isolation
 - ✅ **Connection pooling**: Lambda-optimised with singleton pattern (FFP-61 complete)
 - ✅ **Architectural refinement**: Three-tier architecture (tenant → customer → users)
-- 🎯 **Next**: FFP-9 (Cognito Authentication - 34h, 12 subtasks)
 
 **Previous Work** (Oct 30, 2025 - Session 26):
 
@@ -688,10 +785,10 @@ _Key Requirements:_
 2. Move to "In Progress" in Jira (when available)
 3. Work on subtask according to acceptance criteria
 4. Test locally before marking complete
-5. Commit changes: `git commit -m "FFP-XX: [description]"`
-6. Update Jira to "Done" with time spent (when available)
+5. User reviews and handles Git Actions like commiting changes: `git commit -m "FFP-XX: [description]"`
+6. User update Jira to "Done" with time spent (when available)
 7. Update progress documents
 
 ---
 
-**Sprint 1 Progress: 102/201 hours (51%) - HALFWAY MILESTONE! 🎉 FFP-7, FFP-8, FFP-106/107/108, FFP-10, FFP-11 ALL COMPLETE & MERGED! Next: FFP-9 (Cognito Authentication - 34h, 12 subtasks)!**
+**Sprint 1 Progress: 102/197 hours (52%) - HALFWAY MILESTONE! 🎉 FFP-7, FFP-8, FFP-106/107/108, FFP-10, FFP-11 ALL COMPLETE & MERGED! FFP-9 IN PROGRESS (Cognito Authentication - 29-30h, 13 subtasks)!**

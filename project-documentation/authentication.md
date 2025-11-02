@@ -4,6 +4,105 @@
 
 FFP uses AWS Cognito for authentication with custom attributes to support multi-tenant architecture. Cognito handles user registration, login, password management, and JWT token generation.
 
+## MVP Authentication Strategy (Phase 1)
+
+### Admin-Only Business Onboarding
+
+**Decision:** For MVP, FFP will NOT have public self-registration. Businesses will be manually onboarded by the system administrator.
+
+**Rationale:**
+
+1. **Billing Complexity**: Self-registration requires automated billing (Stripe integration, subscription management, payment failures, dunning), which is out of scope for Sprint 1
+2. **Business Validation**: Manual vetting ensures we onboard legitimate businesses, not individuals misrepresenting themselves
+3. **Product Validation**: Pilot phase with 5-10 manually managed businesses validates product-market fit before scaling
+4. **Manual Invoicing**: Manageable at small scale, allows pricing flexibility during validation phase
+5. **Reduced Risk**: No payment processing failures, disputes, or fraud concerns during initial launch
+
+### MVP Authentication Flows
+
+**Phase 1 (Sprint 1 - Current):**
+1. ✅ **Admin creates business**: CLI script creates tenant → customer → owner user
+2. ✅ **Business owner logs in**: Receives temporary password via email, forced to change on first login
+3. ✅ **Business invites users**: Owner uses "Invite User" feature (AdminCreateUserCommand)
+4. ✅ **Invited users log in**: Receive temporary password, forced to change on first login
+5. ✅ **Token refresh**: Standard JWT refresh flow
+
+**Phase 2 (Post-MVP with Billing):**
+1. 🔄 **Business self-registration**: Public registration endpoint with Cognito SignUpCommand
+2. 🔄 **Stripe integration**: Automated billing, subscriptions, trials
+3. 🔄 **Payment management**: Handle failed payments, dunning, subscription changes
+4. 🔄 **Usage limits**: Enforce tier limits based on subscription
+
+### MVP Onboarding Process
+
+**System Administrator Workflow:**
+
+```bash
+# Step 1: Admin creates business account manually
+npm run admin:create-business \
+  --name="ABC Physiotherapy" \
+  --ownerEmail="owner@abcphysio.com" \
+  --ownerFirstName="Jane" \
+  --ownerLastName="Smith"
+
+# Creates:
+# - Tenant record (tenant_id: UUID, type: 'customer')
+# - Customer record (customer_id: UUID, tenant_id: UUID, name: 'ABC Physiotherapy')
+# - User record (user_id: UUID, tenant_id: UUID, customer_id: UUID, role: 'customer_owner')
+# - Cognito user with temporary password (sent via email)
+```
+
+**Business Owner Workflow:**
+1. Receives email: "Your FFP account is ready - check email for temporary password"
+2. Logs in with temporary password
+3. Forced to set permanent password
+4. Can now invite staff/clients via "Invite User" feature
+5. System administrator invoices monthly/quarterly manually
+
+**Invited User Workflow:**
+1. Business owner invites user via web portal
+2. User receives email with temporary password
+3. Logs in, forced to change password
+4. Can now access FFP features based on role
+
+### Three-Tier Architecture Support
+
+All authentication flows support the three-tier architecture:
+
+- **Tier 1 (Tenant)**: Top-level isolation boundary, unique per business
+- **Tier 2 (Customer)**: Business entity, can have multiple users
+- **Tier 3 (Users)**: Individual users, linked to customer and tenant
+
+**JWT Claims:**
+```json
+{
+  "sub": "user-uuid",
+  "email": "user@business.com",
+  "custom:tenantId": "tenant-uuid",      // Tier 1: Isolation boundary
+  "custom:customerId": "customer-uuid",   // Tier 2: Business entity
+  "custom:role": "customer_owner"         // User role within customer
+}
+```
+
+### Future: Self-Service Registration (Phase 2)
+
+**New Epic Required:** Self-Service Business Registration (~20-25 hours)
+
+**Components:**
+- Business registration endpoint (POST /auth/register)
+- Stripe subscription integration
+- Trial period management (14-30 days)
+- Payment failure handling and dunning
+- Usage limits enforcement
+- Automated invoicing
+- Subscription tier management
+
+**Prerequisites:**
+- ✅ Validated pricing model (from pilot phase)
+- ✅ Confirmed product-market fit
+- ✅ Support processes established
+- ✅ Billing infrastructure ready
+
 ## Why Cognito
 
 ### Benefits for Phase 1
@@ -141,120 +240,169 @@ export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) 
 };
 ```
 
-## User Registration Flows
+## User Management Flows (MVP)
 
-### Individual User Registration
+### Admin CLI: Create Business Account
 
-```typescript
-// functions/auth/register.ts
-import {
-  CognitoIdentityProviderClient,
-  SignUpCommand,
-} from '@aws-sdk/client-cognito-identity-provider';
-import { randomUUID } from 'crypto';
-import { z } from 'zod';
-
-const cognito = new CognitoIdentityProviderClient({});
-
-const RegisterSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  accountType: z.enum(['individual', 'business']),
-});
-
-export const handler = async (event) => {
-  const body = RegisterSchema.parse(JSON.parse(event.body));
-
-  // Generate unique tenant ID
-  const tenantId = randomUUID();
-  const role = body.accountType === 'business' ? 'business_owner' : 'individual_user';
-
-  // Create user in Cognito
-  const signUpResult = await cognito.send(
-    new SignUpCommand({
-      ClientId: process.env.COGNITO_CLIENT_ID!,
-      Username: body.email,
-      Password: body.password,
-      UserAttributes: [
-        { Name: 'email', Value: body.email },
-        { Name: 'given_name', Value: body.firstName },
-        { Name: 'family_name', Value: body.lastName },
-        { Name: 'custom:tenantId', Value: tenantId },
-        { Name: 'custom:role', Value: role },
-      ],
-    })
-  );
-
-  // Store user in PostgreSQL
-  await db.users.create({
-    id: signUpResult.UserSub,
-    tenantId,
-    email: body.email,
-    firstName: body.firstName,
-    lastName: body.lastName,
-    role,
-    createdAt: new Date(),
-  });
-
-  // Create tenant record
-  await db.tenants.create({
-    id: tenantId,
-    type: body.accountType,
-    name:
-      body.accountType === 'business'
-        ? `${body.firstName} ${body.lastName}'s Business`
-        : `${body.firstName} ${body.lastName}`,
-    createdAt: new Date(),
-  });
-
-  return {
-    statusCode: 200,
-    body: JSON.stringify({
-      message: 'Registration successful. Check email for verification.',
-      userId: signUpResult.UserSub,
-    }),
-  };
-};
-```
-
-### Business User Invitation
+**Purpose:** System administrator manually creates business accounts during pilot phase.
 
 ```typescript
-// functions/business/invite-user.ts
+// packages/functions/src/admin/create-business.ts
 import {
   CognitoIdentityProviderClient,
   AdminCreateUserCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
-import { z } from 'zod';
+import { randomUUID } from 'crypto';
+import { db } from '@ffp/database';
+import { tenants, customers, users } from '@ffp/database/schema';
+import { withRLS } from '@ffp/database/lib/rls';
 
-const cognito = new CognitoIdentityProviderClient({});
+const cognito = new CognitoIdentityProviderClient({ region: 'eu-west-2' });
+
+interface CreateBusinessInput {
+  businessName: string;
+  ownerEmail: string;
+  ownerFirstName: string;
+  ownerLastName: string;
+}
+
+export async function createBusiness(input: CreateBusinessInput) {
+  // Generate UUIDs for three-tier architecture
+  const tenantId = randomUUID();
+  const customerId = randomUUID();
+
+  // Step 1: Create Cognito user with temporary password
+  const cognitoResult = await cognito.send(
+    new AdminCreateUserCommand({
+      UserPoolId: process.env.COGNITO_USER_POOL_ID!,
+      Username: input.ownerEmail,
+      UserAttributes: [
+        { Name: 'email', Value: input.ownerEmail },
+        { Name: 'email_verified', Value: 'true' },
+        { Name: 'given_name', Value: input.ownerFirstName },
+        { Name: 'family_name', Value: input.ownerLastName },
+        { Name: 'custom:tenantId', Value: tenantId },
+        { Name: 'custom:customerId', Value: customerId },
+        { Name: 'custom:role', Value: 'customer_owner' },
+      ],
+      DesiredDeliveryMediums: ['EMAIL'], // Sends temp password via email
+      TemporaryPassword: generateSecurePassword(), // Custom function
+    })
+  );
+
+  const userId = cognitoResult.User!.Username!;
+
+  // Step 2: Create database records in transaction with RLS
+  await withRLS(tenantId, userId, async (tx) => {
+    // Create tenant
+    await tx.insert(tenants).values({
+      id: tenantId,
+      type: 'customer',
+      name: input.businessName,
+    });
+
+    // Create customer
+    await tx.insert(customers).values({
+      id: customerId,
+      tenantId: tenantId,
+      name: input.businessName,
+      status: 'active',
+    });
+
+    // Create owner user
+    await tx.insert(users).values({
+      id: userId,
+      tenantId: tenantId,
+      customerId: customerId,
+      email: input.ownerEmail,
+      cognitoSub: userId,
+      firstName: input.ownerFirstName,
+      lastName: input.ownerLastName,
+      role: 'customer_owner',
+      status: 'active',
+    });
+  });
+
+  return {
+    tenantId,
+    customerId,
+    userId,
+    message: 'Business created successfully. Owner will receive email with temporary password.',
+  };
+}
+
+// Helper: Generate secure temporary password
+function generateSecurePassword(): string {
+  const length = 12;
+  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    password += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  return password;
+}
+```
+
+**CLI Wrapper:**
+
+```bash
+# packages/functions/scripts/create-business.sh
+#!/bin/bash
+
+# Usage: npm run admin:create-business -- --name="ABC Physio" --email="owner@abc.com" --firstName="Jane" --lastName="Smith"
+
+ts-node packages/functions/src/admin/create-business.ts \
+  --name="${BUSINESS_NAME}" \
+  --email="${OWNER_EMAIL}" \
+  --firstName="${OWNER_FIRST_NAME}" \
+  --lastName="${OWNER_LAST_NAME}"
+```
+
+### Invite User Lambda Function
+
+**Purpose:** Business owners invite staff/clients after their account is created.
+
+```typescript
+// packages/functions/src/auth/invite-user.ts
+import {
+  CognitoIdentityProviderClient,
+  AdminCreateUserCommand,
+} from '@aws-sdk/client-cognito-identity-provider';
+import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
+import { z } from 'zod';
+import { db } from '@ffp/database';
+import { users } from '@ffp/database/schema';
+import { withRLS } from '@ffp/database/lib/rls';
+import { extractTenantContext } from '@ffp/core/lib/tenant-context';
+
+const cognito = new CognitoIdentityProviderClient({ region: 'eu-west-2' });
 
 const InviteUserSchema = z.object({
   email: z.string().email(),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  role: z.enum(['business_admin', 'business_user']),
+  role: z.enum(['customer_admin', 'customer_user']),
 });
 
-export const handler = async (event) => {
-  const body = InviteUserSchema.parse(JSON.parse(event.body));
-  const businessOwner = event.requestContext.authorizer.jwt.claims;
+export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) => {
+  // Extract tenant context from JWT
+  const context = extractTenantContext(event);
 
-  // Only business owners can invite
-  if (businessOwner['custom:role'] !== 'business_owner') {
+  // Only customer owners can invite users
+  if (context.role !== 'customer_owner') {
     return {
       statusCode: 403,
-      body: JSON.stringify({ error: 'Only business owners can invite users' }),
+      body: JSON.stringify({
+        error: 'FORBIDDEN',
+        message: 'Only business owners can invite users'
+      }),
     };
   }
 
-  const businessTenantId = businessOwner['custom:tenantId'] as string;
-  const businessOwnerId = businessOwner.sub as string;
+  const body = InviteUserSchema.parse(JSON.parse(event.body || '{}'));
 
-  // Create user with temporary password (emailed to user)
-  const result = await cognito.send(
+  // Create user in Cognito with temporary password
+  const cognitoResult = await cognito.send(
     new AdminCreateUserCommand({
       UserPoolId: process.env.COGNITO_USER_POOL_ID!,
       Username: body.email,
@@ -263,34 +411,56 @@ export const handler = async (event) => {
         { Name: 'email_verified', Value: 'true' },
         { Name: 'given_name', Value: body.firstName },
         { Name: 'family_name', Value: body.lastName },
-        { Name: 'custom:tenantId', Value: businessTenantId }, // Same tenant!
+        { Name: 'custom:tenantId', Value: context.tenantId },
+        { Name: 'custom:customerId', Value: context.customerId! },
         { Name: 'custom:role', Value: body.role },
-        { Name: 'custom:customerId', Value: businessOwnerId },
       ],
-      DesiredDeliveryMediums: ['EMAIL'], // Send temp password via email
+      DesiredDeliveryMediums: ['EMAIL'], // Sends temp password via email
     })
   );
 
-  // Store in database
-  await db.users.create({
-    id: result.User!.Username!,
-    tenantId: businessTenantId,
-    email: body.email,
-    firstName: body.firstName,
-    lastName: body.lastName,
-    role: body.role,
-    customerId: businessOwnerId,
-    createdAt: new Date(),
+  const newUserId = cognitoResult.User!.Username!;
+
+  // Store user in database with RLS context
+  await withRLS(context.tenantId, context.userId, async (tx) => {
+    await tx.insert(users).values({
+      id: newUserId,
+      tenantId: context.tenantId,
+      customerId: context.customerId!,
+      email: body.email,
+      cognitoSub: newUserId,
+      firstName: body.firstName,
+      lastName: body.lastName,
+      role: body.role,
+      status: 'active',
+    });
   });
 
   return {
     statusCode: 200,
     body: JSON.stringify({
-      message: 'Invitation sent successfully',
-      userId: result.User!.Username,
+      message: 'User invited successfully. They will receive an email with temporary password.',
+      userId: newUserId,
     }),
   };
 };
+```
+
+### Future: Self-Service Business Registration (Phase 2)
+
+_Deferred to Phase 2 with billing integration. See "MVP Authentication Strategy" section above._
+
+**When implemented, will use:**
+
+```typescript
+// packages/functions/src/auth/register.ts (FUTURE - Phase 2)
+import { SignUpCommand } from '@aws-sdk/client-cognito-identity-provider';
+
+// Self-registration with Stripe subscription
+// - Business signs up via public form
+// - Creates tenant + customer + owner user
+// - Initiates Stripe trial period
+// - Requires billing integration
 ```
 
 ## Frontend Integration
