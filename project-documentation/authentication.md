@@ -21,6 +21,7 @@ FFP uses AWS Cognito for authentication with custom attributes to support multi-
 ### MVP Authentication Flows
 
 **Phase 1 (Sprint 1 - Current):**
+
 1. ✅ **Admin creates business**: CLI script creates tenant → customer → owner user
 2. ✅ **Business owner logs in**: Receives temporary password via email, forced to change on first login
 3. ✅ **Business invites users**: Owner uses "Invite User" feature (AdminCreateUserCommand)
@@ -28,6 +29,7 @@ FFP uses AWS Cognito for authentication with custom attributes to support multi-
 5. ✅ **Token refresh**: Standard JWT refresh flow
 
 **Phase 2 (Post-MVP with Billing):**
+
 1. 🔄 **Business self-registration**: Public registration endpoint with Cognito SignUpCommand
 2. 🔄 **Stripe integration**: Automated billing, subscriptions, trials
 3. 🔄 **Payment management**: Handle failed payments, dunning, subscription changes
@@ -53,6 +55,7 @@ npm run admin:create-business \
 ```
 
 **Business Owner Workflow:**
+
 1. Receives email: "Your FFP account is ready - check email for temporary password"
 2. Logs in with temporary password
 3. Forced to set permanent password
@@ -60,6 +63,7 @@ npm run admin:create-business \
 5. System administrator invoices monthly/quarterly manually
 
 **Invited User Workflow:**
+
 1. Business owner invites user via web portal
 2. User receives email with temporary password
 3. Logs in, forced to change password
@@ -74,13 +78,14 @@ All authentication flows support the three-tier architecture:
 - **Tier 3 (Users)**: Individual users, linked to customer and tenant
 
 **JWT Claims:**
+
 ```json
 {
   "sub": "user-uuid",
   "email": "user@business.com",
-  "custom:tenantId": "tenant-uuid",      // Tier 1: Isolation boundary
-  "custom:customerId": "customer-uuid",   // Tier 2: Business entity
-  "custom:role": "customer_owner"         // User role within customer
+  "custom:tenantId": "tenant-uuid", // Tier 1: Isolation boundary
+  "custom:customerId": "customer-uuid", // Tier 2: Business entity
+  "custom:role": "customer_owner" // User role within customer
 }
 ```
 
@@ -89,6 +94,7 @@ All authentication flows support the three-tier architecture:
 **New Epic Required:** Self-Service Business Registration (~20-25 hours)
 
 **Components:**
+
 - Business registration endpoint (POST /auth/register)
 - Stripe subscription integration
 - Trial period management (14-30 days)
@@ -98,6 +104,7 @@ All authentication flows support the three-tier architecture:
 - Subscription tier management
 
 **Prerequisites:**
+
 - ✅ Validated pricing model (from pilot phase)
 - ✅ Confirmed product-market fit
 - ✅ Support processes established
@@ -394,7 +401,7 @@ export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) 
       statusCode: 403,
       body: JSON.stringify({
         error: 'FORBIDDEN',
-        message: 'Only business owners can invite users'
+        message: 'Only business owners can invite users',
       }),
     };
   }
