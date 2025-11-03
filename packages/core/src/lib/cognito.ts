@@ -18,10 +18,29 @@ import {
 import { UnauthorisedError } from './errors.js';
 
 /**
- * Cognito client instance
- * Region is set to eu-west-2 (London) for GDPR compliance
+ * Cognito region
+ * Defaults to eu-west-2 (London) for GDPR compliance if COGNITO_REGION not set
  */
-const cognito = new CognitoIdentityProviderClient({ region: 'eu-west-2' });
+const COGNITO_REGION = process.env.COGNITO_REGION ?? 'eu-west-2';
+
+/**
+ * Cognito client instance
+ */
+const cognito = new CognitoIdentityProviderClient({ region: COGNITO_REGION });
+
+/**
+ * Validates required environment variables for Cognito operations
+ * @throws {Error} If required environment variables are missing
+ */
+const validateEnvironment = (): void => {
+  const requiredVars = ['COGNITO_USER_POOL_ID', 'COGNITO_CLIENT_ID'];
+
+  const missing = requiredVars.filter((varName) => !process.env[varName]);
+
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
+};
 
 /**
  * Parameters for inviting a new user
@@ -89,11 +108,9 @@ export class CognitoService {
    * ```
    */
   static async inviteUser(params: InviteUserParams): Promise<AdminCreateUserCommandOutput> {
-    const userPoolId = process.env.COGNITO_USER_POOL_ID;
-
-    if (!userPoolId) {
-      throw new Error('COGNITO_USER_POOL_ID environment variable is not configured');
-    }
+    validateEnvironment();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const userPoolId = process.env.COGNITO_USER_POOL_ID!; // Guaranteed by validateEnvironment()
 
     return await cognito.send(
       new AdminCreateUserCommand({
@@ -142,11 +159,9 @@ export class CognitoService {
    * ```
    */
   static async createUser(params: CreateUserParams): Promise<AdminCreateUserCommandOutput> {
-    const userPoolId = process.env.COGNITO_USER_POOL_ID;
-
-    if (!userPoolId) {
-      throw new Error('COGNITO_USER_POOL_ID environment variable is not configured');
-    }
+    validateEnvironment();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const userPoolId = process.env.COGNITO_USER_POOL_ID!; // Guaranteed by validateEnvironment()
 
     const userAttributes = [
       { Name: 'email', Value: params.email },
@@ -209,11 +224,9 @@ export class CognitoService {
    * ```
    */
   static async login(params: LoginParams): Promise<InitiateAuthCommandOutput> {
-    const clientId = process.env.COGNITO_CLIENT_ID;
-
-    if (!clientId) {
-      throw new Error('COGNITO_CLIENT_ID environment variable is not configured');
-    }
+    validateEnvironment();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const clientId = process.env.COGNITO_CLIENT_ID!; // Guaranteed by validateEnvironment()
 
     try {
       return await cognito.send(
@@ -270,11 +283,9 @@ export class CognitoService {
    * ```
    */
   static async refreshToken(refreshToken: string): Promise<InitiateAuthCommandOutput> {
-    const clientId = process.env.COGNITO_CLIENT_ID;
-
-    if (!clientId) {
-      throw new Error('COGNITO_CLIENT_ID environment variable is not configured');
-    }
+    validateEnvironment();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const clientId = process.env.COGNITO_CLIENT_ID!; // Guaranteed by validateEnvironment()
 
     try {
       return await cognito.send(

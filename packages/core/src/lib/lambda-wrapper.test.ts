@@ -15,12 +15,13 @@ import { z } from 'zod';
 import { UnauthorisedError, ValidationError, NotFoundError } from './errors';
 import { withErrorHandling } from './lambda-wrapper';
 
-import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
+import type { APIGatewayProxyEvent, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 
 // Type for the error log structure
 interface ErrorLogData {
   error: string;
   stack?: string;
+  requestId?: string;
   event: unknown;
 }
 
@@ -40,6 +41,55 @@ function assertIsObject(
   if (!('body' in result) || typeof result.body !== 'string') {
     throw new Error('Expected result to have string body');
   }
+}
+
+// Helper to create a minimal valid APIGatewayProxyEvent for testing
+function createMockEvent(overrides?: Partial<APIGatewayProxyEvent>): APIGatewayProxyEvent {
+  const defaultEvent: APIGatewayProxyEvent = {
+    body: null,
+    headers: {},
+    multiValueHeaders: {},
+    httpMethod: 'GET',
+    isBase64Encoded: false,
+    path: '/',
+    pathParameters: null,
+    queryStringParameters: null,
+    multiValueQueryStringParameters: null,
+    stageVariables: null,
+    requestContext: {
+      accountId: '123456789012',
+      apiId: 'test-api',
+      protocol: 'HTTP/1.1',
+      httpMethod: 'GET',
+      path: '/',
+      stage: 'test',
+      requestId: 'test-request-id',
+      requestTimeEpoch: Date.now(),
+      resourceId: 'test-resource',
+      resourcePath: '/',
+      identity: {
+        accessKey: null,
+        accountId: null,
+        apiKey: null,
+        apiKeyId: null,
+        caller: null,
+        clientCert: null,
+        cognitoAuthenticationProvider: null,
+        cognitoAuthenticationType: null,
+        cognitoIdentityId: null,
+        cognitoIdentityPoolId: null,
+        principalOrgId: null,
+        sourceIp: '127.0.0.1',
+        user: null,
+        userAgent: 'test-agent',
+        userArn: null,
+      },
+      authorizer: null,
+    },
+    resource: '/',
+  };
+
+  return { ...defaultEvent, ...overrides };
 }
 
 describe('withErrorHandling', () => {
@@ -62,7 +112,7 @@ describe('withErrorHandling', () => {
         return Promise.resolve({ message: 'Success', data: { id: 123 } });
       });
 
-      const result = await handler({});
+      const result = await handler(createMockEvent());
       assertIsObject(result);
 
       expect(result.statusCode).toBe(200);
@@ -82,7 +132,7 @@ describe('withErrorHandling', () => {
         return Promise.resolve(null);
       });
 
-      const result = await handler({});
+      const result = await handler(createMockEvent());
       assertIsObject(result);
 
       expect(result.statusCode).toBe(200);
@@ -94,7 +144,7 @@ describe('withErrorHandling', () => {
         return Promise.resolve([{ id: 1 }, { id: 2 }]);
       });
 
-      const result = await handler({});
+      const result = await handler(createMockEvent());
       assertIsObject(result);
 
       expect(result.statusCode).toBe(200);
@@ -109,7 +159,10 @@ describe('withErrorHandling', () => {
         throw new UnauthorisedError('Invalid token');
       });
 
-      const result = await handler({});
+      const event = createMockEvent();
+      event.requestContext.requestId = '';
+
+      const result = await handler(event);
       assertIsObject(result);
 
       expect(result.statusCode).toBe(401);
@@ -128,7 +181,10 @@ describe('withErrorHandling', () => {
         throw new NotFoundError('User', 'user-123');
       });
 
-      const result = await handler({});
+      const event = createMockEvent();
+      event.requestContext.requestId = '';
+
+      const result = await handler(event);
       assertIsObject(result);
 
       expect(result.statusCode).toBe(404);
@@ -149,7 +205,10 @@ describe('withErrorHandling', () => {
         });
       });
 
-      const result = await handler({});
+      const event = createMockEvent();
+      event.requestContext.requestId = '';
+
+      const result = await handler(event);
       assertIsObject(result);
 
       expect(result.statusCode).toBe(400);
@@ -170,7 +229,10 @@ describe('withErrorHandling', () => {
         throw new UnauthorisedError();
       });
 
-      const result = await handler({});
+      const event = createMockEvent();
+      event.requestContext.requestId = '';
+
+      const result = await handler(event);
       assertIsObject(result);
 
       const body = JSON.parse(result.body) as {
@@ -198,7 +260,7 @@ describe('withErrorHandling', () => {
         return Promise.resolve({});
       });
 
-      const result = await handler({});
+      const result = await handler(createMockEvent());
       assertIsObject(result);
 
       expect(result.statusCode).toBe(400);
@@ -224,7 +286,7 @@ describe('withErrorHandling', () => {
         return Promise.resolve({});
       });
 
-      const result = await handler({});
+      const result = await handler(createMockEvent());
       assertIsObject(result);
       const body = JSON.parse(result.body) as {
         details: { path: string; message: string; code: string }[];
@@ -246,7 +308,10 @@ describe('withErrorHandling', () => {
         throw new Error('Unexpected database error');
       });
 
-      const result = await handler({});
+      const event = createMockEvent();
+      event.requestContext.requestId = '';
+
+      const result = await handler(event);
       assertIsObject(result);
 
       expect(result.statusCode).toBe(500);
@@ -266,7 +331,10 @@ describe('withErrorHandling', () => {
         throw 'String error';
       });
 
-      const result = await handler({});
+      const event = createMockEvent();
+      event.requestContext.requestId = '';
+
+      const result = await handler(event);
       assertIsObject(result);
 
       expect(result.statusCode).toBe(500);
@@ -287,7 +355,7 @@ describe('withErrorHandling', () => {
         throw new UnauthorisedError('Test error');
       });
 
-      await handler({ test: 'event' });
+      await handler(createMockEvent());
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Lambda error:',
@@ -304,12 +372,12 @@ describe('withErrorHandling', () => {
         throw new Error('Test');
       });
 
-      const event = {
+      const event = createMockEvent({
         headers: {
           authorization: 'Bearer secret-token',
           'Content-Type': 'application/json',
         },
-      };
+      });
 
       await handler(event);
 
@@ -326,12 +394,12 @@ describe('withErrorHandling', () => {
         throw new Error('Test');
       });
 
-      const event = {
+      const event = createMockEvent({
         body: JSON.stringify({
           email: 'user@example.com',
           password: 'secret-password',
         }),
-      };
+      });
 
       await handler(event);
 
@@ -350,11 +418,11 @@ describe('withErrorHandling', () => {
         throw new Error('Test');
       });
 
-      const event = {
+      const event = createMockEvent({
         body: JSON.stringify({
           refreshToken: 'secret-refresh-token',
         }),
-      };
+      });
 
       await handler(event);
 
@@ -371,15 +439,151 @@ describe('withErrorHandling', () => {
         throw new Error('Test');
       });
 
-      const event = {
+      const event = createMockEvent({
         body: 'invalid json{',
-      };
+      });
 
       await handler(event);
 
       const loggedData = consoleErrorSpy.mock.calls[0][1] as ErrorLogData;
       const loggedEvent = loggedData.event as { body: string };
       expect(loggedEvent.body).toBe('invalid json{');
+    });
+    it('should sanitise additional sensitive fields (accessToken, idToken, secret, apiKey)', async () => {
+      const handler = withErrorHandling(() => {
+        throw new Error('Test');
+      });
+
+      const event = createMockEvent({
+        body: JSON.stringify({
+          email: 'user@example.com',
+          accessToken: 'secret-access-token',
+          idToken: 'secret-id-token',
+          secret: 'my-secret-key',
+          apiKey: 'my-api-key',
+          publicData: 'visible-data',
+        }),
+      });
+
+      await handler(event);
+
+      const loggedData = consoleErrorSpy.mock.calls[0][1] as ErrorLogData;
+      const loggedEvent = loggedData.event as { body: string };
+      const loggedBody = JSON.parse(loggedEvent.body) as {
+        email: string;
+        accessToken: string;
+        idToken: string;
+        secret: string;
+        apiKey: string;
+        publicData: string;
+      };
+
+      // All sensitive fields should be redacted
+      expect(loggedBody.accessToken).toBe('[REDACTED]');
+      expect(loggedBody.idToken).toBe('[REDACTED]');
+      expect(loggedBody.secret).toBe('[REDACTED]');
+      expect(loggedBody.apiKey).toBe('[REDACTED]');
+
+      // Non-sensitive fields should remain
+      expect(loggedBody.email).toBe('user@example.com');
+      expect(loggedBody.publicData).toBe('visible-data');
+    });
+  });
+
+  describe('requestId inclusion', () => {
+    it('should include requestId in BaseError responses', async () => {
+      const handler = withErrorHandling(() => {
+        throw new UnauthorisedError('Invalid token');
+      });
+
+      const event = createMockEvent();
+      event.requestContext.requestId = 'test-request-id-123';
+
+      const result = await handler(event);
+      assertIsObject(result);
+
+      expect(result.statusCode).toBe(401);
+      const body = JSON.parse(result.body) as {
+        error: string;
+        message: string;
+        requestId: string;
+      };
+      expect(body).toEqual({
+        error: 'UNAUTHORISED',
+        message: 'Invalid token',
+        requestId: 'test-request-id-123',
+      });
+    });
+
+    it('should include requestId in ZodError responses', async () => {
+      const handler = withErrorHandling(() => {
+        const schema = z.object({ email: z.string().email() });
+        schema.parse({ email: 'invalid' });
+        return Promise.resolve({ success: true });
+      });
+
+      const event = createMockEvent();
+      event.requestContext.requestId = 'test-request-id-456';
+
+      const result = await handler(event);
+      assertIsObject(result);
+
+      expect(result.statusCode).toBe(400);
+      const body = JSON.parse(result.body) as {
+        error: string;
+        message: string;
+        requestId: string;
+        details: unknown[];
+      };
+      expect(body.requestId).toBe('test-request-id-456');
+      expect(body.error).toBe('VALIDATION_ERROR');
+    });
+
+    it('should include requestId in unexpected error responses', async () => {
+      const handler = withErrorHandling(() => {
+        throw new Error('Unexpected error');
+      });
+
+      const event = createMockEvent();
+      event.requestContext.requestId = 'test-request-id-789';
+
+      const result = await handler(event);
+      assertIsObject(result);
+
+      expect(result.statusCode).toBe(500);
+      const body = JSON.parse(result.body) as {
+        error: string;
+        message: string;
+        requestId: string;
+      };
+      expect(body).toEqual({
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred',
+        requestId: 'test-request-id-789',
+      });
+    });
+
+    it('should not include requestId when not present in requestContext', async () => {
+      const handler = withErrorHandling(() => {
+        throw new UnauthorisedError('Invalid token');
+      });
+
+      const event = createMockEvent();
+      event.requestContext.requestId = '';
+
+      const result = await handler(event);
+      assertIsObject(result);
+
+      const body = JSON.parse(result.body) as {
+        error: string;
+        message: string;
+        requestId?: string;
+      };
+      expect(body.requestId).toBeUndefined();
+      expect(body).toEqual({
+        error: 'UNAUTHORISED',
+        message: 'Invalid token',
+      });
     });
   });
 
@@ -389,7 +593,7 @@ describe('withErrorHandling', () => {
         return Promise.resolve({ success: true });
       });
 
-      const result = await handler({});
+      const result = await handler(createMockEvent());
       assertIsObject(result);
 
       expect(result.headers).toHaveProperty('Content-Type');
@@ -401,7 +605,7 @@ describe('withErrorHandling', () => {
         throw new UnauthorisedError();
       });
 
-      const result = await handler({});
+      const result = await handler(createMockEvent());
       assertIsObject(result);
 
       expect(() => JSON.parse(result.body) as unknown).not.toThrow();

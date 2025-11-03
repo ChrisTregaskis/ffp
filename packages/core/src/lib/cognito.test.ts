@@ -106,7 +106,7 @@ describe('CognitoService', () => {
       };
 
       await expect(CognitoService.inviteUser(params)).rejects.toThrow(
-        'COGNITO_USER_POOL_ID environment variable is not configured'
+        'Missing required environment variables: COGNITO_USER_POOL_ID'
       );
     });
 
@@ -241,7 +241,7 @@ describe('CognitoService', () => {
       };
 
       await expect(CognitoService.createUser(params)).rejects.toThrow(
-        'COGNITO_USER_POOL_ID environment variable is not configured'
+        'Missing required environment variables: COGNITO_USER_POOL_ID'
       );
     });
   });
@@ -359,7 +359,7 @@ describe('CognitoService', () => {
           email: 'user@example.com',
           password: 'password',
         })
-      ).rejects.toThrow('COGNITO_CLIENT_ID environment variable is not configured');
+      ).rejects.toThrow('Missing required environment variables: COGNITO_CLIENT_ID');
     });
   });
 
@@ -424,7 +424,7 @@ describe('CognitoService', () => {
       delete process.env.COGNITO_CLIENT_ID;
 
       await expect(CognitoService.refreshToken('refresh-token')).rejects.toThrow(
-        'COGNITO_CLIENT_ID environment variable is not configured'
+        'Missing required environment variables: COGNITO_CLIENT_ID'
       );
     });
   });

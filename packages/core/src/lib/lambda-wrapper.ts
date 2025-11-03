@@ -10,7 +10,30 @@ import { ZodError } from 'zod';
 
 import { BaseError, InternalServerError } from './errors.js';
 
-import type { APIGatewayProxyResultV2 } from 'aws-lambda';
+import type { APIGatewayProxyEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
+
+/**
+ * Sensitive field names to redact from request bodies
+ *
+ * These fields contain security-sensitive data that should never
+ * appear in logs or error messages.
+ */
+const SENSITIVE_BODY_FIELDS = [
+  'password',
+  'refreshToken',
+  'accessToken',
+  'idToken',
+  'secret',
+  'apiKey',
+] as const;
+
+/**
+ * Sensitive header names to redact from requests
+ *
+ * These headers contain authentication/authorisation data that
+ * should never appear in logs.
+ */
+const SENSITIVE_HEADERS = ['authorization', 'Authorization'] as const;
 
 /**
  * Error response body format
@@ -18,6 +41,7 @@ import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 interface ErrorResponseBody {
   error: string;
   message: string;
+  requestId?: string;
   details?: Record<string, unknown> | unknown[];
 }
 
@@ -44,8 +68,10 @@ interface ErrorResponseBody {
  * });
  * ```
  */
-export const withErrorHandling = <TResult>(handler: (event: unknown) => Promise<TResult>) => {
-  return async (event: unknown): Promise<APIGatewayProxyResultV2> => {
+export const withErrorHandling = <TResult>(
+  handler: (event: APIGatewayProxyEvent) => Promise<TResult>
+) => {
+  return async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResultV2> => {
     try {
       const result = await handler(event);
 
@@ -57,11 +83,16 @@ export const withErrorHandling = <TResult>(handler: (event: unknown) => Promise<
         body: JSON.stringify(result),
       };
     } catch (error) {
+      // Extract requestId for tracing (optional for tests)
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      const requestId = event.requestContext?.requestId;
+
       // Log error with context for debugging
       // Note: In production, this should use structured logging (see FFP-44)
       console.error('Lambda error:', {
         error: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
+        requestId,
         // Sanitise event data to avoid logging sensitive information
         event: sanitiseEventForLogging(event),
       });
@@ -71,6 +102,7 @@ export const withErrorHandling = <TResult>(handler: (event: unknown) => Promise<
         const errorBody: ErrorResponseBody = {
           error: error.code,
           message: error.message,
+          ...(requestId && { requestId }),
         };
 
         // Only include details if present
@@ -92,6 +124,7 @@ export const withErrorHandling = <TResult>(handler: (event: unknown) => Promise<
         const errorBody: ErrorResponseBody = {
           error: 'VALIDATION_ERROR',
           message: 'Invalid request data',
+          ...(requestId && { requestId }),
           details: error.errors.map((err) => ({
             path: err.path.join('.'),
             message: err.message,
@@ -113,6 +146,7 @@ export const withErrorHandling = <TResult>(handler: (event: unknown) => Promise<
       const errorBody: ErrorResponseBody = {
         error: internalError.code,
         message: internalError.message,
+        ...(requestId && { requestId }),
       };
 
       return {
@@ -137,39 +171,32 @@ export const withErrorHandling = <TResult>(handler: (event: unknown) => Promise<
  * @param event - The Lambda event object
  * @returns Sanitised event object safe for logging
  */
-const sanitiseEventForLogging = (event: unknown): unknown => {
+const sanitiseEventForLogging = (event: APIGatewayProxyEvent): APIGatewayProxyEvent => {
   const redacted = '[REDACTED]';
+  const sanitised = { ...event };
 
-  if (!event || typeof event !== 'object') {
-    return event;
-  }
-
-  const sanitised = { ...event } as Record<string, unknown>;
-
-  // Remove authorization headers
-  if (sanitised.headers && typeof sanitised.headers === 'object') {
-    const headers = { ...sanitised.headers } as Record<string, unknown>;
-    if ('authorization' in headers) {
-      headers.authorization = redacted;
+  // Remove sensitive headers
+  const headers = { ...sanitised.headers };
+  for (const headerName of SENSITIVE_HEADERS) {
+    if (headerName in headers) {
+      headers[headerName] = redacted;
     }
-    if ('Authorization' in headers) {
-      headers.Authorization = redacted;
-    }
-    sanitised.headers = headers;
   }
+  sanitised.headers = headers;
 
-  // Remove password fields from body
+  // Remove sensitive fields from body
   if (sanitised.body && typeof sanitised.body === 'string') {
     try {
       const body = JSON.parse(sanitised.body) as unknown;
       if (body && typeof body === 'object') {
         const bodyObj = body as Record<string, unknown>;
-        if ('password' in bodyObj) {
-          bodyObj.password = redacted;
+
+        for (const fieldName of SENSITIVE_BODY_FIELDS) {
+          if (fieldName in bodyObj) {
+            bodyObj[fieldName] = redacted;
+          }
         }
-        if ('refreshToken' in bodyObj) {
-          bodyObj.refreshToken = redacted;
-        }
+
         sanitised.body = JSON.stringify(bodyObj);
       }
     } catch {
