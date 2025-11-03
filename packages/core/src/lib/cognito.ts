@@ -172,7 +172,7 @@ export class CognitoService {
       { Name: 'custom:role', Value: params.role },
     ];
 
-    // Only add customerId if it's not null (super admins don't have a customer)
+    // Only add customerId if it's not null (system admins don't have a customer)
     if (params.customerId !== null) {
       userAttributes.push({
         Name: 'custom:customerId',
