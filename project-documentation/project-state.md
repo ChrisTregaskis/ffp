@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: November 2, 2025 - Session 29
+**Last Updated**: November 3, 2025 - Session 30
 **Current Phase**: Sprint 1 Execution - IN PROGRESS 🚀
 **Solo Developer**: Christopher Tregaskis
 **Time Remaining in Sprint 1**: ~1 week (ending ~November 9, 2025)
@@ -94,7 +94,7 @@
 
 **Phase 1: Prerequisites (9.5h)**
 
-- ⏸️ FFP-43: Error Handling Classes (3h) - NOT STARTED
+- ⏸️ FFP-43: Error Handling Classes (3.5h) - NOT STARTED
 - ⏸️ FFP-44: Structured Logging (2h) - NOT STARTED
 - ⏸️ FFP-36: Tenant Context Extraction (2h) - NOT STARTED
 - ⏸️ FFP-32: Secrets Manager - JWT Only (2.5h) - NOT STARTED
@@ -103,7 +103,7 @@
 
 - ⏸️ Manual: Super User Setup (0.5h) - **NEW PREREQUISITE** - NOT STARTED
 - ⏸️ FFP-112: Admin CLI Script (1h) - **NEEDS MANUAL CREATION IN JIRA** (spec ready)
-- ⏸️ FFP-35: Zod Schemas (3h) - **UPDATED** for super_admin role ✅
+- ✅ FFP-35: Zod Schemas (3h) - **COMPLETE** - Domain-organised schemas created ✅
 - ⏸️ FFP-37: Invite User Lambda (4h) - **UPDATED** for super_admin role ✅
 
 **Phase 3: Authentication Endpoints (7h)**
@@ -124,9 +124,9 @@
 
 **Time Tracking:**
 
-- Hours completed: 0/29-30 (0%)
-- Subtasks completed: 0/13 (0%)
-- **Status**: READY TO START - Tickets updated, prerequisites documented
+- Hours completed: 3/29-30 (10%)
+- Subtasks completed: 1/13 (8%)
+- **Status**: Phase 2 in progress - FFP-35 complete, FFP-43 next
 
 **Manual Actions Required Before Implementation:**
 
@@ -290,22 +290,22 @@
 
 **Total**: 10 stories, 93 subtasks, 198 hours (~24.8 weeks at 8h/week, ~6.2 months)
 
-| Story       | Title                           | Subtasks | Hours    | Status               |
-| ----------- | ------------------------------- | -------- | -------- | -------------------- |
-| FFP-7       | Turborepo Monorepo Setup        | 8        | 13h      | ✅ COMPLETE          |
-| FFP-8       | SST Infrastructure Foundation   | 6        | 17h      | ✅ COMPLETE          |
-| FFP-106     | Database Package Refactoring    | 2        | 3h       | ✅ COMPLETE          |
-| ↳ FFP-107   | File Migration & Verification   | -        | 2h       | ✅ COMPLETE          |
-| ↳ FFP-108   | Documentation & Cleanup         | -        | 1h       | ✅ COMPLETE          |
-| FFP-10 + 11 | Database Layer (Interleaved)    | 16       | 46h      | ✅ COMPLETE & MERGED |
-| ↳ FFP-10    | PostgreSQL Schema with RLS      | 9        | 24h      | ✅ COMPLETE & MERGED |
-| ↳ FFP-11    | Drizzle ORM Setup               | 9        | 22h      | ✅ COMPLETE & MERGED |
-| FFP-9       | Cognito Authentication          | 13       | 30-30.5h | 🚀 IN PROGRESS       |
-| FFP-12      | Testing Framework Configuration | 10       | 22h      | ⏸️ Not Started       |
-| FFP-14      | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started       |
-| FFP-15      | Error Handling Patterns         | 7        | 15h      | ⏸️ Not Started       |
-| FFP-16      | Web Login/Logout Flow           | 11       | 27h      | ⏸️ Not Started       |
-| **Total**   |                                 | **96**   | **197h** | **102/197h (52%)**   |
+| Story       | Title                           | Subtasks | Hours    | Status                |
+| ----------- | ------------------------------- | -------- | -------- | --------------------- |
+| FFP-7       | Turborepo Monorepo Setup        | 8        | 13h      | ✅ COMPLETE           |
+| FFP-8       | SST Infrastructure Foundation   | 6        | 17h      | ✅ COMPLETE           |
+| FFP-106     | Database Package Refactoring    | 2        | 3h       | ✅ COMPLETE           |
+| ↳ FFP-107   | File Migration & Verification   | -        | 2h       | ✅ COMPLETE           |
+| ↳ FFP-108   | Documentation & Cleanup         | -        | 1h       | ✅ COMPLETE           |
+| FFP-10 + 11 | Database Layer (Interleaved)    | 16       | 46h      | ✅ COMPLETE & MERGED  |
+| ↳ FFP-10    | PostgreSQL Schema with RLS      | 9        | 24h      | ✅ COMPLETE & MERGED  |
+| ↳ FFP-11    | Drizzle ORM Setup               | 9        | 22h      | ✅ COMPLETE & MERGED  |
+| FFP-9       | Cognito Authentication          | 13       | 30-30.5h | 🚀 IN PROGRESS (1/13) |
+| FFP-12      | Testing Framework Configuration | 10       | 22h      | ⏸️ Not Started        |
+| FFP-14      | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started        |
+| FFP-15      | Error Handling Patterns         | 7        | 15h      | ⏸️ Not Started        |
+| FFP-16      | Web Login/Logout Flow           | 11       | 27h      | ⏸️ Not Started        |
+| **Total**   |                                 | **96**   | **197h** | **105/197h (53%)**    |
 
 **Note**: FFP-13 (CI/CD Pipeline) was intentionally skipped for now - can be added later if needed.
 
@@ -375,7 +375,7 @@
 
 ### Critical Success Criteria
 
-- 🔄 All 93 subtasks (currently 102/201h done - 51%) - **HALF WAY THERE!** 🎉
+- 🔄 All 93 subtasks (currently 105/201h done - 52%) - **OVER HALF WAY!** 🎉
 - ✅ RLS integration tests pass (cross-tenant isolation verified)
 - ✅ JWT contains tenantId, role, customerId (Cognito configured with custom attributes)
 - ⏸️ E2E authentication tests pass (FFP-99 - CRITICAL)
@@ -429,8 +429,8 @@
 - **Interleaved Execution**: FFP-10 + FFP-11 = 16 unique subtasks, 46h total - **ALL PHASES COMPLETE & MERGED!** ✅
 - 🎯 FFP-9: Cognito Authentication (NEXT - 12 subtasks, 34h)
 - ⏸️ FFP-12, FFP-14, FFP-15, FFP-16: Not started
-- **Total Progress**: 102/201 hours (51%) - **HALFWAY MILESTONE!** 🎉
-- **Next**: FFP-9 Cognito Authentication ← **STARTING NOW**
+- **Total Progress**: 105/201 hours (52%) - **OVER HALFWAY!** 🎉
+- **Current**: FFP-9 Cognito Authentication ← **IN PROGRESS** (1/13 subtasks complete)
 
 ---
 
@@ -489,16 +489,19 @@
 
 ## Progress Summary
 
-**Recent Work** (Nov 2, 2025 - Session 29):
+**Recent Work** (Nov 3, 2025 - Session 30):
 
-- 🚀 **FFP-9 STARTED!** Cognito Authentication (29-30h, 13 subtasks)
-- ✅ **Ticket updates complete**: All 12 FFP-9 subtasks updated in Jira
-- ⚠️ **Security enhancement identified**: Super admin bootstrap prerequisite
-- ⚠️ **Role expansion required**: FFP-35 and FFP-37 need super_admin role support
-- 📋 **Manual action needed**: FFP-112 needs manual creation in Jira UI
-- 📝 **Project state updated**: FFP-9 execution order documented
-- ⏱️ **Time remaining**: ~1 week in Sprint 1 (ending ~Nov 9, 2025)
-- 🎯 **Next**: Phase 1 Prerequisites (FFP-43, 44, 36, 32 - 9.5h)
+- 🎉 **FFP-35 COMPLETE!** Zod Validation Schemas for Auth (3h)
+- ✅ **Domain-organised schemas**: Created users/ and auth/ domains
+- ✅ **inviteUserSchema**: Super admin support with custom refinement
+- ✅ **loginSchema & refreshTokenSchema**: Authentication validation
+- ✅ **passwordValidation**: Cognito requirements helper
+- ✅ **34 tests passing**: Comprehensive validation coverage
+- ✅ **British English**: All error messages use correct spelling
+- ✅ **Types exported**: InviteUserInput, LoginInput, RefreshTokenInput
+- 📝 **Review context created**: Comprehensive PR review documentation
+- ⏱️ **FFP-9 Progress**: 1/13 subtasks (8%), 3/30 hours (10%)
+- 🎯 **Next**: FFP-43 Error Handling Classes (3.5h)
 
 **Previous Work** (Nov 1, 2025 - Session 28):
 
@@ -801,4 +804,4 @@ _Key Requirements:_
 
 ---
 
-**Sprint 1 Progress: 102/197 hours (52%) - HALFWAY MILESTONE! 🎉 FFP-7, FFP-8, FFP-106/107/108, FFP-10, FFP-11 ALL COMPLETE & MERGED! FFP-9 IN PROGRESS (Cognito Authentication - 29-30h, 13 subtasks)!**
+**Sprint 1 Progress: 105/197 hours (53%) - OVER HALFWAY! 🎉 FFP-7, FFP-8, FFP-106/107/108, FFP-10, FFP-11 ALL COMPLETE & MERGED! FFP-9 IN PROGRESS (1/13 subtasks complete - FFP-35 ✅)!**

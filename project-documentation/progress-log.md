@@ -1,3 +1,162 @@
+### November 3, 2025 (Session 30 - FFP-35 Complete!)
+
+**Status**: ✅ FFP-35 COMPLETE - Zod Validation Schemas for Auth
+
+**Branch**: `feature/ffp-9-cognito-auth`
+
+**Session Focus**: Implement domain-organised Zod validation schemas for authentication endpoints (FFP-35)
+
+**Completed Work:**
+
+**FFP-35: Create Zod Validation Schemas for Auth** ✅ **COMPLETE** (3 hours)
+
+**Domain-Organised Schema Structure Created:**
+
+- ✅ Created `packages/core/src/users/user.schema.ts` - inviteUserSchema with super_admin support
+  - Email validation (RFC compliant, max 255 chars)
+  - First/last name validation (1-100 chars)
+  - Role validation (customer_owner, customer_admin, customer_user)
+  - Optional tenantId/customerId for super_admin invites
+  - Custom refinement: both IDs provided together or both omitted
+  - TypeScript type: InviteUserInput
+- ✅ Created `packages/core/src/auth/auth.schema.ts` - loginSchema, refreshTokenSchema, passwordValidation
+  - loginSchema: Email and password validation (no strength check during login)
+  - refreshTokenSchema: Non-empty refresh token validation
+  - passwordValidation helper: Cognito requirements (8 chars, mixed case, digit, special char)
+  - TypeScript types: LoginInput, RefreshTokenInput
+- ✅ Created `packages/core/src/users/user.schema.test.ts` - 14 comprehensive tests
+  - Customer owner invites (no tenant/customer)
+  - Super admin invites (with tenant/customer IDs)
+  - Validation errors (missing IDs, invalid formats, length limits, invalid roles)
+- ✅ Created `packages/core/src/auth/auth.schema.test.ts` - 18 comprehensive tests
+  - Password validation (all 5 requirements)
+  - Login schema validation (email, password)
+  - Refresh token validation
+- ✅ Created domain index files:
+  - `packages/core/src/users/index.ts` - User domain exports
+  - `packages/core/src/auth/index.ts` - Auth domain exports
+- ✅ Updated `packages/core/src/index.ts` - Added domain exports
+
+**Key Features Implemented:**
+
+1. **inviteUserSchema with Super Admin Support** (`packages/core/src/users/user.schema.ts:12`)
+   - Supports customer owner mode (tenantId/customerId from JWT)
+   - Supports super admin mode (tenantId/customerId in request body)
+   - Custom refinement validates both IDs together or both omitted
+   - Role enum includes customer_owner (added after initial implementation)
+
+2. **Password Validation Helper** (`packages/core/src/auth/auth.schema.ts:11`)
+   - Minimum 8 characters
+   - At least one lowercase letter
+   - At least one uppercase letter
+   - At least one digit
+   - At least one special character
+   - Matches Cognito password policy requirements
+
+3. **Login Schema** (`packages/core/src/auth/auth.schema.ts:28`)
+   - Email validation (RFC compliant)
+   - Password required (strength not enforced to allow legacy passwords)
+
+4. **Refresh Token Schema** (`packages/core/src/auth/auth.schema.ts:41`)
+   - Non-empty string validation
+
+**Test Results:**
+
+- ✅ **34 tests passing** (14 user schema + 18 auth schema + 2 existing core tests)
+- ✅ **TypeScript compilation successful** (no type errors)
+- ✅ **All acceptance criteria met**
+
+**Acceptance Criteria Verified:**
+
+1. ✅ InviteUserSchema created with super_admin support
+2. ✅ Custom validation ensures tenantId and customerId provided together
+3. ✅ LoginSchema and RefreshTokenSchema created
+4. ✅ Password validation helper exported (Cognito requirements)
+5. ✅ Email validation follows RFC standards
+6. ✅ Role validation includes customer roles (customer_owner, customer_admin, customer_user)
+7. ✅ TypeScript types exported (InviteUserInput, LoginInput, RefreshTokenInput)
+8. ✅ Unit tests passing (including super_admin scenarios)
+9. ✅ British English in all error messages
+
+**Documentation Created:**
+
+- ✅ `.claude/review-context.md` - Comprehensive review context for PR
+  - Goals, requirements, changes made
+  - Areas to focus (schema validation, super admin support, British English)
+  - Known limitations (password strength not enforced during login)
+  - Testing notes (34 tests passing)
+  - Questions for reviewer
+
+**Key Decisions:**
+
+1. ✅ **Domain-organised structure**: Schemas co-located with domain logic (users/, auth/)
+2. ✅ **Password strength during login**: NOT enforced (allows legacy passwords)
+3. ✅ **Async validation**: Deferred to service layer (schemas only synchronous validation)
+4. ✅ **British English**: All error messages use British spelling
+
+**Code Quality Highlights:**
+
+- ✅ **Type-safe schemas**: Full TypeScript integration with Zod
+- ✅ **Comprehensive validation**: All edge cases covered
+- ✅ **Clear error messages**: User-friendly, British English
+- ✅ **Well-documented**: JSDoc comments explain schema purpose
+- ✅ **Test coverage**: 32 tests specifically for schema validation
+
+**Time Tracking:**
+
+- **FFP-35**: 3 hours (estimated 3h) ✅ On target
+- **FFP-9 Progress**: 1/13 subtasks complete (8%)
+- **FFP-9 Hours**: 3/30 hours complete (10%)
+
+**Sprint 1 Progress:**
+
+- **Hours completed**: 105/201 (52%)
+- **Stories completed**: FFP-7 ✅, FFP-8 ✅, FFP-106/107/108 ✅, FFP-10 ✅, FFP-11 ✅
+- **Current story**: FFP-9 (Cognito Authentication) - 1/13 subtasks complete
+
+**Technical Notes:**
+
+- Schemas use Zod's `.refine()` method for custom validation logic
+- Email validation uses Zod's built-in `.email()` validator (RFC compliant)
+- UUID validation uses Zod's `.uuid()` validator
+- Role validation uses `z.enum()` for type-safe role checking
+- Password validation uses regex patterns for each requirement
+- All schemas export both the schema and inferred TypeScript type
+
+**Files Created:**
+
+1. `packages/core/src/users/user.schema.ts` (47 lines)
+2. `packages/core/src/users/user.schema.test.ts` (203 lines)
+3. `packages/core/src/users/index.ts` (2 lines)
+4. `packages/core/src/auth/auth.schema.ts` (49 lines)
+5. `packages/core/src/auth/auth.schema.test.ts` (193 lines)
+6. `packages/core/src/auth/index.ts` (2 lines)
+7. `.claude/review-context.md` (comprehensive PR review context)
+
+**Files Modified:**
+
+1. `packages/core/src/index.ts` - Added domain exports
+
+**Next Steps:**
+
+- 🎯 **FFP-43**: Error Handling Classes and Middleware (3.5h)
+  - Will use these schemas for ZodError handling
+  - Custom error classes (BaseError, NotFoundError, ValidationError, etc.)
+  - Error handler middleware for Lambda functions
+  - Cognito service wrapper class
+
+**Notable Achievements:**
+
+- ✅ **First FFP-9 subtask complete** - Zod schemas ready for use
+- ✅ **Domain-organised structure** - Clean separation of concerns
+- ✅ **Super admin support** - Dual-mode validation for customer owners and super admins
+- ✅ **Comprehensive testing** - 32 schema-specific tests covering all scenarios
+- ✅ **Type-safe validation** - Full TypeScript integration
+- ✅ **British English** - All error messages use correct spelling
+- ✅ **Ready for FFP-43** - Error handler will use these schemas for ZodError handling
+
+---
+
 ### November 2, 2025 (Session 29 - Backend Architecture Enhancements for FFP-9)
 
 **Status**: ✅ Architecture documentation enhanced, FFP-9 ready to implement
