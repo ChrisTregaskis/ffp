@@ -1,3 +1,190 @@
+### November 3, 2025 (Session 31 - FFP-43 Complete!)
+
+**Status**: ✅ FFP-43 COMPLETE - Error Handling Classes and Middleware
+
+**Branch**: `feature/ffp-43-error-handling-classes`
+
+**Session Focus**: Implement custom error class hierarchy, Lambda error handling middleware, and Cognito service wrapper (FFP-43)
+
+**Completed Work:**
+
+**FFP-43: Error Handling Classes and Middleware** ✅ **COMPLETE** (3.5 hours)
+
+**Core Infrastructure Created:**
+
+- ✅ Created `packages/core/src/lib/errors.ts` - Custom error class hierarchy (7 error types)
+  - BaseError (base class with HTTP status codes)
+  - UnauthorisedError (401 - authentication failures)
+  - ForbiddenError (403 - authorisation failures)
+  - NotFoundError (404 - resource not found)
+  - ValidationError (400 - validation failures with details)
+  - ConflictError (409 - resource conflicts like duplicate emails)
+  - InternalServerError (500 - unexpected errors)
+- ✅ Created `packages/core/src/lib/lambda-wrapper.ts` - Error handling middleware
+  - withErrorHandling() wrapper for Lambda functions
+  - Automatic error-to-HTTP response conversion (BaseError, ZodError, unexpected)
+  - Sensitive data sanitisation (passwords, tokens, authorisation headers)
+  - Structured error logging with event context
+- ✅ Created `packages/core/src/lib/cognito.ts` - Cognito service wrapper
+  - CognitoService.inviteUser() - Send email invitations with temporary password
+  - CognitoService.createUser() - Create users with optional temp password
+  - CognitoService.login() - USER_PASSWORD_AUTH flow returning JWT tokens
+  - CognitoService.refreshToken() - REFRESH_TOKEN_AUTH flow for token renewal
+  - Automatic Cognito error conversion (NotAuthorizedException → UnauthorisedError)
+
+**Comprehensive Test Coverage:**
+
+- ✅ Created `packages/core/src/lib/errors.test.ts` - 17 comprehensive tests
+  - All error types instantiate correctly with proper status codes
+  - Error inheritance chain works (instanceof checks)
+  - Optional details parameter handled correctly
+  - Stack traces captured properly
+- ✅ Created `packages/core/src/lib/lambda-wrapper.test.ts` - 18 comprehensive tests
+  - Success responses formatted correctly (200 with JSON)
+  - BaseError instances converted to proper HTTP responses
+  - ZodError instances converted to 400 with formatted validation details
+  - Unexpected errors converted to 500 with sanitised message
+  - Sensitive data redaction (passwords, tokens, headers)
+  - Malformed JSON bodies handled gracefully
+- ✅ Created `packages/core/src/lib/cognito.test.ts` - 20 comprehensive tests
+  - All methods call AWS SDK with correct parameters
+  - Environment variables validated before operations
+  - Cognito errors properly converted to UnauthorisedError
+  - User attributes set correctly (including custom claims)
+  - customerId handling for system_admin role (null value)
+  - Temporary password support tested
+
+**Configuration Updates:**
+
+- ✅ Updated `packages/core/src/lib/constants.ts` - Added PLATFORM_TENANT_ID constant ('platform')
+  - Comprehensive documentation for system administrators
+  - Used for system_admin role with multi-tenant access
+- ✅ Updated `packages/core/src/lib/index.ts` - Added .js extensions for ESM compatibility
+- ✅ Updated `packages/core/src/server.ts` - Moved exports with proper ESM extensions
+- ✅ Updated `packages/core/package.json` - Added AWS SDK dependencies
+  - @aws-sdk/client-cognito-identity-provider
+  - @types/aws-lambda
+- ✅ Updated `packages/core/tsconfig.node.json` - Disabled declaration for build configs
+- ✅ Updated `.gitignore` - Added vitest.config.js and vitest.config.d.ts
+- ✅ Updated `project-documentation/database-schema.md` - System Administrator Multi-Tenant Access section
+  - Documented platform tenant pattern
+  - RLS bypass for system_admin role
+
+**Key Features Implemented:**
+
+1. **Error Class Hierarchy** (`packages/core/src/lib/errors.ts`)
+   - HTTP status codes integrated
+   - Optional details field for validation errors
+   - British English naming (UnauthorisedError, not UnauthorizedError)
+   - Stack traces captured automatically
+
+2. **Lambda Error Middleware** (`packages/core/src/lib/lambda-wrapper.ts`)
+   - Wraps handler functions with automatic error handling
+   - Converts all error types to proper API Gateway responses
+   - Sanitises sensitive data from logs (passwords, tokens, auth headers)
+   - Structured logging ready for CloudWatch integration
+
+3. **Cognito Service Wrapper** (`packages/core/src/lib/cognito.ts`)
+   - Static methods for cleaner imports
+   - Environment variable validation
+   - Multi-tenant custom attributes (tenantId, customerId, role)
+   - Automatic error type conversion
+   - Support for system_admin role (null customerId)
+
+**Code Quality Improvements:**
+
+- ✅ Removed 4 global eslint-disable comments from lambda-wrapper.test.ts
+- ✅ Fixed 37 ESLint violations with proper type annotations
+- ✅ Only 3 minimal inline eslint-disables remain (unavoidable Vitest API)
+- ✅ No `any` types in production code
+- ✅ British English spelling throughout
+
+**Test Results:**
+
+- ✅ **89 tests passing** (55 new + 34 from FFP-35)
+- ✅ **TypeScript compilation successful** (no type errors)
+- ✅ **All acceptance criteria met**
+
+**Acceptance Criteria Verified:**
+
+1. ✅ Custom error classes created (BaseError + 6 specific types)
+2. ✅ Lambda error handler middleware implemented (withErrorHandling)
+3. ✅ Cognito service wrapper created (CognitoService class)
+4. ✅ Sensitive data sanitisation working (passwords, tokens, headers redacted)
+5. ✅ Error-to-HTTP response conversion correct (BaseError, ZodError, unexpected)
+6. ✅ Multi-tenant custom attributes supported (tenantId, customerId, role)
+7. ✅ System admin pattern documented (PLATFORM_TENANT_ID, RLS bypass)
+8. ✅ Comprehensive test coverage (55 tests, all passing)
+9. ✅ British English throughout
+
+**Documentation Created:**
+
+- ✅ `.claude/review-context.md` - Comprehensive PR review documentation
+  - Goals, requirements, changes made
+  - Security focus (sensitive data sanitisation)
+  - Type safety verification (no `any` types)
+  - Known limitations and trade-offs
+  - Testing notes (89 tests passing)
+
+**Time Tracking:**
+
+- **FFP-43**: 3.5 hours (estimated 3.5h) ✅ On target
+- **FFP-9 Progress**: 2/13 subtasks complete (15%)
+- **FFP-9 Hours**: 6.5/30 hours complete (22%)
+
+**Sprint 1 Progress:**
+
+- **Hours completed**: 108.5/201 (54%)
+- **Stories completed**: FFP-7 ✅, FFP-8 ✅, FFP-106/107/108 ✅, FFP-10 ✅, FFP-11 ✅
+- **Current story**: FFP-9 (Cognito Authentication) - 2/13 subtasks complete
+
+**Technical Notes:**
+
+- Static CognitoService class pattern chosen for Phase 1 simplicity
+- Error logging uses console.error (will replace with structured logging in FFP-44)
+- Environment variables validated on each operation
+- PostgreSQL SET command requires sql.raw() (no parameterised queries)
+- ConflictError added for duplicate email scenarios
+
+**Files Created:**
+
+1. `packages/core/src/lib/errors.ts` (107 lines)
+2. `packages/core/src/lib/errors.test.ts` (184 lines)
+3. `packages/core/src/lib/lambda-wrapper.ts` (89 lines)
+4. `packages/core/src/lib/lambda-wrapper.test.ts` (261 lines)
+5. `packages/core/src/lib/cognito.ts` (184 lines)
+6. `packages/core/src/lib/cognito.test.ts` (312 lines)
+7. `.claude/review-context.md` (comprehensive PR review context)
+
+**Files Modified:**
+
+1. `packages/core/src/lib/constants.ts` - Added PLATFORM_TENANT_ID
+2. `packages/core/src/lib/index.ts` - Added .js extensions
+3. `packages/core/src/server.ts` - Moved exports from index.ts
+4. `packages/core/package.json` - Added AWS SDK dependencies
+5. `packages/core/tsconfig.node.json` - Disabled declaration generation
+6. `.gitignore` - Added vitest config artifacts
+7. `project-documentation/database-schema.md` - System admin documentation
+
+**Next Steps:**
+
+- 🎯 **FFP-44**: Structured Logging (2h)
+  - Will replace console.error with proper structured logging
+  - Actor-aware logging (user vs system context)
+  - CloudWatch integration ready
+
+**Notable Achievements:**
+
+- ✅ **Infrastructure complete** - Error handling and Cognito service ready
+- ✅ **Type-safe error handling** - Full TypeScript integration
+- ✅ **Security-first** - Sensitive data sanitisation working
+- ✅ **Comprehensive testing** - 55 new tests covering all scenarios
+- ✅ **British English** - All error messages use correct spelling
+- ✅ **Code quality** - 37 ESLint violations fixed, no `any` types
+- ✅ **Ready for FFP-37** - Invite user endpoint can now use these utilities
+
+---
+
 ### November 3, 2025 (Session 30 - FFP-35 Complete!)
 
 **Status**: ✅ FFP-35 COMPLETE - Zod Validation Schemas for Auth

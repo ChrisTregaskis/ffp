@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: November 3, 2025 - Session 30
+**Last Updated**: November 3, 2025 - Session 31
 **Current Phase**: Sprint 1 Execution - IN PROGRESS 🚀
 **Solo Developer**: Christopher Tregaskis
 **Time Remaining in Sprint 1**: ~1 week (ending ~November 9, 2025)
@@ -94,8 +94,8 @@
 
 **Phase 1: Prerequisites (9.5h)**
 
-- ⏸️ FFP-43: Error Handling Classes (3.5h) - NOT STARTED
-- ⏸️ FFP-44: Structured Logging (2h) - NOT STARTED
+- ✅ FFP-43: Error Handling Classes (3.5h) - **COMPLETE** ✅
+- ⏸️ FFP-44: Structured Logging (2h) - NOT STARTED ← **NEXT**
 - ⏸️ FFP-36: Tenant Context Extraction (2h) - NOT STARTED
 - ⏸️ FFP-32: Secrets Manager - JWT Only (2.5h) - NOT STARTED
 
@@ -124,9 +124,9 @@
 
 **Time Tracking:**
 
-- Hours completed: 3/29-30 (10%)
-- Subtasks completed: 1/13 (8%)
-- **Status**: Phase 2 in progress - FFP-35 complete, FFP-43 next
+- Hours completed: 6.5/29-30 (22%)
+- Subtasks completed: 2/13 (15%)
+- **Status**: Phase 1 in progress - FFP-35 ✅, FFP-43 ✅, FFP-44 next
 
 **Manual Actions Required Before Implementation:**
 
@@ -300,12 +300,12 @@
 | FFP-10 + 11 | Database Layer (Interleaved)    | 16       | 46h      | ✅ COMPLETE & MERGED  |
 | ↳ FFP-10    | PostgreSQL Schema with RLS      | 9        | 24h      | ✅ COMPLETE & MERGED  |
 | ↳ FFP-11    | Drizzle ORM Setup               | 9        | 22h      | ✅ COMPLETE & MERGED  |
-| FFP-9       | Cognito Authentication          | 13       | 30-30.5h | 🚀 IN PROGRESS (1/13) |
+| FFP-9       | Cognito Authentication          | 13       | 30-30.5h | 🚀 IN PROGRESS (2/13) |
 | FFP-12      | Testing Framework Configuration | 10       | 22h      | ⏸️ Not Started        |
 | FFP-14      | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started        |
 | FFP-15      | Error Handling Patterns         | 7        | 15h      | ⏸️ Not Started        |
 | FFP-16      | Web Login/Logout Flow           | 11       | 27h      | ⏸️ Not Started        |
-| **Total**   |                                 | **96**   | **197h** | **105/197h (53%)**    |
+| **Total**   |                                 | **96**   | **197h** | **108.5/197h (55%)**  |
 
 **Note**: FFP-13 (CI/CD Pipeline) was intentionally skipped for now - can be added later if needed.
 
@@ -429,8 +429,8 @@
 - **Interleaved Execution**: FFP-10 + FFP-11 = 16 unique subtasks, 46h total - **ALL PHASES COMPLETE & MERGED!** ✅
 - 🎯 FFP-9: Cognito Authentication (NEXT - 12 subtasks, 34h)
 - ⏸️ FFP-12, FFP-14, FFP-15, FFP-16: Not started
-- **Total Progress**: 105/201 hours (52%) - **OVER HALFWAY!** 🎉
-- **Current**: FFP-9 Cognito Authentication ← **IN PROGRESS** (1/13 subtasks complete)
+- **Total Progress**: 108.5/201 hours (54%) - **OVER HALFWAY!** 🎉
+- **Current**: FFP-9 Cognito Authentication ← **IN PROGRESS** (2/13 subtasks complete: FFP-35 ✅, FFP-43 ✅)
 
 ---
 
@@ -489,7 +489,22 @@
 
 ## Progress Summary
 
-**Recent Work** (Nov 3, 2025 - Session 30):
+**Recent Work** (Nov 3, 2025 - Session 31):
+
+- 🎉 **FFP-43 COMPLETE!** Error Handling Classes and Middleware (3.5h)
+- ✅ **Custom error hierarchy**: 7 error types with HTTP status codes (BaseError, UnauthorisedError, ForbiddenError, NotFoundError, ValidationError, ConflictError, InternalServerError)
+- ✅ **Lambda middleware**: withErrorHandling() wrapper with automatic error-to-HTTP conversion
+- ✅ **Cognito service wrapper**: CognitoService with inviteUser, createUser, login, refreshToken methods
+- ✅ **Sensitive data sanitisation**: Passwords, tokens, auth headers redacted from logs
+- ✅ **55 new tests passing**: Comprehensive error handling coverage (17 + 18 + 20)
+- ✅ **Code quality**: Fixed 37 ESLint violations, no `any` types
+- ✅ **British English**: UnauthorisedError (not UnauthorizedError)
+- ✅ **System admin support**: PLATFORM_TENANT_ID constant and documentation
+- 📝 **Review context created**: Comprehensive PR review documentation
+- ⏱️ **FFP-9 Progress**: 2/13 subtasks (15%), 6.5/30 hours (22%)
+- 🎯 **Next**: FFP-44 Structured Logging (2h)
+
+**Previous Work** (Nov 3, 2025 - Session 30):
 
 - 🎉 **FFP-35 COMPLETE!** Zod Validation Schemas for Auth (3h)
 - ✅ **Domain-organised schemas**: Created users/ and auth/ domains
@@ -499,9 +514,15 @@
 - ✅ **34 tests passing**: Comprehensive validation coverage
 - ✅ **British English**: All error messages use correct spelling
 - ✅ **Types exported**: InviteUserInput, LoginInput, RefreshTokenInput
-- 📝 **Review context created**: Comprehensive PR review documentation
-- ⏱️ **FFP-9 Progress**: 1/13 subtasks (8%), 3/30 hours (10%)
-- 🎯 **Next**: FFP-43 Error Handling Classes (3.5h)
+
+**Previous Work** (Nov 2, 2025 - Session 29):
+
+- ✅ **Backend Architecture Enhancements** - Domain-organised layers documented
+- ✅ **Actor-Based Context Architecture** - UserActor and SystemActor interfaces designed
+- ✅ **Enhanced TenantContext** - Actor, requestId, timestamp, settings support
+- ✅ **FFP-9 Implementation Guide** - Comprehensive task breakdown with layer requirements
+- ✅ **Jira Ticket Updates** - Enhanced FFP-43, FFP-44, FFP-36 with new patterns
+- 📋 **Planning Session**: ~2 hours architecture design and documentation
 
 **Previous Work** (Nov 1, 2025 - Session 28):
 
@@ -804,4 +825,4 @@ _Key Requirements:_
 
 ---
 
-**Sprint 1 Progress: 105/197 hours (53%) - OVER HALFWAY! 🎉 FFP-7, FFP-8, FFP-106/107/108, FFP-10, FFP-11 ALL COMPLETE & MERGED! FFP-9 IN PROGRESS (1/13 subtasks complete - FFP-35 ✅)!**
+**Sprint 1 Progress: 108.5/197 hours (55%) - OVER HALFWAY! 🎉 FFP-7, FFP-8, FFP-106/107/108, FFP-10, FFP-11 ALL COMPLETE & MERGED! FFP-9 IN PROGRESS (2/13 subtasks complete - FFP-35 ✅, FFP-43 ✅)!**
