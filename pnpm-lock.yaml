@@ -71,6 +71,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@aws-sdk/client-cognito-identity-provider':
+        specifier: ^3.705.0
+        version: 3.913.0
       drizzle-orm:
         specifier: ^0.44.7
         version: 0.44.7(@types/pg@8.15.5)(pg@8.16.3)
@@ -84,6 +87,9 @@ importers:
       '@ffp/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
+      '@types/aws-lambda':
+        specifier: ^8.10.145
+        version: 8.10.156
       '@types/node':
         specifier: ^22.9.0
         version: 22.18.11

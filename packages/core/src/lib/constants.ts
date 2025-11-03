@@ -1,6 +1,18 @@
 export const APP_NAME = 'FFP - Fitness & Physiotherapy Platform';
 export const APP_VERSION = '0.0.1';
 
+/**
+ * Platform tenant ID for system administrators
+ *
+ * System administrators don't belong to a specific customer tenant.
+ * They use this special "platform" tenant ID which grants them access
+ * to all tenants via RLS policy bypass.
+ *
+ * Note: This is a reserved tenant ID and should never be used for
+ * regular customer tenants.
+ */
+export const PLATFORM_TENANT_ID = 'platform';
+
 export const USER_ROLES = {
   SYSTEM_ADMIN: 'system_admin',
   CUSTOMER_OWNER: 'customer_owner',
