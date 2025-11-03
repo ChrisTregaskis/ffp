@@ -51,6 +51,10 @@ sst-env.d.ts
 *.tsbuildinfo
 .eslintcache
 
+# Generated config files (TypeScript compilation artifacts)
+vitest.config.js
+vitest.config.d.ts
+
 # Local config (personal, not shared)
 CLAUDE.local.md
 .claude.md
