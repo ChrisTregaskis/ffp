@@ -14,6 +14,7 @@ import { randomUUID } from 'crypto';
 
 import { type APIGatewayProxyEvent } from 'aws-lambda';
 
+import { COGNITO_CUSTOM_ATTRIBUTES } from './constants';
 import { UnauthorisedError, ValidationError } from './errors';
 
 /**
@@ -22,9 +23,9 @@ import { UnauthorisedError, ValidationError } from './errors';
 interface JWTClaims {
   sub: string;
   email: string;
-  'custom:role': string;
-  'custom:tenantId': string;
-  'custom:customerId'?: string;
+  [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: string;
+  [COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID]: string;
+  [COGNITO_CUSTOM_ATTRIBUTES.CUSTOMER_ID]?: string;
   [key: string]: unknown;
 }
 
@@ -147,9 +148,9 @@ export function extractUserContext(event: APIGatewayProxyEvent): TenantContext {
 
   // Validate required claims exist and are strings
   const sub = claims.sub;
-  const role = claims['custom:role'];
+  const role = claims[COGNITO_CUSTOM_ATTRIBUTES.ROLE];
   const email = claims.email;
-  const tenantId = claims['custom:tenantId'];
+  const tenantId = claims[COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID];
 
   if (!sub || typeof sub !== 'string') {
     throw new UnauthorisedError('Missing or invalid sub claim');
@@ -175,7 +176,7 @@ export function extractUserContext(event: APIGatewayProxyEvent): TenantContext {
       email,
     },
     tenantId,
-    customerId: claims['custom:customerId'] ?? null,
+    customerId: claims[COGNITO_CUSTOM_ATTRIBUTES.CUSTOMER_ID] ?? null,
     requestId: event.requestContext.requestId,
     timestamp: new Date(),
   };

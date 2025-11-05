@@ -13,6 +13,12 @@ export const APP_VERSION = '0.0.1';
  */
 export const PLATFORM_TENANT_ID = 'platform';
 
+export const COGNITO_CUSTOM_ATTRIBUTES = {
+  TENANT_ID: 'custom:tenantId',
+  CUSTOMER_ID: 'custom:customerId',
+  ROLE: 'custom:role',
+} as const;
+
 export const USER_ROLES = {
   SYSTEM_ADMIN: 'system_admin',
   CUSTOMER_OWNER: 'customer_owner',
