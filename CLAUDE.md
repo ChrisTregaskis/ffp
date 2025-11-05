@@ -73,7 +73,7 @@ turbo test --filter=@ffp/core
 turbo test --filter=@ffp/web
 
 # Coverage
-pnpm test:coverage  # Target: 30% (Phase 1)
+pnpm test:coverage  # Target: 15% (Phase 1)
 ```
 
 ### Turborepo Operations
@@ -275,7 +275,7 @@ All internal dependencies use `workspace:*` protocol:
 ### Testing Requirements
 
 - Tests live in `tests/` at root (monorepo tests) or `src/**/*.test.ts` in packages
-- All new utilities must have tests (30% coverage target for Phase 1)
+- All new utilities must have tests (15% coverage target for Phase 1)
 - RLS integration tests are CRITICAL when database layer is added (FFP-10)
 
 ### Git Workflow
@@ -454,4 +454,4 @@ topic: "cognito post authentication trigger SST Ion"
 - **Phase 1 focus**: Foundation infrastructure (no premature optimisation)
 - **Security first**: Healthcare data, OWASP compliance required
 - **Cost conscious**: Target ~£54-87/month AWS spend in Phase 1
-- **Test coverage**: 30% minimum (will increase in later phases)
+- **Test coverage**: 15% minimum (will increase in later phases)

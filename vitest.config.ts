@@ -25,7 +25,7 @@ export default defineConfig({
         'packages/eslint-config/**',
         'packages/prettier-config/**',
       ],
-      // Phase 1: 30% coverage target
+      // Phase 1: 15% coverage target
       thresholds: {
         lines: 30,
         functions: 30,

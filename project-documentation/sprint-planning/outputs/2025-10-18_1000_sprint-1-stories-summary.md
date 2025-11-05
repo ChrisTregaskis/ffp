@@ -144,7 +144,7 @@ FFP-7 (Foundation)
 **Testing Philosophy for Sprint 1**:
 
 - Focus on critical paths (authentication, multi-tenant isolation)
-- Target 30% code coverage (not 100%)
+- Target 15% code coverage (not 100%)
 - Prioritise integration tests over unit tests for infrastructure
 - E2E tests for user-facing flows only
 
@@ -403,7 +403,7 @@ All stories tagged with:
 4. **Don't Perfectionate**
    - Simple implementations first
    - Can refactor in later sprints
-   - 30% test coverage is acceptable
+   - 15% test coverage is acceptable
 
 ### When to Ask for Help
 

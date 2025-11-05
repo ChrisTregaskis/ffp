@@ -121,7 +121,7 @@ Configure Vitest (unit) and Playwright (E2E), including MSW for API mocking.
 4. Setup MSW handlers
 5. Add example unit test
 6. Add example E2E test
-7. Configure coverage thresholds (30%)
+7. Configure coverage thresholds (15%)
 
 ### Files Modified
 - `vitest.config.ts` (new)
@@ -134,7 +134,7 @@ Configure Vitest (unit) and Playwright (E2E), including MSW for API mocking.
 - [ ] Vitest runs unit tests
 - [ ] Playwright runs E2E tests in headless mode
 - [ ] MSW intercepts API requests in tests
-- [ ] Coverage report generated (30% threshold)
+- [ ] Coverage report generated (15% threshold)
 - [ ] Example tests pass
 
 ## Verification

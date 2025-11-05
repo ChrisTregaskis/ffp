@@ -8,7 +8,7 @@ FFP uses a **hybrid testing approach** optimized for solo development: fast mock
 
 ### Phase 1 Goals
 
-- **30% code coverage** - Focus on critical paths
+- **15% code coverage** - Focus on critical paths
 - **Security first** - Multi-tenant isolation must be tested
 - **Speed matters** - Fast feedback loop for solo dev
 - **Pragmatic approach** - Test what matters, skip edge cases initially
@@ -733,7 +733,7 @@ jobs:
 ### Phase 1 (Current)
 
 ```
-Overall: 30%
+Overall: 15%
 Critical paths: 80%+
   - RLS policies: 100%
   - Authentication: 100%

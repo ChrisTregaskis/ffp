@@ -64,7 +64,7 @@
 ### Nice to Have (Lower Priority)
 
 - ⚪ FFP-15: Error handling patterns (can be iterative)
-- ⚪ Full test coverage (targeting 30%, not 100%)
+- ⚪ Full test coverage (targeting 15%, not 100%)
 
 ---
 

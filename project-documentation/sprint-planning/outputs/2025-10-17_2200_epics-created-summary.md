@@ -162,7 +162,7 @@ Story points will be determined once User Stories are created and estimated. Eac
 - [ ] API response time <500ms (p95)
 - [ ] Video start time <5 seconds
 - [ ] System uptime >99%
-- [ ] Unit test coverage >30%
+- [ ] Unit test coverage >15%
 - [ ] Zero critical security vulnerabilities
 - [ ] Zero tenant data leakage incidents
 

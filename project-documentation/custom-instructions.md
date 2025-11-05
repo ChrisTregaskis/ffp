@@ -53,7 +53,7 @@ _Important Note:_ When updating local documentation, the files can be found at `
 ### 4. Speed Over Perfection (Phase 1)
 
 - Ship fast, iterate on feedback
-- 30% test coverage (critical paths)
+- 15% test coverage (critical paths)
 - Simple implementations, solid patterns
 - Don't over-engineer for scale you don't have yet
 

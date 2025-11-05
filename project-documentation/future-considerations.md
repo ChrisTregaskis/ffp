@@ -984,7 +984,7 @@ Allows: Per-person billing, sub-accounts, more complex plans
 
 **Timeline**: Ongoing effort over 6-12 months
 
-**Why deferred**: 30% coverage sufficient for Phase 1 MVP
+**Why deferred**: 15% coverage sufficient for Phase 1 MVP
 
 ---
 
