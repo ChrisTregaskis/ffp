@@ -15,6 +15,7 @@ import {
   type InitiateAuthCommandOutput,
 } from '@aws-sdk/client-cognito-identity-provider';
 
+import { COGNITO_CUSTOM_ATTRIBUTES } from './constants.js';
 import { UnauthorisedError } from './errors.js';
 
 /**
@@ -121,9 +122,9 @@ export class CognitoService {
           { Name: 'email_verified', Value: 'true' },
           { Name: 'given_name', Value: params.firstName },
           { Name: 'family_name', Value: params.lastName },
-          { Name: 'custom:tenantId', Value: params.tenantId },
-          { Name: 'custom:customerId', Value: params.customerId },
-          { Name: 'custom:role', Value: params.role },
+          { Name: COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID, Value: params.tenantId },
+          { Name: COGNITO_CUSTOM_ATTRIBUTES.CUSTOMER_ID, Value: params.customerId },
+          { Name: COGNITO_CUSTOM_ATTRIBUTES.ROLE, Value: params.role },
         ],
         DesiredDeliveryMediums: ['EMAIL'],
       })
@@ -168,14 +169,14 @@ export class CognitoService {
       { Name: 'email_verified', Value: 'true' },
       { Name: 'given_name', Value: params.firstName },
       { Name: 'family_name', Value: params.lastName },
-      { Name: 'custom:tenantId', Value: params.tenantId },
-      { Name: 'custom:role', Value: params.role },
+      { Name: COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID, Value: params.tenantId },
+      { Name: COGNITO_CUSTOM_ATTRIBUTES.ROLE, Value: params.role },
     ];
 
     // Only add customerId if it's not null (system admins don't have a customer)
     if (params.customerId !== null) {
       userAttributes.push({
-        Name: 'custom:customerId',
+        Name: COGNITO_CUSTOM_ATTRIBUTES.CUSTOMER_ID,
         Value: params.customerId,
       });
     }

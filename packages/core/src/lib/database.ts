@@ -133,9 +133,7 @@ export async function closePool(): Promise<void> {
 }
 
 /**
- * Type for tenant context used throughout the application
+ * Re-export TenantContext for convenience
+ * The full definition is in context.ts
  */
-export interface TenantContext {
-  tenantId: string;
-  userId?: string;
-}
+export type { TenantContext } from './context';

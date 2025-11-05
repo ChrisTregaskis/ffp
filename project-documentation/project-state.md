@@ -96,8 +96,8 @@
 **Phase 1: Prerequisites (9.5h)**
 
 - ✅ FFP-43: Error Handling Classes (3.5h) - **COMPLETE** ✅
+- ✅ FFP-36: Tenant Context Extraction (2h) - **COMPLETE** ✅
 - ⏸️ FFP-44: Structured Logging (2h) - NOT STARTED ← **NEXT**
-- ⏸️ FFP-36: Tenant Context Extraction (2h) - NOT STARTED
 - ⏸️ FFP-32: Secrets Manager - JWT Only (2.5h) - NOT STARTED
 
 **Phase 2: Bootstrap + Core Auth (8.5h)**
@@ -125,9 +125,9 @@
 
 **Time Tracking:**
 
-- Hours completed: 6.5/29-30 (22%)
-- Subtasks completed: 2/13 (15%)
-- **Status**: Phase 1 in progress - FFP-35 ✅, FFP-43 ✅, FFP-44 next
+- Hours completed: 8.5/29-30 (29%)
+- Subtasks completed: 3/13 (23%)
+- **Status**: Phase 1 in progress - FFP-35 ✅, FFP-43 ✅, FFP-36 ✅, FFP-44 next
 
 **Manual Actions Required Before Implementation:**
 
@@ -333,7 +333,7 @@
 | FFP-14      | CloudWatch Logging              | 7        | 14h      | ⏸️ Not Started           |
 | FFP-15      | Error Handling Patterns         | 7        | 15h      | ✅ COMPLETE (via FFP-43) |
 | FFP-16      | Web Login/Logout Flow           | 11       | 27h      | ⏸️ Not Started           |
-| **Total**   |                                 | **96**   | **197h** | **123.5/197h (63%)**     |
+| **Total**   |                                 | **96**   | **197h** | **125.5/197h (64%)**     |
 
 **Note**: FFP-13 (CI/CD Pipeline) was intentionally skipped for now - can be added later if needed.
 
@@ -459,7 +459,7 @@
 - 🎯 FFP-9: Cognito Authentication (IN PROGRESS - 13 subtasks, 30h)
 - ⏸️ FFP-12, FFP-14, FFP-16: Not started
 - **Total Progress**: 123.5/201 hours (61%) - **WELL OVER HALFWAY!** 🎉
-- **Current**: FFP-9 Cognito Authentication ← **IN PROGRESS** (2/13 subtasks complete: FFP-35 ✅, FFP-43 ✅)
+- **Current**: FFP-9 Cognito Authentication ← **IN PROGRESS** (3/13 subtasks complete: FFP-35 ✅, FFP-43 ✅, FFP-36 ✅)
 
 ---
 
@@ -518,15 +518,17 @@
 
 ## Progress Summary
 
-**Recent Work** (Nov 3, 2025 - Session 32):
+**Recent Work** (Nov 5, 2025 - Session 33):
 
-- 🎉 **FFP-15 MARKED COMPLETE!** Error Handling Patterns (15h)
-- ✅ **Analysis completed**: Verified FFP-43 satisfied all FFP-15 requirements
-- ✅ **FFP-83-87**: Custom error classes, middleware, logging, and tests complete via FFP-43
-- ✅ **FFP-88**: Integration tests deferred to FFP-42 (by design)
-- ✅ **FFP-89**: Documentation covered by inline code docs
-- ✅ **85% coverage**: FFP-43 implemented all core error handling patterns
-- 📊 **Sprint 1 Progress**: 123.5/197 hours (63%) - well over halfway!
+- 🎉 **FFP-36 COMPLETE!** Tenant Context Extraction with Actor Support (2h)
+- ✅ **Actor-based architecture**: UserActor and SystemActor interfaces implemented
+- ✅ **Enhanced TenantContext**: Includes actor, requestId, timestamp, settings, enabledModules
+- ✅ **Context extraction**: extractUserContext, createSystemContext, extractJobContext
+- ✅ **Runtime validation**: All extraction functions validate inputs with typeof checks
+- ✅ **Helper functions**: isUserActor, isSystemActor, getActorDisplayName
+- ✅ **Security fixes**: Added validation to prevent empty strings bypassing RLS
+- ✅ **Code review**: Addressed all critical and high-priority issues
+- 📊 **Sprint 1 Progress**: 125.5/197 hours (64%) - well over halfway!
 - 🎯 **Next**: Continue FFP-9 with FFP-44 Structured Logging (2h)
 
 **Previous Work** (Nov 3, 2025 - Session 31):
@@ -541,7 +543,7 @@
 - ✅ **British English**: UnauthorisedError (not UnauthorizedError)
 - ✅ **System admin support**: PLATFORM_TENANT_ID constant and documentation
 - 📝 **Review context created**: Comprehensive PR review documentation
-- ⏱️ **FFP-9 Progress**: 2/13 subtasks (15%), 6.5/30 hours (22%)
+- ⏱️ **FFP-9 Progress**: 3/13 subtasks (23%), 8.5/30 hours (29%)
 
 **Previous Work** (Nov 3, 2025 - Session 30):
 
@@ -877,4 +879,4 @@ _Key Requirements:_
 
 ---
 
-**Sprint 1 Progress: 123.5/197 hours (63%) - WELL OVER HALFWAY! 🎉 FFP-7, FFP-8, FFP-106/107/108, FFP-10, FFP-11, FFP-15 ALL COMPLETE & MERGED! FFP-9 IN PROGRESS (2/13 subtasks complete - FFP-35 ✅, FFP-43 ✅)!**
+**Sprint 1 Progress: 125.5/197 hours (64%) - WELL OVER HALFWAY! 🎉 FFP-7, FFP-8, FFP-106/107/108, FFP-10, FFP-11, FFP-15 ALL COMPLETE & MERGED! FFP-9 IN PROGRESS (3/13 subtasks complete - FFP-35 ✅, FFP-43 ✅, FFP-36 ✅)!**

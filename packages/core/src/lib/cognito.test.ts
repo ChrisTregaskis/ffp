@@ -19,6 +19,7 @@ import {
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { CognitoService } from './cognito';
+import { COGNITO_CUSTOM_ATTRIBUTES } from './constants';
 import { UnauthorisedError } from './errors';
 
 // Mock the AWS SDK
@@ -83,9 +84,9 @@ describe('CognitoService', () => {
           { Name: 'email_verified', Value: 'true' },
           { Name: 'given_name', Value: 'John' },
           { Name: 'family_name', Value: 'Smith' },
-          { Name: 'custom:tenantId', Value: 'tenant-123' },
-          { Name: 'custom:customerId', Value: 'customer-456' },
-          { Name: 'custom:role', Value: 'customer_user' },
+          { Name: COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID, Value: 'tenant-123' },
+          { Name: COGNITO_CUSTOM_ATTRIBUTES.CUSTOMER_ID, Value: 'customer-456' },
+          { Name: COGNITO_CUSTOM_ATTRIBUTES.ROLE, Value: 'customer_user' },
         ],
         DesiredDeliveryMediums: ['EMAIL'],
       });
@@ -154,7 +155,7 @@ describe('CognitoService', () => {
       expect(AdminCreateUserCommand).toHaveBeenCalledWith(
         expect.objectContaining({
           UserAttributes: expect.arrayContaining([
-            { Name: 'custom:customerId', Value: 'customer-456' },
+            { Name: COGNITO_CUSTOM_ATTRIBUTES.CUSTOMER_ID, Value: 'customer-456' },
           ]),
         })
       );
@@ -178,7 +179,7 @@ describe('CognitoService', () => {
 
       const commandCall = vi.mocked(AdminCreateUserCommand).mock.calls[0][0];
       const hasCustomerId = commandCall.UserAttributes?.some(
-        (attr) => attr.Name === 'custom:customerId'
+        (attr) => attr.Name === COGNITO_CUSTOM_ATTRIBUTES.CUSTOMER_ID
       );
 
       expect(hasCustomerId).toBe(false);

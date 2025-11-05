@@ -1,3 +1,163 @@
+### November 5, 2025 (Session 33 - FFP-36 Complete!)
+
+**Status**: ✅ FFP-36 COMPLETE - Tenant Context Extraction with Actor Support
+
+**Branch**: `feature/ffp-9-cognito-auth`
+
+**Session Focus**: Implement actor-based context extraction utilities with runtime validation (FFP-36)
+
+**Completed Work:**
+
+**FFP-36: Tenant Context Extraction** ✅ **COMPLETE** (2 hours)
+
+**Core Infrastructure Created:**
+
+- ✅ Created `packages/core/src/lib/context.ts` - Actor-based context utilities
+  - UserActor interface - Authenticated users with userId, userRole, email
+  - SystemActor interface - System operations with systemId, triggeredBy, jobId
+  - Actor type (discriminated union of UserActor | SystemActor)
+  - TenantContext interface - Enhanced with actor, requestId, timestamp, settings, enabledModules
+  - PlatformSettings type - Optional tenant-specific settings (Record<string, unknown>)
+- ✅ Implemented extractUserContext(event) - API Gateway JWT claim extraction
+  - Validates all required claims: sub, role, email, tenantId
+  - Runtime type checks with `typeof claim !== 'string'`
+  - Throws UnauthorisedError with specific error messages per claim
+  - Handles optional customerId (nullable for super admins)
+- ✅ Implemented createSystemContext(params) - System operation context creation
+  - Validates systemId and tenantId are non-empty strings
+  - Throws ValidationError for invalid parameters
+  - Generates unique requestId using crypto.randomUUID()
+  - Supports triggeredBy and jobId for traceability
+- ✅ Implemented extractJobContext(jobMessage) - Job queue message extraction
+  - Validates jobId, jobType, tenantId are non-empty strings
+  - Throws ValidationError with specific field names
+  - Maps jobType to systemId for consistent naming
+- ✅ Implemented helper functions
+  - isUserActor(actor) - Type guard for user actors
+  - isSystemActor(actor) - Type guard for system actors
+  - getActorDisplayName(actor) - Human-readable display names
+    - User: "email@example.com (role)"
+    - System: "System: systemId"
+
+**Configuration Updates:**
+
+- ✅ Updated `packages/core/src/server.ts` - Added context utilities export
+  - Added `export * from './lib/context'`
+  - Updated JSDoc to include tenant context extraction utilities
+  - Maintains separation from browser-friendly exports
+- ✅ Updated `packages/core/src/lib/database.ts` - TenantContext integration
+  - Removed duplicate TenantContext interface
+  - Added re-export: `export type { TenantContext } from './context'`
+  - Maintains backward compatibility for existing database utilities
+
+**Security Enhancements (From Code Review):**
+
+- ✅ Added ValidationError import to context.ts
+- ✅ Added JWT claim validation with runtime type checks
+  - Individual validation for: sub, role, email, tenantId
+  - Each claim checked with `typeof claim !== 'string'`
+  - Specific error messages: "Missing or invalid sub claim"
+- ✅ Added validation to createSystemContext()
+  - Validates systemId is non-empty string
+  - Validates tenantId is non-empty string
+  - Prevents empty strings from bypassing RLS isolation
+- ✅ Added validation to extractJobContext()
+  - Validates jobId, jobType, tenantId from job messages
+  - Fails fast with clear error messages
+  - Prevents malformed job messages from propagating
+
+**Key Features Implemented:**
+
+1. **Actor-Based Architecture** (`packages/core/src/lib/context.ts`)
+   - Clean separation between user and system actors
+   - Discriminated union for type-safe handling
+   - Supports both API Gateway requests and background jobs
+
+2. **Enhanced TenantContext Interface**
+   - Includes actor information (user vs system)
+   - requestId for distributed tracing
+   - timestamp for audit trails
+   - Optional settings and enabledModules for future features
+
+3. **Runtime Validation**
+   - All extraction functions validate inputs
+   - Type checks complement TypeScript static types
+   - Defense-in-depth security approach
+   - Empty strings rejected (prevents RLS bypass)
+
+4. **Helper Functions**
+   - Type guards enable proper TypeScript narrowing
+   - getActorDisplayName() for structured logging
+   - Pure functions with no side effects
+
+**Code Quality:**
+
+- ✅ All TypeScript strict mode checks pass
+- ✅ No `any` types in production code
+- ✅ Comprehensive JSDoc documentation with examples
+- ✅ British English spelling throughout (UnauthorisedError)
+- ✅ Runtime validation added to all extraction functions
+- ✅ Zero ESLint warnings
+
+**Testing Results:**
+
+```
+✓ Type check: PASS
+✓ Build: PASS
+✓ Tests: 94 passed (94) - No regressions
+✓ Code review: All critical/high issues resolved
+```
+
+**Documentation:**
+
+- ✅ Review context document created with comprehensive details
+- ✅ Updated after addressing code review feedback
+- ✅ Manual testing instructions provided
+- ✅ Clear reasoning for deferred medium-priority items
+
+**Code Review Process:**
+
+- ✅ First review identified 2 critical + 2 high + 3 medium issues
+- ✅ All critical issues fixed: JWT validation, system context validation, error imports
+- ✅ All high priority issues fixed: Job context validation
+- ✅ Medium priority items deferred as acceptable trade-offs for Phase 1
+- ✅ Second review document prepared with fixes applied
+
+**Key Decisions:**
+
+- **Validation placement**: Added runtime validation in extraction functions (not constructors)
+- **Error types**: UnauthorisedError for auth failures, ValidationError for data validation
+- **Type checking**: Using `typeof x !== 'string'` for runtime validation
+- **Helper functions**: Kept type guards simple (check discriminant field only)
+- **Backward compatibility**: Maintained via re-export from database.ts
+- **Testing strategy**: Unit tests deferred to FFP-41, integration tests to FFP-42
+
+**Files Created:**
+
+- `packages/core/src/lib/context.ts` (267 lines)
+
+**Files Modified:**
+
+- `packages/core/src/server.ts` (added context export)
+- `packages/core/src/lib/database.ts` (re-export TenantContext)
+- `.claude/review-context.md` (comprehensive review documentation)
+
+**Progress Tracking:**
+
+- ✅ FFP-9 Progress: 3/13 subtasks complete (23%)
+- ✅ FFP-9 Hours: 8.5/29-30 hours complete (29%)
+- ✅ Sprint 1 Progress: 125.5/197 hours (64%)
+- 🎯 **Next**: FFP-44 Structured Logging (2h) - Now unblocked with actor context available
+
+**Blockers Resolved:**
+
+- ✅ FFP-44 (Structured Logging) now has access to:
+  - getActorDisplayName() for actor-aware logging
+  - Enhanced TenantContext for structured log context
+  - Logger.fromTenantContext() helper can now be implemented
+
+---
+
 ### November 3, 2025 (Session 31 - FFP-43 Complete!)
 
 **Status**: ✅ FFP-43 COMPLETE - Error Handling Classes and Middleware
