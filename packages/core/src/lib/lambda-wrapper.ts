@@ -4,11 +4,15 @@
  * Provides consistent error handling and response formatting for all Lambda functions.
  * Wraps handler functions to catch errors and convert them to properly formatted
  * API Gateway responses.
+ *
+ * Integrates structured logging for all requests with tenant context awareness.
  */
 
 import { ZodError } from 'zod';
 
+import { extractUserContext } from './context.js';
 import { BaseError, InternalServerError } from './errors.js';
+import { Logger } from './logger.js';
 
 import type { APIGatewayProxyEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 
@@ -46,16 +50,19 @@ interface ErrorResponseBody {
 }
 
 /**
- * Wraps a Lambda handler with error handling middleware
+ * Wraps a Lambda handler with error handling and structured logging middleware
  *
  * This wrapper:
- * 1. Executes the handler and returns success responses (200)
- * 2. Catches BaseError instances and returns appropriate status codes
- * 3. Catches ZodError instances and returns validation errors (400)
- * 4. Catches unexpected errors and returns 500 with sanitised message
- * 5. Logs all errors with context for debugging
+ * 1. Extracts tenant context and creates structured logger
+ * 2. Logs request start with path and method
+ * 3. Executes the handler and returns success responses (200)
+ * 4. Logs request completion with status code
+ * 5. Catches BaseError instances and returns appropriate status codes
+ * 6. Catches ZodError instances and returns validation errors (400)
+ * 7. Catches unexpected errors and returns 500 with sanitised message
+ * 8. Logs all errors with context for debugging
  *
- * Security: Ensures sensitive information is never exposed in error messages
+ * Security: Ensures sensitive information is never exposed in error messages or logs
  *
  * @param handler - The Lambda handler function to wrap
  * @returns Wrapped handler that returns API Gateway responses
@@ -72,8 +79,27 @@ export const withErrorHandling = <TResult>(
   handler: (event: APIGatewayProxyEvent) => Promise<TResult>
 ) => {
   return async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResultV2> => {
+    // Try to extract user context for structured logging (only works for authenticated requests)
+    let logger: Logger | null = null;
+    try {
+      const context = extractUserContext(event);
+      logger = new Logger(context);
+      logger.info('Request started', {
+        path: event.path,
+        method: event.httpMethod,
+      });
+    } catch {
+      // Context extraction failed (unauthenticated request or invalid JWT)
+      // Fall back to console logging for backwards compatibility
+    }
+
     try {
       const result = await handler(event);
+
+      // Log successful completion
+      if (logger) {
+        logger.info('Request completed', { statusCode: 200 });
+      }
 
       return {
         statusCode: 200,
@@ -87,15 +113,25 @@ export const withErrorHandling = <TResult>(
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       const requestId = event.requestContext?.requestId;
 
-      // Log error with context for debugging
-      // Note: In production, this should use structured logging (see FFP-44)
-      console.error('Lambda error:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        requestId,
-        // Sanitise event data to avoid logging sensitive information
-        event: sanitiseEventForLogging(event),
-      });
+      // Log error with structured logging if available, otherwise fall back to console
+      if (logger) {
+        logger.error('Request failed', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          errorType: error instanceof BaseError ? error.code : 'UNKNOWN_ERROR',
+          // Sanitise event data to avoid logging sensitive information
+          sanitisedEvent: sanitiseEventForLogging(event),
+        });
+      } else {
+        // Fallback to console.error for unauthenticated requests
+        console.error('Lambda error:', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          requestId,
+          // Sanitise event data to avoid logging sensitive information
+          event: sanitiseEventForLogging(event),
+        });
+      }
 
       // Handle application errors (our custom error classes)
       if (error instanceof BaseError) {

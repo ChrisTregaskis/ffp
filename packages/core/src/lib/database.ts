@@ -131,9 +131,3 @@ export const withRLS = async <T>(
 export async function closePool(): Promise<void> {
   await pool.end();
 }
-
-/**
- * Re-export TenantContext for convenience
- * The full definition is in context.ts
- */
-export type { TenantContext } from './context';
