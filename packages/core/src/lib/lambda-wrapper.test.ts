@@ -611,4 +611,128 @@ describe('withErrorHandling', () => {
       expect(() => JSON.parse(result.body) as unknown).not.toThrow();
     });
   });
+
+  describe('structured logging integration', () => {
+    let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+    });
+
+    // Helper to create an authenticated event with JWT
+    function createAuthenticatedEvent(
+      overrides?: Partial<APIGatewayProxyEvent>
+    ): APIGatewayProxyEvent {
+      return createMockEvent({
+        ...overrides,
+        requestContext: {
+          ...createMockEvent().requestContext,
+          authorizer: {
+            jwt: {
+              claims: {
+                sub: 'user-123',
+                email: 'test@example.com',
+                'custom:role': 'customer_owner',
+                'custom:tenantId': 'tenant-456',
+                'custom:customerId': 'customer-789',
+              },
+            },
+          },
+        },
+      });
+    }
+
+    it('should use structured logging for authenticated requests', async () => {
+      const handler = withErrorHandling(() => {
+        return Promise.resolve({ success: true });
+      });
+
+      const event = createAuthenticatedEvent({ path: '/users', httpMethod: 'GET' });
+      await handler(event);
+
+      // Should have 2 log entries: request started, request completed
+      expect(consoleLogSpy).toHaveBeenCalledTimes(2);
+
+      const startLog = JSON.parse(consoleLogSpy.mock.calls[0][0] as string) as {
+        level: string;
+        message: string;
+        context?: { path: string; method: string };
+      };
+      const endLog = JSON.parse(consoleLogSpy.mock.calls[1][0] as string) as {
+        level: string;
+        message: string;
+        context?: { statusCode: number };
+      };
+
+      expect(startLog.level).toBe('INFO');
+      expect(startLog.message).toBe('Request started');
+      expect(startLog.context?.path).toBe('/users');
+      expect(startLog.context?.method).toBe('GET');
+
+      expect(endLog.level).toBe('INFO');
+      expect(endLog.message).toBe('Request completed');
+      expect(endLog.context?.statusCode).toBe(200);
+    });
+
+    it('should log errors with structured logging for authenticated requests', async () => {
+      const handler = withErrorHandling(() => {
+        throw new ValidationError('Invalid data');
+      });
+
+      const event = createAuthenticatedEvent();
+      await handler(event);
+
+      // Should have 2 log entries: request started, request failed
+      expect(consoleLogSpy).toHaveBeenCalledTimes(2);
+
+      const errorLog = JSON.parse(consoleLogSpy.mock.calls[1][0] as string) as {
+        level: string;
+        message: string;
+        context?: {
+          error: string;
+          errorType: string;
+        };
+      };
+
+      expect(errorLog.level).toBe('ERROR');
+      expect(errorLog.message).toBe('Request failed');
+      expect(errorLog.context?.error).toBe('Invalid data');
+      expect(errorLog.context?.errorType).toBe('VALIDATION_ERROR');
+    });
+
+    it('should include actor information in structured logs', async () => {
+      const handler = withErrorHandling(() => {
+        return Promise.resolve({ success: true });
+      });
+
+      const event = createAuthenticatedEvent();
+      await handler(event);
+
+      const startLog = JSON.parse(consoleLogSpy.mock.calls[0][0] as string) as {
+        actor: string;
+        tenantId: string;
+      };
+
+      expect(startLog.actor).toBe('test@example.com (customer_owner)');
+      expect(startLog.tenantId).toBe('tenant-456');
+    });
+
+    it('should fall back to console.error for unauthenticated requests', async () => {
+      const handler = withErrorHandling(() => {
+        throw new Error('Test error');
+      });
+
+      const unauthenticatedEvent = createMockEvent();
+      await handler(unauthenticatedEvent);
+
+      // Should not use structured logging (no JWT)
+      expect(consoleLogSpy).not.toHaveBeenCalled();
+      // Should use console.error instead (already mocked in outer beforeEach)
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+  });
 });
