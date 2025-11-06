@@ -8,6 +8,28 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### November 6, 2025 (Session 35 - FFP-32 Deferred)
+
+**Status**: ⏸️ FFP-32 DEFERRED - Secrets Manager (0.5h)
+
+**Branch**: `feature/ffp-9-cognito-auth`
+
+**Decision**: Defer FFP-32 (Secrets Manager) until actually needed
+
+**Rationale**:
+
+- Cognito uses built-in JWTs with custom attributes (`custom:tenantId`, `custom:role`)
+- JWT verification uses Cognito's public keys (JWKS endpoint) - no signing secret needed
+- No custom JWT generation required for Phase 1
+- No API-to-API authentication in Phase 1
+- Will revisit during staging readiness when setting up RDS (may need database encryption keys)
+
+**FFP-9 Progress**: 4/13 subtasks (31%), 10.5/29-30 hours (35%)
+**Sprint 1**: 128/197 hours (65%)
+**Next**: FFP-112 Manual Jira Creation → FFP-37 Invite User Lambda (4h)
+
+---
+
 ### November 6, 2025 (Session 34 - FFP-44 Complete!)
 
 **Status**: ✅ FFP-44 COMPLETE - Structured Logging with Actor Awareness (2h)
@@ -126,18 +148,19 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Key Milestones
 
-| Date        | Milestone                       | Hours          |
-| ----------- | ------------------------------- | -------------- |
-| Oct 20      | Sprint 1 Started                | 0h             |
-| Oct 24      | FFP-7 Complete (Monorepo)       | 13h            |
-| Oct 26      | FFP-8 Complete (Infrastructure) | 30h            |
-| Oct 27      | Database schemas defined        | 44h            |
-| Oct 30      | FFP-10 Complete (RLS)           | 54h            |
-| Nov 1       | FFP-10 & FFP-11 Merged to Main  | 83.5h          |
-| Nov 3       | FFP-35 & FFP-43 Complete        | 94h            |
-| Nov 5       | FFP-36 Complete                 | 125.5h         |
-| Nov 6       | FFP-44 Complete                 | 127.5h         |
-| **Current** | **65% Sprint 1 Complete**       | **127.5/197h** |
+| Date        | Milestone                       | Hours        |
+| ----------- | ------------------------------- | ------------ |
+| Oct 20      | Sprint 1 Started                | 0h           |
+| Oct 24      | FFP-7 Complete (Monorepo)       | 13h          |
+| Oct 26      | FFP-8 Complete (Infrastructure) | 30h          |
+| Oct 27      | Database schemas defined        | 44h          |
+| Oct 30      | FFP-10 Complete (RLS)           | 54h          |
+| Nov 1       | FFP-10 & FFP-11 Merged to Main  | 83.5h        |
+| Nov 3       | FFP-35 & FFP-43 Complete        | 94h          |
+| Nov 5       | FFP-36 Complete                 | 125.5h       |
+| Nov 6       | FFP-44 Complete                 | 127.5h       |
+| Nov 6       | FFP-32 Deferred                 | 128h         |
+| **Current** | **65% Sprint 1 Complete**       | **128/197h** |
 
 ---
 

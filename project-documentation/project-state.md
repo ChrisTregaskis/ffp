@@ -1,9 +1,9 @@
 # FFP - Project State
 
-**Last Updated**: November 6, 2025 - Session 34
+**Last Updated**: November 6, 2025 - Session 35
 **Current Phase**: Sprint 1 Execution - IN PROGRESS 🚀
 **Branch**: `feature/ffp-9-cognito-auth`
-**Sprint 1 Progress**: 127.5/197 hours (65%) - WELL OVER HALFWAY! 🎉
+**Sprint 1 Progress**: 128/197 hours (65%) - WELL OVER HALFWAY! 🎉
 
 ---
 
@@ -11,17 +11,17 @@
 
 **Status**: 🚀 IN PROGRESS (4/13 subtasks, 10.5/29-30 hours, 35%)
 
-### Phase 1: Prerequisites (10.5h) - ✅ COMPLETE
+### Phase 1: Prerequisites (8h) - ✅ COMPLETE
 
 - ✅ FFP-43: Error Handling Classes (3.5h)
 - ✅ FFP-36: Tenant Context Extraction (2h)
 - ✅ FFP-44: Structured Logging (2h)
-- ⏸️ FFP-32: Secrets Manager - JWT Only (2.5h) ← **NEXT**
+- ⏸️ FFP-32: Secrets Manager (2.5h) - **DEFERRED** (see decisions below)
 
 ### Phase 2: Bootstrap + Core Auth (8.5h)
 
 - ⏸️ Manual: Super User Setup (0.5h)
-- ⏸️ FFP-112: Admin CLI Script (1h) - **NEEDS MANUAL JIRA CREATION**
+- ⏸️ FFP-112: Admin CLI Script (1h) - ← **NEXT**
 - ✅ FFP-35: Zod Schemas (3h)
 - ⏸️ FFP-37: Invite User Lambda (4h)
 
@@ -58,6 +58,12 @@
 ---
 
 ## Recent Work
+
+**Session 35 (Nov 6)**: ⏸️ FFP-32 - Secrets Manager DEFERRED (0.5h)
+
+- Decision to defer until actual secret requirements arise
+- Cognito JWTs use public key verification (no signing secret needed)
+- Will revisit during staging readiness / RDS setup
 
 **Session 34 (Nov 6)**: ✅ FFP-44 - Structured Logging (2h)
 
@@ -110,6 +116,14 @@
 ---
 
 ## Key Decisions
+
+**FFP-32 (Secrets Manager)** - Session 35:
+
+- **DEFERRED** until staging readiness / RDS setup
+- Cognito JWTs use custom attributes (`custom:tenantId`, `custom:role`)
+- JWT verification uses Cognito public keys (JWKS) - no signing secret needed
+- No custom JWT generation in Phase 1
+- Will implement when actual secrets required (DB encryption keys, API keys)
 
 **FFP-9 (Cognito Auth)**:
 
