@@ -45,25 +45,44 @@ interface LogEntry {
  * Provides CloudWatch-optimised JSON logging with automatic request tracking,
  * performance timing, and actor identification.
  *
+ * Supports log level filtering via constructor parameter or LOG_LEVEL environment variable.
+ *
  * @example
  * ```typescript
  * const logger = new Logger(context);
  * logger.info('User created', { userId: '123' });
  * logger.error('Validation failed', { field: 'email' });
+ *
+ * // With custom minimum log level
+ * const prodLogger = new Logger(context, LogLevel.INFO); // Suppresses DEBUG logs
  * ```
  */
 export class Logger {
+  /**
+   * Priority values for log levels (higher = more severe)
+   */
+  private static readonly logLevelPriority: Record<LogLevel, number> = {
+    [LogLevel.DEBUG]: 0,
+    [LogLevel.INFO]: 1,
+    [LogLevel.WARN]: 2,
+    [LogLevel.ERROR]: 3,
+  };
+
   private readonly context: TenantContext;
   private readonly startTime: Date;
+  private readonly minLogLevel: LogLevel;
 
   /**
    * Create a new logger instance
    *
    * @param context - Tenant context containing actor and request information
+   * @param minLogLevel - Minimum log level to output (defaults to LOG_LEVEL env var or DEBUG)
    */
-  constructor(context: TenantContext) {
+  constructor(context: TenantContext, minLogLevel?: LogLevel) {
     this.context = context;
     this.startTime = context.timestamp;
+    this.minLogLevel =
+      minLogLevel ?? (process.env.LOG_LEVEL as LogLevel | undefined) ?? LogLevel.DEBUG;
   }
 
   /**
@@ -83,6 +102,11 @@ export class Logger {
    * @param additionalContext - Optional additional context fields
    */
   log(level: LogLevel, message: string, additionalContext?: LogContext): void {
+    // Skip logs below minimum level
+    if (Logger.logLevelPriority[level] < Logger.logLevelPriority[this.minLogLevel]) {
+      return;
+    }
+
     const contextActor = this.context.actor;
 
     const entry: LogEntry = {

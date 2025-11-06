@@ -353,6 +353,130 @@ describe('Logger', () => {
       expect(new Date(logEntry.timestamp).toISOString()).toBe(logEntry.timestamp);
     });
   });
+
+  describe('Log level filtering', () => {
+    const mockContext: TenantContext = {
+      actor: {
+        type: 'user',
+        userId: 'user-123',
+        userRole: 'customer_owner',
+        email: 'test@example.com',
+      },
+      tenantId: 'tenant-456',
+      customerId: 'customer-789',
+      requestId: 'request-filter',
+      timestamp: new Date('2025-01-06T10:00:00.000Z'),
+    };
+
+    it('should output all levels when minLogLevel is DEBUG', () => {
+      const logger = new Logger(mockContext, LogLevel.DEBUG);
+
+      logger.debug('Debug message');
+      logger.info('Info message');
+      logger.warn('Warn message');
+      logger.error('Error message');
+
+      expect(consoleLogSpy).toHaveBeenCalledTimes(4);
+    });
+
+    it('should suppress DEBUG logs when minLogLevel is INFO', () => {
+      const logger = new Logger(mockContext, LogLevel.INFO);
+
+      logger.debug('Debug message');
+      logger.info('Info message');
+      logger.warn('Warn message');
+      logger.error('Error message');
+
+      // DEBUG should be suppressed, only 3 logs
+      expect(consoleLogSpy).toHaveBeenCalledTimes(3);
+
+      const levels = consoleLogSpy.mock.calls.map((call) => parseLogEntry(call[0] as string).level);
+      expect(levels).toEqual(['INFO', 'WARN', 'ERROR']);
+    });
+
+    it('should suppress DEBUG and INFO when minLogLevel is WARN', () => {
+      const logger = new Logger(mockContext, LogLevel.WARN);
+
+      logger.debug('Debug message');
+      logger.info('Info message');
+      logger.warn('Warn message');
+      logger.error('Error message');
+
+      expect(consoleLogSpy).toHaveBeenCalledTimes(2);
+
+      const levels = consoleLogSpy.mock.calls.map((call) => parseLogEntry(call[0] as string).level);
+      expect(levels).toEqual(['WARN', 'ERROR']);
+    });
+
+    it('should only output ERROR when minLogLevel is ERROR', () => {
+      const logger = new Logger(mockContext, LogLevel.ERROR);
+
+      logger.debug('Debug message');
+      logger.info('Info message');
+      logger.warn('Warn message');
+      logger.error('Error message');
+
+      expect(consoleLogSpy).toHaveBeenCalledOnce();
+
+      const logEntry = parseLogEntry(consoleLogSpy.mock.calls[0][0] as string);
+      expect(logEntry.level).toBe('ERROR');
+    });
+
+    it('should default to DEBUG when no minLogLevel specified', () => {
+      const logger = new Logger(mockContext);
+
+      logger.debug('Debug message');
+
+      expect(consoleLogSpy).toHaveBeenCalledOnce();
+      const logEntry = parseLogEntry(consoleLogSpy.mock.calls[0][0] as string);
+      expect(logEntry.level).toBe('DEBUG');
+    });
+
+    it('should respect LOG_LEVEL environment variable', () => {
+      const originalLogLevel = process.env.LOG_LEVEL;
+      process.env.LOG_LEVEL = 'WARN';
+
+      try {
+        const logger = new Logger(mockContext);
+
+        logger.debug('Debug message');
+        logger.info('Info message');
+        logger.warn('Warn message');
+
+        expect(consoleLogSpy).toHaveBeenCalledOnce();
+        const logEntry = parseLogEntry(consoleLogSpy.mock.calls[0][0] as string);
+        expect(logEntry.level).toBe('WARN');
+      } finally {
+        // Restore original value
+        if (originalLogLevel === undefined) {
+          delete process.env.LOG_LEVEL;
+        } else {
+          process.env.LOG_LEVEL = originalLogLevel;
+        }
+      }
+    });
+
+    it('should allow constructor parameter to override LOG_LEVEL env var', () => {
+      const originalLogLevel = process.env.LOG_LEVEL;
+      process.env.LOG_LEVEL = 'ERROR';
+
+      try {
+        const logger = new Logger(mockContext, LogLevel.DEBUG);
+
+        logger.debug('Debug message');
+
+        expect(consoleLogSpy).toHaveBeenCalledOnce();
+        const logEntry = parseLogEntry(consoleLogSpy.mock.calls[0][0] as string);
+        expect(logEntry.level).toBe('DEBUG');
+      } finally {
+        if (originalLogLevel === undefined) {
+          delete process.env.LOG_LEVEL;
+        } else {
+          process.env.LOG_LEVEL = originalLogLevel;
+        }
+      }
+    });
+  });
 });
 
 describe('withRequestLogging', () => {
