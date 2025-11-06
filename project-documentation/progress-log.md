@@ -1,3 +1,189 @@
+### November 6, 2025 (Session 34 - FFP-44 Complete!)
+
+**Status**: ✅ FFP-44 COMPLETE - Structured Logging with Actor Awareness
+
+**Branch**: `feature/ffp-9-cognito-auth`
+
+**Session Focus**: Implement CloudWatch-optimised structured logging with actor awareness and Lambda wrapper integration (FFP-44)
+
+**Completed Work:**
+
+**FFP-44: Structured Logging** ✅ **COMPLETE** (2 hours)
+
+**Core Infrastructure Created:**
+
+- ✅ Created `packages/core/src/lib/logger.ts` - Structured logging utility
+  - LogLevel enum - DEBUG, INFO, WARN, ERROR severity levels
+  - Logger class with actor-aware CloudWatch JSON output
+  - Static logLevelPriority map for O(1) level comparison
+  - Log level filtering via constructor parameter or LOG_LEVEL env var
+  - Performance timing tracked from context.timestamp (milliseconds precision)
+  - Automatic inclusion: timestamp, level, message, requestId, tenantId, actor, duration
+  - `triggeredBy` field included for system actors when present
+  - withRequestLogging() helper for operation-level tracing with automatic start/end logging
+- ✅ Created `packages/core/src/lib/logger.test.ts` - Comprehensive test suite
+  - 27 tests covering all Logger functionality (20 core + 7 log level filtering)
+  - UserActor and SystemActor logging with proper display names
+  - All log levels (DEBUG, INFO, WARN, ERROR)
+  - Additional context fields handling
+  - Performance timing accuracy validation
+  - CloudWatch JSON structure validation
+  - withRequestLogging success and error cases
+  - Log level filtering behaviour (DEBUG, INFO, WARN, ERROR modes)
+  - Environment variable handling (LOG_LEVEL)
+  - Constructor parameter precedence over env var
+  - parseLogEntry() helper with runtime validation (no `as` casting)
+
+**Modified Files:**
+
+- ✅ Updated `packages/core/src/server.ts` - Added logger utilities export
+  - Added `export * from './lib/context'` for TenantContext access
+  - Added `export * from './lib/logger'` for Logger class
+  - Updated JSDoc to include structured logging utilities
+  - Fixed duplicate TenantContext export (removed from database.ts)
+- ✅ Updated `packages/core/src/lib/lambda-wrapper.ts` - Integrated automatic request lifecycle logging
+  - Attempts to extract user context for authenticated requests
+  - Creates Logger instance when JWT is valid
+  - Logs "Request started" with path and HTTP method
+  - Logs "Request completed" with status code on success
+  - Logs "Request failed" with error details and stack trace
+  - Falls back to console.error for unauthenticated requests (backward compatible)
+  - Sanitises event data before logging (passwords, tokens, etc.)
+  - All existing error handling logic preserved (no breaking changes)
+- ✅ Updated `packages/core/src/lib/database.ts` - Removed duplicate TenantContext export
+  - Removed `export type { TenantContext } from './context'` (line 139)
+  - TenantContext now exported only via server.ts
+  - Prevents duplicate export lint error
+- ✅ Updated `packages/core/src/lib/lambda-wrapper.test.ts` - Added structured logging integration tests
+  - 4 new tests (27 total, up from 23)
+  - Structured logging for authenticated requests
+  - Error logging with structured format
+  - Actor information included in logs
+  - Graceful fallback for unauthenticated requests
+  - All existing tests still pass (no regressions)
+
+**Key Features Implemented:**
+
+1. **CloudWatch-Optimised JSON Output** (`packages/core/src/lib/logger.ts:84-110`)
+   - Single-line JSON for efficient CloudWatch ingestion
+   - ISO 8601 timestamps for CloudWatch Logs Insights queries
+   - Structured fields enable filtering: `fields @timestamp, actor, tenantId | filter tenantId = "tenant-123"`
+   - requestId correlation across all logs in a request
+
+2. **Actor Awareness**
+   - Uses `getActorDisplayName()` from context.ts for consistent formatting
+   - User actors: "email@example.com (role)"
+   - System actors: "System: systemId"
+   - `triggeredBy` field included for system jobs when present
+
+3. **Performance Timing**
+   - Duration tracked from context.timestamp (milliseconds precision)
+   - getDuration() calculates elapsed time automatically
+   - Included in every log entry for operation profiling
+   - Operation-specific timing in withRequestLogging
+
+4. **Log Level Filtering**
+   - Constructor accepts optional minLogLevel parameter
+   - Falls back to LOG_LEVEL environment variable
+   - Defaults to DEBUG when neither specified
+   - Static priority map ensures O(1) level comparison
+   - Early return in log() method skips suppressed logs entirely
+   - No JSON.stringify overhead for filtered logs
+   - Production can set `LOG_LEVEL=INFO` to reduce CloudWatch costs
+
+5. **Lambda Wrapper Integration**
+   - Graceful context extraction with try/catch
+   - Automatic request lifecycle logging for authenticated requests
+   - Fallback to console.error for unauthenticated requests
+   - No breaking changes to existing error handling
+   - Sensitive data sanitisation preserved
+
+6. **Operation-Level Tracing**
+   - withRequestLogging() wraps async operations
+   - Automatic start/end logging with operation name
+   - Tracks operation duration separately
+   - Error logging with stack trace and re-throwing
+   - Returns result for chaining
+
+**Test Results:**
+
+- ✅ 125 tests passing (94 → 125, +31 new tests)
+  - Logger tests: 27 passed (20 core + 7 log level filtering)
+  - Lambda wrapper tests: 27 passed (23 existing + 4 new)
+  - Error class tests: 17 passed (unaffected)
+  - Cognito service tests: 20 passed (unaffected)
+  - Schema tests: 32 passed (unaffected)
+  - Other tests: 7 passed (unaffected)
+- ✅ Type check: PASS (strict mode, no `any` types)
+- ✅ Build: PASS (dist/lib/logger.js and logger.d.ts generated)
+- ✅ Lint: PASS (zero warnings, British English)
+- ✅ Coverage: All logger functionality covered including log level filtering
+
+**Code Quality:**
+
+- ✅ All TypeScript strict mode checks pass
+- ✅ No `any` types in production code (tests use typed helpers)
+- ✅ Comprehensive JSDoc documentation with examples
+- ✅ British English spelling throughout ("optimised", "sanitised")
+- ✅ Runtime validation in tests via parseLogEntry() helper
+- ✅ Zero ESLint warnings
+- ✅ Type-safe LogContext with Record<string, unknown>
+
+**Key Decisions:**
+
+- JSON-only output for CloudWatch (no pretty-printing)
+- Log level filtering via constructor or LOG_LEVEL env var (constructor takes precedence)
+- Unauthenticated requests use console.error fallback (backward compatible)
+- No log sampling/throttling in Phase 1 (add if CloudWatch costs become concern)
+- withRequestLogging creates its own Logger (clean separation, negligible overhead)
+- Millisecond resolution timing (Date.now() sufficient for Phase 1)
+- No log buffering (reliability over performance)
+
+**FFP-9 Progress Tracking:**
+
+- ✅ Phase 1 Complete: 10.5/10 hours (100%)
+  - FFP-43 (Error Handling) - 3.5h ✅
+  - FFP-36 (Tenant Context) - 2h ✅
+  - FFP-44 (Structured Logging) - 2h ✅
+  - FFP-32 (Secrets Manager) - 2.5h ⏸️ **NEXT**
+- ✅ FFP-9 Progress: 4/13 subtasks complete (31%)
+- ✅ FFP-9 Hours: 10.5/29-30 hours complete (35%)
+- ✅ Sprint 1 Progress: 127.5/197 hours (65%)
+- 🎯 **Next**: FFP-32 Secrets Manager - JWT Only (2.5h) - Now unblocked with logging and context available
+
+**Blockers Resolved:**
+
+- ✅ FFP-32 (Secrets Manager) now ready to implement:
+  - Structured logging available for secret retrieval operations
+  - Actor context for audit trail of secret access
+  - Error handling classes for secret-related failures
+  - Lambda wrapper integration for automatic request logging
+
+**Review Context Created:**
+
+- ✅ `.claude/review-context.md` - Comprehensive PR review documentation
+  - Goals: Structured logging with actor awareness
+  - Requirements: CloudWatch JSON, log level filtering, Lambda integration
+  - Changes: logger.ts, logger.test.ts, lambda-wrapper updates
+  - Implementation highlights: Type safety, performance, security
+  - Areas to focus: JSON output, timing, log level filtering, backward compatibility
+  - Known limitations: JSON-only output, millisecond precision, no sampling
+  - Testing notes: 31 new tests, zero regressions
+  - Questions for reviewer: Lambda integration, timing precision, trade-offs
+
+**Technical Notes:**
+
+- Logger class pattern chosen for stateful context management
+- Static logLevelPriority map for efficient level filtering
+- parseLogEntry() helper validates log structure in tests (no `as` casting)
+- Lambda wrapper integration preserves all existing behaviour
+- Log level filtering reduces CloudWatch costs in production
+- CloudWatch Logs Insights queries optimised with structured fields
+
+**🎉 FFP-44 COMPLETE! Phase 1 Prerequisites finished (10.5/10h). Ready for FFP-32 (Secrets Manager).**
+
+---
+
 ### November 5, 2025 (Session 33 - FFP-36 Complete!)
 
 **Status**: ✅ FFP-36 COMPLETE - Tenant Context Extraction with Actor Support

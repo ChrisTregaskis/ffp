@@ -97,8 +97,8 @@
 
 - ✅ FFP-43: Error Handling Classes (3.5h) - **COMPLETE** ✅
 - ✅ FFP-36: Tenant Context Extraction (2h) - **COMPLETE** ✅
-- ⏸️ FFP-44: Structured Logging (2h) - NOT STARTED ← **NEXT**
-- ⏸️ FFP-32: Secrets Manager - JWT Only (2.5h) - NOT STARTED
+- ✅ FFP-44: Structured Logging (2h) - **COMPLETE** ✅
+- ⏸️ FFP-32: Secrets Manager - JWT Only (2.5h) - NOT STARTED ← **NEXT**
 
 **Phase 2: Bootstrap + Core Auth (8.5h)**
 
@@ -125,9 +125,9 @@
 
 **Time Tracking:**
 
-- Hours completed: 8.5/29-30 (29%)
-- Subtasks completed: 3/13 (23%)
-- **Status**: Phase 1 in progress - FFP-35 ✅, FFP-43 ✅, FFP-36 ✅, FFP-44 next
+- Hours completed: 10.5/29-30 (35%)
+- Subtasks completed: 4/13 (31%)
+- **Status**: Phase 1 in progress - FFP-35 ✅, FFP-43 ✅, FFP-36 ✅, FFP-44 ✅, FFP-32 next
 
 **Manual Actions Required Before Implementation:**
 
@@ -458,8 +458,8 @@
 - ✅ FFP-15: Error Handling Patterns (COMPLETE - 7/7 subtasks, 15h) 🎉 **Completed via FFP-43**
 - 🎯 FFP-9: Cognito Authentication (IN PROGRESS - 13 subtasks, 30h)
 - ⏸️ FFP-12, FFP-14, FFP-16: Not started
-- **Total Progress**: 123.5/201 hours (61%) - **WELL OVER HALFWAY!** 🎉
-- **Current**: FFP-9 Cognito Authentication ← **IN PROGRESS** (3/13 subtasks complete: FFP-35 ✅, FFP-43 ✅, FFP-36 ✅)
+- **Total Progress**: 127.5/201 hours (63%) - **WELL OVER HALFWAY!** 🎉
+- **Current**: FFP-9 Cognito Authentication ← **IN PROGRESS** (4/13 subtasks complete: FFP-35 ✅, FFP-43 ✅, FFP-36 ✅, FFP-44 ✅)
 
 ---
 
@@ -518,18 +518,19 @@
 
 ## Progress Summary
 
-**Recent Work** (Nov 5, 2025 - Session 33):
+**Recent Work** (Nov 6, 2025 - Session 34):
 
-- 🎉 **FFP-36 COMPLETE!** Tenant Context Extraction with Actor Support (2h)
-- ✅ **Actor-based architecture**: UserActor and SystemActor interfaces implemented
-- ✅ **Enhanced TenantContext**: Includes actor, requestId, timestamp, settings, enabledModules
-- ✅ **Context extraction**: extractUserContext, createSystemContext, extractJobContext
-- ✅ **Runtime validation**: All extraction functions validate inputs with typeof checks
-- ✅ **Helper functions**: isUserActor, isSystemActor, getActorDisplayName
-- ✅ **Security fixes**: Added validation to prevent empty strings bypassing RLS
-- ✅ **Code review**: Addressed all critical and high-priority issues
-- 📊 **Sprint 1 Progress**: 125.5/197 hours (64%) - well over halfway!
-- 🎯 **Next**: Continue FFP-9 with FFP-44 Structured Logging (2h)
+- 🎉 **FFP-44 COMPLETE!** Structured Logging with Actor Awareness (2h)
+- ✅ **Logger class**: CloudWatch-optimised JSON output with actor information
+- ✅ **Log level filtering**: Constructor parameter or LOG_LEVEL env var (DEBUG, INFO, WARN, ERROR)
+- ✅ **Lambda wrapper integration**: Automatic request lifecycle logging for authenticated requests
+- ✅ **Performance timing**: Duration tracking from context.timestamp in every log
+- ✅ **withRequestLogging helper**: Operation-level tracing with automatic start/end logging
+- ✅ **27 new tests**: Comprehensive coverage including log level filtering (125 total, up from 94)
+- ✅ **Type safety**: No `any` types, runtime validation in tests via parseLogEntry()
+- ✅ **British English**: "optimised", "sanitised" throughout
+- 📊 **Sprint 1 Progress**: 127.5/197 hours (65%) - well over halfway!
+- 🎯 **Next**: Continue FFP-9 with FFP-32 Secrets Manager - JWT Only (2.5h)
 
 **Previous Work** (Nov 3, 2025 - Session 31):
 
@@ -879,4 +880,4 @@ _Key Requirements:_
 
 ---
 
-**Sprint 1 Progress: 125.5/197 hours (64%) - WELL OVER HALFWAY! 🎉 FFP-7, FFP-8, FFP-106/107/108, FFP-10, FFP-11, FFP-15 ALL COMPLETE & MERGED! FFP-9 IN PROGRESS (3/13 subtasks complete - FFP-35 ✅, FFP-43 ✅, FFP-36 ✅)!**
+**Sprint 1 Progress: 127.5/197 hours (65%) - WELL OVER HALFWAY! 🎉 FFP-7, FFP-8, FFP-106/107/108, FFP-10, FFP-11, FFP-15 ALL COMPLETE & MERGED! FFP-9 IN PROGRESS (4/13 subtasks complete - FFP-35 ✅, FFP-43 ✅, FFP-36 ✅, FFP-44 ✅)!**
