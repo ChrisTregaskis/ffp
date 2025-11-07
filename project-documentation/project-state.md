@@ -9,7 +9,7 @@
 
 ## Current Work: FFP-9 - Cognito Authentication
 
-**Status**: 🚀 IN PROGRESS (4/13 subtasks, 10.5/29-30 hours, 35%)
+**Status**: 🚀 IN PROGRESS (4/13 subtasks, 10.5/31-32 hours, 33%)
 
 ### Phase 1: Prerequisites (8h) - ✅ COMPLETE
 
@@ -18,10 +18,10 @@
 - ✅ FFP-44: Structured Logging (2h)
 - ⏸️ FFP-32: Secrets Manager (2.5h) - **DEFERRED** (see decisions below)
 
-### Phase 2: Bootstrap + Core Auth (8.5h)
+### Phase 2: Bootstrap + Core Auth (10.5h)
 
 - ⏸️ Manual: Super User Setup (0.5h)
-- ⏸️ FFP-112: Admin CLI Script (1h) - ← **NEXT**
+- ⏸️ FFP-112: Admin API Endpoint (3h) - ← **NEXT**
 - ✅ FFP-35: Zod Schemas (3h)
 - ⏸️ FFP-37: Invite User Lambda (4h)
 

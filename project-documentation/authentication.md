@@ -22,11 +22,12 @@ FFP uses AWS Cognito for authentication with custom attributes to support multi-
 
 **Phase 1 (Sprint 1 - Current):**
 
-1. ✅ **Admin creates business**: CLI script creates tenant → customer → owner user
-2. ✅ **Business owner logs in**: Receives temporary password via email, forced to change on first login
-3. ✅ **Business invites users**: Owner uses "Invite User" feature (AdminCreateUserCommand)
-4. ✅ **Invited users log in**: Receive temporary password, forced to change on first login
-5. ✅ **Token refresh**: Standard JWT refresh flow
+1. ✅ **Admin creates business**: API endpoint creates tenant → customer (FFP-112)
+2. ✅ **Admin invites owner**: API endpoint creates owner user with Cognito (FFP-37)
+3. ✅ **Business owner logs in**: Receives temporary password via email, forced to change on first login
+4. ✅ **Business invites users**: Owner uses "Invite User" feature (AdminCreateUserCommand)
+5. ✅ **Invited users log in**: Receive temporary password, forced to change on first login
+6. ✅ **Token refresh**: Standard JWT refresh flow
 
 **Phase 2 (Post-MVP with Billing):**
 
@@ -37,22 +38,68 @@ FFP uses AWS Cognito for authentication with custom attributes to support multi-
 
 ### MVP Onboarding Process
 
-**System Administrator Workflow:**
+**System Administrator Workflow (Two-Step Process):**
 
-```bash
-# Step 1: Admin creates business account manually
-npm run admin:create-business \
-  --name="ABC Physiotherapy" \
-  --ownerEmail="owner@abcphysio.com" \
-  --ownerFirstName="Jane" \
-  --ownerLastName="Smith"
+**Step 1: Create business account (Postman)**
 
-# Creates:
-# - Tenant record (tenant_id: UUID, type: 'customer')
-# - Customer record (customer_id: UUID, tenant_id: UUID, name: 'ABC Physiotherapy')
-# - User record (user_id: UUID, tenant_id: UUID, customer_id: UUID, role: 'customer_owner')
-# - Cognito user with temporary password (sent via email)
+```http
+POST {{apiUrl}}/admin/create-business
+Authorization: Bearer {{superAdminJwt}}
+Content-Type: application/json
+
+{
+  "businessName": "ABC Physiotherapy",
+  "subscriptionTier": "basic"
+}
 ```
+
+**Response:**
+
+```json
+{
+  "tenantId": "uuid-1",
+  "customerId": "uuid-2",
+  "message": "Business account created. Use /auth/invite-user to create owner."
+}
+```
+
+---
+
+**Step 2: Invite business owner (Postman)**
+
+```http
+POST {{apiUrl}}/auth/invite-user
+Authorization: Bearer {{superAdminJwt}}
+Content-Type: application/json
+
+{
+  "tenantId": "uuid-1",
+  "customerId": "uuid-2",
+  "email": "owner@abcphysio.com",
+  "firstName": "Jane",
+  "lastName": "Smith",
+  "role": "customer_owner"
+}
+```
+
+**Response:**
+
+```json
+{
+  "message": "User invited successfully. They will receive an email with temporary password.",
+  "userId": "uuid-3"
+}
+```
+
+**Created:**
+
+- Cognito user with temporary password (sent via email)
+- User record in database (linked to tenant and customer)
+
+**Postman Environment Variables:**
+
+- `apiUrl`: Your API Gateway URL (e.g., `https://abc123.execute-api.eu-west-2.amazonaws.com`)
+- `superAdminJwt`: JWT token from super admin login
 
 **Business Owner Workflow:**
 
@@ -484,121 +531,140 @@ export const handler = async (event: ScheduledEvent) => {
 
 ## User Management Flows (MVP)
 
-### Admin CLI: Create Business Account
+### Admin API: Create Business Account (FFP-112)
 
-**Purpose:** System administrator manually creates business accounts during pilot phase.
+**Purpose:** Super admin creates business entity (tenant + customer) via authenticated API endpoint.
+
+**Endpoint:** `POST /admin/create-business`
+
+**Authentication:** JWT required (super_admin role only)
 
 ```typescript
 // packages/functions/src/admin/create-business.ts
-import {
-  CognitoIdentityProviderClient,
-  AdminCreateUserCommand,
-} from '@aws-sdk/client-cognito-identity-provider';
+import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
+import { extractUserContext, isUserActor } from '@ffp/core/lib/context';
+import { createBusinessService } from '@ffp/core/admin/admin.service';
+import { withErrorHandling } from '@ffp/core/lib/lambda-wrapper';
+import { ForbiddenError } from '@ffp/core/lib/errors';
+import { CreateBusinessSchema } from '@ffp/core/schemas/admin.schema';
+
+export const handler = withErrorHandling(
+  async (event: APIGatewayProxyHandlerV2WithJWTAuthorizer) => {
+    // Extract context from JWT
+    const context = extractUserContext(event);
+
+    // Validate super_admin role
+    if (!isUserActor(context.actor) || context.actor.userRole !== 'super_admin') {
+      throw new ForbiddenError('Only super admins can create businesses');
+    }
+
+    // Parse and validate request body
+    const body = CreateBusinessSchema.parse(JSON.parse(event.body || '{}'));
+
+    // Call service
+    const result = await createBusinessService(body, context);
+
+    return {
+      statusCode: 201,
+      body: JSON.stringify(result),
+    };
+  }
+);
+```
+
+**Service Layer:**
+
+```typescript
+// packages/core/src/admin/admin.service.ts
 import { randomUUID } from 'crypto';
-import { db } from '@ffp/database';
-import { tenants, customers, users } from '@ffp/database/schema';
-import { withRLS } from '@ffp/database/lib/rls';
+import { adminRepository } from './admin.repository';
+import { TenantContext } from '../lib/context';
+import { Logger } from '../lib/logger';
 
-const cognito = new CognitoIdentityProviderClient({ region: 'eu-west-2' });
+const logger = new Logger('AdminService');
 
-interface CreateBusinessInput {
-  businessName: string;
-  ownerEmail: string;
-  ownerFirstName: string;
-  ownerLastName: string;
-}
+export const createBusinessService = async (data: CreateBusinessInput, context: TenantContext) => {
+  logger.info('Creating business account', {
+    businessName: data.businessName,
+    tier: data.subscriptionTier,
+    adminUserId: context.actor.type === 'user' ? context.actor.userId : null,
+  });
 
-export async function createBusiness(input: CreateBusinessInput) {
-  // Generate UUIDs for three-tier architecture
+  // Generate UUIDs
   const tenantId = randomUUID();
   const customerId = randomUUID();
 
-  // Step 1: Create Cognito user with temporary password
-  const cognitoResult = await cognito.send(
-    new AdminCreateUserCommand({
-      UserPoolId: process.env.COGNITO_USER_POOL_ID!,
-      Username: input.ownerEmail,
-      UserAttributes: [
-        { Name: 'email', Value: input.ownerEmail },
-        { Name: 'email_verified', Value: 'true' },
-        { Name: 'given_name', Value: input.ownerFirstName },
-        { Name: 'family_name', Value: input.ownerLastName },
-        { Name: 'custom:tenantId', Value: tenantId },
-        { Name: 'custom:customerId', Value: customerId },
-        { Name: 'custom:role', Value: 'customer_owner' },
-      ],
-      DesiredDeliveryMediums: ['EMAIL'], // Sends temp password via email
-      TemporaryPassword: generateSecurePassword(), // Custom function
-    })
+  // Create tenant and customer via repository (privileged DB access)
+  await adminRepository.createBusiness(
+    {
+      tenantId,
+      customerId,
+      businessName: data.businessName,
+      subscriptionTier: data.subscriptionTier,
+    },
+    context
   );
 
-  const userId = cognitoResult.User!.Username!;
-
-  // Step 2: Create database records in transaction with RLS
-  await withRLS(tenantId, userId, async (tx) => {
-    // Create tenant
-    await tx.insert(tenants).values({
-      id: tenantId,
-      type: 'customer',
-      name: input.businessName,
-    });
-
-    // Create customer
-    await tx.insert(customers).values({
-      id: customerId,
-      tenantId: tenantId,
-      name: input.businessName,
-      status: 'active',
-    });
-
-    // Create owner user
-    await tx.insert(users).values({
-      id: userId,
-      tenantId: tenantId,
-      customerId: customerId,
-      email: input.ownerEmail,
-      cognitoSub: userId,
-      firstName: input.ownerFirstName,
-      lastName: input.ownerLastName,
-      role: 'customer_owner',
-      status: 'active',
-    });
+  logger.info('Business account created successfully', {
+    tenantId,
+    customerId,
   });
 
   return {
     tenantId,
     customerId,
-    userId,
-    message: 'Business created successfully. Owner will receive email with temporary password.',
+    message: 'Business account created. Use /auth/invite-user to create owner.',
   };
-}
-
-// Helper: Generate secure temporary password
-function generateSecurePassword(): string {
-  const length = 12;
-  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-  let password = '';
-  for (let i = 0; i < length; i++) {
-    password += charset.charAt(Math.floor(Math.random() * charset.length));
-  }
-  return password;
-}
+};
 ```
 
-**CLI Wrapper:**
+**Repository Layer (Privileged Access):**
 
-```bash
-# packages/functions/scripts/create-business.sh
-#!/bin/bash
+```typescript
+// packages/core/src/admin/admin.repository.ts
+import { adminDb } from '@ffp/database'; // Privileged connection (bypasses RLS)
+import { tenants, customers } from '@ffp/database/schema';
+import { TenantContext } from '../lib/context';
 
-# Usage: npm run admin:create-business -- --name="ABC Physio" --email="owner@abc.com" --firstName="Jane" --lastName="Smith"
+export const adminRepository = {
+  async createBusiness(
+    data: {
+      tenantId: string;
+      customerId: string;
+      businessName: string;
+      subscriptionTier: string;
+    },
+    context: TenantContext
+  ) {
+    // Use privileged admin connection (bypasses RLS)
+    await adminDb.transaction(async (tx) => {
+      // Create tenant
+      await tx.insert(tenants).values({
+        id: data.tenantId,
+        type: 'business',
+        name: data.businessName,
+      });
 
-ts-node packages/functions/src/admin/create-business.ts \
-  --name="${BUSINESS_NAME}" \
-  --email="${OWNER_EMAIL}" \
-  --firstName="${OWNER_FIRST_NAME}" \
-  --lastName="${OWNER_LAST_NAME}"
+      // Create customer
+      await tx.insert(customers).values({
+        id: data.customerId,
+        tenantId: data.tenantId,
+        name: data.businessName,
+        subscriptionTier: data.subscriptionTier,
+        status: 'active',
+      });
+    });
+  },
+};
 ```
+
+**Key Points:**
+
+- Two-step process: Create business (FFP-112) then invite owner (FFP-37)
+- Privileged DB connection bypasses RLS for super admin operations
+- Transaction ensures atomicity (tenant + customer created together or not at all)
+- Audit logging captures super admin actions
+- Returns tenantId and customerId for use in invite-user endpoint
 
 ### Invite User Lambda Function
 
@@ -641,7 +707,7 @@ export const handler = withErrorHandling(async (event: APIGatewayProxyEvent) => 
 });
 ```
 
-**Service Layer** (business logic orchestration):
+**Service Layer** (business logic orchestration with Cognito-to-DB rollback):
 
 ```typescript
 // packages/core/users/user.service.ts
@@ -650,6 +716,9 @@ import { userRepository } from './user.repository';
 import { TenantContext } from '../lib/context';
 import { CognitoService } from '../lib/cognito';
 import { ConflictError } from '../lib/errors';
+import { Logger } from '../lib/logger';
+
+const logger = new Logger('UserService');
 
 export const inviteUserService = async (data: unknown, context: TenantContext) => {
   // 1. Validate input
@@ -661,42 +730,71 @@ export const inviteUserService = async (data: unknown, context: TenantContext) =
     throw new ConflictError('User with this email already exists');
   }
 
-  // 3. Coordinate with external service (Cognito)
-  const cognitoUser = await CognitoService.inviteUser({
-    email: validated.email,
-    firstName: validated.firstName,
-    lastName: validated.lastName,
-    tenantId: context.tenantId,
-    customerId: context.customerId!,
-    role: validated.role,
-  });
+  let cognitoUserId: string | undefined;
 
-  // 4. Persist to database via repository
-  const user = await userRepository.create(
-    {
-      id: cognitoUser.Username,
+  try {
+    // 3. Create Cognito user first (external system)
+    const cognitoUser = await CognitoService.inviteUser({
       email: validated.email,
       firstName: validated.firstName,
       lastName: validated.lastName,
+      tenantId: context.tenantId,
+      customerId: context.customerId!,
       role: validated.role,
-      cognitoId: cognitoUser.Username,
-      emailVerified: true,
-      status: 'active',
-    },
-    context
-  );
+    });
 
-  return user;
+    cognitoUserId = cognitoUser.Username;
+
+    // 4. Persist to database via repository
+    const user = await userRepository.create(
+      {
+        id: cognitoUser.Username,
+        email: validated.email,
+        firstName: validated.firstName,
+        lastName: validated.lastName,
+        role: validated.role,
+        cognitoId: cognitoUser.Username,
+        emailVerified: true,
+        status: 'active',
+      },
+      context
+    );
+
+    return user;
+  } catch (error) {
+    // CRITICAL: If database insert fails, rollback Cognito user
+    if (cognitoUserId) {
+      logger.error('Database insert failed, rolling back Cognito user', {
+        cognitoUserId,
+        email: validated.email,
+        error,
+      });
+
+      try {
+        await CognitoService.deleteUser(cognitoUserId);
+        logger.info('Cognito user rollback successful', { cognitoUserId });
+      } catch (rollbackError) {
+        logger.error('Cognito user rollback FAILED', {
+          cognitoUserId,
+          rollbackError,
+        });
+        // Still throw original error - rollback failure is logged separately
+      }
+    }
+
+    throw error;
+  }
 };
 ```
 
-**Cognito Service** (external service wrapper):
+**Cognito Service** (external service wrapper with rollback support):
 
 ```typescript
 // packages/core/lib/cognito.ts
 import {
   CognitoIdentityProviderClient,
   AdminCreateUserCommand,
+  AdminDeleteUserCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 
 const cognito = new CognitoIdentityProviderClient({ region: 'eu-west-2' });
@@ -724,6 +822,15 @@ export class CognitoService {
           { Name: 'custom:role', Value: params.role },
         ],
         DesiredDeliveryMediums: ['EMAIL'], // Sends temp password via email
+      })
+    );
+  }
+
+  static async deleteUser(username: string): Promise<void> {
+    await cognito.send(
+      new AdminDeleteUserCommand({
+        UserPoolId: process.env.COGNITO_USER_POOL_ID!,
+        Username: username,
       })
     );
   }
