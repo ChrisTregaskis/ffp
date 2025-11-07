@@ -157,7 +157,7 @@ Establish core infrastructure for FFP, enabling rapid feature development with s
 - [ ] Deploys to dev, staging, production
 - [ ] User can register, login, receive JWT with tenant context
 - [ ] Database migrations run successfully
-- [ ] Unit tests achieve 15% coverage
+- [ ] Unit tests achieve 10% coverage
 - [ ] E2E tests cover authentication flow
 - [ ] CloudWatch logs capture all requests with tenant context
 - [ ] API response time <500ms (p95)

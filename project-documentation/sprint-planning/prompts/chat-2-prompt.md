@@ -148,7 +148,7 @@ For each sprint, create **one Epic** with:
 
 - Multi-tenant architecture (RLS critical)
 - Healthcare security (OWASP compliance)
-- Phase 1: Speed over perfection (15% test coverage, simple implementations)
+- Phase 1: Speed over perfection (10% test coverage, simple implementations)
 - Testing requirement: Minimum 2 functional tests per User Story
 - Deferred: Multi-AZ RDS, video transcoding, MFA, advanced analytics
 

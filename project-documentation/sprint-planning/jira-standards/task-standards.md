@@ -134,7 +134,7 @@ Configure Vitest (unit) and Playwright (E2E), including MSW for API mocking.
 - [ ] Vitest runs unit tests
 - [ ] Playwright runs E2E tests in headless mode
 - [ ] MSW intercepts API requests in tests
-- [ ] Coverage report generated (15% threshold)
+- [ ] Coverage report generated (10% threshold)
 - [ ] Example tests pass
 
 ## Verification

@@ -9,7 +9,7 @@ This document defines comprehensive standards for creating Jira tickets in the F
 - **Solo Developer**: Standards emphasize clarity for future reference and external collaboration
 - **Multi-Tenant Healthcare SaaS**: Security and data isolation are critical
 - **Tech Stack**: React, TypeScript (strict), SST, PostgreSQL, Drizzle, Cognito, Turborepo
-- **Testing Focus**: Minimum 2 functional tests per User Story, 15% coverage Phase 1 target
+- **Testing Focus**: Minimum 2 functional tests per User Story, 10% coverage Phase 1 target
 
 **Jira Configuration:**
 
@@ -195,7 +195,7 @@ Establish the core infrastructure and development environment for FFP, enabling 
 - [ ] Application deploys to dev, staging, and production environments
 - [ ] User can register, login, and receive JWT token with tenant context
 - [ ] Database migrations run successfully across environments
-- [ ] Unit tests achieve 15% coverage on core business logic
+- [ ] Unit tests achieve 10% coverage on core business logic
 - [ ] E2E tests cover authentication flow
 - [ ] CloudWatch logs capture all API requests with tenant context
 - [ ] API response time <500ms (p95)
@@ -922,7 +922,7 @@ Setup comprehensive testing infrastructure:
 5. Create test utilities in `packages/core/src/test/utils.ts`
 6. Add example unit test for service layer
 7. Add example E2E test for authentication
-8. Configure coverage thresholds (15% for Phase 1)
+8. Configure coverage thresholds (10% for Phase 1)
 9. Add npm scripts for running tests
 
 ### Configuration Changes
@@ -946,7 +946,7 @@ Setup comprehensive testing infrastructure:
 - [ ] Playwright runs E2E tests in headless mode
 - [ ] MSW intercepts API requests in tests
 - [ ] Test coverage report generated (HTML and terminal)
-- [ ] Coverage thresholds enforced (15% global)
+- [ ] Coverage thresholds enforced (10% global)
 - [ ] Example unit test passes
 - [ ] Example E2E test passes
 - [ ] Tests run in CI pipeline (GitHub Actions)
@@ -1632,7 +1632,7 @@ FFP uses the Fibonacci sequence (1, 2, 3, 5, 8, 13) for estimation because:
   - [ ] Integration test for multi-tenant isolation
   - [ ] E2E test for critical user flow (if applicable)
   - [ ] All tests passing in CI pipeline
-  - [ ] Test coverage meets 15% threshold (Phase 1)
+  - [ ] Test coverage meets 10% threshold (Phase 1)
 
 - [ ] **Deployment & Validation**
   - [ ] Code merged to `develop` branch

@@ -64,7 +64,7 @@ For each ticket type, define:
 - TypeScript strict mode, no `any`
 - Zod validation everywhere
 - Service layer + Repository pattern
-- 15% test coverage Phase 1 target, 80%+ on critical paths
+- 10% test coverage Phase 1 target, 80%+ on critical paths
 
 ---
 

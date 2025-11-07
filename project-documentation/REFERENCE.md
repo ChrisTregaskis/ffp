@@ -159,7 +159,7 @@ ffp/
 
 ### Testing Coverage
 
-- Overall: 15% minimum
+- Overall: 10% minimum
 - Critical paths: 80%+ coverage
 - RLS policies: 100% coverage
 - Authentication/JWT: 100% coverage

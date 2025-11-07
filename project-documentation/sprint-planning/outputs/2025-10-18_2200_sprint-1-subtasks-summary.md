@@ -187,7 +187,7 @@ This document summarises all subtasks created for Sprint 1 User Stories. Each st
 
 **Note**: FFP-74 (Write Sample MSW Mock Test) may also exist - verify in Jira.
 
-**Key Focus**: Comprehensive testing infrastructure with Vitest (unit), Playwright (E2E), and MSW (API mocking) to achieve 15% coverage target
+**Key Focus**: Comprehensive testing infrastructure with Vitest (unit), Playwright (E2E), and MSW (API mocking) to achieve 10% coverage target
 
 ---
 

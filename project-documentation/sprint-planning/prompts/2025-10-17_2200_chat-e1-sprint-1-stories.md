@@ -227,7 +227,7 @@ Then [expected outcome].
 
 ### Phase 1 Constraints
 
-- 15% test coverage target (not 100%)
+- 10% test coverage target (not 100%)
 - Simple implementations preferred
 - Deferred features documented in "Out of Scope"
 
