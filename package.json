@@ -33,6 +33,7 @@
     "db:test": "tsx scripts/test-db-connection.ts",
     "db:verify": "turbo run db:verify --filter=@ffp/database",
     "bootstrap:super-admin": "tsx scripts/bootstrap-super-admin.ts",
+    "seed:db": "tsx scripts/seed-database.ts",
     "sst:dev": "sst dev",
     "sst:build": "sst build",
     "sst:deploy": "sst deploy",

@@ -24,6 +24,9 @@ coverage/
 .env
 .env*.local
 
+# Database seed config (local, environment-specific)
+**/db-seed.local.*.json
+
 # IDE
 .vscode/*
 !.vscode/settings.json

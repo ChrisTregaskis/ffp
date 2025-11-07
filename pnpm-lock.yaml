@@ -114,6 +114,9 @@ importers:
 
   packages/database:
     dependencies:
+      '@aws-sdk/client-cognito-identity-provider':
+        specifier: ^3.705.0
+        version: 3.913.0
       drizzle-orm:
         specifier: ^0.44.7
         version: 0.44.7(@types/pg@8.15.5)(pg@8.16.3)
