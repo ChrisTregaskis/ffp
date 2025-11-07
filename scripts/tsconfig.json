@@ -1,0 +1,18 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+
+    // Scripts run with tsx, so resolve to src (not dist)
+    "paths": {
+      "@ffp/core": ["../packages/core/src"],
+      "@ffp/core/*": ["../packages/core/src/*"],
+      "@ffp/database": ["../packages/database/src"],
+      "@ffp/database/*": ["../packages/database/src/*"]
+    }
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
+}

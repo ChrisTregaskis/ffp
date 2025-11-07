@@ -32,6 +32,7 @@
     "db:verify": "tsx ../../scripts/verify-migration.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.705.0",
     "drizzle-orm": "^0.44.7",
     "drizzle-zod": "^0.8.3",
     "pg": "^8.16.3",
@@ -42,8 +43,8 @@
     "@types/pg": "^8.15.5",
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.5",
-    "typescript": "^5.7.3",
     "tsx": "^4.20.6",
+    "typescript": "^5.7.3",
     "vitest": "^2.1.8"
   }
 }

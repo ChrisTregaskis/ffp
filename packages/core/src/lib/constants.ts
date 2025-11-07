@@ -32,7 +32,7 @@ export type UserRoleType = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 export const TENANT_TYPES = {
   INDIVIDUAL: 'individual',
   BUSINESS: 'business',
-  COMPANY: 'company',
+  PLATFORM: 'platform',
 } as const;
 
 export type TenantTypeType = (typeof TENANT_TYPES)[keyof typeof TENANT_TYPES];

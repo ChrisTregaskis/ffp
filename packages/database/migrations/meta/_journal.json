@@ -8,6 +8,20 @@
       "when": 1730207520000,
       "tag": "0000_spotty_makkari",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1762439453217,
+      "tag": "0001_slimy_terror",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1762507727070,
+      "tag": "0002_smiling_marten_broadcloak",
+      "breakpoints": true
     }
   ]
 }

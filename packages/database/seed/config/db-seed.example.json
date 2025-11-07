@@ -1,0 +1,30 @@
+{
+  "platformTenant": {
+    "id": "00000000-0000-0000-0000-000000000000",
+    "type": "platform",
+    "name": "FFP Platform",
+    "settings": {},
+    "createdAt": "2025-01-01T00:00:00.000000",
+    "updatedAt": "2025-01-01T00:00:00.000000"
+  },
+  "superAdminUser": {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "email": "admin@example.com",
+    "cognitoSub": "00000000-0000-0000-0000-000000000002",
+    "firstName": "System",
+    "lastName": "Admin",
+    "role": "system_admin",
+    "customerId": null,
+    "profileImageUrl": null,
+    "phone": null,
+    "dateOfBirth": null,
+    "createdAt": "2025-01-01T00:00:00.000000",
+    "updatedAt": "2025-01-01T00:00:00.000000"
+  },
+  "superAdminCognito": {
+    "email": "admin@example.com",
+    "cognitoSub": "00000000-0000-0000-0000-000000000002",
+    "temporaryPassword": "TempPass123!"
+  }
+}
