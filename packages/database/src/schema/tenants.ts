@@ -16,8 +16,9 @@ import { users } from './users';
  * Tenant type enumeration
  * - individual: Single user account
  * - business: Organisation with multiple sub-customers
+ * - platform: System platform tenant for super admins
  */
-export const tenantTypeEnum = pgEnum('tenant_type', ['individual', 'business']);
+export const tenantTypeEnum = pgEnum('tenant_type', ['individual', 'business', 'platform']);
 
 /**
  * Tenants table definition
