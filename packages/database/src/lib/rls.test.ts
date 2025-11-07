@@ -37,16 +37,20 @@ describe('RLS Utility Functions', () => {
 
   beforeAll(async () => {
     // Setup test database connection
+    // IMPORTANT: Force ffp_test database for RLS tests (matches integration.test.ts pattern)
     pool = new Pool({
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT || '5432'),
-      database: process.env.DB_NAME || 'ffp_dev',
+      database: 'ffp_test', // Always use test database
       user: process.env.DB_USER || 'root_user',
       password: process.env.DB_PASSWORD || 'password',
     });
     db = drizzle(pool);
+  });
 
-    // Create test data for two tenants
+  beforeEach(async () => {
+    // Create test data for two tenants before EACH test
+    // This ensures data exists even if other test suites clean the database
     // Note: We need to set RLS context with the tenant ID we're creating
     // First, create tenant records with generated UUIDs
     tenantAId = randomUUID();
@@ -152,19 +156,15 @@ describe('RLS Utility Functions', () => {
       .returning();
   });
 
+  afterEach(async () => {
+    // Clean up test data after each test
+    // This matches the integration test pattern and ensures test isolation
+    await db.execute(sql`TRUNCATE TABLE users CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE customers CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE tenants CASCADE`);
+  });
+
   afterAll(async () => {
-    // Clean up test data - set appropriate contexts
-    await db.execute(sql.raw(`SET app.tenant_id = '${tenantAId}'`));
-    await db.delete(users).where(eq(users.id, userA1Id));
-    await db.delete(users).where(eq(users.id, userA2Id));
-    await db.delete(customers).where(eq(customers.id, customerAId));
-    await db.delete(tenants).where(eq(tenants.id, tenantAId));
-
-    await db.execute(sql.raw(`SET app.tenant_id = '${tenantBId}'`));
-    await db.delete(users).where(eq(users.id, userB1Id));
-    await db.delete(customers).where(eq(customers.id, customerBId));
-    await db.delete(tenants).where(eq(tenants.id, tenantBId));
-
     // Close connection pool
     await pool.end();
   });
