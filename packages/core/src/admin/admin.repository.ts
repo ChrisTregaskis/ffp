@@ -7,33 +7,33 @@ import { generateRandomAlphanumeric } from '../lib/random';
  * Generate a unique account code from customer name
  *
  * Creates a sanitised account code in the format: PREFIXRRRR
- * where PREFIX is exactly 4 characters derived from the customer name
+ * where PREFIX is exactly 6 characters derived from the customer name
  * (uppercase, alphanumeric only, padded with zeros if needed)
  * and RRRR is a random 4-character alphanumeric suffix for uniqueness.
  *
  * Note: "customer" represents a business/care home organisation in the system.
  *
  * @param customerName - The customer name to generate code from
- * @returns Unique account code (e.g., "ACMEF2R8", "ALF0A3B9", "PI00M7K4")
+ * @returns Unique account code (e.g., "SUNSHI-F2R8", "ALF000-A3B9", "PI0000-M7K4")
  *
  * @example
  * ```typescript
- * generateAccountCode("Acme Physiotherapy") // Returns: "ACMEF2R8"
- * generateAccountCode("ALF") // Returns: "ALF0A3B9"
- * generateAccountCode("PI") // Returns: "PI00M7K4"
+ * generateAccountCode("Sunshine Physiotherapy") // Returns: "SUNSHI-F2R8"
+ * generateAccountCode("ALF") // Returns: "ALF000-A3B9"
+ * generateAccountCode("PI") // Returns: "PI0000-M7K4"
  * ```
  */
 function generateAccountCode(customerName: string): string {
   // Extract alphanumeric characters and convert to uppercase
   const sanitized = customerName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
 
-  // Create exactly 4-character prefix, padding with zeros if needed
-  const prefix = sanitized.substring(0, 4).padEnd(4, '0');
+  // Create exactly 6-character prefix, padding with zeros if needed
+  const prefix = sanitized.substring(0, 6).padEnd(6, '0');
 
   // Generate random 4-character alphanumeric suffix
   const suffix = generateRandomAlphanumeric(4);
 
-  return `${prefix}${suffix}`;
+  return `${prefix}-${suffix}`;
 }
 
 /**
