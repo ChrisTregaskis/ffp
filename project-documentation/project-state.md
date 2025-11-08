@@ -1,15 +1,15 @@
 # FFP - Project State
 
-**Last Updated**: November 6, 2025 - Session 35
+**Last Updated**: November 8, 2025 - Session 36
 **Current Phase**: Sprint 1 Execution - IN PROGRESS 🚀
 **Branch**: `feature/ffp-9-cognito-auth`
-**Sprint 1 Progress**: 128/197 hours (65%) - WELL OVER HALFWAY! 🎉
+**Sprint 1 Progress**: 132.5/197 hours (67%) - TWO THIRDS COMPLETE! 🎉
 
 ---
 
 ## Current Work: FFP-9 - Cognito Authentication
 
-**Status**: 🚀 IN PROGRESS (4/13 subtasks, 10.5/31-32 hours, 33%)
+**Status**: 🚀 IN PROGRESS (5/13 subtasks, 15/31-32 hours, 48%)
 
 ### Phase 1: Prerequisites (8h) - ✅ COMPLETE
 
@@ -18,10 +18,10 @@
 - ✅ FFP-44: Structured Logging (2h)
 - ⏸️ FFP-32: Secrets Manager (2.5h) - **DEFERRED** (see decisions below)
 
-### Phase 2: Bootstrap + Core Auth (10.5h)
+### Phase 2: Bootstrap + Core Auth (10.5h) - ⚡ IN PROGRESS
 
-- ⏸️ Manual: Super User Setup (0.5h)
-- ⏸️ FFP-112: Admin API Endpoint (3h) - ← **NEXT**
+- ⏸️ Manual: Super User Setup (0.5h) - ← **NEXT**
+- ✅ FFP-112: Admin API Endpoint (4.5h)
 - ✅ FFP-35: Zod Schemas (3h)
 - ⏸️ FFP-37: Invite User Lambda (4h)
 
@@ -59,6 +59,16 @@
 
 ## Recent Work
 
+**Session 36 (Nov 8)**: ✅ FFP-112 - Admin API Endpoint COMPLETE (4.5h)
+
+- Admin domain created (repository, service, schemas)
+- POST /admin/create-customer Lambda handler with JWT + role validation
+- Request context utilities (unified db + tenant context)
+- Cryptographically secure random generation (crypto.randomInt)
+- Stage-aware SSL detection for database connections
+- Domain-organised architecture pattern established
+- Security review fixes applied (error handling, British spelling)
+
 **Session 35 (Nov 6)**: ⏸️ FFP-32 - Secrets Manager DEFERRED (0.5h)
 
 - Decision to defer until actual secret requirements arise
@@ -91,7 +101,7 @@
 ## Sprint 1 Overview
 
 **Total Stories**: 10 stories, 197 hours (~6.2 months at 8h/week)
-**Completed**: 127.5/197 hours (65%)
+**Completed**: 132.5/197 hours (67%)
 **In Progress**: FFP-9 Cognito Authentication
 **Remaining**: FFP-12 (Testing), FFP-14 (CloudWatch), FFP-16 (Web Login)
 
@@ -109,13 +119,24 @@
 
 **Monorepo**:
 
-- ✅ Turborepo with 3 packages (web, functions, core, database)
+- ✅ Turborepo with 4 packages (web, functions, core, database)
 - ✅ TypeScript strict mode, ESLint + Prettier, 125+ tests passing
 - ✅ Build caching (30-100x faster), workspace dependencies
+- ✅ Domain-organised backend with admin operations
 
 ---
 
 ## Key Decisions
+
+**FFP-112 (Admin API)** - Session 36:
+
+- **Domain-organised architecture pattern established**: Handler → Service → Repository
+- Admin operations use privileged database connection (BYPASSRLS permission required)
+- Request context pattern: Unified `RequestContext` interface combining db + tenant context
+- Cryptographically secure random generation (Node.js crypto, server-only exports)
+- Stage-aware SSL detection for database connections (local/dev vs staging/production)
+- Clean error propagation: Let `withErrorHandling` wrapper handle all errors naturally
+- No try-catch blocks in handlers/services unless specific error transformation needed
 
 **FFP-32 (Secrets Manager)** - Session 35:
 
@@ -130,7 +151,7 @@
 - Admin-only business onboarding for MVP (no self-registration)
 - Three-tier architecture: tenant → customer → users
 - JWT claims: tenantId, customerId, role
-- Super admin bootstrap + CLI script for business creation
+- Super admin bootstrap + manual business creation via API
 - Invite-only user creation
 
 **Architecture**:

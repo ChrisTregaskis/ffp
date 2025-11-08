@@ -8,3 +8,8 @@ export * from './utils';
 // Domain exports
 export * from './users';
 export * from './auth';
+
+// Schemas (validation only - safe for browser)
+export * from './schemas';
+
+// Note: Admin domain is server-only and exported from @ffp/core/server

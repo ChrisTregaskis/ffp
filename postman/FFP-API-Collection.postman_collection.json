@@ -49,9 +49,345 @@
       "description": "Health and status endpoints - no authentication required"
     },
     {
-      "name": "Authentication (Coming Soon)",
-      "item": [],
-      "description": "User registration, login, and token management.\n\n**Endpoints (to be added):**\n- POST /auth/register\n- POST /auth/login\n- POST /auth/refresh\n- POST /auth/logout\n- POST /auth/forgot-password\n- POST /auth/reset-password"
+      "name": "Admin Operations",
+      "item": [
+        {
+          "name": "Create Customer",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Validate JWT token is set",
+                  "const jwtToken = pm.collectionVariables.get('jwtToken');",
+                  "",
+                  "if (!jwtToken || jwtToken === '') {",
+                  "    throw new Error('JWT token is required. Please authenticate first and set the jwtToken variable.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test response structure",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has required fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('tenantId');",
+                  "    pm.expect(jsonData).to.have.property('customerId');",
+                  "    pm.expect(jsonData).to.have.property('customerName');",
+                  "});",
+                  "",
+                  "pm.test('Tenant ID is valid UUID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+                  "    pm.expect(jsonData.tenantId).to.match(uuidRegex);",
+                  "});",
+                  "",
+                  "pm.test('Customer ID is valid UUID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+                  "    pm.expect(jsonData.customerId).to.match(uuidRegex);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Sunshine Carehome\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/admin/create-customer",
+              "host": ["{{apiUrl}}"],
+              "path": ["admin", "create-customer"]
+            },
+            "description": "Create a new customer tenant and customer record.\n\n**Note:** \"customer\" represents a business/care home organisation in the system.\n\n**Authentication:** System admin JWT token required\n\n**Request Body:**\n```json\n{\n  \"customerName\": \"Sunshine Carehome\"\n}\n```\n\n**Response:**\n```json\n{\n  \"tenantId\": \"uuid\",\n  \"customerId\": \"uuid\",\n  \"customerName\": \"Sunshine Carehome\"\n}\n```\n\n**Status Codes:**\n- `200`: Customer created successfully\n- `400`: Validation error (invalid input)\n- `401`: Unauthorised (no JWT token)\n- `403`: Forbidden (not a system_admin)\n- `500`: Internal server error\n\n**Two-Step Onboarding:**\nThis endpoint creates the tenant and customer records. After successful creation:\n1. Use the returned `tenantId` with POST /auth/invite-user (FFP-37) to create the business owner account\n2. Owner will receive Cognito invitation email with temporary password\n\n**Phase 1 MVP:**\nFor Phase 1, all customers are treated the same. Features will be added in future phases."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"customerName\": \"Sunshine Carehome\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/admin/create-customer",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "create-customer"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"tenantId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"customerId\": \"b2c3d4e5-f6a7-8901-bcde-f12345678901\",\n  \"customerName\": \"Sunshine Carehome\"\n}"
+            },
+            {
+              "name": "Validation Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"customerName\": \"\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/admin/create-customer",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "create-customer"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Invalid request data\",\n  \"requestId\": \"abc123-def456\",\n  \"details\": [\n    {\n      \"path\": \"customerName\",\n      \"message\": \"Customer name is required\",\n      \"code\": \"too_small\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "Forbidden - Not Super Admin",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"customerName\": \"Sunshine Carehome\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/admin/create-customer",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "create-customer"]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"FORBIDDEN\",\n  \"message\": \"Only system admins can create customers\",\n  \"requestId\": \"abc123-def456\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Admin operations requiring system_admin role.\n\n**Authentication:**\nAll endpoints require JWT token with `custom:role = system_admin`.\n\n**Current Endpoints:**\n- POST /admin/create-customer - Create new business tenant",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{jwtToken}}",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Get JWT Token (Cognito)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Extract and save JWT tokens from Cognito response",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has authentication result', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('AuthenticationResult');",
+                  "    pm.expect(jsonData.AuthenticationResult).to.have.property('IdToken');",
+                  "    pm.expect(jsonData.AuthenticationResult).to.have.property('AccessToken');",
+                  "    pm.expect(jsonData.AuthenticationResult).to.have.property('RefreshToken');",
+                  "});",
+                  "",
+                  "// Save the IdToken to collection variable for API requests",
+                  "const response = pm.response.json();",
+                  "if (response.AuthenticationResult && response.AuthenticationResult.IdToken) {",
+                  "    pm.collectionVariables.set('jwtToken', response.AuthenticationResult.IdToken);",
+                  "    console.log('JWT Token saved to collection variable');",
+                  "    ",
+                  "    // Optionally save other tokens",
+                  "    pm.collectionVariables.set('accessToken', response.AuthenticationResult.AccessToken);",
+                  "    pm.collectionVariables.set('refreshToken', response.AuthenticationResult.RefreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Amz-Target",
+                "value": "AWSCognitoIdentityProviderService.InitiateAuth",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-amz-json-1.1",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"AuthFlow\": \"USER_PASSWORD_AUTH\",\n  \"ClientId\": \"{{userPoolClientId}}\",\n  \"AuthParameters\": {\n    \"USERNAME\": \"{{cognitoUsername}}\",\n    \"PASSWORD\": \"{{cognitoPassword}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://cognito-idp.{{awsRegion}}.amazonaws.com/",
+              "protocol": "https",
+              "host": ["cognito-idp", "{{awsRegion}}", "amazonaws", "com"],
+              "path": [""]
+            },
+            "description": "Authenticate with AWS Cognito using username and password to obtain JWT tokens.\n\n**Authentication Flow:** USER_PASSWORD_AUTH\n\n**Required Collection Variables:**\n- `userPoolClientId` - Cognito User Pool Client ID\n- `cognitoUsername` - User's email address\n- `cognitoPassword` - User's password\n- `awsRegion` - AWS region (default: eu-west-2)\n\n**Response Tokens:**\n- `IdToken` - Used for API authentication (saved to `jwtToken` variable)\n- `AccessToken` - Used for Cognito user operations\n- `RefreshToken` - Used to obtain new tokens\n\n**Token Expiry:**\n- Access Token: 60 minutes\n- ID Token: 60 minutes\n- Refresh Token: 30 days\n\n**Usage:**\n1. Set the required collection variables (userPoolClientId, cognitoUsername, cognitoPassword)\n2. Send this request\n3. The `jwtToken` variable will be automatically populated\n4. Use the token for protected API endpoints\n\n**Testing Custom Claims:**\nAfter authentication, you can decode the JWT at https://jwt.io to verify custom claims:\n- `custom:tenantId` - Tenant identifier\n- `custom:role` - User role (e.g., system_admin)\n- `custom:customerId` - Customer identifier (optional)"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-Amz-Target",
+                    "value": "AWSCognitoIdentityProviderService.InitiateAuth",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/x-amz-json-1.1",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"AuthFlow\": \"USER_PASSWORD_AUTH\",\n  \"ClientId\": \"2jp2jkk7f6rtg5rgs5silft99t\",\n  \"AuthParameters\": {\n    \"USERNAME\": \"admin@example.com\",\n    \"PASSWORD\": \"your-password\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://cognito-idp.eu-west-2.amazonaws.com/",
+                  "protocol": "https",
+                  "host": ["cognito-idp", "eu-west-2", "amazonaws", "com"],
+                  "path": [""]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/x-amz-json-1.1"
+                }
+              ],
+              "body": "{\n  \"ChallengeParameters\": {},\n  \"AuthenticationResult\": {\n    \"AccessToken\": \"eyJraWQiOi...(truncated)\",\n    \"ExpiresIn\": 3600,\n    \"TokenType\": \"Bearer\",\n    \"RefreshToken\": \"eyJjdHkiOi...(truncated)\",\n    \"IdToken\": \"eyJraWQiOi...(truncated)\"\n  }\n}"
+            },
+            {
+              "name": "Invalid Credentials",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-Amz-Target",
+                    "value": "AWSCognitoIdentityProviderService.InitiateAuth",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/x-amz-json-1.1",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"AuthFlow\": \"USER_PASSWORD_AUTH\",\n  \"ClientId\": \"2jp2jkk7f6rtg5rgs5silft99t\",\n  \"AuthParameters\": {\n    \"USERNAME\": \"admin@example.com\",\n    \"PASSWORD\": \"wrong-password\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://cognito-idp.eu-west-2.amazonaws.com/",
+                  "protocol": "https",
+                  "host": ["cognito-idp", "eu-west-2", "amazonaws", "com"],
+                  "path": [""]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/x-amz-json-1.1"
+                }
+              ],
+              "body": "{\n  \"__type\": \"NotAuthorizedException\",\n  \"message\": \"Incorrect username or password.\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "AWS Cognito authentication for obtaining JWT tokens.\n\n**Setup Instructions:**\n1. Set collection variables:\n   - `userPoolClientId` - Your Cognito User Pool Client ID\n   - `cognitoUsername` - Your email/username\n   - `cognitoPassword` - Your password\n   - `awsRegion` - AWS region (e.g., eu-west-2)\n\n2. Send the \"Get JWT Token (Cognito)\" request\n3. The `jwtToken` variable will be automatically set\n4. Protected endpoints will use this token automatically\n\n**Future Endpoints:**\n- POST /auth/refresh - Refresh tokens using refresh token\n- POST /auth/forgot-password - Initiate password reset\n- POST /auth/change-password - Change password for authenticated user"
     },
     {
       "name": "Assessments (Coming Soon)",
@@ -115,6 +451,36 @@
     },
     {
       "key": "jwtToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cognitoClientId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cognitoUsername",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cognitoPassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "awsRegion",
+      "value": "eu-west-2",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
       "value": "",
       "type": "string"
     }

@@ -8,6 +8,60 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### November 8, 2025 (Session 36 - FFP-112 Complete!)
+
+**Status**: ✅ FFP-112 COMPLETE - Admin API Endpoint for Business Onboarding (4.5h)
+
+**Branch**: `feature/ffp-112-api-create-business` → `feature/ffp-9-cognito-auth`
+
+**Completed Work**:
+
+- ✅ Created `packages/core/src/admin/admin.repository.ts` - Privileged database operations
+  - `createCustomer()` - Transaction-based tenant + customer creation
+  - `generateAccountCode()` - Unique account codes (e.g., "SUNSHINE-6B4B")
+  - Requires BYPASSRLS permission for admin operations
+- ✅ Created `packages/core/src/admin/admin.service.ts` - Business logic orchestration
+  - Structured logging with admin context
+  - Clean error propagation (no redundant try-catch)
+- ✅ Created `packages/core/src/schemas/admin.schema.ts` - Zod validation schemas
+  - `createCustomerSchema` - Input validation (1-255 chars, trimmed)
+  - `createCustomerResponseSchema` - Output structure
+- ✅ Created `packages/functions/src/admin/create-customer.ts` - Lambda handler
+  - JWT authentication + system_admin role validation
+  - Error handling via withErrorHandling wrapper (no catch-all wrapping)
+  - Domain-organised architecture pattern established
+- ✅ Created `packages/core/src/lib/request-context.ts` - Unified context utilities
+  - `RequestContext` interface (db + tenant context)
+  - `createRequestContext()` - Merges database client with tenant context
+- ✅ Created `packages/core/src/lib/random.ts` - Cryptographically secure random generation
+  - Uses Node.js `crypto.randomInt()` (not Math.random())
+  - Server-only export to prevent browser bundling
+- ✅ Updated `packages/core/src/lib/database.ts` - Stage-aware SSL detection
+  - Uses `SST_STAGE` environment variable
+  - Disables SSL for local/dev, enables for staging/production
+- ✅ Updated `sst.config.ts` - Added protected route with JWT authoriser
+  - `POST /admin/create-customer` with system_admin requirement
+  - Environment variables for database connection
+- ✅ Updated Postman collection - Admin Operations folder
+  - Pre-request scripts for JWT validation
+  - Test scripts for response structure validation
+  - Multiple example responses (200, 400, 403)
+- ✅ Updated `postman/README.md` - Testing guide with AWS CLI auth flow
+- ✅ Updated `project-documentation/authentication.md` - Actor-based context patterns
+- ✅ Applied security review fixes:
+  - Fixed insecure random generation (Math.random → crypto.randomInt)
+  - Removed try-catch wrapper masking error codes
+  - Removed redundant error logging in service layer
+  - Fixed British spelling ("customisable")
+
+**Testing**: End-to-end API tested with Postman, JWT validation verified, CloudWatch logging confirmed
+**Pattern Established**: Handler → Service → Repository architecture for admin operations
+**FFP-9 Progress**: 5/13 subtasks (38%), 15/29-30 hours (52%)
+**Sprint 1**: 132.5/197 hours (67%)
+**Next**: FFP-37 Invite User Lambda (4h)
+
+---
+
 ### November 6, 2025 (Session 35 - FFP-32 Deferred)
 
 **Status**: ⏸️ FFP-32 DEFERRED - Secrets Manager (0.5h)
@@ -148,19 +202,20 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Key Milestones
 
-| Date        | Milestone                       | Hours        |
-| ----------- | ------------------------------- | ------------ |
-| Oct 20      | Sprint 1 Started                | 0h           |
-| Oct 24      | FFP-7 Complete (Monorepo)       | 13h          |
-| Oct 26      | FFP-8 Complete (Infrastructure) | 30h          |
-| Oct 27      | Database schemas defined        | 44h          |
-| Oct 30      | FFP-10 Complete (RLS)           | 54h          |
-| Nov 1       | FFP-10 & FFP-11 Merged to Main  | 83.5h        |
-| Nov 3       | FFP-35 & FFP-43 Complete        | 94h          |
-| Nov 5       | FFP-36 Complete                 | 125.5h       |
-| Nov 6       | FFP-44 Complete                 | 127.5h       |
-| Nov 6       | FFP-32 Deferred                 | 128h         |
-| **Current** | **65% Sprint 1 Complete**       | **128/197h** |
+| Date        | Milestone                       | Hours          |
+| ----------- | ------------------------------- | -------------- |
+| Oct 20      | Sprint 1 Started                | 0h             |
+| Oct 24      | FFP-7 Complete (Monorepo)       | 13h            |
+| Oct 26      | FFP-8 Complete (Infrastructure) | 30h            |
+| Oct 27      | Database schemas defined        | 44h            |
+| Oct 30      | FFP-10 Complete (RLS)           | 54h            |
+| Nov 1       | FFP-10 & FFP-11 Merged to Main  | 83.5h          |
+| Nov 3       | FFP-35 & FFP-43 Complete        | 94h            |
+| Nov 5       | FFP-36 Complete                 | 125.5h         |
+| Nov 6       | FFP-44 Complete                 | 127.5h         |
+| Nov 6       | FFP-32 Deferred                 | 128h           |
+| Nov 8       | FFP-112 Complete (Admin API)    | 132.5h         |
+| **Current** | **67% Sprint 1 Complete**       | **132.5/197h** |
 
 ---
 

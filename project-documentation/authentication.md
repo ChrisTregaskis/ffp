@@ -40,16 +40,17 @@ FFP uses AWS Cognito for authentication with custom attributes to support multi-
 
 **System Administrator Workflow (Two-Step Process):**
 
-**Step 1: Create business account (Postman)**
+**Step 1: Create customer account (Postman)**
+
+Note: "customer" represents a business/care home organisation in the system.
 
 ```http
-POST {{apiUrl}}/admin/create-business
+POST {{apiUrl}}/admin/create-customer
 Authorization: Bearer {{superAdminJwt}}
 Content-Type: application/json
 
 {
-  "businessName": "ABC Physiotherapy",
-  "subscriptionTier": "basic"
+  "customerName": "ABC Physiotherapy"
 }
 ```
 
@@ -533,41 +534,43 @@ export const handler = async (event: ScheduledEvent) => {
 
 ### Admin API: Create Business Account (FFP-112)
 
-**Purpose:** Super admin creates business entity (tenant + customer) via authenticated API endpoint.
+**Purpose:** Super admin creates customer entity (tenant + customer) via authenticated API endpoint.
 
-**Endpoint:** `POST /admin/create-business`
+Note: "customer" represents a business/care home organisation in the system.
 
-**Authentication:** JWT required (super_admin role only)
+**Endpoint:** `POST /admin/create-customer`
+
+**Authentication:** JWT required (system_admin role only)
 
 ```typescript
-// packages/functions/src/admin/create-business.ts
-import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
+// packages/functions/src/admin/create-customer.ts
+import { APIGatewayProxyEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { extractUserContext, isUserActor } from '@ffp/core/lib/context';
-import { createBusinessService } from '@ffp/core/admin/admin.service';
+import { createCustomerService } from '@ffp/core/admin/admin.service';
 import { withErrorHandling } from '@ffp/core/lib/lambda-wrapper';
 import { ForbiddenError } from '@ffp/core/lib/errors';
-import { CreateBusinessSchema } from '@ffp/core/schemas/admin.schema';
+import { createCustomerSchema } from '@ffp/core/schemas/admin.schema';
 
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyHandlerV2WithJWTAuthorizer) => {
+  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResultV2> => {
     // Extract context from JWT
     const context = extractUserContext(event);
 
-    // Validate super_admin role
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'super_admin') {
-      throw new ForbiddenError('Only super admins can create businesses');
+    // Validate system_admin role
+    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
+      throw new ForbiddenError('Only system admins can create customers');
     }
 
     // Parse and validate request body
-    const body = CreateBusinessSchema.parse(JSON.parse(event.body || '{}'));
+    const body = createCustomerSchema.parse(JSON.parse(event.body || '{}'));
+
+    // Create request context
+    const ctx = createRequestContext(context);
 
     // Call service
-    const result = await createBusinessService(body, context);
+    const result = await createCustomerService(ctx, body);
 
-    return {
-      statusCode: 201,
-      body: JSON.stringify(result),
-    };
+    return result;
   }
 );
 ```
@@ -576,44 +579,33 @@ export const handler = withErrorHandling(
 
 ```typescript
 // packages/core/src/admin/admin.service.ts
-import { randomUUID } from 'crypto';
-import { adminRepository } from './admin.repository';
-import { TenantContext } from '../lib/context';
+import { createCustomer as createCustomerInRepo } from './admin.repository';
+import { RequestContext } from '../lib/request-context';
 import { Logger } from '../lib/logger';
 
-const logger = new Logger('AdminService');
+export const createCustomerService = async (
+  ctx: RequestContext,
+  input: CreateCustomerInput
+): Promise<CreateCustomerResponse> => {
+  const logger = new Logger(ctx.tenantContext);
 
-export const createBusinessService = async (data: CreateBusinessInput, context: TenantContext) => {
-  logger.info('Creating business account', {
-    businessName: data.businessName,
-    tier: data.subscriptionTier,
-    adminUserId: context.actor.type === 'user' ? context.actor.userId : null,
+  logger.info('Starting customer creation', {
+    customerName: input.customerName,
   });
 
-  // Generate UUIDs
-  const tenantId = randomUUID();
-  const customerId = randomUUID();
+  // Create customer via repository (transaction-based)
+  const result = await createCustomerInRepo(ctx.db, input.customerName);
 
-  // Create tenant and customer via repository (privileged DB access)
-  await adminRepository.createBusiness(
-    {
-      tenantId,
-      customerId,
-      businessName: data.businessName,
-      subscriptionTier: data.subscriptionTier,
-    },
-    context
-  );
-
-  logger.info('Business account created successfully', {
-    tenantId,
-    customerId,
+  logger.info('Customer created successfully', {
+    tenantId: result.tenantId,
+    customerId: result.customerId,
+    accountCode: result.accountCode,
   });
 
   return {
-    tenantId,
-    customerId,
-    message: 'Business account created. Use /auth/invite-user to create owner.',
+    tenantId: result.tenantId,
+    customerId: result.customerId,
+    customerName: input.customerName,
   };
 };
 ```
@@ -622,16 +614,12 @@ export const createBusinessService = async (data: CreateBusinessInput, context: 
 
 ```typescript
 // packages/core/src/admin/admin.repository.ts
-import { adminDb } from '@ffp/database'; // Privileged connection (bypasses RLS)
+import { DbClient } from '@ffp/database';
 import { tenants, customers } from '@ffp/database/schema';
-import { TenantContext } from '../lib/context';
 
-export const adminRepository = {
-  async createBusiness(
-    data: {
-      tenantId: string;
-      customerId: string;
-      businessName: string;
+export async function createCustomer(
+  db: DbClient,
+  customerName: string
       subscriptionTier: string;
     },
     context: TenantContext

@@ -813,7 +813,7 @@ Your program is designed specifically for your needs based on your assessment.
 ## Program Structure
 
 - **Duration**: Typically 8-12 weeks
-- **Sessions per Week**: 3-4 sessions (customizable)
+- **Sessions per Week**: 3-4 sessions (customisable)
 - **Session Duration**: 30-60 minutes each
 
 ## Completing Sessions
