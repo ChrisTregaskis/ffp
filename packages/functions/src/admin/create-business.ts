@@ -45,8 +45,8 @@ export const handler = withErrorHandling(
       const ctx = createRequestContext(context);
 
       // Create business via service
-
       const result = await createBusinessService(ctx, input);
+
       return result;
     } catch (error) {
       throw new InternalServerError(
