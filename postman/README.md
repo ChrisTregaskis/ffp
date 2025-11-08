@@ -65,9 +65,23 @@ pnpm sst:deploy:dev
 - **Health & Status**
   - `GET /health` - Public health check (no auth required)
 
+- **Admin Operations** (system_admin role required)
+  - `POST /admin/create-business` - Create new business tenant and customer
+
 ### Coming Soon
 
 - **Authentication** - User registration, login, token management
 - **Assessments** - Patient assessment CRUD operations
 - **Programmes** - Workout programme generation
 - **Videos** - Video metadata and streaming
+
+## Testing Guides
+
+For detailed testing instructions for specific features:
+
+- **[TESTING-FFP-112.md](./TESTING-FFP-112.md)** - Testing the Create Business API endpoint
+  - Prerequisites and setup
+  - Step-by-step authentication guide
+  - Happy path and error scenario testing
+  - Database verification
+  - CloudWatch logs validation

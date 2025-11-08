@@ -245,15 +245,36 @@ export default $config({
     });
 
     // Health check endpoint (public, no auth)
-    api.route('GET /health', {
-      handler: 'packages/functions/src/auth/health.handler',
-    });
+    api.route('GET /health', 'packages/functions/src/auth/health.handler');
+
+    // TODO: Once got it all working, lets figure out if its possible to point all `/admin` routes to a single handler file. This would set the pattern for other modules too (e.g., users, videos, etc.) keeping the api routes here tidy.
+    // Admin routes (system_admin role required - validated in handler)
+    api.route(
+      'POST /admin/create-business',
+      {
+        handler: 'packages/functions/src/admin/create-business.handler',
+        environment: {
+          DB_HOST: process.env.DB_HOST!,
+          DB_PORT: process.env.DB_PORT!,
+          DB_NAME: process.env.DB_NAME!,
+          DB_USER: process.env.DB_USER!,
+          DB_PASSWORD: process.env.DB_PASSWORD!,
+          DB_SSL: process.env.DB_SSL || 'false',
+        },
+      },
+      {
+        auth: {
+          jwt: {
+            authorizer: authorizer.id,
+          },
+        },
+      }
+    );
 
     // Protected routes will use authorizer (to be added in future tickets)
     // Example:
-    // api.route('GET /users', {
-    //   handler: 'packages/functions/src/users/list.handler',
-    //   auth: { authorizer },
+    // api.route('GET /users', 'packages/functions/src/users/list.handler', {
+    //   auth: { jwt: { authorizer: authorizer.id } },
     // });
 
     // Export resource identifiers

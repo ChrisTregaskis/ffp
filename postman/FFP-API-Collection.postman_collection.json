@@ -49,6 +49,186 @@
       "description": "Health and status endpoints - no authentication required"
     },
     {
+      "name": "Admin Operations",
+      "item": [
+        {
+          "name": "Create Business",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Validate JWT token is set",
+                  "const jwtToken = pm.collectionVariables.get('jwtToken');",
+                  "",
+                  "if (!jwtToken || jwtToken === '') {",
+                  "    throw new Error('JWT token is required. Please authenticate first and set the jwtToken variable.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test response structure",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has required fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('tenantId');",
+                  "    pm.expect(jsonData).to.have.property('customerId');",
+                  "    pm.expect(jsonData).to.have.property('businessName');",
+                  "});",
+                  "",
+                  "pm.test('Tenant ID is valid UUID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+                  "    pm.expect(jsonData.tenantId).to.match(uuidRegex);",
+                  "});",
+                  "",
+                  "pm.test('Customer ID is valid UUID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+                  "    pm.expect(jsonData.customerId).to.match(uuidRegex);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"businessName\": \"Sunshine Carehome\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/admin/create-business",
+              "host": ["{{apiUrl}}"],
+              "path": ["admin", "create-business"]
+            },
+            "description": "Create a new business tenant and customer record.\n\n**Authentication:** System admin JWT token required\n\n**Request Body:**\n```json\n{\n  \"businessName\": \"Sunshine Carehome\"\n}\n```\n\n**Response:**\n```json\n{\n  \"tenantId\": \"uuid\",\n  \"customerId\": \"uuid\",\n  \"businessName\": \"Sunshine Carehome\"\n}\n```\n\n**Status Codes:**\n- `200`: Business created successfully\n- `400`: Validation error (invalid input)\n- `401`: Unauthorised (no JWT token)\n- `403`: Forbidden (not a system_admin)\n- `500`: Internal server error\n\n**Two-Step Onboarding:**\nThis endpoint creates the tenant and customer records. After successful creation:\n1. Use the returned `tenantId` with POST /auth/invite-user (FFP-37) to create the business owner account\n2. Owner will receive Cognito invitation email with temporary password\n\n**Phase 1 MVP:**\nFor Phase 1, all businesses are treated the same with no subscription tiers. Features will be added in future phases."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"businessName\": \"Sunshine Carehome\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/admin/create-business",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "create-business"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"tenantId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"customerId\": \"b2c3d4e5-f6a7-8901-bcde-f12345678901\",\n  \"businessName\": \"Sunshine Carehome\"\n}"
+            },
+            {
+              "name": "Validation Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"businessName\": \"\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/admin/create-business",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "create-business"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Invalid request data\",\n  \"requestId\": \"abc123-def456\",\n  \"details\": [\n    {\n      \"path\": \"businessName\",\n      \"message\": \"Business name is required\",\n      \"code\": \"too_small\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "Forbidden - Not Super Admin",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"businessName\": \"Sunshine Carehome\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/admin/create-business",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "create-business"]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"FORBIDDEN\",\n  \"message\": \"Only system admins can create businesses\",\n  \"requestId\": \"abc123-def456\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Admin operations requiring system_admin role.\n\n**Authentication:**\nAll endpoints require JWT token with `custom:role = system_admin`.\n\n**Current Endpoints:**\n- POST /admin/create-business - Create new business tenant",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{jwtToken}}",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
       "name": "Authentication (Coming Soon)",
       "item": [],
       "description": "User registration, login, and token management.\n\n**Endpoints (to be added):**\n- POST /auth/register\n- POST /auth/login\n- POST /auth/refresh\n- POST /auth/logout\n- POST /auth/forgot-password\n- POST /auth/reset-password"

@@ -74,6 +74,9 @@ importers:
       '@aws-sdk/client-cognito-identity-provider':
         specifier: ^3.705.0
         version: 3.913.0
+      '@ffp/database':
+        specifier: workspace:*
+        version: link:../database
       drizzle-orm:
         specifier: ^0.44.7
         version: 0.44.7(@types/pg@8.15.5)(pg@8.16.3)
@@ -196,6 +199,9 @@ importers:
       '@ffp/core':
         specifier: workspace:*
         version: link:../core
+      '@ffp/database':
+        specifier: workspace:*
+        version: link:../database
     devDependencies:
       '@ffp/eslint-config':
         specifier: workspace:*
