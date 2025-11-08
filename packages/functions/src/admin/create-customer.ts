@@ -29,14 +29,9 @@ export const handler = withErrorHandling(
     const context = extractUserContext(event);
 
     // Validate system_admin role
-    if (!isUserActor(context.actor)) {
+    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
       throw new ForbiddenError('Only system admins can create customers');
     }
-
-    if (context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system admins can create customers');
-    }
-
     // Parse and validate request body
     // Both V1 and V2 events have a `body` property (string | null)
     const body = JSON.parse(event.body ?? '{}') as unknown;
