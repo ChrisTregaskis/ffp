@@ -41,27 +41,18 @@ export async function createCustomerService(
     customerName: input.customerName,
   });
 
-  try {
-    // Create customer via repository (transaction-based)
-    const result = await createCustomerInRepo(ctx.db, input.customerName);
+  // Create customer via repository (transaction-based)
+  const result = await createCustomerInRepo(ctx.db, input.customerName);
 
-    logger.info('Customer created successfully', {
-      tenantId: result.tenantId,
-      customerId: result.customerId,
-      accountCode: result.accountCode,
-    });
+  logger.info('Customer created successfully', {
+    tenantId: result.tenantId,
+    customerId: result.customerId,
+    accountCode: result.accountCode,
+  });
 
-    return {
-      tenantId: result.tenantId,
-      customerId: result.customerId,
-      customerName: input.customerName,
-    };
-  } catch (error) {
-    logger.error('Failed to create customer', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-    });
-
-    throw error;
-  }
+  return {
+    tenantId: result.tenantId,
+    customerId: result.customerId,
+    customerName: input.customerName,
+  };
 }

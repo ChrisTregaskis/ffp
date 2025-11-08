@@ -6,7 +6,6 @@ import {
   isUserActor,
   createCustomerService,
   createRequestContext,
-  InternalServerError,
 } from '@ffp/core/server';
 
 import type { APIGatewayProxyEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
@@ -26,35 +25,29 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
  */
 export const handler = withErrorHandling(
   async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResultV2<CreateCustomerResponse>> => {
-    try {
-      // Extract user context from JWT (throws UnauthorisedError if missing)
-      const context = extractUserContext(event);
+    // Extract user context from JWT (throws UnauthorisedError if missing)
+    const context = extractUserContext(event);
 
-      // Validate system_admin role
-      if (!isUserActor(context.actor)) {
-        throw new ForbiddenError('Only system admins can create customers');
-      }
-
-      if (context.actor.userRole !== 'system_admin') {
-        throw new ForbiddenError('Only system admins can create customers');
-      }
-
-      // Parse and validate request body
-      // Both V1 and V2 events have a `body` property (string | null)
-      const body = JSON.parse(event.body ?? '{}') as unknown;
-      const input = createCustomerSchema.parse(body);
-
-      // Create unified request context (db + tenant context)
-      const ctx = createRequestContext(context);
-
-      // Create customer via service
-      const result = await createCustomerService(ctx, input);
-
-      return result;
-    } catch (error) {
-      throw new InternalServerError(
-        `Failed to create customer: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+    // Validate system_admin role
+    if (!isUserActor(context.actor)) {
+      throw new ForbiddenError('Only system admins can create customers');
     }
+
+    if (context.actor.userRole !== 'system_admin') {
+      throw new ForbiddenError('Only system admins can create customers');
+    }
+
+    // Parse and validate request body
+    // Both V1 and V2 events have a `body` property (string | null)
+    const body = JSON.parse(event.body ?? '{}') as unknown;
+    const input = createCustomerSchema.parse(body);
+
+    // Create unified request context (db + tenant context)
+    const ctx = createRequestContext(context);
+
+    // Create customer via service
+    const result = await createCustomerService(ctx, input);
+
+    return result;
   }
 );
