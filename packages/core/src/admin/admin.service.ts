@@ -1,10 +1,8 @@
-import type { DbClient } from '@ffp/database';
-
 import { Logger } from '../lib/logger';
 
 import { createBusiness as createBusinessInRepo } from './admin.repository';
 
-import type { TenantContext } from '../lib/context';
+import type { RequestContext } from '../lib/request-context';
 import type { CreateBusinessInput, CreateBusinessResponse } from '../schemas/admin.schema';
 
 /**
@@ -19,24 +17,23 @@ import type { CreateBusinessInput, CreateBusinessResponse } from '../schemas/adm
  * This is a privileged operation that bypasses RLS. The handler
  * should validate that the requesting user has system_admin role.
  *
- * @param db - Database client with privileged access
- * @param context - Tenant context with system admin actor information
+ * @param ctx - Request context containing database client and tenant context
  * @param input - Validated business creation input
  * @returns Object containing tenantId, customerId, and businessName
  *
  * @example
  * ```typescript
- * const result = await createBusinessService(db, adminContext, {
+ * const ctx = createRequestContext(adminContext);
+ * const result = await createBusinessService(ctx, {
  *   businessName: "Acme Physiotherapy"
  * });
  * ```
  */
 export async function createBusinessService(
-  db: DbClient,
-  context: TenantContext,
+  ctx: RequestContext,
   input: CreateBusinessInput
 ): Promise<CreateBusinessResponse> {
-  const logger = new Logger(context);
+  const logger = new Logger(ctx.tenantContext);
 
   logger.info('Starting business creation', {
     businessName: input.businessName,
@@ -44,7 +41,7 @@ export async function createBusinessService(
 
   try {
     // Create business via repository (transaction-based)
-    const result = await createBusinessInRepo(db, input.businessName);
+    const result = await createBusinessInRepo(ctx.db, input.businessName);
 
     logger.info('Business created successfully', {
       tenantId: result.tenantId,

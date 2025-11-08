@@ -247,7 +247,8 @@ export default $config({
     // Health check endpoint (public, no auth)
     api.route('GET /health', 'packages/functions/src/auth/health.handler');
 
-    // TODO: Once got it all working, lets figure out if its possible to point all `/admin` routes to a single handler file. This would set the pattern for other modules too (e.g., users, videos, etc.) keeping the api routes here tidy.
+    // TODO: Once got it all working, lets figure out if its possible to point all `/admin` routes to a single handler file.
+    // TODO: This would set the pattern for other modules too (e.g., users, videos, etc.) keeping the api routes here tidy.
     // Admin routes (system_admin role required - validated in handler)
     api.route(
       'POST /admin/create-business',
