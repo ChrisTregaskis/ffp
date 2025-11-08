@@ -1,10 +1,10 @@
-import { createSystemContext } from '@ffp/core/server';
+import { createSystemContext, type APIGatewayProxyEventV2WithJWT } from '@ffp/core/server';
 
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
 import { handler as createCustomerHandler } from './create-customer';
 
-import type { APIGatewayProxyEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
+import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
 /**
  * Infrastructure-level system context for router logging.
@@ -45,7 +45,9 @@ const routes: RouteRegistry = {
  * Main proxy handler that routes requests to domain handlers.
  * Returns 404 for unregistered routes, 405 for unsupported methods.
  */
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResultV2> => {
+export const handler = async (
+  event: APIGatewayProxyEventV2WithJWT
+): Promise<APIGatewayProxyResultV2> => {
   const result = validateAndMatchRoute(event, routes, 'admin', ROUTER_CONTEXT);
 
   if (result.type === 'error') {

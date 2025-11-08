@@ -1,9 +1,11 @@
 import { Logger } from '@ffp/core/server';
-import type { TenantContext } from '@ffp/core/server';
+import type { TenantContext, APIGatewayProxyEventV2WithJWT } from '@ffp/core/server';
 
-import type { APIGatewayProxyEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
+import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
-export type RouteHandler = (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResultV2>;
+export type RouteHandler = (
+  event: APIGatewayProxyEventV2WithJWT
+) => Promise<APIGatewayProxyResultV2>;
 
 export type RouteRegistry = Partial<Record<string, Partial<Record<string, RouteHandler>>>>;
 
@@ -32,7 +34,7 @@ export type RouteValidationResult =
  * Ref: packages/functions/src/auth/index.ts
  */
 export function validateAndMatchRoute(
-  event: APIGatewayProxyEvent,
+  event: APIGatewayProxyEventV2WithJWT,
   routes: RouteRegistry,
   domainName: string,
   routerContext: TenantContext
@@ -40,7 +42,7 @@ export function validateAndMatchRoute(
   const logger = new Logger(routerContext);
 
   // Extract HTTP method and path from V1 event format
-  const method = event.httpMethod;
+  const method = event.requestContext.http.method;
   const path = `/${event.pathParameters?.proxy ?? ''}`;
 
   logger.debug(`Routing ${domainName} request`, {

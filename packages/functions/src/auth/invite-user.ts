@@ -1,13 +1,14 @@
 import { inviteUserSchema } from '@ffp/core';
 import {
   type InviteUserResponse,
+  type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
   withErrorHandling,
   inviteUserService,
   createRequestContext,
 } from '@ffp/core/server';
 
-import type { APIGatewayProxyEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
+import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
 /**
  * Lambda handler for POST /auth/invite-user
@@ -21,7 +22,9 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
  * Implements rollback pattern: if database fails, Cognito user is deleted.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResultV2<InviteUserResponse>> => {
+  async (
+    event: APIGatewayProxyEventV2WithJWT
+  ): Promise<APIGatewayProxyResultV2<InviteUserResponse>> => {
     // Extract user context from JWT (throws UnauthorisedError if missing)
     const context = extractUserContext(event);
 

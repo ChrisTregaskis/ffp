@@ -1,6 +1,9 @@
-import type { APIGatewayProxyEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
+import type { APIGatewayProxyEventV2WithJWT } from '@ffp/core/server';
+import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResultV2> => {
+export const handler = async (
+  event: APIGatewayProxyEventV2WithJWT
+): Promise<APIGatewayProxyResultV2> => {
   console.log('Health check event:', event);
 
   try {

@@ -10,11 +10,11 @@
 
 import { ZodError } from 'zod';
 
-import { extractUserContext } from './context.js';
+import { extractUserContext, type APIGatewayProxyEventV2WithJWT } from './context.js';
 import { BaseError, InternalServerError } from './errors.js';
 import { Logger } from './logger.js';
 
-import type { APIGatewayProxyEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
+import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
 /**
  * Sensitive field names to redact from request bodies
@@ -76,17 +76,17 @@ interface ErrorResponseBody {
  * ```
  */
 export const withErrorHandling = <TResult>(
-  handler: (event: APIGatewayProxyEvent) => Promise<TResult>
+  handler: (event: APIGatewayProxyEventV2WithJWT) => Promise<TResult>
 ) => {
-  return async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResultV2> => {
+  return async (event: APIGatewayProxyEventV2WithJWT): Promise<APIGatewayProxyResultV2> => {
     // Try to extract user context for structured logging (only works for authenticated requests)
     let logger: Logger | null = null;
     try {
       const context = extractUserContext(event);
       logger = new Logger(context);
       logger.info('Request started', {
-        path: event.path,
-        method: event.httpMethod,
+        path: event.rawPath,
+        method: event.requestContext.http.method,
       });
     } catch {
       // Context extraction failed (unauthenticated request or invalid JWT)
@@ -207,7 +207,9 @@ export const withErrorHandling = <TResult>(
  * @param event - The Lambda event object
  * @returns Sanitised event object safe for logging
  */
-const sanitiseEventForLogging = (event: APIGatewayProxyEvent): APIGatewayProxyEvent => {
+const sanitiseEventForLogging = (
+  event: APIGatewayProxyEventV2WithJWT
+): APIGatewayProxyEventV2WithJWT => {
   const redacted = '[REDACTED]';
   const sanitised = { ...event };
 

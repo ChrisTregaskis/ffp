@@ -1,5 +1,6 @@
 import { type CreateCustomerResponse, createCustomerSchema } from '@ffp/core';
 import {
+  type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
   withErrorHandling,
   ForbiddenError,
@@ -8,7 +9,7 @@ import {
   createRequestContext,
 } from '@ffp/core/server';
 
-import type { APIGatewayProxyEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
+import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
 /**
  * Lambda handler for POST /admin/create-customer
@@ -24,7 +25,9 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
  * ```
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResultV2<CreateCustomerResponse>> => {
+  async (
+    event: APIGatewayProxyEventV2WithJWT
+  ): Promise<APIGatewayProxyResultV2<CreateCustomerResponse>> => {
     // Extract user context from JWT (throws UnauthorisedError if missing)
     const context = extractUserContext(event);
 
