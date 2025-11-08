@@ -180,7 +180,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Invalid request data\",\n  \"requestId\": \"abc123-def456\",\n  \"details\": [\n    {\n      \"path\": \"customerName\",\n      \"message\": \"Business name is required\",\n      \"code\": \"too_small\"\n    }\n  ]\n}"
+              "body": "{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Invalid request data\",\n  \"requestId\": \"abc123-def456\",\n  \"details\": [\n    {\n      \"path\": \"customerName\",\n      \"message\": \"Customer name is required\",\n      \"code\": \"too_small\"\n    }\n  ]\n}"
             },
             {
               "name": "Forbidden - Not Super Admin",
