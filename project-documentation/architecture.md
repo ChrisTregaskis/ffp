@@ -210,62 +210,6 @@ FFP uses [Turborepo](https://turborepo.com/) for efficient monorepo management, 
 - **Remote Caching**: Share build artifacts across team (future)
 - **Incremental Builds**: Only rebuild what changed
 
-### Configuration
-
-```json
-// turbo.json
-{
-  "$schema": "https://turbo.build/schema.json",
-  "pipeline": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**"]
-    },
-    "lint": {
-      "cache": true
-    },
-    "test": {
-      "dependsOn": ["build"],
-      "cache": true,
-      "outputs": ["coverage/**"]
-    },
-    "dev": {
-      "cache": false,
-      "persistent": true
-    },
-    "deploy": {
-      "dependsOn": ["build", "test"],
-      "cache": false
-    }
-  }
-}
-```
-
-### Common Commands
-
-```bash
-# Build all packages
-turbo build
-
-# Run tests across all packages (parallel)
-turbo test
-
-# Lint all packages (parallel)
-turbo lint
-
-# Run dev mode (with caching)
-turbo dev
-
-# Build only affected packages since last commit
-turbo build --filter=[HEAD^1]
-
-# Run specific package task
-turbo build --filter=@ffp/core
-
-# Clear cache
-turbo run build --force
-```
-
 ### Task Dependencies
 
 ```
@@ -917,128 +861,6 @@ export interface TenantContext {
 }
 ```
 
-### Context Extraction Functions
-
-```typescript
-/**
- * Extract context from user request (JWT-authenticated API call)
- */
-export function extractUserContext(event: APIGatewayProxyEvent): TenantContext {
-  const claims = event.requestContext.authorizer?.jwt?.claims;
-
-  if (!claims) {
-    throw new UnauthorisedError('No JWT claims found');
-  }
-
-  return {
-    actor: {
-      type: 'user',
-      userId: claims.sub as string,
-      userRole: claims['custom:role'] as string,
-      email: claims.email as string,
-    },
-    tenantId: claims['custom:tenantId'] as string,
-    customerId: claims['custom:customerId'] as string | null,
-    requestId: event.requestContext.requestId,
-    timestamp: new Date(),
-  };
-}
-
-/**
- * Create context for system-triggered requests
- * Used by: Job processors, scheduled tasks, internal services
- */
-export function createSystemContext(params: {
-  systemId: string;
-  tenantId: string;
-  customerId?: string | null;
-  triggeredBy?: string;
-  jobId?: string;
-}): TenantContext {
-  return {
-    actor: {
-      type: 'system',
-      systemId: params.systemId,
-      triggeredBy: params.triggeredBy,
-      jobId: params.jobId,
-    },
-    tenantId: params.tenantId,
-    customerId: params.customerId ?? null,
-    requestId: `system-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    timestamp: new Date(),
-  };
-}
-
-/**
- * Extract context from job queue message
- */
-export function extractJobContext(jobMessage: {
-  tenantId: string;
-  customerId?: string;
-  triggeredBy?: string;
-  jobId: string;
-  systemId: string;
-}): TenantContext {
-  return createSystemContext(jobMessage);
-}
-```
-
-### Helper Functions
-
-```typescript
-/**
- * Type guards for actor types
- */
-export function isUserActor(actor: Actor): actor is UserActor {
-  return actor.type === 'user';
-}
-
-export function isSystemActor(actor: Actor): actor is SystemActor {
-  return actor.type === 'system';
-}
-
-/**
- * Get display name for audit logs
- */
-export function getActorDisplayName(actor: Actor): string {
-  if (isUserActor(actor)) {
-    return `${actor.email} (${actor.userRole})`;
-  }
-
-  return actor.triggeredBy
-    ? `${actor.systemId} (triggered by user ${actor.triggeredBy})`
-    : actor.systemId;
-}
-
-/**
- * Check if actor has permission
- */
-export function hasPermission(context: TenantContext, permission: string): boolean {
-  if (isUserActor(context.actor)) {
-    const rolePermissions = {
-      system_admin: ['*'],
-      customer_owner: ['users:*', 'assessments:*', 'programs:*'],
-      customer_admin: ['users:read', 'assessments:*', 'programs:read'],
-      customer_user: ['assessments:read', 'programs:read'],
-    };
-
-    const permissions = rolePermissions[context.actor.userRole] || [];
-    return permissions.includes('*') || permissions.includes(permission);
-  }
-
-  // System actors have elevated permissions
-  const systemPermissions = {
-    'export-worker': ['exports:*', 'assessments:read', 'programs:read'],
-    'cleanup-job': ['cleanup:*'],
-    'notification-service': ['notifications:*', 'users:read'],
-    'process-queue-worker': ['*'],
-  };
-
-  const permissions = systemPermissions[context.actor.systemId] || [];
-  return permissions.includes('*') || permissions.includes(permission);
-}
-```
-
 ### Usage Examples
 
 **User-triggered API request:**
@@ -1098,72 +920,6 @@ export const handler = async () => {
 - Audit logs capture both user and system actions
 - System jobs retain original user ID when applicable (job traceability)
 
-## Data Flow Examples
-
-### User Registration Flow
-
-```
-1. User submits registration form (React)
-   ↓
-2. POST /auth/register (API Gateway)
-   ↓
-3. Lambda: Generate tenantId, validate input (Zod)
-   ↓
-4. Cognito: Create user with custom attributes
-   ↓
-5. PostgreSQL: Insert user record with tenantId (via Drizzle)
-   ↓
-6. Cognito: Send verification email
-   ↓
-7. Response: Registration successful
-```
-
-### Assessment Submission Flow
-
-```
-1. User submits assessment answers (React)
-   ↓
-2. POST /assessments/{id}/submit (API Gateway)
-   ↓
-3. JWT Authorizer: Validate token, extract tenantId
-   ↓
-4. Lambda: Validate answers (Zod schema)
-   ↓
-5. Drizzle: Set RLS context in transaction
-   ↓
-6. PostgreSQL: Save answers with tenant isolation
-   ↓
-7. Lambda: Run scoring algorithm
-   ↓
-8. Lambda: Generate workout program
-   ↓
-9. PostgreSQL: Save program with tenant isolation (via Drizzle)
-   ↓
-10. Response: Program generated successfully
-```
-
-### Video Playback Flow
-
-```
-1. User clicks "Play Exercise" (React)
-   ↓
-2. GET /videos/{id}/stream (API Gateway)
-   ↓
-3. JWT Authorizer: Validate token
-   ↓
-4. Lambda: Check user has access (Drizzle RLS query)
-   ↓
-5. Lambda: Generate CloudFront signed URL (5min expiry)
-   ↓
-6. Response: Signed video URL
-   ↓
-7. React: Load video from CloudFront CDN
-   ↓
-8. User watches video (progress tracked locally)
-   ↓
-9. POST /videos/{id}/progress (periodic updates via Drizzle)
-```
-
 ## Environment Strategy
 
 ### Development (dev)
@@ -1172,7 +928,6 @@ export const handler = async () => {
 - Hot-reload Lambda via `sst dev`
 - Isolated resources per developer
 - Use `drizzle-kit push` for rapid schema iteration
-- Cost: ~$10-20/month
 
 ### Staging (staging)
 
@@ -1180,7 +935,6 @@ export const handler = async () => {
 - Matches production configuration
 - Used for QA and demo
 - Use `drizzle-kit generate` + `migrate` for controlled schema changes
-- Cost: ~$30-50/month
 
 ### Production (prod)
 
@@ -1188,7 +942,6 @@ export const handler = async () => {
 - Enhanced monitoring and alarms
 - Daily backups
 - Strict migration review process
-- Cost: ~$36-66/month (<1000 users)
 
 ## Scalability Considerations
 
@@ -1251,16 +1004,7 @@ export const handler = async () => {
 - **Phase 2**: Multi-AZ NAT Gateways for high availability (~£60/month)
 - **Alternative**: Lambda functions outside VPC (less secure, saves NAT costs)
 
-**Free Tier Benefits**:
-
-- **Cognito**: Always free up to 50,000 MAU
-- **Lambda**: 1M requests + 400,000 GB-seconds per month (always free)
-- **S3**: 5GB storage + 20,000 GET requests (12 months for new accounts)
-- **RDS**: 750 hours of t3.micro/t4g.micro (12 months for new accounts) - t3.small not included
-- **CloudWatch**: 5GB logs + 10 metrics (always free)
-- **API Gateway**: 1M calls per month (12 months for new accounts)
-
-**Cost Optimization Tips**:
+**Cost Optimization Considerations**:
 
 1. Use t4g.small (ARM/Graviton) instead of t3.small for RDS (~20% cheaper)
 2. Enable S3 Intelligent-Tiering for video files

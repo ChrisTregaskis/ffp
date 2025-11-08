@@ -244,32 +244,42 @@ export default $config({
       },
     });
 
-    // Health check endpoint (public, no auth)
-    api.route('GET /health', 'packages/functions/src/auth/health.handler');
+    // Handler environment variables
+    const handlerEnv = {
+      environment: {
+        COGNITO_USER_POOL_ID: userPool.id,
+        COGNITO_CLIENT_ID: userPoolClient.id,
+        COGNITO_REGION: 'eu-west-2',
+        DB_HOST: process.env.DB_HOST!,
+        DB_PORT: process.env.DB_PORT!,
+        DB_NAME: process.env.DB_NAME!,
+        DB_USER: process.env.DB_USER!,
+        DB_PASSWORD: process.env.DB_PASSWORD!,
+        DB_SSL: process.env.DB_SSL || 'false',
+      },
+    };
 
-    // Admin domain routes (system_admin role required - validated in handlers)
-    // Uses proxy integration pattern: all /admin/* routes handled by domain router
-    // See packages/functions/src/admin/index.ts for route definitions
-    api.route(
-      'ANY /admin/{proxy+}',
-      {
-        handler: 'packages/functions/src/admin/index.handler',
-        environment: {
-          DB_HOST: process.env.DB_HOST!,
-          DB_PORT: process.env.DB_PORT!,
-          DB_NAME: process.env.DB_NAME!,
-          DB_USER: process.env.DB_USER!,
-          DB_PASSWORD: process.env.DB_PASSWORD!,
-          DB_SSL: process.env.DB_SSL || 'false',
+    // Args parameter for routes requiring authentication
+    const args = {
+      auth: {
+        jwt: {
+          authorizer: authorizer.id,
         },
       },
-      {
-        auth: {
-          jwt: {
-            authorizer: authorizer.id,
-          },
-        },
-      }
+    };
+
+    // Auth domain routes (public health + protected invite)
+    api.route(
+      'ANY /auth/{proxy+}',
+      { handler: 'packages/functions/src/auth/index.handler', ...handlerEnv },
+      args
+    );
+
+    // Admin domain routes (system_admin role required - validated in handlers)
+    api.route(
+      'ANY /admin/{proxy+}',
+      { handler: 'packages/functions/src/admin/index.handler', ...handlerEnv },
+      args
     );
 
     // Export resource identifiers

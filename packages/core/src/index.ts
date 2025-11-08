@@ -6,7 +6,7 @@ export * from './lib';
 export * from './utils';
 
 // Domain exports
-export * from './users';
+// export * from './users'; // TODO: Uncomment when user services are added
 export * from './auth';
 
 // Schemas (validation only - safe for browser)

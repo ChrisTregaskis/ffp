@@ -12,6 +12,7 @@
  * - Structured logging utilities
  * - Random generation utilities (uses Node.js crypto)
  * - Admin domain (server-only operations)
+ * - Auth domain (authentication and authorization)
  *
  * Import using: import { db, withRLS, ValidationError, withErrorHandling, cognito, extractUserContext, createRequestContext, Logger, generateRandomAlphanumeric, createCustomerService } from '@ffp/core/server';
  */
@@ -27,3 +28,4 @@ export * from './lib/random';
 
 // Server-only domain exports
 export * from './admin';
+export * from './auth';
