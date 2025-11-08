@@ -4,14 +4,16 @@ import { tenants, customers } from '@ffp/database/schema';
 import { generateRandomAlphanumeric } from '../lib/random';
 
 /**
- * Generate a unique account code from business name
+ * Generate a unique account code from customer name
  *
  * Creates a sanitised account code in the format: PREFIXRRRR
- * where PREFIX is exactly 4 characters derived from the business name
+ * where PREFIX is exactly 4 characters derived from the customer name
  * (uppercase, alphanumeric only, padded with zeros if needed)
  * and RRRR is a random 4-character alphanumeric suffix for uniqueness.
  *
- * @param businessName - The business name to generate code from
+ * Note: "customer" represents a business/care home organisation in the system.
+ *
+ * @param customerName - The customer name to generate code from
  * @returns Unique account code (e.g., "ACMEF2R8", "ALF0A3B9", "PI00M7K4")
  *
  * @example
@@ -21,9 +23,9 @@ import { generateRandomAlphanumeric } from '../lib/random';
  * generateAccountCode("PI") // Returns: "PI00M7K4"
  * ```
  */
-function generateAccountCode(businessName: string): string {
+function generateAccountCode(customerName: string): string {
   // Extract alphanumeric characters and convert to uppercase
-  const sanitized = businessName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  const sanitized = customerName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
 
   // Create exactly 4-character prefix, padding with zeros if needed
   const prefix = sanitized.substring(0, 4).padEnd(4, '0');
@@ -35,54 +37,56 @@ function generateAccountCode(businessName: string): string {
 }
 
 /**
- * Result of creating a new business
+ * Result of creating a new customer
  */
-export interface CreateBusinessResult {
+export interface CreateCustomerResult {
   tenantId: string;
   customerId: string;
   accountCode: string;
 }
 
 /**
- * Create a new business tenant and customer record
+ * Create a new customer tenant and customer record
  *
  * This operation creates both a tenant and customer record in a single
  * transaction. No RLS context is needed as this is a privileged operation
  * performed by super admins.
  *
+ * Note: "customer" represents a business/care home organisation in the system.
+ *
  * @param db - Database client with privileged access
- * @param businessName - Name of the business organisation
+ * @param customerName - Name of the customer organisation
  * @returns Object containing tenantId, customerId, and accountCode
  *
  * @example
  * ```typescript
- * const result = await createBusiness(db, "Acme Physiotherapy");
+ * const result = await createCustomer(db, "Acme Physiotherapy");
  * // Returns: { tenantId: "...", customerId: "...", accountCode: "ACME-A4F2" }
  * ```
  */
-export async function createBusiness(
+export async function createCustomer(
   db: DbClient,
-  businessName: string
-): Promise<CreateBusinessResult> {
+  customerName: string
+): Promise<CreateCustomerResult> {
   return await db.transaction(async (tx) => {
     // Create tenant record (type='business')
     const [tenant] = await tx
       .insert(tenants)
       .values({
         type: 'business',
-        name: businessName,
+        name: customerName,
       })
       .returning();
 
     // Generate unique account code
-    const accountCode = generateAccountCode(businessName);
+    const accountCode = generateAccountCode(customerName);
 
     // Create customer record linked to tenant
     const [customer] = await tx
       .insert(customers)
       .values({
         tenantId: tenant.id,
-        name: businessName,
+        name: customerName,
         accountCode,
         status: 'active',
       })

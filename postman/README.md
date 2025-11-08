@@ -66,7 +66,7 @@ pnpm sst:deploy:dev
   - `GET /health` - Public health check (no auth required)
 
 - **Admin Operations** (system_admin role required)
-  - `POST /admin/create-business` - Create new business tenant and customer
+  - `POST /admin/create-customer` - Create new business tenant and customer
 
 ### Coming Soon
 

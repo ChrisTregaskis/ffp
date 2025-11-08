@@ -8,125 +8,6 @@ This document analyses each FFP-9 subtask to determine which architectural layer
 
 ## Phase 1: Prerequisites (9.5h)
 
-### FFP-43: Error Handling Classes (3h)
-
-**Decision Tree Analysis:**
-
-- ❌ Does this involve HTTP requests? No
-- ❌ Does this involve business logic? No
-- ✅ Is this shared infrastructure/utilities? Yes
-
-**Required Layers:**
-
-- **Core utilities only** (`packages/core/lib/errors.ts`)
-
-**Components:**
-
-```
-packages/core/lib/
-└── errors.ts
-    ├── BaseError
-    ├── NotFoundError
-    ├── ValidationError
-    ├── UnauthorisedError
-    ├── ForbiddenError
-    ├── ConflictError
-    └── withErrorHandling()
-```
-
-**Key Patterns:**
-
-- Base error class with HTTP status codes
-- Typed error hierarchy
-- Error handler middleware for Lambda
-
----
-
-### FFP-44: Structured Logging (2h)
-
-**Decision Tree Analysis:**
-
-- ❌ Does this involve HTTP requests? No
-- ❌ Does this involve business logic? No
-- ✅ Is this shared infrastructure/utilities? Yes
-
-**Required Layers:**
-
-- **Core utilities only** (`packages/core/lib/logger.ts`)
-
-**Components:**
-
-```
-packages/core/lib/
-└── logger.ts
-    ├── Logger class
-    ├── log(level, message, context)
-    ├── info(), warn(), error(), debug()
-    └── withRequestLogging()
-```
-
-**Key Patterns:**
-
-- Actor-aware logging (uses `getActorDisplayName()`)
-- Structured JSON output for CloudWatch
-- Request ID tracking
-- Tenant ID context
-- Performance timing
-
-**Enhanced Requirements:**
-
-- Must include actor information (user vs system)
-- Must log `triggeredBy` for system jobs
-- Must use `context.actor` field
-
----
-
-### FFP-36: Tenant Context Extraction (2h)
-
-**Decision Tree Analysis:**
-
-- ❌ Does this involve HTTP requests? No
-- ❌ Does this involve business logic? No
-- ✅ Is this shared infrastructure/utilities? Yes
-
-**Required Layers:**
-
-- **Core utilities only** (`packages/core/lib/context.ts`)
-
-**Components:**
-
-```
-packages/core/lib/
-└── context.ts
-    ├── UserActor interface
-    ├── SystemActor interface
-    ├── Actor type
-    ├── TenantContext interface
-    ├── extractUserContext()
-    ├── createSystemContext()
-    ├── extractJobContext()
-    ├── isUserActor()
-    ├── isSystemActor()
-    ├── getActorDisplayName()
-    └── hasPermission() (future)
-```
-
-**Key Patterns:**
-
-- Actor-based context (User vs System)
-- JWT claim extraction for user requests
-- System context creation for jobs/scheduled tasks
-- Helper functions for type guards
-- Enhanced TenantContext with actor, settings, enabledModules
-
-**Enhanced Requirements:**
-
-- Support both user and system actors
-- Include requestId and timestamp
-- Provide factory functions for different context types
-
----
-
 ### FFP-32: Secrets Manager - JWT Only (2.5h)
 
 **Decision Tree Analysis:**
@@ -205,7 +86,7 @@ scripts/
 
 **Required Layers:**
 
-- **Handler** (`packages/functions/admin/create-business.ts`)
+- **Handler** (`packages/functions/admin/create-customer.ts`)
 - **Service** (`packages/core/admin/business.service.ts`)
 - **Repository** (`packages/core/admin/business.repository.ts`)
 - **Cognito Service** (`packages/core/lib/cognito.ts` - NEW)
@@ -215,7 +96,7 @@ scripts/
 
 ```
 packages/functions/admin/
-└── create-business.ts (Handler)
+└── create-customer.ts (Handler)
 
 packages/core/admin/
 ├── business.service.ts (Service)
@@ -239,51 +120,6 @@ packages/core/lib/
 
 - FFP-43 must include Cognito service wrapper (+0.5h)
 - Service should use `CognitoService.createUser()` instead of direct SDK
-
----
-
-### FFP-35: Zod Schemas (3h)
-
-**Decision Tree Analysis:**
-
-- ❌ Does this involve HTTP requests? No
-- ❌ Does this involve business logic? No
-- ✅ Is this shared data validation? Yes
-
-**Required Layers:**
-
-- **Core schemas only** (domain-organised)
-
-**Components:**
-
-```
-packages/core/users/
-└── user.schema.ts
-    ├── inviteUserSchema
-    └── InviteUserInput type
-
-packages/core/admin/
-└── business.schema.ts
-    ├── createBusinessSchema
-    └── CreateBusinessInput type
-
-packages/core/auth/
-└── auth.schema.ts
-    ├── loginSchema
-    ├── refreshTokenSchema
-    └── LoginInput, RefreshTokenInput types
-```
-
-**Key Patterns:**
-
-- Domain-organised (users/, admin/, auth/)
-- Co-located with domain logic
-- Export both schema and inferred types
-
-**Enhanced Requirements:**
-
-- `inviteUserSchema` must support `super_admin` role
-- All schemas use British English in error messages
 
 ---
 
@@ -446,7 +282,7 @@ stacks/
     ├── POST /auth/login (public)
     ├── POST /auth/refresh-token (public)
     ├── POST /auth/invite-user (authenticated)
-    └── POST /admin/create-business (authenticated, super_admin only)
+    └── POST /admin/create-customer (authenticated, super_admin only)
 ```
 
 **Key Patterns:**
@@ -506,7 +342,7 @@ packages/functions/
 ├── auth/login.integration.test.ts
 ├── auth/refresh-token.integration.test.ts
 ├── users/invite-user.integration.test.ts
-└── admin/create-business.integration.test.ts
+└── admin/create-customer.integration.test.ts
 ```
 
 **Key Patterns:**
@@ -530,7 +366,7 @@ packages/functions/
 tests/e2e/
 ├── auth-flow.test.ts
 ├── invite-user.test.ts
-└── admin-create-business.test.ts
+└── admin-create-customer.test.ts
 ```
 
 **Key Patterns:**

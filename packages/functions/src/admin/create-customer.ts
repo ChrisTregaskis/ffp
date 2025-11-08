@@ -1,10 +1,10 @@
-import { type CreateBusinessResponse, createBusinessSchema } from '@ffp/core';
+import { type CreateCustomerResponse, createCustomerSchema } from '@ffp/core';
 import {
   extractUserContext,
   withErrorHandling,
   ForbiddenError,
   isUserActor,
-  createBusinessService,
+  createCustomerService,
   createRequestContext,
   InternalServerError,
 } from '@ffp/core/server';
@@ -12,45 +12,48 @@ import {
 import type { APIGatewayProxyEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 
 /**
- * Lambda handler for POST /admin/create-business
+ * Lambda handler for POST /admin/create-customer
  *
  * Protected endpoint that requires JWT authentication and system_admin role.
  * Creates both tenant and customer records in a single transaction.
  *
+ * Note: "customer" represents a business/care home organisation in the system.
+ *
  * Request body:
  * ```json
- * { "businessName": "Sunshine Carehome" }
+ * { "customerName": "Sunshine Carehome" }
  * ```
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResultV2<CreateBusinessResponse>> => {
+  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResultV2<CreateCustomerResponse>> => {
     try {
       // Extract user context from JWT (throws UnauthorisedError if missing)
       const context = extractUserContext(event);
 
       // Validate system_admin role
       if (!isUserActor(context.actor)) {
-        throw new ForbiddenError('Only system admins can create businesses');
+        throw new ForbiddenError('Only system admins can create customers');
       }
 
       if (context.actor.userRole !== 'system_admin') {
-        throw new ForbiddenError('Only system admins can create businesses');
+        throw new ForbiddenError('Only system admins can create customers');
       }
 
       // Parse and validate request body
+      // Both V1 and V2 events have a `body` property (string | null)
       const body = JSON.parse(event.body ?? '{}') as unknown;
-      const input = createBusinessSchema.parse(body);
+      const input = createCustomerSchema.parse(body);
 
       // Create unified request context (db + tenant context)
       const ctx = createRequestContext(context);
 
-      // Create business via service
-      const result = await createBusinessService(ctx, input);
+      // Create customer via service
+      const result = await createCustomerService(ctx, input);
 
       return result;
     } catch (error) {
       throw new InternalServerError(
-        `Failed to create business: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to create customer: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
   }

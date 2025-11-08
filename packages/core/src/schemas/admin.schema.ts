@@ -1,36 +1,37 @@
 import { z } from 'zod';
 
 /**
- * Input schema for creating a new business
+ * Input schema for creating a new customer
  *
- * Validates the request body for POST /admin/create-business
+ * Note: "customer" represents a business/care home organisation in the system.
+ * Validates the request body for POST /admin/create-customer
  *
  * @example
  * ```json
  * {
- *   "businessName": "Acme Physiotherapy"
+ *   "customerName": "Acme Physiotherapy"
  * }
  * ```
  */
-export const createBusinessSchema = z.object({
-  businessName: z
+export const createCustomerSchema = z.object({
+  customerName: z
     .string()
-    .min(2, 'Business name is required')
-    .max(255, 'Business name must not exceed 255 characters')
+    .min(2, 'Customer name is required')
+    .max(255, 'Customer name must not exceed 255 characters')
     .trim(),
 });
 
-export type CreateBusinessInput = z.infer<typeof createBusinessSchema>;
+export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
 
 /**
- * Output schema for create business operation
+ * Output schema for create customer operation
  *
  * Defines the successful response structure
  */
-export const createBusinessResponseSchema = z.object({
+export const createCustomerResponseSchema = z.object({
   tenantId: z.string().uuid(),
   customerId: z.string().uuid(),
-  businessName: z.string(),
+  customerName: z.string(),
 });
 
-export type CreateBusinessResponse = z.infer<typeof createBusinessResponseSchema>;
+export type CreateCustomerResponse = z.infer<typeof createCustomerResponseSchema>;

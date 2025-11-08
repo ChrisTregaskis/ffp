@@ -1,19 +1,19 @@
-import { handler as createBusinessHandler } from './create-business';
+import { createSystemContext, Logger } from '@ffp/core/server';
+
+import { handler as createCustomerHandler } from './create-customer';
 
 import type { APIGatewayProxyEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 
-/**
- * Admin Domain Router
- *
- * This handler acts as a proxy router for all /admin/* routes.
- * It routes incoming requests to the appropriate domain handler based on HTTP method and path.
- *
- * Pattern: ANY /admin/{proxy+}
- * - GET /admin/businesses -> routes[GET]['/businesses']
- * - POST /admin/create-business -> routes[POST]['/create-business']
- */
-
 type RouteHandler = (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResultV2>;
+
+/**
+ * Infrastructure-level system context for router logging.
+ * Uses placeholder tenantId as routing happens before authentication.
+ */
+const ROUTER_CONTEXT = createSystemContext({
+  systemId: 'admin-router',
+  tenantId: '00000000-0000-0000-0000-000000000000', // Placeholder for pre-auth routing
+});
 
 /**
  * Route registry mapping HTTP methods to path handlers.
@@ -23,35 +23,56 @@ type RouteHandler = (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResu
  */
 const routes: Partial<Record<string, Partial<Record<string, RouteHandler>>>> = {
   POST: {
-    '/create-business': createBusinessHandler,
+    '/create-customer': createCustomerHandler,
     // Future admin routes:
-    // '/update-business': updateBusinessHandler,
-    // '/delete-business': deleteBusinessHandler,
+    // '/update-customer': updateCustomerHandler,
+    // '/delete-customer': deleteCustomerHandler,
   },
   GET: {
     // Future admin routes:
-    // '/businesses': listBusinessesHandler,
-    // '/business/:id': getBusinessHandler,
+    // '/customers': listCustomersHandler,
+    // '/customer/:id': getCustomerHandler,
   },
   PUT: {
     // Future admin routes:
-    // '/business/:id': updateBusinessHandler,
+    // '/customer/:id': updateCustomerHandler,
   },
   DELETE: {
     // Future admin routes:
-    // '/business/:id': deleteBusinessHandler,
+    // '/customer/:id': deleteCustomerHandler,
   },
 };
 
 /**
  * Main proxy handler that routes requests to domain handlers.
  * Returns 404 for unregistered routes, 405 for unsupported methods.
+ *
  */
-export const handler = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResultV2> => {
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResultV2> => {
+  const logger = new Logger(ROUTER_CONTEXT);
+
+  // Extract HTTP method and path from V1 event format
   const method = event.httpMethod;
   const path = `/${event.pathParameters?.proxy ?? ''}`;
+
+  logger.debug('Routing admin request', {
+    method,
+    path,
+    pathParameters: event.pathParameters,
+  });
+
+  if (!method) {
+    return {
+      statusCode: 400,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        error: 'Bad Request',
+        message: 'Unable to determine HTTP method from event',
+      }),
+    };
+  }
 
   // Check if method is supported
   const methodRoutes = routes[method];

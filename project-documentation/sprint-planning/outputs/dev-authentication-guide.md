@@ -67,7 +67,7 @@ export JWT_TOKEN="<paste-IdToken-here>"
 
 ```bash
 curl -H "Authorization: Bearer $JWT_TOKEN" \
-  https://your-api-url/admin/create-business
+  https://your-api-url/admin/create-customer
 ```
 
 ### Postman

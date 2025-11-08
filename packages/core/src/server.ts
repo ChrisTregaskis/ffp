@@ -12,7 +12,7 @@
  * - Structured logging utilities
  * - Admin domain (server-only operations)
  *
- * Import using: import { db, withRLS, ValidationError, withErrorHandling, cognito, extractUserContext, createRequestContext, Logger, createBusinessService } from '@ffp/core/server';
+ * Import using: import { db, withRLS, ValidationError, withErrorHandling, cognito, extractUserContext, createRequestContext, Logger, createCustomerService } from '@ffp/core/server';
  */
 
 export * from './lib/database';
