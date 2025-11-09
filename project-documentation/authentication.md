@@ -20,14 +20,15 @@ FFP uses AWS Cognito for authentication with custom attributes to support multi-
 
 ### MVP Authentication Flows
 
-**Phase 1 (Sprint 1 - Current):**
+**Phase 1 (Sprint 1-2 - Current):**
 
 1. ✅ **Admin creates business**: API endpoint creates tenant → customer (FFP-112)
 2. ✅ **Admin invites owner**: API endpoint creates owner user with Cognito (FFP-37)
-3. ✅ **Business owner logs in**: Receives temporary password via email, forced to change on first login
-4. ✅ **Business invites users**: Owner uses "Invite User" feature (AdminCreateUserCommand)
-5. ✅ **Invited users log in**: Receive temporary password, forced to change on first login
-6. ✅ **Token refresh**: Standard JWT refresh flow
+3. ✅ **Business owner logs in**: POST /auth/login with temporary password (FFP-38)
+4. ✅ **Password change required**: POST /auth/complete-new-password (FFP-38)
+5. ✅ **Business invites users**: Owner uses "Invite User" feature (AdminCreateUserCommand)
+6. ✅ **Invited users log in**: Receive temporary password, change on first login
+7. ✅ **Token refresh**: Standard JWT refresh flow
 
 **Phase 2 (Post-MVP with Billing):**
 
@@ -97,11 +98,6 @@ Content-Type: application/json
 - Cognito user with temporary password (sent via email)
 - User record in database (linked to tenant and customer)
 
-**Postman Environment Variables:**
-
-- `apiUrl`: Your API Gateway URL (e.g., `https://abc123.execute-api.eu-west-2.amazonaws.com`)
-- `superAdminJwt`: JWT token from super admin login
-
 **Business Owner Workflow:**
 
 1. Receives email: "Your FFP account is ready - check email for temporary password"
@@ -157,24 +153,6 @@ All authentication flows support the three-tier architecture:
 - ✅ Confirmed product-market fit
 - ✅ Support processes established
 - ✅ Billing infrastructure ready
-
-## Why Cognito
-
-### Benefits for Phase 1
-
-- **Zero auth code**: Registration, login, password reset all handled
-- **FREE**: First 50,000 monthly active users
-- **JWT automatic**: Token generation, refresh, validation
-- **Security**: Battle-tested AWS security
-- **SST integration**: First-class support
-- **Extensible**: MFA, SSO ready for Phase 2
-
-### Time Savings
-
-- ~5 days of authentication development
-- No password hashing logic
-- No token refresh implementation
-- No email verification system
 
 ## Multi-Tenant Architecture
 
@@ -234,89 +212,6 @@ export interface TenantContext {
   timestamp: Date;
   settings?: PlatformSettings;
   enabledModules?: string[];
-}
-
-/**
- * Extract context from API Gateway user request
- */
-export function extractUserContext(event: APIGatewayProxyEvent): TenantContext {
-  const claims = event.requestContext.authorizer?.jwt?.claims;
-
-  if (!claims) {
-    throw new UnauthorisedError('No JWT claims found');
-  }
-
-  return {
-    actor: {
-      type: 'user',
-      userId: claims.sub as string,
-      userRole: claims['custom:role'] as string,
-      email: claims.email as string,
-    },
-    tenantId: claims['custom:tenantId'] as string,
-    customerId: claims['custom:customerId'] as string | null,
-    requestId: event.requestContext.requestId,
-    timestamp: new Date(),
-  };
-}
-
-/**
- * Create context for system-triggered operations
- */
-export function createSystemContext(params: {
-  systemId: string;
-  tenantId: string;
-  customerId?: string | null;
-  triggeredBy?: string;
-  jobId?: string;
-}): TenantContext {
-  return {
-    actor: {
-      type: 'system',
-      systemId: params.systemId,
-      triggeredBy: params.triggeredBy,
-      jobId: params.jobId,
-    },
-    tenantId: params.tenantId,
-    customerId: params.customerId ?? null,
-    requestId: randomUUID(),
-    timestamp: new Date(),
-  };
-}
-
-/**
- * Extract context from job queue message
- */
-export function extractJobContext(jobMessage: {
-  tenantId: string;
-  customerId?: string;
-  userId?: string;
-  jobId: string;
-  jobType: string;
-}): TenantContext {
-  return createSystemContext({
-    systemId: jobMessage.jobType,
-    tenantId: jobMessage.tenantId,
-    customerId: jobMessage.customerId,
-    triggeredBy: jobMessage.userId,
-    jobId: jobMessage.jobId,
-  });
-}
-
-// Helper functions
-export function isUserActor(actor: Actor): actor is UserActor {
-  return actor.type === 'user';
-}
-
-export function isSystemActor(actor: Actor): actor is SystemActor {
-  return actor.type === 'system';
-}
-
-export function getActorDisplayName(actor: Actor): string {
-  if (isUserActor(actor)) {
-    return `${actor.email} (${actor.userRole})`;
-  }
-  return `System: ${actor.systemId}`;
 }
 ```
 
@@ -466,237 +361,66 @@ export const handler = async (event: ScheduledEvent) => {
 
 **Purpose:** Business owners invite staff/clients after their account is created.
 
-This demonstrates the **full layered architecture**: Handler → Service → Repository + External Service (Cognito).
+**Implementation:** `packages/functions/src/auth/invite-user.ts` and `packages/core/src/auth/invite-user.service.ts`
 
-**Handler Layer** (HTTP interface only):
+**Flow:**
+1. **Handler** extracts JWT context and validates user role (customer_owner only)
+2. **Service** validates input with Zod schema, checks for existing email
+3. **Cognito** creates user with temporary password (sent via email)
+4. **Database** persists user record with tenant/customer linkage
+5. **Rollback** deletes Cognito user if database insert fails (critical for data consistency)
 
-```typescript
-// packages/functions/users/invite-user.ts
-import { APIGatewayProxyEvent } from 'aws-lambda';
-import { extractUserContext, isUserActor } from '@ffp/core/lib/context';
-import { inviteUserService } from '@ffp/core/users/user.service';
-import { withErrorHandling } from '@ffp/core/lib/errors';
-import { ForbiddenError } from '@ffp/core/lib/errors';
+**Architecture:** Demonstrates full layered architecture (Handler → Service → Repository + External Service)
 
-export const handler = withErrorHandling(async (event: APIGatewayProxyEvent) => {
-  // Extract user context from JWT
-  const context = extractUserContext(event);
+**Key Features:**
+- Requires JWT authentication (customer_owner role)
+- Multi-tenant isolation via RLS
+- Cognito-to-database rollback pattern
+- Custom attributes set (tenantId, customerId, role)
+- Temporary password sent via email
 
-  // Only customer owners can invite users
-  if (isUserActor(context.actor) && context.actor.userRole !== 'customer_owner') {
-    throw new ForbiddenError('Only business owners can invite users');
-  }
+See implementation files for current code.
 
-  // Parse request body
-  const body = JSON.parse(event.body || '{}');
+### Login & Password Management
 
-  // Call service (all business logic)
-  const user = await inviteUserService(body, context);
+**Purpose:** Public endpoints for user authentication and temporary password flow.
 
-  return {
-    statusCode: 201,
-    body: JSON.stringify({
-      message: 'User invited successfully. They will receive an email with temporary password.',
-      userId: user.id,
-    }),
-  };
-});
-```
+**Implementation:**
+- `packages/functions/src/auth/login.ts` - Login Lambda handler
+- `packages/functions/src/auth/complete-new-password.ts` - Complete new password Lambda handler
+- `packages/core/src/auth/login.service.ts` - Login service
+- `packages/core/src/auth/complete-new-password.service.ts` - Password change service
 
-**Service Layer** (business logic orchestration with Cognito-to-DB rollback):
+These endpoints are **public** (no JWT required) as users cannot have a token before logging in.
 
-```typescript
-// packages/core/users/user.service.ts
-import { inviteUserSchema } from './user.schema';
-import { userRepository } from './user.repository';
-import { TenantContext } from '../lib/context';
-import { CognitoService } from '../lib/cognito';
-import { ConflictError } from '../lib/errors';
-import { Logger } from '../lib/logger';
+**Login Flow (POST /auth/login):**
+1. **Handler** validates request with Zod schema (email format, password presence)
+2. **Service** calls CognitoService.login() with USER_PASSWORD_AUTH flow
+3. **Challenge Response**: If temporary password, returns NEW_PASSWORD_REQUIRED challenge with session token
+4. **Success Response**: If permanent password, returns JWT tokens (accessToken, idToken, refreshToken)
 
-const logger = new Logger('UserService');
+**Complete New Password Flow (POST /auth/complete-new-password):**
+1. **Handler** validates session token, email, and new password strength
+2. **Service** calls CognitoService.completeNewPassword() with RespondToAuthChallengeCommand
+3. **Success Response**: Returns JWT tokens immediately (no second login needed)
 
-export const inviteUserService = async (data: unknown, context: TenantContext) => {
-  // 1. Validate input
-  const validated = inviteUserSchema.parse(data);
+**Architecture:** Demonstrates handler → service → external service pattern for public endpoints
 
-  // 2. Business rule: Check if email already exists
-  const existing = await userRepository.findByEmail(validated.email, context);
-  if (existing) {
-    throw new ConflictError('User with this email already exists');
-  }
+**Password Requirements:**
+- Minimum 8 characters with uppercase, lowercase, digit, and special character
 
-  let cognitoUserId: string | undefined;
+**Error Responses:**
+- `401 Unauthorised`: Invalid credentials or expired session
+- `400 Validation Error`: Invalid email format or weak password
 
-  try {
-    // 3. Create Cognito user first (external system)
-    const cognitoUser = await CognitoService.inviteUser({
-      email: validated.email,
-      firstName: validated.firstName,
-      lastName: validated.lastName,
-      tenantId: context.tenantId,
-      customerId: context.customerId!,
-      role: validated.role,
-    });
+**Key Features:**
+- Public endpoints (no JWT required at API Gateway level)
+- Session tokens expire after ~3 minutes (security best practice)
+- Proper validation without non-null assertions (ESLint compliant)
+- Clear error messages without exposing sensitive information
+- Tokens returned immediately after password change
 
-    cognitoUserId = cognitoUser.Username;
-
-    // 4. Persist to database via repository
-    const user = await userRepository.create(
-      {
-        id: cognitoUser.Username,
-        email: validated.email,
-        firstName: validated.firstName,
-        lastName: validated.lastName,
-        role: validated.role,
-        cognitoId: cognitoUser.Username,
-        emailVerified: true,
-        status: 'active',
-      },
-      context
-    );
-
-    return user;
-  } catch (error) {
-    // CRITICAL: If database insert fails, rollback Cognito user
-    if (cognitoUserId) {
-      logger.error('Database insert failed, rolling back Cognito user', {
-        cognitoUserId,
-        email: validated.email,
-        error,
-      });
-
-      try {
-        await CognitoService.deleteUser(cognitoUserId);
-        logger.info('Cognito user rollback successful', { cognitoUserId });
-      } catch (rollbackError) {
-        logger.error('Cognito user rollback FAILED', {
-          cognitoUserId,
-          rollbackError,
-        });
-        // Still throw original error - rollback failure is logged separately
-      }
-    }
-
-    throw error;
-  }
-};
-```
-
-**Cognito Service** (external service wrapper with rollback support):
-
-```typescript
-// packages/core/lib/cognito.ts
-import {
-  CognitoIdentityProviderClient,
-  AdminCreateUserCommand,
-  AdminDeleteUserCommand,
-} from '@aws-sdk/client-cognito-identity-provider';
-
-const cognito = new CognitoIdentityProviderClient({ region: 'eu-west-2' });
-
-export class CognitoService {
-  static async inviteUser(params: {
-    email: string;
-    firstName: string;
-    lastName: string;
-    tenantId: string;
-    customerId: string;
-    role: string;
-  }) {
-    return await cognito.send(
-      new AdminCreateUserCommand({
-        UserPoolId: process.env.COGNITO_USER_POOL_ID!,
-        Username: params.email,
-        UserAttributes: [
-          { Name: 'email', Value: params.email },
-          { Name: 'email_verified', Value: 'true' },
-          { Name: 'given_name', Value: params.firstName },
-          { Name: 'family_name', Value: params.lastName },
-          { Name: 'custom:tenantId', Value: params.tenantId },
-          { Name: 'custom:customerId', Value: params.customerId },
-          { Name: 'custom:role', Value: params.role },
-        ],
-        DesiredDeliveryMediums: ['EMAIL'], // Sends temp password via email
-      })
-    );
-  }
-
-  static async deleteUser(username: string): Promise<void> {
-    await cognito.send(
-      new AdminDeleteUserCommand({
-        UserPoolId: process.env.COGNITO_USER_POOL_ID!,
-        Username: username,
-      })
-    );
-  }
-
-  // Other Cognito methods...
-}
-```
-
-**Repository Layer** (data access with RLS):
-
-```typescript
-// packages/core/users/user.repository.ts
-import { db } from '@ffp/database';
-import { users, NewUser, User } from '@ffp/database/schema/users';
-import { setRLSContext } from '@ffp/database/lib/rls';
-import { TenantContext } from '../lib/context';
-
-export const userRepository = {
-  async create(data: NewUser, context: TenantContext): Promise<User> {
-    return await db.transaction(async (tx) => {
-      await setRLSContext(tx, context.tenantId);
-
-      const [user] = await tx
-        .insert(users)
-        .values({
-          ...data,
-          tenantId: context.tenantId,
-          customerId: context.customerId,
-        })
-        .returning();
-
-      return user;
-    });
-  },
-
-  async findByEmail(email: string, context: TenantContext): Promise<User | null> {
-    return await db.transaction(async (tx) => {
-      await setRLSContext(tx, context.tenantId);
-
-      return await tx.query.users.findFirst({
-        where: eq(users.email, email),
-      });
-    });
-  },
-};
-```
-
-**Validation Schema**:
-
-```typescript
-// packages/core/users/user.schema.ts
-import { z } from 'zod';
-
-export const inviteUserSchema = z.object({
-  email: z.string().email(),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  role: z.enum(['customer_admin', 'customer_user']),
-});
-
-export type InviteUserInput = z.infer<typeof inviteUserSchema>;
-```
-
-**Key Points**:
-
-- Handler only does HTTP plumbing
-- Service coordinates business logic (validation, Cognito, database)
-- External services wrapped in service classes
-- Repository handles data access with RLS
-- Each layer has single responsibility
+See implementation files for current code.
 
 ### Future: Self-Service Business Registration (Phase 2)
 
@@ -1002,6 +726,124 @@ try {
 
 ## Testing Authentication
 
+### Manual Testing Guide
+
+Test the complete authentication flow using Postman.
+
+#### Test 1: Temporary Password Flow (New Users)
+
+**1. Create a test user:**
+
+```http
+POST /auth/invite-user
+Authorization: Bearer {{jwtToken}}
+
+{
+  "email": "test.user@example.com",
+  "firstName": "Test",
+  "lastName": "User",
+  "role": "customer_admin"
+}
+```
+
+**2. Login with temporary password:**
+
+```http
+POST /auth/login
+
+{
+  "email": "test.user@example.com",
+  "password": "TempPass123!"  # From email
+}
+```
+
+**Expected:** NEW_PASSWORD_REQUIRED challenge with session token
+
+**3. Complete password change:**
+
+```http
+POST /auth/complete-new-password
+
+{
+  "session": "{{passwordChallengeSession}}",  # Auto-populated by Postman
+  "email": "test.user@example.com",
+  "newPassword": "NewSecure123!"
+}
+```
+
+**Expected:** JWT tokens returned, user can now access protected endpoints
+
+**4. Verify JWT claims:**
+
+- Copy `idToken` from response
+- Decode at https://jwt.io
+- Verify `custom:tenantId`, `custom:customerId`, `custom:role` present
+
+#### Test 2: Regular Login (Existing Users)
+
+**1. Login with permanent password:**
+
+```http
+POST /auth/login
+
+{
+  "email": "test.user@example.com",
+  "password": "NewSecure123!"
+}
+```
+
+**Expected:** JWT tokens returned immediately (no challenge)
+
+**2. Test protected endpoint:**
+Use returned token to access `/auth/invite-user` or other protected endpoints
+
+#### Test 3: Error Scenarios
+
+**Invalid credentials:**
+
+```http
+POST /auth/login
+{ "email": "test.user@example.com", "password": "WrongPass" }
+```
+
+**Expected:** 401 Unauthorised
+
+**Invalid email format:**
+
+```http
+POST /auth/login
+{ "email": "not-an-email", "password": "Pass123!" }
+```
+
+**Expected:** 400 Validation Error
+
+**Weak password:**
+
+```http
+POST /auth/complete-new-password
+{ "session": "valid-session", "email": "test@example.com", "newPassword": "weak" }
+```
+
+**Expected:** 400 Validation Error (minimum 8 chars, uppercase, lowercase, digit, special char)
+
+**Expired session:**
+Wait 5 minutes and retry complete-new-password with old session
+**Expected:** 401 Unauthorised (sessions expire after ~3 minutes)
+
+#### Quick Checklist
+
+After running all tests:
+
+- [ ] Temporary password login returns NEW_PASSWORD_REQUIRED challenge
+- [ ] Session token saved to Postman `passwordChallengeSession` variable
+- [ ] Complete-new-password returns JWT tokens
+- [ ] JWT tokens contain custom claims (tenantId, customerId, role)
+- [ ] Regular login works after password changed
+- [ ] Invalid credentials return 401
+- [ ] Invalid email format returns 400
+- [ ] Weak password returns 400
+- [ ] Expired session returns 401
+
 ### Unit Tests
 
 ```typescript
@@ -1026,27 +868,6 @@ describe('extractTenantContext', () => {
     expect(context.userId).toBe('user-123');
     expect(context.tenantId).toBe('tenant-456');
     expect(context.role).toBe('business_owner');
-  });
-});
-```
-
-### Integration Tests
-
-```typescript
-describe('User Registration', () => {
-  it('creates user with unique tenantId', async () => {
-    const user1 = await registerUser({ email: 'user1@test.com', ... });
-    const user2 = await registerUser({ email: 'user2@test.com', ... });
-
-    expect(user1.tenantId).not.toBe(user2.tenantId);
-  });
-
-  it('customer sub-users share parent tenantId', async () => {
-    const owner = await registerCustomerOwner({ email: 'owner@test.com', ... });
-    const subUser = await inviteCustomerUser(owner, { email: 'sub@test.com', ... });
-
-    expect(subUser.tenantId).toBe(owner.tenantId);
-    expect(subUser.customerId).toBe(owner.id);
   });
 });
 ```

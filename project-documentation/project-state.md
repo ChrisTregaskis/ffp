@@ -4,7 +4,7 @@
 **Current Phase**: Sprint 2 Execution - STARTING 🚀
 **Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
 **User Story Branch**: `feature/ffp-9-cognito-auth`
-**Sub Task Branch**: `feature/ffp-37-invite-user`
+**Sub Task Branch**: `feature/ffp-38-login-lambda`
 
 ---
 

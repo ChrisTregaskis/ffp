@@ -274,26 +274,25 @@ export default $config({
       ...handlerEnv,
     });
 
-    // Auth domain routes (protected invite and authentication)
-    api.route(
-      'ANY /auth/{proxy+}',
-      {
-        handler: 'packages/functions/src/auth/index.handler',
-        ...handlerEnv,
-        permissions: [
-          {
-            actions: [
-              'cognito-idp:AdminCreateUser',
-              'cognito-idp:AdminDeleteUser',
-              'cognito-idp:AdminGetUser',
-              'cognito-idp:AdminUpdateUserAttributes',
-            ],
-            resources: [userPool.arn],
-          },
-        ],
-      },
-      args
-    );
+    // Auth domain routes (mix of public and protected routes)
+    // Note: Authentication is handled per-endpoint in the router
+    // - Public: /auth/login, /auth/complete-new-password
+    // - Protected: /auth/invite-user (requires JWT)
+    api.route('ANY /auth/{proxy+}', {
+      handler: 'packages/functions/src/auth/index.handler',
+      ...handlerEnv,
+      permissions: [
+        {
+          actions: [
+            'cognito-idp:AdminCreateUser',
+            'cognito-idp:AdminDeleteUser',
+            'cognito-idp:AdminGetUser',
+            'cognito-idp:AdminUpdateUserAttributes',
+          ],
+          resources: [userPool.arn],
+        },
+      ],
+    });
 
     // Admin domain routes (system_admin role required - validated in handlers)
     api.route(
