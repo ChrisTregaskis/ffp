@@ -1,10 +1,10 @@
 # FFP - Project State
 
-**Last Updated**: November 9, 2025 - Session 37
-**Current Phase**: Sprint 2 Execution - STARTING 🚀
+**Last Updated**: November 11, 2025 - Session 38
+**Current Phase**: Sprint 2 Execution - IN PROGRESS 🚀
 **Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
 **User Story Branch**: `feature/ffp-9-cognito-auth`
-**Sub Task Branch**: `feature/ffp-38-login-lambda`
+**Sub Task Branch**: `feature/ffp-38-login-lambda` (Ready for Review)
 
 ---
 
@@ -30,7 +30,7 @@
 
 ## Current Work: FFP-9 - Cognito Authentication (CARRYOVER)
 
-**Status**: 🚀 IN PROGRESS (6/13 subtasks, 19/31-32 hours, 61%)
+**Status**: 🚀 IN PROGRESS (7/13 subtasks, 22/31-32 hours, 70%)
 
 ### Phase 1: Prerequisites (8h) - ✅ COMPLETE
 
@@ -39,17 +39,17 @@
 - ✅ FFP-44: Structured Logging (2h)
 - ⏸️ FFP-32: Secrets Manager (2.5h) - **DEFERRED** (see decisions below)
 
-### Phase 2: Bootstrap + Core Auth (10.5h) - ⚡ IN PROGRESS
+### Phase 2: Bootstrap + Core Auth (10.5h) - ✅ COMPLETE
 
 - ✅ Manual: Super User Setup (0.5h)
 - ✅ FFP-112: Admin API Endpoint (4.5h)
 - ✅ FFP-35: Zod Schemas (3h)
 - ✅ FFP-37: Invite User Lambda (4h)
 
-### Phase 3: Authentication Endpoints (7h)
+### Phase 3: Authentication Endpoints (7h) - ⚡ IN PROGRESS
 
-- ⏸️ FFP-38: Login Lambda (3h) - ← **NEXT**
-- ⏸️ FFP-39: Refresh Token Lambda (2h)
+- ✅ FFP-38: Login Lambda (3h) - **Ready for Review**
+- ⏸️ FFP-39: Refresh Token Lambda (2h) - ← **NEXT**
 - ⏸️ FFP-40: API Gateway Routes (2h)
 
 ### Phase 4: Testing (12h - can defer FFP-42/45)
@@ -64,7 +64,18 @@
 
 ---
 
-## Recent Work (Sprint 1 Final Sessions)
+## Recent Work (Sprint 2 Sessions)
+
+**Session 38 (Nov 11)**: ✅ FFP-38 - Login Lambda COMPLETE (3h)
+
+- Implemented login endpoint (POST /auth/login) with NEW_PASSWORD_REQUIRED challenge flow
+- Implemented complete-new-password endpoint (POST /auth/complete-new-password)
+- Added completeNewPassword() method to CognitoService (RespondToAuthChallengeCommand)
+- Created login and complete-new-password services with proper validation
+- Fixed 401 Unauthorized error by making /auth/\* routes public at API Gateway level
+- Updated Postman collection with Login and Complete New Password requests
+- Updated authentication.md with concise testing guide and implementation descriptions
+- All TypeScript checks pass, ESLint clean, ready for code review
 
 **Session 37 (Nov 9)**: ✅ FFP-37 - Invite User Lambda COMPLETE (4h)
 
@@ -119,8 +130,8 @@
 
 **Duration**: 20th October - 9th November 2025
 **Total Stories**: 10 stories, 197 hours planned
-**Completed**: 6 stories (132.5/197 hours, 67%)
-**Carried Over to Sprint 2**: FFP-9 (7 remaining subtasks, ~12-13 hours)
+**Completed**: 6 stories (135.5/197 hours, 69%)
+**Carried Over to Sprint 2**: FFP-9 (6 remaining subtasks, ~9-10 hours)
 **Deferred**: FFP-14 (CloudWatch Monitoring)
 
 **Completed Stories**:

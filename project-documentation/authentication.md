@@ -364,6 +364,7 @@ export const handler = async (event: ScheduledEvent) => {
 **Implementation:** `packages/functions/src/auth/invite-user.ts` and `packages/core/src/auth/invite-user.service.ts`
 
 **Flow:**
+
 1. **Handler** extracts JWT context and validates user role (customer_owner only)
 2. **Service** validates input with Zod schema, checks for existing email
 3. **Cognito** creates user with temporary password (sent via email)
@@ -373,6 +374,7 @@ export const handler = async (event: ScheduledEvent) => {
 **Architecture:** Demonstrates full layered architecture (Handler → Service → Repository + External Service)
 
 **Key Features:**
+
 - Requires JWT authentication (customer_owner role)
 - Multi-tenant isolation via RLS
 - Cognito-to-database rollback pattern
@@ -386,6 +388,7 @@ See implementation files for current code.
 **Purpose:** Public endpoints for user authentication and temporary password flow.
 
 **Implementation:**
+
 - `packages/functions/src/auth/login.ts` - Login Lambda handler
 - `packages/functions/src/auth/complete-new-password.ts` - Complete new password Lambda handler
 - `packages/core/src/auth/login.service.ts` - Login service
@@ -394,12 +397,14 @@ See implementation files for current code.
 These endpoints are **public** (no JWT required) as users cannot have a token before logging in.
 
 **Login Flow (POST /auth/login):**
+
 1. **Handler** validates request with Zod schema (email format, password presence)
 2. **Service** calls CognitoService.login() with USER_PASSWORD_AUTH flow
 3. **Challenge Response**: If temporary password, returns NEW_PASSWORD_REQUIRED challenge with session token
 4. **Success Response**: If permanent password, returns JWT tokens (accessToken, idToken, refreshToken)
 
 **Complete New Password Flow (POST /auth/complete-new-password):**
+
 1. **Handler** validates session token, email, and new password strength
 2. **Service** calls CognitoService.completeNewPassword() with RespondToAuthChallengeCommand
 3. **Success Response**: Returns JWT tokens immediately (no second login needed)
@@ -407,13 +412,16 @@ These endpoints are **public** (no JWT required) as users cannot have a token be
 **Architecture:** Demonstrates handler → service → external service pattern for public endpoints
 
 **Password Requirements:**
+
 - Minimum 8 characters with uppercase, lowercase, digit, and special character
 
 **Error Responses:**
+
 - `401 Unauthorised`: Invalid credentials or expired session
 - `400 Validation Error`: Invalid email format or weak password
 
 **Key Features:**
+
 - Public endpoints (no JWT required at API Gateway level)
 - Session tokens expire after ~3 minutes (security best practice)
 - Proper validation without non-null assertions (ESLint compliant)
