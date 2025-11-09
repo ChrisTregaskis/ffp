@@ -21,14 +21,14 @@
 
 ### Phase 2: Bootstrap + Core Auth (10.5h) - ⚡ IN PROGRESS
 
-- ⏸️ Manual: Super User Setup (0.5h) - ← **NEXT**
+- ✅ Manual: Super User Setup (0.5h)
 - ✅ FFP-112: Admin API Endpoint (4.5h)
 - ✅ FFP-35: Zod Schemas (3h)
 - ✅ FFP-37: Invite User Lambda (4h)
 
 ### Phase 3: Authentication Endpoints (7h)
 
-- ⏸️ FFP-38: Login Lambda (3h)
+- ⏸️ FFP-38: Login Lambda (3h) - ← **NEXT**
 - ⏸️ FFP-39: Refresh Token Lambda (2h)
 - ⏸️ FFP-40: API Gateway Routes (2h)
 
