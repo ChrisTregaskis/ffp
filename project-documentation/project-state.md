@@ -1,14 +1,34 @@
 # FFP - Project State
 
 **Last Updated**: November 9, 2025 - Session 37
-**Current Phase**: Sprint 1 Execution - IN PROGRESS 🚀
+**Current Phase**: Sprint 2 Execution - STARTING 🚀
+**Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
 **User Story Branch**: `feature/ffp-9-cognito-auth`
 **Sub Task Branch**: `feature/ffp-37-invite-user`
-**Sprint 1 Progress**: 136.5/197 hours (69%) - ALMOST THREE QUARTERS COMPLETE! 🎉
 
 ---
 
-## Current Work: FFP-9 - Cognito Authentication
+## Sprint 2 Overview
+
+**Duration**: 10th November - 30th November 2025 (3 weeks)
+**Focus**: Complete Application Setup (EPIC FFP-1) + Assessment Engine Planning
+
+**Sprint 2 Stories**:
+
+1. **FFP-9** - Cognito Authentication (CARRYOVER - remaining subtasks)
+2. **FFP-12** - Testing Infrastructure Setup
+3. **FFP-16** - Web Login Interface
+4. **FFP-110** - Assessment Engine Epic Planning
+
+**Sprint 1 Summary**:
+
+- Completed: 6/10 stories (132.5/197 hours, 67%)
+- Carried Over: FFP-9 (7 remaining subtasks, ~12-13 hours)
+- Deferred: FFP-14 (CloudWatch Monitoring)
+
+---
+
+## Current Work: FFP-9 - Cognito Authentication (CARRYOVER)
 
 **Status**: 🚀 IN PROGRESS (6/13 subtasks, 19/31-32 hours, 61%)
 
@@ -44,21 +64,7 @@
 
 ---
 
-## Completed Stories
-
-| Story           | Title                         | Hours   | Status                   |
-| --------------- | ----------------------------- | ------- | ------------------------ |
-| FFP-7           | Turborepo Monorepo Setup      | 13h     | ✅ MERGED                |
-| FFP-8           | SST Infrastructure Foundation | 17h     | ✅ MERGED                |
-| FFP-106/107/108 | Database Package Refactoring  | 3h      | ✅ MERGED                |
-| FFP-10          | PostgreSQL Schema with RLS    | 24h     | ✅ MERGED                |
-| FFP-11          | Drizzle ORM Setup             | 22h     | ✅ MERGED                |
-| FFP-15          | Error Handling Patterns       | 15h     | ✅ COMPLETE (via FFP-43) |
-| **Total**       |                               | **94h** | **6 stories complete**   |
-
----
-
-## Recent Work
+## Recent Work (Sprint 1 Final Sessions)
 
 **Session 37 (Nov 9)**: ✅ FFP-37 - Invite User Lambda COMPLETE (4h)
 
@@ -109,14 +115,29 @@
 
 ---
 
-## Sprint 1 Overview
+## Sprint 1 Summary (COMPLETE)
 
-**Total Stories**: 10 stories, 197 hours (~6.2 months at 8h/week)
-**Completed**: 132.5/197 hours (67%)
-**In Progress**: FFP-9 Cognito Authentication
-**Remaining**: FFP-12 (Testing), FFP-14 (CloudWatch), FFP-16 (Web Login)
+**Duration**: 20th October - 9th November 2025
+**Total Stories**: 10 stories, 197 hours planned
+**Completed**: 6 stories (132.5/197 hours, 67%)
+**Carried Over to Sprint 2**: FFP-9 (7 remaining subtasks, ~12-13 hours)
+**Deferred**: FFP-14 (CloudWatch Monitoring)
 
-**Timeline**: Started Oct 20, 2025 | Target completion: ~April 2026
+**Completed Stories**:
+
+- FFP-7: Turborepo Monorepo Setup (13h)
+- FFP-8: SST Infrastructure Foundation (17h)
+- FFP-106/107/108: Database Package Refactoring (3h)
+- FFP-10: PostgreSQL Schema with RLS (24h)
+- FFP-11: Drizzle ORM Setup (22h)
+- FFP-15: Error Handling Patterns (15h - via FFP-43)
+
+**Key Achievements**:
+
+- Infrastructure deployed to dev environment
+- Domain-organised architecture established
+- Actor-based context system implemented
+- 125+ tests passing with zero TypeScript errors
 
 ---
 
@@ -180,11 +201,18 @@
 **Site**: https://ctregaskis.atlassian.net
 **Project Key**: FFP
 
-**Epic 1 Stories** (Sprint 1-6):
+**Current Sprint**: Sprint 2 (10th Nov - 30th Nov 2025)
 
-- FFP-7 through FFP-16: Application Setup & Foundation
-- Current: FFP-9 (Cognito Authentication)
-- Next after FFP-9: FFP-12 (Testing), FFP-14 (CloudWatch), FFP-16 (Web Login)
+**EPIC FFP-1: Application Setup** (Sprint 1-2):
+
+- Completed: FFP-7, FFP-8, FFP-10, FFP-11, FFP-15
+- In Progress: FFP-9 (Cognito Authentication - carryover)
+- Sprint 2: FFP-12 (Testing), FFP-16 (Web Login)
+- Deferred: FFP-14 (CloudWatch Monitoring)
+
+**Sprint 2 Planning**:
+
+- FFP-110: Assessment Engine Epic Planning (prepare for next epic)
 
 **Critical Success Criteria**:
 
