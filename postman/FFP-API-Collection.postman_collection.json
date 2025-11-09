@@ -960,9 +960,160 @@
               "body": "{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Invalid request data\",\n  \"requestId\": \"abc123-def456\",\n  \"details\": [\n    {\n      \"path\": \"newPassword\",\n      \"message\": \"Password must be at least 8 characters\",\n      \"code\": \"too_small\"\n    }\n  ]\n}"
             }
           ]
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test response structure and save new tokens",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has authentication tokens', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('accessToken');",
+                  "    pm.expect(jsonData).to.have.property('idToken');",
+                  "    pm.expect(jsonData).to.have.property('refreshToken');",
+                  "    pm.expect(jsonData).to.have.property('expiresIn');",
+                  "});",
+                  "",
+                  "// Save new tokens to collection variables",
+                  "const response = pm.response.json();",
+                  "if (response.idToken) {",
+                  "    pm.collectionVariables.set('jwtToken', response.idToken);",
+                  "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
+                  "    console.log('Tokens refreshed successfully - JWT Token updated');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/auth/refresh-token",
+              "host": ["{{apiUrl}}"],
+              "path": ["auth", "refresh-token"]
+            },
+            "description": "Refresh access and ID tokens using a valid refresh token.\n\n**Authentication:** Public endpoint (no JWT required)\n\n**Workflow:**\n1. User logs in via POST /auth/login (or completes password change)\n2. Response includes refreshToken (valid for 30 days)\n3. When access token expires (after 1 hour), use this endpoint\n4. Receive new access and ID tokens with fresh expiry\n\n**Request Body:**\n```json\n{\n  \"refreshToken\": \"eyJjdHkiOi...\"\n}\n```\n\n**Response:**\n```json\n{\n  \"accessToken\": \"eyJraWQiOi...\",\n  \"idToken\": \"eyJraWQiOi...\",\n  \"refreshToken\": \"eyJjdHkiOi...\",\n  \"expiresIn\": 3600\n}\n```\n\n**Status Codes:**\n- `200`: Tokens refreshed successfully\n- `400`: Validation error (invalid refresh token format)\n- `401`: Unauthorised (refresh token expired or invalid)\n- `500`: Internal server error\n\n**Refresh Token Behaviour:**\n- Refresh tokens are valid for 30 days (Cognito default)\n- Refresh token does NOT rotate - same token returned in response\n- Access/ID tokens are regenerated with new 1-hour expiry\n- If refresh token expires, user must login again\n\n**Token Expiry:**\n- Access Token: 60 minutes\n- ID Token: 60 minutes\n- Refresh Token: 30 days (does not change)\n\n**Tips:**\n- The refreshToken variable is automatically populated by Login and Complete New Password requests\n- Use this endpoint when you receive 401 errors due to expired access tokens\n- No need to logout and re-login if refresh token is still valid",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"eyJjdHkiOiJ...(truncated)\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/refresh-token",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "refresh-token"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"accessToken\": \"eyJraWQiOiJ...(truncated)\",\n  \"idToken\": \"eyJraWQiOiJ...(truncated)\",\n  \"refreshToken\": \"eyJjdHkiOiJ...(truncated)\",\n  \"expiresIn\": 3600\n}"
+            },
+            {
+              "name": "Unauthorised - Expired Refresh Token",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"expired-token\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/refresh-token",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "refresh-token"]
+                }
+              },
+              "status": "Unauthorised",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"UNAUTHORISED\",\n  \"message\": \"Invalid or expired refresh token\",\n  \"requestId\": \"abc123-def456\"\n}"
+            },
+            {
+              "name": "Validation Error - Missing Token",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/refresh-token",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "refresh-token"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Invalid request data\",\n  \"requestId\": \"abc123-def456\",\n  \"details\": [\n    {\n      \"path\": \"refreshToken\",\n      \"message\": \"Refresh token is required\",\n      \"code\": \"too_small\"\n    }\n  ]\n}"
+            }
+          ]
         }
       ],
-      "description": "AWS Cognito authentication for obtaining JWT tokens.\n\n**Setup Instructions:**\n1. Set collection variables:\n   - `userPoolClientId` - Your Cognito User Pool Client ID\n   - `cognitoUsername` - Your email/username\n   - `cognitoPassword` - Your password\n   - `awsRegion` - AWS region (e.g., eu-west-2)\n\n2. Send the \"Get JWT Token (Cognito)\" request\n3. The `jwtToken` variable will be automatically set\n4. Protected endpoints will use this token automatically\n\n**Endpoints:**\n- POST /auth/login - Authenticate with email and password (public)\n- POST /auth/complete-new-password - Complete temporary password challenge (public)\n- POST /auth/invite-user - Invite new users (customer_owner or system_admin role required)\n\n**Future Endpoints:**\n- POST /auth/refresh - Refresh tokens using refresh token\n- POST /auth/forgot-password - Initiate password reset\n- POST /auth/change-password - Change password for authenticated user",
+      "description": "AWS Cognito authentication for obtaining JWT tokens.\n\n**Setup Instructions:**\n1. Set collection variables:\n   - `userPoolClientId` - Your Cognito User Pool Client ID\n   - `cognitoUsername` - Your email/username\n   - `cognitoPassword` - Your password\n   - `awsRegion` - AWS region (e.g., eu-west-2)\n\n2. Send the \"Get JWT Token (Cognito)\" request\n3. The `jwtToken` variable will be automatically set\n4. Protected endpoints will use this token automatically\n\n**Endpoints:**\n- POST /auth/login - Authenticate with email and password (public)\n- POST /auth/complete-new-password - Complete temporary password challenge (public)\n- POST /auth/refresh-token - Refresh tokens using refresh token (public)\n- POST /auth/invite-user - Invite new users (customer_owner or system_admin role required)\n\n**Future Endpoints:**\n- POST /auth/forgot-password - Initiate password reset\n- POST /auth/change-password - Change password for authenticated user",
       "auth": {
         "type": "bearer",
         "bearer": [
