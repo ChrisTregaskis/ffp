@@ -7,9 +7,7 @@ import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda
  * @param _event - API Gateway V2 event (no JWT) - unused but required by Lambda signature
  * @returns Health status response
  */
-export const handler = (
-  _event: APIGatewayProxyEventV2
-): Promise<APIGatewayProxyResultV2> => {
+export const handler = (_event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
   try {
     // Simple health check response
     const response = {
