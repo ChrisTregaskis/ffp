@@ -1,15 +1,36 @@
 # FFP - Project State
 
-**Last Updated**: November 8, 2025 - Session 36
-**Current Phase**: Sprint 1 Execution - IN PROGRESS 🚀
-**Branch**: `feature/ffp-9-cognito-auth`
-**Sprint 1 Progress**: 132.5/197 hours (67%) - TWO THIRDS COMPLETE! 🎉
+**Last Updated**: November 9, 2025 - Session 37
+**Current Phase**: Sprint 2 Execution - STARTING 🚀
+**Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
+**User Story Branch**: `feature/ffp-9-cognito-auth`
+**Sub Task Branch**: `feature/ffp-37-invite-user`
 
 ---
 
-## Current Work: FFP-9 - Cognito Authentication
+## Sprint 2 Overview
 
-**Status**: 🚀 IN PROGRESS (5/13 subtasks, 15/31-32 hours, 48%)
+**Duration**: 10th November - 30th November 2025 (3 weeks)
+**Focus**: Complete Application Setup (EPIC FFP-1) + Assessment Engine Planning
+
+**Sprint 2 Stories**:
+
+1. **FFP-9** - Cognito Authentication (CARRYOVER - remaining subtasks)
+2. **FFP-12** - Testing Infrastructure Setup
+3. **FFP-16** - Web Login Interface
+4. **FFP-110** - Assessment Engine Epic Planning
+
+**Sprint 1 Summary**:
+
+- Completed: 6/10 stories (132.5/197 hours, 67%)
+- Carried Over: FFP-9 (7 remaining subtasks, ~12-13 hours)
+- Deferred: FFP-14 (CloudWatch Monitoring)
+
+---
+
+## Current Work: FFP-9 - Cognito Authentication (CARRYOVER)
+
+**Status**: 🚀 IN PROGRESS (6/13 subtasks, 19/31-32 hours, 61%)
 
 ### Phase 1: Prerequisites (8h) - ✅ COMPLETE
 
@@ -20,14 +41,14 @@
 
 ### Phase 2: Bootstrap + Core Auth (10.5h) - ⚡ IN PROGRESS
 
-- ⏸️ Manual: Super User Setup (0.5h) - ← **NEXT**
+- ✅ Manual: Super User Setup (0.5h)
 - ✅ FFP-112: Admin API Endpoint (4.5h)
 - ✅ FFP-35: Zod Schemas (3h)
-- ⏸️ FFP-37: Invite User Lambda (4h)
+- ✅ FFP-37: Invite User Lambda (4h)
 
 ### Phase 3: Authentication Endpoints (7h)
 
-- ⏸️ FFP-38: Login Lambda (3h)
+- ⏸️ FFP-38: Login Lambda (3h) - ← **NEXT**
 - ⏸️ FFP-39: Refresh Token Lambda (2h)
 - ⏸️ FFP-40: API Gateway Routes (2h)
 
@@ -43,21 +64,17 @@
 
 ---
 
-## Completed Stories
+## Recent Work (Sprint 1 Final Sessions)
 
-| Story           | Title                         | Hours   | Status                   |
-| --------------- | ----------------------------- | ------- | ------------------------ |
-| FFP-7           | Turborepo Monorepo Setup      | 13h     | ✅ MERGED                |
-| FFP-8           | SST Infrastructure Foundation | 17h     | ✅ MERGED                |
-| FFP-106/107/108 | Database Package Refactoring  | 3h      | ✅ MERGED                |
-| FFP-10          | PostgreSQL Schema with RLS    | 24h     | ✅ MERGED                |
-| FFP-11          | Drizzle ORM Setup             | 22h     | ✅ MERGED                |
-| FFP-15          | Error Handling Patterns       | 15h     | ✅ COMPLETE (via FFP-43) |
-| **Total**       |                               | **94h** | **6 stories complete**   |
+**Session 37 (Nov 9)**: ✅ FFP-37 - Invite User Lambda COMPLETE (4h)
 
----
-
-## Recent Work
+- Fixed invite-user endpoint IAM permissions (Cognito AdminCreateUser access)
+- Added Cognito IAM permissions to SST auth route Lambda
+- Fixed test suite to use API Gateway V2 event structures
+- Updated Postman collection with tenantId/customerId placeholders for system admin mode
+- All 125 tests passing in @ffp/core
+- Zero TypeScript errors and ESLint warnings
+- Ready for deployment and end-to-end testing
 
 **Session 36 (Nov 8)**: ✅ FFP-112 - Admin API Endpoint COMPLETE (4.5h)
 
@@ -98,14 +115,29 @@
 
 ---
 
-## Sprint 1 Overview
+## Sprint 1 Summary (COMPLETE)
 
-**Total Stories**: 10 stories, 197 hours (~6.2 months at 8h/week)
-**Completed**: 132.5/197 hours (67%)
-**In Progress**: FFP-9 Cognito Authentication
-**Remaining**: FFP-12 (Testing), FFP-14 (CloudWatch), FFP-16 (Web Login)
+**Duration**: 20th October - 9th November 2025
+**Total Stories**: 10 stories, 197 hours planned
+**Completed**: 6 stories (132.5/197 hours, 67%)
+**Carried Over to Sprint 2**: FFP-9 (7 remaining subtasks, ~12-13 hours)
+**Deferred**: FFP-14 (CloudWatch Monitoring)
 
-**Timeline**: Started Oct 20, 2025 | Target completion: ~April 2026
+**Completed Stories**:
+
+- FFP-7: Turborepo Monorepo Setup (13h)
+- FFP-8: SST Infrastructure Foundation (17h)
+- FFP-106/107/108: Database Package Refactoring (3h)
+- FFP-10: PostgreSQL Schema with RLS (24h)
+- FFP-11: Drizzle ORM Setup (22h)
+- FFP-15: Error Handling Patterns (15h - via FFP-43)
+
+**Key Achievements**:
+
+- Infrastructure deployed to dev environment
+- Domain-organised architecture established
+- Actor-based context system implemented
+- 125+ tests passing with zero TypeScript errors
 
 ---
 
@@ -169,11 +201,18 @@
 **Site**: https://ctregaskis.atlassian.net
 **Project Key**: FFP
 
-**Epic 1 Stories** (Sprint 1-6):
+**Current Sprint**: Sprint 2 (10th Nov - 30th Nov 2025)
 
-- FFP-7 through FFP-16: Application Setup & Foundation
-- Current: FFP-9 (Cognito Authentication)
-- Next after FFP-9: FFP-12 (Testing), FFP-14 (CloudWatch), FFP-16 (Web Login)
+**EPIC FFP-1: Application Setup** (Sprint 1-2):
+
+- Completed: FFP-7, FFP-8, FFP-10, FFP-11, FFP-15
+- In Progress: FFP-9 (Cognito Authentication - carryover)
+- Sprint 2: FFP-12 (Testing), FFP-16 (Web Login)
+- Deferred: FFP-14 (CloudWatch Monitoring)
+
+**Sprint 2 Planning**:
+
+- FFP-110: Assessment Engine Epic Planning (prepare for next epic)
 
 **Critical Success Criteria**:
 

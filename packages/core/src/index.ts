@@ -5,10 +5,6 @@ export * from './types';
 export * from './lib';
 export * from './utils';
 
-// Domain exports
-export * from './users';
-export * from './auth';
-
 // Schemas (validation only - safe for browser)
 export * from './schemas';
 

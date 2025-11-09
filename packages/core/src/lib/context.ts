@@ -12,7 +12,7 @@
 
 import { randomUUID } from 'crypto';
 
-import { type APIGatewayProxyEvent } from 'aws-lambda';
+import { type APIGatewayProxyEventV2, type APIGatewayEventRequestContextV2 } from 'aws-lambda';
 
 import { COGNITO_CUSTOM_ATTRIBUTES } from './constants';
 import { UnauthorisedError, ValidationError } from './errors';
@@ -37,6 +37,20 @@ interface JWTAuthorizer {
     claims: JWTClaims;
   };
 }
+
+/**
+ * API Gateway V2 request context with JWT authorizer
+ */
+interface APIGatewayEventRequestContextV2WithJWT extends APIGatewayEventRequestContextV2 {
+  authorizer: JWTAuthorizer;
+}
+
+/**
+ * API Gateway V2 event with JWT authorizer
+ */
+export type APIGatewayProxyEventV2WithJWT = Omit<APIGatewayProxyEventV2, 'requestContext'> & {
+  requestContext: APIGatewayEventRequestContextV2WithJWT;
+};
 
 /**
  * Type guard to safely validate JWT authorizer structure
@@ -131,13 +145,13 @@ export interface TenantContext {
  *
  * @example
  * ```typescript
- * export const handler = async (event: APIGatewayProxyEvent) => {
+ * export const handler = async (event: APIGatewayProxyEventV2WithJWT) => {
  *   const context = extractUserContext(event);
  *   // Use context for RLS, logging, etc.
  * };
  * ```
  */
-export function extractUserContext(event: APIGatewayProxyEvent): TenantContext {
+export function extractUserContext(event: APIGatewayProxyEventV2WithJWT): TenantContext {
   const { authorizer } = event.requestContext;
 
   if (!hasJWTClaims(authorizer)) {

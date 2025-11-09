@@ -10,6 +10,7 @@
 import {
   CognitoIdentityProviderClient,
   AdminCreateUserCommand,
+  AdminDeleteUserCommand,
   InitiateAuthCommand,
   type AdminCreateUserCommandOutput,
   type InitiateAuthCommandOutput,
@@ -110,8 +111,7 @@ export class CognitoService {
    */
   static async inviteUser(params: InviteUserParams): Promise<AdminCreateUserCommandOutput> {
     validateEnvironment();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const userPoolId = process.env.COGNITO_USER_POOL_ID!; // Guaranteed by validateEnvironment()
+    const userPoolId = process.env.COGNITO_USER_POOL_ID; // Guaranteed by validateEnvironment()
 
     return await cognito.send(
       new AdminCreateUserCommand({
@@ -161,8 +161,7 @@ export class CognitoService {
    */
   static async createUser(params: CreateUserParams): Promise<AdminCreateUserCommandOutput> {
     validateEnvironment();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const userPoolId = process.env.COGNITO_USER_POOL_ID!; // Guaranteed by validateEnvironment()
+    const userPoolId = process.env.COGNITO_USER_POOL_ID; // Guaranteed by validateEnvironment()
 
     const userAttributes = [
       { Name: 'email', Value: params.email },
@@ -192,6 +191,45 @@ export class CognitoService {
     });
 
     return await cognito.send(command);
+  }
+
+  /**
+   * Delete a user from Cognito
+   *
+   * Used for rollback scenarios when user creation fails in downstream systems
+   * (e.g., database insert fails after Cognito user is created).
+   *
+   * !IMPORTANT: This is a destructive operation and cannot be undone.
+   * Use with caution and only for rollback scenarios.
+   *
+   * @param username - The username (email) of the user to delete
+   * @throws {Error} If Cognito operation fails
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   // Create Cognito user
+   *   const cognitoUser = await CognitoService.createUser(params);
+   *
+   *   // Attempt database insert
+   *   await db.insert(users).values(userData);
+   * } catch (dbError) {
+   *   // Rollback: Delete Cognito user if database fails
+   *   await CognitoService.deleteUser(cognitoUser.User!.Username!);
+   *   throw dbError;
+   * }
+   * ```
+   */
+  static async deleteUser(username: string): Promise<void> {
+    validateEnvironment();
+    const userPoolId = process.env.COGNITO_USER_POOL_ID; // Guaranteed by validateEnvironment()
+
+    await cognito.send(
+      new AdminDeleteUserCommand({
+        UserPoolId: userPoolId,
+        Username: username,
+      })
+    );
   }
 
   /**
@@ -226,8 +264,7 @@ export class CognitoService {
    */
   static async login(params: LoginParams): Promise<InitiateAuthCommandOutput> {
     validateEnvironment();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const clientId = process.env.COGNITO_CLIENT_ID!; // Guaranteed by validateEnvironment()
+    const clientId = process.env.COGNITO_CLIENT_ID; // Guaranteed by validateEnvironment()
 
     try {
       return await cognito.send(
@@ -285,8 +322,7 @@ export class CognitoService {
    */
   static async refreshToken(refreshToken: string): Promise<InitiateAuthCommandOutput> {
     validateEnvironment();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const clientId = process.env.COGNITO_CLIENT_ID!; // Guaranteed by validateEnvironment()
+    const clientId = process.env.COGNITO_CLIENT_ID; // Guaranteed by validateEnvironment()
 
     try {
       return await cognito.send(

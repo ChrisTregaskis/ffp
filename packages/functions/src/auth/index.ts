@@ -2,7 +2,7 @@ import { createSystemContext, type APIGatewayProxyEventV2WithJWT } from '@ffp/co
 
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
-import { handler as createCustomerHandler } from './create-customer';
+import { handler as inviteUserHandler } from './invite-user';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
@@ -11,7 +11,7 @@ import type { APIGatewayProxyResultV2 } from 'aws-lambda';
  * Uses placeholder tenantId as routing happens before authentication.
  */
 const ROUTER_CONTEXT = createSystemContext({
-  systemId: 'admin-router',
+  systemId: 'auth-router',
   tenantId: '00000000-0000-0000-0000-000000000000', // Placeholder for pre-auth routing
 });
 
@@ -20,24 +20,20 @@ const ROUTER_CONTEXT = createSystemContext({
  * Add new routes here to keep sst.config.ts clean.
  */
 const routes: RouteRegistry = {
-  POST: {
-    '/create-customer': createCustomerHandler,
-    // Future admin routes:
-    // '/update-customer': updateCustomerHandler,
-    // '/delete-customer': deleteCustomerHandler,
-  },
   GET: {
-    // Future admin routes:
-    // '/customers': listCustomersHandler,
-    // '/customer/:id': getCustomerHandler,
+    // Future auth routes:
+    // '/me': getCurrentUserHandler,
+  },
+  POST: {
+    '/invite-user': inviteUserHandler,
+    // Future auth routes:
+    // '/login': loginHandler,
+    // '/refresh': refreshTokenHandler,
+    // '/logout': logoutHandler,
   },
   PUT: {
-    // Future admin routes:
-    // '/customer/:id': updateCustomerHandler,
-  },
-  DELETE: {
-    // Future admin routes:
-    // '/customer/:id': deleteCustomerHandler,
+    // Future auth routes:
+    // '/change-password': changePasswordHandler,
   },
 };
 
@@ -48,7 +44,7 @@ const routes: RouteRegistry = {
 export const handler = async (
   event: APIGatewayProxyEventV2WithJWT
 ): Promise<APIGatewayProxyResultV2> => {
-  const result = validateAndMatchRoute(event, routes, 'admin', ROUTER_CONTEXT);
+  const result = validateAndMatchRoute(event, routes, 'auth', ROUTER_CONTEXT);
 
   if (result.type === 'error') {
     return result.response;

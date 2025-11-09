@@ -12,10 +12,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { z } from 'zod';
 
+import { type APIGatewayProxyEventV2WithJWT } from './context';
 import { UnauthorisedError, ValidationError, NotFoundError } from './errors';
 import { withErrorHandling } from './lambda-wrapper';
 
-import type { APIGatewayProxyEvent, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
+import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 
 // Type for the error log structure
 interface ErrorLogData {
@@ -43,53 +44,40 @@ function assertIsObject(
   }
 }
 
-// Helper to create a minimal valid APIGatewayProxyEvent for testing
-function createMockEvent(overrides?: Partial<APIGatewayProxyEvent>): APIGatewayProxyEvent {
-  const defaultEvent: APIGatewayProxyEvent = {
-    body: null,
+// Helper to create a minimal valid API Gateway V2 event for testing
+// Note: Returns a base v2 event without JWT authorizer (for unauthenticated tests)
+function createMockEvent(
+  overrides?: Partial<APIGatewayProxyEventV2WithJWT>
+): APIGatewayProxyEventV2WithJWT {
+  const defaultEvent = {
+    version: '2.0',
+    routeKey: 'ANY /{proxy+}',
+    rawPath: '/',
+    rawQueryString: '',
     headers: {},
-    multiValueHeaders: {},
-    httpMethod: 'GET',
-    isBase64Encoded: false,
-    path: '/',
-    pathParameters: null,
-    queryStringParameters: null,
-    multiValueQueryStringParameters: null,
-    stageVariables: null,
     requestContext: {
       accountId: '123456789012',
       apiId: 'test-api',
-      protocol: 'HTTP/1.1',
-      httpMethod: 'GET',
-      path: '/',
-      stage: 'test',
+      domainName: 'test.execute-api.eu-west-2.amazonaws.com',
+      domainPrefix: 'test',
       requestId: 'test-request-id',
-      requestTimeEpoch: Date.now(),
-      resourceId: 'test-resource',
-      resourcePath: '/',
-      identity: {
-        accessKey: null,
-        accountId: null,
-        apiKey: null,
-        apiKeyId: null,
-        caller: null,
-        clientCert: null,
-        cognitoAuthenticationProvider: null,
-        cognitoAuthenticationType: null,
-        cognitoIdentityId: null,
-        cognitoIdentityPoolId: null,
-        principalOrgId: null,
+      routeKey: 'ANY /{proxy+}',
+      stage: '$default',
+      time: new Date().toISOString(),
+      timeEpoch: Date.now(),
+      http: {
+        method: 'GET',
+        path: '/',
+        protocol: 'HTTP/1.1',
         sourceIp: '127.0.0.1',
-        user: null,
         userAgent: 'test-agent',
-        userArn: null,
       },
-      authorizer: null,
     },
-    resource: '/',
+    isBase64Encoded: false,
   };
 
-  return { ...defaultEvent, ...overrides };
+  // Cast to allow tests without JWT (will throw UnauthorizedError when context extraction fails)
+  return { ...defaultEvent, ...overrides } as APIGatewayProxyEventV2WithJWT;
 }
 
 describe('withErrorHandling', () => {
@@ -623,14 +611,34 @@ describe('withErrorHandling', () => {
       consoleLogSpy.mockRestore();
     });
 
-    // Helper to create an authenticated event with JWT
-    function createAuthenticatedEvent(
-      overrides?: Partial<APIGatewayProxyEvent>
-    ): APIGatewayProxyEvent {
-      return createMockEvent({
-        ...overrides,
+    // Helper to create an authenticated event with JWT (V2)
+    function createAuthenticatedEvent(overrides?: {
+      path?: string;
+      httpMethod?: string;
+    }): APIGatewayProxyEventV2WithJWT {
+      return {
+        version: '2.0',
+        routeKey: 'ANY /{proxy+}',
+        rawPath: overrides?.path ?? '/',
+        rawQueryString: '',
+        headers: {},
         requestContext: {
-          ...createMockEvent().requestContext,
+          accountId: '123456789012',
+          apiId: 'test-api',
+          domainName: 'test.execute-api.eu-west-2.amazonaws.com',
+          domainPrefix: 'test',
+          requestId: 'test-request-id',
+          routeKey: 'ANY /{proxy+}',
+          stage: '$default',
+          time: new Date().toISOString(),
+          timeEpoch: Date.now(),
+          http: {
+            method: overrides?.httpMethod ?? 'GET',
+            path: overrides?.path ?? '/',
+            protocol: 'HTTP/1.1',
+            sourceIp: '127.0.0.1',
+            userAgent: 'test-agent',
+          },
           authorizer: {
             jwt: {
               claims: {
@@ -643,7 +651,8 @@ describe('withErrorHandling', () => {
             },
           },
         },
-      });
+        isBase64Encoded: false,
+      };
     }
 
     it('should use structured logging for authenticated requests', async () => {
