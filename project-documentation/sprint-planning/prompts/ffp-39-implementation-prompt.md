@@ -36,9 +36,7 @@ export interface RefreshTokenResult {
   expiresIn: number;
 }
 
-export async function refreshTokenService(
-  input: RefreshTokenInput
-): Promise<RefreshTokenResult> {
+export async function refreshTokenService(input: RefreshTokenInput): Promise<RefreshTokenResult> {
   logger.info('Token refresh request');
 
   const result = await CognitoService.refreshToken(input.refreshToken);
@@ -59,6 +57,7 @@ export async function refreshTokenService(
 ```
 
 **Key Details:**
+
 - Standalone service function (not a class method)
 - Calls `CognitoService.refreshToken()` which handles errors
 - Returns original refresh token (it doesn't rotate, stays valid for 30 days)
@@ -73,10 +72,7 @@ export async function refreshTokenService(
 ```typescript
 import { withErrorHandling } from '@ffp/core/server';
 import { refreshTokenSchema } from '@ffp/core/schemas/auth.schema';
-import {
-  refreshTokenService,
-  type RefreshTokenResult,
-} from '@ffp/core/auth/refresh-token.service';
+import { refreshTokenService, type RefreshTokenResult } from '@ffp/core/auth/refresh-token.service';
 import { type APIGatewayProxyEventV2 } from 'aws-lambda';
 
 export const handler = withErrorHandling(
@@ -90,6 +86,7 @@ export const handler = withErrorHandling(
 ```
 
 **Key Details:**
+
 - Uses `withErrorHandling` wrapper (converts errors to HTTP responses)
 - Parses body with `refreshTokenSchema` (camelCase)
 - Delegates to service layer
@@ -102,11 +99,13 @@ export const handler = withErrorHandling(
 **File**: `packages/functions/src/auth/index.ts`
 
 **Add import at top:**
+
 ```typescript
 import { handler as refreshTokenHandler } from './refresh-token';
 ```
 
 **Add route to RouteRegistry:**
+
 ```typescript
 const routes: RouteRegistry = {
   POST: {
@@ -125,6 +124,7 @@ const routes: RouteRegistry = {
 **File**: `packages/core/src/auth/index.ts`
 
 **Add export:**
+
 ```typescript
 export { refreshTokenService, type RefreshTokenResult } from './refresh-token.service';
 ```
@@ -136,18 +136,22 @@ export { refreshTokenService, type RefreshTokenResult } from './refresh-token.se
 After implementation, verify:
 
 ### TypeScript & Linting
+
 ```bash
 pnpm typecheck           # Should pass with zero errors
 pnpm lint                # Should pass with zero warnings
 ```
 
 ### Build
+
 ```bash
 pnpm build              # Should build successfully
 ```
 
 ### Manual Testing (Optional)
+
 If you want to test locally:
+
 1. Deploy to dev environment
 2. Use Postman "Login" request to get refresh token
 3. Use Postman "Refresh Token" request to test endpoint
@@ -170,12 +174,14 @@ The implementation handles these automatically:
 ## Implementation Notes
 
 ### Refresh Token Behaviour (Cognito)
+
 - Refresh tokens are valid for 30 days (Cognito default)
 - Refresh token **does NOT rotate** - same token is reused until expiry
 - Access/ID tokens are regenerated with new 1-hour expiry
 - If refresh token expires, user must login again
 
 ### Why Return Original Refresh Token?
+
 Even though the refresh token doesn't change, we return it in the response for consistency with the login endpoint response structure. This makes the client implementation simpler - they can always update their stored tokens from the response.
 
 ---
@@ -183,6 +189,7 @@ Even though the refresh token doesn't change, we return it in the response for c
 ## Reference Implementation
 
 Your implementation should mirror FFP-38 (Login Lambda):
+
 - **Handler**: `packages/functions/src/auth/login.ts`
 - **Service**: `packages/core/src/auth/login.service.ts`
 - **Route Registry**: `packages/functions/src/auth/index.ts` (lines 20-30)
