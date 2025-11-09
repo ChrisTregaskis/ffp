@@ -1,4 +1,5 @@
 import type { APIGatewayProxyEventV2WithJWT } from '@ffp/core/server';
+
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
 export const handler = async (

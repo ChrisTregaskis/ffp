@@ -271,7 +271,21 @@ export default $config({
     // Auth domain routes (public health + protected invite)
     api.route(
       'ANY /auth/{proxy+}',
-      { handler: 'packages/functions/src/auth/index.handler', ...handlerEnv },
+      {
+        handler: 'packages/functions/src/auth/index.handler',
+        ...handlerEnv,
+        permissions: [
+          {
+            actions: [
+              'cognito-idp:AdminCreateUser',
+              'cognito-idp:AdminDeleteUser',
+              'cognito-idp:AdminGetUser',
+              'cognito-idp:AdminUpdateUserAttributes',
+            ],
+            resources: [userPool.arn],
+          },
+        ],
+      },
       args
     );
 

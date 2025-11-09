@@ -439,14 +439,14 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user@business.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"role\": \"customer_admin\"\n}"
+              "raw": "{\n  \"email\": \"c.tregaskis+ffp.invite-user.test-001@gmail.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"role\": \"customer_admin\",\n  \"tenantId\": \"REPLACE_WITH_TENANT_ID\",\n  \"customerId\": \"REPLACE_WITH_CUSTOMER_ID\"\n}"
             },
             "url": {
               "raw": "{{apiUrl}}/auth/invite-user",
               "host": ["{{apiUrl}}"],
               "path": ["auth", "invite-user"]
             },
-            "description": "Invite a new user to the platform with temporary password.\n\n**Authentication:** JWT token required (customer_owner OR system_admin)\n\n**Two Modes:**\n\n1. **Customer Owner Mode** (uses JWT context):\n   - User invites staff to their own tenant/customer\n   - tenantId/customerId taken from JWT automatically\n   - Request body does NOT include tenantId/customerId\n\n2. **System Admin Mode** (uses request body):\n   - System admin can invite users to any tenant/customer\n   - Must specify tenantId and customerId in request body\n\n**Request Body (Customer Owner):**\n```json\n{\n  \"email\": \"user@business.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"role\": \"customer_admin\"\n}\n```\n\n**Request Body (System Admin):**\n```json\n{\n  \"email\": \"owner@newbusiness.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"role\": \"customer_owner\",\n  \"tenantId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"customerId\": \"550e8400-e29b-41d4-a716-446655440001\"\n}\n```\n\n**Valid Roles:**\n- `customer_owner` - Owner of a customer account (business)\n- `customer_admin` - Administrator within a customer organisation\n- `customer_user` - Regular user within a customer organisation\n\n**Response:**\n```json\n{\n  \"message\": \"User invited successfully. They will receive an email with temporary password.\",\n  \"userId\": \"uuid\",\n  \"email\": \"user@business.com\"\n}\n```\n\n**Status Codes:**\n- `200`: User invited successfully\n- `400`: Validation error (invalid input or system admin missing tenantId/customerId)\n- `401`: Unauthorised (no JWT token)\n- `403`: Forbidden (not customer_owner or system_admin)\n- `500`: Internal server error\n\n**Cognito-to-DB Rollback:**\nIf database insert fails, Cognito user is automatically deleted (no orphaned users).\n\n**Typical Workflow:**\n1. System admin creates business via POST /admin/create-customer (FFP-112)\n2. System admin invites owner via POST /auth/invite-user (this endpoint)\n3. Owner receives Cognito email with temporary password\n4. Owner logs in and invites additional users via POST /auth/invite-user"
+            "description": "Invite a new user to the platform with temporary password.\n\n**Authentication:** JWT token required (customer_owner OR system_admin)\n\n**Two Modes:**\n\n1. **Customer Owner Mode** (uses JWT context):\n   - User invites staff to their own tenant/customer\n   - tenantId/customerId taken from JWT automatically\n   - Request body does NOT include tenantId/customerId\n\n2. **System Admin Mode** (uses request body):\n   - System admin can invite users to any tenant/customer\n   - Must specify tenantId and customerId in request body\n\n**Request Body (Customer Owner):**\n```json\n{\n  \"email\": \"c.tregaskis+ffp.invite-user.test-001@gmail.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"role\": \"customer_admin\"\n}\n```\n\n**Request Body (System Admin):**\n```json\n{\n  \"email\": \"owner@newbusiness.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"role\": \"customer_owner\",\n  \"tenantId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"customerId\": \"550e8400-e29b-41d4-a716-446655440001\"\n}\n```\n\n**Valid Roles:**\n- `customer_owner` - Owner of a customer account (business)\n- `customer_admin` - Administrator within a customer organisation\n- `customer_user` - Regular user within a customer organisation\n\n**Response:**\n```json\n{\n  \"message\": \"User invited successfully. They will receive an email with temporary password.\",\n  \"userId\": \"uuid\",\n  \"email\": \"c.tregaskis+ffp.invite-user.test-001@gmail.com\"\n}\n```\n\n**Status Codes:**\n- `200`: User invited successfully\n- `400`: Validation error (invalid input or system admin missing tenantId/customerId)\n- `401`: Unauthorised (no JWT token)\n- `403`: Forbidden (not customer_owner or system_admin)\n- `500`: Internal server error\n\n**Cognito-to-DB Rollback:**\nIf database insert fails, Cognito user is automatically deleted (no orphaned users).\n\n**Typical Workflow:**\n1. System admin creates business via POST /admin/create-customer (FFP-112)\n2. System admin invites owner via POST /auth/invite-user (this endpoint)\n3. Owner receives Cognito email with temporary password\n4. Owner logs in and invites additional users via POST /auth/invite-user"
           },
           "response": [
             {
@@ -461,7 +461,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"email\": \"user@business.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"role\": \"customer_admin\"\n}"
+                  "raw": "{\n  \"email\": \"c.tregaskis+ffp.invite-user.test-001@gmail.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"role\": \"customer_admin\"\n}"
                 },
                 "url": {
                   "raw": "{{apiUrl}}/auth/invite-user",
@@ -478,7 +478,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"message\": \"User invited successfully. They will receive an email with temporary password.\",\n  \"userId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"email\": \"user@business.com\"\n}"
+              "body": "{\n  \"message\": \"User invited successfully. They will receive an email with temporary password.\",\n  \"userId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"email\": \"c.tregaskis+ffp.invite-user.test-001@gmail.com\"\n}"
             },
             {
               "name": "Success Response (System Admin)",
@@ -585,7 +585,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"email\": \"user@business.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"role\": \"customer_admin\"\n}"
+                  "raw": "{\n  \"email\": \"c.tregaskis+ffp.invite-user.test-001@gmail.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"role\": \"customer_admin\"\n}"
                 },
                 "url": {
                   "raw": "{{apiUrl}}/auth/invite-user",
