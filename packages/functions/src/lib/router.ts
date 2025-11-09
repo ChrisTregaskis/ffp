@@ -41,7 +41,7 @@ export function validateAndMatchRoute(
 ): RouteValidationResult {
   const logger = new Logger(routerContext);
 
-  // Extract HTTP method and path from V1 event format
+  // Extract HTTP method and path from V2 event format
   const method = event.requestContext.http.method;
   const path = `/${event.pathParameters?.proxy ?? ''}`;
 

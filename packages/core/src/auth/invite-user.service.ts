@@ -27,7 +27,7 @@ export interface InviteUserResponse {
  * @param input - User invitation data
  * @returns Invitation response with user details
  * @throws {ForbiddenError} If user lacks required role
- * @throws {BadRequestError} If system admin doesn't provide tenant/customer IDs
+ * @throws {ValidationError} If system admin doesn't provide tenant/customer IDs
  */
 export async function inviteUserService(
   ctx: RequestContext,

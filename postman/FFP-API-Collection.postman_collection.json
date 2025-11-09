@@ -14,11 +14,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{apiUrl}}/auth/health",
+              "raw": "{{apiUrl}}/health",
               "host": ["{{apiUrl}}"],
-              "path": ["auth", "health"]
+              "path": ["health"]
             },
-            "description": "Public health check endpoint - no authentication required.\n\nReturns:\n- `status`: Health status (\"healthy\")\n- `message`: Service identification\n- `timestamp`: Current server time (ISO 8601)\n- `service`: Service name\n- `version`: API version\n\n**Status Codes:**\n- `200`: Service is healthy\n- `500`: Service health check failed"
+            "description": "Public health check endpoint - no authentication required.\n\nReturns:\n- `status`: Health status (\"healthy\")\n- `message`: Service identification\n- `timestamp`: Current server time (ISO 8601)\n- `version`: API version\n- `stage`: Deployment stage (dev/staging/production)\n\n**Status Codes:**\n- `200`: Service is healthy\n- `500`: Service health check failed",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "response": [
             {
@@ -27,9 +30,9 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{apiUrl}}/auth/health",
+                  "raw": "{{apiUrl}}/health",
                   "host": ["{{apiUrl}}"],
-                  "path": ["auth", "health"]
+                  "path": ["health"]
                 }
               },
               "status": "OK",
@@ -41,7 +44,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"status\": \"healthy\",\n  \"message\": \"FFP Functions - Health Check OK\",\n  \"timestamp\": \"2025-10-25T12:34:56.789Z\",\n  \"service\": \"auth\",\n  \"version\": \"1.0.0\"\n}"
+              "body": "{\n  \"status\": \"healthy\",\n  \"message\": \"FFP API - Health Check OK\",\n  \"timestamp\": \"2025-11-09T12:34:56.789Z\",\n  \"version\": \"1.0.0\",\n  \"stage\": \"dev\"\n}"
             }
           ]
         }

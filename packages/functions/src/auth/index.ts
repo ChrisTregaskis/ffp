@@ -2,7 +2,6 @@ import { createSystemContext, type APIGatewayProxyEventV2WithJWT } from '@ffp/co
 
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
-import { handler as healthHandler } from './health';
 import { handler as inviteUserHandler } from './invite-user';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
@@ -22,7 +21,6 @@ const ROUTER_CONTEXT = createSystemContext({
  */
 const routes: RouteRegistry = {
   GET: {
-    '/health': healthHandler,
     // Future auth routes:
     // '/me': getCurrentUserHandler,
   },

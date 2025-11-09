@@ -268,7 +268,13 @@ export default $config({
       },
     };
 
-    // Auth domain routes (public health + protected invite)
+    // Public health check endpoint (no authentication required)
+    api.route('GET /health', {
+      handler: 'packages/functions/src/health/check.handler',
+      ...handlerEnv,
+    });
+
+    // Auth domain routes (protected invite and authentication)
     api.route(
       'ANY /auth/{proxy+}',
       {

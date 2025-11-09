@@ -9,8 +9,6 @@ import {
   createRequestContext,
 } from '@ffp/core/server';
 
-import type { APIGatewayProxyResultV2 } from 'aws-lambda';
-
 /**
  * Lambda handler for POST /admin/create-customer
  *
@@ -25,9 +23,7 @@ import type { APIGatewayProxyResultV2 } from 'aws-lambda';
  * ```
  */
 export const handler = withErrorHandling(
-  async (
-    event: APIGatewayProxyEventV2WithJWT
-  ): Promise<APIGatewayProxyResultV2<CreateCustomerResponse>> => {
+  async (event: APIGatewayProxyEventV2WithJWT): Promise<CreateCustomerResponse> => {
     // Extract user context from JWT (throws UnauthorisedError if missing)
     const context = extractUserContext(event);
 
