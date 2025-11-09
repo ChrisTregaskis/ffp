@@ -45,6 +45,24 @@ export const refreshTokenSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 
 /**
+ * Schema for completing new password challenge.
+ *
+ * Used when a user with a temporary password logs in and must change it
+ * before accessing the platform. Requires the session token from the login
+ * response and validates the new password meets Cognito requirements.
+ */
+export const completeNewPasswordSchema = z.object({
+  session: z.string().min(1, 'Session is required'),
+  email: z.string().email('Invalid email address'),
+  newPassword: passwordValidation,
+});
+
+/**
  * TypeScript type inferred from refreshTokenSchema
  */
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
+
+/**
+ * TypeScript type inferred from completeNewPasswordSchema
+ */
+export type CompleteNewPasswordInput = z.infer<typeof completeNewPasswordSchema>;

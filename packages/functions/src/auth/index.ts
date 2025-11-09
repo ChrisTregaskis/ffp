@@ -2,7 +2,9 @@ import { createSystemContext, type APIGatewayProxyEventV2WithJWT } from '@ffp/co
 
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
+import { handler as completeNewPasswordHandler } from './complete-new-password';
 import { handler as inviteUserHandler } from './invite-user';
+import { handler as loginHandler } from './login';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
@@ -25,9 +27,10 @@ const routes: RouteRegistry = {
     // '/me': getCurrentUserHandler,
   },
   POST: {
-    '/invite-user': inviteUserHandler,
+    '/login': loginHandler, // Public endpoint
+    '/complete-new-password': completeNewPasswordHandler, // Public endpoint
+    '/invite-user': inviteUserHandler, // Protected endpoint (requires JWT)
     // Future auth routes:
-    // '/login': loginHandler,
     // '/refresh': refreshTokenHandler,
     // '/logout': logoutHandler,
   },

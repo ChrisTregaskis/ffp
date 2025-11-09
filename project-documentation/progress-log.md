@@ -8,6 +8,53 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### November 11, 2025 (Session 38 - FFP-38 Complete!)
+
+**Status**: ✅ FFP-38 COMPLETE - Login and Complete New Password Lambda Functions (3h)
+
+**Branch**: `feature/ffp-38-login-lambda`
+
+**Completed Work**:
+
+- ✅ Implemented login endpoint (POST /auth/login)
+  - Created `packages/functions/src/auth/login.ts` - Public Lambda handler
+  - Created `packages/core/src/auth/login.service.ts` - Login service with challenge handling
+  - Handles NEW_PASSWORD_REQUIRED challenge flow for temporary passwords
+  - Returns JWT tokens for successful authentication or session token for password change
+  - Added loginSchema to `packages/core/src/schemas/auth.schema.ts`
+- ✅ Implemented complete-new-password endpoint (POST /auth/complete-new-password)
+  - Created `packages/functions/src/auth/complete-new-password.ts` - Public Lambda handler
+  - Created `packages/core/src/auth/complete-new-password.service.ts` - Password change service
+  - Added completeNewPasswordSchema to auth schemas
+  - Returns JWT tokens immediately after password change (no second login needed)
+- ✅ Enhanced CognitoService (`packages/core/src/lib/cognito.ts`)
+  - Added completeNewPassword() method using RespondToAuthChallengeCommand
+  - Handles NotAuthorizedException (expired/invalid session)
+  - Handles InvalidPasswordException (weak password)
+  - Proper validation without non-null assertions (ESLint compliant)
+- ✅ Fixed infrastructure configuration
+  - Updated `sst.config.ts` - Removed JWT authorizer from /auth/\* routes (made public)
+  - Updated `packages/functions/src/auth/index.ts` - Registered login and complete-new-password handlers
+  - Fixed 401 Unauthorized error on login endpoint
+- ✅ Updated Postman collection
+  - Added "Login" request with test scripts for token/session handling
+  - Added "Complete New Password" request with test scripts
+  - Test scripts detect challenge vs success responses
+  - Auto-populate session tokens and JWT tokens in collection variables
+- ✅ Updated documentation
+  - Created `TESTING.md` - Step-by-step manual testing instructions (4 test scenarios)
+  - Updated `authentication.md` - Added testing guide and concise implementation descriptions
+  - Updated `.claude/review-context.md` - Comprehensive FFP-38 review context
+  - Removed verbose code examples, kept brief descriptions with file references
+
+**Testing**: Manual tests successful (invite-user, login, complete-new-password flows verified)
+**Pattern Reinforced**: Handler → Service → External Service for public authentication endpoints
+**FFP-9 Progress**: 7/13 subtasks (54%), 22/31-32 hours (70%)
+**Sprint 1+2**: 135.5/197 hours (69%)
+**Next**: FFP-39 Refresh Token Lambda (2h)
+
+---
+
 ### November 9, 2025 (Session 37 - FFP-37 Complete!)
 
 **Status**: ✅ FFP-37 COMPLETE - Invite User Lambda with Cognito Integration (4h)
@@ -251,7 +298,9 @@ Detailed session-by-session history for Sprint 1 execution.
 | Nov 6       | FFP-44 Complete                 | 127.5h         |
 | Nov 6       | FFP-32 Deferred                 | 128h           |
 | Nov 8       | FFP-112 Complete (Admin API)    | 132.5h         |
-| **Current** | **67% Sprint 1 Complete**       | **132.5/197h** |
+| Nov 9       | FFP-37 Complete (Invite User)   | 136.5h         |
+| Nov 11      | FFP-38 Complete (Login)         | 139.5h         |
+| **Current** | **69% Sprint 1 Complete**       | **135.5/197h** |
 
 ---
 

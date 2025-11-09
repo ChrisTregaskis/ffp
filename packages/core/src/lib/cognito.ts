@@ -12,12 +12,13 @@ import {
   AdminCreateUserCommand,
   AdminDeleteUserCommand,
   InitiateAuthCommand,
+  RespondToAuthChallengeCommand,
   type AdminCreateUserCommandOutput,
   type InitiateAuthCommandOutput,
 } from '@aws-sdk/client-cognito-identity-provider';
 
 import { COGNITO_CUSTOM_ATTRIBUTES } from './constants.js';
-import { UnauthorisedError } from './errors.js';
+import { UnauthorisedError, ValidationError } from './errors.js';
 
 /**
  * Cognito region
@@ -75,6 +76,15 @@ export interface CreateUserParams {
 export interface LoginParams {
   email: string;
   password: string;
+}
+
+/**
+ * Parameters for completing new password challenge
+ */
+export interface CompleteNewPasswordParams {
+  session: string;
+  email: string;
+  newPassword: string;
 }
 
 /**
@@ -340,6 +350,58 @@ export class CognitoService {
         // NotAuthorizedException means the refresh token is invalid/expired
         if (error.name === 'NotAuthorizedException') {
           throw new UnauthorisedError('Refresh token is invalid or expired');
+        }
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Complete new password challenge
+   *
+   * Called after a user with a temporary password logs in and receives
+   * a NEW_PASSWORD_REQUIRED challenge. Sets the user's permanent password
+   * and returns authentication tokens.
+   *
+   * This is typically used for:
+   * - Users invited via /auth/invite-user
+   * - Users created by system admins with temporary passwords
+   * - Password reset flows
+   *
+   * @param params - Challenge response parameters
+   * @returns Cognito authentication response with tokens
+   * @throws {UnauthorisedError} If session is expired or invalid
+   * @throws {ValidationError} If password doesn't meet requirements
+   * @throws {Error} If Cognito operation fails
+   *
+   */
+  static async completeNewPassword(
+    params: CompleteNewPasswordParams
+  ): Promise<InitiateAuthCommandOutput> {
+    validateEnvironment();
+    // Guaranteed by validateEnvironment()
+    const clientId = process.env.COGNITO_CLIENT_ID;
+
+    try {
+      return await cognito.send(
+        new RespondToAuthChallengeCommand({
+          ClientId: clientId,
+          ChallengeName: 'NEW_PASSWORD_REQUIRED',
+          Session: params.session,
+          ChallengeResponses: {
+            USERNAME: params.email,
+            NEW_PASSWORD: params.newPassword,
+          },
+        })
+      );
+    } catch (error) {
+      // Convert Cognito errors to our error types
+      if (error instanceof Error) {
+        if (error.name === 'NotAuthorizedException') {
+          throw new UnauthorisedError('Session expired or invalid');
+        }
+        if (error.name === 'InvalidPasswordException') {
+          throw new ValidationError('Password does not meet requirements');
         }
       }
       throw error;
