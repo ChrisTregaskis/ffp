@@ -1,15 +1,16 @@
 # FFP - Project State
 
-**Last Updated**: November 8, 2025 - Session 36
+**Last Updated**: November 9, 2025 - Session 37
 **Current Phase**: Sprint 1 Execution - IN PROGRESS 🚀
-**Branch**: `feature/ffp-9-cognito-auth`
-**Sprint 1 Progress**: 132.5/197 hours (67%) - TWO THIRDS COMPLETE! 🎉
+**User Story Branch**: `feature/ffp-9-cognito-auth`
+**Sub Task Branch**: `feature/ffp-37-invite-user`
+**Sprint 1 Progress**: 136.5/197 hours (69%) - ALMOST THREE QUARTERS COMPLETE! 🎉
 
 ---
 
 ## Current Work: FFP-9 - Cognito Authentication
 
-**Status**: 🚀 IN PROGRESS (5/13 subtasks, 15/31-32 hours, 48%)
+**Status**: 🚀 IN PROGRESS (6/13 subtasks, 19/31-32 hours, 61%)
 
 ### Phase 1: Prerequisites (8h) - ✅ COMPLETE
 
@@ -23,7 +24,7 @@
 - ⏸️ Manual: Super User Setup (0.5h) - ← **NEXT**
 - ✅ FFP-112: Admin API Endpoint (4.5h)
 - ✅ FFP-35: Zod Schemas (3h)
-- ⏸️ FFP-37: Invite User Lambda (4h)
+- ✅ FFP-37: Invite User Lambda (4h)
 
 ### Phase 3: Authentication Endpoints (7h)
 
@@ -58,6 +59,16 @@
 ---
 
 ## Recent Work
+
+**Session 37 (Nov 9)**: ✅ FFP-37 - Invite User Lambda COMPLETE (4h)
+
+- Fixed invite-user endpoint IAM permissions (Cognito AdminCreateUser access)
+- Added Cognito IAM permissions to SST auth route Lambda
+- Fixed test suite to use API Gateway V2 event structures
+- Updated Postman collection with tenantId/customerId placeholders for system admin mode
+- All 125 tests passing in @ffp/core
+- Zero TypeScript errors and ESLint warnings
+- Ready for deployment and end-to-end testing
 
 **Session 36 (Nov 8)**: ✅ FFP-112 - Admin API Endpoint COMPLETE (4.5h)
 

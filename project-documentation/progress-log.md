@@ -8,6 +8,42 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### November 9, 2025 (Session 37 - FFP-37 Complete!)
+
+**Status**: ✅ FFP-37 COMPLETE - Invite User Lambda with Cognito Integration (4h)
+
+**Branch**: `feature/ffp-37-invite-user`
+
+**Completed Work**:
+
+- ✅ Fixed invite-user endpoint IAM permissions
+  - Lambda lacked Cognito AdminCreateUser permission (AccessDeniedException)
+  - Added `permissions` array to SST auth route configuration
+  - Granted 4 Cognito admin actions: AdminCreateUser, AdminDeleteUser, AdminGetUser, AdminUpdateUserAttributes
+  - Scoped permissions to specific User Pool ARN (principle of least privilege)
+  - AdminDeleteUser enables rollback pattern (delete Cognito user if DB insert fails)
+- ✅ Fixed test suite to use API Gateway V2 event structures
+  - Updated `createMockEvent()` helper to return proper V2 event format
+  - Changed from V1 properties (`path`, `httpMethod`) to V2 (`rawPath`, `requestContext.http.method`)
+  - Added required V2 properties: `version`, `routeKey`, `rawQueryString`
+  - Updated `createAuthenticatedEvent()` to use V2 structure with JWT authorizer
+  - Changed `||` to `??` (nullish coalescing) for ESLint compliance
+  - Removed unused imports: `APIGatewayProxyEvent`, `APIGatewayProxyEventV2`
+  - **Fixed 2 failing tests**: Structured logging tests now pass (125/125 tests passing)
+- ✅ Updated Postman collection with system admin mode fields
+  - Added `tenantId` field with placeholder: `"REPLACE_WITH_TENANT_ID"`
+  - Added `customerId` field with placeholder: `"REPLACE_WITH_CUSTOMER_ID"`
+  - Updated description to clarify system admin vs customer owner modes
+  - Example system admin request shows both fields required
+
+**Testing**: All 125 tests passing, zero TypeScript errors, zero ESLint warnings
+**Pattern Reinforced**: API Gateway V2 event structures used consistently across tests
+**FFP-9 Progress**: 6/13 subtasks (46%), 19/31-32 hours (61%)
+**Sprint 1**: 136.5/197 hours (69%) - ALMOST THREE QUARTERS COMPLETE!
+**Next**: Manual Super User Setup (0.5h) → FFP-38 Login Lambda (3h)
+
+---
+
 ### November 8, 2025 (Session 36 - FFP-112 Complete!)
 
 **Status**: ✅ FFP-112 COMPLETE - Admin API Endpoint for Business Onboarding (4.5h)
