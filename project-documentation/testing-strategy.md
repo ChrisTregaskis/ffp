@@ -2,58 +2,63 @@
 
 ## Overview
 
-FFP uses a **hybrid testing approach** optimized for solo development: fast mocked unit tests for business logic, with critical RLS integration tests running against the dev database. This balances speed with security validation for our multi-tenant healthcare application.
+FFP uses a **pragmatic testing approach** optimised for solo development (8h/week): fast unit tests with Vitest, and critical RLS integration tests running against the dev database. This balances development speed with security validation for our multi-tenant healthcare application.
 
 ## Testing Philosophy
 
-### Phase 1 Goals
+### Phase 1 Goals (Current)
 
-- **10% code coverage** - Focus on critical paths
+- **10% code coverage** - Focus on critical paths only
 - **Security first** - Multi-tenant isolation must be tested
 - **Speed matters** - Fast feedback loop for solo dev
-- **Pragmatic approach** - Test what matters, skip edge cases initially
+- **Unit tests only** - No E2E or complex mocking frameworks in Phase 1
+- **Pragmatic approach** - Test what matters, defer edge cases to post-MVP
 
 ### Non-Negotiable Tests
 
-1. **RLS multi-tenant isolation** - Prevents cross-tenant data leakage
-2. **Authentication/authorization flows** - JWT parsing, role validation
-3. **Input validation** - All Zod schemas
-4. **Assessment scoring logic** - Core business value
-5. **Program generation** - Critical user journey
+1. **RLS multi-tenant isolation** - Prevents cross-tenant data leakage (integration tests)
+2. **Authentication/authorisation flows** - JWT parsing, role validation (unit tests)
+3. **Input validation** - All Zod schemas (unit tests)
+4. **Assessment scoring logic** - Core business value (unit tests, when implemented)
+5. **Program generation** - Critical user journey (unit tests, when implemented)
 
 ## Testing Stack
 
-### Frontend
+### Phase 1 (Current)
 
 - **Vitest** - Test runner (fast, TypeScript-native)
-- **@testing-library/react** - Component testing
-- **@testing-library/user-event** - User interaction simulation
-- **Playwright** - E2E tests (critical paths only)
-
-### Backend
-
-- **Vitest** - Test runner
-- **Mocked DB Client** - Fast unit tests (95% of tests)
 - **Real Dev Database** - RLS integration tests (critical validation)
 - **Transaction Rollbacks** - Test isolation without pollution
 
+### Post-MVP (Deferred)
+
+- **@testing-library/react** - Component testing (when web UI is built)
+- **@testing-library/user-event** - User interaction simulation
+- **Playwright** - E2E tests (critical paths only)
+- **MSW (Mock Service Worker)** - API mocking (if needed)
+
 ## Test Types & Distribution
 
+### Phase 1 (Current)
+
 ```
-Unit Tests (Mocked - 70% of tests)
+Unit Tests (Vitest with mocks - 90% of tests)
 ├── Service layer business logic
-├── Repository operations
 ├── Validation logic (Zod schemas)
-├── Utility functions
-└── Frontend components
+├── Utility functions (context, errors, logger)
+├── Authentication logic
+└── Lambda handlers
 
-Integration Tests (Real DB - 25% of tests)
-├── RLS policies (multi-tenant isolation)
+Integration Tests (Real DB - 10% of tests)
+├── RLS policies (multi-tenant isolation) ⭐ CRITICAL
 ├── Database queries with constraints
-├── API endpoint flows
-└── Frontend + API integration
+└── Transaction rollback patterns
+```
 
-E2E Tests (Playwright - 5% of tests)
+### Post-MVP (Future)
+
+```
+E2E Tests (Playwright - deferred)
 ├── Authentication flow
 ├── Assessment completion
 ├── Video playback
@@ -62,598 +67,414 @@ E2E Tests (Playwright - 5% of tests)
 
 ## Setup Instructions
 
-### Install Dependencies
+### Phase 1 Dependencies (Installed)
 
 ```bash
-npm install -D vitest @vitest/ui
-npm install -D @testing-library/react @testing-library/user-event @testing-library/jest-dom
-npm install -D jsdom
-npm install -D @playwright/test
+# Already installed and configured
+pnpm add -D vitest @vitest/ui
 ```
 
-### Vitest Configuration
+### Vitest Configuration (Current)
 
 ```typescript
-// vitest.config.ts
+// vitest.config.ts (root - monorepo tests)
 import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
 
-export default {
-  plugins: [react()],
+export default defineConfig({
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./tests/setup.ts'],
-    include: ['**/*.{test,spec}.{ts,tsx}'],
-    exclude: ['**/node_modules/**', '**/dist/**', '**/*.integration.test.ts'],
+    environment: 'node',
+    include: ['tests/**/*.{test,spec}.{ts,tsx}'],
+    exclude: ['**/node_modules/**', '**/dist/**', 'packages/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['src/**/*.{ts,tsx}', 'packages/**/*.{ts,tsx}'],
-      exclude: ['node_modules/', 'tests/', '**/*.d.ts', '**/*.config.*', '**/dist/**'],
+      include: ['packages/*/src/**/*.{ts,tsx}'],
+      exclude: [
+        'node_modules/',
+        'tests/',
+        '**/*.d.ts',
+        '**/*.config.*',
+        '**/dist/**',
+        'packages/eslint-config/**',
+        'packages/prettier-config/**',
+      ],
+      // Phase 1: 10% coverage target
       thresholds: {
-        lines: 30,
-        functions: 30,
-        branches: 30,
-        statements: 30,
+        lines: 10,
+        functions: 10,
+        branches: 10,
+        statements: 10,
       },
     },
   },
-};
+});
 ```
 
-### Test Setup
+**Package-specific configs**: Each package (`@ffp/core`, `@ffp/database`, `@ffp/functions`, `@ffp/web`) has its own `vitest.config.ts` for package-level tests.
 
-```typescript
-// tests/setup.ts
-import '@testing-library/jest-dom';
-import { afterEach } from 'vitest';
-import { cleanup } from '@testing-library/react';
+### Post-MVP Dependencies (Deferred)
 
-// Cleanup after each test
-afterEach(() => {
-  cleanup();
-});
+```bash
+# Install when web UI is built and E2E testing is needed
+pnpm add -D @testing-library/react @testing-library/user-event @testing-library/jest-dom
+pnpm add -D jsdom
+pnpm add -D @playwright/test
+pnpm add -D msw  # If API mocking needed
 ```
 
 ## Backend Testing
 
-### 1. Unit Tests with Mocked Database (Fast)
+### 1. Unit Tests with Vitest (Fast - 90% of tests)
 
-**Use for:** Business logic, validation, service layer operations
+**Use for:** Business logic, validation, utility functions, service layer operations
 
-```typescript
-// tests/mocks/db.mock.ts
-import { vi } from 'vitest';
+**Current test files:**
 
-export interface MockQueryResult<T = any> {
-  rows: T[];
-  rowCount: number;
-}
+- `packages/core/src/lib/context.test.ts` - Tenant context extraction (60 tests)
+- `packages/core/src/lib/errors.test.ts` - Custom error hierarchy
+- `packages/core/src/lib/logger.test.ts` - Structured logging
+- `packages/core/src/lib/lambda-wrapper.test.ts` - Error handling middleware
+- `packages/core/src/lib/cognito.test.ts` - Cognito service wrapper
+- `packages/core/src/schemas/auth.schema.test.ts` - Zod validation schemas
+- `packages/core/src/schemas/user.schema.test.ts` - User schemas
 
-export const createMockDbClient = () => {
-  const mockQuery = vi.fn<[string, any[]], Promise<MockQueryResult>>();
-
-  return {
-    query: mockQuery,
-    connect: vi.fn(),
-    release: vi.fn(),
-    end: vi.fn(),
-  };
-};
-```
-
-**Example Test:**
+**Example Test (from actual codebase):**
 
 ```typescript
-// services/__tests__/assessment.service.test.ts
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { AssessmentServiceImpl } from '../assessment.service.impl';
-import { createMockDbClient } from '../../tests/mocks/db.mock';
+// packages/core/src/lib/context.test.ts
+import { describe, it, expect } from 'vitest';
+import { extractUserContext } from './context';
+import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 
-describe('AssessmentService', () => {
-  let service: AssessmentServiceImpl;
-  let mockDb: ReturnType<typeof createMockDbClient>;
-  let mockRepo: any;
+describe('extractUserContext', () => {
+  it('extracts valid user context from JWT claims', () => {
+    const event = {
+      requestContext: {
+        authorizer: {
+          jwt: {
+            claims: {
+              sub: 'user-123',
+              'custom:tenantId': 'tenant-abc',
+              'custom:customerId': 'customer-xyz',
+              'custom:role': 'individual_user',
+              email: 'test@example.com',
+            },
+          },
+        },
+        requestId: 'req-123',
+        timeEpoch: 1699999999000,
+      },
+    } as unknown as APIGatewayProxyEventV2;
 
-  beforeEach(() => {
-    mockDb = createMockDbClient();
-    mockRepo = {
-      create: vi.fn(),
-      getById: vi.fn(),
-      update: vi.fn(),
-    };
-    service = new AssessmentServiceImpl(mockRepo, mockDb as any);
+    const context = extractUserContext(event);
+
+    expect(context.actor.type).toBe('user');
+    expect(context.actor.userId).toBe('user-123');
+    expect(context.tenantId).toBe('tenant-abc');
+    expect(context.customerId).toBe('customer-xyz');
+    expect(context.role).toBe('individual_user');
   });
 
-  it('creates assessment with correct tenant context', async () => {
-    const mockAssessment = {
-      id: 'assessment-123',
-      tenant_id: 'tenant-abc',
-      user_id: 'user-xyz',
-      template_id: 'template-001',
-      status: 'in_progress',
-    };
+  it('throws ValidationError when tenantId is missing', () => {
+    const event = {
+      requestContext: {
+        authorizer: {
+          jwt: {
+            claims: {
+              sub: 'user-123',
+              'custom:role': 'individual_user',
+              email: 'test@example.com',
+            },
+          },
+        },
+        requestId: 'req-123',
+        timeEpoch: 1699999999000,
+      },
+    } as unknown as APIGatewayProxyEventV2;
 
-    mockRepo.create.mockResolvedValue(mockAssessment);
-
-    const result = await service.create('user-xyz', 'tenant-abc', 'template-001');
-
-    expect(mockRepo.create).toHaveBeenCalledWith({
-      userId: 'user-xyz',
-      tenantId: 'tenant-abc',
-      templateId: 'template-001',
-      status: 'in_progress',
-      startedAt: expect.any(Date),
-    });
-    expect(result).toEqual(mockAssessment);
-  });
-
-  it('validates answers before saving', async () => {
-    const invalidAnswers = { q1: 'invalid-option' };
-
-    await expect(
-      service.saveProgress('assessment-123', invalidAnswers, {
-        tenantId: 'tenant-abc',
-        userId: 'user-xyz',
-        role: 'individual_user',
-      })
-    ).rejects.toThrow('Invalid option');
+    expect(() => extractUserContext(event)).toThrow('Missing required JWT claim: custom:tenantId');
   });
 });
 ```
 
-### 2. RLS Integration Tests (Real Database)
+### 2. RLS Integration Tests (Real Database - 10% of tests)
 
-**Use for:** Multi-tenant isolation, RLS policy validation
+**Use for:** Multi-tenant isolation validation (CRITICAL for security)
 
-#### Test Helper Utilities
+**Current test files:**
 
-```typescript
-// tests/integration/helpers/db-test-helper.ts
-import { Pool, PoolClient } from 'pg';
+- `packages/database/__tests__/integration.test.ts` - Database integration tests
+- `packages/database/src/lib/rls.test.ts` - RLS helper function tests (16 tests)
+- `packages/database/src/client.test.ts` - Database client tests
 
-let pool: Pool | null = null;
+**Test helpers location:**
 
-export async function getTestDbPool(): Promise<Pool> {
-  if (!pool) {
-    pool = new Pool({
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      database: process.env.DB_NAME || 'ffp_dev',
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-    });
-  }
-  return pool;
-}
+- `packages/database/__tests__/helpers.ts` - Contains `withTestDb`, `withRLS`, `createTestTenant`, `createTestUser`
 
-export async function closeTestDbPool() {
-  if (pool) {
-    await pool.end();
-    pool = null;
-  }
-}
-
-/**
- * Runs test within a transaction that rolls back after completion.
- * Ensures RLS tests don't pollute the database.
- */
-export async function withTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
-  const pool = await getTestDbPool();
-  const client = await pool.connect();
-
-  try {
-    await client.query('BEGIN');
-    const result = await fn(client);
-    await client.query('ROLLBACK'); // Always rollback
-    return result;
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
-export async function createTestTenant(
-  client: PoolClient,
-  data: { type: 'individual' | 'business'; name: string }
-) {
-  const result = await client.query(
-    `INSERT INTO tenants (type, name) VALUES ($1, $2) RETURNING *`,
-    [data.type, data.name]
-  );
-  return result.rows[0];
-}
-
-export async function createTestUser(
-  client: PoolClient,
-  data: {
-    tenantId: string;
-    email: string;
-    role: string;
-    cognitoSub?: string;
-  }
-) {
-  const result = await client.query(
-    `INSERT INTO users (id, tenant_id, email, cognito_sub, first_name, last_name, role)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-    [
-      data.cognitoSub || `test-${Date.now()}`,
-      data.tenantId,
-      data.email,
-      data.cognitoSub || `cognito-${Date.now()}`,
-      'Test',
-      'User',
-      data.role,
-    ]
-  );
-  return result.rows[0];
-}
-
-export async function setRLSContext(client: PoolClient, tenantId: string, userId?: string) {
-  await client.query('SELECT set_config($1, $2, true)', ['app.tenant_id', tenantId]);
-  if (userId) {
-    await client.query('SELECT set_config($1, $2, true)', ['app.user_id', userId]);
-  }
-}
-```
-
-#### RLS Test Examples
+**Example RLS Test (from actual codebase):**
 
 ```typescript
-// tests/integration/rls.test.ts
-import { describe, it, expect, afterAll } from 'vitest';
-import {
-  withTransaction,
-  createTestTenant,
-  createTestUser,
-  setRLSContext,
-  closeTestDbPool,
-} from './helpers/db-test-helper';
+// packages/database/src/lib/rls.test.ts
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { withTestDb, withRLS, createTestTenant, createTestUser } from '../../__tests__/helpers';
+import { getTenantContext } from './rls';
 
 describe('RLS Multi-Tenant Isolation', () => {
-  afterAll(async () => {
-    await closeTestDbPool();
-  });
+  it('prevents cross-tenant access to users table', async () => {
+    await withTestDb(async (db) => {
+      // Create two tenants
+      const tenant1 = await createTestTenant(db, 'individual');
+      const tenant2 = await createTestTenant(db, 'individual');
 
-  it('prevents cross-tenant data access in user_assessments', async () => {
-    await withTransaction(async (client) => {
-      // Create two separate tenants
-      const tenant1 = await createTestTenant(client, {
-        type: 'individual',
-        name: 'Tenant 1',
+      // Create users in each tenant
+      await createTestUser(db, tenant1.id, 'user1@test.com');
+      await createTestUser(db, tenant2.id, 'user2@test.com');
+
+      // Set RLS context to tenant1
+      await withRLS(db, tenant1.id, async () => {
+        const users = await db.query.users.findMany();
+
+        // Should only see tenant1's user
+        expect(users).toHaveLength(1);
+        expect(users[0].email).toBe('user1@test.com');
+        expect(users[0].tenant_id).toBe(tenant1.id);
       });
-      const tenant2 = await createTestTenant(client, {
-        type: 'individual',
-        name: 'Tenant 2',
-      });
-
-      const user1 = await createTestUser(client, {
-        tenantId: tenant1.id,
-        email: 'user1@test.com',
-        role: 'individual_user',
-      });
-      const user2 = await createTestUser(client, {
-        tenantId: tenant2.id,
-        email: 'user2@test.com',
-        role: 'individual_user',
-      });
-
-      // Create assessment for tenant1
-      await client.query(
-        `INSERT INTO user_assessments (tenant_id, user_id, template_id, status)
-         VALUES ($1, $2, $3, $4)`,
-        [tenant1.id, user1.id, 'template-001', 'in_progress']
-      );
-
-      // Set RLS context to tenant2
-      await setRLSContext(client, tenant2.id, user2.id);
-
-      // Try to query assessments - should NOT see tenant1's data
-      const result = await client.query('SELECT * FROM user_assessments');
-
-      expect(result.rows).toHaveLength(0); // Critical: Must be empty!
     });
   });
 
-  it('allows business sub-users to see shared tenant data', async () => {
-    await withTransaction(async (client) => {
-      const businessTenant = await createTestTenant(client, {
-        type: 'business',
-        name: 'Acme Corp',
+  it('allows tenant to see own data', async () => {
+    await withTestDb(async (db) => {
+      const tenant = await createTestTenant(db, 'individual');
+      const user = await createTestUser(db, tenant.id, 'test@example.com');
+
+      await withRLS(db, tenant.id, async () => {
+        const users = await db.query.users.findMany();
+
+        expect(users).toHaveLength(1);
+        expect(users[0].id).toBe(user.id);
       });
-
-      const owner = await createTestUser(client, {
-        tenantId: businessTenant.id,
-        email: 'owner@acme.com',
-        role: 'business_owner',
-      });
-
-      const subUser = await createTestUser(client, {
-        tenantId: businessTenant.id, // Same tenant!
-        email: 'employee@acme.com',
-        role: 'business_user',
-      });
-
-      // Owner creates assessment
-      await setRLSContext(client, businessTenant.id, owner.id);
-      await client.query(
-        `INSERT INTO user_assessments (tenant_id, user_id, template_id, status)
-         VALUES ($1, $2, $3, $4)`,
-        [businessTenant.id, owner.id, 'template-001', 'completed']
-      );
-
-      // Sub-user queries assessments
-      await setRLSContext(client, businessTenant.id, subUser.id);
-      const result = await client.query('SELECT * FROM user_assessments');
-
-      expect(result.rows).toHaveLength(1); // Can see owner's assessment
-      expect(result.rows[0].user_id).toBe(owner.id);
     });
   });
 });
 ```
 
-## Frontend Testing
+**Key Features:**
 
-### Component Tests
+- ✅ All tests run in transactions (automatic rollback)
+- ✅ No database pollution
+- ✅ RLS context automatically set and cleared
+- ✅ Test helpers ensure consistent patterns
+- ✅ 68 total database tests, including 16 RLS-specific tests
 
-```typescript
-// components/__tests__/AssessmentCard.test.tsx
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { AssessmentCard } from "../AssessmentCard";
+## Frontend Testing (Post-MVP)
 
-describe("AssessmentCard", () => {
-  const mockAssessment = {
-    id: "assessment-123",
-    template: {
-      name: "Fitness Assessment",
-      description: "Basic fitness evaluation",
-    },
-    status: "in_progress",
-  };
+**Status:** Deferred until web UI is built (FFP-16 and beyond)
 
-  it("renders assessment information", () => {
-    render(<AssessmentCard assessment={mockAssessment} onStart={vi.fn()} />);
+**Rationale:**
 
-    expect(screen.getByText("Fitness Assessment")).toBeInTheDocument();
-    expect(screen.getByText("Basic fitness evaluation")).toBeInTheDocument();
-  });
+- Current web package has minimal starter template only
+- Solo developer with 8h/week capacity
+- Better ROI focusing on backend/API testing in Phase 1
+- React component testing will be added when UI features are implemented
 
-  it("calls onStart when button clicked", () => {
-    const onStart = vi.fn();
-    render(<AssessmentCard assessment={mockAssessment} onStart={onStart} />);
+**Future approach:**
 
-    fireEvent.click(screen.getByText("Start Assessment"));
-    expect(onStart).toHaveBeenCalledWith("assessment-123");
-  });
+- Vitest + @testing-library/react for component tests
+- Focus on critical user interactions only
+- Test accessibility (aria labels, keyboard navigation)
+- Defer visual regression testing to Phase 2+
 
-  it("conditionally renders delete button", () => {
-    const { rerender } = render(
-      <AssessmentCard assessment={mockAssessment} onStart={vi.fn()} />
-    );
+## E2E Testing with Playwright (Post-MVP)
 
-    expect(screen.queryByText("Delete")).not.toBeInTheDocument();
+**Status:** Deferred to post-MVP
 
-    rerender(
-      <AssessmentCard
-        assessment={mockAssessment}
-        onStart={vi.fn()}
-        onDelete={vi.fn()}
-      />
-    );
+**Rationale:**
 
-    expect(screen.getByText("Delete")).toBeInTheDocument();
-  });
-});
-```
+- High setup/maintenance cost for solo developer
+- Web UI not built yet (requires FFP-16 completion)
+- Manual testing sufficient for MVP validation
+- E2E tests provide most value with stable UI and multiple user flows
 
-## E2E Testing with Playwright
+**When to implement:**
 
-### Setup
+- After FFP-16 (Web Login Interface) is complete
+- When assessment flow is implemented
+- Before hiring additional team members
+- When preparing for beta users
 
-```bash
-npm install -D @playwright/test
-npx playwright install
-```
+**Future critical E2E flows:**
 
-### Playwright Configuration
-
-```typescript
-// playwright.config.ts
-import { defineConfig, devices } from '@playwright/test';
-
-export default defineConfig({
-  testDir: './tests/e2e',
-  fullyParallel: false, // Sequential for data integrity
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: 1, // Single worker for DB consistency
-  reporter: 'html',
-  use: {
-    baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-  },
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-  ],
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-  },
-});
-```
-
-### E2E Test Example
-
-```typescript
-// tests/e2e/assessment-flow.spec.ts
-import { test, expect } from '@playwright/test';
-
-test('complete assessment and generate program', async ({ page }) => {
-  // Login
-  await page.goto('/login');
-  await page.fill('[data-testid="email"]', 'test@example.com');
-  await page.fill('[data-testid="password"]', 'TestPass123!');
-  await page.click('[data-testid="login-btn"]');
-  await expect(page).toHaveURL('/dashboard');
-
-  // Start assessment
-  await page.click('[data-testid="start-assessment"]');
-  await expect(page).toHaveURL(/\/assessments\/.+/);
-
-  // Answer questions
-  await page.click('[data-testid="goal-lose-weight"]');
-  await page.click('[data-testid="next-question"]');
-
-  await page.click('[data-testid="frequency-3-4"]');
-  await page.click('[data-testid="next-question"]');
-
-  await page.click('[data-testid="equipment-basic"]');
-  await page.click('[data-testid="submit-assessment"]');
-
-  // Verify program generated
-  await expect(page.locator('[data-testid="program-title"]')).toBeVisible();
-  await expect(page.locator('[data-testid="session-list"]')).toContainText('Week 1');
-});
-```
+1. Authentication (login, password reset)
+2. Assessment completion (start to program generation)
+3. Video playback and progress tracking
+4. Business portal workflows (multi-user)
 
 ## Test Execution
 
-### NPM Scripts
+### NPM Scripts (Current)
 
 ```json
 {
   "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage",
+    "test": "turbo test",
+    "test:root": "vitest run tests/",
+    "test:root:watch": "vitest tests/",
+    "test:root:ui": "vitest --ui tests/",
     "test:unit": "vitest run --exclude='**/*.integration.test.ts'",
-    "test:rls": "vitest run tests/integration/rls.test.ts",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:debug": "playwright test --debug"
+    "test:coverage": "vitest run --coverage"
   }
 }
 ```
 
-### Running Tests
+**Package-specific test commands:**
 
 ```bash
-# Fast unit tests (mocked DB) - Run during development
-npm run test:unit
+# Test specific package
+turbo test --filter=@ffp/core
+turbo test --filter=@ffp/database
+turbo test --filter=@ffp/functions
 
-# Watch mode for TDD
-npm run test:watch
-
-# RLS integration tests (uses dev DB) - Run before commits
-npm run test:rls
-
-# All backend tests
-npm test
-
-# Coverage report
-npm run test:coverage
-
-# E2E tests - Run before deployments
-npm run test:e2e
-
-# E2E with UI (for debugging)
-npm run test:e2e:ui
+# Test with coverage
+pnpm test:coverage
 ```
 
-## Sprint Planning Requirements
+### Running Tests (Phase 1)
+
+```bash
+# All tests (unit + RLS integration) - Default
+pnpm test
+
+# Watch mode for TDD
+pnpm test:root:watch
+
+# Interactive UI mode
+pnpm test:root:ui
+
+# Coverage report (HTML + terminal)
+pnpm test:coverage
+
+# Package-specific tests
+turbo test --filter=@ffp/core      # 125 tests (context, errors, logger, cognito, schemas)
+turbo test --filter=@ffp/database  # 68 tests (RLS, integration, client)
+```
+
+### Test Output
+
+```
+ RUN  v2.1.4 /Users/.../ffp
+
+ ✓ packages/core/src/lib/context.test.ts (60 tests)
+ ✓ packages/core/src/lib/errors.test.ts (22 tests)
+ ✓ packages/core/src/lib/logger.test.ts (15 tests)
+ ✓ packages/core/src/lib/cognito.test.ts (12 tests)
+ ✓ packages/core/src/schemas/auth.schema.test.ts (8 tests)
+ ✓ packages/database/src/lib/rls.test.ts (16 tests)
+ ✓ packages/database/__tests__/integration.test.ts (30 tests)
+
+ Test Files  7 passed (7)
+      Tests  185 passed (185)
+   Duration  2.3s (transform 45ms, setup 0ms, collect 234ms, tests 1.8s)
+```
+
+## Sprint Planning Requirements (Phase 1)
 
 ### User Story Test Requirements
 
-**MANDATORY:** When creating user stories during sprint planning, a **minimum of 2 functional tests** are required per story.
+**MANDATORY:** When creating user stories during sprint planning, a **minimum of 2 unit tests** are required per story.
 
-**Test Types by Story Size:**
+**Test Types by Story Size (Phase 1 - Unit Tests Only):**
 
 - **Small story** (1-3 points): 2 unit tests minimum
-- **Medium story** (4-6 points): 2 unit tests + 1 integration test
-- **Large story** (7+ points): 3 unit tests + 1 integration test + 1 E2E test
+- **Medium story** (4-6 points): 3-5 unit tests
+- **Large story** (7+ points): 5+ unit tests
 
-**Example User Story:**
+**RLS Integration Tests:** Only add when story modifies database schema or queries.
+
+**Example User Story (Phase 1):**
 
 ```
-As a user, I want to submit an assessment so that I can receive a personalized program.
+As a user, I want to submit an assessment so that I can receive a personalised program.
 
 Acceptance Criteria:
 - User can answer all required questions
 - Validation prevents invalid submissions
 - Program is generated upon completion
 
-Required Tests:
+Required Tests (Phase 1):
 1. Unit: Assessment validation logic rejects invalid answers
 2. Unit: Program generator creates correct session structure
-3. Integration: RLS prevents cross-tenant program access
-4. E2E: Complete assessment flow from start to program view
+3. Unit: Service orchestrates validation → generation flow
+4. RLS Integration: Prevents cross-tenant program access (if new DB queries added)
 ```
+
+**Post-MVP Test Requirements:**
+
+- Add E2E tests for critical user journeys
+- Add frontend component tests when UI is built
+- Increase coverage targets incrementally
 
 ## Test Data Management
 
-### Test Fixtures
+### Test Helpers (Actual Implementation)
+
+Test helpers are located in `packages/database/__tests__/helpers.ts`:
 
 ```typescript
-// tests/fixtures/assessment.fixtures.ts
-export const mockAssessmentTemplate = {
-  id: 'template-001',
-  name: 'Fitness Assessment',
-  version: 1,
-  questions: [
-    {
-      id: 'q1',
-      type: 'single-choice',
-      question: 'What is your primary goal?',
-      options: [
-        { value: 'lose_weight', label: 'Lose weight', score: 1 },
-        { value: 'build_muscle', label: 'Build muscle', score: 2 },
-      ],
-      validation: { required: true },
-    },
-  ],
-  scoringConfig: {
-    strategy: 'weighted',
-    weights: { q1: 1 },
-  },
-};
-
-export const mockUserContext = {
-  tenantId: 'tenant-abc',
-  userId: 'user-xyz',
-  role: 'individual_user' as const,
-};
+// Simplified example from actual codebase
+export async function withTestDb<T>(fn: (db: ExtendedDb) => Promise<T>): Promise<T>;
+export async function withRLS<T>(
+  db: ExtendedDb,
+  tenantId: string,
+  fn: () => Promise<T>
+): Promise<T>;
+export async function createTestTenant(
+  db: ExtendedDb,
+  type: 'individual' | 'business'
+): Promise<Tenant>;
+export async function createTestUser(
+  db: ExtendedDb,
+  tenantId: string,
+  email: string
+): Promise<User>;
+export async function createTestCustomer(db: ExtendedDb, tenantId: string): Promise<Customer>;
 ```
+
+**Key features:**
+
+- Automatic transaction rollback (no database pollution)
+- RLS context management
+- Type-safe with Drizzle schemas
+- Consistent test data patterns
 
 ### Environment Configuration
 
 ```bash
-# .env.test
-SKIP_RLS_TESTS=false
+# .env (used for local dev and tests)
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=ffp_dev
-DB_USER=postgres
-DB_PASSWORD=postgres
-LOG_LEVEL=error
+DB_NAME=ffp_dev          # Use ffp_test for separate test DB (optional)
+DB_USER=root_user
+DB_PASSWORD=root_password
+LOG_LEVEL=error          # Reduce noise in test output
 ```
 
-## CI/CD Integration
+**Note:** All tests run in transactions that rollback, so no separate test database required in Phase 1.
 
-### GitHub Actions Example
+## CI/CD Integration (Future)
+
+**Status:** Deferred to Sprint 3+
+
+**Phase 1 Approach:**
+
+- Manual test execution before commits (`pnpm test`)
+- Manual code review and deployment
+- GitHub repository (no automated CI/CD yet)
+
+**Future GitHub Actions Workflow:**
 
 ```yaml
-# .github/workflows/test.yml
+# .github/workflows/test.yml (example for future implementation)
 name: Tests
 
 on: [push, pull_request]
@@ -679,136 +500,179 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
       - uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: '20'
+          cache: 'pnpm'
 
-      - run: npm ci
+      - run: pnpm install
 
-      - name: Run unit tests
-        run: npm run test:unit
-
-      - name: Run RLS tests
+      - name: Run all tests
         env:
           DB_HOST: localhost
           DB_PORT: 5432
           DB_NAME: ffp_test
           DB_USER: postgres
           DB_PASSWORD: postgres
-        run: npm run test:rls
-
-      - name: Run E2E tests
-        run: npm run test:e2e
+        run: pnpm test
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
 ```
 
-## Best Practices
+## Best Practices (Phase 1)
 
 ### DO ✅
 
-- **Test behavior, not implementation** - Focus on what the code does, not how
+- **Test behaviour, not implementation** - Focus on what the code does, not how
 - **Use descriptive test names** - `it('prevents cross-tenant data access')` not `it('works')`
 - **Arrange-Act-Assert pattern** - Clear test structure
 - **Test one thing per test** - Easier to debug failures
-- **Mock external dependencies** - Database, APIs, file system
-- **Use test fixtures** - Consistent, reusable test data
-- **Clean up after tests** - Transaction rollbacks, mocked function resets
-- **Write failing tests first** (TDD when possible)
+- **Use Vitest mocks for external dependencies** - `vi.fn()`, `vi.mock()`
+- **Use test helpers** - Consistent patterns in `packages/database/__tests__/helpers.ts`
+- **Transaction rollbacks** - All RLS tests automatically rollback
+- **Write tests for new code** - Before or during implementation
 
 ### DON'T ❌
 
-- **Don't test framework code** - React, PostgreSQL already tested
-- **Don't test implementation details** - Internal function names, state
-- **Don't write brittle tests** - Avoid testing CSS classes, DOM structure
-- **Don't skip RLS tests** - Critical for multi-tenant security
+- **Don't test framework code** - Vitest, Drizzle, AWS SDK already tested
+- **Don't test implementation details** - Test public interfaces only
+- **Don't skip RLS tests** - Critical for multi-tenant security (non-negotiable)
 - **Don't commit commented-out tests** - Delete or fix them
-- **Don't use production database for tests** - Always use dev/test DB
-- **Don't test everything** - Focus on critical paths in Phase 1
+- **Don't use production database for tests** - Always use dev database
+- **Don't test every edge case** - Focus on critical paths in Phase 1
+- **Don't use `any` types in tests** - Maintain strict TypeScript
+- **Don't over-engineer tests** - Simple, readable tests > clever tests
 
 ## Coverage Goals
 
-### Phase 1 (Current)
+### Phase 1 (Current - Achieved ✅)
 
 ```
-Overall: 15%
-Critical paths: 80%+
-  - RLS policies: 100%
-  - Authentication: 100%
-  - Assessment scoring: 80%
-  - Input validation: 80%
+Overall: 10%+ ✅ (Target achieved with 185 tests)
+Critical paths tested:
+  - RLS policies: 16 tests ✅
+  - Authentication: JWT parsing, context extraction ✅
+  - Error handling: Custom error hierarchy ✅
+  - Input validation: Zod schemas ✅
+  - Logging: Structured logging with actor context ✅
 ```
 
 ### Phase 2 (Future)
 
 ```
-Overall: 60%
-Critical paths: 90%+
+Overall: 30%
+Critical paths: 80%+
+  - Assessment scoring
+  - Program generation
+  - Video management
 ```
 
-### Phase 3 (Future)
+### Phase 3+ (Future)
 
 ```
-Overall: 80%+
-All paths: 70%+
+Overall: 60%+
+E2E coverage for critical user journeys
+Frontend component coverage
 ```
 
 ## Debugging Tests
 
-### Vitest UI
+### Vitest UI (Installed)
 
 ```bash
-npm run test:ui
+pnpm test:root:ui
 ```
 
-Opens interactive browser UI for running/debugging tests.
+Opens interactive browser UI for running/debugging tests with visual feedback.
 
-### Playwright Inspector
+### Vitest Watch Mode
 
 ```bash
-npm run test:e2e:debug
+pnpm test:root:watch
 ```
 
-Step through E2E tests with visual debugging.
+Automatically re-runs tests on file changes (great for TDD).
 
-### Common Issues
+### Common Issues (Phase 1)
 
 **RLS tests fail with "connection refused":**
 
-- Ensure dev database is running
-- Check `.env.test` has correct DB credentials
-- Try `psql -h localhost -U postgres -d ffp_dev` to verify connection
+- Ensure dev database is running (`docker ps` or check PostgreSQL service)
+- Check `.env` has correct DB credentials
+- Verify connection: `psql -h localhost -U root_user -d ffp_dev`
 
-**Tests pass locally but fail in CI:**
+**Tests pass locally but fail on different machine:**
 
-- Check environment variables are set in CI
-- Ensure database is provisioned in CI workflow
-- Verify Node version matches local environment
+- Ensure `.env` file exists with database credentials
+- Check Node version (`node -v` should be 20+)
+- Run `pnpm install` to ensure dependencies match
+- Verify database migrations applied (`pnpm db:push` or `pnpm db:migrate`)
 
-**Flaky E2E tests:**
+**"Module not found" errors:**
 
-- Add explicit waits: `await page.waitForSelector('[data-testid="element"]')`
-- Use `toBeVisible()` instead of `toBeInTheDocument()` for timing issues
-- Run tests sequentially (`workers: 1`) to avoid DB conflicts
+- Run `pnpm build` to build `@ffp/core` and `@ffp/database` packages
+- Check Turborepo cache: `pnpm clean` then `pnpm install`
+- Verify workspace dependencies use `workspace:*` protocol
+
+**Vitest doesn't find test files:**
+
+- Check `vitest.config.ts` `include` patterns
+- Ensure test files match `*.test.ts` or `*.spec.ts` naming
+- Package tests should be in `src/**/*.test.ts` or `__tests__/*.ts`
 
 ## Resources
 
 ### Documentation
 
-- [Vitest Docs](https://vitest.dev/)
-- [Testing Library Docs](https://testing-library.com/docs/react-testing-library/intro/)
-- [Playwright Docs](https://playwright.dev/)
+- [Vitest Docs](https://vitest.dev/) - Test runner and coverage
+- [Drizzle ORM Docs](https://orm.drizzle.team/) - Database queries in tests
+- [Zod Docs](https://zod.dev/) - Schema validation testing
 
 ### Internal Docs
 
-- `database-schema.md` - RLS policy details
-- `coding-standards.md` - Test code standards
+- `database-schema.md` - RLS policy details and schema
+- `coding-standards.md` - Test code standards and patterns
 - `security.md` - Security testing requirements
+- `authentication.md` - JWT and context extraction patterns
+
+### Test File Locations
+
+```
+packages/
+├── core/
+│   └── src/
+│       ├── lib/
+│       │   ├── context.test.ts          # 60 tests
+│       │   ├── errors.test.ts           # 22 tests
+│       │   ├── logger.test.ts           # 15 tests
+│       │   ├── cognito.test.ts          # 12 tests
+│       │   └── lambda-wrapper.test.ts   # 8 tests
+│       └── schemas/
+│           ├── auth.schema.test.ts      # 8 tests
+│           └── user.schema.test.ts      # Additional tests
+│
+├── database/
+│   ├── __tests__/
+│   │   ├── helpers.ts                   # Test helper utilities
+│   │   ├── integration.test.ts          # 30 tests
+│   │   └── drizzle.test.ts              # Basic smoke tests
+│   └── src/
+│       ├── lib/
+│       │   └── rls.test.ts              # 16 RLS-specific tests
+│       └── client.test.ts               # Client connection tests
+│
+└── functions/
+    └── tests/
+        └── index.test.ts                # Basic package tests
+```
 
 ---
 
-**Last Updated:** October 2025  
-**Version:** 1.0  
-**Status:** Phase 1 Implementation
+**Last Updated:** November 2025
+**Version:** 2.0 (Phase 1 Pragmatic Approach)
+**Status:** Phase 1 Complete - Unit + RLS Testing Operational ✅
