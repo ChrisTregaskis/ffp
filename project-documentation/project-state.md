@@ -1,10 +1,10 @@
 # FFP - Project State
 
-**Last Updated**: November 11, 2025 - Session 39
+**Last Updated**: November 11, 2025 - Session 40
 **Current Phase**: Sprint 2 Execution - IN PROGRESS 🚀
 **Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
 **User Story Branch**: `feature/ffp-9-cognito-auth`
-**Sub Task Branch**: `feature/ffp-39-refresh-token` (Ready for Review)
+**Sub Task Branch**: All Phase 3 subtasks complete (Ready for Review)
 
 ---
 
@@ -30,7 +30,7 @@
 
 ## Current Work: FFP-9 - Cognito Authentication (CARRYOVER)
 
-**Status**: 🚀 IN PROGRESS (8/13 subtasks, 24/31-32 hours, 77%)
+**Status**: 🚀 IN PROGRESS (9/13 subtasks, 25/31-32 hours, 81%)
 
 ### Phase 1: Prerequisites (8h) - ✅ COMPLETE
 
@@ -50,7 +50,7 @@
 
 - ✅ FFP-38: Login Lambda (3h) - **Ready for Review**
 - ✅ FFP-39: Refresh Token Lambda (2h) - **Ready for Review**
-- ⏸️ FFP-40: API Gateway Routes (2h) - ← **NEXT**
+- ✅ FFP-40: API Gateway Routes (1h) - **Verification Complete** ← **NEXT: Phase 4 Testing**
 
 ### Phase 4: Testing (12h - can defer FFP-42/45)
 
@@ -65,6 +65,19 @@
 ---
 
 ## Recent Work (Sprint 2 Sessions)
+
+**Session 40 (Nov 11)**: ✅ FFP-40 - API Gateway Routes Verification COMPLETE (1h)
+
+- Verified SST configuration (routes, CORS, environment variables, JWT authoriser)
+- Confirmed domain proxy routing pattern (ANY /auth/{proxy+}, ANY /admin/{proxy+})
+- Verified all routes in domain routers (auth: 4 routes, admin: 1 route)
+- Updated Jira FFP-40 description to match actual implementation
+- Documented domain proxy routing approach and benefits
+- All acceptance criteria verified and marked complete
+- Routes: POST /admin/create-customer, POST /auth/invite-user, POST /auth/login, POST /auth/complete-new-password, POST /auth/refresh-token, GET /health
+- CORS configured globally with stage-aware origins
+- Health check kept simple (no three-tier context, appropriate for monitoring)
+- All Phase 3 subtasks now complete and ready for review
 
 **Session 39 (Nov 11)**: ✅ FFP-39 - Refresh Token Lambda COMPLETE (2h)
 
