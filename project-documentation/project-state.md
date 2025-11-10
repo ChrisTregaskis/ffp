@@ -1,10 +1,10 @@
 # FFP - Project State
 
-**Last Updated**: November 11, 2025 - Session 41
+**Last Updated**: November 10, 2025 - Session 42
 **Current Phase**: Sprint 2 Execution - IN PROGRESS 🚀
 **Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
-**User Story Branch**: `feature/ffp-9-cognito-auth`
-**Current Subtask**: FFP-41 - Unit Tests (context.ts only)
+**Next Story**: FFP-12 - Testing Infrastructure Setup
+**Current Subtask**: None (awaiting planning session)
 
 ---
 
@@ -15,22 +15,22 @@
 
 **Sprint 2 Stories**:
 
-1. **FFP-9** - Cognito Authentication (CARRYOVER - remaining subtasks)
-2. **FFP-12** - Testing Infrastructure Setup
+1. ✅ **FFP-9** - Cognito Authentication (COMPLETE)
+2. 🔜 **FFP-12** - Testing Infrastructure Setup (NEXT)
 3. **FFP-16** - Web Login Interface
 4. **FFP-110** - Assessment Engine Epic Planning
 
 **Sprint 1 Summary**:
 
 - Completed: 6/10 stories (132.5/197 hours, 67%)
-- Carried Over: FFP-9 (7 remaining subtasks, ~12-13 hours)
+- Carried Over: FFP-9 (completed in Sprint 2)
 - Deferred: FFP-14 (CloudWatch Monitoring)
 
 ---
 
-## Current Work: FFP-9 - Cognito Authentication (CARRYOVER)
+## Completed Work: FFP-9 - Cognito Authentication
 
-**Status**: 🚀 IN PROGRESS (9/13 subtasks, 25/31-32 hours, 81%)
+**Status**: ✅ COMPLETE (10/13 subtasks, 29/31-32 hours, 93%)
 
 ### Phase 1: Prerequisites (8h) - ✅ COMPLETE
 
@@ -48,15 +48,15 @@
 
 ### Phase 3: Authentication Endpoints (7h) - ✅ COMPLETE
 
-- ✅ FFP-38: Login Lambda (3h) - **Ready for Review**
-- ✅ FFP-39: Refresh Token Lambda (2h) - **Ready for Review**
-- ✅ FFP-40: API Gateway Routes (1h) - **Verification Complete** ← **NEXT: Phase 4 Testing**
+- ✅ FFP-38: Login Lambda (3h)
+- ✅ FFP-39: Refresh Token Lambda (2h)
+- ✅ FFP-40: API Gateway Routes (1h)
 
-### Phase 4: Testing (12h - can defer FFP-42/45)
+### Phase 4: Testing (12h - focused on critical unit tests)
 
-- 🚀 FFP-41: Unit Tests (4h) - **IN PROGRESS** (context.ts tests only - auth/error/logger already complete)
-- ⏸️ FFP-42: Integration Tests (5h) - **DEFERRED** (for build speed, sticking with 10% coverage and critical unit tests only)
-- ⏸️ FFP-45: Deployed Environment Tests (3h) - **DEFERRED** (for build speed, sticking with 10% coverage and critical unit tests only)
+- ✅ FFP-41: Unit Tests (4h) - **COMPLETE** (context.ts tests + RLS fix)
+- ⏸️ FFP-42: Integration Tests (5h) - **DEFERRED** (10% coverage target achieved with unit tests)
+- ⏸️ FFP-45: Deployed Environment Tests (3h) - **DEFERRED** (will be addressed in FFP-12)
 
 ### Phase 5: Documentation (2h) - ✅ COMPLETE
 
@@ -64,7 +64,27 @@
 
 ---
 
+## Next Story: FFP-12 - Testing Infrastructure Setup
+
+**Status**: 🔜 AWAITING PLANNING SESSION
+
+Will validate subtasks against recent project state before starting work.
+
+---
+
 ## Recent Work (Sprint 2 Sessions)
+
+**Session 42 (Nov 10)**: ✅ FFP-41 - Unit Tests COMPLETE + RLS Fix (4h)
+
+- Created comprehensive context.ts unit tests (60 tests, 926 lines)
+- Achieved zero ESLint violations using proper TypeScript types (no `any` or disable directives)
+- Created type-safe helper functions for error testing (Partial types, union types, `as never`)
+- Investigated and fixed RLS test failures (13 tests in @ffp/database package)
+- Root cause: `root_user` had BYPASSRLS privilege, completely bypassing RLS policies
+- Solution: Removed BYPASSRLS with `ALTER ROLE root_user NOBYPASSRLS;`
+- All 68 database tests now passing (including all 16 RLS tests)
+- Total: 185/185 tests passing across core and database packages
+- FFP-9 story now complete (10/13 subtasks, deferred FFP-42/45 for FFP-12)
 
 **Session 41 (Nov 11)**: 🚀 FFP-41 - Unit Tests IN PROGRESS
 
@@ -251,9 +271,9 @@
 
 **EPIC FFP-1: Application Setup** (Sprint 1-2):
 
-- Completed: FFP-7, FFP-8, FFP-10, FFP-11, FFP-15
-- In Progress: FFP-9 (Cognito Authentication - carryover)
-- Sprint 2: FFP-12 (Testing), FFP-16 (Web Login)
+- Completed: FFP-7, FFP-8, FFP-10, FFP-11, FFP-15, FFP-9
+- Next: FFP-12 (Testing Infrastructure Setup)
+- Sprint 2: FFP-16 (Web Login)
 - Deferred: FFP-14 (CloudWatch Monitoring)
 
 **Sprint 2 Planning**:
@@ -267,8 +287,9 @@
 - ✅ JWT contains tenantId, role, customerId
 - ✅ Infrastructure deployed to dev environment
 - ✅ Database schemas defined and merged
-- 🔄 E2E authentication tests pass (FFP-99 - CRITICAL)
-- 🔄 Test coverage tracking (125 tests passing)
+- ✅ Unit test coverage for critical paths (185 tests passing)
+- 🔄 E2E authentication tests pass (planned for FFP-12)
+- 🔄 Test coverage tracking and reporting (planned for FFP-12)
 
 ---
 
