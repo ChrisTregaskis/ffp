@@ -8,6 +8,49 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### November 11, 2025 (Session 39 - FFP-39 Complete!)
+
+**Status**: ✅ FFP-39 COMPLETE - Refresh Token Lambda Function (2h)
+
+**Branch**: `feature/ffp-39-refresh-token`
+
+**Completed Work**:
+
+- ✅ Implemented refresh-token endpoint (POST /auth/refresh-token)
+  - Created `packages/functions/src/auth/refresh-token.ts` - Public Lambda handler
+  - Created `packages/core/src/auth/refresh-token.service.ts` - Refresh token service
+  - Returns new access/ID tokens (1-hour validity) with original refresh token (30-day validity)
+  - No refresh token rotation (Cognito default behaviour - same token valid for 30 days)
+  - Added refreshTokenSchema to `packages/core/src/schemas/auth.schema.ts`
+- ✅ Enhanced error handling
+  - UnauthorisedError for invalid/expired refresh tokens
+  - ValidationError for malformed request body
+  - Clear error messages without exposing sensitive information
+  - No non-null assertions used (proper validation throughout)
+- ✅ Updated route registry
+  - Added POST /auth/refresh-token to `packages/functions/src/auth/index.ts`
+  - Marked as public endpoint (no JWT required)
+  - Updated exports to include refreshTokenHandler
+- ✅ Updated core exports
+  - Exported `refreshTokenService` from `packages/core/src/auth/index.ts`
+  - Exported `RefreshTokenResult` interface for type safety
+- ✅ Created comprehensive testing documentation
+  - Created `project-documentation/sprint-planning/outputs/FFP-39-manual-testing.md`
+  - 6 detailed test scenarios (happy path, error cases, multiple refresh, token expiry recovery)
+  - Step-by-step instructions with expected responses
+- ✅ Updated review context
+  - Created `.claude/review-context.md` with comprehensive FFP-39 details
+  - Documented implementation highlights, areas to focus, known limitations
+  - Included testing notes and staging deployment preparation
+
+**Testing**: All TypeScript checks pass, ESLint clean, manual testing guide created
+**Pattern Reinforced**: Handler → Service → External Service for public authentication endpoints
+**FFP-9 Progress**: 8/13 subtasks (62%), 24/31-32 hours (77%)
+**Sprint 1+2**: 137.5/197 hours (70%)
+**Next**: FFP-40 API Gateway Routes (2h)
+
+---
+
 ### November 11, 2025 (Session 38 - FFP-38 Complete!)
 
 **Status**: ✅ FFP-38 COMPLETE - Login and Complete New Password Lambda Functions (3h)
@@ -51,7 +94,7 @@ Detailed session-by-session history for Sprint 1 execution.
 **Pattern Reinforced**: Handler → Service → External Service for public authentication endpoints
 **FFP-9 Progress**: 7/13 subtasks (54%), 22/31-32 hours (70%)
 **Sprint 1+2**: 135.5/197 hours (69%)
-**Next**: FFP-39 Refresh Token Lambda (2h)
+**Next**: FFP-39 Refresh Token Lambda (2h) ← COMPLETED IN SESSION 39
 
 ---
 
@@ -299,8 +342,9 @@ Detailed session-by-session history for Sprint 1 execution.
 | Nov 6       | FFP-32 Deferred                 | 128h           |
 | Nov 8       | FFP-112 Complete (Admin API)    | 132.5h         |
 | Nov 9       | FFP-37 Complete (Invite User)   | 136.5h         |
-| Nov 11      | FFP-38 Complete (Login)         | 139.5h         |
-| **Current** | **69% Sprint 1 Complete**       | **135.5/197h** |
+| Nov 11      | FFP-38 Complete (Login)         | 135.5h         |
+| Nov 11      | FFP-39 Complete (Refresh Token) | 137.5h         |
+| **Current** | **70% Sprint 1 Complete**       | **137.5/197h** |
 
 ---
 

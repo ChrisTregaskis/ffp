@@ -1,10 +1,10 @@
 # FFP - Project State
 
-**Last Updated**: November 11, 2025 - Session 38
+**Last Updated**: November 11, 2025 - Session 39
 **Current Phase**: Sprint 2 Execution - IN PROGRESS 🚀
 **Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
 **User Story Branch**: `feature/ffp-9-cognito-auth`
-**Sub Task Branch**: `feature/ffp-38-login-lambda` (Ready for Review)
+**Sub Task Branch**: `feature/ffp-39-refresh-token` (Ready for Review)
 
 ---
 
@@ -30,7 +30,7 @@
 
 ## Current Work: FFP-9 - Cognito Authentication (CARRYOVER)
 
-**Status**: 🚀 IN PROGRESS (7/13 subtasks, 22/31-32 hours, 70%)
+**Status**: 🚀 IN PROGRESS (8/13 subtasks, 24/31-32 hours, 77%)
 
 ### Phase 1: Prerequisites (8h) - ✅ COMPLETE
 
@@ -46,11 +46,11 @@
 - ✅ FFP-35: Zod Schemas (3h)
 - ✅ FFP-37: Invite User Lambda (4h)
 
-### Phase 3: Authentication Endpoints (7h) - ⚡ IN PROGRESS
+### Phase 3: Authentication Endpoints (7h) - ✅ COMPLETE
 
 - ✅ FFP-38: Login Lambda (3h) - **Ready for Review**
-- ⏸️ FFP-39: Refresh Token Lambda (2h) - ← **NEXT**
-- ⏸️ FFP-40: API Gateway Routes (2h)
+- ✅ FFP-39: Refresh Token Lambda (2h) - **Ready for Review**
+- ⏸️ FFP-40: API Gateway Routes (2h) - ← **NEXT**
 
 ### Phase 4: Testing (12h - can defer FFP-42/45)
 
@@ -66,13 +66,27 @@
 
 ## Recent Work (Sprint 2 Sessions)
 
+**Session 39 (Nov 11)**: ✅ FFP-39 - Refresh Token Lambda COMPLETE (2h)
+
+- Implemented refresh-token endpoint (POST /auth/refresh-token) for automatic token renewal
+- Created `packages/core/src/auth/refresh-token.service.ts` - Calls CognitoService.refreshToken()
+- Created `packages/functions/src/auth/refresh-token.ts` - Public Lambda handler
+- Added refreshTokenSchema validation to auth schemas
+- Returns new access/ID tokens (1-hour validity) with original refresh token (30-day validity)
+- No refresh token rotation (Cognito default behaviour - simplifies client implementation)
+- Comprehensive error handling (invalid/expired tokens return 401 Unauthorised)
+- No non-null assertions used (proper validation throughout)
+- Updated route registry to include POST /auth/refresh-token
+- Created comprehensive manual testing guide in FFP-39-manual-testing.md
+- All TypeScript checks pass, ESLint clean, ready for code review
+
 **Session 38 (Nov 11)**: ✅ FFP-38 - Login Lambda COMPLETE (3h)
 
 - Implemented login endpoint (POST /auth/login) with NEW_PASSWORD_REQUIRED challenge flow
 - Implemented complete-new-password endpoint (POST /auth/complete-new-password)
 - Added completeNewPassword() method to CognitoService (RespondToAuthChallengeCommand)
 - Created login and complete-new-password services with proper validation
-- Fixed 401 Unauthorized error by making /auth/\* routes public at API Gateway level
+- Fixed 401 Unauthorised error by making /auth/\* routes public at API Gateway level
 - Updated Postman collection with Login and Complete New Password requests
 - Updated authentication.md with concise testing guide and implementation descriptions
 - All TypeScript checks pass, ESLint clean, ready for code review
