@@ -1,9 +1,9 @@
 # FFP - Project State
 
-**Last Updated**: November 10, 2025 - Session 43
+**Last Updated**: November 10, 2025 - Session 44
 **Current Phase**: Sprint 2 Execution - IN PROGRESS 🚀
 **Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
-**Next Story**: FFP-16 - Web Login Interface
+**Next Subtask**: FFP-115 - Component Library & Design System Setup
 **Recently Completed**: FFP-12 - Testing Infrastructure Setup
 
 ---
@@ -17,7 +17,7 @@
 
 1. ✅ **FFP-9** - Cognito Authentication (COMPLETE)
 2. ✅ **FFP-12** - Testing Infrastructure Setup (COMPLETE)
-3. 🔜 **FFP-16** - Web Login Interface (NEXT)
+3. 🚀 **FFP-16** - Web Login Interface (IN PROGRESS - 7/10 subtasks active, 2 deferred)
 4. **FFP-110** - Assessment Engine Epic Planning
 
 **Sprint 1 Summary**:
@@ -108,7 +108,74 @@
 
 ---
 
+## Current Work: FFP-16 - Web Login Interface
+
+**Status**: 🚀 IN PROGRESS (7/10 subtasks active, 2 deferred, 1 new)
+**Estimated**: ~18-19 hours (revised from 20 hours with deferrals)
+
+### Execution Order
+
+1. **FFP-115** - Component Library & Design System Setup (3-4h) - 🔜 **NEXT**
+2. **FFP-93** - Install and configure AWS Amplify (1h)
+3. **FFP-90** - Create AuthContext and AuthProvider (4h)
+4. **FFP-92** - Implement login form (2h)
+5. **FFP-94** - Create ProtectedRoute component (2h)
+6. **FFP-96** - Create pages and setup routing (2h)
+7. **FFP-95** - Implement logout functionality (1h)
+8. **FFP-97** - Write unit tests (2h)
+9. **FFP-100** - Update documentation (1h)
+
+### Deferred Subtasks
+
+- **FFP-91** - Registration form (3h) - ⏸️ **DEFERRED** to Phase 2
+  - Reason: Admin-only business onboarding (no self-registration in MVP)
+  - Aligns with FFP-9 authentication strategy
+- **FFP-98** - Integration tests (3h) - ⏸️ **DEFERRED** to post-MVP
+  - Reason: Consistent with FFP-12 testing strategy
+  - Unit tests (FFP-97) + manual testing sufficient for Phase 1
+- **FFP-99** - E2E tests - ✅ **ALREADY ABANDONED** (Playwright deferred)
+
+### Key Decisions
+
+**Component Library First** (Session 44):
+
+- Created new subtask FFP-115 for component library & design system
+- MUST complete before form-based subtasks (FFP-90, FFP-92, FFP-96)
+- Includes: Tailwind theme, Icomoon icons, Button, Form components
+- Form pattern: Standard forms only (assessment forms deferred to Sprint 3)
+- Component showcase page at `/components` route (public, no auth)
+
+**Design System Setup**:
+
+- Tailwind CSS with custom theme (colours, typography)
+- Icomoon icon system with TypeScript type generation
+- Reusable Button component (primary, secondary, text variants)
+- Reusable form inputs (TextInput, PasswordInput, EmailInput)
+- Form management pattern from guide (standard forms only)
+- British English throughout
+
+**Reference Documents**:
+
+- Form pattern: `project-documentation/sprint-planning/outputs/Form Management Pattern Guide.md`
+- Icon system: `project-documentation/sprint-planning/outputs/Icon System Implementation Guide.md`
+- Executable prompt: `project-documentation/sprint-planning/prompts/FFP-115-component-library-prompt.md`
+
+---
+
 ## Recent Work (Sprint 2 Sessions)
+
+**Session 44 (Nov 10)**: 🚀 FFP-16 - Planning & Ticket Updates (1h)
+
+- Reviewed FFP-16 user story and all subtasks (FFP-90 to FFP-100)
+- Identified need for component library setup before form implementation
+- Created FFP-115 (Component Library & Design System Setup) - 3-4h estimate
+- Deferred FFP-91 (registration form) to Phase 2 - admin-only onboarding
+- Deferred FFP-98 (integration tests) to post-MVP - consistent with FFP-12
+- Updated FFP-93 with detailed acceptance criteria for Amplify setup
+- Created comprehensive executable prompt for FFP-115
+- Established execution order (component library → Amplify → forms → routing → tests)
+- User decisions: Tailwind theme (will provide colours), Icomoon icons, form pattern
+- Ready to tackle FFP-115 (Component Library) in next session
 
 **Session 43 (Nov 10)**: ✅ FFP-12 - Testing Infrastructure COMPLETE (0.5h)
 
