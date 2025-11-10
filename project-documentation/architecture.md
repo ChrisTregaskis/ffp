@@ -210,62 +210,6 @@ FFP uses [Turborepo](https://turborepo.com/) for efficient monorepo management, 
 - **Remote Caching**: Share build artifacts across team (future)
 - **Incremental Builds**: Only rebuild what changed
 
-### Configuration
-
-```json
-// turbo.json
-{
-  "$schema": "https://turbo.build/schema.json",
-  "pipeline": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**"]
-    },
-    "lint": {
-      "cache": true
-    },
-    "test": {
-      "dependsOn": ["build"],
-      "cache": true,
-      "outputs": ["coverage/**"]
-    },
-    "dev": {
-      "cache": false,
-      "persistent": true
-    },
-    "deploy": {
-      "dependsOn": ["build", "test"],
-      "cache": false
-    }
-  }
-}
-```
-
-### Common Commands
-
-```bash
-# Build all packages
-turbo build
-
-# Run tests across all packages (parallel)
-turbo test
-
-# Lint all packages (parallel)
-turbo lint
-
-# Run dev mode (with caching)
-turbo dev
-
-# Build only affected packages since last commit
-turbo build --filter=[HEAD^1]
-
-# Run specific package task
-turbo build --filter=@ffp/core
-
-# Clear cache
-turbo run build --force
-```
-
 ### Task Dependencies
 
 ```
@@ -305,26 +249,52 @@ deploy (functions) → depends on → build + test
 │   │   │   │   ├── users.ts
 │   │   │   │   ├── customers.ts
 │   │   │   │   └── index.ts
+│   │   │   ├── lib/           # Database utilities
+│   │   │   │   └── rls.ts     # RLS helper functions
 │   │   │   └── index.ts
 │   │   └── migrations/        # Generated SQL migrations
 │   │       ├── 0000_spotty_makkari.sql
 │   │       └── meta/
 │   │           └── _journal.json
-│   ├── functions/             # Lambda function code
+│   ├── functions/             # Lambda function handlers (domain-organised)
 │   │   ├── package.json       # Functions workspace config
-│   │   ├── auth/              # Registration, login handlers
-│   │   ├── assessments/       # Assessment CRUD
-│   │   ├── programs/          # Program generation
-│   │   ├── videos/            # Video metadata, progress
-│   │   └── business/          # Business portal logic
-│   ├── core/                  # Shared business logic
+│   │   ├── users/             # User management handlers
+│   │   │   ├── create-user.ts
+│   │   │   ├── get-user.ts
+│   │   │   └── update-user.ts
+│   │   ├── assessments/       # Assessment handlers
+│   │   │   ├── create-assessment.ts
+│   │   │   ├── submit-assessment.ts
+│   │   │   └── get-assessment.ts
+│   │   ├── programs/          # Program handlers
+│   │   │   ├── create-program.ts
+│   │   │   └── get-program.ts
+│   │   └── videos/            # Video handlers
+│   │       ├── get-video.ts
+│   │       └── update-progress.ts
+│   ├── core/                  # Shared business logic (domain-organised)
 │   │   ├── package.json       # Core workspace config
 │   │   ├── tsconfig.json      # TypeScript config (extends root)
-│   │   ├── services/          # Service layer implementations
-│   │   ├── repositories/      # Data access layer
-│   │   ├── lib/               # Utilities, helpers
-│   │   │   └── database.ts    # Drizzle client and RLS helpers
-│   │   └── types/             # Shared TypeScript types
+│   │   ├── users/             # User domain
+│   │   │   ├── user.service.ts      # Business logic orchestration
+│   │   │   ├── user.entity.ts       # Business behaviour (optional)
+│   │   │   ├── user.repository.ts   # Data access with RLS
+│   │   │   └── user.schema.ts       # Zod validation schemas
+│   │   ├── assessments/       # Assessment domain
+│   │   │   ├── assessment.service.ts
+│   │   │   ├── assessment.entity.ts
+│   │   │   ├── assessment.repository.ts
+│   │   │   └── assessment.schema.ts
+│   │   ├── programs/          # Program domain
+│   │   │   ├── program.service.ts
+│   │   │   ├── program.entity.ts
+│   │   │   ├── program.repository.ts
+│   │   │   └── program.schema.ts
+│   │   └── lib/               # Cross-cutting utilities
+│   │       ├── context.ts     # Tenant context extraction
+│   │       ├── errors.ts      # Custom error classes
+│   │       ├── logger.ts      # Structured logging
+│   │       └── cognito.ts     # Cognito service wrapper
 │   └── web/                   # React frontend
 │       ├── package.json       # Web workspace config
 │       ├── tsconfig.json      # TypeScript config (extends root)
@@ -337,71 +307,618 @@ deploy (functions) → depends on → build + test
 └── docs/                      # This documentation
 ```
 
-## Data Flow Examples
+## Backend Architecture: Domain-Organised Layers
 
-### User Registration Flow
+FFP uses a clear separation of concerns with domain-organised architecture. Each domain (users, assessments, programs, etc.) contains its own service, entity, repository, and schema files.
 
-```
-1. User submits registration form (React)
-   ↓
-2. POST /auth/register (API Gateway)
-   ↓
-3. Lambda: Generate tenantId, validate input (Zod)
-   ↓
-4. Cognito: Create user with custom attributes
-   ↓
-5. PostgreSQL: Insert user record with tenantId (via Drizzle)
-   ↓
-6. Cognito: Send verification email
-   ↓
-7. Response: Registration successful
-```
-
-### Assessment Submission Flow
+### Architectural Layers
 
 ```
-1. User submits assessment answers (React)
-   ↓
-2. POST /assessments/{id}/submit (API Gateway)
-   ↓
-3. JWT Authorizer: Validate token, extract tenantId
-   ↓
-4. Lambda: Validate answers (Zod schema)
-   ↓
-5. Drizzle: Set RLS context in transaction
-   ↓
-6. PostgreSQL: Save answers with tenant isolation
-   ↓
-7. Lambda: Run scoring algorithm
-   ↓
-8. Lambda: Generate workout program
-   ↓
-9. PostgreSQL: Save program with tenant isolation (via Drizzle)
-   ↓
-10. Response: Program generated successfully
+┌────────────────────────────────────────────────────────────┐
+│                   API Gateway + JWT Auth                   │
+└───────────────────────────┬────────────────────────────────┘
+                            │
+                            ↓
+┌────────────────────────────────────────────────────────────┐
+│  Handler Layer (packages/functions/users/create-user.ts)   │
+│  Responsibility: HTTP/Lambda interface                     │
+│  - Extract data from API Gateway event                     │
+│  - Extract tenant context from JWT                         │
+│  - Call service                                            │
+│  - Format HTTP response                                    │
+│  - Handle errors at HTTP level                             │
+└───────────────────────────┬────────────────────────────────┘
+                            │
+                            ↓
+┌────────────────────────────────────────────────────────────┐
+│  Service Layer (packages/core/users/user.service.ts)       │
+│  Responsibility: Business logic orchestration              │
+│  - Validate input (Zod)                                    │
+│  - Coordinate between entities/repositories                │
+│  - Enforce business rules                                  │
+│  - Transaction management                                  │
+│  - Call external services (Cognito, etc.)                  │
+└───────────────────────────┬────────────────────────────────┘
+                            │
+                            ↓
+┌────────────────────────────────────────────────────────────┐
+│  Entity Layer (packages/core/users/user.entity.ts)         │
+│  Responsibility: Complex business behaviour (optional)     │
+│  - Encapsulate complex business rules                      │
+│  - Data transformations                                    │
+│  - Derived calculations                                    │
+│  - State transitions                                       │
+│  - Validation depending on object state                    │
+└───────────────────────────┬────────────────────────────────┘
+                            │
+                            ↓
+┌────────────────────────────────────────────────────────────┐
+│  Repository Layer (packages/core/users/user.repository.ts) │
+│  Responsibility: Data access with RLS                      │
+│  - CRUD operations                                         │
+│  - Database queries                                        │
+│  - RLS context management                                  │
+│  - Transactions                                            │
+│  - No business logic                                       │
+└───────────────────────────┬────────────────────────────────┘
+                            │
+                            ↓
+┌────────────────────────────────────────────────────────────┐
+│  Drizzle Schema (packages/database/src/schema/users.ts)    │
+│  Responsibility: Database schema definition                │
+│  - Table structure                                         │
+│  - Column types                                            │
+│  - Relations                                               │
+│  - Indexes                                                 │
+└───────────────────────────┬────────────────────────────────┘
+                            │
+                            ↓
+┌────────────────────────────────────────────────────────────┐
+│              PostgreSQL with Row-Level Security            │
+└────────────────────────────────────────────────────────────┘
 ```
 
-### Video Playback Flow
+### When to Use Each Layer
+
+Use this decision tree to determine which layers you need:
 
 ```
-1. User clicks "Play Exercise" (React)
-   ↓
-2. GET /videos/{id}/stream (API Gateway)
-   ↓
-3. JWT Authorizer: Validate token
-   ↓
-4. Lambda: Check user has access (Drizzle RLS query)
-   ↓
-5. Lambda: Generate CloudFront signed URL (5min expiry)
-   ↓
-6. Response: Signed video URL
-   ↓
-7. React: Load video from CloudFront CDN
-   ↓
-8. User watches video (progress tracked locally)
-   ↓
-9. POST /videos/{id}/progress (periodic updates via Drizzle)
+┌─────────────────────────────────────────┐
+│ Do you need business logic?             │
+└────────────┬─────────────┬──────────────┘
+             │             │
+          ┌──▼──┐       ┌──▼──┐
+          │ YES │       │ NO  │
+          └──┬──┘       └──┬──┘
+             │             │
+    ┌────────▼─────────┐   │
+    │ Complex logic?   │   │
+    │ (calculations,   │   │
+    │  state mgmt,     │   │
+    │  transformations)│   │
+    └──┬───────┬───────┘   │
+       │       │           │
+    ┌──▼──┐ ┌──▼──┐        │
+    │ YES │ │ NO  │        │
+    └──┬──┘ └──┬──┘        │
+       │       │           │
+       │       └───────────┼─────────┐
+       │                   │         │
+┌──────▼───────┐  ┌────────▼──────┐  │
+│ Use Entity   │  │ Skip Entity   │  │
+│ Handler →    │  │ Handler →     │  │
+│ Service →    │  │ Service →     │  │
+│ Entity →     │  │ Repository    │  │
+│ Repository   │  │               │  │
+└──────────────┘  └───────────────┘  │
+                                     │
+                           ┌─────────▼──────┐
+                           │ Skip Service   │
+                           │ Handler →      │
+                           │ Repository     │
+                           └────────────────┘
 ```
+
+**Examples:**
+
+1. **Simple GET request** (no business logic):
+   - Flow: `Handler → Repository`
+   - Example: Get user by ID
+
+2. **Business logic without complex behaviour**:
+   - Flow: `Handler → Service → Repository`
+   - Example: Invite user (validate, create Cognito user, save to DB)
+
+3. **Complex business behaviour**:
+   - Flow: `Handler → Service → Entity → Repository`
+   - Example: Complete assessment (validate, calculate scores, generate recommendations, state transition)
+
+### Layer Responsibilities in Detail
+
+#### 1. Handler Layer (Controller)
+
+**Location**: `packages/functions/{domain}/{action}.ts`
+
+**Purpose**: HTTP/Lambda interface - plumbing only, zero business logic
+
+**Responsibilities**:
+
+- Extract data from API Gateway event
+- Extract tenant context from JWT claims
+- Call appropriate service method
+- Format HTTP response
+- Handle HTTP-level errors (400, 401, 403, 404, 500)
+
+**Example**:
+
+```typescript
+// packages/functions/users/create-user.ts
+import { APIGatewayProxyEvent } from 'aws-lambda';
+import { extractTenantContext } from '@ffp/core/lib/context';
+import { createUserService } from '@ffp/core/users/user.service';
+import { withErrorHandling } from '@ffp/core/lib/errors';
+
+export const handler = withErrorHandling(async (event: APIGatewayProxyEvent) => {
+  const context = extractTenantContext(event);
+  const body = JSON.parse(event.body || '{}');
+  const user = await createUserService(body, context);
+
+  return {
+    statusCode: 201,
+    body: JSON.stringify(user),
+  };
+});
+```
+
+#### 2. Service Layer
+
+**Location**: `packages/core/{domain}/{domain}.service.ts`
+
+**Purpose**: Business logic orchestration - decides WHAT to do
+
+**Responsibilities**:
+
+- Validate input using Zod schemas
+- Coordinate between multiple entities/repositories
+- Enforce business rules and constraints
+- Manage transactions
+- Call external services (Cognito, S3, etc.)
+- Transform data between layers
+
+**When to skip**: Simple CRUD operations with no business rules
+
+**Example**:
+
+```typescript
+// packages/core/users/user.service.ts
+import { createUserSchema } from './user.schema';
+import { userRepository } from './user.repository';
+import { UserEntity } from './user.entity';
+import { TenantContext } from '../lib/context';
+import { CognitoService } from '../lib/cognito';
+
+export const createUserService = async (data: unknown, context: TenantContext) => {
+  // 1. Validate input
+  const validated = createUserSchema.parse(data);
+
+  // 2. Business rule: Check if email already exists
+  const existing = await userRepository.findByEmail(validated.email, context);
+  if (existing) {
+    throw new ConflictError('User with this email already exists');
+  }
+
+  // 3. Coordinate with external service
+  const cognitoUser = await CognitoService.createUser({
+    email: validated.email,
+    tenantId: context.tenantId,
+    role: validated.role,
+  });
+
+  // 4. Create entity for complex logic
+  const entity = new UserEntity({
+    ...validated,
+    cognitoId: cognitoUser.Username,
+    tenantId: context.tenantId,
+  });
+
+  // 5. Apply business logic via entity
+  await entity.setInitialPassword(validated.temporaryPassword);
+
+  // 6. Persist via repository
+  const user = await userRepository.create(entity.toDatabase(), context);
+
+  // 7. Return safe data
+  return entity.toJSON();
+};
+```
+
+#### 3. Entity Layer (Optional)
+
+**Location**: `packages/core/{domain}/{domain}.entity.ts`
+
+**Purpose**: Business behaviour - encapsulates HOW complex logic works
+
+**Use when you have**:
+
+- Password hashing/validation logic
+- Score calculations with complex algorithms
+- State transitions with validation (draft → submitted → approved)
+- Permission checks based on user role
+- Derived data or calculations
+
+**Skip when you have**:
+
+- Simple CRUD operations
+- Basic validation (use Zod instead)
+- No complex business behaviour
+
+**Example**:
+
+```typescript
+// packages/core/users/user.entity.ts
+import { hash, verify } from '@node-rs/argon2';
+import { User } from '@ffp/database/schema/users';
+
+export class UserEntity {
+  private data: User;
+  private passwordHash?: string;
+
+  constructor(data: Partial<User>) {
+    this.data = data as User;
+  }
+
+  // Business logic: Password management
+  async setInitialPassword(tempPassword: string): Promise<void> {
+    this.passwordHash = await hash(tempPassword);
+    this.data.passwordChangedAt = new Date();
+    this.data.mustChangePassword = true;
+  }
+
+  async changePassword(oldPassword: string, newPassword: string): Promise<void> {
+    if (!this.passwordHash) {
+      throw new Error('No password hash available');
+    }
+
+    const isValid = await verify(this.passwordHash, oldPassword);
+    if (!isValid) {
+      throw new UnauthorisedError('Current password is incorrect');
+    }
+
+    this.passwordHash = await hash(newPassword);
+    this.data.passwordChangedAt = new Date();
+    this.data.mustChangePassword = false;
+  }
+
+  // Business logic: Permission checks
+  hasPermission(permission: Permission): boolean {
+    const rolePermissions = {
+      admin: ['users:read', 'users:write', 'users:delete', 'assessments:*'],
+      staff: ['users:read', 'assessments:*'],
+      patient: ['assessments:read'],
+    };
+
+    return rolePermissions[this.data.role].includes(permission);
+  }
+
+  // Business logic: Derived state
+  isActive(): boolean {
+    return !this.data.deletedAt && !this.data.suspendedAt && this.data.emailVerified;
+  }
+
+  // Serialisation: What goes to database
+  toDatabase() {
+    return {
+      ...this.data,
+      passwordHash: this.passwordHash,
+    };
+  }
+
+  // Serialisation: What goes to API response (SAFE)
+  toJSON() {
+    const { passwordHash, cognitoId, ...safe } = this.data;
+    return {
+      ...safe,
+      isActive: this.isActive(),
+    };
+  }
+}
+```
+
+#### 4. Repository Layer
+
+**Location**: `packages/core/{domain}/{domain}.repository.ts`
+
+**Purpose**: Data access layer with RLS - dumb data fetching/saving
+
+**Responsibilities**:
+
+- CRUD operations
+- Database queries using Drizzle
+- RLS context management (CRITICAL for multi-tenancy)
+- Transaction management
+- Query composition
+- **No business logic** - just data operations
+
+**Example**:
+
+```typescript
+// packages/core/users/user.repository.ts
+import { db } from '@ffp/database';
+import { users, NewUser, User } from '@ffp/database/schema/users';
+import { eq, and, sql } from 'drizzle-orm';
+import { setRLSContext } from '@ffp/database/lib/rls';
+import { TenantContext } from '../lib/context';
+
+export const userRepository = {
+  async create(data: NewUser, context: TenantContext): Promise<User> {
+    return await db.transaction(async (tx) => {
+      await setRLSContext(tx, context.tenantId);
+
+      const [user] = await tx
+        .insert(users)
+        .values({
+          ...data,
+          tenantId: context.tenantId,
+          customerId: context.customerId,
+        })
+        .returning();
+
+      return user;
+    });
+  },
+
+  async findById(id: string, context: TenantContext): Promise<User | null> {
+    return await db.transaction(async (tx) => {
+      await setRLSContext(tx, context.tenantId);
+
+      return await tx.query.users.findFirst({
+        where: eq(users.id, id),
+      });
+    });
+  },
+
+  async findByEmail(email: string, context: TenantContext): Promise<User | null> {
+    return await db.transaction(async (tx) => {
+      await setRLSContext(tx, context.tenantId);
+
+      return await tx.query.users.findFirst({
+        where: eq(users.email, email),
+      });
+    });
+  },
+
+  async update(id: string, data: Partial<User>, context: TenantContext): Promise<User> {
+    return await db.transaction(async (tx) => {
+      await setRLSContext(tx, context.tenantId);
+
+      const [updated] = await tx.update(users).set(data).where(eq(users.id, id)).returning();
+
+      return updated;
+    });
+  },
+
+  async listByCustomer(
+    customerId: string,
+    pagination: { offset: number; limit: number },
+    context: TenantContext
+  ): Promise<{ users: User[]; total: number }> {
+    return await db.transaction(async (tx) => {
+      await setRLSContext(tx, context.tenantId);
+
+      const usersList = await tx.query.users.findMany({
+        where: eq(users.customerId, customerId),
+        offset: pagination.offset,
+        limit: pagination.limit,
+      });
+
+      const [{ count }] = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(users)
+        .where(eq(users.customerId, customerId));
+
+      return {
+        users: usersList,
+        total: Number(count),
+      };
+    });
+  },
+};
+```
+
+#### 5. Schema Layer (Validation)
+
+**Location**: `packages/core/{domain}/{domain}.schema.ts`
+
+**Purpose**: Input validation using Zod
+
+**Example**:
+
+```typescript
+// packages/core/users/user.schema.ts
+import { z } from 'zod';
+
+export const createUserSchema = z.object({
+  email: z.string().email(),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  role: z.enum(['customer_owner', 'customer_admin', 'customer_user']),
+  customerId: z.string().uuid(),
+  temporaryPassword: z.string().min(8),
+});
+
+export const updateUserSchema = createUserSchema.partial();
+
+export type CreateUserInput = z.infer<typeof createUserSchema>;
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+```
+
+#### 6. Drizzle Schema Layer
+
+**Location**: `packages/database/src/schema/{table}.ts`
+
+**Purpose**: Database table definitions
+
+**Example**:
+
+```typescript
+// packages/database/src/schema/users.ts
+import { pgTable, uuid, varchar, timestamp, boolean } from 'drizzle-orm/pg-core';
+import { tenants } from './tenants';
+import { customers } from './customers';
+
+export const users = pgTable('users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id')
+    .notNull()
+    .references(() => tenants.id),
+  customerId: uuid('customer_id')
+    .notNull()
+    .references(() => customers.id),
+
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  firstName: varchar('first_name', { length: 255 }).notNull(),
+  lastName: varchar('last_name', { length: 255 }).notNull(),
+  role: varchar('role', { length: 50 }).notNull(),
+
+  passwordHash: varchar('password_hash', { length: 255 }),
+  mustChangePassword: boolean('must_change_password').default(true),
+  passwordChangedAt: timestamp('password_changed_at'),
+
+  cognitoId: varchar('cognito_id', { length: 255 }).unique(),
+  emailVerified: boolean('email_verified').default(false),
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
+});
+
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+```
+
+### Domain Organisation Benefits
+
+**Clear boundaries**: Each domain is self-contained with all its layers in one folder
+
+**Easy navigation**: Finding user-related code? Go to `packages/core/users/`
+
+**Scalability**: Adding a new domain (e.g., `videos/`) doesn't affect existing domains
+
+**Testing**: Each domain can be tested independently
+
+**Consistency**: All domains follow the same structure pattern
+
+---
+
+## Enhanced Context Architecture: User & System Requests
+
+FFP supports both **user-triggered requests** (API calls) and **system-triggered requests** (job queues, scheduled tasks).
+
+### Context Interfaces
+
+```typescript
+// packages/core/lib/context.ts
+
+/**
+ * Actor represents who/what is making the request
+ */
+export type ActorType = 'user' | 'system';
+
+export interface UserActor {
+  type: 'user';
+  userId: string;
+  userRole: string;
+  email: string;
+}
+
+export interface SystemActor {
+  type: 'system';
+  systemId: string; // e.g., 'export-worker', 'cleanup-job'
+  triggeredBy?: string; // Original user ID if job was queued by a user
+  jobId?: string; // For job queue processors
+}
+
+export type Actor = UserActor | SystemActor;
+
+/**
+ * Core tenant context required for all requests (user or system)
+ */
+export interface TenantContext {
+  // Actor (who/what is performing the action)
+  actor: Actor;
+
+  // Tenant info (required for RLS)
+  tenantId: string;
+  customerId: string | null;
+
+  // Request metadata
+  requestId: string;
+  timestamp: Date;
+
+  // Platform settings (loaded lazily if needed)
+  settings?: PlatformSettings;
+  enabledModules?: string[];
+}
+```
+
+### Usage Examples
+
+**User-triggered API request:**
+
+```typescript
+// packages/functions/users/invite-user.ts
+export const handler = withErrorHandling(async (event: APIGatewayProxyEvent) => {
+  const context = extractUserContext(event); // User actor
+  const user = await inviteUserService(body, context);
+  return { statusCode: 201, body: JSON.stringify(user) };
+});
+```
+
+**System job queue worker:**
+
+```typescript
+// packages/functions/jobs/process-export.ts
+export const handler = async (event: SQSEvent) => {
+  for (const record of event.Records) {
+    const job: ExportJob = JSON.parse(record.body);
+
+    const context = extractJobContext({
+      systemId: 'export-worker',
+      tenantId: job.tenantId,
+      customerId: job.customerId,
+      triggeredBy: job.triggeredBy, // Original user
+      jobId: job.id,
+    });
+
+    await generateExportService(job, context); // System actor
+  }
+};
+```
+
+**Scheduled cleanup task:**
+
+```typescript
+// packages/functions/scheduled/cleanup.ts
+export const handler = async () => {
+  const tenants = await getAllTenants();
+
+  for (const tenant of tenants) {
+    const context = createSystemContext({
+      systemId: 'cleanup-job',
+      tenantId: tenant.id,
+    });
+
+    await cleanupExpiredSessionsService(context); // System actor
+  }
+};
+```
+
+**Key Points:**
+
+- Single `TenantContext` interface works for both user and system requests
+- RLS always enforced via `tenantId` regardless of actor type
+- Audit logs capture both user and system actions
+- System jobs retain original user ID when applicable (job traceability)
 
 ## Environment Strategy
 
@@ -411,7 +928,6 @@ deploy (functions) → depends on → build + test
 - Hot-reload Lambda via `sst dev`
 - Isolated resources per developer
 - Use `drizzle-kit push` for rapid schema iteration
-- Cost: ~$10-20/month
 
 ### Staging (staging)
 
@@ -419,7 +935,6 @@ deploy (functions) → depends on → build + test
 - Matches production configuration
 - Used for QA and demo
 - Use `drizzle-kit generate` + `migrate` for controlled schema changes
-- Cost: ~$30-50/month
 
 ### Production (prod)
 
@@ -427,7 +942,6 @@ deploy (functions) → depends on → build + test
 - Enhanced monitoring and alarms
 - Daily backups
 - Strict migration review process
-- Cost: ~$36-66/month (<1000 users)
 
 ## Scalability Considerations
 
@@ -490,16 +1004,7 @@ deploy (functions) → depends on → build + test
 - **Phase 2**: Multi-AZ NAT Gateways for high availability (~£60/month)
 - **Alternative**: Lambda functions outside VPC (less secure, saves NAT costs)
 
-**Free Tier Benefits**:
-
-- **Cognito**: Always free up to 50,000 MAU
-- **Lambda**: 1M requests + 400,000 GB-seconds per month (always free)
-- **S3**: 5GB storage + 20,000 GET requests (12 months for new accounts)
-- **RDS**: 750 hours of t3.micro/t4g.micro (12 months for new accounts) - t3.small not included
-- **CloudWatch**: 5GB logs + 10 metrics (always free)
-- **API Gateway**: 1M calls per month (12 months for new accounts)
-
-**Cost Optimization Tips**:
+**Cost Optimization Considerations**:
 
 1. Use t4g.small (ARM/Graviton) instead of t3.small for RDS (~20% cheaper)
 2. Enable S3 Intelligent-Tiering for video files

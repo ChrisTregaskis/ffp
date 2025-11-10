@@ -131,6 +131,7 @@ Epic (Sprint-level)
 2. Updates descriptions with full acceptance criteria
 3. Creates Subtasks if needed
 4. Generates update log
+5. Creates relevant Subtasks for implementation, testing, and documentation
 
 ---
 
@@ -176,12 +177,3 @@ After each chat creating issues:
 ✅ **Searchable**: All issues indexed in Jira search  
 ✅ **Team collaboration**: Share Jira board with others (future)  
 ✅ **Sprint tracking**: Move issues through workflow
-
----
-
-## Next Steps
-
-1. Start Chat 1 to define standards (generates markdown reference)
-2. Start Chat 2 to create 6 Epics in Jira
-3. Verify Epics created successfully
-4. Continue with Story creation for each Epic

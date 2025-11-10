@@ -37,7 +37,7 @@ export const userRoleEnum = pgEnum('user_role', [
 export const users = pgTable(
   'users',
   {
-    id: uuid('id').primaryKey(),
+    id: uuid('id').primaryKey().defaultRandom(),
     tenantId: uuid('tenant_id')
       .notNull()
       .references(() => tenants.id, { onDelete: 'cascade' }),

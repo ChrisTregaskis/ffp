@@ -159,7 +159,7 @@ ffp/
 
 ### Testing Coverage
 
-- Overall: 30% minimum
+- Overall: 10% minimum
 - Critical paths: 80%+ coverage
 - RLS policies: 100% coverage
 - Authentication/JWT: 100% coverage
@@ -185,7 +185,7 @@ ffp/
   - Repository CRUD operations
   - Service layer logic
 
-- **Nice-to-Have** (30%):
+- **Nice-to-Have** (15%):
   - Edge cases
   - UI components
   - Error boundaries

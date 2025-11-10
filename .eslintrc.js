@@ -33,6 +33,7 @@ module.exports = {
   // Ignore all packages - they lint themselves
   ignorePatterns: [
     'packages/**',
+    'scripts/**', // TypeScript scripts - type-checked separately
     'node_modules/**',
     '.turbo/**',
     'dist/**',

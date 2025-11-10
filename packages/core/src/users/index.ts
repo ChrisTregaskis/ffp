@@ -1,0 +1,2 @@
+// User domain exports (services, entities, repositories)
+// Note: User schemas are exported from @ffp/core via './schemas'

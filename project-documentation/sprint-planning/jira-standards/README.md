@@ -53,28 +53,6 @@ Jira ticket standards broken into focused modules to optimize token usage per ch
 
 ---
 
-## 🎯 Quick Start
-
-**For Sprint 1 Planning (Chat 2):**
-
-```
-Load: epic-standards.md + story-standards.md + story-points.md
-```
-
-**For Daily Work:**
-
-```
-Load only the ticket type you're creating
-```
-
-**For Reference:**
-
-```
-Load jira-fields.md or definition-of-done.md as needed
-```
-
----
-
 ## 💡 Best Practices
 
 1. **Start Small**: Load only what you need for current chat
@@ -84,5 +62,5 @@ Load jira-fields.md or definition-of-done.md as needed
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: October 17, 2025
+**Version**: 1.1  
+**Last Updated**: November 09, 2025

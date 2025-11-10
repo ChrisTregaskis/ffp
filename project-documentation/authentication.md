@@ -4,93 +4,155 @@
 
 FFP uses AWS Cognito for authentication with custom attributes to support multi-tenant architecture. Cognito handles user registration, login, password management, and JWT token generation.
 
-## Why Cognito
+## MVP Authentication Strategy (Phase 1)
 
-### Benefits for Phase 1
+### Admin-Only Business Onboarding
 
-- **Zero auth code**: Registration, login, password reset all handled
-- **FREE**: First 50,000 monthly active users
-- **JWT automatic**: Token generation, refresh, validation
-- **Security**: Battle-tested AWS security
-- **SST integration**: First-class support
-- **Extensible**: MFA, SSO ready for Phase 2
+**Decision:** For MVP, FFP will NOT have public self-registration. Businesses will be manually onboarded by the system administrator.
 
-### Time Savings
+**Rationale:**
 
-- ~5 days of authentication development
-- No password hashing logic
-- No token refresh implementation
-- No email verification system
+1. **Billing Complexity**: Self-registration requires automated billing (Stripe integration, subscription management, payment failures, dunning), which is out of scope for Sprint 1
+2. **Business Validation**: Manual vetting ensures we onboard legitimate businesses, not individuals misrepresenting themselves
+3. **Product Validation**: Pilot phase with 5-10 manually managed businesses validates product-market fit before scaling
+4. **Manual Invoicing**: Manageable at small scale, allows pricing flexibility during validation phase
+5. **Reduced Risk**: No payment processing failures, disputes, or fraud concerns during initial launch
 
-## Cognito Configuration (SST)
+### MVP Authentication Flows
 
-### User Pool Setup
+**Phase 1 (Sprint 1-2 - Current):**
 
-```typescript
-// stacks/AuthStack.ts
-import { StackContext, Cognito } from 'sst/constructs';
-import * as cognito from 'aws-cdk-lib/aws-cognito';
-import { Duration } from 'aws-cdk-lib';
+1. ✅ **Admin creates business**: API endpoint creates tenant → customer (FFP-112)
+2. ✅ **Admin invites owner**: API endpoint creates owner user with Cognito (FFP-37)
+3. ✅ **Business owner logs in**: POST /auth/login with temporary password (FFP-38)
+4. ✅ **Password change required**: POST /auth/complete-new-password (FFP-38)
+5. ✅ **Business invites users**: Owner uses "Invite User" feature (AdminCreateUserCommand)
+6. ✅ **Invited users log in**: Receive temporary password, change on first login
+7. ✅ **Token refresh**: Standard JWT refresh flow
 
-export function AuthStack({ stack }: StackContext) {
-  const auth = new Cognito(stack, 'Auth', {
-    login: ['email'],
-    cdk: {
-      userPool: {
-        // Password requirements
-        passwordPolicy: {
-          minLength: 8,
-          requireLowercase: true,
-          requireUppercase: true,
-          requireDigits: true,
-          requireSymbols: true,
-        },
+**Phase 2 (Post-MVP with Billing):**
 
-        // Email verification
-        autoVerify: { email: true },
+1. 🔄 **Business self-registration**: Public registration endpoint with Cognito SignUpCommand
+2. 🔄 **Stripe integration**: Automated billing, subscriptions, trials
+3. 🔄 **Payment management**: Handle failed payments, dunning, subscription changes
+4. 🔄 **Usage limits**: Enforce tier limits based on subscription
 
-        // Custom attributes for multi-tenancy
-        customAttributes: {
-          tenantId: new cognito.StringAttribute({
-            mutable: false, // Cannot change after creation
-          }),
-          role: new cognito.StringAttribute({
-            mutable: true, // Can be updated
-          }),
-          customerId: new cognito.StringAttribute({
-            mutable: true, // For users under customer organisations
-          }),
-        },
+### MVP Onboarding Process
 
-        // Account recovery
-        accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+**System Administrator Workflow (Two-Step Process):**
 
-        // User attributes
-        standardAttributes: {
-          email: { required: true, mutable: false },
-          givenName: { required: true, mutable: true },
-          familyName: { required: true, mutable: true },
-        },
-      },
+**Step 1: Create customer account (Postman)**
 
-      userPoolClient: {
-        // Token expiry
-        accessTokenValidity: Duration.minutes(15),
-        refreshTokenValidity: Duration.days(7),
-        idTokenValidity: Duration.minutes(15),
+Note: "customer" represents a business/care home organisation in the system.
 
-        // OAuth flows (future SSO)
-        authFlows: {
-          userPassword: true,
-          userSrp: true,
-        },
-      },
-    },
-  });
+```http
+POST {{apiUrl}}/admin/create-customer
+Authorization: Bearer {{superAdminJwt}}
+Content-Type: application/json
 
-  return { auth };
+{
+  "customerName": "ABC Physiotherapy"
 }
 ```
+
+**Response:**
+
+```json
+{
+  "tenantId": "uuid-1",
+  "customerId": "uuid-2",
+  "message": "Business account created. Use /auth/invite-user to create owner."
+}
+```
+
+---
+
+**Step 2: Invite business owner (Postman)**
+
+```http
+POST {{apiUrl}}/auth/invite-user
+Authorization: Bearer {{superAdminJwt}}
+Content-Type: application/json
+
+{
+  "tenantId": "uuid-1",
+  "customerId": "uuid-2",
+  "email": "owner@abcphysio.com",
+  "firstName": "Jane",
+  "lastName": "Smith",
+  "role": "customer_owner"
+}
+```
+
+**Response:**
+
+```json
+{
+  "message": "User invited successfully. They will receive an email with temporary password.",
+  "userId": "uuid-3"
+}
+```
+
+**Created:**
+
+- Cognito user with temporary password (sent via email)
+- User record in database (linked to tenant and customer)
+
+**Business Owner Workflow:**
+
+1. Receives email: "Your FFP account is ready - check email for temporary password"
+2. Logs in with temporary password
+3. Forced to set permanent password
+4. Can now invite staff/clients via "Invite User" feature
+5. System administrator invoices monthly/quarterly manually
+
+**Invited User Workflow:**
+
+1. Business owner invites user via web portal
+2. User receives email with temporary password
+3. Logs in, forced to change password
+4. Can now access FFP features based on role
+
+### Three-Tier Architecture Support
+
+All authentication flows support the three-tier architecture:
+
+- **Tier 1 (Tenant)**: Top-level isolation boundary, unique per business
+- **Tier 2 (Customer)**: Business entity, can have multiple users
+- **Tier 3 (Users)**: Individual users, linked to customer and tenant
+
+**JWT Claims:**
+
+```json
+{
+  "sub": "user-uuid",
+  "email": "user@business.com",
+  "custom:tenantId": "tenant-uuid", // Tier 1: Isolation boundary
+  "custom:customerId": "customer-uuid", // Tier 2: Business entity
+  "custom:role": "customer_owner" // User role within customer
+}
+```
+
+### Future: Self-Service Registration (Phase 2)
+
+**New Epic Required:** Self-Service Business Registration (~20-25 hours)
+
+**Components:**
+
+- Business registration endpoint (POST /auth/register)
+- Stripe subscription integration
+- Trial period management (14-30 days)
+- Payment failure handling and dunning
+- Usage limits enforcement
+- Automated invoicing
+- Subscription tier management
+
+**Prerequisites:**
+
+- ✅ Validated pricing model (from pilot phase)
+- ✅ Confirmed product-market fit
+- ✅ Support processes established
+- ✅ Billing infrastructure ready
 
 ## Multi-Tenant Architecture
 
@@ -114,283 +176,278 @@ When a user authenticates, Cognito returns a JWT with these claims:
 
 ### Accessing JWT Claims in Lambda
 
-```typescript
-import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
+JWT claims flow through the layered architecture from handler to service to repository. The system supports both **user-triggered requests** (from API Gateway with JWT) and **system-triggered requests** (from job queues, scheduled tasks).
 
-export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) => {
-  // JWT claims automatically available via API Gateway authorizer
-  const claims = event.requestContext.authorizer.jwt.claims;
-
-  // Extract tenant context
-  const tenantContext = {
-    userId: claims.sub as string,
-    tenantId: claims['custom:tenantId'] as string,
-    role: claims['custom:role'] as string,
-    email: claims.email as string,
-    customerId: claims['custom:customerId'] as string | null,
-  };
-
-  // Use for RLS queries
-  await setRLSContext(tenantContext.tenantId);
-  const data = await repository.find(tenantContext);
-
-  return {
-    statusCode: 200,
-    body: JSON.stringify(data),
-  };
-};
-```
-
-## User Registration Flows
-
-### Individual User Registration
+#### Actor-Based Context
 
 ```typescript
-// functions/auth/register.ts
-import {
-  CognitoIdentityProviderClient,
-  SignUpCommand,
-} from '@aws-sdk/client-cognito-identity-provider';
+// packages/core/lib/context.ts - Enhanced tenant context extraction
+
+import { APIGatewayProxyEvent } from 'aws-lambda';
 import { randomUUID } from 'crypto';
-import { z } from 'zod';
 
-const cognito = new CognitoIdentityProviderClient({});
+// Actor types: User or System
+export interface UserActor {
+  type: 'user';
+  userId: string;
+  userRole: string;
+  email: string;
+}
 
-const RegisterSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  accountType: z.enum(['individual', 'business']),
-});
+export interface SystemActor {
+  type: 'system';
+  systemId: string; // e.g., 'assessment-processor', 'daily-report-job'
+  triggeredBy?: string; // Original user ID if user-triggered
+  jobId?: string; // Queue job ID for traceability
+}
 
-export const handler = async (event) => {
-  const body = RegisterSchema.parse(JSON.parse(event.body));
+export type Actor = UserActor | SystemActor;
 
-  // Generate unique tenant ID
-  const tenantId = randomUUID();
-  const role = body.accountType === 'business' ? 'business_owner' : 'individual_user';
+// Enhanced tenant context (supports both user and system actors)
+export interface TenantContext {
+  actor: Actor;
+  tenantId: string;
+  customerId: string | null;
+  requestId: string;
+  timestamp: Date;
+  settings?: PlatformSettings;
+  enabledModules?: string[];
+}
+```
 
-  // Create user in Cognito
-  const signUpResult = await cognito.send(
-    new SignUpCommand({
-      ClientId: process.env.COGNITO_CLIENT_ID!,
-      Username: body.email,
-      Password: body.password,
-      UserAttributes: [
-        { Name: 'email', Value: body.email },
-        { Name: 'given_name', Value: body.firstName },
-        { Name: 'family_name', Value: body.lastName },
-        { Name: 'custom:tenantId', Value: tenantId },
-        { Name: 'custom:role', Value: role },
-      ],
-    })
-  );
+#### User Request Flow
 
-  // Store user in PostgreSQL
-  await db.users.create({
-    id: signUpResult.UserSub,
-    tenantId,
-    email: body.email,
-    firstName: body.firstName,
-    lastName: body.lastName,
-    role,
-    createdAt: new Date(),
-  });
+**Handler Layer** (extracts context and passes to service):
 
-  // Create tenant record
-  await db.tenants.create({
-    id: tenantId,
-    type: body.accountType,
-    name:
-      body.accountType === 'business'
-        ? `${body.firstName} ${body.lastName}'s Business`
-        : `${body.firstName} ${body.lastName}`,
-    createdAt: new Date(),
-  });
+```typescript
+// packages/functions/assessments/get-assessment.ts
+import { APIGatewayProxyEvent } from 'aws-lambda';
+import { extractUserContext } from '@ffp/core/lib/context';
+import { getAssessmentService } from '@ffp/core/assessments/assessment.service';
+import { withErrorHandling } from '@ffp/core/lib/errors';
+
+export const handler = withErrorHandling(async (event: APIGatewayProxyEvent) => {
+  // Extract user context from JWT
+  const context = extractUserContext(event);
+
+  // Get assessment ID from path
+  const assessmentId = event.pathParameters?.id;
+
+  // Call service (passes context down)
+  const assessment = await getAssessmentService(assessmentId, context);
 
   return {
     statusCode: 200,
-    body: JSON.stringify({
-      message: 'Registration successful. Check email for verification.',
-      userId: signUpResult.UserSub,
-    }),
+    body: JSON.stringify(assessment),
   };
-};
+});
 ```
 
-### Business User Invitation
+**Service Layer** (receives context and passes to repository):
 
 ```typescript
-// functions/business/invite-user.ts
-import {
-  CognitoIdentityProviderClient,
-  AdminCreateUserCommand,
-} from '@aws-sdk/client-cognito-identity-provider';
-import { z } from 'zod';
+// packages/core/assessments/assessment.service.ts
+import { assessmentRepository } from './assessment.repository';
+import { TenantContext } from '../lib/context';
+import { NotFoundError } from '../lib/errors';
 
-const cognito = new CognitoIdentityProviderClient({});
+export const getAssessmentService = async (assessmentId: string, context: TenantContext) => {
+  // Call repository with tenant context
+  const assessment = await assessmentRepository.findById(assessmentId, context);
 
-const InviteUserSchema = z.object({
-  email: z.string().email(),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  role: z.enum(['business_admin', 'business_user']),
-});
-
-export const handler = async (event) => {
-  const body = InviteUserSchema.parse(JSON.parse(event.body));
-  const businessOwner = event.requestContext.authorizer.jwt.claims;
-
-  // Only business owners can invite
-  if (businessOwner['custom:role'] !== 'business_owner') {
-    return {
-      statusCode: 403,
-      body: JSON.stringify({ error: 'Only business owners can invite users' }),
-    };
+  if (!assessment) {
+    throw new NotFoundError('Assessment', assessmentId);
   }
 
-  const businessTenantId = businessOwner['custom:tenantId'] as string;
-  const businessOwnerId = businessOwner.sub as string;
-
-  // Create user with temporary password (emailed to user)
-  const result = await cognito.send(
-    new AdminCreateUserCommand({
-      UserPoolId: process.env.COGNITO_USER_POOL_ID!,
-      Username: body.email,
-      UserAttributes: [
-        { Name: 'email', Value: body.email },
-        { Name: 'email_verified', Value: 'true' },
-        { Name: 'given_name', Value: body.firstName },
-        { Name: 'family_name', Value: body.lastName },
-        { Name: 'custom:tenantId', Value: businessTenantId }, // Same tenant!
-        { Name: 'custom:role', Value: body.role },
-        { Name: 'custom:customerId', Value: businessOwnerId },
-      ],
-      DesiredDeliveryMediums: ['EMAIL'], // Send temp password via email
-    })
-  );
-
-  // Store in database
-  await db.users.create({
-    id: result.User!.Username!,
-    tenantId: businessTenantId,
-    email: body.email,
-    firstName: body.firstName,
-    lastName: body.lastName,
-    role: body.role,
-    customerId: businessOwnerId,
-    createdAt: new Date(),
-  });
-
-  return {
-    statusCode: 200,
-    body: JSON.stringify({
-      message: 'Invitation sent successfully',
-      userId: result.User!.Username,
-    }),
-  };
+  // Could add business logic here if needed
+  return assessment;
 };
+```
+
+**Repository Layer** (uses context to set RLS):
+
+```typescript
+// packages/core/assessments/assessment.repository.ts
+import { db } from '@ffp/database';
+import { assessments } from '@ffp/database/schema/assessments';
+import { eq } from 'drizzle-orm';
+import { setRLSContext } from '@ffp/database/lib/rls';
+import { TenantContext } from '../lib/context';
+
+export const assessmentRepository = {
+  async findById(id: string, context: TenantContext): Promise<Assessment | null> {
+    return await db.transaction(async (tx) => {
+      // Set RLS context for tenant isolation
+      await setRLSContext(tx, context.tenantId);
+
+      return await tx.query.assessments.findFirst({
+        where: eq(assessments.id, id),
+        // RLS ensures only assessments from this tenant are returned
+      });
+    });
+  },
+};
+```
+
+#### System Request Flow (Jobs & Scheduled Tasks)
+
+**Job Worker** (processes background jobs):
+
+```typescript
+// packages/functions/jobs/process-assessment.ts
+import { SQSEvent } from 'aws-lambda';
+import { extractJobContext } from '@ffp/core/lib/context';
+import { processAssessmentService } from '@ffp/core/assessments/assessment.service';
+import { withErrorHandling } from '@ffp/core/lib/errors';
+
+export const handler = withErrorHandling(async (event: SQSEvent) => {
+  for (const record of event.Records) {
+    const message = JSON.parse(record.body);
+
+    // Extract system context from job message
+    const context = extractJobContext({
+      tenantId: message.tenantId,
+      customerId: message.customerId,
+      userId: message.userId, // Original user who triggered this
+      jobId: record.messageId,
+      jobType: 'assessment-processor',
+    });
+
+    // Call service with system context
+    await processAssessmentService(message.assessmentId, context);
+  }
+});
+```
+
+**Scheduled Task** (runs on schedule):
+
+```typescript
+// packages/functions/scheduled/daily-report.ts
+import { ScheduledEvent } from 'aws-lambda';
+import { createSystemContext } from '@ffp/core/lib/context';
+import { generateDailyReportService } from '@ffp/core/reports/report.service';
+
+export const handler = async (event: ScheduledEvent) => {
+  // Get all active tenants
+  const tenants = await getTenantRepository().findAllActive();
+
+  for (const tenant of tenants) {
+    // Create system context for each tenant
+    const context = createSystemContext({
+      systemId: 'daily-report-job',
+      tenantId: tenant.id,
+      customerId: null, // Report spans all customers
+    });
+
+    // Generate report with system context
+    await generateDailyReportService(context);
+  }
+};
+```
+
+**Key Points**:
+
+- **User requests**: Extract context from JWT using `extractUserContext()`
+- **Job workers**: Extract context from message using `extractJobContext()`
+- **Scheduled tasks**: Create context explicitly using `createSystemContext()`
+- Context flows down through layers identically (Handler/Worker → Service → Repository)
+- Repository uses context.tenantId to set RLS (works for both user and system actors)
+- Audit logging uses `actor` field for traceability (user vs system)
+- System jobs retain original user ID via `triggeredBy` when applicable
+
+## User Management Flows (MVP)
+
+### Invite User Lambda Function
+
+**Purpose:** Business owners invite staff/clients after their account is created.
+
+**Implementation:** `packages/functions/src/auth/invite-user.ts` and `packages/core/src/auth/invite-user.service.ts`
+
+**Flow:**
+
+1. **Handler** extracts JWT context and validates user role (customer_owner only)
+2. **Service** validates input with Zod schema, checks for existing email
+3. **Cognito** creates user with temporary password (sent via email)
+4. **Database** persists user record with tenant/customer linkage
+5. **Rollback** deletes Cognito user if database insert fails (critical for data consistency)
+
+**Architecture:** Demonstrates full layered architecture (Handler → Service → Repository + External Service)
+
+**Key Features:**
+
+- Requires JWT authentication (customer_owner role)
+- Multi-tenant isolation via RLS
+- Cognito-to-database rollback pattern
+- Custom attributes set (tenantId, customerId, role)
+- Temporary password sent via email
+
+See implementation files for current code.
+
+### Login & Password Management
+
+**Purpose:** Public endpoints for user authentication and temporary password flow.
+
+**Implementation:**
+
+- `packages/functions/src/auth/login.ts` - Login Lambda handler
+- `packages/functions/src/auth/complete-new-password.ts` - Complete new password Lambda handler
+- `packages/core/src/auth/login.service.ts` - Login service
+- `packages/core/src/auth/complete-new-password.service.ts` - Password change service
+
+These endpoints are **public** (no JWT required) as users cannot have a token before logging in.
+
+**Login Flow (POST /auth/login):**
+
+1. **Handler** validates request with Zod schema (email format, password presence)
+2. **Service** calls CognitoService.login() with USER_PASSWORD_AUTH flow
+3. **Challenge Response**: If temporary password, returns NEW_PASSWORD_REQUIRED challenge with session token
+4. **Success Response**: If permanent password, returns JWT tokens (accessToken, idToken, refreshToken)
+
+**Complete New Password Flow (POST /auth/complete-new-password):**
+
+1. **Handler** validates session token, email, and new password strength
+2. **Service** calls CognitoService.completeNewPassword() with RespondToAuthChallengeCommand
+3. **Success Response**: Returns JWT tokens immediately (no second login needed)
+
+**Architecture:** Demonstrates handler → service → external service pattern for public endpoints
+
+**Password Requirements:**
+
+- Minimum 8 characters with uppercase, lowercase, digit, and special character
+
+**Error Responses:**
+
+- `401 Unauthorised`: Invalid credentials or expired session
+- `400 Validation Error`: Invalid email format or weak password
+
+**Key Features:**
+
+- Public endpoints (no JWT required at API Gateway level)
+- Session tokens expire after ~3 minutes (security best practice)
+- Proper validation without non-null assertions (ESLint compliant)
+- Clear error messages without exposing sensitive information
+- Tokens returned immediately after password change
+
+See implementation files for current code.
+
+### Future: Self-Service Business Registration (Phase 2)
+
+_Deferred to Phase 2 with billing integration. See "MVP Authentication Strategy" section above._
+
+**When implemented, will use:**
+
+```typescript
+// packages/functions/src/auth/register.ts (FUTURE - Phase 2)
+import { SignUpCommand } from '@aws-sdk/client-cognito-identity-provider';
+
+// Self-registration with Stripe subscription
+// - Business signs up via public form
+// - Creates tenant + customer + owner user
+// - Initiates Stripe trial period
+// - Requires billing integration
 ```
 
 ## Frontend Integration
-
-### Setup Amplify Auth
-
-```typescript
-// lib/auth.ts
-import { Amplify } from 'aws-amplify';
-import {
-  signIn,
-  signOut,
-  signUp,
-  confirmSignUp,
-  resetPassword,
-  confirmResetPassword,
-  getCurrentUser,
-  fetchAuthSession,
-} from 'aws-amplify/auth';
-
-// Configure Amplify
-Amplify.configure({
-  Auth: {
-    Cognito: {
-      userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID,
-      userPoolClientId: import.meta.env.VITE_COGNITO_CLIENT_ID,
-      signUpVerificationMethod: 'code',
-    },
-  },
-});
-
-// Registration
-export async function register(data: {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-}) {
-  return await signUp({
-    username: data.email,
-    password: data.password,
-    options: {
-      userAttributes: {
-        email: data.email,
-        given_name: data.firstName,
-        family_name: data.lastName,
-      },
-    },
-  });
-}
-
-// Verify email
-export async function verifyEmail(email: string, code: string) {
-  return await confirmSignUp({
-    username: email,
-    confirmationCode: code,
-  });
-}
-
-// Login
-export async function login(email: string, password: string) {
-  return await signIn({ username: email, password });
-}
-
-// Get current user with tenant context
-export async function getCurrentUserWithContext() {
-  const user = await getCurrentUser();
-  const session = await fetchAuthSession();
-
-  const idToken = session.tokens?.idToken;
-
-  return {
-    userId: user.userId,
-    email: user.signInDetails?.loginId,
-    username: user.username,
-    tenantId: idToken?.payload['custom:tenantId'] as string,
-    role: idToken?.payload['custom:role'] as string,
-    customerId: idToken?.payload['custom:customerId'] as string | null,
-  };
-}
-
-// Logout
-export async function logout() {
-  return await signOut();
-}
-
-// Forgot password
-export async function forgotPassword(email: string) {
-  return await resetPassword({ username: email });
-}
-
-// Reset password
-export async function resetPasswordSubmit(email: string, code: string, newPassword: string) {
-  return await confirmResetPassword({
-    username: email,
-    confirmationCode: code,
-    newPassword,
-  });
-}
-```
 
 ### Auth Context Provider
 
@@ -451,50 +508,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export const useAuth = () => useContext(AuthContext);
-```
-
-## API Gateway Configuration
-
-### Cognito Authorizer
-
-```typescript
-// stacks/ApiStack.ts
-import { StackContext, Api, use } from 'sst/constructs';
-import { AuthStack } from './AuthStack';
-
-export function ApiStack({ stack }: StackContext) {
-  const { auth } = use(AuthStack);
-
-  const api = new Api(stack, 'Api', {
-    authorizers: {
-      jwt: {
-        type: 'user_pool',
-        userPool: {
-          id: auth.userPoolId,
-          clientIds: [auth.userPoolClientId],
-        },
-      },
-    },
-    defaults: {
-      authorizer: 'jwt', // Protect all routes by default
-    },
-    routes: {
-      // Public routes (no auth required)
-      'POST /auth/register': {
-        function: 'functions/auth/register.handler',
-        authorizer: 'none',
-      },
-
-      // Protected routes (JWT required)
-      'GET /assessments': 'functions/assessments/list.handler',
-      'POST /assessments': 'functions/assessments/create.handler',
-      'GET /programs': 'functions/programs/list.handler',
-      'POST /business/invite': 'functions/business/invite-user.handler',
-    },
-  });
-
-  return { api };
-}
 ```
 
 ## Common Issues & Solutions
@@ -580,6 +593,124 @@ try {
 
 ## Testing Authentication
 
+### Manual Testing Guide
+
+Test the complete authentication flow using Postman.
+
+#### Test 1: Temporary Password Flow (New Users)
+
+**1. Create a test user:**
+
+```http
+POST /auth/invite-user
+Authorization: Bearer {{jwtToken}}
+
+{
+  "email": "test.user@example.com",
+  "firstName": "Test",
+  "lastName": "User",
+  "role": "customer_admin"
+}
+```
+
+**2. Login with temporary password:**
+
+```http
+POST /auth/login
+
+{
+  "email": "test.user@example.com",
+  "password": "TempPass123!"  # From email
+}
+```
+
+**Expected:** NEW_PASSWORD_REQUIRED challenge with session token
+
+**3. Complete password change:**
+
+```http
+POST /auth/complete-new-password
+
+{
+  "session": "{{passwordChallengeSession}}",  # Auto-populated by Postman
+  "email": "test.user@example.com",
+  "newPassword": "NewSecure123!"
+}
+```
+
+**Expected:** JWT tokens returned, user can now access protected endpoints
+
+**4. Verify JWT claims:**
+
+- Copy `idToken` from response
+- Decode at https://jwt.io
+- Verify `custom:tenantId`, `custom:customerId`, `custom:role` present
+
+#### Test 2: Regular Login (Existing Users)
+
+**1. Login with permanent password:**
+
+```http
+POST /auth/login
+
+{
+  "email": "test.user@example.com",
+  "password": "NewSecure123!"
+}
+```
+
+**Expected:** JWT tokens returned immediately (no challenge)
+
+**2. Test protected endpoint:**
+Use returned token to access `/auth/invite-user` or other protected endpoints
+
+#### Test 3: Error Scenarios
+
+**Invalid credentials:**
+
+```http
+POST /auth/login
+{ "email": "test.user@example.com", "password": "WrongPass" }
+```
+
+**Expected:** 401 Unauthorised
+
+**Invalid email format:**
+
+```http
+POST /auth/login
+{ "email": "not-an-email", "password": "Pass123!" }
+```
+
+**Expected:** 400 Validation Error
+
+**Weak password:**
+
+```http
+POST /auth/complete-new-password
+{ "session": "valid-session", "email": "test@example.com", "newPassword": "weak" }
+```
+
+**Expected:** 400 Validation Error (minimum 8 chars, uppercase, lowercase, digit, special char)
+
+**Expired session:**
+Wait 5 minutes and retry complete-new-password with old session
+**Expected:** 401 Unauthorised (sessions expire after ~3 minutes)
+
+#### Quick Checklist
+
+After running all tests:
+
+- [ ] Temporary password login returns NEW_PASSWORD_REQUIRED challenge
+- [ ] Session token saved to Postman `passwordChallengeSession` variable
+- [ ] Complete-new-password returns JWT tokens
+- [ ] JWT tokens contain custom claims (tenantId, customerId, role)
+- [ ] Regular login works after password changed
+- [ ] Invalid credentials return 401
+- [ ] Invalid email format returns 400
+- [ ] Weak password returns 400
+- [ ] Expired session returns 401
+
 ### Unit Tests
 
 ```typescript
@@ -604,27 +735,6 @@ describe('extractTenantContext', () => {
     expect(context.userId).toBe('user-123');
     expect(context.tenantId).toBe('tenant-456');
     expect(context.role).toBe('business_owner');
-  });
-});
-```
-
-### Integration Tests
-
-```typescript
-describe('User Registration', () => {
-  it('creates user with unique tenantId', async () => {
-    const user1 = await registerUser({ email: 'user1@test.com', ... });
-    const user2 = await registerUser({ email: 'user2@test.com', ... });
-
-    expect(user1.tenantId).not.toBe(user2.tenantId);
-  });
-
-  it('customer sub-users share parent tenantId', async () => {
-    const owner = await registerCustomerOwner({ email: 'owner@test.com', ... });
-    const subUser = await inviteCustomerUser(owner, { email: 'sub@test.com', ... });
-
-    expect(subUser.tenantId).toBe(owner.tenantId);
-    expect(subUser.customerId).toBe(owner.id);
   });
 });
 ```

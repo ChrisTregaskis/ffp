@@ -11,6 +11,9 @@ export default defineConfig({
     environment: 'node',
     setupFiles: [],
     include: ['src/**/*.test.ts', '__tests__/**/*.test.ts'],
+    // Disable parallel execution to prevent database test interference
+    // Integration tests and RLS tests both manipulate the same database tables
+    fileParallelism: false,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

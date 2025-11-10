@@ -432,6 +432,81 @@ export const enableRLS = sql`
 `;
 ```
 
+### System Administrator Multi-Tenant Access
+
+System administrators (`role='system_admin'`) need access to all tenants for platform management. This is achieved through:
+
+**1. Platform Tenant ID**
+
+System admins use a special reserved tenant ID instead of belonging to a specific customer tenant:
+
+```typescript
+import { PLATFORM_TENANT_ID } from '@ffp/core';
+
+// System admin has tenantId = 'platform' (PLATFORM_TENANT_ID constant)
+// This is NOT a real customer tenant, but a marker for platform-level access
+const systemAdminJWT = {
+  sub: 'admin-user-id',
+  email: 'admin@ffp.com',
+  'custom:tenantId': PLATFORM_TENANT_ID, // 'platform'
+  'custom:customerId': null,
+  'custom:role': 'system_admin',
+};
+```
+
+**2. RLS Policy Bypass**
+
+RLS policies check for `role='system_admin'` to grant cross-tenant access:
+
+```sql
+-- Example: Users table policy with system_admin bypass
+CREATE POLICY tenant_isolation_users ON users
+  FOR ALL
+  USING (
+    -- Either: Match tenant_id (normal users)
+    tenant_id = current_setting('app.tenant_id', true)::UUID
+    OR
+    -- Or: System admin role bypasses tenant isolation
+    EXISTS (
+      SELECT 1 FROM users u
+      WHERE u.id = current_setting('app.user_id', true)::UUID
+      AND u.role = 'system_admin'
+    )
+  );
+```
+
+**3. Application-Level Context Extraction**
+
+Handler functions extract context and handle system admin case:
+
+```typescript
+export function extractUserContext(event: APIGatewayEvent): TenantContext {
+  const claims = event.requestContext.authorizer.jwt.claims;
+  const role = claims['custom:role'] as string;
+  const tenantId = claims['custom:tenantId'] as string;
+
+  // System admins can operate across all tenants
+  // Still set tenantId to PLATFORM_TENANT_ID for audit trails
+  return {
+    actor: {
+      type: 'user',
+      userId: claims.sub,
+      userRole: role,
+      email: claims.email,
+    },
+    tenantId: tenantId, // Will be PLATFORM_TENANT_ID for system_admin
+    customerId: role === 'system_admin' ? null : claims['custom:customerId'],
+  };
+}
+```
+
+**Important Notes:**
+
+- `PLATFORM_TENANT_ID` ('platform') is a **reserved identifier** and must never be used for customer tenants
+- System admin queries still require RLS context to be set (for audit purposes)
+- Database-level policies perform the role check to grant cross-tenant access
+- System admins should still be scoped to specific operations for security (e.g., read-only audit logs)
+
 ### Usage in Lambda Functions
 
 ```typescript

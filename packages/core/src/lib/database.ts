@@ -1,12 +1,3 @@
-/**
- * Database Connection Module
- *
- * Provides connection pooling and RLS utilities for multi-tenant PostgreSQL database.
- * Follows serverless best practices by declaring connections outside handler scope.
- *
- * @module lib/database
- */
-
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
@@ -23,7 +14,10 @@ import { Pool } from 'pg';
  * @returns SSL configuration for pg Pool
  */
 const getSSLConfig = (): boolean | { rejectUnauthorized: boolean; ca: string } => {
-  if (process.env.ENVIRONMENT === 'development') {
+  // SST uses stage names like 'dev', personal stages, 'staging', 'production'
+  // Only enable SSL for staging and production
+  const stage = process.env.SST_STAGE ?? process.env.ENVIRONMENT;
+  if (stage !== 'staging' && stage !== 'production') {
     return false;
   }
 
@@ -130,12 +124,4 @@ export const withRLS = async <T>(
  */
 export async function closePool(): Promise<void> {
   await pool.end();
-}
-
-/**
- * Type for tenant context used throughout the application
- */
-export interface TenantContext {
-  tenantId: string;
-  userId?: string;
 }

@@ -18,7 +18,10 @@
               "host": ["{{apiUrl}}"],
               "path": ["health"]
             },
-            "description": "Public health check endpoint - no authentication required.\n\nReturns:\n- `status`: Health status (\"healthy\")\n- `message`: Service identification\n- `timestamp`: Current server time (ISO 8601)\n- `service`: Service name\n- `version`: API version\n\n**Status Codes:**\n- `200`: Service is healthy\n- `500`: Service health check failed"
+            "description": "Public health check endpoint - no authentication required.\n\nReturns:\n- `status`: Health status (\"healthy\")\n- `message`: Service identification\n- `timestamp`: Current server time (ISO 8601)\n- `version`: API version\n- `stage`: Deployment stage (dev/staging/production)\n\n**Status Codes:**\n- `200`: Service is healthy\n- `500`: Service health check failed",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "response": [
             {
@@ -41,7 +44,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"status\": \"healthy\",\n  \"message\": \"FFP Functions - Health Check OK\",\n  \"timestamp\": \"2025-10-25T12:34:56.789Z\",\n  \"service\": \"auth\",\n  \"version\": \"1.0.0\"\n}"
+              "body": "{\n  \"status\": \"healthy\",\n  \"message\": \"FFP API - Health Check OK\",\n  \"timestamp\": \"2025-11-09T12:34:56.789Z\",\n  \"version\": \"1.0.0\",\n  \"stage\": \"dev\"\n}"
             }
           ]
         }
@@ -49,9 +52,1078 @@
       "description": "Health and status endpoints - no authentication required"
     },
     {
-      "name": "Authentication (Coming Soon)",
-      "item": [],
-      "description": "User registration, login, and token management.\n\n**Endpoints (to be added):**\n- POST /auth/register\n- POST /auth/login\n- POST /auth/refresh\n- POST /auth/logout\n- POST /auth/forgot-password\n- POST /auth/reset-password"
+      "name": "Admin Operations",
+      "item": [
+        {
+          "name": "Create Customer",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Validate JWT token is set",
+                  "const jwtToken = pm.collectionVariables.get('jwtToken');",
+                  "",
+                  "if (!jwtToken || jwtToken === '') {",
+                  "    throw new Error('JWT token is required. Please authenticate first and set the jwtToken variable.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test response structure",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has required fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('tenantId');",
+                  "    pm.expect(jsonData).to.have.property('customerId');",
+                  "    pm.expect(jsonData).to.have.property('customerName');",
+                  "});",
+                  "",
+                  "pm.test('Tenant ID is valid UUID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+                  "    pm.expect(jsonData.tenantId).to.match(uuidRegex);",
+                  "});",
+                  "",
+                  "pm.test('Customer ID is valid UUID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+                  "    pm.expect(jsonData.customerId).to.match(uuidRegex);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Sunshine Carehome\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/admin/create-customer",
+              "host": ["{{apiUrl}}"],
+              "path": ["admin", "create-customer"]
+            },
+            "description": "Create a new customer tenant and customer record.\n\n**Note:** \"customer\" represents a business/care home organisation in the system.\n\n**Authentication:** System admin JWT token required\n\n**Request Body:**\n```json\n{\n  \"customerName\": \"Sunshine Carehome\"\n}\n```\n\n**Response:**\n```json\n{\n  \"tenantId\": \"uuid\",\n  \"customerId\": \"uuid\",\n  \"customerName\": \"Sunshine Carehome\"\n}\n```\n\n**Status Codes:**\n- `200`: Customer created successfully\n- `400`: Validation error (invalid input)\n- `401`: Unauthorised (no JWT token)\n- `403`: Forbidden (not a system_admin)\n- `500`: Internal server error\n\n**Two-Step Onboarding:**\nThis endpoint creates the tenant and customer records. After successful creation:\n1. Use the returned `tenantId` with POST /auth/invite-user (FFP-37) to create the business owner account\n2. Owner will receive Cognito invitation email with temporary password\n\n**Phase 1 MVP:**\nFor Phase 1, all customers are treated the same. Features will be added in future phases."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"customerName\": \"Sunshine Carehome\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/admin/create-customer",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "create-customer"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"tenantId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"customerId\": \"b2c3d4e5-f6a7-8901-bcde-f12345678901\",\n  \"customerName\": \"Sunshine Carehome\"\n}"
+            },
+            {
+              "name": "Validation Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"customerName\": \"\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/admin/create-customer",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "create-customer"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Invalid request data\",\n  \"requestId\": \"abc123-def456\",\n  \"details\": [\n    {\n      \"path\": \"customerName\",\n      \"message\": \"Customer name is required\",\n      \"code\": \"too_small\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "Forbidden - Not Super Admin",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"customerName\": \"Sunshine Carehome\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/admin/create-customer",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "create-customer"]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"FORBIDDEN\",\n  \"message\": \"Only system admins can create customers\",\n  \"requestId\": \"abc123-def456\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Admin operations requiring system_admin role.\n\n**Authentication:**\nAll endpoints require JWT token with `custom:role = system_admin`.\n\n**Current Endpoints:**\n- POST /admin/create-customer - Create new business tenant",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{jwtToken}}",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Get JWT Token (Cognito)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Extract and save JWT tokens from Cognito response",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has authentication result', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('AuthenticationResult');",
+                  "    pm.expect(jsonData.AuthenticationResult).to.have.property('IdToken');",
+                  "    pm.expect(jsonData.AuthenticationResult).to.have.property('AccessToken');",
+                  "    pm.expect(jsonData.AuthenticationResult).to.have.property('RefreshToken');",
+                  "});",
+                  "",
+                  "// Save the IdToken to collection variable for API requests",
+                  "const response = pm.response.json();",
+                  "if (response.AuthenticationResult && response.AuthenticationResult.IdToken) {",
+                  "    pm.collectionVariables.set('jwtToken', response.AuthenticationResult.IdToken);",
+                  "    console.log('JWT Token saved to collection variable');",
+                  "    ",
+                  "    // Optionally save other tokens",
+                  "    pm.collectionVariables.set('accessToken', response.AuthenticationResult.AccessToken);",
+                  "    pm.collectionVariables.set('refreshToken', response.AuthenticationResult.RefreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Amz-Target",
+                "value": "AWSCognitoIdentityProviderService.InitiateAuth",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-amz-json-1.1",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"AuthFlow\": \"USER_PASSWORD_AUTH\",\n  \"ClientId\": \"{{userPoolClientId}}\",\n  \"AuthParameters\": {\n    \"USERNAME\": \"{{cognitoUsername}}\",\n    \"PASSWORD\": \"{{cognitoPassword}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://cognito-idp.{{awsRegion}}.amazonaws.com/",
+              "protocol": "https",
+              "host": ["cognito-idp", "{{awsRegion}}", "amazonaws", "com"],
+              "path": [""]
+            },
+            "description": "Authenticate with AWS Cognito using username and password to obtain JWT tokens.\n\n**Authentication Flow:** USER_PASSWORD_AUTH\n\n**Required Collection Variables:**\n- `userPoolClientId` - Cognito User Pool Client ID\n- `cognitoUsername` - User's email address\n- `cognitoPassword` - User's password\n- `awsRegion` - AWS region (default: eu-west-2)\n\n**Response Tokens:**\n- `IdToken` - Used for API authentication (saved to `jwtToken` variable)\n- `AccessToken` - Used for Cognito user operations\n- `RefreshToken` - Used to obtain new tokens\n\n**Token Expiry:**\n- Access Token: 60 minutes\n- ID Token: 60 minutes\n- Refresh Token: 30 days\n\n**Usage:**\n1. Set the required collection variables (userPoolClientId, cognitoUsername, cognitoPassword)\n2. Send this request\n3. The `jwtToken` variable will be automatically populated\n4. Use the token for protected API endpoints\n\n**Testing Custom Claims:**\nAfter authentication, you can decode the JWT at https://jwt.io to verify custom claims:\n- `custom:tenantId` - Tenant identifier\n- `custom:role` - User role (e.g., system_admin)\n- `custom:customerId` - Customer identifier (optional)"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-Amz-Target",
+                    "value": "AWSCognitoIdentityProviderService.InitiateAuth",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/x-amz-json-1.1",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"AuthFlow\": \"USER_PASSWORD_AUTH\",\n  \"ClientId\": \"2jp2jkk7f6rtg5rgs5silft99t\",\n  \"AuthParameters\": {\n    \"USERNAME\": \"admin@example.com\",\n    \"PASSWORD\": \"your-password\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://cognito-idp.eu-west-2.amazonaws.com/",
+                  "protocol": "https",
+                  "host": ["cognito-idp", "eu-west-2", "amazonaws", "com"],
+                  "path": [""]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/x-amz-json-1.1"
+                }
+              ],
+              "body": "{\n  \"ChallengeParameters\": {},\n  \"AuthenticationResult\": {\n    \"AccessToken\": \"eyJraWQiOi...(truncated)\",\n    \"ExpiresIn\": 3600,\n    \"TokenType\": \"Bearer\",\n    \"RefreshToken\": \"eyJjdHkiOi...(truncated)\",\n    \"IdToken\": \"eyJraWQiOi...(truncated)\"\n  }\n}"
+            },
+            {
+              "name": "Invalid Credentials",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-Amz-Target",
+                    "value": "AWSCognitoIdentityProviderService.InitiateAuth",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/x-amz-json-1.1",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"AuthFlow\": \"USER_PASSWORD_AUTH\",\n  \"ClientId\": \"2jp2jkk7f6rtg5rgs5silft99t\",\n  \"AuthParameters\": {\n    \"USERNAME\": \"admin@example.com\",\n    \"PASSWORD\": \"wrong-password\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://cognito-idp.eu-west-2.amazonaws.com/",
+                  "protocol": "https",
+                  "host": ["cognito-idp", "eu-west-2", "amazonaws", "com"],
+                  "path": [""]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/x-amz-json-1.1"
+                }
+              ],
+              "body": "{\n  \"__type\": \"NotAuthorizedException\",\n  \"message\": \"Incorrect username or password.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Invite User",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Validate JWT token is set",
+                  "const jwtToken = pm.collectionVariables.get('jwtToken');",
+                  "",
+                  "if (!jwtToken || jwtToken === '') {",
+                  "    throw new Error('JWT token is required. Please authenticate first and set the jwtToken variable.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test response structure",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has required fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData).to.have.property('userId');",
+                  "    pm.expect(jsonData).to.have.property('email');",
+                  "});",
+                  "",
+                  "pm.test('User ID is valid UUID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+                  "    pm.expect(jsonData.userId).to.match(uuidRegex);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"c.tregaskis+ffp.invite-user.test-001@gmail.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"role\": \"customer_admin\",\n  \"tenantId\": \"REPLACE_WITH_TENANT_ID\",\n  \"customerId\": \"REPLACE_WITH_CUSTOMER_ID\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/auth/invite-user",
+              "host": ["{{apiUrl}}"],
+              "path": ["auth", "invite-user"]
+            },
+            "description": "Invite a new user to the platform with temporary password.\n\n**Authentication:** JWT token required (customer_owner OR system_admin)\n\n**Two Modes:**\n\n1. **Customer Owner Mode** (uses JWT context):\n   - User invites staff to their own tenant/customer\n   - tenantId/customerId taken from JWT automatically\n   - Request body does NOT include tenantId/customerId\n\n2. **System Admin Mode** (uses request body):\n   - System admin can invite users to any tenant/customer\n   - Must specify tenantId and customerId in request body\n\n**Request Body (Customer Owner):**\n```json\n{\n  \"email\": \"c.tregaskis+ffp.invite-user.test-001@gmail.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"role\": \"customer_admin\"\n}\n```\n\n**Request Body (System Admin):**\n```json\n{\n  \"email\": \"owner@newbusiness.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"role\": \"customer_owner\",\n  \"tenantId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"customerId\": \"550e8400-e29b-41d4-a716-446655440001\"\n}\n```\n\n**Valid Roles:**\n- `customer_owner` - Owner of a customer account (business)\n- `customer_admin` - Administrator within a customer organisation\n- `customer_user` - Regular user within a customer organisation\n\n**Response:**\n```json\n{\n  \"message\": \"User invited successfully. They will receive an email with temporary password.\",\n  \"userId\": \"uuid\",\n  \"email\": \"c.tregaskis+ffp.invite-user.test-001@gmail.com\"\n}\n```\n\n**Status Codes:**\n- `200`: User invited successfully\n- `400`: Validation error (invalid input or system admin missing tenantId/customerId)\n- `401`: Unauthorised (no JWT token)\n- `403`: Forbidden (not customer_owner or system_admin)\n- `500`: Internal server error\n\n**Cognito-to-DB Rollback:**\nIf database insert fails, Cognito user is automatically deleted (no orphaned users).\n\n**Typical Workflow:**\n1. System admin creates business via POST /admin/create-customer (FFP-112)\n2. System admin invites owner via POST /auth/invite-user (this endpoint)\n3. Owner receives Cognito email with temporary password\n4. Owner logs in and invites additional users via POST /auth/invite-user"
+          },
+          "response": [
+            {
+              "name": "Success Response (Customer Owner)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"c.tregaskis+ffp.invite-user.test-001@gmail.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"role\": \"customer_admin\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/invite-user",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "invite-user"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"User invited successfully. They will receive an email with temporary password.\",\n  \"userId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"email\": \"c.tregaskis+ffp.invite-user.test-001@gmail.com\"\n}"
+            },
+            {
+              "name": "Success Response (System Admin)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"owner@newbusiness.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"role\": \"customer_owner\",\n  \"tenantId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"customerId\": \"550e8400-e29b-41d4-a716-446655440001\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/invite-user",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "invite-user"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"User invited successfully. They will receive an email with temporary password.\",\n  \"userId\": \"b2c3d4e5-f6a7-8901-bcde-f12345678901\",\n  \"email\": \"owner@newbusiness.com\"\n}"
+            },
+            {
+              "name": "Validation Error - Invalid Email",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"not-an-email\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"role\": \"customer_admin\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/invite-user",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "invite-user"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Invalid request data\",\n  \"requestId\": \"abc123-def456\",\n  \"details\": [\n    {\n      \"path\": \"email\",\n      \"message\": \"Invalid email address\",\n      \"code\": \"invalid_string\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "Bad Request - System Admin Missing IDs",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"owner@business.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"role\": \"customer_owner\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/invite-user",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "invite-user"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"BAD_REQUEST\",\n  \"message\": \"System admins must provide tenantId and customerId when inviting users\",\n  \"requestId\": \"abc123-def456\"\n}"
+            },
+            {
+              "name": "Forbidden - Not Authorised Role",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"c.tregaskis+ffp.invite-user.test-001@gmail.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"role\": \"customer_admin\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/invite-user",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "invite-user"]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"FORBIDDEN\",\n  \"message\": \"Only business owners or system admins can invite users\",\n  \"requestId\": \"abc123-def456\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test response structure and save tokens if login successful",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "",
+                  "// Check if this is a successful login or NEW_PASSWORD_REQUIRED challenge",
+                  "if (response.accessToken) {",
+                  "    // Successful login - save tokens",
+                  "    pm.test('Response has authentication tokens', function () {",
+                  "        pm.expect(response).to.have.property('accessToken');",
+                  "        pm.expect(response).to.have.property('idToken');",
+                  "        pm.expect(response).to.have.property('refreshToken');",
+                  "        pm.expect(response).to.have.property('expiresIn');",
+                  "    });",
+                  "    ",
+                  "    // Save tokens to collection variables",
+                  "    pm.collectionVariables.set('jwtToken', response.idToken);",
+                  "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
+                  "    console.log('Login successful - JWT Token saved to collection variable');",
+                  "} else if (response.challengeName === 'NEW_PASSWORD_REQUIRED') {",
+                  "    // Temporary password - need to complete password change",
+                  "    pm.test('Response has NEW_PASSWORD_REQUIRED challenge', function () {",
+                  "        pm.expect(response).to.have.property('challengeName');",
+                  "        pm.expect(response).to.have.property('session');",
+                  "        pm.expect(response).to.have.property('email');",
+                  "        pm.expect(response).to.have.property('message');",
+                  "    });",
+                  "    ",
+                  "    // Save session for complete-new-password endpoint",
+                  "    pm.collectionVariables.set('passwordChallengeSession', response.session);",
+                  "    console.log('NEW_PASSWORD_REQUIRED challenge - Use complete-new-password endpoint');",
+                  "    console.log('Session saved to passwordChallengeSession variable');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"TempPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/auth/login",
+              "host": ["{{apiUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Authenticate user with email and password.\n\n**Authentication:** Public endpoint (no JWT required)\n\n**Request Body:**\n```json\n{\n  \"email\": \"user@example.com\",\n  \"password\": \"SecurePass123!\"\n}\n```\n\n**Response (Success):**\n```json\n{\n  \"accessToken\": \"eyJraWQiOi...\",\n  \"idToken\": \"eyJraWQiOi...\",\n  \"refreshToken\": \"eyJjdHkiOi...\",\n  \"expiresIn\": 3600\n}\n```\n\n**Response (Temporary Password):**\n```json\n{\n  \"challengeName\": \"NEW_PASSWORD_REQUIRED\",\n  \"session\": \"session-token-here\",\n  \"email\": \"user@example.com\",\n  \"message\": \"Temporary password must be changed. Please call /auth/complete-new-password with session, email, and new password.\"\n}\n```\n\n**Status Codes:**\n- `200`: Login successful OR temporary password challenge\n- `400`: Validation error (invalid email/password format)\n- `401`: Unauthorised (invalid credentials)\n- `500`: Internal server error\n\n**JWT Token Claims:**\nThe returned idToken contains custom claims:\n- `custom:tenantId` - Tenant identifier\n- `custom:customerId` - Customer identifier\n- `custom:role` - User role (e.g., customer_owner, system_admin)\n\n**Temporary Password Flow:**\nIf user has a temporary password (from /auth/invite-user):\n1. This endpoint returns NEW_PASSWORD_REQUIRED challenge\n2. Save the session token\n3. Call /auth/complete-new-password with session, email, and new password\n4. User receives JWT tokens after password change",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"SecurePass123!\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/login",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"accessToken\": \"eyJraWQiOiJ...(truncated)\",\n  \"idToken\": \"eyJraWQiOiJ...(truncated)\",\n  \"refreshToken\": \"eyJjdHkiOiJ...(truncated)\",\n  \"expiresIn\": 3600\n}"
+            },
+            {
+              "name": "NEW_PASSWORD_REQUIRED Challenge",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"TempPassword123!\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/login",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"challengeName\": \"NEW_PASSWORD_REQUIRED\",\n  \"session\": \"AYABeB1...(truncated)\",\n  \"email\": \"user@example.com\",\n  \"message\": \"Temporary password must be changed. Please call /auth/complete-new-password with session, email, and new password.\"\n}"
+            },
+            {
+              "name": "Unauthorised - Invalid Credentials",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"WrongPassword\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/login",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "status": "Unauthorised",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"UNAUTHORISED\",\n  \"message\": \"Invalid email or password\",\n  \"requestId\": \"abc123-def456\"\n}"
+            },
+            {
+              "name": "Validation Error - Invalid Email",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"SecurePass123!\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/login",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Invalid request data\",\n  \"requestId\": \"abc123-def456\",\n  \"details\": [\n    {\n      \"path\": \"email\",\n      \"message\": \"Invalid email address\",\n      \"code\": \"invalid_string\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Complete New Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test response structure and save tokens",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has authentication tokens', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('accessToken');",
+                  "    pm.expect(jsonData).to.have.property('idToken');",
+                  "    pm.expect(jsonData).to.have.property('refreshToken');",
+                  "    pm.expect(jsonData).to.have.property('expiresIn');",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "});",
+                  "",
+                  "// Save tokens to collection variables",
+                  "const response = pm.response.json();",
+                  "if (response.idToken) {",
+                  "    pm.collectionVariables.set('jwtToken', response.idToken);",
+                  "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
+                  "    console.log('Password changed successfully - JWT Token saved to collection variable');",
+                  "    ",
+                  "    // Clear the challenge session as it's no longer needed",
+                  "    pm.collectionVariables.set('passwordChallengeSession', '');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session\": \"{{passwordChallengeSession}}\",\n  \"email\": \"user@example.com\",\n  \"newPassword\": \"NewSecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/auth/complete-new-password",
+              "host": ["{{apiUrl}}"],
+              "path": ["auth", "complete-new-password"]
+            },
+            "description": "Complete NEW_PASSWORD_REQUIRED challenge for users with temporary passwords.\n\n**Authentication:** Public endpoint (no JWT required)\n\n**Workflow:**\n1. User calls POST /auth/login with temporary password\n2. Response includes NEW_PASSWORD_REQUIRED challenge with session token\n3. User calls this endpoint to set permanent password\n4. Response includes JWT tokens for immediate use\n\n**Request Body:**\n```json\n{\n  \"session\": \"session-token-from-login-response\",\n  \"email\": \"user@example.com\",\n  \"newPassword\": \"NewSecurePass123!\"\n}\n```\n\n**Password Requirements:**\n- Minimum 8 characters\n- At least one lowercase letter\n- At least one uppercase letter\n- At least one digit\n- At least one special character\n\n**Response:**\n```json\n{\n  \"accessToken\": \"eyJraWQiOi...\",\n  \"idToken\": \"eyJraWQiOi...\",\n  \"refreshToken\": \"eyJjdHkiOi...\",\n  \"expiresIn\": 3600,\n  \"message\": \"Password changed successfully. You are now logged in.\"\n}\n```\n\n**Status Codes:**\n- `200`: Password changed successfully\n- `400`: Validation error (password doesn't meet requirements)\n- `401`: Unauthorised (session expired or invalid)\n- `500`: Internal server error\n\n**Tips:**\n- The session token expires after a short period (typically 3 minutes)\n- If session expires, user must call /auth/login again to get a new session\n- The passwordChallengeSession variable is automatically populated by the Login request",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"session\": \"AYABeB1...(truncated)\",\n  \"email\": \"user@example.com\",\n  \"newPassword\": \"NewSecurePass123!\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/complete-new-password",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "complete-new-password"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"accessToken\": \"eyJraWQiOiJ...(truncated)\",\n  \"idToken\": \"eyJraWQiOiJ...(truncated)\",\n  \"refreshToken\": \"eyJjdHkiOiJ...(truncated)\",\n  \"expiresIn\": 3600,\n  \"message\": \"Password changed successfully. You are now logged in.\"\n}"
+            },
+            {
+              "name": "Unauthorised - Session Expired",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"session\": \"expired-session-token\",\n  \"email\": \"user@example.com\",\n  \"newPassword\": \"NewSecurePass123!\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/complete-new-password",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "complete-new-password"]
+                }
+              },
+              "status": "Unauthorised",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"UNAUTHORISED\",\n  \"message\": \"Session expired or invalid\",\n  \"requestId\": \"abc123-def456\"\n}"
+            },
+            {
+              "name": "Validation Error - Weak Password",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"session\": \"AYABeB1...(truncated)\",\n  \"email\": \"user@example.com\",\n  \"newPassword\": \"weak\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/complete-new-password",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "complete-new-password"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Invalid request data\",\n  \"requestId\": \"abc123-def456\",\n  \"details\": [\n    {\n      \"path\": \"newPassword\",\n      \"message\": \"Password must be at least 8 characters\",\n      \"code\": \"too_small\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test response structure and save new tokens",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has authentication tokens', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('accessToken');",
+                  "    pm.expect(jsonData).to.have.property('idToken');",
+                  "    pm.expect(jsonData).to.have.property('refreshToken');",
+                  "    pm.expect(jsonData).to.have.property('expiresIn');",
+                  "});",
+                  "",
+                  "// Save new tokens to collection variables",
+                  "const response = pm.response.json();",
+                  "if (response.idToken) {",
+                  "    pm.collectionVariables.set('jwtToken', response.idToken);",
+                  "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
+                  "    console.log('Tokens refreshed successfully - JWT Token updated');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/auth/refresh-token",
+              "host": ["{{apiUrl}}"],
+              "path": ["auth", "refresh-token"]
+            },
+            "description": "Refresh access and ID tokens using a valid refresh token.\n\n**Authentication:** Public endpoint (no JWT required)\n\n**Workflow:**\n1. User logs in via POST /auth/login (or completes password change)\n2. Response includes refreshToken (valid for 30 days)\n3. When access token expires (after 1 hour), use this endpoint\n4. Receive new access and ID tokens with fresh expiry\n\n**Request Body:**\n```json\n{\n  \"refreshToken\": \"eyJjdHkiOi...\"\n}\n```\n\n**Response:**\n```json\n{\n  \"accessToken\": \"eyJraWQiOi...\",\n  \"idToken\": \"eyJraWQiOi...\",\n  \"refreshToken\": \"eyJjdHkiOi...\",\n  \"expiresIn\": 3600\n}\n```\n\n**Status Codes:**\n- `200`: Tokens refreshed successfully\n- `400`: Validation error (invalid refresh token format)\n- `401`: Unauthorised (refresh token expired or invalid)\n- `500`: Internal server error\n\n**Refresh Token Behaviour:**\n- Refresh tokens are valid for 30 days (Cognito default)\n- Refresh token does NOT rotate - same token returned in response\n- Access/ID tokens are regenerated with new 1-hour expiry\n- If refresh token expires, user must login again\n\n**Token Expiry:**\n- Access Token: 60 minutes\n- ID Token: 60 minutes\n- Refresh Token: 30 days (does not change)\n\n**Tips:**\n- The refreshToken variable is automatically populated by Login and Complete New Password requests\n- Use this endpoint when you receive 401 errors due to expired access tokens\n- No need to logout and re-login if refresh token is still valid",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"eyJjdHkiOiJ...(truncated)\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/refresh-token",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "refresh-token"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"accessToken\": \"eyJraWQiOiJ...(truncated)\",\n  \"idToken\": \"eyJraWQiOiJ...(truncated)\",\n  \"refreshToken\": \"eyJjdHkiOiJ...(truncated)\",\n  \"expiresIn\": 3600\n}"
+            },
+            {
+              "name": "Unauthorised - Expired Refresh Token",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"expired-token\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/refresh-token",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "refresh-token"]
+                }
+              },
+              "status": "Unauthorised",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"UNAUTHORISED\",\n  \"message\": \"Invalid or expired refresh token\",\n  \"requestId\": \"abc123-def456\"\n}"
+            },
+            {
+              "name": "Validation Error - Missing Token",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/refresh-token",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "refresh-token"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Invalid request data\",\n  \"requestId\": \"abc123-def456\",\n  \"details\": [\n    {\n      \"path\": \"refreshToken\",\n      \"message\": \"Refresh token is required\",\n      \"code\": \"too_small\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ],
+      "description": "AWS Cognito authentication for obtaining JWT tokens.\n\n**Setup Instructions:**\n1. Set collection variables:\n   - `userPoolClientId` - Your Cognito User Pool Client ID\n   - `cognitoUsername` - Your email/username\n   - `cognitoPassword` - Your password\n   - `awsRegion` - AWS region (e.g., eu-west-2)\n\n2. Send the \"Get JWT Token (Cognito)\" request\n3. The `jwtToken` variable will be automatically set\n4. Protected endpoints will use this token automatically\n\n**Endpoints:**\n- POST /auth/login - Authenticate with email and password (public)\n- POST /auth/complete-new-password - Complete temporary password challenge (public)\n- POST /auth/refresh-token - Refresh tokens using refresh token (public)\n- POST /auth/invite-user - Invite new users (customer_owner or system_admin role required)\n\n**Future Endpoints:**\n- POST /auth/forgot-password - Initiate password reset\n- POST /auth/change-password - Change password for authenticated user",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{jwtToken}}",
+            "type": "string"
+          }
+        ]
+      }
     },
     {
       "name": "Assessments (Coming Soon)",
@@ -115,6 +1187,36 @@
     },
     {
       "key": "jwtToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cognitoClientId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cognitoUsername",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cognitoPassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "awsRegion",
+      "value": "eu-west-2",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
       "value": "",
       "type": "string"
     }

@@ -25,12 +25,15 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.705.0",
+    "@ffp/database": "workspace:*",
     "drizzle-orm": "^0.44.7",
     "pg": "^8.16.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@ffp/eslint-config": "workspace:*",
+    "@types/aws-lambda": "^8.10.145",
     "@types/node": "^22.9.0",
     "@types/pg": "^8.15.5",
     "@vitest/ui": "^2.1.4",

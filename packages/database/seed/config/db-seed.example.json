@@ -1,0 +1,88 @@
+{
+  "platformTenant": {
+    "id": "00000000-0000-0000-0000-000000000000",
+    "type": "platform",
+    "name": "FFP Platform",
+    "settings": {},
+    "createdAt": "2025-01-01T00:00:00.000000",
+    "updatedAt": "2025-01-01T00:00:00.000000"
+  },
+  "superAdminUser": {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "email": "admin@example.com",
+    "cognitoSub": "00000000-0000-0000-0000-000000000002",
+    "firstName": "System",
+    "lastName": "Admin",
+    "role": "system_admin",
+    "customerId": null,
+    "profileImageUrl": null,
+    "phone": null,
+    "dateOfBirth": null,
+    "createdAt": "2025-01-01T00:00:00.000000",
+    "updatedAt": "2025-01-01T00:00:00.000000"
+  },
+  "superAdminCognito": {
+    "email": "admin@example.com",
+    "cognitoSub": "00000000-0000-0000-0000-000000000002",
+    "temporaryPassword": "TempPass123!"
+  },
+  "testCustomerTenant": {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "type": "business",
+    "name": "Test Care Home",
+    "settings": {
+      "theme": {
+        "primary": "#2563eb",
+        "secondary": "#64748b"
+      },
+      "missedSessionStrategy": "flexible",
+      "allowCustomVideos": false,
+      "requireAssessmentReview": true,
+      "notifications": {
+        "welcomeEmail": true,
+        "programReminders": true,
+        "weeklyDigest": false
+      }
+    },
+    "createdAt": "2025-01-01T00:00:00.000000",
+    "updatedAt": "2025-01-01T00:00:00.000000"
+  },
+  "testCustomer": {
+    "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+    "tenantId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "Test Care Home",
+    "accountCode": "TCH-001",
+    "address": {
+      "line1": "123 High Street",
+      "line2": "",
+      "city": "London",
+      "county": "Greater London",
+      "postcode": "SW1A 1AA",
+      "country": "United Kingdom"
+    },
+    "status": "active",
+    "createdAt": "2025-01-01T00:00:00.000000",
+    "updatedAt": "2025-01-01T00:00:00.000000"
+  },
+  "testCustomerAdminUser": {
+    "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+    "tenantId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "email": "customer.admin@example.com",
+    "cognitoSub": "d4e5f6a7-b8c9-0123-def1-234567890123",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "role": "customer_admin",
+    "customerId": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+    "profileImageUrl": null,
+    "phone": "+44 7700 900123",
+    "dateOfBirth": "1985-03-15",
+    "createdAt": "2025-01-01T00:00:00.000000",
+    "updatedAt": "2025-01-01T00:00:00.000000"
+  },
+  "testCustomerAdminCognito": {
+    "email": "customer.admin@example.com",
+    "cognitoSub": "d4e5f6a7-b8c9-0123-def1-234567890123",
+    "temporaryPassword": "TempPass123!"
+  }
+}

@@ -24,6 +24,9 @@ coverage/
 .env
 .env*.local
 
+# Database seed config (local, environment-specific)
+**/db-seed.local.*.json
+
 # IDE
 .vscode/*
 !.vscode/settings.json
@@ -51,10 +54,17 @@ sst-env.d.ts
 *.tsbuildinfo
 .eslintcache
 
+# Generated config files (TypeScript compilation artifacts)
+vitest.config.js
+vitest.config.d.ts
+
 # Local config (personal, not shared)
 CLAUDE.local.md
 .claude.md
 .claude-prompts/*
+.claude/review-context.md
+project-documentation/sprint-planning/outputs/*.md
+project-documentation/sprint-planning/outputs/**/*.md
 
 # AWS RDS CA certificate (public certificate - safe to commit)
 # curl -o packages/core/certs/rds-ca-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
