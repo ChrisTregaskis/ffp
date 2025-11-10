@@ -5,6 +5,7 @@ import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 import { handler as completeNewPasswordHandler } from './complete-new-password';
 import { handler as inviteUserHandler } from './invite-user';
 import { handler as loginHandler } from './login';
+import { handler as refreshTokenHandler } from './refresh-token';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
@@ -30,8 +31,8 @@ const routes: RouteRegistry = {
     '/login': loginHandler, // Public endpoint
     '/complete-new-password': completeNewPasswordHandler, // Public endpoint
     '/invite-user': inviteUserHandler, // Protected endpoint (requires JWT)
+    '/refresh-token': refreshTokenHandler, // Public endpoint
     // Future auth routes:
-    // '/refresh': refreshTokenHandler,
     // '/logout': logoutHandler,
   },
   PUT: {
