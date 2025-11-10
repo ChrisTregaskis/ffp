@@ -1,10 +1,10 @@
 # FFP - Project State
 
-**Last Updated**: November 11, 2025 - Session 40
+**Last Updated**: November 11, 2025 - Session 41
 **Current Phase**: Sprint 2 Execution - IN PROGRESS 🚀
 **Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
 **User Story Branch**: `feature/ffp-9-cognito-auth`
-**Sub Task Branch**: All Phase 3 subtasks complete (Ready for Review)
+**Current Subtask**: FFP-41 - Unit Tests (context.ts only)
 
 ---
 
@@ -54,9 +54,9 @@
 
 ### Phase 4: Testing (12h - can defer FFP-42/45)
 
-- ⏸️ FFP-41: Unit Tests (4h)
-- ⏸️ FFP-42: Integration Tests (5h) - DEFERRABLE
-- ⏸️ FFP-45: Deployed Environment Tests (3h) - DEFERRABLE
+- 🚀 FFP-41: Unit Tests (4h) - **IN PROGRESS** (context.ts tests only - auth/error/logger already complete)
+- ⏸️ FFP-42: Integration Tests (5h) - **DEFERRED** (for build speed, sticking with 10% coverage and critical unit tests only)
+- ⏸️ FFP-45: Deployed Environment Tests (3h) - **DEFERRED** (for build speed, sticking with 10% coverage and critical unit tests only)
 
 ### Phase 5: Documentation (2h)
 
@@ -65,6 +65,14 @@
 ---
 
 ## Recent Work (Sprint 2 Sessions)
+
+**Session 41 (Nov 11)**: 🚀 FFP-41 - Unit Tests IN PROGRESS
+
+- Analysed ticket: auth schema, error, and logger tests already exist (comprehensive)
+- Missing: context.ts tests (extractUserContext, createSystemContext, extractJobContext)
+- Created executable prompt for context.ts unit tests
+- Scope: Write missing context tests only, verify 10% coverage target achieved
+- Expected completion: ~2-3 hours (ticket estimated 4h, reduced scope)
 
 **Session 40 (Nov 11)**: ✅ FFP-40 - API Gateway Routes Verification COMPLETE (1h)
 
