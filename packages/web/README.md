@@ -4,7 +4,7 @@ React frontend for the Fit For Purpose platform.
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - **Framework**: React 18 with TypeScript (strict mode)
 - **Build Tool**: Vite (fast HMR, optimised builds)
@@ -14,7 +14,7 @@ React frontend for the Fit For Purpose platform.
 
 ---
 
-## 🚀 Usage
+## Usage
 
 ### Importing from @ffp/core
 
@@ -73,46 +73,7 @@ describe('Button', () => {
 
 ---
 
-## 📦 Dependencies
-
-### Production Dependencies
-
-- **@ffp/core** (workspace:\*) - Shared business logic, types, and schemas
-- **react** (^18.x) - UI library
-- **react-dom** (^18.x) - React DOM renderer
-
-### Dev Dependencies
-
-- **vite** (^5.4.10) - Build tool and dev server
-- **typescript** (^5.6.3) - TypeScript compiler
-- **vitest** (^2.1.4) - Unit testing framework
-- **@testing-library/react** - React component testing
-- **@ffp/eslint-config** - Shared ESLint configuration
-
----
-
-## 🎯 Current Status
-
-### ✅ Complete
-
-- Basic React + Vite setup
-- TypeScript configuration with strict mode
-- Workspace dependency on `@ffp/core`
-- Intra-package path aliases (`@web/*`)
-- Hot Module Replacement (HMR) working
-- Testing framework configured
-
-### ⏸️ Awaiting Future Sprints
-
-- **TailwindCSS** configuration
-- **Authentication** components (FFP-16)
-- **Protected** routes
-- **API integration** with Lambda functions
-- **UI component** library setup
-
----
-
-## 📚 Further Reading
+## Further Reading
 
 For detailed commands, project structure, and workflows, see:
 
