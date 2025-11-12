@@ -3,6 +3,9 @@ import { APP_NAME, APP_VERSION } from '@ffp/core';
 import { PathAliasTest } from '@web/components/PathAliasTest';
 
 function App(): JSX.Element {
+  // Test for showing FormTest page for FFP-115b verification
+  // return <FormTest />;
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-4xl">
