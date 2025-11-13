@@ -42,13 +42,37 @@ export const IconTest: React.FC = () => {
 
         {/* Colour variations */}
         <section className="bg-white p-6 rounded-lg shadow mb-8">
-          <h2 className="text-xl font-bold mb-4">Colour Variations</h2>
+          <h2 className="text-xl font-bold mb-4">Colour Variations (FFP Brand Colours)</h2>
           {iconNames.length > 0 && (
             <div className="flex items-center gap-6">
-              <Icon name={iconNames[0]} styleProps={{ size: 'lg', colour: '#3B82F6' }} />
-              <Icon name={iconNames[0]} styleProps={{ size: 'lg', colour: '#10B981' }} />
-              <Icon name={iconNames[0]} styleProps={{ size: 'lg', colour: '#EF4444' }} />
-              <Icon name={iconNames[0]} styleProps={{ size: 'lg', colour: '#8B5CF6' }} />
+              <div className="flex flex-col items-center">
+                <Icon
+                  name={iconNames[0]}
+                  styleProps={{ size: 'lg', colour: 'var(--color-ffp-primary-blue)' }}
+                />
+                <span className="text-xs mt-1">Primary Blue</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <Icon
+                  name={iconNames[0]}
+                  styleProps={{ size: 'lg', colour: 'var(--color-ffp-dark-blue)' }}
+                />
+                <span className="text-xs mt-1">Dark Blue</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <Icon
+                  name={iconNames[0]}
+                  styleProps={{ size: 'lg', colour: 'var(--color-ffp-green)' }}
+                />
+                <span className="text-xs mt-1">Green</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <Icon
+                  name={iconNames[0]}
+                  styleProps={{ size: 'lg', colour: 'var(--color-ffp-light-purple)' }}
+                />
+                <span className="text-xs mt-1">Light Purple</span>
+              </div>
             </div>
           )}
         </section>

@@ -42,7 +42,6 @@ export const Icon: React.FC<IconProps> = ({ name, styleProps = {}, title, ariaLa
 
   return (
     <IcomoonReact
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       iconSet={iconSet}
       icon={name}
       size={sizeMap[size]}
