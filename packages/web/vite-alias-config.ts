@@ -10,6 +10,7 @@ export function createWebAliasConfig(packageRoot: string): Record<string, string
     '@web/components': path.resolve(packageRoot, 'src/components'),
     '@web/hooks': path.resolve(packageRoot, 'src/hooks'),
     '@web/pages': path.resolve(packageRoot, 'src/pages'),
+    '@web/assets': path.resolve(packageRoot, 'src/assets'),
 
     // Future-ready aliases for common directories
     '@web/utils': path.resolve(packageRoot, 'src/utils'),

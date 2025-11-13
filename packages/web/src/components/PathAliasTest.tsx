@@ -13,14 +13,14 @@ export function PathAliasTest(): JSX.Element {
       <h2 className="text-2xl font-semibold text-gray-900">TypeScript Path Alias Test</h2>
 
       <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-green-900 mb-2">✅ Workspace Import (@ffp/core)</h3>
+        <h3 className="text-lg font-medium text-green-900 mb-2">Workspace Import (@ffp/core)</h3>
         <p className="text-green-700">
           App Name: <strong className="font-semibold">{APP_NAME}</strong>
         </p>
       </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-blue-900 mb-3">✅ Internal Path Aliases</h3>
+        <h3 className="text-lg font-medium text-blue-900 mb-3">Internal Path Aliases</h3>
         <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto text-sm">
           {JSON.stringify(
             {

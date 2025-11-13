@@ -1,10 +1,11 @@
 # FFP - Project State
 
-**Last Updated**: November 10, 2025 - Session 44
+**Last Updated**: November 13, 2025 - Session 45
 **Current Phase**: Sprint 2 Execution - IN PROGRESS 🚀
 **Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
-**Next Subtask**: FFP-115 - Component Library & Design System Setup
-**Recently Completed**: FFP-12 - Testing Infrastructure Setup
+**Current User Story Branch:** `feature/FFP-16-web-login-flow`
+**Next Subtask**: FFP-93 - Install and Configure AWS Amplify
+**Recently Completed**: FFP-115 - Component Library & Design System Setup
 
 ---
 
@@ -110,13 +111,14 @@
 
 ## Current Work: FFP-16 - Web Login Interface
 
-**Status**: 🚀 IN PROGRESS (7/10 subtasks active, 2 deferred, 1 new)
+**Status**: 🚀 IN PROGRESS (8/10 subtasks - 1 complete, 7 active, 2 deferred)
 **Estimated**: ~18-19 hours (revised from 20 hours with deferrals)
+**Completed**: 4/18-19 hours (21%)
 
 ### Execution Order
 
-1. **FFP-115** - Component Library & Design System Setup (3-4h) - 🔜 **NEXT**
-2. **FFP-93** - Install and configure AWS Amplify (1h)
+1. ✅ **FFP-115** - Component Library & Design System Setup (4h) - **COMPLETE**
+2. **FFP-93** - Install and configure AWS Amplify (1h) - 🔜 **NEXT**
 3. **FFP-90** - Create AuthContext and AuthProvider (4h)
 4. **FFP-92** - Implement login form (2h)
 5. **FFP-94** - Create ProtectedRoute component (2h)
@@ -163,6 +165,22 @@
 ---
 
 ## Recent Work (Sprint 2 Sessions)
+
+**Session 45 (Nov 13)**: ✅ FFP-115 - Component Library COMPLETE + Code Review (4h)
+
+- Implemented Tailwind CSS v4 with CSS-first `@theme` configuration
+- Created complete FFP colour system (primary, secondary, success, warning, error with 50-950 shades)
+- Integrated Inter font family with optimised weights (400, 500, 600, 700)
+- Built type-safe form pattern with React Hook Form + Zod automatic schema generation
+- Created form components: FormTextInput, FormPasswordInput, FormEmailInput with full accessibility
+- Implemented Icon system with auto-generated TypeScript types from Icomoon (134 icons)
+- Created Icon component with size variants (xs-xl) and type-safe colour props
+- Enhanced components with ARIA attributes (aria-required, aria-invalid, aria-describedby)
+- Added form-level error display with Icon and dismiss functionality
+- Achieved zero TypeScript errors, zero ESLint warnings, zero `any` types
+- British English compliance throughout (colour, optimise, behaviour)
+- All acceptance criteria met for FFP-115a, FFP-115b, FFP-115c
+- Ready for FFP-93 (AWS Amplify setup)
 
 **Session 44 (Nov 10)**: 🚀 FFP-16 - Planning & Ticket Updates (1h)
 

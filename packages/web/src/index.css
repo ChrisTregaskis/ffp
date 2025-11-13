@@ -1,9 +1,97 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
+@theme {
+  /* FFP Brand Colours */
+  --color-ffp-primary-blue: #6d9fff;
+  --color-ffp-dark-blue: #242f8e;
+  --color-ffp-navy: #091c41;
+  --color-ffp-light-purple: #d7d0ff;
+  --color-ffp-green: #64c873;
+
+  /* Semantic Colours */
+  --color-primary: #6d9fff;
+  --color-secondary: #d7d0ff;
+  --color-success: #64c873;
+
+  /* UI Colours */
+  --color-background: #ffffff;
+  --color-foreground: oklch(0.145 0 0);
+  --color-card: #ffffff;
+  --color-card-foreground: oklch(0.145 0 0);
+  --color-popover: oklch(1 0 0);
+  --color-popover-foreground: oklch(0.145 0 0);
+  --color-primary-foreground: #ffffff;
+  --color-secondary-foreground: #030213;
+  --color-muted: #ececf0;
+  --color-muted-foreground: #717182;
+  --color-accent: #e9ebef;
+  --color-accent-foreground: #030213;
+  --color-destructive: #d4183d;
+  --color-destructive-foreground: #ffffff;
+  --color-border: rgba(0, 0, 0, 0.1);
+  --color-input: transparent;
+  --color-input-background: #f3f3f5;
+  --color-ring: #6d9fff;
+
+  /* Border Radius */
+  --radius: 0.625rem;
+  --radius-xs: 0.125rem;
+  --radius-sm: calc(0.625rem - 4px);
+  --radius-md: calc(0.625rem - 2px);
+  --radius-lg: 0.625rem;
+  --radius-xl: calc(0.625rem + 4px);
+  --radius-2xl: 1rem;
+
+  /* Font Family */
+  --font-sans:
+    'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+
+  /* Font Sizes with Line Heights */
+  --font-size-xs: 0.75rem;
+  --font-size-xs--line-height: 1rem;
+  --font-size-sm: 0.875rem;
+  --font-size-sm--line-height: 1.25rem;
+  --font-size-base: 1rem;
+  --font-size-base--line-height: 1.5rem;
+  --font-size-lg: 1.125rem;
+  --font-size-lg--line-height: 1.75rem;
+  --font-size-xl: 1.25rem;
+  --font-size-xl--line-height: 1.75rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-2xl--line-height: 2rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-3xl--line-height: 2.25rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-4xl--line-height: 2.5rem;
+
+  /* Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Max Widths */
+  --max-width-xs: 20rem;
+  --max-width-2xl: 42rem;
+  --max-width-3xl: 48rem;
+  --max-width-4xl: 56rem;
+}
+
+/* Icomoon icon font */
+@font-face {
+  font-family: 'icomoon';
+  src: url('./assets/icomoon/icomoon.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+/* Custom Base Styles */
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900;
+    font-family: var(--font-sans);
+    color: var(--color-foreground);
+    background-color: var(--color-background);
   }
 }
