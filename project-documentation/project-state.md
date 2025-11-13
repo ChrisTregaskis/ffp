@@ -1,11 +1,11 @@
 # FFP - Project State
 
-**Last Updated**: November 13, 2025 - Session 45
+**Last Updated**: November 13, 2025 - Session 46
 **Current Phase**: Sprint 2 Execution - IN PROGRESS 🚀
 **Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
 **Current User Story Branch:** `feature/FFP-16-web-login-flow`
-**Next Subtask**: FFP-93 - Install and Configure AWS Amplify
-**Recently Completed**: FFP-115 - Component Library & Design System Setup
+**Next Subtask**: FFP-90 - Create AuthContext and AuthProvider
+**Recently Completed**: FFP-93 - Install and Configure AWS Amplify
 
 ---
 
@@ -111,15 +111,15 @@
 
 ## Current Work: FFP-16 - Web Login Interface
 
-**Status**: 🚀 IN PROGRESS (8/10 subtasks - 1 complete, 7 active, 2 deferred)
+**Status**: 🚀 IN PROGRESS (8/10 subtasks - 2 complete, 6 active, 2 deferred)
 **Estimated**: ~18-19 hours (revised from 20 hours with deferrals)
-**Completed**: 4/18-19 hours (21%)
+**Completed**: 5/18-19 hours (26%)
 
 ### Execution Order
 
 1. ✅ **FFP-115** - Component Library & Design System Setup (4h) - **COMPLETE**
-2. **FFP-93** - Install and configure AWS Amplify (1h) - 🔜 **NEXT**
-3. **FFP-90** - Create AuthContext and AuthProvider (4h)
+2. ✅ **FFP-93** - Install and configure AWS Amplify (1h) - **COMPLETE**
+3. **FFP-90** - Create AuthContext and AuthProvider (4h) - 🔜 **NEXT**
 4. **FFP-92** - Implement login form (2h)
 5. **FFP-94** - Create ProtectedRoute component (2h)
 6. **FFP-96** - Create pages and setup routing (2h)
@@ -165,6 +165,20 @@
 ---
 
 ## Recent Work (Sprint 2 Sessions)
+
+**Session 46 (Nov 13)**: ✅ FFP-93 - AWS Amplify Setup COMPLETE (1h)
+
+- Installed aws-amplify and @aws-amplify/ui-react packages in @ffp/web
+- Created lib/auth.ts configuration file with Cognito User Pool credentials
+- Added environment variables to .env.local with VITE\_ prefix for client exposure
+- Extended vite-env.d.ts with type-safe ImportMetaEnv interface
+- Initialised Amplify in main.tsx entry point (side-effect import pattern)
+- Exported MVP auth methods: signIn, signOut, getCurrentUser, fetchAuthSession
+- Intentionally excluded signUp (invite-only user creation for MVP)
+- Zero TypeScript errors, zero ESLint warnings, zero `any` types
+- British English spelling throughout (initialise, optimise)
+- All acceptance criteria met
+- Ready for FFP-90 (AuthContext and AuthProvider)
 
 **Session 45 (Nov 13)**: ✅ FFP-115 - Component Library COMPLETE + Code Review (4h)
 

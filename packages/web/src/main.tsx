@@ -6,6 +6,9 @@ import '@fontsource/inter/500.css'; // Medium
 import '@fontsource/inter/600.css'; // Semibold
 import '@fontsource/inter/700.css'; // Bold
 
+// Initialise AWS Amplify authentication
+import './lib/auth';
+
 import App from './App';
 import './index.css';
 
