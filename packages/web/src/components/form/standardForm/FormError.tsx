@@ -2,6 +2,7 @@ import React from 'react';
 
 export interface FormErrorProps {
   message?: string;
+  id?: string; // For linking to input via aria-describedby
 }
 
 /**
@@ -13,13 +14,13 @@ export interface FormErrorProps {
  * Features:
  * - Styled error banner
  * - Conditionally rendered (only shows when message provided)
- * - Accessible error messaging
+ * - Accessible error messaging with optional id for aria-describedby
  */
-export const FormError: React.FC<FormErrorProps> = ({ message }) => {
+export const FormError: React.FC<FormErrorProps> = ({ message, id }) => {
   if (!message) return null;
 
   return (
-    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md" role="alert">
+    <div id={id} className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md" role="alert">
       <p className="text-sm text-red-600">{message}</p>
     </div>
   );

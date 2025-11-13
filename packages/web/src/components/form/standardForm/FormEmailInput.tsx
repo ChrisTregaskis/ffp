@@ -28,17 +28,22 @@ export const FormEmailInput = <TFieldValues extends FieldValues>({
   isRequired,
 }: FormEmailInputProps<TFieldValues>): JSX.Element => {
   const error = errors[name]?.message as string | undefined;
+  const inputId = String(name);
+  const errorId = `${inputId}-error`;
 
   return (
     <div className="mb-4">
-      <label htmlFor={String(name)} className="block text-sm font-medium text-gray-700 mb-1">
+      <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1">
         {label}
         {isRequired && <span className="text-red-500 ml-1">*</span>}
       </label>
       <input
-        id={String(name)}
+        id={inputId}
         type="email"
         placeholder={placeholder}
+        aria-required={isRequired}
+        aria-invalid={!!error}
+        aria-describedby={error ? errorId : undefined}
         {...register(name)}
         className={`
           w-full px-3 py-2 border rounded-md shadow-sm
@@ -46,7 +51,11 @@ export const FormEmailInput = <TFieldValues extends FieldValues>({
           ${error ? 'border-red-500' : 'border-gray-300'}
         `}
       />
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && (
+        <p id={errorId} className="mt-1 text-sm text-red-600" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 };

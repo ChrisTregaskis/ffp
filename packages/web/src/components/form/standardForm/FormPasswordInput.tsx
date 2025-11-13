@@ -31,18 +31,23 @@ export const FormPasswordInput = <TFieldValues extends FieldValues>({
 }: FormPasswordInputProps<TFieldValues>): JSX.Element => {
   const [showPassword, setShowPassword] = useState(false);
   const error = errors[name]?.message as string | undefined;
+  const inputId = String(name);
+  const errorId = `${inputId}-error`;
 
   return (
     <div className="mb-4">
-      <label htmlFor={String(name)} className="block text-sm font-medium text-gray-700 mb-1">
+      <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1">
         {label}
         {isRequired && <span className="text-red-500 ml-1">*</span>}
       </label>
       <div className="relative">
         <input
-          id={String(name)}
+          id={inputId}
           type={showPassword ? 'text' : 'password'}
           placeholder={placeholder}
+          aria-required={isRequired}
+          aria-invalid={!!error}
+          aria-describedby={error ? errorId : undefined}
           {...register(name)}
           className={`
             w-full px-3 py-2 border rounded-md shadow-sm pr-10
@@ -61,7 +66,11 @@ export const FormPasswordInput = <TFieldValues extends FieldValues>({
           {showPassword ? 'Hide' : 'Show'}
         </button>
       </div>
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && (
+        <p id={errorId} className="mt-1 text-sm text-red-600" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 };

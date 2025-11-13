@@ -88,7 +88,7 @@ export const FormTest: React.FC = () => {
           fields={testFields}
           onSubmit={handleSubmit}
           submitLabel="Test Submit"
-          isLoading={isLoading}
+          isSubmitting={isLoading}
         />
 
         {submittedValues && (

@@ -1,7 +1,11 @@
+import { useCallback, useMemo } from 'react';
+
+import { Icon } from '@web/components/Icon/Icon';
+import { Icons } from '@web/components/Icon/types';
+
 import { useFieldsForm } from '../hooks/useFieldsForm';
 
 import { FormEmailInput } from './FormEmailInput';
-import { FormError } from './FormError';
 import { FormPasswordInput } from './FormPasswordInput';
 import { FormTextInput } from './FormTextInput';
 
@@ -14,18 +18,12 @@ export interface FormProps<TFieldValues extends FieldValues> {
   defaultValues?: DefaultValues<TFieldValues>;
   submitLabel?: string;
   errorMessage?: string;
-  isLoading?: boolean;
+  onClearFormError?: () => void; // Clear error on user interaction
+  isSubmitting?: boolean; // External submitting state (e.g., from async API calls)
 }
 
 /**
  * Standard form wrapper component
- *
- * Features:
- * - Declarative field-based configuration
- * - Automatic field rendering based on dataType
- * - Built-in validation from field definitions
- * - Loading state handling
- * - Form-level error display
  *
  * Usage:
  * ```tsx
@@ -34,7 +32,8 @@ export interface FormProps<TFieldValues extends FieldValues> {
  *   onSubmit={handleLogin}
  *   submitLabel="Log In"
  *   errorMessage={apiError}
- *   isLoading={isSubmitting}
+ *   onClearFormError={() => setApiError(undefined)}
+ *   isSubmitting={isSubmitting}
  * />
  * ```
  */
@@ -44,15 +43,16 @@ export const Form = <TFieldValues extends FieldValues>({
   defaultValues,
   submitLabel = 'Submit',
   errorMessage,
-  isLoading = false,
+  onClearFormError,
+  isSubmitting = false,
 }: FormProps<TFieldValues>): JSX.Element => {
   const { methods, formState } = useFieldsForm({
     fields,
     defaultValues,
   });
 
-  // Sort fields by order
-  const sortedFields = [...fields].sort((a, b) => a.order - b.order);
+  // Sort fields by order (memoized to prevent unnecessary recalculation)
+  const sortedFields = useMemo(() => [...fields].sort((a, b) => a.order - b.order), [fields]);
 
   const renderField = (field: Field<TFieldValues>): JSX.Element => {
     const commonProps = {
@@ -79,32 +79,54 @@ export const Form = <TFieldValues extends FieldValues>({
     return <FormTextInput key={String(field.name)} {...commonProps} />;
   };
 
+  // Determine if form is currently submitting (internal or external state)
+  const isFormSubmitting = isSubmitting || formState.isSubmitting;
+
+  // Memoize submit handler to prevent function recreation on each render
+  const handleFormSubmit = useCallback(
+    (e: React.FormEvent) => {
+      void methods.handleSubmit(onSubmit)(e);
+    },
+    [methods, onSubmit]
+  );
+
   return (
-    <form
-      onSubmit={(e) => {
-        void methods.handleSubmit(onSubmit)(e);
-      }}
-      className="space-y-4"
-    >
-      {errorMessage && <FormError message={errorMessage} />}
+    <form onSubmit={handleFormSubmit} className="space-y-4">
+      {/* Enhanced form-level error display */}
+      {errorMessage && (
+        <div role="alert" className="rounded-md bg-error-50 border border-error-200 p-4 mb-6">
+          <div className="flex items-start">
+            <Icon name={Icons.ALERTCIRCLE} styleProps={{ size: 'sm', colour: '#dc2626' }} />
+            <p className="ml-3 text-sm text-error-700 flex-1">{errorMessage}</p>
+            {onClearFormError && (
+              <button
+                type="button"
+                onClick={onClearFormError}
+                className="ml-auto text-error-400 hover:text-error-600 transition-colors"
+                aria-label="Dismiss error"
+              >
+                <Icon name={Icons.CLOSE} styleProps={{ size: 'xs', colour: 'currentColor' }} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {sortedFields.map(renderField)}
 
       <button
         type="submit"
-        disabled={isLoading || formState.isSubmitting}
+        disabled={isFormSubmitting}
         className={`
           w-full px-4 py-2 rounded-md font-medium text-white
           transition-colors duration-200
           focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
           ${
-            isLoading || formState.isSubmitting
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-primary hover:bg-primary-dark'
+            isFormSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary hover:bg-primary-dark'
           }
         `}
       >
-        {isLoading || formState.isSubmitting ? 'Submitting...' : submitLabel}
+        {isFormSubmitting ? 'Submitting...' : submitLabel}
       </button>
     </form>
   );

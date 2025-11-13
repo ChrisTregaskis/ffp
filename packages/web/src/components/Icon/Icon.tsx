@@ -6,7 +6,23 @@ import iconSet from '@web/assets/icomoon/selection.json';
 import type { IconName } from './types';
 
 export type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-export type IconColour = string; // Hex colour or Tailwind colour class
+
+/** Type-safe colour values for icons */
+export type IconColour =
+  /** CSS named colours (e.g., 'currentColor', 'inherit', 'transparent') */
+  | 'currentColor'
+  | 'inherit'
+  | 'transparent'
+  /** Hex colours (e.g., '#3B82F6') */
+  | `#${string}`
+  /** RGB/RGBA (e.g., 'rgb(59, 130, 246)', 'rgba(59, 130, 246, 0.5)') */
+  | `rgb(${string})`
+  | `rgba(${string})`
+  /** HSL/HSLA (e.g., 'hsl(217, 91%, 60%)') */
+  | `hsl(${string})`
+  | `hsla(${string})`
+  /** CSS variables (e.g., 'var(--color-primary)') */
+  | `var(${string})`;
 
 export interface IconStyleProps {
   size?: IconSize;
