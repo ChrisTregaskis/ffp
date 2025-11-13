@@ -78,6 +78,15 @@
   --max-width-4xl: 56rem;
 }
 
+/* Icomoon icon font */
+@font-face {
+  font-family: 'icomoon';
+  src: url('./assets/icomoon/icomoon.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
 /* Custom Base Styles */
 @layer base {
   body {
