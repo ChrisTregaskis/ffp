@@ -191,6 +191,7 @@
 - British English spelling throughout
 - All acceptance criteria met
 - Created comprehensive review context document
+- **IDE Performance Issue Resolved**: Encountered TypeScript server crash loop caused by pnpm's `.pnpm/` directory overwhelming file watchers. Applied comprehensive fix (watchOptions in tsconfig, VS Code settings, disabled TypeScript Importer extension). TS Server now stable with zero crashes. Created `ts-server-debug-guide.md` for future reference.
 - Ready for FFP-92 (Implement Login Form)
 
 **Session 46 (Nov 13)**: ✅ FFP-93 - AWS Amplify Setup COMPLETE (1h)

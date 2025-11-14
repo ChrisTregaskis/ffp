@@ -70,6 +70,20 @@ Detailed session-by-session history for Sprint 1 execution.
 - No Zod runtime validation for JWT claims (type guard sufficient for Phase 1)
 - Unit tests deferred (Phase 1 priority: ship fast)
 
+**IDE Performance Issue Resolved**:
+
+During this session, encountered critical TypeScript server performance issues:
+
+- **Symptoms**: TS server crash loop, symbol count climbing (844 → 54,655+), VS Code unresponsive, frequent SIGTERM errors
+- **Root Cause**: pnpm's `.pnpm/` directory structure overwhelming TypeScript's file watchers (20,000+ files monitored)
+- **Solution Applied**:
+  - Added `watchOptions` to `tsconfig.base.json` excluding `.pnpm/` directories
+  - Updated all package `tsconfig.json` files with `**/.pnpm` exclusions
+  - Configured `.vscode/settings.json` for optimal TypeScript performance
+  - Disabled TypeScript Importer extension (temporarily)
+- **Result**: ✅ TS Server stable, symbol count stabilised, IDE responsive, zero crashes
+- **Documentation**: Created comprehensive `ts-server-debug-guide.md` for future reference
+
 **Pattern Reinforced**: React Context API with custom hooks, type guards for runtime safety
 **FFP-16 Progress**: 3/9 subtasks (33%), 9/18-19 hours (47%)
 **Sprint 2**: 9/~60 hours (15%)
