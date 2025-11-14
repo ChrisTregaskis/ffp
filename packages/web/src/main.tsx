@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 // Import Inter font weights
@@ -9,6 +10,8 @@ import '@fontsource/inter/700.css'; // Bold
 // Initialise AWS Amplify authentication
 import './lib/auth';
 
+import { AuthProvider } from '@web/contexts/AuthContext';
+
 import App from './App';
 import './index.css';
 
@@ -17,4 +20,10 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-createRoot(rootElement).render(<App />);
+createRoot(rootElement).render(
+  <StrictMode>
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  </StrictMode>
+);

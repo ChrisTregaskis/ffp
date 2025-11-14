@@ -14,6 +14,7 @@
     "paths": {
       // Internal aliases for this package using @web/ namespace to avoid conflicts
       "@web/components/*": ["./components/*"],
+      "@web/contexts/*": ["./contexts/*"],
       "@web/hooks/*": ["./hooks/*"],
       "@web/pages/*": ["./pages/*"],
       "@web/assets/*": ["./assets/*"],
