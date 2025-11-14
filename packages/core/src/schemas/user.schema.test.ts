@@ -170,9 +170,11 @@ describe('inviteUserSchema', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain(
-          'customer_owner, customer_admin, or customer_user'
-        );
+        // Zod returns enum values in format: 'customer_owner' | 'customer_admin' | 'customer_user'
+        expect(result.error.issues[0].message).toContain('Invalid enum value');
+        expect(result.error.issues[0].message).toContain('customer_owner');
+        expect(result.error.issues[0].message).toContain('customer_admin');
+        expect(result.error.issues[0].message).toContain('customer_user');
       }
     });
 
