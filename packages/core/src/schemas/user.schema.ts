@@ -41,7 +41,7 @@ export const userSchema = z.object({
   customerId: z.string().uuid().nullable(),
   profileImageUrl: z.string().url().nullable(),
   phone: z.string().max(20).nullable(),
-  dateOfBirth: z.string().date().nullable(),
+  dateOfBirth: z.coerce.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -65,7 +65,7 @@ export const createUserSchema = z.object({
   customerId: z.string().uuid().nullable().optional(),
   profileImageUrl: z.string().url().nullable().optional(),
   phone: z.string().max(20).nullable().optional(),
-  dateOfBirth: z.string().date().nullable().optional(),
+  dateOfBirth: z.coerce.date().nullable().optional(),
 });
 
 /**
