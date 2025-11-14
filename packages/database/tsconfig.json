@@ -11,5 +11,13 @@
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "migrations", "**/*.test.ts", "**/*.spec.ts"]
+  "exclude": [
+    "node_modules",
+    "**/node_modules",
+    "**/.pnpm",
+    "dist",
+    "migrations",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
 }

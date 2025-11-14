@@ -16,10 +16,35 @@
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
 
+    // Performance improvements
+    "incremental": true,
+
     // Workspace package imports (pointing to dist for production builds)
     "paths": {
       "@ffp/core": ["./packages/core/dist"],
       "@ffp/core/*": ["./packages/core/dist/*"]
     }
-  }
+  },
+  // Add watchOptions at the base level so all packages inherit it
+  "watchOptions": {
+    "excludeDirectories": [
+      "**/node_modules",
+      "**/.pnpm",
+      "**/node_modules/.pnpm",
+      "**/dist",
+      "**/build",
+      "**/.next",
+      "**/coverage"
+    ],
+    "excludeFiles": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts"]
+  },
+  "exclude": [
+    "node_modules",
+    "**/node_modules",
+    "**/.pnpm",
+    "node_modules/.pnpm",
+    "dist",
+    "build",
+    "coverage"
+  ]
 }

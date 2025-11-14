@@ -8,6 +8,7 @@ export function createWebAliasConfig(packageRoot: string): Record<string, string
   return {
     // Web package internal aliases with explicit namespace
     '@web/components': path.resolve(packageRoot, 'src/components'),
+    '@web/contexts': path.resolve(packageRoot, 'src/contexts'),
     '@web/hooks': path.resolve(packageRoot, 'src/hooks'),
     '@web/pages': path.resolve(packageRoot, 'src/pages'),
     '@web/assets': path.resolve(packageRoot, 'src/assets'),
