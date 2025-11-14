@@ -30,11 +30,16 @@ export function testPathAliases(): PathAliasTest {
 
   const mockUser: User = {
     id: 'test-user-id',
+    cognitoSub: 'test-cognito-sub',
     firstName: 'Test',
     lastName: 'User',
     email: 'test@example.com',
     tenantId: mockTenant.id,
     role: USER_ROLES.CUSTOMER_ADMIN,
+    customerId: null,
+    profileImageUrl: null,
+    phone: null,
+    dateOfBirth: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

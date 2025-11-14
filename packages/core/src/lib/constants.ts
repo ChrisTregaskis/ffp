@@ -19,6 +19,13 @@ export const COGNITO_CUSTOM_ATTRIBUTES = {
   ROLE: 'custom:role',
 } as const;
 
+/**
+ * User role constants
+ *
+ * IMPORTANT: Keep in sync with userRoleSchema in ../schemas/user.schema.ts
+ * The Zod schema is the single source of truth for user roles.
+ * Use these constants for programmatic access, UserRole type for typing.
+ */
 export const USER_ROLES = {
   SYSTEM_ADMIN: 'system_admin',
   CUSTOMER_OWNER: 'customer_owner',
@@ -27,6 +34,10 @@ export const USER_ROLES = {
   INDIVIDUAL_USER: 'individual_user',
 } as const;
 
+/**
+ * @deprecated Use UserRole from @ffp/core instead (derived from Zod schema)
+ * This type is kept for backwards compatibility but will be removed in future.
+ */
 export type UserRoleType = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 
 export const TENANT_TYPES = {
