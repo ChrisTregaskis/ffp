@@ -1,4 +1,4 @@
-import { APP_NAME, TENANT_STATUS, TENANT_TYPES, USER_ROLES } from '@core/lib/constants';
+import { APP_NAME, TENANT_TYPES, USER_ROLES } from '@core/lib/constants';
 import type { Tenant } from '@core/types/tenant.types';
 import type { User } from '@core/types/user.types';
 
@@ -21,8 +21,6 @@ export function testPathAliases(): PathAliasTest {
     id: 'test-tenant-id',
     name: 'Test Tenant',
     type: TENANT_TYPES.BUSINESS,
-    ownerUserId: 'test-owner-id',
-    status: TENANT_STATUS.ACTIVE,
     settings: {},
     createdAt: new Date(),
     updatedAt: new Date(),

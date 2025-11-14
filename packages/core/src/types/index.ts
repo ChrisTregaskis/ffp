@@ -1,6 +1,6 @@
 // Shared TypeScript types and interfaces
+// All types now re-exported from Zod schemas (single source of truth)
 
 export * from './user.types';
 export * from './tenant.types';
-
-// TODO: Can we import the types and schemas from database package directly? so we're not duplicating them...
+export * from './customer.types';

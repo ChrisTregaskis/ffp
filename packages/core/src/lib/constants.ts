@@ -40,18 +40,57 @@ export const USER_ROLES = {
  */
 export type UserRoleType = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 
+/**
+ * Tenant type constants
+ *
+ * IMPORTANT: Keep in sync with tenantTypeSchema in ../schemas/tenant.schema.ts
+ * The Zod schema is the single source of truth for tenant types.
+ * Use these constants for programmatic access, TenantType type for typing.
+ */
 export const TENANT_TYPES = {
   INDIVIDUAL: 'individual',
   BUSINESS: 'business',
   PLATFORM: 'platform',
 } as const;
 
+/**
+ * @deprecated Use TenantType from @ffp/core instead (derived from Zod schema)
+ * This type is kept for backwards compatibility but will be removed in future.
+ */
 export type TenantTypeType = (typeof TENANT_TYPES)[keyof typeof TENANT_TYPES];
 
+/**
+ * @deprecated TENANT_STATUS constants are not used in current database schema
+ * Tenants do not have a status field. This will be removed in future.
+ * If you need customer status, use CUSTOMER_STATUS instead.
+ */
 export const TENANT_STATUS = {
   ACTIVE: 'active',
   SUSPENDED: 'suspended',
   TRIAL: 'trial',
 } as const;
 
+/**
+ * @deprecated TenantStatusType is not used in current database schema
+ * This type is kept for backwards compatibility but will be removed in future.
+ */
 export type TenantStatusType = (typeof TENANT_STATUS)[keyof typeof TENANT_STATUS];
+
+/**
+ * Customer status constants
+ *
+ * IMPORTANT: Keep in sync with customerStatusSchema in ../schemas/customer.schema.ts
+ * The Zod schema is the single source of truth for customer status.
+ * Use these constants for programmatic access, CustomerStatus type for typing.
+ */
+export const CUSTOMER_STATUS = {
+  ACTIVE: 'active',
+  SUSPENDED: 'suspended',
+  INACTIVE: 'inactive',
+} as const;
+
+/**
+ * @deprecated Use CustomerStatus from @ffp/core instead (derived from Zod schema)
+ * This type is kept for backwards compatibility but will be removed in future.
+ */
+export type CustomerStatusType = (typeof CUSTOMER_STATUS)[keyof typeof CUSTOMER_STATUS];

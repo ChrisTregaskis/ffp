@@ -93,11 +93,7 @@ export type JwtUserClaims = z.infer<typeof jwtUserClaimsSchema>;
  * Invitable roles (subset of all roles)
  * Used when inviting users - system_admin and individual_user cannot be invited
  */
-export const invitableRoleSchema = z.enum([
-  'customer_owner',
-  'customer_admin',
-  'customer_user',
-]);
+export const invitableRoleSchema = z.enum(['customer_owner', 'customer_admin', 'customer_user']);
 
 /**
  * Schema for inviting a new user to the platform.
