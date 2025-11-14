@@ -19,6 +19,15 @@ export const COGNITO_CUSTOM_ATTRIBUTES = {
   ROLE: 'custom:role',
 } as const;
 
+/**
+ * User role constants
+ *
+ * IMPORTANT: Keep in sync with userRoleSchema in ../schemas/user.schema.ts
+ * The Zod schema is the single source of truth for user roles.
+ *
+ * Use these constants for programmatic comparisons (e.g., if (role === USER_ROLES.SYSTEM_ADMIN))
+ * For typing, import UserRole type from @ffp/core schemas
+ */
 export const USER_ROLES = {
   SYSTEM_ADMIN: 'system_admin',
   CUSTOMER_OWNER: 'customer_owner',
@@ -27,20 +36,32 @@ export const USER_ROLES = {
   INDIVIDUAL_USER: 'individual_user',
 } as const;
 
-export type UserRoleType = (typeof USER_ROLES)[keyof typeof USER_ROLES];
-
+/**
+ * Tenant type constants
+ *
+ * IMPORTANT: Keep in sync with tenantTypeSchema in ../schemas/tenant.schema.ts
+ * The Zod schema is the single source of truth for tenant types.
+ *
+ * Use these constants for programmatic comparisons (e.g., if (type === TENANT_TYPES.BUSINESS))
+ * For typing, import TenantType type from @ffp/core schemas
+ */
 export const TENANT_TYPES = {
   INDIVIDUAL: 'individual',
   BUSINESS: 'business',
   PLATFORM: 'platform',
 } as const;
 
-export type TenantTypeType = (typeof TENANT_TYPES)[keyof typeof TENANT_TYPES];
-
-export const TENANT_STATUS = {
+/**
+ * Customer status constants
+ *
+ * IMPORTANT: Keep in sync with customerStatusSchema in ../schemas/customer.schema.ts
+ * The Zod schema is the single source of truth for customer status.
+ *
+ * Use these constants for programmatic comparisons (e.g., if (status === CUSTOMER_STATUS.ACTIVE))
+ * For typing, import CustomerStatus type from @ffp/core schemas
+ */
+export const CUSTOMER_STATUS = {
   ACTIVE: 'active',
   SUSPENDED: 'suspended',
-  TRIAL: 'trial',
+  INACTIVE: 'inactive',
 } as const;
-
-export type TenantStatusType = (typeof TENANT_STATUS)[keyof typeof TENANT_STATUS];

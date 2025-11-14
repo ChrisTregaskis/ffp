@@ -1,40 +1,21 @@
 import { getCurrentUser, fetchAuthSession, signIn, signOut } from 'aws-amplify/auth';
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { ZodError } from 'zod';
 
-// TODO: Figure out how to utilise shared types between packages.
-const USER_ROLE_VALUES = [
-  'system_admin',
-  'customer_owner',
-  'customer_admin',
-  'customer_user',
-  'individual_user',
-];
-
-/**
- * User role type derived from valid role values.
- * Ensures type safety and alignment with database role definitions.
- */
-export type UserRole = (typeof USER_ROLE_VALUES)[number];
-
-/**
- * Type guard to check if a value is a valid UserRole.
- * Uses runtime array validation against database-defined values.
- */
-function isValidUserRole(value: unknown): value is UserRole {
-  return typeof value === 'string' && (USER_ROLE_VALUES as readonly string[]).includes(value);
-}
+import { jwtUserClaimsSchema, type UserRole } from '@ffp/core';
 
 /**
  * User object containing authentication and tenant context extracted from JWT.
+ * Lightweight type specific to authentication context (subset of full User type).
  */
-export interface User {
+export interface AuthUser {
   /** Unique user identifier from Cognito (maps to cognitoSub in database) */
   userId: string;
   /** User's email address */
   email: string;
   /** Tenant ID for multi-tenant isolation */
   tenantId: string;
-  /** User's role within the tenant (type-safe enum from database schema) */
+  /** User's role within the tenant (imported from @ffp/core - single source of truth) */
   role: UserRole;
 }
 
@@ -43,7 +24,7 @@ export interface User {
  */
 interface AuthContextType {
   /** Currently authenticated user, or null if not authenticated */
-  user: User | null;
+  user: AuthUser | null;
   /** Loading state during authentication checks */
   loading: boolean;
   /** Error message from authentication operations */
@@ -68,7 +49,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
  *
  */
 export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
    * - Tenant ID (custom:tenantId)
    * - User role (custom:role)
    *
+   * Uses Zod schema validation from @ffp/core to ensure JWT claims are valid.
    * Silently fails if no session exists (user remains null).
    */
   async function checkAuth(): Promise<void> {
@@ -105,42 +87,28 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
         throw new Error('No ID token found in session');
       }
 
-      // Extract user data from JWT claims
-      const { sub, email } = idToken.payload;
-      const userId = typeof sub === 'string' ? sub : String(sub);
-      const userEmail = typeof email === 'string' ? email : '';
-      const tenantId = idToken.payload['custom:tenantId'];
-      const role = idToken.payload['custom:role'];
+      // Validate JWT claims using Zod schema from @ffp/core
+      // This provides both runtime validation and type safety
+      const claims = jwtUserClaimsSchema.parse(idToken.payload);
 
-      // Validate required claims
-      if (!userId || !userEmail || !tenantId || !role) {
-        throw new Error('Missing required claims in JWT token');
-      }
-
-      if (typeof tenantId !== 'string') {
-        throw new Error('Invalid tenantId type');
-      }
-
-      // Validate role is a valid enum value using type guard
-      if (!isValidUserRole(role)) {
-        const roleStr = String(role);
-        const validRoles = (USER_ROLE_VALUES as readonly string[]).join(', ');
-        throw new Error(`Invalid role: ${roleStr}. Expected one of: ${validRoles}`);
-      }
-
-      // role is now properly typed as UserRole after the type guard
+      // TypeScript now knows claims are correctly typed with all required fields
       setUser({
-        userId,
-        email: userEmail,
-        tenantId,
-        role,
+        userId: claims.sub,
+        email: claims.email,
+        tenantId: claims['custom:tenantId'],
+        role: claims['custom:role'], // Type-safe UserRole from @ffp/core
       });
     } catch (err) {
-      // Type guard to safely handle the error
-      const errorMessage =
-        err instanceof Error ? err.message : 'An unknown error occurred during authentication';
-
-      console.error('Authentication error:', errorMessage);
+      // Handle Zod validation errors with detailed messages
+      if (err instanceof ZodError) {
+        console.error('JWT validation failed:', err.issues);
+        const errorMessage = `Invalid JWT claims: ${err.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join(', ')}`;
+        console.error(errorMessage);
+      } else {
+        const errorMessage =
+          err instanceof Error ? err.message : 'An unknown error occurred during authentication';
+        console.error('Authentication error:', errorMessage);
+      }
 
       // Silent failure - user remains null if not authenticated
       setUser(null);

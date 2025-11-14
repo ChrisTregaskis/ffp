@@ -64,23 +64,41 @@ export default defineConfig({
 
 ### Importing Schemas
 
-All database schemas are available through the `@ffp/database` package:
+**⚠️ IMPORTANT: Type Management Pattern**
+
+FFP uses **Zod schemas in @ffp/core as the single source of truth** for all entity types (User, Tenant, Customer, etc.). Database schemas in @ffp/database are manually kept in sync.
+
+**For application code (services, handlers, components):**
 
 ```typescript
-// Importing all schemas
+// ✅ CORRECT: Import types from @ffp/core
+import { User, UserRole, Tenant, TenantType, Customer, CustomerStatus } from '@ffp/core';
+import { USER_ROLES, TENANT_TYPES, CUSTOMER_STATUS } from '@ffp/core';
+```
+
+**For repository/database code only:**
+
+```typescript
+// ⚠️ EXCEPTION: Repositories MAY import database schemas for internal use
 import { users, customers, tenants } from '@ffp/database/schema';
+import { NewUser, User as DbUser } from '@ffp/database/schema/users';
 
-// Importing specific types
-import type { User, Customer, Tenant } from '@ffp/database/schema';
-
-// Importing everything from the package
-import * as database from '@ffp/database';
+// But even repositories should return types from @ffp/core
+import type { User } from '@ffp/core';
 ```
 
 **Package Structure:**
 
-- Main exports: `@ffp/database` (all schemas and types)
-- Schema exports: `@ffp/database/schema` (specific schemas)
+- **Types**: Import from `@ffp/core` (User, Tenant, Customer, etc.)
+- **Database schemas**: Import from `@ffp/database/schema` (users table, etc.)
+- **Validation schemas**: Import from `@ffp/core` (createUserSchema, etc.)
+
+**Why this pattern:**
+
+1. **Single source of truth**: Zod schemas in @ffp/core define types once
+2. **Runtime validation**: Zod provides validation + TypeScript types
+3. **Cross-package consistency**: All packages use same types from @ffp/core
+4. **Reduced duplication**: No duplicate type definitions
 
 ### Database Client
 

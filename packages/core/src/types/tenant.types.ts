@@ -1,15 +1,14 @@
-import { type TenantStatusType, type TenantTypeType } from '../lib';
-
-export interface Tenant {
-  id: string;
-  name: string;
-  type: TenantTypeType;
-  ownerUserId: string;
-  status: TenantStatusType;
-  settings: Record<string, unknown>;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export type TenantType = Tenant['type'];
-export type TenantStatus = Tenant['status'];
+/**
+ * Tenant types - Re-exported from Zod schemas (single source of truth)
+ *
+ * The Zod schemas in ../schemas/tenant.schema.ts are the authoritative source
+ * for Tenant types. This file re-exports them for backwards compatibility.
+ *
+ * Import from @ffp/core (root exports) or from this file - both work.
+ */
+export type {
+  Tenant,
+  TenantType,
+  CreateTenantInput,
+  UpdateTenantInput,
+} from '../schemas/tenant.schema';

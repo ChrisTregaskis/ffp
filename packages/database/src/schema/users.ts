@@ -14,7 +14,14 @@ import { tenants } from './tenants';
 import { customers } from './customers';
 
 /**
- * User role enumeration
+ * User role enumeration (PostgreSQL enum)
+ *
+ * IMPORTANT: Keep in sync with userRoleSchema in @ffp/core/src/schemas/user.schema.ts
+ * The Zod schema is the single source of truth for user roles.
+ *
+ * Manual synchronisation required (cannot auto-generate due to circular dependency).
+ * Changes to roles must be made in both places.
+ *
  * Defines the hierarchical role system:
  * - system_admin: Platform administrator (highest privilege)
  * - customer_owner: Owner of a customer account (business)

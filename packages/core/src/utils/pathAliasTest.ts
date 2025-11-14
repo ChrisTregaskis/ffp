@@ -1,4 +1,4 @@
-import { APP_NAME, TENANT_STATUS, TENANT_TYPES, USER_ROLES } from '@core/lib/constants';
+import { APP_NAME, TENANT_TYPES, USER_ROLES } from '@core/lib/constants';
 import type { Tenant } from '@core/types/tenant.types';
 import type { User } from '@core/types/user.types';
 
@@ -21,8 +21,6 @@ export function testPathAliases(): PathAliasTest {
     id: 'test-tenant-id',
     name: 'Test Tenant',
     type: TENANT_TYPES.BUSINESS,
-    ownerUserId: 'test-owner-id',
-    status: TENANT_STATUS.ACTIVE,
     settings: {},
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -30,11 +28,16 @@ export function testPathAliases(): PathAliasTest {
 
   const mockUser: User = {
     id: 'test-user-id',
+    cognitoSub: 'test-cognito-sub',
     firstName: 'Test',
     lastName: 'User',
     email: 'test@example.com',
     tenantId: mockTenant.id,
     role: USER_ROLES.CUSTOMER_ADMIN,
+    customerId: null,
+    profileImageUrl: null,
+    phone: null,
+    dateOfBirth: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

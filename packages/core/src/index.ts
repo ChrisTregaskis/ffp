@@ -1,11 +1,13 @@
 // @ffp/core - Shared business logic, types, and utilities
 // This package is imported by both @ffp/web and @ffp/functions
 
-export * from './types';
+// Schemas (validation + types - single source of truth)
+// User, Tenant, and Customer types are exported from here
+export * from './schemas';
+
+// Utilities and constants
 export * from './lib';
 export * from './utils';
 
-// Schemas (validation only - safe for browser)
-export * from './schemas';
-
 // Note: Admin domain is server-only and exported from @ffp/core/server
+// Note: Types are also available via './types/*' for backwards compatibility

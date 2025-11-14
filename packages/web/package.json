@@ -25,7 +25,8 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.66.0",
     "react-icomoon": "^2.6.1",
-    "tailwindcss": "4.1.17"
+    "tailwindcss": "4.1.17",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@ffp/eslint-config": "workspace:*",
