@@ -27,6 +27,8 @@
   "include": ["src/**/*"],
   "exclude": [
     "node_modules",
+    "**/node_modules",
+    "**/.pnpm",
     "dist",
     "**/*.test.ts",
     "**/*.test.tsx",

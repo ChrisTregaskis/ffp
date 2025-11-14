@@ -9,5 +9,42 @@
   "eslint.nodePath": null,
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
+  },
+
+  // TypeScript performance and file watching optimisations
+  "typescript.tsserver.maxTsServerMemory": 8192,
+  "typescript.disableAutomaticTypeAcquisition": true,
+  "typescript.tsserver.experimental.enableProjectDiagnostics": false,
+  "typescript.tsserver.watchOptions": {
+    "excludeDirectories": [
+      "**/node_modules",
+      "**/.pnpm",
+      "**/node_modules/.pnpm",
+      "**/dist",
+      "**/build",
+      "**/.next"
+    ]
+  },
+
+  // File watcher exclusions (prevents VS Code from watching these directories)
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/.pnpm/**": true,
+    "**/node_modules/.pnpm/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.next/**": true,
+    "**/coverage/**": true
+  },
+
+  // Search exclusions (improves search performance)
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.pnpm": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/coverage": true
   }
 }
