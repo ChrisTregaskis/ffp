@@ -275,26 +275,35 @@ deploy (functions) → depends on → build + test
 │   ├── core/                  # Shared business logic (domain-organised)
 │   │   ├── package.json       # Core workspace config
 │   │   ├── tsconfig.json      # TypeScript config (extends root)
-│   │   ├── users/             # User domain
+│   │   ├── schemas/           # Zod validation schemas (SINGLE SOURCE OF TRUTH)
+│   │   │   ├── user.schema.ts       # User types + validation
+│   │   │   ├── tenant.schema.ts     # Tenant types + validation
+│   │   │   ├── customer.schema.ts   # Customer types + validation
+│   │   │   ├── assessment.schema.ts # Assessment types + validation
+│   │   │   ├── program.schema.ts    # Program types + validation
+│   │   │   └── index.ts             # Re-export all schemas
+│   │   ├── types/             # Type re-exports (backwards compatibility)
+│   │   │   ├── user.types.ts        # Re-exports from user.schema.ts
+│   │   │   ├── tenant.types.ts      # Re-exports from tenant.schema.ts
+│   │   │   └── customer.types.ts    # Re-exports from customer.schema.ts
+│   │   ├── users/             # User domain (future - not yet implemented)
 │   │   │   ├── user.service.ts      # Business logic orchestration
 │   │   │   ├── user.entity.ts       # Business behaviour (optional)
-│   │   │   ├── user.repository.ts   # Data access with RLS
-│   │   │   └── user.schema.ts       # Zod validation schemas
-│   │   ├── assessments/       # Assessment domain
+│   │   │   └── user.repository.ts   # Data access with RLS
+│   │   ├── assessments/       # Assessment domain (future)
 │   │   │   ├── assessment.service.ts
 │   │   │   ├── assessment.entity.ts
-│   │   │   ├── assessment.repository.ts
-│   │   │   └── assessment.schema.ts
-│   │   ├── programs/          # Program domain
+│   │   │   └── assessment.repository.ts
+│   │   ├── programs/          # Program domain (future)
 │   │   │   ├── program.service.ts
 │   │   │   ├── program.entity.ts
-│   │   │   ├── program.repository.ts
-│   │   │   └── program.schema.ts
+│   │   │   └── program.repository.ts
 │   │   └── lib/               # Cross-cutting utilities
 │   │       ├── context.ts     # Tenant context extraction
 │   │       ├── errors.ts      # Custom error classes
 │   │       ├── logger.ts      # Structured logging
-│   │       └── cognito.ts     # Cognito service wrapper
+│   │       ├── cognito.ts     # Cognito service wrapper
+│   │       └── constants.ts   # Shared constants (USER_ROLES, TENANT_TYPES, etc.)
 │   └── web/                   # React frontend
 │       ├── package.json       # Web workspace config
 │       ├── tsconfig.json      # TypeScript config (extends root)
@@ -353,6 +362,18 @@ FFP uses a clear separation of concerns with domain-organised architecture. Each
                             │
                             ↓
 ┌────────────────────────────────────────────────────────────┐
+│  Schema Layer (packages/core/src/schemas/user.schema.ts)  │
+│  Responsibility: SINGLE SOURCE OF TRUTH for types          │
+│  - Zod validation schemas                                  │
+│  - TypeScript type inference (z.infer)                     │
+│  - Runtime + compile-time type safety                      │
+│  - Exported to all packages via @ffp/core                  │
+└───────────────────────────┬────────────────────────────────┘
+                            │
+                   All layers use these types
+                            │
+                            ↓
+┌────────────────────────────────────────────────────────────┐
 │  Repository Layer (packages/core/users/user.repository.ts) │
 │  Responsibility: Data access with RLS                      │
 │  - CRUD operations                                         │
@@ -360,6 +381,7 @@ FFP uses a clear separation of concerns with domain-organised architecture. Each
 │  - RLS context management                                  │
 │  - Transactions                                            │
 │  - No business logic                                       │
+│  - Uses types from @ffp/core                               │
 └───────────────────────────┬────────────────────────────────┘
                             │
                             ↓
@@ -370,6 +392,8 @@ FFP uses a clear separation of concerns with domain-organised architecture. Each
 │  - Column types                                            │
 │  - Relations                                               │
 │  - Indexes                                                 │
+│  - PostgreSQL enums (manually synced with Zod)             │
+│  ⚠️ Types from here used ONLY in repositories internally   │
 └───────────────────────────┬────────────────────────────────┘
                             │
                             ↓
@@ -491,7 +515,7 @@ export const handler = withErrorHandling(async (event: APIGatewayProxyEvent) => 
 
 ```typescript
 // packages/core/users/user.service.ts
-import { createUserSchema } from './user.schema';
+import { createUserSchema, CreateUserInput, User } from '@ffp/core';
 import { userRepository } from './user.repository';
 import { UserEntity } from './user.entity';
 import { TenantContext } from '../lib/context';
@@ -557,7 +581,7 @@ export const createUserService = async (data: unknown, context: TenantContext) =
 ```typescript
 // packages/core/users/user.entity.ts
 import { hash, verify } from '@node-rs/argon2';
-import { User } from '@ffp/database/schema/users';
+import { User } from '@ffp/core';
 
 export class UserEntity {
   private data: User;
@@ -644,10 +668,13 @@ export class UserEntity {
 ```typescript
 // packages/core/users/user.repository.ts
 import { db } from '@ffp/database';
-import { users, NewUser, User } from '@ffp/database/schema/users';
+// ⚠️ EXCEPTION: Repository MAY import database types for internal use only
+// All other layers (service, entity, handler) MUST import from @ffp/core
+import { users, NewUser, User as DbUser } from '@ffp/database/schema/users';
 import { eq, and, sql } from 'drizzle-orm';
 import { setRLSContext } from '@ffp/database/lib/rls';
 import { TenantContext } from '../lib/context';
+import type { User } from '@ffp/core';
 
 export const userRepository = {
   async create(data: NewUser, context: TenantContext): Promise<User> {
