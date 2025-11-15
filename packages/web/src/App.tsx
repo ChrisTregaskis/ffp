@@ -1,14 +1,15 @@
-import { IconTest } from '@web/pages/IconTest';
+import { Router } from '@web/pages/routes/Router';
 
-import { FormTest } from './pages/FormTest';
-
+/**
+ * Main application component.
+ *
+ * Renders the application router which handles all routing logic,
+ * including public/protected route separation and authentication checks.
+ *
+ * Authentication is provided by AuthProvider in main.tsx.
+ */
 function App(): JSX.Element {
-  return (
-    <>
-      <IconTest />
-      <FormTest />
-    </>
-  );
+  return <Router />;
 }
 
 export default App;

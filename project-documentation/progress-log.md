@@ -8,6 +8,87 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### November 15, 2025 (Session 48 - FFP-119 Complete!)
+
+**Status**: ✅ FFP-119 COMPLETE - Basic Routing Infrastructure (2h)
+
+**Branch**: `feature/FFP-16-web-login-flow`
+
+**Completed Work**:
+
+**FFP-119: Implement Basic Routing Infrastructure**
+
+- ✅ Installed `react-router-dom@^7.9.6` and `@types/react-router-dom@^5.3.3` packages
+- ✅ Created `packages/web/src/pages/routes/RouteKey.ts` - Type-safe route key enum
+- ✅ Created `packages/web/src/pages/routes/index.ts` - Routes configuration with AppRoute interface
+- ✅ Created `packages/web/src/pages/routes/Router.tsx` - Main router with environment-based filtering
+- ✅ Created `packages/web/src/pages/routes/ProtectedRoute.tsx` - Auth wrapper using existing AuthContext
+- ✅ Created `packages/web/src/pages/public/LoginPage.tsx` - Placeholder login page (FFP-92 will implement)
+- ✅ Created `packages/web/src/pages/protected/HomePage.tsx` - Protected dashboard displaying user JWT claims
+- ✅ Created `packages/web/src/pages/public/NotAuthorisedPage.tsx` - 403 error page
+- ✅ Created `packages/web/src/components/layout/AppLayout.tsx` - Sidebar nav wrapper for protected routes
+- ✅ Created component showcase routes (dev-only, excluded in production):
+  - `packages/web/src/pages/dev/ComponentsPage.tsx` - Showcase landing page
+  - `packages/web/src/pages/dev/FormComponentsPage.tsx` - Form components demo (moved from FormTest)
+  - `packages/web/src/pages/dev/IconComponentsPage.tsx` - Icon components demo (moved from IconTest)
+- ✅ Updated `packages/web/src/App.tsx` - Now renders Router instead of test components
+- ✅ Environment-based route filtering (`import.meta.env.PROD`) excludes dev routes in production
+- ✅ AppRoute interface with `devOnly` flag for development-only routes
+
+**Routing Infrastructure**:
+
+- Type-safe routing with RouteKey enum (compile-time safety)
+- Centralized routes configuration (single source of truth)
+- Public routes: `/login` (no auth required)
+- Protected routes: `/` (requires auth, redirects to `/login`)
+- Dev-only routes: `/components`, `/components/form`, `/components/icon` (excluded in production)
+- Catch-all route: Redirects to home (which redirects to login if not authed)
+
+**ProtectedRoute Implementation**:
+
+- Uses real `useAuth()` hook from FFP-90 AuthContext (no placeholder)
+- Shows loading spinner during auth check
+- Redirects to `/login` if not authenticated
+- Wraps content in AppLayout by default
+- Supports `excludeLayout` prop for fullscreen pages (e.g., future assessments)
+
+**Component Showcase Routes**:
+
+- Landing page at `/components` with category cards
+- Form showcase at `/components/form` (interactive auth form demo)
+- Icon showcase at `/components/icon` (size/colour variations, full icon grid)
+- "Coming Soon" placeholders for Button, Modal, Table components
+- Yellow "Development Only" badges throughout
+- Automatically excluded from production builds
+- Pattern established for adding future component showcases
+
+**Testing & Quality**:
+
+- ✅ Zero TypeScript errors (strict mode)
+- ✅ Zero ESLint warnings
+- ✅ Production build successful (541KB main chunk, acceptable for Phase 1)
+- ✅ All acceptance criteria met
+- ✅ British English spelling throughout
+- ✅ Comprehensive review context document created
+
+**Manual Testing Results**:
+
+- ✓ Navigate to `/` → redirects to `/login` (not authenticated)
+- ✓ Navigate to `/login` → shows placeholder login page
+- ✓ Navigate to invalid route → redirects to `/`
+- ✓ Component showcase routes accessible in dev mode (`/components`, `/components/form`, `/components/icon`)
+- ✓ Production build excludes dev routes
+- ✓ HomePage displays user JWT claims correctly (when authenticated)
+- ✓ Sign out button triggers logout
+- ✓ Loading states render correctly
+
+**Pattern Reinforced**: Type-safe routing with environment-based filtering, component showcases for development
+**FFP-16 Progress**: 4/9 subtasks (44%), 11/18-19 hours (58%)
+**Sprint 2**: 11/~60 hours (18%)
+**Next**: FFP-92 Implement Login Form (2h)
+
+---
+
 ### November 14, 2025 (Session 47 - FFP-90 Complete!)
 
 **Status**: ✅ FFP-90 COMPLETE - Create AuthContext and AuthProvider (4h)
@@ -295,7 +376,8 @@ During this session, encountered critical TypeScript server performance issues:
 | Nov 13      | FFP-115 Complete (Components)   | 141.5h         |
 | Nov 13      | FFP-93 Complete (Amplify)       | 142.5h         |
 | Nov 14      | FFP-90 Complete (AuthContext)   | 146.5h         |
-| **Current** | **74% Sprint 1+2 Complete**     | **146.5/197h** |
+| Nov 15      | FFP-119 Complete (Routing)      | 148.5h         |
+| **Current** | **75% Sprint 1+2 Complete**     | **148.5/197h** |
 
 ---
 

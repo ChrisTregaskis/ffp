@@ -1,0 +1,20 @@
+/**
+ * Enum of route keys for type-safe route references.
+ *
+ * Provides compile-time safety when referencing routes throughout the application.
+ * Add new routes here as the application grows.
+ */
+export enum RouteKey {
+  /** Public login route */
+  LOGIN = 'login',
+  /** Protected home/dashboard route */
+  HOME = 'home',
+
+  // Development-only component showcase routes (excluded in production)
+  /** Component showcase landing page */
+  COMPONENTS = 'components',
+  /** Form components showcase */
+  COMPONENTS_FORM = 'components-form',
+  /** Icon components showcase */
+  COMPONENTS_ICON = 'components-icon',
+}
