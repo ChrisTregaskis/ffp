@@ -5,8 +5,6 @@ import { Icons } from '@web/components/Icon/types';
 
 import { useFieldsForm } from '../hooks/useFieldsForm';
 
-import { FormEmailInput } from './FormEmailInput';
-import { FormPasswordInput } from './FormPasswordInput';
 import { FormTextInput } from './FormTextInput';
 
 import type { Field, SubmitHandler } from '../shared/types';
@@ -55,28 +53,28 @@ export const Form = <TFieldValues extends FieldValues>({
   const sortedFields = useMemo(() => [...fields].sort((a, b) => a.order - b.order), [fields]);
 
   const renderField = (field: Field<TFieldValues>): JSX.Element => {
-    const commonProps = {
-      name: field.name,
-      label: field.label,
-      placeholder: field.placeholder,
-      register: methods.register,
-      errors: formState.errors,
-      isRequired: field.validation?.isRequired,
-    };
-
-    // Determine field type based on name and dataType
+    // Determine field type based on name and validation pattern
     const fieldName = String(field.name).toLowerCase();
+    let inputType: 'text' | 'email' | 'password' = 'text';
 
     if (fieldName.includes('password')) {
-      return <FormPasswordInput key={String(field.name)} {...commonProps} />;
+      inputType = 'password';
+    } else if (fieldName.includes('email') || field.validation?.pattern?.toString().includes('@')) {
+      inputType = 'email';
     }
 
-    if (fieldName.includes('email') || field.validation?.pattern?.toString().includes('@')) {
-      return <FormEmailInput key={String(field.name)} {...commonProps} />;
-    }
-
-    // Default to text input
-    return <FormTextInput key={String(field.name)} {...commonProps} />;
+    return (
+      <FormTextInput
+        key={String(field.name)}
+        name={field.name}
+        label={field.label}
+        type={inputType}
+        placeholder={field.placeholder}
+        register={methods.register}
+        errors={formState.errors}
+        isRequired={field.validation?.isRequired}
+      />
+    );
   };
 
   // Determine if form is currently submitting (internal or external state)

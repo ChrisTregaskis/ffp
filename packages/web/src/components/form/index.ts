@@ -8,6 +8,4 @@ export * from './hooks/useFieldsForm';
 // Standard form components
 export * from './standardForm/Form';
 export * from './standardForm/FormTextInput';
-export * from './standardForm/FormPasswordInput';
-export * from './standardForm/FormEmailInput';
 export * from './standardForm/FormError';
