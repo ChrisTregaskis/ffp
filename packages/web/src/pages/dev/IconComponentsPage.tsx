@@ -6,6 +6,7 @@ import {
   IconSizeDisplay,
 } from '@web/components/dev';
 import { Icon, Icons } from '@web/components/Icon';
+import { Text } from '@web/components/text';
 
 /**
  * Icon components showcase page (development only).
@@ -137,19 +138,30 @@ export function IconComponentsPage(): JSX.Element {
                 title={name}
               >
                 <Icon name={name} styleProps={{ size: 'lg' }} />
-                <span className="mt-2 break-all text-center text-xs text-gray-600">{name}</span>
+                <Text
+                  className="mt-2 break-all text-center text-gray-600"
+                  styleProps={{ size: 'xs' }}
+                >
+                  {name}
+                </Text>
               </div>
             ))}
           </div>
         ) : (
           <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4">
-            <p className="mb-2 text-sm font-medium text-yellow-800">No Icons Found</p>
-            <p className="text-sm text-yellow-700">
+            <Text
+              as="p"
+              className="mb-2 text-yellow-800"
+              styleProps={{ size: 'sm', weight: 'medium' }}
+            >
+              No Icons Found
+            </Text>
+            <Text as="p" className="text-yellow-700" styleProps={{ size: 'sm' }}>
               Add Icomoon assets to{' '}
               <code className="rounded bg-yellow-100 px-1">src/assets/icomoon/</code> and run{' '}
               <code className="rounded bg-yellow-100 px-1">pnpm icon:generate</code> to populate
               icons.
-            </p>
+            </Text>
           </div>
         )}
       </ComponentSection>
@@ -158,25 +170,39 @@ export function IconComponentsPage(): JSX.Element {
       <DeveloperInstructions title="Usage Instructions">
         <div className="space-y-3">
           <div>
-            <p className="mb-1 font-medium">Import the Icon component:</p>
+            <Text as="p" className="mb-1" styleProps={{ weight: 'medium' }}>
+              Import the Icon component:
+            </Text>
             <code className="block rounded bg-muted p-2 text-xs">
               {`import { Icon, Icons } from '@web/components/Icon';`}
             </code>
           </div>
           <div>
-            <p className="mb-1 font-medium">Use in your component:</p>
+            <Text as="p" className="mb-1" styleProps={{ weight: 'medium' }}>
+              Use in your component:
+            </Text>
             <code className="block rounded bg-muted p-2 text-xs">
               {`<Icon name={Icons.ARROW_RIGHT} styleProps={{ size: 'md', colour: 'blue' }} />`}
             </code>
           </div>
           <div>
-            <p className="mb-1 font-medium">Add new icons:</p>
-            <ol className="ml-4 list-decimal space-y-1 text-xs">
-              <li>Upload SVG to Icomoon.io</li>
-              <li>Download icon font and selection.json</li>
-              <li>Replace files in src/assets/icomoon/</li>
+            <Text as="p" className="mb-1" styleProps={{ weight: 'medium' }}>
+              Add new icons:
+            </Text>
+            <ol className="ml-4 list-decimal space-y-1">
               <li>
-                Run <code className="rounded bg-muted px-1">pnpm icon:generate</code>
+                <Text styleProps={{ size: 'xs' }}>Upload SVG to Icomoon.io</Text>
+              </li>
+              <li>
+                <Text styleProps={{ size: 'xs' }}>Download icon font and selection.json</Text>
+              </li>
+              <li>
+                <Text styleProps={{ size: 'xs' }}>Replace files in src/assets/icomoon/</Text>
+              </li>
+              <li>
+                <Text styleProps={{ size: 'xs' }}>
+                  Run <code className="rounded bg-muted px-1">pnpm icon:generate</code>
+                </Text>
               </li>
             </ol>
           </div>

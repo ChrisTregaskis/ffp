@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 
+import { Text, Title } from '@web/components/text';
+
 interface ComponentPageHeaderProps {
   title: string;
   description: string;
@@ -36,23 +38,28 @@ export function ComponentPageHeader({
     <div className="mb-8">
       {showBackLink ? (
         <div className="mb-4 flex items-center justify-between">
-          <Link
-            to={backLinkPath}
-            className="inline-flex items-center text-sm text-primary hover:opacity-80"
-          >
-            {backLinkText}
+          <Link to={backLinkPath} className="inline-flex items-center hover:opacity-80">
+            <Text styleProps={{ size: 'sm', colour: 'primary' }}>{backLinkText}</Text>
           </Link>
-          <div className="rounded-md bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-800">
-            Development Only
+          <div className="rounded-md bg-yellow-100 px-3 py-1">
+            <Text styleProps={{ size: 'sm', weight: 'medium' }} className="text-yellow-800">
+              Development Only
+            </Text>
           </div>
         </div>
       ) : (
-        <div className="mb-4 inline-block rounded-md bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-800">
-          Development Only
+        <div className="mb-4 inline-block rounded-md bg-yellow-100 px-3 py-1">
+          <Text styleProps={{ size: 'sm', weight: 'medium' }} className="text-yellow-800">
+            Development Only
+          </Text>
         </div>
       )}
-      <h1 className="mb-2 text-3xl font-bold text-foreground">{title}</h1>
-      <p className="text-muted-foreground">{description}</p>
+      <Title as="h1" className="mb-2">
+        {title}
+      </Title>
+      <Text as="p" styleProps={{ colour: 'muted-foreground' }}>
+        {description}
+      </Text>
     </div>
   );
 }

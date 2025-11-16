@@ -1,6 +1,7 @@
 import { ComponentsPage } from '@web/pages/dev/ComponentsPage';
 import { FormComponentsPage } from '@web/pages/dev/FormComponentsPage';
 import { IconComponentsPage } from '@web/pages/dev/IconComponentsPage';
+import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { HomePage } from '@web/pages/protected/HomePage';
 import { LoginPage } from '@web/pages/public/LoginPage';
 
@@ -94,6 +95,14 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: IconComponentsPage,
     title: 'Icon Components',
+    excludeFromMainNavbar: true,
+    devOnly: true,
+  },
+  [RouteKey.COMPONENTS_TEXT]: {
+    path: '/components/text', // Includes Title Component
+    public: true,
+    pageComponent: TextComponentsPage,
+    title: 'Text Components',
     excludeFromMainNavbar: true,
     devOnly: true,
   },

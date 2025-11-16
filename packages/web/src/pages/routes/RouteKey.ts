@@ -17,4 +17,6 @@ export enum RouteKey {
   COMPONENTS_FORM = 'components-form',
   /** Icon components showcase */
   COMPONENTS_ICON = 'components-icon',
+  /** Text & Title components showcase */
+  COMPONENTS_TEXT = 'components-text',
 }

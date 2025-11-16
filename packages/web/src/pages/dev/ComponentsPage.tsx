@@ -3,6 +3,7 @@ import {
   ComponentPageWrapper,
   DeveloperInstructions,
 } from '@web/components/dev';
+import { Text, Title } from '@web/components/text';
 
 import { componentCategories } from '.';
 
@@ -23,13 +24,17 @@ export function ComponentsPage(): JSX.Element {
     <ComponentPageWrapper maxWidth="7xl">
       {/* Header */}
       <div className="mb-8">
-        <div className="mb-4 inline-block rounded-md bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-800">
-          Development Only
+        <div className="mb-4 inline-block rounded-md bg-yellow-100 px-3 py-1">
+          <Text styleProps={{ size: 'sm', weight: 'medium' }} className="text-yellow-800">
+            Development Only
+          </Text>
         </div>
-        <h1 className="mb-2 text-4xl font-bold text-foreground">Component Showcase</h1>
-        <p className="text-lg text-muted-foreground">
+        <Title as="h1" className="mb-2">
+          Component Showcase
+        </Title>
+        <Text as="p" styleProps={{ size: 'lg', colour: 'muted-foreground' }}>
           Interactive demonstrations of all UI components used in Fit For Purpose
-        </p>
+        </Text>
       </div>
 
       {/* Component categories grid */}

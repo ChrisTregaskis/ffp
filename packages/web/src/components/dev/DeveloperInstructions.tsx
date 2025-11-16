@@ -1,3 +1,5 @@
+import { Title } from '@web/components/text';
+
 import type { ReactNode } from 'react';
 
 interface DeveloperInstructionsProps {
@@ -27,7 +29,9 @@ export function DeveloperInstructions({
 }: DeveloperInstructionsProps): JSX.Element {
   return (
     <div className="rounded-lg bg-blue-50 p-6">
-      <h3 className="mb-3 text-sm font-semibold text-blue-900">{title}</h3>
+      <Title as="h3" className="mb-3 text-blue-900">
+        {title}
+      </Title>
       <div className="text-sm text-blue-700">{children}</div>
     </div>
   );

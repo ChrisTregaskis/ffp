@@ -1,3 +1,5 @@
+import { Title } from '@web/components/text';
+
 import type { ReactNode } from 'react';
 
 interface ComponentSectionProps {
@@ -31,7 +33,9 @@ export function ComponentSection({
 }: ComponentSectionProps): JSX.Element {
   return (
     <section className={`mb-8 rounded-lg bg-card p-6 shadow ${className}`.trim()}>
-      <h2 className="mb-4 text-xl font-bold text-card-foreground">{title}</h2>
+      <Title as="h2" className="mb-4" colour="card-foreground">
+        {title}
+      </Title>
       {children}
     </section>
   );

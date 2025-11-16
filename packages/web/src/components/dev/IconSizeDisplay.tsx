@@ -1,3 +1,5 @@
+import { Text } from '@web/components/text';
+
 import type { ReactNode } from 'react';
 
 interface IconSizeDisplayProps {
@@ -23,7 +25,9 @@ export function IconSizeDisplay({ icon, label }: IconSizeDisplayProps): JSX.Elem
   return (
     <div className="flex flex-col items-center">
       {icon}
-      <span className="mt-2 text-xs text-muted-foreground">{label}</span>
+      <Text className="mt-2" styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
+        {label}
+      </Text>
     </div>
   );
 }

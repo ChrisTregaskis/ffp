@@ -4,6 +4,7 @@ import {
   DeveloperInstructions,
 } from '@web/components/dev';
 import { Form, type Field, FieldDataType } from '@web/components/form';
+import { Text, Title } from '@web/components/text';
 import { useAuth } from '@web/contexts/AuthContext';
 
 interface LoginFormValues {
@@ -75,15 +76,19 @@ export function FormComponentsPage(): JSX.Element {
 
       {/* Authentication Form Demo */}
       <div className="mb-8 rounded-lg bg-white p-8 shadow">
-        <h2 className="mb-4 text-2xl font-bold text-gray-900">Authentication Form</h2>
-        <p className="mb-6 text-sm text-gray-600">
+        <Title as="h2" className="mb-4 text-gray-900">
+          Authentication Form
+        </Title>
+        <Text as="p" className="mb-6 text-gray-600" styleProps={{ size: 'sm' }}>
           Test the authentication flow with email/password validation
-        </p>
+        </Text>
 
         {/* Loading state during initial auth check */}
         {loading && !user && (
           <div className="mb-6 rounded-md border border-blue-200 bg-blue-50 p-4">
-            <p className="text-sm text-blue-800">Checking authentication...</p>
+            <Text as="p" className="text-blue-800" styleProps={{ size: 'sm' }}>
+              Checking authentication...
+            </Text>
           </div>
         )}
 
@@ -91,7 +96,13 @@ export function FormComponentsPage(): JSX.Element {
         {user && (
           <div className="mb-6">
             <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-4">
-              <p className="mb-2 text-sm font-medium text-green-800">✓ Authenticated User:</p>
+              <Text
+                as="p"
+                className="mb-2 text-green-800"
+                styleProps={{ size: 'sm', weight: 'medium' }}
+              >
+                ✓ Authenticated User:
+              </Text>
               <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-green-700">
                 {JSON.stringify(user, null, 2)}
               </pre>
@@ -99,9 +110,11 @@ export function FormComponentsPage(): JSX.Element {
             <button
               onClick={() => void handleLogout()}
               disabled={loading}
-              className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition-colours hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+              className="w-full rounded-md bg-red-600 px-4 py-2 transition-colours hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-400"
             >
-              {loading ? 'Logging out...' : 'Logout'}
+              <Text className="text-white" styleProps={{ weight: 'medium' }}>
+                {loading ? 'Logging out...' : 'Logout'}
+              </Text>
             </button>
           </div>
         )}
@@ -110,21 +123,51 @@ export function FormComponentsPage(): JSX.Element {
         {!user && (
           <>
             <div className="mb-6 space-y-2 rounded-md bg-gray-50 p-4">
-              <p className="text-sm font-medium text-gray-700">Features:</p>
-              <ul className="list-inside list-disc space-y-1 text-sm text-gray-600">
-                <li>Email validation (valid format required)</li>
-                <li>Password validation (minimum 8 characters)</li>
-                <li>Loading state during submission</li>
-                <li>User object with tenantId and role after success</li>
-                <li>Error display on authentication failure</li>
+              <Text as="p" className="text-gray-700" styleProps={{ size: 'sm', weight: 'medium' }}>
+                Features:
+              </Text>
+              <ul className="list-inside list-disc space-y-1">
+                <li>
+                  <Text className="text-gray-600" styleProps={{ size: 'sm' }}>
+                    Email validation (valid format required)
+                  </Text>
+                </li>
+                <li>
+                  <Text className="text-gray-600" styleProps={{ size: 'sm' }}>
+                    Password validation (minimum 8 characters)
+                  </Text>
+                </li>
+                <li>
+                  <Text className="text-gray-600" styleProps={{ size: 'sm' }}>
+                    Loading state during submission
+                  </Text>
+                </li>
+                <li>
+                  <Text className="text-gray-600" styleProps={{ size: 'sm' }}>
+                    User object with tenantId and role after success
+                  </Text>
+                </li>
+                <li>
+                  <Text className="text-gray-600" styleProps={{ size: 'sm' }}>
+                    Error display on authentication failure
+                  </Text>
+                </li>
               </ul>
             </div>
 
             {/* Display authentication errors */}
             {error && (
               <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4">
-                <p className="mb-1 text-sm font-medium text-red-800">Authentication Error:</p>
-                <p className="text-sm text-red-700">{error}</p>
+                <Text
+                  as="p"
+                  className="mb-1 text-red-800"
+                  styleProps={{ size: 'sm', weight: 'medium' }}
+                >
+                  Authentication Error:
+                </Text>
+                <Text as="p" className="text-red-700" styleProps={{ size: 'sm' }}>
+                  {error}
+                </Text>
               </div>
             )}
 

@@ -23,11 +23,10 @@ export const componentCategories: ComponentCategory[] = [
     comingSoon: true,
   },
   {
-    title: 'Text Components',
+    title: 'Text & Title Components',
     description: 'Text variations and elements',
-    path: `${basePath}/button`,
+    path: `${basePath}/text`,
     examples: ['h1', 'p', 'weight', 'size'],
-    comingSoon: true,
   },
   {
     title: 'Modal Components',
