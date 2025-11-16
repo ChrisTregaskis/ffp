@@ -22,10 +22,22 @@ export const componentCategories: ComponentCategory[] = [
     examples: ['Variants', 'Sizes', 'Loading states', 'Icons'],
   },
   {
+    title: 'Logo Components',
+    description: 'Fit For Purpose brand logos with variants',
+    path: `${basePath}/logo`,
+    examples: ['Brand blue', 'White', 'Primary dark', 'Sizes', 'Clickable'],
+  },
+  {
     title: 'Text & Title Components',
     description: 'Text and title variations and elements',
     path: `${basePath}/text`,
     examples: ['h1', 'p', 'weight', 'size'],
+  },
+  {
+    title: 'Loading Spinner Components',
+    description: 'Animated loading indicators with customisable sizes and colours',
+    path: `${basePath}/loading-spinner`,
+    examples: ['Sizes', 'Variants', 'Colours', 'Real-world usage'],
   },
   {
     title: 'Modal Components',

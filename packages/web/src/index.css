@@ -95,3 +95,35 @@
     background-color: var(--color-background);
   }
 }
+
+/* Loading Spinner Animation */
+.spinner {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border-color: transparent;
+  border-right-color: var(--spinner-colour, rgba(109, 159, 255, 0.6));
+  position: relative;
+  animation: spinner-rotate 1s infinite linear;
+}
+
+.spinner::before,
+.spinner::after {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * var(--spinner-border-width, 3px));
+  border-radius: 50%;
+  border: inherit;
+  border-width: inherit;
+  animation: inherit;
+  animation-duration: 2s;
+}
+
+.spinner::after {
+  animation-duration: 4s;
+}
+
+@keyframes spinner-rotate {
+  100% {
+    transform: rotate(1turn);
+  }
+}

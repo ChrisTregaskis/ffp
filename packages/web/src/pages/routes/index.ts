@@ -2,6 +2,8 @@ import { ButtonComponentsPage } from '@web/pages/dev/ButtonComponentsPage';
 import { ComponentsPage } from '@web/pages/dev/ComponentsPage';
 import { FormComponentsPage } from '@web/pages/dev/FormComponentsPage';
 import { IconComponentsPage } from '@web/pages/dev/IconComponentsPage';
+import { LoadingSpinnerComponentsPage } from '@web/pages/dev/LoadingSpinnerComponentsPage';
+import { LogoComponentsPage } from '@web/pages/dev/LogoComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { HomePage } from '@web/pages/protected/HomePage';
 import { LoginPage } from '@web/pages/public/LoginPage';
@@ -114,6 +116,22 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: ButtonComponentsPage,
     title: 'Button Components',
+    excludeFromMainNavbar: true,
+    devOnly: true,
+  },
+  [RouteKey.COMPONENTS_LOGO]: {
+    path: `${componentsBasePath}/logo`,
+    public: true,
+    pageComponent: LogoComponentsPage,
+    title: 'Logo Components',
+    excludeFromMainNavbar: true,
+    devOnly: true,
+  },
+  [RouteKey.COMPONENTS_LOADING_SPINNER]: {
+    path: `${componentsBasePath}/loading-spinner`,
+    public: true,
+    pageComponent: LoadingSpinnerComponentsPage,
+    title: 'Loading Spinner Components',
     excludeFromMainNavbar: true,
     devOnly: true,
   },

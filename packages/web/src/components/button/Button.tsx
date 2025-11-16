@@ -1,3 +1,5 @@
+import { LoadingSpinner } from '@web/components/LoadingSpinner';
+
 import type { ReactNode, MouseEvent } from 'react';
 
 /**
@@ -40,6 +42,19 @@ const SIZE_CLASS_MAP: Record<ButtonSize, string> = {
   lg: 'h-12 px-6 text-lg',
 };
 
+/**
+ * Map button variants to appropriate spinner colours.
+ * Ensures spinner is visible against button background.
+ */
+const SPINNER_COLOUR_MAP: Record<ButtonVariant, string> = {
+  primary: 'rgba(255, 255, 255, 0.8)', // White on primary blue background
+  secondary: 'rgba(3, 2, 19, 0.7)', // Dark on light purple background
+  success: 'rgba(255, 255, 255, 0.8)', // White on green background
+  destructive: 'rgba(255, 255, 255, 0.8)', // White on red background
+  neutral: 'rgba(113, 113, 130, 0.8)', // Muted foreground on muted background
+  link: 'rgba(109, 159, 255, 0.6)', // Primary blue (no background)
+};
+
 export interface ButtonProps {
   /** Button content */
   children: ReactNode;
@@ -63,30 +78,6 @@ export interface ButtonProps {
   type?: 'button' | 'submit' | 'reset';
   /** Additional custom classes */
   className?: string;
-}
-
-/**
- * Loading spinner component.
- * Simple CSS-based spinner for loading states.
- */
-function LoadingSpinner({ size = 'md' }: { size?: ButtonSize }): JSX.Element {
-  const sizeClass = size === 'sm' ? 'h-3 w-3' : size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
-
-  return (
-    <svg
-      className={`${sizeClass} animate-spin`}
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-      />
-    </svg>
-  );
 }
 
 /**
@@ -131,6 +122,7 @@ export function Button({
 }: ButtonProps): JSX.Element {
   const variantClass = VARIANT_CLASS_MAP[variant];
   const sizeClass = SIZE_CLASS_MAP[size];
+  const spinnerColour = SPINNER_COLOUR_MAP[variant];
 
   // Base styles that apply to all buttons
   const baseStyles =
@@ -149,7 +141,7 @@ export function Button({
   const leftContent =
     iconPosition === 'left' ? (
       <>
-        {loading && <LoadingSpinner size={size} />}
+        {loading && <LoadingSpinner size={size} colour={spinnerColour} />}
         {!loading && icon}
       </>
     ) : null;
@@ -158,7 +150,7 @@ export function Button({
   const rightContent =
     iconPosition === 'right' ? (
       <>
-        {loading && <LoadingSpinner size={size} />}
+        {loading && <LoadingSpinner size={size} colour={spinnerColour} />}
         {!loading && icon}
       </>
     ) : null;
