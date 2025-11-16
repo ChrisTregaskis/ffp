@@ -6,6 +6,32 @@ import type { ReactNode } from 'react';
  */
 export type TitleLevel = 'h1' | 'h2' | 'h3' | 'h4' | 'h5';
 
+/**
+ * Map heading levels to Tailwind text size classes.
+ */
+const SIZE_MAP: Record<TitleLevel, string> = {
+  h1: 'text-4xl',
+  h2: 'text-3xl',
+  h3: 'text-2xl',
+  h4: 'text-xl',
+  h5: 'text-lg',
+};
+
+/**
+ * Map colours to explicit Tailwind class names.
+ * Required for Tailwind JIT compiler to detect and generate classes.
+ */
+const COLOUR_CLASS_MAP: Record<TextColour, string> = {
+  primary: 'text-primary',
+  secondary: 'text-secondary',
+  success: 'text-success',
+  destructive: 'text-destructive',
+  foreground: 'text-foreground',
+  'muted-foreground': 'text-muted-foreground',
+  'card-foreground': 'text-card-foreground',
+  'accent-foreground': 'text-accent-foreground',
+};
+
 export interface TitleProps {
   /** Title content */
   children: ReactNode;
@@ -30,17 +56,8 @@ export function Title({
   colour = 'foreground',
   className = '',
 }: TitleProps): JSX.Element {
-  // Map heading levels to sizes (from FFP theme)
-  const sizeMap: Record<TitleLevel, string> = {
-    h1: 'text-4xl',
-    h2: 'text-3xl',
-    h3: 'text-2xl',
-    h4: 'text-xl',
-    h5: 'text-lg',
-  };
-
-  const colourClass = `text-${colour}`;
-  const sizeClass = sizeMap[as];
+  const colourClass = COLOUR_CLASS_MAP[colour];
+  const sizeClass = SIZE_MAP[as];
   const weightClass = 'font-bold';
 
   const classes = `${colourClass} ${sizeClass} ${weightClass} ${className}`.trim();

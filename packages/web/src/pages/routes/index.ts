@@ -45,6 +45,8 @@ export interface AppRoute {
  */
 export type RoutesConfig = Record<RouteKey, AppRoute>;
 
+const componentsBasePath = '/components';
+
 /**
  * Application routes configuration.
  *
@@ -75,7 +77,7 @@ export const routes: RoutesConfig = {
 
   // Development-only routes (component showcase)
   [RouteKey.COMPONENTS]: {
-    path: '/components',
+    path: componentsBasePath,
     public: true,
     pageComponent: ComponentsPage,
     title: 'Component Showcase',
@@ -83,7 +85,7 @@ export const routes: RoutesConfig = {
     devOnly: true,
   },
   [RouteKey.COMPONENTS_FORM]: {
-    path: '/components/form',
+    path: `${componentsBasePath}/form`,
     public: true,
     pageComponent: FormComponentsPage,
     title: 'Form Components',
@@ -91,7 +93,7 @@ export const routes: RoutesConfig = {
     devOnly: true,
   },
   [RouteKey.COMPONENTS_ICON]: {
-    path: '/components/icon',
+    path: `${componentsBasePath}/icon`,
     public: true,
     pageComponent: IconComponentsPage,
     title: 'Icon Components',
@@ -99,7 +101,7 @@ export const routes: RoutesConfig = {
     devOnly: true,
   },
   [RouteKey.COMPONENTS_TEXT]: {
-    path: '/components/text', // Includes Title Component
+    path: `${componentsBasePath}/text`, // Includes Title Component
     public: true,
     pageComponent: TextComponentsPage,
     title: 'Text Components',

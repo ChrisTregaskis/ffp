@@ -207,6 +207,109 @@ export function TextComponentsPage(): JSX.Element {
         </div>
       </ComponentSection>
 
+      {/* Title component variations */}
+      <ComponentSection title="Title Component - Heading Levels">
+        <div className="space-y-4">
+          <div>
+            <Text
+              styleProps={{ size: 'sm', colour: 'muted-foreground', weight: 'medium' }}
+              className="mb-2"
+            >
+              h1 (4xl, bold):
+            </Text>
+            <Title as="h1">The quick brown fox jumps over the lazy dog</Title>
+          </div>
+          <div>
+            <Text
+              styleProps={{ size: 'sm', colour: 'muted-foreground', weight: 'medium' }}
+              className="mb-2"
+            >
+              h2 (3xl, bold):
+            </Text>
+            <Title as="h2">The quick brown fox jumps over the lazy dog</Title>
+          </div>
+          <div>
+            <Text
+              styleProps={{ size: 'sm', colour: 'muted-foreground', weight: 'medium' }}
+              className="mb-2"
+            >
+              h3 (2xl, bold):
+            </Text>
+            <Title as="h3">The quick brown fox jumps over the lazy dog</Title>
+          </div>
+          <div>
+            <Text
+              styleProps={{ size: 'sm', colour: 'muted-foreground', weight: 'medium' }}
+              className="mb-2"
+            >
+              h4 (xl, bold):
+            </Text>
+            <Title as="h4">The quick brown fox jumps over the lazy dog</Title>
+          </div>
+          <div>
+            <Text
+              styleProps={{ size: 'sm', colour: 'muted-foreground', weight: 'medium' }}
+              className="mb-2"
+            >
+              h5 (lg, bold):
+            </Text>
+            <Title as="h5">The quick brown fox jumps over the lazy dog</Title>
+          </div>
+        </div>
+      </ComponentSection>
+
+      {/* Title colour variations */}
+      <ComponentSection title="Title Component - Colour Variations">
+        <div className="space-y-3">
+          <TextSampleDisplay label="primary" labelWidth="w-44">
+            <Title as="h3" colour="primary">
+              The quick brown fox jumps over the lazy dog
+            </Title>
+          </TextSampleDisplay>
+          <TextSampleDisplay label="secondary" labelWidth="w-44">
+            <Title as="h3" colour="secondary">
+              The quick brown fox jumps over the lazy dog
+            </Title>
+          </TextSampleDisplay>
+          <TextSampleDisplay label="success" labelWidth="w-44">
+            <Title as="h3" colour="success">
+              The quick brown fox jumps over the lazy dog
+            </Title>
+          </TextSampleDisplay>
+          <TextSampleDisplay label="destructive" labelWidth="w-44">
+            <Title as="h3" colour="destructive">
+              The quick brown fox jumps over the lazy dog
+            </Title>
+          </TextSampleDisplay>
+          <TextSampleDisplay label="foreground (default)" labelWidth="w-44">
+            <Title as="h3" colour="foreground">
+              The quick brown fox jumps over the lazy dog
+            </Title>
+          </TextSampleDisplay>
+          <TextSampleDisplay label="muted-foreground" labelWidth="w-44">
+            <Title as="h3" colour="muted-foreground">
+              The quick brown fox jumps over the lazy dog
+            </Title>
+          </TextSampleDisplay>
+          <div className="rounded-md bg-card p-3">
+            <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-2">
+              card-foreground (on card background)
+            </Text>
+            <Title as="h3" colour="card-foreground">
+              The quick brown fox jumps over the lazy dog
+            </Title>
+          </div>
+          <div className="rounded-md bg-accent p-3">
+            <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-2">
+              accent-foreground (on accent background)
+            </Text>
+            <Title as="h3" colour="accent-foreground">
+              The quick brown fox jumps over the lazy dog
+            </Title>
+          </div>
+        </div>
+      </ComponentSection>
+
       {/* Combined examples */}
       <ComponentSection title="Combined Examples" className="mb-8">
         <div className="space-y-6">
@@ -266,15 +369,15 @@ export function TextComponentsPage(): JSX.Element {
         <div className="space-y-3">
           <div>
             <Text as="p" className="mb-1" styleProps={{ weight: 'medium' }}>
-              Import the Text component:
+              Import the components:
             </Text>
             <code className="block rounded bg-muted p-2 text-xs">
-              {`import { Text } from '@web/components/text';`}
+              {`import { Text, Title } from '@web/components/text';`}
             </code>
           </div>
           <div>
             <Text as="p" className="mb-1" styleProps={{ weight: 'medium' }}>
-              Basic usage (inline span):
+              Text component - Basic usage (inline span):
             </Text>
             <code className="block rounded bg-muted p-2 text-xs">
               {`<Text styleProps={{ size: 'lg', colour: 'primary', weight: 'medium' }}>
@@ -284,7 +387,7 @@ export function TextComponentsPage(): JSX.Element {
           </div>
           <div>
             <Text as="p" className="mb-1" styleProps={{ weight: 'medium' }}>
-              Paragraph element:
+              Text component - Paragraph element:
             </Text>
             <code className="block rounded bg-muted p-2 text-xs">
               {`<Text as="p" styleProps={{ colour: 'muted-foreground', size: 'sm' }}>
@@ -294,7 +397,7 @@ export function TextComponentsPage(): JSX.Element {
           </div>
           <div>
             <Text as="p" className="mb-1" styleProps={{ weight: 'medium' }}>
-              With truncation:
+              Text component - With truncation:
             </Text>
             <code className="block rounded bg-muted p-2 text-xs">
               {`<Text styleProps={{ size: 'sm' }} truncationLength={100}>
@@ -304,7 +407,21 @@ export function TextComponentsPage(): JSX.Element {
           </div>
           <div>
             <Text as="p" className="mb-1" styleProps={{ weight: 'medium' }}>
-              Available options:
+              Title component - Automatic sizing:
+            </Text>
+            <code className="block rounded bg-muted p-2 text-xs">
+              {`<Title as="h1" colour="primary">
+  Page Heading
+</Title>
+
+<Title as="h3">
+  Section Heading
+</Title>`}
+            </code>
+          </div>
+          <div>
+            <Text as="p" className="mb-1" styleProps={{ weight: 'medium' }}>
+              Text component options:
             </Text>
             <ul className="ml-4 list-disc space-y-1">
               <li>
@@ -326,6 +443,23 @@ export function TextComponentsPage(): JSX.Element {
               <li>
                 <Text styleProps={{ size: 'xs' }}>
                   <strong>Elements:</strong> span (default), p
+                </Text>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <Text as="p" className="mb-1" styleProps={{ weight: 'medium' }}>
+              Title component options:
+            </Text>
+            <ul className="ml-4 list-disc space-y-1">
+              <li>
+                <Text styleProps={{ size: 'xs' }}>
+                  <strong>Levels:</strong> h1 (4xl), h2 (3xl), h3 (2xl), h4 (xl), h5 (lg) - all bold
+                </Text>
+              </li>
+              <li>
+                <Text styleProps={{ size: 'xs' }}>
+                  <strong>Colours:</strong> Same as Text component
                 </Text>
               </li>
             </ul>

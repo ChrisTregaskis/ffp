@@ -24,7 +24,7 @@ export const componentCategories: ComponentCategory[] = [
   },
   {
     title: 'Text & Title Components',
-    description: 'Text variations and elements',
+    description: 'Text and title variations and elements',
     path: `${basePath}/text`,
     examples: ['h1', 'p', 'weight', 'size'],
   },
