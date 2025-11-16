@@ -1,5 +1,8 @@
 import { useState } from 'react';
 
+import { Icon } from '@web/components/Icon/Icon';
+import { Icons } from '@web/components/Icon/types';
+
 import type { UseFormRegister, FieldErrors, FieldValues, Path } from 'react-hook-form';
 
 export interface FormTextInputProps<TFieldValues extends FieldValues> {
@@ -78,7 +81,10 @@ export const FormTextInput = <TFieldValues extends FieldValues>({
             className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800"
             aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
-            {showPassword ? 'Hide' : 'Show'}
+            <Icon
+              name={showPassword ? Icons.VISIBILITYOFF : Icons.VISIBILITY}
+              styleProps={{ size: 'sm', colour: 'currentColor' }}
+            />
           </button>
         </div>
       ) : (

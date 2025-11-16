@@ -2,8 +2,8 @@
  * Auto-generated icon types from Icomoon selection.json
  * DO NOT EDIT MANUALLY - Run 'pnpm icon:generate' to update
  *
- * Generated: 2025-11-13T07:44:16.260Z
- * Total icons: 65
+ * Generated: 2025-11-16T19:09:55.775Z
+ * Total icons: 66
  */
 
 export enum Icons {
@@ -34,7 +34,6 @@ export enum Icons {
   DOLLARSIGN = 'DollarSign',
   DOWNLOAD = 'Download',
   EDIT = 'Edit',
-  EYE = 'Eye',
   FILETEXT = 'FileText',
   FILTER = 'Filter',
   GLOBE = 'Globe',
@@ -70,6 +69,8 @@ export enum Icons {
   USERPLUS = 'UserPlus',
   USERS = 'Users',
   VIDEO = 'Video',
+  VISIBILITY = 'Visibility',
+  VISIBILITYOFF = 'VisibilityOff',
   VOLUME2 = 'Volume2',
   ZAP = 'Zap',
 }
