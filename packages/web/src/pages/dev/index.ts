@@ -19,8 +19,7 @@ export const componentCategories: ComponentCategory[] = [
     title: 'Button Components',
     description: 'Buttons, links, and call-to-action elements',
     path: `${basePath}/button`,
-    examples: ['Primary button', 'Secondary button', 'Icon button'],
-    comingSoon: true,
+    examples: ['Variants', 'Sizes', 'Loading states', 'Icons'],
   },
   {
     title: 'Text & Title Components',

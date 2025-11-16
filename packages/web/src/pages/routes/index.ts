@@ -1,3 +1,4 @@
+import { ButtonComponentsPage } from '@web/pages/dev/ButtonComponentsPage';
 import { ComponentsPage } from '@web/pages/dev/ComponentsPage';
 import { FormComponentsPage } from '@web/pages/dev/FormComponentsPage';
 import { IconComponentsPage } from '@web/pages/dev/IconComponentsPage';
@@ -105,6 +106,14 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: TextComponentsPage,
     title: 'Text Components',
+    excludeFromMainNavbar: true,
+    devOnly: true,
+  },
+  [RouteKey.COMPONENTS_BUTTON]: {
+    path: `${componentsBasePath}/button`,
+    public: true,
+    pageComponent: ButtonComponentsPage,
+    title: 'Button Components',
     excludeFromMainNavbar: true,
     devOnly: true,
   },

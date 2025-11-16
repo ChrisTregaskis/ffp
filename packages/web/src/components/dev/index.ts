@@ -5,3 +5,4 @@ export { ComponentPageHeader } from './ComponentPageHeader';
 export { ComponentSection } from './ComponentSection';
 export { IconSizeDisplay } from './IconSizeDisplay';
 export { TextSampleDisplay } from './TextSampleDisplay';
+export { ButtonSampleDisplay } from './ButtonSampleDisplay';
