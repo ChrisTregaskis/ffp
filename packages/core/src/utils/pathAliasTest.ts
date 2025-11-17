@@ -1,6 +1,6 @@
 import { APP_NAME, TENANT_TYPES, USER_ROLES } from '@core/lib/constants';
-import type { Tenant } from '@core/types/tenant.types';
-import type { User } from '@core/types/user.types';
+import type { Tenant } from '@core/schemas/tenant.schema';
+import type { User } from '@core/schemas/user.schema';
 
 /**
  * Test file to verify TypeScript path aliases work correctly

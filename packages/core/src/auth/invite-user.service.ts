@@ -29,10 +29,10 @@ export interface InviteUserResponse {
  * @throws {ForbiddenError} If user lacks required role
  * @throws {ValidationError} If system admin doesn't provide tenant/customer IDs
  */
-export const inviteUserService = async (
+export async function inviteUserService(
   ctx: RequestContext,
   input: InviteUserInput
-): Promise<InviteUserResponse> => {
+): Promise<InviteUserResponse> {
   const logger = new Logger(ctx.tenantContext);
 
   logger.info('Invite user request', {
@@ -161,4 +161,4 @@ export const inviteUserService = async (
     userId: newUserId,
     email: input.email,
   };
-};
+}

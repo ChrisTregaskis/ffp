@@ -43,7 +43,7 @@ export type LoginResult = LoginResponse | LoginChallengeResponse;
  * @throws {Error} If Cognito operation fails
  *
  */
-export const loginService = async (input: LoginInput): Promise<LoginResult> => {
+export async function loginService(input: LoginInput): Promise<LoginResult> {
   const result = await CognitoService.login({
     email: input.email,
     password: input.password,
@@ -81,4 +81,4 @@ export const loginService = async (input: LoginInput): Promise<LoginResult> => {
     refreshToken: RefreshToken,
     expiresIn: ExpiresIn,
   };
-};
+}

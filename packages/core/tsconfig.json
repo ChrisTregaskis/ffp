@@ -11,7 +11,7 @@
     "baseUrl": "./src",
     "paths": {
       "@core/lib/*": ["./lib/*"],
-      "@core/types/*": ["./types/*"],
+      "@core/schemas/*": ["./schemas/*"],
       "@core/utils/*": ["./utils/*"],
       "@core/services/*": ["./services/*"],
       "@core/repositories/*": ["./repositories/*"]

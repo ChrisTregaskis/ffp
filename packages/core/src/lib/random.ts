@@ -21,8 +21,8 @@ const ALPHANUMERIC_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
  * generateRandomAlphanumeric(8) // Returns: "M7K4F2R8"
  * ```
  */
-export const generateRandomAlphanumeric = (length: number): string => {
+export function generateRandomAlphanumeric(length: number): string {
   return Array.from({ length }, () =>
     ALPHANUMERIC_CHARS.charAt(randomInt(0, ALPHANUMERIC_CHARS.length))
   ).join('');
-};
+}

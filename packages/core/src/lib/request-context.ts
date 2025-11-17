@@ -50,7 +50,7 @@ export interface RequestContext {
  * };
  * ```
  */
-export const createRequestContext = (tenantContext: TenantContext): RequestContext => {
+export function createRequestContext(tenantContext: TenantContext): RequestContext {
   try {
     return {
       db: getDb(),
@@ -67,4 +67,4 @@ export const createRequestContext = (tenantContext: TenantContext): RequestConte
       `Failed to create request context: ${error instanceof Error ? error.message : 'Unknown error'}`
     );
   }
-};
+}

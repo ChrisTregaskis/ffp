@@ -23,7 +23,7 @@ import { generateRandomAlphanumeric } from '../lib/random';
  * generateAccountCode("PI") // Returns: "PI0000-M7K4"
  * ```
  */
-const generateAccountCode = (customerName: string): string => {
+function generateAccountCode(customerName: string): string {
   // Extract alphanumeric characters and convert to uppercase
   const sanitized = customerName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
 
@@ -34,7 +34,7 @@ const generateAccountCode = (customerName: string): string => {
   const suffix = generateRandomAlphanumeric(4);
 
   return `${prefix}-${suffix}`;
-};
+}
 
 /**
  * Result of creating a new customer
@@ -64,10 +64,10 @@ export interface CreateCustomerResult {
  * // Returns: { tenantId: "...", customerId: "...", accountCode: "ACME-A4F2" }
  * ```
  */
-export const createCustomer = async (
+export async function createCustomer(
   db: DbClient,
   customerName: string
-): Promise<CreateCustomerResult> => {
+): Promise<CreateCustomerResult> {
   return await db.transaction(async (tx) => {
     // Create tenant record (type='business')
     const [tenant] = await tx
@@ -98,4 +98,4 @@ export const createCustomer = async (
       accountCode: customer.accountCode,
     };
   });
-};
+}

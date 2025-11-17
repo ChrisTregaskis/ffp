@@ -2,7 +2,8 @@
 // This package is imported by both @ffp/web and @ffp/functions
 
 // Schemas (validation + types - single source of truth)
-// User, Tenant, and Customer types are exported from here
+// All types (User, UserRole, Tenant, TenantType, Customer, CustomerStatus, etc.)
+// are exported from schemas - Zod schemas are the authoritative source
 export * from './schemas';
 
 // Utilities and constants
@@ -10,4 +11,3 @@ export * from './lib';
 export * from './utils';
 
 // Note: Admin domain is server-only and exported from @ffp/core/server
-// Note: Types are also available via './types/*' for backwards compatibility

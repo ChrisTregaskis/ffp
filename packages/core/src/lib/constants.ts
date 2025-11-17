@@ -13,6 +13,10 @@ export const APP_VERSION = '0.0.1';
  */
 export const PLATFORM_TENANT_ID = 'platform';
 
+import { customerStatusSchema } from '../schemas/customer.schema';
+import { tenantTypeSchema } from '../schemas/tenant.schema';
+import { userRoleSchema } from '../schemas/user.schema';
+
 export const COGNITO_CUSTOM_ATTRIBUTES = {
   TENANT_ID: 'custom:tenantId',
   CUSTOMER_ID: 'custom:customerId',
@@ -20,48 +24,82 @@ export const COGNITO_CUSTOM_ATTRIBUTES = {
 } as const;
 
 /**
- * User role constants
+ * Helper function to convert Zod enum values to uppercase constant object
  *
- * IMPORTANT: Keep in sync with userRoleSchema in ../schemas/user.schema.ts
- * The Zod schema is the single source of truth for user roles.
+ * Transforms: { value: 'value' } => { VALUE: 'value' }
+ *
+ * @param enumObj - Zod enum object with lowercase keys
+ * @returns Object with uppercase keys and original values
+ */
+function createUppercaseConstants<T extends Record<string, string>>(
+  enumObj: T
+): { [K in keyof T as Uppercase<K & string>]: T[K] } {
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(enumObj)) {
+    result[key.toUpperCase()] = value;
+  }
+  return result as { [K in keyof T as Uppercase<K & string>]: T[K] };
+}
+
+/**
+ * User role constants - Derived from Zod schema (single source of truth)
+ *
+ * These constants are automatically derived from userRoleSchema in ../schemas/user.schema.ts
+ * This ensures they always stay in sync - no manual synchronisation needed.
  *
  * Use these constants for programmatic comparisons (e.g., if (role === USER_ROLES.SYSTEM_ADMIN))
  * For typing, import UserRole type from @ffp/core schemas
+ *
+ * @example
+ * ```typescript
+ * import { USER_ROLES, type UserRole } from '@ffp/core';
+ *
+ * const role: UserRole = 'system_admin';
+ * if (role === USER_ROLES.SYSTEM_ADMIN) {
+ *   // Grant admin access
+ * }
+ * ```
  */
-export const USER_ROLES = {
-  SYSTEM_ADMIN: 'system_admin',
-  CUSTOMER_OWNER: 'customer_owner',
-  CUSTOMER_ADMIN: 'customer_admin',
-  CUSTOMER_USER: 'customer_user',
-  INDIVIDUAL_USER: 'individual_user',
-} as const;
+export const USER_ROLES = createUppercaseConstants(userRoleSchema.enum);
 
 /**
- * Tenant type constants
+ * Tenant type constants - Derived from Zod schema (single source of truth)
  *
- * IMPORTANT: Keep in sync with tenantTypeSchema in ../schemas/tenant.schema.ts
- * The Zod schema is the single source of truth for tenant types.
+ * These constants are automatically derived from tenantTypeSchema in ../schemas/tenant.schema.ts
+ * This ensures they always stay in sync - no manual synchronisation needed.
  *
  * Use these constants for programmatic comparisons (e.g., if (type === TENANT_TYPES.BUSINESS))
  * For typing, import TenantType type from @ffp/core schemas
+ *
+ * @example
+ * ```typescript
+ * import { TENANT_TYPES, type TenantType } from '@ffp/core';
+ *
+ * const type: TenantType = 'business';
+ * if (type === TENANT_TYPES.BUSINESS) {
+ *   // Handle business tenant
+ * }
+ * ```
  */
-export const TENANT_TYPES = {
-  INDIVIDUAL: 'individual',
-  BUSINESS: 'business',
-  PLATFORM: 'platform',
-} as const;
+export const TENANT_TYPES = createUppercaseConstants(tenantTypeSchema.enum);
 
 /**
- * Customer status constants
+ * Customer status constants - Derived from Zod schema (single source of truth)
  *
- * IMPORTANT: Keep in sync with customerStatusSchema in ../schemas/customer.schema.ts
- * The Zod schema is the single source of truth for customer status.
+ * These constants are automatically derived from customerStatusSchema in ../schemas/customer.schema.ts
+ * This ensures they always stay in sync - no manual synchronisation needed.
  *
  * Use these constants for programmatic comparisons (e.g., if (status === CUSTOMER_STATUS.ACTIVE))
  * For typing, import CustomerStatus type from @ffp/core schemas
+ *
+ * @example
+ * ```typescript
+ * import { CUSTOMER_STATUS, type CustomerStatus } from '@ffp/core';
+ *
+ * const status: CustomerStatus = 'active';
+ * if (status === CUSTOMER_STATUS.ACTIVE) {
+ *   // Allow access
+ * }
+ * ```
  */
-export const CUSTOMER_STATUS = {
-  ACTIVE: 'active',
-  SUSPENDED: 'suspended',
-  INACTIVE: 'inactive',
-} as const;
+export const CUSTOMER_STATUS = createUppercaseConstants(customerStatusSchema.enum);
