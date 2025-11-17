@@ -5,6 +5,7 @@ import { FormComponentsPage } from '@web/pages/dev/FormComponentsPage';
 import { IconComponentsPage } from '@web/pages/dev/IconComponentsPage';
 import { LoadingSpinnerComponentsPage } from '@web/pages/dev/LoadingSpinnerComponentsPage';
 import { LogoComponentsPage } from '@web/pages/dev/LogoComponentsPage';
+import { MotionShowcasePage } from '@web/pages/dev/MotionShowcasePage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { HomePage } from '@web/pages/protected/HomePage';
 import { LoginPage } from '@web/pages/public/LoginPage';
@@ -141,6 +142,14 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: CardComponentsPage,
     title: 'Card Components',
+    excludeFromMainNavbar: true,
+    devOnly: true,
+  },
+  [RouteKey.COMPONENTS_MOTION]: {
+    path: `${componentsBasePath}/motion`,
+    public: true,
+    pageComponent: MotionShowcasePage,
+    title: 'Motion Showcase',
     excludeFromMainNavbar: true,
     devOnly: true,
   },

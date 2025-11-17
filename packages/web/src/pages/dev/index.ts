@@ -46,6 +46,12 @@ export const componentCategories: ComponentCategory[] = [
     examples: ['Basic cards', 'Auth cards', 'Profile cards', 'Custom styling'],
   },
   {
+    title: 'Motion Animations',
+    description: 'Animation library for smooth, performant UI transitions',
+    path: `${basePath}/motion`,
+    examples: ['Card animations', 'Button clicks', 'Hover effects', 'Spring physics'],
+  },
+  {
     title: 'Modal Components',
     description: 'Dialogs, modals, and overlays',
     path: `${basePath}/modal`,

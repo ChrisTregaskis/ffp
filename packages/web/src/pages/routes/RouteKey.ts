@@ -27,4 +27,6 @@ export enum RouteKey {
   COMPONENTS_LOADING_SPINNER = 'components-loading-spinner',
   /** Card components showcase */
   COMPONENTS_CARD = 'components-card',
+  /** Motion animation showcase */
+  COMPONENTS_MOTION = 'components-motion',
 }
