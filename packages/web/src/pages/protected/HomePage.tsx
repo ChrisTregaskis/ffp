@@ -1,3 +1,4 @@
+import { Title, Text } from '@web/components/text';
 import { useAuth } from '@web/contexts/AuthContext';
 
 /**
@@ -23,36 +24,78 @@ export const HomePage = (): JSX.Element => {
     <div className="p-8">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <Title as="h1" colour="foreground">
+            Dashboard
+          </Title>
           <button
             onClick={handleLogout}
-            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            className="rounded-md bg-destructive px-4 py-2 font-medium text-destructive-foreground hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2"
           >
-            Sign out
+            <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'foreground' }}>
+              Sign out
+            </Text>
           </button>
         </div>
 
         <div className="space-y-6">
           {/* User info card */}
           <div className="rounded-lg bg-white p-6 shadow">
-            <h2 className="mb-4 text-xl font-semibold text-gray-900">Welcome back!</h2>
+            <Title as="h2" colour="foreground" className="mb-4">
+              Welcome back!
+            </Title>
             {user && (
               <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Email</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{user.email}</dd>
+                  <Text
+                    as="span"
+                    styleProps={{ size: 'sm', weight: 'medium', colour: 'muted-foreground' }}
+                  >
+                    Email
+                  </Text>
+                  <Text as="p" styleProps={{ size: 'sm', colour: 'foreground' }} className="mt-1">
+                    {user.email}
+                  </Text>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Role</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{user.role}</dd>
+                  <Text
+                    as="span"
+                    styleProps={{ size: 'sm', weight: 'medium', colour: 'muted-foreground' }}
+                  >
+                    Role
+                  </Text>
+                  <Text as="p" styleProps={{ size: 'sm', colour: 'foreground' }} className="mt-1">
+                    {user.role}
+                  </Text>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Tenant ID</dt>
-                  <dd className="mt-1 text-sm font-mono text-gray-900">{user.tenantId}</dd>
+                  <Text
+                    as="span"
+                    styleProps={{ size: 'sm', weight: 'medium', colour: 'muted-foreground' }}
+                  >
+                    Tenant ID
+                  </Text>
+                  <Text
+                    as="p"
+                    styleProps={{ size: 'sm', colour: 'foreground' }}
+                    className="mt-1 font-mono"
+                  >
+                    {user.tenantId}
+                  </Text>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">User ID</dt>
-                  <dd className="mt-1 text-sm font-mono text-gray-900">{user.userId}</dd>
+                  <Text
+                    as="span"
+                    styleProps={{ size: 'sm', weight: 'medium', colour: 'muted-foreground' }}
+                  >
+                    User ID
+                  </Text>
+                  <Text
+                    as="p"
+                    styleProps={{ size: 'sm', colour: 'foreground' }}
+                    className="mt-1 font-mono"
+                  >
+                    {user.userId}
+                  </Text>
                 </div>
               </dl>
             )}

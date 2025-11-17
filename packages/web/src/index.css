@@ -12,6 +12,10 @@
   --color-primary: #6d9fff;
   --color-secondary: #d7d0ff;
   --color-success: #64c873;
+  --color-warning: #ca8a04;
+  --color-warning-foreground: #ffffff;
+  --color-info: #3b82f6;
+  --color-info-foreground: #ffffff;
 
   /* UI Colours */
   --color-background: #ffffff;

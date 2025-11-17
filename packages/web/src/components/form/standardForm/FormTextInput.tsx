@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { Icon } from '@web/components/Icon/Icon';
 import { Icons } from '@web/components/Icon/types';
+import { Text } from '@web/components/text';
 
 import type { UseFormRegister, FieldErrors, FieldValues, Path } from 'react-hook-form';
 
@@ -65,9 +66,15 @@ export const FormTextInput = <TFieldValues extends FieldValues>({
 
   return (
     <div className="mb-4">
-      <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-        {isRequired && <span className="text-red-500 ml-1">*</span>}
+      <label htmlFor={inputId} className="block mb-1">
+        <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'muted-foreground' }}>
+          {label}
+        </Text>
+        {isRequired && (
+          <Text styleProps={{ colour: 'destructive' }} className="ml-1">
+            *
+          </Text>
+        )}
       </label>
 
       {isPassword ? (
@@ -78,7 +85,7 @@ export const FormTextInput = <TFieldValues extends FieldValues>({
             onClick={() => {
               setShowPassword(!showPassword);
             }}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800"
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
             aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
             <Icon
@@ -92,9 +99,15 @@ export const FormTextInput = <TFieldValues extends FieldValues>({
       )}
 
       {error && (
-        <p id={errorId} className="mt-1 text-sm text-red-600" role="alert">
+        <Text
+          as="p"
+          id={errorId}
+          styleProps={{ size: 'sm', colour: 'destructive' }}
+          className="mt-1"
+          role="alert"
+        >
           {error}
-        </p>
+        </Text>
       )}
     </div>
   );

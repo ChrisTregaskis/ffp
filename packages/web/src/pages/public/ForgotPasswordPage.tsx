@@ -5,6 +5,7 @@ import { Card } from '@web/components/Card/Card';
 import { Icon } from '@web/components/Icon/Icon';
 import { Icons } from '@web/components/Icon/types';
 import { AuthLayout } from '@web/components/layout/AuthLayout';
+import { Text } from '@web/components/text';
 
 /**
  * Forgot Password page component (placeholder).
@@ -36,7 +37,7 @@ export const ForgotPasswordPage = (): JSX.Element => {
         <div className="space-y-6 text-center">
           {/* Info icon */}
           <div className="flex justify-center">
-            <div className="rounded-full bg-blue-100 p-3">
+            <div className="rounded-full bg-primary/10 p-3">
               <Icon
                 name={Icons.HELPCIRCLE}
                 styleProps={{ size: 'xl', colour: 'var(--color-primary)' }}
@@ -46,20 +47,20 @@ export const ForgotPasswordPage = (): JSX.Element => {
 
           {/* Placeholder message */}
           <div className="space-y-2">
-            <p className="text-sm text-gray-600">
+            <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
               Password reset functionality is not yet implemented.
-            </p>
-            <p className="text-sm text-gray-600">
+            </Text>
+            <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
               This feature will be added in a future update and will allow you to reset your
               password via email verification.
-            </p>
+            </Text>
           </div>
 
           {/* Contact info */}
-          <div className="rounded-md bg-blue-50 p-4">
-            <p className="text-sm text-blue-700">
+          <div className="rounded-md bg-info/10 p-4">
+            <Text as="p" styleProps={{ size: 'sm', colour: 'info' }}>
               If you need to reset your password, please contact your system administrator.
-            </p>
+            </Text>
           </div>
 
           {/* Back to login button */}

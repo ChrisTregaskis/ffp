@@ -1,5 +1,7 @@
 import { APP_NAME, testPathAliases } from '@ffp/core';
 
+import { Title, Text } from '@web/components/text';
+
 /**
  * PathAliasTest Component
  * Demonstrates both workspace imports (@ffp/core) and internal aliases (@web/) work correctly
@@ -9,45 +11,55 @@ export const PathAliasTest: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-gray-900">TypeScript Path Alias Test</h2>
+      <Title as="h2" colour="foreground">
+        TypeScript Path Alias Test
+      </Title>
 
-      <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-green-900 mb-2">Workspace Import (@ffp/core)</h3>
-        <p className="text-green-700">
+      <div className="bg-success/10 border border-success/20 rounded-lg p-6">
+        <Title as="h3" colour="success" className="mb-2">
+          Workspace Import (@ffp/core)
+        </Title>
+        <Text styleProps={{ colour: 'success' }}>
           App Name: <strong className="font-semibold">{APP_NAME}</strong>
-        </p>
+        </Text>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-blue-900 mb-3">Internal Path Aliases</h3>
-        <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto text-sm">
-          {JSON.stringify(
-            {
-              tenant: {
-                id: testData.tenant.id,
-                name: testData.tenant.name,
-                type: testData.tenant.type,
+      <div className="bg-info/10 border border-info/20 rounded-lg p-6">
+        <Title as="h3" colour="info" className="mb-3">
+          Internal Path Aliases
+        </Title>
+        <pre className="bg-foreground text-background p-4 rounded-md overflow-x-auto">
+          <Text styleProps={{ size: 'sm' }}>
+            {JSON.stringify(
+              {
+                tenant: {
+                  id: testData.tenant.id,
+                  name: testData.tenant.name,
+                  type: testData.tenant.type,
+                },
+                user: {
+                  id: testData.user.id,
+                  email: testData.user.email,
+                  role: testData.user.role,
+                },
               },
-              user: {
-                id: testData.user.id,
-                email: testData.user.email,
-                role: testData.user.role,
-              },
-            },
-            null,
-            2
-          )}
+              null,
+              2
+            )}
+          </Text>
         </pre>
       </div>
 
-      <div className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-lg p-6 shadow-lg">
+      <div className="bg-gradient-to-r from-success to-info text-white rounded-lg p-6 shadow-lg">
         <div className="flex items-center space-x-3">
           <span className="text-3xl">✅</span>
           <div>
-            <p className="text-lg font-semibold">All path aliases working correctly!</p>
-            <p className="text-sm text-green-50 mt-1">
+            <Text as="p" styleProps={{ size: 'lg', weight: 'semibold' }}>
+              All path aliases working correctly!
+            </Text>
+            <Text as="p" styleProps={{ size: 'sm' }} className="mt-1 opacity-90">
               TailwindCSS is also configured and rendering styles
-            </p>
+            </Text>
           </div>
         </div>
       </div>

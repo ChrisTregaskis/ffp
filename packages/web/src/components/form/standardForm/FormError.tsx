@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { Text } from '@web/components/text';
+
 export interface FormErrorProps {
   message?: string;
   id?: string; // For linking to input via aria-describedby
@@ -21,7 +23,9 @@ export const FormError: React.FC<FormErrorProps> = ({ message, id }) => {
 
   return (
     <div id={id} className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md" role="alert">
-      <p className="text-sm text-red-600">{message}</p>
+      <Text as="p" styleProps={{ size: 'sm', colour: 'destructive' }}>
+        {message}
+      </Text>
     </div>
   );
 };

@@ -33,15 +33,15 @@ export const ComponentPageHeader: React.FC<ComponentPageHeaderProps> = ({
           <Link to={backLinkPath} className="inline-flex items-center hover:opacity-80">
             <Text styleProps={{ size: 'sm', colour: 'primary' }}>{backLinkText}</Text>
           </Link>
-          <div className="rounded-md bg-yellow-100 px-3 py-1">
-            <Text styleProps={{ size: 'sm', weight: 'medium' }} className="text-yellow-800">
+          <div className="rounded-md bg-warning/10 px-3 py-1">
+            <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'warning' }}>
               Development Only
             </Text>
           </div>
         </div>
       ) : (
-        <div className="mb-4 inline-block rounded-md bg-yellow-100 px-3 py-1">
-          <Text styleProps={{ size: 'sm', weight: 'medium' }} className="text-yellow-800">
+        <div className="mb-4 inline-block rounded-md bg-warning/10 px-3 py-1">
+          <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'warning' }}>
             Development Only
           </Text>
         </div>
