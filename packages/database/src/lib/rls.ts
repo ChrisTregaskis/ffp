@@ -25,11 +25,11 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
  * @param paramName - Parameter name for error messages
  * @throws {Error} If value is not a valid UUID format
  */
-function validateUUID(value: string, paramName: string): void {
+const validateUUID = (value: string, paramName: string): void => {
   if (!UUID_REGEX.test(value)) {
     throw new Error(`${paramName} must be a valid UUID format (got: ${value.substring(0, 20)}...)`);
   }
-}
+};
 
 /**
  * Safely escape a string literal for use in SQL
@@ -39,9 +39,9 @@ function validateUUID(value: string, paramName: string): void {
  * @param value - String to escape
  * @returns Safely escaped string value
  */
-function escapeLiteral(value: string): string {
+const escapeLiteral = (value: string): string => {
   return value.replace(/'/g, "''");
-}
+};
 
 /**
  * Set RLS context variables for multi-tenant isolation
@@ -64,11 +64,11 @@ function escapeLiteral(value: string): string {
  *
  * @throws {Error} If tenantId is not provided or invalid
  */
-export async function setRLSContext(
+export const setRLSContext = async (
   db: NodePgDatabase<any>,
   tenantId: string,
   userId?: string
-): Promise<void> {
+): Promise<void> => {
   if (!tenantId) {
     throw new Error('tenantId is required for RLS context');
   }
@@ -90,7 +90,7 @@ export async function setRLSContext(
     const escapedUserId = escapeLiteral(userId);
     await db.execute(sql.raw(`SET app.user_id = '${escapedUserId}'`));
   }
-}
+};
 
 /**
  * Execute a callback within a transaction with RLS context set
@@ -125,12 +125,12 @@ export async function setRLSContext(
  *
  * @throws {Error} If tenantId is not provided or callback fails
  */
-export async function withRLS<T>(
+export const withRLS = async <T>(
   db: NodePgDatabase<any>,
   tenantId: string,
   userId: string | undefined,
   callback: (tx: NodePgDatabase<any>) => Promise<T>
-): Promise<T> {
+): Promise<T> => {
   if (!tenantId) {
     throw new Error('tenantId is required for RLS context');
   }
@@ -148,4 +148,4 @@ export async function withRLS<T>(
     // Execute callback with transaction that has RLS context set
     return await callback(tx);
   });
-}
+};

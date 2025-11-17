@@ -13,7 +13,7 @@ import { Pool } from 'pg';
  *
  * @returns SSL configuration for pg Pool
  */
-const getSSLConfig = (): boolean | { rejectUnauthorized: boolean; ca: string } => {
+function getSSLConfig(): boolean | { rejectUnauthorized: boolean; ca: string } {
   // SST uses stage names like 'dev', personal stages, 'staging', 'production'
   // Only enable SSL for staging and production
   const stage = process.env.SST_STAGE ?? process.env.ENVIRONMENT;
@@ -35,7 +35,7 @@ const getSSLConfig = (): boolean | { rejectUnauthorized: boolean; ca: string } =
     rejectUnauthorized: true,
     ca: fs.readFileSync(caPath, 'utf-8'),
   };
-};
+}
 
 /**
  * Connection pool for PostgreSQL
@@ -78,16 +78,16 @@ export const db = drizzle({ client: pool });
  * });
  * ```
  */
-export const setRLSContext = async (
+export async function setRLSContext(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   tenantId: string,
   userId?: string
-): Promise<void> => {
+): Promise<void> {
   await tx.execute(sql`SET LOCAL app.tenant_id = ${tenantId}`);
   if (userId) {
     await tx.execute(sql`SET LOCAL app.user_id = ${userId}`);
   }
-};
+}
 
 /**
  * Transaction wrapper that automatically sets RLS context
@@ -107,16 +107,16 @@ export const setRLSContext = async (
  * });
  * ```
  */
-export const withRLS = async <T>(
+export async function withRLS<T>(
   tenantId: string,
   userId: string | undefined,
   callback: (tx: Parameters<Parameters<typeof db.transaction>[0]>[0]) => Promise<T>
-): Promise<T> => {
+): Promise<T> {
   return await db.transaction(async (tx) => {
     await setRLSContext(tx, tenantId, userId);
     return await callback(tx);
   });
-};
+}
 
 /**
  * Gracefully closes the database connection pool

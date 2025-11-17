@@ -275,7 +275,7 @@ ENVIRONMENT=staging npm run db:verify
 import { Bucket } from 'sst/constructs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 
-export function FrontendStack({ stack }: StackContext) {
+export const FrontendStack = ({ stack }: StackContext) => {
   const websiteBucket = new Bucket(stack, 'Website', {
     cdk: {
       bucket: {
@@ -306,7 +306,7 @@ export function FrontendStack({ stack }: StackContext) {
   });
 
   return { websiteBucket, distribution };
-}
+};
 ```
 
 ### GitHub Actions Configuration (Future - Phase 2+)
@@ -605,10 +605,10 @@ import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-sec
 
 const client = new SecretsManagerClient({ region: 'eu-west-2' });
 
-export async function getSecret(secretName: string) {
+export const getSecret = async (secretName: string) => {
   const response = await client.send(new GetSecretValueCommand({ SecretId: secretName }));
   return JSON.parse(response.SecretString!);
-}
+};
 
 // Usage
 const dbCredentials = await getSecret(`ffp/${process.env.STAGE}/db-credentials`);

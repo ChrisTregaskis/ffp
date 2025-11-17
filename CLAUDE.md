@@ -271,6 +271,7 @@ All internal dependencies use `workspace:*` protocol:
 - **ESLint** runs with `--max-warnings 0` - no warnings allowed
 - **Prettier** formats on save (VS Code integration configured)
 - **Import order**: External deps → Internal deps → Types → Side effects
+- **React components**: Always use arrow functions with `React.FC` typing (e.g., `const Component: React.FC = () => {}`), never use function declarations
 
 ### Testing Requirements
 

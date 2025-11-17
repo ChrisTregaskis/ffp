@@ -33,12 +33,12 @@ export type RouteValidationResult =
  * @example
  * Ref: packages/functions/src/auth/index.ts
  */
-export function validateAndMatchRoute(
+export const validateAndMatchRoute = (
   event: APIGatewayProxyEventV2WithJWT,
   routes: RouteRegistry,
   domainName: string,
   routerContext: TenantContext
-): RouteValidationResult {
+): RouteValidationResult => {
   const logger = new Logger(routerContext);
 
   // Extract HTTP method and path from V2 event format
@@ -112,4 +112,4 @@ export function validateAndMatchRoute(
     method,
     path,
   };
-}
+};

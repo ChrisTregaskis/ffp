@@ -4,7 +4,7 @@ import path from 'path';
  * Creates alias configuration for the web package internal paths
  * Uses @web/ namespace to avoid any future conflicts with core package
  */
-export function createWebAliasConfig(packageRoot: string): Record<string, string> {
+export const createWebAliasConfig = (packageRoot: string): Record<string, string> => {
   return {
     // Web package internal aliases with explicit namespace
     '@web/components': path.resolve(packageRoot, 'src/components'),
@@ -19,13 +19,13 @@ export function createWebAliasConfig(packageRoot: string): Record<string, string
     '@web/services': path.resolve(packageRoot, 'src/services'),
     '@web/lib': path.resolve(packageRoot, 'src/lib'),
   };
-}
+};
 
 /**
  * Creates alias configuration for core package paths
  * Uses @core/ namespace to avoid conflicts and provide clear separation
  */
-export function createCoreAliasConfig(corePackageRoot: string): Record<string, string> {
+export const createCoreAliasConfig = (corePackageRoot: string): Record<string, string> => {
   return {
     // Core package workspace import
     '@ffp/core': path.resolve(corePackageRoot, 'src'),
@@ -37,18 +37,18 @@ export function createCoreAliasConfig(corePackageRoot: string): Record<string, s
     '@core/services': path.resolve(corePackageRoot, 'src/services'),
     '@core/repositories': path.resolve(corePackageRoot, 'src/repositories'),
   };
-}
+};
 
 /**
  * Creates the complete Vite alias configuration
  * Uses explicit namespaces (@web/ and @core/) to prevent any conflicts
  * This approach is future-proof and scalable as packages grow
  */
-export function createViteAliasConfig(packageRoot: string): Record<string, string> {
+export const createViteAliasConfig = (packageRoot: string): Record<string, string> => {
   const corePackageRoot = path.resolve(packageRoot, '../core');
 
   return {
     ...createWebAliasConfig(packageRoot),
     ...createCoreAliasConfig(corePackageRoot),
   };
-}
+};

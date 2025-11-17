@@ -24,7 +24,7 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
 });
 
-async function testConnection() {
+const testConnection = async () => {
   try {
     console.log(`${terminalPrefix(TerminalPrefix.INFO)} Testing database connection...\n`);
     console.log('Configuration:');
@@ -86,6 +86,6 @@ async function testConnection() {
     await pool.end();
     process.exit(1);
   }
-}
+};
 
 testConnection();

@@ -28,18 +28,18 @@ config({ path: resolve(__dirname, '../../../.env') });
 /**
  * Get required environment variable or throw error
  */
-function getRequiredEnv(key: string): string {
+const getRequiredEnv = (key: string): string => {
   const value = process.env[key];
   if (!value) {
     throw new Error(`Missing required environment variable: ${key}`);
   }
   return value;
-}
+};
 
 /**
  * Main migration runner
  */
-async function runMigrations() {
+const runMigrations = async () => {
   console.log(`${terminalPrefix(TerminalPrefix.INFO)} Starting database migrations...\n`);
 
   // Create connection pool
@@ -76,7 +76,7 @@ async function runMigrations() {
     // Clean up connection pool
     await pool.end();
   }
-}
+};
 
 // Run migrations
 runMigrations().catch((error) => {

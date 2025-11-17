@@ -1,11 +1,11 @@
 # FFP - Project State
 
-**Last Updated**: November 14, 2025 - Session 47
+**Last Updated**: November 17, 2025 - Sessions 49-50
 **Current Phase**: Sprint 2 Execution - IN PROGRESS 🚀
 **Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
 **Current User Story Branch:** `feature/FFP-16-web-login-flow`
-**Next Subtask**: FFP-92 - Implement Login Form
-**Recently Completed**: FFP-90 - Create AuthContext and AuthProvider
+**Next Subtask**: FFP-92 - Implement Login Form (ready to start - component library complete)
+**Recently Completed**: FFP-119 - Web Routing & Component Library Foundation (Extended Scope + Code Review)
 
 ---
 
@@ -111,21 +111,20 @@
 
 ## Current Work: FFP-16 - Web Login Interface
 
-**Status**: 🚀 IN PROGRESS (8/10 subtasks - 3 complete, 5 active, 2 deferred)
+**Status**: 🚀 IN PROGRESS (8/10 subtasks - 5 complete, 3 active, 2 deferred)
 **Estimated**: ~18-19 hours (revised from 20 hours with deferrals)
-**Completed**: 9/18-19 hours (47%)
+**Completed**: 13/18-19 hours (68%)
 
 ### Execution Order
 
 1. ✅ **FFP-115** - Component Library & Design System Setup (4h) - **COMPLETE**
 2. ✅ **FFP-93** - Install and configure AWS Amplify (1h) - **COMPLETE**
 3. ✅ **FFP-90** - Create AuthContext and AuthProvider (4h) - **COMPLETE**
-4. **FFP-92** - Implement login form (2h) - 🔜 **NEXT**
-5. **FFP-94** - Create ProtectedRoute component (2h)
-6. **FFP-96** - Create pages and setup routing (2h)
-7. **FFP-95** - Implement logout functionality (1h)
-8. **FFP-97** - Write unit tests (2h)
-9. **FFP-100** - Update documentation (1h)
+4. ✅ **FFP-119** - Web Routing & Component Library Foundation (2h actual + 2h extended scope) - **COMPLETE**
+5. **FFP-92** - Implement login form (2h) - 🔜 **NEXT** (ready to start - all components available)
+6. **FFP-95** - Implement logout functionality (1h) - ✅ **DONE** (integrated with routing)
+7. **FFP-97** - Write unit tests (2h)
+8. **FFP-100** - Update documentation (1h)
 
 ### Deferred Subtasks
 
@@ -165,6 +164,70 @@
 ---
 
 ## Recent Work (Sprint 2 Sessions)
+
+**Sessions 49-50 (Nov 17)**: ✅ FFP-119 - Web Routing & Component Library Foundation COMPLETE (Extended Scope + Code Review)
+
+**Extended Scope Implementation** (Session 49):
+
+- Significantly expanded beyond basic routing to include comprehensive component library
+- Created complete component library structure:
+  - **Form System**: Config-driven Form, FormTextInput, useForm hook with field-level validation
+  - **Icon Library**: 20+ icons with consistent size/colour props (ArrowLeft, CheckCircle, ChevronDown, LockClosed, UserCircle, etc.)
+  - **UI Components**: Text, Title, Card, LoadingSpinner, Logo with size/weight/colour variants
+  - **Motion System**: FadeIn, SlideIn, Scale animation wrappers using Framer Motion
+  - **Layout Components**: PageContainer, PageHeader for consistent page structure
+  - **Dev Components**: ComponentShowcase, CodeExample, VariantDemo for demonstrations
+- Created comprehensive component showcase pages:
+  - ComponentsPage - Landing with category cards (Forms, Icons, Typography, Layout, Motion)
+  - FormComponentsPage, IconComponentsPage, TypographyComponentsPage, LayoutComponentsPage, MotionComponentsPage
+  - All with live demos, code examples, and variant demonstrations
+- Code style standardisation: Converted all 40+ components to `const Component: React.FC = () => {}` pattern
+- Updated CLAUDE.md to enforce React component arrow function pattern
+- Added dependencies: framer-motion, react-router-dom@^7.9.6, strip-json-comments@^5.0.3
+- Backend refactoring: Converted services/repositories to arrow functions (noted in code review)
+- Added comprehensive Zod schemas: customer.schema.ts, tenant.schema.ts, enhanced user.schema.ts
+- Schema exports now single source of truth for types
+- Enhanced test coverage for z.coerce.date() handling (60+ new tests)
+- TypeScript configuration optimised: VS Code settings to prevent TS Server crashes
+- Bundle size: 650KB uncompressed (190KB gzipped) - acceptable for Phase 1
+
+**Session 48 (Nov 15)**: ✅ FFP-119 - Basic Routing Infrastructure (Initial Implementation - 2h)
+
+- Installed react-router-dom@^7.9.6 and @types/react-router-dom@^5.3.3 packages
+- Created type-safe routing infrastructure:
+  - RouteKey enum for compile-time safety
+  - Routes configuration with AppRoute interface (includes devOnly flag)
+  - Router component with environment-based filtering (excludes dev routes in production)
+  - ProtectedRoute wrapper using existing AuthContext from FFP-90
+- Created placeholder pages:
+  - LoginPage (public, placeholder for FFP-92 implementation)
+  - HomePage (protected, displays user JWT claims)
+  - NotAuthorisedPage (403 error page)
+- Created AppLayout component with sidebar navigation wrapper for protected routes
+- Created component showcase routes (dev-only, excluded in production):
+  - ComponentsPage - Landing page with category cards
+  - FormComponentsPage - Form components demo (moved from FormTest)
+  - IconComponentsPage - Icon components demo (moved from IconTest)
+- Updated App.tsx to render Router instead of test components
+- Implemented environment-based route filtering (import.meta.env.PROD)
+- Public routes: /login
+- Protected routes: / (home/dashboard)
+- Dev-only routes: /components, /components/form, /components/icon
+- Catch-all route redirects to home (which redirects to login if not authed)
+- ProtectedRoute features:
+  - Uses real useAuth() hook (no placeholder)
+  - Shows loading spinner during auth check
+  - Redirects to /login if not authenticated
+  - Wraps content in AppLayout by default
+  - Supports excludeLayout prop for fullscreen pages
+- Zero TypeScript errors, zero ESLint warnings, zero `any` types
+- Production build successful (541KB main chunk, acceptable for Phase 1)
+- British English spelling throughout
+- All acceptance criteria met
+- Created comprehensive review context document
+- Manual testing completed successfully
+- FFP-95 (logout functionality) integrated - sign out button works in HomePage
+- Ready for FFP-92 (Implement Login Form)
 
 **Session 47 (Nov 14)**: ✅ FFP-90 - Create AuthContext and AuthProvider COMPLETE (4h)
 
@@ -398,6 +461,36 @@
 ---
 
 ## Key Decisions
+
+**FFP-119 (Web Routing & Component Library)** - Sessions 49-50:
+
+- **React component pattern standardised**: All React components use `const Component: React.FC = () => {}`
+  - Provides explicit typing and consistent export pattern
+  - Applied across ~40+ components (routing, forms, icons, ui, layout, motion, dev)
+  - **Important**: Backend functions should use traditional `function` declarations (better stack traces, hoisting)
+  - Distinction documented in CLAUDE.md
+- **Schema-first type generation**: Zod schemas are single source of truth for all types
+  - Types exported from `packages/core/src/schemas/` via `z.infer<typeof schema>`
+  - `./types` directory deprecated in favour of schema-derived types
+  - Prevents type/validation drift (runtime and compile-time safety)
+  - Applied to User, UserRole, Tenant, TenantType, Customer, CustomerStatus
+- **Component library architecture**: Atomic design with domain-specific directories
+  - `form/`, `icons/`, `ui/`, `layout/`, `motion/`, `dev/` for clear organisation
+  - Barrel exports (`index.ts`) for clean imports
+  - British English prop names throughout (`colour`, `initialise`, `optimise`)
+- **Dev-only component showcases**: Development routes excluded from production builds
+  - Environment-based filtering via `import.meta.env.PROD`
+  - Routes marked with `devOnly: true` flag
+  - Accessible at `/components/*` in development only
+  - High-ROI developer experience feature for rapid component testing
+- **Framer Motion accepted**: ~50KB bundle cost justified for Phase 1 animation quality
+  - GPU-accelerated animations provide smooth user experience
+  - Critical for healthcare app perceived quality and trust
+  - Defer optimisation (CSS-only alternatives) to Phase 2 if needed
+- **Bundle size monitoring**: 650KB uncompressed (190KB gzipped) acceptable for Phase 1
+  - Not mobile-first (physiotherapist dashboard = desktop/tablet)
+  - Track in CI but don't optimise until >1MB or user feedback indicates slowness
+  - Route-level code splitting deferred to post-MVP
 
 **FFP-112 (Admin API)** - Session 36:
 

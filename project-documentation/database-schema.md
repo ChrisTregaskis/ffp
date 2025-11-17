@@ -120,19 +120,19 @@ const pool = new Pool({
 export const db = drizzle(pool);
 
 // RLS context setting (PostgreSQL-specific, uses raw SQL)
-export async function setRLSContext(tenantId: string, userId?: string) {
+export const setRLSContext = async (tenantId: string, userId?: string) => {
   await db.execute(sql`SET app.tenant_id = ${tenantId}`);
   if (userId) {
     await db.execute(sql`SET app.user_id = ${userId}`);
   }
-}
+};
 
 // Transaction wrapper with RLS
-export async function withRLS<T>(
+export const withRLS = async <T>(
   tenantId: string,
   userId: string | undefined,
   callback: (tx: typeof db) => Promise<T>
-): Promise<T> {
+): Promise<T> => {
   return await db.transaction(async (tx) => {
     await tx.execute(sql`SET app.tenant_id = ${tenantId}`);
     if (userId) {
@@ -140,7 +140,7 @@ export async function withRLS<T>(
     }
     return await callback(tx);
   });
-}
+};
 ```
 
 ## Core Schema Definitions
@@ -498,7 +498,7 @@ CREATE POLICY tenant_isolation_users ON users
 Handler functions extract context and handle system admin case:
 
 ```typescript
-export function extractUserContext(event: APIGatewayEvent): TenantContext {
+export const extractUserContext = (event: APIGatewayEvent): TenantContext => {
   const claims = event.requestContext.authorizer.jwt.claims;
   const role = claims['custom:role'] as string;
   const tenantId = claims['custom:tenantId'] as string;
@@ -515,7 +515,7 @@ export function extractUserContext(event: APIGatewayEvent): TenantContext {
     tenantId: tenantId, // Will be PLATFORM_TENANT_ID for system_admin
     customerId: role === 'system_admin' ? null : claims['custom:customerId'],
   };
-}
+};
 ```
 
 **Important Notes:**
