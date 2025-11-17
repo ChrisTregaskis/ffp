@@ -1,3 +1,8 @@
+import { Link } from 'react-router-dom';
+
+import { Title, Text } from '@web/components/text';
+import { routes, RouteKey } from '@web/pages/routes';
+
 import type { PropsWithChildren } from 'react';
 
 /**
@@ -11,39 +16,36 @@ import type { PropsWithChildren } from 'react';
  */
 export const AppLayout: React.FC<PropsWithChildren> = ({ children }) => {
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-muted">
       {/* Sidebar navigation (placeholder) */}
       <aside className="w-64 bg-white shadow-md">
         <div className="flex h-full flex-col">
           {/* App branding */}
-          <div className="border-b border-gray-200 p-6">
-            <h1 className="text-xl font-bold text-gray-900">Fit For Purpose</h1>
+          <div className="border-b border-border p-6">
+            <Title as="h1" colour="foreground">
+              Fit For Purpose
+            </Title>
           </div>
 
           {/* Navigation items */}
           <nav className="flex-1 p-4">
             <div className="space-y-2">
-              <a
-                href="/"
-                className="block rounded-md bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700"
+              <Link
+                to={routes[RouteKey.HOME].path}
+                className="block rounded-md bg-primary/10 px-4 py-2"
               >
-                Dashboard
-              </a>
-              <div className="rounded-md bg-gray-50 px-4 py-2 text-sm text-gray-500">
-                Assessments (Coming soon)
-              </div>
-              <div className="rounded-md bg-gray-50 px-4 py-2 text-sm text-gray-500">
-                Programmes (Coming soon)
-              </div>
-              <div className="rounded-md bg-gray-50 px-4 py-2 text-sm text-gray-500">
-                Customers (Coming soon)
-              </div>
+                <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'primary' }}>
+                  Dashboard
+                </Text>
+              </Link>
             </div>
           </nav>
 
           {/* Footer placeholder */}
-          <div className="border-t border-gray-200 p-4">
-            <p className="text-xs text-gray-500">FFP v0.1.0 (Sprint 1)</p>
+          <div className="border-t border-border p-4">
+            <Text as="p" styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
+              FFP v0.1.0 (Sprint 1)
+            </Text>
           </div>
         </div>
       </aside>

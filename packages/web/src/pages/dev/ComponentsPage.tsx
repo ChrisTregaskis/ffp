@@ -24,8 +24,8 @@ export const ComponentsPage = (): JSX.Element => {
     <ComponentPageWrapper maxWidth="7xl">
       {/* Header */}
       <div className="mb-8">
-        <div className="mb-4 inline-block rounded-md bg-yellow-100 px-3 py-1">
-          <Text styleProps={{ size: 'sm', weight: 'medium' }} className="text-yellow-800">
+        <div className="mb-4 inline-block rounded-md bg-warning/10 px-3 py-1">
+          <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'warning' }}>
             Development Only
           </Text>
         </div>

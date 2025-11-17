@@ -3,6 +3,7 @@
  */
 export enum FieldDataType {
   STRING = 'String',
+  PASSWORD = 'Password',
   NUMBER = 'Number',
   SELECT = 'Select',
   CHECKBOX = 'Checkbox',

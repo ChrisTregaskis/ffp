@@ -11,18 +11,18 @@ interface DeveloperInstructionsProps {
  * Developer instructions panel (development only).
  *
  * Displays helpful developer information, usage instructions,
- * or implementation guidance in a consistent blue info panel.
+ * or implementation guidance in a consistent info panel.
  */
 export const DeveloperInstructions: React.FC<DeveloperInstructionsProps> = ({
   title = 'Developer Instructions',
   children,
 }) => {
   return (
-    <div className="rounded-lg bg-blue-50 p-6">
-      <Title as="h3" className="mb-3 text-blue-900">
+    <div className="rounded-lg bg-info/10 p-6">
+      <Title as="h3" colour="info" className="mb-3">
         {title}
       </Title>
-      <div className="text-sm text-blue-700">{children}</div>
+      <div className="text-info text-sm">{children}</div>
     </div>
   );
 };

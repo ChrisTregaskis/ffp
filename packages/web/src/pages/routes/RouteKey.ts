@@ -7,6 +7,8 @@
 export enum RouteKey {
   /** Public login route */
   LOGIN = 'login',
+  /** Public forgot password route */
+  FORGOT_PASSWORD = 'forgot-password',
   /** Protected home/dashboard route */
   HOME = 'home',
 
@@ -29,4 +31,6 @@ export enum RouteKey {
   COMPONENTS_CARD = 'components-card',
   /** Motion animation showcase */
   COMPONENTS_MOTION = 'components-motion',
+  /** Static alert components showcase */
+  COMPONENTS_STATIC_ALERT = 'components-static-alert',
 }

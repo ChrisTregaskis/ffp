@@ -1,5 +1,5 @@
 import { getCurrentUser, fetchAuthSession, signIn, signOut } from 'aws-amplify/auth';
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode, useCallback } from 'react';
 import { ZodError } from 'zod';
 
 import { jwtUserClaimsSchema, type UserRole } from '@ffp/core';
@@ -58,6 +58,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
    */
   useEffect(() => {
     void checkAuth();
+    // Disabled as we're doing this on mount only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /**
@@ -71,7 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
    * Uses Zod schema validation from @ffp/core to ensure JWT claims are valid.
    * Silently fails if no session exists (user remains null).
    */
-  const checkAuth = async (): Promise<void> => {
+  const checkAuth = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -104,6 +106,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
         console.error('JWT validation failed:', err.issues);
         const errorMessage = `Invalid JWT claims: ${err.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join(', ')}`;
         console.error(errorMessage);
+
+        // Clear invalid tokens from storage
+        await signOut({ global: false });
       } else {
         const errorMessage =
           err instanceof Error ? err.message : 'An unknown error occurred during authentication';
@@ -115,7 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   /**
    * Authenticate user with email and password.
@@ -124,28 +129,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
    * @param password - User's password
    * @throws Error if authentication fails
    */
-  const handleLogin = async (email: string, password: string): Promise<void> => {
-    try {
-      setLoading(true);
-      setError(null);
+  const handleLogin = useCallback(
+    async (email: string, password: string): Promise<void> => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      await signIn({ username: email, password });
+        await signIn({ username: email, password });
 
-      // Refresh user state after successful login
-      await checkAuth();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
-      setError(errorMessage);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+        // Refresh user state after successful login
+        await checkAuth();
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
+        setError(errorMessage);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [checkAuth]
+  );
 
   /**
    * End the current user session and clear auth state.
    */
-  const handleLogout = async (): Promise<void> => {
+  const handleLogout = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -159,7 +167,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const value: AuthContextType = {
     user,

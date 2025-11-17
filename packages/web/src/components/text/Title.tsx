@@ -30,6 +30,8 @@ const COLOUR_CLASS_MAP: Record<TextColour, string> = {
   'muted-foreground': 'text-muted-foreground',
   'card-foreground': 'text-card-foreground',
   'accent-foreground': 'text-accent-foreground',
+  warning: 'text-warning',
+  info: 'text-info',
 };
 
 export interface TitleProps {

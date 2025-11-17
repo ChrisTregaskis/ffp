@@ -12,6 +12,7 @@ export const createWebAliasConfig = (packageRoot: string): Record<string, string
     '@web/hooks': path.resolve(packageRoot, 'src/hooks'),
     '@web/pages': path.resolve(packageRoot, 'src/pages'),
     '@web/assets': path.resolve(packageRoot, 'src/assets'),
+    '@web/schemas': path.resolve(packageRoot, 'src/schemas'),
 
     // Future-ready aliases for common directories
     '@web/utils': path.resolve(packageRoot, 'src/utils'),

@@ -190,7 +190,7 @@ export const ButtonComponentsPage = (): JSX.Element => {
         ) : (
           <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
             No icons available. Run{' '}
-            <code className="rounded bg-gray-100 px-1">pnpm icon:generate</code> to generate icons.
+            <code className="rounded bg-muted px-1">pnpm icon:generate</code> to generate icons.
           </Text>
         )}
       </ComponentSection>
@@ -247,7 +247,7 @@ export const ButtonComponentsPage = (): JSX.Element => {
             </Title>
             <div className="rounded-lg bg-card p-6 shadow">
               <div className="flex justify-end gap-3">
-                <Button variant="neutral">Cancel</Button>
+                <Button variant="secondary">Cancel</Button>
                 <Button variant="primary">Save Changes</Button>
               </div>
             </div>
@@ -262,7 +262,7 @@ export const ButtonComponentsPage = (): JSX.Element => {
                 Are you sure you want to delete this item? This action cannot be undone.
               </Text>
               <div className="flex justify-end gap-3">
-                <Button variant="neutral">Cancel</Button>
+                <Button variant="secondary">Cancel</Button>
                 <Button
                   variant="destructive"
                   icon={sampleIcon ? <Icon name={sampleIcon} /> : undefined}

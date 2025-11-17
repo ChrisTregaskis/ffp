@@ -61,10 +61,10 @@ export const IconComponentsPage = (): JSX.Element => {
             />
           </div>
         ) : (
-          <p className="text-sm text-gray-500">
+          <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
             No icons available. Run{' '}
-            <code className="rounded bg-gray-100 px-1">pnpm icon:generate</code>
-          </p>
+            <code className="rounded bg-muted px-1">pnpm icon:generate</code>
+          </Text>
         )}
       </ComponentSection>
 
@@ -110,10 +110,10 @@ export const IconComponentsPage = (): JSX.Element => {
             />
           </div>
         ) : (
-          <p className="text-sm text-gray-500">
+          <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
             No icons available. Run{' '}
-            <code className="rounded bg-gray-100 px-1">pnpm icon:generate</code>
-          </p>
+            <code className="rounded bg-muted px-1">pnpm icon:generate</code>
+          </Text>
         )}
       </ComponentSection>
 
@@ -122,9 +122,13 @@ export const IconComponentsPage = (): JSX.Element => {
         title={
           <>
             Complete Icon Library
-            <span className="ml-2 text-base font-normal text-gray-500">
+            <Text
+              as="span"
+              styleProps={{ size: 'base', weight: 'normal', colour: 'muted-foreground' }}
+              className="ml-2"
+            >
               ({iconNames.length} total)
-            </span>
+            </Text>
           </>
         }
         className="mb-8"

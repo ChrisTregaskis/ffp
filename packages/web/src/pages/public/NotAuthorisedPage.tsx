@@ -1,3 +1,9 @@
+import { useNavigate } from 'react-router-dom';
+
+import { Button } from '@web/components/button/Button';
+import { Title, Text } from '@web/components/text';
+import { routes, RouteKey } from '@web/pages/routes';
+
 /**
  * 403 Not Authorised page.
  *
@@ -8,21 +14,28 @@
  * - User is accessing a tenant-specific resource from wrong tenant
  */
 export const NotAuthorisedPage = (): JSX.Element => {
+  const navigate = useNavigate();
+
+  const handleGoToDashboard = (): void => {
+    void navigate(routes[RouteKey.HOME].path);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-muted px-4">
       <div className="text-center">
-        <h1 className="text-9xl font-bold text-gray-900">403</h1>
-        <h2 className="mt-4 text-xl font-semibold uppercase tracking-wider text-gray-600">
+        <Title as="h1" colour="foreground" className="text-9xl">
+          403
+        </Title>
+        <Title as="h2" colour="muted-foreground" className="mt-4 uppercase tracking-wider">
           Not Authorised
-        </h2>
-        <p className="mt-4 text-gray-600">You do not have permission to access this page.</p>
+        </Title>
+        <Text as="p" styleProps={{ colour: 'muted-foreground' }} className="mt-4">
+          You do not have permission to access this page.
+        </Text>
         <div className="mt-8">
-          <a
-            href="/"
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
+          <Button variant="primary" onClick={handleGoToDashboard}>
             Go to Dashboard
-          </a>
+          </Button>
         </div>
       </div>
     </div>

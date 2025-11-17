@@ -11,7 +11,9 @@ export type TextColour =
   | 'foreground'
   | 'muted-foreground'
   | 'card-foreground'
-  | 'accent-foreground';
+  | 'accent-foreground'
+  | 'warning'
+  | 'info';
 
 /**
  * Available text sizes based on FFP theme.
@@ -36,6 +38,8 @@ const COLOUR_CLASS_MAP: Record<TextColour, string> = {
   'muted-foreground': 'text-muted-foreground',
   'card-foreground': 'text-card-foreground',
   'accent-foreground': 'text-accent-foreground',
+  warning: 'text-warning',
+  info: 'text-info',
 };
 
 /**
@@ -85,6 +89,10 @@ export interface TextProps {
   truncationLength?: number;
   /** Additional custom classes */
   className?: string;
+  /** HTML id attribute */
+  id?: string;
+  /** ARIA role attribute */
+  role?: string;
 }
 
 /**
@@ -99,6 +107,8 @@ export const Text: React.FC<TextProps> = ({
   as = 'span',
   truncationLength,
   className = '',
+  id,
+  role,
 }): JSX.Element => {
   const colour = styleProps?.colour ?? 'foreground';
   const weight = styleProps?.weight ?? 'normal';
@@ -118,5 +128,9 @@ export const Text: React.FC<TextProps> = ({
 
   const Component = as;
 
-  return <Component className={classes}>{formattedChildren}</Component>;
+  return (
+    <Component className={classes} id={id} role={role}>
+      {formattedChildren}
+    </Component>
+  );
 };
