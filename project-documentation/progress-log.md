@@ -8,6 +8,123 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### November 17, 2025 (Session 51 - FFP-92 Login Form Complete)
+
+**Status**: ✅ FFP-92 COMPLETE - Implement Login Form (with Code Review Fixes)
+
+**Branch**: `feature/FFP-92-login-page` (merging to `feature/FFP-16-web-login-flow`)
+
+**Completed Work**:
+
+**Login Form Implementation** (2 hours actual):
+
+- ✅ **LoginForm Component**: Config-driven organism using Field[] pattern
+  - Email + password fields with React Hook Form validation
+  - StaticAlert integration for error display
+  - Password field uses FieldDataType.PASSWORD (visibility toggle)
+  - Forgot password navigation link
+  - Loading state during authentication
+  - Clean separation: LoginForm (presentational) + LoginPage (logic)
+
+- ✅ **StaticAlert Component**: Reusable contextual feedback component
+  - Variants: error, warning, success with colour-coded backgrounds/icons/borders
+  - Icons: AlertCircle (error), AlertTriangle (warning), CheckCircle (success)
+  - Dismissible functionality via IconButton
+  - Theme colours: bg-destructive/10, bg-warning/10, bg-success/10 with borders
+  - Accessible: role="alert" for screen readers
+  - Comprehensive showcase page (StaticAlertComponentsPage, 269 lines)
+
+- ✅ **IconButton Component**: Clickable icon primitive
+  - Size/colour props with type-safe IconName
+  - aria-label for accessibility
+  - Disabled state styling
+  - Documented as low-level primitive (raw button acceptable)
+
+- ✅ **AuthLayout Component**: Template for auth screens
+  - Gradient background (from-blue-100 via-purple-50 to-purple-100)
+  - Logo + centered card layout with FadeSlideIn animation
+  - Documented gradient as acceptable exception to hard-coded colour rule
+
+- ✅ **ForgotPasswordPage**: Placeholder with informative messaging
+  - Explains feature not yet implemented
+  - Links back to login with type-safe routing
+  - Professional placeholder design
+
+- ✅ **Component Refinements**:
+  - Button: Secondary variant now outline style (border-2 border-primary, no background)
+  - Form: Refactored to use Button component (15 lines → 3 lines)
+  - Text/Title: Added warning and info colour mappings
+  - FormTextInput: Password visibility toggle support
+
+**Code Review & Fixes** (9 issues addressed in ~0.5 hours):
+
+1. ✅ **HomePage raw button** → Button component with variant="destructive"
+2. ✅ **Text colour inconsistency** → Fixed automatically by Button component
+3. ✅ **IconButton documentation** → Added JSDoc explaining raw button usage
+4. ✅ **Password field type** → Changed to FieldDataType.PASSWORD
+5. ✅ **AuthLayout gradient** → Added comment documenting exception
+6. ✅ **Dev page colours** → Replaced text-gray-XXX/bg-gray-XXX with theme colours
+7. ✅ **AuthLayout API** → Removed unused subtitle prop (simplified)
+8. ✅ **LoginPage routing** → Using routes[RouteKey.HOME].path
+9. ✅ **ForgotPasswordPage routing** → Using routes[RouteKey.LOGIN].path
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ ESLint: Zero warnings (--max-warnings 0)
+- ✅ Tests: All passing (2/2 in @ffp/web)
+- ✅ Manual testing: Login flow, error display, forgot password navigation verified
+- ✅ Component usage: No raw HTML elements (except documented primitives)
+- ✅ Theme colours: All hard-coded colours replaced with theme
+- ✅ Type-safe routing: RouteKey enum used throughout
+- ✅ British English: Consistent spelling (behaviour, colour, optimise)
+- ✅ Security: JWT claims use custom: prefix correctly
+- ✅ Accessibility: role="alert", aria-label attributes present
+
+**Files Created** (7 new files, 665 lines):
+
+1. `packages/web/src/components/auth/LoginForm.tsx` (82 lines)
+2. `packages/web/src/components/auth/index.ts` (36 lines)
+3. `packages/web/src/components/feedback/StaticAlert.tsx` (96 lines)
+4. `packages/web/src/components/button/IconButton.tsx` (51 lines)
+5. `packages/web/src/components/layout/AuthLayout.tsx` (57 lines)
+6. `packages/web/src/pages/public/ForgotPasswordPage.tsx` (74 lines)
+7. `packages/web/src/pages/dev/StaticAlertComponentsPage.tsx` (269 lines)
+
+**Files Modified** (29 files):
+
+- Component refinements: Button, Form, FormTextInput, FormError, Text, Title
+- Page updates: HomePage, LoginPage, ForgotPasswordPage, NotAuthorisedPage
+- Dev pages: IconComponentsPage, ButtonComponentsPage, LoadingSpinnerComponentsPage
+- Routing: RouteKey, routes/index.ts
+- Auth: auth.schema.ts
+- Config: FieldDataType enum, path aliases
+- Documentation: Code review instructions enhanced with component/theme checks
+
+**Architecture Decisions**:
+
+- **Config-driven forms**: LoginForm uses Field[] configuration pattern (consistency)
+- **Component reusability**: StaticAlert and IconButton abstracted for broader use
+- **Theme enforcement**: All components use theme colours (except documented exceptions)
+- **Type-safe routing**: RouteKey enum prevents string typos in navigation
+- **Gradient exception**: Complex visual effects like gradients allowed as documented exceptions
+
+**Acceptance Criteria Met** (FFP-92):
+
+- ✅ Login form with email/password using config-driven Field[] pattern
+- ✅ Cognito authentication via AuthContext
+- ✅ StaticAlert component with error/warning/success variants
+- ✅ IconButton component for clickable icons
+- ✅ Secondary button as outline variant
+- ✅ Form uses Button component (not raw HTML)
+- ✅ British English throughout
+- ✅ TypeScript strict mode
+- ✅ Zero ESLint warnings
+
+**Next**: FFP-97 - Write Unit Tests (2h estimated)
+
+---
+
 ### November 17, 2025 (Sessions 49-50 - FFP-119 Extended + Code Review)
 
 **Status**: ✅ FFP-119 COMPLETE - Web Routing & Component Library Foundation (Extended Scope + Code Review)

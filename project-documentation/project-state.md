@@ -1,11 +1,11 @@
 # FFP - Project State
 
-**Last Updated**: November 17, 2025 - Sessions 49-50
+**Last Updated**: November 17, 2025 - Session 51
 **Current Phase**: Sprint 2 Execution - IN PROGRESS 🚀
 **Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
 **Current User Story Branch:** `feature/FFP-16-web-login-flow`
-**Next Subtask**: FFP-92 - Implement Login Form (ready to start - component library complete)
-**Recently Completed**: FFP-119 - Web Routing & Component Library Foundation (Extended Scope + Code Review)
+**Next Subtask**: FFP-97 - Write Unit Tests for Login Flow
+**Recently Completed**: FFP-92 - Implement Login Form (Complete with Code Review Fixes)
 
 ---
 
@@ -111,9 +111,9 @@
 
 ## Current Work: FFP-16 - Web Login Interface
 
-**Status**: 🚀 IN PROGRESS (8/10 subtasks - 5 complete, 3 active, 2 deferred)
+**Status**: 🚀 IN PROGRESS (8/10 subtasks - 6 complete, 2 active, 2 deferred)
 **Estimated**: ~18-19 hours (revised from 20 hours with deferrals)
-**Completed**: 13/18-19 hours (68%)
+**Completed**: 15/18-19 hours (79%)
 
 ### Execution Order
 
@@ -121,9 +121,9 @@
 2. ✅ **FFP-93** - Install and configure AWS Amplify (1h) - **COMPLETE**
 3. ✅ **FFP-90** - Create AuthContext and AuthProvider (4h) - **COMPLETE**
 4. ✅ **FFP-119** - Web Routing & Component Library Foundation (2h actual + 2h extended scope) - **COMPLETE**
-5. **FFP-92** - Implement login form (2h) - 🔜 **NEXT** (ready to start - all components available)
-6. **FFP-95** - Implement logout functionality (1h) - ✅ **DONE** (integrated with routing)
-7. **FFP-97** - Write unit tests (2h)
+5. ✅ **FFP-92** - Implement login form (2h) - **COMPLETE** (with code review fixes)
+6. ✅ **FFP-95** - Implement logout functionality (1h) - **COMPLETE** (integrated with routing)
+7. **FFP-97** - Write unit tests (2h) - 🔜 **NEXT**
 8. **FFP-100** - Update documentation (1h)
 
 ### Deferred Subtasks
@@ -164,6 +164,84 @@
 ---
 
 ## Recent Work (Sprint 2 Sessions)
+
+**Session 51 (Nov 17)**: ✅ FFP-92 - Implement Login Form COMPLETE (with Code Review Fixes)
+
+**Login Form Implementation**:
+
+- Created LoginForm organism component using config-driven form pattern
+  - Uses Field[] configuration from loginFields (email + password)
+  - Integrated with StaticAlert for error display
+  - Password field configured with FieldDataType.PASSWORD for visibility toggle
+  - Forgot password navigation to placeholder page
+- Created reusable StaticAlert component for contextual feedback
+  - Variants: error, warning, success with colour-coded backgrounds and icons
+  - Dismissible functionality with IconButton integration
+  - Accessible role="alert" for screen readers
+- Extracted IconButton as reusable clickable icon component
+  - Documented as low-level primitive (raw button acceptable)
+  - Full accessibility with aria-label support
+- Updated Button component secondary variant to outline style (border-2 border-primary)
+- Refactored Form component to use Button component instead of raw HTML (15 lines → 3 lines)
+- Added missing colour mappings to Text and Title components (warning, info)
+- Created AuthLayout template component for consistent auth screen styling
+  - Gradient background with logo and centered card layout
+  - Documented gradient colour exception (acceptable for visual effects)
+- Created ForgotPasswordPage placeholder with informative messaging
+- Created comprehensive StaticAlertComponentsPage showcase (269 lines)
+- All components use theme colours (no hard-coded colours except documented exceptions)
+- Zero TypeScript errors, zero ESLint warnings
+- British English spelling throughout
+- Manual testing: Login, error display, forgot password navigation all verified
+
+**Code Review & Fixes** (9 issues addressed):
+
+1. ✅ Replaced raw button in HomePage with Button component
+2. ✅ Fixed text colour inconsistency in logout button (automatic via Button)
+3. ✅ Added documentation to IconButton about raw button usage
+4. ✅ Updated password field to use FieldDataType.PASSWORD (enables visibility toggle)
+5. ✅ Documented gradient colour exception in AuthLayout
+6. ✅ Replaced hard-coded colours in dev pages with theme colours (bg-muted, bg-foreground)
+7. ✅ Simplified AuthLayout by removing unused subtitle prop
+8. ✅ Implemented type-safe routing with RouteKey enum in LoginPage
+9. ✅ Implemented type-safe routing with RouteKey enum in ForgotPasswordPage
+
+**Quality Verification**:
+
+- ✅ TypeScript: Zero errors (strict mode)
+- ✅ ESLint: Zero warnings (--max-warnings 0)
+- ✅ Tests: All passing (2/2 in web package)
+- ✅ Component usage: All raw HTML replaced with themed components
+- ✅ Theme colours: All hard-coded colours replaced (except documented exceptions)
+- ✅ Type-safe routing: RouteKey enum used throughout
+- ✅ Security: JWT claims use correct custom: prefix
+
+**Files Created** (7):
+
+- packages/web/src/components/auth/LoginForm.tsx (82 lines)
+- packages/web/src/components/auth/index.ts (36 lines)
+- packages/web/src/components/feedback/StaticAlert.tsx (96 lines)
+- packages/web/src/components/button/IconButton.tsx (51 lines)
+- packages/web/src/components/layout/AuthLayout.tsx (57 lines)
+- packages/web/src/pages/public/ForgotPasswordPage.tsx (74 lines)
+- packages/web/src/pages/dev/StaticAlertComponentsPage.tsx (269 lines)
+
+**Files Modified** (29):
+
+- Button, Form, FormTextInput, FormError components refined
+- Text, Title components enhanced with warning/info colours
+- HomePage updated to use Button component
+- LoginPage integrated with LoginForm and AuthContext
+- AppLayout refinements
+- Dev pages updated to use theme colours
+- Routes and RouteKey enum extended
+- Auth schemas added
+- Code review instructions updated (raw HTML/hard-coded colour checks)
+- FFP code review skill enhanced with component usage enforcement
+
+**Ready for FFP-97** (Write Unit Tests)
+
+---
 
 **Sessions 49-50 (Nov 17)**: ✅ FFP-119 - Web Routing & Component Library Foundation COMPLETE (Extended Scope + Code Review)
 
