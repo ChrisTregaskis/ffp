@@ -23,7 +23,7 @@ export interface ClickScaleProps {
  */
 export function ClickScale({
   children,
-  scale = 0.95,
+  scale = 0.97,
   duration = 0.1,
   className = '',
 }: ClickScaleProps): JSX.Element {

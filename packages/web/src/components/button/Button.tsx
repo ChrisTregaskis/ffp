@@ -1,5 +1,7 @@
 import { LoadingSpinner } from '@web/components/LoadingSpinner';
 
+import { ClickScale } from '../motion';
+
 import type { ReactNode, MouseEvent } from 'react';
 
 /**
@@ -156,17 +158,19 @@ export function Button({
     ) : null;
 
   return (
-    <button
-      type={type}
-      className={classes}
-      disabled={isDisabled}
-      onClick={onClick}
-      aria-disabled={isDisabled}
-      aria-busy={loading}
-    >
-      {leftContent}
-      {children}
-      {rightContent}
-    </button>
+    <ClickScale>
+      <button
+        type={type}
+        className={classes}
+        disabled={isDisabled}
+        onClick={onClick}
+        aria-disabled={isDisabled}
+        aria-busy={loading}
+      >
+        {leftContent}
+        {children}
+        {rightContent}
+      </button>
+    </ClickScale>
   );
 }

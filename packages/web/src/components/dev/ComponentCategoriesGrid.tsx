@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
+import { Button } from '@web/components/button/Button';
 import { Text, Title } from '@web/components/text';
 
 export interface ComponentCategory {
@@ -24,6 +25,8 @@ interface ComponentCategoriesGridProps {
  * - Navigation links to category pages
  */
 export function ComponentCategoriesGrid({ categories }: ComponentCategoriesGridProps): JSX.Element {
+  const navigate = useNavigate();
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {categories.map((category) => (
@@ -54,23 +57,19 @@ export function ComponentCategoriesGrid({ categories }: ComponentCategoriesGridP
 
           {/* View button */}
           {category.comingSoon ? (
-            <button disabled className="w-full cursor-not-allowed rounded-md bg-muted px-4 py-2">
-              <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'muted-foreground' }}>
-                Not Yet Implemented
-              </Text>
-            </button>
+            <Button variant="neutral" disabled fullWidth>
+              Not Yet Implemented
+            </Button>
           ) : (
-            <Link
-              to={category.path}
-              className="block w-full rounded-md bg-primary px-4 py-2 text-center hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            <Button
+              variant="primary"
+              fullWidth
+              onClick={() => {
+                void navigate(category.path);
+              }}
             >
-              <Text
-                styleProps={{ size: 'sm', weight: 'medium' }}
-                className="text-primary-foreground"
-              >
-                View Components
-              </Text>
-            </Link>
+              View Components
+            </Button>
           )}
         </div>
       ))}
