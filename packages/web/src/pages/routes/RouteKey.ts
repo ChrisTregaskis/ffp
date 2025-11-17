@@ -25,4 +25,6 @@ export enum RouteKey {
   COMPONENTS_LOGO = 'components-logo',
   /** Loading spinner components showcase */
   COMPONENTS_LOADING_SPINNER = 'components-loading-spinner',
+  /** Card components showcase */
+  COMPONENTS_CARD = 'components-card',
 }

@@ -1,4 +1,5 @@
 import { ButtonComponentsPage } from '@web/pages/dev/ButtonComponentsPage';
+import { CardComponentsPage } from '@web/pages/dev/CardComponentsPage';
 import { ComponentsPage } from '@web/pages/dev/ComponentsPage';
 import { FormComponentsPage } from '@web/pages/dev/FormComponentsPage';
 import { IconComponentsPage } from '@web/pages/dev/IconComponentsPage';
@@ -132,6 +133,14 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: LoadingSpinnerComponentsPage,
     title: 'Loading Spinner Components',
+    excludeFromMainNavbar: true,
+    devOnly: true,
+  },
+  [RouteKey.COMPONENTS_CARD]: {
+    path: `${componentsBasePath}/card`,
+    public: true,
+    pageComponent: CardComponentsPage,
+    title: 'Card Components',
     excludeFromMainNavbar: true,
     devOnly: true,
   },

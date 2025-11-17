@@ -40,6 +40,12 @@ export const componentCategories: ComponentCategory[] = [
     examples: ['Sizes', 'Variants', 'Colours', 'Real-world usage'],
   },
   {
+    title: 'Card Components',
+    description: 'Contained, elevated surfaces for displaying content',
+    path: `${basePath}/card`,
+    examples: ['Basic cards', 'Auth cards', 'Profile cards', 'Custom styling'],
+  },
+  {
     title: 'Modal Components',
     description: 'Dialogs, modals, and overlays',
     path: `${basePath}/modal`,
