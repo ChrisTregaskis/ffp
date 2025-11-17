@@ -1,10 +1,11 @@
-import { APP_NAME, TENANT_TYPES, USER_ROLES } from '@core/lib/constants';
-import type { Tenant } from '@core/schemas/tenant.schema';
-import type { User } from '@core/schemas/user.schema';
+import { APP_NAME, TENANT_TYPES, USER_ROLES } from '../lib/constants';
+
+import type { Tenant } from '../schemas/tenant.schema';
+import type { User } from '../schemas/user.schema';
 
 /**
- * Test file to verify TypeScript path aliases work correctly
- * This file uses internal @core/ aliases to import from other parts of core package
+ * Test file demonstrating internal imports within the core package
+ * Uses relative imports since @core/ path aliases don't resolve within the same package
  */
 
 export interface PathAliasTest {
