@@ -27,7 +27,7 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
 const VARIANT_CLASS_MAP: Record<ButtonVariant, string> = {
   primary: 'bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 shadow-sm',
   secondary:
-    'bg-secondary text-secondary-foreground hover:bg-secondary/90 active:bg-secondary/80 shadow-sm',
+    'border-2 border-primary text-primary hover:bg-primary/10 active:bg-primary/20 shadow-sm',
   success: 'bg-success text-white hover:bg-success/90 active:bg-success/80 shadow-sm',
   destructive:
     'bg-destructive text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80 shadow-sm',
@@ -50,7 +50,7 @@ const SIZE_CLASS_MAP: Record<ButtonSize, string> = {
  */
 const SPINNER_COLOUR_MAP: Record<ButtonVariant, string> = {
   primary: 'rgba(255, 255, 255, 0.8)', // White on primary blue background
-  secondary: 'rgba(3, 2, 19, 0.7)', // Dark on light purple background
+  secondary: 'rgba(3, 2, 19, 0.7)', // Dark on transparent background (outline variant)
   success: 'rgba(255, 255, 255, 0.8)', // White on green background
   destructive: 'rgba(255, 255, 255, 0.8)', // White on red background
   neutral: 'rgba(113, 113, 130, 0.8)', // Muted foreground on muted background

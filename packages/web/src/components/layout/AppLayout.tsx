@@ -29,15 +29,6 @@ export const AppLayout: React.FC<PropsWithChildren> = ({ children }) => {
               >
                 Dashboard
               </a>
-              <div className="rounded-md bg-gray-50 px-4 py-2 text-sm text-gray-500">
-                Assessments (Coming soon)
-              </div>
-              <div className="rounded-md bg-gray-50 px-4 py-2 text-sm text-gray-500">
-                Programmes (Coming soon)
-              </div>
-              <div className="rounded-md bg-gray-50 px-4 py-2 text-sm text-gray-500">
-                Customers (Coming soon)
-              </div>
             </div>
           </nav>
 

@@ -247,7 +247,7 @@ export const ButtonComponentsPage = (): JSX.Element => {
             </Title>
             <div className="rounded-lg bg-card p-6 shadow">
               <div className="flex justify-end gap-3">
-                <Button variant="neutral">Cancel</Button>
+                <Button variant="secondary">Cancel</Button>
                 <Button variant="primary">Save Changes</Button>
               </div>
             </div>
@@ -262,7 +262,7 @@ export const ButtonComponentsPage = (): JSX.Element => {
                 Are you sure you want to delete this item? This action cannot be undone.
               </Text>
               <div className="flex justify-end gap-3">
-                <Button variant="neutral">Cancel</Button>
+                <Button variant="secondary">Cancel</Button>
                 <Button
                   variant="destructive"
                   icon={sampleIcon ? <Icon name={sampleIcon} /> : undefined}

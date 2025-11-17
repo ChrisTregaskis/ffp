@@ -76,9 +76,11 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
 /**
  * Schema for JWT claims from Cognito ID token
  * Used to validate and type JWT payload on authentication
+ *
+ * Note: Cognito's 'sub' claim uses their internal identifier format (not UUID)
  */
 export const jwtUserClaimsSchema = z.object({
-  sub: z.string().uuid(),
+  sub: z.string(),
   email: z.string().email(),
   'custom:tenantId': z.string().uuid(),
   'custom:role': userRoleSchema,

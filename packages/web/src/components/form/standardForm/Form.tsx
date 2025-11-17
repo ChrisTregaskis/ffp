@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
+import { Button } from '@web/components/button/Button';
 import { Icon } from '@web/components/Icon/Icon';
 import { Icons } from '@web/components/Icon/types';
 
@@ -112,20 +113,9 @@ export const Form = <TFieldValues extends FieldValues>({
 
       {sortedFields.map(renderField)}
 
-      <button
-        type="submit"
-        disabled={isFormSubmitting}
-        className={`
-          w-full px-4 py-2 rounded-md font-medium text-white
-          transition-colors duration-200
-          focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
-          ${
-            isFormSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary hover:bg-primary-dark'
-          }
-        `}
-      >
-        {isFormSubmitting ? 'Submitting...' : submitLabel}
-      </button>
+      <Button type="submit" loading={isFormSubmitting} fullWidth>
+        {submitLabel}
+      </Button>
     </form>
   );
 };

@@ -57,14 +57,6 @@ export const HomePage = (): JSX.Element => {
               </dl>
             )}
           </div>
-
-          {/* Placeholder content */}
-          <div className="rounded-lg bg-blue-50 p-6">
-            <h3 className="mb-2 text-lg font-medium text-blue-900">Coming Soon</h3>
-            <p className="text-sm text-blue-700">
-              Dashboard widgets, recent activity, and quick actions will be added in future sprints.
-            </p>
-          </div>
         </div>
       </div>
     </div>

@@ -18,6 +18,7 @@
       "@web/hooks/*": ["./hooks/*"],
       "@web/pages/*": ["./pages/*"],
       "@web/assets/*": ["./assets/*"],
+      "@web/schemas/*": ["./schemas/*"],
       "@web/services/*": ["./services/*"],
       "@web/utils/*": ["./utils/*"],
       "@web/types/*": ["./types/*"],

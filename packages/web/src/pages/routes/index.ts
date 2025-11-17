@@ -6,8 +6,10 @@ import { IconComponentsPage } from '@web/pages/dev/IconComponentsPage';
 import { LoadingSpinnerComponentsPage } from '@web/pages/dev/LoadingSpinnerComponentsPage';
 import { LogoComponentsPage } from '@web/pages/dev/LogoComponentsPage';
 import { MotionShowcasePage } from '@web/pages/dev/MotionShowcasePage';
+import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { HomePage } from '@web/pages/protected/HomePage';
+import { ForgotPasswordPage } from '@web/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@web/pages/public/LoginPage';
 
 import { RouteKey } from './RouteKey';
@@ -72,6 +74,13 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: LoginPage,
     title: 'Sign In',
+    excludeFromMainNavbar: true,
+  },
+  [RouteKey.FORGOT_PASSWORD]: {
+    path: '/forgot-password',
+    public: true,
+    pageComponent: ForgotPasswordPage,
+    title: 'Forgot Password',
     excludeFromMainNavbar: true,
   },
   [RouteKey.HOME]: {
@@ -150,6 +159,14 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: MotionShowcasePage,
     title: 'Motion Showcase',
+    excludeFromMainNavbar: true,
+    devOnly: true,
+  },
+  [RouteKey.COMPONENTS_STATIC_ALERT]: {
+    path: `${componentsBasePath}/static-alert`,
+    public: true,
+    pageComponent: StaticAlertComponentsPage,
+    title: 'Static Alert Components',
     excludeFromMainNavbar: true,
     devOnly: true,
   },

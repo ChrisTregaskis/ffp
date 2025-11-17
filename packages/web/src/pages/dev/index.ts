@@ -52,6 +52,12 @@ export const componentCategories: ComponentCategory[] = [
     examples: ['Card animations', 'Button clicks', 'Hover effects', 'Spring physics'],
   },
   {
+    title: 'Static Alert Components',
+    description: 'Contextual alerts for errors, warnings, and success messages',
+    path: `${basePath}/static-alert`,
+    examples: ['Error alerts', 'Warning alerts', 'Success alerts', 'Dismissible alerts'],
+  },
+  {
     title: 'Modal Components',
     description: 'Dialogs, modals, and overlays',
     path: `${basePath}/modal`,
