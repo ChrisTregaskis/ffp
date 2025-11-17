@@ -87,7 +87,7 @@ export const LoadingSpinnerComponentsPage = (): JSX.Element => {
             <LoadingSpinner colour="rgba(109, 159, 255, 0.6)" />
           </ButtonSampleDisplay>
           <ButtonSampleDisplay label="White (for dark backgrounds)">
-            <div className="rounded-md bg-gray-800 p-4">
+            <div className="rounded-md bg-foreground p-4">
               <LoadingSpinner colour="rgba(255, 255, 255, 0.8)" />
             </div>
           </ButtonSampleDisplay>

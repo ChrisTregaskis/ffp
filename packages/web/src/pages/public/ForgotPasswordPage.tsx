@@ -6,6 +6,7 @@ import { Icon } from '@web/components/Icon/Icon';
 import { Icons } from '@web/components/Icon/types';
 import { AuthLayout } from '@web/components/layout/AuthLayout';
 import { Text } from '@web/components/text';
+import { RouteKey, routes } from '@web/pages/routes';
 
 /**
  * Forgot Password page component (placeholder).
@@ -28,11 +29,11 @@ export const ForgotPasswordPage = (): JSX.Element => {
   const navigate = useNavigate();
 
   const handleBackToLogin = (): void => {
-    void navigate('/login');
+    void navigate(routes[RouteKey.LOGIN].path);
   };
 
   return (
-    <AuthLayout title="Forgot your password?" subtitle="Password reset functionality coming soon">
+    <AuthLayout title="Forgot your password?">
       <Card>
         <div className="space-y-6 text-center">
           {/* Info icon */}

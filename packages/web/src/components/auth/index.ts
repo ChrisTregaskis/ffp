@@ -27,7 +27,7 @@ export const loginFields: Field<LoginFormData>[] = [
     order: 2,
     name: 'password',
     label: 'Password',
-    dataType: FieldDataType.STRING,
+    dataType: FieldDataType.PASSWORD,
     placeholder: '••••••••',
     validation: {
       isRequired: true,

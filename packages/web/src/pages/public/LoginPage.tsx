@@ -5,6 +5,7 @@ import { type LoginFormData } from '@web/components/auth';
 import { LoginForm } from '@web/components/auth/LoginForm';
 import { AuthLayout } from '@web/components/layout/AuthLayout';
 import { useAuth } from '@web/contexts/AuthContext';
+import { RouteKey, routes } from '@web/pages/routes';
 
 /**
  * Login page component.
@@ -27,7 +28,7 @@ export const LoginPage = (): JSX.Element => {
         await login(data.email, data.password);
 
         // Redirect to home on successful login
-        void navigate('/home');
+        void navigate(routes[RouteKey.HOME].path);
       } catch (err) {
         // Display error message
         const errorMessage =
@@ -48,7 +49,7 @@ export const LoginPage = (): JSX.Element => {
   }, []);
 
   return (
-    <AuthLayout title="Welcome back" subtitle="Sign in to continue to Fit For Purpose">
+    <AuthLayout title="Welcome back">
       <LoginForm
         onSubmit={handleLogin}
         isLoading={isLoading}

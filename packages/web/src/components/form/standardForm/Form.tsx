@@ -5,6 +5,7 @@ import { Icon } from '@web/components/Icon/Icon';
 import { Icons } from '@web/components/Icon/types';
 
 import { useFieldsForm } from '../hooks/useFieldsForm';
+import { FieldDataType } from '../shared/FieldDataType';
 
 import { FormTextInput } from './FormTextInput';
 
@@ -54,14 +55,23 @@ export const Form = <TFieldValues extends FieldValues>({
   const sortedFields = useMemo(() => [...fields].sort((a, b) => a.order - b.order), [fields]);
 
   const renderField = (field: Field<TFieldValues>): JSX.Element => {
-    // Determine field type based on name and validation pattern
-    const fieldName = String(field.name).toLowerCase();
+    // Determine field type based on dataType, with fallback to name/pattern detection
     let inputType: 'text' | 'email' | 'password' = 'text';
 
-    if (fieldName.includes('password')) {
+    // Prefer explicit dataType over naming conventions
+    if (field.dataType === FieldDataType.PASSWORD) {
       inputType = 'password';
-    } else if (fieldName.includes('email') || field.validation?.pattern?.toString().includes('@')) {
-      inputType = 'email';
+    } else {
+      // Fallback: Determine field type based on name and validation pattern
+      const fieldName = String(field.name).toLowerCase();
+      if (fieldName.includes('password')) {
+        inputType = 'password';
+      } else if (
+        fieldName.includes('email') ||
+        field.validation?.pattern?.toString().includes('@')
+      ) {
+        inputType = 'email';
+      }
     }
 
     return (

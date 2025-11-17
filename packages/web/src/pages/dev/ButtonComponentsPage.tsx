@@ -190,7 +190,7 @@ export const ButtonComponentsPage = (): JSX.Element => {
         ) : (
           <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
             No icons available. Run{' '}
-            <code className="rounded bg-gray-100 px-1">pnpm icon:generate</code> to generate icons.
+            <code className="rounded bg-muted px-1">pnpm icon:generate</code> to generate icons.
           </Text>
         )}
       </ComponentSection>

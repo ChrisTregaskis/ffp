@@ -1,3 +1,4 @@
+import { Button } from '@web/components/button/Button';
 import { Title, Text } from '@web/components/text';
 import { useAuth } from '@web/contexts/AuthContext';
 
@@ -27,14 +28,9 @@ export const HomePage = (): JSX.Element => {
           <Title as="h1" colour="foreground">
             Dashboard
           </Title>
-          <button
-            onClick={handleLogout}
-            className="rounded-md bg-destructive px-4 py-2 font-medium text-destructive-foreground hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2"
-          >
-            <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'foreground' }}>
-              Sign out
-            </Text>
-          </button>
+          <Button variant="destructive" onClick={handleLogout}>
+            Sign out
+          </Button>
         </div>
 
         <div className="space-y-6">

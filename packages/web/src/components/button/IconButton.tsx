@@ -26,6 +26,9 @@ export interface IconButtonProps {
  * Renders a semantic button element with an icon inside.
  * Use for icon-only actions like close, delete, edit, etc.
  *
+ * Note: This component uses a raw <button> element as it is a
+ * low-level primitive in the component library. Application code
+ * should use this component, not raw buttons.
  */
 export const IconButton: React.FC<IconButtonProps> = ({
   icon,
