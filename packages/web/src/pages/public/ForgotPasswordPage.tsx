@@ -5,7 +5,7 @@ import { Card } from '@web/components/Card/Card';
 import { Icon } from '@web/components/Icon/Icon';
 import { Icons } from '@web/components/Icon/types';
 import { AuthLayout } from '@web/components/layout/AuthLayout';
-import { Text } from '@web/components/text';
+import { Text, Title } from '@web/components/text';
 import { RouteKey, routes } from '@web/pages/routes';
 
 /**
@@ -33,7 +33,7 @@ export const ForgotPasswordPage = (): JSX.Element => {
   };
 
   return (
-    <AuthLayout title="Forgot your password?">
+    <AuthLayout>
       <Card>
         <div className="space-y-6 text-center">
           {/* Info icon */}
@@ -45,6 +45,8 @@ export const ForgotPasswordPage = (): JSX.Element => {
               />
             </div>
           </div>
+
+          <Title>For your password?</Title>
 
           {/* Placeholder message */}
           <div className="space-y-2">

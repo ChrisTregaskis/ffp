@@ -1,12 +1,11 @@
+import { type LoginFormData } from '@web/schemas/auth.schema';
+
 import { type Field, FieldDataType } from '../form';
 
 /**
- * Login form data type
+ * Re-export LoginFormData from schema for convenience
  */
-export interface LoginFormData {
-  email: string;
-  password: string;
-}
+export type { LoginFormData };
 
 /**
  * Login form field configuration

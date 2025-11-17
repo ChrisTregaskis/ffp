@@ -1,4 +1,8 @@
+import { useNavigate } from 'react-router-dom';
+
+import { Button } from '@web/components/button/Button';
 import { Title, Text } from '@web/components/text';
+import { routes, RouteKey } from '@web/pages/routes';
 
 /**
  * 403 Not Authorised page.
@@ -10,6 +14,12 @@ import { Title, Text } from '@web/components/text';
  * - User is accessing a tenant-specific resource from wrong tenant
  */
 export const NotAuthorisedPage = (): JSX.Element => {
+  const navigate = useNavigate();
+
+  const handleGoToDashboard = (): void => {
+    void navigate(routes[RouteKey.HOME].path);
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted px-4">
       <div className="text-center">
@@ -23,14 +33,9 @@ export const NotAuthorisedPage = (): JSX.Element => {
           You do not have permission to access this page.
         </Text>
         <div className="mt-8">
-          <a
-            href="/"
-            className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-          >
-            <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'foreground' }}>
-              Go to Dashboard
-            </Text>
-          </a>
+          <Button variant="primary" onClick={handleGoToDashboard}>
+            Go to Dashboard
+          </Button>
         </div>
       </div>
     </div>

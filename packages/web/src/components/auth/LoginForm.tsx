@@ -5,6 +5,7 @@ import { Button } from '@web/components/button/Button';
 import { Card } from '@web/components/Card/Card';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { Form } from '@web/components/form';
+import { routes, RouteKey } from '@web/pages/routes';
 
 import { loginFields, type LoginFormData } from '.';
 
@@ -45,11 +46,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
   // Handle forgot password navigation
   const handleForgotPassword = useCallback((): void => {
-    void navigate('/forgot-password');
+    void navigate(routes[RouteKey.FORGOT_PASSWORD].path);
   }, [navigate]);
 
   return (
-    <Card title="Welcome back" subtitle="Sign into your physiotheropy account." centerHeader>
+    <Card title="Welcome back" subtitle="Sign into your physiotherapy account." centerHeader>
       {/* Error display */}
       {error && (
         <StaticAlert variant="error" message={error} onDismiss={onClearError} className="mb-6" />

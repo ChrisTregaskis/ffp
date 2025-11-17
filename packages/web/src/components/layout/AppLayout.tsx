@@ -1,4 +1,7 @@
+import { Link } from 'react-router-dom';
+
 import { Title, Text } from '@web/components/text';
+import { routes, RouteKey } from '@web/pages/routes';
 
 import type { PropsWithChildren } from 'react';
 
@@ -27,11 +30,14 @@ export const AppLayout: React.FC<PropsWithChildren> = ({ children }) => {
           {/* Navigation items */}
           <nav className="flex-1 p-4">
             <div className="space-y-2">
-              <a href="/" className="block rounded-md bg-primary/10 px-4 py-2">
+              <Link
+                to={routes[RouteKey.HOME].path}
+                className="block rounded-md bg-primary/10 px-4 py-2"
+              >
                 <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'primary' }}>
                   Dashboard
                 </Text>
-              </a>
+              </Link>
             </div>
           </nav>
 

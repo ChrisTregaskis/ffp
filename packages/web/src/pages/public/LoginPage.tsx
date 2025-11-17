@@ -49,7 +49,7 @@ export const LoginPage = (): JSX.Element => {
   }, []);
 
   return (
-    <AuthLayout title="Welcome back">
+    <AuthLayout title="Fit For Purpose">
       <LoginForm
         onSubmit={handleLogin}
         isLoading={isLoading}

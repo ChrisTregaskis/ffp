@@ -46,7 +46,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
           {/* Header section */}
           {title && (
             <div className="text-center space-y-2">
-              <Title as="h1">Fit For Purpose</Title>
+              <Title as="h1">{title}</Title>
             </div>
           )}
 
