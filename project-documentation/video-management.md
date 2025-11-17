@@ -42,7 +42,7 @@ s3://ffp-videos-{env}/
 // stacks/StorageStack.ts
 import { StackContext, Bucket } from 'sst/constructs';
 
-export function StorageStack({ stack }: StackContext) {
+export const StorageStack = ({ stack }: StackContext) => {
   const videosBucket = new Bucket(stack, 'Videos', {
     cors: [
       {
@@ -67,7 +67,7 @@ export function StorageStack({ stack }: StackContext) {
   });
 
   return { videosBucket };
-}
+};
 ```
 
 ## CloudFront Distribution
@@ -338,12 +338,12 @@ interface VideoPlayerProps {
   onComplete?: () => void;
 }
 
-export function VideoPlayer({
+export const VideoPlayer = ({
   videoId,
   sessionId,
   onProgress,
   onComplete,
-}: VideoPlayerProps) {
+}: VideoPlayerProps) => {
   const [videoUrl, setVideoUrl] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -358,7 +358,7 @@ export function VideoPlayer({
     };
   }, [videoId]);
 
-  async function loadVideo() {
+  const loadVideo = async () => {
     try {
       const response = await fetch(`/api/videos/${videoId}/stream`);
       const data = await response.json();
@@ -369,7 +369,7 @@ export function VideoPlayer({
     }
   }
 
-  function handlePlay() {
+  const handlePlay = () => {
     // Track progress every 5 seconds
     progressIntervalRef.current = setInterval(() => {
       if (videoRef.current) {
@@ -381,21 +381,21 @@ export function VideoPlayer({
     }, 5000);
   }
 
-  function handlePause() {
+  const handlePause = () => {
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
     }
   }
 
-  function handleEnded() {
+  const handleEnded = () => {
     updateProgress(100, "completed");
     onComplete?.();
   }
 
-  async function updateProgress(
+  const updateProgress = async (
     percentage: number,
     status: string = "in_progress"
-  ) {
+  ) => {
     await fetch(`/api/videos/${videoId}/progress`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

@@ -30,32 +30,13 @@ const SIZE_MAP: Record<SpinnerSize, string> = {
 
 /**
  * LoadingSpinner component for loading states.
- *
- * Features:
- * - Multiple sizes (sm, md, lg)
- * - Inline or centered variants
- * - CSS-based animation (no JS)
- * - Uses FFP theme colours
- * - Accessible (includes aria-label)
- *
- * @example
- * ```tsx
- * // Inline spinner (e.g., in a button)
- * <LoadingSpinner size="sm" variant="inline" />
- * ```
- *
- * @example
- * ```tsx
- * // Centered spinner (e.g., loading page)
- * <LoadingSpinner size="lg" variant="center" />
- * ```
  */
-export function LoadingSpinner({
+export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 'md',
   variant = 'inline',
   colour = 'rgba(109, 159, 255, 0.6)',
   className = '',
-}: LoadingSpinnerProps): JSX.Element {
+}) => {
   const sizeClass = SIZE_MAP[size];
   const containerClass =
     variant === 'center' ? 'flex items-center justify-center w-full h-full' : '';
@@ -68,4 +49,4 @@ export function LoadingSpinner({
       />
     </div>
   );
-}
+};

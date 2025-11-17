@@ -24,11 +24,11 @@ interface ButtonSampleDisplayProps {
  * </ButtonSampleDisplay>
  * ```
  */
-export function ButtonSampleDisplay({
+export const ButtonSampleDisplay: React.FC<ButtonSampleDisplayProps> = ({
   label,
   children,
   labelWidth = 'w-32',
-}: ButtonSampleDisplayProps): JSX.Element {
+}) => {
   return (
     <div className="flex items-center gap-4">
       <div className={`${labelWidth} shrink-0`}>
@@ -37,4 +37,4 @@ export function ButtonSampleDisplay({
       {children}
     </div>
   );
-}
+};

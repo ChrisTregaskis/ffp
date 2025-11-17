@@ -122,6 +122,6 @@ export const withRLS = async <T>(
  * Gracefully closes the database connection pool
  * Should be called during application shutdown
  */
-export async function closePool(): Promise<void> {
+export const closePool = async (): Promise<void> => {
   await pool.end();
-}
+};

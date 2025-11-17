@@ -18,22 +18,14 @@ interface ComponentPageHeaderProps {
  * - "Development Only" badge
  * - Page title and description
  *
- * @example
- * ```tsx
- * <ComponentPageHeader
- *   title="Icon Components"
- *   description="Complete icon library with size and colour variations"
- *   showBackLink
- * />
- * ```
  */
-export function ComponentPageHeader({
+export const ComponentPageHeader: React.FC<ComponentPageHeaderProps> = ({
   title,
   description,
   showBackLink = false,
   backLinkPath = '/components',
   backLinkText = '← Back to Components',
-}: ComponentPageHeaderProps): JSX.Element {
+}) => {
   return (
     <div className="mb-8">
       {showBackLink ? (
@@ -62,4 +54,4 @@ export function ComponentPageHeader({
       </Text>
     </div>
   );
-}
+};

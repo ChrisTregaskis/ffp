@@ -40,7 +40,7 @@ const loginFields: Field<LoginFormValues>[] = [
 /**
  * Form components showcase page (development only).
  */
-export function FormComponentsPage(): JSX.Element {
+export const FormComponentsPage = (): JSX.Element => {
   const { user, loading, error, login, logout } = useAuth();
 
   const handleSubmit = async (values: LoginFormValues): Promise<void> => {
@@ -192,4 +192,4 @@ export function FormComponentsPage(): JSX.Element {
       </DeveloperInstructions>
     </ComponentPageWrapper>
   );
-}
+};

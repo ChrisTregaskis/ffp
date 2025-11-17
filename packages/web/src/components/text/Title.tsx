@@ -50,12 +50,12 @@ export interface TitleProps {
  * Uses FFP theme colours defined in index.css.
  *
  */
-export function Title({
+export const Title: React.FC<TitleProps> = ({
   children,
   as = 'h2',
   colour = 'foreground',
   className = '',
-}: TitleProps): JSX.Element {
+}) => {
   const colourClass = COLOUR_CLASS_MAP[colour];
   const sizeClass = SIZE_MAP[as];
   const weightClass = 'font-bold';
@@ -65,4 +65,4 @@ export function Title({
   const Component = as;
 
   return <Component className={classes}>{children}</Component>;
-}
+};

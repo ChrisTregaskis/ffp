@@ -92,27 +92,14 @@ export interface TextProps {
  *
  * Uses FFP theme colours, sizes, and weights defined in index.css.
  *
- * @example
- * ```tsx
- * <Text styleProps={{ colour: 'primary', size: 'lg', weight: 'semibold' }}>
- *   Important message
- * </Text>
- * ```
- *
- * @example
- * ```tsx
- * <Text as="p" styleProps={{ colour: 'muted-foreground', size: 'sm' }}>
- *   Description text
- * </Text>
- * ```
  */
-export function Text({
+export const Text: React.FC<TextProps> = ({
   children,
   styleProps,
   as = 'span',
   truncationLength,
   className = '',
-}: TextProps): JSX.Element {
+}): JSX.Element => {
   const colour = styleProps?.colour ?? 'foreground';
   const weight = styleProps?.weight ?? 'normal';
   const size = styleProps?.size ?? 'base';
@@ -132,4 +119,4 @@ export function Text({
   const Component = as;
 
   return <Component className={classes}>{formattedChildren}</Component>;
-}
+};

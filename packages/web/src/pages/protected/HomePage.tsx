@@ -12,7 +12,7 @@ import { useAuth } from '@web/contexts/AuthContext';
  * - Quick actions
  * - Navigation to assessments and programmes
  */
-export function HomePage(): JSX.Element {
+export const HomePage = (): JSX.Element => {
   const { user, logout } = useAuth();
 
   const handleLogout = (): void => {
@@ -69,4 +69,4 @@ export function HomePage(): JSX.Element {
       </div>
     </div>
   );
-}
+};

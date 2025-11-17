@@ -9,7 +9,7 @@ import type { PropsWithChildren } from 'react';
  * TODO: Update to align with prototype designs
  * TODO: Utilise hook to dynamically generate routes available based on user role
  */
-export function AppLayout({ children }: PropsWithChildren): JSX.Element {
+export const AppLayout: React.FC<PropsWithChildren> = ({ children }) => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar navigation (placeholder) */}
@@ -52,4 +52,4 @@ export function AppLayout({ children }: PropsWithChildren): JSX.Element {
       <main className="flex-1">{children}</main>
     </div>
   );
-}
+};

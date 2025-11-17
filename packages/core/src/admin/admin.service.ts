@@ -31,10 +31,10 @@ import type { CreateCustomerInput, CreateCustomerResponse } from '../schemas/adm
  * });
  * ```
  */
-export async function createCustomerService(
+export const createCustomerService = async (
   ctx: RequestContext,
   input: CreateCustomerInput
-): Promise<CreateCustomerResponse> {
+): Promise<CreateCustomerResponse> => {
   const logger = new Logger(ctx.tenantContext);
 
   logger.info('Starting customer creation', {
@@ -55,4 +55,4 @@ export async function createCustomerService(
     customerId: result.customerId,
     customerName: input.customerName,
   };
-}
+};

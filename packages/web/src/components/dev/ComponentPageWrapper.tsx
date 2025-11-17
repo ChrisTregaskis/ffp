@@ -13,18 +13,11 @@ interface ComponentPageWrapperProps {
  * - Centered content container
  * - Configurable max-width
  *
- * @example
- * ```tsx
- * <ComponentPageWrapper maxWidth="6xl">
- *   <ComponentPageHeader title="Icon Components" />
- *   {/* Page content *\/}
- * </ComponentPageWrapper>
- * ```
  */
-export function ComponentPageWrapper({
+export const ComponentPageWrapper: React.FC<ComponentPageWrapperProps> = ({
   children,
   maxWidth = '6xl',
-}: ComponentPageWrapperProps): JSX.Element {
+}) => {
   const maxWidthClass = {
     '4xl': 'max-w-4xl',
     '6xl': 'max-w-6xl',
@@ -36,4 +29,4 @@ export function ComponentPageWrapper({
       <div className={`mx-auto ${maxWidthClass}`}>{children}</div>
     </div>
   );
-}
+};

@@ -43,10 +43,10 @@ interface ProtectedRouteProps extends PropsWithChildren {
  * </ProtectedRoute>
  * ```
  */
-export function ProtectedRoute({
+export const ProtectedRoute = ({
   children,
   excludeLayout = false,
-}: ProtectedRouteProps): JSX.Element {
+}: ProtectedRouteProps): JSX.Element => {
   const { user, loading } = useAuth();
 
   // Show loading spinner while checking authentication
@@ -72,4 +72,4 @@ export function ProtectedRoute({
   }
 
   return <AppLayout>{content}</AppLayout>;
-}
+};

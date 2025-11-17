@@ -52,10 +52,10 @@ const prefixColors: Record<TerminalPrefix, keyof typeof colors> = {
  * console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} Migration complete`);
  * // Output: [SUCCESS] Migration complete (with green color)
  */
-export function terminalPrefix(prefix: TerminalPrefix): string {
+export const terminalPrefix = (prefix: TerminalPrefix): string => {
   const color = prefixColors[prefix];
   return `${colors[color]}[${prefix}]${colors.reset}`;
-}
+};
 
 /**
  * Generate colored status text (for inline coloring)
@@ -68,9 +68,9 @@ export function terminalPrefix(prefix: TerminalPrefix): string {
  * console.log(`RLS Status: ${colorText('Enabled', 'green')}`);
  * // Output: RLS Status: Enabled (with green color)
  */
-export function colorText(
+export const colorText = (
   text: string,
   color: 'blue' | 'cyan' | 'green' | 'red' | 'yellow'
-): string {
+): string => {
   return `${colors[color]}${text}${colors.reset}`;
-}
+};

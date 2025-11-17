@@ -151,7 +151,7 @@ export interface TenantContext {
  * };
  * ```
  */
-export function extractUserContext(event: APIGatewayProxyEventV2WithJWT): TenantContext {
+export const extractUserContext = (event: APIGatewayProxyEventV2WithJWT): TenantContext => {
   const { authorizer } = event.requestContext;
 
   if (!hasJWTClaims(authorizer)) {
@@ -194,7 +194,7 @@ export function extractUserContext(event: APIGatewayProxyEventV2WithJWT): Tenant
     requestId: event.requestContext.requestId,
     timestamp: new Date(),
   };
-}
+};
 
 /**
  * Create context for system-triggered operations
@@ -214,13 +214,13 @@ export function extractUserContext(event: APIGatewayProxyEventV2WithJWT): Tenant
  * });
  * ```
  */
-export function createSystemContext(params: {
+export const createSystemContext = (params: {
   systemId: string;
   tenantId: string;
   customerId?: string | null;
   triggeredBy?: string;
   jobId?: string;
-}): TenantContext {
+}): TenantContext => {
   // Validate required parameters
   if (!params.systemId || typeof params.systemId !== 'string') {
     throw new ValidationError('systemId is required and must be a non-empty string');
@@ -242,7 +242,7 @@ export function createSystemContext(params: {
     requestId: randomUUID(),
     timestamp: new Date(),
   };
-}
+};
 
 /**
  * Extract context from job queue message
@@ -262,13 +262,13 @@ export function createSystemContext(params: {
  * };
  * ```
  */
-export function extractJobContext(jobMessage: {
+export const extractJobContext = (jobMessage: {
   tenantId: string;
   customerId?: string;
   userId?: string;
   jobId: string;
   jobType: string;
-}): TenantContext {
+}): TenantContext => {
   // Validate required fields from job message
   if (!jobMessage.jobId || typeof jobMessage.jobId !== 'string') {
     throw new ValidationError('Job message missing required field: jobId');
@@ -289,7 +289,7 @@ export function extractJobContext(jobMessage: {
     triggeredBy: jobMessage.userId,
     jobId: jobMessage.jobId,
   });
-}
+};
 
 /**
  * Type guard to check if an actor is a user actor
@@ -297,9 +297,9 @@ export function extractJobContext(jobMessage: {
  * @param actor - Actor to check
  * @returns True if actor is a UserActor
  */
-export function isUserActor(actor: Actor): actor is UserActor {
+export const isUserActor = (actor: Actor): actor is UserActor => {
   return actor.type === 'user';
-}
+};
 
 /**
  * Type guard to check if an actor is a system actor
@@ -307,9 +307,9 @@ export function isUserActor(actor: Actor): actor is UserActor {
  * @param actor - Actor to check
  * @returns True if actor is a SystemActor
  */
-export function isSystemActor(actor: Actor): actor is SystemActor {
+export const isSystemActor = (actor: Actor): actor is SystemActor => {
   return actor.type === 'system';
-}
+};
 
 /**
  * Get a human-readable display name for an actor
@@ -326,9 +326,9 @@ export function isSystemActor(actor: Actor): actor is SystemActor {
  * // System: "System: assessment-processor"
  * ```
  */
-export function getActorDisplayName(actor: Actor): string {
+export const getActorDisplayName = (actor: Actor): string => {
   if (isUserActor(actor)) {
     return `${actor.email} (${actor.userRole})`;
   }
   return `System: ${actor.systemId}`;
-}
+};

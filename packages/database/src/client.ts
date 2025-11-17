@@ -30,7 +30,7 @@ let db: ReturnType<typeof drizzle> | null = null;
  * @returns Drizzle database instance with schema
  * @throws {Error} If required environment variables are missing or invalid
  */
-export function getDb() {
+export const getDb = () => {
   if (!db) {
     // Validate required environment variables
     const requiredEnvVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
@@ -97,7 +97,7 @@ export function getDb() {
   }
 
   return db;
-}
+};
 
 /**
  * Execute callback with database instance
@@ -119,12 +119,12 @@ export function getDb() {
  * };
  * ```
  */
-export async function withDb<T>(
+export const withDb = async <T>(
   callback: (db: ReturnType<typeof drizzle>) => Promise<T>
-): Promise<T> {
+): Promise<T> => {
   const client = getDb();
   return callback(client);
-}
+};
 
 /**
  * Close database connection pool
@@ -141,14 +141,14 @@ export async function withDb<T>(
  * });
  * ```
  */
-export async function closeDb() {
+export const closeDb = async () => {
   if (pool) {
     console.log('Closing database connection pool');
     await pool.end();
     pool = null;
     db = null;
   }
-}
+};
 
 // Type exports for external use
 export type DbClient = ReturnType<typeof getDb>;

@@ -26,7 +26,9 @@ export interface RefreshTokenResult {
  * @throws {UnauthorisedError} If refresh token is invalid or expired
  * @throws {Error} If Cognito operation fails
  */
-export async function refreshTokenService(input: RefreshTokenInput): Promise<RefreshTokenResult> {
+export const refreshTokenService = async (
+  input: RefreshTokenInput
+): Promise<RefreshTokenResult> => {
   const result = await CognitoService.refreshToken(input.refreshToken);
 
   if (!result.AuthenticationResult) {
@@ -45,4 +47,4 @@ export async function refreshTokenService(input: RefreshTokenInput): Promise<Ref
     refreshToken: input.refreshToken, // Return original token
     expiresIn: ExpiresIn,
   };
-}
+};

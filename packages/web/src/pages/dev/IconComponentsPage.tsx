@@ -23,7 +23,7 @@ import { Text } from '@web/components/text';
  *
  * This processes the selection.json file and creates TypeScript types.
  */
-export function IconComponentsPage(): JSX.Element {
+export const IconComponentsPage = (): JSX.Element => {
   // Get all icon names from enum
   const iconNames = Object.values(Icons);
 
@@ -210,4 +210,4 @@ export function IconComponentsPage(): JSX.Element {
       </DeveloperInstructions>
     </ComponentPageWrapper>
   );
-}
+};

@@ -422,22 +422,22 @@ Test helpers are located in `packages/database/__tests__/helpers.ts`:
 
 ```typescript
 // Simplified example from actual codebase
-export async function withTestDb<T>(fn: (db: ExtendedDb) => Promise<T>): Promise<T>;
-export async function withRLS<T>(
+export const withTestDb = async <T>(fn: (db: ExtendedDb) => Promise<T>): Promise<T>;
+export const withRLS = async <T>(
   db: ExtendedDb,
   tenantId: string,
   fn: () => Promise<T>
 ): Promise<T>;
-export async function createTestTenant(
+export const createTestTenant = async (
   db: ExtendedDb,
   type: 'individual' | 'business'
 ): Promise<Tenant>;
-export async function createTestUser(
+export const createTestUser = async (
   db: ExtendedDb,
   tenantId: string,
   email: string
 ): Promise<User>;
-export async function createTestCustomer(db: ExtendedDb, tenantId: string): Promise<Customer>;
+export const createTestCustomer = async (db: ExtendedDb, tenantId: string): Promise<Customer>;
 ```
 
 **Key features:**

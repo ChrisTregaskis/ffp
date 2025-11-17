@@ -57,7 +57,7 @@ import { UserSchema } from '@ffp/core';
 import { UserService } from '@ffp/core';
 import { successResponse, errorResponse } from '@functions/utils/response';
 
-export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     // 1. Parse and validate input
     const body = JSON.parse(event.body || '{}');
@@ -75,14 +75,14 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
   } catch (error) {
     return errorResponse(error);
   }
-}
+};
 ```
 
 ### Response Utilities
 
 ```typescript
 // utils/response.ts
-export function successResponse(data: unknown, statusCode = 200) {
+export const successResponse = (data: unknown, statusCode = 200) => {
   return {
     statusCode,
     headers: {
@@ -91,9 +91,9 @@ export function successResponse(data: unknown, statusCode = 200) {
     },
     body: JSON.stringify(data),
   };
-}
+};
 
-export function errorResponse(error: unknown, statusCode = 500) {
+export const errorResponse = (error: unknown, statusCode = 500) => {
   return {
     statusCode,
     headers: {
@@ -104,7 +104,7 @@ export function errorResponse(error: unknown, statusCode = 500) {
       error: error instanceof Error ? error.message : 'Internal server error',
     }),
   };
-}
+};
 ```
 
 ---

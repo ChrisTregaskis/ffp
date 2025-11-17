@@ -27,7 +27,7 @@ const LogoWrapper = ({ children }: LogoWrapper): JSX.Element => {
  * - Clickable logos
  * - Different backgrounds to show variant visibility
  */
-export function LogoComponentsPage(): JSX.Element {
+export const LogoComponentsPage = (): JSX.Element => {
   return (
     <ComponentPageWrapper maxWidth="6xl">
       <ComponentPageHeader
@@ -367,4 +367,4 @@ export function LogoComponentsPage(): JSX.Element {
       </DeveloperInstructions>
     </ComponentPageWrapper>
   );
-}
+};

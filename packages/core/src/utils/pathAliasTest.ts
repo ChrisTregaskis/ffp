@@ -16,7 +16,7 @@ export interface PathAliasTest {
 /**
  * Test function demonstrating internal path aliases work
  */
-export function testPathAliases(): PathAliasTest {
+export const testPathAliases = (): PathAliasTest => {
   const mockTenant: Tenant = {
     id: 'test-tenant-id',
     name: 'Test Tenant',
@@ -47,4 +47,4 @@ export function testPathAliases(): PathAliasTest {
     user: mockUser,
     appName: APP_NAME,
   };
-}
+};

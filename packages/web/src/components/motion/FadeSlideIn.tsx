@@ -22,13 +22,13 @@ export interface FadeSlideInProps {
  * Useful for staggered animations by providing different delay values.
  *
  */
-export function FadeSlideIn({
+export const FadeSlideIn: React.FC<FadeSlideInProps> = ({
   children,
   delay = 0,
   duration = 0.5,
   slideDistance = 20,
   className = '',
-}: FadeSlideInProps): JSX.Element {
+}) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: slideDistance }}
@@ -39,4 +39,4 @@ export function FadeSlideIn({
       {children}
     </motion.div>
   );
-}
+};

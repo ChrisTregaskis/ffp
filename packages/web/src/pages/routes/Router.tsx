@@ -35,7 +35,7 @@ import { RouteKey, routes } from '.';
  * </AuthProvider>
  * ```
  */
-export function Router(): JSX.Element {
+export const Router = (): JSX.Element => {
   const isProduction = import.meta.env.PROD;
 
   // Filter out dev-only routes in production
@@ -88,4 +88,4 @@ export function Router(): JSX.Element {
   );
 
   return <RouterProvider router={router} />;
-}
+};

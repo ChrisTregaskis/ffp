@@ -62,29 +62,14 @@ export interface LogoProps {
  *
  * Supports multiple variants (brand colours and backgrounds) and sizes.
  * Automatically maintains correct aspect ratio.
- *
- * @example
- * ```tsx
- * <Logo variant="brand-blue" size="lg" />
- * ```
- *
- * @example
- * ```tsx
- * <Logo variant="primary-dark" size="sm" onClick={() => navigate('/')} />
- * ```
- *
- * @example
- * ```tsx
- * <Logo variant="icon" size="xs" className="rounded-md" />
- * ```
  */
-export function Logo({
+export const Logo: React.FC<LogoProps> = ({
   variant = 'brand-blue',
   size = 'md',
   alt = 'Fit For Purpose logo',
   className = '',
   onClick,
-}: LogoProps): JSX.Element {
+}) => {
   const src = VARIANT_FILE_MAP[variant];
 
   // Use different dimensions for variants with background
@@ -112,4 +97,4 @@ export function Logo({
       aria-label={alt}
     />
   );
-}
+};

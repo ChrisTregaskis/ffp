@@ -19,7 +19,7 @@ import { Text } from '@web/components/text';
  * - Custom styling options
  * - Real-world examples (auth, profile, settings, etc.)
  */
-export function CardComponentsPage(): JSX.Element {
+export const CardComponentsPage = (): JSX.Element => {
   return (
     <ComponentPageWrapper maxWidth="6xl">
       <ComponentPageHeader
@@ -309,4 +309,4 @@ export function CardComponentsPage(): JSX.Element {
       </DeveloperInstructions>
     </ComponentPageWrapper>
   );
-}
+};

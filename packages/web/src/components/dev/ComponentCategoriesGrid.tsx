@@ -24,7 +24,7 @@ interface ComponentCategoriesGridProps {
  * - "Coming Soon" badge for unimplemented categories
  * - Navigation links to category pages
  */
-export function ComponentCategoriesGrid({ categories }: ComponentCategoriesGridProps): JSX.Element {
+export const ComponentCategoriesGrid: React.FC<ComponentCategoriesGridProps> = ({ categories }) => {
   const navigate = useNavigate();
 
   return (
@@ -75,4 +75,4 @@ export function ComponentCategoriesGrid({ categories }: ComponentCategoriesGridP
       ))}
     </div>
   );
-}
+};

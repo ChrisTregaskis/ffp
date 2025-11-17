@@ -193,11 +193,11 @@ export class Logger {
  * });
  * ```
  */
-export async function withRequestLogging<T>(
+export const withRequestLogging = async <T>(
   context: TenantContext,
   operation: string,
   fn: () => Promise<T>
-): Promise<T> {
+): Promise<T> => {
   const logger = new Logger(context);
   const operationStartTime = Date.now();
 
@@ -230,4 +230,4 @@ export async function withRequestLogging<T>(
     // Re-throw the error for caller to handle
     throw error;
   }
-}
+};

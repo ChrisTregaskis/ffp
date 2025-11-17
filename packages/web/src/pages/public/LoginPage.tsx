@@ -10,7 +10,7 @@
  * - Error handling and validation
  * - Redirect to home after successful login
  */
-export function LoginPage(): JSX.Element {
+export const LoginPage = (): JSX.Element => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md">
@@ -68,4 +68,4 @@ export function LoginPage(): JSX.Element {
       </div>
     </div>
   );
-}
+};

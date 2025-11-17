@@ -19,7 +19,7 @@ import { componentCategories } from '.';
  * - Component documentation and examples
  * - Design system reference
  */
-export function ComponentsPage(): JSX.Element {
+export const ComponentsPage = (): JSX.Element => {
   return (
     <ComponentPageWrapper maxWidth="7xl">
       {/* Header */}
@@ -61,4 +61,4 @@ export function ComponentsPage(): JSX.Element {
       </div>
     </ComponentPageWrapper>
   );
-}
+};

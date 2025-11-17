@@ -17,7 +17,7 @@ import { Text, Title } from '@web/components/text';
  * - Element types (span, p)
  * - Truncation feature
  */
-export function TextComponentsPage(): JSX.Element {
+export const TextComponentsPage = (): JSX.Element => {
   const sampleText = 'The quick brown fox jumps over the lazy dog';
   const longText =
     'This is a very long piece of text that will be truncated to demonstrate the truncation feature of the Text component. It should show an ellipsis when the character limit is reached.';
@@ -468,4 +468,4 @@ export function TextComponentsPage(): JSX.Element {
       </DeveloperInstructions>
     </ComponentPageWrapper>
   );
-}
+};

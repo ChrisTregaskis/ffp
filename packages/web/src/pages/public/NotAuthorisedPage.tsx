@@ -7,7 +7,7 @@
  * - User's session has expired
  * - User is accessing a tenant-specific resource from wrong tenant
  */
-export function NotAuthorisedPage(): JSX.Element {
+export const NotAuthorisedPage = (): JSX.Element => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <div className="text-center">
@@ -27,4 +27,4 @@ export function NotAuthorisedPage(): JSX.Element {
       </div>
     </div>
   );
-}
+};

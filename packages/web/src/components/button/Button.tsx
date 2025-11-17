@@ -88,28 +88,8 @@ export interface ButtonProps {
  * Supports multiple variants, sizes, loading states, and icons.
  * Uses FFP theme colours defined in index.css.
  *
- * @example
- * ```tsx
- * <Button variant="primary" onClick={handleClick}>
- *   Save Changes
- * </Button>
- * ```
- *
- * @example
- * ```tsx
- * <Button variant="destructive" loading icon={<TrashIcon />}>
- *   Delete
- * </Button>
- * ```
- *
- * @example
- * ```tsx
- * <Button variant="link" size="sm">
- *   Learn More
- * </Button>
- * ```
  */
-export function Button({
+export const Button: React.FC<ButtonProps> = ({
   children,
   variant = 'primary',
   size = 'md',
@@ -121,7 +101,7 @@ export function Button({
   onClick,
   type = 'button',
   className = '',
-}: ButtonProps): JSX.Element {
+}) => {
   const variantClass = VARIANT_CLASS_MAP[variant];
   const sizeClass = SIZE_CLASS_MAP[size];
   const spinnerColour = SPINNER_COLOUR_MAP[variant];
@@ -173,4 +153,4 @@ export function Button({
       </button>
     </ClickScale>
   );
-}
+};

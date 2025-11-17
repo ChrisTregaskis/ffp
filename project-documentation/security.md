@@ -79,7 +79,7 @@ logger.info('Assessment completed', {
 // ✅ GOOD: Encrypt sensitive fields (if needed)
 import { KMSClient, EncryptCommand } from '@aws-sdk/client-kms';
 
-async function encryptSensitiveData(data: string): Promise<string> {
+const encryptSensitiveData = async (data: string): Promise<string> => {
   const kms = new KMSClient({ region: process.env.AWS_REGION });
   const result = await kms.send(
     new EncryptCommand({
@@ -88,7 +88,7 @@ async function encryptSensitiveData(data: string): Promise<string> {
     })
   );
   return result.CiphertextBlob!.toString('base64');
-}
+};
 ```
 
 ### 4. XML External Entities (XXE)
@@ -339,7 +339,7 @@ await db.query(
 
 ```typescript
 // Soft delete (Phase 1)
-async function softDeleteUser(userId: string, context: TenantContext) {
+const softDeleteUser = async (userId: string, context: TenantContext) => {
   await db.query(
     `
     UPDATE users 
@@ -350,10 +350,10 @@ async function softDeleteUser(userId: string, context: TenantContext) {
   `,
     [userId, context.tenantId]
   );
-}
+};
 
 // Hard delete cascade (Phase 2 - future)
-async function hardDeleteUser(userId: string, context: TenantContext) {
+const hardDeleteUser = async (userId: string, context: TenantContext) => {
   // Delete in order respecting foreign keys
   await db.query('DELETE FROM user_progress WHERE user_id = $1 AND tenant_id = $2', [
     userId,
@@ -374,7 +374,7 @@ async function hardDeleteUser(userId: string, context: TenantContext) {
     userId,
     tenantId: context.tenantId,
   });
-}
+};
 ```
 
 ## Network Security

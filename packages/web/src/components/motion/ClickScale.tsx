@@ -21,15 +21,15 @@ export interface ClickScaleProps {
  *
  * Typically used to wrap Button components for click feedback.
  */
-export function ClickScale({
+export const ClickScale: React.FC<ClickScaleProps> = ({
   children,
   scale = 0.97,
   duration = 0.1,
   className = '',
-}: ClickScaleProps): JSX.Element {
+}) => {
   return (
     <motion.div whileTap={{ scale }} transition={{ duration }} className={className}>
       {children}
     </motion.div>
   );
-}
+};

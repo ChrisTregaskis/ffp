@@ -13,15 +13,8 @@ interface IconSizeDisplayProps {
  * Displays an icon with its size label in a centered column layout.
  * Used in the IconComponentsPage to demonstrate different icon sizes.
  *
- * @example
- * ```tsx
- * <IconSizeDisplay
- *   icon={<Icon name={Icons.ARROW_RIGHT} styleProps={{ size: 'md' }} />}
- *   label="md (20px)"
- * />
- * ```
  */
-export function IconSizeDisplay({ icon, label }: IconSizeDisplayProps): JSX.Element {
+export const IconSizeDisplay: React.FC<IconSizeDisplayProps> = ({ icon, label }) => {
   return (
     <div className="flex flex-col items-center">
       {icon}
@@ -30,4 +23,4 @@ export function IconSizeDisplay({ icon, label }: IconSizeDisplayProps): JSX.Elem
       </Text>
     </div>
   );
-}
+};

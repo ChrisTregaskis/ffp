@@ -23,7 +23,7 @@ import { terminalPrefix, TerminalPrefix, colorText } from '../lib/terminal-logge
  * @param db - Drizzle database instance
  * @returns Promise<void>
  */
-export async function applyRLS(db: NodePgDatabase<any>): Promise<void> {
+export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> =>{
   console.log(`${terminalPrefix(TerminalPrefix.RLS)} Checking RLS status...`);
 
   // Check if RLS is already applied to all tables

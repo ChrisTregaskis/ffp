@@ -22,7 +22,7 @@ import { Text, Title } from '@web/components/text';
  *
  * Motion is used throughout the application for smooth, performant animations.
  */
-export function MotionShowcasePage(): JSX.Element {
+export const MotionShowcasePage = (): JSX.Element => {
   return (
     <ComponentPageWrapper>
       <ComponentPageHeader
@@ -250,4 +250,4 @@ export function MotionShowcasePage(): JSX.Element {
       </div>
     </ComponentPageWrapper>
   );
-}
+};

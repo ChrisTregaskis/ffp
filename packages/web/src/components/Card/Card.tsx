@@ -20,46 +20,15 @@ export interface CardProps {
 
 /**
  * Card component for displaying content in a contained, elevated surface.
- *
- * Features:
- * - White background with rounded corners
- * - Shadow and border for elevation
- * - Optional header with title and subtitle
- * - Flexible content area via children
- * - Customisable alignment and styling
- *
- * @example
- * ```tsx
- * // Basic card
- * <Card title="Welcome" subtitle="Sign in to continue">
- *   <LoginForm />
- * </Card>
- * ```
- *
- * @example
- * ```tsx
- * // Card without header
- * <Card>
- *   <p>Custom content here</p>
- * </Card>
- * ```
- *
- * @example
- * ```tsx
- * // Centered header (e.g., for auth cards)
- * <Card title="Create Account" subtitle="Join us today" centerHeader>
- *   <SignUpForm />
- * </Card>
- * ```
  */
-export function Card({
+export const Card: React.FC<CardProps> = ({
   children,
   title,
   subtitle,
   centerHeader = false,
   className = '',
   contentClassName = '',
-}: CardProps): JSX.Element {
+}) => {
   const hasHeader = title ?? subtitle;
   const headerAlignment = centerHeader ? 'text-center' : '';
 
@@ -82,4 +51,4 @@ export function Card({
       <div className={contentClassName}>{children}</div>
     </div>
   );
-}
+};

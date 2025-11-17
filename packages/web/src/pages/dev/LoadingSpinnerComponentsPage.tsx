@@ -17,7 +17,7 @@ import { Text, Title } from '@web/components/text';
  * - Colour customisation
  * - Real-world usage examples
  */
-export function LoadingSpinnerComponentsPage(): JSX.Element {
+export const LoadingSpinnerComponentsPage = (): JSX.Element => {
   return (
     <ComponentPageWrapper maxWidth="6xl">
       <ComponentPageHeader
@@ -328,4 +328,4 @@ export function LoadingSpinnerComponentsPage(): JSX.Element {
       </DeveloperInstructions>
     </ComponentPageWrapper>
   );
-}
+};

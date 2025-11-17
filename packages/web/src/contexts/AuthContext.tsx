@@ -48,7 +48,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
  * from JWT claims.
  *
  */
-export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
+export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
    * Uses Zod schema validation from @ffp/core to ensure JWT claims are valid.
    * Silently fails if no session exists (user remains null).
    */
-  async function checkAuth(): Promise<void> {
+  const checkAuth = async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -115,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   /**
    * Authenticate user with email and password.
@@ -124,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
    * @param password - User's password
    * @throws Error if authentication fails
    */
-  async function handleLogin(email: string, password: string): Promise<void> {
+  const handleLogin = async (email: string, password: string): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -140,12 +140,12 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   /**
    * End the current user session and clear auth state.
    */
-  async function handleLogout(): Promise<void> {
+  const handleLogout = async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -159,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   const value: AuthContextType = {
     user,
@@ -170,7 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+};
 
 /**
  * Custom hook to access authentication context.
@@ -193,7 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
  * ```
  */
 // eslint-disable-next-line react-refresh/only-export-components
-export function useAuth(): AuthContextType {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
 
   if (!context) {
@@ -201,4 +201,4 @@ export function useAuth(): AuthContextType {
   }
 
   return context;
-}
+};

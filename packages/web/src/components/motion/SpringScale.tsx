@@ -22,13 +22,13 @@ export interface SpringScaleProps {
  * The spring creates a subtle bounce effect that feels more organic than linear animations.
  *
  */
-export function SpringScale({
+export const SpringScale: React.FC<SpringScaleProps> = ({
   children,
   initialScale = 0.8,
   stiffness = 260,
   damping = 20,
   className = '',
-}: SpringScaleProps): JSX.Element {
+}) => {
   return (
     <motion.div
       initial={{ opacity: 0, scale: initialScale }}
@@ -43,4 +43,4 @@ export function SpringScale({
       {children}
     </motion.div>
   );
-}
+};

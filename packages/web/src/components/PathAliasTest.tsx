@@ -4,8 +4,7 @@ import { APP_NAME, testPathAliases } from '@ffp/core';
  * PathAliasTest Component
  * Demonstrates both workspace imports (@ffp/core) and internal aliases (@web/) work correctly
  */
-
-export function PathAliasTest(): JSX.Element {
+export const PathAliasTest: React.FC = () => {
   const testData = testPathAliases();
 
   return (
@@ -54,4 +53,4 @@ export function PathAliasTest(): JSX.Element {
       </div>
     </div>
   );
-}
+};

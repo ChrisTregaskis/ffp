@@ -17,18 +17,12 @@ interface TextSampleDisplayProps {
  * Displays a text sample with a label in a consistent two-column layout.
  * Used in TextComponentsPage to demonstrate different text variations.
  *
- * @example
- * ```tsx
- * <TextSampleDisplay label="xs">
- *   <Text styleProps={{ size: 'xs' }}>Sample text</Text>
- * </TextSampleDisplay>
- * ```
  */
-export function TextSampleDisplay({
+export const TextSampleDisplay: React.FC<TextSampleDisplayProps> = ({
   label,
   children,
   labelWidth = 'w-16',
-}: TextSampleDisplayProps): JSX.Element {
+}) => {
   return (
     <div className="flex items-baseline gap-4">
       <div className={`${labelWidth} shrink-0`}>
@@ -37,4 +31,4 @@ export function TextSampleDisplay({
       {children}
     </div>
   );
-}
+};

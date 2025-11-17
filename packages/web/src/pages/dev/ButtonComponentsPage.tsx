@@ -20,7 +20,7 @@ import { Text, Title } from '@web/components/text';
  * - Icon positioning (left, right)
  * - Full width buttons
  */
-export function ButtonComponentsPage(): JSX.Element {
+export const ButtonComponentsPage = (): JSX.Element => {
   // Get an icon for demonstrations
   const iconNames = Object.values(Icons);
   const sampleIcon = iconNames.length > 0 ? iconNames[0] : null;
@@ -423,4 +423,4 @@ export function ButtonComponentsPage(): JSX.Element {
       </DeveloperInstructions>
     </ComponentPageWrapper>
   );
-}
+};

@@ -1484,7 +1484,7 @@ export class UnauthorizedError extends ApplicationError {
 
 ```typescript
 // lib/lambda-wrapper.ts
-export function withErrorHandling<T>(handler: (event: APIGatewayProxyEventV2) => Promise<T>) {
+export const withErrorHandling<T> = (handler: (event: APIGatewayProxyEventV2) => Promise<T>) => {
   return async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResult> => {
     try {
       const result = await handler(event);
@@ -1606,6 +1606,38 @@ logger.info('Assessment created', {
 
 ## React Component Standards
 
+### Component Declaration Pattern
+
+**Always use arrow functions with explicit `React.FC` typing for components:**
+
+```typescript
+// ✅ CORRECT: Arrow function with React.FC
+interface AssessmentCardProps {
+  assessment: Assessment;
+  onStart: (id: string) => void;
+  onDelete?: (id: string) => void;
+}
+
+export const AssessmentCard: React.FC<AssessmentCardProps> = ({
+  assessment,
+  onStart,
+  onDelete,
+}) => {
+  // Component implementation
+};
+
+// ❌ INCORRECT: Function declaration
+export function AssessmentCard({ assessment, onStart, onDelete }: AssessmentCardProps) {
+  // Don't use this pattern
+}
+```
+
+**Key principles:**
+
+1. **Arrow functions**: Use `const Component: React.FC = () => {}` pattern
+2. **Explicit typing**: Always define props interface and use `React.FC<PropsType>`
+3. **Export pattern**: Export the const directly: `export const Component: React.FC = ...`
+
 ### Functional Components with Hooks
 
 ```typescript
@@ -1616,11 +1648,11 @@ interface AssessmentCardProps {
   onDelete?: (id: string) => void;
 }
 
-export function AssessmentCard({
+export const AssessmentCard: React.FC<AssessmentCardProps> = ({
   assessment,
   onStart,
   onDelete,
-}: AssessmentCardProps) {
+}) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -1630,7 +1662,7 @@ export function AssessmentCard({
     try {
       await onDelete(assessment.id);
     } catch (error) {
-      console.error("Failed to delete assessment:", error);
+      console.error('Failed to delete assessment:', error);
     } finally {
       setIsDeleting(false);
     }
@@ -1655,20 +1687,20 @@ export function AssessmentCard({
             disabled={isDeleting}
             className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
           >
-            {isDeleting ? "Deleting..." : "Delete"}
+            {isDeleting ? 'Deleting...' : 'Delete'}
           </button>
         )}
       </div>
     </div>
   );
-}
+};
 ```
 
 ### Custom Hooks
 
 ```typescript
 // hooks/useAssessment.ts
-export function useAssessment(assessmentId: string) {
+export const useAssessment = (assessmentId: string) => {
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -1677,7 +1709,7 @@ export function useAssessment(assessmentId: string) {
     loadAssessment();
   }, [assessmentId]);
 
-  async function loadAssessment() {
+  const loadAssessment = async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/assessments/${assessmentId}`);
@@ -1689,9 +1721,9 @@ export function useAssessment(assessmentId: string) {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  async function submitAssessment(answers: Record<string, unknown>) {
+  const submitAssessment = async (answers: Record<string, unknown>) => {
     const response = await fetch(`/api/assessments/${assessmentId}/submit`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1700,7 +1732,7 @@ export function useAssessment(assessmentId: string) {
 
     if (!response.ok) throw new Error('Failed to submit assessment');
     return await response.json();
-  }
+  };
 
   return {
     assessment,
@@ -1709,7 +1741,7 @@ export function useAssessment(assessmentId: string) {
     submitAssessment,
     reload: loadAssessment,
   };
-}
+};
 ```
 
 ## Testing Standards
@@ -1856,7 +1888,7 @@ const ConfigSchema = z.object({
 
 export type Config = z.infer<typeof ConfigSchema>;
 
-export function loadConfig(): Config {
+export const loadConfig = (): Config => {
   return ConfigSchema.parse({
     database: {
       host: process.env.DB_HOST!,
@@ -1879,7 +1911,7 @@ export function loadConfig(): Config {
       environment: (process.env.ENVIRONMENT as any) || 'dev',
     },
   });
-}
+};
 
 export const config = loadConfig();
 ```

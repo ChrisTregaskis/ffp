@@ -36,7 +36,7 @@ const __dirname = dirname(__filename);
  * @returns Parsed seed configuration
  * @throws {Error} If config file not found or invalid JSON
  */
-function loadSeedConfig(environment: string): SeedConfig {
+const loadSeedConfig = (environment: string): SeedConfig => {
   const configPath = resolve(__dirname, `config/db-seed.local.${environment}.json`);
 
   try {
@@ -51,13 +51,13 @@ function loadSeedConfig(environment: string): SeedConfig {
     }
     throw error;
   }
-}
+};
 
 /**
  * Validates required environment variables for database seeding
  * @throws {Error} If required environment variables are missing
  */
-function validateEnvironment(): void {
+const validateEnvironment = (): void => {
   const required = ['DB_HOST', 'DB_NAME', 'BOOTSTRAP_DB_USER', 'COGNITO_USER_POOL_ID'];
 
   const missing = required.filter((varName) => !process.env[varName]);
@@ -72,7 +72,7 @@ function validateEnvironment(): void {
     console.error('  - COGNITO_USER_POOL_ID: AWS Cognito User Pool\n');
     throw new Error('Missing required environment variables');
   }
-}
+};
 
 /**
  * Creates database connection pool with bootstrap user credentials
@@ -80,7 +80,7 @@ function validateEnvironment(): void {
  *
  * @returns Database client with schema
  */
-function createDatabaseConnection(): NodePgDatabase<typeof schema> & { $client: Pool } {
+const createDatabaseConnection = (): NodePgDatabase<typeof schema> & { $client: Pool } => {
   const pool = new Pool({
     host: process.env.DB_HOST,
     port: parseInt(process.env.DB_PORT || '5432'),
@@ -91,7 +91,7 @@ function createDatabaseConnection(): NodePgDatabase<typeof schema> & { $client: 
   });
 
   return drizzle({ client: pool, schema });
-}
+};
 
 /**
  * Seed database with data from configuration
@@ -105,7 +105,7 @@ function createDatabaseConnection(): NodePgDatabase<typeof schema> & { $client: 
  * @throws {Error} If seeding fails
  *
  */
-export async function seedDatabase(environment: string = 'dev'): Promise<void> {
+export const seedDatabase = async (environment: string = 'dev'): Promise<void> => {
   console.log(
     `${terminalPrefix(TerminalPrefix.INFO)} Database Seed - ${environment.toUpperCase()}\n`
   );
@@ -151,4 +151,4 @@ export async function seedDatabase(environment: string = 'dev'): Promise<void> {
   } finally {
     await db.$client.end();
   }
-}
+};
