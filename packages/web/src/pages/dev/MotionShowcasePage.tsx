@@ -8,6 +8,7 @@ import {
   ComponentSection,
   DeveloperInstructions,
 } from '@web/components/dev';
+import { ClickScale, FadeSlideIn, SpringScale } from '@web/components/motion';
 import { Text, Title } from '@web/components/text';
 
 /**
@@ -40,18 +41,14 @@ export function MotionShowcasePage(): JSX.Element {
             <Title as="h3" className="mb-3">
               Basic Fade & Slide
             </Title>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
+            <FadeSlideIn>
               <Card title="Animated Card" subtitle="Fades in and slides up on mount">
                 <Text as="p">
                   This card animates in with a fade and slide-up effect. The animation runs when the
                   component mounts.
                 </Text>
               </Card>
-            </motion.div>
+            </FadeSlideIn>
           </div>
 
           <div>
@@ -60,18 +57,13 @@ export function MotionShowcasePage(): JSX.Element {
             </Title>
             <div className="grid gap-4 md:grid-cols-3">
               {[0, 1, 2].map((index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
+                <FadeSlideIn key={index} delay={index * 0.1}>
                   <Card title={`Card ${String(index + 1)}`}>
                     <Text as="p" styleProps={{ size: 'sm' }}>
                       Staggered animation with {String(index * 100)}ms delay
                     </Text>
                   </Card>
-                </motion.div>
+                </FadeSlideIn>
               ))}
             </div>
           </div>
@@ -80,21 +72,13 @@ export function MotionShowcasePage(): JSX.Element {
             <Title as="h3" className="mb-3">
               Spring Animation
             </Title>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{
-                type: 'spring',
-                stiffness: 260,
-                damping: 20,
-              }}
-            >
+            <SpringScale>
               <Card title="Spring Card" subtitle="Uses spring physics for natural motion">
                 <Text as="p">
                   This card uses a spring transition for a more natural, bouncy animation effect.
                 </Text>
               </Card>
-            </motion.div>
+            </SpringScale>
           </div>
         </div>
       </ComponentSection>
@@ -110,21 +94,21 @@ export function MotionShowcasePage(): JSX.Element {
           </Text>
 
           <div className="flex flex-wrap gap-4">
-            <motion.div whileTap={{ scale: 0.95 }} transition={{ duration: 0.1 }}>
+            <ClickScale>
               <Button variant="primary">Click Me</Button>
-            </motion.div>
+            </ClickScale>
 
-            <motion.div whileTap={{ scale: 0.95 }} transition={{ duration: 0.1 }}>
+            <ClickScale>
               <Button variant="success">Save Changes</Button>
-            </motion.div>
+            </ClickScale>
 
-            <motion.div whileTap={{ scale: 0.95 }} transition={{ duration: 0.1 }}>
+            <ClickScale>
               <Button variant="destructive">Delete</Button>
-            </motion.div>
+            </ClickScale>
 
-            <motion.div whileTap={{ scale: 0.95 }} transition={{ duration: 0.1 }}>
+            <ClickScale>
               <Button variant="secondary">Cancel</Button>
-            </motion.div>
+            </ClickScale>
           </div>
 
           <Card className="mt-6">
@@ -133,13 +117,14 @@ export function MotionShowcasePage(): JSX.Element {
             </Title>
             <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
               <li>
-                Wrap the Button in a <code className="rounded bg-muted px-1">motion.div</code>
+                Wrap the Button in a <code className="rounded bg-muted px-1">ClickScale</code>{' '}
+                component
               </li>
               <li>
-                Use <code className="rounded bg-muted px-1">whileTap</code> prop to define the
-                pressed state
+                Uses <code className="rounded bg-muted px-1">whileTap</code> prop internally to
+                define the pressed state
               </li>
-              <li>Scale down to 0.95 (95% of original size) when clicked</li>
+              <li>Scales down to 0.95 (95% of original size) when clicked</li>
               <li>Quick 0.1s duration creates a snappy, responsive feel</li>
               <li>Automatically returns to original size when released - no cleanup needed</li>
             </ul>
