@@ -4,7 +4,7 @@
 **Current Phase**: Sprint 2 Execution - IN PROGRESS 🚀
 **Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
 **Current User Story Branch:** `feature/FFP-16-web-login-flow`
-**Next Subtask**: FFP-97 - Write Unit Tests for Login Flow
+**Next Subtask**: FFP-116 Implement first time password setup for invited users
 **Recently Completed**: FFP-92 - Implement Login Form (Complete with Code Review Fixes)
 
 ---
@@ -194,18 +194,6 @@
 - British English spelling throughout
 - Manual testing: Login, error display, forgot password navigation all verified
 
-**Code Review & Fixes** (9 issues addressed):
-
-1. ✅ Replaced raw button in HomePage with Button component
-2. ✅ Fixed text colour inconsistency in logout button (automatic via Button)
-3. ✅ Added documentation to IconButton about raw button usage
-4. ✅ Updated password field to use FieldDataType.PASSWORD (enables visibility toggle)
-5. ✅ Documented gradient colour exception in AuthLayout
-6. ✅ Replaced hard-coded colours in dev pages with theme colours (bg-muted, bg-foreground)
-7. ✅ Simplified AuthLayout by removing unused subtitle prop
-8. ✅ Implemented type-safe routing with RouteKey enum in LoginPage
-9. ✅ Implemented type-safe routing with RouteKey enum in ForgotPasswordPage
-
 **Quality Verification**:
 
 - ✅ TypeScript: Zero errors (strict mode)
@@ -238,8 +226,6 @@
 - Auth schemas added
 - Code review instructions updated (raw HTML/hard-coded colour checks)
 - FFP code review skill enhanced with component usage enforcement
-
-**Ready for FFP-97** (Write Unit Tests)
 
 ---
 
