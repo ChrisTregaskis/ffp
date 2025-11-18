@@ -11,6 +11,7 @@ import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { HomePage } from '@web/pages/protected/HomePage';
 import { ForgotPasswordPage } from '@web/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@web/pages/public/LoginPage';
+import { SetPasswordPage } from '@web/pages/public/SetPasswordPage';
 
 import { RouteKey } from './RouteKey';
 
@@ -81,6 +82,13 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: ForgotPasswordPage,
     title: 'Forgot Password',
+    excludeFromMainNavbar: true,
+  },
+  [RouteKey.SET_PASSWORD]: {
+    path: '/set-password',
+    public: true,
+    pageComponent: SetPasswordPage,
+    title: 'Set Password',
     excludeFromMainNavbar: true,
   },
   [RouteKey.HOME]: {

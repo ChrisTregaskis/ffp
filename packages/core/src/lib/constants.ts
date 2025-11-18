@@ -1,3 +1,7 @@
+import { customerStatusSchema } from '../schemas/customer.schema';
+import { tenantTypeSchema } from '../schemas/tenant.schema';
+import { userRoleSchema } from '../schemas/user.schema';
+
 export const APP_NAME = 'FFP - Fitness & Physiotherapy Platform';
 export const APP_VERSION = '0.0.1';
 
@@ -13,9 +17,52 @@ export const APP_VERSION = '0.0.1';
  */
 export const PLATFORM_TENANT_ID = 'platform';
 
-import { customerStatusSchema } from '../schemas/customer.schema';
-import { tenantTypeSchema } from '../schemas/tenant.schema';
-import { userRoleSchema } from '../schemas/user.schema';
+/**
+ * Validation regex patterns used across the application.
+ *
+ * Centralised constants to ensure consistency and maintainability.
+ */
+
+/**
+ * Email validation pattern.
+ *
+ * Matches standard email format: name@domain.tld
+ * Case-insensitive matching.
+ */
+export const EMAIL_PATTERN = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+
+/**
+ * Password requirement patterns matching Cognito default policy.
+ */
+
+/** At least one uppercase letter (A-Z) */
+export const PASSWORD_UPPERCASE_PATTERN = /[A-Z]/;
+
+/** At least one lowercase letter (a-z) */
+export const PASSWORD_LOWERCASE_PATTERN = /[a-z]/;
+
+/** At least one number (0-9) */
+export const PASSWORD_NUMBER_PATTERN = /[0-9]/;
+
+/** At least one special character (non-alphanumeric) */
+export const PASSWORD_SPECIAL_CHAR_PATTERN = /[^A-Za-z0-9]/;
+
+/**
+ * Combined password validation pattern.
+ *
+ * Requires:
+ * - At least 8 characters
+ * - At least one lowercase letter
+ * - At least one uppercase letter
+ * - At least one number
+ * - At least one special character
+ */
+export const PASSWORD_FULL_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+
+/**
+ * Password minimum length requirement
+ */
+export const PASSWORD_MIN_LENGTH = 8;
 
 export const COGNITO_CUSTOM_ATTRIBUTES = {
   TENANT_ID: 'custom:tenantId',

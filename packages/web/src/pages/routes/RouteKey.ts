@@ -9,6 +9,8 @@ export enum RouteKey {
   LOGIN = 'login',
   /** Public forgot password route */
   FORGOT_PASSWORD = 'forgot-password',
+  /** Public set password route for invited users */
+  SET_PASSWORD = 'set-password',
   /** Protected home/dashboard route */
   HOME = 'home',
 

@@ -1,11 +1,11 @@
 # FFP - Project State
 
-**Last Updated**: November 17, 2025 - Session 51
+**Last Updated**: November 18, 2025 - Session 52
 **Current Phase**: Sprint 2 Execution - IN PROGRESS 🚀
 **Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
 **Current User Story Branch:** `feature/FFP-16-web-login-flow`
-**Next Subtask**: FFP-116 Implement first time password setup for invited users
-**Recently Completed**: FFP-92 - Implement Login Form (Complete with Code Review Fixes)
+**Next Subtask**: FFP-97 - Write Unit Tests
+**Recently Completed**: FFP-116 - First-Time Password Setup for Invited Users (Complete with Code Review)
 
 ---
 
@@ -111,9 +111,9 @@
 
 ## Current Work: FFP-16 - Web Login Interface
 
-**Status**: 🚀 IN PROGRESS (8/10 subtasks - 6 complete, 2 active, 2 deferred)
+**Status**: 🚀 IN PROGRESS (9/10 subtasks - 7 complete, 2 active, 2 deferred)
 **Estimated**: ~18-19 hours (revised from 20 hours with deferrals)
-**Completed**: 15/18-19 hours (79%)
+**Completed**: 17/18-19 hours (89%)
 
 ### Execution Order
 
@@ -123,8 +123,9 @@
 4. ✅ **FFP-119** - Web Routing & Component Library Foundation (2h actual + 2h extended scope) - **COMPLETE**
 5. ✅ **FFP-92** - Implement login form (2h) - **COMPLETE** (with code review fixes)
 6. ✅ **FFP-95** - Implement logout functionality (1h) - **COMPLETE** (integrated with routing)
-7. **FFP-97** - Write unit tests (2h) - 🔜 **NEXT**
-8. **FFP-100** - Update documentation (1h)
+7. ✅ **FFP-116** - First-time password setup for invited users (2h) - **COMPLETE** (with code review)
+8. **FFP-97** - Write unit tests (2h) - 🔜 **NEXT**
+9. **FFP-100** - Update documentation (1h)
 
 ### Deferred Subtasks
 
@@ -165,6 +166,94 @@
 
 ## Recent Work (Sprint 2 Sessions)
 
+**Session 52 (Nov 18)**: ✅ FFP-116 - First-Time Password Setup COMPLETE (with Code Review)
+
+**Password Setup Flow Implementation**:
+
+- Created two-step password setup flow with Cognito NEW_PASSWORD_REQUIRED challenge
+  - Step 1: Email + temporary password (skippable if redirected from login page)
+  - Step 2: Create new password with real-time validation and strength indicator
+- Created SetPasswordForm organism component (326 lines) with state management
+  - Detects and handles CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED challenge
+  - Smooth directional animations (forward/backward) via CardTransition
+  - Password confirmation validation with visual feedback
+  - Integration with AuthContext for seamless authentication
+- Created reusable password components for broader use:
+  - PasswordInput: Show/hide toggle, strength indicator in label row, error messaging
+  - PasswordStrengthIndicator: Weak/Medium/Strong levels with theme colours
+  - PasswordRequirement: Single requirement with CheckCircle/AlertCircle icons
+  - PasswordRequirementsList: Full requirements list with real-time feedback
+- Created CardTransition motion component for multi-step forms
+  - Forward/backward directional animations (slide + fade)
+  - Reusable for wizards and sequential UIs
+  - 0.15s default duration (snappier feel)
+- Created SetPasswordPage with smart flow detection
+  - Supports direct access (/set-password?email=user@example.com)
+  - Supports redirect from login (/set-password?email=X&skipTempPassword=true)
+  - Auto-authenticates and redirects to home after password set
+- Created passwordStrength utility with scoring algorithm
+  - Requirements: 8+ chars, uppercase, lowercase, number, special char
+  - Strength scoring: Length (8/12/16+), multiple numbers/special chars, no repeating chars
+  - Levels: Weak (0-2 points), Medium (3-4 points), Strong (5-6 points)
+  - Uses global regex flags for correct counting
+- Migrated validation constants from web to @ffp/core
+  - EMAIL*PATTERN, PASSWORD*\* patterns, PASSWORD_MIN_LENGTH
+  - Shared across web (client validation) and functions (server validation)
+  - Single source of truth prevents drift
+- Refactored invite-user endpoint to /user domain
+  - Moved from /auth/invite-user to /user/invite-user
+  - Created new user domain router (packages/functions/src/user/index.ts)
+  - JWT authentication enforced at API Gateway level (not inside Lambda)
+  - Fixed "No JWT claims found" error with proper JWT authorizer config
+- Updated sst.config.ts with /user/{proxy+} route and JWT authorizer
+- Updated Postman collection with new "User Operations" section
+- All components use theme colours (no hard-coded colours)
+- British English spelling throughout
+- Zero TypeScript errors, zero ESLint warnings
+
+**Files Created** (13):
+
+- packages/core/src/lib/constants.ts (validation patterns and PASSWORD_MIN_LENGTH)
+- packages/functions/src/user/index.ts (new user domain router)
+- packages/web/src/components/auth/SetPasswordForm.tsx (326 lines)
+- packages/web/src/components/form/password/PasswordInput.tsx (118 lines)
+- packages/web/src/components/form/password/PasswordStrengthIndicator.tsx (53 lines)
+- packages/web/src/components/form/password/PasswordRequirement.tsx (34 lines)
+- packages/web/src/components/form/password/PasswordRequirementsList.tsx (30 lines)
+- packages/web/src/components/form/password/index.ts (barrel export)
+- packages/web/src/components/motion/CardTransition.tsx (78 lines)
+- packages/web/src/pages/public/SetPasswordPage.tsx (78 lines)
+- packages/web/src/utils/passwordStrength.ts (163 lines)
+- packages/web/src/schemas/auth.schema.ts (password schemas)
+
+**Files Modified** (12):
+
+- packages/functions/src/auth/index.ts (removed invite-user route)
+- packages/web/src/components/auth/index.ts (added setPasswordCredentialsFields)
+- packages/web/src/components/motion/index.ts (exported CardTransition)
+- packages/web/src/contexts/AuthContext.tsx (skipTempPassword support)
+- packages/web/src/pages/dev/MotionShowcasePage.tsx (CardTransition demo)
+- packages/web/src/pages/public/LoginPage.tsx (NEW_PASSWORD_REQUIRED detection)
+- packages/web/src/pages/routes/RouteKey.ts (added SET_PASSWORD)
+- packages/web/src/pages/routes/index.ts (SetPasswordPage route)
+- sst.config.ts (added /user/{proxy+} route with JWT authorizer)
+- postman/FFP-API-Collection.postman_collection.json (User Operations section)
+- package.json (added strip-json-comments dependency)
+- pnpm-lock.yaml (lockfile update)
+
+**Architecture Decisions**:
+
+- **Domain separation**: /user domain for authenticated user operations vs. /auth for public auth
+- **API Gateway authorization**: JWT validation happens before Lambda execution (not inside handler)
+- **Shared validation**: Constants in @ffp/core prevent frontend/backend drift
+- **Password strength as advisory**: Users can submit weak passwords if requirements met (intentional UX)
+- **Directional animations**: CardTransition provides natural navigation feedback
+- **Component reusability**: Password components designed for change password, admin flows, etc.
+
+**Next**: FFP-97 - Write Unit Tests (2h estimated)
+
+---
+
 **Session 51 (Nov 17)**: ✅ FFP-92 - Implement Login Form COMPLETE (with Code Review Fixes)
 
 **Login Form Implementation**:
@@ -193,16 +282,6 @@
 - Zero TypeScript errors, zero ESLint warnings
 - British English spelling throughout
 - Manual testing: Login, error display, forgot password navigation all verified
-
-**Quality Verification**:
-
-- ✅ TypeScript: Zero errors (strict mode)
-- ✅ ESLint: Zero warnings (--max-warnings 0)
-- ✅ Tests: All passing (2/2 in web package)
-- ✅ Component usage: All raw HTML replaced with themed components
-- ✅ Theme colours: All hard-coded colours replaced (except documented exceptions)
-- ✅ Type-safe routing: RouteKey enum used throughout
-- ✅ Security: JWT claims use correct custom: prefix
 
 **Files Created** (7):
 
@@ -458,26 +537,18 @@
 - Cognito JWTs use public key verification (no signing secret needed)
 - Will revisit during staging readiness / RDS setup
 
-**Session 34 (Nov 6)**: ✅ FFP-44 - Structured Logging (2h)
+**Sessions 31-42 Summary** (Nov 3-10): FFP-9 Phase 1-4 Prerequisites & Core Auth
 
-- Logger class with CloudWatch JSON output and actor awareness
-- Log level filtering (DEBUG/INFO/WARN/ERROR)
-- Lambda wrapper integration with automatic request logging
-- 27 new tests (125 total)
-
-**Session 33 (Nov 5)**: ✅ FFP-36 - Tenant Context Extraction (2h)
-
-- Actor-based architecture (UserActor, SystemActor)
-- Enhanced TenantContext with actor, requestId, timestamp
-- Runtime validation for JWT claims
-- Helper functions for actor display names
-
-**Session 31 (Nov 3)**: ✅ FFP-43 - Error Handling Classes (3.5h)
-
-- Custom error hierarchy (7 error types)
-- Lambda middleware wrapper with error-to-HTTP conversion
-- CognitoService wrapper
-- 55 comprehensive tests
+- ✅ FFP-43: Error handling classes (7 error types, Lambda middleware wrapper)
+- ✅ FFP-36: Tenant context extraction (actor-based architecture)
+- ✅ FFP-44: Structured logging (CloudWatch JSON output, log level filtering)
+- ✅ FFP-112: Admin API endpoint (POST /admin/create-customer, JWT + role validation)
+- ✅ FFP-37: Invite user Lambda (Cognito AdminCreateUser, IAM permissions fixed)
+- ✅ FFP-38: Login Lambda (NEW_PASSWORD_REQUIRED challenge flow)
+- ✅ FFP-39: Refresh token Lambda (automatic token renewal)
+- ✅ FFP-40: API Gateway routes verification (domain proxy routing)
+- ✅ FFP-41: Unit tests (context.ts tests, RLS fix - removed BYPASSRLS privilege)
+- Total: 185 tests passing, zero TypeScript errors, zero ESLint warnings
 
 ---
 
