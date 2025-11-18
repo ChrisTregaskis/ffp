@@ -8,6 +8,147 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### November 18, 2025 (Session 52 - FFP-116 First-Time Password Setup Complete)
+
+**Status**: ✅ FFP-116 COMPLETE - Implement First-Time Password Setup Flow (with Code Review)
+
+**Branch**: `feature/FFP-116-first-time-password` (merging to `feature/FFP-16-web-login-flow`)
+
+**Completed Work**:
+
+**Password Setup Flow Implementation** (2 hours actual):
+
+- ✅ **SetPasswordForm Component**: Two-step password setup organism (326 lines)
+  - Step 1: Email + temporary password entry (triggers Cognito NEW_PASSWORD_REQUIRED challenge)
+  - Step 2: New password creation with real-time validation and strength feedback
+  - Detects `CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED` challenge from Cognito
+  - Uses `confirmSignIn` to complete password setup and authenticate user
+  - Supports `skipTempPasswordStep` prop (when redirected from login page after temp auth)
+  - Loading states during authentication operations
+  - Error display with dismissible StaticAlert
+  - CardTransition animations with directional feedback (forward/backward)
+
+- ✅ **Password Components** (Reusable across forms):
+  - `PasswordInput`: Input with strength indicator, show/hide toggle, error states
+  - `PasswordStrengthIndicator`: Visual feedback (Weak/Medium/Strong) with theme colours
+  - `PasswordRequirement`: Single requirement item with CheckCircle/AlertCircle icons
+  - `PasswordRequirementsList`: Checklist of password requirements with visual feedback
+
+- ✅ **Password Strength Algorithm** (`passwordStrength.ts`):
+  - Requirements: 8+ chars, uppercase, lowercase, number, special character
+  - Scoring system (0-6 points): length bonuses, multiple numbers/special chars, no repeats
+  - Strength levels: Weak (0-2), Medium (3-4), Strong (5-6)
+
+- ✅ **CardTransition Component**: Directional animations for multi-step forms
+  - Forward slides from right, backward slides from left
+  - Configurable duration (default 0.15s for snappier feel)
+  - Type-safe `CardTransitionDirection` type ('forward' | 'backward')
+  - Reusable across any multi-step flow
+
+- ✅ **Validation Constants Migration**:
+  - Created `packages/core/src/lib/constants.ts` with EMAIL*PATTERN, PASSWORD*\* patterns
+  - Prevents frontend/backend validation drift
+
+- ✅ **SetPasswordPage**: Page component with redirect handling
+  - Supports `?email=user@example.com` query param (pre-fill email)
+  - Supports `?skipTempPassword=true` query param (when coming from login page)
+  - Handles success by refreshing AuthContext and navigating to home
+  - Error boundary with clear error display
+
+- ✅ **LoginPage Enhancement**: Detect NEW_PASSWORD_REQUIRED challenge
+  - Added logic to detect `CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED` in sign-in response
+  - Redirects to SetPasswordPage with `skipTempPassword=true` (Cognito session already active)
+  - Passes email in URL for seamless user experience
+
+- ✅ **Invite-User Endpoint Refactored**:
+  - Moved from `/auth/invite-user` to `/user/invite-user` (domain reorganisation)
+  - Created new `packages/functions/src/user/index.ts` router with JWT authentication
+  - JWT authorizer configured at API Gateway level (not inside Lambda)
+  - `event.requestContext.authorizer.jwt.claims` populated by API Gateway
+  - Updated Postman collection with "User Operations" section
+
+- ✅ **Infrastructure Updates**:
+  - Added `/user/{proxy+}` route to `sst.config.ts` with JWT authorizer configuration
+  - Ensures JWT validation happens BEFORE Lambda execution
+  - Auth routes (`/auth/login`, `/auth/complete-new-password`) remain public
+  - User routes (`/user/invite-user`) require authentication
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ ESLint: Zero warnings (--max-warnings 0)
+- ✅ Tests: All passing (2/2 in @ffp/web)
+- ✅ Manual testing: Two-step password flow, directional animations, strength feedback verified
+- ✅ Component reusability: Password components abstracted for use in other forms
+- ✅ Theme colours: All components use theme colours (no hard-coded values)
+- ✅ Type safety: No `any` types, proper Framer Motion Variants typing
+- ✅ British English: Consistent spelling throughout
+- ✅ Security: Cognito authentication via AuthContext (multi-tenant security enforced)
+- ✅ Accessibility: IconButton has aria-label, password requirements have semantic icons
+
+**Files Created** (13 new files, ~800 lines):
+
+1. `packages/core/src/lib/constants.ts` (validation patterns)
+2. `packages/web/src/components/auth/SetPasswordForm.tsx` (326 lines)
+3. `packages/web/src/components/auth/index.ts` (barrel export)
+4. `packages/web/src/pages/public/SetPasswordPage.tsx` (79 lines)
+5. `packages/web/src/components/form/password/PasswordInput.tsx` (refactored)
+6. `packages/web/src/components/form/password/PasswordStrengthIndicator.tsx`
+7. `packages/web/src/components/form/password/PasswordRequirement.tsx`
+8. `packages/web/src/components/form/password/PasswordRequirementsList.tsx`
+9. `packages/web/src/utils/passwordStrength.ts`
+10. `packages/web/src/schemas/auth.schema.ts`
+11. `packages/web/src/components/motion/CardTransition.tsx`
+12. `packages/functions/src/user/index.ts` (new domain router)
+13. `packages/functions/src/user/invite-user.ts` (moved from auth)
+
+**Files Modified** (12 files):
+
+- `packages/core/src/lib/constants.ts` - Added validation patterns
+- `packages/web/src/components/motion/index.ts` - Exported CardTransition
+- `packages/web/src/pages/dev/MotionShowcasePage.tsx` - Added CardTransition demo
+- `packages/web/src/pages/routes/RouteKey.ts` - Added SET_PASSWORD
+- `packages/web/src/pages/routes/index.ts` - Added SetPasswordPage route
+- `packages/web/tsconfig.json` - Removed @web/constants alias
+- `packages/web/vite-alias-config.ts` - Removed @web/constants alias
+- `sst.config.ts` - Added `/user/{proxy+}` route with JWT authorizer
+- `packages/functions/src/auth/index.ts` - Removed invite-user route
+- `postman/FFP-API-Collection.postman_collection.json` - Updated invite-user endpoint
+- `packages/web/src/pages/public/LoginPage.tsx` - Added NEW_PASSWORD_REQUIRED detection
+
+**Files Deleted** (2 files):
+
+- `packages/web/src/constants/validation.ts` (migrated to @ffp/core)
+- `packages/web/src/constants/` directory (removed entirely)
+
+**Architecture Decisions**:
+
+- **JWT Authorization at API Gateway**: Validation happens before Lambda execution, not inside handler
+- **Domain Organisation**: `/user` domain for authenticated operations, `/auth` for public routes
+- **Shared Validation**: Constants in @ffp/core prevent frontend/backend drift
+- **Component Reusability**: Password components designed for use in change password, admin user creation
+- **Directional Animations**: CardTransition provides natural navigation feedback
+- **Advisory Password Strength**: Users can submit weak passwords if requirements met (UX choice)
+- **Single Direction State**: SetPasswordForm tracks one direction (works for two-step flow)
+
+**Acceptance Criteria Met** (FFP-116):
+
+- ✅ Two-step password setup flow (email/temp password → new password)
+- ✅ Real-time password validation with strength indicator
+- ✅ Password requirements checklist with visual feedback
+- ✅ Show/hide password toggle with IconButton
+- ✅ Validation constants shared between packages
+- ✅ CardTransition with directional animations
+- ✅ Cognito NEW_PASSWORD_REQUIRED challenge detection
+- ✅ Redirect from login page for seamless UX
+- ✅ British English throughout
+- ✅ TypeScript strict mode
+- ✅ Zero ESLint warnings
+
+**Next**: FFP-97 - Write Unit Tests (2h estimated)
+
+---
+
 ### November 17, 2025 (Session 51 - FFP-92 Login Form Complete)
 
 **Status**: ✅ FFP-92 COMPLETE - Implement Login Form (with Code Review Fixes)
@@ -231,272 +372,19 @@ ALL of the following were implemented.
 
 ---
 
-### November 15, 2025 (Session 48 - FFP-119 Initial Implementation)
+### Sessions 45-48 (November 13-15, 2025 - Web Foundation)
 
-**Status**: ✅ FFP-119 Basic Routing Infrastructure (2h) - Extended in Sessions 49-50
+**Sessions consolidated for brevity. See earlier versions for full detail.**
 
-**Branch**: `feature/FFP-16-web-login-flow`
+**Session 48 (FFP-119 Basic Routing)**: Type-safe routing with RouteKey enum, ProtectedRoute using AuthContext, component showcase routes (dev-only), environment-based filtering. 2h actual.
 
-**Completed Work**:
+**Session 47 (FFP-90 AuthContext)**: Created AuthContext with JWT claim extraction, User interface with role validation, login/logout functions, manual testing page. Fixed TS Server performance issues (excluded .pnpm/ from watchers). 4h actual.
 
-**FFP-119: Implement Basic Routing Infrastructure**
+**Session 46 (FFP-93 Amplify Setup)**: Installed AWS Amplify, configured Cognito integration, type-safe environment variables, auth methods exported (signIn, signOut, getCurrentUser). 1h actual.
 
-- ✅ Installed `react-router-dom@^7.9.6` and `@types/react-router-dom@^5.3.3` packages
-- ✅ Created `packages/web/src/pages/routes/RouteKey.ts` - Type-safe route key enum
-- ✅ Created `packages/web/src/pages/routes/index.ts` - Routes configuration with AppRoute interface
-- ✅ Created `packages/web/src/pages/routes/Router.tsx` - Main router with environment-based filtering
-- ✅ Created `packages/web/src/pages/routes/ProtectedRoute.tsx` - Auth wrapper using existing AuthContext
-- ✅ Created `packages/web/src/pages/public/LoginPage.tsx` - Placeholder login page (FFP-92 will implement)
-- ✅ Created `packages/web/src/pages/protected/HomePage.tsx` - Protected dashboard displaying user JWT claims
-- ✅ Created `packages/web/src/pages/public/NotAuthorisedPage.tsx` - 403 error page
-- ✅ Created `packages/web/src/components/layout/AppLayout.tsx` - Sidebar nav wrapper for protected routes
-- ✅ Created component showcase routes (dev-only, excluded in production):
-  - `packages/web/src/pages/dev/ComponentsPage.tsx` - Showcase landing page
-  - `packages/web/src/pages/dev/FormComponentsPage.tsx` - Form components demo (moved from FormTest)
-  - `packages/web/src/pages/dev/IconComponentsPage.tsx` - Icon components demo (moved from IconTest)
-- ✅ Updated `packages/web/src/App.tsx` - Now renders Router instead of test components
-- ✅ Environment-based route filtering (`import.meta.env.PROD`) excludes dev routes in production
-- ✅ AppRoute interface with `devOnly` flag for development-only routes
+**Session 45 (FFP-115 Component Library)**: Tailwind CSS v4 setup, React Hook Form + Zod integration, Icon system with auto-generated TypeScript enums, declarative form pattern with generics. 4h actual.
 
-**Routing Infrastructure**:
-
-- Type-safe routing with RouteKey enum (compile-time safety)
-- Centralized routes configuration (single source of truth)
-- Public routes: `/login` (no auth required)
-- Protected routes: `/` (requires auth, redirects to `/login`)
-- Dev-only routes: `/components`, `/components/form`, `/components/icon` (excluded in production)
-- Catch-all route: Redirects to home (which redirects to login if not authed)
-
-**ProtectedRoute Implementation**:
-
-- Uses real `useAuth()` hook from FFP-90 AuthContext (no placeholder)
-- Shows loading spinner during auth check
-- Redirects to `/login` if not authenticated
-- Wraps content in AppLayout by default
-- Supports `excludeLayout` prop for fullscreen pages (e.g., future assessments)
-
-**Component Showcase Routes**:
-
-- Landing page at `/components` with category cards
-- Form showcase at `/components/form` (interactive auth form demo)
-- Icon showcase at `/components/icon` (size/colour variations, full icon grid)
-- "Coming Soon" placeholders for Button, Modal, Table components
-- Yellow "Development Only" badges throughout
-- Automatically excluded from production builds
-- Pattern established for adding future component showcases
-
-**Testing & Quality**:
-
-- ✅ Zero TypeScript errors (strict mode)
-- ✅ Zero ESLint warnings
-- ✅ Production build successful (541KB main chunk, acceptable for Phase 1)
-- ✅ All acceptance criteria met
-- ✅ British English spelling throughout
-- ✅ Comprehensive review context document created
-
-**Manual Testing Results**:
-
-- ✓ Navigate to `/` → redirects to `/login` (not authenticated)
-- ✓ Navigate to `/login` → shows placeholder login page
-- ✓ Navigate to invalid route → redirects to `/`
-- ✓ Component showcase routes accessible in dev mode (`/components`, `/components/form`, `/components/icon`)
-- ✓ Production build excludes dev routes
-- ✓ HomePage displays user JWT claims correctly (when authenticated)
-- ✓ Sign out button triggers logout
-- ✓ Loading states render correctly
-
-**Pattern Reinforced**: Type-safe routing with environment-based filtering, component showcases for development
-**FFP-16 Progress**: 4/9 subtasks (44%), 11/18-19 hours (58%)
-**Sprint 2**: 11/~60 hours (18%)
-**Next**: FFP-92 Implement Login Form (2h)
-
----
-
-### November 14, 2025 (Session 47 - FFP-90 Complete!)
-
-**Status**: ✅ FFP-90 COMPLETE - Create AuthContext and AuthProvider (4h)
-
-**Branch**: `feature/FFP-16-web-login-flow`
-
-**Completed Work**:
-
-**FFP-90: Create AuthContext and AuthProvider**
-
-- ✅ Created `packages/web/src/contexts/AuthContext.tsx` - Authentication context implementation
-  - `User` interface with userId, email, tenantId, role
-  - `UserRole` type derived from database role values with runtime validation
-  - `isValidUserRole()` type guard function for safe role validation
-  - `AuthProvider` component managing auth state (user, loading, error)
-  - `checkAuth()` function with JWT claim extraction and comprehensive validation
-  - `login()` and `logout()` functions wrapping Amplify auth methods
-  - `useAuth()` custom hook with proper error boundary
-- ✅ Created `packages/web/src/pages/FormTest.tsx` - Manual testing page
-  - Login form with email/password validation
-  - User object display (userId, email, tenantId, role)
-  - Loading states during authentication operations
-  - Error display with retry capability
-  - Logout functionality
-  - Developer instructions for console/DevTools verification
-- ✅ Updated `packages/web/src/main.tsx` - Wrapped App with AuthProvider and StrictMode
-- ✅ Updated `packages/web/tsconfig.json` and `vite-alias-config.ts` - Added @web/contexts path alias
-- ✅ Created `MANUAL-TEST-FFP-90.md` - Comprehensive manual test instructions with 10 test scenarios
-
-**Security Implementation**:
-
-- JWT claim extraction with `custom:` prefix (tenantId, role)
-- Type-safe role validation with type guard and detailed error messages
-- All required claims validated before setting user state
-- No non-null assertions (ESLint compliance)
-- Silent failure in `checkAuth()` appropriate for Phase 1
-
-**Manual Testing Results**:
-
-- ✓ Login flow tested with valid credentials
-- ✓ JWT claim extraction validated (userId, email, tenantId, role)
-- ✓ User object structure verified in UI
-- ✓ Loading states during auth operations confirmed
-- ✓ Error handling tested with invalid credentials
-- ✓ Logout flow verified
-- ✓ Session persistence confirmed (refresh browser)
-
-**Testing & Quality**:
-
-- ✅ Zero TypeScript errors (strict mode)
-- ✅ Zero ESLint warnings
-- ✅ All acceptance criteria met
-- ✅ British English spelling throughout
-- ✅ No `any` types used
-- ✅ Comprehensive review context document created
-
-**Known Trade-offs**:
-
-- Role values duplicated from database schema (TODO: extract to shared package)
-- No Zod runtime validation for JWT claims (type guard sufficient for Phase 1)
-- Unit tests deferred (Phase 1 priority: ship fast)
-
-**IDE Performance Issue Resolved**:
-
-During this session, encountered critical TypeScript server performance issues:
-
-- **Symptoms**: TS server crash loop, symbol count climbing (844 → 54,655+), VS Code unresponsive, frequent SIGTERM errors
-- **Root Cause**: pnpm's `.pnpm/` directory structure overwhelming TypeScript's file watchers (20,000+ files monitored)
-- **Solution Applied**:
-  - Added `watchOptions` to `tsconfig.base.json` excluding `.pnpm/` directories
-  - Updated all package `tsconfig.json` files with `**/.pnpm` exclusions
-  - Configured `.vscode/settings.json` for optimal TypeScript performance
-  - Disabled TypeScript Importer extension (temporarily)
-- **Result**: ✅ TS Server stable, symbol count stabilised, IDE responsive, zero crashes
-- **Documentation**: Created comprehensive `ts-server-debug-guide.md` for future reference
-
-**Pattern Reinforced**: React Context API with custom hooks, type guards for runtime safety
-**FFP-16 Progress**: 3/9 subtasks (33%), 9/18-19 hours (47%)
-**Sprint 2**: 9/~60 hours (15%)
-**Next**: FFP-92 Implement Login Form (2h)
-
----
-
-### November 13, 2025 (Session 46 - FFP-93 Complete!)
-
-**Status**: ✅ FFP-93 COMPLETE - AWS Amplify Setup (1h)
-
-**Branch**: `feature/FFP-16-web-login-flow`
-
-**Completed Work**:
-
-**FFP-93: Install and Configure AWS Amplify**
-
-- ✅ Installed `aws-amplify@^6.x.x` and `@aws-amplify/ui-react@^6.x.x` packages
-- ✅ Created `packages/web/src/lib/auth.ts` - Amplify configuration with Cognito User Pool
-- ✅ Created `packages/web/.env.local` - Environment variables with VITE\_ prefix
-- ✅ Extended `packages/web/src/vite-env.d.ts` - TypeScript types for environment variables
-- ✅ Updated `packages/web/src/main.tsx` - Initialise Amplify before React renders
-- ✅ Exported MVP auth methods (signIn, signOut, getCurrentUser, fetchAuthSession)
-- ✅ Intentionally excluded signUp (invite-only user creation for MVP)
-
-**Type-Safe Implementation**:
-
-- Type-safe environment variables with ImportMetaEnv interface
-- No unsafe assignments or `any` types
-- Proper TypeScript types enforced at compile time
-- Zero TypeScript errors, zero ESLint warnings
-
-**Security Considerations**:
-
-- Cognito User Pool ID and Client ID are public identifiers (by design)
-- JWT signature verification happens server-side
-- User credentials never exposed to client
-- .env.local gitignored (local environment only)
-
-**Testing & Quality**:
-
-- ✅ Zero TypeScript errors (strict mode)
-- ✅ Zero ESLint warnings
-- ✅ British English spelling throughout (initialise, optimise)
-- ✅ All acceptance criteria met
-- ✅ Comprehensive review context document created
-
-**Pattern Reinforced**: Side-effect imports for library initialization
-**FFP-16 Progress**: 2/9 subtasks (22%), 5/18-19 hours (26%)
-**Sprint 2**: 5/~60 hours (8%)
-**Next**: FFP-90 Create AuthContext and AuthProvider (4h)
-
----
-
-### November 13, 2025 (Session 45 - FFP-115 Complete!)
-
-**Status**: ✅ FFP-115 COMPLETE - Component Library & Design System Setup (4h)
-
-**Branch**: `feature/FFP-115-component-library`
-
-**Completed Work**:
-
-**FFP-115a: Tailwind CSS v4 Setup**
-
-- ✅ Installed `@tailwindcss/vite@4.1.17` and `@fontsource/inter`
-- ✅ Configured Tailwind v4 CSS-first theme using `@theme` directive
-- ✅ Complete FFP colour palettes (primary, secondary, success, warning, error with shades 50-950)
-- ✅ Inter font family with optimised weights (400, 500, 600, 700)
-- ✅ Custom design tokens (border-radius, font-size, font-weight, max-width)
-- ✅ Vite plugin configuration with path aliases
-
-**FFP-115b: Form Pattern Setup**
-
-- ✅ Installed `react-hook-form@7.66.0`, `@hookform/resolvers@5.2.2`, `zod@3.24.1`
-- ✅ Created type-safe form pattern with generic `Field<TFormValues>` interface
-- ✅ Implemented `useFieldsForm` hook with automatic Zod schema generation
-- ✅ Created form components: FormTextInput, FormPasswordInput, FormEmailInput
-- ✅ Added FormError component with role="alert" for accessibility
-- ✅ Created reusable Form wrapper with declarative field definitions
-- ✅ Enhanced form with error display, loading states, and dismiss functionality
-
-**FFP-115c: Icon System Setup**
-
-- ✅ Installed `react-icomoon@2.6.1` with 134 Icomoon icons
-- ✅ Created `generate-icon-types.js` script for auto-generating TypeScript enums
-- ✅ Generated `Icons` enum with SCREAMING_SNAKE_CASE names (IntelliSense autocomplete)
-- ✅ Implemented Icon component with size variants (xs, sm, md, lg, xl)
-- ✅ Type-safe colour prop supporting CSS colour values
-
-**Code Review & Enhancements**
-
-- ✅ Added ARIA attributes to form inputs (aria-required, aria-invalid, aria-describedby)
-- ✅ Linked error messages to inputs via errorId for screen reader accessibility
-- ✅ Enhanced Icon colour typing with CSS colour value constraints
-- ✅ Added form-level error display with Icon and dismiss button
-- ✅ Fixed isSubmitting state handling (combined internal and external states)
-
-**Testing & Quality**:
-
-- ✅ Zero TypeScript errors (strict mode)
-- ✅ Zero ESLint warnings
-- ✅ All components fully typed with generics (no `any` types)
-- ✅ British English spelling throughout (colour, optimise, behaviour)
-- ✅ Comprehensive review context document created
-
-**Pattern Reinforced**: Declarative component design with type-safe generics
-**FFP-16 Progress**: 1/9 subtasks (11%), 4/18-19 hours (21%)
-**Sprint 2**: 4/~60 hours (7%)
-**Next**: FFP-93 AWS Amplify Setup (1h)
+**Total**: 11h, FFP-16 at 4/9 subtasks (44%)
 
 ---
 
@@ -600,7 +488,9 @@ During this session, encountered critical TypeScript server performance issues:
 | Nov 13      | FFP-93 Complete (Amplify)       | 142.5h         |
 | Nov 14      | FFP-90 Complete (AuthContext)   | 146.5h         |
 | Nov 15      | FFP-119 Complete (Routing)      | 148.5h         |
-| **Current** | **75% Sprint 1+2 Complete**     | **148.5/197h** |
+| Nov 17      | FFP-92 Complete (Login Form)    | 150.5h         |
+| Nov 18      | FFP-116 Complete (Password)     | 152.5h         |
+| **Current** | **77% Sprint 1+2 Complete**     | **152.5/197h** |
 
 ---
 

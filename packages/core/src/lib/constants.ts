@@ -1,3 +1,7 @@
+import { customerStatusSchema } from '../schemas/customer.schema';
+import { tenantTypeSchema } from '../schemas/tenant.schema';
+import { userRoleSchema } from '../schemas/user.schema';
+
 export const APP_NAME = 'FFP - Fitness & Physiotherapy Platform';
 export const APP_VERSION = '0.0.1';
 
@@ -59,10 +63,6 @@ export const PASSWORD_FULL_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za
  * Password minimum length requirement
  */
 export const PASSWORD_MIN_LENGTH = 8;
-
-import { customerStatusSchema } from '../schemas/customer.schema';
-import { tenantTypeSchema } from '../schemas/tenant.schema';
-import { userRoleSchema } from '../schemas/user.schema';
 
 export const COGNITO_CUSTOM_ATTRIBUTES = {
   TENANT_ID: 'custom:tenantId',

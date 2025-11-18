@@ -28,7 +28,7 @@ export interface SetPasswordFormProps {
   onClearError?: () => void;
 }
 
-/**z
+/**
  * Form steps for the set password flow
  */
 enum SetPasswordStep {
@@ -273,7 +273,7 @@ export const SetPasswordForm: React.FC<SetPasswordFormProps> = ({
 
           {/* Password requirements list */}
           <div className="space-y-3">
-            <Text styleProps={{ size: 'sm', weight: 'medium' }} className="text-gray-700">
+            <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'foreground' }}>
               Password requirements:
             </Text>
             <PasswordRequirementsList requirements={passwordValidation.requirements} />
