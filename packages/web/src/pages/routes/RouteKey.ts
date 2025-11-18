@@ -35,4 +35,6 @@ export enum RouteKey {
   COMPONENTS_MOTION = 'components-motion',
   /** Static alert components showcase */
   COMPONENTS_STATIC_ALERT = 'components-static-alert',
+  /** Error boundary components showcase */
+  COMPONENTS_ERROR_BOUNDARY = 'components-error-boundary',
 }

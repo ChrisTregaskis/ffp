@@ -1,6 +1,7 @@
 import { ButtonComponentsPage } from '@web/pages/dev/ButtonComponentsPage';
 import { CardComponentsPage } from '@web/pages/dev/CardComponentsPage';
 import { ComponentsPage } from '@web/pages/dev/ComponentsPage';
+import { ErrorBoundaryShowcasePage } from '@web/pages/dev/ErrorBoundaryShowcasePage';
 import { FormComponentsPage } from '@web/pages/dev/FormComponentsPage';
 import { IconComponentsPage } from '@web/pages/dev/IconComponentsPage';
 import { LoadingSpinnerComponentsPage } from '@web/pages/dev/LoadingSpinnerComponentsPage';
@@ -175,6 +176,14 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: StaticAlertComponentsPage,
     title: 'Static Alert Components',
+    excludeFromMainNavbar: true,
+    devOnly: true,
+  },
+  [RouteKey.COMPONENTS_ERROR_BOUNDARY]: {
+    path: `${componentsBasePath}/error-boundary`,
+    public: true,
+    pageComponent: ErrorBoundaryShowcasePage,
+    title: 'Error Boundary',
     excludeFromMainNavbar: true,
     devOnly: true,
   },

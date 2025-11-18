@@ -58,6 +58,12 @@ export const componentCategories: ComponentCategory[] = [
     examples: ['Error alerts', 'Warning alerts', 'Success alerts', 'Dismissible alerts'],
   },
   {
+    title: 'Error Boundary',
+    description: 'Catch and handle React errors gracefully with fallback UIs',
+    path: `${basePath}/error-boundary`,
+    examples: ['Basic error catching', 'Custom fallbacks', 'Nested boundaries', 'Best practices'],
+  },
+  {
     title: 'Modal Components',
     description: 'Dialogs, modals, and overlays',
     path: `${basePath}/modal`,
