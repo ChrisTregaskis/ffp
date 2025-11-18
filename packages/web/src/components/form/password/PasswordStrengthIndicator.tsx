@@ -26,17 +26,17 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
       case PasswordStrength.WEAK:
         return {
           label: 'Weak',
-          colorClass: 'text-red-600',
+          colorClass: 'text-destructive',
         };
       case PasswordStrength.MEDIUM:
         return {
           label: 'Medium',
-          colorClass: 'text-yellow-600',
+          colorClass: 'text-warning',
         };
       case PasswordStrength.STRONG:
         return {
           label: 'Strong',
-          colorClass: 'text-green-600',
+          colorClass: 'text-success',
         };
     }
   };
@@ -44,7 +44,7 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
   const config = getStrengthConfig(strength);
 
   return (
-    <div className="absolute right-3 top-3" data-testid="password-strength-indicator">
+    <div data-testid="password-strength-indicator">
       <Text styleProps={{ size: 'sm', weight: 'semibold' }} className={config.colorClass}>
         {config.label}
       </Text>

@@ -1,3 +1,5 @@
+import { EMAIL_PATTERN, PASSWORD_FULL_PATTERN } from '@ffp/core';
+
 import {
   type LoginFormData,
   type SetPasswordCredentialsData,
@@ -23,7 +25,7 @@ export const loginFields: Field<LoginFormData>[] = [
     placeholder: 'name@example.com',
     validation: {
       isRequired: true,
-      pattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, // TODO: Move to Constant?
+      pattern: EMAIL_PATTERN,
     },
   },
   {
@@ -50,7 +52,7 @@ export const setPasswordCredentialsFields: Field<SetPasswordCredentialsData>[] =
     placeholder: 'name@example.com',
     validation: {
       isRequired: true,
-      pattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+      pattern: EMAIL_PATTERN,
     },
   },
   {
@@ -78,7 +80,7 @@ export const setPasswordNewPasswordFields: Field<SetPasswordNewPasswordData>[] =
     validation: {
       isRequired: true,
       minLength: 8,
-      pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/, // TODO: Move to Constant?
+      pattern: PASSWORD_FULL_PATTERN,
     },
   },
   {

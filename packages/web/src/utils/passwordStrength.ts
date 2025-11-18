@@ -1,3 +1,11 @@
+import {
+  PASSWORD_LOWERCASE_PATTERN,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_NUMBER_PATTERN,
+  PASSWORD_SPECIAL_CHAR_PATTERN,
+  PASSWORD_UPPERCASE_PATTERN,
+} from '@ffp/core';
+
 /**
  * Password strength level
  */
@@ -39,28 +47,28 @@ export interface PasswordValidationResult {
 const PASSWORD_REQUIREMENTS: Omit<PasswordRequirement, 'isMet'>[] = [
   {
     id: 'minLength',
-    description: 'At least 8 characters',
-    validator: (password: string) => password.length >= 8,
+    description: `At least ${PASSWORD_MIN_LENGTH.toString()} characters`,
+    validator: (password: string) => password.length >= PASSWORD_MIN_LENGTH,
   },
   {
     id: 'uppercase',
     description: 'At least one uppercase letter (A-Z)',
-    validator: (password: string) => /[A-Z]/.test(password),
+    validator: (password: string) => PASSWORD_UPPERCASE_PATTERN.test(password),
   },
   {
     id: 'lowercase',
     description: 'At least one lowercase letter (a-z)',
-    validator: (password: string) => /[a-z]/.test(password),
+    validator: (password: string) => PASSWORD_LOWERCASE_PATTERN.test(password),
   },
   {
     id: 'number',
     description: 'At least one number (0-9)',
-    validator: (password: string) => /[0-9]/.test(password),
+    validator: (password: string) => PASSWORD_NUMBER_PATTERN.test(password),
   },
   {
     id: 'specialChar',
     description: 'At least one special character (!@#$%^&*)',
-    validator: (password: string) => /[^A-Za-z0-9]/.test(password),
+    validator: (password: string) => PASSWORD_SPECIAL_CHAR_PATTERN.test(password),
   },
 ];
 
@@ -85,6 +93,7 @@ const calculateStrength = (
 
   // Calculate additional strength factors
   const length = password.length;
+  // Use global flag to match ALL occurrences, not just the first one
   const hasMultipleNumbers = (password.match(/[0-9]/g) ?? []).length >= 2;
   const hasMultipleSpecialChars = (password.match(/[^A-Za-z0-9]/g) ?? []).length >= 2;
   const hasNoRepeatingChars = !/(.)\1{2,}/.test(password); // No character repeated 3+ times

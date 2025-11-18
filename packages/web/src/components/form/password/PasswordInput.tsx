@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Icon } from '@web/components/Icon/Icon';
+import { IconButton } from '@web/components/button/IconButton';
 import { Text } from '@web/components/text/Text';
 import type { PasswordStrength } from '@web/utils/passwordStrength';
 
@@ -57,18 +57,19 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
 
   return (
     <div className="space-y-2">
-      {/* Label */}
-      <label htmlFor={name} className="block">
-        <Text styleProps={{ size: 'sm', weight: 'medium' }} className="text-gray-700">
-          {label}
-        </Text>
-      </label>
-
-      {/* Input container with relative positioning for absolute elements */}
-      <div className="relative">
-        {/* Password strength indicator (top-right) */}
+      {/* Label row with strength indicator */}
+      <div className="flex items-center justify-between">
+        <label htmlFor={name}>
+          <Text styleProps={{ size: 'sm', weight: 'medium' }} className="text-foreground">
+            {label}
+          </Text>
+        </label>
+        {/* Password strength indicator (aligned right in label row) */}
         {showStrength && <PasswordStrengthIndicator strength={strength ?? null} />}
+      </div>
 
+      {/* Input container with relative positioning for visibility toggle */}
+      <div className="relative">
         {/* Input field */}
         <input
           type={isPasswordVisible ? 'text' : 'password'}
@@ -84,33 +85,31 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
             w-full rounded-lg border px-4 py-3 pr-12 text-base
             transition-colors duration-200
             focus:outline-none focus:ring-2 focus:ring-offset-2
-            disabled:cursor-not-allowed disabled:bg-gray-100
+            disabled:cursor-not-allowed disabled:bg-muted
             ${
               hasError
-                ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                ? 'border-destructive focus:border-destructive focus:ring-destructive'
+                : 'border-border focus:border-primary focus:ring-primary'
             }
           `}
         />
 
-        {/* Show/Hide toggle button */}
-        <button
-          type="button"
-          onClick={handleToggleVisibility}
-          disabled={disabled}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 disabled:opacity-50"
-          aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
-        >
-          <Icon
-            name={isPasswordVisible ? 'VisibilityOff' : 'Visibility'}
-            styleProps={{ size: 'md' }}
+        {/* Show/Hide visibility toggle using IconButton */}
+        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <IconButton
+            icon={isPasswordVisible ? 'VisibilityOff' : 'Visibility'}
+            size="md"
+            onClick={handleToggleVisibility}
+            ariaLabel={isPasswordVisible ? 'Hide password' : 'Show password'}
+            disabled={disabled}
+            className="text-muted-foreground hover:text-foreground"
           />
-        </button>
+        </div>
       </div>
 
       {/* Error message */}
       {hasError && errorMessage && (
-        <Text styleProps={{ size: 'sm' }} className="text-red-600">
+        <Text styleProps={{ size: 'sm' }} className="text-destructive">
           {errorMessage}
         </Text>
       )}

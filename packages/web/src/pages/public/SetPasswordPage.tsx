@@ -57,7 +57,7 @@ export const SetPasswordPage: React.FC = () => {
   }, []);
 
   return (
-    <AuthLayout title="Fit For Purpose">
+    <AuthLayout>
       <SetPasswordForm
         onSuccess={handleSuccess}
         initialEmail={initialEmail}

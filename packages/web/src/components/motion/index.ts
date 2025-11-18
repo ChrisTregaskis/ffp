@@ -8,27 +8,16 @@
  * - FadeSlideIn: Fade and slide up effect (with optional delay for staggering)
  * - SpringScale: Spring-based scale animation with bounce
  * - ClickScale: Subtle click/tap feedback for interactive elements
+ * - CardTransition: Horizontal slide transitions for card-based multi-step flows
  *
- * @example
- * ```tsx
- * import { FadeSlideIn, ClickScale } from '@web/components/motion';
- *
- * // Fade in on mount
- * <FadeSlideIn>
- *   <Card>Content</Card>
- * </FadeSlideIn>
- *
- * // Click feedback
- * <ClickScale>
- *   <Button>Click Me</Button>
- * </ClickScale>
- * ```
  */
 
 export { FadeSlideIn } from './FadeSlideIn';
 export { SpringScale } from './SpringScale';
 export { ClickScale } from './ClickScale';
+export { CardTransition } from './CardTransition';
 
 export type { FadeSlideInProps } from './FadeSlideIn';
 export type { SpringScaleProps } from './SpringScale';
 export type { ClickScaleProps } from './ClickScale';
+export type { CardTransitionProps } from './CardTransition';

@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+import {
+  EMAIL_PATTERN,
+  PASSWORD_LOWERCASE_PATTERN,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_NUMBER_PATTERN,
+  PASSWORD_SPECIAL_CHAR_PATTERN,
+  PASSWORD_UPPERCASE_PATTERN,
+} from '@ffp/core';
+
 /**
  * Login form validation schema
  *
@@ -7,7 +16,7 @@ import { z } from 'zod';
  * Used with react-hook-form for client-side validation.
  */
 export const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.string().regex(EMAIL_PATTERN, 'Invalid email address'),
   password: z.string().min(1, 'Password required'),
 });
 
@@ -28,11 +37,17 @@ export type LoginFormData = z.infer<typeof loginSchema>;
  */
 export const passwordSchema = z
   .string()
-  .min(8, 'Password must be at least 8 characters')
-  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-  .regex(/[0-9]/, 'Password must contain at least one number')
-  .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character (e.g., !@#$%^&*)');
+  .min(
+    PASSWORD_MIN_LENGTH,
+    `Password must be at least ${PASSWORD_MIN_LENGTH.toString()} characters`
+  )
+  .regex(PASSWORD_UPPERCASE_PATTERN, 'Password must contain at least one uppercase letter')
+  .regex(PASSWORD_LOWERCASE_PATTERN, 'Password must contain at least one lowercase letter')
+  .regex(PASSWORD_NUMBER_PATTERN, 'Password must contain at least one number')
+  .regex(
+    PASSWORD_SPECIAL_CHAR_PATTERN,
+    'Password must contain at least one special character (e.g., !@#$%^&*)'
+  );
 
 /**
  * Set password form validation schema (Step 1: Credentials)
@@ -40,7 +55,7 @@ export const passwordSchema = z
  * Used when user first enters their email and temporary password.
  */
 export const setPasswordCredentialsSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.string().regex(EMAIL_PATTERN, 'Invalid email address'),
   temporaryPassword: z.string().min(1, 'Temporary password required'),
 });
 
@@ -64,7 +79,7 @@ export const setPasswordNewPasswordSchema = z
  * Combined set password form data (both steps)
  */
 export const setPasswordSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.string().regex(EMAIL_PATTERN, 'Invalid email address'),
   temporaryPassword: z.string().min(1, 'Temporary password required'),
   password: passwordSchema,
   confirmPassword: z.string().min(1, 'Please confirm your password'),

@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { useState } from 'react';
 
 import { Button } from '@web/components/button/Button';
 import { Card } from '@web/components/Card/Card';
@@ -8,7 +9,7 @@ import {
   ComponentSection,
   DeveloperInstructions,
 } from '@web/components/dev';
-import { ClickScale, FadeSlideIn, SpringScale } from '@web/components/motion';
+import { CardTransition, ClickScale, FadeSlideIn, SpringScale } from '@web/components/motion';
 import { Text, Title } from '@web/components/text';
 
 /**
@@ -16,6 +17,7 @@ import { Text, Title } from '@web/components/text';
  *
  * Demonstrates animation capabilities using the motion library:
  * - Card animations (fade in, slide up)
+ * - Card transitions (multi-step flows)
  * - Button click animations (subtle scale effect)
  * - Hover effects
  * - Transition configurations
@@ -23,6 +25,8 @@ import { Text, Title } from '@web/components/text';
  * Motion is used throughout the application for smooth, performant animations.
  */
 export const MotionShowcasePage = (): JSX.Element => {
+  const [currentStep, setCurrentStep] = useState<number>(1);
+
   return (
     <ComponentPageWrapper>
       <ComponentPageHeader
@@ -80,6 +84,103 @@ export const MotionShowcasePage = (): JSX.Element => {
               </Card>
             </SpringScale>
           </div>
+        </div>
+      </ComponentSection>
+
+      {/* Card Transitions */}
+      <ComponentSection title="Card Transitions">
+        <Text as="p" styleProps={{ colour: 'muted-foreground' }} className="mb-6">
+          Smooth transitions between cards in multi-step flows (wizards, forms, onboarding)
+        </Text>
+        <div className="space-y-6">
+          <div>
+            <Title as="h3" className="mb-3">
+              Interactive Step Flow
+            </Title>
+            <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-4">
+              Click the buttons to navigate between steps and see the transition animation
+            </Text>
+
+            <CardTransition transitionKey={`step-${String(currentStep)}`}>
+              <Card
+                title={`Step ${String(currentStep)} of 3`}
+                subtitle={`This is step ${String(currentStep)} content`}
+              >
+                <div className="space-y-4">
+                  <Text as="p">
+                    CardTransition manages AnimatePresence internally, so you just need to change
+                    the transitionKey prop to trigger a smooth transition to new content.
+                  </Text>
+
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setCurrentStep((prev) => Math.max(1, prev - 1));
+                      }}
+                      disabled={currentStep === 1}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="primary"
+                      onClick={() => {
+                        setCurrentStep((prev) => Math.min(3, prev + 1));
+                      }}
+                      disabled={currentStep === 3}
+                    >
+                      Next
+                    </Button>
+                    <Button
+                      variant="neutral"
+                      onClick={() => {
+                        setCurrentStep(1);
+                      }}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+
+                  <div className="mt-4 rounded-lg bg-muted p-3">
+                    <Text as="p" styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
+                      <strong>Animation:</strong> Fade and slide effect with exit animation (card
+                      slides left as it exits, new card slides in from right)
+                    </Text>
+                  </div>
+                </div>
+              </Card>
+            </CardTransition>
+          </div>
+
+          <Card>
+            <Title as="h4" className="mb-2">
+              Usage Pattern
+            </Title>
+            <pre className="overflow-x-auto rounded bg-muted p-4 text-sm">
+              {`// State to track current step
+const [currentStep, setCurrentStep] = useState(1);
+
+// CardTransition handles AnimatePresence internally
+<CardTransition transitionKey={\`step-\${currentStep}\`}>
+  <Card title={\`Step \${currentStep}\`}>
+    {/* Step content here */}
+  </Card>
+</CardTransition>`}
+            </pre>
+            <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+              <li>
+                Change <code className="rounded bg-muted px-1">transitionKey</code> to trigger
+                transition
+              </li>
+              <li>
+                AnimatePresence with{' '}
+                <code className="rounded bg-muted px-1">mode=&quot;wait&quot;</code> is managed
+                internally
+              </li>
+              <li>Exit animation completes before new content enters</li>
+              <li>Perfect for wizards, multi-step forms, and sequential workflows</li>
+            </ul>
+          </Card>
         </div>
       </ComponentSection>
 

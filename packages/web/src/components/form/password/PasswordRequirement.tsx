@@ -20,12 +20,12 @@ export const PasswordRequirement: React.FC<PasswordRequirementProps> = ({ descri
         name={isMet ? 'CheckCircle' : 'AlertCircle'}
         styleProps={{
           size: 'sm',
-          className: isMet ? 'text-green-600' : 'text-red-600',
+          className: isMet ? 'text-success' : 'text-destructive',
         }}
       />
       <Text
         styleProps={{ size: 'sm' }}
-        className={isMet ? 'text-green-700' : 'text-gray-600'}
+        className={isMet ? 'text-success' : 'text-muted-foreground'}
       >
         {description}
       </Text>

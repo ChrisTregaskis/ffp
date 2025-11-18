@@ -7,13 +7,11 @@ import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { Form } from '@web/components/form';
 import { PasswordInput } from '@web/components/form/password/PasswordInput';
 import { PasswordRequirementsList } from '@web/components/form/password/PasswordRequirementsList';
+import { CardTransition } from '@web/components/motion';
 import { Text } from '@web/components/text/Text';
 import { validatePassword } from '@web/utils/passwordStrength';
 
-import {
-  setPasswordCredentialsFields,
-  type SetPasswordCredentialsData,
-} from '.';
+import { setPasswordCredentialsFields, type SetPasswordCredentialsData } from '.';
 
 export interface SetPasswordFormProps {
   /** Callback when password is successfully set and user is authenticated */
@@ -85,6 +83,7 @@ export const SetPasswordForm: React.FC<SetPasswordFormProps> = ({
       try {
         setInternalLoading(true);
         setInternalError(null);
+
         if (onClearError) {
           onClearError();
         }
@@ -176,6 +175,7 @@ export const SetPasswordForm: React.FC<SetPasswordFormProps> = ({
     setCurrentStep(SetPasswordStep.ENTER_CREDENTIALS);
     setCredentials(null);
     setInternalError(null);
+
     if (onClearError) {
       onClearError();
     }
@@ -184,9 +184,48 @@ export const SetPasswordForm: React.FC<SetPasswordFormProps> = ({
   // Render credentials step
   if (currentStep === SetPasswordStep.ENTER_CREDENTIALS) {
     return (
+      <CardTransition transitionKey="credentials-step">
+        <Card
+          title="Set your password"
+          subtitle="Enter your email and temporary password to get started."
+          centerHeader
+        >
+          {/* Error display */}
+          {error && (
+            <StaticAlert
+              variant="error"
+              message={error}
+              onDismiss={
+                onClearError ??
+                (() => {
+                  setInternalError(null);
+                })
+              }
+              className="mb-6"
+            />
+          )}
+
+          {/* Credentials form */}
+          <div className="space-y-6">
+            <Form
+              fields={setPasswordCredentialsFields}
+              onSubmit={handleCredentialsSubmit}
+              submitLabel={isLoading ? 'Verifying...' : 'Continue'}
+              isSubmitting={isLoading}
+              defaultValues={initialEmail ? { email: initialEmail } : undefined}
+            />
+          </div>
+        </Card>
+      </CardTransition>
+    );
+  }
+
+  // Render new password step
+  return (
+    <CardTransition transitionKey="password-step">
       <Card
-        title="Set your password"
-        subtitle="Enter your email and temporary password to get started."
+        title="Create your password"
+        subtitle={`Set a secure password for ${credentials?.email ?? 'your account'}.`}
         centerHeader
       >
         {/* Error display */}
@@ -204,108 +243,73 @@ export const SetPasswordForm: React.FC<SetPasswordFormProps> = ({
           />
         )}
 
-        {/* Credentials form */}
-        <div className="space-y-6">
-          <Form
-            fields={setPasswordCredentialsFields}
-            onSubmit={handleCredentialsSubmit}
-            submitLabel={isLoading ? 'Verifying...' : 'Continue'}
-            isSubmitting={isLoading}
-            defaultValues={initialEmail ? { email: initialEmail } : undefined}
-          />
-        </div>
-      </Card>
-    );
-  }
-
-  // Render new password step
-  return (
-    <Card
-      title="Create your password"
-      subtitle={`Set a secure password for ${credentials?.email ?? 'your account'}.`}
-      centerHeader
-    >
-      {/* Error display */}
-      {error && (
-        <StaticAlert
-          variant="error"
-          message={error}
-          onDismiss={
-            onClearError ??
-            (() => {
-              setInternalError(null);
-            })
-          }
-          className="mb-6"
-        />
-      )}
-
-      {/* New password form */}
-      <form
-        onSubmit={(e) => {
-          void handleNewPasswordSubmit(e);
-        }}
-        className="space-y-6"
-      >
-        {/* Password input with strength indicator */}
-        <PasswordInput
-          label="New password"
-          placeholder="Create a secure password"
-          value={password}
-          onChange={setPassword}
-          name="password"
-          strength={passwordValidation.strength}
-          showStrength
-          disabled={isLoading}
-        />
-
-        {/* Password requirements list */}
-        <div className="space-y-3">
-          <Text styleProps={{ size: 'sm', weight: 'medium' }} className="text-gray-700">
-            Password requirements:
-          </Text>
-          <PasswordRequirementsList requirements={passwordValidation.requirements} />
-        </div>
-
-        {/* Confirm password input */}
-        <PasswordInput
-          label="Confirm password"
-          placeholder="Re-enter your password"
-          value={confirmPassword}
-          onChange={(value) => {
-            setConfirmPassword(value);
-            setConfirmPasswordTouched(true);
+        {/* New password form */}
+        <form
+          onSubmit={(e) => {
+            void handleNewPasswordSubmit(e);
           }}
-          name="confirmPassword"
-          hasError={showConfirmPasswordError}
-          errorMessage="Passwords do not match"
-          disabled={isLoading}
-        />
-
-        {/* Submit button */}
-        <Button
-          type="submit"
-          variant="primary"
-          size="lg"
-          className="w-full"
-          disabled={isLoading || !passwordValidation.allRequirementsMet || !passwordsMatch}
+          className="space-y-6"
         >
-          {isLoading ? 'Setting password...' : 'Set password'}
-        </Button>
-
-        {/* Back button */}
-        <div className="flex justify-center -mt-2">
-          <Button
-            variant="link"
-            size="sm"
-            onClick={handleGoBack}
-            type="button"
+          {/* Password input with strength indicator */}
+          <PasswordInput
+            label="New password"
+            placeholder="Create a secure password"
+            value={password}
+            onChange={setPassword}
+            name="password"
+            strength={passwordValidation.strength}
+            showStrength
             disabled={isLoading}
+          />
+
+          {/* Password requirements list */}
+          <div className="space-y-3">
+            <Text styleProps={{ size: 'sm', weight: 'medium' }} className="text-gray-700">
+              Password requirements:
+            </Text>
+            <PasswordRequirementsList requirements={passwordValidation.requirements} />
+          </div>
+
+          {/* Confirm password input */}
+          <PasswordInput
+            label="Confirm password"
+            placeholder="Re-enter your password"
+            value={confirmPassword}
+            onChange={(value) => {
+              setConfirmPassword(value);
+              setConfirmPasswordTouched(true);
+            }}
+            name="confirmPassword"
+            hasError={showConfirmPasswordError}
+            errorMessage="Passwords do not match"
+            disabled={isLoading}
+          />
+
+          {/* Submit button */}
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            className="w-full"
+            disabled={isLoading || !passwordValidation.allRequirementsMet || !passwordsMatch}
           >
-            Go back
+            {isLoading ? 'Setting password...' : 'Set password'}
           </Button>
-        </div>
-      </form>
-    </Card>
+
+          {/* Back button */}
+          <div className="flex justify-center -mt-2">
+            <Button
+              variant="link"
+              size="sm"
+              onClick={handleGoBack}
+              type="button"
+              disabled={isLoading}
+            >
+              Go back
+            </Button>
+          </div>
+        </form>
+      </Card>
+    </CardTransition>
   );
 };
