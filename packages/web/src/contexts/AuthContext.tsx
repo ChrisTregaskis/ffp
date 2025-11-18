@@ -33,6 +33,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   /** End the current user session */
   logout: () => Promise<void>;
+  /** Manually refresh authentication state (e.g., after external auth changes) */
+  checkAuth: () => Promise<void>;
 }
 
 /**
@@ -175,6 +177,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
     error,
     login: handleLogin,
     logout: handleLogout,
+    checkAuth,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
