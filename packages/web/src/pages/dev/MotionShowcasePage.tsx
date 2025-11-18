@@ -9,7 +9,13 @@ import {
   ComponentSection,
   DeveloperInstructions,
 } from '@web/components/dev';
-import { CardTransition, ClickScale, FadeSlideIn, SpringScale } from '@web/components/motion';
+import {
+  CardTransition,
+  type CardTransitionDirection,
+  ClickScale,
+  FadeSlideIn,
+  SpringScale,
+} from '@web/components/motion';
 import { Text, Title } from '@web/components/text';
 
 /**
@@ -26,6 +32,7 @@ import { Text, Title } from '@web/components/text';
  */
 export const MotionShowcasePage = (): JSX.Element => {
   const [currentStep, setCurrentStep] = useState<number>(1);
+  const [direction, setDirection] = useState<CardTransitionDirection>('forward');
 
   return (
     <ComponentPageWrapper>
@@ -98,24 +105,26 @@ export const MotionShowcasePage = (): JSX.Element => {
               Interactive Step Flow
             </Title>
             <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-4">
-              Click the buttons to navigate between steps and see the transition animation
+              Click Previous/Next to see directional animations - cards slide in from the direction
+              you&apos;re navigating
             </Text>
 
-            <CardTransition transitionKey={`step-${String(currentStep)}`}>
+            <CardTransition transitionKey={`step-${String(currentStep)}`} direction={direction}>
               <Card
                 title={`Step ${String(currentStep)} of 3`}
                 subtitle={`This is step ${String(currentStep)} content`}
               >
                 <div className="space-y-4">
                   <Text as="p">
-                    CardTransition manages AnimatePresence internally, so you just need to change
-                    the transitionKey prop to trigger a smooth transition to new content.
+                    CardTransition automatically animates in the correct direction based on
+                    navigation. Previous slides from left, Next slides from right.
                   </Text>
 
                   <div className="flex flex-wrap gap-3">
                     <Button
                       variant="secondary"
                       onClick={() => {
+                        setDirection('backward');
                         setCurrentStep((prev) => Math.max(1, prev - 1));
                       }}
                       disabled={currentStep === 1}
@@ -125,6 +134,7 @@ export const MotionShowcasePage = (): JSX.Element => {
                     <Button
                       variant="primary"
                       onClick={() => {
+                        setDirection('forward');
                         setCurrentStep((prev) => Math.min(3, prev + 1));
                       }}
                       disabled={currentStep === 3}
@@ -134,6 +144,7 @@ export const MotionShowcasePage = (): JSX.Element => {
                     <Button
                       variant="neutral"
                       onClick={() => {
+                        setDirection('forward');
                         setCurrentStep(1);
                       }}
                     >
@@ -143,8 +154,10 @@ export const MotionShowcasePage = (): JSX.Element => {
 
                   <div className="mt-4 rounded-lg bg-muted p-3">
                     <Text as="p" styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
-                      <strong>Animation:</strong> Fade and slide effect with exit animation (card
-                      slides left as it exits, new card slides in from right)
+                      <strong>Current direction:</strong> {direction} • <strong>Animation:</strong>{' '}
+                      {direction === 'forward'
+                        ? 'Slides in from right, exits to left'
+                        : 'Slides in from left, exits to right'}
                     </Text>
                   </div>
                 </div>
@@ -157,11 +170,26 @@ export const MotionShowcasePage = (): JSX.Element => {
               Usage Pattern
             </Title>
             <pre className="overflow-x-auto rounded bg-muted p-4 text-sm">
-              {`// State to track current step
+              {`// State to track current step and direction
 const [currentStep, setCurrentStep] = useState(1);
+const [direction, setDirection] = useState('forward');
 
-// CardTransition handles AnimatePresence internally
-<CardTransition transitionKey={\`step-\${currentStep}\`}>
+// Handle navigation with direction
+const goNext = () => {
+  setDirection('forward');
+  setCurrentStep(prev => prev + 1);
+};
+
+const goPrevious = () => {
+  setDirection('backward');
+  setCurrentStep(prev => prev - 1);
+};
+
+// CardTransition handles AnimatePresence and directional animations
+<CardTransition
+  transitionKey={\`step-\${currentStep}\`}
+  direction={direction}
+>
   <Card title={\`Step \${currentStep}\`}>
     {/* Step content here */}
   </Card>
@@ -169,8 +197,16 @@ const [currentStep, setCurrentStep] = useState(1);
             </pre>
             <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
               <li>
-                Change <code className="rounded bg-muted px-1">transitionKey</code> to trigger
-                transition
+                Set <code className="rounded bg-muted px-1">direction</code> before changing{' '}
+                <code className="rounded bg-muted px-1">transitionKey</code>
+              </li>
+              <li>
+                Use <code className="rounded bg-muted px-1">direction=&quot;forward&quot;</code> for
+                next/forward navigation (slides from right)
+              </li>
+              <li>
+                Use <code className="rounded bg-muted px-1">direction=&quot;backward&quot;</code>{' '}
+                for previous/back navigation (slides from left)
               </li>
               <li>
                 AnimatePresence with{' '}

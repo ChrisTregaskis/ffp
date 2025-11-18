@@ -20,4 +20,4 @@ export { CardTransition } from './CardTransition';
 export type { FadeSlideInProps } from './FadeSlideIn';
 export type { SpringScaleProps } from './SpringScale';
 export type { ClickScaleProps } from './ClickScale';
-export type { CardTransitionProps } from './CardTransition';
+export type { CardTransitionProps, CardTransitionDirection } from './CardTransition';

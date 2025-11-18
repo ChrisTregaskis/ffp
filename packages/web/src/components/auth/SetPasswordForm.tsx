@@ -7,7 +7,7 @@ import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { Form } from '@web/components/form';
 import { PasswordInput } from '@web/components/form/password/PasswordInput';
 import { PasswordRequirementsList } from '@web/components/form/password/PasswordRequirementsList';
-import { CardTransition } from '@web/components/motion';
+import { CardTransition, type CardTransitionDirection } from '@web/components/motion';
 import { Text } from '@web/components/text/Text';
 import { validatePassword } from '@web/utils/passwordStrength';
 
@@ -51,6 +51,7 @@ export const SetPasswordForm: React.FC<SetPasswordFormProps> = ({
   const [currentStep, setCurrentStep] = useState<SetPasswordStep>(
     SetPasswordStep.ENTER_CREDENTIALS
   );
+  const [direction, setDirection] = useState<CardTransitionDirection>('forward');
   const [internalLoading, setInternalLoading] = useState(false);
   const [internalError, setInternalError] = useState<string | null>(null);
   const [credentials, setCredentials] = useState<SetPasswordCredentialsData | null>(null);
@@ -98,6 +99,7 @@ export const SetPasswordForm: React.FC<SetPasswordFormProps> = ({
         if (result.nextStep.signInStep === 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED') {
           // Store credentials and move to next step
           setCredentials(data);
+          setDirection('forward');
           setCurrentStep(SetPasswordStep.SET_NEW_PASSWORD);
         } else if (result.isSignedIn) {
           // User is already signed in (shouldn't happen for invited users)
@@ -172,6 +174,7 @@ export const SetPasswordForm: React.FC<SetPasswordFormProps> = ({
    * Handle going back to credentials step
    */
   const handleGoBack = useCallback((): void => {
+    setDirection('backward');
     setCurrentStep(SetPasswordStep.ENTER_CREDENTIALS);
     setCredentials(null);
     setInternalError(null);
@@ -184,7 +187,7 @@ export const SetPasswordForm: React.FC<SetPasswordFormProps> = ({
   // Render credentials step
   if (currentStep === SetPasswordStep.ENTER_CREDENTIALS) {
     return (
-      <CardTransition transitionKey="credentials-step">
+      <CardTransition transitionKey="credentials-step" direction={direction}>
         <Card
           title="Set your password"
           subtitle="Enter your email and temporary password to get started."
@@ -222,7 +225,7 @@ export const SetPasswordForm: React.FC<SetPasswordFormProps> = ({
 
   // Render new password step
   return (
-    <CardTransition transitionKey="password-step">
+    <CardTransition transitionKey="password-step" direction={direction}>
       <Card
         title="Create your password"
         subtitle={`Set a secure password for ${credentials?.email ?? 'your account'}.`}
