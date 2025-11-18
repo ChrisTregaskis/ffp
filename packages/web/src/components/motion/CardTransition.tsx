@@ -1,4 +1,4 @@
-import { AnimatePresence, motion, type Variants } from 'framer-motion';
+import { AnimatePresence, motion, type Variants } from 'motion/react';
 
 export type CardTransitionDirection = 'forward' | 'backward';
 
@@ -7,7 +7,7 @@ export interface CardTransitionProps {
   transitionKey: string;
   /** Content to animate */
   children: React.ReactNode;
-  /** Animation duration in seconds @default 0.3 */
+  /** Animation duration in seconds @default 0.15 */
   duration?: number;
   /** Direction of transition @default 'forward' */
   direction?: CardTransitionDirection;
@@ -44,7 +44,7 @@ const backwardVariants: Variants = {
 /**
  * Card transition wrapper component.
  *
- * Provides consistent animation for card-based transitions using Framer Motion.
+ * Provides consistent animation for card-based transitions using Motion.
  * Commonly used for multi-step forms, wizards, or any sequential card-based UI.
  *
  * Manages its own AnimatePresence internally, so you don't need to wrap it.
