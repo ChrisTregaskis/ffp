@@ -4,6 +4,10 @@ import { ZodError } from 'zod';
 
 import { jwtUserClaimsSchema, type UserRole } from '@ffp/core';
 
+import { createLogger } from '@web/lib/logger';
+
+const logger = createLogger('AuthContext');
+
 /**
  * User object containing authentication and tenant context extracted from JWT.
  * Lightweight type specific to authentication context (subset of full User type).
@@ -105,16 +109,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
     } catch (err) {
       // Handle Zod validation errors with detailed messages
       if (err instanceof ZodError) {
-        console.error('JWT validation failed:', err.issues);
+        logger.error('JWT validation failed', { issues: err.issues });
         const errorMessage = `Invalid JWT claims: ${err.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join(', ')}`;
-        console.error(errorMessage);
+        logger.error(errorMessage);
 
         // Clear invalid tokens from storage
         await signOut({ global: false });
       } else {
         const errorMessage =
           err instanceof Error ? err.message : 'An unknown error occurred during authentication';
-        console.error('Authentication error:', errorMessage);
+        logger.error('Authentication error', { error: errorMessage });
       }
 
       // Silent failure - user remains null if not authenticated
