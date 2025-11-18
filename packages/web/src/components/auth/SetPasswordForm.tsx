@@ -18,6 +18,8 @@ export interface SetPasswordFormProps {
   onSuccess: () => Promise<void>;
   /** Optional initial email (e.g., from invitation link or redirect) */
   initialEmail?: string;
+  /** Skip temporary password step (when redirected from login page after successful temp auth) */
+  skipTempPasswordStep?: boolean;
   /** Loading state during authentication */
   isLoading?: boolean;
   /** Error message from authentication */
@@ -26,7 +28,7 @@ export interface SetPasswordFormProps {
   onClearError?: () => void;
 }
 
-/**
+/**z
  * Form steps for the set password flow
  */
 enum SetPasswordStep {
@@ -38,23 +40,27 @@ enum SetPasswordStep {
  * Set password form organism component.
  *
  * Two-step flow:
- * 1. User enters email and temporary password
+ * 1. User enters email and temporary password (skipped if coming from login page)
  * 2. User sets new password after Cognito challenge is triggered
  */
 export const SetPasswordForm: React.FC<SetPasswordFormProps> = ({
   onSuccess,
   initialEmail,
+  skipTempPasswordStep = false,
   isLoading: externalLoading = false,
   error: externalError,
   onClearError,
 }) => {
   const [currentStep, setCurrentStep] = useState<SetPasswordStep>(
-    SetPasswordStep.ENTER_CREDENTIALS
+    skipTempPasswordStep ? SetPasswordStep.SET_NEW_PASSWORD : SetPasswordStep.ENTER_CREDENTIALS
   );
   const [direction, setDirection] = useState<CardTransitionDirection>('forward');
   const [internalLoading, setInternalLoading] = useState(false);
   const [internalError, setInternalError] = useState<string | null>(null);
-  const [credentials, setCredentials] = useState<SetPasswordCredentialsData | null>(null);
+  const [credentials, setCredentials] = useState<SetPasswordCredentialsData | null>(
+    // If skipping temp password step, store email from initial value
+    skipTempPasswordStep && initialEmail ? { email: initialEmail, temporaryPassword: '' } : null
+  );
 
   // Password step state
   const [password, setPassword] = useState('');
@@ -299,18 +305,20 @@ export const SetPasswordForm: React.FC<SetPasswordFormProps> = ({
             {isLoading ? 'Setting password...' : 'Set password'}
           </Button>
 
-          {/* Back button */}
-          <div className="flex justify-center -mt-2">
-            <Button
-              variant="link"
-              size="sm"
-              onClick={handleGoBack}
-              type="button"
-              disabled={isLoading}
-            >
-              Go back
-            </Button>
-          </div>
+          {/* Back button - only show if user can go back to credentials step */}
+          {!skipTempPasswordStep && (
+            <div className="flex justify-center -mt-2">
+              <Button
+                variant="link"
+                size="sm"
+                onClick={handleGoBack}
+                type="button"
+                disabled={isLoading}
+              >
+                Go back
+              </Button>
+            </div>
+          )}
         </form>
       </Card>
     </CardTransition>

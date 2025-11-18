@@ -43,9 +43,10 @@ export const LoginPage = (): JSX.Element => {
         // AWS `signInStep` type options: https://docs.amplify.aws/react/build-a-backend/auth/connect-your-frontend/multi-step-sign-in/
         if (result.nextStep.signInStep === 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED') {
           // Redirect to set password page with email pre-filled
+          // Add skipTempPassword=true to indicate user has already authenticated with temp password
           const setPasswordPath = routes[RouteKey.SET_PASSWORD].path;
           const emailParam = encodeURIComponent(data.email);
-          void navigate(`${setPasswordPath}?email=${emailParam}`);
+          void navigate(`${setPasswordPath}?email=${emailParam}&skipTempPassword=true`);
           return;
         }
 

@@ -12,14 +12,20 @@ import { RouteKey, routes } from '@web/pages/routes';
  * Allows invited users to set their permanent password after receiving
  * a temporary password via email invitation.
  *
- * Two-step flow:
+ * Flow varies based on entry point:
+ *
+ * **From login page (skipTempPassword=true):**
+ * 1. User sets new password (Cognito session already active from login)
+ * 2. User is automatically authenticated and redirected to home
+ *
+ * **Direct access:**
  * 1. User enters email and temporary password
  * 2. User sets new password (triggers Cognito NEW_PASSWORD_REQUIRED challenge)
  * 3. User is automatically authenticated and redirected to home
  *
  * Can be accessed via:
  * - Direct link: /set-password?email=user@example.com
- * - Redirect from login page when NEW_PASSWORD_REQUIRED is detected
+ * - Redirect from login page: /set-password?email=user@example.com&skipTempPassword=true
  */
 export const SetPasswordPage: React.FC = () => {
   const navigate = useNavigate();
@@ -29,6 +35,8 @@ export const SetPasswordPage: React.FC = () => {
 
   // Get email from URL params if provided
   const initialEmail = searchParams.get('email') ?? undefined;
+  // Check if user was redirected from login (already authenticated with temp password)
+  const skipTempPassword = searchParams.get('skipTempPassword') === 'true';
 
   /**
    * Handle successful password setup
@@ -61,6 +69,7 @@ export const SetPasswordPage: React.FC = () => {
       <SetPasswordForm
         onSuccess={handleSuccess}
         initialEmail={initialEmail}
+        skipTempPasswordStep={skipTempPassword}
         error={error}
         onClearError={handleClearError}
       />
