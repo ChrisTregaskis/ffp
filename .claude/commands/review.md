@@ -64,6 +64,14 @@ Review these changes as a senior engineer specialising in multi-tenant healthcar
 
 - [ ] British English spelling (organise, colour, behaviour, optimise, prioritise)
 - [ ] No emojis in code, comments, or user-facing strings
+- [ ] No raw HTML elements (use components instead):
+  - [ ] No `<h1>`, `<h2>`, `<h3>`, `<h4>`, `<h5>` tags (use `<Title>` component)
+  - [ ] No `<p>` or `<span>` tags for text (use `<Text>` component)
+  - [ ] No raw `<button>` tags (use `<Button>` or `<IconButton>` component)
+- [ ] No hard-coded colours (use theme colours):
+  - [ ] No `text-gray-XXX`, `text-red-XXX`, `text-blue-XXX` classes
+  - [ ] Use theme colours via components: `foreground`, `muted-foreground`, `destructive`, `primary`, `success`, `warning`, `info`
+  - [ ] Background/border colours use theme with opacity: `bg-primary/10`, `border-destructive/20`
 - [ ] 2-space indentation
 - [ ] Descriptive variable and function names
 - [ ] Comments explain "why", not "what"
@@ -73,6 +81,40 @@ Review these changes as a senior engineer specialising in multi-tenant healthcar
 - [ ] NEVER trust client-provided `tenantId` - always use JWT
 - [ ] ALL database queries filter by `tenant_id`
 - [ ] Audit logging includes tenant context
+
+## Component & Theme Usage (Web Package)
+
+When reviewing `.tsx` files in `packages/web/`, check for:
+
+**Raw HTML → Components**:
+
+```typescript
+// WRONG
+<h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+<p className="text-sm text-gray-500">Description</p>
+<button className="bg-blue-600 text-white px-4 py-2">Click</button>
+
+// CORRECT
+<Title as="h1" colour="foreground">Dashboard</Title>
+<Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>Description</Text>
+<Button variant="primary">Click</Button>
+```
+
+**Hard-coded Colours → Theme**:
+
+```typescript
+// WRONG
+className="text-gray-900"
+className="text-red-600"
+className="bg-blue-50"
+
+// CORRECT
+<Text styleProps={{ colour: 'foreground' }} />
+<Text styleProps={{ colour: 'destructive' }} />
+className="bg-info/10"
+```
+
+**Acceptable exceptions**: Structural elements (div, section, nav), gradients, dev-only components.
 
 ## Instructions
 

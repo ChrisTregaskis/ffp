@@ -62,7 +62,7 @@ describe('TypeScript Path Aliases', () => {
 
       const paths = tsconfig.compilerOptions?.paths || {};
       expect(paths['@core/lib/*']).toBeDefined();
-      expect(paths['@core/types/*']).toBeDefined();
+      expect(paths['@core/schemas/*']).toBeDefined();
       expect(paths['@core/services/*']).toBeDefined();
       expect(paths['@core/repositories/*']).toBeDefined();
     });

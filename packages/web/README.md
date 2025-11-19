@@ -4,7 +4,7 @@ React frontend for the Fit For Purpose platform.
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - **Framework**: React 18 with TypeScript (strict mode)
 - **Build Tool**: Vite (fast HMR, optimised builds)
@@ -14,7 +14,7 @@ React frontend for the Fit For Purpose platform.
 
 ---
 
-## 🚀 Usage
+## Usage
 
 ### Importing from @ffp/core
 
@@ -54,6 +54,78 @@ import { useLocalStorage } from '@web/hooks/useLocalStorage';
 
 ---
 
+## Authentication
+
+### Overview
+
+Authentication is handled via **AWS Cognito** using the AWS Amplify SDK. The implementation includes:
+
+- **AuthContext** (`src/contexts/AuthContext.tsx`) - Global auth state management with React Context
+- **JWT Claims Parsing** - Extracts multi-tenant context (`tenantId`, `role`) from Cognito ID tokens
+- **Zod Validation** - Runtime validation of JWT claims using `@ffp/core` schemas
+- **Invite-only** - No public sign-up (admin-controlled user creation only)
+
+User sessions are automatically restored on app load by checking for valid Cognito tokens.
+
+### Environment Variables
+
+Copy `.env.local.example` to `.env.local` and configure:
+
+```bash
+# AWS Cognito Configuration (required)
+VITE_COGNITO_USER_POOL_ID=eu-west-2_xxxxxxxxx
+VITE_COGNITO_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Optional configuration
+VITE_LOG_LEVEL=debug          # Controls client-side logging (debug|info|warn|error)
+ENVIRONMENT=development        # Explicit environment identifier
+```
+
+**Obtaining Cognito values:**
+
+- User Pool ID and Client ID are output by SST after infrastructure deployment
+- Alternatively, find them in **AWS Console → Cognito → User Pools → App Integration**
+
+### Usage
+
+```typescript
+import { useAuth } from '@web/contexts/AuthContext';
+
+function MyComponent() {
+  const { user, loading, login, logout } = useAuth();
+
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <div>Please log in</div>;
+
+  return (
+    <div>
+      <Text>Welcome, {user.email}</Text>
+      <Text>Tenant: {user.tenantId}</Text>
+      <Text>Role: {user.role}</Text>
+      <Button onClick={() => logout()}>Log out</Button>
+    </div>
+  );
+}
+```
+
+### Testing
+
+Authentication uses **Zod schemas** for validation (defined in `src/schemas/auth.schema.ts`). Tests verify:
+
+- Login credentials validation (email format, password presence)
+- Password complexity requirements (Cognito policy: 8+ chars, uppercase, lowercase, number, special character)
+- Password confirmation matching
+
+Run tests:
+
+```bash
+turbo test --filter=@ffp/web
+```
+
+See `src/schemas/auth.schema.test.ts` for examples.
+
+---
+
 ## 🧪 Testing
 
 ### Writing Component Tests
@@ -73,46 +145,7 @@ describe('Button', () => {
 
 ---
 
-## 📦 Dependencies
-
-### Production Dependencies
-
-- **@ffp/core** (workspace:\*) - Shared business logic, types, and schemas
-- **react** (^18.x) - UI library
-- **react-dom** (^18.x) - React DOM renderer
-
-### Dev Dependencies
-
-- **vite** (^5.4.10) - Build tool and dev server
-- **typescript** (^5.6.3) - TypeScript compiler
-- **vitest** (^2.1.4) - Unit testing framework
-- **@testing-library/react** - React component testing
-- **@ffp/eslint-config** - Shared ESLint configuration
-
----
-
-## 🎯 Current Status
-
-### ✅ Complete
-
-- Basic React + Vite setup
-- TypeScript configuration with strict mode
-- Workspace dependency on `@ffp/core`
-- Intra-package path aliases (`@web/*`)
-- Hot Module Replacement (HMR) working
-- Testing framework configured
-
-### ⏸️ Awaiting Future Sprints
-
-- **TailwindCSS** configuration
-- **Authentication** components (FFP-16)
-- **Protected** routes
-- **API integration** with Lambda functions
-- **UI component** library setup
-
----
-
-## 📚 Further Reading
+## Further Reading
 
 For detailed commands, project structure, and workflows, see:
 

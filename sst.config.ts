@@ -268,6 +268,13 @@ export default $config({
       },
     };
 
+    const cognitoPermissionActions = [
+      'cognito-idp:AdminCreateUser',
+      'cognito-idp:AdminDeleteUser',
+      'cognito-idp:AdminGetUser',
+      'cognito-idp:AdminUpdateUserAttributes',
+    ];
+
     // Public health check endpoint (no authentication required)
     api.route('GET /health', {
       handler: 'packages/functions/src/health/check.handler',
@@ -283,12 +290,7 @@ export default $config({
       ...handlerEnv,
       permissions: [
         {
-          actions: [
-            'cognito-idp:AdminCreateUser',
-            'cognito-idp:AdminDeleteUser',
-            'cognito-idp:AdminGetUser',
-            'cognito-idp:AdminUpdateUserAttributes',
-          ],
+          actions: cognitoPermissionActions,
           resources: [userPool.arn],
         },
       ],
@@ -298,6 +300,22 @@ export default $config({
     api.route(
       'ANY /admin/{proxy+}',
       { handler: 'packages/functions/src/admin/index.handler', ...handlerEnv },
+      args
+    );
+
+    // User domain routes (authenticated users with user-specific requests)
+    api.route(
+      'ANY /user/{proxy+}',
+      {
+        handler: 'packages/functions/src/user/index.handler',
+        ...handlerEnv,
+        permissions: [
+          {
+            actions: cognitoPermissionActions,
+            resources: [userPool.arn],
+          },
+        ],
+      },
       args
     );
 

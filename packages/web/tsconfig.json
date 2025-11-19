@@ -14,8 +14,11 @@
     "paths": {
       // Internal aliases for this package using @web/ namespace to avoid conflicts
       "@web/components/*": ["./components/*"],
+      "@web/contexts/*": ["./contexts/*"],
       "@web/hooks/*": ["./hooks/*"],
       "@web/pages/*": ["./pages/*"],
+      "@web/assets/*": ["./assets/*"],
+      "@web/schemas/*": ["./schemas/*"],
       "@web/services/*": ["./services/*"],
       "@web/utils/*": ["./utils/*"],
       "@web/types/*": ["./types/*"],
@@ -25,6 +28,8 @@
   "include": ["src/**/*"],
   "exclude": [
     "node_modules",
+    "**/node_modules",
+    "**/.pnpm",
     "dist",
     "**/*.test.ts",
     "**/*.test.tsx",

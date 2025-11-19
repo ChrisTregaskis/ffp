@@ -13,10 +13,18 @@ import { relations } from 'drizzle-orm';
 import { users } from './users';
 
 /**
- * Tenant type enumeration
- * - individual: Single user account
- * - business: Organisation with multiple sub-customers
- * - platform: System platform tenant for super admins
+ * Tenant type enumeration (PostgreSQL enum)
+ *
+ * IMPORTANT: Keep in sync with tenantTypeSchema in @ffp/core/src/schemas/tenant.schema.ts
+ * The Zod schema is the single source of truth for tenant types.
+ *
+ * Manual synchronisation required (cannot auto-generate due to circular dependency).
+ * Changes to tenant types must be made in both places.
+ *
+ * Defines the three types of tenants:
+ * - individual: Single user account (physiotherapy client)
+ * - business: Organisation with multiple sub-customers (clinics, gyms)
+ * - platform: System platform tenant for super admins (internal use only)
  */
 export const tenantTypeEnum = pgEnum('tenant_type', ['individual', 'business', 'platform']);
 

@@ -466,7 +466,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>(null!);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -474,7 +474,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
-  async function checkAuth() {
+  const checkAuth = async () => {
     try {
       const currentUser = await auth.getCurrentUserWithContext();
       setUser(currentUser);
@@ -485,17 +485,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function login(email: string, password: string) {
+  const login = async (email: string, password: string) => {
     await auth.login(email, password);
     await checkAuth();
   }
 
-  async function logout() {
+  const logout = async () => {
     await auth.logout();
     setUser(null);
   }
 
-  async function register(data: RegisterData) {
+  const register = async (data: RegisterData) => {
     await auth.register(data);
     // User needs to verify email before login
   }

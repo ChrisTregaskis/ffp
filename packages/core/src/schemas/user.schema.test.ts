@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { inviteUserSchema } from './user.schema';
+import { inviteUserSchema, userSchema, createUserSchema } from './user.schema';
 
 describe('inviteUserSchema', () => {
   describe('customer owner invites (no tenant/customer)', () => {
@@ -170,9 +170,11 @@ describe('inviteUserSchema', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain(
-          'customer_owner, customer_admin, or customer_user'
-        );
+        // Zod returns enum values in format: 'customer_owner' | 'customer_admin' | 'customer_user'
+        expect(result.error.issues[0].message).toContain('Invalid enum value');
+        expect(result.error.issues[0].message).toContain('customer_owner');
+        expect(result.error.issues[0].message).toContain('customer_admin');
+        expect(result.error.issues[0].message).toContain('customer_user');
       }
     });
 
@@ -205,6 +207,161 @@ describe('inviteUserSchema', () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues[0].message).toContain('valid UUID');
+      }
+    });
+  });
+});
+
+describe('userSchema', () => {
+  const validUserBase = {
+    id: '123e4567-e89b-12d3-a456-426614174000',
+    tenantId: '123e4567-e89b-12d3-a456-426614174001',
+    email: 'test@example.com',
+    cognitoSub: 'cognito-sub-123',
+    firstName: 'John',
+    lastName: 'Doe',
+    role: 'customer_admin' as const,
+    customerId: null,
+    profileImageUrl: null,
+    phone: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  describe('dateOfBirth field (z.coerce.date())', () => {
+    it('accepts ISO date string (YYYY-MM-DD)', () => {
+      const result = userSchema.safeParse({
+        ...validUserBase,
+        dateOfBirth: '1990-05-15',
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.dateOfBirth).toBeInstanceOf(Date);
+        expect(result.data.dateOfBirth?.toISOString()).toBe('1990-05-15T00:00:00.000Z');
+      }
+    });
+
+    it('accepts Date object', () => {
+      const dateObj = new Date('1990-05-15');
+      const result = userSchema.safeParse({
+        ...validUserBase,
+        dateOfBirth: dateObj,
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.dateOfBirth).toBeInstanceOf(Date);
+        expect(result.data.dateOfBirth).toEqual(dateObj);
+      }
+    });
+
+    it('accepts ISO datetime string', () => {
+      const result = userSchema.safeParse({
+        ...validUserBase,
+        dateOfBirth: '1990-05-15T00:00:00.000Z',
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.dateOfBirth).toBeInstanceOf(Date);
+      }
+    });
+
+    it('accepts null value', () => {
+      const result = userSchema.safeParse({
+        ...validUserBase,
+        dateOfBirth: null,
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.dateOfBirth).toBeNull();
+      }
+    });
+
+    it('rejects invalid date string', () => {
+      const result = userSchema.safeParse({
+        ...validUserBase,
+        dateOfBirth: 'not-a-date',
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain('Invalid date');
+      }
+    });
+
+    it('rejects empty string', () => {
+      const result = userSchema.safeParse({
+        ...validUserBase,
+        dateOfBirth: '',
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain('Invalid date');
+      }
+    });
+  });
+});
+
+describe('createUserSchema', () => {
+  const validCreateUserBase = {
+    email: 'test@example.com',
+    cognitoSub: 'cognito-sub-123',
+    firstName: 'John',
+    lastName: 'Doe',
+    role: 'customer_admin' as const,
+  };
+
+  describe('dateOfBirth field (optional with z.coerce.date())', () => {
+    it('accepts ISO date string', () => {
+      const result = createUserSchema.safeParse({
+        ...validCreateUserBase,
+        dateOfBirth: '1990-05-15',
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.dateOfBirth).toBeInstanceOf(Date);
+        expect(result.data.dateOfBirth?.toISOString()).toBe('1990-05-15T00:00:00.000Z');
+      }
+    });
+
+    it('accepts null value', () => {
+      const result = createUserSchema.safeParse({
+        ...validCreateUserBase,
+        dateOfBirth: null,
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.dateOfBirth).toBeNull();
+      }
+    });
+
+    it('allows dateOfBirth to be omitted (optional)', () => {
+      const result = createUserSchema.safeParse({
+        ...validCreateUserBase,
+        // dateOfBirth omitted
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.dateOfBirth).toBeUndefined();
+      }
+    });
+
+    it('rejects invalid date string', () => {
+      const result = createUserSchema.safeParse({
+        ...validCreateUserBase,
+        dateOfBirth: 'not-a-date',
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain('Invalid date');
       }
     });
   });

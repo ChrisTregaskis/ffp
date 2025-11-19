@@ -1,11 +1,13 @@
 // @ffp/core - Shared business logic, types, and utilities
 // This package is imported by both @ffp/web and @ffp/functions
 
-export * from './types';
+// Schemas (validation + types - single source of truth)
+// All types (User, UserRole, Tenant, TenantType, Customer, CustomerStatus, etc.)
+// are exported from schemas - Zod schemas are the authoritative source
+export * from './schemas';
+
+// Utilities and constants
 export * from './lib';
 export * from './utils';
-
-// Schemas (validation only - safe for browser)
-export * from './schemas';
 
 // Note: Admin domain is server-only and exported from @ffp/core/server

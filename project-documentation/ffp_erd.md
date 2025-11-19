@@ -1309,7 +1309,7 @@ ORDER BY total_actions DESC;
 
 ```typescript
 // Helper function to log audit events
-export async function logAudit({
+export const logAudit = async ({
   tenantId,
   userId,
   action,
@@ -1319,7 +1319,7 @@ export async function logAudit({
   ipAddress,
   userAgent,
   severity = 'info',
-}: AuditLogParams) {
+}: AuditLogParams) => {
   await db.query(
     `
     INSERT INTO audit_logs (
@@ -1343,7 +1343,7 @@ export async function logAudit({
       severity,
     ]
   );
-}
+};
 
 // Usage in Lambda functions
 export const handler = async (event) => {
@@ -1395,7 +1395,7 @@ export const handler = async (event) => {
 };
 
 // Middleware for automatic audit logging
-export function withAuditLogging(handler, action, resourceType) {
+export const withAuditLogging = (handler, action, resourceType) => {
   return async (event) => {
     const context = extractTenantContext(event);
     const startTime = Date.now();
@@ -1437,7 +1437,7 @@ export function withAuditLogging(handler, action, resourceType) {
       throw error;
     }
   };
-}
+};
 ```
 
 **Best Practices:**

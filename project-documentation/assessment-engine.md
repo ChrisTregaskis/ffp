@@ -624,7 +624,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { AssessmentQuestion } from "../components/AssessmentQuestion";
 import { useAuth } from "../contexts/AuthContext";
 
-export function AssessmentPage() {
+export const AssessmentPage = () => {
   const { templateId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -639,7 +639,7 @@ export function AssessmentPage() {
     startAssessment();
   }, []);
 
-  async function startAssessment() {
+  const startAssessment = async () => {
     const response = await fetch("/api/assessments/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -656,7 +656,7 @@ export function AssessmentPage() {
 
   const currentQuestion = visibleQuestions?.[currentQuestionIndex];
 
-  async function handleAnswer(value: any) {
+  const handleAnswer = async (value: any) => {
     const newAnswers = { ...answers, [currentQuestion.id]: value };
     setAnswers(newAnswers);
 
@@ -675,7 +675,7 @@ export function AssessmentPage() {
     }
   }
 
-  async function submitAssessment(finalAnswers: Record<string, any>) {
+  const submitAssessment = async (finalAnswers: Record<string, any>) => {
     setLoading(true);
     const response = await fetch(`/api/assessments/${assessmentId}/submit`, {
       method: "POST",

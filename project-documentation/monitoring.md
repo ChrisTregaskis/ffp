@@ -107,12 +107,12 @@ import { CloudWatchClient, PutMetricDataCommand } from '@aws-sdk/client-cloudwat
 
 const cloudwatch = new CloudWatchClient({ region: process.env.AWS_REGION });
 
-export async function trackMetric(
+export const trackMetric = async (
   metricName: string,
   value: number,
   unit: string = 'Count',
   dimensions: Record<string, string> = {}
-) {
+) => {
   await cloudwatch.send(
     new PutMetricDataCommand({
       Namespace: 'FFP/Business',
@@ -130,7 +130,7 @@ export async function trackMetric(
       ],
     })
   );
-}
+};
 
 // Usage examples
 await trackMetric('AssessmentCompleted', 1, 'Count', {
@@ -525,14 +525,14 @@ export const handler = async () => {
   };
 };
 
-async function checkDatabase(): Promise<HealthCheck> {
+const checkDatabase = async (): Promise<HealthCheck> => {
   try {
     await db.query('SELECT 1');
     return { healthy: true, message: 'Database connected' };
   } catch (error) {
     return { healthy: false, message: 'Database connection failed' };
   }
-}
+};
 ```
 
 ### CloudWatch Synthetic Monitoring (Future)

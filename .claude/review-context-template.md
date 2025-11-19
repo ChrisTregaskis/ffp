@@ -20,7 +20,7 @@ What must this implementation satisfy? Include functional and non-functional req
 - Must validate JWT on every request
 - Must integrate with existing user domain
 - Must maintain multi-tenant isolation
-- Must follow British English spelling
+- Must follow British English spelling (FFP code only; framework integrations use framework conventions)
 
 ## Changes Made
 

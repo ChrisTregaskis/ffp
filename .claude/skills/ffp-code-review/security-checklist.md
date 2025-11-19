@@ -323,3 +323,68 @@ export const updateUserRole = async (
 - [ ] All OWASP Top 10 categories addressed in code
 - [ ] Security requirements in `project-documentation/security.md` followed
 - [ ] Healthcare data compliance (sensitive data protection) enforced
+
+## Frontend Code Quality (Web Package)
+
+### Component Usage
+
+**Use themed components instead of raw HTML elements:**
+
+```typescript
+// WRONG: Raw HTML elements with hard-coded styles
+<h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+<p className="text-sm text-gray-500">Description</p>
+<span className="text-red-600">Error</span>
+<button className="bg-blue-600 text-white px-4 py-2">Click me</button>
+
+// CORRECT: Use app components
+<Title as="h1" colour="foreground">Dashboard</Title>
+<Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>Description</Text>
+<Text styleProps={{ colour: 'destructive' }}>Error</Text>
+<Button variant="primary">Click me</Button>
+```
+
+**Checklist:**
+
+- [ ] No raw `<h1>`, `<h2>`, `<h3>`, `<h4>`, `<h5>` tags (use `<Title>`)
+- [ ] No raw `<p>` or `<span>` tags for text (use `<Text>`)
+- [ ] No raw `<button>` tags (use `<Button>` or `<IconButton>`)
+- [ ] Form inputs use `<FormTextInput>` instead of raw `<input>`
+- [ ] Structural elements (div, section, nav) are acceptable
+
+### Theme Colour Usage
+
+**Use theme colours, not hard-coded values:**
+
+```typescript
+// WRONG: Hard-coded colour classes
+className="text-gray-900"
+className="text-gray-600"
+className="text-red-600"
+className="bg-blue-50"
+className="border-green-200"
+
+// CORRECT: Theme colours via components or Tailwind classes
+<Text styleProps={{ colour: 'foreground' }} />
+<Text styleProps={{ colour: 'muted-foreground' }} />
+<Text styleProps={{ colour: 'destructive' }} />
+className="bg-info/10"
+className="border-success/20"
+```
+
+**Available theme colours:**
+
+- Text: `foreground`, `muted-foreground`, `primary`, `secondary`, `success`, `destructive`, `warning`, `info`
+- Background/border: `bg-background`, `bg-muted`, `bg-primary`, `bg-success`, `bg-destructive`, `bg-warning`, `bg-info`
+- Use opacity for lighter shades: `/10`, `/20`, `/30`
+
+**Checklist:**
+
+- [ ] No `text-gray-XXX` classes (use `foreground` or `muted-foreground`)
+- [ ] No `text-red-XXX` classes (use `destructive`)
+- [ ] No `text-blue-XXX` classes (use `primary` or `info`)
+- [ ] No `text-green-XXX` classes (use `success`)
+- [ ] No `text-yellow-XXX` classes (use `warning`)
+- [ ] No hard-coded `bg-{color}-{number}` classes (use theme with opacity)
+- [ ] Gradients or special effects are acceptable exceptions
+- [ ] Dev-only components may have exceptions (document why)

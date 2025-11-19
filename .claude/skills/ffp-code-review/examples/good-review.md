@@ -232,11 +232,79 @@ export const getUsersByTenant = async (context: RequestContext): Promise<User[]>
 
 ## [MEDIUM] Suggestions (Consider)
 
-### 6. American Spelling in Function Names
+### 6. Raw HTML Elements Instead of Components
+
+**Location**: `packages/web/src/pages/protected/DashboardPage.tsx:34-42`
+
+**Issue**: Using raw HTML elements instead of themed components.
+
+```typescript
+// WRONG: CURRENT CODE (WRONG)
+<div className="mb-8">
+  <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+  <p className="text-sm text-gray-500">Welcome back to your workspace</p>
+</div>
+```
+
+**Remediation**:
+
+```typescript
+// CORRECT: CORRECT CODE
+import { Title, Text } from '@web/components/text';
+
+<div className="mb-8">
+  <Title as="h1" colour="foreground">Dashboard</Title>
+  <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+    Welcome back to your workspace
+  </Text>
+</div>
+```
+
+**Why**: Using themed components ensures consistent styling, easier theme updates, and better maintainability. Hard-coded colours and raw HTML should be replaced with the app's component system.
+
+**Priority**: MEDIUM - Code quality and design system consistency.
+
+---
+
+### 7. Hard-coded Colours Instead of Theme
+
+**Location**: `packages/web/src/components/ErrorBanner.tsx:12-15`
+
+**Issue**: Hard-coded colour classes instead of theme colours.
+
+```typescript
+// WRONG: CURRENT CODE (WRONG)
+<div className="bg-red-50 border border-red-200 p-4">
+  <p className="text-sm text-red-600">{errorMessage}</p>
+</div>
+```
+
+**Remediation**:
+
+```typescript
+// CORRECT: CORRECT CODE
+import { Text } from '@web/components/text';
+
+<div className="bg-destructive/10 border border-destructive/20 p-4">
+  <Text as="p" styleProps={{ size: 'sm', colour: 'destructive' }}>
+    {errorMessage}
+  </Text>
+</div>
+```
+
+**Why**: Theme colours ensure consistency, allow easy theme changes, and follow the design system. Hard-coded `text-red-600` and `bg-red-50` should use theme variables.
+
+**Priority**: MEDIUM - Design system compliance.
+
+---
+
+### 8. American Spelling in FFP-Specific Function Names
 
 **Location**: `packages/core/src/users/user.service.ts:102`, `user.repository.ts:78`
 
-**Issue**: Function names use American spelling instead of British English.
+**Issue**: FFP-specific function names use American spelling instead of British English.
+
+**Note**: This rule applies to FFP domain code only. Framework integrations (e.g., TailwindCSS classes like `text-center`, library APIs) should use the framework's expected spelling.
 
 ```typescript
 // WRONG: CURRENT CODE (WRONG)
@@ -258,7 +326,7 @@ export const normaliseUserData = (data: unknown) => { ... };
 
 ---
 
-### 7. Missing JSDoc Comments on Public API
+### 9. Missing JSDoc Comments on Public API
 
 **Location**: `packages/core/src/users/user.service.ts:45-67`
 
@@ -297,7 +365,7 @@ export const createUser = async (
 
 ---
 
-### 8. Hardcoded Error Messages Could Be Centralised
+### 10. Hardcoded Error Messages Could Be Centralised
 
 **Location**: Multiple files (user.service.ts:34, user.repository.ts:56)
 
@@ -361,7 +429,7 @@ throw new NotFoundError(ERROR_MESSAGES.USER_NOT_FOUND);
 
 **Must Fix**: 3 critical security issues (RLS, Cognito claims, input validation)
 **Should Fix**: 2 high-priority architecture/type issues
-**Consider**: 3 medium/low-priority code quality improvements
+**Consider**: 5 medium/low-priority code quality improvements (including component usage and theme colours)
 
 **Estimated Fix Time**: 2-3 hours for critical issues, 1 hour for high-priority items
 

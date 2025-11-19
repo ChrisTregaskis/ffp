@@ -2,6 +2,7 @@ import { execSync } from 'child_process';
 import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 
+import stripJsonComments from 'strip-json-comments';
 import { describe, it, expect } from 'vitest';
 
 /**
@@ -191,9 +192,8 @@ describe('Code Quality Tools', () => {
     });
 
     it('should enable ESLint auto-fix on save', () => {
-      const vscodeSettings = JSON.parse(
-        readFileSync(resolve(rootDir, '.vscode', 'settings.json'), 'utf-8')
-      );
+      const rawContent = readFileSync(resolve(rootDir, '.vscode', 'settings.json'), 'utf-8');
+      const vscodeSettings = JSON.parse(stripJsonComments(rawContent));
 
       expect(vscodeSettings['editor.codeActionsOnSave']).toBeDefined();
       expect(vscodeSettings['editor.codeActionsOnSave']['source.fixAll.eslint']).toBe('explicit');
