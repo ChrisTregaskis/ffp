@@ -39,6 +39,13 @@
       "cache": true,
       "outputLogs": "new-only"
     },
+    "test:coverage": {
+      "dependsOn": ["build"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
+      "outputs": ["coverage/**"],
+      "cache": true,
+      "outputLogs": "new-only"
+    },
     "dev": {
       "dependsOn": ["^build"],
       "cache": false,
