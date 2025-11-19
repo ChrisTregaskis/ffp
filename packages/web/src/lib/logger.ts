@@ -116,8 +116,7 @@ class BrowserLogger {
     }
 
     // Protection 2: Circular reference detection
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (data && typeof data === 'object' && data !== null) {
+    if (data && typeof data === 'object') {
       if (seen.has(data)) {
         return '[Circular Reference]';
       }
