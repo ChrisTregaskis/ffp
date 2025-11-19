@@ -96,6 +96,67 @@ class BrowserLogger {
   }
 
   /**
+   * Serialise context data, handling Error objects specially to preserve stack traces
+   *
+   * Protections:
+   * - Circular reference detection via WeakSet
+   * - Maximum depth limit (10 levels) to prevent stack overflow
+   * - Safe Error object serialisation
+   *
+   * @param data - Data to serialise
+   * @param depth - Current recursion depth (internal use)
+   * @param seen - Set of already-seen objects for circular reference detection (internal use)
+   * @returns Serialised data with Error objects properly formatted
+   */
+  private serialiseContextData(data: unknown, depth = 0, seen = new WeakSet()): unknown {
+    // Protection 1: Maximum depth limit (prevent stack overflow)
+    const MAX_DEPTH = 10;
+    if (depth > MAX_DEPTH) {
+      return '[Max Depth Exceeded]';
+    }
+
+    // Protection 2: Circular reference detection
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (data && typeof data === 'object' && data !== null) {
+      if (seen.has(data)) {
+        return '[Circular Reference]';
+      }
+      seen.add(data);
+    }
+
+    // Handle Error objects specially to preserve stack traces
+    if (data instanceof Error) {
+      // Only extract safe properties, don't spread the entire Error object
+      return {
+        name: data.name,
+        message: data.message,
+        stack: data.stack,
+        // Safely extract additional enumerable properties (e.g., custom error fields)
+        ...Object.fromEntries(
+          Object.entries(data).filter(([key]) => !['name', 'message', 'stack'].includes(key))
+        ),
+      };
+    }
+
+    // If it's an object, recursively serialise nested values
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      const serialised: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(data)) {
+        serialised[key] = this.serialiseContextData(value, depth + 1, seen);
+      }
+      return serialised;
+    }
+
+    // If it's an array, recursively serialise elements
+    if (Array.isArray(data)) {
+      return data.map((item) => this.serialiseContextData(item, depth + 1, seen));
+    }
+
+    // Primitive values pass through unchanged
+    return data;
+  }
+
+  /**
    * Format log message with colours, module prefix, and optional context
    *
    * @param level - Log level for colour coding
@@ -127,9 +188,10 @@ class BrowserLogger {
       args.splice(7, 0, MODULE_STYLE, this.moduleName, ''); // Insert module styling before message
     }
 
-    // Add context object if provided
+    // Add context object if provided, with proper Error serialisation
     if (context && Object.keys(context).length > 0) {
-      args.push(context);
+      const serialisedContext = this.serialiseContextData(context);
+      args.push(serialisedContext);
     }
 
     return args;

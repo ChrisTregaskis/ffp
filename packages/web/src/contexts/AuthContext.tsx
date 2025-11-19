@@ -26,7 +26,7 @@ export interface AuthUser {
 /**
  * Authentication context type defining available auth operations and state.
  */
-interface AuthContextType {
+export interface AuthContextType {
   /** Currently authenticated user, or null if not authenticated */
   user: AuthUser | null;
   /** Loading state during authentication checks */
@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
       const idToken = session.tokens?.idToken;
 
       if (!idToken) {
-        throw new Error('No ID token found in session');
+        throw new Error('SESSION_EXPIRED:No valid tokens - session expired');
       }
 
       // Validate JWT claims using Zod schema from @ffp/core
@@ -109,16 +109,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
     } catch (err) {
       // Handle Zod validation errors with detailed messages
       if (err instanceof ZodError) {
-        logger.error('JWT validation failed', { issues: err.issues });
+        logger.error('JWT validation failed - invalid token claims', { issues: err.issues });
         const errorMessage = `Invalid JWT claims: ${err.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join(', ')}`;
-        logger.error(errorMessage);
+        setError(errorMessage);
 
         // Clear invalid tokens from storage
         await signOut({ global: false });
+      } else if (err instanceof Error && err.message.startsWith('SESSION_EXPIRED:')) {
+        // Session expired - inform user with friendly message
+        const friendlyMessage = 'Your session has expired. Please log in again.';
+        logger.warn('Session expired - user needs to re-authenticate', { error: err.message });
+        setError(friendlyMessage);
       } else {
+        // Other authentication errors (not logged in, network issues, etc.)
         const errorMessage =
           err instanceof Error ? err.message : 'An unknown error occurred during authentication';
         logger.error('Authentication error', { error: errorMessage });
+        // Don't set user-facing error for "not authenticated" - this is expected state
       }
 
       // Silent failure - user remains null if not authenticated
