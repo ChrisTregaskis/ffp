@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Language & Spelling Preference
 
-**IMPORTANT**: Always use **British English spelling** throughout the codebase and documentation.
+**IMPORTANT**: Always use **British English spelling** for FFP-specific code and documentation.
 
-Examples:
+**British English (FFP code):**
 
 - ✅ optimise, prioritise, organise, realise, analyse, summarise
 - ❌ optimize, prioritize, organize, realize, analyze, summarize
@@ -15,7 +15,21 @@ Examples:
 - ✅ centre, licence (noun), defence
 - ❌ center, license (noun), defense
 
-This applies to all code comments, documentation, commit messages, and user-facing content.
+**Exception - Framework/Package Integrations:**
+When integrating with third-party frameworks or npm packages that use American English conventions, use the framework's expected spelling:
+
+- ✅ TailwindCSS classes: `text-center`, `bg-color-blue-500`
+- ✅ Framework APIs: `color`, `initialize`, `center` (when part of library interface)
+- ❌ Don't fight framework conventions with British spellings
+
+**British English applies to:**
+
+- Code comments and documentation
+- FFP-specific variable and function names
+- Custom Zod schema field names
+- Database column names (e.g., `optimised_at`, `colour_preference`)
+- Commit messages
+- User-facing content and strings
 
 ## Project Overview
 

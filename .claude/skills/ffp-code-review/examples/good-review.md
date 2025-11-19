@@ -298,11 +298,13 @@ import { Text } from '@web/components/text';
 
 ---
 
-### 8. American Spelling in Function Names
+### 8. American Spelling in FFP-Specific Function Names
 
 **Location**: `packages/core/src/users/user.service.ts:102`, `user.repository.ts:78`
 
-**Issue**: Function names use American spelling instead of British English.
+**Issue**: FFP-specific function names use American spelling instead of British English.
+
+**Note**: This rule applies to FFP domain code only. Framework integrations (e.g., TailwindCSS classes like `text-center`, library APIs) should use the framework's expected spelling.
 
 ```typescript
 // WRONG: CURRENT CODE (WRONG)
