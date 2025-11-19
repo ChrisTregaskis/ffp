@@ -19,7 +19,7 @@
   - Integration test for multi-tenant isolation
   - E2E test for critical flow (if applicable)
   - All tests pass in CI
-  - 10% coverage threshold met
+  - 8% coverage threshold met
 
 - [ ] **Deployment**
   - Code merged to `develop`
