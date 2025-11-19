@@ -99,9 +99,9 @@ function MyComponent() {
 
   return (
     <div>
-      <Text>Welcome, {user.email}</<Text>
-      <<Text>Tenant: {user.tenantId}</<Text>
-      <<Text>Role: {user.role}</<Text>
+      <Text>Welcome, {user.email}</Text>
+      <Text>Tenant: {user.tenantId}</Text>
+      <Text>Role: {user.role}</Text>
       <Button onClick={() => logout()}>Log out</Button>
     </div>
   );

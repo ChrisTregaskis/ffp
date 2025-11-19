@@ -54,7 +54,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorB
           {/* Error Title */}
           <div className="mt-6">
             <Title as="h5" colour="destructive">
-              Ops! Looks like something went wrong...
+              Oops! Looks like something went wrong...
             </Title>
           </div>
 
