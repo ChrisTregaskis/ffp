@@ -89,7 +89,8 @@ git branch --show-current         # Current branch name
 
 **[MEDIUM] Code Quality**
 
-- American spelling (optimize, color, behavior)
+- American spelling in FFP-specific code (optimize, color, behavior)
+  - Exception: Framework/package integrations (TailwindCSS classes, library APIs)
 - Emojis in code, comments, or user-facing strings
 - Raw HTML elements instead of components (h1-h5, p, span, button)
 - Hard-coded colours instead of theme variables
@@ -317,24 +318,32 @@ className="border-success/20"
 
 ## British English Enforcement
 
-**Common mistakes to catch:**
+**Important**: British English applies to FFP-specific code only. Framework/package integrations (e.g., TailwindCSS classes, library APIs) should use the framework's expected spelling.
 
-| American (Wrong) | British (Correct) |
-| ---------------- | ----------------- |
-| optimize         | optimise          |
-| organize         | organise          |
-| customize        | customise         |
-| color            | colour            |
-| behavior         | behaviour         |
-| center           | centre            |
-| license (noun)   | licence (noun)    |
+**Common mistakes to catch in FFP code:**
+
+| American (Wrong)         | British (Correct) |
+| ------------------------ | ----------------- |
+| optimize (in FFP code)   | optimise          |
+| organize (in FFP code)   | organise          |
+| customize (in FFP code)  | customise         |
+| color (in FFP code)      | colour            |
+| behavior (in FFP code)   | behaviour         |
+| center (in FFP code)     | centre            |
+| license (noun, FFP code) | licence (noun)    |
 
 **Check in:**
 
-- Variable/function names: `optimizeWorkout` → `optimiseWorkout`
-- Comments: "// Optimize the query" → "// Optimise the query"
-- String literals: "Customization" → "Customisation"
+- FFP variable/function names: `optimizeWorkout` → `optimiseWorkout`
+- FFP comments: "// Optimize the query" → "// Optimise the query"
+- FFP string literals: "Customization" → "Customisation"
 - User-facing messages: "Authorization failed" → "Authorisation failed"
+
+**DO NOT flag as errors:**
+
+- TailwindCSS classes: `text-center`, `bg-color-blue-500` (framework convention)
+- Library APIs: `color`, `initialize`, `center` (when part of framework interface)
+- Package configuration: `color`, `behavior` (when required by package)
 
 ## Review Philosophy
 

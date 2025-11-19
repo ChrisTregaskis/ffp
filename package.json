@@ -20,7 +20,7 @@
     "test:root:watch": "vitest tests/",
     "test:root:ui": "vitest --ui tests/",
     "test:unit": "vitest run --exclude='**/*.integration.test.ts'",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "turbo run test:coverage --force",
     "typecheck": "pnpm run typecheck:root && turbo typecheck",
     "typecheck:root": "tsc --project scripts/tsconfig.json",
     "clean": "turbo clean && rm -rf node_modules",

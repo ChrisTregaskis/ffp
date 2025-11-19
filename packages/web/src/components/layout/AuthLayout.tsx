@@ -1,3 +1,4 @@
+import { ErrorBoundary } from '@web/components/error';
 import { Logo } from '@web/components/logo/Logo';
 import { FadeSlideIn } from '@web/components/motion/FadeSlideIn';
 
@@ -50,8 +51,8 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
             </div>
           )}
 
-          {/* Content slot (auth card) */}
-          {children}
+          {/* Content slot (auth card) - wrapped in error boundary */}
+          <ErrorBoundary>{children}</ErrorBoundary>
         </div>
       </FadeSlideIn>
     </div>

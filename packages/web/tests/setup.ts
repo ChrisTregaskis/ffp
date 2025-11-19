@@ -1,14 +1,7 @@
-import '@testing-library/jest-dom';
-import { cleanup } from '@testing-library/react';
-import { afterEach } from 'vitest';
-
 /**
  * Test setup for @ffp/web package
  *
- * Configures testing library and cleanup
+ * Minimal setup for schema and unit tests
  */
 
-// Cleanup after each test
-afterEach(() => {
-  cleanup();
-});
+// Currently empty - add global test setup here if needed

@@ -10,6 +10,7 @@ import '@fontsource/inter/700.css'; // Bold
 // Initialise AWS Amplify authentication
 import './lib/auth';
 
+import { ErrorBoundary } from '@web/components/error';
 import { AuthProvider } from '@web/contexts/AuthContext';
 
 import App from './App';
@@ -22,8 +23,12 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+    {/* Root-level error boundary for catastrophic errors */}
+    {/* No resetKeys here - this catches errors before router is mounted */}
+    <ErrorBoundary>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </ErrorBoundary>
   </StrictMode>
 );
