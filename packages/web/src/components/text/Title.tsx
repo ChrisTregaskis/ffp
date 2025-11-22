@@ -32,6 +32,7 @@ const COLOUR_CLASS_MAP: Record<TextColour, string> = {
   'accent-foreground': 'text-accent-foreground',
   warning: 'text-warning',
   info: 'text-info',
+  white: 'text-white',
 };
 
 export interface TitleProps {

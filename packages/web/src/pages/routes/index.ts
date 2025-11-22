@@ -1,3 +1,4 @@
+import { ComingSoonPage } from '@web/pages/ComingSoonPage';
 import { ButtonComponentsPage } from '@web/pages/dev/ButtonComponentsPage';
 import { CardComponentsPage } from '@web/pages/dev/CardComponentsPage';
 import { ComponentsPage } from '@web/pages/dev/ComponentsPage';
@@ -10,6 +11,10 @@ import { MotionShowcasePage } from '@web/pages/dev/MotionShowcasePage';
 import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { HomePage } from '@web/pages/protected/HomePage';
+import { AccountSettingsPage } from '@web/pages/protected/program-user/AccountSettingsPage';
+import { ProgrammeOverviewPage } from '@web/pages/protected/program-user/ProgrammeOverviewPage';
+import { ProgressPage } from '@web/pages/protected/program-user/ProgressPage';
+import { TodayWorkoutPage } from '@web/pages/protected/program-user/TodayWorkoutPage';
 import { ForgotPasswordPage } from '@web/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@web/pages/public/LoginPage';
 import { SetPasswordPage } from '@web/pages/public/SetPasswordPage';
@@ -95,7 +100,123 @@ export const routes: RoutesConfig = {
   [RouteKey.HOME]: {
     path: '/',
     pageComponent: HomePage,
+    title: 'Home',
+  },
+
+  // Individual User Routes (for individual_user and customer_user roles)
+  [RouteKey.TODAY_WORKOUT]: {
+    path: '/today-workout',
+    pageComponent: TodayWorkoutPage,
+    title: "Today's Workout",
+  },
+  [RouteKey.PROGRAMME_OVERVIEW]: {
+    path: '/programme-overview',
+    pageComponent: ProgrammeOverviewPage,
+    title: 'Programme Overview',
+  },
+  [RouteKey.PROGRESS]: {
+    path: '/progress',
+    pageComponent: ProgressPage,
+    title: 'Progress',
+  },
+  [RouteKey.ACCOUNT_SETTINGS]: {
+    path: '/account-settings',
+    pageComponent: AccountSettingsPage,
+    title: 'Account Settings',
+  },
+
+  // Customer Owner/Admin Routes (placeholders)
+  [RouteKey.CUSTOMER_DASHBOARD]: {
+    path: '/dashboard',
+    pageComponent: () =>
+      ComingSoonPage({
+        title: 'Customer Dashboard',
+        description: 'View user KPIs and engagement graphs',
+        icon: 'BarChart3',
+      }),
     title: 'Dashboard',
+  },
+  [RouteKey.USER_MANAGEMENT]: {
+    path: '/users',
+    pageComponent: () =>
+      ComingSoonPage({
+        title: 'User Management',
+        description: 'Manage users within your organisation',
+        icon: 'Users',
+      }),
+    title: 'User Management',
+  },
+  [RouteKey.BILLING_USAGE]: {
+    path: '/billing',
+    pageComponent: () =>
+      ComingSoonPage({
+        title: 'Billing & Usage',
+        description: 'Manage billing and view usage statistics',
+        icon: 'CreditCard',
+      }),
+    title: 'Billing & Usage',
+  },
+  [RouteKey.SUPPORT_HELP]: {
+    path: '/support',
+    pageComponent: () =>
+      ComingSoonPage({
+        title: 'Support & Help',
+        description: 'Get help and support for your organisation',
+        icon: 'HelpCircle',
+      }),
+    title: 'Support & Help',
+  },
+
+  // System Admin Routes (placeholders)
+  [RouteKey.ADMIN_CUSTOMERS]: {
+    path: '/admin/customers',
+    pageComponent: () =>
+      ComingSoonPage({
+        title: 'Customers',
+        description: 'Manage customer organisations',
+        icon: 'Building',
+      }),
+    title: 'Customers',
+  },
+  [RouteKey.ADMIN_USERS]: {
+    path: '/admin/users',
+    pageComponent: () =>
+      ComingSoonPage({
+        title: 'Users',
+        description: 'Manage all users across the platform',
+        icon: 'Users',
+      }),
+    title: 'Users',
+  },
+  [RouteKey.ADMIN_ASSESSMENTS]: {
+    path: '/admin/assessments',
+    pageComponent: () =>
+      ComingSoonPage({
+        title: 'Assessments',
+        description: 'Manage assessment templates and configurations',
+        icon: 'ClipboardList',
+      }),
+    title: 'Assessments',
+  },
+  [RouteKey.ADMIN_TEMPLATES]: {
+    path: '/admin/templates',
+    pageComponent: () =>
+      ComingSoonPage({
+        title: 'Session Templates',
+        description: 'Manage workout session templates',
+        icon: 'FileText',
+      }),
+    title: 'Session Templates',
+  },
+  [RouteKey.ADMIN_VIDEOS]: {
+    path: '/admin/videos',
+    pageComponent: () =>
+      ComingSoonPage({
+        title: 'Video Library',
+        description: 'Manage exercise video library',
+        icon: 'Video',
+      }),
+    title: 'Video Library',
   },
 
   // Development-only routes (component showcase)

@@ -13,7 +13,8 @@ export type TextColour =
   | 'card-foreground'
   | 'accent-foreground'
   | 'warning'
-  | 'info';
+  | 'info'
+  | 'white';
 
 /**
  * Available text sizes based on FFP theme.
@@ -40,6 +41,7 @@ const COLOUR_CLASS_MAP: Record<TextColour, string> = {
   'accent-foreground': 'text-accent-foreground',
   warning: 'text-warning',
   info: 'text-info',
+  white: 'text-white',
 };
 
 /**
