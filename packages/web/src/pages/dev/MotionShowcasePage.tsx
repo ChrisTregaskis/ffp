@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 
 import { Button } from '@web/components/button/Button';
@@ -10,10 +10,16 @@ import {
   DeveloperInstructions,
 } from '@web/components/dev';
 import {
+  Backdrop,
   CardTransition,
   type CardTransitionDirection,
   ClickScale,
+  type DrawerPosition,
   FadeSlideIn,
+  ScaleFade,
+  SlideDrawer,
+  SlideVertical,
+  SlideWidth,
   SpringScale,
 } from '@web/components/motion';
 import { Text, Title } from '@web/components/text';
@@ -22,10 +28,14 @@ import { Text, Title } from '@web/components/text';
  * Motion library showcase page (development only).
  *
  * Demonstrates animation capabilities using the motion library:
- * - Card animations (fade in, slide up)
+ * - Card animations (fade in, slide up, spring)
  * - Card transitions (multi-step flows)
  * - Button click animations (subtle scale effect)
  * - Hover effects
+ * - Scale & fade animations (tooltips, popovers)
+ * - Drawer panels with backdrop overlays
+ * - Width transitions (collapsible sidebars)
+ * - Vertical slide animations (sticky headers)
  * - Transition configurations
  *
  * Motion is used throughout the application for smooth, performant animations.
@@ -33,6 +43,11 @@ import { Text, Title } from '@web/components/text';
 export const MotionShowcasePage = (): JSX.Element => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [direction, setDirection] = useState<CardTransitionDirection>('forward');
+  const [showScaleFade, setShowScaleFade] = useState<boolean>(false);
+  const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+  const [drawerPosition, setDrawerPosition] = useState<DrawerPosition>('right');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [headerVisible, setHeaderVisible] = useState<boolean>(true);
 
   return (
     <ComponentPageWrapper>
@@ -296,9 +311,291 @@ const goPrevious = () => {
         </div>
       </ComponentSection>
 
+      {/* Scale & Fade Animation */}
+      <ComponentSection title="Scale & Fade">
+        <Text as="p" styleProps={{ colour: 'muted-foreground' }} className="mb-6">
+          Quick, subtle animations for tooltips, popovers, and dropdowns
+        </Text>
+        <div className="space-y-4">
+          <Text as="p" styleProps={{ colour: 'muted-foreground' }}>
+            ScaleFade combines opacity and scale transformations for snappy, predictable transitions
+          </Text>
+
+          <Button
+            variant="primary"
+            onClick={() => {
+              setShowScaleFade(!showScaleFade);
+            }}
+          >
+            {showScaleFade ? 'Hide' : 'Show'} Popover
+          </Button>
+
+          <div className="relative h-32">
+            <AnimatePresence>
+              {showScaleFade && (
+                <ScaleFade className="absolute left-0 top-2">
+                  <Card className="w-64">
+                    <Text as="p" styleProps={{ size: 'sm' }}>
+                      This is a popover with ScaleFade animation. It scales up from 95% whilst
+                      fading in, creating a subtle but noticeable effect.
+                    </Text>
+                  </Card>
+                </ScaleFade>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <Card className="mt-6">
+            <Title as="h4" className="mb-2">
+              Use Cases
+            </Title>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+              <li>Tooltips and popovers</li>
+              <li>Dropdown menus</li>
+              <li>Quick notifications</li>
+              <li>Any content that appears/disappears quickly</li>
+            </ul>
+          </Card>
+        </div>
+      </ComponentSection>
+
+      {/* Drawer & Backdrop */}
+      <ComponentSection title="Drawer Panels">
+        <Text as="p" styleProps={{ colour: 'muted-foreground' }} className="mb-6">
+          Slide-in panels with backdrop overlay for side menus, filters, and modal content
+        </Text>
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-3">
+            <Button
+              variant="primary"
+              onClick={() => {
+                setDrawerPosition('right');
+                setDrawerOpen(true);
+              }}
+            >
+              Open Right Drawer
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setDrawerPosition('left');
+                setDrawerOpen(true);
+              }}
+            >
+              Open Left Drawer
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setDrawerPosition('top');
+                setDrawerOpen(true);
+              }}
+            >
+              Open Top Drawer
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setDrawerPosition('bottom');
+                setDrawerOpen(true);
+              }}
+            >
+              Open Bottom Drawer
+            </Button>
+          </div>
+
+          <AnimatePresence>
+            {drawerOpen && (
+              <>
+                <Backdrop
+                  onClick={() => {
+                    setDrawerOpen(false);
+                  }}
+                />
+                <SlideDrawer
+                  position={drawerPosition}
+                  className={`fixed z-50 bg-background shadow-lg ${
+                    drawerPosition === 'left' || drawerPosition === 'right'
+                      ? 'top-0 h-full w-80'
+                      : 'left-0 w-full h-64'
+                  } ${drawerPosition === 'right' ? 'right-0' : ''} ${drawerPosition === 'left' ? 'left-0' : ''} ${drawerPosition === 'top' ? 'top-0' : ''} ${drawerPosition === 'bottom' ? 'bottom-0' : ''}`}
+                >
+                  <div className="flex h-full flex-col p-6">
+                    <div className="mb-4 flex items-center justify-between">
+                      <Title as="h3">
+                        Drawer from{' '}
+                        {drawerPosition.charAt(0).toUpperCase() + drawerPosition.slice(1)}
+                      </Title>
+                      <Button
+                        variant="neutral"
+                        onClick={() => {
+                          setDrawerOpen(false);
+                        }}
+                      >
+                        Close
+                      </Button>
+                    </div>
+                    <Text as="p" styleProps={{ colour: 'muted-foreground' }}>
+                      This drawer slides in from the {drawerPosition} with a smooth animation. Click
+                      the backdrop or the close button to dismiss it.
+                    </Text>
+                  </div>
+                </SlideDrawer>
+              </>
+            )}
+          </AnimatePresence>
+
+          <Card className="mt-6">
+            <Title as="h4" className="mb-2">
+              Components Used Together
+            </Title>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+              <li>
+                <strong>Backdrop</strong> - Semi-transparent overlay that blocks interaction and can
+                be clicked to close
+              </li>
+              <li>
+                <strong>SlideDrawer</strong> - Animated panel that slides in from any edge (left,
+                right, top, bottom)
+              </li>
+              <li>
+                <strong>AnimatePresence</strong> - Handles mount/unmount animations smoothly
+              </li>
+            </ul>
+          </Card>
+        </div>
+      </ComponentSection>
+
+      {/* Sidebar Width Transition */}
+      <ComponentSection title="Width Transitions">
+        <Text as="p" styleProps={{ colour: 'muted-foreground' }} className="mb-6">
+          Smooth width animations for collapsible sidebars and resizable panels
+        </Text>
+        <div className="space-y-4">
+          <Button
+            variant="primary"
+            onClick={() => {
+              setSidebarCollapsed(!sidebarCollapsed);
+            }}
+          >
+            {sidebarCollapsed ? 'Expand' : 'Collapse'} Sidebar
+          </Button>
+
+          <div className="flex gap-4">
+            <SlideWidth
+              isCollapsed={sidebarCollapsed}
+              expandedWidth={240}
+              collapsedWidth={64}
+              className="overflow-hidden rounded-lg border bg-muted"
+            >
+              <div className="h-48 p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="h-8 w-8 rounded bg-primary" />
+                  {!sidebarCollapsed && (
+                    <Text as="span" styleProps={{ weight: 'semibold' }}>
+                      Menu
+                    </Text>
+                  )}
+                </div>
+                <nav className="space-y-2">
+                  {['Dashboard', 'Settings', 'Profile'].map((item) => (
+                    <div
+                      key={item}
+                      className="flex items-center gap-2 rounded p-2 hover:bg-background"
+                    >
+                      <div className="h-4 w-4 rounded bg-muted-foreground" />
+                      {!sidebarCollapsed && (
+                        <Text as="span" styleProps={{ size: 'sm' }}>
+                          {item}
+                        </Text>
+                      )}
+                    </div>
+                  ))}
+                </nav>
+              </div>
+            </SlideWidth>
+
+            <Card className="flex-1">
+              <Title as="h4" className="mb-2">
+                Main Content Area
+              </Title>
+              <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+                The sidebar smoothly transitions between expanded (240px) and collapsed (64px)
+                states. Content visibility is handled separately with conditional rendering.
+              </Text>
+            </Card>
+          </div>
+
+          <Card className="mt-6">
+            <Title as="h4" className="mb-2">
+              Use Cases
+            </Title>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+              <li>Collapsible navigation sidebars</li>
+              <li>Resizable panels and split views</li>
+              <li>Responsive layouts that adapt to screen size</li>
+              <li>Filter panels that can be hidden/shown</li>
+            </ul>
+          </Card>
+        </div>
+      </ComponentSection>
+
+      {/* Vertical Slide */}
+      <ComponentSection title="Vertical Slide">
+        <Text as="p" styleProps={{ colour: 'muted-foreground' }} className="mb-6">
+          Animate vertical position changes for sticky headers, banners, and notifications
+        </Text>
+        <div className="space-y-4">
+          <Button
+            variant="primary"
+            onClick={() => {
+              setHeaderVisible(!headerVisible);
+            }}
+          >
+            {headerVisible ? 'Hide' : 'Show'} Header
+          </Button>
+
+          <div className="relative h-32 overflow-hidden rounded-lg border">
+            <SlideVertical
+              isVisible={headerVisible}
+              slideDistance={-80}
+              className="absolute left-0 right-0 top-0"
+            >
+              <div className="bg-primary p-4 text-primary-foreground">
+                <Title as="h4" className="text-white">
+                  Sticky Header
+                </Title>
+                <Text as="p" styleProps={{ size: 'sm' }} className="text-white/90">
+                  This header slides up and down based on visibility state. Perfect for sticky
+                  headers that hide on scroll.
+                </Text>
+              </div>
+            </SlideVertical>
+
+            <div className="p-4 pt-24">
+              <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+                Main content below the header...
+              </Text>
+            </div>
+          </div>
+
+          <Card className="mt-6">
+            <Title as="h4" className="mb-2">
+              Use Cases
+            </Title>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+              <li>Sticky headers that hide/show on scroll</li>
+              <li>Notification banners that slide down from top</li>
+              <li>Action bars that appear on selection</li>
+              <li>Any content that needs to slide vertically based on state</li>
+            </ul>
+          </Card>
+        </div>
+      </ComponentSection>
+
       {/* Developer instructions */}
       <div className="mt-8">
-        <DeveloperInstructions title="Using Motion in Your Components">
+        <DeveloperInstructions title="Using Motion in FFP Components">
           <div className="space-y-4">
             <div>
               <Title as="h4" className="mb-2">
@@ -312,7 +609,7 @@ const goPrevious = () => {
   animate={{ opacity: 1, y: 0 }}
   transition={{ duration: 0.5 }}
 >
-  {/* Your content */}
+  {/* FFP content */}
 </motion.div>`}
               </pre>
             </div>
