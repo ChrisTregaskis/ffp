@@ -235,8 +235,7 @@ export const ErrorBoundaryShowcasePage = (): JSX.Element => {
       <ComponentSection title="Nested Error Boundaries">
         <div className="space-y-3">
           <Text styleProps={{ colour: 'muted-foreground' }}>
-            Multiple boundaries isolate errors to specific features. Inner boundary failures
-            don&rsquo;t affect outer components.
+            {`Multiple boundaries isolate errors to specific features. Inner boundary failures don't affect outer components.`}
           </Text>
           <NestedBoundariesDemo />
         </div>
@@ -266,7 +265,7 @@ export const ErrorBoundaryShowcasePage = (): JSX.Element => {
 
             <div>
               <Text styleProps={{ weight: 'semibold', size: 'sm' }} className="mb-2">
-                What Error Boundaries DON&rsquo;T Catch
+                {`What Error Boundaries DON'T Catch`}
               </Text>
               <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
                 <li>Event handlers (use try/catch)</li>

@@ -1,3 +1,6 @@
+import type { UserRole } from '@ffp/core';
+
+import { USER_ROLE } from '@web/constants/roles';
 import { ComingSoonPage } from '@web/pages/ComingSoonPage';
 import { ButtonComponentsPage } from '@web/pages/dev/ButtonComponentsPage';
 import { CardComponentsPage } from '@web/pages/dev/CardComponentsPage';
@@ -18,6 +21,7 @@ import { TodayWorkoutPage } from '@web/pages/protected/program-user/TodayWorkout
 import { ForgotPasswordPage } from '@web/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@web/pages/public/LoginPage';
 import { SetPasswordPage } from '@web/pages/public/SetPasswordPage';
+import { UnauthorizedPage } from '@web/pages/UnauthorizedPage';
 
 import { RouteKey } from './RouteKey';
 
@@ -49,17 +53,24 @@ export interface AppRoute {
   redirect?: string;
   /** If true, only available in development/staging (excluded in production) */
   devOnly?: boolean;
+  /** Roles permitted to access this route (undefined = all authenticated users) */
+  allowedRoles?: UserRole[];
 }
 
 /**
- * Type-safe routes configuration.
- *
  * Maps route keys to their configuration. Ensures compile-time safety
  * when referencing routes throughout the application.
  */
 export type RoutesConfig = Record<RouteKey, AppRoute>;
 
 const componentsBasePath = '/components';
+
+// Destructure user roles for easier reference
+const INDIVIDUAL_USER = USER_ROLE.INDIVIDUAL_USER;
+const CUSTOMER_USER = USER_ROLE.CUSTOMER_USER;
+const CUSTOMER_OWNER = USER_ROLE.CUSTOMER_OWNER;
+const CUSTOMER_ADMIN = USER_ROLE.CUSTOMER_ADMIN;
+const SYSTEM_ADMIN = USER_ROLE.SYSTEM_ADMIN;
 
 /**
  * Application routes configuration.
@@ -97,10 +108,18 @@ export const routes: RoutesConfig = {
     title: 'Set Password',
     excludeFromMainNavbar: true,
   },
+  [RouteKey.UNAUTHORIZED]: {
+    path: '/unauthorized',
+    pageComponent: UnauthorizedPage,
+    title: 'Access Denied',
+    excludeFromMainNavbar: true,
+    excludeLayout: true,
+  },
   [RouteKey.HOME]: {
     path: '/',
     pageComponent: HomePage,
     title: 'Home',
+    allowedRoles: [INDIVIDUAL_USER, CUSTOMER_USER],
   },
 
   // Individual User Routes (for individual_user and customer_user roles)
@@ -108,21 +127,25 @@ export const routes: RoutesConfig = {
     path: '/today-workout',
     pageComponent: TodayWorkoutPage,
     title: "Today's Workout",
+    allowedRoles: [INDIVIDUAL_USER, CUSTOMER_USER],
   },
   [RouteKey.PROGRAMME_OVERVIEW]: {
     path: '/programme-overview',
     pageComponent: ProgrammeOverviewPage,
     title: 'Programme Overview',
+    allowedRoles: [INDIVIDUAL_USER, CUSTOMER_USER],
   },
   [RouteKey.PROGRESS]: {
     path: '/progress',
     pageComponent: ProgressPage,
     title: 'Progress',
+    allowedRoles: [INDIVIDUAL_USER, CUSTOMER_USER],
   },
   [RouteKey.ACCOUNT_SETTINGS]: {
     path: '/account-settings',
     pageComponent: AccountSettingsPage,
     title: 'Account Settings',
+    allowedRoles: [INDIVIDUAL_USER, CUSTOMER_USER, CUSTOMER_OWNER, CUSTOMER_ADMIN, SYSTEM_ADMIN],
   },
 
   // Customer Owner/Admin Routes (placeholders)
@@ -135,6 +158,7 @@ export const routes: RoutesConfig = {
         icon: 'BarChart3',
       }),
     title: 'Dashboard',
+    allowedRoles: [CUSTOMER_OWNER, CUSTOMER_ADMIN],
   },
   [RouteKey.USER_MANAGEMENT]: {
     path: '/users',
@@ -145,6 +169,7 @@ export const routes: RoutesConfig = {
         icon: 'Users',
       }),
     title: 'User Management',
+    allowedRoles: [CUSTOMER_OWNER, CUSTOMER_ADMIN],
   },
   [RouteKey.BILLING_USAGE]: {
     path: '/billing',
@@ -155,6 +180,7 @@ export const routes: RoutesConfig = {
         icon: 'CreditCard',
       }),
     title: 'Billing & Usage',
+    allowedRoles: [CUSTOMER_OWNER, CUSTOMER_ADMIN],
   },
   [RouteKey.SUPPORT_HELP]: {
     path: '/support',
@@ -165,6 +191,7 @@ export const routes: RoutesConfig = {
         icon: 'HelpCircle',
       }),
     title: 'Support & Help',
+    allowedRoles: [CUSTOMER_OWNER, CUSTOMER_ADMIN],
   },
 
   // System Admin Routes (placeholders)
@@ -177,6 +204,7 @@ export const routes: RoutesConfig = {
         icon: 'Building',
       }),
     title: 'Customers',
+    allowedRoles: [SYSTEM_ADMIN],
   },
   [RouteKey.ADMIN_USERS]: {
     path: '/admin/users',
@@ -187,6 +215,7 @@ export const routes: RoutesConfig = {
         icon: 'Users',
       }),
     title: 'Users',
+    allowedRoles: [SYSTEM_ADMIN],
   },
   [RouteKey.ADMIN_ASSESSMENTS]: {
     path: '/admin/assessments',
@@ -197,6 +226,7 @@ export const routes: RoutesConfig = {
         icon: 'ClipboardList',
       }),
     title: 'Assessments',
+    allowedRoles: [SYSTEM_ADMIN],
   },
   [RouteKey.ADMIN_TEMPLATES]: {
     path: '/admin/templates',
@@ -207,6 +237,7 @@ export const routes: RoutesConfig = {
         icon: 'FileText',
       }),
     title: 'Session Templates',
+    allowedRoles: [SYSTEM_ADMIN],
   },
   [RouteKey.ADMIN_VIDEOS]: {
     path: '/admin/videos',
@@ -217,6 +248,7 @@ export const routes: RoutesConfig = {
         icon: 'Video',
       }),
     title: 'Video Library',
+    allowedRoles: [SYSTEM_ADMIN],
   },
 
   // Development-only routes (component showcase)

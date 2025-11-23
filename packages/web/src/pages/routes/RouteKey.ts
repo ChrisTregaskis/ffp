@@ -1,9 +1,3 @@
-/**
- * Enum of route keys for type-safe route references.
- *
- * Provides compile-time safety when referencing routes throughout the application.
- * Add new routes here as the application grows.
- */
 export enum RouteKey {
   /** Public login route */
   LOGIN = 'login',
@@ -11,6 +5,8 @@ export enum RouteKey {
   FORGOT_PASSWORD = 'forgot-password',
   /** Public set password route for invited users */
   SET_PASSWORD = 'set-password',
+  /** Unauthorised access page (shown when user lacks role permissions) */
+  UNAUTHORIZED = 'unauthorized',
   /** Protected home/dashboard route */
   HOME = 'home',
 
