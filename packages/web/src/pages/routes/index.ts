@@ -119,7 +119,7 @@ export const routes: RoutesConfig = {
     path: '/',
     pageComponent: HomePage,
     title: 'Home',
-    allowedRoles: [INDIVIDUAL_USER, CUSTOMER_USER],
+    // No allowedRoles - accessible to all authenticated users, HomePage handles role-based redirects
   },
 
   // Individual User Routes (for individual_user and customer_user roles)

@@ -1,11 +1,21 @@
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import { Button } from '@web/components/button/Button';
 import { Title, Text } from '@web/components/text';
+import { USER_ROLE } from '@web/constants/roles';
 import { useAuth } from '@web/contexts/AuthContext';
+import { RouteKey, routes } from '@web/pages/routes';
 
 /**
- * Home/Dashboard page component (placeholder).
+ * Home/Dashboard page component.
  *
  * This is a protected route that requires authentication.
+ * Handles role-based redirects:
+ * - Individual users (individual_user, customer_user): Shows this dashboard
+ * - Customer admins (customer_owner, customer_admin): Redirects to /dashboard
+ * - System admins (system_admin): Redirects to /admin/customers
+ *
  * Displays basic user information from the authenticated session.
  *
  * Future implementation will include:
@@ -16,6 +26,26 @@ import { useAuth } from '@web/contexts/AuthContext';
  */
 export const HomePage = (): JSX.Element => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect non-individual users to their role-appropriate home page
+  useEffect(() => {
+    if (!user) return;
+
+    // Customer admins should go to the customer dashboard
+    if (user.role === USER_ROLE.CUSTOMER_OWNER || user.role === USER_ROLE.CUSTOMER_ADMIN) {
+      void navigate(routes[RouteKey.CUSTOMER_DASHBOARD].path, { replace: true });
+      return;
+    }
+
+    // System admins should go to the admin customers page
+    if (user.role === USER_ROLE.SYSTEM_ADMIN) {
+      void navigate(routes[RouteKey.ADMIN_CUSTOMERS].path, { replace: true });
+      return;
+    }
+
+    // Individual users (INDIVIDUAL_USER, CUSTOMER_USER) stay on this page
+  }, [user, navigate]);
 
   const handleLogout = (): void => {
     void logout();

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { AppLayout } from '@web/components/layout/AppLayout';
+import { LoadingSpinner } from '@web/components/LoadingSpinner/LoadingSpinner';
 import { useAuth } from '@web/contexts/AuthContext';
 import { hasRole, logUnauthorisedAccess } from '@web/lib/rbac';
 
@@ -9,9 +10,6 @@ import { RouteKey, routes } from '.';
 
 import type { PropsWithChildren } from 'react';
 
-/**
- * Props for ProtectedRoute component.
- */
 interface ProtectedRouteProps extends PropsWithChildren {
   // If true, exclude AppLayout wrapper (for fullscreen pages like assessments)
   excludeLayout?: boolean;
@@ -58,7 +56,7 @@ export const ProtectedRoute = ({
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-600" />
+        <LoadingSpinner size="lg" variant="center" />
       </div>
     );
   }
