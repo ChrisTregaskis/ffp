@@ -26,9 +26,8 @@ export const hasRole = (userRole: UserRole, allowedRoles: UserRole[]): boolean =
  */
 export const getRoleHomePath = (role: UserRole): RouteKey => {
   switch (role) {
-    case USER_ROLE.INDIVIDUAL_USER:
-    case USER_ROLE.CUSTOMER_USER:
-      // Individual users and customer users see the standard home page
+    case USER_ROLE.PROGRAM_USER:
+      // Programme users see the standard home page
       return RouteKey.HOME;
 
     case USER_ROLE.CUSTOMER_OWNER:

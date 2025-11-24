@@ -71,7 +71,7 @@ describe('CognitoService', () => {
         lastName: 'Smith',
         tenantId: 'tenant-123',
         customerId: 'customer-456',
-        role: 'customer_user',
+        role: 'program_user',
       };
 
       await CognitoService.inviteUser(params);
@@ -86,7 +86,7 @@ describe('CognitoService', () => {
           { Name: 'family_name', Value: 'Smith' },
           { Name: COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID, Value: 'tenant-123' },
           { Name: COGNITO_CUSTOM_ATTRIBUTES.CUSTOMER_ID, Value: 'customer-456' },
-          { Name: COGNITO_CUSTOM_ATTRIBUTES.ROLE, Value: 'customer_user' },
+          { Name: COGNITO_CUSTOM_ATTRIBUTES.ROLE, Value: 'program_user' },
         ],
         DesiredDeliveryMediums: ['EMAIL'],
       });
@@ -103,7 +103,7 @@ describe('CognitoService', () => {
         lastName: 'Smith',
         tenantId: 'tenant-123',
         customerId: 'customer-456',
-        role: 'customer_user',
+        role: 'program_user',
       };
 
       await expect(CognitoService.inviteUser(params)).rejects.toThrow(
@@ -126,7 +126,7 @@ describe('CognitoService', () => {
         lastName: 'Smith',
         tenantId: 'tenant-123',
         customerId: 'customer-456',
-        role: 'customer_user',
+        role: 'program_user',
       };
 
       const result = await CognitoService.inviteUser(params);
@@ -196,7 +196,7 @@ describe('CognitoService', () => {
         lastName: 'User',
         tenantId: 'tenant-123',
         customerId: 'customer-456',
-        role: 'customer_user',
+        role: 'program_user',
         temporaryPassword: 'TempPass123!',
       };
 
@@ -220,7 +220,7 @@ describe('CognitoService', () => {
         lastName: 'User',
         tenantId: 'tenant-123',
         customerId: 'customer-456',
-        role: 'customer_user',
+        role: 'program_user',
       };
 
       await CognitoService.createUser(params);
@@ -238,7 +238,7 @@ describe('CognitoService', () => {
         lastName: 'User',
         tenantId: 'tenant-123',
         customerId: 'customer-456',
-        role: 'customer_user',
+        role: 'program_user',
       };
 
       await expect(CognitoService.createUser(params)).rejects.toThrow(

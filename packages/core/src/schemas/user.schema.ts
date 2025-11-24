@@ -7,8 +7,9 @@ import { z } from 'zod';
  * - system_admin: Platform administrator (highest privilege)
  * - customer_owner: Owner of a customer account (business)
  * - customer_admin: Administrator within a customer organisation
- * - customer_user: Regular user within a customer organisation
- * - individual_user: Standalone user account
+ * - program_user: User accessing workout programmes (individual or customer user)
+ *   - Individual users: customerId = null (cannot be invited)
+ *   - Customer users: customerId present (can be invited)
  *
  * IMPORTANT: Keep PostgreSQL enum in @ffp/database/src/schema/users.ts in sync
  */
@@ -16,8 +17,7 @@ export const userRoleSchema = z.enum([
   'system_admin',
   'customer_owner',
   'customer_admin',
-  'customer_user',
-  'individual_user',
+  'program_user',
 ]);
 
 /**
@@ -93,9 +93,19 @@ export type JwtUserClaims = z.infer<typeof jwtUserClaimsSchema>;
 
 /**
  * Invitable roles (subset of all roles)
- * Used when inviting users - system_admin and individual_user cannot be invited
+ * Used when inviting users - system_admin cannot be invited
+ * For program_user role, invitability is determined by customerId presence
  */
-export const invitableRoleSchema = z.enum(['customer_owner', 'customer_admin', 'customer_user']);
+export const invitableRoleSchema = z.enum(['customer_owner', 'customer_admin', 'program_user']);
+
+/**
+ * Determines if a programme user can be invited based on customerId presence.
+ * Individual users (customerId = null) cannot be invited.
+ * Customer users (customerId present) can be invited.
+ */
+export const canInviteProgramUser = (customerId: string | null): boolean => {
+  return customerId !== null;
+};
 
 /**
  * Schema for inviting a new user to the platform.

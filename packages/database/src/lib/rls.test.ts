@@ -119,7 +119,7 @@ describe('RLS Utility Functions', () => {
         cognitoSub: 'cognito-sub-a1',
         firstName: 'Alice',
         lastName: 'Anderson',
-        role: 'customer_user',
+        role: 'program_user',
       })
       .returning();
 
@@ -146,12 +146,12 @@ describe('RLS Utility Functions', () => {
       .values({
         id: userB1Id,
         tenantId: tenantBId,
-        customerId: customerBId,
+        customerId: null, // Individual user (no customer)
         email: 'user-b1@test.com',
         cognitoSub: 'cognito-sub-b1',
         firstName: 'Bob',
         lastName: 'Brown',
-        role: 'individual_user',
+        role: 'program_user',
       })
       .returning();
   });

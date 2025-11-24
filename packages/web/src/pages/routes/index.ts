@@ -66,8 +66,7 @@ export type RoutesConfig = Record<RouteKey, AppRoute>;
 const componentsBasePath = '/components';
 
 // Destructure user roles for easier reference
-const INDIVIDUAL_USER = USER_ROLE.INDIVIDUAL_USER;
-const CUSTOMER_USER = USER_ROLE.CUSTOMER_USER;
+const PROGRAM_USER = USER_ROLE.PROGRAM_USER;
 const CUSTOMER_OWNER = USER_ROLE.CUSTOMER_OWNER;
 const CUSTOMER_ADMIN = USER_ROLE.CUSTOMER_ADMIN;
 const SYSTEM_ADMIN = USER_ROLE.SYSTEM_ADMIN;
@@ -122,30 +121,30 @@ export const routes: RoutesConfig = {
     // No allowedRoles - accessible to all authenticated users, HomePage handles role-based redirects
   },
 
-  // Individual User Routes (for individual_user and customer_user roles)
+  // Programme User Routes (for program_user role)
   [RouteKey.TODAY_WORKOUT]: {
     path: '/today-workout',
     pageComponent: TodayWorkoutPage,
     title: "Today's Workout",
-    allowedRoles: [INDIVIDUAL_USER, CUSTOMER_USER],
+    allowedRoles: [PROGRAM_USER],
   },
   [RouteKey.PROGRAMME_OVERVIEW]: {
     path: '/programme-overview',
     pageComponent: ProgrammeOverviewPage,
     title: 'Programme Overview',
-    allowedRoles: [INDIVIDUAL_USER, CUSTOMER_USER],
+    allowedRoles: [PROGRAM_USER],
   },
   [RouteKey.PROGRESS]: {
     path: '/progress',
     pageComponent: ProgressPage,
     title: 'Progress',
-    allowedRoles: [INDIVIDUAL_USER, CUSTOMER_USER],
+    allowedRoles: [PROGRAM_USER],
   },
   [RouteKey.ACCOUNT_SETTINGS]: {
     path: '/account-settings',
     pageComponent: AccountSettingsPage,
     title: 'Account Settings',
-    allowedRoles: [INDIVIDUAL_USER, CUSTOMER_USER, CUSTOMER_OWNER, CUSTOMER_ADMIN, SYSTEM_ADMIN],
+    allowedRoles: [PROGRAM_USER, CUSTOMER_OWNER, CUSTOMER_ADMIN, SYSTEM_ADMIN],
   },
 
   // Customer Owner/Admin Routes (placeholders)

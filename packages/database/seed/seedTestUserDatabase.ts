@@ -4,24 +4,25 @@ import { sql } from 'drizzle-orm';
 import * as schema from '../src/schema/index.js';
 import { users } from '../src/schema/index.js';
 import { terminalPrefix, TerminalPrefix } from '../src/lib/terminal-logger.js';
-import type { SuperAdminUserSeed } from './types.js';
+import type { TestUserSeed } from './types.js';
 
 /**
- * Seeds the super admin user record in the database with exact data from configuration.
+ * Seeds a test user record in the database with exact data from configuration.
  * This is NOT idempotent - it will fail if the user already exists.
-
  */
-export const seedSuperAdminDatabase = async (
+export const seedTestUserDatabase = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool },
-  data: SuperAdminUserSeed
+  data: TestUserSeed
 ): Promise<void> => {
-  console.log(`${terminalPrefix(TerminalPrefix.INFO)} Seeding super admin in database...`);
+  console.log(
+    `${terminalPrefix(TerminalPrefix.INFO)} Seeding test user in database (${data.role})...`
+  );
 
   // Bypass RLS for seed operation (audit trail via console logs)
   console.log(`${terminalPrefix(TerminalPrefix.WARNING)} RLS BYPASSED for seed operation`);
   await db.execute(sql`SET LOCAL row_security = off`);
 
-  // Insert super admin user with exact values from config
+  // Insert test user with exact values from config
   await db.insert(users).values({
     id: data.id,
     tenantId: data.tenantId,
@@ -33,13 +34,13 @@ export const seedSuperAdminDatabase = async (
     customerId: data.customerId,
     profileImageUrl: data.profileImageUrl,
     phone: data.phone,
-    dateOfBirth: data.dateOfBirth,
+    dateOfBirth: data.dateOfBirth ? sql`${data.dateOfBirth}::date` : null,
     createdAt: sql`${data.createdAt}::timestamp`,
     updatedAt: sql`${data.updatedAt}::timestamp`,
   });
 
   console.log(
-    `${terminalPrefix(TerminalPrefix.SUCCESS)} Super admin seeded in database: ${data.id}`
+    `${terminalPrefix(TerminalPrefix.SUCCESS)} Test user seeded in database (${data.role}): ${data.id}`
   );
   console.log(`  Email: ${data.email}`);
   console.log(`  Tenant ID: ${data.tenantId}`);

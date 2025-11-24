@@ -4,23 +4,23 @@ import { sql } from 'drizzle-orm';
 import * as schema from '../src/schema/index.js';
 import { tenants } from '../src/schema/index.js';
 import { terminalPrefix, TerminalPrefix } from '../src/lib/terminal-logger.js';
-import type { PlatformTenantSeed } from './types.js';
+import type { TestCustomerTenantSeed } from './types.js';
 
 /**
- * Seeds the platform tenant with exact data from configuration.
+ * Seeds the test customer tenant with exact data from configuration.
  * This is NOT idempotent - it will fail if the tenant already exists.
  */
-export const seedPlatformTenant = async (
+export const seedTestTenant = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool },
-  data: PlatformTenantSeed
+  data: TestCustomerTenantSeed
 ): Promise<void> => {
-  console.log(`${terminalPrefix(TerminalPrefix.INFO)} Seeding platform tenant...`);
+  console.log(`${terminalPrefix(TerminalPrefix.INFO)} Seeding test customer tenant...`);
 
   // Bypass RLS for seed operation (audit trail via console logs)
   console.log(`${terminalPrefix(TerminalPrefix.WARNING)} RLS BYPASSED for seed operation`);
   await db.execute(sql`SET LOCAL row_security = off`);
 
-  // Insert platform tenant with exact values from config
+  // Insert test customer tenant with exact values from config
   await db.insert(tenants).values({
     id: data.id,
     type: data.type,
@@ -30,7 +30,7 @@ export const seedPlatformTenant = async (
     updatedAt: sql`${data.updatedAt}::timestamp`,
   });
 
-  console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} Platform tenant seeded: ${data.id}`);
+  console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} Test customer tenant seeded: ${data.id}`);
   console.log(`  Name: ${data.name}`);
   console.log(`  Type: ${data.type}`);
 };

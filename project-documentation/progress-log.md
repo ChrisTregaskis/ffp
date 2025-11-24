@@ -8,6 +8,256 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### November 24, 2025 (Session 54 - Database Setup & Seeding Debugging)
+
+**Status**: ✅ Database Seeding Complete - Automated FORCE RLS Management Implemented
+
+**Branch**: `feature/ad-hoc-side-menu` (database fixes applied to current branch)
+
+**Completed Work**:
+
+**Database Debugging & Fixes** (~6 hours actual):
+
+This session involved comprehensive debugging of database connectivity, Row-Level Security (RLS) issues, enum migrations, and implementing automated FORCE RLS management for reliable database seeding across all environments.
+
+**Problem 1: DataGrip Connection - No Tables Visible**
+
+- ✅ **Issue**: User connected to database but couldn't see tables or data
+- ✅ **Root Cause**: Connected to wrong database (`postgres` instead of `ffp_dev`)
+- ✅ **Fix**: Updated DataGrip connection to use `ffp_dev` database from `.env` configuration
+- ✅ **Result**: Tables visible but no data present
+
+**Problem 2: Missing Seed Data**
+
+- ✅ **Issue**: Database tables existed but contained no data
+- ✅ **Root Cause**: Seed script had never been run
+- ✅ **Discovery**: Seed configuration only included platform tenant and super admin, missing test users
+- ✅ **Solution**: Expanded seed system to include test customer, test users (customer_admin, program_user)
+
+**Problem 3: Row-Level Security Blocking Seeds**
+
+- ✅ **Error**: `new row violates row-level security policy for table "tenants"`
+- ✅ **Root Cause 1**: `root_user` didn't have `BYPASSRLS` privilege
+- ✅ **Fix Attempt 1**: Updated `.env` to use `christophertregaskis` (superuser) as `BOOTSTRAP_DB_USER`
+- ✅ **Root Cause 2**: FORCE ROW LEVEL SECURITY enabled (applies even to superusers)
+- ✅ **Fix Attempt 2**: Manual FORCE RLS disable before seeding
+- ✅ **Root Cause 3**: `SET LOCAL row_security = off` used pool client instead of transaction connection
+- ✅ **Final Fix**: Changed all seed functions to use `db.execute(sql`SET LOCAL row_security = off`)` for correct transaction context
+
+**Problem 4: Foreign Key Constraint Violations**
+
+- ✅ **Error**: `Key (customer_id)=(b2c3d4e5-f6a7-8901-bcde-f12345678901) is not present in table "customers"`
+- ✅ **Root Cause**: Seed config had incorrect customer IDs - test users referenced non-existent customer
+- ✅ **Fix**: Updated `testCustomerAdminUser` and `testCustomerProgramUser` in `db-seed.local.dev.json`
+  - Changed from: `b2c3d4e5-f6a7-8901-bcde-f12345678901` (doesn't exist)
+  - Changed to: `407d0ac2-bce3-440f-a34e-d7f500a41521` (correct customer ID)
+
+**Problem 5: Invalid Enum Value 'program_user'**
+
+- ✅ **Error**: `invalid input value for enum user_role: "program_user"`
+- ✅ **Root Cause**: Migration `0003_consolidate_user_roles.sql` was created manually (not via drizzle-kit)
+- ✅ **Diagnosis**:
+  - Migration lacked companion `meta/0003_snapshot.json` file
+  - Drizzle never applied migration (only 3 migrations in database, should be 4)
+  - Enum missing `program_user` value: `system_admin`, `customer_owner`, `customer_admin`, `customer_user`, `individual_user`
+- ✅ **Fix**:
+  - Deleted manual migration file
+  - Regenerated proper migration with `pnpm drizzle-kit generate`
+  - Created `0003_jazzy_patch.sql` with proper snapshot JSON
+  - Migration properly recreates enum with `program_user` included
+
+**Problem 6: FORCE RLS Reliability for New Developers**
+
+- ✅ **Issue**: After complete database drop/recreate, seed still failed with FORCE RLS error
+- ✅ **Root Cause**: Migration script automatically enables FORCE RLS, but seed script didn't handle it
+- ✅ **User Concern**: "This leads me to believe, even if a new dev comes on the project, they may have issues with setting up db too?"
+- ✅ **Solution**: Automated FORCE RLS management in seed orchestrator
+
+**Automated FORCE RLS Management Implementation**:
+
+- ✅ **Updated `packages/database/seed/index.ts`**:
+  - Added automatic FORCE RLS disable at start of seeding
+  - All seed operations run with RLS bypass
+  - Re-enable FORCE RLS in finally block (ensures security even if seeding fails)
+  - Clear terminal logging for each step
+  - Error handling with warnings if re-enable fails
+
+- ✅ **Seed Operations Expanded** (9 total steps):
+  1. Platform tenant (FFP Platform)
+  2. Super admin user - Cognito (system_admin role)
+  3. Super admin user - Database
+  4. Test customer tenant (Sunshine Care Home - business type)
+  5. Test customer (Sunshine Care Home customer record)
+  6. Test customer admin - Cognito (customer_admin role)
+  7. Test customer admin - Database
+  8. Test program user - Cognito (program_user role)
+  9. Test program user - Database
+
+**Fresh Database Verification**:
+
+Successfully tested complete workflow:
+1. Drop database: `psql -c "DROP DATABASE IF EXISTS ffp_dev;"`
+2. Create database: `psql -c "CREATE DATABASE ffp_dev;"`
+3. Grant permissions: `GRANT ALL PRIVILEGES`, `GRANT ALL ON SCHEMA`, `ALTER DATABASE OWNER`
+4. Run migrations: `pnpm db:migrate`
+5. Run seeds: `pnpm seed:db` (now fully automated!)
+6. Run tests: `pnpm test` (all 68 database tests passed)
+7. Verify idempotency: `pnpm db:migrate` (no-op as expected)
+
+**User Confirmation**: "We have success!!!!"
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ ESLint: Zero warnings
+- ✅ Tests: All 68 database tests passing
+- ✅ Migration idempotency: Verified with second migration run
+- ✅ Seed reliability: Works on fresh database without manual intervention
+- ✅ Multi-tenant security: FORCE RLS automatically re-enabled after seeding
+- ✅ Data integrity: Foreign key constraints properly configured
+- ✅ Enum consistency: program_user role properly added to database
+- ✅ Documentation: README.md updated with simplified workflow
+- ✅ British English: Consistent spelling throughout (organised, optimised)
+
+**Files Created** (5 new files):
+
+1. `packages/database/seed/seedTestTenant.ts` - Seeds test customer tenant (Sunshine Care Home)
+2. `packages/database/seed/seedTestCustomer.ts` - Seeds test customer record
+3. `packages/database/seed/seedTestUserCognito.ts` - Generic Cognito user seeding (reusable)
+4. `packages/database/seed/seedTestUserDatabase.ts` - Generic database user seeding (reusable)
+5. `packages/database/migrations/0003_jazzy_patch.sql` - Proper Drizzle migration for user_role enum
+
+**Files Modified** (10 files):
+
+1. `.env` - Updated `BOOTSTRAP_DB_USER` to `christophertregaskis` (superuser for seeding)
+2. `packages/database/seed/config/db-seed.local.dev.json` - Fixed customer IDs for test users
+3. `packages/database/seed/types.ts` - Added test data types (TestCustomerTenantSeed, TestCustomerSeed, TestUserSeed, TestUserCognitoSeed)
+4. `packages/database/seed/seedPlatformTenant.ts` - Fixed RLS bypass (`db.execute(sql``)` instead of `db.$client.query()`)
+5. `packages/database/seed/seedSuperAdminDatabase.ts` - Fixed RLS bypass (same as above)
+6. `packages/database/seed/index.ts` - **CRITICAL AUTOMATION**: Added automated FORCE RLS management + 9-step seeding
+7. `packages/database/migrations/meta/0003_snapshot.json` - Created (required Drizzle metadata)
+8. `packages/database/migrations/meta/_journal.json` - Updated with new migration entry
+9. `packages/database/README.md` - Updated Fresh Database Setup section with automated workflow
+10. `packages/core/src/lib/constants.ts` - Referenced in seed fixes (no changes, just context)
+
+**Files Deleted** (1 file):
+
+1. `packages/database/migrations/0003_consolidate_user_roles.sql` - Manual migration without Drizzle metadata (never applied)
+
+**Architecture Decisions**:
+
+- **Automated FORCE RLS Management**: Seeds now handle FORCE RLS automatically (disable → seed → re-enable in finally block)
+  - **Why**: Eliminates manual intervention for new developers
+  - **Security**: Re-enable happens in finally block (even if seeding fails)
+  - **DX**: New developers can run `pnpm db:migrate && pnpm seed:db` without issues
+
+- **Transaction-Scoped RLS Bypass**: Use `db.execute(sql`SET LOCAL row_security = off`)` not `db.$client.query()`
+  - **Why**: `SET LOCAL` only affects current transaction connection
+  - **Security**: RLS bypass limited to seed transaction scope
+  - **Pattern**: All seed functions use same pattern for consistency
+
+- **Generic User Seeding Functions**: `seedTestUserCognito` and `seedTestUserDatabase` reusable for any role
+  - **Why**: Avoid code duplication for multiple test users
+  - **Future-proof**: Easy to add more test users (customer_owner, etc.)
+  - **Consistency**: Same pattern for all user types
+
+- **Migration Regeneration**: Always use `drizzle-kit generate` for migrations (never manual SQL files)
+  - **Why**: Drizzle requires both `.sql` file AND `meta/*_snapshot.json` for migration tracking
+  - **Lesson**: Manual migrations without metadata are invisible to Drizzle
+  - **Process**: Schema change → `pnpm db:generate` → commit both files
+
+- **Bootstrap User Pattern**: Separate privileged user (`christophertregaskis`) for migrations/seeding vs runtime (`root_user`)
+  - **Why**: Seeds require BYPASSRLS privilege (not safe for runtime)
+  - **Security**: Runtime user has limited privileges (can't bypass RLS)
+  - **Separation of Concerns**: Bootstrap operations vs application operations
+
+**Technical Details**:
+
+**FORCE RLS Behaviour**:
+```sql
+-- Development/Test: FORCE RLS enabled (enforces RLS even for superusers)
+ALTER TABLE tenants FORCE ROW LEVEL SECURITY;
+
+-- Temporarily disable for seeding
+ALTER TABLE tenants NO FORCE ROW LEVEL SECURITY;
+
+-- Seeds run with transaction-scoped RLS bypass
+SET LOCAL row_security = off;  -- Only affects current transaction
+
+-- Re-enable after seeding (in finally block)
+ALTER TABLE tenants FORCE ROW LEVEL SECURITY;
+```
+
+**PostgreSQL Enum Recreation Pattern**:
+```sql
+-- Can't modify enum directly, must recreate
+ALTER TABLE "users" ALTER COLUMN "role" SET DATA TYPE text;  -- Temporary text
+DROP TYPE "public"."user_role";  -- Drop old enum
+CREATE TYPE "public"."user_role" AS ENUM('system_admin', 'customer_owner', 'customer_admin', 'program_user');  -- Create new
+ALTER TABLE "users" ALTER COLUMN "role" SET DATA TYPE "public"."user_role" USING "role"::"public"."user_role";  -- Convert back
+```
+
+**Seed Data Structure**:
+```typescript
+// Test Customer Tenant (Sunshine Care Home)
+testCustomerTenant: {
+  id: "d82c67e9-b000-45cb-9105-c53ac48aec36",
+  type: "business",
+  name: "Sunshine Care Home",
+  // ... settings
+}
+
+// Test Customer (same name, links to tenant)
+testCustomer: {
+  id: "407d0ac2-bce3-440f-a34e-d7f500a41521",
+  tenantId: "d82c67e9-b000-45cb-9105-c53ac48aec36",
+  name: "Sunshine Care Home",
+  accountCode: "SUNSHI-V2E9",
+  // ... address, status
+}
+
+// Test Users (both reference same customer)
+testCustomerAdminUser: {
+  id: "bdbdd206-6dab-463a-bbb5-725414b0fcf5",
+  tenantId: "d82c67e9-b000-45cb-9105-c53ac48aec36",
+  customerId: "407d0ac2-bce3-440f-a34e-d7f500a41521",  // Fixed!
+  role: "customer_admin",
+  // ...
+}
+
+testCustomerProgramUser: {
+  id: "06c20204-90d1-70aa-3d3d-69843d65645a",
+  tenantId: "d82c67e9-b000-45cb-9105-c53ac48aec36",
+  customerId: "407d0ac2-bce3-440f-a34e-d7f500a41521",  // Fixed!
+  role: "program_user",
+  // ...
+}
+```
+
+**Lessons Learned**:
+
+1. **Drizzle migrations require metadata**: Manual `.sql` files without `meta/*_snapshot.json` are never applied
+2. **FORCE RLS needs automation**: Manual disable/re-enable not reliable for team onboarding
+3. **Transaction context matters**: `SET LOCAL` only works on transaction connection, not pool client
+4. **PostgreSQL enums are immutable**: Must drop and recreate to add/remove values
+5. **Foreign key order matters**: Must seed tenants → customers → users in correct order
+6. **Developer experience is critical**: Automated workflows prevent setup friction for new team members
+
+**Acceptance Criteria Met**:
+
+- ✅ Database seeding works reliably on fresh database
+- ✅ No manual intervention required (FORCE RLS handled automatically)
+- ✅ Test users populated (customer_admin and program_user roles)
+- ✅ All 68 database tests passing
+- ✅ Migration idempotency verified
+- ✅ Multi-tenant security maintained (FORCE RLS re-enabled after seeding)
+- ✅ Documentation updated with simplified workflow
+- ✅ New developers can follow Fresh Database Setup without issues
+
+**Next**: Continue with `feature/ad-hoc-side-menu` work (current branch context).
+
+---
+
 ### November 19, 2025 (Session 53 - FFP-97 & FFP-100 Complete - FFP-16 DONE!)
 
 **Status**: ✅ FFP-16 Web Login Interface COMPLETE (9/9 subtasks, 9 deferred)

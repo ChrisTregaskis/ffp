@@ -77,7 +77,7 @@ export const NavItem: React.FC<NavItemProps> = ({
     return (
       <ClickScale scale={0.97} duration={0.1}>
         {/* This is a custom button for navigation only, so not utilising Button.tsx */}
-        <button onClick={() => onClick} className={`w-full ${baseClasses}`} aria-label={label}>
+        <button onClick={onClick} className={`w-full ${baseClasses}`} aria-label={label}>
           {content}
         </button>
       </ClickScale>

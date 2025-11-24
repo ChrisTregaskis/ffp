@@ -768,7 +768,7 @@ export const createUserSchema = z.object({
   email: z.string().email(),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  role: z.enum(['customer_owner', 'customer_admin', 'customer_user']),
+  role: z.enum(['customer_owner', 'customer_admin', 'program_user']),
   customerId: z.string().uuid(),
   temporaryPassword: z.string().min(8),
 });
