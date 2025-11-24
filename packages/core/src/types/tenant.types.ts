@@ -1,15 +1,6 @@
-import { type TenantStatusType, type TenantTypeType } from '../lib';
-
-export interface Tenant {
-  id: string;
-  name: string;
-  type: TenantTypeType;
-  ownerUserId: string;
-  status: TenantStatusType;
-  settings: Record<string, unknown>;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export type TenantType = Tenant['type'];
-export type TenantStatus = Tenant['status'];
+/**
+ * Tenant types derived from Zod schemas
+ * Re-exports types from tenant.schema.ts to maintain schema-first architecture
+ * This ensures runtime validation and compile-time types never drift apart
+ */
+export type { Tenant, TenantType } from '../schemas/tenant.schema';

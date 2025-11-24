@@ -66,7 +66,7 @@ export const NavItem: React.FC<NavItemProps> = ({
 
   // Content wrapper with tooltip support
   const content = (
-    <div className="flex items-centre gap-3">
+    <div className="flex items-center gap-3">
       {iconElement}
       {labelElement}
     </div>

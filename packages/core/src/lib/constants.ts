@@ -1,8 +1,6 @@
 import { customerStatusSchema } from '../schemas/customer.schema';
-import { tenantTypeSchema, type TenantType } from '../schemas/tenant.schema';
-import { userRoleSchema, type UserRole } from '../schemas/user.schema';
-
-import type { CustomerStatus } from '../schemas/customer.schema';
+import { tenantTypeSchema } from '../schemas/tenant.schema';
+import { userRoleSchema } from '../schemas/user.schema';
 
 export const APP_NAME = 'FFP - Fitness & Physiotherapy Platform';
 export const APP_VERSION = '0.0.1';
@@ -15,22 +13,11 @@ export const APP_VERSION = '0.0.1';
  * to all tenants via RLS policy bypass.
  *
  * Note: This is a reserved tenant ID and should never be used for
- * regular customer tenants.
+ * regular customer tenants!
  */
 export const PLATFORM_TENANT_ID = 'platform';
 
-/**
- * Validation regex patterns used across the application.
- *
- * Centralised constants to ensure consistency and maintainability.
- */
-
-/**
- * Email validation pattern.
- *
- * Matches standard email format: name@domain.tld
- * Case-insensitive matching.
- */
+// Email validation pattern.
 export const EMAIL_PATTERN = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
 /**
@@ -76,9 +63,6 @@ export const COGNITO_CUSTOM_ATTRIBUTES = {
  * Helper function to convert Zod enum values to uppercase constant object
  *
  * Transforms: { value: 'value' } => { VALUE: 'value' }
- *
- * @param enumObj - Zod enum object with lowercase keys
- * @returns Object with uppercase keys and original values
  */
 function createUppercaseConstants<T extends Record<string, string>>(
   enumObj: T
@@ -91,43 +75,14 @@ function createUppercaseConstants<T extends Record<string, string>>(
 }
 
 /**
- * User role constants - Derived from Zod schema (single source of truth)
+ * User role, Tenant type and Customer status constants - Derived from Zod schema (single source of truth)
  *
- * These constants are automatically derived from userRoleSchema in ../schemas/user.schema.ts
- * This ensures they always stay in sync.
+ * These constants are automatically derived from relevant schema, ie: userRoleSchema in ../schemas/user.schema.ts
+ * Aim is to make it easier to stay in sync.
  *
  * Use these constants for programmatic comparisons (e.g., if (role === USER_ROLES.SYSTEM_ADMIN))
- * For typing, import UserRole type from @ffp/core schemas
+ * For typing, import relevant type ie: UserRole type from @ffp/core schemas
  */
 export const USER_ROLES = createUppercaseConstants(userRoleSchema.enum);
-
-/**
- * Tenant type constants - Derived from Zod schema (single source of truth)
- *
- * These constants are automatically derived from tenantTypeSchema in ../schemas/tenant.schema.ts
- * This ensures they always stay in sync.
- *
- * Use these constants for programmatic comparisons (e.g., if (type === TENANT_TYPES.BUSINESS))
- * For typing, import TenantType type from @ffp/core schemas
-
- */
 export const TENANT_TYPES = createUppercaseConstants(tenantTypeSchema.enum);
-
-/**
- * Customer status constants - Derived from Zod schema (single source of truth)
- *
- * These constants are automatically derived from customerStatusSchema in ../schemas/customer.schema.ts
- * This ensures they always stay in sync.
- *
- * Use these constants for programmatic comparisons (e.g., if (status === CUSTOMER_STATUS.ACTIVE))
- * For typing, import CustomerStatus type from @ffp/core schemas
-
- */
 export const CUSTOMER_STATUS = createUppercaseConstants(customerStatusSchema.enum);
-
-/**
- * These are used by the types/*.types.ts files
- */
-export type UserRoleType = UserRole;
-export type TenantTypeType = TenantType;
-export type TenantStatusType = CustomerStatus;

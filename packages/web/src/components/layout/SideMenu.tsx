@@ -47,7 +47,7 @@ export const SideMenu: React.FC<SideMenuProps> = ({ handleLogout }) => {
     >
       {/* Header Section */}
       <div
-        className="flex items-centre justify-between border-b border-white p-6"
+        className="flex items-center justify-between border-b border-white p-6"
         onMouseEnter={() => {
           setIsHeaderHovered(true);
         }}
@@ -57,7 +57,7 @@ export const SideMenu: React.FC<SideMenuProps> = ({ handleLogout }) => {
       >
         {/* Logo and App Name */}
         <div
-          className="flex cursor-pointer items-centre gap-3"
+          className="flex cursor-pointer items-center gap-3"
           onClick={() => {
             void navigate(routes[RouteKey.HOME].path);
           }}
