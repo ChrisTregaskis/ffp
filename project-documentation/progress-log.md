@@ -8,6 +8,202 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### November 24, 2025 (Session 55 - Navigation & RBAC Implementation)
+
+**Status**: ✅ Navigation System Complete - Role-Based Access Control Implemented
+
+**Branch**: `feature/ad-hoc-side-menu`
+
+**Completed Work**:
+
+**Navigation System Implementation** (~8 hours actual):
+
+This session delivered a comprehensive navigation and role-based access control (RBAC) system for the FFP platform, establishing the foundation for all authenticated features with proper multi-tenant access control.
+
+**User Role Consolidation**:
+
+- ✅ **Database Migration**: Created migration `0003_jazzy_patch.sql` to consolidate user roles
+  - Dropped existing `user_role` enum (individual_user, customer_user)
+  - Created new `user_role` enum (program_user, customer_owner, customer_admin, system_admin)
+  - Simplified user management with single program user role
+- ✅ **Seed Data Updates**: Updated all seed files to use new role structure
+  - Test customer admin user with `customer_admin` role
+  - Test program user with `program_user` role
+  - Updated platform tenant and super admin seeds
+- ✅ **Type & Constant Updates**: Updated all TypeScript types and constants across packages
+- ✅ **Test Updates**: Updated 27 test files to use new role structure
+
+**Desktop Navigation (SideMenu)**:
+
+- ✅ **Collapsible Sidebar**: Implemented desktop sidebar with smooth collapse/expand (256px ↔ 80px)
+  - SlideWidth animation component for smooth width transitions
+  - Expand/collapse button with hover effects
+  - Logo and app name in header (name hides when collapsed)
+- ✅ **Role-Based Navigation**: Navigation items filtered by user role
+  - Program users: Home, Today's Workout, Programme Overview, Progress
+  - Customer admins: Dashboard, User Management, Billing, Support
+  - System admins: Customers, Users, Assessments, Templates, Videos
+- ✅ **Active Route Highlighting**: Current route highlighted with blue background
+- ✅ **Footer Section**: Account Settings and Logout in footer area
+- ✅ **Tooltips**: Label tooltips appear on hover when sidebar collapsed
+
+**Mobile Navigation (MobileMenu)**:
+
+- ✅ **Hamburger Menu**: Implemented responsive mobile menu with slide-in drawer
+  - Fixed header with logo and hamburger button
+  - Slide-in drawer from right (256px width)
+  - Backdrop overlay with click-to-close
+- ✅ **Scroll-Aware Header**: Mobile header hides on scroll down, shows on scroll up
+  - SlideVertical animation component for smooth vertical transitions
+  - Uses `passive: true` on scroll listener to avoid jank
+- ✅ **Role-Based Navigation**: Same role-based filtering as desktop
+- ✅ **Responsive Design**: Hamburger menu only shown on screens < 1024px
+
+**Role-Based Access Control (RBAC)**:
+
+- ✅ **RBAC Utilities**: Created `lib/rbac.ts` with permission checking functions
+  - `hasRole()` - Validates user role against allowed roles
+  - `getRoleHomePath()` - Returns home page path for user role
+  - `logUnauthorisedAccess()` - Logs security events for monitoring
+- ✅ **Protected Route Updates**: Enhanced ProtectedRoute with role validation
+  - Checks `allowedRoles` array on route configuration
+  - Redirects unauthorised users to `/unauthorised` page (403)
+  - Logs unauthorised access attempts for security monitoring
+  - Shows loading spinner during auth check
+- ✅ **Root URL Routing**: Root URL (`/`) redirects to role-appropriate home page
+  - Program users → `/home`
+  - Customer admins → `/customer/dashboard`
+  - System admins → `/admin/customers`
+- ✅ **Unauthorised Page**: Created 403 error page with user-friendly message
+
+**Navigation Configuration**:
+
+- ✅ **Centralised Config**: Created `config/navigation.ts` with role-based navigation items
+  - `NavItem` interface for type-safe navigation structure
+  - Separate navigation arrays per role (programUserNavItems, customerAdminNavItems, systemAdminNavItems)
+  - `getNavigationItems()` function filters by role and adds logout item
+- ✅ **Type-Safe Route Keys**: Extended RouteKey enum with new routes
+  - Program user routes: TODAY_WORKOUT, PROGRAMME_OVERVIEW, PROGRESS
+  - Customer admin routes: CUSTOMER_DASHBOARD, USER_MANAGEMENT, BILLING_USAGE, SUPPORT_HELP
+  - System admin routes: ADMIN_CUSTOMERS, ADMIN_USERS, ADMIN_ASSESSMENTS, ADMIN_TEMPLATES, ADMIN_VIDEOS
+- ✅ **Route Configuration**: Updated routes with `allowedRoles` arrays for RBAC
+
+**Coming Soon Pages**:
+
+- ✅ **Reusable Component**: Created `ComingSoonPage` component for placeholder routes
+  - Accepts title, description, and icon props
+  - Displays "Coming Soon" message with clock icon
+  - Used for all future feature routes (Today's Workout, Progress, etc.)
+- ✅ **Placeholder Routes**: Created 4 coming soon pages for program user features
+  - TodayWorkoutPage
+  - ProgrammeOverviewPage
+  - ProgressPage
+  - AccountSettingsPage
+
+**Enhanced Motion Library**:
+
+- ✅ **Backdrop Component**: Overlay backdrop for modals and drawers (47 lines)
+  - Configurable opacity and z-index
+  - Fade in/out animation with AnimatePresence
+  - Click handler for close-on-backdrop-click
+- ✅ **ScaleFade Component**: Scale and fade animation for elements (42 lines)
+  - Configurable scale range and duration
+  - Used for subtle UI interactions
+- ✅ **SlideDrawer Component**: Slide-in drawer from any direction (59 lines)
+  - Supports left, right, top, bottom positions
+  - Configurable duration and easing
+  - Used for mobile menu drawer
+- ✅ **SlideVertical Component**: Vertical slide animation (45 lines)
+  - Configurable slide distance and direction
+  - Used for scroll-aware mobile header
+  - Supports forwardedRef for measuring element height
+- ✅ **SlideWidth Component**: Width animation for sidebar (59 lines)
+  - Smooth collapse/expand animation
+  - Configurable expanded and collapsed widths
+  - Easing function for natural motion
+
+**Sidebar State Management**:
+
+- ✅ **SidebarContext**: Created React context for sidebar collapse state (65 lines)
+  - `isCollapsed` state (defaults to false)
+  - `toggleCollapsed()` function to toggle state
+  - `SidebarProvider` wrapper component
+- ✅ **Context Integration**: Integrated SidebarContext into AppLayout
+  - SideMenu consumes context for collapse state
+  - Collapse state shared across components
+
+**Tooltip Component**:
+
+- ✅ **Tooltip Component**: Created tooltip component for collapsed sidebar (90 lines)
+  - Shows on hover with configurable position
+  - Dark background with white text
+  - Arrow pointing to target element
+  - Used for showing labels when sidebar collapsed
+
+**Component Updates**:
+
+- ✅ **AppLayout Updates**: Integrated SideMenu and MobileMenu into layout (112 lines)
+  - SideMenu visible on desktop (>= 1024px)
+  - MobileMenu visible on mobile/tablet (< 1024px)
+  - Main content area adjusts based on sidebar width
+- ✅ **NavItem Component**: Created reusable navigation item component (95 lines)
+  - Link with icon and label
+  - Active route highlighting
+  - Supports onClick handlers for actions like logout
+  - Tooltip integration for collapsed sidebar
+- ✅ **Minor Component Updates**: Updated Card, Text, Title, Icon with minor fixes
+
+**Icon Updates**:
+
+- ✅ **New Icons**: Added navigation icons to IcoMoon font
+  - LeftPanelClose, LeftPanelOpen (sidebar controls)
+  - Menu, Close (mobile menu controls)
+  - Updated icon types and metadata
+- ✅ **Icon Font File**: Updated `icomoon.ttf` (17.4KB → 17.7KB)
+
+**Configuration Updates**:
+
+- ✅ **TypeScript Paths**: Updated path aliases for navigation config
+- ✅ **Vite Aliases**: Added alias for navigation config
+- ✅ **Custom Scrollbar**: Added webkit scrollbar styles to index.css
+
+**Testing & Quality**:
+
+- ✅ **All Tests Passing**: 185/185 tests passing across monorepo
+- ✅ **TypeScript Strict Mode**: Zero errors, all types properly defined
+- ✅ **ESLint**: Zero warnings with `--max-warnings 0`
+- ✅ **Manual Testing**: Tested on Chrome, Firefox, Safari, mobile devices
+- ✅ **Accessibility**: Tested keyboard navigation and screen readers
+
+**Documentation Updates**:
+
+- ✅ **Review Context**: Created comprehensive review-context.md for branch review
+- ✅ **Architecture**: Updated user role structure in architecture.md
+- ✅ **Coding Standards**: Updated with navigation patterns
+- ✅ **Database Schema**: Updated user role enum documentation
+- ✅ **Testing Strategy**: Updated role references
+- ✅ **Database README**: Updated with new seed data structure
+
+**Key Decisions**:
+
+1. **Role Consolidation**: Merged individual_user and customer_user into single program_user role
+   - **Rationale**: Simplified user management, single role for all workout programme users
+   - **Impact**: Cleaner data model, easier RBAC configuration
+2. **Navigation Config Location**: Navigation config in web package, not core
+   - **Rationale**: Navigation is UI-specific, not business logic
+   - **Impact**: Clear separation of concerns, easier to modify UI without affecting backend
+3. **Sidebar Collapse State**: Sidebar state not persisted to localStorage
+   - **Rationale**: Minimal UX impact, simplifies implementation for Phase 1
+   - **Impact**: Sidebar resets to expanded on page reload
+4. **Coming Soon Pages**: Separate files for each placeholder route
+   - **Rationale**: Allows future customisation per route, clearer route structure
+   - **Impact**: More files but more flexible for future feature implementation
+5. **RBAC Logging**: Console logging only in Phase 1
+   - **Rationale**: Deferred CloudWatch/Sentry integration to monitoring story (FFP-14)
+   - **Impact**: Security events logged but not persisted or alerted
+
+---
+
 ### November 24, 2025 (Session 54 - Database Setup & Seeding Debugging)
 
 **Status**: ✅ Database Seeding Complete - Automated FORCE RLS Management Implemented
@@ -96,6 +292,7 @@ This session involved comprehensive debugging of database connectivity, Row-Leve
 **Fresh Database Verification**:
 
 Successfully tested complete workflow:
+
 1. Drop database: `psql -c "DROP DATABASE IF EXISTS ffp_dev;"`
 2. Create database: `psql -c "CREATE DATABASE ffp_dev;"`
 3. Grant permissions: `GRANT ALL PRIVILEGES`, `GRANT ALL ON SCHEMA`, `ALTER DATABASE OWNER`
@@ -174,6 +371,7 @@ Successfully tested complete workflow:
 **Technical Details**:
 
 **FORCE RLS Behaviour**:
+
 ```sql
 -- Development/Test: FORCE RLS enabled (enforces RLS even for superusers)
 ALTER TABLE tenants FORCE ROW LEVEL SECURITY;
@@ -189,6 +387,7 @@ ALTER TABLE tenants FORCE ROW LEVEL SECURITY;
 ```
 
 **PostgreSQL Enum Recreation Pattern**:
+
 ```sql
 -- Can't modify enum directly, must recreate
 ALTER TABLE "users" ALTER COLUMN "role" SET DATA TYPE text;  -- Temporary text
@@ -198,6 +397,7 @@ ALTER TABLE "users" ALTER COLUMN "role" SET DATA TYPE "public"."user_role" USING
 ```
 
 **Seed Data Structure**:
+
 ```typescript
 // Test Customer Tenant (Sunshine Care Home)
 testCustomerTenant: {
