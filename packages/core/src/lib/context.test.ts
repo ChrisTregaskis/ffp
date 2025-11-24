@@ -902,7 +902,7 @@ describe('getActorDisplayName', () => {
   });
 
   it('should format display name correctly for different user roles', () => {
-    const roles = ['system_admin', 'customer_admin', 'customer_user', 'individual_user'];
+    const roles = ['system_admin', 'customer_admin', 'program_user'];
 
     roles.forEach((role) => {
       const userActor: UserActor = {

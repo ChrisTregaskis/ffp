@@ -301,8 +301,9 @@ pnpm seed:db test
 **Important:**
 
 - Seeds are **NOT idempotent** - they will fail if data already exists
-- Always run on a fresh database (see workflow below)
-- Seeds bypass RLS (requires BOOTSTRAP_DB_USER with BYPASSRLS privilege)
+- Always run on a fresh database (see Fresh Database Setup section)
+- Seeds automatically manage FORCE RLS (disables during seeding, re-enables after)
+- Requires `BOOTSTRAP_DB_USER` with appropriate permissions (superuser or database owner)
 
 ### Seed Architecture
 
@@ -318,30 +319,41 @@ Individual seed functions are organised in separate files:
 3. Create seed function file (e.g., `seedSampleBusinesses.ts`)
 4. Import and call from `seed/index.ts`
 
-## RLS Migration Test - Fresh Database
+## Fresh Database Setup (Development)
 
-Can check super users for local db running `psql -h localhost -U root_user -d postgres -l`
+Test database migrations and seeding on a clean database:
+
+**Find your PostgreSQL superuser:**
+
+```bash
+psql -h localhost -U root_user -d postgres -c "\du"
+```
+
+**Setup workflow:**
 
 1. Drop and recreate database:
 
    ```bash
    psql -h localhost -U [replace-with-super-user] -d postgres -c "DROP DATABASE IF EXISTS ffp_dev;"
    psql -h localhost -U [replace-with-super-user] -d postgres -c "CREATE DATABASE ffp_dev;"
-   psql -h localhost -U [replace-with-super-user] -d ffp_dev -c "GRANT CREATE ON DATABASE ffp_dev TO root_user;"
+   psql -h localhost -U [replace-with-super-user] -d ffp_dev -c "GRANT ALL PRIVILEGES ON DATABASE ffp_dev TO root_user;"
    psql -h localhost -U [replace-with-super-user] -d ffp_dev -c "GRANT ALL ON SCHEMA public TO root_user;"
+   psql -h localhost -U [replace-with-super-user] -d ffp_dev -c "ALTER DATABASE ffp_dev OWNER TO root_user;"
    ```
 
-2. Run migrations:
+2. Run migrations (creates tables, enums, RLS policies):
 
    ```bash
    pnpm db:migrate
    ```
 
-3. Seed database:
+3. Seed database (automatically handles FORCE RLS):
 
    ```bash
    pnpm seed:db
    ```
+
+   **Note**: Seeds automatically disable FORCE RLS during seeding and re-enable it afterwards for security.
 
 4. Run RLS tests:
 
@@ -349,7 +361,7 @@ Can check super users for local db running `psql -h localhost -U root_user -d po
    pnpm test
    ```
 
-5. Verify idempotency (run migrations again):
+5. Verify idempotency (run migrations again - should be no-op):
    ```bash
    pnpm db:migrate
    ```

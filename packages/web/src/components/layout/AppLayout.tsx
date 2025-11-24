@@ -1,57 +1,77 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
-import { Title, Text } from '@web/components/text';
-import { routes, RouteKey } from '@web/pages/routes';
+import { getNavigationItems } from '@web/config/navigation';
+import { useAuth } from '@web/contexts/AuthContext';
+import { SidebarProvider, useSidebar } from '@web/contexts/SidebarContext';
+import { createLogger } from '@web/lib/logger';
+import { RouteKey, routes } from '@web/pages/routes';
 
+import { MobileMenu } from './MobileMenu';
+import { SideMenu } from './SideMenu';
+
+import type { MobileMenuNavItem } from './MobileMenu';
 import type { PropsWithChildren } from 'react';
+
+const logger = createLogger('AppLayoutContent');
+
+/**
+ * Internal layout component that uses sidebar context
+ * Separated to allow proper context consumption
+ */
+const AppLayoutContent: React.FC<PropsWithChildren> = ({ children }) => {
+  const { isCollapsed } = useSidebar();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // Hanlder for triggering logout. Asyncronous but we don't need wait for it to finish.
+  const triggerLogout = (): void => {
+    logout()
+      .then(() => {
+        void navigate(routes[RouteKey.LOGIN].path);
+      })
+      .catch((error: unknown) => {
+        logger.error('Failure to logout or navigate', {
+          error: error && typeof error === 'object' ? error : String(error),
+        });
+      });
+  };
+
+  // Get navigation items for mobile menu
+  const navItems: MobileMenuNavItem[] = user
+    ? getNavigationItems(user.role, triggerLogout).map((item) => ({
+        key: item.key,
+        label: item.label,
+        icon: item.icon,
+        path: item.path,
+        section: item.section,
+        onClick: item.onClick,
+      }))
+    : [];
+
+  // Calculate main content margin based on sidebar state
+  const mainContentMargin = isCollapsed ? 'lg:ml-20' : 'lg:ml-64';
+
+  return (
+    <div className="min-h-screen bg-white lg:flex">
+      {/* Desktop Sidebar Navigation */}
+      <SideMenu handleLogout={triggerLogout} />
+
+      {/* Mobile Hamburger Menu for smaller screens */}
+      <MobileMenu navItems={navItems} />
+
+      {/* Main content area - adjusts margin based on sidebar state */}
+      <main className={`flex-1 transition-all duration-300 ${mainContentMargin}`}>{children}</main>
+    </div>
+  );
+};
 
 /**
  * Main application layout wrapper for protected routes.
- *
- * Provides consistent layout structure with sidebar navigation
- * for protected pages. Does not wrap public pages (e.g., login)
- * or fullscreen pages (e.g., assessments with `excludeLayout: true`).
- * TODO: Update to align with prototype designs
- * TODO: Utilise hook to dynamically generate routes available based on user role
  */
 export const AppLayout: React.FC<PropsWithChildren> = ({ children }) => {
   return (
-    <div className="flex min-h-screen bg-muted">
-      {/* Sidebar navigation (placeholder) */}
-      <aside className="w-64 bg-white shadow-md">
-        <div className="flex h-full flex-col">
-          {/* App branding */}
-          <div className="border-b border-border p-6">
-            <Title as="h1" colour="foreground">
-              Fit For Purpose
-            </Title>
-          </div>
-
-          {/* Navigation items */}
-          <nav className="flex-1 p-4">
-            <div className="space-y-2">
-              <Link
-                to={routes[RouteKey.HOME].path}
-                className="block rounded-md bg-primary/10 px-4 py-2"
-              >
-                <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'primary' }}>
-                  Dashboard
-                </Text>
-              </Link>
-            </div>
-          </nav>
-
-          {/* Footer placeholder */}
-          <div className="border-t border-border p-4">
-            <Text as="p" styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
-              FFP v0.1.0 (Sprint 1)
-            </Text>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main content area */}
-      <main className="flex-1">{children}</main>
-    </div>
+    <SidebarProvider>
+      <AppLayoutContent>{children}</AppLayoutContent>
+    </SidebarProvider>
   );
 };

@@ -135,13 +135,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
     }
   }, []);
 
-  /**
-   * Authenticate user with email and password.
-   *
-   * @param email - User's email address
-   * @param password - User's password
-   * @throws Error if authentication fails
-   */
   const handleLogin = useCallback(
     async (email: string, password: string): Promise<void> => {
       try {
@@ -163,9 +156,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
     [checkAuth]
   );
 
-  /**
-   * End the current user session and clear auth state.
-   */
   const handleLogout = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
@@ -196,23 +186,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
 
 /**
  * Custom hook to access authentication context.
- *
  * Must be used within an AuthProvider component.
- *
- * @returns Authentication context with user state and auth operations
- * @throws Error if used outside of AuthProvider
- *
- * @example
- * ```tsx
- * function MyComponent() {
- *   const { user, loading, login, logout } = useAuth();
- *
- *   if (loading) return <div>Loading...</div>;
- *   if (!user) return <div>Please log in</div>;
- *
- *   return <div>Welcome, {user.email}</div>;
- * }
- * ```
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = (): AuthContextType => {

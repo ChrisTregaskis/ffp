@@ -65,8 +65,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorB
               styleProps={{ size: 'sm', colour: 'muted-foreground' }}
               className="text-center"
             >
-              We&rsquo;re sorry, but an unexpected error occurred. Please try reloading the page or
-              returning to the home screen.
+              {`We're sorry, but an unexpected error occurred. Please try reloading the page or returning to the home screen.`}
             </Text>
           </div>
 

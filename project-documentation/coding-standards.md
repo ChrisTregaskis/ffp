@@ -58,8 +58,7 @@ export const userRoleSchema = z.enum([
   'system_admin',
   'customer_owner',
   'customer_admin',
-  'customer_user',
-  'individual_user',
+  'program_user',
 ]);
 
 // Type automatically inferred from schema
@@ -86,8 +85,7 @@ export const USER_ROLES = {
   SYSTEM_ADMIN: 'system_admin',
   CUSTOMER_OWNER: 'customer_owner',
   CUSTOMER_ADMIN: 'customer_admin',
-  CUSTOMER_USER: 'customer_user',
-  INDIVIDUAL_USER: 'individual_user',
+  PROGRAM_USER: 'program_user',
 } as const;
 
 // Usage:
@@ -208,8 +206,7 @@ export const userRoleEnum = pgEnum('user_role', [
   'system_admin',
   'customer_owner',
   'customer_admin',
-  'customer_user',
-  'individual_user',
+  'program_user',
 ]);
 
 // ✅ Good: Add indexes in schema definition
@@ -356,7 +353,7 @@ const [newUser] = await db
     email: email,
     firstName: firstName,
     lastName: lastName,
-    role: 'individual_user',
+    role: 'program_user',
   })
   .returning();
 
@@ -455,8 +452,7 @@ export const userRoleSchema = z.enum([
   'system_admin',
   'customer_owner',
   'customer_admin',
-  'customer_user',
-  'individual_user',
+  'program_user',
 ]);
 
 export type UserRole = z.infer<typeof userRoleSchema>;
@@ -1110,8 +1106,7 @@ export const userRoleSchema = z.enum([
   'system_admin',
   'customer_owner',
   'customer_admin',
-  'customer_user',
-  'individual_user',
+  'program_user',
 ]);
 
 /**

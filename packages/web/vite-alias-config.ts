@@ -13,12 +13,14 @@ export const createWebAliasConfig = (packageRoot: string): Record<string, string
     '@web/pages': path.resolve(packageRoot, 'src/pages'),
     '@web/assets': path.resolve(packageRoot, 'src/assets'),
     '@web/schemas': path.resolve(packageRoot, 'src/schemas'),
+    '@web/config': path.resolve(packageRoot, 'src/config'),
 
     // Future-ready aliases for common directories
     '@web/utils': path.resolve(packageRoot, 'src/utils'),
     '@web/types': path.resolve(packageRoot, 'src/types'),
     '@web/services': path.resolve(packageRoot, 'src/services'),
     '@web/lib': path.resolve(packageRoot, 'src/lib'),
+    '@web/constants': path.resolve(packageRoot, 'src/constants'),
   };
 };
 

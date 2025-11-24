@@ -943,7 +943,7 @@ export const testCustomer = {
 };
 
 export const testUsers = [
-  // Individual user (separate tenant, no customer)
+  // Programme User (Individual) - separate tenant, no customer
   {
     id: testIndividualUserId,
     tenant_id: randomUUID(), // Individual users get their own tenant
@@ -951,7 +951,7 @@ export const testUsers = [
     cognito_sub: 'cognito-sub-individual-123',
     first_name: 'John',
     last_name: 'Doe',
-    role: 'individual_user',
+    role: 'program_user',
     customer_id: null, // Individual users have no customer
     profile_image_url: null,
     phone: '+44 7700 900123',
@@ -977,7 +977,7 @@ export const testUsers = [
     updated_at: new Date(),
   },
 
-  // Customer user (patient)
+  // Programme User (Customer) - patient at clinic
   {
     id: testCustomerUserId,
     tenant_id: testTenantId,
@@ -985,7 +985,7 @@ export const testUsers = [
     cognito_sub: 'cognito-sub-patient-123',
     first_name: 'Michael',
     last_name: 'Smith',
-    role: 'customer_user',
+    role: 'program_user',
     customer_id: testCustomerId,
     profile_image_url: null,
     phone: '+44 7700 900789',

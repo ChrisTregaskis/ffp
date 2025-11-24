@@ -183,7 +183,7 @@ export const IconComponentsPage = (): JSX.Element => {
           </div>
           <div>
             <Text as="p" className="mb-1" styleProps={{ weight: 'medium' }}>
-              Use in your component:
+              Use in FFP component:
             </Text>
             <code className="block rounded bg-muted p-2 text-xs">
               {`<Icon name={Icons.ARROW_RIGHT} styleProps={{ size: 'md', colour: 'blue' }} />`}

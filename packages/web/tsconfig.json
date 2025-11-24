@@ -22,7 +22,9 @@
       "@web/services/*": ["./services/*"],
       "@web/utils/*": ["./utils/*"],
       "@web/types/*": ["./types/*"],
-      "@web/lib/*": ["./lib/*"]
+      "@web/lib/*": ["./lib/*"],
+      "@web/config/*": ["./config/*"],
+      "@web/constants/*": ["./constants/*"]
     }
   },
   "include": ["src/**/*"],

@@ -23,6 +23,10 @@ import { terminalPrefix, TerminalPrefix } from '../src/lib/terminal-logger.js';
 import { seedPlatformTenant } from './seedPlatformTenant.js';
 import { seedSuperAdminCognito } from './seedSuperAdminCognito.js';
 import { seedSuperAdminDatabase } from './seedSuperAdminDatabase.js';
+import { seedTestTenant } from './seedTestTenant.js';
+import { seedTestCustomer } from './seedTestCustomer.js';
+import { seedTestUserCognito } from './seedTestUserCognito.js';
+import { seedTestUserDatabase } from './seedTestUserDatabase.js';
 import type { SeedConfig } from './types.js';
 
 // Get current file directory for resolving config paths
@@ -96,11 +100,6 @@ const createDatabaseConnection = (): NodePgDatabase<typeof schema> & { $client: 
 /**
  * Seed database with data from configuration
  *
- * Executes seed operations in order:
- * 1. Platform tenant (database)
- * 2. Super admin user (Cognito)
- * 3. Super admin user (database)
- *
  * @param environment - Environment name (dev, staging, test)
  * @throws {Error} If seeding fails
  *
@@ -123,6 +122,15 @@ export const seedDatabase = async (environment: string = 'dev'): Promise<void> =
   const db = createDatabaseConnection();
 
   try {
+    // Temporarily disable FORCE RLS to allow seeding
+    // FORCE RLS applies even to superusers, so we need to disable it during seeding
+    console.log(`${terminalPrefix(TerminalPrefix.INFO)} Disabling FORCE RLS for seeding...\n`);
+    await db.$client.query(`
+      ALTER TABLE tenants NO FORCE ROW LEVEL SECURITY;
+      ALTER TABLE customers NO FORCE ROW LEVEL SECURITY;
+      ALTER TABLE users NO FORCE ROW LEVEL SECURITY;
+    `);
+
     // Seed 1: Platform tenant
     await db.transaction(async (tx) => {
       const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
@@ -140,15 +148,72 @@ export const seedDatabase = async (environment: string = 'dev'): Promise<void> =
       await seedSuperAdminDatabase(txWithClient, config.superAdminUser);
     });
 
-    // Future seed operations can be added here:
-    // await seedSampleBusinesses(db, config.sampleBusinesses);
-    // await seedSampleCustomers(db, config.sampleCustomers);
+    // Seed 4: Test customer tenant
+    await db.transaction(async (tx) => {
+      const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
+      txWithClient.$client = db.$client;
+      await seedTestTenant(txWithClient, config.testCustomerTenant);
+    });
+
+    // Seed 5: Test customer
+    await db.transaction(async (tx) => {
+      const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
+      txWithClient.$client = db.$client;
+      await seedTestCustomer(txWithClient, config.testCustomer);
+    });
+
+    // Seed 6: Test customer admin user (Cognito)
+    await seedTestUserCognito(
+      config.testCustomerAdminCognito,
+      config.testCustomerAdminUser,
+      config.testCustomerTenant
+    );
+
+    // Seed 7: Test customer admin user (Database)
+    await db.transaction(async (tx) => {
+      const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
+      txWithClient.$client = db.$client;
+      await seedTestUserDatabase(txWithClient, config.testCustomerAdminUser);
+    });
+
+    // Seed 8: Test program user (Cognito)
+    await seedTestUserCognito(
+      config.testCustomerProgramUserCognito,
+      config.testCustomerProgramUser,
+      config.testCustomerTenant
+    );
+
+    // Seed 9: Test program user (Database)
+    await db.transaction(async (tx) => {
+      const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
+      txWithClient.$client = db.$client;
+      await seedTestUserDatabase(txWithClient, config.testCustomerProgramUser);
+    });
 
     console.log(`\n${terminalPrefix(TerminalPrefix.SUCCESS)} Database seeding complete!\n`);
   } catch (error) {
     console.error(`\n${terminalPrefix(TerminalPrefix.ERROR)} Database seeding failed:`, error);
     throw error;
   } finally {
+    // Re-enable FORCE RLS for security
+    console.log(`${terminalPrefix(TerminalPrefix.INFO)} Re-enabling FORCE RLS...\n`);
+    try {
+      await db.$client.query(`
+        ALTER TABLE tenants FORCE ROW LEVEL SECURITY;
+        ALTER TABLE customers FORCE ROW LEVEL SECURITY;
+        ALTER TABLE users FORCE ROW LEVEL SECURITY;
+      `);
+      console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} FORCE RLS re-enabled\n`);
+    } catch (rlsError) {
+      console.error(
+        `${terminalPrefix(TerminalPrefix.ERROR)} Failed to re-enable FORCE RLS:`,
+        rlsError
+      );
+      console.error(
+        `${terminalPrefix(TerminalPrefix.WARNING)} You must manually re-enable FORCE RLS!\n`
+      );
+    }
+
     await db.$client.end();
   }
 };

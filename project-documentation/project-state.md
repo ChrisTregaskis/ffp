@@ -1,11 +1,11 @@
 # FFP - Project State
 
-**Last Updated**: November 19, 2025 - Session 53
+**Last Updated**: November 24, 2025 - Session 55
 **Current Phase**: Sprint 2 Execution - IN PROGRESS 🚀
 **Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
-**Current User Story Branch:** `feature/FFP-16-web-login-flow`
+**Current User Story Branch:** `feature/ad-hoc-side-menu` (READY FOR REVIEW)
 **Next User Story**: FFP-110 - Assessment Engine Epic Planning
-**Recently Completed**: FFP-16 - Web Login Interface (Complete - 9/10 subtasks, 2 deferred)
+**Recently Completed**: Navigation & RBAC Implementation (Session 55)
 
 ---
 
@@ -26,6 +26,76 @@
 - Completed: 6/10 stories (132.5/197 hours, 67%)
 - Carried Over: FFP-9 (completed in Sprint 2)
 - Deferred: FFP-14 (CloudWatch Monitoring)
+
+---
+
+## Recent Work: Navigation & RBAC Implementation
+
+**Status**: ✅ COMPLETE (Session 55 - November 24, 2025)
+**Branch**: `feature/ad-hoc-side-menu` (Ready for review)
+
+### Overview
+
+Comprehensive navigation and role-based access control (RBAC) system for the FFP platform, establishing the foundation for all authenticated features with proper multi-tenant access control.
+
+### Completed Features
+
+**User Role Consolidation**:
+
+- ✅ Database migration to consolidate `individual_user` and `customer_user` into `program_user`
+- ✅ Updated seed data with new role structure (9 seed operations)
+- ✅ Updated all TypeScript types and constants across packages
+- ✅ Updated 27 test files to use new role structure
+
+**Desktop Navigation (SideMenu)**:
+
+- ✅ Collapsible sidebar with smooth animations (256px ↔ 80px)
+- ✅ Role-based navigation filtering (program_user, customer_admin, system_admin)
+- ✅ Active route highlighting with blue background
+- ✅ Footer section with Account Settings and Logout
+- ✅ Tooltips for collapsed sidebar labels
+
+**Mobile Navigation (MobileMenu)**:
+
+- ✅ Responsive hamburger menu with slide-in drawer
+- ✅ Scroll-aware header (hides on scroll down, shows on scroll up)
+- ✅ Backdrop overlay with click-to-close
+- ✅ Same role-based filtering as desktop
+
+**Role-Based Access Control**:
+
+- ✅ RBAC utilities (`hasRole`, `getRoleHomePath`, `logUnauthorisedAccess`)
+- ✅ Protected route with role validation and unauthorised redirects
+- ✅ Root URL redirects to role-appropriate home page
+- ✅ 403 unauthorised access page
+
+**Coming Soon Pages**:
+
+- ✅ Reusable `ComingSoonPage` component for placeholder routes
+- ✅ 4 placeholder pages (Today's Workout, Programme Overview, Progress, Account Settings)
+
+**Enhanced Motion Library**:
+
+- ✅ `Backdrop` - Overlay backdrop for modals and drawers
+- ✅ `ScaleFade` - Scale and fade animation
+- ✅ `SlideDrawer` - Slide-in drawer from any direction
+- ✅ `SlideVertical` - Vertical slide animation
+- ✅ `SlideWidth` - Width animation for sidebar
+
+**Additional Components**:
+
+- ✅ `SidebarContext` - React context for sidebar collapse state
+- ✅ `Tooltip` - Tooltip component for collapsed sidebar
+- ✅ `NavItem` - Reusable navigation item component
+
+### Key Metrics
+
+- **Files Changed**: 73 files
+- **Lines Added**: ~3,385 lines
+- **Lines Removed**: ~376 lines
+- **New Components**: 10+ components (SideMenu, MobileMenu, NavItem, motion components)
+- **Database Migration**: 1 migration (user role consolidation)
+- **All Tests Passing**: 185/185 tests across monorepo
 
 ---
 

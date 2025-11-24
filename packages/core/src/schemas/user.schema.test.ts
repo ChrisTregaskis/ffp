@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 
-import { inviteUserSchema, userSchema, createUserSchema } from './user.schema';
+import {
+  inviteUserSchema,
+  userSchema,
+  createUserSchema,
+  canInviteProgramUser,
+} from './user.schema';
 
 describe('inviteUserSchema', () => {
   describe('customer owner invites (no tenant/customer)', () => {
@@ -15,12 +20,12 @@ describe('inviteUserSchema', () => {
       expect(result.success).toBe(true);
     });
 
-    it('validates invite with customer_user role', () => {
+    it('validates invite with program_user role', () => {
       const result = inviteUserSchema.safeParse({
         email: 'user@business.com',
         firstName: 'Jane',
         lastName: 'Doe',
-        role: 'customer_user',
+        role: 'program_user',
       });
 
       expect(result.success).toBe(true);
@@ -33,7 +38,7 @@ describe('inviteUserSchema', () => {
         email: 'user@business.com',
         firstName: 'Jane',
         lastName: 'Doe',
-        role: 'customer_user',
+        role: 'program_user',
         tenantId: '550e8400-e29b-41d4-a716-446655440000',
         customerId: '550e8400-e29b-41d4-a716-446655440001',
       });
@@ -170,11 +175,11 @@ describe('inviteUserSchema', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        // Zod returns enum values in format: 'customer_owner' | 'customer_admin' | 'customer_user'
+        // Zod returns enum values in format: 'customer_owner' | 'customer_admin' | 'program_user'
         expect(result.error.issues[0].message).toContain('Invalid enum value');
         expect(result.error.issues[0].message).toContain('customer_owner');
         expect(result.error.issues[0].message).toContain('customer_admin');
-        expect(result.error.issues[0].message).toContain('customer_user');
+        expect(result.error.issues[0].message).toContain('program_user');
       }
     });
 
@@ -364,5 +369,15 @@ describe('createUserSchema', () => {
         expect(result.error.issues[0].message).toContain('Invalid date');
       }
     });
+  });
+});
+
+describe('canInviteProgramUser', () => {
+  it('should allow invitation for customer users (customerId present)', () => {
+    expect(canInviteProgramUser('customer-123')).toBe(true);
+  });
+
+  it('should deny invitation for individual users (customerId null)', () => {
+    expect(canInviteProgramUser(null)).toBe(false);
   });
 });

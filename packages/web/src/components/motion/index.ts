@@ -1,23 +1,19 @@
-/**
- * Motion animation wrapper components.
- *
- * Reusable animation primitives built on the motion library.
- * These components provide consistent, performant animations throughout the application.
- *
- * Available animations:
- * - FadeSlideIn: Fade and slide up effect (with optional delay for staggering)
- * - SpringScale: Spring-based scale animation with bounce
- * - ClickScale: Subtle click/tap feedback for interactive elements
- * - CardTransition: Horizontal slide transitions for card-based multi-step flows
- *
- */
-
 export { FadeSlideIn } from './FadeSlideIn';
 export { SpringScale } from './SpringScale';
+export { ScaleFade } from './ScaleFade';
 export { ClickScale } from './ClickScale';
 export { CardTransition } from './CardTransition';
+export { SlideWidth } from './SlideWidth';
+export { SlideVertical } from './SlideVertical';
+export { SlideDrawer } from './SlideDrawer';
+export { Backdrop } from './Backdrop';
 
 export type { FadeSlideInProps } from './FadeSlideIn';
 export type { SpringScaleProps } from './SpringScale';
+export type { ScaleFadeProps } from './ScaleFade';
 export type { ClickScaleProps } from './ClickScale';
 export type { CardTransitionProps, CardTransitionDirection } from './CardTransition';
+export type { SlideWidthProps } from './SlideWidth';
+export type { SlideVerticalProps } from './SlideVertical';
+export type { SlideDrawerProps, DrawerPosition } from './SlideDrawer';
+export type { BackdropProps } from './Backdrop';

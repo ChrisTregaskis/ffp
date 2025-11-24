@@ -33,7 +33,7 @@ export const Card: React.FC<CardProps> = ({
   const headerAlignment = centerHeader ? 'text-center' : '';
 
   return (
-    <div className={`bg-white rounded-lg shadow-xl border border-border p-8 ${className}`.trim()}>
+    <div className={`bg-white rounded-lg shadow-md border border-border p-8 ${className}`.trim()}>
       {hasHeader && (
         <div className={`mb-6 ${headerAlignment}`.trim()}>
           {title && (

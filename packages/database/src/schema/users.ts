@@ -26,15 +26,15 @@ import { customers } from './customers';
  * - system_admin: Platform administrator (highest privilege)
  * - customer_owner: Owner of a customer account (business)
  * - customer_admin: Administrator within a customer organisation
- * - customer_user: Regular user within a customer organisation
- * - individual_user: Standalone user account
+ * - program_user: User accessing workout programmes (individual or customer user)
+ *   - Individual users: customerId = null
+ *   - Customer users: customerId present
  */
 export const userRoleEnum = pgEnum('user_role', [
   'system_admin',
   'customer_owner',
   'customer_admin',
-  'customer_user',
-  'individual_user',
+  'program_user',
 ]);
 
 /**

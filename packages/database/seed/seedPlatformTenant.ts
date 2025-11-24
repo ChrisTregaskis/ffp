@@ -9,10 +9,6 @@ import type { PlatformTenantSeed } from './types.js';
 /**
  * Seeds the platform tenant with exact data from configuration.
  * This is NOT idempotent - it will fail if the tenant already exists.
- *
- * @param db - Database client with RLS bypass capability
- * @param data - Platform tenant seed data (schema-derived with string timestamps)
- * @throws {Error} If tenant insertion fails
  */
 export const seedPlatformTenant = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool },
@@ -22,7 +18,7 @@ export const seedPlatformTenant = async (
 
   // Bypass RLS for seed operation (audit trail via console logs)
   console.log(`${terminalPrefix(TerminalPrefix.WARNING)} RLS BYPASSED for seed operation`);
-  await db.$client.query('SET LOCAL row_security = off');
+  await db.execute(sql`SET LOCAL row_security = off`);
 
   // Insert platform tenant with exact values from config
   await db.insert(tenants).values({

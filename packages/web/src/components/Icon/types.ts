@@ -2,8 +2,8 @@
  * Auto-generated icon types from Icomoon selection.json
  * DO NOT EDIT MANUALLY - Run 'pnpm icon:generate' to update
  *
- * Generated: 2025-11-16T19:09:55.775Z
- * Total icons: 66
+ * Generated: 2025-11-22T09:12:30.821Z
+ * Total icons: 68
  */
 
 export enum Icons {
@@ -31,16 +31,18 @@ export enum Icons {
   CLOSE = 'Close',
   COPY = 'Copy',
   CREDITCARD = 'CreditCard',
-  DOLLARSIGN = 'DollarSign',
   DOWNLOAD = 'Download',
   EDIT = 'Edit',
   FILETEXT = 'FileText',
   FILTER = 'Filter',
+  GBP = 'GBP',
   GLOBE = 'Globe',
   GRIPVERTICAL = 'GripVertical',
   HEART = 'Heart',
   HELPCIRCLE = 'HelpCircle',
   HOME = 'Home',
+  LEFTPANELCLOSE = 'LeftPanelClose',
+  LEFTPANELOPEN = 'LeftPanelOpen',
   LOGOUT = 'LogOut',
   MAIL = 'Mail',
   MAXIMIZE = 'Maximize',

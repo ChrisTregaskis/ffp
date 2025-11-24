@@ -742,7 +742,7 @@ describe('Multi-tenant data isolation', () => {
     });
     const subUser = await createTestUser({
       tenantId: customerTenant.id,
-      role: 'customer_user',
+      role: 'program_user',
       customerId: owner.id,
     });
 

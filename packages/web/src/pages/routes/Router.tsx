@@ -27,13 +27,6 @@ import { RouteKey, routes } from '.';
  * - Authentication check (redirects to /login if not authenticated)
  * - AppLayout (unless route has excludeLayout: true)
  *
- * @example
- * ```tsx
- * // In App.tsx
- * <AuthProvider>
- *   <Router />
- * </AuthProvider>
- * ```
  */
 export const Router = (): JSX.Element => {
   const isProduction = import.meta.env.PROD;
