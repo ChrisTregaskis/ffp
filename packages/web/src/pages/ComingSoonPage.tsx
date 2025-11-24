@@ -35,7 +35,7 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({
       </div>
 
       <Card className="p-8">
-        <div className="flex flex-col items-centre justify-centre py-12">
+        <div className="flex flex-col items-centre justify-center py-12">
           <div className="mb-4">
             <Icon
               name={icon}
