@@ -1,11 +1,11 @@
 # FFP - Project State
 
-**Last Updated**: November 24, 2025 - Session 55
+**Last Updated**: November 28, 2025 - Session 56
 **Current Phase**: Sprint 2 Execution - IN PROGRESS 🚀
 **Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
-**Current User Story Branch:** `feature/ad-hoc-side-menu` (READY FOR REVIEW)
-**Next User Story**: FFP-110 - Assessment Engine Epic Planning
-**Recently Completed**: Navigation & RBAC Implementation (Session 55)
+**Current User Story Branch:** `planning/ffp-110-assessment-engine`
+**Current Task**: FFP-110 - Assessment Engine Epic Planning (Phase 0 Complete ✅)
+**Recently Completed**: Assessment Engine Planning - Phase 0 (Session 56)
 
 ---
 
@@ -26,6 +26,40 @@
 - Completed: 6/10 stories (132.5/197 hours, 67%)
 - Carried Over: FFP-9 (completed in Sprint 2)
 - Deferred: FFP-14 (CloudWatch Monitoring)
+
+---
+
+## Current Work: FFP-110 - Assessment Engine Epic Planning
+
+**Status**: Phase 0 Complete ✅ | Phases 1-4 Pending
+**Plan File**: `~/.claude/plans/mutable-waddling-pretzel.md`
+
+### Phase 0: Planning Prep (Complete)
+
+Reviewed assessment-engine.md, architecture, coding standards, database schema, and prototype screenshots to establish scope for EPIC FFP-2.
+
+**Key Architecture Decisions**:
+
+| Area              | Decision                                               |
+| ----------------- | ------------------------------------------------------ |
+| Template Storage  | Database (PostgreSQL with RLS), not S3 JSON            |
+| Job Queue         | Database-driven polling (`process_job` table), not SQS |
+| Execution         | Lambda only (no ECS for MVP)                           |
+| Frontend State    | TanStack Query + React Context                         |
+| Scoring           | Multi-dimensional (Strength, Balance, Risk Level)      |
+| Assessment Access | NOT tenant-restricted for MVP                          |
+| Conditional Logic | Deferred post-MVP (linear flow only)                   |
+| Admin UI          | Basic CRUD forms (no visual builder)                   |
+| Video Hosting     | Self-hosted S3 + CloudFront                            |
+| Save Behaviour    | On Continue/Back click only (not debounced)            |
+| Velocity          | ~25 story points per sprint                            |
+
+**Remaining Phases**:
+
+- Phase 1: Research & update assessment-engine.md
+- Phase 2: Sprint planning user stories
+- Phase 3: Sub-task breakdown (per category)
+- Phase 4: Sprint prioritisation (may span 3+ sprints)
 
 ---
 

@@ -8,6 +8,78 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### November 28, 2025 (Session 56 - Assessment Engine Planning Phase 0)
+
+**Status**: ✅ Phase 0 Complete - Planning Prep for EPIC FFP-2
+
+**Task**: FFP-110 - Assessment Engine Epic Planning
+
+**Completed Work**:
+
+**Phase 0: Planning Prep** (~2 hours):
+
+Comprehensive planning session to establish scope and architecture decisions for the Assessment Engine build (EPIC FFP-2). Reviewed existing documentation against prototype screenshots and established architecture patterns.
+
+**Context Reviewed**:
+
+- `project-documentation/assessment-engine.md` (identified as outdated)
+- `project-documentation/architecture.md`
+- `project-documentation/coding-standards.md`
+- `project-documentation/database-schema.md`
+- `.claude/screenshots/` (7 prototype screenshots)
+
+**Key Architecture Decisions Agreed**:
+
+| Area              | Decision                                      | Rationale                                          |
+| ----------------- | --------------------------------------------- | -------------------------------------------------- |
+| Template Storage  | Database (PostgreSQL with RLS)                | Drizzle ORM patterns, type safety, RLS enforcement |
+| Job Queue         | Database-driven polling (`process_job` table) | Simpler than SQS, auditable, priority support      |
+| Execution         | Lambda only (no ECS)                          | MVP simplicity, avoid over-engineering             |
+| Frontend State    | TanStack Query + React Context                | Server state + multi-step form state separation    |
+| Scoring           | Multi-dimensional (Strength, Balance, Risk)   | Matches prototype UI                               |
+| Assessment Access | NOT tenant-restricted                         | Templates accessible by all for MVP                |
+| Conditional Logic | Deferred post-MVP                             | Linear flow only, avoid complexity                 |
+| Admin UI          | Basic CRUD forms                              | No visual builder for MVP                          |
+| Video Hosting     | Self-hosted S3 + CloudFront                   | Aligns with video-management.md                    |
+| Save Behaviour    | On Continue/Back click                        | Not debounced auto-save                            |
+| Velocity          | ~25 story points per sprint                   | Based on Sprint 1-2 actuals                        |
+
+**Deferred Items**:
+
+- Conditional question logic/branching
+- Visual template builder
+- Tenant-specific assessments
+- Tenant concurrency toggle
+- Optimistic updates
+- Offline support
+- Analytics
+- Template versioning/snapshots
+
+**Deliverables**:
+
+- ✅ Plan file with agreed scope summary
+- ✅ Four prompt templates for Phases 1-4
+- ✅ Deferred items documented
+- ✅ Velocity and sprint capacity established
+
+**Plan File**: `~/.claude/plans/mutable-waddling-pretzel.md`
+
+**Next Phases**:
+
+- Phase 1: Research & update assessment-engine.md (separate session)
+- Phase 2: Sprint planning user stories (separate session)
+- Phase 3: Sub-task breakdown per category (multiple sessions)
+- Phase 4: Sprint prioritisation (may span 3+ sprints)
+
+**Quality Assurance**:
+
+- ✅ British English throughout
+- ✅ Aligned with existing architecture patterns
+- ✅ MVP-focused scope (avoid over-engineering)
+- ✅ Clear deferred items list
+
+---
+
 ### November 24, 2025 (Session 55 - Navigation & RBAC Implementation)
 
 **Status**: ✅ Navigation System Complete - Role-Based Access Control Implemented

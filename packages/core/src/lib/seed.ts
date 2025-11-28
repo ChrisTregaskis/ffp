@@ -1,4 +1,6 @@
 /**
+ * @deprecated!! This file is deprecated and will be removed in future versions. Was an initial idea of what the seed data could look like.
+ * !Important - Ignore this file for now!!
  * FFP - Database Seed Data
  *
  * This file contains initial data for development and testing.
