@@ -1,44 +1,18 @@
 # FFP - Project State
 
-**Last Updated**: November 28, 2025 - Session 56
-**Current Phase**: Sprint 2 Execution - IN PROGRESS 🚀
-**Sprint Duration**: 10th November - 30th November 2025 (3 weeks)
-**Current User Story Branch:** `planning/ffp-110-assessment-engine`
-**Current Task**: FFP-110 - Assessment Engine Epic Planning (Phase 0 Complete ✅)
-**Recently Completed**: Assessment Engine Planning - Phase 0 (Session 56)
+**Last Updated**: November 28, 2025
+**Current EPIC**: FFP-2 - Assessment Engine (Planning)
+**Current Branch**: `planning/ffp-110-assessment-engine`
+**Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
 
-## Sprint 2 Overview
-
-**Duration**: 10th November - 30th November 2025 (3 weeks)
-**Focus**: Complete Application Setup (EPIC FFP-1) + Assessment Engine Planning
-
-**Sprint 2 Stories**:
-
-1. ✅ **FFP-9** - Cognito Authentication (COMPLETE)
-2. ✅ **FFP-12** - Testing Infrastructure Setup (COMPLETE)
-3. ✅ **FFP-16** - Web Login Interface (COMPLETE - 9/9 subtasks, 2 deferred)
-4. 🔜 **FFP-110** - Assessment Engine Epic Planning (NEXT)
-
-**Sprint 1 Summary**:
-
-- Completed: 6/10 stories (132.5/197 hours, 67%)
-- Carried Over: FFP-9 (completed in Sprint 2)
-- Deferred: FFP-14 (CloudWatch Monitoring)
-
----
-
-## Current Work: FFP-110 - Assessment Engine Epic Planning
+## Current Work: Assessment Engine Planning (FFP-110)
 
 **Status**: Phase 0 Complete ✅ | Phases 1-4 Pending
 **Plan File**: `~/.claude/plans/mutable-waddling-pretzel.md`
 
-### Phase 0: Planning Prep (Complete)
-
-Reviewed assessment-engine.md, architecture, coding standards, database schema, and prototype screenshots to establish scope for EPIC FFP-2.
-
-**Key Architecture Decisions**:
+### Phase 0 Decisions (Complete)
 
 | Area              | Decision                                               |
 | ----------------- | ------------------------------------------------------ |
@@ -54,399 +28,187 @@ Reviewed assessment-engine.md, architecture, coding standards, database schema, 
 | Save Behaviour    | On Continue/Back click only (not debounced)            |
 | Velocity          | ~25 story points per sprint                            |
 
-**Remaining Phases**:
+### Remaining Planning Phases
 
-- Phase 1: Research & update assessment-engine.md
-- Phase 2: Sprint planning user stories
-- Phase 3: Sub-task breakdown (per category)
-- Phase 4: Sprint prioritisation (may span 3+ sprints)
-
----
-
-## Recent Work: Navigation & RBAC Implementation
-
-**Status**: ✅ COMPLETE (Session 55 - November 24, 2025)
-**Branch**: `feature/ad-hoc-side-menu` (Ready for review)
-
-### Overview
-
-Comprehensive navigation and role-based access control (RBAC) system for the FFP platform, establishing the foundation for all authenticated features with proper multi-tenant access control.
-
-### Completed Features
-
-**User Role Consolidation**:
-
-- ✅ Database migration to consolidate `individual_user` and `customer_user` into `program_user`
-- ✅ Updated seed data with new role structure (9 seed operations)
-- ✅ Updated all TypeScript types and constants across packages
-- ✅ Updated 27 test files to use new role structure
-
-**Desktop Navigation (SideMenu)**:
-
-- ✅ Collapsible sidebar with smooth animations (256px ↔ 80px)
-- ✅ Role-based navigation filtering (program_user, customer_admin, system_admin)
-- ✅ Active route highlighting with blue background
-- ✅ Footer section with Account Settings and Logout
-- ✅ Tooltips for collapsed sidebar labels
-
-**Mobile Navigation (MobileMenu)**:
-
-- ✅ Responsive hamburger menu with slide-in drawer
-- ✅ Scroll-aware header (hides on scroll down, shows on scroll up)
-- ✅ Backdrop overlay with click-to-close
-- ✅ Same role-based filtering as desktop
-
-**Role-Based Access Control**:
-
-- ✅ RBAC utilities (`hasRole`, `getRoleHomePath`, `logUnauthorisedAccess`)
-- ✅ Protected route with role validation and unauthorised redirects
-- ✅ Root URL redirects to role-appropriate home page
-- ✅ 403 unauthorised access page
-
-**Coming Soon Pages**:
-
-- ✅ Reusable `ComingSoonPage` component for placeholder routes
-- ✅ 4 placeholder pages (Today's Workout, Programme Overview, Progress, Account Settings)
-
-**Enhanced Motion Library**:
-
-- ✅ `Backdrop` - Overlay backdrop for modals and drawers
-- ✅ `ScaleFade` - Scale and fade animation
-- ✅ `SlideDrawer` - Slide-in drawer from any direction
-- ✅ `SlideVertical` - Vertical slide animation
-- ✅ `SlideWidth` - Width animation for sidebar
-
-**Additional Components**:
-
-- ✅ `SidebarContext` - React context for sidebar collapse state
-- ✅ `Tooltip` - Tooltip component for collapsed sidebar
-- ✅ `NavItem` - Reusable navigation item component
-
-### Key Metrics
-
-- **Files Changed**: 73 files
-- **Lines Added**: ~3,385 lines
-- **Lines Removed**: ~376 lines
-- **New Components**: 10+ components (SideMenu, MobileMenu, NavItem, motion components)
-- **Database Migration**: 1 migration (user role consolidation)
-- **All Tests Passing**: 185/185 tests across monorepo
+- **Phase 1**: Research & update assessment-engine.md
+- **Phase 2**: Sprint planning user stories
+- **Phase 3**: Sub-task breakdown (per category)
+- **Phase 4**: Sprint prioritisation (may span 3+ sprints)
 
 ---
 
-## Completed Work: FFP-9 - Cognito Authentication
+## Completed EPIC: FFP-1 - Application Setup & Foundation
 
-**Status**: ✅ COMPLETE (10/13 subtasks, 29/31-32 hours, 93%)
+**Duration**: Sprint 1 & 2 (20th October - 30th November 2025)
+**Status**: ✅ COMPLETE
 
-### Phase 1: Prerequisites (8h) - ✅ COMPLETE
+### Delivered Capabilities
 
-- ✅ FFP-43: Error Handling Classes (3.5h)
-- ✅ FFP-36: Tenant Context Extraction (2h)
-- ✅ FFP-44: Structured Logging (2h)
-- ⏸️ FFP-32: Secrets Manager (2.5h) - **DEFERRED** (see decisions below)
+**Infrastructure**:
 
-### Phase 2: Bootstrap + Core Auth (10.5h) - ✅ COMPLETE
+- SST v3 Ion deployed to dev environment
+- Cognito User Pool with JWT authorizer
+- S3 + CloudFront for static assets
+- API Gateway with domain proxy routing
+- Local PostgreSQL with Drizzle ORM and RLS
 
-- ✅ Manual: Super User Setup (0.5h)
-- ✅ FFP-112: Admin API Endpoint (4.5h)
-- ✅ FFP-35: Zod Schemas (3h)
-- ✅ FFP-37: Invite User Lambda (4h)
+**Authentication**:
 
-### Phase 3: Authentication Endpoints (7h) - ✅ COMPLETE
+- Admin-only business onboarding (invite-only, no self-registration)
+- JWT with custom claims (tenantId, customerId, role)
+- Login, refresh token, and invite-user endpoints
+- First-time password setup flow
 
-- ✅ FFP-38: Login Lambda (3h)
-- ✅ FFP-39: Refresh Token Lambda (2h)
-- ✅ FFP-40: API Gateway Routes (1h)
+**Web Application**:
 
-### Phase 4: Testing (12h - focused on critical unit tests)
+- React 18 with Vite, TailwindCSS v4, TypeScript strict mode
+- Component library (forms, icons, motion, layout)
+- Role-based navigation (SideMenu, MobileMenu)
+- Protected routing with RBAC
+- AWS Amplify auth integration
 
-- ✅ FFP-41: Unit Tests (4h) - **COMPLETE** (context.ts tests + RLS fix)
-- ⏸️ FFP-42: Integration Tests (5h) - **DEFERRED** (10% coverage target achieved with unit tests)
-- ⏸️ FFP-45: Deployed Environment Tests (3h) - **DEFERRED** (will be addressed in FFP-12)
+**Testing**:
 
-### Phase 5: Documentation (2h) - ✅ COMPLETE
-
-- ✅ FFP-46: API Documentation (2h)
-
----
-
-## Completed Work: FFP-12 - Testing Infrastructure Setup
-
-**Status**: ✅ COMPLETE (4/11 subtasks completed, 7 deferred to post-MVP)
-
-### Phase 1 Pragmatic Approach
-
-**Completed** (Unit + RLS Testing):
-
-- ✅ FFP-65: Vitest installed (`vitest@2.1.4`, `@vitest/ui@2.1.4`)
-- ✅ FFP-66: Vitest configuration (root + package-specific configs)
-- ✅ FFP-72: Sample unit tests (185 tests passing)
-- ✅ FFP-71: Test helpers (database RLS helpers in `packages/database/__tests__/helpers.ts`)
-
-**Deferred to Post-MVP** (Playwright/MSW):
-
-- ⏸️ FFP-67: Install Playwright
-- ⏸️ FFP-68: Create Playwright config
-- ⏸️ FFP-69: Install MSW
-- ⏸️ FFP-70: Configure MSW server/handlers
-- ⏸️ FFP-73: Sample E2E test
-- ⏸️ FFP-74: Sample MSW mock test
-- ✅ FFP-75: Updated testing-strategy.md (reflects Phase 1 approach)
-
-### Testing Infrastructure Summary
-
-**Current State** (Phase 1):
-
-- ✅ Vitest installed and operational
-- ✅ 185 unit tests passing (core + database packages)
-- ✅ 16 RLS integration tests (critical multi-tenant isolation)
-- ✅ 8% coverage target achieved
-- ✅ Test helpers for RLS testing
-- ✅ Transaction rollback pattern (no database pollution)
-
-**Rationale for Deferral**:
-
-- Solo developer with 8h/week capacity
-- Unit tests + RLS integration provide sufficient Phase 1 coverage
-- E2E testing better suited for mature UI (after FFP-16)
-- MSW adds complexity without clear benefit (Vitest mocks sufficient)
-- Manual testing adequate for MVP validation
-
----
-
-## Current Work: FFP-16 - Web Login Interface
-
-**Status**: ✅ COMPLETE (9/9 subtasks - 9 complete, 2 deferred)
-**Estimated**: ~18-19 hours (revised from 20 hours with deferrals)
-**Completed**: 19/18-19 hours (100%)
-
-### Execution Order
-
-1. ✅ **FFP-115** - Component Library & Design System Setup (4h) - **COMPLETE**
-2. ✅ **FFP-93** - Install and configure AWS Amplify (1h) - **COMPLETE**
-3. ✅ **FFP-90** - Create AuthContext and AuthProvider (4h) - **COMPLETE**
-4. ✅ **FFP-119** - Web Routing & Component Library Foundation (2h actual + 2h extended scope) - **COMPLETE**
-5. ✅ **FFP-92** - Implement login form (2h) - **COMPLETE** (with code review fixes)
-6. ✅ **FFP-95** - Implement logout functionality (1h) - **COMPLETE** (integrated with routing)
-7. ✅ **FFP-116** - First-time password setup for invited users (2h) - **COMPLETE** (with code review)
-8. ✅ **FFP-97** - Write unit tests (2h) - **COMPLETE**
-9. ✅ **FFP-100** - Update documentation (1h) - **COMPLETE**
-
-### Deferred Subtasks
-
-- **FFP-91** - Registration form (3h) - ⏸️ **DEFERRED** to Phase 2
-  - Reason: Admin-only business onboarding (no self-registration in MVP)
-  - Aligns with FFP-9 authentication strategy
-- **FFP-98** - Integration tests (3h) - ⏸️ **DEFERRED** to post-MVP
-  - Reason: Consistent with FFP-12 testing strategy
-  - Unit tests (FFP-97) + manual testing sufficient for Phase 1
-- **FFP-99** - E2E tests - ✅ **ALREADY ABANDONED** (Playwright deferred)
-
-### Key Decisions
-
-**Component Library First** (Session 44):
-
-- Created new subtask FFP-115 for component library & design system
-- MUST complete before form-based subtasks (FFP-90, FFP-92, FFP-96)
-- Includes: Tailwind theme, Icomoon icons, Button, Form components
-- Form pattern: Standard forms only (assessment forms deferred to Sprint 3)
-- Component showcase page at `/components` route (public, no auth)
-
-**Design System Setup**:
-
-- Tailwind CSS with custom theme (colours, typography)
-- Icomoon icon system with TypeScript type generation
-- Reusable Button component (primary, secondary, text variants)
-- Reusable form inputs (TextInput, PasswordInput, EmailInput)
-- Form management pattern from guide (standard forms only)
-- British English throughout
-
----
-
-## Recent Work (Sprint 2 Sessions)
-
-> **Note**: Detailed session logs available in `progress-log.md`
-
-**Sessions 51-53 (Nov 17-19)**: ✅ FFP-92, FFP-116, FFP-97, FFP-100 - Login Flow COMPLETE
-
-- **FFP-92 (Session 51)**: Login form with StaticAlert feedback, AuthLayout template, password visibility toggle
-- **FFP-116 (Session 52)**: Two-step password setup flow with strength indicator, CardTransition motion component
-  - Migrated validation constants to @ffp/core (shared client/server validation)
-  - Refactored invite-user to /user domain with JWT authorizer at API Gateway level
-- **FFP-97 (Session 53)**: Auth schema unit tests (2/2 passing), coverage target adjusted to 8%
-- **FFP-100 (Session 53)**: Documentation updated with Authentication section, environment setup
-  - Created client-side logger utility (`packages/web/src/lib/logger.ts`)
-  - Created error boundary system (ErrorBoundary, ErrorFallback components)
-- Quality: Zero TypeScript errors, zero ESLint warnings, 185/185 tests passing
-- FFP-16 COMPLETE - Ready for branch merge
-
----
-
-**Sessions 47-50 (Nov 14-17)**: ✅ FFP-119, FFP-90, FFP-95 - Routing & Auth Context COMPLETE
-
-- **FFP-90 (Session 47)**: AuthContext with JWT claim extraction (tenantId, role, userId)
-  - Fixed TypeScript server crash loop (pnpm .pnpm/ directory overwhelming file watchers)
-  - Created MANUAL-TEST-FFP-90.md with 10 comprehensive test scenarios
-- **FFP-119 (Sessions 48-50)**: Type-safe routing (RouteKey enum, ProtectedRoute) + comprehensive component library
-  - Form system (config-driven), Icon library (20+ icons), Motion system (Framer Motion)
-  - Component showcases (dev-only routes, excluded from production builds)
-  - **Code pattern standardised**: React components use `const Component: React.FC = () => {}`
-  - **Schema-first types**: Zod schemas as single source of truth (prevents drift)
-  - Backend refactoring: Converted services/repositories to arrow functions
-  - TypeScript configuration optimised (VS Code watchOptions to prevent file watcher overload)
-  - Bundle: 650KB uncompressed (190KB gzipped) - acceptable for Phase 1
-- **FFP-95**: Logout functionality integrated with HomePage (sign out button works)
-
----
-
-**Sessions 44-46 (Nov 10-13)**: ✅ FFP-115, FFP-93 - Component Library & Amplify COMPLETE
-
-- **FFP-115 (Session 45)**: Tailwind v4 with @theme config, Inter font, complete colour system
-  - Form components with React Hook Form + Zod, Icon system with TypeScript types
-  - ARIA attributes (aria-required, aria-invalid, aria-describedby) for accessibility
-- **FFP-93 (Session 46)**: AWS Amplify setup (signIn, signOut, getCurrentUser, fetchAuthSession)
-  - Environment variables with VITE\_ prefix for client exposure
-  - Intentionally excluded signUp (invite-only user creation for MVP)
-- **FFP-44 (Session 44)**: Planning session - deferred FFP-91 (registration) and FFP-98 (integration tests)
-
----
-
-**Sessions 42-43 (Nov 10)**: ✅ FFP-12, FFP-41 - Testing Infrastructure COMPLETE
-
-- **FFP-41 (Session 42)**: Comprehensive context.ts unit tests (60 tests, 926 lines)
-  - **RLS Fix**: Removed BYPASSRLS privilege from root_user (tests now properly validate isolation)
-  - Total: 185/185 tests passing (16 RLS integration tests)
-- **FFP-43 (Session 43)**: Strategic decision to defer Playwright/MSW to post-MVP
-  - Phase 1 focus: Unit tests (90%) + RLS integration tests (10%)
-
----
-
-**Sessions 36-41 (Nov 6-11)**: ✅ FFP-9 Core Auth - Prerequisites & Endpoints COMPLETE
-
-- **FFP-112 (Session 36)**: Admin API endpoint (POST /admin/create-customer) with domain-organised architecture
-- **FFP-32 (Session 35)**: Secrets Manager deferred (Cognito uses public key verification)
-- **FFP-37-40**: Auth endpoints (invite-user, login, refresh-token, API Gateway routes)
-  - Fixed IAM permissions for Cognito AdminCreateUser
-  - Implemented NEW_PASSWORD_REQUIRED challenge flow
-  - Domain proxy routing pattern (ANY /auth/{proxy+}, ANY /admin/{proxy+})
-- **FFP-41**: Context.ts tests (see above)
-
----
-
-**Sessions 31-34**: ✅ FFP-9 Prerequisites - Error Handling, Context, Logging
-
-- FFP-43: Error handling classes (7 types, Lambda middleware wrapper)
-- FFP-36: Tenant context extraction (actor-based architecture)
-- FFP-44: Structured logging (CloudWatch JSON, log level filtering)
-
----
-
-## Sprint 1 Summary (COMPLETE)
-
-**Duration**: 20th October - 9th November 2025
-**Total Stories**: 10 stories, 197 hours planned
-**Completed**: 6 stories (135.5/197 hours, 69%)
-**Carried Over to Sprint 2**: FFP-9 (6 remaining subtasks, ~9-10 hours)
-**Deferred**: FFP-14 (CloudWatch Monitoring)
-
-**Completed Stories**:
-
-- FFP-7: Turborepo Monorepo Setup (13h)
-- FFP-8: SST Infrastructure Foundation (17h)
-- FFP-106/107/108: Database Package Refactoring (3h)
-- FFP-10: PostgreSQL Schema with RLS (24h)
-- FFP-11: Drizzle ORM Setup (22h)
-- FFP-15: Error Handling Patterns (15h - via FFP-43)
-
-**Key Achievements**:
-
-- Infrastructure deployed to dev environment
-- Domain-organised architecture established
-- Actor-based context system implemented
-- 125+ tests passing with zero TypeScript errors
-
----
-
-## What's Working
-
-**Infrastructure (Deployed)**:
-
-- ✅ SST v3 Ion, Cognito User Pool, S3 + CloudFront, API Gateway with JWT authorizer
-- ✅ Local PostgreSQL with Drizzle ORM, RLS policies, connection pooling
-- ✅ Error handling, tenant context, structured logging
+- Vitest with 185 passing tests
+- 16 RLS integration tests (critical tenant isolation)
+- 8% coverage target achieved
+- Test helpers for database RLS testing
 
 **Monorepo**:
 
-- ✅ Turborepo with 4 packages (web, functions, core, database)
-- ✅ TypeScript strict mode, ESLint + Prettier, 125+ tests passing
-- ✅ Build caching (30-100x faster), workspace dependencies
-- ✅ Domain-organised backend with admin operations
+- Turborepo with 4 packages (@ffp/web, @ffp/functions, @ffp/core, @ffp/database)
+- Domain-organised backend architecture
+- Build caching (30-100x faster rebuilds)
+
+### Deferred from EPIC FFP-1
+
+| Item                          | Reason                               | When              |
+| ----------------------------- | ------------------------------------ | ----------------- |
+| FFP-14: CloudWatch Monitoring | Nice-to-have for MVP                 | Post-MVP          |
+| FFP-32: Secrets Manager       | Cognito uses public key verification | When RDS deployed |
+| FFP-91: Registration Form     | Admin-only onboarding                | Phase 2           |
+| FFP-67-70: Playwright/MSW     | Unit tests sufficient for Phase 1    | Post-MVP          |
 
 ---
 
-## Key Decisions
+## Key Architectural Decisions
 
-**FFP-119 (Web Routing & Component Library)** - Sessions 49-50:
+These decisions apply across all EPICs and should be referenced when implementing new features.
 
-- **React component pattern standardised**: All React components use `const Component: React.FC = () => {}`
-  - Provides explicit typing and consistent export pattern
-  - Applied across ~40+ components (routing, forms, icons, ui, layout, motion, dev)
-  - **Important**: Backend functions should use traditional `function` declarations (better stack traces, hoisting)
-  - Distinction documented in CLAUDE.md
-- **Schema-first type generation**: Zod schemas are single source of truth for all types
-  - Types exported from `packages/core/src/schemas/` via `z.infer<typeof schema>`
-  - `./types` directory deprecated in favour of schema-derived types
-  - Prevents type/validation drift (runtime and compile-time safety)
-  - Applied to User, UserRole, Tenant, TenantType, Customer, CustomerStatus
-- **Component library architecture**: Atomic design with domain-specific directories
-  - `form/`, `icons/`, `ui/`, `layout/`, `motion/`, `dev/` for clear organisation
-  - Barrel exports (`index.ts`) for clean imports
-  - British English prop names throughout (`colour`, `initialise`, `optimise`)
-- **Dev-only component showcases**: Development routes excluded from production builds
-  - Environment-based filtering via `import.meta.env.PROD`
-  - Routes marked with `devOnly: true` flag
-  - Accessible at `/components/*` in development only
-  - High-ROI developer experience feature for rapid component testing
-- **Framer Motion accepted**: ~50KB bundle cost justified for Phase 1 animation quality
-  - GPU-accelerated animations provide smooth user experience
-  - Critical for healthcare app perceived quality and trust
-  - Defer optimisation (CSS-only alternatives) to Phase 2 if needed
-- **Bundle size monitoring**: 650KB uncompressed (190KB gzipped) acceptable for Phase 1
-  - Not mobile-first (physiotherapist dashboard = desktop/tablet)
-  - Track in CI but don't optimise until >1MB or user feedback indicates slowness
-  - Route-level code splitting deferred to post-MVP
+### Backend Architecture
 
-**FFP-112 (Admin API)** - Session 36:
+**Domain-Organised Pattern**: `Handler → Service → Entity → Repository → Schema`
 
-- **Domain-organised architecture pattern established**: Handler → Service → Repository
-- Admin operations use privileged database connection (BYPASSRLS permission required)
-- Request context pattern: Unified `RequestContext` interface combining db + tenant context
-- Cryptographically secure random generation (Node.js crypto, server-only exports)
-- Stage-aware SSL detection for database connections (local/dev vs staging/production)
-- Clean error propagation: Let `withErrorHandling` wrapper handle all errors naturally
-- No try-catch blocks in handlers/services unless specific error transformation needed
+- **Handler**: HTTP/Lambda interface only, zero business logic
+- **Service**: Business logic orchestration, validates input
+- **Entity**: Complex business behaviour (optional)
+- **Repository**: Data access with RLS context
+- **Schema**: Zod validation schemas
 
-**FFP-32 (Secrets Manager)** - Session 35:
+**Request Context Pattern**:
 
-- **DEFERRED** until staging readiness / RDS setup
-- Cognito JWTs use custom attributes (`custom:tenantId`, `custom:role`)
-- JWT verification uses Cognito public keys (JWKS) - no signing secret needed
-- No custom JWT generation in Phase 1
-- Will implement when actual secrets required (DB encryption keys, API keys)
+```typescript
+// Unified RequestContext combines db + tenant context
+interface RequestContext {
+  db: DrizzleClient;
+  tenantId: string;
+  customerId: string;
+  userId: string;
+  role: UserRole;
+}
+```
 
-**FFP-9 (Cognito Auth)**:
+**Admin Operations**: Use privileged database connection (BYPASSRLS permission)
 
-- Admin-only business onboarding for MVP (no self-registration)
-- Three-tier architecture: tenant → customer → users
-- JWT claims: tenantId, customerId, role
-- Super admin bootstrap + manual business creation via API
-- Invite-only user creation
+### Frontend Architecture
 
-**Architecture**:
+**React Component Pattern** (Session 49):
 
-- Domain-organised backend (Handler → Service → Entity → Repository → Schema)
-- Actor-based context (User vs System actors)
-- Multi-tenant isolation via RLS (all tables have tenant_id)
-- Lambda-optimised connection pooling (max 10 connections)
+```typescript
+// All React components use arrow function with explicit FC typing
+const Component: React.FC<Props> = ({ prop }) => {
+  return <div>{prop}</div>;
+};
+```
+
+**Schema-First Types** (Session 50):
+
+- Zod schemas are single source of truth for all types
+- Types exported via `z.infer<typeof schema>`
+- Prevents type/validation drift
+
+**Component Library**:
+
+- Atomic design with domain directories (`form/`, `icons/`, `ui/`, `layout/`, `motion/`)
+- Barrel exports for clean imports
+- British English prop names (`colour`, `initialise`, `optimise`)
+- Dev-only showcases at `/components/*` (excluded from production)
+
+**Bundle Decisions**:
+
+- Framer Motion accepted (~50KB for animation quality)
+- 650KB uncompressed (190KB gzipped) acceptable for Phase 1
+- Route-level code splitting deferred to post-MVP
+
+### Multi-Tenant Security (Critical)
+
+**RLS Pattern**:
+
+```typescript
+// CORRECT: Set RLS context in transaction
+await db.transaction(async (tx) => {
+  await setRLSContext(tx, context.tenantId);
+  return await tx.query.users.findMany();
+});
+
+// WRONG: Direct query without RLS context
+await db.query.users.findMany(); // Leaks all tenants!
+```
+
+**JWT Claims**:
+
+- `custom:tenantId` - Tenant isolation
+- `custom:customerId` - Customer scope
+- `custom:role` - RBAC (program_user, customer_admin, system_admin)
+
+**User Role Hierarchy**:
+
+- `program_user` - End users (physiotherapy patients)
+- `customer_admin` - Business administrators
+- `system_admin` - Platform administrators
+
+### Authentication
+
+- Admin-only business onboarding (no self-registration)
+- Three-tier: tenant → customer → users
+- Invite-only user creation via admin API
+- Super admin bootstrap for initial setup
+
+---
+
+## Working Infrastructure
+
+**Deployed to Dev Environment**:
+
+- ✅ SST v3 Ion infrastructure
+- ✅ Cognito User Pool with JWT authorizer
+- ✅ S3 + CloudFront CDN
+- ✅ API Gateway with domain proxy routing
+- ✅ PostgreSQL (local) with RLS policies
+
+**Monorepo Packages**:
+
+- `@ffp/web` - React frontend (Vite + TailwindCSS)
+- `@ffp/functions` - Lambda handlers
+- `@ffp/core` - Shared business logic & schemas
+- `@ffp/database` - Drizzle schemas & migrations
+
+**Quality Gates**:
+
+- TypeScript strict mode (zero errors)
+- ESLint + Prettier (zero warnings)
+- 185 tests passing (16 RLS integration tests)
+- 8% coverage target
 
 ---
 
@@ -456,29 +218,16 @@ Comprehensive navigation and role-based access control (RBAC) system for the FFP
 **Site**: https://ctregaskis.atlassian.net
 **Project Key**: FFP
 
-**Current Sprint**: Sprint 2 (10th Nov - 30th Nov 2025)
+**Current Sprint**: Sprint 2 (ends 30th Nov 2025)
+**Velocity**: ~25 story points per sprint
+**Capacity**: 8 hours/week (solo developer)
 
-**EPIC FFP-1: Application Setup** (Sprint 1-2):
+**EPICs**:
 
-- Completed: FFP-7, FFP-8, FFP-10, FFP-11, FFP-15, FFP-9, FFP-12
-- Next: FFP-16 (Web Login Interface)
-- Deferred: FFP-14 (CloudWatch Monitoring)
-
-**Sprint 2 Planning**:
-
-- FFP-110: Assessment Engine Epic Planning (prepare for next epic)
-
-**Critical Success Criteria**:
-
-- ✅ All TypeScript strict mode, no errors
-- ✅ RLS integration tests pass (cross-tenant isolation verified)
-- ✅ JWT contains tenantId, role, customerId
-- ✅ Infrastructure deployed to dev environment
-- ✅ Database schemas defined and merged
-- ✅ Unit test coverage for critical paths (185 tests passing, 8% target achieved)
-- ✅ Test infrastructure configured (Vitest operational)
-- ⏸️ E2E authentication tests (deferred to post-MVP)
-- ⏸️ Advanced test coverage reporting (deferred to post-MVP)
+- ✅ FFP-1: Application Setup & Foundation (Complete)
+- 🚀 FFP-2: Assessment Engine (Planning)
+- ⏳ FFP-3: Programme Generation (Future)
+- ⏳ FFP-4: Video Management (Future)
 
 ---
 
