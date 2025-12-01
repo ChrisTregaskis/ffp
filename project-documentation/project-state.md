@@ -1,7 +1,7 @@
 # FFP - Project State
 
-**Last Updated**: November 28, 2025
-**Current EPIC**: FFP-2 - Assessment Engine (Planning)
+**Last Updated**: December 1, 2025
+**Current EPIC**: FFP-2 - Assessment Engine (Planning → Sub-tasks)
 **Current Branch**: `planning/ffp-110-assessment-engine`
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
@@ -9,10 +9,20 @@
 
 ## Current Work: Assessment Engine Planning (FFP-110)
 
-**Status**: Phase 0 Complete ✅ | Phases 1-4 Pending
+**Status**: Phase 0-2 Complete ✅ | Phase 3 In Progress
 **Plan File**: `~/.claude/plans/mutable-waddling-pretzel.md`
 
-### Phase 0 Decisions (Complete)
+### Planning Progress
+
+| Phase   | Description                    | Status         |
+| ------- | ------------------------------ | -------------- |
+| Phase 0 | Scope & architecture decisions | ✅ Complete    |
+| Phase 1 | Update assessment-engine.md    | ✅ Complete    |
+| Phase 2 | User stories in Jira           | ✅ Complete    |
+| Phase 3 | Sub-task breakdown (batched)   | 🚀 In Progress |
+| Phase 4 | Sprint prioritisation          | ⏳ Pending     |
+
+### Phase 0 Decisions
 
 | Area              | Decision                                               |
 | ----------------- | ------------------------------------------------------ |
@@ -28,12 +38,72 @@
 | Save Behaviour    | On Continue/Back click only (not debounced)            |
 | Velocity          | ~25 story points per sprint                            |
 
-### Remaining Planning Phases
+### Phase 2: User Stories Created (18 stories, 86 points)
 
-- **Phase 1**: Research & update assessment-engine.md
-- **Phase 2**: Sprint planning user stories
-- **Phase 3**: Sub-task breakdown (per category)
-- **Phase 4**: Sprint prioritisation (may span 3+ sprints)
+**Domain 1: Assessment Templates (13 pts)**
+
+| Key     | Summary                                 | Points |
+| ------- | --------------------------------------- | ------ |
+| FFP-124 | Assessment Template Schema & Repository | 5      |
+| FFP-125 | Assessment Flow Schema & Configuration  | 3      |
+| FFP-126 | Assessment Template Admin API           | 5      |
+
+**Domain 2: User Assessments (19 pts)**
+
+| Key     | Summary                                | Points |
+| ------- | -------------------------------------- | ------ |
+| FFP-127 | User Assessment Schema & State Machine | 5      |
+| FFP-128 | Start Assessment API                   | 3      |
+| FFP-129 | Save Assessment Progress API           | 3      |
+| FFP-130 | Submit Assessment API                  | 5      |
+| FFP-131 | Get Assessment Results API             | 3      |
+
+**Domain 3: Process Jobs (16 pts)**
+
+| Key     | Summary                                    | Points |
+| ------- | ------------------------------------------ | ------ |
+| FFP-132 | Process Jobs Schema & Queue Infrastructure | 8      |
+| FFP-133 | Scoring Service Implementation             | 8      |
+
+**Domain 4: Programme Generation (5 pts)**
+
+| Key     | Summary                      | Points |
+| ------- | ---------------------------- | ------ |
+| FFP-134 | Programme Generation Service | 5      |
+
+**Domain 5: Frontend Flow (33 pts)**
+
+| Key     | Summary                               | Points |
+| ------- | ------------------------------------- | ------ |
+| FFP-135 | Assessment Context & State Management | 5      |
+| FFP-136 | TanStack Query Hooks for Assessments  | 5      |
+| FFP-137 | Assessment Navigation Component       | 3      |
+| FFP-138 | Assessment Progress Bar Component     | 2      |
+| FFP-139 | Question Renderer Components          | 8      |
+| FFP-140 | Assessment Step Screens               | 5      |
+| FFP-141 | Video Player Component                | 5      |
+
+### Phase 3: Sub-task Batches (Pending)
+
+Sub-tasks will be created in batches (max 5-6 per story):
+
+| Batch | Stories                   | Focus Area                   |
+| ----- | ------------------------- | ---------------------------- |
+| 1     | FFP-124, FFP-125, FFP-126 | Assessment Templates         |
+| 2     | FFP-127, FFP-128, FFP-129 | User Assessments (Part 1)    |
+| 3     | FFP-130, FFP-131          | User Assessments (Part 2)    |
+| 4     | FFP-132, FFP-133          | Process Jobs & Scoring       |
+| 5     | FFP-134                   | Programme Generation         |
+| 6     | FFP-135, FFP-136, FFP-137 | Frontend State & Navigation  |
+| 7     | FFP-138, FFP-139          | Frontend Components (Part 1) |
+| 8     | FFP-140, FFP-141          | Frontend Components (Part 2) |
+
+### Capacity Planning
+
+- **Total Points**: 86
+- **Velocity**: ~25 pts/sprint
+- **Estimated Sprints**: 3-4 (Sprint 3, 4, 5, possibly 6)
+- **Suggested Sprint 3 Focus**: Backend foundation (FFP-124 to FFP-132)
 
 ---
 
