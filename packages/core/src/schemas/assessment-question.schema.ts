@@ -76,8 +76,9 @@ export type ScoreDimension = z.infer<typeof scoreDimensionSchema>;
  * Represents a single question within an assessment template.
  * Supports multiple question types with type-specific validation.
  *
- * IMPORTANT: When type is 'video-response', videoId is required.
- * This is enforced via .refine() validation.
+ * Type-specific requirements enforced via .refine():
+ * - video-response: videoId is required
+ * - single-choice/multi-choice: options array with at least 2 items is required
  */
 export const assessmentQuestionSchema = z
   .object({
@@ -109,6 +110,19 @@ export const assessmentQuestionSchema = z
     {
       message: 'videoId is required for video-response question type',
       path: ['videoId'],
+    }
+  )
+  .refine(
+    (data) => {
+      // Require at least 2 options for choice-based question types
+      if (data.type === 'single-choice' || data.type === 'multi-choice') {
+        return data.options && data.options.length >= 2;
+      }
+      return true;
+    },
+    {
+      message: 'At least 2 options are required for choice-based question types',
+      path: ['options'],
     }
   );
 
