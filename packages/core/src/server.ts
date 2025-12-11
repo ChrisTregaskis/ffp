@@ -29,3 +29,4 @@ export * from './lib/random';
 // Server-only domain exports
 export * from './admin';
 export * from './auth';
+export * from './assessments';

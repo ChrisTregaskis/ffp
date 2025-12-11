@@ -3,7 +3,7 @@
 **Last Updated**: 11th December 2025
 **Current EPIC**: FFP-2 - Assessment Engine (Sprint 3 In Progress)
 **Current Story**: FFP-124 - Assessment Template Schema & Repository
-**Current Branch**: `feature/assessment-schemas-db-migration`
+**Current Branch**: `feature/ffp-144-template-crud-actions`
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
