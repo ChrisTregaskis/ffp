@@ -3,14 +3,14 @@
 **Last Updated**: 11th December 2025
 **Current EPIC**: FFP-2 - Assessment Engine (Sprint 3 In Progress)
 **Current Story**: FFP-124 - Assessment Template Schema & Repository
-**Current Branch**: `planning/ffp-110-assessment-engine`
+**Current Branch**: `feature/assessment-schemas-db-migration`
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
 
 ## Current Work: FFP-124 - Assessment Template Schema & Repository
 
-**Status**: 🚧 In Progress
+**Status**: ✅ Schema & Migration Complete (PR Ready)
 **Story Points**: 5
 **Sprint**: 3 (Backend Foundation)
 
@@ -24,21 +24,35 @@
 
 | AC  | Description                              | Status  |
 | --- | ---------------------------------------- | ------- |
-| AC1 | Template schema created with Drizzle     | Pending |
-| AC2 | Zod schemas validate template structure  | Pending |
-| AC3 | Repository provides CRUD operations      | Pending |
-| AC4 | Question types schema supports MVP types | Pending |
+| AC1 | Template schema created with Drizzle     | ✅ Done |
+| AC2 | Zod schemas validate template structure  | ✅ Done |
+| AC3 | Repository provides CRUD operations      | ⏳ Next |
+| AC4 | Question types schema supports MVP types | ✅ Done |
+
+### Completed Sub-tasks (This PR)
+
+| Sub-task | Description                             | Status  |
+| -------- | --------------------------------------- | ------- |
+| FFP-143  | Zod schemas for assessment templates    | ✅ Done |
+| FFP-142  | Drizzle schema for assessment_templates | ✅ Done |
+| FFP-146  | Database migration                      | ✅ Done |
 
 ### Technical Notes
 
 - Drizzle schema: `@ffp/database/src/schema/assessment-templates.ts`
-- Zod schemas: `@ffp/core/src/schemas/assessment-template.schema.ts`
-- Repository: `@ffp/core/src/assessments/template.repository.ts`
+- Zod schemas: `@ffp/core/src/schemas/assessment-*.schema.ts`
+- Migration: `migrations/0004_greedy_nekra.sql`
 - **No RLS required** (system content, not tenant-scoped)
+- JSONB types defined locally in database package to avoid circular dependency
 
 ### Dependencies
 
 - ✅ FFP-9: Database infrastructure (completed)
+
+### Remaining Work
+
+- FFP-144: Repository implementation (CRUD operations)
+- FFP-145: Unit tests for repository
 
 ### Out of Scope
 
