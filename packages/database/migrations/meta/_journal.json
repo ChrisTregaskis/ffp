@@ -29,6 +29,13 @@
       "when": 1763972371244,
       "tag": "0003_jazzy_patch",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1765470076825,
+      "tag": "0004_greedy_nekra",
+      "breakpoints": true
     }
   ]
 }
