@@ -97,8 +97,6 @@ export const assessmentQuestionSchema = z
     videoId: z.string().uuid().optional(),
     /** Scoring dimension this question contributes to */
     scoreDimension: scoreDimensionSchema.optional(),
-    /** Additional metadata for custom rendering or processing */
-    metadata: z.record(z.unknown()).optional(),
   })
   .refine(
     (data) => {
