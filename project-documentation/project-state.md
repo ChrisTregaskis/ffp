@@ -1,7 +1,7 @@
 # FFP - Project State
 
-**Last Updated**: December 1, 2025
-**Current EPIC**: FFP-2 - Assessment Engine (Planning → Sub-tasks)
+**Last Updated**: 10th December 2025
+**Current EPIC**: FFP-2 - Assessment Engine (Sprint Planning Complete)
 **Current Branch**: `planning/ffp-110-assessment-engine`
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
@@ -9,18 +9,18 @@
 
 ## Current Work: Assessment Engine Planning (FFP-110)
 
-**Status**: Phase 0-2 Complete ✅ | Phase 3 In Progress
-**Plan File**: `~/.claude/plans/mutable-waddling-pretzel.md`
+**Status**: All Planning Phases Complete ✅ | Ready for Sprint 3
+**Sprint Plan**: `project-documentation/sprint-planning/outputs/assessment-engine-sprint-plan.md`
 
 ### Planning Progress
 
-| Phase   | Description                    | Status         |
-| ------- | ------------------------------ | -------------- |
-| Phase 0 | Scope & architecture decisions | ✅ Complete    |
-| Phase 1 | Update assessment-engine.md    | ✅ Complete    |
-| Phase 2 | User stories in Jira           | ✅ Complete    |
-| Phase 3 | Sub-task breakdown (batched)   | 🚀 In Progress |
-| Phase 4 | Sprint prioritisation          | ⏳ Pending     |
+| Phase   | Description                    | Status      |
+| ------- | ------------------------------ | ----------- |
+| Phase 0 | Scope & architecture decisions | ✅ Complete |
+| Phase 1 | Update assessment-engine.md    | ✅ Complete |
+| Phase 2 | User stories in Jira           | ✅ Complete |
+| Phase 3 | Sub-task breakdown (batched)   | ✅ Complete |
+| Phase 4 | Sprint prioritisation          | ✅ Complete |
 
 ### Phase 0 Decisions
 
@@ -83,27 +83,68 @@
 | FFP-140 | Assessment Step Screens               | 5      |
 | FFP-141 | Video Player Component                | 5      |
 
-### Phase 3: Sub-task Batches (Pending)
+### Sprint Plan (Sprints 3-6)
 
-Sub-tasks will be created in batches (max 5-6 per story):
+**Total**: 86 story points across 4 sprints (~25 pts velocity)
 
-| Batch | Stories                   | Focus Area                   |
-| ----- | ------------------------- | ---------------------------- |
-| 1     | FFP-124, FFP-125, FFP-126 | Assessment Templates         |
-| 2     | FFP-127, FFP-128, FFP-129 | User Assessments (Part 1)    |
-| 3     | FFP-130, FFP-131          | User Assessments (Part 2)    |
-| 4     | FFP-132, FFP-133          | Process Jobs & Scoring       |
-| 5     | FFP-134                   | Programme Generation         |
-| 6     | FFP-135, FFP-136, FFP-137 | Frontend State & Navigation  |
-| 7     | FFP-138, FFP-139          | Frontend Components (Part 1) |
-| 8     | FFP-140, FFP-141          | Frontend Components (Part 2) |
+#### Sprint 3: Backend Foundation (24 pts)
 
-### Capacity Planning
+| Order | Key     | Story                                      | Pts |
+| ----- | ------- | ------------------------------------------ | --- |
+| 1     | FFP-124 | Assessment Template Schema & Repository    | 5   |
+| 2     | FFP-132 | Process Jobs Schema & Queue Infrastructure | 8   |
+| 3     | FFP-125 | Assessment Flow Schema & Configuration     | 3   |
+| 4     | FFP-127 | User Assessment Schema & State Machine     | 5   |
+| 5     | FFP-128 | Start Assessment API                       | 3   |
 
-- **Total Points**: 86
-- **Velocity**: ~25 pts/sprint
-- **Estimated Sprints**: 3-4 (Sprint 3, 4, 5, possibly 6)
-- **Suggested Sprint 3 Focus**: Backend foundation (FFP-124 to FFP-132)
+**Goal**: All database schemas migrated, job queue ready, users can start assessments.
+
+#### Sprint 4: Backend APIs + Frontend Foundation (25 pts)
+
+| Order | Key     | Story                           | Pts |
+| ----- | ------- | ------------------------------- | --- |
+| 1     | FFP-129 | Save Assessment Progress API    | 3   |
+| 2     | FFP-133 | Scoring Service Implementation  | 8   |
+| 3     | FFP-130 | Submit Assessment API           | 5   |
+| 4     | FFP-135 | Assessment Context & State Mgmt | 5   |
+| 5     | FFP-126 | Assessment Template Admin API   | 5   |
+
+**Goal**: Complete assessment lifecycle APIs, scoring logic implemented, frontend state ready.
+
+#### Sprint 5: Results + Frontend Core (23 pts)
+
+| Order | Key     | Story                                | Pts |
+| ----- | ------- | ------------------------------------ | --- |
+| 1     | FFP-131 | Get Assessment Results API           | 3   |
+| 2     | FFP-134 | Programme Generation Service         | 5   |
+| 3     | FFP-136 | TanStack Query Hooks for Assessments | 5   |
+| 4     | FFP-139 | Question Renderer Components         | 8   |
+| 5     | FFP-138 | Assessment Progress Bar Component    | 2   |
+
+**Goal**: Full backend complete, frontend can render questions.
+
+#### Sprint 6: Frontend Completion (14 pts + buffer)
+
+| Order | Key     | Story                           | Pts |
+| ----- | ------- | ------------------------------- | --- |
+| 1     | FFP-137 | Assessment Navigation Component | 3   |
+| 2     | FFP-140 | Assessment Step Screens         | 5   |
+| 3     | FFP-141 | Video Player Component          | 5   |
+| 4     | -       | Integration & Polish            | ~5  |
+
+**Goal**: End-to-end assessment flow working, demo-ready MVP.
+
+### Critical Path
+
+```
+FFP-124 → FFP-125 → FFP-127 → FFP-128 → FFP-129 → FFP-130 → FFP-131
+(Template)  (Flow)   (User)   (Start)   (Save)   (Submit)  (Results)
+```
+
+### Parallel Workstreams
+
+1. **Job Queue**: FFP-132 → FFP-133 → FFP-134 (can start Sprint 3)
+2. **Frontend**: FFP-135 → FFP-138/139 (can start Sprint 4)
 
 ---
 
@@ -288,14 +329,14 @@ await db.query.users.findMany(); // Leaks all tenants!
 **Site**: https://ctregaskis.atlassian.net
 **Project Key**: FFP
 
-**Current Sprint**: Sprint 2 (ends 30th Nov 2025)
+**Current Sprint**: Sprint 2 Complete → Sprint 3 Ready
 **Velocity**: ~25 story points per sprint
 **Capacity**: 8 hours/week (solo developer)
 
 **EPICs**:
 
 - ✅ FFP-1: Application Setup & Foundation (Complete)
-- 🚀 FFP-2: Assessment Engine (Planning)
+- 🚀 FFP-2: Assessment Engine (Sprints 3-6, 86 pts)
 - ⏳ FFP-3: Programme Generation (Future)
 - ⏳ FFP-4: Video Management (Future)
 
