@@ -1,105 +1,85 @@
 # FFP - Project State
 
-**Last Updated**: 10th December 2025
-**Current EPIC**: FFP-2 - Assessment Engine (Sprint Planning Complete)
+**Last Updated**: 11th December 2025
+**Current EPIC**: FFP-2 - Assessment Engine (Sprint 3 In Progress)
+**Current Story**: FFP-124 - Assessment Template Schema & Repository
 **Current Branch**: `planning/ffp-110-assessment-engine`
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
 
-## Current Work: Assessment Engine Planning (FFP-110)
+## Current Work: FFP-124 - Assessment Template Schema & Repository
 
-**Status**: All Planning Phases Complete ✅ | Ready for Sprint 3
+**Status**: 🚧 In Progress
+**Story Points**: 5
+**Sprint**: 3 (Backend Foundation)
+
+### User Story
+
+> As a system administrator,
+> I want assessment templates stored in PostgreSQL with proper schema,
+> So that templates are queryable, type-safe, and manageable without code changes.
+
+### Acceptance Criteria
+
+| AC  | Description                              | Status  |
+| --- | ---------------------------------------- | ------- |
+| AC1 | Template schema created with Drizzle     | Pending |
+| AC2 | Zod schemas validate template structure  | Pending |
+| AC3 | Repository provides CRUD operations      | Pending |
+| AC4 | Question types schema supports MVP types | Pending |
+
+### Technical Notes
+
+- Drizzle schema: `@ffp/database/src/schema/assessment-templates.ts`
+- Zod schemas: `@ffp/core/src/schemas/assessment-template.schema.ts`
+- Repository: `@ffp/core/src/assessments/template.repository.ts`
+- **No RLS required** (system content, not tenant-scoped)
+
+### Dependencies
+
+- ✅ FFP-9: Database infrastructure (completed)
+
+### Out of Scope
+
+- Admin UI (FFP-126)
+- Template versioning (deferred)
+- Conditional logic (deferred post-MVP)
+
+---
+
+## Sprint 3 Progress: Backend Foundation (24 pts)
+
 **Sprint Plan**: `project-documentation/sprint-planning/outputs/assessment-engine-sprint-plan.md`
 
-### Planning Progress
+| Order | Key     | Story                                      | Pts | Status    |
+| ----- | ------- | ------------------------------------------ | --- | --------- |
+| 1     | FFP-124 | Assessment Template Schema & Repository    | 5   | 🚧 Active |
+| 2     | FFP-132 | Process Jobs Schema & Queue Infrastructure | 8   | Pending   |
+| 3     | FFP-125 | Assessment Flow Schema & Configuration     | 3   | Pending   |
+| 4     | FFP-127 | User Assessment Schema & State Machine     | 5   | Pending   |
+| 5     | FFP-128 | Start Assessment API                       | 3   | Pending   |
 
-| Phase   | Description                    | Status      |
-| ------- | ------------------------------ | ----------- |
-| Phase 0 | Scope & architecture decisions | ✅ Complete |
-| Phase 1 | Update assessment-engine.md    | ✅ Complete |
-| Phase 2 | User stories in Jira           | ✅ Complete |
-| Phase 3 | Sub-task breakdown (batched)   | ✅ Complete |
-| Phase 4 | Sprint prioritisation          | ✅ Complete |
+**Sprint Goal**: All database schemas migrated, job queue ready, users can start assessments.
 
-### Phase 0 Decisions
+---
+
+## Assessment Engine Overview (FFP-2)
+
+**Total**: 86 story points across 4 sprints (~25 pts velocity)
+**Full Sprint Plan**: `project-documentation/sprint-planning/outputs/assessment-engine-sprint-plan.md`
+
+### Key Architecture Decisions
 
 | Area              | Decision                                               |
 | ----------------- | ------------------------------------------------------ |
-| Template Storage  | Database (PostgreSQL with RLS), not S3 JSON            |
+| Template Storage  | Database (PostgreSQL), not S3 JSON                     |
 | Job Queue         | Database-driven polling (`process_job` table), not SQS |
-| Execution         | Lambda only (no ECS for MVP)                           |
-| Frontend State    | TanStack Query + React Context                         |
 | Scoring           | Multi-dimensional (Strength, Balance, Risk Level)      |
-| Assessment Access | NOT tenant-restricted for MVP                          |
+| Frontend State    | TanStack Query + React Context                         |
 | Conditional Logic | Deferred post-MVP (linear flow only)                   |
-| Admin UI          | Basic CRUD forms (no visual builder)                   |
-| Video Hosting     | Self-hosted S3 + CloudFront                            |
-| Save Behaviour    | On Continue/Back click only (not debounced)            |
-| Velocity          | ~25 story points per sprint                            |
 
-### Phase 2: User Stories Created (18 stories, 86 points)
-
-**Domain 1: Assessment Templates (13 pts)**
-
-| Key     | Summary                                 | Points |
-| ------- | --------------------------------------- | ------ |
-| FFP-124 | Assessment Template Schema & Repository | 5      |
-| FFP-125 | Assessment Flow Schema & Configuration  | 3      |
-| FFP-126 | Assessment Template Admin API           | 5      |
-
-**Domain 2: User Assessments (19 pts)**
-
-| Key     | Summary                                | Points |
-| ------- | -------------------------------------- | ------ |
-| FFP-127 | User Assessment Schema & State Machine | 5      |
-| FFP-128 | Start Assessment API                   | 3      |
-| FFP-129 | Save Assessment Progress API           | 3      |
-| FFP-130 | Submit Assessment API                  | 5      |
-| FFP-131 | Get Assessment Results API             | 3      |
-
-**Domain 3: Process Jobs (16 pts)**
-
-| Key     | Summary                                    | Points |
-| ------- | ------------------------------------------ | ------ |
-| FFP-132 | Process Jobs Schema & Queue Infrastructure | 8      |
-| FFP-133 | Scoring Service Implementation             | 8      |
-
-**Domain 4: Programme Generation (5 pts)**
-
-| Key     | Summary                      | Points |
-| ------- | ---------------------------- | ------ |
-| FFP-134 | Programme Generation Service | 5      |
-
-**Domain 5: Frontend Flow (33 pts)**
-
-| Key     | Summary                               | Points |
-| ------- | ------------------------------------- | ------ |
-| FFP-135 | Assessment Context & State Management | 5      |
-| FFP-136 | TanStack Query Hooks for Assessments  | 5      |
-| FFP-137 | Assessment Navigation Component       | 3      |
-| FFP-138 | Assessment Progress Bar Component     | 2      |
-| FFP-139 | Question Renderer Components          | 8      |
-| FFP-140 | Assessment Step Screens               | 5      |
-| FFP-141 | Video Player Component                | 5      |
-
-### Sprint Plan (Sprints 3-6)
-
-**Total**: 86 story points across 4 sprints (~25 pts velocity)
-
-#### Sprint 3: Backend Foundation (24 pts)
-
-| Order | Key     | Story                                      | Pts |
-| ----- | ------- | ------------------------------------------ | --- |
-| 1     | FFP-124 | Assessment Template Schema & Repository    | 5   |
-| 2     | FFP-132 | Process Jobs Schema & Queue Infrastructure | 8   |
-| 3     | FFP-125 | Assessment Flow Schema & Configuration     | 3   |
-| 4     | FFP-127 | User Assessment Schema & State Machine     | 5   |
-| 5     | FFP-128 | Start Assessment API                       | 3   |
-
-**Goal**: All database schemas migrated, job queue ready, users can start assessments.
-
-#### Sprint 4: Backend APIs + Frontend Foundation (25 pts)
+### Sprint 4: Backend APIs + Frontend Foundation (25 pts)
 
 | Order | Key     | Story                           | Pts |
 | ----- | ------- | ------------------------------- | --- |
