@@ -8,3 +8,4 @@
 export * from './tenants';
 export * from './customers';
 export * from './users';
+export * from './assessment-templates';
