@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 11th December 2025
+**Last Updated**: 12th December 2025
 **Current EPIC**: FFP-2 - Assessment Engine (Sprint 3 In Progress)
 **Current Story**: FFP-124 - Assessment Template Schema & Repository
 **Current Branch**: `feature/ffp-144-template-crud-actions`
@@ -10,7 +10,7 @@
 
 ## Current Work: FFP-124 - Assessment Template Schema & Repository
 
-**Status**: ✅ Schema & Migration Complete (PR Ready)
+**Status**: ✅ COMPLETE (PR Ready for Review)
 **Story Points**: 5
 **Sprint**: 3 (Backend Foundation)
 
@@ -26,7 +26,7 @@
 | --- | ---------------------------------------- | ------- |
 | AC1 | Template schema created with Drizzle     | ✅ Done |
 | AC2 | Zod schemas validate template structure  | ✅ Done |
-| AC3 | Repository provides CRUD operations      | ⏳ Next |
+| AC3 | Repository provides CRUD operations      | ✅ Done |
 | AC4 | Question types schema supports MVP types | ✅ Done |
 
 ### Completed Sub-tasks (This PR)
@@ -36,23 +36,35 @@
 | FFP-143  | Zod schemas for assessment templates    | ✅ Done |
 | FFP-142  | Drizzle schema for assessment_templates | ✅ Done |
 | FFP-146  | Database migration                      | ✅ Done |
+| FFP-144  | Repository CRUD operations              | ✅ Done |
+| FFP-145  | Unit tests for schemas & repository     | ✅ Done |
 
 ### Technical Notes
 
 - Drizzle schema: `@ffp/database/src/schema/assessment-templates.ts`
 - Zod schemas: `@ffp/core/src/schemas/assessment-*.schema.ts`
+- Repository: `@ffp/core/src/assessments/template.repository.ts`
 - Migration: `migrations/0004_greedy_nekra.sql`
 - **No RLS required** (system content, not tenant-scoped)
 - JSONB types defined locally in database package to avoid circular dependency
+- Repository auto-increments `version` on updates
 
 ### Dependencies
 
 - ✅ FFP-9: Database infrastructure (completed)
 
+### Known Issues / Fixes Applied
+
+**ffp_test database ownership issue (12 Dec 2025)**:
+
+- **Issue**: Migrations to `ffp_test` failed with `must be owner of type user_role`
+- **Root cause**: `user_role` enum was owned by `christophertregaskis` (superuser) while migrations run as `root_user`
+- **Fix**: Changed ownership with `ALTER TYPE user_role OWNER TO root_user;`
+- **Prevention**: When recreating test database, ensure all objects are owned by `root_user` or run initial setup as `root_user`
+
 ### Remaining Work
 
-- FFP-144: Repository implementation (CRUD operations)
-- FFP-145: Unit tests for repository
+- ✅ All sub-tasks complete - ready for PR review and merge
 
 ### Out of Scope
 
