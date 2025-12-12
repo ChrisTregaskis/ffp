@@ -3,6 +3,8 @@ import { eq } from 'drizzle-orm';
 import type { DbClient } from '@ffp/database';
 import { assessmentTemplates } from '@ffp/database/schema';
 
+import { NotFoundError } from '../lib/errors';
+
 import type {
   AssessmentTemplate,
   CreateAssessmentTemplateInput,
@@ -95,7 +97,7 @@ export async function create(
  * Auto-increments the version field on each update.
  *
  * @returns Updated template
- * @throws Error if template not found
+ * @throws NotFoundError if template not found
  */
 export async function update(
   db: DbClient,
@@ -106,7 +108,7 @@ export async function update(
   const existing = await findById(db, id);
 
   if (!existing) {
-    throw new Error(`Assessment template not found: ${id}`);
+    throw new NotFoundError('Assessment template', id);
   }
 
   const [record] = await db
@@ -128,13 +130,13 @@ export async function update(
  * Sets isActive to false rather than deleting the record.
  * This preserves referential integrity with existing assessments.
  *
- * @throws Error if template not found
+ * @throws NotFoundError if template not found
  */
 export async function deactivate(db: DbClient, id: string): Promise<void> {
   const existing = await findById(db, id);
 
   if (!existing) {
-    throw new Error(`Assessment template not found: ${id}`);
+    throw new NotFoundError('Assessment template', id);
   }
 
   await db

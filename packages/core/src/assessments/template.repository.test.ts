@@ -140,12 +140,12 @@ describe('Template Repository', () => {
       expect(result.updatedAt.getTime()).toBeGreaterThan(created.updatedAt.getTime());
     });
 
-    it('throws error when template not found', async () => {
+    it('throws NotFoundError when template not found', async () => {
       await expect(
         templateRepository.update(db, '550e8400-e29b-41d4-a716-446655440000', {
           name: 'Updated',
         })
-      ).rejects.toThrow('Assessment template not found');
+      ).rejects.toThrow('Assessment template with id 550e8400-e29b-41d4-a716-446655440000 not found');
     });
   });
 
@@ -159,10 +159,10 @@ describe('Template Repository', () => {
       expect(result?.isActive).toBe(false);
     });
 
-    it('throws error when template not found', async () => {
+    it('throws NotFoundError when template not found', async () => {
       await expect(
         templateRepository.deactivate(db, '550e8400-e29b-41d4-a716-446655440000')
-      ).rejects.toThrow('Assessment template not found');
+      ).rejects.toThrow('Assessment template with id 550e8400-e29b-41d4-a716-446655440000 not found');
     });
   });
 });
