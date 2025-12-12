@@ -8,6 +8,87 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 12, 2025 (Session 58 - FFP-144 & FFP-145 Repository & Tests)
+
+**Status**: ✅ FFP-124 COMPLETE - All Sub-tasks Done
+
+**Branch**: `feature/ffp-144-template-crud-actions`
+
+**Completed Work**:
+
+**FFP-144: Template Repository** (~1.5 hours):
+
+- ✅ **template.repository.ts**: CRUD operations for assessment templates
+  - `findById(db, id)` - Returns template or null
+  - `findAll(db, options?)` - Returns all templates, supports `activeOnly` filter
+  - `create(db, data)` - Creates template, returns full object with generated fields
+  - `update(db, id, data)` - Updates template, auto-increments version, sets updatedAt
+  - `deactivate(db, id)` - Soft delete (sets isActive = false)
+  - `mapToTemplate()` - Helper to convert Drizzle records to Zod-defined types
+- ✅ **assessments/index.ts**: Barrel export for assessments domain
+- ✅ **server.ts**: Added assessments export to server-only exports
+
+**FFP-145: Unit Tests** (~1.5 hours):
+
+- ✅ **assessment-template.schema.test.ts**: 32 Zod schema validation tests
+  - Question types (text, single-choice, multi-choice, numeric, scale, video-response)
+  - video-response requires videoId validation
+  - Choice questions require at least 2 options
+  - Missing required fields validation
+  - Questions array minimum validation
+  - Scoring config validation with defaults
+  - Template schema validation (UUID, name length, version)
+  - Create/update schema partial validation
+
+- ✅ **template.repository.test.ts**: 9 integration tests against ffp_test database
+  - create: Creates template with generated fields
+  - findById: Returns template when found, null when not found
+  - findAll: Returns all templates, filters by activeOnly
+  - update: Updates template, increments version
+  - deactivate: Soft deletes (sets isActive = false)
+  - Error handling: Throws descriptive errors for not found cases
+
+**Database Fix: ffp_test Migration Issue**:
+
+- **Problem**: Migrations failed with `must be owner of type user_role`
+- **Root Cause**: `user_role` enum owned by `christophertregaskis` (superuser), migrations run as `root_user`
+- **Investigation**: Used `psql` to check type ownership: `SELECT typname, typowner::regrole FROM pg_type WHERE typname = 'user_role';`
+- **Fix**: Changed ownership: `ALTER TYPE user_role OWNER TO root_user;`
+- **Result**: Migrations now run successfully, all 9 repository tests pass against real database
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ ESLint: Zero warnings (--max-warnings 0)
+- ✅ Tests: 238 tests passing (32 schema + 9 repository + existing)
+- ✅ Integration tests run against real ffp_test database (not mocked)
+- ✅ British English: Consistent spelling throughout
+
+**Files Created** (4 new files):
+
+1. `packages/core/src/assessments/template.repository.ts` - Repository CRUD operations
+2. `packages/core/src/assessments/index.ts` - Barrel export
+3. `packages/core/src/schemas/assessment-template.schema.test.ts` - Schema validation tests
+4. `packages/core/src/assessments/template.repository.test.ts` - Repository integration tests
+
+**Files Modified** (1 file):
+
+1. `packages/core/src/server.ts` - Added assessments export
+
+**Architecture Decisions**:
+
+1. **Standalone functions over class**: Repository uses exported functions (not a class), following existing admin.repository.ts pattern
+2. **Version auto-increment**: `update()` automatically increments version field (simple counter for audit trail)
+3. **Integration tests over mocks**: Repository tests run against real ffp_test database for higher confidence
+4. **No skip logic**: Tests fail if table doesn't exist (enforces proper migration before testing)
+
+**Next Steps**:
+
+- FFP-124 complete - ready for PR review and merge
+- Move to FFP-132 (Process Jobs Schema & Queue Infrastructure) or FFP-125 (Assessment Flow Schema)
+
+---
+
 ### December 11, 2025 (Session 57 - FFP-124 Schema & Migration)
 
 **Status**: ✅ Schema & Migration Complete - PR Ready for Review
