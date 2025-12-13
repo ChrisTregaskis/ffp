@@ -1,76 +1,96 @@
 # FFP - Project State
 
-**Last Updated**: 12th December 2025
+**Last Updated**: 13th December 2025
 **Current EPIC**: FFP-2 - Assessment Engine (Sprint 3 In Progress)
-**Current Story**: FFP-124 - Assessment Template Schema & Repository
-**Current Branch**: `feature/ffp-144-template-crud-actions`
+**Current Story**: `feature/ffp-132-process-job-schema-queue-infra`
+**Current Branch**: `feature/ffp-178-schema-job-table`
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
 
-## Current Work: FFP-124 - Assessment Template Schema & Repository
+## Current Work: FFP-132 - Process Jobs Schema & Queue Infrastructure
 
-**Status**: ✅ COMPLETE (PR Ready for Review)
-**Story Points**: 5
+**Status**: 🚧 In Progress
+**Story Points**: 8
 **Sprint**: 3 (Backend Foundation)
 
 ### User Story
 
-> As a system administrator,
-> I want assessment templates stored in PostgreSQL with proper schema,
-> So that templates are queryable, type-safe, and manageable without code changes.
+> As a system,
+> I want jobs queued in the database and processed asynchronously,
+> So that expensive operations don't block user requests.
 
 ### Acceptance Criteria
 
-| AC  | Description                              | Status  |
-| --- | ---------------------------------------- | ------- |
-| AC1 | Template schema created with Drizzle     | ✅ Done |
-| AC2 | Zod schemas validate template structure  | ✅ Done |
-| AC3 | Repository provides CRUD operations      | ✅ Done |
-| AC4 | Question types schema supports MVP types | ✅ Done |
+| AC  | Description                                  | Status  |
+| --- | -------------------------------------------- | ------- |
+| AC1 | Process jobs schema with RLS                 | Pending |
+| AC2 | Job status enum enforced                     | Pending |
+| AC3 | Enqueue function creates pending job         | Pending |
+| AC4 | Polling claims jobs atomically (SKIP LOCKED) | Pending |
+| AC5 | Failed jobs retry with exponential backoff   | Pending |
+| AC6 | Failed jobs marked after max retries         | Pending |
 
-### Completed Sub-tasks (This PR)
+### Sub-tasks (Dependency Order)
 
-| Sub-task | Description                             | Status  |
-| -------- | --------------------------------------- | ------- |
-| FFP-143  | Zod schemas for assessment templates    | ✅ Done |
-| FFP-142  | Drizzle schema for assessment_templates | ✅ Done |
-| FFP-146  | Database migration                      | ✅ Done |
-| FFP-144  | Repository CRUD operations              | ✅ Done |
-| FFP-145  | Unit tests for schemas & repository     | ✅ Done |
+| Order | Key     | Description                                  | Status  |
+| ----- | ------- | -------------------------------------------- | ------- |
+| 1     | FFP-178 | Create Drizzle schema for process_jobs table | Pending |
+| 2     | FFP-179 | Implement job queue service with enqueueJob  | Pending |
+| 3     | FFP-180 | Implement job processor with atomic claiming | Pending |
+| 4     | FFP-181 | Add retry logic with exponential backoff     | Pending |
+| 5     | FFP-182 | Configure SST infrastructure for job polling | Pending |
+
+**Dependency Graph:**
+
+```
+FFP-178 (Schema)
+    ├─→ FFP-179 (Queue Service/enqueueJob)
+    └─→ FFP-180 (Processor/pollAndClaimJobs)
+             └─→ FFP-181 (Retry/Backoff)
+                     └─→ FFP-182 (SST Infra)
+```
 
 ### Technical Notes
 
-- Drizzle schema: `@ffp/database/src/schema/assessment-templates.ts`
-- Zod schemas: `@ffp/core/src/schemas/assessment-*.schema.ts`
-- Repository: `@ffp/core/src/assessments/template.repository.ts`
-- Migration: `migrations/0004_greedy_nekra.sql`
-- **No RLS required** (system content, not tenant-scoped)
-- JSONB types defined locally in database package to avoid circular dependency
-- Repository auto-increments `version` on updates
+- **Schema**: `@ffp/database/src/schema/process-jobs.ts`
+- **Queue Service**: `@ffp/core/src/jobs/job-queue.service.ts`
+- **Processor**: `@ffp/core/src/jobs/job-processor.service.ts`
+- **Job Types**: `score_assessment`, `generate_program`
+- **Polling Pattern**: Database-driven with `FOR UPDATE SKIP LOCKED`
+- **Infrastructure**: EventBridge (1 min) → Lambda → Poll DB
+- **Config**: S3 bucket for concurrency settings
+
+### Key Implementation Details
+
+**Job Status Enum**: `pending`, `processing`, `completed`, `failed`, `cancelled`
+
+**Atomic Claiming Pattern**:
+
+```sql
+SELECT * FROM process_jobs
+WHERE status = 'pending' AND scheduled_for <= now()
+FOR UPDATE SKIP LOCKED
+LIMIT {maxConcurrent}
+```
+
+**Exponential Backoff**: `2^attempts` seconds (2s, 4s, 8s...)
 
 ### Dependencies
 
 - ✅ FFP-9: Database infrastructure (completed)
+- ✅ FFP-124: Assessment Template Schema (completed - previous story)
 
-### Known Issues / Fixes Applied
+### Blocks (Downstream)
 
-**ffp_test database ownership issue (12 Dec 2025)**:
-
-- **Issue**: Migrations to `ffp_test` failed with `must be owner of type user_role`
-- **Root cause**: `user_role` enum was owned by `christophertregaskis` (superuser) while migrations run as `root_user`
-- **Fix**: Changed ownership with `ALTER TYPE user_role OWNER TO root_user;`
-- **Prevention**: When recreating test database, ensure all objects are owned by `root_user` or run initial setup as `root_user`
-
-### Remaining Work
-
-- ✅ All sub-tasks complete - ready for PR review and merge
+- FFP-130: Submit Assessment API
+- FFP-133: Scoring Service Implementation
 
 ### Out of Scope
 
-- Admin UI (FFP-126)
-- Template versioning (deferred)
-- Conditional logic (deferred post-MVP)
+- Priority queues
+- Dead letter handling beyond max_attempts
+- Job cancellation UI
 
 ---
 
@@ -78,13 +98,13 @@
 
 **Sprint Plan**: `project-documentation/sprint-planning/outputs/assessment-engine-sprint-plan.md`
 
-| Order | Key     | Story                                      | Pts | Status    |
-| ----- | ------- | ------------------------------------------ | --- | --------- |
-| 1     | FFP-124 | Assessment Template Schema & Repository    | 5   | 🚧 Active |
-| 2     | FFP-132 | Process Jobs Schema & Queue Infrastructure | 8   | Pending   |
-| 3     | FFP-125 | Assessment Flow Schema & Configuration     | 3   | Pending   |
-| 4     | FFP-127 | User Assessment Schema & State Machine     | 5   | Pending   |
-| 5     | FFP-128 | Start Assessment API                       | 3   | Pending   |
+| Order | Key     | Story                                      | Pts | Status      |
+| ----- | ------- | ------------------------------------------ | --- | ----------- |
+| 1     | FFP-124 | Assessment Template Schema & Repository    | 5   | ✅ Complete |
+| 2     | FFP-132 | Process Jobs Schema & Queue Infrastructure | 8   | 🚧 Active   |
+| 3     | FFP-125 | Assessment Flow Schema & Configuration     | 3   | Pending     |
+| 4     | FFP-127 | User Assessment Schema & State Machine     | 5   | Pending     |
+| 5     | FFP-128 | Start Assessment API                       | 3   | Pending     |
 
 **Sprint Goal**: All database schemas migrated, job queue ready, users can start assessments.
 
