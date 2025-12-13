@@ -8,6 +8,189 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 12, 2025 (Session 58 - FFP-144 & FFP-145 Repository & Tests)
+
+**Status**: ✅ FFP-124 COMPLETE - All Sub-tasks Done
+
+**Branch**: `feature/ffp-144-template-crud-actions`
+
+**Completed Work**:
+
+**FFP-144: Template Repository** (~1.5 hours):
+
+- ✅ **template.repository.ts**: CRUD operations for assessment templates
+  - `findById(db, id)` - Returns template or null
+  - `findAll(db, options?)` - Returns all templates, supports `activeOnly` filter
+  - `create(db, data)` - Creates template, returns full object with generated fields
+  - `update(db, id, data)` - Updates template, auto-increments version, sets updatedAt
+  - `deactivate(db, id)` - Soft delete (sets isActive = false)
+  - `mapToTemplate()` - Helper to convert Drizzle records to Zod-defined types
+- ✅ **assessments/index.ts**: Barrel export for assessments domain
+- ✅ **server.ts**: Added assessments export to server-only exports
+
+**FFP-145: Unit Tests** (~1.5 hours):
+
+- ✅ **assessment-template.schema.test.ts**: 32 Zod schema validation tests
+  - Question types (text, single-choice, multi-choice, numeric, scale, video-response)
+  - video-response requires videoId validation
+  - Choice questions require at least 2 options
+  - Missing required fields validation
+  - Questions array minimum validation
+  - Scoring config validation with defaults
+  - Template schema validation (UUID, name length, version)
+  - Create/update schema partial validation
+
+- ✅ **template.repository.test.ts**: 9 integration tests against ffp_test database
+  - create: Creates template with generated fields
+  - findById: Returns template when found, null when not found
+  - findAll: Returns all templates, filters by activeOnly
+  - update: Updates template, increments version
+  - deactivate: Soft deletes (sets isActive = false)
+  - Error handling: Throws descriptive errors for not found cases
+
+**Database Fix: ffp_test Migration Issue**:
+
+- **Problem**: Migrations failed with `must be owner of type user_role`
+- **Root Cause**: `user_role` enum owned by `christophertregaskis` (superuser), migrations run as `root_user`
+- **Investigation**: Used `psql` to check type ownership: `SELECT typname, typowner::regrole FROM pg_type WHERE typname = 'user_role';`
+- **Fix**: Changed ownership: `ALTER TYPE user_role OWNER TO root_user;`
+- **Result**: Migrations now run successfully, all 9 repository tests pass against real database
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ ESLint: Zero warnings (--max-warnings 0)
+- ✅ Tests: 238 tests passing (32 schema + 9 repository + existing)
+- ✅ Integration tests run against real ffp_test database (not mocked)
+- ✅ British English: Consistent spelling throughout
+
+**Files Created** (4 new files):
+
+1. `packages/core/src/assessments/template.repository.ts` - Repository CRUD operations
+2. `packages/core/src/assessments/index.ts` - Barrel export
+3. `packages/core/src/schemas/assessment-template.schema.test.ts` - Schema validation tests
+4. `packages/core/src/assessments/template.repository.test.ts` - Repository integration tests
+
+**Files Modified** (1 file):
+
+1. `packages/core/src/server.ts` - Added assessments export
+
+**Architecture Decisions**:
+
+1. **Standalone functions over class**: Repository uses exported functions (not a class), following existing admin.repository.ts pattern
+2. **Version auto-increment**: `update()` automatically increments version field (simple counter for audit trail)
+3. **Integration tests over mocks**: Repository tests run against real ffp_test database for higher confidence
+4. **No skip logic**: Tests fail if table doesn't exist (enforces proper migration before testing)
+
+**Next Steps**:
+
+- FFP-124 complete - ready for PR review and merge
+- Move to FFP-132 (Process Jobs Schema & Queue Infrastructure) or FFP-125 (Assessment Flow Schema)
+
+---
+
+### December 11, 2025 (Session 57 - FFP-124 Schema & Migration)
+
+**Status**: ✅ Schema & Migration Complete - PR Ready for Review
+
+**Branch**: `feature/assessment-schemas-db-migration`
+
+**Completed Work**:
+
+**FFP-124: Assessment Template Schema & Repository** (Sub-tasks FFP-142, FFP-143, FFP-146):
+
+This session implemented the database schema, Zod validation schemas, and migration for assessment templates as part of Sprint 3 (Backend Foundation).
+
+**FFP-143: Zod Schemas** (~1 hour):
+
+- ✅ **assessment-question.schema.ts**: Question type definitions
+  - `questionTypeSchema` - 6 types: single-choice, multi-choice, numeric, text, scale, video-response
+  - `questionOptionSchema` - value, label, optional score
+  - `questionValidationSchema` - required, min, max, pattern, customError
+  - `scoreDimensionSchema` - strength, balance, mobility, pain, general
+  - `assessmentQuestionSchema` - full question with `.refine()` for videoId validation
+  - `questionsArraySchema` - array with min(1) validation
+
+- ✅ **scoring-config.schema.ts**: Scoring configuration definitions
+  - `riskLevelSchema` - low, moderate, high
+  - `riskThresholdsSchema` - low, moderate thresholds
+  - `dimensionConfigSchema` - name, questionIds, maxScore, weight, riskThresholds
+  - `comparisonOperatorSchema` - lt, lte, gt, gte, eq
+  - `programMappingConditionSchema` - dimension, operator, value
+  - `logicalOperatorSchema` - and, or
+  - `programMappingSchema` - conditions, operator, programTemplateId, priority
+  - `scoringConfigSchema` - dimensions[], programMappings[]
+
+- ✅ **assessment-template.schema.ts**: Template record definitions
+  - `assessmentTemplateSchema` - full record with all fields
+  - `createAssessmentTemplateSchema` - omits id, createdAt, updatedAt
+  - `updateAssessmentTemplateSchema` - all fields optional (partial)
+
+- ✅ **schemas/index.ts**: Updated with new exports
+
+**FFP-142: Drizzle Schema** (~0.5 hour):
+
+- ✅ **assessment-templates.ts**: Database table definition
+  - `id` - uuid, primary key, defaultRandom
+  - `name` - varchar(255), not null
+  - `description` - text, nullable
+  - `version` - integer, default 1, not null
+  - `questions` - jsonb, typed as `AssessmentQuestion[]`, not null
+  - `scoring_config` - jsonb, typed as `ScoringConfig`, not null
+  - `is_active` - boolean, default true, not null
+  - `created_by` - uuid, references users.id, onDelete: 'set null', nullable
+  - `created_at` - timestamp, defaultNow, not null
+  - `updated_at` - timestamp, defaultNow, not null
+  - Indexes: `idx_assessment_templates_active`, `idx_assessment_templates_name`
+  - Relations: `createdByUser` one-to-one with users table
+
+- ✅ **Local JSONB types**: Defined locally to avoid circular dependency with @ffp/core
+  - Types mirror Zod schemas but are defined in database package
+  - Zod schemas in @ffp/core remain source of truth for runtime validation
+
+**FFP-146: Database Migration** (~0.25 hour):
+
+- ✅ **Generated migration**: `migrations/0004_greedy_nekra.sql`
+- ✅ **Applied migration**: Table created successfully
+- ✅ **Verified structure**: All columns, indexes, and foreign key constraint confirmed
+
+**Files Created** (4 new files):
+
+1. `packages/core/src/schemas/assessment-question.schema.ts` - Question types and validation
+2. `packages/core/src/schemas/scoring-config.schema.ts` - Scoring configuration schemas
+3. `packages/core/src/schemas/assessment-template.schema.ts` - Template record schemas
+4. `packages/database/src/schema/assessment-templates.ts` - Drizzle table definition
+5. `packages/database/migrations/0004_greedy_nekra.sql` - Database migration
+
+**Files Modified** (2 files):
+
+1. `packages/core/src/schemas/index.ts` - Added assessment schema exports
+2. `packages/database/src/schema/index.ts` - Added assessment-templates export
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ ESLint: Zero warnings
+- ✅ Build: Both @ffp/core and @ffp/database build successfully
+- ✅ Migration: Applied and verified in local PostgreSQL
+- ✅ British English: Consistent spelling throughout (programme, colour, etc.)
+
+**Architecture Decisions**:
+
+1. **No RLS required**: Assessment templates are system-managed content, not tenant-scoped
+2. **Local JSONB types**: Defined in database package to avoid circular dependency
+   - @ffp/database cannot depend on @ffp/core (would create circular dependency)
+   - Types mirror Zod schemas but are defined locally
+   - Zod schemas remain source of truth for runtime validation
+3. **videoId validation**: Uses `.refine()` to require videoId for video-response type questions
+
+**Next Steps**:
+
+- FFP-144: Repository implementation (CRUD operations)
+- FFP-145: Unit tests for repository
+
+---
+
 ### November 28, 2025 (Session 56 - Assessment Engine Planning Phase 0)
 
 **Status**: ✅ Phase 0 Complete - Planning Prep for EPIC FFP-2
