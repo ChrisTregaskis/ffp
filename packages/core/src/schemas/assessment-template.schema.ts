@@ -56,11 +56,17 @@ export type CreateAssessmentTemplateInput = z.infer<typeof createAssessmentTempl
  * Update assessment template schema - input for updating existing templates
  *
  * All fields are optional to support partial updates.
- * Version is typically incremented automatically on update.
+ * Omits audit metadata fields that should not be modified:
+ * - id: immutable identifier
+ * - version: auto-incremented by repository
+ * - createdBy: audit trail must remain intact
+ * - createdAt/updatedAt: managed by database
  */
 export const updateAssessmentTemplateSchema = assessmentTemplateSchema
   .omit({
     id: true,
+    version: true,
+    createdBy: true,
     createdAt: true,
     updatedAt: true,
   })

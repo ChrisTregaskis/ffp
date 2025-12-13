@@ -114,7 +114,11 @@ export async function update(
   const [record] = await db
     .update(assessmentTemplates)
     .set({
-      ...data,
+      name: data.name,
+      description: data.description,
+      questions: data.questions,
+      scoringConfig: data.scoringConfig,
+      isActive: data.isActive,
       version: existing.version + 1,
       updatedAt: new Date(),
     })
