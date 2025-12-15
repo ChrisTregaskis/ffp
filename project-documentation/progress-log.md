@@ -8,6 +8,86 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 15, 2025 (Session 59 - FFP-178 Process Jobs Schema)
+
+**Status**: ✅ FFP-178 COMPLETE - Process Jobs Schema Created
+
+**Branch**: `feature/ffp-132-process-job-schema-queue-infra`
+
+**Completed Work**:
+
+**FFP-178: Create Drizzle Schema for process_jobs Table** (~2 hours):
+
+- ✅ **process-jobs.ts**: Database schema with enums, table, indexes, relations
+  - `jobStatusEnum` - PostgreSQL enum: queued, processing, completed, failed, cancelled
+  - `jobTypeEnum` - PostgreSQL enum: score_assessment, generate_program
+  - `processJobs` table with tenant isolation, priority-based ordering, retry support
+  - Optimised indexes for job polling queries (status, type+status, priority, tenant)
+  - Foreign key to tenants table with cascade delete
+  - Timestamps: createdAt, startedAt, completedAt
+
+- ✅ **job.schema.ts**: Zod validation schemas in @ffp/core
+  - `jobStatusSchema` / `jobTypeSchema` - Enum mirrors for runtime validation
+  - `scoreAssessmentPayloadSchema` - Assessment scoring job payload
+  - `scoreAssessmentResultSchema` - Dimensional scores result
+  - `generateProgramPayloadSchema` - Programme generation job payload
+  - `generateProgramResultSchema` - Generated programme result
+  - `jobPayloadSchema` / `jobResultSchema` - Discriminated unions for type-safe handling
+  - `processJobSchema` - Full job record schema
+  - `createProcessJobSchema` - Input schema for enqueueing jobs
+
+**Schema Design Decisions**:
+
+1. **Priority over scheduledFor**: Replaced `scheduled_for` with `priority` (1-4 scale) + `retryAfter`
+   - EventBridge handles scheduling (1-min polling), job queue handles processing order
+   - Priority: 1=urgent, 2=high, 3=medium, 4=low (default)
+
+2. **'queued' over 'pending'**: Status starts as 'queued' for clearer distinction from 'processing'
+
+3. **Typed payloads in @ffp/core**: Job-specific payload/result schemas defined separately from database
+   - Database stores `jsonb`, Zod schemas validate at runtime
+   - Discriminated unions enable type-safe payload/result handling by job type
+
+4. **RLS deferred**: Schema ready for RLS but policies not yet added (will add when needed)
+
+5. **MVP-focused result schemas**: Removed unnecessary fields (recommendations, targetDimensions)
+
+**Migration Generated**: `0005_dapper_jubilee.sql`
+
+- Creates job_status and job_type PostgreSQL enums
+- Creates process_jobs table with all columns
+- Creates 4 indexes for efficient job polling
+
+**Database Migrations Run**:
+
+- ✅ ffp_dev: Migration applied successfully
+- ✅ ffp_test: Migration applied successfully (used `npx drizzle-kit migrate` directly)
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ ESLint: Zero warnings (--max-warnings 0)
+- ✅ Tests: All existing tests still passing
+- ✅ British English: Consistent spelling (normalised, summarise, programme)
+
+**Files Created** (3 new files):
+
+1. `packages/core/src/schemas/job.schema.ts` - Zod schemas for job payloads/results
+2. `packages/database/src/schema/process-jobs.ts` - Drizzle table schema
+3. `packages/database/migrations/0005_dapper_jubilee.sql` - Generated migration
+
+**Files Modified** (2 files):
+
+1. `packages/core/src/schemas/index.ts` - Added job schema export
+2. `packages/database/src/schema/index.ts` - Added process-jobs export
+
+**Next Steps**:
+
+- FFP-179: Implement job queue service with enqueueJob
+- FFP-180: Implement job processor with atomic claiming
+
+---
+
 ### December 12, 2025 (Session 58 - FFP-144 & FFP-145 Repository & Tests)
 
 **Status**: ✅ FFP-124 COMPLETE - All Sub-tasks Done
