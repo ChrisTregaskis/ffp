@@ -1,16 +1,19 @@
 import { z } from 'zod';
 
+import { TENANT_TYPES } from '@ffp/database';
+
 /**
- * Tenant type enumeration - Single source of truth for tenant types
+ * Tenant type Zod schema
+ *
+ * Uses shared constants from @ffp/database to ensure synchronisation
+ * with PostgreSQL enum definitions.
  *
  * Defines the three types of tenants in the platform:
  * - individual: Single user account (physiotherapy client)
  * - business: Organisation with multiple sub-customers (clinics, gyms)
  * - platform: System platform tenant for super admins (internal use only)
- *
- * IMPORTANT: Keep PostgreSQL enum in @ffp/database/src/schema/tenants.ts in sync
  */
-export const tenantTypeSchema = z.enum(['individual', 'business', 'platform']);
+export const tenantTypeSchema = z.enum(TENANT_TYPES);
 
 /**
  * TypeScript type derived from Zod schema
