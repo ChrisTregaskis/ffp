@@ -9,3 +9,6 @@ export * from './customer.schema';
 export * from './assessment-question.schema';
 export * from './scoring-config.schema';
 export * from './assessment-template.schema';
+
+// Job schemas
+export * from './job.schema';

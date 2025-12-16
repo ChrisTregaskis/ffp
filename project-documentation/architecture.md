@@ -210,10 +210,39 @@ FFP uses [Turborepo](https://turborepo.com/) for efficient monorepo management, 
 - **Remote Caching**: Share build artifacts across team (future)
 - **Incremental Builds**: Only rebuild what changed
 
+### Package Dependency Graph
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    DEPENDENCY DIRECTION                         │
+│                                                                 │
+│   @ffp/database  ←── builds FIRST (no @ffp/* dependencies)      │
+│         │                                                       │
+│         │ imports from (constants, types, schemas)              │
+│         ▼                                                       │
+│   @ffp/core  ←────── builds SECOND                              │
+│         │                                                       │
+│         │ imports from (services, schemas, lib)                 │
+│         ▼                                                       │
+│   @ffp/functions  ←─ builds LAST                                │
+│   @ffp/web                                                      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Critical Rule**: `@ffp/database` MUST NOT import from `@ffp/core` to prevent circular dependencies.
+
+- ✅ `@ffp/core` imports from `@ffp/database` (correct direction)
+- ✅ `@ffp/functions` imports from `@ffp/core` (correct direction)
+- ✅ `@ffp/web` imports from `@ffp/core` (correct direction)
+- ❌ `@ffp/database` importing from `@ffp/core` would create a cycle
+
+**Shared Constants Pattern**: When both packages need the same values (e.g., enums), define them in `@ffp/database` and import into `@ffp/core`. Example: `JOB_STATUSES` in `@ffp/database/src/constants/job.constants.ts` is imported by both the Drizzle schema and Zod schemas.
+
 ### Task Dependencies
 
 ```
 build (web) → depends on → build (core)
+build (core) → depends on → build (database)
 test (functions) → depends on → build (core)
 deploy (functions) → depends on → build + test
 ```
@@ -392,7 +421,7 @@ FFP uses a clear separation of concerns with domain-organised architecture. Each
 │  - Column types                                            │
 │  - Relations                                               │
 │  - Indexes                                                 │
-│  - PostgreSQL enums (manually synced with Zod)             │
+│  - PostgreSQL enums (shared constants with Zod)            │
 │  ⚠️ Types from here used ONLY in repositories internally   │
 └───────────────────────────┬────────────────────────────────┘
                             │

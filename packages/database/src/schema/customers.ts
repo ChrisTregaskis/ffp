@@ -12,22 +12,20 @@ import { pgTable, uuid, varchar, timestamp, jsonb, pgEnum, index } from 'drizzle
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { relations } from 'drizzle-orm';
 import { tenants } from './tenants';
+import { CUSTOMER_STATUSES } from '../constants/customer.constants';
 
 /**
  * Customer status enumeration (PostgreSQL enum)
  *
- * IMPORTANT: Keep in sync with customerStatusSchema in @ffp/core/src/schemas/customer.schema.ts
- * The Zod schema is the single source of truth for customer status.
- *
- * Manual synchronisation required (cannot auto-generate due to circular dependency).
- * Changes to customer status must be made in both places.
+ * Uses shared constants from @ffp/database/constants/customer.constants.ts
+ * to ensure synchronisation with Zod schemas in @ffp/core.
  *
  * Defines the lifecycle states of a customer account:
  * - active: Customer account is active and can access the platform
  * - suspended: Temporarily suspended (e.g., payment issues, policy violation)
  * - inactive: Closed/cancelled account (data retained for compliance)
  */
-export const customerStatusEnum = pgEnum('customer_status', ['active', 'suspended', 'inactive']);
+export const customerStatusEnum = pgEnum('customer_status', [...CUSTOMER_STATUSES]);
 
 /**
  * Customers table definition

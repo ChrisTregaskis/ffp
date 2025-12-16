@@ -1,9 +1,9 @@
 # FFP - Project State
 
-**Last Updated**: 13th December 2025
+**Last Updated**: 15th December 2025
 **Current EPIC**: FFP-2 - Assessment Engine (Sprint 3 In Progress)
-**Current Story**: `feature/ffp-132-process-job-schema-queue-infra`
-**Current Branch**: `feature/ffp-178-schema-job-table`
+**Current Story**: FFP-132 - Process Jobs Schema & Queue Infrastructure
+**Current Branch**: `feature/ffp-132-process-job-schema-queue-infra`
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
@@ -22,24 +22,24 @@
 
 ### Acceptance Criteria
 
-| AC  | Description                                  | Status  |
-| --- | -------------------------------------------- | ------- |
-| AC1 | Process jobs schema with RLS                 | Pending |
-| AC2 | Job status enum enforced                     | Pending |
-| AC3 | Enqueue function creates pending job         | Pending |
-| AC4 | Polling claims jobs atomically (SKIP LOCKED) | Pending |
-| AC5 | Failed jobs retry with exponential backoff   | Pending |
-| AC6 | Failed jobs marked after max retries         | Pending |
+| AC  | Description                                  | Status                       |
+| --- | -------------------------------------------- | ---------------------------- |
+| AC1 | Process jobs schema with RLS                 | 🔶 Schema done, RLS deferred |
+| AC2 | Job status enum enforced                     | ✅ Complete                  |
+| AC3 | Enqueue function creates pending job         | Pending                      |
+| AC4 | Polling claims jobs atomically (SKIP LOCKED) | Pending                      |
+| AC5 | Failed jobs retry with exponential backoff   | Pending                      |
+| AC6 | Failed jobs marked after max retries         | Pending                      |
 
 ### Sub-tasks (Dependency Order)
 
-| Order | Key     | Description                                  | Status  |
-| ----- | ------- | -------------------------------------------- | ------- |
-| 1     | FFP-178 | Create Drizzle schema for process_jobs table | Pending |
-| 2     | FFP-179 | Implement job queue service with enqueueJob  | Pending |
-| 3     | FFP-180 | Implement job processor with atomic claiming | Pending |
-| 4     | FFP-181 | Add retry logic with exponential backoff     | Pending |
-| 5     | FFP-182 | Configure SST infrastructure for job polling | Pending |
+| Order | Key     | Description                                  | Status      |
+| ----- | ------- | -------------------------------------------- | ----------- |
+| 1     | FFP-178 | Create Drizzle schema for process_jobs table | ✅ Complete |
+| 2     | FFP-179 | Implement job queue service with enqueueJob  | Pending     |
+| 3     | FFP-180 | Implement job processor with atomic claiming | Pending     |
+| 4     | FFP-181 | Add retry logic with exponential backoff     | Pending     |
+| 5     | FFP-182 | Configure SST infrastructure for job polling | Pending     |
 
 **Dependency Graph:**
 
@@ -63,13 +63,17 @@ FFP-178 (Schema)
 
 ### Key Implementation Details
 
-**Job Status Enum**: `pending`, `processing`, `completed`, `failed`, `cancelled`
+**Job Status Enum**: `queued`, `processing`, `completed`, `failed`, `cancelled`
+
+**Job Priority**: 1=urgent, 2=high, 3=medium, 4=low (default)
 
 **Atomic Claiming Pattern**:
 
 ```sql
 SELECT * FROM process_jobs
-WHERE status = 'pending' AND scheduled_for <= now()
+WHERE status = 'queued'
+  AND (retry_after IS NULL OR retry_after <= now())
+ORDER BY priority ASC, created_at ASC
 FOR UPDATE SKIP LOCKED
 LIMIT {maxConcurrent}
 ```
