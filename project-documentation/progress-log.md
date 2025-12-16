@@ -8,6 +8,80 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 16, 2025 (Session 60 - FFP-179 Job Queue Service)
+
+**Status**: ✅ FFP-179 COMPLETE - Job Queue Service with queueJob
+
+**Branch**: `feature/ffp-179-job-queue-service`
+
+**Completed Work**:
+
+**FFP-179: Implement Job Queue Service with queueJob** (~2 hours):
+
+- ✅ **job-queue.service.ts**: Type-safe job queuing service
+  - `queueJob<T>()` - Generic function with type-safe payloads via `JobPayloadMap`
+  - Automatic payload type inference based on job type (`score_assessment`, `generate_program`)
+  - `QueueJobOptions` - Optional priority (1-4) and maxAttempts configuration
+  - Default priority: 4 (low), default maxAttempts: 3
+  - Returns job UUID for tracking
+  - Uses tenant context for RLS isolation
+
+- ✅ **job-queue.service.test.ts**: 6 integration tests against ffp_test database
+  - Creates job with default priority and maxAttempts
+  - Creates job with custom priority
+  - Creates job with custom maxAttempts
+  - Creates job with both priority and maxAttempts
+  - Creates generate_program job type
+  - Associates job with correct tenant from context
+
+**Type-Safe Payload Pattern**:
+
+```typescript
+// JobPayloadMap enables compile-time type checking
+interface JobPayloadMap {
+  score_assessment: ScoreAssessmentPayload;
+  generate_program: GenerateProgramPayload;
+}
+
+// Usage - payload type inferred from job type
+await queueJob('score_assessment', {
+  assessmentSubmissionId: uuid,
+  templateId: uuid,
+  userId: uuid,
+  responses: [...],
+}, context);
+```
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ ESLint: Zero warnings (--max-warnings 0)
+- ✅ Tests: All 6 integration tests passing against real database
+- ✅ British English: Consistent spelling (behaviour, normalised)
+
+**Files Created** (2 new files):
+
+1. `packages/core/src/jobs/job-queue.service.ts` - Job queue service (70 lines)
+2. `packages/core/src/jobs/job-queue.service.test.ts` - Integration tests (273 lines)
+
+**Files Modified** (1 file):
+
+1. `packages/core/src/jobs/index.ts` - Added job queue service export
+
+**Architecture Decisions**:
+
+1. **Type-safe payloads**: `JobPayloadMap` interface ensures compile-time type checking for job payloads
+2. **Simple defaults**: Priority 4 (low) and maxAttempts 3 as sensible defaults
+3. **Tenant isolation**: Job associated with tenant from context (RLS ready)
+4. **No RLS in service**: Service uses global db connection; RLS will be enforced by job processor when processing
+
+**Next Steps**:
+
+- FFP-180: Implement job processor with atomic claiming (FOR UPDATE SKIP LOCKED)
+- FFP-181: Add retry logic with exponential backoff
+
+---
+
 ### December 15, 2025 (Session 59 - FFP-178 Process Jobs Schema)
 
 **Status**: ✅ FFP-178 COMPLETE - Process Jobs Schema Created
@@ -89,7 +163,7 @@ Detailed session-by-session history for Sprint 1 execution.
 
 **Next Steps**:
 
-- FFP-179: Implement job queue service with enqueueJob
+- FFP-179: Implement job queue service with queueJob
 - FFP-180: Implement job processor with atomic claiming
 
 ---
