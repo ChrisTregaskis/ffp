@@ -1,9 +1,9 @@
 # FFP - Project State
 
-**Last Updated**: 15th December 2025
+**Last Updated**: 16th December 2025
 **Current EPIC**: FFP-2 - Assessment Engine (Sprint 3 In Progress)
 **Current Story**: FFP-132 - Process Jobs Schema & Queue Infrastructure
-**Current Branch**: `feature/ffp-132-process-job-schema-queue-infra`
+**Current Branch**: `feature/ffp-179-job-queue-service`
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
@@ -26,7 +26,7 @@
 | --- | -------------------------------------------- | ---------------------------- |
 | AC1 | Process jobs schema with RLS                 | 🔶 Schema done, RLS deferred |
 | AC2 | Job status enum enforced                     | ✅ Complete                  |
-| AC3 | Enqueue function creates pending job         | Pending                      |
+| AC3 | Enqueue function creates pending job         | ✅ Complete                  |
 | AC4 | Polling claims jobs atomically (SKIP LOCKED) | Pending                      |
 | AC5 | Failed jobs retry with exponential backoff   | Pending                      |
 | AC6 | Failed jobs marked after max retries         | Pending                      |
@@ -36,7 +36,7 @@
 | Order | Key     | Description                                  | Status      |
 | ----- | ------- | -------------------------------------------- | ----------- |
 | 1     | FFP-178 | Create Drizzle schema for process_jobs table | ✅ Complete |
-| 2     | FFP-179 | Implement job queue service with enqueueJob  | Pending     |
+| 2     | FFP-179 | Implement job queue service with queueJob    | ✅ Complete |
 | 3     | FFP-180 | Implement job processor with atomic claiming | Pending     |
 | 4     | FFP-181 | Add retry logic with exponential backoff     | Pending     |
 | 5     | FFP-182 | Configure SST infrastructure for job polling | Pending     |
@@ -45,7 +45,7 @@
 
 ```
 FFP-178 (Schema)
-    ├─→ FFP-179 (Queue Service/enqueueJob)
+    ├─→ FFP-179 (Queue Service/queueJob)
     └─→ FFP-180 (Processor/pollAndClaimJobs)
              └─→ FFP-181 (Retry/Backoff)
                      └─→ FFP-182 (SST Infra)

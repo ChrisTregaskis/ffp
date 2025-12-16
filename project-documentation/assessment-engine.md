@@ -941,7 +941,7 @@ Stored in S3 (not database) to allow hot-reloading without deployment:
 ```typescript
 // Location: @ffp/core/src/jobs/job-queue.service.ts
 
-export const enqueueJob = async (
+export const queueJob = async (
   type: 'score_assessment' | 'generate_program',
   payload: Record<string, unknown>,
   context: TenantContext
@@ -978,7 +978,7 @@ export const submitAssessment = async (
   );
 
   // Enqueue scoring job
-  await enqueueJob('score_assessment', { assessmentId, userId: context.actor.userId }, context);
+  await queueJob('score_assessment', { assessmentId, userId: context.actor.userId }, context);
 };
 ```
 
@@ -1610,7 +1610,7 @@ import { db } from '@ffp/database';
 import { assessmentRepository } from './assessment.repository';
 import { templateRepository } from './template.repository';
 import { flowRepository } from './flow.repository';
-import { enqueueJob } from '../jobs/job-queue.service';
+import { queueJob } from '../jobs/job-queue.service';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import type { TenantContext } from '../lib/context';
 import type { UserAssessment } from '@ffp/core';
@@ -1713,7 +1713,7 @@ export const submitAssessmentService = async (
   );
 
   // Enqueue scoring job
-  const jobId = await enqueueJob(
+  const jobId = await queueJob(
     'score_assessment',
     { assessmentId, userId: context.actor.userId },
     context
