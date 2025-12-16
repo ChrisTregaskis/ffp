@@ -81,6 +81,12 @@ Detailed session-by-session history for Sprint 1 execution.
 1. `packages/core/src/schemas/index.ts` - Added job schema export
 2. `packages/database/src/schema/index.ts` - Added process-jobs export
 
+**Review Comment Fixes** (same session):
+
+- ✅ **[CRITICAL] Tenant Isolation**: Documented that job processor will run with BYPASSRLS to process jobs across all tenants, with tenant context set per-job for tenant-scoped operations
+- ✅ **[HIGH] Enum Sync Risk**: Created shared constants file (`@ffp/database/src/constants/job.constants.ts`) - both packages now import from single source of truth
+- ✅ **[HIGH] DbClient Export**: Verified already exported from `@ffp/database`
+
 **Next Steps**:
 
 - FFP-179: Implement job queue service with enqueueJob

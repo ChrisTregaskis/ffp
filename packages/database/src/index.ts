@@ -8,6 +8,9 @@
 // Re-export all schemas
 export * from './schema';
 
+// Re-export constants (job statuses, job types, etc.)
+export * from './constants';
+
 // Re-export RLS utilities
 export * from './lib/rls';
 

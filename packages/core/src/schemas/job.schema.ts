@@ -1,14 +1,12 @@
 import { z } from 'zod';
 
-// MPORTANT: Keep in sync with jobStatusEnum in @ffp/database/src/schema/process-jobs.ts
-// Manual synchronisation required (cannot auto-generate due to circular dependency).
-export const jobStatusSchema = z.enum(['queued', 'processing', 'completed', 'failed', 'cancelled']);
+import { JOB_STATUSES, JOB_TYPES } from '@ffp/database';
+
+export const jobStatusSchema = z.enum(JOB_STATUSES);
 
 export type JobStatus = z.infer<typeof jobStatusSchema>;
 
-// IMPORTANT: Keep in sync with jobTypeEnum in @ffp/database/src/schema/process-jobs.ts
-// Manual synchronisation required (cannot auto-generate due to circular dependency).
-export const jobTypeSchema = z.enum(['score_assessment', 'generate_program']);
+export const jobTypeSchema = z.enum(JOB_TYPES);
 
 export type JobType = z.infer<typeof jobTypeSchema>;
 

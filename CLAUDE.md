@@ -216,11 +216,17 @@ See `project-documentation/architecture.md` for detailed layer responsibilities 
 ### Dependency Flow
 
 ```
-@ffp/web ──depends on──> @ffp/core
-@ffp/functions ──depends on──> @ffp/core
+@ffp/database  ←── no @ffp/* dependencies (builds FIRST)
+      ↑
+@ffp/core ─────── depends on @ffp/database
+      ↑
+@ffp/web ──────── depends on @ffp/core
+@ffp/functions ── depends on @ffp/core
 ```
 
-**Build order**: `core` must build before `functions` and `web` (enforced by Turborepo)
+**Build order**: `database` → `core` → `functions` and `web` (enforced by Turborepo)
+
+**Critical**: `@ffp/database` MUST NOT import from `@ffp/core` (would create circular dependency). When sharing constants (e.g., enums), define in `@ffp/database` and import into `@ffp/core`.
 
 ### Import Patterns
 
