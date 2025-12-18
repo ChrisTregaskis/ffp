@@ -49,10 +49,7 @@ vi.mock('@ffp/database', async () => {
  */
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-async function setTestRLSContext(
-  db: ReturnType<typeof drizzle>,
-  tenantId: string
-): Promise<void> {
+async function setTestRLSContext(db: ReturnType<typeof drizzle>, tenantId: string): Promise<void> {
   if (!UUID_REGEX.test(tenantId)) {
     throw new Error(`Invalid UUID format for RLS context: ${tenantId}`);
   }
