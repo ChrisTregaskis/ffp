@@ -129,7 +129,7 @@ describe('Job Queue Service', () => {
       expect(job.attempts).toBe(0);
       expect(job.payload).toEqual(payload);
       expect(job.result).toBeNull();
-      expect(job.lastError).toBeNull();
+      expect(job.message).toBeNull();
       expect(job.retryAfter).toBeNull();
       expect(job.startedAt).toBeNull();
       expect(job.completedAt).toBeNull();

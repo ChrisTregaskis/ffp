@@ -118,3 +118,22 @@ export class InternalServerError extends BaseError {
     super(message, 'INTERNAL_SERVER_ERROR', 500);
   }
 }
+
+/**
+ * 500 Job Processor Error - Job processing failures
+ *
+ * Used when:
+ * - Job polling or claiming fails
+ * - Database transaction errors during job processing
+ * - Job execution failures
+ *
+ * Wraps the underlying cause for debugging.
+ */
+export class JobProcessorError extends BaseError {
+  constructor(
+    message: string,
+    public readonly cause?: Error
+  ) {
+    super(message, 'JOB_PROCESSOR_ERROR', 500, cause ? { cause: cause.message } : undefined);
+  }
+}
