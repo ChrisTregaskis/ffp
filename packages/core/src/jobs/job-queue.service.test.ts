@@ -37,6 +37,31 @@ vi.mock('@ffp/database', async () => {
   };
 });
 
+/**
+ * Sets the RLS context for testing purposes.
+ *
+ * IMPORTANT: This helper uses sql.raw() with validated UUID input.
+ * This is necessary because:
+ * 1. PostgreSQL's set_config() with parameterised queries can have connection
+ *    pool issues where the setting doesn't persist across statements
+ * 2. SET commands don't support traditional parameterised queries
+ *
+ * The UUID validation ensures this is safe from SQL injection.
+ * DO NOT copy this pattern to production code - use proper RLS context
+ * management with transactions instead.
+ */
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function setTestRLSContext(
+  db: ReturnType<typeof drizzle>,
+  tenantId: string
+): Promise<void> {
+  if (!UUID_REGEX.test(tenantId)) {
+    throw new Error(`Invalid UUID format for RLS context: ${tenantId}`);
+  }
+  await db.execute(sql.raw(`SET app.tenant_id = '${tenantId}'`));
+}
+
 describe('Job Queue Service', () => {
   let pool: Pool;
   let db: ReturnType<typeof drizzle>;
@@ -63,7 +88,7 @@ describe('Job Queue Service', () => {
     testTenantId = randomUUID();
 
     // Set RLS context first since tenants table has RLS enabled
-    await db.execute(sql.raw(`SET app.tenant_id = '${testTenantId}'`));
+    await setTestRLSContext(db, testTenantId);
     await db.insert(schema.tenants).values({
       id: testTenantId,
       name: `Test Tenant ${testTenantId.slice(0, 8)}`,
@@ -91,7 +116,7 @@ describe('Job Queue Service', () => {
     // Clean up test data created by this test (delete by tenant_id to avoid conflicts)
     if (testTenantId) {
       await db.execute(sql`DELETE FROM process_jobs WHERE tenant_id = ${testTenantId}`);
-      await db.execute(sql.raw(`SET app.tenant_id = '${testTenantId}'`));
+      await setTestRLSContext(db, testTenantId);
       await db.execute(sql`DELETE FROM tenants WHERE id = ${testTenantId}`);
     }
   });
@@ -226,14 +251,14 @@ describe('Job Queue Service', () => {
     it('associates job with correct tenant from context', async () => {
       // Create a second tenant
       const secondTenantId = randomUUID();
-      await db.execute(sql.raw(`SET app.tenant_id = '${secondTenantId}'`));
+      await setTestRLSContext(db, secondTenantId);
       await db.insert(schema.tenants).values({
         id: secondTenantId,
         name: `Second Tenant ${secondTenantId.slice(0, 8)}`,
         type: 'business',
       });
       // Reset RLS context back to first tenant for subsequent operations
-      await db.execute(sql.raw(`SET app.tenant_id = '${testTenantId}'`));
+      await setTestRLSContext(db, testTenantId);
 
       const secondContext: TenantContext = {
         ...testContext,
@@ -266,7 +291,7 @@ describe('Job Queue Service', () => {
 
       // Clean up second tenant's data
       await db.execute(sql`DELETE FROM process_jobs WHERE tenant_id = ${secondTenantId}`);
-      await db.execute(sql.raw(`SET app.tenant_id = '${secondTenantId}'`));
+      await setTestRLSContext(db, secondTenantId);
       await db.execute(sql`DELETE FROM tenants WHERE id = ${secondTenantId}`);
     });
   });

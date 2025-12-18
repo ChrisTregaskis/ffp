@@ -34,6 +34,31 @@ vi.mock('@ffp/database', async () => {
   };
 });
 
+/**
+ * Sets the RLS context for testing purposes.
+ *
+ * IMPORTANT: This helper uses sql.raw() with validated UUID input.
+ * This is necessary because:
+ * 1. PostgreSQL's set_config() with parameterised queries can have connection
+ *    pool issues where the setting doesn't persist across statements
+ * 2. SET commands don't support traditional parameterised queries
+ *
+ * The UUID validation ensures this is safe from SQL injection.
+ * DO NOT copy this pattern to production code - use proper RLS context
+ * management with transactions instead.
+ */
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function setTestRLSContext(
+  db: ReturnType<typeof drizzle>,
+  tenantId: string
+): Promise<void> {
+  if (!UUID_REGEX.test(tenantId)) {
+    throw new Error(`Invalid UUID format for RLS context: ${tenantId}`);
+  }
+  await db.execute(sql.raw(`SET app.tenant_id = '${tenantId}'`));
+}
+
 describe('Job Processor Service', () => {
   let pool: Pool;
   let db: ReturnType<typeof drizzle>;
@@ -61,7 +86,7 @@ describe('Job Processor Service', () => {
     // Create unique test tenant for each test
     testTenantId = randomUUID();
 
-    await db.execute(sql.raw(`SET app.tenant_id = '${testTenantId}'`));
+    await setTestRLSContext(db, testTenantId);
     await db.insert(schema.tenants).values({
       id: testTenantId,
       name: `Test Tenant ${testTenantId.slice(0, 8)}`,
@@ -76,7 +101,7 @@ describe('Job Processor Service', () => {
     // Clean up test data
     if (testTenantId) {
       await db.execute(sql`DELETE FROM process_jobs WHERE tenant_id = ${testTenantId}`);
-      await db.execute(sql.raw(`SET app.tenant_id = '${testTenantId}'`));
+      await setTestRLSContext(db, testTenantId);
       await db.execute(sql`DELETE FROM tenants WHERE id = ${testTenantId}`);
     }
   });

@@ -8,6 +8,118 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 18, 2025 (Session 61 - FFP-180 Job Processor Service)
+
+**Status**: ✅ FFP-180 COMPLETE - Job Processor with Atomic Claiming
+
+**Branch**: `feature/ffp-180-job-processor-auto-claim`
+
+**Completed Work**:
+
+**FFP-180: Implement Job Processor with Atomic Claiming** (~3 hours):
+
+- ✅ **job-processor.service.ts**: Atomic job claiming using `FOR UPDATE SKIP LOCKED`
+  - `pollAndClaimJobs()` - Single function to poll ALL job types with per-type concurrency limits
+  - `JobProcessorConfig` - Configurable `maxConcurrentByType` and `defaultMaxConcurrent` (default: 5)
+  - Batch update optimisation - Single `UPDATE...WHERE IN` instead of N individual updates
+  - Priority-based ordering maintained via `sortBy()` after batch update
+  - Try/catch error handling with `JobProcessorError`
+
+- ✅ **job-processor.service.test.ts**: 15 integration tests against ffp_test database
+  - Claims jobs atomically with `FOR UPDATE SKIP LOCKED`
+  - Respects per-type concurrency limits via `maxConcurrentByType`
+  - Falls back to `defaultMaxConcurrent` for unspecified types
+  - Polls all job types and combines results
+  - Orders by priority (1=urgent, 4=low)
+  - Does not claim non-queued jobs (processing, completed, failed)
+  - Respects `retryAfter` - skips future-scheduled jobs
+  - Increments attempts counter on claim
+  - Sets `startedAt` timestamp
+  - Prevents double-processing with concurrent pollers
+
+- ✅ **sort.utils.ts**: Generic, type-safe sort utility in `@ffp/core/src/lib/`
+  - `sortBy<T>()` - Sort arrays by 1-2 fields with optional direction control
+  - Type-safe field constraints via `keyof T`
+  - Supports field names or `SortCriterion<T>` objects with direction
+  - Handles numbers, strings, Dates, booleans, null values
+  - Immutable - returns new array
+  - British English: `normaliseCriterion()`
+
+- ✅ **sort.utils.test.ts**: 15 unit tests
+  - Single/two field sorting
+  - All data types (number, string, Date, boolean, null)
+  - Direction control (asc/desc)
+  - Immutability verification
+  - Edge cases (empty array, single item, all same values)
+
+- ✅ **errors.ts**: Added `JobProcessorError` for service-layer error handling
+  - Extends `BaseError` with cause chaining
+  - Error code: `JOB_PROCESSOR_ERROR`, HTTP status: 500
+
+**Atomic Claiming Pattern**:
+
+```sql
+SELECT * FROM process_jobs
+WHERE type = $1 AND status = 'queued'
+  AND (retry_after IS NULL OR retry_after <= now())
+ORDER BY priority ASC, created_at ASC
+FOR UPDATE SKIP LOCKED
+LIMIT {maxConcurrent}
+```
+
+**API Design**:
+
+```typescript
+const result = await pollAndClaimJobs({
+  maxConcurrentByType: {
+    score_assessment: 10,
+    generate_program: 3,
+  },
+  defaultMaxConcurrent: 5,
+});
+
+console.log(`Claimed ${result.count} jobs`);
+for (const job of result.claimedJobs) {
+  await processJob(job);
+}
+```
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ ESLint: Zero warnings (--max-warnings 0)
+- ✅ Tests: All 274 tests passing (15 processor + 15 sort + 244 existing)
+- ✅ British English: Consistent spelling (normalise, behaviour)
+
+**Files Created** (4 new files):
+
+1. `packages/core/src/jobs/job-processor.service.ts` - Job processor (138 lines)
+2. `packages/core/src/jobs/job-processor.service.test.ts` - Integration tests (345 lines)
+3. `packages/core/src/lib/sort.utils.ts` - Generic sort utility (94 lines)
+4. `packages/core/src/lib/sort.utils.test.ts` - Sort utility tests (157 lines)
+
+**Files Modified** (4 files):
+
+1. `packages/core/src/jobs/index.ts` - Added job processor service export
+2. `packages/core/src/lib/errors.ts` - Added JobProcessorError class
+3. `packages/database/src/schema/process-jobs.ts` - Renamed `lastError` to `message`
+4. `packages/database/migrations/0006_rename_last_error_to_message.sql` - Column rename migration
+
+**Architecture Decisions**:
+
+1. **Single pollAndClaimJobs function**: Iterates all job types internally rather than requiring callers to specify type
+2. **Per-type concurrency**: `maxConcurrentByType` allows different limits per job type (e.g., 10 for scoring, 3 for generation)
+3. **Batch update**: Single `UPDATE...WHERE IN` is more efficient than N individual updates
+4. **Post-update sorting**: `RETURNING` doesn't preserve order, so sort after batch update
+5. **Generic sort utility**: Reusable across codebase, not job-specific
+
+**Next Steps**:
+
+- FFP-181: Add retry logic with exponential backoff
+- FFP-182: Configure SST infrastructure for job polling
+
+---
+
 ### December 16, 2025 (Session 60 - FFP-179 Job Queue Service)
 
 **Status**: ✅ FFP-179 COMPLETE - Job Queue Service with queueJob
