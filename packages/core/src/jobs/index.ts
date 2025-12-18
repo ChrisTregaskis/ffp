@@ -8,3 +8,4 @@
  */
 
 export * from './job-queue.service';
+export * from './job-processor.service';

@@ -200,8 +200,8 @@ export const processJobSchema = z.object({
   attempts: z.number().int().nonnegative(),
   /** Maximum allowed attempts before marking as failed */
   maxAttempts: z.number().int().positive(),
-  /** Error message from last failed attempt */
-  lastError: z.string().nullable(),
+  /** Human-readable status message (e.g., progress info, failure reason) */
+  message: z.string().nullable(),
   /** Earliest time this job can be retried (null = immediately available) */
   retryAfter: z.date().nullable(),
   /** Timestamp when job was created */

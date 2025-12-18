@@ -65,8 +65,8 @@ export const processJobs = pgTable(
     attempts: integer('attempts').notNull().default(0),
     /** Maximum attempts before marking job as failed */
     maxAttempts: integer('max_attempts').notNull().default(3),
-    /** Error message from the last failed attempt */
-    lastError: text('last_error'),
+    /** Human-readable status message (e.g., progress info, failure reason) */
+    message: text('message'),
     /** Earliest time this job can be retried (null = immediately available) */
     retryAfter: timestamp('retry_after'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
