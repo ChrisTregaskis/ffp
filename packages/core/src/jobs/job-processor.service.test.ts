@@ -19,6 +19,8 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } 
 
 import * as schema from '@ffp/database/schema';
 
+import { NotFoundError } from '../lib/errors';
+
 import {
   pollAndClaimJobs,
   calculateBackoffMs,
@@ -588,6 +590,61 @@ describe('Job Processor Service', () => {
         .where(sql`id = ${failedJob.id}`);
 
       expect(updatedFailedJob.completedAt).toBeInstanceOf(Date);
+    });
+
+    it('throws NotFoundError when job is not in processing status', async () => {
+      // Create a job that is queued (not processing)
+      const job = await createTestJob({ status: 'queued' });
+
+      const [jobRecord] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      await expect(failJob(jobRecord, new Error('Should fail'))).rejects.toThrow(NotFoundError);
+
+      // Verify job status unchanged
+      const [unchangedJob] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      expect(unchangedJob.status).toBe('queued');
+    });
+  });
+
+  describe('completeJob validation', () => {
+    it('throws NotFoundError for non-existent job ID', async () => {
+      const nonExistentId = randomUUID();
+
+      await expect(completeJob(nonExistentId, { data: 'test' })).rejects.toThrow(NotFoundError);
+    });
+
+    it('throws NotFoundError when job is not in processing status', async () => {
+      // Create a job that is queued (not processing)
+      const job = await createTestJob({ status: 'queued' });
+
+      await expect(completeJob(job.id, { data: 'test' })).rejects.toThrow(NotFoundError);
+
+      // Verify job status unchanged
+      const [unchangedJob] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      expect(unchangedJob.status).toBe('queued');
+    });
+
+    it('throws NotFoundError when job is already completed', async () => {
+      const job = await createTestJob({ status: 'completed' });
+
+      await expect(completeJob(job.id, { data: 'test' })).rejects.toThrow(NotFoundError);
+    });
+
+    it('throws NotFoundError when job is already failed', async () => {
+      const job = await createTestJob({ status: 'failed' });
+
+      await expect(completeJob(job.id, { data: 'test' })).rejects.toThrow(NotFoundError);
     });
   });
 });

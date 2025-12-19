@@ -2,7 +2,7 @@ import { eq, and, lte, isNull, or, sql, asc, inArray } from 'drizzle-orm';
 
 import { getDb, processJobs, JOB_TYPES, type ProcessJobRecord, type JobType } from '@ffp/database';
 
-import { JobProcessorError } from '../lib/errors';
+import { JobProcessorError, NotFoundError } from '../lib/errors';
 import { sortBy } from '../lib/sort.utils';
 
 /**
@@ -65,17 +65,26 @@ export async function completeJob<TResult extends Record<string, unknown>>(
   try {
     const db = getDb();
 
-    await db
+    // Only complete jobs that are currently processing
+    const updatedRows = await db
       .update(processJobs)
       .set({
         status: 'completed',
         result,
         completedAt: new Date(),
       })
-      .where(eq(processJobs.id, jobId));
+      .where(and(eq(processJobs.id, jobId), eq(processJobs.status, 'processing')))
+      .returning();
+
+    if (updatedRows.length === 0) {
+      throw new NotFoundError('Process job', jobId);
+    }
 
     return { jobId, success: true };
   } catch (error: unknown) {
+    if (error instanceof NotFoundError) {
+      throw error;
+    }
     if (error instanceof Error) {
       throw new JobProcessorError(`Failed to complete job ${jobId}`, error);
     }
@@ -119,9 +128,10 @@ export async function failJob(job: ProcessJobRecord, error: Error): Promise<Fail
     const backoffMs = calculateBackoffMs(job.attempts);
     const retryAfter = shouldRetry ? new Date(Date.now() + backoffMs) : null;
 
+    // Only fail jobs that are currently processing
     // Retry: return to queue with backoff delay
     // Final failure: mark as failed with completion timestamp
-    await db
+    const updatedRows = await db
       .update(processJobs)
       .set({
         status: shouldRetry ? 'queued' : 'failed',
@@ -129,7 +139,12 @@ export async function failJob(job: ProcessJobRecord, error: Error): Promise<Fail
         retryAfter,
         completedAt: shouldRetry ? null : new Date(),
       })
-      .where(eq(processJobs.id, job.id));
+      .where(and(eq(processJobs.id, job.id), eq(processJobs.status, 'processing')))
+      .returning();
+
+    if (updatedRows.length === 0) {
+      throw new NotFoundError('Process job', job.id);
+    }
 
     return {
       jobId: job.id,
@@ -138,9 +153,14 @@ export async function failJob(job: ProcessJobRecord, error: Error): Promise<Fail
       newStatus: shouldRetry ? 'queued' : 'failed',
     };
   } catch (updateError: unknown) {
+    if (updateError instanceof NotFoundError) {
+      throw updateError;
+    }
+
     if (updateError instanceof Error) {
       throw new JobProcessorError(`Failed to handle job failure for ${job.id}`, updateError);
     }
+
     throw new JobProcessorError(`Failed to handle job failure for ${job.id}`);
   }
 }
