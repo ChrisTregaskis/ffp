@@ -3,7 +3,7 @@
 **Last Updated**: 19th December 2025
 **Current EPIC**: FFP-2 - Assessment Engine (Sprint 3 In Progress)
 **Current Story**: FFP-132 - Process Jobs Schema & Queue Infrastructure
-**Current Branch**: `feature/ffp-181-auto-retry-of-job`
+**Current Branch**: `feature/ffp-182-sst-infrastructure-job-polling`
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
@@ -39,7 +39,7 @@
 | 2     | FFP-179 | Implement job queue service with queueJob    | ✅ Complete |
 | 3     | FFP-180 | Implement job processor with atomic claiming | ✅ Complete |
 | 4     | FFP-181 | Add retry logic with exponential backoff     | ✅ Complete |
-| 5     | FFP-182 | Configure SST infrastructure for job polling | Pending     |
+| 5     | FFP-182 | Configure SST infrastructure for job polling | ✅ Complete |
 
 **Dependency Graph:**
 
@@ -56,10 +56,12 @@ FFP-178 (Schema)
 - **Schema**: `@ffp/database/src/schema/process-jobs.ts`
 - **Queue Service**: `@ffp/core/src/jobs/job-queue.service.ts`
 - **Processor**: `@ffp/core/src/jobs/job-processor.service.ts`
+- **Lambda Handler**: `@ffp/functions/src/jobs/process-jobs.ts`
+- **SST Config**: `sst.config.ts` (JobProcessor Cron)
 - **Job Types**: `score_assessment`, `generate_program`
 - **Polling Pattern**: Database-driven with `FOR UPDATE SKIP LOCKED`
-- **Infrastructure**: EventBridge (1 min) → Lambda → Poll DB
-- **Config**: S3 bucket for concurrency settings
+- **Infrastructure**: EventBridge Cron (1 min) → Lambda → Poll DB
+- **Config**: Environment variables (Phase 1 simplification, S3 bucket deferred)
 
 ### Key Implementation Details
 
