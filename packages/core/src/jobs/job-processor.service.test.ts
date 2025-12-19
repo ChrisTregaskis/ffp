@@ -19,7 +19,14 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } 
 
 import * as schema from '@ffp/database/schema';
 
-import { pollAndClaimJobs } from './job-processor.service';
+import { NotFoundError } from '../lib/errors';
+
+import {
+  pollAndClaimJobs,
+  calculateBackoffMs,
+  completeJob,
+  failJob,
+} from './job-processor.service';
 
 // We need to mock getDb but keep other exports
 const { mockGetDb } = vi.hoisted(() => ({
@@ -361,6 +368,283 @@ describe('Job Processor Service', () => {
           .where(sql`id = ${job.id}`);
         expect(updatedJob.status).toBe('processing');
       }
+    });
+  });
+
+  describe('calculateBackoffMs', () => {
+    it('returns 2000ms for attempt 1', () => {
+      expect(calculateBackoffMs(1)).toBe(2000);
+    });
+
+    it('returns 4000ms for attempt 2', () => {
+      expect(calculateBackoffMs(2)).toBe(4000);
+    });
+
+    it('returns 8000ms for attempt 3', () => {
+      expect(calculateBackoffMs(3)).toBe(8000);
+    });
+
+    it('returns 16000ms for attempt 4', () => {
+      expect(calculateBackoffMs(4)).toBe(16000);
+    });
+
+    it('returns 1000ms for attempt 0 (edge case)', () => {
+      // 2^0 = 1, so 1 * 1000 = 1000
+      expect(calculateBackoffMs(0)).toBe(1000);
+    });
+  });
+
+  describe('completeJob', () => {
+    it('sets status to completed with result', async () => {
+      const job = await createTestJob({ status: 'processing' });
+      const result = { scores: { strength: 75, balance: 82 } };
+
+      const completeResult = await completeJob(job.id, result);
+
+      expect(completeResult.jobId).toBe(job.id);
+      expect(completeResult.success).toBe(true);
+
+      // Verify database state
+      const [updatedJob] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      expect(updatedJob.status).toBe('completed');
+      expect(updatedJob.result).toEqual(result);
+      expect(updatedJob.completedAt).toBeInstanceOf(Date);
+    });
+
+    it('sets completedAt timestamp', async () => {
+      const beforeComplete = new Date();
+      const job = await createTestJob({ status: 'processing' });
+
+      await completeJob(job.id, { data: 'test' });
+      const afterComplete = new Date();
+
+      const [updatedJob] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      expect(updatedJob.completedAt).toBeInstanceOf(Date);
+      if (updatedJob.completedAt) {
+        expect(updatedJob.completedAt.getTime()).toBeGreaterThanOrEqual(beforeComplete.getTime());
+        expect(updatedJob.completedAt.getTime()).toBeLessThanOrEqual(afterComplete.getTime());
+      }
+    });
+  });
+
+  describe('failJob', () => {
+    it('returns job to queued if attempts < maxAttempts', async () => {
+      // Create a job that has been attempted once (maxAttempts=3 by default)
+      const job = await createTestJob({ status: 'processing' });
+      // Simulate one attempt by updating the job
+      await db
+        .update(schema.processJobs)
+        .set({ attempts: 1 })
+        .where(sql`id = ${job.id}`);
+
+      // Fetch updated job record
+      const [jobWithAttempt] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      const result = await failJob(jobWithAttempt, new Error('API timeout'));
+
+      expect(result.willRetry).toBe(true);
+      expect(result.newStatus).toBe('queued');
+      expect(result.retryAfter).toBeInstanceOf(Date);
+
+      // Verify database state
+      const [updatedJob] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      expect(updatedJob.status).toBe('queued');
+      expect(updatedJob.message).toBe('API timeout');
+      expect(updatedJob.retryAfter).toBeInstanceOf(Date);
+      expect(updatedJob.completedAt).toBeNull();
+    });
+
+    it('sets status to failed if attempts >= maxAttempts', async () => {
+      // Create a job that has exhausted all attempts
+      const job = await createTestJob({ status: 'processing', maxAttempts: 3 });
+      await db
+        .update(schema.processJobs)
+        .set({ attempts: 3 })
+        .where(sql`id = ${job.id}`);
+
+      const [jobWithAttempts] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      const result = await failJob(jobWithAttempts, new Error('Final failure'));
+
+      expect(result.willRetry).toBe(false);
+      expect(result.newStatus).toBe('failed');
+      expect(result.retryAfter).toBeNull();
+
+      // Verify database state
+      const [updatedJob] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      expect(updatedJob.status).toBe('failed');
+      expect(updatedJob.message).toBe('Final failure');
+      expect(updatedJob.retryAfter).toBeNull();
+      expect(updatedJob.completedAt).toBeInstanceOf(Date);
+    });
+
+    it('calculates correct exponential backoff for retryAfter', async () => {
+      const beforeFail = Date.now();
+      const job = await createTestJob({ status: 'processing' });
+      await db
+        .update(schema.processJobs)
+        .set({ attempts: 2 })
+        .where(sql`id = ${job.id}`);
+
+      const [jobWith2Attempts] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      const result = await failJob(jobWith2Attempts, new Error('Retry error'));
+
+      // With 2 attempts, backoff should be 2^2 * 1000 = 4000ms
+      expect(result.retryAfter).toBeInstanceOf(Date);
+      if (result.retryAfter) {
+        const expectedMinTime = beforeFail + 4000;
+        const expectedMaxTime = Date.now() + 4000 + 100; // Small buffer for execution time
+
+        expect(result.retryAfter.getTime()).toBeGreaterThanOrEqual(expectedMinTime);
+        expect(result.retryAfter.getTime()).toBeLessThanOrEqual(expectedMaxTime);
+      }
+    });
+
+    it('always records error message on failure', async () => {
+      const job = await createTestJob({ status: 'processing' });
+      await db
+        .update(schema.processJobs)
+        .set({ attempts: 1 })
+        .where(sql`id = ${job.id}`);
+
+      const [jobRecord] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      await failJob(jobRecord, new Error('Connection refused'));
+
+      const [updatedJob] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      expect(updatedJob.message).toBe('Connection refused');
+    });
+
+    it('sets completedAt only on final failure', async () => {
+      // Test retry case - completedAt should be null
+      const retryJob = await createTestJob({ status: 'processing', maxAttempts: 3 });
+      await db
+        .update(schema.processJobs)
+        .set({ attempts: 1 })
+        .where(sql`id = ${retryJob.id}`);
+
+      const [retryJobRecord] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${retryJob.id}`);
+
+      await failJob(retryJobRecord, new Error('Temporary error'));
+
+      const [updatedRetryJob] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${retryJob.id}`);
+
+      expect(updatedRetryJob.completedAt).toBeNull();
+
+      // Test final failure case - completedAt should be set
+      const failedJob = await createTestJob({ status: 'processing', maxAttempts: 2 });
+      await db
+        .update(schema.processJobs)
+        .set({ attempts: 2 })
+        .where(sql`id = ${failedJob.id}`);
+
+      const [failedJobRecord] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${failedJob.id}`);
+
+      await failJob(failedJobRecord, new Error('Permanent error'));
+
+      const [updatedFailedJob] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${failedJob.id}`);
+
+      expect(updatedFailedJob.completedAt).toBeInstanceOf(Date);
+    });
+
+    it('throws NotFoundError when job is not in processing status', async () => {
+      // Create a job that is queued (not processing)
+      const job = await createTestJob({ status: 'queued' });
+
+      const [jobRecord] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      await expect(failJob(jobRecord, new Error('Should fail'))).rejects.toThrow(NotFoundError);
+
+      // Verify job status unchanged
+      const [unchangedJob] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      expect(unchangedJob.status).toBe('queued');
+    });
+  });
+
+  describe('completeJob validation', () => {
+    it('throws NotFoundError for non-existent job ID', async () => {
+      const nonExistentId = randomUUID();
+
+      await expect(completeJob(nonExistentId, { data: 'test' })).rejects.toThrow(NotFoundError);
+    });
+
+    it('throws NotFoundError when job is not in processing status', async () => {
+      // Create a job that is queued (not processing)
+      const job = await createTestJob({ status: 'queued' });
+
+      await expect(completeJob(job.id, { data: 'test' })).rejects.toThrow(NotFoundError);
+
+      // Verify job status unchanged
+      const [unchangedJob] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      expect(unchangedJob.status).toBe('queued');
+    });
+
+    it('throws NotFoundError when job is already completed', async () => {
+      const job = await createTestJob({ status: 'completed' });
+
+      await expect(completeJob(job.id, { data: 'test' })).rejects.toThrow(NotFoundError);
+    });
+
+    it('throws NotFoundError when job is already failed', async () => {
+      const job = await createTestJob({ status: 'failed' });
+
+      await expect(completeJob(job.id, { data: 'test' })).rejects.toThrow(NotFoundError);
     });
   });
 });

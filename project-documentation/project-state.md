@@ -1,9 +1,9 @@
 # FFP - Project State
 
-**Last Updated**: 18th December 2025
+**Last Updated**: 19th December 2025
 **Current EPIC**: FFP-2 - Assessment Engine (Sprint 3 In Progress)
 **Current Story**: FFP-132 - Process Jobs Schema & Queue Infrastructure
-**Current Branch**: `feature/ffp-180-job-processor-auto-claim`
+**Current Branch**: `feature/ffp-181-auto-retry-of-job`
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
@@ -28,8 +28,8 @@
 | AC2 | Job status enum enforced                     | ✅ Complete                  |
 | AC3 | Enqueue function creates pending job         | ✅ Complete                  |
 | AC4 | Polling claims jobs atomically (SKIP LOCKED) | ✅ Complete                  |
-| AC5 | Failed jobs retry with exponential backoff   | Pending                      |
-| AC6 | Failed jobs marked after max retries         | Pending                      |
+| AC5 | Failed jobs retry with exponential backoff   | ✅ Complete                  |
+| AC6 | Failed jobs marked after max retries         | ✅ Complete                  |
 
 ### Sub-tasks (Dependency Order)
 
@@ -38,7 +38,7 @@
 | 1     | FFP-178 | Create Drizzle schema for process_jobs table | ✅ Complete |
 | 2     | FFP-179 | Implement job queue service with queueJob    | ✅ Complete |
 | 3     | FFP-180 | Implement job processor with atomic claiming | ✅ Complete |
-| 4     | FFP-181 | Add retry logic with exponential backoff     | Pending     |
+| 4     | FFP-181 | Add retry logic with exponential backoff     | ✅ Complete |
 | 5     | FFP-182 | Configure SST infrastructure for job polling | Pending     |
 
 **Dependency Graph:**

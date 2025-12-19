@@ -2,8 +2,168 @@ import { eq, and, lte, isNull, or, sql, asc, inArray } from 'drizzle-orm';
 
 import { getDb, processJobs, JOB_TYPES, type ProcessJobRecord, type JobType } from '@ffp/database';
 
-import { JobProcessorError } from '../lib/errors';
+import { JobProcessorError, NotFoundError } from '../lib/errors';
 import { sortBy } from '../lib/sort.utils';
+
+/**
+ * Calculate exponential backoff delay in milliseconds.
+ *
+ * Uses formula: 2^attempts * 1000ms
+ *
+ * @param attempts - Current attempt number (1-based after first failure)
+ * @returns Delay in milliseconds before next retry
+ *
+ * @example
+ * ```typescript
+ * calculateBackoffMs(1); // 2000ms (2 seconds)
+ * calculateBackoffMs(2); // 4000ms (4 seconds)
+ * calculateBackoffMs(3); // 8000ms (8 seconds)
+ * ```
+ */
+export function calculateBackoffMs(attempts: number): number {
+  return Math.pow(2, attempts) * 1000;
+}
+
+/**
+ * Result of a job completion operation
+ */
+export interface CompleteJobResult {
+  /** The job ID that was completed */
+  jobId: string;
+  /** Whether the operation succeeded */
+  success: boolean;
+}
+
+/**
+ * Mark a job as successfully completed with its result.
+ *
+ * Sets status to 'completed', stores the result, and records completion time.
+ *
+ * @typeParam TResult - The shape of the job result (inferred or explicit)
+ * @returns CompleteJobResult indicating success
+ *
+ * @example
+ * ```typescript
+ * // Type inferred from argument
+ * await completeJob(job.id, {
+ *   scores: { strength: 75, balance: 82 },
+ *   recommendations: ['core_stability', 'balance_training'],
+ * });
+ *
+ * // Explicit type for stricter checking
+ * interface ScoreResult {
+ *   scores: Record<string, number>;
+ *   recommendations: string[];
+ * }
+ * await completeJob<ScoreResult>(job.id, result);
+ * ```
+ */
+export async function completeJob<TResult extends Record<string, unknown>>(
+  jobId: string,
+  result: TResult
+): Promise<CompleteJobResult> {
+  try {
+    const db = getDb();
+
+    // Only complete jobs that are currently processing
+    const updatedRows = await db
+      .update(processJobs)
+      .set({
+        status: 'completed',
+        result,
+        completedAt: new Date(),
+      })
+      .where(and(eq(processJobs.id, jobId), eq(processJobs.status, 'processing')))
+      .returning();
+
+    if (updatedRows.length === 0) {
+      throw new NotFoundError('Process job', jobId);
+    }
+
+    return { jobId, success: true };
+  } catch (error: unknown) {
+    if (error instanceof NotFoundError) {
+      throw error;
+    }
+    if (error instanceof Error) {
+      throw new JobProcessorError(`Failed to complete job ${jobId}`, error);
+    }
+    throw new JobProcessorError(`Failed to complete job ${jobId}`);
+  }
+}
+
+/**
+ * Result of a job failure operation
+ */
+export interface FailJobResult {
+  /** The job ID that failed */
+  jobId: string;
+  /** Whether the job will be retried */
+  willRetry: boolean;
+  /** The next retry time (if retrying) */
+  retryAfter: Date | null;
+  /** The final status after handling the failure */
+  newStatus: 'queued' | 'failed';
+}
+
+/**
+ * Handle a job failure with exponential backoff retry logic.
+ *
+ * @example
+ * ```typescript
+ * const result = await failJob(job, new Error('API timeout'));
+ *
+ * if (result.willRetry) {
+ *   console.log(`Job will retry after ${result.retryAfter}`);
+ * } else {
+ *   console.log('Job permanently failed');
+ * }
+ * ```
+ */
+export async function failJob(job: ProcessJobRecord, error: Error): Promise<FailJobResult> {
+  try {
+    const db = getDb();
+
+    const shouldRetry = job.attempts < job.maxAttempts;
+    const backoffMs = calculateBackoffMs(job.attempts);
+    const retryAfter = shouldRetry ? new Date(Date.now() + backoffMs) : null;
+
+    // Only fail jobs that are currently processing
+    // Retry: return to queue with backoff delay
+    // Final failure: mark as failed with completion timestamp
+    const updatedRows = await db
+      .update(processJobs)
+      .set({
+        status: shouldRetry ? 'queued' : 'failed',
+        message: error.message,
+        retryAfter,
+        completedAt: shouldRetry ? null : new Date(),
+      })
+      .where(and(eq(processJobs.id, job.id), eq(processJobs.status, 'processing')))
+      .returning();
+
+    if (updatedRows.length === 0) {
+      throw new NotFoundError('Process job', job.id);
+    }
+
+    return {
+      jobId: job.id,
+      willRetry: shouldRetry,
+      retryAfter,
+      newStatus: shouldRetry ? 'queued' : 'failed',
+    };
+  } catch (updateError: unknown) {
+    if (updateError instanceof NotFoundError) {
+      throw updateError;
+    }
+
+    if (updateError instanceof Error) {
+      throw new JobProcessorError(`Failed to handle job failure for ${job.id}`, updateError);
+    }
+
+    throw new JobProcessorError(`Failed to handle job failure for ${job.id}`);
+  }
+}
 
 /**
  * Configuration for job processor polling behaviour
