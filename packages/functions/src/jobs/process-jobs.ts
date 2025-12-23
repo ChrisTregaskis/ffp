@@ -14,6 +14,10 @@ import type { ScheduledEvent } from 'aws-lambda';
 // ============================================================================
 // Job Payload Types (input to handlers)
 // ============================================================================
+//
+// NOTE: These are placeholder types for handler signatures. When implementing
+// actual handlers (FFP-133/134), import types inferred from Zod schemas in
+// @ffp/core/schemas/job.schema.ts to ensure type consistency with queue payloads.
 
 /** Payload for score_assessment jobs */
 interface ScoreAssessmentPayload {
@@ -36,6 +40,11 @@ interface JobPayloadMap {
 // ============================================================================
 // Job Result Types (output from handlers)
 // ============================================================================
+//
+// NOTE: These are placeholder types that will be replaced by imports from
+// @ffp/core/schemas when FFP-133 (Scoring Service) and FFP-134 (Programme
+// Generation Service) are implemented. The Zod schemas in job.schema.ts
+// define the canonical result structures for database storage.
 
 /** Base result type - allows indexing for Record<string, unknown> compatibility */
 interface BaseJobResult {
@@ -94,6 +103,9 @@ export const handler = async (event: ScheduledEvent): Promise<void> => {
     source: event.source,
   });
 
+  // Warm-up database connection for Lambda cold start optimisation.
+  // pollAndClaimJobs() calls getDb() internally, but pre-warming here
+  // ensures connection is established before job processing begins.
   getDb();
 
   // Configuration for job processing

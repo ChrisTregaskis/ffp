@@ -323,6 +323,10 @@ export default $config({
     // JOB PROCESSING INFRASTRUCTURE
     // =========================================================================
 
+    // Conservative timeout for batch job processing. Actual processing should
+    // complete much faster, but this allows for cold starts and retries.
+    const JOB_PROCESSOR_TIMEOUT = '5 minutes';
+
     // Job processor environment (database access only, no Cognito needed)
     const jobProcessorEnv = {
       environment: {
@@ -337,12 +341,11 @@ export default $config({
 
     // Cron job to poll and process queued jobs every minute
     // Uses EventBridge rule to trigger Lambda on schedule
-    // Lambda timeout set to 5 minutes to allow batch processing
     new sst.aws.Cron('JobProcessor', {
       schedule: 'rate(1 minute)',
       job: {
         handler: 'packages/functions/src/jobs/process-jobs.handler',
-        timeout: '5 minutes',
+        timeout: JOB_PROCESSOR_TIMEOUT,
         ...jobProcessorEnv,
       },
     });
