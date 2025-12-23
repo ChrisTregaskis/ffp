@@ -1,37 +1,60 @@
 # FFP - Project State
 
-**Last Updated**: 19th December 2025
+**Last Updated**: 23rd December 2025
 **Current EPIC**: FFP-2 - Assessment Engine (Sprint 3 In Progress)
-**Current Story**: FFP-132 - Process Jobs Schema & Queue Infrastructure
-**Current Branch**: `feature/ffp-182-sst-infrastructure-job-polling`
+**Current Story**: FFP-125 - Assessment Flow Schema & Configuration
+**Current Branch**: `feature/ffp-132-process-job-schema-queue-infra` (pending merge)
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
 
-## Current Work: FFP-132 - Process Jobs Schema & Queue Infrastructure
+## Current Work: FFP-125 - Assessment Flow Schema & Configuration
 
-**Status**: 🚧 In Progress
-**Story Points**: 8
+**Status**: ⏳ Up Next
+**Story Points**: 3
 **Sprint**: 3 (Backend Foundation)
 
 ### User Story
 
-> As a system,
-> I want jobs queued in the database and processed asynchronously,
-> So that expensive operations don't block user requests.
+> As an assessment author,
+> I want to define the flow of questions in an assessment,
+> So that users progress through sections in a logical order.
+
+### Context
+
+This story defines the schema and configuration for assessment flows - how questions
+are organised into sections and the order in which they're presented to users.
+
+### Dependencies
+
+- ✅ FFP-124: Assessment Template Schema (completed)
+- ✅ FFP-132: Process Jobs Schema (completed)
+
+### Blocks (Downstream)
+
+- FFP-127: User Assessment Schema & State Machine
+- FFP-128: Start Assessment API
+
+---
+
+## Recently Completed: FFP-132 - Process Jobs Schema & Queue Infrastructure ✅
+
+**Status**: ✅ Complete (Ready for merge)
+**Story Points**: 8
+**Sprint**: 3 (Backend Foundation)
 
 ### Acceptance Criteria
 
 | AC  | Description                                  | Status                       |
 | --- | -------------------------------------------- | ---------------------------- |
-| AC1 | Process jobs schema with RLS                 | 🔶 Schema done, RLS deferred |
+| AC1 | Process jobs schema with RLS                 | ✅ Schema done, RLS deferred |
 | AC2 | Job status enum enforced                     | ✅ Complete                  |
 | AC3 | Enqueue function creates pending job         | ✅ Complete                  |
 | AC4 | Polling claims jobs atomically (SKIP LOCKED) | ✅ Complete                  |
 | AC5 | Failed jobs retry with exponential backoff   | ✅ Complete                  |
 | AC6 | Failed jobs marked after max retries         | ✅ Complete                  |
 
-### Sub-tasks (Dependency Order)
+### Sub-tasks
 
 | Order | Key     | Description                                  | Status      |
 | ----- | ------- | -------------------------------------------- | ----------- |
@@ -40,16 +63,6 @@
 | 3     | FFP-180 | Implement job processor with atomic claiming | ✅ Complete |
 | 4     | FFP-181 | Add retry logic with exponential backoff     | ✅ Complete |
 | 5     | FFP-182 | Configure SST infrastructure for job polling | ✅ Complete |
-
-**Dependency Graph:**
-
-```
-FFP-178 (Schema)
-    ├─→ FFP-179 (Queue Service/queueJob)
-    └─→ FFP-180 (Processor/pollAndClaimJobs)
-             └─→ FFP-181 (Retry/Backoff)
-                     └─→ FFP-182 (SST Infra)
-```
 
 ### Technical Notes
 
@@ -61,7 +74,6 @@ FFP-178 (Schema)
 - **Job Types**: `score_assessment`, `generate_program`
 - **Polling Pattern**: Database-driven with `FOR UPDATE SKIP LOCKED`
 - **Infrastructure**: EventBridge Cron (1 min) → Lambda → Poll DB
-- **Config**: Environment variables (Phase 1 simplification, S3 bucket deferred)
 
 ### Key Implementation Details
 
@@ -82,22 +94,6 @@ LIMIT {maxConcurrent}
 
 **Exponential Backoff**: `2^attempts` seconds (2s, 4s, 8s...)
 
-### Dependencies
-
-- ✅ FFP-9: Database infrastructure (completed)
-- ✅ FFP-124: Assessment Template Schema (completed - previous story)
-
-### Blocks (Downstream)
-
-- FFP-130: Submit Assessment API
-- FFP-133: Scoring Service Implementation
-
-### Out of Scope
-
-- Priority queues
-- Dead letter handling beyond max_attempts
-- Job cancellation UI
-
 ---
 
 ## Sprint 3 Progress: Backend Foundation (24 pts)
@@ -107,8 +103,8 @@ LIMIT {maxConcurrent}
 | Order | Key     | Story                                      | Pts | Status      |
 | ----- | ------- | ------------------------------------------ | --- | ----------- |
 | 1     | FFP-124 | Assessment Template Schema & Repository    | 5   | ✅ Complete |
-| 2     | FFP-132 | Process Jobs Schema & Queue Infrastructure | 8   | 🚧 Active   |
-| 3     | FFP-125 | Assessment Flow Schema & Configuration     | 3   | Pending     |
+| 2     | FFP-132 | Process Jobs Schema & Queue Infrastructure | 8   | ✅ Complete |
+| 3     | FFP-125 | Assessment Flow Schema & Configuration     | 3   | ⏳ Up Next  |
 | 4     | FFP-127 | User Assessment Schema & State Machine     | 5   | Pending     |
 | 5     | FFP-128 | Start Assessment API                       | 3   | Pending     |
 
