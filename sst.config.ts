@@ -26,6 +26,26 @@ export default $config({
     };
   },
   async run() {
+    const requiredDbEnvVars = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'] as const;
+    const missingVars = requiredDbEnvVars.filter((varName) => !process.env[varName]);
+
+    if (missingVars.length > 0) {
+      throw new Error(
+        `Missing required database environment variables: ${missingVars.join(', ')}. ` +
+          'Please ensure these are set before deploying.'
+      );
+    }
+
+    // Type-safe access to validated environment variables
+    const dbEnv = {
+      DB_HOST: process.env.DB_HOST!,
+      DB_PORT: process.env.DB_PORT!,
+      DB_NAME: process.env.DB_NAME!,
+      DB_USER: process.env.DB_USER!,
+      DB_PASSWORD: process.env.DB_PASSWORD!,
+      DB_SSL: process.env.DB_SSL || 'false',
+    };
+
     // Cognito User Pool with custom attributes for multi-tenant authentication
     const userPool = new sst.aws.CognitoUserPool('UserPool', {
       usernames: ['email'], // Users sign in with email address
@@ -250,12 +270,7 @@ export default $config({
         COGNITO_USER_POOL_ID: userPool.id,
         COGNITO_CLIENT_ID: userPoolClient.id,
         COGNITO_REGION: 'eu-west-2',
-        DB_HOST: process.env.DB_HOST!,
-        DB_PORT: process.env.DB_PORT!,
-        DB_NAME: process.env.DB_NAME!,
-        DB_USER: process.env.DB_USER!,
-        DB_PASSWORD: process.env.DB_PASSWORD!,
-        DB_SSL: process.env.DB_SSL || 'false',
+        ...dbEnv,
       },
     };
 
@@ -329,14 +344,7 @@ export default $config({
 
     // Job processor environment (database access only, no Cognito needed)
     const jobProcessorEnv = {
-      environment: {
-        DB_HOST: process.env.DB_HOST!,
-        DB_PORT: process.env.DB_PORT!,
-        DB_NAME: process.env.DB_NAME!,
-        DB_USER: process.env.DB_USER!,
-        DB_PASSWORD: process.env.DB_PASSWORD!,
-        DB_SSL: process.env.DB_SSL || 'false',
-      },
+      environment: dbEnv,
     };
 
     // Cron job to poll and process queued jobs every minute

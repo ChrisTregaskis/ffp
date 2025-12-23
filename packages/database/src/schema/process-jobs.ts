@@ -14,7 +14,7 @@ import { JOB_STATUSES, JOB_TYPES } from '../constants/job.constants';
  * - queued: Job created, waiting to be picked up by worker
  * - processing: Worker has claimed the job, currently executing
  * - completed: Job finished successfully, result populated
- * - failed: Job failed after max retries, lastError populated
+ * - failed: Job failed after max retries, message populated
  * - cancelled: Job was manually cancelled before completion
  */
 export const jobStatusEnum = pgEnum('job_status', [...JOB_STATUSES]);

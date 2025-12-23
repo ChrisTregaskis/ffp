@@ -1,74 +1,31 @@
 import {
+  scoreAssessmentPayloadSchema,
+  generateProgramPayloadSchema,
+  type ScoreAssessmentPayload,
+  type GenerateProgramPayload,
+  type ScoreAssessmentResult,
+  type GenerateProgramResult,
+} from '@ffp/core';
+import {
   pollAndClaimJobs,
   completeJob,
   failJob,
   extractJobContext,
   Logger,
   SystemLogger,
+  ValidationError,
   type JobProcessorConfig,
 } from '@ffp/core/server';
 import { getDb, type ProcessJobRecord, type JobType } from '@ffp/database';
 
-import type { ScheduledEvent } from 'aws-lambda';
+import type { Context, ScheduledEvent } from 'aws-lambda';
 
 // ============================================================================
-// Job Payload Types (input to handlers)
-// ============================================================================
-//
-// NOTE: These are placeholder types for handler signatures. When implementing
-// actual handlers (FFP-133/134), import types inferred from Zod schemas in
-// @ffp/core/schemas/job.schema.ts to ensure type consistency with queue payloads.
-
-/** Payload for score_assessment jobs */
-interface ScoreAssessmentPayload {
-  assessmentId: string;
-  // TODO: FFP-133 - Add additional fields as needed
-}
-
-/** Payload for generate_program jobs */
-interface GenerateProgramPayload {
-  assessmentId: string;
-  // TODO: FFP-134 - Add additional fields as needed
-}
-
-/** Map job type to its payload type */
-interface JobPayloadMap {
-  score_assessment: ScoreAssessmentPayload;
-  generate_program: GenerateProgramPayload;
-}
-
-// ============================================================================
-// Job Result Types (output from handlers)
+// Job Type Mappings
 // ============================================================================
 //
-// NOTE: These are placeholder types that will be replaced by imports from
-// @ffp/core/schemas when FFP-133 (Scoring Service) and FFP-134 (Programme
-// Generation Service) are implemented. The Zod schemas in job.schema.ts
-// define the canonical result structures for database storage.
-
-/** Base result type - allows indexing for Record<string, unknown> compatibility */
-interface BaseJobResult {
-  status: string;
-  processedAt: string;
-  [key: string]: unknown;
-}
-
-/** Result for score_assessment jobs */
-interface ScoreAssessmentResult extends BaseJobResult {
-  status: 'scored';
-  scores: {
-    strength: number;
-    balance: number;
-    flexibility: number;
-  };
-}
-
-/** Result for generate_program jobs */
-interface GenerateProgramResult extends BaseJobResult {
-  status: 'generated';
-  programmeId: string | null;
-  exerciseCount: number;
-}
+// Payload and result types are imported from @ffp/core (Zod-inferred canonical types).
+// These mappings enable type-safe routing in processJobByType.
 
 /** Map job type to its result type */
 interface JobResultMap {
@@ -94,9 +51,10 @@ export type JobResult = JobResultMap[JobType];
  * - Each job handler will set tenant context for tenant-scoped operations
  *
  * @param event - EventBridge scheduled event (unused but required by Lambda signature)
+ * @param context - Lambda execution context for timeout tracking
  */
-export const handler = async (event: ScheduledEvent): Promise<void> => {
-  const sysLogger = new SystemLogger('job-processor');
+export const handler = async (event: ScheduledEvent, context: Context): Promise<void> => {
+  const sysLogger = new SystemLogger('job-processor', undefined, context.awsRequestId);
 
   sysLogger.info('Processor triggered', {
     time: event.time,
@@ -145,11 +103,12 @@ export const handler = async (event: ScheduledEvent): Promise<void> => {
       logger.info('Processing job', {
         priority: job.priority,
         attempt: job.attempts,
+        remainingTimeMs: context.getRemainingTimeInMillis(),
       });
 
       try {
         // Route to appropriate handler based on job type
-        const result = processJobByType(job);
+        const result = await processJobByType(job);
 
         // Mark job as completed with result
         await completeJob(job.id, result);
@@ -193,19 +152,37 @@ export const handler = async (event: ScheduledEvent): Promise<void> => {
  * TypeScript narrows the return type based on the job.type discriminant.
  *
  * @param job - The job record to process
- * @returns Typed result object to store in job.result
+ * @returns Promise resolving to typed result object to store in job.result
  */
-function processJobByType<T extends JobType>(job: ProcessJobRecord & { type: T }): JobResultMap[T] {
+async function processJobByType<T extends JobType>(
+  job: ProcessJobRecord & { type: T }
+): Promise<JobResultMap[T]> {
   switch (job.type) {
-    case 'score_assessment':
-      return handleScoreAssessment(
-        job.payload as JobPayloadMap['score_assessment']
-      ) as JobResultMap[T];
+    case 'score_assessment': {
+      const parseResult = scoreAssessmentPayloadSchema.safeParse(job.payload);
 
-    case 'generate_program':
-      return handleGenerateProgram(
-        job.payload as JobPayloadMap['generate_program']
-      ) as JobResultMap[T];
+      if (!parseResult.success) {
+        throw new ValidationError('Invalid score_assessment payload', {
+          jobId: job.id,
+          errors: parseResult.error.format(),
+        });
+      }
+
+      return (await handleScoreAssessment(parseResult.data)) as JobResultMap[T];
+    }
+
+    case 'generate_program': {
+      const parseResult = generateProgramPayloadSchema.safeParse(job.payload);
+
+      if (!parseResult.success) {
+        throw new ValidationError('Invalid generate_program payload', {
+          jobId: job.id,
+          errors: parseResult.error.format(),
+        });
+      }
+
+      return (await handleGenerateProgram(parseResult.data)) as JobResultMap[T];
+    }
 
     default: {
       // TypeScript exhaustiveness check
@@ -221,24 +198,43 @@ function processJobByType<T extends JobType>(job: ProcessJobRecord & { type: T }
  * Placeholder until FFP-133 (Scoring Service) is implemented.
  * Will calculate dimensional scores from assessment responses.
  *
- * @param _payload - Assessment scoring payload
- * @returns Scoring result
+ * @param _payload - Assessment scoring payload (validated via Zod schema)
+ * @returns Promise resolving to scoring result
  */
-function handleScoreAssessment(_payload: ScoreAssessmentPayload): ScoreAssessmentResult {
+async function handleScoreAssessment(
+  _payload: ScoreAssessmentPayload
+): Promise<ScoreAssessmentResult> {
   // TODO: FFP-133 - Implement actual scoring logic
   // Logging will be added when service is implemented with proper context
 
-  // Placeholder: Return mock result structure
-  return {
-    status: 'scored',
-    scores: {
-      // Placeholder scores - will be replaced with actual calculation
-      strength: 0,
-      balance: 0,
-      flexibility: 0,
-    },
-    processedAt: new Date().toISOString(),
-  };
+  // Placeholder: Return mock result structure matching canonical schema
+  // await used to satisfy linter - will be replaced with actual async operations
+  return await Promise.resolve({
+    scores: [
+      {
+        dimensionId: 'placeholder-strength',
+        dimensionName: 'Strength',
+        rawScore: 0,
+        normalisedScore: 0,
+        category: 'pending',
+      },
+      {
+        dimensionId: 'placeholder-balance',
+        dimensionName: 'Balance',
+        rawScore: 0,
+        normalisedScore: 0,
+        category: 'pending',
+      },
+      {
+        dimensionId: 'placeholder-flexibility',
+        dimensionName: 'Flexibility',
+        rawScore: 0,
+        normalisedScore: 0,
+        category: 'pending',
+      },
+    ],
+    scoredAt: new Date().toISOString(),
+  });
 }
 
 /**
@@ -247,18 +243,23 @@ function handleScoreAssessment(_payload: ScoreAssessmentPayload): ScoreAssessmen
  * Placeholder until FFP-134 (Programme Generation Service) is implemented.
  * Will generate personalised workout programme from assessment scores.
  *
- * @param _payload - Programme generation payload
- * @returns Generated programme result
+ * @param _payload - Programme generation payload (validated via Zod schema)
+ * @returns Promise resolving to generated programme result
  */
-function handleGenerateProgram(_payload: GenerateProgramPayload): GenerateProgramResult {
+async function handleGenerateProgram(
+  _payload: GenerateProgramPayload
+): Promise<GenerateProgramResult> {
   // TODO: FFP-134 - Implement actual programme generation logic
   // Logging will be added when service is implemented with proper context
 
-  // Placeholder: Return mock result structure
-  return {
-    status: 'generated',
-    programmeId: null, // Will be actual programme ID when implemented
-    exerciseCount: 0,
-    processedAt: new Date().toISOString(),
-  };
+  // Placeholder: Return mock result structure matching canonical schema
+  // await used to satisfy linter - will be replaced with actual async operations
+  return await Promise.resolve({
+    programId: '00000000-0000-0000-0000-000000000000', // Placeholder UUID
+    programName: 'Pending Programme',
+    durationWeeks: 0,
+    exercises: [],
+    sessionsPerWeek: 0,
+    generatedAt: new Date().toISOString(),
+  });
 }

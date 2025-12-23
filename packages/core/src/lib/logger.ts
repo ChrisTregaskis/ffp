@@ -182,6 +182,7 @@ interface SystemLogEntry {
   level: LogLevel;
   message: string;
   service: string;
+  requestId?: string;
   context?: LogContext;
 }
 
@@ -202,6 +203,9 @@ interface SystemLogEntry {
  * sysLogger.info('Processor triggered', { time: event.time });
  * sysLogger.info('Claimed jobs', { count: 5 });
  * sysLogger.error('Processor failed', { error: err.message });
+ *
+ * // With request ID for distributed tracing
+ * const sysLogger = new SystemLogger('job-processor', undefined, context.awsRequestId);
  * ```
  */
 export class SystemLogger {
@@ -214,17 +218,20 @@ export class SystemLogger {
 
   private readonly service: string;
   private readonly minLogLevel: LogLevel;
+  private readonly requestId?: string;
 
   /**
    * Create a new system logger instance
    *
    * @param service - Name of the service/component (e.g., 'job-processor', 'health-check')
    * @param minLogLevel - Minimum log level to output (defaults to LOG_LEVEL env var or DEBUG)
+   * @param requestId - Optional request ID for distributed tracing (e.g., Lambda context.awsRequestId)
    */
-  constructor(service: string, minLogLevel?: LogLevel) {
+  constructor(service: string, minLogLevel?: LogLevel, requestId?: string) {
     this.service = service;
     this.minLogLevel =
       minLogLevel ?? (process.env.LOG_LEVEL as LogLevel | undefined) ?? LogLevel.DEBUG;
+    this.requestId = requestId;
   }
 
   log(level: LogLevel, message: string, additionalContext?: LogContext): void {
@@ -239,6 +246,11 @@ export class SystemLogger {
       message,
       service: this.service,
     };
+
+    // Include requestId for distributed tracing if available
+    if (this.requestId) {
+      entry.requestId = this.requestId;
+    }
 
     // Include additional context if provided
     if (additionalContext && Object.keys(additionalContext).length > 0) {
