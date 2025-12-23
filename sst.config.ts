@@ -319,6 +319,37 @@ export default $config({
       args
     );
 
+    // =========================================================================
+    // JOB PROCESSING INFRASTRUCTURE
+    // =========================================================================
+
+    // Conservative timeout for batch job processing. Actual processing should
+    // complete much faster, but this allows for cold starts and retries.
+    const JOB_PROCESSOR_TIMEOUT = '5 minutes';
+
+    // Job processor environment (database access only, no Cognito needed)
+    const jobProcessorEnv = {
+      environment: {
+        DB_HOST: process.env.DB_HOST!,
+        DB_PORT: process.env.DB_PORT!,
+        DB_NAME: process.env.DB_NAME!,
+        DB_USER: process.env.DB_USER!,
+        DB_PASSWORD: process.env.DB_PASSWORD!,
+        DB_SSL: process.env.DB_SSL || 'false',
+      },
+    };
+
+    // Cron job to poll and process queued jobs every minute
+    // Uses EventBridge rule to trigger Lambda on schedule
+    new sst.aws.Cron('JobProcessor', {
+      schedule: 'rate(1 minute)',
+      job: {
+        handler: 'packages/functions/src/jobs/process-jobs.handler',
+        timeout: JOB_PROCESSOR_TIMEOUT,
+        ...jobProcessorEnv,
+      },
+    });
+
     // Export resource identifiers
     return {
       // Cognito resources

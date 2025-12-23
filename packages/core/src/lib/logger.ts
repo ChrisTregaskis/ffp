@@ -175,6 +175,98 @@ export class Logger {
 }
 
 /**
+ * Structured log entry format for system-level logs (no tenant context)
+ */
+interface SystemLogEntry {
+  timestamp: string;
+  level: LogLevel;
+  message: string;
+  service: string;
+  context?: LogContext;
+}
+
+/**
+ * System-level logger for cross-tenant or infrastructure operations
+ *
+ * Use this logger when there is no tenant context available, such as:
+ * - Lambda cold starts
+ * - Cross-tenant batch operations (job processor polling)
+ * - Infrastructure health checks
+ * - System-wide metrics
+ *
+ * For tenant-scoped operations, use the `Logger` class instead.
+ *
+ * @example
+ * ```typescript
+ * const sysLogger = new SystemLogger('job-processor');
+ * sysLogger.info('Processor triggered', { time: event.time });
+ * sysLogger.info('Claimed jobs', { count: 5 });
+ * sysLogger.error('Processor failed', { error: err.message });
+ * ```
+ */
+export class SystemLogger {
+  private static readonly logLevelPriority: Record<LogLevel, number> = {
+    [LogLevel.DEBUG]: 0,
+    [LogLevel.INFO]: 1,
+    [LogLevel.WARN]: 2,
+    [LogLevel.ERROR]: 3,
+  };
+
+  private readonly service: string;
+  private readonly minLogLevel: LogLevel;
+
+  /**
+   * Create a new system logger instance
+   *
+   * @param service - Name of the service/component (e.g., 'job-processor', 'health-check')
+   * @param minLogLevel - Minimum log level to output (defaults to LOG_LEVEL env var or DEBUG)
+   */
+  constructor(service: string, minLogLevel?: LogLevel) {
+    this.service = service;
+    this.minLogLevel =
+      minLogLevel ?? (process.env.LOG_LEVEL as LogLevel | undefined) ?? LogLevel.DEBUG;
+  }
+
+  log(level: LogLevel, message: string, additionalContext?: LogContext): void {
+    // Skip logs below minimum level
+    if (SystemLogger.logLevelPriority[level] < SystemLogger.logLevelPriority[this.minLogLevel]) {
+      return;
+    }
+
+    const entry: SystemLogEntry = {
+      timestamp: new Date().toISOString(),
+      level,
+      message,
+      service: this.service,
+    };
+
+    // Include additional context if provided
+    if (additionalContext && Object.keys(additionalContext).length > 0) {
+      entry.context = additionalContext;
+    }
+
+    // Output as JSON for CloudWatch
+    console.log(JSON.stringify(entry));
+  }
+
+  info(message: string, context?: LogContext): void {
+    this.log(LogLevel.INFO, message, context);
+  }
+
+  warn(message: string, context?: LogContext): void {
+    this.log(LogLevel.WARN, message, context);
+  }
+
+  error(message: string, context?: LogContext): void {
+    this.log(LogLevel.ERROR, message, context);
+  }
+
+  debug(message: string, context?: LogContext): void {
+    this.log(LogLevel.DEBUG, message, context);
+  }
+}
+
+/**
  * Wrap an async operation with automatic request logging
  *
  * Logs operation start and end with timing information. If the operation throws

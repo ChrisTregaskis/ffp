@@ -8,6 +8,172 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 19, 2025 (Session 63 - FFP-182 SST Infrastructure for Job Polling)
+
+**Status**: ✅ FFP-182 COMPLETE - SST Infrastructure for Job Polling
+
+**Branch**: `feature/ffp-182-sst-infrastructure-job-polling`
+
+**Completed Work**:
+
+**FFP-182: Configure SST Infrastructure for Job Polling** (~1.5 hours):
+
+- ✅ **process-jobs.ts**: Lambda handler for EventBridge Cron job processor
+  - Polls and claims jobs via `pollAndClaimJobs()` from FFP-180
+  - Processes each job with tenant-aware logging via `extractJobContext()`
+  - Completes/fails jobs via `completeJob()`/`failJob()` from FFP-181
+  - Placeholder handlers for `score_assessment` and `generate_program` job types
+  - `Promise.allSettled()` for parallel job processing with result aggregation
+  - Summary logging with completed/failed/error counts
+
+- ✅ **SystemLogger class**: System-level logger for cross-tenant operations
+  - No tenant context required (unlike `Logger` class)
+  - Outputs structured JSON: `{ timestamp, level, message, service, context }`
+  - Log level filtering via constructor or `LOG_LEVEL` env var
+  - Methods: `info()`, `warn()`, `error()`, `debug()`
+  - Use cases: Lambda cold starts, job processor polling, health checks
+
+- ✅ **sst.config.ts**: Added JobProcessor Cron job
+  - EventBridge Cron schedule: `rate(1 minute)`
+  - Lambda timeout: 5 minutes (conservative for job processing)
+  - Environment variables: DB connection (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD, DB_SSL)
+  - Simplified approach: No S3 config bucket (hardcoded config for Phase 1)
+
+**Logging Architecture**:
+
+Two logger types for different contexts:
+
+1. **SystemLogger** - Handler-level operations (no tenant context)
+   - `Processor triggered` with event time/source
+   - `Claimed jobs for processing` with count
+   - `Job processing complete` with summary stats
+   - `Job processor failed` for handler errors
+
+2. **Logger** - Per-job operations (tenant-aware)
+   - `Processing job` with priority, attempt number
+   - `Job completed successfully` / `Job failed`
+   - `Job failure handled` with retry info
+
+**Execution Flow**:
+
+```
+EventBridge (1-min) → Lambda → pollAndClaimJobs() → Process each job → completeJob()/failJob()
+```
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ ESLint: Zero warnings (--max-warnings 0)
+- ✅ British English: Consistent spelling (programme, behaviour)
+
+**Files Created** (1 new file):
+
+1. `packages/functions/src/jobs/process-jobs.ts` - Job processor Lambda handler (202 lines)
+
+**Files Modified** (2 files):
+
+1. `packages/core/src/lib/logger.ts` - Added SystemLogger class (60 lines)
+2. `sst.config.ts` - Added JobProcessor Cron configuration
+
+**Architecture Decisions**:
+
+1. **SystemLogger separate from Logger**: System-level operations don't have tenant context
+   - Job processor polls across ALL tenants, then processes each job with tenant context
+   - SystemLogger for orchestration, Logger for per-job operations
+
+2. **Simplified configuration**: No S3 config bucket for Phase 1
+   - Original ticket suggested S3 for config - over-engineering for current needs
+   - Can add environment variables or config service later if needed
+
+3. **5-minute Lambda timeout**: Conservative limit
+   - Actual processing should be much faster
+   - Allows headroom for slow database queries or network issues
+
+4. **Placeholder job handlers**: Return mock results until services built
+   - `handleScoreAssessment()` → FFP-133 (Scoring Service)
+   - `handleGenerateProgram()` → FFP-134 (Programme Generation Service)
+
+**FFP-132 User Story Complete**:
+
+All 5 subtasks for Process Jobs Schema & Queue Infrastructure now complete:
+
+- ✅ FFP-178: Process Jobs Schema
+- ✅ FFP-179: Job Queue Service (`queueJob`)
+- ✅ FFP-180: Job Processor (`pollAndClaimJobs`)
+- ✅ FFP-181: Auto-Retry Logic (`completeJob`, `failJob`)
+- ✅ FFP-182: SST Infrastructure (this ticket)
+
+**Next Steps**:
+
+- PR review and merge to main
+- FFP-132 user story ready for Done
+
+---
+
+### December 19, 2025 (Session 62 - FFP-181 Auto-Retry Logic)
+
+**Status**: ✅ FFP-181 COMPLETE - Auto-Retry of Job with Exponential Backoff
+
+**Branch**: `feature/ffp-181-auto-retry-of-job`
+
+**Completed Work**:
+
+**FFP-181: Implement Auto-Retry Logic with Exponential Backoff** (~2 hours):
+
+- ✅ **completeJob()**: Mark jobs as successfully completed
+  - Generic `TResult extends Record<string, unknown>` for type-safe results
+  - Sets `status = 'completed'`, stores result, sets `completedAt`
+  - Returns `CompleteJobResult` with success confirmation
+
+- ✅ **failJob()**: Handle job failures with retry scheduling
+  - If `attempts < maxAttempts`: Sets `status = 'queued'`, calculates `retryAfter`
+  - If `attempts >= maxAttempts`: Sets `status = 'failed'`, sets `completedAt`
+  - Always records error message for debugging
+  - Returns `FailJobResult` with retry info (`willRetry`, `newStatus`, `retryAfter`)
+
+- ✅ **calculateBackoffMs()**: Exponential backoff calculation
+  - Formula: `2^attempts * 1000` milliseconds
+  - Attempt 1: 2 seconds, Attempt 2: 4 seconds, Attempt 3: 8 seconds
+  - No maximum cap (limited by `maxAttempts` default of 3)
+
+- ✅ **job-processor.service.test.ts**: 12 new tests for retry logic
+  - `completeJob()` sets status to completed with result
+  - `completeJob()` sets completedAt timestamp
+  - `failJob()` returns job to queued if attempts < maxAttempts
+  - `failJob()` sets status to failed if attempts >= maxAttempts
+  - `failJob()` calculates exponential backoff for retryAfter
+  - `failJob()` always records error message
+  - `failJob()` sets completedAt on final failure
+  - `calculateBackoffMs()` returns correct values
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ ESLint: Zero warnings (--max-warnings 0)
+- ✅ Tests: All 286 tests passing (12 new + 274 existing)
+- ✅ British English: Consistent spelling
+
+**Files Modified** (2 files):
+
+1. `packages/core/src/jobs/job-processor.service.ts` - Added `calculateBackoffMs()`, `completeJob()`, `failJob()`
+2. `packages/core/src/jobs/job-processor.service.test.ts` - Added 12 tests for retry logic
+
+**Architecture Decisions**:
+
+1. **Simple backoff formula**: `2^attempts` without jitter
+   - Jitter can be added later if needed for high concurrency
+   - `maxAttempts` (default 3) limits total attempts, keeping backoff reasonable
+
+2. **Schema uses `message` not `lastError`**: More generic field name
+   - Can store progress info as well as error messages
+   - Renamed from `lastError` in FFP-180
+
+**Next Steps**:
+
+- FFP-182: Configure SST infrastructure for job polling
+
+---
+
 ### December 18, 2025 (Session 61 - FFP-180 Job Processor Service)
 
 **Status**: ✅ FFP-180 COMPLETE - Job Processor with Atomic Claiming
@@ -1583,30 +1749,33 @@ ALL of the following were implemented.
 
 ## Key Milestones
 
-| Date        | Milestone                       | Hours          |
-| ----------- | ------------------------------- | -------------- |
-| Oct 20      | Sprint 1 Started                | 0h             |
-| Oct 24      | FFP-7 Complete (Monorepo)       | 13h            |
-| Oct 26      | FFP-8 Complete (Infrastructure) | 30h            |
-| Oct 27      | Database schemas defined        | 44h            |
-| Oct 30      | FFP-10 Complete (RLS)           | 54h            |
-| Nov 1       | FFP-10 & FFP-11 Merged to Main  | 83.5h          |
-| Nov 3       | FFP-35 & FFP-43 Complete        | 94h            |
-| Nov 5       | FFP-36 Complete                 | 125.5h         |
-| Nov 6       | FFP-44 Complete                 | 127.5h         |
-| Nov 6       | FFP-32 Deferred                 | 128h           |
-| Nov 8       | FFP-112 Complete (Admin API)    | 132.5h         |
-| Nov 9       | FFP-37 Complete (Invite User)   | 136.5h         |
-| Nov 11      | FFP-38 Complete (Login)         | 135.5h         |
-| Nov 11      | FFP-39 Complete (Refresh Token) | 137.5h         |
-| Nov 13      | FFP-115 Complete (Components)   | 141.5h         |
-| Nov 13      | FFP-93 Complete (Amplify)       | 142.5h         |
-| Nov 14      | FFP-90 Complete (AuthContext)   | 146.5h         |
-| Nov 15      | FFP-119 Complete (Routing)      | 148.5h         |
-| Nov 17      | FFP-92 Complete (Login Form)    | 150.5h         |
-| Nov 18      | FFP-116 Complete (Password)     | 152.5h         |
-| Nov 19      | FFP-16 Complete (Web Login)     | 155.5h         |
-| **Current** | **79% Sprint 1+2 Complete**     | **155.5/197h** |
+| Date        | Milestone                        | Hours         |
+| ----------- | -------------------------------- | ------------- |
+| Oct 20      | Sprint 1 Started                 | 0h            |
+| Oct 24      | FFP-7 Complete (Monorepo)        | 13h           |
+| Oct 26      | FFP-8 Complete (Infrastructure)  | 30h           |
+| Oct 27      | Database schemas defined         | 44h           |
+| Oct 30      | FFP-10 Complete (RLS)            | 54h           |
+| Nov 1       | FFP-10 & FFP-11 Merged to Main   | 83.5h         |
+| Nov 3       | FFP-35 & FFP-43 Complete         | 94h           |
+| Nov 5       | FFP-36 Complete                  | 125.5h        |
+| Nov 6       | FFP-44 Complete                  | 127.5h        |
+| Nov 6       | FFP-32 Deferred                  | 128h          |
+| Nov 8       | FFP-112 Complete (Admin API)     | 132.5h        |
+| Nov 9       | FFP-37 Complete (Invite User)    | 136.5h        |
+| Nov 11      | FFP-38 Complete (Login)          | 135.5h        |
+| Nov 11      | FFP-39 Complete (Refresh Token)  | 137.5h        |
+| Nov 13      | FFP-115 Complete (Components)    | 141.5h        |
+| Nov 13      | FFP-93 Complete (Amplify)        | 142.5h        |
+| Nov 14      | FFP-90 Complete (AuthContext)    | 146.5h        |
+| Nov 15      | FFP-119 Complete (Routing)       | 148.5h        |
+| Nov 17      | FFP-92 Complete (Login Form)     | 150.5h        |
+| Nov 18      | FFP-116 Complete (Password)      | 152.5h        |
+| Nov 19      | FFP-16 Complete (Web Login)      | 155.5h        |
+| Dec 18      | FFP-180 Complete (Job Processor) | 158.5h        |
+| Dec 19      | FFP-181 Complete (Auto-Retry)    | 160.5h        |
+| Dec 19      | FFP-182 Complete (SST Cron)      | 162h          |
+| **Current** | **FFP-132 Complete**             | **~162/197h** |
 
 ---
 

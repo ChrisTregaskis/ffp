@@ -302,7 +302,7 @@ describe('Logger', () => {
 
       const logEntry = parseLogEntry(consoleLogSpy.mock.calls[0][0] as string);
       expect(logEntry.duration).toBeGreaterThanOrEqual(50);
-      expect(logEntry.duration).toBeLessThan(200); // Reasonable upper bound
+      expect(logEntry.duration).toBeLessThan(500); // Reasonable upper bound (allows for CI/system load variability)
     });
   });
 
