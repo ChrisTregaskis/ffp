@@ -1,16 +1,19 @@
 import { z } from 'zod';
 
+import { CUSTOMER_STATUSES } from '@ffp/database';
+
 /**
- * Customer status enumeration - Single source of truth for customer status
+ * Customer status Zod schema
+ *
+ * Uses shared constants from @ffp/database to ensure synchronisation
+ * with PostgreSQL enum definitions.
  *
  * Defines the lifecycle states of a customer account:
  * - active: Customer account is active and can access the platform
  * - suspended: Temporarily suspended (e.g., payment issues, policy violation)
  * - inactive: Closed/cancelled account (data retained for compliance)
- *
- * IMPORTANT: Keep PostgreSQL enum in @ffp/database/src/schema/customers.ts in sync
  */
-export const customerStatusSchema = z.enum(['active', 'suspended', 'inactive']);
+export const customerStatusSchema = z.enum(CUSTOMER_STATUSES);
 
 /**
  * TypeScript type derived from Zod schema

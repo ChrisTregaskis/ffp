@@ -210,10 +210,39 @@ FFP uses [Turborepo](https://turborepo.com/) for efficient monorepo management, 
 - **Remote Caching**: Share build artifacts across team (future)
 - **Incremental Builds**: Only rebuild what changed
 
+### Package Dependency Graph
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    DEPENDENCY DIRECTION                         │
+│                                                                 │
+│   @ffp/database  ←── builds FIRST (no @ffp/* dependencies)      │
+│         │                                                       │
+│         │ imports from (constants, types, schemas)              │
+│         ▼                                                       │
+│   @ffp/core  ←────── builds SECOND                              │
+│         │                                                       │
+│         │ imports from (services, schemas, lib)                 │
+│         ▼                                                       │
+│   @ffp/functions  ←─ builds LAST                                │
+│   @ffp/web                                                      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Critical Rule**: `@ffp/database` MUST NOT import from `@ffp/core` to prevent circular dependencies.
+
+- ✅ `@ffp/core` imports from `@ffp/database` (correct direction)
+- ✅ `@ffp/functions` imports from `@ffp/core` (correct direction)
+- ✅ `@ffp/web` imports from `@ffp/core` (correct direction)
+- ❌ `@ffp/database` importing from `@ffp/core` would create a cycle
+
+**Shared Constants Pattern**: When both packages need the same values (e.g., enums), define them in `@ffp/database` and import into `@ffp/core`. Example: `JOB_STATUSES` in `@ffp/database/src/constants/job.constants.ts` is imported by both the Drizzle schema and Zod schemas.
+
 ### Task Dependencies
 
 ```
 build (web) → depends on → build (core)
+build (core) → depends on → build (database)
 test (functions) → depends on → build (core)
 deploy (functions) → depends on → build + test
 ```
@@ -392,7 +421,7 @@ FFP uses a clear separation of concerns with domain-organised architecture. Each
 │  - Column types                                            │
 │  - Relations                                               │
 │  - Indexes                                                 │
-│  - PostgreSQL enums (manually synced with Zod)             │
+│  - PostgreSQL enums (shared constants with Zod)            │
 │  ⚠️ Types from here used ONLY in repositories internally   │
 └───────────────────────────┬────────────────────────────────┘
                             │
@@ -986,6 +1015,31 @@ export const handler = async () => {
 - **100k users**: ElastiCache, DynamoDB for rate limiting
 - **1M users**: Auto-scaling Lambda concurrency, database sharding
 - **Drizzle**: Continues to work efficiently at all scales
+
+### Database Connection Limits
+
+RDS PostgreSQL connection limits are based on instance memory:
+
+| Instance Class | Memory | max_connections | Recommended App Limit |
+| -------------- | ------ | --------------- | --------------------- |
+| db.t3.small    | 2 GB   | ~112            | ~80                   |
+| db.t3.medium   | 4 GB   | ~225            | ~160                  |
+| db.t3.large    | 8 GB   | ~450            | ~320                  |
+| db.r5.large    | 16 GB  | ~900            | ~650                  |
+
+**Job Processor Concurrency Model:**
+
+- EventBridge triggers Lambda every 1 minute
+- Each Lambda invocation uses 1 database connection
+- Jobs are processed sequentially within the invocation (not parallel)
+- `FOR UPDATE SKIP LOCKED` prevents double-processing if invocations overlap
+- With 5-minute timeout, worst case is ~5 concurrent Lambdas (5 connections)
+
+**When to add RDS Proxy (~£15-20/month):**
+
+- Lambda concurrency exceeds 50% of max_connections
+- Frequent connection timeouts in CloudWatch logs
+- Scaling beyond t3.medium instance
 
 ## Cost Breakdown (Phase 1)
 

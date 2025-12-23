@@ -12,15 +12,13 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { relations } from 'drizzle-orm';
 import { tenants } from './tenants';
 import { customers } from './customers';
+import { USER_ROLES } from '../constants/user.constants';
 
 /**
  * User role enumeration (PostgreSQL enum)
  *
- * IMPORTANT: Keep in sync with userRoleSchema in @ffp/core/src/schemas/user.schema.ts
- * The Zod schema is the single source of truth for user roles.
- *
- * Manual synchronisation required (cannot auto-generate due to circular dependency).
- * Changes to roles must be made in both places.
+ * Uses shared constants from @ffp/database/constants/user.constants.ts
+ * to ensure synchronisation with Zod schemas in @ffp/core.
  *
  * Defines the hierarchical role system:
  * - system_admin: Platform administrator (highest privilege)
@@ -30,12 +28,7 @@ import { customers } from './customers';
  *   - Individual users: customerId = null
  *   - Customer users: customerId present
  */
-export const userRoleEnum = pgEnum('user_role', [
-  'system_admin',
-  'customer_owner',
-  'customer_admin',
-  'program_user',
-]);
+export const userRoleEnum = pgEnum('user_role', [...USER_ROLES]);
 
 /**
  * Users table definition

@@ -36,6 +36,20 @@
       "when": 1765470076825,
       "tag": "0004_greedy_nekra",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1765785298552,
+      "tag": "0005_dapper_jubilee",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1734534111000,
+      "tag": "0006_rename_last_error_to_message",
+      "breakpoints": true
     }
   ]
 }

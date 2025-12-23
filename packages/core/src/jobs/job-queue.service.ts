@@ -1,0 +1,70 @@
+import { getDb, processJobs, type JobType } from '@ffp/database';
+
+import type { TenantContext } from '../lib/context';
+import type { GenerateProgramPayload, ScoreAssessmentPayload } from '../schemas/job.schema';
+
+/**
+ * Maps job types to their corresponding payload types.
+ * This enables type-safe payloads when calling queueJob().
+ */
+export interface JobPayloadMap {
+  score_assessment: ScoreAssessmentPayload;
+  generate_program: GenerateProgramPayload;
+}
+
+/**
+ * Options for queueing a job
+ */
+export interface QueueJobOptions {
+  /**
+   * Job priority: 1=urgent, 2=high, 3=medium, 4=low (default)
+   * Lower numbers are processed first.
+   */
+  priority?: 1 | 2 | 3 | 4;
+
+  /**
+   * Maximum number of retry attempts before marking job as failed.
+   * @default 3
+   */
+  maxAttempts?: number;
+}
+
+/**
+ * Queue a job for asynchronous processing
+ *
+ * Creates a new job record in the database with 'queued' status.
+ * The job will be picked up by the job processor on its next poll cycle.
+ *
+ * @typeParam T - The job type, used to infer the correct payload type
+ * @param type - The type of job to queue (e.g., 'score_assessment', 'generate_program')
+ * @param payload - Job-specific data required for processing (type-safe based on job type)
+ * @param context - Tenant context for RLS isolation
+ * @param options - Optional configuration for priority and retry behaviour
+ * @returns The UUID of the created job for tracking
+ *
+ */
+export async function queueJob<T extends JobType>(
+  type: T,
+  payload: JobPayloadMap[T],
+  context: TenantContext,
+  options: QueueJobOptions = {}
+): Promise<string> {
+  const { priority = 4, maxAttempts = 3 } = options;
+
+  const db = getDb();
+
+  const [job] = await db
+    .insert(processJobs)
+    .values({
+      tenantId: context.tenantId,
+      type,
+      payload,
+      priority,
+      maxAttempts,
+      // status defaults to 'queued' in schema
+      // attempts defaults to 0 in schema
+    })
+    .returning({ id: processJobs.id });
+
+  return job.id;
+}

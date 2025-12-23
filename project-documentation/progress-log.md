@@ -8,6 +8,444 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 19, 2025 (Session 63 - FFP-182 SST Infrastructure for Job Polling)
+
+**Status**: ✅ FFP-182 COMPLETE - SST Infrastructure for Job Polling
+
+**Branch**: `feature/ffp-182-sst-infrastructure-job-polling`
+
+**Completed Work**:
+
+**FFP-182: Configure SST Infrastructure for Job Polling** (~1.5 hours):
+
+- ✅ **process-jobs.ts**: Lambda handler for EventBridge Cron job processor
+  - Polls and claims jobs via `pollAndClaimJobs()` from FFP-180
+  - Processes each job with tenant-aware logging via `extractJobContext()`
+  - Completes/fails jobs via `completeJob()`/`failJob()` from FFP-181
+  - Placeholder handlers for `score_assessment` and `generate_program` job types
+  - `Promise.allSettled()` for parallel job processing with result aggregation
+  - Summary logging with completed/failed/error counts
+
+- ✅ **SystemLogger class**: System-level logger for cross-tenant operations
+  - No tenant context required (unlike `Logger` class)
+  - Outputs structured JSON: `{ timestamp, level, message, service, context }`
+  - Log level filtering via constructor or `LOG_LEVEL` env var
+  - Methods: `info()`, `warn()`, `error()`, `debug()`
+  - Use cases: Lambda cold starts, job processor polling, health checks
+
+- ✅ **sst.config.ts**: Added JobProcessor Cron job
+  - EventBridge Cron schedule: `rate(1 minute)`
+  - Lambda timeout: 5 minutes (conservative for job processing)
+  - Environment variables: DB connection (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD, DB_SSL)
+  - Simplified approach: No S3 config bucket (hardcoded config for Phase 1)
+
+**Logging Architecture**:
+
+Two logger types for different contexts:
+
+1. **SystemLogger** - Handler-level operations (no tenant context)
+   - `Processor triggered` with event time/source
+   - `Claimed jobs for processing` with count
+   - `Job processing complete` with summary stats
+   - `Job processor failed` for handler errors
+
+2. **Logger** - Per-job operations (tenant-aware)
+   - `Processing job` with priority, attempt number
+   - `Job completed successfully` / `Job failed`
+   - `Job failure handled` with retry info
+
+**Execution Flow**:
+
+```
+EventBridge (1-min) → Lambda → pollAndClaimJobs() → Process each job → completeJob()/failJob()
+```
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ ESLint: Zero warnings (--max-warnings 0)
+- ✅ British English: Consistent spelling (programme, behaviour)
+
+**Files Created** (1 new file):
+
+1. `packages/functions/src/jobs/process-jobs.ts` - Job processor Lambda handler (202 lines)
+
+**Files Modified** (2 files):
+
+1. `packages/core/src/lib/logger.ts` - Added SystemLogger class (60 lines)
+2. `sst.config.ts` - Added JobProcessor Cron configuration
+
+**Architecture Decisions**:
+
+1. **SystemLogger separate from Logger**: System-level operations don't have tenant context
+   - Job processor polls across ALL tenants, then processes each job with tenant context
+   - SystemLogger for orchestration, Logger for per-job operations
+
+2. **Simplified configuration**: No S3 config bucket for Phase 1
+   - Original ticket suggested S3 for config - over-engineering for current needs
+   - Can add environment variables or config service later if needed
+
+3. **5-minute Lambda timeout**: Conservative limit
+   - Actual processing should be much faster
+   - Allows headroom for slow database queries or network issues
+
+4. **Placeholder job handlers**: Return mock results until services built
+   - `handleScoreAssessment()` → FFP-133 (Scoring Service)
+   - `handleGenerateProgram()` → FFP-134 (Programme Generation Service)
+
+**FFP-132 User Story Complete**:
+
+All 5 subtasks for Process Jobs Schema & Queue Infrastructure now complete:
+
+- ✅ FFP-178: Process Jobs Schema
+- ✅ FFP-179: Job Queue Service (`queueJob`)
+- ✅ FFP-180: Job Processor (`pollAndClaimJobs`)
+- ✅ FFP-181: Auto-Retry Logic (`completeJob`, `failJob`)
+- ✅ FFP-182: SST Infrastructure (this ticket)
+
+**Next Steps**:
+
+- PR review and merge to main
+- FFP-132 user story ready for Done
+
+---
+
+### December 19, 2025 (Session 62 - FFP-181 Auto-Retry Logic)
+
+**Status**: ✅ FFP-181 COMPLETE - Auto-Retry of Job with Exponential Backoff
+
+**Branch**: `feature/ffp-181-auto-retry-of-job`
+
+**Completed Work**:
+
+**FFP-181: Implement Auto-Retry Logic with Exponential Backoff** (~2 hours):
+
+- ✅ **completeJob()**: Mark jobs as successfully completed
+  - Generic `TResult extends Record<string, unknown>` for type-safe results
+  - Sets `status = 'completed'`, stores result, sets `completedAt`
+  - Returns `CompleteJobResult` with success confirmation
+
+- ✅ **failJob()**: Handle job failures with retry scheduling
+  - If `attempts < maxAttempts`: Sets `status = 'queued'`, calculates `retryAfter`
+  - If `attempts >= maxAttempts`: Sets `status = 'failed'`, sets `completedAt`
+  - Always records error message for debugging
+  - Returns `FailJobResult` with retry info (`willRetry`, `newStatus`, `retryAfter`)
+
+- ✅ **calculateBackoffMs()**: Exponential backoff calculation
+  - Formula: `2^attempts * 1000` milliseconds
+  - Attempt 1: 2 seconds, Attempt 2: 4 seconds, Attempt 3: 8 seconds
+  - No maximum cap (limited by `maxAttempts` default of 3)
+
+- ✅ **job-processor.service.test.ts**: 12 new tests for retry logic
+  - `completeJob()` sets status to completed with result
+  - `completeJob()` sets completedAt timestamp
+  - `failJob()` returns job to queued if attempts < maxAttempts
+  - `failJob()` sets status to failed if attempts >= maxAttempts
+  - `failJob()` calculates exponential backoff for retryAfter
+  - `failJob()` always records error message
+  - `failJob()` sets completedAt on final failure
+  - `calculateBackoffMs()` returns correct values
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ ESLint: Zero warnings (--max-warnings 0)
+- ✅ Tests: All 286 tests passing (12 new + 274 existing)
+- ✅ British English: Consistent spelling
+
+**Files Modified** (2 files):
+
+1. `packages/core/src/jobs/job-processor.service.ts` - Added `calculateBackoffMs()`, `completeJob()`, `failJob()`
+2. `packages/core/src/jobs/job-processor.service.test.ts` - Added 12 tests for retry logic
+
+**Architecture Decisions**:
+
+1. **Simple backoff formula**: `2^attempts` without jitter
+   - Jitter can be added later if needed for high concurrency
+   - `maxAttempts` (default 3) limits total attempts, keeping backoff reasonable
+
+2. **Schema uses `message` not `lastError`**: More generic field name
+   - Can store progress info as well as error messages
+   - Renamed from `lastError` in FFP-180
+
+**Next Steps**:
+
+- FFP-182: Configure SST infrastructure for job polling
+
+---
+
+### December 18, 2025 (Session 61 - FFP-180 Job Processor Service)
+
+**Status**: ✅ FFP-180 COMPLETE - Job Processor with Atomic Claiming
+
+**Branch**: `feature/ffp-180-job-processor-auto-claim`
+
+**Completed Work**:
+
+**FFP-180: Implement Job Processor with Atomic Claiming** (~3 hours):
+
+- ✅ **job-processor.service.ts**: Atomic job claiming using `FOR UPDATE SKIP LOCKED`
+  - `pollAndClaimJobs()` - Single function to poll ALL job types with per-type concurrency limits
+  - `JobProcessorConfig` - Configurable `maxConcurrentByType` and `defaultMaxConcurrent` (default: 5)
+  - Batch update optimisation - Single `UPDATE...WHERE IN` instead of N individual updates
+  - Priority-based ordering maintained via `sortBy()` after batch update
+  - Try/catch error handling with `JobProcessorError`
+
+- ✅ **job-processor.service.test.ts**: 15 integration tests against ffp_test database
+  - Claims jobs atomically with `FOR UPDATE SKIP LOCKED`
+  - Respects per-type concurrency limits via `maxConcurrentByType`
+  - Falls back to `defaultMaxConcurrent` for unspecified types
+  - Polls all job types and combines results
+  - Orders by priority (1=urgent, 4=low)
+  - Does not claim non-queued jobs (processing, completed, failed)
+  - Respects `retryAfter` - skips future-scheduled jobs
+  - Increments attempts counter on claim
+  - Sets `startedAt` timestamp
+  - Prevents double-processing with concurrent pollers
+
+- ✅ **sort.utils.ts**: Generic, type-safe sort utility in `@ffp/core/src/lib/`
+  - `sortBy<T>()` - Sort arrays by 1-2 fields with optional direction control
+  - Type-safe field constraints via `keyof T`
+  - Supports field names or `SortCriterion<T>` objects with direction
+  - Handles numbers, strings, Dates, booleans, null values
+  - Immutable - returns new array
+  - British English: `normaliseCriterion()`
+
+- ✅ **sort.utils.test.ts**: 15 unit tests
+  - Single/two field sorting
+  - All data types (number, string, Date, boolean, null)
+  - Direction control (asc/desc)
+  - Immutability verification
+  - Edge cases (empty array, single item, all same values)
+
+- ✅ **errors.ts**: Added `JobProcessorError` for service-layer error handling
+  - Extends `BaseError` with cause chaining
+  - Error code: `JOB_PROCESSOR_ERROR`, HTTP status: 500
+
+**Atomic Claiming Pattern**:
+
+```sql
+SELECT * FROM process_jobs
+WHERE type = $1 AND status = 'queued'
+  AND (retry_after IS NULL OR retry_after <= now())
+ORDER BY priority ASC, created_at ASC
+FOR UPDATE SKIP LOCKED
+LIMIT {maxConcurrent}
+```
+
+**API Design**:
+
+```typescript
+const result = await pollAndClaimJobs({
+  maxConcurrentByType: {
+    score_assessment: 10,
+    generate_program: 3,
+  },
+  defaultMaxConcurrent: 5,
+});
+
+console.log(`Claimed ${result.count} jobs`);
+for (const job of result.claimedJobs) {
+  await processJob(job);
+}
+```
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ ESLint: Zero warnings (--max-warnings 0)
+- ✅ Tests: All 274 tests passing (15 processor + 15 sort + 244 existing)
+- ✅ British English: Consistent spelling (normalise, behaviour)
+
+**Files Created** (4 new files):
+
+1. `packages/core/src/jobs/job-processor.service.ts` - Job processor (138 lines)
+2. `packages/core/src/jobs/job-processor.service.test.ts` - Integration tests (345 lines)
+3. `packages/core/src/lib/sort.utils.ts` - Generic sort utility (94 lines)
+4. `packages/core/src/lib/sort.utils.test.ts` - Sort utility tests (157 lines)
+
+**Files Modified** (4 files):
+
+1. `packages/core/src/jobs/index.ts` - Added job processor service export
+2. `packages/core/src/lib/errors.ts` - Added JobProcessorError class
+3. `packages/database/src/schema/process-jobs.ts` - Renamed `lastError` to `message`
+4. `packages/database/migrations/0006_rename_last_error_to_message.sql` - Column rename migration
+
+**Architecture Decisions**:
+
+1. **Single pollAndClaimJobs function**: Iterates all job types internally rather than requiring callers to specify type
+2. **Per-type concurrency**: `maxConcurrentByType` allows different limits per job type (e.g., 10 for scoring, 3 for generation)
+3. **Batch update**: Single `UPDATE...WHERE IN` is more efficient than N individual updates
+4. **Post-update sorting**: `RETURNING` doesn't preserve order, so sort after batch update
+5. **Generic sort utility**: Reusable across codebase, not job-specific
+
+**Next Steps**:
+
+- FFP-181: Add retry logic with exponential backoff
+- FFP-182: Configure SST infrastructure for job polling
+
+---
+
+### December 16, 2025 (Session 60 - FFP-179 Job Queue Service)
+
+**Status**: ✅ FFP-179 COMPLETE - Job Queue Service with queueJob
+
+**Branch**: `feature/ffp-179-job-queue-service`
+
+**Completed Work**:
+
+**FFP-179: Implement Job Queue Service with queueJob** (~2 hours):
+
+- ✅ **job-queue.service.ts**: Type-safe job queuing service
+  - `queueJob<T>()` - Generic function with type-safe payloads via `JobPayloadMap`
+  - Automatic payload type inference based on job type (`score_assessment`, `generate_program`)
+  - `QueueJobOptions` - Optional priority (1-4) and maxAttempts configuration
+  - Default priority: 4 (low), default maxAttempts: 3
+  - Returns job UUID for tracking
+  - Uses tenant context for RLS isolation
+
+- ✅ **job-queue.service.test.ts**: 6 integration tests against ffp_test database
+  - Creates job with default priority and maxAttempts
+  - Creates job with custom priority
+  - Creates job with custom maxAttempts
+  - Creates job with both priority and maxAttempts
+  - Creates generate_program job type
+  - Associates job with correct tenant from context
+
+**Type-Safe Payload Pattern**:
+
+```typescript
+// JobPayloadMap enables compile-time type checking
+interface JobPayloadMap {
+  score_assessment: ScoreAssessmentPayload;
+  generate_program: GenerateProgramPayload;
+}
+
+// Usage - payload type inferred from job type
+await queueJob('score_assessment', {
+  assessmentSubmissionId: uuid,
+  templateId: uuid,
+  userId: uuid,
+  responses: [...],
+}, context);
+```
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ ESLint: Zero warnings (--max-warnings 0)
+- ✅ Tests: All 6 integration tests passing against real database
+- ✅ British English: Consistent spelling (behaviour, normalised)
+
+**Files Created** (2 new files):
+
+1. `packages/core/src/jobs/job-queue.service.ts` - Job queue service (70 lines)
+2. `packages/core/src/jobs/job-queue.service.test.ts` - Integration tests (273 lines)
+
+**Files Modified** (1 file):
+
+1. `packages/core/src/jobs/index.ts` - Added job queue service export
+
+**Architecture Decisions**:
+
+1. **Type-safe payloads**: `JobPayloadMap` interface ensures compile-time type checking for job payloads
+2. **Simple defaults**: Priority 4 (low) and maxAttempts 3 as sensible defaults
+3. **Tenant isolation**: Job associated with tenant from context (RLS ready)
+4. **No RLS in service**: Service uses global db connection; RLS will be enforced by job processor when processing
+
+**Next Steps**:
+
+- FFP-180: Implement job processor with atomic claiming (FOR UPDATE SKIP LOCKED)
+- FFP-181: Add retry logic with exponential backoff
+
+---
+
+### December 15, 2025 (Session 59 - FFP-178 Process Jobs Schema)
+
+**Status**: ✅ FFP-178 COMPLETE - Process Jobs Schema Created
+
+**Branch**: `feature/ffp-132-process-job-schema-queue-infra`
+
+**Completed Work**:
+
+**FFP-178: Create Drizzle Schema for process_jobs Table** (~2 hours):
+
+- ✅ **process-jobs.ts**: Database schema with enums, table, indexes, relations
+  - `jobStatusEnum` - PostgreSQL enum: queued, processing, completed, failed, cancelled
+  - `jobTypeEnum` - PostgreSQL enum: score_assessment, generate_program
+  - `processJobs` table with tenant isolation, priority-based ordering, retry support
+  - Optimised indexes for job polling queries (status, type+status, priority, tenant)
+  - Foreign key to tenants table with cascade delete
+  - Timestamps: createdAt, startedAt, completedAt
+
+- ✅ **job.schema.ts**: Zod validation schemas in @ffp/core
+  - `jobStatusSchema` / `jobTypeSchema` - Enum mirrors for runtime validation
+  - `scoreAssessmentPayloadSchema` - Assessment scoring job payload
+  - `scoreAssessmentResultSchema` - Dimensional scores result
+  - `generateProgramPayloadSchema` - Programme generation job payload
+  - `generateProgramResultSchema` - Generated programme result
+  - `jobPayloadSchema` / `jobResultSchema` - Discriminated unions for type-safe handling
+  - `processJobSchema` - Full job record schema
+  - `createProcessJobSchema` - Input schema for enqueueing jobs
+
+**Schema Design Decisions**:
+
+1. **Priority over scheduledFor**: Replaced `scheduled_for` with `priority` (1-4 scale) + `retryAfter`
+   - EventBridge handles scheduling (1-min polling), job queue handles processing order
+   - Priority: 1=urgent, 2=high, 3=medium, 4=low (default)
+
+2. **'queued' over 'pending'**: Status starts as 'queued' for clearer distinction from 'processing'
+
+3. **Typed payloads in @ffp/core**: Job-specific payload/result schemas defined separately from database
+   - Database stores `jsonb`, Zod schemas validate at runtime
+   - Discriminated unions enable type-safe payload/result handling by job type
+
+4. **RLS deferred**: Schema ready for RLS but policies not yet added (will add when needed)
+
+5. **MVP-focused result schemas**: Removed unnecessary fields (recommendations, targetDimensions)
+
+**Migration Generated**: `0005_dapper_jubilee.sql`
+
+- Creates job_status and job_type PostgreSQL enums
+- Creates process_jobs table with all columns
+- Creates 4 indexes for efficient job polling
+
+**Database Migrations Run**:
+
+- ✅ ffp_dev: Migration applied successfully
+- ✅ ffp_test: Migration applied successfully (used `npx drizzle-kit migrate` directly)
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ ESLint: Zero warnings (--max-warnings 0)
+- ✅ Tests: All existing tests still passing
+- ✅ British English: Consistent spelling (normalised, summarise, programme)
+
+**Files Created** (3 new files):
+
+1. `packages/core/src/schemas/job.schema.ts` - Zod schemas for job payloads/results
+2. `packages/database/src/schema/process-jobs.ts` - Drizzle table schema
+3. `packages/database/migrations/0005_dapper_jubilee.sql` - Generated migration
+
+**Files Modified** (2 files):
+
+1. `packages/core/src/schemas/index.ts` - Added job schema export
+2. `packages/database/src/schema/index.ts` - Added process-jobs export
+
+**Review Comment Fixes** (same session):
+
+- ✅ **[CRITICAL] Tenant Isolation**: Documented that job processor will run with BYPASSRLS to process jobs across all tenants, with tenant context set per-job for tenant-scoped operations
+- ✅ **[HIGH] Enum Sync Risk**: Created shared constants file (`@ffp/database/src/constants/job.constants.ts`) - both packages now import from single source of truth
+- ✅ **[HIGH] DbClient Export**: Verified already exported from `@ffp/database`
+
+**Next Steps**:
+
+- FFP-179: Implement job queue service with queueJob
+- FFP-180: Implement job processor with atomic claiming
+
+---
+
 ### December 12, 2025 (Session 58 - FFP-144 & FFP-145 Repository & Tests)
 
 **Status**: ✅ FFP-124 COMPLETE - All Sub-tasks Done
@@ -1311,30 +1749,33 @@ ALL of the following were implemented.
 
 ## Key Milestones
 
-| Date        | Milestone                       | Hours          |
-| ----------- | ------------------------------- | -------------- |
-| Oct 20      | Sprint 1 Started                | 0h             |
-| Oct 24      | FFP-7 Complete (Monorepo)       | 13h            |
-| Oct 26      | FFP-8 Complete (Infrastructure) | 30h            |
-| Oct 27      | Database schemas defined        | 44h            |
-| Oct 30      | FFP-10 Complete (RLS)           | 54h            |
-| Nov 1       | FFP-10 & FFP-11 Merged to Main  | 83.5h          |
-| Nov 3       | FFP-35 & FFP-43 Complete        | 94h            |
-| Nov 5       | FFP-36 Complete                 | 125.5h         |
-| Nov 6       | FFP-44 Complete                 | 127.5h         |
-| Nov 6       | FFP-32 Deferred                 | 128h           |
-| Nov 8       | FFP-112 Complete (Admin API)    | 132.5h         |
-| Nov 9       | FFP-37 Complete (Invite User)   | 136.5h         |
-| Nov 11      | FFP-38 Complete (Login)         | 135.5h         |
-| Nov 11      | FFP-39 Complete (Refresh Token) | 137.5h         |
-| Nov 13      | FFP-115 Complete (Components)   | 141.5h         |
-| Nov 13      | FFP-93 Complete (Amplify)       | 142.5h         |
-| Nov 14      | FFP-90 Complete (AuthContext)   | 146.5h         |
-| Nov 15      | FFP-119 Complete (Routing)      | 148.5h         |
-| Nov 17      | FFP-92 Complete (Login Form)    | 150.5h         |
-| Nov 18      | FFP-116 Complete (Password)     | 152.5h         |
-| Nov 19      | FFP-16 Complete (Web Login)     | 155.5h         |
-| **Current** | **79% Sprint 1+2 Complete**     | **155.5/197h** |
+| Date        | Milestone                        | Hours         |
+| ----------- | -------------------------------- | ------------- |
+| Oct 20      | Sprint 1 Started                 | 0h            |
+| Oct 24      | FFP-7 Complete (Monorepo)        | 13h           |
+| Oct 26      | FFP-8 Complete (Infrastructure)  | 30h           |
+| Oct 27      | Database schemas defined         | 44h           |
+| Oct 30      | FFP-10 Complete (RLS)            | 54h           |
+| Nov 1       | FFP-10 & FFP-11 Merged to Main   | 83.5h         |
+| Nov 3       | FFP-35 & FFP-43 Complete         | 94h           |
+| Nov 5       | FFP-36 Complete                  | 125.5h        |
+| Nov 6       | FFP-44 Complete                  | 127.5h        |
+| Nov 6       | FFP-32 Deferred                  | 128h          |
+| Nov 8       | FFP-112 Complete (Admin API)     | 132.5h        |
+| Nov 9       | FFP-37 Complete (Invite User)    | 136.5h        |
+| Nov 11      | FFP-38 Complete (Login)          | 135.5h        |
+| Nov 11      | FFP-39 Complete (Refresh Token)  | 137.5h        |
+| Nov 13      | FFP-115 Complete (Components)    | 141.5h        |
+| Nov 13      | FFP-93 Complete (Amplify)        | 142.5h        |
+| Nov 14      | FFP-90 Complete (AuthContext)    | 146.5h        |
+| Nov 15      | FFP-119 Complete (Routing)       | 148.5h        |
+| Nov 17      | FFP-92 Complete (Login Form)     | 150.5h        |
+| Nov 18      | FFP-116 Complete (Password)      | 152.5h        |
+| Nov 19      | FFP-16 Complete (Web Login)      | 155.5h        |
+| Dec 18      | FFP-180 Complete (Job Processor) | 158.5h        |
+| Dec 19      | FFP-181 Complete (Auto-Retry)    | 160.5h        |
+| Dec 19      | FFP-182 Complete (SST Cron)      | 162h          |
+| **Current** | **FFP-132 Complete**             | **~162/197h** |
 
 ---
 
