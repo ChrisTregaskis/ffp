@@ -8,9 +8,9 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
-### December 24, 2025 (Session 65 - FFP-127 User Assessment Schema Started)
+### December 24, 2025 (Session 65 - FFP-127 User Assessment Schema Complete)
 
-**Status**: 🚧 IN PROGRESS - FFP-156, FFP-159, FFP-157 complete, FFP-158/160 pending
+**Status**: ✅ COMPLETE - All sub-tasks done (FFP-160 deferred)
 
 **Branch**: `feature/ffp-127-assessment-schema-state-machine`
 
@@ -76,6 +76,36 @@ Detailed session-by-session history for Sprint 1 execution.
 
 - ✅ Migrations applied to both `ffp_dev` and `ffp_test` databases
 
+**FFP-158: Create Repository with RLS Enforcement** (~0.5 hours):
+
+- ✅ **user-assessment.repository.ts**: Repository with RLS enforcement
+  - `create()` - Creates assessment in 'not_started' status
+  - `findById()` - Find by ID with RLS context
+  - `findByUserId()` - Find all for user, optional status filter
+  - `findInProgress()` - Find in-progress assessment for user
+  - `updateProgress()` - Update currentStep and merge answers
+  - `transitionStatus()` - Validate and execute state transitions
+  - `updateScores()` - Set calculated scores
+  - `linkProgramme()` - Link generated programme
+  - All functions use `withRLS` helper for tenant isolation
+
+- ✅ **user-assessment.repository.test.ts**: 23 integration tests
+  - Create tests (1 test)
+  - FindById tests (3 tests)
+  - FindByUserId tests (2 tests)
+  - FindInProgress tests (3 tests)
+  - UpdateProgress tests (3 tests)
+  - TransitionStatus tests (5 tests)
+  - UpdateScores tests (2 tests)
+  - LinkProgramme tests (2 tests)
+  - RLS Cross-Tenant Isolation tests (2 tests)
+
+- ✅ **database.ts**: Fixed setRLSContext to use sql.raw() with UUID validation
+  - PostgreSQL's SET command doesn't support parameterised queries
+  - Added UUID validation and escaping for SQL injection prevention
+
+- ✅ **vitest.config.ts**: Added DB_NAME=ffp_test environment for integration tests
+
 **Files Created**:
 
 - `packages/database/src/constants/user-assessment.constants.ts`
@@ -83,6 +113,8 @@ Detailed session-by-session history for Sprint 1 execution.
 - `packages/database/migrations/0008_friendly_purple_man.sql`
 - `packages/core/src/schemas/user-assessment.schema.ts`
 - `packages/core/src/schemas/user-assessment.schema.test.ts`
+- `packages/core/src/assessments/user-assessment.repository.ts`
+- `packages/core/src/assessments/user-assessment.repository.test.ts`
 
 **Files Modified**:
 
@@ -90,6 +122,9 @@ Detailed session-by-session history for Sprint 1 execution.
 - `packages/database/src/schema/index.ts` - Added export
 - `packages/database/src/migrations/apply-rls.ts` - Added user_assessments RLS
 - `packages/core/src/schemas/index.ts` - Added user-assessment.schema export
+- `packages/core/src/assessments/index.ts` - Added user-assessment.repository export
+- `packages/core/src/lib/database.ts` - Fixed setRLSContext for PostgreSQL SET
+- `packages/core/vitest.config.ts` - Added DB_NAME=ffp_test env
 
 **Quality Assurance**:
 
@@ -97,12 +132,11 @@ Detailed session-by-session history for Sprint 1 execution.
 - ✅ TypeScript: Zero errors
 - ✅ Database: Table verified with `\d user_assessments`
 - ✅ RLS: Policy verified in both ffp_dev and ffp_test
-- ✅ Tests: 66 new schema tests passing
+- ✅ Tests: 89 new tests (66 schema + 23 repository integration)
 
-**Next Steps**:
+**Branch Status**: Ready for review and merge to main
 
-- FFP-158: Create repository with RLS enforcement
-- FFP-160: Create multi-tenant isolation tests
+**Next Story**: FFP-128 (Start Assessment API) - pending user confirmation
 
 ---
 

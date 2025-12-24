@@ -10,7 +10,7 @@
 
 ## Current Work: FFP-127 - User Assessment Schema & State Machine
 
-**Status**: 🚧 In Progress
+**Status**: ✅ Complete
 **Story Points**: 5
 **Sprint**: 3 (Backend Foundation)
 
@@ -42,13 +42,13 @@ not_started → in_progress → submitted → scored → completed
 
 ### Acceptance Criteria
 
-| AC  | Description                     | Status  |
-| --- | ------------------------------- | ------- |
-| AC1 | User assessment schema with RLS | Pending |
-| AC2 | Assessment status enum enforced | Pending |
-| AC3 | Answers stored as JSONB         | Pending |
-| AC4 | Repository enforces RLS context | Pending |
-| AC5 | Multi-tenant isolation verified | Pending |
+| AC  | Description                     | Status      |
+| --- | ------------------------------- | ----------- |
+| AC1 | User assessment schema with RLS | ✅ Done     |
+| AC2 | Assessment status enum enforced | ✅ Done     |
+| AC3 | Answers stored as JSONB         | ✅ Done     |
+| AC4 | Repository enforces RLS context | ✅ Done     |
+| AC5 | Multi-tenant isolation verified | ⏸️ Deferred |
 
 ### Dependencies
 
@@ -65,13 +65,15 @@ not_started → in_progress → submitted → scored → completed
 
 **Branch**: `feature/ffp-127-assessment-schema-state-machine` (single branch for all sub-tasks)
 
-| Order | Key     | Sub-task                                   | Status      |
-| ----- | ------- | ------------------------------------------ | ----------- |
-| 1     | FFP-156 | Create Drizzle schema for user_assessments | ✅ Complete |
-| 2     | FFP-159 | Create database migration with RLS policy  | ✅ Complete |
-| 3     | FFP-157 | Create Zod validation schemas              | ✅ Complete |
-| 4     | FFP-158 | Create repository with RLS enforcement     | Pending     |
-| 5     | FFP-160 | Create multi-tenant isolation tests        | Pending     |
+| Order | Key     | Sub-task                                   | Status            |
+| ----- | ------- | ------------------------------------------ | ----------------- |
+| 1     | FFP-156 | Create Drizzle schema for user_assessments | ✅ Complete       |
+| 2     | FFP-159 | Create database migration with RLS policy  | ✅ Complete       |
+| 3     | FFP-157 | Create Zod validation schemas              | ✅ Complete       |
+| 4     | FFP-158 | Create repository with RLS enforcement     | ✅ Complete       |
+| 5     | FFP-160 | Create multi-tenant isolation tests        | ⏸️ Deferred (MVP) |
+
+**FFP-160 Deferral Rationale:** RLS pattern identical to existing tables (16 tests already cover pattern). Repository tests in FFP-158 provide implicit coverage. Add dedicated RLS tests post-MVP if pattern changes.
 
 ### Technical Details
 

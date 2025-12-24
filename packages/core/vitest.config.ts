@@ -19,6 +19,14 @@ export default defineConfig({
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['node_modules/', 'tests/', '**/*.d.ts', '**/*.config.*', '**/dist/**'],
     },
+    // Use ffp_test database for integration tests
+    env: {
+      DB_NAME: 'ffp_test',
+      DB_HOST: 'localhost',
+      DB_PORT: '5432',
+      DB_USER: 'root_user',
+      DB_PASSWORD: 'password',
+    },
   },
   resolve: {
     alias: {
