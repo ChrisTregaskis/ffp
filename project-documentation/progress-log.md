@@ -8,9 +8,9 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
-### December 24, 2025 (Session 64 - FFP-147 Assessment Flows Schema)
+### December 24, 2025 (Session 64 - FFP-147/148 Assessment Flows Schema)
 
-**Status**: ✅ FFP-147 COMPLETE - Create Drizzle schema for assessment_flows table
+**Status**: ✅ FFP-147, FFP-148 COMPLETE - Assessment flows schema and Zod validation
 
 **Branch**: `feature/ffp-147-assessment-flow-schema`
 
@@ -62,9 +62,30 @@ Detailed session-by-session history for Sprint 1 execution.
 2. **Single source of truth pattern**: Types in `flow.constants.ts` (same as `job.constants.ts`)
 3. **Schema imports from constants**: Avoids duplication, @ffp/core can import same types
 
+**FFP-148: Create Zod Schemas for Flow Steps** (~0.25 hours):
+
+- ✅ **assessment-flow.schema.ts**: Zod validation schemas for flow configuration
+  - `flowStepTypeSchema` - Enum from `FLOW_STEP_TYPES` constant
+  - `flowStepConfigSchema` - title, description?, instructions?, safetyNotes?, estimatedMinutes?
+  - `flowStepSchema` - order, type, templateId?, config
+  - `assessmentFlowSchema` - Complete flow with id, name, steps[], timestamps
+  - `createAssessmentFlowSchema` - Omits auto-generated fields (id, timestamps)
+  - `updateAssessmentFlowSchema` - Partial update schema
+
+- ✅ **Type exports**: All types via `z.infer<typeof schema>`
+  - `FlowStepType`, `FlowStepConfig`, `FlowStep`
+  - `AssessmentFlow`, `CreateAssessmentFlow`, `UpdateAssessmentFlow`
+
+**Files Created** (1 new file for FFP-148):
+
+1. `packages/core/src/schemas/assessment-flow.schema.ts` - Zod schemas (~110 lines)
+
+**Files Modified** (1 file for FFP-148):
+
+1. `packages/core/src/schemas/index.ts` - Added assessment-flow.schema export
+
 **Next Steps**:
 
-- FFP-148: Create Zod schemas for flow configuration (in @ffp/core)
 - FFP-149: Seed default assessment flow
 - FFP-150: Add unit tests for flow schema validation
 

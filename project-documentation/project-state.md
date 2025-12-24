@@ -37,12 +37,12 @@ a database-driven flow model rather than hardcoded phases. MVP: Single default f
 
 ### Sub-tasks (Execution Order)
 
-| Order | Key     | Description                                    | File Location                                                    | Status       |
-| ----- | ------- | ---------------------------------------------- | ---------------------------------------------------------------- | ------------ |
-| 1     | FFP-147 | Create Drizzle schema for assessment_flows     | `@ffp/database/src/schema/assessment-flows.ts`                   | ✅ Complete  |
-| 2     | FFP-148 | Create Zod schemas for flow steps              | `@ffp/core/src/schemas/assessment-flow.schema.ts`                | Pending      |
-| 3     | FFP-149 | Create seed script for default assessment flow | `@ffp/database/seed/seedAssessmentFlows.ts`                      | Pending      |
-| 4     | FFP-150 | Add unit tests for flow schema validation      | `@ffp/core/src/schemas/__tests__/assessment-flow.schema.test.ts` | Pending      |
+| Order | Key     | Description                                    | File Location                                                    | Status      |
+| ----- | ------- | ---------------------------------------------- | ---------------------------------------------------------------- | ----------- |
+| 1     | FFP-147 | Create Drizzle schema for assessment_flows     | `@ffp/database/src/schema/assessment-flows.ts`                   | ✅ Complete |
+| 2     | FFP-148 | Create Zod schemas for flow steps              | `@ffp/core/src/schemas/assessment-flow.schema.ts`                | ✅ Complete |
+| 3     | FFP-149 | Create seed script for default assessment flow | `@ffp/database/seed/seedAssessmentFlows.ts`                      | Pending     |
+| 4     | FFP-150 | Add unit tests for flow schema validation      | `@ffp/core/src/schemas/__tests__/assessment-flow.schema.test.ts` | Pending     |
 
 **Note**: FFP-149 file path corrected from Jira (`src/seeds/`) to match existing pattern (`seed/`).
 
