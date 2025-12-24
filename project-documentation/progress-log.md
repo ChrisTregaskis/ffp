@@ -8,6 +8,71 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 24, 2025 (Session 65 - FFP-127 User Assessment Schema Started)
+
+**Status**: 🚧 IN PROGRESS - FFP-156 and FFP-159 complete, FFP-157/158/160 pending
+
+**Branch**: `feature/ffp-127-assessment-schema-state-machine`
+
+**Completed Work**:
+
+**FFP-156: Create Drizzle Schema for user_assessments** (~0.5 hours):
+
+- ✅ **user-assessment.constants.ts**: Status enum and state transitions
+  - `USER_ASSESSMENT_STATUSES` - 6 states: not_started, in_progress, submitted, scored, completed, abandoned
+  - `UserAssessmentStatus` type
+  - `VALID_STATUS_TRANSITIONS` - State machine transition map
+
+- ✅ **user-assessments.ts**: Drizzle table schema
+  - 14 columns (id, tenant_id, user_id, flow_id, current_step, status, answers, scores, programme_id, timestamps)
+  - `userAssessmentStatusEnum` PostgreSQL enum
+  - 3 indexes: tenant_user (composite), status, flow
+  - 3 foreign keys: tenants (cascade), users (cascade), assessment_flows (restrict)
+  - Relations defined for tenant, user, flow
+  - Insert/select schemas and inferred types exported
+
+**FFP-159: Create Database Migration with RLS Policy** (~0.25 hours):
+
+- ✅ **0008_friendly_purple_man.sql**: Auto-generated migration
+  - Creates `user_assessment_status` enum
+  - Creates `user_assessments` table with all columns
+  - Adds foreign key constraints
+  - Creates indexes
+
+- ✅ **apply-rls.ts**: Updated with user_assessments RLS
+  - Added RLS policy `user_assessment_tenant_isolation`
+  - Updated RLS check queries to include user_assessments
+  - Forced RLS for development environment
+
+- ✅ Migrations applied to both `ffp_dev` and `ffp_test` databases
+
+**Files Created**:
+
+- `packages/database/src/constants/user-assessment.constants.ts`
+- `packages/database/src/schema/user-assessments.ts`
+- `packages/database/migrations/0008_friendly_purple_man.sql`
+
+**Files Modified**:
+
+- `packages/database/src/constants/index.ts` - Added export
+- `packages/database/src/schema/index.ts` - Added export
+- `packages/database/src/migrations/apply-rls.ts` - Added user_assessments RLS
+
+**Quality Assurance**:
+
+- ✅ Build: @ffp/database and @ffp/core built successfully
+- ✅ TypeScript: Zero errors
+- ✅ Database: Table verified with `\d user_assessments`
+- ✅ RLS: Policy verified in both ffp_dev and ffp_test
+
+**Next Steps**:
+
+- FFP-157: Create Zod validation schemas in @ffp/core
+- FFP-158: Create repository with RLS enforcement
+- FFP-160: Create multi-tenant isolation tests
+
+---
+
 ### December 24, 2025 (Session 64 - FFP-125 Assessment Flow Schema Complete)
 
 **Status**: ✅ FFP-125 COMPLETE - All 4 sub-tasks done (FFP-147, FFP-148, FFP-149, FFP-150)

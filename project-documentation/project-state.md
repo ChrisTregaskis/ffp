@@ -65,13 +65,13 @@ not_started → in_progress → submitted → scored → completed
 
 **Branch**: `feature/ffp-127-assessment-schema-state-machine` (single branch for all sub-tasks)
 
-| Order | Key     | Sub-task                                   | Status  |
-| ----- | ------- | ------------------------------------------ | ------- |
-| 1     | FFP-156 | Create Drizzle schema for user_assessments | Pending |
-| 2     | FFP-159 | Create database migration with RLS policy  | Pending |
-| 3     | FFP-157 | Create Zod validation schemas              | Pending |
-| 4     | FFP-158 | Create repository with RLS enforcement     | Pending |
-| 5     | FFP-160 | Create multi-tenant isolation tests        | Pending |
+| Order | Key     | Sub-task                                   | Status      |
+| ----- | ------- | ------------------------------------------ | ----------- |
+| 1     | FFP-156 | Create Drizzle schema for user_assessments | ✅ Complete |
+| 2     | FFP-159 | Create database migration with RLS policy  | ✅ Complete |
+| 3     | FFP-157 | Create Zod validation schemas              | Pending     |
+| 4     | FFP-158 | Create repository with RLS enforcement     | Pending     |
+| 5     | FFP-160 | Create multi-tenant isolation tests        | Pending     |
 
 ### Technical Details
 
