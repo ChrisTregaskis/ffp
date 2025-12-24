@@ -8,6 +8,68 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 24, 2025 (Session 64 - FFP-147 Assessment Flows Schema)
+
+**Status**: ✅ FFP-147 COMPLETE - Create Drizzle schema for assessment_flows table
+
+**Branch**: `feature/ffp-147-assessment-flow-schema`
+
+**Completed Work**:
+
+**FFP-147: Create Drizzle Schema for assessment_flows Table** (~0.5 hours):
+
+- ✅ **assessment-flows.ts**: Database schema for configurable assessment journeys
+  - `id` - UUID, primary key, defaultRandom
+  - `name` - varchar(255), not null
+  - `description` - text, nullable
+  - `steps` - JSONB, typed as `FlowStep[]`, not null
+  - `isActive` - boolean, default true, not null
+  - `createdAt` - timestamp, defaultNow, not null
+  - `updatedAt` - timestamp, defaultNow, not null
+  - Index: `idx_assessment_flows_active` on `isActive`
+
+- ✅ **flow.constants.ts**: Single source of truth for flow types (follows job.constants.ts pattern)
+  - `FLOW_STEP_TYPES` - Array of step type strings for enum usage
+  - `FlowStepType` - 'intro' | 'questions' | 'transition' | 'video-assessment' | 'results' | 'programme-overview'
+  - `FlowStepConfig` - title, description?, instructions?, safetyNotes?, estimatedMinutes?
+  - `FlowStep` - order, type, templateId?, config
+
+- ✅ **Schema exports**: Insert/select schemas via drizzle-zod, inferred types
+  - `insertAssessmentFlowSchema`, `selectAssessmentFlowSchema`
+  - `AssessmentFlowRecord`, `NewAssessmentFlow` types
+
+- ✅ **Index exports**: Added to `packages/database/src/schema/index.ts`
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ Follows existing pattern from `assessment-templates.ts`
+- ✅ British English: Consistent spelling (programme)
+
+**Files Created** (2 new files):
+
+1. `packages/database/src/constants/flow.constants.ts` - Flow types (single source of truth)
+2. `packages/database/src/schema/assessment-flows.ts` - Drizzle table definition
+
+**Files Modified** (2 files):
+
+1. `packages/database/src/constants/index.ts` - Added flow.constants export
+2. `packages/database/src/schema/index.ts` - Added assessment-flows export
+
+**Architecture Decisions**:
+
+1. **No RLS required**: Flows are system-managed content accessible by all authenticated users
+2. **Single source of truth pattern**: Types in `flow.constants.ts` (same as `job.constants.ts`)
+3. **Schema imports from constants**: Avoids duplication, @ffp/core can import same types
+
+**Next Steps**:
+
+- FFP-148: Create Zod schemas for flow configuration (in @ffp/core)
+- FFP-149: Seed default assessment flow
+- FFP-150: Add unit tests for flow schema validation
+
+---
+
 ### December 19, 2025 (Session 63 - FFP-182 SST Infrastructure for Job Polling)
 
 **Status**: ✅ FFP-182 COMPLETE - SST Infrastructure for Job Polling
