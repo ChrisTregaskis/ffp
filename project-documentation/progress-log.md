@@ -10,11 +10,41 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ### December 24, 2025 (Session 65 - FFP-127 User Assessment Schema Started)
 
-**Status**: 🚧 IN PROGRESS - FFP-156 and FFP-159 complete, FFP-157/158/160 pending
+**Status**: 🚧 IN PROGRESS - FFP-156, FFP-159, FFP-157 complete, FFP-158/160 pending
 
 **Branch**: `feature/ffp-127-assessment-schema-state-machine`
 
 **Completed Work**:
+
+**FFP-157: Create Zod Validation Schemas** (~0.5 hours):
+
+- ✅ **user-assessment.schema.ts**: Comprehensive Zod validation schemas
+  - `userAssessmentStatusSchema` - Enum from shared constants
+  - `userAnswerSchema` - Individual answer structure (questionId, answerValue, answerId?, answeredAt?)
+  - `userAssessmentAnswersSchema` - Record keyed by questionId
+  - `userAssessmentScoresSchema` - Scores with dimensions array, overallScore?, riskLevel?
+  - `userAssessmentSchema` - Full record with all 14 fields
+  - `createUserAssessmentSchema` - For creating new assessments (tenantId, userId, flowId)
+  - `updateUserAssessmentSchema` - For saving progress (currentStep?, answers?)
+  - `statusTransitionSchema` - Validates state machine transitions with refine()
+  - `isValidStatusTransition()` - Helper function
+  - `getAllowedTransitions()` - Helper function
+  - `submitAssessmentSchema` - For submitting completed assessments
+
+- ✅ **user-assessment.schema.test.ts**: 66 unit tests
+  - Status schema tests (3 tests)
+  - Answer schema tests (8 tests)
+  - Answers record schema tests (4 tests)
+  - Dimensional score schema tests (4 tests)
+  - Scores schema tests (6 tests)
+  - User assessment schema tests (7 tests)
+  - Create schema tests (5 tests)
+  - Update schema tests (6 tests)
+  - Status transition schema tests (10 tests)
+  - Helper function tests (8 tests)
+  - Submit schema tests (5 tests)
+
+- ✅ Re-uses `dimensionalScoreSchema` from job.schema.ts to avoid duplication
 
 **FFP-156: Create Drizzle Schema for user_assessments** (~0.5 hours):
 
@@ -51,12 +81,15 @@ Detailed session-by-session history for Sprint 1 execution.
 - `packages/database/src/constants/user-assessment.constants.ts`
 - `packages/database/src/schema/user-assessments.ts`
 - `packages/database/migrations/0008_friendly_purple_man.sql`
+- `packages/core/src/schemas/user-assessment.schema.ts`
+- `packages/core/src/schemas/user-assessment.schema.test.ts`
 
 **Files Modified**:
 
 - `packages/database/src/constants/index.ts` - Added export
 - `packages/database/src/schema/index.ts` - Added export
 - `packages/database/src/migrations/apply-rls.ts` - Added user_assessments RLS
+- `packages/core/src/schemas/index.ts` - Added user-assessment.schema export
 
 **Quality Assurance**:
 
@@ -64,10 +97,10 @@ Detailed session-by-session history for Sprint 1 execution.
 - ✅ TypeScript: Zero errors
 - ✅ Database: Table verified with `\d user_assessments`
 - ✅ RLS: Policy verified in both ffp_dev and ffp_test
+- ✅ Tests: 66 new schema tests passing
 
 **Next Steps**:
 
-- FFP-157: Create Zod validation schemas in @ffp/core
 - FFP-158: Create repository with RLS enforcement
 - FFP-160: Create multi-tenant isolation tests
 
