@@ -10,6 +10,7 @@ export * from './assessment-question.schema';
 export * from './scoring-config.schema';
 export * from './assessment-template.schema';
 export * from './assessment-flow.schema';
+export * from './user-assessment.schema';
 
 // Job schemas
 export * from './job.schema';
