@@ -8,9 +8,9 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
-### December 24, 2025 (Session 64 - FFP-147/148 Assessment Flows Schema)
+### December 24, 2025 (Session 64 - FFP-147/148/149 Assessment Flows Schema)
 
-**Status**: ✅ FFP-147, FFP-148 COMPLETE - Assessment flows schema and Zod validation
+**Status**: ✅ FFP-147, FFP-148, FFP-149 COMPLETE - Assessment flows schema, Zod validation, and seed
 
 **Branch**: `feature/ffp-147-assessment-flow-schema`
 
@@ -84,9 +84,27 @@ Detailed session-by-session history for Sprint 1 execution.
 
 1. `packages/core/src/schemas/index.ts` - Added assessment-flow.schema export
 
+**FFP-149: Create Seed Script for Default Assessment Flow** (~0.25 hours):
+
+- ✅ **seedAssessmentFlows.ts**: Idempotent seed for "Standard Physiotherapy Assessment"
+  - 7-step MVP flow (intro → questions → transition → video×2 → results → programme-overview)
+  - Checks if flow exists before inserting (idempotent)
+  - Uses `FlowStep` type from constants
+  - No RLS handling needed (assessment_flows has no RLS)
+
+- ✅ **seed/index.ts**: Added to orchestrator as Seed 10
+  - Re-exported for standalone use
+
+**Files Created** (1 new file for FFP-149):
+
+1. `packages/database/seed/seedAssessmentFlows.ts` - Seed script (~130 lines)
+
+**Files Modified** (1 file for FFP-149):
+
+1. `packages/database/seed/index.ts` - Import and orchestrator integration
+
 **Next Steps**:
 
-- FFP-149: Seed default assessment flow
 - FFP-150: Add unit tests for flow schema validation
 
 ---
