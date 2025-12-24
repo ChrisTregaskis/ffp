@@ -8,6 +8,107 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 24, 2025 (Session 64 - FFP-147/148/149 Assessment Flows Schema)
+
+**Status**: ✅ FFP-147, FFP-148, FFP-149 COMPLETE - Assessment flows schema, Zod validation, and seed
+
+**Branch**: `feature/ffp-147-assessment-flow-schema`
+
+**Completed Work**:
+
+**FFP-147: Create Drizzle Schema for assessment_flows Table** (~0.5 hours):
+
+- ✅ **assessment-flows.ts**: Database schema for configurable assessment journeys
+  - `id` - UUID, primary key, defaultRandom
+  - `name` - varchar(255), not null
+  - `description` - text, nullable
+  - `steps` - JSONB, typed as `FlowStep[]`, not null
+  - `isActive` - boolean, default true, not null
+  - `createdAt` - timestamp, defaultNow, not null
+  - `updatedAt` - timestamp, defaultNow, not null
+  - Index: `idx_assessment_flows_active` on `isActive`
+
+- ✅ **flow.constants.ts**: Single source of truth for flow types (follows job.constants.ts pattern)
+  - `FLOW_STEP_TYPES` - Array of step type strings for enum usage
+  - `FlowStepType` - 'intro' | 'questions' | 'transition' | 'video-assessment' | 'results' | 'programme-overview'
+  - `FlowStepConfig` - title, description?, instructions?, safetyNotes?, estimatedMinutes?
+  - `FlowStep` - order, type, templateId?, config
+
+- ✅ **Schema exports**: Insert/select schemas via drizzle-zod, inferred types
+  - `insertAssessmentFlowSchema`, `selectAssessmentFlowSchema`
+  - `AssessmentFlowRecord`, `NewAssessmentFlow` types
+
+- ✅ **Index exports**: Added to `packages/database/src/schema/index.ts`
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (strict mode compliance)
+- ✅ Follows existing pattern from `assessment-templates.ts`
+- ✅ British English: Consistent spelling (programme)
+
+**Files Created** (2 new files):
+
+1. `packages/database/src/constants/flow.constants.ts` - Flow types (single source of truth)
+2. `packages/database/src/schema/assessment-flows.ts` - Drizzle table definition
+
+**Files Modified** (2 files):
+
+1. `packages/database/src/constants/index.ts` - Added flow.constants export
+2. `packages/database/src/schema/index.ts` - Added assessment-flows export
+
+**Architecture Decisions**:
+
+1. **No RLS required**: Flows are system-managed content accessible by all authenticated users
+2. **Single source of truth pattern**: Types in `flow.constants.ts` (same as `job.constants.ts`)
+3. **Schema imports from constants**: Avoids duplication, @ffp/core can import same types
+
+**FFP-148: Create Zod Schemas for Flow Steps** (~0.25 hours):
+
+- ✅ **assessment-flow.schema.ts**: Zod validation schemas for flow configuration
+  - `flowStepTypeSchema` - Enum from `FLOW_STEP_TYPES` constant
+  - `flowStepConfigSchema` - title, description?, instructions?, safetyNotes?, estimatedMinutes?
+  - `flowStepSchema` - order, type, templateId?, config
+  - `assessmentFlowSchema` - Complete flow with id, name, steps[], timestamps
+  - `createAssessmentFlowSchema` - Omits auto-generated fields (id, timestamps)
+  - `updateAssessmentFlowSchema` - Partial update schema
+
+- ✅ **Type exports**: All types via `z.infer<typeof schema>`
+  - `FlowStepType`, `FlowStepConfig`, `FlowStep`
+  - `AssessmentFlow`, `CreateAssessmentFlow`, `UpdateAssessmentFlow`
+
+**Files Created** (1 new file for FFP-148):
+
+1. `packages/core/src/schemas/assessment-flow.schema.ts` - Zod schemas (~110 lines)
+
+**Files Modified** (1 file for FFP-148):
+
+1. `packages/core/src/schemas/index.ts` - Added assessment-flow.schema export
+
+**FFP-149: Create Seed Script for Default Assessment Flow** (~0.25 hours):
+
+- ✅ **seedAssessmentFlows.ts**: Idempotent seed for "Standard Physiotherapy Assessment"
+  - 7-step MVP flow (intro → questions → transition → video×2 → results → programme-overview)
+  - Checks if flow exists before inserting (idempotent)
+  - Uses `FlowStep` type from constants
+  - No RLS handling needed (assessment_flows has no RLS)
+
+- ✅ **seed/index.ts**: Added to orchestrator as Seed 10
+  - Re-exported for standalone use
+
+**Files Created** (1 new file for FFP-149):
+
+1. `packages/database/seed/seedAssessmentFlows.ts` - Seed script (~130 lines)
+
+**Files Modified** (1 file for FFP-149):
+
+1. `packages/database/seed/index.ts` - Import and orchestrator integration
+
+**Next Steps**:
+
+- FFP-150: Add unit tests for flow schema validation
+
+---
+
 ### December 19, 2025 (Session 63 - FFP-182 SST Infrastructure for Job Polling)
 
 **Status**: ✅ FFP-182 COMPLETE - SST Infrastructure for Job Polling

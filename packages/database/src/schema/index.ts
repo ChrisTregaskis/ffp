@@ -9,4 +9,5 @@ export * from './tenants';
 export * from './customers';
 export * from './users';
 export * from './assessment-templates';
+export * from './assessment-flows';
 export * from './process-jobs';
