@@ -1,6 +1,8 @@
 import {
   scoreAssessmentPayloadSchema,
   generateProgramPayloadSchema,
+  scoreAssessmentResultSchema,
+  generateProgramResultSchema,
   type ScoreAssessmentPayload,
   type GenerateProgramPayload,
   type ScoreAssessmentResult,
@@ -168,7 +170,19 @@ async function processJobByType<T extends JobType>(
         });
       }
 
-      return (await handleScoreAssessment(parseResult.data)) as JobResultMap[T];
+      const result = await handleScoreAssessment(parseResult.data);
+
+      // Validate result matches schema (runtime safety check)
+      const resultValidation = scoreAssessmentResultSchema.safeParse(result);
+      if (!resultValidation.success) {
+        throw new ValidationError('Invalid score_assessment result from handler', {
+          jobId: job.id,
+          errors: resultValidation.error.format(),
+        });
+      }
+
+      // Type assertion is safe: result validated against ScoreAssessmentResult schema
+      return resultValidation.data as JobResultMap[T];
     }
 
     case 'generate_program': {
@@ -181,7 +195,19 @@ async function processJobByType<T extends JobType>(
         });
       }
 
-      return (await handleGenerateProgram(parseResult.data)) as JobResultMap[T];
+      const result = await handleGenerateProgram(parseResult.data);
+
+      // Validate result matches schema (runtime safety check)
+      const resultValidation = generateProgramResultSchema.safeParse(result);
+      if (!resultValidation.success) {
+        throw new ValidationError('Invalid generate_program result from handler', {
+          jobId: job.id,
+          errors: resultValidation.error.format(),
+        });
+      }
+
+      // Type assertion is safe: result validated against GenerateProgramResult schema
+      return resultValidation.data as JobResultMap[T];
     }
 
     default: {
@@ -254,12 +280,13 @@ async function handleGenerateProgram(
 
   // Placeholder: Return mock result structure matching canonical schema
   // await used to satisfy linter - will be replaced with actual async operations
+  // Values must be positive (>0) to satisfy generateProgramResultSchema validation
   return await Promise.resolve({
     programId: '00000000-0000-0000-0000-000000000000', // Placeholder UUID
     programName: 'Pending Programme',
-    durationWeeks: 0,
+    durationWeeks: 1,
     exercises: [],
-    sessionsPerWeek: 0,
+    sessionsPerWeek: 1,
     generatedAt: new Date().toISOString(),
   });
 }

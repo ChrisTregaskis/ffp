@@ -1,39 +1,90 @@
 # FFP - Project State
 
-**Last Updated**: 23rd December 2025
+**Last Updated**: 24th December 2025
 **Current EPIC**: FFP-2 - Assessment Engine (Sprint 3 In Progress)
-**Current Story**: FFP-125 - Assessment Flow Schema & Configuration
-**Current Branch**: `feature/ffp-132-process-job-schema-queue-infra` (pending merge)
+**Current Story**: FFP-127 - User Assessment Schema & State Machine
+**Current Branch**: `feature/ffp-147-assessment-flow-schema` (pending merge)
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
 
-## Current Work: FFP-125 - Assessment Flow Schema & Configuration
+## Current Work: FFP-127 - User Assessment Schema & State Machine
 
 **Status**: ⏳ Up Next
+**Story Points**: 5
+**Sprint**: 3 (Backend Foundation)
+
+### User Story
+
+> As a system,
+> I want to track user assessment progress through defined states,
+> So that users can resume assessments and we can enforce valid transitions.
+
+### Context
+
+User assessments track individual assessment sessions. This schema enables the state machine
+for assessment progress: `not_started` → `in_progress` → `completed` / `abandoned`.
+
+### Acceptance Criteria
+
+| AC  | Description                             | Status  |
+| --- | --------------------------------------- | ------- |
+| AC1 | User assessment schema with state field | Pending |
+| AC2 | State transitions enforced via enum     | Pending |
+| AC3 | Progress stored as JSONB                | Pending |
+| AC4 | RLS policies for tenant isolation       | Pending |
+
+### Dependencies
+
+- ✅ FFP-124: Assessment Template Schema (completed)
+- ✅ FFP-125: Assessment Flow Schema (completed)
+- ✅ FFP-132: Process Jobs Schema (completed)
+
+### Blocks (Downstream)
+
+- FFP-128: Start Assessment API
+- FFP-129: Save Assessment Progress API
+
+---
+
+## Recently Completed: FFP-125 - Assessment Flow Schema & Configuration ✅
+
+**Status**: ✅ Complete (Ready for merge)
 **Story Points**: 3
 **Sprint**: 3 (Backend Foundation)
 
 ### User Story
 
-> As an assessment author,
-> I want to define the flow of questions in an assessment,
-> So that users progress through sections in a logical order.
+> As a system administrator,
+> I want assessment flows (intro → questions → transition → video → results) stored in the database,
+> So that the assessment journey is configurable and extensible.
 
-### Context
+### Acceptance Criteria
 
-This story defines the schema and configuration for assessment flows - how questions
-are organised into sections and the order in which they're presented to users.
+| AC  | Description                              | Status      |
+| --- | ---------------------------------------- | ----------- |
+| AC1 | Flow schema created with step types      | ✅ Complete |
+| AC2 | Flow step types support MVP journey      | ✅ Complete |
+| AC3 | Steps link to templates where applicable | ✅ Complete |
+| AC4 | Default flow seeded for MVP              | ✅ Complete |
 
-### Dependencies
+### Sub-tasks
 
-- ✅ FFP-124: Assessment Template Schema (completed)
-- ✅ FFP-132: Process Jobs Schema (completed)
+| Order | Key     | Description                                    | Status      |
+| ----- | ------- | ---------------------------------------------- | ----------- |
+| 1     | FFP-147 | Create Drizzle schema for assessment_flows     | ✅ Complete |
+| 2     | FFP-148 | Create Zod schemas for flow steps              | ✅ Complete |
+| 3     | FFP-149 | Create seed script for default assessment flow | ✅ Complete |
+| 4     | FFP-150 | Add unit tests for flow schema validation      | ✅ Complete |
 
-### Blocks (Downstream)
+### Key Implementation Details
 
-- FFP-127: User Assessment Schema & State Machine
-- FFP-128: Start Assessment API
+- **Schema**: `@ffp/database/src/schema/assessment-flows.ts`
+- **Zod Schemas**: `@ffp/core/src/schemas/assessment-flow.schema.ts`
+- **Seed Script**: `@ffp/database/seed/seedAssessmentFlows.ts`
+- **Unit Tests**: `@ffp/core/src/schemas/assessment-flow.schema.test.ts` (57 tests)
+- **No RLS required**: Flows are system-managed content accessible by all authenticated users
+- **Step types (MVP)**: `intro`, `questions`, `transition`, `video-assessment`, `results`, `programme-overview`
 
 ---
 
@@ -104,11 +155,12 @@ LIMIT {maxConcurrent}
 | ----- | ------- | ------------------------------------------ | --- | ----------- |
 | 1     | FFP-124 | Assessment Template Schema & Repository    | 5   | ✅ Complete |
 | 2     | FFP-132 | Process Jobs Schema & Queue Infrastructure | 8   | ✅ Complete |
-| 3     | FFP-125 | Assessment Flow Schema & Configuration     | 3   | ⏳ Up Next  |
-| 4     | FFP-127 | User Assessment Schema & State Machine     | 5   | Pending     |
+| 3     | FFP-125 | Assessment Flow Schema & Configuration     | 3   | ✅ Complete |
+| 4     | FFP-127 | User Assessment Schema & State Machine     | 5   | ⏳ Up Next  |
 | 5     | FFP-128 | Start Assessment API                       | 3   | Pending     |
 
 **Sprint Goal**: All database schemas migrated, job queue ready, users can start assessments.
+**Progress**: 16/24 pts complete (67%)
 
 ---
 
@@ -346,7 +398,7 @@ await db.query.users.findMany(); // Leaks all tenants!
 
 - TypeScript strict mode (zero errors)
 - ESLint + Prettier (zero warnings)
-- 185 tests passing (16 RLS integration tests)
+- 541 tests passing (16 RLS integration tests, 57 flow schema tests)
 - 8% coverage target
 
 ---

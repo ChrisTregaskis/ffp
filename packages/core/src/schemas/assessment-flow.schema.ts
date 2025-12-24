@@ -1,0 +1,68 @@
+import { z } from 'zod';
+
+import { FLOW_STEP_TYPES } from '@ffp/database';
+
+export const flowStepTypeSchema = z.enum(FLOW_STEP_TYPES);
+
+export type FlowStepType = z.infer<typeof flowStepTypeSchema>;
+
+export const flowStepConfigSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  instructions: z.array(z.string()).optional(),
+  safetyNotes: z.array(z.string()).optional(),
+  estimatedMinutes: z.number().positive().optional(),
+});
+
+export type FlowStepConfig = z.infer<typeof flowStepConfigSchema>;
+
+// For descriptions, packages/database/src/constants/flow.constants.ts
+export const flowStepSchema = z.object({
+  order: z.number().int().positive('Order must be a positive integer'),
+  type: flowStepTypeSchema,
+  templateId: z.string().uuid('Invalid template ID format').optional(),
+  config: flowStepConfigSchema,
+});
+
+export type FlowStep = z.infer<typeof flowStepSchema>;
+
+export const assessmentFlowSchema = z.object({
+  // UUID primary key
+  id: z.string().uuid(),
+  // Display name (required)
+  name: z.string().min(1, 'Name is required'),
+  // Optional explanatory text
+  description: z.string().optional(),
+  // Array of flow steps (min 1)
+  steps: z.array(flowStepSchema).min(1, 'At least one step is required'),
+  // Whether the flow is available for use
+  isActive: z.boolean(),
+  // Timestamp when created
+  createdAt: z.coerce.date(),
+  // Timestamp when last modified
+  updatedAt: z.coerce.date(),
+});
+
+export type AssessmentFlow = z.infer<typeof assessmentFlowSchema>;
+
+export const createAssessmentFlowSchema = assessmentFlowSchema
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    isActive: z.boolean().optional().default(true),
+  });
+
+export type CreateAssessmentFlow = z.infer<typeof createAssessmentFlowSchema>;
+
+export const updateAssessmentFlowSchema = assessmentFlowSchema
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .partial();
+
+export type UpdateAssessmentFlow = z.infer<typeof updateAssessmentFlowSchema>;

@@ -27,6 +27,7 @@ import { seedTestTenant } from './seedTestTenant.js';
 import { seedTestCustomer } from './seedTestCustomer.js';
 import { seedTestUserCognito } from './seedTestUserCognito.js';
 import { seedTestUserDatabase } from './seedTestUserDatabase.js';
+import { seedAssessmentFlows } from './seedAssessmentFlows.js';
 import type { SeedConfig } from './types.js';
 
 // Get current file directory for resolving config paths
@@ -190,6 +191,9 @@ export const seedDatabase = async (environment: string = 'dev'): Promise<void> =
       await seedTestUserDatabase(txWithClient, config.testCustomerProgramUser);
     });
 
+    // Seed 10: Assessment flows (no RLS, idempotent)
+    await seedAssessmentFlows(db);
+
     console.log(`\n${terminalPrefix(TerminalPrefix.SUCCESS)} Database seeding complete!\n`);
   } catch (error) {
     console.error(`\n${terminalPrefix(TerminalPrefix.ERROR)} Database seeding failed:`, error);
@@ -217,3 +221,6 @@ export const seedDatabase = async (environment: string = 'dev'): Promise<void> =
     await db.$client.end();
   }
 };
+
+// Re-export individual seed functions for standalone use
+export { seedAssessmentFlows } from './seedAssessmentFlows.js';
