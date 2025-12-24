@@ -31,14 +31,14 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> =>{
     SELECT tablename, rowsecurity
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('tenants', 'customers', 'users')
+    AND tablename IN ('tenants', 'customers', 'users', 'user_assessments')
     ORDER BY tablename
   `);
 
   const tables = rlsCheck.rows as Array<{ tablename: string; rowsecurity: boolean }>;
 
   // Check if all tables have RLS enabled
-  const allTablesHaveRLS = tables.length === 3 && tables.every((t) => t.rowsecurity === true);
+  const allTablesHaveRLS = tables.length === 4 && tables.every((t) => t.rowsecurity === true);
 
   if (allTablesHaveRLS) {
     console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} RLS already applied to all tables, skipping...`);
@@ -133,6 +133,32 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> =>{
         FOR ALL
         USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
     `);
+
+    // ============================================================================
+    // USER_ASSESSMENTS TABLE RLS
+    // ============================================================================
+
+    console.log('  - Enabling RLS on user_assessments table...');
+
+    await tx.execute(sql`
+      ALTER TABLE user_assessments ENABLE ROW LEVEL SECURITY;
+    `);
+
+    if (!isProduction) {
+      await tx.execute(sql`
+        ALTER TABLE user_assessments FORCE ROW LEVEL SECURITY;
+      `);
+    }
+
+    await tx.execute(sql`
+      DROP POLICY IF EXISTS user_assessment_tenant_isolation ON user_assessments;
+    `);
+
+    await tx.execute(sql`
+      CREATE POLICY user_assessment_tenant_isolation ON user_assessments
+        FOR ALL
+        USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+    `);
   });
 
   console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} RLS policies applied successfully`);
@@ -142,7 +168,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> =>{
     SELECT tablename, rowsecurity
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('tenants', 'customers', 'users')
+    AND tablename IN ('tenants', 'customers', 'users', 'user_assessments')
     ORDER BY tablename
   `);
 

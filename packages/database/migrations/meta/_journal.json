@@ -57,6 +57,13 @@
       "when": 1735041600000,
       "tag": "0007_create_assessment_flows",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1766609415493,
+      "tag": "0008_friendly_purple_man",
+      "breakpoints": true
     }
   ]
 }
