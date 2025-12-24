@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 23rd December 2025
+**Last Updated**: 24th December 2025
 **Current EPIC**: FFP-2 - Assessment Engine (Sprint 3 In Progress)
 **Current Story**: FFP-125 - Assessment Flow Schema & Configuration
 **Current Branch**: `feature/ffp-132-process-job-schema-queue-infra` (pending merge)
@@ -10,20 +10,49 @@
 
 ## Current Work: FFP-125 - Assessment Flow Schema & Configuration
 
-**Status**: ⏳ Up Next
+**Status**: 🚀 In Progress
 **Story Points**: 3
 **Sprint**: 3 (Backend Foundation)
 
 ### User Story
 
-> As an assessment author,
-> I want to define the flow of questions in an assessment,
-> So that users progress through sections in a logical order.
+> As a system administrator,
+> I want assessment flows (intro → questions → transition → video → results) stored in the database,
+> So that the assessment journey is configurable and extensible.
 
 ### Context
 
-This story defines the schema and configuration for assessment flows - how questions
-are organised into sections and the order in which they're presented to users.
+Assessment flows define the step sequence users experience. FFP uses "chained assessments" -
+a database-driven flow model rather than hardcoded phases. MVP: Single default flow
+("Standard Physiotherapy Assessment").
+
+### Acceptance Criteria
+
+| AC  | Description                              | Status  |
+| --- | ---------------------------------------- | ------- |
+| AC1 | Flow schema created with step types      | Pending |
+| AC2 | Flow step types support MVP journey      | Pending |
+| AC3 | Steps link to templates where applicable | Pending |
+| AC4 | Default flow seeded for MVP              | Pending |
+
+### Sub-tasks (Execution Order)
+
+| Order | Key     | Description                                    | File Location                                                    | Status  |
+| ----- | ------- | ---------------------------------------------- | ---------------------------------------------------------------- | ------- |
+| 1     | FFP-147 | Create Drizzle schema for assessment_flows     | `@ffp/database/src/schema/assessment-flows.ts`                   | Pending |
+| 2     | FFP-148 | Create Zod schemas for flow steps              | `@ffp/core/src/schemas/assessment-flow.schema.ts`                | Pending |
+| 3     | FFP-149 | Create seed script for default assessment flow | `@ffp/database/seed/seedAssessmentFlows.ts`                      | Pending |
+| 4     | FFP-150 | Add unit tests for flow schema validation      | `@ffp/core/src/schemas/__tests__/assessment-flow.schema.test.ts` | Pending |
+
+**Note**: FFP-149 file path corrected from Jira (`src/seeds/`) to match existing pattern (`seed/`).
+
+### Technical Notes
+
+- **No RLS required**: Flows are system-managed content accessible by all authenticated users
+- **JSONB steps column**: Array of FlowStep objects with type, order, templateId, and config
+- **Step types (MVP)**: `intro`, `questions`, `transition`, `video-assessment`, `results`, `programme-overview`
+- **Template linking**: Steps of type `questions` or `video-assessment` reference `templateId`
+- **Default flow**: 7 steps matching prototype UI (see `assessment-engine.md`)
 
 ### Dependencies
 
