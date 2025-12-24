@@ -339,7 +339,7 @@ describe('RLS Utility Functions', () => {
       `);
 
       const policies = policiesCheck.rows;
-      expect(policies.length).toBe(3);
+      expect(policies.length).toBe(4);
 
       // Check tenant_isolation policy exists
       expect(
@@ -356,6 +356,15 @@ describe('RLS Utility Functions', () => {
       // Check user_isolation policy exists
       expect(
         policies.some((p: any) => p.tablename === 'users' && p.policyname === 'user_isolation')
+      ).toBe(true);
+
+      // Check user_assessment_tenant_isolation policy exists
+      expect(
+        policies.some(
+          (p: any) =>
+            p.tablename === 'user_assessments' &&
+            p.policyname === 'user_assessment_tenant_isolation'
+        )
       ).toBe(true);
     });
   });
