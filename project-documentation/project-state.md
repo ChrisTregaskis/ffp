@@ -10,7 +10,7 @@
 
 ## Current Work: FFP-128 - Start Assessment API
 
-**Status**: 🚧 In Progress
+**Status**: ✅ Complete
 **Story Points**: 3
 **Sprint**: 3 (Backend Foundation)
 
@@ -28,12 +28,12 @@ Starting an assessment creates a user_assessment record (or returns existing non
 
 ### Acceptance Criteria
 
-| AC  | Description                                 | Status  |
-| --- | ------------------------------------------- | ------- |
-| AC1 | Start creates new assessment                | Pending |
-| AC2 | Start returns existing resumable assessment | Pending |
-| AC3 | Tenant context extracted from JWT           | Pending |
-| AC4 | Flow validation (exists and active)         | Pending |
+| AC  | Description                                 | Status      |
+| --- | ------------------------------------------- | ----------- |
+| AC1 | Start creates new assessment                | ✅ Complete |
+| AC2 | Start returns existing resumable assessment | ✅ Complete |
+| AC3 | Tenant context extracted from JWT           | ✅ Complete |
+| AC4 | Flow validation (exists and active)         | ✅ Complete |
 
 ### Dependencies
 
@@ -53,7 +53,7 @@ Starting an assessment creates a user_assessment record (or returns existing non
 | ----- | ------- | --------------------------------------------- | ----------------- |
 | 1     | FFP-161 | Create Zod schemas for start request/response | ✅ Complete       |
 | 2     | FFP-162 | Create startAssessmentService + flow repo     | ✅ Complete       |
-| 3     | FFP-163 | Create start-assessment Lambda handler        | Pending           |
+| 3     | FFP-163 | Create start-assessment Lambda handler        | ✅ Complete       |
 | 4     | FFP-164 | Create integration tests                      | ⏸️ Deferred (MVP) |
 
 **FFP-164 Deferral Rationale:** Service logic is straightforward (query + create). Existing repository tests provide coverage for RLS patterns. Add integration tests post-MVP when API complexity increases.
@@ -244,16 +244,16 @@ LIMIT {maxConcurrent}
 
 **Sprint Plan**: `project-documentation/sprint-planning/outputs/assessment-engine-sprint-plan.md`
 
-| Order | Key     | Story                                      | Pts | Status         |
-| ----- | ------- | ------------------------------------------ | --- | -------------- |
-| 1     | FFP-124 | Assessment Template Schema & Repository    | 5   | ✅ Complete    |
-| 2     | FFP-132 | Process Jobs Schema & Queue Infrastructure | 8   | ✅ Complete    |
-| 3     | FFP-125 | Assessment Flow Schema & Configuration     | 3   | ✅ Complete    |
-| 4     | FFP-127 | User Assessment Schema & State Machine     | 5   | ✅ Complete    |
-| 5     | FFP-128 | Start Assessment API                       | 3   | 🚧 In Progress |
+| Order | Key     | Story                                      | Pts | Status      |
+| ----- | ------- | ------------------------------------------ | --- | ----------- |
+| 1     | FFP-124 | Assessment Template Schema & Repository    | 5   | ✅ Complete |
+| 2     | FFP-132 | Process Jobs Schema & Queue Infrastructure | 8   | ✅ Complete |
+| 3     | FFP-125 | Assessment Flow Schema & Configuration     | 3   | ✅ Complete |
+| 4     | FFP-127 | User Assessment Schema & State Machine     | 5   | ✅ Complete |
+| 5     | FFP-128 | Start Assessment API                       | 3   | ✅ Complete |
 
 **Sprint Goal**: All database schemas migrated, job queue ready, users can start assessments.
-**Progress**: 21/24 pts complete (88%)
+**Progress**: 24/24 pts complete (100%) ✅ SPRINT 3 COMPLETE
 
 ---
 
@@ -502,7 +502,7 @@ await db.query.users.findMany(); // Leaks all tenants!
 **Site**: https://ctregaskis.atlassian.net
 **Project Key**: FFP
 
-**Current Sprint**: Sprint 3 (88% complete)
+**Current Sprint**: Sprint 3 (100% complete) ✅
 **Velocity**: ~25 story points per sprint
 **Capacity**: 8 hours/week (solo developer)
 

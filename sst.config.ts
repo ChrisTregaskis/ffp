@@ -290,9 +290,11 @@ export default $config({
       'cognito-idp:AdminUpdateUserAttributes',
     ];
 
+    const repositoryFunctionsPath = 'packages/functions/src';
+
     // Public health check endpoint (no authentication required)
     api.route('GET /health', {
-      handler: 'packages/functions/src/health/check.handler',
+      handler: `${repositoryFunctionsPath}/health/check.handler`,
       ...handlerEnv,
     });
 
@@ -301,7 +303,7 @@ export default $config({
     // - Public: /auth/login, /auth/complete-new-password
     // - Protected: /auth/invite-user (requires JWT)
     api.route('ANY /auth/{proxy+}', {
-      handler: 'packages/functions/src/auth/index.handler',
+      handler: `${repositoryFunctionsPath}/auth/index.handler`,
       ...handlerEnv,
       permissions: [
         {
@@ -314,7 +316,7 @@ export default $config({
     // Admin domain routes (system_admin role required - validated in handlers)
     api.route(
       'ANY /admin/{proxy+}',
-      { handler: 'packages/functions/src/admin/index.handler', ...handlerEnv },
+      { handler: `${repositoryFunctionsPath}/admin/index.handler`, ...handlerEnv },
       args
     );
 
@@ -322,7 +324,7 @@ export default $config({
     api.route(
       'ANY /user/{proxy+}',
       {
-        handler: 'packages/functions/src/user/index.handler',
+        handler: `${repositoryFunctionsPath}/user/index.handler`,
         ...handlerEnv,
         permissions: [
           {
@@ -331,6 +333,13 @@ export default $config({
           },
         ],
       },
+      args
+    );
+
+    // Assessments domain routes (authenticated users - assessment lifecycle)
+    api.route(
+      'ANY /assessments/{proxy+}',
+      { handler: `${repositoryFunctionsPath}/assessments/index.handler`, ...handlerEnv },
       args
     );
 
@@ -352,7 +361,7 @@ export default $config({
     new sst.aws.Cron('JobProcessor', {
       schedule: 'rate(1 minute)',
       job: {
-        handler: 'packages/functions/src/jobs/process-jobs.handler',
+        handler: `${repositoryFunctionsPath}/jobs/process-jobs.handler`,
         timeout: JOB_PROCESSOR_TIMEOUT,
         ...jobProcessorEnv,
       },

@@ -8,6 +8,55 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 26, 2025 (Session 68 - FFP-163 Start Assessment Lambda Handler)
+
+**Status**: ✅ FFP-163 COMPLETE
+
+**Branch**: `feature/ffp-128-start-assessment-api`
+
+**Completed Work**:
+
+**FFP-163: Create start-assessment Lambda Handler** (~0.25 hours):
+
+- ✅ **start-assessment.ts**: Lambda handler for POST /assessments/start
+  - Extracts user context from JWT via `extractUserContext`
+  - Validates request body with `startAssessmentRequestSchema`
+  - Delegates to `assessmentService.startAssessment`
+  - Returns `StartAssessmentResponse`
+
+- ✅ **assessments/index.ts**: Domain router for assessment endpoints
+  - Uses `validateAndMatchRoute` pattern from other domains
+  - Routes POST /start to startAssessmentHandler
+  - Placeholder comments for future routes (progress, submit, results)
+
+- ✅ **sst.config.ts**: Added assessments route
+  - `ANY /assessments/{proxy+}` → assessments router
+  - JWT authentication required via Cognito authorizer
+
+- ✅ **Postman Collection**: Updated for testing
+  - Added "Start Assessment" endpoint with pre-request/test scripts
+  - Added collection variables: `testFlowId`, `lastAssessmentId`
+  - Example responses for success, resume, validation error, not found
+
+**Files Created**:
+
+- `packages/functions/src/assessments/start-assessment.ts`
+- `packages/functions/src/assessments/index.ts`
+
+**Files Modified**:
+
+- `sst.config.ts` - Added assessments route
+- `postman/FFP-API-Collection.postman_collection.json` - Added endpoint + variables
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors
+- ✅ Tests: All passing
+
+**FFP-128 Story Complete**: All non-deferred sub-tasks done (FFP-161, FFP-162, FFP-163). FFP-164 (integration tests) deferred for MVP.
+
+---
+
 ### December 26, 2025 (Session 67 - FFP-162 Assessment Service & Flow Repository)
 
 **Status**: ✅ FFP-162 COMPLETE
