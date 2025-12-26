@@ -3,36 +3,52 @@
 **Last Updated**: 24th December 2025
 **Current EPIC**: FFP-2 - Assessment Engine (Sprint 3 In Progress)
 **Current Story**: FFP-127 - User Assessment Schema & State Machine
-**Current Branch**: `feature/ffp-147-assessment-flow-schema` (pending merge)
+**Current Branch**: `feature/ffp-127-assessment-schema-state-machine`
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
 
 ## Current Work: FFP-127 - User Assessment Schema & State Machine
 
-**Status**: ⏳ Up Next
+**Status**: ✅ Complete
 **Story Points**: 5
 **Sprint**: 3 (Backend Foundation)
 
 ### User Story
 
-> As a system,
-> I want to track user assessment progress through defined states,
-> So that users can resume assessments and we can enforce valid transitions.
+> As a user,
+> I want my assessment instances stored with proper state tracking,
+> So that I can resume in-progress assessments and view completed ones.
 
 ### Context
 
 User assessments track individual assessment sessions. This schema enables the state machine
-for assessment progress: `not_started` → `in_progress` → `completed` / `abandoned`.
+for assessment progress through the full lifecycle.
+
+**State Machine**:
+
+```
+not_started → in_progress → submitted → scored → completed
+                    ↓
+               abandoned
+```
+
+- `not_started` - Assessment instance created but user hasn't begun
+- `in_progress` - User actively answering questions
+- `submitted` - User submitted, waiting for scoring job
+- `scored` - Scoring complete, waiting for programme generation
+- `completed` - Full flow done with programme generated
+- `abandoned` - User didn't finish (timeout or explicit abandon)
 
 ### Acceptance Criteria
 
-| AC  | Description                             | Status  |
-| --- | --------------------------------------- | ------- |
-| AC1 | User assessment schema with state field | Pending |
-| AC2 | State transitions enforced via enum     | Pending |
-| AC3 | Progress stored as JSONB                | Pending |
-| AC4 | RLS policies for tenant isolation       | Pending |
+| AC  | Description                     | Status      |
+| --- | ------------------------------- | ----------- |
+| AC1 | User assessment schema with RLS | ✅ Done     |
+| AC2 | Assessment status enum enforced | ✅ Done     |
+| AC3 | Answers stored as JSONB         | ✅ Done     |
+| AC4 | Repository enforces RLS context | ✅ Done     |
+| AC5 | Multi-tenant isolation verified | ⏸️ Deferred |
 
 ### Dependencies
 
@@ -43,7 +59,67 @@ for assessment progress: `not_started` → `in_progress` → `completed` / `aban
 ### Blocks (Downstream)
 
 - FFP-128: Start Assessment API
-- FFP-129: Save Assessment Progress API
+- FFP-133: Scoring Service Implementation
+
+### Implementation Plan
+
+**Branch**: `feature/ffp-127-assessment-schema-state-machine` (single branch for all sub-tasks)
+
+| Order | Key     | Sub-task                                   | Status            |
+| ----- | ------- | ------------------------------------------ | ----------------- |
+| 1     | FFP-156 | Create Drizzle schema for user_assessments | ✅ Complete       |
+| 2     | FFP-159 | Create database migration with RLS policy  | ✅ Complete       |
+| 3     | FFP-157 | Create Zod validation schemas              | ✅ Complete       |
+| 4     | FFP-158 | Create repository with RLS enforcement     | ✅ Complete       |
+| 5     | FFP-160 | Create multi-tenant isolation tests        | ⏸️ Deferred (MVP) |
+
+**FFP-160 Deferral Rationale:** RLS pattern identical to existing tables (16 tests already cover pattern). Repository tests in FFP-158 provide implicit coverage. Add dedicated RLS tests post-MVP if pattern changes.
+
+### Technical Details
+
+**Files to Create**:
+
+| Package       | File                                                                       | Purpose                     |
+| ------------- | -------------------------------------------------------------------------- | --------------------------- |
+| @ffp/database | `src/constants/user-assessment.constants.ts`                               | Status enum (single source) |
+| @ffp/database | `src/schema/user-assessments.ts`                                           | Drizzle table definition    |
+| @ffp/database | `migrations/XXXX_user_assessments.sql`                                     | Migration + RLS policy      |
+| @ffp/core     | `src/schemas/user-assessment.schema.ts`                                    | Zod validation schemas      |
+| @ffp/core     | `src/assessments/user-assessment.repository.ts`                            | Data access with RLS        |
+| @ffp/core     | `src/assessments/__tests__/user-assessment.repository.integration.test.ts` | RLS tests                   |
+
+**Table Schema** (`user_assessments`):
+
+| Column       | Type                   | Notes                  |
+| ------------ | ---------------------- | ---------------------- |
+| id           | uuid (PK)              | Default random         |
+| tenant_id    | uuid (FK → tenants)    | NOT NULL, RLS filtered |
+| user_id      | uuid (FK → users)      | NOT NULL               |
+| flow_id      | uuid (FK → flows)      | NOT NULL               |
+| current_step | integer                | Default 1              |
+| status       | assessment_status_enum | Default 'not_started'  |
+| answers      | jsonb                  | Default {}             |
+| scores       | jsonb                  | Nullable               |
+| programme_id | uuid (FK → programmes) | Nullable               |
+| started_at   | timestamp              | Nullable               |
+| submitted_at | timestamp              | Nullable               |
+| completed_at | timestamp              | Nullable               |
+| created_at   | timestamp              | Default now()          |
+| updated_at   | timestamp              | Default now()          |
+
+**RLS Policy**:
+
+```sql
+CREATE POLICY user_assessment_tenant_isolation ON user_assessments
+  FOR ALL
+  USING (tenant_id = current_setting('app.tenant_id')::uuid);
+```
+
+**Indexes**:
+
+- `idx_user_assessments_tenant_user` on (tenant_id, user_id)
+- `idx_user_assessments_status` on (status)
+- `idx_user_assessments_flow` on (flow_id)
 
 ---
 

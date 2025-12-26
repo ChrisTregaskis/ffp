@@ -8,6 +8,138 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 24, 2025 (Session 65 - FFP-127 User Assessment Schema Complete)
+
+**Status**: ✅ COMPLETE - All sub-tasks done (FFP-160 deferred)
+
+**Branch**: `feature/ffp-127-assessment-schema-state-machine`
+
+**Completed Work**:
+
+**FFP-157: Create Zod Validation Schemas** (~0.5 hours):
+
+- ✅ **user-assessment.schema.ts**: Comprehensive Zod validation schemas
+  - `userAssessmentStatusSchema` - Enum from shared constants
+  - `userAnswerSchema` - Individual answer structure (questionId, answerValue, answerId?, answeredAt?)
+  - `userAssessmentAnswersSchema` - Record keyed by questionId
+  - `userAssessmentScoresSchema` - Scores with dimensions array, overallScore?, riskLevel?
+  - `userAssessmentSchema` - Full record with all 14 fields
+  - `createUserAssessmentSchema` - For creating new assessments (tenantId, userId, flowId)
+  - `updateUserAssessmentSchema` - For saving progress (currentStep?, answers?)
+  - `statusTransitionSchema` - Validates state machine transitions with refine()
+  - `isValidStatusTransition()` - Helper function
+  - `getAllowedTransitions()` - Helper function
+  - `submitAssessmentSchema` - For submitting completed assessments
+
+- ✅ **user-assessment.schema.test.ts**: 66 unit tests
+  - Status schema tests (3 tests)
+  - Answer schema tests (8 tests)
+  - Answers record schema tests (4 tests)
+  - Dimensional score schema tests (4 tests)
+  - Scores schema tests (6 tests)
+  - User assessment schema tests (7 tests)
+  - Create schema tests (5 tests)
+  - Update schema tests (6 tests)
+  - Status transition schema tests (10 tests)
+  - Helper function tests (8 tests)
+  - Submit schema tests (5 tests)
+
+- ✅ Re-uses `dimensionalScoreSchema` from job.schema.ts to avoid duplication
+
+**FFP-156: Create Drizzle Schema for user_assessments** (~0.5 hours):
+
+- ✅ **user-assessment.constants.ts**: Status enum and state transitions
+  - `USER_ASSESSMENT_STATUSES` - 6 states: not_started, in_progress, submitted, scored, completed, abandoned
+  - `UserAssessmentStatus` type
+  - `VALID_STATUS_TRANSITIONS` - State machine transition map
+
+- ✅ **user-assessments.ts**: Drizzle table schema
+  - 14 columns (id, tenant_id, user_id, flow_id, current_step, status, answers, scores, programme_id, timestamps)
+  - `userAssessmentStatusEnum` PostgreSQL enum
+  - 3 indexes: tenant_user (composite), status, flow
+  - 3 foreign keys: tenants (cascade), users (cascade), assessment_flows (restrict)
+  - Relations defined for tenant, user, flow
+  - Insert/select schemas and inferred types exported
+
+**FFP-159: Create Database Migration with RLS Policy** (~0.25 hours):
+
+- ✅ **0008_friendly_purple_man.sql**: Auto-generated migration
+  - Creates `user_assessment_status` enum
+  - Creates `user_assessments` table with all columns
+  - Adds foreign key constraints
+  - Creates indexes
+
+- ✅ **apply-rls.ts**: Updated with user_assessments RLS
+  - Added RLS policy `user_assessment_tenant_isolation`
+  - Updated RLS check queries to include user_assessments
+  - Forced RLS for development environment
+
+- ✅ Migrations applied to both `ffp_dev` and `ffp_test` databases
+
+**FFP-158: Create Repository with RLS Enforcement** (~0.5 hours):
+
+- ✅ **user-assessment.repository.ts**: Repository with RLS enforcement
+  - `create()` - Creates assessment in 'not_started' status
+  - `findById()` - Find by ID with RLS context
+  - `findByUserId()` - Find all for user, optional status filter
+  - `findInProgress()` - Find in-progress assessment for user
+  - `updateProgress()` - Update currentStep and merge answers
+  - `transitionStatus()` - Validate and execute state transitions
+  - `updateScores()` - Set calculated scores
+  - `linkProgramme()` - Link generated programme
+  - All functions use `withRLS` helper for tenant isolation
+
+- ✅ **user-assessment.repository.test.ts**: 23 integration tests
+  - Create tests (1 test)
+  - FindById tests (3 tests)
+  - FindByUserId tests (2 tests)
+  - FindInProgress tests (3 tests)
+  - UpdateProgress tests (3 tests)
+  - TransitionStatus tests (5 tests)
+  - UpdateScores tests (2 tests)
+  - LinkProgramme tests (2 tests)
+  - RLS Cross-Tenant Isolation tests (2 tests)
+
+- ✅ **database.ts**: Fixed setRLSContext to use sql.raw() with UUID validation
+  - PostgreSQL's SET command doesn't support parameterised queries
+  - Added UUID validation and escaping for SQL injection prevention
+
+- ✅ **vitest.config.ts**: Added DB_NAME=ffp_test environment for integration tests
+
+**Files Created**:
+
+- `packages/database/src/constants/user-assessment.constants.ts`
+- `packages/database/src/schema/user-assessments.ts`
+- `packages/database/migrations/0008_friendly_purple_man.sql`
+- `packages/core/src/schemas/user-assessment.schema.ts`
+- `packages/core/src/schemas/user-assessment.schema.test.ts`
+- `packages/core/src/assessments/user-assessment.repository.ts`
+- `packages/core/src/assessments/user-assessment.repository.test.ts`
+
+**Files Modified**:
+
+- `packages/database/src/constants/index.ts` - Added export
+- `packages/database/src/schema/index.ts` - Added export
+- `packages/database/src/migrations/apply-rls.ts` - Added user_assessments RLS
+- `packages/core/src/schemas/index.ts` - Added user-assessment.schema export
+- `packages/core/src/assessments/index.ts` - Added user-assessment.repository export
+- `packages/core/src/lib/database.ts` - Fixed setRLSContext for PostgreSQL SET
+- `packages/core/vitest.config.ts` - Added DB_NAME=ffp_test env
+
+**Quality Assurance**:
+
+- ✅ Build: @ffp/database and @ffp/core built successfully
+- ✅ TypeScript: Zero errors
+- ✅ Database: Table verified with `\d user_assessments`
+- ✅ RLS: Policy verified in both ffp_dev and ffp_test
+- ✅ Tests: 89 new tests (66 schema + 23 repository integration)
+
+**Branch Status**: Ready for review and merge to main
+
+**Next Story**: FFP-128 (Start Assessment API) - pending user confirmation
+
+---
+
 ### December 24, 2025 (Session 64 - FFP-125 Assessment Flow Schema Complete)
 
 **Status**: ✅ FFP-125 COMPLETE - All 4 sub-tasks done (FFP-147, FFP-148, FFP-149, FFP-150)

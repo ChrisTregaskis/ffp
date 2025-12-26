@@ -11,3 +11,4 @@ export * from './users';
 export * from './assessment-templates';
 export * from './assessment-flows';
 export * from './process-jobs';
+export * from './user-assessments';

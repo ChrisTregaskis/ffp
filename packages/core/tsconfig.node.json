@@ -6,8 +6,7 @@
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "allowJs": true,
-    "types": ["node"],
-    "declaration": false
+    "types": ["node"]
   },
   "include": ["vitest.config.ts"]
 }
