@@ -8,6 +8,69 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 26, 2025 (Session 67 - FFP-162 Assessment Service & Flow Repository)
+
+**Status**: ✅ FFP-162 COMPLETE
+
+**Branch**: `feature/ffp-128-start-assessment-api`
+
+**Completed Work**:
+
+**FFP-162: Create startAssessmentService with Resume Logic** (~0.5 hours):
+
+- ✅ **flow.repository.ts**: New repository for assessment flow lookups
+  - `findById(flowId)` - Find flow by ID
+  - `findActiveById(flowId)` - Find flow by ID with `isActive=true` check
+  - No RLS required - flows are system-managed content
+  - Uses `AssessmentFlowRecord` type from `@ffp/database` (avoids duplication)
+
+- ✅ **assessment.service.ts**: Business logic orchestration
+  - `startAssessment(flowId, context)` - Start or resume assessment
+  - Validates flow exists and is active (throws NotFoundError if not)
+  - Checks for existing resumable assessment (`not_started` or `in_progress`)
+  - Returns existing with `isResumed: true` or creates new with `isResumed: false`
+
+- ✅ **user-assessment.repository.ts**: Added `findResumable()` function
+  - Finds existing assessment for user/flow with resumable status
+  - Uses RLS via `withRLS()` helper for tenant isolation
+  - Added `or` import from drizzle-orm
+
+- ✅ **context.ts**: Added `getUserIdFromContext()` helper
+  - Extracts userId from TenantContext with UserActor
+  - Throws UnauthorisedError if context has SystemActor
+  - Reusable across services requiring user context
+
+- ✅ **assessments/index.ts**: Updated exports
+  - Added `flowRepository` and `assessmentService` namespace exports
+
+- ✅ **Unit tests** (MVP-appropriate coverage):
+  - `assessment.service.test.ts` - 3 tests (new creates, resume returns, NotFoundError)
+  - `user-assessment.repository.test.ts` - 2 additional tests for findResumable
+
+**Files Created**:
+
+- `packages/core/src/assessments/flow.repository.ts`
+- `packages/core/src/assessments/assessment.service.ts`
+- `packages/core/src/assessments/assessment.service.test.ts`
+
+**Files Modified**:
+
+- `packages/core/src/assessments/user-assessment.repository.ts` - Added findResumable, or import
+- `packages/core/src/assessments/user-assessment.repository.test.ts` - Added 2 tests
+- `packages/core/src/assessments/index.ts` - Added exports
+- `packages/core/src/lib/context.ts` - Added getUserIdFromContext
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors
+- ✅ Tests: 457 tests passing (trimmed from 472 for MVP)
+
+**Test Coverage Philosophy**: Reduced test count to MVP-appropriate levels. Deleted flow.repository tests (trivial Drizzle queries). Kept essential service tests: happy paths + error case.
+
+**Next Sub-task**: FFP-163 (Create start-assessment Lambda handler)
+
+---
+
 ### December 26, 2025 (Session 66 - FFP-161 Start Assessment Schemas)
 
 **Status**: ✅ FFP-161 COMPLETE

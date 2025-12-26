@@ -302,6 +302,34 @@ describe('User Assessment Repository', () => {
     });
   });
 
+  describe('findResumable', () => {
+    it('returns resumable assessment (not_started or in_progress)', async () => {
+      const assessment = await userAssessmentRepository.create({
+        tenantId: tenantAId,
+        userId: userA1Id,
+        flowId,
+      });
+
+      const result = await userAssessmentRepository.findResumable(tenantAId, userA1Id, flowId);
+
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe(assessment.id);
+    });
+
+    it('respects RLS tenant isolation', async () => {
+      await userAssessmentRepository.create({
+        tenantId: tenantAId,
+        userId: userA1Id,
+        flowId,
+      });
+
+      // Tenant B should not see Tenant A's assessment
+      const result = await userAssessmentRepository.findResumable(tenantBId, userA1Id, flowId);
+
+      expect(result).toBeNull();
+    });
+  });
+
   describe('updateProgress', () => {
     it('updates currentStep', async () => {
       const assessment = await userAssessmentRepository.create({

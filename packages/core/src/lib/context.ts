@@ -332,3 +332,26 @@ export function getActorDisplayName(actor: Actor): string {
   }
   return `System: ${actor.systemId}`;
 }
+
+/**
+ * Extract userId from TenantContext
+ *
+ * Safely extracts the userId from a context with a user actor.
+ * Use this in services that require user-initiated operations.
+ *
+ * @param context - Tenant context to extract userId from
+ * @returns The user's ID
+ * @throws UnauthorisedError if actor is not a user
+ *
+ * @example
+ * ```typescript
+ * const userId = getUserIdFromContext(context);
+ * await userAssessmentRepository.findResumable(context.tenantId, userId, flowId);
+ * ```
+ */
+export function getUserIdFromContext(context: TenantContext): string {
+  if (!isUserActor(context.actor)) {
+    throw new UnauthorisedError('This operation requires a user context');
+  }
+  return context.actor.userId;
+}

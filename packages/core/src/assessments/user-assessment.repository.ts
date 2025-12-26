@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, or } from 'drizzle-orm';
 
 import type { UserAssessmentStatus } from '@ffp/database';
 import { userAssessments } from '@ffp/database/schema';
@@ -147,6 +147,38 @@ export async function findInProgress(
       .select()
       .from(userAssessments)
       .where(and(...conditions))
+      .limit(1);
+
+    if (records.length === 0) {
+      return null;
+    }
+
+    return mapToUserAssessment(records[0]);
+  });
+}
+
+/**
+ * Find a resumable assessment for a user
+ *
+ * Returns an existing assessment that can be resumed (not_started or in_progress).
+ * Used by the start assessment API to prevent creating duplicate assessments.
+ */
+export async function findResumable(
+  tenantId: string,
+  userId: string,
+  flowId: string
+): Promise<UserAssessment | null> {
+  return await withRLS(tenantId, userId, async (tx) => {
+    const records = await tx
+      .select()
+      .from(userAssessments)
+      .where(
+        and(
+          eq(userAssessments.userId, userId),
+          eq(userAssessments.flowId, flowId),
+          or(eq(userAssessments.status, 'not_started'), eq(userAssessments.status, 'in_progress'))
+        )
+      )
       .limit(1);
 
     if (records.length === 0) {
