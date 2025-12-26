@@ -13,6 +13,8 @@ import {
   isValidStatusTransition,
   getAllowedTransitions,
   submitAssessmentSchema,
+  startAssessmentRequestSchema,
+  startAssessmentResponseSchema,
 } from './user-assessment.schema';
 
 // Test fixtures
@@ -718,6 +720,174 @@ describe('submitAssessmentSchema', () => {
       answers: {},
     };
     const result = submitAssessmentSchema.safeParse(input);
+    expect(result.success).toBe(false);
+  });
+});
+
+// ============================================================================
+// startAssessmentRequestSchema tests
+// ============================================================================
+
+describe('startAssessmentRequestSchema', () => {
+  it('should accept valid flowId as UUID', () => {
+    const input = {
+      flowId: validUuid,
+    };
+    const result = startAssessmentRequestSchema.safeParse(input);
+    expect(result.success).toBe(true);
+  });
+
+  it('should reject missing flowId', () => {
+    const input = {};
+    const result = startAssessmentRequestSchema.safeParse(input);
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject invalid UUID format with clear error message', () => {
+    const input = {
+      flowId: 'not-a-uuid',
+    };
+    const result = startAssessmentRequestSchema.safeParse(input);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe('flowId must be a valid UUID');
+    }
+  });
+
+  it('should reject empty string flowId', () => {
+    const input = {
+      flowId: '',
+    };
+    const result = startAssessmentRequestSchema.safeParse(input);
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject non-string flowId', () => {
+    const input = {
+      flowId: 12345,
+    };
+    const result = startAssessmentRequestSchema.safeParse(input);
+    expect(result.success).toBe(false);
+  });
+});
+
+// ============================================================================
+// startAssessmentResponseSchema tests
+// ============================================================================
+
+describe('startAssessmentResponseSchema', () => {
+  const validResponse = {
+    assessmentId: validUuid,
+    currentStep: 1,
+    status: 'not_started' as const,
+    answers: {},
+    flowId: validUuid2,
+    isResumed: false,
+  };
+
+  it('should accept valid response for new assessment', () => {
+    const result = startAssessmentResponseSchema.safeParse(validResponse);
+    expect(result.success).toBe(true);
+  });
+
+  it('should accept valid response for resumed assessment', () => {
+    const response = {
+      ...validResponse,
+      status: 'in_progress' as const,
+      currentStep: 3,
+      answers: {
+        [validUuid]: {
+          questionId: validUuid,
+          answerValue: 4,
+        },
+      },
+      isResumed: true,
+    };
+    const result = startAssessmentResponseSchema.safeParse(response);
+    expect(result.success).toBe(true);
+  });
+
+  it('should require isResumed boolean field', () => {
+    const { isResumed: _, ...responseWithoutIsResumed } = validResponse;
+    const result = startAssessmentResponseSchema.safeParse(responseWithoutIsResumed);
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject invalid assessmentId format', () => {
+    const response = {
+      ...validResponse,
+      assessmentId: 'not-a-uuid',
+    };
+    const result = startAssessmentResponseSchema.safeParse(response);
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject invalid flowId format', () => {
+    const response = {
+      ...validResponse,
+      flowId: 'not-a-uuid',
+    };
+    const result = startAssessmentResponseSchema.safeParse(response);
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject non-positive currentStep', () => {
+    const response = {
+      ...validResponse,
+      currentStep: 0,
+    };
+    const result = startAssessmentResponseSchema.safeParse(response);
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject invalid status', () => {
+    const response = {
+      ...validResponse,
+      status: 'invalid_status',
+    };
+    const result = startAssessmentResponseSchema.safeParse(response);
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject non-boolean isResumed', () => {
+    const response = {
+      ...validResponse,
+      isResumed: 'true',
+    };
+    const result = startAssessmentResponseSchema.safeParse(response);
+    expect(result.success).toBe(false);
+  });
+
+  it('should accept response with populated answers', () => {
+    const response = {
+      ...validResponse,
+      answers: {
+        [validUuid]: {
+          questionId: validUuid,
+          answerValue: 5,
+          answeredAt: new Date().toISOString(),
+        },
+        [validUuid2]: {
+          questionId: validUuid2,
+          answerValue: 'Text response',
+        },
+      },
+    };
+    const result = startAssessmentResponseSchema.safeParse(response);
+    expect(result.success).toBe(true);
+  });
+
+  it('should reject response with invalid answers structure', () => {
+    const response = {
+      ...validResponse,
+      answers: {
+        [validUuid]: {
+          // missing required fields
+          invalidField: 'value',
+        },
+      },
+    };
+    const result = startAssessmentResponseSchema.safeParse(response);
     expect(result.success).toBe(false);
   });
 });

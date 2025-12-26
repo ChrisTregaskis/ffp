@@ -160,3 +160,40 @@ export const submitAssessmentSchema = z.object({
 });
 
 export type SubmitAssessmentInput = z.infer<typeof submitAssessmentSchema>;
+
+/**
+ * Request schema for starting an assessment
+ *
+ * Used to validate incoming API requests to the start assessment endpoint.
+ * The flowId identifies which assessment flow the user wants to begin.
+ */
+export const startAssessmentRequestSchema = z.object({
+  /** Assessment flow ID to start (must be valid UUID) */
+  flowId: z.string().uuid({ message: 'flowId must be a valid UUID' }),
+});
+
+export type StartAssessmentRequest = z.infer<typeof startAssessmentRequestSchema>;
+
+/**
+ * Response schema for starting an assessment
+ *
+ * Returns the assessment state to the client. The isResumed flag indicates
+ * whether an existing in-progress assessment was returned (true) or a new
+ * assessment was created (false).
+ */
+export const startAssessmentResponseSchema = z.object({
+  /** Unique identifier for the assessment */
+  assessmentId: z.string().uuid(),
+  /** Current step index in the flow (1-based) */
+  currentStep: z.number().int().positive(),
+  /** Assessment state machine status */
+  status: userAssessmentStatusSchema,
+  /** User's answers (keyed by questionId) */
+  answers: userAssessmentAnswersSchema,
+  /** Assessment flow being followed */
+  flowId: z.string().uuid(),
+  /** True if resuming existing assessment, false if newly created */
+  isResumed: z.boolean(),
+});
+
+export type StartAssessmentResponse = z.infer<typeof startAssessmentResponseSchema>;
