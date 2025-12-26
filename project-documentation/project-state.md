@@ -51,7 +51,7 @@ Starting an assessment creates a user_assessment record (or returns existing non
 
 | Order | Key     | Sub-task                                      | Status            |
 | ----- | ------- | --------------------------------------------- | ----------------- |
-| 1     | FFP-161 | Create Zod schemas for start request/response | Pending           |
+| 1     | FFP-161 | Create Zod schemas for start request/response | ✅ Complete       |
 | 2     | FFP-162 | Create startAssessmentService + flow repo     | Pending           |
 | 3     | FFP-163 | Create start-assessment Lambda handler        | Pending           |
 | 4     | FFP-164 | Create integration tests                      | ⏸️ Deferred (MVP) |

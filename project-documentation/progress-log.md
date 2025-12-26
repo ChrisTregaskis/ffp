@@ -8,6 +8,47 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 26, 2025 (Session 66 - FFP-161 Start Assessment Schemas)
+
+**Status**: ✅ FFP-161 COMPLETE
+
+**Branch**: `feature/ffp-128-start-assessment-api`
+
+**Completed Work**:
+
+**FFP-161: Create Zod Schemas for Start Assessment Request/Response** (~0.25 hours):
+
+- ✅ **startAssessmentRequestSchema**: Validates `{ flowId: uuid }` with custom error message
+  - `flowId` - UUID validation with message: "flowId must be a valid UUID"
+
+- ✅ **startAssessmentResponseSchema**: Validates API response shape
+  - `assessmentId` - UUID
+  - `currentStep` - Positive integer (1-based)
+  - `status` - Assessment status enum
+  - `answers` - User assessment answers record (reuses existing schema)
+  - `flowId` - UUID
+  - `isResumed` - Boolean flag indicating resume vs new assessment
+
+- ✅ **Types exported**: `StartAssessmentRequest`, `StartAssessmentResponse`
+
+- ✅ **17 new unit tests** in `user-assessment.schema.test.ts`:
+  - Request schema tests (5 tests): Valid UUID, missing flowId, invalid UUID with error message, empty string, non-string
+  - Response schema tests (12 tests): Valid new/resumed response, isResumed required, invalid UUIDs, invalid status, populated answers
+
+**Files Modified**:
+
+- `packages/core/src/schemas/user-assessment.schema.ts` - Added request/response schemas
+- `packages/core/src/schemas/user-assessment.schema.test.ts` - Added 17 tests
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors
+- ✅ Tests: 81 tests passing in schema file (17 new)
+
+**Next Sub-task**: FFP-162 (Create startAssessmentService + flow repository)
+
+---
+
 ### December 24, 2025 (Session 65 - FFP-127 User Assessment Schema Complete)
 
 **Status**: ✅ COMPLETE - All sub-tasks done (FFP-160 deferred)
@@ -388,7 +429,9 @@ After code review, two issues were addressed in `packages/functions/src/jobs/pro
 | Dec 19      | FFP-181 Complete (Auto-Retry)    | 160.5h        |
 | Dec 19      | FFP-182 Complete (SST Cron)      | 162h          |
 | Dec 24      | FFP-125 Complete (Flow Schema)   | 163.5h        |
-| **Current** | **FFP-125 Complete**             | **~164/197h** |
+| Dec 24      | FFP-127 Complete (User Assess)   | 165.5h        |
+| Dec 26      | FFP-161 Complete (Start Schemas) | 165.75h       |
+| **Current** | **FFP-128 In Progress**          | **~166/197h** |
 
 ---
 
