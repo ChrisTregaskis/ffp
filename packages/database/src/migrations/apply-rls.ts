@@ -4,6 +4,14 @@
  * This module applies Row-Level Security (RLS) policies to all tenant-scoped tables.
  * It is idempotent and can be run multiple times safely.
  *
+ * **Tables with RLS policies:**
+ * - tenants, customers, users, user_assessments
+ *
+ * **Tables intentionally without RLS (for MVP):**
+ * - process_jobs: Job processor runs with BYPASSRLS to claim jobs across tenants.
+ *   RLS will be added when user-facing job queries are implemented (see process-jobs.ts).
+ * - assessment_templates, assessment_flows: System-managed content, no tenant isolation.
+ *
  * @module migrations/apply-rls
  */
 

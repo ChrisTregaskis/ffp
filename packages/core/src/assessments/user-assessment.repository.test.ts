@@ -27,6 +27,27 @@ import * as userAssessmentRepository from './user-assessment.repository';
  */
 const TEST_RUN_ID = randomUUID().substring(0, 8);
 
+/**
+ * UUID validation regex (RFC 4122 compliant)
+ * Used to validate tenant IDs before setting RLS context
+ */
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Safely set RLS context for test setup/teardown
+ *
+ * PostgreSQL's SET command doesn't support parameterised queries ($1, $2),
+ * so we use sql.raw() with UUID validation to prevent injection.
+ * This mirrors the pattern used in @ffp/core's database.ts setRLSContext.
+ */
+async function setTestRLSContext(db: ReturnType<typeof drizzle>, tenantId: string): Promise<void> {
+  if (!UUID_REGEX.test(tenantId)) {
+    throw new Error(`Invalid UUID format for tenantId: ${tenantId}`);
+  }
+  // Safe: tenantId is validated as UUID (only hex digits and hyphens)
+  await db.execute(sql.raw(`SET app.tenant_id = '${tenantId}'`));
+}
+
 describe('User Assessment Repository', () => {
   let pool: Pool;
   let db: ReturnType<typeof drizzle>;
@@ -57,14 +78,14 @@ describe('User Assessment Repository', () => {
     tenantBId = randomUUID();
 
     // Create Tenant A (use TEST_RUN_ID in name for easy cleanup)
-    await db.execute(sql.raw(`SET app.tenant_id = '${tenantAId}'`));
+    await setTestRLSContext(db, tenantAId);
     await db.execute(sql`
       INSERT INTO tenants (id, type, name, settings)
       VALUES (${tenantAId}, 'business', ${`Test Tenant A [${TEST_RUN_ID}]`}, '{}')
     `);
 
     // Create Tenant B
-    await db.execute(sql.raw(`SET app.tenant_id = '${tenantBId}'`));
+    await setTestRLSContext(db, tenantBId);
     await db.execute(sql`
       INSERT INTO tenants (id, type, name, settings)
       VALUES (${tenantBId}, 'individual', ${`Test Tenant B [${TEST_RUN_ID}]`}, '{}')
@@ -72,7 +93,7 @@ describe('User Assessment Repository', () => {
 
     // Create Customer A (belongs to Tenant A)
     // Use customerAId (UUID) for unique account_code to avoid conflicts
-    await db.execute(sql.raw(`SET app.tenant_id = '${tenantAId}'`));
+    await setTestRLSContext(db, tenantAId);
     customerAId = randomUUID();
     const customerAccountCode = customerAId.substring(0, 8);
     await db.execute(sql`
@@ -89,7 +110,7 @@ describe('User Assessment Repository', () => {
     `);
 
     // Create User B1 (Tenant B - individual user, no customer)
-    await db.execute(sql.raw(`SET app.tenant_id = '${tenantBId}'`));
+    await setTestRLSContext(db, tenantBId);
     userB1Id = randomUUID();
     await db.execute(sql`
       INSERT INTO users (id, tenant_id, customer_id, email, cognito_sub, first_name, last_name, role)
@@ -114,16 +135,12 @@ describe('User Assessment Repository', () => {
     // Wrap in try/catch as parallel tests may cause intermittent FK issues
     try {
       // Delete in FK-safe order (children first, then parents)
-      // Use raw SQL to bypass RLS for cleanup
-      await db.execute(sql.raw(`DELETE FROM user_assessments WHERE flow_id = '${flowId}'`));
-      await db.execute(sql.raw(`DELETE FROM assessment_flows WHERE id = '${flowId}'`));
-      await db.execute(
-        sql.raw(`DELETE FROM users WHERE tenant_id IN ('${tenantAId}', '${tenantBId}')`)
-      );
-      await db.execute(
-        sql.raw(`DELETE FROM customers WHERE tenant_id IN ('${tenantAId}', '${tenantBId}')`)
-      );
-      await db.execute(sql.raw(`DELETE FROM tenants WHERE id IN ('${tenantAId}', '${tenantBId}')`));
+      // Use parameterised queries to demonstrate secure patterns
+      await db.execute(sql`DELETE FROM user_assessments WHERE flow_id = ${flowId}`);
+      await db.execute(sql`DELETE FROM assessment_flows WHERE id = ${flowId}`);
+      await db.execute(sql`DELETE FROM users WHERE tenant_id = ANY(${[tenantAId, tenantBId]})`);
+      await db.execute(sql`DELETE FROM customers WHERE tenant_id = ANY(${[tenantAId, tenantBId]})`);
+      await db.execute(sql`DELETE FROM tenants WHERE id = ANY(${[tenantAId, tenantBId]})`);
     } catch {
       // Ignore cleanup errors - unique UUIDs ensure no conflicts between tests
     }

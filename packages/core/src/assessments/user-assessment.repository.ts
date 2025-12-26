@@ -69,12 +69,17 @@ export async function create(input: CreateUserAssessmentInput): Promise<UserAsse
  * Find a user assessment by ID
  *
  * RLS is enforced via tenant context.
+ *
+ * @param userId - Optional user ID for fine-grained RLS. While tenant-level
+ *   isolation is sufficient for current needs, passing userId enables future
+ *   user-level RLS policies without API changes.
  */
 export async function findById(
   tenantId: string,
-  assessmentId: string
+  assessmentId: string,
+  userId?: string
 ): Promise<UserAssessment | null> {
-  return await withRLS(tenantId, undefined, async (tx) => {
+  return await withRLS(tenantId, userId, async (tx) => {
     const records = await tx
       .select()
       .from(userAssessments)
@@ -157,13 +162,18 @@ export async function findInProgress(
  *
  * Updates currentStep and/or merges new answers.
  * Does not change status - use transitionStatus for that.
+ *
+ * @param userId - Optional user ID for fine-grained RLS. While tenant-level
+ *   isolation is sufficient for current needs, passing userId enables future
+ *   user-level RLS policies without API changes.
  */
 export async function updateProgress(
   tenantId: string,
   assessmentId: string,
-  data: UpdateUserAssessmentInput
+  data: UpdateUserAssessmentInput,
+  userId?: string
 ): Promise<UserAssessment> {
-  return await withRLS(tenantId, undefined, async (tx) => {
+  return await withRLS(tenantId, userId, async (tx) => {
     // Fetch current assessment
     const existing = await tx
       .select()
@@ -203,15 +213,19 @@ export async function updateProgress(
  * Updates relevant timestamp fields based on the target status.
  *
  * @param toStatus - Target status
+ * @param userId - Optional user ID for fine-grained RLS. While tenant-level
+ *   isolation is sufficient for current needs, passing userId enables future
+ *   user-level RLS policies without API changes.
  * @throws NotFoundError if assessment not found
  * @throws ValidationError if transition is not allowed
  */
 export async function transitionStatus(
   tenantId: string,
   assessmentId: string,
-  toStatus: UserAssessmentStatus
+  toStatus: UserAssessmentStatus,
+  userId?: string
 ): Promise<UserAssessment> {
-  return await withRLS(tenantId, undefined, async (tx) => {
+  return await withRLS(tenantId, userId, async (tx) => {
     // Fetch current assessment
     const existing = await tx
       .select()
@@ -270,13 +284,17 @@ export async function transitionStatus(
  * Typically followed by transitionStatus to 'scored'.
  *
  * @param scores - Calculated scores from scoring job
+ * @param userId - Optional user ID for fine-grained RLS. While tenant-level
+ *   isolation is sufficient for current needs, passing userId enables future
+ *   user-level RLS policies without API changes.
  */
 export async function updateScores(
   tenantId: string,
   assessmentId: string,
-  scores: UserAssessmentScores
+  scores: UserAssessmentScores,
+  userId?: string
 ): Promise<UserAssessment> {
-  return await withRLS(tenantId, undefined, async (tx) => {
+  return await withRLS(tenantId, userId, async (tx) => {
     const existing = await tx
       .select()
       .from(userAssessments)
@@ -305,13 +323,18 @@ export async function updateScores(
  *
  * Called after programme generation job completes.
  * Typically followed by transitionStatus to 'completed'.
+ *
+ * @param userId - Optional user ID for fine-grained RLS. While tenant-level
+ *   isolation is sufficient for current needs, passing userId enables future
+ *   user-level RLS policies without API changes.
  */
 export async function linkProgramme(
   tenantId: string,
   assessmentId: string,
-  programmeId: string
+  programmeId: string,
+  userId?: string
 ): Promise<UserAssessment> {
-  return await withRLS(tenantId, undefined, async (tx) => {
+  return await withRLS(tenantId, userId, async (tx) => {
     const existing = await tx
       .select()
       .from(userAssessments)
