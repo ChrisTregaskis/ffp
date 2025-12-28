@@ -8,6 +8,65 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 28, 2025 (Session 69 - FFP-129 Save Assessment Progress API)
+
+**Status**: ✅ FFP-129 COMPLETE
+
+**Branch**: `feature/ffp-129-save-assessment-progress-api`
+
+**Completed Work**:
+
+**FFP-165: Create Zod schemas for save progress request/response** (~0.15 hours):
+
+- ✅ `saveProgressRequestSchema`: Validates answers (Record) + currentStep (positive int)
+- ✅ `saveProgressResponseSchema`: Validates success (literal true) + updatedAt (ISO datetime)
+- ✅ Exported TypeScript types: `SaveProgressRequest`, `SaveProgressResponse`
+- ✅ Empty answers object allowed for step-only navigation
+
+**FFP-166: Create saveProgressService with answer merging** (~0.25 hours):
+
+- ✅ `saveProgress(assessmentId, data, context)` in `assessment.service.ts`
+- ✅ Fetches assessment by ID with RLS enforcement
+- ✅ Validates status not submitted/completed (throws ValidationError)
+- ✅ Transitions `not_started` → `in_progress` with startedAt timestamp
+- ✅ Leverages existing `updateProgress()` for answer merging
+- ✅ Returns `{ success: true, updatedAt: ISO string }`
+
+**FFP-167: Create save-progress Lambda handler** (~0.2 hours):
+
+- ✅ `save-progress.ts`: Lambda handler for PUT /assessments/{id}/progress
+- ✅ Extracts assessmentId from path parameters
+- ✅ Extracts user context from JWT
+- ✅ Validates request body with Zod schema
+- ✅ Registered in assessments router as PUT route
+
+**Documentation & Testing**:
+
+- ✅ Updated Postman collection with Save Progress endpoint
+- ✅ Created `ffp-129-test-instructions.md` with 12 test scenarios
+- ✅ Test scenarios cover all 5 acceptance criteria
+
+**Files Created**:
+
+- `packages/functions/src/assessments/save-progress.ts`
+- `project-documentation/sprint-planning/outputs/ffp-129-test-instructions.md`
+
+**Files Modified**:
+
+- `packages/core/src/schemas/user-assessment.schema.ts` - Added save progress schemas
+- `packages/core/src/assessments/assessment.service.ts` - Added saveProgress function
+- `packages/functions/src/assessments/index.ts` - Registered PUT route
+- `postman/FFP-API-Collection.postman_collection.json` - Added endpoint + examples
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (`pnpm typecheck`)
+- ✅ All packages compile successfully
+
+**Design Decision**: Changed from POST to PUT for save-progress endpoint (more RESTful - idempotent update at known location).
+
+---
+
 ### December 26, 2025 (Session 68 - FFP-163 Start Assessment Lambda Handler)
 
 **Status**: ✅ FFP-163 COMPLETE

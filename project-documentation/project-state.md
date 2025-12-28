@@ -10,7 +10,7 @@
 
 ## Current Work: FFP-129 - Save Assessment Progress API
 
-**Status**: 🚀 In Progress
+**Status**: ✅ Complete (Ready for Review)
 **Story Points**: 3
 **Sprint**: 4 (Backend APIs + Frontend Foundation)
 
@@ -26,13 +26,13 @@ Progress is saved on navigation only (not debounced auto-save). This reduces API
 
 ### Acceptance Criteria
 
-| AC  | Description                        | Status  |
-| --- | ---------------------------------- | ------- |
-| AC1 | Progress saves merged answers      | Pending |
-| AC2 | Current step updated               | Pending |
-| AC3 | Status transitions to in_progress  | Pending |
-| AC4 | Cannot modify submitted assessment | Pending |
-| AC5 | Tenant isolation enforced          | Pending |
+| AC  | Description                        | Status      |
+| --- | ---------------------------------- | ----------- |
+| AC1 | Progress saves merged answers      | ✅ Complete |
+| AC2 | Current step updated               | ✅ Complete |
+| AC3 | Status transitions to in_progress  | ✅ Complete |
+| AC4 | Cannot modify submitted assessment | ✅ Complete |
+| AC5 | Tenant isolation enforced          | ✅ Complete |
 
 ### Dependencies
 
@@ -51,7 +51,7 @@ Progress is saved on navigation only (not debounced auto-save). This reduces API
 | ----- | ------- | ---------------------------------------------- | ----------- |
 | 1     | FFP-165 | Create Zod schemas for save progress req/res   | ✅ Complete |
 | 2     | FFP-166 | Create saveProgressService with answer merging | ✅ Complete |
-| 3     | FFP-167 | Create save-progress Lambda handler            | Pending     |
+| 3     | FFP-167 | Create save-progress Lambda handler            | ✅ Complete |
 
 **No test sub-task**: Consistent with FFP-128 deferral rationale. Repository tests already cover RLS patterns; service logic is straightforward orchestration.
 
