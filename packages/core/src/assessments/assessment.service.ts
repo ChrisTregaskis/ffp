@@ -1,11 +1,15 @@
 import { getUserIdFromContext } from '../lib/context';
-import { NotFoundError } from '../lib/errors';
+import { NotFoundError, ValidationError } from '../lib/errors';
 
 import * as flowRepository from './flow.repository';
 import * as userAssessmentRepository from './user-assessment.repository';
 
 import type { TenantContext } from '../lib/context';
-import type { StartAssessmentResponse } from '../schemas/user-assessment.schema';
+import type {
+  StartAssessmentResponse,
+  SaveProgressRequest,
+  SaveProgressResponse,
+} from '../schemas/user-assessment.schema';
 
 /**
  * Start a new assessment or resume an existing one
@@ -68,5 +72,59 @@ export async function startAssessment(
     answers: newAssessment.answers,
     flowId: newAssessment.flowId,
     isResumed: false,
+  };
+}
+
+/**
+ * Save assessment progress
+ *
+ * Persists user's answers and current step when navigating (Continue/Back).
+ * Handles status transition from 'not_started' to 'in_progress' on first save.
+ *
+ * @throws NotFoundError if assessment doesn't exist or not accessible
+ * @throws ValidationError if assessment is submitted/completed
+ *
+ * @example
+ * ```typescript
+ * const response = await saveProgress(assessmentId, {
+ *   answers: { 'q1-uuid': { questionId: 'q1-uuid', answerValue: 5 } },
+ *   currentStep: 2
+ * }, context);
+ * ```
+ */
+export async function saveProgress(
+  assessmentId: string,
+  data: SaveProgressRequest,
+  context: TenantContext
+): Promise<SaveProgressResponse> {
+  const { tenantId } = context;
+
+  // 1. Fetch assessment by ID (RLS enforced)
+  const assessment = await userAssessmentRepository.findById(tenantId, assessmentId);
+
+  if (!assessment) {
+    throw new NotFoundError('Assessment', assessmentId);
+  }
+
+  // 2. Validate assessment is not submitted/completed
+  if (assessment.status === 'submitted' || assessment.status === 'completed') {
+    throw new ValidationError('Cannot modify submitted assessment');
+  }
+
+  // 3. If status is 'not_started', transition to 'in_progress'
+  if (assessment.status === 'not_started') {
+    await userAssessmentRepository.transitionStatus(tenantId, assessmentId, 'in_progress');
+  }
+
+  // 4. Update progress (merges answers + updates currentStep)
+  const updatedAssessment = await userAssessmentRepository.updateProgress(tenantId, assessmentId, {
+    answers: data.answers,
+    currentStep: data.currentStep,
+  });
+
+  // 5. Return success response
+  return {
+    success: true,
+    updatedAt: updatedAssessment.updatedAt.toISOString(),
   };
 }

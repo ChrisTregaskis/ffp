@@ -47,11 +47,11 @@ Progress is saved on navigation only (not debounced auto-save). This reduces API
 
 **Branch**: `feature/ffp-129-save-assessment-progress-api` (single branch for all sub-tasks)
 
-| Order | Key     | Sub-task                                       | Status  |
-| ----- | ------- | ---------------------------------------------- | ------- |
-| 1     | FFP-165 | Create Zod schemas for save progress req/res   | Pending |
-| 2     | FFP-166 | Create saveProgressService with answer merging | Pending |
-| 3     | FFP-167 | Create save-progress Lambda handler            | Pending |
+| Order | Key     | Sub-task                                       | Status      |
+| ----- | ------- | ---------------------------------------------- | ----------- |
+| 1     | FFP-165 | Create Zod schemas for save progress req/res   | ✅ Complete |
+| 2     | FFP-166 | Create saveProgressService with answer merging | Pending     |
+| 3     | FFP-167 | Create save-progress Lambda handler            | Pending     |
 
 **No test sub-task**: Consistent with FFP-128 deferral rationale. Repository tests already cover RLS patterns; service logic is straightforward orchestration.
 
