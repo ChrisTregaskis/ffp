@@ -8,7 +8,7 @@ import type { TestUserSeed } from './types.js';
 
 /**
  * Seeds a test user record in the database with exact data from configuration.
- * This is NOT idempotent - it will fail if the user already exists.
+ * Idempotent: uses upsert to update existing records or insert new ones.
  */
 export const seedTestUserDatabase = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool },
@@ -22,22 +22,40 @@ export const seedTestUserDatabase = async (
   console.log(`${terminalPrefix(TerminalPrefix.WARNING)} RLS BYPASSED for seed operation`);
   await db.execute(sql`SET LOCAL row_security = off`);
 
-  // Insert test user with exact values from config
-  await db.insert(users).values({
-    id: data.id,
-    tenantId: data.tenantId,
-    email: data.email,
-    cognitoSub: data.cognitoSub,
-    firstName: data.firstName,
-    lastName: data.lastName,
-    role: data.role,
-    customerId: data.customerId,
-    profileImageUrl: data.profileImageUrl,
-    phone: data.phone,
-    dateOfBirth: data.dateOfBirth ? sql`${data.dateOfBirth}::date` : null,
-    createdAt: sql`${data.createdAt}::timestamp`,
-    updatedAt: sql`${data.updatedAt}::timestamp`,
-  });
+  // Upsert test user - insert or update if exists
+  await db
+    .insert(users)
+    .values({
+      id: data.id,
+      tenantId: data.tenantId,
+      email: data.email,
+      cognitoSub: data.cognitoSub,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      role: data.role,
+      customerId: data.customerId,
+      profileImageUrl: data.profileImageUrl,
+      phone: data.phone,
+      dateOfBirth: data.dateOfBirth ? sql`${data.dateOfBirth}::date` : null,
+      createdAt: sql`${data.createdAt}::timestamp`,
+      updatedAt: sql`${data.updatedAt}::timestamp`,
+    })
+    .onConflictDoUpdate({
+      target: users.id,
+      set: {
+        tenantId: data.tenantId,
+        email: data.email,
+        cognitoSub: data.cognitoSub,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        role: data.role,
+        customerId: data.customerId,
+        profileImageUrl: data.profileImageUrl,
+        phone: data.phone,
+        dateOfBirth: data.dateOfBirth ? sql`${data.dateOfBirth}::date` : null,
+        updatedAt: sql`${data.updatedAt}::timestamp`,
+      },
+    });
 
   console.log(
     `${terminalPrefix(TerminalPrefix.SUCCESS)} Test user seeded in database (${data.role}): ${data.id}`

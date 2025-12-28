@@ -1142,9 +1142,275 @@
       }
     },
     {
-      "name": "Assessments (Coming Soon)",
-      "item": [],
-      "description": "Patient assessment endpoints - JWT authentication required.\n\n**Endpoints (to be added):**\n- GET /assessments\n- POST /assessments\n- GET /assessments/{id}\n- PUT /assessments/{id}\n- DELETE /assessments/{id}\n- POST /assessments/{id}/submit"
+      "name": "Assessments",
+      "item": [
+        {
+          "name": "Start Assessment",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Validate JWT token is set",
+                  "const jwtToken = pm.collectionVariables.get('jwtToken');",
+                  "",
+                  "if (!jwtToken || jwtToken === '') {",
+                  "    throw new Error('JWT token is required. Please authenticate first using the Login endpoint.');",
+                  "}",
+                  "",
+                  "// Validate flowId is set",
+                  "const flowId = pm.collectionVariables.get('testFlowId');",
+                  "",
+                  "if (!flowId || flowId === '' || flowId === 'REPLACE_WITH_FLOW_ID') {",
+                  "    console.warn('testFlowId not set. Using placeholder UUID. Set testFlowId variable to a valid flow ID from your database.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test response structure",
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test('Response has required fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('assessmentId');",
+                  "    pm.expect(jsonData).to.have.property('currentStep');",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "    pm.expect(jsonData).to.have.property('answers');",
+                  "    pm.expect(jsonData).to.have.property('flowId');",
+                  "    pm.expect(jsonData).to.have.property('isResumed');",
+                  "});",
+                  "",
+                  "pm.test('Assessment ID is valid UUID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+                  "    pm.expect(jsonData.assessmentId).to.match(uuidRegex);",
+                  "});",
+                  "",
+                  "pm.test('Flow ID matches request', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const requestFlowId = pm.collectionVariables.get('testFlowId');",
+                  "    pm.expect(jsonData.flowId).to.equal(requestFlowId);",
+                  "});",
+                  "",
+                  "pm.test('Status is valid assessment status', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const validStatuses = ['not_started', 'in_progress', 'submitted', 'scored', 'completed', 'abandoned'];",
+                  "    pm.expect(validStatuses).to.include(jsonData.status);",
+                  "});",
+                  "",
+                  "pm.test('isResumed is boolean', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.isResumed).to.be.a('boolean');",
+                  "});",
+                  "",
+                  "// Save assessment ID for subsequent requests",
+                  "const response = pm.response.json();",
+                  "if (response.assessmentId) {",
+                  "    pm.collectionVariables.set('lastAssessmentId', response.assessmentId);",
+                  "    console.log('Assessment ID saved to lastAssessmentId variable');",
+                  "    console.log('isResumed:', response.isResumed ? 'Existing assessment resumed' : 'New assessment created');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flowId\": \"{{testFlowId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/assessments/start",
+              "host": ["{{apiUrl}}"],
+              "path": ["assessments", "start"]
+            },
+            "description": "Start a new assessment or resume an existing one for the authenticated user.\n\n**Authentication:** JWT token required (any authenticated user)\n\n**Resume Logic:**\nIf the user has an existing assessment for the same flow with status `not_started` or `in_progress`, that assessment is returned instead of creating a new one. The `isResumed` flag indicates whether an existing assessment was resumed.\n\n**Request Body:**\n```json\n{\n  \"flowId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}\n```\n\n**Response (New Assessment):**\n```json\n{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"currentStep\": 1,\n  \"status\": \"not_started\",\n  \"answers\": {},\n  \"flowId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"isResumed\": false\n}\n```\n\n**Response (Resumed Assessment):**\n```json\n{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"currentStep\": 3,\n  \"status\": \"in_progress\",\n  \"answers\": {\n    \"q1\": { \"questionId\": \"q1\", \"answerValue\": 4 },\n    \"q2\": { \"questionId\": \"q2\", \"answerValue\": 3 }\n  },\n  \"flowId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"isResumed\": true\n}\n```\n\n**Status Codes:**\n- `200`: Assessment started or resumed successfully\n- `400`: Validation error (flowId not a valid UUID)\n- `401`: Unauthorised (no JWT token)\n- `404`: Flow not found or inactive\n- `500`: Internal server error\n\n**Multi-Tenant Security:**\n- User can only access assessments within their tenant\n- Flow ID is validated against active flows in the system\n- Tenant context extracted from JWT `custom:tenantId` claim\n\n**Testing Tips:**\n1. Get a valid flowId from your database (check `assessment_flows` table)\n2. Set the `testFlowId` collection variable\n3. Call this endpoint twice to test resume logic:\n   - First call: `isResumed: false` (new assessment)\n   - Second call: `isResumed: true` (same assessment returned)"
+          },
+          "response": [
+            {
+              "name": "Success - New Assessment",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"flowId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/start",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "start"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"currentStep\": 1,\n  \"status\": \"not_started\",\n  \"answers\": {},\n  \"flowId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"isResumed\": false\n}"
+            },
+            {
+              "name": "Success - Resumed Assessment",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"flowId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/start",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "start"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"currentStep\": 3,\n  \"status\": \"in_progress\",\n  \"answers\": {\n    \"q1\": { \"questionId\": \"q1\", \"answerValue\": 4 },\n    \"q2\": { \"questionId\": \"q2\", \"answerValue\": 3 }\n  },\n  \"flowId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"isResumed\": true\n}"
+            },
+            {
+              "name": "Validation Error - Invalid UUID",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"flowId\": \"not-a-uuid\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/start",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "start"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Invalid request data\",\n  \"requestId\": \"abc123-def456\",\n  \"details\": [\n    {\n      \"path\": \"flowId\",\n      \"message\": \"flowId must be a valid UUID\",\n      \"code\": \"invalid_string\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "Not Found - Flow Does Not Exist",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"flowId\": \"00000000-0000-0000-0000-000000000000\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/start",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "start"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"NOT_FOUND\",\n  \"message\": \"Assessment flow with id 00000000-0000-0000-0000-000000000000 not found\",\n  \"requestId\": \"abc123-def456\"\n}"
+            },
+            {
+              "name": "Unauthorised - No JWT Token",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"flowId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/start",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "start"]
+                }
+              },
+              "status": "Unauthorised",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Unauthorized\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Assessment endpoints - JWT authentication required.\n\n**Current Endpoints:**\n- POST /assessments/start - Start or resume an assessment\n\n**Coming Soon:**\n- PUT /assessments/{id}/progress - Save assessment progress\n- POST /assessments/{id}/submit - Submit completed assessment\n- GET /assessments/{id}/results - Get assessment results\n\n**Authentication:**\nAll endpoints require JWT token with valid `custom:tenantId` claim for RLS isolation.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{jwtToken}}",
+            "type": "string"
+          }
+        ]
+      }
     },
     {
       "name": "Programmes (Coming Soon)",
@@ -1233,6 +1499,26 @@
     },
     {
       "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "testFlowId",
+      "value": "REPLACE_WITH_FLOW_ID",
+      "type": "string"
+    },
+    {
+      "key": "lastAssessmentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userPoolClientId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "passwordChallengeSession",
       "value": "",
       "type": "string"
     }

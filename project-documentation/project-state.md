@@ -1,14 +1,113 @@
 # FFP - Project State
 
-**Last Updated**: 24th December 2025
+**Last Updated**: 26th December 2025
 **Current EPIC**: FFP-2 - Assessment Engine (Sprint 3 In Progress)
-**Current Story**: FFP-127 - User Assessment Schema & State Machine
-**Current Branch**: `feature/ffp-127-assessment-schema-state-machine`
+**Current Story**: FFP-128 - Start Assessment API
+**Current Branch**: `feature/ffp-128-start-assessment-api`
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
 
-## Current Work: FFP-127 - User Assessment Schema & State Machine
+## Current Work: FFP-128 - Start Assessment API
+
+**Status**: ✅ Complete
+**Story Points**: 3
+**Sprint**: 3 (Backend Foundation)
+
+### User Story
+
+> As a user,
+> I want to start a new assessment or resume an existing one,
+> So that I can begin/continue my physiotherapy evaluation.
+
+### Context
+
+Starting an assessment creates a user_assessment record (or returns existing non-terminal one). This is the entry point for the assessment journey.
+
+**Resume Logic**: If user has an existing `not_started` or `in_progress` assessment for the same flow, return it instead of creating a duplicate.
+
+### Acceptance Criteria
+
+| AC  | Description                                 | Status      |
+| --- | ------------------------------------------- | ----------- |
+| AC1 | Start creates new assessment                | ✅ Complete |
+| AC2 | Start returns existing resumable assessment | ✅ Complete |
+| AC3 | Tenant context extracted from JWT           | ✅ Complete |
+| AC4 | Flow validation (exists and active)         | ✅ Complete |
+
+### Dependencies
+
+- ✅ FFP-127: User Assessment Schema & State Machine (completed)
+- ✅ FFP-125: Assessment Flow Schema (completed)
+
+### Blocks (Downstream)
+
+- FFP-129: Save Assessment Progress API
+- FFP-130: Submit Assessment API
+
+### Implementation Plan
+
+**Branch**: `feature/ffp-128-start-assessment-api` (single branch for all sub-tasks)
+
+| Order | Key     | Sub-task                                      | Status            |
+| ----- | ------- | --------------------------------------------- | ----------------- |
+| 1     | FFP-161 | Create Zod schemas for start request/response | ✅ Complete       |
+| 2     | FFP-162 | Create startAssessmentService + flow repo     | ✅ Complete       |
+| 3     | FFP-163 | Create start-assessment Lambda handler        | ✅ Complete       |
+| 4     | FFP-164 | Create integration tests                      | ⏸️ Deferred (MVP) |
+
+**FFP-164 Deferral Rationale:** Service logic is straightforward (query + create). Existing repository tests provide coverage for RLS patterns. Add integration tests post-MVP when API complexity increases.
+
+### Technical Details
+
+**Files to Create/Modify**:
+
+| Package        | File                                    | Purpose                            |
+| -------------- | --------------------------------------- | ---------------------------------- |
+| @ffp/core      | `src/schemas/user-assessment.schema.ts` | Add start request/response schemas |
+| @ffp/core      | `src/assessments/flow.repository.ts`    | Flow lookup (findById, isActive)   |
+| @ffp/core      | `src/assessments/assessment.service.ts` | Business logic orchestration       |
+| @ffp/functions | `src/assessments/start-assessment.ts`   | Lambda handler                     |
+
+**API Endpoint**:
+
+```
+POST /assessments/start
+Body: { flowId: uuid }
+Response: {
+  assessmentId: uuid,
+  currentStep: number,
+  status: string,
+  answers: object,
+  flowId: uuid,
+  isResumed: boolean
+}
+```
+
+**Resume Logic**:
+
+```typescript
+// Find any non-terminal assessment for user + flow
+const existing = await findResumableAssessment(tenantId, userId, flowId);
+if (existing) {
+  return { ...existing, isResumed: true };
+}
+// Create new assessment
+const created = await createAssessment(tenantId, userId, flowId);
+return { ...created, isResumed: false };
+```
+
+**Resumable Statuses**: `not_started`, `in_progress`
+
+**Error Responses**:
+
+- 400: Invalid request body (flowId not UUID)
+- 404: Flow not found or inactive
+- 401: Missing/invalid JWT
+
+---
+
+## Recently Completed: FFP-127 - User Assessment Schema & State Machine ✅
 
 **Status**: ✅ Complete
 **Story Points**: 5
@@ -20,50 +119,16 @@
 > I want my assessment instances stored with proper state tracking,
 > So that I can resume in-progress assessments and view completed ones.
 
-### Context
+### Key Implementation Details
 
-User assessments track individual assessment sessions. This schema enables the state machine
-for assessment progress through the full lifecycle.
+- **Schema**: `@ffp/database/src/schema/user-assessments.ts`
+- **Constants**: `@ffp/database/src/constants/user-assessment.constants.ts`
+- **Zod Schemas**: `@ffp/core/src/schemas/user-assessment.schema.ts`
+- **Repository**: `@ffp/core/src/assessments/user-assessment.repository.ts`
+- **State Machine**: `not_started → in_progress → submitted → scored → completed` (+ `abandoned`)
+- **RLS Policy**: Tenant isolation via `app.tenant_id` session variable
 
-**State Machine**:
-
-```
-not_started → in_progress → submitted → scored → completed
-                    ↓
-               abandoned
-```
-
-- `not_started` - Assessment instance created but user hasn't begun
-- `in_progress` - User actively answering questions
-- `submitted` - User submitted, waiting for scoring job
-- `scored` - Scoring complete, waiting for programme generation
-- `completed` - Full flow done with programme generated
-- `abandoned` - User didn't finish (timeout or explicit abandon)
-
-### Acceptance Criteria
-
-| AC  | Description                     | Status      |
-| --- | ------------------------------- | ----------- |
-| AC1 | User assessment schema with RLS | ✅ Done     |
-| AC2 | Assessment status enum enforced | ✅ Done     |
-| AC3 | Answers stored as JSONB         | ✅ Done     |
-| AC4 | Repository enforces RLS context | ✅ Done     |
-| AC5 | Multi-tenant isolation verified | ⏸️ Deferred |
-
-### Dependencies
-
-- ✅ FFP-124: Assessment Template Schema (completed)
-- ✅ FFP-125: Assessment Flow Schema (completed)
-- ✅ FFP-132: Process Jobs Schema (completed)
-
-### Blocks (Downstream)
-
-- FFP-128: Start Assessment API
-- FFP-133: Scoring Service Implementation
-
-### Implementation Plan
-
-**Branch**: `feature/ffp-127-assessment-schema-state-machine` (single branch for all sub-tasks)
+### Sub-tasks
 
 | Order | Key     | Sub-task                                   | Status            |
 | ----- | ------- | ------------------------------------------ | ----------------- |
@@ -72,54 +137,6 @@ not_started → in_progress → submitted → scored → completed
 | 3     | FFP-157 | Create Zod validation schemas              | ✅ Complete       |
 | 4     | FFP-158 | Create repository with RLS enforcement     | ✅ Complete       |
 | 5     | FFP-160 | Create multi-tenant isolation tests        | ⏸️ Deferred (MVP) |
-
-**FFP-160 Deferral Rationale:** RLS pattern identical to existing tables (16 tests already cover pattern). Repository tests in FFP-158 provide implicit coverage. Add dedicated RLS tests post-MVP if pattern changes.
-
-### Technical Details
-
-**Files to Create**:
-
-| Package       | File                                                                       | Purpose                     |
-| ------------- | -------------------------------------------------------------------------- | --------------------------- |
-| @ffp/database | `src/constants/user-assessment.constants.ts`                               | Status enum (single source) |
-| @ffp/database | `src/schema/user-assessments.ts`                                           | Drizzle table definition    |
-| @ffp/database | `migrations/XXXX_user_assessments.sql`                                     | Migration + RLS policy      |
-| @ffp/core     | `src/schemas/user-assessment.schema.ts`                                    | Zod validation schemas      |
-| @ffp/core     | `src/assessments/user-assessment.repository.ts`                            | Data access with RLS        |
-| @ffp/core     | `src/assessments/__tests__/user-assessment.repository.integration.test.ts` | RLS tests                   |
-
-**Table Schema** (`user_assessments`):
-
-| Column       | Type                   | Notes                  |
-| ------------ | ---------------------- | ---------------------- |
-| id           | uuid (PK)              | Default random         |
-| tenant_id    | uuid (FK → tenants)    | NOT NULL, RLS filtered |
-| user_id      | uuid (FK → users)      | NOT NULL               |
-| flow_id      | uuid (FK → flows)      | NOT NULL               |
-| current_step | integer                | Default 1              |
-| status       | assessment_status_enum | Default 'not_started'  |
-| answers      | jsonb                  | Default {}             |
-| scores       | jsonb                  | Nullable               |
-| programme_id | uuid (FK → programmes) | Nullable               |
-| started_at   | timestamp              | Nullable               |
-| submitted_at | timestamp              | Nullable               |
-| completed_at | timestamp              | Nullable               |
-| created_at   | timestamp              | Default now()          |
-| updated_at   | timestamp              | Default now()          |
-
-**RLS Policy**:
-
-```sql
-CREATE POLICY user_assessment_tenant_isolation ON user_assessments
-  FOR ALL
-  USING (tenant_id = current_setting('app.tenant_id')::uuid);
-```
-
-**Indexes**:
-
-- `idx_user_assessments_tenant_user` on (tenant_id, user_id)
-- `idx_user_assessments_status` on (status)
-- `idx_user_assessments_flow` on (flow_id)
 
 ---
 
@@ -232,11 +249,11 @@ LIMIT {maxConcurrent}
 | 1     | FFP-124 | Assessment Template Schema & Repository    | 5   | ✅ Complete |
 | 2     | FFP-132 | Process Jobs Schema & Queue Infrastructure | 8   | ✅ Complete |
 | 3     | FFP-125 | Assessment Flow Schema & Configuration     | 3   | ✅ Complete |
-| 4     | FFP-127 | User Assessment Schema & State Machine     | 5   | ⏳ Up Next  |
-| 5     | FFP-128 | Start Assessment API                       | 3   | Pending     |
+| 4     | FFP-127 | User Assessment Schema & State Machine     | 5   | ✅ Complete |
+| 5     | FFP-128 | Start Assessment API                       | 3   | ✅ Complete |
 
 **Sprint Goal**: All database schemas migrated, job queue ready, users can start assessments.
-**Progress**: 16/24 pts complete (67%)
+**Progress**: 24/24 pts complete (100%) ✅ SPRINT 3 COMPLETE
 
 ---
 
@@ -474,7 +491,7 @@ await db.query.users.findMany(); // Leaks all tenants!
 
 - TypeScript strict mode (zero errors)
 - ESLint + Prettier (zero warnings)
-- 541 tests passing (16 RLS integration tests, 57 flow schema tests)
+- 457 tests passing (16 RLS integration tests, 57 flow schema tests)
 - 8% coverage target
 
 ---
@@ -485,7 +502,7 @@ await db.query.users.findMany(); // Leaks all tenants!
 **Site**: https://ctregaskis.atlassian.net
 **Project Key**: FFP
 
-**Current Sprint**: Sprint 2 Complete → Sprint 3 Ready
+**Current Sprint**: Sprint 3 (100% complete) ✅
 **Velocity**: ~25 story points per sprint
 **Capacity**: 8 hours/week (solo developer)
 

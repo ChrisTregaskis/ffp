@@ -8,6 +8,159 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 26, 2025 (Session 68 - FFP-163 Start Assessment Lambda Handler)
+
+**Status**: ✅ FFP-163 COMPLETE
+
+**Branch**: `feature/ffp-128-start-assessment-api`
+
+**Completed Work**:
+
+**FFP-163: Create start-assessment Lambda Handler** (~0.25 hours):
+
+- ✅ **start-assessment.ts**: Lambda handler for POST /assessments/start
+  - Extracts user context from JWT via `extractUserContext`
+  - Validates request body with `startAssessmentRequestSchema`
+  - Delegates to `assessmentService.startAssessment`
+  - Returns `StartAssessmentResponse`
+
+- ✅ **assessments/index.ts**: Domain router for assessment endpoints
+  - Uses `validateAndMatchRoute` pattern from other domains
+  - Routes POST /start to startAssessmentHandler
+  - Placeholder comments for future routes (progress, submit, results)
+
+- ✅ **sst.config.ts**: Added assessments route
+  - `ANY /assessments/{proxy+}` → assessments router
+  - JWT authentication required via Cognito authorizer
+
+- ✅ **Postman Collection**: Updated for testing
+  - Added "Start Assessment" endpoint with pre-request/test scripts
+  - Added collection variables: `testFlowId`, `lastAssessmentId`
+  - Example responses for success, resume, validation error, not found
+
+**Files Created**:
+
+- `packages/functions/src/assessments/start-assessment.ts`
+- `packages/functions/src/assessments/index.ts`
+
+**Files Modified**:
+
+- `sst.config.ts` - Added assessments route
+- `postman/FFP-API-Collection.postman_collection.json` - Added endpoint + variables
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors
+- ✅ Tests: All passing
+
+**FFP-128 Story Complete**: All non-deferred sub-tasks done (FFP-161, FFP-162, FFP-163). FFP-164 (integration tests) deferred for MVP.
+
+---
+
+### December 26, 2025 (Session 67 - FFP-162 Assessment Service & Flow Repository)
+
+**Status**: ✅ FFP-162 COMPLETE
+
+**Branch**: `feature/ffp-128-start-assessment-api`
+
+**Completed Work**:
+
+**FFP-162: Create startAssessmentService with Resume Logic** (~0.5 hours):
+
+- ✅ **flow.repository.ts**: New repository for assessment flow lookups
+  - `findById(flowId)` - Find flow by ID
+  - `findActiveById(flowId)` - Find flow by ID with `isActive=true` check
+  - No RLS required - flows are system-managed content
+  - Uses `AssessmentFlowRecord` type from `@ffp/database` (avoids duplication)
+
+- ✅ **assessment.service.ts**: Business logic orchestration
+  - `startAssessment(flowId, context)` - Start or resume assessment
+  - Validates flow exists and is active (throws NotFoundError if not)
+  - Checks for existing resumable assessment (`not_started` or `in_progress`)
+  - Returns existing with `isResumed: true` or creates new with `isResumed: false`
+
+- ✅ **user-assessment.repository.ts**: Added `findResumable()` function
+  - Finds existing assessment for user/flow with resumable status
+  - Uses RLS via `withRLS()` helper for tenant isolation
+  - Added `or` import from drizzle-orm
+
+- ✅ **context.ts**: Added `getUserIdFromContext()` helper
+  - Extracts userId from TenantContext with UserActor
+  - Throws UnauthorisedError if context has SystemActor
+  - Reusable across services requiring user context
+
+- ✅ **assessments/index.ts**: Updated exports
+  - Added `flowRepository` and `assessmentService` namespace exports
+
+- ✅ **Unit tests** (MVP-appropriate coverage):
+  - `assessment.service.test.ts` - 3 tests (new creates, resume returns, NotFoundError)
+  - `user-assessment.repository.test.ts` - 2 additional tests for findResumable
+
+**Files Created**:
+
+- `packages/core/src/assessments/flow.repository.ts`
+- `packages/core/src/assessments/assessment.service.ts`
+- `packages/core/src/assessments/assessment.service.test.ts`
+
+**Files Modified**:
+
+- `packages/core/src/assessments/user-assessment.repository.ts` - Added findResumable, or import
+- `packages/core/src/assessments/user-assessment.repository.test.ts` - Added 2 tests
+- `packages/core/src/assessments/index.ts` - Added exports
+- `packages/core/src/lib/context.ts` - Added getUserIdFromContext
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors
+- ✅ Tests: 457 tests passing (trimmed from 472 for MVP)
+
+**Test Coverage Philosophy**: Reduced test count to MVP-appropriate levels. Deleted flow.repository tests (trivial Drizzle queries). Kept essential service tests: happy paths + error case.
+
+**Next Sub-task**: FFP-163 (Create start-assessment Lambda handler)
+
+---
+
+### December 26, 2025 (Session 66 - FFP-161 Start Assessment Schemas)
+
+**Status**: ✅ FFP-161 COMPLETE
+
+**Branch**: `feature/ffp-128-start-assessment-api`
+
+**Completed Work**:
+
+**FFP-161: Create Zod Schemas for Start Assessment Request/Response** (~0.25 hours):
+
+- ✅ **startAssessmentRequestSchema**: Validates `{ flowId: uuid }` with custom error message
+  - `flowId` - UUID validation with message: "flowId must be a valid UUID"
+
+- ✅ **startAssessmentResponseSchema**: Validates API response shape
+  - `assessmentId` - UUID
+  - `currentStep` - Positive integer (1-based)
+  - `status` - Assessment status enum
+  - `answers` - User assessment answers record (reuses existing schema)
+  - `flowId` - UUID
+  - `isResumed` - Boolean flag indicating resume vs new assessment
+
+- ✅ **Types exported**: `StartAssessmentRequest`, `StartAssessmentResponse`
+
+- ✅ **17 new unit tests** in `user-assessment.schema.test.ts`:
+  - Request schema tests (5 tests): Valid UUID, missing flowId, invalid UUID with error message, empty string, non-string
+  - Response schema tests (12 tests): Valid new/resumed response, isResumed required, invalid UUIDs, invalid status, populated answers
+
+**Files Modified**:
+
+- `packages/core/src/schemas/user-assessment.schema.ts` - Added request/response schemas
+- `packages/core/src/schemas/user-assessment.schema.test.ts` - Added 17 tests
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors
+- ✅ Tests: 81 tests passing in schema file (17 new)
+
+**Next Sub-task**: FFP-162 (Create startAssessmentService + flow repository)
+
+---
+
 ### December 24, 2025 (Session 65 - FFP-127 User Assessment Schema Complete)
 
 **Status**: ✅ COMPLETE - All sub-tasks done (FFP-160 deferred)
@@ -388,7 +541,9 @@ After code review, two issues were addressed in `packages/functions/src/jobs/pro
 | Dec 19      | FFP-181 Complete (Auto-Retry)    | 160.5h        |
 | Dec 19      | FFP-182 Complete (SST Cron)      | 162h          |
 | Dec 24      | FFP-125 Complete (Flow Schema)   | 163.5h        |
-| **Current** | **FFP-125 Complete**             | **~164/197h** |
+| Dec 24      | FFP-127 Complete (User Assess)   | 165.5h        |
+| Dec 26      | FFP-161 Complete (Start Schemas) | 165.75h       |
+| **Current** | **FFP-128 In Progress**          | **~166/197h** |
 
 ---
 

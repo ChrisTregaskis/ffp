@@ -8,8 +8,7 @@ import type { SuperAdminUserSeed } from './types.js';
 
 /**
  * Seeds the super admin user record in the database with exact data from configuration.
- * This is NOT idempotent - it will fail if the user already exists.
-
+ * Idempotent: uses upsert to update existing records or insert new ones.
  */
 export const seedSuperAdminDatabase = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool },
@@ -21,22 +20,40 @@ export const seedSuperAdminDatabase = async (
   console.log(`${terminalPrefix(TerminalPrefix.WARNING)} RLS BYPASSED for seed operation`);
   await db.execute(sql`SET LOCAL row_security = off`);
 
-  // Insert super admin user with exact values from config
-  await db.insert(users).values({
-    id: data.id,
-    tenantId: data.tenantId,
-    email: data.email,
-    cognitoSub: data.cognitoSub,
-    firstName: data.firstName,
-    lastName: data.lastName,
-    role: data.role,
-    customerId: data.customerId,
-    profileImageUrl: data.profileImageUrl,
-    phone: data.phone,
-    dateOfBirth: data.dateOfBirth,
-    createdAt: sql`${data.createdAt}::timestamp`,
-    updatedAt: sql`${data.updatedAt}::timestamp`,
-  });
+  // Upsert super admin user - insert or update if exists
+  await db
+    .insert(users)
+    .values({
+      id: data.id,
+      tenantId: data.tenantId,
+      email: data.email,
+      cognitoSub: data.cognitoSub,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      role: data.role,
+      customerId: data.customerId,
+      profileImageUrl: data.profileImageUrl,
+      phone: data.phone,
+      dateOfBirth: data.dateOfBirth,
+      createdAt: sql`${data.createdAt}::timestamp`,
+      updatedAt: sql`${data.updatedAt}::timestamp`,
+    })
+    .onConflictDoUpdate({
+      target: users.id,
+      set: {
+        tenantId: data.tenantId,
+        email: data.email,
+        cognitoSub: data.cognitoSub,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        role: data.role,
+        customerId: data.customerId,
+        profileImageUrl: data.profileImageUrl,
+        phone: data.phone,
+        dateOfBirth: data.dateOfBirth,
+        updatedAt: sql`${data.updatedAt}::timestamp`,
+      },
+    });
 
   console.log(
     `${terminalPrefix(TerminalPrefix.SUCCESS)} Super admin seeded in database: ${data.id}`

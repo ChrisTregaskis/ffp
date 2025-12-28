@@ -65,8 +65,8 @@ describe('User Assessment Repository', () => {
       host: process.env.DB_HOST ?? 'localhost',
       port: parseInt(process.env.DB_PORT ?? '5432'),
       database: 'ffp_test',
-      user: process.env.DB_USER ?? 'root_user',
-      password: process.env.DB_PASSWORD ?? 'password',
+      user: process.env.DB_USER ?? 'test_user',
+      password: process.env.DB_PASSWORD ?? 'test_password',
     });
     db = drizzle(pool);
   });
@@ -299,6 +299,34 @@ describe('User Assessment Repository', () => {
 
       expect(withFlow).not.toBeNull();
       expect(wrongFlow).toBeNull();
+    });
+  });
+
+  describe('findResumable', () => {
+    it('returns resumable assessment (not_started or in_progress)', async () => {
+      const assessment = await userAssessmentRepository.create({
+        tenantId: tenantAId,
+        userId: userA1Id,
+        flowId,
+      });
+
+      const result = await userAssessmentRepository.findResumable(tenantAId, userA1Id, flowId);
+
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe(assessment.id);
+    });
+
+    it('respects RLS tenant isolation', async () => {
+      await userAssessmentRepository.create({
+        tenantId: tenantAId,
+        userId: userA1Id,
+        flowId,
+      });
+
+      // Tenant B should not see Tenant A's assessment
+      const result = await userAssessmentRepository.findResumable(tenantBId, userA1Id, flowId);
+
+      expect(result).toBeNull();
     });
   });
 

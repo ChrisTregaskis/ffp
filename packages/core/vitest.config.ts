@@ -20,12 +20,13 @@ export default defineConfig({
       exclude: ['node_modules/', 'tests/', '**/*.d.ts', '**/*.config.*', '**/dist/**'],
     },
     // Use ffp_test database for integration tests
+    // IMPORTANT: test_user does NOT have BYPASSRLS, so RLS policies are enforced
     env: {
       DB_NAME: 'ffp_test',
       DB_HOST: 'localhost',
       DB_PORT: '5432',
-      DB_USER: 'root_user',
-      DB_PASSWORD: 'password',
+      DB_USER: 'test_user',
+      DB_PASSWORD: 'test_password',
     },
   },
   resolve: {
