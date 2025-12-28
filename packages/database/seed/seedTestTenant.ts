@@ -8,7 +8,7 @@ import type { TestCustomerTenantSeed } from './types.js';
 
 /**
  * Seeds the test customer tenant with exact data from configuration.
- * This is NOT idempotent - it will fail if the tenant already exists.
+ * Idempotent: uses upsert to update existing records or insert new ones.
  */
 export const seedTestTenant = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool },
@@ -20,15 +20,26 @@ export const seedTestTenant = async (
   console.log(`${terminalPrefix(TerminalPrefix.WARNING)} RLS BYPASSED for seed operation`);
   await db.execute(sql`SET LOCAL row_security = off`);
 
-  // Insert test customer tenant with exact values from config
-  await db.insert(tenants).values({
-    id: data.id,
-    type: data.type,
-    name: data.name,
-    settings: data.settings,
-    createdAt: sql`${data.createdAt}::timestamp`,
-    updatedAt: sql`${data.updatedAt}::timestamp`,
-  });
+  // Upsert test customer tenant - insert or update if exists
+  await db
+    .insert(tenants)
+    .values({
+      id: data.id,
+      type: data.type,
+      name: data.name,
+      settings: data.settings,
+      createdAt: sql`${data.createdAt}::timestamp`,
+      updatedAt: sql`${data.updatedAt}::timestamp`,
+    })
+    .onConflictDoUpdate({
+      target: tenants.id,
+      set: {
+        type: data.type,
+        name: data.name,
+        settings: data.settings,
+        updatedAt: sql`${data.updatedAt}::timestamp`,
+      },
+    });
 
   console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} Test customer tenant seeded: ${data.id}`);
   console.log(`  Name: ${data.name}`);

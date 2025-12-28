@@ -8,7 +8,7 @@ import type { PlatformTenantSeed } from './types.js';
 
 /**
  * Seeds the platform tenant with exact data from configuration.
- * This is NOT idempotent - it will fail if the tenant already exists.
+ * Idempotent: uses upsert to update existing records or insert new ones.
  */
 export const seedPlatformTenant = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool },
@@ -20,15 +20,26 @@ export const seedPlatformTenant = async (
   console.log(`${terminalPrefix(TerminalPrefix.WARNING)} RLS BYPASSED for seed operation`);
   await db.execute(sql`SET LOCAL row_security = off`);
 
-  // Insert platform tenant with exact values from config
-  await db.insert(tenants).values({
-    id: data.id,
-    type: data.type,
-    name: data.name,
-    settings: data.settings,
-    createdAt: sql`${data.createdAt}::timestamp`,
-    updatedAt: sql`${data.updatedAt}::timestamp`,
-  });
+  // Upsert platform tenant - insert or update if exists
+  await db
+    .insert(tenants)
+    .values({
+      id: data.id,
+      type: data.type,
+      name: data.name,
+      settings: data.settings,
+      createdAt: sql`${data.createdAt}::timestamp`,
+      updatedAt: sql`${data.updatedAt}::timestamp`,
+    })
+    .onConflictDoUpdate({
+      target: tenants.id,
+      set: {
+        type: data.type,
+        name: data.name,
+        settings: data.settings,
+        updatedAt: sql`${data.updatedAt}::timestamp`,
+      },
+    });
 
   console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} Platform tenant seeded: ${data.id}`);
   console.log(`  Name: ${data.name}`);
