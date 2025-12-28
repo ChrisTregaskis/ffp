@@ -1,14 +1,110 @@
 # FFP - Project State
 
-**Last Updated**: 26th December 2025
-**Current EPIC**: FFP-2 - Assessment Engine (Sprint 3 In Progress)
-**Current Story**: FFP-128 - Start Assessment API
-**Current Branch**: `feature/ffp-128-start-assessment-api`
+**Last Updated**: 28th December 2025
+**Current EPIC**: FFP-2 - Assessment Engine (Sprint 4 In Progress)
+**Current Story**: FFP-129 - Save Assessment Progress API
+**Current Branch**: `feature/ffp-129-save-assessment-progress-api`
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
 
-## Current Work: FFP-128 - Start Assessment API
+## Current Work: FFP-129 - Save Assessment Progress API
+
+**Status**: 🚀 In Progress
+**Story Points**: 3
+**Sprint**: 4 (Backend APIs + Frontend Foundation)
+
+### User Story
+
+> As a user,
+> I want my answers saved when I click Continue or Back,
+> So that I can close the browser and resume later.
+
+### Context
+
+Progress is saved on navigation only (not debounced auto-save). This reduces API calls while ensuring users don't lose progress.
+
+### Acceptance Criteria
+
+| AC  | Description                        | Status  |
+| --- | ---------------------------------- | ------- |
+| AC1 | Progress saves merged answers      | Pending |
+| AC2 | Current step updated               | Pending |
+| AC3 | Status transitions to in_progress  | Pending |
+| AC4 | Cannot modify submitted assessment | Pending |
+| AC5 | Tenant isolation enforced          | Pending |
+
+### Dependencies
+
+- ✅ FFP-128: Start Assessment API (completed)
+- ✅ FFP-127: User Assessment Schema & State Machine (completed)
+
+### Blocks (Downstream)
+
+- FFP-130: Submit Assessment API
+
+### Implementation Plan
+
+**Branch**: `feature/ffp-129-save-assessment-progress-api` (single branch for all sub-tasks)
+
+| Order | Key     | Sub-task                                       | Status  |
+| ----- | ------- | ---------------------------------------------- | ------- |
+| 1     | FFP-165 | Create Zod schemas for save progress req/res   | Pending |
+| 2     | FFP-166 | Create saveProgressService with answer merging | Pending |
+| 3     | FFP-167 | Create save-progress Lambda handler            | Pending |
+
+**No test sub-task**: Consistent with FFP-128 deferral rationale. Repository tests already cover RLS patterns; service logic is straightforward orchestration.
+
+### Implementation Notes (Updated from Jira Analysis)
+
+The Jira sub-tasks were created before FFP-128 was implemented. Key existing code to leverage:
+
+| Existing Code                | Location                        | Purpose                                                |
+| ---------------------------- | ------------------------------- | ------------------------------------------------------ |
+| `updateProgress()`           | `user-assessment.repository.ts` | Already merges answers                                 |
+| `transitionStatus()`         | `user-assessment.repository.ts` | Handles `not_started` → `in_progress` with `startedAt` |
+| `findById()`                 | `user-assessment.repository.ts` | Fetches assessment with RLS                            |
+| `updateUserAssessmentSchema` | `user-assessment.schema.ts`     | Partial schema (needs request/response wrappers)       |
+
+### Technical Details
+
+**Files to Create/Modify**:
+
+| Package        | File                                    | Purpose                            |
+| -------------- | --------------------------------------- | ---------------------------------- |
+| @ffp/core      | `src/schemas/user-assessment.schema.ts` | Add save progress request/response |
+| @ffp/core      | `src/assessments/assessment.service.ts` | Add `saveProgress()` function      |
+| @ffp/functions | `src/assessments/save-progress.ts`      | New Lambda handler                 |
+
+**API Endpoint**:
+
+```
+POST /assessments/:id/progress
+Body: { answers: Record<string, UserAnswer>, currentStep: number }
+Response: { success: true, updatedAt: string }
+```
+
+**Service Logic**:
+
+```typescript
+async function saveProgress(assessmentId, data, context) {
+  // 1. Find assessment by ID (validate exists + tenant access)
+  // 2. Validate status not submitted/completed (throw ValidationError)
+  // 3. If status is 'not_started', transition to 'in_progress'
+  // 4. Update progress (merges answers + updates currentStep)
+  // 5. Return { success: true, updatedAt }
+}
+```
+
+**Error Responses**:
+
+- 400: Invalid request body / Cannot modify submitted assessment
+- 404: Assessment not found
+- 401: Missing/invalid JWT
+
+---
+
+## Recently Completed: FFP-128 - Start Assessment API ✅
 
 **Status**: ✅ Complete
 **Story Points**: 3
@@ -20,12 +116,6 @@
 > I want to start a new assessment or resume an existing one,
 > So that I can begin/continue my physiotherapy evaluation.
 
-### Context
-
-Starting an assessment creates a user_assessment record (or returns existing non-terminal one). This is the entry point for the assessment journey.
-
-**Resume Logic**: If user has an existing `not_started` or `in_progress` assessment for the same flow, return it instead of creating a duplicate.
-
 ### Acceptance Criteria
 
 | AC  | Description                                 | Status      |
@@ -35,19 +125,7 @@ Starting an assessment creates a user_assessment record (or returns existing non
 | AC3 | Tenant context extracted from JWT           | ✅ Complete |
 | AC4 | Flow validation (exists and active)         | ✅ Complete |
 
-### Dependencies
-
-- ✅ FFP-127: User Assessment Schema & State Machine (completed)
-- ✅ FFP-125: Assessment Flow Schema (completed)
-
-### Blocks (Downstream)
-
-- FFP-129: Save Assessment Progress API
-- FFP-130: Submit Assessment API
-
-### Implementation Plan
-
-**Branch**: `feature/ffp-128-start-assessment-api` (single branch for all sub-tasks)
+### Implementation Summary
 
 | Order | Key     | Sub-task                                      | Status            |
 | ----- | ------- | --------------------------------------------- | ----------------- |
@@ -55,55 +133,6 @@ Starting an assessment creates a user_assessment record (or returns existing non
 | 2     | FFP-162 | Create startAssessmentService + flow repo     | ✅ Complete       |
 | 3     | FFP-163 | Create start-assessment Lambda handler        | ✅ Complete       |
 | 4     | FFP-164 | Create integration tests                      | ⏸️ Deferred (MVP) |
-
-**FFP-164 Deferral Rationale:** Service logic is straightforward (query + create). Existing repository tests provide coverage for RLS patterns. Add integration tests post-MVP when API complexity increases.
-
-### Technical Details
-
-**Files to Create/Modify**:
-
-| Package        | File                                    | Purpose                            |
-| -------------- | --------------------------------------- | ---------------------------------- |
-| @ffp/core      | `src/schemas/user-assessment.schema.ts` | Add start request/response schemas |
-| @ffp/core      | `src/assessments/flow.repository.ts`    | Flow lookup (findById, isActive)   |
-| @ffp/core      | `src/assessments/assessment.service.ts` | Business logic orchestration       |
-| @ffp/functions | `src/assessments/start-assessment.ts`   | Lambda handler                     |
-
-**API Endpoint**:
-
-```
-POST /assessments/start
-Body: { flowId: uuid }
-Response: {
-  assessmentId: uuid,
-  currentStep: number,
-  status: string,
-  answers: object,
-  flowId: uuid,
-  isResumed: boolean
-}
-```
-
-**Resume Logic**:
-
-```typescript
-// Find any non-terminal assessment for user + flow
-const existing = await findResumableAssessment(tenantId, userId, flowId);
-if (existing) {
-  return { ...existing, isResumed: true };
-}
-// Create new assessment
-const created = await createAssessment(tenantId, userId, flowId);
-return { ...created, isResumed: false };
-```
-
-**Resumable Statuses**: `not_started`, `in_progress`
-
-**Error Responses**:
-
-- 400: Invalid request body (flowId not UUID)
-- 404: Flow not found or inactive
-- 401: Missing/invalid JWT
 
 ---
 
@@ -240,9 +269,24 @@ LIMIT {maxConcurrent}
 
 ---
 
-## Sprint 3 Progress: Backend Foundation (24 pts)
+## Sprint 4 Progress: Backend APIs + Frontend Foundation (26 pts)
 
 **Sprint Plan**: `project-documentation/sprint-planning/outputs/assessment-engine-sprint-plan.md`
+
+| Order | Key     | Story                           | Pts | Status         |
+| ----- | ------- | ------------------------------- | --- | -------------- |
+| 1     | FFP-129 | Save Assessment Progress API    | 3   | 🚀 In Progress |
+| 2     | FFP-133 | Scoring Service Implementation  | 8   | Pending        |
+| 3     | FFP-130 | Submit Assessment API           | 5   | Pending        |
+| 4     | FFP-135 | Assessment Context & State Mgmt | 5   | Pending        |
+| 5     | FFP-126 | Assessment Template Admin API   | 5   | Pending        |
+
+**Sprint Goal**: Complete assessment lifecycle APIs, scoring logic implemented, frontend state ready.
+**Progress**: 0/26 pts complete (0%)
+
+---
+
+## Completed: Sprint 3 - Backend Foundation (24 pts) ✅
 
 | Order | Key     | Story                                      | Pts | Status      |
 | ----- | ------- | ------------------------------------------ | --- | ----------- |
@@ -252,8 +296,7 @@ LIMIT {maxConcurrent}
 | 4     | FFP-127 | User Assessment Schema & State Machine     | 5   | ✅ Complete |
 | 5     | FFP-128 | Start Assessment API                       | 3   | ✅ Complete |
 
-**Sprint Goal**: All database schemas migrated, job queue ready, users can start assessments.
-**Progress**: 24/24 pts complete (100%) ✅ SPRINT 3 COMPLETE
+**Sprint Goal**: All database schemas migrated, job queue ready, users can start assessments. ✅ ACHIEVED
 
 ---
 
@@ -272,19 +315,7 @@ LIMIT {maxConcurrent}
 | Frontend State    | TanStack Query + React Context                         |
 | Conditional Logic | Deferred post-MVP (linear flow only)                   |
 
-### Sprint 4: Backend APIs + Frontend Foundation (25 pts)
-
-| Order | Key     | Story                           | Pts |
-| ----- | ------- | ------------------------------- | --- |
-| 1     | FFP-129 | Save Assessment Progress API    | 3   |
-| 2     | FFP-133 | Scoring Service Implementation  | 8   |
-| 3     | FFP-130 | Submit Assessment API           | 5   |
-| 4     | FFP-135 | Assessment Context & State Mgmt | 5   |
-| 5     | FFP-126 | Assessment Template Admin API   | 5   |
-
-**Goal**: Complete assessment lifecycle APIs, scoring logic implemented, frontend state ready.
-
-#### Sprint 5: Results + Frontend Core (23 pts)
+### Sprint 5: Results + Frontend Core (23 pts)
 
 | Order | Key     | Story                                | Pts |
 | ----- | ------- | ------------------------------------ | --- |
@@ -502,7 +533,7 @@ await db.query.users.findMany(); // Leaks all tenants!
 **Site**: https://ctregaskis.atlassian.net
 **Project Key**: FFP
 
-**Current Sprint**: Sprint 3 (100% complete) ✅
+**Current Sprint**: Sprint 4 (0% complete) - FFP-129 in progress
 **Velocity**: ~25 story points per sprint
 **Capacity**: 8 hours/week (solo developer)
 
