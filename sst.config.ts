@@ -345,27 +345,31 @@ export default $config({
 
     // =========================================================================
     // JOB PROCESSING INFRASTRUCTURE
+    // Only deployed in staging and production to avoid unnecessary costs
+    // and resource usage in development environments
     // =========================================================================
 
-    // Conservative timeout for batch job processing. Actual processing should
-    // complete much faster, but this allows for cold starts and retries.
-    const JOB_PROCESSOR_TIMEOUT = '5 minutes';
+    if ($app.stage === 'staging' || $app.stage === 'production') {
+      // Conservative timeout for batch job processing. Actual processing should
+      // complete much faster, but this allows for cold starts and retries.
+      const JOB_PROCESSOR_TIMEOUT = '5 minutes';
 
-    // Job processor environment (database access only, no Cognito needed)
-    const jobProcessorEnv = {
-      environment: dbEnv,
-    };
+      // Job processor environment (database access only, no Cognito needed)
+      const jobProcessorEnv = {
+        environment: dbEnv,
+      };
 
-    // Cron job to poll and process queued jobs every minute
-    // Uses EventBridge rule to trigger Lambda on schedule
-    new sst.aws.Cron('JobProcessor', {
-      schedule: 'rate(1 minute)',
-      job: {
-        handler: `${repositoryFunctionsPath}/jobs/process-jobs.handler`,
-        timeout: JOB_PROCESSOR_TIMEOUT,
-        ...jobProcessorEnv,
-      },
-    });
+      // Cron job to poll and process queued jobs every minute
+      // Uses EventBridge rule to trigger Lambda on schedule
+      new sst.aws.Cron('JobProcessor', {
+        schedule: 'rate(1 minute)',
+        job: {
+          handler: `${repositoryFunctionsPath}/jobs/process-jobs.handler`,
+          timeout: JOB_PROCESSOR_TIMEOUT,
+          ...jobProcessorEnv,
+        },
+      });
+    }
 
     // Export resource identifiers
     return {
