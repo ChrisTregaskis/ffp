@@ -197,3 +197,34 @@ export const startAssessmentResponseSchema = z.object({
 });
 
 export type StartAssessmentResponse = z.infer<typeof startAssessmentResponseSchema>;
+
+/**
+ * Request schema for saving assessment progress
+ *
+ * Used when user navigates (Continue/Back) to persist their answers
+ * and update their current position in the assessment flow.
+ * Empty answers object is allowed for step-only navigation.
+ */
+export const saveProgressRequestSchema = z.object({
+  /** Answers to merge with existing (can be empty for step-only updates) */
+  answers: userAssessmentAnswersSchema,
+  /** Current step index in the flow (1-based) */
+  currentStep: z.number().int().positive({ message: 'currentStep must be a positive integer' }),
+});
+
+export type SaveProgressRequest = z.infer<typeof saveProgressRequestSchema>;
+
+/**
+ * Response schema for saving assessment progress
+ *
+ * Returns success confirmation and the timestamp of when
+ * the progress was last updated.
+ */
+export const saveProgressResponseSchema = z.object({
+  /** Indicates the save was successful */
+  success: z.literal(true),
+  /** ISO 8601 timestamp of when the progress was updated */
+  updatedAt: z.string().datetime(),
+});
+
+export type SaveProgressResponse = z.infer<typeof saveProgressResponseSchema>;
