@@ -12,7 +12,7 @@ import type { StartAssessmentResponse } from '../schemas/user-assessment.schema'
  * @returns StartAssessmentResponse with the assessment data and isResumed flag
  *
  * @throws NotFoundError if flow doesn't exist or is inactive
- * @throws UnauthorisedError if context doesn't have a user actor
+ * @throws UnauthorisedError if context doesn't have a user actor or user not in database
  *
  * @example
  * ```typescript
@@ -28,7 +28,7 @@ export async function startAssessment(
   flowId: string,
   context: TenantContext
 ): Promise<StartAssessmentResponse> {
-  const userId = getUserIdFromContext(context);
+  const userId = await getUserIdFromContext(context);
   const { tenantId } = context;
 
   // 1. Validate flow exists and is active
@@ -43,7 +43,7 @@ export async function startAssessment(
   const existingAssessment = await userAssessmentRepository.findResumable(tenantId, userId, flowId);
 
   if (existingAssessment) {
-    // 3. Return existing assessment with isResumed=true
+    // Return existing assessment with isResumed=true
     return {
       assessmentId: existingAssessment.id,
       currentStep: existingAssessment.currentStep,
@@ -54,7 +54,7 @@ export async function startAssessment(
     };
   }
 
-  // 4. Create new assessment
+  // 3. Create new assessment
   const newAssessment = await userAssessmentRepository.create({
     tenantId,
     userId,
