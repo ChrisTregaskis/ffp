@@ -14,11 +14,12 @@ import { users, tenants, customers } from '../src/schema';
 describe('Drizzle ORM Configuration', () => {
   beforeAll(() => {
     // Setup test environment variables
+    // IMPORTANT: test_user does NOT have BYPASSRLS, so RLS policies are enforced
     process.env.DB_HOST = 'localhost';
     process.env.DB_PORT = '5432';
     process.env.DB_NAME = 'ffp_test';
-    process.env.DB_USER = 'root_user';
-    process.env.DB_PASSWORD = 'password';
+    process.env.DB_USER = 'test_user';
+    process.env.DB_PASSWORD = 'test_password';
     process.env.DB_SSL = 'false';
   });
 

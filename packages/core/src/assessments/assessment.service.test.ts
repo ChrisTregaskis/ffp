@@ -8,6 +8,7 @@ import { randomUUID } from 'crypto';
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import * as contextModule from '../lib/context';
 import { NotFoundError } from '../lib/errors';
 
 import * as assessmentService from './assessment.service';
@@ -19,9 +20,17 @@ import type { TenantContext, UserActor } from '../lib/context';
 
 vi.mock('./flow.repository');
 vi.mock('./user-assessment.repository');
+vi.mock('../lib/context', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../lib/context')>();
+  return {
+    ...actual,
+    getUserIdFromContext: vi.fn(),
+  };
+});
 
 const mockedFlowRepo = vi.mocked(flowRepository);
 const mockedUserAssessmentRepo = vi.mocked(userAssessmentRepository);
+const mockedContextModule = vi.mocked(contextModule);
 
 const createUserContext = (): TenantContext => ({
   actor: {
@@ -55,10 +64,11 @@ describe('Assessment Service', () => {
     it('creates new assessment when no resumable exists', async () => {
       const context = createUserContext();
       const flowId = randomUUID();
+      const databaseUserId = randomUUID(); // Simulates resolved database user ID
       const mockAssessment = {
         id: randomUUID(),
         tenantId: context.tenantId,
-        userId: (context.actor as UserActor).userId,
+        userId: databaseUserId,
         flowId,
         currentStep: 1,
         status: 'not_started' as const,
@@ -72,6 +82,7 @@ describe('Assessment Service', () => {
         updatedAt: new Date(),
       };
 
+      mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
       mockedFlowRepo.findActiveById.mockResolvedValue(createMockFlow(flowId));
       mockedUserAssessmentRepo.findResumable.mockResolvedValue(null);
       mockedUserAssessmentRepo.create.mockResolvedValue(mockAssessment);
@@ -85,10 +96,11 @@ describe('Assessment Service', () => {
     it('returns existing assessment with isResumed=true', async () => {
       const context = createUserContext();
       const flowId = randomUUID();
+      const databaseUserId = randomUUID(); // Simulates resolved database user ID
       const existingAssessment = {
         id: randomUUID(),
         tenantId: context.tenantId,
-        userId: (context.actor as UserActor).userId,
+        userId: databaseUserId,
         flowId,
         currentStep: 3,
         status: 'in_progress' as const,
@@ -102,6 +114,7 @@ describe('Assessment Service', () => {
         updatedAt: new Date(),
       };
 
+      mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
       mockedFlowRepo.findActiveById.mockResolvedValue(createMockFlow(flowId));
       mockedUserAssessmentRepo.findResumable.mockResolvedValue(existingAssessment);
 
@@ -115,7 +128,9 @@ describe('Assessment Service', () => {
     it('throws NotFoundError for invalid flow', async () => {
       const context = createUserContext();
       const flowId = randomUUID();
+      const databaseUserId = randomUUID(); // Simulates resolved database user ID
 
+      mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
       mockedFlowRepo.findActiveById.mockResolvedValue(null);
 
       await expect(assessmentService.startAssessment(flowId, context)).rejects.toThrow(

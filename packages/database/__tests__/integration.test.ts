@@ -5,9 +5,12 @@
  * Requires a test database to be set up and migrated.
  *
  * Setup:
- * 1. Create test database: psql -h localhost -U root_user -d postgres -c "CREATE DATABASE ffp_test;"
+ * 1. Create test database: psql -h localhost -d postgres -c "CREATE DATABASE ffp_test;"
  * 2. Run migrations: DB_NAME=ffp_test pnpm db:migrate
  * 3. Run tests: pnpm test
+ *
+ * IMPORTANT: Tests connect as `test_user` which does NOT have BYPASSRLS,
+ * so RLS policies are enforced automatically.
  *
  * @module __tests__/integration.test
  */
@@ -24,14 +27,24 @@ describe('Drizzle Integration Tests', () => {
 
   beforeAll(async () => {
     // Setup test database connection
+    // IMPORTANT: test_user does NOT have BYPASSRLS, so RLS policies are enforced
     process.env.DB_HOST = 'localhost';
     process.env.DB_PORT = '5432';
     process.env.DB_NAME = 'ffp_test';
-    process.env.DB_USER = 'root_user';
-    process.env.DB_PASSWORD = 'password';
+    process.env.DB_USER = 'test_user';
+    process.env.DB_PASSWORD = 'test_password';
     process.env.DB_SSL = 'false';
 
     db = getDb();
+
+    // Clean slate: Truncate all tables before running test suite
+    // This ensures no leftover data from manual testing or seed scripts interferes
+    await db.execute(sql`TRUNCATE TABLE user_assessments CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE users CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE customers CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE assessment_flows CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE process_jobs CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE tenants CASCADE`);
   });
 
   afterAll(async () => {
@@ -42,8 +55,12 @@ describe('Drizzle Integration Tests', () => {
   beforeEach(async () => {
     // Clean tables before each test
     // Note: RLS will prevent deletion without context, so we use raw SQL
+    // Order respects FK constraints (CASCADE handles dependencies)
+    await db.execute(sql`TRUNCATE TABLE user_assessments CASCADE`);
     await db.execute(sql`TRUNCATE TABLE users CASCADE`);
     await db.execute(sql`TRUNCATE TABLE customers CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE assessment_flows CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE process_jobs CASCADE`);
     await db.execute(sql`TRUNCATE TABLE tenants CASCADE`);
   });
 
@@ -599,6 +616,7 @@ describe('Drizzle Integration Tests', () => {
       const tenant2Id = randomUUID();
 
       // Create two separate tenants with users
+      // Use withRLS to properly enforce RLS policies during setup
       await withRLS(db, tenant1Id, undefined, async (tx) => {
         await tx.insert(tenants).values({
           id: tenant1Id,
