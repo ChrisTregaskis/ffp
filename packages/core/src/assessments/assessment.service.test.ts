@@ -18,10 +18,12 @@ import * as userAssessmentRepository from './user-assessment.repository';
 import type { AssessmentFlow } from './flow.repository';
 import type { TenantContext, UserActor } from '../lib/context';
 
+type ContextModule = typeof contextModule;
+
 vi.mock('./flow.repository');
 vi.mock('./user-assessment.repository');
 vi.mock('../lib/context', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../lib/context')>();
+  const actual = await importOriginal<ContextModule>();
   return {
     ...actual,
     getUserIdFromContext: vi.fn(),
