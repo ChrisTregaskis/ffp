@@ -1,302 +1,64 @@
 # FFP - Project State
 
-**Last Updated**: 28th December 2025
-**Current EPIC**: FFP-2 - Assessment Engine (Sprint 4 In Progress)
-**Current Story**: FFP-129 - Save Assessment Progress API
-**Current Branch**: `feature/ffp-129-save-assessment-progress-api`
+**Last Updated**: 29th December 2025
+**Current EPIC**: FFP-2 - Assessment Engine
+**Sprint Status**: Sprint 3 ✅ Complete | Sprint 4 starts 5th January 2026
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
 
-## Current Work: FFP-129 - Save Assessment Progress API
-
-**Status**: ✅ Complete (Ready for Review)
-**Story Points**: 3
-**Sprint**: 4 (Backend APIs + Frontend Foundation)
-
-### User Story
-
-> As a user,
-> I want my answers saved when I click Continue or Back,
-> So that I can close the browser and resume later.
-
-### Context
-
-Progress is saved on navigation only (not debounced auto-save). This reduces API calls while ensuring users don't lose progress.
-
-### Acceptance Criteria
-
-| AC  | Description                        | Status      |
-| --- | ---------------------------------- | ----------- |
-| AC1 | Progress saves merged answers      | ✅ Complete |
-| AC2 | Current step updated               | ✅ Complete |
-| AC3 | Status transitions to in_progress  | ✅ Complete |
-| AC4 | Cannot modify submitted assessment | ✅ Complete |
-| AC5 | Tenant isolation enforced          | ✅ Complete |
-
-### Dependencies
-
-- ✅ FFP-128: Start Assessment API (completed)
-- ✅ FFP-127: User Assessment Schema & State Machine (completed)
-
-### Blocks (Downstream)
-
-- FFP-130: Submit Assessment API
-
-### Implementation Plan
-
-**Branch**: `feature/ffp-129-save-assessment-progress-api` (single branch for all sub-tasks)
-
-| Order | Key     | Sub-task                                       | Status      |
-| ----- | ------- | ---------------------------------------------- | ----------- |
-| 1     | FFP-165 | Create Zod schemas for save progress req/res   | ✅ Complete |
-| 2     | FFP-166 | Create saveProgressService with answer merging | ✅ Complete |
-| 3     | FFP-167 | Create save-progress Lambda handler            | ✅ Complete |
-
-**No test sub-task**: Consistent with FFP-128 deferral rationale. Repository tests already cover RLS patterns; service logic is straightforward orchestration.
-
-### Implementation Notes (Updated from Jira Analysis)
-
-The Jira sub-tasks were created before FFP-128 was implemented. Key existing code to leverage:
-
-| Existing Code                | Location                        | Purpose                                                |
-| ---------------------------- | ------------------------------- | ------------------------------------------------------ |
-| `updateProgress()`           | `user-assessment.repository.ts` | Already merges answers                                 |
-| `transitionStatus()`         | `user-assessment.repository.ts` | Handles `not_started` → `in_progress` with `startedAt` |
-| `findById()`                 | `user-assessment.repository.ts` | Fetches assessment with RLS                            |
-| `updateUserAssessmentSchema` | `user-assessment.schema.ts`     | Partial schema (needs request/response wrappers)       |
-
-### Technical Details
-
-**Files to Create/Modify**:
-
-| Package        | File                                    | Purpose                            |
-| -------------- | --------------------------------------- | ---------------------------------- |
-| @ffp/core      | `src/schemas/user-assessment.schema.ts` | Add save progress request/response |
-| @ffp/core      | `src/assessments/assessment.service.ts` | Add `saveProgress()` function      |
-| @ffp/functions | `src/assessments/save-progress.ts`      | New Lambda handler                 |
-
-**API Endpoint**:
-
-```
-POST /assessments/:id/progress
-Body: { answers: Record<string, UserAnswer>, currentStep: number }
-Response: { success: true, updatedAt: string }
-```
-
-**Service Logic**:
-
-```typescript
-async function saveProgress(assessmentId, data, context) {
-  // 1. Find assessment by ID (validate exists + tenant access)
-  // 2. Validate status not submitted/completed (throw ValidationError)
-  // 3. If status is 'not_started', transition to 'in_progress'
-  // 4. Update progress (merges answers + updates currentStep)
-  // 5. Return { success: true, updatedAt }
-}
-```
-
-**Error Responses**:
-
-- 400: Invalid request body / Cannot modify submitted assessment
-- 404: Assessment not found
-- 401: Missing/invalid JWT
-
----
-
-## Recently Completed: FFP-128 - Start Assessment API ✅
+## Completed: Sprint 3 - Backend Foundation (24 pts + 3 early) ✅
 
 **Status**: ✅ Complete
-**Story Points**: 3
-**Sprint**: 3 (Backend Foundation)
+**Branch**: `feature/sprint3` (merged)
 
-### User Story
-
-> As a user,
-> I want to start a new assessment or resume an existing one,
-> So that I can begin/continue my physiotherapy evaluation.
-
-### Acceptance Criteria
-
-| AC  | Description                                 | Status      |
-| --- | ------------------------------------------- | ----------- |
-| AC1 | Start creates new assessment                | ✅ Complete |
-| AC2 | Start returns existing resumable assessment | ✅ Complete |
-| AC3 | Tenant context extracted from JWT           | ✅ Complete |
-| AC4 | Flow validation (exists and active)         | ✅ Complete |
-
-### Implementation Summary
-
-| Order | Key     | Sub-task                                      | Status            |
-| ----- | ------- | --------------------------------------------- | ----------------- |
-| 1     | FFP-161 | Create Zod schemas for start request/response | ✅ Complete       |
-| 2     | FFP-162 | Create startAssessmentService + flow repo     | ✅ Complete       |
-| 3     | FFP-163 | Create start-assessment Lambda handler        | ✅ Complete       |
-| 4     | FFP-164 | Create integration tests                      | ⏸️ Deferred (MVP) |
-
----
-
-## Recently Completed: FFP-127 - User Assessment Schema & State Machine ✅
-
-**Status**: ✅ Complete
-**Story Points**: 5
-**Sprint**: 3 (Backend Foundation)
-
-### User Story
-
-> As a user,
-> I want my assessment instances stored with proper state tracking,
-> So that I can resume in-progress assessments and view completed ones.
-
-### Key Implementation Details
-
-- **Schema**: `@ffp/database/src/schema/user-assessments.ts`
-- **Constants**: `@ffp/database/src/constants/user-assessment.constants.ts`
-- **Zod Schemas**: `@ffp/core/src/schemas/user-assessment.schema.ts`
-- **Repository**: `@ffp/core/src/assessments/user-assessment.repository.ts`
-- **State Machine**: `not_started → in_progress → submitted → scored → completed` (+ `abandoned`)
-- **RLS Policy**: Tenant isolation via `app.tenant_id` session variable
-
-### Sub-tasks
-
-| Order | Key     | Sub-task                                   | Status            |
-| ----- | ------- | ------------------------------------------ | ----------------- |
-| 1     | FFP-156 | Create Drizzle schema for user_assessments | ✅ Complete       |
-| 2     | FFP-159 | Create database migration with RLS policy  | ✅ Complete       |
-| 3     | FFP-157 | Create Zod validation schemas              | ✅ Complete       |
-| 4     | FFP-158 | Create repository with RLS enforcement     | ✅ Complete       |
-| 5     | FFP-160 | Create multi-tenant isolation tests        | ⏸️ Deferred (MVP) |
-
----
-
-## Recently Completed: FFP-125 - Assessment Flow Schema & Configuration ✅
-
-**Status**: ✅ Complete (Ready for merge)
-**Story Points**: 3
-**Sprint**: 3 (Backend Foundation)
-
-### User Story
-
-> As a system administrator,
-> I want assessment flows (intro → questions → transition → video → results) stored in the database,
-> So that the assessment journey is configurable and extensible.
-
-### Acceptance Criteria
-
-| AC  | Description                              | Status      |
-| --- | ---------------------------------------- | ----------- |
-| AC1 | Flow schema created with step types      | ✅ Complete |
-| AC2 | Flow step types support MVP journey      | ✅ Complete |
-| AC3 | Steps link to templates where applicable | ✅ Complete |
-| AC4 | Default flow seeded for MVP              | ✅ Complete |
-
-### Sub-tasks
-
-| Order | Key     | Description                                    | Status      |
-| ----- | ------- | ---------------------------------------------- | ----------- |
-| 1     | FFP-147 | Create Drizzle schema for assessment_flows     | ✅ Complete |
-| 2     | FFP-148 | Create Zod schemas for flow steps              | ✅ Complete |
-| 3     | FFP-149 | Create seed script for default assessment flow | ✅ Complete |
-| 4     | FFP-150 | Add unit tests for flow schema validation      | ✅ Complete |
-
-### Key Implementation Details
-
-- **Schema**: `@ffp/database/src/schema/assessment-flows.ts`
-- **Zod Schemas**: `@ffp/core/src/schemas/assessment-flow.schema.ts`
-- **Seed Script**: `@ffp/database/seed/seedAssessmentFlows.ts`
-- **Unit Tests**: `@ffp/core/src/schemas/assessment-flow.schema.test.ts` (57 tests)
-- **No RLS required**: Flows are system-managed content accessible by all authenticated users
-- **Step types (MVP)**: `intro`, `questions`, `transition`, `video-assessment`, `results`, `programme-overview`
-
----
-
-## Recently Completed: FFP-132 - Process Jobs Schema & Queue Infrastructure ✅
-
-**Status**: ✅ Complete (Ready for merge)
-**Story Points**: 8
-**Sprint**: 3 (Backend Foundation)
-
-### Acceptance Criteria
-
-| AC  | Description                                  | Status                       |
-| --- | -------------------------------------------- | ---------------------------- |
-| AC1 | Process jobs schema with RLS                 | ✅ Schema done, RLS deferred |
-| AC2 | Job status enum enforced                     | ✅ Complete                  |
-| AC3 | Enqueue function creates pending job         | ✅ Complete                  |
-| AC4 | Polling claims jobs atomically (SKIP LOCKED) | ✅ Complete                  |
-| AC5 | Failed jobs retry with exponential backoff   | ✅ Complete                  |
-| AC6 | Failed jobs marked after max retries         | ✅ Complete                  |
-
-### Sub-tasks
-
-| Order | Key     | Description                                  | Status      |
-| ----- | ------- | -------------------------------------------- | ----------- |
-| 1     | FFP-178 | Create Drizzle schema for process_jobs table | ✅ Complete |
-| 2     | FFP-179 | Implement job queue service with queueJob    | ✅ Complete |
-| 3     | FFP-180 | Implement job processor with atomic claiming | ✅ Complete |
-| 4     | FFP-181 | Add retry logic with exponential backoff     | ✅ Complete |
-| 5     | FFP-182 | Configure SST infrastructure for job polling | ✅ Complete |
-
-### Technical Notes
-
-- **Schema**: `@ffp/database/src/schema/process-jobs.ts`
-- **Queue Service**: `@ffp/core/src/jobs/job-queue.service.ts`
-- **Processor**: `@ffp/core/src/jobs/job-processor.service.ts`
-- **Lambda Handler**: `@ffp/functions/src/jobs/process-jobs.ts`
-- **SST Config**: `sst.config.ts` (JobProcessor Cron)
-- **Job Types**: `score_assessment`, `generate_program`
-- **Polling Pattern**: Database-driven with `FOR UPDATE SKIP LOCKED`
-- **Infrastructure**: EventBridge Cron (1 min) → Lambda → Poll DB
-
-### Key Implementation Details
-
-**Job Status Enum**: `queued`, `processing`, `completed`, `failed`, `cancelled`
-
-**Job Priority**: 1=urgent, 2=high, 3=medium, 4=low (default)
-
-**Atomic Claiming Pattern**:
-
-```sql
-SELECT * FROM process_jobs
-WHERE status = 'queued'
-  AND (retry_after IS NULL OR retry_after <= now())
-ORDER BY priority ASC, created_at ASC
-FOR UPDATE SKIP LOCKED
-LIMIT {maxConcurrent}
-```
-
-**Exponential Backoff**: `2^attempts` seconds (2s, 4s, 8s...)
-
----
-
-## Sprint 4 Progress: Backend APIs + Frontend Foundation (26 pts)
-
-**Sprint Plan**: `project-documentation/sprint-planning/outputs/assessment-engine-sprint-plan.md`
-
-| Order | Key     | Story                           | Pts | Status         |
-| ----- | ------- | ------------------------------- | --- | -------------- |
-| 1     | FFP-129 | Save Assessment Progress API    | 3   | 🚀 In Progress |
-| 2     | FFP-133 | Scoring Service Implementation  | 8   | Pending        |
-| 3     | FFP-130 | Submit Assessment API           | 5   | Pending        |
-| 4     | FFP-135 | Assessment Context & State Mgmt | 5   | Pending        |
-| 5     | FFP-126 | Assessment Template Admin API   | 5   | Pending        |
-
-**Sprint Goal**: Complete assessment lifecycle APIs, scoring logic implemented, frontend state ready.
-**Progress**: 0/26 pts complete (0%)
-
----
-
-## Completed: Sprint 3 - Backend Foundation (24 pts) ✅
-
-| Order | Key     | Story                                      | Pts | Status      |
-| ----- | ------- | ------------------------------------------ | --- | ----------- |
-| 1     | FFP-124 | Assessment Template Schema & Repository    | 5   | ✅ Complete |
-| 2     | FFP-132 | Process Jobs Schema & Queue Infrastructure | 8   | ✅ Complete |
-| 3     | FFP-125 | Assessment Flow Schema & Configuration     | 3   | ✅ Complete |
-| 4     | FFP-127 | User Assessment Schema & State Machine     | 5   | ✅ Complete |
-| 5     | FFP-128 | Start Assessment API                       | 3   | ✅ Complete |
+| Key     | Story                                      | Pts | Key Files                                                                    |
+| ------- | ------------------------------------------ | --- | ---------------------------------------------------------------------------- |
+| FFP-124 | Assessment Template Schema & Repository    | 5   | `schema/assessment-templates.ts`, `assessment-template.repository.ts`        |
+| FFP-132 | Process Jobs Schema & Queue Infrastructure | 8   | `schema/process-jobs.ts`, `job-queue.service.ts`, `job-processor.service.ts` |
+| FFP-125 | Assessment Flow Schema & Configuration     | 3   | `schema/assessment-flows.ts`, `seedAssessmentFlows.ts`                       |
+| FFP-127 | User Assessment Schema & State Machine     | 5   | `schema/user-assessments.ts`, `user-assessment.repository.ts`                |
+| FFP-128 | Start Assessment API                       | 3   | `start-assessment.ts`, `assessment.service.ts`                               |
+| FFP-129 | Save Assessment Progress API (early)       | 3   | `save-progress.ts`, `assessment.service.ts`                                  |
 
 **Sprint Goal**: All database schemas migrated, job queue ready, users can start assessments. ✅ ACHIEVED
+
+### Key Patterns & Decisions Established
+
+| Area               | Decision                                                                                |
+| ------------------ | --------------------------------------------------------------------------------------- |
+| **State Machine**  | `not_started → in_progress → submitted → scored → completed` (+ `abandoned`)            |
+| **Job Queue**      | Database-driven polling with `FOR UPDATE SKIP LOCKED`, exponential backoff              |
+| **Flow Steps**     | `intro`, `questions`, `transition`, `video-assessment`, `results`, `programme-overview` |
+| **RLS Pattern**    | Tenant isolation via `app.tenant_id` session variable                                   |
+| **User Ownership** | Service-layer `userId` check (RLS enforces tenant, not user isolation)                  |
+| **Router**         | Regex-based pattern matching with parameter extraction for dynamic routes               |
+
+### Key File Locations
+
+- **Schemas**: `@ffp/database/src/schema/` (assessment-templates, assessment-flows, user-assessments, process-jobs)
+- **Repositories**: `@ffp/core/src/assessments/` (user-assessment.repository.ts, assessment-template.repository.ts)
+- **Services**: `@ffp/core/src/assessments/assessment.service.ts`
+- **Job Queue**: `@ffp/core/src/jobs/` (job-queue.service.ts, job-processor.service.ts)
+- **Handlers**: `@ffp/functions/src/assessments/` (start-assessment.ts, save-progress.ts)
+
+---
+
+## Upcoming: Sprint 4 - Backend APIs + Frontend Foundation (23 pts remaining)
+
+**Starts**: 5th January 2026
+**Sprint Plan**: `project-documentation/sprint-planning/outputs/assessment-engine-sprint-plan.md`
+
+| Order | Key     | Story                           | Pts | Status                          |
+| ----- | ------- | ------------------------------- | --- | ------------------------------- |
+| 1     | FFP-129 | Save Assessment Progress API    | 3   | ✅ Complete (done in Sprint 3)  |
+| 2     | FFP-130 | Submit Assessment API           | 5   | Pending (next on critical path) |
+| 3     | FFP-133 | Scoring Service Implementation  | 8   | Pending                         |
+| 4     | FFP-135 | Assessment Context & State Mgmt | 5   | Pending                         |
+| 5     | FFP-126 | Assessment Template Admin API   | 5   | Pending                         |
+
+**Sprint Goal**: Complete assessment lifecycle APIs, scoring logic implemented, frontend state ready.
+**Progress**: 3/26 pts complete (12%) - FFP-129 done early
 
 ---
 
@@ -343,12 +105,13 @@ LIMIT {maxConcurrent}
 ```
 FFP-124 → FFP-125 → FFP-127 → FFP-128 → FFP-129 → FFP-130 → FFP-131
 (Template)  (Flow)   (User)   (Start)   (Save)   (Submit)  (Results)
+   ✅         ✅        ✅        ✅        ✅       NEXT
 ```
 
 ### Parallel Workstreams
 
-1. **Job Queue**: FFP-132 → FFP-133 → FFP-134 (can start Sprint 3)
-2. **Frontend**: FFP-135 → FFP-138/139 (can start Sprint 4)
+1. **Job Queue**: FFP-132 ✅ → FFP-133 → FFP-134
+2. **Frontend**: FFP-135 → FFP-138/139 (Sprint 4+)
 
 ---
 
@@ -533,7 +296,7 @@ await db.query.users.findMany(); // Leaks all tenants!
 **Site**: https://ctregaskis.atlassian.net
 **Project Key**: FFP
 
-**Current Sprint**: Sprint 4 (0% complete) - FFP-129 in progress
+**Sprint Status**: Sprint 3 ✅ Complete | Sprint 4 starts 5th Jan 2026
 **Velocity**: ~25 story points per sprint
 **Capacity**: 8 hours/week (solo developer)
 
