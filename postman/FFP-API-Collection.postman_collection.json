@@ -1398,9 +1398,242 @@
               "body": "{\n  \"message\": \"Unauthorized\"\n}"
             }
           ]
+        },
+        {
+          "name": "Save Progress",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Validate JWT token is set",
+                  "const jwtToken = pm.collectionVariables.get('jwtToken');",
+                  "",
+                  "if (!jwtToken || jwtToken === '') {",
+                  "    throw new Error('JWT token is required. Please authenticate first using the Login endpoint.');",
+                  "}",
+                  "",
+                  "// Validate assessmentId is set",
+                  "const assessmentId = pm.collectionVariables.get('lastAssessmentId');",
+                  "",
+                  "if (!assessmentId || assessmentId === '') {",
+                  "    console.warn('lastAssessmentId not set. Please run Start Assessment first to get an assessment ID.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test response structure",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has required fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "    pm.expect(jsonData).to.have.property('updatedAt');",
+                  "});",
+                  "",
+                  "pm.test('Success is true', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.equal(true);",
+                  "});",
+                  "",
+                  "pm.test('updatedAt is valid ISO date', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const date = new Date(jsonData.updatedAt);",
+                  "    pm.expect(date.toString()).to.not.equal('Invalid Date');",
+                  "});",
+                  "",
+                  "console.log('Progress saved successfully at:', pm.response.json().updatedAt);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": {\n    \"550e8400-e29b-41d4-a716-446655440001\": {\n      \"questionId\": \"550e8400-e29b-41d4-a716-446655440001\",\n      \"answerValue\": 4\n    }\n  },\n  \"currentStep\": 2\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+              "host": ["{{apiUrl}}"],
+              "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+            },
+            "description": "Save assessment progress (answers and current step) for the authenticated user.\n\n**Authentication:** JWT token required (any authenticated user)\n\n**Purpose:**\nCalled when user navigates (clicks Continue or Back) to persist their progress. This allows users to close the browser and resume later.\n\n**Path Parameters:**\n- `id` - Assessment UUID (use `lastAssessmentId` variable from Start Assessment)\n\n**Request Body:**\n```json\n{\n  \"answers\": {\n    \"question-uuid-1\": {\n      \"questionId\": \"question-uuid-1\",\n      \"answerValue\": 4\n    },\n    \"question-uuid-2\": {\n      \"questionId\": \"question-uuid-2\",\n      \"answerValue\": \"some text\"\n    }\n  },\n  \"currentStep\": 2\n}\n```\n\n**Answer Merging:**\nNew answers are merged with existing answers. If the same question ID exists, the new value overwrites the old.\n\n**Status Transition:**\nIf assessment status is `not_started`, it automatically transitions to `in_progress` and sets `startedAt` timestamp.\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"updatedAt\": \"2025-01-15T10:30:00.000Z\"\n}\n```\n\n**Status Codes:**\n- `200`: Progress saved successfully\n- `400`: Validation error OR assessment is submitted/completed\n- `401`: Unauthorised (no JWT token)\n- `404`: Assessment not found\n- `500`: Internal server error\n\n**Error: Cannot Modify Submitted Assessment:**\n```json\n{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Cannot modify submitted assessment\",\n  \"requestId\": \"abc123-def456\"\n}\n```\n\n**Multi-Tenant Security:**\n- User can only save progress on assessments within their tenant\n- RLS policies enforce tenant isolation\n\n**Testing Tips:**\n1. First run Start Assessment to get an assessment ID\n2. The `lastAssessmentId` variable is auto-populated\n3. Modify the answers and currentStep values\n4. Call this endpoint multiple times to test answer merging"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"answers\": {\n    \"550e8400-e29b-41d4-a716-446655440001\": {\n      \"questionId\": \"550e8400-e29b-41d4-a716-446655440001\",\n      \"answerValue\": 4\n    }\n  },\n  \"currentStep\": 2\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"updatedAt\": \"2025-01-15T10:30:00.000Z\"\n}"
+            },
+            {
+              "name": "Validation Error - Cannot Modify Submitted",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"answers\": {},\n  \"currentStep\": 2\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Cannot modify submitted assessment\",\n  \"requestId\": \"abc123-def456\"\n}"
+            },
+            {
+              "name": "Validation Error - Invalid currentStep",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"answers\": {},\n  \"currentStep\": 0\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Invalid request data\",\n  \"requestId\": \"abc123-def456\",\n  \"details\": [\n    {\n      \"path\": \"currentStep\",\n      \"message\": \"currentStep must be a positive integer\",\n      \"code\": \"too_small\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "Not Found - Assessment Does Not Exist",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"answers\": {},\n  \"currentStep\": 2\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/00000000-0000-0000-0000-000000000000/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "00000000-0000-0000-0000-000000000000", "progress"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"NOT_FOUND\",\n  \"message\": \"Assessment with id 00000000-0000-0000-0000-000000000000 not found\",\n  \"requestId\": \"abc123-def456\"\n}"
+            },
+            {
+              "name": "Unauthorised - No JWT Token",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"answers\": {},\n  \"currentStep\": 2\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                }
+              },
+              "status": "Unauthorised",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Unauthorized\"\n}"
+            }
+          ]
         }
       ],
-      "description": "Assessment endpoints - JWT authentication required.\n\n**Current Endpoints:**\n- POST /assessments/start - Start or resume an assessment\n\n**Coming Soon:**\n- PUT /assessments/{id}/progress - Save assessment progress\n- POST /assessments/{id}/submit - Submit completed assessment\n- GET /assessments/{id}/results - Get assessment results\n\n**Authentication:**\nAll endpoints require JWT token with valid `custom:tenantId` claim for RLS isolation.",
+      "description": "Assessment endpoints - JWT authentication required.\n\n**Current Endpoints:**\n- POST /assessments/start - Start or resume an assessment\n- PUT /assessments/{id}/progress - Save assessment progress\n\n**Coming Soon:**\n- POST /assessments/{id}/submit - Submit completed assessment\n- GET /assessments/{id}/results - Get assessment results\n\n**Authentication:**\nAll endpoints require JWT token with valid `custom:tenantId` claim for RLS isolation.",
       "auth": {
         "type": "bearer",
         "bearer": [

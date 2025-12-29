@@ -2,6 +2,7 @@ import { createSystemContext, type APIGatewayProxyEventV2WithJWT } from '@ffp/co
 
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
+import { handler as saveProgressHandler } from './save-progress';
 import { handler as startAssessmentHandler } from './start-assessment';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
@@ -28,8 +29,7 @@ const routes: RouteRegistry = {
     // '/{id}/results': getAssessmentResultsHandler,
   },
   PUT: {
-    // Future assessment routes:
-    // '/{id}/progress': saveProgressHandler,
+    '/{id}/progress': saveProgressHandler,
   },
 };
 
