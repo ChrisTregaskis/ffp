@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 
 import type { DbClient } from '@ffp/database';
 import { assessmentTemplates } from '@ffp/database/schema';
@@ -48,6 +48,31 @@ export async function findById(db: DbClient, id: string): Promise<AssessmentTemp
   }
 
   return mapToTemplate(records[0]);
+}
+
+/**
+ * Find multiple assessment templates by IDs
+ *
+ * Fetches all templates matching the provided IDs in a single query.
+ * Returns templates in no guaranteed order. Missing IDs are silently ignored.
+ *
+ * @param ids - Array of template UUIDs to fetch
+ * @returns Array of found templates (may be fewer than requested if some IDs don't exist)
+ */
+export async function findTemplatesByIds(
+  db: DbClient,
+  ids: string[]
+): Promise<AssessmentTemplate[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const records = await db
+    .select()
+    .from(assessmentTemplates)
+    .where(inArray(assessmentTemplates.id, ids));
+
+  return records.map(mapToTemplate);
 }
 
 /**

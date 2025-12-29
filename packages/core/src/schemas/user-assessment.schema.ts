@@ -228,3 +228,19 @@ export const saveProgressResponseSchema = z.object({
 });
 
 export type SaveProgressResponse = z.infer<typeof saveProgressResponseSchema>;
+
+export const submitAssessmentRequestSchema = z.object({
+  /** Final answers to submit (merged with existing answers) */
+  answers: userAssessmentAnswersSchema,
+});
+
+export type SubmitAssessmentRequest = z.infer<typeof submitAssessmentRequestSchema>;
+
+export const submitAssessmentResponseSchema = z.object({
+  /** UUID of the enqueued scoring job for status polling */
+  jobId: z.string().uuid(),
+  /** Human-readable message confirming submission */
+  message: z.string(),
+});
+
+export type SubmitAssessmentResponse = z.infer<typeof submitAssessmentResponseSchema>;

@@ -1,6 +1,7 @@
 import { getDb, processJobs, type JobType } from '@ffp/database';
 
 import type { TenantContext } from '../lib/context';
+import type { Transaction } from '../lib/database';
 import type { GenerateProgramPayload, ScoreAssessmentPayload } from '../schemas/job.schema';
 
 /**
@@ -27,6 +28,13 @@ export interface QueueJobOptions {
    * @default 3
    */
   maxAttempts?: number;
+
+  /**
+   * Optional transaction for atomic operations across multiple writes.
+   * If provided, the job is created within this transaction.
+   * If not provided, creates the job in a standalone operation.
+   */
+  tx?: Transaction;
 }
 
 /**
@@ -39,7 +47,7 @@ export interface QueueJobOptions {
  * @param type - The type of job to queue (e.g., 'score_assessment', 'generate_program')
  * @param payload - Job-specific data required for processing (type-safe based on job type)
  * @param context - Tenant context for RLS isolation
- * @param options - Optional configuration for priority and retry behaviour
+ * @param options - Optional configuration for priority, retry behaviour, and transaction
  * @returns The UUID of the created job for tracking
  *
  */
@@ -49,11 +57,12 @@ export async function queueJob<T extends JobType>(
   context: TenantContext,
   options: QueueJobOptions = {}
 ): Promise<string> {
-  const { priority = 4, maxAttempts = 3 } = options;
+  const { priority = 4, maxAttempts = 3, tx } = options;
 
-  const db = getDb();
+  // Use provided transaction or get standalone db connection
+  const dbClient = tx ?? getDb();
 
-  const [job] = await db
+  const [job] = await dbClient
     .insert(processJobs)
     .values({
       tenantId: context.tenantId,
