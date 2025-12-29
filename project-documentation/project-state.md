@@ -2,7 +2,7 @@
 
 **Last Updated**: 29th December 2025
 **Current EPIC**: FFP-2 - Assessment Engine
-**Sprint Status**: Sprint 3 ✅ Complete | Sprint 4 starts 5th January 2026
+**Sprint Status**: Sprint 3 ✅ Complete | Sprint 4 early start (FFP-130 in progress)
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
@@ -44,21 +44,92 @@
 
 ---
 
+## In Progress: FFP-130 - Submit Assessment API
+
+**Branch**: `feature/ffp-130-submit-assessment-api`
+**Story Points**: 5
+**Status**: 🚧 Implementation Ready
+
+### Implementation Plan
+
+Single PR covering all sub-tasks (logical grouping for cohesive feature):
+
+| Order | Sub-task | Summary                                                | Status  |
+| ----- | -------- | ------------------------------------------------------ | ------- |
+| 1     | FFP-169  | Add response schema for submission                     | Pending |
+| 2     | FFP-171  | Implement `submitAssessment()` service                 | Pending |
+| 3     | FFP-172  | Create `submit-assessment.ts` Lambda handler           | Pending |
+| 4     | FFP-173  | Add unit tests for submission flow                     | Pending |
+| -     | FFP-170  | Required question validation → **Deferred to FFP-233** | N/A     |
+
+### Key Implementation Decisions
+
+| Decision                         | Choice                                                                                     |
+| -------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Job Payload**                  | Simplified - just `assessmentId`. Scoring job (FFP-133) fetches what it needs.             |
+| **Direct Lambda Invocation**     | Include - invoke job processor immediately after queueing for better UX (avoids 60s wait). |
+| **Required Question Validation** | Deferred to FFP-233 (backlog). Frontend validation sufficient for MVP.                     |
+
+### Technical Approach
+
+**1. Schema (FFP-169)**
+
+- Add `submitAssessmentResponseSchema` to `user-assessment.schema.ts`
+- Response: `{ jobId: string, message: string }`
+
+**2. Service (FFP-171)**
+
+```
+submitAssessment(assessmentId, answers, context):
+  1. Fetch assessment (with RLS)
+  2. Validate status is 'in_progress' (not already submitted)
+  3. Merge final answers via updateProgress()
+  4. Transition status to 'submitted' via transitionStatus()
+  5. Queue 'score_assessment' job with simplified payload { assessmentId }
+  6. Invoke job processor Lambda asynchronously (fire-and-forget)
+  7. Return { jobId, message: 'Assessment submitted' }
+```
+
+**3. Handler (FFP-172)**
+
+- `POST /assessments/:id/submit`
+- Follow established pattern from `save-progress.ts`
+- Parse body with Zod, call service, return response
+
+**4. Tests (FFP-173)**
+
+- Successful submission flow
+- Already-submitted rejection
+- Answer merging verification
+- Job enqueue verification
+
+### Files to Create/Modify
+
+| Action | File                                                       |
+| ------ | ---------------------------------------------------------- |
+| Modify | `packages/core/src/schemas/user-assessment.schema.ts`      |
+| Modify | `packages/core/src/assessments/assessment.service.ts`      |
+| Create | `packages/functions/src/assessments/submit-assessment.ts`  |
+| Modify | `packages/core/src/assessments/assessment.service.test.ts` |
+| Modify | `packages/functions/src/router.ts` (add route)             |
+
+---
+
 ## Upcoming: Sprint 4 - Backend APIs + Frontend Foundation (23 pts remaining)
 
 **Starts**: 5th January 2026
 **Sprint Plan**: `project-documentation/sprint-planning/outputs/assessment-engine-sprint-plan.md`
 
-| Order | Key     | Story                           | Pts | Status                          |
-| ----- | ------- | ------------------------------- | --- | ------------------------------- |
-| 1     | FFP-129 | Save Assessment Progress API    | 3   | ✅ Complete (done in Sprint 3)  |
-| 2     | FFP-130 | Submit Assessment API           | 5   | Pending (next on critical path) |
-| 3     | FFP-133 | Scoring Service Implementation  | 8   | Pending                         |
-| 4     | FFP-135 | Assessment Context & State Mgmt | 5   | Pending                         |
-| 5     | FFP-126 | Assessment Template Admin API   | 5   | Pending                         |
+| Order | Key     | Story                           | Pts | Status                         |
+| ----- | ------- | ------------------------------- | --- | ------------------------------ |
+| 1     | FFP-129 | Save Assessment Progress API    | 3   | ✅ Complete (done in Sprint 3) |
+| 2     | FFP-130 | Submit Assessment API           | 5   | 🚧 In Progress (early start)   |
+| 3     | FFP-133 | Scoring Service Implementation  | 8   | Pending                        |
+| 4     | FFP-135 | Assessment Context & State Mgmt | 5   | Pending                        |
+| 5     | FFP-126 | Assessment Template Admin API   | 5   | Pending                        |
 
 **Sprint Goal**: Complete assessment lifecycle APIs, scoring logic implemented, frontend state ready.
-**Progress**: 3/26 pts complete (12%) - FFP-129 done early
+**Progress**: 3/26 pts complete (12%) - FFP-129 done early, FFP-130 started early
 
 ---
 
@@ -105,7 +176,7 @@
 ```
 FFP-124 → FFP-125 → FFP-127 → FFP-128 → FFP-129 → FFP-130 → FFP-131
 (Template)  (Flow)   (User)   (Start)   (Save)   (Submit)  (Results)
-   ✅         ✅        ✅        ✅        ✅       NEXT
+   ✅         ✅        ✅        ✅        ✅        🚧
 ```
 
 ### Parallel Workstreams
