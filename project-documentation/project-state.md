@@ -40,7 +40,7 @@
 - **Repositories**: `@ffp/core/src/assessments/` (user-assessment.repository.ts, assessment-template.repository.ts)
 - **Services**: `@ffp/core/src/assessments/assessment.service.ts`
 - **Job Queue**: `@ffp/core/src/jobs/` (job-queue.service.ts, job-processor.service.ts)
-- **Handlers**: `@ffp/functions/src/assessments/` (start-assessment.ts, save-progress.ts)
+- **Handlers**: `@ffp/functions/src/assessments/` (start-assessment.ts, save-progress.ts, submit-assessment.ts)
 
 ---
 
@@ -48,7 +48,7 @@
 
 **Branch**: `feature/ffp-130-submit-assessment-api`
 **Story Points**: 5
-**Status**: 🚧 Service Layer + Tests Complete (3/4 sub-tasks)
+**Status**: ✅ All Sub-tasks Complete (4/4) - Ready for Manual Testing
 
 ### Implementation Plan
 
@@ -59,7 +59,7 @@ Single PR covering all sub-tasks (logical grouping for cohesive feature):
 | 1     | FFP-169  | Add request/response schemas for submission            | ✅ Complete |
 | 2     | FFP-171  | Implement `submitAssessment()` service                 | ✅ Complete |
 | 3     | FFP-173  | Add unit tests for submission flow                     | ✅ Complete |
-| 4     | FFP-172  | Create `submit-assessment.ts` Lambda handler           | Pending     |
+| 4     | FFP-172  | Create `submit-assessment.ts` Lambda handler           | ✅ Complete |
 | -     | FFP-170  | Required question validation → **Deferred to FFP-233** | N/A         |
 
 ### Key Implementation Decisions
@@ -102,22 +102,31 @@ Single PR covering all sub-tasks (logical grouping for cohesive feature):
 
 ### Files Modified
 
-| Action | File                                                          |
-| ------ | ------------------------------------------------------------- |
-| Modify | `packages/core/src/schemas/user-assessment.schema.ts`         |
-| Modify | `packages/core/src/assessments/assessment.service.ts`         |
-| Modify | `packages/core/src/assessments/template.repository.ts`        |
-| Modify | `packages/core/src/assessments/user-assessment.repository.ts` |
-| Modify | `packages/core/src/jobs/job-queue.service.ts`                 |
-| Modify | `packages/core/src/lib/database.ts`                           |
+| Action | File                                                                         |
+| ------ | ---------------------------------------------------------------------------- |
+| Modify | `packages/core/src/schemas/user-assessment.schema.ts`                        |
+| Modify | `packages/core/src/assessments/assessment.service.ts`                        |
+| Modify | `packages/core/src/assessments/template.repository.ts`                       |
+| Modify | `packages/core/src/assessments/user-assessment.repository.ts`                |
+| Modify | `packages/core/src/jobs/job-queue.service.ts`                                |
+| Modify | `packages/core/src/lib/database.ts`                                          |
+| Create | `packages/functions/src/assessments/submit-assessment.ts`                    |
+| Modify | `packages/functions/src/assessments/index.ts`                                |
+| Modify | `postman/FFP-API-Collection.postman_collection.json`                         |
+| Create | `project-documentation/sprint-planning/outputs/ffp-130-test-instructions.md` |
 
-### Remaining Work
+### Testing
 
-**FFP-172: Lambda Handler**
+**Manual testing via Postman**: See `project-documentation/sprint-planning/outputs/ffp-130-test-instructions.md`
 
-- `POST /assessments/:id/submit`
-- Follow established pattern from `save-progress.ts`
-- Parse body with Zod, call service, return response
+**Test Scenarios**:
+
+- Happy path submission with merged answers
+- Already submitted rejection (400)
+- Missing required questions (400 with missingQuestionIds)
+- Non-existent assessment (404)
+- Unauthenticated request (401)
+- Multi-tenant isolation
 
 ---
 
@@ -126,16 +135,16 @@ Single PR covering all sub-tasks (logical grouping for cohesive feature):
 **Starts**: 5th January 2026
 **Sprint Plan**: `project-documentation/sprint-planning/outputs/assessment-engine-sprint-plan.md`
 
-| Order | Key     | Story                           | Pts | Status                         |
-| ----- | ------- | ------------------------------- | --- | ------------------------------ |
-| 1     | FFP-129 | Save Assessment Progress API    | 3   | ✅ Complete (done in Sprint 3) |
-| 2     | FFP-130 | Submit Assessment API           | 5   | 🚧 In Progress (early start)   |
-| 3     | FFP-133 | Scoring Service Implementation  | 8   | Pending                        |
-| 4     | FFP-135 | Assessment Context & State Mgmt | 5   | Pending                        |
-| 5     | FFP-126 | Assessment Template Admin API   | 5   | Pending                        |
+| Order | Key     | Story                           | Pts | Status                            |
+| ----- | ------- | ------------------------------- | --- | --------------------------------- |
+| 1     | FFP-129 | Save Assessment Progress API    | 3   | ✅ Complete (done in Sprint 3)    |
+| 2     | FFP-130 | Submit Assessment API           | 5   | ✅ Complete (pending manual test) |
+| 3     | FFP-133 | Scoring Service Implementation  | 8   | Pending                           |
+| 4     | FFP-135 | Assessment Context & State Mgmt | 5   | Pending                           |
+| 5     | FFP-126 | Assessment Template Admin API   | 5   | Pending                           |
 
 **Sprint Goal**: Complete assessment lifecycle APIs, scoring logic implemented, frontend state ready.
-**Progress**: 3/26 pts complete (12%) - FFP-129 done early, FFP-130 started early
+**Progress**: 8/26 pts complete (31%) - FFP-129 done early, FFP-130 complete (pending manual testing)
 
 ---
 
@@ -182,7 +191,7 @@ Single PR covering all sub-tasks (logical grouping for cohesive feature):
 ```
 FFP-124 → FFP-125 → FFP-127 → FFP-128 → FFP-129 → FFP-130 → FFP-131
 (Template)  (Flow)   (User)   (Start)   (Save)   (Submit)  (Results)
-   ✅         ✅        ✅        ✅        ✅        🚧
+   ✅         ✅        ✅        ✅        ✅        ✅
 ```
 
 ### Parallel Workstreams

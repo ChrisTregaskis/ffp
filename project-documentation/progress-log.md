@@ -8,6 +8,61 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 30, 2025 (Session 72 - FFP-172 Lambda Handler Complete)
+
+**Status**: ✅ FFP-130 COMPLETE (4/4 sub-tasks) - Ready for Manual Testing
+
+**Branch**: `feature/ffp-130-submit-assessment-api`
+
+**Completed Work**:
+
+**FFP-172: Create submit-assessment Lambda Handler** (~0.25 hours):
+
+- ✅ `submit-assessment.ts`: Lambda handler for POST /assessments/{id}/submit
+  - Extracts assessmentId from path parameters
+  - Extracts user context from JWT via `extractUserContext`
+  - Validates request body with `submitAssessmentRequestSchema`
+  - Delegates to `assessmentService.submitAssessment`
+  - Returns `SubmitAssessmentResponse` with jobId and message
+
+- ✅ `assessments/index.ts`: Registered POST `/{id}/submit` route in domain router
+  - Uses existing regex-based pattern matching
+  - Follows established handler patterns
+
+- ✅ **Postman Collection**: Updated for testing
+  - Added "Submit Assessment" endpoint with pre-request/test scripts
+  - Added `lastJobId` collection variable (auto-populated on success)
+  - Example responses: success, already submitted, missing required questions, 404, 401
+  - Updated Assessments folder description to list submit endpoint
+
+- ✅ **Test Instructions**: Created `ffp-130-test-instructions.md`
+  - 11 test scenarios covering all acceptance criteria
+  - Database verification queries
+  - Troubleshooting section
+  - Sign-off checklist
+
+**Files Created**:
+
+- `packages/functions/src/assessments/submit-assessment.ts`
+- `project-documentation/sprint-planning/outputs/ffp-130-test-instructions.md`
+
+**Files Modified**:
+
+- `packages/functions/src/assessments/index.ts` - Added submit route
+- `postman/FFP-API-Collection.postman_collection.json` - Added Submit Assessment request + lastJobId variable
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (`pnpm build --filter=@ffp/functions`)
+- ✅ Lint: Zero warnings (`pnpm lint-format`)
+- ✅ All packages compile successfully
+
+**FFP-130 Story Complete**: All sub-tasks done (FFP-169, FFP-171, FFP-173, FFP-172). Ready for manual testing via Postman.
+
+**Next**: Manual testing through Postman, then code review and merge.
+
+---
+
 ### December 30, 2025 (Session 71 - FFP-173 Unit Tests for Submit Assessment)
 
 **Status**: 🚧 FFP-130 IN PROGRESS (3/4 sub-tasks complete)
@@ -713,7 +768,8 @@ After code review, two issues were addressed in `packages/functions/src/jobs/pro
 | Dec 28      | FFP-129 Complete (Save Progress) | 166.35h       |
 | Dec 29      | FFP-169/171 Complete (Submit)    | 167.35h       |
 | Dec 30      | FFP-173 Complete (Unit Tests)    | 167.65h       |
-| **Current** | **FFP-130 In Progress**          | **~168/197h** |
+| Dec 30      | FFP-172 Complete (Handler)       | 167.9h        |
+| **Current** | **FFP-130 Complete (Testing)**   | **~168/197h** |
 
 ---
 
