@@ -8,6 +8,72 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 29, 2025 (Session 70 - FFP-130 Submit Assessment API - Service Layer)
+
+**Status**: 🚧 FFP-130 IN PROGRESS (2/4 sub-tasks complete)
+
+**Branch**: `feature/ffp-130-submit-assessment-api`
+
+**Completed Work**:
+
+**FFP-169: Create Zod schemas for submission request/response** (~0.1 hours):
+
+- ✅ `submitAssessmentRequestSchema`: Validates answers as UserAssessmentAnswers
+- ✅ `submitAssessmentResponseSchema`: Validates `{ jobId: uuid, message: string }`
+- ✅ Exported TypeScript types: `SubmitAssessmentRequest`, `SubmitAssessmentResponse`
+
+**FFP-171: Implement submitAssessment service with job enqueue** (~0.5 hours):
+
+- ✅ `submitAssessment(assessmentId, data, context)` in `assessment.service.ts`
+- ✅ Fetches assessment by ID with RLS enforcement
+- ✅ Validates status not already submitted/completed (throws ValidationError)
+- ✅ Fetches flow to get required question IDs from templates
+- ✅ Validates all required questions have answers (throws ValidationError with missingQuestionIds)
+- ✅ Merges final answers with existing
+- ✅ Transitions status to 'submitted'
+- ✅ Enqueues 'score_assessment' job with responses payload
+- ✅ Returns `{ jobId, message }`
+
+**Transaction Support Implementation** (~0.4 hours):
+
+- ✅ `Transaction` type exported from `lib/database.ts`
+- ✅ `updateProgress()` refactored with internal `updateProgressInTx()` + optional `tx` parameter
+- ✅ `transitionStatus()` refactored with internal `transitionStatusInTx()` + optional `tx` parameter
+- ✅ `queueJob()` updated to accept optional `tx` parameter in `QueueJobOptions`
+- ✅ `submitAssessment()` wraps all writes in single `withRLS` transaction for atomicity
+
+**Supporting Changes**:
+
+- ✅ `findTemplatesByIds()` batch query function in `template.repository.ts`
+- ✅ Uses `inArray` from drizzle-orm for efficient batch fetching
+- ✅ Naming convention: repository functions include entity name (e.g., `findTemplatesByIds` not `findByIds`)
+
+**Files Modified**:
+
+- `packages/core/src/schemas/user-assessment.schema.ts` - Added submit schemas
+- `packages/core/src/assessments/assessment.service.ts` - Added submitAssessment with transactions
+- `packages/core/src/assessments/template.repository.ts` - Added findTemplatesByIds
+- `packages/core/src/assessments/user-assessment.repository.ts` - Added transaction support
+- `packages/core/src/jobs/job-queue.service.ts` - Added transaction support
+- `packages/core/src/lib/database.ts` - Exported Transaction type
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (`pnpm typecheck`)
+- ✅ Tests: 457 tests passing (`pnpm test --filter=@ffp/core`)
+- ✅ Lint: Zero warnings (`pnpm lint`)
+
+**Design Decisions**:
+
+1. **Transaction pattern**: Repository functions accept optional `tx` parameter via options object. If provided, uses existing transaction (caller sets RLS). If not, creates new transaction with RLS.
+2. **Batch queries**: Use `findTemplatesByIds` with `inArray` instead of Promise.all with individual queries
+3. **Required defaults to true**: Questions without explicit `validation.required: false` are considered required
+4. **Job payload**: Includes pre-formatted responses array so scoring job doesn't need to re-fetch
+
+**Next Sub-tasks**: FFP-172 (Lambda handler), FFP-173 (Unit tests)
+
+---
+
 ### December 28, 2025 (Session 69 - FFP-129 Save Assessment Progress API)
 
 **Status**: ✅ FFP-129 COMPLETE
@@ -602,7 +668,9 @@ After code review, two issues were addressed in `packages/functions/src/jobs/pro
 | Dec 24      | FFP-125 Complete (Flow Schema)   | 163.5h        |
 | Dec 24      | FFP-127 Complete (User Assess)   | 165.5h        |
 | Dec 26      | FFP-161 Complete (Start Schemas) | 165.75h       |
-| **Current** | **FFP-128 In Progress**          | **~166/197h** |
+| Dec 28      | FFP-129 Complete (Save Progress) | 166.35h       |
+| Dec 29      | FFP-169/171 Complete (Submit)    | 167.35h       |
+| **Current** | **FFP-130 In Progress**          | **~167/197h** |
 
 ---
 

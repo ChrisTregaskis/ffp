@@ -48,70 +48,77 @@
 
 **Branch**: `feature/ffp-130-submit-assessment-api`
 **Story Points**: 5
-**Status**: 🚧 Implementation Ready
+**Status**: 🚧 Service Layer Complete (2/4 sub-tasks)
 
 ### Implementation Plan
 
 Single PR covering all sub-tasks (logical grouping for cohesive feature):
 
-| Order | Sub-task | Summary                                                | Status  |
-| ----- | -------- | ------------------------------------------------------ | ------- |
-| 1     | FFP-169  | Add response schema for submission                     | Pending |
-| 2     | FFP-171  | Implement `submitAssessment()` service                 | Pending |
-| 3     | FFP-172  | Create `submit-assessment.ts` Lambda handler           | Pending |
-| 4     | FFP-173  | Add unit tests for submission flow                     | Pending |
-| -     | FFP-170  | Required question validation → **Deferred to FFP-233** | N/A     |
+| Order | Sub-task | Summary                                                | Status      |
+| ----- | -------- | ------------------------------------------------------ | ----------- |
+| 1     | FFP-169  | Add request/response schemas for submission            | ✅ Complete |
+| 2     | FFP-171  | Implement `submitAssessment()` service                 | ✅ Complete |
+| 3     | FFP-172  | Create `submit-assessment.ts` Lambda handler           | Pending     |
+| 4     | FFP-173  | Add unit tests for submission flow                     | Pending     |
+| -     | FFP-170  | Required question validation → **Deferred to FFP-233** | N/A         |
 
 ### Key Implementation Decisions
 
-| Decision                         | Choice                                                                                     |
-| -------------------------------- | ------------------------------------------------------------------------------------------ |
-| **Job Payload**                  | Simplified - just `assessmentId`. Scoring job (FFP-133) fetches what it needs.             |
-| **Direct Lambda Invocation**     | Include - invoke job processor immediately after queueing for better UX (avoids 60s wait). |
-| **Required Question Validation** | Deferred to FFP-233 (backlog). Frontend validation sufficient for MVP.                     |
+| Decision                         | Choice                                                                            |
+| -------------------------------- | --------------------------------------------------------------------------------- |
+| **Job Payload**                  | Full payload with responses array (scoring job doesn't need to re-fetch)          |
+| **Required Question Validation** | Included in FFP-171 (validates all required questions have answers before submit) |
+| **Transaction Support**          | All writes in single transaction for atomicity (rollback on failure)              |
+| **Batch Template Query**         | `findTemplatesByIds` with `inArray` instead of sequential queries                 |
 
-### Technical Approach
+### Completed Work
 
-**1. Schema (FFP-169)**
+**FFP-169: Zod Schemas**
 
-- Add `submitAssessmentResponseSchema` to `user-assessment.schema.ts`
-- Response: `{ jobId: string, message: string }`
+- `submitAssessmentRequestSchema` - validates answers object
+- `submitAssessmentResponseSchema` - `{ jobId: uuid, message: string }`
+- Types exported: `SubmitAssessmentRequest`, `SubmitAssessmentResponse`
 
-**2. Service (FFP-171)**
+**FFP-171: Service Implementation**
 
-```
-submitAssessment(assessmentId, answers, context):
-  1. Fetch assessment (with RLS)
-  2. Validate status is 'in_progress' (not already submitted)
-  3. Merge final answers via updateProgress()
-  4. Transition status to 'submitted' via transitionStatus()
-  5. Queue 'score_assessment' job with simplified payload { assessmentId }
-  6. Invoke job processor Lambda asynchronously (fire-and-forget)
-  7. Return { jobId, message: 'Assessment submitted' }
-```
+- `submitAssessment()` in `assessment.service.ts`
+- Validates assessment exists and not already submitted
+- Fetches flow and validates required questions
+- Merges answers, transitions status, enqueues job
+- All writes in single `withRLS` transaction for atomicity
+- Returns `{ jobId, message }`
 
-**3. Handler (FFP-172)**
+**Supporting Changes:**
+
+- `findTemplatesByIds()` batch query in `template.repository.ts`
+- Transaction support added to `updateProgress()`, `transitionStatus()`, `queueJob()`
+- `Transaction` type exported from `lib/database.ts`
+
+### Files Modified
+
+| Action | File                                                          |
+| ------ | ------------------------------------------------------------- |
+| Modify | `packages/core/src/schemas/user-assessment.schema.ts`         |
+| Modify | `packages/core/src/assessments/assessment.service.ts`         |
+| Modify | `packages/core/src/assessments/template.repository.ts`        |
+| Modify | `packages/core/src/assessments/user-assessment.repository.ts` |
+| Modify | `packages/core/src/jobs/job-queue.service.ts`                 |
+| Modify | `packages/core/src/lib/database.ts`                           |
+
+### Remaining Work
+
+**FFP-172: Lambda Handler**
 
 - `POST /assessments/:id/submit`
 - Follow established pattern from `save-progress.ts`
 - Parse body with Zod, call service, return response
 
-**4. Tests (FFP-173)**
+**FFP-173: Unit Tests**
 
 - Successful submission flow
 - Already-submitted rejection
-- Answer merging verification
+- Missing required questions rejection
 - Job enqueue verification
-
-### Files to Create/Modify
-
-| Action | File                                                       |
-| ------ | ---------------------------------------------------------- |
-| Modify | `packages/core/src/schemas/user-assessment.schema.ts`      |
-| Modify | `packages/core/src/assessments/assessment.service.ts`      |
-| Create | `packages/functions/src/assessments/submit-assessment.ts`  |
-| Modify | `packages/core/src/assessments/assessment.service.test.ts` |
-| Modify | `packages/functions/src/router.ts` (add route)             |
 
 ---
 
