@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 29th December 2025
+**Last Updated**: 30th December 2025
 **Current EPIC**: FFP-2 - Assessment Engine
 **Sprint Status**: Sprint 3 ✅ Complete | Sprint 4 early start (FFP-130 in progress)
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
@@ -48,7 +48,7 @@
 
 **Branch**: `feature/ffp-130-submit-assessment-api`
 **Story Points**: 5
-**Status**: 🚧 Service Layer Complete (2/4 sub-tasks)
+**Status**: 🚧 Service Layer + Tests Complete (3/4 sub-tasks)
 
 ### Implementation Plan
 
@@ -58,8 +58,8 @@ Single PR covering all sub-tasks (logical grouping for cohesive feature):
 | ----- | -------- | ------------------------------------------------------ | ----------- |
 | 1     | FFP-169  | Add request/response schemas for submission            | ✅ Complete |
 | 2     | FFP-171  | Implement `submitAssessment()` service                 | ✅ Complete |
-| 3     | FFP-172  | Create `submit-assessment.ts` Lambda handler           | Pending     |
-| 4     | FFP-173  | Add unit tests for submission flow                     | Pending     |
+| 3     | FFP-173  | Add unit tests for submission flow                     | ✅ Complete |
+| 4     | FFP-172  | Create `submit-assessment.ts` Lambda handler           | Pending     |
 | -     | FFP-170  | Required question validation → **Deferred to FFP-233** | N/A         |
 
 ### Key Implementation Decisions
@@ -88,6 +88,12 @@ Single PR covering all sub-tasks (logical grouping for cohesive feature):
 - All writes in single `withRLS` transaction for atomicity
 - Returns `{ jobId, message }`
 
+**FFP-173: Unit Tests**
+
+- 9 new unit tests for `submitAssessment()` in `assessment.service.test.ts`
+- Test cases: successful submission, already-submitted rejection, completed rejection, missing required questions, job payload verification, assessment not found, flow not found, no questions template, optional questions handling
+- Mocked dependencies: user-assessment.repository, flow.repository, template.repository, job-queue.service, context, database
+
 **Supporting Changes:**
 
 - `findTemplatesByIds()` batch query in `template.repository.ts`
@@ -112,13 +118,6 @@ Single PR covering all sub-tasks (logical grouping for cohesive feature):
 - `POST /assessments/:id/submit`
 - Follow established pattern from `save-progress.ts`
 - Parse body with Zod, call service, return response
-
-**FFP-173: Unit Tests**
-
-- Successful submission flow
-- Already-submitted rejection
-- Missing required questions rejection
-- Job enqueue verification
 
 ---
 
@@ -363,7 +362,7 @@ await db.query.users.findMany(); // Leaks all tenants!
 
 - TypeScript strict mode (zero errors)
 - ESLint + Prettier (zero warnings)
-- 457 tests passing (16 RLS integration tests, 57 flow schema tests)
+- 466 tests passing (16 RLS integration tests, 57 flow schema tests)
 - 8% coverage target
 
 ---

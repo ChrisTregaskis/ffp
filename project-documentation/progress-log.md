@@ -8,6 +8,48 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### December 30, 2025 (Session 71 - FFP-173 Unit Tests for Submit Assessment)
+
+**Status**: 🚧 FFP-130 IN PROGRESS (3/4 sub-tasks complete)
+
+**Branch**: `feature/ffp-130-submit-assessment-api`
+
+**Completed Work**:
+
+**FFP-173: Unit Tests for Submit Assessment Flow** (~0.3 hours):
+
+- ✅ Added 9 new unit tests for `submitAssessment()` in `assessment.service.test.ts`
+- ✅ Test cases implemented:
+  - Successful submission with merged answers and job enqueue
+  - ValidationError when assessment is already submitted
+  - ValidationError when assessment is completed
+  - ValidationError with missingQuestionIds when required questions unanswered
+  - Job payload verification (correct structure with responses array)
+  - NotFoundError when assessment does not exist
+  - NotFoundError when flow does not exist
+  - ValidationError when flow has no questions template
+  - Optional questions handling (does not require them)
+
+**Mocking Approach**:
+
+- Mocked `user-assessment.repository` (findById, updateProgress, transitionStatus)
+- Mocked `flow.repository` (findById)
+- Mocked `template.repository` (findTemplatesByIds)
+- Mocked `job-queue.service` (queueJob)
+- Mocked `lib/context` (getUserIdFromContext)
+- Mocked `lib/database` (withRLS)
+- Mocked `@ffp/database` (getDb) with importOriginal for full module exports
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (`pnpm typecheck`)
+- ✅ Tests: 466 tests passing (12 in assessment.service.test.ts)
+- ✅ Lint: Zero warnings
+
+**Next Sub-task**: FFP-172 (Lambda handler)
+
+---
+
 ### December 29, 2025 (Session 70 - FFP-130 Submit Assessment API - Service Layer)
 
 **Status**: 🚧 FFP-130 IN PROGRESS (2/4 sub-tasks complete)
@@ -670,7 +712,8 @@ After code review, two issues were addressed in `packages/functions/src/jobs/pro
 | Dec 26      | FFP-161 Complete (Start Schemas) | 165.75h       |
 | Dec 28      | FFP-129 Complete (Save Progress) | 166.35h       |
 | Dec 29      | FFP-169/171 Complete (Submit)    | 167.35h       |
-| **Current** | **FFP-130 In Progress**          | **~167/197h** |
+| Dec 30      | FFP-173 Complete (Unit Tests)    | 167.65h       |
+| **Current** | **FFP-130 In Progress**          | **~168/197h** |
 
 ---
 

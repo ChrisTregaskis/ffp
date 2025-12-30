@@ -1,14 +1,8 @@
-/**
- * Assessment Service Unit Tests
- *
- * Essential tests for core business logic only.
- */
-
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import { randomUUID } from 'crypto';
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import type * as ffpDatabase from '@ffp/database';
 
 import * as jobQueueService from '../jobs/job-queue.service';
 import * as contextModule from '../lib/context';
@@ -27,6 +21,7 @@ import type { UserAssessment } from '../schemas/user-assessment.schema';
 
 type ContextModule = typeof contextModule;
 type DatabaseModule = typeof databaseModule;
+type FFPDatabaseModule = typeof ffpDatabase;
 
 vi.mock('./flow.repository');
 vi.mock('./user-assessment.repository');
@@ -47,7 +42,7 @@ vi.mock('../lib/database', async (importOriginal) => {
   };
 });
 vi.mock('@ffp/database', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@ffp/database')>();
+  const actual = await importOriginal<FFPDatabaseModule>();
   return {
     ...actual,
     getDb: vi.fn(),
@@ -311,14 +306,14 @@ describe('Assessment Service', () => {
         context.tenantId,
         assessmentId,
         { answers: { ...existingAnswers, ...newAnswers } },
-        expect.objectContaining({ tx: expect.anything() })
+        expect.objectContaining({ tx: expect.anything() as unknown })
       );
 
       expect(mockedUserAssessmentRepo.transitionStatus).toHaveBeenCalledWith(
         context.tenantId,
         assessmentId,
         'submitted',
-        expect.objectContaining({ tx: expect.anything() })
+        expect.objectContaining({ tx: expect.anything() as unknown })
       );
 
       expect(mockedJobQueueService.queueJob).toHaveBeenCalledWith(
@@ -330,10 +325,10 @@ describe('Assessment Service', () => {
           responses: expect.arrayContaining([
             expect.objectContaining({ questionId: questionId1, answerValue: 3 }),
             expect.objectContaining({ questionId: questionId2, answerValue: 5 }),
-          ]),
+          ]) as unknown[],
         },
         context,
-        expect.objectContaining({ priority: 2, tx: expect.anything() })
+        expect.objectContaining({ priority: 2, tx: expect.anything() as unknown })
       );
     });
 
@@ -449,7 +444,7 @@ describe('Assessment Service', () => {
         const validationError = error as ValidationError;
         expect(validationError.message).toBe('Required questions are missing answers');
         expect(validationError.details).toEqual({
-          missingQuestionIds: expect.arrayContaining([questionId2, questionId3]),
+          missingQuestionIds: expect.arrayContaining([questionId2, questionId3]) as string[],
         });
       }
 
@@ -523,7 +518,7 @@ describe('Assessment Service', () => {
           responses: expect.arrayContaining([
             { questionId: questionId1, answerValue: 7, answerId: undefined },
             { questionId: questionId2, answerValue: 3, answerId },
-          ]),
+          ]) as unknown[],
         }),
         context,
         expect.objectContaining({ priority: 2 })
