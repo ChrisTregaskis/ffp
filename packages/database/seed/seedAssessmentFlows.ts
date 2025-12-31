@@ -4,6 +4,7 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../src/schema/index.js';
 import { assessmentFlows } from '../src/schema/index.js';
 import { terminalPrefix, TerminalPrefix } from '../src/lib/terminal-logger.js';
+import { TEMPLATE_IDS } from './seedAssessmentTemplates.js';
 
 import type { FlowStep } from '../src/constants/flow.constants.js';
 
@@ -37,7 +38,7 @@ const DEFAULT_FLOW_STEPS: FlowStep[] = [
   {
     order: 2,
     type: 'questions',
-    templateId: 'pre-assessment-questions-v1',
+    templateId: TEMPLATE_IDS.PRE_ASSESSMENT_QUESTIONS,
     config: {
       title: 'Pre-Assessment Questions',
       description: 'Quick questions about your goals, pain levels, and medical history',
@@ -61,7 +62,7 @@ const DEFAULT_FLOW_STEPS: FlowStep[] = [
   {
     order: 4,
     type: 'video-assessment',
-    templateId: 'strength-assessment-v1',
+    templateId: TEMPLATE_IDS.STRENGTH_ASSESSMENT,
     config: {
       title: 'Strength Assessment',
       description: "Let's evaluate your current strength levels with some simple exercises.",
@@ -76,7 +77,7 @@ const DEFAULT_FLOW_STEPS: FlowStep[] = [
   {
     order: 5,
     type: 'video-assessment',
-    templateId: 'balance-assessment-v1',
+    templateId: TEMPLATE_IDS.BALANCE_ASSESSMENT,
     config: {
       title: 'Balance Assessment',
       description: 'Tests to measure your stability and balance in different positions.',
