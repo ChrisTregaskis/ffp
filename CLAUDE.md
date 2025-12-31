@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Team Contacts
+
+**Dev Team:**
+When asked to "email the dev team" or "send to dev team", use these addresses:
+
+- c.tregaskis+ffp.dev.team@gmail.com
+- chris.tregaskis@wongdoody.com
+
 ## Language & Spelling Preference
 
 **IMPORTANT**: Always use **British English spelling** for FFP-specific code and documentation.
