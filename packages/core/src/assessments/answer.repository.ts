@@ -5,32 +5,12 @@ import { userAssessmentAnswers } from '@ffp/database/schema';
 
 import { withRLS, type Transaction } from '../lib/database';
 
-export interface UserAssessmentAnswer {
-  id: string;
-  tenantId: string;
-  userAssessmentId: string;
-  questionId: string;
-  answerValue: AnswerValue;
-  answeredAt: Date;
-}
+// User assessment answer record type - inferred from Drizzle schema
+export type UserAssessmentAnswer = typeof userAssessmentAnswers.$inferSelect;
 
 export interface SaveAnswerInput {
   questionId: string;
   answerValue: AnswerValue;
-}
-
-/**
- * Map database record to UserAssessmentAnswer type
- */
-function mapToAnswer(record: typeof userAssessmentAnswers.$inferSelect): UserAssessmentAnswer {
-  return {
-    id: record.id,
-    tenantId: record.tenantId,
-    userAssessmentId: record.userAssessmentId,
-    questionId: record.questionId,
-    answerValue: record.answerValue,
-    answeredAt: record.answeredAt,
-  };
 }
 
 // RLS is enforced via tenant context.
@@ -40,12 +20,10 @@ export async function findByAssessmentId(
   userId?: string
 ): Promise<UserAssessmentAnswer[]> {
   return await withRLS(tenantId, userId, async (tx) => {
-    const records = await tx
+    return await tx
       .select()
       .from(userAssessmentAnswers)
       .where(eq(userAssessmentAnswers.userAssessmentId, assessmentId));
-
-    return records.map(mapToAnswer);
   });
 }
 
@@ -68,11 +46,7 @@ export async function findByAssessmentAndQuestion(
       )
       .limit(1);
 
-    if (records.length === 0) {
-      return null;
-    }
-
-    return mapToAnswer(records[0]);
+    return records[0] ?? null;
   });
 }
 
@@ -115,7 +89,7 @@ async function upsertAnswerInTx(
     })
     .returning();
 
-  return mapToAnswer(record);
+  return record;
 }
 
 /**
@@ -194,7 +168,7 @@ async function saveAnswersInTx(
       })
       .returning();
 
-    results.push(mapToAnswer(record));
+    results.push(record);
   }
 
   return results;

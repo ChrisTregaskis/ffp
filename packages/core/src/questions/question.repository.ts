@@ -1,68 +1,15 @@
 import { eq, inArray, asc } from 'drizzle-orm';
 
-import type { DbClient, QuestionOption, QuestionValidation, ConfigOverrides } from '@ffp/database';
-import { questions, templateQuestions } from '@ffp/database/schema';
+import type { DbClient, QuestionWithConfig } from '@ffp/database';
+import { questions, templateQuestions, type QuestionRecord } from '@ffp/database/schema';
+
+// Re-export types for convenience
+export type { QuestionWithConfig };
 
 /**
- * Question with optional template-specific configuration
- *
- * Represents a question as returned by findByTemplateId, including
- * display order and any config overrides from the template.
+ * Base question record type - inferred from Drizzle schema
  */
-export interface QuestionWithConfig {
-  id: string;
-  slug: string;
-  type: string;
-  questionText: string;
-  description: string | null;
-  options: QuestionOption[] | null;
-  validation: QuestionValidation | null;
-  videoId: string | null;
-  scoreDimension: string | null;
-  isActive: boolean;
-  /** Display order within the template (1-based) */
-  displayOrder: number;
-  /** Template-specific overrides (merged on read by caller if needed) */
-  configOverrides: ConfigOverrides | null;
-}
-
-/**
- * Base question record type
- */
-export interface Question {
-  id: string;
-  slug: string;
-  type: string;
-  questionText: string;
-  description: string | null;
-  options: QuestionOption[] | null;
-  validation: QuestionValidation | null;
-  videoId: string | null;
-  scoreDimension: string | null;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-/**
- * Map database record to Question type
- */
-function mapToQuestion(record: typeof questions.$inferSelect): Question {
-  return {
-    id: record.id,
-    slug: record.slug,
-    type: record.type,
-    questionText: record.questionText,
-    description: record.description,
-    options: record.options,
-    validation: record.validation,
-    videoId: record.videoId,
-    scoreDimension: record.scoreDimension,
-    isActive: record.isActive,
-    createdAt: record.createdAt,
-    updatedAt: record.updatedAt,
-  };
-}
+export type Question = QuestionRecord;
 
 /**
  * Find a question by ID
@@ -72,11 +19,7 @@ function mapToQuestion(record: typeof questions.$inferSelect): Question {
 export async function findByQuestionId(db: DbClient, id: string): Promise<Question | null> {
   const records = await db.select().from(questions).where(eq(questions.id, id)).limit(1);
 
-  if (records.length === 0) {
-    return null;
-  }
-
-  return mapToQuestion(records[0]);
+  return records[0] ?? null;
 }
 
 /**
@@ -93,9 +36,7 @@ export async function findByQuestionIds(db: DbClient, ids: string[]): Promise<Qu
     return [];
   }
 
-  const records = await db.select().from(questions).where(inArray(questions.id, ids));
-
-  return records.map(mapToQuestion);
+  return await db.select().from(questions).where(inArray(questions.id, ids));
 }
 
 /**
@@ -108,11 +49,7 @@ export async function findByQuestionIds(db: DbClient, ids: string[]): Promise<Qu
 export async function findQuestionBySlug(db: DbClient, slug: string): Promise<Question | null> {
   const records = await db.select().from(questions).where(eq(questions.slug, slug)).limit(1);
 
-  if (records.length === 0) {
-    return null;
-  }
-
-  return mapToQuestion(records[0]);
+  return records[0] ?? null;
 }
 
 /**
@@ -229,8 +166,7 @@ export async function findAllQuestions(
 ): Promise<Question[]> {
   const query = db.select().from(questions);
 
-  const records =
-    options?.activeOnly !== false ? await query.where(eq(questions.isActive, true)) : await query;
-
-  return records.map(mapToQuestion);
+  return options?.activeOnly !== false
+    ? await query.where(eq(questions.isActive, true))
+    : await query;
 }

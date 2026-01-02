@@ -64,3 +64,29 @@ export interface ConfigOverrides {
  * - video-response: { videoId: string, thumbnailUrl?: string }
  */
 export type AnswerValue = Record<string, unknown>;
+
+/**
+ * Question with template-specific configuration
+ *
+ * Represents a question as returned when joining with template_questions,
+ * including display order and any config overrides from the template.
+ *
+ * This is the primary type used when fetching questions for a template,
+ * as it includes the template-specific configuration.
+ */
+export interface QuestionWithConfig {
+  id: string;
+  slug: string;
+  type: string;
+  questionText: string;
+  description: string | null;
+  options: QuestionOption[] | null;
+  validation: QuestionValidation | null;
+  videoId: string | null;
+  scoreDimension: string | null;
+  isActive: boolean;
+  /** Display order within the template (1-based) */
+  displayOrder: number;
+  /** Template-specific overrides (merged on read by caller if needed) */
+  configOverrides: ConfigOverrides | null;
+}

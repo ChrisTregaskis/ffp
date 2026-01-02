@@ -276,9 +276,9 @@ async function getRequiredQuestionIds(flowSteps: FlowStep[]): Promise<string[]> 
  */
 function findMissingRequiredQuestions(
   requiredQuestionIds: string[],
-  answeredQuestionIds: Set<string>
+  answeredQuestionIds: string[]
 ): string[] {
-  return requiredQuestionIds.filter((questionId) => !answeredQuestionIds.has(questionId));
+  return requiredQuestionIds.filter((questionId) => !answeredQuestionIds.includes(questionId));
 }
 
 /**
@@ -331,15 +331,15 @@ export async function submitAssessment(
   // Convert request answers to save format
   const newAnswersToSave = convertAnswersToSaveFormat(data.answers);
 
-  // Build set of all answered question IDs (existing + new)
-  const answeredQuestionIds = new Set<string>();
+  // Build array of all answered question IDs (existing + new)
+  const answeredQuestionIds: string[] = [];
 
   for (const answer of existingAnswers) {
-    answeredQuestionIds.add(answer.questionId);
+    answeredQuestionIds.push(answer.questionId);
   }
 
   for (const answer of newAnswersToSave) {
-    answeredQuestionIds.add(answer.questionId);
+    answeredQuestionIds.push(answer.questionId);
   }
 
   // Validate required questions are answered
