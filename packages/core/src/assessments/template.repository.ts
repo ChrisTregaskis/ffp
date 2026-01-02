@@ -4,12 +4,19 @@ import type { DbClient } from '@ffp/database';
 import { assessmentTemplates } from '@ffp/database/schema';
 
 import { NotFoundError } from '../lib/errors';
+import { findByTemplateId as findQuestionsByTemplateId } from '../questions/question.repository';
 
+import type { QuestionWithConfig } from '../questions/question.repository';
 import type {
   AssessmentTemplate,
   CreateAssessmentTemplateInput,
   UpdateAssessmentTemplateInput,
 } from '../schemas/assessment-template.schema';
+
+export interface AssessmentTemplateWithQuestions extends AssessmentTemplate {
+  /** Questions in display order, loaded from template_questions join */
+  templateQuestions: QuestionWithConfig[];
+}
 
 /**
  * Map database record to AssessmentTemplate type
@@ -177,4 +184,31 @@ export async function deactivate(db: DbClient, id: string): Promise<void> {
       updatedAt: new Date(),
     })
     .where(eq(assessmentTemplates.id, id));
+}
+
+/**
+ * Find an assessment template by ID with its questions loaded
+ *
+ * Fetches the template and its associated questions via the template_questions
+ * join table. Questions are returned in display order.
+ *
+ */
+export async function findWithQuestions(
+  db: DbClient,
+  id: string
+): Promise<AssessmentTemplateWithQuestions | null> {
+  // First fetch the template
+  const template = await findById(db, id);
+
+  if (!template) {
+    return null;
+  }
+
+  // Fetch questions via question repository
+  const loadedQuestions = await findQuestionsByTemplateId(db, id);
+
+  return {
+    ...template,
+    templateQuestions: loadedQuestions,
+  };
 }

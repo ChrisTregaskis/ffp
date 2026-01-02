@@ -8,6 +8,127 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### January 2, 2026 (Session 75 - FFP-130 Questions Table Refactor - Session C)
+
+**Status**: 🔄 FFP-130 Questions Table Refactor IN PROGRESS (Phases 1-7 Complete)
+
+**Branch**: `feature/ffp-130-submit-assessment-api`
+
+**Completed Work**:
+
+**Phase 6: Core Package - Repository Updates** (~0.5 hours):
+
+- ✅ **6.1: Created question.repository.ts**
+  - `packages/core/src/questions/question.repository.ts`
+  - `findById(db, id)` - Find question by ID
+  - `findByIds(db, ids)` - Find multiple questions by IDs (batch query)
+  - `findBySlug(db, slug)` - Find question by human-readable slug
+  - `findByTemplateId(db, templateId)` - Join with template_questions, ordered by displayOrder
+  - `findByTemplateIds(db, templateIds)` - Batch fetch for multiple templates
+  - `findAll(db, options)` - Find all active questions
+  - Types: `Question`, `QuestionWithConfig` (includes displayOrder and configOverrides)
+
+- ✅ **6.2: Created answer.repository.ts**
+  - `packages/core/src/assessments/answer.repository.ts`
+  - `findByAssessmentId(tenantId, assessmentId, userId?)` - Find all answers
+  - `findByAssessmentAndQuestion(tenantId, assessmentId, questionId, userId?)` - Find specific answer
+  - `upsertAnswer(tenantId, assessmentId, questionId, answerValue, options?)` - ON CONFLICT upsert
+  - `saveAnswers(tenantId, assessmentId, answers[], options?)` - Batch upsert
+  - `deleteByAssessmentId(tenantId, assessmentId, userId?)` - Delete all answers
+  - `deleteByQuestionIds(tenantId, assessmentId, questionIds[], userId?)` - Delete specific answers
+  - Transaction support via optional `tx` parameter (follows existing pattern)
+  - Types: `UserAssessmentAnswer`, `SaveAnswerInput`
+
+- ✅ **6.3: Updated template.repository.ts**
+  - Added `findWithQuestions(db, id)` - Fetch template with questions loaded via join
+  - Added `AssessmentTemplateWithQuestions` type
+
+- ✅ **6.4: Updated user-assessment.repository.ts**
+  - Removed JSONB answer merging logic from `updateProgress()`
+  - Now only updates `currentStep` (answers handled via `answerRepository`)
+  - Added deprecation comments explaining migration
+
+- ✅ **6.5: Updated assessments/index.ts**
+  - Added `answerRepository` namespace export
+  - Added `UserAssessmentAnswer`, `SaveAnswerInput` type exports
+
+- ✅ **6.6: Created questions/index.ts**
+  - Barrel export for new questions domain
+  - Exports `questionRepository` namespace and types
+
+**Phase 7: Service Layer Updates** (~0.4 hours):
+
+- ✅ **7.1: assessment.service.ts - Conversion Helpers**
+  - `convertAnswersToResponseFormat()` - Convert DB records to API response format
+  - `convertAnswersToSaveFormat()` - Convert API request to DB save format
+  - `extractAnswerValue()` - Extract raw value from JSONB structure
+
+- ✅ **7.2: assessment.service.ts - startAssessment**
+  - Load answers from `user_assessment_answers` table when resuming
+  - Convert to API format via `convertAnswersToResponseFormat()`
+  - Return empty object for new assessments (no answers yet)
+
+- ✅ **7.3: assessment.service.ts - saveProgress**
+  - Wrapped all writes in single `withRLS` transaction
+  - Save answers via `answerRepository.saveAnswers()` instead of JSONB merge
+  - Status transition and currentStep update in same transaction
+
+- ✅ **7.4: assessment.service.ts - submitAssessment**
+  - Load existing answers from `user_assessment_answers` table
+  - Build `answeredQuestionIds` set from both existing and new answers
+  - Save new answers via `answerRepository.saveAnswers()`
+  - Build job payload from all answers with `extractAnswerValue()`
+
+- ✅ **7.5: assessment.service.ts - getRequiredQuestionIds**
+  - Now uses `questionRepository.findByTemplateIds()` instead of `templateRepository.findTemplatesByIds()`
+  - No longer accesses deprecated `template.questions` field
+
+- ✅ **7.6: assessment.service.test.ts - Test Refactor**
+  - Removed `templateRepository` mocks
+  - Added `questionRepository` and `answerRepository` mocks
+  - Updated test fixtures: `QuestionWithConfig` instead of `AssessmentTemplate.questions`
+  - All 12 tests updated for new repository patterns
+  - Fixed answer expectations (JSONB structure in DB vs raw values in API)
+
+**Test File Recovery** (~0.2 hours):
+
+- Fixed corrupted `assessment.service.test.ts` file
+  - File had syntax errors and incomplete test blocks
+  - Reconstructed from diff and verified all tests pass
+
+**Files Created**:
+
+- `packages/core/src/questions/question.repository.ts`
+- `packages/core/src/questions/index.ts`
+- `packages/core/src/assessments/answer.repository.ts`
+
+**Files Modified**:
+
+- `packages/core/src/assessments/template.repository.ts` - Added findWithQuestions
+- `packages/core/src/assessments/user-assessment.repository.ts` - Removed answer merging
+- `packages/core/src/assessments/user-assessment.repository.test.ts` - Updated test expectations
+- `packages/core/src/assessments/assessment.service.ts` - New repository integration
+- `packages/core/src/assessments/assessment.service.test.ts` - Complete mock refactor
+- `packages/core/src/assessments/index.ts` - Added answerRepository export
+
+**Quality Assurance**:
+
+- ✅ Build: All packages built successfully (`pnpm build`)
+- ✅ TypeScript: Zero errors (`pnpm typecheck`)
+- ✅ Tests: 466 tests passing (`pnpm test`)
+- ✅ Lint: Zero warnings (`pnpm lint`)
+
+**Design Decisions**:
+
+1. **Answer storage migration**: Answers now stored in `user_assessment_answers` table, not JSONB
+2. **JSONB structure**: DB stores `{ value: X }`, API returns raw value - conversion helpers handle this
+3. **Transaction boundaries**: `saveProgress` and `submitAssessment` wrap all writes in single transaction
+4. **Deprecation approach**: JSONB `answers` field kept but ignored; gradual migration in Phase 8
+
+**Next**: Session D (Phases 8-9: Breaking changes to remove deprecated fields + test cleanup)
+
+---
+
 ### January 2, 2026 (Session 74 - FFP-130 Questions Table Refactor - Session B)
 
 **Status**: 🔄 FFP-130 Questions Table Refactor IN PROGRESS (Phases 1-5 Complete)

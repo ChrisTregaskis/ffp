@@ -4,13 +4,14 @@ import { queueJob } from '../jobs/job-queue.service';
 import { getUserIdFromContext } from '../lib/context';
 import { withRLS } from '../lib/database';
 import { NotFoundError, ValidationError } from '../lib/errors';
+import { findByTemplateIds as findQuestionsByTemplateIds } from '../questions/question.repository';
 
+import * as answerRepository from './answer.repository';
 import * as flowRepository from './flow.repository';
-import { findTemplatesByIds } from './template.repository';
 import * as userAssessmentRepository from './user-assessment.repository';
 
+import type { UserAssessmentAnswer, SaveAnswerInput } from './answer.repository';
 import type { TenantContext } from '../lib/context';
-import type { AssessmentTemplate } from '../schemas/assessment-template.schema';
 import type {
   StartAssessmentResponse,
   SaveProgressRequest,
@@ -19,6 +20,86 @@ import type {
   SubmitAssessmentResponse,
   UserAssessmentAnswers,
 } from '../schemas/user-assessment.schema';
+
+/**
+ * Convert answers from database table format to API response format
+ *
+ * The user_assessment_answers table stores one row per answer, while the
+ * API returns answers as a record keyed by questionId for efficient lookup.
+ *
+ * Note: The database AnswerValue is a flexible JSONB structure (Record<string, unknown>),
+ * but the API schema expects answerValue as string | number. We extract the raw value
+ * from the JSONB structure for API compatibility.
+ */
+function convertAnswersToResponseFormat(answers: UserAssessmentAnswer[]): UserAssessmentAnswers {
+  const result: UserAssessmentAnswers = {};
+
+  for (const answer of answers) {
+    // Extract the value from the JSONB structure using the shared helper
+    const answerValue = extractAnswerValue(answer.answerValue);
+
+    result[answer.questionId] = {
+      questionId: answer.questionId,
+      answerValue,
+      answeredAt: answer.answeredAt,
+    };
+  }
+
+  return result;
+}
+
+/**
+ * Convert answers from API request format to database input format
+ *
+ * The API accepts answers as a record keyed by questionId, while the
+ * repository expects an array of SaveAnswerInput objects.
+ *
+ * Note: The API sends answerValue as string | number, but the database
+ * AnswerValue type is Record<string, unknown>. We wrap the value in an
+ * object structure for consistency.
+ */
+function convertAnswersToSaveFormat(answers: UserAssessmentAnswers): SaveAnswerInput[] {
+  return Object.values(answers).map((answer) => ({
+    questionId: answer.questionId,
+    // Wrap the raw value in a consistent structure for database storage
+    answerValue: { value: answer.answerValue } as Record<string, unknown>,
+  }));
+}
+
+/**
+ * Extract the actual answer value from JSONB structure
+ *
+ * The database stores answers as JSONB (e.g., { value: 5 } or { selected: 'option-a' }),
+ * but the job payload requires a plain string | number value.
+ */
+function extractAnswerValue(answerValue: unknown): string | number {
+  // Handle direct primitive values
+  if (typeof answerValue === 'string' || typeof answerValue === 'number') {
+    return answerValue;
+  }
+
+  // Handle structured JSONB objects
+  if (typeof answerValue === 'object' && answerValue !== null) {
+    const obj = answerValue as Record<string, unknown>;
+    const valueKey = 'value' in obj ? obj.value : null;
+    const selectedKey = 'selected' in obj ? obj.selected : null;
+    const textKey = 'text' in obj ? obj.text : null;
+
+    if (typeof valueKey === 'string' || typeof valueKey === 'number') {
+      return valueKey;
+    } else if (typeof selectedKey === 'string') {
+      return selectedKey;
+    } else if (typeof textKey === 'string') {
+      return textKey;
+    }
+
+    // Fallback: stringify the object
+    return JSON.stringify(answerValue);
+  }
+
+  // Fallback for other types
+  return String(answerValue);
+}
 
 /**
  * Start a new assessment or resume an existing one
@@ -56,12 +137,21 @@ export async function startAssessment(
   const existingAssessment = await userAssessmentRepository.findResumable(tenantId, userId, flowId);
 
   if (existingAssessment) {
+    // Load answers from user_assessment_answers table
+    const storedAnswers = await answerRepository.findByAssessmentId(
+      tenantId,
+      existingAssessment.id,
+      userId
+    );
+
+    const answers = convertAnswersToResponseFormat(storedAnswers);
+
     // Return existing assessment with isResumed=true
     return {
       assessmentId: existingAssessment.id,
       currentStep: existingAssessment.currentStep,
       status: existingAssessment.status,
-      answers: existingAssessment.answers,
+      answers,
       flowId: existingAssessment.flowId,
       isResumed: true,
     };
@@ -78,7 +168,7 @@ export async function startAssessment(
     assessmentId: newAssessment.id,
     currentStep: newAssessment.currentStep,
     status: newAssessment.status,
-    answers: newAssessment.answers,
+    answers: {}, // New assessment has no answers yet
     flowId: newAssessment.flowId,
     isResumed: false,
   };
@@ -107,43 +197,57 @@ export async function saveProgress(
   context: TenantContext
 ): Promise<SaveProgressResponse> {
   const { tenantId } = context;
+  const userId = await getUserIdFromContext(context);
 
-  // 1. Fetch assessment by ID (RLS enforced)
+  // Fetch assessment by ID (RLS enforced)
   const assessment = await userAssessmentRepository.findById(tenantId, assessmentId);
 
   if (!assessment) {
     throw new NotFoundError('Assessment', assessmentId);
   }
 
-  // 2. Validate assessment is not submitted/completed
+  // Validate assessment is not submitted/completed
   if (assessment.status === 'submitted' || assessment.status === 'completed') {
     throw new ValidationError('Cannot modify submitted assessment');
   }
 
-  // 3. If status is 'not_started', transition to 'in_progress'
-  if (assessment.status === 'not_started') {
-    await userAssessmentRepository.transitionStatus(tenantId, assessmentId, 'in_progress');
-  }
+  // Execute all writes in a single transaction for atomicity
+  return await withRLS(tenantId, userId, async (tx) => {
+    // If status is 'not_started', transition to 'in_progress'
+    if (assessment.status === 'not_started') {
+      await userAssessmentRepository.transitionStatus(tenantId, assessmentId, 'in_progress', {
+        tx,
+      });
+    }
 
-  // 4. Update progress (merges answers + updates currentStep)
-  const updatedAssessment = await userAssessmentRepository.updateProgress(tenantId, assessmentId, {
-    answers: data.answers,
-    currentStep: data.currentStep,
+    // Save answers to user_assessment_answers table
+    const answersToSave = convertAnswersToSaveFormat(data.answers);
+    if (answersToSave.length > 0) {
+      await answerRepository.saveAnswers(tenantId, assessmentId, answersToSave, { tx });
+    }
+
+    // Update currentStep
+    const updatedAssessment = await userAssessmentRepository.updateProgress(
+      tenantId,
+      assessmentId,
+      { currentStep: data.currentStep },
+      { tx }
+    );
+
+    // Return success response
+    return {
+      success: true as const,
+      updatedAt: updatedAssessment.updatedAt.toISOString(),
+    };
   });
-
-  // 5. Return success response
-  return {
-    success: true,
-    updatedAt: updatedAssessment.updatedAt.toISOString(),
-  };
 }
 
 /**
  * Get required question IDs from flow templates
  *
- * Fetches all templates referenced by 'questions' and 'video-assessment' steps
- * in the flow, then extracts question IDs where validation.required is true
- * (or undefined, as required defaults to true).
+ * Fetches all questions from templates referenced by 'questions' and
+ * 'video-assessment' steps in the flow, then returns IDs where
+ * validation.required is true (or undefined, as required defaults to true).
  */
 async function getRequiredQuestionIds(flowSteps: FlowStep[]): Promise<string[]> {
   const db = getDb();
@@ -158,14 +262,11 @@ async function getRequiredQuestionIds(flowSteps: FlowStep[]): Promise<string[]> 
     return [];
   }
 
-  // Fetch all templates in a single query
-  const templates: AssessmentTemplate[] = await findTemplatesByIds(db, templateIds);
+  // Fetch all questions via the template_questions join table
+  const questions = await findQuestionsByTemplateIds(db, templateIds);
 
-  // Extract required question IDs from all templates
-  // Note: template.questions is deprecated; future versions will fetch from template_questions
-  return templates.flatMap((template) =>
-    (template.questions ?? []).filter((q) => q.validation?.required !== false).map((q) => q.id)
-  );
+  // Extract required question IDs (validation.required defaults to true)
+  return questions.filter((q) => q.validation?.required !== false).map((q) => q.id);
 }
 
 /**
@@ -175,15 +276,15 @@ async function getRequiredQuestionIds(flowSteps: FlowStep[]): Promise<string[]> 
  */
 function findMissingRequiredQuestions(
   requiredQuestionIds: string[],
-  answers: UserAssessmentAnswers
+  answeredQuestionIds: Set<string>
 ): string[] {
-  return requiredQuestionIds.filter((questionId) => !(questionId in answers));
+  return requiredQuestionIds.filter((questionId) => !answeredQuestionIds.has(questionId));
 }
 
 /**
  * Submit an assessment for scoring
  *
- * Validates the assessment can be submitted, merges final answers,
+ * Validates the assessment can be submitted, saves final answers,
  * transitions status to 'submitted', and enqueues a scoring job.
  *
  * @throws NotFoundError if assessment doesn't exist or not accessible
@@ -224,15 +325,26 @@ export async function submitAssessment(
     throw new NotFoundError('Assessment flow', assessment.flowId);
   }
 
-  // Merge new answers with existing answers
-  const mergedAnswers: UserAssessmentAnswers = {
-    ...assessment.answers,
-    ...data.answers,
-  };
+  // Load existing answers from user_assessment_answers table
+  const existingAnswers = await answerRepository.findByAssessmentId(tenantId, assessmentId, userId);
+
+  // Convert request answers to save format
+  const newAnswersToSave = convertAnswersToSaveFormat(data.answers);
+
+  // Build set of all answered question IDs (existing + new)
+  const answeredQuestionIds = new Set<string>();
+
+  for (const answer of existingAnswers) {
+    answeredQuestionIds.add(answer.questionId);
+  }
+
+  for (const answer of newAnswersToSave) {
+    answeredQuestionIds.add(answer.questionId);
+  }
 
   // Validate required questions are answered
   const requiredQuestionIds = await getRequiredQuestionIds(flow.steps);
-  const missingQuestionIds = findMissingRequiredQuestions(requiredQuestionIds, mergedAnswers);
+  const missingQuestionIds = findMissingRequiredQuestions(requiredQuestionIds, answeredQuestionIds);
 
   if (missingQuestionIds.length > 0) {
     throw new ValidationError('Required questions are missing answers', {
@@ -248,25 +360,37 @@ export async function submitAssessment(
     throw new ValidationError('Assessment flow has no questions template');
   }
 
-  // Convert merged answers to responses format for scoring job
-  const responses = Object.values(mergedAnswers).map((answer) => ({
-    questionId: answer.questionId,
-    answerValue: answer.answerValue,
-    answerId: answer.answerId,
-  }));
+  // Build responses array for scoring job from all answers
+  // Combine existing answers with new answers (new answers override existing)
+  // Extract the actual value from JSONB structure for the job payload
+  const allAnswersMap = new Map<string, { questionId: string; answerValue: string | number }>();
+
+  for (const answer of existingAnswers) {
+    const extractedValue = extractAnswerValue(answer.answerValue);
+
+    allAnswersMap.set(answer.questionId, {
+      questionId: answer.questionId,
+      answerValue: extractedValue,
+    });
+  }
+
+  for (const answer of newAnswersToSave) {
+    const extractedValue = extractAnswerValue(answer.answerValue);
+    allAnswersMap.set(answer.questionId, {
+      questionId: answer.questionId,
+      answerValue: extractedValue,
+    });
+  }
+
+  const responses = Array.from(allAnswersMap.values());
 
   // Execute all writes in a single transaction for atomicity
   // If any step fails, all changes are rolled back
   return await withRLS(tenantId, userId, async (tx) => {
-    // Update assessment with merged answers
-    await userAssessmentRepository.updateProgress(
-      tenantId,
-      assessmentId,
-      {
-        answers: mergedAnswers,
-      },
-      { tx }
-    );
+    // Save new answers to user_assessment_answers table
+    if (newAnswersToSave.length > 0) {
+      await answerRepository.saveAnswers(tenantId, assessmentId, newAnswersToSave, { tx });
+    }
 
     // Transition status to 'submitted'
     await userAssessmentRepository.transitionStatus(tenantId, assessmentId, 'submitted', { tx });

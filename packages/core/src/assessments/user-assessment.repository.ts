@@ -212,16 +212,11 @@ async function updateProgressInTx(
 
   const currentRecord = existing[0];
 
-  // Merge answers if provided
-  const mergedAnswers = data.answers
-    ? { ...(currentRecord.answers as object), ...data.answers }
-    : currentRecord.answers;
-
+  // Only update currentStep
   const [record] = await tx
     .update(userAssessments)
     .set({
       currentStep: data.currentStep ?? currentRecord.currentStep,
-      answers: mergedAnswers,
       updatedAt: new Date(),
     })
     .where(eq(userAssessments.id, assessmentId))
@@ -240,8 +235,10 @@ export interface UpdateProgressOptions {
 /**
  * Update assessment progress
  *
- * Updates currentStep and/or merges new answers.
- * Does not change status - use transitionStatus for that.
+ * Updates currentStep only. Does not change status - use transitionStatus for that.
+ *
+ * Note: Answers are stored in the user_assessment_answers table.
+ * Use answerRepository.saveAnswers() to save answers separately.
  *
  * @param options.userId - Optional user ID for fine-grained RLS. While tenant-level
  *   isolation is sufficient for current needs, passing userId enables future

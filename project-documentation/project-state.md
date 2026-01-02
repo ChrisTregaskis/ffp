@@ -48,7 +48,7 @@
 
 **Branch**: `feature/ffp-130-submit-assessment-api`
 **Story Points**: 5
-**Status**: 🔄 Sessions A+B Complete (Phases 1-5) | Session C Pending
+**Status**: 🔄 Sessions A+B+C Complete (Phases 1-7) | Session D Pending
 
 ### Implementation Plan
 
@@ -63,10 +63,65 @@ Refactoring questions from embedded JSONB (`assessment_templates.questions`) int
 | 3     | Generate and Run Migration         | ✅ Complete | A       |
 | 4     | Seed Data Refactor                 | ✅ Complete | B       |
 | 5     | Core Package - Schema Updates      | ✅ Complete | B       |
-| 6     | Core Package - Repository Updates  | ⬜ Pending  | C       |
-| 7     | Service Layer Updates              | ⬜ Pending  | C       |
+| 6     | Core Package - Repository Updates  | ✅ Complete | C       |
+| 7     | Service Layer Updates              | ✅ Complete | C       |
 | 8     | Modify Existing Schemas (Breaking) | ⬜ Pending  | D       |
 | 9     | Test Updates                       | ⬜ Pending  | D       |
+
+### Session C Completed Work (2nd January 2026)
+
+**Phase 6: Core Package - Repository Updates**
+
+- Created `packages/core/src/questions/question.repository.ts`
+  - `findById(db, id)` - Find question by ID
+  - `findByIds(db, ids)` - Find multiple questions by IDs
+  - `findBySlug(db, slug)` - Find question by slug
+  - `findByTemplateId(db, templateId)` - Join with template_questions, order by displayOrder
+  - `findByTemplateIds(db, templateIds)` - Batch fetch for multiple templates
+  - `findAll(db, options)` - Find all active questions
+  - Types exported: `Question`, `QuestionWithConfig`
+- Created `packages/core/src/questions/index.ts` - Barrel export for questions domain
+- Created `packages/core/src/assessments/answer.repository.ts`
+  - `findByAssessmentId()` - Find all answers for assessment
+  - `findByAssessmentAndQuestion()` - Find specific answer
+  - `upsertAnswer()` - Insert or update single answer (ON CONFLICT)
+  - `saveAnswers()` - Batch upsert multiple answers
+  - `deleteByAssessmentId()` - Delete all answers for assessment
+  - `deleteByQuestionIds()` - Delete specific answers
+  - Transaction support via optional `tx` parameter
+  - Types exported: `UserAssessmentAnswer`, `SaveAnswerInput`
+- Updated `packages/core/src/assessments/template.repository.ts`
+  - Added `findWithQuestions(db, id)` - Fetch template with questions loaded
+  - Added `AssessmentTemplateWithQuestions` type
+- Updated `packages/core/src/assessments/user-assessment.repository.ts`
+  - Removed JSONB answer merging from `updateProgress()`
+  - Now only updates `currentStep` (answers via `answerRepository`)
+  - Added deprecation comments
+- Updated `packages/core/src/assessments/index.ts`
+  - Added `answerRepository` export and types
+
+**Phase 7: Service Layer Updates**
+
+- Updated `packages/core/src/assessments/assessment.service.ts`
+  - Added `convertAnswersToResponseFormat()` - DB → API format conversion
+  - Added `convertAnswersToSaveFormat()` - API → DB format conversion
+  - Added `extractAnswerValue()` - Extract value from JSONB structure
+  - Updated `startAssessment()` - Load answers from `user_assessment_answers` table
+  - Updated `saveProgress()` - Save answers via `answerRepository.saveAnswers()` in transaction
+  - Updated `submitAssessment()` - Use new repositories instead of JSONB field
+  - Updated `getRequiredQuestionIds()` - Use `questionRepository.findByTemplateIds()`
+- Updated `packages/core/src/assessments/assessment.service.test.ts`
+  - Refactored all mocks: removed `templateRepository`, added `questionRepository` + `answerRepository`
+  - Updated test fixtures to use `QuestionWithConfig` type
+  - All 12 tests updated to use new repository patterns
+  - Fixed answer structure expectations (separate table vs JSONB)
+
+**Quality Assurance**:
+
+- ✅ `pnpm build` - All packages build successfully
+- ✅ `pnpm typecheck` - Zero TypeScript errors
+- ✅ `pnpm test` - 466 tests passing
+- ✅ `pnpm lint` - Zero warnings
 
 ### Session B Completed Work (2nd January 2026)
 

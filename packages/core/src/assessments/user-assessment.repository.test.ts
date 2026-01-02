@@ -345,28 +345,24 @@ describe('User Assessment Repository', () => {
       expect(result.currentStep).toBe(3);
     });
 
-    it('merges answers with existing answers', async () => {
+    it('only updates currentStep (answers are stored in user_assessment_answers table)', async () => {
+      // Note: This test verifies that updateProgress only updates currentStep.
+      // Answer storage has been moved to the user_assessment_answers table
+      // and should be handled via answerRepository.saveAnswers().
       const assessment = await userAssessmentRepository.create({
         tenantId: tenantAId,
         userId: userA1Id,
         flowId,
       });
 
-      const q1Id = randomUUID();
-      const q2Id = randomUUID();
-
-      await userAssessmentRepository.updateProgress(tenantAId, assessment.id, {
-        answers: { [q1Id]: { questionId: q1Id, answerValue: 'answer1' } },
-      });
-
+      // Update with currentStep only
       const result = await userAssessmentRepository.updateProgress(tenantAId, assessment.id, {
-        answers: { [q2Id]: { questionId: q2Id, answerValue: 5 } },
+        currentStep: 5,
       });
 
-      expect(result.answers).toEqual({
-        [q1Id]: { questionId: q1Id, answerValue: 'answer1' },
-        [q2Id]: { questionId: q2Id, answerValue: 5 },
-      });
+      expect(result.currentStep).toBe(5);
+      // Answers field on the record should still be empty (legacy field)
+      expect(result.answers).toEqual({});
     });
 
     it('throws NotFoundError when assessment not found', async () => {
