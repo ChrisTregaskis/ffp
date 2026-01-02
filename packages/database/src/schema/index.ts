@@ -12,3 +12,6 @@ export * from './assessment-templates';
 export * from './assessment-flows';
 export * from './process-jobs';
 export * from './user-assessments';
+export * from './questions';
+export * from './template-questions';
+export * from './user-assessment-answers';

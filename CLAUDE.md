@@ -477,6 +477,46 @@ topic: "cognito post authentication trigger SST Ion"
 - **web_search**: More token-efficient, but may require multiple searches or fetches
 - **Decision rule**: Use Context7 for definitive documentation, web_search for quick lookups or when context is running low
 
+## Context Management
+
+Claude Code has a finite context window. For long sessions or complex tasks, use these strategies to preserve context:
+
+### Built-in Sub-Agents
+
+Sub-agents run in **isolated context windows** and return only summaries to the main conversation. Use them for context-heavy operations:
+
+**Explore agent** - For codebase searches and pattern discovery:
+
+```
+"Use the Explore agent to find all files related to RLS policies"
+"Use the Explore agent to understand how assessments are structured"
+```
+
+**Plan agent** - For designing implementation approaches:
+
+```
+"Use the Plan agent to design the repository layer for questions"
+```
+
+These are built-in - just ask explicitly. The isolated context prevents search results and exploration from filling the main conversation.
+
+### Session Management for Multi-Phase Work
+
+For large implementations (4+ phases), break into separate sessions:
+
+1. **Document the plan** in a markdown file before starting
+2. **Group phases** into logical sessions (2-3 phases each)
+3. **Start fresh sessions** between groups - reference the plan file
+4. **Update progress** in the plan file after each session
+
+### When to Start a Fresh Session
+
+- After extensive codebase exploration
+- After generating/reviewing large amounts of code
+- When responses feel less coherent or repetitive
+- Before starting a new logical phase of work
+- After planning mode completes (start implementation fresh)
+
 ## Project Constraints
 
 - **Solo developer**: 8 hours/week capacity

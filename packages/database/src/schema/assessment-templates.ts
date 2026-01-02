@@ -20,6 +20,11 @@ import { users } from './users';
  * These types mirror the Zod schemas in @ffp/core but are defined locally
  * to avoid circular dependencies between database and core packages.
  * The Zod schemas in @ffp/core are the source of truth for runtime validation.
+ *
+ * TODO: Migrate these types to src/types/ following the established pattern.
+ * See src/types/question.types.ts for the pattern used for shared JSONB types.
+ * Types to migrate: QuestionType, ScoreDimension (use constants), QuestionOption,
+ * QuestionValidation (already in types/), AssessmentQuestion, ScoringConfig, etc.
  */
 
 type QuestionType =
