@@ -162,8 +162,9 @@ async function getRequiredQuestionIds(flowSteps: FlowStep[]): Promise<string[]> 
   const templates: AssessmentTemplate[] = await findTemplatesByIds(db, templateIds);
 
   // Extract required question IDs from all templates
+  // Note: template.questions is deprecated; future versions will fetch from template_questions
   return templates.flatMap((template) =>
-    template.questions.filter((q) => q.validation?.required !== false).map((q) => q.id)
+    (template.questions ?? []).filter((q) => q.validation?.required !== false).map((q) => q.id)
   );
 }
 

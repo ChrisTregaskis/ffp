@@ -106,7 +106,9 @@ export async function create(
       name: data.name,
       description: data.description,
       version: data.version,
-      questions: data.questions,
+      // Note: questions is deprecated; use template_questions join instead
+      // Defaulting to empty array for backward compatibility until column is removed
+      questions: data.questions ?? [],
       scoringConfig: data.scoringConfig,
       isActive: data.isActive,
       createdBy: data.createdBy,

@@ -2,10 +2,12 @@ import { Pool } from 'pg';
 import { eq } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../src/schema/index.js';
-import { assessmentTemplates } from '../src/schema/index.js';
+import { assessmentTemplates, templateQuestions } from '../src/schema/index.js';
 import { terminalPrefix, TerminalPrefix } from '../src/lib/terminal-logger.js';
+import { QUESTION_IDS } from './seedQuestions.js';
 
 import type { NewAssessmentTemplate } from '../src/schema/assessment-templates.js';
+import type { NewTemplateQuestion } from '../src/schema/template-questions.js';
 
 /**
  * Deterministic UUIDs for assessment templates
@@ -28,9 +30,53 @@ export const TEMPLATE_NAMES = {
 } as const;
 
 /**
+ * Template question mappings
+ * Maps each template to its questions with display order
+ */
+interface TemplateQuestionMapping {
+  templateId: string;
+  questionIds: Array<keyof typeof QUESTION_IDS>;
+}
+
+const templateQuestionMappings: TemplateQuestionMapping[] = [
+  {
+    templateId: TEMPLATE_IDS.PRE_ASSESSMENT_QUESTIONS,
+    questionIds: [
+      'goal-primary',
+      'pain-level',
+      'pain-location',
+      'activity-level',
+      'medical-conditions',
+    ],
+  },
+  {
+    templateId: TEMPLATE_IDS.STRENGTH_ASSESSMENT,
+    questionIds: [
+      'squat-assessment',
+      'squat-rating',
+      'pushup-assessment',
+      'pushup-count',
+      'strength-comfort',
+    ],
+  },
+  {
+    templateId: TEMPLATE_IDS.BALANCE_ASSESSMENT,
+    questionIds: [
+      'single-leg-stand',
+      'single-leg-duration',
+      'tandem-stand',
+      'tandem-stability',
+      'balance-confidence',
+    ],
+  },
+];
+
+/**
  * Pre-assessment questions template
  * Contains questions about goals, pain levels, and medical history
- * Some questions are marked as required for testing validation
+ *
+ * Note: The `questions` array is retained for backwards compatibility until
+ * Phase 8 removes the JSONB column. New code should use template_questions join.
  */
 const preAssessmentQuestionsTemplate: NewAssessmentTemplate = {
   id: TEMPLATE_IDS.PRE_ASSESSMENT_QUESTIONS,
@@ -39,7 +85,7 @@ const preAssessmentQuestionsTemplate: NewAssessmentTemplate = {
   version: 1,
   questions: [
     {
-      id: 'goal-primary',
+      id: QUESTION_IDS['goal-primary'],
       type: 'single-choice',
       question: 'What is your primary goal for this programme?',
       description: 'Select the goal that best describes what you want to achieve',
@@ -54,7 +100,7 @@ const preAssessmentQuestionsTemplate: NewAssessmentTemplate = {
       scoreDimension: 'general',
     },
     {
-      id: 'pain-level',
+      id: QUESTION_IDS['pain-level'],
       type: 'scale',
       question: 'How would you rate your current pain level?',
       description: 'On a scale of 0 (no pain) to 10 (worst pain imaginable)',
@@ -62,7 +108,7 @@ const preAssessmentQuestionsTemplate: NewAssessmentTemplate = {
       scoreDimension: 'pain',
     },
     {
-      id: 'pain-location',
+      id: QUESTION_IDS['pain-location'],
       type: 'multi-choice',
       question: 'Where do you experience pain or discomfort?',
       description: 'Select all areas that apply',
@@ -79,7 +125,7 @@ const preAssessmentQuestionsTemplate: NewAssessmentTemplate = {
       scoreDimension: 'pain',
     },
     {
-      id: 'activity-level',
+      id: QUESTION_IDS['activity-level'],
       type: 'single-choice',
       question: 'How would you describe your current activity level?',
       options: [
@@ -96,7 +142,7 @@ const preAssessmentQuestionsTemplate: NewAssessmentTemplate = {
       scoreDimension: 'general',
     },
     {
-      id: 'medical-conditions',
+      id: QUESTION_IDS['medical-conditions'],
       type: 'multi-choice',
       question: 'Do you have any of the following conditions?',
       description: 'Select all that apply. This helps us tailor your programme safely.',
@@ -117,14 +163,18 @@ const preAssessmentQuestionsTemplate: NewAssessmentTemplate = {
     dimensions: [
       {
         name: 'pain',
-        questionIds: ['pain-level', 'pain-location'],
+        questionIds: [QUESTION_IDS['pain-level'], QUESTION_IDS['pain-location']],
         maxScore: 17,
         weight: 1,
         riskThresholds: { low: 3, moderate: 6 },
       },
       {
         name: 'general',
-        questionIds: ['goal-primary', 'activity-level', 'medical-conditions'],
+        questionIds: [
+          QUESTION_IDS['goal-primary'],
+          QUESTION_IDS['activity-level'],
+          QUESTION_IDS['medical-conditions'],
+        ],
         maxScore: 6,
         weight: 1,
       },
@@ -156,7 +206,7 @@ const strengthAssessmentTemplate: NewAssessmentTemplate = {
   version: 1,
   questions: [
     {
-      id: 'squat-assessment',
+      id: QUESTION_IDS['squat-assessment'],
       type: 'video-response',
       question: 'Wall Squat Hold',
       description: 'Hold a wall squat position for as long as comfortable',
@@ -165,7 +215,7 @@ const strengthAssessmentTemplate: NewAssessmentTemplate = {
       scoreDimension: 'strength',
     },
     {
-      id: 'squat-rating',
+      id: QUESTION_IDS['squat-rating'],
       type: 'single-choice',
       question: 'How did you find the wall squat?',
       options: [
@@ -178,7 +228,7 @@ const strengthAssessmentTemplate: NewAssessmentTemplate = {
       scoreDimension: 'strength',
     },
     {
-      id: 'pushup-assessment',
+      id: QUESTION_IDS['pushup-assessment'],
       type: 'video-response',
       question: 'Modified Push-up Test',
       description: 'Perform as many modified push-ups as you can with good form',
@@ -187,14 +237,14 @@ const strengthAssessmentTemplate: NewAssessmentTemplate = {
       scoreDimension: 'strength',
     },
     {
-      id: 'pushup-count',
+      id: QUESTION_IDS['pushup-count'],
       type: 'numeric',
       question: 'How many modified push-ups did you complete?',
       validation: { required: true, min: 0, max: 50 },
       scoreDimension: 'strength',
     },
     {
-      id: 'strength-comfort',
+      id: QUESTION_IDS['strength-comfort'],
       type: 'scale',
       question: 'How comfortable did you feel during the strength exercises?',
       description: 'On a scale of 1 (very uncomfortable) to 10 (very comfortable)',
@@ -206,7 +256,11 @@ const strengthAssessmentTemplate: NewAssessmentTemplate = {
     dimensions: [
       {
         name: 'strength',
-        questionIds: ['squat-rating', 'pushup-count', 'strength-comfort'],
+        questionIds: [
+          QUESTION_IDS['squat-rating'],
+          QUESTION_IDS['pushup-count'],
+          QUESTION_IDS['strength-comfort'],
+        ],
         maxScore: 64,
         weight: 1.5,
         riskThresholds: { low: 20, moderate: 40 },
@@ -239,7 +293,7 @@ const balanceAssessmentTemplate: NewAssessmentTemplate = {
   version: 1,
   questions: [
     {
-      id: 'single-leg-stand',
+      id: QUESTION_IDS['single-leg-stand'],
       type: 'video-response',
       question: 'Single Leg Stand',
       description: 'Stand on one leg for as long as you can safely manage',
@@ -248,7 +302,7 @@ const balanceAssessmentTemplate: NewAssessmentTemplate = {
       scoreDimension: 'balance',
     },
     {
-      id: 'single-leg-duration',
+      id: QUESTION_IDS['single-leg-duration'],
       type: 'single-choice',
       question: 'How long could you hold the single leg stand?',
       options: [
@@ -261,7 +315,7 @@ const balanceAssessmentTemplate: NewAssessmentTemplate = {
       scoreDimension: 'balance',
     },
     {
-      id: 'tandem-stand',
+      id: QUESTION_IDS['tandem-stand'],
       type: 'video-response',
       question: 'Tandem Stand',
       description: 'Stand with one foot directly in front of the other, heel to toe',
@@ -270,7 +324,7 @@ const balanceAssessmentTemplate: NewAssessmentTemplate = {
       scoreDimension: 'balance',
     },
     {
-      id: 'tandem-stability',
+      id: QUESTION_IDS['tandem-stability'],
       type: 'single-choice',
       question: 'How stable did you feel during the tandem stand?',
       options: [
@@ -283,7 +337,7 @@ const balanceAssessmentTemplate: NewAssessmentTemplate = {
       scoreDimension: 'balance',
     },
     {
-      id: 'balance-confidence',
+      id: QUESTION_IDS['balance-confidence'],
       type: 'scale',
       question: 'How confident do you feel about your balance in daily activities?',
       description: 'On a scale of 1 (not confident) to 10 (very confident)',
@@ -295,7 +349,11 @@ const balanceAssessmentTemplate: NewAssessmentTemplate = {
     dimensions: [
       {
         name: 'balance',
-        questionIds: ['single-leg-duration', 'tandem-stability', 'balance-confidence'],
+        questionIds: [
+          QUESTION_IDS['single-leg-duration'],
+          QUESTION_IDS['tandem-stability'],
+          QUESTION_IDS['balance-confidence'],
+        ],
         maxScore: 18,
         weight: 1.2,
         riskThresholds: { low: 6, moderate: 12 },
@@ -327,6 +385,48 @@ const DEFAULT_TEMPLATES: NewAssessmentTemplate[] = [
 ];
 
 /**
+ * Seeds template_questions join records for a template
+ *
+ * @param db - Database client
+ * @param templateId - Template UUID
+ * @param questionSlugs - Ordered array of question slugs
+ * @returns Number of join records created
+ */
+const seedTemplateQuestions = async (
+  db: NodePgDatabase<typeof schema> & { $client: Pool },
+  templateId: string,
+  questionSlugs: Array<keyof typeof QUESTION_IDS>
+): Promise<number> => {
+  let createdCount = 0;
+
+  for (let i = 0; i < questionSlugs.length; i++) {
+    const slug = questionSlugs[i];
+    const questionId = QUESTION_IDS[slug];
+    const displayOrder = i + 1; // 1-based display order
+
+    // Check if join record already exists
+    const existing = await db.query.templateQuestions.findFirst({
+      where: (tq, { and, eq }) => and(eq(tq.templateId, templateId), eq(tq.questionId, questionId)),
+    });
+
+    if (existing) {
+      continue; // Already exists, skip
+    }
+
+    const joinRecord: NewTemplateQuestion = {
+      templateId,
+      questionId,
+      displayOrder,
+    };
+
+    await db.insert(templateQuestions).values(joinRecord);
+    createdCount++;
+  }
+
+  return createdCount;
+};
+
+/**
  * Seeds assessment templates for MVP.
  *
  * This seed is IDEMPOTENT - safe to run multiple times.
@@ -342,7 +442,8 @@ export const seedAssessmentTemplates = async (
 ): Promise<number> => {
   console.log(`${terminalPrefix(TerminalPrefix.INFO)} Seeding assessment templates...`);
 
-  let createdCount = 0;
+  let templatesCreatedCount = 0;
+  let joinRecordsCreatedCount = 0;
 
   for (const template of DEFAULT_TEMPLATES) {
     // Check if template already exists (idempotency check by ID)
@@ -356,29 +457,40 @@ export const seedAssessmentTemplates = async (
       );
       console.log(`  ID: ${existingTemplate.id}`);
       console.log(`  Questions: ${existingTemplate.questions.length}`);
-      continue;
+    } else {
+      // Insert new template
+      const [newTemplate] = await db.insert(assessmentTemplates).values(template).returning({
+        id: assessmentTemplates.id,
+        name: assessmentTemplates.name,
+      });
+
+      console.log(
+        `${terminalPrefix(TerminalPrefix.SUCCESS)} Template created: ${newTemplate.name}`
+      );
+      console.log(`  ID: ${newTemplate.id}`);
+      console.log(`  Questions: ${template.questions.length}`);
+
+      // Count required questions for visibility
+      const requiredCount = template.questions.filter((q) => q.validation?.required).length;
+      console.log(`  Required questions: ${requiredCount}`);
+
+      templatesCreatedCount++;
     }
 
-    // Insert new template
-    const [newTemplate] = await db.insert(assessmentTemplates).values(template).returning({
-      id: assessmentTemplates.id,
-      name: assessmentTemplates.name,
-    });
-
-    console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} Template created: ${newTemplate.name}`);
-    console.log(`  ID: ${newTemplate.id}`);
-    console.log(`  Questions: ${template.questions.length}`);
-
-    // Count required questions for visibility
-    const requiredCount = template.questions.filter((q) => q.validation?.required).length;
-    console.log(`  Required questions: ${requiredCount}`);
-
-    createdCount++;
+    // Seed template_questions join records (always attempt, idempotent)
+    const mapping = templateQuestionMappings.find((m) => m.templateId === template.id);
+    if (mapping) {
+      const joinCount = await seedTemplateQuestions(db, template.id!, mapping.questionIds);
+      if (joinCount > 0) {
+        console.log(`  Template-question joins created: ${joinCount}`);
+        joinRecordsCreatedCount += joinCount;
+      }
+    }
   }
 
   console.log(
-    `${terminalPrefix(TerminalPrefix.INFO)} Assessment templates seed complete: ${createdCount} created, ${DEFAULT_TEMPLATES.length - createdCount} already existed`
+    `${terminalPrefix(TerminalPrefix.INFO)} Assessment templates seed complete: ${templatesCreatedCount} templates created, ${joinRecordsCreatedCount} joins created`
   );
 
-  return createdCount;
+  return templatesCreatedCount;
 };

@@ -27,6 +27,7 @@ import { seedTestTenant } from './seedTestTenant.js';
 import { seedTestCustomer } from './seedTestCustomer.js';
 import { seedTestUserCognito } from './seedTestUserCognito.js';
 import { seedTestUserDatabase } from './seedTestUserDatabase.js';
+import { seedQuestions } from './seedQuestions.js';
 import { seedAssessmentTemplates } from './seedAssessmentTemplates.js';
 import { seedAssessmentFlows } from './seedAssessmentFlows.js';
 import type { SeedConfig } from './types.js';
@@ -192,11 +193,15 @@ export const seedDatabase = async (environment: string = 'dev'): Promise<void> =
       await seedTestUserDatabase(txWithClient, config.testCustomerProgramUser);
     });
 
-    // Seed 10: Assessment templates (no RLS, idempotent)
+    // Seed 10: Questions (no RLS, idempotent)
+    // Must run BEFORE assessment templates as templates reference question UUIDs
+    await seedQuestions(db);
+
+    // Seed 11: Assessment templates (no RLS, idempotent)
     // Must run BEFORE assessment flows as flows reference template IDs
     await seedAssessmentTemplates(db);
 
-    // Seed 11: Assessment flows (no RLS, idempotent)
+    // Seed 12: Assessment flows (no RLS, idempotent)
     await seedAssessmentFlows(db);
 
     console.log(`\n${terminalPrefix(TerminalPrefix.SUCCESS)} Database seeding complete!\n`);
@@ -228,5 +233,6 @@ export const seedDatabase = async (environment: string = 'dev'): Promise<void> =
 };
 
 // Re-export individual seed functions for standalone use
+export { seedQuestions, QUESTION_IDS } from './seedQuestions.js';
 export { seedAssessmentTemplates } from './seedAssessmentTemplates.js';
 export { seedAssessmentFlows } from './seedAssessmentFlows.js';

@@ -8,15 +8,21 @@ import {
 } from './assessment-template.schema';
 import { scoringConfigSchema, dimensionConfigSchema } from './scoring-config.schema';
 
-// Test fixtures
+// Test fixtures with deterministic UUIDs
+const QUESTION_UUID_1 = '11111111-1111-1111-1111-111111111001';
+const QUESTION_UUID_2 = '11111111-1111-1111-1111-111111111002';
+const QUESTION_UUID_3 = '11111111-1111-1111-1111-111111111003';
+const QUESTION_UUID_4 = '11111111-1111-1111-1111-111111111004';
+const QUESTION_UUID_5 = '11111111-1111-1111-1111-111111111005';
+
 const validQuestion = {
-  id: 'q1',
+  id: QUESTION_UUID_1,
   type: 'text' as const,
   question: 'How are you feeling today?',
 };
 
 const validSingleChoiceQuestion = {
-  id: 'q2',
+  id: QUESTION_UUID_2,
   type: 'single-choice' as const,
   question: 'Rate your pain level',
   options: [
@@ -26,7 +32,7 @@ const validSingleChoiceQuestion = {
 };
 
 const validVideoQuestion = {
-  id: 'q3',
+  id: QUESTION_UUID_3,
   type: 'video-response' as const,
   question: 'Perform the exercise shown',
   videoId: '550e8400-e29b-41d4-a716-446655440000',
@@ -36,7 +42,7 @@ const validScoringConfig = {
   dimensions: [
     {
       name: 'general' as const,
-      questionIds: ['q1'],
+      questionIds: [QUESTION_UUID_1],
       maxScore: 10,
     },
   ],
@@ -88,7 +94,7 @@ describe('assessmentQuestionSchema', () => {
 
     it('accepts valid numeric question', () => {
       const result = assessmentQuestionSchema.safeParse({
-        id: 'q4',
+        id: QUESTION_UUID_4,
         type: 'numeric',
         question: 'Enter your age',
       });
@@ -97,7 +103,7 @@ describe('assessmentQuestionSchema', () => {
 
     it('accepts valid scale question', () => {
       const result = assessmentQuestionSchema.safeParse({
-        id: 'q5',
+        id: QUESTION_UUID_5,
         type: 'scale',
         question: 'Rate from 1-10',
       });
@@ -118,7 +124,7 @@ describe('assessmentQuestionSchema', () => {
   describe('video-response requires videoId', () => {
     it('rejects video-response without videoId', () => {
       const result = assessmentQuestionSchema.safeParse({
-        id: 'q3',
+        id: QUESTION_UUID_3,
         type: 'video-response',
         question: 'Perform the exercise',
       });
@@ -132,7 +138,7 @@ describe('assessmentQuestionSchema', () => {
   describe('choice questions require options', () => {
     it('rejects single-choice without options', () => {
       const result = assessmentQuestionSchema.safeParse({
-        id: 'q2',
+        id: QUESTION_UUID_2,
         type: 'single-choice',
         question: 'Pick one',
       });
@@ -144,7 +150,7 @@ describe('assessmentQuestionSchema', () => {
 
     it('rejects single-choice with only 1 option', () => {
       const result = assessmentQuestionSchema.safeParse({
-        id: 'q2',
+        id: QUESTION_UUID_2,
         type: 'single-choice',
         question: 'Pick one',
         options: [{ value: 'only', label: 'Only option' }],
@@ -157,7 +163,7 @@ describe('assessmentQuestionSchema', () => {
 
     it('rejects multi-choice without options', () => {
       const result = assessmentQuestionSchema.safeParse({
-        id: 'q2',
+        id: QUESTION_UUID_2,
         type: 'multi-choice',
         question: 'Pick many',
       });
@@ -176,7 +182,7 @@ describe('assessmentQuestionSchema', () => {
 
     it('rejects missing question text', () => {
       const result = assessmentQuestionSchema.safeParse({
-        id: 'q1',
+        id: QUESTION_UUID_1,
         type: 'text',
       });
       expect(result.success).toBe(false);
@@ -184,7 +190,7 @@ describe('assessmentQuestionSchema', () => {
 
     it('rejects empty question text', () => {
       const result = assessmentQuestionSchema.safeParse({
-        id: 'q1',
+        id: QUESTION_UUID_1,
         type: 'text',
         question: '',
       });
@@ -219,7 +225,7 @@ describe('scoringConfigSchema', () => {
       dimensions: [
         {
           name: 'strength',
-          questionIds: ['q1', 'q2'],
+          questionIds: [QUESTION_UUID_1, QUESTION_UUID_2],
           maxScore: 20,
           weight: 1.5,
           riskThresholds: { low: 15, moderate: 10 },
@@ -233,7 +239,7 @@ describe('scoringConfigSchema', () => {
   it('applies default weight of 1', () => {
     const result = dimensionConfigSchema.safeParse({
       name: 'balance',
-      questionIds: ['q1'],
+      questionIds: [QUESTION_UUID_1],
       maxScore: 10,
     });
     expect(result.success).toBe(true);
