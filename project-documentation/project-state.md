@@ -48,7 +48,7 @@
 
 **Branch**: `feature/ffp-130-submit-assessment-api`
 **Story Points**: 5
-**Status**: 🔄 Session A Complete (Phases 1-3) | Session B Pending
+**Status**: 🔄 Sessions A+B Complete (Phases 1-5) | Session C Pending
 
 ### Implementation Plan
 
@@ -61,12 +61,43 @@ Refactoring questions from embedded JSONB (`assessment_templates.questions`) int
 | 1     | Database Constants                 | ✅ Complete | A       |
 | 2     | New Database Schema Files          | ✅ Complete | A       |
 | 3     | Generate and Run Migration         | ✅ Complete | A       |
-| 4     | Seed Data Refactor                 | ⬜ Pending  | B       |
-| 5     | Core Package - Schema Updates      | ⬜ Pending  | B       |
+| 4     | Seed Data Refactor                 | ✅ Complete | B       |
+| 5     | Core Package - Schema Updates      | ✅ Complete | B       |
 | 6     | Core Package - Repository Updates  | ⬜ Pending  | C       |
 | 7     | Service Layer Updates              | ⬜ Pending  | C       |
 | 8     | Modify Existing Schemas (Breaking) | ⬜ Pending  | D       |
 | 9     | Test Updates                       | ⬜ Pending  | D       |
+
+### Session B Completed Work (2nd January 2026)
+
+**Phase 4: Seed Data Refactor**
+
+- Created `packages/database/seed/seedQuestions.ts`
+  - Deterministic UUIDs for 15 questions (pattern: `22222222-2222-2222-2222-2222222200XX`)
+  - `QUESTION_IDS` mapping: slug → UUID
+  - Questions grouped: pre-assessment, strength, balance
+  - Idempotent seeding (checks existence before insert)
+- Refactored `packages/database/seed/seedAssessmentTemplates.ts`
+  - Updated question IDs to use UUIDs from `QUESTION_IDS`
+  - Added `template_questions` join record seeding
+- Updated `packages/database/seed/index.ts`
+  - Added `seedQuestions` call before templates
+  - Re-exports `seedQuestions` and `QUESTION_IDS`
+
+**Phase 5: Core Package - Schema Updates**
+
+- Updated `assessment-question.schema.ts`: `id` now validates as UUID
+- Updated `scoring-config.schema.ts`: `questionIds` array validates as UUIDs
+- Updated `assessment-template.schema.ts`: Made `questions` optional with `@deprecated` annotation
+- Fixed build errors in `assessment.service.ts` and `template.repository.ts` for optional `questions`
+- Updated `assessment-template.schema.test.ts` with UUID test fixtures
+
+**Quality Assurance**:
+
+- ✅ `pnpm build` - All packages build successfully
+- ✅ `pnpm typecheck` - Zero TypeScript errors
+- ✅ `pnpm test` - 466 tests passing
+- ✅ `pnpm lint` - Zero warnings
 
 ### Session A Completed Work (2nd January 2026)
 

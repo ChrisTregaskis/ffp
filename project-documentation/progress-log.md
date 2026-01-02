@@ -8,6 +8,96 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### January 2, 2026 (Session 74 - FFP-130 Questions Table Refactor - Session B)
+
+**Status**: 🔄 FFP-130 Questions Table Refactor IN PROGRESS (Phases 1-5 Complete)
+
+**Branch**: `feature/ffp-130-submit-assessment-api`
+
+**Completed Work**:
+
+**Phase 4: Seed Data Refactor** (~0.4 hours):
+
+- ✅ **4.1: Created seedQuestions.ts**
+  - `packages/database/seed/seedQuestions.ts`
+  - Deterministic UUIDs for 15 questions (pattern: `22222222-2222-2222-2222-2222222200XX`)
+  - `QUESTION_IDS` mapping: slug → UUID for all questions
+  - `VIDEO_IDS` mapping: video slugs → placeholder UUIDs (pattern: `33333333-3333-3333-3333-3333333300XX`)
+  - Questions grouped: pre-assessment (5), strength (5), balance (5)
+  - Idempotent seeding with existence check before insert
+
+- ✅ **4.2: Refactored seedAssessmentTemplates.ts**
+  - Imported `QUESTION_IDS` from seedQuestions
+  - Updated all question IDs to use UUIDs
+  - Updated `scoringConfig.dimensions[].questionIds` to use UUIDs
+  - Added `template_questions` join record seeding
+  - Kept `questions` array for backward compatibility during migration
+
+- ✅ **4.3: Updated seed/index.ts**
+  - Added `seedQuestions` import
+  - Added `seedQuestions(db)` call as Seed 10 (before templates)
+  - Re-exports `seedQuestions` and `QUESTION_IDS`
+
+**Phase 5: Core Package - Schema Updates** (~0.3 hours):
+
+- ✅ **5.1: assessment-question.schema.ts**
+  - Changed `id: z.string().min(1)` → `id: z.string().uuid()`
+
+- ✅ **5.2: scoring-config.schema.ts**
+  - Changed `questionIds: z.array(z.string().min(1))` → `questionIds: z.array(z.string().uuid())`
+
+- ✅ **5.3: assessment-template.schema.ts**
+  - Made `questions` field optional: `questions: questionsArraySchema.optional()`
+  - Added `@deprecated` JSDoc annotation with migration notes
+
+- ✅ **5.4: user-assessment.schema.ts**
+  - Verified already uses UUIDs - no changes needed
+
+**Build Error Fixes** (~0.15 hours):
+
+Two TypeScript errors due to `questions` becoming optional:
+
+- ✅ `assessment.service.ts:166` - Added nullish coalescing `(template.questions ?? [])`
+- ✅ `template.repository.ts:105` - Added default `questions: data.questions ?? []`
+
+**Test Fixes** (~0.1 hours):
+
+- ✅ `assessment-template.schema.test.ts` - Updated all test fixtures to use UUID constants
+  - Added `QUESTION_UUID_1` through `QUESTION_UUID_5` (pattern: `11111111-1111-1111-1111-1111111110XX`)
+  - Updated `validQuestion`, `validSingleChoiceQuestion`, `validVideoQuestion` etc.
+
+**Files Created**:
+
+- `packages/database/seed/seedQuestions.ts`
+
+**Files Modified**:
+
+- `packages/database/seed/seedAssessmentTemplates.ts` - Use UUIDs, add template_questions seeding
+- `packages/database/seed/index.ts` - Add seedQuestions call and exports
+- `packages/core/src/schemas/assessment-question.schema.ts` - UUID validation
+- `packages/core/src/schemas/scoring-config.schema.ts` - UUID validation for questionIds
+- `packages/core/src/schemas/assessment-template.schema.ts` - Made questions optional
+- `packages/core/src/assessments/assessment.service.ts` - Handle optional questions
+- `packages/core/src/assessments/template.repository.ts` - Default empty array for questions
+- `packages/core/src/schemas/assessment-template.schema.test.ts` - UUID test fixtures
+
+**Quality Assurance**:
+
+- ✅ Build: All packages built successfully (`pnpm build`)
+- ✅ TypeScript: Zero errors (`pnpm typecheck`)
+- ✅ Tests: 466 tests passing (`pnpm test`)
+- ✅ Lint: Zero warnings (`pnpm lint`)
+
+**Design Decisions**:
+
+1. **Deterministic UUIDs**: Pattern-based UUIDs allow reliable cross-referencing in seeds
+2. **Backward compatibility**: `questions` field kept but marked deprecated
+3. **Nullish coalescing**: Preferred over conditional checks for cleaner code
+
+**Next**: Session C (Phases 6-7: Repository + Service layer updates)
+
+---
+
 ### January 2, 2026 (Session 73 - FFP-130 Questions Table Refactor - Session A)
 
 **Status**: 🔄 FFP-130 Questions Table Refactor IN PROGRESS (Phases 1-3 Complete)
