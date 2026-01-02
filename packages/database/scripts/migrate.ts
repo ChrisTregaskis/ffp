@@ -6,6 +6,10 @@
  * 2. RLS policy application
  * 3. Future: Database roles and permissions
  *
+ * Environment Variables:
+ * - DB_MIGRATE_USER: (Optional) Elevated user for migrations (e.g., root_user)
+ * - DB_USER: Fallback if DB_MIGRATE_USER not set
+ *
  * Usage: pnpm db:migrate
  */
 
@@ -47,7 +51,7 @@ const runMigrations = async () => {
     host: getRequiredEnv('DB_HOST'),
     port: parseInt(process.env.DB_PORT || '5432'),
     database: getRequiredEnv('DB_NAME'),
-    user: getRequiredEnv('DB_USER'),
+    user: process.env.DB_MIGRATE_USER || getRequiredEnv('DB_USER'),
     password: getRequiredEnv('DB_PASSWORD'),
     // SSL configuration based on environment
     ssl: process.env.ENVIRONMENT === 'development' ? false : { rejectUnauthorized: true },

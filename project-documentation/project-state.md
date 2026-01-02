@@ -1,8 +1,8 @@
 # FFP - Project State
 
-**Last Updated**: 30th December 2025
+**Last Updated**: 2nd January 2026
 **Current EPIC**: FFP-2 - Assessment Engine
-**Sprint Status**: Sprint 3 ✅ Complete | Sprint 4 early start (FFP-130 in progress)
+**Sprint Status**: Sprint 3 ✅ Complete | Sprint 4 in progress (FFP-130 Questions Table Refactor)
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
@@ -44,7 +44,97 @@
 
 ---
 
-## In Progress: FFP-130 - Submit Assessment API
+## In Progress: FFP-130 - Questions Table Refactor
+
+**Branch**: `feature/ffp-130-submit-assessment-api`
+**Story Points**: 5
+**Status**: 🔄 Session A Complete (Phases 1-3) | Session B Pending
+
+### Implementation Plan
+
+Refactoring questions from embedded JSONB (`assessment_templates.questions`) into a dedicated `questions` table with proper referential integrity.
+
+**Full Plan**: `project-documentation/sprint-planning/outputs/ffp-130-questions-table-implementation.md`
+
+| Phase | Description                        | Status      | Session |
+| ----- | ---------------------------------- | ----------- | ------- |
+| 1     | Database Constants                 | ✅ Complete | A       |
+| 2     | New Database Schema Files          | ✅ Complete | A       |
+| 3     | Generate and Run Migration         | ✅ Complete | A       |
+| 4     | Seed Data Refactor                 | ⬜ Pending  | B       |
+| 5     | Core Package - Schema Updates      | ⬜ Pending  | B       |
+| 6     | Core Package - Repository Updates  | ⬜ Pending  | C       |
+| 7     | Service Layer Updates              | ⬜ Pending  | C       |
+| 8     | Modify Existing Schemas (Breaking) | ⬜ Pending  | D       |
+| 9     | Test Updates                       | ⬜ Pending  | D       |
+
+### Session A Completed Work (2nd January 2026)
+
+**Phase 1: Database Constants**
+
+- Created `packages/database/src/constants/question.constants.ts`
+  - `QUESTION_TYPES`: single-choice, multi-choice, numeric, text, scale, video-response
+  - `SCORE_DIMENSIONS`: strength, balance, mobility, pain, general
+- Updated `constants/index.ts` to export new constants
+
+**Phase 2: New Database Schema Files**
+
+- Created `packages/database/src/schema/questions.ts`
+  - Questions table with slug, type, questionText, options, validation, videoId, scoreDimension
+  - PostgreSQL enums: `question_type`, `score_dimension`
+  - Indexes on slug, type, is_active
+- Created `packages/database/src/schema/template-questions.ts`
+  - Join table: templateId, questionId, displayOrder, configOverrides
+  - Unique constraints on (template_id, question_id) and (template_id, display_order)
+  - FK CASCADE on template delete, RESTRICT on question delete
+- Created `packages/database/src/schema/user-assessment-answers.ts`
+  - Answers table with RLS: tenantId, userAssessmentId, questionId, answerValue
+  - Unique constraint on (user_assessment_id, question_id)
+- Updated `schema/index.ts` to export all new schemas
+
+**Phase 3: Migration**
+
+- Generated `migrations/0009_easy_captain_marvel.sql`
+  - Creates 2 enums, 3 tables, FK constraints, and indexes
+- Migration ready to run locally
+
+**Architectural Improvement: Shared Types Pattern**
+
+- Created `packages/database/src/types/` folder (following `constants/` pattern)
+- `question.types.ts`: QuestionOption, QuestionValidation, ConfigOverrides, AnswerValue
+- Schema files now import from `../types` instead of defining locally
+- Added TODO to `assessment-templates.ts` to migrate legacy types
+
+### Files Created
+
+| File                                                        | Description                                |
+| ----------------------------------------------------------- | ------------------------------------------ |
+| `packages/database/src/constants/question.constants.ts`     | QUESTION_TYPES, SCORE_DIMENSIONS constants |
+| `packages/database/src/types/question.types.ts`             | Shared JSONB types                         |
+| `packages/database/src/types/index.ts`                      | Types barrel export                        |
+| `packages/database/src/schema/questions.ts`                 | Questions table schema                     |
+| `packages/database/src/schema/template-questions.ts`        | Template-questions join table              |
+| `packages/database/src/schema/user-assessment-answers.ts`   | User answers table with RLS                |
+| `packages/database/migrations/0009_easy_captain_marvel.sql` | Migration file                             |
+
+### Files Modified
+
+| File                                                   | Change                          |
+| ------------------------------------------------------ | ------------------------------- |
+| `packages/database/src/constants/index.ts`             | Added question.constants export |
+| `packages/database/src/schema/index.ts`                | Added new schema exports        |
+| `packages/database/src/index.ts`                       | Added types export              |
+| `packages/database/src/schema/assessment-templates.ts` | Added TODO for types migration  |
+
+### Quality Assurance
+
+- ✅ `pnpm build` - All packages build successfully
+- ✅ `pnpm typecheck` - Zero TypeScript errors
+- ✅ `pnpm lint` - Zero warnings
+
+---
+
+## Completed: FFP-130 - Submit Assessment API
 
 **Branch**: `feature/ffp-130-submit-assessment-api`
 **Story Points**: 5

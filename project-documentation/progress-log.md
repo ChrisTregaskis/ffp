@@ -8,6 +8,99 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### January 2, 2026 (Session 73 - FFP-130 Questions Table Refactor - Session A)
+
+**Status**: 🔄 FFP-130 Questions Table Refactor IN PROGRESS (Phases 1-3 Complete)
+
+**Branch**: `feature/ffp-130-submit-assessment-api`
+
+**Completed Work**:
+
+**Phase 1: Database Constants** (~0.1 hours):
+
+- ✅ Created `packages/database/src/constants/question.constants.ts`
+  - `QUESTION_TYPES`: ['single-choice', 'multi-choice', 'numeric', 'text', 'scale', 'video-response']
+  - `SCORE_DIMENSIONS`: ['strength', 'balance', 'mobility', 'pain', 'general']
+  - Types exported: `QuestionType`, `ScoreDimension`
+- ✅ Updated `constants/index.ts` to export new constants
+
+**Phase 2: New Database Schema Files** (~0.4 hours):
+
+- ✅ **questions.ts**: Questions table schema
+  - Columns: id, slug (unique), type, questionText, description, options, validation, videoId, scoreDimension, isActive, timestamps
+  - PostgreSQL enums: `question_type`, `score_dimension` (from constants)
+  - Indexes: slug, type, is_active
+  - No RLS (system content like assessment_templates)
+
+- ✅ **template-questions.ts**: Join table for template-question relationships
+  - Columns: id, templateId, questionId, displayOrder, configOverrides
+  - Unique constraints: (template_id, question_id), (template_id, display_order)
+  - FK: CASCADE on template delete, RESTRICT on question delete
+  - Relations defined to assessmentTemplates and questions
+
+- ✅ **user-assessment-answers.ts**: Answers table with RLS
+  - Columns: id, tenantId, userAssessmentId, questionId, answerValue, answeredAt
+  - Unique constraint: (user_assessment_id, question_id)
+  - FK: CASCADE on tenant/assessment delete, RESTRICT on question delete
+  - Indexes: tenant, assessment, assessment_question (unique)
+  - RLS enabled via tenant_id column
+
+- ✅ Updated `schema/index.ts` to export all new schemas
+
+**Phase 3: Migration** (~0.1 hours):
+
+- ✅ Generated `migrations/0009_easy_captain_marvel.sql`
+  - Creates `question_type` and `score_dimension` enums
+  - Creates `questions`, `template_questions`, `user_assessment_answers` tables
+  - Adds all FK constraints and indexes
+- ✅ Migration file ready (user to run locally due to DB permissions)
+
+**Architectural Improvement: Shared Types Pattern** (~0.15 hours):
+
+- ✅ Created `packages/database/src/types/` folder (mirrors `constants/` pattern)
+- ✅ Created `question.types.ts` with exported interfaces:
+  - `QuestionOption`: value, label, score?
+  - `QuestionValidation`: required?, min?, max?, pattern?, customError?
+  - `ConfigOverrides`: questionText?, description?, validation?
+  - `AnswerValue`: Record<string, unknown>
+- ✅ Updated schema files to import from `../types` instead of defining locally
+- ✅ Updated `packages/database/src/index.ts` to export types
+- ✅ Added TODO comment to `assessment-templates.ts` for legacy types migration
+
+**Files Created**:
+
+- `packages/database/src/constants/question.constants.ts`
+- `packages/database/src/types/question.types.ts`
+- `packages/database/src/types/index.ts`
+- `packages/database/src/schema/questions.ts`
+- `packages/database/src/schema/template-questions.ts`
+- `packages/database/src/schema/user-assessment-answers.ts`
+- `packages/database/migrations/0009_easy_captain_marvel.sql`
+
+**Files Modified**:
+
+- `packages/database/src/constants/index.ts` - Added question.constants export
+- `packages/database/src/schema/index.ts` - Added new schema exports
+- `packages/database/src/index.ts` - Added types export
+- `packages/database/src/schema/assessment-templates.ts` - Added TODO for types migration
+
+**Quality Assurance**:
+
+- ✅ Build: All packages built successfully (`pnpm build`)
+- ✅ TypeScript: Zero errors (`pnpm typecheck`)
+- ✅ Lint: Zero warnings (`pnpm lint`)
+
+**Design Decisions**:
+
+1. **Shared types pattern**: Created `src/types/` folder following `src/constants/` pattern for JSONB types
+2. **Types exported**: All JSONB interfaces exported for use in @ffp/core validation
+3. **No RLS on questions/template_questions**: System content like assessment_templates
+4. **RLS on user_assessment_answers**: Tenant-isolated user data
+
+**Next**: Session B (Phases 4-5: Seed Data + Core Schema Updates)
+
+---
+
 ### December 30, 2025 (Session 72 - FFP-172 Lambda Handler Complete)
 
 **Status**: ✅ FFP-130 COMPLETE (4/4 sub-tasks) - Ready for Manual Testing
