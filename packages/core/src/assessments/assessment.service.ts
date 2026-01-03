@@ -4,7 +4,11 @@ import { queueJob } from '../jobs/job-queue.service';
 import { getUserIdFromContext } from '../lib/context';
 import { withRLS } from '../lib/database';
 import { NotFoundError, ValidationError } from '../lib/errors';
+import { createSystemLogger } from '../lib/logger';
 import { findByTemplateIds as findQuestionsByTemplateIds } from '../questions/question.repository';
+
+// System logger for assessment data integrity issues (no tenant context needed)
+const systemLogger = createSystemLogger('assessment-service');
 
 import * as answerRepository from './answer.repository';
 import * as flowRepository from './flow.repository';
@@ -71,6 +75,8 @@ function convertAnswersToSaveFormat(answers: UserAssessmentAnswers): SaveAnswerI
  *
  * The database stores answers as JSONB (e.g., { value: 5 } or { selected: 'option-a' }),
  * but the job payload requires a plain string | number value.
+ *
+ * @throws ValidationError if the answer value format is unexpected
  */
 function extractAnswerValue(answerValue: unknown): string | number {
   // Handle direct primitive values
@@ -81,24 +87,72 @@ function extractAnswerValue(answerValue: unknown): string | number {
   // Handle structured JSONB objects
   if (typeof answerValue === 'object' && answerValue !== null) {
     const obj = answerValue as Record<string, unknown>;
-    const valueKey = 'value' in obj ? obj.value : null;
-    const selectedKey = 'selected' in obj ? obj.selected : null;
-    const textKey = 'text' in obj ? obj.text : null;
 
-    if (typeof valueKey === 'string' || typeof valueKey === 'number') {
-      return valueKey;
-    } else if (typeof selectedKey === 'string') {
-      return selectedKey;
-    } else if (typeof textKey === 'string') {
-      return textKey;
+    // Check for known JSONB structures: { value: ... }, { selected: ... }, { text: ... }
+    if ('value' in obj) {
+      const value = obj.value;
+
+      if (typeof value === 'string' || typeof value === 'number') {
+        return value;
+      }
+
+      // value key exists but has unexpected type
+      systemLogger.warn('Unexpected type for answer value.value field', {
+        answerValue,
+        valueType: typeof value,
+      });
+
+      throw new ValidationError('Invalid answer value format: value field has unexpected type');
     }
 
-    // Fallback: stringify the object
-    return JSON.stringify(answerValue);
+    if ('selected' in obj) {
+      const selected = obj.selected;
+
+      if (typeof selected === 'string') {
+        return selected;
+      }
+
+      systemLogger.warn('Unexpected type for answer value.selected field', {
+        answerValue,
+        selectedType: typeof selected,
+      });
+
+      throw new ValidationError('Invalid answer value format: selected field has unexpected type');
+    }
+
+    if ('text' in obj) {
+      const text = obj.text;
+
+      if (typeof text === 'string') {
+        return text;
+      }
+
+      systemLogger.warn('Unexpected type for answer value.text field', {
+        answerValue,
+        textType: typeof text,
+      });
+
+      throw new ValidationError('Invalid answer value format: text field has unexpected type');
+    }
+
+    // Object doesn't have any recognised structure
+    systemLogger.warn('Unexpected answer value structure', {
+      answerValue,
+      keys: Object.keys(obj),
+    });
+
+    throw new ValidationError('Invalid answer value format: unrecognised object structure');
   }
 
-  // Fallback for other types
-  return String(answerValue);
+  // Unexpected type (null, undefined, boolean, symbol, etc.)
+  systemLogger.warn('Unexpected answer value type', {
+    answerValue,
+    type: typeof answerValue,
+  });
+
+  throw new ValidationError(
+    'Invalid answer value format: expected string, number, or structured object'
+  );
 }
 
 /**
