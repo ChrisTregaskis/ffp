@@ -30,6 +30,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
 import { applyRLS } from '../src/migrations/apply-rls';
+import { applyPermissions } from '../src/migrations/apply-permissions';
 import { terminalPrefix, TerminalPrefix } from '../src/lib/terminal-logger';
 
 // Get __dirname equivalent in ES modules
@@ -56,12 +57,15 @@ const getRequiredEnv = (key: string): string => {
 const runMigrations = async () => {
   console.log(`${terminalPrefix(TerminalPrefix.INFO)} Starting database migrations...\n`);
 
+  // Determine which user is running migrations
+  const migrationUser = process.env.DB_MIGRATE_USER || getRequiredEnv('DB_USER');
+
   // Create connection pool
   const pool = new Pool({
     host: getRequiredEnv('DB_HOST'),
     port: parseInt(process.env.DB_PORT || '5432'),
     database: getRequiredEnv('DB_NAME'),
-    user: process.env.DB_MIGRATE_USER || getRequiredEnv('DB_USER'),
+    user: migrationUser,
     password: getRequiredEnv('DB_PASSWORD'),
     // SSL configuration based on environment
     ssl: process.env.ENVIRONMENT === 'development' ? false : { rejectUnauthorized: true },
@@ -79,8 +83,9 @@ const runMigrations = async () => {
     await applyRLS(db);
     console.log('');
 
-    // Step 3: Future - Apply database roles and permissions
-    // await applyDatabaseRoles(db);
+    // Step 3: Apply database permissions (DEFAULT PRIVILEGES for app_user and test_user)
+    await applyPermissions(db, migrationUser);
+    console.log('');
 
     console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} All migrations completed successfully!`);
   } catch (error) {
