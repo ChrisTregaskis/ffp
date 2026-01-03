@@ -19,7 +19,7 @@ import { fileURLToPath } from 'url';
 import { Pool } from 'pg';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../src/schema/index.js';
-import { terminalPrefix, TerminalPrefix } from '../src/lib/terminal-logger.js';
+import { createLogger } from '../src/lib/logger.js';
 import { seedPlatformTenant } from './seedPlatformTenant.js';
 import { seedSuperAdminCognito } from './seedSuperAdminCognito.js';
 import { seedSuperAdminDatabase } from './seedSuperAdminDatabase.js';
@@ -31,6 +31,8 @@ import { seedQuestions } from './seedQuestions.js';
 import { seedAssessmentTemplates } from './seedAssessmentTemplates.js';
 import { seedAssessmentFlows } from './seedAssessmentFlows.js';
 import type { SeedConfig } from './types.js';
+
+const logger = createLogger('seed');
 
 // Get current file directory for resolving config paths
 const __filename = fileURLToPath(import.meta.url);
@@ -70,13 +72,10 @@ const validateEnvironment = (): void => {
   const missing = required.filter((varName) => !process.env[varName]);
 
   if (missing.length > 0) {
-    console.error(
-      `${terminalPrefix(TerminalPrefix.ERROR)} Missing required environment variables: ${missing.join(', ')}`
+    logger.error('Missing required environment variables', { missing });
+    logger.error(
+      'Required for database seeding: DB_HOST, DB_NAME, BOOTSTRAP_DB_USER, BOOTSTRAP_DB_PASSWORD, COGNITO_USER_POOL_ID'
     );
-    console.error('\nRequired for database seeding:');
-    console.error('  - DB_HOST, DB_NAME: Database connection');
-    console.error('  - BOOTSTRAP_DB_USER, BOOTSTRAP_DB_PASSWORD: Superuser with BYPASSRLS');
-    console.error('  - COGNITO_USER_POOL_ID: AWS Cognito User Pool\n');
     throw new Error('Missing required environment variables');
   }
 };
@@ -108,18 +107,14 @@ const createDatabaseConnection = (): NodePgDatabase<typeof schema> & { $client: 
  *
  */
 export const seedDatabase = async (environment: string = 'dev'): Promise<void> => {
-  console.log(
-    `${terminalPrefix(TerminalPrefix.INFO)} Database Seed - ${environment.toUpperCase()}\n`
-  );
+  logger.info(`Database Seed - ${environment.toUpperCase()}`);
 
   // Validate environment variables
   validateEnvironment();
 
   // Load seed configuration
   const config = loadSeedConfig(environment);
-  console.log(
-    `${terminalPrefix(TerminalPrefix.SUCCESS)} Loaded seed config: db-seed.local.${environment}.json\n`
-  );
+  logger.info(`Loaded seed config: db-seed.local.${environment}.json`);
 
   // Create database connection
   const db = createDatabaseConnection();
@@ -127,7 +122,7 @@ export const seedDatabase = async (environment: string = 'dev'): Promise<void> =
   try {
     // Temporarily disable FORCE RLS to allow seeding
     // FORCE RLS applies even to superusers, so we need to disable it during seeding
-    console.log(`${terminalPrefix(TerminalPrefix.INFO)} Disabling FORCE RLS for seeding...\n`);
+    logger.info('Disabling FORCE RLS for seeding...');
     await db.$client.query(`
       ALTER TABLE tenants NO FORCE ROW LEVEL SECURITY;
       ALTER TABLE customers NO FORCE ROW LEVEL SECURITY;
@@ -204,28 +199,27 @@ export const seedDatabase = async (environment: string = 'dev'): Promise<void> =
     // Seed 12: Assessment flows (no RLS, idempotent)
     await seedAssessmentFlows(db);
 
-    console.log(`\n${terminalPrefix(TerminalPrefix.SUCCESS)} Database seeding complete!\n`);
+    logger.info('Database seeding complete!');
   } catch (error) {
-    console.error(`\n${terminalPrefix(TerminalPrefix.ERROR)} Database seeding failed:`, error);
+    logger.error('Database seeding failed', {
+      error: error instanceof Error ? error.message : error,
+    });
     throw error;
   } finally {
     // Re-enable FORCE RLS for security
-    console.log(`${terminalPrefix(TerminalPrefix.INFO)} Re-enabling FORCE RLS...\n`);
+    logger.info('Re-enabling FORCE RLS...');
     try {
       await db.$client.query(`
         ALTER TABLE tenants FORCE ROW LEVEL SECURITY;
         ALTER TABLE customers FORCE ROW LEVEL SECURITY;
         ALTER TABLE users FORCE ROW LEVEL SECURITY;
       `);
-      console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} FORCE RLS re-enabled\n`);
+      logger.info('FORCE RLS re-enabled');
     } catch (rlsError) {
-      console.error(
-        `${terminalPrefix(TerminalPrefix.ERROR)} Failed to re-enable FORCE RLS:`,
-        rlsError
-      );
-      console.error(
-        `${terminalPrefix(TerminalPrefix.WARNING)} You must manually re-enable FORCE RLS!\n`
-      );
+      logger.error('Failed to re-enable FORCE RLS', {
+        error: rlsError instanceof Error ? rlsError.message : rlsError,
+      });
+      logger.warn('You must manually re-enable FORCE RLS!');
     }
 
     await db.$client.end();

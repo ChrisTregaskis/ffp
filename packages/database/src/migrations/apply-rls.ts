@@ -18,7 +18,9 @@
 
 import { sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { terminalPrefix, TerminalPrefix, colorText } from '../lib/terminal-logger';
+import { createLogger } from '../lib/logger';
+
+const logger = createLogger('apply-rls');
 
 /**
  * Apply RLS policies to all tenant-scoped tables
@@ -32,8 +34,8 @@ import { terminalPrefix, TerminalPrefix, colorText } from '../lib/terminal-logge
  * @param db - Drizzle database instance
  * @returns Promise<void>
  */
-export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> =>{
-  console.log(`${terminalPrefix(TerminalPrefix.RLS)} Checking RLS status...`);
+export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
+  logger.info('Checking RLS status...');
 
   // Check if RLS is already applied to all tables
   const rlsCheck = await db.execute(sql`
@@ -50,11 +52,11 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> =>{
   const allTablesHaveRLS = tables.length === 5 && tables.every((t) => t.rowsecurity === true);
 
   if (allTablesHaveRLS) {
-    console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} RLS already applied to all tables, skipping...`);
+    logger.info('RLS already applied to all tables, skipping...');
     return;
   }
 
-  console.log(`${terminalPrefix(TerminalPrefix.RLS)} Applying RLS policies...`);
+  logger.info('Applying RLS policies...');
 
   // Apply RLS to all tables in a transaction
   await db.transaction(async (tx) => {
@@ -62,7 +64,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> =>{
     // TENANTS TABLE RLS
     // ============================================================================
 
-    console.log('  - Enabling RLS on tenants table...');
+    logger.debug('Enabling RLS on tenants table...');
 
     await tx.execute(sql`
       ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
@@ -74,7 +76,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> =>{
     const isProduction = environment === 'production' || environment === 'prod';
 
     if (!isProduction) {
-      console.log(`  - Forcing RLS for ${environment} environment...`);
+      logger.debug('Forcing RLS for environment', { environment });
       await tx.execute(sql`
         ALTER TABLE tenants FORCE ROW LEVEL SECURITY;
       `);
@@ -95,7 +97,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> =>{
     // CUSTOMERS TABLE RLS
     // ============================================================================
 
-    console.log('  - Enabling RLS on customers table...');
+    logger.debug('Enabling RLS on customers table...');
 
     await tx.execute(sql`
       ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
@@ -121,7 +123,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> =>{
     // USERS TABLE RLS
     // ============================================================================
 
-    console.log('  - Enabling RLS on users table...');
+    logger.debug('Enabling RLS on users table...');
 
     await tx.execute(sql`
       ALTER TABLE users ENABLE ROW LEVEL SECURITY;
@@ -147,7 +149,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> =>{
     // USER_ASSESSMENTS TABLE RLS
     // ============================================================================
 
-    console.log('  - Enabling RLS on user_assessments table...');
+    logger.debug('Enabling RLS on user_assessments table...');
 
     await tx.execute(sql`
       ALTER TABLE user_assessments ENABLE ROW LEVEL SECURITY;
@@ -173,7 +175,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> =>{
     // USER_ASSESSMENT_ANSWERS TABLE RLS
     // ============================================================================
 
-    console.log('  - Enabling RLS on user_assessment_answers table...');
+    logger.debug('Enabling RLS on user_assessment_answers table...');
 
     await tx.execute(sql`
       ALTER TABLE user_assessment_answers ENABLE ROW LEVEL SECURITY;
@@ -194,10 +196,9 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> =>{
         FOR ALL
         USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
     `);
-
   });
 
-  console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} RLS policies applied successfully`);
+  logger.info('RLS policies applied successfully');
 
   // Verify RLS is now enabled
   const verifyCheck = await db.execute(sql`
@@ -208,9 +209,9 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> =>{
     ORDER BY tablename
   `);
 
-  console.log(`${terminalPrefix(TerminalPrefix.RLS)} RLS Status:`);
+  logger.info('RLS Status:');
   for (const row of verifyCheck.rows as Array<{ tablename: string; rowsecurity: boolean }>) {
-    const status = row.rowsecurity ? colorText('Enabled', 'green') : colorText('Disabled', 'red');
-    console.log(`  - ${row.tablename}: ${status}`);
+    const status = row.rowsecurity ? 'Enabled' : 'Disabled';
+    logger.info(`  ${row.tablename}: ${status}`, { table: row.tablename, enabled: row.rowsecurity });
   }
-}
+};

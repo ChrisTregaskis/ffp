@@ -4,8 +4,10 @@ import {
   type AdminCreateUserCommandOutput,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { COGNITO_CUSTOM_ATTRIBUTES } from '../../core/src/lib/constants.js';
-import { terminalPrefix, TerminalPrefix } from '../src/lib/terminal-logger.js';
+import { createLogger } from '../src/lib/logger.js';
 import type { TestUserCognitoSeed, TestUserSeed, TestCustomerTenantSeed } from './types.js';
+
+const logger = createLogger('seed-test-user-cognito');
 
 /**
  * Cognito region
@@ -41,9 +43,7 @@ export const seedTestUserCognito = async (
   userData: TestUserSeed,
   tenantData: TestCustomerTenantSeed
 ): Promise<AdminCreateUserCommandOutput> => {
-  console.log(
-    `${terminalPrefix(TerminalPrefix.INFO)} Seeding test user in Cognito (${userData.role})...`
-  );
+  logger.info(`Seeding test user in Cognito (${userData.role})...`);
 
   validateEnvironment();
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -67,24 +67,18 @@ export const seedTestUserCognito = async (
       })
     );
 
-    console.log(
-      `${terminalPrefix(TerminalPrefix.SUCCESS)} Test user created in Cognito (${userData.role})`
-    );
-    console.log(`  Email: ${cognitoData.email}`);
-    console.log(
-      `  ${terminalPrefix(TerminalPrefix.WARNING)} Temporary password: ${cognitoData.temporaryPassword}`
-    );
+    logger.info(`Test user created in Cognito (${userData.role})`, { email: cognitoData.email });
+    logger.warn('Temporary password set', { temporaryPassword: cognitoData.temporaryPassword });
 
     return response;
   } catch (error) {
     // If user already exists, skip creation (common when re-seeding database)
     if (error instanceof Error && error.name === 'UsernameExistsException') {
-      console.log(
-        `${terminalPrefix(TerminalPrefix.SUCCESS)} Test user already exists in Cognito (skipped)`
-      );
-      console.log(`  Email: ${cognitoData.email}`);
-      console.log(`  Role: ${userData.role}`);
-      console.log(`  Cognito Sub: ${cognitoData.cognitoSub} (from config)`);
+      logger.info('Test user already exists in Cognito (skipped)', {
+        email: cognitoData.email,
+        role: userData.role,
+        cognitoSub: cognitoData.cognitoSub,
+      });
 
       // Return empty response - user already exists
       return {} as AdminCreateUserCommandOutput;

@@ -3,8 +3,10 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
 import * as schema from '../src/schema/index.js';
 import { users } from '../src/schema/index.js';
-import { terminalPrefix, TerminalPrefix } from '../src/lib/terminal-logger.js';
+import { createLogger } from '../src/lib/logger.js';
 import type { TestUserSeed } from './types.js';
+
+const logger = createLogger('seed-test-user-db');
 
 /**
  * Seeds a test user record in the database with exact data from configuration.
@@ -14,12 +16,10 @@ export const seedTestUserDatabase = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool },
   data: TestUserSeed
 ): Promise<void> => {
-  console.log(
-    `${terminalPrefix(TerminalPrefix.INFO)} Seeding test user in database (${data.role})...`
-  );
+  logger.info(`Seeding test user in database (${data.role})...`);
 
-  // Bypass RLS for seed operation (audit trail via console logs)
-  console.log(`${terminalPrefix(TerminalPrefix.WARNING)} RLS BYPASSED for seed operation`);
+  // Bypass RLS for seed operation (audit trail via logs)
+  logger.warn('RLS BYPASSED for seed operation');
   await db.execute(sql`SET LOCAL row_security = off`);
 
   // Upsert test user - insert or update if exists
@@ -57,10 +57,10 @@ export const seedTestUserDatabase = async (
       },
     });
 
-  console.log(
-    `${terminalPrefix(TerminalPrefix.SUCCESS)} Test user seeded in database (${data.role}): ${data.id}`
-  );
-  console.log(`  Email: ${data.email}`);
-  console.log(`  Tenant ID: ${data.tenantId}`);
-  console.log(`  Role: ${data.role}`);
+  logger.info(`Test user seeded in database (${data.role})`, {
+    id: data.id,
+    email: data.email,
+    tenantId: data.tenantId,
+    role: data.role,
+  });
 };

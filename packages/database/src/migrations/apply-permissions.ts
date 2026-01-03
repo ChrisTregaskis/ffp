@@ -27,7 +27,9 @@
 
 import { sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { terminalPrefix, TerminalPrefix, colorText } from '../lib/terminal-logger';
+import { createLogger } from '../lib/logger';
+
+const logger = createLogger('permissions');
 
 /**
  * Get users that need table access permissions
@@ -70,9 +72,10 @@ export const applyPermissions = async (
 ): Promise<void> => {
   const applicationUsers = getApplicationUsers();
 
-  console.log(`${terminalPrefix(TerminalPrefix.MIGRATE)} Applying database permissions...`);
-  console.log(`  - Migration user: ${colorText(migrationUser, 'cyan')}`);
-  console.log(`  - Application users: ${colorText(applicationUsers.join(', '), 'cyan')}`);
+  logger.info('Applying database permissions...', {
+    migrationUser,
+    applicationUsers,
+  });
 
   for (const user of applicationUsers) {
     try {
@@ -82,9 +85,10 @@ export const applyPermissions = async (
       `);
 
       if (userExists.rows.length === 0) {
-        console.log(
-          `  - ${colorText('SKIP', 'yellow')} User '${user}' does not exist (may be intentional in some environments)`
-        );
+        logger.warn(`User '${user}' does not exist (may be intentional in some environments)`, {
+          user,
+          skipped: true,
+        });
         continue;
       }
 
@@ -114,15 +118,13 @@ export const applyPermissions = async (
         GRANT USAGE, SELECT ON SEQUENCES TO ${sql.raw(user)}
       `);
 
-      console.log(`  - ${colorText('✓', 'green')} Permissions granted to '${user}'`);
+      logger.info(`Permissions granted to '${user}'`, { user, success: true });
     } catch (error) {
       // Log but don't fail - user might not exist in all environments
       const message = error instanceof Error ? error.message : String(error);
-      console.log(
-        `  - ${colorText('WARN', 'yellow')} Could not grant permissions to '${user}': ${message}`
-      );
+      logger.warn(`Could not grant permissions to '${user}'`, { user, error: message });
     }
   }
 
-  console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} Database permissions applied`);
+  logger.info('Database permissions applied');
 };

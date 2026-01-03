@@ -3,9 +3,11 @@ import { eq } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../src/schema/index.js';
 import { questions } from '../src/schema/index.js';
-import { terminalPrefix, TerminalPrefix } from '../src/lib/terminal-logger.js';
+import { createLogger } from '../src/lib/logger.js';
 
 import type { NewQuestion } from '../src/schema/questions.js';
+
+const logger = createLogger('seed-questions');
 
 /**
  * Deterministic UUIDs for demo videos
@@ -306,7 +308,7 @@ const DEFAULT_QUESTIONS: NewQuestion[] = [
 export const seedQuestions = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool }
 ): Promise<number> => {
-  console.log(`${terminalPrefix(TerminalPrefix.INFO)} Seeding questions...`);
+  logger.info('Seeding questions...');
 
   let createdCount = 0;
 
@@ -317,9 +319,7 @@ export const seedQuestions = async (
     });
 
     if (existingQuestion) {
-      console.log(
-        `${terminalPrefix(TerminalPrefix.WARNING)} Question already exists: "${question.slug}"`
-      );
+      logger.warn(`Question already exists: "${question.slug}"`);
       continue;
     }
 
@@ -330,16 +330,19 @@ export const seedQuestions = async (
       type: questions.type,
     });
 
-    console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} Question created: ${newQuestion.slug}`);
-    console.log(`  ID: ${newQuestion.id}`);
-    console.log(`  Type: ${newQuestion.type}`);
+    logger.info('Question created', {
+      slug: newQuestion.slug,
+      id: newQuestion.id,
+      type: newQuestion.type,
+    });
 
     createdCount++;
   }
 
-  console.log(
-    `${terminalPrefix(TerminalPrefix.INFO)} Questions seed complete: ${createdCount} created, ${DEFAULT_QUESTIONS.length - createdCount} already existed`
-  );
+  logger.info('Questions seed complete', {
+    created: createdCount,
+    alreadyExisted: DEFAULT_QUESTIONS.length - createdCount,
+  });
 
   return createdCount;
 };

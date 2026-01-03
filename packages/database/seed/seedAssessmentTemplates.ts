@@ -3,11 +3,13 @@ import { eq } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../src/schema/index.js';
 import { assessmentTemplates, templateQuestions } from '../src/schema/index.js';
-import { terminalPrefix, TerminalPrefix } from '../src/lib/terminal-logger.js';
+import { createLogger } from '../src/lib/logger.js';
 import { QUESTION_IDS } from './seedQuestions.js';
 
 import type { NewAssessmentTemplate } from '../src/schema/assessment-templates.js';
 import type { NewTemplateQuestion } from '../src/schema/template-questions.js';
+
+const logger = createLogger('seed-assessment-templates');
 
 /**
  * Deterministic UUIDs for assessment templates
@@ -268,7 +270,7 @@ const seedTemplateQuestions = async (
 export const seedAssessmentTemplates = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool }
 ): Promise<number> => {
-  console.log(`${terminalPrefix(TerminalPrefix.INFO)} Seeding assessment templates...`);
+  logger.info('Seeding assessment templates...');
 
   let templatesCreatedCount = 0;
   let joinRecordsCreatedCount = 0;
@@ -284,10 +286,7 @@ export const seedAssessmentTemplates = async (
     const questionCount = mapping?.questionIds.length ?? 0;
 
     if (existingTemplate) {
-      console.log(
-        `${terminalPrefix(TerminalPrefix.WARNING)} Template already exists: "${template.name}"`
-      );
-      console.log(`  ID: ${existingTemplate.id}`);
+      logger.warn(`Template already exists: "${template.name}"`, { id: existingTemplate.id });
     } else {
       // Insert new template
       const [newTemplate] = await db.insert(assessmentTemplates).values(template).returning({
@@ -295,11 +294,11 @@ export const seedAssessmentTemplates = async (
         name: assessmentTemplates.name,
       });
 
-      console.log(
-        `${terminalPrefix(TerminalPrefix.SUCCESS)} Template created: ${newTemplate.name}`
-      );
-      console.log(`  ID: ${newTemplate.id}`);
-      console.log(`  Questions: ${questionCount} (via template_questions join)`);
+      logger.info('Template created', {
+        name: newTemplate.name,
+        id: newTemplate.id,
+        questionCount,
+      });
 
       templatesCreatedCount++;
     }
@@ -308,15 +307,16 @@ export const seedAssessmentTemplates = async (
     if (mapping) {
       const joinCount = await seedTemplateQuestions(db, template.id!, mapping.questionIds);
       if (joinCount > 0) {
-        console.log(`  Template-question joins created: ${joinCount}`);
+        logger.debug('Template-question joins created', { templateId: template.id, joinCount });
         joinRecordsCreatedCount += joinCount;
       }
     }
   }
 
-  console.log(
-    `${terminalPrefix(TerminalPrefix.INFO)} Assessment templates seed complete: ${templatesCreatedCount} templates created, ${joinRecordsCreatedCount} joins created`
-  );
+  logger.info('Assessment templates seed complete', {
+    templatesCreated: templatesCreatedCount,
+    joinsCreated: joinRecordsCreatedCount,
+  });
 
   return templatesCreatedCount;
 };
