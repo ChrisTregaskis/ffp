@@ -82,8 +82,8 @@ export type ScoreDimension = z.infer<typeof scoreDimensionSchema>;
  */
 export const assessmentQuestionSchema = z
   .object({
-    /** Unique identifier for the question within the template */
-    id: z.string().min(1),
+    /** Unique identifier for the question (UUID) */
+    id: z.string().uuid(),
     /** Type of question (determines UI component and validation) */
     type: questionTypeSchema,
     /** The question text displayed to the user */

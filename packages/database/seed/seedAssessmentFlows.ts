@@ -3,9 +3,25 @@ import { eq } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../src/schema/index.js';
 import { assessmentFlows } from '../src/schema/index.js';
-import { terminalPrefix, TerminalPrefix } from '../src/lib/terminal-logger.js';
+import { createLogger } from '../src/lib/logger.js';
+import { TEMPLATE_IDS } from './seedAssessmentTemplates.js';
 
 import type { FlowStep } from '../src/constants/flow.constants.js';
+
+const logger = createLogger('seed-assessment-flows');
+
+/**
+ * Deterministic UUID for the default assessment flow
+ *
+ * UUID Pattern: 44444444-4444-4444-4444-4444444400XX
+ * - Default flow: 01
+ *
+ * This ensures consistency across seed runs and allows Postman/tests
+ * to reference the flow reliably.
+ */
+export const FLOW_IDS = {
+  DEFAULT: '44444444-4444-4444-4444-444444440001',
+} as const;
 
 /**
  * Default flow name - used for idempotency check
@@ -37,7 +53,7 @@ const DEFAULT_FLOW_STEPS: FlowStep[] = [
   {
     order: 2,
     type: 'questions',
-    templateId: 'pre-assessment-questions-v1',
+    templateId: TEMPLATE_IDS.PRE_ASSESSMENT_QUESTIONS,
     config: {
       title: 'Pre-Assessment Questions',
       description: 'Quick questions about your goals, pain levels, and medical history',
@@ -61,7 +77,7 @@ const DEFAULT_FLOW_STEPS: FlowStep[] = [
   {
     order: 4,
     type: 'video-assessment',
-    templateId: 'strength-assessment-v1',
+    templateId: TEMPLATE_IDS.STRENGTH_ASSESSMENT,
     config: {
       title: 'Strength Assessment',
       description: "Let's evaluate your current strength levels with some simple exercises.",
@@ -76,7 +92,7 @@ const DEFAULT_FLOW_STEPS: FlowStep[] = [
   {
     order: 5,
     type: 'video-assessment',
-    templateId: 'balance-assessment-v1',
+    templateId: TEMPLATE_IDS.BALANCE_ASSESSMENT,
     config: {
       title: 'Balance Assessment',
       description: 'Tests to measure your stability and balance in different positions.',
@@ -114,7 +130,7 @@ const DEFAULT_FLOW_STEPS: FlowStep[] = [
 export const seedAssessmentFlows = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool }
 ): Promise<boolean> => {
-  console.log(`${terminalPrefix(TerminalPrefix.INFO)} Seeding assessment flows...`);
+  logger.info('Seeding assessment flows...');
 
   // Check if default flow already exists (idempotency)
   const existingFlow = await db.query.assessmentFlows.findFirst({
@@ -122,19 +138,19 @@ export const seedAssessmentFlows = async (
   });
 
   if (existingFlow) {
-    console.log(
-      `${terminalPrefix(TerminalPrefix.WARNING)} Assessment flow already exists: "${DEFAULT_FLOW_NAME}"`
-    );
-    console.log(`  ID: ${existingFlow.id}`);
-    console.log(`  Steps: ${existingFlow.steps.length}`);
-    console.log(`  Active: ${existingFlow.isActive}`);
+    logger.warn(`Assessment flow already exists: "${DEFAULT_FLOW_NAME}"`, {
+      id: existingFlow.id,
+      steps: existingFlow.steps.length,
+      isActive: existingFlow.isActive,
+    });
     return false;
   }
 
-  // Insert default flow
+  // Insert default flow with deterministic UUID
   const [newFlow] = await db
     .insert(assessmentFlows)
     .values({
+      id: FLOW_IDS.DEFAULT,
       name: DEFAULT_FLOW_NAME,
       description: 'Comprehensive assessment with pre-questions and physical tests',
       steps: DEFAULT_FLOW_STEPS,
@@ -142,10 +158,12 @@ export const seedAssessmentFlows = async (
     })
     .returning({ id: assessmentFlows.id });
 
-  console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} Assessment flow created: ${newFlow.id}`);
-  console.log(`  Name: ${DEFAULT_FLOW_NAME}`);
-  console.log(`  Steps: ${DEFAULT_FLOW_STEPS.length}`);
-  console.log(`  Active: true`);
+  logger.info('Assessment flow created', {
+    id: newFlow.id,
+    name: DEFAULT_FLOW_NAME,
+    steps: DEFAULT_FLOW_STEPS.length,
+    isActive: true,
+  });
 
   return true;
 };

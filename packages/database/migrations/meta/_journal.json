@@ -64,6 +64,20 @@
       "when": 1766609415493,
       "tag": "0008_friendly_purple_man",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1767350039769,
+      "tag": "0009_easy_captain_marvel",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1767434138101,
+      "tag": "0010_redundant_tyger_tiger",
+      "breakpoints": true
     }
   ]
 }

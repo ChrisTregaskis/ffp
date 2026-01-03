@@ -71,26 +71,12 @@ export const customersRelations = relations(customers, ({ one }) => ({
   // Users will reference this via customerId foreign key
 }));
 
-/**
- * Zod schema for inserting a customer
- * Auto-generated from Drizzle schema for validation
- */
+// Zod schema for inserting a customer
 export const insertCustomerSchema = createInsertSchema(customers);
 
-/**
- * Zod schema for selecting a customer
- * Auto-generated from Drizzle schema for validation
- */
+// Zod schema for selecting a customer
 export const selectCustomerSchema = createSelectSchema(customers);
 
-/**
- * TypeScript type for a customer record
- * Inferred from Drizzle schema
- */
 export type Customer = typeof customers.$inferSelect;
 
-/**
- * TypeScript type for creating a new customer
- * Inferred from Drizzle schema
- */
 export type NewCustomer = typeof customers.$inferInsert;

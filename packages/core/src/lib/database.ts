@@ -88,6 +88,14 @@ const pool = new Pool({
 export const db = drizzle({ client: pool });
 
 /**
+ * Transaction type for use in repository functions
+ *
+ * Use this type when passing transactions between functions to ensure
+ * atomic operations across multiple database writes.
+ */
+export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/**
  * Sets the Row-Level Security (RLS) context for the current transaction
  *
  * This function sets PostgreSQL session variables that are used by RLS policies

@@ -4,6 +4,8 @@
 
 FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolation, accessed through Drizzle ORM for type-safe database operations. All tenant-scoped tables enforce RLS policies to prevent cross-tenant data access.
 
+// TODO: When the APP is essentially ready for MVP launch, this document needs to be condensed removing code examples that simply now dulicate what is built. Users or AI Agents, should at this point be referring to the actual implemented code. As such, code examples for files already created can be removed to avoid maintainence burden keeping in sync as well as potentially misleading those that read it here.
+
 ## Why PostgreSQL + RLS + Drizzle ORM
 
 ### Benefits
@@ -173,7 +175,10 @@ import {
   index,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { relations } from 'drizzle-orm';
 import { users } from './users';
+import { templateQuestions } from './template-questions';
+import type { ScoringConfig } from '../types';
 
 export const assessmentTemplates = pgTable(
   'assessment_templates',
@@ -182,44 +187,181 @@ export const assessmentTemplates = pgTable(
     name: varchar('name', { length: 255 }).notNull(),
     description: text('description'),
     version: integer('version').notNull().default(1),
-    questions: jsonb('questions').notNull(),
-    scoringConfig: jsonb('scoring_config').notNull(),
+    // Note: Questions are now in normalised tables (questions + template_questions)
+    scoringConfig: jsonb('scoring_config').$type<ScoringConfig>().notNull(),
     isActive: boolean('is_active').notNull().default(true),
     createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  (table) => ({
-    activeIdx: index('idx_assessment_templates_active').on(table.isActive),
-  })
+  (table) => [
+    index('idx_assessment_templates_active').on(table.isActive),
+    index('idx_assessment_templates_name').on(table.name),
+  ]
 );
+
+// Relations
+export const assessmentTemplatesRelations = relations(assessmentTemplates, ({ one, many }) => ({
+  createdByUser: one(users, {
+    fields: [assessmentTemplates.createdBy],
+    references: [users.id],
+  }),
+  templateQuestions: many(templateQuestions),
+}));
 
 // Auto-generated Zod schemas
 export const insertAssessmentTemplateSchema = createInsertSchema(assessmentTemplates);
 export const selectAssessmentTemplateSchema = createSelectSchema(assessmentTemplates);
 
 // TypeScript types
-export type AssessmentTemplate = typeof assessmentTemplates.$inferSelect;
+export type AssessmentTemplateRecord = typeof assessmentTemplates.$inferSelect;
 export type NewAssessmentTemplate = typeof assessmentTemplates.$inferInsert;
 
 // No RLS needed (system-managed, not tenant-specific)
+```
+
+### Questions Table
+
+```typescript
+// schema/questions.ts
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  boolean,
+  timestamp,
+  jsonb,
+  index,
+  pgEnum,
+} from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { QUESTION_TYPES, SCORE_DIMENSIONS } from '../constants/question.constants';
+import type { QuestionOption, QuestionValidation } from '../types';
+
+// Enums defined from shared constants
+export const questionTypeEnum = pgEnum('question_type', [...QUESTION_TYPES]);
+export const scoreDimensionEnum = pgEnum('score_dimension', [...SCORE_DIMENSIONS]);
+
+export const questions = pgTable(
+  'questions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    /** Human-readable identifier (e.g., 'goal-primary', 'pain-level') */
+    slug: varchar('slug', { length: 100 }).notNull().unique(),
+    /** Type of question determines UI and validation */
+    type: questionTypeEnum('type').notNull(),
+    /** The question text displayed to users */
+    questionText: text('question_text').notNull(),
+    /** Optional description or help text */
+    description: text('description'),
+    /** Answer options for choice-based questions */
+    options: jsonb('options').$type<QuestionOption[]>(),
+    /** Validation rules for the question */
+    validation: jsonb('validation').$type<QuestionValidation>(),
+    /** Reference to video for video-response type questions */
+    videoId: uuid('video_id'),
+    /** Score dimension this question contributes to */
+    scoreDimension: scoreDimensionEnum('score_dimension'),
+    /** Whether this question is currently active */
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('idx_questions_slug').on(table.slug),
+    index('idx_questions_type').on(table.type),
+    index('idx_questions_is_active').on(table.isActive),
+  ]
+);
+
+// Auto-generated Zod schemas
+export const insertQuestionSchema = createInsertSchema(questions);
+export const selectQuestionSchema = createSelectSchema(questions);
+
+// TypeScript types
+export type QuestionRecord = typeof questions.$inferSelect;
+export type NewQuestion = typeof questions.$inferInsert;
+
+// No RLS needed (system-managed content)
+```
+
+### Template Questions Table (Join Table)
+
+```typescript
+// schema/template-questions.ts
+import { pgTable, uuid, integer, jsonb, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { relations } from 'drizzle-orm';
+import { assessmentTemplates } from './assessment-templates';
+import { questions } from './questions';
+import type { ConfigOverrides } from '../types';
+
+export const templateQuestions = pgTable(
+  'template_questions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    /** Reference to the assessment template */
+    templateId: uuid('template_id')
+      .notNull()
+      .references(() => assessmentTemplates.id, { onDelete: 'cascade' }),
+    /** Reference to the question */
+    questionId: uuid('question_id')
+      .notNull()
+      .references(() => questions.id, { onDelete: 'restrict' }),
+    /** Order in which question appears within the template (1-based) */
+    displayOrder: integer('display_order').notNull(),
+    /** Template-specific overrides for question text, description, or validation */
+    configOverrides: jsonb('config_overrides').$type<ConfigOverrides>(),
+  },
+  (table) => [
+    // Each question can only appear once per template
+    uniqueIndex('idx_template_questions_template_question').on(table.templateId, table.questionId),
+    // Display order must be unique within a template
+    uniqueIndex('idx_template_questions_template_order').on(table.templateId, table.displayOrder),
+    // Efficient lookup of all questions for a template
+    index('idx_template_questions_template').on(table.templateId),
+  ]
+);
+
+// Relations
+export const templateQuestionsRelations = relations(templateQuestions, ({ one }) => ({
+  template: one(assessmentTemplates, {
+    fields: [templateQuestions.templateId],
+    references: [assessmentTemplates.id],
+  }),
+  question: one(questions, {
+    fields: [templateQuestions.questionId],
+    references: [questions.id],
+  }),
+}));
+
+// Auto-generated Zod schemas
+export const insertTemplateQuestionSchema = createInsertSchema(templateQuestions);
+export const selectTemplateQuestionSchema = createSelectSchema(templateQuestions);
+
+// TypeScript types
+export type TemplateQuestionRecord = typeof templateQuestions.$inferSelect;
+export type NewTemplateQuestion = typeof templateQuestions.$inferInsert;
+
+// No RLS needed (system-managed content)
 ```
 
 ### User Assessments Table
 
 ```typescript
 // schema/user-assessments.ts
-import { pgTable, uuid, varchar, timestamp, jsonb, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, integer, jsonb, timestamp, index, pgEnum } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { relations } from 'drizzle-orm';
 import { tenants } from './tenants';
 import { users } from './users';
-import { assessmentTemplates } from './assessment-templates';
+import { assessmentFlows } from './assessment-flows';
+import { userAssessmentAnswers } from './user-assessment-answers';
+import { USER_ASSESSMENT_STATUSES } from '../constants/user-assessment.constants';
 
-export const assessmentStatusEnum = pgEnum('assessment_status', [
-  'in_progress',
-  'completed',
-  'abandoned',
+export const userAssessmentStatusEnum = pgEnum('user_assessment_status', [
+  ...USER_ASSESSMENT_STATUSES,
 ]);
 
 export const userAssessments = pgTable(
@@ -232,25 +374,36 @@ export const userAssessments = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    templateId: uuid('template_id')
+    flowId: uuid('flow_id')
       .notNull()
-      .references(() => assessmentTemplates.id, { onDelete: 'restrict' }),
-    status: assessmentStatusEnum('status').notNull().default('in_progress'),
-    answers: jsonb('answers').default({}),
-    score: jsonb('score'),
-    startedAt: timestamp('started_at').defaultNow().notNull(),
+      .references(() => assessmentFlows.id, { onDelete: 'restrict' }),
+    /** Current step index in the flow (1-based) */
+    currentStep: integer('current_step').notNull().default(1),
+    /** Assessment state machine status */
+    status: userAssessmentStatusEnum('status').notNull().default('not_started'),
+    // Note: Answers are now in normalised user_assessment_answers table
+    /** Calculated scores after scoring job completes */
+    scores: jsonb('scores'),
+    /** Reference to generated programme (nullable until programme generation) */
+    programmeId: uuid('programme_id'),
+    /** When user started the assessment */
+    startedAt: timestamp('started_at'),
+    /** When user submitted the assessment */
+    submittedAt: timestamp('submitted_at'),
+    /** When assessment flow completed */
     completedAt: timestamp('completed_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  (table) => ({
-    tenantUserIdx: index('idx_user_assessments_tenant_user').on(table.tenantId, table.userId),
-    statusIdx: index('idx_user_assessments_status').on(table.status),
-  })
+  (table) => [
+    index('idx_user_assessments_tenant_user').on(table.tenantId, table.userId),
+    index('idx_user_assessments_status').on(table.status),
+    index('idx_user_assessments_flow').on(table.flowId),
+  ]
 );
 
 // Relations
-export const userAssessmentsRelations = relations(userAssessments, ({ one }) => ({
+export const userAssessmentsRelations = relations(userAssessments, ({ one, many }) => ({
   tenant: one(tenants, {
     fields: [userAssessments.tenantId],
     references: [tenants.id],
@@ -259,10 +412,11 @@ export const userAssessmentsRelations = relations(userAssessments, ({ one }) => 
     fields: [userAssessments.userId],
     references: [users.id],
   }),
-  template: one(assessmentTemplates, {
-    fields: [userAssessments.templateId],
-    references: [assessmentTemplates.id],
+  flow: one(assessmentFlows, {
+    fields: [userAssessments.flowId],
+    references: [assessmentFlows.id],
   }),
+  answers: many(userAssessmentAnswers),
 }));
 
 // Auto-generated Zod schemas
@@ -270,8 +424,81 @@ export const insertUserAssessmentSchema = createInsertSchema(userAssessments);
 export const selectUserAssessmentSchema = createSelectSchema(userAssessments);
 
 // TypeScript types
-export type UserAssessment = typeof userAssessments.$inferSelect;
+export type UserAssessmentRecord = typeof userAssessments.$inferSelect;
 export type NewUserAssessment = typeof userAssessments.$inferInsert;
+
+// RLS enabled via migration (see below)
+```
+
+### User Assessment Answers Table
+
+```typescript
+// schema/user-assessment-answers.ts
+import { pgTable, uuid, jsonb, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { relations } from 'drizzle-orm';
+import { tenants } from './tenants';
+import { userAssessments } from './user-assessments';
+import { questions } from './questions';
+import type { AnswerValue } from '../types';
+
+export const userAssessmentAnswers = pgTable(
+  'user_assessment_answers',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    /** Tenant ID for RLS isolation - denormalised from user_assessment */
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    /** Reference to the user assessment this answer belongs to */
+    userAssessmentId: uuid('user_assessment_id')
+      .notNull()
+      .references(() => userAssessments.id, { onDelete: 'cascade' }),
+    /** Reference to the question being answered */
+    questionId: uuid('question_id')
+      .notNull()
+      .references(() => questions.id, { onDelete: 'restrict' }),
+    /** The answer value - flexible JSONB to accommodate all question types */
+    answerValue: jsonb('answer_value').$type<AnswerValue>().notNull(),
+    /** When this answer was recorded/updated */
+    answeredAt: timestamp('answered_at').defaultNow().notNull(),
+  },
+  (table) => [
+    // One answer per question per assessment
+    uniqueIndex('idx_user_assessment_answers_assessment_question').on(
+      table.userAssessmentId,
+      table.questionId
+    ),
+    // Efficient lookup for RLS policy
+    index('idx_user_assessment_answers_tenant').on(table.tenantId),
+    // Efficient lookup of all answers for an assessment
+    index('idx_user_assessment_answers_assessment').on(table.userAssessmentId),
+  ]
+);
+
+// Relations
+export const userAssessmentAnswersRelations = relations(userAssessmentAnswers, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [userAssessmentAnswers.tenantId],
+    references: [tenants.id],
+  }),
+  userAssessment: one(userAssessments, {
+    fields: [userAssessmentAnswers.userAssessmentId],
+    references: [userAssessments.id],
+  }),
+  question: one(questions, {
+    fields: [userAssessmentAnswers.questionId],
+    references: [questions.id],
+  }),
+}));
+
+// Auto-generated Zod schemas
+export const insertUserAssessmentAnswerSchema = createInsertSchema(userAssessmentAnswers);
+export const selectUserAssessmentAnswerSchema = createSelectSchema(userAssessmentAnswers);
+
+// TypeScript types
+export type UserAssessmentAnswerRecord = typeof userAssessmentAnswers.$inferSelect;
+export type NewUserAssessmentAnswer = typeof userAssessmentAnswers.$inferInsert;
 
 // RLS enabled via migration (see below)
 ```
@@ -410,29 +637,34 @@ export const enableRLS = sql`
   -- Enable RLS on tenant-scoped tables
   ALTER TABLE users ENABLE ROW LEVEL SECURITY;
   ALTER TABLE user_assessments ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE user_assessment_answers ENABLE ROW LEVEL SECURITY;
   ALTER TABLE programs ENABLE ROW LEVEL SECURITY;
   ALTER TABLE program_sessions ENABLE ROW LEVEL SECURITY;
   ALTER TABLE user_progress ENABLE ROW LEVEL SECURITY;
 
   -- Create RLS policies
   CREATE POLICY tenant_isolation_users ON users
-    FOR ALL 
+    FOR ALL
     USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
 
   CREATE POLICY tenant_isolation_assessments ON user_assessments
-    FOR ALL 
+    FOR ALL
+    USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
+
+  CREATE POLICY tenant_isolation_answers ON user_assessment_answers
+    FOR ALL
     USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
 
   CREATE POLICY tenant_isolation_programs ON programs
-    FOR ALL 
+    FOR ALL
     USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
 
   CREATE POLICY tenant_isolation_sessions ON program_sessions
-    FOR ALL 
+    FOR ALL
     USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
 
   CREATE POLICY tenant_isolation_progress ON user_progress
-    FOR ALL 
+    FOR ALL
     USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
 
   -- Audit logs policy (system admins only)

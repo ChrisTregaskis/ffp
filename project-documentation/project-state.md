@@ -1,302 +1,367 @@
 # FFP - Project State
 
-**Last Updated**: 28th December 2025
-**Current EPIC**: FFP-2 - Assessment Engine (Sprint 4 In Progress)
-**Current Story**: FFP-129 - Save Assessment Progress API
-**Current Branch**: `feature/ffp-129-save-assessment-progress-api`
+**Last Updated**: 3rd January 2026
+**Current EPIC**: FFP-2 - Assessment Engine
+**Sprint Status**: Sprint 3 ✅ Complete | Sprint 4 in progress (FFP-130 Questions Table Refactor ✅)
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
 
-## Current Work: FFP-129 - Save Assessment Progress API
+## Completed: Sprint 3 - Backend Foundation (24 pts + 3 early) ✅
 
-**Status**: ✅ Complete (Ready for Review)
-**Story Points**: 3
-**Sprint**: 4 (Backend APIs + Frontend Foundation)
+**Status**: ✅ Complete
+**Branch**: `feature/sprint3` (merged)
 
-### User Story
+| Key     | Story                                      | Pts | Key Files                                                                    |
+| ------- | ------------------------------------------ | --- | ---------------------------------------------------------------------------- |
+| FFP-124 | Assessment Template Schema & Repository    | 5   | `schema/assessment-templates.ts`, `assessment-template.repository.ts`        |
+| FFP-132 | Process Jobs Schema & Queue Infrastructure | 8   | `schema/process-jobs.ts`, `job-queue.service.ts`, `job-processor.service.ts` |
+| FFP-125 | Assessment Flow Schema & Configuration     | 3   | `schema/assessment-flows.ts`, `seedAssessmentFlows.ts`                       |
+| FFP-127 | User Assessment Schema & State Machine     | 5   | `schema/user-assessments.ts`, `user-assessment.repository.ts`                |
+| FFP-128 | Start Assessment API                       | 3   | `start-assessment.ts`, `assessment.service.ts`                               |
+| FFP-129 | Save Assessment Progress API (early)       | 3   | `save-progress.ts`, `assessment.service.ts`                                  |
 
-> As a user,
-> I want my answers saved when I click Continue or Back,
-> So that I can close the browser and resume later.
+**Sprint Goal**: All database schemas migrated, job queue ready, users can start assessments. ✅ ACHIEVED
 
-### Context
+### Key Patterns & Decisions Established
 
-Progress is saved on navigation only (not debounced auto-save). This reduces API calls while ensuring users don't lose progress.
+| Area               | Decision                                                                                |
+| ------------------ | --------------------------------------------------------------------------------------- |
+| **State Machine**  | `not_started → in_progress → submitted → scored → completed` (+ `abandoned`)            |
+| **Job Queue**      | Database-driven polling with `FOR UPDATE SKIP LOCKED`, exponential backoff              |
+| **Flow Steps**     | `intro`, `questions`, `transition`, `video-assessment`, `results`, `programme-overview` |
+| **RLS Pattern**    | Tenant isolation via `app.tenant_id` session variable                                   |
+| **User Ownership** | Service-layer `userId` check (RLS enforces tenant, not user isolation)                  |
+| **Router**         | Regex-based pattern matching with parameter extraction for dynamic routes               |
 
-### Acceptance Criteria
+### Key File Locations
 
-| AC  | Description                        | Status      |
-| --- | ---------------------------------- | ----------- |
-| AC1 | Progress saves merged answers      | ✅ Complete |
-| AC2 | Current step updated               | ✅ Complete |
-| AC3 | Status transitions to in_progress  | ✅ Complete |
-| AC4 | Cannot modify submitted assessment | ✅ Complete |
-| AC5 | Tenant isolation enforced          | ✅ Complete |
+- **Schemas**: `@ffp/database/src/schema/` (assessment-templates, assessment-flows, user-assessments, process-jobs)
+- **Repositories**: `@ffp/core/src/assessments/` (user-assessment.repository.ts, assessment-template.repository.ts)
+- **Services**: `@ffp/core/src/assessments/assessment.service.ts`
+- **Job Queue**: `@ffp/core/src/jobs/` (job-queue.service.ts, job-processor.service.ts)
+- **Handlers**: `@ffp/functions/src/assessments/` (start-assessment.ts, save-progress.ts, submit-assessment.ts)
 
-### Dependencies
+---
 
-- ✅ FFP-128: Start Assessment API (completed)
-- ✅ FFP-127: User Assessment Schema & State Machine (completed)
+## Completed: FFP-130 - Questions Table Refactor ✅
 
-### Blocks (Downstream)
-
-- FFP-130: Submit Assessment API
+**Branch**: `feature/ffp-130-submit-assessment-api`
+**Story Points**: 5
+**Status**: ✅ All Phases Complete (Sessions A-D)
 
 ### Implementation Plan
 
-**Branch**: `feature/ffp-129-save-assessment-progress-api` (single branch for all sub-tasks)
+Refactoring questions from embedded JSONB (`assessment_templates.questions`) into a dedicated `questions` table with proper referential integrity.
 
-| Order | Key     | Sub-task                                       | Status      |
-| ----- | ------- | ---------------------------------------------- | ----------- |
-| 1     | FFP-165 | Create Zod schemas for save progress req/res   | ✅ Complete |
-| 2     | FFP-166 | Create saveProgressService with answer merging | ✅ Complete |
-| 3     | FFP-167 | Create save-progress Lambda handler            | ✅ Complete |
+**Full Plan**: `project-documentation/sprint-planning/outputs/ffp-130-questions-table-implementation.md`
 
-**No test sub-task**: Consistent with FFP-128 deferral rationale. Repository tests already cover RLS patterns; service logic is straightforward orchestration.
+| Phase | Description                        | Status      | Session |
+| ----- | ---------------------------------- | ----------- | ------- |
+| 1     | Database Constants                 | ✅ Complete | A       |
+| 2     | New Database Schema Files          | ✅ Complete | A       |
+| 3     | Generate and Run Migration         | ✅ Complete | A       |
+| 4     | Seed Data Refactor                 | ✅ Complete | B       |
+| 5     | Core Package - Schema Updates      | ✅ Complete | B       |
+| 6     | Core Package - Repository Updates  | ✅ Complete | C       |
+| 7     | Service Layer Updates              | ✅ Complete | C       |
+| 8     | Modify Existing Schemas (Breaking) | ✅ Complete | D       |
+| 9     | Test Updates                       | ✅ Complete | D       |
 
-### Implementation Notes (Updated from Jira Analysis)
+### Session D Completed Work (3rd January 2026)
 
-The Jira sub-tasks were created before FFP-128 was implemented. Key existing code to leverage:
+**Phase 8: Modify Existing Schemas (Breaking Changes)**
 
-| Existing Code                | Location                        | Purpose                                                |
-| ---------------------------- | ------------------------------- | ------------------------------------------------------ |
-| `updateProgress()`           | `user-assessment.repository.ts` | Already merges answers                                 |
-| `transitionStatus()`         | `user-assessment.repository.ts` | Handles `not_started` → `in_progress` with `startedAt` |
-| `findById()`                 | `user-assessment.repository.ts` | Fetches assessment with RLS                            |
-| `updateUserAssessmentSchema` | `user-assessment.schema.ts`     | Partial schema (needs request/response wrappers)       |
+- Updated `packages/database/src/schema/assessment-templates.ts`
+  - Removed `questions` JSONB column
+  - Removed local type definitions (AssessmentQuestion, QuestionType, etc.)
+  - Added relation to `templateQuestions` (many relation)
+  - Imported ScoringConfig from shared types
+- Updated `packages/database/src/schema/user-assessments.ts`
+  - Removed `answers` JSONB column
+  - Added relation to `userAssessmentAnswers` (many relation)
+- Generated migration `0010_redundant_tyger_tiger.sql` (drops questions/answers columns)
+- Ran migration on both `ffp_dev` and `ffp_test` databases
 
-### Technical Details
+**Phase 9: Test Updates**
 
-**Files to Create/Modify**:
+- Updated `packages/core/src/assessments/template.repository.test.ts`
+  - Removed `questions` field from test input
+  - Updated `questionIds` to use UUID format (`22222222-2222-2222-2222-222222220101`)
+  - Changed TRUNCATE to DELETE statements (FK dependencies)
+- Updated `packages/core/src/assessments/user-assessment.repository.test.ts`
+  - Removed `expect(result.answers).toEqual({})` assertions (answers now in separate table)
+- Fixed database permissions for `test_user` on new tables (questions, template_questions, user_assessment_answers)
+- Set up DEFAULT PRIVILEGES for both `app_user` and `test_user`
 
-| Package        | File                                    | Purpose                            |
-| -------------- | --------------------------------------- | ---------------------------------- |
-| @ffp/core      | `src/schemas/user-assessment.schema.ts` | Add save progress request/response |
-| @ffp/core      | `src/assessments/assessment.service.ts` | Add `saveProgress()` function      |
-| @ffp/functions | `src/assessments/save-progress.ts`      | New Lambda handler                 |
+**Key Fix: Database User Permissions**
 
-**API Endpoint**:
+The vitest config (`@ffp/core/vitest.config.ts`) uses `test_user`, not `app_user` from `.env`. When adding new tables:
 
-```
-POST /assessments/:id/progress
-Body: { answers: Record<string, UserAnswer>, currentStep: number }
-Response: { success: true, updatedAt: string }
-```
+1. Run migrations as `root_user` (DB_MIGRATE_USER)
+2. Ensure DEFAULT PRIVILEGES are configured so `test_user` and `app_user` both get table access
+3. Added strategic comments to `vitest.config.ts` and `migrate.ts` documenting this
 
-**Service Logic**:
+**Quality Assurance**:
 
-```typescript
-async function saveProgress(assessmentId, data, context) {
-  // 1. Find assessment by ID (validate exists + tenant access)
-  // 2. Validate status not submitted/completed (throw ValidationError)
-  // 3. If status is 'not_started', transition to 'in_progress'
-  // 4. Update progress (merges answers + updates currentStep)
-  // 5. Return { success: true, updatedAt }
-}
-```
+- ✅ `pnpm build` - All packages build successfully
+- ✅ `pnpm typecheck` - Zero TypeScript errors
+- ✅ `pnpm test` - 466 tests passing
+- ✅ `pnpm lint` - Zero warnings
 
-**Error Responses**:
+### Session C Completed Work (2nd January 2026)
 
-- 400: Invalid request body / Cannot modify submitted assessment
-- 404: Assessment not found
-- 401: Missing/invalid JWT
+**Phase 6: Core Package - Repository Updates**
+
+- Created `packages/core/src/questions/question.repository.ts`
+  - `findById(db, id)` - Find question by ID
+  - `findByIds(db, ids)` - Find multiple questions by IDs
+  - `findBySlug(db, slug)` - Find question by slug
+  - `findByTemplateId(db, templateId)` - Join with template_questions, order by displayOrder
+  - `findByTemplateIds(db, templateIds)` - Batch fetch for multiple templates
+  - `findAll(db, options)` - Find all active questions
+  - Types exported: `Question`, `QuestionWithConfig`
+- Created `packages/core/src/questions/index.ts` - Barrel export for questions domain
+- Created `packages/core/src/assessments/answer.repository.ts`
+  - `findByAssessmentId()` - Find all answers for assessment
+  - `findByAssessmentAndQuestion()` - Find specific answer
+  - `upsertAnswer()` - Insert or update single answer (ON CONFLICT)
+  - `saveAnswers()` - Batch upsert multiple answers
+  - `deleteByAssessmentId()` - Delete all answers for assessment
+  - `deleteByQuestionIds()` - Delete specific answers
+  - Transaction support via optional `tx` parameter
+  - Types exported: `UserAssessmentAnswer`, `SaveAnswerInput`
+- Updated `packages/core/src/assessments/template.repository.ts`
+  - Added `findWithQuestions(db, id)` - Fetch template with questions loaded
+  - Added `AssessmentTemplateWithQuestions` type
+- Updated `packages/core/src/assessments/user-assessment.repository.ts`
+  - Removed JSONB answer merging from `updateProgress()`
+  - Now only updates `currentStep` (answers via `answerRepository`)
+  - Added deprecation comments
+- Updated `packages/core/src/assessments/index.ts`
+  - Added `answerRepository` export and types
+
+**Phase 7: Service Layer Updates**
+
+- Updated `packages/core/src/assessments/assessment.service.ts`
+  - Added `convertAnswersToResponseFormat()` - DB → API format conversion
+  - Added `convertAnswersToSaveFormat()` - API → DB format conversion
+  - Added `extractAnswerValue()` - Extract value from JSONB structure
+  - Updated `startAssessment()` - Load answers from `user_assessment_answers` table
+  - Updated `saveProgress()` - Save answers via `answerRepository.saveAnswers()` in transaction
+  - Updated `submitAssessment()` - Use new repositories instead of JSONB field
+  - Updated `getRequiredQuestionIds()` - Use `questionRepository.findByTemplateIds()`
+- Updated `packages/core/src/assessments/assessment.service.test.ts`
+  - Refactored all mocks: removed `templateRepository`, added `questionRepository` + `answerRepository`
+  - Updated test fixtures to use `QuestionWithConfig` type
+  - All 12 tests updated to use new repository patterns
+  - Fixed answer structure expectations (separate table vs JSONB)
+
+**Quality Assurance**:
+
+- ✅ `pnpm build` - All packages build successfully
+- ✅ `pnpm typecheck` - Zero TypeScript errors
+- ✅ `pnpm test` - 466 tests passing
+- ✅ `pnpm lint` - Zero warnings
+
+### Session B Completed Work (2nd January 2026)
+
+**Phase 4: Seed Data Refactor**
+
+- Created `packages/database/seed/seedQuestions.ts`
+  - Deterministic UUIDs for 15 questions (pattern: `22222222-2222-2222-2222-2222222200XX`)
+  - `QUESTION_IDS` mapping: slug → UUID
+  - Questions grouped: pre-assessment, strength, balance
+  - Idempotent seeding (checks existence before insert)
+- Refactored `packages/database/seed/seedAssessmentTemplates.ts`
+  - Updated question IDs to use UUIDs from `QUESTION_IDS`
+  - Added `template_questions` join record seeding
+- Updated `packages/database/seed/index.ts`
+  - Added `seedQuestions` call before templates
+  - Re-exports `seedQuestions` and `QUESTION_IDS`
+
+**Phase 5: Core Package - Schema Updates**
+
+- Updated `assessment-question.schema.ts`: `id` now validates as UUID
+- Updated `scoring-config.schema.ts`: `questionIds` array validates as UUIDs
+- Updated `assessment-template.schema.ts`: Made `questions` optional with `@deprecated` annotation
+- Fixed build errors in `assessment.service.ts` and `template.repository.ts` for optional `questions`
+- Updated `assessment-template.schema.test.ts` with UUID test fixtures
+
+**Quality Assurance**:
+
+- ✅ `pnpm build` - All packages build successfully
+- ✅ `pnpm typecheck` - Zero TypeScript errors
+- ✅ `pnpm test` - 466 tests passing
+- ✅ `pnpm lint` - Zero warnings
+
+### Session A Completed Work (2nd January 2026)
+
+**Phase 1: Database Constants**
+
+- Created `packages/database/src/constants/question.constants.ts`
+  - `QUESTION_TYPES`: single-choice, multi-choice, numeric, text, scale, video-response
+  - `SCORE_DIMENSIONS`: strength, balance, mobility, pain, general
+- Updated `constants/index.ts` to export new constants
+
+**Phase 2: New Database Schema Files**
+
+- Created `packages/database/src/schema/questions.ts`
+  - Questions table with slug, type, questionText, options, validation, videoId, scoreDimension
+  - PostgreSQL enums: `question_type`, `score_dimension`
+  - Indexes on slug, type, is_active
+- Created `packages/database/src/schema/template-questions.ts`
+  - Join table: templateId, questionId, displayOrder, configOverrides
+  - Unique constraints on (template_id, question_id) and (template_id, display_order)
+  - FK CASCADE on template delete, RESTRICT on question delete
+- Created `packages/database/src/schema/user-assessment-answers.ts`
+  - Answers table with RLS: tenantId, userAssessmentId, questionId, answerValue
+  - Unique constraint on (user_assessment_id, question_id)
+- Updated `schema/index.ts` to export all new schemas
+
+**Phase 3: Migration**
+
+- Generated `migrations/0009_easy_captain_marvel.sql`
+  - Creates 2 enums, 3 tables, FK constraints, and indexes
+- Migration ready to run locally
+
+**Architectural Improvement: Shared Types Pattern**
+
+- Created `packages/database/src/types/` folder (following `constants/` pattern)
+- `question.types.ts`: QuestionOption, QuestionValidation, ConfigOverrides, AnswerValue
+- Schema files now import from `../types` instead of defining locally
+- Added TODO to `assessment-templates.ts` to migrate legacy types
+
+### Files Created
+
+| File                                                        | Description                                |
+| ----------------------------------------------------------- | ------------------------------------------ |
+| `packages/database/src/constants/question.constants.ts`     | QUESTION_TYPES, SCORE_DIMENSIONS constants |
+| `packages/database/src/types/question.types.ts`             | Shared JSONB types                         |
+| `packages/database/src/types/index.ts`                      | Types barrel export                        |
+| `packages/database/src/schema/questions.ts`                 | Questions table schema                     |
+| `packages/database/src/schema/template-questions.ts`        | Template-questions join table              |
+| `packages/database/src/schema/user-assessment-answers.ts`   | User answers table with RLS                |
+| `packages/database/migrations/0009_easy_captain_marvel.sql` | Migration file                             |
+
+### Files Modified
+
+| File                                                   | Change                          |
+| ------------------------------------------------------ | ------------------------------- |
+| `packages/database/src/constants/index.ts`             | Added question.constants export |
+| `packages/database/src/schema/index.ts`                | Added new schema exports        |
+| `packages/database/src/index.ts`                       | Added types export              |
+| `packages/database/src/schema/assessment-templates.ts` | Added TODO for types migration  |
+
+### Quality Assurance
+
+- ✅ `pnpm build` - All packages build successfully
+- ✅ `pnpm typecheck` - Zero TypeScript errors
+- ✅ `pnpm lint` - Zero warnings
 
 ---
 
-## Recently Completed: FFP-128 - Start Assessment API ✅
+## Completed: FFP-130 - Submit Assessment API
 
-**Status**: ✅ Complete
-**Story Points**: 3
-**Sprint**: 3 (Backend Foundation)
-
-### User Story
-
-> As a user,
-> I want to start a new assessment or resume an existing one,
-> So that I can begin/continue my physiotherapy evaluation.
-
-### Acceptance Criteria
-
-| AC  | Description                                 | Status      |
-| --- | ------------------------------------------- | ----------- |
-| AC1 | Start creates new assessment                | ✅ Complete |
-| AC2 | Start returns existing resumable assessment | ✅ Complete |
-| AC3 | Tenant context extracted from JWT           | ✅ Complete |
-| AC4 | Flow validation (exists and active)         | ✅ Complete |
-
-### Implementation Summary
-
-| Order | Key     | Sub-task                                      | Status            |
-| ----- | ------- | --------------------------------------------- | ----------------- |
-| 1     | FFP-161 | Create Zod schemas for start request/response | ✅ Complete       |
-| 2     | FFP-162 | Create startAssessmentService + flow repo     | ✅ Complete       |
-| 3     | FFP-163 | Create start-assessment Lambda handler        | ✅ Complete       |
-| 4     | FFP-164 | Create integration tests                      | ⏸️ Deferred (MVP) |
-
----
-
-## Recently Completed: FFP-127 - User Assessment Schema & State Machine ✅
-
-**Status**: ✅ Complete
+**Branch**: `feature/ffp-130-submit-assessment-api`
 **Story Points**: 5
-**Sprint**: 3 (Backend Foundation)
+**Status**: ✅ All Sub-tasks Complete (4/4) - Ready for Manual Testing
 
-### User Story
+### Implementation Plan
 
-> As a user,
-> I want my assessment instances stored with proper state tracking,
-> So that I can resume in-progress assessments and view completed ones.
+Single PR covering all sub-tasks (logical grouping for cohesive feature):
 
-### Key Implementation Details
+| Order | Sub-task | Summary                                                | Status      |
+| ----- | -------- | ------------------------------------------------------ | ----------- |
+| 1     | FFP-169  | Add request/response schemas for submission            | ✅ Complete |
+| 2     | FFP-171  | Implement `submitAssessment()` service                 | ✅ Complete |
+| 3     | FFP-173  | Add unit tests for submission flow                     | ✅ Complete |
+| 4     | FFP-172  | Create `submit-assessment.ts` Lambda handler           | ✅ Complete |
+| -     | FFP-170  | Required question validation → **Deferred to FFP-233** | N/A         |
 
-- **Schema**: `@ffp/database/src/schema/user-assessments.ts`
-- **Constants**: `@ffp/database/src/constants/user-assessment.constants.ts`
-- **Zod Schemas**: `@ffp/core/src/schemas/user-assessment.schema.ts`
-- **Repository**: `@ffp/core/src/assessments/user-assessment.repository.ts`
-- **State Machine**: `not_started → in_progress → submitted → scored → completed` (+ `abandoned`)
-- **RLS Policy**: Tenant isolation via `app.tenant_id` session variable
+### Key Implementation Decisions
 
-### Sub-tasks
+| Decision                         | Choice                                                                            |
+| -------------------------------- | --------------------------------------------------------------------------------- |
+| **Job Payload**                  | Full payload with responses array (scoring job doesn't need to re-fetch)          |
+| **Required Question Validation** | Included in FFP-171 (validates all required questions have answers before submit) |
+| **Transaction Support**          | All writes in single transaction for atomicity (rollback on failure)              |
+| **Batch Template Query**         | `findTemplatesByIds` with `inArray` instead of sequential queries                 |
 
-| Order | Key     | Sub-task                                   | Status            |
-| ----- | ------- | ------------------------------------------ | ----------------- |
-| 1     | FFP-156 | Create Drizzle schema for user_assessments | ✅ Complete       |
-| 2     | FFP-159 | Create database migration with RLS policy  | ✅ Complete       |
-| 3     | FFP-157 | Create Zod validation schemas              | ✅ Complete       |
-| 4     | FFP-158 | Create repository with RLS enforcement     | ✅ Complete       |
-| 5     | FFP-160 | Create multi-tenant isolation tests        | ⏸️ Deferred (MVP) |
+### Completed Work
 
----
+**FFP-169: Zod Schemas**
 
-## Recently Completed: FFP-125 - Assessment Flow Schema & Configuration ✅
+- `submitAssessmentRequestSchema` - validates answers object
+- `submitAssessmentResponseSchema` - `{ jobId: uuid, message: string }`
+- Types exported: `SubmitAssessmentRequest`, `SubmitAssessmentResponse`
 
-**Status**: ✅ Complete (Ready for merge)
-**Story Points**: 3
-**Sprint**: 3 (Backend Foundation)
+**FFP-171: Service Implementation**
 
-### User Story
+- `submitAssessment()` in `assessment.service.ts`
+- Validates assessment exists and not already submitted
+- Fetches flow and validates required questions
+- Merges answers, transitions status, enqueues job
+- All writes in single `withRLS` transaction for atomicity
+- Returns `{ jobId, message }`
 
-> As a system administrator,
-> I want assessment flows (intro → questions → transition → video → results) stored in the database,
-> So that the assessment journey is configurable and extensible.
+**FFP-173: Unit Tests**
 
-### Acceptance Criteria
+- 9 new unit tests for `submitAssessment()` in `assessment.service.test.ts`
+- Test cases: successful submission, already-submitted rejection, completed rejection, missing required questions, job payload verification, assessment not found, flow not found, no questions template, optional questions handling
+- Mocked dependencies: user-assessment.repository, flow.repository, template.repository, job-queue.service, context, database
 
-| AC  | Description                              | Status      |
-| --- | ---------------------------------------- | ----------- |
-| AC1 | Flow schema created with step types      | ✅ Complete |
-| AC2 | Flow step types support MVP journey      | ✅ Complete |
-| AC3 | Steps link to templates where applicable | ✅ Complete |
-| AC4 | Default flow seeded for MVP              | ✅ Complete |
+**Supporting Changes:**
 
-### Sub-tasks
+- `findTemplatesByIds()` batch query in `template.repository.ts`
+- Transaction support added to `updateProgress()`, `transitionStatus()`, `queueJob()`
+- `Transaction` type exported from `lib/database.ts`
 
-| Order | Key     | Description                                    | Status      |
-| ----- | ------- | ---------------------------------------------- | ----------- |
-| 1     | FFP-147 | Create Drizzle schema for assessment_flows     | ✅ Complete |
-| 2     | FFP-148 | Create Zod schemas for flow steps              | ✅ Complete |
-| 3     | FFP-149 | Create seed script for default assessment flow | ✅ Complete |
-| 4     | FFP-150 | Add unit tests for flow schema validation      | ✅ Complete |
+### Files Modified
 
-### Key Implementation Details
+| Action | File                                                                         |
+| ------ | ---------------------------------------------------------------------------- |
+| Modify | `packages/core/src/schemas/user-assessment.schema.ts`                        |
+| Modify | `packages/core/src/assessments/assessment.service.ts`                        |
+| Modify | `packages/core/src/assessments/template.repository.ts`                       |
+| Modify | `packages/core/src/assessments/user-assessment.repository.ts`                |
+| Modify | `packages/core/src/jobs/job-queue.service.ts`                                |
+| Modify | `packages/core/src/lib/database.ts`                                          |
+| Create | `packages/functions/src/assessments/submit-assessment.ts`                    |
+| Modify | `packages/functions/src/assessments/index.ts`                                |
+| Modify | `postman/FFP-API-Collection.postman_collection.json`                         |
+| Create | `project-documentation/sprint-planning/outputs/ffp-130-test-instructions.md` |
 
-- **Schema**: `@ffp/database/src/schema/assessment-flows.ts`
-- **Zod Schemas**: `@ffp/core/src/schemas/assessment-flow.schema.ts`
-- **Seed Script**: `@ffp/database/seed/seedAssessmentFlows.ts`
-- **Unit Tests**: `@ffp/core/src/schemas/assessment-flow.schema.test.ts` (57 tests)
-- **No RLS required**: Flows are system-managed content accessible by all authenticated users
-- **Step types (MVP)**: `intro`, `questions`, `transition`, `video-assessment`, `results`, `programme-overview`
+### Testing
 
----
+**Manual testing via Postman**: See `project-documentation/sprint-planning/outputs/ffp-130-test-instructions.md`
 
-## Recently Completed: FFP-132 - Process Jobs Schema & Queue Infrastructure ✅
+**Test Scenarios**:
 
-**Status**: ✅ Complete (Ready for merge)
-**Story Points**: 8
-**Sprint**: 3 (Backend Foundation)
-
-### Acceptance Criteria
-
-| AC  | Description                                  | Status                       |
-| --- | -------------------------------------------- | ---------------------------- |
-| AC1 | Process jobs schema with RLS                 | ✅ Schema done, RLS deferred |
-| AC2 | Job status enum enforced                     | ✅ Complete                  |
-| AC3 | Enqueue function creates pending job         | ✅ Complete                  |
-| AC4 | Polling claims jobs atomically (SKIP LOCKED) | ✅ Complete                  |
-| AC5 | Failed jobs retry with exponential backoff   | ✅ Complete                  |
-| AC6 | Failed jobs marked after max retries         | ✅ Complete                  |
-
-### Sub-tasks
-
-| Order | Key     | Description                                  | Status      |
-| ----- | ------- | -------------------------------------------- | ----------- |
-| 1     | FFP-178 | Create Drizzle schema for process_jobs table | ✅ Complete |
-| 2     | FFP-179 | Implement job queue service with queueJob    | ✅ Complete |
-| 3     | FFP-180 | Implement job processor with atomic claiming | ✅ Complete |
-| 4     | FFP-181 | Add retry logic with exponential backoff     | ✅ Complete |
-| 5     | FFP-182 | Configure SST infrastructure for job polling | ✅ Complete |
-
-### Technical Notes
-
-- **Schema**: `@ffp/database/src/schema/process-jobs.ts`
-- **Queue Service**: `@ffp/core/src/jobs/job-queue.service.ts`
-- **Processor**: `@ffp/core/src/jobs/job-processor.service.ts`
-- **Lambda Handler**: `@ffp/functions/src/jobs/process-jobs.ts`
-- **SST Config**: `sst.config.ts` (JobProcessor Cron)
-- **Job Types**: `score_assessment`, `generate_program`
-- **Polling Pattern**: Database-driven with `FOR UPDATE SKIP LOCKED`
-- **Infrastructure**: EventBridge Cron (1 min) → Lambda → Poll DB
-
-### Key Implementation Details
-
-**Job Status Enum**: `queued`, `processing`, `completed`, `failed`, `cancelled`
-
-**Job Priority**: 1=urgent, 2=high, 3=medium, 4=low (default)
-
-**Atomic Claiming Pattern**:
-
-```sql
-SELECT * FROM process_jobs
-WHERE status = 'queued'
-  AND (retry_after IS NULL OR retry_after <= now())
-ORDER BY priority ASC, created_at ASC
-FOR UPDATE SKIP LOCKED
-LIMIT {maxConcurrent}
-```
-
-**Exponential Backoff**: `2^attempts` seconds (2s, 4s, 8s...)
+- Happy path submission with merged answers
+- Already submitted rejection (400)
+- Missing required questions (400 with missingQuestionIds)
+- Non-existent assessment (404)
+- Unauthenticated request (401)
+- Multi-tenant isolation
 
 ---
 
-## Sprint 4 Progress: Backend APIs + Frontend Foundation (26 pts)
+## Upcoming: Sprint 4 - Backend APIs + Frontend Foundation (23 pts remaining)
 
+**Starts**: 5th January 2026
 **Sprint Plan**: `project-documentation/sprint-planning/outputs/assessment-engine-sprint-plan.md`
 
-| Order | Key     | Story                           | Pts | Status         |
-| ----- | ------- | ------------------------------- | --- | -------------- |
-| 1     | FFP-129 | Save Assessment Progress API    | 3   | 🚀 In Progress |
-| 2     | FFP-133 | Scoring Service Implementation  | 8   | Pending        |
-| 3     | FFP-130 | Submit Assessment API           | 5   | Pending        |
-| 4     | FFP-135 | Assessment Context & State Mgmt | 5   | Pending        |
-| 5     | FFP-126 | Assessment Template Admin API   | 5   | Pending        |
+| Order | Key     | Story                           | Pts | Status                            |
+| ----- | ------- | ------------------------------- | --- | --------------------------------- |
+| 1     | FFP-129 | Save Assessment Progress API    | 3   | ✅ Complete (done in Sprint 3)    |
+| 2     | FFP-130 | Submit Assessment API           | 5   | ✅ Complete (pending manual test) |
+| 3     | FFP-133 | Scoring Service Implementation  | 8   | Pending                           |
+| 4     | FFP-135 | Assessment Context & State Mgmt | 5   | Pending                           |
+| 5     | FFP-126 | Assessment Template Admin API   | 5   | Pending                           |
 
 **Sprint Goal**: Complete assessment lifecycle APIs, scoring logic implemented, frontend state ready.
-**Progress**: 0/26 pts complete (0%)
-
----
-
-## Completed: Sprint 3 - Backend Foundation (24 pts) ✅
-
-| Order | Key     | Story                                      | Pts | Status      |
-| ----- | ------- | ------------------------------------------ | --- | ----------- |
-| 1     | FFP-124 | Assessment Template Schema & Repository    | 5   | ✅ Complete |
-| 2     | FFP-132 | Process Jobs Schema & Queue Infrastructure | 8   | ✅ Complete |
-| 3     | FFP-125 | Assessment Flow Schema & Configuration     | 3   | ✅ Complete |
-| 4     | FFP-127 | User Assessment Schema & State Machine     | 5   | ✅ Complete |
-| 5     | FFP-128 | Start Assessment API                       | 3   | ✅ Complete |
-
-**Sprint Goal**: All database schemas migrated, job queue ready, users can start assessments. ✅ ACHIEVED
+**Progress**: 8/26 pts complete (31%) - FFP-129 done early, FFP-130 complete (pending manual testing)
 
 ---
 
@@ -343,12 +408,13 @@ LIMIT {maxConcurrent}
 ```
 FFP-124 → FFP-125 → FFP-127 → FFP-128 → FFP-129 → FFP-130 → FFP-131
 (Template)  (Flow)   (User)   (Start)   (Save)   (Submit)  (Results)
+   ✅         ✅        ✅        ✅        ✅        ✅
 ```
 
 ### Parallel Workstreams
 
-1. **Job Queue**: FFP-132 → FFP-133 → FFP-134 (can start Sprint 3)
-2. **Frontend**: FFP-135 → FFP-138/139 (can start Sprint 4)
+1. **Job Queue**: FFP-132 ✅ → FFP-133 → FFP-134
+2. **Frontend**: FFP-135 → FFP-138/139 (Sprint 4+)
 
 ---
 
@@ -522,7 +588,7 @@ await db.query.users.findMany(); // Leaks all tenants!
 
 - TypeScript strict mode (zero errors)
 - ESLint + Prettier (zero warnings)
-- 457 tests passing (16 RLS integration tests, 57 flow schema tests)
+- 466 tests passing (16 RLS integration tests, 57 flow schema tests)
 - 8% coverage target
 
 ---
@@ -533,7 +599,7 @@ await db.query.users.findMany(); // Leaks all tenants!
 **Site**: https://ctregaskis.atlassian.net
 **Project Key**: FFP
 
-**Current Sprint**: Sprint 4 (0% complete) - FFP-129 in progress
+**Sprint Status**: Sprint 3 ✅ Complete | Sprint 4 starts 5th Jan 2026
 **Velocity**: ~25 story points per sprint
 **Capacity**: 8 hours/week (solo developer)
 

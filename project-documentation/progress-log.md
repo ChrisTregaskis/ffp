@@ -8,6 +8,543 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### January 3, 2026 (Session 76 - FFP-130 Questions Table Refactor - Session D)
+
+**Status**: ✅ FFP-130 Questions Table Refactor COMPLETE (All 9 Phases Done)
+
+**Branch**: `feature/ffp-130-submit-assessment-api`
+
+**Completed Work**:
+
+**Phase 8: Modify Existing Schemas (Breaking Changes)** (~0.25 hours):
+
+- ✅ Updated `packages/database/src/schema/assessment-templates.ts`
+  - Removed `questions` JSONB column
+  - Removed local type definitions (AssessmentQuestion, QuestionType, etc.)
+  - Added relation to `templateQuestions` (many relation)
+  - Imported ScoringConfig from shared types
+- ✅ Updated `packages/database/src/schema/user-assessments.ts`
+  - Removed `answers` JSONB column
+  - Added relation to `userAssessmentAnswers` (many relation)
+- ✅ Generated migration `0010_redundant_tyger_tiger.sql`
+- ✅ Ran migration on both `ffp_dev` and `ffp_test` databases
+
+**Phase 9: Test Updates** (~0.5 hours):
+
+- ✅ Updated `packages/core/src/assessments/template.repository.test.ts`
+  - Removed `questions` field from test input
+  - Updated `questionIds` to use UUID format
+  - Changed TRUNCATE to DELETE statements (FK dependencies)
+- ✅ Updated `packages/core/src/assessments/user-assessment.repository.test.ts`
+  - Removed `expect(result.answers).toEqual({})` assertions
+
+**Key Fix: Database User Permissions Issue**:
+
+The tests were failing with "permission denied for table template_questions" because:
+
+- Vitest config uses `test_user` (hardcoded in `vitest.config.ts`)
+- `.env` file defines `DB_USER=app_user`
+- Permissions were only granted to `app_user`, not `test_user`
+
+**Resolution**:
+
+1. Granted permissions on new tables to both `test_user` and `app_user`
+2. Set up `ALTER DEFAULT PRIVILEGES` for both users so future tables automatically grant permissions
+3. Added strategic comments to `vitest.config.ts` and `migrate.ts` documenting this
+
+**Documentation Added**:
+
+- `packages/core/vitest.config.ts` - Comments explaining test_user vs app_user distinction
+- `packages/database/scripts/migrate.ts` - Full documentation of database user roles
+
+**Files Modified**:
+
+| File                                                               | Change                                                               |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| `packages/database/src/schema/assessment-templates.ts`             | Removed questions column, local types, added relation                |
+| `packages/database/src/schema/user-assessments.ts`                 | Removed answers column, added relation                               |
+| `packages/database/src/migrations/apply-rls.ts`                    | Removed incorrect GRANT section (permissions via DEFAULT PRIVILEGES) |
+| `packages/core/src/assessments/template.repository.test.ts`        | UUID question IDs, DELETE instead of TRUNCATE                        |
+| `packages/core/src/assessments/user-assessment.repository.test.ts` | Removed answers assertions                                           |
+| `packages/core/vitest.config.ts`                                   | Added documentation comments                                         |
+| `packages/database/scripts/migrate.ts`                             | Added database user roles documentation                              |
+
+**Quality Assurance**:
+
+- ✅ `pnpm build` - All packages build successfully
+- ✅ `pnpm typecheck` - Zero TypeScript errors
+- ✅ `pnpm test` - 466 tests passing
+- ✅ `pnpm lint` - Zero warnings
+
+---
+
+### January 2, 2026 (Session 75 - FFP-130 Questions Table Refactor - Session C)
+
+**Status**: 🔄 FFP-130 Questions Table Refactor IN PROGRESS (Phases 1-7 Complete)
+
+**Branch**: `feature/ffp-130-submit-assessment-api`
+
+**Completed Work**:
+
+**Phase 6: Core Package - Repository Updates** (~0.5 hours):
+
+- ✅ **6.1: Created question.repository.ts**
+  - `packages/core/src/questions/question.repository.ts`
+  - `findById(db, id)` - Find question by ID
+  - `findByIds(db, ids)` - Find multiple questions by IDs (batch query)
+  - `findBySlug(db, slug)` - Find question by human-readable slug
+  - `findByTemplateId(db, templateId)` - Join with template_questions, ordered by displayOrder
+  - `findByTemplateIds(db, templateIds)` - Batch fetch for multiple templates
+  - `findAll(db, options)` - Find all active questions
+  - Types: `Question`, `QuestionWithConfig` (includes displayOrder and configOverrides)
+
+- ✅ **6.2: Created answer.repository.ts**
+  - `packages/core/src/assessments/answer.repository.ts`
+  - `findByAssessmentId(tenantId, assessmentId, userId?)` - Find all answers
+  - `findByAssessmentAndQuestion(tenantId, assessmentId, questionId, userId?)` - Find specific answer
+  - `upsertAnswer(tenantId, assessmentId, questionId, answerValue, options?)` - ON CONFLICT upsert
+  - `saveAnswers(tenantId, assessmentId, answers[], options?)` - Batch upsert
+  - `deleteByAssessmentId(tenantId, assessmentId, userId?)` - Delete all answers
+  - `deleteByQuestionIds(tenantId, assessmentId, questionIds[], userId?)` - Delete specific answers
+  - Transaction support via optional `tx` parameter (follows existing pattern)
+  - Types: `UserAssessmentAnswer`, `SaveAnswerInput`
+
+- ✅ **6.3: Updated template.repository.ts**
+  - Added `findWithQuestions(db, id)` - Fetch template with questions loaded via join
+  - Added `AssessmentTemplateWithQuestions` type
+
+- ✅ **6.4: Updated user-assessment.repository.ts**
+  - Removed JSONB answer merging logic from `updateProgress()`
+  - Now only updates `currentStep` (answers handled via `answerRepository`)
+  - Added deprecation comments explaining migration
+
+- ✅ **6.5: Updated assessments/index.ts**
+  - Added `answerRepository` namespace export
+  - Added `UserAssessmentAnswer`, `SaveAnswerInput` type exports
+
+- ✅ **6.6: Created questions/index.ts**
+  - Barrel export for new questions domain
+  - Exports `questionRepository` namespace and types
+
+**Phase 7: Service Layer Updates** (~0.4 hours):
+
+- ✅ **7.1: assessment.service.ts - Conversion Helpers**
+  - `convertAnswersToResponseFormat()` - Convert DB records to API response format
+  - `convertAnswersToSaveFormat()` - Convert API request to DB save format
+  - `extractAnswerValue()` - Extract raw value from JSONB structure
+
+- ✅ **7.2: assessment.service.ts - startAssessment**
+  - Load answers from `user_assessment_answers` table when resuming
+  - Convert to API format via `convertAnswersToResponseFormat()`
+  - Return empty object for new assessments (no answers yet)
+
+- ✅ **7.3: assessment.service.ts - saveProgress**
+  - Wrapped all writes in single `withRLS` transaction
+  - Save answers via `answerRepository.saveAnswers()` instead of JSONB merge
+  - Status transition and currentStep update in same transaction
+
+- ✅ **7.4: assessment.service.ts - submitAssessment**
+  - Load existing answers from `user_assessment_answers` table
+  - Build `answeredQuestionIds` set from both existing and new answers
+  - Save new answers via `answerRepository.saveAnswers()`
+  - Build job payload from all answers with `extractAnswerValue()`
+
+- ✅ **7.5: assessment.service.ts - getRequiredQuestionIds**
+  - Now uses `questionRepository.findByTemplateIds()` instead of `templateRepository.findTemplatesByIds()`
+  - No longer accesses deprecated `template.questions` field
+
+- ✅ **7.6: assessment.service.test.ts - Test Refactor**
+  - Removed `templateRepository` mocks
+  - Added `questionRepository` and `answerRepository` mocks
+  - Updated test fixtures: `QuestionWithConfig` instead of `AssessmentTemplate.questions`
+  - All 12 tests updated for new repository patterns
+  - Fixed answer expectations (JSONB structure in DB vs raw values in API)
+
+**Test File Recovery** (~0.2 hours):
+
+- Fixed corrupted `assessment.service.test.ts` file
+  - File had syntax errors and incomplete test blocks
+  - Reconstructed from diff and verified all tests pass
+
+**Files Created**:
+
+- `packages/core/src/questions/question.repository.ts`
+- `packages/core/src/questions/index.ts`
+- `packages/core/src/assessments/answer.repository.ts`
+
+**Files Modified**:
+
+- `packages/core/src/assessments/template.repository.ts` - Added findWithQuestions
+- `packages/core/src/assessments/user-assessment.repository.ts` - Removed answer merging
+- `packages/core/src/assessments/user-assessment.repository.test.ts` - Updated test expectations
+- `packages/core/src/assessments/assessment.service.ts` - New repository integration
+- `packages/core/src/assessments/assessment.service.test.ts` - Complete mock refactor
+- `packages/core/src/assessments/index.ts` - Added answerRepository export
+
+**Quality Assurance**:
+
+- ✅ Build: All packages built successfully (`pnpm build`)
+- ✅ TypeScript: Zero errors (`pnpm typecheck`)
+- ✅ Tests: 466 tests passing (`pnpm test`)
+- ✅ Lint: Zero warnings (`pnpm lint`)
+
+**Design Decisions**:
+
+1. **Answer storage migration**: Answers now stored in `user_assessment_answers` table, not JSONB
+2. **JSONB structure**: DB stores `{ value: X }`, API returns raw value - conversion helpers handle this
+3. **Transaction boundaries**: `saveProgress` and `submitAssessment` wrap all writes in single transaction
+4. **Deprecation approach**: JSONB `answers` field kept but ignored; gradual migration in Phase 8
+
+**Next**: Session D (Phases 8-9: Breaking changes to remove deprecated fields + test cleanup)
+
+---
+
+### January 2, 2026 (Session 74 - FFP-130 Questions Table Refactor - Session B)
+
+**Status**: 🔄 FFP-130 Questions Table Refactor IN PROGRESS (Phases 1-5 Complete)
+
+**Branch**: `feature/ffp-130-submit-assessment-api`
+
+**Completed Work**:
+
+**Phase 4: Seed Data Refactor** (~0.4 hours):
+
+- ✅ **4.1: Created seedQuestions.ts**
+  - `packages/database/seed/seedQuestions.ts`
+  - Deterministic UUIDs for 15 questions (pattern: `22222222-2222-2222-2222-2222222200XX`)
+  - `QUESTION_IDS` mapping: slug → UUID for all questions
+  - `VIDEO_IDS` mapping: video slugs → placeholder UUIDs (pattern: `33333333-3333-3333-3333-3333333300XX`)
+  - Questions grouped: pre-assessment (5), strength (5), balance (5)
+  - Idempotent seeding with existence check before insert
+
+- ✅ **4.2: Refactored seedAssessmentTemplates.ts**
+  - Imported `QUESTION_IDS` from seedQuestions
+  - Updated all question IDs to use UUIDs
+  - Updated `scoringConfig.dimensions[].questionIds` to use UUIDs
+  - Added `template_questions` join record seeding
+  - Kept `questions` array for backward compatibility during migration
+
+- ✅ **4.3: Updated seed/index.ts**
+  - Added `seedQuestions` import
+  - Added `seedQuestions(db)` call as Seed 10 (before templates)
+  - Re-exports `seedQuestions` and `QUESTION_IDS`
+
+**Phase 5: Core Package - Schema Updates** (~0.3 hours):
+
+- ✅ **5.1: assessment-question.schema.ts**
+  - Changed `id: z.string().min(1)` → `id: z.string().uuid()`
+
+- ✅ **5.2: scoring-config.schema.ts**
+  - Changed `questionIds: z.array(z.string().min(1))` → `questionIds: z.array(z.string().uuid())`
+
+- ✅ **5.3: assessment-template.schema.ts**
+  - Made `questions` field optional: `questions: questionsArraySchema.optional()`
+  - Added `@deprecated` JSDoc annotation with migration notes
+
+- ✅ **5.4: user-assessment.schema.ts**
+  - Verified already uses UUIDs - no changes needed
+
+**Build Error Fixes** (~0.15 hours):
+
+Two TypeScript errors due to `questions` becoming optional:
+
+- ✅ `assessment.service.ts:166` - Added nullish coalescing `(template.questions ?? [])`
+- ✅ `template.repository.ts:105` - Added default `questions: data.questions ?? []`
+
+**Test Fixes** (~0.1 hours):
+
+- ✅ `assessment-template.schema.test.ts` - Updated all test fixtures to use UUID constants
+  - Added `QUESTION_UUID_1` through `QUESTION_UUID_5` (pattern: `11111111-1111-1111-1111-1111111110XX`)
+  - Updated `validQuestion`, `validSingleChoiceQuestion`, `validVideoQuestion` etc.
+
+**Files Created**:
+
+- `packages/database/seed/seedQuestions.ts`
+
+**Files Modified**:
+
+- `packages/database/seed/seedAssessmentTemplates.ts` - Use UUIDs, add template_questions seeding
+- `packages/database/seed/index.ts` - Add seedQuestions call and exports
+- `packages/core/src/schemas/assessment-question.schema.ts` - UUID validation
+- `packages/core/src/schemas/scoring-config.schema.ts` - UUID validation for questionIds
+- `packages/core/src/schemas/assessment-template.schema.ts` - Made questions optional
+- `packages/core/src/assessments/assessment.service.ts` - Handle optional questions
+- `packages/core/src/assessments/template.repository.ts` - Default empty array for questions
+- `packages/core/src/schemas/assessment-template.schema.test.ts` - UUID test fixtures
+
+**Quality Assurance**:
+
+- ✅ Build: All packages built successfully (`pnpm build`)
+- ✅ TypeScript: Zero errors (`pnpm typecheck`)
+- ✅ Tests: 466 tests passing (`pnpm test`)
+- ✅ Lint: Zero warnings (`pnpm lint`)
+
+**Design Decisions**:
+
+1. **Deterministic UUIDs**: Pattern-based UUIDs allow reliable cross-referencing in seeds
+2. **Backward compatibility**: `questions` field kept but marked deprecated
+3. **Nullish coalescing**: Preferred over conditional checks for cleaner code
+
+**Next**: Session C (Phases 6-7: Repository + Service layer updates)
+
+---
+
+### January 2, 2026 (Session 73 - FFP-130 Questions Table Refactor - Session A)
+
+**Status**: 🔄 FFP-130 Questions Table Refactor IN PROGRESS (Phases 1-3 Complete)
+
+**Branch**: `feature/ffp-130-submit-assessment-api`
+
+**Completed Work**:
+
+**Phase 1: Database Constants** (~0.1 hours):
+
+- ✅ Created `packages/database/src/constants/question.constants.ts`
+  - `QUESTION_TYPES`: ['single-choice', 'multi-choice', 'numeric', 'text', 'scale', 'video-response']
+  - `SCORE_DIMENSIONS`: ['strength', 'balance', 'mobility', 'pain', 'general']
+  - Types exported: `QuestionType`, `ScoreDimension`
+- ✅ Updated `constants/index.ts` to export new constants
+
+**Phase 2: New Database Schema Files** (~0.4 hours):
+
+- ✅ **questions.ts**: Questions table schema
+  - Columns: id, slug (unique), type, questionText, description, options, validation, videoId, scoreDimension, isActive, timestamps
+  - PostgreSQL enums: `question_type`, `score_dimension` (from constants)
+  - Indexes: slug, type, is_active
+  - No RLS (system content like assessment_templates)
+
+- ✅ **template-questions.ts**: Join table for template-question relationships
+  - Columns: id, templateId, questionId, displayOrder, configOverrides
+  - Unique constraints: (template_id, question_id), (template_id, display_order)
+  - FK: CASCADE on template delete, RESTRICT on question delete
+  - Relations defined to assessmentTemplates and questions
+
+- ✅ **user-assessment-answers.ts**: Answers table with RLS
+  - Columns: id, tenantId, userAssessmentId, questionId, answerValue, answeredAt
+  - Unique constraint: (user_assessment_id, question_id)
+  - FK: CASCADE on tenant/assessment delete, RESTRICT on question delete
+  - Indexes: tenant, assessment, assessment_question (unique)
+  - RLS enabled via tenant_id column
+
+- ✅ Updated `schema/index.ts` to export all new schemas
+
+**Phase 3: Migration** (~0.1 hours):
+
+- ✅ Generated `migrations/0009_easy_captain_marvel.sql`
+  - Creates `question_type` and `score_dimension` enums
+  - Creates `questions`, `template_questions`, `user_assessment_answers` tables
+  - Adds all FK constraints and indexes
+- ✅ Migration file ready (user to run locally due to DB permissions)
+
+**Architectural Improvement: Shared Types Pattern** (~0.15 hours):
+
+- ✅ Created `packages/database/src/types/` folder (mirrors `constants/` pattern)
+- ✅ Created `question.types.ts` with exported interfaces:
+  - `QuestionOption`: value, label, score?
+  - `QuestionValidation`: required?, min?, max?, pattern?, customError?
+  - `ConfigOverrides`: questionText?, description?, validation?
+  - `AnswerValue`: Record<string, unknown>
+- ✅ Updated schema files to import from `../types` instead of defining locally
+- ✅ Updated `packages/database/src/index.ts` to export types
+- ✅ Added TODO comment to `assessment-templates.ts` for legacy types migration
+
+**Files Created**:
+
+- `packages/database/src/constants/question.constants.ts`
+- `packages/database/src/types/question.types.ts`
+- `packages/database/src/types/index.ts`
+- `packages/database/src/schema/questions.ts`
+- `packages/database/src/schema/template-questions.ts`
+- `packages/database/src/schema/user-assessment-answers.ts`
+- `packages/database/migrations/0009_easy_captain_marvel.sql`
+
+**Files Modified**:
+
+- `packages/database/src/constants/index.ts` - Added question.constants export
+- `packages/database/src/schema/index.ts` - Added new schema exports
+- `packages/database/src/index.ts` - Added types export
+- `packages/database/src/schema/assessment-templates.ts` - Added TODO for types migration
+
+**Quality Assurance**:
+
+- ✅ Build: All packages built successfully (`pnpm build`)
+- ✅ TypeScript: Zero errors (`pnpm typecheck`)
+- ✅ Lint: Zero warnings (`pnpm lint`)
+
+**Design Decisions**:
+
+1. **Shared types pattern**: Created `src/types/` folder following `src/constants/` pattern for JSONB types
+2. **Types exported**: All JSONB interfaces exported for use in @ffp/core validation
+3. **No RLS on questions/template_questions**: System content like assessment_templates
+4. **RLS on user_assessment_answers**: Tenant-isolated user data
+
+**Next**: Session B (Phases 4-5: Seed Data + Core Schema Updates)
+
+---
+
+### December 30, 2025 (Session 72 - FFP-172 Lambda Handler Complete)
+
+**Status**: ✅ FFP-130 COMPLETE (4/4 sub-tasks) - Ready for Manual Testing
+
+**Branch**: `feature/ffp-130-submit-assessment-api`
+
+**Completed Work**:
+
+**FFP-172: Create submit-assessment Lambda Handler** (~0.25 hours):
+
+- ✅ `submit-assessment.ts`: Lambda handler for POST /assessments/{id}/submit
+  - Extracts assessmentId from path parameters
+  - Extracts user context from JWT via `extractUserContext`
+  - Validates request body with `submitAssessmentRequestSchema`
+  - Delegates to `assessmentService.submitAssessment`
+  - Returns `SubmitAssessmentResponse` with jobId and message
+
+- ✅ `assessments/index.ts`: Registered POST `/{id}/submit` route in domain router
+  - Uses existing regex-based pattern matching
+  - Follows established handler patterns
+
+- ✅ **Postman Collection**: Updated for testing
+  - Added "Submit Assessment" endpoint with pre-request/test scripts
+  - Added `lastJobId` collection variable (auto-populated on success)
+  - Example responses: success, already submitted, missing required questions, 404, 401
+  - Updated Assessments folder description to list submit endpoint
+
+- ✅ **Test Instructions**: Created `ffp-130-test-instructions.md`
+  - 11 test scenarios covering all acceptance criteria
+  - Database verification queries
+  - Troubleshooting section
+  - Sign-off checklist
+
+**Files Created**:
+
+- `packages/functions/src/assessments/submit-assessment.ts`
+- `project-documentation/sprint-planning/outputs/ffp-130-test-instructions.md`
+
+**Files Modified**:
+
+- `packages/functions/src/assessments/index.ts` - Added submit route
+- `postman/FFP-API-Collection.postman_collection.json` - Added Submit Assessment request + lastJobId variable
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (`pnpm build --filter=@ffp/functions`)
+- ✅ Lint: Zero warnings (`pnpm lint-format`)
+- ✅ All packages compile successfully
+
+**FFP-130 Story Complete**: All sub-tasks done (FFP-169, FFP-171, FFP-173, FFP-172). Ready for manual testing via Postman.
+
+**Next**: Manual testing through Postman, then code review and merge.
+
+---
+
+### December 30, 2025 (Session 71 - FFP-173 Unit Tests for Submit Assessment)
+
+**Status**: 🚧 FFP-130 IN PROGRESS (3/4 sub-tasks complete)
+
+**Branch**: `feature/ffp-130-submit-assessment-api`
+
+**Completed Work**:
+
+**FFP-173: Unit Tests for Submit Assessment Flow** (~0.3 hours):
+
+- ✅ Added 9 new unit tests for `submitAssessment()` in `assessment.service.test.ts`
+- ✅ Test cases implemented:
+  - Successful submission with merged answers and job enqueue
+  - ValidationError when assessment is already submitted
+  - ValidationError when assessment is completed
+  - ValidationError with missingQuestionIds when required questions unanswered
+  - Job payload verification (correct structure with responses array)
+  - NotFoundError when assessment does not exist
+  - NotFoundError when flow does not exist
+  - ValidationError when flow has no questions template
+  - Optional questions handling (does not require them)
+
+**Mocking Approach**:
+
+- Mocked `user-assessment.repository` (findById, updateProgress, transitionStatus)
+- Mocked `flow.repository` (findById)
+- Mocked `template.repository` (findTemplatesByIds)
+- Mocked `job-queue.service` (queueJob)
+- Mocked `lib/context` (getUserIdFromContext)
+- Mocked `lib/database` (withRLS)
+- Mocked `@ffp/database` (getDb) with importOriginal for full module exports
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (`pnpm typecheck`)
+- ✅ Tests: 466 tests passing (12 in assessment.service.test.ts)
+- ✅ Lint: Zero warnings
+
+**Next Sub-task**: FFP-172 (Lambda handler)
+
+---
+
+### December 29, 2025 (Session 70 - FFP-130 Submit Assessment API - Service Layer)
+
+**Status**: 🚧 FFP-130 IN PROGRESS (2/4 sub-tasks complete)
+
+**Branch**: `feature/ffp-130-submit-assessment-api`
+
+**Completed Work**:
+
+**FFP-169: Create Zod schemas for submission request/response** (~0.1 hours):
+
+- ✅ `submitAssessmentRequestSchema`: Validates answers as UserAssessmentAnswers
+- ✅ `submitAssessmentResponseSchema`: Validates `{ jobId: uuid, message: string }`
+- ✅ Exported TypeScript types: `SubmitAssessmentRequest`, `SubmitAssessmentResponse`
+
+**FFP-171: Implement submitAssessment service with job enqueue** (~0.5 hours):
+
+- ✅ `submitAssessment(assessmentId, data, context)` in `assessment.service.ts`
+- ✅ Fetches assessment by ID with RLS enforcement
+- ✅ Validates status not already submitted/completed (throws ValidationError)
+- ✅ Fetches flow to get required question IDs from templates
+- ✅ Validates all required questions have answers (throws ValidationError with missingQuestionIds)
+- ✅ Merges final answers with existing
+- ✅ Transitions status to 'submitted'
+- ✅ Enqueues 'score_assessment' job with responses payload
+- ✅ Returns `{ jobId, message }`
+
+**Transaction Support Implementation** (~0.4 hours):
+
+- ✅ `Transaction` type exported from `lib/database.ts`
+- ✅ `updateProgress()` refactored with internal `updateProgressInTx()` + optional `tx` parameter
+- ✅ `transitionStatus()` refactored with internal `transitionStatusInTx()` + optional `tx` parameter
+- ✅ `queueJob()` updated to accept optional `tx` parameter in `QueueJobOptions`
+- ✅ `submitAssessment()` wraps all writes in single `withRLS` transaction for atomicity
+
+**Supporting Changes**:
+
+- ✅ `findTemplatesByIds()` batch query function in `template.repository.ts`
+- ✅ Uses `inArray` from drizzle-orm for efficient batch fetching
+- ✅ Naming convention: repository functions include entity name (e.g., `findTemplatesByIds` not `findByIds`)
+
+**Files Modified**:
+
+- `packages/core/src/schemas/user-assessment.schema.ts` - Added submit schemas
+- `packages/core/src/assessments/assessment.service.ts` - Added submitAssessment with transactions
+- `packages/core/src/assessments/template.repository.ts` - Added findTemplatesByIds
+- `packages/core/src/assessments/user-assessment.repository.ts` - Added transaction support
+- `packages/core/src/jobs/job-queue.service.ts` - Added transaction support
+- `packages/core/src/lib/database.ts` - Exported Transaction type
+
+**Quality Assurance**:
+
+- ✅ TypeScript: Zero errors (`pnpm typecheck`)
+- ✅ Tests: 457 tests passing (`pnpm test --filter=@ffp/core`)
+- ✅ Lint: Zero warnings (`pnpm lint`)
+
+**Design Decisions**:
+
+1. **Transaction pattern**: Repository functions accept optional `tx` parameter via options object. If provided, uses existing transaction (caller sets RLS). If not, creates new transaction with RLS.
+2. **Batch queries**: Use `findTemplatesByIds` with `inArray` instead of Promise.all with individual queries
+3. **Required defaults to true**: Questions without explicit `validation.required: false` are considered required
+4. **Job payload**: Includes pre-formatted responses array so scoring job doesn't need to re-fetch
+
+**Next Sub-tasks**: FFP-172 (Lambda handler), FFP-173 (Unit tests)
+
+---
+
 ### December 28, 2025 (Session 69 - FFP-129 Save Assessment Progress API)
 
 **Status**: ✅ FFP-129 COMPLETE
@@ -602,7 +1139,11 @@ After code review, two issues were addressed in `packages/functions/src/jobs/pro
 | Dec 24      | FFP-125 Complete (Flow Schema)   | 163.5h        |
 | Dec 24      | FFP-127 Complete (User Assess)   | 165.5h        |
 | Dec 26      | FFP-161 Complete (Start Schemas) | 165.75h       |
-| **Current** | **FFP-128 In Progress**          | **~166/197h** |
+| Dec 28      | FFP-129 Complete (Save Progress) | 166.35h       |
+| Dec 29      | FFP-169/171 Complete (Submit)    | 167.35h       |
+| Dec 30      | FFP-173 Complete (Unit Tests)    | 167.65h       |
+| Dec 30      | FFP-172 Complete (Handler)       | 167.9h        |
+| **Current** | **FFP-130 Complete (Testing)**   | **~168/197h** |
 
 ---
 

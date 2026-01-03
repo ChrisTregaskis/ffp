@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import { questionsArraySchema } from './assessment-question.schema';
 import { scoringConfigSchema } from './scoring-config.schema';
 
 /**
@@ -8,10 +7,14 @@ import { scoringConfigSchema } from './scoring-config.schema';
  *
  * Represents a complete assessment template stored in the database.
  * Templates are system-managed content (not tenant-scoped) and define
- * the structure, questions, and scoring rules for assessments.
+ * the structure and scoring rules for assessments.
  *
  * IMPORTANT: Templates do NOT require RLS - they are accessible by
  * all authenticated users as system content.
+ *
+ * NOTE: Questions are stored in a dedicated `questions` table and linked
+ * via `template_questions`. Use the question repository to fetch questions
+ * for a template.
  */
 export const assessmentTemplateSchema = z.object({
   /** Unique identifier (UUID) */
@@ -22,8 +25,6 @@ export const assessmentTemplateSchema = z.object({
   description: z.string().nullable(),
   /** Version number for tracking template changes */
   version: z.number().int().positive(),
-  /** Array of questions in this template */
-  questions: questionsArraySchema,
   /** Scoring configuration for multi-dimensional scoring */
   scoringConfig: scoringConfigSchema,
   /** Whether the template is currently active/usable */

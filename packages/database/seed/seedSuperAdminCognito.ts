@@ -4,8 +4,10 @@ import {
   type AdminCreateUserCommandOutput,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { COGNITO_CUSTOM_ATTRIBUTES } from '../../core/src/lib/constants.js';
-import { terminalPrefix, TerminalPrefix } from '../src/lib/terminal-logger.js';
+import { createLogger } from '../src/lib/logger.js';
 import type { SuperAdminCognitoSeed, PlatformTenantSeed } from './types.js';
+
+const logger = createLogger('seed-super-admin-cognito');
 
 /**
  * Cognito region
@@ -46,7 +48,7 @@ export const seedSuperAdminCognito = async (
   cognitoData: SuperAdminCognitoSeed,
   tenantData: PlatformTenantSeed
 ): Promise<AdminCreateUserCommandOutput> => {
-  console.log(`${terminalPrefix(TerminalPrefix.INFO)} Seeding super admin in Cognito...`);
+  logger.info('Seeding super admin in Cognito...');
 
   validateEnvironment();
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -70,21 +72,17 @@ export const seedSuperAdminCognito = async (
       })
     );
 
-    console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} Super admin created in Cognito`);
-    console.log(`  Email: ${cognitoData.email}`);
-    console.log(
-      `  ${terminalPrefix(TerminalPrefix.WARNING)} Temporary password: ${cognitoData.temporaryPassword}`
-    );
+    logger.info('Super admin created in Cognito', { email: cognitoData.email });
+    logger.warn('Temporary password set', { temporaryPassword: cognitoData.temporaryPassword });
 
     return response;
   } catch (error) {
     // If user already exists, skip creation (common when re-seeding database)
     if (error instanceof Error && error.name === 'UsernameExistsException') {
-      console.log(
-        `${terminalPrefix(TerminalPrefix.SUCCESS)} Super admin already exists in Cognito (skipped)`
-      );
-      console.log(`  Email: ${cognitoData.email}`);
-      console.log(`  Cognito Sub: ${cognitoData.cognitoSub} (from config)`);
+      logger.info('Super admin already exists in Cognito (skipped)', {
+        email: cognitoData.email,
+        cognitoSub: cognitoData.cognitoSub,
+      });
 
       // Return empty response - user already exists
       return {} as AdminCreateUserCommandOutput;

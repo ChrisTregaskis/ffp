@@ -4,6 +4,7 @@ import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
 import { handler as saveProgressHandler } from './save-progress';
 import { handler as startAssessmentHandler } from './start-assessment';
+import { handler as submitAssessmentHandler } from './submit-assessment';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
@@ -19,8 +20,7 @@ const ROUTER_CONTEXT = createSystemContext({
 const routes: RouteRegistry = {
   POST: {
     '/start': startAssessmentHandler,
-    // Future assessment routes:
-    // '/{id}/submit': submitAssessmentHandler,
+    '/{id}/submit': submitAssessmentHandler,
   },
   GET: {
     // Future assessment routes:

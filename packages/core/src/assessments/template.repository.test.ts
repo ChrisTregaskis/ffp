@@ -24,22 +24,19 @@ describe('Template Repository', () => {
   let pool: Pool;
   let db: ReturnType<typeof drizzle>;
 
+  // Use deterministic UUIDs for testing (matching seedQuestions.ts pattern)
+  const TEST_QUESTION_ID = '22222222-2222-2222-2222-222222220101';
+
   const validCreateInput: CreateAssessmentTemplateInput = {
     name: 'Test Assessment Template',
     description: 'A template for testing',
     version: 1,
-    questions: [
-      {
-        id: 'q1',
-        type: 'text',
-        question: 'How are you feeling today?',
-      },
-    ],
+    // Note: questions are now stored in the questions table and linked via template_questions
     scoringConfig: {
       dimensions: [
         {
           name: 'general',
-          questionIds: ['q1'],
+          questionIds: [TEST_QUESTION_ID], // Reference question by UUID
           maxScore: 10,
           weight: 1,
         },
@@ -62,8 +59,10 @@ describe('Template Repository', () => {
   });
 
   beforeEach(async () => {
-    // Clean up assessment_templates table before each test
-    await db.execute(sql`TRUNCATE TABLE assessment_templates CASCADE`);
+    // Clean up tables before each test
+    // Delete template_questions first (FK dependency), then assessment_templates
+    await db.execute(sql`DELETE FROM template_questions`);
+    await db.execute(sql`DELETE FROM assessment_templates`);
   });
 
   afterAll(async () => {
