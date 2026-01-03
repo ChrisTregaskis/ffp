@@ -163,7 +163,7 @@ describe('User Assessment Repository', () => {
       expect(result.flowId).toBe(flowId);
       expect(result.status).toBe('not_started');
       expect(result.currentStep).toBe(1);
-      expect(result.answers).toEqual({});
+      // Note: answers are stored in user_assessment_answers table, not on the assessment record
       expect(result.scores).toBeNull();
       expect(result.programmeId).toBeNull();
       expect(result.startedAt).toBeNull();
@@ -361,8 +361,7 @@ describe('User Assessment Repository', () => {
       });
 
       expect(result.currentStep).toBe(5);
-      // Answers field on the record should still be empty (legacy field)
-      expect(result.answers).toEqual({});
+      // Note: answers are stored in user_assessment_answers table, not on the assessment record
     });
 
     it('throws NotFoundError when assessment not found', async () => {

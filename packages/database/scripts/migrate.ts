@@ -10,6 +10,16 @@
  * - DB_MIGRATE_USER: (Optional) Elevated user for migrations (e.g., root_user)
  * - DB_USER: Fallback if DB_MIGRATE_USER not set
  *
+ * IMPORTANT: Database User Roles
+ * - root_user (DB_MIGRATE_USER): Runs migrations, creates tables, owns objects.
+ *   Has DEFAULT PRIVILEGES configured to grant access to app_user and test_user.
+ * - app_user (DB_USER): Application runtime user. Gets permissions via DEFAULT PRIVILEGES.
+ * - test_user: Vitest integration tests user (see @ffp/core vitest.config.ts).
+ *   Gets permissions via DEFAULT PRIVILEGES. Distinct from app_user.
+ *
+ * When adding new tables, ensure DEFAULT PRIVILEGES are set so both app_user
+ * and test_user automatically receive SELECT, INSERT, UPDATE, DELETE permissions.
+ *
  * Usage: pnpm db:migrate
  */
 

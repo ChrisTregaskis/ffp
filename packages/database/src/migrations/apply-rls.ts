@@ -5,12 +5,13 @@
  * It is idempotent and can be run multiple times safely.
  *
  * **Tables with RLS policies:**
- * - tenants, customers, users, user_assessments
+ * - tenants, customers, users, user_assessments, user_assessment_answers
  *
  * **Tables intentionally without RLS (for MVP):**
  * - process_jobs: Job processor runs with BYPASSRLS to claim jobs across tenants.
  *   RLS will be added when user-facing job queries are implemented (see process-jobs.ts).
- * - assessment_templates, assessment_flows: System-managed content, no tenant isolation.
+ * - assessment_templates, assessment_flows, questions, template_questions:
+ *   System-managed content, no tenant isolation.
  *
  * @module migrations/apply-rls
  */
@@ -39,14 +40,14 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> =>{
     SELECT tablename, rowsecurity
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('tenants', 'customers', 'users', 'user_assessments')
+    AND tablename IN ('tenants', 'customers', 'users', 'user_assessments', 'user_assessment_answers')
     ORDER BY tablename
   `);
 
   const tables = rlsCheck.rows as Array<{ tablename: string; rowsecurity: boolean }>;
 
-  // Check if all tables have RLS enabled
-  const allTablesHaveRLS = tables.length === 4 && tables.every((t) => t.rowsecurity === true);
+  // Check if all tables have RLS enabled (5 tables now)
+  const allTablesHaveRLS = tables.length === 5 && tables.every((t) => t.rowsecurity === true);
 
   if (allTablesHaveRLS) {
     console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} RLS already applied to all tables, skipping...`);
@@ -167,6 +168,33 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> =>{
         FOR ALL
         USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
     `);
+
+    // ============================================================================
+    // USER_ASSESSMENT_ANSWERS TABLE RLS
+    // ============================================================================
+
+    console.log('  - Enabling RLS on user_assessment_answers table...');
+
+    await tx.execute(sql`
+      ALTER TABLE user_assessment_answers ENABLE ROW LEVEL SECURITY;
+    `);
+
+    if (!isProduction) {
+      await tx.execute(sql`
+        ALTER TABLE user_assessment_answers FORCE ROW LEVEL SECURITY;
+      `);
+    }
+
+    await tx.execute(sql`
+      DROP POLICY IF EXISTS user_assessment_answers_tenant_isolation ON user_assessment_answers;
+    `);
+
+    await tx.execute(sql`
+      CREATE POLICY user_assessment_answers_tenant_isolation ON user_assessment_answers
+        FOR ALL
+        USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+    `);
+
   });
 
   console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} RLS policies applied successfully`);
@@ -176,7 +204,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> =>{
     SELECT tablename, rowsecurity
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('tenants', 'customers', 'users', 'user_assessments')
+    AND tablename IN ('tenants', 'customers', 'users', 'user_assessments', 'user_assessment_answers')
     ORDER BY tablename
   `);
 

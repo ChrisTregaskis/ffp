@@ -9,6 +9,19 @@ import { TEMPLATE_IDS } from './seedAssessmentTemplates.js';
 import type { FlowStep } from '../src/constants/flow.constants.js';
 
 /**
+ * Deterministic UUID for the default assessment flow
+ *
+ * UUID Pattern: 44444444-4444-4444-4444-4444444400XX
+ * - Default flow: 01
+ *
+ * This ensures consistency across seed runs and allows Postman/tests
+ * to reference the flow reliably.
+ */
+export const FLOW_IDS = {
+  DEFAULT: '44444444-4444-4444-4444-444444440001',
+} as const;
+
+/**
  * Default flow name - used for idempotency check
  */
 const DEFAULT_FLOW_NAME = 'Standard Physiotherapy Assessment';
@@ -132,10 +145,11 @@ export const seedAssessmentFlows = async (
     return false;
   }
 
-  // Insert default flow
+  // Insert default flow with deterministic UUID
   const [newFlow] = await db
     .insert(assessmentFlows)
     .values({
+      id: FLOW_IDS.DEFAULT,
       name: DEFAULT_FLOW_NAME,
       description: 'Comprehensive assessment with pre-questions and physical tests',
       steps: DEFAULT_FLOW_STEPS,

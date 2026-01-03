@@ -1,8 +1,8 @@
 # FFP - Project State
 
-**Last Updated**: 2nd January 2026
+**Last Updated**: 3rd January 2026
 **Current EPIC**: FFP-2 - Assessment Engine
-**Sprint Status**: Sprint 3 ✅ Complete | Sprint 4 in progress (FFP-130 Questions Table Refactor)
+**Sprint Status**: Sprint 3 ✅ Complete | Sprint 4 in progress (FFP-130 Questions Table Refactor ✅)
 **Previous EPIC**: FFP-1 - Application Setup & Foundation ✅ COMPLETE
 
 ---
@@ -44,11 +44,11 @@
 
 ---
 
-## In Progress: FFP-130 - Questions Table Refactor
+## Completed: FFP-130 - Questions Table Refactor ✅
 
 **Branch**: `feature/ffp-130-submit-assessment-api`
 **Story Points**: 5
-**Status**: 🔄 Sessions A+B+C Complete (Phases 1-7) | Session D Pending
+**Status**: ✅ All Phases Complete (Sessions A-D)
 
 ### Implementation Plan
 
@@ -65,8 +65,49 @@ Refactoring questions from embedded JSONB (`assessment_templates.questions`) int
 | 5     | Core Package - Schema Updates      | ✅ Complete | B       |
 | 6     | Core Package - Repository Updates  | ✅ Complete | C       |
 | 7     | Service Layer Updates              | ✅ Complete | C       |
-| 8     | Modify Existing Schemas (Breaking) | ⬜ Pending  | D       |
-| 9     | Test Updates                       | ⬜ Pending  | D       |
+| 8     | Modify Existing Schemas (Breaking) | ✅ Complete | D       |
+| 9     | Test Updates                       | ✅ Complete | D       |
+
+### Session D Completed Work (3rd January 2026)
+
+**Phase 8: Modify Existing Schemas (Breaking Changes)**
+
+- Updated `packages/database/src/schema/assessment-templates.ts`
+  - Removed `questions` JSONB column
+  - Removed local type definitions (AssessmentQuestion, QuestionType, etc.)
+  - Added relation to `templateQuestions` (many relation)
+  - Imported ScoringConfig from shared types
+- Updated `packages/database/src/schema/user-assessments.ts`
+  - Removed `answers` JSONB column
+  - Added relation to `userAssessmentAnswers` (many relation)
+- Generated migration `0010_redundant_tyger_tiger.sql` (drops questions/answers columns)
+- Ran migration on both `ffp_dev` and `ffp_test` databases
+
+**Phase 9: Test Updates**
+
+- Updated `packages/core/src/assessments/template.repository.test.ts`
+  - Removed `questions` field from test input
+  - Updated `questionIds` to use UUID format (`22222222-2222-2222-2222-222222220101`)
+  - Changed TRUNCATE to DELETE statements (FK dependencies)
+- Updated `packages/core/src/assessments/user-assessment.repository.test.ts`
+  - Removed `expect(result.answers).toEqual({})` assertions (answers now in separate table)
+- Fixed database permissions for `test_user` on new tables (questions, template_questions, user_assessment_answers)
+- Set up DEFAULT PRIVILEGES for both `app_user` and `test_user`
+
+**Key Fix: Database User Permissions**
+
+The vitest config (`@ffp/core/vitest.config.ts`) uses `test_user`, not `app_user` from `.env`. When adding new tables:
+
+1. Run migrations as `root_user` (DB_MIGRATE_USER)
+2. Ensure DEFAULT PRIVILEGES are configured so `test_user` and `app_user` both get table access
+3. Added strategic comments to `vitest.config.ts` and `migrate.ts` documenting this
+
+**Quality Assurance**:
+
+- ✅ `pnpm build` - All packages build successfully
+- ✅ `pnpm typecheck` - Zero TypeScript errors
+- ✅ `pnpm test` - 466 tests passing
+- ✅ `pnpm lint` - Zero warnings
 
 ### Session C Completed Work (2nd January 2026)
 

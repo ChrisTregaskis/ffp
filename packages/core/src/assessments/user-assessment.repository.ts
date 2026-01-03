@@ -11,7 +11,6 @@ import type {
   UserAssessment,
   CreateUserAssessmentInput,
   UpdateUserAssessmentInput,
-  UserAssessmentAnswers,
   UserAssessmentScores,
 } from '../schemas/user-assessment.schema';
 
@@ -30,7 +29,6 @@ function mapToUserAssessment(record: typeof userAssessments.$inferSelect): UserA
     flowId: record.flowId,
     currentStep: record.currentStep,
     status: record.status,
-    answers: (record.answers ?? {}) as unknown as UserAssessmentAnswers,
     scores: record.scores as UserAssessmentScores | null,
     programmeId: record.programmeId,
     startedAt: record.startedAt,
@@ -57,7 +55,6 @@ export async function create(input: CreateUserAssessmentInput): Promise<UserAsse
         flowId: input.flowId,
         currentStep: 1,
         status: 'not_started',
-        answers: {},
       })
       .returning();
 

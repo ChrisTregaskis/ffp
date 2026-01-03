@@ -4,6 +4,7 @@ import { relations } from 'drizzle-orm';
 import { tenants } from './tenants';
 import { users } from './users';
 import { assessmentFlows } from './assessment-flows';
+import { userAssessmentAnswers } from './user-assessment-answers';
 import { USER_ASSESSMENT_STATUSES } from '../constants/user-assessment.constants';
 
 /**
@@ -46,8 +47,6 @@ export const userAssessments = pgTable(
     currentStep: integer('current_step').notNull().default(1),
     /** Assessment state machine status */
     status: userAssessmentStatusEnum('status').notNull().default('not_started'),
-    /** User's answers stored as JSONB (structure defined by question types) */
-    answers: jsonb('answers').notNull().default({}),
     /** Calculated scores after scoring job completes (nullable until scored) */
     scores: jsonb('scores'),
     /**
@@ -76,8 +75,9 @@ export const userAssessments = pgTable(
  * - Belongs to a tenant (for RLS isolation)
  * - Belongs to a user
  * - References an assessment flow
+ * - Has many answers (via user_assessment_answers table)
  */
-export const userAssessmentsRelations = relations(userAssessments, ({ one }) => ({
+export const userAssessmentsRelations = relations(userAssessments, ({ one, many }) => ({
   tenant: one(tenants, {
     fields: [userAssessments.tenantId],
     references: [tenants.id],
@@ -90,6 +90,7 @@ export const userAssessmentsRelations = relations(userAssessments, ({ one }) => 
     fields: [userAssessments.flowId],
     references: [assessmentFlows.id],
   }),
+  answers: many(userAssessmentAnswers),
 }));
 
 export const insertUserAssessmentSchema = createInsertSchema(userAssessments);

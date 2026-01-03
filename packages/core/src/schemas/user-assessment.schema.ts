@@ -54,6 +54,9 @@ export type UserAssessmentScores = z.infer<typeof userAssessmentScoresSchema>;
  * User assessment schema - full record
  *
  * Represents a complete user assessment record from the database.
+ *
+ * NOTE: Answers are stored in a dedicated `user_assessment_answers` table.
+ * Use the answer repository to fetch answers for an assessment.
  */
 export const userAssessmentSchema = z.object({
   /** Unique identifier (UUID) */
@@ -68,8 +71,6 @@ export const userAssessmentSchema = z.object({
   currentStep: z.number().int().positive(),
   /** Assessment state machine status */
   status: userAssessmentStatusSchema,
-  /** User's answers (keyed by questionId) */
-  answers: userAssessmentAnswersSchema,
   /** Calculated scores (null until scored) */
   scores: userAssessmentScoresSchema.nullable(),
   /** Generated programme ID (null until programme generated) */
@@ -102,8 +103,6 @@ export type CreateUserAssessmentInput = z.infer<typeof createUserAssessmentSchem
 export const updateUserAssessmentSchema = z.object({
   /** Update current step */
   currentStep: z.number().int().positive().optional(),
-  /** Merge new answers (partial update) */
-  answers: userAssessmentAnswersSchema.optional(),
 });
 
 export type UpdateUserAssessmentInput = z.infer<typeof updateUserAssessmentSchema>;

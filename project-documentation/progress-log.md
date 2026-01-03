@@ -8,6 +8,76 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### January 3, 2026 (Session 76 - FFP-130 Questions Table Refactor - Session D)
+
+**Status**: ✅ FFP-130 Questions Table Refactor COMPLETE (All 9 Phases Done)
+
+**Branch**: `feature/ffp-130-submit-assessment-api`
+
+**Completed Work**:
+
+**Phase 8: Modify Existing Schemas (Breaking Changes)** (~0.25 hours):
+
+- ✅ Updated `packages/database/src/schema/assessment-templates.ts`
+  - Removed `questions` JSONB column
+  - Removed local type definitions (AssessmentQuestion, QuestionType, etc.)
+  - Added relation to `templateQuestions` (many relation)
+  - Imported ScoringConfig from shared types
+- ✅ Updated `packages/database/src/schema/user-assessments.ts`
+  - Removed `answers` JSONB column
+  - Added relation to `userAssessmentAnswers` (many relation)
+- ✅ Generated migration `0010_redundant_tyger_tiger.sql`
+- ✅ Ran migration on both `ffp_dev` and `ffp_test` databases
+
+**Phase 9: Test Updates** (~0.5 hours):
+
+- ✅ Updated `packages/core/src/assessments/template.repository.test.ts`
+  - Removed `questions` field from test input
+  - Updated `questionIds` to use UUID format
+  - Changed TRUNCATE to DELETE statements (FK dependencies)
+- ✅ Updated `packages/core/src/assessments/user-assessment.repository.test.ts`
+  - Removed `expect(result.answers).toEqual({})` assertions
+
+**Key Fix: Database User Permissions Issue**:
+
+The tests were failing with "permission denied for table template_questions" because:
+
+- Vitest config uses `test_user` (hardcoded in `vitest.config.ts`)
+- `.env` file defines `DB_USER=app_user`
+- Permissions were only granted to `app_user`, not `test_user`
+
+**Resolution**:
+
+1. Granted permissions on new tables to both `test_user` and `app_user`
+2. Set up `ALTER DEFAULT PRIVILEGES` for both users so future tables automatically grant permissions
+3. Added strategic comments to `vitest.config.ts` and `migrate.ts` documenting this
+
+**Documentation Added**:
+
+- `packages/core/vitest.config.ts` - Comments explaining test_user vs app_user distinction
+- `packages/database/scripts/migrate.ts` - Full documentation of database user roles
+
+**Files Modified**:
+
+| File                                                               | Change                                                               |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| `packages/database/src/schema/assessment-templates.ts`             | Removed questions column, local types, added relation                |
+| `packages/database/src/schema/user-assessments.ts`                 | Removed answers column, added relation                               |
+| `packages/database/src/migrations/apply-rls.ts`                    | Removed incorrect GRANT section (permissions via DEFAULT PRIVILEGES) |
+| `packages/core/src/assessments/template.repository.test.ts`        | UUID question IDs, DELETE instead of TRUNCATE                        |
+| `packages/core/src/assessments/user-assessment.repository.test.ts` | Removed answers assertions                                           |
+| `packages/core/vitest.config.ts`                                   | Added documentation comments                                         |
+| `packages/database/scripts/migrate.ts`                             | Added database user roles documentation                              |
+
+**Quality Assurance**:
+
+- ✅ `pnpm build` - All packages build successfully
+- ✅ `pnpm typecheck` - Zero TypeScript errors
+- ✅ `pnpm test` - 466 tests passing
+- ✅ `pnpm lint` - Zero warnings
+
+---
+
 ### January 2, 2026 (Session 75 - FFP-130 Questions Table Refactor - Session C)
 
 **Status**: 🔄 FFP-130 Questions Table Refactor IN PROGRESS (Phases 1-7 Complete)

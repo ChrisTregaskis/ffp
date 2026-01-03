@@ -294,7 +294,7 @@
               "host": ["{{apiUrl}}"],
               "path": ["user", "invite-user"]
             },
-            "description": "Invite a new user to the platform with temporary password.\n\n**Authentication:** JWT token required (customer_owner OR system_admin)\n\n**Two Modes:**\n\n1. **Customer Owner Mode** (uses JWT context):\n   - User invites staff to their own tenant/customer\n   - tenantId/customerId taken from JWT automatically\n   - Request body does NOT include tenantId/customerId\n\n2. **System Admin Mode** (uses request body):\n   - System admin can invite users to any tenant/customer\n   - Must specify tenantId and customerId in request body\n\n**Request Body (Customer Owner):**\n```json\n{\n  \"email\": \"c.tregaskis+ffp.invite-user.test-001@gmail.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"role\": \"customer_admin\"\n}\n```\n\n**Request Body (System Admin):**\n```json\n{\n  \"email\": \"owner@newbusiness.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"role\": \"customer_owner\",\n  \"tenantId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"customerId\": \"550e8400-e29b-41d4-a716-446655440001\"\n}\n```\n\n**Valid Roles:**\n- `customer_owner` - Owner of a customer account (business)\n- `customer_admin` - Administrator within a customer organisation\n- `customer_user` - Regular user within a customer organisation\n\n**Response:**\n```json\n{\n  \"message\": \"User invited successfully. They will receive an email with temporary password.\",\n  \"userId\": \"uuid\",\n  \"email\": \"c.tregaskis+ffp.invite-user.test-001@gmail.com\"\n}\n```\n\n**Status Codes:**\n- `200`: User invited successfully\n- `400`: Validation error (invalid input or system admin missing tenantId/customerId)\n- `401`: Unauthorised (no JWT token)\n- `403`: Forbidden (not customer_owner or system_admin)\n- `500`: Internal server error\n\n**Cognito-to-DB Rollback:**\nIf database insert fails, Cognito user is automatically deleted (no orphaned users).\n\n**Typical Workflow:**\n1. System admin creates business via POST /admin/create-customer (FFP-112)\n2. System admin invites owner via POST /user/invite-user (this endpoint)\n3. Owner receives Cognito email with temporary password\n4. Owner logs in and invites additional users via POST /user/invite-user"
+            "description": "Invite a new user to the platform with temporary password.\n\n**Authentication:** JWT token required (customer_owner OR system_admin)\n\n**Two Modes:**\n\n1. **Customer Owner Mode** (uses JWT context):\n   - User invites staff to their own tenant/customer\n   - tenantId/customerId taken from JWT automatically\n   - Request body does NOT include tenantId/customerId\n\n2. **System Admin Mode** (uses request body):\n   - System admin can invite users to any tenant/customer\n   - Must specify tenantId and customerId in request body\n\n**Request Body (Customer Owner):**\n```json\n{\n  \"email\": \"c.tregaskis+ffp.invite-user.test-001@gmail.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"role\": \"customer_admin\"\n}\n```\n\n**Request Body (System Admin):**\n```json\n{\n  \"email\": \"owner@newbusiness.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"role\": \"customer_owner\",\n  \"tenantId\": \"44444444-4444-4444-4444-444444440001\",\n  \"customerId\": \"22222222-2222-2222-2222-222222220101\"\n}\n```\n\n**Valid Roles:**\n- `customer_owner` - Owner of a customer account (business)\n- `customer_admin` - Administrator within a customer organisation\n- `customer_user` - Regular user within a customer organisation\n\n**Response:**\n```json\n{\n  \"message\": \"User invited successfully. They will receive an email with temporary password.\",\n  \"userId\": \"uuid\",\n  \"email\": \"c.tregaskis+ffp.invite-user.test-001@gmail.com\"\n}\n```\n\n**Status Codes:**\n- `200`: User invited successfully\n- `400`: Validation error (invalid input or system admin missing tenantId/customerId)\n- `401`: Unauthorised (no JWT token)\n- `403`: Forbidden (not customer_owner or system_admin)\n- `500`: Internal server error\n\n**Cognito-to-DB Rollback:**\nIf database insert fails, Cognito user is automatically deleted (no orphaned users).\n\n**Typical Workflow:**\n1. System admin creates business via POST /admin/create-customer (FFP-112)\n2. System admin invites owner via POST /user/invite-user (this endpoint)\n3. Owner receives Cognito email with temporary password\n4. Owner logs in and invites additional users via POST /user/invite-user"
           },
           "response": [
             {
@@ -340,7 +340,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"email\": \"owner@newbusiness.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"role\": \"customer_owner\",\n  \"tenantId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"customerId\": \"550e8400-e29b-41d4-a716-446655440001\"\n}"
+                  "raw": "{\n  \"email\": \"owner@newbusiness.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"role\": \"customer_owner\",\n  \"tenantId\": \"d82c67e9-b000-45cb-9105-c53ac48aec36\",\n  \"customerId\": \"407d0ac2-bce3-440f-a34e-d7f500a41521\"\n}"
                 },
                 "url": {
                   "raw": "{{apiUrl}}/user/invite-user",
@@ -1239,7 +1239,7 @@
               "host": ["{{apiUrl}}"],
               "path": ["assessments", "start"]
             },
-            "description": "Start a new assessment or resume an existing one for the authenticated user.\n\n**Authentication:** JWT token required (any authenticated user)\n\n**Resume Logic:**\nIf the user has an existing assessment for the same flow with status `not_started` or `in_progress`, that assessment is returned instead of creating a new one. The `isResumed` flag indicates whether an existing assessment was resumed.\n\n**Request Body:**\n```json\n{\n  \"flowId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}\n```\n\n**Response (New Assessment):**\n```json\n{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"currentStep\": 1,\n  \"status\": \"not_started\",\n  \"answers\": {},\n  \"flowId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"isResumed\": false\n}\n```\n\n**Response (Resumed Assessment):**\n```json\n{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"currentStep\": 3,\n  \"status\": \"in_progress\",\n  \"answers\": {\n    \"q1\": { \"questionId\": \"q1\", \"answerValue\": 4 },\n    \"q2\": { \"questionId\": \"q2\", \"answerValue\": 3 }\n  },\n  \"flowId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"isResumed\": true\n}\n```\n\n**Status Codes:**\n- `200`: Assessment started or resumed successfully\n- `400`: Validation error (flowId not a valid UUID)\n- `401`: Unauthorised (no JWT token)\n- `404`: Flow not found or inactive\n- `500`: Internal server error\n\n**Multi-Tenant Security:**\n- User can only access assessments within their tenant\n- Flow ID is validated against active flows in the system\n- Tenant context extracted from JWT `custom:tenantId` claim\n\n**Testing Tips:**\n1. Get a valid flowId from your database (check `assessment_flows` table)\n2. Set the `testFlowId` collection variable\n3. Call this endpoint twice to test resume logic:\n   - First call: `isResumed: false` (new assessment)\n   - Second call: `isResumed: true` (same assessment returned)"
+            "description": "Start a new assessment or resume an existing one for the authenticated user.\n\n**Authentication:** JWT token required (any authenticated user)\n\n**Resume Logic:**\nIf the user has an existing assessment for the same flow with status `not_started` or `in_progress`, that assessment is returned instead of creating a new one. The `isResumed` flag indicates whether an existing assessment was resumed.\n\n**Request Body:**\n```json\n{\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\"\n}\n```\n\n**Response (New Assessment):**\n```json\n{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"currentStep\": 1,\n  \"status\": \"not_started\",\n  \"answers\": {},\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\",\n  \"isResumed\": false\n}\n```\n\n**Response (Resumed Assessment):**\n```json\n{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"currentStep\": 3,\n  \"status\": \"in_progress\",\n  \"answers\": {\n    \"q1\": { \"questionId\": \"q1\", \"answerValue\": 4 },\n    \"q2\": { \"questionId\": \"q2\", \"answerValue\": 3 }\n  },\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\",\n  \"isResumed\": true\n}\n```\n\n**Status Codes:**\n- `200`: Assessment started or resumed successfully\n- `400`: Validation error (flowId not a valid UUID)\n- `401`: Unauthorised (no JWT token)\n- `404`: Flow not found or inactive\n- `500`: Internal server error\n\n**Multi-Tenant Security:**\n- User can only access assessments within their tenant\n- Flow ID is validated against active flows in the system\n- Tenant context extracted from JWT `custom:tenantId` claim\n\n**Testing Tips:**\n1. Get a valid flowId from your database (check `assessment_flows` table)\n2. Set the `testFlowId` collection variable\n3. Call this endpoint twice to test resume logic:\n   - First call: `isResumed: false` (new assessment)\n   - Second call: `isResumed: true` (same assessment returned)"
           },
           "response": [
             {
@@ -1254,7 +1254,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"flowId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+                  "raw": "{\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\"\n}"
                 },
                 "url": {
                   "raw": "{{apiUrl}}/assessments/start",
@@ -1271,7 +1271,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"currentStep\": 1,\n  \"status\": \"not_started\",\n  \"answers\": {},\n  \"flowId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"isResumed\": false\n}"
+              "body": "{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"currentStep\": 1,\n  \"status\": \"not_started\",\n  \"answers\": {},\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\",\n  \"isResumed\": false\n}"
             },
             {
               "name": "Success - Resumed Assessment",
@@ -1285,7 +1285,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"flowId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+                  "raw": "{\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\"\n}"
                 },
                 "url": {
                   "raw": "{{apiUrl}}/assessments/start",
@@ -1302,7 +1302,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"currentStep\": 3,\n  \"status\": \"in_progress\",\n  \"answers\": {\n    \"q1\": { \"questionId\": \"q1\", \"answerValue\": 4 },\n    \"q2\": { \"questionId\": \"q2\", \"answerValue\": 3 }\n  },\n  \"flowId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"isResumed\": true\n}"
+              "body": "{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"currentStep\": 3,\n  \"status\": \"in_progress\",\n  \"answers\": {\n    \"q1\": { \"questionId\": \"q1\", \"answerValue\": 4 },\n    \"q2\": { \"questionId\": \"q2\", \"answerValue\": 3 }\n  },\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\",\n  \"isResumed\": true\n}"
             },
             {
               "name": "Validation Error - Invalid UUID",
@@ -1378,7 +1378,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"flowId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+                  "raw": "{\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\"\n}"
                 },
                 "url": {
                   "raw": "{{apiUrl}}/assessments/start",
@@ -1465,7 +1465,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"answers\": {\n    \"550e8400-e29b-41d4-a716-446655440001\": {\n      \"questionId\": \"550e8400-e29b-41d4-a716-446655440001\",\n      \"answerValue\": 4\n    }\n  },\n  \"currentStep\": 2\n}"
+              "raw": "{\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220101\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220101\",\n      \"answerValue\": 4\n    }\n  },\n  \"currentStep\": 2\n}"
             },
             "url": {
               "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
@@ -1487,7 +1487,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"answers\": {\n    \"550e8400-e29b-41d4-a716-446655440001\": {\n      \"questionId\": \"550e8400-e29b-41d4-a716-446655440001\",\n      \"answerValue\": 4\n    }\n  },\n  \"currentStep\": 2\n}"
+                  "raw": "{\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220101\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220101\",\n      \"answerValue\": 4\n    }\n  },\n  \"currentStep\": 2\n}"
                 },
                 "url": {
                   "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
@@ -1704,7 +1704,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"answers\": {\n    \"550e8400-e29b-41d4-a716-446655440001\": {\n      \"questionId\": \"550e8400-e29b-41d4-a716-446655440001\",\n      \"answerValue\": 4\n    },\n    \"550e8400-e29b-41d4-a716-446655440002\": {\n      \"questionId\": \"550e8400-e29b-41d4-a716-446655440002\",\n      \"answerValue\": 3\n    }\n  }\n}"
+              "raw": "{\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220101\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220101\",\n      \"answerValue\": 4\n    },\n    \"22222222-2222-2222-2222-222222220102\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220102\",\n      \"answerValue\": 3\n    }\n  }\n}"
             },
             "url": {
               "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/submit",
@@ -1726,7 +1726,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"answers\": {\n    \"550e8400-e29b-41d4-a716-446655440001\": {\n      \"questionId\": \"550e8400-e29b-41d4-a716-446655440001\",\n      \"answerValue\": 4\n    }\n  }\n}"
+                  "raw": "{\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220101\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220101\",\n      \"answerValue\": 4\n    }\n  }\n}"
                 },
                 "url": {
                   "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/submit",
@@ -1805,7 +1805,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Required questions are missing answers\",\n  \"requestId\": \"abc123-def456\",\n  \"details\": {\n    \"missingQuestionIds\": [\"550e8400-e29b-41d4-a716-446655440001\", \"550e8400-e29b-41d4-a716-446655440002\"]\n  }\n}"
+              "body": "{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Required questions are missing answers\",\n  \"requestId\": \"abc123-def456\",\n  \"details\": {\n    \"missingQuestionIds\": [\"22222222-2222-2222-2222-222222220101\", \"22222222-2222-2222-2222-222222220102\"]\n  }\n}"
             },
             {
               "name": "Not Found - Assessment Does Not Exist",

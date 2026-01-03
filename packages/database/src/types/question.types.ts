@@ -9,6 +9,8 @@
  * on other @ffp/* packages.
  */
 
+import type { ScoreDimension } from '../constants/question.constants';
+
 /**
  * Question option for choice-based questions (single-choice, multi-choice)
  */
@@ -89,4 +91,65 @@ export interface QuestionWithConfig {
   displayOrder: number;
   /** Template-specific overrides (merged on read by caller if needed) */
   configOverrides: ConfigOverrides | null;
+}
+
+/** Comparison operators for scoring conditions */
+export type ComparisonOperator = 'lt' | 'lte' | 'gt' | 'gte' | 'eq';
+
+/** Logical operators for combining conditions */
+export type LogicalOperator = 'and' | 'or';
+
+/** Risk level thresholds for dimension scores */
+export interface RiskThresholds {
+  low: number;
+  moderate: number;
+}
+
+/** Configuration for a single scoring dimension */
+export interface DimensionConfig {
+  /** Name of the dimension being scored */
+  name: ScoreDimension;
+  /** Question IDs (UUIDs) that contribute to this dimension */
+  questionIds: string[];
+  /** Maximum possible score for this dimension */
+  maxScore: number;
+  /** Weight multiplier for this dimension (optional) */
+  weight?: number;
+  /** Thresholds for risk categorisation (optional) */
+  riskThresholds?: RiskThresholds;
+}
+
+/** Condition for programme mapping */
+export interface ProgramMappingCondition {
+  /** Dimension to evaluate */
+  dimension: ScoreDimension;
+  /** Comparison operator */
+  operator: ComparisonOperator;
+  /** Value to compare against */
+  value: number;
+}
+
+/** Mapping from scores to programme recommendations */
+export interface ProgramMapping {
+  /** Conditions that must be met */
+  conditions: ProgramMappingCondition[];
+  /** How to combine conditions (default: 'and') */
+  operator?: LogicalOperator;
+  /** ID of the programme template to recommend */
+  programTemplateId: string;
+  /** Priority for selecting between matching mappings */
+  priority?: number;
+}
+
+/**
+ * Scoring configuration for an assessment template
+ *
+ * Defines how responses are scored across dimensions and
+ * how scores map to programme recommendations.
+ */
+export interface ScoringConfig {
+  /** Scoring dimensions and their configurations */
+  dimensions: DimensionConfig[];
+  /** Mappings from scores to programme recommendations */
+  programMappings: ProgramMapping[];
 }

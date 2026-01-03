@@ -234,5 +234,5 @@ export const seedDatabase = async (environment: string = 'dev'): Promise<void> =
 
 // Re-export individual seed functions for standalone use
 export { seedQuestions, QUESTION_IDS } from './seedQuestions.js';
-export { seedAssessmentTemplates } from './seedAssessmentTemplates.js';
-export { seedAssessmentFlows } from './seedAssessmentFlows.js';
+export { seedAssessmentTemplates, TEMPLATE_IDS } from './seedAssessmentTemplates.js';
+export { seedAssessmentFlows, FLOW_IDS } from './seedAssessmentFlows.js';
