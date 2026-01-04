@@ -71,7 +71,7 @@ function convertAnswersToSaveFormat(answers: UserAssessmentAnswers): SaveAnswerI
  * Extract the answer value from database JSONB
  *
  * Values are stored directly as string, number, or string[] (for multi-select).
- * Also handles legacy wrapped formats for backwards compatibility.
+ * Also handles legacy wrapped formats for backwards compatibility. // TODO: Clean up "legacy" handling before MVP launch.
  *
  * @throws ValidationError if the answer value format is unexpected
  */
