@@ -1,0 +1,812 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fit For Purpose - Progress Update October 2025</title>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --primary-blue: #0066cc;
+        --teal: #008b8b;
+        --light-blue: #e6f2ff;
+        --accent-orange: #ff6b35;
+        --success-green: #10b981;
+        --text-dark: #1f2937;
+        --text-light: #6b7280;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          'Inter',
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        color: var(--text-dark);
+        line-height: 1.6;
+        background: white;
+      }
+
+      /* Sections */
+      .section {
+        min-height: 100vh;
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        scroll-margin-top: 2rem;
+      }
+
+      .section.center {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 3.5em;
+        color: var(--primary-blue);
+        margin-bottom: 0.5em;
+        font-weight: 700;
+      }
+
+      h2 {
+        font-size: 2.5em;
+        color: var(--primary-blue);
+        margin-bottom: 1em;
+        font-weight: 700;
+      }
+
+      h3 {
+        font-size: 1.8em;
+        color: var(--teal);
+        margin-bottom: 0.5em;
+      }
+
+      h4 {
+        font-size: 1.3em;
+        color: var(--primary-blue);
+        margin-bottom: 0.5em;
+      }
+
+      p {
+        font-size: 1.1em;
+        margin-bottom: 1em;
+      }
+
+      .tagline {
+        color: var(--teal);
+        font-size: 1.5em;
+        font-weight: 300;
+        margin: 1em 0;
+      }
+
+      .date {
+        color: var(--text-light);
+        font-size: 1.2em;
+        margin-top: 2em;
+      }
+
+      /* Grid Layouts */
+      .two-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin: 2rem 0;
+      }
+
+      .tech-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin: 2rem 0;
+      }
+
+      .tech-card {
+        background: var(--light-blue);
+        padding: 2rem;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary-blue);
+      }
+
+      .tech-card i {
+        font-size: 2.5em;
+        color: var(--teal);
+        display: block;
+        margin-bottom: 0.5em;
+      }
+
+      /* Lists */
+      ul {
+        list-style: none;
+      }
+
+      .achievement-list li {
+        margin: 1em 0;
+        padding-left: 2em;
+        position: relative;
+      }
+
+      .achievement-list i {
+        position: absolute;
+        left: 0;
+      }
+
+      .fa-check-circle {
+        color: var(--success-green);
+      }
+
+      .fa-times-circle {
+        color: #ef4444;
+      }
+
+      /* Metrics */
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin: 2rem 0;
+      }
+
+      .metric-box {
+        background: linear-gradient(135deg, var(--primary-blue), var(--teal));
+        color: white;
+        padding: 2rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .metric-box h3 {
+        color: white;
+        font-size: 3em;
+        margin: 0;
+      }
+
+      .metric-box p {
+        margin: 0.5em 0;
+        opacity: 0.9;
+      }
+
+      /* Progress Bar */
+      .progress-bar {
+        background: #e5e7eb;
+        border-radius: 10px;
+        height: 40px;
+        margin: 2rem 0;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        background: linear-gradient(90deg, var(--teal), var(--primary-blue));
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.2em;
+      }
+
+      /* Chart */
+      .simple-chart {
+        display: flex;
+        justify-content: space-around;
+        margin: 3rem 0;
+        gap: 2rem;
+      }
+
+      .chart-bar {
+        flex: 1;
+        text-align: center;
+      }
+
+      .bar-container {
+        height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        margin-bottom: 1em;
+      }
+
+      .bar-complete {
+        background: var(--teal);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1.2em;
+      }
+
+      .bar-remaining {
+        background: #e5e7eb;
+        color: var(--text-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2em;
+      }
+
+      /* Architecture */
+      .architecture-diagram {
+        background: var(--light-blue);
+        padding: 2rem;
+        border-radius: 8px;
+        margin: 2rem 0;
+      }
+
+      .layer {
+        background: white;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-radius: 6px;
+        border-left: 4px solid var(--teal);
+      }
+
+      /* Cost Cards */
+      .cost-comparison {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin: 2rem 0;
+      }
+
+      .cost-card {
+        padding: 2rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .cost-card.original {
+        background: #fee2e2;
+        border: 3px solid #ef4444;
+      }
+
+      .cost-card.optimised {
+        background: #d1fae5;
+        border: 3px solid var(--success-green);
+      }
+
+      .cost-card h3 {
+        font-size: 2.5em;
+        margin: 0.5em 0;
+      }
+
+      .cost-card.original h3 {
+        color: #ef4444;
+      }
+
+      .cost-card.optimised h3 {
+        color: var(--success-green);
+      }
+
+      /* Security */
+      .security-badge {
+        display: inline-block;
+        background: var(--success-green);
+        color: white;
+        padding: 0.5em 1em;
+        border-radius: 20px;
+        font-size: 1em;
+        margin: 0.5em;
+      }
+
+      /* Workflow */
+      .workflow-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin: 2rem 0;
+      }
+
+      .workflow-card {
+        background: white;
+        border: 2px solid var(--light-blue);
+        padding: 1.5rem;
+        border-radius: 8px;
+      }
+
+      .workflow-card i {
+        color: var(--teal);
+        font-size: 2em;
+        display: block;
+        margin-bottom: 0.5em;
+      }
+
+      /* Timeline */
+      .timeline {
+        margin: 2rem 0;
+      }
+
+      .timeline-item {
+        display: flex;
+        margin: 1.5rem 0;
+        align-items: flex-start;
+      }
+
+      .timeline-marker {
+        width: 50px;
+        height: 50px;
+        background: var(--teal);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2em;
+        margin-right: 1.5rem;
+        flex-shrink: 0;
+      }
+
+      .timeline-marker.complete {
+        background: var(--success-green);
+        font-size: 1.5em;
+      }
+
+      .timeline-content {
+        flex: 1;
+      }
+
+      .highlight {
+        background: linear-gradient(120deg, var(--light-blue) 0%, var(--light-blue) 100%);
+        background-repeat: no-repeat;
+        background-size: 100% 40%;
+        background-position: 0 80%;
+        padding: 0 0.3em;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .two-column,
+        .tech-grid,
+        .metrics-grid,
+        .workflow-grid,
+        .cost-comparison {
+          grid-template-columns: 1fr;
+        }
+
+        h1 {
+          font-size: 2.5em;
+        }
+        h2 {
+          font-size: 2em;
+        }
+
+        .nav-bar {
+          padding: 0.75rem 1rem;
+        }
+
+        .section {
+          padding: 2rem 1rem;
+        }
+      }
+
+      /* Tooltip Styles */
+      .tooltip-container {
+        position: relative;
+        cursor: help;
+      }
+
+      .tooltip-content {
+        visibility: hidden;
+        opacity: 0;
+        position: absolute;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--text-dark);
+        color: white;
+        padding: 1rem 1.25rem;
+        border-radius: 8px;
+        width: 350px;
+        font-size: 0.85em;
+        line-height: 1.5;
+        text-align: left;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        transition:
+          opacity 0.3s,
+          visibility 0.3s;
+        pointer-events: none;
+      }
+
+      .tooltip-content::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 8px solid transparent;
+        border-top-color: var(--text-dark);
+      }
+
+      .tooltip-content strong {
+        color: var(--teal);
+        display: block;
+        margin-bottom: 0.25em;
+      }
+
+      .tooltip-content ul {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      .tooltip-content ul li {
+        margin: 0.4em 0;
+        padding-left: 0;
+      }
+
+      .tooltip-container:hover .tooltip-content {
+        visibility: visible;
+        opacity: 1;
+      }
+
+      /* Responsive - adjust on mobile */
+      @media (max-width: 768px) {
+        .tooltip-content {
+          width: 280px;
+          font-size: 0.8em;
+          padding: 0.75rem 1rem;
+        }
+      }
+
+      /* Side Menu */
+      .side-menu {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 250px;
+        height: 100vh;
+        background: white;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        z-index: 999;
+        overflow-y: auto;
+        padding: 4rem 0 1.5rem 0;
+        transition: transform 0.3s ease;
+      }
+
+      .side-menu.hidden {
+        transform: translateX(-250px);
+      }
+
+      .menu-toggle {
+        position: fixed;
+        left: 10px;
+        top: 10px;
+        background: var(--primary-blue);
+        color: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        z-index: 1001;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        transition: left 0.3s ease;
+      }
+
+      .menu-toggle.menu-open {
+        left: 260px;
+      }
+
+      .menu-section {
+        margin-bottom: 0.5rem;
+      }
+
+      .menu-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 600;
+        color: var(--text-dark);
+        background: var(--light-blue);
+        border-left: 3px solid var(--primary-blue);
+      }
+
+      .menu-section-header:hover {
+        background: #d1e7ff;
+      }
+
+      .menu-section-header i.fa-chevron-down {
+        font-size: 0.8em;
+        transition: transform 0.3s;
+      }
+
+      .menu-section-header.collapsed i.fa-chevron-down {
+        transform: rotate(-90deg);
+      }
+
+      .menu-items {
+        max-height: 500px;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+      }
+
+      .menu-items.collapsed {
+        max-height: 0;
+      }
+
+      .menu-item {
+        display: block;
+        padding: 0.75rem 1.5rem 0.75rem 2.5rem;
+        color: var(--text-dark);
+        text-decoration: none;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+        cursor: pointer;
+        font-size: 0.95em;
+      }
+
+      .menu-item:hover {
+        background: var(--light-blue);
+        border-left-color: var(--teal);
+      }
+
+      .menu-item.active {
+        background: var(--light-blue);
+        border-left-color: var(--primary-blue);
+        font-weight: 600;
+        color: var(--primary-blue);
+      }
+
+      .main-content {
+        margin-left: 250px;
+        transition: margin-left 0.3s ease;
+      }
+
+      .main-content.menu-hidden {
+        margin-left: 0;
+      }
+
+      @media (max-width: 768px) {
+        .side-menu {
+          transform: translateX(-250px);
+        }
+        .side-menu.visible {
+          transform: translateX(0);
+        }
+        .main-content {
+          margin-left: 0;
+        }
+        .menu-toggle {
+          left: 10px;
+        }
+        .menu-toggle.menu-open {
+          left: 260px;
+        }
+      }
+
+      /* Loading state */
+      .loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        font-size: 1.5em;
+        color: var(--text-light);
+      }
+
+      .loading i {
+        margin-right: 0.5em;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Menu Toggle Button -->
+    <button class="menu-toggle" id="menuToggle" onclick="toggleMenu()">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Side Menu -->
+    <nav class="side-menu" id="sideMenu">
+      <div class="menu-section">
+        <div class="menu-section-header" onclick="toggleSection('overview')">
+          <span>Overview</span>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="menu-items" id="overview-items">
+          <a class="menu-item" onclick="jumpToSection(1)">Title</a>
+          <a class="menu-item" onclick="jumpToSection(2)">The Challenge</a>
+          <a class="menu-item" onclick="jumpToSection(3)">Our Solution</a>
+          <a class="menu-item" onclick="jumpToSection(4)">Tech Stack</a>
+          <a class="menu-item" onclick="jumpToSection(5)">Architecture</a>
+          <a class="menu-item" onclick="jumpToSection(6)">Epic Progress</a>
+          <a class="menu-item" onclick="jumpToSection(7)">What's Deployed</a>
+          <a class="menu-item" onclick="jumpToSection(8)">Achievements</a>
+          <a class="menu-item" onclick="jumpToSection(9)">Cost Savings</a>
+          <a class="menu-item" onclick="jumpToSection(10)">Security</a>
+          <a class="menu-item" onclick="jumpToSection(11)">Next Phase</a>
+          <a class="menu-item" onclick="jumpToSection(12)">Roadmap</a>
+        </div>
+      </div>
+      <div class="menu-section">
+        <div class="menu-section-header collapsed" onclick="toggleSection('sprint1')">
+          <span>Sprint 1 (Nov 2025)</span>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="menu-items collapsed" id="sprint1-items">
+          <a class="menu-item" onclick="jumpToSection(13)">Sprint 1 Title</a>
+          <a class="menu-item" onclick="jumpToSection(14)">What We Built</a>
+          <a class="menu-item" onclick="jumpToSection(15)">Database Foundation</a>
+          <a class="menu-item" onclick="jumpToSection(16)">Security Layer</a>
+          <a class="menu-item" onclick="jumpToSection(17)">By The Numbers</a>
+        </div>
+      </div>
+      <div class="menu-section">
+        <div class="menu-section-header collapsed" onclick="toggleSection('sprint2')">
+          <span>Sprint 2 (Nov 2025)</span>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="menu-items collapsed" id="sprint2-items">
+          <a class="menu-item" onclick="jumpToSection(18)">Sprint 2 Title</a>
+          <a class="menu-item" onclick="jumpToSection(19)">Authentication Complete</a>
+          <a class="menu-item" onclick="jumpToSection(20)">Web Interface</a>
+          <a class="menu-item" onclick="jumpToSection(21)">Sprint 2 Numbers</a>
+        </div>
+      </div>
+      <div class="menu-section">
+        <div class="menu-section-header collapsed" onclick="toggleSection('sprint3')">
+          <span>Sprint 3 (Dec 2025)</span>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="menu-items collapsed" id="sprint3-items">
+          <a class="menu-item" onclick="jumpToSection(22)">Sprint 3 Title</a>
+          <a class="menu-item" onclick="jumpToSection(23)">Assessment Engine</a>
+          <a class="menu-item" onclick="jumpToSection(24)">Job Queue System</a>
+          <a class="menu-item" onclick="jumpToSection(25)">APIs & State Machine</a>
+          <a class="menu-item" onclick="jumpToSection(26)">Sprint 3 Numbers</a>
+        </div>
+      </div>
+      <div class="menu-section">
+        <div class="menu-section-header collapsed" onclick="toggleSection('closing')">
+          <span>Closing</span>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="menu-items collapsed" id="closing-items">
+          <a class="menu-item" onclick="jumpToSection(27)">Questions</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-content" id="mainContent">
+      <div class="loading" id="loadingIndicator">
+        <i class="fas fa-spinner fa-spin"></i> Loading content...
+      </div>
+      <div id="contentContainer" style="display: none;"></div>
+    </div>
+    <!-- End Main Content Wrapper -->
+
+    <script>
+      let menuOpen = true;
+
+      // Content files to load in order
+      const contentFiles = [
+        'overview.html',
+        'sprint-updates/sprint-1.html',
+        'sprint-updates/sprint-2.html',
+        'sprint-updates/sprint-3.html',
+        'closing.html'
+      ];
+
+      // Load all content on page load
+      async function loadAllContent() {
+        const container = document.getElementById('contentContainer');
+        const loading = document.getElementById('loadingIndicator');
+
+        try {
+          const contents = await Promise.all(
+            contentFiles.map(file =>
+              fetch(file)
+                .then(response => {
+                  if (!response.ok) throw new Error(`Failed to load ${file}`);
+                  return response.text();
+                })
+            )
+          );
+
+          container.innerHTML = contents.join('\n');
+          container.style.display = 'block';
+          loading.style.display = 'none';
+        } catch (error) {
+          console.error('Error loading content:', error);
+          loading.innerHTML = `
+            <div style="text-align: center;">
+              <i class="fas fa-exclamation-triangle" style="color: var(--accent-orange);"></i>
+              <p>Error loading content. Please refresh the page.</p>
+              <p style="font-size: 0.8em; color: var(--text-light);">
+                Note: This page requires a web server to load content dynamically.<br>
+                Try running: <code>python3 -m http.server 8000</code> from the stakeholder-update folder.
+              </p>
+            </div>
+          `;
+        }
+      }
+
+      // Menu functions
+      function toggleMenu() {
+        menuOpen = !menuOpen;
+        const menu = document.getElementById('sideMenu');
+        const mainContent = document.getElementById('mainContent');
+        const menuToggle = document.getElementById('menuToggle');
+
+        if (menuOpen) {
+          menu.classList.remove('hidden');
+          mainContent.classList.remove('menu-hidden');
+          menuToggle.classList.add('menu-open');
+          menuToggle.innerHTML = '<i class="fas fa-times"></i>';
+        } else {
+          menu.classList.add('hidden');
+          mainContent.classList.add('menu-hidden');
+          menuToggle.classList.remove('menu-open');
+          menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+        }
+      }
+
+      function toggleSection(sectionId) {
+        const header = event.currentTarget;
+        const items = document.getElementById(sectionId + '-items');
+
+        header.classList.toggle('collapsed');
+        items.classList.toggle('collapsed');
+      }
+
+      function jumpToSection(section) {
+        const element = document.getElementById(`section-${section}`);
+        if (element) {
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
+          updateActiveMenuItem(section);
+        }
+      }
+
+      function updateActiveMenuItem(section) {
+        // Remove active class from all menu items
+        document.querySelectorAll('.menu-item').forEach((item) => {
+          item.classList.remove('active');
+        });
+
+        // Add active class to clicked section's menu item
+        const menuItems = document.querySelectorAll('.menu-item');
+        menuItems.forEach((item) => {
+          const onClick = item.getAttribute('onclick');
+          if (onClick && onClick.includes(`jumpToSection(${section})`)) {
+            item.classList.add('active');
+          }
+        });
+      }
+
+      // Load content when page loads
+      document.addEventListener('DOMContentLoaded', loadAllContent);
+    </script>
+  </body>
+</html>
