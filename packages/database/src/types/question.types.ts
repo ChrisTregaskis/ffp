@@ -55,17 +55,13 @@ export interface ConfigOverrides {
 }
 
 /**
- * Answer value structure for user assessment answers
- *
- * Flexible structure to accommodate all question types:
- * - single-choice: { selected: string }
- * - multi-choice: { selected: string[] }
- * - numeric: { value: number }
- * - text: { text: string }
- * - scale: { value: number }
- * - video-response: { videoId: string, thumbnailUrl?: string }
+ * Answer value stored directly (not wrapped in object):
+ * - single-choice: string (e.g., "reduce_pain")
+ * - multi-choice: string[] (e.g., ["none", "diabetes"])
+ * - numeric/scale: number (e.g., 5, 7)
+ * - text: string (e.g., "User's free text response")
  */
-export type AnswerValue = Record<string, unknown>;
+export type AnswerValue = string | number | string[];
 
 /**
  * Question with template-specific configuration

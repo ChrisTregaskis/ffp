@@ -58,101 +58,61 @@ function convertAnswersToResponseFormat(answers: UserAssessmentAnswer[]): UserAs
  * The API accepts answers as a record keyed by questionId, while the
  * repository expects an array of SaveAnswerInput objects.
  *
- * Note: The API sends answerValue as string | number, but the database
- * AnswerValue type is Record<string, unknown>. We wrap the value in an
- * object structure for consistency.
+ * Answer values are stored directly (string, number, or string[]).
  */
 function convertAnswersToSaveFormat(answers: UserAssessmentAnswers): SaveAnswerInput[] {
   return Object.values(answers).map((answer) => ({
     questionId: answer.questionId,
-    // Wrap the raw value in a consistent structure for database storage
-    answerValue: { value: answer.answerValue } as Record<string, unknown>,
+    answerValue: answer.answerValue,
   }));
 }
 
 /**
- * Extract the actual answer value from JSONB structure
+ * Extract the answer value from database JSONB
  *
- * The database stores answers as JSONB (e.g., { value: 5 } or { selected: 'option-a' }),
- * but the job payload requires a plain string | number value.
+ * Values are stored directly as string, number, or string[] (for multi-select).
+ * Also handles legacy wrapped formats for backwards compatibility.
  *
  * @throws ValidationError if the answer value format is unexpected
  */
-function extractAnswerValue(answerValue: unknown): string | number {
-  // Handle direct primitive values
+function extractAnswerValue(answerValue: unknown): string | number | string[] {
+  // Handle direct primitive values (current format)
   if (typeof answerValue === 'string' || typeof answerValue === 'number') {
     return answerValue;
   }
 
-  // Handle structured JSONB objects
+  // Handle string arrays (multi-select)
+  if (Array.isArray(answerValue)) {
+    if (answerValue.every((item) => typeof item === 'string')) {
+      return answerValue;
+    }
+
+    systemLogger.warn('Array contains non-string values', { answerValue });
+    throw new ValidationError('Invalid answer value format: array contains non-string values');
+  }
+
+  // Handle legacy wrapped formats: { value: ... }, { selected: ... }, { text: ... }
   if (typeof answerValue === 'object' && answerValue !== null) {
     const obj = answerValue as Record<string, unknown>;
 
-    // Check for known JSONB structures: { value: ... }, { selected: ... }, { text: ... }
-    if ('value' in obj) {
-      const value = obj.value;
-
-      if (typeof value === 'string' || typeof value === 'number') {
-        return value;
-      }
-
-      // value key exists but has unexpected type
-      systemLogger.warn('Unexpected type for answer value.value field', {
-        answerValue,
-        valueType: typeof value,
-      });
-
-      throw new ValidationError('Invalid answer value format: value field has unexpected type');
+    if ('value' in obj && (typeof obj.value === 'string' || typeof obj.value === 'number')) {
+      return obj.value;
     }
 
-    if ('selected' in obj) {
-      const selected = obj.selected;
-
-      if (typeof selected === 'string') {
-        return selected;
-      }
-
-      systemLogger.warn('Unexpected type for answer value.selected field', {
-        answerValue,
-        selectedType: typeof selected,
-      });
-
-      throw new ValidationError('Invalid answer value format: selected field has unexpected type');
+    if ('selected' in obj && typeof obj.selected === 'string') {
+      return obj.selected;
     }
 
-    if ('text' in obj) {
-      const text = obj.text;
-
-      if (typeof text === 'string') {
-        return text;
-      }
-
-      systemLogger.warn('Unexpected type for answer value.text field', {
-        answerValue,
-        textType: typeof text,
-      });
-
-      throw new ValidationError('Invalid answer value format: text field has unexpected type');
+    if ('text' in obj && typeof obj.text === 'string') {
+      return obj.text;
     }
 
-    // Object doesn't have any recognised structure
-    systemLogger.warn('Unexpected answer value structure', {
-      answerValue,
-      keys: Object.keys(obj),
-    });
-
+    systemLogger.warn('Unexpected answer value structure', { answerValue, keys: Object.keys(obj) });
     throw new ValidationError('Invalid answer value format: unrecognised object structure');
   }
 
-  // Unexpected type (null, undefined, boolean, symbol, etc.)
-  systemLogger.warn('Unexpected answer value type', {
-    answerValue,
-    type: typeof answerValue,
-  });
-
-  throw new ValidationError(
-    'Invalid answer value format: expected string, number, or structured object'
-  );
+  systemLogger.warn('Unexpected answer value type', { answerValue, type: typeof answerValue });
+  throw new ValidationError('Invalid answer value format: expected string, number, or string[]');
 }
 
 /**
@@ -417,7 +377,10 @@ export async function submitAssessment(
   // Build responses array for scoring job from all answers
   // Combine existing answers with new answers (new answers override existing)
   // Extract the actual value from JSONB structure for the job payload
-  const allAnswersMap = new Map<string, { questionId: string; answerValue: string | number }>();
+  const allAnswersMap = new Map<
+    string,
+    { questionId: string; answerValue: string | number | string[] }
+  >();
 
   for (const answer of existingAnswers) {
     const extractedValue = extractAnswerValue(answer.answerValue);

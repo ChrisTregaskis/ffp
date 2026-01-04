@@ -11,8 +11,8 @@ export type UserAssessmentStatus = z.infer<typeof userAssessmentStatusSchema>;
 export const userAnswerSchema = z.object({
   /** Question ID from the assessment template */
   questionId: z.string().uuid(),
-  /** Selected answer value (numeric for scales, string for text) */
-  answerValue: z.union([z.number(), z.string()]),
+  /** Selected answer value (numeric for scales, string for single-select, array for multi-select) */
+  answerValue: z.union([z.number(), z.string(), z.array(z.string())]),
   /** Optional: Answer ID if selecting from predefined options */
   answerId: z.string().uuid().optional(),
   /** Timestamp when answer was recorded */
