@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Team Contacts
+
+**Dev Team:**
+When asked to "email the dev team" or "send to dev team", use these addresses:
+
+- c.tregaskis+ffp.dev.team@gmail.com
+- chris.tregaskis@wongdoody.com
+
 ## Language & Spelling Preference
 
 **IMPORTANT**: Always use **British English spelling** for FFP-specific code and documentation.
@@ -216,11 +224,17 @@ See `project-documentation/architecture.md` for detailed layer responsibilities 
 ### Dependency Flow
 
 ```
-@ffp/web ──depends on──> @ffp/core
-@ffp/functions ──depends on──> @ffp/core
+@ffp/database  ←── no @ffp/* dependencies (builds FIRST)
+      ↑
+@ffp/core ─────── depends on @ffp/database
+      ↑
+@ffp/web ──────── depends on @ffp/core
+@ffp/functions ── depends on @ffp/core
 ```
 
-**Build order**: `core` must build before `functions` and `web` (enforced by Turborepo)
+**Build order**: `database` → `core` → `functions` and `web` (enforced by Turborepo)
+
+**Critical**: `@ffp/database` MUST NOT import from `@ffp/core` (would create circular dependency). When sharing constants (e.g., enums), define in `@ffp/database` and import into `@ffp/core`.
 
 ### Import Patterns
 
@@ -462,6 +476,46 @@ topic: "cognito post authentication trigger SST Ion"
 - **Context7**: More reliable, comprehensive docs, but token-heavy
 - **web_search**: More token-efficient, but may require multiple searches or fetches
 - **Decision rule**: Use Context7 for definitive documentation, web_search for quick lookups or when context is running low
+
+## Context Management
+
+Claude Code has a finite context window. For long sessions or complex tasks, use these strategies to preserve context:
+
+### Built-in Sub-Agents
+
+Sub-agents run in **isolated context windows** and return only summaries to the main conversation. Use them for context-heavy operations:
+
+**Explore agent** - For codebase searches and pattern discovery:
+
+```
+"Use the Explore agent to find all files related to RLS policies"
+"Use the Explore agent to understand how assessments are structured"
+```
+
+**Plan agent** - For designing implementation approaches:
+
+```
+"Use the Plan agent to design the repository layer for questions"
+```
+
+These are built-in - just ask explicitly. The isolated context prevents search results and exploration from filling the main conversation.
+
+### Session Management for Multi-Phase Work
+
+For large implementations (4+ phases), break into separate sessions:
+
+1. **Document the plan** in a markdown file before starting
+2. **Group phases** into logical sessions (2-3 phases each)
+3. **Start fresh sessions** between groups - reference the plan file
+4. **Update progress** in the plan file after each session
+
+### When to Start a Fresh Session
+
+- After extensive codebase exploration
+- After generating/reviewing large amounts of code
+- When responses feel less coherent or repetitive
+- Before starting a new logical phase of work
+- After planning mode completes (start implementation fresh)
 
 ## Project Constraints
 

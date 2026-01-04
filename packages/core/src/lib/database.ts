@@ -3,6 +3,33 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
 /**
+ * Strict UUID validation regex (RFC 4122 compliant)
+ * Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+ */
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Validate that a string is a properly formatted UUID
+ * This prevents SQL injection when setting RLS context
+ */
+function validateUUID(value: string, paramName: string): void {
+  if (!value) {
+    throw new Error(`${paramName} is required for RLS context`);
+  }
+  if (!UUID_REGEX.test(value)) {
+    throw new Error(`${paramName} must be a valid UUID format (got: ${value.substring(0, 20)}...)`);
+  }
+}
+
+/**
+ * Safely escape a string literal for use in SQL
+ * PostgreSQL's SET command requires literal values and doesn't support parameterised queries.
+ */
+function escapeLiteral(value: string): string {
+  return value.replace(/'/g, "''");
+}
+
+/**
  * Gets SSL configuration based on environment
  *
  * Development: SSL disabled (local PostgreSQL)
@@ -61,10 +88,23 @@ const pool = new Pool({
 export const db = drizzle({ client: pool });
 
 /**
+ * Transaction type for use in repository functions
+ *
+ * Use this type when passing transactions between functions to ensure
+ * atomic operations across multiple database writes.
+ */
+export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/**
  * Sets the Row-Level Security (RLS) context for the current transaction
  *
  * This function sets PostgreSQL session variables that are used by RLS policies
  * to enforce multi-tenant data isolation.
+ *
+ * Note: PostgreSQL's SET command doesn't support parameterised queries ($1, $2, etc.)
+ * We use sql.raw() with multiple layers of defence:
+ * 1. UUID format validation (only allows hexadecimal digits and hyphens)
+ * 2. SQL escaping (escape single quotes using PostgreSQL standard)
  *
  * @param tx - Database transaction instance
  * @param tenantId - UUID of the tenant
@@ -83,9 +123,14 @@ export async function setRLSContext(
   tenantId: string,
   userId?: string
 ): Promise<void> {
-  await tx.execute(sql`SET LOCAL app.tenant_id = ${tenantId}`);
+  validateUUID(tenantId, 'tenantId');
+  const escapedTenantId = escapeLiteral(tenantId);
+  await tx.execute(sql.raw(`SET LOCAL app.tenant_id = '${escapedTenantId}'`));
+
   if (userId) {
-    await tx.execute(sql`SET LOCAL app.user_id = ${userId}`);
+    validateUUID(userId, 'userId');
+    const escapedUserId = escapeLiteral(userId);
+    await tx.execute(sql.raw(`SET LOCAL app.user_id = '${escapedUserId}'`));
   }
 }
 

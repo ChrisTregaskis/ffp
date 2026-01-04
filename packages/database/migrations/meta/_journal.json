@@ -29,6 +29,55 @@
       "when": 1763972371244,
       "tag": "0003_jazzy_patch",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1765470076825,
+      "tag": "0004_greedy_nekra",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1765785298552,
+      "tag": "0005_dapper_jubilee",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1734534111000,
+      "tag": "0006_rename_last_error_to_message",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1735041600000,
+      "tag": "0007_create_assessment_flows",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1766609415493,
+      "tag": "0008_friendly_purple_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1767350039769,
+      "tag": "0009_easy_captain_marvel",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1767434138101,
+      "tag": "0010_redundant_tyger_tiger",
+      "breakpoints": true
     }
   ]
 }

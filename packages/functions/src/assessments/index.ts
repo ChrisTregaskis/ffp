@@ -1,0 +1,51 @@
+import { createSystemContext, type APIGatewayProxyEventV2WithJWT } from '@ffp/core/server';
+
+import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
+
+import { handler as saveProgressHandler } from './save-progress';
+import { handler as startAssessmentHandler } from './start-assessment';
+import { handler as submitAssessmentHandler } from './submit-assessment';
+
+import type { APIGatewayProxyResultV2 } from 'aws-lambda';
+
+const ROUTER_CONTEXT = createSystemContext({
+  systemId: 'assessments-router',
+  tenantId: '00000000-0000-0000-0000-000000000000', // Placeholder for pre-auth routing
+});
+
+/**
+ * Route registry mapping HTTP methods to path handlers.
+ * Add new routes here to keep sst.config.ts clean.
+ */
+const routes: RouteRegistry = {
+  POST: {
+    '/start': startAssessmentHandler,
+    '/{id}/submit': submitAssessmentHandler,
+  },
+  GET: {
+    // Future assessment routes:
+    // '/': listAssessmentsHandler,
+    // '/{id}': getAssessmentHandler,
+    // '/{id}/results': getAssessmentResultsHandler,
+  },
+  PUT: {
+    '/{id}/progress': saveProgressHandler,
+  },
+};
+
+/**
+ * Main proxy handler that routes requests to domain handlers.
+ * Returns 404 for unregistered routes, 405 for unsupported methods.
+ */
+export const handler = async (
+  event: APIGatewayProxyEventV2WithJWT
+): Promise<APIGatewayProxyResultV2> => {
+  const result = validateAndMatchRoute(event, routes, 'assessments', ROUTER_CONTEXT);
+
+  if (result.type === 'error') {
+    return result.response;
+  }
+
+  // Execute the matched handler
+  return result.handler(event);
+};

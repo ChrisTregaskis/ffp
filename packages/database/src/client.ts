@@ -15,6 +15,9 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as schema from './schema';
+import { createLogger } from './lib/logger';
+
+const logger = createLogger('db-client');
 
 // Global connection pool for Lambda reuse
 let pool: Pool | null = null;
@@ -53,7 +56,7 @@ export const getDb = () => {
     const isProduction = process.env.NODE_ENV === 'production';
 
     // Log pool creation (useful for CloudWatch debugging)
-    console.log('Creating database connection pool', {
+    logger.info('Creating database connection pool', {
       host: process.env.DB_HOST,
       port,
       database: process.env.DB_NAME,
@@ -88,7 +91,7 @@ export const getDb = () => {
     // Handle pool errors to prevent unhandled rejections
     // These are emitted when an idle client in the pool encounters an error
     pool.on('error', (err) => {
-      console.error('Unexpected database pool error:', err);
+      logger.error('Unexpected database pool error', { error: err.message, stack: err.stack });
       // In production, consider sending to CloudWatch/Sentry for alerting
     });
 
@@ -143,7 +146,7 @@ export const withDb = async <T>(
  */
 export const closeDb = async () => {
   if (pool) {
-    console.log('Closing database connection pool');
+    logger.info('Closing database connection pool');
     await pool.end();
     pool = null;
     db = null;

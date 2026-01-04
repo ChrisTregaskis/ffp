@@ -14,6 +14,8 @@ import { randomUUID } from 'crypto';
 
 import { type APIGatewayProxyEventV2, type APIGatewayEventRequestContextV2 } from 'aws-lambda';
 
+import * as userRepository from '../users/user.repository';
+
 import { COGNITO_CUSTOM_ATTRIBUTES } from './constants';
 import { UnauthorisedError, ValidationError } from './errors';
 
@@ -331,4 +333,35 @@ export function getActorDisplayName(actor: Actor): string {
     return `${actor.email} (${actor.userRole})`;
   }
   return `System: ${actor.systemId}`;
+}
+
+/**
+ * Extract and resolve userId from TenantContext
+ *
+ * Resolves the Cognito sub (from JWT) to the database user ID.
+ * Use this in services that require user-initiated operations.
+ *
+ * @param context - Tenant context to extract and resolve userId from
+ * @returns The user's database ID
+ * @throws UnauthorisedError if actor is not a user or user not found in database
+ *
+ * @example
+ * ```typescript
+ * const userId = await getUserIdFromContext(context);
+ * await userAssessmentRepository.findResumable(context.tenantId, userId, flowId);
+ * ```
+ */
+export async function getUserIdFromContext(context: TenantContext): Promise<string> {
+  if (!isUserActor(context.actor)) {
+    throw new UnauthorisedError('This operation requires a user context');
+  }
+
+  const cognitoSub = context.actor.userId;
+  const user = await userRepository.findByCognitoSub(context.tenantId, cognitoSub);
+
+  if (!user) {
+    throw new UnauthorisedError('User not found in database');
+  }
+
+  return user.id;
 }

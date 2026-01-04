@@ -4,9 +4,11 @@
 
 The assessment engine is the core value proposition of FFP. It uses a **database-driven chained assessment flow** to evaluate users through pre-assessment questions and video-guided physical tests, then generates personalised workout programmes based on multi-dimensional scoring.
 
+// TODO: When the assessment engine EPIC is essentially ready for MVP launch, this document needs to be condensed removing code examples that simply now dulicate what is built. Users or AI Agents, should at this point be referring to the actual implemented code. As such, code examples for files already created can be removed to avoid maintainence burden keeping in sync as well as potentially misleading those that read it here.
+
 ## Design Principles
 
-1. **Database-driven**: Templates stored in PostgreSQL with JSONB columns (not S3 JSON files)
+1. **Database-driven**: Templates and flows stored in PostgreSQL; questions in normalised tables with JSONB for complex config
 2. **Type-safe**: Zod schemas in `@ffp/core` validate structure at runtime
 3. **Linear flow (MVP)**: Sequential questions without conditional branching
 4. **Multi-dimensional scoring**: Separate scores for Strength, Balance, and Risk Level
@@ -15,6 +17,7 @@ The assessment engine is the core value proposition of FFP. It uses a **database
 7. **Audit trail**: Immutable history of all assessment attempts
 8. **Resume capability**: Save progress on navigation (Continue/Back), continue later
 9. **Video-guided**: Physical assessments include video demonstrations from S3 + CloudFront
+10. **Normalised questions**: Questions stored in dedicated table, linked to templates via join table
 
 ### Post-MVP Enhancements
 
@@ -941,7 +944,7 @@ Stored in S3 (not database) to allow hot-reloading without deployment:
 ```typescript
 // Location: @ffp/core/src/jobs/job-queue.service.ts
 
-export const enqueueJob = async (
+export const queueJob = async (
   type: 'score_assessment' | 'generate_program',
   payload: Record<string, unknown>,
   context: TenantContext
@@ -978,7 +981,7 @@ export const submitAssessment = async (
   );
 
   // Enqueue scoring job
-  await enqueueJob('score_assessment', { assessmentId, userId: context.actor.userId }, context);
+  await queueJob('score_assessment', { assessmentId, userId: context.actor.userId }, context);
 };
 ```
 
@@ -1332,7 +1335,7 @@ const getPhaseLabel = (phase: string): string => {
 
 ### Templates (Database)
 
-Assessment templates are stored in **PostgreSQL** (agreed decision #1), not S3 JSON files.
+Assessment templates are stored in **PostgreSQL** (agreed decision #1), not S3 JSON files. Questions are now stored in normalised tables (`questions` + `template_questions`) rather than embedded JSONB.
 
 ```typescript
 // Location: @ffp/database/src/schema/assessment-templates.ts
@@ -1348,7 +1351,10 @@ import {
   jsonb,
   index,
 } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 import { users } from './users';
+import { templateQuestions } from './template-questions';
+import type { ScoringConfig } from '../types';
 
 export const assessmentTemplates = pgTable(
   'assessment_templates',
@@ -1357,44 +1363,147 @@ export const assessmentTemplates = pgTable(
     name: varchar('name', { length: 255 }).notNull(),
     description: text('description'),
     version: integer('version').notNull().default(1),
-    questions: jsonb('questions').notNull(), // Array of AssessmentQuestion
-    scoringConfig: jsonb('scoring_config').notNull(), // ScoringConfig object
+    // Questions are now in normalised tables (questions + template_questions)
+    scoringConfig: jsonb('scoring_config').$type<ScoringConfig>().notNull(),
     isActive: boolean('is_active').notNull().default(true),
     createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  (table) => ({
-    activeIdx: index('idx_assessment_templates_active').on(table.isActive),
-    nameIdx: index('idx_assessment_templates_name').on(table.name),
-  })
+  (table) => [
+    index('idx_assessment_templates_active').on(table.isActive),
+    index('idx_assessment_templates_name').on(table.name),
+  ]
 );
+
+// Relations
+export const assessmentTemplatesRelations = relations(assessmentTemplates, ({ one, many }) => ({
+  createdByUser: one(users, {
+    fields: [assessmentTemplates.createdBy],
+    references: [users.id],
+  }),
+  templateQuestions: many(templateQuestions),
+}));
 
 // No RLS - templates are system-managed, accessible by all authenticated users
 // (Agreed decision #10: NOT tenant-restricted for MVP)
 ```
 
+### Questions (Database)
+
+Questions are stored in a dedicated normalised table, allowing reuse across templates.
+
+```typescript
+// Location: @ffp/database/src/schema/questions.ts
+
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  boolean,
+  timestamp,
+  jsonb,
+  index,
+  pgEnum,
+} from 'drizzle-orm/pg-core';
+import { QUESTION_TYPES, SCORE_DIMENSIONS } from '../constants/question.constants';
+import type { QuestionOption, QuestionValidation } from '../types';
+
+export const questionTypeEnum = pgEnum('question_type', [...QUESTION_TYPES]);
+export const scoreDimensionEnum = pgEnum('score_dimension', [...SCORE_DIMENSIONS]);
+
+export const questions = pgTable(
+  'questions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    slug: varchar('slug', { length: 100 }).notNull().unique(),
+    type: questionTypeEnum('type').notNull(),
+    questionText: text('question_text').notNull(),
+    description: text('description'),
+    options: jsonb('options').$type<QuestionOption[]>(),
+    validation: jsonb('validation').$type<QuestionValidation>(),
+    videoId: uuid('video_id'),
+    scoreDimension: scoreDimensionEnum('score_dimension'),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('idx_questions_slug').on(table.slug),
+    index('idx_questions_type').on(table.type),
+    index('idx_questions_is_active').on(table.isActive),
+  ]
+);
+
+// No RLS - questions are system-managed content
+```
+
+### Template Questions (Join Table)
+
+Links questions to templates with ordering and optional config overrides.
+
+```typescript
+// Location: @ffp/database/src/schema/template-questions.ts
+
+import { pgTable, uuid, integer, jsonb, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+import { assessmentTemplates } from './assessment-templates';
+import { questions } from './questions';
+import type { ConfigOverrides } from '../types';
+
+export const templateQuestions = pgTable(
+  'template_questions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    templateId: uuid('template_id')
+      .notNull()
+      .references(() => assessmentTemplates.id, { onDelete: 'cascade' }),
+    questionId: uuid('question_id')
+      .notNull()
+      .references(() => questions.id, { onDelete: 'restrict' }),
+    displayOrder: integer('display_order').notNull(),
+    configOverrides: jsonb('config_overrides').$type<ConfigOverrides>(),
+  },
+  (table) => [
+    uniqueIndex('idx_template_questions_template_question').on(table.templateId, table.questionId),
+    uniqueIndex('idx_template_questions_template_order').on(table.templateId, table.displayOrder),
+    index('idx_template_questions_template').on(table.templateId),
+  ]
+);
+
+// Relations
+export const templateQuestionsRelations = relations(templateQuestions, ({ one }) => ({
+  template: one(assessmentTemplates, {
+    fields: [templateQuestions.templateId],
+    references: [assessmentTemplates.id],
+  }),
+  question: one(questions, {
+    fields: [templateQuestions.questionId],
+    references: [questions.id],
+  }),
+}));
+
+// No RLS - system-managed content
+```
+
 ### Assessment Responses (Database)
 
-User assessment instances and responses are stored with full tenant isolation via RLS.
+User assessment instances are stored with full tenant isolation via RLS. Answers are stored in a separate normalised table (`user_assessment_answers`).
 
 ```typescript
 // Location: @ffp/database/src/schema/user-assessments.ts
 
-import { pgTable, uuid, varchar, timestamp, jsonb, index, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, integer, jsonb, timestamp, index, pgEnum } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { tenants } from './tenants';
 import { users } from './users';
-import { assessmentTemplates } from './assessment-templates';
 import { assessmentFlows } from './assessment-flows';
+import { userAssessmentAnswers } from './user-assessment-answers';
+import { USER_ASSESSMENT_STATUSES } from '../constants/user-assessment.constants';
 
-export const assessmentStatusEnum = pgEnum('assessment_status', [
-  'not_started',
-  'in_progress',
-  'submitted',
-  'scored',
-  'completed',
-  'abandoned',
+export const userAssessmentStatusEnum = pgEnum('user_assessment_status', [
+  ...USER_ASSESSMENT_STATUSES,
 ]);
 
 export const userAssessments = pgTable(
@@ -1411,25 +1520,25 @@ export const userAssessments = pgTable(
       .notNull()
       .references(() => assessmentFlows.id, { onDelete: 'restrict' }),
     currentStep: integer('current_step').notNull().default(1),
-    status: assessmentStatusEnum('status').notNull().default('not_started'),
-    answers: jsonb('answers').default({}),
-    scores: jsonb('scores'), // AssessmentScore object
-    programId: uuid('program_id').references(() => programs.id),
+    status: userAssessmentStatusEnum('status').notNull().default('not_started'),
+    // Answers are now in normalised user_assessment_answers table
+    scores: jsonb('scores'), // Calculated scores after scoring job
+    programmeId: uuid('programme_id'),
     startedAt: timestamp('started_at'),
     submittedAt: timestamp('submitted_at'),
     completedAt: timestamp('completed_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  (table) => ({
-    tenantUserIdx: index('idx_user_assessments_tenant_user').on(table.tenantId, table.userId),
-    statusIdx: index('idx_user_assessments_status').on(table.status),
-    flowIdx: index('idx_user_assessments_flow').on(table.flowId),
-  })
+  (table) => [
+    index('idx_user_assessments_tenant_user').on(table.tenantId, table.userId),
+    index('idx_user_assessments_status').on(table.status),
+    index('idx_user_assessments_flow').on(table.flowId),
+  ]
 );
 
 // Relations
-export const userAssessmentsRelations = relations(userAssessments, ({ one }) => ({
+export const userAssessmentsRelations = relations(userAssessments, ({ one, many }) => ({
   tenant: one(tenants, {
     fields: [userAssessments.tenantId],
     references: [tenants.id],
@@ -1442,9 +1551,86 @@ export const userAssessmentsRelations = relations(userAssessments, ({ one }) => 
     fields: [userAssessments.flowId],
     references: [assessmentFlows.id],
   }),
+  answers: many(userAssessmentAnswers),
 }));
 
 // RLS enabled - tenant-scoped access
+```
+
+### User Assessment Answers (Database)
+
+Individual answers are stored in a normalised table with RLS for tenant isolation.
+
+```typescript
+// Location: @ffp/database/src/schema/user-assessment-answers.ts
+
+import { pgTable, uuid, jsonb, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+import { tenants } from './tenants';
+import { userAssessments } from './user-assessments';
+import { questions } from './questions';
+import type { AnswerValue } from '../types';
+
+export const userAssessmentAnswers = pgTable(
+  'user_assessment_answers',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    userAssessmentId: uuid('user_assessment_id')
+      .notNull()
+      .references(() => userAssessments.id, { onDelete: 'cascade' }),
+    questionId: uuid('question_id')
+      .notNull()
+      .references(() => questions.id, { onDelete: 'restrict' }),
+    answerValue: jsonb('answer_value').$type<AnswerValue>().notNull(),
+    answeredAt: timestamp('answered_at').defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('idx_user_assessment_answers_assessment_question').on(
+      table.userAssessmentId,
+      table.questionId
+    ),
+    index('idx_user_assessment_answers_tenant').on(table.tenantId),
+    index('idx_user_assessment_answers_assessment').on(table.userAssessmentId),
+  ]
+);
+
+// Relations
+export const userAssessmentAnswersRelations = relations(userAssessmentAnswers, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [userAssessmentAnswers.tenantId],
+    references: [tenants.id],
+  }),
+  userAssessment: one(userAssessments, {
+    fields: [userAssessmentAnswers.userAssessmentId],
+    references: [userAssessments.id],
+  }),
+  question: one(questions, {
+    fields: [userAssessmentAnswers.questionId],
+    references: [questions.id],
+  }),
+}));
+
+// RLS enabled - tenant-scoped access
+```
+
+### Repository Access Patterns
+
+Questions and answers are accessed via dedicated repositories:
+
+```typescript
+// Fetch questions for a template
+import * as questionRepository from '@ffp/core/questions';
+const questions = await questionRepository.findByTemplateId(db, templateId);
+
+// Save user answers (with upsert for updates)
+import * as answerRepository from '@ffp/core/assessments/answer.repository';
+await answerRepository.saveAnswers(tenantId, assessmentId, answers, { tx });
+
+// Fetch answers for an assessment
+const answers = await answerRepository.findByAssessmentId(tenantId, assessmentId);
 ```
 
 ### Videos (S3 + CloudFront)
@@ -1610,7 +1796,7 @@ import { db } from '@ffp/database';
 import { assessmentRepository } from './assessment.repository';
 import { templateRepository } from './template.repository';
 import { flowRepository } from './flow.repository';
-import { enqueueJob } from '../jobs/job-queue.service';
+import { queueJob } from '../jobs/job-queue.service';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import type { TenantContext } from '../lib/context';
 import type { UserAssessment } from '@ffp/core';
@@ -1713,7 +1899,7 @@ export const submitAssessmentService = async (
   );
 
   // Enqueue scoring job
-  const jobId = await enqueueJob(
+  const jobId = await queueJob(
     'score_assessment',
     { assessmentId, userId: context.actor.userId },
     context

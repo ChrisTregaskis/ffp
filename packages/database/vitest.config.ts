@@ -14,6 +14,15 @@ export default defineConfig({
     // Disable parallel execution to prevent database test interference
     // Integration tests and RLS tests both manipulate the same database tables
     fileParallelism: false,
+    // Use ffp_test database for integration tests
+    // IMPORTANT: test_user does NOT have BYPASSRLS, so RLS policies are enforced
+    env: {
+      DB_NAME: 'ffp_test',
+      DB_HOST: 'localhost',
+      DB_PORT: '5432',
+      DB_USER: 'test_user',
+      DB_PASSWORD: 'test_password',
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

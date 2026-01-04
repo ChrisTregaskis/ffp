@@ -10,10 +10,13 @@
  * - All three tables (tenants, customers, users) enforce RLS
  * - Queries fail/return empty without RLS context
  *
+ * IMPORTANT: Tests connect as `test_user` which does NOT have BYPASSRLS,
+ * so RLS policies are enforced automatically.
+ *
  * @module lib/rls.test
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { eq, sql } from 'drizzle-orm';
@@ -37,15 +40,25 @@ describe('RLS Utility Functions', () => {
 
   beforeAll(async () => {
     // Setup test database connection
-    // IMPORTANT: Force ffp_test database for RLS tests (matches integration.test.ts pattern)
+    // IMPORTANT: test_user does NOT have BYPASSRLS, so RLS policies are enforced
     pool = new Pool({
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT || '5432'),
-      database: 'ffp_test', // Always use test database
-      user: process.env.DB_USER || 'root_user',
-      password: process.env.DB_PASSWORD || 'password',
+      database: 'ffp_test',
+      user: process.env.DB_USER || 'test_user',
+      password: process.env.DB_PASSWORD || 'test_password',
     });
     db = drizzle(pool);
+
+    // Clean slate: Truncate all tables before running tests
+    // This ensures no leftover data from manual testing or seed scripts interferes
+    // Order respects FK constraints (CASCADE handles dependencies)
+    await db.execute(sql`TRUNCATE TABLE user_assessments CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE users CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE customers CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE assessment_flows CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE process_jobs CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE tenants CASCADE`);
   });
 
   beforeEach(async () => {
@@ -159,8 +172,12 @@ describe('RLS Utility Functions', () => {
   afterEach(async () => {
     // Clean up test data after each test
     // This matches the integration test pattern and ensures test isolation
+    // Order respects FK constraints (CASCADE handles dependencies)
+    await db.execute(sql`TRUNCATE TABLE user_assessments CASCADE`);
     await db.execute(sql`TRUNCATE TABLE users CASCADE`);
     await db.execute(sql`TRUNCATE TABLE customers CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE assessment_flows CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE process_jobs CASCADE`);
     await db.execute(sql`TRUNCATE TABLE tenants CASCADE`);
   });
 
@@ -309,12 +326,20 @@ describe('RLS Utility Functions', () => {
   });
 
   describe('Queries Without RLS Context', () => {
-    it('should fail or return empty when querying without RLS context', async () => {
-      // Note: Since we're using a superuser role (root_user), RLS is bypassed
-      // In production, application users would not have superuser privileges
-      // and would get empty results or errors without RLS context
+    it('should return empty results when querying without RLS context', async () => {
+      // test_user does NOT have BYPASSRLS, so RLS policies are enforced
+      // Set app.tenant_id to a valid UUID that doesn't exist in the data
+      // (beforeEach sets it to actual tenant IDs during data creation)
+      // Note: We use a zeros UUID which is valid but won't match any tenant
+      const nonExistentTenantId = '00000000-0000-0000-0000-000000000000';
+      await db.execute(sql.raw(`SET app.tenant_id = '${nonExistentTenantId}'`));
 
-      // For this test, we verify that RLS is enabled on the tables
+      // Without a matching tenant_id, queries should return empty results
+      const result = await db.select().from(users);
+      expect(result.length).toBe(0); // No results for non-existent tenant
+    });
+
+    it('should verify RLS is enabled on all tables', async () => {
       const rlsCheck = await db.execute(sql`
         SELECT tablename, rowsecurity
         FROM pg_tables
@@ -339,7 +364,7 @@ describe('RLS Utility Functions', () => {
       `);
 
       const policies = policiesCheck.rows;
-      expect(policies.length).toBe(3);
+      expect(policies.length).toBe(5);
 
       // Check tenant_isolation policy exists
       expect(
@@ -356,6 +381,24 @@ describe('RLS Utility Functions', () => {
       // Check user_isolation policy exists
       expect(
         policies.some((p: any) => p.tablename === 'users' && p.policyname === 'user_isolation')
+      ).toBe(true);
+
+      // Check user_assessment_tenant_isolation policy exists
+      expect(
+        policies.some(
+          (p: any) =>
+            p.tablename === 'user_assessments' &&
+            p.policyname === 'user_assessment_tenant_isolation'
+        )
+      ).toBe(true);
+
+      // Check user_assessment_answers_tenant_isolation policy exists
+      expect(
+        policies.some(
+          (p: any) =>
+            p.tablename === 'user_assessment_answers' &&
+            p.policyname === 'user_assessment_answers_tenant_isolation'
+        )
       ).toBe(true);
     });
   });

@@ -139,20 +139,21 @@ describe('Database Client', () => {
       process.env.DB_SSL = 'true';
       process.env.NODE_ENV = 'production';
 
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
       getDb();
 
       // Verify logging shows SSL enabled with certificate verification
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        'Creating database connection pool',
-        expect.objectContaining({
-          ssl: true,
-          sslRejectUnauthorized: true,
-        })
+      // Logger formats output with colours and prefixes
+      expect(consoleInfoSpy).toHaveBeenCalled();
+      const logCall = consoleInfoSpy.mock.calls.find((call) =>
+        call[0]?.includes('Creating database connection pool')
       );
+      expect(logCall).toBeDefined();
+      expect(logCall?.[0]).toContain('"ssl":true');
+      expect(logCall?.[0]).toContain('"sslRejectUnauthorized":true');
 
-      consoleLogSpy.mockRestore();
+      consoleInfoSpy.mockRestore();
     });
 
     it('should enable SSL without certificate verification in development', async () => {
@@ -160,38 +161,40 @@ describe('Database Client', () => {
       process.env.DB_SSL = 'true';
       process.env.NODE_ENV = 'development';
 
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
       getDb();
 
       // Verify logging shows SSL enabled but without certificate verification
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        'Creating database connection pool',
-        expect.objectContaining({
-          ssl: true,
-          sslRejectUnauthorized: false,
-        })
+      // Logger formats output with colours and prefixes
+      expect(consoleInfoSpy).toHaveBeenCalled();
+      const logCall = consoleInfoSpy.mock.calls.find((call) =>
+        call[0]?.includes('Creating database connection pool')
       );
+      expect(logCall).toBeDefined();
+      expect(logCall?.[0]).toContain('"ssl":true');
+      expect(logCall?.[0]).toContain('"sslRejectUnauthorized":false');
 
-      consoleLogSpy.mockRestore();
+      consoleInfoSpy.mockRestore();
     });
 
     it('should disable SSL when DB_SSL=false', async () => {
       await closeDb();
       process.env.DB_SSL = 'false';
 
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
       getDb();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        'Creating database connection pool',
-        expect.objectContaining({
-          ssl: false,
-        })
+      // Logger formats output with colours and prefixes
+      expect(consoleInfoSpy).toHaveBeenCalled();
+      const logCall = consoleInfoSpy.mock.calls.find((call) =>
+        call[0]?.includes('Creating database connection pool')
       );
+      expect(logCall).toBeDefined();
+      expect(logCall?.[0]).toContain('"ssl":false');
 
-      consoleLogSpy.mockRestore();
+      consoleInfoSpy.mockRestore();
     });
   });
 
@@ -225,51 +228,59 @@ describe('Database Client', () => {
   describe('Logging', () => {
     it('should log pool creation', async () => {
       await closeDb();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
       getDb();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        'Creating database connection pool',
-        expect.objectContaining({
-          host: 'localhost',
-          port: 5432,
-          database: 'ffp_dev',
-          max: 10,
-        })
+      // Logger formats output with colours and prefixes, so check for message content
+      expect(consoleInfoSpy).toHaveBeenCalled();
+      const logCall = consoleInfoSpy.mock.calls.find((call) =>
+        call[0]?.includes('Creating database connection pool')
       );
+      expect(logCall).toBeDefined();
+      // Check that context is included in the formatted output
+      expect(logCall?.[0]).toContain('localhost');
+      expect(logCall?.[0]).toContain('ffp_dev');
 
-      consoleLogSpy.mockRestore();
+      consoleInfoSpy.mockRestore();
     });
 
     it('should log pool closure', async () => {
       getDb(); // Create pool first
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
       await closeDb();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('Closing database connection pool');
+      // Logger formats output with colours and prefixes
+      expect(consoleInfoSpy).toHaveBeenCalled();
+      const logCall = consoleInfoSpy.mock.calls.find((call) =>
+        call[0]?.includes('Closing database connection pool')
+      );
+      expect(logCall).toBeDefined();
 
-      consoleLogSpy.mockRestore();
+      consoleInfoSpy.mockRestore();
     });
 
     it('should not log credentials', async () => {
       await closeDb();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
       getDb();
 
       // Verify that credentials are NOT in the log output
-      const logCalls = consoleLogSpy.mock.calls;
-      const poolCreationLog = logCalls.find(
-        (call) => call[0] === 'Creating database connection pool'
+      const logCalls = consoleInfoSpy.mock.calls;
+      const poolCreationLog = logCalls.find((call) =>
+        call[0]?.includes('Creating database connection pool')
       );
 
       expect(poolCreationLog).toBeDefined();
-      expect(poolCreationLog?.[1]).not.toHaveProperty('user');
-      expect(poolCreationLog?.[1]).not.toHaveProperty('password');
+      // The formatted log output should NOT contain user/password
+      expect(poolCreationLog?.[0]).not.toContain('"user"');
+      expect(poolCreationLog?.[0]).not.toContain('"password"');
+      expect(poolCreationLog?.[0]).not.toContain('test_user');
+      expect(poolCreationLog?.[0]).not.toContain('test_password');
 
-      consoleLogSpy.mockRestore();
+      consoleInfoSpy.mockRestore();
     });
   });
 });

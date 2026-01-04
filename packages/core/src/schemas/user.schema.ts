@@ -1,7 +1,12 @@
 import { z } from 'zod';
 
+import { INVITABLE_ROLES, USER_ROLES } from '@ffp/database';
+
 /**
- * User role enumeration - Single source of truth for user roles across the platform
+ * User role Zod schema
+ *
+ * Uses shared constants from @ffp/database to ensure synchronisation
+ * with PostgreSQL enum definitions.
  *
  * Defines the hierarchical role system:
  * - system_admin: Platform administrator (highest privilege)
@@ -10,15 +15,8 @@ import { z } from 'zod';
  * - program_user: User accessing workout programmes (individual or customer user)
  *   - Individual users: customerId = null (cannot be invited)
  *   - Customer users: customerId present (can be invited)
- *
- * IMPORTANT: Keep PostgreSQL enum in @ffp/database/src/schema/users.ts in sync
  */
-export const userRoleSchema = z.enum([
-  'system_admin',
-  'customer_owner',
-  'customer_admin',
-  'program_user',
-]);
+export const userRoleSchema = z.enum(USER_ROLES);
 
 /**
  * TypeScript type derived from Zod schema
@@ -93,10 +91,12 @@ export type JwtUserClaims = z.infer<typeof jwtUserClaimsSchema>;
 
 /**
  * Invitable roles (subset of all roles)
- * Used when inviting users - system_admin cannot be invited
- * For program_user role, invitability is determined by customerId presence
+ *
+ * Uses shared constants from @ffp/database to ensure synchronisation.
+ * Used when inviting users - system_admin cannot be invited.
+ * For program_user role, invitability is determined by customerId presence.
  */
-export const invitableRoleSchema = z.enum(['customer_owner', 'customer_admin', 'program_user']);
+export const invitableRoleSchema = z.enum(INVITABLE_ROLES);
 
 /**
  * Determines if a programme user can be invited based on customerId presence.

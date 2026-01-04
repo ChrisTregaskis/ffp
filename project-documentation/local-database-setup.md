@@ -25,17 +25,26 @@ brew services start postgresql@16
 psql --version
 ```
 
-### 2. Create Database and User
+### 2. Create Database and Users
+
+FFP uses two database users for security:
+
+| User        | Purpose                    | BYPASSRLS   | Used By                     |
+| ----------- | -------------------------- | ----------- | --------------------------- |
+| `root_user` | Migrations, schema changes | Yes (owner) | `pnpm db:migrate`, DataGrip |
+| `app_user`  | Application queries        | **No**      | Lambda, `pnpm sst dev`      |
+
+**Why two users?** Row-Level Security (RLS) is bypassed by table owners and users with `BYPASSRLS` privilege. Using `app_user` (without bypass) ensures RLS policies are enforced during development, catching tenant isolation bugs early.
 
 ```bash
 # Connect to PostgreSQL as superuser (use your macOS username)
 psql postgres
 
-# In the PostgreSQL prompt, run the following commands:
+# ============================================================================
+# 1. Create root_user (for migrations)
+# ============================================================================
 CREATE USER root_user WITH PASSWORD 'your_secure_password_here';
 CREATE DATABASE ffp_dev OWNER root_user;
-
-# Grant all privileges
 GRANT ALL PRIVILEGES ON DATABASE ffp_dev TO root_user;
 
 # Connect to the database
@@ -44,11 +53,45 @@ GRANT ALL PRIVILEGES ON DATABASE ffp_dev TO root_user;
 # Grant schema privileges (required for tables and RLS)
 GRANT ALL ON SCHEMA public TO root_user;
 
+# ============================================================================
+# 2. Create app_user (for application - RLS enforced)
+# ============================================================================
+CREATE USER app_user WITH PASSWORD 'your_app_password_here';
+
+# Grant connection and usage
+GRANT CONNECT ON DATABASE ffp_dev TO app_user;
+GRANT USAGE ON SCHEMA public TO app_user;
+
+# Grant table operations (SELECT, INSERT, UPDATE, DELETE only - no DDL)
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_user;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_user;
+
+# Ensure future tables also get permissions (run as owner)
+ALTER DEFAULT PRIVILEGES FOR ROLE root_user IN SCHEMA public
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE root_user IN SCHEMA public
+GRANT USAGE, SELECT ON SEQUENCES TO app_user;
+
 # Exit PostgreSQL
 \q
 ```
 
-**Alternative: Grant CREATE permission (required for migrations)**
+**Verify app_user cannot bypass RLS:**
+
+```bash
+psql -h localhost -U your_username -d ffp_dev -c "SELECT rolname, rolbypassrls FROM pg_roles WHERE rolname IN ('root_user', 'app_user');"
+```
+
+Expected output:
+
+```
+  rolname  | rolbypassrls
+-----------+--------------
+ root_user | t
+ app_user  | f
+```
+
+**Alternative: Grant CREATE permission to root_user (required for migrations)**
 
 If you encounter permission errors when running migrations, grant CREATE permission on the database:
 
@@ -71,14 +114,19 @@ Update `.env` with your database credentials:
 
 ```bash
 # Database Configuration (Local PostgreSQL for development)
+# Use app_user for development to ensure RLS is enforced
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=ffp_dev
-DB_USER=root_user
-DB_PASSWORD=your_secure_password_here
+DB_USER=app_user
+DB_PASSWORD=your_app_password_here
 ```
 
-**⚠️ Important:** Never commit your `.env` file to Git. It's already in `.gitignore`.
+**⚠️ Important:**
+
+- Never commit your `.env` file to Git (already in `.gitignore`)
+- Use `app_user` for development to catch RLS issues early
+- Only use `root_user` for running migrations (`pnpm db:migrate`)
 
 ### 4. Test Database Connection
 
@@ -280,6 +328,50 @@ Migration from local to RDS is straightforward:
 3. Migrations automatically create `app_user` with restricted permissions
 4. Configure Lambda to use `app_user` credentials from Secrets Manager
 5. All data schemas and RLS policies transfer seamlessly
+
+### AWS Secrets Manager Configuration
+
+Store credentials separately for each user type:
+
+```
+# Migration user (used by CI/CD)
+ffp/{stage}/db/admin
+{
+  "username": "ffp_admin",
+  "password": "...",
+  "host": "ffp-{stage}.xxxxx.eu-west-2.rds.amazonaws.com",
+  "port": 5432,
+  "dbname": "ffp_{stage}"
+}
+
+# Application user (used by Lambda)
+ffp/{stage}/db/app
+{
+  "username": "app_user",
+  "password": "...",
+  "host": "ffp-{stage}.xxxxx.eu-west-2.rds.amazonaws.com",
+  "port": 5432,
+  "dbname": "ffp_{stage}"
+}
+```
+
+**SST Configuration** (`sst.config.ts`):
+
+```typescript
+// Lambda functions use app_user (RLS enforced)
+const dbSecret = new sst.Secret('DatabaseSecret', {
+  value: `arn:aws:secretsmanager:eu-west-2:xxx:secret:ffp/${stage}/db/app`,
+});
+
+// Migrations use admin user (separate CI/CD process)
+// Never expose admin credentials to Lambda functions
+```
+
+**Why this matters:**
+
+- `app_user` cannot bypass RLS, ensuring tenant isolation at the database level
+- Even if application code has a bug, RLS prevents cross-tenant data access
+- Admin credentials are only used during deployments, reducing attack surface
 
 ## Resources
 

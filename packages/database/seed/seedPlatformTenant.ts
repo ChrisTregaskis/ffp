@@ -3,34 +3,45 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
 import * as schema from '../src/schema/index.js';
 import { tenants } from '../src/schema/index.js';
-import { terminalPrefix, TerminalPrefix } from '../src/lib/terminal-logger.js';
+import { createLogger } from '../src/lib/logger.js';
 import type { PlatformTenantSeed } from './types.js';
+
+const logger = createLogger('seed-platform');
 
 /**
  * Seeds the platform tenant with exact data from configuration.
- * This is NOT idempotent - it will fail if the tenant already exists.
+ * Idempotent: uses upsert to update existing records or insert new ones.
  */
 export const seedPlatformTenant = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool },
   data: PlatformTenantSeed
 ): Promise<void> => {
-  console.log(`${terminalPrefix(TerminalPrefix.INFO)} Seeding platform tenant...`);
+  logger.info('Seeding platform tenant...');
 
-  // Bypass RLS for seed operation (audit trail via console logs)
-  console.log(`${terminalPrefix(TerminalPrefix.WARNING)} RLS BYPASSED for seed operation`);
+  // Bypass RLS for seed operation (audit trail via logs)
+  logger.warn('RLS BYPASSED for seed operation');
   await db.execute(sql`SET LOCAL row_security = off`);
 
-  // Insert platform tenant with exact values from config
-  await db.insert(tenants).values({
-    id: data.id,
-    type: data.type,
-    name: data.name,
-    settings: data.settings,
-    createdAt: sql`${data.createdAt}::timestamp`,
-    updatedAt: sql`${data.updatedAt}::timestamp`,
-  });
+  // Upsert platform tenant - insert or update if exists
+  await db
+    .insert(tenants)
+    .values({
+      id: data.id,
+      type: data.type,
+      name: data.name,
+      settings: data.settings,
+      createdAt: sql`${data.createdAt}::timestamp`,
+      updatedAt: sql`${data.updatedAt}::timestamp`,
+    })
+    .onConflictDoUpdate({
+      target: tenants.id,
+      set: {
+        type: data.type,
+        name: data.name,
+        settings: data.settings,
+        updatedAt: sql`${data.updatedAt}::timestamp`,
+      },
+    });
 
-  console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} Platform tenant seeded: ${data.id}`);
-  console.log(`  Name: ${data.name}`);
-  console.log(`  Type: ${data.type}`);
+  logger.info('Platform tenant seeded', { id: data.id, name: data.name, type: data.type });
 };

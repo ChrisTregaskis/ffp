@@ -112,8 +112,12 @@ tenants.settings = {
 erDiagram
     programs ||--o{ user_assessments : "associated"
     users ||--o{ user_assessments : "completes"
-    assessment_templates ||--o{ user_assessments : "uses"
-    assessment_categories ||--o{ assessment_templates : "categorizes"
+    assessment_flows ||--o{ user_assessments : "uses"
+    assessment_categories ||--o{ assessment_templates : "categorises"
+    assessment_templates ||--o{ template_questions : "has"
+    questions ||--o{ template_questions : "included in"
+    questions ||--o{ user_assessment_answers : "answered by"
+    user_assessments ||--o{ user_assessment_answers : "contains"
     user_assessments ||--o{ user_assessment_history : "tracks"
 
     assessment_categories {
@@ -124,13 +128,35 @@ erDiagram
         timestamp created_at
     }
 
+    questions {
+        uuid id PK
+        varchar(100) slug UK "goal-primary, pain-level"
+        varchar(50) type "single-choice|multi-choice|scale|text"
+        text question_text "The question displayed to users"
+        text description "Optional help text"
+        jsonb options "Answer options for choice-based"
+        jsonb validation "Validation rules"
+        uuid video_id FK "For video-response questions"
+        varchar(50) score_dimension "strength|balance|mobility"
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    template_questions {
+        uuid id PK
+        uuid template_id FK "assessment_templates.id"
+        uuid question_id FK "questions.id"
+        integer display_order "1, 2, 3..."
+        jsonb config_overrides "Template-specific overrides"
+    }
+
     assessment_templates {
         uuid id PK
         uuid category_id FK
         varchar(255) name "Lower Back Pain Assessment v1"
         text description
         integer version
-        jsonb questions "dynamic question tree"
         jsonb scoring_config "strategy, weights, rules"
         boolean is_active
         uuid created_by FK "users.id (system admin)"
@@ -142,17 +168,25 @@ erDiagram
         uuid id PK
         uuid tenant_id FK "RLS isolation"
         uuid user_id FK
-        uuid program_id FK "programs.id (nullable initially)"
-        uuid template_id FK
-        integer attempt_number "1, 2, 3..."
-        boolean is_initial "first assessment for THIS template"
-        varchar(20) status "in_progress|completed|abandoned"
-        jsonb answers "question_id: answer"
-        jsonb score "calculated scores"
+        uuid flow_id FK "assessment_flows.id"
+        integer current_step "1-based step index"
+        varchar(20) status "not_started|in_progress|submitted|completed"
+        jsonb scores "Calculated scores after scoring"
+        uuid programme_id FK "Generated programme"
         timestamp started_at
+        timestamp submitted_at
         timestamp completed_at
         timestamp created_at
         timestamp updated_at
+    }
+
+    user_assessment_answers {
+        uuid id PK
+        uuid tenant_id FK "RLS isolation"
+        uuid user_assessment_id FK "user_assessments.id"
+        uuid question_id FK "questions.id"
+        jsonb answer_value "The answer value"
+        timestamp answered_at
     }
 
     user_assessment_history {
@@ -171,9 +205,18 @@ erDiagram
 
 - `idx_assessment_templates_category` on assessment_templates(category_id)
 - `idx_assessment_templates_active` on assessment_templates(is_active) WHERE is_active = true
+- `idx_questions_slug` on questions(slug)
+- `idx_questions_type` on questions(type)
+- `idx_questions_is_active` on questions(is_active)
+- `idx_template_questions_template_question` UNIQUE on template_questions(template_id, question_id)
+- `idx_template_questions_template_order` UNIQUE on template_questions(template_id, display_order)
+- `idx_template_questions_template` on template_questions(template_id)
 - `idx_user_assessments_tenant_user` on user_assessments(tenant_id, user_id)
-- `idx_user_assessments_program` on user_assessments(program_id)
+- `idx_user_assessments_flow` on user_assessments(flow_id)
 - `idx_user_assessments_status` on user_assessments(status)
+- `idx_user_assessment_answers_assessment_question` UNIQUE on user_assessment_answers(user_assessment_id, question_id)
+- `idx_user_assessment_answers_tenant` on user_assessment_answers(tenant_id)
+- `idx_user_assessment_answers_assessment` on user_assessment_answers(user_assessment_id)
 - `idx_user_assessment_history_assessment` on user_assessment_history(assessment_id, event_at DESC)
 
 **RLS Policies:**
@@ -184,10 +227,19 @@ CREATE POLICY tenant_isolation_assessments ON user_assessments
   FOR ALL
   USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
 
+-- user_assessment_answers table (tenant-scoped)
+CREATE POLICY tenant_isolation_answers ON user_assessment_answers
+  FOR ALL
+  USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
+
 -- user_assessment_history table
 CREATE POLICY tenant_isolation_assessment_history ON user_assessment_history
   FOR ALL
   USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
+
+-- No RLS on questions (system-managed content)
+-- No RLS on template_questions (system-managed content)
+-- No RLS on assessment_templates (system-managed content)
 ```
 
 **Business Logic Notes:**
@@ -1515,8 +1567,11 @@ export const withAuditLogging = (handler, action, resourceType) => {
 2. **jobs** - Background job queue
 3. **notifications** - Email/SMS notification queue
 4. **support_articles** - CMS for support docs
+5. **questions** - Normalised question definitions (Phase 2 refactor)
+6. **template_questions** - Question-to-template mapping with ordering (Phase 2 refactor)
+7. **user_assessment_answers** - Individual user answers with RLS (Phase 2 refactor)
 
-## Total Tables: 15
+## Total Tables: 18
 
-**Tenant-Scoped (with RLS):** 8 tables
-**System-Managed (no RLS):** 7 tables
+**Tenant-Scoped (with RLS):** 9 tables (users, user_assessments, user_assessment_answers, user_assessment_history, programs, program_sessions, user_progress, jobs, notifications)
+**System-Managed (no RLS):** 9 tables (tenants, global_config, assessment_categories, assessment_templates, questions, template_questions, videos, support_articles, audit_logs)
