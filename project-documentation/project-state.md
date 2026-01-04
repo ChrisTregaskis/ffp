@@ -2,7 +2,7 @@
 
 **Last Updated**: 4th January 2026
 **Current EPIC**: FFP-2 - Assessment Engine
-**Sprint Status**: Sprint 4 in progress (0/18 pts remaining)
+**Sprint Status**: Sprint 4 in progress | FFP-133 Scoring Service 🚧
 **Previous**: Sprint 3 ✅ Complete | FFP-130 Submit API ✅ Complete
 
 ---
@@ -15,14 +15,14 @@
 
 ### Sprint 4 Stories
 
-| Order | Key     | Story                           | Pts | Status      | Notes                               |
-| ----- | ------- | ------------------------------- | --- | ----------- | ----------------------------------- |
-| -     | FFP-130 | Submit Assessment API           | 5   | ✅ Complete | Merged from Sprint 3 early work     |
-| 1     | FFP-133 | Scoring Service Implementation  | 8   | To Do       | Critical path - enables results API |
-| 2     | FFP-126 | Assessment Template Admin API   | 5   | To Do       | CRUD for system admins              |
-| 3     | FFP-135 | Assessment Context & State Mgmt | 5   | To Do       | Frontend foundation                 |
+| Order | Key     | Story                           | Pts | Status         | Notes                               |
+| ----- | ------- | ------------------------------- | --- | -------------- | ----------------------------------- |
+| -     | FFP-130 | Submit Assessment API           | 5   | ✅ Complete    | Merged from Sprint 3 early work     |
+| 1     | FFP-133 | Scoring Service Implementation  | 8   | 🚧 In Progress | Critical path - enables results API |
+| 2     | FFP-126 | Assessment Template Admin API   | 5   | To Do          | CRUD for system admins              |
+| 3     | FFP-135 | Assessment Context & State Mgmt | 5   | To Do          | Frontend foundation                 |
 
-**Progress**: 5/23 pts complete (22%)
+**Progress**: 5/23 pts complete (22%) - FFP-133 in progress
 
 ### Implementation Order Rationale
 
@@ -47,8 +47,9 @@
 ## Current Task: FFP-133 - Scoring Service Implementation
 
 **Story Points**: 8
-**Status**: Not Started
+**Status**: In Progress
 **Priority**: Critical Path
+**Branch**: `feature/ffp-133-scoring-service`
 
 ### Acceptance Criteria
 
@@ -61,18 +62,65 @@
 7. Programme recommendation selected based on condition evaluation
 8. Scores stored on assessment, status transitioned to `scored`
 
+### Implementation Plan
+
+**Branch Strategy**: Single branch (`feature/ffp-133-scoring-service`) with incremental commits per sub-task.
+
+**Sub-Tasks Execution Order**:
+
+| Order | Key     | Summary                                              | Commit Scope                   |
+| ----- | ------- | ---------------------------------------------------- | ------------------------------ |
+| 1     | FFP-188 | Create `calculateScores()` orchestrator              | `scoring.service.ts` + types   |
+| 2     | FFP-189 | Implement `calculateQuestionScore()` handler         | Same file, question type logic |
+| 3     | FFP-190 | Add `calculateRiskLevel()` + `findMatchingProgram()` | Same file, risk + programme    |
+| 4     | FFP-191 | Create `processScoreAssessment` job handler          | `jobs/handlers/` + integration |
+| 5     | FFP-192 | Add minimal unit tests (critical paths only)         | `scoring.service.test.ts`      |
+
+**Schema Alignment** (adapting to existing):
+
+- Use existing `scoreAssessmentResultSchema` from `job.schema.ts`
+- Use existing `dimensionalScoreSchema` structure
+- Use existing `scoreAssessmentPayloadSchema` (responses array format)
+
+**Key Adaptations from Jira Tickets**:
+
+1. Questions fetched via `findByTemplateId()` (not embedded in template)
+2. Job payload uses `responses[]` array (not `Record<string, unknown>`)
+3. Result uses `dimensionalScoreSchema` structure
+4. Handler in `@ffp/core/src/jobs/handlers/score-assessment.handler.ts` (new directory)
+
 ### Technical Approach
 
 **Location**: `@ffp/core/src/assessments/scoring.service.ts`
 
 **Key Functions**:
 
-- `calculateScores(answers, template)` → AssessmentScore
-- `calculateQuestionScore(question, answer)` → number
+- `calculateScores(responses, questions, scoringConfig)` → ScoreAssessmentResult
+- `calculateQuestionScore(question, answerValue)` → number
 - `calculateRiskLevel(dimensionScores)` → RiskLevel
-- `findMatchingProgram(scores, mappings)` → programTemplateId
+- `findMatchingProgram(scores, programMappings)` → programTemplateId | undefined
 
-**Testing**: Critical path - comprehensive unit tests required for all scoring logic.
+**Testing Strategy** (MVP minimal):
+
+| Test Category          | Include | Reason                         |
+| ---------------------- | ------- | ------------------------------ |
+| Question type scoring  | ✅      | Core calculation correctness   |
+| Risk level thresholds  | ✅      | Critical safety/business logic |
+| Programme matching     | ✅      | User-facing recommendation     |
+| Edge cases             | ❌      | Post-MVP enhancement           |
+| Full integration tests | ❌      | Job processor already tested   |
+
+**Estimated**: ~10-15 focused tests
+
+### Verification Workflow
+
+After all sub-tasks complete:
+
+1. **Seed Data**: Update assessment seed data with scoring config
+2. **Postman Collection**: Add/update requests for scoring flow
+3. **Manual Testing**: End-to-end via Postman (submit → poll → verify scores)
+4. **Code Review**: Claude review before PR
+5. **PR**: To `feature/sprint4` with Copilot review
 
 ---
 
@@ -148,7 +196,7 @@ Refactored questions from embedded JSONB into dedicated tables:
 ```
 FFP-124 → FFP-125 → FFP-127 → FFP-128 → FFP-129 → FFP-130 → FFP-133 → FFP-131
 (Template)  (Flow)   (User)   (Start)   (Save)   (Submit)  (Score)  (Results)
-   ✅         ✅        ✅        ✅        ✅        ✅
+   ✅         ✅        ✅        ✅        ✅        ✅        🚧
 ```
 
 ### Sprint Overview
