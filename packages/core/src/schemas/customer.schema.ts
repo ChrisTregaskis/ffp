@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { CUSTOMER_STATUSES } from '@ffp/database';
+import { CUSTOMER_STATUSES } from '@ffp/database/constants';
 
 /**
  * Customer status Zod schema
