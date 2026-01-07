@@ -1,8 +1,8 @@
 # FFP - Project State
 
-**Last Updated**: 4th January 2026
+**Last Updated**: 7th January 2026
 **Current EPIC**: FFP-2 - Assessment Engine
-**Sprint Status**: Sprint 4 in progress | FFP-133 Scoring Service 🚧
+**Sprint Status**: Sprint 4 in progress | FFP-133 Scoring Service 🚧 (3/5 sub-tasks complete)
 **Previous**: Sprint 3 ✅ Complete | FFP-130 Submit API ✅ Complete
 
 ---
@@ -68,13 +68,13 @@
 
 **Sub-Tasks Execution Order**:
 
-| Order | Key     | Summary                                              | Commit Scope                   |
-| ----- | ------- | ---------------------------------------------------- | ------------------------------ |
-| 1     | FFP-188 | Create `calculateScores()` orchestrator              | `scoring.service.ts` + types   |
-| 2     | FFP-189 | Implement `calculateQuestionScore()` handler         | Same file, question type logic |
-| 3     | FFP-190 | Add `calculateRiskLevel()` + `findMatchingProgram()` | Same file, risk + programme    |
-| 4     | FFP-191 | Create `processScoreAssessment` job handler          | `jobs/handlers/` + integration |
-| 5     | FFP-192 | Add minimal unit tests (critical paths only)         | `scoring.service.test.ts`      |
+| Order | Key     | Summary                                              | Status      | Commit Scope                   |
+| ----- | ------- | ---------------------------------------------------- | ----------- | ------------------------------ |
+| 1     | FFP-188 | Create `calculateScores()` orchestrator              | ✅ Complete | `scoring/` module + types      |
+| 2     | FFP-189 | Implement `calculateQuestionScore()` handler         | ✅ Complete | `helpers/question-scoring.ts`  |
+| 3     | FFP-190 | Add `calculateRiskLevel()` + `findMatchingProgram()` | ✅ Complete | `helpers/risk-level.ts` + more |
+| 4     | FFP-191 | Create `processScoreAssessment` job handler          | 🚧 Next     | `jobs/handlers/` + integration |
+| 5     | FFP-192 | Add minimal unit tests (critical paths only)         | To Do       | `scoring.service.test.ts`      |
 
 **Schema Alignment** (adapting to existing):
 
@@ -91,14 +91,31 @@
 
 ### Technical Approach
 
-**Location**: `@ffp/core/src/assessments/scoring.service.ts`
+**Location**: `@ffp/core/src/assessments/scoring/`
 
-**Key Functions**:
+```
+scoring/
+├── index.ts                  # Barrel export
+├── scoring.service.ts        # Main orchestrator
+└── helpers/
+    ├── index.ts              # Barrel export
+    ├── question-scoring.ts   # calculateQuestionScore
+    ├── risk-level.ts         # calculateRiskLevel, getCategoryFromScore
+    ├── programme-matching.ts # findMatchingProgramme
+    └── dimension-scoring.ts  # calculateDimensionScore, calculateOverallScore
+```
 
-- `calculateScores(responses, questions, scoringConfig)` → ScoreAssessmentResult
+**Key Functions** (all implemented ✅):
+
+- `calculateScores(responses, questions, scoringConfig)` → ScoringResult
 - `calculateQuestionScore(question, answerValue)` → number
-- `calculateRiskLevel(dimensionScores)` → RiskLevel
-- `findMatchingProgram(scores, programMappings)` → programTemplateId | undefined
+- `calculateRiskLevel(dimensionScores)` → RiskLevel (throws if empty)
+- `findMatchingProgramme(scores, programMappings)` → programTemplateId | null
+
+**Supporting Infrastructure**:
+
+- Types: `@ffp/core/src/types/scoring.types.ts` (RiskLevel, ScoringResult)
+- Constants: `@ffp/core/src/constants/scoring.constants.ts` (thresholds, operators)
 
 **Testing Strategy** (MVP minimal):
 

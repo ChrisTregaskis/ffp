@@ -8,6 +8,79 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### January 7, 2026 (Session 77 - FFP-133 Scoring Service - Sub-tasks 1-3)
+
+**Status**: ✅ FFP-188, FFP-189, FFP-190 Complete (Scoring Pure Functions)
+
+**Branch**: `feature/ffp-133-scoring-service`
+
+**Completed Work**:
+
+**FFP-188: Create `calculateScores()` orchestrator** (~0.5 hours):
+
+- ✅ Created `@ffp/core/src/assessments/scoring/scoring.service.ts`
+- ✅ Main orchestrator coordinates dimension scoring, overall score, risk level, programme matching
+- ✅ Added `toJobResult()` helper for job result format conversion
+
+**FFP-189: Implement `calculateQuestionScore()` handler** (~0.25 hours):
+
+- ✅ Created `helpers/question-scoring.ts`
+- ✅ Handles single-choice, multi-choice, numeric, scale, text question types
+- ✅ Removed video-response (deferred to post-MVP)
+
+**FFP-190: Add `calculateRiskLevel()` + `findMatchingProgramme()`** (~0.25 hours):
+
+- ✅ Created `helpers/risk-level.ts` - throws ValidationError on empty scores
+- ✅ Created `helpers/programme-matching.ts` - returns null (not undefined) for no match
+- ✅ Created `helpers/dimension-scoring.ts` - dimension/overall score calculations
+
+**Refactoring (Code Review)** (~0.5 hours):
+
+- ✅ Moved types to `@ffp/core/src/types/scoring.types.ts`
+- ✅ Created `@ffp/core/src/constants/` directory with `scoring.constants.ts`
+- ✅ Extracted risk thresholds: `LOW_RISK_THRESHOLD (70)`, `MODERATE_RISK_THRESHOLD (40)`
+- ✅ Created operator constants: `LOGICAL_OPERATORS`, `COMPARISON_OPERATORS`
+- ✅ Organised scoring module into `scoring/` directory with `helpers/` subdirectory
+
+**New Directory Structure**:
+
+```
+packages/core/src/
+├── constants/
+│   ├── index.ts
+│   └── scoring.constants.ts
+├── types/
+│   └── scoring.types.ts      # RiskLevel, ScoringResult
+└── assessments/
+    └── scoring/
+        ├── index.ts
+        ├── scoring.service.ts
+        └── helpers/
+            ├── index.ts
+            ├── question-scoring.ts
+            ├── risk-level.ts
+            ├── programme-matching.ts
+            └── dimension-scoring.ts
+```
+
+**Key Decisions**:
+
+| Decision                          | Rationale                                    |
+| --------------------------------- | -------------------------------------------- |
+| Throw on empty dimensional scores | Configuration error, not "no data"           |
+| Return null (not undefined)       | Explicit intentional "no match" vs unplanned |
+| Constants for operators           | Type-safe runtime values matching DB types   |
+| Separate helpers directory        | Clean separation, easier testing             |
+
+**Quality Assurance**:
+
+- ✅ `pnpm typecheck` - Zero errors
+- ✅ `pnpm lint` - Zero warnings
+
+**Next**: FFP-191 - Create `processScoreAssessment` job handler
+
+---
+
 ### January 3, 2026 (Session 76 - FFP-130 Questions Table Refactor - Session D)
 
 **Status**: ✅ FFP-130 Questions Table Refactor COMPLETE (All 9 Phases Done)
@@ -176,18 +249,19 @@ The tests were failing with "permission denied for table template_questions" bec
 
 ## Key Milestones
 
-| Date        | Milestone                       | Hours         |
-| ----------- | ------------------------------- | ------------- |
-| Oct 20      | Sprint 1 Started                | 0h            |
-| Oct 24      | FFP-7 Complete (Monorepo)       | 13h           |
-| Oct 26      | FFP-8 Complete (Infrastructure) | 30h           |
-| Nov 1       | FFP-10 & FFP-11 Merged to Main  | 83.5h         |
-| Nov 9       | FFP-37 Complete (Invite User)   | 136.5h        |
-| Nov 19      | FFP-16 Complete (Web Login)     | 155.5h        |
-| Dec 19      | FFP-132 Complete (Job Queue)    | 162h          |
-| Dec 24      | FFP-127 Complete (User Assess)  | 165.5h        |
-| Dec 30      | FFP-130 Complete (Submit API)   | 167.9h        |
-| **Current** | **FFP-130 Refactor Complete**   | **~168/197h** |
+| Date        | Milestone                       | Hours           |
+| ----------- | ------------------------------- | --------------- |
+| Oct 20      | Sprint 1 Started                | 0h              |
+| Oct 24      | FFP-7 Complete (Monorepo)       | 13h             |
+| Oct 26      | FFP-8 Complete (Infrastructure) | 30h             |
+| Nov 1       | FFP-10 & FFP-11 Merged to Main  | 83.5h           |
+| Nov 9       | FFP-37 Complete (Invite User)   | 136.5h          |
+| Nov 19      | FFP-16 Complete (Web Login)     | 155.5h          |
+| Dec 19      | FFP-132 Complete (Job Queue)    | 162h            |
+| Dec 24      | FFP-127 Complete (User Assess)  | 165.5h          |
+| Dec 30      | FFP-130 Complete (Submit API)   | 167.9h          |
+| Jan 3       | FFP-130 Refactor Complete       | ~168h           |
+| **Current** | **FFP-133 Scoring (3/5 done)**  | **~169.5/197h** |
 
 ---
 
