@@ -9,3 +9,4 @@
 
 export * from './job-queue.service';
 export * from './job-processor.service';
+export * from './handlers';

@@ -68,13 +68,13 @@
 
 **Sub-Tasks Execution Order**:
 
-| Order | Key     | Summary                                              | Status      | Commit Scope                   |
-| ----- | ------- | ---------------------------------------------------- | ----------- | ------------------------------ |
-| 1     | FFP-188 | Create `calculateScores()` orchestrator              | ✅ Complete | `scoring/` module + types      |
-| 2     | FFP-189 | Implement `calculateQuestionScore()` handler         | ✅ Complete | `helpers/question-scoring.ts`  |
-| 3     | FFP-190 | Add `calculateRiskLevel()` + `findMatchingProgram()` | ✅ Complete | `helpers/risk-level.ts` + more |
-| 4     | FFP-191 | Create `processScoreAssessment` job handler          | 🚧 Next     | `jobs/handlers/` + integration |
-| 5     | FFP-192 | Add minimal unit tests (critical paths only)         | To Do       | `scoring.service.test.ts`      |
+| Order | Key     | Summary                                              | Status      | Commit Scope                      |
+| ----- | ------- | ---------------------------------------------------- | ----------- | --------------------------------- |
+| 1     | FFP-188 | Create `calculateScores()` orchestrator              | ✅ Complete | `scoring/` module + types         |
+| 2     | FFP-189 | Implement `calculateQuestionScore()` handler         | ✅ Complete | `helpers/question-scoring.ts`     |
+| 3     | FFP-190 | Add `calculateRiskLevel()` + `findMatchingProgram()` | ✅ Complete | `helpers/risk-level.ts` + more    |
+| 4     | FFP-191 | Create `processScoreAssessment` job handler          | ⏸️ Blocked  | Needs flow-level scoring refactor |
+| 5     | FFP-192 | Add minimal unit tests (critical paths only)         | To Do       | `scoring.service.test.ts`         |
 
 **Schema Alignment** (adapting to existing):
 
@@ -85,9 +85,33 @@
 **Key Adaptations from Jira Tickets**:
 
 1. Questions fetched via `findByTemplateId()` (not embedded in template)
-2. Job payload uses `responses[]` array (not `Record<string, unknown>`)
+2. ~~Job payload uses `responses[]` array~~ → **Answers fetched from database** (see note below)
 3. Result uses `dimensionalScoreSchema` structure
 4. Handler in `@ffp/core/src/jobs/handlers/score-assessment.handler.ts` (new directory)
+
+**Architectural Note (FFP-191)**: The job handler fetches answers from `user_assessment_answers` table instead of receiving them in the job payload. This simplifies the payload to just `{ userAssessmentId, flowId }` and ensures scoring uses the actual persisted answers.
+
+### ⚠️ Design Gap Identified: Multi-Template Scoring
+
+**Discovered**: 8th January 2026 (during FFP-191)
+
+**Issue**: Assessment flows use multiple templates (pre-assessment, strength, balance), each with independent `scoringConfig` and `programMappings`. Current handler assumed single template scoring.
+
+**Impact**: Cannot produce unified programme recommendation considering ALL dimensions (pain, general, strength, balance).
+
+**Resolution**: Flow-level scoring refactor - move `scoringConfig` from templates to flows.
+
+**Plan**: `project-documentation/refactoring/flow-level-scoring-refactor.md`
+
+**Sessions Required** (can run independently):
+| Session | Focus | Est. |
+|---------|-------|------|
+| 1 | Schema & Migration | 1h |
+| 2 | Seed Data Updates | 0.5h |
+| 3 | Handler & Service Refactor | 1h |
+| 4 | Testing & Verification | 0.5h |
+
+**Status**: Plan created, FFP-191 paused pending refactor.
 
 ### Technical Approach
 
