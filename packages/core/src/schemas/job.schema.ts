@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { JOB_STATUSES, JOB_TYPES } from '@ffp/database';
+import { JOB_STATUSES, JOB_TYPES } from '@ffp/database/constants';
 
 export const jobStatusSchema = z.enum(JOB_STATUSES);
 

@@ -1,0 +1,407 @@
+<!-- Section 22: Sprint 3 Title -->
+<section id="section-22" class="section center">
+  <h1>Sprint 3 Complete</h1>
+  <p class="tagline">Backend Foundation - Assessment Lifecycle Ready</p>
+  <h3>December 2025 - January 2026</h3>
+  <p class="date">13th December 2025 - 4th January 2026</p>
+  <div class="metric-box" style="margin-top: 3rem; max-width: 600px">
+    <h3><i class="fas fa-database"></i></h3>
+    <p style="font-size: 1.3em">Assessment Engine Foundation Complete - Ready for Scoring</p>
+  </div>
+</section>
+
+<!-- Section 23: Assessment Engine Foundation -->
+<section id="section-23" class="section">
+  <h2>Assessment Engine Foundation</h2>
+  <p style="font-size: 1.3em; margin: 2rem 0">
+    Complete <span class="highlight">database schema and repository layer</span> for the core
+    assessment functionality.
+  </p>
+
+  <div class="two-column">
+    <div>
+      <h4>
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> Database
+        Schema
+      </h4>
+      <div class="architecture-diagram" style="margin-top: 1rem">
+        <div class="layer">
+          <h4><i class="fas fa-clipboard-list"></i> Assessment Templates</h4>
+          <p>
+            <strong>Templates:</strong> Reusable assessment definitions<br />
+            <strong>Questions:</strong> Dedicated table with RLS (refactored from JSONB)<br />
+            <strong>Options:</strong> Answer choices with scoring metadata
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-user-edit"></i> User Assessments</h4>
+          <p>
+            <strong>Sessions:</strong> Individual assessment attempts<br />
+            <strong>Responses:</strong> User answers linked to questions<br />
+            <strong>State tracking:</strong> Step position and progress
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-sitemap"></i> Assessment Flow</h4>
+          <p>
+            <strong>7-step flow:</strong> intro → questions → transition → video → results →
+            programme<br />
+            <strong>Configurable:</strong> Flow steps per template
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h4>
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> Key Decisions
+      </h4>
+      <div class="architecture-diagram" style="margin-top: 1rem">
+        <div class="layer">
+          <h4><i class="fas fa-table"></i> Questions Refactor</h4>
+          <p>
+            <strong>Before:</strong> Embedded JSONB in templates<br />
+            <strong>After:</strong> Dedicated table with full RLS<br />
+            <strong>Benefit:</strong> Better querying, security, flexibility
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-shield-alt"></i> RLS Pattern</h4>
+          <p>
+            <strong>Tenant isolation:</strong> Via <code>app.tenant_id</code> session
+            variable<br />
+            <strong>User ownership:</strong> Service-layer checks (not RLS)<br />
+            <strong>Reason:</strong> RLS enforces tenant, app enforces user
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-route"></i> Dynamic Routing</h4>
+          <p>
+            <strong>Pattern:</strong> Regex-based route matching<br />
+            <strong>Parameters:</strong> Extracted from URL paths<br />
+            <strong>Example:</strong> <code>/assessments/:id/progress</code>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    style="
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #d1fae5;
+      border-radius: 8px;
+      border-left: 4px solid var(--success-green);
+    "
+  >
+    <p style="margin: 0; font-size: 0.95em">
+      <i class="fas fa-check-circle" style="color: var(--success-green)"></i>
+      <strong>All migrations deployed:</strong> Questions table refactored with full backward
+      compatibility
+    </p>
+  </div>
+</section>
+
+<!-- Section 24: Job Queue System -->
+<section id="section-24" class="section">
+  <h2>Job Queue Infrastructure</h2>
+  <p style="font-size: 1.3em; margin: 2rem 0">
+    A <span class="highlight">database-driven polling queue</span> for background processing -
+    no external dependencies like SQS.
+  </p>
+
+  <div class="tech-grid">
+    <div class="tech-card">
+      <i class="fas fa-database"></i>
+      <h4>Database-Driven Design</h4>
+      <p>
+        Jobs stored in PostgreSQL with full transactional guarantees. No external queue
+        service required - simpler architecture, lower cost.
+      </p>
+    </div>
+
+    <div class="tech-card">
+      <i class="fas fa-lock"></i>
+      <h4>Atomic Job Claiming</h4>
+      <p>
+        Uses <code>FOR UPDATE SKIP LOCKED</code> for concurrent worker safety. Multiple
+        workers can poll without conflicts.
+      </p>
+    </div>
+
+    <div class="tech-card">
+      <i class="fas fa-redo"></i>
+      <h4>Exponential Backoff</h4>
+      <p>
+        Failed jobs retry with increasing delays. Configurable max attempts prevent infinite
+        loops on permanent failures.
+      </p>
+    </div>
+
+    <div class="tech-card">
+      <i class="fas fa-clock"></i>
+      <h4>EventBridge Integration</h4>
+      <p>
+        Scheduled processing via AWS EventBridge Cron. Serverless polling at configurable
+        intervals (e.g., every minute).
+      </p>
+    </div>
+  </div>
+
+  <h3 style="margin-top: 3rem">Job Lifecycle</h3>
+  <div class="workflow-grid" style="grid-template-columns: repeat(4, 1fr)">
+    <div class="workflow-card">
+      <i class="fas fa-plus-circle"></i>
+      <h4>1. Enqueue</h4>
+      <p>Job created with type, payload, and scheduled time</p>
+    </div>
+
+    <div class="workflow-card">
+      <i class="fas fa-hand-pointer"></i>
+      <h4>2. Claim</h4>
+      <p>Worker atomically claims pending job with SKIP LOCKED</p>
+    </div>
+
+    <div class="workflow-card">
+      <i class="fas fa-cog"></i>
+      <h4>3. Process</h4>
+      <p>Handler executes job logic (e.g., scoring)</p>
+    </div>
+
+    <div class="workflow-card">
+      <i class="fas fa-check-circle"></i>
+      <h4>4. Complete</h4>
+      <p>Job marked complete or scheduled for retry</p>
+    </div>
+  </div>
+
+  <div
+    class="tech-card"
+    style="margin-top: 2rem; background: #fff3cd; border-left-color: var(--accent-orange)"
+  >
+    <h4><i class="fas fa-lightbulb" style="color: var(--accent-orange)"></i> Why Not SQS?</h4>
+    <p style="margin: 0">
+      Database-driven queue means one less AWS service to manage, full transactional
+      consistency with assessment data, and simpler local development. SQS can be added later
+      if scale requires it.
+    </p>
+  </div>
+</section>
+
+<!-- Section 25: APIs & State Machine -->
+<section id="section-25" class="section">
+  <h2>Assessment APIs & State Machine</h2>
+  <p style="font-size: 1.3em; margin: 2rem 0">
+    Complete <span class="highlight">API endpoints</span> for the assessment lifecycle with
+    robust state management.
+  </p>
+
+  <div class="two-column">
+    <div>
+      <h4>
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> API Endpoints
+        Built
+      </h4>
+      <div class="architecture-diagram" style="margin-top: 1rem">
+        <div class="layer">
+          <h4><i class="fas fa-play"></i> POST /assessments/start</h4>
+          <p>
+            <strong>Create or resume:</strong> Returns existing in-progress or creates new<br />
+            <strong>Validation:</strong> Template exists, user authorised
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-save"></i> PUT /assessments/:id/progress</h4>
+          <p>
+            <strong>Save answers:</strong> Stores responses as user navigates<br />
+            <strong>Step tracking:</strong> Updates current step position
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-paper-plane"></i> POST /assessments/:id/submit</h4>
+          <p>
+            <strong>Validate complete:</strong> All required questions answered<br />
+            <strong>Enqueue scoring:</strong> Creates job for background processing
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h4>
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> State Machine
+      </h4>
+      <div class="architecture-diagram" style="margin-top: 1rem">
+        <div class="layer">
+          <h4><i class="fas fa-project-diagram"></i> Assessment States</h4>
+          <p>
+            <code>not_started</code> → <code>in_progress</code> → <code>submitted</code> →
+            <code>scored</code> → <code>completed</code>
+          </p>
+          <p style="margin-top: 0.5em">
+            <strong>+ abandoned:</strong> For incomplete assessments after timeout
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-exchange-alt"></i> Transition Rules</h4>
+          <p>
+            <strong>Only forward:</strong> Cannot go back to previous states<br />
+            <strong>Service enforced:</strong> Validation before each transition<br />
+            <strong>Audit ready:</strong> State changes logged with timestamps
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-user-check"></i> Ownership Checks</h4>
+          <p>
+            <strong>Pattern:</strong> RLS isolates tenant, service validates user<br />
+            <strong>Reason:</strong> Multiple users per tenant need separation
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top: 3rem">Key Patterns Established</h3>
+  <div class="tech-grid" style="gap: 1rem; margin: 1.5rem 0">
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-cog" style="font-size: 1.2em"></i> State Machine
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">
+        <code>not_started → in_progress → submitted → scored → completed</code>
+      </p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-database" style="font-size: 1.2em"></i> Job Queue
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">
+        Database polling with <code>FOR UPDATE SKIP LOCKED</code>
+      </p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-shield-alt" style="font-size: 1.2em"></i> RLS Pattern
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">
+        Tenant via <code>app.tenant_id</code>, user via service layer
+      </p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-route" style="font-size: 1.2em"></i> Router
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">Regex matching with parameter extraction</p>
+    </div>
+  </div>
+</section>
+
+<!-- Section 26: Sprint 3 Numbers -->
+<section id="section-26" class="section">
+  <h2>Sprint 3: By The Numbers</h2>
+
+  <div class="metrics-grid">
+    <div class="metric-box">
+      <h3>466</h3>
+      <p>Tests Passing</p>
+      <p style="font-size: 0.9em">+281 from Sprint 2</p>
+    </div>
+    <div class="metric-box">
+      <h3>27</h3>
+      <p>Story Points</p>
+      <p style="font-size: 0.9em">7 stories complete</p>
+    </div>
+    <div class="metric-box">
+      <h3>0</h3>
+      <p>TS/Lint Errors</p>
+      <p style="font-size: 0.9em">Zero warnings</p>
+    </div>
+  </div>
+
+  <h3 style="margin-top: 3rem">Stories Delivered</h3>
+  <div class="tech-grid" style="gap: 1rem; margin: 1.5rem 0">
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> FFP-124 (5
+        pts)
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">Assessment Template Schema & Repository</p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> FFP-132 (8
+        pts)
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">Process Jobs Schema & Queue Infrastructure</p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> FFP-125 (3
+        pts)
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">Assessment Flow Schema & Configuration</p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> FFP-127 (5
+        pts)
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">User Assessment Schema & State Machine</p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> FFP-128 (3
+        pts)
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">Start Assessment API</p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> FFP-129 (3
+        pts)
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">Save Assessment Progress API</p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> FFP-130 (5
+        pts)
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">Submit Assessment API (early from Sprint 4)</p>
+    </div>
+  </div>
+
+  <div class="cost-comparison" style="margin-top: 3rem">
+    <div class="cost-card optimised">
+      <p>Monthly Running Cost</p>
+      <h3>£7-14</h3>
+      <p>/month</p>
+      <p style="margin-top: 1em; font-size: 0.9em">Still 87% below budget</p>
+    </div>
+
+    <div class="cost-card" style="background: #e0f2fe; border-color: var(--primary-blue)">
+      <p>Sprint 4 Focus</p>
+      <h3 style="color: var(--primary-blue)"><i class="fas fa-calculator"></i></h3>
+      <p>Scoring Service</p>
+      <p style="margin-top: 1em; font-size: 0.9em">FFP-133: Critical path (8 pts)</p>
+    </div>
+  </div>
+</section>

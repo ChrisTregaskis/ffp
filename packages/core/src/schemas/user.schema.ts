@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { INVITABLE_ROLES, USER_ROLES } from '@ffp/database';
+import { INVITABLE_ROLES, USER_ROLES } from '@ffp/database/constants';
 
 /**
  * User role Zod schema

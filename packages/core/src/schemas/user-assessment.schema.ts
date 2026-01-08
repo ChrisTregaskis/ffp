@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { USER_ASSESSMENT_STATUSES, VALID_STATUS_TRANSITIONS } from '@ffp/database';
+import { USER_ASSESSMENT_STATUSES, VALID_STATUS_TRANSITIONS } from '@ffp/database/constants';
 
 import { dimensionalScoreSchema } from './job.schema';
 

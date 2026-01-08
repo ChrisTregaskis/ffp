@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { TENANT_TYPES } from '@ffp/database';
+import { TENANT_TYPES } from '@ffp/database/constants';
 
 /**
  * Tenant type Zod schema
