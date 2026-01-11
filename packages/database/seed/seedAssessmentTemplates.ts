@@ -4,7 +4,7 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../src/schema/index.js';
 import { assessmentTemplates, templateQuestions } from '../src/schema/index.js';
 import { createLogger } from '../src/lib/logger.js';
-import { QUESTION_IDS } from './seedQuestions.js';
+import { QUESTION_IDS } from './seedQuestions.js'; // Used for template-question mappings
 
 import type { NewAssessmentTemplate } from '../src/schema/assessment-templates.js';
 import type { NewTemplateQuestion } from '../src/schema/template-questions.js';
@@ -79,45 +79,16 @@ const templateQuestionMappings: TemplateQuestionMapping[] = [
  *
  * Questions are now stored in the dedicated `questions` table and linked
  * via `template_questions` join table. See seedQuestions.ts for question data.
+ *
+ * NOTE: scoringConfig is now null - scoring is handled at flow level.
+ * See seedAssessmentFlows.ts for the combined scoring configuration.
  */
 const preAssessmentQuestionsTemplate: NewAssessmentTemplate = {
   id: TEMPLATE_IDS.PRE_ASSESSMENT_QUESTIONS,
   name: TEMPLATE_NAMES.PRE_ASSESSMENT_QUESTIONS,
   description: 'Pre-assessment questions about goals, pain levels, and medical history',
   version: 1,
-  scoringConfig: {
-    dimensions: [
-      {
-        name: 'pain',
-        questionIds: [QUESTION_IDS['pain-level'], QUESTION_IDS['pain-location']],
-        maxScore: 17,
-        weight: 1,
-        riskThresholds: { low: 3, moderate: 6 },
-      },
-      {
-        name: 'general',
-        questionIds: [
-          QUESTION_IDS['goal-primary'],
-          QUESTION_IDS['activity-level'],
-          QUESTION_IDS['medical-conditions'],
-        ],
-        maxScore: 6,
-        weight: 1,
-      },
-    ],
-    programMappings: [
-      {
-        conditions: [{ dimension: 'pain', operator: 'gte', value: 7 }],
-        programTemplateId: 'gentle-mobility-programme',
-        priority: 1,
-      },
-      {
-        conditions: [{ dimension: 'pain', operator: 'lt', value: 3 }],
-        programTemplateId: 'strength-building-programme',
-        priority: 2,
-      },
-    ],
-  },
+  scoringConfig: null, // Deprecated: Use flow-level scoring
   isActive: true,
 };
 
@@ -127,39 +98,16 @@ const preAssessmentQuestionsTemplate: NewAssessmentTemplate = {
  *
  * Questions are now stored in the dedicated `questions` table and linked
  * via `template_questions` join table. See seedQuestions.ts for question data.
+ *
+ * NOTE: scoringConfig is now null - scoring is handled at flow level.
+ * See seedAssessmentFlows.ts for the combined scoring configuration.
  */
 const strengthAssessmentTemplate: NewAssessmentTemplate = {
   id: TEMPLATE_IDS.STRENGTH_ASSESSMENT,
   name: TEMPLATE_NAMES.STRENGTH_ASSESSMENT,
   description: 'Video-guided strength assessment exercises',
   version: 1,
-  scoringConfig: {
-    dimensions: [
-      {
-        name: 'strength',
-        questionIds: [
-          QUESTION_IDS['squat-rating'],
-          QUESTION_IDS['pushup-count'],
-          QUESTION_IDS['strength-comfort'],
-        ],
-        maxScore: 64,
-        weight: 1.5,
-        riskThresholds: { low: 20, moderate: 40 },
-      },
-    ],
-    programMappings: [
-      {
-        conditions: [{ dimension: 'strength', operator: 'lt', value: 20 }],
-        programTemplateId: 'beginner-strength-programme',
-        priority: 1,
-      },
-      {
-        conditions: [{ dimension: 'strength', operator: 'gte', value: 40 }],
-        programTemplateId: 'advanced-strength-programme',
-        priority: 2,
-      },
-    ],
-  },
+  scoringConfig: null, // Deprecated: Use flow-level scoring
   isActive: true,
 };
 
@@ -169,39 +117,16 @@ const strengthAssessmentTemplate: NewAssessmentTemplate = {
  *
  * Questions are now stored in the dedicated `questions` table and linked
  * via `template_questions` join table. See seedQuestions.ts for question data.
+ *
+ * NOTE: scoringConfig is now null - scoring is handled at flow level.
+ * See seedAssessmentFlows.ts for the combined scoring configuration.
  */
 const balanceAssessmentTemplate: NewAssessmentTemplate = {
   id: TEMPLATE_IDS.BALANCE_ASSESSMENT,
   name: TEMPLATE_NAMES.BALANCE_ASSESSMENT,
   description: 'Balance and stability assessment exercises',
   version: 1,
-  scoringConfig: {
-    dimensions: [
-      {
-        name: 'balance',
-        questionIds: [
-          QUESTION_IDS['single-leg-duration'],
-          QUESTION_IDS['tandem-stability'],
-          QUESTION_IDS['balance-confidence'],
-        ],
-        maxScore: 18,
-        weight: 1.2,
-        riskThresholds: { low: 6, moderate: 12 },
-      },
-    ],
-    programMappings: [
-      {
-        conditions: [{ dimension: 'balance', operator: 'lt', value: 6 }],
-        programTemplateId: 'balance-foundation-programme',
-        priority: 1,
-      },
-      {
-        conditions: [{ dimension: 'balance', operator: 'gte', value: 12 }],
-        programTemplateId: 'advanced-balance-programme',
-        priority: 2,
-      },
-    ],
-  },
+  scoringConfig: null, // Deprecated: Use flow-level scoring
   isActive: true,
 };
 

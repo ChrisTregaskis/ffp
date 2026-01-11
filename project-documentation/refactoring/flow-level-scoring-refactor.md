@@ -340,11 +340,11 @@ const STEP_IDS = {
 | 2       | Schema Migration: Normalise flow_steps table | 1.5 hours | Session 1    |
 | 3       | Seed Data Migration                          | 1 hour    | Session 2    |
 | 4       | Handler & Service Refactor (scoring)         | 1 hour    | Session 3    |
-| 5       | Branching Logic Implementation               | 1.5 hours | Session 4    |
+| 5       | Branching Logic + Clinical Questions         | 3 hours   | Session 4    |
 | 6       | Testing & Postman Updates                    | 1 hour    | Session 5    |
 | 7       | Documentation Updates                        | 1 hour    | Session 6    |
 
-**Total estimated**: ~8 hours (was ~3 hours before branching + normalisation)
+**Total estimated**: ~9.5 hours (includes real clinical questions for demo)
 
 ---
 
@@ -710,9 +710,11 @@ pnpm typecheck && pnpm lint && pnpm test
 
 ---
 
-## Session 5: Branching Logic Implementation
+## Session 5: Branching Logic + Clinical Questions
 
-**Goal**: Implement `evaluateNextStep()` logic for conditional navigation
+**Goal**: Implement `evaluateNextStep()` logic for conditional navigation AND add real clinical questions for a meaningful demo.
+
+**Related Ticket**: [FFP-249](https://ctregaskis.atlassian.net/browse/FFP-249) - Add real clinical assessment questions to seed data
 
 ### Design Decisions
 
@@ -720,9 +722,60 @@ pnpm typecheck && pnpm lint && pnpm test
 
 **Warnings storage**: Store on `user_assessments.warnings_shown` as JSONB array for MVP simplicity. Warnings are few per assessment (unlike answers). Can extract to separate table later if analytics needs grow.
 
+**Clinical questions**: Red flag screening is the perfect use case for `show_warning` branching - any "yes" answer triggers a medical review warning.
+
 ### Tasks
 
-1. **Create branch evaluator service**
+#### Part A: Clinical Questions (~1.5 hours)
+
+1. **Add back pain questions to seedQuestions.ts**
+   - File: `packages/database/seed/seedQuestions.ts`
+   - Add 5 back pain general questions:
+     - Duration of pain (less than 1 week, 1-2 weeks, 2-4 weeks, 4-12 weeks, 12+ weeks)
+     - Pain intensity (0-10 scale)
+     - Type of pain (sharp shooting, dull aching, only when moving, constant intense)
+     - Recurrence history (0, 1, 2-5, 5+ times in last 3 years)
+     - Typical duration (few days, 1-2 weeks, 3-6 weeks, 7-12 weeks, 12+ weeks, N/A)
+   - Add 6 red flag screening questions (yes/no):
+     - Radiating pain to leg
+     - Pins & needles/numbness in feet or legs
+     - Incontinence/inability to go to toilet
+     - Genital/saddle area numbness
+     - Unexplained weight loss (10%+)
+     - Night sweats
+
+2. **Create red flag screening template**
+   - File: `packages/database/seed/seedAssessmentTemplates.ts`
+   - Add `RED_FLAG_SCREENING` template linking to the 6 yes/no questions
+
+3. **Update flow steps with red flag screening**
+   - File: `packages/database/seed/seedFlowSteps.ts`
+   - Add red flag screening step after pre-assessment (order: 3)
+   - Shift subsequent steps (transition → 4, strength → 5, etc.)
+   - Add `nextStepRules` to red flag step:
+     ```typescript
+     nextStepRules: [
+       {
+         priority: 1,
+         conditions: [{ type: 'answer_value', questionSlug: 'radiating-pain', answerValue: 'yes' }],
+         action: {
+           type: 'show_warning',
+           warningMessage: 'Please seek medical review before starting exercise programme',
+           warningType: 'seek_medical',
+           continueAfterWarning: true,
+         },
+       },
+       // Similar rules for other red flags...
+     ];
+     ```
+
+4. **Update scoring config with back pain dimensions**
+   - File: `packages/database/seed/seedAssessmentFlows.ts`
+   - Update pain dimension to use new back pain questions
+
+#### Part B: Branching Logic (~1.5 hours)
+
+5. **Create branch evaluator service**
    - File: `packages/core/src/assessments/branching/branch-evaluator.service.ts`
 
    ```typescript
@@ -818,7 +871,7 @@ pnpm typecheck && pnpm lint && pnpm test
    }
    ```
 
-2. **Create condition evaluators**
+6. **Create condition evaluators**
    - File: `packages/core/src/assessments/branching/condition-evaluator.ts`
 
    ```typescript
@@ -847,12 +900,12 @@ pnpm typecheck && pnpm lint && pnpm test
    }
    ```
 
-3. **Update save-progress handler**
+7. **Update save-progress handler**
    - File: `packages/functions/src/assessments/save-progress.ts`
    - After saving answers, evaluate branching rules
    - Return `nextStepId` and any warnings in response
 
-4. **Update user_assessments table**
+8. **Update user_assessments table**
    - Add `visited_step_ids` JSONB array for path tracking (UUIDs of visited steps)
    - Add `warnings_shown` JSONB array for audit (with timestamps)
 
@@ -862,7 +915,7 @@ pnpm typecheck && pnpm lint && pnpm test
    warningsShown: jsonb('warnings_shown').$type<Warning[]>().default([]),
    ```
 
-5. **Add warning schema**
+9. **Add warning schema**
    - File: `packages/core/src/schemas/warning.schema.ts`
 
    ```typescript
@@ -883,6 +936,17 @@ pnpm typecheck && pnpm lint && pnpm test
 ```
 
 ### Deliverables
+
+#### Clinical Questions (Part A)
+
+- [ ] Back pain general questions added (5 questions)
+- [ ] Red flag screening questions added (6 yes/no questions)
+- [ ] Red flag screening template created
+- [ ] Flow steps updated with red flag screening step
+- [ ] Scoring config updated with back pain dimensions
+- [ ] Seeds run successfully
+
+#### Branching Logic (Part B)
 
 - [ ] Branch evaluator service implemented
 - [ ] Condition evaluators for all types
@@ -1016,30 +1080,31 @@ Review each updated document for accuracy and consistency.
 
 ## Files Modified Summary
 
-| File                                                          | Change                                           |
-| ------------------------------------------------------------- | ------------------------------------------------ |
-| `packages/database/src/schema/assessment-flows.ts`            | Add scoringConfig, deprecate steps               |
-| `packages/database/src/schema/assessment-templates.ts`        | Deprecate scoringConfig                          |
-| `packages/database/src/schema/flow-steps.ts`                  | **NEW** normalised steps table                   |
-| `packages/database/src/schema/user-assessments.ts`            | Add visitedStepIds, warningsShown JSONB          |
-| `packages/database/src/constants/branching.constants.ts`      | **NEW** branching types                          |
-| `packages/database/seed/seedAssessmentFlows.ts`               | Add combined scoring config                      |
-| `packages/database/seed/seedAssessmentTemplates.ts`           | Remove scoringConfig                             |
-| `packages/database/seed/seedFlowSteps.ts`                     | **NEW** seed normalised steps                    |
-| `packages/core/src/assessments/flow.repository.ts`            | Add findById, findStepsByFlowId                  |
-| `packages/core/src/assessments/branching/`                    | **NEW** branch-evaluator, condition-evaluator    |
-| `packages/core/src/questions/question.repository.ts`          | Add findByTemplateIds                            |
-| `packages/core/src/jobs/handlers/score-assessment.handler.ts` | Use flowId, flow config                          |
-| `packages/core/src/assessments/assessment.service.ts`         | Pass flowId to job                               |
-| `packages/core/src/schemas/job.schema.ts`                     | Update payload schema                            |
-| `packages/core/src/schemas/warning.schema.ts`                 | **NEW** warning types                            |
-| `packages/functions/src/assessments/save-progress.ts`         | Evaluate branching, return nextStepId + warnings |
-| `postman/FFP-API-Collection.postman_collection.json`          | Update schemas, add branching tests              |
-| `project-documentation/assessment-engine.md`                  | Add branching concepts, update diagrams          |
-| `project-documentation/database-schema.md`                    | Add flow_steps, update schema definitions        |
-| `project-documentation/architecture.md`                       | Update service layer diagrams (if needed)        |
-| `project-documentation/project-state.md`                      | Mark refactor complete                           |
-| `project-documentation/progress-log.md`                       | Add refactor summary entry                       |
+| File                                                          | Change                                            |
+| ------------------------------------------------------------- | ------------------------------------------------- |
+| `packages/database/src/schema/assessment-flows.ts`            | Add scoringConfig, deprecate steps                |
+| `packages/database/src/schema/assessment-templates.ts`        | Deprecate scoringConfig                           |
+| `packages/database/src/schema/flow-steps.ts`                  | **NEW** normalised steps table                    |
+| `packages/database/src/schema/user-assessments.ts`            | Add visitedStepIds, warningsShown JSONB           |
+| `packages/database/src/constants/branching.constants.ts`      | **NEW** branching types                           |
+| `packages/database/seed/seedQuestions.ts`                     | Add back pain + red flag screening questions      |
+| `packages/database/seed/seedAssessmentFlows.ts`               | Add combined scoring config, back pain dimensions |
+| `packages/database/seed/seedAssessmentTemplates.ts`           | Remove scoringConfig, add RED_FLAG_SCREENING      |
+| `packages/database/seed/seedFlowSteps.ts`                     | **NEW** seed normalised steps + branching rules   |
+| `packages/core/src/assessments/flow.repository.ts`            | Add findById, findStepsByFlowId                   |
+| `packages/core/src/assessments/branching/`                    | **NEW** branch-evaluator, condition-evaluator     |
+| `packages/core/src/questions/question.repository.ts`          | Add findByTemplateIds                             |
+| `packages/core/src/jobs/handlers/score-assessment.handler.ts` | Use flowId, flow config                           |
+| `packages/core/src/assessments/assessment.service.ts`         | Pass flowId to job                                |
+| `packages/core/src/schemas/job.schema.ts`                     | Update payload schema                             |
+| `packages/core/src/schemas/warning.schema.ts`                 | **NEW** warning types                             |
+| `packages/functions/src/assessments/save-progress.ts`         | Evaluate branching, return nextStepId + warnings  |
+| `postman/FFP-API-Collection.postman_collection.json`          | Update schemas, add branching tests               |
+| `project-documentation/assessment-engine.md`                  | Add branching concepts, update diagrams           |
+| `project-documentation/database-schema.md`                    | Add flow_steps, update schema definitions         |
+| `project-documentation/architecture.md`                       | Update service layer diagrams (if needed)         |
+| `project-documentation/project-state.md`                      | Mark refactor complete                            |
+| `project-documentation/progress-log.md`                       | Add refactor summary entry                        |
 
 ---
 
