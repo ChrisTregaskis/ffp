@@ -19,7 +19,7 @@ import type { ScoringConfig } from '../types';
 /**
  * Assessment templates table definition
  *
- * Templates define assessment structure and scoring configuration.
+ * Templates define assessment question structure.
  * Questions are linked via the template_questions join table (see template-questions.ts).
  *
  * No RLS - templates are system content accessible by all authenticated users.
@@ -31,7 +31,15 @@ export const assessmentTemplates = pgTable(
     name: varchar('name', { length: 255 }).notNull(),
     description: text('description'),
     version: integer('version').notNull().default(1),
-    scoringConfig: jsonb('scoring_config').$type<ScoringConfig>().notNull(),
+
+    /**
+     * @deprecated Use assessment_flows.scoringConfig instead.
+     * Flow-level scoring provides holistic programme recommendations
+     * across all templates in a flow. This column is nullable for
+     * backwards compatibility and will be removed in a future migration.
+     */
+    scoringConfig: jsonb('scoring_config').$type<ScoringConfig>(),
+
     isActive: boolean('is_active').notNull().default(true),
     createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at').defaultNow().notNull(),

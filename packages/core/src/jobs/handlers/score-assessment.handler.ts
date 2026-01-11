@@ -55,10 +55,20 @@ export async function processScoreAssessment(
     const dbTx = tx as unknown as DbClient;
 
     // Get template for scoring config
+    // NOTE: Session 4 will refactor to use flow.scoringConfig instead of template
     const template = await findTemplateById(dbTx, payload.templateId);
 
     if (!template) {
       throw new NotFoundError('Assessment template', payload.templateId);
+    }
+
+    // Null check for deprecated template-level scoringConfig
+    // Future: Session 4 will fetch scoringConfig from flow instead
+    if (!template.scoringConfig) {
+      throw new ValidationError(
+        `Template ${payload.templateId} has no scoring configuration. ` +
+          `Use flow-level scoring via assessment_flows.scoringConfig instead.`
+      );
     }
 
     // Get questions for the template
