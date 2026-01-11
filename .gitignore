@@ -67,6 +67,7 @@ CLAUDE.local.md
 
 project-documentation/sprint-planning/outputs/*.md
 project-documentation/sprint-planning/outputs/**/*.md
+project-documentation/refactoring/log
 
 # AWS RDS CA certificate (public certificate - safe to commit)
 # curl -o packages/core/certs/rds-ca-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
