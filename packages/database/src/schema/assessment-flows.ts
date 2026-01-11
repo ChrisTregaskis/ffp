@@ -22,6 +22,9 @@ import type { ScoringConfig } from '../types';
  * Flow owns the scoring configuration that combines dimensions from all templates
  * in the flow to produce a single holistic programme recommendation.
  *
+ * **Relations:**
+ * - Has many flowSteps (defined in flow-steps.ts to avoid circular imports)
+ *
  * No RLS required - flows are system-managed content accessible by all authenticated users.
  */
 export const assessmentFlows = pgTable(
