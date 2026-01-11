@@ -342,8 +342,9 @@ const STEP_IDS = {
 | 4       | Handler & Service Refactor (scoring)         | 1 hour    | Session 3    |
 | 5       | Branching Logic Implementation               | 1.5 hours | Session 4    |
 | 6       | Testing & Postman Updates                    | 1 hour    | Session 5    |
+| 7       | Documentation Updates                        | 1 hour    | Session 6    |
 
-**Total estimated**: ~7 hours (was ~3 hours before branching + normalisation)
+**Total estimated**: ~8 hours (was ~3 hours before branching + normalisation)
 
 ---
 
@@ -964,7 +965,52 @@ pnpm typecheck && pnpm lint && pnpm test
 - [ ] Postman collection updated
 - [ ] Unit tests pass
 - [ ] Manual E2E test succeeds
-- [ ] Documentation updated
+
+---
+
+## Session 7: Documentation Updates
+
+**Goal**: Update project documentation to reflect new architecture
+
+### Tasks
+
+1. **Update assessment-engine.md**
+   - Add "Template-Level Branching" section with concept explanation
+   - Update data model diagrams to include `flow_steps` table
+   - Add branching examples (red flags, body part routing)
+   - Update API endpoint response schemas
+   - Document warning system behaviour
+
+2. **Update database-schema.md**
+   - Add `flow_steps` table definition and relationships
+   - Update `assessment_flows` (add scoringConfig, note steps deprecation)
+   - Update `user_assessments` (add visitedStepIds, warningsShown)
+   - Update ERD if present
+
+3. **Update architecture.md** (if needed)
+   - Add branching evaluator to service layer diagram
+   - Update assessment flow diagrams to show branching paths
+
+4. **Update project-state.md**
+   - Mark this refactor as complete
+   - Update "Current State" section
+   - Note any follow-up work identified
+
+5. **Update progress-log.md**
+   - Add entry summarising flow-level scoring + branching refactor
+   - Include key decisions made (stepId vs order, JSONB warnings, etc.)
+
+### Verification
+
+Review each updated document for accuracy and consistency.
+
+### Deliverables
+
+- [ ] assessment-engine.md updated with branching concepts
+- [ ] database-schema.md updated with new tables/columns
+- [ ] architecture.md updated (if applicable)
+- [ ] project-state.md updated
+- [ ] progress-log.md updated
 
 ---
 
@@ -989,6 +1035,11 @@ pnpm typecheck && pnpm lint && pnpm test
 | `packages/core/src/schemas/warning.schema.ts`                 | **NEW** warning types                            |
 | `packages/functions/src/assessments/save-progress.ts`         | Evaluate branching, return nextStepId + warnings |
 | `postman/FFP-API-Collection.postman_collection.json`          | Update schemas, add branching tests              |
+| `project-documentation/assessment-engine.md`                  | Add branching concepts, update diagrams          |
+| `project-documentation/database-schema.md`                    | Add flow_steps, update schema definitions        |
+| `project-documentation/architecture.md`                       | Update service layer diagrams (if needed)        |
+| `project-documentation/project-state.md`                      | Mark refactor complete                           |
+| `project-documentation/progress-log.md`                       | Add refactor summary entry                       |
 
 ---
 
