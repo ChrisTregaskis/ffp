@@ -1,4 +1,4 @@
-import { eq, inArray, asc } from 'drizzle-orm';
+import { eq, inArray, asc, and } from 'drizzle-orm';
 
 import type { DbClient, QuestionWithConfig } from '@ffp/database';
 import { questions, templateQuestions, type QuestionRecord } from '@ffp/database/schema';
@@ -136,7 +136,7 @@ export async function findByTemplateIds(
     })
     .from(templateQuestions)
     .innerJoin(questions, eq(templateQuestions.questionId, questions.id))
-    .where(inArray(templateQuestions.templateId, templateIds))
+    .where(and(inArray(templateQuestions.templateId, templateIds), eq(questions.isActive, true)))
     .orderBy(asc(templateQuestions.templateId), asc(templateQuestions.displayOrder));
 
   return records.map((record) => ({

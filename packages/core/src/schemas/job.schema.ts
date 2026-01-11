@@ -33,12 +33,15 @@ export type AssessmentResponse = z.infer<typeof assessmentResponseSchema>;
  *
  * Contains all data needed to calculate dimensional scores from
  * a completed assessment submission.
+ *
+ * Note: Uses flowId (not templateId) because scoring configuration
+ * lives at the flow level, combining dimensions from all templates.
  */
 export const scoreAssessmentPayloadSchema = z.object({
-  /** The assessment submission ID being scored */
-  assessmentSubmissionId: z.string().uuid(),
-  /** The template used for this assessment */
-  templateId: z.string().uuid(),
+  /** The user_assessments record ID being scored */
+  userAssessmentId: z.string().uuid(),
+  /** The flow containing the scoring configuration */
+  flowId: z.string().uuid(),
   /** User who completed the assessment */
   userId: z.string().uuid(),
   /** Array of question responses to score */

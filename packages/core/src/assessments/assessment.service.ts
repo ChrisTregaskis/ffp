@@ -366,14 +366,6 @@ export async function submitAssessment(
     });
   }
 
-  // Get the first template ID for scoring (primary questions template)
-  const questionsStep = flow.steps.find((step) => step.type === 'questions');
-  const templateId = questionsStep?.templateId;
-
-  if (!templateId) {
-    throw new ValidationError('Assessment flow has no questions template');
-  }
-
   // Build responses array for scoring job from all answers
   // Combine existing answers with new answers (new answers override existing)
   // Extract the actual value from JSONB structure for the job payload
@@ -413,11 +405,12 @@ export async function submitAssessment(
     await userAssessmentRepository.transitionStatus(tenantId, assessmentId, 'submitted', { tx });
 
     // Enqueue score_assessment job
+    // Uses flowId for scoring config (flow owns combined dimensions from all templates)
     const jobId = await queueJob(
       'score_assessment',
       {
-        assessmentSubmissionId: assessmentId,
-        templateId,
+        userAssessmentId: assessmentId,
+        flowId: assessment.flowId,
         userId,
         responses,
       },
