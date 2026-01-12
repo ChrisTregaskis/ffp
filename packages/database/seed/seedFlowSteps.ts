@@ -8,6 +8,7 @@ import { FLOW_IDS } from './seedAssessmentFlows.js';
 import { TEMPLATE_IDS } from './seedAssessmentTemplates.js';
 
 import type { NewFlowStep } from '../src/schema/flow-steps.js';
+import type { NextStepRule } from '../src/constants/branching.constants.js';
 
 const logger = createLogger('seed-flow-steps');
 
@@ -21,6 +22,8 @@ const logger = createLogger('seed-flow-steps');
 export const STEP_IDS = {
   INTRO: '55555555-5555-5555-5555-555555550001',
   PRE_ASSESSMENT_QUESTIONS: '55555555-5555-5555-5555-555555550002',
+  BACK_PAIN_GENERAL: '55555555-5555-5555-5555-555555550008',
+  RED_FLAG_SCREENING: '55555555-5555-5555-5555-555555550009',
   TRANSITION: '55555555-5555-5555-5555-555555550003',
   STRENGTH_ASSESSMENT: '55555555-5555-5555-5555-555555550004',
   BALANCE_ASSESSMENT: '55555555-5555-5555-5555-555555550005',
@@ -29,19 +32,102 @@ export const STEP_IDS = {
 } as const;
 
 /**
+ * Red flag screening branching rules
+ *
+ * These rules trigger a medical warning when any red flag question is answered "yes".
+ * The warning advises users to seek medical review before starting an exercise programme.
+ *
+ * Design: Each red flag question gets its own rule. When any "yes" is detected,
+ * a warning is shown but the user can continue (continueAfterWarning: true).
+ * This allows collection of all red flag responses while ensuring the warning is displayed.
+ */
+const RED_FLAG_BRANCHING_RULES: NextStepRule[] = [
+  {
+    priority: 1,
+    conditions: [{ type: 'answer_value', questionSlug: 'radiating-pain', answerValue: 'yes' }],
+    action: {
+      type: 'show_warning',
+      warningMessage:
+        'Your symptoms may indicate nerve involvement. Please seek medical review before starting an exercise programme.',
+      warningType: 'seek_medical',
+      continueAfterWarning: true,
+    },
+  },
+  {
+    priority: 2,
+    conditions: [{ type: 'answer_value', questionSlug: 'numbness-tingling', answerValue: 'yes' }],
+    action: {
+      type: 'show_warning',
+      warningMessage:
+        'Numbness or tingling may indicate nerve involvement. Please seek medical review before starting an exercise programme.',
+      warningType: 'seek_medical',
+      continueAfterWarning: true,
+    },
+  },
+  {
+    priority: 3,
+    conditions: [{ type: 'answer_value', questionSlug: 'incontinence', answerValue: 'yes' }],
+    action: {
+      type: 'show_warning',
+      warningMessage:
+        'This symptom requires urgent medical attention. Please seek medical review immediately before starting any exercise programme.',
+      warningType: 'seek_medical',
+      continueAfterWarning: true,
+    },
+  },
+  {
+    priority: 4,
+    conditions: [{ type: 'answer_value', questionSlug: 'saddle-numbness', answerValue: 'yes' }],
+    action: {
+      type: 'show_warning',
+      warningMessage:
+        'This symptom requires urgent medical attention. Please seek medical review immediately before starting any exercise programme.',
+      warningType: 'seek_medical',
+      continueAfterWarning: true,
+    },
+  },
+  {
+    priority: 5,
+    conditions: [
+      { type: 'answer_value', questionSlug: 'unexplained-weight-loss', answerValue: 'yes' },
+    ],
+    action: {
+      type: 'show_warning',
+      warningMessage:
+        'Unexplained weight loss alongside back pain may require investigation. Please seek medical review before starting an exercise programme.',
+      warningType: 'seek_medical',
+      continueAfterWarning: true,
+    },
+  },
+  {
+    priority: 6,
+    conditions: [{ type: 'answer_value', questionSlug: 'night-sweats', answerValue: 'yes' }],
+    action: {
+      type: 'show_warning',
+      warningMessage:
+        'Night sweats or fever alongside back pain may require investigation. Please seek medical review before starting an exercise programme.',
+      warningType: 'seek_medical',
+      continueAfterWarning: true,
+    },
+  },
+];
+
+/**
  * Default flow steps (normalised from JSONB)
  *
- * MVP 7-step journey:
+ * 9-step journey with clinical back pain assessment:
  * 1. Intro - Welcome screen
- * 2. Questions - Pre-assessment questions
- * 3. Transition - Physical assessment preparation
- * 4. Video-assessment - Strength tests
- * 5. Video-assessment - Balance tests
- * 6. Results - Score display
- * 7. Programme-overview - Generated programme
+ * 2. Questions - Pre-assessment questions (goals, activity level)
+ * 3. Questions - Back pain general (clinical back pain questions)
+ * 4. Questions - Red flag screening (critical yes/no questions with branching)
+ * 5. Transition - Physical assessment preparation
+ * 6. Video-assessment - Strength tests
+ * 7. Video-assessment - Balance tests
+ * 8. Results - Score display
+ * 9. Programme-overview - Generated programme
  *
  * Note: defaultNextStepId provides linear progression.
- * No branching rules in MVP - will be added for body-part-specific flows.
+ * RED_FLAG_SCREENING step has nextStepRules for medical warning branching.
  */
 const DEFAULT_FLOW_STEPS: NewFlowStep[] = [
   {
@@ -53,7 +139,7 @@ const DEFAULT_FLOW_STEPS: NewFlowStep[] = [
     config: {
       title: 'Physiotherapy Assessment',
       description: 'Welcome to your personalised physiotherapy assessment.',
-      estimatedMinutes: 20,
+      estimatedMinutes: 25,
     },
     nextStepRules: null,
     defaultNextStepId: STEP_IDS.PRE_ASSESSMENT_QUESTIONS,
@@ -70,6 +156,36 @@ const DEFAULT_FLOW_STEPS: NewFlowStep[] = [
       description: 'Quick questions about your goals, pain levels, and medical history',
     },
     nextStepRules: null,
+    defaultNextStepId: STEP_IDS.BACK_PAIN_GENERAL,
+    isActive: true,
+  },
+  {
+    id: STEP_IDS.BACK_PAIN_GENERAL,
+    flowId: FLOW_IDS.DEFAULT,
+    templateId: TEMPLATE_IDS.BACK_PAIN_GENERAL,
+    order: 3,
+    type: 'questions',
+    config: {
+      title: 'Back Pain Assessment',
+      description:
+        "Let's understand more about your back pain history and characteristics to tailor your programme.",
+    },
+    nextStepRules: null,
+    defaultNextStepId: STEP_IDS.RED_FLAG_SCREENING,
+    isActive: true,
+  },
+  {
+    id: STEP_IDS.RED_FLAG_SCREENING,
+    flowId: FLOW_IDS.DEFAULT,
+    templateId: TEMPLATE_IDS.RED_FLAG_SCREENING,
+    order: 4,
+    type: 'questions',
+    config: {
+      title: 'Health Screening',
+      description:
+        'Important health questions to ensure your safety. Please answer honestly - this helps us provide appropriate guidance.',
+    },
+    nextStepRules: RED_FLAG_BRANCHING_RULES,
     defaultNextStepId: STEP_IDS.TRANSITION,
     isActive: true,
   },
@@ -77,7 +193,7 @@ const DEFAULT_FLOW_STEPS: NewFlowStep[] = [
     id: STEP_IDS.TRANSITION,
     flowId: FLOW_IDS.DEFAULT,
     templateId: null,
-    order: 3,
+    order: 5,
     type: 'transition',
     config: {
       title: 'Ready for Physical Assessment?',
@@ -98,7 +214,7 @@ const DEFAULT_FLOW_STEPS: NewFlowStep[] = [
     id: STEP_IDS.STRENGTH_ASSESSMENT,
     flowId: FLOW_IDS.DEFAULT,
     templateId: TEMPLATE_IDS.STRENGTH_ASSESSMENT,
-    order: 4,
+    order: 6,
     type: 'video-assessment',
     config: {
       title: 'Strength Assessment',
@@ -118,7 +234,7 @@ const DEFAULT_FLOW_STEPS: NewFlowStep[] = [
     id: STEP_IDS.BALANCE_ASSESSMENT,
     flowId: FLOW_IDS.DEFAULT,
     templateId: TEMPLATE_IDS.BALANCE_ASSESSMENT,
-    order: 5,
+    order: 7,
     type: 'video-assessment',
     config: {
       title: 'Balance Assessment',
@@ -132,7 +248,7 @@ const DEFAULT_FLOW_STEPS: NewFlowStep[] = [
     id: STEP_IDS.RESULTS,
     flowId: FLOW_IDS.DEFAULT,
     templateId: null,
-    order: 6,
+    order: 8,
     type: 'results',
     config: {
       title: 'Assessment Complete!',
@@ -146,7 +262,7 @@ const DEFAULT_FLOW_STEPS: NewFlowStep[] = [
     id: STEP_IDS.PROGRAMME_OVERVIEW,
     flowId: FLOW_IDS.DEFAULT,
     templateId: null,
-    order: 7,
+    order: 9,
     type: 'programme-overview',
     config: {
       title: 'Your Personalised Programme',

@@ -118,3 +118,28 @@ export interface NextStepRule {
   /** Action to take when conditions match */
   action: BranchAction;
 }
+
+/**
+ * Warning record stored in user_assessments.warnings_shown
+ *
+ * Tracks warnings shown to users during assessment for:
+ * - Audit trail (which warnings were displayed)
+ * - Duplicate prevention (don't show same warning twice)
+ * - Assessment history (medical review recommendations)
+ */
+export interface AssessmentWarning {
+  /** Warning message displayed to user */
+  message: string;
+
+  /** Severity level of the warning */
+  type: WarningType;
+
+  /** ISO timestamp when warning was shown */
+  shownAt: string;
+
+  /** Step ID where warning was triggered (optional for context) */
+  stepId?: string;
+
+  /** Question slug that triggered the warning (optional for context) */
+  triggeredBy?: string;
+}

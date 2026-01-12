@@ -36,6 +36,8 @@ export type VideoSlug = keyof typeof VIDEO_IDS;
  * - Pre-assessment questions: 01xx
  * - Strength assessment questions: 02xx
  * - Balance assessment questions: 03xx
+ * - Back pain general questions: 04xx
+ * - Red flag screening questions: 05xx
  */
 export const QUESTION_IDS = {
   // Pre-assessment questions (template 11111111-1111-1111-1111-111111111101)
@@ -58,6 +60,21 @@ export const QUESTION_IDS = {
   'tandem-stand': '22222222-2222-2222-2222-222222220303',
   'tandem-stability': '22222222-2222-2222-2222-222222220304',
   'balance-confidence': '22222222-2222-2222-2222-222222220305',
+
+  // Back pain general questions (template 11111111-1111-1111-1111-111111111104)
+  'back-pain-duration': '22222222-2222-2222-2222-222222220401',
+  'back-pain-intensity': '22222222-2222-2222-2222-222222220402',
+  'back-pain-type': '22222222-2222-2222-2222-222222220403',
+  'back-pain-recurrence': '22222222-2222-2222-2222-222222220404',
+  'back-pain-typical-duration': '22222222-2222-2222-2222-222222220405',
+
+  // Red flag screening questions (template 11111111-1111-1111-1111-111111111105)
+  'radiating-pain': '22222222-2222-2222-2222-222222220501',
+  'numbness-tingling': '22222222-2222-2222-2222-222222220502',
+  incontinence: '22222222-2222-2222-2222-222222220503',
+  'saddle-numbness': '22222222-2222-2222-2222-222222220504',
+  'unexplained-weight-loss': '22222222-2222-2222-2222-222222220505',
+  'night-sweats': '22222222-2222-2222-2222-222222220506',
 } as const;
 
 export type QuestionSlug = keyof typeof QUESTION_IDS;
@@ -286,12 +303,199 @@ const balanceAssessmentQuestions: NewQuestion[] = [
 ];
 
 /**
+ * Back pain general questions
+ * Clinical questions about back pain history and characteristics
+ * Based on real physiotherapy assessment protocols
+ */
+const backPainGeneralQuestions: NewQuestion[] = [
+  {
+    id: QUESTION_IDS['back-pain-duration'],
+    slug: 'back-pain-duration',
+    type: 'single-choice',
+    questionText: 'How long have you been experiencing your current back pain?',
+    description: 'Select the option that best describes the duration',
+    options: [
+      { value: 'less-1-week', label: 'Less than 1 week', score: 1 },
+      { value: '1-2-weeks', label: '1-2 weeks', score: 2 },
+      { value: '2-4-weeks', label: '2-4 weeks', score: 3 },
+      { value: '4-12-weeks', label: '4-12 weeks', score: 4 },
+      { value: 'over-12-weeks', label: 'More than 12 weeks', score: 5 },
+    ],
+    validation: { required: true },
+    scoreDimension: 'pain',
+    isActive: true,
+  },
+  {
+    id: QUESTION_IDS['back-pain-intensity'],
+    slug: 'back-pain-intensity',
+    type: 'scale',
+    questionText: 'On average, how would you rate your back pain intensity?',
+    description:
+      'On a scale of 0 (no pain) to 10 (worst pain imaginable). Think about your typical pain level over the past week.',
+    validation: { required: true, min: 0, max: 10 },
+    scoreDimension: 'pain',
+    isActive: true,
+  },
+  {
+    id: QUESTION_IDS['back-pain-type'],
+    slug: 'back-pain-type',
+    type: 'single-choice',
+    questionText: 'How would you best describe your back pain?',
+    description: 'Select the description that most closely matches your experience',
+    options: [
+      { value: 'sharp-shooting', label: 'Sharp or shooting pain', score: 4 },
+      { value: 'dull-aching', label: 'Dull or aching pain', score: 2 },
+      { value: 'only-when-moving', label: 'Pain only when moving', score: 1 },
+      { value: 'constant-intense', label: 'Constant and intense pain', score: 5 },
+    ],
+    validation: { required: true },
+    scoreDimension: 'pain',
+    isActive: true,
+  },
+  {
+    id: QUESTION_IDS['back-pain-recurrence'],
+    slug: 'back-pain-recurrence',
+    type: 'single-choice',
+    questionText: 'How many times has your back pain recurred in the last 3 years?',
+    description: 'Include any episodes of significant back pain',
+    options: [
+      { value: 'never', label: 'This is the first time', score: 1 },
+      { value: 'once', label: '1 previous episode', score: 2 },
+      { value: '2-5-times', label: '2-5 times', score: 3 },
+      { value: 'over-5-times', label: 'More than 5 times', score: 4 },
+    ],
+    validation: { required: true },
+    scoreDimension: 'pain',
+    isActive: true,
+  },
+  {
+    id: QUESTION_IDS['back-pain-typical-duration'],
+    slug: 'back-pain-typical-duration',
+    type: 'single-choice',
+    questionText: 'When you have had back pain before, how long did it typically last?',
+    description: 'Select the duration that best matches your experience',
+    options: [
+      { value: 'few-days', label: 'A few days', score: 1 },
+      { value: '1-2-weeks', label: '1-2 weeks', score: 2 },
+      { value: '3-6-weeks', label: '3-6 weeks', score: 3 },
+      { value: '7-12-weeks', label: '7-12 weeks', score: 4 },
+      { value: 'over-12-weeks', label: 'More than 12 weeks', score: 5 },
+      { value: 'not-applicable', label: 'Not applicable (first episode)', score: 0 },
+    ],
+    validation: { required: true },
+    scoreDimension: 'pain',
+    isActive: true,
+  },
+];
+
+/**
+ * Red flag screening questions
+ * Critical clinical questions to identify conditions requiring medical review
+ * Any "yes" answer triggers a medical warning before proceeding with exercise
+ *
+ * These questions are based on standard physiotherapy red flag screening protocols.
+ * All questions use yes/no format with score: 0 for no, 10 for yes (triggers warning threshold)
+ */
+const redFlagScreeningQuestions: NewQuestion[] = [
+  {
+    id: QUESTION_IDS['radiating-pain'],
+    slug: 'radiating-pain',
+    type: 'single-choice',
+    questionText: 'Does your back pain radiate (travel) down your leg below the knee?',
+    description:
+      'Pain that travels from your back down into your leg may indicate nerve involvement',
+    options: [
+      { value: 'no', label: 'No', score: 0 },
+      { value: 'yes', label: 'Yes', score: 10 },
+    ],
+    validation: { required: true },
+    scoreDimension: 'pain',
+    isActive: true,
+  },
+  {
+    id: QUESTION_IDS['numbness-tingling'],
+    slug: 'numbness-tingling',
+    type: 'single-choice',
+    questionText: 'Do you experience pins and needles, numbness, or tingling in your feet or legs?',
+    description: 'These sensations may indicate nerve involvement',
+    options: [
+      { value: 'no', label: 'No', score: 0 },
+      { value: 'yes', label: 'Yes', score: 10 },
+    ],
+    validation: { required: true },
+    scoreDimension: 'pain',
+    isActive: true,
+  },
+  {
+    id: QUESTION_IDS['incontinence'],
+    slug: 'incontinence',
+    type: 'single-choice',
+    questionText:
+      'Have you experienced any difficulty controlling your bladder or bowel (incontinence)?',
+    description: 'This is an important symptom that requires immediate medical attention',
+    options: [
+      { value: 'no', label: 'No', score: 0 },
+      { value: 'yes', label: 'Yes', score: 10 },
+    ],
+    validation: { required: true },
+    scoreDimension: 'pain',
+    isActive: true,
+  },
+  {
+    id: QUESTION_IDS['saddle-numbness'],
+    slug: 'saddle-numbness',
+    type: 'single-choice',
+    questionText:
+      'Do you have any numbness around your genital area or inner thighs (saddle area)?',
+    description: 'This is an important symptom that requires immediate medical attention',
+    options: [
+      { value: 'no', label: 'No', score: 0 },
+      { value: 'yes', label: 'Yes', score: 10 },
+    ],
+    validation: { required: true },
+    scoreDimension: 'pain',
+    isActive: true,
+  },
+  {
+    id: QUESTION_IDS['unexplained-weight-loss'],
+    slug: 'unexplained-weight-loss',
+    type: 'single-choice',
+    questionText:
+      'Have you experienced unexplained weight loss of more than 10% of your body weight?',
+    description: 'Unexplained weight loss alongside back pain may require investigation',
+    options: [
+      { value: 'no', label: 'No', score: 0 },
+      { value: 'yes', label: 'Yes', score: 10 },
+    ],
+    validation: { required: true },
+    scoreDimension: 'pain',
+    isActive: true,
+  },
+  {
+    id: QUESTION_IDS['night-sweats'],
+    slug: 'night-sweats',
+    type: 'single-choice',
+    questionText: 'Have you been experiencing night sweats or fever alongside your back pain?',
+    description: 'These symptoms alongside back pain may require further investigation',
+    options: [
+      { value: 'no', label: 'No', score: 0 },
+      { value: 'yes', label: 'Yes', score: 10 },
+    ],
+    validation: { required: true },
+    scoreDimension: 'pain',
+    isActive: true,
+  },
+];
+
+/**
  * All default questions to seed
  */
 const DEFAULT_QUESTIONS: NewQuestion[] = [
   ...preAssessmentQuestions,
   ...strengthAssessmentQuestions,
   ...balanceAssessmentQuestions,
+  ...backPainGeneralQuestions,
+  ...redFlagScreeningQuestions,
 ];
 
 /**

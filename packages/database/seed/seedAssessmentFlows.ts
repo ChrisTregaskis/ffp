@@ -33,23 +33,43 @@ const DEFAULT_FLOW_NAME = 'Standard Physiotherapy Assessment';
 /**
  * Combined scoring configuration for all dimensions in the flow.
  *
- * This consolidates scoring from all templates (pre-assessment, strength, balance)
- * into a single configuration that produces one holistic programme recommendation.
+ * This consolidates scoring from all templates into a single configuration
+ * that produces one holistic programme recommendation.
  *
  * Dimensions:
- * - pain: From pre-assessment questions (pain-level, pain-location)
+ * - pain: From pre-assessment (pain-level, pain-location) + back pain questions + red flag screening
  * - general: From pre-assessment questions (goal-primary, activity-level, medical-conditions)
  * - strength: From strength assessment (squat-rating, pushup-count, strength-comfort)
  * - balance: From balance assessment (single-leg-duration, tandem-stability, balance-confidence)
+ *
+ * Note: Red flag screening questions are included in pain dimension but with high scores (10)
+ * to ensure any red flag triggers high pain score and gentle programme recommendation.
  */
 const FLOW_SCORING_CONFIG: ScoringConfig = {
   dimensions: [
     {
       name: 'pain',
       weight: 1,
-      maxScore: 17,
-      questionIds: [QUESTION_IDS['pain-level'], QUESTION_IDS['pain-location']],
-      riskThresholds: { low: 3, moderate: 6 },
+      maxScore: 100, // Increased to accommodate back pain and red flag questions
+      questionIds: [
+        // Pre-assessment pain questions
+        QUESTION_IDS['pain-level'],
+        QUESTION_IDS['pain-location'],
+        // Back pain general questions
+        QUESTION_IDS['back-pain-duration'],
+        QUESTION_IDS['back-pain-intensity'],
+        QUESTION_IDS['back-pain-type'],
+        QUESTION_IDS['back-pain-recurrence'],
+        QUESTION_IDS['back-pain-typical-duration'],
+        // Red flag screening questions (high score = triggers gentle programme)
+        QUESTION_IDS['radiating-pain'],
+        QUESTION_IDS['numbness-tingling'],
+        QUESTION_IDS['incontinence'],
+        QUESTION_IDS['saddle-numbness'],
+        QUESTION_IDS['unexplained-weight-loss'],
+        QUESTION_IDS['night-sweats'],
+      ],
+      riskThresholds: { low: 15, moderate: 30 }, // Adjusted for more questions
     },
     {
       name: 'general',
@@ -85,15 +105,22 @@ const FLOW_SCORING_CONFIG: ScoringConfig = {
     },
   ],
   programMappings: [
-    // High pain takes priority - recommend gentle programme
+    // Any red flag present - highest priority, recommend gentle programme with medical review
+    // Red flags score 10 each, so pain >= 10 catches any single red flag
     {
       priority: 1,
-      conditions: [{ dimension: 'pain', operator: 'gte', value: 7 }],
+      conditions: [{ dimension: 'pain', operator: 'gte', value: 35 }],
+      programTemplateId: 'gentle-mobility-programme',
+    },
+    // Moderate-high pain without red flags - gentle programme
+    {
+      priority: 2,
+      conditions: [{ dimension: 'pain', operator: 'gte', value: 20 }],
       programTemplateId: 'gentle-mobility-programme',
     },
     // Low strength + low balance - foundation programme
     {
-      priority: 2,
+      priority: 3,
       conditions: [
         { dimension: 'strength', operator: 'lt', value: 20 },
         { dimension: 'balance', operator: 'lt', value: 6 },
@@ -103,9 +130,9 @@ const FLOW_SCORING_CONFIG: ScoringConfig = {
     },
     // Good overall - advanced programme
     {
-      priority: 3,
+      priority: 4,
       conditions: [
-        { dimension: 'pain', operator: 'lt', value: 3 },
+        { dimension: 'pain', operator: 'lt', value: 10 },
         { dimension: 'strength', operator: 'gte', value: 40 },
       ],
       operator: 'and',
@@ -121,16 +148,20 @@ const FLOW_SCORING_CONFIG: ScoringConfig = {
 };
 
 /**
- * Default assessment flow steps (from assessment-engine.md)
+ * Default assessment flow steps (DEPRECATED - kept for backwards compatibility)
  *
- * MVP 7-step journey:
+ * @deprecated Use normalised flow_steps table instead. See seedFlowSteps.ts.
+ *
+ * 9-step journey with clinical back pain assessment:
  * 1. Intro - Welcome screen
- * 2. Questions - Pre-assessment questions
- * 3. Transition - Physical assessment preparation
- * 4. Video-assessment - Strength tests
- * 5. Video-assessment - Balance tests
- * 6. Results - Score display
- * 7. Programme-overview - Generated programme
+ * 2. Questions - Pre-assessment questions (goals, activity level)
+ * 3. Questions - Back pain general (clinical back pain questions)
+ * 4. Questions - Red flag screening (critical yes/no questions)
+ * 5. Transition - Physical assessment preparation
+ * 6. Video-assessment - Strength tests
+ * 7. Video-assessment - Balance tests
+ * 8. Results - Score display
+ * 9. Programme-overview - Generated programme
  */
 const DEFAULT_FLOW_STEPS: FlowStep[] = [
   {
@@ -139,7 +170,7 @@ const DEFAULT_FLOW_STEPS: FlowStep[] = [
     config: {
       title: 'Physiotherapy Assessment',
       description: 'Welcome to your personalised physiotherapy assessment.',
-      estimatedMinutes: 20,
+      estimatedMinutes: 25,
     },
   },
   {
@@ -153,6 +184,26 @@ const DEFAULT_FLOW_STEPS: FlowStep[] = [
   },
   {
     order: 3,
+    type: 'questions',
+    templateId: TEMPLATE_IDS.BACK_PAIN_GENERAL,
+    config: {
+      title: 'Back Pain Assessment',
+      description:
+        "Let's understand more about your back pain history and characteristics to tailor your programme.",
+    },
+  },
+  {
+    order: 4,
+    type: 'questions',
+    templateId: TEMPLATE_IDS.RED_FLAG_SCREENING,
+    config: {
+      title: 'Health Screening',
+      description:
+        'Important health questions to ensure your safety. Please answer honestly - this helps us provide appropriate guidance.',
+    },
+  },
+  {
+    order: 5,
     type: 'transition',
     config: {
       title: 'Ready for Physical Assessment?',
@@ -167,7 +218,7 @@ const DEFAULT_FLOW_STEPS: FlowStep[] = [
     },
   },
   {
-    order: 4,
+    order: 6,
     type: 'video-assessment',
     templateId: TEMPLATE_IDS.STRENGTH_ASSESSMENT,
     config: {
@@ -182,7 +233,7 @@ const DEFAULT_FLOW_STEPS: FlowStep[] = [
     },
   },
   {
-    order: 5,
+    order: 7,
     type: 'video-assessment',
     templateId: TEMPLATE_IDS.BALANCE_ASSESSMENT,
     config: {
@@ -191,7 +242,7 @@ const DEFAULT_FLOW_STEPS: FlowStep[] = [
     },
   },
   {
-    order: 6,
+    order: 8,
     type: 'results',
     config: {
       title: 'Assessment Complete!',
@@ -199,7 +250,7 @@ const DEFAULT_FLOW_STEPS: FlowStep[] = [
     },
   },
   {
-    order: 7,
+    order: 9,
     type: 'programme-overview',
     config: {
       title: 'Your Personalised Programme',

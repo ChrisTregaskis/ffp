@@ -20,6 +20,8 @@ export const TEMPLATE_IDS = {
   PRE_ASSESSMENT_QUESTIONS: '11111111-1111-1111-1111-111111111101',
   STRENGTH_ASSESSMENT: '11111111-1111-1111-1111-111111111102',
   BALANCE_ASSESSMENT: '11111111-1111-1111-1111-111111111103',
+  BACK_PAIN_GENERAL: '11111111-1111-1111-1111-111111111104',
+  RED_FLAG_SCREENING: '11111111-1111-1111-1111-111111111105',
 } as const;
 
 /**
@@ -29,6 +31,8 @@ export const TEMPLATE_NAMES = {
   PRE_ASSESSMENT_QUESTIONS: 'pre-assessment-questions-v1',
   STRENGTH_ASSESSMENT: 'strength-assessment-v1',
   BALANCE_ASSESSMENT: 'balance-assessment-v1',
+  BACK_PAIN_GENERAL: 'back-pain-general-v1',
+  RED_FLAG_SCREENING: 'red-flag-screening-v1',
 } as const;
 
 /**
@@ -69,6 +73,27 @@ const templateQuestionMappings: TemplateQuestionMapping[] = [
       'tandem-stand',
       'tandem-stability',
       'balance-confidence',
+    ],
+  },
+  {
+    templateId: TEMPLATE_IDS.BACK_PAIN_GENERAL,
+    questionIds: [
+      'back-pain-duration',
+      'back-pain-intensity',
+      'back-pain-type',
+      'back-pain-recurrence',
+      'back-pain-typical-duration',
+    ],
+  },
+  {
+    templateId: TEMPLATE_IDS.RED_FLAG_SCREENING,
+    questionIds: [
+      'radiating-pain',
+      'numbness-tingling',
+      'incontinence',
+      'saddle-numbness',
+      'unexplained-weight-loss',
+      'night-sweats',
     ],
   },
 ];
@@ -131,12 +156,52 @@ const balanceAssessmentTemplate: NewAssessmentTemplate = {
 };
 
 /**
+ * Back pain general assessment template
+ * Clinical questions about back pain history and characteristics
+ *
+ * Questions include duration, intensity, type, recurrence history, and typical duration.
+ * Based on real physiotherapy assessment protocols.
+ *
+ * NOTE: scoringConfig is now null - scoring is handled at flow level.
+ * See seedAssessmentFlows.ts for the combined scoring configuration.
+ */
+const backPainGeneralTemplate: NewAssessmentTemplate = {
+  id: TEMPLATE_IDS.BACK_PAIN_GENERAL,
+  name: TEMPLATE_NAMES.BACK_PAIN_GENERAL,
+  description: 'Clinical questions about back pain history and characteristics',
+  version: 1,
+  scoringConfig: null, // Deprecated: Use flow-level scoring
+  isActive: true,
+};
+
+/**
+ * Red flag screening template
+ * Critical clinical questions to identify conditions requiring medical review
+ *
+ * Contains 6 yes/no questions based on standard physiotherapy red flag screening protocols.
+ * Any "yes" answer triggers a medical warning via branching rules before proceeding.
+ *
+ * NOTE: scoringConfig is now null - scoring is handled at flow level.
+ * See seedAssessmentFlows.ts for the combined scoring configuration.
+ */
+const redFlagScreeningTemplate: NewAssessmentTemplate = {
+  id: TEMPLATE_IDS.RED_FLAG_SCREENING,
+  name: TEMPLATE_NAMES.RED_FLAG_SCREENING,
+  description: 'Critical clinical questions to identify conditions requiring medical review',
+  version: 1,
+  scoringConfig: null, // Deprecated: Use flow-level scoring
+  isActive: true,
+};
+
+/**
  * All default templates to seed
  */
 const DEFAULT_TEMPLATES: NewAssessmentTemplate[] = [
   preAssessmentQuestionsTemplate,
   strengthAssessmentTemplate,
   balanceAssessmentTemplate,
+  backPainGeneralTemplate,
+  redFlagScreeningTemplate,
 ];
 
 /**

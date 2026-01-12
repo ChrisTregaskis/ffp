@@ -1024,6 +1024,8 @@ pnpm typecheck && pnpm lint && pnpm test
 - [ ] `visited_step_ids` tracks actual path taken
 - [ ] `warnings_shown` persisted on user_assessment
 
+_note:_ please provide user with manual test instructions once work complete.
+
 ### Deliverables
 
 - [ ] Postman collection updated
@@ -1068,6 +1070,10 @@ pnpm typecheck && pnpm lint && pnpm test
 
 Review each updated document for accuracy and consistency.
 
+### Review Context
+
+Replace in full and prepare .claude/review-context.md ready for a final review of all work on this branch.
+
 ### Deliverables
 
 - [ ] assessment-engine.md updated with branching concepts
@@ -1075,6 +1081,7 @@ Review each updated document for accuracy and consistency.
 - [ ] architecture.md updated (if applicable)
 - [ ] project-state.md updated
 - [ ] progress-log.md updated
+- [ ] .claude/review-context.md ready for review
 
 ---
 

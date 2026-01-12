@@ -14,3 +14,6 @@ export * from './user-assessment.schema';
 
 // Job schemas
 export * from './job.schema';
+
+// Branching schemas
+export * from './warning.schema';
