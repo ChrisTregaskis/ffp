@@ -1,7 +1,7 @@
 ---
 description: Review current branch changes against FFP standards
 allowed-tools: Bash(git diff:*), Bash(git status:*), Bash(git log:*), Bash(git branch:*)
-argument-hint: [base-branch]
+argument-hint: <base-branch>
 ---
 
 # Code Review Request
@@ -26,9 +26,9 @@ If missing, note "No review context provided - consider creating `.claude/review
 
 **Status**: !`git status --short`
 
-**Diff from ${1:-main}**: !`git diff ${1:-main}...HEAD`
+**Diff from $ARGUMENTS**: !`git diff $ARGUMENTS...HEAD`
 
-**Recent commits**: !`git log ${1:-main}..HEAD --oneline --no-decorate`
+**Recent commits**: !`git log $ARGUMENTS..HEAD --oneline --no-decorate`
 
 ## Project Context
 

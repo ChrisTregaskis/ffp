@@ -21,8 +21,11 @@ import { findFlowById, findStepsByFlowId } from '../../assessments/flow.reposito
 import { calculateScores, toJobResult } from '../../assessments/scoring';
 import { NotFoundError, ValidationError } from '../../lib/errors';
 import { findByTemplateIds } from '../../questions/question.repository';
-
-import type { AssessmentResponse, ScoreAssessmentResult } from '../../schemas/job.schema';
+import {
+  assessmentResponseSchema,
+  type AssessmentResponse,
+  type ScoreAssessmentResult,
+} from '../../schemas/job.schema';
 
 export interface ScoreAssessmentJobPayload {
   /** The user assessment ID to score */
@@ -37,9 +40,7 @@ export interface ScoreAssessmentJobPayload {
  * Fetches the assessment flow (with scoringConfig), all questions from templates
  * in the flow via flow_steps, and persisted answers from the database.
  * Calculates dimensional scores and updates the user_assessment record.
- *
- * @param payload - Job payload containing assessment ID and flow ID
- * @param tenantId - Tenant UUID for RLS context
+
  * @returns Score assessment result with dimensional scores
  *
  * @throws {NotFoundError} If the assessment flow is not found
@@ -51,6 +52,11 @@ export async function processScoreAssessment(
 ): Promise<ScoreAssessmentResult> {
   const db = getDb();
 
+  // Scoring jobs are system operations triggered by authenticated user submissions.
+  // Tenant-level RLS isolation (userId = undefined) is sufficient because:
+  // 1. Jobs are only created via submitAssessment() which validates user ownership
+  // 2. The job payload contains userAssessmentId which is tenant-scoped
+  // 3. User-level RLS would require passing userId through the job queue unnecessarily
   return await withRLS(db, tenantId, undefined, async (tx) => {
     // Type assertion: tx is compatible with DbClient for query operations
     // The $client property is only used for connection management, not queries
@@ -104,11 +110,23 @@ export async function processScoreAssessment(
       );
     }
 
-    // Transform database records to AssessmentResponse format
-    const responses: AssessmentResponse[] = answerRecords.map((record) => ({
-      questionId: record.questionId,
-      answerValue: record.answerValue as AssessmentResponse['answerValue'],
-    }));
+    // Transform and validate database records to AssessmentResponse format.
+    // Validate JSONB answerValue from database to catch
+    // any malformed data that could cause silent incorrect scoring.
+    const responses: AssessmentResponse[] = answerRecords.map((record) => {
+      const parsed = assessmentResponseSchema.safeParse({
+        questionId: record.questionId,
+        answerValue: record.answerValue,
+      });
+
+      if (!parsed.success) {
+        throw new ValidationError(
+          `Invalid answer format for question ${record.questionId}: ${parsed.error.message}`
+        );
+      }
+
+      return parsed.data;
+    });
 
     // Calculate scores using flow's combined scoring config
     const scoringResult = calculateScores(responses, questions, flow.scoringConfig);

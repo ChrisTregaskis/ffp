@@ -5,15 +5,15 @@ import { userAssessments } from '@ffp/database/schema';
 
 import { withRLS, type Transaction } from '../lib/database';
 import { NotFoundError, ValidationError } from '../lib/errors';
-import { isValidStatusTransition, getAllowedTransitions } from '../schemas/user-assessment.schema';
-
-import type {
-  UserAssessment,
-  CreateUserAssessmentInput,
-  UpdateUserAssessmentInput,
-  UserAssessmentScores,
+import {
+  isValidStatusTransition,
+  getAllowedTransitions,
+  type UserAssessment,
+  type CreateUserAssessmentInput,
+  type UpdateUserAssessmentInput,
+  type UserAssessmentScores,
 } from '../schemas/user-assessment.schema';
-import type { Warning } from '../schemas/warning.schema';
+import { warningsArraySchema, type Warning } from '../schemas/warning.schema';
 
 /**
  * Map database record to UserAssessment type
@@ -471,13 +471,19 @@ export async function appendWarnings(
     return;
   }
 
+  // Validate warnings structure before SQL interpolation.
+  // This ensures malformed data cannot cause unexpected behaviour.
+  const validatedWarnings = warningsArraySchema.parse(warnings);
+  const warningsJson = JSON.stringify(validatedWarnings);
+
   const doAppend = async (dbTx: Transaction): Promise<void> => {
     // Use JSONB concatenation to append warnings to existing array
     // COALESCE handles null case, defaulting to empty array
+    // Note: warningsJson is parameterised by Drizzle's sql template tag
     await dbTx
       .update(userAssessments)
       .set({
-        warningsShown: sql`COALESCE(${userAssessments.warningsShown}, '[]'::jsonb) || ${JSON.stringify(warnings)}::jsonb`,
+        warningsShown: sql`COALESCE(${userAssessments.warningsShown}, '[]'::jsonb) || ${warningsJson}::jsonb`,
         updatedAt: new Date(),
       })
       .where(and(eq(userAssessments.id, assessmentId), eq(userAssessments.tenantId, tenantId)));
