@@ -19,14 +19,13 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } 
 
 import * as schema from '@ffp/database/schema';
 
-import { NotFoundError } from '../lib/errors';
-
 import {
   pollAndClaimJobs,
   calculateBackoffMs,
   completeJob,
   failJob,
-} from './job-processor.service';
+} from '../../src/jobs/job-processor.service';
+import { NotFoundError } from '../../src/lib/errors';
 
 // We need to mock getDb but keep other exports
 const { mockGetDb } = vi.hoisted(() => ({

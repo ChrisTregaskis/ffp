@@ -12,7 +12,7 @@
 
 import { describe, it, expect } from 'vitest';
 
-import { COGNITO_CUSTOM_ATTRIBUTES } from './constants';
+import { COGNITO_CUSTOM_ATTRIBUTES } from '../../src/lib/constants';
 import {
   extractUserContext,
   createSystemContext,
@@ -24,8 +24,8 @@ import {
   type APIGatewayProxyEventV2WithJWT,
   type UserActor,
   type SystemActor,
-} from './context';
-import { UnauthorisedError, ValidationError } from './errors';
+} from '../../src/lib/context';
+import { UnauthorisedError, ValidationError } from '../../src/lib/errors';
 
 import type { APIGatewayEventRequestContextV2 } from 'aws-lambda';
 

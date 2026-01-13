@@ -5,7 +5,7 @@ import {
   userSchema,
   createUserSchema,
   canInviteProgramUser,
-} from './user.schema';
+} from '../../src/schemas/user.schema';
 
 describe('inviteUserSchema', () => {
   describe('customer owner invites (no tenant/customer)', () => {

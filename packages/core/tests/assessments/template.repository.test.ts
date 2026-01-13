@@ -16,9 +16,9 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 
-import * as templateRepository from './template.repository';
+import * as templateRepository from '../../src/assessments/template.repository';
 
-import type { CreateAssessmentTemplateInput } from '../schemas/assessment-template.schema';
+import type { CreateAssessmentTemplateInput } from '../../src/schemas/assessment-template.schema';
 
 describe('Template Repository', () => {
   let pool: Pool;

@@ -4,40 +4,39 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import type * as ffpDatabase from '@ffp/database';
 
-import * as jobQueueService from '../jobs/job-queue.service';
-import * as contextModule from '../lib/context';
-import * as databaseModule from '../lib/database';
-import { NotFoundError, ValidationError } from '../lib/errors';
-import * as questionRepository from '../questions/question.repository';
+import * as answerRepository from '../../src/assessments/answer.repository';
+import * as assessmentService from '../../src/assessments/assessment.service';
+import * as flowRepository from '../../src/assessments/flow.repository';
+import * as userAssessmentRepository from '../../src/assessments/user-assessment.repository';
+import * as jobQueueService from '../../src/jobs/job-queue.service';
+import * as contextModule from '../../src/lib/context';
+import * as databaseModule from '../../src/lib/database';
+import { NotFoundError, ValidationError } from '../../src/lib/errors';
+import * as questionRepository from '../../src/questions/question.repository';
 
-import * as answerRepository from './answer.repository';
-import * as assessmentService from './assessment.service';
-import * as flowRepository from './flow.repository';
-import * as userAssessmentRepository from './user-assessment.repository';
-
-import type { UserAssessmentAnswer } from './answer.repository';
-import type { AssessmentFlow, FlowStepWithConfig } from './flow.repository';
-import type { TenantContext, UserActor } from '../lib/context';
-import type { QuestionWithConfig } from '../questions/question.repository';
-import type { UserAssessment } from '../schemas/user-assessment.schema';
+import type { UserAssessmentAnswer } from '../../src/assessments/answer.repository';
+import type { AssessmentFlow, FlowStepWithConfig } from '../../src/assessments/flow.repository';
+import type { TenantContext, UserActor } from '../../src/lib/context';
+import type { QuestionWithConfig } from '../../src/questions/question.repository';
+import type { UserAssessment } from '../../src/schemas/user-assessment.schema';
 
 type ContextModule = typeof contextModule;
 type DatabaseModule = typeof databaseModule;
 type FFPDatabaseModule = typeof ffpDatabase;
 
-vi.mock('./flow.repository');
-vi.mock('./user-assessment.repository');
-vi.mock('./answer.repository');
-vi.mock('../questions/question.repository');
-vi.mock('../jobs/job-queue.service');
-vi.mock('../lib/context', async (importOriginal) => {
+vi.mock('../../src/assessments/flow.repository');
+vi.mock('../../src/assessments/user-assessment.repository');
+vi.mock('../../src/assessments/answer.repository');
+vi.mock('../../src/questions/question.repository');
+vi.mock('../../src/jobs/job-queue.service');
+vi.mock('../../src/lib/context', async (importOriginal) => {
   const actual = await importOriginal<ContextModule>();
   return {
     ...actual,
     getUserIdFromContext: vi.fn(),
   };
 });
-vi.mock('../lib/database', async (importOriginal) => {
+vi.mock('../../src/lib/database', async (importOriginal) => {
   const actual = await importOriginal<DatabaseModule>();
   return {
     ...actual,

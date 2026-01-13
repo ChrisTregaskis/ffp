@@ -18,7 +18,7 @@ import {
   ValidationError,
   ConflictError,
   InternalServerError,
-} from './errors';
+} from '../../src/lib/errors';
 
 describe('BaseError', () => {
   it('should create error with all properties', () => {

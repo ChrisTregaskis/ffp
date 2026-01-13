@@ -18,9 +18,9 @@ import {
 } from '@aws-sdk/client-cognito-identity-provider';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import { CognitoService } from './cognito';
-import { COGNITO_CUSTOM_ATTRIBUTES } from './constants';
-import { UnauthorisedError } from './errors';
+import { CognitoService } from '../../src/lib/cognito';
+import { COGNITO_CUSTOM_ATTRIBUTES } from '../../src/lib/constants';
+import { UnauthorisedError } from '../../src/lib/errors';
 
 // Mock the AWS SDK
 vi.mock('@aws-sdk/client-cognito-identity-provider', () => {

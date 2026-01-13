@@ -12,9 +12,9 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Logger, LogLevel, withRequestLogging } from './logger';
+import { Logger, LogLevel, withRequestLogging } from '../../src/lib/logger';
 
-import type { TenantContext } from './context';
+import type { TenantContext } from '../../src/lib/context';
 
 /**
  * Helper interface for typed log entry parsing in tests
