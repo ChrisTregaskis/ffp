@@ -69,6 +69,7 @@ project-documentation/sprint-planning/outputs/*.md
 project-documentation/sprint-planning/outputs/**/*.md
 project-documentation/refactoring/log
 project-documentation/refactoring/testing
+project-documentation/refactoring/archive
 
 # AWS RDS CA certificate (public certificate - safe to commit)
 # curl -o packages/core/certs/rds-ca-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem

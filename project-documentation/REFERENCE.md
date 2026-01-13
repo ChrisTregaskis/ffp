@@ -125,25 +125,55 @@ ffp/
 
 ## Cost Estimates (Phase 1)
 
-| Service         | Monthly Cost     | Notes                    |
-| --------------- | ---------------- | ------------------------ |
-| Cognito         | $0               | Free tier (50k MAU)      |
-| RDS (t3.small)  | ~$30             | Single AZ                |
-| S3 + CloudFront | $5-20            | Depends on video storage |
-| Lambda          | $0-5             | Free tier covers Phase 1 |
-| API Gateway     | $0-5             | Free tier (1M requests)  |
-| Amplify         | $0               | Free tier (1k build min) |
-| CloudWatch      | $0-5             | Basic logs & metrics     |
-| Route53         | $1               | Hosted zone              |
-| **Total**       | **$36-66/month** | <1000 users              |
+**Region**: eu-west-2 (London) | **Sources**: [AWS Pricing Calculator](https://calculator.aws/) (October 2025)
+
+| Service                       | Monthly Cost (GBP) | Notes                                            |
+| ----------------------------- | ------------------ | ------------------------------------------------ |
+| **Cognito**                   | £0                 | Free tier: 50,000 MAU                            |
+| **RDS PostgreSQL (t3.small)** | £22-27             | Single AZ, ~£0.031/hour, 2 vCPU, 2GB RAM         |
+| **S3 + CloudFront**           | £4-15              | Video library (500GB-1TB storage + bandwidth)    |
+| **Lambda**                    | £0-4               | Free tier: 1M requests/month                     |
+| **API Gateway**               | £0-4               | Free tier: 1M API calls/month                    |
+| **CloudWatch**                | £0-4               | 5GB ingestion free tier                          |
+| **Route53**                   | £0.40              | Hosted zone (~£0.50/month)                       |
+| **NAT Gateway**               | £27-32             | ~£0.045/hour (Phase 1 uses default VPC to avoid) |
+| **Secrets Manager**           | £0.32              | ~5 secrets × £0.40/month                         |
+| **Total**                     | **£54-87**         | With NAT Gateway; ~£27-55 without                |
 
 ### Cost at Scale
 
-| Users    | Monthly Cost | Notes                           |
-| -------- | ------------ | ------------------------------- |
-| <1k      | $36-66       | Phase 1 target                  |
-| 1k-10k   | $100-300     | Add Multi-AZ, caching           |
-| 10k-100k | $500-2k      | Read replicas, CDN optimization |
+| Users    | Monthly Cost | Key Changes                            |
+| -------- | ------------ | -------------------------------------- |
+| <1k      | £54-87       | Phase 1 baseline (free tiers active)   |
+| 1k-10k   | £85-150      | RDS t3.medium, increased bandwidth     |
+| 10k-100k | £300-600     | Multi-AZ RDS, ElastiCache              |
+| 100k+    | £1,200-3,000 | Read replicas, sharding considerations |
+
+### Cost Optimisation Tips
+
+1. Use t4g.small (ARM/Graviton) instead of t3.small for RDS (~20% cheaper)
+2. Enable S3 Intelligent-Tiering for video files
+3. Set CloudFront cache TTL appropriately
+4. Right-size Lambda memory allocation
+
+---
+
+## Database Connection Limits
+
+RDS PostgreSQL connection limits based on instance memory:
+
+| Instance Class | Memory | max_connections | Recommended App Limit |
+| -------------- | ------ | --------------- | --------------------- |
+| db.t3.small    | 2 GB   | ~112            | ~80                   |
+| db.t3.medium   | 4 GB   | ~225            | ~160                  |
+| db.t3.large    | 8 GB   | ~450            | ~320                  |
+| db.r5.large    | 16 GB  | ~900            | ~650                  |
+
+**When to add RDS Proxy (~£15-20/month):**
+
+- Lambda concurrency exceeds 50% of max_connections
+- Frequent connection timeouts in CloudWatch logs
+- Scaling beyond t3.medium instance
 
 ---
 
