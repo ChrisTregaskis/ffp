@@ -1,4 +1,4 @@
-import { eq, and, or } from 'drizzle-orm';
+import { eq, and, or, sql } from 'drizzle-orm';
 
 import type { UserAssessmentStatus } from '@ffp/database';
 import { userAssessments } from '@ffp/database/schema';
@@ -13,6 +13,7 @@ import type {
   UpdateUserAssessmentInput,
   UserAssessmentScores,
 } from '../schemas/user-assessment.schema';
+import type { Warning } from '../schemas/warning.schema';
 
 /**
  * Map database record to UserAssessment type
@@ -443,5 +444,53 @@ export async function linkProgramme(
       .returning();
 
     return mapToUserAssessment(record);
+  });
+}
+
+export interface AppendWarningsOptions {
+  /** Optional transaction for atomic operations */
+  tx?: Transaction;
+}
+
+/**
+ * Append warnings to an assessment's warnings_shown array
+ *
+ * Adds new warnings to the existing JSONB array without overwriting.
+ * Used by branching evaluation to persist warnings shown to users.
+ */
+export async function appendWarnings(
+  tenantId: string,
+  assessmentId: string,
+  warnings: Warning[],
+  options: AppendWarningsOptions = {}
+): Promise<void> {
+  const { tx } = options;
+
+  // If no warnings to add, skip the update
+  if (warnings.length === 0) {
+    return;
+  }
+
+  const doAppend = async (dbTx: Transaction): Promise<void> => {
+    // Use JSONB concatenation to append warnings to existing array
+    // COALESCE handles null case, defaulting to empty array
+    await dbTx
+      .update(userAssessments)
+      .set({
+        warningsShown: sql`COALESCE(${userAssessments.warningsShown}, '[]'::jsonb) || ${JSON.stringify(warnings)}::jsonb`,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(userAssessments.id, assessmentId), eq(userAssessments.tenantId, tenantId)));
+  };
+
+  // If transaction provided, use it directly
+  if (tx) {
+    await doAppend(tx);
+    return;
+  }
+
+  // Otherwise, create new transaction with RLS
+  await withRLS(tenantId, undefined, async (newTx) => {
+    await doAppend(newTx);
   });
 }

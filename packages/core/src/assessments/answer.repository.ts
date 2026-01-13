@@ -13,18 +13,37 @@ export interface SaveAnswerInput {
   answerValue: AnswerValue;
 }
 
-// RLS is enforced via tenant context.
+export interface FindByAssessmentIdOptions {
+  /** Optional user ID for fine-grained RLS */
+  userId?: string;
+  /** Optional transaction for reading within an existing transaction */
+  tx?: Transaction;
+}
+
+/**
+ * Find all answers for an assessment
+ */
 export async function findByAssessmentId(
   tenantId: string,
   assessmentId: string,
-  userId?: string
+  options: FindByAssessmentIdOptions = {}
 ): Promise<UserAssessmentAnswer[]> {
-  return await withRLS(tenantId, userId, async (tx) => {
-    return await tx
+  const { userId, tx } = options;
+
+  const doQuery = async (dbTx: Transaction): Promise<UserAssessmentAnswer[]> => {
+    return await dbTx
       .select()
       .from(userAssessmentAnswers)
       .where(eq(userAssessmentAnswers.userAssessmentId, assessmentId));
-  });
+  };
+
+  // If transaction provided, use it directly
+  if (tx) {
+    return doQuery(tx);
+  }
+
+  // Otherwise, create new transaction with RLS
+  return await withRLS(tenantId, userId, doQuery);
 }
 
 // RLS is enforced via tenant context.

@@ -1210,12 +1210,31 @@
                   "    pm.expect(jsonData.isResumed).to.be.a('boolean');",
                   "});",
                   "",
+                  "pm.test('Response has steps array', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('steps');",
+                  "    pm.expect(jsonData.steps).to.be.an('array');",
+                  "    pm.expect(jsonData.steps.length).to.be.greaterThan(0);",
+                  "});",
+                  "",
+                  "pm.test('Each step has required fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.steps && jsonData.steps.length > 0) {",
+                  "        const step = jsonData.steps[0];",
+                  "        pm.expect(step).to.have.property('id');",
+                  "        pm.expect(step).to.have.property('order');",
+                  "        pm.expect(step).to.have.property('type');",
+                  "        pm.expect(step).to.have.property('hasBranchingRules');",
+                  "    }",
+                  "});",
+                  "",
                   "// Save assessment ID for subsequent requests",
                   "const response = pm.response.json();",
                   "if (response.assessmentId) {",
                   "    pm.collectionVariables.set('lastAssessmentId', response.assessmentId);",
                   "    console.log('Assessment ID saved to lastAssessmentId variable');",
                   "    console.log('isResumed:', response.isResumed ? 'Existing assessment resumed' : 'New assessment created');",
+                  "    console.log('Steps count:', response.steps ? response.steps.length : 0);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -1449,7 +1468,23 @@
                   "    pm.expect(date.toString()).to.not.equal('Invalid Date');",
                   "});",
                   "",
-                  "console.log('Progress saved successfully at:', pm.response.json().updatedAt);"
+                  "pm.test('Response has branching fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('nextStepId');",
+                  "    pm.expect(jsonData).to.have.property('warnings');",
+                  "    pm.expect(jsonData).to.have.property('shouldTerminate');",
+                  "    pm.expect(jsonData).to.have.property('terminationReason');",
+                  "    pm.expect(jsonData.warnings).to.be.an('array');",
+                  "    pm.expect(jsonData.shouldTerminate).to.be.a('boolean');",
+                  "});",
+                  "",
+                  "// Log branching info for debugging",
+                  "const response = pm.response.json();",
+                  "console.log('Progress saved successfully at:', response.updatedAt);",
+                  "console.log('Next step ID:', response.nextStepId);",
+                  "if (response.warnings && response.warnings.length > 0) {",
+                  "    console.log('Warnings triggered:', JSON.stringify(response.warnings));",
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -1504,10 +1539,10 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"updatedAt\": \"2025-01-15T10:30:00.000Z\"\n}"
+              "body": "{\n  \"success\": true,\n  \"updatedAt\": \"2025-01-15T10:30:00.000Z\",\n  \"nextStepId\": \"55555555-5555-5555-5555-555555550004\",\n  \"warnings\": [],\n  \"shouldTerminate\": false,\n  \"terminationReason\": null\n}"
             },
             {
-              "name": "Success - With Red Flag Warning (Future)",
+              "name": "Success - With Red Flag Warning",
               "originalRequest": {
                 "method": "PUT",
                 "header": [

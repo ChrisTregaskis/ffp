@@ -170,3 +170,26 @@ export async function findAllQuestions(
     ? await query.where(eq(questions.isActive, true))
     : await query;
 }
+
+/**
+ * Find question slugs by question IDs
+ *
+ * Returns a Map of questionId -> slug for efficient lookup.
+ *
+ * @returns Map of question ID to slug
+ */
+export async function findSlugsByIds(
+  db: DbClient,
+  questionIds: string[]
+): Promise<Map<string, string>> {
+  if (questionIds.length === 0) {
+    return new Map();
+  }
+
+  const records = await db
+    .select({ id: questions.id, slug: questions.slug })
+    .from(questions)
+    .where(inArray(questions.id, questionIds));
+
+  return new Map(records.map((r) => [r.id, r.slug]));
+}

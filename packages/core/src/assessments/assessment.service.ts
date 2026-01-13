@@ -5,14 +5,18 @@ import { getUserIdFromContext } from '../lib/context';
 import { withRLS } from '../lib/database';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import { createSystemLogger } from '../lib/logger';
-import { findByTemplateIds as findQuestionsByTemplateIds } from '../questions/question.repository';
+import {
+  findByTemplateIds as findQuestionsByTemplateIds,
+  findSlugsByIds,
+} from '../questions/question.repository';
+
+import * as answerRepository from './answer.repository';
+import { evaluateNextStep, createEvaluationContext } from './branching';
+import * as flowRepository from './flow.repository';
+import * as userAssessmentRepository from './user-assessment.repository';
 
 // System logger for assessment data integrity issues (no tenant context needed)
 const systemLogger = createSystemLogger('assessment-service');
-
-import * as answerRepository from './answer.repository';
-import * as flowRepository from './flow.repository';
-import * as userAssessmentRepository from './user-assessment.repository';
 
 import type { UserAssessmentAnswer, SaveAnswerInput } from './answer.repository';
 import type { FlowStepWithConfig } from './flow.repository';
@@ -183,7 +187,7 @@ export async function startAssessment(
     const storedAnswers = await answerRepository.findByAssessmentId(
       tenantId,
       existingAssessment.id,
-      userId
+      { userId }
     );
 
     const answers = convertAnswersToResponseFormat(storedAnswers);
@@ -223,6 +227,7 @@ export async function startAssessment(
  *
  * Persists user's answers and current step when navigating (Continue/Back).
  * Handles status transition from 'not_started' to 'in_progress' on first save.
+ * Evaluates branching rules to determine the next step and any warnings.
  *
  * @throws NotFoundError if assessment doesn't exist or not accessible
  * @throws ValidationError if assessment is submitted/completed
@@ -233,6 +238,8 @@ export async function startAssessment(
  *   answers: { 'q1-uuid': { questionId: 'q1-uuid', answerValue: 5 } },
  *   currentStep: 2
  * }, context);
+ * // response.nextStepId - UUID of next step (from branching evaluation)
+ * // response.warnings - Any warnings triggered by branching rules
  * ```
  */
 export async function saveProgress(
@@ -242,6 +249,7 @@ export async function saveProgress(
 ): Promise<SaveProgressResponse> {
   const { tenantId } = context;
   const userId = await getUserIdFromContext(context);
+  const db = getDb();
 
   // Fetch assessment by ID (RLS enforced)
   const assessment = await userAssessmentRepository.findById(tenantId, assessmentId);
@@ -278,15 +286,84 @@ export async function saveProgress(
       { tx }
     );
 
-    // Return success response with default branching fields
-    // TODO: Wire up branch evaluation when full step-based navigation is implemented
+    // Fetch flow steps for branching evaluation
+    const flowSteps = await flowRepository.findStepsByFlowId(db, assessment.flowId);
+
+    // Find the current step record by order
+    const currentStepRecord = flowSteps.find((s) => s.order === data.currentStep);
+
+    if (!currentStepRecord) {
+      // Step not found - return success without branching evaluation
+      // This can happen if order doesn't match any step (edge case)
+      systemLogger.warn('Current step not found in flow steps', {
+        assessmentId,
+        currentStep: data.currentStep,
+        flowId: assessment.flowId,
+      });
+
+      return {
+        success: true as const,
+        updatedAt: updatedAssessment.updatedAt.toISOString(),
+        nextStepId: null,
+        warnings: [],
+        shouldTerminate: false,
+        terminationReason: null,
+      };
+    }
+
+    // Fetch all answers for the assessment (including ones just saved)
+    // Pass tx to read within the same transaction (sees uncommitted writes)
+    const allAnswers = await answerRepository.findByAssessmentId(tenantId, assessmentId, {
+      userId,
+      tx,
+    });
+
+    // Build question ID to slug map for branching conditions
+    const questionIds = allAnswers.map((a) => a.questionId);
+    const idToSlugMap = await findSlugsByIds(db, questionIds);
+
+    // Convert answers to slug-keyed format for branching evaluation
+    const answersForBranching = allAnswers.map((answer) => {
+      const slug = idToSlugMap.get(answer.questionId);
+
+      if (!slug) {
+        // Log but don't fail - not essential
+        systemLogger.warn('Question slug not found for answer', {
+          questionId: answer.questionId,
+          assessmentId,
+        });
+      }
+
+      return {
+        questionSlug: slug ?? answer.questionId, // Fallback to ID if slug not found
+        value: extractAnswerValue(answer.answerValue),
+      };
+    });
+
+    // Create evaluation context and evaluate branching rules
+    const evalContext = createEvaluationContext(
+      currentStepRecord.id,
+      flowSteps,
+      answersForBranching
+    );
+
+    const branchResult = evaluateNextStep(currentStepRecord, evalContext);
+
+    // Persist warnings if any were triggered
+    if (branchResult.warnings.length > 0) {
+      await userAssessmentRepository.appendWarnings(tenantId, assessmentId, branchResult.warnings, {
+        tx,
+      });
+    }
+
+    // Return success response with branching evaluation results
     return {
       success: true as const,
       updatedAt: updatedAssessment.updatedAt.toISOString(),
-      nextStepId: null, // Branching evaluation not yet implemented
-      warnings: [],
-      shouldTerminate: false,
-      terminationReason: null,
+      nextStepId: branchResult.nextStepId,
+      warnings: branchResult.warnings,
+      shouldTerminate: branchResult.shouldTerminate,
+      terminationReason: branchResult.terminationReason ?? null,
     };
   });
 }
@@ -382,7 +459,9 @@ export async function submitAssessment(
   }
 
   // Load existing answers from user_assessment_answers table
-  const existingAnswers = await answerRepository.findByAssessmentId(tenantId, assessmentId, userId);
+  const existingAnswers = await answerRepository.findByAssessmentId(tenantId, assessmentId, {
+    userId,
+  });
 
   // Convert request answers to save format
   const newAnswersToSave = convertAnswersToSaveFormat(data.answers);
