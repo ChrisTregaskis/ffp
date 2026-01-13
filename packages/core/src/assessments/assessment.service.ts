@@ -1,4 +1,4 @@
-import { getDb, type FlowStep } from '@ffp/database';
+import { getDb } from '@ffp/database';
 
 import { queueJob } from '../jobs/job-queue.service';
 import { getUserIdFromContext } from '../lib/context';
@@ -15,8 +15,10 @@ import * as flowRepository from './flow.repository';
 import * as userAssessmentRepository from './user-assessment.repository';
 
 import type { UserAssessmentAnswer, SaveAnswerInput } from './answer.repository';
+import type { FlowStepWithConfig } from './flow.repository';
 import type { TenantContext } from '../lib/context';
 import type {
+  FlowStepSummary,
   StartAssessmentResponse,
   SaveProgressRequest,
   SaveProgressResponse,
@@ -68,10 +70,31 @@ function convertAnswersToSaveFormat(answers: UserAssessmentAnswers): SaveAnswerI
 }
 
 /**
+ * Convert flow steps from database format to API summary format
+ *
+ * Maps the full FlowStepWithConfig record to the minimal FlowStepSummary
+ * needed by the client for navigation.
+ */
+function convertStepsToSummaryFormat(steps: FlowStepWithConfig[]): FlowStepSummary[] {
+  return steps.map((step) => ({
+    id: step.id,
+    order: step.order,
+    type: step.type,
+    config: {
+      title: step.config.title,
+      description: step.config.description,
+    },
+    templateId: step.templateId,
+    hasBranchingRules: step.nextStepRules !== null && step.nextStepRules.length > 0,
+    defaultNextStepId: step.defaultNextStepId,
+  }));
+}
+
+/**
  * Extract the answer value from database JSONB
  *
  * Values are stored directly as string, number, or string[] (for multi-select).
- * Also handles legacy wrapped formats for backwards compatibility. // TODO: Clean up "legacy" handling before MVP launch.
+ * Also handles legacy wrapped formats for backwards compatibility.
  *
  * @throws ValidationError if the answer value format is unexpected
  */
@@ -147,7 +170,12 @@ export async function startAssessment(
     throw new NotFoundError('Assessment flow', flowId);
   }
 
-  // 2. Check for existing resumable assessment
+  // 2. Fetch flow steps from normalised table
+  const db = getDb();
+  const flowSteps = await flowRepository.findStepsByFlowId(db, flowId);
+  const steps = convertStepsToSummaryFormat(flowSteps);
+
+  // 3. Check for existing resumable assessment
   const existingAssessment = await userAssessmentRepository.findResumable(tenantId, userId, flowId);
 
   if (existingAssessment) {
@@ -168,6 +196,7 @@ export async function startAssessment(
       answers,
       flowId: existingAssessment.flowId,
       isResumed: true,
+      steps,
     };
   }
 
@@ -185,6 +214,7 @@ export async function startAssessment(
     answers: {}, // New assessment has no answers yet
     flowId: newAssessment.flowId,
     isResumed: false,
+    steps,
   };
 }
 
@@ -248,10 +278,15 @@ export async function saveProgress(
       { tx }
     );
 
-    // Return success response
+    // Return success response with default branching fields
+    // TODO: Wire up branch evaluation when full step-based navigation is implemented
     return {
       success: true as const,
       updatedAt: updatedAssessment.updatedAt.toISOString(),
+      nextStepId: null, // Branching evaluation not yet implemented
+      warnings: [],
+      shouldTerminate: false,
+      terminationReason: null,
     };
   });
 }
@@ -260,20 +295,27 @@ export async function saveProgress(
  * Get required question IDs from flow templates
  *
  * Fetches all questions from templates referenced by 'questions' and
- * 'video-assessment' steps in the flow, then returns IDs where
- * validation.required is true (or undefined, as required defaults to true).
+ * 'video-assessment' steps in the flow (via normalised flow_steps table),
+ * then returns IDs where validation.required is true (or undefined,
+ * as required defaults to true).
+ *
+ * @param flowId - The assessment flow UUID
+ * @throws ValidationError if flow has no questions template
  */
-async function getRequiredQuestionIds(flowSteps: FlowStep[]): Promise<string[]> {
+async function getRequiredQuestionIds(flowId: string): Promise<string[]> {
   const db = getDb();
 
+  // Fetch normalised steps from flow_steps table
+  const steps = await flowRepository.findStepsByFlowId(db, flowId);
+
   // Get template IDs from question and video-assessment steps
-  const templateIds = flowSteps
+  const templateIds = steps
     .filter((step) => step.type === 'questions' || step.type === 'video-assessment')
     .map((step) => step.templateId)
-    .filter((id): id is string => id !== undefined);
+    .filter((id): id is string => id !== null);
 
   if (templateIds.length === 0) {
-    return [];
+    throw new ValidationError('Assessment flow has no questions template');
   }
 
   // Fetch all questions via the template_questions join table
@@ -356,8 +398,8 @@ export async function submitAssessment(
     answeredQuestionIds.push(answer.questionId);
   }
 
-  // Validate required questions are answered
-  const requiredQuestionIds = await getRequiredQuestionIds(flow.steps);
+  // Validate required questions are answered (uses normalised flow_steps table)
+  const requiredQuestionIds = await getRequiredQuestionIds(assessment.flowId);
   const missingQuestionIds = findMissingRequiredQuestions(requiredQuestionIds, answeredQuestionIds);
 
   if (missingQuestionIds.length > 0) {

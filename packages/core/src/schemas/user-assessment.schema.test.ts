@@ -776,6 +776,16 @@ describe('startAssessmentRequestSchema', () => {
 // ============================================================================
 
 describe('startAssessmentResponseSchema', () => {
+  const validStepSummary = {
+    id: validUuid,
+    order: 1,
+    type: 'intro',
+    config: { title: 'Welcome' },
+    templateId: null,
+    hasBranchingRules: false,
+    defaultNextStepId: null,
+  };
+
   const validResponse = {
     assessmentId: validUuid,
     currentStep: 1,
@@ -783,6 +793,7 @@ describe('startAssessmentResponseSchema', () => {
     answers: {},
     flowId: validUuid2,
     isResumed: false,
+    steps: [validStepSummary],
   };
 
   it('should accept valid response for new assessment', () => {

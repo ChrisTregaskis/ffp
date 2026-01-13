@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-import { USER_ASSESSMENT_STATUSES, VALID_STATUS_TRANSITIONS } from '@ffp/database/constants';
+import {
+  USER_ASSESSMENT_STATUSES,
+  VALID_STATUS_TRANSITIONS,
+  WARNING_TYPES,
+} from '@ffp/database/constants';
 
 import { dimensionalScoreSchema } from './job.schema';
 
@@ -54,9 +58,6 @@ export type UserAssessmentScores = z.infer<typeof userAssessmentScoresSchema>;
  * User assessment schema - full record
  *
  * Represents a complete user assessment record from the database.
- *
- * NOTE: Answers are stored in a dedicated `user_assessment_answers` table.
- * Use the answer repository to fetch answers for an assessment.
  */
 export const userAssessmentSchema = z.object({
   /** Unique identifier (UUID) */
@@ -129,8 +130,6 @@ export type StatusTransition = z.infer<typeof statusTransitionSchema>;
 /**
  * Validates if a status transition is allowed
  *
- * @param fromStatus - Current assessment status
- * @param toStatus - Target status to transition to
  * @returns true if transition is valid, false otherwise
  */
 export const isValidStatusTransition = (
@@ -144,7 +143,6 @@ export const isValidStatusTransition = (
 /**
  * Gets allowed transitions from a given status
  *
- * @param status - Current assessment status
  * @returns Array of valid target statuses
  */
 export const getAllowedTransitions = (status: UserAssessmentStatus): UserAssessmentStatus[] => {
@@ -174,6 +172,34 @@ export const startAssessmentRequestSchema = z.object({
 export type StartAssessmentRequest = z.infer<typeof startAssessmentRequestSchema>;
 
 /**
+ * Flow step summary for client-side navigation
+ *
+ * Minimal step information needed for the client to navigate
+ * through the assessment flow. Includes branching indicators.
+ */
+export const flowStepSummarySchema = z.object({
+  /** Unique step identifier (UUID) */
+  id: z.string().uuid(),
+  /** Step tier/order (multiple steps can share same order for parallel branches) */
+  order: z.number().int().positive(),
+  /** Step type (intro, questions, transition, etc.) */
+  type: z.string(),
+  /** Step display configuration */
+  config: z.object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+  }),
+  /** Template ID for question/video steps (optional) */
+  templateId: z.string().uuid().nullable().optional(),
+  /** Whether this step has branching rules */
+  hasBranchingRules: z.boolean(),
+  /** Default next step ID (for linear progression) */
+  defaultNextStepId: z.string().uuid().nullable().optional(),
+});
+
+export type FlowStepSummary = z.infer<typeof flowStepSummarySchema>;
+
+/**
  * Response schema for starting an assessment
  *
  * Returns the assessment state to the client. The isResumed flag indicates
@@ -185,6 +211,8 @@ export const startAssessmentResponseSchema = z.object({
   assessmentId: z.string().uuid(),
   /** Current step index in the flow (1-based) */
   currentStep: z.number().int().positive(),
+  /** Current step UUID (for step-based navigation) */
+  currentStepId: z.string().uuid().optional(),
   /** Assessment state machine status */
   status: userAssessmentStatusSchema,
   /** User's answers (keyed by questionId) */
@@ -193,6 +221,8 @@ export const startAssessmentResponseSchema = z.object({
   flowId: z.string().uuid(),
   /** True if resuming existing assessment, false if newly created */
   isResumed: z.boolean(),
+  /** Flow steps for client-side navigation (from normalised flow_steps table) */
+  steps: z.array(flowStepSummarySchema),
 });
 
 export type StartAssessmentResponse = z.infer<typeof startAssessmentResponseSchema>;
@@ -214,16 +244,41 @@ export const saveProgressRequestSchema = z.object({
 export type SaveProgressRequest = z.infer<typeof saveProgressRequestSchema>;
 
 /**
+ * Warning shown during assessment (for branching rules)
+ */
+export const assessmentWarningSchema = z.object({
+  /** Warning message displayed to user */
+  message: z.string().min(1),
+  /** Severity level of the warning */
+  type: z.enum(WARNING_TYPES),
+  /** ISO timestamp when warning was shown */
+  shownAt: z.string().datetime(),
+  /** Step ID where warning was triggered (optional) */
+  stepId: z.string().uuid().optional(),
+  /** Question slug that triggered the warning (optional) */
+  triggeredBy: z.string().optional(),
+});
+
+export type AssessmentWarning = z.infer<typeof assessmentWarningSchema>;
+
+/**
  * Response schema for saving assessment progress
  *
- * Returns success confirmation and the timestamp of when
- * the progress was last updated.
+ * Returns success confirmation, timestamp, and branching evaluation results.
  */
 export const saveProgressResponseSchema = z.object({
   /** Indicates the save was successful */
   success: z.literal(true),
   /** ISO 8601 timestamp of when the progress was updated */
   updatedAt: z.string().datetime(),
+  /** UUID of the next step to navigate to (from branching evaluation) */
+  nextStepId: z.string().uuid().nullable(),
+  /** Warnings to display to the user */
+  warnings: z.array(assessmentWarningSchema),
+  /** Whether the assessment should terminate early */
+  shouldTerminate: z.boolean(),
+  /** Reason for early termination (null if shouldTerminate is false) */
+  terminationReason: z.string().nullable(),
 });
 
 export type SaveProgressResponse = z.infer<typeof saveProgressResponseSchema>;

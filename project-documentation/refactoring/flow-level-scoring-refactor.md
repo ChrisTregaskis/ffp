@@ -342,9 +342,10 @@ const STEP_IDS = {
 | 4       | Handler & Service Refactor (scoring)         | 1 hour    | Session 3    |
 | 5       | Branching Logic + Clinical Questions         | 3 hours   | Session 4    |
 | 6       | Testing & Postman Updates                    | 1 hour    | Session 5    |
-| 7       | Documentation Updates                        | 1 hour    | Session 6    |
+| 6b      | Handler Integration (Branching Wire-up)      | 1.5 hours | Session 6    |
+| 7       | Documentation Updates                        | 1 hour    | Session 6b   |
 
-**Total estimated**: ~9.5 hours (includes real clinical questions for demo)
+**Total estimated**: ~11 hours (includes real clinical questions for demo)
 
 ---
 

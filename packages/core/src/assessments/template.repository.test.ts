@@ -60,7 +60,8 @@ describe('Template Repository', () => {
 
   beforeEach(async () => {
     // Clean up tables before each test
-    // Delete template_questions first (FK dependency), then assessment_templates
+    // Delete in FK dependency order: flow_steps → template_questions → assessment_templates
+    await db.execute(sql`DELETE FROM flow_steps`);
     await db.execute(sql`DELETE FROM template_questions`);
     await db.execute(sql`DELETE FROM assessment_templates`);
   });
