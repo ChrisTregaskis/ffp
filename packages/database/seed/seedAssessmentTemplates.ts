@@ -53,6 +53,7 @@ const templateQuestionMappings: TemplateQuestionMapping[] = [
       'pain-location',
       'activity-level',
       'medical-conditions',
+      'pain-area', // Branching question: determines next step (back vs other)
     ],
   },
   {

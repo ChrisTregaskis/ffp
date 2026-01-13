@@ -46,6 +46,7 @@ export const QUESTION_IDS = {
   'pain-location': '22222222-2222-2222-2222-222222220103',
   'activity-level': '22222222-2222-2222-2222-222222220104',
   'medical-conditions': '22222222-2222-2222-2222-222222220105',
+  'pain-area': '22222222-2222-2222-2222-222222220106', // Branching: determines next step
 
   // Strength assessment questions (template 11111111-1111-1111-1111-111111111102)
   'squat-assessment': '22222222-2222-2222-2222-222222220201',
@@ -163,6 +164,21 @@ const preAssessmentQuestions: NewQuestion[] = [
       { value: 'osteoporosis', label: 'Osteoporosis', score: 0 },
       { value: 'recent-surgery', label: 'Recent surgery (within 6 months)', score: 0 },
       { value: 'none', label: 'None of the above', score: 0 },
+    ],
+    validation: { required: true },
+    scoreDimension: 'general',
+    isActive: true,
+  },
+  {
+    id: QUESTION_IDS['pain-area'],
+    slug: 'pain-area',
+    type: 'single-choice',
+    questionText: 'Which area is your primary concern?',
+    description:
+      'Select the main area you would like to focus on. This helps us tailor your assessment.',
+    options: [
+      { value: 'back', label: 'Back (lower or upper)', score: 0 },
+      { value: 'other', label: 'Other area (general assessment)', score: 0 },
     ],
     validation: { required: true },
     scoreDimension: 'general',

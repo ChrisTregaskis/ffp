@@ -41,6 +41,26 @@ export const STEP_IDS = {
  * a warning is shown but the user can continue (continueAfterWarning: true).
  * This allows collection of all red flag responses while ensuring the warning is displayed.
  */
+/**
+ * Pre-assessment branching rules
+ *
+ * Routes users to appropriate assessment path based on their primary concern.
+ * - "back" → continues to Back Pain General (default path)
+ * - "other" → skips Back Pain General, goes directly to Red Flag Screening
+ *
+ * This tests the goto_step action type for conditional navigation.
+ */
+const PRE_ASSESSMENT_BRANCHING_RULES: NextStepRule[] = [
+  {
+    priority: 1,
+    conditions: [{ type: 'answer_value', questionSlug: 'pain-area', answerValue: 'other' }],
+    action: {
+      type: 'goto_step',
+      targetStepId: STEP_IDS.RED_FLAG_SCREENING, // Skip Back Pain General
+    },
+  },
+];
+
 const RED_FLAG_BRANCHING_RULES: NextStepRule[] = [
   {
     priority: 1,
@@ -155,7 +175,7 @@ const DEFAULT_FLOW_STEPS: NewFlowStep[] = [
       title: 'Pre-Assessment Questions',
       description: 'Quick questions about your goals, pain levels, and medical history',
     },
-    nextStepRules: null,
+    nextStepRules: PRE_ASSESSMENT_BRANCHING_RULES, // goto_step: routes based on pain-area answer
     defaultNextStepId: STEP_IDS.BACK_PAIN_GENERAL,
     isActive: true,
   },
