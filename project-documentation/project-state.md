@@ -1,8 +1,8 @@
 # FFP - Project State
 
-**Last Updated**: 7th January 2026
+**Last Updated**: 13th January 2026
 **Current EPIC**: FFP-2 - Assessment Engine
-**Sprint Status**: Sprint 4 in progress | FFP-133 Scoring Service 🚧 (3/5 sub-tasks complete)
+**Sprint Status**: Sprint 4 in progress | FFP-133 Scoring Service 🚧 (3/5 sub-tasks complete) | Flow-level scoring refactor ✅
 **Previous**: Sprint 3 ✅ Complete | FFP-130 Submit API ✅ Complete
 
 ---
@@ -68,13 +68,13 @@
 
 **Sub-Tasks Execution Order**:
 
-| Order | Key     | Summary                                              | Status      | Commit Scope                      |
-| ----- | ------- | ---------------------------------------------------- | ----------- | --------------------------------- |
-| 1     | FFP-188 | Create `calculateScores()` orchestrator              | ✅ Complete | `scoring/` module + types         |
-| 2     | FFP-189 | Implement `calculateQuestionScore()` handler         | ✅ Complete | `helpers/question-scoring.ts`     |
-| 3     | FFP-190 | Add `calculateRiskLevel()` + `findMatchingProgram()` | ✅ Complete | `helpers/risk-level.ts` + more    |
-| 4     | FFP-191 | Create `processScoreAssessment` job handler          | ⏸️ Blocked  | Needs flow-level scoring refactor |
-| 5     | FFP-192 | Add minimal unit tests (critical paths only)         | To Do       | `scoring.service.test.ts`         |
+| Order | Key     | Summary                                              | Status      | Commit Scope                   |
+| ----- | ------- | ---------------------------------------------------- | ----------- | ------------------------------ |
+| 1     | FFP-188 | Create `calculateScores()` orchestrator              | ✅ Complete | `scoring/` module + types      |
+| 2     | FFP-189 | Implement `calculateQuestionScore()` handler         | ✅ Complete | `helpers/question-scoring.ts`  |
+| 3     | FFP-190 | Add `calculateRiskLevel()` + `findMatchingProgram()` | ✅ Complete | `helpers/risk-level.ts` + more |
+| 4     | FFP-191 | Create `processScoreAssessment` job handler          | To Do       | Ready - flow-level refactor ✅ |
+| 5     | FFP-192 | Add minimal unit tests (critical paths only)         | To Do       | `scoring.service.test.ts`      |
 
 **Schema Alignment** (adapting to existing):
 
@@ -91,27 +91,26 @@
 
 **Architectural Note (FFP-191)**: The job handler fetches answers from `user_assessment_answers` table instead of receiving them in the job payload. This simplifies the payload to just `{ userAssessmentId, flowId }` and ensures scoring uses the actual persisted answers.
 
-### ⚠️ Design Gap Identified: Multi-Template Scoring
+### ✅ Design Gap Resolved: Multi-Template Scoring
 
 **Discovered**: 8th January 2026 (during FFP-191)
+**Resolved**: 13th January 2026 (7 sessions)
 
 **Issue**: Assessment flows use multiple templates (pre-assessment, strength, balance), each with independent `scoringConfig` and `programMappings`. Current handler assumed single template scoring.
 
-**Impact**: Cannot produce unified programme recommendation considering ALL dimensions (pain, general, strength, balance).
+**Resolution**: Flow-level scoring refactor complete:
 
-**Resolution**: Flow-level scoring refactor - move `scoringConfig` from templates to flows.
+- ✅ Schema migration: `scoringConfig` moved from templates to flows
+- ✅ Normalised `flow_steps` table with branching rules
+- ✅ Clinical questions: back pain history + red flag screening
+- ✅ Branching evaluation service with condition types
+- ✅ Warning system for clinical alerts
+- ✅ 629 tests passing, TypeScript/lint clean
 
 **Plan**: `project-documentation/refactoring/flow-level-scoring-refactor.md`
+**Session Logs**: `project-documentation/refactoring/log/`
 
-**Sessions Required** (can run independently):
-| Session | Focus | Est. |
-|---------|-------|------|
-| 1 | Schema & Migration | 1h |
-| 2 | Seed Data Updates | 0.5h |
-| 3 | Handler & Service Refactor | 1h |
-| 4 | Testing & Verification | 0.5h |
-
-**Status**: Plan created, FFP-191 paused pending refactor.
+**FFP-191 now unblocked** - ready to implement score assessment job handler.
 
 ### Technical Approach
 

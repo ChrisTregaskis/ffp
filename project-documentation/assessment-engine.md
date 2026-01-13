@@ -10,21 +10,21 @@ The assessment engine is the core value proposition of FFP. It uses a **database
 
 1. **Database-driven**: Templates and flows stored in PostgreSQL; questions in normalised tables with JSONB for complex config
 2. **Type-safe**: Zod schemas in `@ffp/core` validate structure at runtime
-3. **Linear flow (MVP)**: Sequential questions without conditional branching
-4. **Multi-dimensional scoring**: Separate scores for Strength, Balance, and Risk Level
+3. **Template-level branching**: Conditional navigation based on template scores or answer values
+4. **Flow-level scoring**: Combined multi-dimensional scoring at the flow level (not template level)
 5. **Chained assessments**: Database-driven flow linking pre-assessment → physical → results
 6. **Async processing**: Scoring and programme generation via database job queue
-7. **Audit trail**: Immutable history of all assessment attempts
+7. **Audit trail**: Immutable history of all assessment attempts, including warnings shown
 8. **Resume capability**: Save progress on navigation (Continue/Back), continue later
 9. **Video-guided**: Physical assessments include video demonstrations from S3 + CloudFront
-10. **Normalised questions**: Questions stored in dedicated table, linked to templates via join table
+10. **Normalised steps**: Flow steps stored in dedicated `flow_steps` table with branching rules
 
 ### Post-MVP Enhancements
 
-- Conditional logic (dynamic question trees based on previous answers)
 - Visual template builder (drag-and-drop)
 - A/B testing for assessment templates
 - Advanced analytics (dropout points, question difficulty)
+- Body-part-specific flows with branching to specialised templates
 
 ---
 
@@ -142,23 +142,32 @@ The assessment engine is the core value proposition of FFP. It uses a **database
 │  │─────────────────│     │─────────────────────│                        │
 │  │ id              │     │ template_id         │                        │
 │  │ name            │     │ question_id         │                        │
-│  │ scoring_config  │     │ display_order       │                        │
-│  │ is_active       │     │ config_overrides    │                        │
-│  └─────────────────┘     └──────────┬──────────┘                        │
-│                                     │                                    │
-│  ┌─────────────────┐               │                                    │
-│  │ assessment_     │               │                                    │
-│  │ flows           │               ▼                                    │
-│  │─────────────────│     ┌─────────────────────┐                        │
-│  │ id              │     │ questions           │                        │
-│  │ name            │     │─────────────────────│                        │
-│  │ steps (JSONB)   │     │ id                  │                        │
-│  │ is_active       │     │ slug                │                        │
-│  └─────────────────┘     │ type                │                        │
-│                          │ question_text       │                        │
-│                          │ options (JSONB)     │                        │
-│                          │ score_dimension     │                        │
-│                          └─────────────────────┘                        │
+│  │ is_active       │     │ display_order       │                        │
+│  └─────────────────┘     │ config_overrides    │                        │
+│         ▲                └──────────┬──────────┘                        │
+│         │                          │                                    │
+│         │  ┌─────────────────┐     │                                    │
+│         │  │ assessment_     │     ▼                                    │
+│         │  │ flows           │   ┌─────────────────────┐                │
+│         │  │─────────────────│   │ questions           │                │
+│         │  │ id              │   │─────────────────────│                │
+│         │  │ name            │   │ id                  │                │
+│         │  │ scoring_config  │   │ slug                │                │
+│         │  │ is_active       │   │ type                │                │
+│         │  └────────┬────────┘   │ question_text       │                │
+│         │           │            │ options (JSONB)     │                │
+│         │           ▼            │ score_dimension     │                │
+│         │  ┌─────────────────┐   └─────────────────────┘                │
+│         └──│ flow_steps      │                                          │
+│            │─────────────────│ ◀─ NEW: Normalised step table            │
+│            │ id              │                                          │
+│            │ flow_id     FK  │                                          │
+│            │ template_id FK  │                                          │
+│            │ order           │                                          │
+│            │ type            │                                          │
+│            │ config (JSONB)  │                                          │
+│            │ next_step_rules │ ◀─ Branching conditions                  │
+│            └─────────────────┘                                          │
 │                                                                          │
 │  TENANT DATA (RLS enforced)                                             │
 │  ═══════════════════════════                                            │
@@ -170,9 +179,11 @@ The assessment engine is the core value proposition of FFP. It uses a **database
 │  │ tenant_id     ◀─ RLS│     │ tenant_id     ◀─ RLS│                    │
 │  │ user_id             │     │ user_assessment_id  │                    │
 │  │ flow_id             │     │ question_id         │                    │
-│  │ current_step        │     │ answer_value        │                    │
-│  │ status              │     │ answered_at         │                    │
-│  │ scores (JSONB)      │     └─────────────────────┘                    │
+│  │ current_step_id     │     │ answer_value        │                    │
+│  │ visited_step_ids    │     │ answered_at         │                    │
+│  │ warnings_shown      │     └─────────────────────┘                    │
+│  │ status              │                                                 │
+│  │ scores (JSONB)      │                                                 │
 │  │ programme_id        │                                                 │
 │  └─────────────────────┘                                                 │
 │                                                                          │
@@ -287,6 +298,150 @@ FFP uses multi-dimensional scoring rather than a single total score. The prototy
 │                                                                          │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Template-Level Branching
+
+FFP supports conditional navigation based on template outcomes. A template's collective score or specific answer values determine the next step in the flow.
+
+### Branching Concepts
+
+**Key insight**: Branching happens at the **template level**, not individual questions. A template's collective outcome determines the next step.
+
+**Examples from real clinical assessments**:
+
+- **Red Flag Screening**: Yes/no questions about symptoms (radiating pain, numbness, incontinence). Any "yes" triggers a warning: "Seek medical review before exercise."
+- **Body Part Selection**: Prerequisite question determines which specialised template follows (back → back assessment, shoulder → shoulder assessment).
+- **Severity Routing**: High pain scores route to gentle mobility, low pain to advanced conditioning.
+
+### Branching Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    BRANCHING EVALUATION FLOW                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│   User completes step answers                                            │
+│          │                                                               │
+│          ▼                                                               │
+│   ┌──────────────────────┐                                               │
+│   │ Save Progress API    │                                               │
+│   │ save-progress.ts     │                                               │
+│   └──────────┬───────────┘                                               │
+│              │                                                           │
+│              ▼                                                           │
+│   ┌──────────────────────┐                                               │
+│   │ evaluateNextStep()   │  ◀── Branch evaluator service                │
+│   │ branch-evaluator.ts  │                                               │
+│   └──────────┬───────────┘                                               │
+│              │                                                           │
+│   ┌──────────┴──────────────────────────────┐                           │
+│   │                                         │                            │
+│   ▼                                         ▼                            │
+│   ┌────────────────┐              ┌────────────────┐                     │
+│   │ Has next_step_ │──NO──────────│ Default next   │                     │
+│   │ rules?         │              │ step (order+1) │                     │
+│   └───────┬────────┘              └────────────────┘                     │
+│           │ YES                                                          │
+│           ▼                                                              │
+│   ┌────────────────┐                                                     │
+│   │ Evaluate rules │  ◀── Sort by priority, check conditions            │
+│   │ (by priority)  │                                                     │
+│   └───────┬────────┘                                                     │
+│           │                                                              │
+│   ┌───────┴───────────────────────────────────────┐                     │
+│   │                       │                       │                      │
+│   ▼                       ▼                       ▼                      │
+│   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                  │
+│   │ goto_step    │  │ show_warning │  │ end_assess-  │                  │
+│   │ → target ID  │  │ → warning +  │  │ ment         │                  │
+│   │              │  │   continue?  │  │ → terminate  │                  │
+│   └──────────────┘  └──────────────┘  └──────────────┘                  │
+│                                                                          │
+│   Response: { nextStepId, warnings[], shouldTerminate }                  │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Branching Rule Types
+
+| Action Type      | Description                          | Use Case                 |
+| ---------------- | ------------------------------------ | ------------------------ |
+| `goto_step`      | Navigate to specific step by UUID    | Body part routing        |
+| `show_warning`   | Display warning, optionally continue | Red flag screening       |
+| `end_assessment` | Terminate assessment early           | Critical safety concerns |
+
+### Condition Types
+
+| Condition Type    | Description                         | Example                  |
+| ----------------- | ----------------------------------- | ------------------------ |
+| `answer_value`    | Check specific answer to a question | `radiating-pain = 'yes'` |
+| `dimension_score` | Check calculated dimension score    | `strength < 4`           |
+| `aggregate`       | Check aggregate conditions (future) | `any_red_flag = true`    |
+
+### Example: Red Flag Screening Rules
+
+```typescript
+// flow_steps.next_step_rules for red flag screening step
+nextStepRules: [
+  {
+    priority: 1,
+    conditions: [{ type: 'answer_value', questionSlug: 'radiating-pain', answerValue: 'yes' }],
+    action: {
+      type: 'show_warning',
+      warningMessage: 'Please seek medical review before starting exercise programme',
+      warningType: 'seek_medical',
+      continueAfterWarning: true,
+    },
+  },
+  {
+    priority: 2,
+    conditions: [{ type: 'answer_value', questionSlug: 'incontinence', answerValue: 'yes' }],
+    action: {
+      type: 'show_warning',
+      warningMessage: 'Please seek medical review before starting exercise programme',
+      warningType: 'seek_medical',
+      continueAfterWarning: true,
+    },
+  },
+];
+```
+
+### Warning System
+
+Warnings are tracked on the `user_assessments` record for audit purposes:
+
+```typescript
+// user_assessments.warnings_shown (JSONB array)
+[
+  {
+    type: 'seek_medical',
+    message: 'Please seek medical review before starting exercise programme',
+    stepId: '55555555-5555-5555-5555-555555550003',
+    triggeredBy: 'radiating-pain',
+    shownAt: '2026-01-12T10:30:00.000Z',
+  },
+];
+```
+
+### Step ID vs Order for Navigation
+
+**Problem**: Branching creates parallel paths where multiple steps occupy the same logical "tier":
+
+```
+Step 1: "Where is your pain?" (order: 1)
+   ├── Answer: "back"     → goto back-assessment step (order: 2)
+   ├── Answer: "shoulder" → goto shoulder-assessment step (order: 2)
+   └── Answer: "leg"      → goto leg-assessment step (order: 2)
+```
+
+**Solution**:
+
+- `order` is a **tier/level indicator** (NOT unique per flow)
+- Branching uses `targetStepId` (UUID) for explicit routing
+- Multiple steps can share the same order (parallel branches at same tier)
+- Default progression: use `defaultNextStepId` or fall back to first step at order + 1
 
 ---
 

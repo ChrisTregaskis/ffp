@@ -8,6 +8,67 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### January 8-13, 2026 (Sessions 78-84 - Flow-Level Scoring Refactor)
+
+**Status**: ✅ COMPLETE (All 7 sessions)
+
+**Branch**: `refactor/flow-level-scoring`
+
+**Summary**: Major refactoring to support multi-template assessment flows with combined scoring dimensions and conditional branching.
+
+**Sessions Completed**:
+
+| Session | Focus                                       | Status |
+| ------- | ------------------------------------------- | ------ |
+| 1       | Schema migration (`scoringConfig` to flows) | ✅     |
+| 2       | Normalised `flow_steps` table               | ✅     |
+| 3       | Seed data migration                         | ✅     |
+| 4       | Handler & service refactor                  | ✅     |
+| 5       | Branching logic & clinical questions        | ✅     |
+| 6/6b    | Testing & deprecation cleanup               | ✅     |
+| 7       | Documentation updates                       | ✅     |
+
+**Key Deliverables**:
+
+- **Schema Changes**: `scoringConfig` moved from `assessment_templates` to `assessment_flows`
+- **New Table**: `flow_steps` with normalised step definitions and branching rules
+- **Clinical Questions**: 11 new questions (5 back pain history + 6 red flag screening)
+- **Branching Service**: `branch-evaluator.service.ts` with condition evaluators
+- **Warning System**: `warnings_shown` audit trail on `user_assessments`
+- **New Columns**: `visitedStepIds`, `warningsShown` on `user_assessments`
+
+**Files Created**:
+
+```
+packages/database/src/
+├── constants/branching.constants.ts    # NextStepRule, BranchCondition types
+├── schema/flow-steps.ts                # Normalised flow_steps table
+
+packages/core/src/
+├── assessments/branching/
+│   ├── branch-evaluator.service.ts     # Main branching logic
+│   ├── condition-evaluator.ts          # Condition evaluation
+│   └── index.ts                        # Module exports
+├── schemas/warning.schema.ts           # Warning validation
+
+packages/core/tests/branching/
+├── condition-evaluator.test.ts         # 27 tests
+└── branch-evaluator.test.ts            # 11 tests
+```
+
+**Test Coverage**: 629 tests passing (38 new branching tests)
+
+**Documentation Updated**:
+
+- `assessment-engine.md` - Added Template-Level Branching section
+- `database-schema.md` - Added flow_steps, updated ERD
+- `architecture.md` - Added specialised services reference
+- `project-state.md` - Marked refactor complete, unblocked FFP-191
+
+**Session Logs**: `project-documentation/refactoring/log/session-{1-7}.md`
+
+---
+
 ### January 7, 2026 (Session 77 - FFP-133 Scoring Service - Sub-tasks 1-3)
 
 **Status**: ✅ FFP-188, FFP-189, FFP-190 Complete (Scoring Pure Functions)
@@ -249,19 +310,20 @@ The tests were failing with "permission denied for table template_questions" bec
 
 ## Key Milestones
 
-| Date        | Milestone                       | Hours           |
-| ----------- | ------------------------------- | --------------- |
-| Oct 20      | Sprint 1 Started                | 0h              |
-| Oct 24      | FFP-7 Complete (Monorepo)       | 13h             |
-| Oct 26      | FFP-8 Complete (Infrastructure) | 30h             |
-| Nov 1       | FFP-10 & FFP-11 Merged to Main  | 83.5h           |
-| Nov 9       | FFP-37 Complete (Invite User)   | 136.5h          |
-| Nov 19      | FFP-16 Complete (Web Login)     | 155.5h          |
-| Dec 19      | FFP-132 Complete (Job Queue)    | 162h            |
-| Dec 24      | FFP-127 Complete (User Assess)  | 165.5h          |
-| Dec 30      | FFP-130 Complete (Submit API)   | 167.9h          |
-| Jan 3       | FFP-130 Refactor Complete       | ~168h           |
-| **Current** | **FFP-133 Scoring (3/5 done)**  | **~169.5/197h** |
+| Date        | Milestone                       | Hours         |
+| ----------- | ------------------------------- | ------------- |
+| Oct 20      | Sprint 1 Started                | 0h            |
+| Oct 24      | FFP-7 Complete (Monorepo)       | 13h           |
+| Oct 26      | FFP-8 Complete (Infrastructure) | 30h           |
+| Nov 1       | FFP-10 & FFP-11 Merged to Main  | 83.5h         |
+| Nov 9       | FFP-37 Complete (Invite User)   | 136.5h        |
+| Nov 19      | FFP-16 Complete (Web Login)     | 155.5h        |
+| Dec 19      | FFP-132 Complete (Job Queue)    | 162h          |
+| Dec 24      | FFP-127 Complete (User Assess)  | 165.5h        |
+| Dec 30      | FFP-130 Complete (Submit API)   | 167.9h        |
+| Jan 3       | FFP-130 Refactor Complete       | ~168h         |
+| Jan 13      | Flow-Level Scoring Refactor ✅  | ~172h         |
+| **Current** | **FFP-133 Scoring (3/5 done)**  | **~172/197h** |
 
 ---
 

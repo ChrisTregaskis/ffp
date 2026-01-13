@@ -540,6 +540,11 @@ export const handler = withErrorHandling(async (event: APIGatewayProxyEvent) => 
 
 **When to skip**: Simple CRUD operations with no business rules
 
+**Specialised Services**:
+
+- `scoring.service.ts` - Dimension scoring, risk level calculation, programme matching
+- `branch-evaluator.service.ts` - Conditional navigation based on answers/scores
+
 **Example**:
 
 ```typescript

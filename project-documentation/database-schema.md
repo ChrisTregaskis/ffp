@@ -73,8 +73,11 @@ FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolatio
 │  │  │ tenant_id         │    │ tenant_id               │            │   │
 │  │  │ user_id           │    │ user_assessment_id      │            │   │
 │  │  │ flow_id           │    │ question_id             │            │   │
-│  │  │ status            │    │ answer_value            │            │   │
-│  │  │ scores            │    └─────────────────────────┘            │   │
+│  │  │ current_step_id   │    │ answer_value            │            │   │
+│  │  │ visited_step_ids  │    └─────────────────────────┘            │   │
+│  │  │ warnings_shown    │ ◀── Audit trail for clinical warnings    │   │
+│  │  │ status            │                                           │   │
+│  │  │ scores            │                                           │   │
 │  │  └───────────────────┘                                           │   │
 │  │           │                                                      │   │
 │  │           ▼                                                      │   │
@@ -98,17 +101,32 @@ FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolatio
 │  │─────────────────│    │─────────────────────│    │─────────────────│  │
 │  │ id              │    │ template_id         │    │ id              │  │
 │  │ name            │    │ question_id         │    │ slug            │  │
-│  │ scoring_config  │    │ display_order       │    │ type            │  │
-│  └─────────────────┘    └─────────────────────┘    │ question_text   │  │
-│                                                    │ options         │  │
-│  ┌─────────────────┐    ┌─────────────────┐        └─────────────────┘  │
+│  │ is_active       │    │ display_order       │    │ type            │  │
+│  └────────┬────────┘    └─────────────────────┘    │ question_text   │  │
+│           │                                        │ options         │  │
+│           │                                        └─────────────────┘  │
+│           │                                                             │
+│  ┌────────┴────────┐    ┌─────────────────┐                             │
 │  │ assessment_     │    │    videos       │                             │
 │  │ flows           │    │─────────────────│                             │
 │  │─────────────────│    │ id              │                             │
 │  │ id              │    │ title           │                             │
 │  │ name            │    │ s3_key          │                             │
-│  │ steps (JSONB)   │    │ duration        │                             │
-│  └─────────────────┘    └─────────────────┘                             │
+│  │ scoring_config  │◀── │ duration        │ (MOVED from templates)      │
+│  └────────┬────────┘    └─────────────────┘                             │
+│           │                                                             │
+│           ▼                                                             │
+│  ┌─────────────────┐                                                    │
+│  │ flow_steps      │ ◀── NEW: Normalised step table                     │
+│  │─────────────────│                                                    │
+│  │ id              │                                                    │
+│  │ flow_id     FK  │                                                    │
+│  │ template_id FK  │                                                    │
+│  │ order           │                                                    │
+│  │ type            │                                                    │
+│  │ config (JSONB)  │                                                    │
+│  │ next_step_rules │ ◀── Branching conditions                           │
+│  └─────────────────┘                                                    │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -134,14 +152,15 @@ These tables contain user/customer data and **require RLS policies**:
 
 These tables contain shared content accessible to all authenticated users:
 
-| Table                  | Description                        |
-| ---------------------- | ---------------------------------- |
-| `tenants`              | Tenant registry (platform-managed) |
-| `assessment_templates` | Assessment configuration           |
-| `assessment_flows`     | Journey step definitions           |
-| `questions`            | Reusable question bank             |
-| `template_questions`   | Template ↔ Question links         |
-| `videos`               | Video content library              |
+| Table                  | Description                                       |
+| ---------------------- | ------------------------------------------------- |
+| `tenants`              | Tenant registry (platform-managed)                |
+| `assessment_templates` | Assessment question configuration                 |
+| `assessment_flows`     | Assessment journey with flow-level scoring config |
+| `flow_steps`           | Normalised step definitions with branching rules  |
+| `questions`            | Reusable question bank                            |
+| `template_questions`   | Template ↔ Question links                        |
+| `videos`               | Video content library                             |
 
 ---
 
@@ -324,6 +343,7 @@ export const handler = async () => {
 | Users                   | `packages/database/src/schema/users.ts`                   |
 | Assessment Templates    | `packages/database/src/schema/assessment-templates.ts`    |
 | Assessment Flows        | `packages/database/src/schema/assessment-flows.ts`        |
+| Flow Steps              | `packages/database/src/schema/flow-steps.ts`              |
 | Questions               | `packages/database/src/schema/questions.ts`               |
 | Template Questions      | `packages/database/src/schema/template-questions.ts`      |
 | User Assessments        | `packages/database/src/schema/user-assessments.ts`        |
