@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { answerValueSchema } from '@ffp/database';
 import {
   USER_ASSESSMENT_STATUSES,
   VALID_STATUS_TRANSITIONS,
@@ -15,8 +16,8 @@ export type UserAssessmentStatus = z.infer<typeof userAssessmentStatusSchema>;
 export const userAnswerSchema = z.object({
   /** Question ID from the assessment template */
   questionId: z.string().uuid(),
-  /** Selected answer value (numeric for scales, string for single-select, array for multi-select) */
-  answerValue: z.union([z.number(), z.string(), z.array(z.string())]),
+  /** Selected answer value - uses shared schema from @ffp/database */
+  answerValue: answerValueSchema,
   /** Optional: Answer ID if selecting from predefined options */
   answerId: z.string().uuid().optional(),
   /** Timestamp when answer was recorded */

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { answerValueSchema } from '@ffp/database';
 import { JOB_STATUSES, JOB_TYPES } from '@ffp/database/constants';
 
 export const jobStatusSchema = z.enum(JOB_STATUSES);
@@ -20,8 +21,8 @@ export type JobType = z.infer<typeof jobTypeSchema>;
 export const assessmentResponseSchema = z.object({
   /** Question ID from the assessment template */
   questionId: z.string().uuid(),
-  /** Selected answer value (numeric for scales, string for single-select, array for multi-select) */
-  answerValue: z.union([z.number(), z.string(), z.array(z.string())]),
+  /** Selected answer value - uses shared schema from @ffp/database */
+  answerValue: answerValueSchema,
   /** Optional: Answer ID if selecting from predefined options */
   answerId: z.string().uuid().optional(),
 });

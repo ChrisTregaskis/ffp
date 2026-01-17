@@ -116,17 +116,34 @@ export const withErrorHandling = <TResult>(
       // Log error with structured logging if available, otherwise fall back to console
       if (logger) {
         logger.error('Request failed', {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : undefined,
-          errorType: error instanceof BaseError ? error.code : 'UNKNOWN_ERROR',
+          // For ZodError, use the structured errors array instead of the stringified message
+          error:
+            error instanceof ZodError
+              ? error.errors
+              : error instanceof Error
+                ? error.message
+                : 'Unknown error',
+          stack: error instanceof Error && !(error instanceof ZodError) ? error.stack : undefined,
+          errorType:
+            error instanceof ZodError
+              ? 'VALIDATION_ERROR'
+              : error instanceof BaseError
+                ? error.code
+                : 'UNKNOWN_ERROR',
           // Sanitise event data to avoid logging sensitive information
           sanitisedEvent: sanitiseEventForLogging(event),
         });
       } else {
         // Fallback to console.error for unauthenticated requests
         console.error('Lambda error:', {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : undefined,
+          // For ZodError, use the structured errors array instead of the stringified message
+          error:
+            error instanceof ZodError
+              ? error.errors
+              : error instanceof Error
+                ? error.message
+                : 'Unknown error',
+          stack: error instanceof Error && !(error instanceof ZodError) ? error.stack : undefined,
           requestId,
           // Sanitise event data to avoid logging sensitive information
           event: sanitiseEventForLogging(event),

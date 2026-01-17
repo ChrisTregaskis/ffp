@@ -1,4 +1,4 @@
-import type { QuestionWithConfig, QuestionOption } from '@ffp/database';
+import type { QuestionWithConfig, QuestionOption, AnswerValue } from '@ffp/database';
 
 /**
  * Calculate score for a single question based on answer value
@@ -8,16 +8,15 @@ import type { QuestionWithConfig, QuestionOption } from '@ffp/database';
  * - multi-choice: Sums scores from all selected options
  * - numeric/scale: Returns the numeric value directly
  * - text: Returns 0 (text questions are not scored)
- *
- * Note: video-response questions are not currently scored (post-MVP feature).
+ * - video-response: Returns 0 (completion tracking only, not scored)
  *
  * @param question - Question with options and scoring configuration
- * @param answerValue - User's answer (string, number, or string[])
+ * @param answerValue - User's answer (string, number, boolean, or string[])
  * @returns Numeric score value
  */
 export function calculateQuestionScore(
   question: QuestionWithConfig,
-  answerValue: string | number | string[]
+  answerValue: AnswerValue
 ): number {
   switch (question.type) {
     case 'single-choice':
@@ -34,6 +33,10 @@ export function calculateQuestionScore(
       // Text questions are informational only, not scored
       return 0;
 
+    case 'video-response':
+      // Video-response questions track completion (boolean), not scored
+      return 0;
+
     default:
       return 0;
   }
@@ -46,7 +49,7 @@ export function calculateQuestionScore(
  */
 function calculateSingleChoiceScore(
   options: QuestionOption[] | null,
-  answerValue: string | number | string[]
+  answerValue: AnswerValue
 ): number {
   if (!options || typeof answerValue !== 'string') {
     return 0;
@@ -64,7 +67,7 @@ function calculateSingleChoiceScore(
  */
 function calculateMultiChoiceScore(
   options: QuestionOption[] | null,
-  answerValue: string | number | string[]
+  answerValue: AnswerValue
 ): number {
   if (!options || !Array.isArray(answerValue)) {
     return 0;
@@ -88,7 +91,7 @@ function calculateMultiChoiceScore(
  *
  * Returns the numeric value directly (clamped to non-negative).
  */
-function calculateNumericScore(answerValue: string | number | string[]): number {
+function calculateNumericScore(answerValue: AnswerValue): number {
   if (typeof answerValue === 'number') {
     return Math.max(0, answerValue);
   }
