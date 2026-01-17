@@ -1,4 +1,4 @@
-import type { FlowStepRecord, NextStepRule } from '@ffp/database';
+import type { AnswerValue, FlowStepRecord, NextStepRule } from '@ffp/database';
 
 import { evaluateConditions, type BranchEvaluationContext } from './condition-evaluator';
 
@@ -138,9 +138,9 @@ function resolveDefaultNextStep(
 export function createEvaluationContext(
   currentStepId: string,
   allSteps: FlowStepRecord[],
-  answers: { questionSlug: string; value: string | string[] | number }[]
+  answers: { questionSlug: string; value: AnswerValue }[]
 ): BranchEvaluationContext {
-  const answerMap = new Map<string, string | string[] | number>();
+  const answerMap = new Map<string, AnswerValue>();
 
   for (const answer of answers) {
     answerMap.set(answer.questionSlug, answer.value);

@@ -1,4 +1,5 @@
 import type {
+  AnswerValue,
   BranchCondition,
   ComparisonOperator,
   FlowStepRecord,
@@ -20,7 +21,7 @@ export interface BranchEvaluationContext {
   allSteps: Pick<FlowStepRecord, 'id' | 'order' | 'isActive' | 'defaultNextStepId'>[];
 
   /** Map of question slug to answer value */
-  answers: Map<string, string | string[] | number>;
+  answers: Map<string, AnswerValue>;
 
   /** Map of dimension name to calculated score (optional, for post-scoring branching) */
   dimensionScores?: Map<ScoreDimension, number>;
@@ -75,7 +76,7 @@ function evaluateCondition(condition: BranchCondition, context: BranchEvaluation
  */
 function evaluateAnswerCondition(
   condition: BranchCondition,
-  answers: Map<string, string | string[] | number>
+  answers: Map<string, AnswerValue>
 ): boolean {
   const { questionSlug, answerValue } = condition;
 

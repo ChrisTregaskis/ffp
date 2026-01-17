@@ -1,4 +1,5 @@
 import { getDb } from '@ffp/database';
+import type { AnswerValue } from '@ffp/database';
 
 import { queueJob } from '../jobs/job-queue.service';
 import { getUserIdFromContext } from '../lib/context';
@@ -97,14 +98,18 @@ function convertStepsToSummaryFormat(steps: FlowStepWithConfig[]): FlowStepSumma
 /**
  * Extract the answer value from database JSONB
  *
- * Values are stored directly as string, number, or string[] (for multi-select).
+ * Values are stored directly as string, number, boolean, or string[] (for multi-select).
  * Also handles legacy wrapped formats for backwards compatibility.
  *
  * @throws ValidationError if the answer value format is unexpected
  */
-function extractAnswerValue(answerValue: unknown): string | number | string[] {
+function extractAnswerValue(answerValue: unknown): AnswerValue {
   // Handle direct primitive values (current format)
-  if (typeof answerValue === 'string' || typeof answerValue === 'number') {
+  if (
+    typeof answerValue === 'string' ||
+    typeof answerValue === 'number' ||
+    typeof answerValue === 'boolean'
+  ) {
     return answerValue;
   }
 
@@ -115,6 +120,7 @@ function extractAnswerValue(answerValue: unknown): string | number | string[] {
     }
 
     systemLogger.warn('Array contains non-string values', { answerValue });
+
     throw new ValidationError('Invalid answer value format: array contains non-string values');
   }
 
@@ -135,11 +141,15 @@ function extractAnswerValue(answerValue: unknown): string | number | string[] {
     }
 
     systemLogger.warn('Unexpected answer value structure', { answerValue, keys: Object.keys(obj) });
+
     throw new ValidationError('Invalid answer value format: unrecognised object structure');
   }
 
   systemLogger.warn('Unexpected answer value type', { answerValue, type: typeof answerValue });
-  throw new ValidationError('Invalid answer value format: expected string, number, or string[]');
+
+  throw new ValidationError(
+    'Invalid answer value format: expected string, number, boolean, or string[]'
+  );
 }
 
 /**
@@ -490,10 +500,7 @@ export async function submitAssessment(
   // Build responses array for scoring job from all answers
   // Combine existing answers with new answers (new answers override existing)
   // Extract the actual value from JSONB structure for the job payload
-  const allAnswersMap = new Map<
-    string,
-    { questionId: string; answerValue: string | number | string[] }
-  >();
+  const allAnswersMap = new Map<string, { questionId: string; answerValue: AnswerValue }>();
 
   for (const answer of existingAnswers) {
     const extractedValue = extractAnswerValue(answer.answerValue);
