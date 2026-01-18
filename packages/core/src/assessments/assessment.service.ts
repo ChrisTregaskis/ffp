@@ -379,31 +379,21 @@ export async function saveProgress(
 }
 
 /**
- * Get required question IDs from flow templates
+ * Get required question IDs from the given templates
  *
- * Fetches all questions from templates referenced by 'questions' and
- * 'video-assessment' steps in the flow (via normalised flow_steps table),
- * then returns IDs where validation.required is true (or undefined,
- * as required defaults to true).
+ * Fetches all questions from the specified templates via the
+ * template_questions join table, then returns IDs where
+ * validation.required is true (or undefined, as required defaults to true).
  *
- * @param flowId - The assessment flow UUID
- * @throws ValidationError if flow has no questions template
+ * @param templateIds - Array of template UUIDs to get questions from
+ * @returns Array of required question IDs
  */
-async function getRequiredQuestionIds(flowId: string): Promise<string[]> {
-  const db = getDb();
-
-  // Fetch normalised steps from flow_steps table
-  const steps = await flowRepository.findStepsByFlowId(db, flowId);
-
-  // Get template IDs from question and video-assessment steps
-  const templateIds = steps
-    .filter((step) => step.type === 'questions' || step.type === 'video-assessment')
-    .map((step) => step.templateId)
-    .filter((id): id is string => id !== null);
-
+async function getRequiredQuestionIds(templateIds: string[]): Promise<string[]> {
   if (templateIds.length === 0) {
-    throw new ValidationError('Assessment flow has no questions template');
+    return [];
   }
+
+  const db = getDb();
 
   // Fetch all questions via the template_questions join table
   const questions = await findQuestionsByTemplateIds(db, templateIds);
@@ -487,8 +477,17 @@ export async function submitAssessment(
     answeredQuestionIds.push(answer.questionId);
   }
 
-  // Validate required questions are answered (uses normalised flow_steps table)
-  const requiredQuestionIds = await getRequiredQuestionIds(assessment.flowId);
+  // Get template IDs from visited steps (derived from saved answers)
+  // This ensures we only validate required questions from steps the user actually visited,
+  // supporting branching flows where some steps are skipped
+  const visitedTemplateIds = await answerRepository.findVisitedTemplateIds(
+    tenantId,
+    assessmentId,
+    userId
+  );
+
+  // Validate required questions are answered (only from visited templates)
+  const requiredQuestionIds = await getRequiredQuestionIds(visitedTemplateIds);
   const missingQuestionIds = findMissingRequiredQuestions(requiredQuestionIds, answeredQuestionIds);
 
   if (missingQuestionIds.length > 0) {
