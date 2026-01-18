@@ -2,7 +2,7 @@
 
 **Last Updated**: 18th January 2026
 **Current EPIC**: FFP-2 - Assessment Engine
-**Sprint Status**: Sprint 4 in progress | FFP-133 Scoring Service ✅ Complete | FFP-126 next
+**Sprint Status**: Sprint 4 in progress | FFP-133 ✅ Complete | FFP-126 In Progress
 **Previous**: Sprint 3 ✅ Complete | FFP-130 Submit API ✅ Complete
 
 ---
@@ -19,10 +19,10 @@
 | ----- | ------- | ------------------------------- | --- | ----------- | ------------------------------------ |
 | -     | FFP-130 | Submit Assessment API           | 5   | ✅ Complete | Merged from Sprint 3 early work      |
 | 1     | FFP-133 | Scoring Service Implementation  | 8   | ✅ Complete | Flow-level refactor + manual testing |
-| 2     | FFP-126 | Assessment Template Admin API   | 5   | To Do       | CRUD for system admins               |
+| 2     | FFP-126 | Assessment Template Admin API   | 5   | In Progress | CRUD for system admins               |
 | 3     | FFP-135 | Assessment Context & State Mgmt | 5   | To Do       | Frontend foundation                  |
 
-**Progress**: 13/23 pts complete (57%) - FFP-126 next
+**Progress**: 13/23 pts complete (57%) - FFP-126 in progress
 
 ### Implementation Order Rationale
 
@@ -108,19 +108,79 @@ Multi-template assessment flows required architectural refactor:
 
 ---
 
-## Next Task: FFP-126 - Assessment Template Admin API
+## Active: FFP-126 - Assessment Template Admin API
 
 **Story Points**: 5
-**Status**: To Do
+**Status**: In Progress
 **Priority**: Backend completion
+**Branch**: `feature/ffp-126-assessment-template-admin-api`
 
 ### Scope
 
-CRUD operations for system admins to manage assessment templates:
+CRUD API endpoints for system admins to manage assessment templates:
 
-- Create, read, update, delete assessment templates
-- Template validation (scoring config, question mappings)
-- Admin-only access (system_admin role)
+- List, get, create, update, deactivate templates
+- Duplicate template functionality
+- Admin-only access (`system_admin` role enforcement)
+
+### What Already Exists (from FFP-124)
+
+| Component               | Status | Location                                                  |
+| ----------------------- | ------ | --------------------------------------------------------- |
+| Database schema         | ✅     | `@ffp/database/src/schema/assessment-templates.ts`        |
+| Template-questions join | ✅     | `@ffp/database/src/schema/template-questions.ts`          |
+| Zod schemas             | ✅     | `@ffp/core/src/schemas/assessment-template.schema.ts`     |
+| Repository (CRUD)       | ✅     | `@ffp/core/src/assessments/template.repository.ts`        |
+| Repository tests        | ✅     | `@ffp/core/tests/assessments/template.repository.test.ts` |
+| Admin router            | ✅     | `@ffp/functions/src/admin/index.ts`                       |
+
+### Sub-Task Execution Order
+
+| Order | Key     | Summary                               | Status   | Notes                                |
+| ----- | ------- | ------------------------------------- | -------- | ------------------------------------ |
+| 1     | FFP-151 | Service layer (`template.service.ts`) | To Do    | Thin layer for createdBy + duplicate |
+| 2     | FFP-152 | List + Get handlers                   | To Do    | Read-only, no role check needed      |
+| 3     | FFP-153 | Create/Update/Deactivate handlers     | To Do    | Role validation (system_admin)       |
+| 4     | FFP-154 | Duplicate handler                     | To Do    | Uses service layer                   |
+| 5     | FFP-155 | Integration tests                     | **SKIP** | Repository/schema tests exist        |
+
+### Implementation Decisions
+
+1. **Thin service layer** - Repository handles most logic (version increment, soft delete); service adds:
+   - Setting `createdBy` from actor context
+   - Duplicate logic (copy template + questions)
+   - Input schema validation
+
+2. **Skip integration tests (FFP-155)** - Reduces MVP maintenance burden:
+   - Repository integration tests already exist ✅
+   - Schema validation tests already exist ✅
+   - Role validation is simple 3-line pattern per handler
+
+3. **Single branch** - All sub-tasks on `feature/ffp-126-assessment-template-admin-api`
+
+### API Endpoints
+
+| Method | Path                                        | Handler             | Role Required     |
+| ------ | ------------------------------------------- | ------------------- | ----------------- |
+| GET    | `/admin/assessment-templates`               | list-templates      | Any authenticated |
+| GET    | `/admin/assessment-templates/:id`           | get-template        | Any authenticated |
+| POST   | `/admin/assessment-templates`               | create-template     | system_admin      |
+| PUT    | `/admin/assessment-templates/:id`           | update-template     | system_admin      |
+| DELETE | `/admin/assessment-templates/:id`           | deactivate-template | system_admin      |
+| POST   | `/admin/assessment-templates/:id/duplicate` | duplicate-template  | system_admin      |
+
+### Key Files to Create
+
+```
+packages/core/src/assessments/template.service.ts    # Thin service layer
+packages/functions/src/admin/templates/
+├── list-templates.ts      # GET /admin/assessment-templates
+├── get-template.ts        # GET /admin/assessment-templates/:id
+├── create-template.ts     # POST /admin/assessment-templates
+├── update-template.ts     # PUT /admin/assessment-templates/:id
+├── deactivate-template.ts # DELETE /admin/assessment-templates/:id
+└── duplicate-template.ts  # POST /admin/assessment-templates/:id/duplicate
+```
 
 ---
 
