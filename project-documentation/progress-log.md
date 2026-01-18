@@ -8,6 +8,57 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### January 16-18, 2026 (Sessions 85-87 - FFP-133 Manual Testing & Completion)
+
+**Status**: ✅ FFP-133 COMPLETE
+
+**Branch**: `refactor/flow-level-scoring`
+
+**Summary**: Comprehensive manual testing of the flow-level scoring refactor, fixing TF-002 (submit validation), and completing all FFP-133 sub-tasks.
+
+**Sessions Completed**:
+
+| Session | Focus                                        | Status |
+| ------- | -------------------------------------------- | ------ |
+| 85      | Manual testing guide creation & linear flow  | ✅     |
+| 86      | Branching tests (show_warning, goto_step)    | ✅     |
+| 87      | TF-002 fix (visited steps validation) & docs | ✅     |
+
+**Key Deliverables**:
+
+- **Manual Testing Guide**: `project-documentation/refactoring/testing/manual-testing-guide-assessments.md`
+- **Testing Results**: `project-documentation/refactoring/testing/handover-testing-complete.md`
+- **TF-002 Fix**: Submit API now validates only visited template questions (not all flow questions)
+
+**Test Results** (All Passed):
+
+| Test  | Description                | Key Validation                    |
+| ----- | -------------------------- | --------------------------------- |
+| TC-01 | Start Assessment           | 9 steps returned, correct format  |
+| TC-02 | Pre-Assessment (back path) | Default nextStepId works          |
+| TC-03 | Red Flag show_warning      | Warning triggered, flow continues |
+| TC-04 | Resume Assessment          | isResumed=true, answers preserved |
+| TC-05 | Submit Assessment          | jobId returned after TF-002 fix   |
+| TC-06 | goto_step branching        | Conditional navigation works      |
+| LF-\* | Linear flow (7 steps)      | Full flow progression verified    |
+
+**Finding Fixed During Testing**:
+
+| ID     | Issue                                                 | Fix                                           |
+| ------ | ----------------------------------------------------- | --------------------------------------------- |
+| TF-002 | Submit validated ALL questions, not just visited ones | Fetch visited templates from `visitedStepIds` |
+
+**Quality Assurance**:
+
+- ✅ 629 tests passing
+- ✅ TypeScript/lint clean
+- ✅ All branching actions verified (goto_step, show_warning)
+- ✅ Linear and branching flows both work correctly
+
+**Next**: FFP-126 (Assessment Template Admin API) or FFP-135 (Assessment Context & State Mgmt)
+
+---
+
 ### January 8-13, 2026 (Sessions 78-84 - Flow-Level Scoring Refactor)
 
 **Status**: ✅ COMPLETE (All 7 sessions)
@@ -310,20 +361,21 @@ The tests were failing with "permission denied for table template_questions" bec
 
 ## Key Milestones
 
-| Date        | Milestone                       | Hours         |
-| ----------- | ------------------------------- | ------------- |
-| Oct 20      | Sprint 1 Started                | 0h            |
-| Oct 24      | FFP-7 Complete (Monorepo)       | 13h           |
-| Oct 26      | FFP-8 Complete (Infrastructure) | 30h           |
-| Nov 1       | FFP-10 & FFP-11 Merged to Main  | 83.5h         |
-| Nov 9       | FFP-37 Complete (Invite User)   | 136.5h        |
-| Nov 19      | FFP-16 Complete (Web Login)     | 155.5h        |
-| Dec 19      | FFP-132 Complete (Job Queue)    | 162h          |
-| Dec 24      | FFP-127 Complete (User Assess)  | 165.5h        |
-| Dec 30      | FFP-130 Complete (Submit API)   | 167.9h        |
-| Jan 3       | FFP-130 Refactor Complete       | ~168h         |
-| Jan 13      | Flow-Level Scoring Refactor ✅  | ~172h         |
-| **Current** | **FFP-133 Scoring (3/5 done)**  | **~172/197h** |
+| Date        | Milestone                          | Hours         |
+| ----------- | ---------------------------------- | ------------- |
+| Oct 20      | Sprint 1 Started                   | 0h            |
+| Oct 24      | FFP-7 Complete (Monorepo)          | 13h           |
+| Oct 26      | FFP-8 Complete (Infrastructure)    | 30h           |
+| Nov 1       | FFP-10 & FFP-11 Merged to Main     | 83.5h         |
+| Nov 9       | FFP-37 Complete (Invite User)      | 136.5h        |
+| Nov 19      | FFP-16 Complete (Web Login)        | 155.5h        |
+| Dec 19      | FFP-132 Complete (Job Queue)       | 162h          |
+| Dec 24      | FFP-127 Complete (User Assess)     | 165.5h        |
+| Dec 30      | FFP-130 Complete (Submit API)      | 167.9h        |
+| Jan 3       | FFP-130 Refactor Complete          | ~168h         |
+| Jan 13      | Flow-Level Scoring Refactor        | ~172h         |
+| Jan 18      | FFP-133 Complete (Scoring Service) | ~175h         |
+| **Current** | **Sprint 4 - FFP-126 next**        | **~175/197h** |
 
 ---
 
