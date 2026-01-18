@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { dimensionalScoreSchema } from './job.schema';
+import { dimensionalScoreSchema } from '../../src/schemas/job.schema';
 import {
   userAssessmentStatusSchema,
   userAnswerSchema,
@@ -15,7 +15,7 @@ import {
   submitAssessmentSchema,
   startAssessmentRequestSchema,
   startAssessmentResponseSchema,
-} from './user-assessment.schema';
+} from '../../src/schemas/user-assessment.schema';
 
 // Test fixtures
 const validUuid = '550e8400-e29b-41d4-a716-446655440000';
@@ -776,6 +776,16 @@ describe('startAssessmentRequestSchema', () => {
 // ============================================================================
 
 describe('startAssessmentResponseSchema', () => {
+  const validStepSummary = {
+    id: validUuid,
+    order: 1,
+    type: 'intro',
+    config: { title: 'Welcome' },
+    templateId: null,
+    hasBranchingRules: false,
+    defaultNextStepId: null,
+  };
+
   const validResponse = {
     assessmentId: validUuid,
     currentStep: 1,
@@ -783,6 +793,7 @@ describe('startAssessmentResponseSchema', () => {
     answers: {},
     flowId: validUuid2,
     isResumed: false,
+    steps: [validStepSummary],
   };
 
   it('should accept valid response for new assessment', () => {

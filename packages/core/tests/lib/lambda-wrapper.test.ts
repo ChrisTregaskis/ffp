@@ -12,9 +12,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { z } from 'zod';
 
-import { type APIGatewayProxyEventV2WithJWT } from './context';
-import { UnauthorisedError, ValidationError, NotFoundError } from './errors';
-import { withErrorHandling } from './lambda-wrapper';
+import { type APIGatewayProxyEventV2WithJWT } from '../../src/lib/context';
+import { UnauthorisedError, ValidationError, NotFoundError } from '../../src/lib/errors';
+import { withErrorHandling } from '../../src/lib/lambda-wrapper';
 
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 

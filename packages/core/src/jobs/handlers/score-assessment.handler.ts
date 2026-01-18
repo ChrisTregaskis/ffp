@@ -4,9 +4,10 @@
  * Processes assessment scoring jobs by calculating dimensional scores
  * from user responses and updating the user_assessments table.
  *
- * Architecture note: Responses are fetched from the database (user_assessment_answers)
- * rather than passed in the job payload. This ensures we score the actual persisted
- * answers and keeps the job payload lightweight.
+ * Architecture notes:
+ * - Scoring configuration lives at the FLOW level (not template)
+ * - Questions are fetched from ALL templates in the flow via flow_steps
+ * - Responses are fetched from database (user_assessment_answers)
  *
  * @module jobs/handlers/score-assessment
  */
@@ -16,32 +17,34 @@ import { eq } from 'drizzle-orm';
 import { getDb, withRLS, type DbClient } from '@ffp/database';
 import { userAssessments, userAssessmentAnswers } from '@ffp/database/schema';
 
+import { findFlowById, findStepsByFlowId } from '../../assessments/flow.repository';
 import { calculateScores, toJobResult } from '../../assessments/scoring';
-import { findById as findTemplateById } from '../../assessments/template.repository';
 import { NotFoundError, ValidationError } from '../../lib/errors';
-import { findByTemplateId as findQuestionsByTemplateId } from '../../questions/question.repository';
-
-import type { AssessmentResponse, ScoreAssessmentResult } from '../../schemas/job.schema';
+import { findByTemplateIds } from '../../questions/question.repository';
+import {
+  assessmentResponseSchema,
+  type AssessmentResponse,
+  type ScoreAssessmentResult,
+} from '../../schemas/job.schema';
 
 export interface ScoreAssessmentJobPayload {
   /** The user assessment ID to score */
   userAssessmentId: string;
-  /** The template containing the scoring configuration */
-  templateId: string;
+  /** The flow containing the scoring configuration */
+  flowId: string;
 }
 
 /**
  * Process a score_assessment job
  *
- * Fetches the assessment template, questions, and persisted answers from the database,
- * calculates scores, and updates the user_assessment record.
- *
- * @param payload - Job payload containing assessment and template IDs
- * @param tenantId - Tenant UUID for RLS context
+ * Fetches the assessment flow (with scoringConfig), all questions from templates
+ * in the flow via flow_steps, and persisted answers from the database.
+ * Calculates dimensional scores and updates the user_assessment record.
+
  * @returns Score assessment result with dimensional scores
  *
- * @throws {NotFoundError} If the assessment template is not found
- * @throws {ValidationError} If no answers exist for the assessment
+ * @throws {NotFoundError} If the assessment flow is not found
+ * @throws {ValidationError} If flow has no scoring config or no answers exist
  */
 export async function processScoreAssessment(
   payload: ScoreAssessmentJobPayload,
@@ -49,20 +52,51 @@ export async function processScoreAssessment(
 ): Promise<ScoreAssessmentResult> {
   const db = getDb();
 
+  // Scoring jobs are system operations triggered by authenticated user submissions.
+  // Tenant-level RLS isolation (userId = undefined) is sufficient because:
+  // 1. Jobs are only created via submitAssessment() which validates user ownership
+  // 2. The job payload contains userAssessmentId which is tenant-scoped
+  // 3. User-level RLS would require passing userId through the job queue unnecessarily
   return await withRLS(db, tenantId, undefined, async (tx) => {
     // Type assertion: tx is compatible with DbClient for query operations
     // The $client property is only used for connection management, not queries
     const dbTx = tx as unknown as DbClient;
 
-    // Get template for scoring config
-    const template = await findTemplateById(dbTx, payload.templateId);
+    // Fetch flow with scoringConfig
+    const flow = await findFlowById(dbTx, payload.flowId);
 
-    if (!template) {
-      throw new NotFoundError('Assessment template', payload.templateId);
+    if (!flow) {
+      throw new NotFoundError('Assessment flow', payload.flowId);
     }
 
-    // Get questions for the template
-    const questions = await findQuestionsByTemplateId(dbTx, payload.templateId);
+    if (!flow.scoringConfig) {
+      throw new ValidationError(
+        `Flow ${payload.flowId} has no scoring configuration. ` +
+          `Add scoringConfig to assessment_flows table.`
+      );
+    }
+
+    // Fetch ALL steps for flow (normalised table)
+    const steps = await findStepsByFlowId(dbTx, payload.flowId);
+
+    // Get template IDs from question and video-assessment steps
+    const templateIds = steps
+      .filter((step) => step.type === 'questions' || step.type === 'video-assessment')
+      .map((step) => step.templateId)
+      .filter((id): id is string => id !== null);
+
+    if (templateIds.length === 0) {
+      throw new ValidationError(`Flow ${payload.flowId} has no question templates. Cannot score.`);
+    }
+
+    // Fetch questions from ALL templates in the flow
+    const questions = await findByTemplateIds(dbTx, templateIds);
+
+    if (questions.length === 0) {
+      throw new ValidationError(
+        `No questions found in flow ${payload.flowId} templates. Cannot score.`
+      );
+    }
 
     // Fetch persisted answers from database (not from payload)
     const answerRecords = await tx
@@ -76,14 +110,26 @@ export async function processScoreAssessment(
       );
     }
 
-    // Transform database records to AssessmentResponse format
-    const responses: AssessmentResponse[] = answerRecords.map((record) => ({
-      questionId: record.questionId,
-      answerValue: record.answerValue as AssessmentResponse['answerValue'],
-    }));
+    // Transform and validate database records to AssessmentResponse format.
+    // Validate JSONB answerValue from database to catch
+    // any malformed data that could cause silent incorrect scoring.
+    const responses: AssessmentResponse[] = answerRecords.map((record) => {
+      const parsed = assessmentResponseSchema.safeParse({
+        questionId: record.questionId,
+        answerValue: record.answerValue,
+      });
 
-    // Calculate scores using fetched responses
-    const scoringResult = calculateScores(responses, questions, template.scoringConfig);
+      if (!parsed.success) {
+        throw new ValidationError(
+          `Invalid answer format for question ${record.questionId}: ${parsed.error.message}`
+        );
+      }
+
+      return parsed.data;
+    });
+
+    // Calculate scores using flow's combined scoring config
+    const scoringResult = calculateScores(responses, questions, flow.scoringConfig);
 
     // Convert to job result format
     const result = toJobResult(scoringResult);

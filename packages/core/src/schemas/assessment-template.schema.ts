@@ -25,8 +25,12 @@ export const assessmentTemplateSchema = z.object({
   description: z.string().nullable(),
   /** Version number for tracking template changes */
   version: z.number().int().positive(),
-  /** Scoring configuration for multi-dimensional scoring */
-  scoringConfig: scoringConfigSchema,
+  /**
+   * Scoring configuration for multi-dimensional scoring.
+   * @deprecated Use assessment_flows.scoringConfig for flow-level scoring.
+   * Nullable for backwards compatibility during migration.
+   */
+  scoringConfig: scoringConfigSchema.nullable(),
   /** Whether the template is currently active/usable */
   isActive: z.boolean(),
   /** User ID of the creator (nullable for system-seeded templates) */

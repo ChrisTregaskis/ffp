@@ -6,6 +6,7 @@ import { users } from './users';
 import { assessmentFlows } from './assessment-flows';
 import { userAssessmentAnswers } from './user-assessment-answers';
 import { USER_ASSESSMENT_STATUSES } from '../constants/user-assessment.constants';
+import type { AssessmentWarning } from '../constants/branching.constants';
 
 /**
  * User assessment status enumeration (PostgreSQL enum)
@@ -49,6 +50,16 @@ export const userAssessments = pgTable(
     status: userAssessmentStatusEnum('status').notNull().default('not_started'),
     /** Calculated scores after scoring job completes (nullable until scored) */
     scores: jsonb('scores'),
+    /**
+     * Ordered list of step IDs the user has visited during this assessment.
+     * Used for path tracking, branching validation, and resuming interrupted assessments.
+     */
+    visitedStepIds: jsonb('visited_step_ids').$type<string[]>().default([]),
+    /**
+     * Warnings shown to the user during the assessment (e.g., medical review warnings).
+     * Stored for audit purposes and to prevent duplicate warnings on resume.
+     */
+    warningsShown: jsonb('warnings_shown').$type<AssessmentWarning[]>().default([]),
     /**
      * Reference to generated programme (nullable until programme generation)
      * FK constraint will be added when programmes table is created (FFP-134)

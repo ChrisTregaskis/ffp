@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { sortBy } from './sort.utils';
+import { sortBy } from '../../src/lib/sort.utils';
 
 interface TestItem {
   id: number;

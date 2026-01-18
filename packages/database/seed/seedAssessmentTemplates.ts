@@ -4,7 +4,7 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../src/schema/index.js';
 import { assessmentTemplates, templateQuestions } from '../src/schema/index.js';
 import { createLogger } from '../src/lib/logger.js';
-import { QUESTION_IDS } from './seedQuestions.js';
+import { QUESTION_IDS } from './seedQuestions.js'; // Used for template-question mappings
 
 import type { NewAssessmentTemplate } from '../src/schema/assessment-templates.js';
 import type { NewTemplateQuestion } from '../src/schema/template-questions.js';
@@ -20,6 +20,8 @@ export const TEMPLATE_IDS = {
   PRE_ASSESSMENT_QUESTIONS: '11111111-1111-1111-1111-111111111101',
   STRENGTH_ASSESSMENT: '11111111-1111-1111-1111-111111111102',
   BALANCE_ASSESSMENT: '11111111-1111-1111-1111-111111111103',
+  BACK_PAIN_GENERAL: '11111111-1111-1111-1111-111111111104',
+  RED_FLAG_SCREENING: '11111111-1111-1111-1111-111111111105',
 } as const;
 
 /**
@@ -29,6 +31,8 @@ export const TEMPLATE_NAMES = {
   PRE_ASSESSMENT_QUESTIONS: 'pre-assessment-questions-v1',
   STRENGTH_ASSESSMENT: 'strength-assessment-v1',
   BALANCE_ASSESSMENT: 'balance-assessment-v1',
+  BACK_PAIN_GENERAL: 'back-pain-general-v1',
+  RED_FLAG_SCREENING: 'red-flag-screening-v1',
 } as const;
 
 /**
@@ -49,6 +53,7 @@ const templateQuestionMappings: TemplateQuestionMapping[] = [
       'pain-location',
       'activity-level',
       'medical-conditions',
+      'pain-area', // Branching question: determines next step (back vs other)
     ],
   },
   {
@@ -71,6 +76,27 @@ const templateQuestionMappings: TemplateQuestionMapping[] = [
       'balance-confidence',
     ],
   },
+  {
+    templateId: TEMPLATE_IDS.BACK_PAIN_GENERAL,
+    questionIds: [
+      'back-pain-duration',
+      'back-pain-intensity',
+      'back-pain-type',
+      'back-pain-recurrence',
+      'back-pain-typical-duration',
+    ],
+  },
+  {
+    templateId: TEMPLATE_IDS.RED_FLAG_SCREENING,
+    questionIds: [
+      'radiating-pain',
+      'numbness-tingling',
+      'incontinence',
+      'saddle-numbness',
+      'unexplained-weight-loss',
+      'night-sweats',
+    ],
+  },
 ];
 
 /**
@@ -79,45 +105,16 @@ const templateQuestionMappings: TemplateQuestionMapping[] = [
  *
  * Questions are now stored in the dedicated `questions` table and linked
  * via `template_questions` join table. See seedQuestions.ts for question data.
+ *
+ * NOTE: scoringConfig is now null - scoring is handled at flow level.
+ * See seedAssessmentFlows.ts for the combined scoring configuration.
  */
 const preAssessmentQuestionsTemplate: NewAssessmentTemplate = {
   id: TEMPLATE_IDS.PRE_ASSESSMENT_QUESTIONS,
   name: TEMPLATE_NAMES.PRE_ASSESSMENT_QUESTIONS,
   description: 'Pre-assessment questions about goals, pain levels, and medical history',
   version: 1,
-  scoringConfig: {
-    dimensions: [
-      {
-        name: 'pain',
-        questionIds: [QUESTION_IDS['pain-level'], QUESTION_IDS['pain-location']],
-        maxScore: 17,
-        weight: 1,
-        riskThresholds: { low: 3, moderate: 6 },
-      },
-      {
-        name: 'general',
-        questionIds: [
-          QUESTION_IDS['goal-primary'],
-          QUESTION_IDS['activity-level'],
-          QUESTION_IDS['medical-conditions'],
-        ],
-        maxScore: 6,
-        weight: 1,
-      },
-    ],
-    programMappings: [
-      {
-        conditions: [{ dimension: 'pain', operator: 'gte', value: 7 }],
-        programTemplateId: 'gentle-mobility-programme',
-        priority: 1,
-      },
-      {
-        conditions: [{ dimension: 'pain', operator: 'lt', value: 3 }],
-        programTemplateId: 'strength-building-programme',
-        priority: 2,
-      },
-    ],
-  },
+  scoringConfig: null, // Deprecated: Use flow-level scoring
   isActive: true,
 };
 
@@ -127,39 +124,16 @@ const preAssessmentQuestionsTemplate: NewAssessmentTemplate = {
  *
  * Questions are now stored in the dedicated `questions` table and linked
  * via `template_questions` join table. See seedQuestions.ts for question data.
+ *
+ * NOTE: scoringConfig is now null - scoring is handled at flow level.
+ * See seedAssessmentFlows.ts for the combined scoring configuration.
  */
 const strengthAssessmentTemplate: NewAssessmentTemplate = {
   id: TEMPLATE_IDS.STRENGTH_ASSESSMENT,
   name: TEMPLATE_NAMES.STRENGTH_ASSESSMENT,
   description: 'Video-guided strength assessment exercises',
   version: 1,
-  scoringConfig: {
-    dimensions: [
-      {
-        name: 'strength',
-        questionIds: [
-          QUESTION_IDS['squat-rating'],
-          QUESTION_IDS['pushup-count'],
-          QUESTION_IDS['strength-comfort'],
-        ],
-        maxScore: 64,
-        weight: 1.5,
-        riskThresholds: { low: 20, moderate: 40 },
-      },
-    ],
-    programMappings: [
-      {
-        conditions: [{ dimension: 'strength', operator: 'lt', value: 20 }],
-        programTemplateId: 'beginner-strength-programme',
-        priority: 1,
-      },
-      {
-        conditions: [{ dimension: 'strength', operator: 'gte', value: 40 }],
-        programTemplateId: 'advanced-strength-programme',
-        priority: 2,
-      },
-    ],
-  },
+  scoringConfig: null, // Deprecated: Use flow-level scoring
   isActive: true,
 };
 
@@ -169,39 +143,54 @@ const strengthAssessmentTemplate: NewAssessmentTemplate = {
  *
  * Questions are now stored in the dedicated `questions` table and linked
  * via `template_questions` join table. See seedQuestions.ts for question data.
+ *
+ * NOTE: scoringConfig is now null - scoring is handled at flow level.
+ * See seedAssessmentFlows.ts for the combined scoring configuration.
  */
 const balanceAssessmentTemplate: NewAssessmentTemplate = {
   id: TEMPLATE_IDS.BALANCE_ASSESSMENT,
   name: TEMPLATE_NAMES.BALANCE_ASSESSMENT,
   description: 'Balance and stability assessment exercises',
   version: 1,
-  scoringConfig: {
-    dimensions: [
-      {
-        name: 'balance',
-        questionIds: [
-          QUESTION_IDS['single-leg-duration'],
-          QUESTION_IDS['tandem-stability'],
-          QUESTION_IDS['balance-confidence'],
-        ],
-        maxScore: 18,
-        weight: 1.2,
-        riskThresholds: { low: 6, moderate: 12 },
-      },
-    ],
-    programMappings: [
-      {
-        conditions: [{ dimension: 'balance', operator: 'lt', value: 6 }],
-        programTemplateId: 'balance-foundation-programme',
-        priority: 1,
-      },
-      {
-        conditions: [{ dimension: 'balance', operator: 'gte', value: 12 }],
-        programTemplateId: 'advanced-balance-programme',
-        priority: 2,
-      },
-    ],
-  },
+  scoringConfig: null, // Deprecated: Use flow-level scoring
+  isActive: true,
+};
+
+/**
+ * Back pain general assessment template
+ * Clinical questions about back pain history and characteristics
+ *
+ * Questions include duration, intensity, type, recurrence history, and typical duration.
+ * Based on real physiotherapy assessment protocols.
+ *
+ * NOTE: scoringConfig is now null - scoring is handled at flow level.
+ * See seedAssessmentFlows.ts for the combined scoring configuration.
+ */
+const backPainGeneralTemplate: NewAssessmentTemplate = {
+  id: TEMPLATE_IDS.BACK_PAIN_GENERAL,
+  name: TEMPLATE_NAMES.BACK_PAIN_GENERAL,
+  description: 'Clinical questions about back pain history and characteristics',
+  version: 1,
+  scoringConfig: null, // Deprecated: Use flow-level scoring
+  isActive: true,
+};
+
+/**
+ * Red flag screening template
+ * Critical clinical questions to identify conditions requiring medical review
+ *
+ * Contains 6 yes/no questions based on standard physiotherapy red flag screening protocols.
+ * Any "yes" answer triggers a medical warning via branching rules before proceeding.
+ *
+ * NOTE: scoringConfig is now null - scoring is handled at flow level.
+ * See seedAssessmentFlows.ts for the combined scoring configuration.
+ */
+const redFlagScreeningTemplate: NewAssessmentTemplate = {
+  id: TEMPLATE_IDS.RED_FLAG_SCREENING,
+  name: TEMPLATE_NAMES.RED_FLAG_SCREENING,
+  description: 'Critical clinical questions to identify conditions requiring medical review',
+  version: 1,
+  scoringConfig: null, // Deprecated: Use flow-level scoring
   isActive: true,
 };
 
@@ -212,6 +201,8 @@ const DEFAULT_TEMPLATES: NewAssessmentTemplate[] = [
   preAssessmentQuestionsTemplate,
   strengthAssessmentTemplate,
   balanceAssessmentTemplate,
+  backPainGeneralTemplate,
+  redFlagScreeningTemplate,
 ];
 
 /**

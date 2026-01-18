@@ -1,6 +1,9 @@
 /**
  * Job Queue Service Integration Tests
  *
+ * NOTE: This file was original named job-queue.service.test.ts however
+ * due to file curruption, is recreated with this name.
+ *
  * Tests job queuing operations against a real PostgreSQL database (ffp_test).
  * These tests verify that the service correctly creates jobs with proper
  * tenant isolation and default values.
@@ -19,9 +22,10 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } 
 
 import * as schema from '@ffp/database/schema';
 
-import { queueJob } from './job-queue.service';
+import { queueJob } from '../../src/jobs/job-queue.service';
 
-import type { TenantContext, UserActor } from '../lib/context';
+import type { JobPayloadMap } from '../../src/jobs/job-queue.service';
+import type { TenantContext, UserActor } from '../../src/lib/context';
 
 // We need to mock getDb but keep other exports
 // Using hoisted mock with partial implementation
@@ -129,9 +133,9 @@ describe('Job Queue Service', () => {
         templateId: randomUUID(),
         userId: randomUUID(),
         responses: [{ questionId: randomUUID(), answerValue: 5 }],
-      };
+      } as unknown as JobPayloadMap['score_assessment'];
 
-      const jobId = await queueJob('score_assessment', payload, testContext);
+      const jobId = await queueJob<'score_assessment'>('score_assessment', payload, testContext);
 
       expect(jobId).toBeDefined();
       expect(jobId).toMatch(/^[0-9a-f-]{36}$/);
@@ -164,7 +168,7 @@ describe('Job Queue Service', () => {
         templateId: randomUUID(),
         userId: randomUUID(),
         responses: [{ questionId: randomUUID(), answerValue: 5 }],
-      };
+      } as unknown as JobPayloadMap['score_assessment'];
 
       const jobId = await queueJob('score_assessment', payload, testContext, {
         priority: 1,
@@ -184,7 +188,7 @@ describe('Job Queue Service', () => {
         templateId: randomUUID(),
         userId: randomUUID(),
         responses: [{ questionId: randomUUID(), answerValue: 5 }],
-      };
+      } as unknown as JobPayloadMap['score_assessment'];
 
       const jobId = await queueJob('score_assessment', payload, testContext, {
         maxAttempts: 5,
@@ -204,7 +208,7 @@ describe('Job Queue Service', () => {
         templateId: randomUUID(),
         userId: randomUUID(),
         responses: [{ questionId: randomUUID(), answerValue: 5 }],
-      };
+      } as unknown as JobPayloadMap['score_assessment'];
 
       const jobId = await queueJob('score_assessment', payload, testContext, {
         priority: 2,
@@ -267,7 +271,7 @@ describe('Job Queue Service', () => {
         templateId: randomUUID(),
         userId: randomUUID(),
         responses: [{ questionId: randomUUID(), answerValue: 5 }],
-      };
+      } as unknown as JobPayloadMap['score_assessment'];
 
       // Queue jobs for different tenants
       const job1Id = await queueJob('score_assessment', payload, testContext);

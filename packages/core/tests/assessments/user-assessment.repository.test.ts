@@ -17,9 +17,8 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
-import { NotFoundError, ValidationError } from '../lib/errors';
-
-import * as userAssessmentRepository from './user-assessment.repository';
+import * as userAssessmentRepository from '../../src/assessments/user-assessment.repository';
+import { NotFoundError, ValidationError } from '../../src/lib/errors';
 
 /**
  * Generate unique test identifiers per test run to avoid conflicts

@@ -1,4 +1,4 @@
-import { eq, inArray, asc } from 'drizzle-orm';
+import { eq, inArray, asc, and } from 'drizzle-orm';
 
 import type { DbClient, QuestionWithConfig } from '@ffp/database';
 import { questions, templateQuestions, type QuestionRecord } from '@ffp/database/schema';
@@ -136,7 +136,7 @@ export async function findByTemplateIds(
     })
     .from(templateQuestions)
     .innerJoin(questions, eq(templateQuestions.questionId, questions.id))
-    .where(inArray(templateQuestions.templateId, templateIds))
+    .where(and(inArray(templateQuestions.templateId, templateIds), eq(questions.isActive, true)))
     .orderBy(asc(templateQuestions.templateId), asc(templateQuestions.displayOrder));
 
   return records.map((record) => ({
@@ -169,4 +169,27 @@ export async function findAllQuestions(
   return options?.activeOnly !== false
     ? await query.where(eq(questions.isActive, true))
     : await query;
+}
+
+/**
+ * Find question slugs by question IDs
+ *
+ * Returns a Map of questionId -> slug for efficient lookup.
+ *
+ * @returns Map of question ID to slug
+ */
+export async function findSlugsByIds(
+  db: DbClient,
+  questionIds: string[]
+): Promise<Map<string, string>> {
+  if (questionIds.length === 0) {
+    return new Map();
+  }
+
+  const records = await db
+    .select({ id: questions.id, slug: questions.slug })
+    .from(questions)
+    .where(inArray(questions.id, questionIds));
+
+  return new Map(records.map((r) => [r.id, r.slug]));
 }

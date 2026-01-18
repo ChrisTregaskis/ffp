@@ -1,12 +1,18 @@
 import { describe, it, expect } from 'vitest';
 
-import { assessmentQuestionSchema, questionsArraySchema } from './assessment-question.schema';
+import {
+  assessmentQuestionSchema,
+  questionsArraySchema,
+} from '../../src/schemas/assessment-question.schema';
 import {
   assessmentTemplateSchema,
   createAssessmentTemplateSchema,
   updateAssessmentTemplateSchema,
-} from './assessment-template.schema';
-import { scoringConfigSchema, dimensionConfigSchema } from './scoring-config.schema';
+} from '../../src/schemas/assessment-template.schema';
+import {
+  scoringConfigSchema,
+  dimensionConfigSchema,
+} from '../../src/schemas/scoring-config.schema';
 
 // Test fixtures with deterministic UUIDs
 const QUESTION_UUID_1 = '11111111-1111-1111-1111-111111111001';

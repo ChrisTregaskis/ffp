@@ -16,9 +16,9 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 
-import * as templateRepository from './template.repository';
+import * as templateRepository from '../../src/assessments/template.repository';
 
-import type { CreateAssessmentTemplateInput } from '../schemas/assessment-template.schema';
+import type { CreateAssessmentTemplateInput } from '../../src/schemas/assessment-template.schema';
 
 describe('Template Repository', () => {
   let pool: Pool;
@@ -60,7 +60,8 @@ describe('Template Repository', () => {
 
   beforeEach(async () => {
     // Clean up tables before each test
-    // Delete template_questions first (FK dependency), then assessment_templates
+    // Delete in FK dependency order: flow_steps → template_questions → assessment_templates
+    await db.execute(sql`DELETE FROM flow_steps`);
     await db.execute(sql`DELETE FROM template_questions`);
     await db.execute(sql`DELETE FROM assessment_templates`);
   });
