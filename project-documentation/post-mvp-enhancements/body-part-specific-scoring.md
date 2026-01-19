@@ -1,9 +1,13 @@
 # Body-Part-Specific Scoring Enhancement
 
 **Status:** Post-MVP
-**Complexity:** Moderate (~2-3 hours)
+**Complexity:** Low-Moderate (~1.5-2 hours) - reduced due to existing patterns
 **Priority:** Medium
 **Dependencies:** Core scoring system (MVP complete)
+
+---
+
+> **Implementation Note (January 2026):** The Sprint 4 branching refactor implemented a `condition-evaluator.ts` with answer-based condition evaluation patterns (`eq`, `gt`, `in` operators). This infrastructure can be reused for programme matching conditions, reducing implementation effort. See `packages/core/src/assessments/branching/condition-evaluator.ts` for the pattern to follow.
 
 ---
 
