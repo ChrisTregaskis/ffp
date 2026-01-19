@@ -2,26 +2,40 @@
 
 **Last Updated**: 19th January 2026
 **Current EPIC**: FFP-2 - Assessment Engine
-**Sprint Status**: Sprint 4 ✅ Complete | Sprint 5 next
+**Sprint Status**: Sprint 4 ✅ Complete | Sprint 5 Ready
 **Previous**: Sprint 3 ✅ Complete
 
 ---
 
-## Next: Sprint 5 - Results & Frontend Core (23 pts)
+## Ready: Sprint 5 - Results & Frontend Core (23 pts)
 
 **Dates**: 26th January - 15th February 2026
-**Branch**: TBD (`feature/sprint5`)
+**Branch**: `feature/sprint5`
 **Sprint Goal**: Assessment results API, programme generation, frontend components for assessment flow.
+**Analysis**: See `sprint-planning/outputs/sprint-5-analysis-report.md`
 
 ### Sprint 5 Stories
 
-| Key     | Story                                | Pts | Dependencies             |
-| ------- | ------------------------------------ | --- | ------------------------ |
-| FFP-131 | Get Assessment Results API           | 3   | FFP-133 (scoring) ✅     |
-| FFP-134 | Programme Generation Service         | 5   | FFP-131, video catalogue |
-| FFP-136 | TanStack Query Hooks for Assessments | 5   | FFP-135 ✅               |
-| FFP-139 | Question Renderer Components         | 8   | FFP-135 ✅, FFP-136      |
-| FFP-138 | Assessment Progress Bar Component    | 2   | FFP-135 ✅               |
+| Key     | Story                                | Pts | Dependencies        |
+| ------- | ------------------------------------ | --- | ------------------- |
+| FFP-131 | Get Assessment Results API           | 3   | FFP-133 ✅          |
+| FFP-134 | Programme Generation Service         | 5   | FFP-131             |
+| FFP-136 | TanStack Query Hooks for Assessments | 5   | FFP-135 ✅, FFP-131 |
+| FFP-139 | Question Renderer Components         | 8   | FFP-135 ✅, FFP-136 |
+| FFP-138 | Assessment Progress Bar Component    | 2   | FFP-135 ✅          |
+
+### Recommended Implementation Order
+
+1. **FFP-138** (2 pts) - Independent, quick win
+2. **FFP-131** (3 pts) - Unblocks FFP-134, critical path
+3. **FFP-136** (5 pts) - TanStack setup, unblocks FFP-139
+4. **FFP-139** (8 pts) - Largest story, benefits from hooks
+5. **FFP-134** (5 pts) - Can parallel with FFP-139
+
+### Pre-requisites
+
+- [ ] **API Client Design** - Base + FFP client pattern (see `sprint-planning/outputs/api-client-design-prompt.md`)
+- [ ] Install TanStack Query before FFP-136
 
 ---
 
@@ -73,18 +87,6 @@
 
 ---
 
-## ✅ Completed: FFP-130 - Submit Assessment API
-
-**Story Points**: 5
-**Branch**: `feature/ffp-130-submit-assessment-api` (merged)
-
-- `POST /assessments/:id/submit` endpoint
-- Validates required questions, transitions to `submitted`
-- Enqueues `score_assessment` job
-- Includes questions table refactor (JSONB → dedicated tables)
-
----
-
 ## Assessment Engine Overview (FFP-2)
 
 **Total**: 86 story points across 4 sprints (~25 pts velocity)
@@ -103,7 +105,7 @@ FFP-124 → FFP-125 → FFP-127 → FFP-128 → FFP-129 → FFP-130 → FFP-133 
 | ------ | -------------------- | --- | ----------- |
 | 3      | Backend Foundation   | 24  | ✅ Complete |
 | 4      | APIs & FE Foundation | 23  | ✅ Complete |
-| 5      | Results & FE Core    | 23  | Next        |
+| 5      | Results & FE Core    | 23  | 📋 Ready    |
 | 6      | FE Completion        | 14  | Future      |
 
 ---
