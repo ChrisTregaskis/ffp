@@ -16,9 +16,6 @@ import { getDb } from '@ffp/database';
  * Returns a single assessment template with its questions.
  * Any authenticated user can view templates.
  *
- * Path parameters:
- * - id: UUID of the template to retrieve
- *
  */
 export const handler = withErrorHandling(
   async (event: APIGatewayProxyEventV2WithJWT): Promise<AssessmentTemplateWithQuestions> => {

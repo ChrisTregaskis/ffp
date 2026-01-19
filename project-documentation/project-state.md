@@ -136,13 +136,13 @@ CRUD API endpoints for system admins to manage assessment templates:
 
 ### Sub-Task Execution Order
 
-| Order | Key     | Summary                               | Status   | Notes                                |
-| ----- | ------- | ------------------------------------- | -------- | ------------------------------------ |
-| 1     | FFP-151 | Service layer (`template.service.ts`) | To Do    | Thin layer for createdBy + duplicate |
-| 2     | FFP-152 | List + Get handlers                   | To Do    | Read-only, no role check needed      |
-| 3     | FFP-153 | Create/Update/Deactivate handlers     | To Do    | Role validation (system_admin)       |
-| 4     | FFP-154 | Duplicate handler                     | To Do    | Uses service layer                   |
-| 5     | FFP-155 | Integration tests                     | **SKIP** | Repository/schema tests exist        |
+| Order | Key     | Summary                               | Status      | Notes                                |
+| ----- | ------- | ------------------------------------- | ----------- | ------------------------------------ |
+| 1     | FFP-151 | Service layer (`template.service.ts`) | ✅ Complete | Thin layer for createdBy + duplicate |
+| 2     | FFP-152 | List + Get handlers                   | ✅ Complete | Read-only, no role check needed      |
+| 3     | FFP-153 | Create/Update/Deactivate handlers     | ✅ Complete | Role validation (system_admin)       |
+| 4     | FFP-154 | Duplicate handler                     | To Do       | Uses service layer                   |
+| 5     | FFP-155 | Integration tests                     | **SKIP**    | Repository/schema tests exist        |
 
 ### Implementation Decisions
 

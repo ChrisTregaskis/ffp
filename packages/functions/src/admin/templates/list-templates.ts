@@ -21,9 +21,6 @@ interface ListTemplatesResponse {
  * Protected endpoint that requires JWT authentication.
  * Returns all assessment templates. Any authenticated user can view templates.
  *
- * Query parameters:
- * - activeOnly: 'true' | 'false' (default: 'false') - Filter to only active templates
- *
  */
 export const handler = withErrorHandling(
   async (event: APIGatewayProxyEventV2WithJWT): Promise<ListTemplatesResponse> => {

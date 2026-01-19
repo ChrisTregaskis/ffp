@@ -8,4 +8,4 @@ export * as answerRepository from './answer.repository';
 export * as scoringService from './scoring';
 export * as branchingService from './branching';
 export type { UserAssessmentAnswer, SaveAnswerInput } from './answer.repository';
-export type { CreateTemplateInput } from './template.service';
+export type { CreateTemplateInput, AssessmentTemplate } from './template.service';
