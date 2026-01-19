@@ -3,6 +3,8 @@ import { createSystemContext, type APIGatewayProxyEventV2WithJWT } from '@ffp/co
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
 import { handler as createCustomerHandler } from './create-customer';
+import { handler as getTemplateHandler } from './templates/get-template';
+import { handler as listTemplatesHandler } from './templates/list-templates';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
@@ -22,14 +24,10 @@ const ROUTER_CONTEXT = createSystemContext({
 const routes: RouteRegistry = {
   POST: {
     '/create-customer': createCustomerHandler,
-    // Future admin routes:
-    // '/update-customer': updateCustomerHandler,
-    // '/delete-customer': deleteCustomerHandler,
   },
   GET: {
-    // Future admin routes:
-    // '/customers': listCustomersHandler,
-    // '/customer/:id': getCustomerHandler,
+    '/assessment-templates': listTemplatesHandler,
+    '/assessment-templates/{id}': getTemplateHandler,
   },
   PUT: {
     // Future admin routes:
