@@ -5,7 +5,6 @@ import {
   withErrorHandling,
   templateService,
 } from '@ffp/core/server';
-import { getDb } from '@ffp/database';
 
 /**
  * Response type for list templates endpoint
@@ -20,18 +19,17 @@ interface ListTemplatesResponse {
  *
  * Protected endpoint that requires JWT authentication.
  * Returns all assessment templates. Any authenticated user can view templates.
- *
  */
 export const handler = withErrorHandling(
   async (event: APIGatewayProxyEventV2WithJWT): Promise<ListTemplatesResponse> => {
     // Extract user context from JWT (validates authentication)
-    extractUserContext(event);
+    const context = extractUserContext(event);
 
     // Parse query parameters
     const activeOnly = event.queryStringParameters?.activeOnly === 'true';
 
-    const db = getDb();
-    const templates = await templateService.listTemplatesService(db, { activeOnly });
+    // Service functions consistently take ctx as first parameter
+    const templates = await templateService.listTemplatesService(context, { activeOnly });
 
     return {
       templates,
