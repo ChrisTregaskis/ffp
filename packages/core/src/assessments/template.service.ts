@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 
 import { getDb } from '@ffp/database';
-import { assessmentTemplates, templateQuestions } from '@ffp/database/schema';
+import { templateQuestions } from '@ffp/database/schema';
 
 import { isUserActor, type TenantContext } from '../lib/context';
 import {
@@ -147,36 +147,14 @@ export async function duplicateTemplateService(
     .from(templateQuestions)
     .where(eq(templateQuestions.templateId, templateId));
 
-  // Wrap write operations in transaction for atomicity
-  // If question copy fails, template creation is rolled back
-  const duplicatedTemplateId = await db.transaction(async (tx) => {
-    // Create the duplicate template using direct Drizzle insert
-    const [duplicatedTemplate] = await tx
-      .insert(assessmentTemplates)
-      .values({
-        name: newName,
-        description: sourceTemplate.description,
-        version: 1,
-        scoringConfig: sourceTemplate.scoringConfig,
-        isActive: false, // Start as draft
-        createdBy: userId,
-      })
-      .returning({ id: assessmentTemplates.id });
-
-    // Copy template_questions join records
-    if (sourceTemplateQuestions.length > 0) {
-      const newTemplateQuestions = sourceTemplateQuestions.map((tq) => ({
-        templateId: duplicatedTemplate.id,
-        questionId: tq.questionId,
-        displayOrder: tq.displayOrder,
-        configOverrides: tq.configOverrides,
-      }));
-
-      await tx.insert(templateQuestions).values(newTemplateQuestions);
-    }
-
-    return duplicatedTemplate.id;
-  });
+  // Duplicate template and its questions in a transaction
+  const duplicatedTemplateId = await templateRepository.createDuplicateTemplate(
+    db,
+    userId,
+    newName,
+    sourceTemplate,
+    sourceTemplateQuestions
+  );
 
   // Fetch and return the complete duplicated template with questions
   // (read operation, outside transaction - uses repository for full hydration)
