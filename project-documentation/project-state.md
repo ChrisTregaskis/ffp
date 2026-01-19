@@ -119,7 +119,7 @@ CRUD API endpoints for system admins to manage assessment templates:
 | 1     | FFP-193 | Define TypeScript types     | ✅ Complete | Foundation - types for state/actions |
 | 2     | FFP-194 | Implement assessmentReducer | ✅ Complete | State transitions                    |
 | 3     | FFP-195 | Create Context and Provider | ✅ Complete | React Context + useReducer           |
-| 4     | FFP-196 | Create useAssessment hook   | To Do       | Consumer hook with error handling    |
+| 4     | FFP-196 | Create useAssessment hook   | ✅ Complete | Consumer hook with error handling    |
 | 5     | FFP-197 | Unit tests for reducer      | DEFERRED    | Per MVP testing policy               |
 
 ### Corrections from Jira (Outdated Requirements)
