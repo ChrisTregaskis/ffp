@@ -6,7 +6,6 @@ import {
   integer,
   boolean,
   timestamp,
-  jsonb,
   index,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
@@ -14,7 +13,6 @@ import { relations } from 'drizzle-orm';
 
 import { users } from './users';
 import { templateQuestions } from './template-questions';
-import type { ScoringConfig } from '../types';
 
 /**
  * Assessment templates table definition
@@ -31,14 +29,6 @@ export const assessmentTemplates = pgTable(
     name: varchar('name', { length: 255 }).notNull(),
     description: text('description'),
     version: integer('version').notNull().default(1),
-
-    /**
-     * @deprecated Use assessment_flows.scoringConfig instead.
-     * Flow-level scoring provides holistic programme recommendations
-     * across all templates in a flow. This column is nullable for
-     * backwards compatibility and will be removed in a future migration.
-     */
-    scoringConfig: jsonb('scoring_config').$type<ScoringConfig>(),
 
     isActive: boolean('is_active').notNull().default(true),
     createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),

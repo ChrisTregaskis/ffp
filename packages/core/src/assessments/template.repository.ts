@@ -1,7 +1,11 @@
 import { eq, inArray } from 'drizzle-orm';
 
 import type { DbClient } from '@ffp/database';
-import { assessmentTemplates } from '@ffp/database/schema';
+import {
+  assessmentTemplates,
+  templateQuestions,
+  type TemplateQuestionRecord,
+} from '@ffp/database/schema';
 
 import { NotFoundError } from '../lib/errors';
 import { findByTemplateId as findQuestionsByTemplateId } from '../questions/question.repository';
@@ -22,8 +26,6 @@ export interface AssessmentTemplateWithQuestions extends AssessmentTemplate {
  * Map database record to AssessmentTemplate type
  *
  * Converts the Drizzle select result to the Zod-defined AssessmentTemplate type.
- * The cast through unknown is safe because JSONB data is validated by Zod
- * schemas before being stored in the database.
  */
 function mapToTemplate(record: typeof assessmentTemplates.$inferSelect): AssessmentTemplate {
   return {
@@ -31,7 +33,6 @@ function mapToTemplate(record: typeof assessmentTemplates.$inferSelect): Assessm
     name: record.name,
     description: record.description,
     version: record.version,
-    scoringConfig: record.scoringConfig as unknown as AssessmentTemplate['scoringConfig'],
     isActive: record.isActive,
     createdBy: record.createdBy,
     createdAt: record.createdAt,
@@ -112,7 +113,6 @@ export async function create(
       name: data.name,
       description: data.description,
       version: data.version,
-      scoringConfig: data.scoringConfig,
       isActive: data.isActive,
       createdBy: data.createdBy,
     })
@@ -146,7 +146,6 @@ export async function update(
     .set({
       name: data.name,
       description: data.description,
-      scoringConfig: data.scoringConfig,
       isActive: data.isActive,
       version: existing.version + 1,
       updatedAt: new Date(),
@@ -206,4 +205,76 @@ export async function findWithQuestions(
     ...template,
     templateQuestions: loadedQuestions,
   };
+}
+
+/**
+ * Find question assignments for a template
+ *
+ * Returns the raw template_questions join records (not the full questions).
+ * Use this when you need the assignment metadata for duplication or reordering.
+ *
+ * @param templateId - ID of the template to fetch assignments for
+ * @returns Array of question assignments with questionId, displayOrder, and configOverrides
+ */
+export async function findQuestionAssignmentsByTemplateId(
+  db: DbClient,
+  templateId: string
+): Promise<Pick<TemplateQuestionRecord, 'questionId' | 'displayOrder' | 'configOverrides'>[]> {
+  return await db
+    .select({
+      questionId: templateQuestions.questionId,
+      displayOrder: templateQuestions.displayOrder,
+      configOverrides: templateQuestions.configOverrides,
+    })
+    .from(templateQuestions)
+    .where(eq(templateQuestions.templateId, templateId));
+}
+
+/**
+ * Duplicate an assessment template
+ *
+ * Creates a copy of an existing template including all its question assignments.
+ * The write operations are wrapped in a transaction to ensure atomicity.
+ *
+ * @returns The ID of the newly created duplicated template
+ */
+export async function createDuplicateTemplate(
+  db: DbClient,
+  userId: string,
+  newName: string,
+  sourceTemplate: AssessmentTemplate,
+  sourceTemplateQuestions: Pick<
+    TemplateQuestionRecord,
+    'questionId' | 'displayOrder' | 'configOverrides'
+  >[]
+): Promise<string> {
+  // Wrap write operations in transaction for atomicity
+  // If question copy fails, template creation is rolled back
+  return await db.transaction(async (tx) => {
+    // Create the duplicate template using direct Drizzle insert
+    const [duplicatedTemplate] = await tx
+      .insert(assessmentTemplates)
+      .values({
+        name: newName,
+        description: sourceTemplate.description,
+        version: 1,
+        isActive: false, // Start as draft
+        createdBy: userId,
+      })
+      .returning({ id: assessmentTemplates.id });
+
+    // Copy template_questions join records
+    if (sourceTemplateQuestions.length > 0) {
+      const newTemplateQuestions = sourceTemplateQuestions.map((tq) => ({
+        templateId: duplicatedTemplate.id,
+        questionId: tq.questionId,
+        displayOrder: tq.displayOrder,
+        configOverrides: tq.configOverrides,
+      }));
+
+      await tx.insert(templateQuestions).values(newTemplateQuestions);
+    }
+
+    return duplicatedTemplate.id;
+  });
 }

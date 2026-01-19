@@ -217,9 +217,290 @@
               "body": "{\n  \"error\": \"FORBIDDEN\",\n  \"message\": \"Only system admins can create customers\",\n  \"requestId\": \"abc123-def456\"\n}"
             }
           ]
+        },
+        {
+          "name": "Template Management",
+          "item": [
+            {
+              "name": "List Templates",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response has templates array and count', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('templates');",
+                      "    pm.expect(jsonData).to.have.property('count');",
+                      "    pm.expect(jsonData.templates).to.be.an('array');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/admin/assessment-templates",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "assessment-templates"]
+                },
+                "description": "List all assessment templates.\n\n**Query Parameters:**\n- `activeOnly=true` - Filter to active templates only\n\n**Response:**\n```json\n{\n  \"templates\": [...],\n  \"count\": 5\n}\n```"
+              },
+              "response": []
+            },
+            {
+              "name": "List Templates (Active Only)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/admin/assessment-templates?activeOnly=true",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "assessment-templates"],
+                  "query": [
+                    {
+                      "key": "activeOnly",
+                      "value": "true"
+                    }
+                  ]
+                },
+                "description": "List only active assessment templates."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Template",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response has template with questions', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('id');",
+                      "    pm.expect(jsonData).to.have.property('name');",
+                      "    pm.expect(jsonData).to.have.property('questions');",
+                      "    pm.expect(jsonData.questions).to.be.an('array');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/admin/assessment-templates/11111111-1111-1111-1111-111111111101",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "assessment-templates", "11111111-1111-1111-1111-111111111101"]
+                },
+                "description": "Get a single assessment template with its questions.\n\n**Path Parameters:**\n- `id` - Template UUID\n\n**Seed Template IDs:**\n- `11111111-1111-1111-1111-111111111101` - Pre-assessment questions\n- `11111111-1111-1111-1111-111111111102` - Strength assessment\n- `11111111-1111-1111-1111-111111111103` - Balance assessment\n- `11111111-1111-1111-1111-111111111104` - Back pain general\n- `11111111-1111-1111-1111-111111111105` - Red flag screening"
+              },
+              "response": []
+            },
+            {
+              "name": "Create Template",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response has template object', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('template');",
+                      "    pm.expect(jsonData.template).to.have.property('id');",
+                      "    pm.expect(jsonData.template).to.have.property('name');",
+                      "    pm.expect(jsonData.template).to.have.property('createdBy');",
+                      "});",
+                      "",
+                      "// Save template ID for later tests",
+                      "const jsonData = pm.response.json();",
+                      "if (jsonData.template && jsonData.template.id) {",
+                      "    pm.collectionVariables.set('lastTemplateId', jsonData.template.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"test-manual-template-v1\",\n  \"description\": \"Template created during manual testing\",\n  \"version\": 1,\n  \"isActive\": false\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/admin/assessment-templates",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "assessment-templates"]
+                },
+                "description": "Create a new assessment template.\n\n**Required Role:** system_admin\n\n**Request Body:**\n```json\n{\n  \"name\": \"template-name\",\n  \"description\": \"Template description\",\n  \"version\": 1,\n  \"isActive\": false\n}\n```\n\n**Notes:**\n- `createdBy` is automatically set from JWT\n- Creates template without questions (add via separate API)"
+              },
+              "response": []
+            },
+            {
+              "name": "Update Template",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Version is incremented', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.template.version).to.be.above(1);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"description\": \"Updated description during manual testing\",\n  \"isActive\": true\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/admin/assessment-templates/{{lastTemplateId}}",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "assessment-templates", "{{lastTemplateId}}"]
+                },
+                "description": "Update an existing assessment template.\n\n**Required Role:** system_admin\n\n**Path Parameters:**\n- `id` - Template UUID (use `{{lastTemplateId}}` from Create)\n\n**Notes:**\n- Version is auto-incremented on update\n- Only provided fields are updated"
+              },
+              "response": []
+            },
+            {
+              "name": "Duplicate Template",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Duplicated template has questions', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.template).to.have.property('questions');",
+                      "    pm.expect(jsonData.template.questions).to.be.an('array');",
+                      "});",
+                      "",
+                      "pm.test('Version is reset to 1', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.template.version).to.equal(1);",
+                      "});",
+                      "",
+                      "pm.test('Template is inactive (draft)', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.template.isActive).to.equal(false);",
+                      "});",
+                      "",
+                      "// Save for cleanup",
+                      "const jsonData = pm.response.json();",
+                      "if (jsonData.template && jsonData.template.id) {",
+                      "    pm.collectionVariables.set('lastTemplateId', jsonData.template.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"duplicated-pre-assessment-v1\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/admin/assessment-templates/11111111-1111-1111-1111-111111111101/duplicate",
+                  "host": ["{{apiUrl}}"],
+                  "path": [
+                    "admin",
+                    "assessment-templates",
+                    "11111111-1111-1111-1111-111111111101",
+                    "duplicate"
+                  ]
+                },
+                "description": "Duplicate an existing template with all its questions.\n\n**Required Role:** system_admin\n\n**Request Body:**\n```json\n{\n  \"name\": \"new-template-name\"\n}\n```\n\n**Behaviour:**\n- Copies all template properties\n- Copies all template_questions join records\n- Sets version = 1\n- Sets isActive = false (draft)\n- Sets createdBy to current user"
+              },
+              "response": []
+            },
+            {
+              "name": "Deactivate Template",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Success response', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.success).to.equal(true);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/admin/assessment-templates/{{lastTemplateId}}",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "assessment-templates", "{{lastTemplateId}}"]
+                },
+                "description": "Deactivate (soft delete) a template.\n\n**Required Role:** system_admin\n\n**Path Parameters:**\n- `id` - Template UUID\n\n**Notes:**\n- Sets isActive = false\n- Template is NOT deleted from database\n- Preserves referential integrity with existing assessments"
+              },
+              "response": []
+            }
+          ],
+          "description": "Assessment template CRUD operations.\n\n**Required Role:** system_admin for create/update/delete/duplicate\n\n**Endpoints:**\n- GET /admin/assessment-templates - List all\n- GET /admin/assessment-templates/:id - Get with questions\n- POST /admin/assessment-templates - Create\n- PUT /admin/assessment-templates/:id - Update\n- DELETE /admin/assessment-templates/:id - Deactivate\n- POST /admin/assessment-templates/:id/duplicate - Duplicate"
         }
       ],
-      "description": "Admin operations requiring system_admin role.\n\n**Authentication:**\nAll endpoints require JWT token with `custom:role = system_admin`.\n\n**Current Endpoints:**\n- POST /admin/create-customer - Create new business tenant",
+      "description": "Admin operations requiring system_admin role.\n\n**Authentication:**\nAll endpoints require JWT token with `custom:role = system_admin`.\n\n**Folders:**\n- Create Customer - Tenant/customer onboarding\n- Template Management - Assessment template CRUD",
       "auth": {
         "type": "bearer",
         "bearer": [
@@ -2062,6 +2343,11 @@
     },
     {
       "key": "lastJobId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lastTemplateId",
       "value": "",
       "type": "string"
     }

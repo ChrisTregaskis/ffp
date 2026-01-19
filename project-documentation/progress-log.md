@@ -8,6 +8,51 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### January 19, 2026 (Session 88 - FFP-126 Manual Testing & Completion)
+
+**Status**: ✅ FFP-126 COMPLETE
+
+**Branch**: `feature/ffp-126-assessment-template-admin-api`
+
+**Summary**: Manual testing of assessment template admin API, bug fixes discovered during testing, and story completion.
+
+**Key Deliverables**:
+
+- **Manual Testing Guide**: `project-documentation/refactoring/testing/manual-testing-guide-template-admin-api.md`
+- **6 API Endpoints**: List, Get, Create, Update, Deactivate, Duplicate templates
+- **New Jira Story**: FFP-251 (Template Question Management API) - identified gap during testing
+
+**Bugs Fixed During Testing**:
+
+| Issue                  | Description                                        | Fix                                                           |
+| ---------------------- | -------------------------------------------------- | ------------------------------------------------------------- |
+| TC-05 Validation Error | `scoringConfig` required but not provided          | Removed deprecated field (separate session via prompt)        |
+| TC-05 FK Constraint    | `createdBy` used Cognito sub instead of DB user ID | Changed to use `getUserIdFromContext()` for proper resolution |
+
+**Test Results** (All Passed):
+
+| Test  | Description              | Status |
+| ----- | ------------------------ | ------ |
+| TC-01 | List all templates       | ✓ Pass |
+| TC-02 | List active only         | ✓ Pass |
+| TC-03 | Get template w/questions | ✓ Pass |
+| TC-04 | 404 for non-existent     | ✓ Pass |
+| TC-05 | Create new template      | ✓ Pass |
+| TC-06 | 403 for non-admin        | ✓ Pass |
+| TC-07 | Update template          | ✓ Pass |
+| TC-08 | Duplicate template       | ✓ Pass |
+| TC-09 | Deactivate (soft delete) | ✓ Pass |
+
+**Quality Assurance**:
+
+- ✅ 504 tests passing
+- ✅ TypeScript/lint clean
+- ✅ All CRUD operations verified via Postman
+
+**Sprint 4 Progress**: 18/23 pts (78%) - FFP-135 remaining
+
+---
+
 ### January 16-18, 2026 (Sessions 85-87 - FFP-133 Manual Testing & Completion)
 
 **Status**: ✅ FFP-133 COMPLETE

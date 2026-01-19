@@ -1,0 +1,1 @@
+ALTER TABLE "assessment_templates" DROP COLUMN "scoring_config";

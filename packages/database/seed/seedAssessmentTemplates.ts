@@ -106,7 +106,7 @@ const templateQuestionMappings: TemplateQuestionMapping[] = [
  * Questions are now stored in the dedicated `questions` table and linked
  * via `template_questions` join table. See seedQuestions.ts for question data.
  *
- * NOTE: scoringConfig is now null - scoring is handled at flow level.
+ * NOTE: Scoring configuration lives at flow level (assessment_flows.scoringConfig).
  * See seedAssessmentFlows.ts for the combined scoring configuration.
  */
 const preAssessmentQuestionsTemplate: NewAssessmentTemplate = {
@@ -114,7 +114,6 @@ const preAssessmentQuestionsTemplate: NewAssessmentTemplate = {
   name: TEMPLATE_NAMES.PRE_ASSESSMENT_QUESTIONS,
   description: 'Pre-assessment questions about goals, pain levels, and medical history',
   version: 1,
-  scoringConfig: null, // Deprecated: Use flow-level scoring
   isActive: true,
 };
 
@@ -125,7 +124,7 @@ const preAssessmentQuestionsTemplate: NewAssessmentTemplate = {
  * Questions are now stored in the dedicated `questions` table and linked
  * via `template_questions` join table. See seedQuestions.ts for question data.
  *
- * NOTE: scoringConfig is now null - scoring is handled at flow level.
+ * NOTE: Scoring configuration lives at flow level (assessment_flows.scoringConfig).
  * See seedAssessmentFlows.ts for the combined scoring configuration.
  */
 const strengthAssessmentTemplate: NewAssessmentTemplate = {
@@ -133,7 +132,6 @@ const strengthAssessmentTemplate: NewAssessmentTemplate = {
   name: TEMPLATE_NAMES.STRENGTH_ASSESSMENT,
   description: 'Video-guided strength assessment exercises',
   version: 1,
-  scoringConfig: null, // Deprecated: Use flow-level scoring
   isActive: true,
 };
 
@@ -144,7 +142,7 @@ const strengthAssessmentTemplate: NewAssessmentTemplate = {
  * Questions are now stored in the dedicated `questions` table and linked
  * via `template_questions` join table. See seedQuestions.ts for question data.
  *
- * NOTE: scoringConfig is now null - scoring is handled at flow level.
+ * NOTE: Scoring configuration lives at flow level (assessment_flows.scoringConfig).
  * See seedAssessmentFlows.ts for the combined scoring configuration.
  */
 const balanceAssessmentTemplate: NewAssessmentTemplate = {
@@ -152,7 +150,6 @@ const balanceAssessmentTemplate: NewAssessmentTemplate = {
   name: TEMPLATE_NAMES.BALANCE_ASSESSMENT,
   description: 'Balance and stability assessment exercises',
   version: 1,
-  scoringConfig: null, // Deprecated: Use flow-level scoring
   isActive: true,
 };
 
@@ -163,7 +160,7 @@ const balanceAssessmentTemplate: NewAssessmentTemplate = {
  * Questions include duration, intensity, type, recurrence history, and typical duration.
  * Based on real physiotherapy assessment protocols.
  *
- * NOTE: scoringConfig is now null - scoring is handled at flow level.
+ * NOTE: Scoring configuration lives at flow level (assessment_flows.scoringConfig).
  * See seedAssessmentFlows.ts for the combined scoring configuration.
  */
 const backPainGeneralTemplate: NewAssessmentTemplate = {
@@ -171,7 +168,6 @@ const backPainGeneralTemplate: NewAssessmentTemplate = {
   name: TEMPLATE_NAMES.BACK_PAIN_GENERAL,
   description: 'Clinical questions about back pain history and characteristics',
   version: 1,
-  scoringConfig: null, // Deprecated: Use flow-level scoring
   isActive: true,
 };
 
@@ -182,7 +178,7 @@ const backPainGeneralTemplate: NewAssessmentTemplate = {
  * Contains 6 yes/no questions based on standard physiotherapy red flag screening protocols.
  * Any "yes" answer triggers a medical warning via branching rules before proceeding.
  *
- * NOTE: scoringConfig is now null - scoring is handled at flow level.
+ * NOTE: Scoring configuration lives at flow level (assessment_flows.scoringConfig).
  * See seedAssessmentFlows.ts for the combined scoring configuration.
  */
 const redFlagScreeningTemplate: NewAssessmentTemplate = {
@@ -190,7 +186,6 @@ const redFlagScreeningTemplate: NewAssessmentTemplate = {
   name: TEMPLATE_NAMES.RED_FLAG_SCREENING,
   description: 'Critical clinical questions to identify conditions requiring medical review',
   version: 1,
-  scoringConfig: null, // Deprecated: Use flow-level scoring
   isActive: true,
 };
 
