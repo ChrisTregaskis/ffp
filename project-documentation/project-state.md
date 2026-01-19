@@ -2,8 +2,8 @@
 
 **Last Updated**: 19th January 2026
 **Current EPIC**: FFP-2 - Assessment Engine
-**Sprint Status**: Sprint 4 in progress | FFP-133 ✅ Complete | FFP-126 In Progress
-**Previous**: Sprint 3 ✅ Complete | FFP-130 Submit API ✅ Complete
+**Sprint Status**: Sprint 4 in progress | FFP-133 ✅ | FFP-126 ✅ | FFP-135 To Do
+**Previous**: Sprint 3 ✅ Complete
 
 ---
 
@@ -19,77 +19,77 @@
 | ----- | ------- | ------------------------------- | --- | ----------- | ------------------------------------ |
 | -     | FFP-130 | Submit Assessment API           | 5   | ✅ Complete | Merged from Sprint 3 early work      |
 | 1     | FFP-133 | Scoring Service Implementation  | 8   | ✅ Complete | Flow-level refactor + manual testing |
-| 2     | FFP-126 | Assessment Template Admin API   | 5   | In Progress | CRUD for system admins               |
+| 2     | FFP-126 | Assessment Template Admin API   | 5   | ✅ Complete | CRUD for system admins               |
 | 3     | FFP-135 | Assessment Context & State Mgmt | 5   | To Do       | Frontend foundation                  |
 
-**Progress**: 13/23 pts complete (57%) - FFP-126 in progress
+**Progress**: 18/23 pts complete (78%) - FFP-135 remaining
 
-### Implementation Order Rationale
+---
 
-1. **FFP-133 (Scoring)** - Must complete first
-   - Critical path: completes backend assessment lifecycle
-   - Pure functions, highly testable
-   - Job processor ready from Sprint 3
-   - Required before FFP-131 (Results API) in Sprint 5
+## ✅ Completed: FFP-126 - Assessment Template Admin API
 
-2. **FFP-126 (Template Admin)** - Backend completion
-   - Independent of scoring
-   - Builds on existing template repository
-   - Enables admin management of templates
+**Story Points**: 5
+**Status**: ✅ Complete (19th January 2026)
+**Branch**: `feature/ffp-126-assessment-template-admin-api`
 
-3. **FFP-135 (Assessment Context)** - Frontend foundation
-   - Best after backend is solid
-   - React Context + useReducer pattern
-   - Prepares for Sprint 5 UI components
+### What Was Built
+
+CRUD API endpoints for system admins to manage assessment templates:
+
+| Method | Path                                        | Handler             | Role Required     |
+| ------ | ------------------------------------------- | ------------------- | ----------------- |
+| GET    | `/admin/assessment-templates`               | list-templates      | Any authenticated |
+| GET    | `/admin/assessment-templates/:id`           | get-template        | Any authenticated |
+| POST   | `/admin/assessment-templates`               | create-template     | system_admin      |
+| PUT    | `/admin/assessment-templates/:id`           | update-template     | system_admin      |
+| DELETE | `/admin/assessment-templates/:id`           | deactivate-template | system_admin      |
+| POST   | `/admin/assessment-templates/:id/duplicate` | duplicate-template  | system_admin      |
+
+### Key Files
+
+- **Service**: `@ffp/core/src/assessments/template.service.ts`
+- **Handlers**: `@ffp/functions/src/admin/templates/*.ts`
+- **Manual Testing Guide**: `project-documentation/refactoring/testing/manual-testing-guide-template-admin-api.md`
+
+### Implementation Notes
+
+1. **Thin service layer** - Repository handles most logic; service adds createdBy resolution and input validation
+2. **scoringConfig removed** - Deprecated field removed from templates (scoring now at flow level)
+3. **User ID resolution** - Fixed bug where Cognito sub was used instead of database user ID for `createdBy`
+4. **Question management deferred** - FFP-251 created for template-question association endpoints
+
+### Manual Testing Complete (19th January 2026)
+
+| Test  | Description              | Status |
+| ----- | ------------------------ | ------ |
+| TC-01 | List all templates       | ✓ Pass |
+| TC-02 | List active only         | ✓ Pass |
+| TC-03 | Get template w/questions | ✓ Pass |
+| TC-04 | 404 for non-existent     | ✓ Pass |
+| TC-05 | Create new template      | ✓ Pass |
+| TC-06 | 403 for non-admin        | ✓ Pass |
+| TC-07 | Update template          | ✓ Pass |
+| TC-08 | Duplicate template       | ✓ Pass |
+| TC-09 | Deactivate (soft delete) | ✓ Pass |
 
 ---
 
 ## ✅ Completed: FFP-133 - Scoring Service Implementation
 
 **Story Points**: 8
-**Status**: ✅ Complete
-**Priority**: Critical Path
+**Status**: ✅ Complete (18th January 2026)
 **Branch**: `refactor/flow-level-scoring` (merged)
 
-### Acceptance Criteria - All Met ✅
+### What Was Built
 
-1. ✅ Dimension scores calculated from answers (strength, balance)
-2. ✅ Single-choice questions scored correctly
-3. ✅ Multi-choice questions sum scores
-4. ✅ Scale/numeric questions use value directly
-5. ✅ Video-response questions scored via response config
-6. ✅ Risk level calculated from lowest dimension (>=70% low, >=40% moderate, <40% high)
-7. ✅ Programme recommendation selected based on condition evaluation
-8. ✅ Scores stored on assessment, status transitioned to `scored`
+- Multi-dimensional scoring with weighted dimensions
+- Flow-level `scoringConfig` (migrated from templates)
+- Normalised `flow_steps` table with branching rules
+- Branching evaluation (`goto_step`, `show_warning` actions)
+- Clinical questions: back pain history + red flag screening
+- Warning system for clinical alerts with audit trail
 
-### Sub-Tasks - All Complete
-
-| Order | Key     | Summary                                              | Status      |
-| ----- | ------- | ---------------------------------------------------- | ----------- |
-| 1     | FFP-188 | Create `calculateScores()` orchestrator              | ✅ Complete |
-| 2     | FFP-189 | Implement `calculateQuestionScore()` handler         | ✅ Complete |
-| 3     | FFP-190 | Add `calculateRiskLevel()` + `findMatchingProgram()` | ✅ Complete |
-| 4     | FFP-191 | Create `processScoreAssessment` job handler          | ✅ Complete |
-| 5     | FFP-192 | Add minimal unit tests (critical paths only)         | ✅ Complete |
-
-### Flow-Level Scoring Refactor (Major Enhancement)
-
-**Discovered**: 8th January 2026 | **Resolved**: 18th January 2026 (10 sessions)
-
-Multi-template assessment flows required architectural refactor:
-
-- ✅ Schema migration: `scoringConfig` moved from templates to flows
-- ✅ Normalised `flow_steps` table with branching rules
-- ✅ Clinical questions: back pain history + red flag screening
-- ✅ Branching evaluation service with `goto_step` and `show_warning` actions
-- ✅ Warning system for clinical alerts with audit trail
-- ✅ Submit validation now checks visited steps only (TF-002 fix)
-- ✅ 629 tests passing, TypeScript/lint clean
-
-### Manual Testing Complete (18th January 2026)
-
-**Guide**: `project-documentation/refactoring/testing/manual-testing-guide-assessments.md`
-**Results**: `project-documentation/refactoring/testing/handover-testing-complete.md`
+### Manual Testing Complete
 
 | Test  | Description                  | Status |
 | ----- | ---------------------------- | ------ |
@@ -101,93 +101,25 @@ Multi-template assessment flows required architectural refactor:
 | TC-06 | `goto_step` branching        | ✓ Pass |
 | LF-\* | Linear flow (7 steps)        | ✓ Pass |
 
-**Key Branching Tests**:
-
-- `show_warning`: Warning triggered correctly for red flag answers
-- `goto_step`: Conditional navigation skips steps based on answers
-
 ---
 
-## Active: FFP-126 - Assessment Template Admin API
+## Next: FFP-135 - Assessment Context & State Management
 
 **Story Points**: 5
-**Status**: In Progress
-**Priority**: Backend completion
-**Branch**: `feature/ffp-126-assessment-template-admin-api`
+**Status**: To Do
+**Priority**: Frontend foundation
 
 ### Scope
 
-CRUD API endpoints for system admins to manage assessment templates:
-
-- List, get, create, update, deactivate templates
-- Duplicate template functionality
-- Admin-only access (`system_admin` role enforcement)
-
-### What Already Exists (from FFP-124)
-
-| Component               | Status | Location                                                  |
-| ----------------------- | ------ | --------------------------------------------------------- |
-| Database schema         | ✅     | `@ffp/database/src/schema/assessment-templates.ts`        |
-| Template-questions join | ✅     | `@ffp/database/src/schema/template-questions.ts`          |
-| Zod schemas             | ✅     | `@ffp/core/src/schemas/assessment-template.schema.ts`     |
-| Repository (CRUD)       | ✅     | `@ffp/core/src/assessments/template.repository.ts`        |
-| Repository tests        | ✅     | `@ffp/core/tests/assessments/template.repository.test.ts` |
-| Admin router            | ✅     | `@ffp/functions/src/admin/index.ts`                       |
-
-### Sub-Task Execution Order
-
-| Order | Key     | Summary                               | Status      | Notes                                |
-| ----- | ------- | ------------------------------------- | ----------- | ------------------------------------ |
-| 1     | FFP-151 | Service layer (`template.service.ts`) | ✅ Complete | Thin layer for createdBy + duplicate |
-| 2     | FFP-152 | List + Get handlers                   | ✅ Complete | Read-only, no role check needed      |
-| 3     | FFP-153 | Create/Update/Deactivate handlers     | ✅ Complete | Role validation (system_admin)       |
-| 4     | FFP-154 | Duplicate handler                     | ✅ Complete | Uses service layer                   |
-| 5     | FFP-155 | Integration tests                     | **SKIP**    | Repository/schema tests exist        |
-
-### Implementation Decisions
-
-1. **Thin service layer** - Repository handles most logic (version increment, soft delete); service adds:
-   - Setting `createdBy` from actor context
-   - Duplicate logic (copy template + questions)
-   - Input schema validation
-
-2. **Skip integration tests (FFP-155)** - Reduces MVP maintenance burden:
-   - Repository integration tests already exist ✅
-   - Schema validation tests already exist ✅
-   - Role validation is simple 3-line pattern per handler
-
-3. **Single branch** - All sub-tasks on `feature/ffp-126-assessment-template-admin-api`
-
-### API Endpoints
-
-| Method | Path                                        | Handler             | Role Required     |
-| ------ | ------------------------------------------- | ------------------- | ----------------- |
-| GET    | `/admin/assessment-templates`               | list-templates      | Any authenticated |
-| GET    | `/admin/assessment-templates/:id`           | get-template        | Any authenticated |
-| POST   | `/admin/assessment-templates`               | create-template     | system_admin      |
-| PUT    | `/admin/assessment-templates/:id`           | update-template     | system_admin      |
-| DELETE | `/admin/assessment-templates/:id`           | deactivate-template | system_admin      |
-| POST   | `/admin/assessment-templates/:id/duplicate` | duplicate-template  | system_admin      |
-
-### Key Files to Create
-
-```
-packages/core/src/assessments/template.service.ts    # Thin service layer
-packages/functions/src/admin/templates/
-├── list-templates.ts      # GET /admin/assessment-templates
-├── get-template.ts        # GET /admin/assessment-templates/:id
-├── create-template.ts     # POST /admin/assessment-templates
-├── update-template.ts     # PUT /admin/assessment-templates/:id
-├── deactivate-template.ts # DELETE /admin/assessment-templates/:id
-└── duplicate-template.ts  # POST /admin/assessment-templates/:id/duplicate
-```
+- React Context for assessment state
+- useReducer pattern for form management
+- Prepares for Sprint 5 UI components
 
 ---
 
-## Completed: Sprint 3 - Backend Foundation (24 pts + 3 early) ✅
+## Completed: Sprint 3 - Backend Foundation (24 pts) ✅
 
 **Status**: ✅ Complete (merged)
-**Branch**: `feature/sprint3`
 
 | Key     | Story                                      | Pts |
 | ------- | ------------------------------------------ | --- |
@@ -196,60 +128,35 @@ packages/functions/src/admin/templates/
 | FFP-125 | Assessment Flow Schema & Configuration     | 3   |
 | FFP-127 | User Assessment Schema & State Machine     | 5   |
 | FFP-128 | Start Assessment API                       | 3   |
-| FFP-129 | Save Assessment Progress API (early)       | 3   |
-
-**Sprint Goal**: All database schemas migrated, job queue ready, users can start assessments. ✅ ACHIEVED
+| FFP-129 | Save Assessment Progress API               | 3   |
 
 ### Key Patterns Established
 
-| Area               | Decision                                                                                |
-| ------------------ | --------------------------------------------------------------------------------------- |
-| **State Machine**  | `not_started → in_progress → submitted → scored → completed` (+ `abandoned`)            |
-| **Job Queue**      | Database-driven polling with `FOR UPDATE SKIP LOCKED`, exponential backoff              |
-| **Flow Steps**     | `intro`, `questions`, `transition`, `video-assessment`, `results`, `programme-overview` |
-| **RLS Pattern**    | Tenant isolation via `app.tenant_id` session variable                                   |
-| **User Ownership** | Service-layer `userId` check (RLS enforces tenant, not user isolation)                  |
-| **Router**         | Regex-based pattern matching with parameter extraction for dynamic routes               |
-
-### Key File Locations
-
-- **Schemas**: `@ffp/database/src/schema/` (assessment-templates, assessment-flows, user-assessments, process-jobs, questions, template-questions, user-assessment-answers)
-- **Repositories**: `@ffp/core/src/assessments/` and `@ffp/core/src/questions/`
-- **Services**: `@ffp/core/src/assessments/assessment.service.ts`
-- **Job Queue**: `@ffp/core/src/jobs/` (job-queue.service.ts, job-processor.service.ts)
-- **Handlers**: `@ffp/functions/src/assessments/`
+| Area               | Decision                                                                     |
+| ------------------ | ---------------------------------------------------------------------------- |
+| **State Machine**  | `not_started → in_progress → submitted → scored → completed` (+ `abandoned`) |
+| **Job Queue**      | Database-driven polling with `FOR UPDATE SKIP LOCKED`, exponential backoff   |
+| **Flow Steps**     | `intro`, `questions`, `transition`, `video-assessment`, `results`            |
+| **RLS Pattern**    | Tenant isolation via `app.tenant_id` session variable                        |
+| **User Ownership** | Service-layer `userId` check (RLS enforces tenant, not user isolation)       |
 
 ---
 
-## Completed: FFP-130 - Submit Assessment API ✅
+## ✅ Completed: FFP-130 - Submit Assessment API
 
-**Branch**: `feature/ffp-130-submit-assessment-api` (merged to feature/sprint3)
 **Story Points**: 5
-
-### What Was Built
+**Branch**: `feature/ffp-130-submit-assessment-api` (merged)
 
 - `POST /assessments/:id/submit` endpoint
-- Validates required questions answered
-- Merges final answers, transitions to `submitted`
+- Validates required questions, transitions to `submitted`
 - Enqueues `score_assessment` job
-- Returns `{ jobId, message }` for polling
-
-### Questions Table Refactor (Part of FFP-130)
-
-Refactored questions from embedded JSONB into dedicated tables:
-
-- `questions` table with proper schema
-- `template_questions` join table
-- `user_assessment_answers` table with RLS
-- All repositories and services updated
-- 466 tests passing
+- Includes questions table refactor (JSONB → dedicated tables)
 
 ---
 
 ## Assessment Engine Overview (FFP-2)
 
 **Total**: 86 story points across 4 sprints (~25 pts velocity)
-**Full Sprint Plan**: `project-documentation/sprint-planning/outputs/assessment-engine-sprint-plan.md`
 
 ### Critical Path
 
@@ -284,19 +191,7 @@ FFP-124 → FFP-125 → FFP-127 → FFP-128 → FFP-129 → FFP-130 → FFP-133 
 
 ### Backend Architecture
 
-**Domain-Organised Pattern**: `Handler → Service → Entity → Repository → Schema`
-
-**Request Context Pattern**:
-
-```typescript
-interface RequestContext {
-  db: DrizzleClient;
-  tenantId: string;
-  customerId: string;
-  userId: string;
-  role: UserRole;
-}
-```
+**Domain-Organised Pattern**: `Handler → Service → Repository → Schema`
 
 ### Multi-Tenant Security (Critical)
 
@@ -313,7 +208,7 @@ await db.transaction(async (tx) => {
 
 ### Frontend Architecture
 
-- React 18 with arrow function components (`const Component: React.FC = () => {}`)
+- React 18 with arrow function components
 - Zod schemas as single source of truth
 - TanStack Query for server state
 - React Context + useReducer for form state
@@ -326,7 +221,7 @@ await db.transaction(async (tx) => {
 
 **Packages**: `@ffp/web`, `@ffp/functions`, `@ffp/core`, `@ffp/database`
 
-**Quality Gates**: TypeScript strict, ESLint (0 warnings), 466 tests, 8% coverage
+**Quality Gates**: TypeScript strict, ESLint (0 warnings), 504 tests passing
 
 ---
 
