@@ -1,7 +1,11 @@
 import { eq, inArray } from 'drizzle-orm';
 
 import type { DbClient } from '@ffp/database';
-import { assessmentTemplates, templateQuestions } from '@ffp/database/schema';
+import {
+  assessmentTemplates,
+  templateQuestions,
+  type TemplateQuestionRecord,
+} from '@ffp/database/schema';
 
 import { NotFoundError } from '../lib/errors';
 import { findByTemplateId as findQuestionsByTemplateId } from '../questions/question.repository';
@@ -209,10 +213,33 @@ export async function findWithQuestions(
 }
 
 /**
+ * Find question assignments for a template
  *
+ * Returns the raw template_questions join records (not the full questions).
+ * Use this when you need the assignment metadata for duplication or reordering.
+ *
+ * @param templateId - ID of the template to fetch assignments for
+ * @returns Array of question assignments with questionId, displayOrder, and configOverrides
+ */
+export async function findQuestionAssignmentsByTemplateId(
+  db: DbClient,
+  templateId: string
+): Promise<Pick<TemplateQuestionRecord, 'questionId' | 'displayOrder' | 'configOverrides'>[]> {
+  return await db
+    .select({
+      questionId: templateQuestions.questionId,
+      displayOrder: templateQuestions.displayOrder,
+      configOverrides: templateQuestions.configOverrides,
+    })
+    .from(templateQuestions)
+    .where(eq(templateQuestions.templateId, templateId));
+}
+
+/**
  * Duplicate an assessment template
  *
  * Creates a copy of an existing template including all its question assignments.
+ * The write operations are wrapped in a transaction to ensure atomicity.
  *
  * @returns The ID of the newly created duplicated template
  */
@@ -221,11 +248,10 @@ export async function createDuplicateTemplate(
   userId: string,
   newName: string,
   sourceTemplate: AssessmentTemplate,
-  sourceTemplateQuestions: {
-    questionId: string;
-    displayOrder: number;
-    configOverrides: object | null;
-  }[]
+  sourceTemplateQuestions: Pick<
+    TemplateQuestionRecord,
+    'questionId' | 'displayOrder' | 'configOverrides'
+  >[]
 ): Promise<string> {
   // Wrap write operations in transaction for atomicity
   // If question copy fails, template creation is rolled back

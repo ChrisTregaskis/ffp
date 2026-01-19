@@ -1,7 +1,4 @@
-import { eq } from 'drizzle-orm';
-
 import { getDb } from '@ffp/database';
-import { templateQuestions } from '@ffp/database/schema';
 
 import { isUserActor, type TenantContext } from '../lib/context';
 import {
@@ -120,11 +117,6 @@ export async function deactivateTemplateService(
  * Creates a copy of an existing template including all its question assignments.
  * The write operations are wrapped in a transaction to ensure atomicity - if the
  * question copy fails, the entire operation is rolled back.
- *
- * Pattern note: Uses direct Drizzle calls inside transaction rather than repository
- * functions, as DbClient type doesn't accept transaction objects. This matches the
- * pattern used in admin.repository.ts for transactional operations.
- *
  */
 export async function duplicateTemplateService(
   ctx: TenantContext,
@@ -134,18 +126,18 @@ export async function duplicateTemplateService(
   const userId = getActorUserId(ctx);
   const db = getDb();
 
-  // Validate source template exists (read operation, outside transaction)
+  // Validate source template exists
   const sourceTemplate = await templateRepository.findById(db, templateId);
 
   if (!sourceTemplate) {
     throw new NotFoundError('Assessment template', templateId);
   }
 
-  // Fetch source template's question assignments (read operation, outside transaction)
-  const sourceTemplateQuestions = await db
-    .select()
-    .from(templateQuestions)
-    .where(eq(templateQuestions.templateId, templateId));
+  // Fetch source template's question assignments
+  const sourceTemplateQuestions = await templateRepository.findQuestionAssignmentsByTemplateId(
+    db,
+    templateId
+  );
 
   // Duplicate template and its questions in a transaction
   const duplicatedTemplateId = await templateRepository.createDuplicateTemplate(
