@@ -2,7 +2,7 @@
 
 **Last Updated**: 19th January 2026
 **Current EPIC**: FFP-2 - Assessment Engine
-**Sprint Status**: Sprint 4 in progress | FFP-133 ✅ | FFP-126 ✅ | FFP-135 To Do
+**Sprint Status**: Sprint 4 in progress | FFP-133 ✅ | FFP-126 ✅ | FFP-135 Planned
 **Previous**: Sprint 3 ✅ Complete
 
 ---
@@ -108,12 +108,70 @@ CRUD API endpoints for system admins to manage assessment templates:
 **Story Points**: 5
 **Status**: To Do
 **Priority**: Frontend foundation
+**Branch**: `feature/ffp-135-assessment-context`
 
-### Scope
+### Implementation Plan
 
-- React Context for assessment state
-- useReducer pattern for form management
-- Prepares for Sprint 5 UI components
+**Single PR** - All sub-tasks target one file: `packages/web/src/contexts/AssessmentContext.tsx`
+
+| Order | Key     | Summary                     | Status      | Notes                                |
+| ----- | ------- | --------------------------- | ----------- | ------------------------------------ |
+| 1     | FFP-193 | Define TypeScript types     | ✅ Complete | Foundation - types for state/actions |
+| 2     | FFP-194 | Implement assessmentReducer | To Do       | State transitions                    |
+| 3     | FFP-195 | Create Context and Provider | To Do       | React Context + useReducer           |
+| 4     | FFP-196 | Create useAssessment hook   | To Do       | Consumer hook with error handling    |
+| 5     | FFP-197 | Unit tests for reducer      | DEFERRED    | Per MVP testing policy               |
+
+### Corrections from Jira (Outdated Requirements)
+
+**Phase Type** - Jira specified outdated phase values. Use `FlowStepType` from `@ffp/core`:
+
+```typescript
+// CORRECT (from @ffp/core via @ffp/database constants)
+type: 'intro' | 'questions' | 'transition' | 'video-assessment' | 'results' | 'programme-overview';
+
+// OUTDATED (in Jira FFP-193)
+phase: 'intro' | 'pre-assessment' | 'transition' | 'physical-assessment' | 'results' | 'programme';
+```
+
+**Score Type** - Use `UserAssessmentScores` from `@ffp/core` (not `AssessmentScore`).
+
+**Steps Array** - Store `FlowStepSummary[]` from `StartAssessmentResponse` for navigation.
+
+### Updated State Shape
+
+```typescript
+interface AssessmentState {
+  flowId: string;
+  assessmentId: string | null;
+  currentStep: number;
+  currentStepId: string | null; // Added: UUID-based navigation
+  totalSteps: number;
+  steps: FlowStepSummary[]; // Added: from StartAssessmentResponse
+  phase: FlowStepType; // Corrected: use FlowStepType
+  answers: Record<string, UserAnswer>; // Corrected: use UserAnswer type
+  isDirty: boolean;
+  scores: UserAssessmentScores | null; // Corrected: use UserAssessmentScores
+  warnings: AssessmentWarning[]; // Added: for branching warnings
+}
+```
+
+### Key Imports (from @ffp/core)
+
+```typescript
+import {
+  FlowStepType,
+  FlowStepSummary,
+  UserAssessmentScores,
+  UserAnswer,
+  AssessmentWarning,
+} from '@ffp/core';
+```
+
+### Dependency Note
+
+`@ffp/web` imports from `@ffp/core` only (never `@ffp/database`).
+Dependency flow: `@ffp/database` → `@ffp/core` → `@ffp/web` / `@ffp/functions`
 
 ---
 
