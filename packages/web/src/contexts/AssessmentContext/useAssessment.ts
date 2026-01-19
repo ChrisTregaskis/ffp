@@ -12,18 +12,18 @@ import type { AssessmentContextValue } from './types';
  *
  * Must be used within an AssessmentProvider component.
  *
- * @returns Assessment context value containing state and dispatch
+ * @returns Assessment context value containing assessmentState and assessmentDispatch
  * @throws Error if used outside of AssessmentProvider
  *
  * @example
  * ```tsx
- * const { state, dispatch } = useAssessment();
+ * const { assessmentState, assessmentDispatch } = useAssessment();
  *
  * // Access current step
- * console.log(state.currentStep);
+ * console.log(assessmentState.currentStep);
  *
  * // Dispatch an action
- * dispatch({ type: ASSESSMENT_ACTION.NEXT_STEP });
+ * assessmentDispatch({ type: ASSESSMENT_ACTION.NEXT_STEP });
  * ```
  */
 

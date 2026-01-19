@@ -28,9 +28,15 @@ interface AssessmentProviderProps {
  * ```
  */
 export const AssessmentProvider = ({ flowId, children }: AssessmentProviderProps): JSX.Element => {
-  const [state, dispatch] = useReducer(assessmentReducer, flowId, createInitialState);
+  const [assessmentState, assessmentDispatch] = useReducer(
+    assessmentReducer,
+    flowId,
+    createInitialState
+  );
 
   return (
-    <AssessmentContext.Provider value={{ state, dispatch }}>{children}</AssessmentContext.Provider>
+    <AssessmentContext.Provider value={{ assessmentState, assessmentDispatch }}>
+      {children}
+    </AssessmentContext.Provider>
   );
 };

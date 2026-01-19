@@ -186,8 +186,8 @@ export type AssessmentAction =
  */
 export interface AssessmentContextValue {
   /** Current assessment state */
-  state: AssessmentState;
+  assessmentState: AssessmentState;
 
   /** Dispatch function for state updates */
-  dispatch: React.Dispatch<AssessmentAction>;
+  assessmentDispatch: React.Dispatch<AssessmentAction>;
 }
