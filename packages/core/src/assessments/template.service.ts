@@ -1,12 +1,7 @@
 import { getDb } from '@ffp/database';
 
-import { isUserActor, type TenantContext } from '../lib/context';
-import {
-  InternalServerError,
-  NotFoundError,
-  UnauthorisedError,
-  ValidationError,
-} from '../lib/errors';
+import { getUserIdFromContext, type TenantContext } from '../lib/context';
+import { InternalServerError, NotFoundError, ValidationError } from '../lib/errors';
 import {
   createAssessmentTemplateSchema,
   updateAssessmentTemplateSchema,
@@ -25,22 +20,6 @@ export type { AssessmentTemplate, AssessmentTemplateWithQuestions };
 export type CreateTemplateInput = Omit<CreateAssessmentTemplateInput, 'createdBy'>;
 
 /**
- * Get actor's user ID from context
- *
- * For template operations, we use the Cognito sub directly as the createdBy
- * value since templates are system content and don't require RLS user resolution.
- *
- * @throws UnauthorisedError if actor is not a user
- */
-function getActorUserId(ctx: TenantContext): string {
-  if (!isUserActor(ctx.actor)) {
-    throw new UnauthorisedError('This operation requires a user context');
-  }
-
-  return ctx.actor.userId;
-}
-
-/**
  * Create a new assessment template
  *
  * Validates input against Zod schema and sets createdBy from actor context.
@@ -49,7 +28,7 @@ export async function createTemplateService(
   ctx: TenantContext,
   input: CreateTemplateInput
 ): Promise<AssessmentTemplate> {
-  const userId = getActorUserId(ctx);
+  const userId = await getUserIdFromContext(ctx);
 
   // Build full input with createdBy from actor
   const fullInput: CreateAssessmentTemplateInput = {
@@ -123,7 +102,7 @@ export async function duplicateTemplateService(
   templateId: string,
   newName: string
 ): Promise<AssessmentTemplateWithQuestions> {
-  const userId = getActorUserId(ctx);
+  const userId = await getUserIdFromContext(ctx);
   const db = getDb();
 
   // Validate source template exists
