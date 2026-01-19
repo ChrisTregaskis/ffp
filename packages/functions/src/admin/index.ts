@@ -5,6 +5,7 @@ import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 import { handler as createCustomerHandler } from './create-customer';
 import { handler as createTemplateHandler } from './templates/create-template';
 import { handler as deactivateTemplateHandler } from './templates/deactivate-template';
+import { handler as duplicateTemplateHandler } from './templates/duplicate-template';
 import { handler as getTemplateHandler } from './templates/get-template';
 import { handler as listTemplatesHandler } from './templates/list-templates';
 import { handler as updateTemplateHandler } from './templates/update-template';
@@ -28,6 +29,7 @@ const routes: RouteRegistry = {
   POST: {
     '/create-customer': createCustomerHandler,
     '/assessment-templates': createTemplateHandler,
+    '/assessment-templates/{id}/duplicate': duplicateTemplateHandler,
   },
   GET: {
     '/assessment-templates': listTemplatesHandler,

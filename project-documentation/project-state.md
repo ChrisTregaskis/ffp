@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 18th January 2026
+**Last Updated**: 19th January 2026
 **Current EPIC**: FFP-2 - Assessment Engine
 **Sprint Status**: Sprint 4 in progress | FFP-133 ✅ Complete | FFP-126 In Progress
 **Previous**: Sprint 3 ✅ Complete | FFP-130 Submit API ✅ Complete
@@ -141,7 +141,7 @@ CRUD API endpoints for system admins to manage assessment templates:
 | 1     | FFP-151 | Service layer (`template.service.ts`) | ✅ Complete | Thin layer for createdBy + duplicate |
 | 2     | FFP-152 | List + Get handlers                   | ✅ Complete | Read-only, no role check needed      |
 | 3     | FFP-153 | Create/Update/Deactivate handlers     | ✅ Complete | Role validation (system_admin)       |
-| 4     | FFP-154 | Duplicate handler                     | To Do       | Uses service layer                   |
+| 4     | FFP-154 | Duplicate handler                     | ✅ Complete | Uses service layer                   |
 | 5     | FFP-155 | Integration tests                     | **SKIP**    | Repository/schema tests exist        |
 
 ### Implementation Decisions
