@@ -404,6 +404,7 @@ describe('Assessment Service', () => {
       mockedFlowRepo.findById.mockResolvedValue(flow);
       mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createMockFlowSteps(flowId, templateId));
       mockedAnswerRepo.findByAssessmentId.mockResolvedValue(existingDbAnswers);
+      mockedAnswerRepo.findVisitedTemplateIds.mockResolvedValue([templateId]);
       mockedQuestionRepo.findByTemplateIds.mockResolvedValue(questions);
       mockedAnswerRepo.saveAnswers.mockResolvedValue([]);
 
@@ -553,6 +554,7 @@ describe('Assessment Service', () => {
       mockedFlowRepo.findById.mockResolvedValue(flow);
       mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createMockFlowSteps(flowId, templateId));
       mockedAnswerRepo.findByAssessmentId.mockResolvedValue(existingDbAnswers);
+      mockedAnswerRepo.findVisitedTemplateIds.mockResolvedValue([templateId]);
       mockedQuestionRepo.findByTemplateIds.mockResolvedValue(questions);
 
       try {
@@ -622,6 +624,7 @@ describe('Assessment Service', () => {
       mockedFlowRepo.findById.mockResolvedValue(flow);
       mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createMockFlowSteps(flowId, templateId));
       mockedAnswerRepo.findByAssessmentId.mockResolvedValue(existingDbAnswers);
+      mockedAnswerRepo.findVisitedTemplateIds.mockResolvedValue([templateId]);
       mockedQuestionRepo.findByTemplateIds.mockResolvedValue(questions);
       mockedAnswerRepo.saveAnswers.mockResolvedValue([]);
 
@@ -727,6 +730,7 @@ describe('Assessment Service', () => {
       mockedFlowRepo.findById.mockResolvedValue(flowWithNoQuestions);
       mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createMockFlowStepsNoQuestions(flowId));
       mockedAnswerRepo.findByAssessmentId.mockResolvedValue([]);
+      mockedAnswerRepo.findVisitedTemplateIds.mockResolvedValue([]);
       mockedQuestionRepo.findByTemplateIds.mockResolvedValue([]);
 
       await expect(
@@ -780,6 +784,7 @@ describe('Assessment Service', () => {
       mockedFlowRepo.findById.mockResolvedValue(flow);
       mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createMockFlowSteps(flowId, templateId));
       mockedAnswerRepo.findByAssessmentId.mockResolvedValue(existingDbAnswers);
+      mockedAnswerRepo.findVisitedTemplateIds.mockResolvedValue([templateId]);
       mockedQuestionRepo.findByTemplateIds.mockResolvedValue(questions);
       mockedAnswerRepo.saveAnswers.mockResolvedValue([]);
 

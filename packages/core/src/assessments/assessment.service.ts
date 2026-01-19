@@ -458,6 +458,15 @@ export async function submitAssessment(
     throw new NotFoundError('Assessment flow', assessment.flowId);
   }
 
+  // Validate flow has questions templates
+  const db = getDb();
+  const flowSteps = await flowRepository.findStepsByFlowId(db, flow.id);
+  const questionSteps = flowSteps.filter((step) => step.type === 'questions');
+
+  if (questionSteps.length === 0) {
+    throw new ValidationError('Assessment flow has no questions template');
+  }
+
   // Load existing answers from user_assessment_answers table
   const existingAnswers = await answerRepository.findByAssessmentId(tenantId, assessmentId, {
     userId,
