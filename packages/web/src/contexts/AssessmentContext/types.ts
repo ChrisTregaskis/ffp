@@ -6,43 +6,8 @@ import type {
   AssessmentWarning,
 } from '@ffp/core';
 
-// ============================================================================
-// Action Type Constants
-// ============================================================================
+import { type ASSESSMENT_ACTION } from './constants';
 
-/**
- * Action type constants for assessment reducer.
- *
- * Use these constants when dispatching actions to prevent typos
- * and enable IDE autocompletion.
- *
- * @example
- * dispatch({ type: ASSESSMENT_ACTION.SET_ANSWER, payload: { questionId, answer } });
- */
-export const ASSESSMENT_ACTION = {
-  START_ASSESSMENT: 'START_ASSESSMENT',
-  SET_ANSWER: 'SET_ANSWER',
-  NEXT_STEP: 'NEXT_STEP',
-  PREV_STEP: 'PREV_STEP',
-  SET_PHASE: 'SET_PHASE',
-  GO_TO_STEP: 'GO_TO_STEP',
-  MARK_SAVED: 'MARK_SAVED',
-  SET_SCORES: 'SET_SCORES',
-  ADD_WARNING: 'ADD_WARNING',
-  CLEAR_WARNINGS: 'CLEAR_WARNINGS',
-  RESET: 'RESET',
-} as const;
-
-// ============================================================================
-// State Types
-// ============================================================================
-
-/**
- * Assessment context state shape.
- *
- * Represents the complete client-side state for an active assessment.
- * Populated from StartAssessmentResponse and updated as user progresses.
- */
 export interface AssessmentState {
   /** Assessment flow ID being followed */
   flowId: string;
@@ -67,21 +32,6 @@ export interface AssessmentState {
   /** Warnings displayed during assessment (from branching rules) */
   warnings: AssessmentWarning[];
 }
-
-// Used when creating a new assessment context or after reset.
-export const createInitialState = (flowId: string): AssessmentState => ({
-  flowId,
-  assessmentId: null,
-  currentStep: 1,
-  currentStepId: null,
-  totalSteps: 0,
-  steps: [],
-  phase: 'intro',
-  answers: {},
-  isDirty: false,
-  scores: null,
-  warnings: [],
-});
 
 /**
  * Start assessment action.
@@ -214,11 +164,7 @@ export interface ResetAction {
   payload?: Partial<Pick<AssessmentState, 'flowId'>>;
 }
 
-/**
- * Union type of all assessment actions.
- *
- * Used by the reducer to handle state transitions.
- */
+// Union type of all assessment actions.
 export type AssessmentAction =
   | StartAssessmentAction
   | SetAnswerAction
