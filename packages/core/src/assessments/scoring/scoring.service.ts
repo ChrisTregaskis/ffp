@@ -20,7 +20,7 @@ import type { ScoringResult } from '../../types';
  * const result = calculateScores(
  *   [{ questionId: 'q1', answerValue: 'high' }],
  *   questionsFromTemplate,
- *   template.scoringConfig
+ *   flow.scoringConfig
  * );
  * // result.scores = [{ dimensionId: 'strength', rawScore: 3, normalisedScore: 75, ... }]
  * // result.riskLevel = 'low'

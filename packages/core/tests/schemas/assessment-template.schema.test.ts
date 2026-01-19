@@ -65,8 +65,6 @@ const validTemplate = {
   name: 'Test Template',
   description: 'A test template',
   version: 1,
-  questions: [validQuestion],
-  scoringConfig: validScoringConfig,
   isActive: true,
   createdBy: null,
   createdAt: new Date(),
@@ -316,8 +314,6 @@ describe('createAssessmentTemplateSchema', () => {
       name: 'New Template',
       description: 'Description',
       version: 1,
-      questions: [validQuestion],
-      scoringConfig: validScoringConfig,
       isActive: true,
       createdBy: null,
     });
@@ -330,8 +326,6 @@ describe('createAssessmentTemplateSchema', () => {
       name: 'New Template',
       description: 'Description',
       version: 1,
-      questions: [validQuestion],
-      scoringConfig: validScoringConfig,
       isActive: true,
       createdBy: null,
     });

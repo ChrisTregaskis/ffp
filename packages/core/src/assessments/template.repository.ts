@@ -26,8 +26,6 @@ export interface AssessmentTemplateWithQuestions extends AssessmentTemplate {
  * Map database record to AssessmentTemplate type
  *
  * Converts the Drizzle select result to the Zod-defined AssessmentTemplate type.
- * The cast through unknown is safe because JSONB data is validated by Zod
- * schemas before being stored in the database.
  */
 function mapToTemplate(record: typeof assessmentTemplates.$inferSelect): AssessmentTemplate {
   return {
@@ -35,7 +33,6 @@ function mapToTemplate(record: typeof assessmentTemplates.$inferSelect): Assessm
     name: record.name,
     description: record.description,
     version: record.version,
-    scoringConfig: record.scoringConfig as unknown as AssessmentTemplate['scoringConfig'],
     isActive: record.isActive,
     createdBy: record.createdBy,
     createdAt: record.createdAt,
@@ -116,7 +113,6 @@ export async function create(
       name: data.name,
       description: data.description,
       version: data.version,
-      scoringConfig: data.scoringConfig,
       isActive: data.isActive,
       createdBy: data.createdBy,
     })
@@ -150,7 +146,6 @@ export async function update(
     .set({
       name: data.name,
       description: data.description,
-      scoringConfig: data.scoringConfig,
       isActive: data.isActive,
       version: existing.version + 1,
       updatedAt: new Date(),
@@ -263,7 +258,6 @@ export async function createDuplicateTemplate(
         name: newName,
         description: sourceTemplate.description,
         version: 1,
-        scoringConfig: sourceTemplate.scoringConfig,
         isActive: false, // Start as draft
         createdBy: userId,
       })
