@@ -1,13 +1,11 @@
 import { z } from 'zod';
 
-import { scoringConfigSchema } from './scoring-config.schema';
-
 /**
  * Assessment template schema - full template record
  *
  * Represents a complete assessment template stored in the database.
  * Templates are system-managed content (not tenant-scoped) and define
- * the structure and scoring rules for assessments.
+ * the structure of assessments.
  *
  * IMPORTANT: Templates do NOT require RLS - they are accessible by
  * all authenticated users as system content.
@@ -15,6 +13,10 @@ import { scoringConfigSchema } from './scoring-config.schema';
  * NOTE: Questions are stored in a dedicated `questions` table and linked
  * via `template_questions`. Use the question repository to fetch questions
  * for a template.
+ *
+ * NOTE: Scoring configuration lives at the flow level (assessment_flows.scoringConfig),
+ * not the template level. This allows holistic programme recommendations across
+ * all templates in a flow.
  */
 export const assessmentTemplateSchema = z.object({
   /** Unique identifier (UUID) */
@@ -25,8 +27,6 @@ export const assessmentTemplateSchema = z.object({
   description: z.string().nullable(),
   /** Version number for tracking template changes */
   version: z.number().int().positive(),
-  /** Scoring configuration for multi-dimensional scoring */
-  scoringConfig: scoringConfigSchema,
   /** Whether the template is currently active/usable */
   isActive: z.boolean(),
   /** User ID of the creator (nullable for system-seeded templates) */

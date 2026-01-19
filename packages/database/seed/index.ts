@@ -30,6 +30,7 @@ import { seedTestUserDatabase } from './seedTestUserDatabase.js';
 import { seedQuestions } from './seedQuestions.js';
 import { seedAssessmentTemplates } from './seedAssessmentTemplates.js';
 import { seedAssessmentFlows } from './seedAssessmentFlows.js';
+import { seedFlowSteps } from './seedFlowSteps.js';
 import type { SeedConfig } from './types.js';
 
 const logger = createLogger('seed');
@@ -199,6 +200,10 @@ export const seedDatabase = async (environment: string = 'dev'): Promise<void> =
     // Seed 12: Assessment flows (no RLS, idempotent)
     await seedAssessmentFlows(db);
 
+    // Seed 13: Flow steps (normalised from JSONB, no RLS, idempotent)
+    // Must run AFTER assessment flows as steps reference flow IDs
+    await seedFlowSteps(db);
+
     logger.info('Database seeding complete!');
   } catch (error) {
     logger.error('Database seeding failed', {
@@ -230,3 +235,4 @@ export const seedDatabase = async (environment: string = 'dev'): Promise<void> =
 export { seedQuestions, QUESTION_IDS } from './seedQuestions.js';
 export { seedAssessmentTemplates, TEMPLATE_IDS } from './seedAssessmentTemplates.js';
 export { seedAssessmentFlows, FLOW_IDS } from './seedAssessmentFlows.js';
+export { seedFlowSteps, STEP_IDS } from './seedFlowSteps.js';

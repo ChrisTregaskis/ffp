@@ -217,9 +217,290 @@
               "body": "{\n  \"error\": \"FORBIDDEN\",\n  \"message\": \"Only system admins can create customers\",\n  \"requestId\": \"abc123-def456\"\n}"
             }
           ]
+        },
+        {
+          "name": "Template Management",
+          "item": [
+            {
+              "name": "List Templates",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response has templates array and count', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('templates');",
+                      "    pm.expect(jsonData).to.have.property('count');",
+                      "    pm.expect(jsonData.templates).to.be.an('array');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/admin/assessment-templates",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "assessment-templates"]
+                },
+                "description": "List all assessment templates.\n\n**Query Parameters:**\n- `activeOnly=true` - Filter to active templates only\n\n**Response:**\n```json\n{\n  \"templates\": [...],\n  \"count\": 5\n}\n```"
+              },
+              "response": []
+            },
+            {
+              "name": "List Templates (Active Only)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/admin/assessment-templates?activeOnly=true",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "assessment-templates"],
+                  "query": [
+                    {
+                      "key": "activeOnly",
+                      "value": "true"
+                    }
+                  ]
+                },
+                "description": "List only active assessment templates."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Template",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response has template with questions', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('id');",
+                      "    pm.expect(jsonData).to.have.property('name');",
+                      "    pm.expect(jsonData).to.have.property('questions');",
+                      "    pm.expect(jsonData.questions).to.be.an('array');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/admin/assessment-templates/11111111-1111-1111-1111-111111111101",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "assessment-templates", "11111111-1111-1111-1111-111111111101"]
+                },
+                "description": "Get a single assessment template with its questions.\n\n**Path Parameters:**\n- `id` - Template UUID\n\n**Seed Template IDs:**\n- `11111111-1111-1111-1111-111111111101` - Pre-assessment questions\n- `11111111-1111-1111-1111-111111111102` - Strength assessment\n- `11111111-1111-1111-1111-111111111103` - Balance assessment\n- `11111111-1111-1111-1111-111111111104` - Back pain general\n- `11111111-1111-1111-1111-111111111105` - Red flag screening"
+              },
+              "response": []
+            },
+            {
+              "name": "Create Template",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response has template object', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('template');",
+                      "    pm.expect(jsonData.template).to.have.property('id');",
+                      "    pm.expect(jsonData.template).to.have.property('name');",
+                      "    pm.expect(jsonData.template).to.have.property('createdBy');",
+                      "});",
+                      "",
+                      "// Save template ID for later tests",
+                      "const jsonData = pm.response.json();",
+                      "if (jsonData.template && jsonData.template.id) {",
+                      "    pm.collectionVariables.set('lastTemplateId', jsonData.template.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"test-manual-template-v1\",\n  \"description\": \"Template created during manual testing\",\n  \"version\": 1,\n  \"isActive\": false\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/admin/assessment-templates",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "assessment-templates"]
+                },
+                "description": "Create a new assessment template.\n\n**Required Role:** system_admin\n\n**Request Body:**\n```json\n{\n  \"name\": \"template-name\",\n  \"description\": \"Template description\",\n  \"version\": 1,\n  \"isActive\": false\n}\n```\n\n**Notes:**\n- `createdBy` is automatically set from JWT\n- Creates template without questions (add via separate API)"
+              },
+              "response": []
+            },
+            {
+              "name": "Update Template",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Version is incremented', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.template.version).to.be.above(1);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"description\": \"Updated description during manual testing\",\n  \"isActive\": true\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/admin/assessment-templates/{{lastTemplateId}}",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "assessment-templates", "{{lastTemplateId}}"]
+                },
+                "description": "Update an existing assessment template.\n\n**Required Role:** system_admin\n\n**Path Parameters:**\n- `id` - Template UUID (use `{{lastTemplateId}}` from Create)\n\n**Notes:**\n- Version is auto-incremented on update\n- Only provided fields are updated"
+              },
+              "response": []
+            },
+            {
+              "name": "Duplicate Template",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Duplicated template has questions', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.template).to.have.property('questions');",
+                      "    pm.expect(jsonData.template.questions).to.be.an('array');",
+                      "});",
+                      "",
+                      "pm.test('Version is reset to 1', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.template.version).to.equal(1);",
+                      "});",
+                      "",
+                      "pm.test('Template is inactive (draft)', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.template.isActive).to.equal(false);",
+                      "});",
+                      "",
+                      "// Save for cleanup",
+                      "const jsonData = pm.response.json();",
+                      "if (jsonData.template && jsonData.template.id) {",
+                      "    pm.collectionVariables.set('lastTemplateId', jsonData.template.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"duplicated-pre-assessment-v1\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/admin/assessment-templates/11111111-1111-1111-1111-111111111101/duplicate",
+                  "host": ["{{apiUrl}}"],
+                  "path": [
+                    "admin",
+                    "assessment-templates",
+                    "11111111-1111-1111-1111-111111111101",
+                    "duplicate"
+                  ]
+                },
+                "description": "Duplicate an existing template with all its questions.\n\n**Required Role:** system_admin\n\n**Request Body:**\n```json\n{\n  \"name\": \"new-template-name\"\n}\n```\n\n**Behaviour:**\n- Copies all template properties\n- Copies all template_questions join records\n- Sets version = 1\n- Sets isActive = false (draft)\n- Sets createdBy to current user"
+              },
+              "response": []
+            },
+            {
+              "name": "Deactivate Template",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Success response', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.success).to.equal(true);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/admin/assessment-templates/{{lastTemplateId}}",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["admin", "assessment-templates", "{{lastTemplateId}}"]
+                },
+                "description": "Deactivate (soft delete) a template.\n\n**Required Role:** system_admin\n\n**Path Parameters:**\n- `id` - Template UUID\n\n**Notes:**\n- Sets isActive = false\n- Template is NOT deleted from database\n- Preserves referential integrity with existing assessments"
+              },
+              "response": []
+            }
+          ],
+          "description": "Assessment template CRUD operations.\n\n**Required Role:** system_admin for create/update/delete/duplicate\n\n**Endpoints:**\n- GET /admin/assessment-templates - List all\n- GET /admin/assessment-templates/:id - Get with questions\n- POST /admin/assessment-templates - Create\n- PUT /admin/assessment-templates/:id - Update\n- DELETE /admin/assessment-templates/:id - Deactivate\n- POST /admin/assessment-templates/:id/duplicate - Duplicate"
         }
       ],
-      "description": "Admin operations requiring system_admin role.\n\n**Authentication:**\nAll endpoints require JWT token with `custom:role = system_admin`.\n\n**Current Endpoints:**\n- POST /admin/create-customer - Create new business tenant",
+      "description": "Admin operations requiring system_admin role.\n\n**Authentication:**\nAll endpoints require JWT token with `custom:role = system_admin`.\n\n**Folders:**\n- Create Customer - Tenant/customer onboarding\n- Template Management - Assessment template CRUD",
       "auth": {
         "type": "bearer",
         "bearer": [
@@ -1210,12 +1491,31 @@
                   "    pm.expect(jsonData.isResumed).to.be.a('boolean');",
                   "});",
                   "",
+                  "pm.test('Response has steps array', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('steps');",
+                  "    pm.expect(jsonData.steps).to.be.an('array');",
+                  "    pm.expect(jsonData.steps.length).to.be.greaterThan(0);",
+                  "});",
+                  "",
+                  "pm.test('Each step has required fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.steps && jsonData.steps.length > 0) {",
+                  "        const step = jsonData.steps[0];",
+                  "        pm.expect(step).to.have.property('id');",
+                  "        pm.expect(step).to.have.property('order');",
+                  "        pm.expect(step).to.have.property('type');",
+                  "        pm.expect(step).to.have.property('hasBranchingRules');",
+                  "    }",
+                  "});",
+                  "",
                   "// Save assessment ID for subsequent requests",
                   "const response = pm.response.json();",
                   "if (response.assessmentId) {",
                   "    pm.collectionVariables.set('lastAssessmentId', response.assessmentId);",
                   "    console.log('Assessment ID saved to lastAssessmentId variable');",
                   "    console.log('isResumed:', response.isResumed ? 'Existing assessment resumed' : 'New assessment created');",
+                  "    console.log('Steps count:', response.steps ? response.steps.length : 0);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -1239,7 +1539,7 @@
               "host": ["{{apiUrl}}"],
               "path": ["assessments", "start"]
             },
-            "description": "Start a new assessment or resume an existing one for the authenticated user.\n\n**Authentication:** JWT token required (any authenticated user)\n\n**Resume Logic:**\nIf the user has an existing assessment for the same flow with status `not_started` or `in_progress`, that assessment is returned instead of creating a new one. The `isResumed` flag indicates whether an existing assessment was resumed.\n\n**Request Body:**\n```json\n{\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\"\n}\n```\n\n**Response (New Assessment):**\n```json\n{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"currentStep\": 1,\n  \"status\": \"not_started\",\n  \"answers\": {},\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\",\n  \"isResumed\": false\n}\n```\n\n**Response (Resumed Assessment):**\n```json\n{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"currentStep\": 3,\n  \"status\": \"in_progress\",\n  \"answers\": {\n    \"q1\": { \"questionId\": \"q1\", \"answerValue\": 4 },\n    \"q2\": { \"questionId\": \"q2\", \"answerValue\": 3 }\n  },\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\",\n  \"isResumed\": true\n}\n```\n\n**Status Codes:**\n- `200`: Assessment started or resumed successfully\n- `400`: Validation error (flowId not a valid UUID)\n- `401`: Unauthorised (no JWT token)\n- `404`: Flow not found or inactive\n- `500`: Internal server error\n\n**Multi-Tenant Security:**\n- User can only access assessments within their tenant\n- Flow ID is validated against active flows in the system\n- Tenant context extracted from JWT `custom:tenantId` claim\n\n**Testing Tips:**\n1. Get a valid flowId from your database (check `assessment_flows` table)\n2. Set the `testFlowId` collection variable\n3. Call this endpoint twice to test resume logic:\n   - First call: `isResumed: false` (new assessment)\n   - Second call: `isResumed: true` (same assessment returned)"
+            "description": "Start a new assessment or resume an existing one for the authenticated user.\n\n**Authentication:** JWT token required (any authenticated user)\n\n**Resume Logic:**\nIf the user has an existing assessment for the same flow with status `not_started` or `in_progress`, that assessment is returned instead of creating a new one. The `isResumed` flag indicates whether an existing assessment was resumed.\n\n**Request Body:**\n```json\n{\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\"\n}\n```\n\n**Response (New Assessment):**\n```json\n{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"currentStep\": 1,\n  \"status\": \"not_started\",\n  \"answers\": {},\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\",\n  \"isResumed\": false\n}\n```\n\n**Response with Steps (Coming Soon):**\nWhen step-based navigation is enabled, the response includes flow steps:\n```json\n{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"currentStep\": 1,\n  \"currentStepId\": \"55555555-5555-5555-5555-555555550001\",\n  \"status\": \"not_started\",\n  \"answers\": {},\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\",\n  \"isResumed\": false,\n  \"steps\": [\n    {\n      \"id\": \"55555555-5555-5555-5555-555555550001\",\n      \"order\": 1,\n      \"type\": \"intro\",\n      \"config\": { \"title\": \"Welcome\" },\n      \"templateId\": null,\n      \"hasBranchingRules\": false,\n      \"defaultNextStepId\": \"55555555-5555-5555-5555-555555550002\"\n    },\n    {\n      \"id\": \"55555555-5555-5555-5555-555555550003\",\n      \"order\": 3,\n      \"type\": \"questions\",\n      \"config\": { \"title\": \"Health Screening\" },\n      \"templateId\": \"11111111-1111-1111-1111-111111111105\",\n      \"hasBranchingRules\": true,\n      \"defaultNextStepId\": \"55555555-5555-5555-5555-555555550004\"\n    }\n  ]\n}\n```\n\n**Step Fields:**\n- `id`: Unique step UUID for navigation\n- `order`: Step tier (parallel branches share same order)\n- `type`: Step type (intro, questions, transition, video-assessment, results, programme-overview)\n- `config`: Display configuration\n- `templateId`: Assessment template UUID (for question/video steps)\n- `hasBranchingRules`: Whether this step has conditional navigation\n- `defaultNextStepId`: Default next step (when no branching rules match)\n\n**Response (Resumed Assessment):**\n```json\n{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"currentStep\": 3,\n  \"status\": \"in_progress\",\n  \"answers\": {\n    \"q1\": { \"questionId\": \"q1\", \"answerValue\": 4 },\n    \"q2\": { \"questionId\": \"q2\", \"answerValue\": 3 }\n  },\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\",\n  \"isResumed\": true\n}\n```\n\n**Status Codes:**\n- `200`: Assessment started or resumed successfully\n- `400`: Validation error (flowId not a valid UUID)\n- `401`: Unauthorised (no JWT token)\n- `404`: Flow not found or inactive\n- `500`: Internal server error\n\n**Multi-Tenant Security:**\n- User can only access assessments within their tenant\n- Flow ID is validated against active flows in the system\n- Tenant context extracted from JWT `custom:tenantId` claim\n\n**Testing Tips:**\n1. Get a valid flowId from your database (check `assessment_flows` table)\n2. Set the `testFlowId` collection variable\n3. Call this endpoint twice to test resume logic:\n   - First call: `isResumed: false` (new assessment)\n   - Second call: `isResumed: true` (same assessment returned)"
           },
           "response": [
             {
@@ -1449,7 +1749,23 @@
                   "    pm.expect(date.toString()).to.not.equal('Invalid Date');",
                   "});",
                   "",
-                  "console.log('Progress saved successfully at:', pm.response.json().updatedAt);"
+                  "pm.test('Response has branching fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('nextStepId');",
+                  "    pm.expect(jsonData).to.have.property('warnings');",
+                  "    pm.expect(jsonData).to.have.property('shouldTerminate');",
+                  "    pm.expect(jsonData).to.have.property('terminationReason');",
+                  "    pm.expect(jsonData.warnings).to.be.an('array');",
+                  "    pm.expect(jsonData.shouldTerminate).to.be.a('boolean');",
+                  "});",
+                  "",
+                  "// Log branching info for debugging",
+                  "const response = pm.response.json();",
+                  "console.log('Progress saved successfully at:', response.updatedAt);",
+                  "console.log('Next step ID:', response.nextStepId);",
+                  "if (response.warnings && response.warnings.length > 0) {",
+                  "    console.log('Warnings triggered:', JSON.stringify(response.warnings));",
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -1472,7 +1788,7 @@
               "host": ["{{apiUrl}}"],
               "path": ["assessments", "{{lastAssessmentId}}", "progress"]
             },
-            "description": "Save assessment progress (answers and current step) for the authenticated user.\n\n**Authentication:** JWT token required (any authenticated user)\n\n**Purpose:**\nCalled when user navigates (clicks Continue or Back) to persist their progress. This allows users to close the browser and resume later.\n\n**Path Parameters:**\n- `id` - Assessment UUID (use `lastAssessmentId` variable from Start Assessment)\n\n**Request Body:**\n```json\n{\n  \"answers\": {\n    \"question-uuid-1\": {\n      \"questionId\": \"question-uuid-1\",\n      \"answerValue\": 4\n    },\n    \"question-uuid-2\": {\n      \"questionId\": \"question-uuid-2\",\n      \"answerValue\": \"some text\"\n    }\n  },\n  \"currentStep\": 2\n}\n```\n\n**Answer Merging:**\nNew answers are merged with existing answers. If the same question ID exists, the new value overwrites the old.\n\n**Status Transition:**\nIf assessment status is `not_started`, it automatically transitions to `in_progress` and sets `startedAt` timestamp.\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"updatedAt\": \"2025-01-15T10:30:00.000Z\"\n}\n```\n\n**Status Codes:**\n- `200`: Progress saved successfully\n- `400`: Validation error OR assessment is submitted/completed\n- `401`: Unauthorised (no JWT token)\n- `404`: Assessment not found\n- `500`: Internal server error\n\n**Error: Cannot Modify Submitted Assessment:**\n```json\n{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Cannot modify submitted assessment\",\n  \"requestId\": \"abc123-def456\"\n}\n```\n\n**Multi-Tenant Security:**\n- User can only save progress on assessments within their tenant\n- RLS policies enforce tenant isolation\n\n**Testing Tips:**\n1. First run Start Assessment to get an assessment ID\n2. The `lastAssessmentId` variable is auto-populated\n3. Modify the answers and currentStep values\n4. Call this endpoint multiple times to test answer merging"
+            "description": "Save assessment progress (answers and current step) for the authenticated user.\n\n**Authentication:** JWT token required (any authenticated user)\n\n**Purpose:**\nCalled when user navigates (clicks Continue or Back) to persist their progress. This allows users to close the browser and resume later.\n\n**Path Parameters:**\n- `id` - Assessment UUID (use `lastAssessmentId` variable from Start Assessment)\n\n**Request Body:**\n```json\n{\n  \"answers\": {\n    \"question-uuid-1\": {\n      \"questionId\": \"question-uuid-1\",\n      \"answerValue\": 4\n    },\n    \"question-uuid-2\": {\n      \"questionId\": \"question-uuid-2\",\n      \"answerValue\": \"some text\"\n    }\n  },\n  \"currentStep\": 2\n}\n```\n\n**Answer Merging:**\nNew answers are merged with existing answers. If the same question ID exists, the new value overwrites the old.\n\n**Status Transition:**\nIf assessment status is `not_started`, it automatically transitions to `in_progress` and sets `startedAt` timestamp.\n\n**Response (Basic):**\n```json\n{\n  \"success\": true,\n  \"updatedAt\": \"2025-01-15T10:30:00.000Z\"\n}\n```\n\n**Response (With Branching - coming soon):**\nWhen branching evaluation is enabled, the response includes navigation guidance:\n```json\n{\n  \"success\": true,\n  \"updatedAt\": \"2025-01-15T10:30:00.000Z\",\n  \"nextStepId\": \"55555555-5555-5555-5555-555555550004\",\n  \"warnings\": [\n    {\n      \"message\": \"Please seek medical review before starting exercise\",\n      \"type\": \"seek_medical\",\n      \"shownAt\": \"2025-01-15T10:30:00.000Z\",\n      \"stepId\": \"55555555-5555-5555-5555-555555550003\",\n      \"triggeredBy\": \"radiating-pain\"\n    }\n  ],\n  \"shouldTerminate\": false\n}\n```\n\n**Branching Fields:**\n- `nextStepId` (optional): UUID of the next step based on branching rules\n- `warnings` (optional): Array of warnings triggered by answers (e.g., red flag screening)\n- `shouldTerminate` (optional): If true, assessment should end early\n- `terminationReason` (optional): Reason for early termination\n\n**Warning Types:**\n- `info`: Informational message\n- `caution`: User should be aware\n- `seek_medical`: User should consult a medical professional\n\n**Status Codes:**\n- `200`: Progress saved successfully\n- `400`: Validation error OR assessment is submitted/completed\n- `401`: Unauthorised (no JWT token)\n- `404`: Assessment not found\n- `500`: Internal server error\n\n**Error: Cannot Modify Submitted Assessment:**\n```json\n{\n  \"error\": \"VALIDATION_ERROR\",\n  \"message\": \"Cannot modify submitted assessment\",\n  \"requestId\": \"abc123-def456\"\n}\n```\n\n**Multi-Tenant Security:**\n- User can only save progress on assessments within their tenant\n- RLS policies enforce tenant isolation\n\n**Testing Tips:**\n1. First run Start Assessment to get an assessment ID\n2. The `lastAssessmentId` variable is auto-populated\n3. Modify the answers and currentStep values\n4. Call this endpoint multiple times to test answer merging\n5. Test red flag questions (e.g., 'radiating-pain': 'yes') to trigger warnings"
           },
           "response": [
             {
@@ -1504,7 +1820,38 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"updatedAt\": \"2025-01-15T10:30:00.000Z\"\n}"
+              "body": "{\n  \"success\": true,\n  \"updatedAt\": \"2025-01-15T10:30:00.000Z\",\n  \"nextStepId\": \"55555555-5555-5555-5555-555555550004\",\n  \"warnings\": [],\n  \"shouldTerminate\": false,\n  \"terminationReason\": null\n}"
+            },
+            {
+              "name": "Success - With Red Flag Warning",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220401\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220401\",\n      \"answerValue\": \"yes\"\n    }\n  },\n  \"currentStep\": 3\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"updatedAt\": \"2026-01-12T10:30:00.000Z\",\n  \"nextStepId\": \"55555555-5555-5555-5555-555555550004\",\n  \"warnings\": [\n    {\n      \"message\": \"Your symptoms may indicate nerve involvement. Please seek medical review before starting any exercise programme.\",\n      \"type\": \"seek_medical\",\n      \"shownAt\": \"2026-01-12T10:30:00.000Z\",\n      \"stepId\": \"55555555-5555-5555-5555-555555550003\",\n      \"triggeredBy\": \"radiating-pain\"\n    }\n  ],\n  \"shouldTerminate\": false\n}"
             },
             {
               "name": "Validation Error - Cannot Modify Submitted",
@@ -1996,6 +2343,11 @@
     },
     {
       "key": "lastJobId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lastTemplateId",
       "value": "",
       "type": "string"
     }

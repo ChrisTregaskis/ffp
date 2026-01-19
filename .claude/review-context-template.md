@@ -60,5 +60,3 @@ What testing has been done?
 - `pnpm lint` - Zero warnings
 
 ---
-
-**Usage**: Copy this template to `.claude/review-context.md` and fill it out before requesting a code review.

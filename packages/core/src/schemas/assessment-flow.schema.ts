@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { FLOW_STEP_TYPES } from '@ffp/database';
+import { FLOW_STEP_TYPES } from '@ffp/database/constants';
 
 export const flowStepTypeSchema = z.enum(FLOW_STEP_TYPES);
 

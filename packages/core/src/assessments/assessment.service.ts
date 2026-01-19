@@ -1,22 +1,29 @@
-import { getDb, type FlowStep } from '@ffp/database';
+import { getDb } from '@ffp/database';
+import type { AnswerValue } from '@ffp/database';
 
 import { queueJob } from '../jobs/job-queue.service';
 import { getUserIdFromContext } from '../lib/context';
 import { withRLS } from '../lib/database';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import { createSystemLogger } from '../lib/logger';
-import { findByTemplateIds as findQuestionsByTemplateIds } from '../questions/question.repository';
+import {
+  findByTemplateIds as findQuestionsByTemplateIds,
+  findSlugsByIds,
+} from '../questions/question.repository';
+
+import * as answerRepository from './answer.repository';
+import { evaluateNextStep, createEvaluationContext } from './branching';
+import * as flowRepository from './flow.repository';
+import * as userAssessmentRepository from './user-assessment.repository';
 
 // System logger for assessment data integrity issues (no tenant context needed)
 const systemLogger = createSystemLogger('assessment-service');
 
-import * as answerRepository from './answer.repository';
-import * as flowRepository from './flow.repository';
-import * as userAssessmentRepository from './user-assessment.repository';
-
 import type { UserAssessmentAnswer, SaveAnswerInput } from './answer.repository';
+import type { FlowStepWithConfig } from './flow.repository';
 import type { TenantContext } from '../lib/context';
 import type {
+  FlowStepSummary,
   StartAssessmentResponse,
   SaveProgressRequest,
   SaveProgressResponse,
@@ -68,16 +75,41 @@ function convertAnswersToSaveFormat(answers: UserAssessmentAnswers): SaveAnswerI
 }
 
 /**
+ * Convert flow steps from database format to API summary format
+ *
+ * Maps the full FlowStepWithConfig record to the minimal FlowStepSummary
+ * needed by the client for navigation.
+ */
+function convertStepsToSummaryFormat(steps: FlowStepWithConfig[]): FlowStepSummary[] {
+  return steps.map((step) => ({
+    id: step.id,
+    order: step.order,
+    type: step.type,
+    config: {
+      title: step.config.title,
+      description: step.config.description,
+    },
+    templateId: step.templateId,
+    hasBranchingRules: step.nextStepRules !== null && step.nextStepRules.length > 0,
+    defaultNextStepId: step.defaultNextStepId,
+  }));
+}
+
+/**
  * Extract the answer value from database JSONB
  *
- * Values are stored directly as string, number, or string[] (for multi-select).
- * Also handles legacy wrapped formats for backwards compatibility. // TODO: Clean up "legacy" handling before MVP launch.
+ * Values are stored directly as string, number, boolean, or string[] (for multi-select).
+ * Also handles legacy wrapped formats for backwards compatibility.
  *
  * @throws ValidationError if the answer value format is unexpected
  */
-function extractAnswerValue(answerValue: unknown): string | number | string[] {
+function extractAnswerValue(answerValue: unknown): AnswerValue {
   // Handle direct primitive values (current format)
-  if (typeof answerValue === 'string' || typeof answerValue === 'number') {
+  if (
+    typeof answerValue === 'string' ||
+    typeof answerValue === 'number' ||
+    typeof answerValue === 'boolean'
+  ) {
     return answerValue;
   }
 
@@ -88,6 +120,7 @@ function extractAnswerValue(answerValue: unknown): string | number | string[] {
     }
 
     systemLogger.warn('Array contains non-string values', { answerValue });
+
     throw new ValidationError('Invalid answer value format: array contains non-string values');
   }
 
@@ -108,11 +141,15 @@ function extractAnswerValue(answerValue: unknown): string | number | string[] {
     }
 
     systemLogger.warn('Unexpected answer value structure', { answerValue, keys: Object.keys(obj) });
+
     throw new ValidationError('Invalid answer value format: unrecognised object structure');
   }
 
   systemLogger.warn('Unexpected answer value type', { answerValue, type: typeof answerValue });
-  throw new ValidationError('Invalid answer value format: expected string, number, or string[]');
+
+  throw new ValidationError(
+    'Invalid answer value format: expected string, number, boolean, or string[]'
+  );
 }
 
 /**
@@ -147,7 +184,12 @@ export async function startAssessment(
     throw new NotFoundError('Assessment flow', flowId);
   }
 
-  // 2. Check for existing resumable assessment
+  // 2. Fetch flow steps from normalised table
+  const db = getDb();
+  const flowSteps = await flowRepository.findStepsByFlowId(db, flowId);
+  const steps = convertStepsToSummaryFormat(flowSteps);
+
+  // 3. Check for existing resumable assessment
   const existingAssessment = await userAssessmentRepository.findResumable(tenantId, userId, flowId);
 
   if (existingAssessment) {
@@ -155,7 +197,7 @@ export async function startAssessment(
     const storedAnswers = await answerRepository.findByAssessmentId(
       tenantId,
       existingAssessment.id,
-      userId
+      { userId }
     );
 
     const answers = convertAnswersToResponseFormat(storedAnswers);
@@ -168,6 +210,7 @@ export async function startAssessment(
       answers,
       flowId: existingAssessment.flowId,
       isResumed: true,
+      steps,
     };
   }
 
@@ -185,6 +228,7 @@ export async function startAssessment(
     answers: {}, // New assessment has no answers yet
     flowId: newAssessment.flowId,
     isResumed: false,
+    steps,
   };
 }
 
@@ -193,6 +237,7 @@ export async function startAssessment(
  *
  * Persists user's answers and current step when navigating (Continue/Back).
  * Handles status transition from 'not_started' to 'in_progress' on first save.
+ * Evaluates branching rules to determine the next step and any warnings.
  *
  * @throws NotFoundError if assessment doesn't exist or not accessible
  * @throws ValidationError if assessment is submitted/completed
@@ -203,6 +248,8 @@ export async function startAssessment(
  *   answers: { 'q1-uuid': { questionId: 'q1-uuid', answerValue: 5 } },
  *   currentStep: 2
  * }, context);
+ * // response.nextStepId - UUID of next step (from branching evaluation)
+ * // response.warnings - Any warnings triggered by branching rules
  * ```
  */
 export async function saveProgress(
@@ -212,6 +259,7 @@ export async function saveProgress(
 ): Promise<SaveProgressResponse> {
   const { tenantId } = context;
   const userId = await getUserIdFromContext(context);
+  const db = getDb();
 
   // Fetch assessment by ID (RLS enforced)
   const assessment = await userAssessmentRepository.findById(tenantId, assessmentId);
@@ -248,33 +296,104 @@ export async function saveProgress(
       { tx }
     );
 
-    // Return success response
+    // Fetch flow steps for branching evaluation
+    const flowSteps = await flowRepository.findStepsByFlowId(db, assessment.flowId);
+
+    // Find the current step record by order
+    const currentStepRecord = flowSteps.find((s) => s.order === data.currentStep);
+
+    if (!currentStepRecord) {
+      // Step not found - return success without branching evaluation
+      // This can happen if order doesn't match any step (edge case)
+      systemLogger.warn('Current step not found in flow steps', {
+        assessmentId,
+        currentStep: data.currentStep,
+        flowId: assessment.flowId,
+      });
+
+      return {
+        success: true as const,
+        updatedAt: updatedAssessment.updatedAt.toISOString(),
+        nextStepId: null,
+        warnings: [],
+        shouldTerminate: false,
+        terminationReason: null,
+      };
+    }
+
+    // Fetch all answers for the assessment (including ones just saved)
+    // Pass tx to read within the same transaction (sees uncommitted writes)
+    const allAnswers = await answerRepository.findByAssessmentId(tenantId, assessmentId, {
+      userId,
+      tx,
+    });
+
+    // Build question ID to slug map for branching conditions
+    const questionIds = allAnswers.map((a) => a.questionId);
+    const idToSlugMap = await findSlugsByIds(db, questionIds);
+
+    // Convert answers to slug-keyed format for branching evaluation
+    const answersForBranching = allAnswers.map((answer) => {
+      const slug = idToSlugMap.get(answer.questionId);
+
+      if (!slug) {
+        // Log but don't fail - not essential
+        systemLogger.warn('Question slug not found for answer', {
+          questionId: answer.questionId,
+          assessmentId,
+        });
+      }
+
+      return {
+        questionSlug: slug ?? answer.questionId, // Fallback to ID if slug not found
+        value: extractAnswerValue(answer.answerValue),
+      };
+    });
+
+    // Create evaluation context and evaluate branching rules
+    const evalContext = createEvaluationContext(
+      currentStepRecord.id,
+      flowSteps,
+      answersForBranching
+    );
+
+    const branchResult = evaluateNextStep(currentStepRecord, evalContext);
+
+    // Persist warnings if any were triggered
+    if (branchResult.warnings.length > 0) {
+      await userAssessmentRepository.appendWarnings(tenantId, assessmentId, branchResult.warnings, {
+        tx,
+      });
+    }
+
+    // Return success response with branching evaluation results
     return {
       success: true as const,
       updatedAt: updatedAssessment.updatedAt.toISOString(),
+      nextStepId: branchResult.nextStepId,
+      warnings: branchResult.warnings,
+      shouldTerminate: branchResult.shouldTerminate,
+      terminationReason: branchResult.terminationReason ?? null,
     };
   });
 }
 
 /**
- * Get required question IDs from flow templates
+ * Get required question IDs from the given templates
  *
- * Fetches all questions from templates referenced by 'questions' and
- * 'video-assessment' steps in the flow, then returns IDs where
+ * Fetches all questions from the specified templates via the
+ * template_questions join table, then returns IDs where
  * validation.required is true (or undefined, as required defaults to true).
+ *
+ * @param templateIds - Array of template UUIDs to get questions from
+ * @returns Array of required question IDs
  */
-async function getRequiredQuestionIds(flowSteps: FlowStep[]): Promise<string[]> {
-  const db = getDb();
-
-  // Get template IDs from question and video-assessment steps
-  const templateIds = flowSteps
-    .filter((step) => step.type === 'questions' || step.type === 'video-assessment')
-    .map((step) => step.templateId)
-    .filter((id): id is string => id !== undefined);
-
+async function getRequiredQuestionIds(templateIds: string[]): Promise<string[]> {
   if (templateIds.length === 0) {
     return [];
   }
+
+  const db = getDb();
 
   // Fetch all questions via the template_questions join table
   const questions = await findQuestionsByTemplateIds(db, templateIds);
@@ -339,8 +458,19 @@ export async function submitAssessment(
     throw new NotFoundError('Assessment flow', assessment.flowId);
   }
 
+  // Validate flow has questions templates
+  const db = getDb();
+  const flowSteps = await flowRepository.findStepsByFlowId(db, flow.id);
+  const questionSteps = flowSteps.filter((step) => step.type === 'questions');
+
+  if (questionSteps.length === 0) {
+    throw new ValidationError('Assessment flow has no questions template');
+  }
+
   // Load existing answers from user_assessment_answers table
-  const existingAnswers = await answerRepository.findByAssessmentId(tenantId, assessmentId, userId);
+  const existingAnswers = await answerRepository.findByAssessmentId(tenantId, assessmentId, {
+    userId,
+  });
 
   // Convert request answers to save format
   const newAnswersToSave = convertAnswersToSaveFormat(data.answers);
@@ -356,8 +486,17 @@ export async function submitAssessment(
     answeredQuestionIds.push(answer.questionId);
   }
 
-  // Validate required questions are answered
-  const requiredQuestionIds = await getRequiredQuestionIds(flow.steps);
+  // Get template IDs from visited steps (derived from saved answers)
+  // This ensures we only validate required questions from steps the user actually visited,
+  // supporting branching flows where some steps are skipped
+  const visitedTemplateIds = await answerRepository.findVisitedTemplateIds(
+    tenantId,
+    assessmentId,
+    userId
+  );
+
+  // Validate required questions are answered (only from visited templates)
+  const requiredQuestionIds = await getRequiredQuestionIds(visitedTemplateIds);
   const missingQuestionIds = findMissingRequiredQuestions(requiredQuestionIds, answeredQuestionIds);
 
   if (missingQuestionIds.length > 0) {
@@ -366,21 +505,10 @@ export async function submitAssessment(
     });
   }
 
-  // Get the first template ID for scoring (primary questions template)
-  const questionsStep = flow.steps.find((step) => step.type === 'questions');
-  const templateId = questionsStep?.templateId;
-
-  if (!templateId) {
-    throw new ValidationError('Assessment flow has no questions template');
-  }
-
   // Build responses array for scoring job from all answers
   // Combine existing answers with new answers (new answers override existing)
   // Extract the actual value from JSONB structure for the job payload
-  const allAnswersMap = new Map<
-    string,
-    { questionId: string; answerValue: string | number | string[] }
-  >();
+  const allAnswersMap = new Map<string, { questionId: string; answerValue: AnswerValue }>();
 
   for (const answer of existingAnswers) {
     const extractedValue = extractAnswerValue(answer.answerValue);
@@ -413,11 +541,12 @@ export async function submitAssessment(
     await userAssessmentRepository.transitionStatus(tenantId, assessmentId, 'submitted', { tx });
 
     // Enqueue score_assessment job
+    // Uses flowId for scoring config (flow owns combined dimensions from all templates)
     const jobId = await queueJob(
       'score_assessment',
       {
-        assessmentSubmissionId: assessmentId,
-        templateId,
+        userAssessmentId: assessmentId,
+        flowId: assessment.flowId,
         userId,
         responses,
       },

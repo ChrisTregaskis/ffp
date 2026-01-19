@@ -1,0 +1,252 @@
+<!-- Section 18: Sprint 2 Title -->
+<section id="section-18" class="section center">
+  <h1>Sprint 2 Complete</h1>
+  <p class="tagline">Full Authentication Stack - API to Web</p>
+  <h3>November 2025 - 3 Week Sprint</h3>
+  <p class="date">10th - 30th November 2025</p>
+  <div class="metric-box" style="margin-top: 3rem; max-width: 600px">
+    <h3><i class="fas fa-user-shield"></i></h3>
+    <p style="font-size: 1.3em">Users Can Now Log In and Access the Platform</p>
+  </div>
+</section>
+
+<!-- Section 19: Authentication Complete -->
+<section id="section-19" class="section">
+  <h2>Authentication Stack Complete</h2>
+  <p style="font-size: 1.3em; margin: 2rem 0">
+    From <span class="highlight">API endpoints to React frontend</span> - the full
+    authentication journey is now working.
+  </p>
+
+  <div class="two-column">
+    <div>
+      <h4>
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> Backend (API
+        Layer)
+      </h4>
+      <div class="architecture-diagram" style="margin-top: 1rem">
+        <div class="layer">
+          <h4><i class="fas fa-key"></i> Cognito Authentication (FFP-9)</h4>
+          <p>
+            <strong>Login Lambda:</strong> JWT token generation<br />
+            <strong>Refresh Token:</strong> Seamless session extension<br />
+            <strong>API Gateway:</strong> Protected routes with JWT validation
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-exclamation-triangle"></i> Error Handling (FFP-15)</h4>
+          <p>
+            <strong>Custom error classes:</strong> Typed exceptions for all scenarios<br />
+            <strong>Structured logging:</strong> Request tracing with tenant context<br />
+            <strong>Security-safe responses:</strong> No sensitive data leaks
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-vial"></i> Testing Framework (FFP-12)</h4>
+          <p>
+            <strong>Vitest configured:</strong> Fast, TypeScript-native testing<br />
+            <strong>60+ context tests:</strong> JWT extraction, tenant validation<br />
+            <strong>Deferred:</strong> Playwright & MSW for post-MVP
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h4>
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> Frontend
+        (React)
+      </h4>
+      <div class="architecture-diagram" style="margin-top: 1rem">
+        <div class="layer">
+          <h4><i class="fas fa-sign-in-alt"></i> Web Login Flow (FFP-16)</h4>
+          <p>
+            <strong>Login form:</strong> Email/password with validation<br />
+            <strong>First-time password:</strong> Secure password change flow<br />
+            <strong>Session management:</strong> Auto-refresh, logout
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-sitemap"></i> Navigation (FFP-122)</h4>
+          <p>
+            <strong>Role-based menus:</strong> Different views per user type<br />
+            <strong>Side navigation:</strong> Desktop & mobile responsive<br />
+            <strong>Page placeholders:</strong> Ready for feature development
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-tools"></i> Developer Experience</h4>
+          <p>
+            <strong>AuthContext:</strong> Global auth state management<br />
+            <strong>Error Boundary:</strong> Graceful error handling<br />
+            <strong>Client Logger:</strong> Browser-side logging
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    style="
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #d1fae5;
+      border-radius: 8px;
+      border-left: 4px solid var(--success-green);
+    "
+  >
+    <p style="margin: 0; font-size: 0.95em">
+      <i class="fas fa-check-circle" style="color: var(--success-green)"></i>
+      <strong>End-to-end authentication working:</strong> Users can log in via web, tokens
+      validated by API, sessions managed securely
+    </p>
+  </div>
+</section>
+
+<!-- Section 20: Web Interface -->
+<section id="section-20" class="section">
+  <h2>Web Interface Foundation</h2>
+  <p style="font-size: 1.3em; margin: 2rem 0">
+    A <span class="highlight">production-ready React application</span> with authentication,
+    routing, and responsive design.
+  </p>
+
+  <div class="tech-grid">
+    <div class="tech-card">
+      <i class="fab fa-react"></i>
+      <h4>AWS Amplify Integration</h4>
+      <p>
+        Cognito authentication seamlessly integrated with React hooks for login, logout, and
+        session management
+      </p>
+    </div>
+
+    <div class="tech-card">
+      <i class="fas fa-route"></i>
+      <h4>Protected Routing</h4>
+      <p>
+        Role-based route guards ensuring users only access pages they're authorised to view
+      </p>
+    </div>
+
+    <div class="tech-card">
+      <i class="fas fa-mobile-alt"></i>
+      <h4>Responsive Design</h4>
+      <p>
+        Mobile-first navigation with collapsible side menu and touch-friendly interactions
+      </p>
+    </div>
+
+    <div class="tech-card">
+      <i class="fas fa-palette"></i>
+      <h4>Component Library Started</h4>
+      <p>Reusable UI components with TailwindCSS styling, ready for feature development</p>
+    </div>
+  </div>
+
+  <h3 style="margin-top: 3rem">User Roles Supported</h3>
+  <div class="workflow-grid" style="grid-template-columns: repeat(4, 1fr)">
+    <div class="workflow-card">
+      <i class="fas fa-crown"></i>
+      <h4>Super Admin</h4>
+      <p>System-wide access, business onboarding</p>
+    </div>
+
+    <div class="workflow-card">
+      <i class="fas fa-building"></i>
+      <h4>Tenant Admin</h4>
+      <p>Clinic management, user invitations</p>
+    </div>
+
+    <div class="workflow-card">
+      <i class="fas fa-user-md"></i>
+      <h4>Physiotherapist</h4>
+      <p>Patient management, assessments</p>
+    </div>
+
+    <div class="workflow-card">
+      <i class="fas fa-user"></i>
+      <h4>Patient</h4>
+      <p>Self-service assessments, workouts</p>
+    </div>
+  </div>
+
+  <p style="text-align: center; margin-top: 2rem; font-size: 1.2em; color: var(--text-light)">
+    <i class="fas fa-shield-alt" style="color: var(--success-green)"></i>
+    Each role sees only what they need - <strong>least privilege by design</strong>
+  </p>
+</section>
+
+<!-- Section 21: Sprint 2 Numbers -->
+<section id="section-21" class="section">
+  <h2>Sprint 2: By The Numbers</h2>
+
+  <div class="metrics-grid">
+    <div class="metric-box">
+      <h3>185</h3>
+      <p>Tests Passing</p>
+      <p style="font-size: 0.9em">+60 from Sprint 1</p>
+    </div>
+    <div class="metric-box">
+      <h3>5</h3>
+      <p>Stories Complete</p>
+      <p style="font-size: 0.9em">All planned work</p>
+    </div>
+    <div class="metric-box">
+      <h3>100%</h3>
+      <p>Auth Coverage</p>
+      <p style="font-size: 0.9em">API + Web</p>
+    </div>
+  </div>
+
+  <h3 style="margin-top: 3rem">Stories Delivered</h3>
+  <div class="tech-grid" style="gap: 1rem; margin: 1.5rem 0">
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> FFP-9
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">Cognito Authentication - API layer complete</p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> FFP-12
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">Testing Framework - Vitest configured</p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> FFP-15
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">Error Handling - Structured patterns</p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> FFP-16
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">Web Login/Logout - Full flow working</p>
+    </div>
+  </div>
+
+  <div class="cost-comparison" style="margin-top: 3rem">
+    <div class="cost-card optimised">
+      <p>Monthly Running Cost</p>
+      <h3>£7-14</h3>
+      <p>/month</p>
+      <p style="margin-top: 1em; font-size: 0.9em">Still 87% below budget</p>
+    </div>
+
+    <div class="cost-card" style="background: #e0f2fe; border-color: var(--primary-blue)">
+      <p>Sprint 3 Focus</p>
+      <h3 style="color: var(--primary-blue)"><i class="fas fa-database"></i></h3>
+      <p>Assessment Engine</p>
+      <p style="margin-top: 1em; font-size: 0.9em">Core business logic begins</p>
+    </div>
+  </div>
+</section>

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-import { JOB_STATUSES, JOB_TYPES } from '@ffp/database';
+import { answerValueSchema } from '@ffp/database';
+import { JOB_STATUSES, JOB_TYPES } from '@ffp/database/constants';
 
 export const jobStatusSchema = z.enum(JOB_STATUSES);
 
@@ -20,8 +21,8 @@ export type JobType = z.infer<typeof jobTypeSchema>;
 export const assessmentResponseSchema = z.object({
   /** Question ID from the assessment template */
   questionId: z.string().uuid(),
-  /** Selected answer value (numeric for scales, string for single-select, array for multi-select) */
-  answerValue: z.union([z.number(), z.string(), z.array(z.string())]),
+  /** Selected answer value - uses shared schema from @ffp/database */
+  answerValue: answerValueSchema,
   /** Optional: Answer ID if selecting from predefined options */
   answerId: z.string().uuid().optional(),
 });
@@ -33,12 +34,15 @@ export type AssessmentResponse = z.infer<typeof assessmentResponseSchema>;
  *
  * Contains all data needed to calculate dimensional scores from
  * a completed assessment submission.
+ *
+ * Note: Uses flowId (not templateId) because scoring configuration
+ * lives at the flow level, combining dimensions from all templates.
  */
 export const scoreAssessmentPayloadSchema = z.object({
-  /** The assessment submission ID being scored */
-  assessmentSubmissionId: z.string().uuid(),
-  /** The template used for this assessment */
-  templateId: z.string().uuid(),
+  /** The user_assessments record ID being scored */
+  userAssessmentId: z.string().uuid(),
+  /** The flow containing the scoring configuration */
+  flowId: z.string().uuid(),
   /** User who completed the assessment */
   userId: z.string().uuid(),
   /** Array of question responses to score */

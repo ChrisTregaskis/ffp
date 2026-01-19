@@ -3,11 +3,13 @@
  *
  * These types are shared between:
  * - @ffp/database: JSONB column typing in Drizzle schemas
- * - @ffp/core: Zod validation schemas (can import and use for type inference)
+ * - @ffp/core: Zod validation schemas (imports schemas directly)
  *
  * This avoids circular dependencies since @ffp/database has no dependencies
  * on other @ffp/* packages.
  */
+
+import { z } from 'zod';
 
 import type { ScoreDimension } from '../constants/question.constants';
 
@@ -55,13 +57,24 @@ export interface ConfigOverrides {
 }
 
 /**
- * Answer value stored directly (not wrapped in object):
+ * Zod schema for answer values - single source of truth
+ *
+ * Supported value types:
  * - single-choice: string (e.g., "reduce_pain")
  * - multi-choice: string[] (e.g., ["none", "diabetes"])
  * - numeric/scale: number (e.g., 5, 7)
  * - text: string (e.g., "User's free text response")
+ * - video-response: boolean (e.g., true when video completed)
  */
-export type AnswerValue = string | number | string[];
+export const answerValueSchema = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.array(z.string()),
+]);
+
+/** Answer value type - inferred from schema */
+export type AnswerValue = z.infer<typeof answerValueSchema>;
 
 /**
  * Question with template-specific configuration

@@ -10,6 +10,7 @@ export * from './customers';
 export * from './users';
 export * from './assessment-templates';
 export * from './assessment-flows';
+export * from './flow-steps';
 export * from './process-jobs';
 export * from './user-assessments';
 export * from './questions';

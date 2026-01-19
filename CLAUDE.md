@@ -386,6 +386,82 @@ await db.query.users.findMany(); // Leaks all tenants!
 
 **See `architecture.md` for full actor architecture and `authentication.md` for context extraction patterns.**
 
+## Database Change Protocols
+
+**CRITICAL**: All database schema changes MUST go through the migration system. Never apply manual SQL changes directly.
+
+### NEVER Use `db:push`
+
+**⚠️ WARNING**: Never use `drizzle-kit push` or `pnpm db:push` in this project.
+
+| Command       | What it does                                   | Safe?        |
+| ------------- | ---------------------------------------------- | ------------ |
+| `db:generate` | Creates migration SQL file from schema changes | ✅ Yes       |
+| `db:migrate`  | Applies migrations AND tracks them             | ✅ Yes       |
+| `db:push`     | Syncs schema WITHOUT tracking migrations       | ❌ **NEVER** |
+
+**Why `db:push` is dangerous:**
+
+- It applies schema changes directly without creating migration records
+- The `__drizzle_migrations` table won't know the changes were applied
+- Future `db:migrate` calls will try to re-apply changes that already exist
+- This causes migration failures and requires manual database intervention to fix
+
+**If you see schema drift or migration tracking issues**, it's likely because `db:push` was used. The fix requires manually inserting migration tracking records or recreating the database.
+
+### Migration-Only Changes
+
+**Claude's Role**:
+
+- **NEVER** run ad-hoc SQL commands to modify database schema (ALTER TABLE, CREATE TABLE, DROP, etc.)
+- **NEVER** attempt to "fix" migration issues by running manual SQL
+- **DO** use `pnpm db:generate` to create migration files from schema changes
+- **DO** use `pnpm db:migrate` to apply migrations properly
+- **DO** explain any database issues fully before proposing solutions
+
+### When Database Issues Occur
+
+If migrations fail or databases appear out of sync:
+
+1. **STOP** - Do not attempt manual fixes
+2. **DIAGNOSE** - Explain the issue clearly to the user:
+   - What error occurred?
+   - What is the expected vs actual state?
+   - What might have caused the discrepancy?
+3. **PROPOSE** - Suggest investigation steps, not immediate fixes
+4. **WAIT** - Let the user decide how to proceed
+
+### Database Commands Reference
+
+```bash
+# Generate migration from schema changes (safe - creates .sql file only)
+cd packages/database && pnpm db:generate
+
+# Apply migrations (modifies database)
+pnpm db:migrate
+
+# View database state (read-only, safe)
+pnpm db:studio
+
+# Check migration status
+pnpm db:check
+```
+
+### Why This Matters
+
+- **Reproducibility**: New instances must be deployable from migrations alone
+- **Audit trail**: All schema changes are tracked in version control
+- **Rollback capability**: Migrations can be reverted if issues arise
+- **Team consistency**: Everyone works from the same migration history
+
+### Environment Variables
+
+- `DB_NAME`: Target database (e.g., `ffp_dev`, `ffp_test`)
+- `DB_MIGRATE_USER`: Elevated user for running migrations (e.g., `root_user`)
+- `DB_USER`: Application runtime user (e.g., `app_user`)
+
+**Note**: Migrations require `DB_MIGRATE_USER` due to RLS restrictions on the application user.
+
 ## Common Issues & Troubleshooting
 
 ### Build Errors

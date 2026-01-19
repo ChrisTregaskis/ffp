@@ -1,7 +1,7 @@
 import { eq, and, inArray } from 'drizzle-orm';
 
 import type { AnswerValue } from '@ffp/database';
-import { userAssessmentAnswers } from '@ffp/database/schema';
+import { userAssessmentAnswers, templateQuestions } from '@ffp/database/schema';
 
 import { withRLS, type Transaction } from '../lib/database';
 
@@ -13,18 +13,44 @@ export interface SaveAnswerInput {
   answerValue: AnswerValue;
 }
 
-// RLS is enforced via tenant context.
+export interface FindByAssessmentIdOptions {
+  /** Optional user ID for fine-grained RLS */
+  userId?: string;
+  /** Optional transaction for reading within an existing transaction */
+  tx?: Transaction;
+}
+
+export interface UpsertAnswerOptions {
+  /** Optional user ID for fine-grained RLS */
+  userId?: string;
+  /** Optional transaction for atomic operations across multiple writes */
+  tx?: Transaction;
+}
+
+/**
+ * Find all answers for an assessment
+ */
 export async function findByAssessmentId(
   tenantId: string,
   assessmentId: string,
-  userId?: string
+  options: FindByAssessmentIdOptions = {}
 ): Promise<UserAssessmentAnswer[]> {
-  return await withRLS(tenantId, userId, async (tx) => {
-    return await tx
+  const { userId, tx } = options;
+
+  const doQuery = async (dbTx: Transaction): Promise<UserAssessmentAnswer[]> => {
+    return await dbTx
       .select()
       .from(userAssessmentAnswers)
       .where(eq(userAssessmentAnswers.userAssessmentId, assessmentId));
-  });
+  };
+
+  // If transaction provided, use it directly
+  if (tx) {
+    return doQuery(tx);
+  }
+
+  // Otherwise, create new transaction with RLS
+  return await withRLS(tenantId, userId, doQuery);
 }
 
 // RLS is enforced via tenant context.
@@ -48,13 +74,6 @@ export async function findByAssessmentAndQuestion(
 
     return records[0] ?? null;
   });
-}
-
-export interface UpsertAnswerOptions {
-  /** Optional user ID for fine-grained RLS */
-  userId?: string;
-  /** Optional transaction for atomic operations across multiple writes */
-  tx?: Transaction;
 }
 
 /**
@@ -238,5 +257,31 @@ export async function deleteByQuestionIds(
           inArray(userAssessmentAnswers.questionId, questionIds)
         )
       );
+  });
+}
+
+/**
+ * Find distinct template IDs from the user's saved answers
+ *
+ * Derives which templates the user visited by joining their answers
+ * with the template_questions table. Used for submit validation to
+ * only check required questions from steps the user actually visited.
+ */
+export async function findVisitedTemplateIds(
+  tenantId: string,
+  assessmentId: string,
+  userId?: string
+): Promise<string[]> {
+  return await withRLS(tenantId, userId, async (tx) => {
+    const results = await tx
+      .selectDistinct({ templateId: templateQuestions.templateId })
+      .from(userAssessmentAnswers)
+      .innerJoin(
+        templateQuestions,
+        eq(userAssessmentAnswers.questionId, templateQuestions.questionId)
+      )
+      .where(eq(userAssessmentAnswers.userAssessmentId, assessmentId));
+
+    return results.map((r) => r.templateId);
   });
 }
