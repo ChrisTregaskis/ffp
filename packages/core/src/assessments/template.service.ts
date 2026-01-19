@@ -1,10 +1,15 @@
 import { eq } from 'drizzle-orm';
 
-import { getDb, type DbClient } from '@ffp/database';
-import { templateQuestions } from '@ffp/database/schema';
+import { getDb } from '@ffp/database';
+import { assessmentTemplates, templateQuestions } from '@ffp/database/schema';
 
 import { isUserActor, type TenantContext } from '../lib/context';
-import { NotFoundError, UnauthorisedError, ValidationError } from '../lib/errors';
+import {
+  InternalServerError,
+  NotFoundError,
+  UnauthorisedError,
+  ValidationError,
+} from '../lib/errors';
 import {
   createAssessmentTemplateSchema,
   updateAssessmentTemplateSchema,
@@ -111,6 +116,15 @@ export async function deactivateTemplateService(
 
 /**
  * Duplicate an assessment template
+ *
+ * Creates a copy of an existing template including all its question assignments.
+ * The write operations are wrapped in a transaction to ensure atomicity - if the
+ * question copy fails, the entire operation is rolled back.
+ *
+ * Pattern note: Uses direct Drizzle calls inside transaction rather than repository
+ * functions, as DbClient type doesn't accept transaction objects. This matches the
+ * pattern used in admin.repository.ts for transactional operations.
+ *
  */
 export async function duplicateTemplateService(
   ctx: TenantContext,
@@ -120,49 +134,57 @@ export async function duplicateTemplateService(
   const userId = getActorUserId(ctx);
   const db = getDb();
 
-  // Fetch source template
+  // Validate source template exists (read operation, outside transaction)
   const sourceTemplate = await templateRepository.findById(db, templateId);
 
   if (!sourceTemplate) {
     throw new NotFoundError('Assessment template', templateId);
   }
 
-  // Fetch source template's question assignments
+  // Fetch source template's question assignments (read operation, outside transaction)
   const sourceTemplateQuestions = await db
     .select()
     .from(templateQuestions)
     .where(eq(templateQuestions.templateId, templateId));
 
-  // Create the duplicate template
-  const duplicateInput: CreateAssessmentTemplateInput = {
-    name: newName,
-    description: sourceTemplate.description,
-    version: 1,
-    scoringConfig: sourceTemplate.scoringConfig,
-    isActive: false, // Start as draft
-    createdBy: userId,
-  };
+  // Wrap write operations in transaction for atomicity
+  // If question copy fails, template creation is rolled back
+  const duplicatedTemplateId = await db.transaction(async (tx) => {
+    // Create the duplicate template using direct Drizzle insert
+    const [duplicatedTemplate] = await tx
+      .insert(assessmentTemplates)
+      .values({
+        name: newName,
+        description: sourceTemplate.description,
+        version: 1,
+        scoringConfig: sourceTemplate.scoringConfig,
+        isActive: false, // Start as draft
+        createdBy: userId,
+      })
+      .returning({ id: assessmentTemplates.id });
 
-  const duplicatedTemplate = await templateRepository.create(db, duplicateInput);
+    // Copy template_questions join records
+    if (sourceTemplateQuestions.length > 0) {
+      const newTemplateQuestions = sourceTemplateQuestions.map((tq) => ({
+        templateId: duplicatedTemplate.id,
+        questionId: tq.questionId,
+        displayOrder: tq.displayOrder,
+        configOverrides: tq.configOverrides,
+      }));
 
-  // Copy template_questions join records
-  if (sourceTemplateQuestions.length > 0) {
-    const newTemplateQuestions = sourceTemplateQuestions.map((tq) => ({
-      templateId: duplicatedTemplate.id,
-      questionId: tq.questionId,
-      displayOrder: tq.displayOrder,
-      configOverrides: tq.configOverrides,
-    }));
+      await tx.insert(templateQuestions).values(newTemplateQuestions);
+    }
 
-    await db.insert(templateQuestions).values(newTemplateQuestions);
-  }
+    return duplicatedTemplate.id;
+  });
 
   // Fetch and return the complete duplicated template with questions
-  const result = await templateRepository.findWithQuestions(db, duplicatedTemplate.id);
+  // (read operation, outside transaction - uses repository for full hydration)
+  const result = await templateRepository.findWithQuestions(db, duplicatedTemplateId);
 
   // Should never be null since we just created it
   if (!result) {
-    throw new Error('Failed to fetch duplicated template');
+    throw new InternalServerError('Failed to fetch duplicated template after creation');
   }
 
   return result;
@@ -172,20 +194,32 @@ export async function duplicateTemplateService(
  * Get an assessment template by ID with questions
  *
  * Fetches template and its associated questions via template_questions join.
+ *
+ * @param _ctx - Tenant context (unused for system content, but maintains consistent API)
+ * @param templateId - ID of the template to fetch
+ * @returns Template with questions or null if not found
  */
 export async function getTemplateService(
-  db: DbClient,
+  _ctx: TenantContext,
   templateId: string
 ): Promise<AssessmentTemplateWithQuestions | null> {
+  const db = getDb();
+
   return await templateRepository.findWithQuestions(db, templateId);
 }
 
 /**
  * List assessment templates
+ *
+ * @param _ctx - Tenant context (unused for system content, but maintains consistent API)
+ * @param options - Filter options (activeOnly)
+ * @returns List of templates
  */
 export async function listTemplatesService(
-  db: DbClient,
+  _ctx: TenantContext,
   options?: { activeOnly?: boolean }
 ): Promise<AssessmentTemplate[]> {
+  const db = getDb();
+
   return await templateRepository.findAll(db, options);
 }
