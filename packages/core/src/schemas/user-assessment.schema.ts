@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
-import { answerValueSchema } from '@ffp/database';
 import {
   USER_ASSESSMENT_STATUSES,
   VALID_STATUS_TRANSITIONS,
   WARNING_TYPES,
 } from '@ffp/database/constants';
+import { answerValueSchema } from '@ffp/database/types';
 
 import { dimensionalScoreSchema } from './job.schema';
 
