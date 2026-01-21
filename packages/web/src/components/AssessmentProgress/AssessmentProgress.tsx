@@ -55,7 +55,7 @@ export const AssessmentProgress: React.FC<AssessmentProgressProps> = ({
       {/* Progress bar track */}
       <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
         <div
-          className="h-full rounded-full bg-primary transition-all duration-300 ease-out"
+          className="h-full rounded-full bg-linear-to-r from-ffp-primary-blue to-ffp-dark-blue transition-all duration-300 ease-out"
           style={{ width: `${String(percentage)}%` }}
         />
       </div>

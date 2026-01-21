@@ -25,7 +25,8 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
  * Uses FFP theme colours defined in index.css.
  */
 const VARIANT_CLASS_MAP: Record<ButtonVariant, string> = {
-  primary: 'bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 shadow-sm',
+  primary:
+    'bg-gradient-to-r from-ffp-primary-blue to-ffp-dark-blue text-primary-foreground hover:opacity-90 active:opacity-80 shadow-sm',
   secondary:
     'border-2 border-primary text-primary hover:bg-primary/10 active:bg-primary/20 shadow-sm',
   success: 'bg-success text-white hover:bg-success/90 active:bg-success/80 shadow-sm',
