@@ -19,7 +19,7 @@
 | Key     | Story                                | Pts | Status      | Dependencies        |
 | ------- | ------------------------------------ | --- | ----------- | ------------------- |
 | FFP-138 | Assessment Progress Bar Component    | 2   | ✅ Complete | FFP-135 ✅          |
-| FFP-131 | Get Assessment Results API           | 3   | 📋 Ready    | FFP-133 ✅          |
+| FFP-131 | Get Assessment Results API           | 3   | 🚀 Active   | FFP-133 ✅          |
 | FFP-134 | Programme Generation Service         | 5   | ⏳ Blocked  | FFP-131             |
 | FFP-136 | TanStack Query Hooks for Assessments | 5   | ⏳ Blocked  | FFP-135 ✅, FFP-131 |
 | FFP-139 | Question Renderer Components         | 8   | ⏳ Blocked  | FFP-135 ✅, FFP-136 |
@@ -29,10 +29,81 @@
 ### Recommended Next Steps
 
 1. ~~**FFP-138** (2 pts) - Independent, quick win~~ ✅ Complete
-2. **FFP-131** (3 pts) - Unblocks FFP-134 and FFP-136, critical path
+2. **FFP-131** (3 pts) - Unblocks FFP-134 and FFP-136, critical path ← **IN PROGRESS**
 3. **FFP-136** (5 pts) - TanStack setup, unblocks FFP-139
 4. **FFP-139** (8 pts) - Largest story, benefits from hooks
 5. **FFP-134** (5 pts) - Can parallel with FFP-139
+
+---
+
+## FFP-131 Implementation Plan: Get Assessment Results API
+
+**Branch**: `feature/ffp-131-get-results-api`
+**PR Strategy**: Single PR for all sub-tasks (tightly coupled, ~100 lines total)
+
+### Sub-task Execution Order
+
+| #   | Key     | Task                                  | Est. Lines | Notes                                           |
+| --- | ------- | ------------------------------------- | ---------- | ----------------------------------------------- |
+| 1   | FFP-174 | Zod schema for results response       | ~25        | Discriminated union: 'processing' vs 'complete' |
+| 2   | FFP-175 | `getAssessmentResults` service method | ~40        | Status check, return appropriate response       |
+| 3   | FFP-176 | `get-results.ts` Lambda handler       | ~25        | Standard pattern, extract context + ID          |
+| -   | FFP-177 | Unit tests                            | DEFERRED   | Not essential for MVP                           |
+
+### Adjustments from Jira Tickets
+
+1. **Schema naming**: Use `userAssessmentScoresSchema` (not `assessmentScoreSchema`)
+2. **British English**: Use `programmeId` (not `programId`)
+3. **Repository naming**: Use `userAssessmentRepository` (not `assessmentRepository`)
+
+### Implementation Details
+
+**FFP-174 - Schema** (`packages/core/src/schemas/user-assessment.schema.ts`):
+
+```typescript
+// Discriminated union for polling endpoint
+assessmentResultsResponseSchema = z.discriminatedUnion('status', [
+  z.object({ status: z.literal('processing'), scores: z.null(), programmeId: z.null() }),
+  z.object({
+    status: z.literal('complete'),
+    scores: userAssessmentScoresSchema,
+    programmeId: z.string().uuid().nullable(),
+  }),
+]);
+```
+
+**FFP-175 - Service** (`packages/core/src/assessments/assessment.service.ts`):
+
+- Check assessment status: `submitted` → processing, `scored`/`completed` → complete
+- Return 404 for missing/other tenant (RLS enforced)
+- Return 400 for not-yet-submitted assessments
+
+**FFP-176 - Handler** (`packages/functions/src/assessments/get-results.ts`):
+
+- `GET /assessments/:id/results`
+- Standard pattern: `withErrorHandling`, `extractUserContext`
+
+### Acceptance Criteria Mapping
+
+| AC  | Description                      | Implementation                                                                           |
+| --- | -------------------------------- | ---------------------------------------------------------------------------------------- |
+| AC1 | Returns null while processing    | Service returns `{ status: 'processing', scores: null }` when status='submitted'         |
+| AC2 | Returns scores when complete     | Service returns `{ status: 'complete', scores: {...} }` when status='scored'/'completed' |
+| AC3 | Returns programme recommendation | Include `programmeId` in response (nullable)                                             |
+| AC4 | Tenant isolation enforced        | RLS via `userAssessmentRepository.findById()` returns null for other tenants             |
+
+### Dependencies
+
+- ✅ FFP-130 (Submit Assessment API) - Complete
+- ✅ FFP-133 (Scoring Service) - Complete
+
+### Verification
+
+```bash
+pnpm typecheck --filter=@ffp/core
+pnpm typecheck --filter=@ffp/functions
+pnpm build
+```
 
 ### Pre-requisites
 
