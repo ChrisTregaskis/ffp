@@ -1,33 +1,35 @@
 # FFP - Project State
 
-**Last Updated**: 19th January 2026
+**Last Updated**: 22nd January 2026
 **Current EPIC**: FFP-2 - Assessment Engine
-**Sprint Status**: Sprint 4 ✅ Complete | Sprint 5 Ready
-**Previous**: Sprint 3 ✅ Complete
+**Sprint Status**: Sprint 5 🚀 In Progress
+**Previous**: Sprint 4 ✅ Complete
 
 ---
 
-## Ready: Sprint 5 - Results & Frontend Core (23 pts)
+## In Progress: Sprint 5 - Results & Frontend Core (23 pts)
 
 **Dates**: 26th January - 15th February 2026
-**Branch**: `feature/sprint5`
+**Branch**: `feature/sprint5` (story branches off main)
 **Sprint Goal**: Assessment results API, programme generation, frontend components for assessment flow.
 **Analysis**: See `sprint-planning/outputs/sprint-5-analysis-report.md`
 
 ### Sprint 5 Stories
 
-| Key     | Story                                | Pts | Dependencies        |
-| ------- | ------------------------------------ | --- | ------------------- |
-| FFP-131 | Get Assessment Results API           | 3   | FFP-133 ✅          |
-| FFP-134 | Programme Generation Service         | 5   | FFP-131             |
-| FFP-136 | TanStack Query Hooks for Assessments | 5   | FFP-135 ✅, FFP-131 |
-| FFP-139 | Question Renderer Components         | 8   | FFP-135 ✅, FFP-136 |
-| FFP-138 | Assessment Progress Bar Component    | 2   | FFP-135 ✅          |
+| Key     | Story                                | Pts | Status      | Dependencies        |
+| ------- | ------------------------------------ | --- | ----------- | ------------------- |
+| FFP-138 | Assessment Progress Bar Component    | 2   | ✅ Complete | FFP-135 ✅          |
+| FFP-131 | Get Assessment Results API           | 3   | 📋 Ready    | FFP-133 ✅          |
+| FFP-134 | Programme Generation Service         | 5   | ⏳ Blocked  | FFP-131             |
+| FFP-136 | TanStack Query Hooks for Assessments | 5   | ⏳ Blocked  | FFP-135 ✅, FFP-131 |
+| FFP-139 | Question Renderer Components         | 8   | ⏳ Blocked  | FFP-135 ✅, FFP-136 |
 
-### Recommended Implementation Order
+### Current Progress: 2/23 pts (9%)
 
-1. **FFP-138** (2 pts) - Independent, quick win
-2. **FFP-131** (3 pts) - Unblocks FFP-134, critical path
+### Recommended Next Steps
+
+1. ~~**FFP-138** (2 pts) - Independent, quick win~~ ✅ Complete
+2. **FFP-131** (3 pts) - Unblocks FFP-134 and FFP-136, critical path
 3. **FFP-136** (5 pts) - TanStack setup, unblocks FFP-139
 4. **FFP-139** (8 pts) - Largest story, benefits from hooks
 5. **FFP-134** (5 pts) - Can parallel with FFP-139
