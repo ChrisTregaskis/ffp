@@ -561,11 +561,17 @@ export async function getAssessmentResults(
   context: TenantContext
 ): Promise<AssessmentResultsResponse> {
   const { tenantId } = context;
+  const userId = await getUserIdFromContext(context);
 
-  // Fetch assessment by ID (RLS enforced)
-  const assessment = await userAssessmentRepository.findById(tenantId, assessmentId);
+  // Fetch assessment by ID (RLS enforced for tenant, userId for fine-grained RLS)
+  const assessment = await userAssessmentRepository.findById(tenantId, assessmentId, userId);
 
   if (!assessment) {
+    throw new NotFoundError('Assessment', assessmentId);
+  }
+
+  // Validate user ownership (RLS enforces tenant, not user isolation)
+  if (assessment.userId !== userId) {
     throw new NotFoundError('Assessment', assessmentId);
   }
 
