@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { FlowStepType } from '@ffp/core';
 
 import { AssessmentProgress } from '@web/components/AssessmentProgress';
+import { Button } from '@web/components/button';
 import {
   ComponentPageWrapper,
   ComponentPageHeader,
@@ -10,6 +11,7 @@ import {
   DeveloperInstructions,
   ButtonSampleDisplay,
 } from '@web/components/dev';
+import { Icon, Icons } from '@web/components/Icon';
 import { Text, Title } from '@web/components/text';
 
 /**
@@ -115,27 +117,29 @@ export const AssessmentProgressComponentsPage = (): JSX.Element => {
               phase={phases[Math.min(Math.floor((interactiveStep - 1) / 2), phases.length - 1)]}
             />
             <div className="mt-4 flex items-center justify-center gap-4">
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => {
                   setInteractiveStep((s) => Math.max(1, s - 1));
                 }}
                 disabled={interactiveStep <= 1}
-                className="rounded-md bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/80 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Previous
-              </button>
+              </Button>
               <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
                 Step {interactiveStep} of {totalSteps}
               </Text>
-              <button
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => {
                   setInteractiveStep((s) => Math.min(totalSteps, s + 1));
                 }}
                 disabled={interactiveStep >= totalSteps}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Next
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -193,7 +197,10 @@ export const AssessmentProgressComponentsPage = (): JSX.Element => {
               <AssessmentProgress currentStep={10} totalSteps={10} phase="results" />
               <div className="mt-6 text-center">
                 <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
-                  <span className="text-2xl">✓</span>
+                  <Icon
+                    name={Icons.CHECKCIRCLE}
+                    styleProps={{ size: 'xl', colour: 'var(--success)' }}
+                  />
                 </div>
                 <Title as="h2" className="mb-2" colour="card-foreground">
                   Assessment Complete!

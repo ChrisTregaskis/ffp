@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 
 import type { FlowStepType } from '@ffp/core';
 
+import { Text } from '@web/components/text';
+
 import { getPhaseLabel } from './utils';
 
 export interface AssessmentProgressProps {
@@ -31,9 +33,8 @@ export const AssessmentProgress: React.FC<AssessmentProgressProps> = ({
     return totalSteps > 0 ? Math.round((currentStep / totalSteps) * 100) : 0;
   }, [currentStep, totalSteps]);
 
-  const phaseLabel = useMemo(() => {
-    return getPhaseLabel(phase);
-  }, [phase]);
+  // Simple constant lookup - no memoisation needed
+  const phaseLabel = getPhaseLabel(phase);
 
   return (
     <div
@@ -46,10 +47,12 @@ export const AssessmentProgress: React.FC<AssessmentProgressProps> = ({
     >
       {/* Phase label and step counter row */}
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-sm font-medium text-foreground">{phaseLabel}</span>
-        <span className="text-sm text-muted-foreground">
+        <Text as="span" styleProps={{ size: 'sm', weight: 'medium', colour: 'foreground' }}>
+          {phaseLabel}
+        </Text>
+        <Text as="span" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
           {currentStep}/{totalSteps}
-        </span>
+        </Text>
       </div>
 
       {/* Progress bar track */}
