@@ -43,12 +43,12 @@
 
 ### Sub-task Execution Order
 
-| #   | Key     | Task                                  | Est. Lines | Notes                                     |
-| --- | ------- | ------------------------------------- | ---------- | ----------------------------------------- |
-| 1   | FFP-174 | Zod schema for results response       | ~15        | ✅ Complete - simple nullable approach    |
-| 2   | FFP-175 | `getAssessmentResults` service method | ~40        | Status check, return appropriate response |
-| 3   | FFP-176 | `get-results.ts` Lambda handler       | ~25        | Standard pattern, extract context + ID    |
-| -   | FFP-177 | Unit tests                            | DEFERRED   | Not essential for MVP                     |
+| #   | Key     | Task                                  | Est. Lines | Notes                                         |
+| --- | ------- | ------------------------------------- | ---------- | --------------------------------------------- |
+| 1   | FFP-174 | Zod schema for results response       | ~15        | ✅ Complete - simple nullable approach        |
+| 2   | FFP-175 | `getAssessmentResults` service method | ~35        | ✅ Complete - RLS enforced, status validation |
+| 3   | FFP-176 | `get-results.ts` Lambda handler       | ~25        | Standard pattern, extract context + ID        |
+| -   | FFP-177 | Unit tests                            | DEFERRED   | Not essential for MVP                         |
 
 ### Adjustments from Jira Tickets
 
