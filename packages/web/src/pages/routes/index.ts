@@ -2,6 +2,7 @@ import type { UserRole } from '@ffp/core';
 
 import { USER_ROLE } from '@web/constants/roles';
 import { ComingSoonPage } from '@web/pages/ComingSoonPage';
+import { AssessmentProgressComponentsPage } from '@web/pages/dev/AssessmentProgressComponentsPage';
 import { ButtonComponentsPage } from '@web/pages/dev/ButtonComponentsPage';
 import { CardComponentsPage } from '@web/pages/dev/CardComponentsPage';
 import { ComponentsPage } from '@web/pages/dev/ComponentsPage';
@@ -336,6 +337,14 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: ErrorBoundaryShowcasePage,
     title: 'Error Boundary',
+    excludeFromMainNavbar: true,
+    devOnly: true,
+  },
+  [RouteKey.COMPONENTS_ASSESSMENT_PROGRESS]: {
+    path: `${componentsBasePath}/assessment-progress`,
+    public: true,
+    pageComponent: AssessmentProgressComponentsPage,
+    title: 'Assessment Progress Components',
     excludeFromMainNavbar: true,
     devOnly: true,
   },

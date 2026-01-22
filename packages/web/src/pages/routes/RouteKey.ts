@@ -65,4 +65,6 @@ export enum RouteKey {
   COMPONENTS_STATIC_ALERT = 'components-static-alert',
   /** Error boundary components showcase */
   COMPONENTS_ERROR_BOUNDARY = 'components-error-boundary',
+  /** Assessment progress components showcase */
+  COMPONENTS_ASSESSMENT_PROGRESS = 'components-assessment-progress',
 }
