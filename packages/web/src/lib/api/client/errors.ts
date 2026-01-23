@@ -1,3 +1,5 @@
+import { API_ERROR_NAME, RETRYABLE_STATUS_CODES } from '@web/constants';
+
 export interface ApiErrorResponse {
   /** Machine-readable error code */
   code: string;
@@ -9,14 +11,11 @@ export interface ApiErrorResponse {
   requestId?: string;
 }
 
-/** Error codes that should trigger retry */
-const RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504]);
-
 /**
  * Normalised API error class
  */
 export class ApiError extends Error {
-  readonly name = 'ApiError';
+  readonly name = API_ERROR_NAME;
 
   constructor(
     /** HTTP status code */

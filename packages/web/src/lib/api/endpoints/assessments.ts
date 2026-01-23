@@ -8,7 +8,6 @@ export interface SubmitAnswersPayload {
   completedAt: string;
 }
 
-/** Response from results endpoint */
 export interface AssessmentResultsResponse {
   status: 'processing' | 'complete';
   scores?: UserAssessmentScores;
@@ -67,11 +66,4 @@ export const assessmentsApi = {
    */
   getResults: (assessmentId: string, signal?: AbortSignal): Promise<AssessmentResultsResponse> =>
     ffpClient.get<AssessmentResultsResponse>(`${basePath}/${assessmentId}/results`, { signal }),
-
-  /**
-   * Save partial progress (draft)
-   */
-  saveDraft: async (assessmentId: string, answers: Record<string, unknown>): Promise<void> => {
-    await ffpClient.patch(`${basePath}/${assessmentId}/draft`, { answers });
-  },
 };

@@ -1,5 +1,7 @@
 import { fetchAuthSession } from 'aws-amplify/auth';
 
+import { createLogger } from '@web/lib/logger';
+
 import { BaseHttpClient } from './base-client';
 import { ApiError } from './errors';
 
@@ -12,6 +14,8 @@ if (!API_BASE_URL_RAW) {
 }
 
 const API_BASE_URL: string = API_BASE_URL_RAW;
+
+const logger = createLogger('FFPClient');
 
 /**
  * FFP API Client
@@ -30,21 +34,18 @@ export class FFPClient extends BaseHttpClient {
       },
     });
 
-    // Register auth interceptor
-    this.addRequestInterceptor(this.authInterceptor.bind(this));
+    this.addRequestInterceptor(this.authInterceptor);
 
-    // Register logging interceptor in development
     if (import.meta.env.DEV) {
-      this.addRequestInterceptor(this.loggingRequestInterceptor.bind(this));
-      this.addResponseInterceptor(this.loggingResponseInterceptor.bind(this));
+      this.addRequestInterceptor(this.loggingRequestInterceptor);
+      this.addResponseInterceptor(this.loggingResponseInterceptor);
     }
   }
 
   /**
    * Auth interceptor - adds Cognito JWT to requests
    */
-  private async authInterceptor(context: RequestContext): Promise<RequestContext> {
-    // Skip auth for public endpoints
+  private authInterceptor = async (context: RequestContext): Promise<RequestContext> => {
     if (context.skipAuth) {
       return context;
     }
@@ -79,42 +80,31 @@ export class FFPClient extends BaseHttpClient {
         'Failed to retrieve authentication session. Please sign in again.'
       );
     }
-  }
+  };
 
   /**
    * Development logging - request
    */
-  private loggingRequestInterceptor(context: RequestContext): RequestContext {
-    // eslint-disable-next-line no-console
-    console.groupCollapsed(`%c[API] ${context.method} ${context.path}`, 'color: #4a9eff');
-    // eslint-disable-next-line no-console
-    console.log('URL:', context.url);
-    // eslint-disable-next-line no-console
-    console.log('Headers:', context.headers);
-    if (context.body) {
-      // eslint-disable-next-line no-console
-      console.log('Body:', context.body);
-    }
-    // eslint-disable-next-line no-console
-    console.groupEnd();
+  private loggingRequestInterceptor = (context: RequestContext): RequestContext => {
+    logger.debug(`${context.method} ${context.path}`, {
+      url: context.url,
+      headers: context.headers,
+      ...(context.body ? { body: context.body } : {}),
+    });
 
     return context;
-  }
+  };
 
   /**
    * Development logging - response
    */
-  private loggingResponseInterceptor(response: Response, context: RequestContext): Response {
-    const colour = response.ok ? '#4caf50' : '#f44336';
+  private loggingResponseInterceptor = (response: Response, context: RequestContext): Response => {
+    const logMethod = response.ok ? logger.debug : logger.warn;
 
-    // eslint-disable-next-line no-console
-    console.log(
-      `%c[API] ${context.method} ${context.path} → ${String(response.status)}`,
-      `color: ${colour}`
-    );
+    logMethod(`${context.method} ${context.path} → ${String(response.status)}`);
 
     return response;
-  }
+  };
 }
 
 export const ffpClient = new FFPClient();

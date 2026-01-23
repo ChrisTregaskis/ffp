@@ -1,7 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 
-/** HTTP status codes that should trigger retry */
-const RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504]);
+import { RETRYABLE_STATUS_CODES } from '@web/constants';
 
 /**
  * Determines whether a failed query should be retried
