@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 22nd January 2026
+**Last Updated**: 23rd January 2026
 **Current EPIC**: FFP-2 - Assessment Engine
 **Sprint Status**: Sprint 5 🚀 In Progress
 **Previous**: Sprint 4 ✅ Complete
@@ -16,20 +16,20 @@
 
 ### Sprint 5 Stories
 
-| Key     | Story                                | Pts | Status      | Dependencies        |
-| ------- | ------------------------------------ | --- | ----------- | ------------------- |
-| FFP-138 | Assessment Progress Bar Component    | 2   | ✅ Complete | FFP-135 ✅          |
-| FFP-131 | Get Assessment Results API           | 3   | 🚀 Active   | FFP-133 ✅          |
-| FFP-134 | Programme Generation Service         | 5   | ⏳ Blocked  | FFP-131             |
-| FFP-136 | TanStack Query Hooks for Assessments | 5   | ⏳ Blocked  | FFP-135 ✅, FFP-131 |
-| FFP-139 | Question Renderer Components         | 8   | ⏳ Blocked  | FFP-135 ✅, FFP-136 |
+| Key     | Story                                | Pts | Status      | Dependencies           |
+| ------- | ------------------------------------ | --- | ----------- | ---------------------- |
+| FFP-138 | Assessment Progress Bar Component    | 2   | ✅ Complete | FFP-135 ✅             |
+| FFP-131 | Get Assessment Results API           | 3   | ✅ Complete | FFP-133 ✅             |
+| FFP-134 | Programme Generation Service         | 5   | 📋 Ready    | FFP-131 ✅             |
+| FFP-136 | TanStack Query Hooks for Assessments | 5   | 📋 Ready    | FFP-135 ✅, FFP-131 ✅ |
+| FFP-139 | Question Renderer Components         | 8   | ⏳ Blocked  | FFP-135 ✅, FFP-136    |
 
-### Current Progress: 2/23 pts (9%)
+### Current Progress: 5/23 pts (22%)
 
 ### Recommended Next Steps
 
 1. ~~**FFP-138** (2 pts) - Independent, quick win~~ ✅ Complete
-2. **FFP-131** (3 pts) - Unblocks FFP-134 and FFP-136, critical path ← **IN PROGRESS**
+2. ~~**FFP-131** (3 pts) - Unblocks FFP-134 and FFP-136, critical path~~ ✅ Complete
 3. **FFP-136** (5 pts) - TanStack setup, unblocks FFP-139
 4. **FFP-139** (8 pts) - Largest story, benefits from hooks
 5. **FFP-134** (5 pts) - Can parallel with FFP-139
