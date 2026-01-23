@@ -2,6 +2,7 @@ import { createSystemContext, type APIGatewayProxyEventV2WithJWT } from '@ffp/co
 
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
+import { handler as getResultsHandler } from './get-results';
 import { handler as saveProgressHandler } from './save-progress';
 import { handler as startAssessmentHandler } from './start-assessment';
 import { handler as submitAssessmentHandler } from './submit-assessment';
@@ -23,10 +24,7 @@ const routes: RouteRegistry = {
     '/{id}/submit': submitAssessmentHandler,
   },
   GET: {
-    // Future assessment routes:
-    // '/': listAssessmentsHandler,
-    // '/{id}': getAssessmentHandler,
-    // '/{id}/results': getAssessmentResultsHandler,
+    '/{id}/results': getResultsHandler,
   },
   PUT: {
     '/{id}/progress': saveProgressHandler,

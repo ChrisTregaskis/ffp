@@ -299,3 +299,14 @@ export const submitAssessmentResponseSchema = z.object({
 });
 
 export type SubmitAssessmentResponse = z.infer<typeof submitAssessmentResponseSchema>;
+
+export const assessmentResultsResponseSchema = z.object({
+  /** Current assessment status (submitted, scored, completed, etc.) */
+  status: userAssessmentStatusSchema,
+  /** Calculated assessment scores (null until scoring completes) */
+  scores: userAssessmentScoresSchema.nullable(),
+  /** Recommended programme ID (null until programme assigned) */
+  programmeId: z.string().uuid().nullable(),
+});
+
+export type AssessmentResultsResponse = z.infer<typeof assessmentResultsResponseSchema>;
