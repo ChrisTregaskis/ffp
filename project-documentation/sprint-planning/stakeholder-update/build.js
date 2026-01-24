@@ -20,6 +20,7 @@ const CONTENT_FILES = [
   'sprint-updates/sprint-1.html',
   'sprint-updates/sprint-2.html',
   'sprint-updates/sprint-3.html',
+  'sprint-updates/sprint-4.html',
   'closing.html',
 ];
 

@@ -9,11 +9,12 @@ stakeholder-update/
 ├── build.js                # Combines files into single HTML
 ├── index.html              # Template with CSS, nav, and loader
 ├── overview.html           # Sections 1-12 (project overview)
-├── closing.html            # Section 27 (questions slide)
+├── closing.html            # Section 32 (questions slide)
 └── sprint-updates/
     ├── sprint-1.html       # Sections 13-17
     ├── sprint-2.html       # Sections 18-21
-    └── sprint-3.html       # Sections 22-26
+    ├── sprint-3.html       # Sections 22-26
+    └── sprint-4.html       # Sections 27-31
 ```
 
 ## Building
@@ -31,15 +32,15 @@ Output: `../ffp-stakeholder-update.html` - a single portable file that opens dir
 1. **Create the sprint file:**
 
    ```bash
-   touch sprint-updates/sprint-4.html
+   touch sprint-updates/sprint-5.html
    ```
 
 2. **Add sections** following the existing pattern:
 
    ```html
-   <!-- Section XX: Sprint 4 Title -->
-   <section id="section-XX" class="section center">
-     <h1>Sprint 4 Complete</h1>
+   <!-- Section 33: Sprint 5 Title -->
+   <section id="section-33" class="section center">
+     <h1>Sprint 5 Complete</h1>
      ...
    </section>
    ```
@@ -48,12 +49,12 @@ Output: `../ffp-stakeholder-update.html` - a single portable file that opens dir
 
    ```html
    <div class="menu-section">
-     <div class="menu-section-header collapsed" onclick="toggleSection('sprint4')">
-       <span>Sprint 4 (Jan 2026)</span>
+     <div class="menu-section-header collapsed" onclick="toggleSection('sprint5')">
+       <span>Sprint 5 (Feb 2026)</span>
        <i class="fas fa-chevron-down"></i>
      </div>
-     <div class="menu-items collapsed" id="sprint4-items">
-       <a class="menu-item" onclick="jumpToSection(XX)">Sprint 4 Title</a>
+     <div class="menu-items collapsed" id="sprint5-items">
+       <a class="menu-item" onclick="jumpToSection(33)">Sprint 5 Title</a>
        <!-- Add more nav items -->
      </div>
    </div>
@@ -67,7 +68,8 @@ Output: `../ffp-stakeholder-update.html` - a single portable file that opens dir
      'sprint-updates/sprint-1.html',
      'sprint-updates/sprint-2.html',
      'sprint-updates/sprint-3.html',
-     'sprint-updates/sprint-4.html', // Add this
+     'sprint-updates/sprint-4.html',
+     'sprint-updates/sprint-5.html',
      'closing.html',
    ];
    ```
@@ -99,6 +101,7 @@ Then open `http://localhost:8000`.
 | sprint-1.html | 13-17    |
 | sprint-2.html | 18-21    |
 | sprint-3.html | 22-26    |
-| closing.html  | 27       |
+| sprint-4.html | 27-31    |
+| closing.html  | 32       |
 
-When adding Sprint 4, continue from section 28.
+When adding Sprint 5, continue from section 33.

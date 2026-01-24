@@ -685,12 +685,25 @@
         </div>
       </div>
       <div class="menu-section">
+        <div class="menu-section-header collapsed" onclick="toggleSection('sprint4')">
+          <span>Sprint 4 (Jan 2026)</span>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="menu-items collapsed" id="sprint4-items">
+          <a class="menu-item" onclick="jumpToSection(27)">Sprint 4 Title</a>
+          <a class="menu-item" onclick="jumpToSection(28)">Flow-Level Scoring</a>
+          <a class="menu-item" onclick="jumpToSection(29)">Scoring & Admin API</a>
+          <a class="menu-item" onclick="jumpToSection(30)">Frontend State</a>
+          <a class="menu-item" onclick="jumpToSection(31)">Sprint 4 Numbers</a>
+        </div>
+      </div>
+      <div class="menu-section">
         <div class="menu-section-header collapsed" onclick="toggleSection('closing')">
           <span>Closing</span>
           <i class="fas fa-chevron-down"></i>
         </div>
         <div class="menu-items collapsed" id="closing-items">
-          <a class="menu-item" onclick="jumpToSection(27)">Questions</a>
+          <a class="menu-item" onclick="jumpToSection(32)">Questions</a>
         </div>
       </div>
     </nav>
@@ -713,6 +726,7 @@
         'sprint-updates/sprint-1.html',
         'sprint-updates/sprint-2.html',
         'sprint-updates/sprint-3.html',
+        'sprint-updates/sprint-4.html',
         'closing.html'
       ];
 
