@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 
 import { RETRYABLE_STATUS_CODES } from '@web/constants';
+import { minutesToMs } from '@web/utils/time';
 
 /**
  * Determines whether a failed query should be retried
@@ -30,8 +31,8 @@ const shouldRetry = (failureCount: number, error: unknown): boolean => {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      staleTime: minutesToMs(5),
+      gcTime: minutesToMs(10), // formerly cacheTime
       retry: shouldRetry,
       refetchOnWindowFocus: false, // Disable for better UX
     },
