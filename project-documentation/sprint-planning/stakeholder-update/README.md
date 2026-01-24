@@ -25,7 +25,7 @@ Run from this folder:
 node build.js
 ```
 
-Output: `../ffp-stakeholder-update.html` - a single portable file that opens directly in any browser.
+Output: `../_stakeholder-update.build.html` - a single portable file that opens directly in any browser (gitignored).
 
 ## Adding a New Sprint
 
@@ -105,3 +105,28 @@ Then open `http://localhost:8000`.
 | closing.html  | 32       |
 
 When adding Sprint 5, continue from section 33.
+
+---
+
+## Claude Prompt for Future Sprints
+
+Use this prompt when a sprint completes:
+
+```
+Update the stakeholder update for Sprint [N]. Reference:
+- `project-documentation/progress-log.md` for implementation details
+- `project-documentation/project-state.md` for story summaries
+
+Files to update:
+1. Create `sprint-updates/sprint-[N].html` (follow existing sprint patterns)
+2. Update `closing.html` section number and metrics (tests, hours)
+3. Update `index.html` navigation (add sprint menu section, update closing section number)
+4. Update `build.js` CONTENT_FILES array
+5. Update this README (structure diagram, section numbering table)
+6. Run `node build.js` to generate output (gitignored)
+
+Pattern notes:
+- Each sprint has ~5 sections (title, 2-3 content slides, numbers)
+- Use consistent CSS classes: section, center, two-column, tech-grid, workflow-grid, metric-box
+- Update closing slide metrics to reflect latest test count and hours invested
+```

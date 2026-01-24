@@ -67,6 +67,7 @@ CLAUDE.local.md
 
 project-documentation/sprint-planning/outputs/*.md
 project-documentation/sprint-planning/outputs/**/*.md
+project-documentation/sprint-planning/_stakeholder-update.build.html
 project-documentation/refactoring/log
 project-documentation/refactoring/testing
 project-documentation/refactoring/archive
