@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 23rd January 2026
+**Last Updated**: 24th January 2026
 **Current EPIC**: FFP-2 - Assessment Engine
 **Sprint Status**: Sprint 5 🚀 In Progress
 **Previous**: Sprint 4 ✅ Complete
@@ -65,15 +65,15 @@ Native fetch()
 
 ### Sub-task Execution Order
 
-| #   | Key     | Task                                               | Est. Lines | Status  |
-| --- | ------- | -------------------------------------------------- | ---------- | ------- |
-| 0   | -       | Install packages + QueryClient + App setup         | ~50        | Pending |
-| 1   | FFP-198 | API client infrastructure (base + FFP + endpoints) | ~350       | Pending |
-| 2   | FFP-199 | useAssessmentFlow + useAssessmentTemplate hooks    | ~50        | Pending |
-| 3   | FFP-200 | useStartAssessment mutation hook                   | ~25        | Pending |
-| 4   | FFP-201 | useSaveProgress + useSubmitAssessment hooks        | ~40        | Pending |
-| 5   | FFP-202 | useAssessmentResults with polling                  | ~30        | Pending |
-| 6   | FFP-203 | Unit tests for hooks                               | ~150       | Pending |
+| #   | Key     | Task                                                | Est. Lines | Status   |
+| --- | ------- | --------------------------------------------------- | ---------- | -------- |
+| 0   | -       | Install packages + QueryClient + App setup          | ~50        | **Done** |
+| 1   | FFP-198 | API client infrastructure (base + FFP + endpoints)  | ~350       | **Done** |
+| 2   | FFP-199 | useAssessmentFlowQuery + useAssessmentTemplateQuery | ~50        | **Done** |
+| 3   | FFP-200 | useStartAssessment mutation hook                    | ~25        | Pending  |
+| 4   | FFP-201 | useSaveProgress + useSubmitAssessment hooks         | ~40        | Pending  |
+| 5   | FFP-202 | useAssessmentResults with polling                   | ~30        | Pending  |
+| 6   | FFP-203 | Unit tests for hooks                                | ~150       | Pending  |
 
 ### Implementation Details
 
@@ -97,7 +97,7 @@ Files to create in `packages/web/src/lib/api/`:
 **FFP-199 - FFP-202: TanStack Query Hooks**
 File: `packages/web/src/hooks/useAssessmentQueries.ts`
 
-- Query hooks: `useAssessmentFlow`, `useAssessmentTemplate`
+- Query hooks: `useAssessmentFlowQuery`, `useAssessmentTemplateQuery` ✅
 - Mutation hooks: `useStartAssessment`, `useSaveProgress`, `useSubmitAssessment`
 - Polling hook: `useAssessmentResults`
 
