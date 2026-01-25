@@ -1,4 +1,5 @@
 import { useAssessmentFlowQuery } from './useAssessmentFlowQuery';
+import { useAssessmentResultsQuery } from './useAssessmentResultsQuery';
 import { useAssessmentTemplateQuery } from './useAssessmentTemplateQuery';
 import { useSaveProgress } from './useSaveProgress';
 import { useStartAssessment } from './useStartAssessment';
@@ -10,6 +11,7 @@ import type { SubmitAssessmentInput } from './useSubmitAssessment';
 
 export {
   useAssessmentFlowQuery,
+  useAssessmentResultsQuery,
   useAssessmentTemplateQuery,
   useSaveProgress,
   useStartAssessment,
