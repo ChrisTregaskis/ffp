@@ -9,15 +9,17 @@ import type { UseMutationOptions, UseMutationResult } from '@tanstack/react-quer
 
 /** Input for starting a new assessment */
 export interface StartAssessmentInput {
-  templateId: string;
+  /** Assessment flow ID to start */
+  flowId: string;
 }
 
 /**
- * Start a new assessment
+ * Start a new assessment (or resume existing)
  *
- * Creates a new user assessment instance from a template.
- * Invalidates user-assessments cache on success to reflect
- * the newly created assessment in lists.
+ * Creates a new user assessment instance from a flow, or resumes
+ * an existing in-progress assessment for the same flow.
+ *
+ * Invalidates user-assessments cache on success.
  */
 export const useStartAssessment = (
   options?: Omit<
@@ -29,9 +31,9 @@ export const useStartAssessment = (
 
   return useMutation({
     ...options,
-    mutationFn: ({ templateId }: StartAssessmentInput) => assessmentsApi.start(templateId),
+    mutationFn: ({ flowId }: StartAssessmentInput) => assessmentsApi.start(flowId),
     onSuccess: (...args) => {
-      // Invalidate user assessments list to reflect the new assessment
+      // Invalidate user assessments list to reflect the new/resumed assessment
       void queryClient.invalidateQueries({
         queryKey: assessmentKeys.userAssessments(),
       });

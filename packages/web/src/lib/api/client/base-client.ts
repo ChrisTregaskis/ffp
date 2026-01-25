@@ -234,23 +234,23 @@ export abstract class BaseHttpClient {
     return controller.signal;
   }
 
-  get<T>(path: string, config?: Partial<RequestConfig>): Promise<T> {
+  get<T = unknown>(path: string, config?: Partial<RequestConfig>): Promise<T> {
     return this.request<T>({ method: 'GET', path, ...config });
   }
 
-  post<T>(path: string, body?: unknown, config?: Partial<RequestConfig>): Promise<T> {
+  post<T = unknown>(path: string, body?: unknown, config?: Partial<RequestConfig>): Promise<T> {
     return this.request<T>({ method: 'POST', path, body, ...config });
   }
 
-  put<T>(path: string, body?: unknown, config?: Partial<RequestConfig>): Promise<T> {
+  put<T = unknown>(path: string, body?: unknown, config?: Partial<RequestConfig>): Promise<T> {
     return this.request<T>({ method: 'PUT', path, body, ...config });
   }
 
-  patch<T>(path: string, body?: unknown, config?: Partial<RequestConfig>): Promise<T> {
+  patch<T = unknown>(path: string, body?: unknown, config?: Partial<RequestConfig>): Promise<T> {
     return this.request<T>({ method: 'PATCH', path, body, ...config });
   }
 
-  delete<T>(path: string, config?: Partial<RequestConfig>): Promise<T> {
+  delete<T = unknown>(path: string, config?: Partial<RequestConfig>): Promise<T> {
     return this.request<T>({ method: 'DELETE', path, ...config });
   }
 }

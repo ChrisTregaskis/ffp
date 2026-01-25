@@ -1,37 +1,29 @@
-import type { AssessmentFlow, AssessmentTemplate, UserAssessmentScores } from '@ffp/core';
+import {
+  assessmentFlowSchema,
+  assessmentResultsResponseSchema,
+  assessmentTemplateSchema,
+  saveProgressResponseSchema,
+  startAssessmentResponseSchema,
+  submitAssessmentResponseSchema,
+  type AssessmentFlow,
+  type AssessmentResultsResponse,
+  type AssessmentTemplate,
+  type SaveProgressRequest,
+  type SaveProgressResponse,
+  type StartAssessmentResponse,
+  type SubmitAssessmentRequest,
+  type SubmitAssessmentResponse,
+} from '@ffp/core';
 
 import { ffpClient } from '../client';
-
-/** Payload for saving assessment progress */
-export interface SaveProgressPayload {
-  /** Current answers (partial or complete) */
-  answers: Record<string, unknown>;
-  /** Current step/question index */
-  currentStep?: number;
-}
-
-/** Payload for submitting assessment answers */
-export interface SubmitAnswersPayload {
-  answers: Record<string, unknown>;
-  completedAt: string;
-}
-
-export interface AssessmentResultsResponse {
-  status: 'processing' | 'complete';
-  scores?: UserAssessmentScores;
-  programmeId?: string;
-}
-
-/** Response from starting an assessment */
-export interface StartAssessmentResponse {
-  userAssessmentId: string;
-  flowId: string;
-}
 
 const basePath = '/assessments';
 
 /**
  * Assessment API methods
+ *
+ * All responses are validated against Zod schemas from @ffp/core
+ * to ensure type safety at runtime, not just compile time.
  *
  * @example
  * import { assessmentsApi } from '@web/lib/api';
@@ -43,42 +35,75 @@ export const assessmentsApi = {
   /**
    * Get assessment flow by ID
    */
-  getFlow: (flowId: string, signal?: AbortSignal): Promise<AssessmentFlow> =>
-    ffpClient.get<AssessmentFlow>(`${basePath}/flows/${flowId}`, { signal }),
+  getFlow: async (flowId: string, signal?: AbortSignal): Promise<AssessmentFlow> => {
+    const response = await ffpClient.get(`${basePath}/flows/${flowId}`, { signal });
+    return assessmentFlowSchema.parse(response);
+  },
 
   /**
    * Get assessment template by ID
    */
-  getTemplate: (templateId: string, signal?: AbortSignal): Promise<AssessmentTemplate> =>
-    ffpClient.get<AssessmentTemplate>(`${basePath}/templates/${templateId}`, {
-      signal,
-    }),
-
-  /**
-   * Start a new assessment
-   */
-  start: (templateId: string): Promise<StartAssessmentResponse> =>
-    ffpClient.post<StartAssessmentResponse>(`${basePath}/start`, {
-      templateId,
-    }),
-
-  /**
-   * Save assessment progress (auto-save)
-   */
-  saveProgress: async (assessmentId: string, payload: SaveProgressPayload): Promise<void> => {
-    await ffpClient.post(`${basePath}/${assessmentId}/progress`, payload);
+  getTemplate: async (templateId: string, signal?: AbortSignal): Promise<AssessmentTemplate> => {
+    const response = await ffpClient.get(`${basePath}/templates/${templateId}`, { signal });
+    return assessmentTemplateSchema.parse(response);
   },
 
   /**
-   * Submit assessment answers
+   * Start a new assessment (or resume existing)
+   *
+   * Returns full assessment state including steps, answers, and resume status.
    */
-  submit: async (assessmentId: string, payload: SubmitAnswersPayload): Promise<void> => {
-    await ffpClient.post(`${basePath}/${assessmentId}/submit`, payload);
+  start: async (flowId: string): Promise<StartAssessmentResponse> => {
+    const response = await ffpClient.post(`${basePath}/start`, { flowId });
+    return startAssessmentResponseSchema.parse(response);
   },
 
   /**
-   * Get assessment results
+   * Save assessment progress
+   *
+   * Returns branching evaluation results including next step and any warnings.
    */
-  getResults: (assessmentId: string, signal?: AbortSignal): Promise<AssessmentResultsResponse> =>
-    ffpClient.get<AssessmentResultsResponse>(`${basePath}/${assessmentId}/results`, { signal }),
+  saveProgress: async (
+    assessmentId: string,
+    payload: SaveProgressRequest
+  ): Promise<SaveProgressResponse> => {
+    const response = await ffpClient.put(`${basePath}/${assessmentId}/progress`, payload);
+    return saveProgressResponseSchema.parse(response);
+  },
+
+  /**
+   * Submit assessment answers for scoring
+   *
+   * Returns the scoring job ID for status polling.
+   */
+  submit: async (
+    assessmentId: string,
+    payload: SubmitAssessmentRequest
+  ): Promise<SubmitAssessmentResponse> => {
+    const response = await ffpClient.post(`${basePath}/${assessmentId}/submit`, payload);
+    return submitAssessmentResponseSchema.parse(response);
+  },
+
+  /**
+   * Get assessment results (for polling after submission)
+   */
+  getResults: async (
+    assessmentId: string,
+    signal?: AbortSignal
+  ): Promise<AssessmentResultsResponse> => {
+    const response = await ffpClient.get(`${basePath}/${assessmentId}/results`, { signal });
+    return assessmentResultsResponseSchema.parse(response);
+  },
+};
+
+// Re-export types for consumers
+export type {
+  AssessmentFlow,
+  AssessmentResultsResponse,
+  AssessmentTemplate,
+  SaveProgressRequest,
+  SaveProgressResponse,
+  StartAssessmentResponse,
+  SubmitAssessmentRequest,
+  SubmitAssessmentResponse,
 };

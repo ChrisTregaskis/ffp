@@ -2,27 +2,37 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { assessmentsApi } from '@web/lib/api';
 import type { ApiError } from '@web/lib/api/client/errors';
-import type { SubmitAnswersPayload } from '@web/lib/api/endpoints/assessments';
+import type {
+  SubmitAssessmentRequest,
+  SubmitAssessmentResponse,
+} from '@web/lib/api/endpoints/assessments';
 import { assessmentKeys } from '@web/lib/query';
 
 import type { UseMutationOptions, UseMutationResult } from '@tanstack/react-query';
 
 /** Input for submitting an assessment */
 export interface SubmitAssessmentInput {
+  /** Assessment ID to submit */
   assessmentId: string;
-  payload: SubmitAnswersPayload;
+  /** Final answers to submit */
+  payload: SubmitAssessmentRequest;
 }
 
 /**
- * Submit assessment answers
+ * Submit assessment answers for scoring
  *
  * Finalises an assessment by submitting all answers for scoring.
- * Invalidates the assessment results cache on success to trigger
- * a fresh fetch of the processing/complete status.
+ * Returns the scoring job ID for status tracking.
+ *
+ * Invalidates the assessment results and user assessments caches
+ * on success to trigger fresh fetches.
  */
 export const useSubmitAssessment = (
-  options?: Omit<UseMutationOptions<void, ApiError, SubmitAssessmentInput>, 'mutationFn'>
-): UseMutationResult<void, ApiError, SubmitAssessmentInput> => {
+  options?: Omit<
+    UseMutationOptions<SubmitAssessmentResponse, ApiError, SubmitAssessmentInput>,
+    'mutationFn'
+  >
+): UseMutationResult<SubmitAssessmentResponse, ApiError, SubmitAssessmentInput> => {
   const queryClient = useQueryClient();
 
   return useMutation({

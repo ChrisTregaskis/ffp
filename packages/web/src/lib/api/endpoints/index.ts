@@ -1,9 +1,13 @@
 export { assessmentsApi } from './assessments';
 export type {
+  AssessmentFlow,
   AssessmentResultsResponse,
-  SaveProgressPayload,
+  AssessmentTemplate,
+  SaveProgressRequest,
+  SaveProgressResponse,
   StartAssessmentResponse,
-  SubmitAnswersPayload,
+  SubmitAssessmentRequest,
+  SubmitAssessmentResponse,
 } from './assessments';
 
 // Future exports:

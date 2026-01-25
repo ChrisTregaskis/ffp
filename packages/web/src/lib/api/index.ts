@@ -13,7 +13,12 @@ export type {
 // Endpoint exports
 export { assessmentsApi } from './endpoints';
 export type {
+  AssessmentFlow,
   AssessmentResultsResponse,
+  AssessmentTemplate,
+  SaveProgressRequest,
+  SaveProgressResponse,
   StartAssessmentResponse,
-  SubmitAnswersPayload,
+  SubmitAssessmentRequest,
+  SubmitAssessmentResponse,
 } from './endpoints';

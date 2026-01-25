@@ -2,24 +2,29 @@ import { useMutation } from '@tanstack/react-query';
 
 import { assessmentsApi } from '@web/lib/api';
 import type { ApiError } from '@web/lib/api/client/errors';
-import type { SaveProgressPayload } from '@web/lib/api/endpoints/assessments';
+import type { SaveProgressRequest, SaveProgressResponse } from '@web/lib/api/endpoints/assessments';
 
 import type { UseMutationOptions, UseMutationResult } from '@tanstack/react-query';
 
 /** Input for saving assessment progress */
 export interface SaveProgressInput {
+  /** Assessment ID to save progress for */
   assessmentId: string;
-  payload: SaveProgressPayload;
+  /** Progress data (answers and current step) */
+  payload: SaveProgressRequest;
 }
 
 /**
  * Save assessment progress
  *
- * Persists partial answers during assessment completion.
+ * Persists answers and current step during assessment completion.
  */
 export const useSaveProgress = (
-  options?: Omit<UseMutationOptions<void, ApiError, SaveProgressInput>, 'mutationFn'>
-): UseMutationResult<void, ApiError, SaveProgressInput> => {
+  options?: Omit<
+    UseMutationOptions<SaveProgressResponse, ApiError, SaveProgressInput>,
+    'mutationFn'
+  >
+): UseMutationResult<SaveProgressResponse, ApiError, SaveProgressInput> => {
   return useMutation({
     ...options,
     mutationFn: ({ assessmentId, payload }: SaveProgressInput) =>
