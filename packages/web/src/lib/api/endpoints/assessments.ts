@@ -2,6 +2,14 @@ import type { AssessmentFlow, AssessmentTemplate, UserAssessmentScores } from '@
 
 import { ffpClient } from '../client';
 
+/** Payload for saving assessment progress */
+export interface SaveProgressPayload {
+  /** Current answers (partial or complete) */
+  answers: Record<string, unknown>;
+  /** Current step/question index */
+  currentStep?: number;
+}
+
 /** Payload for submitting assessment answers */
 export interface SubmitAnswersPayload {
   answers: Record<string, unknown>;
@@ -53,6 +61,13 @@ export const assessmentsApi = {
     ffpClient.post<StartAssessmentResponse>(`${basePath}/start`, {
       templateId,
     }),
+
+  /**
+   * Save assessment progress (auto-save)
+   */
+  saveProgress: async (assessmentId: string, payload: SaveProgressPayload): Promise<void> => {
+    await ffpClient.post(`${basePath}/${assessmentId}/progress`, payload);
+  },
 
   /**
    * Submit assessment answers
