@@ -25,13 +25,20 @@ export const useAssessmentResultsQuery = (
     queryKey: assessmentKeys.results(assessmentId),
     queryFn: ({ signal }) => assessmentsApi.getResults(assessmentId, signal),
     enabled: !!assessmentId,
-    // Poll every 2 seconds while processing, stop when complete
+    // Poll every 2 seconds while processing, stop when complete or on persistent error
     refetchInterval: (query) => {
       const data = query.state.data;
+
       // Stop polling if we have scores or status is complete
       if (data?.status === 'complete' || data?.scores) {
         return false;
       }
+
+      // Stop polling if we've had persistent errors (idle means not currently fetching)
+      if (query.state.fetchStatus === 'idle' && query.state.status === 'error') {
+        return false;
+      }
+
       return POLLING_INTERVAL_MS;
     },
     ...options,
