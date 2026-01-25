@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 23rd January 2026
+**Last Updated**: 25th January 2026
 **Current EPIC**: FFP-2 - Assessment Engine
 **Sprint Status**: Sprint 5 🚀 In Progress
 **Previous**: Sprint 4 ✅ Complete
@@ -20,92 +20,125 @@
 | ------- | ------------------------------------ | --- | ----------- | ---------------------- |
 | FFP-138 | Assessment Progress Bar Component    | 2   | ✅ Complete | FFP-135 ✅             |
 | FFP-131 | Get Assessment Results API           | 3   | ✅ Complete | FFP-133 ✅             |
+| FFP-136 | TanStack Query Hooks for Assessments | 5   | ✅ Complete | FFP-135 ✅, FFP-131 ✅ |
 | FFP-134 | Programme Generation Service         | 5   | 📋 Ready    | FFP-131 ✅             |
-| FFP-136 | TanStack Query Hooks for Assessments | 5   | 📋 Ready    | FFP-135 ✅, FFP-131 ✅ |
-| FFP-139 | Question Renderer Components         | 8   | ⏳ Blocked  | FFP-135 ✅, FFP-136    |
+| FFP-139 | Question Renderer Components         | 8   | 📋 Ready    | FFP-135 ✅, FFP-136 ✅ |
 
-### Current Progress: 5/23 pts (22%)
+### Current Progress: 10/23 pts (43%)
 
 ### Recommended Next Steps
 
 1. ~~**FFP-138** (2 pts) - Independent, quick win~~ ✅ Complete
 2. ~~**FFP-131** (3 pts) - Unblocks FFP-134 and FFP-136, critical path~~ ✅ Complete
-3. **FFP-136** (5 pts) - TanStack setup, unblocks FFP-139
-4. **FFP-139** (8 pts) - Largest story, benefits from hooks
+3. ~~**FFP-136** (5 pts) - TanStack setup, unblocks FFP-139~~ ✅ Complete
+4. **FFP-139** (8 pts) - Largest story, benefits from hooks 🚀 **READY**
 5. **FFP-134** (5 pts) - Can parallel with FFP-139
 
 ---
 
-## FFP-131 Implementation Plan: Get Assessment Results API
+## FFP-136 Implementation Plan: TanStack Query Hooks for Assessments
 
-**Branch**: `feature/ffp-131-get-results-api`
-**PR Strategy**: Single PR for all sub-tasks (tightly coupled, ~100 lines total)
+**Branch**: `feature/ffp-136-tanstack-hooks`
+**PR Strategy**: Single PR for all sub-tasks (cohesive API client + hooks infrastructure)
+**Planning Doc**: `sprint-planning/outputs/api-client-architecture.md`
+
+### Architecture Overview
+
+```
+React Component
+     │ uses
+     ▼
+TanStack Query Hooks (caching layer)
+     │ calls
+     ▼
+Endpoint Modules (assessmentsApi)
+     │ calls
+     ▼
+FFPClient (Cognito auth)
+     │ extends
+     ▼
+BaseHttpClient (interceptors, errors)
+     │ uses
+     ▼
+Native fetch()
+```
 
 ### Sub-task Execution Order
 
-| #   | Key     | Task                                  | Est. Lines | Notes                                         |
-| --- | ------- | ------------------------------------- | ---------- | --------------------------------------------- |
-| 1   | FFP-174 | Zod schema for results response       | ~15        | ✅ Complete - simple nullable approach        |
-| 2   | FFP-175 | `getAssessmentResults` service method | ~35        | ✅ Complete - RLS enforced, status validation |
-| 3   | FFP-176 | `get-results.ts` Lambda handler       | ~25        | ✅ Complete - handler + route registered      |
-| -   | FFP-177 | Unit tests                            | DEFERRED   | Not essential for MVP                         |
-
-### Adjustments from Jira Tickets
-
-1. **Schema naming**: Use `userAssessmentScoresSchema` (not `assessmentScoreSchema`)
-2. **British English**: Use `programmeId` (not `programId`)
-3. **Repository naming**: Use `userAssessmentRepository` (not `assessmentRepository`)
+| #   | Key     | Task                                                | Est. Lines | Status      |
+| --- | ------- | --------------------------------------------------- | ---------- | ----------- |
+| 0   | -       | Install packages + QueryClient + App setup          | ~50        | ✅ Done     |
+| 1   | FFP-198 | API client infrastructure (base + FFP + endpoints)  | ~350       | ✅ Done     |
+| 2   | FFP-199 | useAssessmentFlowQuery + useAssessmentTemplateQuery | ~50        | ✅ Done     |
+| 3   | FFP-200 | useStartAssessment mutation hook                    | ~25        | ✅ Done     |
+| 4   | FFP-201 | useSaveProgress + useSubmitAssessment hooks         | ~40        | ✅ Done     |
+| 5   | FFP-202 | useAssessmentResults with polling                   | ~30        | ✅ Done     |
+| 6   | FFP-203 | Unit tests for hooks                                | ~150       | ⏸️ Deferred |
 
 ### Implementation Details
 
-**FFP-174 - Schema** (`packages/core/src/schemas/user-assessment.schema.ts`):
+**Sub-task 0: Setup & Infrastructure**
 
-```typescript
-// Simple nullable approach - works with any assessment status
-assessmentResultsResponseSchema = z.object({
-  status: userAssessmentStatusSchema,
-  scores: userAssessmentScoresSchema.nullable(),
-  programmeId: z.string().uuid().nullable(),
-});
-```
+- Install `@tanstack/react-query` and `@tanstack/react-query-devtools`
+- Create `lib/query/query-client.ts` with smart retry logic
+- Wrap App with `QueryClientProvider`
+- Add DevTools (development only)
 
-**FFP-175 - Service** (`packages/core/src/assessments/assessment.service.ts`):
+**FFP-198: API Client Infrastructure**
+Files to create in `packages/web/src/lib/api/`:
 
-- Check assessment status: `submitted` → processing, `scored`/`completed` → complete
-- Return 404 for missing/other tenant (RLS enforced)
-- Return 400 for not-yet-submitted assessments
+- `client/errors.ts` - ApiError class with type guards
+- `client/types.ts` - RequestConfig, interceptor types
+- `client/base-client.ts` - BaseHttpClient with interceptor pipeline
+- `client/ffp-client.ts` - FFPClient with Cognito auth
+- `endpoints/assessments.ts` - Assessment API methods
+- `query/keys/assessments.ts` - Query key factory
 
-**FFP-176 - Handler** (`packages/functions/src/assessments/get-results.ts`):
+**FFP-199 - FFP-202: TanStack Query Hooks** ✅
+Folder: `packages/web/src/hooks/assessments/`
 
-- `GET /assessments/:id/results`
-- Standard pattern: `withErrorHandling`, `extractUserContext`
+- Query hooks: `useAssessmentFlowQuery`, `useAssessmentTemplateQuery` ✅
+- Mutation hooks: `useStartAssessment`, `useSaveProgress`, `useSubmitAssessment` ✅
+- Polling hook: `useAssessmentResultsQuery` ✅
 
-### Acceptance Criteria Mapping
+**FFP-203: Unit Tests** ⏸️ Deferred
 
-| AC  | Description                      | Implementation                                                                           |
-| --- | -------------------------------- | ---------------------------------------------------------------------------------------- |
-| AC1 | Returns null while processing    | Service returns `{ status: 'processing', scores: null }` when status='submitted'         |
-| AC2 | Returns scores when complete     | Service returns `{ status: 'complete', scores: {...} }` when status='scored'/'completed' |
-| AC3 | Returns programme recommendation | Include `programmeId` in response (nullable)                                             |
-| AC4 | Tenant isolation enforced        | RLS via `userAssessmentRepository.findById()` returns null for other tenants             |
+- Will test during integration with assessment flow components
+- Hooks are thin wrappers - integration testing more valuable
+
+### Acceptance Criteria Mapping (Parent Story FFP-136)
+
+| AC  | Description                       | Sub-task | Implementation                              |
+| --- | --------------------------------- | -------- | ------------------------------------------- |
+| AC1 | useAssessmentFlow fetches flow    | FFP-199  | 5-minute stale time, enabled when flowId    |
+| AC2 | useAssessmentTemplate fetches     | FFP-199  | enabled when templateId exists              |
+| AC3 | useStartAssessment mutation       | FFP-200  | POST /assessments/start, cache invalidation |
+| AC4 | useSaveProgress mutation          | FFP-201  | POST /assessments/:id/progress              |
+| AC5 | useSubmitAssessment mutation      | FFP-201  | POST /assessments/:id/submit, invalidation  |
+| AC6 | useAssessmentResults with polling | FFP-202  | Poll every 2s until scores exist            |
 
 ### Dependencies
 
-- ✅ FFP-130 (Submit Assessment API) - Complete
-- ✅ FFP-133 (Scoring Service) - Complete
+- ✅ FFP-135 (Assessment Context & State Mgmt) - Complete
+- ✅ FFP-131 (Get Assessment Results API) - Complete
+- ✅ API endpoints available (Start, Save, Submit, Results)
 
 ### Verification
 
 ```bash
-pnpm typecheck --filter=@ffp/core
-pnpm typecheck --filter=@ffp/functions
+pnpm typecheck --filter=@ffp/web
+pnpm lint --filter=@ffp/web
+pnpm test --filter=@ffp/web
 pnpm build
 ```
 
-### Pre-requisites
+---
 
-- [ ] **API Client Design** - Base + FFP client pattern (see `sprint-planning/outputs/api-client-design-prompt.md`)
-- [ ] Install TanStack Query before FFP-136
+## FFP-131: Get Assessment Results API ✅ COMPLETE
+
+**Endpoint**: `GET /assessments/:id/results`
+**Key files**: `user-assessment.schema.ts`, `assessment.service.ts`, `get-results.ts`
+**Pattern**: Simple nullable approach - `scores` and `programmeId` null until scoring completes
 
 ---
 

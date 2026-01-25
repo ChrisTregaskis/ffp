@@ -15,6 +15,7 @@
       // Internal aliases for this package using @web/ namespace to avoid conflicts
       "@web/components/*": ["./components/*"],
       "@web/contexts/*": ["./contexts/*"],
+      "@web/hooks": ["./hooks"],
       "@web/hooks/*": ["./hooks/*"],
       "@web/pages/*": ["./pages/*"],
       "@web/assets/*": ["./assets/*"],
@@ -24,6 +25,7 @@
       "@web/types/*": ["./types/*"],
       "@web/lib/*": ["./lib/*"],
       "@web/config/*": ["./config/*"],
+      "@web/constants": ["./constants"],
       "@web/constants/*": ["./constants/*"]
     }
   },
