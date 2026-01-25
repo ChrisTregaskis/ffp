@@ -8,6 +8,89 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### January 25, 2026 (Session 91 - FFP-136 TanStack Query Hooks)
+
+**Status**: ✅ FFP-136 COMPLETE
+
+**Branch**: `feature/ffp-136-tanstack-hooks`
+
+**Summary**: Implemented TanStack Query infrastructure and hooks for all assessment APIs, providing caching, background refetch, mutation support, and polling for results.
+
+**Key Deliverables**:
+
+- **API Client Infrastructure**: BaseHttpClient with interceptor pipeline, FFPClient with Cognito auth
+- **Error Handling**: ApiError class with type guards (isRetryable, isAuthError, isValidationError)
+- **Query Key Factory**: Hierarchical keys for efficient cache invalidation
+- **Query Hooks**: `useAssessmentFlowQuery`, `useAssessmentTemplateQuery`, `useAssessmentResultsQuery`
+- **Mutation Hooks**: `useStartAssessment`, `useSaveProgress`, `useSubmitAssessment`
+
+**Sub-tasks Completed**:
+
+| Key     | Summary                                 | Status      |
+| ------- | --------------------------------------- | ----------- |
+| -       | Setup (packages, QueryClient, DevTools) | ✅ Complete |
+| FFP-198 | API client infrastructure               | ✅ Complete |
+| FFP-199 | Query hooks (flow, template)            | ✅ Complete |
+| FFP-200 | useStartAssessment mutation             | ✅ Complete |
+| FFP-201 | useSaveProgress + useSubmitAssessment   | ✅ Complete |
+| FFP-202 | useAssessmentResultsQuery with polling  | ✅ Complete |
+| FFP-203 | Unit tests                              | ⏸️ Deferred |
+
+**Key Implementation Details**:
+
+- All hooks use `ApiError` type for rich error handling
+- `useAssessmentResultsQuery` polls every 2s, stops when `status === 'complete'` or `scores` exist
+- `useSubmitAssessment` invalidates both results and userAssessments caches
+- Hooks organised in `packages/web/src/hooks/assessments/` folder structure
+
+**Files Created**:
+
+```
+packages/web/src/
+├── lib/
+│   ├── api/
+│   │   ├── client/
+│   │   │   ├── base-client.ts
+│   │   │   ├── ffp-client.ts
+│   │   │   ├── errors.ts
+│   │   │   ├── types.ts
+│   │   │   └── index.ts
+│   │   ├── endpoints/
+│   │   │   ├── assessments.ts
+│   │   │   └── index.ts
+│   │   └── index.ts
+│   └── query/
+│       ├── query-client.ts
+│       ├── keys/
+│       │   ├── assessments.ts
+│       │   └── index.ts
+│       └── index.ts
+├── hooks/
+│   └── assessments/
+│       ├── index.ts
+│       ├── useAssessmentFlowQuery.ts
+│       ├── useAssessmentTemplateQuery.ts
+│       ├── useAssessmentResultsQuery.ts
+│       ├── useStartAssessment.ts
+│       ├── useSaveProgress.ts
+│       └── useSubmitAssessment.ts
+├── utils/
+│   └── time.ts
+└── constants/
+    ├── http.ts
+    └── index.ts
+```
+
+**Quality Assurance**:
+
+- ✅ `pnpm typecheck` - Zero errors
+- ✅ `pnpm lint` - Zero warnings
+- ✅ `pnpm build` - Successful
+
+**Sprint 5 Progress**: 10/23 pts (43%) - FFP-136 complete, FFP-139 unblocked
+
+---
+
 ### January 22, 2026 (Session 90 - FFP-138 Assessment Progress Bar Component)
 
 **Status**: ✅ FFP-138 COMPLETE (Sprint 5 started)

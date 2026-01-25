@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 24th January 2026
+**Last Updated**: 25th January 2026
 **Current EPIC**: FFP-2 - Assessment Engine
 **Sprint Status**: Sprint 5 🚀 In Progress
 **Previous**: Sprint 4 ✅ Complete
@@ -20,18 +20,18 @@
 | ------- | ------------------------------------ | --- | ----------- | ---------------------- |
 | FFP-138 | Assessment Progress Bar Component    | 2   | ✅ Complete | FFP-135 ✅             |
 | FFP-131 | Get Assessment Results API           | 3   | ✅ Complete | FFP-133 ✅             |
+| FFP-136 | TanStack Query Hooks for Assessments | 5   | ✅ Complete | FFP-135 ✅, FFP-131 ✅ |
 | FFP-134 | Programme Generation Service         | 5   | 📋 Ready    | FFP-131 ✅             |
-| FFP-136 | TanStack Query Hooks for Assessments | 5   | 📋 Ready    | FFP-135 ✅, FFP-131 ✅ |
-| FFP-139 | Question Renderer Components         | 8   | ⏳ Blocked  | FFP-135 ✅, FFP-136    |
+| FFP-139 | Question Renderer Components         | 8   | 📋 Ready    | FFP-135 ✅, FFP-136 ✅ |
 
-### Current Progress: 5/23 pts (22%)
+### Current Progress: 10/23 pts (43%)
 
 ### Recommended Next Steps
 
 1. ~~**FFP-138** (2 pts) - Independent, quick win~~ ✅ Complete
 2. ~~**FFP-131** (3 pts) - Unblocks FFP-134 and FFP-136, critical path~~ ✅ Complete
-3. **FFP-136** (5 pts) - TanStack setup, unblocks FFP-139 🚀 **IN PROGRESS**
-4. **FFP-139** (8 pts) - Largest story, benefits from hooks
+3. ~~**FFP-136** (5 pts) - TanStack setup, unblocks FFP-139~~ ✅ Complete
+4. **FFP-139** (8 pts) - Largest story, benefits from hooks 🚀 **READY**
 5. **FFP-134** (5 pts) - Can parallel with FFP-139
 
 ---
@@ -65,15 +65,15 @@ Native fetch()
 
 ### Sub-task Execution Order
 
-| #   | Key     | Task                                                | Est. Lines | Status   |
-| --- | ------- | --------------------------------------------------- | ---------- | -------- |
-| 0   | -       | Install packages + QueryClient + App setup          | ~50        | **Done** |
-| 1   | FFP-198 | API client infrastructure (base + FFP + endpoints)  | ~350       | **Done** |
-| 2   | FFP-199 | useAssessmentFlowQuery + useAssessmentTemplateQuery | ~50        | **Done** |
-| 3   | FFP-200 | useStartAssessment mutation hook                    | ~25        | Pending  |
-| 4   | FFP-201 | useSaveProgress + useSubmitAssessment hooks         | ~40        | Pending  |
-| 5   | FFP-202 | useAssessmentResults with polling                   | ~30        | Pending  |
-| 6   | FFP-203 | Unit tests for hooks                                | ~150       | Pending  |
+| #   | Key     | Task                                                | Est. Lines | Status      |
+| --- | ------- | --------------------------------------------------- | ---------- | ----------- |
+| 0   | -       | Install packages + QueryClient + App setup          | ~50        | ✅ Done     |
+| 1   | FFP-198 | API client infrastructure (base + FFP + endpoints)  | ~350       | ✅ Done     |
+| 2   | FFP-199 | useAssessmentFlowQuery + useAssessmentTemplateQuery | ~50        | ✅ Done     |
+| 3   | FFP-200 | useStartAssessment mutation hook                    | ~25        | ✅ Done     |
+| 4   | FFP-201 | useSaveProgress + useSubmitAssessment hooks         | ~40        | ✅ Done     |
+| 5   | FFP-202 | useAssessmentResults with polling                   | ~30        | ✅ Done     |
+| 6   | FFP-203 | Unit tests for hooks                                | ~150       | ⏸️ Deferred |
 
 ### Implementation Details
 
@@ -94,19 +94,17 @@ Files to create in `packages/web/src/lib/api/`:
 - `endpoints/assessments.ts` - Assessment API methods
 - `query/keys/assessments.ts` - Query key factory
 
-**FFP-199 - FFP-202: TanStack Query Hooks**
-File: `packages/web/src/hooks/useAssessmentQueries.ts`
+**FFP-199 - FFP-202: TanStack Query Hooks** ✅
+Folder: `packages/web/src/hooks/assessments/`
 
 - Query hooks: `useAssessmentFlowQuery`, `useAssessmentTemplateQuery` ✅
-- Mutation hooks: `useStartAssessment`, `useSaveProgress`, `useSubmitAssessment`
-- Polling hook: `useAssessmentResults`
+- Mutation hooks: `useStartAssessment`, `useSaveProgress`, `useSubmitAssessment` ✅
+- Polling hook: `useAssessmentResultsQuery` ✅
 
-**FFP-203: Unit Tests**
-File: `packages/web/src/hooks/__tests__/useAssessmentQueries.test.ts`
+**FFP-203: Unit Tests** ⏸️ Deferred
 
-- Mock API client
-- Test query/mutation behaviour
-- Test polling stop condition
+- Will test during integration with assessment flow components
+- Hooks are thin wrappers - integration testing more valuable
 
 ### Acceptance Criteria Mapping (Parent Story FFP-136)
 
