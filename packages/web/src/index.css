@@ -81,6 +81,9 @@
   --max-width-2xl: 42rem;
   --max-width-3xl: 48rem;
   --max-width-4xl: 56rem;
+
+  /* Custom Shadows */
+  --shadow-radio-dot: inset 0 0 0 3px white;
 }
 
 /* Icomoon icon font */

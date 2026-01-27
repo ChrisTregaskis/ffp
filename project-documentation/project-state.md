@@ -71,14 +71,14 @@ packages/web/src/components/assessment/
 
 ### Sub-task Execution Order
 
-| #   | Key     | Task                                       | Status   |
-| --- | ------- | ------------------------------------------ | -------- |
-| 1   | FFP-213 | SingleChoiceQuestion (establishes pattern) | 📋 Ready |
-| 2   | FFP-214 | MultiChoiceQuestion (similar to single)    | 📋 Ready |
-| 3   | FFP-217 | TextQuestion + barrel exports setup        | 📋 Ready |
-| 4   | FFP-215 | NumericQuestion + ScaleQuestion            | 📋 Ready |
-| 5   | FFP-216 | VideoResponseQuestion (HTML5 placeholder)  | 📋 Ready |
-| 6   | FFP-212 | QuestionRenderer factory (ties together)   | 📋 Ready |
+| #   | Key     | Task                                       | Status      |
+| --- | ------- | ------------------------------------------ | ----------- |
+| 1   | FFP-213 | SingleChoiceQuestion (establishes pattern) | ✅ Complete |
+| 2   | FFP-214 | MultiChoiceQuestion (similar to single)    | 📋 Ready    |
+| 3   | FFP-217 | TextQuestion + barrel exports setup        | 📋 Ready    |
+| 4   | FFP-215 | NumericQuestion + ScaleQuestion            | 📋 Ready    |
+| 5   | FFP-216 | VideoResponseQuestion (HTML5 placeholder)  | 📋 Ready    |
+| 6   | FFP-212 | QuestionRenderer factory (ties together)   | 📋 Ready    |
 
 ### Implementation Notes
 
