@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import type { AssessmentQuestion, AnswerValue } from '@ffp/core';
 
-import { SingleChoiceQuestion } from '@web/components/assessment';
+import { SingleChoiceQuestion, MultiChoiceQuestion } from '@web/components/assessment';
 import {
   ComponentPageWrapper,
   ComponentPageHeader,
@@ -62,24 +62,73 @@ const mockDisabledDemoQuestion: AssessmentQuestion = {
   id: 'q-single-disabled',
 };
 
+// Multi-choice mock questions
+const mockMultiChoiceQuestion: AssessmentQuestion = {
+  id: 'q-multi-1',
+  type: 'multi-choice',
+  question: 'Which areas are you experiencing discomfort?',
+  description: 'Select all that apply.',
+  options: [
+    { value: 'lower_back', label: 'Lower back' },
+    { value: 'upper_back', label: 'Upper back / shoulders' },
+    { value: 'neck', label: 'Neck' },
+    { value: 'knees', label: 'Knees' },
+    { value: 'hips', label: 'Hips' },
+    { value: 'ankles', label: 'Ankles / feet' },
+  ],
+  validation: { required: true },
+};
+
+const mockMultiChoiceOptional: AssessmentQuestion = {
+  id: 'q-multi-2',
+  type: 'multi-choice',
+  question: 'Do you have any of these conditions?',
+  description: 'Select all that apply, or leave blank if none.',
+  options: [
+    { value: 'diabetes', label: 'Diabetes' },
+    { value: 'heart_condition', label: 'Heart condition' },
+    { value: 'high_blood_pressure', label: 'High blood pressure' },
+    { value: 'arthritis', label: 'Arthritis' },
+  ],
+  validation: { required: false },
+};
+
+const mockMultiChoiceErrorDemo: AssessmentQuestion = {
+  ...mockMultiChoiceQuestion,
+  id: 'q-multi-error',
+};
+
+const mockMultiChoiceDisabledDemo: AssessmentQuestion = {
+  ...mockMultiChoiceQuestion,
+  id: 'q-multi-disabled',
+};
+
 /**
  * Assessment Questions components showcase page (development only).
  *
  * Demonstrates all question renderer components for FFP-139:
  * - SingleChoiceQuestion (radio buttons)
- * - MultiChoiceQuestion (checkboxes) - Coming soon
+ * - MultiChoiceQuestion (checkboxes)
  * - NumericQuestion (number input) - Coming soon
  * - ScaleQuestion (1-10 scale) - Coming soon
  * - TextQuestion (textarea) - Coming soon
  * - VideoResponseQuestion (video + input) - Coming soon
  */
 export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
-  // State for interactive demos
+  // State for SingleChoice demos
   const [singleChoiceValue, setSingleChoiceValue] = useState<AnswerValue | undefined>(undefined);
   const [singleChoiceValue2, setSingleChoiceValue2] = useState<AnswerValue | undefined>(undefined);
   const [optionalValue, setOptionalValue] = useState<AnswerValue | undefined>(undefined);
   const [errorDemoValue, setErrorDemoValue] = useState<AnswerValue | undefined>(undefined);
   const [disabledValue] = useState<AnswerValue | undefined>('improve_mobility');
+
+  // State for MultiChoice demos
+  const [multiChoiceValue, setMultiChoiceValue] = useState<AnswerValue | undefined>([]);
+  const [multiChoiceOptionalValue, setMultiChoiceOptionalValue] = useState<AnswerValue | undefined>(
+    []
+  );
+  const [multiChoiceErrorValue, setMultiChoiceErrorValue] = useState<AnswerValue | undefined>([]);
+  const [multiChoiceDisabledValue] = useState<AnswerValue | undefined>(['lower_back', 'knees']);
 
   return (
     <ComponentPageWrapper maxWidth="4xl">
@@ -92,17 +141,17 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
       {/* Implementation Status */}
       <ComponentSection title="Implementation Status">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <StatusCard title="SingleChoiceQuestion" status="complete" />
-          <StatusCard title="MultiChoiceQuestion" status="pending" task="FFP-214" />
-          <StatusCard title="TextQuestion" status="pending" task="FFP-217" />
-          <StatusCard title="NumericQuestion" status="pending" task="FFP-215" />
-          <StatusCard title="ScaleQuestion" status="pending" task="FFP-215" />
-          <StatusCard title="VideoResponseQuestion" status="pending" task="FFP-216" />
+          <StatusCard title="SingleChoiceQuestion" status="complete" href="#single-choice" />
+          <StatusCard title="MultiChoiceQuestion" status="complete" href="#multi-choice" />
+          <StatusCard title="TextQuestion" status="pending" task="FFP-217" href="#text" />
+          <StatusCard title="NumericQuestion" status="pending" task="FFP-215" href="#numeric" />
+          <StatusCard title="ScaleQuestion" status="pending" task="FFP-215" href="#scale" />
+          <StatusCard title="VideoResponseQuestion" status="pending" task="FFP-216" href="#video" />
         </div>
       </ComponentSection>
 
       {/* SingleChoiceQuestion */}
-      <ComponentSection title="SingleChoiceQuestion">
+      <ComponentSection title="SingleChoiceQuestion" id="single-choice">
         <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
           Radio button group for selecting a single option. Supports required/optional validation,
           descriptions, and error states.
@@ -186,36 +235,98 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
         </div>
       </ComponentSection>
 
-      {/* MultiChoiceQuestion - Placeholder */}
-      <ComponentSection title="MultiChoiceQuestion" className="opacity-50">
-        <div className="rounded-lg border-2 border-dashed border-border p-8 text-center">
-          <Text styleProps={{ colour: 'muted-foreground' }}>Coming in FFP-214</Text>
+      {/* MultiChoiceQuestion */}
+      <ComponentSection title="MultiChoiceQuestion" id="multi-choice">
+        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
+          Checkbox group for selecting multiple options. Values stored as string array.
+        </Text>
+
+        {/* Basic Example */}
+        <div className="mb-8">
+          <Title as="h3" className="mb-4" colour="card-foreground">
+            Basic Usage
+          </Title>
+          <div className="rounded-lg border border-border bg-card p-6">
+            <MultiChoiceQuestion
+              question={mockMultiChoiceQuestion}
+              value={multiChoiceValue}
+              onChange={setMultiChoiceValue}
+            />
+            <SelectedValue value={multiChoiceValue} />
+          </div>
+        </div>
+
+        {/* Optional Question */}
+        <div className="mb-8">
+          <Title as="h3" className="mb-4" colour="card-foreground">
+            Optional Question (no asterisk)
+          </Title>
+          <div className="rounded-lg border border-border bg-card p-6">
+            <MultiChoiceQuestion
+              question={mockMultiChoiceOptional}
+              value={multiChoiceOptionalValue}
+              onChange={setMultiChoiceOptionalValue}
+            />
+            <SelectedValue value={multiChoiceOptionalValue} />
+          </div>
+        </div>
+
+        {/* Error State */}
+        <div className="mb-8">
+          <Title as="h3" className="mb-4" colour="card-foreground">
+            With Validation Error
+          </Title>
+          <div className="rounded-lg border border-border bg-card p-6">
+            <MultiChoiceQuestion
+              question={mockMultiChoiceErrorDemo}
+              value={multiChoiceErrorValue}
+              onChange={setMultiChoiceErrorValue}
+              error="Please select at least one option"
+            />
+          </div>
+        </div>
+
+        {/* Disabled State */}
+        <div className="mb-8">
+          <Title as="h3" className="mb-4" colour="card-foreground">
+            Disabled State
+          </Title>
+          <div className="rounded-lg border border-border bg-card p-6">
+            <MultiChoiceQuestion
+              question={mockMultiChoiceDisabledDemo}
+              value={multiChoiceDisabledValue}
+              onChange={() => {
+                // No-op when disabled
+              }}
+              disabled
+            />
+          </div>
         </div>
       </ComponentSection>
 
       {/* TextQuestion - Placeholder */}
-      <ComponentSection title="TextQuestion" className="opacity-50">
+      <ComponentSection title="TextQuestion" id="text" className="opacity-50">
         <div className="rounded-lg border-2 border-dashed border-border p-8 text-center">
           <Text styleProps={{ colour: 'muted-foreground' }}>Coming in FFP-217</Text>
         </div>
       </ComponentSection>
 
       {/* NumericQuestion - Placeholder */}
-      <ComponentSection title="NumericQuestion" className="opacity-50">
+      <ComponentSection title="NumericQuestion" id="numeric" className="opacity-50">
         <div className="rounded-lg border-2 border-dashed border-border p-8 text-center">
           <Text styleProps={{ colour: 'muted-foreground' }}>Coming in FFP-215</Text>
         </div>
       </ComponentSection>
 
       {/* ScaleQuestion - Placeholder */}
-      <ComponentSection title="ScaleQuestion" className="opacity-50">
+      <ComponentSection title="ScaleQuestion" id="scale" className="opacity-50">
         <div className="rounded-lg border-2 border-dashed border-border p-8 text-center">
           <Text styleProps={{ colour: 'muted-foreground' }}>Coming in FFP-215</Text>
         </div>
       </ComponentSection>
 
       {/* VideoResponseQuestion - Placeholder */}
-      <ComponentSection title="VideoResponseQuestion" className="opacity-50">
+      <ComponentSection title="VideoResponseQuestion" id="video" className="opacity-50">
         <div className="rounded-lg border-2 border-dashed border-border p-8 text-center">
           <Text styleProps={{ colour: 'muted-foreground' }}>Coming in FFP-216</Text>
         </div>
@@ -304,12 +415,9 @@ const StatusCard: React.FC<{
   title: string;
   status: 'complete' | 'pending';
   task?: string;
-}> = ({ title, status, task }) => (
-  <div
-    className={`rounded-lg border p-3 ${
-      status === 'complete' ? 'border-success/30 bg-success/5' : 'border-border bg-muted/30'
-    }`}
-  >
+  href?: string;
+}> = ({ title, status, task, href }) => {
+  const content = (
     <div className="flex items-center justify-between">
       <Text styleProps={{ size: 'sm', weight: 'medium' }}>{title}</Text>
       {status === 'complete' ? (
@@ -320,5 +428,19 @@ const StatusCard: React.FC<{
         </span>
       )}
     </div>
-  </div>
-);
+  );
+
+  const baseClassName = `block rounded-lg border p-3 transition-colors ${
+    status === 'complete' ? 'border-success/30 bg-success/5' : 'border-border bg-muted/30'
+  }`;
+
+  if (href) {
+    return (
+      <a href={href} className={`${baseClassName} hover:bg-accent/50`}>
+        {content}
+      </a>
+    );
+  }
+
+  return <div className={baseClassName}>{content}</div>;
+};

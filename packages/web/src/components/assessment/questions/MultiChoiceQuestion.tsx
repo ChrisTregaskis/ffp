@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { RequiredIndicator } from '@web/components/form';
 import { Text } from '@web/components/text';
@@ -8,12 +8,12 @@ import { OptionLabel } from './OptionLabel';
 import type { QuestionComponentProps } from './types';
 
 /**
- * Single choice question component - renders radio button group.
+ * Multi choice question component - renders checkbox group.
  *
- * Displays a question with multiple options where only one can be selected.
- * Uses native radio inputs for accessibility and form integration.
+ * Displays a question with multiple options where several can be selected.
+ * Uses native checkbox inputs for accessibility and form integration.
  */
-export const SingleChoiceQuestion: React.FC<QuestionComponentProps> = ({
+export const MultiChoiceQuestion: React.FC<QuestionComponentProps> = ({
   question,
   value,
   onChange,
@@ -24,15 +24,24 @@ export const SingleChoiceQuestion: React.FC<QuestionComponentProps> = ({
   const errorId = `${questionId}-error`;
   const descriptionId = question.description ? `${questionId}-description` : undefined;
   const isRequired = question.validation?.required !== false;
-  const currentValue = typeof value === 'string' ? value : undefined;
 
-  const handleChange = useCallback(
+  // Ensure value is always an array for multi-choice (memoised to prevent unnecessary re-renders)
+  const currentValues = useMemo<string[]>(() => (Array.isArray(value) ? value : []), [value]);
+
+  const handleToggle = useCallback(
     (optionValue: string): void => {
-      if (!disabled) {
-        onChange(optionValue);
+      if (disabled) {
+        return;
       }
+
+      const isCurrentlySelected = currentValues.includes(optionValue);
+      const newValues = isCurrentlySelected
+        ? currentValues.filter((v) => v !== optionValue)
+        : [...currentValues, optionValue];
+
+      onChange(newValues);
     },
-    [disabled, onChange]
+    [disabled, currentValues, onChange]
   );
 
   return (
@@ -63,11 +72,11 @@ export const SingleChoiceQuestion: React.FC<QuestionComponentProps> = ({
         )}
       </div>
 
-      {/* Radio options */}
-      <div className="space-y-3" role="radiogroup" aria-required={isRequired}>
+      {/* Checkbox options */}
+      <div className="space-y-3" role="group" aria-required={isRequired}>
         {question.options?.map((option) => {
           const optionId = `${questionId}-option-${option.value}`;
-          const isSelected = currentValue === option.value;
+          const isSelected = currentValues.includes(option.value);
 
           return (
             <OptionLabel
@@ -78,24 +87,20 @@ export const SingleChoiceQuestion: React.FC<QuestionComponentProps> = ({
               disabled={disabled}
             >
               <input
-                type="radio"
+                type="checkbox"
                 id={optionId}
                 name={questionId}
                 value={option.value}
                 checked={isSelected}
                 onChange={() => {
-                  handleChange(option.value);
+                  handleToggle(option.value);
                 }}
                 disabled={disabled}
                 aria-invalid={!!error}
                 className={`
-                  h-5 w-5 border-2 rounded-full appearance-none
+                  h-5 w-5 rounded border-2 appearance-none
                   transition-all duration-200
-                  ${
-                    isSelected
-                      ? 'border-primary bg-primary shadow-radio-dot'
-                      : 'border-gray-300 bg-white'
-                  }
+                  ${isSelected ? 'border-primary bg-primary bg-checkbox-tick' : 'border-gray-300 bg-white'}
                   focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2
                   ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}
                 `}
