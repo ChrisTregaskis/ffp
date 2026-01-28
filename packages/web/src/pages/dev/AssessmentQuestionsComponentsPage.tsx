@@ -6,6 +6,8 @@ import {
   SingleChoiceQuestion,
   MultiChoiceQuestion,
   TextQuestion,
+  NumericQuestion,
+  ScaleQuestion,
 } from '@web/components/assessment';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
@@ -146,6 +148,74 @@ const mockTextQuestionDisabledDemo: AssessmentQuestion = {
   id: 'q-text-disabled',
 };
 
+// Numeric question mock questions
+const mockNumericQuestion: AssessmentQuestion = {
+  id: 'q-numeric-1',
+  type: 'numeric',
+  question: 'How many repetitions can you complete comfortably?',
+  description: 'Enter a number between 0 and 100.',
+  validation: { required: true, min: 0, max: 100 },
+};
+
+const mockNumericQuestionNoLimits: AssessmentQuestion = {
+  id: 'q-numeric-2',
+  type: 'numeric',
+  question: 'How many years have you been active?',
+  validation: { required: true },
+};
+
+const mockNumericQuestionOptional: AssessmentQuestion = {
+  id: 'q-numeric-3',
+  type: 'numeric',
+  question: 'How many days per week do you exercise?',
+  description: 'Optional - leave blank if you prefer not to answer.',
+  validation: { required: false, min: 0, max: 7 },
+};
+
+const mockNumericQuestionErrorDemo: AssessmentQuestion = {
+  ...mockNumericQuestion,
+  id: 'q-numeric-error',
+};
+
+const mockNumericQuestionDisabledDemo: AssessmentQuestion = {
+  ...mockNumericQuestion,
+  id: 'q-numeric-disabled',
+};
+
+// Scale question mock questions
+const mockScaleQuestion: AssessmentQuestion = {
+  id: 'q-scale-1',
+  type: 'scale',
+  question: 'How would you rate your current pain level?',
+  description: 'Select a number from 1 (no pain) to 10 (severe pain).',
+  validation: { required: true },
+};
+
+const mockScaleQuestionCustomRange: AssessmentQuestion = {
+  id: 'q-scale-2',
+  type: 'scale',
+  question: 'How satisfied are you with your progress?',
+  description: 'Rate from 1 to 5.',
+  validation: { required: true, min: 1, max: 5 },
+};
+
+const mockScaleQuestionOptional: AssessmentQuestion = {
+  id: 'q-scale-3',
+  type: 'scale',
+  question: 'How confident do you feel about the exercises?',
+  validation: { required: false },
+};
+
+const mockScaleQuestionErrorDemo: AssessmentQuestion = {
+  ...mockScaleQuestion,
+  id: 'q-scale-error',
+};
+
+const mockScaleQuestionDisabledDemo: AssessmentQuestion = {
+  ...mockScaleQuestion,
+  id: 'q-scale-disabled',
+};
+
 // ============================================================================
 // Page Component
 // ============================================================================
@@ -187,6 +257,26 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
   const [textDisabledValue] = useState<AnswerValue | undefined>(
     'I have been experiencing lower back pain for the past 3 months...'
   );
+
+  // State for NumericQuestion demos
+  const [numericBasicValue, setNumericBasicValue] = useState<AnswerValue | undefined>(undefined);
+  const [numericNoLimitsValue, setNumericNoLimitsValue] = useState<AnswerValue | undefined>(
+    undefined
+  );
+  const [numericOptionalValue, setNumericOptionalValue] = useState<AnswerValue | undefined>(
+    undefined
+  );
+  const [numericErrorValue, setNumericErrorValue] = useState<AnswerValue | undefined>(undefined);
+  const [numericDisabledValue] = useState<AnswerValue | undefined>(25);
+
+  // State for ScaleQuestion demos
+  const [scaleBasicValue, setScaleBasicValue] = useState<AnswerValue | undefined>(undefined);
+  const [scaleCustomRangeValue, setScaleCustomRangeValue] = useState<AnswerValue | undefined>(
+    undefined
+  );
+  const [scaleOptionalValue, setScaleOptionalValue] = useState<AnswerValue | undefined>(undefined);
+  const [scaleErrorValue, setScaleErrorValue] = useState<AnswerValue | undefined>(undefined);
+  const [scaleDisabledValue] = useState<AnswerValue | undefined>(7);
 
   // Tab configurations
   const singleChoiceTabs: DemoTab[] = [
@@ -388,6 +478,148 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
     },
   ];
 
+  const numericQuestionTabs: DemoTab[] = [
+    {
+      id: 'basic',
+      label: 'Basic',
+      content: (
+        <>
+          <NumericQuestion
+            question={mockNumericQuestion}
+            value={numericBasicValue}
+            onChange={setNumericBasicValue}
+          />
+          <SelectedValue value={numericBasicValue} />
+        </>
+      ),
+    },
+    {
+      id: 'no-limits',
+      label: 'No Limits',
+      content: (
+        <>
+          <NumericQuestion
+            question={mockNumericQuestionNoLimits}
+            value={numericNoLimitsValue}
+            onChange={setNumericNoLimitsValue}
+          />
+          <SelectedValue value={numericNoLimitsValue} />
+        </>
+      ),
+    },
+    {
+      id: 'optional',
+      label: 'Optional',
+      content: (
+        <>
+          <NumericQuestion
+            question={mockNumericQuestionOptional}
+            value={numericOptionalValue}
+            onChange={setNumericOptionalValue}
+          />
+          <SelectedValue value={numericOptionalValue} />
+        </>
+      ),
+    },
+    {
+      id: 'error',
+      label: 'Error',
+      content: (
+        <NumericQuestion
+          question={mockNumericQuestionErrorDemo}
+          value={numericErrorValue}
+          onChange={setNumericErrorValue}
+          error="Please enter a valid number"
+        />
+      ),
+    },
+    {
+      id: 'disabled',
+      label: 'Disabled',
+      content: (
+        <NumericQuestion
+          question={mockNumericQuestionDisabledDemo}
+          value={numericDisabledValue}
+          onChange={() => {
+            // No-op when disabled
+          }}
+          disabled
+        />
+      ),
+    },
+  ];
+
+  const scaleQuestionTabs: DemoTab[] = [
+    {
+      id: 'basic',
+      label: 'Basic (1-10)',
+      content: (
+        <>
+          <ScaleQuestion
+            question={mockScaleQuestion}
+            value={scaleBasicValue}
+            onChange={setScaleBasicValue}
+          />
+          <SelectedValue value={scaleBasicValue} />
+        </>
+      ),
+    },
+    {
+      id: 'custom-range',
+      label: 'Custom (1-5)',
+      content: (
+        <>
+          <ScaleQuestion
+            question={mockScaleQuestionCustomRange}
+            value={scaleCustomRangeValue}
+            onChange={setScaleCustomRangeValue}
+          />
+          <SelectedValue value={scaleCustomRangeValue} />
+        </>
+      ),
+    },
+    {
+      id: 'optional',
+      label: 'Optional',
+      content: (
+        <>
+          <ScaleQuestion
+            question={mockScaleQuestionOptional}
+            value={scaleOptionalValue}
+            onChange={setScaleOptionalValue}
+          />
+          <SelectedValue value={scaleOptionalValue} />
+        </>
+      ),
+    },
+    {
+      id: 'error',
+      label: 'Error',
+      content: (
+        <ScaleQuestion
+          question={mockScaleQuestionErrorDemo}
+          value={scaleErrorValue}
+          onChange={setScaleErrorValue}
+          error="Please select a rating to continue"
+        />
+      ),
+    },
+    {
+      id: 'disabled',
+      label: 'Disabled',
+      content: (
+        <ScaleQuestion
+          question={mockScaleQuestionDisabledDemo}
+          value={scaleDisabledValue}
+          onChange={() => {
+            // No-op when disabled
+          }}
+          disabled
+        />
+      ),
+    },
+  ];
+
   return (
     <ComponentPageWrapper maxWidth="4xl">
       <ComponentPageHeader
@@ -402,8 +634,8 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
           <StatusCard title="SingleChoiceQuestion" status="complete" href="#single-choice" />
           <StatusCard title="MultiChoiceQuestion" status="complete" href="#multi-choice" />
           <StatusCard title="TextQuestion" status="complete" href="#text" />
-          <StatusCard title="NumericQuestion" status="pending" task="FFP-215" href="#numeric" />
-          <StatusCard title="ScaleQuestion" status="pending" task="FFP-215" href="#scale" />
+          <StatusCard title="NumericQuestion" status="complete" href="#numeric" />
+          <StatusCard title="ScaleQuestion" status="complete" href="#scale" />
           <StatusCard title="VideoResponseQuestion" status="pending" task="FFP-216" href="#video" />
         </div>
       </ComponentSection>
@@ -433,18 +665,22 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
         <DemoTabs tabs={textQuestionTabs} />
       </ComponentSection>
 
-      {/* NumericQuestion - Placeholder */}
-      <ComponentSection title="NumericQuestion" id="numeric" className="opacity-50">
-        <div className="rounded-lg border-2 border-dashed border-border p-8 text-center">
-          <Text styleProps={{ colour: 'muted-foreground' }}>Coming in FFP-215</Text>
-        </div>
+      {/* NumericQuestion */}
+      <ComponentSection title="NumericQuestion" id="numeric">
+        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
+          Number input with stepper buttons. Supports min/max validation via validation.min and
+          validation.max.
+        </Text>
+        <DemoTabs tabs={numericQuestionTabs} />
       </ComponentSection>
 
-      {/* ScaleQuestion - Placeholder */}
-      <ComponentSection title="ScaleQuestion" id="scale" className="opacity-50">
-        <div className="rounded-lg border-2 border-dashed border-border p-8 text-center">
-          <Text styleProps={{ colour: 'muted-foreground' }}>Coming in FFP-215</Text>
-        </div>
+      {/* ScaleQuestion */}
+      <ComponentSection title="ScaleQuestion" id="scale">
+        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
+          Button scale for ratings. Defaults to 1-10, customisable via validation.min and
+          validation.max.
+        </Text>
+        <DemoTabs tabs={scaleQuestionTabs} />
       </ComponentSection>
 
       {/* VideoResponseQuestion - Placeholder */}
