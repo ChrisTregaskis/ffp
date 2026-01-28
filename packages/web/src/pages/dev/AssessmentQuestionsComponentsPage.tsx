@@ -8,6 +8,7 @@ import {
   TextQuestion,
   NumericQuestion,
   ScaleQuestion,
+  VideoResponseQuestion,
 } from '@web/components/assessment';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
@@ -216,6 +217,49 @@ const mockScaleQuestionDisabledDemo: AssessmentQuestion = {
   id: 'q-scale-disabled',
 };
 
+// Video response mock questions
+const mockVideoResponseQuestion: AssessmentQuestion = {
+  id: 'q-video-1',
+  type: 'video-response',
+  question: 'Complete as many squats as you can in 30 seconds',
+  description:
+    'Watch the video for proper form, then enter the number of repetitions you completed.',
+  videoId: '00000000-0000-0000-0000-000000000001',
+  validation: { required: true, min: 0, max: 100 },
+};
+
+const mockVideoResponseNoVideo: AssessmentQuestion = {
+  id: 'q-video-2',
+  type: 'video-response',
+  question: 'Hold a plank position for as long as possible',
+  description: 'Enter the duration in seconds.',
+  videoId: '00000000-0000-0000-0000-000000000002',
+  validation: { required: true, min: 0 },
+};
+
+const mockVideoResponseOptional: AssessmentQuestion = {
+  id: 'q-video-3',
+  type: 'video-response',
+  question: 'Optional: Complete the balance test',
+  description: 'This exercise is optional. Enter your result if you completed it.',
+  videoId: '00000000-0000-0000-0000-000000000003',
+  validation: { required: false, min: 0, max: 60 },
+};
+
+const mockVideoResponseErrorDemo: AssessmentQuestion = {
+  ...mockVideoResponseQuestion,
+  id: 'q-video-error',
+};
+
+const mockVideoResponseDisabledDemo: AssessmentQuestion = {
+  ...mockVideoResponseQuestion,
+  id: 'q-video-disabled',
+};
+
+// Sample video URL for demo (Big Buck Bunny - public domain)
+const DEMO_VIDEO_URL =
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4';
+
 // ============================================================================
 // Page Component
 // ============================================================================
@@ -277,6 +321,13 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
   const [scaleOptionalValue, setScaleOptionalValue] = useState<AnswerValue | undefined>(undefined);
   const [scaleErrorValue, setScaleErrorValue] = useState<AnswerValue | undefined>(undefined);
   const [scaleDisabledValue] = useState<AnswerValue | undefined>(7);
+
+  // State for VideoResponseQuestion demos
+  const [videoBasicValue, setVideoBasicValue] = useState<AnswerValue | undefined>(undefined);
+  const [videoNoVideoValue, setVideoNoVideoValue] = useState<AnswerValue | undefined>(undefined);
+  const [videoOptionalValue, setVideoOptionalValue] = useState<AnswerValue | undefined>(undefined);
+  const [videoErrorValue, setVideoErrorValue] = useState<AnswerValue | undefined>(undefined);
+  const [videoDisabledValue] = useState<AnswerValue | undefined>(15);
 
   // Tab configurations
   const singleChoiceTabs: DemoTab[] = [
@@ -620,6 +671,81 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
     },
   ];
 
+  const videoResponseTabs: DemoTab[] = [
+    {
+      id: 'basic',
+      label: 'With Video',
+      content: (
+        <>
+          <VideoResponseQuestion
+            question={mockVideoResponseQuestion}
+            value={videoBasicValue}
+            onChange={setVideoBasicValue}
+            videoUrl={DEMO_VIDEO_URL}
+          />
+          <SelectedValue value={videoBasicValue} />
+        </>
+      ),
+    },
+    {
+      id: 'no-video',
+      label: 'No Video',
+      content: (
+        <>
+          <VideoResponseQuestion
+            question={mockVideoResponseNoVideo}
+            value={videoNoVideoValue}
+            onChange={setVideoNoVideoValue}
+          />
+          <SelectedValue value={videoNoVideoValue} />
+        </>
+      ),
+    },
+    {
+      id: 'optional',
+      label: 'Optional',
+      content: (
+        <>
+          <VideoResponseQuestion
+            question={mockVideoResponseOptional}
+            value={videoOptionalValue}
+            onChange={setVideoOptionalValue}
+            videoUrl={DEMO_VIDEO_URL}
+          />
+          <SelectedValue value={videoOptionalValue} />
+        </>
+      ),
+    },
+    {
+      id: 'error',
+      label: 'Error',
+      content: (
+        <VideoResponseQuestion
+          question={mockVideoResponseErrorDemo}
+          value={videoErrorValue}
+          onChange={setVideoErrorValue}
+          videoUrl={DEMO_VIDEO_URL}
+          error="Please enter your result to continue"
+        />
+      ),
+    },
+    {
+      id: 'disabled',
+      label: 'Disabled',
+      content: (
+        <VideoResponseQuestion
+          question={mockVideoResponseDisabledDemo}
+          value={videoDisabledValue}
+          onChange={() => {
+            // No-op when disabled
+          }}
+          videoUrl={DEMO_VIDEO_URL}
+          disabled
+        />
+      ),
+    },
+  ];
+
   return (
     <ComponentPageWrapper maxWidth="4xl">
       <ComponentPageHeader
@@ -636,7 +762,7 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
           <StatusCard title="TextQuestion" status="complete" href="#text" />
           <StatusCard title="NumericQuestion" status="complete" href="#numeric" />
           <StatusCard title="ScaleQuestion" status="complete" href="#scale" />
-          <StatusCard title="VideoResponseQuestion" status="pending" task="FFP-216" href="#video" />
+          <StatusCard title="VideoResponseQuestion" status="complete" href="#video" />
         </div>
       </ComponentSection>
 
@@ -683,11 +809,13 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
         <DemoTabs tabs={scaleQuestionTabs} />
       </ComponentSection>
 
-      {/* VideoResponseQuestion - Placeholder */}
-      <ComponentSection title="VideoResponseQuestion" id="video" className="opacity-50">
-        <div className="rounded-lg border-2 border-dashed border-border p-8 text-center">
-          <Text styleProps={{ colour: 'muted-foreground' }}>Coming in FFP-216</Text>
-        </div>
+      {/* VideoResponseQuestion */}
+      <ComponentSection title="VideoResponseQuestion" id="video">
+        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
+          Video player with numeric response input. Uses HTML5 video as placeholder (VideoPlayer
+          component FFP-141 pending).
+        </Text>
+        <DemoTabs tabs={videoResponseTabs} />
       </ComponentSection>
 
       {/* Developer Instructions */}

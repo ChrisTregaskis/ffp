@@ -77,7 +77,7 @@ packages/web/src/components/assessment/
 | 2   | FFP-214 | MultiChoiceQuestion (similar to single)    | ✅ Complete |
 | 3   | FFP-217 | TextQuestion + barrel exports setup        | ✅ Complete |
 | 4   | FFP-215 | NumericQuestion + ScaleQuestion            | ✅ Complete |
-| 5   | FFP-216 | VideoResponseQuestion (HTML5 placeholder)  | 📋 Ready    |
+| 5   | FFP-216 | VideoResponseQuestion (HTML5 placeholder)  | ✅ Complete |
 | 6   | FFP-212 | QuestionRenderer factory (ties together)   | 📋 Ready    |
 
 ### Implementation Notes
