@@ -2,16 +2,25 @@ import { useState } from 'react';
 
 import type { AssessmentQuestion, AnswerValue } from '@ffp/core';
 
-import { SingleChoiceQuestion, MultiChoiceQuestion } from '@web/components/assessment';
+import {
+  SingleChoiceQuestion,
+  MultiChoiceQuestion,
+  TextQuestion,
+} from '@web/components/assessment';
+import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
   ComponentPageHeader,
   ComponentSection,
   DeveloperInstructions,
 } from '@web/components/dev';
-import { Text, Title } from '@web/components/text';
+import { Text } from '@web/components/text';
 
+// ============================================================================
 // Mock question data for demonstrations
+// ============================================================================
+
+// Single choice mock questions
 const mockSingleChoiceQuestion: AssessmentQuestion = {
   id: 'q-single-1',
   type: 'single-choice',
@@ -40,7 +49,7 @@ const mockSingleChoiceWithManyOptions: AssessmentQuestion = {
   validation: { required: true },
 };
 
-const mockOptionalQuestion: AssessmentQuestion = {
+const mockSingleOptionalQuestion: AssessmentQuestion = {
   id: 'q-single-3',
   type: 'single-choice',
   question: 'Do you have any previous experience with physiotherapy?',
@@ -51,13 +60,12 @@ const mockOptionalQuestion: AssessmentQuestion = {
   validation: { required: false },
 };
 
-// Separate questions for error and disabled demos (different IDs to avoid radio name conflicts)
-const mockErrorDemoQuestion: AssessmentQuestion = {
+const mockSingleErrorDemoQuestion: AssessmentQuestion = {
   ...mockSingleChoiceQuestion,
   id: 'q-single-error',
 };
 
-const mockDisabledDemoQuestion: AssessmentQuestion = {
+const mockSingleDisabledDemoQuestion: AssessmentQuestion = {
   ...mockSingleChoiceQuestion,
   id: 'q-single-disabled',
 };
@@ -103,32 +111,282 @@ const mockMultiChoiceDisabledDemo: AssessmentQuestion = {
   id: 'q-multi-disabled',
 };
 
+// Text question mock questions
+const mockTextQuestion: AssessmentQuestion = {
+  id: 'q-text-1',
+  type: 'text',
+  question: 'Please describe any specific concerns or goals you have for this programme',
+  description: 'Share as much detail as you feel comfortable with.',
+  validation: { required: true },
+};
+
+const mockTextQuestionWithMaxLength: AssessmentQuestion = {
+  id: 'q-text-2',
+  type: 'text',
+  question: 'Briefly describe your current exercise routine',
+  description: 'Keep it concise (max 200 characters).',
+  validation: { required: true, max: 200 },
+};
+
+const mockTextQuestionOptional: AssessmentQuestion = {
+  id: 'q-text-3',
+  type: 'text',
+  question: 'Is there anything else you would like us to know?',
+  description: 'This is optional.',
+  validation: { required: false },
+};
+
+const mockTextQuestionErrorDemo: AssessmentQuestion = {
+  ...mockTextQuestion,
+  id: 'q-text-error',
+};
+
+const mockTextQuestionDisabledDemo: AssessmentQuestion = {
+  ...mockTextQuestion,
+  id: 'q-text-disabled',
+};
+
+// ============================================================================
+// Page Component
+// ============================================================================
+
 /**
  * Assessment Questions components showcase page (development only).
  *
  * Demonstrates all question renderer components for FFP-139:
  * - SingleChoiceQuestion (radio buttons)
  * - MultiChoiceQuestion (checkboxes)
+ * - TextQuestion (textarea)
  * - NumericQuestion (number input) - Coming soon
  * - ScaleQuestion (1-10 scale) - Coming soon
- * - TextQuestion (textarea) - Coming soon
  * - VideoResponseQuestion (video + input) - Coming soon
  */
 export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
   // State for SingleChoice demos
-  const [singleChoiceValue, setSingleChoiceValue] = useState<AnswerValue | undefined>(undefined);
-  const [singleChoiceValue2, setSingleChoiceValue2] = useState<AnswerValue | undefined>(undefined);
-  const [optionalValue, setOptionalValue] = useState<AnswerValue | undefined>(undefined);
-  const [errorDemoValue, setErrorDemoValue] = useState<AnswerValue | undefined>(undefined);
-  const [disabledValue] = useState<AnswerValue | undefined>('improve_mobility');
+  const [singleBasicValue, setSingleBasicValue] = useState<AnswerValue | undefined>(undefined);
+  const [singleManyOptionsValue, setSingleManyOptionsValue] = useState<AnswerValue | undefined>(
+    undefined
+  );
+  const [singleOptionalValue, setSingleOptionalValue] = useState<AnswerValue | undefined>(
+    undefined
+  );
+  const [singleErrorValue, setSingleErrorValue] = useState<AnswerValue | undefined>(undefined);
+  const [singleDisabledValue] = useState<AnswerValue | undefined>('improve_mobility');
 
   // State for MultiChoice demos
-  const [multiChoiceValue, setMultiChoiceValue] = useState<AnswerValue | undefined>([]);
-  const [multiChoiceOptionalValue, setMultiChoiceOptionalValue] = useState<AnswerValue | undefined>(
-    []
+  const [multiBasicValue, setMultiBasicValue] = useState<AnswerValue | undefined>([]);
+  const [multiOptionalValue, setMultiOptionalValue] = useState<AnswerValue | undefined>([]);
+  const [multiErrorValue, setMultiErrorValue] = useState<AnswerValue | undefined>([]);
+  const [multiDisabledValue] = useState<AnswerValue | undefined>(['lower_back', 'knees']);
+
+  // State for TextQuestion demos
+  const [textBasicValue, setTextBasicValue] = useState<AnswerValue | undefined>('');
+  const [textMaxLengthValue, setTextMaxLengthValue] = useState<AnswerValue | undefined>('');
+  const [textOptionalValue, setTextOptionalValue] = useState<AnswerValue | undefined>('');
+  const [textErrorValue, setTextErrorValue] = useState<AnswerValue | undefined>('');
+  const [textDisabledValue] = useState<AnswerValue | undefined>(
+    'I have been experiencing lower back pain for the past 3 months...'
   );
-  const [multiChoiceErrorValue, setMultiChoiceErrorValue] = useState<AnswerValue | undefined>([]);
-  const [multiChoiceDisabledValue] = useState<AnswerValue | undefined>(['lower_back', 'knees']);
+
+  // Tab configurations
+  const singleChoiceTabs: DemoTab[] = [
+    {
+      id: 'basic',
+      label: 'Basic',
+      content: (
+        <>
+          <SingleChoiceQuestion
+            question={mockSingleChoiceQuestion}
+            value={singleBasicValue}
+            onChange={setSingleBasicValue}
+          />
+          <SelectedValue value={singleBasicValue} />
+        </>
+      ),
+    },
+    {
+      id: 'many-options',
+      label: 'Many Options',
+      content: (
+        <>
+          <SingleChoiceQuestion
+            question={mockSingleChoiceWithManyOptions}
+            value={singleManyOptionsValue}
+            onChange={setSingleManyOptionsValue}
+          />
+          <SelectedValue value={singleManyOptionsValue} />
+        </>
+      ),
+    },
+    {
+      id: 'optional',
+      label: 'Optional',
+      content: (
+        <>
+          <SingleChoiceQuestion
+            question={mockSingleOptionalQuestion}
+            value={singleOptionalValue}
+            onChange={setSingleOptionalValue}
+          />
+          <SelectedValue value={singleOptionalValue} />
+        </>
+      ),
+    },
+    {
+      id: 'error',
+      label: 'Error',
+      content: (
+        <SingleChoiceQuestion
+          question={mockSingleErrorDemoQuestion}
+          value={singleErrorValue}
+          onChange={setSingleErrorValue}
+          error="Please select an option to continue"
+        />
+      ),
+    },
+    {
+      id: 'disabled',
+      label: 'Disabled',
+      content: (
+        <SingleChoiceQuestion
+          question={mockSingleDisabledDemoQuestion}
+          value={singleDisabledValue}
+          onChange={() => {
+            // No-op when disabled
+          }}
+          disabled
+        />
+      ),
+    },
+  ];
+
+  const multiChoiceTabs: DemoTab[] = [
+    {
+      id: 'basic',
+      label: 'Basic',
+      content: (
+        <>
+          <MultiChoiceQuestion
+            question={mockMultiChoiceQuestion}
+            value={multiBasicValue}
+            onChange={setMultiBasicValue}
+          />
+          <SelectedValue value={multiBasicValue} />
+        </>
+      ),
+    },
+    {
+      id: 'optional',
+      label: 'Optional',
+      content: (
+        <>
+          <MultiChoiceQuestion
+            question={mockMultiChoiceOptional}
+            value={multiOptionalValue}
+            onChange={setMultiOptionalValue}
+          />
+          <SelectedValue value={multiOptionalValue} />
+        </>
+      ),
+    },
+    {
+      id: 'error',
+      label: 'Error',
+      content: (
+        <MultiChoiceQuestion
+          question={mockMultiChoiceErrorDemo}
+          value={multiErrorValue}
+          onChange={setMultiErrorValue}
+          error="Please select at least one option"
+        />
+      ),
+    },
+    {
+      id: 'disabled',
+      label: 'Disabled',
+      content: (
+        <MultiChoiceQuestion
+          question={mockMultiChoiceDisabledDemo}
+          value={multiDisabledValue}
+          onChange={() => {
+            // No-op when disabled
+          }}
+          disabled
+        />
+      ),
+    },
+  ];
+
+  const textQuestionTabs: DemoTab[] = [
+    {
+      id: 'basic',
+      label: 'Basic',
+      content: (
+        <>
+          <TextQuestion
+            question={mockTextQuestion}
+            value={textBasicValue}
+            onChange={setTextBasicValue}
+          />
+          <SelectedValue value={textBasicValue} />
+        </>
+      ),
+    },
+    {
+      id: 'max-length',
+      label: 'Max Length',
+      content: (
+        <>
+          <TextQuestion
+            question={mockTextQuestionWithMaxLength}
+            value={textMaxLengthValue}
+            onChange={setTextMaxLengthValue}
+          />
+          <SelectedValue value={textMaxLengthValue} />
+        </>
+      ),
+    },
+    {
+      id: 'optional',
+      label: 'Optional',
+      content: (
+        <>
+          <TextQuestion
+            question={mockTextQuestionOptional}
+            value={textOptionalValue}
+            onChange={setTextOptionalValue}
+          />
+          <SelectedValue value={textOptionalValue} />
+        </>
+      ),
+    },
+    {
+      id: 'error',
+      label: 'Error',
+      content: (
+        <TextQuestion
+          question={mockTextQuestionErrorDemo}
+          value={textErrorValue}
+          onChange={setTextErrorValue}
+          error="Please provide a response to continue"
+        />
+      ),
+    },
+    {
+      id: 'disabled',
+      label: 'Disabled',
+      content: (
+        <TextQuestion
+          question={mockTextQuestionDisabledDemo}
+          value={textDisabledValue}
+          onChange={() => {
+            // No-op when disabled
+          }}
+          disabled
+        />
+      ),
+    },
+  ];
 
   return (
     <ComponentPageWrapper maxWidth="4xl">
@@ -143,7 +401,7 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <StatusCard title="SingleChoiceQuestion" status="complete" href="#single-choice" />
           <StatusCard title="MultiChoiceQuestion" status="complete" href="#multi-choice" />
-          <StatusCard title="TextQuestion" status="pending" task="FFP-217" href="#text" />
+          <StatusCard title="TextQuestion" status="complete" href="#text" />
           <StatusCard title="NumericQuestion" status="pending" task="FFP-215" href="#numeric" />
           <StatusCard title="ScaleQuestion" status="pending" task="FFP-215" href="#scale" />
           <StatusCard title="VideoResponseQuestion" status="pending" task="FFP-216" href="#video" />
@@ -156,83 +414,7 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
           Radio button group for selecting a single option. Supports required/optional validation,
           descriptions, and error states.
         </Text>
-
-        {/* Basic Example */}
-        <div className="mb-8">
-          <Title as="h3" className="mb-4" colour="card-foreground">
-            Basic Usage
-          </Title>
-          <div className="rounded-lg border border-border bg-card p-6">
-            <SingleChoiceQuestion
-              question={mockSingleChoiceQuestion}
-              value={singleChoiceValue}
-              onChange={setSingleChoiceValue}
-            />
-            <SelectedValue value={singleChoiceValue} />
-          </div>
-        </div>
-
-        {/* More Options */}
-        <div className="mb-8">
-          <Title as="h3" className="mb-4" colour="card-foreground">
-            More Options
-          </Title>
-          <div className="rounded-lg border border-border bg-card p-6">
-            <SingleChoiceQuestion
-              question={mockSingleChoiceWithManyOptions}
-              value={singleChoiceValue2}
-              onChange={setSingleChoiceValue2}
-            />
-            <SelectedValue value={singleChoiceValue2} />
-          </div>
-        </div>
-
-        {/* Optional Question */}
-        <div className="mb-8">
-          <Title as="h3" className="mb-4" colour="card-foreground">
-            Optional Question (no asterisk)
-          </Title>
-          <div className="rounded-lg border border-border bg-card p-6">
-            <SingleChoiceQuestion
-              question={mockOptionalQuestion}
-              value={optionalValue}
-              onChange={setOptionalValue}
-            />
-            <SelectedValue value={optionalValue} />
-          </div>
-        </div>
-
-        {/* Error State */}
-        <div className="mb-8">
-          <Title as="h3" className="mb-4" colour="card-foreground">
-            With Validation Error
-          </Title>
-          <div className="rounded-lg border border-border bg-card p-6">
-            <SingleChoiceQuestion
-              question={mockErrorDemoQuestion}
-              value={errorDemoValue}
-              onChange={setErrorDemoValue}
-              error="Please select an option to continue"
-            />
-          </div>
-        </div>
-
-        {/* Disabled State */}
-        <div className="mb-8">
-          <Title as="h3" className="mb-4" colour="card-foreground">
-            Disabled State
-          </Title>
-          <div className="rounded-lg border border-border bg-card p-6">
-            <SingleChoiceQuestion
-              question={mockDisabledDemoQuestion}
-              value={disabledValue}
-              onChange={() => {
-                // No-op when disabled
-              }}
-              disabled
-            />
-          </div>
-        </div>
+        <DemoTabs tabs={singleChoiceTabs} />
       </ComponentSection>
 
       {/* MultiChoiceQuestion */}
@@ -240,75 +422,15 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
         <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
           Checkbox group for selecting multiple options. Values stored as string array.
         </Text>
-
-        {/* Basic Example */}
-        <div className="mb-8">
-          <Title as="h3" className="mb-4" colour="card-foreground">
-            Basic Usage
-          </Title>
-          <div className="rounded-lg border border-border bg-card p-6">
-            <MultiChoiceQuestion
-              question={mockMultiChoiceQuestion}
-              value={multiChoiceValue}
-              onChange={setMultiChoiceValue}
-            />
-            <SelectedValue value={multiChoiceValue} />
-          </div>
-        </div>
-
-        {/* Optional Question */}
-        <div className="mb-8">
-          <Title as="h3" className="mb-4" colour="card-foreground">
-            Optional Question (no asterisk)
-          </Title>
-          <div className="rounded-lg border border-border bg-card p-6">
-            <MultiChoiceQuestion
-              question={mockMultiChoiceOptional}
-              value={multiChoiceOptionalValue}
-              onChange={setMultiChoiceOptionalValue}
-            />
-            <SelectedValue value={multiChoiceOptionalValue} />
-          </div>
-        </div>
-
-        {/* Error State */}
-        <div className="mb-8">
-          <Title as="h3" className="mb-4" colour="card-foreground">
-            With Validation Error
-          </Title>
-          <div className="rounded-lg border border-border bg-card p-6">
-            <MultiChoiceQuestion
-              question={mockMultiChoiceErrorDemo}
-              value={multiChoiceErrorValue}
-              onChange={setMultiChoiceErrorValue}
-              error="Please select at least one option"
-            />
-          </div>
-        </div>
-
-        {/* Disabled State */}
-        <div className="mb-8">
-          <Title as="h3" className="mb-4" colour="card-foreground">
-            Disabled State
-          </Title>
-          <div className="rounded-lg border border-border bg-card p-6">
-            <MultiChoiceQuestion
-              question={mockMultiChoiceDisabledDemo}
-              value={multiChoiceDisabledValue}
-              onChange={() => {
-                // No-op when disabled
-              }}
-              disabled
-            />
-          </div>
-        </div>
+        <DemoTabs tabs={multiChoiceTabs} />
       </ComponentSection>
 
-      {/* TextQuestion - Placeholder */}
-      <ComponentSection title="TextQuestion" id="text" className="opacity-50">
-        <div className="rounded-lg border-2 border-dashed border-border p-8 text-center">
-          <Text styleProps={{ colour: 'muted-foreground' }}>Coming in FFP-217</Text>
-        </div>
+      {/* TextQuestion */}
+      <ComponentSection title="TextQuestion" id="text">
+        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
+          Textarea input for free-text responses. Supports max character limit via validation.max.
+        </Text>
+        <DemoTabs tabs={textQuestionTabs} />
       </ComponentSection>
 
       {/* NumericQuestion - Placeholder */}
@@ -398,7 +520,11 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
   );
 };
 
-// Helper component to show selected value
+// ============================================================================
+// Helper Components
+// ============================================================================
+
+/** Helper component to show selected value */
 const SelectedValue: React.FC<{ value: AnswerValue | undefined }> = ({ value }) => (
   <div className="mt-4 rounded bg-muted p-3">
     <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
@@ -410,7 +536,7 @@ const SelectedValue: React.FC<{ value: AnswerValue | undefined }> = ({ value }) 
   </div>
 );
 
-// Helper component for status cards
+/** Helper component for status cards */
 const StatusCard: React.FC<{
   title: string;
   status: 'complete' | 'pending';

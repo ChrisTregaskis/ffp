@@ -75,7 +75,7 @@ packages/web/src/components/assessment/
 | --- | ------- | ------------------------------------------ | ----------- |
 | 1   | FFP-213 | SingleChoiceQuestion (establishes pattern) | ✅ Complete |
 | 2   | FFP-214 | MultiChoiceQuestion (similar to single)    | ✅ Complete |
-| 3   | FFP-217 | TextQuestion + barrel exports setup        | 📋 Ready    |
+| 3   | FFP-217 | TextQuestion + barrel exports setup        | ✅ Complete |
 | 4   | FFP-215 | NumericQuestion + ScaleQuestion            | 📋 Ready    |
 | 5   | FFP-216 | VideoResponseQuestion (HTML5 placeholder)  | 📋 Ready    |
 | 6   | FFP-212 | QuestionRenderer factory (ties together)   | 📋 Ready    |

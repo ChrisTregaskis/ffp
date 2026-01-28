@@ -41,7 +41,7 @@ export const ComponentsPage = (): JSX.Element => {
       <ComponentCategoriesGrid categories={componentCategories} />
 
       {/* Developer instructions */}
-      <div className="mt-8">
+      <div className="mt-8 space-y-4">
         <DeveloperInstructions title="Adding New Components">
           <ol className="list-decimal space-y-1 pl-5">
             <li>
@@ -57,6 +57,29 @@ export const ComponentsPage = (): JSX.Element => {
             </li>
             <li>Update this landing page with the new category</li>
           </ol>
+        </DeveloperInstructions>
+
+        <DeveloperInstructions title="Demo-Only Components">
+          <div className="space-y-3">
+            <Text as="p" styleProps={{ size: 'sm' }}>
+              Components in <code className="rounded bg-muted px-1">components/demo/</code> are for
+              dev demo pages only. NOT for production use.
+            </Text>
+            <Text as="p" styleProps={{ size: 'sm', weight: 'medium' }}>
+              DemoTabs - Use when displaying different versions of a component:
+            </Text>
+            <code className="block whitespace-pre rounded bg-muted p-2 text-xs">
+              {`import { DemoTabs } from '@web/components/demo';
+
+<DemoTabs
+  tabs={[
+    { id: 'basic', label: 'Basic', content: <BasicDemo /> },
+    { id: 'error', label: 'Error', content: <ErrorDemo /> },
+    { id: 'disabled', label: 'Disabled', content: <DisabledDemo /> },
+  ]}
+/>`}
+            </code>
+          </div>
         </DeveloperInstructions>
       </div>
     </ComponentPageWrapper>
