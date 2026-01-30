@@ -17,10 +17,10 @@ import type { QuestionComponentProps } from './types';
 export interface QuestionRendererProps {
   /** Question definition from the assessment template */
   question: AssessmentQuestion;
-  /** Current answer value (undefined if not yet answered) */
-  value: AnswerValue | undefined;
-  /** Callback fired when the answer changes (includes questionId for dispatch) */
-  onChange: (questionId: string, value: AnswerValue) => void;
+  /** Current answer value (null when not yet answered or cleared) */
+  value: AnswerValue | null;
+  /** Callback fired when the answer changes (null when intentionally cleared) */
+  onChange: (questionId: string, value: AnswerValue | null) => void;
   /** Whether the question input is disabled */
   disabled?: boolean;
   /** Validation error message to display */
@@ -47,7 +47,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   videoUrl,
 }) => {
   const handleChange = useCallback(
-    (newValue: AnswerValue) => {
+    (newValue: AnswerValue | null) => {
       onChange(question.id, newValue);
     },
     [onChange, question.id]

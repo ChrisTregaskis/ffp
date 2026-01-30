@@ -50,12 +50,11 @@ export const TextQuestion: React.FC<QuestionComponentProps> = ({
 
       {/* Question text */}
       <div className="space-y-1">
-        <label
-          htmlFor={questionId}
-          className="block text-xl font-medium text-foreground leading-relaxed"
-        >
-          {question.question}
-          {isRequired && <RequiredIndicator />}
+        <label htmlFor={questionId} className="block leading-relaxed">
+          <Text as="span" styleProps={{ size: 'xl', weight: 'medium', colour: 'foreground' }}>
+            {question.question}
+            {isRequired && <RequiredIndicator />}
+          </Text>
         </label>
 
         {/* Description / helper text */}

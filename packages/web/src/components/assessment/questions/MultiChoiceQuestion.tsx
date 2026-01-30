@@ -100,7 +100,7 @@ export const MultiChoiceQuestion: React.FC<QuestionComponentProps> = ({
                 className={`
                   h-5 w-5 rounded border-2 appearance-none
                   transition-all duration-200
-                  ${isSelected ? 'border-primary bg-primary bg-checkbox-tick' : 'border-gray-300 bg-white'}
+                  ${isSelected ? 'border-primary bg-primary bg-checkbox-tick' : 'border-border bg-card'}
                   focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2
                   ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}
                 `}

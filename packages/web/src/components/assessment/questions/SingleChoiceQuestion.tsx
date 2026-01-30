@@ -94,7 +94,7 @@ export const SingleChoiceQuestion: React.FC<QuestionComponentProps> = ({
                   ${
                     isSelected
                       ? 'border-primary bg-primary shadow-radio-dot'
-                      : 'border-gray-300 bg-white'
+                      : 'border-border bg-card'
                   }
                   focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2
                   ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}

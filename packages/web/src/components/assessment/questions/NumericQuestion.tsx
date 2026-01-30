@@ -37,7 +37,7 @@ export const NumericQuestion: React.FC<QuestionComponentProps> = ({
 
       // Allow empty input (clearing the field)
       if (inputValue === '') {
-        onChange(undefined as unknown as number);
+        onChange(null);
         return;
       }
 

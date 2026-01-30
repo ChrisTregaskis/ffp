@@ -33,7 +33,7 @@ export const OptionLabel: React.FC<OptionLabelProps> = ({
       ${
         isSelected
           ? 'border-primary bg-secondary/30 shadow-md'
-          : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
+          : 'border-border hover:border-primary/50 hover:bg-muted/30'
       }
       ${hasError && !isSelected ? 'border-destructive/50' : ''}
       ${disabled ? 'cursor-not-allowed opacity-60' : ''}

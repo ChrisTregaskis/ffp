@@ -309,62 +309,52 @@ const DEMO_VIDEO_URL =
  */
 export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
   // State for SingleChoice demos
-  const [singleBasicValue, setSingleBasicValue] = useState<AnswerValue | undefined>(undefined);
-  const [singleManyOptionsValue, setSingleManyOptionsValue] = useState<AnswerValue | undefined>(
-    undefined
-  );
-  const [singleOptionalValue, setSingleOptionalValue] = useState<AnswerValue | undefined>(
-    undefined
-  );
-  const [singleErrorValue, setSingleErrorValue] = useState<AnswerValue | undefined>(undefined);
-  const [singleDisabledValue] = useState<AnswerValue | undefined>('improve_mobility');
+  const [singleBasicValue, setSingleBasicValue] = useState<AnswerValue | null>(null);
+  const [singleManyOptionsValue, setSingleManyOptionsValue] = useState<AnswerValue | null>(null);
+  const [singleOptionalValue, setSingleOptionalValue] = useState<AnswerValue | null>(null);
+  const [singleErrorValue, setSingleErrorValue] = useState<AnswerValue | null>(null);
+  const [singleDisabledValue] = useState<AnswerValue | null>('improve_mobility');
 
   // State for MultiChoice demos
-  const [multiBasicValue, setMultiBasicValue] = useState<AnswerValue | undefined>([]);
-  const [multiOptionalValue, setMultiOptionalValue] = useState<AnswerValue | undefined>([]);
-  const [multiErrorValue, setMultiErrorValue] = useState<AnswerValue | undefined>([]);
-  const [multiDisabledValue] = useState<AnswerValue | undefined>(['lower_back', 'knees']);
+  const [multiBasicValue, setMultiBasicValue] = useState<AnswerValue | null>([]);
+  const [multiOptionalValue, setMultiOptionalValue] = useState<AnswerValue | null>([]);
+  const [multiErrorValue, setMultiErrorValue] = useState<AnswerValue | null>([]);
+  const [multiDisabledValue] = useState<AnswerValue | null>(['lower_back', 'knees']);
 
   // State for TextQuestion demos
-  const [textBasicValue, setTextBasicValue] = useState<AnswerValue | undefined>('');
-  const [textMaxLengthValue, setTextMaxLengthValue] = useState<AnswerValue | undefined>('');
-  const [textOptionalValue, setTextOptionalValue] = useState<AnswerValue | undefined>('');
-  const [textErrorValue, setTextErrorValue] = useState<AnswerValue | undefined>('');
-  const [textDisabledValue] = useState<AnswerValue | undefined>(
+  const [textBasicValue, setTextBasicValue] = useState<AnswerValue | null>('');
+  const [textMaxLengthValue, setTextMaxLengthValue] = useState<AnswerValue | null>('');
+  const [textOptionalValue, setTextOptionalValue] = useState<AnswerValue | null>('');
+  const [textErrorValue, setTextErrorValue] = useState<AnswerValue | null>('');
+  const [textDisabledValue] = useState<AnswerValue | null>(
     'I have been experiencing lower back pain for the past 3 months...'
   );
 
   // State for NumericQuestion demos
-  const [numericBasicValue, setNumericBasicValue] = useState<AnswerValue | undefined>(undefined);
-  const [numericNoLimitsValue, setNumericNoLimitsValue] = useState<AnswerValue | undefined>(
-    undefined
-  );
-  const [numericOptionalValue, setNumericOptionalValue] = useState<AnswerValue | undefined>(
-    undefined
-  );
-  const [numericErrorValue, setNumericErrorValue] = useState<AnswerValue | undefined>(undefined);
-  const [numericDisabledValue] = useState<AnswerValue | undefined>(25);
+  const [numericBasicValue, setNumericBasicValue] = useState<AnswerValue | null>(null);
+  const [numericNoLimitsValue, setNumericNoLimitsValue] = useState<AnswerValue | null>(null);
+  const [numericOptionalValue, setNumericOptionalValue] = useState<AnswerValue | null>(null);
+  const [numericErrorValue, setNumericErrorValue] = useState<AnswerValue | null>(null);
+  const [numericDisabledValue] = useState<AnswerValue | null>(25);
 
   // State for ScaleQuestion demos
-  const [scaleBasicValue, setScaleBasicValue] = useState<AnswerValue | undefined>(undefined);
-  const [scaleCustomRangeValue, setScaleCustomRangeValue] = useState<AnswerValue | undefined>(
-    undefined
-  );
-  const [scaleOptionalValue, setScaleOptionalValue] = useState<AnswerValue | undefined>(undefined);
-  const [scaleErrorValue, setScaleErrorValue] = useState<AnswerValue | undefined>(undefined);
-  const [scaleDisabledValue] = useState<AnswerValue | undefined>(7);
+  const [scaleBasicValue, setScaleBasicValue] = useState<AnswerValue | null>(null);
+  const [scaleCustomRangeValue, setScaleCustomRangeValue] = useState<AnswerValue | null>(null);
+  const [scaleOptionalValue, setScaleOptionalValue] = useState<AnswerValue | null>(null);
+  const [scaleErrorValue, setScaleErrorValue] = useState<AnswerValue | null>(null);
+  const [scaleDisabledValue] = useState<AnswerValue | null>(7);
 
   // State for VideoResponseQuestion demos
-  const [videoBasicValue, setVideoBasicValue] = useState<AnswerValue | undefined>(undefined);
-  const [videoNoVideoValue, setVideoNoVideoValue] = useState<AnswerValue | undefined>(undefined);
-  const [videoOptionalValue, setVideoOptionalValue] = useState<AnswerValue | undefined>(undefined);
-  const [videoErrorValue, setVideoErrorValue] = useState<AnswerValue | undefined>(undefined);
-  const [videoDisabledValue] = useState<AnswerValue | undefined>(15);
+  const [videoBasicValue, setVideoBasicValue] = useState<AnswerValue | null>(null);
+  const [videoNoVideoValue, setVideoNoVideoValue] = useState<AnswerValue | null>(null);
+  const [videoOptionalValue, setVideoOptionalValue] = useState<AnswerValue | null>(null);
+  const [videoErrorValue, setVideoErrorValue] = useState<AnswerValue | null>(null);
+  const [videoDisabledValue] = useState<AnswerValue | null>(15);
 
   // State for QuestionRenderer demos
-  const [rendererValues, setRendererValues] = useState<Record<string, AnswerValue | undefined>>({});
+  const [rendererValues, setRendererValues] = useState<Record<string, AnswerValue | null>>({});
 
-  const handleRendererChange = (questionId: string, value: AnswerValue): void => {
+  const handleRendererChange = (questionId: string, value: AnswerValue | null): void => {
     setRendererValues((prev) => ({ ...prev, [questionId]: value }));
   };
 
@@ -793,10 +783,10 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
         <>
           <QuestionRenderer
             question={mockRendererSingleChoice}
-            value={rendererValues[mockRendererSingleChoice.id]}
+            value={rendererValues[mockRendererSingleChoice.id] ?? null}
             onChange={handleRendererChange}
           />
-          <SelectedValue value={rendererValues[mockRendererSingleChoice.id]} />
+          <SelectedValue value={rendererValues[mockRendererSingleChoice.id] ?? null} />
         </>
       ),
     },
@@ -807,10 +797,10 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
         <>
           <QuestionRenderer
             question={mockRendererMultiChoice}
-            value={rendererValues[mockRendererMultiChoice.id]}
+            value={rendererValues[mockRendererMultiChoice.id] ?? null}
             onChange={handleRendererChange}
           />
-          <SelectedValue value={rendererValues[mockRendererMultiChoice.id]} />
+          <SelectedValue value={rendererValues[mockRendererMultiChoice.id] ?? null} />
         </>
       ),
     },
@@ -821,10 +811,10 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
         <>
           <QuestionRenderer
             question={mockRendererText}
-            value={rendererValues[mockRendererText.id]}
+            value={rendererValues[mockRendererText.id] ?? null}
             onChange={handleRendererChange}
           />
-          <SelectedValue value={rendererValues[mockRendererText.id]} />
+          <SelectedValue value={rendererValues[mockRendererText.id] ?? null} />
         </>
       ),
     },
@@ -835,10 +825,10 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
         <>
           <QuestionRenderer
             question={mockRendererNumeric}
-            value={rendererValues[mockRendererNumeric.id]}
+            value={rendererValues[mockRendererNumeric.id] ?? null}
             onChange={handleRendererChange}
           />
-          <SelectedValue value={rendererValues[mockRendererNumeric.id]} />
+          <SelectedValue value={rendererValues[mockRendererNumeric.id] ?? null} />
         </>
       ),
     },
@@ -849,10 +839,10 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
         <>
           <QuestionRenderer
             question={mockRendererScale}
-            value={rendererValues[mockRendererScale.id]}
+            value={rendererValues[mockRendererScale.id] ?? null}
             onChange={handleRendererChange}
           />
-          <SelectedValue value={rendererValues[mockRendererScale.id]} />
+          <SelectedValue value={rendererValues[mockRendererScale.id] ?? null} />
         </>
       ),
     },
@@ -863,11 +853,11 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
         <>
           <QuestionRenderer
             question={mockRendererVideoResponse}
-            value={rendererValues[mockRendererVideoResponse.id]}
+            value={rendererValues[mockRendererVideoResponse.id] ?? null}
             onChange={handleRendererChange}
             videoUrl={DEMO_VIDEO_URL}
           />
-          <SelectedValue value={rendererValues[mockRendererVideoResponse.id]} />
+          <SelectedValue value={rendererValues[mockRendererVideoResponse.id] ?? null} />
         </>
       ),
     },
@@ -1032,12 +1022,12 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
 // ============================================================================
 
 /** Helper component to show selected value */
-const SelectedValue: React.FC<{ value: AnswerValue | undefined }> = ({ value }) => (
+const SelectedValue: React.FC<{ value: AnswerValue | null }> = ({ value }) => (
   <div className="mt-4 rounded bg-muted p-3">
     <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
       Selected value:{' '}
       <code className="rounded bg-background px-1">
-        {value !== undefined ? String(value) : 'undefined'}
+        {value !== null ? String(value) : 'null'}
       </code>
     </Text>
   </div>
