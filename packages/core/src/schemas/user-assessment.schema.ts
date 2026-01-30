@@ -9,6 +9,9 @@ import { answerValueSchema } from '@ffp/database/types';
 
 import { dimensionalScoreSchema } from './job.schema';
 
+/** Answer value type - re-exported from @ffp/database for web package usage */
+export type AnswerValue = z.infer<typeof answerValueSchema>;
+
 export const userAssessmentStatusSchema = z.enum(USER_ASSESSMENT_STATUSES);
 
 export type UserAssessmentStatus = z.infer<typeof userAssessmentStatusSchema>;

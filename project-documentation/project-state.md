@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 25th January 2026
+**Last Updated**: 26th January 2026
 **Current EPIC**: FFP-2 - Assessment Engine
 **Sprint Status**: Sprint 5 🚀 In Progress
 **Previous**: Sprint 4 ✅ Complete
@@ -22,122 +22,136 @@
 | FFP-131 | Get Assessment Results API           | 3   | ✅ Complete | FFP-133 ✅             |
 | FFP-136 | TanStack Query Hooks for Assessments | 5   | ✅ Complete | FFP-135 ✅, FFP-131 ✅ |
 | FFP-134 | Programme Generation Service         | 5   | 📋 Ready    | FFP-131 ✅             |
-| FFP-139 | Question Renderer Components         | 8   | 📋 Ready    | FFP-135 ✅, FFP-136 ✅ |
+| FFP-139 | Question Renderer Components         | 8   | ✅ Complete | FFP-135 ✅, FFP-136 ✅ |
 
-### Current Progress: 10/23 pts (43%)
+### Current Progress: 18/23 pts (78%) - FFP-139 complete
 
 ### Recommended Next Steps
 
 1. ~~**FFP-138** (2 pts) - Independent, quick win~~ ✅ Complete
 2. ~~**FFP-131** (3 pts) - Unblocks FFP-134 and FFP-136, critical path~~ ✅ Complete
 3. ~~**FFP-136** (5 pts) - TanStack setup, unblocks FFP-139~~ ✅ Complete
-4. **FFP-139** (8 pts) - Largest story, benefits from hooks 🚀 **READY**
-5. **FFP-134** (5 pts) - Can parallel with FFP-139
+4. ~~**FFP-139** (8 pts) - Question renderers~~ ✅ Complete
+5. **FFP-134** (5 pts) - Programme Generation Service 📋 **NEXT UP**
 
 ---
 
-## FFP-136 Implementation Plan: TanStack Query Hooks for Assessments
+## FFP-139 Implementation Plan: Question Renderer Components
 
-**Branch**: `feature/ffp-136-tanstack-hooks`
-**PR Strategy**: Single PR for all sub-tasks (cohesive API client + hooks infrastructure)
-**Planning Doc**: `sprint-planning/outputs/api-client-architecture.md`
+**Branch**: `feature/ffp-139-question-renderers`
+**PR Strategy**: Single PR for all sub-tasks (cohesive component library)
 
-### Architecture Overview
+### Overview
+
+Create question renderer components for all MVP question types. Each component receives question data and dispatches answers to AssessmentContext.
+
+**Key Types** (from `@ffp/core`):
+
+- `AssessmentQuestion` - question definition with `type`, `options`, `validation`
+- `UserAnswer` - contains `questionId`, `answerValue`, `answeredAt`
+- `AnswerValue` - `string | number | boolean | string[]`
+
+### Folder Structure
 
 ```
-React Component
-     │ uses
-     ▼
-TanStack Query Hooks (caching layer)
-     │ calls
-     ▼
-Endpoint Modules (assessmentsApi)
-     │ calls
-     ▼
-FFPClient (Cognito auth)
-     │ extends
-     ▼
-BaseHttpClient (interceptors, errors)
-     │ uses
-     ▼
-Native fetch()
+packages/web/src/components/assessment/
+├── questions/
+│   ├── QuestionRenderer.tsx      # Factory router
+│   ├── SingleChoiceQuestion.tsx  # Radio buttons
+│   ├── MultiChoiceQuestion.tsx   # Checkboxes
+│   ├── NumericQuestion.tsx       # Number input
+│   ├── ScaleQuestion.tsx         # 1-10 button group
+│   ├── TextQuestion.tsx          # Textarea
+│   ├── VideoResponseQuestion.tsx # Video + response input
+│   └── index.ts                  # Barrel exports
+├── AssessmentProgress.tsx        # (move from current location)
+├── utils.ts
+└── index.ts
 ```
 
 ### Sub-task Execution Order
 
-| #   | Key     | Task                                                | Est. Lines | Status      |
-| --- | ------- | --------------------------------------------------- | ---------- | ----------- |
-| 0   | -       | Install packages + QueryClient + App setup          | ~50        | ✅ Done     |
-| 1   | FFP-198 | API client infrastructure (base + FFP + endpoints)  | ~350       | ✅ Done     |
-| 2   | FFP-199 | useAssessmentFlowQuery + useAssessmentTemplateQuery | ~50        | ✅ Done     |
-| 3   | FFP-200 | useStartAssessment mutation hook                    | ~25        | ✅ Done     |
-| 4   | FFP-201 | useSaveProgress + useSubmitAssessment hooks         | ~40        | ✅ Done     |
-| 5   | FFP-202 | useAssessmentResults with polling                   | ~30        | ✅ Done     |
-| 6   | FFP-203 | Unit tests for hooks                                | ~150       | ⏸️ Deferred |
+| #   | Key     | Task                                       | Status      |
+| --- | ------- | ------------------------------------------ | ----------- |
+| 1   | FFP-213 | SingleChoiceQuestion (establishes pattern) | ✅ Complete |
+| 2   | FFP-214 | MultiChoiceQuestion (similar to single)    | ✅ Complete |
+| 3   | FFP-217 | TextQuestion + barrel exports setup        | ✅ Complete |
+| 4   | FFP-215 | NumericQuestion + ScaleQuestion            | ✅ Complete |
+| 5   | FFP-216 | VideoResponseQuestion (HTML5 placeholder)  | ✅ Complete |
+| 6   | FFP-212 | QuestionRenderer factory (ties together)   | ✅ Complete |
 
-### Implementation Details
+### Implementation Notes
 
-**Sub-task 0: Setup & Infrastructure**
+**Common Props Interface**:
 
-- Install `@tanstack/react-query` and `@tanstack/react-query-devtools`
-- Create `lib/query/query-client.ts` with smart retry logic
-- Wrap App with `QueryClientProvider`
-- Add DevTools (development only)
+```typescript
+interface QuestionComponentProps {
+  question: AssessmentQuestion;
+  value: AnswerValue | undefined;
+  onChange: (value: AnswerValue) => void;
+  disabled?: boolean;
+  error?: string;
+}
+```
 
-**FFP-198: API Client Infrastructure**
-Files to create in `packages/web/src/lib/api/`:
+**Integration with AssessmentContext**:
 
-- `client/errors.ts` - ApiError class with type guards
-- `client/types.ts` - RequestConfig, interceptor types
-- `client/base-client.ts` - BaseHttpClient with interceptor pipeline
-- `client/ffp-client.ts` - FFPClient with Cognito auth
-- `endpoints/assessments.ts` - Assessment API methods
-- `query/keys/assessments.ts` - Query key factory
+```typescript
+const { assessmentState, assessmentDispatch } = useAssessment();
 
-**FFP-199 - FFP-202: TanStack Query Hooks** ✅
-Folder: `packages/web/src/hooks/assessments/`
+const handleChange = (questionId: string, value: AnswerValue) => {
+  assessmentDispatch({
+    type: ASSESSMENT_ACTION.SET_ANSWER,
+    payload: { questionId, answer: { questionId, answerValue: value } },
+  });
+};
+```
 
-- Query hooks: `useAssessmentFlowQuery`, `useAssessmentTemplateQuery` ✅
-- Mutation hooks: `useStartAssessment`, `useSaveProgress`, `useSubmitAssessment` ✅
-- Polling hook: `useAssessmentResultsQuery` ✅
+**FFP-216 VideoResponseQuestion**:
 
-**FFP-203: Unit Tests** ⏸️ Deferred
+- Uses basic HTML5 `<video>` element as placeholder
+- TODO: Integrate with VideoPlayer component (FFP-141) when available
 
-- Will test during integration with assessment flow components
-- Hooks are thin wrappers - integration testing more valuable
+### Acceptance Criteria (from parent FFP-139)
 
-### Acceptance Criteria Mapping (Parent Story FFP-136)
-
-| AC  | Description                       | Sub-task | Implementation                              |
-| --- | --------------------------------- | -------- | ------------------------------------------- |
-| AC1 | useAssessmentFlow fetches flow    | FFP-199  | 5-minute stale time, enabled when flowId    |
-| AC2 | useAssessmentTemplate fetches     | FFP-199  | enabled when templateId exists              |
-| AC3 | useStartAssessment mutation       | FFP-200  | POST /assessments/start, cache invalidation |
-| AC4 | useSaveProgress mutation          | FFP-201  | POST /assessments/:id/progress              |
-| AC5 | useSubmitAssessment mutation      | FFP-201  | POST /assessments/:id/submit, invalidation  |
-| AC6 | useAssessmentResults with polling | FFP-202  | Poll every 2s until scores exist            |
+| AC  | Component             | Requirement                             |
+| --- | --------------------- | --------------------------------------- |
+| AC1 | SingleChoiceQuestion  | Radio button group with all options     |
+| AC2 | MultiChoiceQuestion   | Checkbox group, multiple selections     |
+| AC3 | NumericQuestion       | Number input with min/max validation    |
+| AC4 | TextQuestion          | Textarea displayed                      |
+| AC5 | ScaleQuestion         | 1-10 scale with labels                  |
+| AC6 | VideoResponseQuestion | Video player + rep count input          |
+| AC7 | All components        | Dispatch SET_ANSWER on change           |
+| AC8 | All components        | Display validation errors when provided |
 
 ### Dependencies
 
-- ✅ FFP-135 (Assessment Context & State Mgmt) - Complete
-- ✅ FFP-131 (Get Assessment Results API) - Complete
-- ✅ API endpoints available (Start, Save, Submit, Results)
+- ✅ FFP-135 (Assessment Context) - provides `useAssessment`, `SET_ANSWER`
+- ✅ FFP-136 (TanStack Hooks) - provides save/submit mutations
+- ⏸️ FFP-141 (VideoPlayer) - future; using HTML5 placeholder
 
 ### Verification
 
 ```bash
 pnpm typecheck --filter=@ffp/web
 pnpm lint --filter=@ffp/web
-pnpm test --filter=@ffp/web
 pnpm build
 ```
 
 ---
 
-## FFP-131: Get Assessment Results API ✅ COMPLETE
+## Completed This Sprint
+
+### FFP-136: TanStack Query Hooks ✅
+
+**Branch**: `feature/ffp-136-tanstack-hooks` (merged)
+**Key deliverables**: API client infrastructure, assessment hooks
+**Files**: `lib/api/client/`, `lib/api/endpoints/`, `hooks/assessments/`
+
+### FFP-131: Get Assessment Results API ✅
 
 **Endpoint**: `GET /assessments/:id/results`
-**Key files**: `user-assessment.schema.ts`, `assessment.service.ts`, `get-results.ts`
 **Pattern**: Simple nullable approach - `scores` and `programmeId` null until scoring completes
 
 ---

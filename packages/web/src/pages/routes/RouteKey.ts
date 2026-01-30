@@ -67,4 +67,6 @@ export enum RouteKey {
   COMPONENTS_ERROR_BOUNDARY = 'components-error-boundary',
   /** Assessment progress components showcase */
   COMPONENTS_ASSESSMENT_PROGRESS = 'components-assessment-progress',
+  /** Assessment question components showcase */
+  COMPONENTS_ASSESSMENT_QUESTIONS = 'components-assessment-questions',
 }
