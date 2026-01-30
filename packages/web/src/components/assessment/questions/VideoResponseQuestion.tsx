@@ -1,7 +1,11 @@
-import { useCallback, useId } from 'react';
+import { useMemo, useId } from 'react';
+
+import type { AssessmentQuestion } from '@ffp/core';
 
 import { RequiredIndicator } from '@web/components/form';
 import { Text } from '@web/components/text';
+
+import { NumericQuestion } from './NumericQuestion';
 
 import type { QuestionComponentProps } from './types';
 
@@ -33,45 +37,22 @@ export const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
 }) => {
   const instanceId = useId();
   const questionId = `question-${question.id}-${instanceId}`;
-  const errorId = `${questionId}-error`;
   const descriptionId = question.description ? `${questionId}-description` : undefined;
   const isRequired = question.validation?.required !== false;
 
-  // Parse current value as number (or undefined)
-  const currentValue = typeof value === 'number' ? value : undefined;
-
-  const minValue = question.validation?.min;
-  const maxValue = question.validation?.max;
-
-  const handleInputChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>): void => {
-      if (disabled) return;
-
-      const inputValue = event.target.value;
-
-      // Allow empty input (clearing the field)
-      if (inputValue === '') {
-        onChange(undefined as unknown as number);
-        return;
-      }
-
-      const numericValue = parseFloat(inputValue);
-      if (!isNaN(numericValue)) {
-        onChange(numericValue);
-      }
-    },
-    [disabled, onChange]
+  // Sub-question for the numeric input (unique ID, simplified text)
+  const numericQuestion: AssessmentQuestion = useMemo(
+    () => ({
+      ...question,
+      id: `${question.id}-response`,
+      question: 'Enter your result:',
+      description: undefined,
+    }),
+    [question]
   );
 
   return (
-    <fieldset
-      className="space-y-5"
-      aria-describedby={
-        [descriptionId, error ? errorId : undefined].filter(Boolean).join(' ') || undefined
-      }
-    >
-      <legend className="sr-only">{question.question}</legend>
-
+    <div className="space-y-5" aria-describedby={descriptionId}>
       {/* Question text */}
       <div className="space-y-1">
         <Text
@@ -111,63 +92,16 @@ export const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
         )}
       </div>
 
-      {/* Numeric response input */}
-      <div className="space-y-3 border-t border-border pt-4">
-        <label htmlFor={questionId} className="block text-base font-medium text-foreground">
-          Enter your result:
-        </label>
-
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            id={questionId}
-            value={currentValue ?? ''}
-            onChange={handleInputChange}
-            disabled={disabled}
-            min={minValue}
-            max={maxValue}
-            aria-invalid={!!error}
-            aria-describedby={
-              [descriptionId, error ? errorId : undefined].filter(Boolean).join(' ') || undefined
-            }
-            aria-required={isRequired}
-            placeholder="0"
-            className={`
-              h-12 w-24 rounded-lg border-2 bg-card px-4 text-center text-lg font-medium
-              transition-colors duration-200
-              placeholder:text-muted-foreground/60
-              focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2
-              [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
-              ${
-                error !== undefined
-                  ? 'border-destructive focus:border-destructive'
-                  : 'border-border focus:border-primary'
-              }
-              ${disabled ? 'cursor-not-allowed bg-muted opacity-60' : ''}
-            `}
-          />
-
-          {/* Range indicator */}
-          {minValue !== undefined && maxValue !== undefined && (
-            <Text as="span" styleProps={{ size: 'lg', colour: 'muted-foreground' }}>
-              {String(minValue)}/{String(maxValue)}
-            </Text>
-          )}
-        </div>
+      {/* Numeric response - delegates to NumericQuestion */}
+      <div className="border-t border-border pt-4">
+        <NumericQuestion
+          question={numericQuestion}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          error={error}
+        />
       </div>
-
-      {/* Error message */}
-      {error && (
-        <Text
-          as="p"
-          id={errorId}
-          styleProps={{ size: 'sm', colour: 'destructive' }}
-          role="alert"
-          className="animate-in fade-in slide-in-from-top-2 duration-200"
-        >
-          {error}
-        </Text>
-      )}
-    </fieldset>
+    </div>
   );
 };

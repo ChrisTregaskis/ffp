@@ -43,10 +43,18 @@ export const NumericQuestion: React.FC<QuestionComponentProps> = ({
 
       const numericValue = parseFloat(inputValue);
       if (!isNaN(numericValue)) {
-        onChange(numericValue);
+        // Clamp value within min/max bounds when defined
+        let clampedValue = numericValue;
+        if (maxValue !== undefined && clampedValue > maxValue) {
+          clampedValue = maxValue;
+        }
+        if (minValue !== undefined && clampedValue < minValue) {
+          clampedValue = minValue;
+        }
+        onChange(clampedValue);
       }
     },
-    [disabled, onChange]
+    [disabled, maxValue, minValue, onChange]
   );
 
   return (

@@ -22,17 +22,17 @@
 | FFP-131 | Get Assessment Results API           | 3   | ✅ Complete | FFP-133 ✅             |
 | FFP-136 | TanStack Query Hooks for Assessments | 5   | ✅ Complete | FFP-135 ✅, FFP-131 ✅ |
 | FFP-134 | Programme Generation Service         | 5   | 📋 Ready    | FFP-131 ✅             |
-| FFP-139 | Question Renderer Components         | 8   | 🚀 Active   | FFP-135 ✅, FFP-136 ✅ |
+| FFP-139 | Question Renderer Components         | 8   | ✅ Complete | FFP-135 ✅, FFP-136 ✅ |
 
-### Current Progress: 10/23 pts (43%) - FFP-139 in progress
+### Current Progress: 18/23 pts (78%) - FFP-139 complete
 
 ### Recommended Next Steps
 
 1. ~~**FFP-138** (2 pts) - Independent, quick win~~ ✅ Complete
 2. ~~**FFP-131** (3 pts) - Unblocks FFP-134 and FFP-136, critical path~~ ✅ Complete
 3. ~~**FFP-136** (5 pts) - TanStack setup, unblocks FFP-139~~ ✅ Complete
-4. **FFP-139** (8 pts) - Question renderers 🚀 **IN PROGRESS**
-5. **FFP-134** (5 pts) - Programme Generation Service (can follow FFP-139)
+4. ~~**FFP-139** (8 pts) - Question renderers~~ ✅ Complete
+5. **FFP-134** (5 pts) - Programme Generation Service 📋 **NEXT UP**
 
 ---
 
@@ -78,7 +78,7 @@ packages/web/src/components/assessment/
 | 3   | FFP-217 | TextQuestion + barrel exports setup        | ✅ Complete |
 | 4   | FFP-215 | NumericQuestion + ScaleQuestion            | ✅ Complete |
 | 5   | FFP-216 | VideoResponseQuestion (HTML5 placeholder)  | ✅ Complete |
-| 6   | FFP-212 | QuestionRenderer factory (ties together)   | 📋 Ready    |
+| 6   | FFP-212 | QuestionRenderer factory (ties together)   | ✅ Complete |
 
 ### Implementation Notes
 

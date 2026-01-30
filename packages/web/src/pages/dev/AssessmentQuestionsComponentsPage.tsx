@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { AssessmentQuestion, AnswerValue } from '@ffp/core';
 
 import {
+  QuestionRenderer,
   SingleChoiceQuestion,
   MultiChoiceQuestion,
   TextQuestion,
@@ -256,6 +257,37 @@ const mockVideoResponseDisabledDemo: AssessmentQuestion = {
   id: 'q-video-disabled',
 };
 
+// QuestionRenderer mock questions (unique IDs to avoid form element collisions)
+const mockRendererSingleChoice: AssessmentQuestion = {
+  ...mockSingleChoiceQuestion,
+  id: 'q-renderer-single',
+};
+
+const mockRendererMultiChoice: AssessmentQuestion = {
+  ...mockMultiChoiceQuestion,
+  id: 'q-renderer-multi',
+};
+
+const mockRendererText: AssessmentQuestion = {
+  ...mockTextQuestion,
+  id: 'q-renderer-text',
+};
+
+const mockRendererNumeric: AssessmentQuestion = {
+  ...mockNumericQuestion,
+  id: 'q-renderer-numeric',
+};
+
+const mockRendererScale: AssessmentQuestion = {
+  ...mockScaleQuestion,
+  id: 'q-renderer-scale',
+};
+
+const mockRendererVideoResponse: AssessmentQuestion = {
+  ...mockVideoResponseQuestion,
+  id: 'q-renderer-video',
+};
+
 // Sample video URL for demo (Big Buck Bunny - public domain)
 const DEMO_VIDEO_URL =
   'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4';
@@ -328,6 +360,13 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
   const [videoOptionalValue, setVideoOptionalValue] = useState<AnswerValue | undefined>(undefined);
   const [videoErrorValue, setVideoErrorValue] = useState<AnswerValue | undefined>(undefined);
   const [videoDisabledValue] = useState<AnswerValue | undefined>(15);
+
+  // State for QuestionRenderer demos
+  const [rendererValues, setRendererValues] = useState<Record<string, AnswerValue | undefined>>({});
+
+  const handleRendererChange = (questionId: string, value: AnswerValue): void => {
+    setRendererValues((prev) => ({ ...prev, [questionId]: value }));
+  };
 
   // Tab configurations
   const singleChoiceTabs: DemoTab[] = [
@@ -746,6 +785,94 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
     },
   ];
 
+  const questionRendererTabs: DemoTab[] = [
+    {
+      id: 'single-choice',
+      label: 'Single Choice',
+      content: (
+        <>
+          <QuestionRenderer
+            question={mockRendererSingleChoice}
+            value={rendererValues[mockRendererSingleChoice.id]}
+            onChange={handleRendererChange}
+          />
+          <SelectedValue value={rendererValues[mockRendererSingleChoice.id]} />
+        </>
+      ),
+    },
+    {
+      id: 'multi-choice',
+      label: 'Multi Choice',
+      content: (
+        <>
+          <QuestionRenderer
+            question={mockRendererMultiChoice}
+            value={rendererValues[mockRendererMultiChoice.id]}
+            onChange={handleRendererChange}
+          />
+          <SelectedValue value={rendererValues[mockRendererMultiChoice.id]} />
+        </>
+      ),
+    },
+    {
+      id: 'text',
+      label: 'Text',
+      content: (
+        <>
+          <QuestionRenderer
+            question={mockRendererText}
+            value={rendererValues[mockRendererText.id]}
+            onChange={handleRendererChange}
+          />
+          <SelectedValue value={rendererValues[mockRendererText.id]} />
+        </>
+      ),
+    },
+    {
+      id: 'numeric',
+      label: 'Numeric',
+      content: (
+        <>
+          <QuestionRenderer
+            question={mockRendererNumeric}
+            value={rendererValues[mockRendererNumeric.id]}
+            onChange={handleRendererChange}
+          />
+          <SelectedValue value={rendererValues[mockRendererNumeric.id]} />
+        </>
+      ),
+    },
+    {
+      id: 'scale',
+      label: 'Scale',
+      content: (
+        <>
+          <QuestionRenderer
+            question={mockRendererScale}
+            value={rendererValues[mockRendererScale.id]}
+            onChange={handleRendererChange}
+          />
+          <SelectedValue value={rendererValues[mockRendererScale.id]} />
+        </>
+      ),
+    },
+    {
+      id: 'video-response',
+      label: 'Video Response',
+      content: (
+        <>
+          <QuestionRenderer
+            question={mockRendererVideoResponse}
+            value={rendererValues[mockRendererVideoResponse.id]}
+            onChange={handleRendererChange}
+            videoUrl={DEMO_VIDEO_URL}
+          />
+          <SelectedValue value={rendererValues[mockRendererVideoResponse.id]} />
+        </>
+      ),
+    },
+  ];
+
   return (
     <ComponentPageWrapper maxWidth="4xl">
       <ComponentPageHeader
@@ -763,6 +890,7 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
           <StatusCard title="NumericQuestion" status="complete" href="#numeric" />
           <StatusCard title="ScaleQuestion" status="complete" href="#scale" />
           <StatusCard title="VideoResponseQuestion" status="complete" href="#video" />
+          <StatusCard title="QuestionRenderer" status="complete" href="#renderer" />
         </div>
       </ComponentSection>
 
@@ -818,38 +946,53 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
         <DemoTabs tabs={videoResponseTabs} />
       </ComponentSection>
 
+      {/* QuestionRenderer */}
+      <ComponentSection title="QuestionRenderer" id="renderer">
+        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
+          Factory component that routes to the correct question renderer based on question.type.
+          Wraps onChange to include questionId for AssessmentContext dispatch.
+        </Text>
+        <DemoTabs tabs={questionRendererTabs} />
+      </ComponentSection>
+
       {/* Developer Instructions */}
       <DeveloperInstructions title="Usage Instructions">
         <div className="space-y-3">
           <div>
             <Text as="p" className="mb-1" styleProps={{ weight: 'medium' }}>
-              Import question components:
+              Import QuestionRenderer (recommended):
             </Text>
             <code className="block rounded bg-muted p-2 text-xs">
-              {`import { SingleChoiceQuestion } from '@web/components/assessment';`}
+              {`import { QuestionRenderer } from '@web/components/assessment';`}
             </code>
           </div>
           <div>
             <Text as="p" className="mb-1" styleProps={{ weight: 'medium' }}>
-              Basic usage with AssessmentContext:
+              QuestionRenderer with AssessmentContext:
             </Text>
             <code className="block whitespace-pre rounded bg-muted p-2 text-xs">
               {`const { assessmentState, assessmentDispatch } = useAssessment();
 
-<SingleChoiceQuestion
+<QuestionRenderer
   question={question}
   value={assessmentState.answers[question.id]?.answerValue}
-  onChange={(value) => {
+  onChange={(questionId, value) => {
     assessmentDispatch({
       type: ASSESSMENT_ACTION.SET_ANSWER,
-      payload: {
-        questionId: question.id,
-        answer: { questionId: question.id, answerValue: value }
-      },
+      payload: { questionId, answer: { questionId, answerValue: value } },
     });
   }}
+  videoUrl={videoUrls[question.videoId]}
   error={validationErrors[question.id]}
 />`}
+            </code>
+          </div>
+          <div>
+            <Text as="p" className="mb-1" styleProps={{ weight: 'medium' }}>
+              Or import individual components directly:
+            </Text>
+            <code className="block rounded bg-muted p-2 text-xs">
+              {`import { SingleChoiceQuestion } from '@web/components/assessment';`}
             </code>
           </div>
           <div>
