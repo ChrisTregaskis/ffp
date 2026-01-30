@@ -1026,9 +1026,7 @@ const SelectedValue: React.FC<{ value: AnswerValue | null }> = ({ value }) => (
   <div className="mt-4 rounded bg-muted p-3">
     <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
       Selected value:{' '}
-      <code className="rounded bg-background px-1">
-        {value !== null ? String(value) : 'null'}
-      </code>
+      <code className="rounded bg-background px-1">{value !== null ? String(value) : 'null'}</code>
     </Text>
   </div>
 );
