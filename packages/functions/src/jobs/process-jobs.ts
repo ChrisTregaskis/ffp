@@ -13,8 +13,8 @@ import {
   completeJob,
   failJob,
   extractJobContext,
-  Logger,
-  SystemLogger,
+  createLogger,
+  createSystemLogger,
   ValidationError,
   type JobProcessorConfig,
 } from '@ffp/core/server';
@@ -56,7 +56,7 @@ export type JobResult = JobResultMap[JobType];
  * @param context - Lambda execution context for timeout tracking
  */
 export const handler = async (event: ScheduledEvent, context: Context): Promise<void> => {
-  const sysLogger = new SystemLogger('job-processor', undefined, context.awsRequestId);
+  const sysLogger = createSystemLogger('job-processor', undefined, context.awsRequestId);
 
   sysLogger.info('Processor triggered', {
     time: event.time,
@@ -100,7 +100,7 @@ export const handler = async (event: ScheduledEvent, context: Context): Promise<
         jobType: job.type,
       });
 
-      const logger = new Logger(jobContext);
+      const logger = createLogger(jobContext);
 
       logger.info('Processing job', {
         priority: job.priority,

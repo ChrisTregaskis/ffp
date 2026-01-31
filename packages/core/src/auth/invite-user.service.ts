@@ -4,7 +4,7 @@ import { users } from '@ffp/database/schema';
 import { CognitoService } from '../lib/cognito';
 import { isUserActor } from '../lib/context';
 import { ForbiddenError, ValidationError } from '../lib/errors';
-import { Logger } from '../lib/logger';
+import { createLogger } from '../lib/logger';
 import { type RequestContext } from '../lib/request-context';
 import { type InviteUserInput } from '../schemas/user.schema';
 
@@ -33,7 +33,7 @@ export async function inviteUserService(
   ctx: RequestContext,
   input: InviteUserInput
 ): Promise<InviteUserResponse> {
-  const logger = new Logger(ctx.tenantContext);
+  const logger = createLogger(ctx.tenantContext);
 
   logger.info('Invite user request', {
     role: isUserActor(ctx.tenantContext.actor) ? ctx.tenantContext.actor.userRole : 'system',

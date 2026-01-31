@@ -10,7 +10,6 @@ import {
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
-import type { FlowStep } from '../constants';
 import type { ScoringConfig } from '../types';
 
 /**
@@ -40,12 +39,6 @@ export const assessmentFlows = pgTable(
      * aggregated here to produce a single programme recommendation.
      */
     scoringConfig: jsonb('scoring_config').$type<ScoringConfig>(),
-
-    /**
-     * @deprecated Session 2 will normalise this to flow_steps table.
-     * Kept for backwards compatibility during migration.
-     */
-    steps: jsonb('steps').$type<FlowStep[]>().notNull(),
 
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at').defaultNow().notNull(),

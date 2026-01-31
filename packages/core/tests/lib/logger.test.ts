@@ -1,7 +1,7 @@
 /**
  * Unit tests for structured logging
  *
- * Tests the Logger class and withRequestLogging wrapper to ensure:
+ * Tests createLogger and withRequestLogging to ensure:
  * - Correct JSON output format for CloudWatch
  * - Actor-aware logging (user vs system)
  * - Request ID and tenant ID tracking
@@ -12,7 +12,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Logger, LogLevel, withRequestLogging } from '../../src/lib/logger';
+import { createLogger, LogLevel, withRequestLogging } from '../../src/lib/logger';
 
 import type { TenantContext } from '../../src/lib/context';
 
@@ -107,7 +107,7 @@ describe('Logger', () => {
     };
 
     it('should log info message with user actor', () => {
-      const logger = new Logger(mockUserContext);
+      const logger = createLogger(mockUserContext);
       logger.info('Test message');
 
       expect(consoleLogSpy).toHaveBeenCalledOnce();
@@ -125,7 +125,7 @@ describe('Logger', () => {
     });
 
     it('should log warn message', () => {
-      const logger = new Logger(mockUserContext);
+      const logger = createLogger(mockUserContext);
       logger.warn('Warning message');
 
       expect(consoleLogSpy).toHaveBeenCalledOnce();
@@ -136,7 +136,7 @@ describe('Logger', () => {
     });
 
     it('should log error message', () => {
-      const logger = new Logger(mockUserContext);
+      const logger = createLogger(mockUserContext);
       logger.error('Error message');
 
       expect(consoleLogSpy).toHaveBeenCalledOnce();
@@ -147,7 +147,7 @@ describe('Logger', () => {
     });
 
     it('should log debug message', () => {
-      const logger = new Logger(mockUserContext);
+      const logger = createLogger(mockUserContext);
       logger.debug('Debug message');
 
       expect(consoleLogSpy).toHaveBeenCalledOnce();
@@ -158,7 +158,7 @@ describe('Logger', () => {
     });
 
     it('should include additional context', () => {
-      const logger = new Logger(mockUserContext);
+      const logger = createLogger(mockUserContext);
       logger.info('User created', {
         userId: 'new-user-123',
         role: 'customer_user',
@@ -174,7 +174,7 @@ describe('Logger', () => {
     });
 
     it('should not include context field when empty', () => {
-      const logger = new Logger(mockUserContext);
+      const logger = createLogger(mockUserContext);
       logger.info('Test message', {});
 
       expect(consoleLogSpy).toHaveBeenCalledOnce();
@@ -184,7 +184,7 @@ describe('Logger', () => {
     });
 
     it('should not include triggeredBy for user actors', () => {
-      const logger = new Logger(mockUserContext);
+      const logger = createLogger(mockUserContext);
       logger.info('Test message');
 
       expect(consoleLogSpy).toHaveBeenCalledOnce();
@@ -209,7 +209,7 @@ describe('Logger', () => {
     };
 
     it('should log with system actor display name', () => {
-      const logger = new Logger(mockSystemContext);
+      const logger = createLogger(mockSystemContext);
       logger.info('Processing assessment');
 
       expect(consoleLogSpy).toHaveBeenCalledOnce();
@@ -219,7 +219,7 @@ describe('Logger', () => {
     });
 
     it('should include triggeredBy when present', () => {
-      const logger = new Logger(mockSystemContext);
+      const logger = createLogger(mockSystemContext);
       logger.info('Processing assessment');
 
       expect(consoleLogSpy).toHaveBeenCalledOnce();
@@ -237,7 +237,7 @@ describe('Logger', () => {
         },
       };
 
-      const logger = new Logger(systemContextNoTrigger);
+      const logger = createLogger(systemContextNoTrigger);
       logger.info('Generating daily report');
 
       expect(consoleLogSpy).toHaveBeenCalledOnce();
@@ -262,7 +262,7 @@ describe('Logger', () => {
     };
 
     it('should support all log levels via log() method', () => {
-      const logger = new Logger(mockContext);
+      const logger = createLogger(mockContext);
 
       logger.log(LogLevel.DEBUG, 'Debug via log()');
       logger.log(LogLevel.INFO, 'Info via log()');
@@ -291,7 +291,7 @@ describe('Logger', () => {
         timestamp: new Date(Date.now() - 100), // 100ms ago
       };
 
-      const logger = new Logger(mockContext);
+      const logger = createLogger(mockContext);
 
       // Wait a bit to ensure measurable duration
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -321,7 +321,7 @@ describe('Logger', () => {
     };
 
     it('should output valid JSON', () => {
-      const logger = new Logger(mockContext);
+      const logger = createLogger(mockContext);
       logger.info('Test message');
 
       expect(consoleLogSpy).toHaveBeenCalledOnce();
@@ -333,7 +333,7 @@ describe('Logger', () => {
     });
 
     it('should have correct CloudWatch structure', () => {
-      const logger = new Logger(mockContext);
+      const logger = createLogger(mockContext);
       logger.info('Test message', { key: 'value' });
 
       expect(consoleLogSpy).toHaveBeenCalledOnce();
@@ -369,7 +369,7 @@ describe('Logger', () => {
     };
 
     it('should output all levels when minLogLevel is DEBUG', () => {
-      const logger = new Logger(mockContext, LogLevel.DEBUG);
+      const logger = createLogger(mockContext, LogLevel.DEBUG);
 
       logger.debug('Debug message');
       logger.info('Info message');
@@ -380,7 +380,7 @@ describe('Logger', () => {
     });
 
     it('should suppress DEBUG logs when minLogLevel is INFO', () => {
-      const logger = new Logger(mockContext, LogLevel.INFO);
+      const logger = createLogger(mockContext, LogLevel.INFO);
 
       logger.debug('Debug message');
       logger.info('Info message');
@@ -395,7 +395,7 @@ describe('Logger', () => {
     });
 
     it('should suppress DEBUG and INFO when minLogLevel is WARN', () => {
-      const logger = new Logger(mockContext, LogLevel.WARN);
+      const logger = createLogger(mockContext, LogLevel.WARN);
 
       logger.debug('Debug message');
       logger.info('Info message');
@@ -409,7 +409,7 @@ describe('Logger', () => {
     });
 
     it('should only output ERROR when minLogLevel is ERROR', () => {
-      const logger = new Logger(mockContext, LogLevel.ERROR);
+      const logger = createLogger(mockContext, LogLevel.ERROR);
 
       logger.debug('Debug message');
       logger.info('Info message');
@@ -423,7 +423,7 @@ describe('Logger', () => {
     });
 
     it('should default to DEBUG when no minLogLevel specified', () => {
-      const logger = new Logger(mockContext);
+      const logger = createLogger(mockContext);
 
       logger.debug('Debug message');
 
@@ -437,7 +437,7 @@ describe('Logger', () => {
       process.env.LOG_LEVEL = 'WARN';
 
       try {
-        const logger = new Logger(mockContext);
+        const logger = createLogger(mockContext);
 
         logger.debug('Debug message');
         logger.info('Info message');
@@ -461,7 +461,7 @@ describe('Logger', () => {
       process.env.LOG_LEVEL = 'ERROR';
 
       try {
-        const logger = new Logger(mockContext, LogLevel.DEBUG);
+        const logger = createLogger(mockContext, LogLevel.DEBUG);
 
         logger.debug('Debug message');
 
