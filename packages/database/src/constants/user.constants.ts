@@ -6,6 +6,8 @@
  * - customer_owner: Owner of a customer account (business)
  * - customer_admin: Administrator within a customer organisation
  * - program_user: User accessing workout programmes (individual or customer user)
+ *   - Individual users: customerId = null (cannot be invited)
+ *   - Customer users: customerId present (can be invited)
  */
 export const USER_ROLES = [
   'system_admin',
