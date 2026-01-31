@@ -106,6 +106,13 @@
       "when": 1768823069185,
       "tag": "0014_eager_korvac",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1769886048277,
+      "tag": "0015_purple_karen_page",
+      "breakpoints": true
     }
   ]
 }
