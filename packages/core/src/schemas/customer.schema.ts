@@ -2,13 +2,8 @@ import { z } from 'zod';
 
 import { CUSTOMER_STATUSES } from '@ffp/database/constants';
 
-// Customer status Zod schema
 export const customerStatusSchema = z.enum(CUSTOMER_STATUSES);
 
-/**
- * Customer address schema
- * Validates UK-style address format with optional fields
- */
 export const customerAddressSchema = z
   .object({
     line1: z.string().max(255).optional(),
@@ -20,10 +15,6 @@ export const customerAddressSchema = z
   })
   .optional();
 
-/**
- * Full customer schema representing a complete customer record
- * Used for validation and type generation across the platform
- */
 export const customerSchema = z.object({
   id: z.string().uuid(),
   tenantId: z.string().uuid(),
@@ -36,9 +27,6 @@ export const customerSchema = z.object({
 });
 
 /**
- * Schema for creating a new customer (full entity)
- * Derived from customerSchema - picks required fields, overrides status with default
- *
  * Note: For admin API customer creation, use createCustomerSchema from admin.schema.ts
  */
 export const insertCustomerSchema = customerSchema
@@ -51,10 +39,6 @@ export const insertCustomerSchema = customerSchema
     status: customerSchema.shape.status.optional().default('active'),
   });
 
-/**
- * Schema for updating an existing customer
- * Derived from customerSchema - picks mutable fields, all optional via .partial()
- */
 export const updateCustomerSchema = customerSchema
   .pick({
     name: true,

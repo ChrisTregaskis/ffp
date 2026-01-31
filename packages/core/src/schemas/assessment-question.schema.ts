@@ -1,32 +1,9 @@
 import { z } from 'zod';
 
-/**
- * Question type enumeration - defines the available question types for assessments
- *
- * - single-choice: Radio button selection (one option)
- * - multi-choice: Checkbox selection (multiple options)
- * - numeric: Number input field
- * - text: Free text input field
- * - scale: Numeric scale (e.g., 1-10 rating)
- * - video-response: Video-guided physical test with recorded numerical score response
- */
-export const questionTypeSchema = z.enum([
-  'single-choice',
-  'multi-choice',
-  'numeric',
-  'text',
-  'scale',
-  'video-response',
-]);
+import { QUESTION_TYPES } from '@ffp/database/constants';
 
-export type QuestionType = z.infer<typeof questionTypeSchema>;
+export const questionTypeSchema = z.enum(QUESTION_TYPES);
 
-/**
- * Question option schema - defines selectable options for choice-based questions
- *
- * Used by single-choice and multi-choice question types.
- * The score field enables automatic scoring when an option is selected.
- */
 export const questionOptionSchema = z.object({
   /** Unique value identifier for this option */
   value: z.string().min(1),
@@ -36,11 +13,6 @@ export const questionOptionSchema = z.object({
   score: z.number().optional(),
 });
 
-export type QuestionOption = z.infer<typeof questionOptionSchema>;
-
-/**
- * Question validation schema - defines validation rules for question responses
- */
 export const questionValidationSchema = z.object({
   /** Whether an answer is required (defaults to true) */
   required: z.boolean().default(true),
@@ -54,8 +26,6 @@ export const questionValidationSchema = z.object({
   customError: z.string().optional(),
 });
 
-export type QuestionValidation = z.infer<typeof questionValidationSchema>;
-
 /**
  * Score dimension enumeration - defines the scoring dimensions for assessments
  *
@@ -68,18 +38,6 @@ export type QuestionValidation = z.infer<typeof questionValidationSchema>;
  */
 export const scoreDimensionSchema = z.enum(['strength', 'balance', 'mobility', 'pain', 'general']);
 
-export type ScoreDimension = z.infer<typeof scoreDimensionSchema>;
-
-/**
- * Assessment question schema - full question definition
- *
- * Represents a single question within an assessment template.
- * Supports multiple question types with type-specific validation.
- *
- * Type-specific requirements enforced via .refine():
- * - video-response: videoId is required
- * - single-choice/multi-choice: options array with at least 2 items is required
- */
 export const assessmentQuestionSchema = z
   .object({
     /** Unique identifier for the question (UUID) */
@@ -126,16 +84,13 @@ export const assessmentQuestionSchema = z
     }
   );
 
-export type AssessmentQuestion = z.infer<typeof assessmentQuestionSchema>;
-
-/**
- * Questions array schema - validates an array of assessment questions
- *
- * Used for the questions field in assessment templates.
- * Ensures at least one question is present.
- */
 export const questionsArraySchema = z
   .array(assessmentQuestionSchema)
   .min(1, 'At least one question is required');
 
+export type QuestionType = z.infer<typeof questionTypeSchema>;
+export type QuestionOption = z.infer<typeof questionOptionSchema>;
+export type QuestionValidation = z.infer<typeof questionValidationSchema>;
+export type ScoreDimension = z.infer<typeof scoreDimensionSchema>;
+export type AssessmentQuestion = z.infer<typeof assessmentQuestionSchema>;
 export type QuestionsArray = z.infer<typeof questionsArraySchema>;
