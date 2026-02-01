@@ -5,19 +5,26 @@ import { userAssessments, userAssessmentAnswers } from '@ffp/database/schema';
 
 import { findFlowById, findStepsByFlowId } from '../../assessments/flow.repository';
 import { calculateScores, toJobResult } from '../../assessments/scoring';
+import { createSystemContext } from '../../lib/context';
 import { NotFoundError, ValidationError } from '../../lib/errors';
+import { createSystemLogger } from '../../lib/logger';
 import { findByTemplateIds } from '../../questions/question.repository';
 import {
   assessmentResponseSchema,
   type AssessmentResponse,
   type ScoreAssessmentResult,
 } from '../../schemas/job.schema';
+import { queueJob } from '../job-queue.service';
+
+import type { Transaction } from '../../lib/database';
 
 export interface ScoreAssessmentJobPayload {
   /** The user assessment ID to score */
   userAssessmentId: string;
   /** The flow containing the scoring configuration */
   flowId: string;
+  /** User who completed the assessment */
+  userId: string;
 }
 
 /**
@@ -132,6 +139,31 @@ export async function processScoreAssessment(
         updatedAt: new Date(),
       })
       .where(eq(userAssessments.id, payload.userAssessmentId));
+
+    // Chain: queue generate_program job (atomic with scoring)
+    const logger = createSystemLogger('score-assessment-handler');
+    const systemContext = createSystemContext({
+      systemId: 'score-assessment-handler',
+      tenantId,
+    });
+
+    const generateJobId = await queueJob(
+      'generate_program',
+      {
+        assessmentSubmissionId: payload.userAssessmentId,
+        userId: payload.userId,
+        scores: result.scores,
+        recommendedTemplateSlug: scoringResult.recommendedProgrammeId ?? undefined,
+      },
+      systemContext,
+      { priority: 2, tx: tx as unknown as Transaction }
+    );
+
+    logger.info('Queue generate_program job', {
+      generateJobId,
+      assessmentId: payload.userAssessmentId,
+      recommendedTemplateSlug: scoringResult.recommendedProgrammeId,
+    });
 
     return result;
   });

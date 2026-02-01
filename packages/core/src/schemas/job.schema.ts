@@ -54,6 +54,8 @@ export const generateProgramPayloadSchema = z.object({
   userId: z.string().uuid(),
   /** Dimensional scores from the assessment */
   scores: z.array(dimensionalScoreSchema).min(1),
+  /** Programme template slug from scoring (e.g., 'gentle-mobility-programme') */
+  recommendedTemplateSlug: z.string().min(1).optional(),
   /** Optional: Specific focus areas requested by user */
   focusAreas: z.array(z.string()).optional(),
   /** Optional: Programme duration preference in weeks */

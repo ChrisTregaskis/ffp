@@ -3,9 +3,8 @@ import {
   generateProgramPayloadSchema,
   scoreAssessmentResultSchema,
   generateProgramResultSchema,
-  type ScoreAssessmentPayload,
-  type GenerateProgramPayload,
   type ScoreAssessmentResult,
+  type GenerateProgramPayload,
   type GenerateProgramResult,
 } from '@ffp/core';
 import {
@@ -13,6 +12,8 @@ import {
   completeJob,
   failJob,
   extractJobContext,
+  processScoreAssessment,
+  processGenerateProgram,
   createLogger,
   createSystemLogger,
   ValidationError,
@@ -170,7 +171,7 @@ async function processJobByType<T extends JobType>(
         });
       }
 
-      const result = await handleScoreAssessment(parseResult.data);
+      const result = await handleScoreAssessment(parseResult.data, job.tenantId);
 
       // Validate result matches schema (runtime safety check)
       const resultValidation = scoreAssessmentResultSchema.safeParse(result);
@@ -195,7 +196,7 @@ async function processJobByType<T extends JobType>(
         });
       }
 
-      const result = await handleGenerateProgram(parseResult.data);
+      const result = await handleGenerateProgram(parseResult.data, job.tenantId);
 
       // Validate result matches schema (runtime safety check)
       const resultValidation = generateProgramResultSchema.safeParse(result);
@@ -218,75 +219,18 @@ async function processJobByType<T extends JobType>(
   }
 }
 
-/**
- * Handle score_assessment job
- *
- * Placeholder until FFP-133 (Scoring Service) is implemented.
- * Will calculate dimensional scores from assessment responses.
- *
- * @param _payload - Assessment scoring payload (validated via Zod schema)
- * @returns Promise resolving to scoring result
- */
+/** Delegate to core scoring handler */
 async function handleScoreAssessment(
-  _payload: ScoreAssessmentPayload
+  payload: { userAssessmentId: string; flowId: string; userId: string },
+  tenantId: string
 ): Promise<ScoreAssessmentResult> {
-  // TODO: FFP-133 - Implement actual scoring logic
-  // Logging will be added when service is implemented with proper context
-
-  // Placeholder: Return mock result structure matching canonical schema
-  // await used to satisfy linter - will be replaced with actual async operations
-  return await Promise.resolve({
-    scores: [
-      {
-        dimensionId: 'placeholder-strength',
-        dimensionName: 'Strength',
-        rawScore: 0,
-        normalisedScore: 0,
-        category: 'pending',
-      },
-      {
-        dimensionId: 'placeholder-balance',
-        dimensionName: 'Balance',
-        rawScore: 0,
-        normalisedScore: 0,
-        category: 'pending',
-      },
-      {
-        dimensionId: 'placeholder-flexibility',
-        dimensionName: 'Flexibility',
-        rawScore: 0,
-        normalisedScore: 0,
-        category: 'pending',
-      },
-    ],
-    scoredAt: new Date().toISOString(),
-  });
+  return await processScoreAssessment(payload, tenantId);
 }
 
-/**
- * Handle generate_program job
- *
- * Placeholder until FFP-134 (Programme Generation Service) is implemented.
- * Will generate personalised workout programme from assessment scores.
- *
- * @param _payload - Programme generation payload (validated via Zod schema)
- * @returns Promise resolving to generated programme result
- */
+/** Delegate to core programme generation handler */
 async function handleGenerateProgram(
-  _payload: GenerateProgramPayload
+  payload: GenerateProgramPayload,
+  tenantId: string
 ): Promise<GenerateProgramResult> {
-  // TODO: FFP-134 - Implement actual programme generation logic
-  // Logging will be added when service is implemented with proper context
-
-  // Placeholder: Return mock result structure matching canonical schema
-  // await used to satisfy linter - will be replaced with actual async operations
-  // Values must be positive (>0) to satisfy generateProgramResultSchema validation
-  return await Promise.resolve({
-    programId: '00000000-0000-0000-0000-000000000000', // Placeholder UUID
-    programName: 'Pending Programme',
-    durationWeeks: 1,
-    exercises: [],
-    sessionsPerWeek: 1,
-    generatedAt: new Date().toISOString(),
-  });
+  return await processGenerateProgram(payload, tenantId);
 }

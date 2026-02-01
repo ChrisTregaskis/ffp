@@ -9,3 +9,6 @@
 
 export { processScoreAssessment } from './score-assessment.handler';
 export type { ScoreAssessmentJobPayload } from './score-assessment.handler';
+
+export { processGenerateProgram } from './generate-program.handler';
+export type { GenerateProgramJobPayload } from './generate-program.handler';

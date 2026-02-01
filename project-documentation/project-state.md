@@ -82,7 +82,7 @@ Create the programme generation service that runs after assessment scoring. When
 | 1   | 1       | FFP-183 | Programmes table schema, enum, migration, Zod schemas        | ✅ Complete                    |
 | 2   | 1       | FFP-184 | Programme repository with RLS (`withRLS()` pattern)          | ✅ Complete                    |
 | 3   | 2       | FFP-185 | Programme generation service logic                           | ✅ Complete                    |
-| 4   | 2       | FFP-186 | Job handler + scoring integration + assessment status update | 📋 Ready                       |
+| 4   | 2       | FFP-186 | Job handler + scoring integration + assessment status update | ✅ Complete                    |
 | 5   | 3       | -       | Leg pain seed data + programme mapping for manual testing    | 📋 Ready                       |
 | -   | -       | FFP-187 | Unit tests                                                   | 🚫 Abandoned (deferred to MVP) |
 
