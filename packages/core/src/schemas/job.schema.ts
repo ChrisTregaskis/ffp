@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { JOB_STATUSES, JOB_TYPES } from '@ffp/database/constants';
-import { answerValueSchema } from '@ffp/database/types';
+import { answerValueSchema, dimensionalScoreSchema } from '@ffp/database/types';
 
 export const jobStatusSchema = z.enum(JOB_STATUSES);
 export const jobTypeSchema = z.enum(JOB_TYPES);
@@ -31,19 +31,7 @@ export const scoreAssessmentPayloadSchema = z.object({
   responses: z.array(assessmentResponseSchema).min(1),
 });
 
-// Dimensional score result from assessment scoring
-export const dimensionalScoreSchema = z.object({
-  /** Dimension identifier (e.g., 'mobility', 'strength', 'stability') */
-  dimensionId: z.string(),
-  /** Dimension display name */
-  dimensionName: z.string(),
-  /** Raw score value */
-  rawScore: z.number(),
-  /** Normalised score (0-100 scale) */
-  normalisedScore: z.number(),
-  /** Score category (e.g., 'low', 'moderate', 'high') */
-  category: z.string().optional(),
-});
+export { dimensionalScoreSchema };
 
 // Contains calculated dimensional scores from the scoring algorithm.
 export const scoreAssessmentResultSchema = z.object({

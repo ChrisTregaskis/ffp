@@ -115,22 +115,16 @@ export type PlatformSettings = Record<string, unknown>;
 export interface TenantContext {
   /** The actor performing the operation (user or system) */
   actor: Actor;
-
   /** Tenant ID for Row-Level Security isolation */
   tenantId: string;
-
   /** Customer ID within the tenant (nullable for super admins) */
   customerId: string | null;
-
   /** Unique request ID for tracing and logging */
   requestId: string;
-
   /** Timestamp when the context was created */
   timestamp: Date;
-
   /** Optional platform settings for the tenant */
   settings?: PlatformSettings;
-
   /** Optional list of enabled modules for the tenant */
   enabledModules?: string[];
 }
@@ -357,7 +351,7 @@ export async function getUserIdFromContext(context: TenantContext): Promise<stri
   }
 
   const cognitoSub = context.actor.userId;
-  const user = await userRepository.findByCognitoSub(context.tenantId, cognitoSub);
+  const user = await userRepository.findUserByCognitoSub(context.tenantId, cognitoSub);
 
   if (!user) {
     throw new UnauthorisedError('User not found in database');

@@ -8,6 +8,7 @@ import { programmes } from './programmes';
 import { userAssessmentAnswers } from './user-assessment-answers';
 import { USER_ASSESSMENT_STATUSES } from '../constants/user-assessment.constants';
 import type { AssessmentWarning } from '../constants/branching.constants';
+import type { UserAssessmentScores } from '../types/assessment.types';
 
 /**
  * User assessment status enumeration (PostgreSQL enum)
@@ -50,7 +51,7 @@ export const userAssessments = pgTable(
     /** Assessment state machine status */
     status: userAssessmentStatusEnum('status').notNull().default('not_started'),
     /** Calculated scores after scoring job completes (nullable until scored) */
-    scores: jsonb('scores'),
+    scores: jsonb('scores').$type<UserAssessmentScores | null>(),
     /**
      * Ordered list of step IDs the user has visited during this assessment.
      * Used for path tracking, branching validation, and resuming interrupted assessments.

@@ -1,52 +1,44 @@
 import { eq, and, or, sql } from 'drizzle-orm';
 
 import type { UserAssessmentStatus } from '@ffp/database';
-import { userAssessments } from '@ffp/database/schema';
+import { userAssessments, type UserAssessmentRecord } from '@ffp/database/schema';
+import type { UserAssessmentScores } from '@ffp/database/types';
 
 import { withRLS, type Transaction } from '../lib/database';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import {
   isValidStatusTransition,
   getAllowedTransitions,
-  type UserAssessment,
   type CreateUserAssessmentInput,
   type UpdateUserAssessmentInput,
-  type UserAssessmentScores,
 } from '../schemas/user-assessment.schema';
 import { warningsArraySchema, type Warning } from '../schemas/warning.schema';
 
-/**
- * Map database record to UserAssessment type
- *
- * Converts the Drizzle select result to the Zod-defined UserAssessment type.
- * The cast through unknown is safe because JSONB data is validated by Zod
- * schemas before being stored in the database.
- */
-function mapToUserAssessment(record: typeof userAssessments.$inferSelect): UserAssessment {
-  return {
-    id: record.id,
-    tenantId: record.tenantId,
-    userId: record.userId,
-    flowId: record.flowId,
-    currentStep: record.currentStep,
-    status: record.status,
-    scores: record.scores as UserAssessmentScores | null,
-    programmeId: record.programmeId,
-    startedAt: record.startedAt,
-    submittedAt: record.submittedAt,
-    completedAt: record.completedAt,
-    createdAt: record.createdAt,
-    updatedAt: record.updatedAt,
-  };
+export type UserAssessment = UserAssessmentRecord;
+
+export interface UpdateAssessmentProgressOptions {
+  /** Optional user ID for fine-grained RLS */
+  userId?: string;
+  /** Optional transaction for atomic operations across multiple writes */
+  tx?: Transaction;
 }
 
-/**
- * Create a new user assessment
- *
- * Creates an assessment instance in 'not_started' status.
- * RLS is enforced via tenant context.
- */
-export async function create(input: CreateUserAssessmentInput): Promise<UserAssessment> {
+export interface TransitionAssessmentStatusOptions {
+  /** Optional user ID for fine-grained RLS */
+  userId?: string;
+  /** Optional transaction for atomic operations across multiple writes */
+  tx?: Transaction;
+}
+
+export interface AppendWarningsOptions {
+  /** Optional transaction for atomic operations */
+  tx?: Transaction;
+}
+
+/** Creates an assessment instance in 'not_started' status. */
+export async function createUserAssessment(
+  input: CreateUserAssessmentInput
+): Promise<UserAssessment> {
   return await withRLS(input.tenantId, input.userId, async (tx) => {
     const [record] = await tx
       .insert(userAssessments)
@@ -59,20 +51,11 @@ export async function create(input: CreateUserAssessmentInput): Promise<UserAsse
       })
       .returning();
 
-    return mapToUserAssessment(record);
+    return record;
   });
 }
 
-/**
- * Find a user assessment by ID
- *
- * RLS is enforced via tenant context.
- *
- * @param userId - Optional user ID for fine-grained RLS. While tenant-level
- *   isolation is sufficient for current needs, passing userId enables future
- *   user-level RLS policies without API changes.
- */
-export async function findById(
+export async function findUserAssessmentById(
   tenantId: string,
   assessmentId: string,
   userId?: string
@@ -88,16 +71,10 @@ export async function findById(
       return null;
     }
 
-    return mapToUserAssessment(records[0]);
+    return records[0];
   });
 }
 
-/**
- * Find all assessments for a user
- *
- * RLS is enforced via tenant context.
- * @param options.status - Optional status filter
- */
 export async function findByUserId(
   tenantId: string,
   userId: string,
@@ -115,18 +92,11 @@ export async function findByUserId(
       .from(userAssessments)
       .where(and(...conditions));
 
-    return records.map(mapToUserAssessment);
+    return records;
   });
 }
 
-/**
- * Find an in-progress assessment for a user
- *
- * Useful for checking if a user has an existing assessment to resume.
- *
- * @param flowId - Optional flow ID to filter by
- */
-export async function findInProgress(
+export async function findAssessmentInProgress(
   tenantId: string,
   userId: string,
   flowId?: string
@@ -151,17 +121,12 @@ export async function findInProgress(
       return null;
     }
 
-    return mapToUserAssessment(records[0]);
+    return records[0];
   });
 }
 
-/**
- * Find a resumable assessment for a user
- *
- * Returns an existing assessment that can be resumed (not_started or in_progress).
- * Used by the start assessment API to prevent creating duplicate assessments.
- */
-export async function findResumable(
+/** Returns an existing assessment that can be resumed (not_started or in_progress). */
+export async function findResumableAssessment(
   tenantId: string,
   userId: string,
   flowId: string
@@ -183,16 +148,12 @@ export async function findResumable(
       return null;
     }
 
-    return mapToUserAssessment(records[0]);
+    return records[0];
   });
 }
 
-/**
- * Update assessment progress (internal implementation)
- *
- * Executes the update logic within a provided transaction.
- */
-async function updateProgressInTx(
+/** Executes the update logic within a provided transaction. */
+async function updateAssessmentProgressInTx(
   tx: Transaction,
   assessmentId: string,
   data: UpdateUserAssessmentInput
@@ -220,56 +181,35 @@ async function updateProgressInTx(
     .where(eq(userAssessments.id, assessmentId))
     .returning();
 
-  return mapToUserAssessment(record);
-}
-
-export interface UpdateProgressOptions {
-  /** Optional user ID for fine-grained RLS */
-  userId?: string;
-  /** Optional transaction for atomic operations across multiple writes */
-  tx?: Transaction;
+  return record;
 }
 
 /**
- * Update assessment progress
- *
  * Updates currentStep only. Does not change status - use transitionStatus for that.
- *
  * Note: Answers are stored in the user_assessment_answers table.
  * Use answerRepository.saveAnswers() to save answers separately.
- *
- * @param options.userId - Optional user ID for fine-grained RLS. While tenant-level
- *   isolation is sufficient for current needs, passing userId enables future
- *   user-level RLS policies without API changes.
- * @param options.tx - Optional transaction for atomic operations. If provided,
- *   the operation runs within this transaction (RLS must be set by caller).
- *   If not provided, creates a new transaction with RLS.
  */
-export async function updateProgress(
+export async function updateAssessmentProgress(
   tenantId: string,
   assessmentId: string,
   data: UpdateUserAssessmentInput,
-  options: UpdateProgressOptions = {}
+  options: UpdateAssessmentProgressOptions = {}
 ): Promise<UserAssessment> {
   const { userId, tx } = options;
 
   // If transaction provided, use it directly (caller must set RLS)
   if (tx) {
-    return updateProgressInTx(tx, assessmentId, data);
+    return updateAssessmentProgressInTx(tx, assessmentId, data);
   }
 
   // Otherwise, create new transaction with RLS
   return await withRLS(tenantId, userId, async (newTx) => {
-    return updateProgressInTx(newTx, assessmentId, data);
+    return updateAssessmentProgressInTx(newTx, assessmentId, data);
   });
 }
 
-/**
- * Transition assessment to a new status (internal implementation)
- *
- * Executes the transition logic within a provided transaction.
- */
-async function transitionStatusInTx(
+/** Executes the transition logic within a provided transaction. */
+async function transitionAssessmentStatusInTx(
   tx: Transaction,
   assessmentId: string,
   toStatus: UserAssessmentStatus
@@ -321,63 +261,37 @@ async function transitionStatusInTx(
     .where(eq(userAssessments.id, assessmentId))
     .returning();
 
-  return mapToUserAssessment(record);
-}
-
-export interface TransitionStatusOptions {
-  /** Optional user ID for fine-grained RLS */
-  userId?: string;
-  /** Optional transaction for atomic operations across multiple writes */
-  tx?: Transaction;
+  return record;
 }
 
 /**
- * Transition assessment to a new status
- *
  * Validates that the transition is allowed by the state machine.
  * Updates relevant timestamp fields based on the target status.
- *
- * @param toStatus - Target status
- * @param options.userId - Optional user ID for fine-grained RLS. While tenant-level
- *   isolation is sufficient for current needs, passing userId enables future
- *   user-level RLS policies without API changes.
- * @param options.tx - Optional transaction for atomic operations. If provided,
- *   the operation runs within this transaction (RLS must be set by caller).
- *   If not provided, creates a new transaction with RLS.
- * @throws NotFoundError if assessment not found
- * @throws ValidationError if transition is not allowed
  */
-export async function transitionStatus(
+export async function transitionAssessmentStatus(
   tenantId: string,
   assessmentId: string,
   toStatus: UserAssessmentStatus,
-  options: TransitionStatusOptions = {}
+  options: TransitionAssessmentStatusOptions = {}
 ): Promise<UserAssessment> {
   const { userId, tx } = options;
 
   // If transaction provided, use it directly (caller must set RLS)
   if (tx) {
-    return transitionStatusInTx(tx, assessmentId, toStatus);
+    return transitionAssessmentStatusInTx(tx, assessmentId, toStatus);
   }
 
   // Otherwise, create new transaction with RLS
   return await withRLS(tenantId, userId, async (newTx) => {
-    return transitionStatusInTx(newTx, assessmentId, toStatus);
+    return transitionAssessmentStatusInTx(newTx, assessmentId, toStatus);
   });
 }
 
 /**
- * Update assessment scores
- *
  * Called after scoring job completes.
  * Typically followed by transitionStatus to 'scored'.
- *
- * @param scores - Calculated scores from scoring job
- * @param userId - Optional user ID for fine-grained RLS. While tenant-level
- *   isolation is sufficient for current needs, passing userId enables future
- *   user-level RLS policies without API changes.
  */
-export async function updateScores(
+export async function updateAssessmentScores(
   tenantId: string,
   assessmentId: string,
   scores: UserAssessmentScores,
@@ -403,21 +317,15 @@ export async function updateScores(
       .where(eq(userAssessments.id, assessmentId))
       .returning();
 
-    return mapToUserAssessment(record);
+    return record;
   });
 }
 
 /**
- * Link assessment to generated programme
- *
  * Called after programme generation job completes.
  * Typically followed by transitionStatus to 'completed'.
- *
- * @param userId - Optional user ID for fine-grained RLS. While tenant-level
- *   isolation is sufficient for current needs, passing userId enables future
- *   user-level RLS policies without API changes.
  */
-export async function linkProgramme(
+export async function linkAssessmentToProgramme(
   tenantId: string,
   assessmentId: string,
   programmeId: string,
@@ -443,22 +351,12 @@ export async function linkProgramme(
       .where(eq(userAssessments.id, assessmentId))
       .returning();
 
-    return mapToUserAssessment(record);
+    return record;
   });
 }
 
-export interface AppendWarningsOptions {
-  /** Optional transaction for atomic operations */
-  tx?: Transaction;
-}
-
-/**
- * Append warnings to an assessment's warnings_shown array
- *
- * Adds new warnings to the existing JSONB array without overwriting.
- * Used by branching evaluation to persist warnings shown to users.
- */
-export async function appendWarnings(
+/** Append warnings to an assessment's warnings_shown array */
+export async function appendAssessmentWarnings(
   tenantId: string,
   assessmentId: string,
   warnings: Warning[],

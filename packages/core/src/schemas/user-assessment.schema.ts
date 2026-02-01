@@ -5,9 +5,7 @@ import {
   VALID_STATUS_TRANSITIONS,
   WARNING_TYPES,
 } from '@ffp/database/constants';
-import { answerValueSchema } from '@ffp/database/types';
-
-import { dimensionalScoreSchema } from './job.schema';
+import { answerValueSchema, userAssessmentScoresSchema } from '@ffp/database/types';
 
 export const userAssessmentStatusSchema = z.enum(USER_ASSESSMENT_STATUSES);
 
@@ -28,20 +26,7 @@ export const userAnswerSchema = z.object({
  */
 export const userAssessmentAnswersSchema = z.record(z.string().uuid(), userAnswerSchema);
 
-/**
- * Contains calculated dimensional scores after scoring job completes.
- * Stored as JSONB in the database.
- */
-export const userAssessmentScoresSchema = z.object({
-  /** Array of dimensional scores */
-  dimensions: z.array(dimensionalScoreSchema),
-  /** Overall assessment score (if applicable) */
-  overallScore: z.number().optional(),
-  /** Risk level derived from scores */
-  riskLevel: z.enum(['low', 'moderate', 'high']).optional(),
-  /** Timestamp when scoring was completed */
-  scoredAt: z.coerce.date(),
-});
+export { userAssessmentScoresSchema };
 
 /** Represents a complete user assessment record from the database. */
 export const userAssessmentSchema = z.object({
