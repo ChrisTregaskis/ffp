@@ -1,8 +1,13 @@
 import { eq, and } from 'drizzle-orm';
 
-import { programmes, type ProgrammeRecord } from '@ffp/database/schema';
+import {
+  programmes,
+  programmeTemplates,
+  type ProgrammeRecord,
+  type ProgrammeTemplateRecord,
+} from '@ffp/database/schema';
 
-import { withRLS, type Transaction } from '../lib/database';
+import { db, withRLS, type Transaction } from '../lib/database';
 import { type CreateProgrammeInput } from '../schemas/programme.schema';
 
 export type Programme = ProgrammeRecord;
@@ -20,6 +25,11 @@ export interface FindByUserIdOptions {
 export interface FindByIdOptions {
   /** Optional user ID for fine-grained RLS */
   userId?: string;
+  /** Optional transaction for atomic operations. If provided, RLS must be set by caller. */
+  tx?: Transaction;
+}
+
+export interface FindTemplateBySlugOptions {
   /** Optional transaction for atomic operations. If provided, RLS must be set by caller. */
   tx?: Transaction;
 }
@@ -60,6 +70,19 @@ async function findProgrammeByIdInTx(
   programmeId: string
 ): Promise<Programme | null> {
   const records = await tx.select().from(programmes).where(eq(programmes.id, programmeId)).limit(1);
+
+  return records[0] ?? null;
+}
+
+async function findTemplateBySlugInTx(
+  tx: Transaction,
+  slug: string
+): Promise<ProgrammeTemplateRecord | null> {
+  const records = await tx
+    .select()
+    .from(programmeTemplates)
+    .where(eq(programmeTemplates.slug, slug))
+    .limit(1);
 
   return records[0] ?? null;
 }
@@ -112,4 +135,26 @@ export async function findProgrammeById(
   });
 }
 
+/** Looks up a programme template by slug. No RLS required (system-managed table). */
+export async function findTemplateBySlug(
+  slug: string,
+  options: FindTemplateBySlugOptions = {}
+): Promise<ProgrammeTemplateRecord | null> {
+  const { tx } = options;
+
+  if (tx) {
+    return findTemplateBySlugInTx(tx, slug);
+  }
+
+  // No RLS needed — programme_templates is a system-managed lookup table
+  const records = await db
+    .select()
+    .from(programmeTemplates)
+    .where(eq(programmeTemplates.slug, slug))
+    .limit(1);
+
+  return records[0] ?? null;
+}
+
 export type { CreateProgrammeInput };
+export type { ProgrammeTemplateRecord };
