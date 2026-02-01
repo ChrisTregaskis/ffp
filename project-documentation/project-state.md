@@ -72,8 +72,8 @@ Create the programme generation service that runs after assessment scoring. When
 | Programme Zod schemas                                          | `@ffp/core/src/schemas/programme.schema.ts`               |
 | Programme repository (RLS)                                     | `@ffp/core/src/programmes/programme.repository.ts`        |
 | Programme service                                              | `@ffp/core/src/programmes/programme.service.ts`           |
-| `processGenerateProgram` handler                               | `@ffp/core/src/jobs/handlers/generate-program.handler.ts` |
-| Enqueue `generate_program` after scoring                       | Modify `score-assessment.handler.ts`                      |
+| `processGenerateProgramme` handler                             | `@ffp/core/src/jobs/handlers/generate-program.handler.ts` |
+| Enqueue `generate_programme` after scoring                     | Modify `score-assessment.handler.ts`                      |
 
 ### Sub-task Execution Order
 
@@ -104,7 +104,7 @@ Create the programme generation service that runs after assessment scoring. When
 
 - Create `generateProgramme()` in `@ffp/core/src/programmes/programme.service.ts`
 - MVP logic: check for existing active programme → if exists, return existing ID (retake path) → if not, create new programme from `recommendedProgrammeId`
-- Create `processGenerateProgram` handler following `processScoreAssessment` pattern
+- Create `processGenerateProgramme` handler following `processScoreAssessment` pattern
 - Modify `score-assessment.handler.ts` to enqueue `generate_program` job after scoring completes
 - Handler updates `user_assessments`: set `programmeId`, `status: 'completed'`, `completedAt`
 - Register handler in job processor dispatch

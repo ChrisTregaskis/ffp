@@ -13,10 +13,10 @@ import {
   failJob,
   extractJobContext,
   processScoreAssessment,
-  processGenerateProgram,
   createLogger,
   createSystemLogger,
   ValidationError,
+  processGenerateProgramme,
   type JobProcessorConfig,
 } from '@ffp/core/server';
 import { getDb, type ProcessJobRecord, type JobType } from '@ffp/database';
@@ -232,5 +232,5 @@ async function handleGenerateProgram(
   payload: GenerateProgramPayload,
   tenantId: string
 ): Promise<GenerateProgramResult> {
-  return await processGenerateProgram(payload, tenantId);
+  return await processGenerateProgramme(payload, tenantId);
 }

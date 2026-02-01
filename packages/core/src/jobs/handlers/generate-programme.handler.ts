@@ -9,7 +9,7 @@ import { generateProgramme } from '../../programmes/programme.service';
 
 import type { DimensionalScore, GenerateProgramResult } from '../../schemas/job.schema';
 
-export interface GenerateProgramJobPayload {
+export interface GenerateProgrammeJobPayload {
   /** The scored user assessment ID */
   assessmentSubmissionId: string;
   /** User who completed the assessment */
@@ -28,11 +28,11 @@ export interface GenerateProgramJobPayload {
  *
  * Flow: scored assessment → generate programme → link → complete
  */
-export async function processGenerateProgram(
-  payload: GenerateProgramJobPayload,
+export async function processGenerateProgramme(
+  payload: GenerateProgrammeJobPayload,
   tenantId: string
 ): Promise<GenerateProgramResult> {
-  const logger = createSystemLogger('generate-program-handler');
+  const logger = createSystemLogger('generate-programme-handler');
 
   return await withRLS(tenantId, undefined, async (tx) => {
     // Generate or retrieve existing programme
