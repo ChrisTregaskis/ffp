@@ -16,9 +16,9 @@ import * as questionRepository from '../../src/questions/question.repository';
 
 import type { UserAssessmentAnswer } from '../../src/assessments/answer.repository';
 import type { AssessmentFlow, FlowStepWithConfig } from '../../src/assessments/flow.repository';
+import type { UserAssessment } from '../../src/assessments/user-assessment.repository';
 import type { TenantContext, UserActor } from '../../src/lib/context';
 import type { QuestionWithConfig } from '../../src/questions/question.repository';
-import type { UserAssessment } from '../../src/assessments/user-assessment.repository';
 
 type ContextModule = typeof contextModule;
 type DatabaseModule = typeof databaseModule;
