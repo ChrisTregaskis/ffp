@@ -31,7 +31,7 @@ import type { Context, ScheduledEvent } from 'aws-lambda';
 // These mappings enable type-safe routing in processJobByType.
 
 /** Map job type to its result type */
-interface JobResultMap {
+export interface JobResultMap {
   score_assessment: ScoreAssessmentResult;
   generate_program: GenerateProgramResult;
 }
@@ -157,7 +157,7 @@ export const handler = async (event: ScheduledEvent, context: Context): Promise<
  * @param job - The job record to process
  * @returns Promise resolving to typed result object to store in job.result
  */
-async function processJobByType<T extends JobType>(
+export async function processJobByType<T extends JobType>(
   job: ProcessJobRecord & { type: T }
 ): Promise<JobResultMap[T]> {
   switch (job.type) {
