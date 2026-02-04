@@ -149,27 +149,38 @@ const FLOW_SCORING_CONFIG: ScoringConfig = {
  * Seeds the default assessment flow for MVP.
  *
  * This seed is IDEMPOTENT - safe to run multiple times.
- * If a flow with the default name already exists, it will be skipped.
+ * - If the flow does not exist, it will be created.
+ * - If the flow already exists, its scoringConfig will be updated
+ *   to match the current seed definition (scoring rules evolve over time).
  *
  * Note: assessment_flows table has NO RLS, so no special context needed.
  *
  * @param db - Database client with schema
- * @returns Promise<boolean> - true if flow was created, false if already existed
+ * @returns Promise<boolean> - true if flow was created, false if updated
  */
 export const seedAssessmentFlows = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool }
 ): Promise<boolean> => {
   logger.info('Seeding assessment flows...');
 
-  // Check if default flow already exists (idempotency)
+  // Check if default flow already exists
   const existingFlow = await db.query.assessmentFlows.findFirst({
     where: eq(assessmentFlows.name, DEFAULT_FLOW_NAME),
   });
 
   if (existingFlow) {
-    logger.warn(`Assessment flow already exists: "${DEFAULT_FLOW_NAME}"`, {
+    // Upsert: update scoringConfig to keep it in sync with seed definition
+    await db
+      .update(assessmentFlows)
+      .set({
+        scoringConfig: FLOW_SCORING_CONFIG,
+        description: 'Comprehensive assessment with pre-questions and physical tests',
+      })
+      .where(eq(assessmentFlows.id, existingFlow.id));
+
+    logger.info('Assessment flow scoring config updated', {
       id: existingFlow.id,
-      isActive: existingFlow.isActive,
+      name: DEFAULT_FLOW_NAME,
     });
     return false;
   }

@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 30th January 2026
+**Last Updated**: 4th February 2026
 **Current EPIC**: FFP-2 - Assessment Engine
 **Sprint Status**: Sprint 5 🚀 In Progress
 **Previous**: Sprint 4 ✅ Complete
@@ -21,10 +21,10 @@
 | FFP-138 | Assessment Progress Bar Component    | 2   | ✅ Complete | FFP-135 ✅             |
 | FFP-131 | Get Assessment Results API           | 3   | ✅ Complete | FFP-133 ✅             |
 | FFP-136 | TanStack Query Hooks for Assessments | 5   | ✅ Complete | FFP-135 ✅, FFP-131 ✅ |
-| FFP-134 | Programme Generation Service         | 5   | 📋 Ready    | FFP-131 ✅             |
+| FFP-134 | Programme Generation Service         | 5   | ✅ Complete | FFP-131 ✅             |
 | FFP-139 | Question Renderer Components         | 8   | ✅ Complete | FFP-135 ✅, FFP-136 ✅ |
 
-### Current Progress: 18/23 pts (78%) - FFP-134 in progress
+### Current Progress: 23/23 pts (100%) - Sprint 5 Complete 🎉
 
 ### Recommended Next Steps
 
@@ -32,7 +32,7 @@
 2. ~~**FFP-131** (3 pts) - Unblocks FFP-134 and FFP-136, critical path~~ ✅ Complete
 3. ~~**FFP-136** (5 pts) - TanStack setup, unblocks FFP-139~~ ✅ Complete
 4. ~~**FFP-139** (8 pts) - Question renderers~~ ✅ Complete
-5. **FFP-134** (5 pts) - Programme Generation Service 🚀 **IN PROGRESS**
+5. ~~**FFP-134** (5 pts) - Programme Generation Service~~ ✅ Complete
 
 ---
 
@@ -83,7 +83,7 @@ Create the programme generation service that runs after assessment scoring. When
 | 2   | 1       | FFP-184 | Programme repository with RLS (`withRLS()` pattern)          | ✅ Complete                    |
 | 3   | 2       | FFP-185 | Programme generation service logic                           | ✅ Complete                    |
 | 4   | 2       | FFP-186 | Job handler + scoring integration + assessment status update | ✅ Complete                    |
-| 5   | 3       | -       | Leg pain seed data + programme mapping for manual testing    | 📋 Ready                       |
+| 5   | 3       | -       | Manual testing: 5 scenarios validated (A-E), all passing     | ✅ Complete                    |
 | -   | -       | FFP-187 | Unit tests                                                   | 🚫 Abandoned (deferred to MVP) |
 
 ### Session Breakdown
@@ -255,7 +255,7 @@ FFP-124 → FFP-125 → FFP-127 → FFP-128 → FFP-129 → FFP-130 → FFP-133 
 | ------ | -------------------- | --- | ----------- |
 | 3      | Backend Foundation   | 24  | ✅ Complete |
 | 4      | APIs & FE Foundation | 23  | ✅ Complete |
-| 5      | Results & FE Core    | 23  | 📋 Ready    |
+| 5      | Results & FE Core    | 23  | ✅ Complete |
 | 6      | FE Completion        | 14  | Future      |
 
 ---
