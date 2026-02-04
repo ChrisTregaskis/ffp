@@ -1,14 +1,3 @@
-/**
- * Question-related types - Single source of truth for question JSONB structures
- *
- * These types are shared between:
- * - @ffp/database: JSONB column typing in Drizzle schemas
- * - @ffp/core: Zod validation schemas (imports schemas directly)
- *
- * This avoids circular dependencies since @ffp/database has no dependencies
- * on other @ffp/* packages.
- */
-
 import { z } from 'zod';
 
 import type { ScoreDimension } from '../constants/question.constants';

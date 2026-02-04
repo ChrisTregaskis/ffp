@@ -244,10 +244,3 @@ export const createLogger = (moduleName: string): BrowserLogger => {
     },
   };
 };
-
-/**
- * Default logger instance for the application (without module prefix)
- *
- * @deprecated Prefer using `createLogger(moduleName)` for better debugging
- */
-export const logger = createLogger('app');

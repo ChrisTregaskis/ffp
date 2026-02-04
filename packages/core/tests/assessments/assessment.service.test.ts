@@ -16,9 +16,9 @@ import * as questionRepository from '../../src/questions/question.repository';
 
 import type { UserAssessmentAnswer } from '../../src/assessments/answer.repository';
 import type { AssessmentFlow, FlowStepWithConfig } from '../../src/assessments/flow.repository';
+import type { UserAssessment } from '../../src/assessments/user-assessment.repository';
 import type { TenantContext, UserActor } from '../../src/lib/context';
 import type { QuestionWithConfig } from '../../src/questions/question.repository';
-import type { UserAssessment } from '../../src/schemas/user-assessment.schema';
 
 type ContextModule = typeof contextModule;
 type DatabaseModule = typeof databaseModule;
@@ -77,7 +77,6 @@ const createMockFlow = (id: string): AssessmentFlow => ({
   name: 'Test Flow',
   description: null,
   scoringConfig: null,
-  steps: [{ order: 1, type: 'intro', config: { title: 'Intro' } }],
   isActive: true,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -102,6 +101,8 @@ describe('Assessment Service', () => {
         status: 'not_started',
         scores: null,
         programmeId: null,
+        visitedStepIds: [],
+        warningsShown: [],
         startedAt: null,
         submittedAt: null,
         completedAt: null,
@@ -129,14 +130,14 @@ describe('Assessment Service', () => {
       mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
       mockedFlowRepo.findActiveById.mockResolvedValue(createMockFlow(flowId));
       mockedFlowRepo.findStepsByFlowId.mockResolvedValue(mockFlowSteps);
-      mockedUserAssessmentRepo.findResumable.mockResolvedValue(null);
-      mockedUserAssessmentRepo.create.mockResolvedValue(mockAssessment);
+      mockedUserAssessmentRepo.findResumableAssessment.mockResolvedValue(null);
+      mockedUserAssessmentRepo.createUserAssessment.mockResolvedValue(mockAssessment);
 
       const result = await assessmentService.startAssessment(flowId, context);
 
       expect(result.isResumed).toBe(false);
       expect(result.steps).toHaveLength(1);
-      expect(mockedUserAssessmentRepo.create).toHaveBeenCalled();
+      expect(mockedUserAssessmentRepo.createUserAssessment).toHaveBeenCalled();
     });
 
     it('returns existing assessment with isResumed=true', async () => {
@@ -153,6 +154,8 @@ describe('Assessment Service', () => {
         status: 'in_progress',
         scores: null,
         programmeId: null,
+        visitedStepIds: [],
+        warningsShown: [],
         startedAt: new Date(),
         submittedAt: null,
         completedAt: null,
@@ -192,7 +195,7 @@ describe('Assessment Service', () => {
       mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
       mockedFlowRepo.findActiveById.mockResolvedValue(createMockFlow(flowId));
       mockedFlowRepo.findStepsByFlowId.mockResolvedValue(mockFlowSteps);
-      mockedUserAssessmentRepo.findResumable.mockResolvedValue(existingAssessment);
+      mockedUserAssessmentRepo.findResumableAssessment.mockResolvedValue(existingAssessment);
       mockedAnswerRepo.findByAssessmentId.mockResolvedValue(storedAnswers);
 
       const result = await assessmentService.startAssessment(flowId, context);
@@ -202,7 +205,7 @@ describe('Assessment Service', () => {
       expect(result.steps).toHaveLength(1);
       expect(result.answers[questionId]).toBeDefined();
       expect(result.answers[questionId].answerValue).toBe(4);
-      expect(mockedUserAssessmentRepo.create).not.toHaveBeenCalled();
+      expect(mockedUserAssessmentRepo.createUserAssessment).not.toHaveBeenCalled();
     });
 
     it('throws NotFoundError for invalid flow', async () => {
@@ -216,7 +219,7 @@ describe('Assessment Service', () => {
       await expect(assessmentService.startAssessment(flowId, context)).rejects.toThrow(
         NotFoundError
       );
-      expect(mockedUserAssessmentRepo.findResumable).not.toHaveBeenCalled();
+      expect(mockedUserAssessmentRepo.findResumableAssessment).not.toHaveBeenCalled();
     });
   });
 
@@ -230,6 +233,8 @@ describe('Assessment Service', () => {
       status: 'in_progress',
       scores: null,
       programmeId: null,
+      visitedStepIds: [],
+      warningsShown: [],
       startedAt: new Date(),
       submittedAt: null,
       completedAt: null,
@@ -238,16 +243,11 @@ describe('Assessment Service', () => {
       ...overrides,
     });
 
-    const createMockFlowWithQuestions = (flowId: string, templateId: string): AssessmentFlow => ({
+    const createMockFlowWithQuestions = (flowId: string, _templateId: string): AssessmentFlow => ({
       id: flowId,
       name: 'Test Flow',
       description: null,
       scoringConfig: null,
-      steps: [
-        { order: 1, type: 'intro', config: { title: 'Welcome' } },
-        { order: 2, type: 'questions', templateId, config: { title: 'Questions' } },
-        { order: 3, type: 'results', config: { title: 'Results' } },
-      ],
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -400,7 +400,7 @@ describe('Assessment Service', () => {
       ];
 
       mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
-      mockedUserAssessmentRepo.findById.mockResolvedValue(assessment);
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
       mockedFlowRepo.findById.mockResolvedValue(flow);
       mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createMockFlowSteps(flowId, templateId));
       mockedAnswerRepo.findByAssessmentId.mockResolvedValue(existingDbAnswers);
@@ -413,7 +413,7 @@ describe('Assessment Service', () => {
         status: 'submitted',
         submittedAt: new Date(),
       };
-      mockedUserAssessmentRepo.transitionStatus.mockResolvedValue(submittedAssessment);
+      mockedUserAssessmentRepo.transitionAssessmentStatus.mockResolvedValue(submittedAssessment);
       mockedJobQueueService.queueJob.mockResolvedValue(jobId);
 
       const result = await assessmentService.submitAssessment(
@@ -433,7 +433,7 @@ describe('Assessment Service', () => {
         expect.objectContaining({ tx: expect.anything() as unknown })
       );
 
-      expect(mockedUserAssessmentRepo.transitionStatus).toHaveBeenCalledWith(
+      expect(mockedUserAssessmentRepo.transitionAssessmentStatus).toHaveBeenCalledWith(
         context.tenantId,
         assessmentId,
         'submitted',
@@ -470,7 +470,7 @@ describe('Assessment Service', () => {
       });
 
       mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
-      mockedUserAssessmentRepo.findById.mockResolvedValue(assessment);
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
 
       await expect(
         assessmentService.submitAssessment(assessmentId, { answers: {} }, context)
@@ -499,7 +499,7 @@ describe('Assessment Service', () => {
       });
 
       mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
-      mockedUserAssessmentRepo.findById.mockResolvedValue(assessment);
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
 
       await expect(
         assessmentService.submitAssessment(assessmentId, { answers: {} }, context)
@@ -550,7 +550,7 @@ describe('Assessment Service', () => {
       ];
 
       mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
-      mockedUserAssessmentRepo.findById.mockResolvedValue(assessment);
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
       mockedFlowRepo.findById.mockResolvedValue(flow);
       mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createMockFlowSteps(flowId, templateId));
       mockedAnswerRepo.findByAssessmentId.mockResolvedValue(existingDbAnswers);
@@ -570,7 +570,7 @@ describe('Assessment Service', () => {
       }
 
       expect(mockedAnswerRepo.saveAnswers).not.toHaveBeenCalled();
-      expect(mockedUserAssessmentRepo.transitionStatus).not.toHaveBeenCalled();
+      expect(mockedUserAssessmentRepo.transitionAssessmentStatus).not.toHaveBeenCalled();
       expect(mockedJobQueueService.queueJob).not.toHaveBeenCalled();
     });
 
@@ -620,7 +620,7 @@ describe('Assessment Service', () => {
       ];
 
       mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
-      mockedUserAssessmentRepo.findById.mockResolvedValue(assessment);
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
       mockedFlowRepo.findById.mockResolvedValue(flow);
       mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createMockFlowSteps(flowId, templateId));
       mockedAnswerRepo.findByAssessmentId.mockResolvedValue(existingDbAnswers);
@@ -632,7 +632,7 @@ describe('Assessment Service', () => {
         ...assessment,
         status: 'submitted',
       };
-      mockedUserAssessmentRepo.transitionStatus.mockResolvedValue(submittedAssessment);
+      mockedUserAssessmentRepo.transitionAssessmentStatus.mockResolvedValue(submittedAssessment);
       mockedJobQueueService.queueJob.mockResolvedValue(jobId);
 
       await assessmentService.submitAssessment(assessmentId, { answers: {} }, context);
@@ -659,7 +659,7 @@ describe('Assessment Service', () => {
       const assessmentId = randomUUID();
 
       mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
-      mockedUserAssessmentRepo.findById.mockResolvedValue(null);
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(null);
 
       await expect(
         assessmentService.submitAssessment(assessmentId, { answers: {} }, context)
@@ -685,7 +685,7 @@ describe('Assessment Service', () => {
       });
 
       mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
-      mockedUserAssessmentRepo.findById.mockResolvedValue(assessment);
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
       mockedFlowRepo.findById.mockResolvedValue(null);
 
       await expect(
@@ -716,17 +716,13 @@ describe('Assessment Service', () => {
         name: 'Test Flow',
         description: null,
         scoringConfig: null,
-        steps: [
-          { order: 1, type: 'intro', config: { title: 'Welcome' } },
-          { order: 2, type: 'results', config: { title: 'Results' } },
-        ],
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
       mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
-      mockedUserAssessmentRepo.findById.mockResolvedValue(assessment);
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
       mockedFlowRepo.findById.mockResolvedValue(flowWithNoQuestions);
       mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createMockFlowStepsNoQuestions(flowId));
       mockedAnswerRepo.findByAssessmentId.mockResolvedValue([]);
@@ -780,7 +776,7 @@ describe('Assessment Service', () => {
       ];
 
       mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
-      mockedUserAssessmentRepo.findById.mockResolvedValue(assessment);
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
       mockedFlowRepo.findById.mockResolvedValue(flow);
       mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createMockFlowSteps(flowId, templateId));
       mockedAnswerRepo.findByAssessmentId.mockResolvedValue(existingDbAnswers);
@@ -792,7 +788,7 @@ describe('Assessment Service', () => {
         ...assessment,
         status: 'submitted',
       };
-      mockedUserAssessmentRepo.transitionStatus.mockResolvedValue(submittedAssessment);
+      mockedUserAssessmentRepo.transitionAssessmentStatus.mockResolvedValue(submittedAssessment);
       mockedJobQueueService.queueJob.mockResolvedValue(jobId);
 
       const result = await assessmentService.submitAssessment(

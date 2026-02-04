@@ -59,7 +59,7 @@ describe('Template Repository', () => {
 
   describe('create', () => {
     it('creates a template and returns it with generated fields', async () => {
-      const result = await templateRepository.create(db, validCreateInput);
+      const result = await templateRepository.createTemplate(db, validCreateInput);
 
       expect(result.id).toBeDefined();
       expect(result.name).toBe(validCreateInput.name);
@@ -73,9 +73,9 @@ describe('Template Repository', () => {
 
   describe('findById', () => {
     it('returns template when found', async () => {
-      const created = await templateRepository.create(db, validCreateInput);
+      const created = await templateRepository.createTemplate(db, validCreateInput);
 
-      const result = await templateRepository.findById(db, created.id);
+      const result = await templateRepository.findTemplateById(db, created.id);
 
       expect(result).not.toBeNull();
       expect(result?.id).toBe(created.id);
@@ -83,7 +83,10 @@ describe('Template Repository', () => {
     });
 
     it('returns null when not found', async () => {
-      const result = await templateRepository.findById(db, '550e8400-e29b-41d4-a716-446655440000');
+      const result = await templateRepository.findTemplateById(
+        db,
+        '550e8400-e29b-41d4-a716-446655440000'
+      );
 
       expect(result).toBeNull();
     });
@@ -91,23 +94,23 @@ describe('Template Repository', () => {
 
   describe('findAll', () => {
     it('returns all templates', async () => {
-      await templateRepository.create(db, validCreateInput);
-      await templateRepository.create(db, { ...validCreateInput, name: 'Second Template' });
+      await templateRepository.createTemplate(db, validCreateInput);
+      await templateRepository.createTemplate(db, { ...validCreateInput, name: 'Second Template' });
 
-      const result = await templateRepository.findAll(db);
+      const result = await templateRepository.findAllTemplates(db);
 
       expect(result).toHaveLength(2);
     });
 
     it('filters to active only when activeOnly is true', async () => {
-      const active = await templateRepository.create(db, validCreateInput);
-      await templateRepository.create(db, {
+      const active = await templateRepository.createTemplate(db, validCreateInput);
+      await templateRepository.createTemplate(db, {
         ...validCreateInput,
         name: 'Inactive',
         isActive: false,
       });
 
-      const result = await templateRepository.findAll(db, { activeOnly: true });
+      const result = await templateRepository.findAllTemplates(db, { activeOnly: true });
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe(active.id);
@@ -116,9 +119,9 @@ describe('Template Repository', () => {
 
   describe('update', () => {
     it('updates template and increments version', async () => {
-      const created = await templateRepository.create(db, validCreateInput);
+      const created = await templateRepository.createTemplate(db, validCreateInput);
 
-      const result = await templateRepository.update(db, created.id, {
+      const result = await templateRepository.updateTemplate(db, created.id, {
         name: 'Updated Name',
       });
 
@@ -130,7 +133,7 @@ describe('Template Repository', () => {
 
     it('throws NotFoundError when template not found', async () => {
       await expect(
-        templateRepository.update(db, '550e8400-e29b-41d4-a716-446655440000', {
+        templateRepository.updateTemplate(db, '550e8400-e29b-41d4-a716-446655440000', {
           name: 'Updated',
         })
       ).rejects.toThrow(
@@ -141,17 +144,17 @@ describe('Template Repository', () => {
 
   describe('deactivate', () => {
     it('sets isActive to false', async () => {
-      const created = await templateRepository.create(db, validCreateInput);
+      const created = await templateRepository.createTemplate(db, validCreateInput);
 
-      await templateRepository.deactivate(db, created.id);
+      await templateRepository.deactivateTemplate(db, created.id);
 
-      const result = await templateRepository.findById(db, created.id);
+      const result = await templateRepository.findTemplateById(db, created.id);
       expect(result?.isActive).toBe(false);
     });
 
     it('throws NotFoundError when template not found', async () => {
       await expect(
-        templateRepository.deactivate(db, '550e8400-e29b-41d4-a716-446655440000')
+        templateRepository.deactivateTemplate(db, '550e8400-e29b-41d4-a716-446655440000')
       ).rejects.toThrow(
         'Assessment template with id 550e8400-e29b-41d4-a716-446655440000 not found'
       );

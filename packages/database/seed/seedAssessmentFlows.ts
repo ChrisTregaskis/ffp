@@ -4,10 +4,8 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../src/schema/index.js';
 import { assessmentFlows } from '../src/schema/index.js';
 import { createLogger } from '../src/lib/logger.js';
-import { TEMPLATE_IDS } from './seedAssessmentTemplates.js';
 import { QUESTION_IDS } from './seedQuestions.js';
 
-import type { FlowStep } from '../src/constants/flow.constants.js';
 import type { ScoringConfig } from '../src/types/question.types.js';
 
 const logger = createLogger('seed-assessment-flows');
@@ -148,150 +146,47 @@ const FLOW_SCORING_CONFIG: ScoringConfig = {
 };
 
 /**
- * Default assessment flow steps (DEPRECATED - kept for backwards compatibility)
- *
- * @deprecated Use normalised flow_steps table instead. See seedFlowSteps.ts.
- *
- * 9-step journey with clinical back pain assessment:
- * 1. Intro - Welcome screen
- * 2. Questions - Pre-assessment questions (goals, activity level)
- * 3. Questions - Back pain general (clinical back pain questions)
- * 4. Questions - Red flag screening (critical yes/no questions)
- * 5. Transition - Physical assessment preparation
- * 6. Video-assessment - Strength tests
- * 7. Video-assessment - Balance tests
- * 8. Results - Score display
- * 9. Programme-overview - Generated programme
- */
-const DEFAULT_FLOW_STEPS: FlowStep[] = [
-  {
-    order: 1,
-    type: 'intro',
-    config: {
-      title: 'Physiotherapy Assessment',
-      description: 'Welcome to your personalised physiotherapy assessment.',
-      estimatedMinutes: 25,
-    },
-  },
-  {
-    order: 2,
-    type: 'questions',
-    templateId: TEMPLATE_IDS.PRE_ASSESSMENT_QUESTIONS,
-    config: {
-      title: 'Pre-Assessment Questions',
-      description: 'Quick questions about your goals, pain levels, and medical history',
-    },
-  },
-  {
-    order: 3,
-    type: 'questions',
-    templateId: TEMPLATE_IDS.BACK_PAIN_GENERAL,
-    config: {
-      title: 'Back Pain Assessment',
-      description:
-        "Let's understand more about your back pain history and characteristics to tailor your programme.",
-    },
-  },
-  {
-    order: 4,
-    type: 'questions',
-    templateId: TEMPLATE_IDS.RED_FLAG_SCREENING,
-    config: {
-      title: 'Health Screening',
-      description:
-        'Important health questions to ensure your safety. Please answer honestly - this helps us provide appropriate guidance.',
-    },
-  },
-  {
-    order: 5,
-    type: 'transition',
-    config: {
-      title: 'Ready for Physical Assessment?',
-      description:
-        "Great job completing the initial questions! Now we'll guide you through some physical tests.",
-      safetyNotes: [
-        'Stop immediately if you experience any pain or discomfort',
-        'Only perform movements within your comfortable range',
-        'Use support (chair, wall) if needed for balance',
-        'Take breaks as needed between exercises',
-      ],
-    },
-  },
-  {
-    order: 6,
-    type: 'video-assessment',
-    templateId: TEMPLATE_IDS.STRENGTH_ASSESSMENT,
-    config: {
-      title: 'Strength Assessment',
-      description: "Let's evaluate your current strength levels with some simple exercises.",
-      instructions: [
-        'Watch the video demonstration carefully',
-        'Perform the exercise to the best of your ability',
-        'Stop if you feel any pain or discomfort',
-        'Rate your performance based on how many repetitions you completed',
-      ],
-    },
-  },
-  {
-    order: 7,
-    type: 'video-assessment',
-    templateId: TEMPLATE_IDS.BALANCE_ASSESSMENT,
-    config: {
-      title: 'Balance Assessment',
-      description: 'Tests to measure your stability and balance in different positions.',
-    },
-  },
-  {
-    order: 8,
-    type: 'results',
-    config: {
-      title: 'Assessment Complete!',
-      description: 'Thank you for completing your physiotherapy assessment. Here are your results:',
-    },
-  },
-  {
-    order: 9,
-    type: 'programme-overview',
-    config: {
-      title: 'Your Personalised Programme',
-      description: "Based on your assessment results, we've created a custom programme for you.",
-    },
-  },
-];
-
-/**
  * Seeds the default assessment flow for MVP.
  *
  * This seed is IDEMPOTENT - safe to run multiple times.
- * If a flow with the default name already exists, it will be skipped.
+ * - If the flow does not exist, it will be created.
+ * - If the flow already exists, its scoringConfig will be updated
+ *   to match the current seed definition (scoring rules evolve over time).
  *
  * Note: assessment_flows table has NO RLS, so no special context needed.
  *
  * @param db - Database client with schema
- * @returns Promise<boolean> - true if flow was created, false if already existed
+ * @returns Promise<boolean> - true if flow was created, false if updated
  */
 export const seedAssessmentFlows = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool }
 ): Promise<boolean> => {
   logger.info('Seeding assessment flows...');
 
-  // Check if default flow already exists (idempotency)
+  // Check if default flow already exists
   const existingFlow = await db.query.assessmentFlows.findFirst({
     where: eq(assessmentFlows.name, DEFAULT_FLOW_NAME),
   });
 
   if (existingFlow) {
-    logger.warn(`Assessment flow already exists: "${DEFAULT_FLOW_NAME}"`, {
+    // Upsert: update scoringConfig to keep it in sync with seed definition
+    await db
+      .update(assessmentFlows)
+      .set({
+        scoringConfig: FLOW_SCORING_CONFIG,
+        description: 'Comprehensive assessment with pre-questions and physical tests',
+      })
+      .where(eq(assessmentFlows.id, existingFlow.id));
+
+    logger.info('Assessment flow scoring config updated', {
       id: existingFlow.id,
-      steps: existingFlow.steps.length,
-      isActive: existingFlow.isActive,
+      name: DEFAULT_FLOW_NAME,
     });
     return false;
   }
 
   // Insert default flow with deterministic UUID
-  // NOTE: steps JSONB is kept for backwards compatibility but is deprecated.
-  // Normalised steps are now in flow_steps table (see seedFlowSteps.ts).
+  // Normalised steps are in flow_steps table (see seedFlowSteps.ts).
   const [newFlow] = await db
     .insert(assessmentFlows)
     .values({
@@ -299,7 +194,6 @@ export const seedAssessmentFlows = async (
       name: DEFAULT_FLOW_NAME,
       description: 'Comprehensive assessment with pre-questions and physical tests',
       scoringConfig: FLOW_SCORING_CONFIG,
-      steps: DEFAULT_FLOW_STEPS, // @deprecated - kept for backwards compatibility
       isActive: true,
     })
     .returning({ id: assessmentFlows.id });
@@ -307,7 +201,6 @@ export const seedAssessmentFlows = async (
   logger.info('Assessment flow created', {
     id: newFlow.id,
     name: DEFAULT_FLOW_NAME,
-    steps: DEFAULT_FLOW_STEPS.length,
     isActive: true,
   });
 

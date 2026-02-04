@@ -183,7 +183,11 @@ export async function startAssessment(
   const steps = convertStepsToSummaryFormat(flowSteps);
 
   // 3. Check for existing resumable assessment
-  const existingAssessment = await userAssessmentRepository.findResumable(tenantId, userId, flowId);
+  const existingAssessment = await userAssessmentRepository.findResumableAssessment(
+    tenantId,
+    userId,
+    flowId
+  );
 
   if (existingAssessment) {
     // Load answers from user_assessment_answers table
@@ -208,7 +212,7 @@ export async function startAssessment(
   }
 
   // 3. Create new assessment
-  const newAssessment = await userAssessmentRepository.create({
+  const newAssessment = await userAssessmentRepository.createUserAssessment({
     tenantId,
     userId,
     flowId,
@@ -255,7 +259,7 @@ export async function saveProgress(
   const db = getDb();
 
   // Fetch assessment by ID (RLS enforced)
-  const assessment = await userAssessmentRepository.findById(tenantId, assessmentId);
+  const assessment = await userAssessmentRepository.findUserAssessmentById(tenantId, assessmentId);
 
   if (!assessment) {
     throw new NotFoundError('Assessment', assessmentId);
@@ -270,9 +274,14 @@ export async function saveProgress(
   return await withRLS(tenantId, userId, async (tx) => {
     // If status is 'not_started', transition to 'in_progress'
     if (assessment.status === 'not_started') {
-      await userAssessmentRepository.transitionStatus(tenantId, assessmentId, 'in_progress', {
-        tx,
-      });
+      await userAssessmentRepository.transitionAssessmentStatus(
+        tenantId,
+        assessmentId,
+        'in_progress',
+        {
+          tx,
+        }
+      );
     }
 
     // Save answers to user_assessment_answers table
@@ -282,7 +291,7 @@ export async function saveProgress(
     }
 
     // Update currentStep
-    const updatedAssessment = await userAssessmentRepository.updateProgress(
+    const updatedAssessment = await userAssessmentRepository.updateAssessmentProgress(
       tenantId,
       assessmentId,
       { currentStep: data.currentStep },
@@ -354,9 +363,14 @@ export async function saveProgress(
 
     // Persist warnings if any were triggered
     if (branchResult.warnings.length > 0) {
-      await userAssessmentRepository.appendWarnings(tenantId, assessmentId, branchResult.warnings, {
-        tx,
-      });
+      await userAssessmentRepository.appendAssessmentWarnings(
+        tenantId,
+        assessmentId,
+        branchResult.warnings,
+        {
+          tx,
+        }
+      );
     }
 
     // Return success response with branching evaluation results
@@ -429,7 +443,7 @@ export async function submitAssessment(
   const userId = await getUserIdFromContext(context);
 
   // Fetch assessment (RLS enforced)
-  const assessment = await userAssessmentRepository.findById(tenantId, assessmentId);
+  const assessment = await userAssessmentRepository.findUserAssessmentById(tenantId, assessmentId);
 
   if (!assessment) {
     throw new NotFoundError('Assessment', assessmentId);
@@ -527,7 +541,9 @@ export async function submitAssessment(
     }
 
     // Transition status to 'submitted'
-    await userAssessmentRepository.transitionStatus(tenantId, assessmentId, 'submitted', { tx });
+    await userAssessmentRepository.transitionAssessmentStatus(tenantId, assessmentId, 'submitted', {
+      tx,
+    });
 
     // Enqueue score_assessment job
     // Uses flowId for scoring config (flow owns combined dimensions from all templates)
@@ -564,7 +580,11 @@ export async function getAssessmentResults(
   const userId = await getUserIdFromContext(context);
 
   // Fetch assessment by ID (RLS enforced for tenant, userId for fine-grained RLS)
-  const assessment = await userAssessmentRepository.findById(tenantId, assessmentId, userId);
+  const assessment = await userAssessmentRepository.findUserAssessmentById(
+    tenantId,
+    assessmentId,
+    userId
+  );
 
   if (!assessment) {
     throw new NotFoundError('Assessment', assessmentId);

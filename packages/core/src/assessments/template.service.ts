@@ -14,16 +14,10 @@ import * as templateRepository from './template.repository';
 
 import type { AssessmentTemplateWithQuestions } from './template.repository';
 
-// Re-export types for convenience
 export type { AssessmentTemplate, AssessmentTemplateWithQuestions };
-
 export type CreateTemplateInput = Omit<CreateAssessmentTemplateInput, 'createdBy'>;
 
-/**
- * Create a new assessment template
- *
- * Validates input against Zod schema and sets createdBy from actor context.
- */
+/** Create a new assessment template */
 export async function createTemplateService(
   ctx: TenantContext,
   input: CreateTemplateInput
@@ -47,15 +41,10 @@ export async function createTemplateService(
 
   const db = getDb();
 
-  return await templateRepository.create(db, parseResult.data);
+  return await templateRepository.createTemplate(db, parseResult.data);
 }
 
-/**
- * Update an existing assessment template
- *
- * Validates input against Zod schema and delegates to repository.
- * Version is auto-incremented by the repository.
- */
+/** Update an existing assessment template */
 export async function updateTemplateService(
   _ctx: TenantContext,
   templateId: string,
@@ -72,31 +61,20 @@ export async function updateTemplateService(
 
   const db = getDb();
 
-  return await templateRepository.update(db, templateId, parseResult.data);
+  return await templateRepository.updateTemplate(db, templateId, parseResult.data);
 }
 
-/**
- * Deactivate an assessment template (soft delete)
- *
- * Sets isActive to false rather than deleting the record.
- * This preserves referential integrity with existing assessments.
- */
+/** Deactivate an assessment template (soft delete) */
 export async function deactivateTemplateService(
   _ctx: TenantContext,
   templateId: string
 ): Promise<void> {
   const db = getDb();
 
-  await templateRepository.deactivate(db, templateId);
+  await templateRepository.deactivateTemplate(db, templateId);
 }
 
-/**
- * Duplicate an assessment template
- *
- * Creates a copy of an existing template including all its question assignments.
- * The write operations are wrapped in a transaction to ensure atomicity - if the
- * question copy fails, the entire operation is rolled back.
- */
+/** Duplicate an assessment template */
 export async function duplicateTemplateService(
   ctx: TenantContext,
   templateId: string,
@@ -106,7 +84,7 @@ export async function duplicateTemplateService(
   const db = getDb();
 
   // Validate source template exists
-  const sourceTemplate = await templateRepository.findById(db, templateId);
+  const sourceTemplate = await templateRepository.findTemplateById(db, templateId);
 
   if (!sourceTemplate) {
     throw new NotFoundError('Assessment template', templateId);
@@ -129,7 +107,7 @@ export async function duplicateTemplateService(
 
   // Fetch and return the complete duplicated template with questions
   // (read operation, outside transaction - uses repository for full hydration)
-  const result = await templateRepository.findWithQuestions(db, duplicatedTemplateId);
+  const result = await templateRepository.findTemplateWithQuestions(db, duplicatedTemplateId);
 
   // Should never be null since we just created it
   if (!result) {
@@ -141,12 +119,7 @@ export async function duplicateTemplateService(
 
 /**
  * Get an assessment template by ID with questions
- *
- * Fetches template and its associated questions via template_questions join.
- *
  * @param _ctx - Tenant context (unused for system content, but maintains consistent API)
- * @param templateId - ID of the template to fetch
- * @returns Template with questions or null if not found
  */
 export async function getTemplateService(
   _ctx: TenantContext,
@@ -154,15 +127,12 @@ export async function getTemplateService(
 ): Promise<AssessmentTemplateWithQuestions | null> {
   const db = getDb();
 
-  return await templateRepository.findWithQuestions(db, templateId);
+  return await templateRepository.findTemplateWithQuestions(db, templateId);
 }
 
 /**
  * List assessment templates
- *
  * @param _ctx - Tenant context (unused for system content, but maintains consistent API)
- * @param options - Filter options (activeOnly)
- * @returns List of templates
  */
 export async function listTemplatesService(
   _ctx: TenantContext,
@@ -170,5 +140,5 @@ export async function listTemplatesService(
 ): Promise<AssessmentTemplate[]> {
   const db = getDb();
 
-  return await templateRepository.findAll(db, options);
+  return await templateRepository.findAllTemplates(db, options);
 }

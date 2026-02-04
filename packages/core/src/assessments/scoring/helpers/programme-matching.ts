@@ -26,11 +26,13 @@ export function findMatchingProgramme(
     return null;
   }
 
-  // Build score lookup map
+  // Build score lookup map using raw scores so programme mapping
+  // conditions can be written in natural units per dimension
+  // (e.g., "balance < 6" means rawScore < 6 out of maxScore 18)
   const scoreMap = new Map<string, number>();
 
   for (const score of dimensionalScores) {
-    scoreMap.set(score.dimensionId, score.normalisedScore);
+    scoreMap.set(score.dimensionId, score.rawScore);
   }
 
   // Sort mappings by priority (lower number = higher priority)
@@ -62,7 +64,7 @@ function evaluateMappingConditions(
   const { conditions, operator = DEFAULT_LOGICAL_OPERATOR } = mapping;
 
   if (conditions.length === 0) {
-    return false;
+    return true;
   }
 
   const results = conditions.map((condition) => {

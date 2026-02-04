@@ -1,18 +1,4 @@
 /**
- * User constants - Single source of truth for user-related enums
- *
- * These constants are shared between:
- * - @ffp/database: PostgreSQL enum definitions (pgEnum)
- * - @ffp/core: Zod validation schemas (z.enum)
- *
- * IMPORTANT: When adding new user roles:
- * 1. Update this file
- * 2. Run `pnpm db:generate` to create migration for enum changes
- * 3. Run `pnpm db:migrate` to apply changes
- * 4. Both database and Zod schemas will automatically use updated values
- */
-
-/**
  * User role values
  *
  * Defines the hierarchical role system:
@@ -20,6 +6,8 @@
  * - customer_owner: Owner of a customer account (business)
  * - customer_admin: Administrator within a customer organisation
  * - program_user: User accessing workout programmes (individual or customer user)
+ *   - Individual users: customerId = null (cannot be invited)
+ *   - Customer users: customerId present (can be invited)
  */
 export const USER_ROLES = [
   'system_admin',

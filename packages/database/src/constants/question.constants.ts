@@ -1,18 +1,4 @@
 /**
- * Question constants - Single source of truth for question-related enums
- *
- * These constants are shared between:
- * - @ffp/database: PostgreSQL enum definitions (pgEnum)
- * - @ffp/core: Zod validation schemas (z.enum)
- *
- * IMPORTANT: When adding new question types or score dimensions:
- * 1. Update this file
- * 2. Run `pnpm db:generate` to create migration for enum changes
- * 3. Run `pnpm db:migrate` to apply changes
- * 4. Both database and Zod schemas will automatically use updated values
- */
-
-/**
  * Question type values
  *
  * Defines the different types of questions available in assessments:

@@ -2507,6 +2507,16 @@
       "key": "lastTemplateId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "customerUserEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerUserPassword",
+      "value": "",
+      "type": "string"
     }
   ]
 }
