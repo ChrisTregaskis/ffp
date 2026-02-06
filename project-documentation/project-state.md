@@ -49,14 +49,14 @@ Renamed American English identifiers to British English across the codebase (mer
 
 ### Sprint 6 Stories
 
-| Key     | Story                            | Pts | Dependencies           | Notes                                   |
-| ------- | -------------------------------- | --- | ---------------------- | --------------------------------------- |
-| FFP-137 | Assessment Navigation Component  | 3   | FFP-135 ✅, FFP-136 ✅ | ✅ Complete                             |
-| FFP-140 | Assessment Step Screens          | 5   | FFP-135 ✅, FFP-131 ✅ | Intro, Transition, Results              |
-| FFP-230 | Stale Job Detection              | 2   | FFP-180 ✅             | EventBridge scheduled Lambda            |
-| FFP-233 | Backend Required Question Valid. | 3   | FFP-130 ✅             | Defence-in-depth server-side validation |
-| FFP-254 | FFP-3 Epic Planning & Sprints    | 5   | -                      | Architecture, user stories, sprint defs |
-| FFP-229 | Assessment Engine Epic Clean Up  | 8   | -                      | Review FFP-2 requirements, backlog scan |
+| Key     | Story                            | Pts | Dependencies           | Notes                                    |
+| ------- | -------------------------------- | --- | ---------------------- | ---------------------------------------- |
+| FFP-137 | Assessment Navigation Component  | 3   | FFP-135 ✅, FFP-136 ✅ | ✅ Complete                              |
+| FFP-140 | Assessment Step Screens          | 5   | FFP-135 ✅, FFP-131 ✅ | 🚀 In Progress — see implementation plan |
+| FFP-230 | Stale Job Detection              | 2   | FFP-180 ✅             | EventBridge scheduled Lambda             |
+| FFP-233 | Backend Required Question Valid. | 3   | FFP-130 ✅             | Defence-in-depth server-side validation  |
+| FFP-254 | FFP-3 Epic Planning & Sprints    | 5   | -                      | Architecture, user stories, sprint defs  |
+| FFP-229 | Assessment Engine Epic Clean Up  | 8   | -                      | Review FFP-2 requirements, backlog scan  |
 
 ### Recommended Execution Order
 
@@ -67,46 +67,91 @@ Renamed American English identifiers to British English across the codebase (mer
 5. **FFP-229** - Epic cleanup (review FFP-2, polish)
 6. **FFP-254** - FFP-3 Epic planning (documentation, prepares next phase)
 
-### Implementation Plan: FFP-137 — Assessment Navigation Component
+### Completed: FFP-137 — Assessment Navigation Component ✅
 
-**Branch**: `feature/FFP-137-assessment-navigation` (single branch, single PR)
-**Estimated effort**: Small — one new component file, all dependencies already built.
+**Branch**: `feature/FFP-137-assessment-navigation` | **Sub-tasks**: FFP-204, FFP-205, FFP-206 (done), FFP-207 (tests deferred)
+**Summary**: Save-on-navigate component using `useAssessment()` + `useSaveProgress()`. Supports branching via `nextStepId`, loading states, custom callbacks.
+
+---
+
+### Implementation Plan: FFP-140 — Assessment Step Screens
+
+**Branch**: `feature/FFP-140-assessment-step-screens` (single branch, single PR)
+**Estimated effort**: Medium — 4 new screen components + 2 placeholders + 1 orchestrator, all infrastructure already built.
 
 #### Sub-tasks (all on one branch)
 
-| Order | Key     | Summary                                  | Status    | Notes                                   |
-| ----- | ------- | ---------------------------------------- | --------- | --------------------------------------- |
-| 1     | FFP-204 | Component structure and props            | Done      | Props interface, base JSX               |
-| 2     | FFP-205 | Save-on-navigate logic (Continue & Back) | Done      | `useSaveProgress` + context dispatch    |
-| 3     | FFP-206 | Loading states and button disabling      | Done      | `isPending` from mutation, disabled UX  |
-| -     | FFP-207 | Unit tests                               | Abandoned | Deferred to post-MVP (tests moratorium) |
+| Order | Key     | Summary                               | Status  | Notes                                                   |
+| ----- | ------- | ------------------------------------- | ------- | ------------------------------------------------------- |
+| -     | FFP-223 | AssessmentProgress with phase         | Skip    | Already done via FFP-138 (Sprint 5) — component exists  |
+| 1     | FFP-218 | IntroScreen component                 | Pending | Welcome screen with checklist and start button          |
+| 2     | FFP-220 | TransitionScreen component            | Pending | Safety notes before physical assessment                 |
+| 3     | FFP-219 | QuestionScreen wrapper                | Pending | Thin wrapper — uses existing QuestionRenderer (FFP-139) |
+| 4     | FFP-221 | ResultsScreen component               | Pending | Score cards, risk level, polling loading state          |
+| 5     | FFP-222 | AssessmentStepRenderer (orchestrator) | Pending | Routes step type → screen component via switch          |
 
-**Rationale for single branch**: All 3 sub-tasks modify the same file (`AssessmentNavigation.tsx`). They form a single coherent component — splitting across branches/PRs would be unnecessary overhead.
+**Rationale for single branch**: All components form one cohesive feature. The StepRenderer (FFP-222) depends on all screen components. Splitting would create unnecessary merge dependencies.
 
-#### Amendments from Jira (outdated details)
+#### Session Grouping
 
-| Area                        | Jira Says                                             | Actual Codebase                                                                                                             | Resolution                                                             |
-| --------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| **Save hook signature**     | `saveProgress.mutateAsync({ assessmentId, answers })` | `useSaveProgress` takes `{ assessmentId, payload }` where payload includes answers + step                                   | Use actual hook signature                                              |
-| **File location**           | `components/AssessmentNavigation.tsx`                 | Assessment components use subdirectory pattern (e.g., `components/assessment/questions/`, `components/AssessmentProgress/`) | Place in `components/assessment/AssessmentNavigation/` for consistency |
-| **`continueLabel` default** | `'Next'`                                              | Other components use `'Continue'` convention                                                                                | Use `'Continue'` as default, keep prop for customisation               |
+| Session | Sub-tasks        | Scope                                                     |
+| ------- | ---------------- | --------------------------------------------------------- |
+| 1       | FFP-218, FFP-220 | IntroScreen + TransitionScreen (similar patterns)         |
+| 2       | FFP-219, FFP-221 | QuestionScreen wrapper + ResultsScreen (data-driven)      |
+| 3       | FFP-222          | StepRenderer orchestrator + placeholder screens + exports |
+
+#### Amendments from Jira
+
+- **FFP-223 — skip**: Already built as FFP-138 (Sprint 5). Existing `AssessmentProgress` has phase label, step counter, animated bar.
+- **FFP-219 — reduced scope**: QuestionRenderer + 6 types already built (FFP-139). Only need a thin screen wrapper with question number indicator.
+- **FFP-221 scores**: Jira says "Strength Score (X/10)" — actual schema uses `dimensions[]` with `normalisedScore` (0-100). Use real `UserAssessmentScores` schema.
+- **FFP-221 programme**: No programme details API yet (`programmeId` only). Simple card — full details deferred to FFP-3.
+- **FFP-222 props**: Jira passes `template` as prop — actually fetched via `useAssessmentTemplateQuery` hook internally.
+- **FFP-222 step types**: Video + programme-overview steps get placeholder components (FFP-141/FFP-3 deferred).
+- **File location**: Create new `components/assessment/screens/` subdirectory for step screen components.
 
 #### Dependencies (all satisfied)
 
-- ✅ `useAssessment()` hook — provides `state` (isDirty, assessmentId, answers, currentStep) and `dispatch`
-- ✅ `useSaveProgress()` hook — mutation with `isPending`, `mutateAsync`
-- ✅ Context actions — `NEXT_STEP`, `PREV_STEP`, `MARK_SAVED` all implemented in reducer
+- ✅ `useAssessment()` — state (currentStep, answers, phase, scores) and dispatch
+- ✅ `useSaveProgress()` — mutation for save-on-navigate
+- ✅ `useSubmitAssessment()` — mutation for final submission
+- ✅ `useAssessmentResultsQuery(assessmentId)` — polling hook (2s interval, auto-stops)
+- ✅ `useAssessmentFlowQuery(flowId)` — fetch flow config (step configs, descriptions)
+- ✅ `useAssessmentTemplateQuery(templateId)` — fetch questions for question steps
+- ✅ `QuestionRenderer` — factory component for 6 question types
+- ✅ `AssessmentNavigation` — Continue/Back with save-on-navigate
+- ✅ `AssessmentProgress` — progress bar with phase label
+- ✅ Flow step types: `intro`, `questions`, `transition`, `video-assessment`, `results`, `programme-overview`
 
-#### Implementation Notes
+#### Key Types for Implementation
 
-- Component uses `useAssessment()` for state/dispatch and `useSaveProgress()` for the mutation
-- Save-then-navigate pattern: if `isDirty`, await `mutateAsync`, dispatch `MARK_SAVED`, then dispatch `NEXT_STEP`/`PREV_STEP`
-- Both buttons disabled when `saveProgress.isPending` to prevent double-clicks
-- Continue button shows `'Saving...'` during pending state
-- Back button hidden when `showBack=false` (e.g., on first step)
-- Custom `onContinue`/`onBack` callbacks override default dispatch behaviour
-- TailwindCSS styling with `disabled:opacity-50` pattern
-- Arrow function component with `React.FC` typing per project standards
+```typescript
+// Step config from flow (FlowStepConfig)
+{ title, description?, instructions?, safetyNotes?, estimatedMinutes? }
+
+// Scores from results (UserAssessmentScores)
+{ dimensions: DimensionalScore[], overallScore?, riskLevel?, scoredAt }
+
+// DimensionalScore
+{ dimensionId, dimensionName, rawScore, normalisedScore, category? }
+
+// Results API response (AssessmentResultsResponse)
+{ status, scores: UserAssessmentScores | null, programmeId: string | null }
+```
+
+#### Component Overview
+
+**IntroScreen** (FFP-218): Renders welcome heading, "What to Expect" section from `config.description`, estimated duration from `config.estimatedMinutes`, "Before You Begin" checklist from `config.instructions`, and "Start Assessment" button.
+**TransitionScreen** (FFP-220): Renders heading, physical assessment overview, safety notes from `config.safetyNotes` in amber warning box, Back/Continue buttons.
+**QuestionScreen** (FFP-219): Thin wrapper — gets current question from template (via `useAssessmentTemplateQuery`), shows question number indicator, delegates to existing `QuestionRenderer`, dispatches `SET_ANSWER` on change.
+**ResultsScreen** (FFP-221): Uses `useAssessmentResultsQuery` for polling. Loading state while `scores === null`. Displays dimensional score cards, risk level with colour coding (low=green, moderate=amber, high=red), "What Happens Next" steps, "View Programme" button.
+**VideoAssessmentScreen** (placeholder): Simple "Video assessment coming soon" message. Full implementation via FFP-141/FFP-3.
+**ProgrammeOverviewScreen** (placeholder): Simple "Programme details coming soon" message. Full implementation via FFP-3.
+**AssessmentStepRenderer** (FFP-222): Switch on `step.type` → renders correct screen component. Uses `useAssessment()` for state/dispatch. Passes step config to each screen. Handles unknown step types with fallback.
+
+#### Tests
+
+Deferred to post-MVP (tests moratorium).
 
 ---
 
