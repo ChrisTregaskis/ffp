@@ -2,943 +2,110 @@
 
 ## Overview
 
-FFP uses SST (Serverless Stack) for infrastructure as code, S3 + CloudFront for frontend hosting, and GitHub for version control. This document covers deployment workflows, environment management, and CI/CD pipelines.
-
-**Version Control Platform:** GitHub
-
-**Phase 1 Deployment Strategy:** Manual deployments with basic automated testing (GitHub Actions for CI only, not CD)
+FFP uses SST (Serverless Stack) for infrastructure-as-code, S3 + CloudFront for frontend hosting, and GitHub Actions for CI/CD. This document captures key decisions, patterns, and constraints. Detailed implementation will be planned via Jira stories when deploying staging and production.
 
 ## Environment Strategy
 
-### Three Environments
+| Environment | Purpose                                            | Deployment                             | Estimated Cost              |
+| ----------- | -------------------------------------------------- | -------------------------------------- | --------------------------- |
+| **dev**     | Personal developer environment, hot-reload Lambdas | Manual (`sst dev`)                     | ~£10-20/month               |
+| **staging** | QA, client demos, mirrors production config        | Manual (Phase 1), automated (Phase 2+) | ~£30-50/month               |
+| **prod**    | Customer-facing, enhanced monitoring & backups     | Manual (Phase 1), automated (Phase 2+) | ~£36-66/month (<1000 users) |
 
-**Development (dev)**
+## Key Decisions
 
-- Personal developer environments
-- Hot-reload Lambda functions
-- Separate resources per developer
-- Cost: ~$10-20/month per developer
+### SST Stage Naming
 
-**Staging (staging)**
-
-- Shared testing environment
-- Mirrors production configuration
-- Used for QA and client demos
-- Cost: ~$30-50/month
-
-**Production (prod)**
-
-- Customer-facing environment
-- Enhanced monitoring and backups
-- Strict change control
-- Cost: ~$36-66/month (<1000 users)
-
-## SST Deployment
-
-### Installation
+Use project-specific stage names, never the default macOS username (causes cross-project lock conflicts and state corruption):
 
 ```bash
-npm install -g sst
-npm install
+sst dev --stage ct-ffp           # ✅ Project-specific
+sst dev                          # ❌ Defaults to username, conflicts across projects
 ```
 
-### Development Workflow
+### Database Migrations (Drizzle)
+
+**Migration-only workflow** - see CLAUDE.md for full rationale on never using `db:push`.
 
 ```bash
-# Start live Lambda development (hot reload)
-npm run sst dev
-
-# Deploy to dev environment
-npm run sst deploy --stage dev
-
-# View logs
-npm run sst logs --stage dev --function assessments
-
-# Remove all resources
-npm run sst remove --stage dev
+# Schema change → generate → review → migrate
+pnpm db:generate    # Creates .sql migration file
+pnpm db:migrate     # Applies migrations with tracking
+pnpm db:studio      # Visual database browser (read-only verification)
 ```
 
-### SST Stage Naming Convention
+Migrations require `DB_MIGRATE_USER` (elevated privileges) due to RLS restrictions on the application user.
 
-**IMPORTANT**: Do NOT use the default macOS username as your SST stage name.
+### Secrets Management
 
-When SST prompts for a stage name (or defaults to your username), use a unique, project-specific stage name instead:
+- All secrets in **AWS Secrets Manager** (never in code or environment files)
+- Naming convention: `ffp/{stage}/secret-name` (e.g., `ffp/prod/db-credentials`)
+- Access via `@aws-sdk/client-secrets-manager` in Lambda functions
 
-```bash
-# ❌ WRONG - Using default username across projects causes conflicts
-sst dev  # Defaults to christophertregaskis
+### Branch Strategy
 
-# ✅ CORRECT - Use project-specific stage names
-sst dev --stage ct-ffp           # For FFP project
-sst dev --stage ct-other-project # For other project
-```
+| Branch           | Environment    | Deployment                              |
+| ---------------- | -------------- | --------------------------------------- |
+| Feature branches | dev (personal) | Manual                                  |
+| `develop`        | staging        | Manual (Phase 1) → Automated (Phase 2+) |
+| `main`           | production     | Manual (Phase 1) → Automated (Phase 2+) |
 
-**Why this matters:**
+## CI/CD Approach
 
-- Multiple SST projects using the same stage name can cause lock conflicts
-- Zombie processes from one project can block another
-- State corruption can occur when projects fight over the same stage
+### Phase 1: Automated Testing Only
 
-**Tip**: Use a short prefix (like your initials) + project name for easy identification.
-
-### SST Configuration
-
-```typescript
-// sst.config.ts
-import { SSTConfig } from 'sst';
-import { AuthStack } from './stacks/AuthStack';
-import { DatabaseStack } from './stacks/DatabaseStack';
-import { StorageStack } from './stacks/StorageStack';
-import { ApiStack } from './stacks/ApiStack';
-import { MonitoringStack } from './stacks/MonitoringStack';
-
-export default {
-  config(_input) {
-    return {
-      name: 'ffp',
-      region: 'eu-west-2',
-    };
-  },
-  stacks(app) {
-    // Set stage-specific configuration
-    app.setDefaultFunctionProps({
-      runtime: 'nodejs18.x',
-      timeout: '30 seconds',
-      environment: {
-        STAGE: app.stage,
-      },
-    });
-
-    // Deploy stacks in order (respecting dependencies)
-    app
-      .stack(AuthStack)
-      .stack(DatabaseStack)
-      .stack(StorageStack)
-      .stack(ApiStack)
-      .stack(MonitoringStack);
-  },
-} satisfies SSTConfig;
-```
-
-### Resource Binding
-
-SST automatically injects resource references:
-
-```typescript
-// stacks/ApiStack.ts
-const api = new Api(stack, 'Api', {
-  defaults: {
-    function: {
-      bind: [auth, videosBucket, sessionsTable],
-    },
-  },
-  routes: {
-    'GET /assessments': 'functions/assessments/list.handler',
-  },
-});
-
-// In Lambda function
-import { Resource } from 'sst';
-
-export const handler = async (event) => {
-  const bucketName = Resource.Videos.name; // Type-safe!
-  const userPoolId = Resource.Auth.userPoolId;
-  // ...
-};
-```
-
-## Database Migrations
-
-### Using Drizzle Kit
-
-```bash
-# Install Drizzle
-npm install drizzle-orm pg
-npm install -D drizzle-kit drizzle-zod @types/pg
-```
-
-### Package.json Scripts
-
-```json
-{
-  "scripts": {
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
-    "db:drop": "drizzle-kit drop",
-    "db:check": "drizzle-kit check"
-  }
-}
-```
-
-### Migration Workflow
-
-```bash
-# 1. Make changes to schema files (schema/*.ts)
-
-# 2. Generate migration from schema changes
-npm run db:generate
-
-# 3. Review generated SQL
-cat migrations/[auto-generated-name].sql
-
-# 4. Test connection
-npm run db:test
-
-# 5. Apply migrations to database
-npm run db:migrate
-
-# 6. Verify migration succeeded
-npm run db:verify
-
-# 7. Check migration status
-npm run db:check
-```
-
-### Development Workflow (db:push)
-
-```bash
-# Push schema changes directly to database (bypasses migrations)
-npm run db:push
-
-# ⚠️ WARNING: Only use in development
-# This doesn't create migration files
-# Production should always use db:generate + db:migrate
-```
-
-### Environment-Specific Migrations
-
-```bash
-# Development
-DB_HOST=localhost DB_NAME=ffp_dev npm run db:migrate
-
-# Staging
-DB_HOST=ffp-staging.xxx.rds.amazonaws.com DB_NAME=ffp_staging npm run db:migrate
-
-# Production
-DB_HOST=ffp-prod.xxx.rds.amazonaws.com DB_NAME=ffp_prod npm run db:migrate
-```
-
-### Pre-Deployment Migration Lambda
-
-```typescript
-// functions/migrations/run.ts
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { migrate } from 'drizzle-orm/node-postgres/migrator';
-import { Pool } from 'pg';
-
-export const handler = async () => {
-  const pool = new Pool({
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '5432'),
-    database: process.env.DB_NAME,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-  });
-
-  const db = drizzle(pool);
-
-  try {
-    console.log('Starting migrations...');
-    await migrate(db, { migrationsFolder: './migrations' });
-    console.log('Migrations completed successfully');
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ message: 'Migrations complete' }),
-    };
-  } catch (error) {
-    console.error('Migration failed:', error);
-    throw error;
-  } finally {
-    await pool.end();
-  }
-};
-```
-
-### Database Utilities
-
-#### Drizzle Studio
-
-```bash
-# Start Drizzle Studio (visual database GUI)
-npm run db:studio
-
-# Opens browser at https://local.drizzle.studio
-# Provides visual interface for:
-# - Browsing tables and data
-# - Running queries
-# - Inspecting schema
-# - Testing relationships
-```
-
-#### Verify Migrations
-
-```bash
-# Run post-migration verification checks
-npm run db:verify
-
-# Verifies:
-# - All expected tables exist
-# - Indexes are created
-# - Foreign keys are correct
-# - RLS policies are applied (when implemented)
-
-# Environment-specific verification
-ENVIRONMENT=staging npm run db:verify
-```
-
-## Frontend Deployment (S3 + CloudFront + CircleCI)
-
-### S3 Bucket Setup
-
-```typescript
-// stacks/FrontendStack.ts
-import { Bucket } from 'sst/constructs';
-import * as s3 from 'aws-cdk-lib/aws-s3';
-
-export const FrontendStack = ({ stack }: StackContext) => {
-  const websiteBucket = new Bucket(stack, 'Website', {
-    cdk: {
-      bucket: {
-        websiteIndexDocument: 'index.html',
-        websiteErrorDocument: 'index.html', // SPA routing
-        publicReadAccess: false,
-        blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      },
-    },
-  });
-
-  const distribution = new Distribution(stack, 'CDN', {
-    defaultBehavior: {
-      origin: new S3Origin(websiteBucket.bucket, {
-        originAccessIdentity: oai,
-      }),
-      viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-      cachePolicy: CachePolicy.CACHING_OPTIMIZED,
-    },
-    errorResponses: [
-      {
-        httpStatus: 404,
-        responseHttpStatus: 200,
-        responsePagePath: '/index.html',
-        ttl: Duration.minutes(5),
-      },
-    ],
-  });
-
-  return { websiteBucket, distribution };
-};
-```
-
-### GitHub Actions Configuration (Future - Phase 2+)
-
-Note: Full CI/CD is deferred to Phase 2. For Phase 1, we use manual deployments with basic automated testing only.
-
-```yaml
-# .github/workflows/test.yml (Phase 1 - Testing Only)
-name: Test
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      - run: npm ci
-      - run: npm run test
-      - run: npm run lint
-```
-
-### GitHub Actions Configuration (Future - Phase 2+ Full CI/CD)
-
-This is an example of full automated deployment that will be implemented in Phase 2+:
-
-```yaml
-# .github/workflows/deploy-staging.yml (Future Phase 2+)
-name: Deploy to Staging
-
-on:
-  push:
-    branches: [develop]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      - run: npm ci
-      - run: npm run test
-      - run: npm run lint
-
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      - run: npm ci
-      - run: npm run sst deploy -- --stage staging
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      - run: npm run db:migrate -- --env staging
-```
-
-### Environment Variables (GitHub Actions)
-
-Set these in GitHub Repository Settings → Secrets and variables → Actions:
-
-```bash
-# Staging
-STAGING_COGNITO_POOL_ID=eu-west-2_ABC123
-STAGING_COGNITO_CLIENT_ID=abc123def456
-STAGING_DISTRIBUTION_ID=E1234567890ABC
-
-# Production
-PROD_COGNITO_POOL_ID=eu-west-2_XYZ789
-PROD_COGNITO_CLIENT_ID=xyz789abc123
-PROD_DISTRIBUTION_ID=E9876543210XYZ
-
-# AWS Credentials
-AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
-AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-AWS_DEFAULT_REGION=eu-west-2
-```
-
-### Branch Mapping
-
-- `main` branch → production environment (auto-deploy via CircleCI)
-- `develop` branch → staging environment (auto-deploy via CircleCI)
-- Feature branches → Manual deploy to dev environments
-
-## Deployment Workflows
-
-### Feature Development
-
-```bash
-# 1. Create feature branch
-git checkout -b feature/assessment-timer
-
-# 2. Develop with live Lambda reload
-npm run sst dev
-
-# 3. Make schema changes
-# Edit schema/users.ts
-
-# 4. Generate and apply migration
-npm run db:generate
-npm run db:migrate
-
-# 5. Run tests
-npm run test
-npm run test:e2e
-
-# 6. Deploy to personal dev environment
-npm run sst deploy --stage dev
-
-# 7. Commit and push
-git add .
-git commit -m "feat: add assessment timer"
-git push origin feature/assessment-timer
-
-# 8. Create pull request on GitHub
-# GitHub PR created and reviewed
-
-# 9. After approval, merge to develop
-# Manual deployment to staging (Phase 1)
-# Future: GitHub Actions auto-deploys (Phase 2+)
-```
-
-### Staging Deployment
-
-```bash
-# After PR merge to develop
-git checkout develop
-git pull
-
-# Deploy backend (if manual deployment needed)
-npm run sst deploy --stage staging
-
-# Run database migrations (with safety checks)
-ENVIRONMENT=staging npm run db:test       # Test connection
-ENVIRONMENT=staging npm run db:migrate    # Apply migrations
-ENVIRONMENT=staging npm run db:verify     # Verify success
-
-# Manual frontend deployment (Phase 1)
-# Future: GitHub Actions auto-deploys (Phase 2+)
-
-# Smoke test
-npm run test:e2e -- --env staging
-```
-
-### Production Deployment
-
-```bash
-# Create release branch
-git checkout -b release/v1.2.0
-git push origin release/v1.2.0
-
-# Deploy to production
-npm run sst deploy --stage prod
-
-# Run migrations (with safety checks)
-ENVIRONMENT=production npm run db:test       # Test connection
-ENVIRONMENT=production npm run db:migrate    # Apply migrations
-ENVIRONMENT=production npm run db:verify     # Verify success
-
-# Merge to main
-git checkout main
-git merge release/v1.2.0
-git push origin main
-
-# Tag release
-git tag v1.2.0
-git push origin v1.2.0
-
-# Manual frontend deployment (Phase 1)
-# Future: GitHub Actions auto-deploys (Phase 2+)
-
-# Monitor CloudWatch for errors
-npm run logs:watch -- --stage prod
-```
-
-## Rollback Procedures
-
-### Backend Rollback (SST)
-
-```bash
-# List recent deployments
-sst list --stage prod
-
-# Rollback to previous version
-sst rollback --stage prod --version v1.1.5
-
-# Or redeploy from previous git tag
-git checkout v1.1.5
-npm run sst deploy --stage prod
-```
-
-### Database Rollback
-
-Drizzle doesn't have built-in rollback commands. You have two options:
-
-**Option 1: Manual rollback SQL**
-
-```bash
-# Review the migration you want to rollback
-cat migrations/0005_problematic_migration.sql
-
-# Write a reverse migration manually
-# Create migrations/0006_rollback_previous.sql with reverse operations
-
-# Apply the rollback migration
-npm run db:migrate
-```
-
-**Option 2: Restore from backup**
-
-```bash
-# Restore from RDS snapshot
-aws rds restore-db-instance-from-db-snapshot \
-  --db-instance-identifier ffp-prod-db-restored \
-  --db-snapshot-identifier ffp-prod-db-2025-10-15-03-00
-
-# Update connection strings
-# Run health checks
-```
-
-### Frontend Rollback (S3 + CloudFront)
-
-**Option 1: Redeploy previous version**
-
-```bash
-# Find previous successful git commit
-git log --oneline
-
-# Checkout previous version
-git checkout <commit-hash>
-
-# Build and deploy manually
-npm run build
-aws s3 sync dist/ s3://ffp-prod-website --delete
-aws cloudfront create-invalidation --distribution-id $PROD_DISTRIBUTION_ID --paths "/*"
-
-# Return to main branch
-git checkout main
-```
-
-**Option 2: Revert commit and trigger CircleCI**
-
-```bash
-git revert HEAD
-git push origin main
-# CircleCI will automatically deploy the reverted version
-```
-
-**Option 3: S3 versioning (if enabled)**
-
-```bash
-# List previous versions
-aws s3api list-object-versions --bucket ffp-prod-website
-
-# Restore specific version
-aws s3api copy-object \
-  --copy-source ffp-prod-website/index.html?versionId=<version-id> \
-  --bucket ffp-prod-website \
-  --key index.html
-```
-
-## Secrets Management
-
-### AWS Secrets Manager
-
-```bash
-# Store database credentials
-aws secretsmanager create-secret \
-  --name ffp/prod/db-credentials \
-  --secret-string '{
-    "host": "ffp-prod-db.xxx.eu-west-2.rds.amazonaws.com",
-    "port": 5432,
-    "username": "ffp_admin",
-    "password": "super-secret-password",
-    "database": "ffp_prod"
-  }'
-
-# Store JWT secret
-aws secretsmanager create-secret \
-  --name ffp/prod/jwt-secret \
-  --secret-string '{"secret":"your-jwt-secret-key"}'
-```
-
-### Access in Lambda
-
-```typescript
-import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
-
-const client = new SecretsManagerClient({ region: 'eu-west-2' });
-
-export const getSecret = async (secretName: string) => {
-  const response = await client.send(new GetSecretValueCommand({ SecretId: secretName }));
-  return JSON.parse(response.SecretString!);
-};
-
-// Usage
-const dbCredentials = await getSecret(`ffp/${process.env.STAGE}/db-credentials`);
-```
-
-### Rotation Policy
-
-- **Database passwords**: Rotate every 90 days
-- **JWT secrets**: Rotate every 180 days
-- **API keys**: Rotate on employee offboarding
-
-## Monitoring Deployments
-
-### Post-Deployment Checks
-
-```bash
-# Check API health
-curl https://api.ffp.app/health
-
-# Check database connectivity
-npm run db:test-connection -- --env prod
-
-# View recent logs
-npm run logs:tail -- --stage prod --function assessments
-
-# Check CloudWatch alarms
-aws cloudwatch describe-alarms --state-value ALARM
-
-# Test Drizzle Studio connection (staging only)
-npm run db:studio
-```
-
-### Deployment Metrics
-
-Track these in CloudWatch:
-
-- Deployment duration
-- Error rate (5 min post-deploy)
-- Response time (5 min post-deploy)
-- Database connection pool usage
-
-### Rollback Triggers
-
-Automatically rollback if:
-
-- Error rate >5% in first 5 minutes
-- Response time >2 seconds (p95)
-- Any critical CloudWatch alarm triggered
-
-## CI/CD Pipeline (GitHub Actions)
-
-### Phase 1: Basic Automated Testing Only
-
-For MVP/Phase 1, we implement **automated testing only** - deployments remain manual.
-
-**Setup Steps:**
-
-1. **Create `.github/workflows/test.yml`**
-   ```yaml
-   name: Test
-   ```
-
-on: [push, pull_request]
-
-jobs:
-test:
-runs-on: ubuntu-latest
-steps: - uses: actions/checkout@v3
-
-- uses: actions/setup-node@v3
-  with:
-  node-version: '18' - run: npm ci - run: npm run test - run: npm run lint
-
-````
-
-2. **Configure Repository Secrets**
-   - Navigate to Settings → Secrets and variables → Actions
-   - Add: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (for future use)
-
-3. **Setup Status Badge**
-   ```markdown
-   ![Tests](https://github.com/your-org/ffp/actions/workflows/test.yml/badge.svg)
-````
-
-**Why Manual Deployments for Phase 1:**
-
-- Solo developer, 8-12 week MVP timeline
-- Learn SST deployment patterns hands-on first
-- Add automation when deployment frequency becomes painful (Phase 2)
-- Aligns with "Speed Over Perfection" principle
+- GitHub Actions runs tests and linting on push/PR
+- All deployments are manual via SST CLI
+- Rationale: learn SST patterns hands-on first, automate when deployment frequency becomes painful
 
 ### Phase 2+: Full Automated Deployment
 
-**Future enhancements** (see example workflows above):
-
-- Automated staging deployments on `develop` branch merge
-- Automated production deployments on `main` branch merge
+- Automated staging deploys on `develop` merge
+- Automated production deploys on `main` merge
 - Database migration automation
-- Frontend build and S3 sync automation
-- CloudFront invalidation automation
+- Frontend build → S3 sync → CloudFront invalidation
 
-### Manual Deployment Commands (Phase 1)
+## Patterns to Implement
 
-```bash
-# Backend deployment
-npm run sst deploy -- --stage staging
-npm run sst deploy -- --stage prod
+### SST Resource Binding
 
-# Frontend deployment
-npm run build
-aws s3 sync dist/ s3://ffp-staging-website --delete
-aws cloudfront create-invalidation --distribution-id $STAGING_DISTRIBUTION_ID --paths "/*"
+SST injects resource references (bucket names, pool IDs) into Lambda functions automatically - no manual environment variable wiring needed.
 
-# Database migrations
-npm run db:migrate -- --env staging
-npm run db:migrate -- --env prod
-```
+### Pre-Deployment Migration Lambda
 
-## Disaster Recovery
+A dedicated Lambda function for running Drizzle migrations during deployment, rather than running migrations from a local machine against remote databases.
 
-### Backup Strategy
+### Rollback Strategy
 
-**Database Backups**
+| Layer             | Approach                                                   |
+| ----------------- | ---------------------------------------------------------- |
+| **Backend (SST)** | Redeploy from previous git tag                             |
+| **Database**      | Manual reverse migration SQL, or restore from RDS snapshot |
+| **Frontend**      | Redeploy previous build to S3 + CloudFront invalidation    |
 
-- Automated daily snapshots (7-day retention)
-- Manual backup before major changes
-- Point-in-time recovery (within retention)
+### Disaster Recovery
 
-**S3 Backups**
+- **Database**: Automated daily RDS snapshots (7-day retention), point-in-time recovery
+- **Videos (S3)**: Versioning enabled, lifecycle to Glacier after 90 days
+- **Infrastructure**: All defined in Git (SST + Drizzle) - can rebuild from scratch
 
-- Versioning enabled on video bucket
-- Lifecycle policy: Archive to Glacier after 90 days
-- Cross-region replication (future)
+## Deployment Checklist (High-Level)
 
-**Infrastructure as Code**
+1. All tests passing, code reviewed
+2. Migration SQL reviewed
+3. Deploy to staging first, run smoke tests
+4. Deploy to production
+5. Monitor CloudWatch for 30 minutes post-deploy
+6. Verify critical user flows
 
-- All infrastructure in Git (SST)
-- All schema definitions in Git (Drizzle)
-- Can rebuild from scratch in <1 hour
+## Cost Optimisation Notes
 
-### Recovery Procedures
-
-**Database Corruption**
-
-```bash
-# Restore from latest snapshot
-aws rds restore-db-instance-from-db-snapshot \
-  --db-instance-identifier ffp-prod-db-restored \
-  --db-snapshot-identifier ffp-prod-db-2025-10-15-03-00
-
-# Update connection strings
-# Run health checks
-```
-
-**Complete Infrastructure Loss**
-
-```bash
-# Checkout infrastructure code
-git clone https://github.com/ffp/infrastructure
-cd infrastructure
-
-# Deploy all stacks
-npm run sst deploy -- --stage prod
-
-# Restore database from snapshot
-npm run db:restore -- --snapshot latest
-
-# Apply all migrations
-npm run db:migrate
-
-# Verify functionality
-npm run test:smoke
-```
-
-## Deployment Schedule
-
-### Regular Deployments
-
-- **Staging**: Daily (automated from develop branch)
-- **Production**: Weekly (Tuesday 10 AM PST)
-- **Hotfixes**: As needed (with approval)
-
-### Deployment Windows
-
-- **Preferred**: Tuesday-Thursday, 10 AM - 2 PM PST
-- **Avoid**: Friday afternoons, weekends, holidays
-- **Blackout**: Week before major holidays
-
-### Change Freeze
-
-- 2 weeks before major product launch
-- During high-traffic events
-- When critical bugs exist in staging
-
-## Troubleshooting Deployments
-
-### Issue: SST Deploy Fails
-
-```bash
-# Check AWS credentials
-aws sts get-caller-identity
-
-# Check CloudFormation events
-aws cloudformation describe-stack-events \
-  --stack-name ffp-prod-ApiStack
-
-# Remove stuck stack
-sst remove --stage prod
-# Then redeploy
-sst deploy --stage prod
-```
-
-### Issue: Migration Fails
-
-```bash
-# Check migration status
-npm run db:check
-
-# Review the problematic migration
-cat migrations/<failing-migration>.sql
-
-# Options:
-# 1. Fix the migration file and re-run
-# 2. Drop the migration and regenerate
-npm run db:drop
-npm run db:generate
-
-# 3. Or restore from backup
-npm run db:restore -- --env prod --backup-id 2025-10-15-03-00
-```
-
-### Issue: Drizzle Studio Won't Connect
-
-```bash
-# Check database credentials
-echo $DB_HOST $DB_PORT $DB_NAME
-
-# Test direct connection
-psql -h $DB_HOST -U $DB_USER -d $DB_NAME
-
-# Verify drizzle.config.ts has correct credentials
-cat drizzle.config.ts
-
-# Try with explicit credentials
-DB_HOST=localhost DB_PORT=5432 npm run db:studio
-```
-
-### Issue: Frontend Build Fails (CircleCI)
-
-1. Check build logs in GitHub Actions dashboard
-2. Verify environment variables are set in CircleCI project settings
-3. Check if API endpoint is correct in environment variables
-4. Re-run workflow from GitHub Actions dashboard
-5. Test build locally:
-
-```bash
-npm run build
-# Check for errors
-```
-
-## Cost Optimization
-
-### Development Environments
-
-- Tear down personal dev environments when not in use
-- Use smaller RDS instances for dev (t3.micro)
-- Limit Lambda provisioned concurrency
-- Use `db:push` for rapid schema iteration (no migration files)
-
-### Production
-
-- Use AWS Reserved Instances for RDS (40% savings)
+- Tear down dev environments when not in use
+- Use `t3.micro` RDS for dev
+- Consider RDS Reserved Instances for production (40% savings)
+- Use ARM64 Lambda runtime (20% cost savings)
 - Enable S3 Intelligent-Tiering
-- Set CloudFront cache TTL appropriately
-- Use ARM64 Lambda (20% cost savings)
 
-## Deployment Checklist
+---
 
-### Pre-Deployment
-
-- [ ] All tests passing
-- [ ] Code reviewed and approved
-- [ ] Database migrations tested locally
-- [ ] Migration SQL reviewed (check generated SQL files)
-- [ ] Secrets updated (if needed)
-- [ ] Deployment announcement sent
-- [ ] Rollback plan prepared
-
-### During Deployment
-
-- [ ] Deploy to staging first
-- [ ] Test database connection
-- [ ] Run migrations
-- [ ] Verify migration success (run db:verify)
-- [ ] Run smoke tests
-- [ ] Review migration SQL before applying to production
-- [ ] Deploy to production
-- [ ] Monitor CloudWatch alarms
-- [ ] Check error rates
-- [ ] Verify critical user flows
-
-### Post-Deployment
-
-- [ ] Run post-deployment verification (db:verify)
-- [ ] Monitor for 30 minutes
-- [ ] Check user feedback
-- [ ] Verify database schema matches expectations (use `db:studio`)
-- [ ] Document any issues
-- [ ] Update deployment log
-- [ ] Send deployment completion notice
+_Detailed implementation steps, GitHub Actions workflows, and SST stack configuration will be planned via Jira stories when deploying staging and production for the first time._
