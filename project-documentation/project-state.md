@@ -51,7 +51,7 @@ Renamed American English identifiers to British English across the codebase (mer
 
 | Key     | Story                            | Pts | Dependencies           | Notes                                   |
 | ------- | -------------------------------- | --- | ---------------------- | --------------------------------------- |
-| FFP-137 | Assessment Navigation Component  | 3   | FFP-135 ✅, FFP-136 ✅ | ✅ Complete                              |
+| FFP-137 | Assessment Navigation Component  | 3   | FFP-135 ✅, FFP-136 ✅ | ✅ Complete                             |
 | FFP-140 | Assessment Step Screens          | 5   | FFP-135 ✅, FFP-131 ✅ | Intro, Transition, Results              |
 | FFP-230 | Stale Job Detection              | 2   | FFP-180 ✅             | EventBridge scheduled Lambda            |
 | FFP-233 | Backend Required Question Valid. | 3   | FFP-130 ✅             | Defence-in-depth server-side validation |
