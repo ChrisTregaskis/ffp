@@ -2,7 +2,7 @@ import { getDb, processJobs, type JobType } from '@ffp/database';
 
 import type { TenantContext } from '../lib/context';
 import type { Transaction } from '../lib/database';
-import type { GenerateProgramPayload, ScoreAssessmentPayload } from '../schemas/job.schema';
+import type { GenerateProgrammePayload, ScoreAssessmentPayload } from '../schemas/job.schema';
 
 /**
  * Maps job types to their corresponding payload types.
@@ -10,7 +10,7 @@ import type { GenerateProgramPayload, ScoreAssessmentPayload } from '../schemas/
  */
 export interface JobPayloadMap {
   score_assessment: ScoreAssessmentPayload;
-  generate_program: GenerateProgramPayload;
+  generate_programme: GenerateProgrammePayload;
 }
 
 /**
@@ -44,7 +44,7 @@ export interface QueueJobOptions {
  * The job will be picked up by the job processor on its next poll cycle.
  *
  * @typeParam T - The job type, used to infer the correct payload type
- * @param type - The type of job to queue (e.g., 'score_assessment', 'generate_program')
+ * @param type - The type of job to queue (e.g., 'score_assessment', 'generate_programme')
  * @param payload - Job-specific data required for processing (type-safe based on job type)
  * @param context - Tenant context for RLS isolation
  * @param options - Optional configuration for priority, retry behaviour, and transaction

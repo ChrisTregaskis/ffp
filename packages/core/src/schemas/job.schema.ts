@@ -47,7 +47,7 @@ export const scoreAssessmentResultSchema = z.object({
  * Contains scored assessment data needed to generate a personalised
  * workout programme from the video catalogue.
  */
-export const generateProgramPayloadSchema = z.object({
+export const generateProgrammePayloadSchema = z.object({
   /** The scored assessment submission ID */
   assessmentSubmissionId: z.string().uuid(),
   /** User for whom the programme is being generated */
@@ -71,11 +71,11 @@ export const exerciseSummarySchema = z.object({
 });
 
 // Contains the generated programme ID and summary of included exercises.
-export const generateProgramResultSchema = z.object({
+export const generateProgrammeResultSchema = z.object({
   /** The generated programme ID */
-  programId: z.string().uuid(),
+  programmeId: z.string().uuid(),
   /** Programme name */
-  programName: z.string(),
+  programmeName: z.string(),
   /** Duration in weeks */
   durationWeeks: z.number().int().positive(),
   /** Summary of exercises included */
@@ -89,13 +89,13 @@ export const generateProgramResultSchema = z.object({
 // Use this to type-safely handle different job payloads based on job type.
 export const jobPayloadSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('score_assessment'), data: scoreAssessmentPayloadSchema }),
-  z.object({ type: z.literal('generate_program'), data: generateProgramPayloadSchema }),
+  z.object({ type: z.literal('generate_programme'), data: generateProgrammePayloadSchema }),
 ]);
 
-// As abvoe but for job results
+// As above but for job results
 export const jobResultSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('score_assessment'), data: scoreAssessmentResultSchema }),
-  z.object({ type: z.literal('generate_program'), data: generateProgramResultSchema }),
+  z.object({ type: z.literal('generate_programme'), data: generateProgrammeResultSchema }),
 ]);
 
 export const processJobSchema = z.object({
@@ -146,10 +146,10 @@ export type ScoreAssessmentPayload = z.infer<typeof scoreAssessmentPayloadSchema
 export type DimensionalScore = z.infer<typeof dimensionalScoreSchema>;
 export type ScoreAssessmentResult = z.infer<typeof scoreAssessmentResultSchema>;
 
-// Generate program types
-export type GenerateProgramPayload = z.infer<typeof generateProgramPayloadSchema>;
+// Generate programme types
+export type GenerateProgrammePayload = z.infer<typeof generateProgrammePayloadSchema>;
 export type ExerciseSummary = z.infer<typeof exerciseSummarySchema>;
-export type GenerateProgramResult = z.infer<typeof generateProgramResultSchema>;
+export type GenerateProgrammeResult = z.infer<typeof generateProgrammeResultSchema>;
 
 // Process job types
 export type JobPayload = z.infer<typeof jobPayloadSchema>;

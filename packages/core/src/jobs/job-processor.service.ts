@@ -177,7 +177,7 @@ export interface JobProcessorConfig {
    * ```typescript
    * maxConcurrentByType: {
    *   score_assessment: 10,
-   *   generate_program: 3,
+   *   generate_programme: 3,
    * }
    * ```
    */
@@ -216,7 +216,7 @@ export interface PollResult {
  * const result = await pollAndClaimJobs({
  *   maxConcurrentByType: {
  *     score_assessment: 10,
- *     generate_program: 3,
+ *     generate_programme: 3,
  *   },
  *   defaultMaxConcurrent: 5,
  * });

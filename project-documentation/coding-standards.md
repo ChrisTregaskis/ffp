@@ -22,7 +22,7 @@ export const userRoleSchema = z.enum([
   'system_admin',
   'customer_owner',
   'customer_admin',
-  'program_user',
+  'programme_user',
 ]);
 
 export type UserRole = z.infer<typeof userRoleSchema>;
@@ -96,7 +96,7 @@ export const userRoleEnum = pgEnum('user_role', [
   'system_admin',
   'customer_owner',
   'customer_admin',
-  'program_user',
+  'programme_user',
 ]);
 
 export const users = pgTable(
@@ -157,7 +157,7 @@ await db.query.users.findMany();
 // Insert with returning
 const [newUser] = await db
   .insert(users)
-  .values({ id, tenantId, email, role: 'program_user' })
+  .values({ id, tenantId, email, role: 'programme_user' })
   .returning();
 
 // Update

@@ -1,11 +1,11 @@
 import {
   scoreAssessmentPayloadSchema,
-  generateProgramPayloadSchema,
+  generateProgrammePayloadSchema,
   scoreAssessmentResultSchema,
-  generateProgramResultSchema,
+  generateProgrammeResultSchema,
   type ScoreAssessmentResult,
-  type GenerateProgramPayload,
-  type GenerateProgramResult,
+  type GenerateProgrammePayload,
+  type GenerateProgrammeResult,
 } from '@ffp/core';
 import {
   pollAndClaimJobs,
@@ -33,7 +33,7 @@ import type { Context, ScheduledEvent } from 'aws-lambda';
 /** Map job type to its result type */
 export interface JobResultMap {
   score_assessment: ScoreAssessmentResult;
-  generate_program: GenerateProgramResult;
+  generate_programme: GenerateProgrammeResult;
 }
 
 /** Union of all job results (for storage in database) */
@@ -73,7 +73,7 @@ export const handler = async (event: ScheduledEvent, context: Context): Promise<
   const config: JobProcessorConfig = {
     maxConcurrentByType: {
       score_assessment: 5,
-      generate_program: 3,
+      generate_programme: 3,
     },
     defaultMaxConcurrent: 5,
   };
@@ -186,28 +186,28 @@ export async function processJobByType<T extends JobType>(
       return resultValidation.data as JobResultMap[T];
     }
 
-    case 'generate_program': {
-      const parseResult = generateProgramPayloadSchema.safeParse(job.payload);
+    case 'generate_programme': {
+      const parseResult = generateProgrammePayloadSchema.safeParse(job.payload);
 
       if (!parseResult.success) {
-        throw new ValidationError('Invalid generate_program payload', {
+        throw new ValidationError('Invalid generate_programme payload', {
           jobId: job.id,
           errors: parseResult.error.format(),
         });
       }
 
-      const result = await handleGenerateProgram(parseResult.data, job.tenantId);
+      const result = await handleGenerateProgramme(parseResult.data, job.tenantId);
 
       // Validate result matches schema (runtime safety check)
-      const resultValidation = generateProgramResultSchema.safeParse(result);
+      const resultValidation = generateProgrammeResultSchema.safeParse(result);
       if (!resultValidation.success) {
-        throw new ValidationError('Invalid generate_program result from handler', {
+        throw new ValidationError('Invalid generate_programme result from handler', {
           jobId: job.id,
           errors: resultValidation.error.format(),
         });
       }
 
-      // Type assertion is safe: result validated against GenerateProgramResult schema
+      // Type assertion is safe: result validated against GenerateProgrammeResult schema
       return resultValidation.data as JobResultMap[T];
     }
 
@@ -228,9 +228,9 @@ async function handleScoreAssessment(
 }
 
 /** Delegate to core programme generation handler */
-async function handleGenerateProgram(
-  payload: GenerateProgramPayload,
+async function handleGenerateProgramme(
+  payload: GenerateProgrammePayload,
   tenantId: string
-): Promise<GenerateProgramResult> {
+): Promise<GenerateProgrammeResult> {
   return await processGenerateProgramme(payload, tenantId);
 }

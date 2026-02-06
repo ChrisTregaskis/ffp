@@ -63,6 +63,7 @@ Review these changes as a senior engineer specialising in multi-tenant healthcar
 ### [MEDIUM] Code Quality (Consider)
 
 - [ ] British English spelling (organise, colour, behaviour, optimise, prioritise)
+- [ ] `programme` not `program` in FFP-specific code (exception: third-party APIs)
 - [ ] No emojis in code, comments, or user-facing strings
 - [ ] No raw HTML elements (use components instead):
   - [ ] No `<h1>`, `<h2>`, `<h3>`, `<h4>`, `<h5>` tags (use `<Title>` component)

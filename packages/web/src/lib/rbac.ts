@@ -26,7 +26,7 @@ export const hasRole = (userRole: UserRole, allowedRoles: UserRole[]): boolean =
  */
 export const getRoleHomePath = (role: UserRole): RouteKey => {
   switch (role) {
-    case USER_ROLE.PROGRAM_USER:
+    case USER_ROLE.PROGRAMME_USER:
       // Programme users see the standard home page
       return RouteKey.HOME;
 
@@ -47,7 +47,7 @@ export const getRoleHomePath = (role: UserRole): RouteKey => {
 
 /**
  * Log unauthorised access attempts for security monitoring.
- * In Phase 1, this logs to console. In future phases, this will integrate
+ * Currently, this logs to console. In future, this will integrate
  * with analytics/monitoring services (CloudWatch, Sentry, etc.).
  *
  * @param userId - The ID of the user who attempted access

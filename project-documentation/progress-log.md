@@ -8,6 +8,84 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### February 4, 2026 (Sessions 93-94 - FFP-134 Programme Generation Service)
+
+**Status**: ✅ FFP-134 COMPLETE
+
+**Branch**: `feature/ffp-134-programme-generation-service`
+
+**Summary**: Created the programme generation service that runs after assessment scoring. Includes programme templates lookup table, programmes table with RLS, job handler, and scoring integration.
+
+**Key Deliverables**:
+
+- **Programme Templates Table**: System-managed lookup (`slug`, `name`, `description`, `isActive`)
+- **Programmes Table**: Tenant-isolated with status enum (`active`, `paused`, `completed`, `archived`)
+- **Programme Repository**: `createProgramme`, `findByUserId`, `findById`, `findTemplateBySlug` with RLS
+- **Programme Service**: `generateProgramme()` with retake detection, template lookup, validation
+- **Job Handler**: `processGenerateProgram` links assessment to programme, transitions to `completed`
+- **Scoring Integration**: `score_assessment` handler now enqueues `generate_program` job atomically
+
+**Sub-tasks Completed**:
+
+| Key     | Summary                                    | Status      |
+| ------- | ------------------------------------------ | ----------- |
+| FFP-183 | Programmes table schema, enum, Zod schemas | ✅ Complete |
+| FFP-184 | Programme repository with RLS              | ✅ Complete |
+| FFP-185 | Programme generation service logic         | ✅ Complete |
+| FFP-186 | Job handler + scoring integration          | ✅ Complete |
+| FFP-187 | Unit tests                                 | Deferred    |
+
+**E2E Manual Testing**: 5 scenarios validated (A-E) covering different programme mappings.
+See `project-documentation/sprint-planning/outputs/archive/testing-guide-programme-generation.md`
+
+**Sprint 5 Progress**: 23/23 pts (100%) - Sprint 5 Complete
+
+---
+
+### January 27, 2026 (Session 92 - FFP-139 Question Renderer Components)
+
+**Status**: ✅ FFP-139 COMPLETE
+
+**Branch**: `feature/ffp-139-question-renderers`
+
+**Summary**: Implemented 6 question type renderer components with factory pattern, all dispatching answers to AssessmentContext.
+
+**Key Deliverables**:
+
+- **QuestionRenderer Factory**: Dispatches to correct component based on `question.type`
+- **SingleChoiceQuestion**: Radio button group for single selection
+- **MultiChoiceQuestion**: Checkbox group for multiple selections
+- **NumericQuestion**: Number input with min/max validation
+- **ScaleQuestion**: Slider/range input with labelled endpoints
+- **TextQuestion**: Textarea for freeform responses
+- **VideoResponseQuestion**: Placeholder for video-guided assessments
+
+**Pattern**: Common `QuestionComponentProps` interface (`question`, `answer`, `onAnswerChange`), all components dispatch `SET_ANSWER` action to context.
+
+**Files Created**:
+
+```
+packages/web/src/components/questions/
+├── index.ts                    # Re-exports
+├── QuestionRenderer.tsx        # Factory component
+├── SingleChoiceQuestion.tsx
+├── MultiChoiceQuestion.tsx
+├── NumericQuestion.tsx
+├── ScaleQuestion.tsx
+├── TextQuestion.tsx
+└── VideoResponseQuestion.tsx
+```
+
+**Quality Assurance**:
+
+- ✅ `pnpm typecheck` - Zero errors
+- ✅ `pnpm lint` - Zero warnings
+- ✅ `pnpm build` - Successful
+
+**Sprint 5 Progress**: 18/23 pts (78%) - FFP-134 remaining
+
+---
+
 ### January 25, 2026 (Session 91 - FFP-136 TanStack Query Hooks)
 
 **Status**: ✅ FFP-136 COMPLETE
@@ -596,8 +674,10 @@ The tests were failing with "permission denied for table template_questions" bec
 | Jan 19      | FFP-126 Complete (Template Admin)  | ~176h         |
 | Jan 19      | FFP-135 Complete (Assessment Ctx)  | ~177h         |
 | Jan 22      | FFP-138 Complete (Progress Bar)    | ~178h         |
-| **Current** | **Sprint 5 🚀 In Progress**        | **~178/197h** |
+| Jan 27      | FFP-139 Complete (Question Render) | ~180h         |
+| Feb 4       | FFP-134 Complete (Programme Gen)   | ~183h         |
+| **Current** | **Sprint 5 ✅ Complete (Early)**   | **~183/197h** |
 
 ---
 
-**For current status and next tasks, see `project-state.md`**
+**Sprint 5 completed 4th February 2026 (11 days early). For current status and next tasks, see `project-state.md`**

@@ -7,7 +7,7 @@ import { withRLS } from '../../lib/database';
 import { createSystemLogger } from '../../lib/logger';
 import { generateProgramme } from '../../programmes/programme.service';
 
-import type { DimensionalScore, GenerateProgramResult } from '../../schemas/job.schema';
+import type { DimensionalScore, GenerateProgrammeResult } from '../../schemas/job.schema';
 
 export interface GenerateProgrammeJobPayload {
   /** The scored user assessment ID */
@@ -31,7 +31,7 @@ export interface GenerateProgrammeJobPayload {
 export async function processGenerateProgramme(
   payload: GenerateProgrammeJobPayload,
   tenantId: string
-): Promise<GenerateProgramResult> {
+): Promise<GenerateProgrammeResult> {
   const logger = createSystemLogger('generate-programme-handler');
 
   return await withRLS(tenantId, undefined, async (tx) => {
@@ -72,8 +72,8 @@ export async function processGenerateProgramme(
 
     // MVP defaults — exercise catalogue not yet built
     return {
-      programId: result.programmeId,
-      programName: result.programmeName,
+      programmeId: result.programmeId,
+      programmeName: result.programmeName,
       durationWeeks: 8,
       exercises: [],
       sessionsPerWeek: 3,

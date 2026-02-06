@@ -224,7 +224,7 @@ describe('Job Queue Service', () => {
       expect(job.maxAttempts).toBe(10);
     });
 
-    it('creates a generate_program job type', async () => {
+    it('creates a generate_programme job type', async () => {
       const payload = {
         assessmentSubmissionId: randomUUID(),
         userId: randomUUID(),
@@ -238,14 +238,14 @@ describe('Job Queue Service', () => {
         ],
       };
 
-      const jobId = await queueJob('generate_program', payload, testContext);
+      const jobId = await queueJob('generate_programme', payload, testContext);
 
       const [job] = await db
         .select()
         .from(schema.processJobs)
         .where(sql`id = ${jobId}`);
 
-      expect(job.type).toBe('generate_program');
+      expect(job.type).toBe('generate_programme');
       expect(job.payload).toEqual(payload);
     });
 

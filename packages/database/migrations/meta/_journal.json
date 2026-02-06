@@ -113,6 +113,13 @@
       "when": 1769886048277,
       "tag": "0015_purple_karen_page",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1770362467833,
+      "tag": "0016_first_silhouette",
+      "breakpoints": true
     }
   ]
 }

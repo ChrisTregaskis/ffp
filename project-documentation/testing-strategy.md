@@ -157,7 +157,7 @@ describe('extractUserContext', () => {
               sub: 'user-123',
               'custom:tenantId': 'tenant-abc',
               'custom:customerId': 'customer-xyz',
-              'custom:role': 'program_user',
+              'custom:role': 'programme_user',
               email: 'test@example.com',
             },
           },
@@ -173,7 +173,7 @@ describe('extractUserContext', () => {
     expect(context.actor.userId).toBe('user-123');
     expect(context.tenantId).toBe('tenant-abc');
     expect(context.customerId).toBe('customer-xyz');
-    expect(context.role).toBe('program_user');
+    expect(context.role).toBe('programme_user');
   });
 
   it('throws ValidationError when tenantId is missing', () => {
@@ -183,7 +183,7 @@ describe('extractUserContext', () => {
           jwt: {
             claims: {
               sub: 'user-123',
-              'custom:role': 'program_user',
+              'custom:role': 'programme_user',
               email: 'test@example.com',
             },
           },

@@ -188,35 +188,39 @@ describe('Job Processor Service', () => {
     });
 
     it('uses defaultMaxConcurrent for types not in maxConcurrentByType', async () => {
-      // Create 5 generate_program jobs
+      // Create 5 generate_programme jobs
       await Promise.all(
-        Array.from({ length: 5 }, () => createTestJob({ type: 'generate_program' }))
+        Array.from({ length: 5 }, () => createTestJob({ type: 'generate_programme' }))
       );
 
       const result = await pollAndClaimJobs({
-        maxConcurrentByType: { score_assessment: 10 }, // Not setting generate_program
+        maxConcurrentByType: { score_assessment: 10 }, // Not setting generate_programme
         defaultMaxConcurrent: 2,
       });
 
-      // Should use defaultMaxConcurrent (2) for generate_program
-      const generateProgramJobs = result.claimedJobs.filter((j) => j.type === 'generate_program');
-      expect(generateProgramJobs).toHaveLength(2);
+      // Should use defaultMaxConcurrent (2) for generate_programme
+      const generateProgrammeJobs = result.claimedJobs.filter(
+        (j) => j.type === 'generate_programme'
+      );
+      expect(generateProgrammeJobs).toHaveLength(2);
     });
 
     it('polls all job types and combines results', async () => {
       await createTestJob({ type: 'score_assessment' });
       await createTestJob({ type: 'score_assessment' });
-      await createTestJob({ type: 'generate_program' });
+      await createTestJob({ type: 'generate_programme' });
 
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
 
       expect(result.count).toBe(3);
 
       const scoreAssessmentJobs = result.claimedJobs.filter((j) => j.type === 'score_assessment');
-      const generateProgramJobs = result.claimedJobs.filter((j) => j.type === 'generate_program');
+      const generateProgrammeJobs = result.claimedJobs.filter(
+        (j) => j.type === 'generate_programme'
+      );
 
       expect(scoreAssessmentJobs).toHaveLength(2);
-      expect(generateProgramJobs).toHaveLength(1);
+      expect(generateProgrammeJobs).toHaveLength(1);
     });
 
     it('returns empty results when no jobs are queued', async () => {

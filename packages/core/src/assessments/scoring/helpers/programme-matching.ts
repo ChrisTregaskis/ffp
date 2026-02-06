@@ -15,14 +15,14 @@ import type { DimensionalScore } from '../../../schemas/job.schema';
  * Returns the first matching programme (sorted by priority).
  *
  * @param dimensionalScores - Calculated dimension scores
- * @param programMappings - Programme mapping rules from scoring config
+ * @param programmeMappings - Programme mapping rules from scoring config
  * @returns Programme template ID if a match is found, null if no match
  */
 export function findMatchingProgramme(
   dimensionalScores: DimensionalScore[],
-  programMappings: ScoringConfig['programMappings']
+  programmeMappings: ScoringConfig['programmeMappings']
 ): string | null {
-  if (programMappings.length === 0) {
+  if (programmeMappings.length === 0) {
     return null;
   }
 
@@ -36,14 +36,14 @@ export function findMatchingProgramme(
   }
 
   // Sort mappings by priority (lower number = higher priority)
-  const sortedMappings = [...programMappings].sort(
+  const sortedMappings = [...programmeMappings].sort(
     (a, b) => (a.priority ?? 999) - (b.priority ?? 999)
   );
 
   // Find first matching mapping
   for (const mapping of sortedMappings) {
     if (evaluateMappingConditions(mapping, scoreMap)) {
-      return mapping.programTemplateId;
+      return mapping.programmeTemplateId;
     }
   }
 
@@ -58,7 +58,7 @@ export function findMatchingProgramme(
  * @returns True if all conditions are met
  */
 function evaluateMappingConditions(
-  mapping: ScoringConfig['programMappings'][0],
+  mapping: ScoringConfig['programmeMappings'][0],
   scoreMap: Map<string, number>
 ): boolean {
   const { conditions, operator = DEFAULT_LOGICAL_OPERATOR } = mapping;

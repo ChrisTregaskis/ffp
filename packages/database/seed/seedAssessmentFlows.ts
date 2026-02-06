@@ -102,19 +102,19 @@ const FLOW_SCORING_CONFIG: ScoringConfig = {
       riskThresholds: { low: 6, moderate: 12 },
     },
   ],
-  programMappings: [
+  programmeMappings: [
     // Any red flag present - highest priority, recommend gentle programme with medical review
     // Red flags score 10 each, so pain >= 10 catches any single red flag
     {
       priority: 1,
       conditions: [{ dimension: 'pain', operator: 'gte', value: 35 }],
-      programTemplateId: 'gentle-mobility-programme',
+      programmeTemplateId: 'gentle-mobility-programme',
     },
     // Moderate-high pain without red flags - gentle programme
     {
       priority: 2,
       conditions: [{ dimension: 'pain', operator: 'gte', value: 20 }],
-      programTemplateId: 'gentle-mobility-programme',
+      programmeTemplateId: 'gentle-mobility-programme',
     },
     // Low strength + low balance - foundation programme
     {
@@ -124,7 +124,7 @@ const FLOW_SCORING_CONFIG: ScoringConfig = {
         { dimension: 'balance', operator: 'lt', value: 6 },
       ],
       operator: 'and',
-      programTemplateId: 'foundation-programme',
+      programmeTemplateId: 'foundation-programme',
     },
     // Good overall - advanced programme
     {
@@ -134,13 +134,13 @@ const FLOW_SCORING_CONFIG: ScoringConfig = {
         { dimension: 'strength', operator: 'gte', value: 40 },
       ],
       operator: 'and',
-      programTemplateId: 'advanced-strength-programme',
+      programmeTemplateId: 'advanced-strength-programme',
     },
     // Default fallback
     {
       priority: 10,
       conditions: [],
-      programTemplateId: 'general-wellness-programme',
+      programmeTemplateId: 'general-wellness-programme',
     },
   ],
 };

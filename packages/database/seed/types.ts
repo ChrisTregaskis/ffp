@@ -69,6 +69,6 @@ export interface SeedConfig {
   testCustomer: TestCustomerSeed;
   testCustomerAdminUser: TestUserSeed;
   testCustomerAdminCognito: TestUserCognitoSeed;
-  testCustomerProgramUser: TestUserSeed;
-  testCustomerProgramUserCognito: TestUserCognitoSeed;
+  testCustomerProgrammeUser: TestUserSeed;
+  testCustomerProgrammeUserCognito: TestUserCognitoSeed;
 }

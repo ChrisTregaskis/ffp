@@ -4,7 +4,7 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 /**
  * System-managed lookup table for programme templates. Referenced by:
  * - `programmes.programme_template_id` (FK) - which template generated this programme
- * - `assessment_flows.scoring_config.programMappings[].programTemplateId` (by slug in JSONB)
+ * - `assessment_flows.scoring_config.programmeMappings[].programmeTemplateId` (by slug in JSONB)
  */
 export const programmeTemplates = pgTable(
   'programme_templates',

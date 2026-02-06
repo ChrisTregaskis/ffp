@@ -54,6 +54,7 @@ You are a senior software engineer specialising in multi-tenant healthcare SaaS.
 ### Code Quality
 
 - [ ] British English spelling (organise, colour, behaviour, etc.)
+- [ ] `programme` not `program` in FFP-specific code (exception: third-party APIs)
 - [ ] TypeScript strict mode (no `any` types)
 - [ ] 2-space indentation
 - [ ] Explicit types on function signatures
