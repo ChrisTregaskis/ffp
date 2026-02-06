@@ -1,21 +1,3 @@
-/**
- * Branching constants - Single source of truth for flow step branching types
- *
- * These constants define the branching logic for assessment flows:
- * - NextStepRule: Conditional navigation between steps
- * - BranchCondition: Conditions that trigger branching
- * - BranchAction: Actions to take when conditions match
- *
- * Used by:
- * - @ffp/database: JSONB column typing in flow_steps.next_step_rules
- * - @ffp/core: Branch evaluation service (Session 5)
- *
- * Design decisions:
- * - Branching uses targetStepId (UUID) not order, because parallel branches share order
- * - Conditions use AND logic (all must match)
- * - Rules are evaluated by priority (lower = higher priority)
- */
-
 import type { ScoreDimension } from './question.constants';
 import type { ComparisonOperator } from '../types/question.types';
 

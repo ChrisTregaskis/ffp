@@ -3,34 +3,16 @@ import { eq, inArray, asc, and } from 'drizzle-orm';
 import type { DbClient, QuestionWithConfig } from '@ffp/database';
 import { questions, templateQuestions, type QuestionRecord } from '@ffp/database/schema';
 
-// Re-export types for convenience
-export type { QuestionWithConfig };
-
-/**
- * Base question record type - inferred from Drizzle schema
- */
 export type Question = QuestionRecord;
 
-/**
- * Find a question by ID
- *
- * Questions are system content (no RLS required).
- */
+/** Questions are system content (no RLS required) */
 export async function findByQuestionId(db: DbClient, id: string): Promise<Question | null> {
   const records = await db.select().from(questions).where(eq(questions.id, id)).limit(1);
 
   return records[0] ?? null;
 }
 
-/**
- * Find multiple questions by IDs
- *
- * Fetches all questions matching the provided IDs in a single query.
- * Returns questions in no guaranteed order. Missing IDs are silently ignored.
- *
- * @param ids - Array of question UUIDs to fetch
- * @returns Array of found questions (may be fewer than requested if some IDs don't exist)
- */
+/** Returns questions in no guaranteed order. Missing IDs are silently ignored. */
 export async function findByQuestionIds(db: DbClient, ids: string[]): Promise<Question[]> {
   if (ids.length === 0) {
     return [];
@@ -39,13 +21,6 @@ export async function findByQuestionIds(db: DbClient, ids: string[]): Promise<Qu
   return await db.select().from(questions).where(inArray(questions.id, ids));
 }
 
-/**
- * Find a question by slug
- *
- * Useful for looking up questions by human-readable identifier.
- *
- * @param slug - The question slug (e.g., 'goal-primary', 'pain-level')
- */
 export async function findQuestionBySlug(db: DbClient, slug: string): Promise<Question | null> {
   const records = await db.select().from(questions).where(eq(questions.slug, slug)).limit(1);
 
@@ -54,11 +29,6 @@ export async function findQuestionBySlug(db: DbClient, slug: string): Promise<Qu
 
 /**
  * Find all questions for a template, ordered by display order
- *
- * Joins with template_questions to get questions associated with a template,
- * including display order and any config overrides.
- *
- * @param templateId - The assessment template UUID
  * @returns Questions with template-specific config, ordered by displayOrder
  */
 export async function findByTemplateId(
@@ -103,11 +73,6 @@ export async function findByTemplateId(
 
 /**
  * Find all questions for multiple templates, ordered by display order within each template
- *
- * Useful for fetching all questions across multiple templates in a single query.
- * Returns results grouped by template, maintaining display order.
- *
- * @param templateIds - Array of assessment template UUIDs
  * @returns Questions with template-specific config, ordered by templateId then displayOrder
  */
 export async function findByTemplateIds(
@@ -156,10 +121,7 @@ export async function findByTemplateIds(
 }
 
 /**
- * Find all active questions
- *
- * @param options.activeOnly - If true (default), only return active questions
- */
+ * Find all active questions unless explicitly requested otherwise */
 export async function findAllQuestions(
   db: DbClient,
   options?: { activeOnly?: boolean }
@@ -171,13 +133,6 @@ export async function findAllQuestions(
     : await query;
 }
 
-/**
- * Find question slugs by question IDs
- *
- * Returns a Map of questionId -> slug for efficient lookup.
- *
- * @returns Map of question ID to slug
- */
 export async function findSlugsByIds(
   db: DbClient,
   questionIds: string[]
@@ -193,3 +148,5 @@ export async function findSlugsByIds(
 
   return new Map(records.map((r) => [r.id, r.slug]));
 }
+
+export type { QuestionWithConfig };

@@ -1,4 +1,4 @@
-import { Logger } from '../lib/logger';
+import { createLogger } from '../lib/logger';
 
 import { createCustomer as createCustomerInRepo } from './admin.repository';
 
@@ -35,7 +35,7 @@ export async function createCustomerService(
   ctx: RequestContext,
   input: CreateCustomerInput
 ): Promise<CreateCustomerResponse> {
-  const logger = new Logger(ctx.tenantContext);
+  const logger = createLogger(ctx.tenantContext);
 
   logger.info('Starting customer creation', {
     customerName: input.customerName,

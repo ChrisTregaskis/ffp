@@ -5,7 +5,7 @@ import { userRoleSchema } from '@ffp/core';
  * Single source of truth derived from core schema.
  */
 export const USER_ROLE = {
-  PROGRAM_USER: userRoleSchema.enum.program_user,
+  PROGRAMME_USER: userRoleSchema.enum.programme_user,
   CUSTOMER_OWNER: userRoleSchema.enum.customer_owner,
   CUSTOMER_ADMIN: userRoleSchema.enum.customer_admin,
   SYSTEM_ADMIN: userRoleSchema.enum.system_admin,

@@ -13,11 +13,12 @@ The following MCP servers are configured:
 5. **Puppeteer** - Browser automation
 6. **Tavily** - AI-powered search and research
 7. **Context7** - Up-to-date documentation for any framework/library
+8. **Gmail** - Email integration for sending notifications
 
 ## Prerequisites
 
 - Docker installed and running (for GitHub and Atlassian servers)
-- Node.js v22.15.0+ installed via nvm
+- Node.js v20.20.0+ installed via nvm
 - API keys and credentials (see below)
 - Claude Desktop and/or Claude Code installed
 
@@ -105,26 +106,29 @@ After updating the config, restart Claude Desktop completely (quit and reopen).
 Add MCP servers to Claude Code using the CLI:
 
 ```bash
-# GitHub
+# GitHub (requires Docker)
 claude mcp add --transport stdio github -- docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server
 
-# Atlassian (Jira)
+# Atlassian (Jira) (requires Docker)
 claude mcp add --transport stdio atlassian -e JIRA_URL="${JIRA_URL}" -e JIRA_USERNAME="${JIRA_USERNAME}" -e JIRA_API_TOKEN="${JIRA_API_TOKEN}" -- docker run -i --rm -e JIRA_URL -e JIRA_USERNAME -e JIRA_API_TOKEN ghcr.io/sooperset/mcp-atlassian:latest
 
 # Sequential Thinking
-claude mcp add --transport stdio sequential-thinking -- /Users/christophertregaskis/.nvm/versions/node/v22.15.0/bin/node /Users/christophertregaskis/.nvm/versions/node/v22.15.0/lib/node_modules/@modelcontextprotocol/server-sequential-thinking/dist/index.js
+claude mcp add --transport stdio sequential-thinking -- /Users/christophertregaskis/.nvm/versions/node/v20.20.0/bin/node /Users/christophertregaskis/.nvm/versions/node/v20.20.0/lib/node_modules/@modelcontextprotocol/server-sequential-thinking/dist/index.js
 
 # Brave Search
-claude mcp add --transport stdio brave-search -e BRAVE_API_KEY="${BRAVE_API_KEY}" -- /Users/christophertregaskis/.nvm/versions/node/v22.15.0/bin/node /Users/christophertregaskis/.nvm/versions/node/v22.15.0/lib/node_modules/@modelcontextprotocol/server-brave-search/dist/index.js
+claude mcp add --transport stdio brave-search -e BRAVE_API_KEY="${BRAVE_API_KEY}" -- /Users/christophertregaskis/.nvm/versions/node/v20.20.0/bin/node /Users/christophertregaskis/.nvm/versions/node/v20.20.0/lib/node_modules/@modelcontextprotocol/server-brave-search/dist/index.js
 
 # Puppeteer
-claude mcp add --transport stdio puppeteer -- /Users/christophertregaskis/.nvm/versions/node/v22.15.0/bin/node /Users/christophertregaskis/.nvm/versions/node/v22.15.0/lib/node_modules/@modelcontextprotocol/server-puppeteer/dist/index.js
+claude mcp add --transport stdio puppeteer -- /Users/christophertregaskis/.nvm/versions/node/v20.20.0/bin/node /Users/christophertregaskis/.nvm/versions/node/v20.20.0/lib/node_modules/@modelcontextprotocol/server-puppeteer/dist/index.js
 
 # Tavily
-claude mcp add --transport stdio tavily -e TAVILY_API_KEY="${TAVILY_API_KEY}" -- /Users/christophertregaskis/.nvm/versions/node/v22.15.0/bin/node /Users/christophertregaskis/Training/MCP-General/TavilyServer/tavily-mcp/build/index.js
+claude mcp add --transport stdio tavily -e TAVILY_API_KEY="${TAVILY_API_KEY}" -- /Users/christophertregaskis/.nvm/versions/node/v20.20.0/bin/node /Users/christophertregaskis/Training/MCP-General/TavilyServer/tavily-mcp/build/index.js
 
 # Context7
-claude mcp add --transport stdio context7 -e CONTEXT7_API_KEY="${CONTEXT7_API_KEY}" -- /Users/christophertregaskis/.nvm/versions/node/v22.15.0/bin/npx -y @upstash/context7-mcp --api-key "${CONTEXT7_API_KEY}"
+claude mcp add --transport stdio context7 -e CONTEXT7_API_KEY="${CONTEXT7_API_KEY}" -- /Users/christophertregaskis/.nvm/versions/node/v20.20.0/bin/npx -y @upstash/context7-mcp --api-key "${CONTEXT7_API_KEY}"
+
+# Gmail
+claude mcp add --transport stdio gmail -- npx -y @gongrzhe/server-gmail-autoauth-mcp
 ```
 
 ## Testing MCP Connections
@@ -149,6 +153,7 @@ brave-search: ... - ✓ Connected
 puppeteer: ... - ✓ Connected
 tavily: ... - ✓ Connected
 context7: ... - ✓ Connected
+gmail: ... - ✓ Connected
 ```
 
 ### Claude Desktop
@@ -269,6 +274,13 @@ Additional verification steps:
 - Usage: Request library documentation in your prompts
 - Pulls documentation from official sources
 
+### Gmail
+
+- No API key required (uses OAuth auto-auth)
+- Provides email sending and reading capabilities
+- First use will prompt for Google OAuth authentication
+- Useful for sending notifications to the dev team
+
 ## Troubleshooting
 
 ### Docker Permission Issues
@@ -301,6 +313,34 @@ Ensure you've:
 1. Added variables to the correct shell config file
 2. Reloaded the shell (`source ~/.bashrc`)
 3. Restarted Claude Code after setting variables
+
+### Node.js Version Mismatch After Migration
+
+If MCP servers fail after migrating to a new machine:
+
+1. Check your current Node.js version: `node --version`
+2. The MCP configs use absolute paths to Node.js (e.g., `/Users/.../.nvm/versions/node/v20.20.0/bin/node`)
+3. If the version differs, either:
+   - Install the version specified in configs: `nvm install <version>`
+   - Or update the MCP configs to use your current version:
+     ```bash
+     # Remove old config
+     claude mcp remove <server-name> -s user
+     # Add with new path
+     claude mcp add -s user --transport stdio <server-name> -- /path/to/new/node ...
+     ```
+4. You may also need to reinstall global npm packages:
+   ```bash
+   npm install -g @modelcontextprotocol/server-sequential-thinking @modelcontextprotocol/server-brave-search @modelcontextprotocol/server-puppeteer
+   ```
+
+### Docker Not Running
+
+If GitHub or Atlassian servers show "Failed to connect":
+
+1. Open Docker Desktop from Applications
+2. Wait for the Docker daemon to fully start (whale icon stops animating)
+3. Run `claude mcp list` to verify connection
 
 ## Project-Specific Isolation (Future)
 

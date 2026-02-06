@@ -4,6 +4,7 @@ import type { DbClient } from '@ffp/database';
 import {
   assessmentTemplates,
   templateQuestions,
+  type AssessmentTemplateRecord,
   type TemplateQuestionRecord,
 } from '@ffp/database/schema';
 
@@ -12,60 +13,30 @@ import { findByTemplateId as findQuestionsByTemplateId } from '../questions/ques
 
 import type { QuestionWithConfig } from '../questions/question.repository';
 import type {
-  AssessmentTemplate,
   CreateAssessmentTemplateInput,
   UpdateAssessmentTemplateInput,
 } from '../schemas/assessment-template.schema';
+
+export type AssessmentTemplate = AssessmentTemplateRecord;
 
 export interface AssessmentTemplateWithQuestions extends AssessmentTemplate {
   /** Questions in display order, loaded from template_questions join */
   templateQuestions: QuestionWithConfig[];
 }
 
-/**
- * Map database record to AssessmentTemplate type
- *
- * Converts the Drizzle select result to the Zod-defined AssessmentTemplate type.
- */
-function mapToTemplate(record: typeof assessmentTemplates.$inferSelect): AssessmentTemplate {
-  return {
-    id: record.id,
-    name: record.name,
-    description: record.description,
-    version: record.version,
-    isActive: record.isActive,
-    createdBy: record.createdBy,
-    createdAt: record.createdAt,
-    updatedAt: record.updatedAt,
-  };
-}
-
-/**
- * Find an assessment template by ID
- */
-export async function findById(db: DbClient, id: string): Promise<AssessmentTemplate | null> {
+export async function findTemplateById(
+  db: DbClient,
+  id: string
+): Promise<AssessmentTemplate | null> {
   const records = await db
     .select()
     .from(assessmentTemplates)
     .where(eq(assessmentTemplates.id, id))
     .limit(1);
 
-  if (records.length === 0) {
-    return null;
-  }
-
-  return mapToTemplate(records[0]);
+  return records[0] ?? null;
 }
 
-/**
- * Find multiple assessment templates by IDs
- *
- * Fetches all templates matching the provided IDs in a single query.
- * Returns templates in no guaranteed order. Missing IDs are silently ignored.
- *
- * @param ids - Array of template UUIDs to fetch
- * @returns Array of found templates (may be fewer than requested if some IDs don't exist)
- */
 export async function findTemplatesByIds(
   db: DbClient,
   ids: string[]
@@ -79,15 +50,10 @@ export async function findTemplatesByIds(
     .from(assessmentTemplates)
     .where(inArray(assessmentTemplates.id, ids));
 
-  return records.map(mapToTemplate);
+  return records;
 }
 
-/**
- * Find all assessment templates
- *
- * @param options.activeOnly - If true, only return active templates
- */
-export async function findAll(
+export async function findAllTemplates(
   db: DbClient,
   options?: { activeOnly?: boolean }
 ): Promise<AssessmentTemplate[]> {
@@ -97,13 +63,10 @@ export async function findAll(
     ? await query.where(eq(assessmentTemplates.isActive, true))
     : await query;
 
-  return records.map(mapToTemplate);
+  return records;
 }
 
-/**
- * Create a new assessment template
- */
-export async function create(
+export async function createTemplate(
   db: DbClient,
   data: CreateAssessmentTemplateInput
 ): Promise<AssessmentTemplate> {
@@ -118,24 +81,17 @@ export async function create(
     })
     .returning();
 
-  return mapToTemplate(record);
+  return record;
 }
 
-/**
- * Update an existing assessment template
- *
- * Auto-increments the version field on each update.
- *
- * @returns Updated template
- * @throws NotFoundError if template not found
- */
-export async function update(
+/** Auto-increments the version field on each update. */
+export async function updateTemplate(
   db: DbClient,
   id: string,
   data: UpdateAssessmentTemplateInput
 ): Promise<AssessmentTemplate> {
   // Fetch current template to get version for increment
-  const existing = await findById(db, id);
+  const existing = await findTemplateById(db, id);
 
   if (!existing) {
     throw new NotFoundError('Assessment template', id);
@@ -153,19 +109,12 @@ export async function update(
     .where(eq(assessmentTemplates.id, id))
     .returning();
 
-  return mapToTemplate(record);
+  return record;
 }
 
-/**
- * Deactivate an assessment template (soft delete)
- *
- * Sets isActive to false rather than deleting the record.
- * This preserves referential integrity with existing assessments.
- *
- * @throws NotFoundError if template not found
- */
-export async function deactivate(db: DbClient, id: string): Promise<void> {
-  const existing = await findById(db, id);
+/** Deactivate an assessment template (soft delete) */
+export async function deactivateTemplate(db: DbClient, id: string): Promise<void> {
+  const existing = await findTemplateById(db, id);
 
   if (!existing) {
     throw new NotFoundError('Assessment template', id);
@@ -180,19 +129,13 @@ export async function deactivate(db: DbClient, id: string): Promise<void> {
     .where(eq(assessmentTemplates.id, id));
 }
 
-/**
- * Find an assessment template by ID with its questions loaded
- *
- * Fetches the template and its associated questions via the template_questions
- * join table. Questions are returned in display order.
- *
- */
-export async function findWithQuestions(
+/** Find an assessment template by ID with its questions loaded */
+export async function findTemplateWithQuestions(
   db: DbClient,
   id: string
 ): Promise<AssessmentTemplateWithQuestions | null> {
   // First fetch the template
-  const template = await findById(db, id);
+  const template = await findTemplateById(db, id);
 
   if (!template) {
     return null;
@@ -207,15 +150,7 @@ export async function findWithQuestions(
   };
 }
 
-/**
- * Find question assignments for a template
- *
- * Returns the raw template_questions join records (not the full questions).
- * Use this when you need the assignment metadata for duplication or reordering.
- *
- * @param templateId - ID of the template to fetch assignments for
- * @returns Array of question assignments with questionId, displayOrder, and configOverrides
- */
+/** Returns the raw template_questions join records (not the full questions). */
 export async function findQuestionAssignmentsByTemplateId(
   db: DbClient,
   templateId: string
@@ -230,14 +165,6 @@ export async function findQuestionAssignmentsByTemplateId(
     .where(eq(templateQuestions.templateId, templateId));
 }
 
-/**
- * Duplicate an assessment template
- *
- * Creates a copy of an existing template including all its question assignments.
- * The write operations are wrapped in a transaction to ensure atomicity.
- *
- * @returns The ID of the newly created duplicated template
- */
 export async function createDuplicateTemplate(
   db: DbClient,
   userId: string,

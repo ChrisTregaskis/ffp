@@ -1,0 +1,400 @@
+<!-- Section 27: Sprint 4 Title -->
+<section id="section-27" class="section center">
+  <h1>Sprint 4 Complete</h1>
+  <p class="tagline">APIs & Frontend Foundation - Scoring & Branching Ready</p>
+  <h3>January 2026</h3>
+  <p class="date">5th January 2026 - 19th January 2026</p>
+  <div class="metric-box" style="margin-top: 3rem; max-width: 600px">
+    <h3><i class="fas fa-calculator"></i></h3>
+    <p style="font-size: 1.3em">Multi-Dimensional Scoring Engine Complete - Ready for Programme Generation</p>
+  </div>
+</section>
+
+<!-- Section 28: Flow-Level Scoring & Branching -->
+<section id="section-28" class="section">
+  <h2>Flow-Level Scoring & Branching</h2>
+  <p style="font-size: 1.3em; margin: 2rem 0">
+    Major refactoring to support <span class="highlight">multi-template assessment flows</span> with conditional branching and combined scoring dimensions.
+  </p>
+
+  <div class="two-column">
+    <div>
+      <h4>
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> Architecture Changes
+      </h4>
+      <div class="architecture-diagram" style="margin-top: 1rem">
+        <div class="layer">
+          <h4><i class="fas fa-database"></i> Schema Migration</h4>
+          <p>
+            <strong>Before:</strong> <code>scoringConfig</code> on templates<br />
+            <strong>After:</strong> <code>scoringConfig</code> on flows<br />
+            <strong>Benefit:</strong> Unified scoring across multiple templates
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-sitemap"></i> Normalised Flow Steps</h4>
+          <p>
+            <strong>New table:</strong> <code>flow_steps</code> with branching rules<br />
+            <strong>Step types:</strong> intro, questions, transition, results<br />
+            <strong>Branching:</strong> <code>goto_step</code>, <code>show_warning</code> actions
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-heartbeat"></i> Clinical Questions</h4>
+          <p>
+            <strong>11 new questions:</strong> Back pain history + red flag screening<br />
+            <strong>Warning system:</strong> <code>warnings_shown</code> audit trail<br />
+            <strong>Safety:</strong> Red flags trigger immediate clinical review prompts
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h4>
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> Branching Engine
+      </h4>
+      <div class="architecture-diagram" style="margin-top: 1rem">
+        <div class="layer">
+          <h4><i class="fas fa-code-branch"></i> Branch Evaluator Service</h4>
+          <p>
+            <strong>Condition types:</strong> answer_equals, answer_contains, answer_in<br />
+            <strong>Logical operators:</strong> AND, OR, NOT<br />
+            <strong>Actions:</strong> Navigate to step or show warning
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-random"></i> Dynamic Routing</h4>
+          <p>
+            <strong>Conditional:</strong> Rules evaluated per step<br />
+            <strong>Default:</strong> Falls back to next step in sequence<br />
+            <strong>Tracking:</strong> <code>visitedStepIds</code> on user assessments
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-vial"></i> Comprehensive Testing</h4>
+          <p>
+            <strong>38 new tests:</strong> Branching logic coverage<br />
+            <strong>Manual testing:</strong> Linear and branching flows verified<br />
+            <strong>TF-002 fix:</strong> Submit validates only visited questions
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top: 3rem">Branching Flow Example</h3>
+  <div class="workflow-grid" style="grid-template-columns: repeat(4, 1fr)">
+    <div class="workflow-card">
+      <i class="fas fa-clipboard-list"></i>
+      <h4>1. Question</h4>
+      <p>"Have you experienced sudden weakness?"</p>
+    </div>
+
+    <div class="workflow-card">
+      <i class="fas fa-code-branch"></i>
+      <h4>2. Evaluate</h4>
+      <p>Check if answer triggers red flag condition</p>
+    </div>
+
+    <div class="workflow-card">
+      <i class="fas fa-exclamation-triangle" style="color: var(--accent-orange)"></i>
+      <h4>3. Warning</h4>
+      <p><code>show_warning</code> action with clinical message</p>
+    </div>
+
+    <div class="workflow-card">
+      <i class="fas fa-arrow-right"></i>
+      <h4>4. Continue</h4>
+      <p>User acknowledges, flow continues to next step</p>
+    </div>
+  </div>
+</section>
+
+<!-- Section 29: Scoring Service & Admin API -->
+<section id="section-29" class="section">
+  <h2>Scoring Service & Admin API</h2>
+  <p style="font-size: 1.3em; margin: 2rem 0">
+    A <span class="highlight">multi-dimensional scoring engine</span> and CRUD API for assessment template management.
+  </p>
+
+  <div class="two-column">
+    <div>
+      <h4>
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> Scoring Service (FFP-133)
+      </h4>
+      <div class="architecture-diagram" style="margin-top: 1rem">
+        <div class="layer">
+          <h4><i class="fas fa-calculator"></i> Multi-Dimensional Scoring</h4>
+          <p>
+            <strong>Dimensions:</strong> Mobility, pain, function, etc.<br />
+            <strong>Weighted:</strong> Configurable dimension weights<br />
+            <strong>Normalised:</strong> 0-100 scale for all dimensions
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-layer-group"></i> Pure Function Architecture</h4>
+          <p>
+            <strong><code>calculateScores()</code>:</strong> Main orchestrator<br />
+            <strong><code>calculateQuestionScore()</code>:</strong> Per-question scoring<br />
+            <strong><code>calculateRiskLevel()</code>:</strong> Low/Moderate/High classification
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-bullseye"></i> Programme Matching</h4>
+          <p>
+            <strong>Risk thresholds:</strong> 70+ (Low), 40-69 (Moderate), &lt;40 (High)<br />
+            <strong><code>findMatchingProgramme()</code>:</strong> Returns best-fit programme<br />
+            <strong>Explicit nulls:</strong> No match = null (not undefined)
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h4>
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> Admin API (FFP-126)
+      </h4>
+      <div class="architecture-diagram" style="margin-top: 1rem">
+        <div class="layer">
+          <h4><i class="fas fa-list"></i> GET /admin/templates</h4>
+          <p>
+            <strong>List all:</strong> All templates with pagination<br />
+            <strong>Filter:</strong> <code>?status=active</code> for active only<br />
+            <strong>Admin only:</strong> Role-based access control
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-edit"></i> CRUD Operations</h4>
+          <p>
+            <strong>Create:</strong> POST with validation<br />
+            <strong>Update:</strong> PATCH for partial updates<br />
+            <strong>Deactivate:</strong> Soft delete (status change)
+          </p>
+        </div>
+
+        <div class="layer">
+          <h4><i class="fas fa-copy"></i> Template Duplication</h4>
+          <p>
+            <strong>POST /admin/templates/:id/duplicate</strong><br />
+            <strong>Copies:</strong> Template + questions + options<br />
+            <strong>Use case:</strong> Create variations from base template
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="tech-card"
+    style="margin-top: 2rem; background: #d1fae5; border-left-color: var(--success-green)"
+  >
+    <h4><i class="fas fa-check-circle" style="color: var(--success-green)"></i> Manual Testing Complete</h4>
+    <p style="margin: 0">
+      All 9 test cases passed for Admin API (TC-01 through TC-09). Comprehensive testing guide documented.
+      6 endpoints verified: List, Get, Create, Update, Deactivate, Duplicate.
+    </p>
+  </div>
+</section>
+
+<!-- Section 30: Frontend State Management -->
+<section id="section-30" class="section">
+  <h2>Frontend State Management</h2>
+  <p style="font-size: 1.3em; margin: 2rem 0">
+    <span class="highlight">React Context + useReducer</span> pattern for client-side assessment flow state.
+  </p>
+
+  <div class="tech-grid">
+    <div class="tech-card">
+      <i class="fas fa-layer-group"></i>
+      <h4>Organised Structure</h4>
+      <p>
+        Folder-based organisation: <code>contexts/AssessmentContext/</code> with separate files for
+        types, reducer, context, provider, and hook.
+      </p>
+    </div>
+
+    <div class="tech-card">
+      <i class="fas fa-code"></i>
+      <h4>Typed Actions</h4>
+      <p>
+        11 action types with TypeScript discriminated unions: START_ASSESSMENT, SET_ANSWER, NEXT_STEP,
+        PREV_STEP, SET_PHASE, GO_TO_STEP, MARK_SAVED, SET_SCORES, ADD_WARNING, CLEAR_WARNINGS, RESET.
+      </p>
+    </div>
+
+    <div class="tech-card">
+      <i class="fas fa-code-branch"></i>
+      <h4>Branching Support</h4>
+      <p>
+        State includes <code>currentStepId</code>, <code>steps</code>, and <code>warnings</code>
+        for conditional navigation and red flag handling.
+      </p>
+    </div>
+
+    <div class="tech-card">
+      <i class="fas fa-shield-alt"></i>
+      <h4>ESLint Compliant</h4>
+      <p>
+        Split Context and Provider into separate files for <code>react-refresh</code> compatibility.
+        Zero warnings in strict mode.
+      </p>
+    </div>
+  </div>
+
+  <h3 style="margin-top: 3rem">Assessment Flow State</h3>
+  <div class="architecture-diagram">
+    <div class="layer">
+      <h4><i class="fas fa-database"></i> State Shape</h4>
+      <p>
+        <code>flowId</code> | <code>assessmentId</code> | <code>currentStep</code> |
+        <code>currentStepId</code> | <code>phase</code> | <code>answers</code> |
+        <code>steps</code> | <code>scores</code> | <code>warnings</code> |
+        <code>isSaved</code> | <code>isSubmitting</code> | <code>error</code>
+      </p>
+    </div>
+  </div>
+
+  <h3 style="margin-top: 2rem">Key Patterns Established</h3>
+  <div class="tech-grid" style="gap: 1rem; margin: 1.5rem 0">
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-sitemap" style="font-size: 1.2em"></i> Scoring Config
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">
+        Multi-dimensional with weighted dimensions, flow-level config
+      </p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-code-branch" style="font-size: 1.2em"></i> Branching
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">
+        <code>goto_step</code>, <code>show_warning</code> with condition evaluators
+      </p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-react" style="font-size: 1.2em"></i> Frontend State
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">
+        React Context + useReducer pattern, typed actions
+      </p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-upload" style="font-size: 1.2em"></i> Type Imports
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">
+        <code>@ffp/web</code> imports from <code>@ffp/core</code> only (never <code>@ffp/database</code>)
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Section 31: Sprint 4 Numbers -->
+<section id="section-31" class="section">
+  <h2>Sprint 4: By The Numbers</h2>
+
+  <div class="metrics-grid">
+    <div class="metric-box">
+      <h3>629</h3>
+      <p>Tests Passing</p>
+      <p style="font-size: 0.9em">+163 from Sprint 3</p>
+    </div>
+    <div class="metric-box">
+      <h3>23</h3>
+      <p>Story Points</p>
+      <p style="font-size: 0.9em">4 stories complete</p>
+    </div>
+    <div class="metric-box">
+      <h3>0</h3>
+      <p>TS/Lint Errors</p>
+      <p style="font-size: 0.9em">Zero warnings</p>
+    </div>
+  </div>
+
+  <h3 style="margin-top: 3rem">Stories Delivered</h3>
+  <div class="tech-grid" style="gap: 1rem; margin: 1.5rem 0">
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> FFP-130 (5 pts)
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">Submit Assessment API - Job enqueue, validation</p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> FFP-133 (8 pts)
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">Scoring Service - Multi-dimensional, flow-level config</p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> FFP-126 (5 pts)
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">Assessment Template Admin API - 6 CRUD endpoints</p>
+    </div>
+
+    <div class="tech-card" style="padding: 1rem">
+      <h4 style="font-size: 1.1em; margin-bottom: 0.5rem">
+        <i class="fas fa-check-circle" style="color: var(--success-green)"></i> FFP-135 (5 pts)
+      </h4>
+      <p style="margin: 0; font-size: 0.95em">Assessment Context & State Management - React patterns</p>
+    </div>
+  </div>
+
+  <h3 style="margin-top: 3rem">Major Refactoring: Flow-Level Scoring</h3>
+  <div class="workflow-grid" style="grid-template-columns: repeat(4, 1fr)">
+    <div class="workflow-card">
+      <i class="fas fa-database"></i>
+      <h4>Schema</h4>
+      <p>7 sessions, new <code>flow_steps</code> table</p>
+    </div>
+
+    <div class="workflow-card">
+      <i class="fas fa-code-branch"></i>
+      <h4>Branching</h4>
+      <p>Condition evaluators, warning system</p>
+    </div>
+
+    <div class="workflow-card">
+      <i class="fas fa-vial"></i>
+      <h4>Testing</h4>
+      <p>38 new branching tests, manual verification</p>
+    </div>
+
+    <div class="workflow-card">
+      <i class="fas fa-book"></i>
+      <h4>Docs</h4>
+      <p>Architecture, schema, and engine docs updated</p>
+    </div>
+  </div>
+
+  <div class="cost-comparison" style="margin-top: 3rem">
+    <div class="cost-card optimised">
+      <p>Monthly Running Cost</p>
+      <h3>£7-14</h3>
+      <p>/month</p>
+      <p style="margin-top: 1em; font-size: 0.9em">Still 87% below budget</p>
+    </div>
+
+    <div class="cost-card" style="background: #e0f2fe; border-color: var(--primary-blue)">
+      <p>Sprint 5 Focus</p>
+      <h3 style="color: var(--primary-blue)"><i class="fas fa-chart-line"></i></h3>
+      <p>Results & Frontend</p>
+      <p style="margin-top: 1em; font-size: 0.9em">FFP-131, FFP-134, FFP-136, FFP-138, FFP-139</p>
+    </div>
+  </div>
+</section>

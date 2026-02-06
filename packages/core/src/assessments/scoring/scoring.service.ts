@@ -51,7 +51,7 @@ export function calculateScores(
   // Find matching programme recommendation
   const recommendedProgrammeId = findMatchingProgramme(
     dimensionalScores,
-    scoringConfig.programMappings
+    scoringConfig.programmeMappings
   );
 
   return {

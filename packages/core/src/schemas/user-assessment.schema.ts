@@ -1,17 +1,13 @@
 import { z } from 'zod';
 
-import { answerValueSchema } from '@ffp/database';
 import {
   USER_ASSESSMENT_STATUSES,
   VALID_STATUS_TRANSITIONS,
   WARNING_TYPES,
 } from '@ffp/database/constants';
-
-import { dimensionalScoreSchema } from './job.schema';
+import { answerValueSchema, userAssessmentScoresSchema } from '@ffp/database/types';
 
 export const userAssessmentStatusSchema = z.enum(USER_ASSESSMENT_STATUSES);
-
-export type UserAssessmentStatus = z.infer<typeof userAssessmentStatusSchema>;
 
 export const userAnswerSchema = z.object({
   /** Question ID from the assessment template */
@@ -24,42 +20,15 @@ export const userAnswerSchema = z.object({
   answeredAt: z.coerce.date().optional(),
 });
 
-export type UserAnswer = z.infer<typeof userAnswerSchema>;
-
 /**
- * Answers object schema
- *
  * Keyed by questionId for efficient lookup and updates.
  * Stored as JSONB in the database.
  */
 export const userAssessmentAnswersSchema = z.record(z.string().uuid(), userAnswerSchema);
 
-export type UserAssessmentAnswers = z.infer<typeof userAssessmentAnswersSchema>;
+export { userAssessmentScoresSchema };
 
-/**
- * Scores object schema
- *
- * Contains calculated dimensional scores after scoring job completes.
- * Stored as JSONB in the database.
- */
-export const userAssessmentScoresSchema = z.object({
-  /** Array of dimensional scores */
-  dimensions: z.array(dimensionalScoreSchema),
-  /** Overall assessment score (if applicable) */
-  overallScore: z.number().optional(),
-  /** Risk level derived from scores */
-  riskLevel: z.enum(['low', 'moderate', 'high']).optional(),
-  /** Timestamp when scoring was completed */
-  scoredAt: z.coerce.date(),
-});
-
-export type UserAssessmentScores = z.infer<typeof userAssessmentScoresSchema>;
-
-/**
- * User assessment schema - full record
- *
- * Represents a complete user assessment record from the database.
- */
+/** Represents a complete user assessment record from the database. */
 export const userAssessmentSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.string().uuid(),
@@ -89,25 +58,19 @@ export const userAssessmentSchema = z.object({
   updatedAt: z.coerce.date(),
 });
 
-export type UserAssessment = z.infer<typeof userAssessmentSchema>;
-
-export const createUserAssessmentSchema = z.object({
-  /** Tenant ID (from request context) */
-  tenantId: z.string().uuid(),
-  /** User ID (from request context) */
-  userId: z.string().uuid(),
-  /** Assessment flow to follow */
-  flowId: z.string().uuid(),
+/** Derived from userAssessmentSchema - picks fields required for creation */
+export const createUserAssessmentSchema = userAssessmentSchema.pick({
+  tenantId: true,
+  userId: true,
+  flowId: true,
 });
 
-export type CreateUserAssessmentInput = z.infer<typeof createUserAssessmentSchema>;
-
-export const updateUserAssessmentSchema = z.object({
-  /** Update current step */
-  currentStep: z.number().int().positive().optional(),
-});
-
-export type UpdateUserAssessmentInput = z.infer<typeof updateUserAssessmentSchema>;
+/** Derived from userAssessmentSchema - picks mutable fields, all optional via .partial() */
+export const updateUserAssessmentSchema = userAssessmentSchema
+  .pick({
+    currentStep: true,
+  })
+  .partial();
 
 export const statusTransitionSchema = z
   .object({
@@ -126,13 +89,7 @@ export const statusTransitionSchema = z
     })
   );
 
-export type StatusTransition = z.infer<typeof statusTransitionSchema>;
-
-/**
- * Validates if a status transition is allowed
- *
- * @returns true if transition is valid, false otherwise
- */
+/** Validates if a status transition is allowed */
 export const isValidStatusTransition = (
   fromStatus: UserAssessmentStatus,
   toStatus: UserAssessmentStatus
@@ -141,11 +98,7 @@ export const isValidStatusTransition = (
   return result.success;
 };
 
-/**
- * Gets allowed transitions from a given status
- *
- * @returns Array of valid target statuses
- */
+/** Gets allowed transitions from a given status */
 export const getAllowedTransitions = (status: UserAssessmentStatus): UserAssessmentStatus[] => {
   return VALID_STATUS_TRANSITIONS[status];
 };
@@ -157,24 +110,12 @@ export const submitAssessmentSchema = z.object({
   answers: userAssessmentAnswersSchema,
 });
 
-export type SubmitAssessmentInput = z.infer<typeof submitAssessmentSchema>;
-
-/**
- * Request schema for starting an assessment
- *
- * Used to validate incoming API requests to the start assessment endpoint.
- * The flowId identifies which assessment flow the user wants to begin.
- */
 export const startAssessmentRequestSchema = z.object({
   /** Assessment flow ID to start (must be valid UUID) */
   flowId: z.string().uuid({ message: 'flowId must be a valid UUID' }),
 });
 
-export type StartAssessmentRequest = z.infer<typeof startAssessmentRequestSchema>;
-
 /**
- * Flow step summary for client-side navigation
- *
  * Minimal step information needed for the client to navigate
  * through the assessment flow. Includes branching indicators.
  */
@@ -198,15 +139,6 @@ export const flowStepSummarySchema = z.object({
   defaultNextStepId: z.string().uuid().nullable().optional(),
 });
 
-export type FlowStepSummary = z.infer<typeof flowStepSummarySchema>;
-
-/**
- * Response schema for starting an assessment
- *
- * Returns the assessment state to the client. The isResumed flag indicates
- * whether an existing in-progress assessment was returned (true) or a new
- * assessment was created (false).
- */
 export const startAssessmentResponseSchema = z.object({
   /** Unique identifier for the assessment */
   assessmentId: z.string().uuid(),
@@ -226,15 +158,6 @@ export const startAssessmentResponseSchema = z.object({
   steps: z.array(flowStepSummarySchema),
 });
 
-export type StartAssessmentResponse = z.infer<typeof startAssessmentResponseSchema>;
-
-/**
- * Request schema for saving assessment progress
- *
- * Used when user navigates (Continue/Back) to persist their answers
- * and update their current position in the assessment flow.
- * Empty answers object is allowed for step-only navigation.
- */
 export const saveProgressRequestSchema = z.object({
   /** Answers to merge with existing (can be empty for step-only updates) */
   answers: userAssessmentAnswersSchema,
@@ -242,11 +165,6 @@ export const saveProgressRequestSchema = z.object({
   currentStep: z.number().int().positive({ message: 'currentStep must be a positive integer' }),
 });
 
-export type SaveProgressRequest = z.infer<typeof saveProgressRequestSchema>;
-
-/**
- * Warning shown during assessment (for branching rules)
- */
 export const assessmentWarningSchema = z.object({
   /** Warning message displayed to user */
   message: z.string().min(1),
@@ -260,13 +178,6 @@ export const assessmentWarningSchema = z.object({
   triggeredBy: z.string().optional(),
 });
 
-export type AssessmentWarning = z.infer<typeof assessmentWarningSchema>;
-
-/**
- * Response schema for saving assessment progress
- *
- * Returns success confirmation, timestamp, and branching evaluation results.
- */
 export const saveProgressResponseSchema = z.object({
   /** Indicates the save was successful */
   success: z.literal(true),
@@ -282,14 +193,10 @@ export const saveProgressResponseSchema = z.object({
   terminationReason: z.string().nullable(),
 });
 
-export type SaveProgressResponse = z.infer<typeof saveProgressResponseSchema>;
-
 export const submitAssessmentRequestSchema = z.object({
   /** Final answers to submit (merged with existing answers) */
   answers: userAssessmentAnswersSchema,
 });
-
-export type SubmitAssessmentRequest = z.infer<typeof submitAssessmentRequestSchema>;
 
 export const submitAssessmentResponseSchema = z.object({
   /** UUID of the enqueued scoring job for status polling */
@@ -298,4 +205,31 @@ export const submitAssessmentResponseSchema = z.object({
   message: z.string(),
 });
 
+export const assessmentResultsResponseSchema = z.object({
+  /** Current assessment status (submitted, scored, completed, etc.) */
+  status: userAssessmentStatusSchema,
+  /** Calculated assessment scores (null until scoring completes) */
+  scores: userAssessmentScoresSchema.nullable(),
+  /** Recommended programme ID (null until programme assigned) */
+  programmeId: z.string().uuid().nullable(),
+});
+
+export type AnswerValue = z.infer<typeof answerValueSchema>;
+export type UserAssessmentStatus = z.infer<typeof userAssessmentStatusSchema>;
+export type UserAnswer = z.infer<typeof userAnswerSchema>;
+export type UserAssessmentAnswers = z.infer<typeof userAssessmentAnswersSchema>;
+export type UserAssessmentScores = z.infer<typeof userAssessmentScoresSchema>;
+export type UserAssessment = z.infer<typeof userAssessmentSchema>;
+export type CreateUserAssessmentInput = z.infer<typeof createUserAssessmentSchema>;
+export type UpdateUserAssessmentInput = z.infer<typeof updateUserAssessmentSchema>;
+export type StatusTransition = z.infer<typeof statusTransitionSchema>;
+export type SubmitAssessmentInput = z.infer<typeof submitAssessmentSchema>;
+export type StartAssessmentRequest = z.infer<typeof startAssessmentRequestSchema>;
+export type FlowStepSummary = z.infer<typeof flowStepSummarySchema>;
+export type StartAssessmentResponse = z.infer<typeof startAssessmentResponseSchema>;
+export type SaveProgressRequest = z.infer<typeof saveProgressRequestSchema>;
+export type AssessmentWarning = z.infer<typeof assessmentWarningSchema>;
+export type SaveProgressResponse = z.infer<typeof saveProgressResponseSchema>;
+export type SubmitAssessmentRequest = z.infer<typeof submitAssessmentRequestSchema>;
 export type SubmitAssessmentResponse = z.infer<typeof submitAssessmentResponseSchema>;
+export type AssessmentResultsResponse = z.infer<typeof assessmentResultsResponseSchema>;

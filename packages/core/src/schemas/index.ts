@@ -12,6 +12,9 @@ export * from './assessment-template.schema';
 export * from './assessment-flow.schema';
 export * from './user-assessment.schema';
 
+// Programme schemas
+export * from './programme.schema';
+
 // Job schemas
 export * from './job.schema';
 

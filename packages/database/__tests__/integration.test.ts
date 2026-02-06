@@ -169,7 +169,7 @@ describe('Drizzle Integration Tests', () => {
             cognitoSub: 'cognito-123',
             firstName: 'John',
             lastName: 'Doe',
-            role: 'program_user',
+            role: 'programme_user',
           })
           .returning();
 
@@ -315,7 +315,7 @@ describe('Drizzle Integration Tests', () => {
                 cognitoSub: `cognito-${i}`,
                 firstName: `User${i}`,
                 lastName: 'Test',
-                role: 'program_user',
+                role: 'programme_user',
               })
               .returning();
 
@@ -348,7 +348,7 @@ describe('Drizzle Integration Tests', () => {
             cognitoSub: 'cognito-123',
             firstName: 'John',
             lastName: 'Doe',
-            role: 'program_user',
+            role: 'programme_user',
           });
         });
       }).rejects.toThrow();
@@ -372,7 +372,7 @@ describe('Drizzle Integration Tests', () => {
           cognitoSub: 'cognito-1',
           firstName: 'User',
           lastName: 'One',
-          role: 'program_user',
+          role: 'programme_user',
         });
       });
 
@@ -386,7 +386,7 @@ describe('Drizzle Integration Tests', () => {
             cognitoSub: 'cognito-2',
             firstName: 'User',
             lastName: 'Two',
-            role: 'program_user',
+            role: 'programme_user',
           });
         });
       }).rejects.toThrow();
@@ -443,7 +443,7 @@ describe('Drizzle Integration Tests', () => {
           cognitoSub: 'cognito-cascade',
           firstName: 'Cascade',
           lastName: 'Test',
-          role: 'program_user',
+          role: 'programme_user',
         });
       });
 
@@ -493,7 +493,7 @@ describe('Drizzle Integration Tests', () => {
           cognitoSub: 'cognito-txn',
           firstName: 'Transaction',
           lastName: 'User',
-          role: 'program_user',
+          role: 'programme_user',
         });
       });
 
@@ -525,7 +525,7 @@ describe('Drizzle Integration Tests', () => {
             cognitoSub: 'cognito-fail',
             firstName: 'Fail',
             lastName: 'User',
-            role: 'program_user',
+            role: 'programme_user',
           });
         });
       }).rejects.toThrow();
@@ -583,7 +583,7 @@ describe('Drizzle Integration Tests', () => {
             cognitoSub: 'cognito-nested-1',
             firstName: 'User',
             lastName: 'One',
-            role: 'program_user',
+            role: 'programme_user',
           })
           .returning();
 
@@ -597,7 +597,7 @@ describe('Drizzle Integration Tests', () => {
             cognitoSub: 'cognito-nested-2',
             firstName: 'User',
             lastName: 'Two',
-            role: 'program_user',
+            role: 'programme_user',
           })
           .returning();
 
@@ -631,7 +631,7 @@ describe('Drizzle Integration Tests', () => {
           cognitoSub: 'cognito-tenant1',
           firstName: 'Tenant',
           lastName: 'One',
-          role: 'program_user',
+          role: 'programme_user',
         });
       });
 
@@ -649,7 +649,7 @@ describe('Drizzle Integration Tests', () => {
           cognitoSub: 'cognito-tenant2',
           firstName: 'Tenant',
           lastName: 'Two',
-          role: 'program_user',
+          role: 'programme_user',
         });
       });
 

@@ -74,4 +74,4 @@ jira-standards/
 
 ---
 
-**Path**: `/Users/christophertregaskis/Documents/FFP/ffp/project-documentation/sprint-planning/jira-standards/`
+**Path**: `/Users/christophertregaskis/developer/ffp/project-documentation/sprint-planning/jira-standards/`

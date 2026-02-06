@@ -13,6 +13,9 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/**/*.{test,spec}.{ts,tsx}', 'src/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['**/node_modules/**', '**/dist/**'],
+    // Disable parallel execution to prevent database test interference
+    // Job processor tests and job queue tests both manipulate the same process_jobs table
+    fileParallelism: false,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

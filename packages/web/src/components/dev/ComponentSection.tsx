@@ -6,6 +6,8 @@ interface ComponentSectionProps {
   title: ReactNode;
   children: ReactNode;
   className?: string;
+  /** Optional ID for anchor linking */
+  id?: string;
 }
 
 /**
@@ -15,9 +17,10 @@ export const ComponentSection: React.FC<ComponentSectionProps> = ({
   title,
   children,
   className = '',
+  id,
 }) => {
   return (
-    <section className={`mb-8 rounded-lg bg-card p-6 shadow ${className}`.trim()}>
+    <section id={id} className={`mb-8 rounded-lg bg-card p-6 shadow ${className}`.trim()}>
       <Title as="h2" className="mb-4" colour="card-foreground">
         {title}
       </Title>

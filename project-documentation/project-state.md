@@ -1,27 +1,86 @@
 # FFP - Project State
 
-**Last Updated**: 19th January 2026
+**Last Updated**: 5th February 2026
 **Current EPIC**: FFP-2 - Assessment Engine
-**Sprint Status**: Sprint 4 ✅ Complete | Sprint 5 next
-**Previous**: Sprint 3 ✅ Complete
+**Sprint Status**: Sprint 5 ✅ Complete (Early)
+**Next**: Sprint 6 - Frontend Completion
 
 ---
 
-## Next: Sprint 5 - Results & Frontend Core (23 pts)
+## Completed: Sprint 5 - Results & Frontend Core (23 pts) ✅
 
-**Dates**: 26th January - 15th February 2026
-**Branch**: TBD (`feature/sprint5`)
+**Dates**: 26th January - 15th February 2026 (completed 4th Feb)
 **Sprint Goal**: Assessment results API, programme generation, frontend components for assessment flow.
 
-### Sprint 5 Stories
+| Key     | Story                                | Pts | Summary                                                  |
+| ------- | ------------------------------------ | --- | -------------------------------------------------------- |
+| FFP-138 | Assessment Progress Bar Component    | 2   | Visual progress indicator for assessment flow            |
+| FFP-131 | Get Assessment Results API           | 3   | `GET /assessments/:id/results` with nullable scores      |
+| FFP-136 | TanStack Query Hooks for Assessments | 5   | API client infrastructure, assessment hooks              |
+| FFP-134 | Programme Generation Service         | 5   | Job handler, `programmes` table, retake detection        |
+| FFP-139 | Question Renderer Components         | 8   | 6 question types: SingleChoice, MultiChoice, Scale, etc. |
 
-| Key     | Story                                | Pts | Dependencies             |
-| ------- | ------------------------------------ | --- | ------------------------ |
-| FFP-131 | Get Assessment Results API           | 3   | FFP-133 (scoring) ✅     |
-| FFP-134 | Programme Generation Service         | 5   | FFP-131, video catalogue |
-| FFP-136 | TanStack Query Hooks for Assessments | 5   | FFP-135 ✅               |
-| FFP-139 | Question Renderer Components         | 8   | FFP-135 ✅, FFP-136      |
-| FFP-138 | Assessment Progress Bar Component    | 2   | FFP-135 ✅               |
+### Key Patterns Established
+
+| Area                   | Decision                                                                   |
+| ---------------------- | -------------------------------------------------------------------------- |
+| **Programme Gen**      | `score_assessment` → `generate_programme` job chain, retakes skip creation |
+| **Question Renderers** | Factory pattern with `QuestionComponentProps`, dispatches `SET_ANSWER`     |
+| **API Client**         | TanStack Query with typed hooks in `hooks/assessments/`                    |
+| **Results API**        | Nullable `scores`/`programmeId` until scoring completes                    |
+
+---
+
+## Spike: FFP-253 British English Rename
+
+**Branch**: `feature/ffp-253-british-english-rename`
+**Status**: Plan complete, ready to execute
+
+Renames American English identifiers to British English across the codebase:
+
+- `generate_program` → `generate_programme` (job type enum)
+- `program_user` → `programme_user` (user role enum)
+- `programTemplateId` → `programmeTemplateId` (types/JSONB)
+- `programMapping(s)` → `programmeMapping(s)` (types/seed data)
+
+**Prompt**: `project-documentation/sprint-planning/outputs/ffp-253-british-english-rename-prompt.md`
+
+---
+
+## Next: Sprint 6 - Frontend Completion (~26 pts)
+
+**Dates**: 16th February - 8th March 2026 (Likely to start early but will leave planned dates for sprint)
+**Sprint Goal**: End-to-end assessment flow working, demo-ready MVP.
+
+### Sprint 6 Stories
+
+| Key     | Story                            | Pts | Dependencies           | Notes                                   |
+| ------- | -------------------------------- | --- | ---------------------- | --------------------------------------- |
+| FFP-137 | Assessment Navigation Component  | 3   | FFP-135 ✅, FFP-136 ✅ | Prev/Next with auto-save                |
+| FFP-140 | Assessment Step Screens          | 5   | FFP-135 ✅, FFP-131 ✅ | Intro, Transition, Results              |
+| FFP-230 | Stale Job Detection              | 2   | FFP-180 ✅             | EventBridge scheduled Lambda            |
+| FFP-233 | Backend Required Question Valid. | 3   | FFP-130 ✅             | Defence-in-depth server-side validation |
+| FFP-254 | FFP-3 Epic Planning & Sprints    | 5   | -                      | Architecture, user stories, sprint defs |
+| FFP-229 | Assessment Engine Epic Clean Up  | 8   | -                      | Review FFP-2 requirements, backlog scan |
+
+### Recommended Execution Order
+
+1. **FFP-137** - Assessment Navigation (frontend, all deps complete)
+2. **FFP-140** - Assessment Step Screens (frontend, core UX)
+3. **FFP-233** - Backend required question validation (backend, defence-in-depth)
+4. **FFP-230** - Stale job detection (backend, operational resilience)
+5. **FFP-229** - Epic cleanup (review FFP-2, polish)
+6. **FFP-254** - FFP-3 Epic planning (documentation, prepares next phase)
+
+### Deferred to Backlog
+
+| Key     | Story                  | Reason                                                                           |
+| ------- | ---------------------- | -------------------------------------------------------------------------------- |
+| FFP-231 | Job Status Polling     | `GET /assessments/:id/results` already supports polling (scores null → complete) |
+| FFP-252 | Scoring E2E Validation | Waiting on co-founder's question/scoring config spreadsheet (post-sprint 6)      |
+| FFP-141 | Video Player Component | Defer to FFP-3 (Video Management) to avoid premature implementation              |
+
+**Note on FFP-141**: Consider a simple placeholder component (`VideoPlayer.tsx` with "Video not available" message) to unblock FFP-140's video-assessment step type. Full implementation deferred to FFP-3 epic.
 
 ---
 
@@ -73,18 +132,6 @@
 
 ---
 
-## ✅ Completed: FFP-130 - Submit Assessment API
-
-**Story Points**: 5
-**Branch**: `feature/ffp-130-submit-assessment-api` (merged)
-
-- `POST /assessments/:id/submit` endpoint
-- Validates required questions, transitions to `submitted`
-- Enqueues `score_assessment` job
-- Includes questions table refactor (JSONB → dedicated tables)
-
----
-
 ## Assessment Engine Overview (FFP-2)
 
 **Total**: 86 story points across 4 sprints (~25 pts velocity)
@@ -103,8 +150,8 @@ FFP-124 → FFP-125 → FFP-127 → FFP-128 → FFP-129 → FFP-130 → FFP-133 
 | ------ | -------------------- | --- | ----------- |
 | 3      | Backend Foundation   | 24  | ✅ Complete |
 | 4      | APIs & FE Foundation | 23  | ✅ Complete |
-| 5      | Results & FE Core    | 23  | Next        |
-| 6      | FE Completion        | 14  | Future      |
+| 5      | Results & FE Core    | 23  | ✅ Complete |
+| 6      | FE Completion        | 26  | 🚀 Next     |
 
 ---
 
@@ -149,7 +196,7 @@ await db.transaction(async (tx) => {
 ## Quick Reference
 
 **Jira**: FFP project at ctregaskis.atlassian.net
-**Sprint**: 5 of 6 (Assessment Engine)
+**Sprint**: 6 of 6 (Assessment Engine - Final)
 **Velocity**: ~25 pts/sprint
 **Capacity**: 8 hours/week
 

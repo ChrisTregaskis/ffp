@@ -23,6 +23,7 @@ import type { UserAssessmentAnswer, SaveAnswerInput } from './answer.repository'
 import type { FlowStepWithConfig } from './flow.repository';
 import type { TenantContext } from '../lib/context';
 import type {
+  AssessmentResultsResponse,
   FlowStepSummary,
   StartAssessmentResponse,
   SaveProgressRequest,
@@ -37,10 +38,6 @@ import type {
  *
  * The user_assessment_answers table stores one row per answer, while the
  * API returns answers as a record keyed by questionId for efficient lookup.
- *
- * Note: The database AnswerValue is a flexible JSONB structure (Record<string, unknown>),
- * but the API schema expects answerValue as string | number. We extract the raw value
- * from the JSONB structure for API compatibility.
  */
 function convertAnswersToResponseFormat(answers: UserAssessmentAnswer[]): UserAssessmentAnswers {
   const result: UserAssessmentAnswers = {};
@@ -64,8 +61,6 @@ function convertAnswersToResponseFormat(answers: UserAssessmentAnswer[]): UserAs
  *
  * The API accepts answers as a record keyed by questionId, while the
  * repository expects an array of SaveAnswerInput objects.
- *
- * Answer values are stored directly (string, number, or string[]).
  */
 function convertAnswersToSaveFormat(answers: UserAssessmentAnswers): SaveAnswerInput[] {
   return Object.values(answers).map((answer) => ({
@@ -100,8 +95,6 @@ function convertStepsToSummaryFormat(steps: FlowStepWithConfig[]): FlowStepSumma
  *
  * Values are stored directly as string, number, boolean, or string[] (for multi-select).
  * Also handles legacy wrapped formats for backwards compatibility.
- *
- * @throws ValidationError if the answer value format is unexpected
  */
 function extractAnswerValue(answerValue: unknown): AnswerValue {
   // Handle direct primitive values (current format)
@@ -190,7 +183,11 @@ export async function startAssessment(
   const steps = convertStepsToSummaryFormat(flowSteps);
 
   // 3. Check for existing resumable assessment
-  const existingAssessment = await userAssessmentRepository.findResumable(tenantId, userId, flowId);
+  const existingAssessment = await userAssessmentRepository.findResumableAssessment(
+    tenantId,
+    userId,
+    flowId
+  );
 
   if (existingAssessment) {
     // Load answers from user_assessment_answers table
@@ -215,7 +212,7 @@ export async function startAssessment(
   }
 
   // 3. Create new assessment
-  const newAssessment = await userAssessmentRepository.create({
+  const newAssessment = await userAssessmentRepository.createUserAssessment({
     tenantId,
     userId,
     flowId,
@@ -262,7 +259,7 @@ export async function saveProgress(
   const db = getDb();
 
   // Fetch assessment by ID (RLS enforced)
-  const assessment = await userAssessmentRepository.findById(tenantId, assessmentId);
+  const assessment = await userAssessmentRepository.findUserAssessmentById(tenantId, assessmentId);
 
   if (!assessment) {
     throw new NotFoundError('Assessment', assessmentId);
@@ -277,9 +274,14 @@ export async function saveProgress(
   return await withRLS(tenantId, userId, async (tx) => {
     // If status is 'not_started', transition to 'in_progress'
     if (assessment.status === 'not_started') {
-      await userAssessmentRepository.transitionStatus(tenantId, assessmentId, 'in_progress', {
-        tx,
-      });
+      await userAssessmentRepository.transitionAssessmentStatus(
+        tenantId,
+        assessmentId,
+        'in_progress',
+        {
+          tx,
+        }
+      );
     }
 
     // Save answers to user_assessment_answers table
@@ -289,7 +291,7 @@ export async function saveProgress(
     }
 
     // Update currentStep
-    const updatedAssessment = await userAssessmentRepository.updateProgress(
+    const updatedAssessment = await userAssessmentRepository.updateAssessmentProgress(
       tenantId,
       assessmentId,
       { currentStep: data.currentStep },
@@ -361,9 +363,14 @@ export async function saveProgress(
 
     // Persist warnings if any were triggered
     if (branchResult.warnings.length > 0) {
-      await userAssessmentRepository.appendWarnings(tenantId, assessmentId, branchResult.warnings, {
-        tx,
-      });
+      await userAssessmentRepository.appendAssessmentWarnings(
+        tenantId,
+        assessmentId,
+        branchResult.warnings,
+        {
+          tx,
+        }
+      );
     }
 
     // Return success response with branching evaluation results
@@ -380,12 +387,8 @@ export async function saveProgress(
 
 /**
  * Get required question IDs from the given templates
- *
- * Fetches all questions from the specified templates via the
- * template_questions join table, then returns IDs where
- * validation.required is true (or undefined, as required defaults to true).
- *
- * @param templateIds - Array of template UUIDs to get questions from
+ * returns IDs where validation.required is true (or undefined,
+ * as required defaults to true).
  * @returns Array of required question IDs
  */
 async function getRequiredQuestionIds(templateIds: string[]): Promise<string[]> {
@@ -440,7 +443,7 @@ export async function submitAssessment(
   const userId = await getUserIdFromContext(context);
 
   // Fetch assessment (RLS enforced)
-  const assessment = await userAssessmentRepository.findById(tenantId, assessmentId);
+  const assessment = await userAssessmentRepository.findUserAssessmentById(tenantId, assessmentId);
 
   if (!assessment) {
     throw new NotFoundError('Assessment', assessmentId);
@@ -538,7 +541,9 @@ export async function submitAssessment(
     }
 
     // Transition status to 'submitted'
-    await userAssessmentRepository.transitionStatus(tenantId, assessmentId, 'submitted', { tx });
+    await userAssessmentRepository.transitionAssessmentStatus(tenantId, assessmentId, 'submitted', {
+      tx,
+    });
 
     // Enqueue score_assessment job
     // Uses flowId for scoring config (flow owns combined dimensions from all templates)
@@ -560,4 +565,45 @@ export async function submitAssessment(
       message: 'Assessment submitted successfully. Scoring in progress.',
     };
   });
+}
+
+/**
+ * Get assessment results (scores and programme)
+ *
+ * Returns the current status, scores, and programme ID for a submitted assessment.
+ */
+export async function getAssessmentResults(
+  assessmentId: string,
+  context: TenantContext
+): Promise<AssessmentResultsResponse> {
+  const { tenantId } = context;
+  const userId = await getUserIdFromContext(context);
+
+  // Fetch assessment by ID (RLS enforced for tenant, userId for fine-grained RLS)
+  const assessment = await userAssessmentRepository.findUserAssessmentById(
+    tenantId,
+    assessmentId,
+    userId
+  );
+
+  if (!assessment) {
+    throw new NotFoundError('Assessment', assessmentId);
+  }
+
+  // Validate user ownership (RLS enforces tenant, not user isolation)
+  if (assessment.userId !== userId) {
+    throw new NotFoundError('Assessment', assessmentId);
+  }
+
+  // Validate assessment has been submitted
+  if (assessment.status === 'not_started' || assessment.status === 'in_progress') {
+    throw new ValidationError('Assessment not yet submitted');
+  }
+
+  // Return the assessment results
+  return {
+    status: assessment.status,
+    scores: assessment.scores,
+    programmeId: assessment.programmeId,
+  };
 }

@@ -4,9 +4,11 @@ import { relations } from 'drizzle-orm';
 import { tenants } from './tenants';
 import { users } from './users';
 import { assessmentFlows } from './assessment-flows';
+import { programmes } from './programmes';
 import { userAssessmentAnswers } from './user-assessment-answers';
 import { USER_ASSESSMENT_STATUSES } from '../constants/user-assessment.constants';
 import type { AssessmentWarning } from '../constants/branching.constants';
+import type { UserAssessmentScores } from '../types/assessment.types';
 
 /**
  * User assessment status enumeration (PostgreSQL enum)
@@ -49,7 +51,7 @@ export const userAssessments = pgTable(
     /** Assessment state machine status */
     status: userAssessmentStatusEnum('status').notNull().default('not_started'),
     /** Calculated scores after scoring job completes (nullable until scored) */
-    scores: jsonb('scores'),
+    scores: jsonb('scores').$type<UserAssessmentScores | null>(),
     /**
      * Ordered list of step IDs the user has visited during this assessment.
      * Used for path tracking, branching validation, and resuming interrupted assessments.
@@ -60,11 +62,10 @@ export const userAssessments = pgTable(
      * Stored for audit purposes and to prevent duplicate warnings on resume.
      */
     warningsShown: jsonb('warnings_shown').$type<AssessmentWarning[]>().default([]),
-    /**
-     * Reference to generated programme (nullable until programme generation)
-     * FK constraint will be added when programmes table is created (FFP-134)
-     */
-    programmeId: uuid('programme_id'),
+    /** Reference to generated programme (nullable until programme generation completes) */
+    programmeId: uuid('programme_id').references(() => programmes.id, {
+      onDelete: 'set null',
+    }),
     /** When user started the assessment (null until status = in_progress) */
     startedAt: timestamp('started_at'),
     /** When user submitted the assessment (null until status = submitted) */
@@ -100,6 +101,10 @@ export const userAssessmentsRelations = relations(userAssessments, ({ one, many 
   flow: one(assessmentFlows, {
     fields: [userAssessments.flowId],
     references: [assessmentFlows.id],
+  }),
+  programme: one(programmes, {
+    fields: [userAssessments.programmeId],
+    references: [programmes.id],
   }),
   answers: many(userAssessmentAnswers),
 }));

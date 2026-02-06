@@ -2217,9 +2217,166 @@
               "body": "{\n  \"message\": \"Unauthorized\"\n}"
             }
           ]
+        },
+        {
+          "name": "Get Assessment Results",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Validate required variables",
+                  "const assessmentId = pm.collectionVariables.get(\"lastAssessmentId\");",
+                  "if (!assessmentId) {",
+                  "    console.warn(\"Warning: lastAssessmentId not set. Run Start Assessment first, then Submit Assessment.\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test for successful response or expected errors",
+                  "pm.test(\"Status code is 200, 400, or 404\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400, 404]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Response has required fields\", function () {",
+                  "        const jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property(\"status\");",
+                  "        pm.expect(jsonData).to.have.property(\"scores\");",
+                  "        pm.expect(jsonData).to.have.property(\"programmeId\");",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Status is valid assessment status\", function () {",
+                  "        const jsonData = pm.response.json();",
+                  "        const validStatuses = [\"submitted\", \"scored\", \"completed\"];",
+                  "        pm.expect(validStatuses).to.include(jsonData.status);",
+                  "    });",
+                  "    ",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.scores !== null) {",
+                  "        console.log(\"Scoring complete! Results:\", JSON.stringify(jsonData.scores, null, 2));",
+                  "    } else {",
+                  "        console.log(\"Still processing... Poll again.\");",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/results",
+              "host": ["{{apiUrl}}"],
+              "path": ["assessments", "{{lastAssessmentId}}", "results"]
+            },
+            "description": "Get assessment results after submission.\n\n**Authentication:** JWT token required (Bearer token)\n\n**Path Parameters:**\n- `id` - Assessment UUID (uses `lastAssessmentId` variable set by Start Assessment)\n\n**Response:**\n- `status` - Current assessment status (submitted, scored, completed)\n- `scores` - Scoring results (null while processing)\n- `programmeId` - Recommended programme UUID (null until assigned)\n\n**Workflow:**\n1. Start Assessment (POST /assessments/start)\n2. Save Progress (PUT /assessments/{id}/progress)\n3. Submit Assessment (POST /assessments/{id}/submit)\n4. **Poll Get Results** until scores !== null\n\n**Error Responses:**\n- 400 - Assessment not yet submitted\n- 404 - Assessment not found or belongs to different tenant"
+          },
+          "response": [
+            {
+              "name": "Processing (scores not ready)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/results",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "results"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"submitted\",\n  \"scores\": null,\n  \"programmeId\": null\n}"
+            },
+            {
+              "name": "Success (scoring complete)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/results",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "results"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"scored\",\n  \"scores\": {\n    \"dimensions\": [\n      {\n        \"dimensionKey\": \"mobility\",\n        \"score\": 75,\n        \"maxScore\": 100,\n        \"percentage\": 75\n      },\n      {\n        \"dimensionKey\": \"strength\",\n        \"score\": 60,\n        \"maxScore\": 100,\n        \"percentage\": 60\n      }\n    ],\n    \"overallScore\": 67.5,\n    \"riskLevel\": \"moderate\",\n    \"scoredAt\": \"2026-01-22T12:00:00.000Z\"\n  },\n  \"programmeId\": null\n}"
+            },
+            {
+              "name": "Error - Not yet submitted",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/results",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "results"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"ValidationError\",\n  \"message\": \"Assessment not yet submitted\"\n}"
+            },
+            {
+              "name": "Error - Not found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/results",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "results"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"NotFoundError\",\n  \"message\": \"Assessment not found\"\n}"
+            }
+          ]
         }
       ],
-      "description": "Assessment endpoints - JWT authentication required.\n\n**Current Endpoints:**\n- POST /assessments/start - Start or resume an assessment\n- PUT /assessments/{id}/progress - Save assessment progress\n- POST /assessments/{id}/submit - Submit completed assessment for scoring\n\n**Coming Soon:**\n- GET /assessments/{id}/results - Get assessment results\n\n**Authentication:**\nAll endpoints require JWT token with valid `custom:tenantId` claim for RLS isolation.",
+      "description": "Assessment endpoints - JWT authentication required.\n\n**Current Endpoints:**\n- POST /assessments/start - Start or resume an assessment\n- PUT /assessments/{id}/progress - Save assessment progress  \n- POST /assessments/{id}/submit - Submit completed assessment for scoring\n- GET /assessments/{id}/results - Get assessment results (poll after submit)\n\n**Testing Workflow:**\n1. Login (to get JWT token)\n2. Start Assessment\n3. Save Progress (optional, can repeat)\n4. Submit Assessment\n5. Get Assessment Results (poll until scores !== null)",
       "auth": {
         "type": "bearer",
         "bearer": [
@@ -2348,6 +2505,16 @@
     },
     {
       "key": "lastTemplateId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerUserEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerUserPassword",
       "value": "",
       "type": "string"
     }

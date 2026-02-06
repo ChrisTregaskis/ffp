@@ -2,29 +2,8 @@ import { z } from 'zod';
 
 import { CUSTOMER_STATUSES } from '@ffp/database/constants';
 
-/**
- * Customer status Zod schema
- *
- * Uses shared constants from @ffp/database to ensure synchronisation
- * with PostgreSQL enum definitions.
- *
- * Defines the lifecycle states of a customer account:
- * - active: Customer account is active and can access the platform
- * - suspended: Temporarily suspended (e.g., payment issues, policy violation)
- * - inactive: Closed/cancelled account (data retained for compliance)
- */
 export const customerStatusSchema = z.enum(CUSTOMER_STATUSES);
 
-/**
- * TypeScript type derived from Zod schema
- * Use this across all packages for type-safe customer status handling
- */
-export type CustomerStatus = z.infer<typeof customerStatusSchema>;
-
-/**
- * Customer address schema
- * Validates UK-style address format with optional fields
- */
 export const customerAddressSchema = z
   .object({
     line1: z.string().max(255).optional(),
@@ -36,15 +15,6 @@ export const customerAddressSchema = z
   })
   .optional();
 
-/**
- * TypeScript type for customer address
- */
-export type CustomerAddress = z.infer<typeof customerAddressSchema>;
-
-/**
- * Full customer schema representing a complete customer record
- * Used for validation and type generation across the platform
- */
 export const customerSchema = z.object({
   id: z.string().uuid(),
   tenantId: z.string().uuid(),
@@ -57,40 +27,28 @@ export const customerSchema = z.object({
 });
 
 /**
- * TypeScript type inferred from Zod schema
- * Single source of truth for Customer type across all packages
- */
-export type Customer = z.infer<typeof customerSchema>;
-
-/**
- * Schema for creating a new customer (full entity)
- * tenantId will typically come from JWT context, not client input
- *
  * Note: For admin API customer creation, use createCustomerSchema from admin.schema.ts
  */
-export const insertCustomerSchema = z.object({
-  name: z.string().min(1).max(255),
-  accountCode: z.string().min(1).max(50),
-  address: customerAddressSchema,
-  status: customerStatusSchema.optional().default('active'),
-});
+export const insertCustomerSchema = customerSchema
+  .pick({
+    name: true,
+    accountCode: true,
+    address: true,
+  })
+  .extend({
+    status: customerSchema.shape.status.optional().default('active'),
+  });
 
-/**
- * TypeScript type for customer creation input (full entity)
- */
+export const updateCustomerSchema = customerSchema
+  .pick({
+    name: true,
+    address: true,
+    status: true,
+  })
+  .partial();
+
+export type CustomerStatus = z.infer<typeof customerStatusSchema>;
+export type CustomerAddress = z.infer<typeof customerAddressSchema>;
+export type Customer = z.infer<typeof customerSchema>;
 export type InsertCustomerInput = z.infer<typeof insertCustomerSchema>;
-
-/**
- * Schema for updating an existing customer
- * All fields optional except immutable ones (tenantId, accountCode)
- */
-export const updateCustomerSchema = z.object({
-  name: z.string().min(1).max(255).optional(),
-  address: customerAddressSchema,
-  status: customerStatusSchema.optional(),
-});
-
-/**
- * TypeScript type for customer update input
- */
 export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;

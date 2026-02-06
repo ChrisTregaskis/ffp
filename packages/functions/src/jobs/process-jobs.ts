@@ -1,21 +1,22 @@
 import {
   scoreAssessmentPayloadSchema,
-  generateProgramPayloadSchema,
+  generateProgrammePayloadSchema,
   scoreAssessmentResultSchema,
-  generateProgramResultSchema,
-  type ScoreAssessmentPayload,
-  type GenerateProgramPayload,
+  generateProgrammeResultSchema,
   type ScoreAssessmentResult,
-  type GenerateProgramResult,
+  type GenerateProgrammePayload,
+  type GenerateProgrammeResult,
 } from '@ffp/core';
 import {
   pollAndClaimJobs,
   completeJob,
   failJob,
   extractJobContext,
-  Logger,
-  SystemLogger,
+  processScoreAssessment,
+  createLogger,
+  createSystemLogger,
   ValidationError,
+  processGenerateProgramme,
   type JobProcessorConfig,
 } from '@ffp/core/server';
 import { getDb, type ProcessJobRecord, type JobType } from '@ffp/database';
@@ -30,9 +31,9 @@ import type { Context, ScheduledEvent } from 'aws-lambda';
 // These mappings enable type-safe routing in processJobByType.
 
 /** Map job type to its result type */
-interface JobResultMap {
+export interface JobResultMap {
   score_assessment: ScoreAssessmentResult;
-  generate_program: GenerateProgramResult;
+  generate_programme: GenerateProgrammeResult;
 }
 
 /** Union of all job results (for storage in database) */
@@ -56,7 +57,7 @@ export type JobResult = JobResultMap[JobType];
  * @param context - Lambda execution context for timeout tracking
  */
 export const handler = async (event: ScheduledEvent, context: Context): Promise<void> => {
-  const sysLogger = new SystemLogger('job-processor', undefined, context.awsRequestId);
+  const sysLogger = createSystemLogger('job-processor', undefined, context.awsRequestId);
 
   sysLogger.info('Processor triggered', {
     time: event.time,
@@ -72,7 +73,7 @@ export const handler = async (event: ScheduledEvent, context: Context): Promise<
   const config: JobProcessorConfig = {
     maxConcurrentByType: {
       score_assessment: 5,
-      generate_program: 3,
+      generate_programme: 3,
     },
     defaultMaxConcurrent: 5,
   };
@@ -100,7 +101,7 @@ export const handler = async (event: ScheduledEvent, context: Context): Promise<
         jobType: job.type,
       });
 
-      const logger = new Logger(jobContext);
+      const logger = createLogger(jobContext);
 
       logger.info('Processing job', {
         priority: job.priority,
@@ -156,7 +157,7 @@ export const handler = async (event: ScheduledEvent, context: Context): Promise<
  * @param job - The job record to process
  * @returns Promise resolving to typed result object to store in job.result
  */
-async function processJobByType<T extends JobType>(
+export async function processJobByType<T extends JobType>(
   job: ProcessJobRecord & { type: T }
 ): Promise<JobResultMap[T]> {
   switch (job.type) {
@@ -170,7 +171,7 @@ async function processJobByType<T extends JobType>(
         });
       }
 
-      const result = await handleScoreAssessment(parseResult.data);
+      const result = await handleScoreAssessment(parseResult.data, job.tenantId);
 
       // Validate result matches schema (runtime safety check)
       const resultValidation = scoreAssessmentResultSchema.safeParse(result);
@@ -185,28 +186,28 @@ async function processJobByType<T extends JobType>(
       return resultValidation.data as JobResultMap[T];
     }
 
-    case 'generate_program': {
-      const parseResult = generateProgramPayloadSchema.safeParse(job.payload);
+    case 'generate_programme': {
+      const parseResult = generateProgrammePayloadSchema.safeParse(job.payload);
 
       if (!parseResult.success) {
-        throw new ValidationError('Invalid generate_program payload', {
+        throw new ValidationError('Invalid generate_programme payload', {
           jobId: job.id,
           errors: parseResult.error.format(),
         });
       }
 
-      const result = await handleGenerateProgram(parseResult.data);
+      const result = await handleGenerateProgramme(parseResult.data, job.tenantId);
 
       // Validate result matches schema (runtime safety check)
-      const resultValidation = generateProgramResultSchema.safeParse(result);
+      const resultValidation = generateProgrammeResultSchema.safeParse(result);
       if (!resultValidation.success) {
-        throw new ValidationError('Invalid generate_program result from handler', {
+        throw new ValidationError('Invalid generate_programme result from handler', {
           jobId: job.id,
           errors: resultValidation.error.format(),
         });
       }
 
-      // Type assertion is safe: result validated against GenerateProgramResult schema
+      // Type assertion is safe: result validated against GenerateProgrammeResult schema
       return resultValidation.data as JobResultMap[T];
     }
 
@@ -218,75 +219,18 @@ async function processJobByType<T extends JobType>(
   }
 }
 
-/**
- * Handle score_assessment job
- *
- * Placeholder until FFP-133 (Scoring Service) is implemented.
- * Will calculate dimensional scores from assessment responses.
- *
- * @param _payload - Assessment scoring payload (validated via Zod schema)
- * @returns Promise resolving to scoring result
- */
+/** Delegate to core scoring handler */
 async function handleScoreAssessment(
-  _payload: ScoreAssessmentPayload
+  payload: { userAssessmentId: string; flowId: string; userId: string },
+  tenantId: string
 ): Promise<ScoreAssessmentResult> {
-  // TODO: FFP-133 - Implement actual scoring logic
-  // Logging will be added when service is implemented with proper context
-
-  // Placeholder: Return mock result structure matching canonical schema
-  // await used to satisfy linter - will be replaced with actual async operations
-  return await Promise.resolve({
-    scores: [
-      {
-        dimensionId: 'placeholder-strength',
-        dimensionName: 'Strength',
-        rawScore: 0,
-        normalisedScore: 0,
-        category: 'pending',
-      },
-      {
-        dimensionId: 'placeholder-balance',
-        dimensionName: 'Balance',
-        rawScore: 0,
-        normalisedScore: 0,
-        category: 'pending',
-      },
-      {
-        dimensionId: 'placeholder-flexibility',
-        dimensionName: 'Flexibility',
-        rawScore: 0,
-        normalisedScore: 0,
-        category: 'pending',
-      },
-    ],
-    scoredAt: new Date().toISOString(),
-  });
+  return await processScoreAssessment(payload, tenantId);
 }
 
-/**
- * Handle generate_program job
- *
- * Placeholder until FFP-134 (Programme Generation Service) is implemented.
- * Will generate personalised workout programme from assessment scores.
- *
- * @param _payload - Programme generation payload (validated via Zod schema)
- * @returns Promise resolving to generated programme result
- */
-async function handleGenerateProgram(
-  _payload: GenerateProgramPayload
-): Promise<GenerateProgramResult> {
-  // TODO: FFP-134 - Implement actual programme generation logic
-  // Logging will be added when service is implemented with proper context
-
-  // Placeholder: Return mock result structure matching canonical schema
-  // await used to satisfy linter - will be replaced with actual async operations
-  // Values must be positive (>0) to satisfy generateProgramResultSchema validation
-  return await Promise.resolve({
-    programId: '00000000-0000-0000-0000-000000000000', // Placeholder UUID
-    programName: 'Pending Programme',
-    durationWeeks: 1,
-    exercises: [],
-    sessionsPerWeek: 1,
-    generatedAt: new Date().toISOString(),
-  });
+/** Delegate to core programme generation handler */
+async function handleGenerateProgramme(
+  payload: GenerateProgrammePayload,
+  tenantId: string
+): Promise<GenerateProgrammeResult> {
+  return await processGenerateProgramme(payload, tenantId);
 }

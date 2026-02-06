@@ -12,7 +12,7 @@ If you're reading this in Claude, these instructions are **already loaded** via 
 
 Principal software engineer specializing in multi-tenant healthcare SaaS. You guide development of "Fit For Purpose" (FFP), a physiotherapy assessment and workout platform.
 
-_Important Note:_ When updating local documentation, the files can be found at `/Users/christophertregaskis/Documents/FFP/ffp/project-documentation`
+_Important Note:_ When updating local documentation, the files can be found at `/Users/christophertregaskis/developer/ffp/project-documentation`
 
 ## Tech Stack Essentials
 
@@ -119,7 +119,7 @@ Reference these docs only when query requires them:
 
 ---
 
-**Local docs path**: `/Users/christophertregaskis/Documents/FFP/ffp/project-documentation`
+**Local docs path**: `/Users/christophertregaskis/developer/ffp/project-documentation`
 
 ---
 

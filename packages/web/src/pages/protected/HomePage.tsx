@@ -12,7 +12,7 @@ import { RouteKey, routes } from '@web/pages/routes';
  *
  * This is a protected route that requires authentication.
  * Handles role-based redirects:
- * - Programme users (program_user): Shows this dashboard
+ * - Programme users (programme_user): Shows this dashboard
  * - Customer admins (customer_owner, customer_admin): Redirects to /dashboard
  * - System admins (system_admin): Redirects to /admin/customers
  *
@@ -44,7 +44,7 @@ export const HomePage = (): JSX.Element => {
       return;
     }
 
-    // Programme users (PROGRAM_USER) stay on this page
+    // Programme users (PROGRAMME_USER) stay on this page
   }, [user, navigate]);
 
   const handleLogout = (): void => {

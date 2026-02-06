@@ -1,16 +1,3 @@
-/**
- * Assessment flow constants - Single source of truth for flow-related types
- *
- * These constants are shared between:
- * - @ffp/database: Drizzle schema JSONB column types
- * - @ffp/core: Zod validation schemas (z.enum, z.object)
- *
- * IMPORTANT: When adding new flow step types:
- * 1. Update this file
- * 2. Update any Zod schemas in @ffp/core that reference these types
- * 3. Update seed data if adding new step types
- */
-
 export const FLOW_STEP_TYPES = [
   // Welcome screen with overview
   'intro',

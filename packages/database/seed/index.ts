@@ -27,6 +27,7 @@ import { seedTestTenant } from './seedTestTenant.js';
 import { seedTestCustomer } from './seedTestCustomer.js';
 import { seedTestUserCognito } from './seedTestUserCognito.js';
 import { seedTestUserDatabase } from './seedTestUserDatabase.js';
+import { seedProgrammeTemplates } from './seedProgrammeTemplates.js';
 import { seedQuestions } from './seedQuestions.js';
 import { seedAssessmentTemplates } from './seedAssessmentTemplates.js';
 import { seedAssessmentFlows } from './seedAssessmentFlows.js';
@@ -175,32 +176,36 @@ export const seedDatabase = async (environment: string = 'dev'): Promise<void> =
       await seedTestUserDatabase(txWithClient, config.testCustomerAdminUser);
     });
 
-    // Seed 8: Test program user (Cognito)
+    // Seed 8: Test programme user (Cognito)
     await seedTestUserCognito(
-      config.testCustomerProgramUserCognito,
-      config.testCustomerProgramUser,
+      config.testCustomerProgrammeUserCognito,
+      config.testCustomerProgrammeUser,
       config.testCustomerTenant
     );
 
-    // Seed 9: Test program user (Database)
+    // Seed 9: Test programme user (Database)
     await db.transaction(async (tx) => {
       const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
       txWithClient.$client = db.$client;
-      await seedTestUserDatabase(txWithClient, config.testCustomerProgramUser);
+      await seedTestUserDatabase(txWithClient, config.testCustomerProgrammeUser);
     });
 
-    // Seed 10: Questions (no RLS, idempotent)
+    // Seed 10: Programme templates (no RLS, system-managed lookup table, idempotent)
+    // No tenant dependency - these are global templates referenced by scoring config
+    await seedProgrammeTemplates(db);
+
+    // Seed 11: Questions (no RLS, idempotent)
     // Must run BEFORE assessment templates as templates reference question UUIDs
     await seedQuestions(db);
 
-    // Seed 11: Assessment templates (no RLS, idempotent)
+    // Seed 12: Assessment templates (no RLS, idempotent)
     // Must run BEFORE assessment flows as flows reference template IDs
     await seedAssessmentTemplates(db);
 
-    // Seed 12: Assessment flows (no RLS, idempotent)
+    // Seed 13: Assessment flows (no RLS, idempotent)
     await seedAssessmentFlows(db);
 
-    // Seed 13: Flow steps (normalised from JSONB, no RLS, idempotent)
+    // Seed 14: Flow steps (normalised from JSONB, no RLS, idempotent)
     // Must run AFTER assessment flows as steps reference flow IDs
     await seedFlowSteps(db);
 
@@ -232,6 +237,7 @@ export const seedDatabase = async (environment: string = 'dev'): Promise<void> =
 };
 
 // Re-export individual seed functions for standalone use
+export { seedProgrammeTemplates, PROGRAMME_TEMPLATE_IDS } from './seedProgrammeTemplates.js';
 export { seedQuestions, QUESTION_IDS } from './seedQuestions.js';
 export { seedAssessmentTemplates, TEMPLATE_IDS } from './seedAssessmentTemplates.js';
 export { seedAssessmentFlows, FLOW_IDS } from './seedAssessmentFlows.js';

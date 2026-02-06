@@ -2,24 +2,7 @@ import { z } from 'zod';
 
 import { TENANT_TYPES } from '@ffp/database/constants';
 
-/**
- * Tenant type Zod schema
- *
- * Uses shared constants from @ffp/database to ensure synchronisation
- * with PostgreSQL enum definitions.
- *
- * Defines the three types of tenants in the platform:
- * - individual: Single user account (physiotherapy client)
- * - business: Organisation with multiple sub-customers (clinics, gyms)
- * - platform: System platform tenant for super admins (internal use only)
- */
 export const tenantTypeSchema = z.enum(TENANT_TYPES);
-
-/**
- * TypeScript type derived from Zod schema
- * Use this across all packages for type-safe tenant type handling
- */
-export type TenantType = z.infer<typeof tenantTypeSchema>;
 
 /**
  * Tenant settings schema
@@ -40,37 +23,20 @@ export const tenantSchema = z.object({
   updatedAt: z.date(),
 });
 
-/**
- * TypeScript type inferred from Zod schema
- * Single source of truth for Tenant type across all packages
- */
+export const createTenantSchema = tenantSchema.pick({
+  type: true,
+  name: true,
+  settings: true,
+});
+
+export const updateTenantSchema = tenantSchema
+  .pick({
+    name: true,
+    settings: true,
+  })
+  .partial();
+
+export type TenantType = z.infer<typeof tenantTypeSchema>;
 export type Tenant = z.infer<typeof tenantSchema>;
-
-/**
- * Schema for creating a new tenant
- * Only includes fields that can be set during creation
- */
-export const createTenantSchema = z.object({
-  type: tenantTypeSchema,
-  name: z.string().min(1).max(255),
-  settings: tenantSettingsSchema.optional(),
-});
-
-/**
- * TypeScript type for tenant creation input
- */
 export type CreateTenantInput = z.infer<typeof createTenantSchema>;
-
-/**
- * Schema for updating an existing tenant
- * All fields optional except those that shouldn't change
- */
-export const updateTenantSchema = z.object({
-  name: z.string().min(1).max(255).optional(),
-  settings: tenantSettingsSchema.optional(),
-});
-
-/**
- * TypeScript type for tenant update input
- */
 export type UpdateTenantInput = z.infer<typeof updateTenantSchema>;

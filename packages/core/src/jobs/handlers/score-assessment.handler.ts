@@ -1,17 +1,3 @@
-/**
- * Score Assessment Job Handler
- *
- * Processes assessment scoring jobs by calculating dimensional scores
- * from user responses and updating the user_assessments table.
- *
- * Architecture notes:
- * - Scoring configuration lives at the FLOW level (not template)
- * - Questions are fetched from ALL templates in the flow via flow_steps
- * - Responses are fetched from database (user_assessment_answers)
- *
- * @module jobs/handlers/score-assessment
- */
-
 import { eq } from 'drizzle-orm';
 
 import { getDb, withRLS, type DbClient } from '@ffp/database';
@@ -19,19 +5,26 @@ import { userAssessments, userAssessmentAnswers } from '@ffp/database/schema';
 
 import { findFlowById, findStepsByFlowId } from '../../assessments/flow.repository';
 import { calculateScores, toJobResult } from '../../assessments/scoring';
+import { createSystemContext } from '../../lib/context';
 import { NotFoundError, ValidationError } from '../../lib/errors';
+import { createSystemLogger } from '../../lib/logger';
 import { findByTemplateIds } from '../../questions/question.repository';
 import {
   assessmentResponseSchema,
   type AssessmentResponse,
   type ScoreAssessmentResult,
 } from '../../schemas/job.schema';
+import { queueJob } from '../job-queue.service';
+
+import type { Transaction } from '../../lib/database';
 
 export interface ScoreAssessmentJobPayload {
   /** The user assessment ID to score */
   userAssessmentId: string;
   /** The flow containing the scoring configuration */
   flowId: string;
+  /** User who completed the assessment */
+  userId: string;
 }
 
 /**
@@ -40,11 +33,6 @@ export interface ScoreAssessmentJobPayload {
  * Fetches the assessment flow (with scoringConfig), all questions from templates
  * in the flow via flow_steps, and persisted answers from the database.
  * Calculates dimensional scores and updates the user_assessment record.
-
- * @returns Score assessment result with dimensional scores
- *
- * @throws {NotFoundError} If the assessment flow is not found
- * @throws {ValidationError} If flow has no scoring config or no answers exist
  */
 export async function processScoreAssessment(
   payload: ScoreAssessmentJobPayload,
@@ -134,15 +122,48 @@ export async function processScoreAssessment(
     // Convert to job result format
     const result = toJobResult(scoringResult);
 
+    // Map job result to database scores format (dimensions, not scores)
+    const scores = {
+      dimensions: result.scores,
+      overallScore: result.overallScore,
+      riskLevel: scoringResult.riskLevel,
+      scoredAt: new Date(result.scoredAt),
+    };
+
     // Update assessment with scores and transition status
     await tx
       .update(userAssessments)
       .set({
-        scores: result,
+        scores,
         status: 'scored',
         updatedAt: new Date(),
       })
       .where(eq(userAssessments.id, payload.userAssessmentId));
+
+    // Chain: queue generate_programme job (atomic with scoring)
+    const logger = createSystemLogger('score-assessment-handler');
+    const systemContext = createSystemContext({
+      systemId: 'score-assessment-handler',
+      tenantId,
+    });
+
+    const generateJobId = await queueJob(
+      'generate_programme',
+      {
+        assessmentSubmissionId: payload.userAssessmentId,
+        userId: payload.userId,
+        scores: result.scores,
+        recommendedTemplateSlug: scoringResult.recommendedProgrammeId ?? undefined,
+      },
+      systemContext,
+      { priority: 2, tx: tx as unknown as Transaction }
+    );
+
+    logger.info('Queue generate_programme job', {
+      generateJobId,
+      assessmentId: payload.userAssessmentId,
+      recommendedTemplateSlug: scoringResult.recommendedProgrammeId,
+    });
 
     return result;
   });

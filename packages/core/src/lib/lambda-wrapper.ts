@@ -12,7 +12,7 @@ import { ZodError } from 'zod';
 
 import { extractUserContext, type APIGatewayProxyEventV2WithJWT } from './context.js';
 import { BaseError, InternalServerError } from './errors.js';
-import { Logger } from './logger.js';
+import { createLogger, type TenantLogger } from './logger.js';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
@@ -80,10 +80,10 @@ export const withErrorHandling = <TResult>(
 ) => {
   return async (event: APIGatewayProxyEventV2WithJWT): Promise<APIGatewayProxyResultV2> => {
     // Try to extract user context for structured logging (only works for authenticated requests)
-    let logger: Logger | null = null;
+    let logger: TenantLogger | null = null;
     try {
       const context = extractUserContext(event);
-      logger = new Logger(context);
+      logger = createLogger(context);
       logger.info('Request started', {
         path: event.rawPath,
         method: event.requestContext.http.method,

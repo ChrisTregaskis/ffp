@@ -8,6 +8,215 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### February 4, 2026 (Sessions 93-94 - FFP-134 Programme Generation Service)
+
+**Status**: ✅ FFP-134 COMPLETE
+
+**Branch**: `feature/ffp-134-programme-generation-service`
+
+**Summary**: Created the programme generation service that runs after assessment scoring. Includes programme templates lookup table, programmes table with RLS, job handler, and scoring integration.
+
+**Key Deliverables**:
+
+- **Programme Templates Table**: System-managed lookup (`slug`, `name`, `description`, `isActive`)
+- **Programmes Table**: Tenant-isolated with status enum (`active`, `paused`, `completed`, `archived`)
+- **Programme Repository**: `createProgramme`, `findByUserId`, `findById`, `findTemplateBySlug` with RLS
+- **Programme Service**: `generateProgramme()` with retake detection, template lookup, validation
+- **Job Handler**: `processGenerateProgram` links assessment to programme, transitions to `completed`
+- **Scoring Integration**: `score_assessment` handler now enqueues `generate_program` job atomically
+
+**Sub-tasks Completed**:
+
+| Key     | Summary                                    | Status      |
+| ------- | ------------------------------------------ | ----------- |
+| FFP-183 | Programmes table schema, enum, Zod schemas | ✅ Complete |
+| FFP-184 | Programme repository with RLS              | ✅ Complete |
+| FFP-185 | Programme generation service logic         | ✅ Complete |
+| FFP-186 | Job handler + scoring integration          | ✅ Complete |
+| FFP-187 | Unit tests                                 | Deferred    |
+
+**E2E Manual Testing**: 5 scenarios validated (A-E) covering different programme mappings.
+See `project-documentation/sprint-planning/outputs/archive/testing-guide-programme-generation.md`
+
+**Sprint 5 Progress**: 23/23 pts (100%) - Sprint 5 Complete
+
+---
+
+### January 27, 2026 (Session 92 - FFP-139 Question Renderer Components)
+
+**Status**: ✅ FFP-139 COMPLETE
+
+**Branch**: `feature/ffp-139-question-renderers`
+
+**Summary**: Implemented 6 question type renderer components with factory pattern, all dispatching answers to AssessmentContext.
+
+**Key Deliverables**:
+
+- **QuestionRenderer Factory**: Dispatches to correct component based on `question.type`
+- **SingleChoiceQuestion**: Radio button group for single selection
+- **MultiChoiceQuestion**: Checkbox group for multiple selections
+- **NumericQuestion**: Number input with min/max validation
+- **ScaleQuestion**: Slider/range input with labelled endpoints
+- **TextQuestion**: Textarea for freeform responses
+- **VideoResponseQuestion**: Placeholder for video-guided assessments
+
+**Pattern**: Common `QuestionComponentProps` interface (`question`, `answer`, `onAnswerChange`), all components dispatch `SET_ANSWER` action to context.
+
+**Files Created**:
+
+```
+packages/web/src/components/questions/
+├── index.ts                    # Re-exports
+├── QuestionRenderer.tsx        # Factory component
+├── SingleChoiceQuestion.tsx
+├── MultiChoiceQuestion.tsx
+├── NumericQuestion.tsx
+├── ScaleQuestion.tsx
+├── TextQuestion.tsx
+└── VideoResponseQuestion.tsx
+```
+
+**Quality Assurance**:
+
+- ✅ `pnpm typecheck` - Zero errors
+- ✅ `pnpm lint` - Zero warnings
+- ✅ `pnpm build` - Successful
+
+**Sprint 5 Progress**: 18/23 pts (78%) - FFP-134 remaining
+
+---
+
+### January 25, 2026 (Session 91 - FFP-136 TanStack Query Hooks)
+
+**Status**: ✅ FFP-136 COMPLETE
+
+**Branch**: `feature/ffp-136-tanstack-hooks`
+
+**Summary**: Implemented TanStack Query infrastructure and hooks for all assessment APIs, providing caching, background refetch, mutation support, and polling for results.
+
+**Key Deliverables**:
+
+- **API Client Infrastructure**: BaseHttpClient with interceptor pipeline, FFPClient with Cognito auth
+- **Error Handling**: ApiError class with type guards (isRetryable, isAuthError, isValidationError)
+- **Query Key Factory**: Hierarchical keys for efficient cache invalidation
+- **Query Hooks**: `useAssessmentFlowQuery`, `useAssessmentTemplateQuery`, `useAssessmentResultsQuery`
+- **Mutation Hooks**: `useStartAssessment`, `useSaveProgress`, `useSubmitAssessment`
+
+**Sub-tasks Completed**:
+
+| Key     | Summary                                 | Status      |
+| ------- | --------------------------------------- | ----------- |
+| -       | Setup (packages, QueryClient, DevTools) | ✅ Complete |
+| FFP-198 | API client infrastructure               | ✅ Complete |
+| FFP-199 | Query hooks (flow, template)            | ✅ Complete |
+| FFP-200 | useStartAssessment mutation             | ✅ Complete |
+| FFP-201 | useSaveProgress + useSubmitAssessment   | ✅ Complete |
+| FFP-202 | useAssessmentResultsQuery with polling  | ✅ Complete |
+| FFP-203 | Unit tests                              | ⏸️ Deferred |
+
+**Key Implementation Details**:
+
+- All hooks use `ApiError` type for rich error handling
+- `useAssessmentResultsQuery` polls every 2s, stops when `status === 'complete'` or `scores` exist
+- `useSubmitAssessment` invalidates both results and userAssessments caches
+- Hooks organised in `packages/web/src/hooks/assessments/` folder structure
+
+**Files Created**:
+
+```
+packages/web/src/
+├── lib/
+│   ├── api/
+│   │   ├── client/
+│   │   │   ├── base-client.ts
+│   │   │   ├── ffp-client.ts
+│   │   │   ├── errors.ts
+│   │   │   ├── types.ts
+│   │   │   └── index.ts
+│   │   ├── endpoints/
+│   │   │   ├── assessments.ts
+│   │   │   └── index.ts
+│   │   └── index.ts
+│   └── query/
+│       ├── query-client.ts
+│       ├── keys/
+│       │   ├── assessments.ts
+│       │   └── index.ts
+│       └── index.ts
+├── hooks/
+│   └── assessments/
+│       ├── index.ts
+│       ├── useAssessmentFlowQuery.ts
+│       ├── useAssessmentTemplateQuery.ts
+│       ├── useAssessmentResultsQuery.ts
+│       ├── useStartAssessment.ts
+│       ├── useSaveProgress.ts
+│       └── useSubmitAssessment.ts
+├── utils/
+│   └── time.ts
+└── constants/
+    ├── http.ts
+    └── index.ts
+```
+
+**Quality Assurance**:
+
+- ✅ `pnpm typecheck` - Zero errors
+- ✅ `pnpm lint` - Zero warnings
+- ✅ `pnpm build` - Successful
+
+**Sprint 5 Progress**: 10/23 pts (43%) - FFP-136 complete, FFP-139 unblocked
+
+---
+
+### January 22, 2026 (Session 90 - FFP-138 Assessment Progress Bar Component)
+
+**Status**: ✅ FFP-138 COMPLETE (Sprint 5 started)
+
+**Branch**: `feature/ffp-208-progress-bar`
+
+**Summary**: Implemented the assessment progress bar component showing completion percentage, phase labels, and step counter with gradient styling and accessibility features.
+
+**Key Deliverables**:
+
+- **Folder Structure**: `packages/web/src/components/AssessmentProgress/`
+- **AssessmentProgress Component**: Visual progress bar with gradient fill (blue to dark blue)
+- **Phase Label Utility**: Maps FlowStepType to user-friendly labels (e.g., "Getting Started", "Pre-Assessment")
+- **Demo Page**: Comprehensive showcase at `/dev/assessment-progress`
+
+**Sub-tasks Completed**:
+
+| Key     | Summary                             | Status      |
+| ------- | ----------------------------------- | ----------- |
+| FFP-208 | Create AssessmentProgress component | ✅ Complete |
+| FFP-209 | Implement progress bar visual       | ✅ Complete |
+| FFP-210 | Create phase label mapping utility  | ✅ Complete |
+| FFP-211 | Export from components barrel file  | ✅ Complete |
+
+**Key Implementation Details**:
+
+- Props: `currentStep`, `totalSteps`, `phase`, `className`
+- Gradient: `bg-linear-to-r from-ffp-primary-blue to-ffp-dark-blue`
+- Accessibility: Full ARIA attributes (`role="progressbar"`, `aria-valuenow`, etc.)
+- Phase labels: intro → "Getting Started", questions → "Pre-Assessment", etc.
+- Smooth animation: `transition-all duration-300 ease-out`
+
+**Files Created**:
+
+```
+packages/web/src/components/AssessmentProgress/
+├── index.ts                # Re-exports
+├── AssessmentProgress.tsx  # Main component
+└── utils.ts                # PHASE_LABELS, getPhaseLabel
+
+packages/web/src/pages/dev/
+└── AssessmentProgressComponentsPage.tsx  # Demo page
+```
+
+**Sprint 5 Progress**: 2/23 pts (9%) - FFP-138 complete, FFP-131 next
+
+---
+
 ### January 19, 2026 (Session 89 - FFP-135 Assessment Context & State Management)
 
 **Status**: ✅ FFP-135 COMPLETE (Sprint 4 Complete)
@@ -448,24 +657,27 @@ The tests were failing with "permission denied for table template_questions" bec
 
 ## Key Milestones
 
-| Date        | Milestone                           | Hours         |
-| ----------- | ----------------------------------- | ------------- |
-| Oct 20      | Sprint 1 Started                    | 0h            |
-| Oct 24      | FFP-7 Complete (Monorepo)           | 13h           |
-| Oct 26      | FFP-8 Complete (Infrastructure)     | 30h           |
-| Nov 1       | FFP-10 & FFP-11 Merged to Main      | 83.5h         |
-| Nov 9       | FFP-37 Complete (Invite User)       | 136.5h        |
-| Nov 19      | FFP-16 Complete (Web Login)         | 155.5h        |
-| Dec 19      | FFP-132 Complete (Job Queue)        | 162h          |
-| Dec 24      | FFP-127 Complete (User Assess)      | 165.5h        |
-| Dec 30      | FFP-130 Complete (Submit API)       | 167.9h        |
-| Jan 3       | FFP-130 Refactor Complete           | ~168h         |
-| Jan 13      | Flow-Level Scoring Refactor         | ~172h         |
-| Jan 18      | FFP-133 Complete (Scoring Service)  | ~175h         |
-| Jan 19      | FFP-126 Complete (Template Admin)   | ~176h         |
-| Jan 19      | FFP-135 Complete (Assessment Ctx)   | ~177h         |
-| **Current** | **Sprint 4 ✅ Complete - Sprint 5** | **~177/197h** |
+| Date        | Milestone                          | Hours         |
+| ----------- | ---------------------------------- | ------------- |
+| Oct 20      | Sprint 1 Started                   | 0h            |
+| Oct 24      | FFP-7 Complete (Monorepo)          | 13h           |
+| Oct 26      | FFP-8 Complete (Infrastructure)    | 30h           |
+| Nov 1       | FFP-10 & FFP-11 Merged to Main     | 83.5h         |
+| Nov 9       | FFP-37 Complete (Invite User)      | 136.5h        |
+| Nov 19      | FFP-16 Complete (Web Login)        | 155.5h        |
+| Dec 19      | FFP-132 Complete (Job Queue)       | 162h          |
+| Dec 24      | FFP-127 Complete (User Assess)     | 165.5h        |
+| Dec 30      | FFP-130 Complete (Submit API)      | 167.9h        |
+| Jan 3       | FFP-130 Refactor Complete          | ~168h         |
+| Jan 13      | Flow-Level Scoring Refactor        | ~172h         |
+| Jan 18      | FFP-133 Complete (Scoring Service) | ~175h         |
+| Jan 19      | FFP-126 Complete (Template Admin)  | ~176h         |
+| Jan 19      | FFP-135 Complete (Assessment Ctx)  | ~177h         |
+| Jan 22      | FFP-138 Complete (Progress Bar)    | ~178h         |
+| Jan 27      | FFP-139 Complete (Question Render) | ~180h         |
+| Feb 4       | FFP-134 Complete (Programme Gen)   | ~183h         |
+| **Current** | **Sprint 5 ✅ Complete (Early)**   | **~183/197h** |
 
 ---
 
-**For current status and next tasks, see `project-state.md`**
+**Sprint 5 completed 4th February 2026 (11 days early). For current status and next tasks, see `project-state.md`**

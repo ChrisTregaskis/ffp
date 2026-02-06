@@ -58,6 +58,29 @@ npm run sst logs --stage dev --function assessments
 npm run sst remove --stage dev
 ```
 
+### SST Stage Naming Convention
+
+**IMPORTANT**: Do NOT use the default macOS username as your SST stage name.
+
+When SST prompts for a stage name (or defaults to your username), use a unique, project-specific stage name instead:
+
+```bash
+# ❌ WRONG - Using default username across projects causes conflicts
+sst dev  # Defaults to christophertregaskis
+
+# ✅ CORRECT - Use project-specific stage names
+sst dev --stage ct-ffp           # For FFP project
+sst dev --stage ct-other-project # For other project
+```
+
+**Why this matters:**
+
+- Multiple SST projects using the same stage name can cause lock conflicts
+- Zombie processes from one project can block another
+- State corruption can occur when projects fight over the same stage
+
+**Tip**: Use a short prefix (like your initials) + project name for easy identification.
+
 ### SST Configuration
 
 ```typescript

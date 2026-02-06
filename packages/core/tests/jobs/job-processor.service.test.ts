@@ -188,35 +188,39 @@ describe('Job Processor Service', () => {
     });
 
     it('uses defaultMaxConcurrent for types not in maxConcurrentByType', async () => {
-      // Create 5 generate_program jobs
+      // Create 5 generate_programme jobs
       await Promise.all(
-        Array.from({ length: 5 }, () => createTestJob({ type: 'generate_program' }))
+        Array.from({ length: 5 }, () => createTestJob({ type: 'generate_programme' }))
       );
 
       const result = await pollAndClaimJobs({
-        maxConcurrentByType: { score_assessment: 10 }, // Not setting generate_program
+        maxConcurrentByType: { score_assessment: 10 }, // Not setting generate_programme
         defaultMaxConcurrent: 2,
       });
 
-      // Should use defaultMaxConcurrent (2) for generate_program
-      const generateProgramJobs = result.claimedJobs.filter((j) => j.type === 'generate_program');
-      expect(generateProgramJobs).toHaveLength(2);
+      // Should use defaultMaxConcurrent (2) for generate_programme
+      const generateProgrammeJobs = result.claimedJobs.filter(
+        (j) => j.type === 'generate_programme'
+      );
+      expect(generateProgrammeJobs).toHaveLength(2);
     });
 
     it('polls all job types and combines results', async () => {
       await createTestJob({ type: 'score_assessment' });
       await createTestJob({ type: 'score_assessment' });
-      await createTestJob({ type: 'generate_program' });
+      await createTestJob({ type: 'generate_programme' });
 
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
 
       expect(result.count).toBe(3);
 
       const scoreAssessmentJobs = result.claimedJobs.filter((j) => j.type === 'score_assessment');
-      const generateProgramJobs = result.claimedJobs.filter((j) => j.type === 'generate_program');
+      const generateProgrammeJobs = result.claimedJobs.filter(
+        (j) => j.type === 'generate_programme'
+      );
 
       expect(scoreAssessmentJobs).toHaveLength(2);
-      expect(generateProgramJobs).toHaveLength(1);
+      expect(generateProgrammeJobs).toHaveLength(1);
     });
 
     it('returns empty results when no jobs are queued', async () => {
@@ -261,21 +265,31 @@ describe('Job Processor Service', () => {
 
     it('respects retryAfter - does not claim jobs scheduled for the future', async () => {
       const futureDate = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
-      await createTestJob({ retryAfter: futureDate });
-      await createTestJob({ retryAfter: null }); // Should be claimed
+      const futureJob = await createTestJob({ retryAfter: futureDate });
+      const claimableJob = await createTestJob({ retryAfter: null }); // Should be claimed
 
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
 
-      expect(result.count).toBe(1);
+      // Verify the claimable job was claimed
+      const claimedJob = result.claimedJobs.find((j) => j.id === claimableJob.id);
+      expect(claimedJob).toBeDefined();
+      expect(claimedJob?.status).toBe('processing');
+
+      // Verify the future job was NOT claimed
+      const notClaimedJob = result.claimedJobs.find((j) => j.id === futureJob.id);
+      expect(notClaimedJob).toBeUndefined();
     });
 
     it('claims jobs where retryAfter is in the past', async () => {
       const pastDate = new Date(Date.now() - 60 * 1000); // 1 minute ago
-      await createTestJob({ retryAfter: pastDate });
+      const job = await createTestJob({ retryAfter: pastDate });
 
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
 
-      expect(result.count).toBe(1);
+      // Find our specific job (other tests may create jobs concurrently)
+      const claimedJob = result.claimedJobs.find((j) => j.id === job.id);
+      expect(claimedJob).toBeDefined();
+      expect(claimedJob?.status).toBe('processing');
     });
 
     it('increments attempts counter on claim', async () => {
@@ -340,6 +354,7 @@ describe('Job Processor Service', () => {
     it('prevents double-processing when two pollers run concurrently', async () => {
       // Create 5 jobs
       const jobs = await Promise.all(Array.from({ length: 5 }, () => createTestJob()));
+      const jobIds = new Set(jobs.map((j) => j.id));
 
       // Run two pollers concurrently, each trying to claim 5 jobs
       const [result1, result2] = await Promise.all([
@@ -347,13 +362,17 @@ describe('Job Processor Service', () => {
         pollAndClaimJobs({ maxConcurrentByType: { score_assessment: 5 } }),
       ]);
 
-      // Total claimed should be 5 (all jobs)
-      const totalClaimed = result1.count + result2.count;
-      expect(totalClaimed).toBe(5);
+      // Filter to only our test jobs (other tests may create jobs concurrently)
+      const ourResult1Jobs = result1.claimedJobs.filter((j) => jobIds.has(j.id));
+      const ourResult2Jobs = result2.claimedJobs.filter((j) => jobIds.has(j.id));
 
-      // No job should appear in both results
-      const result1Ids = new Set(result1.claimedJobs.map((j) => j.id));
-      const result2Ids = new Set(result2.claimedJobs.map((j) => j.id));
+      // All 5 of our jobs should be claimed across both pollers
+      const totalOurJobsClaimed = ourResult1Jobs.length + ourResult2Jobs.length;
+      expect(totalOurJobsClaimed).toBe(5);
+
+      // No job should appear in both results (no double-processing)
+      const result1Ids = new Set(ourResult1Jobs.map((j) => j.id));
+      const result2Ids = new Set(ourResult2Jobs.map((j) => j.id));
 
       for (const id of result1Ids) {
         expect(result2Ids.has(id)).toBe(false);

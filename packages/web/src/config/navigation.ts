@@ -6,7 +6,7 @@ import { routes } from '@web/pages/routes';
 import { RouteKey } from '@web/pages/routes/RouteKey';
 
 // Destructure user roles for easier reference
-const PROGRAM_USER = USER_ROLE.PROGRAM_USER;
+const PROGRAMME_USER = USER_ROLE.PROGRAMME_USER;
 const CUSTOMER_OWNER = USER_ROLE.CUSTOMER_OWNER;
 const CUSTOMER_ADMIN = USER_ROLE.CUSTOMER_ADMIN;
 const SYSTEM_ADMIN = USER_ROLE.SYSTEM_ADMIN;
@@ -33,15 +33,15 @@ export interface NavItem {
 
 /**
  * Programme User Navigation Items
- * Visible to: program_user
+ * Visible to: programme_user
  */
-export const programUserNavItems: NavItem[] = [
+export const programmeUserNavItems: NavItem[] = [
   {
     key: RouteKey.HOME,
     label: 'Home',
     icon: 'Home',
     path: routes[RouteKey.HOME].path,
-    roles: [PROGRAM_USER],
+    roles: [PROGRAMME_USER],
     section: 'main',
   },
   {
@@ -49,7 +49,7 @@ export const programUserNavItems: NavItem[] = [
     label: "Today's Workout",
     icon: 'Calendar',
     path: routes[RouteKey.TODAY_WORKOUT].path,
-    roles: [PROGRAM_USER],
+    roles: [PROGRAMME_USER],
     section: 'main',
   },
   {
@@ -57,7 +57,7 @@ export const programUserNavItems: NavItem[] = [
     label: 'Programme Overview',
     icon: 'Activity',
     path: routes[RouteKey.PROGRAMME_OVERVIEW].path,
-    roles: [PROGRAM_USER],
+    roles: [PROGRAMME_USER],
     section: 'main',
   },
   {
@@ -65,7 +65,7 @@ export const programUserNavItems: NavItem[] = [
     label: 'Progress',
     icon: 'TrendingUp',
     path: routes[RouteKey.PROGRESS].path,
-    roles: [PROGRAM_USER],
+    roles: [PROGRAMME_USER],
     section: 'main',
   },
 ];
@@ -166,7 +166,7 @@ export const footerNavItems: NavItem[] = [
     label: 'Account Settings',
     icon: 'Settings',
     path: routes[RouteKey.ACCOUNT_SETTINGS].path,
-    roles: [PROGRAM_USER, CUSTOMER_OWNER, CUSTOMER_ADMIN, SYSTEM_ADMIN],
+    roles: [PROGRAMME_USER, CUSTOMER_OWNER, CUSTOMER_ADMIN, SYSTEM_ADMIN],
     section: 'footer',
   },
 ];
@@ -181,8 +181,8 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
   let mainNavItems: NavItem[] = [];
 
   // Determine which main navigation items to show based on role
-  if (userRole === PROGRAM_USER) {
-    mainNavItems = programUserNavItems;
+  if (userRole === PROGRAMME_USER) {
+    mainNavItems = programmeUserNavItems;
   } else if (userRole === CUSTOMER_OWNER || userRole === CUSTOMER_ADMIN) {
     mainNavItems = customerAdminNavItems;
   } else {
@@ -201,7 +201,7 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
     label: 'Logout',
     icon: 'LogOut',
     path: '#', // No actual path for logout
-    roles: [PROGRAM_USER, CUSTOMER_OWNER, CUSTOMER_ADMIN, SYSTEM_ADMIN],
+    roles: [PROGRAMME_USER, CUSTOMER_OWNER, CUSTOMER_ADMIN, SYSTEM_ADMIN],
     section: 'footer',
     onClick: onLogout,
   };

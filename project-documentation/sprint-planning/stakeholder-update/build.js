@@ -20,10 +20,11 @@ const CONTENT_FILES = [
   'sprint-updates/sprint-1.html',
   'sprint-updates/sprint-2.html',
   'sprint-updates/sprint-3.html',
+  'sprint-updates/sprint-4.html',
   'closing.html',
 ];
 
-const OUTPUT_FILE = '../ffp-stakeholder-update.html';
+const OUTPUT_FILE = '../_stakeholder-update.build.html';
 
 function build() {
   console.log('Building FFP Stakeholder Update...\n');

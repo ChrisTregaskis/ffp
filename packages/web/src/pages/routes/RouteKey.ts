@@ -10,7 +10,7 @@ export enum RouteKey {
   /** Protected home/dashboard route */
   HOME = 'home',
 
-  // Programme User Routes (for program_user role)
+  // Programme User Routes (for programme_user role)
   /** Today's workout/activity page */
   TODAY_WORKOUT = 'today-workout',
   /** Programme overview and calendar page */
@@ -65,4 +65,8 @@ export enum RouteKey {
   COMPONENTS_STATIC_ALERT = 'components-static-alert',
   /** Error boundary components showcase */
   COMPONENTS_ERROR_BOUNDARY = 'components-error-boundary',
+  /** Assessment progress components showcase */
+  COMPONENTS_ASSESSMENT_PROGRESS = 'components-assessment-progress',
+  /** Assessment question components showcase */
+  COMPONENTS_ASSESSMENT_QUESTIONS = 'components-assessment-questions',
 }

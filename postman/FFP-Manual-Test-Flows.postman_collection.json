@@ -1,0 +1,2115 @@
+{
+  "info": {
+    "_postman_id": "ffp-manual-test-flows",
+    "name": "FFP - Manual Test & Demo Flows",
+    "description": "End-to-end test flows that exercise multiple API endpoints in sequence to validate complete assessment pipelines.\n\nSeparated from the main API collection for cleaner organisation.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Assessment Flows",
+      "item": [
+        {
+          "name": "Leg Pain Test Scenario",
+          "item": [
+            {
+              "name": "1. Login as Programme User",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "",
+                      "if (response.accessToken) {",
+                      "    pm.collectionVariables.set('jwtToken', response.idToken);",
+                      "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                      "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
+                      "    console.log('Programme user login successful - tokens saved');",
+                      "} else if (response.challengeName === 'NEW_PASSWORD_REQUIRED') {",
+                      "    pm.collectionVariables.set('passwordChallengeSession', response.session);",
+                      "    console.log('NEW_PASSWORD_REQUIRED - complete password change first');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{customerUserEmail}}\",\n  \"password\": \"{{customerUserPassword}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/login",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "login"]
+                },
+                "description": "Login as the test programme user (customer_user role).\n\n**Prerequisites:**\n- Database seeded with test programme user\n- Set `customerUserEmail` and `customerUserPassword` collection variables\n\n**Auto-saves:** jwtToken, accessToken, refreshToken"
+              },
+              "response": []
+            },
+            {
+              "name": "2. Start Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response has assessmentId', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('assessmentId');",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "if (response.assessmentId) {",
+                      "    pm.collectionVariables.set('lastAssessmentId', response.assessmentId);",
+                      "    console.log('Assessment ID saved:', response.assessmentId);",
+                      "    console.log('isResumed:', response.isResumed);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/start",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "start"]
+                },
+                "description": "Start a new assessment using the default Standard Physiotherapy Assessment flow.\n\nUses deterministic flow ID from seed data.\n\n**Auto-saves:** lastAssessmentId"
+              },
+              "response": []
+            },
+            {
+              "name": "3. Save Progress - Pre-Assessment (Leg Pain)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 2,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220106\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220106\",\n      \"answerValue\": \"other\"\n    },\n    \"22222222-2222-2222-2222-222222220102\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220102\",\n      \"answerValue\": 7\n    },\n    \"22222222-2222-2222-2222-222222220103\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220103\",\n      \"answerValue\": [\"knees\", \"hips\"]\n    },\n    \"22222222-2222-2222-2222-222222220101\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220101\",\n      \"answerValue\": \"pain-reduction\"\n    },\n    \"22222222-2222-2222-2222-222222220104\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220104\",\n      \"answerValue\": \"light\"\n    },\n    \"22222222-2222-2222-2222-222222220105\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220105\",\n      \"answerValue\": [\"none\"]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save pre-assessment answers for leg pain scenario.\n\n**Answers:**\n- `pain-area` = \"other\" (triggers skip of back pain questions)\n- `pain-level` = 7 (high pain)\n- `pain-location` = [\"knees\", \"hips\"]\n- `goal-primary` = \"pain-reduction\"\n- `activity-level` = \"light\"\n- `medical-conditions` = [\"none\"]\n\n**Note:** Question IDs are deterministic UUIDs from seed data."
+              },
+              "response": []
+            },
+            {
+              "name": "4. Save Progress - Red Flag Screening",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 3,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220501\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220501\",\n      \"answerValue\": \"yes\"\n    },\n    \"22222222-2222-2222-2222-222222220502\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220502\",\n      \"answerValue\": \"yes\"\n    },\n    \"22222222-2222-2222-2222-222222220503\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220503\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220504\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220504\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220505\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220505\",\n      \"answerValue\": \"yes\"\n    },\n    \"22222222-2222-2222-2222-222222220506\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220506\",\n      \"answerValue\": \"no\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save red flag screening answers.\n\n**Answers:**\n- `radiating-pain` = \"yes\" (leg-specific red flag - score 10)\n- All others = \"no\" (score 0)\n\n**Expected Impact:**\nWith radiating-pain = \"yes\" (score 10) plus pain-level 7 and 2 pain locations,\nthe pain dimension total should exceed 35, triggering priority 1:\n→ `gentle-mobility-programme`"
+              },
+              "response": []
+            },
+            {
+              "name": "5. Save Progress - Strength Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 4,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220201\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220201\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220202\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220202\",\n      \"answerValue\": \"moderate\"\n    },\n    \"22222222-2222-2222-2222-222222220203\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220203\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220204\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220204\",\n      \"answerValue\": 8\n    },\n    \"22222222-2222-2222-2222-222222220205\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220205\",\n      \"answerValue\": 5\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save strength assessment answers.\n\n**Answers:**\n- `squat-assessment` = \"completed\" (video response)\n- `squat-rating` = \"moderate\" (score 3)\n- `pushup-assessment` = \"completed\" (video response)\n- `pushup-count` = 8\n- `strength-comfort` = 5"
+              },
+              "response": []
+            },
+            {
+              "name": "6. Save Progress - Balance Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 5,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220301\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220301\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220302\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220302\",\n      \"answerValue\": \"5-15\"\n    },\n    \"22222222-2222-2222-2222-222222220303\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220303\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220304\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220304\",\n      \"answerValue\": \"somewhat-stable\"\n    },\n    \"22222222-2222-2222-2222-222222220305\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220305\",\n      \"answerValue\": 6\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save balance assessment answers.\n\n**Answers:**\n- `single-leg-stand` = \"completed\" (video response)\n- `single-leg-duration` = \"5-15\" (score 2)\n- `tandem-stand` = \"completed\" (video response)\n- `tandem-stability` = \"somewhat-stable\" (score 3)\n- `balance-confidence` = 6"
+              },
+              "response": []
+            },
+            {
+              "name": "7. Submit Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Assessment submitted', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    pm.expect(response.status).to.equal('submitted');",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "if (response.jobId) {",
+                      "    pm.collectionVariables.set('lastJobId', response.jobId);",
+                      "    console.log('Job ID saved:', response.jobId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220106\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220106\",\n      \"answerValue\": \"other\"\n    },\n    \"22222222-2222-2222-2222-222222220102\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220102\",\n      \"answerValue\": 7\n    },\n    \"22222222-2222-2222-2222-222222220103\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220103\",\n      \"answerValue\": [\"knees\", \"hips\"]\n    },\n    \"22222222-2222-2222-2222-222222220101\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220101\",\n      \"answerValue\": \"pain-reduction\"\n    },\n    \"22222222-2222-2222-2222-222222220104\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220104\",\n      \"answerValue\": \"light\"\n    },\n    \"22222222-2222-2222-2222-222222220105\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220105\",\n      \"answerValue\": [\"none\"]\n    },\n    \"22222222-2222-2222-2222-222222220501\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220501\",\n      \"answerValue\": \"yes\"\n    },\n    \"22222222-2222-2222-2222-222222220502\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220502\",\n      \"answerValue\": \"yes\"\n    },\n    \"22222222-2222-2222-2222-222222220503\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220503\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220504\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220504\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220505\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220505\",\n      \"answerValue\": \"yes\"\n    },\n    \"22222222-2222-2222-2222-222222220506\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220506\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220201\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220201\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220202\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220202\",\n      \"answerValue\": \"moderate\"\n    },\n    \"22222222-2222-2222-2222-222222220203\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220203\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220204\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220204\",\n      \"answerValue\": 8\n    },\n    \"22222222-2222-2222-2222-222222220205\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220205\",\n      \"answerValue\": 5\n    },\n    \"22222222-2222-2222-2222-222222220301\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220301\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220302\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220302\",\n      \"answerValue\": \"5-15\"\n    },\n    \"22222222-2222-2222-2222-222222220303\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220303\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220304\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220304\",\n      \"answerValue\": \"somewhat-stable\"\n    },\n    \"22222222-2222-2222-2222-222222220305\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220305\",\n      \"answerValue\": 6\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/submit",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "submit"]
+                },
+                "description": "Submit the assessment with all answers.\n\nThis submits the complete set of answers and queues a `score_assessment` job.\n\n**Auto-saves:** lastJobId\n\n**Next step:** Trigger the JobProcessor Lambda via the AWS Console to process queued jobs. You need to invoke it **twice** (once for scoring, once for programme generation). See the testing guide for details."
+              },
+              "response": []
+            },
+            {
+              "name": "8. Get Assessment Results",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "console.log('Assessment results:', JSON.stringify(response, null, 2));",
+                      "",
+                      "pm.test('Assessment is completed', function () {",
+                      "    pm.expect(response.status).to.equal('completed');",
+                      "});",
+                      "",
+                      "pm.test('Programme ID is populated', function () {",
+                      "    pm.expect(response).to.have.property('programmeId');",
+                      "    pm.expect(response.programmeId).to.not.be.null;",
+                      "    console.log('Programme ID:', response.programmeId);",
+                      "});",
+                      "",
+                      "pm.test('Scores are present', function () {",
+                      "    pm.expect(response).to.have.property('scores');",
+                      "    console.log('Scores:', JSON.stringify(response.scores));",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/results",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "results"]
+                },
+                "description": "Poll assessment results after job processing completes.\n\n**Expected for Leg Pain Scenario:**\n- `status`: \"completed\"\n- `programmeId`: UUID of created programme\n- `scores`: Dimensional scores including high pain score\n\n**Expected Programme:** `gentle-mobility-programme` (priority 1: pain >= 35)\n\nThe high pain level (7) + pain locations (knees, hips) + radiating pain red flag\nshould push the pain dimension well above the 35 threshold."
+              },
+              "response": []
+            }
+          ],
+          "description": "End-to-end test scenario for leg pain assessment → programme generation pipeline.\n\n**Pre-configured for Scenario A: Severe Leg Pain + Red Flags**\n\n**Flow:**\n1. Login as programme user\n2. Start assessment (Standard Physiotherapy Assessment flow)\n3. Save pre-assessment answers (leg pain, high pain level)\n4. Save red flag screening (radiating pain = yes)\n5. Save strength assessment (moderate)\n6. Save balance assessment (moderate)\n7. Submit assessment (queues score_assessment job)\n8. Get results (verify programme assigned)\n\n**Job Processing (between steps 7 and 8):**\nIn dev, there is no EventBridge Cron to process jobs automatically. Trigger the job processor Lambda manually via the AWS Console:\n- Navigate to the Lambda function for your dev stage\n- Use a test event with: { \"source\": \"manual-trigger\" }\n- Run twice: once for score_assessment, once for generate_programme\n\n**Expected Result:** `gentle-mobility-programme` (priority 1: pain >= 35)\n\n**Prerequisites:**\n- Database seeded (including programme templates)\n- Dev stack deployed\n- Collection variables set: customerUserEmail, customerUserPassword"
+        },
+        {
+          "name": "Scenario B: Moderate Back Pain → Gentle Mobility",
+          "item": [
+            {
+              "name": "1. Login as Programme User",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "",
+                      "if (response.accessToken) {",
+                      "    pm.collectionVariables.set('jwtToken', response.idToken);",
+                      "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                      "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
+                      "    console.log('Programme user login successful - tokens saved');",
+                      "} else if (response.challengeName === 'NEW_PASSWORD_REQUIRED') {",
+                      "    pm.collectionVariables.set('passwordChallengeSession', response.session);",
+                      "    console.log('NEW_PASSWORD_REQUIRED - complete password change first');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{customerUserEmail}}\",\n  \"password\": \"{{customerUserPassword}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/login",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "login"]
+                },
+                "description": "Login as the test programme user (customer_user role).\n\n**Prerequisites:**\n- Database seeded with test programme user\n- Set `customerUserEmail` and `customerUserPassword` collection variables\n\n**Auto-saves:** jwtToken, accessToken, refreshToken"
+              },
+              "response": []
+            },
+            {
+              "name": "2. Start Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response has assessmentId', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('assessmentId');",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "if (response.assessmentId) {",
+                      "    pm.collectionVariables.set('lastAssessmentId', response.assessmentId);",
+                      "    console.log('Assessment ID saved:', response.assessmentId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/start",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "start"]
+                },
+                "description": "Start a new assessment using the default Standard Physiotherapy Assessment flow.\n\nUses deterministic flow ID from seed data.\n\n**Auto-saves:** lastAssessmentId"
+              },
+              "response": []
+            },
+            {
+              "name": "3. Save Progress - Pre-Assessment (Back Pain)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 2,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220106\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220106\",\n      \"answerValue\": \"back\"\n    },\n    \"22222222-2222-2222-2222-222222220102\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220102\",\n      \"answerValue\": 8\n    },\n    \"22222222-2222-2222-2222-222222220103\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220103\",\n      \"answerValue\": [\"knees\", \"hips\", \"lower-back\"]\n    },\n    \"22222222-2222-2222-2222-222222220101\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220101\",\n      \"answerValue\": \"pain-reduction\"\n    },\n    \"22222222-2222-2222-2222-222222220104\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220104\",\n      \"answerValue\": \"light\"\n    },\n    \"22222222-2222-2222-2222-222222220105\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220105\",\n      \"answerValue\": [\"none\"]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save pre-assessment answers for back pain scenario.\n\n**Answers:**\n- `pain-area` = \"back\" (triggers back pain questions)\n- `pain-level` = 8 (high pain)\n- `pain-location` = [\"knees\", \"hips\", \"lower-back\"]\n- `goal-primary` = \"pain-reduction\"\n- `activity-level` = \"light\"\n- `medical-conditions` = [\"none\"]\n\n**Note:** pain-area = \"back\" triggers the back pain detail questions in the next step."
+              },
+              "response": []
+            },
+            {
+              "name": "4. Save Progress - Back Pain Details",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 3,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220401\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220401\",\n      \"answerValue\": \"over-12-weeks\"\n    },\n    \"22222222-2222-2222-2222-222222220402\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220402\",\n      \"answerValue\": 6\n    },\n    \"22222222-2222-2222-2222-222222220403\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220403\",\n      \"answerValue\": \"dull-aching\"\n    },\n    \"22222222-2222-2222-2222-222222220404\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220404\",\n      \"answerValue\": \"2-5-times\"\n    },\n    \"22222222-2222-2222-2222-222222220405\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220405\",\n      \"answerValue\": \"3-6-weeks\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save back pain detail answers (only shown when pain-area = \"back\").\n\n**Answers:**\n- `back-pain-duration` = \"over-12-weeks\" (score 5)\n- `back-pain-intensity` = 6\n- `back-pain-type` = \"dull-aching\" (score 2)\n- `back-pain-recurrence` = \"2-5-times\" (score 3)\n- `back-pain-typical-duration` = \"3-6-weeks\" (score 3)"
+              },
+              "response": []
+            },
+            {
+              "name": "5. Save Progress - Red Flag Screening",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 4,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220501\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220501\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220502\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220502\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220503\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220503\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220504\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220504\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220505\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220505\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220506\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220506\",\n      \"answerValue\": \"no\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save red flag screening answers.\n\n**Answers:**\n- All red flags = \"no\" (score 0 each)\n\n**No red flags triggered** - pain score comes from pre-assessment and back pain details."
+              },
+              "response": []
+            },
+            {
+              "name": "6. Save Progress - Strength Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 5,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220201\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220201\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220202\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220202\",\n      \"answerValue\": \"moderate\"\n    },\n    \"22222222-2222-2222-2222-222222220203\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220203\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220204\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220204\",\n      \"answerValue\": 8\n    },\n    \"22222222-2222-2222-2222-222222220205\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220205\",\n      \"answerValue\": 5\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save strength assessment answers.\n\n**Answers:**\n- `squat-assessment` = \"completed\" (video response)\n- `squat-rating` = \"moderate\" (score 3)\n- `pushup-assessment` = \"completed\" (video response)\n- `pushup-count` = 8\n- `strength-comfort` = 5"
+              },
+              "response": []
+            },
+            {
+              "name": "7. Save Progress - Balance Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 6,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220301\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220301\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220302\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220302\",\n      \"answerValue\": \"5-15\"\n    },\n    \"22222222-2222-2222-2222-222222220303\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220303\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220304\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220304\",\n      \"answerValue\": \"somewhat-stable\"\n    },\n    \"22222222-2222-2222-2222-222222220305\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220305\",\n      \"answerValue\": 6\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save balance assessment answers.\n\n**Answers:**\n- `single-leg-stand` = \"completed\" (video response)\n- `single-leg-duration` = \"5-15\" (score 2)\n- `tandem-stand` = \"completed\" (video response)\n- `tandem-stability` = \"somewhat-stable\" (score 3)\n- `balance-confidence` = 6"
+              },
+              "response": []
+            },
+            {
+              "name": "8. Submit Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Assessment submitted', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('jobId');",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "if (response.jobId) {",
+                      "    pm.collectionVariables.set('lastJobId', response.jobId);",
+                      "    console.log('Job ID saved:', response.jobId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220106\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220106\",\n      \"answerValue\": \"back\"\n    },\n    \"22222222-2222-2222-2222-222222220102\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220102\",\n      \"answerValue\": 8\n    },\n    \"22222222-2222-2222-2222-222222220103\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220103\",\n      \"answerValue\": [\"knees\", \"hips\", \"lower-back\"]\n    },\n    \"22222222-2222-2222-2222-222222220101\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220101\",\n      \"answerValue\": \"pain-reduction\"\n    },\n    \"22222222-2222-2222-2222-222222220104\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220104\",\n      \"answerValue\": \"light\"\n    },\n    \"22222222-2222-2222-2222-222222220105\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220105\",\n      \"answerValue\": [\"none\"]\n    },\n    \"22222222-2222-2222-2222-222222220401\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220401\",\n      \"answerValue\": \"over-12-weeks\"\n    },\n    \"22222222-2222-2222-2222-222222220402\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220402\",\n      \"answerValue\": 6\n    },\n    \"22222222-2222-2222-2222-222222220403\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220403\",\n      \"answerValue\": \"dull-aching\"\n    },\n    \"22222222-2222-2222-2222-222222220404\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220404\",\n      \"answerValue\": \"2-5-times\"\n    },\n    \"22222222-2222-2222-2222-222222220405\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220405\",\n      \"answerValue\": \"3-6-weeks\"\n    },\n    \"22222222-2222-2222-2222-222222220501\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220501\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220502\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220502\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220503\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220503\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220504\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220504\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220505\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220505\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220506\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220506\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220201\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220201\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220202\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220202\",\n      \"answerValue\": \"moderate\"\n    },\n    \"22222222-2222-2222-2222-222222220203\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220203\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220204\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220204\",\n      \"answerValue\": 8\n    },\n    \"22222222-2222-2222-2222-222222220205\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220205\",\n      \"answerValue\": 5\n    },\n    \"22222222-2222-2222-2222-222222220301\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220301\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220302\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220302\",\n      \"answerValue\": \"5-15\"\n    },\n    \"22222222-2222-2222-2222-222222220303\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220303\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220304\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220304\",\n      \"answerValue\": \"somewhat-stable\"\n    },\n    \"22222222-2222-2222-2222-222222220305\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220305\",\n      \"answerValue\": 6\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/submit",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "submit"]
+                },
+                "description": "Submit the assessment with all answers from steps 3-7.\n\nIncludes pre-assessment, back pain details, red flags, strength, and balance answers.\n\n**Auto-saves:** lastJobId\n\n**Next step:** Trigger the JobProcessor Lambda via the AWS Console twice (scoring + programme generation)."
+              },
+              "response": []
+            },
+            {
+              "name": "9. Get Assessment Results",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "console.log('Assessment results:', JSON.stringify(response, null, 2));",
+                      "",
+                      "pm.test('Assessment is completed', function () {",
+                      "    pm.expect(response.status).to.equal('completed');",
+                      "});",
+                      "",
+                      "pm.test('Programme ID is populated', function () {",
+                      "    pm.expect(response).to.have.property('programmeId');",
+                      "    pm.expect(response.programmeId).to.not.be.null;",
+                      "    console.log('Programme ID:', response.programmeId);",
+                      "});",
+                      "",
+                      "pm.test('Scores are present', function () {",
+                      "    pm.expect(response).to.have.property('scores');",
+                      "    console.log('Scores:', JSON.stringify(response.scores));",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/results",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "results"]
+                },
+                "description": "Poll assessment results after job processing completes.\n\n**Expected for Back Pain Scenario:**\n- `status`: \"completed\"\n- `programmeId`: UUID of created programme\n- `scores`: Dimensional scores including high pain score\n\n**Expected Programme:** `gentle-mobility-programme` (priority 2: pain >= 20)\n\nThe high pain level (8) + back pain detail scores (duration 5, intensity 6, type 2, recurrence 3, typical duration 3) push the pain dimension above 20."
+              },
+              "response": []
+            }
+          ],
+          "description": "End-to-end test for back pain assessment path.\n\n**Scenario B: Moderate Back Pain, No Red Flags**\n\n**Key differences from Scenario A:**\n- pain-area = \"back\" (triggers back pain questions)\n- Higher pain level (8) with back pain detail questions\n- All red flags = \"no\"\n- Same moderate strength/balance\n\n**Expected Result:** `gentle-mobility-programme` (priority 2: pain >= 20)\n\n**Job Processing:** Trigger Lambda twice after submit."
+        },
+        {
+          "name": "Scenario C: Low Fitness → Foundation",
+          "item": [
+            {
+              "name": "1. Login as Programme User",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "",
+                      "if (response.accessToken) {",
+                      "    pm.collectionVariables.set('jwtToken', response.idToken);",
+                      "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                      "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
+                      "    console.log('Programme user login successful - tokens saved');",
+                      "} else if (response.challengeName === 'NEW_PASSWORD_REQUIRED') {",
+                      "    pm.collectionVariables.set('passwordChallengeSession', response.session);",
+                      "    console.log('NEW_PASSWORD_REQUIRED - complete password change first');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{customerUserEmail}}\",\n  \"password\": \"{{customerUserPassword}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/login",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "login"]
+                },
+                "description": "Login as the test programme user (customer_user role).\n\n**Prerequisites:**\n- Database seeded with test programme user\n- Set `customerUserEmail` and `customerUserPassword` collection variables\n\n**Auto-saves:** jwtToken, accessToken, refreshToken"
+              },
+              "response": []
+            },
+            {
+              "name": "2. Start Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response has assessmentId', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('assessmentId');",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "if (response.assessmentId) {",
+                      "    pm.collectionVariables.set('lastAssessmentId', response.assessmentId);",
+                      "    console.log('Assessment ID saved:', response.assessmentId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/start",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "start"]
+                },
+                "description": "Start a new assessment using the default Standard Physiotherapy Assessment flow.\n\nUses deterministic flow ID from seed data.\n\n**Auto-saves:** lastAssessmentId"
+              },
+              "response": []
+            },
+            {
+              "name": "3. Save Progress - Pre-Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 2,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220106\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220106\",\n      \"answerValue\": \"other\"\n    },\n    \"22222222-2222-2222-2222-222222220102\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220102\",\n      \"answerValue\": 2\n    },\n    \"22222222-2222-2222-2222-222222220103\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220103\",\n      \"answerValue\": [\"knees\"]\n    },\n    \"22222222-2222-2222-2222-222222220101\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220101\",\n      \"answerValue\": \"general-fitness\"\n    },\n    \"22222222-2222-2222-2222-222222220104\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220104\",\n      \"answerValue\": \"sedentary\"\n    },\n    \"22222222-2222-2222-2222-222222220105\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220105\",\n      \"answerValue\": [\"none\"]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save pre-assessment answers for low fitness scenario.\n\n**Answers:**\n- `pain-area` = \"other\" (skips back pain questions)\n- `pain-level` = 2 (mild pain)\n- `pain-location` = [\"knees\"]\n- `goal-primary` = \"general-fitness\"\n- `activity-level` = \"sedentary\"\n- `medical-conditions` = [\"none\"]"
+              },
+              "response": []
+            },
+            {
+              "name": "4. Save Progress - Red Flag Screening",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 3,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220501\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220501\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220502\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220502\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220503\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220503\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220504\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220504\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220505\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220505\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220506\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220506\",\n      \"answerValue\": \"no\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save red flag screening answers.\n\n**Answers:**\n- All red flags = \"no\" (score 0 each)"
+              },
+              "response": []
+            },
+            {
+              "name": "5. Save Progress - Strength Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 4,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220201\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220201\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220202\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220202\",\n      \"answerValue\": \"very-difficult\"\n    },\n    \"22222222-2222-2222-2222-222222220203\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220203\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220204\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220204\",\n      \"answerValue\": 2\n    },\n    \"22222222-2222-2222-2222-222222220205\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220205\",\n      \"answerValue\": 2\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save strength assessment answers (very low fitness).\n\n**Answers:**\n- `squat-assessment` = \"completed\" (video response)\n- `squat-rating` = \"very-difficult\" (score 1)\n- `pushup-assessment` = \"completed\" (video response)\n- `pushup-count` = 2 (very low)\n- `strength-comfort` = 2 (very low)"
+              },
+              "response": []
+            },
+            {
+              "name": "6. Save Progress - Balance Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 5,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220301\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220301\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220302\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220302\",\n      \"answerValue\": \"less-5\"\n    },\n    \"22222222-2222-2222-2222-222222220303\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220303\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220304\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220304\",\n      \"answerValue\": \"very-unstable\"\n    },\n    \"22222222-2222-2222-2222-222222220305\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220305\",\n      \"answerValue\": 2\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save balance assessment answers (very low balance).\n\n**Answers:**\n- `single-leg-stand` = \"completed\" (video response)\n- `single-leg-duration` = \"less-5\" (score 1)\n- `tandem-stand` = \"completed\" (video response)\n- `tandem-stability` = \"very-unstable\" (score 1)\n- `balance-confidence` = 2 (very low)"
+              },
+              "response": []
+            },
+            {
+              "name": "7. Submit Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Assessment submitted', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('jobId');",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "if (response.jobId) {",
+                      "    pm.collectionVariables.set('lastJobId', response.jobId);",
+                      "    console.log('Job ID saved:', response.jobId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220106\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220106\",\n      \"answerValue\": \"other\"\n    },\n    \"22222222-2222-2222-2222-222222220102\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220102\",\n      \"answerValue\": 2\n    },\n    \"22222222-2222-2222-2222-222222220103\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220103\",\n      \"answerValue\": [\"knees\"]\n    },\n    \"22222222-2222-2222-2222-222222220101\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220101\",\n      \"answerValue\": \"general-fitness\"\n    },\n    \"22222222-2222-2222-2222-222222220104\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220104\",\n      \"answerValue\": \"sedentary\"\n    },\n    \"22222222-2222-2222-2222-222222220105\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220105\",\n      \"answerValue\": [\"none\"]\n    },\n    \"22222222-2222-2222-2222-222222220501\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220501\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220502\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220502\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220503\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220503\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220504\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220504\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220505\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220505\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220506\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220506\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220201\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220201\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220202\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220202\",\n      \"answerValue\": \"very-difficult\"\n    },\n    \"22222222-2222-2222-2222-222222220203\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220203\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220204\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220204\",\n      \"answerValue\": 2\n    },\n    \"22222222-2222-2222-2222-222222220205\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220205\",\n      \"answerValue\": 2\n    },\n    \"22222222-2222-2222-2222-222222220301\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220301\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220302\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220302\",\n      \"answerValue\": \"less-5\"\n    },\n    \"22222222-2222-2222-2222-222222220303\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220303\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220304\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220304\",\n      \"answerValue\": \"very-unstable\"\n    },\n    \"22222222-2222-2222-2222-222222220305\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220305\",\n      \"answerValue\": 2\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/submit",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "submit"]
+                },
+                "description": "Submit the assessment with all answers from steps 3-6.\n\nIncludes pre-assessment, red flags, strength, and balance answers.\n\n**Auto-saves:** lastJobId\n\n**Next step:** Trigger the JobProcessor Lambda via the AWS Console twice (scoring + programme generation)."
+              },
+              "response": []
+            },
+            {
+              "name": "8. Get Assessment Results",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "console.log('Assessment results:', JSON.stringify(response, null, 2));",
+                      "",
+                      "pm.test('Assessment is completed', function () {",
+                      "    pm.expect(response.status).to.equal('completed');",
+                      "});",
+                      "",
+                      "pm.test('Programme ID is populated', function () {",
+                      "    pm.expect(response).to.have.property('programmeId');",
+                      "    pm.expect(response.programmeId).to.not.be.null;",
+                      "    console.log('Programme ID:', response.programmeId);",
+                      "});",
+                      "",
+                      "pm.test('Scores are present', function () {",
+                      "    pm.expect(response).to.have.property('scores');",
+                      "    console.log('Scores:', JSON.stringify(response.scores));",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/results",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "results"]
+                },
+                "description": "Poll assessment results after job processing completes.\n\n**Expected for Low Fitness Scenario:**\n- `status`: \"completed\"\n- `programmeId`: UUID of created programme\n- `scores`: Very low strength and balance scores\n\n**Expected Programme:** `foundation-programme` (priority 3: strength < 20 AND balance < 6)\n\nVery low strength (very-difficult squat score 1, 2 pushups, comfort 2) and\nvery low balance (less than 5s single-leg score 1, very unstable score 1, confidence 2)."
+              },
+              "response": []
+            }
+          ],
+          "description": "End-to-end test for low fitness baseline.\n\n**Scenario C: Mild Pain, Low Fitness**\n\n**Key characteristics:**\n- Low pain (level 2)\n- Very low strength scores (very-difficult squat, 2 pushups)\n- Very low balance scores (less than 5s single-leg, very unstable)\n- All red flags = \"no\"\n\n**Expected Result:** `foundation-programme` (priority 3: strength < 20 AND balance < 6)\n\n**Job Processing:** Trigger Lambda twice after submit."
+        },
+        {
+          "name": "Scenario D: High Fitness → Advanced Strength",
+          "item": [
+            {
+              "name": "1. Login as Programme User",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "",
+                      "if (response.accessToken) {",
+                      "    pm.collectionVariables.set('jwtToken', response.idToken);",
+                      "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                      "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
+                      "    console.log('Programme user login successful - tokens saved');",
+                      "} else if (response.challengeName === 'NEW_PASSWORD_REQUIRED') {",
+                      "    pm.collectionVariables.set('passwordChallengeSession', response.session);",
+                      "    console.log('NEW_PASSWORD_REQUIRED - complete password change first');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{customerUserEmail}}\",\n  \"password\": \"{{customerUserPassword}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/login",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "login"]
+                },
+                "description": "Login as the test programme user (customer_user role).\n\n**Prerequisites:**\n- Database seeded with test programme user\n- Set `customerUserEmail` and `customerUserPassword` collection variables\n\n**Auto-saves:** jwtToken, accessToken, refreshToken"
+              },
+              "response": []
+            },
+            {
+              "name": "2. Start Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response has assessmentId', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('assessmentId');",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "if (response.assessmentId) {",
+                      "    pm.collectionVariables.set('lastAssessmentId', response.assessmentId);",
+                      "    console.log('Assessment ID saved:', response.assessmentId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/start",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "start"]
+                },
+                "description": "Start a new assessment using the default Standard Physiotherapy Assessment flow.\n\nUses deterministic flow ID from seed data.\n\n**Auto-saves:** lastAssessmentId"
+              },
+              "response": []
+            },
+            {
+              "name": "3. Save Progress - Pre-Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 2,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220106\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220106\",\n      \"answerValue\": \"other\"\n    },\n    \"22222222-2222-2222-2222-222222220102\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220102\",\n      \"answerValue\": 1\n    },\n    \"22222222-2222-2222-2222-222222220103\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220103\",\n      \"answerValue\": [\"none\"]\n    },\n    \"22222222-2222-2222-2222-222222220101\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220101\",\n      \"answerValue\": \"strength\"\n    },\n    \"22222222-2222-2222-2222-222222220104\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220104\",\n      \"answerValue\": \"very-active\"\n    },\n    \"22222222-2222-2222-2222-222222220105\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220105\",\n      \"answerValue\": [\"none\"]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save pre-assessment answers for high fitness scenario.\n\n**Answers:**\n- `pain-area` = \"other\" (skips back pain questions)\n- `pain-level` = 1 (very low pain)\n- `pain-location` = [\"none\"]\n- `goal-primary` = \"strength\"\n- `activity-level` = \"very-active\"\n- `medical-conditions` = [\"none\"]"
+              },
+              "response": []
+            },
+            {
+              "name": "4. Save Progress - Red Flag Screening",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 3,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220501\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220501\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220502\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220502\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220503\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220503\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220504\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220504\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220505\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220505\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220506\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220506\",\n      \"answerValue\": \"no\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save red flag screening answers.\n\n**Answers:**\n- All red flags = \"no\" (score 0 each)"
+              },
+              "response": []
+            },
+            {
+              "name": "5. Save Progress - Strength Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 4,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220201\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220201\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220202\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220202\",\n      \"answerValue\": \"easy\"\n    },\n    \"22222222-2222-2222-2222-222222220203\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220203\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220204\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220204\",\n      \"answerValue\": 27\n    },\n    \"22222222-2222-2222-2222-222222220205\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220205\",\n      \"answerValue\": 9\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save strength assessment answers (very high fitness).\n\n**Answers:**\n- `squat-assessment` = \"completed\" (video response)\n- `squat-rating` = \"easy\" (score 4)\n- `pushup-assessment` = \"completed\" (video response)\n- `pushup-count` = 25 (very high)\n- `strength-comfort` = 9 (very high)"
+              },
+              "response": []
+            },
+            {
+              "name": "6. Save Progress - Balance Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 5,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220301\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220301\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220302\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220302\",\n      \"answerValue\": \"over-30\"\n    },\n    \"22222222-2222-2222-2222-222222220303\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220303\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220304\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220304\",\n      \"answerValue\": \"very-stable\"\n    },\n    \"22222222-2222-2222-2222-222222220305\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220305\",\n      \"answerValue\": 9\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save balance assessment answers (very high balance).\n\n**Answers:**\n- `single-leg-stand` = \"completed\" (video response)\n- `single-leg-duration` = \"over-30\" (score 4)\n- `tandem-stand` = \"completed\" (video response)\n- `tandem-stability` = \"very-stable\" (score 4)\n- `balance-confidence` = 9 (very high)"
+              },
+              "response": []
+            },
+            {
+              "name": "7. Submit Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Assessment submitted', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('jobId');",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "if (response.jobId) {",
+                      "    pm.collectionVariables.set('lastJobId', response.jobId);",
+                      "    console.log('Job ID saved:', response.jobId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220106\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220106\",\n      \"answerValue\": \"other\"\n    },\n    \"22222222-2222-2222-2222-222222220102\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220102\",\n      \"answerValue\": 1\n    },\n    \"22222222-2222-2222-2222-222222220103\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220103\",\n      \"answerValue\": [\"none\"]\n    },\n    \"22222222-2222-2222-2222-222222220101\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220101\",\n      \"answerValue\": \"strength\"\n    },\n    \"22222222-2222-2222-2222-222222220104\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220104\",\n      \"answerValue\": \"very-active\"\n    },\n    \"22222222-2222-2222-2222-222222220105\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220105\",\n      \"answerValue\": [\"none\"]\n    },\n    \"22222222-2222-2222-2222-222222220501\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220501\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220502\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220502\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220503\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220503\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220504\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220504\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220505\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220505\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220506\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220506\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220201\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220201\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220202\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220202\",\n      \"answerValue\": \"easy\"\n    },\n    \"22222222-2222-2222-2222-222222220203\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220203\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220204\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220204\",\n      \"answerValue\": 27\n    },\n    \"22222222-2222-2222-2222-222222220205\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220205\",\n      \"answerValue\": 9\n    },\n    \"22222222-2222-2222-2222-222222220301\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220301\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220302\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220302\",\n      \"answerValue\": \"over-30\"\n    },\n    \"22222222-2222-2222-2222-222222220303\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220303\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220304\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220304\",\n      \"answerValue\": \"very-stable\"\n    },\n    \"22222222-2222-2222-2222-222222220305\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220305\",\n      \"answerValue\": 9\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/submit",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "submit"]
+                },
+                "description": "Submit the assessment with all answers from steps 3-6.\n\nIncludes pre-assessment, red flags, strength, and balance answers.\n\n**Auto-saves:** lastJobId\n\n**Next step:** Trigger the JobProcessor Lambda via the AWS Console twice (scoring + programme generation)."
+              },
+              "response": []
+            },
+            {
+              "name": "8. Get Assessment Results",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "console.log('Assessment results:', JSON.stringify(response, null, 2));",
+                      "",
+                      "pm.test('Assessment is completed', function () {",
+                      "    pm.expect(response.status).to.equal('completed');",
+                      "});",
+                      "",
+                      "pm.test('Programme ID is populated', function () {",
+                      "    pm.expect(response).to.have.property('programmeId');",
+                      "    pm.expect(response.programmeId).to.not.be.null;",
+                      "    console.log('Programme ID:', response.programmeId);",
+                      "});",
+                      "",
+                      "pm.test('Scores are present', function () {",
+                      "    pm.expect(response).to.have.property('scores');",
+                      "    console.log('Scores:', JSON.stringify(response.scores));",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/results",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "results"]
+                },
+                "description": "Poll assessment results after job processing completes.\n\n**Expected for High Fitness Scenario:**\n- `status`: \"completed\"\n- `programmeId`: UUID of created programme\n- `scores`: Very high strength scores, low pain\n\n**Expected Programme:** `advanced-strength-programme` (priority 4: pain < 10 AND strength >= 40)\n\nVery low pain (level 1, no locations) with very high strength (easy squat score 4, 25 pushups, comfort 9)."
+              },
+              "response": []
+            }
+          ],
+          "description": "End-to-end test for high fitness baseline.\n\n**Scenario D: Mild Pain, High Fitness**\n\n**Key characteristics:**\n- Very low pain (level 1, no locations)\n- Very high strength scores (easy squat, 25 pushups, comfort 9)\n- High balance scores (over 30s single-leg, very stable)\n- All red flags = \"no\"\n\n**Expected Result:** `advanced-strength-programme` (priority 4: pain < 10 AND strength >= 40)\n\n**Job Processing:** Trigger Lambda twice after submit."
+        },
+        {
+          "name": "Scenario E: Default → General Wellness",
+          "item": [
+            {
+              "name": "1. Login as Programme User",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "",
+                      "if (response.accessToken) {",
+                      "    pm.collectionVariables.set('jwtToken', response.idToken);",
+                      "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                      "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
+                      "    console.log('Programme user login successful - tokens saved');",
+                      "} else if (response.challengeName === 'NEW_PASSWORD_REQUIRED') {",
+                      "    pm.collectionVariables.set('passwordChallengeSession', response.session);",
+                      "    console.log('NEW_PASSWORD_REQUIRED - complete password change first');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{customerUserEmail}}\",\n  \"password\": \"{{customerUserPassword}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/auth/login",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["auth", "login"]
+                },
+                "description": "Login as the test programme user (customer_user role).\n\n**Prerequisites:**\n- Database seeded with test programme user\n- Set `customerUserEmail` and `customerUserPassword` collection variables\n\n**Auto-saves:** jwtToken, accessToken, refreshToken"
+              },
+              "response": []
+            },
+            {
+              "name": "2. Start Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response has assessmentId', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('assessmentId');",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "if (response.assessmentId) {",
+                      "    pm.collectionVariables.set('lastAssessmentId', response.assessmentId);",
+                      "    console.log('Assessment ID saved:', response.assessmentId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"flowId\": \"44444444-4444-4444-4444-444444440001\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/start",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "start"]
+                },
+                "description": "Start a new assessment using the default Standard Physiotherapy Assessment flow.\n\nUses deterministic flow ID from seed data.\n\n**Auto-saves:** lastAssessmentId"
+              },
+              "response": []
+            },
+            {
+              "name": "3. Save Progress - Pre-Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 2,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220106\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220106\",\n      \"answerValue\": \"other\"\n    },\n    \"22222222-2222-2222-2222-222222220102\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220102\",\n      \"answerValue\": 0\n    },\n    \"22222222-2222-2222-2222-222222220103\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220103\",\n      \"answerValue\": [\"none\"]\n    },\n    \"22222222-2222-2222-2222-222222220101\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220101\",\n      \"answerValue\": \"general-fitness\"\n    },\n    \"22222222-2222-2222-2222-222222220104\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220104\",\n      \"answerValue\": \"moderate\"\n    },\n    \"22222222-2222-2222-2222-222222220105\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220105\",\n      \"answerValue\": [\"none\"]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save pre-assessment answers for default/moderate scenario.\n\n**Answers:**\n- `pain-area` = \"other\" (skips back pain questions)\n- `pain-level` = 0 (no pain)\n- `pain-location` = [\"none\"]\n- `goal-primary` = \"general-fitness\"\n- `activity-level` = \"moderate\"\n- `medical-conditions` = [\"none\"]"
+              },
+              "response": []
+            },
+            {
+              "name": "4. Save Progress - Red Flag Screening",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 3,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220501\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220501\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220502\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220502\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220503\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220503\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220504\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220504\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220505\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220505\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220506\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220506\",\n      \"answerValue\": \"no\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save red flag screening answers.\n\n**Answers:**\n- All red flags = \"no\" (score 0 each)"
+              },
+              "response": []
+            },
+            {
+              "name": "5. Save Progress - Strength Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 4,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220201\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220201\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220202\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220202\",\n      \"answerValue\": \"moderate\"\n    },\n    \"22222222-2222-2222-2222-222222220203\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220203\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220204\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220204\",\n      \"answerValue\": 10\n    },\n    \"22222222-2222-2222-2222-222222220205\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220205\",\n      \"answerValue\": 5\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save strength assessment answers (moderate fitness).\n\n**Answers:**\n- `squat-assessment` = \"completed\" (video response)\n- `squat-rating` = \"moderate\" (score 3)\n- `pushup-assessment` = \"completed\" (video response)\n- `pushup-count` = 10 (moderate)\n- `strength-comfort` = 5 (moderate)"
+              },
+              "response": []
+            },
+            {
+              "name": "6. Save Progress - Balance Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress saved successfully', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('status');",
+                      "    console.log('Assessment status:', response.status);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentStep\": 5,\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220301\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220301\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220302\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220302\",\n      \"answerValue\": \"15-30\"\n    },\n    \"22222222-2222-2222-2222-222222220303\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220303\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220304\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220304\",\n      \"answerValue\": \"somewhat-stable\"\n    },\n    \"22222222-2222-2222-2222-222222220305\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220305\",\n      \"answerValue\": 5\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/progress",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "progress"]
+                },
+                "description": "Save balance assessment answers (moderate balance).\n\n**Answers:**\n- `single-leg-stand` = \"completed\" (video response)\n- `single-leg-duration` = \"15-30\" (score 3)\n- `tandem-stand` = \"completed\" (video response)\n- `tandem-stability` = \"somewhat-stable\" (score 3)\n- `balance-confidence` = 5 (moderate)"
+              },
+              "response": []
+            },
+            {
+              "name": "7. Submit Assessment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Assessment submitted', function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('jobId');",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "if (response.jobId) {",
+                      "    pm.collectionVariables.set('lastJobId', response.jobId);",
+                      "    console.log('Job ID saved:', response.jobId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"answers\": {\n    \"22222222-2222-2222-2222-222222220106\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220106\",\n      \"answerValue\": \"other\"\n    },\n    \"22222222-2222-2222-2222-222222220102\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220102\",\n      \"answerValue\": 0\n    },\n    \"22222222-2222-2222-2222-222222220103\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220103\",\n      \"answerValue\": [\"none\"]\n    },\n    \"22222222-2222-2222-2222-222222220101\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220101\",\n      \"answerValue\": \"general-fitness\"\n    },\n    \"22222222-2222-2222-2222-222222220104\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220104\",\n      \"answerValue\": \"moderate\"\n    },\n    \"22222222-2222-2222-2222-222222220105\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220105\",\n      \"answerValue\": [\"none\"]\n    },\n    \"22222222-2222-2222-2222-222222220501\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220501\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220502\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220502\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220503\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220503\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220504\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220504\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220505\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220505\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220506\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220506\",\n      \"answerValue\": \"no\"\n    },\n    \"22222222-2222-2222-2222-222222220201\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220201\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220202\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220202\",\n      \"answerValue\": \"moderate\"\n    },\n    \"22222222-2222-2222-2222-222222220203\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220203\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220204\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220204\",\n      \"answerValue\": 10\n    },\n    \"22222222-2222-2222-2222-222222220205\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220205\",\n      \"answerValue\": 5\n    },\n    \"22222222-2222-2222-2222-222222220301\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220301\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220302\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220302\",\n      \"answerValue\": \"15-30\"\n    },\n    \"22222222-2222-2222-2222-222222220303\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220303\",\n      \"answerValue\": \"completed\"\n    },\n    \"22222222-2222-2222-2222-222222220304\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220304\",\n      \"answerValue\": \"somewhat-stable\"\n    },\n    \"22222222-2222-2222-2222-222222220305\": {\n      \"questionId\": \"22222222-2222-2222-2222-222222220305\",\n      \"answerValue\": 5\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/submit",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "submit"]
+                },
+                "description": "Submit the assessment with all answers from steps 3-6.\n\nIncludes pre-assessment, red flags, strength, and balance answers.\n\n**Auto-saves:** lastJobId\n\n**Next step:** Trigger the JobProcessor Lambda via the AWS Console twice (scoring + programme generation)."
+              },
+              "response": []
+            },
+            {
+              "name": "8. Get Assessment Results",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "console.log('Assessment results:', JSON.stringify(response, null, 2));",
+                      "",
+                      "pm.test('Assessment is completed', function () {",
+                      "    pm.expect(response.status).to.equal('completed');",
+                      "});",
+                      "",
+                      "pm.test('Programme ID is populated', function () {",
+                      "    pm.expect(response).to.have.property('programmeId');",
+                      "    pm.expect(response.programmeId).to.not.be.null;",
+                      "    console.log('Programme ID:', response.programmeId);",
+                      "});",
+                      "",
+                      "pm.test('Scores are present', function () {",
+                      "    pm.expect(response).to.have.property('scores');",
+                      "    console.log('Scores:', JSON.stringify(response.scores));",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/assessments/{{lastAssessmentId}}/results",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["assessments", "{{lastAssessmentId}}", "results"]
+                },
+                "description": "Poll assessment results after job processing completes.\n\n**Expected for Default Scenario:**\n- `status`: \"completed\"\n- `programmeId`: UUID of created programme\n- `scores`: Moderate across all dimensions\n\n**Expected Programme:** `general-wellness-programme` (priority 10: default fallback)\n\nNo pain (level 0), moderate strength and balance scores fall through all\nspecific programme mappings to the default general wellness programme."
+              },
+              "response": []
+            }
+          ],
+          "description": "End-to-end test for default programme fallback.\n\n**Scenario E: No Pain, Moderate Baseline**\n\n**Key characteristics:**\n- No pain (level 0)\n- Moderate strength (moderate squat, 10 pushups, comfort 5)\n- Moderate balance (15-30s single-leg, somewhat stable)\n- All red flags = \"no\"\n- Falls through all specific mappings to default\n\n**Expected Result:** `general-wellness-programme` (priority 10: default fallback)\n\n**Job Processing:** Trigger Lambda twice after submit."
+        }
+      ],
+      "description": "End-to-end test flows that exercise multiple API endpoints in sequence to validate complete pipelines."
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwtToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Pre-request script for all requests",
+          "// Add custom headers or logging here if needed"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "pm.test(\"Response time is less than 2000ms\", function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+          "});",
+          "",
+          "pm.test(\"Response has JSON content type\", function () {",
+          "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "});"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "apiUrl",
+      "value": "https://your-api-url.execute-api.eu-west-2.amazonaws.com",
+      "type": "string"
+    },
+    {
+      "key": "jwtToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cognitoClientId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cognitoUsername",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cognitoPassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "awsRegion",
+      "value": "eu-west-2",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "testFlowId",
+      "value": "REPLACE_WITH_FLOW_ID",
+      "type": "string"
+    },
+    {
+      "key": "lastAssessmentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userPoolClientId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "passwordChallengeSession",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lastJobId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lastTemplateId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerUserEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerUserPassword",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

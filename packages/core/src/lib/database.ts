@@ -110,13 +110,6 @@ export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
  * @param tenantId - UUID of the tenant
  * @param userId - Optional UUID of the user
  *
- * @example
- * ```typescript
- * await db.transaction(async (tx) => {
- *   await setRLSContext(tx, tenantId, userId);
- *   return await tx.query.users.findMany();
- * });
- * ```
  */
 export async function setRLSContext(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
@@ -144,13 +137,6 @@ export async function setRLSContext(
  * @param userId - Optional UUID of the user
  * @param callback - Async function to execute within the transaction
  * @returns Result of the callback function
- *
- * @example
- * ```typescript
- * const users = await withRLS(tenantId, userId, async (tx) => {
- *   return await tx.query.users.findMany();
- * });
- * ```
  */
 export async function withRLS<T>(
   tenantId: string,

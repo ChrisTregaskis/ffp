@@ -64,6 +64,18 @@ export const componentCategories: ComponentCategory[] = [
     examples: ['Basic error catching', 'Custom fallbacks', 'Nested boundaries', 'Best practices'],
   },
   {
+    title: 'Assessment Progress',
+    description: 'Progress bar for assessment flows with phase labels and step counters',
+    path: `${basePath}/assessment-progress`,
+    examples: ['Progress states', 'Phase labels', 'Interactive demo', 'Real-world usage'],
+  },
+  {
+    title: 'Assessment Questions',
+    description: 'Question renderer components for assessment flows (FFP-139)',
+    path: `${basePath}/assessment-questions`,
+    examples: ['SingleChoice', 'MultiChoice', 'Numeric', 'Scale', 'Text', 'VideoResponse'],
+  },
+  {
     title: 'Modal Components',
     description: 'Dialogs, modals, and overlays',
     path: `${basePath}/modal`,

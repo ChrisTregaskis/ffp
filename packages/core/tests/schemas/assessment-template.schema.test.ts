@@ -52,10 +52,10 @@ const validScoringConfig = {
       maxScore: 10,
     },
   ],
-  programMappings: [
+  programmeMappings: [
     {
       conditions: [{ dimension: 'general' as const, operator: 'gte' as const, value: 5 }],
-      programTemplateId: 'prog-1',
+      programmeTemplateId: 'prog-1',
     },
   ],
 };
@@ -235,7 +235,7 @@ describe('scoringConfigSchema', () => {
           riskThresholds: { low: 15, moderate: 10 },
         },
       ],
-      programMappings: [],
+      programmeMappings: [],
     });
     expect(result.success).toBe(true);
   });

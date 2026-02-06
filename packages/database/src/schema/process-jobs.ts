@@ -27,7 +27,7 @@ export const jobStatusEnum = pgEnum('job_status', [...JOB_STATUSES]);
  *
  * Job types for MVP:
  * - score_assessment: Calculate dimensional scores from assessment responses
- * - generate_program: Generate personalised workout programme from scores
+ * - generate_programme: Generate personalised workout programme from scores
  */
 export const jobTypeEnum = pgEnum('job_type', [...JOB_TYPES]);
 
