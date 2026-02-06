@@ -67,6 +67,49 @@ Renamed American English identifiers to British English across the codebase (mer
 5. **FFP-229** - Epic cleanup (review FFP-2, polish)
 6. **FFP-254** - FFP-3 Epic planning (documentation, prepares next phase)
 
+### Implementation Plan: FFP-137 — Assessment Navigation Component
+
+**Branch**: `feature/FFP-137-assessment-navigation` (single branch, single PR)
+**Estimated effort**: Small — one new component file, all dependencies already built.
+
+#### Sub-tasks (all on one branch)
+
+| Order | Key     | Summary                                  | Status    | Notes                                   |
+| ----- | ------- | ---------------------------------------- | --------- | --------------------------------------- |
+| 1     | FFP-204 | Component structure and props            | To Do     | Props interface, base JSX               |
+| 2     | FFP-205 | Save-on-navigate logic (Continue & Back) | To Do     | `useSaveProgress` + context dispatch    |
+| 3     | FFP-206 | Loading states and button disabling      | To Do     | `isPending` from mutation, disabled UX  |
+| -     | FFP-207 | Unit tests                               | Abandoned | Deferred to post-MVP (tests moratorium) |
+
+**Rationale for single branch**: All 3 sub-tasks modify the same file (`AssessmentNavigation.tsx`). They form a single coherent component — splitting across branches/PRs would be unnecessary overhead.
+
+#### Amendments from Jira (outdated details)
+
+| Area                        | Jira Says                                             | Actual Codebase                                                                                                             | Resolution                                                             |
+| --------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Save hook signature**     | `saveProgress.mutateAsync({ assessmentId, answers })` | `useSaveProgress` takes `{ assessmentId, payload }` where payload includes answers + step                                   | Use actual hook signature                                              |
+| **File location**           | `components/AssessmentNavigation.tsx`                 | Assessment components use subdirectory pattern (e.g., `components/assessment/questions/`, `components/AssessmentProgress/`) | Place in `components/assessment/AssessmentNavigation/` for consistency |
+| **`continueLabel` default** | `'Next'`                                              | Other components use `'Continue'` convention                                                                                | Use `'Continue'` as default, keep prop for customisation               |
+
+#### Dependencies (all satisfied)
+
+- ✅ `useAssessment()` hook — provides `state` (isDirty, assessmentId, answers, currentStep) and `dispatch`
+- ✅ `useSaveProgress()` hook — mutation with `isPending`, `mutateAsync`
+- ✅ Context actions — `NEXT_STEP`, `PREV_STEP`, `MARK_SAVED` all implemented in reducer
+
+#### Implementation Notes
+
+- Component uses `useAssessment()` for state/dispatch and `useSaveProgress()` for the mutation
+- Save-then-navigate pattern: if `isDirty`, await `mutateAsync`, dispatch `MARK_SAVED`, then dispatch `NEXT_STEP`/`PREV_STEP`
+- Both buttons disabled when `saveProgress.isPending` to prevent double-clicks
+- Continue button shows `'Saving...'` during pending state
+- Back button hidden when `showBack=false` (e.g., on first step)
+- Custom `onContinue`/`onBack` callbacks override default dispatch behaviour
+- TailwindCSS styling with `disabled:opacity-50` pattern
+- Arrow function component with `React.FC` typing per project standards
+
+---
+
 ### Deferred to Backlog
 
 | Key     | Story                  | Reason                                                                           |
