@@ -118,7 +118,7 @@ export interface DimensionConfig {
 }
 
 /** Condition for programme mapping */
-export interface ProgramMappingCondition {
+export interface ProgrammeMappingCondition {
   /** Dimension to evaluate */
   dimension: ScoreDimension;
   /** Comparison operator */
@@ -128,13 +128,13 @@ export interface ProgramMappingCondition {
 }
 
 /** Mapping from scores to programme recommendations */
-export interface ProgramMapping {
+export interface ProgrammeMapping {
   /** Conditions that must be met */
-  conditions: ProgramMappingCondition[];
+  conditions: ProgrammeMappingCondition[];
   /** How to combine conditions (default: 'and') */
   operator?: LogicalOperator;
   /** ID of the programme template to recommend */
-  programTemplateId: string;
+  programmeTemplateId: string;
   /** Priority for selecting between matching mappings */
   priority?: number;
 }
@@ -149,5 +149,5 @@ export interface ScoringConfig {
   /** Scoring dimensions and their configurations */
   dimensions: DimensionConfig[];
   /** Mappings from scores to programme recommendations */
-  programMappings: ProgramMapping[];
+  programmeMappings: ProgrammeMapping[];
 }

@@ -44,7 +44,7 @@ export const dimensionConfigSchema = z.object({
  * Defines a condition that compares a dimension score against a threshold
  * to determine programme eligibility.
  */
-export const programMappingConditionSchema = z.object({
+export const programmeMappingConditionSchema = z.object({
   /** The scoring dimension to evaluate */
   dimension: scoreDimensionSchema,
   /** Comparison operator */
@@ -58,13 +58,13 @@ export const programMappingConditionSchema = z.object({
  * assessment scores. Multiple conditions can be combined with logical operators.
  * Higher priority mappings are evaluated first.
  */
-export const programMappingSchema = z.object({
+export const programmeMappingSchema = z.object({
   /** Array of conditions that must be satisfied */
-  conditions: z.array(programMappingConditionSchema),
+  conditions: z.array(programmeMappingConditionSchema),
   /** Logical operator to combine conditions (default: 'and') */
   operator: logicalOperatorSchema.default('and'),
   /** ID of the programme template to recommend when conditions match */
-  programTemplateId: z.string().min(1),
+  programmeTemplateId: z.string().min(1),
   /** Priority for evaluation order (higher = checked first, default: 0) */
   priority: z.number().int().default(0),
 });
@@ -77,14 +77,14 @@ export const scoringConfigSchema = z.object({
   /** Array of dimension configurations for multi-dimensional scoring */
   dimensions: z.array(dimensionConfigSchema),
   /** Array of programme mappings for automatic recommendations */
-  programMappings: z.array(programMappingSchema),
+  programmeMappings: z.array(programmeMappingSchema),
 });
 
 export type RiskLevel = z.infer<typeof riskLevelSchema>;
 export type RiskThresholds = z.infer<typeof riskThresholdsSchema>;
 export type DimensionConfig = z.infer<typeof dimensionConfigSchema>;
 export type ComparisonOperator = z.infer<typeof comparisonOperatorSchema>;
-export type ProgramMappingCondition = z.infer<typeof programMappingConditionSchema>;
+export type ProgrammeMappingCondition = z.infer<typeof programmeMappingConditionSchema>;
 export type LogicalOperator = z.infer<typeof logicalOperatorSchema>;
-export type ProgramMapping = z.infer<typeof programMappingSchema>;
+export type ProgrammeMapping = z.infer<typeof programmeMappingSchema>;
 export type ScoringConfig = z.infer<typeof scoringConfigSchema>;

@@ -63,7 +63,7 @@ const createUserContext = (): TenantContext => ({
   actor: {
     type: 'user',
     userId: randomUUID(),
-    userRole: 'program_user',
+    userRole: 'programme_user',
     email: 'test@example.com',
   } as UserActor,
   tenantId: randomUUID(),

@@ -132,7 +132,7 @@ describe('RLS Utility Functions', () => {
         cognitoSub: 'cognito-sub-a1',
         firstName: 'Alice',
         lastName: 'Anderson',
-        role: 'program_user',
+        role: 'programme_user',
       })
       .returning();
 
@@ -164,7 +164,7 @@ describe('RLS Utility Functions', () => {
         cognitoSub: 'cognito-sub-b1',
         firstName: 'Bob',
         lastName: 'Brown',
-        role: 'program_user',
+        role: 'programme_user',
       })
       .returning();
   });

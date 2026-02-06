@@ -574,7 +574,7 @@ erDiagram
         uuid id PK
         uuid tenant_id FK "RLS isolation (nullable for system jobs)"
         uuid user_id FK "user who triggered (nullable)"
-        varchar(50) type "generate_program|send_email|process_assessment"
+        varchar(50) type "generate_programme|send_email|process_assessment"
         varchar(20) status "pending|processing|completed|failed"
         jsonb payload "job-specific data"
         jsonb result "job output"
@@ -641,7 +641,7 @@ CREATE POLICY tenant_isolation_notifications ON notifications
 - Retry logic with exponential backoff
 - `scheduled_for` enables delayed job execution
 - Job types:
-  - `generate_program`: Create program from assessment
+  - `generate_programme`: Create programme from assessment
   - `send_email`: Queue email sending
   - `process_assessment`: Score assessment
   - `reschedule_sessions`: Handle missed sessions
@@ -675,7 +675,7 @@ To prevent overloading the database with automated jobs and impacting user exper
   "lastUpdated": "2025-10-07T10:00:00Z",
   "globalLimits": {
     "process_assessment": 50,
-    "generate_program": 30,
+    "generate_programme": 30,
     "send_email": 100,
     "reschedule_sessions": 20,
     "generate_report": 10
@@ -691,7 +691,7 @@ To prevent overloading the database with automated jobs and impacting user exper
   "lastUpdated": "2026-03-15T14:30:00Z",
   "globalLimits": {
     "process_assessment": 50,
-    "generate_program": 30,
+    "generate_programme": 30,
     "send_email": 100,
     "reschedule_sessions": 20,
     "generate_report": 10
@@ -699,7 +699,7 @@ To prevent overloading the database with automated jobs and impacting user exper
   "reservedCapacity": {
     "tenant-large-clinic-uuid": {
       "process_assessment": 20,
-      "generate_program": 10
+      "generate_programme": 10
     }
   }
 }
@@ -713,7 +713,7 @@ To prevent overloading the database with automated jobs and impacting user exper
   "lastUpdated": "2027-06-20T09:00:00Z",
   "globalLimits": {
     "process_assessment": 100,
-    "generate_program": 60,
+    "generate_programme": 60,
     "send_email": 200,
     "reschedule_sessions": 40,
     "generate_report": 20
@@ -721,18 +721,18 @@ To prevent overloading the database with automated jobs and impacting user exper
   "tenantQuotas": {
     "tenant-enterprise-1": {
       "process_assessment": 30,
-      "generate_program": 15,
+      "generate_programme": 15,
       "priority": "high"
     },
     "tenant-enterprise-2": {
       "process_assessment": 25,
-      "generate_program": 12,
+      "generate_programme": 12,
       "priority": "high"
     }
   },
   "defaultTenantQuota": {
     "process_assessment": 5,
-    "generate_program": 3,
+    "generate_programme": 3,
     "priority": "normal"
   }
 }
@@ -917,7 +917,7 @@ INSERT INTO jobs (
   id, tenant_id, user_id, type, status, payload, created_at, updated_at
 )
 VALUES (
-  gen_random_uuid(), ?, ?, 'generate_program', 'pending',
+  gen_random_uuid(), ?, ?, 'generate_programme', 'pending',
   jsonb_build_object(
     'assessment_id', ?,
     'user_id', ?,

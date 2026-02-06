@@ -480,7 +480,7 @@ Assessment scoring runs asynchronously via a **database-driven job queue**.
 │            ┌───────────────────┼───────────────────┐                    │
 │            ▼                                       ▼                    │
 │   ┌─────────────────┐                    ┌─────────────────┐            │
-│   │ score_assessment│                    │ generate_program│            │
+│   │ score_assessment│                    │generate_programme│            │
 │   │ handler         │                    │ handler         │            │
 │   └─────────┬───────┘                    └─────────────────┘            │
 │             │                                                            │

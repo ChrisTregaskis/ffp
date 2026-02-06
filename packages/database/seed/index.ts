@@ -176,18 +176,18 @@ export const seedDatabase = async (environment: string = 'dev'): Promise<void> =
       await seedTestUserDatabase(txWithClient, config.testCustomerAdminUser);
     });
 
-    // Seed 8: Test program user (Cognito)
+    // Seed 8: Test programme user (Cognito)
     await seedTestUserCognito(
-      config.testCustomerProgramUserCognito,
-      config.testCustomerProgramUser,
+      config.testCustomerProgrammeUserCognito,
+      config.testCustomerProgrammeUser,
       config.testCustomerTenant
     );
 
-    // Seed 9: Test program user (Database)
+    // Seed 9: Test programme user (Database)
     await db.transaction(async (tx) => {
       const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
       txWithClient.$client = db.$client;
-      await seedTestUserDatabase(txWithClient, config.testCustomerProgramUser);
+      await seedTestUserDatabase(txWithClient, config.testCustomerProgrammeUser);
     });
 
     // Seed 10: Programme templates (no RLS, system-managed lookup table, idempotent)

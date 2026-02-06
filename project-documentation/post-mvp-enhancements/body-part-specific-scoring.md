@@ -48,14 +48,14 @@ IF pain_score > 50 AND body_part = 'lower_back' → Recommend Core Stability Pro
 
 ```typescript
 // Current
-interface ProgramMappingCondition {
+interface ProgrammeMappingCondition {
   dimension: ScoreDimension;
   operator: ComparisonOperator;
   value: number;
 }
 
 // Enhanced
-interface ProgramMappingCondition {
+interface ProgrammeMappingCondition {
   // Dimension-based condition (existing)
   dimension?: ScoreDimension;
 
@@ -80,13 +80,13 @@ The `findMatchingProgramme` function signature changes:
 // Current
 function findMatchingProgramme(
   dimensionalScores: DimensionalScore[],
-  programMappings: ProgramMapping[]
+  programmeMappings: ProgrammeMapping[]
 ): string | null;
 
 // Enhanced
 function findMatchingProgramme(
   dimensionalScores: DimensionalScore[],
-  programMappings: ProgramMapping[],
+  programmeMappings: ProgrammeMapping[],
   responseMap: Map<string, AnswerValue> // New parameter
 ): string | null;
 ```
@@ -95,7 +95,7 @@ Condition evaluation logic:
 
 ```typescript
 function evaluateCondition(
-  condition: ProgramMappingCondition,
+  condition: ProgrammeMappingCondition,
   dimensionalScores: DimensionalScore[],
   responseMap: Map<string, AnswerValue>
 ): boolean {
@@ -167,7 +167,7 @@ A reusable question for body part selection:
       "maxScore": 15
     }
   ],
-  "programMappings": [
+  "programmeMappings": [
     {
       "conditions": [
         { "dimension": "pain", "operator": "gt", "value": 50 },
@@ -262,9 +262,9 @@ A reusable question for body part selection:
 
 ## Implementation Checklist
 
-- [ ] Extend `ProgramMappingCondition` type to support `questionSlug` and string values
+- [ ] Extend `ProgrammeMappingCondition` type to support `questionSlug` and string values
 - [ ] Add `'eq' | 'in' | 'contains'` to operator types
-- [ ] Update Zod validation schema for `ProgramMappingCondition`
+- [ ] Update Zod validation schema for `ProgrammeMappingCondition`
 - [ ] Modify `findMatchingProgramme` to accept response map parameter
 - [ ] Implement `evaluateAnswerCondition` helper function
 - [ ] Update `scoring.service.ts` to pass response map to programme matching

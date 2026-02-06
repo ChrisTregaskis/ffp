@@ -47,7 +47,7 @@ export async function generateProgramme(
   // Validate that scoring produced a recommendation
   if (!recommendedTemplateSlug) {
     throw new ValidationError(
-      'No programme recommendation provided. Scoring config may be missing programMappings.'
+      'No programme recommendation provided. Scoring config may be missing programmeMappings.'
     );
   }
 

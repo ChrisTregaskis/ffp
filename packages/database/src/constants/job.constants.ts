@@ -17,8 +17,8 @@ export type JobStatus = (typeof JOB_STATUSES)[number];
  *
  * MVP job types:
  * - score_assessment: Calculate dimensional scores from assessment responses
- * - generate_program: Generate personalised workout programme from scores
+ * - generate_programme: Generate personalised workout programme from scores
  */
-export const JOB_TYPES = ['score_assessment', 'generate_program'] as const;
+export const JOB_TYPES = ['score_assessment', 'generate_programme'] as const;
 
 export type JobType = (typeof JOB_TYPES)[number];

@@ -140,7 +140,7 @@ export async function processScoreAssessment(
       })
       .where(eq(userAssessments.id, payload.userAssessmentId));
 
-    // Chain: queue generate_program job (atomic with scoring)
+    // Chain: queue generate_programme job (atomic with scoring)
     const logger = createSystemLogger('score-assessment-handler');
     const systemContext = createSystemContext({
       systemId: 'score-assessment-handler',
@@ -148,7 +148,7 @@ export async function processScoreAssessment(
     });
 
     const generateJobId = await queueJob(
-      'generate_program',
+      'generate_programme',
       {
         assessmentSubmissionId: payload.userAssessmentId,
         userId: payload.userId,
@@ -159,7 +159,7 @@ export async function processScoreAssessment(
       { priority: 2, tx: tx as unknown as Transaction }
     );
 
-    logger.info('Queue generate_program job', {
+    logger.info('Queue generate_programme job', {
       generateJobId,
       assessmentId: payload.userAssessmentId,
       recommendedTemplateSlug: scoringResult.recommendedProgrammeId,

@@ -58,6 +58,8 @@ describe('User Assessment Repository', () => {
   let userA1Id: string;
   let userB1Id: string;
   let flowId: string;
+  let programmeTemplateId: string;
+  let programmeId: string;
 
   beforeAll(() => {
     pool = new Pool({
@@ -105,7 +107,7 @@ describe('User Assessment Repository', () => {
     userA1Id = randomUUID();
     await db.execute(sql`
       INSERT INTO users (id, tenant_id, customer_id, email, cognito_sub, first_name, last_name, role)
-      VALUES (${userA1Id}, ${tenantAId}, ${customerAId}, ${`user-${userA1Id.substring(0, 8)}@test.com`}, ${`cognito-${userA1Id.substring(0, 8)}`}, 'Alice', 'Anderson', 'program_user')
+      VALUES (${userA1Id}, ${tenantAId}, ${customerAId}, ${`user-${userA1Id.substring(0, 8)}@test.com`}, ${`cognito-${userA1Id.substring(0, 8)}`}, 'Alice', 'Anderson', 'programme_user')
     `);
 
     // Create User B1 (Tenant B - individual user, no customer)
@@ -113,18 +115,43 @@ describe('User Assessment Repository', () => {
     userB1Id = randomUUID();
     await db.execute(sql`
       INSERT INTO users (id, tenant_id, customer_id, email, cognito_sub, first_name, last_name, role)
-      VALUES (${userB1Id}, ${tenantBId}, NULL, ${`user-${userB1Id.substring(0, 8)}@test.com`}, ${`cognito-${userB1Id.substring(0, 8)}`}, 'Bob', 'Brown', 'program_user')
+      VALUES (${userB1Id}, ${tenantBId}, NULL, ${`user-${userB1Id.substring(0, 8)}@test.com`}, ${`cognito-${userB1Id.substring(0, 8)}`}, 'Bob', 'Brown', 'programme_user')
     `);
 
     // Create Assessment Flow (shared, no RLS - flows are system-managed)
     flowId = randomUUID();
     await db.execute(sql`
-      INSERT INTO assessment_flows (id, name, steps, is_active)
+      INSERT INTO assessment_flows (id, name, is_active)
       VALUES (
         ${flowId},
         ${`Test Flow [${TEST_RUN_ID}]`},
-        '[{"type": "intro", "title": "Welcome"}]'::jsonb,
         true
+      )
+    `);
+
+    // Create Programme Template (shared, no RLS - templates are system-managed)
+    programmeTemplateId = randomUUID();
+    await db.execute(sql`
+      INSERT INTO programme_templates (id, slug, name, is_active)
+      VALUES (
+        ${programmeTemplateId},
+        ${`test-template-${TEST_RUN_ID}`},
+        ${`Test Template [${TEST_RUN_ID}]`},
+        true
+      )
+    `);
+
+    // Create Programme (belongs to Tenant A, linked to User A1)
+    await setTestRLSContext(db, tenantAId);
+    programmeId = randomUUID();
+    await db.execute(sql`
+      INSERT INTO programmes (id, tenant_id, user_id, programme_template_id, name)
+      VALUES (
+        ${programmeId},
+        ${tenantAId},
+        ${userA1Id},
+        ${programmeTemplateId},
+        ${`Test Programme [${TEST_RUN_ID}]`}
       )
     `);
   });
@@ -136,6 +163,8 @@ describe('User Assessment Repository', () => {
       // Delete in FK-safe order (children first, then parents)
       // Use parameterised queries to demonstrate secure patterns
       await db.execute(sql`DELETE FROM user_assessments WHERE flow_id = ${flowId}`);
+      await db.execute(sql`DELETE FROM programmes WHERE id = ${programmeId}`);
+      await db.execute(sql`DELETE FROM programme_templates WHERE id = ${programmeTemplateId}`);
       await db.execute(sql`DELETE FROM assessment_flows WHERE id = ${flowId}`);
       await db.execute(sql`DELETE FROM users WHERE tenant_id = ANY(${[tenantAId, tenantBId]})`);
       await db.execute(sql`DELETE FROM customers WHERE tenant_id = ANY(${[tenantAId, tenantBId]})`);
@@ -549,7 +578,6 @@ describe('User Assessment Repository', () => {
         userId: userA1Id,
         flowId,
       });
-      const programmeId = randomUUID();
 
       const result = await userAssessmentRepository.linkAssessmentToProgramme(
         tenantAId,

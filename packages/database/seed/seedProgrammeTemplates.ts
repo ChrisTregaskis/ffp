@@ -13,7 +13,7 @@ const logger = createLogger('seed-programme-templates');
  * Deterministic UUIDs for programme templates
  *
  * These are fixed to ensure consistency across seed runs and allow
- * scoring config programMappings to reference them reliably by slug.
+ * scoring config programmeMappings to reference them reliably by slug.
  *
  * UUID Pattern: 66666666-6666-6666-6666-6666666600XX
  * - gentle-mobility-programme: 01
@@ -33,7 +33,7 @@ export type ProgrammeTemplateSlug = keyof typeof PROGRAMME_TEMPLATE_IDS;
 /**
  * Programme template definitions matching scoring config in seedAssessmentFlows.ts
  *
- * These templates are referenced by slug in the flow's programMappings:
+ * These templates are referenced by slug in the flow's programmeMappings:
  * - priority 1 & 2 (pain >= 35 / >= 20): gentle-mobility-programme
  * - priority 3 (low strength + low balance): foundation-programme
  * - priority 4 (low pain + high strength): advanced-strength-programme

@@ -4,7 +4,7 @@ import {
   inviteUserSchema,
   userSchema,
   createUserSchema,
-  canInviteProgramUser,
+  canInviteProgrammeUser,
 } from '../../src/schemas/user.schema';
 
 describe('inviteUserSchema', () => {
@@ -20,12 +20,12 @@ describe('inviteUserSchema', () => {
       expect(result.success).toBe(true);
     });
 
-    it('validates invite with program_user role', () => {
+    it('validates invite with programme_user role', () => {
       const result = inviteUserSchema.safeParse({
         email: 'user@business.com',
         firstName: 'Jane',
         lastName: 'Doe',
-        role: 'program_user',
+        role: 'programme_user',
       });
 
       expect(result.success).toBe(true);
@@ -38,7 +38,7 @@ describe('inviteUserSchema', () => {
         email: 'user@business.com',
         firstName: 'Jane',
         lastName: 'Doe',
-        role: 'program_user',
+        role: 'programme_user',
         tenantId: '550e8400-e29b-41d4-a716-446655440000',
         customerId: '550e8400-e29b-41d4-a716-446655440001',
       });
@@ -175,11 +175,11 @@ describe('inviteUserSchema', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        // Zod returns enum values in format: 'customer_owner' | 'customer_admin' | 'program_user'
+        // Zod returns enum values in format: 'customer_owner' | 'customer_admin' | 'programme_user'
         expect(result.error.issues[0].message).toContain('Invalid enum value');
         expect(result.error.issues[0].message).toContain('customer_owner');
         expect(result.error.issues[0].message).toContain('customer_admin');
-        expect(result.error.issues[0].message).toContain('program_user');
+        expect(result.error.issues[0].message).toContain('programme_user');
       }
     });
 
@@ -372,12 +372,12 @@ describe('createUserSchema', () => {
   });
 });
 
-describe('canInviteProgramUser', () => {
+describe('canInviteProgrammeUser', () => {
   it('should allow invitation for customer users (customerId present)', () => {
-    expect(canInviteProgramUser('customer-123')).toBe(true);
+    expect(canInviteProgrammeUser('customer-123')).toBe(true);
   });
 
   it('should deny invitation for individual users (customerId null)', () => {
-    expect(canInviteProgramUser(null)).toBe(false);
+    expect(canInviteProgrammeUser(null)).toBe(false);
   });
 });

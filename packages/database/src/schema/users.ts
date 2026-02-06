@@ -24,7 +24,7 @@ import { USER_ROLES } from '../constants/user.constants';
  * - system_admin: Platform administrator (highest privilege)
  * - customer_owner: Owner of a customer account (business)
  * - customer_admin: Administrator within a customer organisation
- * - program_user: User accessing workout programmes (individual or customer user)
+ * - programme_user: User accessing workout programmes (individual or customer user)
  *   - Individual users: customerId = null
  *   - Customer users: customerId present
  */

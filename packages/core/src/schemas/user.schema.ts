@@ -55,7 +55,7 @@ export const invitableRoleSchema = z.enum(INVITABLE_ROLES);
  * Individual users (customerId = null) cannot be invited.
  * Customer users (customerId present) can be invited.
  */
-export const canInviteProgramUser = (customerId: string | null): boolean => {
+export const canInviteProgrammeUser = (customerId: string | null): boolean => {
   return customerId !== null;
 };
 

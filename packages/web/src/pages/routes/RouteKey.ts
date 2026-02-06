@@ -10,7 +10,7 @@ export enum RouteKey {
   /** Protected home/dashboard route */
   HOME = 'home',
 
-  // Programme User Routes (for program_user role)
+  // Programme User Routes (for programme_user role)
   /** Today's workout/activity page */
   TODAY_WORKOUT = 'today-workout',
   /** Programme overview and calendar page */

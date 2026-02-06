@@ -324,6 +324,7 @@ className="border-success/20"
 
 | American (Wrong)         | British (Correct) |
 | ------------------------ | ----------------- |
+| program (in FFP code)    | programme         |
 | optimize (in FFP code)   | optimise          |
 | organize (in FFP code)   | organise          |
 | customize (in FFP code)  | customise         |
@@ -334,6 +335,7 @@ className="border-success/20"
 
 **Check in:**
 
+- FFP identifiers: `program` → `programme` (e.g., `programUser` → `programmeUser`, `generate_program` → `generate_programme`)
 - FFP variable/function names: `optimizeWorkout` → `optimiseWorkout`
 - FFP comments: "// Optimize the query" → "// Optimise the query"
 - FFP string literals: "Customization" → "Customisation"

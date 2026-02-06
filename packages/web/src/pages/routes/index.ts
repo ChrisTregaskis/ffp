@@ -16,10 +16,10 @@ import { MotionShowcasePage } from '@web/pages/dev/MotionShowcasePage';
 import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { HomePage } from '@web/pages/protected/HomePage';
-import { AccountSettingsPage } from '@web/pages/protected/program-user/AccountSettingsPage';
-import { ProgrammeOverviewPage } from '@web/pages/protected/program-user/ProgrammeOverviewPage';
-import { ProgressPage } from '@web/pages/protected/program-user/ProgressPage';
-import { TodayWorkoutPage } from '@web/pages/protected/program-user/TodayWorkoutPage';
+import { AccountSettingsPage } from '@web/pages/protected/programme-user/AccountSettingsPage';
+import { ProgrammeOverviewPage } from '@web/pages/protected/programme-user/ProgrammeOverviewPage';
+import { ProgressPage } from '@web/pages/protected/programme-user/ProgressPage';
+import { TodayWorkoutPage } from '@web/pages/protected/programme-user/TodayWorkoutPage';
 import { ForgotPasswordPage } from '@web/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@web/pages/public/LoginPage';
 import { SetPasswordPage } from '@web/pages/public/SetPasswordPage';
@@ -68,7 +68,7 @@ export type RoutesConfig = Record<RouteKey, AppRoute>;
 const componentsBasePath = '/components';
 
 // Destructure user roles for easier reference
-const PROGRAM_USER = USER_ROLE.PROGRAM_USER;
+const PROGRAMME_USER = USER_ROLE.PROGRAMME_USER;
 const CUSTOMER_OWNER = USER_ROLE.CUSTOMER_OWNER;
 const CUSTOMER_ADMIN = USER_ROLE.CUSTOMER_ADMIN;
 const SYSTEM_ADMIN = USER_ROLE.SYSTEM_ADMIN;
@@ -123,30 +123,30 @@ export const routes: RoutesConfig = {
     // No allowedRoles - accessible to all authenticated users, HomePage handles role-based redirects
   },
 
-  // Programme User Routes (for program_user role)
+  // Programme User Routes (for programme_user role)
   [RouteKey.TODAY_WORKOUT]: {
     path: '/today-workout',
     pageComponent: TodayWorkoutPage,
     title: "Today's Workout",
-    allowedRoles: [PROGRAM_USER],
+    allowedRoles: [PROGRAMME_USER],
   },
   [RouteKey.PROGRAMME_OVERVIEW]: {
     path: '/programme-overview',
     pageComponent: ProgrammeOverviewPage,
     title: 'Programme Overview',
-    allowedRoles: [PROGRAM_USER],
+    allowedRoles: [PROGRAMME_USER],
   },
   [RouteKey.PROGRESS]: {
     path: '/progress',
     pageComponent: ProgressPage,
     title: 'Progress',
-    allowedRoles: [PROGRAM_USER],
+    allowedRoles: [PROGRAMME_USER],
   },
   [RouteKey.ACCOUNT_SETTINGS]: {
     path: '/account-settings',
     pageComponent: AccountSettingsPage,
     title: 'Account Settings',
-    allowedRoles: [PROGRAM_USER, CUSTOMER_OWNER, CUSTOMER_ADMIN, SYSTEM_ADMIN],
+    allowedRoles: [PROGRAMME_USER, CUSTOMER_OWNER, CUSTOMER_ADMIN, SYSTEM_ADMIN],
   },
 
   // Customer Owner/Admin Routes (placeholders)
