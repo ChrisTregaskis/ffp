@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useId, useMemo } from 'react';
 
 import { RequiredIndicator } from '@web/components/form';
 import { Text } from '@web/components/text';
@@ -20,7 +20,8 @@ export const MultiChoiceQuestion: React.FC<QuestionComponentProps> = ({
   disabled = false,
   error,
 }) => {
-  const questionId = `question-${question.id}`;
+  const instanceId = useId();
+  const questionId = `question-${question.id}-${instanceId}`;
   const errorId = `${questionId}-error`;
   const descriptionId = question.description ? `${questionId}-description` : undefined;
   const isRequired = question.validation?.required !== false;

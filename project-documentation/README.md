@@ -135,7 +135,7 @@ See `architecture.md` for full stack details, `REFERENCE.md` for commands.
 
 ---
 
-**Local Path**: `/Users/christophertregaskis/developer/ffp/project-documentation`
+**Local Path**: `<project-root>/project-documentation`
 
 **Last Updated**: October 17, 2025  
 **Version**: 4.0
