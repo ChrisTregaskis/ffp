@@ -1,6 +1,6 @@
 import type { FlowStepConfig } from '@ffp/core';
 
-import { IntroScreen } from '@web/components/assessment';
+import { IntroScreen, TransitionScreen } from '@web/components/assessment';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
@@ -35,6 +35,29 @@ const mockIntroNoInstructionsConfig: FlowStepConfig = {
   title: 'Mobility Assessment',
   description: 'A short assessment to evaluate your current range of motion and flexibility.',
   estimatedMinutes: 10,
+};
+
+const mockTransitionConfig: FlowStepConfig = {
+  title: 'Physical Assessment',
+  description:
+    'Great work on the questionnaire! Next, we will guide you through a series of physical tests to assess your strength and balance.',
+  estimatedMinutes: 10,
+  safetyNotes: [
+    'Stop immediately if you experience sharp or sudden pain',
+    'Use a sturdy chair or wall for support during balance exercises',
+    'Skip any exercise that aggravates an existing injury',
+    'Stay hydrated and take breaks between exercises if needed',
+  ],
+};
+
+const mockTransitionNoSafetyConfig: FlowStepConfig = {
+  title: 'Movement Assessment',
+  description: 'The next section includes a series of guided movement tests.',
+  estimatedMinutes: 8,
+};
+
+const mockTransitionMinimalConfig: FlowStepConfig = {
+  title: 'Next Section',
 };
 
 // Placeholder for screens not yet built
@@ -82,7 +105,12 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
     {
       id: 'transition',
       label: 'TransitionScreen',
-      content: <ComingSoonPlaceholder name="TransitionScreen" ticket="FFP-220" />,
+      content: (
+        <TransitionScreenDemo
+          onContinue={handleAction('onContinue called')}
+          onBack={handleAction('onBack called')}
+        />
+      ),
     },
     {
       id: 'question',
@@ -113,7 +141,7 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
       <ComponentSection title="Implementation Status">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <StatusCard title="IntroScreen" status="complete" />
-          <StatusCard title="TransitionScreen" status="pending" task="FFP-220" />
+          <StatusCard title="TransitionScreen" status="complete" />
           <StatusCard title="QuestionScreen" status="pending" task="FFP-219" />
           <StatusCard title="ResultsScreen" status="pending" task="FFP-221" />
           <StatusCard title="StepRenderer" status="pending" task="FFP-222" />
@@ -138,18 +166,7 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
               Import screen components:
             </Text>
             <code className="block rounded bg-muted p-2 text-xs">
-              {`import { IntroScreen } from '@web/components/assessment';`}
-            </code>
-          </div>
-          <div>
-            <Text as="p" className="mb-1" styleProps={{ weight: 'medium' }}>
-              IntroScreen props:
-            </Text>
-            <code className="block whitespace-pre rounded bg-muted p-2 text-xs">
-              {`interface IntroScreenProps {
-  config: FlowStepConfig;  // Step configuration from flow
-  onStart: () => void;     // Called when user clicks "Start Assessment"
-}`}
+              {`import { IntroScreen, TransitionScreen } from '@web/components/assessment';`}
             </code>
           </div>
           <div>
@@ -158,12 +175,12 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
             </Text>
             <code className="block whitespace-pre rounded bg-muted p-2 text-xs">
               {`interface FlowStepConfig {
-  title: string;
-  description?: string;
-  instructions?: string[];
-  safetyNotes?: string[];
-  estimatedMinutes?: number;
-}`}
+                title: string;
+                description?: string;
+                instructions?: string[];
+                safetyNotes?: string[];
+                estimatedMinutes?: number;
+              }`}
             </code>
           </div>
         </div>
@@ -200,6 +217,57 @@ const IntroScreenDemo: React.FC<{ onStart: () => void }> = ({ onStart }) => {
       <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
         Welcome screen displayed at the start of an assessment flow. Renders title, description,
         estimated duration, preparation checklist, and start button.
+      </Text>
+      <DemoTabs tabs={variantTabs} />
+    </div>
+  );
+};
+
+// ============================================================================
+// TransitionScreen Demo (with variant tabs)
+// ============================================================================
+
+const TransitionScreenDemo: React.FC<{ onContinue: () => void; onBack: () => void }> = ({
+  onContinue,
+  onBack,
+}) => {
+  const variantTabs: DemoTab[] = [
+    {
+      id: 'full',
+      label: 'Full Config',
+      content: (
+        <TransitionScreen config={mockTransitionConfig} onContinue={onContinue} onBack={onBack} />
+      ),
+    },
+    {
+      id: 'no-safety',
+      label: 'No Safety Notes',
+      content: (
+        <TransitionScreen
+          config={mockTransitionNoSafetyConfig}
+          onContinue={onContinue}
+          onBack={onBack}
+        />
+      ),
+    },
+    {
+      id: 'minimal',
+      label: 'Minimal',
+      content: (
+        <TransitionScreen
+          config={mockTransitionMinimalConfig}
+          onContinue={onContinue}
+          onBack={onBack}
+        />
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+        Transition screen displayed between assessment phases. Shows what to expect next, safety
+        warnings from the flow configuration, and navigation buttons.
       </Text>
       <DemoTabs tabs={variantTabs} />
     </div>

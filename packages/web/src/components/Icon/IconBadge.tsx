@@ -4,7 +4,7 @@ import type { IconColour, IconSize } from './Icon';
 import type { IconName } from './types';
 
 export type IconBadgeSize = 'sm' | 'md' | 'lg';
-export type IconBadgeVariant = 'secondary' | 'success' | 'primary' | 'muted';
+export type IconBadgeVariant = 'secondary' | 'success' | 'primary' | 'warning' | 'muted';
 
 const BADGE_SIZE_MAP: Record<IconBadgeSize, { container: string; icon: IconSize }> = {
   sm: { container: 'h-8 w-8', icon: 'sm' },
@@ -19,6 +19,7 @@ const BADGE_VARIANT_MAP: Record<IconBadgeVariant, { bg: string; colour: IconColo
   },
   success: { bg: 'bg-success/20', colour: 'var(--color-success)' },
   primary: { bg: 'bg-primary/20', colour: 'var(--color-primary)' },
+  warning: { bg: 'bg-warning/20', colour: 'var(--color-warning)' },
   muted: { bg: 'bg-muted', colour: 'var(--color-muted-foreground)' },
 };
 
