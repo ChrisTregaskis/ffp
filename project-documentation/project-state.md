@@ -51,7 +51,7 @@ Renamed American English identifiers to British English across the codebase (mer
 
 | Key     | Story                            | Pts | Dependencies           | Notes                                   |
 | ------- | -------------------------------- | --- | ---------------------- | --------------------------------------- |
-| FFP-137 | Assessment Navigation Component  | 3   | FFP-135 ✅, FFP-136 ✅ | Prev/Next with auto-save                |
+| FFP-137 | Assessment Navigation Component  | 3   | FFP-135 ✅, FFP-136 ✅ | ✅ Complete                              |
 | FFP-140 | Assessment Step Screens          | 5   | FFP-135 ✅, FFP-131 ✅ | Intro, Transition, Results              |
 | FFP-230 | Stale Job Detection              | 2   | FFP-180 ✅             | EventBridge scheduled Lambda            |
 | FFP-233 | Backend Required Question Valid. | 3   | FFP-130 ✅             | Defence-in-depth server-side validation |
@@ -76,9 +76,9 @@ Renamed American English identifiers to British English across the codebase (mer
 
 | Order | Key     | Summary                                  | Status    | Notes                                   |
 | ----- | ------- | ---------------------------------------- | --------- | --------------------------------------- |
-| 1     | FFP-204 | Component structure and props            | To Do     | Props interface, base JSX               |
-| 2     | FFP-205 | Save-on-navigate logic (Continue & Back) | To Do     | `useSaveProgress` + context dispatch    |
-| 3     | FFP-206 | Loading states and button disabling      | To Do     | `isPending` from mutation, disabled UX  |
+| 1     | FFP-204 | Component structure and props            | Done      | Props interface, base JSX               |
+| 2     | FFP-205 | Save-on-navigate logic (Continue & Back) | Done      | `useSaveProgress` + context dispatch    |
+| 3     | FFP-206 | Loading states and button disabling      | Done      | `isPending` from mutation, disabled UX  |
 | -     | FFP-207 | Unit tests                               | Abandoned | Deferred to post-MVP (tests moratorium) |
 
 **Rationale for single branch**: All 3 sub-tasks modify the same file (`AssessmentNavigation.tsx`). They form a single coherent component — splitting across branches/PRs would be unnecessary overhead.
