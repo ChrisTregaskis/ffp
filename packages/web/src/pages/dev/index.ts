@@ -76,6 +76,12 @@ export const componentCategories: ComponentCategory[] = [
     examples: ['SingleChoice', 'MultiChoice', 'Numeric', 'Scale', 'Text', 'VideoResponse'],
   },
   {
+    title: 'Assessment Screens',
+    description: 'Step screen components for assessment flows (FFP-140)',
+    path: `${basePath}/assessment-screens`,
+    examples: ['IntroScreen', 'TransitionScreen', 'QuestionScreen', 'ResultsScreen'],
+  },
+  {
     title: 'Modal Components',
     description: 'Dialogs, modals, and overlays',
     path: `${basePath}/modal`,

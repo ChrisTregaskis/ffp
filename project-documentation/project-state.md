@@ -84,7 +84,7 @@ Renamed American English identifiers to British English across the codebase (mer
 | Order | Key     | Summary                               | Status  | Notes                                                   |
 | ----- | ------- | ------------------------------------- | ------- | ------------------------------------------------------- |
 | -     | FFP-223 | AssessmentProgress with phase         | Skip    | Already done via FFP-138 (Sprint 5) — component exists  |
-| 1     | FFP-218 | IntroScreen component                 | Pending | Welcome screen with checklist and start button          |
+| 1     | FFP-218 | IntroScreen component                 | Done    | Welcome screen with checklist and start button          |
 | 2     | FFP-220 | TransitionScreen component            | Pending | Safety notes before physical assessment                 |
 | 3     | FFP-219 | QuestionScreen wrapper                | Pending | Thin wrapper — uses existing QuestionRenderer (FFP-139) |
 | 4     | FFP-221 | ResultsScreen component               | Pending | Score cards, risk level, polling loading state          |
