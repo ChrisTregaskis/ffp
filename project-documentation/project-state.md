@@ -149,6 +149,15 @@ Renamed American English identifiers to British English across the codebase (mer
 **ProgrammeOverviewScreen** (placeholder): Simple "Programme details coming soon" message. Full implementation via FFP-3.
 **AssessmentStepRenderer** (FFP-222): Switch on `step.type` → renders correct screen component. Uses `useAssessment()` for state/dispatch. Passes step config to each screen. Handles unknown step types with fallback.
 
+#### Key Decisions (from FFP-218 implementation)
+
+- **Colour hierarchy**: Headings use `text-ffp-navy`, descriptions use `text-muted-foreground`, body uses default foreground. All existing theme colours.
+- **Gradients** (from Figma, diagonal `to-br`): Checklist card `from-secondary/40 to-primary/10`. IconBadge secondary `from-secondary to-primary/20`.
+- **IconBadge**: New reusable component at `@web/components/Icon`. Variants: secondary (gradient), success, primary, muted. Sizes: sm/md/lg.
+- **Shadows**: `shadow-xl` on card sections (matching Figma prototype).
+- **Dev showcase**: Page at `/components/assessment-screens` (7xl width). Tab per screen, variant tabs per component. Update as each sub-task completes.
+- **Screen props**: Screens are presentational — `config: FlowStepConfig` + callbacks. No `useAssessment` dependency; orchestrator (FFP-222) handles state.
+
 #### Tests
 
 Deferred to post-MVP (tests moratorium).
