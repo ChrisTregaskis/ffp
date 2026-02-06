@@ -1,15 +1,15 @@
 # FFP - Project State
 
-**Last Updated**: 5th February 2026
+**Last Updated**: 6th February 2026
 **Current EPIC**: FFP-2 - Assessment Engine
-**Sprint Status**: Sprint 5 ✅ Complete (Early)
-**Next**: Sprint 6 - Frontend Completion
+**Sprint Status**: Sprint 6 - Frontend Completion (Early Start)
+**Note**: Starting sprint 6 stories early; committed dates unchanged (16th Feb - 8th Mar)
 
 ---
 
 ## Completed: Sprint 5 - Results & Frontend Core (23 pts) ✅
 
-**Dates**: 26th January - 15th February 2026 (completed 4th Feb)
+**Dates**: 26th January - 15th February 2026 (completed 4th Feb, merged 6th Feb)
 **Sprint Goal**: Assessment results API, programme generation, frontend components for assessment flow.
 
 | Key     | Story                                | Pts | Summary                                                  |
@@ -31,25 +31,20 @@
 
 ---
 
-## Spike: FFP-253 British English Rename
+## Completed: FFP-253 British English Rename ✅
 
-**Branch**: `feature/ffp-253-british-english-rename`
-**Status**: Plan complete, ready to execute
-
-Renames American English identifiers to British English across the codebase:
+Renamed American English identifiers to British English across the codebase (merged via PR #74):
 
 - `generate_program` → `generate_programme` (job type enum)
 - `program_user` → `programme_user` (user role enum)
 - `programTemplateId` → `programmeTemplateId` (types/JSONB)
 - `programMapping(s)` → `programmeMapping(s)` (types/seed data)
 
-**Prompt**: `project-documentation/sprint-planning/outputs/ffp-253-british-english-rename-prompt.md`
-
 ---
 
-## Next: Sprint 6 - Frontend Completion (~26 pts)
+## Current: Sprint 6 - Frontend Completion (~26 pts)
 
-**Dates**: 16th February - 8th March 2026 (Likely to start early but will leave planned dates for sprint)
+**Dates**: 16th February - 8th March 2026 (early start from 6th Feb, committed dates unchanged)
 **Sprint Goal**: End-to-end assessment flow working, demo-ready MVP.
 
 ### Sprint 6 Stories
@@ -146,12 +141,12 @@ FFP-124 → FFP-125 → FFP-127 → FFP-128 → FFP-129 → FFP-130 → FFP-133 
 
 ### Sprint Overview
 
-| Sprint | Focus                | Pts | Status      |
-| ------ | -------------------- | --- | ----------- |
-| 3      | Backend Foundation   | 24  | ✅ Complete |
-| 4      | APIs & FE Foundation | 23  | ✅ Complete |
-| 5      | Results & FE Core    | 23  | ✅ Complete |
-| 6      | FE Completion        | 26  | 🚀 Next     |
+| Sprint | Focus                | Pts | Status                       |
+| ------ | -------------------- | --- | ---------------------------- |
+| 3      | Backend Foundation   | 24  | ✅ Complete                  |
+| 4      | APIs & FE Foundation | 23  | ✅ Complete                  |
+| 5      | Results & FE Core    | 23  | ✅ Complete                  |
+| 6      | FE Completion        | 26  | 🚀 In Progress (Early Start) |
 
 ---
 
@@ -196,7 +191,7 @@ await db.transaction(async (tx) => {
 ## Quick Reference
 
 **Jira**: FFP project at ctregaskis.atlassian.net
-**Sprint**: 6 of 6 (Assessment Engine - Final)
+**Sprint**: 6 of 6 (Assessment Engine - Final, early start)
 **Velocity**: ~25 pts/sprint
 **Capacity**: 8 hours/week
 
