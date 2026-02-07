@@ -81,34 +81,53 @@ Renamed American English identifiers to British English across the codebase (mer
 
 #### Sub-tasks (all on one branch)
 
-| Order | Key     | Summary                               | Status  | Notes                                                   |
-| ----- | ------- | ------------------------------------- | ------- | ------------------------------------------------------- |
-| -     | FFP-223 | AssessmentProgress with phase         | Skip    | Already done via FFP-138 (Sprint 5) — component exists  |
-| 1     | FFP-218 | IntroScreen component                 | Done    | Welcome screen with checklist and start button          |
-| 2     | FFP-220 | TransitionScreen component            | Done    | Safety notes before physical assessment                 |
-| 3     | FFP-219 | QuestionScreen wrapper                | Done    | Thin wrapper — uses existing QuestionRenderer (FFP-139) |
-| 4     | FFP-221 | ResultsScreen component               | Pending | Score cards, risk level, polling loading state          |
-| 5     | FFP-222 | AssessmentStepRenderer (orchestrator) | Pending | Routes step type → screen component via switch          |
+| Order | Key     | Summary                               | Status      | Notes                                                  |
+| ----- | ------- | ------------------------------------- | ----------- | ------------------------------------------------------ |
+| -     | FFP-223 | AssessmentProgress with phase         | Skip        | Already done via FFP-138 (Sprint 5) — component exists |
+| 1     | FFP-218 | IntroScreen component                 | Done        | Welcome screen with checklist and start button         |
+| 2     | FFP-220 | TransitionScreen component            | Refactoring | Being migrated to TransitionCard (see refactor below)  |
+| 3     | FFP-219 | QuestionScreen wrapper                | Refactoring | Being migrated to QuestionCard (see refactor below)    |
+| -     | -       | VideoQuestionCard (scaffold)          | Pending     | New card — added during refactor, not a Jira ticket    |
+| 4     | FFP-221 | ResultsScreen component               | Pending     | Score cards, risk level, polling loading state         |
+| 5     | FFP-222 | AssessmentStepRenderer (orchestrator) | Pending     | Routes step type → card/screen component via switch    |
 
-**Rationale for single branch**: All components form one cohesive feature. The StepRenderer (FFP-222) depends on all screen components. Splitting would create unnecessary merge dependencies.
+**Rationale for single branch**: All components form one cohesive feature. The StepRenderer (FFP-222) depends on all screen/card components. Splitting would create unnecessary merge dependencies.
 
-#### Session Grouping
+#### Screen-to-Card Refactor (in progress)
 
-| Session | Sub-tasks        | Scope                                                     |
-| ------- | ---------------- | --------------------------------------------------------- |
-| 1       | FFP-218, FFP-220 | IntroScreen + TransitionScreen (similar patterns)         |
-| 2       | FFP-219, FFP-221 | QuestionScreen wrapper + ResultsScreen (data-driven)      |
-| 3       | FFP-222          | StepRenderer orchestrator + placeholder screens + exports |
+After reviewing Figma screenshots against the built components, a structural mismatch was identified: the question, transition, and video step types all share a common card layout (progress bar + card container with title/content/CTAs inside), but each "Screen" component was implementing its own standalone layout with title/description floating above the card.
+
+**Decision**: Introduce a shared `StepCard` layout component and rename the card-based step components:
+
+- `QuestionScreen` → `QuestionCard` (composes `StepCard`)
+- `TransitionScreen` → `TransitionCard` (composes `StepCard`)
+- New `VideoQuestionCard` scaffold (composes `StepCard`)
+- `IntroScreen` unchanged (standalone screen, not a card)
+
+**New directory**: `components/assessment/cards/` alongside existing `screens/`
+
+**Full plan**: `.claude/plans/ffp-140-screen-to-card-refactor.md`
+
+#### Session Grouping (updated)
+
+| Session | Sub-tasks               | Scope                                                        |
+| ------- | ----------------------- | ------------------------------------------------------------ |
+| 1       | FFP-218, FFP-220        | IntroScreen + TransitionScreen (similar patterns) — Done     |
+| 2       | FFP-219                 | QuestionScreen wrapper — Done                                |
+| 3       | Screen-to-Card refactor | StepCard + QuestionCard + TransitionCard + VideoQuestionCard |
+| 4       | FFP-221                 | ResultsScreen (standalone, data-driven)                      |
+| 5       | FFP-222                 | StepRenderer orchestrator + placeholder screens + exports    |
 
 #### Amendments from Jira
 
 - **FFP-223 — skip**: Already built as FFP-138 (Sprint 5). Existing `AssessmentProgress` has phase label, step counter, animated bar.
 - **FFP-219 — reduced scope**: QuestionRenderer + 6 types already built (FFP-139). Only need a thin screen wrapper with question number indicator.
+- **FFP-219/FFP-220 — refactored**: Now being migrated from Screen to Card pattern with shared `StepCard` layout. Title/description move inside the card. Navigation CTAs become the card footer via `AssessmentNavigation`.
 - **FFP-221 scores**: Jira says "Strength Score (X/10)" — actual schema uses `dimensions[]` with `normalisedScore` (0-100). Use real `UserAssessmentScores` schema.
 - **FFP-221 programme**: No programme details API yet (`programmeId` only). Simple card — full details deferred to FFP-3.
 - **FFP-222 props**: Jira passes `template` as prop — actually fetched via `useAssessmentTemplateQuery` hook internally.
-- **FFP-222 step types**: Video + programme-overview steps get placeholder components (FFP-141/FFP-3 deferred).
-- **File location**: Create new `components/assessment/screens/` subdirectory for step screen components.
+- **FFP-222 step types**: Video step now gets `VideoQuestionCard` scaffold (not just a placeholder). Programme-overview gets placeholder (FFP-3 deferred).
+- **File location**: `components/assessment/cards/` for card-based steps, `components/assessment/screens/` for standalone screens (IntroScreen).
 
 #### Dependencies (all satisfied)
 
@@ -141,13 +160,22 @@ Renamed American English identifiers to British English across the codebase (mer
 
 #### Component Overview
 
-**IntroScreen** (FFP-218): Renders welcome heading, "What to Expect" section from `config.description`, estimated duration from `config.estimatedMinutes`, "Before You Begin" checklist from `config.instructions`, and "Start Assessment" button.
-**TransitionScreen** (FFP-220): Renders heading, physical assessment overview, safety notes from `config.safetyNotes` in amber warning box, Back/Continue buttons.
-**QuestionScreen** (FFP-219): Thin wrapper — gets current question from template (via `useAssessmentTemplateQuery`), shows question number indicator, delegates to existing `QuestionRenderer`, dispatches `SET_ANSWER` on change.
-**ResultsScreen** (FFP-221): Uses `useAssessmentResultsQuery` for polling. Loading state while `scores === null`. Displays dimensional score cards, risk level with colour coding (low=green, moderate=amber, high=red), "What Happens Next" steps, "View Programme" button.
-**VideoAssessmentScreen** (placeholder): Simple "Video assessment coming soon" message. Full implementation via FFP-141/FFP-3.
-**ProgrammeOverviewScreen** (placeholder): Simple "Programme details coming soon" message. Full implementation via FFP-3.
-**AssessmentStepRenderer** (FFP-222): Switch on `step.type` → renders correct screen component. Uses `useAssessment()` for state/dispatch. Passes step config to each screen. Handles unknown step types with fallback.
+**Standalone Screens** (full-page layouts, no shared card chrome):
+
+- **IntroScreen** (FFP-218): Welcome heading, "What to Expect" section, "Before You Begin" checklist, "Start Assessment" button.
+- **ResultsScreen** (FFP-221): Score cards, risk level, polling loading state, "View Programme" button.
+- **ProgrammeOverviewScreen** (placeholder): Simple "Programme details coming soon" message. Full implementation via FFP-3.
+
+**Card Components** (compose shared `StepCard` layout):
+
+- **StepCard**: Shared layout — card chrome (`rounded-2xl shadow-xl`), header zone (title + description inside card), content zone, footer zone (border-t separator + CTAs).
+- **QuestionCard** (from FFP-219): Question sub-progress in header, `QuestionRenderer` as content, `AssessmentNavigation` as footer.
+- **TransitionCard** (from FFP-220): Centre-aligned title, "What's Next" + Safety Notes as flat inner sections (no individual shadows), `AssessmentNavigation` as footer.
+- **VideoQuestionCard** (scaffold): Instructions list + `QuestionRenderer` (routes to `VideoResponseQuestion`) as content, `AssessmentNavigation` as footer.
+
+**Orchestrator**:
+
+- **AssessmentStepRenderer** (FFP-222): Switch on `step.type` → renders correct card/screen component. Renders `AssessmentProgress` for all types except intro and programme-overview. Uses `useAssessment()` for state/dispatch.
 
 #### Key Decisions (from FFP-218 implementation)
 
