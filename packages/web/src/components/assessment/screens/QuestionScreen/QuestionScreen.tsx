@@ -45,10 +45,7 @@ export const QuestionScreen: React.FC<QuestionScreenProps> = ({
 
       {/* Question number indicator */}
       <div className="flex items-center justify-center">
-        <Text
-          as="span"
-          styleProps={{ size: 'sm', weight: 'medium', colour: 'muted-foreground' }}
-        >
+        <Text as="span" styleProps={{ size: 'sm', weight: 'medium', colour: 'muted-foreground' }}>
           Question {questionNumber} of {totalQuestions}
         </Text>
       </div>

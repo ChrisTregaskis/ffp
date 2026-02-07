@@ -371,8 +371,8 @@ const QuestionScreenDemo: React.FC = () => {
   return (
     <div className="space-y-4">
       <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-        Thin wrapper around QuestionRenderer with question number indicator. Select different tabs to
-        see various question types. Answers are interactive — try selecting options.
+        Thin wrapper around QuestionRenderer with question number indicator. Select different tabs
+        to see various question types. Answers are interactive — try selecting options.
       </Text>
       <DemoTabs tabs={variantTabs} />
     </div>
