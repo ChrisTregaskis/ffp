@@ -81,15 +81,16 @@ Renamed American English identifiers to British English across the codebase (mer
 
 #### Sub-tasks (all on one branch)
 
-| Order | Key     | Summary                               | Status      | Notes                                                  |
-| ----- | ------- | ------------------------------------- | ----------- | ------------------------------------------------------ |
-| -     | FFP-223 | AssessmentProgress with phase         | Skip        | Already done via FFP-138 (Sprint 5) — component exists |
-| 1     | FFP-218 | IntroScreen component                 | Done        | Welcome screen with checklist and start button         |
-| 2     | FFP-220 | TransitionScreen component            | Refactoring | Being migrated to TransitionCard (see refactor below)  |
-| 3     | FFP-219 | QuestionScreen wrapper                | Refactoring | Being migrated to QuestionCard (see refactor below)    |
-| -     | -       | VideoQuestionCard (scaffold)          | Pending     | New card — added during refactor, not a Jira ticket    |
-| 4     | FFP-221 | ResultsScreen component               | Pending     | Score cards, risk level, polling loading state         |
-| 5     | FFP-222 | AssessmentStepRenderer (orchestrator) | Pending     | Routes step type → card/screen component via switch    |
+| Order | Key     | Summary                               | Status  | Notes                                                  |
+| ----- | ------- | ------------------------------------- | ------- | ------------------------------------------------------ |
+| -     | FFP-223 | AssessmentProgress with phase         | Skip    | Already done via FFP-138 (Sprint 5) — component exists |
+| 1     | FFP-218 | IntroScreen component                 | Done    | Welcome screen with checklist and start button         |
+| 2     | FFP-220 | TransitionScreen component            | Done    | Refactored to TransitionCard (composes StepCard)       |
+| 3     | FFP-219 | QuestionScreen wrapper                | Done    | Refactored to QuestionCard (composes StepCard)         |
+| -     | -       | Screen-to-Card refactor               | Done    | StepCard layout, cards/ directory, VideoQuestionCard   |
+| -     | -       | Shared component extraction           | Done    | FeatureColumnGrid, InstructionList, SectionHeader      |
+| 4     | FFP-221 | ResultsScreen component               | Pending | Score cards, risk level, polling loading state         |
+| 5     | FFP-222 | AssessmentStepRenderer (orchestrator) | Pending | Routes step type → card/screen component via switch    |
 
 **Rationale for single branch**: All components form one cohesive feature. The StepRenderer (FFP-222) depends on all screen/card components. Splitting would create unnecessary merge dependencies.
 
@@ -110,13 +111,14 @@ After reviewing Figma screenshots against the built components, a structural mis
 
 #### Session Grouping (updated)
 
-| Session | Sub-tasks               | Scope                                                        |
-| ------- | ----------------------- | ------------------------------------------------------------ |
-| 1       | FFP-218, FFP-220        | IntroScreen + TransitionScreen (similar patterns) — Done     |
-| 2       | FFP-219                 | QuestionScreen wrapper — Done                                |
-| 3       | Screen-to-Card refactor | StepCard + QuestionCard + TransitionCard + VideoQuestionCard |
-| 4       | FFP-221                 | ResultsScreen (standalone, data-driven)                      |
-| 5       | FFP-222                 | StepRenderer orchestrator + placeholder screens + exports    |
+| Session | Sub-tasks                   | Scope                                                               |
+| ------- | --------------------------- | ------------------------------------------------------------------- |
+| 1       | FFP-218, FFP-220            | IntroScreen + TransitionScreen (similar patterns) — Done            |
+| 2       | FFP-219                     | QuestionScreen wrapper — Done                                       |
+| 3       | Screen-to-Card refactor     | StepCard + QuestionCard + TransitionCard + VideoQuestionCard — Done |
+| 4       | Shared component extraction | FeatureColumnGrid, InstructionList, SectionHeader — Done            |
+| 5       | FFP-221                     | ResultsScreen (standalone, data-driven)                             |
+| 6       | FFP-222                     | StepRenderer orchestrator + placeholder screens + exports           |
 
 #### Amendments from Jira
 
