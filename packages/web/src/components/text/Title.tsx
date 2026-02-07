@@ -33,6 +33,7 @@ const COLOUR_CLASS_MAP: Record<TextColour, string> = {
   warning: 'text-warning',
   info: 'text-info',
   white: 'text-white',
+  'ffp-navy': 'text-ffp-navy',
 };
 
 export interface TitleProps {

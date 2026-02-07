@@ -77,9 +77,9 @@ export const componentCategories: ComponentCategory[] = [
   },
   {
     title: 'Assessment Screens',
-    description: 'Step screen components for assessment flows (FFP-140)',
+    description: 'Step screen and card components for assessment flows (FFP-140)',
     path: `${basePath}/assessment-screens`,
-    examples: ['IntroScreen', 'TransitionScreen', 'QuestionScreen', 'ResultsScreen'],
+    examples: ['IntroScreen', 'QuestionCard', 'TransitionCard', 'VideoQuestionCard'],
   },
   {
     title: 'Modal Components',

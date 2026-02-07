@@ -3,6 +3,7 @@ import { useMemo, useId } from 'react';
 import type { AssessmentQuestion } from '@ffp/core';
 
 import { RequiredIndicator } from '@web/components/form';
+import { IconBadge, Icons } from '@web/components/Icon';
 import { Text } from '@web/components/text';
 
 import { NumericQuestion } from './NumericQuestion';
@@ -73,7 +74,7 @@ export const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
       </div>
 
       {/* Video player */}
-      <div className="aspect-video overflow-hidden rounded-lg bg-muted">
+      <div className="aspect-video overflow-hidden rounded-2xl border border-border bg-muted shadow-lg">
         {videoUrl ? (
           <video
             src={videoUrl}
@@ -86,8 +87,21 @@ export const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
             Your browser does not support the video element.
           </video>
         ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <Text styleProps={{ colour: 'muted-foreground' }}>Video not available</Text>
+          <div className="flex h-full w-full flex-col items-center justify-center gap-3">
+            <IconBadge name={Icons.PLAY} size="lg" variant="secondary" />
+            <Text as="p" styleProps={{ size: 'lg', weight: 'semibold', colour: 'foreground' }}>
+              Video Demonstration
+            </Text>
+            <Text
+              as="p"
+              styleProps={{ size: 'sm', colour: 'muted-foreground' }}
+              className="max-w-sm text-center"
+            >
+              In a real application, this would show an instructional video for the assessment.
+            </Text>
+            <Text as="p" styleProps={{ size: 'xs', colour: 'muted-foreground' }} className="mt-1">
+              Video placeholder — follow the written instructions above
+            </Text>
           </div>
         )}
       </div>

@@ -2,7 +2,13 @@ import { useState } from 'react';
 
 import type { AnswerValue, AssessmentQuestion, FlowStepConfig } from '@ffp/core';
 
-import { IntroScreen, QuestionScreen, TransitionScreen } from '@web/components/assessment';
+import {
+  IntroScreen,
+  QuestionCard,
+  TransitionCard,
+  VideoQuestionCard,
+} from '@web/components/assessment';
+import { Button } from '@web/components/button';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
@@ -10,6 +16,7 @@ import {
   ComponentSection,
   DeveloperInstructions,
 } from '@web/components/dev';
+import { Icon, Icons } from '@web/components/Icon';
 import { Text } from '@web/components/text';
 
 // ============================================================================
@@ -40,7 +47,7 @@ const mockIntroNoInstructionsConfig: FlowStepConfig = {
 };
 
 const mockTransitionConfig: FlowStepConfig = {
-  title: 'Physical Assessment',
+  title: 'Ready for Physical Assessment?',
   description:
     'Great work on the questionnaire! Next, we will guide you through a series of physical tests to assess your strength and balance.',
   estimatedMinutes: 10,
@@ -53,18 +60,28 @@ const mockTransitionConfig: FlowStepConfig = {
 };
 
 const mockTransitionNoSafetyConfig: FlowStepConfig = {
-  title: 'Movement Assessment',
+  title: 'Ready for Movement Assessment?',
   description: 'The next section includes a series of guided movement tests.',
   estimatedMinutes: 8,
 };
 
 const mockTransitionMinimalConfig: FlowStepConfig = {
-  title: 'Next Section',
+  title: 'Ready for Next Section',
 };
 
 const mockQuestionStepConfig: FlowStepConfig = {
   title: 'Pre-Assessment Questions',
   description: 'Help us understand your current condition and goals.',
+};
+
+const mockVideoStepConfig: FlowStepConfig = {
+  title: 'Physical Assessment',
+  description: 'Follow the video instructions and record your result.',
+  instructions: [
+    'Watch the full video before attempting the exercise',
+    'Use a sturdy chair or wall for support if needed',
+    'Record the number of repetitions you can complete',
+  ],
 };
 
 const mockSingleChoiceQuestion: AssessmentQuestion = {
@@ -96,6 +113,14 @@ const mockTextQuestion: AssessmentQuestion = {
   validation: { required: false, max: 500 },
 };
 
+const mockVideoQuestion: AssessmentQuestion = {
+  id: '00000000-0000-0000-0000-000000000004',
+  type: 'video-response',
+  question: 'How many sit-to-stand repetitions can you complete in 30 seconds?',
+  description: 'Watch the demonstration video, then perform the exercise and enter your count.',
+  validation: { required: true, min: 0, max: 50 },
+};
+
 // Placeholder for screens not yet built
 const ComingSoonPlaceholder: React.FC<{ name: string; ticket: string }> = ({ name, ticket }) => (
   <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -111,6 +136,33 @@ const ComingSoonPlaceholder: React.FC<{ name: string; ticket: string }> = ({ nam
   </div>
 );
 
+// Mock footer for dev demos (avoids needing AssessmentProvider context)
+const MockFooter: React.FC = () => (
+  <nav className="flex items-center justify-between" aria-label="Assessment navigation">
+    <Button
+      variant="secondary"
+      onClick={() => {
+        // eslint-disable-next-line no-console
+        console.log('[Demo] Back clicked');
+      }}
+      icon={<Icon name={Icons.CHEVRONLEFT} styleProps={{ size: 'sm' }} />}
+    >
+      Back
+    </Button>
+    <Button
+      variant="primary"
+      onClick={() => {
+        // eslint-disable-next-line no-console
+        console.log('[Demo] Continue clicked');
+      }}
+      icon={<Icon name={Icons.CHEVRONRIGHT} styleProps={{ size: 'sm' }} />}
+      iconPosition="right"
+    >
+      Continue
+    </Button>
+  </nav>
+);
+
 // ============================================================================
 // Page Component
 // ============================================================================
@@ -118,10 +170,11 @@ const ComingSoonPlaceholder: React.FC<{ name: string; ticket: string }> = ({ nam
 /**
  * Assessment Screen components showcase page (development only).
  *
- * Demonstrates all step screen components for FFP-140:
- * - IntroScreen (FFP-218)
- * - TransitionScreen (FFP-220)
- * - QuestionScreen (FFP-219)
+ * Demonstrates all step components for FFP-140:
+ * - IntroScreen (FFP-218) — standalone screen
+ * - QuestionCard (FFP-219) — card layout
+ * - TransitionCard (FFP-220) — card layout
+ * - VideoQuestionCard — card layout scaffold
  * - ResultsScreen (FFP-221) — coming soon
  * - AssessmentStepRenderer (FFP-222) — coming soon
  */
@@ -131,7 +184,7 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
     console.log(`[Demo] ${action}`);
   };
 
-  // Top-level tabs — one per screen component
+  // Top-level tabs — one per component
   const screenTabs: DemoTab[] = [
     {
       id: 'intro',
@@ -139,19 +192,19 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
       content: <IntroScreenDemo onStart={handleAction('onStart called')} />,
     },
     {
-      id: 'transition',
-      label: 'TransitionScreen',
-      content: (
-        <TransitionScreenDemo
-          onContinue={handleAction('onContinue called')}
-          onBack={handleAction('onBack called')}
-        />
-      ),
+      id: 'question',
+      label: 'QuestionCard',
+      content: <QuestionCardDemo />,
     },
     {
-      id: 'question',
-      label: 'QuestionScreen',
-      content: <QuestionScreenDemo />,
+      id: 'transition',
+      label: 'TransitionCard',
+      content: <TransitionCardDemo />,
+    },
+    {
+      id: 'video',
+      label: 'VideoQuestionCard',
+      content: <VideoQuestionCardDemo />,
     },
     {
       id: 'results',
@@ -168,8 +221,8 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
   return (
     <ComponentPageWrapper maxWidth="7xl">
       <ComponentPageHeader
-        title="Assessment Step Screens"
-        description="Step screen components for assessment flows (FFP-140)"
+        title="Assessment Step Components"
+        description="Step screen and card components for assessment flows (FFP-140)"
         showBackLink
       />
 
@@ -177,19 +230,20 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
       <ComponentSection title="Implementation Status">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <StatusCard title="IntroScreen" status="complete" />
-          <StatusCard title="TransitionScreen" status="complete" />
-          <StatusCard title="QuestionScreen" status="complete" />
+          <StatusCard title="QuestionCard" status="complete" />
+          <StatusCard title="TransitionCard" status="complete" />
+          <StatusCard title="VideoQuestionCard" status="complete" />
           <StatusCard title="ResultsScreen" status="pending" task="FFP-221" />
           <StatusCard title="StepRenderer" status="pending" task="FFP-222" />
         </div>
       </ComponentSection>
 
-      {/* Screen demos */}
-      <ComponentSection title="Screen Demos">
+      {/* Component demos */}
+      <ComponentSection title="Component Demos">
         <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
-          Click through each tab to preview the assessment step screens. Each screen receives a{' '}
-          <code className="rounded bg-muted px-1">FlowStepConfig</code> and renders its content
-          accordingly.
+          Click through each tab to preview the assessment step components. IntroScreen is a
+          standalone screen; the card components compose{' '}
+          <code className="rounded bg-muted px-1">StepCard</code> for consistent layout.
         </Text>
         <DemoTabs tabs={screenTabs} />
       </ComponentSection>
@@ -199,10 +253,18 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
         <div className="space-y-3">
           <div>
             <Text as="p" className="mb-1" styleProps={{ weight: 'medium' }}>
+              Import card components:
+            </Text>
+            <code className="block rounded bg-muted p-2 text-xs">
+              {`import { QuestionCard, TransitionCard, VideoQuestionCard } from '@web/components/assessment';`}
+            </code>
+          </div>
+          <div>
+            <Text as="p" className="mb-1" styleProps={{ weight: 'medium' }}>
               Import screen components:
             </Text>
             <code className="block rounded bg-muted p-2 text-xs">
-              {`import { IntroScreen, TransitionScreen, QuestionScreen } from '@web/components/assessment';`}
+              {`import { IntroScreen } from '@web/components/assessment';`}
             </code>
           </div>
           <div>
@@ -211,12 +273,12 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
             </Text>
             <code className="block whitespace-pre rounded bg-muted p-2 text-xs">
               {`interface FlowStepConfig {
-                title: string;
-                description?: string;
-                instructions?: string[];
-                safetyNotes?: string[];
-                estimatedMinutes?: number;
-              }`}
+  title: string;
+  description?: string;
+  instructions?: string[];
+  safetyNotes?: string[];
+  estimatedMinutes?: number;
+}`}
             </code>
           </div>
         </div>
@@ -260,61 +322,10 @@ const IntroScreenDemo: React.FC<{ onStart: () => void }> = ({ onStart }) => {
 };
 
 // ============================================================================
-// TransitionScreen Demo (with variant tabs)
+// QuestionCard Demo (with variant tabs)
 // ============================================================================
 
-const TransitionScreenDemo: React.FC<{ onContinue: () => void; onBack: () => void }> = ({
-  onContinue,
-  onBack,
-}) => {
-  const variantTabs: DemoTab[] = [
-    {
-      id: 'full',
-      label: 'Full Config',
-      content: (
-        <TransitionScreen config={mockTransitionConfig} onContinue={onContinue} onBack={onBack} />
-      ),
-    },
-    {
-      id: 'no-safety',
-      label: 'No Safety Notes',
-      content: (
-        <TransitionScreen
-          config={mockTransitionNoSafetyConfig}
-          onContinue={onContinue}
-          onBack={onBack}
-        />
-      ),
-    },
-    {
-      id: 'minimal',
-      label: 'Minimal',
-      content: (
-        <TransitionScreen
-          config={mockTransitionMinimalConfig}
-          onContinue={onContinue}
-          onBack={onBack}
-        />
-      ),
-    },
-  ];
-
-  return (
-    <div className="space-y-4">
-      <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-        Transition screen displayed between assessment phases. Shows what to expect next, safety
-        warnings from the flow configuration, and navigation buttons.
-      </Text>
-      <DemoTabs tabs={variantTabs} />
-    </div>
-  );
-};
-
-// ============================================================================
-// QuestionScreen Demo (with variant tabs)
-// ============================================================================
-
-const QuestionScreenDemo: React.FC = () => {
+const QuestionCardDemo: React.FC = () => {
   const [answers, setAnswers] = useState<Record<string, AnswerValue | null>>({});
 
   const handleAnswer = (questionId: string, value: AnswerValue | null): void => {
@@ -328,42 +339,51 @@ const QuestionScreenDemo: React.FC = () => {
       id: 'single-choice',
       label: 'Single Choice',
       content: (
-        <QuestionScreen
-          config={mockQuestionStepConfig}
-          question={mockSingleChoiceQuestion}
-          questionNumber={1}
-          totalQuestions={5}
-          value={answers[mockSingleChoiceQuestion.id] ?? null}
-          onAnswer={handleAnswer}
-        />
+        <div className="mx-auto max-w-3xl px-4 py-8">
+          <QuestionCard
+            config={mockQuestionStepConfig}
+            question={mockSingleChoiceQuestion}
+            questionNumber={1}
+            totalQuestions={5}
+            value={answers[mockSingleChoiceQuestion.id] ?? null}
+            onAnswer={handleAnswer}
+            footer={<MockFooter />}
+          />
+        </div>
       ),
     },
     {
       id: 'scale',
       label: 'Scale',
       content: (
-        <QuestionScreen
-          config={mockQuestionStepConfig}
-          question={mockScaleQuestion}
-          questionNumber={3}
-          totalQuestions={5}
-          value={answers[mockScaleQuestion.id] ?? null}
-          onAnswer={handleAnswer}
-        />
+        <div className="mx-auto max-w-3xl px-4 py-8">
+          <QuestionCard
+            config={mockQuestionStepConfig}
+            question={mockScaleQuestion}
+            questionNumber={3}
+            totalQuestions={5}
+            value={answers[mockScaleQuestion.id] ?? null}
+            onAnswer={handleAnswer}
+            footer={<MockFooter />}
+          />
+        </div>
       ),
     },
     {
       id: 'text',
       label: 'Text',
       content: (
-        <QuestionScreen
-          config={mockQuestionStepConfig}
-          question={mockTextQuestion}
-          questionNumber={5}
-          totalQuestions={5}
-          value={answers[mockTextQuestion.id] ?? null}
-          onAnswer={handleAnswer}
-        />
+        <div className="mx-auto max-w-3xl px-4 py-8">
+          <QuestionCard
+            config={mockQuestionStepConfig}
+            question={mockTextQuestion}
+            questionNumber={5}
+            totalQuestions={5}
+            value={answers[mockTextQuestion.id] ?? null}
+            onAnswer={handleAnswer}
+            footer={<MockFooter />}
+          />
+        </div>
       ),
     },
   ];
@@ -371,8 +391,123 @@ const QuestionScreenDemo: React.FC = () => {
   return (
     <div className="space-y-4">
       <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-        Thin wrapper around QuestionRenderer with question number indicator. Select different tabs
-        to see various question types. Answers are interactive — try selecting options.
+        Card layout around QuestionRenderer with question sub-progress indicator. Select different
+        tabs to see various question types. Answers are interactive — try selecting options.
+      </Text>
+      <DemoTabs tabs={variantTabs} />
+    </div>
+  );
+};
+
+// ============================================================================
+// TransitionCard Demo (with variant tabs)
+// ============================================================================
+
+const TransitionCardDemo: React.FC = () => {
+  const variantTabs: DemoTab[] = [
+    {
+      id: 'full',
+      label: 'Full Config',
+      content: (
+        <div className="mx-auto max-w-3xl px-4 py-8">
+          <TransitionCard config={mockTransitionConfig} footer={<MockFooter />} />
+        </div>
+      ),
+    },
+    {
+      id: 'no-safety',
+      label: 'No Safety Notes',
+      content: (
+        <div className="mx-auto max-w-3xl px-4 py-8">
+          <TransitionCard
+            config={mockTransitionNoSafetyConfig}
+            footer={<MockFooter />}
+            showWhatsNextTitleDescription
+          />
+        </div>
+      ),
+    },
+    {
+      id: 'minimal',
+      label: 'Minimal',
+      content: (
+        <div className="mx-auto max-w-3xl px-4 py-8">
+          <TransitionCard
+            config={mockTransitionMinimalConfig}
+            footer={<MockFooter />}
+            showWhatsNextTitleDescription
+          />
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+        Transition card displayed between assessment phases. Shows what to expect next, safety
+        warnings from the flow configuration, and navigation in the footer.
+      </Text>
+      <DemoTabs tabs={variantTabs} />
+    </div>
+  );
+};
+
+// ============================================================================
+// VideoQuestionCard Demo (with variant tabs)
+// ============================================================================
+
+const VideoQuestionCardDemo: React.FC = () => {
+  const [answers, setAnswers] = useState<Record<string, AnswerValue | null>>({});
+
+  const handleAnswer = (questionId: string, value: AnswerValue | null): void => {
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+    // eslint-disable-next-line no-console
+    console.log(`[Demo] onAnswer: ${questionId} = ${JSON.stringify(value)}`);
+  };
+
+  const variantTabs: DemoTab[] = [
+    {
+      id: 'with-instructions',
+      label: 'With Instructions',
+      content: (
+        <div className="mx-auto max-w-3xl px-4 py-8">
+          <VideoQuestionCard
+            config={mockVideoStepConfig}
+            question={mockVideoQuestion}
+            questionNumber={1}
+            totalQuestions={3}
+            value={answers[mockVideoQuestion.id] ?? null}
+            onAnswer={handleAnswer}
+            footer={<MockFooter />}
+          />
+        </div>
+      ),
+    },
+    {
+      id: 'no-instructions',
+      label: 'No Instructions',
+      content: (
+        <div className="mx-auto max-w-3xl px-4 py-8">
+          <VideoQuestionCard
+            config={{ title: 'Physical Assessment' }}
+            question={mockVideoQuestion}
+            questionNumber={2}
+            totalQuestions={3}
+            value={answers[mockVideoQuestion.id] ?? null}
+            onAnswer={handleAnswer}
+            footer={<MockFooter />}
+          />
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+        Video question card with instructions list and video-response question. The QuestionRenderer
+        routes video-response types to the VideoResponseQuestion component.
       </Text>
       <DemoTabs tabs={variantTabs} />
     </div>

@@ -51,7 +51,7 @@ export const IconBadge: React.FC<IconBadgeProps> = ({
 
   return (
     <div
-      className={`inline-flex items-center justify-center rounded-xl ${bg} ${container} ${className}`.trim()}
+      className={`inline-flex items-center justify-center rounded-xl transition-transform duration-200 hover:scale-110 ${bg} ${container} ${className}`.trim()}
     >
       <Icon name={name} styleProps={{ size: icon, colour }} />
     </div>
