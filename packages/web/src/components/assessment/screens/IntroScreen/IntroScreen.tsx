@@ -1,7 +1,9 @@
 import type { FlowStepConfig } from '@ffp/core';
 
+import type { FeatureItem } from '@web/components/assessment';
+import { FeatureColumnGrid, InstructionList, SectionHeader } from '@web/components/assessment';
 import { Button } from '@web/components/button';
-import { Icon, IconBadge, Icons } from '@web/components/Icon';
+import { Icons } from '@web/components/Icon';
 import { Text } from '@web/components/text';
 
 export interface IntroScreenProps {
@@ -10,6 +12,24 @@ export interface IntroScreenProps {
   /** Callback when user clicks "Start Assessment" */
   onStart: () => void;
 }
+
+const INTRO_FEATURES: FeatureItem[] = [
+  {
+    icon: Icons.CLIPBOARDLIST,
+    heading: 'Pre-Assessment Questions',
+    description: 'Quick questions about your goals and pain levels',
+  },
+  {
+    icon: Icons.VIDEO,
+    heading: 'Video-Guided Tests',
+    description: 'Strength and balance assessments with clear video instructions',
+  },
+  {
+    icon: Icons.CHECKCIRCLE,
+    heading: 'Personalised Programme',
+    description: 'Custom physiotherapy programme based on your assessment results',
+  },
+];
 
 /**
  * Assessment intro screen.
@@ -41,76 +61,34 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ config, onStart }) => 
 
       {/* What to Expect */}
       <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
-        {/* Header with duration */}
         <div className="px-6 pt-6 pb-5">
-          <div className="flex items-center gap-2">
-            <Icon name={Icons.CLOCK} styleProps={{ size: 'md', colour: 'var(--color-primary)' }} />
-            <Text as="h2" styleProps={{ size: 'xl', weight: 'semibold', colour: 'ffp-navy' }}>
-              What to Expect
-            </Text>
-          </div>
-          {estimatedMinutes && (
-            <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mt-1">
-              This assessment will take approximately {estimatedMinutes} minutes to complete
-            </Text>
-          )}
+          <SectionHeader
+            icon={Icons.CLOCK}
+            title="What to Expect"
+            description={
+              estimatedMinutes
+                ? `This assessment will take approximately ${String(estimatedMinutes)} minutes to complete`
+                : undefined
+            }
+            as="h2"
+            align="centre"
+          />
         </div>
 
-        {/* Feature columns */}
-        <div className="grid grid-cols-1 gap-6 px-6 py-8 sm:grid-cols-3">
-          <div className="flex flex-col items-center text-center">
-            <IconBadge name={Icons.CLIPBOARDLIST} size="lg" variant="secondary" />
-            <Text as="h3" styleProps={{ weight: 'semibold', colour: 'ffp-navy' }} className="mt-3">
-              Pre-Assessment Questions
-            </Text>
-            <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mt-1">
-              Quick questions about your goals and pain levels
-            </Text>
-          </div>
-          <div className="flex flex-col items-center text-center">
-            <IconBadge name={Icons.VIDEO} size="lg" variant="secondary" />
-            <Text as="h3" styleProps={{ weight: 'semibold', colour: 'ffp-navy' }} className="mt-3">
-              Video-Guided Tests
-            </Text>
-            <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mt-1">
-              Strength and balance assessments with clear video instructions
-            </Text>
-          </div>
-          <div className="flex flex-col items-center text-center">
-            <IconBadge name={Icons.CHECKCIRCLE} size="lg" variant="secondary" />
-            <Text as="h3" styleProps={{ weight: 'semibold', colour: 'ffp-navy' }} className="mt-3">
-              Personalised Programme
-            </Text>
-            <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mt-1">
-              Custom physiotherapy programme based on your assessment results
-            </Text>
-          </div>
-        </div>
+        <FeatureColumnGrid features={INTRO_FEATURES} headingLevel="h3" className="px-6 py-8" />
       </section>
 
       {/* Before You Begin checklist */}
       {instructions && instructions.length > 0 && (
         <section className="rounded-2xl bg-linear-to-br from-secondary/40 to-primary/10 p-6 shadow-xl">
-          <Text
-            as="h2"
-            styleProps={{ size: 'xl', weight: 'semibold', colour: 'ffp-navy' }}
-            className="mb-4"
-          >
-            Before You Begin:
-          </Text>
-          <ul className="space-y-3">
-            {instructions.map((instruction) => (
-              <li key={instruction} className="flex items-start gap-3">
-                <Icon
-                  name={Icons.CHECKCIRCLE}
-                  styleProps={{ size: 'md', colour: 'var(--color-success)' }}
-                />
-                <Text as="span" styleProps={{ size: 'sm' }}>
-                  {instruction}
-                </Text>
-              </li>
-            ))}
-          </ul>
+          <InstructionList
+            items={instructions}
+            title="Before You Begin:"
+            titleAs="h2"
+            bulletStyle="icon"
+            bulletIcon={Icons.CHECKCIRCLE}
+            bulletColour="var(--color-success)"
+          />
         </section>
       )}
 

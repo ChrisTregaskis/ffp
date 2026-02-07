@@ -1,6 +1,11 @@
 // Navigation
 export * from './AssessmentNavigation';
 
+// Shared UI components
+export * from './FeatureColumnGrid';
+export * from './InstructionList';
+export * from './SectionHeader';
+
 // Question components
 export * from './questions';
 

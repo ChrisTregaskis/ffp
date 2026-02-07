@@ -1,7 +1,10 @@
 import type { AnswerValue, AssessmentQuestion, FlowStepConfig } from '@ffp/core';
 
-import { AssessmentNavigation, QuestionRenderer } from '@web/components/assessment';
-import { Text } from '@web/components/text';
+import {
+  AssessmentNavigation,
+  InstructionList,
+  QuestionRenderer,
+} from '@web/components/assessment';
 
 import { StepCard } from '../StepCard';
 
@@ -53,24 +56,9 @@ export const VideoQuestionCard: React.FC<VideoQuestionCardProps> = ({
       footer={footer ?? <AssessmentNavigation />}
     >
       <div className="py-5">
-        {/* Instructions card */}
         {config.instructions && config.instructions.length > 0 && (
           <div className="rounded-2xl bg-linear-to-br from-secondary/40 to-primary/10 p-5">
-            <Text
-              as="p"
-              styleProps={{ size: 'sm', weight: 'semibold', colour: 'foreground' }}
-              className="mb-3"
-            >
-              Instructions:
-            </Text>
-            <ul className="space-y-2">
-              {config.instructions.map((instruction) => (
-                <li key={instruction} className="flex items-start gap-2.5">
-                  <span className="mt-1.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                  <span className="text-sm text-foreground">{instruction}</span>
-                </li>
-              ))}
-            </ul>
+            <InstructionList items={config.instructions} title="Instructions:" />
           </div>
         )}
       </div>

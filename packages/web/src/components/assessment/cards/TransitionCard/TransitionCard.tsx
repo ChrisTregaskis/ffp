@@ -1,7 +1,8 @@
 import type { FlowStepConfig } from '@ffp/core';
 
-import { AssessmentNavigation } from '@web/components/assessment';
-import { Icon, IconBadge, Icons } from '@web/components/Icon';
+import type { FeatureItem } from '@web/components/assessment';
+import { AssessmentNavigation, FeatureColumnGrid, SectionHeader } from '@web/components/assessment';
+import { Icon, Icons } from '@web/components/Icon';
 import { Text } from '@web/components/text';
 
 import { StepCard } from '../StepCard';
@@ -16,6 +17,24 @@ export interface TransitionCardProps {
   /** Optional render of What's Next */
   showWhatsNextTitleDescription?: boolean;
 }
+
+const TRANSITION_FEATURES: FeatureItem[] = [
+  {
+    icon: Icons.VIDEO,
+    heading: 'Video-Guided',
+    description: 'Follow along with clear video demonstrations for each exercise',
+  },
+  {
+    icon: Icons.TARGET,
+    heading: 'Strength & Balance',
+    description: 'Simple tests to measure your current physical abilities',
+  },
+  {
+    icon: Icons.CLOCK,
+    heading: 'At Your Own Pace',
+    description: 'Take breaks whenever you need — your progress is saved automatically',
+  },
+];
 
 /**
  * Assessment transition card.
@@ -42,68 +61,32 @@ export const TransitionCard: React.FC<TransitionCardProps> = ({
       <section className="pt-5">
         {showWhatsNextTitleDescription && (
           <div className="pb-5">
-            <div className="flex gap-2 items-center justify-center">
-              <Icon
-                name={Icons.ACTIVITY}
-                styleProps={{ size: 'md', colour: 'var(--color-primary)' }}
-              />
-              <Text as="h3" styleProps={{ size: 'xl', weight: 'semibold', colour: 'ffp-navy' }}>
-                What&apos;s Next
-              </Text>
-            </div>
-            {estimatedMinutes && (
-              <Text
-                as="p"
-                styleProps={{ size: 'sm', colour: 'muted-foreground' }}
-                className="mt-1 text-center"
-              >
-                This section will take approximately {estimatedMinutes} minutes to complete
-              </Text>
-            )}
+            <SectionHeader
+              icon={Icons.ACTIVITY}
+              title="What's Next"
+              description={
+                estimatedMinutes
+                  ? `This section will take approximately ${String(estimatedMinutes)} minutes to complete`
+                  : undefined
+              }
+              align="centre"
+            />
           </div>
         )}
 
-        {/* Feature columns */}
-        <div className="grid grid-cols-1 gap-6 py-8 sm:grid-cols-3">
-          <div className="flex flex-col items-center text-center">
-            <IconBadge name={Icons.VIDEO} size="lg" variant="secondary" />
-            <Text as="h4" styleProps={{ weight: 'semibold', colour: 'ffp-navy' }} className="mt-3">
-              Video-Guided
-            </Text>
-            <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mt-1">
-              Follow along with clear video demonstrations for each exercise
-            </Text>
-          </div>
-          <div className="flex flex-col items-center text-center">
-            <IconBadge name={Icons.TARGET} size="lg" variant="secondary" />
-            <Text as="h4" styleProps={{ weight: 'semibold', colour: 'ffp-navy' }} className="mt-3">
-              Strength &amp; Balance
-            </Text>
-            <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mt-1">
-              Simple tests to measure your current physical abilities
-            </Text>
-          </div>
-          <div className="flex flex-col items-center text-center">
-            <IconBadge name={Icons.CLOCK} size="lg" variant="secondary" />
-            <Text as="h4" styleProps={{ weight: 'semibold', colour: 'ffp-navy' }} className="mt-3">
-              At Your Own Pace
-            </Text>
-            <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mt-1">
-              Take breaks whenever you need — your progress is saved automatically
-            </Text>
-          </div>
-        </div>
+        <FeatureColumnGrid features={TRANSITION_FEATURES} headingLevel="h4" className="py-8" />
       </section>
 
       {/* Safety Notes */}
       {safetyNotes && safetyNotes.length > 0 && (
         <section className="mt-4 rounded-xl border border-warning/30 bg-warning/5 p-6">
-          <div className="mb-4 flex items-center gap-3">
-            <IconBadge name={Icons.ALERTTRIANGLE} size="md" variant="warning" />
-            <Text as="h3" styleProps={{ size: 'xl', weight: 'semibold', colour: 'ffp-navy' }}>
-              Safety Notes
-            </Text>
-          </div>
+          <SectionHeader
+            icon={Icons.ALERTTRIANGLE}
+            title="Safety Notes"
+            iconStyle="badge"
+            badgeVariant="warning"
+            className="mb-4"
+          />
           <ul className="space-y-3">
             {safetyNotes.map((note) => (
               <li key={note} className="flex items-start gap-3">
