@@ -1,6 +1,8 @@
-import type { FlowStepConfig } from '@ffp/core';
+import { useState } from 'react';
 
-import { IntroScreen, TransitionScreen } from '@web/components/assessment';
+import type { AnswerValue, AssessmentQuestion, FlowStepConfig } from '@ffp/core';
+
+import { IntroScreen, QuestionScreen, TransitionScreen } from '@web/components/assessment';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
@@ -60,6 +62,40 @@ const mockTransitionMinimalConfig: FlowStepConfig = {
   title: 'Next Section',
 };
 
+const mockQuestionStepConfig: FlowStepConfig = {
+  title: 'Pre-Assessment Questions',
+  description: 'Help us understand your current condition and goals.',
+};
+
+const mockSingleChoiceQuestion: AssessmentQuestion = {
+  id: '00000000-0000-0000-0000-000000000001',
+  type: 'single-choice',
+  question: 'What is your primary goal for this programme?',
+  description: 'Select the option that best describes what you hope to achieve.',
+  options: [
+    { value: 'reduce_pain', label: 'Reduce pain and discomfort' },
+    { value: 'improve_mobility', label: 'Improve mobility and flexibility' },
+    { value: 'build_strength', label: 'Build strength and endurance' },
+    { value: 'prevent_injury', label: 'Prevent future injuries' },
+  ],
+};
+
+const mockScaleQuestion: AssessmentQuestion = {
+  id: '00000000-0000-0000-0000-000000000002',
+  type: 'scale',
+  question: 'How would you rate your current pain level?',
+  description: 'On a scale from 0 (no pain) to 10 (worst imaginable pain).',
+  validation: { required: true, min: 0, max: 10 },
+};
+
+const mockTextQuestion: AssessmentQuestion = {
+  id: '00000000-0000-0000-0000-000000000003',
+  type: 'text',
+  question: 'Please describe any previous injuries or conditions.',
+  description: 'Include any relevant medical history that may affect your assessment.',
+  validation: { required: false, max: 500 },
+};
+
 // Placeholder for screens not yet built
 const ComingSoonPlaceholder: React.FC<{ name: string; ticket: string }> = ({ name, ticket }) => (
   <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -84,8 +120,8 @@ const ComingSoonPlaceholder: React.FC<{ name: string; ticket: string }> = ({ nam
  *
  * Demonstrates all step screen components for FFP-140:
  * - IntroScreen (FFP-218)
- * - TransitionScreen (FFP-220) — coming soon
- * - QuestionScreen (FFP-219) — coming soon
+ * - TransitionScreen (FFP-220)
+ * - QuestionScreen (FFP-219)
  * - ResultsScreen (FFP-221) — coming soon
  * - AssessmentStepRenderer (FFP-222) — coming soon
  */
@@ -115,7 +151,7 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
     {
       id: 'question',
       label: 'QuestionScreen',
-      content: <ComingSoonPlaceholder name="QuestionScreen" ticket="FFP-219" />,
+      content: <QuestionScreenDemo />,
     },
     {
       id: 'results',
@@ -142,7 +178,7 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <StatusCard title="IntroScreen" status="complete" />
           <StatusCard title="TransitionScreen" status="complete" />
-          <StatusCard title="QuestionScreen" status="pending" task="FFP-219" />
+          <StatusCard title="QuestionScreen" status="complete" />
           <StatusCard title="ResultsScreen" status="pending" task="FFP-221" />
           <StatusCard title="StepRenderer" status="pending" task="FFP-222" />
         </div>
@@ -166,7 +202,7 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
               Import screen components:
             </Text>
             <code className="block rounded bg-muted p-2 text-xs">
-              {`import { IntroScreen, TransitionScreen } from '@web/components/assessment';`}
+              {`import { IntroScreen, TransitionScreen, QuestionScreen } from '@web/components/assessment';`}
             </code>
           </div>
           <div>
@@ -268,6 +304,75 @@ const TransitionScreenDemo: React.FC<{ onContinue: () => void; onBack: () => voi
       <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
         Transition screen displayed between assessment phases. Shows what to expect next, safety
         warnings from the flow configuration, and navigation buttons.
+      </Text>
+      <DemoTabs tabs={variantTabs} />
+    </div>
+  );
+};
+
+// ============================================================================
+// QuestionScreen Demo (with variant tabs)
+// ============================================================================
+
+const QuestionScreenDemo: React.FC = () => {
+  const [answers, setAnswers] = useState<Record<string, AnswerValue | null>>({});
+
+  const handleAnswer = (questionId: string, value: AnswerValue | null): void => {
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+    // eslint-disable-next-line no-console
+    console.log(`[Demo] onAnswer: ${questionId} = ${JSON.stringify(value)}`);
+  };
+
+  const variantTabs: DemoTab[] = [
+    {
+      id: 'single-choice',
+      label: 'Single Choice',
+      content: (
+        <QuestionScreen
+          config={mockQuestionStepConfig}
+          question={mockSingleChoiceQuestion}
+          questionNumber={1}
+          totalQuestions={5}
+          value={answers[mockSingleChoiceQuestion.id] ?? null}
+          onAnswer={handleAnswer}
+        />
+      ),
+    },
+    {
+      id: 'scale',
+      label: 'Scale',
+      content: (
+        <QuestionScreen
+          config={mockQuestionStepConfig}
+          question={mockScaleQuestion}
+          questionNumber={3}
+          totalQuestions={5}
+          value={answers[mockScaleQuestion.id] ?? null}
+          onAnswer={handleAnswer}
+        />
+      ),
+    },
+    {
+      id: 'text',
+      label: 'Text',
+      content: (
+        <QuestionScreen
+          config={mockQuestionStepConfig}
+          question={mockTextQuestion}
+          questionNumber={5}
+          totalQuestions={5}
+          value={answers[mockTextQuestion.id] ?? null}
+          onAnswer={handleAnswer}
+        />
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+        Thin wrapper around QuestionRenderer with question number indicator. Select different tabs to
+        see various question types. Answers are interactive — try selecting options.
       </Text>
       <DemoTabs tabs={variantTabs} />
     </div>
