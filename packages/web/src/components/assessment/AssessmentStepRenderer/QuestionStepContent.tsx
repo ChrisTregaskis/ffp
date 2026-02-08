@@ -1,4 +1,8 @@
+import { useState } from 'react';
+
 import { LoadingSpinner } from '@web/components/LoadingSpinner';
+import type { CardTransitionDirection } from '@web/components/motion';
+import { FadeSlideIn } from '@web/components/motion';
 import { Text } from '@web/components/text';
 
 import { AssessmentNavigation } from '../AssessmentNavigation';
@@ -32,39 +36,46 @@ export const QuestionStepContent: React.FC<QuestionStepContentProps> = ({
     );
   }
 
+  const [direction, setDirection] = useState<CardTransitionDirection>('forward');
+
   const currentQuestion = questions[questionIndex];
   const isFirstQuestion = questionIndex === 0;
   const isLastQuestion = questionIndex === questions.length - 1;
 
   return (
     <div className="mx-auto max-w-3xl">
-      <QuestionCard
-        config={config}
-        question={currentQuestion}
-        questionNumber={questionIndex + 1}
-        totalQuestions={questions.length}
-        value={currentQuestion.id in answers ? answers[currentQuestion.id].answerValue : null}
-        onAnswer={onAnswer}
-        footer={
-          <AssessmentNavigation
-            showBack={!isFirstQuestion || currentStep > 1}
-            onContinue={
-              isLastQuestion
-                ? undefined
-                : () => {
-                    onQuestionIndexChange((i) => i + 1);
-                  }
-            }
-            onBack={
-              isFirstQuestion
-                ? undefined
-                : () => {
-                    onQuestionIndexChange((i) => i - 1);
-                  }
-            }
-          />
-        }
-      />
+      <FadeSlideIn duration={0.5}>
+        <QuestionCard
+          config={config}
+          question={currentQuestion}
+          questionNumber={questionIndex + 1}
+          totalQuestions={questions.length}
+          value={currentQuestion.id in answers ? answers[currentQuestion.id].answerValue : null}
+          onAnswer={onAnswer}
+          direction={direction}
+          footer={
+            <AssessmentNavigation
+              showBack={!isFirstQuestion || currentStep > 1}
+              onContinue={
+                isLastQuestion
+                  ? undefined
+                  : () => {
+                      setDirection('forward');
+                      onQuestionIndexChange((i) => i + 1);
+                    }
+              }
+              onBack={
+                isFirstQuestion
+                  ? undefined
+                  : () => {
+                      setDirection('backward');
+                      onQuestionIndexChange((i) => i - 1);
+                    }
+              }
+            />
+          }
+        />
+      </FadeSlideIn>
     </div>
   );
 };

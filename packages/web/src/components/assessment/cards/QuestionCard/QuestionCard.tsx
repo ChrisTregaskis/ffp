@@ -1,6 +1,7 @@
 import type { AnswerValue, AssessmentQuestion, FlowStepConfig } from '@ffp/core';
 
 import { AssessmentNavigation, QuestionRenderer } from '@web/components/assessment';
+import { CardTransition, type CardTransitionDirection } from '@web/components/motion';
 
 import { StepCard } from '../StepCard';
 
@@ -19,6 +20,8 @@ export interface QuestionCardProps {
   value: AnswerValue | null;
   /** Callback when the answer changes */
   onAnswer: (questionId: string, value: AnswerValue | null) => void;
+  /** Navigation direction for question transition animation @default 'forward' */
+  direction?: CardTransitionDirection;
   /** Optional footer override (defaults to AssessmentNavigation) */
   footer?: ReactNode;
 }
@@ -37,6 +40,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   totalQuestions,
   value,
   onAnswer,
+  direction = 'forward',
   footer,
 }) => {
   return (
@@ -48,7 +52,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
       footer={footer ?? <AssessmentNavigation />}
     >
       <div className="pt-5">
-        <QuestionRenderer question={question} value={value} onChange={onAnswer} />
+        <CardTransition transitionKey={question.id} direction={direction} duration={0.2}>
+          <QuestionRenderer question={question} value={value} onChange={onAnswer} />
+        </CardTransition>
       </div>
     </StepCard>
   );
