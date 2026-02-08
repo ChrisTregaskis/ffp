@@ -24,6 +24,7 @@ import { Text } from '@web/components/text';
 export const StaticAlertComponentsPage = (): JSX.Element => {
   const componentTabs: DemoTab[] = [
     { id: 'variants', label: 'Variants', content: <VariantsDemo /> },
+    { id: 'appearances', label: 'Appearances', content: <AppearancesDemo /> },
     { id: 'dismissible', label: 'Dismissible', content: <DismissibleDemo /> },
     { id: 'real-world', label: 'Real-World Examples', content: <RealWorldDemo /> },
     { id: 'accessibility', label: 'Accessibility', content: <AccessibilityDemo /> },
@@ -142,6 +143,66 @@ const VariantsDemo: React.FC = () => (
     <ButtonSampleDisplay label="Success Alert">
       <StaticAlert variant="success" message="Your changes have been saved successfully." />
     </ButtonSampleDisplay>
+  </div>
+);
+
+// ============================================================================
+// Appearances Demo
+// ============================================================================
+
+const AppearancesDemo: React.FC = () => (
+  <div className="space-y-8">
+    <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+      Two appearance styles: soft (translucent tint) and solid (full-colour background with white
+      text). Compare side-by-side to decide which suits different use cases.
+    </Text>
+
+    <div className="space-y-6">
+      <ButtonSampleDisplay label="Error — Soft vs Solid">
+        <div className="space-y-3">
+          <StaticAlert
+            variant="error"
+            appearance="soft"
+            message="Soft: Invalid email or password."
+          />
+          <StaticAlert
+            variant="error"
+            appearance="solid"
+            message="Solid: Invalid email or password."
+          />
+        </div>
+      </ButtonSampleDisplay>
+
+      <ButtonSampleDisplay label="Warning — Soft vs Solid">
+        <div className="space-y-3">
+          <StaticAlert
+            variant="warning"
+            appearance="soft"
+            message="Soft: Your session will expire in 5 minutes."
+          />
+          <StaticAlert
+            variant="warning"
+            appearance="solid"
+            message="Solid: Your session will expire in 5 minutes."
+          />
+        </div>
+      </ButtonSampleDisplay>
+
+      <ButtonSampleDisplay label="Success — Soft vs Solid">
+        <div className="space-y-3">
+          <StaticAlert
+            variant="success"
+            appearance="soft"
+            message="Soft: Your changes have been saved."
+          />
+          <StaticAlert
+            variant="success"
+            appearance="solid"
+            message="Solid: Your changes have been saved."
+          />
+        </div>
+      </ButtonSampleDisplay>
+    </div>
   </div>
 );
 

@@ -6,7 +6,8 @@ import {
   DeveloperInstructions,
   IconSizeDisplay,
 } from '@web/components/dev';
-import { Icon, Icons } from '@web/components/Icon';
+import { Icon, IconBadge, Icons } from '@web/components/Icon';
+import type { IconBadgeAppearance, IconBadgeSize, IconBadgeVariant } from '@web/components/Icon';
 import { Text } from '@web/components/text';
 
 /**
@@ -28,6 +29,7 @@ export const IconComponentsPage = (): JSX.Element => {
   const componentTabs: DemoTab[] = [
     { id: 'sizes', label: 'Sizes', content: <SizesDemo /> },
     { id: 'colours', label: 'Colours', content: <ColoursDemo /> },
+    { id: 'badges', label: 'Icon Badges', content: <IconBadgeDemo /> },
     { id: 'library', label: 'Icon Library', content: <IconLibraryDemo /> },
   ];
 
@@ -200,6 +202,77 @@ const ColoursDemo: React.FC = () => {
     </div>
   );
 };
+
+// ============================================================================
+// Icon Badge Demo
+// ============================================================================
+
+const BADGE_VARIANTS: IconBadgeVariant[] = ['secondary', 'primary', 'success', 'warning', 'muted'];
+const BADGE_SIZES: IconBadgeSize[] = ['sm', 'md', 'lg'];
+const BADGE_APPEARANCES: IconBadgeAppearance[] = ['soft', 'solid'];
+
+const IconBadgeDemo: React.FC = () => (
+  <div className="space-y-8">
+    <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+      Icons wrapped in coloured badge containers. Supports soft (translucent) and solid (filled)
+      appearances, with square or circle shapes.
+    </Text>
+
+    {/* Variants × Appearances */}
+    {BADGE_APPEARANCES.map((appearance) => (
+      <div key={appearance} className="space-y-3">
+        <Text as="h3" styleProps={{ size: 'sm', weight: 'semibold' }} className="capitalize">
+          {appearance} appearance
+        </Text>
+        <div className="flex items-center gap-6">
+          {BADGE_VARIANTS.map((variant) => (
+            <div key={variant} className="flex flex-col items-center gap-2">
+              <IconBadge
+                name={Icons.CHECKCIRCLE}
+                variant={variant}
+                appearance={appearance}
+                size="md"
+              />
+              <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>{variant}</Text>
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+
+    {/* Sizes */}
+    <div className="space-y-3">
+      <Text as="h3" styleProps={{ size: 'sm', weight: 'semibold' }}>
+        Sizes
+      </Text>
+      <div className="flex items-end gap-6">
+        {BADGE_SIZES.map((size) => (
+          <div key={size} className="flex flex-col items-center gap-2">
+            <IconBadge name={Icons.TARGET} variant="primary" appearance="solid" size={size} />
+            <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>{size}</Text>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Shapes */}
+    <div className="space-y-3">
+      <Text as="h3" styleProps={{ size: 'sm', weight: 'semibold' }}>
+        Shapes
+      </Text>
+      <div className="flex items-center gap-6">
+        <div className="flex flex-col items-center gap-2">
+          <IconBadge name={Icons.VIDEO} variant="success" appearance="solid" shape="square" />
+          <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>square</Text>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <IconBadge name={Icons.VIDEO} variant="success" appearance="solid" shape="circle" />
+          <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>circle</Text>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 // ============================================================================
 // Icon Library Demo

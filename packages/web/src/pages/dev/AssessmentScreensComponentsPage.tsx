@@ -295,18 +295,6 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
         showBackLink
       />
 
-      {/* Implementation Status */}
-      <ComponentSection title="Implementation Status">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <StatusCard title="IntroScreen" status="complete" />
-          <StatusCard title="QuestionCard" status="complete" />
-          <StatusCard title="TransitionCard" status="complete" />
-          <StatusCard title="VideoQuestionCard" status="complete" />
-          <StatusCard title="ResultsScreen" status="complete" />
-          <StatusCard title="StepRenderer" status="complete" />
-        </div>
-      </ComponentSection>
-
       {/* Component demos */}
       <ComponentSection title="Component Demos">
         <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
@@ -805,35 +793,6 @@ const StepRendererDemo: React.FC = () => {
         AssessmentProvider context and fetches flow configuration.
       </Text>
       <DemoTabs tabs={typeTabs} />
-    </div>
-  );
-};
-
-// ============================================================================
-// Helper Components
-// ============================================================================
-
-const StatusCard: React.FC<{
-  title: string;
-  status: 'complete' | 'pending';
-  task?: string;
-}> = ({ title, status, task }) => {
-  const baseClassName = `rounded-lg border p-3 transition-colors ${
-    status === 'complete' ? 'border-success/30 bg-success/5' : 'border-border bg-muted/30'
-  }`;
-
-  return (
-    <div className={baseClassName}>
-      <div className="flex items-center justify-between">
-        <Text styleProps={{ size: 'sm', weight: 'medium' }}>{title}</Text>
-        {status === 'complete' ? (
-          <span className="rounded-full bg-success/20 px-2 py-0.5 text-xs text-success">Done</span>
-        ) : (
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-            {task}
-          </span>
-        )}
-      </div>
     </div>
   );
 };
