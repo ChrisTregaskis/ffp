@@ -49,23 +49,25 @@ Renamed American English identifiers to British English across the codebase (mer
 
 ### Sprint 6 Stories
 
-| Key     | Story                            | Pts | Dependencies           | Notes                                     |
-| ------- | -------------------------------- | --- | ---------------------- | ----------------------------------------- |
-| FFP-137 | Assessment Navigation Component  | 3   | FFP-135 ✅, FFP-136 ✅ | ✅ Complete                               |
-| FFP-140 | Assessment Step Screens          | 5   | FFP-135 ✅, FFP-131 ✅ | All sub-tasks done — pending final review |
-| FFP-230 | Stale Job Detection              | 2   | FFP-180 ✅             | EventBridge scheduled Lambda              |
-| FFP-233 | Backend Required Question Valid. | 3   | FFP-130 ✅             | Defence-in-depth server-side validation   |
-| FFP-254 | FFP-3 Epic Planning & Sprints    | 5   | -                      | Architecture, user stories, sprint defs   |
-| FFP-229 | Assessment Engine Epic Clean Up  | 8   | -                      | Review FFP-2 requirements, backlog scan   |
+| Key     | Story                            | Pts | Dependencies           | Notes                                                                    |
+| ------- | -------------------------------- | --- | ---------------------- | ------------------------------------------------------------------------ |
+| FFP-137 | Assessment Navigation Component  | 3   | FFP-135 ✅, FFP-136 ✅ | ✅ Complete                                                              |
+| FFP-140 | Assessment Step Screens          | 5   | FFP-135 ✅, FFP-131 ✅ | All sub-tasks done — pending final review                                |
+| FFP-272 | E2E Assessment Flow Integration  | 5   | FFP-140, FFP-136 ✅    | First-login → assessment route, template questions gap, full flow wiring |
+| FFP-230 | Stale Job Detection              | 2   | FFP-180 ✅             | EventBridge scheduled Lambda                                             |
+| FFP-233 | Backend Required Question Valid. | 3   | FFP-130 ✅             | Defence-in-depth server-side validation                                  |
+| FFP-254 | FFP-3 Epic Planning & Sprints    | 5   | -                      | Architecture, user stories, sprint defs                                  |
+| FFP-229 | Assessment Engine Epic Clean Up  | 8   | -                      | Review FFP-2 requirements, backlog scan                                  |
 
 ### Recommended Execution Order
 
 1. **FFP-137** - Assessment Navigation (frontend, all deps complete)
 2. **FFP-140** - Assessment Step Screens (frontend, core UX)
-3. **FFP-233** - Backend required question validation (backend, defence-in-depth)
-4. **FFP-230** - Stale job detection (backend, operational resilience)
-5. **FFP-229** - Epic cleanup (review FFP-2, polish)
-6. **FFP-254** - FFP-3 Epic planning (documentation, prepares next phase)
+3. **FFP-272** - E2E Assessment Flow Integration (wires everything together, demo-ready)
+4. **FFP-233** - Backend required question validation (backend, defence-in-depth)
+5. **FFP-230** - Stale job detection (backend, operational resilience)
+6. **FFP-229** - Epic cleanup (review FFP-2, polish)
+7. **FFP-254** - FFP-3 Epic planning (documentation, prepares next phase)
 
 ### Completed: FFP-137 — Assessment Navigation Component ✅
 

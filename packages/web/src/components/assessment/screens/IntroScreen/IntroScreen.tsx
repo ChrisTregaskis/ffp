@@ -9,6 +9,7 @@ import {
 } from '@web/components/assessment';
 import { Button } from '@web/components/button';
 import { Icons } from '@web/components/Icon';
+import { ClickScale, FadeSlideIn } from '@web/components/motion';
 import { Text } from '@web/components/text';
 
 export interface IntroScreenProps {
@@ -49,64 +50,74 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ config, onStart }) => 
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-8">
       {/* Welcome heading */}
-      <div className="text-center">
-        <Text
-          as="h1"
-          styleProps={{ size: '3xl', weight: 'bold', colour: 'ffp-navy' }}
-          className="tracking-tight"
-        >
-          {title}
-        </Text>
-        {description && (
-          <Text as="p" styleProps={{ size: 'lg', colour: 'muted-foreground' }} className="mt-3">
-            {description}
+      <FadeSlideIn duration={0.5}>
+        <div className="text-center">
+          <Text
+            as="h1"
+            styleProps={{ size: '3xl', weight: 'bold', colour: 'ffp-navy' }}
+            className="tracking-tight"
+          >
+            {title}
           </Text>
-        )}
-      </div>
+          {description && (
+            <Text as="p" styleProps={{ size: 'lg', colour: 'muted-foreground' }} className="mt-3">
+              {description}
+            </Text>
+          )}
+        </div>
+      </FadeSlideIn>
 
       {/* What to Expect */}
-      <SectionPanel>
-        <div className="px-6 pt-6 pb-5">
-          <SectionHeader
-            icon={Icons.CLOCK}
-            title="What to Expect"
-            description={
-              estimatedMinutes
-                ? `This assessment will take approximately ${String(estimatedMinutes)} minutes to complete`
-                : undefined
-            }
-            as="h2"
-            align="centre"
-          />
-        </div>
+      <FadeSlideIn delay={0.15} duration={0.5}>
+        <SectionPanel>
+          <div className="px-6 pt-6 pb-5">
+            <SectionHeader
+              icon={Icons.CLOCK}
+              title="What to Expect"
+              description={
+                estimatedMinutes
+                  ? `This assessment will take approximately ${String(estimatedMinutes)} minutes to complete`
+                  : undefined
+              }
+              as="h2"
+              align="centre"
+            />
+          </div>
 
-        <FeatureColumnGrid features={INTRO_FEATURES} headingLevel="h3" className="px-6 py-8" />
-      </SectionPanel>
+          <FeatureColumnGrid features={INTRO_FEATURES} headingLevel="h3" className="px-6 py-8" />
+        </SectionPanel>
+      </FadeSlideIn>
 
       {/* Before You Begin checklist */}
       {instructions && instructions.length > 0 && (
-        <SectionPanel variant="gradient" className="p-6">
-          <InstructionList
-            items={instructions}
-            title="Before You Begin:"
-            titleAs="h2"
-            bulletStyle="icon"
-            bulletIcon={Icons.CHECKCIRCLE}
-            bulletColour="var(--color-success)"
-          />
-        </SectionPanel>
+        <FadeSlideIn delay={0.3} duration={0.5}>
+          <SectionPanel variant="gradient" className="p-6">
+            <InstructionList
+              items={instructions}
+              title="Before You Begin:"
+              titleAs="h2"
+              bulletStyle="icon"
+              bulletIcon={Icons.CHECKCIRCLE}
+              bulletColour="var(--color-success)"
+            />
+          </SectionPanel>
+        </FadeSlideIn>
       )}
 
       {/* Start button and footer */}
-      <div className="flex flex-col items-center gap-3 pt-4">
-        <Button variant="primary" size="lg" onClick={onStart}>
-          Start Assessment
-        </Button>
-        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-          Your progress will be saved automatically. You can return to complete the assessment later
-          if needed.
-        </Text>
-      </div>
+      <FadeSlideIn delay={0.5} duration={0.5} slideDistance={0}>
+        <div className="flex flex-col items-center gap-3 pt-4">
+          <ClickScale>
+            <Button variant="primary" size="lg" onClick={onStart}>
+              Start Assessment
+            </Button>
+          </ClickScale>
+          <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+            Your progress will be saved automatically. You can return to complete the assessment
+            later if needed.
+          </Text>
+        </div>
+      </FadeSlideIn>
     </div>
   );
 };
