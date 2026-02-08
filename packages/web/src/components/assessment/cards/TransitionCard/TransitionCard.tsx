@@ -1,7 +1,12 @@
 import type { FlowStepConfig } from '@ffp/core';
 
 import type { FeatureItem } from '@web/components/assessment';
-import { ASSESSMENT_MOTION, AssessmentNavigation, FeatureColumnGrid, SectionHeader } from '@web/components/assessment';
+import {
+  ASSESSMENT_MOTION,
+  AssessmentNavigation,
+  FeatureColumnGrid,
+  SectionHeader,
+} from '@web/components/assessment';
 import { Icon, Icons } from '@web/components/Icon';
 import { FadeSlideIn } from '@web/components/motion';
 import { Text } from '@web/components/text';
