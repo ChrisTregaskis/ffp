@@ -1,10 +1,12 @@
 import type { AnswerValue, AssessmentQuestion, FlowStepConfig } from '@ffp/core';
 
 import {
+  ASSESSMENT_MOTION,
   AssessmentNavigation,
   InstructionList,
   QuestionRenderer,
 } from '@web/components/assessment';
+import { CardTransition, type CardTransitionDirection } from '@web/components/motion';
 
 import { StepCard } from '../StepCard';
 
@@ -25,6 +27,8 @@ export interface VideoQuestionCardProps {
   onAnswer: (questionId: string, value: AnswerValue | null) => void;
   /** Signed CloudFront URL for the video */
   videoUrl?: string;
+  /** Navigation direction for question transition animation @default 'forward' */
+  direction?: CardTransitionDirection;
   /** Optional footer override (defaults to AssessmentNavigation) */
   footer?: ReactNode;
 }
@@ -45,6 +49,7 @@ export const VideoQuestionCard: React.FC<VideoQuestionCardProps> = ({
   value,
   onAnswer,
   videoUrl,
+  direction = 'forward',
   footer,
 }) => {
   return (
@@ -64,7 +69,18 @@ export const VideoQuestionCard: React.FC<VideoQuestionCardProps> = ({
       </div>
 
       {/* Video question content */}
-      <QuestionRenderer question={question} value={value} onChange={onAnswer} videoUrl={videoUrl} />
+      <CardTransition
+        transitionKey={question.id}
+        direction={direction}
+        duration={ASSESSMENT_MOTION.duration.questionTransition}
+      >
+        <QuestionRenderer
+          question={question}
+          value={value}
+          onChange={onAnswer}
+          videoUrl={videoUrl}
+        />
+      </CardTransition>
     </StepCard>
   );
 };

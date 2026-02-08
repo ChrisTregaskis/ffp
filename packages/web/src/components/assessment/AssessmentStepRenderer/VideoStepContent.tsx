@@ -1,8 +1,13 @@
+import { useState } from 'react';
+
 import { LoadingSpinner } from '@web/components/LoadingSpinner';
+import type { CardTransitionDirection } from '@web/components/motion';
+import { FadeSlideIn } from '@web/components/motion';
 import { Text } from '@web/components/text';
 
 import { AssessmentNavigation } from '../AssessmentNavigation';
 import { VideoQuestionCard } from '../cards/VideoQuestionCard';
+import { ASSESSMENT_MOTION } from '../motion.constants';
 
 import type { QuestionStepContentProps } from './types';
 
@@ -16,6 +21,8 @@ export const VideoStepContent: React.FC<QuestionStepContentProps> = ({
   currentStep,
   onAnswer,
 }) => {
+  const [direction, setDirection] = useState<CardTransitionDirection>('forward');
+
   if (questions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-16">
@@ -33,33 +40,38 @@ export const VideoStepContent: React.FC<QuestionStepContentProps> = ({
 
   return (
     <div className="mx-auto max-w-3xl">
-      <VideoQuestionCard
-        config={config}
-        question={currentQuestion}
-        questionNumber={questionIndex + 1}
-        totalQuestions={questions.length}
-        value={currentQuestion.id in answers ? answers[currentQuestion.id].answerValue : null}
-        onAnswer={onAnswer}
-        footer={
-          <AssessmentNavigation
-            showBack={!isFirstQuestion || currentStep > 1}
-            onContinue={
-              isLastQuestion
-                ? undefined
-                : () => {
-                    onQuestionIndexChange((i) => i + 1);
-                  }
-            }
-            onBack={
-              isFirstQuestion
-                ? undefined
-                : () => {
-                    onQuestionIndexChange((i) => i - 1);
-                  }
-            }
-          />
-        }
-      />
+      <FadeSlideIn duration={ASSESSMENT_MOTION.duration.entrance}>
+        <VideoQuestionCard
+          config={config}
+          question={currentQuestion}
+          questionNumber={questionIndex + 1}
+          totalQuestions={questions.length}
+          value={currentQuestion.id in answers ? answers[currentQuestion.id].answerValue : null}
+          onAnswer={onAnswer}
+          direction={direction}
+          footer={
+            <AssessmentNavigation
+              showBack={!isFirstQuestion || currentStep > 1}
+              onContinue={
+                isLastQuestion
+                  ? undefined
+                  : () => {
+                      setDirection('forward');
+                      onQuestionIndexChange((i) => i + 1);
+                    }
+              }
+              onBack={
+                isFirstQuestion
+                  ? undefined
+                  : () => {
+                      setDirection('backward');
+                      onQuestionIndexChange((i) => i - 1);
+                    }
+              }
+            />
+          }
+        />
+      </FadeSlideIn>
     </div>
   );
 };
