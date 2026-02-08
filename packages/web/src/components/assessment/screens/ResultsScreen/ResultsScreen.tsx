@@ -1,6 +1,6 @@
 import type { FlowStepConfig, UserAssessmentScores } from '@ffp/core';
 
-import { SectionHeader } from '@web/components/assessment';
+import { SectionHeader, SectionPanel } from '@web/components/assessment';
 import { Button } from '@web/components/button';
 import { IconBadge, Icons } from '@web/components/Icon';
 import type { IconName } from '@web/components/Icon';
@@ -70,7 +70,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   if (scores === null && isLoading) {
     return (
       <div className="mx-auto max-w-3xl space-y-8 px-4 py-8">
-        <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+        <SectionPanel>
           <div className="flex flex-col items-center gap-5 px-6 py-16">
             <div className="animate-pulse rounded-full bg-primary/10 p-5">
               <LoadingSpinner size="lg" />
@@ -88,11 +88,11 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                 styleProps={{ size: 'base', colour: 'muted-foreground' }}
                 className="mt-2"
               >
-                We&apos;re analysing your responses to create a personalised programme.
+                We&apos;re analysing your responses to match against a programme.
               </Text>
             </div>
           </div>
-        </section>
+        </SectionPanel>
       </div>
     );
   }
@@ -128,7 +128,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Assessment Scores */}
         {scores && (
-          <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+          <SectionPanel>
             <div className="px-5 pt-5 pb-4">
               <SectionHeader icon={Icons.TARGET} title="Assessment Scores" as="h2" />
             </div>
@@ -166,11 +166,11 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                 </div>
               )}
             </div>
-          </section>
+          </SectionPanel>
         )}
 
         {/* Recommended Programme */}
-        <section className="flex flex-col overflow-hidden rounded-2xl bg-secondary/30 shadow-xl">
+        <SectionPanel variant="tinted" className="flex flex-col">
           <div className="px-5 pt-5 pb-4">
             <SectionHeader icon={Icons.TRENDINGUP} title="Recommended Programme" as="h2" />
           </div>
@@ -179,7 +179,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
             <Text
               as="h3"
               styleProps={{ size: '2xl', weight: 'bold' }}
-              className="bg-gradient-to-r from-ffp-primary-blue to-ffp-dark-blue bg-clip-text text-transparent"
+              className="bg-linear-to-r from-ffp-primary-blue to-ffp-dark-blue bg-clip-text text-transparent"
             >
               {programmeName}
             </Text>
@@ -187,11 +187,11 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
               {programmeDescription}
             </Text>
           </div>
-        </section>
+        </SectionPanel>
       </div>
 
       {/* What Happens Next */}
-      <section className="rounded-2xl bg-secondary/30 p-6 shadow-xl">
+      <SectionPanel variant="tinted" className="p-6">
         <Text as="h2" styleProps={{ size: 'xl', weight: 'bold', colour: 'ffp-navy' }}>
           What Happens Next?
         </Text>
@@ -213,7 +213,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
             </div>
           ))}
         </div>
-      </section>
+      </SectionPanel>
 
       {/* CTA */}
       <div className="flex flex-col items-center gap-3 pt-4">

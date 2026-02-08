@@ -1,7 +1,12 @@
 import type { FlowStepConfig } from '@ffp/core';
 
 import type { FeatureItem } from '@web/components/assessment';
-import { FeatureColumnGrid, InstructionList, SectionHeader } from '@web/components/assessment';
+import {
+  FeatureColumnGrid,
+  InstructionList,
+  SectionHeader,
+  SectionPanel,
+} from '@web/components/assessment';
 import { Button } from '@web/components/button';
 import { Icons } from '@web/components/Icon';
 import { Text } from '@web/components/text';
@@ -60,7 +65,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ config, onStart }) => 
       </div>
 
       {/* What to Expect */}
-      <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+      <SectionPanel>
         <div className="px-6 pt-6 pb-5">
           <SectionHeader
             icon={Icons.CLOCK}
@@ -76,11 +81,11 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ config, onStart }) => 
         </div>
 
         <FeatureColumnGrid features={INTRO_FEATURES} headingLevel="h3" className="px-6 py-8" />
-      </section>
+      </SectionPanel>
 
       {/* Before You Begin checklist */}
       {instructions && instructions.length > 0 && (
-        <section className="rounded-2xl bg-linear-to-br from-secondary/40 to-primary/10 p-6 shadow-xl">
+        <SectionPanel variant="gradient" className="p-6">
           <InstructionList
             items={instructions}
             title="Before You Begin:"
@@ -89,7 +94,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ config, onStart }) => 
             bulletIcon={Icons.CHECKCIRCLE}
             bulletColour="var(--color-success)"
           />
-        </section>
+        </SectionPanel>
       )}
 
       {/* Start button and footer */}

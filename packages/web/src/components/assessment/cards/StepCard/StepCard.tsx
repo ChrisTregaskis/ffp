@@ -1,3 +1,4 @@
+import { SectionPanel } from '@web/components/assessment/SectionPanel';
 import { Text } from '@web/components/text';
 
 import { QuestionSubProgress } from '../QuestionSubProgress';
@@ -53,7 +54,7 @@ export const StepCard: React.FC<StepCardProps> = ({
     questionNumber !== undefined && totalQuestions !== undefined && totalQuestions > 0;
 
   return (
-    <div className={`rounded-2xl border border-border bg-card shadow-xl ${className}`.trim()}>
+    <SectionPanel as="div" className={className}>
       {/* Header zone */}
       <div
         className={`rounded-t-2xl bg-linear-to-r from-secondary/20 to-transparent px-6 pt-6 pb-4 ${alignClass}`}
@@ -83,6 +84,6 @@ export const StepCard: React.FC<StepCardProps> = ({
 
       {/* Footer zone */}
       {footer && <div className="px-6 py-4">{footer}</div>}
-    </div>
+    </SectionPanel>
   );
 };
