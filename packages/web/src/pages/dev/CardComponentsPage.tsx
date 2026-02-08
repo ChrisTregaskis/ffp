@@ -1,5 +1,6 @@
 import { Button } from '@web/components/button';
 import { Card } from '@web/components/Card';
+import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
   ComponentPageHeader,
@@ -20,6 +21,13 @@ import { Text } from '@web/components/text';
  * - Real-world examples (auth, profile, settings, etc.)
  */
 export const CardComponentsPage = (): JSX.Element => {
+  const componentTabs: DemoTab[] = [
+    { id: 'basic', label: 'Basic Variations', content: <BasicVariationsDemo /> },
+    { id: 'auth', label: 'Auth Card', content: <AuthCardDemo /> },
+    { id: 'real-world', label: 'Real-World Examples', content: <RealWorldDemo /> },
+    { id: 'custom', label: 'Custom Styling', content: <CustomStylingDemo /> },
+  ];
+
   return (
     <ComponentPageWrapper maxWidth="6xl">
       <ComponentPageHeader
@@ -28,181 +36,12 @@ export const CardComponentsPage = (): JSX.Element => {
         showBackLink
       />
 
-      {/* Basic variations */}
-      <ComponentSection title="Basic Variations">
-        <div className="space-y-6">
-          <ButtonSampleDisplay label="Card with title and subtitle">
-            <Card title="Card Title" subtitle="This is a subtitle describing the card content">
-              <Text>Card content goes here. This can be any React component or HTML.</Text>
-            </Card>
-          </ButtonSampleDisplay>
-
-          <ButtonSampleDisplay label="Card with title only">
-            <Card title="Simple Card">
-              <Text>Content without a subtitle.</Text>
-            </Card>
-          </ButtonSampleDisplay>
-
-          <ButtonSampleDisplay label="Card without header">
-            <Card>
-              <Text as="p" styleProps={{ weight: 'medium' }} className="mb-2">
-                No Header Card
-              </Text>
-              <Text styleProps={{ colour: 'muted-foreground' }}>
-                This card has no title or subtitle, just content.
-              </Text>
-            </Card>
-          </ButtonSampleDisplay>
-
-          <ButtonSampleDisplay label="Card with centered header">
-            <Card title="Centered Header" subtitle="Perfect for auth cards" centerHeader>
-              <Text className="text-center">Content can also be centered if needed.</Text>
-            </Card>
-          </ButtonSampleDisplay>
-        </div>
-      </ComponentSection>
-
-      {/* Auth card examples */}
-      <ComponentSection title="Auth Card Example">
-        <div className="space-y-6">
-          <ButtonSampleDisplay label="Sign In Card">
-            <div className="flex justify-center">
-              <Card
-                title="Welcome Back"
-                subtitle="Sign in to continue"
-                centerHeader
-                className="w-full max-w-md"
-              >
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="you@example.com"
-                      className="w-full px-3 py-2 border rounded-md"
-                      disabled
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input
-                      type="password"
-                      placeholder="••••••••"
-                      className="w-full px-3 py-2 border rounded-md"
-                      disabled
-                    />
-                  </div>
-                  <Button variant="primary" fullWidth disabled>
-                    Sign In
-                  </Button>
-                  <Text
-                    as="p"
-                    styleProps={{ size: 'sm', colour: 'muted-foreground' }}
-                    className="text-center"
-                  >
-                    Dont have an account?{' '}
-                    <span className="text-primary font-medium cursor-pointer">Sign up</span>
-                  </Text>
-                </div>
-              </Card>
-            </div>
-          </ButtonSampleDisplay>
-        </div>
-      </ComponentSection>
-
-      {/* Real-world examples */}
-      <ComponentSection title="Real-World Examples">
-        <div className="space-y-6">
-          <ButtonSampleDisplay label="User Profile Card">
-            <Card title="User Profile" subtitle="Manage your personal information">
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Text styleProps={{ size: 'xl', weight: 'semibold' }} className="text-primary">
-                      JD
-                    </Text>
-                  </div>
-                  <div>
-                    <Text styleProps={{ weight: 'medium' }}>John Doe</Text>
-                    <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-                      john.doe@example.com
-                    </Text>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="primary" size="sm">
-                    Edit Profile
-                  </Button>
-                  <Button variant="neutral" size="sm">
-                    Change Password
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </ButtonSampleDisplay>
-
-          <ButtonSampleDisplay label="Loading State Card">
-            <Card title="Loading Data" subtitle="Please wait while we fetch your information">
-              <div className="py-8">
-                <LoadingSpinner variant="center" size="md" />
-              </div>
-            </Card>
-          </ButtonSampleDisplay>
-
-          <ButtonSampleDisplay label="Stats Card">
-            <Card>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <Text styleProps={{ size: '2xl', weight: 'bold' }} className="text-primary">
-                    1,234
-                  </Text>
-                  <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>Users</Text>
-                </div>
-                <div>
-                  <Text styleProps={{ size: '2xl', weight: 'bold' }} className="text-success">
-                    89%
-                  </Text>
-                  <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>Success Rate</Text>
-                </div>
-                <div>
-                  <Text styleProps={{ size: '2xl', weight: 'bold' }} className="text-primary">
-                    567
-                  </Text>
-                  <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>Active</Text>
-                </div>
-              </div>
-            </Card>
-          </ButtonSampleDisplay>
-        </div>
-      </ComponentSection>
-
-      {/* Custom styling examples */}
-      <ComponentSection title="Custom Styling">
-        <div className="space-y-6">
-          <ButtonSampleDisplay label="Card with custom width">
-            <div className="flex justify-center">
-              <Card title="Narrow Card" className="max-w-sm">
-                <Text>This card has a maximum width constraint.</Text>
-              </Card>
-            </div>
-          </ButtonSampleDisplay>
-
-          <ButtonSampleDisplay label="Card with custom content spacing">
-            <Card title="Spaced Content" contentClassName="space-y-4">
-              <Text>First paragraph with spacing.</Text>
-              <Text>Second paragraph with spacing.</Text>
-              <Text>Third paragraph with spacing.</Text>
-            </Card>
-          </ButtonSampleDisplay>
-
-          <ButtonSampleDisplay label="Card with background color override">
-            <Card title="Custom Background" className="bg-primary/5">
-              <Text>This card has a custom background colour.</Text>
-            </Card>
-          </ButtonSampleDisplay>
-        </div>
+      <ComponentSection title="Component Demos">
+        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
+          Click through each tab to explore card variations, auth patterns, real-world examples, and
+          custom styling options.
+        </Text>
+        <DemoTabs tabs={componentTabs} />
       </ComponentSection>
 
       {/* Developer instructions */}
@@ -310,3 +149,202 @@ export const CardComponentsPage = (): JSX.Element => {
     </ComponentPageWrapper>
   );
 };
+
+// ============================================================================
+// Basic Variations Demo
+// ============================================================================
+
+const BasicVariationsDemo: React.FC = () => (
+  <div className="space-y-6">
+    <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+      Card with different header configurations and content layouts.
+    </Text>
+    <ButtonSampleDisplay label="Card with title and subtitle">
+      <Card title="Card Title" subtitle="This is a subtitle describing the card content">
+        <Text>Card content goes here. This can be any React component or HTML.</Text>
+      </Card>
+    </ButtonSampleDisplay>
+
+    <ButtonSampleDisplay label="Card with title only">
+      <Card title="Simple Card">
+        <Text>Content without a subtitle.</Text>
+      </Card>
+    </ButtonSampleDisplay>
+
+    <ButtonSampleDisplay label="Card without header">
+      <Card>
+        <Text as="p" styleProps={{ weight: 'medium' }} className="mb-2">
+          No Header Card
+        </Text>
+        <Text styleProps={{ colour: 'muted-foreground' }}>
+          This card has no title or subtitle, just content.
+        </Text>
+      </Card>
+    </ButtonSampleDisplay>
+
+    <ButtonSampleDisplay label="Card with centered header">
+      <Card title="Centered Header" subtitle="Perfect for auth cards" centerHeader>
+        <Text className="text-center">Content can also be centered if needed.</Text>
+      </Card>
+    </ButtonSampleDisplay>
+  </div>
+);
+
+// ============================================================================
+// Auth Card Demo
+// ============================================================================
+
+const AuthCardDemo: React.FC = () => (
+  <div className="space-y-6">
+    <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+      Centered card pattern commonly used for sign-in and authentication flows.
+    </Text>
+    <ButtonSampleDisplay label="Sign In Card">
+      <div className="flex justify-center">
+        <Card
+          title="Welcome Back"
+          subtitle="Sign in to continue"
+          centerHeader
+          className="w-full max-w-md"
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Email Address</label>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                className="w-full rounded-md border px-3 py-2"
+                disabled
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Password</label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                className="w-full rounded-md border px-3 py-2"
+                disabled
+              />
+            </div>
+            <Button variant="primary" fullWidth disabled>
+              Sign In
+            </Button>
+            <Text
+              as="p"
+              styleProps={{ size: 'sm', colour: 'muted-foreground' }}
+              className="text-center"
+            >
+              Dont have an account?{' '}
+              <span className="cursor-pointer font-medium text-primary">Sign up</span>
+            </Text>
+          </div>
+        </Card>
+      </div>
+    </ButtonSampleDisplay>
+  </div>
+);
+
+// ============================================================================
+// Real-World Examples Demo
+// ============================================================================
+
+const RealWorldDemo: React.FC = () => (
+  <div className="space-y-6">
+    <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+      Common card patterns in real application layouts.
+    </Text>
+    <ButtonSampleDisplay label="User Profile Card">
+      <Card title="User Profile" subtitle="Manage your personal information">
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <Text styleProps={{ size: 'xl', weight: 'semibold' }} className="text-primary">
+                JD
+              </Text>
+            </div>
+            <div>
+              <Text styleProps={{ weight: 'medium' }}>John Doe</Text>
+              <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+                john.doe@example.com
+              </Text>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="primary" size="sm">
+              Edit Profile
+            </Button>
+            <Button variant="neutral" size="sm">
+              Change Password
+            </Button>
+          </div>
+        </div>
+      </Card>
+    </ButtonSampleDisplay>
+
+    <ButtonSampleDisplay label="Loading State Card">
+      <Card title="Loading Data" subtitle="Please wait while we fetch your information">
+        <div className="py-8">
+          <LoadingSpinner variant="center" size="md" />
+        </div>
+      </Card>
+    </ButtonSampleDisplay>
+
+    <ButtonSampleDisplay label="Stats Card">
+      <Card>
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <Text styleProps={{ size: '2xl', weight: 'bold' }} className="text-primary">
+              1,234
+            </Text>
+            <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>Users</Text>
+          </div>
+          <div>
+            <Text styleProps={{ size: '2xl', weight: 'bold' }} className="text-success">
+              89%
+            </Text>
+            <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>Success Rate</Text>
+          </div>
+          <div>
+            <Text styleProps={{ size: '2xl', weight: 'bold' }} className="text-primary">
+              567
+            </Text>
+            <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>Active</Text>
+          </div>
+        </div>
+      </Card>
+    </ButtonSampleDisplay>
+  </div>
+);
+
+// ============================================================================
+// Custom Styling Demo
+// ============================================================================
+
+const CustomStylingDemo: React.FC = () => (
+  <div className="space-y-6">
+    <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+      Customisation options using className, contentClassName, and background overrides.
+    </Text>
+    <ButtonSampleDisplay label="Card with custom width">
+      <div className="flex justify-center">
+        <Card title="Narrow Card" className="max-w-sm">
+          <Text>This card has a maximum width constraint.</Text>
+        </Card>
+      </div>
+    </ButtonSampleDisplay>
+
+    <ButtonSampleDisplay label="Card with custom content spacing">
+      <Card title="Spaced Content" contentClassName="space-y-4">
+        <Text>First paragraph with spacing.</Text>
+        <Text>Second paragraph with spacing.</Text>
+        <Text>Third paragraph with spacing.</Text>
+      </Card>
+    </ButtonSampleDisplay>
+
+    <ButtonSampleDisplay label="Card with background color override">
+      <Card title="Custom Background" className="bg-primary/5">
+        <Text>This card has a custom background colour.</Text>
+      </Card>
+    </ButtonSampleDisplay>
+  </div>
+);
