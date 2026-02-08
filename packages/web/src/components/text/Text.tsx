@@ -14,7 +14,8 @@ export type TextColour =
   | 'accent-foreground'
   | 'warning'
   | 'info'
-  | 'white';
+  | 'white'
+  | 'ffp-navy';
 
 /**
  * Available text sizes based on FFP theme.
@@ -42,6 +43,7 @@ const COLOUR_CLASS_MAP: Record<TextColour, string> = {
   warning: 'text-warning',
   info: 'text-info',
   white: 'text-white',
+  'ffp-navy': 'text-ffp-navy',
 };
 
 /**
@@ -86,7 +88,7 @@ export interface TextProps {
   /** Style properties */
   styleProps?: TextStyleProps;
   /** HTML element to render @default 'span' */
-  as?: 'span' | 'p';
+  as?: 'span' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5';
   /** If provided, truncates text to this length and appends '...' */
   truncationLength?: number;
   /** Additional custom classes */

@@ -1,3 +1,4 @@
+import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
   ComponentPageHeader,
@@ -5,7 +6,8 @@ import {
   DeveloperInstructions,
   IconSizeDisplay,
 } from '@web/components/dev';
-import { Icon, Icons } from '@web/components/Icon';
+import { Icon, IconBadge, Icons } from '@web/components/Icon';
+import type { IconBadgeAppearance, IconBadgeSize, IconBadgeVariant } from '@web/components/Icon';
 import { Text } from '@web/components/text';
 
 /**
@@ -24,8 +26,12 @@ import { Text } from '@web/components/text';
  * This processes the selection.json file and creates TypeScript types.
  */
 export const IconComponentsPage = (): JSX.Element => {
-  // Get all icon names from enum
-  const iconNames = Object.values(Icons);
+  const componentTabs: DemoTab[] = [
+    { id: 'sizes', label: 'Sizes', content: <SizesDemo /> },
+    { id: 'colours', label: 'Colours', content: <ColoursDemo /> },
+    { id: 'badges', label: 'Icon Badges', content: <IconBadgeDemo /> },
+    { id: 'library', label: 'Icon Library', content: <IconLibraryDemo /> },
+  ];
 
   return (
     <ComponentPageWrapper maxWidth="6xl">
@@ -35,139 +41,12 @@ export const IconComponentsPage = (): JSX.Element => {
         showBackLink
       />
 
-      {/* Size variations */}
-      <ComponentSection title="Size Variations">
-        {iconNames.length > 0 ? (
-          <div className="flex items-center gap-8">
-            <IconSizeDisplay
-              icon={<Icon name={iconNames[0]} styleProps={{ size: 'xs' }} />}
-              label="xs (12px)"
-            />
-            <IconSizeDisplay
-              icon={<Icon name={iconNames[0]} styleProps={{ size: 'sm' }} />}
-              label="sm (16px)"
-            />
-            <IconSizeDisplay
-              icon={<Icon name={iconNames[0]} styleProps={{ size: 'md' }} />}
-              label="md (20px)"
-            />
-            <IconSizeDisplay
-              icon={<Icon name={iconNames[0]} styleProps={{ size: 'lg' }} />}
-              label="lg (24px)"
-            />
-            <IconSizeDisplay
-              icon={<Icon name={iconNames[0]} styleProps={{ size: 'xl' }} />}
-              label="xl (32px)"
-            />
-          </div>
-        ) : (
-          <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-            No icons available. Run{' '}
-            <code className="rounded bg-muted px-1">pnpm icon:generate</code>
-          </Text>
-        )}
-      </ComponentSection>
-
-      {/* Colour variations */}
-      <ComponentSection title="Colour Variations (FFP Brand Colours)">
-        {iconNames.length > 0 ? (
-          <div className="flex items-center gap-8">
-            <IconSizeDisplay
-              icon={
-                <Icon
-                  name={iconNames[0]}
-                  styleProps={{ size: 'lg', colour: 'var(--color-ffp-primary-blue)' }}
-                />
-              }
-              label="Primary Blue"
-            />
-            <IconSizeDisplay
-              icon={
-                <Icon
-                  name={iconNames[0]}
-                  styleProps={{ size: 'lg', colour: 'var(--color-ffp-dark-blue)' }}
-                />
-              }
-              label="Dark Blue"
-            />
-            <IconSizeDisplay
-              icon={
-                <Icon
-                  name={iconNames[0]}
-                  styleProps={{ size: 'lg', colour: 'var(--color-ffp-green)' }}
-                />
-              }
-              label="Green"
-            />
-            <IconSizeDisplay
-              icon={
-                <Icon
-                  name={iconNames[0]}
-                  styleProps={{ size: 'lg', colour: 'var(--color-ffp-light-purple)' }}
-                />
-              }
-              label="Light Purple"
-            />
-          </div>
-        ) : (
-          <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-            No icons available. Run{' '}
-            <code className="rounded bg-muted px-1">pnpm icon:generate</code>
-          </Text>
-        )}
-      </ComponentSection>
-
-      {/* All icons grid */}
-      <ComponentSection
-        title={
-          <>
-            Complete Icon Library
-            <Text
-              as="span"
-              styleProps={{ size: 'base', weight: 'normal', colour: 'muted-foreground' }}
-              className="ml-2"
-            >
-              ({iconNames.length} total)
-            </Text>
-          </>
-        }
-        className="mb-8"
-      >
-        {iconNames.length > 0 ? (
-          <div className="grid grid-cols-6 gap-4 md:grid-cols-8 lg:grid-cols-10">
-            {iconNames.map((name) => (
-              <div
-                key={name}
-                className="flex flex-col items-center rounded p-3 transition-colours hover:bg-gray-50"
-                title={name}
-              >
-                <Icon name={name} styleProps={{ size: 'lg' }} />
-                <Text
-                  className="mt-2 break-all text-center text-gray-600"
-                  styleProps={{ size: 'xs' }}
-                >
-                  {name}
-                </Text>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4">
-            <Text
-              as="p"
-              className="mb-2 text-yellow-800"
-              styleProps={{ size: 'sm', weight: 'medium' }}
-            >
-              No Icons Found
-            </Text>
-            <Text as="p" className="text-yellow-700" styleProps={{ size: 'sm' }}>
-              Add Icomoon assets to{' '}
-              <code className="rounded bg-yellow-100 px-1">src/assets/icomoon/</code> and run{' '}
-              <code className="rounded bg-yellow-100 px-1">pnpm icon:generate</code> to populate
-              icons.
-            </Text>
-          </div>
-        )}
+      <ComponentSection title="Component Demos">
+        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
+          Click through each tab to explore icon sizes, FFP brand colours, and the full icon
+          library.
+        </Text>
+        <DemoTabs tabs={componentTabs} />
       </ComponentSection>
 
       {/* Developer instructions */}
@@ -213,5 +92,229 @@ export const IconComponentsPage = (): JSX.Element => {
         </div>
       </DeveloperInstructions>
     </ComponentPageWrapper>
+  );
+};
+
+// ============================================================================
+// Sizes Demo
+// ============================================================================
+
+const SizesDemo: React.FC = () => {
+  const iconNames = Object.values(Icons);
+
+  if (iconNames.length === 0) {
+    return (
+      <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+        No icons available. Run <code className="rounded bg-muted px-1">pnpm icon:generate</code>
+      </Text>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+        Five size options from extra small (12px) to extra large (32px).
+      </Text>
+      <div className="flex items-center gap-8">
+        <IconSizeDisplay
+          icon={<Icon name={iconNames[0]} styleProps={{ size: 'xs' }} />}
+          label="xs (12px)"
+        />
+        <IconSizeDisplay
+          icon={<Icon name={iconNames[0]} styleProps={{ size: 'sm' }} />}
+          label="sm (16px)"
+        />
+        <IconSizeDisplay
+          icon={<Icon name={iconNames[0]} styleProps={{ size: 'md' }} />}
+          label="md (20px)"
+        />
+        <IconSizeDisplay
+          icon={<Icon name={iconNames[0]} styleProps={{ size: 'lg' }} />}
+          label="lg (24px)"
+        />
+        <IconSizeDisplay
+          icon={<Icon name={iconNames[0]} styleProps={{ size: 'xl' }} />}
+          label="xl (32px)"
+        />
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// Colours Demo
+// ============================================================================
+
+const ColoursDemo: React.FC = () => {
+  const iconNames = Object.values(Icons);
+
+  if (iconNames.length === 0) {
+    return (
+      <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+        No icons available. Run <code className="rounded bg-muted px-1">pnpm icon:generate</code>
+      </Text>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+        FFP brand colours applied via the colour style prop.
+      </Text>
+      <div className="flex items-center gap-8">
+        <IconSizeDisplay
+          icon={
+            <Icon
+              name={iconNames[0]}
+              styleProps={{ size: 'lg', colour: 'var(--color-ffp-primary-blue)' }}
+            />
+          }
+          label="Primary Blue"
+        />
+        <IconSizeDisplay
+          icon={
+            <Icon
+              name={iconNames[0]}
+              styleProps={{ size: 'lg', colour: 'var(--color-ffp-dark-blue)' }}
+            />
+          }
+          label="Dark Blue"
+        />
+        <IconSizeDisplay
+          icon={
+            <Icon
+              name={iconNames[0]}
+              styleProps={{ size: 'lg', colour: 'var(--color-ffp-green)' }}
+            />
+          }
+          label="Green"
+        />
+        <IconSizeDisplay
+          icon={
+            <Icon
+              name={iconNames[0]}
+              styleProps={{ size: 'lg', colour: 'var(--color-ffp-light-purple)' }}
+            />
+          }
+          label="Light Purple"
+        />
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// Icon Badge Demo
+// ============================================================================
+
+const BADGE_VARIANTS: IconBadgeVariant[] = ['secondary', 'primary', 'success', 'warning', 'muted'];
+const BADGE_SIZES: IconBadgeSize[] = ['sm', 'md', 'lg'];
+const BADGE_APPEARANCES: IconBadgeAppearance[] = ['soft', 'solid'];
+
+const IconBadgeDemo: React.FC = () => (
+  <div className="space-y-8">
+    <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+      Icons wrapped in coloured badge containers. Supports soft (translucent) and solid (filled)
+      appearances, with square or circle shapes.
+    </Text>
+
+    {/* Variants × Appearances */}
+    {BADGE_APPEARANCES.map((appearance) => (
+      <div key={appearance} className="space-y-3">
+        <Text as="h3" styleProps={{ size: 'sm', weight: 'semibold' }} className="capitalize">
+          {appearance} appearance
+        </Text>
+        <div className="flex items-center gap-6">
+          {BADGE_VARIANTS.map((variant) => (
+            <div key={variant} className="flex flex-col items-center gap-2">
+              <IconBadge
+                name={Icons.CHECKCIRCLE}
+                variant={variant}
+                appearance={appearance}
+                size="md"
+              />
+              <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>{variant}</Text>
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+
+    {/* Sizes */}
+    <div className="space-y-3">
+      <Text as="h3" styleProps={{ size: 'sm', weight: 'semibold' }}>
+        Sizes
+      </Text>
+      <div className="flex items-end gap-6">
+        {BADGE_SIZES.map((size) => (
+          <div key={size} className="flex flex-col items-center gap-2">
+            <IconBadge name={Icons.TARGET} variant="primary" appearance="solid" size={size} />
+            <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>{size}</Text>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Shapes */}
+    <div className="space-y-3">
+      <Text as="h3" styleProps={{ size: 'sm', weight: 'semibold' }}>
+        Shapes
+      </Text>
+      <div className="flex items-center gap-6">
+        <div className="flex flex-col items-center gap-2">
+          <IconBadge name={Icons.VIDEO} variant="success" appearance="solid" shape="square" />
+          <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>square</Text>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <IconBadge name={Icons.VIDEO} variant="success" appearance="solid" shape="circle" />
+          <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>circle</Text>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// ============================================================================
+// Icon Library Demo
+// ============================================================================
+
+const IconLibraryDemo: React.FC = () => {
+  const iconNames = Object.values(Icons);
+
+  if (iconNames.length === 0) {
+    return (
+      <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4">
+        <Text as="p" className="mb-2 text-yellow-800" styleProps={{ size: 'sm', weight: 'medium' }}>
+          No Icons Found
+        </Text>
+        <Text as="p" className="text-yellow-700" styleProps={{ size: 'sm' }}>
+          Add Icomoon assets to{' '}
+          <code className="rounded bg-yellow-100 px-1">src/assets/icomoon/</code> and run{' '}
+          <code className="rounded bg-yellow-100 px-1">pnpm icon:generate</code> to populate icons.
+        </Text>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+        All {iconNames.length} icons in the library. Hover for the icon name.
+      </Text>
+      <div className="grid grid-cols-6 gap-4 md:grid-cols-8 lg:grid-cols-10">
+        {iconNames.map((name) => (
+          <div
+            key={name}
+            className="flex flex-col items-center rounded p-3 transition-colours hover:bg-gray-50"
+            title={name}
+          >
+            <Icon name={name} styleProps={{ size: 'lg' }} />
+            <Text className="mt-2 break-all text-center text-gray-600" styleProps={{ size: 'xs' }}>
+              {name}
+            </Text>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };

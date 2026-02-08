@@ -4,6 +4,7 @@ import { USER_ROLE } from '@web/constants/roles';
 import { ComingSoonPage } from '@web/pages/ComingSoonPage';
 import { AssessmentProgressComponentsPage } from '@web/pages/dev/AssessmentProgressComponentsPage';
 import { AssessmentQuestionsComponentsPage } from '@web/pages/dev/AssessmentQuestionsComponentsPage';
+import { AssessmentScreensComponentsPage } from '@web/pages/dev/AssessmentScreensComponentsPage';
 import { ButtonComponentsPage } from '@web/pages/dev/ButtonComponentsPage';
 import { CardComponentsPage } from '@web/pages/dev/CardComponentsPage';
 import { ComponentsPage } from '@web/pages/dev/ComponentsPage';
@@ -354,6 +355,14 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: AssessmentQuestionsComponentsPage,
     title: 'Assessment Question Components',
+    excludeFromMainNavbar: true,
+    devOnly: true,
+  },
+  [RouteKey.COMPONENTS_ASSESSMENT_SCREENS]: {
+    path: `${componentsBasePath}/assessment-screens`,
+    public: true,
+    pageComponent: AssessmentScreensComponentsPage,
+    title: 'Assessment Screen Components',
     excludeFromMainNavbar: true,
     devOnly: true,
   },

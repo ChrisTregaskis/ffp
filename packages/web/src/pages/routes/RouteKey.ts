@@ -69,4 +69,6 @@ export enum RouteKey {
   COMPONENTS_ASSESSMENT_PROGRESS = 'components-assessment-progress',
   /** Assessment question components showcase */
   COMPONENTS_ASSESSMENT_QUESTIONS = 'components-assessment-questions',
+  /** Assessment screen components showcase */
+  COMPONENTS_ASSESSMENT_SCREENS = 'components-assessment-screens',
 }

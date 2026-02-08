@@ -64,14 +64,13 @@ CLAUDE.local.md
 .claude-prompts/*
 .claude/review-context.md
 .claude/screenshots*
+.claude/plans/
 
 project-documentation/sprint-planning/outputs/*.md
 project-documentation/sprint-planning/outputs/**/*.md
 project-documentation/sprint-planning/_stakeholder-update.build.html
 project-documentation/sprint-planning/stakeholder-update/
-project-documentation/refactoring/log
-project-documentation/refactoring/testing
-project-documentation/refactoring/archive
+project-documentation/refactoring/
 
 # AWS RDS CA certificate (public certificate - safe to commit)
 # curl -o packages/core/certs/rds-ca-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem

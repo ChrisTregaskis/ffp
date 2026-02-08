@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { Button } from '@web/components/button';
 import { Card } from '@web/components/Card';
+import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageHeader,
   ComponentPageWrapper,
@@ -32,14 +33,146 @@ const BuggyComponent: React.FC<{ shouldThrow: boolean }> = ({ shouldThrow }) => 
 };
 
 /**
- * Demo showing error boundary with reset functionality
+ * Custom fallback component demo
  */
-const ErrorBoundaryResetDemo: React.FC = () => {
+const CustomErrorFallback: React.FC<{ error: Error; resetErrorBoundary?: () => void }> = ({
+  error,
+  resetErrorBoundary,
+}) => {
+  return (
+    <Card>
+      <div className="space-y-4">
+        <div>
+          <Text styleProps={{ weight: 'semibold', colour: 'destructive' }}>
+            Custom Error Fallback
+          </Text>
+          <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>{error.message}</Text>
+        </div>
+        {resetErrorBoundary && (
+          <Button variant="secondary" size="sm" onClick={resetErrorBoundary}>
+            Try Again
+          </Button>
+        )}
+      </div>
+    </Card>
+  );
+};
+
+/**
+ * Error Boundary showcase page (development only).
+ *
+ * Demonstrates error boundary features:
+ * - Basic error catching and fallback UI
+ * - Reset functionality
+ * - Custom fallback components
+ * - Nested error boundaries
+ * - Best practices and usage patterns
+ */
+export const ErrorBoundaryShowcasePage = (): JSX.Element => {
+  const componentTabs: DemoTab[] = [
+    { id: 'basic', label: 'Basic', content: <BasicDemo /> },
+    { id: 'custom-fallback', label: 'Custom Fallback', content: <CustomFallbackDemo /> },
+    { id: 'nested', label: 'Nested Boundaries', content: <NestedBoundariesDemo /> },
+  ];
+
+  return (
+    <ComponentPageWrapper maxWidth="6xl">
+      <ComponentPageHeader
+        title="Error Boundary"
+        description="Catch and handle React errors gracefully with fallback UIs"
+        showBackLink
+      />
+
+      <ComponentSection title="Component Demos">
+        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
+          Click through each tab to explore basic error catching, custom fallback components, and
+          nested boundary isolation. Use the trigger buttons to simulate errors.
+        </Text>
+        <DemoTabs tabs={componentTabs} />
+      </ComponentSection>
+
+      {/* Developer Instructions */}
+      <DeveloperInstructions title="Error Boundary Best Practices">
+        <div className="space-y-4">
+          <div>
+            <Text styleProps={{ weight: 'semibold', size: 'sm' }} className="mb-2">
+              Placement Strategy
+            </Text>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+              <li>
+                <strong>Root level:</strong> Catches catastrophic errors (in{' '}
+                <code className="rounded bg-muted px-1">main.tsx</code>)
+              </li>
+              <li>
+                <strong>Feature level:</strong> Isolates failures in auth, dashboard, forms
+              </li>
+              <li>
+                <strong>Component level:</strong> For third-party or unstable components
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <Text styleProps={{ weight: 'semibold', size: 'sm' }} className="mb-2">
+              {`What Error Boundaries DON'T Catch`}
+            </Text>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+              <li>Event handlers (use try/catch)</li>
+              <li>Async code (promises, setTimeout)</li>
+              <li>Server-side rendering</li>
+              <li>Errors in the error boundary itself</li>
+            </ul>
+          </div>
+
+          <div>
+            <Text styleProps={{ weight: 'semibold', size: 'sm' }} className="mb-2">
+              Usage Examples
+            </Text>
+            <pre className="rounded bg-muted p-3 text-xs">
+              {`// Basic usage
+<ErrorBoundary>
+  <MyComponent />
+</ErrorBoundary>
+
+// With custom fallback
+<ErrorBoundary FallbackComponent={CustomFallback}>
+  <MyComponent />
+</ErrorBoundary>
+
+// With reset keys (auto-reset on route change)
+<ErrorBoundary
+  resetKeys={[location.pathname]}
+  onReset={() => logger.info('Error boundary reset')}
+>
+  <Router />
+</ErrorBoundary>
+
+// With error reporting (production only)
+<ErrorBoundary onError={(error) => Sentry.captureException(error)}>
+  <App />
+</ErrorBoundary>`}
+            </pre>
+          </div>
+        </div>
+      </DeveloperInstructions>
+    </ComponentPageWrapper>
+  );
+};
+
+// ============================================================================
+// Basic Demo
+// ============================================================================
+
+const BasicDemo: React.FC = () => {
   const [shouldThrow, setShouldThrow] = useState(false);
   const [resetCount, setResetCount] = useState(0);
 
   return (
     <div className="space-y-4">
+      <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+        Demonstrates error catching and recovery. Click &ldquo;Trigger Error&rdquo; to throw an
+        error, then use the fallback UI to reset.
+      </Text>
       <ErrorBoundary
         onReset={() => {
           setShouldThrow(false);
@@ -68,40 +201,19 @@ const ErrorBoundaryResetDemo: React.FC = () => {
   );
 };
 
-/**
- * Custom fallback component demo
- */
-const CustomErrorFallback: React.FC<{ error: Error; resetErrorBoundary?: () => void }> = ({
-  error,
-  resetErrorBoundary,
-}) => {
-  return (
-    <Card>
-      <div className="space-y-4">
-        <div>
-          <Text styleProps={{ weight: 'semibold', colour: 'destructive' }}>
-            Custom Error Fallback
-          </Text>
-          <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>{error.message}</Text>
-        </div>
-        {resetErrorBoundary && (
-          <Button variant="secondary" size="sm" onClick={resetErrorBoundary}>
-            Try Again
-          </Button>
-        )}
-      </div>
-    </Card>
-  );
-};
+// ============================================================================
+// Custom Fallback Demo
+// ============================================================================
 
-/**
- * Demo showing custom fallback component
- */
 const CustomFallbackDemo: React.FC = () => {
   const [shouldThrow, setShouldThrow] = useState(false);
 
   return (
     <div className="space-y-4">
+      <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+        Use the <code className="rounded bg-muted px-1">FallbackComponent</code> prop to customise
+        the error UI.
+      </Text>
       <ErrorBoundary
         FallbackComponent={CustomErrorFallback}
         onReset={() => {
@@ -123,15 +235,19 @@ const CustomFallbackDemo: React.FC = () => {
   );
 };
 
-/**
- * Demo showing nested error boundaries
- */
+// ============================================================================
+// Nested Boundaries Demo
+// ============================================================================
+
 const NestedBoundariesDemo: React.FC = () => {
   const [throwOuter, setThrowOuter] = useState(false);
   const [throwInner, setThrowInner] = useState(false);
 
   return (
     <div className="space-y-4">
+      <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+        {`Multiple boundaries isolate errors to specific features. Inner boundary failures don't affect outer components.`}
+      </Text>
       <ErrorBoundary
         onReset={() => {
           setThrowOuter(false);
@@ -187,126 +303,5 @@ const NestedBoundariesDemo: React.FC = () => {
         </Button>
       </div>
     </div>
-  );
-};
-
-/**
- * Error Boundary showcase page (development only).
- *
- * Demonstrates error boundary features:
- * - Basic error catching and fallback UI
- * - Reset functionality
- * - Custom fallback components
- * - Nested error boundaries
- * - Best practices and usage patterns
- */
-export const ErrorBoundaryShowcasePage = (): JSX.Element => {
-  return (
-    <ComponentPageWrapper maxWidth="6xl">
-      <ComponentPageHeader
-        title="Error Boundary"
-        description="Catch and handle React errors gracefully with fallback UIs"
-        showBackLink
-      />
-
-      {/* Basic Error Boundary with Reset */}
-      <ComponentSection title="Basic Error Boundary">
-        <div className="space-y-3">
-          <Text styleProps={{ colour: 'muted-foreground' }}>
-            Demonstrates error catching and recovery. Click &ldquo;Trigger Error&rdquo; to throw an
-            error, then use the fallback UI to reset.
-          </Text>
-          <ErrorBoundaryResetDemo />
-        </div>
-      </ComponentSection>
-
-      {/* Custom Fallback Component */}
-      <ComponentSection title="Custom Fallback Component">
-        <div className="space-y-3">
-          <Text styleProps={{ colour: 'muted-foreground' }}>
-            Use the <code className="rounded bg-muted px-1">FallbackComponent</code> prop to
-            customise the error UI.
-          </Text>
-          <CustomFallbackDemo />
-        </div>
-      </ComponentSection>
-
-      {/* Nested Error Boundaries */}
-      <ComponentSection title="Nested Error Boundaries">
-        <div className="space-y-3">
-          <Text styleProps={{ colour: 'muted-foreground' }}>
-            {`Multiple boundaries isolate errors to specific features. Inner boundary failures don't affect outer components.`}
-          </Text>
-          <NestedBoundariesDemo />
-        </div>
-      </ComponentSection>
-
-      {/* Developer Instructions */}
-      <div className="mt-8">
-        <DeveloperInstructions title="Error Boundary Best Practices">
-          <div className="space-y-4">
-            <div>
-              <Text styleProps={{ weight: 'semibold', size: 'sm' }} className="mb-2">
-                Placement Strategy
-              </Text>
-              <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                <li>
-                  <strong>Root level:</strong> Catches catastrophic errors (in{' '}
-                  <code className="rounded bg-muted px-1">main.tsx</code>)
-                </li>
-                <li>
-                  <strong>Feature level:</strong> Isolates failures in auth, dashboard, forms
-                </li>
-                <li>
-                  <strong>Component level:</strong> For third-party or unstable components
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <Text styleProps={{ weight: 'semibold', size: 'sm' }} className="mb-2">
-                {`What Error Boundaries DON'T Catch`}
-              </Text>
-              <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                <li>Event handlers (use try/catch)</li>
-                <li>Async code (promises, setTimeout)</li>
-                <li>Server-side rendering</li>
-                <li>Errors in the error boundary itself</li>
-              </ul>
-            </div>
-
-            <div>
-              <Text styleProps={{ weight: 'semibold', size: 'sm' }} className="mb-2">
-                Usage Examples
-              </Text>
-              <pre className="rounded bg-muted p-3 text-xs">
-                {`// Basic usage
-<ErrorBoundary>
-  <MyComponent />
-</ErrorBoundary>
-
-// With custom fallback
-<ErrorBoundary FallbackComponent={CustomFallback}>
-  <MyComponent />
-</ErrorBoundary>
-
-// With reset keys (auto-reset on route change)
-<ErrorBoundary
-  resetKeys={[location.pathname]}
-  onReset={() => logger.info('Error boundary reset')}
->
-  <Router />
-</ErrorBoundary>
-
-// With error reporting (production only)
-<ErrorBoundary onError={(error) => Sentry.captureException(error)}>
-  <App />
-</ErrorBoundary>`}
-              </pre>
-            </div>
-          </div>
-        </DeveloperInstructions>
-      </div>
-    </ComponentPageWrapper>
   );
 };

@@ -49,64 +49,151 @@ Renamed American English identifiers to British English across the codebase (mer
 
 ### Sprint 6 Stories
 
-| Key     | Story                            | Pts | Dependencies           | Notes                                   |
-| ------- | -------------------------------- | --- | ---------------------- | --------------------------------------- |
-| FFP-137 | Assessment Navigation Component  | 3   | FFP-135 ✅, FFP-136 ✅ | ✅ Complete                             |
-| FFP-140 | Assessment Step Screens          | 5   | FFP-135 ✅, FFP-131 ✅ | Intro, Transition, Results              |
-| FFP-230 | Stale Job Detection              | 2   | FFP-180 ✅             | EventBridge scheduled Lambda            |
-| FFP-233 | Backend Required Question Valid. | 3   | FFP-130 ✅             | Defence-in-depth server-side validation |
-| FFP-254 | FFP-3 Epic Planning & Sprints    | 5   | -                      | Architecture, user stories, sprint defs |
-| FFP-229 | Assessment Engine Epic Clean Up  | 8   | -                      | Review FFP-2 requirements, backlog scan |
+| Key     | Story                             | Pts | Dependencies           | Notes                                                                    |
+| ------- | --------------------------------- | --- | ---------------------- | ------------------------------------------------------------------------ |
+| FFP-137 | Assessment Navigation Component   | 3   | FFP-135 ✅, FFP-136 ✅ | ✅ Complete                                                              |
+| FFP-140 | Assessment Step Screens           | 5   | FFP-135 ✅, FFP-131 ✅ | All sub-tasks done + animations added — pending final review             |
+| FFP-272 | E2E Assessment Flow Integration   | 5   | FFP-140, FFP-136 ✅    | First-login → assessment route, template questions gap, full flow wiring |
+| FFP-230 | Stale Job Detection               | 2   | FFP-180 ✅             | EventBridge scheduled Lambda                                             |
+| FFP-233 | Backend Required Question Valid.  | 3   | FFP-130 ✅             | Defence-in-depth server-side validation                                  |
+| FFP-254 | FFP-3 Epic Planning & Sprints     | 5   | -                      | Architecture, user stories, sprint defs                                  |
+| FFP-273 | ToastAlert Notification Component | 3   | -                      | Auto-dismissing toast notifications (separate from StaticAlert)          |
+| FFP-229 | Assessment Engine Epic Clean Up   | 8   | -                      | Review FFP-2 requirements, backlog scan                                  |
 
 ### Recommended Execution Order
 
 1. **FFP-137** - Assessment Navigation (frontend, all deps complete)
 2. **FFP-140** - Assessment Step Screens (frontend, core UX)
-3. **FFP-233** - Backend required question validation (backend, defence-in-depth)
-4. **FFP-230** - Stale job detection (backend, operational resilience)
-5. **FFP-229** - Epic cleanup (review FFP-2, polish)
-6. **FFP-254** - FFP-3 Epic planning (documentation, prepares next phase)
+3. **FFP-272** - E2E Assessment Flow Integration (wires everything together, demo-ready)
+4. **FFP-233** - Backend required question validation (backend, defence-in-depth)
+5. **FFP-230** - Stale job detection (backend, operational resilience)
+6. **FFP-229** - Epic cleanup (review FFP-2, polish)
+7. **FFP-254** - FFP-3 Epic planning (documentation, prepares next phase)
 
-### Implementation Plan: FFP-137 — Assessment Navigation Component
+### Completed: FFP-137 — Assessment Navigation Component ✅
 
-**Branch**: `feature/FFP-137-assessment-navigation` (single branch, single PR)
-**Estimated effort**: Small — one new component file, all dependencies already built.
+**Branch**: `feature/FFP-137-assessment-navigation` | **Sub-tasks**: FFP-204, FFP-205, FFP-206 (done), FFP-207 (tests deferred)
+**Summary**: Save-on-navigate component using `useAssessment()` + `useSaveProgress()`. Supports branching via `nextStepId`, loading states, custom callbacks.
+
+---
+
+### Implementation Plan: FFP-140 — Assessment Step Screens
+
+**Branch**: `feature/FFP-140-assessment-step-screens` (single branch, single PR)
+**Estimated effort**: Medium — 4 new screen components + 2 placeholders + 1 orchestrator, all infrastructure already built.
 
 #### Sub-tasks (all on one branch)
 
-| Order | Key     | Summary                                  | Status    | Notes                                   |
-| ----- | ------- | ---------------------------------------- | --------- | --------------------------------------- |
-| 1     | FFP-204 | Component structure and props            | Done      | Props interface, base JSX               |
-| 2     | FFP-205 | Save-on-navigate logic (Continue & Back) | Done      | `useSaveProgress` + context dispatch    |
-| 3     | FFP-206 | Loading states and button disabling      | Done      | `isPending` from mutation, disabled UX  |
-| -     | FFP-207 | Unit tests                               | Abandoned | Deferred to post-MVP (tests moratorium) |
+| Order | Key     | Summary                               | Status | Notes                                                               |
+| ----- | ------- | ------------------------------------- | ------ | ------------------------------------------------------------------- |
+| -     | FFP-223 | AssessmentProgress with phase         | Skip   | Already done via FFP-138 (Sprint 5) — component exists              |
+| 1     | FFP-218 | IntroScreen component                 | Done   | Welcome screen with checklist and start button                      |
+| 2     | FFP-220 | TransitionScreen component            | Done   | Refactored to TransitionCard (composes StepCard)                    |
+| 3     | FFP-219 | QuestionScreen wrapper                | Done   | Refactored to QuestionCard (composes StepCard)                      |
+| -     | -       | Screen-to-Card refactor               | Done   | StepCard layout, cards/ directory, VideoQuestionCard                |
+| -     | -       | Shared component extraction           | Done   | FeatureColumnGrid, InstructionList, SectionHeader                   |
+| 4     | FFP-221 | ResultsScreen component               | Done   | Scores, risk level, recommended programme, SectionPanel             |
+| 5     | FFP-222 | AssessmentStepRenderer (orchestrator) | Done   | Routes step type → card/screen, question iteration, results polling |
 
-**Rationale for single branch**: All 3 sub-tasks modify the same file (`AssessmentNavigation.tsx`). They form a single coherent component — splitting across branches/PRs would be unnecessary overhead.
+**Rationale for single branch**: All components form one cohesive feature. The StepRenderer (FFP-222) depends on all screen/card components. Splitting would create unnecessary merge dependencies.
 
-#### Amendments from Jira (outdated details)
+#### Screen-to-Card Refactor (in progress)
 
-| Area                        | Jira Says                                             | Actual Codebase                                                                                                             | Resolution                                                             |
-| --------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| **Save hook signature**     | `saveProgress.mutateAsync({ assessmentId, answers })` | `useSaveProgress` takes `{ assessmentId, payload }` where payload includes answers + step                                   | Use actual hook signature                                              |
-| **File location**           | `components/AssessmentNavigation.tsx`                 | Assessment components use subdirectory pattern (e.g., `components/assessment/questions/`, `components/AssessmentProgress/`) | Place in `components/assessment/AssessmentNavigation/` for consistency |
-| **`continueLabel` default** | `'Next'`                                              | Other components use `'Continue'` convention                                                                                | Use `'Continue'` as default, keep prop for customisation               |
+After reviewing Figma screenshots against the built components, a structural mismatch was identified: the question, transition, and video step types all share a common card layout (progress bar + card container with title/content/CTAs inside), but each "Screen" component was implementing its own standalone layout with title/description floating above the card.
+
+**Decision**: Introduce a shared `StepCard` layout component and rename the card-based step components:
+
+- `QuestionScreen` → `QuestionCard` (composes `StepCard`)
+- `TransitionScreen` → `TransitionCard` (composes `StepCard`)
+- New `VideoQuestionCard` scaffold (composes `StepCard`)
+- `IntroScreen` unchanged (standalone screen, not a card)
+
+**New directory**: `components/assessment/cards/` alongside existing `screens/`
+
+**Full plan**: `.claude/plans/ffp-140-screen-to-card-refactor.md`
+
+#### Session Grouping (updated)
+
+| Session | Sub-tasks                   | Scope                                                               |
+| ------- | --------------------------- | ------------------------------------------------------------------- |
+| 1       | FFP-218, FFP-220            | IntroScreen + TransitionScreen (similar patterns) — Done            |
+| 2       | FFP-219                     | QuestionScreen wrapper — Done                                       |
+| 3       | Screen-to-Card refactor     | StepCard + QuestionCard + TransitionCard + VideoQuestionCard — Done |
+| 4       | Shared component extraction | FeatureColumnGrid, InstructionList, SectionHeader — Done            |
+| 5       | FFP-221                     | ResultsScreen (standalone, data-driven)                             |
+| 6       | FFP-222                     | StepRenderer orchestrator + placeholder screens + exports           |
+
+#### Amendments from Jira
+
+- **FFP-223 — skip**: Already built as FFP-138 (Sprint 5). Existing `AssessmentProgress` has phase label, step counter, animated bar.
+- **FFP-219 — reduced scope**: QuestionRenderer + 6 types already built (FFP-139). Only need a thin screen wrapper with question number indicator.
+- **FFP-219/FFP-220 — refactored**: Now being migrated from Screen to Card pattern with shared `StepCard` layout. Title/description move inside the card. Navigation CTAs become the card footer via `AssessmentNavigation`.
+- **FFP-221 scores**: Jira says "Strength Score (X/10)" — actual schema uses `dimensions[]` with `normalisedScore` (0-100). Use real `UserAssessmentScores` schema.
+- **FFP-221 programme**: No programme details API yet (`programmeId` only). Simple card — full details deferred to FFP-3.
+- **FFP-222 props**: Jira passes `template` as prop — actually fetched via `useAssessmentTemplateQuery` hook internally.
+- **FFP-222 step types**: Video step now gets `VideoQuestionCard` scaffold (not just a placeholder). Programme-overview gets placeholder (FFP-3 deferred).
+- **File location**: `components/assessment/cards/` for card-based steps, `components/assessment/screens/` for standalone screens (IntroScreen).
 
 #### Dependencies (all satisfied)
 
-- ✅ `useAssessment()` hook — provides `state` (isDirty, assessmentId, answers, currentStep) and `dispatch`
-- ✅ `useSaveProgress()` hook — mutation with `isPending`, `mutateAsync`
-- ✅ Context actions — `NEXT_STEP`, `PREV_STEP`, `MARK_SAVED` all implemented in reducer
+- ✅ `useAssessment()` — state (currentStep, answers, phase, scores) and dispatch
+- ✅ `useSaveProgress()` — mutation for save-on-navigate
+- ✅ `useSubmitAssessment()` — mutation for final submission
+- ✅ `useAssessmentResultsQuery(assessmentId)` — polling hook (2s interval, auto-stops)
+- ✅ `useAssessmentFlowQuery(flowId)` — fetch flow config (step configs, descriptions)
+- ✅ `useAssessmentTemplateQuery(templateId)` — fetch questions for question steps
+- ✅ `QuestionRenderer` — factory component for 6 question types
+- ✅ `AssessmentNavigation` — Continue/Back with save-on-navigate
+- ✅ `AssessmentProgress` — progress bar with phase label
+- ✅ Flow step types: `intro`, `questions`, `transition`, `video-assessment`, `results`, `programme-overview`
 
-#### Implementation Notes
+#### Key Types for Implementation
 
-- Component uses `useAssessment()` for state/dispatch and `useSaveProgress()` for the mutation
-- Save-then-navigate pattern: if `isDirty`, await `mutateAsync`, dispatch `MARK_SAVED`, then dispatch `NEXT_STEP`/`PREV_STEP`
-- Both buttons disabled when `saveProgress.isPending` to prevent double-clicks
-- Continue button shows `'Saving...'` during pending state
-- Back button hidden when `showBack=false` (e.g., on first step)
-- Custom `onContinue`/`onBack` callbacks override default dispatch behaviour
-- TailwindCSS styling with `disabled:opacity-50` pattern
-- Arrow function component with `React.FC` typing per project standards
+```typescript
+// Step config from flow (FlowStepConfig)
+{ title, description?, instructions?, safetyNotes?, estimatedMinutes? }
+
+// Scores from results (UserAssessmentScores)
+{ dimensions: DimensionalScore[], overallScore?, riskLevel?, scoredAt }
+
+// DimensionalScore
+{ dimensionId, dimensionName, rawScore, normalisedScore, category? }
+
+// Results API response (AssessmentResultsResponse)
+{ status, scores: UserAssessmentScores | null, programmeId: string | null }
+```
+
+#### Component Overview
+
+**Standalone Screens** (full-page layouts, no shared card chrome):
+
+- **IntroScreen** (FFP-218): Welcome heading, "What to Expect" section, "Before You Begin" checklist, "Start Assessment" button.
+- **ResultsScreen** (FFP-221): Score cards, risk level, polling loading state, "View Programme" button.
+- **ProgrammeOverviewScreen** (placeholder): Simple "Programme details coming soon" message. Full implementation via FFP-3.
+
+**Card Components** (compose shared `StepCard` layout):
+
+- **StepCard**: Shared layout — card chrome (`rounded-2xl shadow-xl`), header zone (title + description inside card), content zone, footer zone (border-t separator + CTAs).
+- **QuestionCard** (from FFP-219): Question sub-progress in header, `QuestionRenderer` as content, `AssessmentNavigation` as footer.
+- **TransitionCard** (from FFP-220): Centre-aligned title, "What's Next" + Safety Notes as flat inner sections (no individual shadows), `AssessmentNavigation` as footer.
+- **VideoQuestionCard** (scaffold): Instructions list + `QuestionRenderer` (routes to `VideoResponseQuestion`) as content, `AssessmentNavigation` as footer.
+
+**Orchestrator**:
+
+- **AssessmentStepRenderer** (FFP-222): Switch on `step.type` → renders correct card/screen component. Renders `AssessmentProgress` for all types except intro and programme-overview. Uses `useAssessment()` for state/dispatch.
+
+#### Key Decisions (from FFP-218 implementation)
+
+- **Colour hierarchy**: Headings use `text-ffp-navy`, descriptions use `text-muted-foreground`, body uses default foreground. All existing theme colours.
+- **Gradients** (from Figma, diagonal `to-br`): Checklist card `from-secondary/40 to-primary/10`. IconBadge secondary `from-secondary to-primary/20`.
+- **IconBadge**: New reusable component at `@web/components/Icon`. Variants: secondary (gradient), success, primary, muted. Sizes: sm/md/lg.
+- **Shadows**: `shadow-xl` on card sections (matching Figma prototype).
+- **Dev showcase**: Page at `/components/assessment-screens` (7xl width). Tab per screen, variant tabs per component. Update as each sub-task completes.
+- **Screen props**: Screens are presentational — `config: FlowStepConfig` + callbacks. No `useAssessment` dependency; orchestrator (FFP-222) handles state.
+
+#### Tests
+
+Deferred to post-MVP (tests moratorium).
 
 ---
 
