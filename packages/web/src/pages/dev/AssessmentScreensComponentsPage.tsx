@@ -1,10 +1,17 @@
 import { useState } from 'react';
 
-import type { AnswerValue, AssessmentQuestion, FlowStepConfig } from '@ffp/core';
+import type {
+  AnswerValue,
+  AssessmentQuestion,
+  DimensionalScore,
+  FlowStepConfig,
+  UserAssessmentScores,
+} from '@ffp/core';
 
 import {
   IntroScreen,
   QuestionCard,
+  ResultsScreen,
   TransitionCard,
   VideoQuestionCard,
 } from '@web/components/assessment';
@@ -82,6 +89,81 @@ const mockVideoStepConfig: FlowStepConfig = {
     'Use a sturdy chair or wall for support if needed',
     'Record the number of repetitions you can complete',
   ],
+};
+
+// ============================================================================
+// Mock results data for ResultsScreen demonstrations
+// ============================================================================
+
+const mockResultsConfig: FlowStepConfig = {
+  title: 'Your Results',
+  description: 'Based on your responses, here is a summary of your assessment.',
+};
+
+const mockResultsMinimalConfig: FlowStepConfig = {
+  title: 'Results',
+};
+
+const mockDimensions: DimensionalScore[] = [
+  {
+    dimensionId: 'strength',
+    dimensionName: 'Strength',
+    rawScore: 7,
+    normalisedScore: 70,
+  },
+  {
+    dimensionId: 'balance',
+    dimensionName: 'Balance',
+    rawScore: 6,
+    normalisedScore: 60,
+  },
+];
+
+const mockFullScores: UserAssessmentScores = {
+  dimensions: mockDimensions,
+  riskLevel: 'moderate',
+  scoredAt: new Date('2026-02-08T10:30:00Z'),
+};
+
+const mockMinimalScores: UserAssessmentScores = {
+  dimensions: [
+    {
+      dimensionId: 'mobility',
+      dimensionName: 'Mobility',
+      rawScore: 32,
+      normalisedScore: 78,
+    },
+  ],
+  scoredAt: new Date('2026-02-08T10:30:00Z'),
+};
+
+const mockHighRiskScores: UserAssessmentScores = {
+  dimensions: [
+    {
+      dimensionId: 'mobility',
+      dimensionName: 'Mobility',
+      rawScore: 8,
+      normalisedScore: 22,
+      category: 'Poor',
+    },
+    {
+      dimensionId: 'strength',
+      dimensionName: 'Strength',
+      rawScore: 5,
+      normalisedScore: 15,
+      category: 'Poor',
+    },
+    {
+      dimensionId: 'stability',
+      dimensionName: 'Stability',
+      rawScore: 10,
+      normalisedScore: 28,
+      category: 'Low',
+    },
+  ],
+  overallScore: 22,
+  riskLevel: 'high',
+  scoredAt: new Date('2026-02-08T10:30:00Z'),
 };
 
 const mockSingleChoiceQuestion: AssessmentQuestion = {
@@ -209,7 +291,7 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
     {
       id: 'results',
       label: 'ResultsScreen',
-      content: <ComingSoonPlaceholder name="ResultsScreen" ticket="FFP-221" />,
+      content: <ResultsScreenDemo onViewProgramme={handleAction('onViewProgramme called')} />,
     },
     {
       id: 'step-renderer',
@@ -233,7 +315,7 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
           <StatusCard title="QuestionCard" status="complete" />
           <StatusCard title="TransitionCard" status="complete" />
           <StatusCard title="VideoQuestionCard" status="complete" />
-          <StatusCard title="ResultsScreen" status="pending" task="FFP-221" />
+          <StatusCard title="ResultsScreen" status="complete" />
           <StatusCard title="StepRenderer" status="pending" task="FFP-222" />
         </div>
       </ComponentSection>
@@ -508,6 +590,82 @@ const VideoQuestionCardDemo: React.FC = () => {
       <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
         Video question card with instructions list and video-response question. The QuestionRenderer
         routes video-response types to the VideoResponseQuestion component.
+      </Text>
+      <DemoTabs tabs={variantTabs} />
+    </div>
+  );
+};
+
+// ============================================================================
+// ResultsScreen Demo (with variant tabs)
+// ============================================================================
+
+const ResultsScreenDemo: React.FC<{ onViewProgramme: () => void }> = ({ onViewProgramme }) => {
+  const variantTabs: DemoTab[] = [
+    {
+      id: 'full',
+      label: 'Full Results',
+      content: (
+        <ResultsScreen
+          config={mockResultsConfig}
+          scores={mockFullScores}
+          isLoading={false}
+          programmeId="00000000-0000-0000-0000-000000000099"
+          programmeName="Progressive Rehabilitation"
+          programmeDescription="Personalised based on your assessment results and goals"
+          onViewProgramme={onViewProgramme}
+        />
+      ),
+    },
+    {
+      id: 'loading',
+      label: 'Loading',
+      content: (
+        <ResultsScreen
+          config={mockResultsConfig}
+          scores={null}
+          isLoading
+          programmeId={null}
+          onViewProgramme={onViewProgramme}
+        />
+      ),
+    },
+    {
+      id: 'minimal',
+      label: 'Minimal',
+      content: (
+        <ResultsScreen
+          config={mockResultsMinimalConfig}
+          scores={mockMinimalScores}
+          isLoading={false}
+          programmeId="00000000-0000-0000-0000-000000000099"
+          onViewProgramme={onViewProgramme}
+        />
+      ),
+    },
+    {
+      id: 'high-risk',
+      label: 'High Risk',
+      content: (
+        <ResultsScreen
+          config={mockResultsConfig}
+          scores={mockHighRiskScores}
+          isLoading={false}
+          programmeId={null}
+          programmeName="Gentle Recovery"
+          programmeDescription="Carefully tailored with additional precautions for your safety"
+          onViewProgramme={onViewProgramme}
+        />
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+        Standalone results screen showing assessment scores, recommended programme, and programme
+        CTA. The loading state displays while scoring is in progress. The &quot;View My
+        Programme&quot; button is disabled when no programmeId is available.
       </Text>
       <DemoTabs tabs={variantTabs} />
     </div>
