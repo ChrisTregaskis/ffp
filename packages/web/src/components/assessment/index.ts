@@ -1,3 +1,6 @@
+// Motion constants
+export * from './motion.constants';
+
 // Navigation
 export * from './AssessmentNavigation';
 

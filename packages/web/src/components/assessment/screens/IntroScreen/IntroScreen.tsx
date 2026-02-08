@@ -2,6 +2,7 @@ import type { FlowStepConfig } from '@ffp/core';
 
 import type { FeatureItem } from '@web/components/assessment';
 import {
+  ASSESSMENT_MOTION,
   FeatureColumnGrid,
   InstructionList,
   SectionHeader,
@@ -46,11 +47,12 @@ const INTRO_FEATURES: FeatureItem[] = [
  */
 export const IntroScreen: React.FC<IntroScreenProps> = ({ config, onStart }) => {
   const { title, description, instructions, estimatedMinutes } = config;
+  const { duration, stagger } = ASSESSMENT_MOTION;
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-8">
       {/* Welcome heading */}
-      <FadeSlideIn duration={0.5}>
+      <FadeSlideIn duration={duration.entrance}>
         <div className="text-center">
           <Text
             as="h1"
@@ -68,7 +70,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ config, onStart }) => 
       </FadeSlideIn>
 
       {/* What to Expect */}
-      <FadeSlideIn delay={0.15} duration={0.5}>
+      <FadeSlideIn delay={stagger.second} duration={duration.entrance}>
         <SectionPanel>
           <div className="px-6 pt-6 pb-5">
             <SectionHeader
@@ -90,7 +92,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ config, onStart }) => 
 
       {/* Before You Begin checklist */}
       {instructions && instructions.length > 0 && (
-        <FadeSlideIn delay={0.3} duration={0.5}>
+        <FadeSlideIn delay={stagger.third} duration={duration.entrance}>
           <SectionPanel variant="gradient" className="p-6">
             <InstructionList
               items={instructions}
@@ -105,7 +107,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ config, onStart }) => 
       )}
 
       {/* Start button and footer */}
-      <FadeSlideIn delay={0.5} duration={0.5} slideDistance={0}>
+      <FadeSlideIn delay={stagger.fourth} duration={duration.entrance} slideDistance={0}>
         <div className="flex flex-col items-center gap-3 pt-4">
           <ClickScale>
             <Button variant="primary" size="lg" onClick={onStart}>

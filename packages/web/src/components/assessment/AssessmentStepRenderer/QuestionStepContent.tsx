@@ -7,6 +7,7 @@ import { Text } from '@web/components/text';
 
 import { AssessmentNavigation } from '../AssessmentNavigation';
 import { QuestionCard } from '../cards/QuestionCard';
+import { ASSESSMENT_MOTION } from '../motion.constants';
 
 import type { QuestionStepContentProps } from './types';
 
@@ -25,6 +26,8 @@ export const QuestionStepContent: React.FC<QuestionStepContentProps> = ({
   currentStep,
   onAnswer,
 }) => {
+  const [direction, setDirection] = useState<CardTransitionDirection>('forward');
+
   if (questions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-16">
@@ -36,15 +39,13 @@ export const QuestionStepContent: React.FC<QuestionStepContentProps> = ({
     );
   }
 
-  const [direction, setDirection] = useState<CardTransitionDirection>('forward');
-
   const currentQuestion = questions[questionIndex];
   const isFirstQuestion = questionIndex === 0;
   const isLastQuestion = questionIndex === questions.length - 1;
 
   return (
     <div className="mx-auto max-w-3xl">
-      <FadeSlideIn duration={0.5}>
+      <FadeSlideIn duration={ASSESSMENT_MOTION.duration.entrance}>
         <QuestionCard
           config={config}
           question={currentQuestion}

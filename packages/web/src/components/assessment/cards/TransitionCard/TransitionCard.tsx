@@ -1,7 +1,7 @@
 import type { FlowStepConfig } from '@ffp/core';
 
 import type { FeatureItem } from '@web/components/assessment';
-import { AssessmentNavigation, FeatureColumnGrid, SectionHeader } from '@web/components/assessment';
+import { ASSESSMENT_MOTION, AssessmentNavigation, FeatureColumnGrid, SectionHeader } from '@web/components/assessment';
 import { Icon, Icons } from '@web/components/Icon';
 import { FadeSlideIn } from '@web/components/motion';
 import { Text } from '@web/components/text';
@@ -52,7 +52,7 @@ export const TransitionCard: React.FC<TransitionCardProps> = ({
   const { safetyNotes, estimatedMinutes } = config;
 
   return (
-    <FadeSlideIn duration={0.5}>
+    <FadeSlideIn duration={ASSESSMENT_MOTION.duration.entrance}>
       <StepCard
         title={config.title}
         description={config.description}
