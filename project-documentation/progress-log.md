@@ -8,6 +8,86 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### February 6-8, 2026 (Sessions 95-102 - FFP-140 Assessment Step Screens)
+
+**Status**: ✅ FFP-140 COMPLETE
+
+**Branch**: `feature/FFP-140-assessment-step-screens`
+
+**Summary**: Built all assessment step screen and card components across 8 rounds of iterative development. Started with standalone screen components, refactored to a shared card layout pattern after Figma review, extracted reusable shared components, built the orchestrator, and added entrance animations throughout.
+
+**Key Deliverables**:
+
+- **IntroScreen**: Welcome screen with "What to Expect" feature grid, "Before You Begin" checklist, start button
+- **Screen-to-Card Refactor**: Introduced `StepCard` shared layout; migrated `QuestionScreen` → `QuestionCard`, `TransitionScreen` → `TransitionCard`, new `VideoQuestionCard` scaffold
+- **Shared Components**: `SectionHeader`, `FeatureColumnGrid`, `InstructionList`, `SectionPanel` — extracted from repeated patterns across cards/screens
+- **ResultsScreen**: Two-column layout (scores + recommended programme), loading/polling state, "What Happens Next" feature grid
+- **AssessmentStepRenderer**: Orchestrator routing step types to correct card/screen, question iteration within steps, results polling, conditional progress bar
+- **Animations**: Staggered `FadeSlideIn` entrances, directional `CardTransition` for question navigation, `SpringScale` on results icon, `ClickScale` on CTAs. Centralised `ASSESSMENT_MOTION` constants
+- **Component Extensions**: `Text` component extended with `h1`–`h5` and `ffp-navy` colour; `IconBadge` extended with `solid`/`circle` variants; `StaticAlert` extended with `solid` appearance
+
+**Sub-tasks Completed**:
+
+| Order | Key     | Summary                           | Status      |
+| ----- | ------- | --------------------------------- | ----------- |
+| 1     | FFP-218 | IntroScreen component             | ✅ Complete |
+| 2     | FFP-220 | TransitionScreen → TransitionCard | ✅ Complete |
+| 3     | FFP-219 | QuestionScreen → QuestionCard     | ✅ Complete |
+| -     | -       | Screen-to-Card refactor           | ✅ Complete |
+| -     | -       | Shared component extraction       | ✅ Complete |
+| 4     | FFP-221 | ResultsScreen                     | ✅ Complete |
+| 5     | FFP-222 | AssessmentStepRenderer            | ✅ Complete |
+| -     | -       | Entrance animations & polish      | ✅ Complete |
+
+**Development Rounds**:
+
+| Round | Focus                                    | Key Outcome                                                                            |
+| ----- | ---------------------------------------- | -------------------------------------------------------------------------------------- |
+| 1     | FFP-218 IntroScreen + FFP-220 Transition | Initial standalone screen implementations                                              |
+| 2     | FFP-219 QuestionScreen                   | Question wrapper with sub-progress indicator                                           |
+| 3     | Screen-to-Card refactor                  | StepCard layout, `cards/` directory, VideoQuestionCard                                 |
+| 4     | Text/StepCard improvements               | Heading elements on Text, QuestionSubProgress in StepCard                              |
+| 5     | Shared component extraction              | FeatureColumnGrid, InstructionList, SectionHeader                                      |
+| 6     | FFP-221 ResultsScreen                    | SectionPanel, IconBadge solid/circle, scores layout                                    |
+| 7     | FFP-222 AssessmentStepRenderer           | Orchestrator, step type routing, question iteration                                    |
+| 8     | Animations & polish                      | ASSESSMENT_MOTION constants, FadeSlideIn/CardTransition/SpringScale across all screens |
+
+**Files Created**:
+
+```
+packages/web/src/components/assessment/
+├── cards/
+│   ├── StepCard/StepCard.tsx              # Shared card layout
+│   ├── QuestionCard/QuestionCard.tsx      # Question step card
+│   ├── TransitionCard/TransitionCard.tsx  # Transition step card
+│   ├── VideoQuestionCard/VideoQuestionCard.tsx  # Video step card
+│   ├── QuestionSubProgress/QuestionSubProgress.tsx  # Question counter
+│   └── index.ts
+├── screens/
+│   ├── IntroScreen/IntroScreen.tsx        # Welcome screen
+│   └── ResultsScreen/ResultsScreen.tsx    # Results with polling
+├── AssessmentStepRenderer/
+│   └── AssessmentStepRenderer.tsx         # Step type orchestrator
+├── SectionPanel/SectionPanel.tsx          # Styled section container
+├── SectionHeader/SectionHeader.tsx        # Icon + title + description
+├── FeatureColumnGrid/FeatureColumnGrid.tsx  # 3-column feature grid
+├── InstructionList/InstructionList.tsx     # Bulleted instruction list
+└── motion.constants.ts                    # Animation timing constants
+```
+
+**Known Gap**: `useAssessmentTemplateQuery` doesn't return questions (Zod schema strips them). Tracked in FFP-272 (E2E Assessment Flow Integration).
+
+**Quality Assurance**:
+
+- ✅ `pnpm lint-format` - Zero warnings
+- ✅ `pnpm turbo typecheck --filter=@ffp/web` - Zero errors
+- ✅ Dev showcase pages updated with tabbed demos for all components
+- ✅ Merged to main via PR #77
+
+**Sprint 6 Progress**: 8/~26 pts (31%) - FFP-137 + FFP-140 complete
+
+---
+
 ### February 4, 2026 (Sessions 93-94 - FFP-134 Programme Generation Service)
 
 **Status**: ✅ FFP-134 COMPLETE
@@ -676,8 +756,11 @@ The tests were failing with "permission denied for table template_questions" bec
 | Jan 22      | FFP-138 Complete (Progress Bar)    | ~178h         |
 | Jan 27      | FFP-139 Complete (Question Render) | ~180h         |
 | Feb 4       | FFP-134 Complete (Programme Gen)   | ~183h         |
-| **Current** | **Sprint 5 ✅ Complete (Early)**   | **~183/197h** |
+| Feb 4       | Sprint 5 ✅ Complete (Early)       | ~183h         |
+| Feb 6       | FFP-137 Complete (Assessment Nav)  | ~185h         |
+| Feb 8       | FFP-140 Complete (Step Screens)    | ~189h         |
+| **Current** | **Sprint 6 In Progress (8/~26)**   | **~189/197h** |
 
 ---
 
-**Sprint 5 completed 4th February 2026 (11 days early). For current status and next tasks, see `project-state.md`**
+**Sprint 6 started early 6th February 2026. For current status and next tasks, see `project-state.md`**
