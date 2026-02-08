@@ -15,3 +15,6 @@ export * from './screens';
 
 // Step card components
 export * from './cards';
+
+// Step renderer (orchestrator)
+export * from './AssessmentStepRenderer';

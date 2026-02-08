@@ -49,14 +49,14 @@ Renamed American English identifiers to British English across the codebase (mer
 
 ### Sprint 6 Stories
 
-| Key     | Story                            | Pts | Dependencies           | Notes                                    |
-| ------- | -------------------------------- | --- | ---------------------- | ---------------------------------------- |
-| FFP-137 | Assessment Navigation Component  | 3   | FFP-135 ✅, FFP-136 ✅ | ✅ Complete                              |
-| FFP-140 | Assessment Step Screens          | 5   | FFP-135 ✅, FFP-131 ✅ | 🚀 In Progress — see implementation plan |
-| FFP-230 | Stale Job Detection              | 2   | FFP-180 ✅             | EventBridge scheduled Lambda             |
-| FFP-233 | Backend Required Question Valid. | 3   | FFP-130 ✅             | Defence-in-depth server-side validation  |
-| FFP-254 | FFP-3 Epic Planning & Sprints    | 5   | -                      | Architecture, user stories, sprint defs  |
-| FFP-229 | Assessment Engine Epic Clean Up  | 8   | -                      | Review FFP-2 requirements, backlog scan  |
+| Key     | Story                            | Pts | Dependencies           | Notes                                     |
+| ------- | -------------------------------- | --- | ---------------------- | ----------------------------------------- |
+| FFP-137 | Assessment Navigation Component  | 3   | FFP-135 ✅, FFP-136 ✅ | ✅ Complete                               |
+| FFP-140 | Assessment Step Screens          | 5   | FFP-135 ✅, FFP-131 ✅ | All sub-tasks done — pending final review |
+| FFP-230 | Stale Job Detection              | 2   | FFP-180 ✅             | EventBridge scheduled Lambda              |
+| FFP-233 | Backend Required Question Valid. | 3   | FFP-130 ✅             | Defence-in-depth server-side validation   |
+| FFP-254 | FFP-3 Epic Planning & Sprints    | 5   | -                      | Architecture, user stories, sprint defs   |
+| FFP-229 | Assessment Engine Epic Clean Up  | 8   | -                      | Review FFP-2 requirements, backlog scan   |
 
 ### Recommended Execution Order
 
@@ -81,16 +81,16 @@ Renamed American English identifiers to British English across the codebase (mer
 
 #### Sub-tasks (all on one branch)
 
-| Order | Key     | Summary                               | Status  | Notes                                                   |
-| ----- | ------- | ------------------------------------- | ------- | ------------------------------------------------------- |
-| -     | FFP-223 | AssessmentProgress with phase         | Skip    | Already done via FFP-138 (Sprint 5) — component exists  |
-| 1     | FFP-218 | IntroScreen component                 | Done    | Welcome screen with checklist and start button          |
-| 2     | FFP-220 | TransitionScreen component            | Done    | Refactored to TransitionCard (composes StepCard)        |
-| 3     | FFP-219 | QuestionScreen wrapper                | Done    | Refactored to QuestionCard (composes StepCard)          |
-| -     | -       | Screen-to-Card refactor               | Done    | StepCard layout, cards/ directory, VideoQuestionCard    |
-| -     | -       | Shared component extraction           | Done    | FeatureColumnGrid, InstructionList, SectionHeader       |
-| 4     | FFP-221 | ResultsScreen component               | Done    | Scores, risk level, recommended programme, SectionPanel |
-| 5     | FFP-222 | AssessmentStepRenderer (orchestrator) | Pending | Routes step type → card/screen component via switch     |
+| Order | Key     | Summary                               | Status | Notes                                                               |
+| ----- | ------- | ------------------------------------- | ------ | ------------------------------------------------------------------- |
+| -     | FFP-223 | AssessmentProgress with phase         | Skip   | Already done via FFP-138 (Sprint 5) — component exists              |
+| 1     | FFP-218 | IntroScreen component                 | Done   | Welcome screen with checklist and start button                      |
+| 2     | FFP-220 | TransitionScreen component            | Done   | Refactored to TransitionCard (composes StepCard)                    |
+| 3     | FFP-219 | QuestionScreen wrapper                | Done   | Refactored to QuestionCard (composes StepCard)                      |
+| -     | -       | Screen-to-Card refactor               | Done   | StepCard layout, cards/ directory, VideoQuestionCard                |
+| -     | -       | Shared component extraction           | Done   | FeatureColumnGrid, InstructionList, SectionHeader                   |
+| 4     | FFP-221 | ResultsScreen component               | Done   | Scores, risk level, recommended programme, SectionPanel             |
+| 5     | FFP-222 | AssessmentStepRenderer (orchestrator) | Done   | Routes step type → card/screen, question iteration, results polling |
 
 **Rationale for single branch**: All components form one cohesive feature. The StepRenderer (FFP-222) depends on all screen/card components. Splitting would create unnecessary merge dependencies.
 

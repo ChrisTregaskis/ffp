@@ -5,6 +5,7 @@ import type {
   AssessmentQuestion,
   DimensionalScore,
   FlowStepConfig,
+  FlowStepType,
   UserAssessmentScores,
 } from '@ffp/core';
 
@@ -15,6 +16,7 @@ import {
   TransitionCard,
   VideoQuestionCard,
 } from '@web/components/assessment';
+import { AssessmentProgress } from '@web/components/AssessmentProgress';
 import { Button } from '@web/components/button';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
@@ -203,21 +205,6 @@ const mockVideoQuestion: AssessmentQuestion = {
   validation: { required: true, min: 0, max: 50 },
 };
 
-// Placeholder for screens not yet built
-const ComingSoonPlaceholder: React.FC<{ name: string; ticket: string }> = ({ name, ticket }) => (
-  <div className="flex flex-col items-center justify-center py-16 text-center">
-    <div className="mb-4 rounded-full bg-muted p-4">
-      <span className="text-2xl">🚧</span>
-    </div>
-    <Text as="p" styleProps={{ size: 'lg', weight: 'semibold' }}>
-      {name}
-    </Text>
-    <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mt-1">
-      Coming in {ticket}
-    </Text>
-  </div>
-);
-
 // Mock footer for dev demos (avoids needing AssessmentProvider context)
 const MockFooter: React.FC = () => (
   <nav className="flex items-center justify-between" aria-label="Assessment navigation">
@@ -257,8 +244,8 @@ const MockFooter: React.FC = () => (
  * - QuestionCard (FFP-219) — card layout
  * - TransitionCard (FFP-220) — card layout
  * - VideoQuestionCard — card layout scaffold
- * - ResultsScreen (FFP-221) — coming soon
- * - AssessmentStepRenderer (FFP-222) — coming soon
+ * - ResultsScreen (FFP-221) — standalone screen
+ * - AssessmentStepRenderer (FFP-222) — orchestrator routing demo
  */
 export const AssessmentScreensComponentsPage = (): JSX.Element => {
   const handleAction = (action: string) => () => {
@@ -296,7 +283,7 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
     {
       id: 'step-renderer',
       label: 'StepRenderer',
-      content: <ComingSoonPlaceholder name="AssessmentStepRenderer" ticket="FFP-222" />,
+      content: <StepRendererDemo />,
     },
   ];
 
@@ -316,7 +303,7 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
           <StatusCard title="TransitionCard" status="complete" />
           <StatusCard title="VideoQuestionCard" status="complete" />
           <StatusCard title="ResultsScreen" status="complete" />
-          <StatusCard title="StepRenderer" status="pending" task="FFP-222" />
+          <StatusCard title="StepRenderer" status="complete" />
         </div>
       </ComponentSection>
 
@@ -668,6 +655,156 @@ const ResultsScreenDemo: React.FC<{ onViewProgramme: () => void }> = ({ onViewPr
         Programme&quot; button is disabled when no programmeId is available.
       </Text>
       <DemoTabs tabs={variantTabs} />
+    </div>
+  );
+};
+
+// ============================================================================
+// StepRenderer Demo (orchestrator routing simulation)
+// ============================================================================
+
+/** Mock step order for progress bar display */
+const MOCK_STEP_ORDER: Record<FlowStepType, number> = {
+  intro: 1,
+  questions: 2,
+  transition: 3,
+  'video-assessment': 4,
+  results: 5,
+  'programme-overview': 6,
+};
+
+const TOTAL_MOCK_STEPS = 6;
+
+/** Step types that do not show the progress bar */
+const STEPS_WITHOUT_PROGRESS: FlowStepType[] = ['intro', 'programme-overview'];
+
+const StepRendererDemo: React.FC = () => {
+  const [answers, setAnswers] = useState<Record<string, AnswerValue | null>>({});
+
+  const handleAnswer = (questionId: string, value: AnswerValue | null): void => {
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+    // eslint-disable-next-line no-console
+    console.log(`[Demo] onAnswer: ${questionId} = ${JSON.stringify(value)}`);
+  };
+
+  const handleAction = (action: string) => () => {
+    // eslint-disable-next-line no-console
+    console.log(`[Demo] ${action}`);
+  };
+
+  /** Wraps step content with an optional progress bar (as the real orchestrator does) */
+  const withProgress = (type: FlowStepType, content: JSX.Element): JSX.Element => {
+    const showProgress = !STEPS_WITHOUT_PROGRESS.includes(type);
+    return (
+      <div className="space-y-6">
+        {showProgress && (
+          <AssessmentProgress
+            currentStep={MOCK_STEP_ORDER[type]}
+            totalSteps={TOTAL_MOCK_STEPS}
+            phase={type}
+          />
+        )}
+        {content}
+      </div>
+    );
+  };
+
+  const typeTabs: DemoTab[] = [
+    {
+      id: 'intro',
+      label: 'intro',
+      content: withProgress(
+        'intro',
+        <IntroScreen config={mockIntroConfig} onStart={handleAction('onStart → NEXT_STEP')} />
+      ),
+    },
+    {
+      id: 'questions',
+      label: 'questions',
+      content: withProgress(
+        'questions',
+        <div className="mx-auto max-w-3xl">
+          <QuestionCard
+            config={mockQuestionStepConfig}
+            question={mockSingleChoiceQuestion}
+            questionNumber={1}
+            totalQuestions={3}
+            value={answers[mockSingleChoiceQuestion.id] ?? null}
+            onAnswer={handleAnswer}
+            footer={<MockFooter />}
+          />
+        </div>
+      ),
+    },
+    {
+      id: 'transition',
+      label: 'transition',
+      content: withProgress(
+        'transition',
+        <div className="mx-auto max-w-3xl">
+          <TransitionCard config={mockTransitionConfig} footer={<MockFooter />} />
+        </div>
+      ),
+    },
+    {
+      id: 'video-assessment',
+      label: 'video-assessment',
+      content: withProgress(
+        'video-assessment',
+        <div className="mx-auto max-w-3xl">
+          <VideoQuestionCard
+            config={mockVideoStepConfig}
+            question={mockVideoQuestion}
+            questionNumber={1}
+            totalQuestions={2}
+            value={answers[mockVideoQuestion.id] ?? null}
+            onAnswer={handleAnswer}
+            footer={<MockFooter />}
+          />
+        </div>
+      ),
+    },
+    {
+      id: 'results',
+      label: 'results',
+      content: withProgress(
+        'results',
+        <ResultsScreen
+          config={mockResultsConfig}
+          scores={mockFullScores}
+          isLoading={false}
+          programmeId="00000000-0000-0000-0000-000000000099"
+          programmeName="Progressive Rehabilitation"
+          onViewProgramme={handleAction('onViewProgramme')}
+        />
+      ),
+    },
+    {
+      id: 'programme-overview',
+      label: 'programme-overview',
+      content: withProgress(
+        'programme-overview',
+        <div className="mx-auto max-w-3xl py-16 text-center">
+          <Text as="h2" styleProps={{ size: 'xl', weight: 'semibold', colour: 'ffp-navy' }}>
+            Programme Overview
+          </Text>
+          <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mt-2">
+            Programme details will be available when FFP-3 is complete.
+          </Text>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+        Simulates the AssessmentStepRenderer orchestrator routing. Select a step type to see the
+        component that would render, including the AssessmentProgress bar (shown for all types
+        except intro and programme-overview). In production, the orchestrator reads state from
+        AssessmentProvider context and fetches flow configuration.
+      </Text>
+      <DemoTabs tabs={typeTabs} />
     </div>
   );
 };
