@@ -3,6 +3,7 @@ import type { FlowStepConfig } from '@ffp/core';
 import type { FeatureItem } from '@web/components/assessment';
 import { AssessmentNavigation, FeatureColumnGrid, SectionHeader } from '@web/components/assessment';
 import { Icon, Icons } from '@web/components/Icon';
+import { FadeSlideIn } from '@web/components/motion';
 import { Text } from '@web/components/text';
 
 import { StepCard } from '../StepCard';
@@ -51,57 +52,59 @@ export const TransitionCard: React.FC<TransitionCardProps> = ({
   const { safetyNotes, estimatedMinutes } = config;
 
   return (
-    <StepCard
-      title={config.title}
-      description={config.description}
-      titleAlign="centre"
-      footer={footer ?? <AssessmentNavigation />}
-    >
-      {/* What's Next overview */}
-      <section className="pt-5">
-        {showWhatsNextTitleDescription && (
-          <div className="pb-5">
-            <SectionHeader
-              icon={Icons.ACTIVITY}
-              title="What's Next"
-              description={
-                estimatedMinutes
-                  ? `This section will take approximately ${String(estimatedMinutes)} minutes to complete`
-                  : undefined
-              }
-              align="centre"
-            />
-          </div>
-        )}
+    <FadeSlideIn duration={0.5}>
+      <StepCard
+        title={config.title}
+        description={config.description}
+        titleAlign="centre"
+        footer={footer ?? <AssessmentNavigation />}
+      >
+        {/* What's Next overview */}
+        <section className="pt-5">
+          {showWhatsNextTitleDescription && (
+            <div className="pb-5">
+              <SectionHeader
+                icon={Icons.ACTIVITY}
+                title="What's Next"
+                description={
+                  estimatedMinutes
+                    ? `This section will take approximately ${String(estimatedMinutes)} minutes to complete`
+                    : undefined
+                }
+                align="centre"
+              />
+            </div>
+          )}
 
-        <FeatureColumnGrid features={TRANSITION_FEATURES} headingLevel="h4" className="py-8" />
-      </section>
-
-      {/* Safety Notes */}
-      {safetyNotes && safetyNotes.length > 0 && (
-        <section className="mt-4 rounded-xl border border-warning/30 bg-warning/5 p-6">
-          <SectionHeader
-            icon={Icons.ALERTTRIANGLE}
-            title="Safety Notes"
-            iconStyle="badge"
-            badgeVariant="warning"
-            className="mb-4"
-          />
-          <ul className="space-y-3">
-            {safetyNotes.map((note) => (
-              <li key={note} className="flex items-start gap-3">
-                <Icon
-                  name={Icons.SHIELD}
-                  styleProps={{ size: 'md', colour: 'var(--color-warning)' }}
-                />
-                <Text as="span" styleProps={{ size: 'sm' }}>
-                  {note}
-                </Text>
-              </li>
-            ))}
-          </ul>
+          <FeatureColumnGrid features={TRANSITION_FEATURES} headingLevel="h4" className="py-8" />
         </section>
-      )}
-    </StepCard>
+
+        {/* Safety Notes */}
+        {safetyNotes && safetyNotes.length > 0 && (
+          <section className="mt-4 rounded-xl border border-warning/30 bg-warning/5 p-6">
+            <SectionHeader
+              icon={Icons.ALERTTRIANGLE}
+              title="Safety Notes"
+              iconStyle="badge"
+              badgeVariant="warning"
+              className="mb-4"
+            />
+            <ul className="space-y-3">
+              {safetyNotes.map((note) => (
+                <li key={note} className="flex items-start gap-3">
+                  <Icon
+                    name={Icons.SHIELD}
+                    styleProps={{ size: 'md', colour: 'var(--color-warning)' }}
+                  />
+                  <Text as="span" styleProps={{ size: 'sm' }}>
+                    {note}
+                  </Text>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </StepCard>
+    </FadeSlideIn>
   );
 };
