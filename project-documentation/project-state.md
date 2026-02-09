@@ -91,13 +91,14 @@ Renamed American English identifiers to British English across the codebase (mer
 **Branch**: `feature/ffp-272-full-e2e-assessment-integration`
 **Subtasks** (in execution order):
 
-| Key     | Subtask                                              | Focus              | Status      |
-| ------- | ---------------------------------------------------- | ------------------ | ----------- |
-| FFP-274 | Fix template questions schema & API response parsing | schema, API client | ✅ Complete |
-| FFP-275 | Create assessment route and page shell               | route, page        | ✅ Complete |
-| FFP-276 | Wire assessment page orchestrator (start, step flow) | orchestration      | ⏳ Next     |
-| FFP-277 | Wire submit assessment and results polling           | submit, polling    | ⏳ Pending  |
-| FFP-278 | Programme user first-login redirect to assessment    | routing            | ⏳ Pending  |
+| Key     | Subtask                                                | Focus              | Status      |
+| ------- | ------------------------------------------------------ | ------------------ | ----------- |
+| FFP-274 | Fix template questions schema & API response parsing   | schema, API client | ✅ Complete |
+| FFP-275 | Create assessment route and page shell                 | route, page        | ✅ Complete |
+| FFP-276 | Wire assessment page orchestrator (start, step flow)   | orchestration      | ⏳ Next     |
+| FFP-277 | Wire submit assessment and results polling             | submit, polling    | ⏳ Pending  |
+| FFP-278 | Programme user first-login redirect to assessment      | routing            | ⏳ Pending  |
+| —       | E2E testing guide (seed data, scenarios, verification) | testing            | ⏳ Pending  |
 
 **FFP-274 summary**: Added `assessmentTemplateWithQuestionsSchema` with Zod transform mapping backend `QuestionWithConfig` to frontend `AssessmentQuestion` (`questionText` → `question`, nullable → optional, configOverrides applied, backend-only fields stripped). Updated API client and hook to use new schema/type.
 
