@@ -1,13 +1,14 @@
 import {
   assessmentFlowSchema,
   assessmentResultsResponseSchema,
-  assessmentTemplateSchema,
+  assessmentTemplateWithQuestionsSchema,
   saveProgressResponseSchema,
   startAssessmentResponseSchema,
   submitAssessmentResponseSchema,
   type AssessmentFlow,
   type AssessmentResultsResponse,
   type AssessmentTemplate,
+  type AssessmentTemplateWithQuestions,
   type SaveProgressRequest,
   type SaveProgressResponse,
   type StartAssessmentResponse,
@@ -41,11 +42,15 @@ export const assessmentsApi = {
   },
 
   /**
-   * Get assessment template by ID
+   * Get assessment template by ID (includes questions)
    */
-  getTemplate: async (templateId: string, signal?: AbortSignal): Promise<AssessmentTemplate> => {
+  getTemplate: async (
+    templateId: string,
+    signal?: AbortSignal
+  ): Promise<AssessmentTemplateWithQuestions> => {
     const response = await ffpClient.get(`${basePath}/templates/${templateId}`, { signal });
-    return assessmentTemplateSchema.parse(response);
+
+    return assessmentTemplateWithQuestionsSchema.parse(response);
   },
 
   /**
@@ -55,6 +60,7 @@ export const assessmentsApi = {
    */
   start: async (flowId: string): Promise<StartAssessmentResponse> => {
     const response = await ffpClient.post(`${basePath}/start`, { flowId });
+
     return startAssessmentResponseSchema.parse(response);
   },
 
@@ -68,6 +74,7 @@ export const assessmentsApi = {
     payload: SaveProgressRequest
   ): Promise<SaveProgressResponse> => {
     const response = await ffpClient.put(`${basePath}/${assessmentId}/progress`, payload);
+
     return saveProgressResponseSchema.parse(response);
   },
 
@@ -81,6 +88,7 @@ export const assessmentsApi = {
     payload: SubmitAssessmentRequest
   ): Promise<SubmitAssessmentResponse> => {
     const response = await ffpClient.post(`${basePath}/${assessmentId}/submit`, payload);
+
     return submitAssessmentResponseSchema.parse(response);
   },
 
@@ -92,6 +100,7 @@ export const assessmentsApi = {
     signal?: AbortSignal
   ): Promise<AssessmentResultsResponse> => {
     const response = await ffpClient.get(`${basePath}/${assessmentId}/results`, { signal });
+
     return assessmentResultsResponseSchema.parse(response);
   },
 };
@@ -101,6 +110,7 @@ export type {
   AssessmentFlow,
   AssessmentResultsResponse,
   AssessmentTemplate,
+  AssessmentTemplateWithQuestions,
   SaveProgressRequest,
   SaveProgressResponse,
   StartAssessmentResponse,
