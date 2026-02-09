@@ -6,7 +6,7 @@ import {
 } from '@web/components/dev';
 import { Form, type Field, FieldDataType } from '@web/components/form';
 import { Text, Title } from '@web/components/text';
-import { useAuth } from '@web/contexts/AuthContext';
+import { useAuth } from '@web/hooks/useAuth';
 
 interface LoginFormValues {
   email: string;

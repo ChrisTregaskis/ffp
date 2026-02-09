@@ -11,7 +11,7 @@ import '@fontsource/inter/700.css'; // Bold
 import './lib/auth';
 
 import { ErrorBoundary } from '@web/components/error';
-import { AuthProvider } from '@web/contexts/AuthContext';
+import { AuthProvider } from '@web/contexts/auth/AuthContext';
 
 import App from './App';
 import './index.css';

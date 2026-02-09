@@ -57,7 +57,7 @@ Renamed American English identifiers to British English across the codebase (mer
 | FFP-230 | Stale Job Detection               | 2   | FFP-180 ✅             | EventBridge scheduled Lambda                                             |
 | FFP-233 | Backend Required Question Valid.  | 3   | FFP-130 ✅             | Defence-in-depth server-side validation                                  |
 | FFP-254 | FFP-3 Epic Planning & Sprints     | 5   | -                      | Architecture, user stories, sprint defs                                  |
-| FFP-273 | ToastAlert Notification Component | 3   | -                      | Auto-dismissing toast notifications (separate from StaticAlert)          |
+| FFP-273 | ToastAlert Notification Component | 3   | -                      | ✅ Complete                                                              |
 | FFP-229 | Assessment Engine Epic Clean Up   | 8   | -                      | Review FFP-2 requirements, backlog scan                                  |
 
 ### Recommended Execution Order
@@ -83,6 +83,13 @@ Renamed American English identifiers to British English across the codebase (mer
 **Summary**: Built all assessment step components — `IntroScreen`, `ResultsScreen` (standalone screens), `QuestionCard`, `TransitionCard`, `VideoQuestionCard` (compose shared `StepCard` layout), and `AssessmentStepRenderer` orchestrator. Mid-story Screen-to-Card refactor after Figma review introduced `cards/` directory alongside `screens/`. Extracted shared components (`SectionHeader`, `FeatureColumnGrid`, `InstructionList`, `SectionPanel`). Added entrance animations with centralised `ASSESSMENT_MOTION` constants. Extended `Text` (`h1`–`h5`, `ffp-navy`), `IconBadge` (`solid`/`circle`), and `StaticAlert` (`solid` appearance).
 
 **Key decisions**: `cards/` vs `screens/` split reflects genuine layout difference (card chrome vs full-page); presentational screen props with orchestrator owning state; questions passed as prop due to template query gap (tracked FFP-272).
+
+---
+
+### Completed: FFP-273 — ToastAlert Notification Component ✅
+
+**Branch**: `feature/sprint6`
+**Summary**: Built auto-dismissing toast notification system — `ToastAlert` component (4 variants, progress bar, entrance/exit animations), `ToastProvider` context + `useToast` hook, and dev showcase page with 5 demo tabs. Updated `StaticAlert` showcase to reference ToastAlert as implemented (no longer "future").
 
 ---
 

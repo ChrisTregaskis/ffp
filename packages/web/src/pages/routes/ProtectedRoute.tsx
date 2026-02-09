@@ -3,7 +3,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { AppLayout } from '@web/components/layout/AppLayout';
 import { LoadingSpinner } from '@web/components/LoadingSpinner/LoadingSpinner';
-import { useAuth } from '@web/contexts/AuthContext';
+import { useAuth } from '@web/hooks/useAuth';
 import { hasRole, logUnauthorisedAccess } from '@web/lib/rbac';
 
 import { RouteKey, routes } from '.';

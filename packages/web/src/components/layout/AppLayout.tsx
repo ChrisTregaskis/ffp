@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 
 import { getNavigationItems } from '@web/config/navigation';
-import { useAuth } from '@web/contexts/AuthContext';
-import { SidebarProvider, useSidebar } from '@web/contexts/SidebarContext';
+import { SidebarProvider } from '@web/contexts/sidebar/SidebarContext';
+import { useAuth } from '@web/hooks/useAuth';
+import { useSidebar } from '@web/hooks/useSidebar';
 import { createLogger } from '@web/lib/logger';
 import { RouteKey, routes } from '@web/pages/routes';
 

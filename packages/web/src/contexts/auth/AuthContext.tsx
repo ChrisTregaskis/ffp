@@ -1,50 +1,14 @@
 import { getCurrentUser, fetchAuthSession, signIn, signOut } from 'aws-amplify/auth';
-import { createContext, useContext, useState, useEffect, type ReactNode, useCallback } from 'react';
+import { useState, useEffect, type ReactNode, useCallback } from 'react';
 import { ZodError } from 'zod';
 
-import { jwtUserClaimsSchema, type UserRole } from '@ffp/core';
+import { jwtUserClaimsSchema } from '@ffp/core';
 
 import { createLogger } from '@web/lib/logger';
 
+import { AuthContext, type AuthContextType, type AuthUser } from './auth.definitions';
+
 const logger = createLogger('AuthContext');
-
-/**
- * User object containing authentication and tenant context extracted from JWT.
- * Lightweight type specific to authentication context (subset of full User type).
- */
-export interface AuthUser {
-  /** Unique user identifier from Cognito (maps to cognitoSub in database) */
-  userId: string;
-  /** User's email address */
-  email: string;
-  /** Tenant ID for multi-tenant isolation */
-  tenantId: string;
-  /** User's role within the tenant (imported from @ffp/core - single source of truth) */
-  role: UserRole;
-}
-
-/**
- * Authentication context type defining available auth operations and state.
- */
-export interface AuthContextType {
-  /** Currently authenticated user, or null if not authenticated */
-  user: AuthUser | null;
-  /** Loading state during authentication checks */
-  loading: boolean;
-  /** Error message from authentication operations */
-  error: string | null;
-  /** Authenticate user with email and password */
-  login: (email: string, password: string) => Promise<void>;
-  /** End the current user session */
-  logout: () => Promise<void>;
-  /** Manually refresh authentication state (e.g., after external auth changes) */
-  checkAuth: () => Promise<void>;
-}
-
-/**
- * Authentication context for managing global auth state.
- */
-const AuthContext = createContext<AuthContextType | null>(null);
 
 /**
  * Authentication provider component that manages auth state and operations.
@@ -182,19 +146,4 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
-/**
- * Custom hook to access authentication context.
- * Must be used within an AuthProvider component.
- */
-// eslint-disable-next-line react-refresh/only-export-components
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-
-  return context;
 };

@@ -71,7 +71,7 @@ export const StaticAlertComponentsPage = (): JSX.Element => {
 
           <div>
             <Text styleProps={{ weight: 'medium', size: 'sm' }} className="mb-1">
-              When to use ToastAlert (future):
+              When to use ToastAlert instead:
             </Text>
             <ul className="list-disc space-y-1 pl-6">
               <li>

@@ -2,8 +2,8 @@ import { useCallback } from 'react';
 
 import { Button } from '@web/components/button';
 import { Icon, Icons } from '@web/components/Icon';
-import { ASSESSMENT_ACTION } from '@web/contexts/AssessmentContext/constants';
-import { useAssessment } from '@web/contexts/AssessmentContext/useAssessment';
+import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
+import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import { useSaveProgress } from '@web/hooks/assessments/useSaveProgress';
 
 export interface AssessmentNavigationProps {

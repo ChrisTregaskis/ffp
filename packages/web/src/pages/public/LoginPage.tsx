@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { type LoginFormData } from '@web/components/auth';
 import { LoginForm } from '@web/components/auth/LoginForm';
 import { AuthLayout } from '@web/components/layout/AuthLayout';
-import { useAuth } from '@web/contexts/AuthContext';
+import { useAuth } from '@web/hooks/useAuth';
 import { RouteKey, routes } from '@web/pages/routes';
 
 /**

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@web/components/button/Button';
 import { Title, Text } from '@web/components/text';
 import { USER_ROLE } from '@web/constants/roles';
-import { useAuth } from '@web/contexts/AuthContext';
+import { useAuth } from '@web/hooks/useAuth';
 import { RouteKey, routes } from '@web/pages/routes';
 
 /**

@@ -82,6 +82,12 @@ export const componentCategories: ComponentCategory[] = [
     examples: ['IntroScreen', 'QuestionCard', 'TransitionCard', 'VideoQuestionCard'],
   },
   {
+    title: 'Toast Alert Components',
+    description: 'Auto-dismissing toast notifications for transient feedback',
+    path: `${basePath}/toast-alert`,
+    examples: ['Success', 'Error', 'Warning', 'Info', 'Auto-dismiss', 'useToast hook'],
+  },
+  {
     title: 'Modal Components',
     description: 'Dialogs, modals, and overlays',
     path: `${basePath}/modal`,
