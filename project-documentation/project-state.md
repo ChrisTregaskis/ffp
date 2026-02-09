@@ -49,16 +49,16 @@ Renamed American English identifiers to British English across the codebase (mer
 
 ### Sprint 6 Stories
 
-| Key     | Story                             | Pts | Dependencies           | Notes                                                                    |
-| ------- | --------------------------------- | --- | ---------------------- | ------------------------------------------------------------------------ |
-| FFP-137 | Assessment Navigation Component   | 3   | FFP-135 ✅, FFP-136 ✅ | ✅ Complete                                                              |
-| FFP-140 | Assessment Step Screens           | 5   | FFP-135 ✅, FFP-131 ✅ | All sub-tasks done + animations added — pending final review             |
-| FFP-272 | E2E Assessment Flow Integration   | 5   | FFP-140, FFP-136 ✅    | First-login → assessment route, template questions gap, full flow wiring |
-| FFP-230 | Stale Job Detection               | 2   | FFP-180 ✅             | EventBridge scheduled Lambda                                             |
-| FFP-233 | Backend Required Question Valid.  | 3   | FFP-130 ✅             | Defence-in-depth server-side validation                                  |
-| FFP-254 | FFP-3 Epic Planning & Sprints     | 5   | -                      | Architecture, user stories, sprint defs                                  |
-| FFP-273 | ToastAlert Notification Component | 3   | -                      | ✅ Complete                                                              |
-| FFP-229 | Assessment Engine Epic Clean Up   | 8   | -                      | Review FFP-2 requirements, backlog scan                                  |
+| Key     | Story                             | Pts | Dependencies           | Notes                                                        |
+| ------- | --------------------------------- | --- | ---------------------- | ------------------------------------------------------------ |
+| FFP-137 | Assessment Navigation Component   | 3   | FFP-135 ✅, FFP-136 ✅ | ✅ Complete                                                  |
+| FFP-140 | Assessment Step Screens           | 5   | FFP-135 ✅, FFP-131 ✅ | All sub-tasks done + animations added — pending final review |
+| FFP-272 | E2E Assessment Flow Integration   | 5   | FFP-140, FFP-136 ✅    | Subtasks created — see below                                 |
+| FFP-230 | Stale Job Detection               | 2   | FFP-180 ✅             | EventBridge scheduled Lambda                                 |
+| FFP-233 | Backend Required Question Valid.  | 3   | FFP-130 ✅             | Defence-in-depth server-side validation                      |
+| FFP-254 | FFP-3 Epic Planning & Sprints     | 5   | -                      | Architecture, user stories, sprint defs                      |
+| FFP-273 | ToastAlert Notification Component | 3   | -                      | ✅ Complete                                                  |
+| FFP-229 | Assessment Engine Epic Clean Up   | 8   | -                      | Review FFP-2 requirements, backlog scan                      |
 
 ### Recommended Execution Order
 
@@ -83,6 +83,23 @@ Renamed American English identifiers to British English across the codebase (mer
 **Summary**: Built all assessment step components — `IntroScreen`, `ResultsScreen` (standalone screens), `QuestionCard`, `TransitionCard`, `VideoQuestionCard` (compose shared `StepCard` layout), and `AssessmentStepRenderer` orchestrator. Mid-story Screen-to-Card refactor after Figma review introduced `cards/` directory alongside `screens/`. Extracted shared components (`SectionHeader`, `FeatureColumnGrid`, `InstructionList`, `SectionPanel`). Added entrance animations with centralised `ASSESSMENT_MOTION` constants. Extended `Text` (`h1`–`h5`, `ffp-navy`), `IconBadge` (`solid`/`circle`), and `StaticAlert` (`solid` appearance).
 
 **Key decisions**: `cards/` vs `screens/` split reflects genuine layout difference (card chrome vs full-page); presentational screen props with orchestrator owning state; questions passed as prop due to template query gap (tracked FFP-272).
+
+---
+
+### Next Up: FFP-272 — E2E Assessment Flow Integration
+
+**Branch**: `feature/ffp-272-full-e2e-assessment-integration`
+**Subtasks** (in execution order):
+
+| Key     | Subtask                                              | Focus              |
+| ------- | ---------------------------------------------------- | ------------------ |
+| FFP-274 | Fix template questions schema & API response parsing | schema, API client |
+| FFP-275 | Create assessment route and page shell               | route, page        |
+| FFP-276 | Wire assessment page orchestrator (start, step flow) | orchestration      |
+| FFP-277 | Wire submit assessment and results polling           | submit, polling    |
+| FFP-278 | Programme user first-login redirect to assessment    | routing            |
+
+**Known gaps resolved**: Template questions stripped by Zod parse, `questionText` → `question` field name mismatch, no `/assessment` route, no first-login redirect logic.
 
 ---
 
