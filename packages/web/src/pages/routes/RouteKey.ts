@@ -71,4 +71,6 @@ export enum RouteKey {
   COMPONENTS_ASSESSMENT_QUESTIONS = 'components-assessment-questions',
   /** Assessment screen components showcase */
   COMPONENTS_ASSESSMENT_SCREENS = 'components-assessment-screens',
+  /** Toast alert components showcase */
+  COMPONENTS_TOAST_ALERT = 'components-toast-alert',
 }

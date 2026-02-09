@@ -16,6 +16,7 @@ import { LogoComponentsPage } from '@web/pages/dev/LogoComponentsPage';
 import { MotionShowcasePage } from '@web/pages/dev/MotionShowcasePage';
 import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
+import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
 import { HomePage } from '@web/pages/protected/HomePage';
 import { AccountSettingsPage } from '@web/pages/protected/programme-user/AccountSettingsPage';
 import { ProgrammeOverviewPage } from '@web/pages/protected/programme-user/ProgrammeOverviewPage';
@@ -363,6 +364,14 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: AssessmentScreensComponentsPage,
     title: 'Assessment Screen Components',
+    excludeFromMainNavbar: true,
+    devOnly: true,
+  },
+  [RouteKey.COMPONENTS_TOAST_ALERT]: {
+    path: `${componentsBasePath}/toast-alert`,
+    public: true,
+    pageComponent: ToastAlertComponentsPage,
+    title: 'Toast Alert Components',
     excludeFromMainNavbar: true,
     devOnly: true,
   },

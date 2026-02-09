@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { SetPasswordForm } from '@web/components/auth/SetPasswordForm';
 import { AuthLayout } from '@web/components/layout/AuthLayout';
-import { useAuth } from '@web/contexts/AuthContext';
+import { useAuth } from '@web/hooks/useAuth';
 import { RouteKey, routes } from '@web/pages/routes';
 
 /**

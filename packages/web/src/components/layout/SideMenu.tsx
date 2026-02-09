@@ -7,8 +7,8 @@ import { SlideWidth, ClickScale } from '@web/components/motion';
 import { Text } from '@web/components/text';
 import { getNavigationItems } from '@web/config/navigation';
 import type { NavItem as NavItemType } from '@web/config/navigation';
-import { useAuth } from '@web/contexts/AuthContext';
-import { useSidebar } from '@web/contexts/SidebarContext';
+import { useAuth } from '@web/hooks/useAuth';
+import { useSidebar } from '@web/hooks/useSidebar';
 import { RouteKey, routes } from '@web/pages/routes';
 
 import { NavItem } from './NavItem';
