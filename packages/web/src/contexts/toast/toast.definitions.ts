@@ -16,7 +16,6 @@ export interface ToastItem {
   message: string;
   variant: ToastVariant;
   duration: number;
-  visible: boolean;
 }
 
 /** Toast context value exposed via useToast */

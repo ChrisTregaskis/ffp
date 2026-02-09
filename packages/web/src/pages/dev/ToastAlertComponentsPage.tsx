@@ -154,7 +154,6 @@ const VariantsDemo: React.FC = () => (
         variant="success"
         message="Assessment progress saved successfully."
         duration={0}
-        visible
         onDismiss={noop}
       />
     </ButtonSampleDisplay>
@@ -165,7 +164,6 @@ const VariantsDemo: React.FC = () => (
         variant="error"
         message="Failed to submit assessment. Please try again."
         duration={0}
-        visible
         onDismiss={noop}
       />
     </ButtonSampleDisplay>
@@ -176,7 +174,6 @@ const VariantsDemo: React.FC = () => (
         variant="warning"
         message="Your session will expire in 5 minutes."
         duration={0}
-        visible
         onDismiss={noop}
       />
     </ButtonSampleDisplay>
@@ -187,7 +184,6 @@ const VariantsDemo: React.FC = () => (
         variant="info"
         message="A new assessment is available for you."
         duration={0}
-        visible
         onDismiss={noop}
       />
     </ButtonSampleDisplay>

@@ -53,7 +53,6 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
       message,
       variant: options?.variant ?? 'info',
       duration: options?.duration ?? DEFAULT_DURATION,
-      visible: true,
     };
 
     setToasts((prev) => {
@@ -89,7 +88,6 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
               variant={toast.variant}
               message={toast.message}
               duration={toast.duration}
-              visible={toast.visible}
               onDismiss={dismissToast}
             />
           ))}
