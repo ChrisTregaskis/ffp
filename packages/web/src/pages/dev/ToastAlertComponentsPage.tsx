@@ -95,7 +95,7 @@ export const ToastAlertComponentsPage = (): JSX.Element => {
               Code Example (recommended - useToast hook):
             </Text>
             <pre className="overflow-x-auto rounded bg-muted p-3 text-xs">
-              {`import { useToast } from '@web/contexts/ToastContext';
+              {`import { useToast } from '@web/hooks/useToast';
 
 const MyComponent: React.FC = () => {
   const { addToast } = useToast();
@@ -111,24 +111,6 @@ const MyComponent: React.FC = () => {
 
   return <Button onClick={handleSave}>Save</Button>;
 };`}
-            </pre>
-          </div>
-
-          <div>
-            <Text styleProps={{ weight: 'medium', size: 'sm' }} className="mb-1">
-              Code Example (standalone component):
-            </Text>
-            <pre className="overflow-x-auto rounded bg-muted p-3 text-xs">
-              {`import { ToastAlert } from '@web/components/feedback/ToastAlert';
-
-<ToastAlert
-  id="save-success"
-  variant="success"
-  message="Changes saved successfully"
-  duration={5000}
-  visible={showToast}
-  onDismiss={() => setShowToast(false)}
-/>`}
             </pre>
           </div>
         </div>

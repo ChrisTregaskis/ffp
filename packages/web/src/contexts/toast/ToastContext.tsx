@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'motion/react';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { ToastAlert, type ToastPosition } from '@web/components/feedback/ToastAlert';
 
@@ -21,8 +21,6 @@ const DEFAULT_DURATION = 5000;
 /** Maximum concurrent toasts displayed */
 const MAX_TOASTS = 5;
 
-let toastCounter = 0;
-
 export interface ToastProviderProps {
   children: ReactNode;
   /** Position of the toast container @default 'top-right' */
@@ -40,6 +38,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
   children,
   position = 'top-right',
 }) => {
+  const toastCounter = useRef(0);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const dismissToast = useCallback((id: string) => {
@@ -47,7 +46,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
   }, []);
 
   const addToast = useCallback((message: string, options?: ToastOptions): string => {
-    const id = `toast-${String(++toastCounter)}`;
+    const id = `toast-${String(++toastCounter.current)}`;
     const newToast: ToastItem = {
       id,
       message,
