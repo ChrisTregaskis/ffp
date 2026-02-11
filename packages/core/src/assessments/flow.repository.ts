@@ -11,6 +11,9 @@ import {
 
 import { db } from '../lib/database';
 import { InternalServerError } from '../lib/errors';
+import { createSystemLogger } from '../lib/logger';
+
+const logger = createSystemLogger('flow-repository');
 
 export type AssessmentFlow = AssessmentFlowRecord;
 export type FlowStepWithConfig = FlowStepRecord;
@@ -139,17 +142,20 @@ export async function findDefaultForTenant(tenantId: string): Promise<Assessment
     }
 
     // Configured flow ID exists but is inactive or missing
+    logger.error('Platform default assessment flow is not active or does not exist', {
+      platformFlowId,
+      tenantId,
+    });
+
     throw new InternalServerError(
-      `Platform default assessment flow '${platformFlowId}' is not active or does not exist. ` +
-        'Update settings.defaultAssessmentFlowId on the platform tenant.'
+      'Platform default assessment flow is not active or does not exist.'
     );
   }
 
   // No default configured at any level
-  throw new InternalServerError(
-    'No default assessment flow configured. ' +
-      'Set settings.defaultAssessmentFlowId on the platform tenant.'
-  );
+  logger.error('No default assessment flow configured', { tenantId });
+
+  throw new InternalServerError('No default assessment flow is configured.');
 }
 
 /**

@@ -1,13 +1,12 @@
-import { useState } from 'react';
-
 import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import type { CardTransitionDirection } from '@web/components/motion';
 import { FadeSlideIn } from '@web/components/motion';
 import { Text } from '@web/components/text';
 
 import { AssessmentNavigation } from '../AssessmentNavigation';
 import { QuestionCard } from '../cards/QuestionCard';
 import { ASSESSMENT_MOTION } from '../motion.constants';
+
+import { useQuestionStepNavigation } from './useQuestionStepNavigation';
 
 import type { QuestionStepContentProps } from './types';
 
@@ -28,7 +27,15 @@ export const QuestionStepContent: React.FC<QuestionStepContentProps> = ({
   isLastSubmittableStep = false,
   onSubmitAssessment,
 }) => {
-  const [direction, setDirection] = useState<CardTransitionDirection>('forward');
+  const { direction, showBack, continueLabel, continueVariant, continueHandler, backHandler } =
+    useQuestionStepNavigation({
+      questionIndex,
+      totalQuestions: questions.length,
+      currentStep,
+      isLastSubmittableStep,
+      onSubmitAssessment,
+      onQuestionIndexChange,
+    });
 
   if (questions.length === 0) {
     return (
@@ -42,25 +49,6 @@ export const QuestionStepContent: React.FC<QuestionStepContentProps> = ({
   }
 
   const currentQuestion = questions[questionIndex];
-  const isFirstQuestion = questionIndex === 0;
-  const isLastQuestion = questionIndex === questions.length - 1;
-  const isFinalSubmit = isLastQuestion && isLastSubmittableStep;
-
-  // Resolve continue handler: submit on final question, advance within step, or fall through to step navigation
-  const getContinueHandler = (): (() => void) | undefined => {
-    if (isFinalSubmit) {
-      return () => onSubmitAssessment?.();
-    }
-
-    if (isLastQuestion) {
-      return undefined;
-    }
-
-    return () => {
-      setDirection('forward');
-      onQuestionIndexChange((i) => i + 1);
-    };
-  };
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -75,18 +63,11 @@ export const QuestionStepContent: React.FC<QuestionStepContentProps> = ({
           direction={direction}
           footer={
             <AssessmentNavigation
-              showBack={!isFirstQuestion || currentStep > 1}
-              continueLabel={isFinalSubmit ? 'Complete Assessment' : undefined}
-              continueVariant={isFinalSubmit ? 'success' : undefined}
-              onContinue={getContinueHandler()}
-              onBack={
-                isFirstQuestion
-                  ? undefined
-                  : () => {
-                      setDirection('backward');
-                      onQuestionIndexChange((i) => i - 1);
-                    }
-              }
+              showBack={showBack}
+              continueLabel={continueLabel}
+              continueVariant={continueVariant}
+              onContinue={continueHandler}
+              onBack={backHandler}
             />
           }
         />
