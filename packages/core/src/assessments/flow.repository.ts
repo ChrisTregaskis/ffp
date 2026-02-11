@@ -4,11 +4,13 @@ import type { DbClient } from '@ffp/database';
 import {
   assessmentFlows,
   flowSteps,
+  tenants,
   type AssessmentFlowRecord,
   type FlowStepRecord,
 } from '@ffp/database/schema';
 
 import { db } from '../lib/database';
+import { InternalServerError } from '../lib/errors';
 
 export type AssessmentFlow = AssessmentFlowRecord;
 export type FlowStepWithConfig = FlowStepRecord;
@@ -74,20 +76,80 @@ export async function findActiveById(flowId: string): Promise<AssessmentFlow | n
 }
 
 /**
- * Find the first active assessment flow
- *
- * Returns any single active flow. Used to determine the default
- * assessment flow for users who have not yet been assigned one.
- * No RLS needed — assessment_flows is a system-managed table.
+ * Extract `defaultAssessmentFlowId` from a tenant settings JSONB value.
+ * Returns the flow ID string if present, otherwise null.
  */
-export async function findFirstActive(): Promise<AssessmentFlow | null> {
-  const records = await db
-    .select()
-    .from(assessmentFlows)
-    .where(eq(assessmentFlows.isActive, true))
+function extractDefaultFlowId(settings: unknown): string | null {
+  if (typeof settings === 'object' && settings !== null) {
+    const obj = settings as Record<string, unknown>;
+    if (typeof obj.defaultAssessmentFlowId === 'string') {
+      return obj.defaultAssessmentFlowId;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Find the default assessment flow for a tenant
+ *
+ * Lookup hierarchy:
+ * 1. Tenant's own `settings.defaultAssessmentFlowId` — per-tenant override
+ * 2. Platform tenant's `settings.defaultAssessmentFlowId` — global default (required)
+ *
+ * At each level, the configured flow is validated as still active.
+ * This allows customer admins to set a tenant-specific default, while
+ * platform admins control the global default for all tenants.
+ *
+ * @param tenantId - The tenant UUID to check settings for
+ * @throws InternalServerError if no default assessment flow is configured
+ */
+export async function findDefaultForTenant(tenantId: string): Promise<AssessmentFlow | null> {
+  // 1. Check tenant's own settings for a configured default
+  const tenantRecords = await db
+    .select({ settings: tenants.settings })
+    .from(tenants)
+    .where(eq(tenants.id, tenantId))
     .limit(1);
 
-  return records[0] ?? null;
+  const tenantFlowId = extractDefaultFlowId(tenantRecords[0]?.settings);
+
+  if (tenantFlowId) {
+    const flow = await findActiveById(tenantFlowId);
+
+    if (flow) {
+      return flow;
+    }
+  }
+
+  // 2. Check platform tenant settings for a global default
+  const platformRecords = await db
+    .select({ settings: tenants.settings })
+    .from(tenants)
+    .where(eq(tenants.type, 'platform'))
+    .limit(1);
+
+  const platformFlowId = extractDefaultFlowId(platformRecords[0]?.settings);
+
+  if (platformFlowId) {
+    const flow = await findActiveById(platformFlowId);
+
+    if (flow) {
+      return flow;
+    }
+
+    // Configured flow ID exists but is inactive or missing
+    throw new InternalServerError(
+      `Platform default assessment flow '${platformFlowId}' is not active or does not exist. ` +
+        'Update settings.defaultAssessmentFlowId on the platform tenant.'
+    );
+  }
+
+  // No default configured at any level
+  throw new InternalServerError(
+    'No default assessment flow configured. ' +
+      'Set settings.defaultAssessmentFlowId on the platform tenant.'
+  );
 }
 
 /**

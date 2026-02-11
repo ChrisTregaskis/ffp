@@ -626,8 +626,8 @@ export async function getUserAssessmentStatus(
     return { hasProgramme: true, assessmentFlowId: null };
   }
 
-  // No programme — find the default assessment flow
-  const flow = await flowRepository.findFirstActive();
+  // No programme — find the default assessment flow for this tenant
+  const flow = await flowRepository.findDefaultForTenant(context.tenantId);
 
   return {
     hasProgramme: false,
