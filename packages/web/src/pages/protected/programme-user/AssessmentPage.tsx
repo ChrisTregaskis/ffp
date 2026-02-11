@@ -1,16 +1,17 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { AssessmentStepRenderer } from '@web/components/assessment/AssessmentStepRenderer/AssessmentStepRenderer';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { AssessmentProvider } from '@web/contexts/assessments/AssessmentProvider';
+
+import { AssessmentOrchestrator } from './AssessmentOrchestrator';
 
 /**
  * Fullscreen assessment page (no app layout or sidebar).
  *
  * Reads `flowId` from URL search params and wraps the assessment
- * flow in AssessmentProvider. Renders AssessmentStepRenderer which
- * orchestrates step-by-step rendering based on context state.
+ * flow in AssessmentProvider. Renders AssessmentOrchestrator which
+ * handles start/resume, question fetching, and step-by-step rendering.
  */
 export const AssessmentPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -30,7 +31,7 @@ export const AssessmentPage: React.FC = () => {
   return (
     <AssessmentProvider flowId={flowId}>
       <div className="min-h-screen bg-linear-to-br from-gray-50 via-ffp-light-purple/10 to-gray-50">
-        <AssessmentStepRenderer />
+        <AssessmentOrchestrator flowId={flowId} />
       </div>
     </AssessmentProvider>
   );

@@ -95,16 +95,18 @@ Renamed American English identifiers to British English across the codebase (mer
 | ------- | ------------------------------------------------------ | ------------------ | ----------- |
 | FFP-274 | Fix template questions schema & API response parsing   | schema, API client | ✅ Complete |
 | FFP-275 | Create assessment route and page shell                 | route, page        | ✅ Complete |
-| FFP-276 | Wire assessment page orchestrator (start, step flow)   | orchestration      | ⏳ Next     |
+| FFP-276 | Wire assessment page orchestrator (start, step flow)   | orchestration      | ✅ Complete |
 | FFP-277 | Wire submit assessment and results polling             | submit, polling    | ⏳ Pending  |
 | FFP-278 | Programme user first-login redirect to assessment      | routing            | ⏳ Pending  |
 | —       | E2E testing guide (seed data, scenarios, verification) | testing            | ⏳ Pending  |
 
 **FFP-274 summary**: Added `assessmentTemplateWithQuestionsSchema` with Zod transform mapping backend `QuestionWithConfig` to frontend `AssessmentQuestion` (`questionText` → `question`, nullable → optional, configOverrides applied, backend-only fields stripped). Updated API client and hook to use new schema/type.
 
-**FFP-275 summary**: Added `RouteKey.ASSESSMENT` and route config at `/assessment` with `excludeLayout: true` (fullscreen, no app layout). Created `AssessmentPage` shell — reads `flowId` from search params, shows error if missing, wraps with `AssessmentProvider`, renders `AssessmentStepRenderer`.
+**FFP-275 summary**: Added `RouteKey.ASSESSMENT` and route config at `/assessment` with `excludeLayout: true` (fullscreen, no app layout). Created `AssessmentPage` shell — reads `flowId` from search params, shows error if missing, wraps with `AssessmentProvider`, renders orchestrator.
 
-**Remaining gaps**: No start-assessment orchestration, no first-login redirect logic.
+**FFP-276 summary**: Created `AssessmentOrchestrator` component — starts/resumes assessment on mount via `useStartAssessment`, dispatches `START_ASSESSMENT` to populate context, fetches template questions reactively based on current step's `templateId`, passes questions to `AssessmentStepRenderer`. Loading spinner while starting, error states with retry button, resume flow handled through `START_ASSESSMENT` payload.
+
+**Remaining gaps**: No submit/results polling (FFP-277), no first-login redirect logic (FFP-278).
 
 ---
 
