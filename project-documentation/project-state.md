@@ -97,7 +97,7 @@ Renamed American English identifiers to British English across the codebase (mer
 | FFP-275 | Create assessment route and page shell                 | route, page        | ✅ Complete |
 | FFP-276 | Wire assessment page orchestrator (start, step flow)   | orchestration      | ✅ Complete |
 | FFP-277 | Wire submit assessment and results polling             | submit, polling    | ✅ Complete |
-| FFP-278 | Programme user first-login redirect to assessment      | routing            | ⏳ Pending  |
+| FFP-278 | Programme user first-login redirect to assessment      | routing            | ✅ Complete |
 | —       | E2E testing guide (seed data, scenarios, verification) | testing            | ⏳ Pending  |
 
 **FFP-274 summary**: Added `assessmentTemplateWithQuestionsSchema` with Zod transform mapping backend `QuestionWithConfig` to frontend `AssessmentQuestion` (`questionText` → `question`, nullable → optional, configOverrides applied, backend-only fields stripped). Updated API client and hook to use new schema/type.
@@ -108,7 +108,7 @@ Renamed American English identifiers to British English across the codebase (mer
 
 **FFP-277 summary**: User-initiated submit flow (no useEffect). Orchestrator computes `isLastSubmittableStep` from flow steps, passes `onSubmitAssessment` callback down through `AssessmentStepRenderer` to `QuestionStepContent`/`VideoStepContent`. On the last question of the last submittable step, "Continue" becomes "Complete Assessment" (green `success` button variant). Clicking it calls `submitMutate` with full answers; `onSuccess` dispatches `NEXT_STEP` to transition to results. `hasSubmittedRef` prevents re-submission on resume. Shows "Submitting..." loading and error+retry states. `handleViewProgramme` navigates to `/programme-overview`. `ResultsStepContent` dispatches `SET_SCORES` when polling returns scores. Added `continueVariant` prop to `AssessmentNavigation`.
 
-**Remaining gaps**: No first-login redirect logic (FFP-278).
+**FFP-278 summary**: Added `GET /assessments/user-status` endpoint — checks if programme user has an active programme, returns default assessment flow ID for redirect. Flow lookup uses two-tier hierarchy: tenant `settings.defaultAssessmentFlowId` override → platform tenant `settings.defaultAssessmentFlowId` global default (throws `InternalServerError` if neither configured). Frontend `useUserAssessmentStatusQuery` hook called from `HomePage`, redirects programme users without a programme to `/assessment?flowId=<id>` with loading spinner during check.
 
 ---
 
