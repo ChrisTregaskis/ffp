@@ -1,12 +1,21 @@
 import { ASSESSMENT_ACTION } from './constants';
-import { createInitialState, findStepById, getPhaseForStep } from './helpers';
+import { findStepById, getPhaseForStep } from './helpers';
 
 import type { AssessmentState, AssessmentAction } from './types';
 
 /**
  * Assessment reducer handling all state transitions.
  *
- * Handles navigation, answer recording, warnings, and assessment lifecycle.
+ * Active lifecycle:
+ *   START_ASSESSMENT → SET_ANSWER → MARK_SAVED → NEXT_STEP / PREV_STEP → SET_SCORES
+ *
+ * - START_ASSESSMENT: Hydrates state from server (start or resume)
+ * - SET_ANSWER: Records a user answer, marks state dirty
+ * - MARK_SAVED: Clears dirty flag after successful API save
+ * - NEXT_STEP: Advances forward (supports server-driven branching via nextStepId)
+ * - PREV_STEP: Navigates backward (linear only)
+ * - SET_SCORES: Stores results and transitions to results phase
+ *
  * All state updates are immutable.
  */
 export const assessmentReducer = (
@@ -83,24 +92,6 @@ export const assessmentReducer = (
       };
     }
 
-    case ASSESSMENT_ACTION.SET_PHASE: {
-      return {
-        ...state,
-        phase: action.payload.phase,
-      };
-    }
-
-    case ASSESSMENT_ACTION.GO_TO_STEP: {
-      const { stepId, stepNumber } = action.payload;
-
-      return {
-        ...state,
-        currentStep: stepNumber,
-        currentStepId: stepId,
-        phase: getPhaseForStep(state.steps, stepNumber, state.phase),
-      };
-    }
-
     case ASSESSMENT_ACTION.MARK_SAVED: {
       return {
         ...state,
@@ -114,26 +105,6 @@ export const assessmentReducer = (
         scores: action.payload.scores,
         phase: 'results',
       };
-    }
-
-    case ASSESSMENT_ACTION.ADD_WARNING: {
-      return {
-        ...state,
-        warnings: [...state.warnings, action.payload.warning],
-      };
-    }
-
-    case ASSESSMENT_ACTION.CLEAR_WARNINGS: {
-      return {
-        ...state,
-        warnings: [],
-      };
-    }
-
-    case ASSESSMENT_ACTION.RESET: {
-      const flowId = action.payload?.flowId ?? state.flowId;
-
-      return createInitialState(flowId);
     }
 
     default: {

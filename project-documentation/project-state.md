@@ -98,7 +98,7 @@ Renamed American English identifiers to British English across the codebase (mer
 | FFP-276 | Wire assessment page orchestrator (start, step flow)   | orchestration      | ✅ Complete |
 | FFP-277 | Wire submit assessment and results polling             | submit, polling    | ✅ Complete |
 | FFP-278 | Programme user first-login redirect to assessment      | routing            | ✅ Complete |
-| —       | E2E testing guide (seed data, scenarios, verification) | testing            | ⏳ Pending  |
+| —       | E2E testing guide (seed data, scenarios, verification) | testing            | ✅ Complete |
 
 **FFP-274 summary**: Added `assessmentTemplateWithQuestionsSchema` with Zod transform mapping backend `QuestionWithConfig` to frontend `AssessmentQuestion` (`questionText` → `question`, nullable → optional, configOverrides applied, backend-only fields stripped). Updated API client and hook to use new schema/type.
 

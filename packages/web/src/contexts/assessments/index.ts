@@ -8,13 +8,8 @@ export type {
   SetAnswerAction,
   NextStepAction,
   PrevStepAction,
-  SetPhaseAction,
-  GoToStepAction,
   MarkSavedAction,
   SetScoresAction,
-  AddWarningAction,
-  ClearWarningsAction,
-  ResetAction,
 } from './types';
 
 export { createInitialState, findStepById, getPhaseForStep } from './helpers';

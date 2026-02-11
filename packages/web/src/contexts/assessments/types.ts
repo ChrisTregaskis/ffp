@@ -87,29 +87,6 @@ export interface PrevStepAction {
 }
 
 /**
- * Set current phase action.
- *
- * Dispatched when transitioning between assessment phases.
- */
-export interface SetPhaseAction {
-  type: typeof ASSESSMENT_ACTION.SET_PHASE;
-  payload: Pick<AssessmentState, 'phase'>;
-}
-
-/**
- * Navigate to specific step action.
- *
- * Dispatched for UUID-based navigation (e.g., after branching evaluation).
- */
-export interface GoToStepAction {
-  type: typeof ASSESSMENT_ACTION.GO_TO_STEP;
-  payload: {
-    stepId: string;
-    stepNumber: number;
-  };
-}
-
-/**
  * Mark as saved action.
  *
  * Dispatched after successful save to API.
@@ -131,52 +108,14 @@ export interface SetScoresAction {
   };
 }
 
-/**
- * Add warning action.
- *
- * Dispatched when a branching rule triggers a warning.
- */
-export interface AddWarningAction {
-  type: typeof ASSESSMENT_ACTION.ADD_WARNING;
-  payload: {
-    warning: AssessmentWarning;
-  };
-}
-
-/**
- * Clear warnings action.
- *
- * Dispatched to clear all warnings (e.g., after acknowledgement).
- */
-export interface ClearWarningsAction {
-  type: typeof ASSESSMENT_ACTION.CLEAR_WARNINGS;
-}
-
-/**
- * Reset assessment action.
- *
- * Dispatched to reset state to initial values.
- * Preserves flowId for starting a new assessment.
- */
-export interface ResetAction {
-  type: typeof ASSESSMENT_ACTION.RESET;
-  /** Optional new flowId (defaults to current) */
-  payload?: Partial<Pick<AssessmentState, 'flowId'>>;
-}
-
 // Union type of all assessment actions.
 export type AssessmentAction =
   | StartAssessmentAction
   | SetAnswerAction
   | NextStepAction
   | PrevStepAction
-  | SetPhaseAction
-  | GoToStepAction
   | MarkSavedAction
-  | SetScoresAction
-  | AddWarningAction
-  | ClearWarningsAction
-  | ResetAction;
+  | SetScoresAction;
 
 /**
  * Assessment context value type.
