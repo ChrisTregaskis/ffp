@@ -214,6 +214,13 @@ export const assessmentResultsResponseSchema = z.object({
   programmeId: z.string().uuid().nullable(),
 });
 
+export const userAssessmentStatusResponseSchema = z.object({
+  /** Whether the user has an active programme */
+  hasProgramme: z.boolean(),
+  /** Assessment flow ID to redirect to (null if user has a programme or no active flow) */
+  assessmentFlowId: z.string().uuid().nullable(),
+});
+
 export type AnswerValue = z.infer<typeof answerValueSchema>;
 export type UserAssessmentStatus = z.infer<typeof userAssessmentStatusSchema>;
 export type UserAnswer = z.infer<typeof userAnswerSchema>;
@@ -233,3 +240,4 @@ export type SaveProgressResponse = z.infer<typeof saveProgressResponseSchema>;
 export type SubmitAssessmentRequest = z.infer<typeof submitAssessmentRequestSchema>;
 export type SubmitAssessmentResponse = z.infer<typeof submitAssessmentResponseSchema>;
 export type AssessmentResultsResponse = z.infer<typeof assessmentResultsResponseSchema>;
+export type UserAssessmentStatusResponse = z.infer<typeof userAssessmentStatusResponseSchema>;

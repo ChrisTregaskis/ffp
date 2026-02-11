@@ -74,6 +74,23 @@ export async function findActiveById(flowId: string): Promise<AssessmentFlow | n
 }
 
 /**
+ * Find the first active assessment flow
+ *
+ * Returns any single active flow. Used to determine the default
+ * assessment flow for users who have not yet been assigned one.
+ * No RLS needed — assessment_flows is a system-managed table.
+ */
+export async function findFirstActive(): Promise<AssessmentFlow | null> {
+  const records = await db
+    .select()
+    .from(assessmentFlows)
+    .where(eq(assessmentFlows.isActive, true))
+    .limit(1);
+
+  return records[0] ?? null;
+}
+
+/**
  * Find all steps for a flow from the normalised flow_steps table
  *
  * Returns steps ordered by `order` (tier/level), then by id for deterministic

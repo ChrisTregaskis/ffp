@@ -6,6 +6,7 @@ import { getUserIdFromContext } from '../lib/context';
 import { withRLS } from '../lib/database';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import { createSystemLogger } from '../lib/logger';
+import { programmeRepository } from '../programmes';
 import {
   findByTemplateIds as findQuestionsByTemplateIds,
   findSlugsByIds,
@@ -31,6 +32,7 @@ import type {
   SubmitAssessmentRequest,
   SubmitAssessmentResponse,
   UserAssessmentAnswers,
+  UserAssessmentStatusResponse,
 } from '../schemas/user-assessment.schema';
 
 /**
@@ -605,5 +607,30 @@ export async function getAssessmentResults(
     status: assessment.status,
     scores: assessment.scores,
     programmeId: assessment.programmeId,
+  };
+}
+
+/**
+ * Checks whether the user has an active programme. If not, returns the
+ * default assessment flow ID so the frontend can redirect to the assessment.
+ */
+export async function getUserAssessmentStatus(
+  context: TenantContext
+): Promise<UserAssessmentStatusResponse> {
+  const userId = await getUserIdFromContext(context);
+
+  // Check if user has an active programme
+  const programme = await programmeRepository.findProgrammeByUserId(context.tenantId, userId);
+
+  if (programme) {
+    return { hasProgramme: true, assessmentFlowId: null };
+  }
+
+  // No programme — find the default assessment flow
+  const flow = await flowRepository.findFirstActive();
+
+  return {
+    hasProgramme: false,
+    assessmentFlowId: flow?.id ?? null,
   };
 }

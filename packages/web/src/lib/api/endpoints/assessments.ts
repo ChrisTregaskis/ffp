@@ -5,6 +5,7 @@ import {
   saveProgressResponseSchema,
   startAssessmentResponseSchema,
   submitAssessmentResponseSchema,
+  userAssessmentStatusResponseSchema,
   type AssessmentFlow,
   type AssessmentResultsResponse,
   type AssessmentTemplate,
@@ -14,6 +15,7 @@ import {
   type StartAssessmentResponse,
   type SubmitAssessmentRequest,
   type SubmitAssessmentResponse,
+  type UserAssessmentStatusResponse,
 } from '@ffp/core';
 
 import { ffpClient } from '../client';
@@ -93,6 +95,18 @@ export const assessmentsApi = {
   },
 
   /**
+   * Get user's assessment/programme status
+   *
+   * Returns whether the user has an active programme and the default
+   * assessment flow ID for redirect.
+   */
+  getUserStatus: async (signal?: AbortSignal): Promise<UserAssessmentStatusResponse> => {
+    const response = await ffpClient.get(`${basePath}/user-status`, { signal });
+
+    return userAssessmentStatusResponseSchema.parse(response);
+  },
+
+  /**
    * Get assessment results (for polling after submission)
    */
   getResults: async (
@@ -116,4 +130,5 @@ export type {
   StartAssessmentResponse,
   SubmitAssessmentRequest,
   SubmitAssessmentResponse,
+  UserAssessmentStatusResponse,
 };
