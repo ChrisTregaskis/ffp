@@ -20,6 +20,8 @@ export const VideoStepContent: React.FC<QuestionStepContentProps> = ({
   answers,
   currentStep,
   onAnswer,
+  isLastSubmittableStep = false,
+  onSubmitAssessment,
 }) => {
   const [direction, setDirection] = useState<CardTransitionDirection>('forward');
 
@@ -37,6 +39,23 @@ export const VideoStepContent: React.FC<QuestionStepContentProps> = ({
   const currentQuestion = questions[questionIndex];
   const isFirstQuestion = questionIndex === 0;
   const isLastQuestion = questionIndex === questions.length - 1;
+  const isFinalSubmit = isLastQuestion && isLastSubmittableStep;
+
+  // Resolve continue handler: submit on final question, advance within step, or fall through to step navigation
+  const getContinueHandler = (): (() => void) | undefined => {
+    if (isFinalSubmit) {
+      return () => onSubmitAssessment?.();
+    }
+
+    if (isLastQuestion) {
+      return undefined;
+    }
+
+    return () => {
+      setDirection('forward');
+      onQuestionIndexChange((i) => i + 1);
+    };
+  };
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -52,14 +71,9 @@ export const VideoStepContent: React.FC<QuestionStepContentProps> = ({
           footer={
             <AssessmentNavigation
               showBack={!isFirstQuestion || currentStep > 1}
-              onContinue={
-                isLastQuestion
-                  ? undefined
-                  : () => {
-                      setDirection('forward');
-                      onQuestionIndexChange((i) => i + 1);
-                    }
-              }
+              continueLabel={isFinalSubmit ? 'Complete Assessment' : undefined}
+              continueVariant={isFinalSubmit ? 'success' : undefined}
+              onContinue={getContinueHandler()}
               onBack={
                 isFirstQuestion
                   ? undefined

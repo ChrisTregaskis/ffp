@@ -96,7 +96,7 @@ Renamed American English identifiers to British English across the codebase (mer
 | FFP-274 | Fix template questions schema & API response parsing   | schema, API client | ✅ Complete |
 | FFP-275 | Create assessment route and page shell                 | route, page        | ✅ Complete |
 | FFP-276 | Wire assessment page orchestrator (start, step flow)   | orchestration      | ✅ Complete |
-| FFP-277 | Wire submit assessment and results polling             | submit, polling    | ⏳ Pending  |
+| FFP-277 | Wire submit assessment and results polling             | submit, polling    | ✅ Complete |
 | FFP-278 | Programme user first-login redirect to assessment      | routing            | ⏳ Pending  |
 | —       | E2E testing guide (seed data, scenarios, verification) | testing            | ⏳ Pending  |
 
@@ -106,7 +106,9 @@ Renamed American English identifiers to British English across the codebase (mer
 
 **FFP-276 summary**: Created `AssessmentOrchestrator` component — starts/resumes assessment on mount via `useStartAssessment`, dispatches `START_ASSESSMENT` to populate context, fetches template questions reactively based on current step's `templateId`, passes questions to `AssessmentStepRenderer`. Loading spinner while starting, error states with retry button, resume flow handled through `START_ASSESSMENT` payload.
 
-**Remaining gaps**: No submit/results polling (FFP-277), no first-login redirect logic (FFP-278).
+**FFP-277 summary**: User-initiated submit flow (no useEffect). Orchestrator computes `isLastSubmittableStep` from flow steps, passes `onSubmitAssessment` callback down through `AssessmentStepRenderer` to `QuestionStepContent`/`VideoStepContent`. On the last question of the last submittable step, "Continue" becomes "Complete Assessment" (green `success` button variant). Clicking it calls `submitMutate` with full answers; `onSuccess` dispatches `NEXT_STEP` to transition to results. `hasSubmittedRef` prevents re-submission on resume. Shows "Submitting..." loading and error+retry states. `handleViewProgramme` navigates to `/programme-overview`. `ResultsStepContent` dispatches `SET_SCORES` when polling returns scores. Added `continueVariant` prop to `AssessmentNavigation`.
+
+**Remaining gaps**: No first-login redirect logic (FFP-278).
 
 ---
 

@@ -5,6 +5,10 @@ export interface AssessmentStepRendererProps {
   questions?: AssessmentQuestion[];
   /** Callback when user clicks "View My Programme" on results screen */
   onViewProgramme?: () => void;
+  /** Whether the current step is the last question/video step in the flow */
+  isLastSubmittableStep?: boolean;
+  /** Callback to submit the assessment (triggered by user clicking "Complete Assessment") */
+  onSubmitAssessment?: () => void;
 }
 
 export interface QuestionStepContentProps {
@@ -15,6 +19,10 @@ export interface QuestionStepContentProps {
   answers: Record<string, { questionId: string; answerValue: AnswerValue }>;
   currentStep: number;
   onAnswer: (questionId: string, value: AnswerValue | null) => void;
+  /** Whether the current step is the last question/video step in the flow */
+  isLastSubmittableStep?: boolean;
+  /** Callback to submit the assessment (triggered by user clicking "Complete Assessment") */
+  onSubmitAssessment?: () => void;
 }
 
 export interface ResultsStepContentProps {

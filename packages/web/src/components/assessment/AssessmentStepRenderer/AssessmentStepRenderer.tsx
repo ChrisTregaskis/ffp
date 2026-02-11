@@ -31,6 +31,8 @@ const STEPS_WITHOUT_PROGRESS: FlowStepType[] = ['intro', 'programme-overview'];
 export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
   questions = [],
   onViewProgramme,
+  isLastSubmittableStep = false,
+  onSubmitAssessment,
 }) => {
   const { assessmentState, assessmentDispatch } = useAssessment();
   const { data: flow, isLoading: isFlowLoading } = useAssessmentFlowQuery(assessmentState.flowId);
@@ -107,6 +109,8 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
             answers={assessmentState.answers}
             currentStep={assessmentState.currentStep}
             onAnswer={handleAnswer}
+            isLastSubmittableStep={isLastSubmittableStep}
+            onSubmitAssessment={onSubmitAssessment}
           />
         );
 
@@ -120,6 +124,8 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
             answers={assessmentState.answers}
             currentStep={assessmentState.currentStep}
             onAnswer={handleAnswer}
+            isLastSubmittableStep={isLastSubmittableStep}
+            onSubmitAssessment={onSubmitAssessment}
           />
         );
 

@@ -1,5 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
+import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
+import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import { useAssessmentResultsQuery } from '@web/hooks/assessments';
 
 import { ResultsScreen } from '../screens/ResultsScreen';
@@ -12,7 +14,18 @@ export const ResultsStepContent: React.FC<ResultsStepContentProps> = ({
   assessmentId,
   onViewProgramme,
 }) => {
+  const { assessmentDispatch } = useAssessment();
   const { data: results, isLoading } = useAssessmentResultsQuery(assessmentId ?? '');
+
+  // Sync polled scores into assessment context state
+  useEffect(() => {
+    if (results?.scores) {
+      assessmentDispatch({
+        type: ASSESSMENT_ACTION.SET_SCORES,
+        payload: { scores: results.scores },
+      });
+    }
+  }, [results?.scores, assessmentDispatch]);
 
   const handleViewProgramme = useCallback(() => {
     onViewProgramme?.();

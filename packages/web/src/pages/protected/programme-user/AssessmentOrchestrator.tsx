@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { flowStepTypeSchema, type FlowStepType } from '@ffp/core';
+import { flowStepTypeSchema, type FlowStepType, type UserAssessmentStatus } from '@ffp/core';
 
 import { AssessmentStepRenderer } from '@web/components/assessment/AssessmentStepRenderer/AssessmentStepRenderer';
 import { Button } from '@web/components/button';
@@ -9,7 +10,12 @@ import { LoadingSpinner } from '@web/components/LoadingSpinner';
 import { Text } from '@web/components/text';
 import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
-import { useAssessmentTemplateQuery, useStartAssessment } from '@web/hooks/assessments';
+import {
+  useAssessmentTemplateQuery,
+  useStartAssessment,
+  useSubmitAssessment,
+} from '@web/hooks/assessments';
+import { routes, RouteKey } from '@web/pages/routes';
 
 interface AssessmentOrchestratorProps {
   /** Assessment flow ID to start or resume */
@@ -18,6 +24,9 @@ interface AssessmentOrchestratorProps {
 
 /** Step types that require template questions to be fetched. */
 const QUESTION_STEP_TYPES: FlowStepType[] = ['questions', 'video-assessment'];
+
+/** Statuses indicating the assessment has already been submitted (skip re-submission on resume). */
+const ALREADY_SUBMITTED_STATUSES: UserAssessmentStatus[] = ['submitted', 'scored', 'completed'];
 
 /** Safely parse a string to FlowStepType, returning fallback if invalid. */
 const toFlowStepType = (value: string, fallback: FlowStepType): FlowStepType => {
@@ -37,6 +46,10 @@ const toFlowStepType = (value: string, fallback: FlowStepType): FlowStepType => 
  */
 export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({ flowId }) => {
   const { assessmentState, assessmentDispatch } = useAssessment();
+  const navigate = useNavigate();
+
+  // Tracks whether this assessment has already been submitted (prevents re-submission on resume).
+  const hasSubmittedRef = useRef(false);
 
   const {
     mutate: startMutate,
@@ -45,6 +58,11 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({ 
   } = useStartAssessment({
     onSuccess: (data) => {
       const currentStepSummary = data.steps.find((s) => s.order === data.currentStep);
+
+      // If resuming an already-submitted assessment, skip submission
+      if (ALREADY_SUBMITTED_STATUSES.includes(data.status)) {
+        hasSubmittedRef.current = true;
+      }
 
       assessmentDispatch({
         type: ASSESSMENT_ACTION.START_ASSESSMENT,
@@ -58,6 +76,17 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({ 
           phase: currentStepSummary ? toFlowStepType(currentStepSummary.type, 'intro') : 'intro',
         },
       });
+    },
+  });
+
+  const {
+    mutate: submitMutate,
+    isPending: isSubmitPending,
+    isError: isSubmitError,
+  } = useSubmitAssessment({
+    onSuccess: () => {
+      hasSubmittedRef.current = true;
+      assessmentDispatch({ type: ASSESSMENT_ACTION.NEXT_STEP });
     },
   });
 
@@ -88,6 +117,38 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({ 
     () => (needsQuestions && template ? template.templateQuestions : []),
     [needsQuestions, template]
   );
+
+  // Determine if the current step is the last question/video step in the flow.
+  // Used to show "Complete Assessment" CTA instead of "Continue" on the final question.
+  const isLastSubmittableStep = useMemo(() => {
+    if (!QUESTION_STEP_TYPES.includes(stepType)) {
+      return false;
+    }
+
+    const currentOrder = currentStepSummary?.order ?? 0;
+
+    return !assessmentState.steps.some(
+      (s) => s.order > currentOrder && QUESTION_STEP_TYPES.includes(toFlowStepType(s.type, 'intro'))
+    );
+  }, [stepType, currentStepSummary?.order, assessmentState.steps]);
+
+  // User-initiated submission: sends all answers for scoring.
+  // Called when user clicks "Complete Assessment" on the final question.
+  // Submit onSuccess dispatches NEXT_STEP to transition to the results phase.
+  const handleSubmitAssessment = useCallback(() => {
+    if (!assessmentState.assessmentId) {
+      return;
+    }
+
+    submitMutate({
+      assessmentId: assessmentState.assessmentId,
+      payload: { answers: assessmentState.answers },
+    });
+  }, [assessmentState.assessmentId, assessmentState.answers, submitMutate]);
+
+  const handleViewProgramme = useCallback(() => {
+    void navigate(routes[RouteKey.PROGRAMME_OVERVIEW].path);
+  }, [navigate]);
 
   // Loading state: starting or resuming assessment
   if (isStartPending) {
@@ -135,5 +196,51 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({ 
     );
   }
 
-  return <AssessmentStepRenderer questions={questions} />;
+  // Submission loading state: submitting assessment answers
+  if (isSubmitPending) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
+        <LoadingSpinner size="lg" variant="center" />
+
+        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+          Submitting your assessment...
+        </Text>
+      </div>
+    );
+  }
+
+  // Submission error state
+  if (isSubmitError) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-6">
+        <StaticAlert
+          variant="error"
+          message="Unable to submit your assessment. Please try again."
+        />
+
+        <Button
+          variant="secondary"
+          onClick={() => {
+            if (assessmentState.assessmentId) {
+              submitMutate({
+                assessmentId: assessmentState.assessmentId,
+                payload: { answers: assessmentState.answers },
+              });
+            }
+          }}
+        >
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <AssessmentStepRenderer
+      questions={questions}
+      onViewProgramme={handleViewProgramme}
+      isLastSubmittableStep={isLastSubmittableStep}
+      onSubmitAssessment={handleSubmitAssessment}
+    />
+  );
 };
