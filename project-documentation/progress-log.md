@@ -8,6 +8,111 @@ Detailed session-by-session history for Sprint 1 execution.
 
 ## Recent Sessions (Detailed)
 
+### February 8-11, 2026 (Sessions 103-108 - FFP-272 E2E Assessment Flow Integration)
+
+**Status**: ✅ FFP-272 CODE COMPLETE (pending E2E manual testing)
+
+**Branch**: `feature/ffp-272-full-e2e-assessment-integration`
+
+**Summary**: Wired the end-to-end assessment flow together across 6 sub-tasks — from fixing the template questions schema through to first-login redirect. Finished with a state management audit that trimmed the reducer from 11 to 6 actions.
+
+**Key Deliverables**:
+
+- **Template Questions Schema** (FFP-274): `assessmentTemplateWithQuestionsSchema` with Zod transform mapping backend `QuestionWithConfig` to frontend `AssessmentQuestion` (`questionText` -> `question`, nullable -> optional, `configOverrides` applied, backend-only fields stripped)
+- **Assessment Route & Page Shell** (FFP-275): `RouteKey.ASSESSMENT` at `/assessment` with `excludeLayout: true` (fullscreen). `AssessmentPage` reads `flowId` from search params, wraps with `AssessmentProvider`
+- **Assessment Orchestrator** (FFP-276): Starts/resumes assessment on mount via `useStartAssessment`, dispatches `START_ASSESSMENT` to hydrate context from server, fetches template questions reactively based on current step's `templateId`
+- **Submit & Results Polling** (FFP-277): User-initiated submit flow (no useEffect). `isLastSubmittableStep` computed from flow steps. "Complete Assessment" green button on final question. `ResultsStepContent` polls and dispatches `SET_SCORES`. `handleViewProgramme` navigates to `/programme-overview`
+- **First-Login Redirect** (FFP-278): `GET /assessments/user-status` endpoint with two-tier flow lookup (tenant override -> platform default). `useUserAssessmentStatusQuery` hook on `HomePage` redirects programme users without a programme to `/assessment?flowId=<id>`
+- **E2E Testing Guide**: Comprehensive seed data scenarios and verification steps documented
+- **State Management Audit**: Evaluated useReducer + Context against Zustand, XState v5, Jotai, TanStack Query, useActionState, React Hook Form. Decision: keep current pattern. Removed 5 unused speculative actions (YAGNI)
+
+**Sub-tasks Completed**:
+
+| Order | Key     | Summary                                              | Status      |
+| ----- | ------- | ---------------------------------------------------- | ----------- |
+| 1     | FFP-274 | Fix template questions schema & API response parsing | ✅ Complete |
+| 2     | FFP-275 | Create assessment route and page shell               | ✅ Complete |
+| 3     | FFP-276 | Wire assessment page orchestrator (start, step flow) | ✅ Complete |
+| 4     | FFP-277 | Wire submit assessment and results polling           | ✅ Complete |
+| 5     | FFP-278 | Programme user first-login redirect to assessment    | ✅ Complete |
+| -     | -       | E2E testing guide (seed data, scenarios)             | ✅ Complete |
+| -     | -       | State management audit & reducer cleanup             | ✅ Complete |
+
+**Files Created**:
+
+```
+packages/web/src/pages/protected/programme-user/
+├── AssessmentPage.tsx                    # Fullscreen page shell with provider
+└── AssessmentOrchestrator.tsx            # Lifecycle orchestrator (start, submit, results)
+
+packages/web/src/components/assessment/
+└── AssessmentStepRenderer/
+    └── ResultsStepContent.tsx            # Results polling + SET_SCORES dispatch
+
+packages/core/src/schemas/
+└── assessment-template.schema.ts         # assessmentTemplateWithQuestionsSchema (extended)
+
+packages/core/src/assessments/
+└── user-assessment-status.service.ts     # getUserAssessmentStatus (two-tier flow lookup)
+
+packages/functions/src/assessments/
+└── get-user-assessment-status.ts         # GET /assessments/user-status handler
+
+packages/web/src/hooks/assessments/
+└── useUserAssessmentStatusQuery.ts       # Status check + redirect hook
+```
+
+**Files Modified** (key changes only):
+
+| File                                                                                       | Change                                                                        |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| `packages/web/src/lib/api/endpoints/assessments.ts`                                        | Updated `getTemplate()` to parse with `assessmentTemplateWithQuestionsSchema` |
+| `packages/web/src/hooks/assessments/useAssessmentTemplateQuery.ts`                         | Updated generic type to `AssessmentTemplateWithQuestions`                     |
+| `packages/web/src/pages/routes/RouteKey.ts`                                                | Added `ASSESSMENT` enum value                                                 |
+| `packages/web/src/pages/routes/index.ts`                                                   | Added `/assessment` route config with `excludeLayout: true`                   |
+| `packages/web/src/components/assessment/AssessmentStepRenderer/types.ts`                   | Added `isLastSubmittableStep`, `onSubmitAssessment` props                     |
+| `packages/web/src/components/assessment/AssessmentStepRenderer/AssessmentStepRenderer.tsx` | Passes submit props to content components                                     |
+| `packages/web/src/components/assessment/AssessmentStepRenderer/QuestionStepContent.tsx`    | Final-submit logic ("Complete Assessment" green button)                       |
+| `packages/web/src/components/assessment/AssessmentStepRenderer/VideoStepContent.tsx`       | Same final-submit logic as QuestionStepContent                                |
+| `packages/web/src/components/assessment/AssessmentNavigation/AssessmentNavigation.tsx`     | Added `continueVariant` prop                                                  |
+| `packages/web/src/pages/protected/programme-user/HomePage.tsx`                             | Added `useUserAssessmentStatusQuery` redirect logic                           |
+| `packages/web/src/contexts/assessments/constants.ts`                                       | Removed 5 unused action keys (audit)                                          |
+| `packages/web/src/contexts/assessments/types.ts`                                           | Removed 5 action interfaces + union members (audit)                           |
+| `packages/web/src/contexts/assessments/reducer.ts`                                         | Removed 5 cases, added lifecycle comment (audit)                              |
+| `packages/web/src/contexts/assessments/index.ts`                                           | Removed 5 unused type exports (audit)                                         |
+
+**State Management Audit Decision**:
+
+Evaluated `useReducer` + Context against 6 alternatives (Zustand, XState v5, Jotai, TanStack Query, useActionState, React Hook Form). Key findings:
+
+- Pattern is still React-recommended in 2026, zero bundle overhead, 4 page-scoped consumers with no prop drilling
+- Removed 5 unused speculative actions per YAGNI: `SET_PHASE`, `GO_TO_STEP`, `ADD_WARNING`, `CLEAR_WARNINGS`, `RESET` (~100 lines removed)
+- Reducer trimmed from 11 to 6 active actions with lifecycle documentation
+- `questionIndex` stays as local state in `AssessmentStepRenderer`
+- Full research documented in `.claude/docs/React State Management Research: Multi-Step Assessment Wizard (2026).md`
+
+**Key Patterns Established**:
+
+| Area                | Decision                                                                                        |
+| ------------------- | ----------------------------------------------------------------------------------------------- |
+| **Template Schema** | Zod `.transform()` maps backend shape to frontend at parse time (single source of truth)        |
+| **Orchestrator**    | Page-level component owns lifecycle (start/submit); child components are presentational         |
+| **Submit Flow**     | User-initiated (button click), not state-driven (no useEffect) — avoids accidental submission   |
+| **Resume**          | `START_ASSESSMENT` re-hydrates full state from server; `hasSubmittedRef` prevents re-submission |
+| **Results**         | Polling via `useAssessmentResultsQuery`, `SET_SCORES` dispatch syncs to context                 |
+| **First-Login**     | Two-tier flow lookup (tenant override -> platform default) for multi-tenant flexibility         |
+| **State Mgmt**      | useReducer + Context validated for this use case; re-evaluate if branching moves client-side    |
+
+**Quality Assurance**:
+
+- ✅ `pnpm typecheck` — Zero errors across all packages
+- ✅ `pnpm lint` — Zero warnings
+- ⏳ E2E manual testing — deferred to next session (testing guide prepared)
+
+**Sprint 6 Progress**: ~13/~26 pts (~50%) — FFP-137 + FFP-140 + FFP-272 (code) + FFP-273 complete
+
+---
+
 ### February 6-8, 2026 (Sessions 95-102 - FFP-140 Assessment Step Screens)
 
 **Status**: ✅ FFP-140 COMPLETE
@@ -759,7 +864,8 @@ The tests were failing with "permission denied for table template_questions" bec
 | Feb 4       | Sprint 5 ✅ Complete (Early)       | ~183h         |
 | Feb 6       | FFP-137 Complete (Assessment Nav)  | ~185h         |
 | Feb 8       | FFP-140 Complete (Step Screens)    | ~189h         |
-| **Current** | **Sprint 6 In Progress (8/~26)**   | **~189/197h** |
+| Feb 11      | FFP-272 Code Complete (E2E Flow)   | ~193h         |
+| **Current** | **Sprint 6 In Progress (~13/~26)** | **~193/197h** |
 
 ---
 

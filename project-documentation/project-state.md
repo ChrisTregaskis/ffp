@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 6th February 2026
+**Last Updated**: 11th February 2026
 **Current EPIC**: FFP-2 - Assessment Engine
 **Sprint Status**: Sprint 6 - Frontend Completion (Early Start)
 **Note**: Starting sprint 6 stories early; committed dates unchanged (16th Feb - 8th Mar)
@@ -109,6 +109,8 @@ Renamed American English identifiers to British English across the codebase (mer
 **FFP-277 summary**: User-initiated submit flow (no useEffect). Orchestrator computes `isLastSubmittableStep` from flow steps, passes `onSubmitAssessment` callback down through `AssessmentStepRenderer` to `QuestionStepContent`/`VideoStepContent`. On the last question of the last submittable step, "Continue" becomes "Complete Assessment" (green `success` button variant). Clicking it calls `submitMutate` with full answers; `onSuccess` dispatches `NEXT_STEP` to transition to results. `hasSubmittedRef` prevents re-submission on resume. Shows "Submitting..." loading and error+retry states. `handleViewProgramme` navigates to `/programme-overview`. `ResultsStepContent` dispatches `SET_SCORES` when polling returns scores. Added `continueVariant` prop to `AssessmentNavigation`.
 
 **FFP-278 summary**: Added `GET /assessments/user-status` endpoint — checks if programme user has an active programme, returns default assessment flow ID for redirect. Flow lookup uses two-tier hierarchy: tenant `settings.defaultAssessmentFlowId` override → platform tenant `settings.defaultAssessmentFlowId` global default (throws `InternalServerError` if neither configured). Frontend `useUserAssessmentStatusQuery` hook called from `HomePage`, redirects programme users without a programme to `/assessment?flowId=<id>` with loading spinner during check.
+
+**State management audit**: Audited `useReducer` + Context pattern (established FFP-135, Sprint 4) against Zustand, XState v5, Jotai, TanStack Query, useActionState, and React Hook Form. Decision: **keep current pattern** — still React-recommended in 2026, zero bundle overhead, 4 page-scoped consumers with no prop drilling issues. Removed 5 unused speculative actions (`SET_PHASE`, `GO_TO_STEP`, `ADD_WARNING`, `CLEAR_WARNINGS`, `RESET`) per YAGNI — reducer trimmed from 11 to 6 actions (~100 lines removed). Added lifecycle documentation to reducer. `questionIndex` stays as local state. Research documented in `.claude/docs/`.
 
 ---
 
