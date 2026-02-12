@@ -9,7 +9,7 @@ import {
   type FlowStepRecord,
 } from '@ffp/database/schema';
 
-import { db } from '../lib/database';
+import { db, withRLS } from '../lib/database';
 import { InternalServerError } from '../lib/errors';
 import { createSystemLogger } from '../lib/logger';
 
@@ -109,13 +109,15 @@ function extractDefaultFlowId(settings: unknown): string | null {
  */
 export async function findDefaultForTenant(tenantId: string): Promise<AssessmentFlow | null> {
   // 1. Check tenant's own settings for a configured default
-  const tenantRecords = await db
-    .select({ settings: tenants.settings })
-    .from(tenants)
-    .where(eq(tenants.id, tenantId))
-    .limit(1);
+  const tenantFlowId = await withRLS(tenantId, undefined, async (tx) => {
+    const records = await tx
+      .select({ settings: tenants.settings })
+      .from(tenants)
+      .where(eq(tenants.id, tenantId))
+      .limit(1);
 
-  const tenantFlowId = extractDefaultFlowId(tenantRecords[0]?.settings);
+    return extractDefaultFlowId(records[0]?.settings);
+  });
 
   if (tenantFlowId) {
     const flow = await findActiveById(tenantFlowId);
@@ -126,13 +128,17 @@ export async function findDefaultForTenant(tenantId: string): Promise<Assessment
   }
 
   // 2. Check platform tenant settings for a global default
-  const platformRecords = await db
-    .select({ settings: tenants.settings })
-    .from(tenants)
-    .where(eq(tenants.type, 'platform'))
-    .limit(1);
+  // Uses the user's tenant RLS context — the tenant_isolation policy allows
+  // any tenant to also read the platform tenant row (type = 'platform')
+  const platformFlowId = await withRLS(tenantId, undefined, async (tx) => {
+    const records = await tx
+      .select({ settings: tenants.settings })
+      .from(tenants)
+      .where(eq(tenants.type, 'platform'))
+      .limit(1);
 
-  const platformFlowId = extractDefaultFlowId(platformRecords[0]?.settings);
+    return extractDefaultFlowId(records[0]?.settings);
+  });
 
   if (platformFlowId) {
     const flow = await findActiveById(platformFlowId);
