@@ -18,7 +18,7 @@ import {
   type UserAssessmentStatusResponse,
 } from '@ffp/core';
 
-import { ffpClient } from '../client';
+import { ffpClient, parseApiResponse } from '../client';
 
 const basePath = '/assessments';
 
@@ -39,8 +39,9 @@ export const assessmentsApi = {
    * Get assessment flow by ID
    */
   getFlow: async (flowId: string, signal?: AbortSignal): Promise<AssessmentFlow> => {
-    const response = await ffpClient.get(`${basePath}/flows/${flowId}`, { signal });
-    return assessmentFlowSchema.parse(response);
+    const path = `${basePath}/flows/${flowId}`;
+    const response = await ffpClient.get(path, { signal });
+    return parseApiResponse(assessmentFlowSchema, response, { method: 'GET', path });
   },
 
   /**
@@ -50,9 +51,12 @@ export const assessmentsApi = {
     templateId: string,
     signal?: AbortSignal
   ): Promise<AssessmentTemplateWithQuestions> => {
-    const response = await ffpClient.get(`${basePath}/templates/${templateId}`, { signal });
-
-    return assessmentTemplateWithQuestionsSchema.parse(response);
+    const path = `${basePath}/templates/${templateId}`;
+    const response = await ffpClient.get(path, { signal });
+    return parseApiResponse(assessmentTemplateWithQuestionsSchema, response, {
+      method: 'GET',
+      path,
+    });
   },
 
   /**
@@ -61,9 +65,9 @@ export const assessmentsApi = {
    * Returns full assessment state including steps, answers, and resume status.
    */
   start: async (flowId: string): Promise<StartAssessmentResponse> => {
-    const response = await ffpClient.post(`${basePath}/start`, { flowId });
-
-    return startAssessmentResponseSchema.parse(response);
+    const path = `${basePath}/start`;
+    const response = await ffpClient.post(path, { flowId });
+    return parseApiResponse(startAssessmentResponseSchema, response, { method: 'POST', path });
   },
 
   /**
@@ -75,9 +79,9 @@ export const assessmentsApi = {
     assessmentId: string,
     payload: SaveProgressRequest
   ): Promise<SaveProgressResponse> => {
-    const response = await ffpClient.put(`${basePath}/${assessmentId}/progress`, payload);
-
-    return saveProgressResponseSchema.parse(response);
+    const path = `${basePath}/${assessmentId}/progress`;
+    const response = await ffpClient.put(path, payload);
+    return parseApiResponse(saveProgressResponseSchema, response, { method: 'PUT', path });
   },
 
   /**
@@ -89,9 +93,9 @@ export const assessmentsApi = {
     assessmentId: string,
     payload: SubmitAssessmentRequest
   ): Promise<SubmitAssessmentResponse> => {
-    const response = await ffpClient.post(`${basePath}/${assessmentId}/submit`, payload);
-
-    return submitAssessmentResponseSchema.parse(response);
+    const path = `${basePath}/${assessmentId}/submit`;
+    const response = await ffpClient.post(path, payload);
+    return parseApiResponse(submitAssessmentResponseSchema, response, { method: 'POST', path });
   },
 
   /**
@@ -101,9 +105,12 @@ export const assessmentsApi = {
    * assessment flow ID for redirect.
    */
   getUserStatus: async (signal?: AbortSignal): Promise<UserAssessmentStatusResponse> => {
-    const response = await ffpClient.get(`${basePath}/user-status`, { signal });
-
-    return userAssessmentStatusResponseSchema.parse(response);
+    const path = `${basePath}/user-status`;
+    const response = await ffpClient.get(path, { signal });
+    return parseApiResponse(userAssessmentStatusResponseSchema, response, {
+      method: 'GET',
+      path,
+    });
   },
 
   /**
@@ -113,9 +120,9 @@ export const assessmentsApi = {
     assessmentId: string,
     signal?: AbortSignal
   ): Promise<AssessmentResultsResponse> => {
-    const response = await ffpClient.get(`${basePath}/${assessmentId}/results`, { signal });
-
-    return assessmentResultsResponseSchema.parse(response);
+    const path = `${basePath}/${assessmentId}/results`;
+    const response = await ffpClient.get(path, { signal });
+    return parseApiResponse(assessmentResultsResponseSchema, response, { method: 'GET', path });
   },
 };
 
