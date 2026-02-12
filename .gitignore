@@ -65,6 +65,7 @@ CLAUDE.local.md
 .claude/review-context.md
 .claude/screenshots*
 .claude/plans/
+.claude/prompts/
 .claude/docs/
 
 project-documentation/sprint-planning/outputs/*.md
