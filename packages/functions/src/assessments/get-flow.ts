@@ -1,3 +1,4 @@
+import type { AssessmentFlow } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
@@ -7,8 +8,6 @@ import {
   ValidationError,
   NotFoundError,
 } from '@ffp/core/server';
-
-import type { AssessmentFlow } from '@ffp/core';
 
 /**
  * Lambda handler for GET /assessments/flows/:id
