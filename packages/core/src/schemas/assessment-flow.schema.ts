@@ -20,7 +20,7 @@ export type FlowStepConfig = z.infer<typeof flowStepConfigSchema>;
 export const flowStepSchema = z.object({
   order: z.number().int().positive('Order must be a positive integer'),
   type: flowStepTypeSchema,
-  templateId: z.string().uuid('Invalid template ID format').optional(),
+  templateId: z.string().optional(), // Relaxed from .uuid() — see FFP-279
   config: flowStepConfigSchema,
 });
 
@@ -28,7 +28,7 @@ export type FlowStep = z.infer<typeof flowStepSchema>;
 
 export const assessmentFlowSchema = z.object({
   // UUID primary key
-  id: z.string().uuid(),
+  id: z.string(), // Relaxed from .uuid() — see FFP-279
   // Display name (required)
   name: z.string().min(1, 'Name is required'),
   // Optional explanatory text

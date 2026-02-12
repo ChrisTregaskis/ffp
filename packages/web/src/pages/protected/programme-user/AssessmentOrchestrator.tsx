@@ -153,7 +153,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({ 
   // Loading state: starting or resuming assessment
   if (isStartPending) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3">
         <LoadingSpinner size="lg" variant="center" />
 
         <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
@@ -166,7 +166,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({ 
   // Error state: start assessment failed
   if (isStartError) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-6">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
         <StaticAlert
           variant="error"
           message="Unable to start the assessment. Please try again later."
@@ -187,7 +187,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({ 
   // Error state: template questions failed to load
   if (needsQuestions && templateError) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-6">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
         <StaticAlert
           variant="error"
           message="Unable to load assessment questions. Please try again later."
@@ -199,7 +199,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({ 
   // Submission loading state: submitting assessment answers
   if (isSubmitPending) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3">
         <LoadingSpinner size="lg" variant="center" />
 
         <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
@@ -212,7 +212,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({ 
   // Submission error state
   if (isSubmitError) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-6">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
         <StaticAlert
           variant="error"
           message="Unable to submit your assessment. Please try again."

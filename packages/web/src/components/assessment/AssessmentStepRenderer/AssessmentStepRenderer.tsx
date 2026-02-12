@@ -78,7 +78,7 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
 
   if (isFlowLoading || !currentStepSummary) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 py-16">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3">
         <LoadingSpinner size="lg" variant="center" />
         <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
           Loading assessment...
@@ -152,15 +152,22 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
     }
   };
 
+  // Steps without a progress bar (intro, programme-overview) are vertically centred on the page.
+  if (!showProgress) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        {renderStepContent()}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {showProgress && (
-        <AssessmentProgress
-          currentStep={assessmentState.currentStep}
-          totalSteps={assessmentState.totalSteps}
-          phase={assessmentState.phase}
-        />
-      )}
+      <AssessmentProgress
+        currentStep={assessmentState.currentStep}
+        totalSteps={assessmentState.totalSteps}
+        phase={assessmentState.phase}
+      />
       {renderStepContent()}
     </div>
   );
