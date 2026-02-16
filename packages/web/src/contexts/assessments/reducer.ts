@@ -52,6 +52,17 @@ export const assessmentReducer = (
       };
     }
 
+    case ASSESSMENT_ACTION.CLEAR_ANSWER: {
+      const { questionId } = action.payload;
+      const { [questionId]: _, ...remainingAnswers } = state.answers;
+
+      return {
+        ...state,
+        answers: remainingAnswers,
+        isDirty: true,
+      };
+    }
+
     case ASSESSMENT_ACTION.NEXT_STEP: {
       // If nextStepId provided (from branching), navigate to that step
       if (action.payload?.nextStepId) {

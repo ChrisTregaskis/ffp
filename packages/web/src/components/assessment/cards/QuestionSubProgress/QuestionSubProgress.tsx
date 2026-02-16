@@ -18,7 +18,6 @@ export const QuestionSubProgress: React.FC<QuestionSubProgressProps> = ({
   totalQuestions,
 }) => {
   const percentage = totalQuestions > 0 ? Math.round((questionNumber / totalQuestions) * 100) : 0;
-  const remaining = totalQuestions - questionNumber;
 
   return (
     <div>
@@ -34,7 +33,7 @@ export const QuestionSubProgress: React.FC<QuestionSubProgressProps> = ({
           styleProps={{ size: 'xs', colour: 'muted-foreground' }}
           className="shrink-0"
         >
-          {remaining}/{totalQuestions}
+          {questionNumber}/{totalQuestions}
         </Text>
       </div>
     </div>

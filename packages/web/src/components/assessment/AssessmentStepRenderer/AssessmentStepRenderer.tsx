@@ -71,6 +71,11 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
           type: ASSESSMENT_ACTION.SET_ANSWER,
           payload: { questionId, answer: { questionId, answerValue: value } },
         });
+      } else {
+        assessmentDispatch({
+          type: ASSESSMENT_ACTION.CLEAR_ANSWER,
+          payload: { questionId },
+        });
       }
     },
     [assessmentDispatch]
@@ -162,13 +167,15 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
   }
 
   return (
-    <div className="space-y-6">
-      <AssessmentProgress
-        currentStep={assessmentState.currentStep}
-        totalSteps={assessmentState.totalSteps}
-        phase={assessmentState.phase}
-      />
-      {renderStepContent()}
+    <div className="flex min-h-screen flex-col">
+      <div className="mx-auto w-full max-w-3xl px-4 pt-6">
+        <AssessmentProgress
+          currentStep={assessmentState.currentStep}
+          totalSteps={assessmentState.totalSteps}
+          phase={assessmentState.phase}
+        />
+      </div>
+      <div className="flex flex-1 items-center justify-center px-4 py-6">{renderStepContent()}</div>
     </div>
   );
 };

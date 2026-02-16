@@ -8,6 +8,10 @@ interface UseQuestionStepNavigationParams {
   totalQuestions: number;
   currentStep: number;
   isLastSubmittableStep: boolean;
+  /** Whether the current question requires an answer */
+  isCurrentQuestionRequired: boolean;
+  /** Whether the current question has been answered */
+  isCurrentQuestionAnswered: boolean;
   onSubmitAssessment?: () => void;
   onQuestionIndexChange: (index: number | ((prev: number) => number)) => void;
 }
@@ -17,6 +21,7 @@ interface QuestionStepNavigation {
   showBack: boolean;
   continueLabel: string | undefined;
   continueVariant: ButtonVariant | undefined;
+  continueDisabled: boolean;
   continueHandler: (() => void) | undefined;
   backHandler: (() => void) | undefined;
 }
@@ -32,6 +37,8 @@ export const useQuestionStepNavigation = ({
   totalQuestions,
   currentStep,
   isLastSubmittableStep,
+  isCurrentQuestionRequired,
+  isCurrentQuestionAnswered,
   onSubmitAssessment,
   onQuestionIndexChange,
 }: UseQuestionStepNavigationParams): QuestionStepNavigation => {
@@ -67,11 +74,15 @@ export const useQuestionStepNavigation = ({
     };
   };
 
+  // Disable Continue when a required question has no answer
+  const continueDisabled = isCurrentQuestionRequired && !isCurrentQuestionAnswered;
+
   return {
     direction,
     showBack: !isFirstQuestion || currentStep > 1,
     continueLabel: isFinalSubmit ? 'Complete Assessment' : undefined,
     continueVariant: isFinalSubmit ? 'success' : undefined,
+    continueDisabled,
     continueHandler: getContinueHandler(),
     backHandler: getBackHandler(),
   };

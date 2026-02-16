@@ -22,17 +22,30 @@ export const VideoStepContent: React.FC<QuestionStepContentProps> = ({
   isLastSubmittableStep = false,
   onSubmitAssessment,
 }) => {
-  const { direction, showBack, continueLabel, continueVariant, continueHandler, backHandler } =
-    useQuestionStepNavigation({
-      questionIndex,
-      totalQuestions: questions.length,
-      currentStep,
-      isLastSubmittableStep,
-      onSubmitAssessment,
-      onQuestionIndexChange,
-    });
+  const currentQuestion = questions.length > 0 ? questions[questionIndex] : undefined;
+  const isCurrentQuestionRequired = currentQuestion?.validation?.required !== false;
+  const isCurrentQuestionAnswered = !!currentQuestion && currentQuestion.id in answers;
 
-  if (questions.length === 0) {
+  const {
+    direction,
+    showBack,
+    continueLabel,
+    continueVariant,
+    continueDisabled,
+    continueHandler,
+    backHandler,
+  } = useQuestionStepNavigation({
+    questionIndex,
+    totalQuestions: questions.length,
+    currentStep,
+    isLastSubmittableStep,
+    isCurrentQuestionRequired,
+    isCurrentQuestionAnswered,
+    onSubmitAssessment,
+    onQuestionIndexChange,
+  });
+
+  if (!currentQuestion) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-16">
         <LoadingSpinner size="lg" variant="center" />
@@ -42,8 +55,6 @@ export const VideoStepContent: React.FC<QuestionStepContentProps> = ({
       </div>
     );
   }
-
-  const currentQuestion = questions[questionIndex];
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -61,6 +72,7 @@ export const VideoStepContent: React.FC<QuestionStepContentProps> = ({
               showBack={showBack}
               continueLabel={continueLabel}
               continueVariant={continueVariant}
+              continueDisabled={continueDisabled}
               onContinue={continueHandler}
               onBack={backHandler}
             />

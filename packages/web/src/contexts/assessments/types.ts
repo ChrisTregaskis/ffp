@@ -64,6 +64,19 @@ export interface SetAnswerAction {
 }
 
 /**
+ * Clear answer action.
+ *
+ * Dispatched when user clears a previously answered question (e.g. numeric input deletion).
+ * Removes the answer from state and marks state as dirty.
+ */
+export interface ClearAnswerAction {
+  type: typeof ASSESSMENT_ACTION.CLEAR_ANSWER;
+  payload: {
+    questionId: string;
+  };
+}
+
+/**
  * Navigate to next step action.
  *
  * Dispatched when user clicks Continue/Next.
@@ -112,6 +125,7 @@ export interface SetScoresAction {
 export type AssessmentAction =
   | StartAssessmentAction
   | SetAnswerAction
+  | ClearAnswerAction
   | NextStepAction
   | PrevStepAction
   | MarkSavedAction
