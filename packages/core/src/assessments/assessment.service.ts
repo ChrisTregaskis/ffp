@@ -171,7 +171,7 @@ export async function startAssessment(
   const userId = await getUserIdFromContext(context);
   const { tenantId } = context;
 
-  // 1. Validate flow exists and is active
+  // Validate flow exists and is active
   const flow = await flowRepository.findActiveById(flowId);
 
   if (!flow) {
@@ -179,12 +179,12 @@ export async function startAssessment(
     throw new NotFoundError('Assessment flow', flowId);
   }
 
-  // 2. Fetch flow steps from normalised table
+  // Fetch flow steps from normalised table
   const db = getDb();
   const flowSteps = await flowRepository.findStepsByFlowId(db, flowId);
   const steps = convertStepsToSummaryFormat(flowSteps);
 
-  // 3. Check for existing resumable assessment
+  // Check for existing resumable assessment
   const existingAssessment = await userAssessmentRepository.findResumableAssessment(
     tenantId,
     userId,
@@ -213,7 +213,39 @@ export async function startAssessment(
     };
   }
 
-  // 3. Create new assessment
+  // Check for already-submitted assessment (handles hard reload after submission)
+  const submittedAssessment = await userAssessmentRepository.findSubmittedAssessment(
+    tenantId,
+    userId,
+    flowId
+  );
+
+  if (submittedAssessment) {
+    // Find the results step order so the frontend navigates directly to results
+    const resultsStep = steps.find((s) => s.type === 'results');
+    const resultsStepOrder = resultsStep?.order ?? steps.length;
+
+    const storedAnswers = await answerRepository.findByAssessmentId(
+      tenantId,
+      submittedAssessment.id,
+      { userId }
+    );
+
+    const answers = convertAnswersToResponseFormat(storedAnswers);
+
+    return {
+      assessmentId: submittedAssessment.id,
+      currentStep: resultsStepOrder,
+      currentStepId: resultsStep?.id,
+      status: submittedAssessment.status,
+      answers,
+      flowId: submittedAssessment.flowId,
+      isResumed: true,
+      steps,
+    };
+  }
+
+  // Create new assessment
   const newAssessment = await userAssessmentRepository.createUserAssessment({
     tenantId,
     userId,
@@ -602,11 +634,27 @@ export async function getAssessmentResults(
     throw new ValidationError('Assessment not yet submitted');
   }
 
+  // Fetch programme name if a programme has been assigned
+  let programmeName: string | null = null;
+
+  if (assessment.programmeId) {
+    const programme = await programmeRepository.findProgrammeById(
+      tenantId,
+      assessment.programmeId,
+      {
+        userId,
+      }
+    );
+
+    programmeName = programme?.name ?? null;
+  }
+
   // Return the assessment results
   return {
     status: assessment.status,
     scores: assessment.scores,
     programmeId: assessment.programmeId,
+    programmeName,
   };
 }
 

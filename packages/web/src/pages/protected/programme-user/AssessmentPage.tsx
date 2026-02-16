@@ -1,8 +1,11 @@
 import React from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
+import { LoadingSpinner } from '@web/components/LoadingSpinner';
 import { AssessmentProvider } from '@web/contexts/assessments/AssessmentProvider';
+import { useUserAssessmentStatusQuery } from '@web/hooks/assessments';
+import { routes, RouteKey } from '@web/pages/routes';
 
 import { AssessmentOrchestrator } from './AssessmentOrchestrator';
 
@@ -10,12 +13,27 @@ import { AssessmentOrchestrator } from './AssessmentOrchestrator';
  * Fullscreen assessment page (no app layout or sidebar).
  *
  * Reads `flowId` from URL search params and wraps the assessment
- * flow in AssessmentProvider. Renders AssessmentOrchestrator which
- * handles start/resume, question fetching, and step-by-step rendering.
+ * flow in AssessmentProvider. Guards against users who already have
+ * an active programme — redirects them to the programme overview.
  */
 export const AssessmentPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const flowId = searchParams.get('flowId');
+  const { data: assessmentStatus, isLoading: isStatusLoading } = useUserAssessmentStatusQuery();
+
+  // Show loading while checking programme status
+  if (isStatusLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-gray-50 via-ffp-light-purple/10 to-gray-50">
+        <LoadingSpinner size="lg" variant="center" />
+      </div>
+    );
+  }
+
+  // Redirect users with an active programme away from the assessment flow
+  if (assessmentStatus?.hasProgramme) {
+    return <Navigate to={routes[RouteKey.PROGRAMME_OVERVIEW].path} replace />;
+  }
 
   if (!flowId) {
     return (

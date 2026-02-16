@@ -152,6 +152,37 @@ export async function findResumableAssessment(
   });
 }
 
+/** Returns an existing assessment that has been submitted (submitted, scored, or completed). */
+export async function findSubmittedAssessment(
+  tenantId: string,
+  userId: string,
+  flowId: string
+): Promise<UserAssessment | null> {
+  return await withRLS(tenantId, userId, async (tx) => {
+    const records = await tx
+      .select()
+      .from(userAssessments)
+      .where(
+        and(
+          eq(userAssessments.userId, userId),
+          eq(userAssessments.flowId, flowId),
+          or(
+            eq(userAssessments.status, 'submitted'),
+            eq(userAssessments.status, 'scored'),
+            eq(userAssessments.status, 'completed')
+          )
+        )
+      )
+      .limit(1);
+
+    if (records.length === 0) {
+      return null;
+    }
+
+    return records[0];
+  });
+}
+
 /** Executes the update logic within a provided transaction. */
 async function updateAssessmentProgressInTx(
   tx: Transaction,

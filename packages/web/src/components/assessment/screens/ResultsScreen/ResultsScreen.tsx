@@ -18,7 +18,7 @@ export interface ResultsScreenProps {
   /** Generated programme ID (null while programme is being created) */
   programmeId: string | null;
   /** Programme name to display in the recommended programme section */
-  programmeName?: string;
+  programmeName?: string | null;
   /** Programme description text */
   programmeDescription?: string;
   /** Callback when user clicks "View My Programme" */

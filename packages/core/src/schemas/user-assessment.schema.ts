@@ -212,6 +212,8 @@ export const assessmentResultsResponseSchema = z.object({
   scores: userAssessmentScoresSchema.nullable(),
   /** Recommended programme ID (null until programme assigned) */
   programmeId: z.string().nullable(), // Relaxed from .uuid() — see FFP-279
+  /** Display name of the recommended programme (null until programme assigned) */
+  programmeName: z.string().nullable(),
 });
 
 export const userAssessmentStatusResponseSchema = z.object({

@@ -37,6 +37,7 @@ export const ResultsStepContent: React.FC<ResultsStepContentProps> = ({
       scores={results?.scores ?? null}
       isLoading={isLoading || !results?.scores}
       programmeId={results?.programmeId ?? null}
+      programmeName={results?.programmeName}
       onViewProgramme={handleViewProgramme}
     />
   );
