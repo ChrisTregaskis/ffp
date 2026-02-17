@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 11th February 2026
+**Last Updated**: 17th February 2026
 **Current EPIC**: FFP-2 - Assessment Engine
 **Sprint Status**: Sprint 6 - Frontend Completion (Early Start)
 **Note**: Starting sprint 6 stories early; committed dates unchanged (16th Feb - 8th Mar)
@@ -86,9 +86,11 @@ Renamed American English identifiers to British English across the codebase (mer
 
 ---
 
-### In Progress: FFP-272 — E2E Assessment Flow Integration
+### Nearly Complete: FFP-272 — E2E Assessment Flow Integration
 
 **Branch**: `feature/ffp-272-full-e2e-assessment-integration`
+**Status**: E2E testing near-complete. One remaining test (red flag warnings UI), then merge to main.
+
 **Subtasks** (in execution order):
 
 | Key     | Subtask                                                | Focus              | Status      |
@@ -99,6 +101,26 @@ Renamed American English identifiers to British English across the codebase (mer
 | FFP-277 | Wire submit assessment and results polling             | submit, polling    | ✅ Complete |
 | FFP-278 | Programme user first-login redirect to assessment      | routing            | ✅ Complete |
 | —       | E2E testing guide (seed data, scenarios, verification) | testing            | ✅ Complete |
+
+**E2E testing status** (6 sessions, 12th–17th Feb):
+
+| Scenario | Description                         | Status                    |
+| -------- | ----------------------------------- | ------------------------- |
+| 1        | Happy path (back pain, full 9-step) | ✅ Tested                 |
+| 2        | Branching (non-back-pain skip)      | ✅ API-verified           |
+| 3        | Red flag warnings UI                | ⏳ Remaining              |
+| 4        | Resume mid-assessment               | ✅ API-verified           |
+| 5        | Resume after submission             | ✅ Tested (routing guard) |
+| 6        | First login redirect                | ✅ Tested                 |
+| —        | Programme overview page             | ✅ Tested                 |
+| —        | Reassessment flow (replace/keep)    | ✅ Tested                 |
+
+**Additional work delivered on this branch** (beyond original subtasks):
+
+- Programme overview page (`GET /programmes/active` endpoint + frontend)
+- Reassessment flow (start new assessment, replace/keep programme choice, programme archival)
+- RLS policy tightening (split `tenant_read_isolation` / `tenant_write_isolation`)
+- Multiple UX fixes from E2E testing (numeric clamping, progress counter, continue button, resume behaviour)
 
 **FFP-274 summary**: Added `assessmentTemplateWithQuestionsSchema` with Zod transform mapping backend `QuestionWithConfig` to frontend `AssessmentQuestion` (`questionText` → `question`, nullable → optional, configOverrides applied, backend-only fields stripped). Updated API client and hook to use new schema/type.
 
