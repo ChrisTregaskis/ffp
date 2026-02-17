@@ -25,6 +25,8 @@ export const userAssessmentScoresSchema = z.object({
   overallScore: z.number().optional(),
   /** Risk level derived from scores */
   riskLevel: z.enum(['low', 'moderate', 'high']).optional(),
+  /** Programme template slug recommended by scoring (for reassessment replacement) */
+  recommendedTemplateSlug: z.string().optional(),
   /** Timestamp when scoring was completed */
   scoredAt: z.coerce.date(),
 });

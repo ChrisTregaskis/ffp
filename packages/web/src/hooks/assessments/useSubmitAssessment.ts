@@ -37,8 +37,9 @@ export const useSubmitAssessment = (
 
   return useMutation({
     ...options,
-    mutationFn: ({ assessmentId, payload }: SubmitAssessmentInput) =>
-      assessmentsApi.submit(assessmentId, payload),
+    mutationFn: ({ assessmentId, payload }: SubmitAssessmentInput) => {
+      return assessmentsApi.submit(assessmentId, payload);
+    },
     onSuccess: (...args) => {
       const [, variables] = args;
 

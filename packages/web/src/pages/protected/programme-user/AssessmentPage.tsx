@@ -19,7 +19,11 @@ import { AssessmentOrchestrator } from './AssessmentOrchestrator';
 export const AssessmentPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const flowId = searchParams.get('flowId');
+  const reassessParam = searchParams.get('reassess') === 'true';
   const { data: assessmentStatus, isLoading: isStatusLoading } = useUserAssessmentStatusQuery();
+
+  // Only treat as reassessment if param is set AND user actually has a programme
+  const isReassessment = reassessParam && !!assessmentStatus?.hasProgramme;
 
   // Show loading while checking programme status
   if (isStatusLoading) {
@@ -30,8 +34,8 @@ export const AssessmentPage: React.FC = () => {
     );
   }
 
-  // Redirect users with an active programme away from the assessment flow
-  if (assessmentStatus?.hasProgramme) {
+  // Redirect users with an active programme away — unless this is an explicit reassessment
+  if (assessmentStatus?.hasProgramme && !reassessParam) {
     return <Navigate to={routes[RouteKey.PROGRAMME_OVERVIEW].path} replace />;
   }
 
@@ -49,7 +53,7 @@ export const AssessmentPage: React.FC = () => {
   return (
     <AssessmentProvider flowId={flowId}>
       <div className="min-h-screen bg-linear-to-br from-gray-50 via-ffp-light-purple/10 to-gray-50">
-        <AssessmentOrchestrator flowId={flowId} />
+        <AssessmentOrchestrator flowId={flowId} isReassessment={isReassessment} />
       </div>
     </AssessmentProvider>
   );

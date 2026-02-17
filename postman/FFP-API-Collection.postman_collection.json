@@ -2485,9 +2485,109 @@
               "body": "{\n  \"error\": \"NotFoundError\",\n  \"message\": \"Active programme not found\"\n}"
             }
           ]
+        },
+        {
+          "name": "Replace Active Programme",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Status code is 200\", function () {",
+                  "        pm.response.to.have.status(200);",
+                  "    });",
+                  "",
+                  "    pm.test(\"Response has programmeId and programmeName\", function () {",
+                  "        const jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property(\"programmeId\");",
+                  "        pm.expect(jsonData).to.have.property(\"programmeName\");",
+                  "    });",
+                  "",
+                  "    const jsonData = pm.response.json();",
+                  "    console.log(\"New programme:\", jsonData.programmeName);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assessmentId\": \"{{assessmentId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{apiUrl}}/programmes/active/replace",
+              "host": ["{{apiUrl}}"],
+              "path": ["programmes", "active", "replace"]
+            },
+            "description": "Replace the user's active programme with the recommendation from a reassessment.\n\n**Authentication:** JWT token required (Bearer token)\n\n**Request Body:**\n- `assessmentId` (UUID) - The scored reassessment whose recommendation should replace the active programme\n\n**Response:**\n- `programmeId` - New programme UUID\n- `programmeName` - New programme display name\n\n**Workflow:**\n1. User completes a reassessment (assessment with `reassess=true`)\n2. Assessment is scored and produces a `recommendedTemplateSlug`\n3. User chooses \"Replace My Programme\" on the results screen\n4. This endpoint archives the current programme and creates a new one\n\n**Error Responses:**\n- 400 - Assessment not scored or no recommendation produced\n- 403 - Assessment does not belong to user\n- 404 - Assessment not found"
+          },
+          "response": [
+            {
+              "name": "Success - Programme Replaced",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/programmes/active/replace",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["programmes", "active", "replace"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"programmeId\": \"b2c3d4e5-f6a7-8901-bcde-f12345678901\",\n  \"programmeName\": \"Active Recovery Programme\"\n}"
+            },
+            {
+              "name": "Error - Assessment Not Scored",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"assessmentId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\"\n}"
+                },
+                "url": {
+                  "raw": "{{apiUrl}}/programmes/active/replace",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["programmes", "active", "replace"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"ValidationError\",\n  \"message\": \"Assessment must be scored before programme replacement. Current status: in_progress\"\n}"
+            }
+          ]
         }
       ],
-      "description": "Programme endpoints - JWT authentication required.\n\n**Current Endpoints:**\n- GET /programmes/active - Get the current user's active programme\n\n**Future Endpoints:**\n- GET /programmes/{id}\n- PUT /programmes/{id}\n- DELETE /programmes/{id}",
+      "description": "Programme endpoints - JWT authentication required.\n\n**Current Endpoints:**\n- GET /programmes/active - Get the current user's active programme\n- PUT /programmes/active/replace - Replace active programme with reassessment recommendation\n\n**Future Endpoints:**\n- GET /programmes/{id}\n- PUT /programmes/{id}\n- DELETE /programmes/{id}",
       "auth": {
         "type": "bearer",
         "bearer": [

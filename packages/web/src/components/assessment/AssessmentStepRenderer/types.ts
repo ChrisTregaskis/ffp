@@ -9,6 +9,14 @@ export interface AssessmentStepRendererProps {
   isLastSubmittableStep?: boolean;
   /** Callback to submit the assessment (triggered by user clicking "Complete Assessment") */
   onSubmitAssessment?: () => void;
+  /** Whether this assessment is a reassessment (user already has a programme) */
+  isReassessment?: boolean;
+  /** Callback when user chooses to keep their current programme (reassessment only) */
+  onKeepProgramme?: () => void;
+  /** Callback when user chooses to replace their programme (reassessment only) */
+  onReplaceProgramme?: () => void;
+  /** Whether the replace programme mutation is in progress */
+  isReplacing?: boolean;
 }
 
 export interface QuestionStepContentProps {
@@ -29,4 +37,12 @@ export interface ResultsStepContentProps {
   config: FlowStepConfig;
   assessmentId: string | null;
   onViewProgramme?: () => void;
+  /** Whether this assessment is a reassessment (user already has a programme) */
+  isReassessment?: boolean;
+  /** Callback when user chooses to keep their current programme (reassessment only) */
+  onKeepProgramme?: () => void;
+  /** Callback when user chooses to replace their programme (reassessment only) */
+  onReplaceProgramme?: () => void;
+  /** Whether the replace programme mutation is in progress */
+  isReplacing?: boolean;
 }

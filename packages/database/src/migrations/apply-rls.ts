@@ -81,18 +81,34 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
       `);
     }
 
-    // Drop existing policy if it exists (for idempotency)
+    // Drop existing policies (for idempotency)
     await tx.execute(sql`
       DROP POLICY IF EXISTS tenant_isolation ON tenants;
     `);
 
     await tx.execute(sql`
-      CREATE POLICY tenant_isolation ON tenants
-        FOR ALL
+      DROP POLICY IF EXISTS tenant_read_isolation ON tenants;
+    `);
+
+    await tx.execute(sql`
+      DROP POLICY IF EXISTS tenant_write_isolation ON tenants;
+    `);
+
+    // Read policy: own tenant + platform tenant (for default flow lookup)
+    await tx.execute(sql`
+      CREATE POLICY tenant_read_isolation ON tenants
+        FOR SELECT
         USING (
           id = current_setting('app.tenant_id', true)::uuid
           OR type = 'platform'
         );
+    `);
+
+    // Write policy: own tenant only
+    await tx.execute(sql`
+      CREATE POLICY tenant_write_isolation ON tenants
+        FOR ALL
+        USING (id = current_setting('app.tenant_id', true)::uuid);
     `);
 
     // ============================================================================

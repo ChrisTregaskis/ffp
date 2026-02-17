@@ -127,6 +127,7 @@ export async function processScoreAssessment(
       dimensions: result.scores,
       overallScore: result.overallScore,
       riskLevel: scoringResult.riskLevel,
+      recommendedTemplateSlug: scoringResult.recommendedProgrammeId ?? undefined,
       scoredAt: new Date(result.scoredAt),
     };
 

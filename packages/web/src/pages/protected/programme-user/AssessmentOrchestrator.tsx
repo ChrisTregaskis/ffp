@@ -15,11 +15,14 @@ import {
   useStartAssessment,
   useSubmitAssessment,
 } from '@web/hooks/assessments';
+import { useReplaceProgrammeMutation } from '@web/hooks/programmes';
 import { routes, RouteKey } from '@web/pages/routes';
 
 interface AssessmentOrchestratorProps {
   /** Assessment flow ID to start or resume */
   flowId: string;
+  /** Whether this assessment is a reassessment (user already has a programme) */
+  isReassessment?: boolean;
 }
 
 /** Step types that require template questions to be fetched. */
@@ -44,7 +47,10 @@ const toFlowStepType = (value: string, fallback: FlowStepType): FlowStepType => 
  * - Passes questions to `AssessmentStepRenderer` for step-by-step rendering
  *
  */
-export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({ flowId }) => {
+export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
+  flowId,
+  isReassessment = false,
+}) => {
   const { assessmentState, assessmentDispatch } = useAssessment();
   const navigate = useNavigate();
 
@@ -90,11 +96,23 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({ 
     },
   });
 
+  const { mutate: replaceMutate, isPending: isReplacePending } = useReplaceProgrammeMutation({
+    onSuccess: () => {
+      void navigate(routes[RouteKey.PROGRAMME_OVERVIEW].path);
+    },
+  });
+
   // Start or resume assessment on mount (or if flowId changes).
-  // mutate is referentially stable (useCallback([observer]) in TanStack Query v5).
+  // The sessionStorage flag distinguishes an intentional CTA click (fresh start)
+  // from a page reload (which should resume the in-progress assessment).
   useEffect(() => {
-    startMutate({ flowId });
-  }, [startMutate, flowId]);
+    const isFreshStart = sessionStorage.getItem('ffp-reassessment-start') === 'true';
+    sessionStorage.removeItem('ffp-reassessment-start');
+
+    const shouldStartNew = isReassessment && isFreshStart;
+
+    startMutate({ flowId, isReassessment: shouldStartNew || undefined });
+  }, [startMutate, flowId, isReassessment]);
 
   // Resolve current step to determine if questions are needed
   const currentStepSummary = useMemo(
@@ -149,6 +167,18 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({ 
   const handleViewProgramme = useCallback(() => {
     void navigate(routes[RouteKey.PROGRAMME_OVERVIEW].path);
   }, [navigate]);
+
+  const handleKeepProgramme = useCallback(() => {
+    void navigate(routes[RouteKey.PROGRAMME_OVERVIEW].path);
+  }, [navigate]);
+
+  const handleReplaceProgramme = useCallback(() => {
+    if (!assessmentState.assessmentId) {
+      return;
+    }
+
+    replaceMutate(assessmentState.assessmentId);
+  }, [assessmentState.assessmentId, replaceMutate]);
 
   // Loading state: starting or resuming assessment
   if (isStartPending) {
@@ -241,6 +271,10 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({ 
       onViewProgramme={handleViewProgramme}
       isLastSubmittableStep={isLastSubmittableStep}
       onSubmitAssessment={handleSubmitAssessment}
+      isReassessment={isReassessment}
+      onKeepProgramme={handleKeepProgramme}
+      onReplaceProgramme={handleReplaceProgramme}
+      isReplacing={isReplacePending}
     />
   );
 };

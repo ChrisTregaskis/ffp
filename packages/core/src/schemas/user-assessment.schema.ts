@@ -113,6 +113,8 @@ export const submitAssessmentSchema = z.object({
 export const startAssessmentRequestSchema = z.object({
   /** Assessment flow ID to start (must be valid UUID) */
   flowId: z.string().uuid({ message: 'flowId must be a valid UUID' }),
+  /** When true, create a new assessment instead of resuming an existing one (reassessment path). */
+  isReassessment: z.boolean().optional(),
 });
 
 /**

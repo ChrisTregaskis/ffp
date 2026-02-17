@@ -13,6 +13,10 @@ export const ResultsStepContent: React.FC<ResultsStepContentProps> = ({
   config,
   assessmentId,
   onViewProgramme,
+  onKeepProgramme,
+  onReplaceProgramme,
+  isReassessment = false,
+  isReplacing = false,
 }) => {
   const { assessmentDispatch } = useAssessment();
   const { data: results, isLoading } = useAssessmentResultsQuery(assessmentId ?? '');
@@ -31,6 +35,14 @@ export const ResultsStepContent: React.FC<ResultsStepContentProps> = ({
     onViewProgramme?.();
   }, [onViewProgramme]);
 
+  const handleKeepProgramme = useCallback(() => {
+    onKeepProgramme?.();
+  }, [onKeepProgramme]);
+
+  const handleReplaceProgramme = useCallback(() => {
+    onReplaceProgramme?.();
+  }, [onReplaceProgramme]);
+
   return (
     <ResultsScreen
       config={config}
@@ -39,6 +51,10 @@ export const ResultsStepContent: React.FC<ResultsStepContentProps> = ({
       programmeId={results?.programmeId ?? null}
       programmeName={results?.programmeName}
       onViewProgramme={handleViewProgramme}
+      isReassessment={isReassessment}
+      onKeepProgramme={handleKeepProgramme}
+      onReplaceProgramme={handleReplaceProgramme}
+      isReplacing={isReplacing}
     />
   );
 };

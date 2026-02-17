@@ -33,6 +33,10 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
   onViewProgramme,
   isLastSubmittableStep = false,
   onSubmitAssessment,
+  isReassessment = false,
+  onKeepProgramme,
+  onReplaceProgramme,
+  isReplacing = false,
 }) => {
   const { assessmentState, assessmentDispatch } = useAssessment();
   const { data: flow, isLoading: isFlowLoading } = useAssessmentFlowQuery(assessmentState.flowId);
@@ -140,6 +144,10 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
             config={config}
             assessmentId={assessmentState.assessmentId}
             onViewProgramme={onViewProgramme}
+            isReassessment={isReassessment}
+            onKeepProgramme={onKeepProgramme}
+            onReplaceProgramme={onReplaceProgramme}
+            isReplacing={isReplacing}
           />
         );
 

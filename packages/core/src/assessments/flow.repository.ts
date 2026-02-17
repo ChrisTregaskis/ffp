@@ -108,7 +108,7 @@ function extractDefaultFlowId(settings: unknown): string | null {
  * @throws InternalServerError if no default assessment flow is configured
  */
 export async function findDefaultForTenant(tenantId: string): Promise<AssessmentFlow | null> {
-  // 1. Check tenant's own settings for a configured default
+  // Check tenant's own settings for a configured default
   const tenantFlowId = await withRLS(tenantId, undefined, async (tx) => {
     const records = await tx
       .select({ settings: tenants.settings })
@@ -127,7 +127,7 @@ export async function findDefaultForTenant(tenantId: string): Promise<Assessment
     }
   }
 
-  // 2. Check platform tenant settings for a global default
+  // Check platform tenant settings for a global default
   // Uses the user's tenant RLS context — the tenant_isolation policy allows
   // any tenant to also read the platform tenant row (type = 'platform')
   const platformFlowId = await withRLS(tenantId, undefined, async (tx) => {
@@ -158,7 +158,23 @@ export async function findDefaultForTenant(tenantId: string): Promise<Assessment
     );
   }
 
-  // No default configured at any level
+  // Fallback — find any single active flow
+  const fallbackRecords = await db
+    .select()
+    .from(assessmentFlows)
+    .where(eq(assessmentFlows.isActive, true))
+    .limit(1);
+
+  if (fallbackRecords[0]) {
+    logger.warn('No default assessment flow configured — falling back to first active flow', {
+      tenantId,
+      flowId: fallbackRecords[0].id,
+    });
+
+    return fallbackRecords[0];
+  }
+
+  // No flows exist at all
   logger.error('No default assessment flow configured', { tenantId });
 
   throw new InternalServerError('No default assessment flow is configured.');

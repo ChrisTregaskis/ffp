@@ -1,4 +1,9 @@
-import { activeProgrammeResponseSchema, type ActiveProgrammeResponse } from '@ffp/core';
+import {
+  activeProgrammeResponseSchema,
+  replaceProgrammeResponseSchema,
+  type ActiveProgrammeResponse,
+  type ReplaceProgrammeResponse,
+} from '@ffp/core';
 
 import { ffpClient, parseApiResponse } from '../client';
 
@@ -17,9 +22,21 @@ export const programmesApi = {
   getActive: async (signal?: AbortSignal): Promise<ActiveProgrammeResponse> => {
     const path = `${basePath}/active`;
     const response = await ffpClient.get(path, { signal });
+
     return parseApiResponse(activeProgrammeResponseSchema, response, { method: 'GET', path });
+  },
+
+  /**
+   * Replace the active programme with the recommendation from a reassessment.
+   * Archives the current programme and creates a new one.
+   */
+  replaceActive: async (assessmentId: string): Promise<ReplaceProgrammeResponse> => {
+    const path = `${basePath}/active/replace`;
+    const response = await ffpClient.put(path, { assessmentId });
+
+    return parseApiResponse(replaceProgrammeResponseSchema, response, { method: 'PUT', path });
   },
 };
 
 // Re-export types for consumers
-export type { ActiveProgrammeResponse };
+export type { ActiveProgrammeResponse, ReplaceProgrammeResponse };

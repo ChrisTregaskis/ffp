@@ -41,6 +41,7 @@ export const assessmentsApi = {
   getFlow: async (flowId: string, signal?: AbortSignal): Promise<AssessmentFlow> => {
     const path = `${basePath}/flows/${flowId}`;
     const response = await ffpClient.get(path, { signal });
+
     return parseApiResponse(assessmentFlowSchema, response, { method: 'GET', path });
   },
 
@@ -53,6 +54,7 @@ export const assessmentsApi = {
   ): Promise<AssessmentTemplateWithQuestions> => {
     const path = `${basePath}/templates/${templateId}`;
     const response = await ffpClient.get(path, { signal });
+
     return parseApiResponse(assessmentTemplateWithQuestionsSchema, response, {
       method: 'GET',
       path,
@@ -64,9 +66,16 @@ export const assessmentsApi = {
    *
    * Returns full assessment state including steps, answers, and resume status.
    */
-  start: async (flowId: string): Promise<StartAssessmentResponse> => {
+  start: async (
+    flowId: string,
+    options?: { isReassessment?: boolean }
+  ): Promise<StartAssessmentResponse> => {
     const path = `${basePath}/start`;
-    const response = await ffpClient.post(path, { flowId });
+    const response = await ffpClient.post(path, {
+      flowId,
+      isReassessment: options?.isReassessment,
+    });
+
     return parseApiResponse(startAssessmentResponseSchema, response, { method: 'POST', path });
   },
 
@@ -81,6 +90,7 @@ export const assessmentsApi = {
   ): Promise<SaveProgressResponse> => {
     const path = `${basePath}/${assessmentId}/progress`;
     const response = await ffpClient.put(path, payload);
+
     return parseApiResponse(saveProgressResponseSchema, response, { method: 'PUT', path });
   },
 
@@ -95,6 +105,7 @@ export const assessmentsApi = {
   ): Promise<SubmitAssessmentResponse> => {
     const path = `${basePath}/${assessmentId}/submit`;
     const response = await ffpClient.post(path, payload);
+
     return parseApiResponse(submitAssessmentResponseSchema, response, { method: 'POST', path });
   },
 
@@ -107,6 +118,7 @@ export const assessmentsApi = {
   getUserStatus: async (signal?: AbortSignal): Promise<UserAssessmentStatusResponse> => {
     const path = `${basePath}/user-status`;
     const response = await ffpClient.get(path, { signal });
+
     return parseApiResponse(userAssessmentStatusResponseSchema, response, {
       method: 'GET',
       path,
@@ -122,6 +134,7 @@ export const assessmentsApi = {
   ): Promise<AssessmentResultsResponse> => {
     const path = `${basePath}/${assessmentId}/results`;
     const response = await ffpClient.get(path, { signal });
+
     return parseApiResponse(assessmentResultsResponseSchema, response, { method: 'GET', path });
   },
 };
