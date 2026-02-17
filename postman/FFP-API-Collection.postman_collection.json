@@ -2389,9 +2389,115 @@
       }
     },
     {
-      "name": "Programmes (Coming Soon)",
-      "item": [],
-      "description": "Workout programme generation and management - JWT authentication required.\n\n**Endpoints (to be added):**\n- GET /programmes\n- GET /programmes/{id}\n- POST /programmes/generate\n- PUT /programmes/{id}\n- DELETE /programmes/{id}"
+      "name": "Programmes",
+      "item": [
+        {
+          "name": "Get Active Programme",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 404\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Response has required fields\", function () {",
+                  "        const jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property(\"id\");",
+                  "        pm.expect(jsonData).to.have.property(\"name\");",
+                  "        pm.expect(jsonData).to.have.property(\"status\");",
+                  "        pm.expect(jsonData).to.have.property(\"createdAt\");",
+                  "    });",
+                  "",
+                  "    pm.test(\"Status is active\", function () {",
+                  "        const jsonData = pm.response.json();",
+                  "        pm.expect(jsonData.status).to.eql(\"active\");",
+                  "    });",
+                  "",
+                  "    const jsonData = pm.response.json();",
+                  "    console.log(\"Active programme:\", jsonData.name);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{apiUrl}}/programmes/active",
+              "host": ["{{apiUrl}}"],
+              "path": ["programmes", "active"]
+            },
+            "description": "Get the current user's active programme.\n\n**Authentication:** JWT token required (Bearer token)\n\n**Response:**\n- `id` - Programme UUID\n- `name` - Programme display name\n- `description` - Programme description (nullable)\n- `status` - Programme status (active)\n- `createdAt` - When the programme was created\n\n**Workflow:**\nCall after completing an assessment and receiving a programme recommendation.\n\n**Error Responses:**\n- 404 - No active programme found for user"
+          },
+          "response": [
+            {
+              "name": "Success - Active Programme",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/programmes/active",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["programmes", "active"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"name\": \"Gentle Mobility Programme\",\n  \"description\": \"A gentle programme focused on improving mobility and reducing stiffness through guided exercises.\",\n  \"status\": \"active\",\n  \"createdAt\": \"2026-02-17T10:30:00.000Z\"\n}"
+            },
+            {
+              "name": "Error - No Active Programme",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{apiUrl}}/programmes/active",
+                  "host": ["{{apiUrl}}"],
+                  "path": ["programmes", "active"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"NotFoundError\",\n  \"message\": \"Active programme not found\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Programme endpoints - JWT authentication required.\n\n**Current Endpoints:**\n- GET /programmes/active - Get the current user's active programme\n\n**Future Endpoints:**\n- GET /programmes/{id}\n- PUT /programmes/{id}\n- DELETE /programmes/{id}",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{jwtToken}}",
+            "type": "string"
+          }
+        ]
+      }
     },
     {
       "name": "Videos (Coming Soon)",

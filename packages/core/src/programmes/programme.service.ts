@@ -1,7 +1,9 @@
+import { getUserIdFromContext, type TenantContext } from '../lib/context';
 import { NotFoundError, ValidationError } from '../lib/errors';
 
 import { createProgramme, findProgrammeByUserId, findTemplateBySlug } from './programme.repository';
 
+import type { Programme } from './programme.repository';
 import type { Transaction } from '../lib/database';
 
 export interface GenerateProgrammeInput {
@@ -81,4 +83,10 @@ export async function generateProgramme(
     programmeName: programme.name,
     isExisting: false,
   };
+}
+
+/** Fetch the current user's active programme, or null if none exists. */
+export async function getActiveProgramme(context: TenantContext): Promise<Programme | null> {
+  const userId = await getUserIdFromContext(context);
+  return await findProgrammeByUserId(context.tenantId, userId);
 }

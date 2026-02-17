@@ -66,7 +66,17 @@ export const createProgrammeSchema = programmeSchema
     description: programmeSchema.shape.description.optional(),
   });
 
+/** Response schema for the active programme endpoint */
+export const activeProgrammeResponseSchema = programmeSchema.pick({
+  id: true,
+  name: true,
+  description: true,
+  status: true,
+  createdAt: true,
+});
+
 export type Programme = z.infer<typeof programmeSchema>;
+export type ActiveProgrammeResponse = z.infer<typeof activeProgrammeResponseSchema>;
 export type ProgrammeTemplate = z.infer<typeof programmeTemplateSchema>;
 export type CreateProgrammeTemplateInput = z.infer<typeof createProgrammeTemplateSchema>;
 export type ProgrammeStatus = z.infer<typeof programmeStatusSchema>;

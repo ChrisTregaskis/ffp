@@ -334,6 +334,10 @@ export default $config({
       handler: `${repositoryFunctionsPath}/assessments/index.handler`,
       ...handlerEnv,
     });
+    api.route('OPTIONS /programmes/{proxy+}', {
+      handler: `${repositoryFunctionsPath}/programs/index.handler`,
+      ...handlerEnv,
+    });
 
     // Admin domain routes (system_admin role required - validated in handlers)
     api.route(
@@ -362,6 +366,13 @@ export default $config({
     api.route(
       'ANY /assessments/{proxy+}',
       { handler: `${repositoryFunctionsPath}/assessments/index.handler`, ...handlerEnv },
+      args
+    );
+
+    // Programmes domain routes (authenticated users - programme data)
+    api.route(
+      'ANY /programmes/{proxy+}',
+      { handler: `${repositoryFunctionsPath}/programs/index.handler`, ...handlerEnv },
       args
     );
 
