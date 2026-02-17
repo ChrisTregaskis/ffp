@@ -66,7 +66,33 @@ export const createProgrammeSchema = programmeSchema
     description: programmeSchema.shape.description.optional(),
   });
 
+/** Response schema for the active programme endpoint */
+export const activeProgrammeResponseSchema = programmeSchema.pick({
+  id: true,
+  name: true,
+  description: true,
+  status: true,
+  createdAt: true,
+});
+
+/** Request schema for the replace programme endpoint */
+export const replaceProgrammeRequestSchema = z.object({
+  /** The completed reassessment ID whose recommendation should replace the active programme */
+  assessmentId: z.string().uuid({ message: 'assessmentId must be a valid UUID' }),
+});
+
+/** Response schema for the replace programme endpoint */
+export const replaceProgrammeResponseSchema = z.object({
+  /** New programme UUID */
+  programmeId: z.string(),
+  /** New programme display name */
+  programmeName: z.string(),
+});
+
 export type Programme = z.infer<typeof programmeSchema>;
+export type ActiveProgrammeResponse = z.infer<typeof activeProgrammeResponseSchema>;
+export type ReplaceProgrammeRequest = z.infer<typeof replaceProgrammeRequestSchema>;
+export type ReplaceProgrammeResponse = z.infer<typeof replaceProgrammeResponseSchema>;
 export type ProgrammeTemplate = z.infer<typeof programmeTemplateSchema>;
 export type CreateProgrammeTemplateInput = z.infer<typeof createProgrammeTemplateSchema>;
 export type ProgrammeStatus = z.infer<typeof programmeStatusSchema>;

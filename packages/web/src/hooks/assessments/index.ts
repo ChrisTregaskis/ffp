@@ -4,6 +4,7 @@ import { useAssessmentTemplateQuery } from './useAssessmentTemplateQuery';
 import { useSaveProgress } from './useSaveProgress';
 import { useStartAssessment } from './useStartAssessment';
 import { useSubmitAssessment } from './useSubmitAssessment';
+import { useUserAssessmentStatusQuery } from './useUserAssessmentStatusQuery';
 
 import type { SaveProgressInput } from './useSaveProgress';
 import type { StartAssessmentInput } from './useStartAssessment';
@@ -16,6 +17,7 @@ export {
   useSaveProgress,
   useStartAssessment,
   useSubmitAssessment,
+  useUserAssessmentStatusQuery,
 };
 
 export type { SaveProgressInput, StartAssessmentInput, SubmitAssessmentInput };

@@ -51,6 +51,13 @@ export const NumericQuestion: React.FC<QuestionComponentProps> = ({
         if (minValue !== undefined && clampedValue < minValue) {
           clampedValue = minValue;
         }
+
+        // Force the DOM input to show the clamped value (handles the case
+        // where React skips re-render because state didn't change)
+        if (clampedValue !== numericValue) {
+          event.target.value = String(clampedValue);
+        }
+
         onChange(clampedValue);
       }
     },

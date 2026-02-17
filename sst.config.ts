@@ -123,8 +123,8 @@ export default $config({
           args.allowedOauthFlowsUserPoolClient = true;
 
           // Callback URLs (localhost for dev, will add production URLs later)
-          args.callbackUrls = ['http://localhost:5173/auth/callback'];
-          args.logoutUrls = ['http://localhost:5173'];
+          args.callbackUrls = ['http://localhost:3000/auth/callback'];
+          args.logoutUrls = ['http://localhost:3000'];
 
           // Token validity periods
           args.accessTokenValidity = 60; // 60 minutes
@@ -237,7 +237,7 @@ export default $config({
         ? ['https://app.fitforpurpose.app'] // TODO: Replace with actual production domain when available
         : $app.stage === 'staging'
           ? ['https://staging.fitforpurpose.app'] // TODO: Replace with actual staging domain when available
-          : ['http://localhost:5173']; // Dev server (for 'dev', personal stages, etc.)
+          : ['http://localhost:3000']; // Dev server (for 'dev', personal stages, etc.)
 
     const api = new sst.aws.ApiGatewayV2('Api', {
       cors: {
@@ -320,6 +320,25 @@ export default $config({
       ],
     });
 
+    // CORS preflight routes (no JWT authorizer — browser OPTIONS requests carry no token)
+    // API Gateway CORS config adds response headers; Lambda returns 204 via router
+    api.route('OPTIONS /admin/{proxy+}', {
+      handler: `${repositoryFunctionsPath}/admin/index.handler`,
+      ...handlerEnv,
+    });
+    api.route('OPTIONS /user/{proxy+}', {
+      handler: `${repositoryFunctionsPath}/user/index.handler`,
+      ...handlerEnv,
+    });
+    api.route('OPTIONS /assessments/{proxy+}', {
+      handler: `${repositoryFunctionsPath}/assessments/index.handler`,
+      ...handlerEnv,
+    });
+    api.route('OPTIONS /programmes/{proxy+}', {
+      handler: `${repositoryFunctionsPath}/programs/index.handler`,
+      ...handlerEnv,
+    });
+
     // Admin domain routes (system_admin role required - validated in handlers)
     api.route(
       'ANY /admin/{proxy+}',
@@ -347,6 +366,13 @@ export default $config({
     api.route(
       'ANY /assessments/{proxy+}',
       { handler: `${repositoryFunctionsPath}/assessments/index.handler`, ...handlerEnv },
+      args
+    );
+
+    // Programmes domain routes (authenticated users - programme data)
+    api.route(
+      'ANY /programmes/{proxy+}',
+      { handler: `${repositoryFunctionsPath}/programs/index.handler`, ...handlerEnv },
       args
     );
 

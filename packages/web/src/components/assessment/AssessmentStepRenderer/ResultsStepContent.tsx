@@ -1,5 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
+import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
+import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import { useAssessmentResultsQuery } from '@web/hooks/assessments';
 
 import { ResultsScreen } from '../screens/ResultsScreen';
@@ -11,12 +13,35 @@ export const ResultsStepContent: React.FC<ResultsStepContentProps> = ({
   config,
   assessmentId,
   onViewProgramme,
+  onKeepProgramme,
+  onReplaceProgramme,
+  isReassessment = false,
+  isReplacing = false,
 }) => {
+  const { assessmentDispatch } = useAssessment();
   const { data: results, isLoading } = useAssessmentResultsQuery(assessmentId ?? '');
+
+  // Sync polled scores into assessment context state
+  useEffect(() => {
+    if (results?.scores) {
+      assessmentDispatch({
+        type: ASSESSMENT_ACTION.SET_SCORES,
+        payload: { scores: results.scores },
+      });
+    }
+  }, [results?.scores, assessmentDispatch]);
 
   const handleViewProgramme = useCallback(() => {
     onViewProgramme?.();
   }, [onViewProgramme]);
+
+  const handleKeepProgramme = useCallback(() => {
+    onKeepProgramme?.();
+  }, [onKeepProgramme]);
+
+  const handleReplaceProgramme = useCallback(() => {
+    onReplaceProgramme?.();
+  }, [onReplaceProgramme]);
 
   return (
     <ResultsScreen
@@ -24,7 +49,12 @@ export const ResultsStepContent: React.FC<ResultsStepContentProps> = ({
       scores={results?.scores ?? null}
       isLoading={isLoading || !results?.scores}
       programmeId={results?.programmeId ?? null}
+      programmeName={results?.programmeName}
       onViewProgramme={handleViewProgramme}
+      isReassessment={isReassessment}
+      onKeepProgramme={handleKeepProgramme}
+      onReplaceProgramme={handleReplaceProgramme}
+      isReplacing={isReplacing}
     />
   );
 };

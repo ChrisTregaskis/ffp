@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { Button } from '@web/components/button';
+import { Button, type ButtonVariant } from '@web/components/button';
 import { Icon, Icons } from '@web/components/Icon';
 import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
@@ -11,6 +11,10 @@ export interface AssessmentNavigationProps {
   showBack?: boolean;
   /** Label for the continue button @default 'Continue' */
   continueLabel?: string;
+  /** Visual variant for the continue button @default 'primary' */
+  continueVariant?: ButtonVariant;
+  /** Whether the Continue button is disabled (e.g. required question unanswered) */
+  continueDisabled?: boolean;
   /** Custom handler for Continue — overrides default save-then-navigate */
   onContinue?: () => void;
   /** Custom handler for Back — overrides default save-then-navigate */
@@ -29,6 +33,8 @@ export interface AssessmentNavigationProps {
 export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
   showBack = true,
   continueLabel = 'Continue',
+  continueVariant = 'primary',
+  continueDisabled = false,
   onContinue,
   onBack,
   className = '',
@@ -105,9 +111,9 @@ export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
       </div>
 
       <Button
-        variant="primary"
+        variant={continueVariant}
         onClick={handleContinue}
-        disabled={isSaving}
+        disabled={isSaving || continueDisabled}
         loading={isSaving}
         icon={<Icon name={Icons.CHEVRONRIGHT} styleProps={{ size: 'sm' }} />}
         iconPosition="right"

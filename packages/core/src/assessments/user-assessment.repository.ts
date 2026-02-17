@@ -1,4 +1,4 @@
-import { eq, and, or, sql } from 'drizzle-orm';
+import { eq, and, or, desc, sql } from 'drizzle-orm';
 
 import type { UserAssessmentStatus } from '@ffp/database';
 import { userAssessments, type UserAssessmentRecord } from '@ffp/database/schema';
@@ -142,6 +142,7 @@ export async function findResumableAssessment(
           or(eq(userAssessments.status, 'not_started'), eq(userAssessments.status, 'in_progress'))
         )
       )
+      .orderBy(desc(userAssessments.createdAt))
       .limit(1);
 
     if (records.length === 0) {
@@ -149,6 +150,64 @@ export async function findResumableAssessment(
     }
 
     return records[0];
+  });
+}
+
+/** Returns the most recent assessment that has been submitted (submitted, scored, or completed). */
+export async function findSubmittedAssessment(
+  tenantId: string,
+  userId: string,
+  flowId: string
+): Promise<UserAssessment | null> {
+  return await withRLS(tenantId, userId, async (tx) => {
+    const records = await tx
+      .select()
+      .from(userAssessments)
+      .where(
+        and(
+          eq(userAssessments.userId, userId),
+          eq(userAssessments.flowId, flowId),
+          or(
+            eq(userAssessments.status, 'submitted'),
+            eq(userAssessments.status, 'scored'),
+            eq(userAssessments.status, 'completed')
+          )
+        )
+      )
+      .orderBy(desc(userAssessments.createdAt))
+      .limit(1);
+
+    if (records.length === 0) {
+      return null;
+    }
+
+    return records[0];
+  });
+}
+
+/**
+ * Abandon any in-progress or not-started assessments for a given flow/user.
+ * Used when starting a reassessment to ensure only one active assessment exists.
+ */
+export async function abandonInProgressAssessments(
+  tenantId: string,
+  userId: string,
+  flowId: string
+): Promise<number> {
+  return await withRLS(tenantId, userId, async (tx) => {
+    const result = await tx
+      .update(userAssessments)
+      .set({ status: 'abandoned' as const, updatedAt: new Date() })
+      .where(
+        and(
+          eq(userAssessments.userId, userId),
+          eq(userAssessments.flowId, flowId),
+          or(eq(userAssessments.status, 'not_started'), eq(userAssessments.status, 'in_progress'))
+        )
+      )
+      .returning({ id: userAssessments.id });
+
+    return result.length;
   });
 }
 

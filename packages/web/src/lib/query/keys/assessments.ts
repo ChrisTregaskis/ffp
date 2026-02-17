@@ -32,4 +32,7 @@ export const assessmentKeys = {
   /** Results for a specific assessment */
   results: (assessmentId: string) =>
     [...assessmentKeys.userAssessment(assessmentId), 'results'] as const,
+
+  /** Current user's assessment/programme status */
+  userStatus: () => [...assessmentKeys.all, 'userStatus'] as const,
 };

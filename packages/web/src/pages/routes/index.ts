@@ -19,6 +19,7 @@ import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
 import { HomePage } from '@web/pages/protected/HomePage';
 import { AccountSettingsPage } from '@web/pages/protected/programme-user/AccountSettingsPage';
+import { AssessmentPage } from '@web/pages/protected/programme-user/AssessmentPage';
 import { ProgrammeOverviewPage } from '@web/pages/protected/programme-user/ProgrammeOverviewPage';
 import { ProgressPage } from '@web/pages/protected/programme-user/ProgressPage';
 import { TodayWorkoutPage } from '@web/pages/protected/programme-user/TodayWorkoutPage';
@@ -126,6 +127,14 @@ export const routes: RoutesConfig = {
   },
 
   // Programme User Routes (for programme_user role)
+  [RouteKey.ASSESSMENT]: {
+    path: '/assessment',
+    pageComponent: AssessmentPage,
+    title: 'Assessment',
+    allowedRoles: [PROGRAMME_USER],
+    excludeLayout: true,
+    excludeFromMainNavbar: true,
+  },
   [RouteKey.TODAY_WORKOUT]: {
     path: '/today-workout',
     pageComponent: TodayWorkoutPage,

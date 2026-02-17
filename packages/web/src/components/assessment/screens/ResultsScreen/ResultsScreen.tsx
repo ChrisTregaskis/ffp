@@ -18,11 +18,19 @@ export interface ResultsScreenProps {
   /** Generated programme ID (null while programme is being created) */
   programmeId: string | null;
   /** Programme name to display in the recommended programme section */
-  programmeName?: string;
+  programmeName?: string | null;
   /** Programme description text */
   programmeDescription?: string;
-  /** Callback when user clicks "View My Programme" */
+  /** Callback when user clicks "View My Programme" (first-time assessment) */
   onViewProgramme: () => void;
+  /** Whether this assessment is a reassessment (user already has a programme) */
+  isReassessment?: boolean;
+  /** Callback when user chooses to keep their current programme (reassessment only) */
+  onKeepProgramme?: () => void;
+  /** Callback when user chooses to replace their programme (reassessment only) */
+  onReplaceProgramme?: () => void;
+  /** Whether the replace programme mutation is in progress */
+  isReplacing?: boolean;
 }
 
 /** Risk level badge styling */
@@ -63,9 +71,13 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   scores,
   isLoading,
   programmeId,
+  onViewProgramme,
+  onKeepProgramme,
+  onReplaceProgramme,
   programmeName = 'Your Programme',
   programmeDescription = 'Personalised based on your assessment results and goals',
-  onViewProgramme,
+  isReassessment = false,
+  isReplacing = false,
 }) => {
   // Loading state — scoring in progress
   if (scores === null && isLoading) {
@@ -169,11 +181,13 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                     <Text as="span" styleProps={{ weight: 'medium' }}>
                       Risk Level:
                     </Text>
-                    <span
-                      className={`rounded-lg px-4 py-1.5 text-sm font-bold ${RISK_BADGE_STYLES[scores.riskLevel]}`}
+                    <Text
+                      as="span"
+                      styleProps={{ size: 'sm', weight: 'bold' }}
+                      className={`rounded-lg px-4 py-1.5 ${RISK_BADGE_STYLES[scores.riskLevel]}`}
                     >
                       {scores.riskLevel.charAt(0).toUpperCase() + scores.riskLevel.slice(1)}
-                    </span>
+                    </Text>
                   </div>
                 )}
               </div>
@@ -238,19 +252,51 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
       {/* CTA */}
       <FadeSlideIn delay={stagger.fourth} duration={duration.entrance} slideDistance={0}>
         <div className="flex flex-col items-center gap-3 pt-4">
-          <ClickScale>
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={onViewProgramme}
-              disabled={programmeId === null}
-            >
-              View My Programme
-            </Button>
-          </ClickScale>
-          <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-            Your assessment results and programme will be saved to your account.
-          </Text>
+          {isReassessment ? (
+            <>
+              <div className="flex gap-3">
+                <ClickScale>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    onClick={onReplaceProgramme}
+                    disabled={!scores || isReplacing}
+                  >
+                    {isReplacing ? 'Replacing...' : 'Replace My Programme'}
+                  </Button>
+                </ClickScale>
+                <ClickScale>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onClick={onKeepProgramme}
+                    disabled={isReplacing}
+                  >
+                    Keep Current Programme
+                  </Button>
+                </ClickScale>
+              </div>
+              <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+                Choose to update your programme or keep your existing one.
+              </Text>
+            </>
+          ) : (
+            <>
+              <ClickScale>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={onViewProgramme}
+                  disabled={programmeId === null}
+                >
+                  View My Programme
+                </Button>
+              </ClickScale>
+              <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+                Your assessment results and programme will be saved to your account.
+              </Text>
+            </>
+          )}
         </div>
       </FadeSlideIn>
     </div>

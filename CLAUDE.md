@@ -513,6 +513,11 @@ pnpm db:check
 
 **Note**: Package READMEs are intentionally concise and reference root README for common commands and workflows.
 
+**Claude Code working files**:
+
+- `.claude/prompts/` - Session handover prompts and next-session prompts
+- `.claude/plans/` - Implementation plans, testing guides, design documents
+
 **Configuration**:
 
 - `turbo.json` - Build pipeline configuration

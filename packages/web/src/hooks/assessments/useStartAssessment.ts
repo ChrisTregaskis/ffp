@@ -11,6 +11,8 @@ import type { UseMutationOptions, UseMutationResult } from '@tanstack/react-quer
 export interface StartAssessmentInput {
   /** Assessment flow ID to start */
   flowId: string;
+  /** When true, create a new assessment instead of resuming an existing one (reassessment path) */
+  isReassessment?: boolean;
 }
 
 /**
@@ -31,7 +33,9 @@ export const useStartAssessment = (
 
   return useMutation({
     ...options,
-    mutationFn: ({ flowId }: StartAssessmentInput) => assessmentsApi.start(flowId),
+    mutationFn: ({ flowId, isReassessment }: StartAssessmentInput) => {
+      return assessmentsApi.start(flowId, { isReassessment });
+    },
     onSuccess: (...args) => {
       // Invalidate user assessments list to reflect the new/resumed assessment
       void queryClient.invalidateQueries({

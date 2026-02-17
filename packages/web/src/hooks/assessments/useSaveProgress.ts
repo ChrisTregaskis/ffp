@@ -27,7 +27,8 @@ export const useSaveProgress = (
 ): UseMutationResult<SaveProgressResponse, ApiError, SaveProgressInput> => {
   return useMutation({
     ...options,
-    mutationFn: ({ assessmentId, payload }: SaveProgressInput) =>
-      assessmentsApi.saveProgress(assessmentId, payload),
+    mutationFn: ({ assessmentId, payload }: SaveProgressInput) => {
+      return assessmentsApi.saveProgress(assessmentId, payload);
+    },
   });
 };

@@ -11,6 +11,8 @@ export enum RouteKey {
   HOME = 'home',
 
   // Programme User Routes (for programme_user role)
+  /** Fullscreen assessment flow (no app layout) */
+  ASSESSMENT = 'assessment',
   /** Today's workout/activity page */
   TODAY_WORKOUT = 'today-workout',
   /** Programme overview and calendar page */

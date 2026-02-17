@@ -2,18 +2,13 @@ import { createSystemContext, type APIGatewayProxyEventV2WithJWT } from '@ffp/co
 
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
-import { handler as getFlowHandler } from './get-flow';
-import { handler as getResultsHandler } from './get-results';
-import { handler as getTemplateHandler } from './get-template';
-import { handler as getUserStatusHandler } from './get-user-status';
-import { handler as saveProgressHandler } from './save-progress';
-import { handler as startAssessmentHandler } from './start-assessment';
-import { handler as submitAssessmentHandler } from './submit-assessment';
+import { handler as getActiveHandler } from './get-active';
+import { handler as replaceActiveHandler } from './replace-active';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
 const ROUTER_CONTEXT = createSystemContext({
-  systemId: 'assessments-router',
+  systemId: 'programmes-router',
   tenantId: '00000000-0000-0000-0000-000000000000', // Placeholder for pre-auth routing
 });
 
@@ -22,18 +17,11 @@ const ROUTER_CONTEXT = createSystemContext({
  * Add new routes here to keep sst.config.ts clean.
  */
 const routes: RouteRegistry = {
-  POST: {
-    '/start': startAssessmentHandler,
-    '/{id}/submit': submitAssessmentHandler,
-  },
   GET: {
-    '/user-status': getUserStatusHandler,
-    '/flows/{id}': getFlowHandler,
-    '/templates/{id}': getTemplateHandler,
-    '/{id}/results': getResultsHandler,
+    '/active': getActiveHandler,
   },
   PUT: {
-    '/{id}/progress': saveProgressHandler,
+    '/active/replace': replaceActiveHandler,
   },
 };
 
@@ -44,7 +32,7 @@ const routes: RouteRegistry = {
 export const handler = async (
   event: APIGatewayProxyEventV2WithJWT
 ): Promise<APIGatewayProxyResultV2> => {
-  const result = validateAndMatchRoute(event, routes, 'assessments', ROUTER_CONTEXT);
+  const result = validateAndMatchRoute(event, routes, 'programmes', ROUTER_CONTEXT);
 
   if (result.type === 'error') {
     return result.response;

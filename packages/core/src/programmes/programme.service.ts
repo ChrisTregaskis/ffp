@@ -1,7 +1,20 @@
-import { NotFoundError, ValidationError } from '../lib/errors';
+import { eq, and } from 'drizzle-orm';
 
-import { createProgramme, findProgrammeByUserId, findTemplateBySlug } from './programme.repository';
+import { userAssessments } from '@ffp/database/schema';
 
+import * as userAssessmentRepo from '../assessments/user-assessment.repository';
+import { getUserIdFromContext, type TenantContext } from '../lib/context';
+import { withRLS } from '../lib/database';
+import { ForbiddenError, NotFoundError, ValidationError } from '../lib/errors';
+
+import {
+  archiveProgramme,
+  createProgramme,
+  findProgrammeByUserId,
+  findTemplateBySlug,
+} from './programme.repository';
+
+import type { Programme } from './programme.repository';
 import type { Transaction } from '../lib/database';
 
 export interface GenerateProgrammeInput {
@@ -10,6 +23,8 @@ export interface GenerateProgrammeInput {
   userId: string;
   /** Programme template slug from scoring result (e.g., 'gentle-mobility-programme') */
   recommendedTemplateSlug: string | null;
+  /** If true, archive any existing active programme and create a new one */
+  replaceExisting?: boolean;
 }
 
 export interface GenerateProgrammeOptions {
@@ -25,18 +40,34 @@ export interface GenerateProgrammeResult {
   isExisting: boolean;
 }
 
+export interface ReplaceProgrammeInput {
+  /** The completed reassessment whose recommendation should replace the active programme */
+  assessmentId: string;
+}
+
+export interface ReplaceProgrammeResult {
+  /** New programme UUID */
+  programmeId: string;
+  /** New programme display name */
+  programmeName: string;
+}
+
 /** Generate a programme for a user based on assessment scoring results. */
 export async function generateProgramme(
   input: GenerateProgrammeInput,
   options: GenerateProgrammeOptions = {}
 ): Promise<GenerateProgrammeResult> {
-  const { tenantId, userId, recommendedTemplateSlug } = input;
+  const { tenantId, userId, recommendedTemplateSlug, replaceExisting } = input;
   const { tx } = options;
 
-  // Retake path — if user already has an active programme, return it
+  // Check for existing active programme
   const existing = await findProgrammeByUserId(tenantId, userId, { tx });
 
-  if (existing) {
+  if (existing && replaceExisting) {
+    // Reassessment path — archive the old programme and create a new one below
+    await archiveProgramme(tenantId, existing.id, userId, { tx });
+  } else if (existing) {
+    // Retake path — return the existing active programme
     return {
       programmeId: existing.id,
       programmeName: existing.name,
@@ -81,4 +112,85 @@ export async function generateProgramme(
     programmeName: programme.name,
     isExisting: false,
   };
+}
+
+/** Fetch the current user's active programme, or null if none exists. */
+export async function getActiveProgramme(context: TenantContext): Promise<Programme | null> {
+  const userId = await getUserIdFromContext(context);
+  return await findProgrammeByUserId(context.tenantId, userId);
+}
+
+/**
+ * Replace the user's active programme with the recommendation from a reassessment.
+ *
+ * - Looks up the assessment's scores to find the recommended template slug
+ * - Archives the current active programme
+ * - Creates a new programme from the recommended template
+ * - Updates the assessment to point to the new programme
+ */
+export async function replaceProgramme(
+  input: ReplaceProgrammeInput,
+  context: TenantContext
+): Promise<ReplaceProgrammeResult> {
+  const userId = await getUserIdFromContext(context);
+  const { tenantId } = context;
+
+  // Fetch the assessment to read its scores
+  const assessment = await userAssessmentRepo.findUserAssessmentById(
+    tenantId,
+    input.assessmentId,
+    userId
+  );
+
+  if (!assessment) {
+    throw new NotFoundError('Assessment', input.assessmentId);
+  }
+
+  // Belt-and-braces ownership check (RLS already scopes, but defence-in-depth)
+  if (assessment.userId !== userId) {
+    throw new ForbiddenError('You do not have permission to access this assessment.');
+  }
+
+  // Only allow replacement from a scored or completed assessment
+  if (!(['scored', 'completed'] as string[]).includes(assessment.status)) {
+    throw new ValidationError(
+      `Assessment must be scored before programme replacement. Current status: ${assessment.status}`
+    );
+  }
+
+  if (!assessment.scores) {
+    throw new ValidationError('Assessment has not been scored yet. Cannot replace programme.');
+  }
+
+  const recommendedSlug = assessment.scores.recommendedTemplateSlug;
+
+  if (!recommendedSlug) {
+    throw new ValidationError(
+      'Assessment scoring did not produce a programme recommendation. Cannot replace programme.'
+    );
+  }
+
+  // Use a single transaction for the atomic archive + create + link
+  return await withRLS(tenantId, userId, async (tx) => {
+    const result = await generateProgramme(
+      {
+        tenantId,
+        userId,
+        recommendedTemplateSlug: recommendedSlug,
+        replaceExisting: true,
+      },
+      { tx }
+    );
+
+    // Link the assessment to the new programme (within the same transaction)
+    await tx
+      .update(userAssessments)
+      .set({ programmeId: result.programmeId, updatedAt: new Date() })
+      .where(and(eq(userAssessments.id, input.assessmentId), eq(userAssessments.userId, userId)));
+
+    return {
+      programmeId: result.programmeId,
+      programmeName: result.programmeName,
+    };
+  });
 }

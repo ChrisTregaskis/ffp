@@ -1,5 +1,5 @@
 export { assessmentKeys } from './assessments';
+export { programmeKeys } from './programmes';
 
 // Future exports:
-// export { programmeKeys } from './programmes';
 // export { userKeys } from './users';

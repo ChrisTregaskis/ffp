@@ -65,6 +65,7 @@ CLAUDE.local.md
 .claude/review-context.md
 .claude/screenshots*
 .claude/plans/
+.claude/prompts/
 .claude/docs/
 
 project-documentation/sprint-planning/outputs/*.md
@@ -72,6 +73,9 @@ project-documentation/sprint-planning/outputs/**/*.md
 project-documentation/sprint-planning/_stakeholder-update.build.html
 project-documentation/sprint-planning/stakeholder-update/
 project-documentation/refactoring/
+
+# Postman (managed via Postman MCP server, not local files)
+postman/
 
 # AWS RDS CA certificate (public certificate - safe to commit)
 # curl -o packages/core/certs/rds-ca-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem

@@ -1,13 +1,12 @@
-import { useState } from 'react';
-
 import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import type { CardTransitionDirection } from '@web/components/motion';
 import { FadeSlideIn } from '@web/components/motion';
 import { Text } from '@web/components/text';
 
 import { AssessmentNavigation } from '../AssessmentNavigation';
 import { QuestionCard } from '../cards/QuestionCard';
 import { ASSESSMENT_MOTION } from '../motion.constants';
+
+import { useQuestionStepNavigation } from './useQuestionStepNavigation';
 
 import type { QuestionStepContentProps } from './types';
 
@@ -25,10 +24,33 @@ export const QuestionStepContent: React.FC<QuestionStepContentProps> = ({
   answers,
   currentStep,
   onAnswer,
+  isLastSubmittableStep = false,
+  onSubmitAssessment,
 }) => {
-  const [direction, setDirection] = useState<CardTransitionDirection>('forward');
+  const currentQuestion = questions.length > 0 ? questions[questionIndex] : undefined;
+  const isCurrentQuestionRequired = currentQuestion?.validation?.required !== false;
+  const isCurrentQuestionAnswered = !!currentQuestion && currentQuestion.id in answers;
 
-  if (questions.length === 0) {
+  const {
+    direction,
+    showBack,
+    continueLabel,
+    continueVariant,
+    continueDisabled,
+    continueHandler,
+    backHandler,
+  } = useQuestionStepNavigation({
+    questionIndex,
+    totalQuestions: questions.length,
+    currentStep,
+    isLastSubmittableStep,
+    isCurrentQuestionRequired,
+    isCurrentQuestionAnswered,
+    onSubmitAssessment,
+    onQuestionIndexChange,
+  });
+
+  if (!currentQuestion) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-16">
         <LoadingSpinner size="lg" variant="center" />
@@ -38,10 +60,6 @@ export const QuestionStepContent: React.FC<QuestionStepContentProps> = ({
       </div>
     );
   }
-
-  const currentQuestion = questions[questionIndex];
-  const isFirstQuestion = questionIndex === 0;
-  const isLastQuestion = questionIndex === questions.length - 1;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -56,23 +74,12 @@ export const QuestionStepContent: React.FC<QuestionStepContentProps> = ({
           direction={direction}
           footer={
             <AssessmentNavigation
-              showBack={!isFirstQuestion || currentStep > 1}
-              onContinue={
-                isLastQuestion
-                  ? undefined
-                  : () => {
-                      setDirection('forward');
-                      onQuestionIndexChange((i) => i + 1);
-                    }
-              }
-              onBack={
-                isFirstQuestion
-                  ? undefined
-                  : () => {
-                      setDirection('backward');
-                      onQuestionIndexChange((i) => i - 1);
-                    }
-              }
+              showBack={showBack}
+              continueLabel={continueLabel}
+              continueVariant={continueVariant}
+              continueDisabled={continueDisabled}
+              onContinue={continueHandler}
+              onBack={backHandler}
             />
           }
         />

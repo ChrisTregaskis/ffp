@@ -31,6 +31,12 @@ const STEPS_WITHOUT_PROGRESS: FlowStepType[] = ['intro', 'programme-overview'];
 export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
   questions = [],
   onViewProgramme,
+  isLastSubmittableStep = false,
+  onSubmitAssessment,
+  isReassessment = false,
+  onKeepProgramme,
+  onReplaceProgramme,
+  isReplacing = false,
 }) => {
   const { assessmentState, assessmentDispatch } = useAssessment();
   const { data: flow, isLoading: isFlowLoading } = useAssessmentFlowQuery(assessmentState.flowId);
@@ -69,6 +75,11 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
           type: ASSESSMENT_ACTION.SET_ANSWER,
           payload: { questionId, answer: { questionId, answerValue: value } },
         });
+      } else {
+        assessmentDispatch({
+          type: ASSESSMENT_ACTION.CLEAR_ANSWER,
+          payload: { questionId },
+        });
       }
     },
     [assessmentDispatch]
@@ -76,7 +87,7 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
 
   if (isFlowLoading || !currentStepSummary) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 py-16">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3">
         <LoadingSpinner size="lg" variant="center" />
         <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
           Loading assessment...
@@ -107,6 +118,8 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
             answers={assessmentState.answers}
             currentStep={assessmentState.currentStep}
             onAnswer={handleAnswer}
+            isLastSubmittableStep={isLastSubmittableStep}
+            onSubmitAssessment={onSubmitAssessment}
           />
         );
 
@@ -120,6 +133,8 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
             answers={assessmentState.answers}
             currentStep={assessmentState.currentStep}
             onAnswer={handleAnswer}
+            isLastSubmittableStep={isLastSubmittableStep}
+            onSubmitAssessment={onSubmitAssessment}
           />
         );
 
@@ -129,6 +144,10 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
             config={config}
             assessmentId={assessmentState.assessmentId}
             onViewProgramme={onViewProgramme}
+            isReassessment={isReassessment}
+            onKeepProgramme={onKeepProgramme}
+            onReplaceProgramme={onReplaceProgramme}
+            isReplacing={isReplacing}
           />
         );
 
@@ -146,16 +165,25 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
     }
   };
 
+  // Steps without a progress bar (intro, programme-overview) are vertically centred on the page.
+  if (!showProgress) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        {renderStepContent()}
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      {showProgress && (
+    <div className="flex min-h-screen flex-col">
+      <div className="mx-auto w-full max-w-3xl px-4 pt-6">
         <AssessmentProgress
           currentStep={assessmentState.currentStep}
           totalSteps={assessmentState.totalSteps}
           phase={assessmentState.phase}
         />
-      )}
-      {renderStepContent()}
+      </div>
+      <div className="flex flex-1 items-center justify-center px-4 py-6">{renderStepContent()}</div>
     </div>
   );
 };

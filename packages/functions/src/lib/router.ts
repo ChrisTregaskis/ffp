@@ -155,6 +155,18 @@ export const validateAndMatchRoute = (
   const method = event.requestContext.http.method;
   const path = `/${event.pathParameters?.proxy ?? ''}`;
 
+  // Handle CORS preflight — return 204 immediately
+  // OPTIONS routes are registered without JWT auth in sst.config.ts
+  if (method === 'OPTIONS') {
+    return {
+      type: 'error',
+      response: {
+        statusCode: 204,
+        body: '',
+      },
+    };
+  }
+
   logger.debug(`Routing ${domainName} request`, {
     method,
     path,

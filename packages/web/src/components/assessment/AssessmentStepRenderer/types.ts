@@ -5,6 +5,18 @@ export interface AssessmentStepRendererProps {
   questions?: AssessmentQuestion[];
   /** Callback when user clicks "View My Programme" on results screen */
   onViewProgramme?: () => void;
+  /** Whether the current step is the last question/video step in the flow */
+  isLastSubmittableStep?: boolean;
+  /** Callback to submit the assessment (triggered by user clicking "Complete Assessment") */
+  onSubmitAssessment?: () => void;
+  /** Whether this assessment is a reassessment (user already has a programme) */
+  isReassessment?: boolean;
+  /** Callback when user chooses to keep their current programme (reassessment only) */
+  onKeepProgramme?: () => void;
+  /** Callback when user chooses to replace their programme (reassessment only) */
+  onReplaceProgramme?: () => void;
+  /** Whether the replace programme mutation is in progress */
+  isReplacing?: boolean;
 }
 
 export interface QuestionStepContentProps {
@@ -15,10 +27,22 @@ export interface QuestionStepContentProps {
   answers: Record<string, { questionId: string; answerValue: AnswerValue }>;
   currentStep: number;
   onAnswer: (questionId: string, value: AnswerValue | null) => void;
+  /** Whether the current step is the last question/video step in the flow */
+  isLastSubmittableStep?: boolean;
+  /** Callback to submit the assessment (triggered by user clicking "Complete Assessment") */
+  onSubmitAssessment?: () => void;
 }
 
 export interface ResultsStepContentProps {
   config: FlowStepConfig;
   assessmentId: string | null;
   onViewProgramme?: () => void;
+  /** Whether this assessment is a reassessment (user already has a programme) */
+  isReassessment?: boolean;
+  /** Callback when user chooses to keep their current programme (reassessment only) */
+  onKeepProgramme?: () => void;
+  /** Callback when user chooses to replace their programme (reassessment only) */
+  onReplaceProgramme?: () => void;
+  /** Whether the replace programme mutation is in progress */
+  isReplacing?: boolean;
 }
