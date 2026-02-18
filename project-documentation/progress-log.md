@@ -1,12 +1,78 @@
 # FFP - Progress Log
 
-Detailed session-by-session history for Sprint 1 execution.
+Detailed session-by-session history.
 
 **For current status, see `project-state.md`**
 
 ---
 
 ## Recent Sessions (Detailed)
+
+### February 12-17, 2026 — FFP-272 E2E Testing, Additional Features & Merge
+
+**Status**: ✅ FFP-272 MERGED (PR merged to main, 17th Feb)
+
+**Branch**: `feature/ffp-272-full-e2e-assessment-integration`
+
+**Summary**: Six E2E testing sessions that uncovered and fixed multiple UX issues, plus significant scope expansion beyond original subtasks — programme overview page, reassessment flow, RLS tightening, and Postman MCP migration.
+
+**E2E Testing Results** (6 scenarios):
+
+| Scenario | Description                         | Result                    |
+| -------- | ----------------------------------- | ------------------------- |
+| 1        | Happy path (back pain, full 9-step) | ✅ Tested                 |
+| 2        | Branching (non-back-pain skip)      | ✅ API-verified           |
+| 3        | Red flag warnings UI                | ✅ Tested                 |
+| 4        | Resume mid-assessment               | ✅ API-verified           |
+| 5        | Resume after submission             | ✅ Tested (routing guard) |
+| 6        | First login redirect                | ✅ Tested                 |
+| —        | Programme overview page             | ✅ Tested                 |
+| —        | Reassessment flow (replace/keep)    | ✅ Tested                 |
+
+**UX Fixes from E2E Testing**:
+
+- Disabled Continue button until required questions answered
+- Fixed numeric input deletion (added `CLEAR_ANSWER` reducer action)
+- Fixed question sub-progress counter (current/total not remaining/total)
+- Clamped numeric inputs with min/max on video-response seed questions
+- Vertically centred question card screens within viewport
+- Resumed submitted assessments at results step on reload
+- Redirected to programme overview if user already has active programme
+
+**Additional Features Delivered** (beyond FFP-272 scope):
+
+- **Programme Overview Page**: `GET /programmes/active` endpoint, `getActiveProgramme` service, `activeProgrammeResponseSchema`, frontend API client, React Query hook, real `ProgrammeOverviewPage` replacing placeholder
+- **Reassessment Flow**: Start new assessment when programme exists, replace/keep programme choice dialogue, programme archival with `replaceProgramme` service method
+- **RLS Policy Tightening**: Split `tenants` RLS into `tenant_read_isolation` (SELECT, includes platform) and `tenant_write_isolation` (ALL on own tenant only) to prevent cross-tenant writes
+- **Defence-in-depth**: Added `userId` filter to assessment update in `replaceProgramme`, narrowed error handling in `getUserAssessmentStatus` to `InternalServerError` only
+- **Results API**: Return programme name in results response
+
+**Review Fixes** (final commit before merge):
+
+- Split tenants RLS into separate read/write policies
+- Narrowed catch in `getUserAssessmentStatus` to `InternalServerError` only — re-throws unexpected errors
+- Added `userId` filter to assessment update in `replaceProgramme` for belt-and-braces consistency
+- Replaced raw `<span>` with themed `Text` component in `ResultsScreen` risk level badge
+
+**Postman MCP Server Setup** (17th Feb):
+
+- Verified Postman MCP server connection (100+ tools available)
+- Migrated `FFP - Manual Test & Demo Flows` collection to Postman workspace via API
+- Confirmed `FFP - Fit For Purpose API` collection already present (imported earlier that day)
+- Created `/postman` skill (`.claude/skills/postman/SKILL.md`) with collection IDs, interaction rules, and read-only environment policy
+- Updated `.gitignore` to exclude `postman/` directory
+- Updated `CLAUDE.local.md` MCP server list with Postman and Gmail entries
+
+**Quality Assurance**:
+
+- ✅ 8 E2E scenarios tested across 6 sessions
+- ✅ `pnpm typecheck` — Zero errors
+- ✅ `pnpm lint` — Zero warnings
+- ✅ Postman collections synced to cloud
+
+**Sprint 6 Progress**: ~24/~26 pts (~92%) — FFP-137 + FFP-140 + FFP-272 + FFP-273 + FFP-229 complete. Remaining: FFP-279, FFP-280, FFP-233, FFP-230, FFP-254.
+
+---
 
 ### February 8-11, 2026 (Sessions 103-108 - FFP-272 E2E Assessment Flow Integration)
 
@@ -107,9 +173,9 @@ Evaluated `useReducer` + Context against 6 alternatives (Zustand, XState v5, Jot
 
 - ✅ `pnpm typecheck` — Zero errors across all packages
 - ✅ `pnpm lint` — Zero warnings
-- ⏳ E2E manual testing — deferred to next session (testing guide prepared)
+- ✅ E2E manual testing — completed across 6 sessions (12th-17th Feb, see entry above)
 
-**Sprint 6 Progress**: ~13/~26 pts (~50%) — FFP-137 + FFP-140 + FFP-272 (code) + FFP-273 complete
+**Sprint 6 Progress at this point**: ~13/~26 pts (~50%) — FFP-137 + FFP-140 + FFP-272 (code) + FFP-273 complete
 
 ---
 

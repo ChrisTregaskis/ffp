@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 17th February 2026
+**Last Updated**: 17th February 2026 (evening)
 **Current EPIC**: FFP-2 - Assessment Engine
 **Sprint Status**: Sprint 6 - Frontend Completion (Early Start)
 **Note**: Starting sprint 6 stories early; committed dates unchanged (16th Feb - 8th Mar)
@@ -49,26 +49,25 @@ Renamed American English identifiers to British English across the codebase (mer
 
 ### Sprint 6 Stories
 
-| Key     | Story                             | Pts | Dependencies           | Notes                                                        |
-| ------- | --------------------------------- | --- | ---------------------- | ------------------------------------------------------------ |
-| FFP-137 | Assessment Navigation Component   | 3   | FFP-135 ✅, FFP-136 ✅ | ✅ Complete                                                  |
-| FFP-140 | Assessment Step Screens           | 5   | FFP-135 ✅, FFP-131 ✅ | All sub-tasks done + animations added — pending final review |
-| FFP-272 | E2E Assessment Flow Integration   | 5   | FFP-140, FFP-136 ✅    | Subtasks created — see below                                 |
-| FFP-230 | Stale Job Detection               | 2   | FFP-180 ✅             | EventBridge scheduled Lambda                                 |
-| FFP-233 | Backend Required Question Valid.  | 3   | FFP-130 ✅             | Defence-in-depth server-side validation                      |
-| FFP-254 | FFP-3 Epic Planning & Sprints     | 5   | -                      | Architecture, user stories, sprint defs                      |
-| FFP-273 | ToastAlert Notification Component | 3   | -                      | ✅ Complete                                                  |
-| FFP-229 | Assessment Engine Epic Clean Up   | 8   | -                      | Review FFP-2 requirements, backlog scan                      |
+| Key     | Story                                        | Pts | Type  | Status  |
+| ------- | -------------------------------------------- | --- | ----- | ------- |
+| FFP-137 | Assessment Navigation Component              | 3   | Story | ✅ Done |
+| FFP-140 | Assessment Step Screens                      | 5   | Story | ✅ Done |
+| FFP-272 | E2E Assessment Flow Integration              | 5   | Story | ✅ Done |
+| FFP-273 | ToastAlert Notification Component            | 3   | Task  | ✅ Done |
+| FFP-229 | Assessment Engine Epic Clean Up              | 8   | Story | ✅ Done |
+| FFP-279 | Update deterministic seed UUIDs to RFC 4122  | -   | Task  | To Do   |
+| FFP-280 | Align Zod versions across monorepo (v3 → v4) | -   | Task  | To Do   |
+| FFP-233 | Backend Required Question Validation         | 3   | Story | To Do   |
+| FFP-230 | Stale Job Detection                          | 2   | Story | To Do   |
+| FFP-254 | FFP-3 Epic Planning & Sprint Definition      | 5   | Story | To Do   |
 
-### Recommended Execution Order
+### Recommended Execution Order (remaining)
 
-1. **FFP-137** - Assessment Navigation (frontend, all deps complete)
-2. **FFP-140** - Assessment Step Screens (frontend, core UX)
-3. **FFP-272** - E2E Assessment Flow Integration (wires everything together, demo-ready)
-4. **FFP-233** - Backend required question validation (backend, defence-in-depth)
-5. **FFP-230** - Stale job detection (backend, operational resilience)
-6. **FFP-229** - Epic cleanup (review FFP-2, polish)
-7. **FFP-254** - FFP-3 Epic planning (documentation, prepares next phase)
+1. **FFP-279 + FFP-280** - Tech debt (seed UUIDs + Zod v4 migration, single branch)
+2. **FFP-233** - Backend required question validation (defence-in-depth)
+3. **FFP-230** - Stale job detection (operational resilience)
+4. **FFP-254** - FFP-3 Epic planning (documentation, prepares next phase)
 
 ### Completed: FFP-137 — Assessment Navigation Component ✅
 
@@ -86,10 +85,9 @@ Renamed American English identifiers to British English across the codebase (mer
 
 ---
 
-### Nearly Complete: FFP-272 — E2E Assessment Flow Integration
+### Completed: FFP-272 — E2E Assessment Flow Integration ✅
 
-**Branch**: `feature/ffp-272-full-e2e-assessment-integration`
-**Status**: E2E testing near-complete. One remaining test (red flag warnings UI), then merge to main.
+**Branch**: `feature/ffp-272-full-e2e-assessment-integration` | **Merged**: 17th Feb 2026
 
 **Subtasks** (in execution order):
 
@@ -108,7 +106,7 @@ Renamed American English identifiers to British English across the codebase (mer
 | -------- | ----------------------------------- | ------------------------- |
 | 1        | Happy path (back pain, full 9-step) | ✅ Tested                 |
 | 2        | Branching (non-back-pain skip)      | ✅ API-verified           |
-| 3        | Red flag warnings UI                | ⏳ Remaining              |
+| 3        | Red flag warnings UI                | ✅ Tested                 |
 | 4        | Resume mid-assessment               | ✅ API-verified           |
 | 5        | Resume after submission             | ✅ Tested (routing guard) |
 | 6        | First login redirect                | ✅ Tested                 |
@@ -140,6 +138,24 @@ Renamed American English identifiers to British English across the codebase (mer
 
 **Branch**: `feature/sprint6`
 **Summary**: Built auto-dismissing toast notification system — `ToastAlert` component (4 variants, progress bar, entrance/exit animations), `ToastProvider` context + `useToast` hook, and dev showcase page with 5 demo tabs. Updated `StaticAlert` showcase to reference ToastAlert as implemented (no longer "future").
+
+---
+
+### Completed: FFP-229 — Assessment Engine Epic Clean Up ✅
+
+**Summary**: Review of FFP-2 requirements, backlog scan, and epic hygiene.
+
+---
+
+### Postman MCP Server Setup (17th Feb)
+
+Migrated local Postman collection JSON files to cloud-managed via Postman MCP server. Collections are now maintained through the `/postman` skill rather than manual file imports.
+
+- **API Collection**: `FFP - Fit For Purpose API` (ID: `c522ff50-4664-4d72-901d-fb5a0dd3612c`)
+- **Test Flows**: `FFP - Manual Test & Demo Flows` (ID: `312a0fac-8906-43e3-abf9-745d64e9faa7`)
+- **Environment**: `FFP-DEV-CHRIS` (read-only, user-managed)
+- Skill created at `.claude/skills/postman/SKILL.md`
+- Local JSON files gitignored (`postman/` directory)
 
 ---
 
