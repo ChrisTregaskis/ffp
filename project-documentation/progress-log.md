@@ -8,6 +8,24 @@ Detailed session-by-session history.
 
 ## Recent Sessions (Detailed)
 
+### February 21, 2026 (session 2) — FFP-233 Closed, FFP-230 Implemented
+
+**Status**: FFP-233 ✅ CLOSED (already implemented), FFP-230 ✅ COMPLETE
+
+**Branch**: `feature/sprint6`
+
+**FFP-233 — Backend Required Question Validation**: Closed without new work — required question validation was already fully implemented during FFP-130 (Sprint 4) in `assessment.service.ts` (lines 436–551). Both ACs satisfied: required question detection with `missingQuestionIds` response, and multi-template support via `findVisitedTemplateIds()`.
+
+**FFP-230 — Stale Job Detection**: Implemented scheduled Lambda for detecting and marking stale jobs as failed.
+
+- `stale-job.service.ts` — `detectAndMarkStaleJobs(config)` with `StaleJobConfig` supporting per-type threshold overrides (mirrors `JobProcessorConfig.maxConcurrentByType` pattern)
+- `detect-stale-jobs.ts` — Lambda handler reads `STALE_JOB_THRESHOLD_SECONDS` (default) and `STALE_JOB_THRESHOLD_{TYPE}` (per-type overrides) env vars
+- `sst.config.ts` — Standalone `StaleJobDetector` Function (all stages) + `StaleJobDetectorCron` (rate 5 min, staging/production only)
+- No schema changes needed (`process_jobs.message` already existed), no RLS needed (table excluded by design)
+- Per-type thresholds added during review as enhancement for future job types with different expected durations
+
+---
+
 ### February 21, 2026 — FFP-279/280 Merged, Slash Commands, FFP-230 Planning
 
 **Status**: FFP-279 + FFP-280 ✅ MERGED (PR #80), FFP-230 implementation plan written

@@ -64,10 +64,12 @@ Renamed American English identifiers to British English across the codebase (mer
 
 ### Recommended Execution Order (remaining)
 
-1. **FFP-230** - Stale job detection (operational resilience)
-2. **FFP-254** - FFP-3 Epic planning (documentation, prepares next phase)
+1. **FFP-254** - FFP-3 Epic planning (documentation, prepares next phase)
 
-**Note**: FFP-233 closed without new work — required question validation was already implemented during FFP-130 (Sprint 4) in `assessment.service.ts` (lines 436–551).
+**Notes**:
+
+- FFP-233 closed without new work — already implemented during FFP-130 (Sprint 4)
+- FFP-230 completed 21st Feb — per-type configurable thresholds added during implementation
 
 ### Completed: FFP-230 — Stale Job Detection ✅
 
