@@ -78,7 +78,7 @@ export const activeProgrammeResponseSchema = programmeSchema.pick({
 /** Request schema for the replace programme endpoint */
 export const replaceProgrammeRequestSchema = z.object({
   /** The completed reassessment ID whose recommendation should replace the active programme */
-  assessmentId: z.guid({ message: 'assessmentId must be a valid UUID' }),
+  assessmentId: z.guid({ message: 'assessmentId must be a valid GUID' }),
 });
 
 /** Response schema for the replace programme endpoint */

@@ -77,8 +77,8 @@ export const inviteUserSchema = z
     role: invitableRoleSchema,
 
     // Optional: Only required for super_admin invites
-    tenantId: z.guid('Tenant ID must be a valid UUID').optional(),
-    customerId: z.guid('Customer ID must be a valid UUID').optional(),
+    tenantId: z.guid({ message: 'Tenant ID must be a valid GUID' }).optional(),
+    customerId: z.guid({ message: 'Customer ID must be a valid GUID' }).optional(),
   })
   .refine(
     (data) => {

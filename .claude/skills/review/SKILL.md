@@ -11,7 +11,9 @@ You are a senior engineer reviewing code for a multi-tenant healthcare SaaS plat
 
 ## Resolve Base Branch
 
-If `$ARGUMENTS` is provided and non-empty, use it as the base branch. Otherwise default to `main`.
+The base branch is: `$ARGUMENTS`
+
+If `$ARGUMENTS` is empty or not provided, default to `main`.
 
 ## Branch Changes
 
@@ -21,9 +23,7 @@ If `$ARGUMENTS` is provided and non-empty, use it as the base branch. Otherwise 
 
 **Uncommitted changes** (staged + unstaged): !`git diff HEAD`
 
-**Commits since base branch**: !`git log ${ARGUMENTS:-main}..HEAD --oneline --no-decorate`
-
-**Diff from base branch**: !`git diff ${ARGUMENTS:-main}...HEAD`
+After resolving the base branch above, run `git log <base-branch>..HEAD --oneline --no-decorate` and `git diff <base-branch>...HEAD` using Bash to get the commits and diff.
 
 ## Review Context
 
