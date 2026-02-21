@@ -1,53 +1,15 @@
 # FFP - Project State
 
 **Last Updated**: 21st February 2026
-**Current EPIC**: FFP-2 - Assessment Engine
-**Sprint Status**: Sprint 6 - Frontend Completion (Early Start)
-**Note**: Starting sprint 6 stories early; committed dates unchanged (16th Feb - 8th Mar)
-
----
-
-## Completed: Sprint 5 - Results & Frontend Core (23 pts) ✅
-
-**Dates**: 26th January - 15th February 2026 (completed 4th Feb, merged 6th Feb)
-**Sprint Goal**: Assessment results API, programme generation, frontend components for assessment flow.
-
-| Key     | Story                                | Pts | Summary                                                  |
-| ------- | ------------------------------------ | --- | -------------------------------------------------------- |
-| FFP-138 | Assessment Progress Bar Component    | 2   | Visual progress indicator for assessment flow            |
-| FFP-131 | Get Assessment Results API           | 3   | `GET /assessments/:id/results` with nullable scores      |
-| FFP-136 | TanStack Query Hooks for Assessments | 5   | API client infrastructure, assessment hooks              |
-| FFP-134 | Programme Generation Service         | 5   | Job handler, `programmes` table, retake detection        |
-| FFP-139 | Question Renderer Components         | 8   | 6 question types: SingleChoice, MultiChoice, Scale, etc. |
-
-### Key Patterns Established
-
-| Area                   | Decision                                                                   |
-| ---------------------- | -------------------------------------------------------------------------- |
-| **Programme Gen**      | `score_assessment` → `generate_programme` job chain, retakes skip creation |
-| **Question Renderers** | Factory pattern with `QuestionComponentProps`, dispatches `SET_ANSWER`     |
-| **API Client**         | TanStack Query with typed hooks in `hooks/assessments/`                    |
-| **Results API**        | Nullable `scores`/`programmeId` until scoring completes                    |
-
----
-
-## Completed: FFP-253 British English Rename ✅
-
-Renamed American English identifiers to British English across the codebase (merged via PR #74):
-
-- `generate_program` → `generate_programme` (job type enum)
-- `program_user` → `programme_user` (user role enum)
-- `programTemplateId` → `programmeTemplateId` (types/JSONB)
-- `programMapping(s)` → `programmeMapping(s)` (types/seed data)
+**Current EPIC**: FFP-2 wrapping up, FFP-3 (Video Management) next
+**Sprint Status**: Sprint 6 - Frontend Completion (nearly complete)
 
 ---
 
 ## Current: Sprint 6 - Frontend Completion (~26 pts)
 
-**Dates**: 16th February - 8th March 2026 (early start from 6th Feb, committed dates unchanged)
+**Dates**: 16th February - 8th March 2026
 **Sprint Goal**: End-to-end assessment flow working, demo-ready MVP.
-
-### Sprint 6 Stories
 
 | Key     | Story                                        | Pts | Type  | Status                                   |
 | ------- | -------------------------------------------- | --- | ----- | ---------------------------------------- |
@@ -62,134 +24,43 @@ Renamed American English identifiers to British English across the codebase (mer
 | FFP-230 | Stale Job Detection                          | 2   | Story | ✅ Done                                  |
 | FFP-254 | FFP-3 Epic Planning & Sprint Definition      | 5   | Story | To Do                                    |
 
-### Recommended Execution Order (remaining)
+### Remaining
 
 1. **FFP-254** - FFP-3 Epic planning (documentation, prepares next phase)
 
-**Notes**:
-
-- FFP-233 closed without new work — already implemented during FFP-130 (Sprint 4)
-- FFP-230 completed 21st Feb — per-type configurable thresholds added during implementation
-
-### Completed: FFP-230 — Stale Job Detection ✅
-
-**Branch**: `feature/sprint6`
-**Summary**: Scheduled Lambda (EventBridge, every 5 min, staging/production only) that detects jobs stuck in 'processing' status beyond configurable threshold and marks them as 'failed'. No schema changes — `process_jobs.message` column already existed. No RLS needed — table excluded from RLS policies by design.
-
-**Files**: `stale-job.service.ts` (core), `detect-stale-jobs.ts` (handler), `sst.config.ts` (cron), `jobs/index.ts` (export)
-
 ---
 
-### Completed: FFP-137 — Assessment Navigation Component ✅
+## Completed: FFP-2 Assessment Engine (Sprints 3-6, 96 pts)
 
-**Branch**: `feature/FFP-137-assessment-navigation` | **Sub-tasks**: FFP-204, FFP-205, FFP-206 (done), FFP-207 (tests deferred)
-**Summary**: Save-on-navigate component using `useAssessment()` + `useSaveProgress()`. Supports branching via `nextStepId`, loading states, custom callbacks.
+**86 story points** across 4 sprints. E2E assessment flow working and tested.
 
----
+| Sprint | Focus                | Pts | Key Deliverables                                                      |
+| ------ | -------------------- | --- | --------------------------------------------------------------------- |
+| 3      | Backend Foundation   | 24  | Schemas, job queue, state machine, Start/Save APIs                    |
+| 4      | APIs & FE Foundation | 23  | Submit API, scoring service, admin API, React Context state           |
+| 5      | Results & FE Core    | 23  | Results API, programme generation, TanStack Query, question renderers |
+| 6      | FE Completion        | 26  | Navigation, step screens, E2E integration, stale job detection        |
 
-### Completed: FFP-140 — Assessment Step Screens ✅
+### Key Patterns & Decisions (Assessment Engine)
 
-**Branch**: `feature/FFP-140-assessment-step-screens` | **Sub-tasks**: FFP-218, FFP-219, FFP-220, FFP-221, FFP-222 (all done) | **Merged**: PR #77
-**Summary**: Built all assessment step components — `IntroScreen`, `ResultsScreen` (standalone screens), `QuestionCard`, `TransitionCard`, `VideoQuestionCard` (compose shared `StepCard` layout), and `AssessmentStepRenderer` orchestrator. Mid-story Screen-to-Card refactor after Figma review introduced `cards/` directory alongside `screens/`. Extracted shared components (`SectionHeader`, `FeatureColumnGrid`, `InstructionList`, `SectionPanel`). Added entrance animations with centralised `ASSESSMENT_MOTION` constants. Extended `Text` (`h1`–`h5`, `ffp-navy`), `IconBadge` (`solid`/`circle`), and `StaticAlert` (`solid` appearance).
-
-**Key decisions**: `cards/` vs `screens/` split reflects genuine layout difference (card chrome vs full-page); presentational screen props with orchestrator owning state; questions passed as prop due to template query gap (tracked FFP-272).
-
----
-
-### Completed: FFP-272 — E2E Assessment Flow Integration ✅
-
-**Branch**: `feature/ffp-272-full-e2e-assessment-integration` | **Merged**: 17th Feb 2026
-
-**Subtasks** (in execution order):
-
-| Key     | Subtask                                                | Focus              | Status      |
-| ------- | ------------------------------------------------------ | ------------------ | ----------- |
-| FFP-274 | Fix template questions schema & API response parsing   | schema, API client | ✅ Complete |
-| FFP-275 | Create assessment route and page shell                 | route, page        | ✅ Complete |
-| FFP-276 | Wire assessment page orchestrator (start, step flow)   | orchestration      | ✅ Complete |
-| FFP-277 | Wire submit assessment and results polling             | submit, polling    | ✅ Complete |
-| FFP-278 | Programme user first-login redirect to assessment      | routing            | ✅ Complete |
-| —       | E2E testing guide (seed data, scenarios, verification) | testing            | ✅ Complete |
-
-**E2E testing status** (6 sessions, 12th–17th Feb):
-
-| Scenario | Description                         | Status                    |
-| -------- | ----------------------------------- | ------------------------- |
-| 1        | Happy path (back pain, full 9-step) | ✅ Tested                 |
-| 2        | Branching (non-back-pain skip)      | ✅ API-verified           |
-| 3        | Red flag warnings UI                | ✅ Tested                 |
-| 4        | Resume mid-assessment               | ✅ API-verified           |
-| 5        | Resume after submission             | ✅ Tested (routing guard) |
-| 6        | First login redirect                | ✅ Tested                 |
-| —        | Programme overview page             | ✅ Tested                 |
-| —        | Reassessment flow (replace/keep)    | ✅ Tested                 |
-
-**Additional work delivered on this branch** (beyond original subtasks):
-
-- Programme overview page (`GET /programmes/active` endpoint + frontend)
-- Reassessment flow (start new assessment, replace/keep programme choice, programme archival)
-- RLS policy tightening (split `tenant_read_isolation` / `tenant_write_isolation`)
-- Multiple UX fixes from E2E testing (numeric clamping, progress counter, continue button, resume behaviour)
-
-**FFP-274 summary**: Added `assessmentTemplateWithQuestionsSchema` with Zod transform mapping backend `QuestionWithConfig` to frontend `AssessmentQuestion` (`questionText` → `question`, nullable → optional, configOverrides applied, backend-only fields stripped). Updated API client and hook to use new schema/type.
-
-**FFP-275 summary**: Added `RouteKey.ASSESSMENT` and route config at `/assessment` with `excludeLayout: true` (fullscreen, no app layout). Created `AssessmentPage` shell — reads `flowId` from search params, shows error if missing, wraps with `AssessmentProvider`, renders orchestrator.
-
-**FFP-276 summary**: Created `AssessmentOrchestrator` component — starts/resumes assessment on mount via `useStartAssessment`, dispatches `START_ASSESSMENT` to populate context, fetches template questions reactively based on current step's `templateId`, passes questions to `AssessmentStepRenderer`. Loading spinner while starting, error states with retry button, resume flow handled through `START_ASSESSMENT` payload.
-
-**FFP-277 summary**: User-initiated submit flow (no useEffect). Orchestrator computes `isLastSubmittableStep` from flow steps, passes `onSubmitAssessment` callback down through `AssessmentStepRenderer` to `QuestionStepContent`/`VideoStepContent`. On the last question of the last submittable step, "Continue" becomes "Complete Assessment" (green `success` button variant). Clicking it calls `submitMutate` with full answers; `onSuccess` dispatches `NEXT_STEP` to transition to results. `hasSubmittedRef` prevents re-submission on resume. Shows "Submitting..." loading and error+retry states. `handleViewProgramme` navigates to `/programme-overview`. `ResultsStepContent` dispatches `SET_SCORES` when polling returns scores. Added `continueVariant` prop to `AssessmentNavigation`.
-
-**FFP-278 summary**: Added `GET /assessments/user-status` endpoint — checks if programme user has an active programme, returns default assessment flow ID for redirect. Flow lookup uses two-tier hierarchy: tenant `settings.defaultAssessmentFlowId` override → platform tenant `settings.defaultAssessmentFlowId` global default (throws `InternalServerError` if neither configured). Frontend `useUserAssessmentStatusQuery` hook called from `HomePage`, redirects programme users without a programme to `/assessment?flowId=<id>` with loading spinner during check.
-
-**State management audit**: Audited `useReducer` + Context pattern (established FFP-135, Sprint 4) against Zustand, XState v5, Jotai, TanStack Query, useActionState, and React Hook Form. Decision: **keep current pattern** — still React-recommended in 2026, zero bundle overhead, 4 page-scoped consumers with no prop drilling issues. Removed 5 unused speculative actions (`SET_PHASE`, `GO_TO_STEP`, `ADD_WARNING`, `CLEAR_WARNINGS`, `RESET`) per YAGNI — reducer trimmed from 11 to 6 actions (~100 lines removed). Added lifecycle documentation to reducer. `questionIndex` stays as local state. Research documented in `.claude/docs/`.
-
----
-
-### Completed: FFP-273 — ToastAlert Notification Component ✅
-
-**Branch**: `feature/sprint6`
-**Summary**: Built auto-dismissing toast notification system — `ToastAlert` component (4 variants, progress bar, entrance/exit animations), `ToastProvider` context + `useToast` hook, and dev showcase page with 5 demo tabs. Updated `StaticAlert` showcase to reference ToastAlert as implemented (no longer "future").
-
----
-
-### Completed: FFP-229 — Assessment Engine Epic Clean Up ✅
-
-**Summary**: Review of FFP-2 requirements, backlog scan, and epic hygiene.
-
----
-
-### Completed: FFP-279 + FFP-280 — Seed UUIDs & Zod v4 Migration ✅
-
-**Branch**: `feature/ffp-279-280-seed-uuids-zod-v4` | **Merged**: PR #80 (21st Feb 2026)
-**Summary**: Combined tech debt task — migrated deterministic seed UUIDs to RFC 4122 format and aligned Zod across the monorepo from v3 to v4.
-
-- Replaced `z.string().uuid()` with `z.guid()` across all Zod schemas to accept Cognito's non-RFC-4122 UUIDs
-- Aligned UUID changes in user assessments schema
-- Migrated email and ISO date validators from Zod v3 to v4 syntax
-- Updated Zod validation error messages
-
----
-
-### Claude Code Custom Commands (21st Feb)
-
-Added `/pick-up` and `/work-on` slash commands to `.claude/commands/` for structured sprint workflows:
-
-- **`/pick-up`** — User story planning: reads Jira ticket, analyses requirements, creates sub-tasks with implementation plans
-- **`/work-on`** — Sub-task implementation: picks up a sub-task, reads the plan, implements the code changes
-
----
-
-### Postman MCP Server Setup (17th Feb)
-
-Migrated local Postman collection JSON files to cloud-managed via Postman MCP server. Collections are now maintained through the `/postman` skill rather than manual file imports.
-
-- **API Collection**: `FFP - Fit For Purpose API` (ID: `c522ff50-4664-4d72-901d-fb5a0dd3612c`)
-- **Test Flows**: `FFP - Manual Test & Demo Flows` (ID: `312a0fac-8906-43e3-abf9-745d64e9faa7`)
-- **Environment**: `FFP-DEV-CHRIS` (read-only, user-managed)
-- Skill created at `.claude/skills/postman/SKILL.md`
-- Local JSON files gitignored (`postman/` directory)
-
----
+| Area                    | Decision                                                                       |
+| ----------------------- | ------------------------------------------------------------------------------ |
+| **State Machine**       | `not_started → in_progress → submitted → scored → completed` (+ `abandoned`)   |
+| **Job Queue**           | DB-driven polling, `FOR UPDATE SKIP LOCKED`, exponential backoff, 2 job types  |
+| **Stale Job Detection** | Per-type configurable thresholds, EventBridge cron (5 min), staging/prod only  |
+| **Scoring**             | Multi-dimensional with weighted dimensions, flow-level config                  |
+| **Branching**           | `goto_step`, `show_warning` actions with condition evaluators                  |
+| **Flow Steps**          | `intro`, `questions`, `transition`, `video-assessment`, `results`              |
+| **Programme Gen**       | `score_assessment` → `generate_programme` job chain, retakes skip creation     |
+| **Question Renderers**  | Factory pattern with `QuestionComponentProps`, dispatches `SET_ANSWER`         |
+| **Frontend State**      | React Context + useReducer (audited 2026, kept over Zustand/XState/Jotai)      |
+| **API Client**          | TanStack Query with typed hooks in `hooks/assessments/`                        |
+| **Zod Transforms**      | Backend → frontend shape mapping at parse time (configOverrides applied)       |
+| **Assessment Route**    | `/assessment` fullscreen (excludeLayout), orchestrator pattern                 |
+| **Submit Flow**         | User-initiated (no useEffect), "Complete Assessment" on final submittable step |
+| **Results Polling**     | `useAssessmentResultsQuery` polls every 2s, stops on scores                    |
+| **First Login**         | Redirect programme users without programme to assessment via user-status API   |
+| **Admin API**           | Thin service layer, repository handles logic                                   |
 
 ### Deferred to Backlog
 
@@ -199,86 +70,13 @@ Migrated local Postman collection JSON files to cloud-managed via Postman MCP se
 | FFP-252 | Scoring E2E Validation | Waiting on co-founder's question/scoring config spreadsheet (post-sprint 6)      |
 | FFP-141 | Video Player Component | Defer to FFP-3 (Video Management) to avoid premature implementation              |
 
-**Note on FFP-141**: Consider a simple placeholder component (`VideoPlayer.tsx` with "Video not available" message) to unblock FFP-140's video-assessment step type. Full implementation deferred to FFP-3 epic.
-
----
-
-## Completed: Sprint 4 - APIs & FE Foundation (23 pts) ✅
-
-**Status**: ✅ Complete (merged)
-
-| Key     | Story                           | Pts | Summary                                       |
-| ------- | ------------------------------- | --- | --------------------------------------------- |
-| FFP-130 | Submit Assessment API           | 5   | POST /assessments/:id/submit, job enqueue     |
-| FFP-133 | Scoring Service Implementation  | 8   | Multi-dimensional scoring, flow-level config  |
-| FFP-126 | Assessment Template Admin API   | 5   | CRUD endpoints for system admins              |
-| FFP-135 | Assessment Context & State Mgmt | 5   | React Context + useReducer, branching support |
-
-### Key Patterns Established
-
-| Area               | Decision                                                         |
-| ------------------ | ---------------------------------------------------------------- |
-| **Scoring**        | Multi-dimensional with weighted dimensions, flow-level config    |
-| **Branching**      | `goto_step`, `show_warning` actions with condition evaluators    |
-| **Frontend State** | React Context + useReducer pattern, typed actions                |
-| **Admin API**      | Thin service layer, repository handles logic                     |
-| **Type Imports**   | `@ffp/web` imports from `@ffp/core` only (never `@ffp/database`) |
-
----
-
-## Completed: Sprint 3 - Backend Foundation (24 pts) ✅
-
-**Status**: ✅ Complete (merged)
-
-| Key     | Story                                      | Pts |
-| ------- | ------------------------------------------ | --- |
-| FFP-124 | Assessment Template Schema & Repository    | 5   |
-| FFP-132 | Process Jobs Schema & Queue Infrastructure | 8   |
-| FFP-125 | Assessment Flow Schema & Configuration     | 3   |
-| FFP-127 | User Assessment Schema & State Machine     | 5   |
-| FFP-128 | Start Assessment API                       | 3   |
-| FFP-129 | Save Assessment Progress API               | 3   |
-
-### Key Patterns Established
-
-| Area               | Decision                                                                     |
-| ------------------ | ---------------------------------------------------------------------------- |
-| **State Machine**  | `not_started → in_progress → submitted → scored → completed` (+ `abandoned`) |
-| **Job Queue**      | Database-driven polling with `FOR UPDATE SKIP LOCKED`, exponential backoff   |
-| **Flow Steps**     | `intro`, `questions`, `transition`, `video-assessment`, `results`            |
-| **RLS Pattern**    | Tenant isolation via `app.tenant_id` session variable                        |
-| **User Ownership** | Service-layer `userId` check (RLS enforces tenant, not user isolation)       |
-
----
-
-## Assessment Engine Overview (FFP-2)
-
-**Total**: 86 story points across 4 sprints (~25 pts velocity)
-
-### Critical Path
-
-```
-FFP-124 → FFP-125 → FFP-127 → FFP-128 → FFP-129 → FFP-130 → FFP-133 → FFP-131
-(Template)  (Flow)   (User)   (Start)   (Save)   (Submit)  (Score)  (Results)
-   ✅         ✅        ✅        ✅        ✅        ✅        ✅      (next)
-```
-
-### Sprint Overview
-
-| Sprint | Focus                | Pts | Status                       |
-| ------ | -------------------- | --- | ---------------------------- |
-| 3      | Backend Foundation   | 24  | ✅ Complete                  |
-| 4      | APIs & FE Foundation | 23  | ✅ Complete                  |
-| 5      | Results & FE Core    | 23  | ✅ Complete                  |
-| 6      | FE Completion        | 26  | 🚀 In Progress (Early Start) |
-
 ---
 
 ## Key Architectural Decisions
 
 ### Backend Architecture
 
-**Domain-Organised Pattern**: `Handler → Service → Repository → Schema`
+**Domain-Organised Pattern**: `Handler → Service → Entity (optional) → Repository → Schema`
 
 ### Multi-Tenant Security (Critical)
 
@@ -293,12 +91,22 @@ await db.transaction(async (tx) => {
 
 **JWT Claims**: `custom:tenantId`, `custom:customerId`, `custom:role`
 
+**RLS exclusions**: `process_jobs`, `assessment_templates`, `assessment_flows`, `questions`, `template_questions` (system-managed, cross-tenant by design)
+
 ### Frontend Architecture
 
 - React 18 with arrow function components
 - Zod schemas as single source of truth
 - TanStack Query for server state
-- React Context + useReducer for form state
+- React Context + useReducer for page-scoped form state
+- Component library: `cards/` vs `screens/` split, shared `StepCard` layout
+- ToastAlert notification system (4 variants, auto-dismiss)
+
+### Import Rules
+
+- `@ffp/web` imports from `@ffp/core` only (never `@ffp/database`)
+- Cross-package: `workspace:*` protocol, resolve to `dist/`
+- Intra-package: namespace aliases (`@core/`, `@web/`)
 
 ---
 
@@ -310,20 +118,21 @@ await db.transaction(async (tx) => {
 
 **Quality Gates**: TypeScript strict, ESLint (0 warnings), 504 tests passing
 
+**Postman**: API collection + test flows managed via MCP server (`/postman` skill)
+
 ---
 
 ## Quick Reference
 
 **Jira**: FFP project at ctregaskis.atlassian.net
-**Sprint**: 6 of 6 (Assessment Engine - Final, early start)
 **Velocity**: ~25 pts/sprint
 **Capacity**: 8 hours/week
 
 **EPICs**:
 
 - ✅ FFP-1: Application Setup & Foundation
-- 🚀 FFP-2: Assessment Engine (Sprints 3-6)
-- ⏳ FFP-3: Video Management
+- ✅ FFP-2: Assessment Engine (Sprints 3-6) — wrapping up
+- ⏳ FFP-3: Video Management — next
 - ⏳ FFP-4: User Dashboards and Progress Tracking
 
 ---
