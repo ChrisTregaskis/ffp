@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 18th February 2026 (evening)
+**Last Updated**: 21st February 2026
 **Current EPIC**: FFP-2 - Assessment Engine
 **Sprint Status**: Sprint 6 - Frontend Completion (Early Start)
 **Note**: Starting sprint 6 stories early; committed dates unchanged (16th Feb - 8th Mar)
@@ -49,25 +49,57 @@ Renamed American English identifiers to British English across the codebase (mer
 
 ### Sprint 6 Stories
 
-| Key     | Story                                        | Pts | Type  | Status         |
-| ------- | -------------------------------------------- | --- | ----- | -------------- |
-| FFP-137 | Assessment Navigation Component              | 3   | Story | ✅ Done        |
-| FFP-140 | Assessment Step Screens                      | 5   | Story | ✅ Done        |
-| FFP-272 | E2E Assessment Flow Integration              | 5   | Story | ✅ Done        |
-| FFP-273 | ToastAlert Notification Component            | 3   | Task  | ✅ Done        |
-| FFP-229 | Assessment Engine Epic Clean Up              | 8   | Story | ✅ Done        |
-| FFP-279 | Update deterministic seed UUIDs to RFC 4122  | -   | Task  | 🚀 In Progress |
-| FFP-280 | Align Zod versions across monorepo (v3 → v4) | -   | Task  | 🚀 In Progress |
-| FFP-233 | Backend Required Question Validation         | 3   | Story | To Do          |
-| FFP-230 | Stale Job Detection                          | 2   | Story | To Do          |
-| FFP-254 | FFP-3 Epic Planning & Sprint Definition      | 5   | Story | To Do          |
+| Key     | Story                                        | Pts | Type  | Status                                   |
+| ------- | -------------------------------------------- | --- | ----- | ---------------------------------------- |
+| FFP-137 | Assessment Navigation Component              | 3   | Story | ✅ Done                                  |
+| FFP-140 | Assessment Step Screens                      | 5   | Story | ✅ Done                                  |
+| FFP-272 | E2E Assessment Flow Integration              | 5   | Story | ✅ Done                                  |
+| FFP-273 | ToastAlert Notification Component            | 3   | Task  | ✅ Done                                  |
+| FFP-229 | Assessment Engine Epic Clean Up              | 8   | Story | ✅ Done                                  |
+| FFP-279 | Update deterministic seed UUIDs to RFC 4122  | -   | Task  | ✅ Done                                  |
+| FFP-280 | Align Zod versions across monorepo (v3 → v4) | -   | Task  | ✅ Done                                  |
+| FFP-233 | Backend Required Question Validation         | 3   | Story | ✅ Done (already implemented in FFP-130) |
+| FFP-230 | Stale Job Detection                          | 2   | Story | 🚀 In Progress                           |
+| FFP-254 | FFP-3 Epic Planning & Sprint Definition      | 5   | Story | To Do                                    |
 
 ### Recommended Execution Order (remaining)
 
-1. **FFP-279 + FFP-280** - Tech debt (seed UUIDs + Zod v4 migration, single branch)
-2. **FFP-233** - Backend required question validation (defence-in-depth)
-3. **FFP-230** - Stale job detection (operational resilience)
-4. **FFP-254** - FFP-3 Epic planning (documentation, prepares next phase)
+1. **FFP-230** - Stale job detection (operational resilience)
+2. **FFP-254** - FFP-3 Epic planning (documentation, prepares next phase)
+
+**Note**: FFP-233 closed without new work — required question validation was already implemented during FFP-130 (Sprint 4) in `assessment.service.ts` (lines 436–551).
+
+### Implementation Plan: FFP-230 — Stale Job Detection
+
+**Branch**: `feature/sprint6` (current branch, single PR with other sprint 6 work)
+**Story**: As a developer, I want jobs stuck in 'processing' status to be automatically marked as failed, so I can investigate and manually re-queue them.
+**Points**: 2 | **Type**: Story | **No sub-tasks** (standalone)
+
+**Codebase context** (already in place):
+
+- `process_jobs` table has `message` column (text) — no schema changes needed
+- `process_jobs` has no RLS — handler can query cross-tenant without BYPASSRLS
+- Existing `sst.aws.Cron` pattern for job processor (staging/production only)
+- `failJob()` in `job-processor.service.ts` handles retry logic + status transitions
+- Job statuses: `queued`, `processing`, `completed`, `failed`, `cancelled`
+
+**Implementation steps** (single branch, 3 files):
+
+| #   | Step                                 | Package          | File(s)                                            | Notes                                                                                                                                                                                                               |
+| --- | ------------------------------------ | ---------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Stale job detection service function | `@ffp/core`      | `packages/core/src/jobs/stale-job.service.ts`      | Query `process_jobs` WHERE status='processing' AND started_at < NOW() - threshold. Update each to status='failed', set message, set completedAt. Return count. Configurable threshold via parameter (default 300s). |
+| 2   | Lambda handler                       | `@ffp/functions` | `packages/functions/src/jobs/detect-stale-jobs.ts` | Scheduled handler, reads `STALE_JOB_THRESHOLD_SECONDS` env var, calls service, logs summary.                                                                                                                        |
+| 3   | SST cron configuration               | root             | `sst.config.ts`                                    | Add `StaleJobDetector` cron (rate 5 minutes), staging/production only. Same pattern as existing `JobProcessorCron`.                                                                                                 |
+
+**Amended requirements vs ticket**:
+
+- Ticket says "BYPASSRLS (system context)" — **not needed**. `process_jobs` is intentionally excluded from RLS policies, so the handler can query directly.
+- Ticket references `FFP-180` as dependency — this was the original job processor ticket (completed in Sprint 3 as FFP-132). Dependency satisfied.
+- No automatic re-queuing or alerting (explicitly out of scope per ticket).
+
+**Tests**: Deferred to MVP launch.
+
+---
 
 ### Completed: FFP-137 — Assessment Navigation Component ✅
 
@@ -144,6 +176,27 @@ Renamed American English identifiers to British English across the codebase (mer
 ### Completed: FFP-229 — Assessment Engine Epic Clean Up ✅
 
 **Summary**: Review of FFP-2 requirements, backlog scan, and epic hygiene.
+
+---
+
+### Completed: FFP-279 + FFP-280 — Seed UUIDs & Zod v4 Migration ✅
+
+**Branch**: `feature/ffp-279-280-seed-uuids-zod-v4` | **Merged**: PR #80 (21st Feb 2026)
+**Summary**: Combined tech debt task — migrated deterministic seed UUIDs to RFC 4122 format and aligned Zod across the monorepo from v3 to v4.
+
+- Replaced `z.string().uuid()` with `z.guid()` across all Zod schemas to accept Cognito's non-RFC-4122 UUIDs
+- Aligned UUID changes in user assessments schema
+- Migrated email and ISO date validators from Zod v3 to v4 syntax
+- Updated Zod validation error messages
+
+---
+
+### Claude Code Custom Commands (21st Feb)
+
+Added `/pick-up` and `/work-on` slash commands to `.claude/commands/` for structured sprint workflows:
+
+- **`/pick-up`** — User story planning: reads Jira ticket, analyses requirements, creates sub-tasks with implementation plans
+- **`/work-on`** — Sub-task implementation: picks up a sub-task, reads the plan, implements the code changes
 
 ---
 

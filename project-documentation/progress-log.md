@@ -8,6 +8,77 @@ Detailed session-by-session history.
 
 ## Recent Sessions (Detailed)
 
+### February 21, 2026 — FFP-279/280 Merged, Slash Commands, FFP-230 Planning
+
+**Status**: FFP-279 + FFP-280 ✅ MERGED (PR #80), FFP-230 implementation plan written
+
+**Branch**: `feature/ffp-279-280-seed-uuids-zod-v4` (merged), `feature/sprint6` (ongoing)
+
+**Summary**: Completed the Zod v4 + seed UUID tech debt migration, created Claude Code custom commands for sprint workflows, and planned FFP-230 (stale job detection).
+
+**FFP-279 + FFP-280 — Seed UUIDs & Zod v4 Migration** (PR #80, merged):
+
+- Replaced `z.string().uuid()` with `z.guid()` across all Zod schemas to accept Cognito's non-RFC-4122 UUIDs
+- Aligned UUID changes in user assessments schema
+- Migrated email and ISO date validators from Zod v3 to v4 syntax (`z.email()`, `z.iso.date()`)
+- Updated Zod validation error messages for consistency
+- Fixed review skill and updated validation error message formatting
+
+**Commits** (on `feature/ffp-279-280-seed-uuids-zod-v4`):
+
+| Hash      | Description                                                         |
+| --------- | ------------------------------------------------------------------- |
+| `8b62c0a` | FFP-279: Replace z.string().uuid() with z.guid() across all schemas |
+| `d925442` | Aligned UUID changes in user assessments schema                     |
+| `ca1d8db` | Fixed review skill and updated messages in Zod validation errors    |
+| `529c461` | Aligned email and ISO date from v3 to v4 for the Zod schema         |
+
+**Claude Code Custom Commands** (on `feature/sprint6`):
+
+- Created `/pick-up` command (`.claude/commands/pick-up.md`) — structured workflow for picking up a user story: reads Jira ticket, analyses requirements, creates sub-tasks with implementation plans
+- Created `/work-on` command (`.claude/commands/work-on.md`) — structured workflow for implementing a sub-task: reads the plan, implements code changes, runs quality checks
+
+**FFP-230 — Stale Job Detection** (planned, not yet implemented):
+
+- Wrote implementation plan in `project-state.md`
+- 3 files: service function, Lambda handler, SST cron config
+- Confirmed `process_jobs` has no RLS (no BYPASSRLS needed)
+- Configurable threshold via env var (`STALE_JOB_THRESHOLD_SECONDS`, default 300s)
+- Tests deferred to MVP launch
+
+**Sprint 6 Progress**: ~24/~26 pts (~92%) — FFP-279 + FFP-280 complete. Remaining: FFP-230 (planned), FFP-254 (to do).
+
+---
+
+### February 18-20, 2026 — FFP-229 Epic Clean Up, FFP-273 ToastAlert, Sprint 6 Housekeeping
+
+**Status**: FFP-229 ✅ Done, FFP-273 ✅ Done, FFP-233 ✅ Closed (no work needed)
+
+**Branch**: `feature/sprint6`
+
+**Summary**: Completed assessment engine epic clean-up, built the toast notification system, and closed FFP-233 (already implemented).
+
+**FFP-229 — Assessment Engine Epic Clean Up**:
+
+- Reviewed FFP-2 epic requirements against delivered work
+- Backlog scan and ticket hygiene
+- Identified deferred items (FFP-231, FFP-252, FFP-141)
+
+**FFP-273 — ToastAlert Notification Component**:
+
+- Built `ToastAlert` component with 4 variants (info, success, warning, error)
+- Auto-dismissing with animated progress bar
+- Entrance/exit animations
+- `ToastProvider` context + `useToast` hook for app-wide toast management
+- Dev showcase page with 5 demo tabs
+- Updated `StaticAlert` showcase to reference ToastAlert as implemented
+
+**FFP-233 — Backend Required Question Validation**:
+
+- Closed without new work — required question validation was already implemented during FFP-130 (Sprint 4) in `assessment.service.ts`
+
+---
+
 ### February 12-17, 2026 — FFP-272 E2E Testing, Additional Features & Merge
 
 **Status**: ✅ FFP-272 MERGED (PR merged to main, 17th Feb)
