@@ -51,14 +51,13 @@ export async function detectAndMarkStaleJobs(
 
   for (const jobType of JOB_TYPES) {
     const thresholdSeconds = thresholdByType[jobType] ?? defaultThresholdSeconds;
-    const thresholdStr = String(thresholdSeconds);
-    const cutoff = sql`NOW() - INTERVAL '${sql.raw(thresholdStr)} seconds'`;
+    const cutoff = sql`NOW() - (INTERVAL '1 second' * ${thresholdSeconds})`;
 
     const updatedRows = await db
       .update(processJobs)
       .set({
         status: 'failed',
-        message: sql<string>`'Job timed out - started at ' || ${processJobs.startedAt}::text || ', exceeded ' || ${sql.raw(`'${thresholdStr}'`)} || 's threshold'`,
+        message: sql<string>`'Job timed out - started at ' || ${processJobs.startedAt}::text || ', exceeded ' || ${thresholdSeconds}::text || 's threshold'`,
         completedAt: new Date(),
       })
       .where(

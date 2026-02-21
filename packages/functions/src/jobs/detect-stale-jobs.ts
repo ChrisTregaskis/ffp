@@ -1,5 +1,5 @@
 import { detectAndMarkStaleJobs, createSystemLogger } from '@ffp/core/server';
-import { getDb, JOB_TYPES, type JobType } from '@ffp/database';
+import { JOB_TYPES, type JobType } from '@ffp/database';
 
 import type { Context, ScheduledEvent } from 'aws-lambda';
 
@@ -26,9 +26,6 @@ export const handler = async (event: ScheduledEvent, context: Context): Promise<
     time: event.time,
     source: event.source,
   });
-
-  // Warm-up database connection for Lambda cold start optimisation
-  getDb();
 
   const defaultThresholdSeconds = parseThreshold(process.env.STALE_JOB_THRESHOLD_SECONDS);
   const thresholdByType = buildThresholdByType();
