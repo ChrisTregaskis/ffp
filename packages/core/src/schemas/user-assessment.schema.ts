@@ -173,7 +173,7 @@ export const assessmentWarningSchema = z.object({
   /** Severity level of the warning */
   type: z.enum(WARNING_TYPES),
   /** ISO timestamp when warning was shown */
-  shownAt: z.string().datetime(),
+  shownAt: z.iso.datetime(),
   /** Step ID where warning was triggered (optional) */
   stepId: z.guid().optional(),
   /** Question slug that triggered the warning (optional) */
@@ -184,7 +184,7 @@ export const saveProgressResponseSchema = z.object({
   /** Indicates the save was successful */
   success: z.literal(true),
   /** ISO 8601 timestamp of when the progress was updated */
-  updatedAt: z.string().datetime(),
+  updatedAt: z.iso.datetime(),
   /** UUID of the next step to navigate to (from branching evaluation) */
   nextStepId: z.guid().nullable(),
   /** Warnings to display to the user */

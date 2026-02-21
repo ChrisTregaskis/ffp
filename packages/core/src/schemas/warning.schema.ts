@@ -10,7 +10,7 @@ export const warningSchema = z.object({
   /** Severity level of the warning */
   type: warningTypeSchema,
   /** ISO timestamp when warning was shown */
-  shownAt: z.string().datetime(),
+  shownAt: z.iso.datetime(),
   /** Step ID where warning was triggered (optional for context) */
   stepId: z.guid().optional(),
   /** Question slug that triggered the warning (optional for context) */

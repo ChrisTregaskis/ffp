@@ -40,7 +40,7 @@ export const scoreAssessmentResultSchema = z.object({
   /** Overall assessment score (if applicable) */
   overallScore: z.number().optional(),
   /** Timestamp when scoring was completed */
-  scoredAt: z.string().datetime(),
+  scoredAt: z.iso.datetime(),
 });
 
 /**
@@ -83,7 +83,7 @@ export const generateProgrammeResultSchema = z.object({
   /** Number of workout sessions per week */
   sessionsPerWeek: z.number().int().positive(),
   /** Timestamp when programme was generated */
-  generatedAt: z.string().datetime(),
+  generatedAt: z.iso.datetime(),
 });
 
 // Use this to type-safely handle different job payloads based on job type.

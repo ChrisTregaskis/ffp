@@ -7,13 +7,13 @@ export const userRoleSchema = z.enum(USER_ROLES);
 export const userSchema = z.object({
   id: z.guid(),
   tenantId: z.guid(),
-  email: z.string().email().max(255),
+  email: z.email().max(255),
   cognitoSub: z.string().max(255),
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
   role: userRoleSchema,
   customerId: z.guid().nullable(),
-  profileImageUrl: z.string().url().nullable(),
+  profileImageUrl: z.url().nullable(),
   phone: z.string().max(20).nullable(),
   dateOfBirth: z.coerce.date().nullable(),
   createdAt: z.date(),
@@ -43,7 +43,7 @@ export const createUserSchema = userSchema
  */
 export const jwtUserClaimsSchema = z.object({
   sub: z.string(),
-  email: z.string().email(),
+  email: z.email(),
   'custom:tenantId': z.guid(),
   'custom:role': userRoleSchema,
 });
@@ -62,10 +62,7 @@ export const canInviteProgrammeUser = (customerId: string | null): boolean => {
 /** The schema validates that tenantId and customerId are provided together or both omitted. */
 export const inviteUserSchema = z
   .object({
-    email: z
-      .string()
-      .email('Invalid email address')
-      .max(255, 'Email must be 255 characters or less'),
+    email: z.email().max(255, 'Email must be 255 characters or less'),
     firstName: z
       .string()
       .min(1, 'First name is required')

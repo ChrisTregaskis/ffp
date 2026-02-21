@@ -750,7 +750,7 @@ describe('startAssessmentRequestSchema', () => {
     const result = startAssessmentRequestSchema.safeParse(input);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe('flowId must be a valid UUID');
+      expect(result.error.issues[0].message).toBe('flowId must be a valid GUID');
     }
   });
 
