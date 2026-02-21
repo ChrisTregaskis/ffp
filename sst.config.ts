@@ -399,7 +399,21 @@ export default $config({
       ...jobProcessorEnv,
     });
 
-    // Cron schedule only in staging/production — no recurring costs in dev
+    // Stale job detector Lambda — available in all stages for manual triggering
+    const staleJobDetectorEnv = {
+      environment: {
+        ...dbEnv,
+        STALE_JOB_THRESHOLD_SECONDS: '300',
+      },
+    };
+
+    new sst.aws.Function('StaleJobDetector', {
+      handler: `${repositoryFunctionsPath}/jobs/detect-stale-jobs.handler`,
+      timeout: '1 minute',
+      ...staleJobDetectorEnv,
+    });
+
+    // Cron schedules only in staging/production — no recurring costs in dev
     if ($app.stage === 'staging' || $app.stage === 'production') {
       new sst.aws.Cron('JobProcessorCron', {
         schedule: 'rate(1 minute)',
@@ -407,6 +421,15 @@ export default $config({
           handler: `${repositoryFunctionsPath}/jobs/process-jobs.handler`,
           timeout: JOB_PROCESSOR_TIMEOUT,
           ...jobProcessorEnv,
+        },
+      });
+
+      new sst.aws.Cron('StaleJobDetectorCron', {
+        schedule: 'rate(5 minutes)',
+        job: {
+          handler: `${repositoryFunctionsPath}/jobs/detect-stale-jobs.handler`,
+          timeout: '1 minute',
+          ...staleJobDetectorEnv,
         },
       });
     }

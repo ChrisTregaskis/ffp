@@ -59,7 +59,7 @@ Renamed American English identifiers to British English across the codebase (mer
 | FFP-279 | Update deterministic seed UUIDs to RFC 4122  | -   | Task  | ✅ Done                                  |
 | FFP-280 | Align Zod versions across monorepo (v3 → v4) | -   | Task  | ✅ Done                                  |
 | FFP-233 | Backend Required Question Validation         | 3   | Story | ✅ Done (already implemented in FFP-130) |
-| FFP-230 | Stale Job Detection                          | 2   | Story | 🚀 In Progress                           |
+| FFP-230 | Stale Job Detection                          | 2   | Story | ✅ Done                                  |
 | FFP-254 | FFP-3 Epic Planning & Sprint Definition      | 5   | Story | To Do                                    |
 
 ### Recommended Execution Order (remaining)
@@ -69,35 +69,12 @@ Renamed American English identifiers to British English across the codebase (mer
 
 **Note**: FFP-233 closed without new work — required question validation was already implemented during FFP-130 (Sprint 4) in `assessment.service.ts` (lines 436–551).
 
-### Implementation Plan: FFP-230 — Stale Job Detection
+### Completed: FFP-230 — Stale Job Detection ✅
 
-**Branch**: `feature/sprint6` (current branch, single PR with other sprint 6 work)
-**Story**: As a developer, I want jobs stuck in 'processing' status to be automatically marked as failed, so I can investigate and manually re-queue them.
-**Points**: 2 | **Type**: Story | **No sub-tasks** (standalone)
+**Branch**: `feature/sprint6`
+**Summary**: Scheduled Lambda (EventBridge, every 5 min, staging/production only) that detects jobs stuck in 'processing' status beyond configurable threshold and marks them as 'failed'. No schema changes — `process_jobs.message` column already existed. No RLS needed — table excluded from RLS policies by design.
 
-**Codebase context** (already in place):
-
-- `process_jobs` table has `message` column (text) — no schema changes needed
-- `process_jobs` has no RLS — handler can query cross-tenant without BYPASSRLS
-- Existing `sst.aws.Cron` pattern for job processor (staging/production only)
-- `failJob()` in `job-processor.service.ts` handles retry logic + status transitions
-- Job statuses: `queued`, `processing`, `completed`, `failed`, `cancelled`
-
-**Implementation steps** (single branch, 3 files):
-
-| #   | Step                                 | Package          | File(s)                                            | Notes                                                                                                                                                                                                               |
-| --- | ------------------------------------ | ---------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Stale job detection service function | `@ffp/core`      | `packages/core/src/jobs/stale-job.service.ts`      | Query `process_jobs` WHERE status='processing' AND started_at < NOW() - threshold. Update each to status='failed', set message, set completedAt. Return count. Configurable threshold via parameter (default 300s). |
-| 2   | Lambda handler                       | `@ffp/functions` | `packages/functions/src/jobs/detect-stale-jobs.ts` | Scheduled handler, reads `STALE_JOB_THRESHOLD_SECONDS` env var, calls service, logs summary.                                                                                                                        |
-| 3   | SST cron configuration               | root             | `sst.config.ts`                                    | Add `StaleJobDetector` cron (rate 5 minutes), staging/production only. Same pattern as existing `JobProcessorCron`.                                                                                                 |
-
-**Amended requirements vs ticket**:
-
-- Ticket says "BYPASSRLS (system context)" — **not needed**. `process_jobs` is intentionally excluded from RLS policies, so the handler can query directly.
-- Ticket references `FFP-180` as dependency — this was the original job processor ticket (completed in Sprint 3 as FFP-132). Dependency satisfied.
-- No automatic re-queuing or alerting (explicitly out of scope per ticket).
-
-**Tests**: Deferred to MVP launch.
+**Files**: `stale-job.service.ts` (core), `detect-stale-jobs.ts` (handler), `sst.config.ts` (cron), `jobs/index.ts` (export)
 
 ---
 
