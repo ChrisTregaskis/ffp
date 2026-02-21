@@ -418,7 +418,7 @@ Warnings are tracked on the `user_assessments` record for audit purposes:
   {
     type: 'seek_medical',
     message: 'Please seek medical review before starting exercise programme',
-    stepId: '55555555-5555-5555-5555-555555550003',
+    stepId: '55555555-5555-5555-8555-555555550003',
     triggeredBy: 'radiating-pain',
     shownAt: '2026-01-12T10:30:00.000Z',
   },

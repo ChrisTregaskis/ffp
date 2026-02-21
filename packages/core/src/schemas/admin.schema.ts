@@ -9,8 +9,8 @@ export const createCustomerSchema = z.object({
 });
 
 export const createCustomerResponseSchema = z.object({
-  tenantId: z.string().uuid(),
-  customerId: z.string().uuid(),
+  tenantId: z.guid(),
+  customerId: z.guid(),
   customerName: z.string(),
 });
 

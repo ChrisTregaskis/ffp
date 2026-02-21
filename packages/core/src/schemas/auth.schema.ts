@@ -9,7 +9,7 @@ export const passwordValidation = z
   .regex(/[^a-zA-Z0-9]/, 'Password must contain at least one special character');
 
 export const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.email(),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -19,7 +19,7 @@ export const refreshTokenSchema = z.object({
 
 export const completeNewPasswordSchema = z.object({
   session: z.string().min(1, 'Session is required'),
-  email: z.string().email('Invalid email address'),
+  email: z.email(),
   newPassword: passwordValidation,
 });
 

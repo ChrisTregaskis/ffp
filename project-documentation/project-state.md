@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 17th February 2026 (evening)
+**Last Updated**: 18th February 2026 (evening)
 **Current EPIC**: FFP-2 - Assessment Engine
 **Sprint Status**: Sprint 6 - Frontend Completion (Early Start)
 **Note**: Starting sprint 6 stories early; committed dates unchanged (16th Feb - 8th Mar)
@@ -49,18 +49,18 @@ Renamed American English identifiers to British English across the codebase (mer
 
 ### Sprint 6 Stories
 
-| Key     | Story                                        | Pts | Type  | Status  |
-| ------- | -------------------------------------------- | --- | ----- | ------- |
-| FFP-137 | Assessment Navigation Component              | 3   | Story | ✅ Done |
-| FFP-140 | Assessment Step Screens                      | 5   | Story | ✅ Done |
-| FFP-272 | E2E Assessment Flow Integration              | 5   | Story | ✅ Done |
-| FFP-273 | ToastAlert Notification Component            | 3   | Task  | ✅ Done |
-| FFP-229 | Assessment Engine Epic Clean Up              | 8   | Story | ✅ Done |
-| FFP-279 | Update deterministic seed UUIDs to RFC 4122  | -   | Task  | To Do   |
-| FFP-280 | Align Zod versions across monorepo (v3 → v4) | -   | Task  | To Do   |
-| FFP-233 | Backend Required Question Validation         | 3   | Story | To Do   |
-| FFP-230 | Stale Job Detection                          | 2   | Story | To Do   |
-| FFP-254 | FFP-3 Epic Planning & Sprint Definition      | 5   | Story | To Do   |
+| Key     | Story                                        | Pts | Type  | Status         |
+| ------- | -------------------------------------------- | --- | ----- | -------------- |
+| FFP-137 | Assessment Navigation Component              | 3   | Story | ✅ Done        |
+| FFP-140 | Assessment Step Screens                      | 5   | Story | ✅ Done        |
+| FFP-272 | E2E Assessment Flow Integration              | 5   | Story | ✅ Done        |
+| FFP-273 | ToastAlert Notification Component            | 3   | Task  | ✅ Done        |
+| FFP-229 | Assessment Engine Epic Clean Up              | 8   | Story | ✅ Done        |
+| FFP-279 | Update deterministic seed UUIDs to RFC 4122  | -   | Task  | 🚀 In Progress |
+| FFP-280 | Align Zod versions across monorepo (v3 → v4) | -   | Task  | 🚀 In Progress |
+| FFP-233 | Backend Required Question Validation         | 3   | Story | To Do          |
+| FFP-230 | Stale Job Detection                          | 2   | Story | To Do          |
+| FFP-254 | FFP-3 Epic Planning & Sprint Definition      | 5   | Story | To Do          |
 
 ### Recommended Execution Order (remaining)
 

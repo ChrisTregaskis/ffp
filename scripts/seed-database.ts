@@ -8,6 +8,7 @@
  *   pnpm seed:db              # Seeds dev environment (default)
  *   pnpm seed:db staging      # Seeds staging environment (future)
  *   pnpm seed:db test         # Seeds test environment (future)
+ *   pnpm seed:db -- --fresh   # Truncates content tables before seeding (for UUID changes)
  *
  * Configuration:
  *   Seed data is loaded from packages/database/seed/config/db-seed.local.{env}.json
@@ -25,11 +26,13 @@ import { seedDatabase } from '../packages/database/seed/index.js';
 // Load environment variables
 config();
 
-// Get environment from command line args (default: dev)
-const environment = process.argv[2] || 'dev';
+// Parse command line args
+const args = process.argv.slice(2);
+const fresh = args.includes('--fresh');
+const environment = args.find((arg) => !arg.startsWith('--')) || 'dev';
 
 // Run seed
-seedDatabase(environment)
+seedDatabase(environment, { fresh })
   .then(() => {
     process.exit(0);
   })

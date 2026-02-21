@@ -9,11 +9,11 @@ export const jobTypeSchema = z.enum(JOB_TYPES);
 // Individual response to an assessment question
 export const assessmentResponseSchema = z.object({
   /** Question ID from the assessment template */
-  questionId: z.string().uuid(),
+  questionId: z.guid(),
   /** Selected answer value - uses shared schema from @ffp/database */
   answerValue: answerValueSchema,
   /** Optional: Answer ID if selecting from predefined options */
-  answerId: z.string().uuid().optional(),
+  answerId: z.guid().optional(),
 });
 
 /**
@@ -22,11 +22,11 @@ export const assessmentResponseSchema = z.object({
  */
 export const scoreAssessmentPayloadSchema = z.object({
   /** The user_assessments record ID being scored */
-  userAssessmentId: z.string().uuid(),
+  userAssessmentId: z.guid(),
   /** The flow containing the scoring configuration */
-  flowId: z.string().uuid(),
+  flowId: z.guid(),
   /** User who completed the assessment */
-  userId: z.string().uuid(),
+  userId: z.guid(),
   /** Array of question responses to score */
   responses: z.array(assessmentResponseSchema).min(1),
 });
@@ -40,7 +40,7 @@ export const scoreAssessmentResultSchema = z.object({
   /** Overall assessment score (if applicable) */
   overallScore: z.number().optional(),
   /** Timestamp when scoring was completed */
-  scoredAt: z.string().datetime(),
+  scoredAt: z.iso.datetime(),
 });
 
 /**
@@ -49,9 +49,9 @@ export const scoreAssessmentResultSchema = z.object({
  */
 export const generateProgrammePayloadSchema = z.object({
   /** The scored assessment submission ID */
-  assessmentSubmissionId: z.string().uuid(),
+  assessmentSubmissionId: z.guid(),
   /** User for whom the programme is being generated */
-  userId: z.string().uuid(),
+  userId: z.guid(),
   /** Dimensional scores from the assessment */
   scores: z.array(dimensionalScoreSchema).min(1),
   /** Programme template slug from scoring (e.g., 'gentle-mobility-programme') */
@@ -65,7 +65,7 @@ export const generateProgrammePayloadSchema = z.object({
 // Minimal reference to exercises included in the generated programme.
 export const exerciseSummarySchema = z.object({
   /** Exercise/video ID from the catalogue */
-  exerciseId: z.string().uuid(),
+  exerciseId: z.guid(),
   /** Exercise name (denormalised for display without lookup) */
   name: z.string(),
 });
@@ -73,7 +73,7 @@ export const exerciseSummarySchema = z.object({
 // Contains the generated programme ID and summary of included exercises.
 export const generateProgrammeResultSchema = z.object({
   /** The generated programme ID */
-  programmeId: z.string().uuid(),
+  programmeId: z.guid(),
   /** Programme name */
   programmeName: z.string(),
   /** Duration in weeks */
@@ -83,7 +83,7 @@ export const generateProgrammeResultSchema = z.object({
   /** Number of workout sessions per week */
   sessionsPerWeek: z.number().int().positive(),
   /** Timestamp when programme was generated */
-  generatedAt: z.string().datetime(),
+  generatedAt: z.iso.datetime(),
 });
 
 // Use this to type-safely handle different job payloads based on job type.
@@ -100,9 +100,9 @@ export const jobResultSchema = z.discriminatedUnion('type', [
 
 export const processJobSchema = z.object({
   /** Unique identifier (UUID) */
-  id: z.string().uuid(),
+  id: z.guid(),
   /** Tenant ID for RLS isolation */
-  tenantId: z.string().uuid(),
+  tenantId: z.guid(),
   /** Job type determining payload/result structure */
   type: jobTypeSchema,
   /** Current job status */
@@ -110,9 +110,9 @@ export const processJobSchema = z.object({
   /** Job priority: 1=urgent, 2=high, 3=medium, 4=low (default) */
   priority: z.number().int().min(1).max(4),
   /** Job-specific payload data */
-  payload: z.record(z.unknown()),
+  payload: z.record(z.string(), z.unknown()),
   /** Job result (populated on completion) */
-  result: z.record(z.unknown()).nullable(),
+  result: z.record(z.string(), z.unknown()).nullable(),
   /** Number of execution attempts */
   attempts: z.number().int().nonnegative(),
   /** Maximum allowed attempts before marking as failed */

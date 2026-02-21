@@ -239,7 +239,7 @@ describe('withErrorHandling', () => {
   describe('ZodError handling', () => {
     it('should convert ZodError to 400 validation error', async () => {
       const schema = z.object({
-        email: z.string().email(),
+        email: z.email(),
         age: z.number().min(18),
       });
 
@@ -266,7 +266,7 @@ describe('withErrorHandling', () => {
 
     it('should format Zod error details correctly', async () => {
       const schema = z.object({
-        email: z.string().email('Invalid email format'),
+        email: z.email(),
       });
 
       const handler = withErrorHandling(() => {
@@ -505,7 +505,7 @@ describe('withErrorHandling', () => {
 
     it('should include requestId in ZodError responses', async () => {
       const handler = withErrorHandling(() => {
-        const schema = z.object({ email: z.string().email() });
+        const schema = z.object({ email: z.email() });
         schema.parse({ email: 'invalid' });
         return Promise.resolve({ success: true });
       });

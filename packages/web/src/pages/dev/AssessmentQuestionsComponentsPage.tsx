@@ -225,7 +225,7 @@ const mockVideoResponseQuestion: AssessmentQuestion = {
   question: 'Complete as many squats as you can in 30 seconds',
   description:
     'Watch the video for proper form, then enter the number of repetitions you completed.',
-  videoId: '00000000-0000-0000-0000-000000000001',
+  videoId: '00000000-0000-0000-8000-000000000001',
   validation: { required: true, min: 0, max: 100 },
 };
 
@@ -234,7 +234,7 @@ const mockVideoResponseNoVideo: AssessmentQuestion = {
   type: 'video-response',
   question: 'Hold a plank position for as long as possible',
   description: 'Enter the duration in seconds.',
-  videoId: '00000000-0000-0000-0000-000000000002',
+  videoId: '00000000-0000-0000-8000-000000000002',
   validation: { required: true, min: 0 },
 };
 
@@ -243,7 +243,7 @@ const mockVideoResponseOptional: AssessmentQuestion = {
   type: 'video-response',
   question: 'Optional: Complete the balance test',
   description: 'This exercise is optional. Enter your result if you completed it.',
-  videoId: '00000000-0000-0000-0000-000000000003',
+  videoId: '00000000-0000-0000-8000-000000000003',
   validation: { required: false, min: 0, max: 60 },
 };
 

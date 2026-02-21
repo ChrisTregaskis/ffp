@@ -169,7 +169,7 @@ const mockHighRiskScores: UserAssessmentScores = {
 };
 
 const mockSingleChoiceQuestion: AssessmentQuestion = {
-  id: '00000000-0000-0000-0000-000000000001',
+  id: '00000000-0000-0000-8000-000000000001',
   type: 'single-choice',
   question: 'What is your primary goal for this programme?',
   description: 'Select the option that best describes what you hope to achieve.',
@@ -182,7 +182,7 @@ const mockSingleChoiceQuestion: AssessmentQuestion = {
 };
 
 const mockScaleQuestion: AssessmentQuestion = {
-  id: '00000000-0000-0000-0000-000000000002',
+  id: '00000000-0000-0000-8000-000000000002',
   type: 'scale',
   question: 'How would you rate your current pain level?',
   description: 'On a scale from 0 (no pain) to 10 (worst imaginable pain).',
@@ -190,7 +190,7 @@ const mockScaleQuestion: AssessmentQuestion = {
 };
 
 const mockTextQuestion: AssessmentQuestion = {
-  id: '00000000-0000-0000-0000-000000000003',
+  id: '00000000-0000-0000-8000-000000000003',
   type: 'text',
   question: 'Please describe any previous injuries or conditions.',
   description: 'Include any relevant medical history that may affect your assessment.',
@@ -198,7 +198,7 @@ const mockTextQuestion: AssessmentQuestion = {
 };
 
 const mockVideoQuestion: AssessmentQuestion = {
-  id: '00000000-0000-0000-0000-000000000004',
+  id: '00000000-0000-0000-8000-000000000004',
   type: 'video-response',
   question: 'How many sit-to-stand repetitions can you complete in 30 seconds?',
   description: 'Watch the demonstration video, then perform the exercise and enter your count.',
@@ -585,7 +585,7 @@ const ResultsScreenDemo: React.FC<{ onViewProgramme: () => void }> = ({ onViewPr
           config={mockResultsConfig}
           scores={mockFullScores}
           isLoading={false}
-          programmeId="00000000-0000-0000-0000-000000000099"
+          programmeId="00000000-0000-0000-8000-000000000099"
           programmeName="Progressive Rehabilitation"
           programmeDescription="Personalised based on your assessment results and goals"
           onViewProgramme={onViewProgramme}
@@ -613,7 +613,7 @@ const ResultsScreenDemo: React.FC<{ onViewProgramme: () => void }> = ({ onViewPr
           config={mockResultsMinimalConfig}
           scores={mockMinimalScores}
           isLoading={false}
-          programmeId="00000000-0000-0000-0000-000000000099"
+          programmeId="00000000-0000-0000-8000-000000000099"
           onViewProgramme={onViewProgramme}
         />
       ),
@@ -761,7 +761,7 @@ const StepRendererDemo: React.FC = () => {
           config={mockResultsConfig}
           scores={mockFullScores}
           isLoading={false}
-          programmeId="00000000-0000-0000-0000-000000000099"
+          programmeId="00000000-0000-0000-8000-000000000099"
           programmeName="Progressive Rehabilitation"
           onViewProgramme={handleAction('onViewProgramme')}
         />

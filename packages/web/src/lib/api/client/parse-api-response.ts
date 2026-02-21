@@ -1,19 +1,4 @@
-/** Structural issue type matching both Zod v3 and v4. */
-interface ZodIssuelike {
-  path: (string | number)[];
-  code: string;
-  message: string;
-}
-
-/** Structural error type matching both Zod v3 and v4 ZodError. */
-interface ZodErrorlike extends Error {
-  issues: ZodIssuelike[];
-}
-
-/** Structural type for any Zod schema with safeParse — avoids v3/v4 import mismatch. */
-interface ParseableSchema<T> {
-  safeParse(data: unknown): { success: true; data: T } | { success: false; error: ZodErrorlike };
-}
+import type { z } from 'zod';
 
 /**
  * Parse an API response with a Zod schema, logging detailed errors on failure.
@@ -23,7 +8,7 @@ interface ParseableSchema<T> {
  * mismatches are immediately visible in the browser console.
  */
 export function parseApiResponse<T>(
-  schema: ParseableSchema<T>,
+  schema: z.ZodType<T>,
   response: unknown,
   context: { method: string; path: string }
 ): T {
