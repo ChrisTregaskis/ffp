@@ -5,14 +5,14 @@ import { INVITABLE_ROLES, USER_ROLES } from '@ffp/database/constants';
 export const userRoleSchema = z.enum(USER_ROLES);
 
 export const userSchema = z.object({
-  id: z.string().uuid(),
-  tenantId: z.string().uuid(),
+  id: z.guid(),
+  tenantId: z.guid(),
   email: z.string().email().max(255),
   cognitoSub: z.string().max(255),
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
   role: userRoleSchema,
-  customerId: z.string().uuid().nullable(),
+  customerId: z.guid().nullable(),
   profileImageUrl: z.string().url().nullable(),
   phone: z.string().max(20).nullable(),
   dateOfBirth: z.coerce.date().nullable(),
@@ -44,7 +44,7 @@ export const createUserSchema = userSchema
 export const jwtUserClaimsSchema = z.object({
   sub: z.string(),
   email: z.string().email(),
-  'custom:tenantId': z.string().uuid(),
+  'custom:tenantId': z.guid(),
   'custom:role': userRoleSchema,
 });
 
@@ -77,8 +77,8 @@ export const inviteUserSchema = z
     role: invitableRoleSchema,
 
     // Optional: Only required for super_admin invites
-    tenantId: z.string().uuid('Tenant ID must be a valid UUID').optional(),
-    customerId: z.string().uuid('Customer ID must be a valid UUID').optional(),
+    tenantId: z.guid('Tenant ID must be a valid UUID').optional(),
+    customerId: z.guid('Customer ID must be a valid UUID').optional(),
   })
   .refine(
     (data) => {

@@ -35,7 +35,7 @@ export async function createTemplateService(
 
   if (!parseResult.success) {
     throw new ValidationError('Invalid template input', {
-      errors: parseResult.error.errors,
+      errors: parseResult.error.issues,
     });
   }
 
@@ -55,7 +55,7 @@ export async function updateTemplateService(
 
   if (!parseResult.success) {
     throw new ValidationError('Invalid template update input', {
-      errors: parseResult.error.errors,
+      errors: parseResult.error.issues,
     });
   }
 

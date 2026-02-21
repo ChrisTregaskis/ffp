@@ -15,13 +15,13 @@ const logger = createLogger('seed-questions');
  * These are placeholder UUIDs for videos referenced by questions.
  * When actual videos are seeded, they should use these IDs.
  *
- * UUID Pattern: 33333333-3333-3333-3333-3333333300XX
+ * UUID Pattern: 33333333-3333-3333-8333-3333333300XX
  */
 export const VIDEO_IDS = {
-  'wall-squat-demo': '33333333-3333-3333-3333-333333330001',
-  'modified-pushup-demo': '33333333-3333-3333-3333-333333330002',
-  'single-leg-stand-demo': '33333333-3333-3333-3333-333333330003',
-  'tandem-stand-demo': '33333333-3333-3333-3333-333333330004',
+  'wall-squat-demo': '33333333-3333-3333-8333-333333330001',
+  'modified-pushup-demo': '33333333-3333-3333-8333-333333330002',
+  'single-leg-stand-demo': '33333333-3333-3333-8333-333333330003',
+  'tandem-stand-demo': '33333333-3333-3333-8333-333333330004',
 } as const;
 
 export type VideoSlug = keyof typeof VIDEO_IDS;
@@ -32,7 +32,7 @@ export type VideoSlug = keyof typeof VIDEO_IDS;
  * These are fixed to ensure consistency across seed runs and allow
  * template_questions and scoring configs to reference them reliably.
  *
- * UUID Pattern: 22222222-2222-2222-2222-2222222200XX
+ * UUID Pattern: 22222222-2222-2222-8222-2222222200XX
  * - Pre-assessment questions: 01xx
  * - Strength assessment questions: 02xx
  * - Balance assessment questions: 03xx
@@ -40,42 +40,42 @@ export type VideoSlug = keyof typeof VIDEO_IDS;
  * - Red flag screening questions: 05xx
  */
 export const QUESTION_IDS = {
-  // Pre-assessment questions (template 11111111-1111-1111-1111-111111111101)
-  'goal-primary': '22222222-2222-2222-2222-222222220101',
-  'pain-level': '22222222-2222-2222-2222-222222220102',
-  'pain-location': '22222222-2222-2222-2222-222222220103',
-  'activity-level': '22222222-2222-2222-2222-222222220104',
-  'medical-conditions': '22222222-2222-2222-2222-222222220105',
-  'pain-area': '22222222-2222-2222-2222-222222220106', // Branching: determines next step
+  // Pre-assessment questions (template 11111111-1111-1111-8111-111111111101)
+  'goal-primary': '22222222-2222-2222-8222-222222220101',
+  'pain-level': '22222222-2222-2222-8222-222222220102',
+  'pain-location': '22222222-2222-2222-8222-222222220103',
+  'activity-level': '22222222-2222-2222-8222-222222220104',
+  'medical-conditions': '22222222-2222-2222-8222-222222220105',
+  'pain-area': '22222222-2222-2222-8222-222222220106', // Branching: determines next step
 
-  // Strength assessment questions (template 11111111-1111-1111-1111-111111111102)
-  'squat-assessment': '22222222-2222-2222-2222-222222220201',
-  'squat-rating': '22222222-2222-2222-2222-222222220202',
-  'pushup-assessment': '22222222-2222-2222-2222-222222220203',
-  'pushup-count': '22222222-2222-2222-2222-222222220204',
-  'strength-comfort': '22222222-2222-2222-2222-222222220205',
+  // Strength assessment questions (template 11111111-1111-1111-8111-111111111102)
+  'squat-assessment': '22222222-2222-2222-8222-222222220201',
+  'squat-rating': '22222222-2222-2222-8222-222222220202',
+  'pushup-assessment': '22222222-2222-2222-8222-222222220203',
+  'pushup-count': '22222222-2222-2222-8222-222222220204',
+  'strength-comfort': '22222222-2222-2222-8222-222222220205',
 
-  // Balance assessment questions (template 11111111-1111-1111-1111-111111111103)
-  'single-leg-stand': '22222222-2222-2222-2222-222222220301',
-  'single-leg-duration': '22222222-2222-2222-2222-222222220302',
-  'tandem-stand': '22222222-2222-2222-2222-222222220303',
-  'tandem-stability': '22222222-2222-2222-2222-222222220304',
-  'balance-confidence': '22222222-2222-2222-2222-222222220305',
+  // Balance assessment questions (template 11111111-1111-1111-8111-111111111103)
+  'single-leg-stand': '22222222-2222-2222-8222-222222220301',
+  'single-leg-duration': '22222222-2222-2222-8222-222222220302',
+  'tandem-stand': '22222222-2222-2222-8222-222222220303',
+  'tandem-stability': '22222222-2222-2222-8222-222222220304',
+  'balance-confidence': '22222222-2222-2222-8222-222222220305',
 
-  // Back pain general questions (template 11111111-1111-1111-1111-111111111104)
-  'back-pain-duration': '22222222-2222-2222-2222-222222220401',
-  'back-pain-intensity': '22222222-2222-2222-2222-222222220402',
-  'back-pain-type': '22222222-2222-2222-2222-222222220403',
-  'back-pain-recurrence': '22222222-2222-2222-2222-222222220404',
-  'back-pain-typical-duration': '22222222-2222-2222-2222-222222220405',
+  // Back pain general questions (template 11111111-1111-1111-8111-111111111104)
+  'back-pain-duration': '22222222-2222-2222-8222-222222220401',
+  'back-pain-intensity': '22222222-2222-2222-8222-222222220402',
+  'back-pain-type': '22222222-2222-2222-8222-222222220403',
+  'back-pain-recurrence': '22222222-2222-2222-8222-222222220404',
+  'back-pain-typical-duration': '22222222-2222-2222-8222-222222220405',
 
-  // Red flag screening questions (template 11111111-1111-1111-1111-111111111105)
-  'radiating-pain': '22222222-2222-2222-2222-222222220501',
-  'numbness-tingling': '22222222-2222-2222-2222-222222220502',
-  incontinence: '22222222-2222-2222-2222-222222220503',
-  'saddle-numbness': '22222222-2222-2222-2222-222222220504',
-  'unexplained-weight-loss': '22222222-2222-2222-2222-222222220505',
-  'night-sweats': '22222222-2222-2222-2222-222222220506',
+  // Red flag screening questions (template 11111111-1111-1111-8111-111111111105)
+  'radiating-pain': '22222222-2222-2222-8222-222222220501',
+  'numbness-tingling': '22222222-2222-2222-8222-222222220502',
+  incontinence: '22222222-2222-2222-8222-222222220503',
+  'saddle-numbness': '22222222-2222-2222-8222-222222220504',
+  'unexplained-weight-loss': '22222222-2222-2222-8222-222222220505',
+  'night-sweats': '22222222-2222-2222-8222-222222220506',
 } as const;
 
 export type QuestionSlug = keyof typeof QUESTION_IDS;

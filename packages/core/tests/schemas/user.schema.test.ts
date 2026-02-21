@@ -175,8 +175,7 @@ describe('inviteUserSchema', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        // Zod returns enum values in format: 'customer_owner' | 'customer_admin' | 'programme_user'
-        expect(result.error.issues[0].message).toContain('Invalid enum value');
+        // Zod v4 returns options in format: 'Invalid option: expected one of "customer_owner"|"customer_admin"|"programme_user"'
         expect(result.error.issues[0].message).toContain('customer_owner');
         expect(result.error.issues[0].message).toContain('customer_admin');
         expect(result.error.issues[0].message).toContain('programme_user');
@@ -293,7 +292,7 @@ describe('userSchema', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Invalid date');
+        expect(result.error.issues[0].message).toContain('expected date');
       }
     });
 
@@ -305,7 +304,7 @@ describe('userSchema', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Invalid date');
+        expect(result.error.issues[0].message).toContain('expected date');
       }
     });
   });
@@ -366,7 +365,7 @@ describe('createUserSchema', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Invalid date');
+        expect(result.error.issues[0].message).toContain('expected date');
       }
     });
   });

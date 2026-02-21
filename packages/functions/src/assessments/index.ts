@@ -14,7 +14,7 @@ import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
 const ROUTER_CONTEXT = createSystemContext({
   systemId: 'assessments-router',
-  tenantId: '00000000-0000-0000-0000-000000000000', // Placeholder for pre-auth routing
+  tenantId: '00000000-0000-0000-8000-000000000000', // Placeholder for pre-auth routing
 });
 
 /**

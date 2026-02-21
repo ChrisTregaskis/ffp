@@ -7,6 +7,7 @@
  * Usage:
  *   import { seedDatabase } from '@ffp/database/seed';
  *   await seedDatabase('dev');
+ *   await seedDatabase('dev', { fresh: true }); // Truncates content tables first
  *
  * Environment-specific config files:
  *   - db-seed.local.dev.json (development)
@@ -108,8 +109,11 @@ const createDatabaseConnection = (): NodePgDatabase<typeof schema> & { $client: 
  * @throws {Error} If seeding fails
  *
  */
-export const seedDatabase = async (environment: string = 'dev'): Promise<void> => {
-  logger.info(`Database Seed - ${environment.toUpperCase()}`);
+export const seedDatabase = async (
+  environment: string = 'dev',
+  options?: { fresh?: boolean }
+): Promise<void> => {
+  logger.info(`Database Seed - ${environment.toUpperCase()}${options?.fresh ? ' (FRESH)' : ''}`);
 
   // Validate environment variables
   validateEnvironment();
@@ -189,6 +193,15 @@ export const seedDatabase = async (environment: string = 'dev'): Promise<void> =
       txWithClient.$client = db.$client;
       await seedTestUserDatabase(txWithClient, config.testCustomerProgrammeUser);
     });
+
+    // Fresh mode: truncate content tables before re-seeding (preserves identity data)
+    if (options?.fresh) {
+      logger.info('Fresh mode: truncating seed content tables (preserving identity data)...');
+      await db.$client.query(`
+        TRUNCATE assessment_flows, assessment_templates, questions, programme_templates CASCADE;
+      `);
+      logger.info('Content tables truncated');
+    }
 
     // Seed 10: Programme templates (no RLS, system-managed lookup table, idempotent)
     // No tenant dependency - these are global templates referenced by scoring config

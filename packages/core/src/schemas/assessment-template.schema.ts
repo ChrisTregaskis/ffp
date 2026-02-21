@@ -14,7 +14,7 @@ import {
  */
 export const assessmentTemplateSchema = z.object({
   /** Unique identifier (UUID) */
-  id: z.string(), // Relaxed from .uuid() — see FFP-279
+  id: z.guid(),
   /** Template name for identification and admin display */
   name: z.string().min(1).max(255),
   /** Optional description of the template purpose */
@@ -24,7 +24,7 @@ export const assessmentTemplateSchema = z.object({
   /** Whether the template is currently active/usable */
   isActive: z.boolean(),
   /** User ID of the creator (nullable for system-seeded templates) */
-  createdBy: z.string().nullable(), // Relaxed from .uuid() — see FFP-279
+  createdBy: z.guid().nullable(),
   /** Timestamp when template was created */
   createdAt: z.coerce.date(),
   /** Timestamp when template was last updated */
@@ -55,7 +55,7 @@ export const updateAssessmentTemplateSchema = assessmentTemplateSchema
  */
 const templateQuestionResponseSchema = z.object({
   /** Question UUID */
-  id: z.string(), // Relaxed from .uuid() — see FFP-279
+  id: z.guid(),
   /** URL-friendly identifier (backend-only, stripped in transform) */
   slug: z.string(),
   /** Question type (determines UI component) */
@@ -69,7 +69,7 @@ const templateQuestionResponseSchema = z.object({
   /** Validation rules */
   validation: questionValidationSchema.nullable(),
   /** Video reference for video-response questions */
-  videoId: z.string().nullable(), // Relaxed from .uuid() — see FFP-279
+  videoId: z.guid().nullable(),
   /** Scoring dimension this question contributes to */
   scoreDimension: scoreDimensionSchema.nullable(),
   /** Whether the question is active (backend-only, stripped in transform) */

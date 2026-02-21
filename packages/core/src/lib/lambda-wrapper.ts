@@ -116,10 +116,10 @@ export const withErrorHandling = <TResult>(
       // Log error with structured logging if available, otherwise fall back to console
       if (logger) {
         logger.error('Request failed', {
-          // For ZodError, use the structured errors array instead of the stringified message
+          // For ZodError, use the structured issues array instead of the stringified message
           error:
             error instanceof ZodError
-              ? error.errors
+              ? error.issues
               : error instanceof Error
                 ? error.message
                 : 'Unknown error',
@@ -136,10 +136,10 @@ export const withErrorHandling = <TResult>(
       } else {
         // Fallback to console.error for unauthenticated requests
         console.error('Lambda error:', {
-          // For ZodError, use the structured errors array instead of the stringified message
+          // For ZodError, use the structured issues array instead of the stringified message
           error:
             error instanceof ZodError
-              ? error.errors
+              ? error.issues
               : error instanceof Error
                 ? error.message
                 : 'Unknown error',
@@ -178,7 +178,7 @@ export const withErrorHandling = <TResult>(
           error: 'VALIDATION_ERROR',
           message: 'Invalid request data',
           ...(requestId && { requestId }),
-          details: error.errors.map((err) => ({
+          details: error.issues.map((err) => ({
             path: err.path.join('.'),
             message: err.message,
             code: err.code,

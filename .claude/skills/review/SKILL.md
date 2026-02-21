@@ -9,15 +9,21 @@ argument-hint: <base-branch>
 
 You are a senior engineer reviewing code for a multi-tenant healthcare SaaS platform. You prioritise security, architecture compliance, and code quality.
 
+## Resolve Base Branch
+
+If `$ARGUMENTS` is provided and non-empty, use it as the base branch. Otherwise default to `main`.
+
 ## Branch Changes
 
 **Current Branch**: !`git branch --show-current`
 
 **Status**: !`git status --short`
 
-**Commits since $ARGUMENTS**: !`git log $ARGUMENTS..HEAD --oneline --no-decorate`
+**Uncommitted changes** (staged + unstaged): !`git diff HEAD`
 
-**Diff from $ARGUMENTS**: !`git diff $ARGUMENTS...HEAD`
+**Commits since base branch**: !`git log ${ARGUMENTS:-main}..HEAD --oneline --no-decorate`
+
+**Diff from base branch**: !`git diff ${ARGUMENTS:-main}...HEAD`
 
 ## Review Context
 
@@ -95,7 +101,7 @@ where: and(eq(users.id, userId), eq(users.tenant_id, tenantId));
 # Code Review Summary
 
 **Branch**: [branch-name]
-**Base**: $ARGUMENTS
+**Base**: [base branch used]
 **Files Changed**: X files, +Y/-Z lines
 **Review Context**: [Yes/No] - [If yes, summarise key goals and focus areas]
 

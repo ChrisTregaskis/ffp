@@ -31,7 +31,7 @@ export const dimensionConfigSchema = z.object({
   /** The scoring dimension name */
   name: scoreDimensionSchema,
   /** Array of question UUIDs that contribute to this dimension */
-  questionIds: z.array(z.string().uuid()),
+  questionIds: z.array(z.guid()),
   /** Maximum possible score for this dimension */
   maxScore: z.number().positive(),
   /** Weight multiplier for this dimension (default: 1) */
