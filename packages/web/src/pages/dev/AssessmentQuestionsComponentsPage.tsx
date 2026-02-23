@@ -225,7 +225,7 @@ const mockVideoResponseQuestion: AssessmentQuestion = {
   question: 'Complete as many squats as you can in 30 seconds',
   description:
     'Watch the video for proper form, then enter the number of repetitions you completed.',
-  videoId: '00000000-0000-0000-0000-000000000001',
+  videoId: '00000000-0000-0000-8000-000000000001',
   validation: { required: true, min: 0, max: 100 },
 };
 
@@ -234,7 +234,7 @@ const mockVideoResponseNoVideo: AssessmentQuestion = {
   type: 'video-response',
   question: 'Hold a plank position for as long as possible',
   description: 'Enter the duration in seconds.',
-  videoId: '00000000-0000-0000-0000-000000000002',
+  videoId: '00000000-0000-0000-8000-000000000002',
   validation: { required: true, min: 0 },
 };
 
@@ -243,7 +243,7 @@ const mockVideoResponseOptional: AssessmentQuestion = {
   type: 'video-response',
   question: 'Optional: Complete the balance test',
   description: 'This exercise is optional. Enter your result if you completed it.',
-  videoId: '00000000-0000-0000-0000-000000000003',
+  videoId: '00000000-0000-0000-8000-000000000003',
   validation: { required: false, min: 0, max: 60 },
 };
 
@@ -871,19 +871,6 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
         showBackLink
       />
 
-      {/* Implementation Status */}
-      <ComponentSection title="Implementation Status">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <StatusCard title="SingleChoiceQuestion" status="complete" href="#single-choice" />
-          <StatusCard title="MultiChoiceQuestion" status="complete" href="#multi-choice" />
-          <StatusCard title="TextQuestion" status="complete" href="#text" />
-          <StatusCard title="NumericQuestion" status="complete" href="#numeric" />
-          <StatusCard title="ScaleQuestion" status="complete" href="#scale" />
-          <StatusCard title="VideoResponseQuestion" status="complete" href="#video" />
-          <StatusCard title="QuestionRenderer" status="complete" href="#renderer" />
-        </div>
-      </ComponentSection>
-
       {/* SingleChoiceQuestion */}
       <ComponentSection title="SingleChoiceQuestion" id="single-choice">
         <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
@@ -1030,38 +1017,3 @@ const SelectedValue: React.FC<{ value: AnswerValue | null }> = ({ value }) => (
     </Text>
   </div>
 );
-
-/** Helper component for status cards */
-const StatusCard: React.FC<{
-  title: string;
-  status: 'complete' | 'pending';
-  task?: string;
-  href?: string;
-}> = ({ title, status, task, href }) => {
-  const content = (
-    <div className="flex items-center justify-between">
-      <Text styleProps={{ size: 'sm', weight: 'medium' }}>{title}</Text>
-      {status === 'complete' ? (
-        <span className="rounded-full bg-success/20 px-2 py-0.5 text-xs text-success">Done</span>
-      ) : (
-        <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-          {task}
-        </span>
-      )}
-    </div>
-  );
-
-  const baseClassName = `block rounded-lg border p-3 transition-colors ${
-    status === 'complete' ? 'border-success/30 bg-success/5' : 'border-border bg-muted/30'
-  }`;
-
-  if (href) {
-    return (
-      <a href={href} className={`${baseClassName} hover:bg-accent/50`}>
-        {content}
-      </a>
-    );
-  }
-
-  return <div className={baseClassName}>{content}</div>;
-};

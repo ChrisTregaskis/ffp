@@ -10,6 +10,8 @@ export type {
   SubmitAssessmentResponse,
 } from './assessments';
 
+export { programmesApi } from './programmes';
+export type { ActiveProgrammeResponse } from './programmes';
+
 // Future exports:
-// export { programmesApi } from './programmes';
 // export { usersApi } from './users';

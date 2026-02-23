@@ -13,14 +13,14 @@ const logger = createLogger('seed-assessment-flows');
 /**
  * Deterministic UUID for the default assessment flow
  *
- * UUID Pattern: 44444444-4444-4444-4444-4444444400XX
+ * UUID Pattern: 44444444-4444-4444-8444-4444444400XX
  * - Default flow: 01
  *
  * This ensures consistency across seed runs and allows Postman/tests
  * to reference the flow reliably.
  */
 export const FLOW_IDS = {
-  DEFAULT: '44444444-4444-4444-4444-444444440001',
+  DEFAULT: '44444444-4444-4444-8444-444444440001',
 } as const;
 
 /**

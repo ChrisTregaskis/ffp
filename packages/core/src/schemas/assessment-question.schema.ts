@@ -41,7 +41,7 @@ export const scoreDimensionSchema = z.enum(['strength', 'balance', 'mobility', '
 export const assessmentQuestionSchema = z
   .object({
     /** Unique identifier for the question (UUID) */
-    id: z.string().uuid(),
+    id: z.guid(),
     /** Type of question (determines UI component and validation) */
     type: questionTypeSchema,
     /** The question text displayed to the user */
@@ -53,7 +53,7 @@ export const assessmentQuestionSchema = z
     /** Validation rules for the question response */
     validation: questionValidationSchema.optional(),
     /** Video ID for video-response questions (references videos table) */
-    videoId: z.string().uuid().optional(),
+    videoId: z.guid().optional(),
     /** Scoring dimension this question contributes to */
     scoreDimension: scoreDimensionSchema.optional(),
   })

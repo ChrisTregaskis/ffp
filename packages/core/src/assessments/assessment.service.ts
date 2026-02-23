@@ -4,8 +4,9 @@ import type { AnswerValue } from '@ffp/database';
 import { queueJob } from '../jobs/job-queue.service';
 import { getUserIdFromContext } from '../lib/context';
 import { withRLS } from '../lib/database';
-import { NotFoundError, ValidationError } from '../lib/errors';
+import { InternalServerError, NotFoundError, ValidationError } from '../lib/errors';
 import { createSystemLogger } from '../lib/logger';
+import { programmeRepository } from '../programmes';
 import {
   findByTemplateIds as findQuestionsByTemplateIds,
   findSlugsByIds,
@@ -31,6 +32,7 @@ import type {
   SubmitAssessmentRequest,
   SubmitAssessmentResponse,
   UserAssessmentAnswers,
+  UserAssessmentStatusResponse,
 } from '../schemas/user-assessment.schema';
 
 /**
@@ -164,12 +166,13 @@ function extractAnswerValue(answerValue: unknown): AnswerValue {
  */
 export async function startAssessment(
   flowId: string,
-  context: TenantContext
+  context: TenantContext,
+  options: { isReassessment?: boolean } = {}
 ): Promise<StartAssessmentResponse> {
   const userId = await getUserIdFromContext(context);
   const { tenantId } = context;
 
-  // 1. Validate flow exists and is active
+  // Validate flow exists and is active
   const flow = await flowRepository.findActiveById(flowId);
 
   if (!flow) {
@@ -177,41 +180,80 @@ export async function startAssessment(
     throw new NotFoundError('Assessment flow', flowId);
   }
 
-  // 2. Fetch flow steps from normalised table
+  // Fetch flow steps from normalised table
   const db = getDb();
   const flowSteps = await flowRepository.findStepsByFlowId(db, flowId);
   const steps = convertStepsToSummaryFormat(flowSteps);
 
-  // 3. Check for existing resumable assessment
-  const existingAssessment = await userAssessmentRepository.findResumableAssessment(
-    tenantId,
-    userId,
-    flowId
-  );
+  if (options.isReassessment) {
+    // Reassessment: abandon any in-progress assessments for this flow, then create fresh
+    await userAssessmentRepository.abandonInProgressAssessments(tenantId, userId, flowId);
+  } else {
+    // Normal path: try to resume an existing assessment
 
-  if (existingAssessment) {
-    // Load answers from user_assessment_answers table
-    const storedAnswers = await answerRepository.findByAssessmentId(
+    // Check for existing resumable assessment
+    const existingAssessment = await userAssessmentRepository.findResumableAssessment(
       tenantId,
-      existingAssessment.id,
-      { userId }
+      userId,
+      flowId
     );
 
-    const answers = convertAnswersToResponseFormat(storedAnswers);
+    if (existingAssessment) {
+      // Load answers from user_assessment_answers table
+      const storedAnswers = await answerRepository.findByAssessmentId(
+        tenantId,
+        existingAssessment.id,
+        { userId }
+      );
 
-    // Return existing assessment with isResumed=true
-    return {
-      assessmentId: existingAssessment.id,
-      currentStep: existingAssessment.currentStep,
-      status: existingAssessment.status,
-      answers,
-      flowId: existingAssessment.flowId,
-      isResumed: true,
-      steps,
-    };
+      const answers = convertAnswersToResponseFormat(storedAnswers);
+
+      // Return existing assessment with isResumed=true
+      return {
+        assessmentId: existingAssessment.id,
+        currentStep: existingAssessment.currentStep,
+        status: existingAssessment.status,
+        answers,
+        flowId: existingAssessment.flowId,
+        isResumed: true,
+        steps,
+      };
+    }
+
+    // Check for already-submitted assessment (handles hard reload after submission)
+    const submittedAssessment = await userAssessmentRepository.findSubmittedAssessment(
+      tenantId,
+      userId,
+      flowId
+    );
+
+    if (submittedAssessment) {
+      // Find the results step order so the frontend navigates directly to results
+      const resultsStep = steps.find((s) => s.type === 'results');
+      const resultsStepOrder = resultsStep?.order ?? steps.length;
+
+      const storedAnswers = await answerRepository.findByAssessmentId(
+        tenantId,
+        submittedAssessment.id,
+        { userId }
+      );
+
+      const answers = convertAnswersToResponseFormat(storedAnswers);
+
+      return {
+        assessmentId: submittedAssessment.id,
+        currentStep: resultsStepOrder,
+        currentStepId: resultsStep?.id,
+        status: submittedAssessment.status,
+        answers,
+        flowId: submittedAssessment.flowId,
+        isResumed: true,
+        steps,
+      };
+    }
   }
 
-  // 3. Create new assessment
+  // Create new assessment
   const newAssessment = await userAssessmentRepository.createUserAssessment({
     tenantId,
     userId,
@@ -600,10 +642,61 @@ export async function getAssessmentResults(
     throw new ValidationError('Assessment not yet submitted');
   }
 
+  // Fetch programme name if a programme has been assigned
+  let programmeName: string | null = null;
+
+  if (assessment.programmeId) {
+    const programme = await programmeRepository.findProgrammeById(
+      tenantId,
+      assessment.programmeId,
+      {
+        userId,
+      }
+    );
+
+    programmeName = programme?.name ?? null;
+  }
+
   // Return the assessment results
   return {
     status: assessment.status,
     scores: assessment.scores,
     programmeId: assessment.programmeId,
+    programmeName,
+  };
+}
+
+/**
+ * Checks whether the user has an active programme. If not, returns the
+ * default assessment flow ID so the frontend can redirect to the assessment.
+ */
+export async function getUserAssessmentStatus(
+  context: TenantContext
+): Promise<UserAssessmentStatusResponse> {
+  const userId = await getUserIdFromContext(context);
+
+  // Check if user has an active programme
+  const programme = await programmeRepository.findProgrammeByUserId(context.tenantId, userId);
+
+  // Always look up the default flow — needed for reassessments too.
+  // findDefaultForTenant throws if no flow is configured, which is expected for
+  // tenants that haven't set one up yet — return null gracefully.
+  let flowId: string | null = null;
+
+  try {
+    const flow = await flowRepository.findDefaultForTenant(context.tenantId);
+
+    flowId = flow?.id ?? null;
+  } catch (error) {
+    if (error instanceof InternalServerError) {
+      // No default flow configured for this tenant — not an error for this endpoint
+    } else {
+      throw error;
+    }
+  }
+
+  return {
+    hasProgramme: !!programme,
+    assessmentFlowId: flowId,
   };
 }

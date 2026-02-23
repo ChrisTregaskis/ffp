@@ -8,14 +8,14 @@ export const tenantTypeSchema = z.enum(TENANT_TYPES);
  * Tenant settings schema
  * Flexible JSON object for tenant-specific configuration
  */
-export const tenantSettingsSchema = z.record(z.unknown()).default({});
+export const tenantSettingsSchema = z.record(z.string(), z.unknown()).default({});
 
 /**
  * Full tenant schema representing a complete tenant record
  * Used for validation and type generation across the platform
  */
 export const tenantSchema = z.object({
-  id: z.string().uuid(),
+  id: z.guid(),
   type: tenantTypeSchema,
   name: z.string().min(1).max(255),
   settings: tenantSettingsSchema,

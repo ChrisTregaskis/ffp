@@ -5,7 +5,7 @@ import { PROGRAMME_STATUSES } from '@ffp/database/constants';
 // System-managed lookup table for programme templates.
 export const programmeTemplateSchema = z.object({
   /** Unique identifier (UUID) */
-  id: z.string().uuid(),
+  id: z.guid(),
   /** Unique slug for referencing in scoring config (e.g., 'gentle-mobility-programme') */
   slug: z.string().min(1).max(255),
   /** Display name (e.g., 'Gentle Mobility Programme') */
@@ -36,13 +36,13 @@ export const programmeStatusSchema = z.enum(PROGRAMME_STATUSES);
 // Represents a generated workout programme linked to a user and template.
 export const programmeSchema = z.object({
   /** Unique identifier (UUID) */
-  id: z.string().uuid(),
+  id: z.guid(),
   /** Tenant ID for RLS isolation */
-  tenantId: z.string().uuid(),
+  tenantId: z.guid(),
   /** User who owns this programme */
-  userId: z.string().uuid(),
+  userId: z.guid(),
   /** FK to programme_templates table */
-  programmeTemplateId: z.string().uuid(),
+  programmeTemplateId: z.guid(),
   /** Display name for the programme */
   name: z.string().min(1).max(255),
   /** Optional description of the programme */
@@ -66,7 +66,33 @@ export const createProgrammeSchema = programmeSchema
     description: programmeSchema.shape.description.optional(),
   });
 
+/** Response schema for the active programme endpoint */
+export const activeProgrammeResponseSchema = programmeSchema.pick({
+  id: true,
+  name: true,
+  description: true,
+  status: true,
+  createdAt: true,
+});
+
+/** Request schema for the replace programme endpoint */
+export const replaceProgrammeRequestSchema = z.object({
+  /** The completed reassessment ID whose recommendation should replace the active programme */
+  assessmentId: z.guid({ message: 'assessmentId must be a valid GUID' }),
+});
+
+/** Response schema for the replace programme endpoint */
+export const replaceProgrammeResponseSchema = z.object({
+  /** New programme UUID */
+  programmeId: z.string(),
+  /** New programme display name */
+  programmeName: z.string(),
+});
+
 export type Programme = z.infer<typeof programmeSchema>;
+export type ActiveProgrammeResponse = z.infer<typeof activeProgrammeResponseSchema>;
+export type ReplaceProgrammeRequest = z.infer<typeof replaceProgrammeRequestSchema>;
+export type ReplaceProgrammeResponse = z.infer<typeof replaceProgrammeResponseSchema>;
 export type ProgrammeTemplate = z.infer<typeof programmeTemplateSchema>;
 export type CreateProgrammeTemplateInput = z.infer<typeof createProgrammeTemplateSchema>;
 export type ProgrammeStatus = z.infer<typeof programmeStatusSchema>;

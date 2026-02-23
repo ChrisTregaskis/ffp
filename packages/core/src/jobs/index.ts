@@ -9,4 +9,5 @@
 
 export * from './job-queue.service';
 export * from './job-processor.service';
+export * from './stale-job.service';
 export * from './handlers';

@@ -1,11 +1,12 @@
 import {
   ComponentPageWrapper,
   ComponentPageHeader,
+  ComponentSection,
   DeveloperInstructions,
 } from '@web/components/dev';
 import { Form, type Field, FieldDataType } from '@web/components/form';
 import { Text, Title } from '@web/components/text';
-import { useAuth } from '@web/contexts/AuthContext';
+import { useAuth } from '@web/hooks/useAuth';
 
 interface LoginFormValues {
   email: string;
@@ -39,6 +40,10 @@ const loginFields: Field<LoginFormValues>[] = [
 
 /**
  * Form components showcase page (development only).
+ *
+ * Demonstrates the Form component with a live authentication flow.
+ * This page is interactive rather than purely visual — it connects
+ * to the AuthContext for real login/logout behaviour.
  */
 export const FormComponentsPage = (): JSX.Element => {
   const { user, loading, error, login, logout } = useAuth();
@@ -74,112 +79,122 @@ export const FormComponentsPage = (): JSX.Element => {
         showBackLink
       />
 
-      {/* Authentication Form Demo */}
-      <div className="mb-8 rounded-lg bg-white p-8 shadow">
-        <Title as="h2" className="mb-4 text-gray-900">
-          Authentication Form
-        </Title>
-        <Text as="p" className="mb-6 text-gray-600" styleProps={{ size: 'sm' }}>
-          Test the authentication flow with email/password validation
+      <ComponentSection title="Authentication Form">
+        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
+          Live authentication flow using the Form component with email/password validation. Connect
+          to the AuthContext for real login/logout behaviour.
         </Text>
 
-        {/* Loading state during initial auth check */}
-        {loading && !user && (
-          <div className="mb-6 rounded-md border border-blue-200 bg-blue-50 p-4">
-            <Text as="p" className="text-blue-800" styleProps={{ size: 'sm' }}>
-              Checking authentication...
-            </Text>
-          </div>
-        )}
+        <div className="rounded-lg bg-white p-8 shadow">
+          <Title as="h2" className="mb-4 text-gray-900">
+            Authentication Form
+          </Title>
+          <Text as="p" className="mb-6 text-gray-600" styleProps={{ size: 'sm' }}>
+            Test the authentication flow with email/password validation
+          </Text>
 
-        {/* Display authenticated user */}
-        {user && (
-          <div className="mb-6">
-            <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-4">
-              <Text
-                as="p"
-                className="mb-2 text-green-800"
-                styleProps={{ size: 'sm', weight: 'medium' }}
-              >
-                ✓ Authenticated User:
+          {/* Loading state during initial auth check */}
+          {loading && !user && (
+            <div className="mb-6 rounded-md border border-blue-200 bg-blue-50 p-4">
+              <Text as="p" className="text-blue-800" styleProps={{ size: 'sm' }}>
+                Checking authentication...
               </Text>
-              <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-green-700">
-                {JSON.stringify(user, null, 2)}
-              </pre>
             </div>
-            <button
-              onClick={() => void handleLogout()}
-              disabled={loading}
-              className="w-full rounded-md bg-red-600 px-4 py-2 transition-colours hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-400"
-            >
-              <Text className="text-white" styleProps={{ weight: 'medium' }}>
-                {loading ? 'Logging out...' : 'Logout'}
-              </Text>
-            </button>
-          </div>
-        )}
+          )}
 
-        {/* Login form (only show if not authenticated) */}
-        {!user && (
-          <>
-            <div className="mb-6 space-y-2 rounded-md bg-gray-50 p-4">
-              <Text as="p" className="text-gray-700" styleProps={{ size: 'sm', weight: 'medium' }}>
-                Features:
-              </Text>
-              <ul className="list-inside list-disc space-y-1">
-                <li>
-                  <Text className="text-gray-600" styleProps={{ size: 'sm' }}>
-                    Email validation (valid format required)
-                  </Text>
-                </li>
-                <li>
-                  <Text className="text-gray-600" styleProps={{ size: 'sm' }}>
-                    Password validation (minimum 8 characters)
-                  </Text>
-                </li>
-                <li>
-                  <Text className="text-gray-600" styleProps={{ size: 'sm' }}>
-                    Loading state during submission
-                  </Text>
-                </li>
-                <li>
-                  <Text className="text-gray-600" styleProps={{ size: 'sm' }}>
-                    User object with tenantId and role after success
-                  </Text>
-                </li>
-                <li>
-                  <Text className="text-gray-600" styleProps={{ size: 'sm' }}>
-                    Error display on authentication failure
-                  </Text>
-                </li>
-              </ul>
-            </div>
-
-            {/* Display authentication errors */}
-            {error && (
-              <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4">
+          {/* Display authenticated user */}
+          {user && (
+            <div className="mb-6">
+              <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-4">
                 <Text
                   as="p"
-                  className="mb-1 text-red-800"
+                  className="mb-2 text-green-800"
                   styleProps={{ size: 'sm', weight: 'medium' }}
                 >
-                  Authentication Error:
+                  ✓ Authenticated User:
                 </Text>
-                <Text as="p" className="text-red-700" styleProps={{ size: 'sm' }}>
-                  {error}
-                </Text>
+                <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-green-700">
+                  {JSON.stringify(user, null, 2)}
+                </pre>
               </div>
-            )}
+              <button
+                onClick={() => void handleLogout()}
+                disabled={loading}
+                className="w-full rounded-md bg-red-600 px-4 py-2 transition-colours hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+              >
+                <Text className="text-white" styleProps={{ weight: 'medium' }}>
+                  {loading ? 'Logging out...' : 'Logout'}
+                </Text>
+              </button>
+            </div>
+          )}
 
-            <Form
-              fields={loginFields}
-              onSubmit={handleSubmit}
-              submitLabel={loading ? 'Logging in...' : 'Login'}
-              isSubmitting={loading}
-            />
-          </>
-        )}
-      </div>
+          {/* Login form (only show if not authenticated) */}
+          {!user && (
+            <>
+              <div className="mb-6 space-y-2 rounded-md bg-gray-50 p-4">
+                <Text
+                  as="p"
+                  className="text-gray-700"
+                  styleProps={{ size: 'sm', weight: 'medium' }}
+                >
+                  Features:
+                </Text>
+                <ul className="list-inside list-disc space-y-1">
+                  <li>
+                    <Text className="text-gray-600" styleProps={{ size: 'sm' }}>
+                      Email validation (valid format required)
+                    </Text>
+                  </li>
+                  <li>
+                    <Text className="text-gray-600" styleProps={{ size: 'sm' }}>
+                      Password validation (minimum 8 characters)
+                    </Text>
+                  </li>
+                  <li>
+                    <Text className="text-gray-600" styleProps={{ size: 'sm' }}>
+                      Loading state during submission
+                    </Text>
+                  </li>
+                  <li>
+                    <Text className="text-gray-600" styleProps={{ size: 'sm' }}>
+                      User object with tenantId and role after success
+                    </Text>
+                  </li>
+                  <li>
+                    <Text className="text-gray-600" styleProps={{ size: 'sm' }}>
+                      Error display on authentication failure
+                    </Text>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Display authentication errors */}
+              {error && (
+                <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4">
+                  <Text
+                    as="p"
+                    className="mb-1 text-red-800"
+                    styleProps={{ size: 'sm', weight: 'medium' }}
+                  >
+                    Authentication Error:
+                  </Text>
+                  <Text as="p" className="text-red-700" styleProps={{ size: 'sm' }}>
+                    {error}
+                  </Text>
+                </div>
+              )}
+
+              <Form
+                fields={loginFields}
+                onSubmit={handleSubmit}
+                submitLabel={loading ? 'Logging in...' : 'Login'}
+                isSubmitting={loading}
+              />
+            </>
+          )}
+        </div>
+      </ComponentSection>
 
       {/* Developer instructions */}
       <DeveloperInstructions title="Developer Tools">

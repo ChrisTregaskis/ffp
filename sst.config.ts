@@ -123,8 +123,8 @@ export default $config({
           args.allowedOauthFlowsUserPoolClient = true;
 
           // Callback URLs (localhost for dev, will add production URLs later)
-          args.callbackUrls = ['http://localhost:5173/auth/callback'];
-          args.logoutUrls = ['http://localhost:5173'];
+          args.callbackUrls = ['http://localhost:3000/auth/callback'];
+          args.logoutUrls = ['http://localhost:3000'];
 
           // Token validity periods
           args.accessTokenValidity = 60; // 60 minutes
@@ -237,7 +237,7 @@ export default $config({
         ? ['https://app.fitforpurpose.app'] // TODO: Replace with actual production domain when available
         : $app.stage === 'staging'
           ? ['https://staging.fitforpurpose.app'] // TODO: Replace with actual staging domain when available
-          : ['http://localhost:5173']; // Dev server (for 'dev', personal stages, etc.)
+          : ['http://localhost:3000']; // Dev server (for 'dev', personal stages, etc.)
 
     const api = new sst.aws.ApiGatewayV2('Api', {
       cors: {
@@ -320,6 +320,25 @@ export default $config({
       ],
     });
 
+    // CORS preflight routes (no JWT authorizer — browser OPTIONS requests carry no token)
+    // API Gateway CORS config adds response headers; Lambda returns 204 via router
+    api.route('OPTIONS /admin/{proxy+}', {
+      handler: `${repositoryFunctionsPath}/admin/index.handler`,
+      ...handlerEnv,
+    });
+    api.route('OPTIONS /user/{proxy+}', {
+      handler: `${repositoryFunctionsPath}/user/index.handler`,
+      ...handlerEnv,
+    });
+    api.route('OPTIONS /assessments/{proxy+}', {
+      handler: `${repositoryFunctionsPath}/assessments/index.handler`,
+      ...handlerEnv,
+    });
+    api.route('OPTIONS /programmes/{proxy+}', {
+      handler: `${repositoryFunctionsPath}/programs/index.handler`,
+      ...handlerEnv,
+    });
+
     // Admin domain routes (system_admin role required - validated in handlers)
     api.route(
       'ANY /admin/{proxy+}',
@@ -350,6 +369,13 @@ export default $config({
       args
     );
 
+    // Programmes domain routes (authenticated users - programme data)
+    api.route(
+      'ANY /programmes/{proxy+}',
+      { handler: `${repositoryFunctionsPath}/programs/index.handler`, ...handlerEnv },
+      args
+    );
+
     // =========================================================================
     // JOB PROCESSING INFRASTRUCTURE
     // Lambda function exists in all stages for manual invocation.
@@ -373,7 +399,21 @@ export default $config({
       ...jobProcessorEnv,
     });
 
-    // Cron schedule only in staging/production — no recurring costs in dev
+    // Stale job detector Lambda — available in all stages for manual triggering
+    const staleJobDetectorEnv = {
+      environment: {
+        ...dbEnv,
+        STALE_JOB_THRESHOLD_SECONDS: '300',
+      },
+    };
+
+    new sst.aws.Function('StaleJobDetector', {
+      handler: `${repositoryFunctionsPath}/jobs/detect-stale-jobs.handler`,
+      timeout: '1 minute',
+      ...staleJobDetectorEnv,
+    });
+
+    // Cron schedules only in staging/production — no recurring costs in dev
     if ($app.stage === 'staging' || $app.stage === 'production') {
       new sst.aws.Cron('JobProcessorCron', {
         schedule: 'rate(1 minute)',
@@ -381,6 +421,15 @@ export default $config({
           handler: `${repositoryFunctionsPath}/jobs/process-jobs.handler`,
           timeout: JOB_PROCESSOR_TIMEOUT,
           ...jobProcessorEnv,
+        },
+      });
+
+      new sst.aws.Cron('StaleJobDetectorCron', {
+        schedule: 'rate(5 minutes)',
+        job: {
+          handler: `${repositoryFunctionsPath}/jobs/detect-stale-jobs.handler`,
+          timeout: '1 minute',
+          ...staleJobDetectorEnv,
         },
       });
     }

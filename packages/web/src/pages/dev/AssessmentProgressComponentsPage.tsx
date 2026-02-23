@@ -4,6 +4,7 @@ import type { FlowStepType } from '@ffp/core';
 
 import { AssessmentProgress } from '@web/components/AssessmentProgress';
 import { Button } from '@web/components/button';
+import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
   ComponentPageHeader,
@@ -13,6 +14,15 @@ import {
 } from '@web/components/dev';
 import { Icon, Icons } from '@web/components/Icon';
 import { Text, Title } from '@web/components/text';
+
+const phases: FlowStepType[] = [
+  'intro',
+  'questions',
+  'transition',
+  'video-assessment',
+  'results',
+  'programme-overview',
+];
 
 /**
  * AssessmentProgress components showcase page (development only).
@@ -24,16 +34,12 @@ import { Text, Title } from '@web/components/text';
  * - Various progress states
  */
 export const AssessmentProgressComponentsPage = (): JSX.Element => {
-  const [interactiveStep, setInteractiveStep] = useState(3);
-  const totalSteps = 10;
-
-  const phases: FlowStepType[] = [
-    'intro',
-    'questions',
-    'transition',
-    'video-assessment',
-    'results',
-    'programme-overview',
+  const componentTabs: DemoTab[] = [
+    { id: 'basic', label: 'Basic Usage', content: <BasicUsageDemo /> },
+    { id: 'states', label: 'Progress States', content: <ProgressStatesDemo /> },
+    { id: 'phases', label: 'Phase Labels', content: <PhaseLabelsDemo /> },
+    { id: 'interactive', label: 'Interactive Demo', content: <InteractiveDemo /> },
+    { id: 'real-world', label: 'Real-World Examples', content: <RealWorldDemo /> },
   ];
 
   return (
@@ -44,174 +50,12 @@ export const AssessmentProgressComponentsPage = (): JSX.Element => {
         showBackLink
       />
 
-      {/* Basic Usage */}
-      <ComponentSection title="Basic Usage">
-        <div className="space-y-6">
-          <ButtonSampleDisplay label="Default progress bar">
-            <div className="w-full max-w-md">
-              <AssessmentProgress currentStep={3} totalSteps={10} phase="questions" />
-            </div>
-          </ButtonSampleDisplay>
-        </div>
-      </ComponentSection>
-
-      {/* Progress States */}
-      <ComponentSection title="Progress States">
-        <div className="space-y-6">
-          <ButtonSampleDisplay label="Just started (10%)">
-            <div className="w-full max-w-md">
-              <AssessmentProgress currentStep={1} totalSteps={10} phase="intro" />
-            </div>
-          </ButtonSampleDisplay>
-
-          <ButtonSampleDisplay label="Mid-way (50%)">
-            <div className="w-full max-w-md">
-              <AssessmentProgress currentStep={5} totalSteps={10} phase="questions" />
-            </div>
-          </ButtonSampleDisplay>
-
-          <ButtonSampleDisplay label="Almost complete (80%)">
-            <div className="w-full max-w-md">
-              <AssessmentProgress currentStep={8} totalSteps={10} phase="video-assessment" />
-            </div>
-          </ButtonSampleDisplay>
-
-          <ButtonSampleDisplay label="Complete (100%)">
-            <div className="w-full max-w-md">
-              <AssessmentProgress currentStep={10} totalSteps={10} phase="results" />
-            </div>
-          </ButtonSampleDisplay>
-        </div>
-      </ComponentSection>
-
-      {/* Phase Labels */}
-      <ComponentSection title="Phase Labels">
-        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-4">
-          Each phase displays a human-readable label. The following shows all available phases:
+      <ComponentSection title="Component Demos">
+        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
+          Click through each tab to explore basic usage, progress states, phase labels, an
+          interactive demo, and real-world examples.
         </Text>
-        <div className="space-y-6">
-          {phases.map((phase, index) => (
-            <ButtonSampleDisplay key={phase} label={`Phase: ${phase}`}>
-              <div className="w-full max-w-md">
-                <AssessmentProgress
-                  currentStep={index + 1}
-                  totalSteps={phases.length}
-                  phase={phase}
-                />
-              </div>
-            </ButtonSampleDisplay>
-          ))}
-        </div>
-      </ComponentSection>
-
-      {/* Interactive Demo */}
-      <ComponentSection title="Interactive Demo">
-        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-4">
-          Use the buttons below to simulate progress through an assessment:
-        </Text>
-        <div className="space-y-6">
-          <div className="rounded-lg bg-card p-6 shadow">
-            <AssessmentProgress
-              currentStep={interactiveStep}
-              totalSteps={totalSteps}
-              phase={phases[Math.min(Math.floor((interactiveStep - 1) / 2), phases.length - 1)]}
-            />
-            <div className="mt-4 flex items-center justify-center gap-4">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  setInteractiveStep((s) => Math.max(1, s - 1));
-                }}
-                disabled={interactiveStep <= 1}
-              >
-                Previous
-              </Button>
-              <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-                Step {interactiveStep} of {totalSteps}
-              </Text>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => {
-                  setInteractiveStep((s) => Math.min(totalSteps, s + 1));
-                }}
-                disabled={interactiveStep >= totalSteps}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        </div>
-      </ComponentSection>
-
-      {/* Real-World Examples */}
-      <ComponentSection title="Real-World Examples" className="mb-8">
-        <div className="space-y-6">
-          <div>
-            <Title as="h3" className="mb-3" colour="card-foreground">
-              Assessment Header
-            </Title>
-            <div className="rounded-lg bg-card p-6 shadow">
-              <div className="mb-6">
-                <AssessmentProgress currentStep={4} totalSteps={12} phase="questions" />
-              </div>
-              <div className="border-t border-border pt-4">
-                <Title as="h2" className="mb-2" colour="card-foreground">
-                  Mobility Assessment
-                </Title>
-                <Text styleProps={{ colour: 'muted-foreground' }}>
-                  Answer the following questions about your current mobility.
-                </Text>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <Title as="h3" className="mb-3" colour="card-foreground">
-              Video Assessment Screen
-            </Title>
-            <div className="rounded-lg bg-card shadow">
-              <div className="p-4">
-                <AssessmentProgress currentStep={7} totalSteps={10} phase="video-assessment" />
-              </div>
-              <div className="aspect-video bg-muted">
-                <div className="flex h-full items-center justify-center">
-                  <Text styleProps={{ colour: 'muted-foreground' }}>Video Player Placeholder</Text>
-                </div>
-              </div>
-              <div className="p-4">
-                <Text styleProps={{ weight: 'medium' }}>Squat Assessment</Text>
-                <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-                  Follow the on-screen instructions to complete this exercise.
-                </Text>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <Title as="h3" className="mb-3" colour="card-foreground">
-              Results Screen
-            </Title>
-            <div className="rounded-lg bg-card p-6 shadow">
-              <AssessmentProgress currentStep={10} totalSteps={10} phase="results" />
-              <div className="mt-6 text-center">
-                <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
-                  <Icon
-                    name={Icons.CHECKCIRCLE}
-                    styleProps={{ size: 'xl', colour: 'var(--success)' }}
-                  />
-                </div>
-                <Title as="h2" className="mb-2" colour="card-foreground">
-                  Assessment Complete!
-                </Title>
-                <Text styleProps={{ colour: 'muted-foreground' }}>
-                  Your personalised programme is ready.
-                </Text>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DemoTabs tabs={componentTabs} />
       </ComponentSection>
 
       {/* Developer instructions */}
@@ -326,3 +170,196 @@ const label = getPhaseLabel('questions'); // "Pre-Assessment"`}
     </ComponentPageWrapper>
   );
 };
+
+// ============================================================================
+// Basic Usage Demo
+// ============================================================================
+
+const BasicUsageDemo: React.FC = () => (
+  <div className="space-y-6">
+    <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+      Default progress bar with step counter and phase label.
+    </Text>
+    <ButtonSampleDisplay label="Default progress bar">
+      <div className="w-full max-w-md">
+        <AssessmentProgress currentStep={3} totalSteps={10} phase="questions" />
+      </div>
+    </ButtonSampleDisplay>
+  </div>
+);
+
+// ============================================================================
+// Progress States Demo
+// ============================================================================
+
+const ProgressStatesDemo: React.FC = () => (
+  <div className="space-y-6">
+    <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+      Progress bar at different completion percentages.
+    </Text>
+    <ButtonSampleDisplay label="Just started (10%)">
+      <div className="w-full max-w-md">
+        <AssessmentProgress currentStep={1} totalSteps={10} phase="intro" />
+      </div>
+    </ButtonSampleDisplay>
+
+    <ButtonSampleDisplay label="Mid-way (50%)">
+      <div className="w-full max-w-md">
+        <AssessmentProgress currentStep={5} totalSteps={10} phase="questions" />
+      </div>
+    </ButtonSampleDisplay>
+
+    <ButtonSampleDisplay label="Almost complete (80%)">
+      <div className="w-full max-w-md">
+        <AssessmentProgress currentStep={8} totalSteps={10} phase="video-assessment" />
+      </div>
+    </ButtonSampleDisplay>
+
+    <ButtonSampleDisplay label="Complete (100%)">
+      <div className="w-full max-w-md">
+        <AssessmentProgress currentStep={10} totalSteps={10} phase="results" />
+      </div>
+    </ButtonSampleDisplay>
+  </div>
+);
+
+// ============================================================================
+// Phase Labels Demo
+// ============================================================================
+
+const PhaseLabelsDemo: React.FC = () => (
+  <div className="space-y-6">
+    <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+      Each phase displays a human-readable label. The following shows all available phases.
+    </Text>
+    {phases.map((phase, index) => (
+      <ButtonSampleDisplay key={phase} label={`Phase: ${phase}`}>
+        <div className="w-full max-w-md">
+          <AssessmentProgress currentStep={index + 1} totalSteps={phases.length} phase={phase} />
+        </div>
+      </ButtonSampleDisplay>
+    ))}
+  </div>
+);
+
+// ============================================================================
+// Interactive Demo
+// ============================================================================
+
+const InteractiveDemo: React.FC = () => {
+  const [interactiveStep, setInteractiveStep] = useState(3);
+  const totalSteps = 10;
+
+  return (
+    <div className="space-y-6">
+      <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+        Use the buttons below to simulate progress through an assessment.
+      </Text>
+      <div className="rounded-lg bg-card p-6 shadow">
+        <AssessmentProgress
+          currentStep={interactiveStep}
+          totalSteps={totalSteps}
+          phase={phases[Math.min(Math.floor((interactiveStep - 1) / 2), phases.length - 1)]}
+        />
+        <div className="mt-4 flex items-center justify-center gap-4">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setInteractiveStep((s) => Math.max(1, s - 1));
+            }}
+            disabled={interactiveStep <= 1}
+          >
+            Previous
+          </Button>
+          <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+            Step {interactiveStep} of {totalSteps}
+          </Text>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => {
+              setInteractiveStep((s) => Math.min(totalSteps, s + 1));
+            }}
+            disabled={interactiveStep >= totalSteps}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// Real-World Examples Demo
+// ============================================================================
+
+const RealWorldDemo: React.FC = () => (
+  <div className="space-y-6">
+    <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+      Common progress bar patterns in real assessment layouts.
+    </Text>
+
+    <div>
+      <Title as="h3" className="mb-3" colour="card-foreground">
+        Assessment Header
+      </Title>
+      <div className="rounded-lg bg-card p-6 shadow">
+        <div className="mb-6">
+          <AssessmentProgress currentStep={4} totalSteps={12} phase="questions" />
+        </div>
+        <div className="border-t border-border pt-4">
+          <Title as="h2" className="mb-2" colour="card-foreground">
+            Mobility Assessment
+          </Title>
+          <Text styleProps={{ colour: 'muted-foreground' }}>
+            Answer the following questions about your current mobility.
+          </Text>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <Title as="h3" className="mb-3" colour="card-foreground">
+        Video Assessment Screen
+      </Title>
+      <div className="rounded-lg bg-card shadow">
+        <div className="p-4">
+          <AssessmentProgress currentStep={7} totalSteps={10} phase="video-assessment" />
+        </div>
+        <div className="aspect-video bg-muted">
+          <div className="flex h-full items-center justify-center">
+            <Text styleProps={{ colour: 'muted-foreground' }}>Video Player Placeholder</Text>
+          </div>
+        </div>
+        <div className="p-4">
+          <Text styleProps={{ weight: 'medium' }}>Squat Assessment</Text>
+          <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+            Follow the on-screen instructions to complete this exercise.
+          </Text>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <Title as="h3" className="mb-3" colour="card-foreground">
+        Results Screen
+      </Title>
+      <div className="rounded-lg bg-card p-6 shadow">
+        <AssessmentProgress currentStep={10} totalSteps={10} phase="results" />
+        <div className="mt-6 text-center">
+          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+            <Icon name={Icons.CHECKCIRCLE} styleProps={{ size: 'xl', colour: 'var(--success)' }} />
+          </div>
+          <Title as="h2" className="mb-2" colour="card-foreground">
+            Assessment Complete!
+          </Title>
+          <Text styleProps={{ colour: 'muted-foreground' }}>
+            Your personalised programme is ready.
+          </Text>
+        </div>
+      </div>
+    </div>
+  </div>
+);

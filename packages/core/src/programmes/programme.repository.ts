@@ -34,6 +34,11 @@ export interface FindTemplateBySlugOptions {
   tx?: Transaction;
 }
 
+export interface ArchiveProgrammeOptions {
+  /** Optional transaction for atomic operations. If provided, RLS must be set by caller. */
+  tx?: Transaction;
+}
+
 async function createProgrammeInTx(
   tx: Transaction,
   input: CreateProgrammeInput
@@ -72,6 +77,17 @@ async function findProgrammeByIdInTx(
   const records = await tx.select().from(programmes).where(eq(programmes.id, programmeId)).limit(1);
 
   return records[0] ?? null;
+}
+
+async function archiveProgrammeInTx(
+  tx: Transaction,
+  programmeId: string,
+  userId: string
+): Promise<void> {
+  await tx
+    .update(programmes)
+    .set({ status: 'archived', updatedAt: new Date() })
+    .where(and(eq(programmes.id, programmeId), eq(programmes.userId, userId)));
 }
 
 async function findTemplateBySlugInTx(
@@ -132,6 +148,24 @@ export async function findProgrammeById(
 
   return await withRLS(tenantId, userId, async (newTx) => {
     return findProgrammeByIdInTx(newTx, programmeId);
+  });
+}
+
+/** Archives a programme (sets status to 'archived'). Used when replacing with a new programme. */
+export async function archiveProgramme(
+  tenantId: string,
+  programmeId: string,
+  userId: string,
+  options: ArchiveProgrammeOptions = {}
+): Promise<void> {
+  const { tx } = options;
+
+  if (tx) {
+    return archiveProgrammeInTx(tx, programmeId, userId);
+  }
+
+  await withRLS(tenantId, userId, async (newTx) => {
+    return archiveProgrammeInTx(newTx, programmeId, userId);
   });
 }
 

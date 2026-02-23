@@ -16,8 +16,8 @@ export const customerAddressSchema = z
   .optional();
 
 export const customerSchema = z.object({
-  id: z.string().uuid(),
-  tenantId: z.string().uuid(),
+  id: z.guid(),
+  tenantId: z.guid(),
   name: z.string().min(1).max(255),
   accountCode: z.string().min(1).max(50),
   address: customerAddressSchema,

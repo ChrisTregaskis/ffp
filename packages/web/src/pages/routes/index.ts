@@ -4,6 +4,7 @@ import { USER_ROLE } from '@web/constants/roles';
 import { ComingSoonPage } from '@web/pages/ComingSoonPage';
 import { AssessmentProgressComponentsPage } from '@web/pages/dev/AssessmentProgressComponentsPage';
 import { AssessmentQuestionsComponentsPage } from '@web/pages/dev/AssessmentQuestionsComponentsPage';
+import { AssessmentScreensComponentsPage } from '@web/pages/dev/AssessmentScreensComponentsPage';
 import { ButtonComponentsPage } from '@web/pages/dev/ButtonComponentsPage';
 import { CardComponentsPage } from '@web/pages/dev/CardComponentsPage';
 import { ComponentsPage } from '@web/pages/dev/ComponentsPage';
@@ -15,8 +16,10 @@ import { LogoComponentsPage } from '@web/pages/dev/LogoComponentsPage';
 import { MotionShowcasePage } from '@web/pages/dev/MotionShowcasePage';
 import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
+import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
 import { HomePage } from '@web/pages/protected/HomePage';
 import { AccountSettingsPage } from '@web/pages/protected/programme-user/AccountSettingsPage';
+import { AssessmentPage } from '@web/pages/protected/programme-user/AssessmentPage';
 import { ProgrammeOverviewPage } from '@web/pages/protected/programme-user/ProgrammeOverviewPage';
 import { ProgressPage } from '@web/pages/protected/programme-user/ProgressPage';
 import { TodayWorkoutPage } from '@web/pages/protected/programme-user/TodayWorkoutPage';
@@ -124,6 +127,14 @@ export const routes: RoutesConfig = {
   },
 
   // Programme User Routes (for programme_user role)
+  [RouteKey.ASSESSMENT]: {
+    path: '/assessment',
+    pageComponent: AssessmentPage,
+    title: 'Assessment',
+    allowedRoles: [PROGRAMME_USER],
+    excludeLayout: true,
+    excludeFromMainNavbar: true,
+  },
   [RouteKey.TODAY_WORKOUT]: {
     path: '/today-workout',
     pageComponent: TodayWorkoutPage,
@@ -354,6 +365,22 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: AssessmentQuestionsComponentsPage,
     title: 'Assessment Question Components',
+    excludeFromMainNavbar: true,
+    devOnly: true,
+  },
+  [RouteKey.COMPONENTS_ASSESSMENT_SCREENS]: {
+    path: `${componentsBasePath}/assessment-screens`,
+    public: true,
+    pageComponent: AssessmentScreensComponentsPage,
+    title: 'Assessment Screen Components',
+    excludeFromMainNavbar: true,
+    devOnly: true,
+  },
+  [RouteKey.COMPONENTS_TOAST_ALERT]: {
+    path: `${componentsBasePath}/toast-alert`,
+    public: true,
+    pageComponent: ToastAlertComponentsPage,
+    title: 'Toast Alert Components',
     excludeFromMainNavbar: true,
     devOnly: true,
   },

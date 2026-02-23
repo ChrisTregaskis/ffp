@@ -11,11 +11,11 @@ export const userAssessmentStatusSchema = z.enum(USER_ASSESSMENT_STATUSES);
 
 export const userAnswerSchema = z.object({
   /** Question ID from the assessment template */
-  questionId: z.string().uuid(),
+  questionId: z.guid(),
   /** Selected answer value - uses shared schema from @ffp/database */
   answerValue: answerValueSchema,
   /** Optional: Answer ID if selecting from predefined options */
-  answerId: z.string().uuid().optional(),
+  answerId: z.guid().optional(),
   /** Timestamp when answer was recorded */
   answeredAt: z.coerce.date().optional(),
 });
@@ -24,20 +24,20 @@ export const userAnswerSchema = z.object({
  * Keyed by questionId for efficient lookup and updates.
  * Stored as JSONB in the database.
  */
-export const userAssessmentAnswersSchema = z.record(z.string().uuid(), userAnswerSchema);
+export const userAssessmentAnswersSchema = z.record(z.guid(), userAnswerSchema);
 
 export { userAssessmentScoresSchema };
 
 /** Represents a complete user assessment record from the database. */
 export const userAssessmentSchema = z.object({
   /** Unique identifier (UUID) */
-  id: z.string().uuid(),
+  id: z.guid(),
   /** Tenant ID for RLS isolation */
-  tenantId: z.string().uuid(),
+  tenantId: z.guid(),
   /** User who owns this assessment */
-  userId: z.string().uuid(),
+  userId: z.guid(),
   /** Assessment flow being followed */
-  flowId: z.string().uuid(),
+  flowId: z.guid(),
   /** Current step index in the flow (1-based) */
   currentStep: z.number().int().positive(),
   /** Assessment state machine status */
@@ -45,7 +45,7 @@ export const userAssessmentSchema = z.object({
   /** Calculated scores (null until scored) */
   scores: userAssessmentScoresSchema.nullable(),
   /** Generated programme ID (null until programme generated) */
-  programmeId: z.string().uuid().nullable(),
+  programmeId: z.guid().nullable(),
   /** When user started the assessment */
   startedAt: z.coerce.date().nullable(),
   /** When user submitted the assessment */
@@ -79,15 +79,15 @@ export const statusTransitionSchema = z
     /** Target status to transition to */
     toStatus: userAssessmentStatusSchema,
   })
-  .refine(
-    (data) => {
-      const allowedTransitions = VALID_STATUS_TRANSITIONS[data.fromStatus];
-      return allowedTransitions.includes(data.toStatus);
-    },
-    (data) => ({
-      message: `Invalid status transition: ${data.fromStatus} → ${data.toStatus}. Allowed transitions from '${data.fromStatus}': ${VALID_STATUS_TRANSITIONS[data.fromStatus].join(', ') || 'none'}`,
-    })
-  );
+  .superRefine((data, ctx) => {
+    const allowedTransitions = VALID_STATUS_TRANSITIONS[data.fromStatus];
+    if (!allowedTransitions.includes(data.toStatus)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `Invalid status transition: ${data.fromStatus} → ${data.toStatus}. Allowed transitions from '${data.fromStatus}': ${VALID_STATUS_TRANSITIONS[data.fromStatus].join(', ') || 'none'}`,
+      });
+    }
+  });
 
 /** Validates if a status transition is allowed */
 export const isValidStatusTransition = (
@@ -105,14 +105,16 @@ export const getAllowedTransitions = (status: UserAssessmentStatus): UserAssessm
 
 export const submitAssessmentSchema = z.object({
   /** Assessment ID being submitted */
-  assessmentId: z.string().uuid(),
+  assessmentId: z.guid(),
   /** Final answers (complete set) */
   answers: userAssessmentAnswersSchema,
 });
 
 export const startAssessmentRequestSchema = z.object({
   /** Assessment flow ID to start (must be valid UUID) */
-  flowId: z.string().uuid({ message: 'flowId must be a valid UUID' }),
+  flowId: z.guid({ message: 'flowId must be a valid GUID' }),
+  /** When true, create a new assessment instead of resuming an existing one (reassessment path). */
+  isReassessment: z.boolean().optional(),
 });
 
 /**
@@ -121,7 +123,7 @@ export const startAssessmentRequestSchema = z.object({
  */
 export const flowStepSummarySchema = z.object({
   /** Unique step identifier (UUID) */
-  id: z.string().uuid(),
+  id: z.guid(),
   /** Step tier/order (multiple steps can share same order for parallel branches) */
   order: z.number().int().positive(),
   /** Step type (intro, questions, transition, etc.) */
@@ -132,26 +134,26 @@ export const flowStepSummarySchema = z.object({
     description: z.string().optional(),
   }),
   /** Template ID for question/video steps (optional) */
-  templateId: z.string().uuid().nullable().optional(),
+  templateId: z.guid().nullable().optional(),
   /** Whether this step has branching rules */
   hasBranchingRules: z.boolean(),
   /** Default next step ID (for linear progression) */
-  defaultNextStepId: z.string().uuid().nullable().optional(),
+  defaultNextStepId: z.guid().nullable().optional(),
 });
 
 export const startAssessmentResponseSchema = z.object({
   /** Unique identifier for the assessment */
-  assessmentId: z.string().uuid(),
+  assessmentId: z.guid(),
   /** Current step index in the flow (1-based) */
   currentStep: z.number().int().positive(),
   /** Current step UUID (for step-based navigation) */
-  currentStepId: z.string().uuid().optional(),
+  currentStepId: z.guid().optional(),
   /** Assessment state machine status */
   status: userAssessmentStatusSchema,
   /** User's answers (keyed by questionId) */
   answers: userAssessmentAnswersSchema,
   /** Assessment flow being followed */
-  flowId: z.string().uuid(),
+  flowId: z.guid(),
   /** True if resuming existing assessment, false if newly created */
   isResumed: z.boolean(),
   /** Flow steps for client-side navigation (from normalised flow_steps table) */
@@ -171,9 +173,9 @@ export const assessmentWarningSchema = z.object({
   /** Severity level of the warning */
   type: z.enum(WARNING_TYPES),
   /** ISO timestamp when warning was shown */
-  shownAt: z.string().datetime(),
+  shownAt: z.iso.datetime(),
   /** Step ID where warning was triggered (optional) */
-  stepId: z.string().uuid().optional(),
+  stepId: z.guid().optional(),
   /** Question slug that triggered the warning (optional) */
   triggeredBy: z.string().optional(),
 });
@@ -182,9 +184,9 @@ export const saveProgressResponseSchema = z.object({
   /** Indicates the save was successful */
   success: z.literal(true),
   /** ISO 8601 timestamp of when the progress was updated */
-  updatedAt: z.string().datetime(),
+  updatedAt: z.iso.datetime(),
   /** UUID of the next step to navigate to (from branching evaluation) */
-  nextStepId: z.string().uuid().nullable(),
+  nextStepId: z.guid().nullable(),
   /** Warnings to display to the user */
   warnings: z.array(assessmentWarningSchema),
   /** Whether the assessment should terminate early */
@@ -200,7 +202,7 @@ export const submitAssessmentRequestSchema = z.object({
 
 export const submitAssessmentResponseSchema = z.object({
   /** UUID of the enqueued scoring job for status polling */
-  jobId: z.string().uuid(),
+  jobId: z.guid(),
   /** Human-readable message confirming submission */
   message: z.string(),
 });
@@ -211,7 +213,16 @@ export const assessmentResultsResponseSchema = z.object({
   /** Calculated assessment scores (null until scoring completes) */
   scores: userAssessmentScoresSchema.nullable(),
   /** Recommended programme ID (null until programme assigned) */
-  programmeId: z.string().uuid().nullable(),
+  programmeId: z.guid().nullable(),
+  /** Display name of the recommended programme (null until programme assigned) */
+  programmeName: z.string().nullable(),
+});
+
+export const userAssessmentStatusResponseSchema = z.object({
+  /** Whether the user has an active programme */
+  hasProgramme: z.boolean(),
+  /** Assessment flow ID to redirect to (null if user has a programme or no active flow) */
+  assessmentFlowId: z.guid().nullable(),
 });
 
 export type AnswerValue = z.infer<typeof answerValueSchema>;
@@ -233,3 +244,4 @@ export type SaveProgressResponse = z.infer<typeof saveProgressResponseSchema>;
 export type SubmitAssessmentRequest = z.infer<typeof submitAssessmentRequestSchema>;
 export type SubmitAssessmentResponse = z.infer<typeof submitAssessmentResponseSchema>;
 export type AssessmentResultsResponse = z.infer<typeof assessmentResultsResponseSchema>;
+export type UserAssessmentStatusResponse = z.infer<typeof userAssessmentStatusResponseSchema>;

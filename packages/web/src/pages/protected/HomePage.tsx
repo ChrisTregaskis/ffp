@@ -2,9 +2,11 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@web/components/button/Button';
+import { LoadingSpinner } from '@web/components/LoadingSpinner/LoadingSpinner';
 import { Title, Text } from '@web/components/text';
 import { USER_ROLE } from '@web/constants/roles';
-import { useAuth } from '@web/contexts/AuthContext';
+import { useUserAssessmentStatusQuery } from '@web/hooks/assessments';
+import { useAuth } from '@web/hooks/useAuth';
 import { RouteKey, routes } from '@web/pages/routes';
 
 /**
@@ -28,7 +30,12 @@ export const HomePage = (): JSX.Element => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect non-individual users to their role-appropriate home page
+  const isProgrammeUser = user?.role === USER_ROLE.PROGRAMME_USER;
+  const { data: assessmentStatus, isLoading: isStatusLoading } = useUserAssessmentStatusQuery({
+    enabled: isProgrammeUser,
+  });
+
+  // Redirect users to their role-appropriate home page
   useEffect(() => {
     if (!user) return;
 
@@ -44,12 +51,30 @@ export const HomePage = (): JSX.Element => {
       return;
     }
 
-    // Programme users (PROGRAMME_USER) stay on this page
-  }, [user, navigate]);
+    // Programme users without an active programme → redirect to assessment
+    if (isProgrammeUser && assessmentStatus) {
+      if (!assessmentStatus.hasProgramme && assessmentStatus.assessmentFlowId) {
+        const assessmentPath = routes[RouteKey.ASSESSMENT].path;
+
+        void navigate(`${assessmentPath}?flowId=${assessmentStatus.assessmentFlowId}`, {
+          replace: true,
+        });
+      }
+    }
+  }, [user, navigate, isProgrammeUser, assessmentStatus]);
 
   const handleLogout = (): void => {
     void logout();
   };
+
+  // Show loading spinner while checking programme status for programme users
+  if (isProgrammeUser && isStatusLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <LoadingSpinner size="lg" variant="center" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">

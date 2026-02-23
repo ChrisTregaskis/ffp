@@ -33,8 +33,8 @@ describe('Branch Evaluator', () => {
    */
   function createFlowStep(overrides: Partial<FlowStepRecord> = {}): FlowStepRecord {
     return {
-      id: '55555555-5555-5555-5555-555555550001',
-      flowId: '44444444-4444-4444-4444-444444440001',
+      id: '55555555-5555-5555-8555-555555550001',
+      flowId: '44444444-4444-4444-8444-444444440001',
       templateId: null,
       order: 1,
       type: 'questions',
@@ -72,13 +72,13 @@ describe('Branch Evaluator', () => {
     it('should return default next step when no branching rules', () => {
       const currentStep = createFlowStep({
         nextStepRules: null,
-        defaultNextStepId: '55555555-5555-5555-5555-555555550002',
+        defaultNextStepId: '55555555-5555-5555-8555-555555550002',
       });
       const context = createContext(currentStep);
 
       const result = evaluateNextStep(currentStep, context);
 
-      expect(result.nextStepId).toBe('55555555-5555-5555-5555-555555550002');
+      expect(result.nextStepId).toBe('55555555-5555-5555-8555-555555550002');
       expect(result.warnings).toHaveLength(0);
       expect(result.shouldTerminate).toBe(false);
     });
@@ -86,14 +86,14 @@ describe('Branch Evaluator', () => {
     it('should fall back to order+1 step when no default set', () => {
       const currentStep = createFlowStep({ order: 1, defaultNextStepId: null });
       const nextStep = createFlowStep({
-        id: '55555555-5555-5555-5555-555555550002',
+        id: '55555555-5555-5555-8555-555555550002',
         order: 2,
       });
       const context = createContext(currentStep, [currentStep, nextStep]);
 
       const result = evaluateNextStep(currentStep, context);
 
-      expect(result.nextStepId).toBe('55555555-5555-5555-5555-555555550002');
+      expect(result.nextStepId).toBe('55555555-5555-5555-8555-555555550002');
     });
 
     it('should return null when no next step available (end of flow)', () => {
@@ -117,7 +117,7 @@ describe('Branch Evaluator', () => {
         {
           priority: 1,
           conditions: [{ type: 'answer_value', questionSlug: 'pain-level', answerValue: 'high' }],
-          action: { type: 'goto_step', targetStepId: '55555555-5555-5555-5555-555555550010' },
+          action: { type: 'goto_step', targetStepId: '55555555-5555-5555-8555-555555550010' },
         },
       ];
       const currentStep = createFlowStep({ nextStepRules: rules });
@@ -125,7 +125,7 @@ describe('Branch Evaluator', () => {
 
       const result = evaluateNextStep(currentStep, context);
 
-      expect(result.nextStepId).toBe('55555555-5555-5555-5555-555555550010');
+      expect(result.nextStepId).toBe('55555555-5555-5555-8555-555555550010');
       expect(result.warnings).toHaveLength(0);
       expect(result.shouldTerminate).toBe(false);
     });
@@ -135,18 +135,18 @@ describe('Branch Evaluator', () => {
         {
           priority: 1,
           conditions: [{ type: 'answer_value', questionSlug: 'pain-level', answerValue: 'high' }],
-          action: { type: 'goto_step', targetStepId: '55555555-5555-5555-5555-555555550010' },
+          action: { type: 'goto_step', targetStepId: '55555555-5555-5555-8555-555555550010' },
         },
       ];
       const currentStep = createFlowStep({
         nextStepRules: rules,
-        defaultNextStepId: '55555555-5555-5555-5555-555555550002',
+        defaultNextStepId: '55555555-5555-5555-8555-555555550002',
       });
       const context = createContext(currentStep, [], { 'pain-level': 'low' });
 
       const result = evaluateNextStep(currentStep, context);
 
-      expect(result.nextStepId).toBe('55555555-5555-5555-5555-555555550002');
+      expect(result.nextStepId).toBe('55555555-5555-5555-8555-555555550002');
     });
   });
 
@@ -168,7 +168,7 @@ describe('Branch Evaluator', () => {
       ];
       const currentStep = createFlowStep({
         nextStepRules: rules,
-        defaultNextStepId: '55555555-5555-5555-5555-555555550002',
+        defaultNextStepId: '55555555-5555-5555-8555-555555550002',
       });
       const context = createContext(currentStep, [], { 'radiating-pain': 'yes' });
 
@@ -177,7 +177,7 @@ describe('Branch Evaluator', () => {
       expect(result.warnings).toHaveLength(1);
       expect(result.warnings[0].message).toBe('Please consult a doctor');
       expect(result.warnings[0].type).toBe('seek_medical');
-      expect(result.nextStepId).toBe('55555555-5555-5555-5555-555555550002');
+      expect(result.nextStepId).toBe('55555555-5555-5555-8555-555555550002');
       expect(result.shouldTerminate).toBe(false);
     });
 
@@ -231,7 +231,7 @@ describe('Branch Evaluator', () => {
       ];
       const currentStep = createFlowStep({
         nextStepRules: rules,
-        defaultNextStepId: '55555555-5555-5555-5555-555555550002',
+        defaultNextStepId: '55555555-5555-5555-8555-555555550002',
       });
       const context = createContext(currentStep, [], {
         'radiating-pain': 'yes',
@@ -273,12 +273,12 @@ describe('Branch Evaluator', () => {
         {
           priority: 10,
           conditions: [{ type: 'answer_value', questionSlug: 'test', answerValue: 'yes' }],
-          action: { type: 'goto_step', targetStepId: '55555555-5555-5555-5555-555555550010' },
+          action: { type: 'goto_step', targetStepId: '55555555-5555-5555-8555-555555550010' },
         },
         {
           priority: 1,
           conditions: [{ type: 'answer_value', questionSlug: 'test', answerValue: 'yes' }],
-          action: { type: 'goto_step', targetStepId: '55555555-5555-5555-5555-555555550001' },
+          action: { type: 'goto_step', targetStepId: '55555555-5555-5555-8555-555555550001' },
         },
       ];
       const currentStep = createFlowStep({ nextStepRules: rules });
@@ -287,7 +287,7 @@ describe('Branch Evaluator', () => {
       const result = evaluateNextStep(currentStep, context);
 
       // Priority 1 (higher priority) should match first
-      expect(result.nextStepId).toBe('55555555-5555-5555-5555-555555550001');
+      expect(result.nextStepId).toBe('55555555-5555-5555-8555-555555550001');
     });
   });
 
@@ -297,12 +297,12 @@ describe('Branch Evaluator', () => {
         {
           priority: 1,
           conditions: [{ type: 'answer_value', questionSlug: 'test', answerValue: 'yes' }],
-          action: { type: 'goto_step', targetStepId: '55555555-5555-5555-5555-555555550010' },
+          action: { type: 'goto_step', targetStepId: '55555555-5555-5555-8555-555555550010' },
         },
         {
           priority: 100,
           conditions: [], // Fallback - always matches
-          action: { type: 'goto_step', targetStepId: '55555555-5555-5555-5555-555555550099' },
+          action: { type: 'goto_step', targetStepId: '55555555-5555-5555-8555-555555550099' },
         },
       ];
       const currentStep = createFlowStep({ nextStepRules: rules });
@@ -311,7 +311,7 @@ describe('Branch Evaluator', () => {
       const result = evaluateNextStep(currentStep, context);
 
       // First rule doesn't match, fallback should be used
-      expect(result.nextStepId).toBe('55555555-5555-5555-5555-555555550099');
+      expect(result.nextStepId).toBe('55555555-5555-5555-8555-555555550099');
     });
   });
 });

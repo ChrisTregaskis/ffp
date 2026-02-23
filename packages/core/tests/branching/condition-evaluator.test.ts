@@ -24,7 +24,7 @@ describe('Condition Evaluator', () => {
     dimensionScores?: Partial<Record<ScoreDimension, number>>
   ): BranchEvaluationContext {
     return {
-      currentStepId: '55555555-5555-5555-5555-555555550001',
+      currentStepId: '55555555-5555-5555-8555-555555550001',
       allSteps: [],
       answers: new Map(Object.entries(answers)),
       dimensionScores: dimensionScores

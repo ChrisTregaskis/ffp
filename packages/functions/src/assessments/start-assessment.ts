@@ -27,7 +27,9 @@ export const handler = withErrorHandling(
     const input = startAssessmentRequestSchema.parse(body);
 
     // Start or resume assessment via service
-    const result = await assessmentService.startAssessment(input.flowId, context);
+    const result = await assessmentService.startAssessment(input.flowId, context, {
+      isReassessment: input.isReassessment,
+    });
 
     return result;
   }

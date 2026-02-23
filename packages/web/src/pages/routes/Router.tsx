@@ -51,9 +51,21 @@ export const Router = (): JSX.Element => {
           return <Route key={key} path={config.path} element={<PageComponent />} />;
         })}
 
-        {/* Protected routes (auth required) */}
+        {/* Protected routes with AppLayout (auth required) */}
         <Route element={<ProtectedRoute />}>
-          {protectedRoutes.map(([key, config]) => {
+          {protectedRoutes
+            .filter(([, config]) => !config.excludeLayout)
+            .map(([key, config]) => {
+              const PageComponent = config.pageComponent;
+
+              return <Route key={key} path={config.path} element={<PageComponent />} />;
+            })}
+        </Route>
+
+        {/* Protected routes without AppLayout (fullscreen pages like assessments) */}
+        {protectedRoutes
+          .filter(([, config]) => config.excludeLayout)
+          .map(([key, config]) => {
             const PageComponent = config.pageComponent;
 
             return (
@@ -61,18 +73,13 @@ export const Router = (): JSX.Element => {
                 key={key}
                 path={config.path}
                 element={
-                  config.excludeLayout ? (
-                    <ProtectedRoute excludeLayout>
-                      <PageComponent />
-                    </ProtectedRoute>
-                  ) : (
+                  <ProtectedRoute excludeLayout>
                     <PageComponent />
-                  )
+                  </ProtectedRoute>
                 }
               />
             );
           })}
-        </Route>
 
         {/* Catch-all: redirect to home (which will redirect to login if not authed) */}
         <Route path="*" element={<Navigate to={routes[RouteKey.HOME].path} replace />} />

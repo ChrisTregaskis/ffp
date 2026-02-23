@@ -15,17 +15,17 @@ const logger = createLogger('seed-programme-templates');
  * These are fixed to ensure consistency across seed runs and allow
  * scoring config programmeMappings to reference them reliably by slug.
  *
- * UUID Pattern: 66666666-6666-6666-6666-6666666600XX
+ * UUID Pattern: 66666666-6666-6666-8666-6666666600XX
  * - gentle-mobility-programme: 01
  * - foundation-programme: 02
  * - advanced-strength-programme: 03
  * - general-wellness-programme: 04
  */
 export const PROGRAMME_TEMPLATE_IDS = {
-  'gentle-mobility-programme': '66666666-6666-6666-6666-666666660001',
-  'foundation-programme': '66666666-6666-6666-6666-666666660002',
-  'advanced-strength-programme': '66666666-6666-6666-6666-666666660003',
-  'general-wellness-programme': '66666666-6666-6666-6666-666666660004',
+  'gentle-mobility-programme': '66666666-6666-6666-8666-666666660001',
+  'foundation-programme': '66666666-6666-6666-8666-666666660002',
+  'advanced-strength-programme': '66666666-6666-6666-8666-666666660003',
+  'general-wellness-programme': '66666666-6666-6666-8666-666666660004',
 } as const;
 
 export type ProgrammeTemplateSlug = keyof typeof PROGRAMME_TEMPLATE_IDS;

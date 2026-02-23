@@ -10,9 +10,9 @@ export const warningSchema = z.object({
   /** Severity level of the warning */
   type: warningTypeSchema,
   /** ISO timestamp when warning was shown */
-  shownAt: z.string().datetime(),
+  shownAt: z.iso.datetime(),
   /** Step ID where warning was triggered (optional for context) */
-  stepId: z.string().uuid().optional(),
+  stepId: z.guid().optional(),
   /** Question slug that triggered the warning (optional for context) */
   triggeredBy: z.string().optional(),
 });
@@ -21,7 +21,7 @@ export const warningsArraySchema = z.array(warningSchema);
 
 export const branchEvaluationResultSchema = z.object({
   /** UUID of the next step to navigate to, or null if end of flow */
-  nextStepId: z.string().uuid().nullable(),
+  nextStepId: z.guid().nullable(),
   /** Warnings to display to the user */
   warnings: z.array(warningSchema),
   /** Whether the assessment should terminate early */

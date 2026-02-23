@@ -1,12 +1,352 @@
 # FFP - Progress Log
 
-Detailed session-by-session history for Sprint 1 execution.
+Detailed session-by-session history.
 
 **For current status, see `project-state.md`**
 
 ---
 
 ## Recent Sessions (Detailed)
+
+### February 21, 2026 (session 2) — FFP-233 Closed, FFP-230 Implemented
+
+**Status**: FFP-233 ✅ CLOSED (already implemented), FFP-230 ✅ COMPLETE
+
+**Branch**: `feature/sprint6`
+
+**FFP-233 — Backend Required Question Validation**: Closed without new work — required question validation was already fully implemented during FFP-130 (Sprint 4) in `assessment.service.ts` (lines 436–551). Both ACs satisfied: required question detection with `missingQuestionIds` response, and multi-template support via `findVisitedTemplateIds()`.
+
+**FFP-230 — Stale Job Detection**: Implemented scheduled Lambda for detecting and marking stale jobs as failed.
+
+- `stale-job.service.ts` — `detectAndMarkStaleJobs(config)` with `StaleJobConfig` supporting per-type threshold overrides (mirrors `JobProcessorConfig.maxConcurrentByType` pattern)
+- `detect-stale-jobs.ts` — Lambda handler reads `STALE_JOB_THRESHOLD_SECONDS` (default) and `STALE_JOB_THRESHOLD_{TYPE}` (per-type overrides) env vars
+- `sst.config.ts` — Standalone `StaleJobDetector` Function (all stages) + `StaleJobDetectorCron` (rate 5 min, staging/production only)
+- No schema changes needed (`process_jobs.message` already existed), no RLS needed (table excluded by design)
+- Per-type thresholds added during review as enhancement for future job types with different expected durations
+
+---
+
+### February 21, 2026 — FFP-279/280 Merged, Slash Commands, FFP-230 Planning
+
+**Status**: FFP-279 + FFP-280 ✅ MERGED (PR #80), FFP-230 implementation plan written
+
+**Branch**: `feature/ffp-279-280-seed-uuids-zod-v4` (merged), `feature/sprint6` (ongoing)
+
+**Summary**: Completed the Zod v4 + seed UUID tech debt migration, created Claude Code custom commands for sprint workflows, and planned FFP-230 (stale job detection).
+
+**FFP-279 + FFP-280 — Seed UUIDs & Zod v4 Migration** (PR #80, merged):
+
+- Replaced `z.string().uuid()` with `z.guid()` across all Zod schemas to accept Cognito's non-RFC-4122 UUIDs
+- Aligned UUID changes in user assessments schema
+- Migrated email and ISO date validators from Zod v3 to v4 syntax (`z.email()`, `z.iso.date()`)
+- Updated Zod validation error messages for consistency
+- Fixed review skill and updated validation error message formatting
+
+**Commits** (on `feature/ffp-279-280-seed-uuids-zod-v4`):
+
+| Hash      | Description                                                         |
+| --------- | ------------------------------------------------------------------- |
+| `8b62c0a` | FFP-279: Replace z.string().uuid() with z.guid() across all schemas |
+| `d925442` | Aligned UUID changes in user assessments schema                     |
+| `ca1d8db` | Fixed review skill and updated messages in Zod validation errors    |
+| `529c461` | Aligned email and ISO date from v3 to v4 for the Zod schema         |
+
+**Claude Code Custom Commands** (on `feature/sprint6`):
+
+- Created `/pick-up` command (`.claude/commands/pick-up.md`) — structured workflow for picking up a user story: reads Jira ticket, analyses requirements, creates sub-tasks with implementation plans
+- Created `/work-on` command (`.claude/commands/work-on.md`) — structured workflow for implementing a sub-task: reads the plan, implements code changes, runs quality checks
+
+**FFP-230 — Stale Job Detection** (planned, not yet implemented):
+
+- Wrote implementation plan in `project-state.md`
+- 3 files: service function, Lambda handler, SST cron config
+- Confirmed `process_jobs` has no RLS (no BYPASSRLS needed)
+- Configurable threshold via env var (`STALE_JOB_THRESHOLD_SECONDS`, default 300s)
+- Tests deferred to MVP launch
+
+**Sprint 6 Progress**: ~24/~26 pts (~92%) — FFP-279 + FFP-280 complete. Remaining: FFP-230 (planned), FFP-254 (to do).
+
+---
+
+### February 18-20, 2026 — FFP-229 Epic Clean Up, FFP-273 ToastAlert, Sprint 6 Housekeeping
+
+**Status**: FFP-229 ✅ Done, FFP-273 ✅ Done, FFP-233 ✅ Closed (no work needed)
+
+**Branch**: `feature/sprint6`
+
+**Summary**: Completed assessment engine epic clean-up, built the toast notification system, and closed FFP-233 (already implemented).
+
+**FFP-229 — Assessment Engine Epic Clean Up**:
+
+- Reviewed FFP-2 epic requirements against delivered work
+- Backlog scan and ticket hygiene
+- Identified deferred items (FFP-231, FFP-252, FFP-141)
+
+**FFP-273 — ToastAlert Notification Component**:
+
+- Built `ToastAlert` component with 4 variants (info, success, warning, error)
+- Auto-dismissing with animated progress bar
+- Entrance/exit animations
+- `ToastProvider` context + `useToast` hook for app-wide toast management
+- Dev showcase page with 5 demo tabs
+- Updated `StaticAlert` showcase to reference ToastAlert as implemented
+
+**FFP-233 — Backend Required Question Validation**:
+
+- Closed without new work — required question validation was already implemented during FFP-130 (Sprint 4) in `assessment.service.ts`
+
+---
+
+### February 12-17, 2026 — FFP-272 E2E Testing, Additional Features & Merge
+
+**Status**: ✅ FFP-272 MERGED (PR merged to main, 17th Feb)
+
+**Branch**: `feature/ffp-272-full-e2e-assessment-integration`
+
+**Summary**: Six E2E testing sessions that uncovered and fixed multiple UX issues, plus significant scope expansion beyond original subtasks — programme overview page, reassessment flow, RLS tightening, and Postman MCP migration.
+
+**E2E Testing Results** (6 scenarios):
+
+| Scenario | Description                         | Result                    |
+| -------- | ----------------------------------- | ------------------------- |
+| 1        | Happy path (back pain, full 9-step) | ✅ Tested                 |
+| 2        | Branching (non-back-pain skip)      | ✅ API-verified           |
+| 3        | Red flag warnings UI                | ✅ Tested                 |
+| 4        | Resume mid-assessment               | ✅ API-verified           |
+| 5        | Resume after submission             | ✅ Tested (routing guard) |
+| 6        | First login redirect                | ✅ Tested                 |
+| —        | Programme overview page             | ✅ Tested                 |
+| —        | Reassessment flow (replace/keep)    | ✅ Tested                 |
+
+**UX Fixes from E2E Testing**:
+
+- Disabled Continue button until required questions answered
+- Fixed numeric input deletion (added `CLEAR_ANSWER` reducer action)
+- Fixed question sub-progress counter (current/total not remaining/total)
+- Clamped numeric inputs with min/max on video-response seed questions
+- Vertically centred question card screens within viewport
+- Resumed submitted assessments at results step on reload
+- Redirected to programme overview if user already has active programme
+
+**Additional Features Delivered** (beyond FFP-272 scope):
+
+- **Programme Overview Page**: `GET /programmes/active` endpoint, `getActiveProgramme` service, `activeProgrammeResponseSchema`, frontend API client, React Query hook, real `ProgrammeOverviewPage` replacing placeholder
+- **Reassessment Flow**: Start new assessment when programme exists, replace/keep programme choice dialogue, programme archival with `replaceProgramme` service method
+- **RLS Policy Tightening**: Split `tenants` RLS into `tenant_read_isolation` (SELECT, includes platform) and `tenant_write_isolation` (ALL on own tenant only) to prevent cross-tenant writes
+- **Defence-in-depth**: Added `userId` filter to assessment update in `replaceProgramme`, narrowed error handling in `getUserAssessmentStatus` to `InternalServerError` only
+- **Results API**: Return programme name in results response
+
+**Review Fixes** (final commit before merge):
+
+- Split tenants RLS into separate read/write policies
+- Narrowed catch in `getUserAssessmentStatus` to `InternalServerError` only — re-throws unexpected errors
+- Added `userId` filter to assessment update in `replaceProgramme` for belt-and-braces consistency
+- Replaced raw `<span>` with themed `Text` component in `ResultsScreen` risk level badge
+
+**Postman MCP Server Setup** (17th Feb):
+
+- Verified Postman MCP server connection (100+ tools available)
+- Migrated `FFP - Manual Test & Demo Flows` collection to Postman workspace via API
+- Confirmed `FFP - Fit For Purpose API` collection already present (imported earlier that day)
+- Created `/postman` skill (`.claude/skills/postman/SKILL.md`) with collection IDs, interaction rules, and read-only environment policy
+- Updated `.gitignore` to exclude `postman/` directory
+- Updated `CLAUDE.local.md` MCP server list with Postman and Gmail entries
+
+**Quality Assurance**:
+
+- ✅ 8 E2E scenarios tested across 6 sessions
+- ✅ `pnpm typecheck` — Zero errors
+- ✅ `pnpm lint` — Zero warnings
+- ✅ Postman collections synced to cloud
+
+**Sprint 6 Progress**: ~24/~26 pts (~92%) — FFP-137 + FFP-140 + FFP-272 + FFP-273 + FFP-229 complete. Remaining: FFP-279, FFP-280, FFP-233, FFP-230, FFP-254.
+
+---
+
+### February 8-11, 2026 (Sessions 103-108 - FFP-272 E2E Assessment Flow Integration)
+
+**Status**: ✅ FFP-272 CODE COMPLETE (pending E2E manual testing)
+
+**Branch**: `feature/ffp-272-full-e2e-assessment-integration`
+
+**Summary**: Wired the end-to-end assessment flow together across 6 sub-tasks — from fixing the template questions schema through to first-login redirect. Finished with a state management audit that trimmed the reducer from 11 to 6 actions.
+
+**Key Deliverables**:
+
+- **Template Questions Schema** (FFP-274): `assessmentTemplateWithQuestionsSchema` with Zod transform mapping backend `QuestionWithConfig` to frontend `AssessmentQuestion` (`questionText` -> `question`, nullable -> optional, `configOverrides` applied, backend-only fields stripped)
+- **Assessment Route & Page Shell** (FFP-275): `RouteKey.ASSESSMENT` at `/assessment` with `excludeLayout: true` (fullscreen). `AssessmentPage` reads `flowId` from search params, wraps with `AssessmentProvider`
+- **Assessment Orchestrator** (FFP-276): Starts/resumes assessment on mount via `useStartAssessment`, dispatches `START_ASSESSMENT` to hydrate context from server, fetches template questions reactively based on current step's `templateId`
+- **Submit & Results Polling** (FFP-277): User-initiated submit flow (no useEffect). `isLastSubmittableStep` computed from flow steps. "Complete Assessment" green button on final question. `ResultsStepContent` polls and dispatches `SET_SCORES`. `handleViewProgramme` navigates to `/programme-overview`
+- **First-Login Redirect** (FFP-278): `GET /assessments/user-status` endpoint with two-tier flow lookup (tenant override -> platform default). `useUserAssessmentStatusQuery` hook on `HomePage` redirects programme users without a programme to `/assessment?flowId=<id>`
+- **E2E Testing Guide**: Comprehensive seed data scenarios and verification steps documented
+- **State Management Audit**: Evaluated useReducer + Context against Zustand, XState v5, Jotai, TanStack Query, useActionState, React Hook Form. Decision: keep current pattern. Removed 5 unused speculative actions (YAGNI)
+
+**Sub-tasks Completed**:
+
+| Order | Key     | Summary                                              | Status      |
+| ----- | ------- | ---------------------------------------------------- | ----------- |
+| 1     | FFP-274 | Fix template questions schema & API response parsing | ✅ Complete |
+| 2     | FFP-275 | Create assessment route and page shell               | ✅ Complete |
+| 3     | FFP-276 | Wire assessment page orchestrator (start, step flow) | ✅ Complete |
+| 4     | FFP-277 | Wire submit assessment and results polling           | ✅ Complete |
+| 5     | FFP-278 | Programme user first-login redirect to assessment    | ✅ Complete |
+| -     | -       | E2E testing guide (seed data, scenarios)             | ✅ Complete |
+| -     | -       | State management audit & reducer cleanup             | ✅ Complete |
+
+**Files Created**:
+
+```
+packages/web/src/pages/protected/programme-user/
+├── AssessmentPage.tsx                    # Fullscreen page shell with provider
+└── AssessmentOrchestrator.tsx            # Lifecycle orchestrator (start, submit, results)
+
+packages/web/src/components/assessment/
+└── AssessmentStepRenderer/
+    └── ResultsStepContent.tsx            # Results polling + SET_SCORES dispatch
+
+packages/core/src/schemas/
+└── assessment-template.schema.ts         # assessmentTemplateWithQuestionsSchema (extended)
+
+packages/core/src/assessments/
+└── user-assessment-status.service.ts     # getUserAssessmentStatus (two-tier flow lookup)
+
+packages/functions/src/assessments/
+└── get-user-assessment-status.ts         # GET /assessments/user-status handler
+
+packages/web/src/hooks/assessments/
+└── useUserAssessmentStatusQuery.ts       # Status check + redirect hook
+```
+
+**Files Modified** (key changes only):
+
+| File                                                                                       | Change                                                                        |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| `packages/web/src/lib/api/endpoints/assessments.ts`                                        | Updated `getTemplate()` to parse with `assessmentTemplateWithQuestionsSchema` |
+| `packages/web/src/hooks/assessments/useAssessmentTemplateQuery.ts`                         | Updated generic type to `AssessmentTemplateWithQuestions`                     |
+| `packages/web/src/pages/routes/RouteKey.ts`                                                | Added `ASSESSMENT` enum value                                                 |
+| `packages/web/src/pages/routes/index.ts`                                                   | Added `/assessment` route config with `excludeLayout: true`                   |
+| `packages/web/src/components/assessment/AssessmentStepRenderer/types.ts`                   | Added `isLastSubmittableStep`, `onSubmitAssessment` props                     |
+| `packages/web/src/components/assessment/AssessmentStepRenderer/AssessmentStepRenderer.tsx` | Passes submit props to content components                                     |
+| `packages/web/src/components/assessment/AssessmentStepRenderer/QuestionStepContent.tsx`    | Final-submit logic ("Complete Assessment" green button)                       |
+| `packages/web/src/components/assessment/AssessmentStepRenderer/VideoStepContent.tsx`       | Same final-submit logic as QuestionStepContent                                |
+| `packages/web/src/components/assessment/AssessmentNavigation/AssessmentNavigation.tsx`     | Added `continueVariant` prop                                                  |
+| `packages/web/src/pages/protected/programme-user/HomePage.tsx`                             | Added `useUserAssessmentStatusQuery` redirect logic                           |
+| `packages/web/src/contexts/assessments/constants.ts`                                       | Removed 5 unused action keys (audit)                                          |
+| `packages/web/src/contexts/assessments/types.ts`                                           | Removed 5 action interfaces + union members (audit)                           |
+| `packages/web/src/contexts/assessments/reducer.ts`                                         | Removed 5 cases, added lifecycle comment (audit)                              |
+| `packages/web/src/contexts/assessments/index.ts`                                           | Removed 5 unused type exports (audit)                                         |
+
+**State Management Audit Decision**:
+
+Evaluated `useReducer` + Context against 6 alternatives (Zustand, XState v5, Jotai, TanStack Query, useActionState, React Hook Form). Key findings:
+
+- Pattern is still React-recommended in 2026, zero bundle overhead, 4 page-scoped consumers with no prop drilling
+- Removed 5 unused speculative actions per YAGNI: `SET_PHASE`, `GO_TO_STEP`, `ADD_WARNING`, `CLEAR_WARNINGS`, `RESET` (~100 lines removed)
+- Reducer trimmed from 11 to 6 active actions with lifecycle documentation
+- `questionIndex` stays as local state in `AssessmentStepRenderer`
+- Full research documented in `.claude/docs/React State Management Research: Multi-Step Assessment Wizard (2026).md`
+
+**Key Patterns Established**:
+
+| Area                | Decision                                                                                        |
+| ------------------- | ----------------------------------------------------------------------------------------------- |
+| **Template Schema** | Zod `.transform()` maps backend shape to frontend at parse time (single source of truth)        |
+| **Orchestrator**    | Page-level component owns lifecycle (start/submit); child components are presentational         |
+| **Submit Flow**     | User-initiated (button click), not state-driven (no useEffect) — avoids accidental submission   |
+| **Resume**          | `START_ASSESSMENT` re-hydrates full state from server; `hasSubmittedRef` prevents re-submission |
+| **Results**         | Polling via `useAssessmentResultsQuery`, `SET_SCORES` dispatch syncs to context                 |
+| **First-Login**     | Two-tier flow lookup (tenant override -> platform default) for multi-tenant flexibility         |
+| **State Mgmt**      | useReducer + Context validated for this use case; re-evaluate if branching moves client-side    |
+
+**Quality Assurance**:
+
+- ✅ `pnpm typecheck` — Zero errors across all packages
+- ✅ `pnpm lint` — Zero warnings
+- ✅ E2E manual testing — completed across 6 sessions (12th-17th Feb, see entry above)
+
+**Sprint 6 Progress at this point**: ~13/~26 pts (~50%) — FFP-137 + FFP-140 + FFP-272 (code) + FFP-273 complete
+
+---
+
+### February 6-8, 2026 (Sessions 95-102 - FFP-140 Assessment Step Screens)
+
+**Status**: ✅ FFP-140 COMPLETE
+
+**Branch**: `feature/FFP-140-assessment-step-screens`
+
+**Summary**: Built all assessment step screen and card components across 8 rounds of iterative development. Started with standalone screen components, refactored to a shared card layout pattern after Figma review, extracted reusable shared components, built the orchestrator, and added entrance animations throughout.
+
+**Key Deliverables**:
+
+- **IntroScreen**: Welcome screen with "What to Expect" feature grid, "Before You Begin" checklist, start button
+- **Screen-to-Card Refactor**: Introduced `StepCard` shared layout; migrated `QuestionScreen` → `QuestionCard`, `TransitionScreen` → `TransitionCard`, new `VideoQuestionCard` scaffold
+- **Shared Components**: `SectionHeader`, `FeatureColumnGrid`, `InstructionList`, `SectionPanel` — extracted from repeated patterns across cards/screens
+- **ResultsScreen**: Two-column layout (scores + recommended programme), loading/polling state, "What Happens Next" feature grid
+- **AssessmentStepRenderer**: Orchestrator routing step types to correct card/screen, question iteration within steps, results polling, conditional progress bar
+- **Animations**: Staggered `FadeSlideIn` entrances, directional `CardTransition` for question navigation, `SpringScale` on results icon, `ClickScale` on CTAs. Centralised `ASSESSMENT_MOTION` constants
+- **Component Extensions**: `Text` component extended with `h1`–`h5` and `ffp-navy` colour; `IconBadge` extended with `solid`/`circle` variants; `StaticAlert` extended with `solid` appearance
+
+**Sub-tasks Completed**:
+
+| Order | Key     | Summary                           | Status      |
+| ----- | ------- | --------------------------------- | ----------- |
+| 1     | FFP-218 | IntroScreen component             | ✅ Complete |
+| 2     | FFP-220 | TransitionScreen → TransitionCard | ✅ Complete |
+| 3     | FFP-219 | QuestionScreen → QuestionCard     | ✅ Complete |
+| -     | -       | Screen-to-Card refactor           | ✅ Complete |
+| -     | -       | Shared component extraction       | ✅ Complete |
+| 4     | FFP-221 | ResultsScreen                     | ✅ Complete |
+| 5     | FFP-222 | AssessmentStepRenderer            | ✅ Complete |
+| -     | -       | Entrance animations & polish      | ✅ Complete |
+
+**Development Rounds**:
+
+| Round | Focus                                    | Key Outcome                                                                            |
+| ----- | ---------------------------------------- | -------------------------------------------------------------------------------------- |
+| 1     | FFP-218 IntroScreen + FFP-220 Transition | Initial standalone screen implementations                                              |
+| 2     | FFP-219 QuestionScreen                   | Question wrapper with sub-progress indicator                                           |
+| 3     | Screen-to-Card refactor                  | StepCard layout, `cards/` directory, VideoQuestionCard                                 |
+| 4     | Text/StepCard improvements               | Heading elements on Text, QuestionSubProgress in StepCard                              |
+| 5     | Shared component extraction              | FeatureColumnGrid, InstructionList, SectionHeader                                      |
+| 6     | FFP-221 ResultsScreen                    | SectionPanel, IconBadge solid/circle, scores layout                                    |
+| 7     | FFP-222 AssessmentStepRenderer           | Orchestrator, step type routing, question iteration                                    |
+| 8     | Animations & polish                      | ASSESSMENT_MOTION constants, FadeSlideIn/CardTransition/SpringScale across all screens |
+
+**Files Created**:
+
+```
+packages/web/src/components/assessment/
+├── cards/
+│   ├── StepCard/StepCard.tsx              # Shared card layout
+│   ├── QuestionCard/QuestionCard.tsx      # Question step card
+│   ├── TransitionCard/TransitionCard.tsx  # Transition step card
+│   ├── VideoQuestionCard/VideoQuestionCard.tsx  # Video step card
+│   ├── QuestionSubProgress/QuestionSubProgress.tsx  # Question counter
+│   └── index.ts
+├── screens/
+│   ├── IntroScreen/IntroScreen.tsx        # Welcome screen
+│   └── ResultsScreen/ResultsScreen.tsx    # Results with polling
+├── AssessmentStepRenderer/
+│   └── AssessmentStepRenderer.tsx         # Step type orchestrator
+├── SectionPanel/SectionPanel.tsx          # Styled section container
+├── SectionHeader/SectionHeader.tsx        # Icon + title + description
+├── FeatureColumnGrid/FeatureColumnGrid.tsx  # 3-column feature grid
+├── InstructionList/InstructionList.tsx     # Bulleted instruction list
+└── motion.constants.ts                    # Animation timing constants
+```
+
+**Known Gap**: `useAssessmentTemplateQuery` doesn't return questions (Zod schema strips them). Tracked in FFP-272 (E2E Assessment Flow Integration).
+
+**Quality Assurance**:
+
+- ✅ `pnpm lint-format` - Zero warnings
+- ✅ `pnpm turbo typecheck --filter=@ffp/web` - Zero errors
+- ✅ Dev showcase pages updated with tabbed demos for all components
+- ✅ Merged to main via PR #77
+
+**Sprint 6 Progress**: 8/~26 pts (31%) - FFP-137 + FFP-140 complete
+
+---
 
 ### February 4, 2026 (Sessions 93-94 - FFP-134 Programme Generation Service)
 
@@ -676,8 +1016,12 @@ The tests were failing with "permission denied for table template_questions" bec
 | Jan 22      | FFP-138 Complete (Progress Bar)    | ~178h         |
 | Jan 27      | FFP-139 Complete (Question Render) | ~180h         |
 | Feb 4       | FFP-134 Complete (Programme Gen)   | ~183h         |
-| **Current** | **Sprint 5 ✅ Complete (Early)**   | **~183/197h** |
+| Feb 4       | Sprint 5 ✅ Complete (Early)       | ~183h         |
+| Feb 6       | FFP-137 Complete (Assessment Nav)  | ~185h         |
+| Feb 8       | FFP-140 Complete (Step Screens)    | ~189h         |
+| Feb 11      | FFP-272 Code Complete (E2E Flow)   | ~193h         |
+| **Current** | **Sprint 6 In Progress (~13/~26)** | **~193/197h** |
 
 ---
 
-**Sprint 5 completed 4th February 2026 (11 days early). For current status and next tasks, see `project-state.md`**
+**Sprint 6 started early 6th February 2026. For current status and next tasks, see `project-state.md`**

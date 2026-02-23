@@ -331,7 +331,7 @@ describe('RLS Utility Functions', () => {
       // Set app.tenant_id to a valid UUID that doesn't exist in the data
       // (beforeEach sets it to actual tenant IDs during data creation)
       // Note: We use a zeros UUID which is valid but won't match any tenant
-      const nonExistentTenantId = '00000000-0000-0000-0000-000000000000';
+      const nonExistentTenantId = '00000000-0000-0000-8000-000000000000';
       await db.execute(sql.raw(`SET app.tenant_id = '${nonExistentTenantId}'`));
 
       // Without a matching tenant_id, queries should return empty results
