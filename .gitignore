@@ -67,6 +67,7 @@ CLAUDE.local.md
 .claude/plans/
 .claude/prompts/
 .claude/docs/
+.claude/research/
 
 project-documentation/sprint-planning/outputs/*.md
 project-documentation/sprint-planning/outputs/**/*.md

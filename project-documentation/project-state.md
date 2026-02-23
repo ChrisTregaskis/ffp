@@ -1,8 +1,8 @@
 # FFP - Project State
 
-**Last Updated**: 21st February 2026
-**Current EPIC**: FFP-2 wrapping up, FFP-3 (Video Management) next
-**Sprint Status**: Sprint 6 - Frontend Completion (nearly complete)
+**Last Updated**: 22nd February 2026
+**Current EPIC**: FFP-2 complete, FFP-3 (Video Management) planned and ready
+**Sprint Status**: Sprint 6 - Frontend Completion (complete)
 
 ---
 
@@ -11,22 +11,43 @@
 **Dates**: 16th February - 8th March 2026
 **Sprint Goal**: End-to-end assessment flow working, demo-ready MVP.
 
-| Key     | Story                                        | Pts | Type  | Status                                   |
-| ------- | -------------------------------------------- | --- | ----- | ---------------------------------------- |
-| FFP-137 | Assessment Navigation Component              | 3   | Story | ✅ Done                                  |
-| FFP-140 | Assessment Step Screens                      | 5   | Story | ✅ Done                                  |
-| FFP-272 | E2E Assessment Flow Integration              | 5   | Story | ✅ Done                                  |
-| FFP-273 | ToastAlert Notification Component            | 3   | Task  | ✅ Done                                  |
-| FFP-229 | Assessment Engine Epic Clean Up              | 8   | Story | ✅ Done                                  |
-| FFP-279 | Update deterministic seed UUIDs to RFC 4122  | -   | Task  | ✅ Done                                  |
-| FFP-280 | Align Zod versions across monorepo (v3 → v4) | -   | Task  | ✅ Done                                  |
-| FFP-233 | Backend Required Question Validation         | 3   | Story | ✅ Done (already implemented in FFP-130) |
-| FFP-230 | Stale Job Detection                          | 2   | Story | ✅ Done                                  |
-| FFP-254 | FFP-3 Epic Planning & Sprint Definition      | 5   | Story | To Do                                    |
+| Key     | Story                                        | Pts | Type  | Status                                             |
+| ------- | -------------------------------------------- | --- | ----- | -------------------------------------------------- |
+| FFP-137 | Assessment Navigation Component              | 3   | Story | ✅ Done                                            |
+| FFP-140 | Assessment Step Screens                      | 5   | Story | ✅ Done                                            |
+| FFP-272 | E2E Assessment Flow Integration              | 5   | Story | ✅ Done                                            |
+| FFP-273 | ToastAlert Notification Component            | 3   | Task  | ✅ Done                                            |
+| FFP-229 | Assessment Engine Epic Clean Up              | 8   | Story | ✅ Done                                            |
+| FFP-279 | Update deterministic seed UUIDs to RFC 4122  | -   | Task  | ✅ Done                                            |
+| FFP-280 | Align Zod versions across monorepo (v3 → v4) | -   | Task  | ✅ Done                                            |
+| FFP-233 | Backend Required Question Validation         | 3   | Story | ✅ Done (already implemented in FFP-130)           |
+| FFP-230 | Stale Job Detection                          | 2   | Story | ✅ Done                                            |
+| FFP-254 | FFP-3 Epic Planning & Sprint Definition      | 5   | Story | ✅ Done (planning complete, Jira creation pending) |
 
-### Remaining
+### FFP-3 Planning Outcomes (FFP-254)
 
-1. **FFP-254** - FFP-3 Epic planning (documentation, prepares next phase)
+**Research & planning complete**. Jira ticket creation is the final step (prompt ready at `.claude/prompts/ffp-3-jira-creation.md`).
+
+**FFP-3 scope**: 2 sprints, ~55 pts (Sprint 7: 28 pts, Sprint 8: 27 pts)
+
+- Sprint 7: Video catalogue schema, CloudFront OAC + signed URLs, video catalogue APIs, programme-video relationship schema
+- Sprint 8: Admin video upload/management UI, video player component, integration verification, docs update
+
+**Programme data model research complete** (`.claude/research/programme-data-model-research.md`):
+
+- Confirmed: Programme → Weeks → Sessions → Exercises (flexible days, not prescriptive)
+- Phases as metadata on weeks (`phase_label`/`phase_number`), not a separate entity
+- Hybrid instantiation: weeks created eagerly at assignment, sessions/completions lazily
+- Normalised `exercise_completions` table (not JSONB)
+- `programme_weeks` (user-layer, RLS) created in FFP-3; `user_sessions` and `exercise_completions` deferred to FFP-4
+
+**FFP-4 epic updated** in Jira with confirmed data model, prerequisites from FFP-3, and design decisions.
+
+**Key documents**:
+
+- `.claude/research/video-management-research.md` - Video infrastructure research & confirmed decisions
+- `.claude/research/ffp-3-epic-plan.md` - Final epic plan (stories, ACs, subtasks, sprint allocation)
+- `.claude/research/programme-data-model-research.md` - Authoritative programme data model
 
 ---
 
