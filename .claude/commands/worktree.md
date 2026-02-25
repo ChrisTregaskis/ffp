@@ -114,19 +114,35 @@ After completing all phases, provide:
 2. **User story overview** and execution plan (from Phase 3)
 3. **Any changes made** to outdated requirements
 4. **Any questions or decisions** needed before starting implementation
-5. **Worktree details and next steps**:
+5. **Next steps** — always end with this section, clearly formatted:
 
    ```
+   ✅ Pick-up complete — implementation plan is in project-state.md
+
+   ┌─────────────────────────────────────────────────────────┐
+   │  NEXT STEPS                                             │
+   │                                                         │
+   │  1. Open a new terminal and start a Claude session:     │
+   │                                                         │
+   │     cd <worktree-absolute-path>                         │
+   │     claude                                              │
+   │                                                         │
+   │  2. Begin implementation with the first sub-task:       │
+   │                                                         │
+   │     /work-on <first-subtask-key>                        │
+   │                                                         │
+   │  3. Continue with each sub-task in order:               │
+   │     /work-on <second-subtask-key>                       │
+   │     /work-on <third-subtask-key>                        │
+   │     ...                                                 │
+   │                                                         │
+   └─────────────────────────────────────────────────────────┘
+
    Worktree Details
    ────────────────
    Path:     <worktree-absolute-path>
    Branch:   <derived-branch-name>
    Based on: <sprint-branch>
-
-   To start implementation in a new session:
-     cd <worktree-absolute-path>
-     claude
-     /work-on <first-subtask-key>
 
    When all sub-tasks are complete:
      1. Commit and push the worktree branch
