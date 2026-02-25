@@ -34,7 +34,8 @@
       "**/dist",
       "**/build",
       "**/.next",
-      "**/coverage"
+      "**/coverage",
+      "**/.claude/worktrees"
     ],
     "excludeFiles": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts"]
   },
@@ -45,6 +46,7 @@
     "node_modules/.pnpm",
     "dist",
     "build",
-    "coverage"
+    "coverage",
+    ".claude/worktrees"
   ]
 }
