@@ -2,7 +2,7 @@
 
 **Last Updated**: 26th February 2026
 **Current EPIC**: FFP-3 Video Management
-**Sprint Status**: Sprint 7 - Video Infrastructure & APIs (ready to start)
+**Sprint Status**: Sprint 7 - Video Infrastructure & APIs (in progress)
 
 ---
 
@@ -17,6 +17,41 @@
 - `.claude/research/video-management-research.md` - Video infrastructure research & confirmed decisions
 - `.claude/research/ffp-3-epic-plan.md` - Final epic plan (stories, ACs, subtasks, sprint allocation)
 - `.claude/research/programme-data-model-research.md` - Authoritative programme data model
+
+### Active Story: FFP-282 — Video Catalogue Database Schema (5 pts)
+
+**Branch**: `feature/ffp-282-video-cat-database-schema`
+**Status**: In Progress
+**Blocks**: FFP-294 (Signed URL Service), FFP-307 (Programme-Video Relationships), FFP-320 (Admin Video Upload)
+
+**Summary**: Create the videos table schema, migration, Zod validation schemas, and seed data. Videos are system-managed content (no RLS) — follows the `programme_templates` pattern.
+
+**Sub-tasks (execution order)**:
+
+| #   | Key     | Sub-task                                        | Status | Notes                                      |
+| --- | ------- | ----------------------------------------------- | ------ | ------------------------------------------ |
+| 1   | FFP-283 | Create Drizzle schema + enums + GIN indexes     | Done   | Also created video.constants.ts per amend  |
+| 2   | FFP-287 | Add videos export to schema & constants indexes | Done   | Bundled with FFP-283                       |
+| 3   | FFP-284 | Generate and apply database migration           | Done   | Migration 0017_awesome_nebula.sql applied  |
+| 4   | FFP-285 | Create Zod validation schemas                   | Done   | + schemas index export per amended req #3  |
+| 5   | FFP-286 | Create seed data script (5-10 video records)    | Done   | 10 videos, deterministic UUIDs, idempotent |
+
+**Amended requirements** (ticket vs current codebase patterns):
+
+1. **Enum constants** — Ticket only mentions enums in the schema file, but the established pattern defines constants in `packages/database/src/constants/video.constants.ts` as the single source of truth, then imports them into both the Drizzle schema (`pgEnum`) and Zod schemas (`z.enum`). Will create `video.constants.ts` and export from constants index.
+2. **Constants index** — FFP-287 ticket only mentions `schema/index.ts`, but also need to update `constants/index.ts` to export new video constants.
+3. **Zod schema exports** — FFP-285 ticket doesn't mention updating `packages/core/src/schemas/index.ts`, but must do so for downstream consumers.
+4. **Seed pattern** — FFP-286 says "Add to existing seed script or create new seed function". Existing pattern is individual seed files in `packages/database/seed/`. Will create `seedVideos.ts` following the `seedProgrammeTemplates.ts` pattern (deterministic UUIDs, idempotent, logger).
+5. **RLS exclusion note** — Videos should be added to the RLS exclusions list in project-state.md once complete.
+
+**Implementation grouping** (single branch, single PR):
+
+- **Pass 1**: FFP-283 + FFP-287 — Constants file, schema file, index exports
+- **Pass 2**: FFP-284 — Generate & apply migration
+- **Pass 3**: FFP-285 — Zod schemas + core schemas index export
+- **Pass 4**: FFP-286 — Seed data script
+
+**No blockers or prerequisites** — this is the first story in Sprint 7.
 
 ---
 
@@ -155,7 +190,7 @@ await db.transaction(async (tx) => {
 
 **JWT Claims**: `custom:tenantId`, `custom:customerId`, `custom:role`
 
-**RLS exclusions**: `process_jobs`, `assessment_templates`, `assessment_flows`, `questions`, `template_questions` (system-managed, cross-tenant by design)
+**RLS exclusions**: `process_jobs`, `assessment_templates`, `assessment_flows`, `questions`, `template_questions`, `programme_templates`, `videos` (system-managed, cross-tenant by design)
 
 ### Frontend Architecture
 
@@ -189,15 +224,17 @@ await db.transaction(async (tx) => {
 ## Quick Reference
 
 **Jira**: FFP project at ctregaskis.atlassian.net
-**Velocity**: ~25 pts/sprint
-**Capacity**: 8 hours/week
+**Velocity**: ~25-30 pts/sprint
+**Capacity**: 8-12 hours/week
 
 **EPICs**:
 
 - ✅ FFP-1: Application Setup & Foundation
 - ✅ FFP-2: Assessment Engine (Sprints 3-6)
 - 🏃 FFP-3: Video Management (Sprint 7-8) — in progress
-- ⏳ FFP-4: User Dashboards and Progress Tracking
+- ⏳ FFP-4: Programme Execution & Progress
+- ⏳ FFP-109: Deployment Readiness (staging + production)
+- ⏳ FFP-6: Customer & User Onboarding
 
 ---
 

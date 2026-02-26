@@ -21,3 +21,4 @@ export * from './question.constants';
 export * from './tenant.constants';
 export * from './user.constants';
 export * from './user-assessment.constants';
+export * from './video.constants';
