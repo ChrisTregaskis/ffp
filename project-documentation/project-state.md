@@ -40,7 +40,7 @@
 | 1   | FFP-283 | Create Drizzle schema + enums + GIN indexes     | Done   | Also created video.constants.ts per amend  |
 | 2   | FFP-287 | Add videos export to schema & constants indexes | Done   | Bundled with FFP-283                       |
 | 3   | FFP-284 | Generate and apply database migration           | Done   | Migration 0017_awesome_nebula.sql applied  |
-| 4   | FFP-285 | Create Zod validation schemas                   | To Do  | In `packages/core/src/schemas/`            |
+| 4   | FFP-285 | Create Zod validation schemas                   | Done   | + schemas index export per amended req #3  |
 | 5   | FFP-286 | Create seed data script (5-10 video records)    | To Do  | Follow `seedProgrammeTemplates.ts` pattern |
 
 **Amended requirements** (ticket vs current codebase patterns):
