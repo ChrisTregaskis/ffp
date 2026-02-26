@@ -33,12 +33,12 @@
 
 **Execution order** (entire story on one branch):
 
-| Order | Sub-task          | Summary                                                                                                                                     | Type            | Status   |
-| ----- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | -------- |
-| 1     | FFP-289           | Generate RSA 2048 key pair, create setup script (`scripts/setup-cloudfront-signing-key.sh`), store private key via `sst secret set`         | Script + Manual | ✅ Done  |
-| 2     | FFP-290 + FFP-291 | Update SST config: OAC on VideoCdn, CloudFront Key Group, S3 bucket policy, `sst.Secret("CloudFrontSigningKey")` linked to Lambda functions | Code (SST)      | ✅ Done  |
-| 3     | FFP-292           | Verify deployment: direct S3 URL → 403, unsigned CloudFront URL → 403                                                                       | Manual (curl)   | ⬜ To Do |
-| 4     | FFP-293           | Document setup script usage as deployment prerequisite                                                                                      | Documentation   | ⬜ To Do |
+| Order | Sub-task          | Summary                                                                                                                                     | Type            | Status  |
+| ----- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------- |
+| 1     | FFP-289           | Generate RSA 2048 key pair, create setup script (`scripts/setup-cloudfront-signing-key.sh`), store private key via `sst secret set`         | Script + Manual | ✅ Done |
+| 2     | FFP-290 + FFP-291 | Update SST config: OAC on VideoCdn, CloudFront Key Group, S3 bucket policy, `sst.Secret("CloudFrontSigningKey")` linked to Lambda functions | Code (SST)      | ✅ Done |
+| 3     | FFP-292           | Verify deployment: direct S3 URL → 403, unsigned CloudFront URL → 403                                                                       | Manual (curl)   | ✅ Done |
+| 4     | FFP-293           | Document setup script usage as deployment prerequisite                                                                                      | Documentation   | ✅ Done |
 
 #### Grouping Notes
 
