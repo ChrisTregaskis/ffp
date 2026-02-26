@@ -38,7 +38,7 @@ export const videos = pgTable(
     /** Detailed exercise instructions */
     description: text('description'),
     /** S3 object key (e.g., 'library/{uuid}.mp4') — not a full URL */
-    s3Key: varchar('s3_key', { length: 500 }).notNull(),
+    s3Key: varchar('s3_key', { length: 500 }).notNull().unique(),
     /** S3 key for thumbnail image */
     thumbnailKey: varchar('thumbnail_key', { length: 500 }),
     /** Video duration in seconds */
