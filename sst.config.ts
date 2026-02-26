@@ -197,7 +197,44 @@ export default $config({
       },
     });
 
-    // CloudFront CDN for video delivery
+    // =========================================================================
+    // CLOUDFRONT SIGNED URL INFRASTRUCTURE
+    // Signing key pair for generating time-limited signed URLs for video content.
+    // Keys are stored as SST secrets (per-stage) via the setup script:
+    //   bash scripts/setup-cloudfront-signing-key.sh <stage>
+    // =========================================================================
+
+    // SST Secrets — private key for Lambda URL signing, public key for CloudFront verification
+    // Set via: bash scripts/setup-cloudfront-signing-key.sh <stage>
+    // CloudFrontSigningKey will be linked to Lambda functions when video URL API is built
+    new sst.Secret('CloudFrontSigningKey');
+    const cloudFrontSigningPublicKey = new sst.Secret('CloudFrontSigningPublicKey');
+
+    const videoOac = new aws.cloudfront.OriginAccessControl('VideoOac', {
+      name: `ffp-video-oac-${$app.stage}`,
+      description:
+        'Origin Access Control for FFP video S3 bucket — restricts access to CloudFront only',
+      originAccessControlOriginType: 's3',
+      signingBehavior: 'always',
+      signingProtocol: 'sigv4',
+    });
+
+    const cfPublicKey = new aws.cloudfront.PublicKey('CfPublicKey', {
+      name: `ffp-cf-public-key-${$app.stage}`,
+      comment: 'Public key for FFP CloudFront signed URL verification',
+      encodedKey: cloudFrontSigningPublicKey.value,
+    });
+
+    // Key Group — trusted by the CloudFront distribution for signed URL validation
+    const cfKeyGroup = new aws.cloudfront.KeyGroup('CfKeyGroup', {
+      name: `ffp-cf-key-group-${$app.stage}`,
+      comment: 'Key group for FFP signed video URLs',
+      items: [cfPublicKey.id],
+    });
+
+    // CloudFront CDN for video delivery (OAC + signed URLs)
+    // OAC and trustedKeyGroups are applied in transform.distribution to guarantee
+    // they reach the raw Pulumi distribution (SST Cdn may not pass them through)
     const videoCdn = new sst.aws.Cdn('VideoCdn', {
       origins: [
         {
@@ -225,7 +262,70 @@ export default $config({
         distribution: (args: any) => {
           // Use only North America and Europe for cost optimisation
           args.priceClass = 'PriceClass_100';
+
+          // Override origins with OAC at the raw Pulumi level — SST Cdn may not
+          // pass originAccessControlId through its abstraction layer
+          args.origins = [
+            {
+              domainName: videosBucket.domain,
+              originId: 'S3-Videos',
+              originAccessControlId: videoOac.id,
+              s3OriginConfig: {
+                originAccessIdentity: '', // Empty — using OAC instead of legacy OAI
+              },
+            },
+          ];
+
+          // Enforce signed URLs via trusted key groups
+          args.defaultCacheBehavior.trustedKeyGroups = [cfKeyGroup.id];
         },
+      },
+    });
+
+    // S3 bucket policy — restrict video access to CloudFront OAC only (no direct S3 access)
+    // Two statements: Allow CloudFront OAC + Deny everything else
+    new aws.s3.BucketPolicy('VideosBucketPolicy', {
+      bucket: videosBucket.name,
+      policy: $interpolate`{
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "AllowCloudFrontOACReadOnly",
+            "Effect": "Allow",
+            "Principal": {
+              "Service": "cloudfront.amazonaws.com"
+            },
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::${videosBucket.name}/*",
+            "Condition": {
+              "StringEquals": {
+                "AWS:SourceArn": "${videoCdn.nodes.distribution.arn}"
+              }
+            }
+          },
+          {
+            "Sid": "DenyNonCloudFrontAccess",
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::${videosBucket.name}/*",
+            "Condition": {
+              "StringNotEquals": {
+                "AWS:SourceArn": "${videoCdn.nodes.distribution.arn}"
+              }
+            }
+          }
+        ]
+      }`,
+    });
+
+    // Linkable — exposes CloudFront key pair ID for Lambda functions generating signed URLs
+    // Will be linked to functions when video URL API is built:
+    //   link: [CloudFrontSigningKey, CloudFrontKeyPairId]
+    //   Access in handler: Resource.CloudFrontKeyPairId.value
+    new sst.Linkable('CloudFrontKeyPairId', {
+      properties: {
+        value: cfPublicKey.id,
       },
     });
 
@@ -444,6 +544,8 @@ export default $config({
       videosBucket: videosBucket.name,
       assetsBucket: assetsBucket.name,
       cdnUrl: videoCdn.url,
+      // CloudFront signing infrastructure
+      cloudFrontKeyPairId: cfPublicKey.id,
       // API Gateway
       apiUrl: api.url,
       // General
