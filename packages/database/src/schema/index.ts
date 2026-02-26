@@ -18,3 +18,4 @@ export * from './user-assessments';
 export * from './questions';
 export * from './template-questions';
 export * from './user-assessment-answers';
+export * from './videos';

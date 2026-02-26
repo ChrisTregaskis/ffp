@@ -11,7 +11,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['tests/**/*.{test,spec}.{ts,tsx}'],
-    exclude: ['**/node_modules/**', '**/dist/**', 'packages/**'],
+    exclude: ['**/node_modules/**', '**/dist/**', 'packages/**', '.claude/worktrees/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -24,6 +24,7 @@ export default defineConfig({
         '**/dist/**',
         'packages/eslint-config/**',
         'packages/prettier-config/**',
+        '.claude/worktrees/**',
       ],
       // Phase 1: 8% coverage target
       thresholds: {

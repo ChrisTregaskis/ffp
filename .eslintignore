@@ -28,5 +28,8 @@ migrations/
 .cache
 *.tsbuildinfo
 
+# Claude Code worktrees
+.claude/worktrees
+
 # OS files
 .DS_Store
