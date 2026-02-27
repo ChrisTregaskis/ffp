@@ -50,36 +50,41 @@ echo ""
 # -------------------------------------------------------------------------
 echo -e "$(prefix_info) Retrieving SST outputs for stage '${STAGE}'..."
 
-# Get the CloudFormation stack outputs
-# SST v3 Ion uses the naming convention: <app>-<stage>-<resource>
-# The exports are in the SST output format
-BUCKET_NAME=$(aws ssm get-parameter \
-  --name "/sst/ffp/${STAGE}/VideosBucket/name" \
-  --query "Parameter.Value" --output text 2>/dev/null) || true
+# Query AWS directly — SST v3 Ion bucket naming convention: ffp-<stage>-videosbucketbucket-<hash>
+BUCKET_NAME=$(aws s3api list-buckets \
+  --query "Buckets[?starts_with(Name, 'ffp-${STAGE}-videosbucketbucket-')].Name | [0]" \
+  --output text 2>/dev/null) || true
 
-CDN_URL=$(aws ssm get-parameter \
-  --name "/sst/ffp/${STAGE}/VideoCdn/url" \
-  --query "Parameter.Value" --output text 2>/dev/null) || true
-
-# Fallback: try SST outputs directly if SSM parameters not found
-if [ -z "$BUCKET_NAME" ] || [ "$BUCKET_NAME" = "None" ]; then
-  echo -e "$(prefix_info) SSM lookup failed, trying sst output..."
-  BUCKET_NAME=$(npx sst output --stage "$STAGE" 2>/dev/null | grep "videosBucket" | awk '{print $2}') || true
+if [ "$BUCKET_NAME" = "None" ] || [ -z "$BUCKET_NAME" ]; then
+  BUCKET_NAME=""
 fi
 
-if [ -z "$CDN_URL" ] || [ "$CDN_URL" = "None" ]; then
-  CDN_URL=$(npx sst output --stage "$STAGE" 2>/dev/null | grep "cdnUrl" | awk '{print $2}') || true
+# Find the CloudFront distribution whose origin points to the videos bucket
+if [ -n "$BUCKET_NAME" ]; then
+  CDN_DOMAIN=$(aws cloudfront list-distributions \
+    --query "DistributionList.Items[?contains(Origins.Items[0].DomainName, '${BUCKET_NAME}')].DomainName | [0]" \
+    --output text 2>/dev/null) || true
+
+  if [ -n "$CDN_DOMAIN" ] && [ "$CDN_DOMAIN" != "None" ]; then
+    CDN_URL="https://${CDN_DOMAIN}"
+  fi
 fi
 
-if [ -z "$BUCKET_NAME" ] || [ "$BUCKET_NAME" = "None" ]; then
+# Allow environment variable overrides
+BUCKET_NAME="${BUCKET_NAME:-${FFP_VIDEOS_BUCKET:-}}"
+CDN_URL="${CDN_URL:-${FFP_CDN_URL:-}}"
+
+if [ -z "$BUCKET_NAME" ]; then
   echo -e "$(prefix_fail) Could not determine S3 bucket name for stage '${STAGE}'"
   echo -e "  Ensure SST is deployed: sst deploy --stage ${STAGE}"
+  echo -e "  Or set FFP_VIDEOS_BUCKET environment variable"
   exit 1
 fi
 
-if [ -z "$CDN_URL" ] || [ "$CDN_URL" = "None" ]; then
+if [ -z "$CDN_URL" ]; then
   echo -e "$(prefix_fail) Could not determine CloudFront URL for stage '${STAGE}'"
   echo -e "  Ensure SST is deployed: sst deploy --stage ${STAGE}"
+  echo -e "  Or set FFP_CDN_URL environment variable"
   exit 1
 fi
 
@@ -95,9 +100,7 @@ echo ""
 # -------------------------------------------------------------------------
 echo -e "$(prefix_running) Uploading test file to S3: s3://${BUCKET_NAME}/${TEST_FILE_KEY}"
 
-echo "$TEST_FILE_CONTENT" | aws s3 cp - "s3://${BUCKET_NAME}/${TEST_FILE_KEY}" --content-type "text/plain" 2>/dev/null
-
-if [ $? -ne 0 ]; then
+if ! echo "$TEST_FILE_CONTENT" | aws s3 cp - "s3://${BUCKET_NAME}/${TEST_FILE_KEY}" --content-type "text/plain" 2>&1; then
   echo -e "$(prefix_fail) Failed to upload test file to S3"
   echo -e "  Check your AWS credentials have s3:PutObject permission"
   exit 1
@@ -176,9 +179,7 @@ echo "-------------------------------------------"
 echo ""
 echo -e "$(prefix_running) Removing test file from S3..."
 
-aws s3 rm "s3://${BUCKET_NAME}/${TEST_FILE_KEY}" 2>/dev/null
-
-if [ $? -eq 0 ]; then
+if aws s3 rm "s3://${BUCKET_NAME}/${TEST_FILE_KEY}" 2>/dev/null; then
   echo -e "$(prefix_info) Test file removed from S3"
 else
   echo -e "$(prefix_warn) Could not remove test file — delete manually:"

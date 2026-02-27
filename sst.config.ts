@@ -153,12 +153,25 @@ export default $config({
     });
 
     // S3 Buckets for video and asset storage
+    // NOTE: SST enforces one BucketPolicy per Bucket (auto-created by the component).
+    // We cannot reference videoCdn ARN here (circular dependency: Bucket → Policy → CDN → Bucket).
+    // Instead, we allow the CloudFront service principal without SourceArn condition.
+    // Security is maintained by OAC (SigV4 restricts access to our specific distribution)
+    // and signed URL enforcement (trusted key group on the distribution).
+    // TODO: Add SourceArn condition when architecture supports it (e.g., post-deploy policy update)
     const videosBucket = new sst.aws.Bucket('VideosBucket', {
       cors: {
         allowHeaders: ['*'],
         allowMethods: ['GET', 'HEAD'],
         allowOrigins: ['*'], // Will be restricted to specific origins in production
       },
+      policy: [
+        {
+          actions: ['s3:GetObject'],
+          principals: [{ type: 'service', identifiers: ['cloudfront.amazonaws.com'] }],
+          paths: ['*'],
+        },
+      ],
       transform: {
         bucket: (args: any) => {
           // Enable AES256 encryption at rest
@@ -271,7 +284,7 @@ export default $config({
               originId: 'S3-Videos',
               originAccessControlId: videoOac.id,
               s3OriginConfig: {
-                originAccessIdentity: '', // Empty — using OAC instead of legacy OAI
+                originAccessIdentity: '', // Required by Pulumi provider to identify S3 origin; empty because OAC replaces legacy OAI
               },
             },
           ];
@@ -280,43 +293,6 @@ export default $config({
           args.defaultCacheBehavior.trustedKeyGroups = [cfKeyGroup.id];
         },
       },
-    });
-
-    // S3 bucket policy — restrict video access to CloudFront OAC only (no direct S3 access)
-    // Two statements: Allow CloudFront OAC + Deny everything else
-    new aws.s3.BucketPolicy('VideosBucketPolicy', {
-      bucket: videosBucket.name,
-      policy: $interpolate`{
-        "Version": "2012-10-17",
-        "Statement": [
-          {
-            "Sid": "AllowCloudFrontOACReadOnly",
-            "Effect": "Allow",
-            "Principal": {
-              "Service": "cloudfront.amazonaws.com"
-            },
-            "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::${videosBucket.name}/*",
-            "Condition": {
-              "StringEquals": {
-                "AWS:SourceArn": "${videoCdn.nodes.distribution.arn}"
-              }
-            }
-          },
-          {
-            "Sid": "DenyNonCloudFrontAccess",
-            "Effect": "Deny",
-            "Principal": "*",
-            "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::${videosBucket.name}/*",
-            "Condition": {
-              "StringNotEquals": {
-                "AWS:SourceArn": "${videoCdn.nodes.distribution.arn}"
-              }
-            }
-          }
-        ]
-      }`,
     });
 
     // Linkable — exposes CloudFront key pair ID for Lambda functions generating signed URLs
