@@ -40,13 +40,13 @@
 
 **Sub-tasks (execution order)**:
 
-| #   | Key     | Sub-task                                        | Status  | Notes                                             |
-| --- | ------- | ----------------------------------------------- | ------- | ------------------------------------------------- |
+| #   | Key     | Sub-task                                        | Status  | Notes                                                                    |
+| --- | ------- | ----------------------------------------------- | ------- | ------------------------------------------------------------------------ |
 | 1   | FFP-295 | Install AWS SDK dependencies                    | ✅ Done | Both `cloudfront-signer` + `client-secrets-manager` installed (^3.999.0) |
-| 2   | FFP-296 | Signing key retrieval with module-level caching | Pending | + video.repository.ts (`findVideoById`) per amend |
-| 3   | FFP-297 | Signed URL generation service                   | Pending | Combined in `video-signing.service.ts`            |
-| 4   | FFP-298 | GET /videos/{id}/signed-url Lambda handler      | Pending | Uses signing service + video repository           |
-| 5   | FFP-299 | Audit logging for video access events           | Pending | Integrated into service/handler, not standalone   |
+| 2   | FFP-296 | Signing key retrieval with module-level caching | ✅ Done | Config injection pattern + module-level cache; SST handles key retrieval |
+| 3   | FFP-297 | Signed URL generation service                   | ✅ Done | `video-signing.service.ts` + `video.repository.ts` + barrel exports      |
+| 4   | FFP-298 | GET /videos/{id}/signed-url Lambda handler      | Pending | Uses signing service + video repository                                  |
+| 5   | FFP-299 | Audit logging for video access events           | Pending | Integrated into service/handler, not standalone                          |
 
 **Amended requirements** (ticket vs current codebase patterns):
 
