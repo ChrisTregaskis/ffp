@@ -38,9 +38,111 @@ Migrations require `DB_MIGRATE_USER` (elevated privileges) due to RLS restrictio
 
 ### Secrets Management
 
-- All secrets in **AWS Secrets Manager** (never in code or environment files)
-- Naming convention: `ffp/{stage}/secret-name` (e.g., `ffp/prod/db-credentials`)
-- Access via `@aws-sdk/client-secrets-manager` in Lambda functions
+- Application secrets use **SST Secrets** (`sst secret set`) — per-stage, automatically linked to Lambda functions via `Resource.<SecretName>.value`
+- Database credentials in **AWS Secrets Manager** (accessed via `@aws-sdk/client-secrets-manager`)
+- Naming convention for Secrets Manager: `ffp/{stage}/secret-name` (e.g., `ffp/prod/db-credentials`)
+- Never commit secrets to code or environment files
+
+### CloudFront Signing Key Setup (Per-Environment Prerequisite)
+
+CloudFront signed URLs require an RSA key pair per environment. This is a **one-time setup** — keys are stored as SST secrets and reused across deployments.
+
+#### When to Run
+
+- **New environment setup** (dev, staging, production) — run once before the first `sst deploy`
+- **Key rotation** — re-run to generate a new key pair (overwrites existing secrets)
+- **NOT on every deploy** — SST references the stored secrets automatically at deploy time
+
+#### How to Run
+
+```bash
+# One-time setup per environment
+bash scripts/setup-cloudfront-signing-key.sh <stage>
+
+# Examples
+bash scripts/setup-cloudfront-signing-key.sh dev
+bash scripts/setup-cloudfront-signing-key.sh staging
+bash scripts/setup-cloudfront-signing-key.sh production
+```
+
+The script:
+
+1. Generates an RSA 2048 key pair (via OpenSSL)
+2. Validates the key pair before uploading
+3. Stores the private key as `CloudFrontSigningKey` (SST secret)
+4. Stores the public key as `CloudFrontSigningPublicKey` (SST secret)
+5. Removes key files from disk (cleanup trap)
+
+#### Prerequisites
+
+- OpenSSL installed (standard on macOS/Linux)
+- SST Ion CLI installed
+- AWS credentials configured for the target account
+
+#### Verify Secrets
+
+```bash
+sst secret list --stage <stage>
+# Should show: CloudFrontSigningKey, CloudFrontSigningPublicKey
+```
+
+#### How It Works at Deploy Time
+
+At deploy time, SST reads the stored secrets automatically — no manual intervention needed:
+
+| Secret                       | Used by                        | Purpose                                    |
+| ---------------------------- | ------------------------------ | ------------------------------------------ |
+| `CloudFrontSigningKey`       | Lambda functions (via `link`)  | Sign CloudFront URLs at runtime            |
+| `CloudFrontSigningPublicKey` | CloudFront Public Key resource | Verify signed URLs (embedded in Key Group) |
+
+Lambda functions access the private key via `Resource.CloudFrontSigningKey.value` (auto-decrypted at cold start). The key pair ID is available via `Resource.CloudFrontKeyPairId.value`.
+
+#### Post-Deployment Verification
+
+After deploying with OAC and Key Group, verify access is correctly restricted:
+
+```bash
+bash scripts/verify-cloudfront-oac.sh <stage>
+```
+
+This script uploads a test file to S3, verifies direct S3 access returns 403, verifies unsigned CloudFront access returns 403, then cleans up.
+
+### SST Deployment Outputs
+
+After a successful deployment, SST outputs resource identifiers needed for configuration and testing:
+
+```
+✓  Complete
+   apiUrl: https://abc123xyz.execute-api.eu-west-2.amazonaws.com
+   assetsBucket: ffp-dev-assetsbucketbucket-dnvmaanu
+   cdnUrl: https://d25o0th3bf9azm.cloudfront.net
+   region: eu-west-2
+   userPoolArn: arn:aws:cognito-idp:eu-west-2:123456789012:userpool/eu-west-2_ABC123XYZ
+   userPoolClientId: 7ams44epvr3jgb9dnto3a94hmh
+   userPoolId: eu-west-2_ABC123XYZ
+   videosBucket: ffp-dev-videosbucketbucket-fhwfrwta
+```
+
+Access outputs from the last deployment:
+
+```bash
+cat .sst/outputs.json
+```
+
+| Output             | Description           | Used For                          |
+| ------------------ | --------------------- | --------------------------------- |
+| `apiUrl`           | API Gateway endpoint  | Frontend API calls, health checks |
+| `userPoolId`       | Cognito User Pool ID  | Authentication configuration      |
+| `userPoolClientId` | User Pool Client ID   | Frontend authentication           |
+| `userPoolArn`      | User Pool ARN         | IAM policies, Lambda triggers     |
+| `videosBucket`     | S3 videos bucket name | Video upload/storage              |
+| `assetsBucket`     | S3 assets bucket name | Static asset storage              |
+| `cdnUrl`           | CloudFront CDN URL    | Video delivery                    |
+| `region`           | AWS region            | SDK configuration                 |
+
+### Personal Stage CORS
+
+When using `sst dev` (personal stage), CORS defaults to `http://localhost:5173`.
 
 ### Branch Strategy
 
@@ -91,12 +193,25 @@ A dedicated Lambda function for running Drizzle migrations during deployment, ra
 
 ## Deployment Checklist (High-Level)
 
+### First Deploy to a New Environment
+
+1. Run `bash scripts/setup-cloudfront-signing-key.sh <stage>` (one-time signing key setup)
+2. Verify secrets stored: `sst secret list --stage <stage>`
+
+### Every Deploy
+
 1. All tests passing, code reviewed
 2. Migration SQL reviewed
 3. Deploy to staging first, run smoke tests
 4. Deploy to production
-5. Monitor CloudWatch for 30 minutes post-deploy
-6. Verify critical user flows
+5. Verify health endpoint:
+   ```bash
+   API_URL=$(cat .sst/outputs.json | grep -o '"apiUrl":"[^"]*"' | cut -d'"' -f4)
+   curl -v $API_URL/health
+   ```
+6. Run `bash scripts/verify-cloudfront-oac.sh <stage>` (verify OAC access restrictions)
+7. Monitor CloudWatch for 30 minutes post-deploy
+8. Verify critical user flows
 
 ## Cost Optimisation Notes
 
