@@ -107,6 +107,43 @@ bash scripts/verify-cloudfront-oac.sh <stage>
 
 This script uploads a test file to S3, verifies direct S3 access returns 403, verifies unsigned CloudFront access returns 403, then cleans up.
 
+### SST Deployment Outputs
+
+After a successful deployment, SST outputs resource identifiers needed for configuration and testing:
+
+```
+✓  Complete
+   apiUrl: https://abc123xyz.execute-api.eu-west-2.amazonaws.com
+   assetsBucket: ffp-dev-assetsbucketbucket-dnvmaanu
+   cdnUrl: https://d25o0th3bf9azm.cloudfront.net
+   region: eu-west-2
+   userPoolArn: arn:aws:cognito-idp:eu-west-2:123456789012:userpool/eu-west-2_ABC123XYZ
+   userPoolClientId: 7ams44epvr3jgb9dnto3a94hmh
+   userPoolId: eu-west-2_ABC123XYZ
+   videosBucket: ffp-dev-videosbucketbucket-fhwfrwta
+```
+
+Access outputs from the last deployment:
+
+```bash
+cat .sst/outputs.json
+```
+
+| Output             | Description           | Used For                          |
+| ------------------ | --------------------- | --------------------------------- |
+| `apiUrl`           | API Gateway endpoint  | Frontend API calls, health checks |
+| `userPoolId`       | Cognito User Pool ID  | Authentication configuration      |
+| `userPoolClientId` | User Pool Client ID   | Frontend authentication           |
+| `userPoolArn`      | User Pool ARN         | IAM policies, Lambda triggers     |
+| `videosBucket`     | S3 videos bucket name | Video upload/storage              |
+| `assetsBucket`     | S3 assets bucket name | Static asset storage              |
+| `cdnUrl`           | CloudFront CDN URL    | Video delivery                    |
+| `region`           | AWS region            | SDK configuration                 |
+
+### Personal Stage CORS
+
+When using `sst dev` (personal stage), CORS defaults to `http://localhost:5173`.
+
 ### Branch Strategy
 
 | Branch           | Environment    | Deployment                              |
@@ -167,9 +204,14 @@ A dedicated Lambda function for running Drizzle migrations during deployment, ra
 2. Migration SQL reviewed
 3. Deploy to staging first, run smoke tests
 4. Deploy to production
-5. Run `bash scripts/verify-cloudfront-oac.sh <stage>` (verify OAC access restrictions)
-6. Monitor CloudWatch for 30 minutes post-deploy
-7. Verify critical user flows
+5. Verify health endpoint:
+   ```bash
+   API_URL=$(cat .sst/outputs.json | grep -o '"apiUrl":"[^"]*"' | cut -d'"' -f4)
+   curl -v $API_URL/health
+   ```
+6. Run `bash scripts/verify-cloudfront-oac.sh <stage>` (verify OAC access restrictions)
+7. Monitor CloudWatch for 30 minutes post-deploy
+8. Verify critical user flows
 
 ## Cost Optimisation Notes
 
