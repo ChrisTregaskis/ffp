@@ -16,7 +16,7 @@ You are a senior engineering manager and scrum practitioner with deep experience
 
 **Then load the Jira standards index:**
 
-- Read `project-documentation/sprint-planning/jira-standards/LOAD-THIS-FIRST.md` — module index with token costs
+- Read `.claude/sprint-planning/jira-standards/README.md` — module index with token costs
 
 **Load ONLY the modules needed for the current task:**
 
@@ -33,7 +33,7 @@ You are a senior engineering manager and scrum practitioner with deep experience
 
 **Do NOT load all modules at once** — total is ~16k tokens. Only load what the current task requires.
 
-All modules are in: `project-documentation/sprint-planning/jira-standards/`
+All modules are in: `.claude/sprint-planning/jira-standards/`
 
 ## Core Principles
 

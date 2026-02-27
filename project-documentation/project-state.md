@@ -12,13 +12,6 @@
 **Sprint Goal**: Video catalogue schema, CloudFront signed URLs, video APIs, programme-video relationships.
 **Epic**: FFP-3 Video Management
 
-**Scope** (from FFP-254 planning):
-
-- Video catalogue schema & migrations
-- CloudFront OAC + signed URL infrastructure
-- Video catalogue CRUD APIs
-- Programme-video relationship schema
-
 **Key documents**:
 
 - `.claude/research/video-management-research.md` - Video infrastructure research & confirmed decisions
@@ -71,6 +64,43 @@
 - **Pass 3**: FFP-298 + FFP-299 — Create `get-signed-url.ts` handler with integrated audit logging
 
 **Parallel work note**: FFP-288 is in a separate worktree. FFP-294 touches entirely different files (`packages/core/src/videos/`, `packages/functions/src/videos/`). Only expected merge conflict is `project-state.md` (trivially resolvable).
+
+---
+
+### Active: FFP-288 — CloudFront OAC & Signed URL Infrastructure (5 pts)
+
+**Branch**: `feature/ffp-288-cloudfront-oac-signed-url-infrastructure`
+**Status**: In progress (worktree)
+
+**Summary**: Configure CloudFront with Origin Access Control (replacing legacy OAI) and signing key infrastructure so videos can only be accessed via time-limited signed URLs. This is pure infrastructure — no application code, no database changes.
+
+**Files touched**: `sst.config.ts`, `project-documentation/deployment.md`
+
+#### Implementation Plan
+
+**Execution order** (entire story on one branch):
+
+| Order | Sub-task          | Summary                                                                                                                                     | Type            | Status  |
+| ----- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------- |
+| 1     | FFP-289           | Generate RSA 2048 key pair, create setup script (`scripts/setup-cloudfront-signing-key.sh`), store private key via `sst secret set`         | Script + Manual | ✅ Done |
+| 2     | FFP-290 + FFP-291 | Update SST config: OAC on VideoCdn, CloudFront Key Group, S3 bucket policy, `sst.Secret("CloudFrontSigningKey")` linked to Lambda functions | Code (SST)      | ✅ Done |
+| 3     | FFP-292           | Verify deployment: direct S3 URL → 403, unsigned CloudFront URL → 403                                                                       | Manual (curl)   | ✅ Done |
+| 4     | FFP-293           | Document setup script usage as deployment prerequisite                                                                                      | Documentation   | ✅ Done |
+
+#### Grouping Notes
+
+- **FFP-290 + FFP-291 grouped**: Both modify `sst.config.ts` and are tightly coupled — OAC setup, Key Group creation, and `sst.Secret` linking are all part of the same deployment unit. FFP-291 scope reduced to `link: [secret]` on functions (no env vars or IAM needed).
+- **FFP-289 includes a setup script**: `scripts/setup-cloudfront-signing-key.sh` generates the key pair and runs `sst secret set`. Repeatable for staging/production.
+- **FFP-292 requires deployment**: Verification can only happen after `sst deploy` completes with the OAC + Key Group changes.
+
+#### Key Technical Context
+
+- **Current SST state**: VideoCdn exists with basic S3 origin (no OAC, no Key Group). See `sst.config.ts` lines ~200-230.
+- **OAC replaces OAI**: Origin Access Control uses SigV4, supports all regions, has confused-deputy protection.
+- **Signing key is per-environment**: One-time setup per stage (dev/staging/prod) via setup script + `sst secret set`. Key is NOT regenerated on each deploy.
+- **SST Secret approach**: Using `sst.Secret("CloudFrontSigningKey")` and `sst.Secret("CloudFrontSigningPublicKey")` instead of raw Secrets Manager. Lambda accesses private key via `Resource.CloudFrontSigningKey.value` (auto-decrypted at cold start). Public key feeds the CloudFront Public Key resource at deploy time. No env vars, no IAM permissions needed — SST handles it.
+- **Key pair ID**: Exposed via `sst.Linkable("CloudFrontKeyPairId")` — derived from CloudFront Public Key resource output, accessible in Lambda via `Resource.CloudFrontKeyPairId.value`.
+- **Skill**: `/infrastructure` for all sub-tasks
 
 ---
 
