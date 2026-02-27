@@ -42,7 +42,7 @@
 
 | #   | Key     | Sub-task                                        | Status  | Notes                                             |
 | --- | ------- | ----------------------------------------------- | ------- | ------------------------------------------------- |
-| 1   | FFP-295 | Install AWS SDK dependencies                    | Pending | Amended: also install `client-secrets-manager`    |
+| 1   | FFP-295 | Install AWS SDK dependencies                    | ✅ Done | Both `cloudfront-signer` + `client-secrets-manager` installed (^3.999.0) |
 | 2   | FFP-296 | Signing key retrieval with module-level caching | Pending | + video.repository.ts (`findVideoById`) per amend |
 | 3   | FFP-297 | Signed URL generation service                   | Pending | Combined in `video-signing.service.ts`            |
 | 4   | FFP-298 | GET /videos/{id}/signed-url Lambda handler      | Pending | Uses signing service + video repository           |
