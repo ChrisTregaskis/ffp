@@ -1,5 +1,7 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
+  createColdStartContext,
+  createLogger,
   extractUserContext,
   withErrorHandling,
   ValidationError,
@@ -18,7 +20,18 @@ const cloudfrontDomain = process.env.CLOUDFRONT_DOMAIN?.replace(/^https?:\/\//, 
 const keyPairId = process.env.CLOUDFRONT_KEY_PAIR_ID;
 const signingKey = process.env.CLOUDFRONT_SIGNING_KEY;
 
-if (cloudfrontDomain && keyPairId && signingKey) {
+const coldStartContext = createColdStartContext('video-signed-url-handler');
+const coldStartLogger = createLogger(coldStartContext);
+
+if (!cloudfrontDomain || !keyPairId || !signingKey) {
+  const missing = [
+    !cloudfrontDomain && 'CLOUDFRONT_DOMAIN',
+    !keyPairId && 'CLOUDFRONT_KEY_PAIR_ID',
+    !signingKey && 'CLOUDFRONT_SIGNING_KEY',
+  ].filter(Boolean);
+
+  coldStartLogger.error(`Video signing disabled — missing env vars: ${missing.join(', ')}`);
+} else {
   setVideoSigningConfig({
     cloudfrontDomain,
     keyPairId,

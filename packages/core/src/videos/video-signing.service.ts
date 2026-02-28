@@ -64,19 +64,24 @@ function getSigningConfig(): VideoSigningConfig {
  * Uses canned policy with 15-minute TTL.
  *
  * @param s3Key - The video's S3 object key (e.g., 'exercises/shoulder-stretch.mp4')
- * @returns Signed CloudFront URL with embedded expiry and signature
+ * @returns Signed CloudFront URL with embedded expiry and ISO 8601 expiry timestamp
  */
-export function generateSignedVideoUrl(s3Key: string): string {
+export function generateSignedVideoUrl(s3Key: string): {
+  signedUrl: string;
+  expiresAt: string;
+} {
   const config = getSigningConfig();
   const url = `https://${config.cloudfrontDomain}/${s3Key}`;
-  const dateLessThan = new Date(Date.now() + SIGNED_URL_TTL_SECONDS * 1000).toISOString();
+  const expiresAt = new Date(Date.now() + SIGNED_URL_TTL_SECONDS * 1000).toISOString();
 
-  return getSignedUrl({
+  const signedUrl = getSignedUrl({
     url,
     keyPairId: config.keyPairId,
     privateKey: config.privateKey,
-    dateLessThan,
+    dateLessThan: expiresAt,
   });
+
+  return { signedUrl, expiresAt };
 }
 
 /**
@@ -101,8 +106,7 @@ export async function getSignedVideoUrl(
     throw new NotFoundError('Video', videoId);
   }
 
-  const signedUrl = generateSignedVideoUrl(video.s3Key);
-  const expiresAt = new Date(Date.now() + SIGNED_URL_TTL_SECONDS * 1000).toISOString();
+  const { signedUrl, expiresAt } = generateSignedVideoUrl(video.s3Key);
 
   logger.info('Signed URL generated', {
     action: 'video_access',

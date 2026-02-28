@@ -1,4 +1,8 @@
-import { createSystemContext, type APIGatewayProxyEventV2WithJWT } from '@ffp/core/server';
+import {
+  createSystemContext,
+  SYSTEM_PLACEHOLDER_TENANT_ID,
+  type APIGatewayProxyEventV2WithJWT,
+} from '@ffp/core/server';
 
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
@@ -14,7 +18,7 @@ import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
 const ROUTER_CONTEXT = createSystemContext({
   systemId: 'assessments-router',
-  tenantId: '00000000-0000-0000-8000-000000000000', // Placeholder for pre-auth routing
+  tenantId: SYSTEM_PLACEHOLDER_TENANT_ID,
 });
 
 /**
