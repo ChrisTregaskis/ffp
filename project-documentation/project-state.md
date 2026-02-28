@@ -18,40 +18,52 @@
 - `.claude/research/ffp-3-epic-plan.md` - Final epic plan (stories, ACs, subtasks, sprint allocation)
 - `.claude/research/programme-data-model-research.md` - Authoritative programme data model
 
-### Active Story: FFP-282 — Video Catalogue Database Schema (5 pts)
+### Completed Story: FFP-282 — Video Catalogue Database Schema (5 pts) ✅
 
-**Branch**: `feature/ffp-282-video-cat-database-schema`
-**Status**: In Progress
-**Blocks**: FFP-294 (Signed URL Service), FFP-307 (Programme-Video Relationships), FFP-320 (Admin Video Upload)
+**Branch**: `feature/ffp-282-video-cat-database-schema` (merged to main)
+**All 5 sub-tasks complete**: Drizzle schema + enums + GIN indexes, index exports, migration (0017), Zod schemas, seed data (10 videos).
 
-**Summary**: Create the videos table schema, migration, Zod validation schemas, and seed data. Videos are system-managed content (no RLS) — follows the `programme_templates` pattern.
+### Parallel Story: FFP-288 — CloudFront OAC & Signed URL Infrastructure (5 pts)
+
+**Branch**: `feature/ffp-288` (in worktree at `.claude/worktrees/ffp-288/`)
+**Status**: In Progress (parallel work)
+**Touches**: `sst.config.ts`, `scripts/setup-cloudfront-signing-key.sh`, `project-state.md`
+
+### Active Story: FFP-294 — Signed URL Generation Service (5 pts)
+
+**Branch**: `feature/ffp-294-signed-url-generation-service`
+**Status**: Planning
+**Blocked by**: FFP-282 ✅ (Done), FFP-288 🏃 (In Progress — runtime dependency only, code can be written independently)
+**Blocks**: FFP-300 (Video Catalogue APIs), FFP-320 (Admin Video Upload), FFP-337 (Video Player Component)
+
+**Summary**: Create the service layer that generates time-limited CloudFront signed URLs for secure video playback. Retrieves the signing private key from Secrets Manager (cached at module level for Lambda warm instances), generates canned policy signed URLs with 15-minute TTL, and audit-logs all video access events.
 
 **Sub-tasks (execution order)**:
 
-| #   | Key     | Sub-task                                        | Status | Notes                                      |
-| --- | ------- | ----------------------------------------------- | ------ | ------------------------------------------ |
-| 1   | FFP-283 | Create Drizzle schema + enums + GIN indexes     | Done   | Also created video.constants.ts per amend  |
-| 2   | FFP-287 | Add videos export to schema & constants indexes | Done   | Bundled with FFP-283                       |
-| 3   | FFP-284 | Generate and apply database migration           | Done   | Migration 0017_awesome_nebula.sql applied  |
-| 4   | FFP-285 | Create Zod validation schemas                   | Done   | + schemas index export per amended req #3  |
-| 5   | FFP-286 | Create seed data script (5-10 video records)    | Done   | 10 videos, deterministic UUIDs, idempotent |
+| #   | Key     | Sub-task                                        | Status  | Notes                                                                    |
+| --- | ------- | ----------------------------------------------- | ------- | ------------------------------------------------------------------------ |
+| 1   | FFP-295 | Install AWS SDK dependencies                    | ✅ Done | Both `cloudfront-signer` + `client-secrets-manager` installed (^3.999.0) |
+| 2   | FFP-296 | Signing key retrieval with module-level caching | ✅ Done | Config injection pattern + module-level cache; SST handles key retrieval |
+| 3   | FFP-297 | Signed URL generation service                   | ✅ Done | `video-signing.service.ts` + `video.repository.ts` + barrel exports      |
+| 4   | FFP-298 | GET /videos/{id}/signed-url Lambda handler      | ✅ Done | Handler + router + SST route with CloudFront env vars                    |
+| 5   | FFP-299 | Audit logging for video access events           | ✅ Done | Structured logging in `getSignedVideoUrl()` — info/warn with action tags |
 
 **Amended requirements** (ticket vs current codebase patterns):
 
-1. **Enum constants** — Ticket only mentions enums in the schema file, but the established pattern defines constants in `packages/database/src/constants/video.constants.ts` as the single source of truth, then imports them into both the Drizzle schema (`pgEnum`) and Zod schemas (`z.enum`). Will create `video.constants.ts` and export from constants index.
-2. **Constants index** — FFP-287 ticket only mentions `schema/index.ts`, but also need to update `constants/index.ts` to export new video constants.
-3. **Zod schema exports** — FFP-285 ticket doesn't mention updating `packages/core/src/schemas/index.ts`, but must do so for downstream consumers.
-4. **Seed pattern** — FFP-286 says "Add to existing seed script or create new seed function". Existing pattern is individual seed files in `packages/database/seed/`. Will create `seedVideos.ts` following the `seedProgrammeTemplates.ts` pattern (deterministic UUIDs, idempotent, logger).
-5. **RLS exclusion note** — Videos should be added to the RLS exclusions list in project-state.md once complete.
+1. **Additional dependency** — FFP-295 only mentions `@aws-sdk/cloudfront-signer`, but FFP-296 requires `@aws-sdk/client-secrets-manager` for key retrieval. Will install both in Pass 1.
+2. **Video repository needed** — FFP-298 needs to look up a video by ID (verify exists, is active, get `s3_key`). Will create a minimal `video.repository.ts` with `findVideoById()`. Videos are system-managed (no RLS) — queries use `db` directly, not `withRLS()`. FFP-300 can extend the repository later with full CRUD.
+3. **Audit logging is cross-cutting** — FFP-299 will be implemented as structured logging calls within the service/handler using the existing `createLogger(context)` pattern, not as a separate standalone utility.
+4. **Environment variables** — Service needs 3 env vars from FFP-288: `CLOUDFRONT_KEY_PAIR_ID`, `CLOUDFRONT_SIGNING_KEY_SECRET_ARN`, and `CLOUDFRONT_DOMAIN`. Code reads from `process.env` at runtime — no compile-time dependency on FFP-288.
+5. **No RLS for video lookup** — Videos are system-managed content (already in RLS exclusions list). Repository queries without RLS context. Authentication still required for audit logging (tenantId, userId from JWT).
+6. **Barrel exports** — Need to create `packages/core/src/videos/index.ts` and update `packages/core/src/server.ts` to export the videos domain for handler consumption.
 
 **Implementation grouping** (single branch, single PR):
 
-- **Pass 1**: FFP-283 + FFP-287 — Constants file, schema file, index exports
-- **Pass 2**: FFP-284 — Generate & apply migration
-- **Pass 3**: FFP-285 — Zod schemas + core schemas index export
-- **Pass 4**: FFP-286 — Seed data script
+- **Pass 1**: FFP-295 — Install `@aws-sdk/cloudfront-signer` + `@aws-sdk/client-secrets-manager` in `@ffp/core`
+- **Pass 2**: FFP-296 + FFP-297 — Create `video-signing.service.ts` (key caching + URL generation) + `video.repository.ts` (`findVideoById`) + barrel exports
+- **Pass 3**: FFP-298 + FFP-299 — Create `get-signed-url.ts` handler with integrated audit logging
 
-**No blockers or prerequisites** — this is the first story in Sprint 7.
+**Parallel work note**: FFP-288 is in a separate worktree. FFP-294 touches entirely different files (`packages/core/src/videos/`, `packages/functions/src/videos/`). Only expected merge conflict is `project-state.md` (trivially resolvable).
 
 ---
 

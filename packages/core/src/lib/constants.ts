@@ -17,6 +17,12 @@ export const APP_VERSION = '0.0.1';
  */
 export const PLATFORM_TENANT_ID = 'platform';
 
+/**
+ * Placeholder tenant ID for system-level operations where no real tenant exists.
+ * Used by routers (pre-auth routing) and cold start logging.
+ */
+export const SYSTEM_PLACEHOLDER_TENANT_ID = '00000000-0000-0000-8000-000000000000';
+
 // Email validation pattern.
 export const EMAIL_PATTERN = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
