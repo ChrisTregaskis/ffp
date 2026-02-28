@@ -26,6 +26,10 @@ export default $config({
     };
   },
   async run() {
+    // Global Lambda runtime — Node.js 24.x Active LTS (supported until April 2028)
+    $transform(sst.aws.Function, (args) => {
+      args.runtime = 'nodejs24.x' as typeof args.runtime;
+    });
     const requiredDbEnvVars = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'] as const;
     const missingVars = requiredDbEnvVars.filter((varName) => !process.env[varName]);
 
@@ -219,8 +223,7 @@ export default $config({
 
     // SST Secrets — private key for Lambda URL signing, public key for CloudFront verification
     // Set via: bash scripts/setup-cloudfront-signing-key.sh <stage>
-    // CloudFrontSigningKey will be linked to Lambda functions when video URL API is built
-    new sst.Secret('CloudFrontSigningKey');
+    const cloudFrontSigningKey = new sst.Secret('CloudFrontSigningKey');
     const cloudFrontSigningPublicKey = new sst.Secret('CloudFrontSigningPublicKey');
 
     const videoOac = new aws.cloudfront.OriginAccessControl('VideoOac', {
@@ -296,9 +299,7 @@ export default $config({
     });
 
     // Linkable — exposes CloudFront key pair ID for Lambda functions generating signed URLs
-    // Will be linked to functions when video URL API is built:
-    //   link: [CloudFrontSigningKey, CloudFrontKeyPairId]
-    //   Access in handler: Resource.CloudFrontKeyPairId.value
+    // Used by video handler via CLOUDFRONT_KEY_PAIR_ID env var (see videoHandlerEnv below)
     new sst.Linkable('CloudFrontKeyPairId', {
       properties: {
         value: cfPublicKey.id,
@@ -449,6 +450,26 @@ export default $config({
     api.route(
       'ANY /programmes/{proxy+}',
       { handler: `${repositoryFunctionsPath}/programs/index.handler`, ...handlerEnv },
+      args
+    );
+
+    // Videos domain routes (authenticated users - video playback with signed URLs)
+    // Includes CloudFront signing config: domain, key pair ID, and signing key (SST Secret)
+    const videoHandlerEnv = {
+      environment: {
+        ...handlerEnv.environment,
+        CLOUDFRONT_DOMAIN: videoCdn.url,
+        CLOUDFRONT_KEY_PAIR_ID: cfPublicKey.id,
+        CLOUDFRONT_SIGNING_KEY: cloudFrontSigningKey.value,
+      },
+    };
+    api.route('OPTIONS /videos/{proxy+}', {
+      handler: `${repositoryFunctionsPath}/videos/index.handler`,
+      ...videoHandlerEnv,
+    });
+    api.route(
+      'ANY /videos/{proxy+}',
+      { handler: `${repositoryFunctionsPath}/videos/index.handler`, ...videoHandlerEnv },
       args
     );
 

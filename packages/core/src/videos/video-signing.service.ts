@@ -1,6 +1,13 @@
 import { getSignedUrl } from '@aws-sdk/cloudfront-signer';
 
-import { InternalServerError } from '../lib/errors';
+import { getDb } from '@ffp/database';
+
+import { InternalServerError, NotFoundError } from '../lib/errors';
+import { createLogger } from '../lib/logger';
+
+import * as videoRepository from './video.repository';
+
+import type { TenantContext } from '../lib/context';
 
 /** Configuration for CloudFront signed URL generation */
 export interface VideoSigningConfig {
@@ -18,15 +25,25 @@ const SIGNED_URL_TTL_SECONDS = 15 * 60;
 /** Module-level cache for Lambda warm instance reuse */
 let cachedConfig: VideoSigningConfig | null = null;
 
+/** Response from the signed URL orchestration function */
+export interface SignedVideoUrlResponse {
+  /** Time-limited CloudFront signed URL for video playback */
+  signedUrl: string;
+  /** ISO 8601 timestamp when the signed URL expires */
+  expiresAt: string;
+  /** The video ID that was requested */
+  videoId: string;
+}
+
 /**
  * Initialise the video signing configuration.
  * Call once at Lambda cold start — cached at module level for warm invocations.
  *
- * In SST, the handler reads Resource values and passes them here:
+ * The handler reads environment variables (set by SST) and passes them here:
  *   setVideoSigningConfig({
- *     cloudfrontDomain: Resource.VideoCdn.url.replace(/^https?:\/\//, ''),
- *     keyPairId: Resource.CloudFrontKeyPairId.value,
- *     privateKey: Resource.CloudFrontSigningKey.value,
+ *     cloudfrontDomain: process.env.CLOUDFRONT_DOMAIN,
+ *     keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID,
+ *     privateKey: process.env.CLOUDFRONT_SIGNING_KEY,
  *   });
  */
 export function setVideoSigningConfig(config: VideoSigningConfig): void {
@@ -60,4 +77,38 @@ export function generateSignedVideoUrl(s3Key: string): string {
     privateKey: config.privateKey,
     dateLessThan,
   });
+}
+
+/**
+ * Look up a video, verify it is active, and generate a signed playback URL.
+ * Logs structured audit events for video access (FFP-299).
+ */
+export async function getSignedVideoUrl(
+  context: TenantContext,
+  videoId: string
+): Promise<SignedVideoUrlResponse> {
+  const logger = createLogger(context);
+  const db = getDb();
+
+  const video = await videoRepository.findVideoById(db, videoId);
+
+  if (!video || video.status !== 'active') {
+    logger.warn('Video access denied', {
+      action: 'video_access_denied',
+      videoId,
+      reason: !video ? 'not_found' : 'inactive',
+    });
+    throw new NotFoundError('Video', videoId);
+  }
+
+  const signedUrl = generateSignedVideoUrl(video.s3Key);
+  const expiresAt = new Date(Date.now() + SIGNED_URL_TTL_SECONDS * 1000).toISOString();
+
+  logger.info('Signed URL generated', {
+    action: 'video_access',
+    videoId,
+    expiresAt,
+  });
+
+  return { signedUrl, expiresAt, videoId };
 }
