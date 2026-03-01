@@ -1,4 +1,4 @@
-import { videoFilterSchema, type VideoListResponse } from '@ffp/core';
+import type { VideoListResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
@@ -34,9 +34,7 @@ export const handler = withErrorHandling(
     let videos: VideoListResponse[];
 
     if (hasFilters) {
-      const filters = videoFilterSchema.parse(rawFilters);
-
-      videos = await listVideosByFilter(context, filters);
+      videos = await listVideosByFilter(context, rawFilters);
     } else {
       videos = await listVideos(context);
     }

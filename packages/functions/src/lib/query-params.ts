@@ -19,7 +19,7 @@ export function parseArrayParam(value: string | undefined): string[] | undefined
   if (!value) return undefined;
   const items = value
     .split(',')
-    .map((s) => s.trim())
+    .map((s) => decodeURIComponent(s.trim()))
     .filter(Boolean);
   return items.length > 0 ? items : undefined;
 }
