@@ -53,7 +53,7 @@
 | 3   | FFP-303 | Create GET /videos Lambda handler (list + filter)  | ✅ Done | **Created** `list.ts` — parses comma-separated query params, validates via `videoFilterSchema`, branches list/filter.                                         |
 | 4   | FFP-304 | Create GET /videos/{id} Lambda handler             | ✅ Done | **Created** `get.ts` — extracts path param, delegates to `getVideo()`, 404 via `NotFoundError`.                                                               |
 | 5   | FFP-305 | Add video routes to API Gateway in SST config      | ✅ Done | **Updated** router `index.ts` — added `/` and `/{id}` GET routes. SST config unchanged (already has `ANY /videos/{proxy+}`).                                  |
-| 6   | FFP-306 | Update Postman collection with video endpoints     | To Do   | Add requests via `/postman` skill after handlers are working                                                                                                  |
+| 6   | FFP-306 | Update Postman collection with video endpoints     | ✅ Done | **Updated** Postman — renamed folder, added List Videos, Get Video, Get Signed URL requests with descriptions and query params.                               |
 
 **Amended requirements** (ticket vs current codebase):
 
