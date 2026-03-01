@@ -46,14 +46,14 @@
 
 **Sub-tasks (execution order)**:
 
-| #   | Key     | Sub-task                                           | Status           | Notes                                                                                                                                                         |
-| --- | ------- | -------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | FFP-301 | Create video repository with list, get, and filter | ✅ Done          | **Extended** `video.repository.ts` — added `findAllActive()`, `findByFilters()` with `VideoFilters` interface. `arrayOverlaps` for GIN-indexed array columns. |
-| 2   | FFP-302 | Create video service layer                         | ✅ Done          | **Created** `video.service.ts` with `listVideos()`, `getVideo()`, `listVideosByFilter()`. Added `videoFilterSchema` to Zod schemas. Barrel exports updated.   |
-| 3   | FFP-303 | Create GET /videos Lambda handler (list + filter)  | To Do            | New `packages/functions/src/videos/list.ts`. Parse query params, call service                                                                                 |
-| 4   | FFP-304 | Create GET /videos/{id} Lambda handler             | To Do            | New `packages/functions/src/videos/get.ts`. Extract path param, call service, 404 on not found                                                                |
-| 5   | FFP-305 | Add video routes to API Gateway in SST config      | **Already done** | SST already has `ANY /videos/{proxy+}` — just update router `index.ts` with new route entries                                                                 |
-| 6   | FFP-306 | Update Postman collection with video endpoints     | To Do            | Add requests via `/postman` skill after handlers are working                                                                                                  |
+| #   | Key     | Sub-task                                           | Status  | Notes                                                                                                                                                         |
+| --- | ------- | -------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | FFP-301 | Create video repository with list, get, and filter | ✅ Done | **Extended** `video.repository.ts` — added `findAllActive()`, `findByFilters()` with `VideoFilters` interface. `arrayOverlaps` for GIN-indexed array columns. |
+| 2   | FFP-302 | Create video service layer                         | ✅ Done | **Created** `video.service.ts` with `listVideos()`, `getVideo()`, `listVideosByFilter()`. Added `videoFilterSchema` to Zod schemas. Barrel exports updated.   |
+| 3   | FFP-303 | Create GET /videos Lambda handler (list + filter)  | ✅ Done | **Created** `list.ts` — parses comma-separated query params, validates via `videoFilterSchema`, branches list/filter.                                         |
+| 4   | FFP-304 | Create GET /videos/{id} Lambda handler             | ✅ Done | **Created** `get.ts` — extracts path param, delegates to `getVideo()`, 404 via `NotFoundError`.                                                               |
+| 5   | FFP-305 | Add video routes to API Gateway in SST config      | ✅ Done | **Updated** router `index.ts` — added `/` and `/{id}` GET routes. SST config unchanged (already has `ANY /videos/{proxy+}`).                                  |
+| 6   | FFP-306 | Update Postman collection with video endpoints     | To Do   | Add requests via `/postman` skill after handlers are working                                                                                                  |
 
 **Amended requirements** (ticket vs current codebase):
 
