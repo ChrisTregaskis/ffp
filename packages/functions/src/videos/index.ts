@@ -6,7 +6,9 @@ import {
 
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
+import { handler as getVideoHandler } from './get';
 import { handler as getSignedUrlHandler } from './get-signed-url';
+import { handler as listVideosHandler } from './list';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
@@ -15,11 +17,10 @@ const ROUTER_CONTEXT = createSystemContext({
   tenantId: SYSTEM_PLACEHOLDER_TENANT_ID,
 });
 
-/**
- * Route registry for the videos domain.
- */
 const routes: RouteRegistry = {
   GET: {
+    '/': listVideosHandler,
+    '/{id}': getVideoHandler,
     '/{id}/signed-url': getSignedUrlHandler,
   },
 };

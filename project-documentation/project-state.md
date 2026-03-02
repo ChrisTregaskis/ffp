@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 26th February 2026
+**Last Updated**: 28th February 2026
 **Current EPIC**: FFP-3 Video Management
 **Sprint Status**: Sprint 7 - Video Infrastructure & APIs (in progress)
 
@@ -23,84 +23,64 @@
 **Branch**: `feature/ffp-282-video-cat-database-schema` (merged to main)
 **All 5 sub-tasks complete**: Drizzle schema + enums + GIN indexes, index exports, migration (0017), Zod schemas, seed data (10 videos).
 
-### Parallel Story: FFP-288 — CloudFront OAC & Signed URL Infrastructure (5 pts)
+### Completed Story: FFP-288 — CloudFront OAC & Signed URL Infrastructure (5 pts) ✅
 
-**Branch**: `feature/ffp-288` (in worktree at `.claude/worktrees/ffp-288/`)
-**Status**: In Progress (parallel work)
-**Touches**: `sst.config.ts`, `scripts/setup-cloudfront-signing-key.sh`, `project-state.md`
+**Branch**: `feature/ffp-288-cloudfront-oac-signed-url-infrastructure` (merged to main)
+**All 4 sub-tasks complete**: RSA key pair setup script, SST OAC + Key Group config, deployment verification, documentation.
 
-### Active Story: FFP-294 — Signed URL Generation Service (5 pts)
+### Completed Story: FFP-294 — Signed URL Generation Service (5 pts) ✅
 
-**Branch**: `feature/ffp-294-signed-url-generation-service`
+**Branch**: `feature/ffp-294-signed-url-generation-service` (merged to main)
+**All 5 sub-tasks complete**: AWS SDK deps, signing key caching, `video-signing.service.ts` + `video.repository.ts` (findVideoById only), `get-signed-url.ts` handler + router, audit logging.
+
+**Foundation created for FFP-300**: `video.repository.ts`, `video-signing.service.ts`, barrel exports (`videos/index.ts`, `server.ts`), router (`functions/src/videos/index.ts`), SST route (`ANY /videos/{proxy+}`), Zod schemas (`video.schema.ts`).
+
+### Active Story: FFP-300 — Video Catalogue APIs (5 pts)
+
+**Branch**: `feature/ffp-300-vid-cat-apis`
 **Status**: Planning
-**Blocked by**: FFP-282 ✅ (Done), FFP-288 🏃 (In Progress — runtime dependency only, code can be written independently)
-**Blocks**: FFP-300 (Video Catalogue APIs), FFP-320 (Admin Video Upload), FFP-337 (Video Player Component)
+**Blocked by**: FFP-282 ✅, FFP-288 ✅, FFP-294 ✅ — all dependencies resolved
+**Blocks**: FFP-320 (Admin Video Upload)
 
-**Summary**: Create the service layer that generates time-limited CloudFront signed URLs for secure video playback. Retrieves the signing private key from Secrets Manager (cached at module level for Lambda warm instances), generates canned policy signed URLs with 15-minute TTL, and audit-logs all video access events.
+**Summary**: Create read-only APIs to list, filter, and retrieve exercise video metadata. Two endpoints: `GET /videos` (list/filter) and `GET /videos/{id}` (detail). Videos are system-managed content — no RLS required, but JWT authentication enforced.
 
 **Sub-tasks (execution order)**:
 
-| #   | Key     | Sub-task                                        | Status  | Notes                                                                    |
-| --- | ------- | ----------------------------------------------- | ------- | ------------------------------------------------------------------------ |
-| 1   | FFP-295 | Install AWS SDK dependencies                    | ✅ Done | Both `cloudfront-signer` + `client-secrets-manager` installed (^3.999.0) |
-| 2   | FFP-296 | Signing key retrieval with module-level caching | ✅ Done | Config injection pattern + module-level cache; SST handles key retrieval |
-| 3   | FFP-297 | Signed URL generation service                   | ✅ Done | `video-signing.service.ts` + `video.repository.ts` + barrel exports      |
-| 4   | FFP-298 | GET /videos/{id}/signed-url Lambda handler      | ✅ Done | Handler + router + SST route with CloudFront env vars                    |
-| 5   | FFP-299 | Audit logging for video access events           | ✅ Done | Structured logging in `getSignedVideoUrl()` — info/warn with action tags |
+| #   | Key     | Sub-task                                           | Status  | Notes                                                                                                                                                         |
+| --- | ------- | -------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | FFP-301 | Create video repository with list, get, and filter | ✅ Done | **Extended** `video.repository.ts` — added `findAllActive()`, `findByFilters()` with `VideoFilters` interface. `arrayOverlaps` for GIN-indexed array columns. |
+| 2   | FFP-302 | Create video service layer                         | ✅ Done | **Created** `video.service.ts` with `listVideos()`, `getVideo()`, `listVideosByFilter()`. Added `videoFilterSchema` to Zod schemas. Barrel exports updated.   |
+| 3   | FFP-303 | Create GET /videos Lambda handler (list + filter)  | ✅ Done | **Created** `list.ts` — parses comma-separated query params, validates via `videoFilterSchema`, branches list/filter.                                         |
+| 4   | FFP-304 | Create GET /videos/{id} Lambda handler             | ✅ Done | **Created** `get.ts` — extracts path param, delegates to `getVideo()`, 404 via `NotFoundError`.                                                               |
+| 5   | FFP-305 | Add video routes to API Gateway in SST config      | ✅ Done | **Updated** router `index.ts` — added `/` and `/{id}` GET routes. SST config unchanged (already has `ANY /videos/{proxy+}`).                                  |
+| 6   | FFP-306 | Update Postman collection with video endpoints     | ✅ Done | **Updated** Postman — renamed folder, added List Videos, Get Video, Get Signed URL requests with descriptions and query params.                               |
 
-**Amended requirements** (ticket vs current codebase patterns):
+**Amended requirements** (ticket vs current codebase):
 
-1. **Additional dependency** — FFP-295 only mentions `@aws-sdk/cloudfront-signer`, but FFP-296 requires `@aws-sdk/client-secrets-manager` for key retrieval. Will install both in Pass 1.
-2. **Video repository needed** — FFP-298 needs to look up a video by ID (verify exists, is active, get `s3_key`). Will create a minimal `video.repository.ts` with `findVideoById()`. Videos are system-managed (no RLS) — queries use `db` directly, not `withRLS()`. FFP-300 can extend the repository later with full CRUD.
-3. **Audit logging is cross-cutting** — FFP-299 will be implemented as structured logging calls within the service/handler using the existing `createLogger(context)` pattern, not as a separate standalone utility.
-4. **Environment variables** — Service needs 3 env vars from FFP-288: `CLOUDFRONT_KEY_PAIR_ID`, `CLOUDFRONT_SIGNING_KEY_SECRET_ARN`, and `CLOUDFRONT_DOMAIN`. Code reads from `process.env` at runtime — no compile-time dependency on FFP-288.
-5. **No RLS for video lookup** — Videos are system-managed content (already in RLS exclusions list). Repository queries without RLS context. Authentication still required for audit logging (tenantId, userId from JWT).
-6. **Barrel exports** — Need to create `packages/core/src/videos/index.ts` and update `packages/core/src/server.ts` to export the videos domain for handler consumption.
+1. **FFP-301 — Extend, not create** — `video.repository.ts` already exists with `findVideoById()` from FFP-294. This sub-task adds `findAllActive()` and `findByFilters()` to the same file. Array filtering uses Drizzle `arrayOverlaps` with GIN-indexed columns.
+2. **FFP-302 — Separate service file** — `video-signing.service.ts` handles signed URL generation. Catalogue operations go in a new `video.service.ts` to maintain single responsibility. Service validates filters, calls repository, returns Zod-validated responses.
+3. **FFP-305 — Effectively complete** — SST config already routes `ANY /videos/{proxy+}` to the video router (set up in FFP-294/FFP-298). Only the router `index.ts` needs new route entries for `GET /` and `GET /{id}`. No SST changes required.
+4. **No RLS** — Videos are system-managed (in RLS exclusions list). Repository queries use `db` directly, not `withRLS()`. JWT authentication still required for all routes.
+5. **Barrel exports** — `packages/core/src/videos/index.ts` and `packages/core/src/server.ts` already export the videos domain. New service just needs adding to the barrel.
+6. **Zod schemas already exist** — `videoListResponseSchema`, `videoDetailResponseSchema` defined in `packages/core/src/schemas/video.schema.ts` from FFP-282.
 
-**Implementation grouping** (single branch, single PR):
+**Implementation grouping** (single branch `feature/ffp-300-vid-cat-apis`, single PR):
 
-- **Pass 1**: FFP-295 — Install `@aws-sdk/cloudfront-signer` + `@aws-sdk/client-secrets-manager` in `@ffp/core`
-- **Pass 2**: FFP-296 + FFP-297 — Create `video-signing.service.ts` (key caching + URL generation) + `video.repository.ts` (`findVideoById`) + barrel exports
-- **Pass 3**: FFP-298 + FFP-299 — Create `get-signed-url.ts` handler with integrated audit logging
+- **Pass 1**: FFP-301 — Extend `video.repository.ts` with `findAllActive()` and `findByFilters()`
+- **Pass 2**: FFP-302 — Create `video.service.ts` with `listVideos()`, `getVideo()`, `listVideosByFilter()`; update barrel exports
+- **Pass 3**: FFP-303 + FFP-304 + FFP-305 — Create `list.ts` and `get.ts` handlers; update router `index.ts` with new routes
+- **Pass 4**: FFP-306 — Update Postman collection via `/postman` skill
 
-**Parallel work note**: FFP-288 is in a separate worktree. FFP-294 touches entirely different files (`packages/core/src/videos/`, `packages/functions/src/videos/`). Only expected merge conflict is `project-state.md` (trivially resolvable).
+**Key files to modify/create**:
 
----
+- Modify: `packages/core/src/videos/video.repository.ts` (add functions)
+- Create: `packages/core/src/videos/video.service.ts` (new service)
+- Modify: `packages/core/src/videos/index.ts` (add service export)
+- Create: `packages/functions/src/videos/list.ts` (new handler)
+- Create: `packages/functions/src/videos/get.ts` (new handler)
+- Modify: `packages/functions/src/videos/index.ts` (add routes to router)
 
-### Active: FFP-288 — CloudFront OAC & Signed URL Infrastructure (5 pts)
-
-**Branch**: `feature/ffp-288-cloudfront-oac-signed-url-infrastructure`
-**Status**: In progress (worktree)
-
-**Summary**: Configure CloudFront with Origin Access Control (replacing legacy OAI) and signing key infrastructure so videos can only be accessed via time-limited signed URLs. This is pure infrastructure — no application code, no database changes.
-
-**Files touched**: `sst.config.ts`, `project-documentation/deployment.md`
-
-#### Implementation Plan
-
-**Execution order** (entire story on one branch):
-
-| Order | Sub-task          | Summary                                                                                                                                     | Type            | Status  |
-| ----- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------- |
-| 1     | FFP-289           | Generate RSA 2048 key pair, create setup script (`scripts/setup-cloudfront-signing-key.sh`), store private key via `sst secret set`         | Script + Manual | ✅ Done |
-| 2     | FFP-290 + FFP-291 | Update SST config: OAC on VideoCdn, CloudFront Key Group, S3 bucket policy, `sst.Secret("CloudFrontSigningKey")` linked to Lambda functions | Code (SST)      | ✅ Done |
-| 3     | FFP-292           | Verify deployment: direct S3 URL → 403, unsigned CloudFront URL → 403                                                                       | Manual (curl)   | ✅ Done |
-| 4     | FFP-293           | Document setup script usage as deployment prerequisite                                                                                      | Documentation   | ✅ Done |
-
-#### Grouping Notes
-
-- **FFP-290 + FFP-291 grouped**: Both modify `sst.config.ts` and are tightly coupled — OAC setup, Key Group creation, and `sst.Secret` linking are all part of the same deployment unit. FFP-291 scope reduced to `link: [secret]` on functions (no env vars or IAM needed).
-- **FFP-289 includes a setup script**: `scripts/setup-cloudfront-signing-key.sh` generates the key pair and runs `sst secret set`. Repeatable for staging/production.
-- **FFP-292 requires deployment**: Verification can only happen after `sst deploy` completes with the OAC + Key Group changes.
-
-#### Key Technical Context
-
-- **Current SST state**: VideoCdn exists with basic S3 origin (no OAC, no Key Group). See `sst.config.ts` lines ~200-230.
-- **OAC replaces OAI**: Origin Access Control uses SigV4, supports all regions, has confused-deputy protection.
-- **Signing key is per-environment**: One-time setup per stage (dev/staging/prod) via setup script + `sst secret set`. Key is NOT regenerated on each deploy.
-- **SST Secret approach**: Using `sst.Secret("CloudFrontSigningKey")` and `sst.Secret("CloudFrontSigningPublicKey")` instead of raw Secrets Manager. Lambda accesses private key via `Resource.CloudFrontSigningKey.value` (auto-decrypted at cold start). Public key feeds the CloudFront Public Key resource at deploy time. No env vars, no IAM permissions needed — SST handles it.
-- **Key pair ID**: Exposed via `sst.Linkable("CloudFrontKeyPairId")` — derived from CloudFront Public Key resource output, accessible in Lambda via `Resource.CloudFrontKeyPairId.value`.
-- **Skill**: `/infrastructure` for all sub-tasks
+**Skill**: `/backend` for Passes 1-3, `/postman` for Pass 4
 
 ---
 
@@ -131,11 +111,11 @@
 
 **Programme data model research complete** (`.claude/research/programme-data-model-research.md`):
 
-- Confirmed: Programme → Weeks → Sessions → Exercises (flexible days, not prescriptive)
-- Phases as metadata on weeks (`phase_label`/`phase_number`), not a separate entity
-- Hybrid instantiation: weeks created eagerly at assignment, sessions/completions lazily
+- Confirmed: Programme → Phases → Sessions → Exercises (status-driven, not calendar-based)
+- "Phases" replace "weeks" as the structural unit (co-founder decision, 1st March 2026) — avoids implying weekly cadence
+- Hybrid instantiation: phases created eagerly at assignment, sessions/completions lazily
 - Normalised `exercise_completions` table (not JSONB)
-- `programme_weeks` (user-layer, RLS) created in FFP-3; `user_sessions` and `exercise_completions` deferred to FFP-4
+- `programme_phases` (user-layer, RLS) created in FFP-3; `user_sessions` and `exercise_completions` deferred to FFP-4
 
 **FFP-4 epic updated** in Jira with confirmed data model, prerequisites from FFP-3, and design decisions.
 

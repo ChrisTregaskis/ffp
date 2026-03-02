@@ -103,7 +103,8 @@ export async function getSignedVideoUrl(
       videoId,
       reason: !video ? 'not_found' : 'inactive',
     });
-    throw new NotFoundError('Video', videoId);
+
+    throw new NotFoundError('Video');
   }
 
   const { signedUrl, expiresAt } = generateSignedVideoUrl(video.s3Key);

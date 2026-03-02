@@ -77,6 +77,15 @@ export const updateVideoSchema = videoSchema
   })
   .partial();
 
+/** Filter criteria for video catalogue queries — all fields optional, combine with AND logic */
+export const videoFilterSchema = z.object({
+  bodyParts: z.array(z.string().min(1)).optional(),
+  equipment: z.array(z.string().min(1)).optional(),
+  difficulty: difficultySchema.optional(),
+  movementType: movementTypeSchema.optional(),
+  tags: z.array(z.string().min(1)).optional(),
+});
+
 /** Response schema for video list API — lightweight fields for catalogue browsing */
 export const videoListResponseSchema = videoSchema.pick({
   id: true,
@@ -104,5 +113,6 @@ export type MovementType = z.infer<typeof movementTypeSchema>;
 export type Video = z.infer<typeof videoSchema>;
 export type CreateVideoInput = z.infer<typeof createVideoSchema>;
 export type UpdateVideoInput = z.infer<typeof updateVideoSchema>;
+export type VideoFilterInput = z.infer<typeof videoFilterSchema>;
 export type VideoListResponse = z.infer<typeof videoListResponseSchema>;
 export type VideoDetailResponse = z.infer<typeof videoDetailResponseSchema>;
