@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 28th February 2026
+**Last Updated**: 2nd March 2026
 **Current EPIC**: FFP-3 Video Management
 **Sprint Status**: Sprint 7 - Video Infrastructure & APIs (in progress)
 
@@ -35,52 +35,72 @@
 
 **Foundation created for FFP-300**: `video.repository.ts`, `video-signing.service.ts`, barrel exports (`videos/index.ts`, `server.ts`), router (`functions/src/videos/index.ts`), SST route (`ANY /videos/{proxy+}`), Zod schemas (`video.schema.ts`).
 
-### Active Story: FFP-300 — Video Catalogue APIs (5 pts)
+### Completed Story: FFP-300 — Video Catalogue APIs (5 pts) ✅
 
-**Branch**: `feature/ffp-300-vid-cat-apis`
+**Branch**: `feature/ffp-300-vid-cat-apis` (merged to main)
+**All 6 sub-tasks complete**: Extended video repository, created video service, list + get handlers, router routes, Postman collection updated.
+
+### Active Story: FFP-307 — Programme-Video Relationship Schema & Service Evolution (8 pts)
+
+**Branch**: `feature/ffp-307-programme-video-schema`
 **Status**: Planning
-**Blocked by**: FFP-282 ✅, FFP-288 ✅, FFP-294 ✅ — all dependencies resolved
-**Blocks**: FFP-320 (Admin Video Upload)
+**Blocked by**: FFP-282 ✅ (videos table for session_exercises FK)
+**Blocks**: FFP-4 stories (Programme Execution & Progress)
 
-**Summary**: Create read-only APIs to list, filter, and retrieve exercise video metadata. Two endpoints: `GET /videos` (list/filter) and `GET /videos/{id}` (detail). Videos are system-managed content — no RLS required, but JWT authentication enforced.
+**Summary**: Create template-layer tables (template_phases, template_sessions, session_exercises) that define workout plan structure, the user-layer table (programme_phases with RLS) that tracks individual progress, and evolve `generateProgramme()` to create phase instances at assignment time.
+
+**Authoritative data model reference**: `.claude/research/programme-data-model-research.md`
 
 **Sub-tasks (execution order)**:
 
-| #   | Key     | Sub-task                                           | Status  | Notes                                                                                                                                                         |
-| --- | ------- | -------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | FFP-301 | Create video repository with list, get, and filter | ✅ Done | **Extended** `video.repository.ts` — added `findAllActive()`, `findByFilters()` with `VideoFilters` interface. `arrayOverlaps` for GIN-indexed array columns. |
-| 2   | FFP-302 | Create video service layer                         | ✅ Done | **Created** `video.service.ts` with `listVideos()`, `getVideo()`, `listVideosByFilter()`. Added `videoFilterSchema` to Zod schemas. Barrel exports updated.   |
-| 3   | FFP-303 | Create GET /videos Lambda handler (list + filter)  | ✅ Done | **Created** `list.ts` — parses comma-separated query params, validates via `videoFilterSchema`, branches list/filter.                                         |
-| 4   | FFP-304 | Create GET /videos/{id} Lambda handler             | ✅ Done | **Created** `get.ts` — extracts path param, delegates to `getVideo()`, 404 via `NotFoundError`.                                                               |
-| 5   | FFP-305 | Add video routes to API Gateway in SST config      | ✅ Done | **Updated** router `index.ts` — added `/` and `/{id}` GET routes. SST config unchanged (already has `ANY /videos/{proxy+}`).                                  |
-| 6   | FFP-306 | Update Postman collection with video endpoints     | ✅ Done | **Updated** Postman — renamed folder, added List Videos, Get Video, Get Signed URL requests with descriptions and query params.                               |
+| #   | Key     | Sub-task                                                                             | Status  | Notes                                                                                                                                                                    |
+| --- | ------- | ------------------------------------------------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | FFP-312 | Add phase_status enum type                                                           | Pending | `difficulty` enum already exists in `videos.ts` — reuse, don't recreate                                                                                                  |
+| 2   | FFP-308 | Create Drizzle schemas for template_phases, template_sessions, session_exercises     | Pending | System-managed tables, no RLS. Follow `programme-templates.ts` pattern                                                                                                   |
+| 3   | FFP-309 | Create Drizzle schema for programme_phases (RLS-enforced)                            | Pending | User-layer table with tenant_id. FKs to programmes + template_phases                                                                                                     |
+| 4   | FFP-310 | Add columns to programme_templates (total_phases, sessions_per_phase, difficulty)    | Pending | Reuse existing `difficultyEnum`. **⚠️ DECISION NEEDED at implementation**: nullable vs NOT NULL+defaults — see amended requirement #5 below. Ask user before proceeding. |
+| 5   | FFP-311 | Add columns to programmes (started_at, completed_at, archived_at, etc.)              | Pending | 7 new columns, all nullable. Self-referential FK for replaced_by                                                                                                         |
+| 6   | FFP-316 | Update database schema index exports                                                 | Pending | Export new tables + enums from `schema/index.ts`                                                                                                                         |
+| 7   | FFP-313 | Generate and apply database migration                                                | Pending | Single migration covering all new tables + column additions + enums                                                                                                      |
+| 8   | FFP-314 | Create Zod validation schemas for new and updated tables                             | Pending | New schemas in `@ffp/core`, update existing programme schemas                                                                                                            |
+| 9   | FFP-315 | Create seed data for at least 1 complete programme template                          | Pending | Full hierarchy: phases → sessions → exercises referencing seeded videos                                                                                                  |
+| 10  | FFP-318 | Update programme.repository.ts with createProgrammePhases() and findTemplatePhases() | Pending | New repository functions for phase creation within RLS transactions                                                                                                      |
+| 11  | FFP-317 | Update generateProgramme() to create programme_phases rows                           | Pending | Evolve existing service to eagerly create phase rows at assignment                                                                                                       |
 
 **Amended requirements** (ticket vs current codebase):
 
-1. **FFP-301 — Extend, not create** — `video.repository.ts` already exists with `findVideoById()` from FFP-294. This sub-task adds `findAllActive()` and `findByFilters()` to the same file. Array filtering uses Drizzle `arrayOverlaps` with GIN-indexed columns.
-2. **FFP-302 — Separate service file** — `video-signing.service.ts` handles signed URL generation. Catalogue operations go in a new `video.service.ts` to maintain single responsibility. Service validates filters, calls repository, returns Zod-validated responses.
-3. **FFP-305 — Effectively complete** — SST config already routes `ANY /videos/{proxy+}` to the video router (set up in FFP-294/FFP-298). Only the router `index.ts` needs new route entries for `GET /` and `GET /{id}`. No SST changes required.
-4. **No RLS** — Videos are system-managed (in RLS exclusions list). Repository queries use `db` directly, not `withRLS()`. JWT authentication still required for all routes.
-5. **Barrel exports** — `packages/core/src/videos/index.ts` and `packages/core/src/server.ts` already export the videos domain. New service just needs adding to the barrel.
-6. **Zod schemas already exist** — `videoListResponseSchema`, `videoDetailResponseSchema` defined in `packages/core/src/schemas/video.schema.ts` from FFP-282.
+1. **Terminology: "phases" not "weeks"** — Sub-tasks were created 23rd Feb before the 1st March terminology update. All references to `template_weeks`, `programme_weeks`, `week_status`, `week_number`, `total_weeks`, `sessions_per_week` must use the confirmed "phases" terminology: `template_phases`, `programme_phases`, `phase_status`, `phase_number`, `total_phases`, `sessions_per_phase`.
+2. **FFP-312 — `difficulty` enum already exists** — Created in FFP-282 (`videos.ts`). Import and reuse `difficultyEnum` from videos schema; only `phase_status` enum is new. The sub-task's `week_status` → `phase_status` with values: `not_started`, `in_progress`, `completed`.
+3. **FFP-308 — Table names updated** — `template_weeks` → `template_phases`, `template_week_id` → `template_phase_id`. The sub-task still references `phase_label` and `phase_number` columns; per the confirmed data model, template_phases has only `phase_number` + `name` (the name serves as the label). No separate `phase_label` column.
+4. **FFP-309 — Table name updated** — `programme_weeks` → `programme_phases`, `week_status` → `phase_status`, `week_number` → `phase_number`. No `phase_label` column — `name` is copied from template.
+5. **FFP-310 — Column names updated** — `total_weeks` → `total_phases`, `sessions_per_week` → `sessions_per_phase`. Per data model research, these should be NOT NULL with defaults (not nullable as ticket suggests) — `total_phases` default 12, `sessions_per_phase` default 3, `difficulty` default 'beginner'. **Decision needed**: nullable for migration safety vs NOT NULL with defaults (both are safe for existing rows if defaults are provided).
+6. **FFP-311 — Column names updated** — `total_weeks` → `total_phases`, `sessions_per_week` → `sessions_per_phase`. The data model research suggests `total_phases` and `sessions_per_phase` as NOT NULL on programmes, but these are snapshot values copied at assignment time — nullable is correct here since existing programmes won't have them.
+7. **FFP-317/FFP-318 — Function names updated** — `findTemplateWeeks()` → `findTemplatePhases()`, `createProgrammeWeeks()` → `createProgrammePhases()`. Service creates `programme_phases` rows (not `programme_weeks`).
+8. **RLS exclusions update needed** — New template tables (`template_phases`, `template_sessions`, `session_exercises`) are system-managed and should be added to RLS exclusions list. `programme_phases` IS RLS-enforced.
 
-**Implementation grouping** (single branch `feature/ffp-300-vid-cat-apis`, single PR):
+**Implementation grouping** (single branch `feature/ffp-307-programme-video-schema`, single PR):
 
-- **Pass 1**: FFP-301 — Extend `video.repository.ts` with `findAllActive()` and `findByFilters()`
-- **Pass 2**: FFP-302 — Create `video.service.ts` with `listVideos()`, `getVideo()`, `listVideosByFilter()`; update barrel exports
-- **Pass 3**: FFP-303 + FFP-304 + FFP-305 — Create `list.ts` and `get.ts` handlers; update router `index.ts` with new routes
-- **Pass 4**: FFP-306 — Update Postman collection via `/postman` skill
+- **Pass 1** (FFP-312 + FFP-308 + FFP-309 + FFP-310 + FFP-311 + FFP-316): All Drizzle schema definitions — new enum, 4 new tables, 2 table modifications, index exports
+- **Pass 2** (FFP-313): Generate and apply single database migration
+- **Pass 3** (FFP-314 + FFP-315): Zod validation schemas + seed data
+- **Pass 4** (FFP-318 + FFP-317): Repository functions + evolve `generateProgramme()` service
 
 **Key files to modify/create**:
 
-- Modify: `packages/core/src/videos/video.repository.ts` (add functions)
-- Create: `packages/core/src/videos/video.service.ts` (new service)
-- Modify: `packages/core/src/videos/index.ts` (add service export)
-- Create: `packages/functions/src/videos/list.ts` (new handler)
-- Create: `packages/functions/src/videos/get.ts` (new handler)
-- Modify: `packages/functions/src/videos/index.ts` (add routes to router)
+- Create: `packages/database/src/schema/template-phases.ts` (new schema)
+- Create: `packages/database/src/schema/template-sessions.ts` (new schema)
+- Create: `packages/database/src/schema/session-exercises.ts` (new schema)
+- Create: `packages/database/src/schema/programme-phases.ts` (new schema, RLS)
+- Modify: `packages/database/src/schema/programme-templates.ts` (add columns)
+- Modify: `packages/database/src/schema/programmes.ts` (add columns)
+- Modify: `packages/database/src/schema/index.ts` (export new schemas)
+- Modify: `packages/database/src/constants/programme.constants.ts` (add phase statuses)
+- Create/Modify: Zod schemas in `packages/core/src/schemas/`
+- Modify: `packages/database/seed/` (new seed data for template hierarchy)
+- Modify: `packages/core/src/programmes/programme.repository.ts` (add functions)
+- Modify: `packages/core/src/programmes/programme.service.ts` (evolve generateProgramme)
 
-**Skill**: `/backend` for Passes 1-3, `/postman` for Pass 4
+**Skill**: `/database` for Passes 1-2, `/backend` for Passes 3-4
 
 ---
 
