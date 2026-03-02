@@ -111,11 +111,11 @@
 
 **Programme data model research complete** (`.claude/research/programme-data-model-research.md`):
 
-- Confirmed: Programme → Weeks → Sessions → Exercises (flexible days, not prescriptive)
-- Phases as metadata on weeks (`phase_label`/`phase_number`), not a separate entity
-- Hybrid instantiation: weeks created eagerly at assignment, sessions/completions lazily
+- Confirmed: Programme → Phases → Sessions → Exercises (status-driven, not calendar-based)
+- "Phases" replace "weeks" as the structural unit (co-founder decision, 1st March 2026) — avoids implying weekly cadence
+- Hybrid instantiation: phases created eagerly at assignment, sessions/completions lazily
 - Normalised `exercise_completions` table (not JSONB)
-- `programme_weeks` (user-layer, RLS) created in FFP-3; `user_sessions` and `exercise_completions` deferred to FFP-4
+- `programme_phases` (user-layer, RLS) created in FFP-3; `user_sessions` and `exercise_completions` deferred to FFP-4
 
 **FFP-4 epic updated** in Jira with confirmed data model, prerequisites from FFP-3, and design decisions.
 
