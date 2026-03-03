@@ -1,5 +1,9 @@
+import { useCallback, useState } from 'react';
+
 import { useVideoSignedUrlQuery } from '@web/hooks/videos';
 
+import { VideoErrorState } from './VideoErrorState';
+import { VideoLoadingSkeleton } from './VideoLoadingSkeleton';
 import { VideoUnavailablePlaceholder } from './VideoUnavailablePlaceholder';
 
 export interface VideoPlayerProps {
@@ -29,15 +33,48 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   autoPlay = false,
   ariaLabel,
 }) => {
-  const { data: signedUrlData } = useVideoSignedUrlQuery(videoId ?? '', {
-    enabled: !!videoId && !src,
+  const [hasPlaybackError, setHasPlaybackError] = useState(false);
+
+  const isFetchEnabled = !!videoId && !src;
+  const {
+    data: signedUrlData,
+    isLoading,
+    isError: isFetchError,
+    refetch,
+  } = useVideoSignedUrlQuery(videoId ?? '', {
+    enabled: isFetchEnabled,
   });
 
   const videoSrc = src ?? signedUrlData?.signedUrl;
+  const hasNoSource = !videoId && !src;
+  const showLoading = isFetchEnabled && isLoading;
+  const showError = isFetchError || hasPlaybackError;
 
-  return (
-    <div className={`aspect-video overflow-hidden rounded-2xl bg-muted ${className ?? ''}`.trim()}>
-      {videoSrc ? (
+  const handleRetry = useCallback(() => {
+    setHasPlaybackError(false);
+    void refetch();
+  }, [refetch]);
+
+  const handleVideoError = useCallback(() => {
+    setHasPlaybackError(true);
+  }, []);
+
+  const renderContent = (): React.ReactNode => {
+    if (hasNoSource) {
+      return <VideoUnavailablePlaceholder />;
+    }
+    
+    if (showLoading) {
+      return <VideoLoadingSkeleton />;
+    }
+    
+    if (showError) {
+      return <VideoErrorState onRetry={handleRetry} />;
+    }
+    
+
+    if (videoSrc) {
+      return (
         <video
           src={videoSrc}
           controls
@@ -46,14 +83,20 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           autoPlay={autoPlay}
           className="h-full w-full object-cover"
           aria-label={ariaLabel}
+          onError={handleVideoError}
         >
           <track kind="captions" label="Captions" />
           Your browser does not support the video element.
         </video>
-      ) : (
-        <VideoUnavailablePlaceholder />
-      )}
+      );
+    }
+
+    return <VideoUnavailablePlaceholder />;
+  };
+
+  return (
+    <div className={`aspect-video overflow-hidden rounded-2xl bg-muted ${className ?? ''}`.trim()}>
+      {renderContent()}
     </div>
   );
 };
-

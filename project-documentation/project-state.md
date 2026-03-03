@@ -62,7 +62,7 @@ All sub-tasks on single branch — tightly coupled, pure frontend:
 | 1     | FFP-341 | Create useVideos and useVideo query hooks       | Done — videosApi + query keys + hooks                                                                                                                            |
 | 2     | FFP-339 | Create useVideoSignedUrl TanStack Query hook    | Done — Zod schema in core, getSignedUrl API method, 10-min staleTime hook                                                                                        |
 | 3     | FFP-338 | Create VideoPlayer component with HTML5 video   | Done — dual-mode (videoId/src), integrated into VideoResponseQuestion                                                                                            |
-| 4     | FFP-340 | Add loading, error, and retry states            | Enhances VideoPlayer from FFP-338                                                                                                                                |
+| 4     | FFP-340 | Add loading, error, and retry states            | Done — VideoLoadingSkeleton, VideoErrorState, playback error handling with retry                                                                                 |
 | 5     | FFP-342 | Style VideoPlayer for responsive desktop/tablet | Final polish pass                                                                                                                                                |
 | —     | —       | Manual verification & testing                   | After FFP-338: verify video playback, data loading, signed URLs. After FFP-342: check responsive layouts, error/retry states. Complete before PR review & merge. |
 

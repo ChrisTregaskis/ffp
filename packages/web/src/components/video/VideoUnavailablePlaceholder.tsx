@@ -1,5 +1,5 @@
-import { IconBadge, Icons } from "../Icon";
-import { Text } from "../text";
+import { IconBadge, Icons } from '../Icon';
+import { Text } from '../text';
 
 /** Placeholder shown when no video source is available. */
 export const VideoUnavailablePlaceholder: React.FC = () => (
