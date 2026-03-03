@@ -61,7 +61,7 @@
 | 4   | FFP-310 | Add columns to programme_templates (total_phases, sessions_per_phase, difficulty)    | ✅ Done | NOT NULL with defaults (decision: 12, 3, 'beginner'). difficultyEnum imported from videos |
 | 5   | FFP-311 | Add columns to programmes (started_at, completed_at, archived_at, etc.)              | ✅ Done | 7 nullable columns. Self-referential FK with AnyPgColumn + onDelete: set null             |
 | 6   | FFP-316 | Update database schema index exports                                                 | ✅ Done | 4 new exports in schema/index.ts                                                          |
-| 7   | FFP-313 | Generate and apply database migration                                                | Pending | Single migration covering all new tables + column additions + enums                       |
+| 7   | FFP-313 | Generate and apply database migration                                                | ✅ Done | Migration 0018_modern_polaris.sql. RLS added for programme_phases in apply-rls.ts         |
 | 8   | FFP-314 | Create Zod validation schemas for new and updated tables                             | Pending | New schemas in `@ffp/core`, update existing programme schemas                             |
 | 9   | FFP-315 | Create seed data for at least 1 complete programme template                          | Pending | Full hierarchy: phases → sessions → exercises referencing seeded videos                   |
 | 10  | FFP-318 | Update programme.repository.ts with createProgrammePhases() and findTemplatePhases() | Pending | New repository functions for phase creation within RLS transactions                       |
@@ -202,7 +202,7 @@ await db.transaction(async (tx) => {
 
 **JWT Claims**: `custom:tenantId`, `custom:customerId`, `custom:role`
 
-**RLS exclusions**: `process_jobs`, `assessment_templates`, `assessment_flows`, `questions`, `template_questions`, `programme_templates`, `videos` (system-managed, cross-tenant by design)
+**RLS exclusions**: `process_jobs`, `assessment_templates`, `assessment_flows`, `questions`, `template_questions`, `programme_templates`, `template_phases`, `template_sessions`, `session_exercises`, `videos` (system-managed, cross-tenant by design)
 
 ### Frontend Architecture
 
