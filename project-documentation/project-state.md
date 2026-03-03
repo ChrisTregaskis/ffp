@@ -6,7 +6,7 @@
 
 ---
 
-## Next: Sprint 8 - Video UI & Integration (~27 pts)
+## In Progress: Sprint 8 - Video UI & Integration (~27 pts)
 
 **Dates**: 4th March - 24th March 2026
 **Sprint Goal**: Admin video upload/management UI, video player component, integration verification, documentation update.
@@ -18,17 +18,52 @@
 - `.claude/research/ffp-3-epic-plan.md` - Final epic plan (stories, ACs, subtasks, sprint allocation)
 - `.claude/research/programme-data-model-research.md` - Authoritative programme data model
 
-**Planned stories** (from FFP-3 epic plan):
-
-- FFP-320 — Admin Video Upload & Management UI
-- FFP-141 — Video Player Component
-- Integration verification & documentation update stories
-
 **Prerequisites from Sprint 7** (all met):
 
 - Video catalogue schema + APIs (FFP-282, FFP-300)
 - CloudFront OAC + signed URL infrastructure (FFP-288, FFP-294)
 - Programme-video relationship schema + service evolution (FFP-307)
+
+---
+
+### FFP-337: Video Player Component (5 SP) — Implementation Plan
+
+**Branch**: `feature/ffp-337-video-player-component` (worktree)
+**Scope**: Frontend-only. Reusable VideoPlayer React component with HTML5 video, TanStack Query hooks for video data + signed URLs, loading/error/retry states, responsive styling.
+
+**What already exists**:
+
+- Core video domain: `video.service.ts`, `video.repository.ts`, `video-signing.service.ts`
+- Zod schemas: `videoSchema`, `videoListResponseSchema`, `videoDetailResponseSchema`, `videoFilterSchema`
+- APIs deployed: `GET /videos`, `GET /videos/:id`, `GET /videos/:id/signed-url`
+- TanStack Query configured in web package with smart retry logic
+- API client pattern established (`packages/web/src/lib/api/`)
+- Placeholder `<video>` element in `VideoResponseQuestion.tsx` with TODO to integrate
+
+**What needs building**:
+
+- `videosApi` endpoint file in `packages/web/src/lib/api/videos.ts`
+- Video query hooks in `packages/web/src/hooks/videos/`
+- `VideoPlayer` component in `packages/web/src/components/video/`
+- Integration with existing `VideoQuestionCard` / `VideoResponseQuestion`
+
+**Amended requirements**:
+
+- FFP-341 ticket references `useVideos()` and `useVideo()` but also requires a `videosApi` endpoint — prerequisite not called out in ticket
+- FFP-338 lists `videoId` as a prop but the component should also accept an optional `src` prop for direct URL use (assessment context already has videoUrl)
+- Tests deferred until MVP launch per sprint policy
+
+#### Execution Order
+
+All sub-tasks on single branch — tightly coupled, pure frontend:
+
+| Order | Key     | Summary                                          | Notes                                             |
+| ----- | ------- | ------------------------------------------------ | ------------------------------------------------- |
+| 1     | FFP-341 | Create useVideos and useVideo query hooks         | Also creates `videosApi` endpoint file            |
+| 2     | FFP-339 | Create useVideoSignedUrl TanStack Query hook      | Depends on videosApi for signed URL fetch         |
+| 3     | FFP-338 | Create VideoPlayer component with HTML5 video     | Consumes useVideoSignedUrl hook                   |
+| 4     | FFP-340 | Add loading, error, and retry states              | Enhances VideoPlayer from FFP-338                 |
+| 5     | FFP-342 | Style VideoPlayer for responsive desktop/tablet   | Final polish pass                                 |
 
 ---
 
