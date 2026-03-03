@@ -1,5 +1,15 @@
-import { pgTable, uuid, varchar, text, boolean, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  boolean,
+  integer,
+  timestamp,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { difficultyEnum } from './videos';
 
 /**
  * System-managed lookup table for programme templates. Referenced by:
@@ -18,6 +28,12 @@ export const programmeTemplates = pgTable(
     description: text('description'),
     /** Whether this template is available for new programme generation */
     isActive: boolean('is_active').notNull().default(true),
+    /** Total number of phases in the programme */
+    totalPhases: integer('total_phases').notNull().default(12),
+    /** Default number of sessions per phase */
+    sessionsPerPhase: integer('sessions_per_phase').notNull().default(3),
+    /** Programme difficulty level (shared enum with videos) */
+    difficulty: difficultyEnum('difficulty').notNull().default('beginner'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },

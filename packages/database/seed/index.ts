@@ -34,6 +34,7 @@ import { seedAssessmentTemplates } from './seedAssessmentTemplates.js';
 import { seedAssessmentFlows } from './seedAssessmentFlows.js';
 import { seedFlowSteps } from './seedFlowSteps.js';
 import { seedVideos } from './seedVideos.js';
+import { seedTemplateHierarchy } from './seedTemplateHierarchy.js';
 import type { SeedConfig } from './types.js';
 
 const logger = createLogger('seed');
@@ -199,7 +200,8 @@ export const seedDatabase = async (
     if (options?.fresh) {
       logger.info('Fresh mode: truncating seed content tables (preserving identity data)...');
       await db.$client.query(`
-        TRUNCATE assessment_flows, assessment_templates, questions, programme_templates, videos CASCADE;
+        TRUNCATE assessment_flows, assessment_templates, questions, programme_templates, videos,
+                 template_phases, template_sessions, session_exercises CASCADE;
       `);
       logger.info('Content tables truncated');
     }
@@ -226,6 +228,10 @@ export const seedDatabase = async (
     // Seed 15: Videos (no RLS, system-managed catalogue, idempotent)
     // No dependency on other seeds — standalone catalogue entries
     await seedVideos(db);
+
+    // Seed 16: Template hierarchy — phases, sessions, exercises (no RLS, idempotent)
+    // Must run AFTER programme templates (FK) and videos (FK)
+    await seedTemplateHierarchy(db);
 
     logger.info('Database seeding complete!');
   } catch (error) {
@@ -261,3 +267,9 @@ export { seedAssessmentTemplates, TEMPLATE_IDS } from './seedAssessmentTemplates
 export { seedAssessmentFlows, FLOW_IDS } from './seedAssessmentFlows.js';
 export { seedFlowSteps, STEP_IDS } from './seedFlowSteps.js';
 export { seedVideos, VIDEO_IDS } from './seedVideos.js';
+export {
+  seedTemplateHierarchy,
+  TEMPLATE_PHASE_IDS,
+  TEMPLATE_SESSION_IDS,
+  SESSION_EXERCISE_IDS,
+} from './seedTemplateHierarchy.js';

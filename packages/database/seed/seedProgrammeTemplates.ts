@@ -48,6 +48,9 @@ const DEFAULT_PROGRAMME_TEMPLATES: NewProgrammeTemplate[] = [
       'Low-impact mobility and flexibility exercises for users with significant pain or red flags. ' +
       'Focuses on gentle range-of-motion work and pain management techniques.',
     isActive: true,
+    totalPhases: 4,
+    sessionsPerPhase: 3,
+    difficulty: 'beginner',
   },
   {
     id: PROGRAMME_TEMPLATE_IDS['foundation-programme'],
@@ -57,6 +60,9 @@ const DEFAULT_PROGRAMME_TEMPLATES: NewProgrammeTemplate[] = [
       'Foundational strength and balance exercises for users with low baseline fitness. ' +
       'Builds core stability and basic movement patterns before progressing.',
     isActive: true,
+    totalPhases: 6,
+    sessionsPerPhase: 3,
+    difficulty: 'beginner',
   },
   {
     id: PROGRAMME_TEMPLATE_IDS['advanced-strength-programme'],
@@ -66,6 +72,9 @@ const DEFAULT_PROGRAMME_TEMPLATES: NewProgrammeTemplate[] = [
       'Progressive strength training for users with good baseline and low pain. ' +
       'Includes compound movements and progressive overload principles.',
     isActive: true,
+    totalPhases: 8,
+    sessionsPerPhase: 4,
+    difficulty: 'advanced',
   },
   {
     id: PROGRAMME_TEMPLATE_IDS['general-wellness-programme'],
@@ -75,6 +84,9 @@ const DEFAULT_PROGRAMME_TEMPLATES: NewProgrammeTemplate[] = [
       'Balanced general fitness programme covering strength, mobility, and balance. ' +
       'Default recommendation when no specific programme mapping matches.',
     isActive: true,
+    totalPhases: 6,
+    sessionsPerPhase: 3,
+    difficulty: 'intermediate',
   },
 ];
 
