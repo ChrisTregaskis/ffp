@@ -1,5 +1,7 @@
 import { useVideoSignedUrlQuery } from '@web/hooks/videos';
 
+import { VideoUnavailablePlaceholder } from './VideoUnavailablePlaceholder';
+
 export interface VideoPlayerProps {
   /** Video ID — fetches a signed CloudFront URL via the signed URL hook */
   videoId?: string;
@@ -48,7 +50,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           <track kind="captions" label="Captions" />
           Your browser does not support the video element.
         </video>
-      ) : null}
+      ) : (
+        <VideoUnavailablePlaceholder />
+      )}
     </div>
   );
 };
+
