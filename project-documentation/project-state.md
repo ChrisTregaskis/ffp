@@ -8,7 +8,7 @@
 
 ## Next: Sprint 8 - Video UI & Integration (~27 pts)
 
-**Dates**: TBD
+**Dates**: 4th March - 24th March 2026
 **Sprint Goal**: Admin video upload/management UI, video player component, integration verification, documentation update.
 **Epic**: FFP-3 Video Management
 
