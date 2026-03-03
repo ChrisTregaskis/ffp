@@ -57,13 +57,14 @@
 
 All sub-tasks on single branch — tightly coupled, pure frontend:
 
-| Order | Key     | Summary                                          | Notes                                             |
-| ----- | ------- | ------------------------------------------------ | ------------------------------------------------- |
-| 1     | FFP-341 | Create useVideos and useVideo query hooks         | Also creates `videosApi` endpoint file            |
-| 2     | FFP-339 | Create useVideoSignedUrl TanStack Query hook      | Depends on videosApi for signed URL fetch         |
-| 3     | FFP-338 | Create VideoPlayer component with HTML5 video     | Consumes useVideoSignedUrl hook                   |
-| 4     | FFP-340 | Add loading, error, and retry states              | Enhances VideoPlayer from FFP-338                 |
-| 5     | FFP-342 | Style VideoPlayer for responsive desktop/tablet   | Final polish pass                                 |
+| Order | Key     | Summary                                         | Notes                                     |
+| ----- | ------- | ----------------------------------------------- | ----------------------------------------- |
+| 1     | FFP-341 | Create useVideos and useVideo query hooks       | Done — videosApi + query keys + hooks     |
+| 2     | FFP-339 | Create useVideoSignedUrl TanStack Query hook    | Depends on videosApi for signed URL fetch |
+| 3     | FFP-338 | Create VideoPlayer component with HTML5 video   | Consumes useVideoSignedUrl hook           |
+| 4     | FFP-340 | Add loading, error, and retry states            | Enhances VideoPlayer from FFP-338         |
+| 5     | FFP-342 | Style VideoPlayer for responsive desktop/tablet | Final polish pass                         |
+| —     | —       | Manual verification & testing                   | After FFP-338: verify video playback, data loading, signed URLs. After FFP-342: check responsive layouts, error/retry states. Complete before PR review & merge. |
 
 ---
 

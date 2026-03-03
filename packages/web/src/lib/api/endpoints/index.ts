@@ -13,5 +13,6 @@ export type {
 export { programmesApi } from './programmes';
 export type { ActiveProgrammeResponse } from './programmes';
 
-// Future exports:
-// export { usersApi } from './users';
+export { videosApi } from './videos';
+export type { VideoDetailResponse, VideoFilterInput, VideoListResponse } from './videos';
+export type { VideoListApiResponse } from './videos';
