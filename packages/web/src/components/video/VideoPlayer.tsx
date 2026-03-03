@@ -63,15 +63,14 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     if (hasNoSource) {
       return <VideoUnavailablePlaceholder />;
     }
-    
+
     if (showLoading) {
       return <VideoLoadingSkeleton />;
     }
-    
+
     if (showError) {
       return <VideoErrorState onRetry={handleRetry} />;
     }
-    
 
     if (videoSrc) {
       return (
