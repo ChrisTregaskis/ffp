@@ -23,4 +23,10 @@ export const videoKeys = {
 
   /** Single video detail by ID */
   detail: (videoId: string) => [...videoKeys.details(), videoId] as const,
+
+  /** Signed URL queries */
+  signedUrls: () => [...videoKeys.all, 'signedUrl'] as const,
+
+  /** Signed URL for a specific video */
+  signedUrl: (videoId: string) => [...videoKeys.signedUrls(), videoId] as const,
 };

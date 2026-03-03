@@ -22,6 +22,7 @@ export type {
   StartAssessmentResponse,
   SubmitAssessmentRequest,
   SubmitAssessmentResponse,
+  SignedVideoUrlResponse,
   VideoDetailResponse,
   VideoFilterInput,
   VideoListApiResponse,

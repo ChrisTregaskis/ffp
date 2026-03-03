@@ -1,6 +1,8 @@
 import {
+  signedVideoUrlResponseSchema,
   videoDetailResponseSchema,
   videoListApiResponseSchema,
+  type SignedVideoUrlResponse,
   type VideoDetailResponse,
   type VideoFilterInput,
   type VideoListApiResponse,
@@ -61,7 +63,21 @@ export const videosApi = {
 
     return parseApiResponse(videoDetailResponseSchema, response, { method: 'GET', path });
   },
+
+  /** Get a time-limited CloudFront signed URL for video playback */
+  getSignedUrl: async (videoId: string, signal?: AbortSignal): Promise<SignedVideoUrlResponse> => {
+    const path = `${basePath}/${videoId}/signed-url`;
+    const response = await ffpClient.get(path, { signal });
+
+    return parseApiResponse(signedVideoUrlResponseSchema, response, { method: 'GET', path });
+  },
 };
 
 // Re-export types for consumers
-export type { VideoDetailResponse, VideoFilterInput, VideoListApiResponse, VideoListResponse };
+export type {
+  SignedVideoUrlResponse,
+  VideoDetailResponse,
+  VideoFilterInput,
+  VideoListApiResponse,
+  VideoListResponse,
+};
