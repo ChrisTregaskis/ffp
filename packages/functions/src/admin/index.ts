@@ -13,6 +13,8 @@ import { handler as duplicateTemplateHandler } from './templates/duplicate-templ
 import { handler as getTemplateHandler } from './templates/get-template';
 import { handler as listTemplatesHandler } from './templates/list-templates';
 import { handler as updateTemplateHandler } from './templates/update-template';
+import { handler as createVideoHandler } from './videos/create';
+import { handler as getUploadUrlHandler } from './videos/get-upload-url';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
@@ -34,6 +36,8 @@ const routes: RouteRegistry = {
     '/create-customer': createCustomerHandler,
     '/assessment-templates': createTemplateHandler,
     '/assessment-templates/{id}/duplicate': duplicateTemplateHandler,
+    '/videos': createVideoHandler,
+    '/videos/upload-url': getUploadUrlHandler,
   },
   GET: {
     '/assessment-templates': listTemplatesHandler,

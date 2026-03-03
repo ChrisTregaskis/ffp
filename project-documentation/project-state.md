@@ -45,26 +45,24 @@
 
 - Update VideosBucket and AssetsBucket CORS to allow PUT method for presigned upload support
 
-#### Phase 1 — Backend APIs (FFP-321 + FFP-327)
+#### Phase 1 — Backend APIs (FFP-321 + FFP-327) ✅ COMPLETE
 
 **FFP-321**: Presigned upload URL endpoint (`POST /admin/videos/upload-url`)
 
 - New file: `packages/functions/src/admin/videos/get-upload-url.ts`
-- New service method using `@aws-sdk/s3-request-presigner` (PutObjectCommand)
+- New service: `packages/core/src/videos/video-upload.service.ts` using `@aws-sdk/s3-request-presigner`
 - S3 key format: `library/{uuid}.mp4`, 15-min TTL
-- Returns: `{ uploadUrl, s3Key, expiresIn }`
-- Admin role check enforced
-- Register route in admin router
-- **Amended**: Also generate presigned PUT URL for thumbnail to AssetsBucket (key: `thumbnails/{uuid}.{ext}`) — return both URLs in one call to avoid extra round-trip
+- Returns: `{ videoUploadUrl, videoS3Key, thumbnailUploadUrl, thumbnailKey, expiresIn }`
+- Admin role check enforced, route registered in admin router
+- Thumbnail presigned PUT URL for AssetsBucket (`thumbnails/{uuid}.{ext}`) included in same response
+- Infrastructure: VideosBucket + AssetsBucket CORS updated to allow PUT; admin Lambda has S3 env vars + `s3:PutObject` permissions
 
 **FFP-327**: Video creation endpoint (`POST /admin/videos`)
 
 - New file: `packages/functions/src/admin/videos/create.ts`
-- Add `createVideo()` to video repository + service
-- Validate with existing `createVideoSchema`
-- Create record with status `draft`
-- Admin role check enforced
-- Register route in admin router
+- Added `insertVideo()` to repository, `createVideo()` to service
+- Validates with existing `createVideoSchema`, creates record with status `draft`
+- Admin role check enforced, route registered in admin router
 
 #### Phase 2 — Upload UI (FFP-322 + FFP-324 + FFP-323)
 

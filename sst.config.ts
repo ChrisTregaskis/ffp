@@ -166,7 +166,7 @@ export default $config({
     const videosBucket = new sst.aws.Bucket('VideosBucket', {
       cors: {
         allowHeaders: ['*'],
-        allowMethods: ['GET', 'HEAD'],
+        allowMethods: ['GET', 'HEAD', 'PUT'],
         allowOrigins: ['*'], // Will be restricted to specific origins in production
       },
       policy: [
@@ -195,7 +195,7 @@ export default $config({
     const assetsBucket = new sst.aws.Bucket('AssetsBucket', {
       cors: {
         allowHeaders: ['*'],
-        allowMethods: ['GET', 'HEAD'],
+        allowMethods: ['GET', 'HEAD', 'PUT'],
         allowOrigins: ['*'], // Will be restricted to specific origins in production
       },
       transform: {
@@ -417,9 +417,29 @@ export default $config({
     });
 
     // Admin domain routes (system_admin role required - validated in handlers)
+    // Includes S3 bucket names for presigned video/thumbnail upload URLs
+    const adminHandlerEnv = {
+      environment: {
+        ...handlerEnv.environment,
+        VIDEOS_BUCKET_NAME: videosBucket.name,
+        ASSETS_BUCKET_NAME: assetsBucket.name,
+      },
+    };
     api.route(
       'ANY /admin/{proxy+}',
-      { handler: `${repositoryFunctionsPath}/admin/index.handler`, ...handlerEnv },
+      {
+        handler: `${repositoryFunctionsPath}/admin/index.handler`,
+        ...adminHandlerEnv,
+        permissions: [
+          {
+            actions: ['s3:PutObject'],
+            resources: [
+              $interpolate`arn:aws:s3:::${videosBucket.name}/*`,
+              $interpolate`arn:aws:s3:::${assetsBucket.name}/*`,
+            ],
+          },
+        ],
+      },
       args
     );
 

@@ -77,6 +77,15 @@ export const updateVideoSchema = videoSchema
   })
   .partial();
 
+/** Allowed thumbnail file extensions for upload */
+const THUMBNAIL_EXTENSIONS = ['jpg', 'jpeg', 'png'] as const;
+
+/** Request schema for generating presigned upload URLs */
+export const uploadUrlRequestSchema = z.object({
+  /** Optional thumbnail file extension — when provided, a thumbnail upload URL is also generated */
+  thumbnailExtension: z.enum(THUMBNAIL_EXTENSIONS).optional(),
+});
+
 /** Filter criteria for video catalogue queries — all fields optional, combine with AND logic */
 export const videoFilterSchema = z.object({
   bodyParts: z.array(z.string().min(1)).optional(),
@@ -84,6 +93,20 @@ export const videoFilterSchema = z.object({
   difficulty: difficultySchema.optional(),
   movementType: movementTypeSchema.optional(),
   tags: z.array(z.string().min(1)).optional(),
+});
+
+/** Response schema for presigned upload URL endpoint */
+export const uploadUrlResponseSchema = z.object({
+  /** Presigned PUT URL for uploading the video file to S3 */
+  videoUploadUrl: z.url(),
+  /** S3 object key for the video (e.g., 'library/{uuid}.mp4') */
+  videoS3Key: z.string().min(1),
+  /** Presigned PUT URL for uploading the thumbnail (null if not requested) */
+  thumbnailUploadUrl: z.url().nullable(),
+  /** S3 object key for the thumbnail (null if not requested) */
+  thumbnailKey: z.string().min(1).nullable(),
+  /** URL validity period in seconds */
+  expiresIn: z.number().int().positive(),
 });
 
 /** Response schema for video list API — lightweight fields for catalogue browsing */
@@ -114,5 +137,7 @@ export type Video = z.infer<typeof videoSchema>;
 export type CreateVideoInput = z.infer<typeof createVideoSchema>;
 export type UpdateVideoInput = z.infer<typeof updateVideoSchema>;
 export type VideoFilterInput = z.infer<typeof videoFilterSchema>;
+export type UploadUrlRequest = z.infer<typeof uploadUrlRequestSchema>;
+export type UploadUrlResponse = z.infer<typeof uploadUrlResponseSchema>;
 export type VideoListResponse = z.infer<typeof videoListResponseSchema>;
 export type VideoDetailResponse = z.infer<typeof videoDetailResponseSchema>;
