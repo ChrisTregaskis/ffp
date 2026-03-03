@@ -17,6 +17,7 @@ import { MotionShowcasePage } from '@web/pages/dev/MotionShowcasePage';
 import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
+import { VideoLibraryPage } from '@web/pages/protected/admin/VideoLibraryPage';
 import { HomePage } from '@web/pages/protected/HomePage';
 import { AccountSettingsPage } from '@web/pages/protected/programme-user/AccountSettingsPage';
 import { AssessmentPage } from '@web/pages/protected/programme-user/AssessmentPage';
@@ -253,12 +254,7 @@ export const routes: RoutesConfig = {
   },
   [RouteKey.ADMIN_VIDEOS]: {
     path: '/admin/videos',
-    pageComponent: () =>
-      ComingSoonPage({
-        title: 'Video Library',
-        description: 'Manage exercise video library',
-        icon: 'Video',
-      }),
+    pageComponent: VideoLibraryPage,
     title: 'Video Library',
     allowedRoles: [SYSTEM_ADMIN],
   },

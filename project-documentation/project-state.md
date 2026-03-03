@@ -64,57 +64,75 @@
 - Validates with existing `createVideoSchema`, creates record with status `draft`
 - Admin role check enforced, route registered in admin router
 
-#### Phase 2 — Upload UI (FFP-322 + FFP-324 + FFP-323)
+#### Phase 2 — Upload UI (FFP-322 + FFP-324 + FFP-323) ✅ COMPLETE
 
-**FFP-322**: Admin video upload page with drag-and-drop
+**Refactor note**: After initial implementation, the page was restructured per the prototype MVP spec (`.claude/research/video-library-ui-mvp-spec.md`). The upload flow moved from a standalone page into a modal dialog. A reusable `Modal` component was built using existing `Backdrop` + `ScaleFade` motion wrappers.
 
-- New file: `packages/web/src/pages/protected/admin/VideosPage.tsx`
-- Replace `ComingSoonPage` placeholder in route config
-- Drag-and-drop zone + click-to-select file picker
-- Display selected file info (name, size, type)
+**FFP-322**: Video Library Management page with upload modal
 
-**FFP-324**: Client-side file validation (built into FFP-322)
+- New file: `packages/web/src/pages/protected/admin/VideoLibraryPage.tsx` — page shell with header + empty state
+- New file: `packages/web/src/pages/protected/admin/UploadVideoModal.tsx` — upload flow in modal
+- New file: `packages/web/src/components/modal/Modal.tsx` — reusable modal component (Backdrop + ScaleFade, Escape/scroll lock/focus management)
+- Replaced `ComingSoonPage` placeholder in route config
+- Drag-and-drop zone + click-to-select file picker inside modal
 
-- MP4 only (`video/mp4`), max 500MB
-- Inline validation errors near upload zone
+**FFP-324**: Client-side file validation (built into upload modal)
+
+- MP4 only (`video/mp4`), max 500 MB
+- Inline validation errors via StaticAlert inside modal
 - Upload button disabled when validation fails
 
 **FFP-323**: Browser-to-S3 upload with progress
 
-- Fetch presigned URL from `POST /admin/videos/upload-url`
+- Fetches presigned URL from `POST /admin/videos/upload-url` via `adminVideosApi`
 - XHR PUT to presigned URL with `Content-Type: video/mp4`
-- Progress bar showing upload percentage
-- Error handling with user-friendly messages
-- On success, transition to metadata form
+- Progress bar showing upload percentage with aria attributes
+- Error handling with user-friendly messages via StaticAlert
+- Modal close disabled during upload to prevent data loss
+- On success, shows completion state (metadata form wiring in Phase 3)
+- Supporting files: `useVideoUpload` hook, `admin-videos.ts` API client
 
 #### Phase 3 — Metadata, Thumbnails & Integration (FFP-326 + FFP-325 + FFP-328)
 
-**FFP-326**: Video metadata form component
+All Phase 3 work renders inside the Upload Video modal on the Video Library Management page.
 
-- Fields: title, description, body_parts (multi-select), equipment (multi-select), difficulty (dropdown), movement_type (dropdown), tags (tag input), duration_seconds
+**FFP-326**: Video metadata form component (inside upload modal)
+
+- Form appears below upload zone after successful file upload
+- Fields map to DB schema (not prototype spec): title, description (textarea), movementType (select), difficulty (select), bodyParts (multi-value), equipment (multi-value), tags (multi-value), durationSeconds
+- Layout: Row 1 (2-col: title + movementType), Row 2 (full: description), Row 3 (3-col: difficulty + bodyParts + equipment), Row 4 (full: tags)
+- **Prerequisite**: Extend `FieldDataType` enum and `Form` component to handle `TEXTAREA`, `SELECT`, and multi-value field types
 - Client-side Zod validation using existing `createVideoSchema`
-- TailwindCSS styling consistent with admin portal
+- Footer buttons: Cancel (closes modal) + Submit (creates record)
 
-**FFP-325**: Thumbnail upload flow
+**FFP-325**: Thumbnail upload flow (inside upload modal)
 
-- Optional image file picker (JPEG/PNG, max 5MB)
+- Optional image file picker (JPEG/PNG, max 5MB) inside the modal
 - Upload to AssetsBucket via presigned URL (from Phase 1 endpoint)
-- Thumbnail preview after selection
+- Thumbnail preview after selection inside the modal
 - Upload can proceed without thumbnail
 
-**FFP-328**: End-to-end wiring
+**FFP-328**: End-to-end wiring (modal-based flow)
 
-- Complete flow: select file → validate → get presigned URL → upload to S3 → show metadata form → submit → create video record
-- State transitions between steps
-- Success message + option to upload another or view video list
-- Error handling at each step
+- Full modal flow: click "Upload Video" → modal opens → select file → validate → upload to S3 with progress → show metadata form → optional thumbnail → submit → create video record → success state → upload another or close
+- Modal close/cancel handling: confirm if upload in progress, reset form state on close
+- Escape key and backdrop click close the modal (with confirmation if upload active)
+- "Upload Another" resets modal to initial state
+- Error handling at each step via StaticAlert, success via ToastAlert
 
 #### Execution Notes
 
-- **Single branch**: All sub-tasks on `feature/sprint8`
+- **Single branch**: All sub-tasks on `feature/ffp-320-admin-video-upload`
 - **Tests**: Deferred to MVP launch
 - **Videos table is RLS-excluded** (system-managed, cross-tenant) — no tenant context needed for video CRUD
 - **Postman**: Update collection with new admin video endpoints after Phase 1
+- **Prototype spec discovered**: `.claude/research/video-library-ui-mvp-spec.md` — describes full Video Library page with search/filters/cards grid. Only the upload modal and page shell are in Sprint 8 scope. Video list UI deferred.
+- **Jira tickets updated**: Sprint 8 sub-task descriptions updated to reflect modal-based flow, data shape reconciliation, and form infrastructure prerequisites. FFP-322, FFP-324, FFP-323 transitioned to Done.
+- **Form infrastructure gaps for Phase 3**: `FieldDataType` enum needs `TEXTAREA`; `Form` component only renders text/password inputs — needs `SELECT`, `TEXTAREA`, and multi-value handling for metadata form
+- **Future scope identified from prototype spec** (not in Sprint 8 — do NOT create tickets):
+  - **Video Library list view**: search/filters card + responsive video cards grid (likely FFP-4 or later sprint)
+  - **Video Card component**: thumbnail, category/difficulty badges, duration, tags, activate/deactivate toggle
+  - **Reusable Modal component**: available at `packages/web/src/components/modal/` for future use across the app
 
 ---
 

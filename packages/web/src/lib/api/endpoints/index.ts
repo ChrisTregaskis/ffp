@@ -1,3 +1,6 @@
+export { adminVideosApi } from './admin-videos';
+export type { UploadUrlRequest, UploadUrlResponse } from './admin-videos';
+
 export { assessmentsApi } from './assessments';
 export type {
   AssessmentFlow,
