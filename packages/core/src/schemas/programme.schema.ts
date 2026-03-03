@@ -88,6 +88,8 @@ export const createProgrammeSchema = programmeSchema
   })
   .extend({
     description: programmeSchema.shape.description.optional(),
+    totalPhases: programmeSchema.shape.totalPhases.optional(),
+    sessionsPerPhase: programmeSchema.shape.sessionsPerPhase.optional(),
   });
 
 /** Response schema for the active programme endpoint */

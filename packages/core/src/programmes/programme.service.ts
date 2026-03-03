@@ -10,11 +10,13 @@ import { ForbiddenError, NotFoundError, ValidationError } from '../lib/errors';
 import {
   archiveProgramme,
   createProgramme,
+  createProgrammePhases,
   findProgrammeByUserId,
   findTemplateBySlug,
+  findTemplatePhases,
 } from './programme.repository';
 
-import type { Programme } from './programme.repository';
+import type { Programme, NewProgrammePhase } from './programme.repository';
 import type { Transaction } from '../lib/database';
 
 export interface GenerateProgrammeInput {
@@ -95,7 +97,7 @@ export async function generateProgramme(
     );
   }
 
-  // Create programme from template
+  // Create programme from template, snapshotting structure metadata
   const programme = await createProgramme(
     {
       tenantId,
@@ -103,9 +105,26 @@ export async function generateProgramme(
       programmeTemplateId: template.id,
       name: template.name,
       description: template.description,
+      totalPhases: template.totalPhases,
+      sessionsPerPhase: template.sessionsPerPhase,
     },
     { tx }
   );
+
+  // Eagerly create programme phase rows from the template definition
+  const phases = await findTemplatePhases(template.id, { tx });
+
+  if (phases.length > 0) {
+    const phaseInputs: NewProgrammePhase[] = phases.map((phase) => ({
+      tenantId,
+      programmeId: programme.id,
+      templatePhaseId: phase.id,
+      phaseNumber: phase.phaseNumber,
+      name: phase.name,
+    }));
+
+    await createProgrammePhases(tenantId, phaseInputs, { tx });
+  }
 
   return {
     programmeId: programme.id,

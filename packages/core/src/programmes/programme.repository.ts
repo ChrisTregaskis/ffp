@@ -3,8 +3,12 @@ import { eq, and } from 'drizzle-orm';
 import {
   programmes,
   programmeTemplates,
+  templatePhases,
+  programmePhases,
   type ProgrammeRecord,
   type ProgrammeTemplateRecord,
+  type TemplatePhaseRecord,
+  type NewProgrammePhase,
 } from '@ffp/database/schema';
 
 import { db, withRLS, type Transaction } from '../lib/database';
@@ -39,6 +43,16 @@ export interface ArchiveProgrammeOptions {
   tx?: Transaction;
 }
 
+export interface FindTemplatePhasesOptions {
+  /** Optional transaction for atomic operations. If provided, RLS must be set by caller. */
+  tx?: Transaction;
+}
+
+export interface CreateProgrammePhasesOptions {
+  /** Optional transaction for atomic operations. If provided, RLS must be set by caller. */
+  tx?: Transaction;
+}
+
 async function createProgrammeInTx(
   tx: Transaction,
   input: CreateProgrammeInput
@@ -51,6 +65,8 @@ async function createProgrammeInTx(
       programmeTemplateId: input.programmeTemplateId,
       name: input.name,
       description: input.description ?? null,
+      totalPhases: input.totalPhases ?? null,
+      sessionsPerPhase: input.sessionsPerPhase ?? null,
     })
     .returning();
 
@@ -101,6 +117,26 @@ async function findTemplateBySlugInTx(
     .limit(1);
 
   return records[0] ?? null;
+}
+
+async function findTemplatePhasesInTx(
+  tx: Transaction,
+  templateId: string
+): Promise<TemplatePhaseRecord[]> {
+  return await tx
+    .select()
+    .from(templatePhases)
+    .where(eq(templatePhases.programmeTemplateId, templateId))
+    .orderBy(templatePhases.phaseNumber);
+}
+
+async function createProgrammePhasesInTx(
+  tx: Transaction,
+  phases: NewProgrammePhase[]
+): Promise<void> {
+  if (phases.length === 0) return;
+
+  await tx.insert(programmePhases).values(phases);
 }
 
 export async function createProgramme(
@@ -190,5 +226,45 @@ export async function findTemplateBySlug(
   return records[0] ?? null;
 }
 
+/** Retrieves template phases for a programme template, ordered by phase_number. No RLS required. */
+export async function findTemplatePhases(
+  templateId: string,
+  options: FindTemplatePhasesOptions = {}
+): Promise<TemplatePhaseRecord[]> {
+  const { tx } = options;
+
+  if (tx) {
+    return findTemplatePhasesInTx(tx, templateId);
+  }
+
+  // No RLS needed — template_phases is a system-managed lookup table
+  return await db
+    .select()
+    .from(templatePhases)
+    .where(eq(templatePhases.programmeTemplateId, templateId))
+    .orderBy(templatePhases.phaseNumber);
+}
+
+/** Batch inserts programme_phases rows. RLS context must be set when using a transaction. */
+export async function createProgrammePhases(
+  tenantId: string,
+  phases: NewProgrammePhase[],
+  options: CreateProgrammePhasesOptions = {}
+): Promise<void> {
+  if (phases.length === 0) return;
+
+  const { tx } = options;
+
+  if (tx) {
+    return createProgrammePhasesInTx(tx, phases);
+  }
+
+  await withRLS(tenantId, undefined, async (newTx) => {
+    return createProgrammePhasesInTx(newTx, phases);
+  });
+}
+
 export type { CreateProgrammeInput };
 export type { ProgrammeTemplateRecord };
+export type { TemplatePhaseRecord };
+export type { NewProgrammePhase };

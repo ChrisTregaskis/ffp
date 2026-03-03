@@ -64,8 +64,8 @@
 | 7   | FFP-313 | Generate and apply database migration                                                | ✅ Done | Migration 0018_modern_polaris.sql. RLS added for programme_phases in apply-rls.ts                     |
 | 8   | FFP-314 | Create Zod validation schemas for new and updated tables                             | ✅ Done | Updated programme.schema.ts, new programme-structure.schema.ts, barrel exports                        |
 | 9   | FFP-315 | Create seed data for at least 1 complete programme template                          | ✅ Done | Updated template seeds with new cols, new seedTemplateHierarchy (4 phases, 12 sessions, 40 exercises) |
-| 10  | FFP-318 | Update programme.repository.ts with createProgrammePhases() and findTemplatePhases() | Pending | New repository functions for phase creation within RLS transactions                                   |
-| 11  | FFP-317 | Update generateProgramme() to create programme_phases rows                           | Pending | Evolve existing service to eagerly create phase rows at assignment                                    |
+| 10  | FFP-318 | Update programme.repository.ts with createProgrammePhases() and findTemplatePhases() | ✅ Done | findTemplatePhases (no RLS), createProgrammePhases (RLS), createProgramme updated with snapshots      |
+| 11  | FFP-317 | Update generateProgramme() to create programme_phases rows                           | ✅ Done | Eagerly creates phase rows from template, snapshots totalPhases + sessionsPerPhase, same tx           |
 
 **Amended requirements** (ticket vs current codebase):
 
