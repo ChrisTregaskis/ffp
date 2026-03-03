@@ -26,6 +26,10 @@ export default $config({
     };
   },
   async run() {
+    // Global Lambda runtime — Node.js 24.x Active LTS (supported until April 2028)
+    $transform(sst.aws.Function, (args) => {
+      args.runtime = 'nodejs24.x' as typeof args.runtime;
+    });
     const requiredDbEnvVars = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'] as const;
     const missingVars = requiredDbEnvVars.filter((varName) => !process.env[varName]);
 
@@ -153,12 +157,25 @@ export default $config({
     });
 
     // S3 Buckets for video and asset storage
+    // NOTE: SST enforces one BucketPolicy per Bucket (auto-created by the component).
+    // We cannot reference videoCdn ARN here (circular dependency: Bucket → Policy → CDN → Bucket).
+    // Instead, we allow the CloudFront service principal without SourceArn condition.
+    // Security is maintained by OAC (SigV4 restricts access to our specific distribution)
+    // and signed URL enforcement (trusted key group on the distribution).
+    // TODO: Add SourceArn condition when architecture supports it (e.g., post-deploy policy update)
     const videosBucket = new sst.aws.Bucket('VideosBucket', {
       cors: {
         allowHeaders: ['*'],
         allowMethods: ['GET', 'HEAD'],
         allowOrigins: ['*'], // Will be restricted to specific origins in production
       },
+      policy: [
+        {
+          actions: ['s3:GetObject'],
+          principals: [{ type: 'service', identifiers: ['cloudfront.amazonaws.com'] }],
+          paths: ['*'],
+        },
+      ],
       transform: {
         bucket: (args: any) => {
           // Enable AES256 encryption at rest
@@ -197,7 +214,43 @@ export default $config({
       },
     });
 
-    // CloudFront CDN for video delivery
+    // =========================================================================
+    // CLOUDFRONT SIGNED URL INFRASTRUCTURE
+    // Signing key pair for generating time-limited signed URLs for video content.
+    // Keys are stored as SST secrets (per-stage) via the setup script:
+    //   bash scripts/setup-cloudfront-signing-key.sh <stage>
+    // =========================================================================
+
+    // SST Secrets — private key for Lambda URL signing, public key for CloudFront verification
+    // Set via: bash scripts/setup-cloudfront-signing-key.sh <stage>
+    const cloudFrontSigningKey = new sst.Secret('CloudFrontSigningKey');
+    const cloudFrontSigningPublicKey = new sst.Secret('CloudFrontSigningPublicKey');
+
+    const videoOac = new aws.cloudfront.OriginAccessControl('VideoOac', {
+      name: `ffp-video-oac-${$app.stage}`,
+      description:
+        'Origin Access Control for FFP video S3 bucket — restricts access to CloudFront only',
+      originAccessControlOriginType: 's3',
+      signingBehavior: 'always',
+      signingProtocol: 'sigv4',
+    });
+
+    const cfPublicKey = new aws.cloudfront.PublicKey('CfPublicKey', {
+      name: `ffp-cf-public-key-${$app.stage}`,
+      comment: 'Public key for FFP CloudFront signed URL verification',
+      encodedKey: cloudFrontSigningPublicKey.value,
+    });
+
+    // Key Group — trusted by the CloudFront distribution for signed URL validation
+    const cfKeyGroup = new aws.cloudfront.KeyGroup('CfKeyGroup', {
+      name: `ffp-cf-key-group-${$app.stage}`,
+      comment: 'Key group for FFP signed video URLs',
+      items: [cfPublicKey.id],
+    });
+
+    // CloudFront CDN for video delivery (OAC + signed URLs)
+    // OAC and trustedKeyGroups are applied in transform.distribution to guarantee
+    // they reach the raw Pulumi distribution (SST Cdn may not pass them through)
     const videoCdn = new sst.aws.Cdn('VideoCdn', {
       origins: [
         {
@@ -225,7 +278,31 @@ export default $config({
         distribution: (args: any) => {
           // Use only North America and Europe for cost optimisation
           args.priceClass = 'PriceClass_100';
+
+          // Override origins with OAC at the raw Pulumi level — SST Cdn may not
+          // pass originAccessControlId through its abstraction layer
+          args.origins = [
+            {
+              domainName: videosBucket.domain,
+              originId: 'S3-Videos',
+              originAccessControlId: videoOac.id,
+              s3OriginConfig: {
+                originAccessIdentity: '', // Required by Pulumi provider to identify S3 origin; empty because OAC replaces legacy OAI
+              },
+            },
+          ];
+
+          // Enforce signed URLs via trusted key groups
+          args.defaultCacheBehavior.trustedKeyGroups = [cfKeyGroup.id];
         },
+      },
+    });
+
+    // Linkable — exposes CloudFront key pair ID for Lambda functions generating signed URLs
+    // Used by video handler via CLOUDFRONT_KEY_PAIR_ID env var (see videoHandlerEnv below)
+    new sst.Linkable('CloudFrontKeyPairId', {
+      properties: {
+        value: cfPublicKey.id,
       },
     });
 
@@ -376,6 +453,35 @@ export default $config({
       args
     );
 
+    // Videos domain routes (authenticated users - video playback with signed URLs)
+    // Includes CloudFront signing config: domain, key pair ID, and signing key (SST Secret)
+    const videoHandlerEnv = {
+      environment: {
+        ...handlerEnv.environment,
+        CLOUDFRONT_DOMAIN: videoCdn.url,
+        CLOUDFRONT_KEY_PAIR_ID: cfPublicKey.id,
+        CLOUDFRONT_SIGNING_KEY: cloudFrontSigningKey.value,
+      },
+    };
+    api.route('OPTIONS /videos', {
+      handler: `${repositoryFunctionsPath}/videos/index.handler`,
+      ...videoHandlerEnv,
+    });
+    api.route('OPTIONS /videos/{proxy+}', {
+      handler: `${repositoryFunctionsPath}/videos/index.handler`,
+      ...videoHandlerEnv,
+    });
+    api.route(
+      'ANY /videos',
+      { handler: `${repositoryFunctionsPath}/videos/index.handler`, ...videoHandlerEnv },
+      args
+    );
+    api.route(
+      'ANY /videos/{proxy+}',
+      { handler: `${repositoryFunctionsPath}/videos/index.handler`, ...videoHandlerEnv },
+      args
+    );
+
     // =========================================================================
     // JOB PROCESSING INFRASTRUCTURE
     // Lambda function exists in all stages for manual invocation.
@@ -444,6 +550,8 @@ export default $config({
       videosBucket: videosBucket.name,
       assetsBucket: assetsBucket.name,
       cdnUrl: videoCdn.url,
+      // CloudFront signing infrastructure
+      cloudFrontKeyPairId: cfPublicKey.id,
       // API Gateway
       apiUrl: api.url,
       // General

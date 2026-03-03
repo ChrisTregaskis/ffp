@@ -17,6 +17,7 @@
  * Import using: import { db, withRLS, ValidationError, withErrorHandling, cognito, extractUserContext, createRequestContext, createLogger, generateRandomAlphanumeric, createCustomerService } from '@ffp/core/server';
  */
 
+export * from './lib/constants';
 export * from './lib/database';
 export * from './lib/errors';
 export * from './lib/lambda-wrapper';
@@ -32,3 +33,4 @@ export * from './auth';
 export * from './assessments';
 export * from './jobs';
 export * from './programmes';
+export * from './videos';

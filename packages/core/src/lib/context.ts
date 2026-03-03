@@ -16,7 +16,7 @@ import { type APIGatewayProxyEventV2, type APIGatewayEventRequestContextV2 } fro
 
 import * as userRepository from '../users/user.repository';
 
-import { COGNITO_CUSTOM_ATTRIBUTES } from './constants';
+import { COGNITO_CUSTOM_ATTRIBUTES, SYSTEM_PLACEHOLDER_TENANT_ID } from './constants';
 import { UnauthorisedError, ValidationError } from './errors';
 
 /**
@@ -284,6 +284,36 @@ export function extractJobContext(jobMessage: {
     customerId: jobMessage.customerId,
     triggeredBy: jobMessage.userId,
     jobId: jobMessage.jobId,
+  });
+}
+
+/**
+ * Type guard to check if an actor is a user actor
+ *
+ * @param actor - Actor to check
+ * @returns True if actor is a UserActor
+ */
+/**
+ * Create a system context for Lambda cold start operations.
+ *
+ * A factory (not a constant) because each cold start should get its own
+ * timestamp and requestId. Use this for structured logging during
+ * Lambda initialisation, before any tenant context is available.
+ *
+ * @param systemId - Identifier for the handler (e.g., 'video-signed-url-handler')
+ * @returns TenantContext with system actor and placeholder tenant ID
+ *
+ * @example
+ * ```typescript
+ * const coldCtx = createColdStartContext('video-signed-url-handler');
+ * const logger = createLogger(coldCtx);
+ * logger.error('Missing env vars');
+ * ```
+ */
+export function createColdStartContext(systemId: string): TenantContext {
+  return createSystemContext({
+    systemId,
+    tenantId: SYSTEM_PLACEHOLDER_TENANT_ID,
   });
 }
 

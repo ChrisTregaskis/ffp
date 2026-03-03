@@ -68,6 +68,9 @@ CLAUDE.local.md
 .claude/prompts/
 .claude/docs/
 .claude/research/
+.claude/worktrees/
+.claude/_claude_chat_output.md
+.claude/sprint-planning/stakeholder-update
 
 project-documentation/sprint-planning/outputs/*.md
 project-documentation/sprint-planning/outputs/**/*.md

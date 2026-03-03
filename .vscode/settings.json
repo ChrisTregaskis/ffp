@@ -2,7 +2,15 @@
   "workbench.colorCustomizations": {
     "activityBar.background": "#091c41",
     "titleBar.activeBackground": "#242f8e",
-    "titleBar.activeForeground": "#ffffff"
+    "titleBar.activeForeground": "#ffffff",
+    "titleBar.inactiveBackground": "#0C2555",
+    "titleBar.inactiveForeground": "#FBFDFF",
+    "statusBar.background": "#0C2555",
+    "statusBar.foreground": "#FBFDFF",
+    "statusBar.debuggingBackground": "#0C2555",
+    "statusBar.debuggingForeground": "#FBFDFF",
+    "statusBar.noFolderBackground": "#0C2555",
+    "statusBar.noFolderForeground": "#FBFDFF"
   },
   "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
   "eslint.workingDirectories": [{ "mode": "auto" }],

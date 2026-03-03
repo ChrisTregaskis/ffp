@@ -14,6 +14,10 @@ export * from './user-assessment.schema';
 
 // Programme schemas
 export * from './programme.schema';
+export * from './programme-structure.schema';
+
+// Video schemas
+export * from './video.schema';
 
 // Job schemas
 export * from './job.schema';

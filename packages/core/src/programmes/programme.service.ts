@@ -10,11 +10,14 @@ import { ForbiddenError, NotFoundError, ValidationError } from '../lib/errors';
 import {
   archiveProgramme,
   createProgramme,
+  createProgrammePhases,
   findProgrammeByUserId,
   findTemplateBySlug,
+  findTemplatePhases,
+  setReplacementProgramme,
 } from './programme.repository';
 
-import type { Programme } from './programme.repository';
+import type { Programme, NewProgrammePhase } from './programme.repository';
 import type { Transaction } from '../lib/database';
 
 export interface GenerateProgrammeInput {
@@ -65,7 +68,7 @@ export async function generateProgramme(
 
   if (existing && replaceExisting) {
     // Reassessment path — archive the old programme and create a new one below
-    await archiveProgramme(tenantId, existing.id, userId, { tx });
+    await archiveProgramme(tenantId, existing.id, userId, { tx, reason: 'reassessment' });
   } else if (existing) {
     // Retake path — return the existing active programme
     return {
@@ -95,7 +98,7 @@ export async function generateProgramme(
     );
   }
 
-  // Create programme from template
+  // Create programme from template, snapshotting structure metadata
   const programme = await createProgramme(
     {
       tenantId,
@@ -103,9 +106,31 @@ export async function generateProgramme(
       programmeTemplateId: template.id,
       name: template.name,
       description: template.description,
+      totalPhases: template.totalPhases,
+      sessionsPerPhase: template.sessionsPerPhase,
     },
     { tx }
   );
+
+  // Eagerly create programme phase rows from the template definition
+  const phases = await findTemplatePhases(template.id, { tx });
+
+  if (phases.length > 0) {
+    const phaseInputs: NewProgrammePhase[] = phases.map((phase) => ({
+      tenantId,
+      programmeId: programme.id,
+      templatePhaseId: phase.id,
+      phaseNumber: phase.phaseNumber,
+      name: phase.name,
+    }));
+
+    await createProgrammePhases(tenantId, phaseInputs, { tx });
+  }
+
+  // Link the archived programme to its replacement (if we archived one above)
+  if (existing && replaceExisting) {
+    await setReplacementProgramme(tenantId, existing.id, programme.id, { tx });
+  }
 
   return {
     programmeId: programme.id,
