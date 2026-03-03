@@ -50,10 +50,10 @@ const AppLayoutContent: React.FC<PropsWithChildren> = ({ children }) => {
     : [];
 
   // Calculate main content margin based on sidebar state
-  const mainContentMargin = isCollapsed ? 'lg:ml-20' : 'lg:ml-64';
+  const mainContentMargin = isCollapsed ? 'lg:ml-20' : 'lg:ml-[230px]';
 
   return (
-    <div className="min-h-screen bg-white lg:flex">
+    <div className="min-h-screen bg-muted lg:flex">
       {/* Desktop Sidebar Navigation */}
       <SideMenu handleLogout={triggerLogout} />
 

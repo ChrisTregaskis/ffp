@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { IconButton } from '@web/components/button';
+import { Icon } from '@web/components/Icon';
+import { Icons } from '@web/components/Icon/types';
 import { Logo } from '@web/components/logo';
 import { SlideWidth, ClickScale } from '@web/components/motion';
 import { Text } from '@web/components/text';
@@ -13,7 +14,7 @@ import { RouteKey, routes } from '@web/pages/routes';
 
 import { NavItem } from './NavItem';
 
-const SIDEBAR_EXPANDED_WIDTH = 256; // 64 * 4 = 256px (w-64)
+const SIDEBAR_EXPANDED_WIDTH = 230;
 const SIDEBAR_COLLAPSED_WIDTH = 80; // 20 * 4 = 80px (w-20)
 
 interface SideMenuProps {
@@ -28,7 +29,6 @@ export const SideMenu: React.FC<SideMenuProps> = ({ handleLogout }) => {
   const { user } = useAuth();
   const { isCollapsed, toggleCollapsed } = useSidebar();
   const navigate = useNavigate();
-  const [isHeaderHovered, setIsHeaderHovered] = useState(false);
 
   // Get navigation items for the current user role
   const navItems: NavItemType[] = user ? getNavigationItems(user.role, handleLogout) : [];
@@ -46,15 +46,7 @@ export const SideMenu: React.FC<SideMenuProps> = ({ handleLogout }) => {
       className="fixed left-0 top-0 z-40 hidden h-screen border-r border-white bg-ffp-navy shadow-md lg:flex lg:flex-col"
     >
       {/* Header Section */}
-      <div
-        className="flex items-center justify-between border-b border-white p-6"
-        onMouseEnter={() => {
-          setIsHeaderHovered(true);
-        }}
-        onMouseLeave={() => {
-          setIsHeaderHovered(false);
-        }}
-      >
+      <div className="flex items-center border-b border-white p-6">
         {/* Logo and App Name */}
         <div
           className="flex cursor-pointer items-center gap-3"
@@ -72,39 +64,7 @@ export const SideMenu: React.FC<SideMenuProps> = ({ handleLogout }) => {
             </Text>
           )}
         </div>
-
-        {/* Collapse Toggle Button */}
-        {!isCollapsed && (
-          <div
-            className={`flex items-center transition-opacity ${isHeaderHovered ? 'opacity-100' : 'opacity-0'}`}
-          >
-            <IconButton
-              icon="LeftPanelClose"
-              size="lg"
-              colour="#fff"
-              onClick={toggleCollapsed}
-              ariaLabel="Collapse sidebar"
-              className="p-2"
-            />
-          </div>
-        )}
       </div>
-
-      {/* Expand Button (shown when collapsed) */}
-      {isCollapsed && (
-        <div className="inline-flex items-center justify-center transition-opacity hover:opacity-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 w-full hover:bg-muted border-white">
-          <ClickScale scale={0.95} duration={0.1}>
-            <IconButton
-              icon="LeftPanelOpen"
-              size="md"
-              colour="#fff"
-              onClick={toggleCollapsed}
-              ariaLabel="Expand sidebar"
-              className="py-3 "
-            />
-          </ClickScale>
-        </div>
-      )}
 
       {/* Main Navigation */}
       <nav className="flex-1 w-full justify-center overflow-y-auto">
@@ -125,6 +85,28 @@ export const SideMenu: React.FC<SideMenuProps> = ({ handleLogout }) => {
       {/* Footer Navigation */}
       <div className="py-4">
         <div className="space-y-1">
+          {/* Collapse/Expand Toggle */}
+          <ClickScale scale={0.97} duration={0.1}>
+            <button
+              onClick={toggleCollapsed}
+              className={`flex w-full items-center gap-3 py-3 text-white transition-colors duration-150 hover:bg-secondary ${isCollapsed ? 'justify-center' : 'px-4'}`}
+              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              <div className="flex items-center gap-3">
+                <Icon
+                  name={isCollapsed ? Icons.LEFTPANELOPEN : Icons.LEFTPANELCLOSE}
+                  styleProps={{ size: 'md', colour: 'currentColor' }}
+                  ariaLabel={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                />
+                {!isCollapsed && (
+                  <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'white' }}>
+                    Collapse
+                  </Text>
+                )}
+              </div>
+            </button>
+          </ClickScale>
+
           {footerNavItems.map((item) => (
             <NavItem
               key={item.key}

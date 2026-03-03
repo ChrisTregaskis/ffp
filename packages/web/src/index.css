@@ -105,6 +105,10 @@
 
 /* Custom Base Styles */
 @layer base {
+  html {
+    font-size: 14px;
+  }
+
   body {
     font-family: var(--font-sans);
     color: var(--color-foreground);
