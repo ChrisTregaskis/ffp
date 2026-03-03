@@ -1,15 +1,15 @@
 # FFP - Project State
 
-**Last Updated**: 2nd March 2026
+**Last Updated**: 3rd March 2026
 **Current EPIC**: FFP-3 Video Management
-**Sprint Status**: Sprint 7 - Video Infrastructure & APIs (in progress)
+**Sprint Status**: Sprint 8 - Video UI & Integration (next)
 
 ---
 
-## Current: Sprint 7 - Video Infrastructure & APIs (~28 pts)
+## Next: Sprint 8 - Video UI & Integration (~27 pts)
 
-**Dates**: 23rd February 2026 onwards
-**Sprint Goal**: Video catalogue schema, CloudFront signed URLs, video APIs, programme-video relationships.
+**Dates**: TBD
+**Sprint Goal**: Admin video upload/management UI, video player component, integration verification, documentation update.
 **Epic**: FFP-3 Video Management
 
 **Key documents**:
@@ -18,89 +18,47 @@
 - `.claude/research/ffp-3-epic-plan.md` - Final epic plan (stories, ACs, subtasks, sprint allocation)
 - `.claude/research/programme-data-model-research.md` - Authoritative programme data model
 
-### Completed Story: FFP-282 — Video Catalogue Database Schema (5 pts) ✅
+**Planned stories** (from FFP-3 epic plan):
 
-**Branch**: `feature/ffp-282-video-cat-database-schema` (merged to main)
-**All 5 sub-tasks complete**: Drizzle schema + enums + GIN indexes, index exports, migration (0017), Zod schemas, seed data (10 videos).
+- FFP-320 — Admin Video Upload & Management UI
+- FFP-141 — Video Player Component
+- Integration verification & documentation update stories
 
-### Completed Story: FFP-288 — CloudFront OAC & Signed URL Infrastructure (5 pts) ✅
+**Prerequisites from Sprint 7** (all met):
 
-**Branch**: `feature/ffp-288-cloudfront-oac-signed-url-infrastructure` (merged to main)
-**All 4 sub-tasks complete**: RSA key pair setup script, SST OAC + Key Group config, deployment verification, documentation.
+- Video catalogue schema + APIs (FFP-282, FFP-300)
+- CloudFront OAC + signed URL infrastructure (FFP-288, FFP-294)
+- Programme-video relationship schema + service evolution (FFP-307)
 
-### Completed Story: FFP-294 — Signed URL Generation Service (5 pts) ✅
+---
 
-**Branch**: `feature/ffp-294-signed-url-generation-service` (merged to main)
-**All 5 sub-tasks complete**: AWS SDK deps, signing key caching, `video-signing.service.ts` + `video.repository.ts` (findVideoById only), `get-signed-url.ts` handler + router, audit logging.
+## Completed: Sprint 7 - Video Infrastructure & APIs (~28 pts)
 
-**Foundation created for FFP-300**: `video.repository.ts`, `video-signing.service.ts`, barrel exports (`videos/index.ts`, `server.ts`), router (`functions/src/videos/index.ts`), SST route (`ANY /videos/{proxy+}`), Zod schemas (`video.schema.ts`).
+**Dates**: 23rd February - 3rd March 2026
+**Sprint Goal**: Video catalogue schema, CloudFront signed URLs, video APIs, programme-video relationships.
+**Epic**: FFP-3 Video Management
 
-### Completed Story: FFP-300 — Video Catalogue APIs (5 pts) ✅
+| Key     | Story                                                   | Pts | Status |
+| ------- | ------------------------------------------------------- | --- | ------ |
+| FFP-282 | Video Catalogue Database Schema                         | 5   | Done   |
+| FFP-288 | CloudFront OAC & Signed URL Infrastructure              | 5   | Done   |
+| FFP-294 | Signed URL Generation Service                           | 5   | Done   |
+| FFP-300 | Video Catalogue APIs                                    | 5   | Done   |
+| FFP-307 | Programme-Video Relationship Schema & Service Evolution | 8   | Done   |
 
-**Branch**: `feature/ffp-300-vid-cat-apis` (merged to main)
-**All 6 sub-tasks complete**: Extended video repository, created video service, list + get handlers, router routes, Postman collection updated.
+### Key Deliverables (Sprint 7)
 
-### Active Story: FFP-307 — Programme-Video Relationship Schema & Service Evolution (8 pts)
+- **Video catalogue**: Drizzle schema with GIN indexes, 10 seed videos, list/filter/get APIs, Postman collection
+- **CloudFront signed URLs**: RSA key pair, SST OAC + Key Group, `video-signing.service.ts` with key caching
+- **Programme structure**: 4 new DB tables (`template_phases`, `template_sessions`, `session_exercises`, `programme_phases`), migration 0018, RLS on `programme_phases`
+- **Template metadata**: `programme_templates` extended with `total_phases`, `sessions_per_phase`, `difficulty`; `programmes` extended with 7 lifecycle columns
+- **Service evolution**: `generateProgramme()` eagerly creates phase rows, snapshots template metadata, `archiveProgramme()` sets lifecycle columns (`archivedAt`, `archivedReason`, `replacedByProgrammeId`)
+- **Seed data**: Complete Gentle Mobility Programme template hierarchy (4 phases, 12 sessions, 40 exercises)
+- **Zod schemas**: `programme-structure.schema.ts` (template hierarchy), updated `programme.schema.ts` (phase status, lifecycle fields)
 
-**Branch**: `feature/ffp-307-programme-video-schema`
-**Status**: Planning
-**Blocked by**: FFP-282 ✅ (videos table for session_exercises FK)
-**Blocks**: FFP-4 stories (Programme Execution & Progress)
+### Backlog Items Created (Sprint 7)
 
-**Summary**: Create template-layer tables (template_phases, template_sessions, session_exercises) that define workout plan structure, the user-layer table (programme_phases with RLS) that tracks individual progress, and evolve `generateProgramme()` to create phase instances at assignment time.
-
-**Authoritative data model reference**: `.claude/research/programme-data-model-research.md`
-
-**Sub-tasks (execution order)**:
-
-| #   | Key     | Sub-task                                                                             | Status  | Notes                                                                                                 |
-| --- | ------- | ------------------------------------------------------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------- |
-| 1   | FFP-312 | Add phase_status enum type                                                           | ✅ Done | `PHASE_STATUSES` constant + `phaseStatusEnum`. `difficultyEnum` reused from videos.ts                 |
-| 2   | FFP-308 | Create Drizzle schemas for template_phases, template_sessions, session_exercises     | ✅ Done | 3 new schema files, system-managed, no RLS. Follows confirmed data model                              |
-| 3   | FFP-309 | Create Drizzle schema for programme_phases (RLS-enforced)                            | ✅ Done | RLS with tenant_id. FKs to programmes + template_phases. phaseStatusEnum                              |
-| 4   | FFP-310 | Add columns to programme_templates (total_phases, sessions_per_phase, difficulty)    | ✅ Done | NOT NULL with defaults (decision: 12, 3, 'beginner'). difficultyEnum imported from videos             |
-| 5   | FFP-311 | Add columns to programmes (started_at, completed_at, archived_at, etc.)              | ✅ Done | 7 nullable columns. Self-referential FK with AnyPgColumn + onDelete: set null                         |
-| 6   | FFP-316 | Update database schema index exports                                                 | ✅ Done | 4 new exports in schema/index.ts                                                                      |
-| 7   | FFP-313 | Generate and apply database migration                                                | ✅ Done | Migration 0018_modern_polaris.sql. RLS added for programme_phases in apply-rls.ts                     |
-| 8   | FFP-314 | Create Zod validation schemas for new and updated tables                             | ✅ Done | Updated programme.schema.ts, new programme-structure.schema.ts, barrel exports                        |
-| 9   | FFP-315 | Create seed data for at least 1 complete programme template                          | ✅ Done | Updated template seeds with new cols, new seedTemplateHierarchy (4 phases, 12 sessions, 40 exercises) |
-| 10  | FFP-318 | Update programme.repository.ts with createProgrammePhases() and findTemplatePhases() | ✅ Done | findTemplatePhases (no RLS), createProgrammePhases (RLS), createProgramme updated with snapshots      |
-| 11  | FFP-317 | Update generateProgramme() to create programme_phases rows                           | ✅ Done | Eagerly creates phase rows from template, snapshots totalPhases + sessionsPerPhase, same tx           |
-
-**Amended requirements** (ticket vs current codebase):
-
-1. **Terminology: "phases" not "weeks"** — Sub-tasks were created 23rd Feb before the 1st March terminology update. All references to `template_weeks`, `programme_weeks`, `week_status`, `week_number`, `total_weeks`, `sessions_per_week` must use the confirmed "phases" terminology: `template_phases`, `programme_phases`, `phase_status`, `phase_number`, `total_phases`, `sessions_per_phase`.
-2. **FFP-312 — `difficulty` enum already exists** — Created in FFP-282 (`videos.ts`). Import and reuse `difficultyEnum` from videos schema; only `phase_status` enum is new. The sub-task's `week_status` → `phase_status` with values: `not_started`, `in_progress`, `completed`.
-3. **FFP-308 — Table names updated** — `template_weeks` → `template_phases`, `template_week_id` → `template_phase_id`. The sub-task still references `phase_label` and `phase_number` columns; per the confirmed data model, template_phases has only `phase_number` + `name` (the name serves as the label). No separate `phase_label` column.
-4. **FFP-309 — Table name updated** — `programme_weeks` → `programme_phases`, `week_status` → `phase_status`, `week_number` → `phase_number`. No `phase_label` column — `name` is copied from template.
-5. **FFP-310 — Column names updated** — `total_weeks` → `total_phases`, `sessions_per_week` → `sessions_per_phase`. Per data model research, these should be NOT NULL with defaults (not nullable as ticket suggests) — `total_phases` default 12, `sessions_per_phase` default 3, `difficulty` default 'beginner'. **Decision needed**: nullable for migration safety vs NOT NULL with defaults (both are safe for existing rows if defaults are provided).
-6. **FFP-311 — Column names updated** — `total_weeks` → `total_phases`, `sessions_per_week` → `sessions_per_phase`. The data model research suggests `total_phases` and `sessions_per_phase` as NOT NULL on programmes, but these are snapshot values copied at assignment time — nullable is correct here since existing programmes won't have them.
-7. **FFP-317/FFP-318 — Function names updated** — `findTemplateWeeks()` → `findTemplatePhases()`, `createProgrammeWeeks()` → `createProgrammePhases()`. Service creates `programme_phases` rows (not `programme_weeks`).
-8. **RLS exclusions update needed** — New template tables (`template_phases`, `template_sessions`, `session_exercises`) are system-managed and should be added to RLS exclusions list. `programme_phases` IS RLS-enforced.
-
-**Implementation grouping** (single branch `feature/ffp-307-programme-video-schema`, single PR):
-
-- **Pass 1** (FFP-312 + FFP-308 + FFP-309 + FFP-310 + FFP-311 + FFP-316): All Drizzle schema definitions — new enum, 4 new tables, 2 table modifications, index exports
-- **Pass 2** (FFP-313): Generate and apply single database migration
-- **Pass 3** (FFP-314 + FFP-315): Zod validation schemas + seed data
-- **Pass 4** (FFP-318 + FFP-317): Repository functions + evolve `generateProgramme()` service
-
-**Key files to modify/create**:
-
-- Create: `packages/database/src/schema/template-phases.ts` (new schema)
-- Create: `packages/database/src/schema/template-sessions.ts` (new schema)
-- Create: `packages/database/src/schema/session-exercises.ts` (new schema)
-- Create: `packages/database/src/schema/programme-phases.ts` (new schema, RLS)
-- Modify: `packages/database/src/schema/programme-templates.ts` (add columns)
-- Modify: `packages/database/src/schema/programmes.ts` (add columns)
-- Modify: `packages/database/src/schema/index.ts` (export new schemas)
-- Modify: `packages/database/src/constants/programme.constants.ts` (add phase statuses)
-- Create/Modify: Zod schemas in `packages/core/src/schemas/`
-- Modify: `packages/database/seed/` (new seed data for template hierarchy)
-- Modify: `packages/core/src/programmes/programme.repository.ts` (add functions)
-- Modify: `packages/core/src/programmes/programme.service.ts` (evolve generateProgramme)
-
-**Skill**: `/database` for Passes 1-2, `/backend` for Passes 3-4
+- `programmes` table RLS policy gap — table has `tenant_id` but not in `apply-rls.ts` (pre-existing, tracked for FFP-4)
 
 ---
 
@@ -109,18 +67,18 @@
 **Dates**: 16th February - 22nd February 2026
 **Sprint Goal**: End-to-end assessment flow working, demo-ready MVP.
 
-| Key     | Story                                        | Pts | Type  | Status  |
-| ------- | -------------------------------------------- | --- | ----- | ------- |
-| FFP-137 | Assessment Navigation Component              | 3   | Story | ✅ Done |
-| FFP-140 | Assessment Step Screens                      | 5   | Story | ✅ Done |
-| FFP-272 | E2E Assessment Flow Integration              | 5   | Story | ✅ Done |
-| FFP-273 | ToastAlert Notification Component            | 3   | Task  | ✅ Done |
-| FFP-229 | Assessment Engine Epic Clean Up              | 8   | Story | ✅ Done |
-| FFP-279 | Update deterministic seed UUIDs to RFC 4122  | -   | Task  | ✅ Done |
-| FFP-280 | Align Zod versions across monorepo (v3 → v4) | -   | Task  | ✅ Done |
-| FFP-233 | Backend Required Question Validation         | 3   | Story | ✅ Done |
-| FFP-230 | Stale Job Detection                          | 2   | Story | ✅ Done |
-| FFP-254 | FFP-3 Epic Planning & Sprint Definition      | 5   | Story | ✅ Done |
+| Key     | Story                                        | Pts | Type  | Status |
+| ------- | -------------------------------------------- | --- | ----- | ------ |
+| FFP-137 | Assessment Navigation Component              | 3   | Story | Done   |
+| FFP-140 | Assessment Step Screens                      | 5   | Story | Done   |
+| FFP-272 | E2E Assessment Flow Integration              | 5   | Story | Done   |
+| FFP-273 | ToastAlert Notification Component            | 3   | Task  | Done   |
+| FFP-229 | Assessment Engine Epic Clean Up              | 8   | Story | Done   |
+| FFP-279 | Update deterministic seed UUIDs to RFC 4122  | -   | Task  | Done   |
+| FFP-280 | Align Zod versions across monorepo (v3 → v4) | -   | Task  | Done   |
+| FFP-233 | Backend Required Question Validation         | 3   | Story | Done   |
+| FFP-230 | Stale Job Detection                          | 2   | Story | Done   |
+| FFP-254 | FFP-3 Epic Planning & Sprint Definition      | 5   | Story | Done   |
 
 ### FFP-3 Planning Outcomes (from Sprint 6)
 
@@ -179,7 +137,6 @@
 | ------- | ---------------------- | -------------------------------------------------------------------------------- |
 | FFP-231 | Job Status Polling     | `GET /assessments/:id/results` already supports polling (scores null → complete) |
 | FFP-252 | Scoring E2E Validation | Waiting on co-founder's question/scoring config spreadsheet (post-sprint 6)      |
-| FFP-141 | Video Player Component | Defer to FFP-3 (Video Management) to avoid premature implementation              |
 
 ---
 
@@ -227,7 +184,7 @@ await db.transaction(async (tx) => {
 
 **Packages**: `@ffp/web`, `@ffp/functions`, `@ffp/core`, `@ffp/database`
 
-**Quality Gates**: TypeScript strict, ESLint (0 warnings), 504 tests passing
+**Quality Gates**: TypeScript strict, ESLint (0 warnings), 698 tests passing
 
 **Postman**: API collection + test flows managed via MCP server (`/postman` skill)
 
@@ -243,7 +200,7 @@ await db.transaction(async (tx) => {
 
 - ✅ FFP-1: Application Setup & Foundation
 - ✅ FFP-2: Assessment Engine (Sprints 3-6)
-- 🏃 FFP-3: Video Management (Sprint 7-8) — in progress
+- 🏃 FFP-3: Video Management (Sprint 7-8) — Sprint 7 complete, Sprint 8 next
 - ⏳ FFP-4: Programme Execution & Progress
 - ⏳ FFP-109: Deployment Readiness (staging + production)
 - ⏳ FFP-6: Customer & User Onboarding
