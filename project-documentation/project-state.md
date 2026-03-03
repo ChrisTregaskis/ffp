@@ -2,15 +2,16 @@
 
 **Last Updated**: 3rd March 2026
 **Current EPIC**: FFP-3 Video Management
-**Sprint Status**: Sprint 8 - Video UI & Integration (next)
+**Sprint Status**: Sprint 8 - Video UI & Integration (active — FFP-320 in progress)
 
 ---
 
-## Next: Sprint 8 - Video UI & Integration (~27 pts)
+## Active: Sprint 8 - Video UI & Integration (~27 pts)
 
 **Dates**: 4th March - 24th March 2026
 **Sprint Goal**: Admin video upload/management UI, video player component, integration verification, documentation update.
 **Epic**: FFP-3 Video Management
+**Branch**: `feature/sprint8`
 
 **Key documents**:
 
@@ -18,17 +19,104 @@
 - `.claude/research/ffp-3-epic-plan.md` - Final epic plan (stories, ACs, subtasks, sprint allocation)
 - `.claude/research/programme-data-model-research.md` - Authoritative programme data model
 
-**Planned stories** (from FFP-3 epic plan):
-
-- FFP-320 — Admin Video Upload & Management UI
-- FFP-141 — Video Player Component
-- Integration verification & documentation update stories
-
 **Prerequisites from Sprint 7** (all met):
 
 - Video catalogue schema + APIs (FFP-282, FFP-300)
 - CloudFront OAC + signed URL infrastructure (FFP-288, FFP-294)
 - Programme-video relationship schema + service evolution (FFP-307)
+
+---
+
+### FFP-320: Admin Video Upload (8 pts) — Implementation Plan
+
+**Summary**: Admin user (physiotherapist) uploads exercise videos via browser directly to S3 using presigned PUT URLs, then submits metadata to create a video record with status `draft`.
+
+**What already exists**:
+
+- Video DB schema (videos table with all fields incl. s3_key, thumbnail_key, status)
+- Zod schemas: `createVideoSchema`, `updateVideoSchema`, `videoFilterSchema` in `packages/core/src/schemas/video.schema.ts`
+- Video service + repository (read-only: list, get, filter) in `packages/core/src/videos/`
+- Admin router at `packages/functions/src/admin/index.ts` (route registry pattern)
+- Frontend route `ADMIN_VIDEOS` at `/admin/videos` (currently `ComingSoonPage` placeholder)
+- S3 VideosBucket + AssetsBucket deployed (CORS: GET/HEAD only — **needs PUT**)
+- CloudFront video-signing service (for GET/streaming, not uploads)
+
+**Infrastructure prerequisite** (not in Jira — include with FFP-321):
+
+- Update VideosBucket and AssetsBucket CORS to allow PUT method for presigned upload support
+
+#### Phase 1 — Backend APIs (FFP-321 + FFP-327)
+
+**FFP-321**: Presigned upload URL endpoint (`POST /admin/videos/upload-url`)
+
+- New file: `packages/functions/src/admin/videos/get-upload-url.ts`
+- New service method using `@aws-sdk/s3-request-presigner` (PutObjectCommand)
+- S3 key format: `library/{uuid}.mp4`, 15-min TTL
+- Returns: `{ uploadUrl, s3Key, expiresIn }`
+- Admin role check enforced
+- Register route in admin router
+- **Amended**: Also generate presigned PUT URL for thumbnail to AssetsBucket (key: `thumbnails/{uuid}.{ext}`) — return both URLs in one call to avoid extra round-trip
+
+**FFP-327**: Video creation endpoint (`POST /admin/videos`)
+
+- New file: `packages/functions/src/admin/videos/create.ts`
+- Add `createVideo()` to video repository + service
+- Validate with existing `createVideoSchema`
+- Create record with status `draft`
+- Admin role check enforced
+- Register route in admin router
+
+#### Phase 2 — Upload UI (FFP-322 + FFP-324 + FFP-323)
+
+**FFP-322**: Admin video upload page with drag-and-drop
+
+- New file: `packages/web/src/pages/protected/admin/VideosPage.tsx`
+- Replace `ComingSoonPage` placeholder in route config
+- Drag-and-drop zone + click-to-select file picker
+- Display selected file info (name, size, type)
+
+**FFP-324**: Client-side file validation (built into FFP-322)
+
+- MP4 only (`video/mp4`), max 500MB
+- Inline validation errors near upload zone
+- Upload button disabled when validation fails
+
+**FFP-323**: Browser-to-S3 upload with progress
+
+- Fetch presigned URL from `POST /admin/videos/upload-url`
+- XHR PUT to presigned URL with `Content-Type: video/mp4`
+- Progress bar showing upload percentage
+- Error handling with user-friendly messages
+- On success, transition to metadata form
+
+#### Phase 3 — Metadata, Thumbnails & Integration (FFP-326 + FFP-325 + FFP-328)
+
+**FFP-326**: Video metadata form component
+
+- Fields: title, description, body_parts (multi-select), equipment (multi-select), difficulty (dropdown), movement_type (dropdown), tags (tag input), duration_seconds
+- Client-side Zod validation using existing `createVideoSchema`
+- TailwindCSS styling consistent with admin portal
+
+**FFP-325**: Thumbnail upload flow
+
+- Optional image file picker (JPEG/PNG, max 5MB)
+- Upload to AssetsBucket via presigned URL (from Phase 1 endpoint)
+- Thumbnail preview after selection
+- Upload can proceed without thumbnail
+
+**FFP-328**: End-to-end wiring
+
+- Complete flow: select file → validate → get presigned URL → upload to S3 → show metadata form → submit → create video record
+- State transitions between steps
+- Success message + option to upload another or view video list
+- Error handling at each step
+
+#### Execution Notes
+
+- **Single branch**: All sub-tasks on `feature/sprint8`
+- **Tests**: Deferred to MVP launch
+- **Videos table is RLS-excluded** (system-managed, cross-tenant) — no tenant context needed for video CRUD
+- **Postman**: Update collection with new admin video endpoints after Phase 1
 
 ---
 
