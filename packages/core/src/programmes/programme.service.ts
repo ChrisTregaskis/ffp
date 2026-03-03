@@ -14,6 +14,7 @@ import {
   findProgrammeByUserId,
   findTemplateBySlug,
   findTemplatePhases,
+  setReplacementProgramme,
 } from './programme.repository';
 
 import type { Programme, NewProgrammePhase } from './programme.repository';
@@ -67,7 +68,7 @@ export async function generateProgramme(
 
   if (existing && replaceExisting) {
     // Reassessment path — archive the old programme and create a new one below
-    await archiveProgramme(tenantId, existing.id, userId, { tx });
+    await archiveProgramme(tenantId, existing.id, userId, { tx, reason: 'reassessment' });
   } else if (existing) {
     // Retake path — return the existing active programme
     return {
@@ -124,6 +125,11 @@ export async function generateProgramme(
     }));
 
     await createProgrammePhases(tenantId, phaseInputs, { tx });
+  }
+
+  // Link the archived programme to its replacement (if we archived one above)
+  if (existing && replaceExisting) {
+    await setReplacementProgramme(tenantId, existing.id, programme.id, { tx });
   }
 
   return {

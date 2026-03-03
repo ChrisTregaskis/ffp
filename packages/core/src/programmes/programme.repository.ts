@@ -41,6 +41,13 @@ export interface FindTemplateBySlugOptions {
 export interface ArchiveProgrammeOptions {
   /** Optional transaction for atomic operations. If provided, RLS must be set by caller. */
   tx?: Transaction;
+  /** Why the programme was archived (e.g., 'reassessment', 'manual', 'expired') */
+  reason?: string;
+}
+
+export interface SetReplacementProgrammeOptions {
+  /** Optional transaction for atomic operations. If provided, RLS must be set by caller. */
+  tx?: Transaction;
 }
 
 export interface FindTemplatePhasesOptions {
@@ -98,12 +105,32 @@ async function findProgrammeByIdInTx(
 async function archiveProgrammeInTx(
   tx: Transaction,
   programmeId: string,
-  userId: string
+  userId: string,
+  reason?: string
 ): Promise<void> {
   await tx
     .update(programmes)
-    .set({ status: 'archived', updatedAt: new Date() })
+    .set({
+      status: 'archived',
+      archivedAt: new Date(),
+      archivedReason: reason ?? null,
+      updatedAt: new Date(),
+    })
     .where(and(eq(programmes.id, programmeId), eq(programmes.userId, userId)));
+}
+
+async function setReplacementProgrammeInTx(
+  tx: Transaction,
+  archivedProgrammeId: string,
+  replacementProgrammeId: string
+): Promise<void> {
+  await tx
+    .update(programmes)
+    .set({
+      replacedByProgrammeId: replacementProgrammeId,
+      updatedAt: new Date(),
+    })
+    .where(eq(programmes.id, archivedProgrammeId));
 }
 
 async function findTemplateBySlugInTx(
@@ -187,21 +214,39 @@ export async function findProgrammeById(
   });
 }
 
-/** Archives a programme (sets status to 'archived'). Used when replacing with a new programme. */
+/** Archives a programme — sets status, archivedAt, and optional reason. */
 export async function archiveProgramme(
   tenantId: string,
   programmeId: string,
   userId: string,
   options: ArchiveProgrammeOptions = {}
 ): Promise<void> {
-  const { tx } = options;
+  const { tx, reason } = options;
 
   if (tx) {
-    return archiveProgrammeInTx(tx, programmeId, userId);
+    return archiveProgrammeInTx(tx, programmeId, userId, reason);
   }
 
   await withRLS(tenantId, userId, async (newTx) => {
-    return archiveProgrammeInTx(newTx, programmeId, userId);
+    return archiveProgrammeInTx(newTx, programmeId, userId, reason);
+  });
+}
+
+/** Links an archived programme to its replacement (sets replacedByProgrammeId). */
+export async function setReplacementProgramme(
+  tenantId: string,
+  archivedProgrammeId: string,
+  replacementProgrammeId: string,
+  options: SetReplacementProgrammeOptions = {}
+): Promise<void> {
+  const { tx } = options;
+
+  if (tx) {
+    return setReplacementProgrammeInTx(tx, archivedProgrammeId, replacementProgrammeId);
+  }
+
+  await withRLS(tenantId, undefined, async (newTx) => {
+    return setReplacementProgrammeInTx(newTx, archivedProgrammeId, replacementProgrammeId);
   });
 }
 
