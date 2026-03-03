@@ -11,3 +11,15 @@ export const PROGRAMME_STATUSES = [
 ] as const;
 
 export type ProgrammeStatus = (typeof PROGRAMME_STATUSES)[number];
+
+// Phase status values (programme_phases lifecycle)
+export const PHASE_STATUSES = [
+  // Phase has not been started by the user
+  'not_started',
+  // Phase is currently in progress
+  'in_progress',
+  // Phase has been completed
+  'completed',
+] as const;
+
+export type PhaseStatus = (typeof PHASE_STATUSES)[number];

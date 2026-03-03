@@ -1,4 +1,14 @@
-import { pgTable, uuid, varchar, text, timestamp, index, pgEnum } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  integer,
+  timestamp,
+  index,
+  pgEnum,
+  type AnyPgColumn,
+} from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { relations } from 'drizzle-orm';
 import { tenants } from './tenants';
@@ -39,6 +49,23 @@ export const programmes = pgTable(
     description: text('description'),
     /** Programme lifecycle status */
     status: programmeStatusEnum('status').notNull().default('active'),
+    /** When the user first started a session */
+    startedAt: timestamp('started_at'),
+    /** When all phases/sessions were completed */
+    completedAt: timestamp('completed_at'),
+    /** When the programme was archived */
+    archivedAt: timestamp('archived_at'),
+    /** Why archived: reassessment, manual, expired */
+    archivedReason: varchar('archived_reason', { length: 50 }),
+    /** Successor programme (self-referential linked list of programme history) */
+    replacedByProgrammeId: uuid('replaced_by_programme_id').references(
+      (): AnyPgColumn => programmes.id,
+      { onDelete: 'set null' }
+    ),
+    /** Snapshot of template's total phases at assignment time */
+    totalPhases: integer('total_phases'),
+    /** Snapshot of template's sessions per phase at assignment time */
+    sessionsPerPhase: integer('sessions_per_phase'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -54,6 +81,8 @@ export const programmes = pgTable(
  * - Belongs to a tenant (for RLS isolation)
  * - Belongs to a user
  * - References a programme template
+ * - Self-referential: may be replaced by another programme
+ * - Has many programme phases
  */
 export const programmesRelations = relations(programmes, ({ one }) => ({
   tenant: one(tenants, {
@@ -67,6 +96,11 @@ export const programmesRelations = relations(programmes, ({ one }) => ({
   template: one(programmeTemplates, {
     fields: [programmes.programmeTemplateId],
     references: [programmeTemplates.id],
+  }),
+  replacedByProgramme: one(programmes, {
+    fields: [programmes.replacedByProgrammeId],
+    references: [programmes.id],
+    relationName: 'programmeReplacement',
   }),
 }));
 

@@ -53,19 +53,19 @@
 
 **Sub-tasks (execution order)**:
 
-| #   | Key     | Sub-task                                                                             | Status  | Notes                                                                                                                                                                    |
-| --- | ------- | ------------------------------------------------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | FFP-312 | Add phase_status enum type                                                           | Pending | `difficulty` enum already exists in `videos.ts` — reuse, don't recreate                                                                                                  |
-| 2   | FFP-308 | Create Drizzle schemas for template_phases, template_sessions, session_exercises     | Pending | System-managed tables, no RLS. Follow `programme-templates.ts` pattern                                                                                                   |
-| 3   | FFP-309 | Create Drizzle schema for programme_phases (RLS-enforced)                            | Pending | User-layer table with tenant_id. FKs to programmes + template_phases                                                                                                     |
-| 4   | FFP-310 | Add columns to programme_templates (total_phases, sessions_per_phase, difficulty)    | Pending | Reuse existing `difficultyEnum`. **⚠️ DECISION NEEDED at implementation**: nullable vs NOT NULL+defaults — see amended requirement #5 below. Ask user before proceeding. |
-| 5   | FFP-311 | Add columns to programmes (started_at, completed_at, archived_at, etc.)              | Pending | 7 new columns, all nullable. Self-referential FK for replaced_by                                                                                                         |
-| 6   | FFP-316 | Update database schema index exports                                                 | Pending | Export new tables + enums from `schema/index.ts`                                                                                                                         |
-| 7   | FFP-313 | Generate and apply database migration                                                | Pending | Single migration covering all new tables + column additions + enums                                                                                                      |
-| 8   | FFP-314 | Create Zod validation schemas for new and updated tables                             | Pending | New schemas in `@ffp/core`, update existing programme schemas                                                                                                            |
-| 9   | FFP-315 | Create seed data for at least 1 complete programme template                          | Pending | Full hierarchy: phases → sessions → exercises referencing seeded videos                                                                                                  |
-| 10  | FFP-318 | Update programme.repository.ts with createProgrammePhases() and findTemplatePhases() | Pending | New repository functions for phase creation within RLS transactions                                                                                                      |
-| 11  | FFP-317 | Update generateProgramme() to create programme_phases rows                           | Pending | Evolve existing service to eagerly create phase rows at assignment                                                                                                       |
+| #   | Key     | Sub-task                                                                             | Status  | Notes                                                                                     |
+| --- | ------- | ------------------------------------------------------------------------------------ | ------- | ----------------------------------------------------------------------------------------- |
+| 1   | FFP-312 | Add phase_status enum type                                                           | ✅ Done | `PHASE_STATUSES` constant + `phaseStatusEnum`. `difficultyEnum` reused from videos.ts     |
+| 2   | FFP-308 | Create Drizzle schemas for template_phases, template_sessions, session_exercises     | ✅ Done | 3 new schema files, system-managed, no RLS. Follows confirmed data model                  |
+| 3   | FFP-309 | Create Drizzle schema for programme_phases (RLS-enforced)                            | ✅ Done | RLS with tenant_id. FKs to programmes + template_phases. phaseStatusEnum                  |
+| 4   | FFP-310 | Add columns to programme_templates (total_phases, sessions_per_phase, difficulty)    | ✅ Done | NOT NULL with defaults (decision: 12, 3, 'beginner'). difficultyEnum imported from videos |
+| 5   | FFP-311 | Add columns to programmes (started_at, completed_at, archived_at, etc.)              | ✅ Done | 7 nullable columns. Self-referential FK with AnyPgColumn + onDelete: set null             |
+| 6   | FFP-316 | Update database schema index exports                                                 | ✅ Done | 4 new exports in schema/index.ts                                                          |
+| 7   | FFP-313 | Generate and apply database migration                                                | Pending | Single migration covering all new tables + column additions + enums                       |
+| 8   | FFP-314 | Create Zod validation schemas for new and updated tables                             | Pending | New schemas in `@ffp/core`, update existing programme schemas                             |
+| 9   | FFP-315 | Create seed data for at least 1 complete programme template                          | Pending | Full hierarchy: phases → sessions → exercises referencing seeded videos                   |
+| 10  | FFP-318 | Update programme.repository.ts with createProgrammePhases() and findTemplatePhases() | Pending | New repository functions for phase creation within RLS transactions                       |
+| 11  | FFP-317 | Update generateProgramme() to create programme_phases rows                           | Pending | Evolve existing service to eagerly create phase rows at assignment                        |
 
 **Amended requirements** (ticket vs current codebase):
 
