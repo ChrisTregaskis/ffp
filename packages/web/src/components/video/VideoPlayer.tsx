@@ -80,7 +80,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           controlsList="nodownload"
           preload="metadata"
           autoPlay={autoPlay}
-          className="h-full w-full object-cover"
+          className="h-full w-full bg-black object-contain"
           aria-label={ariaLabel}
           onError={handleVideoError}
         >
