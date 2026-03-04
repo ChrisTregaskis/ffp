@@ -2,6 +2,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import { ErrorBoundary } from '@web/components/error';
+import { ToastProvider } from '@web/contexts/toast/ToastContext';
 import { queryClient } from '@web/lib/query';
 import { Router } from '@web/pages/routes/Router';
 
@@ -19,7 +20,9 @@ function App(): JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
-        <Router />
+        <ToastProvider>
+          <Router />
+        </ToastProvider>
       </ErrorBoundary>
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>

@@ -64,7 +64,9 @@ export const Modal: React.FC<ModalProps> = ({
 
   // Escape key handler
   useEffect(() => {
-    if (!isOpen || !closeOnEscape) return;
+    if (!isOpen || !closeOnEscape) {
+      return;
+    }
 
     const handleKeyDown = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') {
@@ -73,6 +75,7 @@ export const Modal: React.FC<ModalProps> = ({
     };
 
     document.addEventListener('keydown', handleKeyDown);
+
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };

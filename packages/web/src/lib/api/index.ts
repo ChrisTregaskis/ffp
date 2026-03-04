@@ -17,6 +17,7 @@ export type {
   AssessmentFlow,
   AssessmentResultsResponse,
   AssessmentTemplate,
+  CreateVideoInput,
   SaveProgressRequest,
   SaveProgressResponse,
   StartAssessmentResponse,

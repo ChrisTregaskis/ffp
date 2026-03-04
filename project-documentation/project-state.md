@@ -92,33 +92,73 @@
 - On success, shows completion state (metadata form wiring in Phase 3)
 - Supporting files: `useVideoUpload` hook, `admin-videos.ts` API client
 
-#### Phase 3 — Metadata, Thumbnails & Integration (FFP-326 + FFP-325 + FFP-328)
-
-All Phase 3 work renders inside the Upload Video modal on the Video Library Management page.
+#### Phase 3 — Metadata, Thumbnails & Integration (FFP-326 + FFP-325 + FFP-328) ✅ COMPLETE
 
 **FFP-326**: Video metadata form component (inside upload modal)
 
 - Form appears below upload zone after successful file upload
-- Fields map to DB schema (not prototype spec): title, description (textarea), movementType (select), difficulty (select), bodyParts (multi-value), equipment (multi-value), tags (multi-value), durationSeconds
-- Layout: Row 1 (2-col: title + movementType), Row 2 (full: description), Row 3 (3-col: difficulty + bodyParts + equipment), Row 4 (full: tags)
-- **Prerequisite**: Extend `FieldDataType` enum and `Form` component to handle `TEXTAREA`, `SELECT`, and multi-value field types
-- Client-side Zod validation using existing `createVideoSchema`
-- Footer buttons: Cancel (closes modal) + Submit (creates record)
+- Fields: title, description (textarea), movementType (select), difficulty (select), bodyParts (tag input), equipment (tag input), tags (tag input), durationSeconds
+- 4-row responsive layout: 2-col → full → 3-col → full
+- Form infrastructure extended: `TEXTAREA`, `SELECT`, `TAG_INPUT` field types added to `FieldDataType` and `Form.renderField()`
+- New components: `FormTextarea`, `FormSelect`, `FormTagInput` — consistent styling with existing `FormTextInput`
+- Client-side validation via react-hook-form (title required/max 255, duration required/non-negative integer)
+- Submit/Cancel footer buttons within form
 
 **FFP-325**: Thumbnail upload flow (inside upload modal)
 
-- Optional image file picker (JPEG/PNG, max 5MB) inside the modal
-- Upload to AssetsBucket via presigned URL (from Phase 1 endpoint)
-- Thumbnail preview after selection inside the modal
+- Optional image file picker (JPEG/PNG, max 5 MB) inside the modal
+- Upload to AssetsBucket via presigned URL (requests new URL with `thumbnailExtension`)
+- Thumbnail preview with progress bar after selection
 - Upload can proceed without thumbnail
 
 **FFP-328**: End-to-end wiring (modal-based flow)
 
-- Full modal flow: click "Upload Video" → modal opens → select file → validate → upload to S3 with progress → show metadata form → optional thumbnail → submit → create video record → success state → upload another or close
-- Modal close/cancel handling: confirm if upload in progress, reset form state on close
-- Escape key and backdrop click close the modal (with confirmation if upload active)
-- "Upload Another" resets modal to initial state
+- Full modal flow: select file → validate → S3 upload with progress → metadata form + optional thumbnail → submit → create video record → success state → upload another or close
+- Added `createVideo()` method to `admin-videos.ts` API client
+- Modal close/Escape/backdrop disabled during upload and submission
+- "Upload Another" resets all modal state
 - Error handling at each step via StaticAlert, success via ToastAlert
+- Toast notification on successful video creation
+
+#### Phase 3 Continuation — Modal UX Restructure ✅ COMPLETE
+
+**Restructured UX flow** based on review feedback:
+
+- **Old flow**: Select file → upload to S3 → then show metadata form (sequential steps)
+- **New flow**: Drop zone + metadata form + thumbnail picker all visible from the start; user fills in any order; submit triggers upload + create; progress view during upload; success view
+- New `useUploadVideoModal` hook with `useReducer` replacing 15+ `useState` calls — phases: `idle` | `uploading` | `creating` | `success` | `error`
+- `VideoMetadataForm` refactored: removed `s3Key`/`fileSizeBytes`/`thumbnailKey` props, added `hasFile: boolean`, returns `VideoMetadataValues` (user-entered fields only), button changed to "Upload Video"
+- Modal component rewritten as thin rendering layer over the hook
+- `UploadVideoFooter` component no longer used (form has own buttons)
+
+#### Phase 4 — Video Deletion API (FFP-436)
+
+**FFP-436**: Delete video endpoint (`DELETE /admin/videos/:id`) — prerequisite for clean e2e testing
+
+- Admin-only endpoint to delete a video record + S3 objects (video file + thumbnail)
+- Deletes S3 objects first (VideosBucket + AssetsBucket), then DB record
+- Returns 404 if video not found, 403 for non-admin
+- Requires `s3:DeleteObject` permission on both buckets
+- Hard delete for now — soft-delete deferred to production readiness
+- **Must be completed before e2e verification** to avoid manual test cleanup overhead
+
+#### Post-Phase 4 — Manual Verification (requires `sst dev`)
+
+Once the modal restructure is complete, verify the full end-to-end flow:
+
+- [ ] Upload a valid MP4 video via the modal (file selection, progress, completion)
+- [ ] Fill in all metadata fields (title, description, movement type, difficulty, body parts, equipment, tags, duration)
+- [ ] Attempt invalid metadata (missing required title, negative duration, empty body parts) — confirm validation errors shown
+- [ ] Upload with optional thumbnail (JPEG/PNG) — confirm preview and upload
+- [ ] Submit and confirm video record created successfully (toast notification, success state)
+- [ ] Use "Upload Another" to reset and upload a second video
+- [ ] Verify the created video is retrievable via existing APIs:
+  - `GET /videos` (list) — new video appears in catalogue
+  - `GET /videos/:id` (detail) — full record returned with correct metadata
+  - Postman collection tests pass against the new video record
+- [ ] Delete the test video via `DELETE /admin/videos/:id`
+  - Confirm `GET /videos/:id` returns 404 after deletion
+  - Confirm S3 objects removed from VideosBucket and AssetsBucket
 
 #### Execution Notes
 
