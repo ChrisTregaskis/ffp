@@ -2,7 +2,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { useController } from 'react-hook-form';
 
 import { Icon } from '@web/components/Icon/Icon';
-import { Text } from '@web/components/text';
+
+import { getInputClassName } from '../shared/inputStyles';
+
+import { FormField } from './FormField';
 
 import type { Control, FieldErrors, FieldValues, Path } from 'react-hook-form';
 
@@ -92,24 +95,15 @@ export const FormTagInput = <TFieldValues extends FieldValues>({
   }, [inputValue, addTag]);
 
   return (
-    <div className="mb-4">
-      <label htmlFor={inputId} className="block mb-1">
-        <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'muted-foreground' }}>
-          {label}
-        </Text>
-        {isRequired && (
-          <Text styleProps={{ colour: 'destructive' }} className="ml-1">
-            *
-          </Text>
-        )}
-      </label>
-
+    <FormField
+      htmlFor={inputId}
+      label={label}
+      isRequired={isRequired}
+      error={error}
+      errorId={errorId}
+    >
       <div
-        className={`
-          flex flex-wrap items-center gap-1.5 min-h-[42px] px-2 py-1.5 border rounded-md shadow-sm
-          focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent
-          ${error ? 'border-red-500' : 'border-gray-300'}
-        `}
+        className={`${getInputClassName(!!error, 'container')} flex flex-wrap items-center gap-1.5 px-2 py-1.5`}
       >
         {tags.map((tag, index) => (
           <span
@@ -145,18 +139,6 @@ export const FormTagInput = <TFieldValues extends FieldValues>({
           className="flex-1 min-w-[120px] border-0 px-1 py-0.5 text-sm outline-none bg-transparent"
         />
       </div>
-
-      {error && (
-        <Text
-          as="p"
-          id={errorId}
-          styleProps={{ size: 'sm', colour: 'destructive' }}
-          className="mt-1"
-          role="alert"
-        >
-          {error}
-        </Text>
-      )}
-    </div>
+    </FormField>
   );
 };

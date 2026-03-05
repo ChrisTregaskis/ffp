@@ -4,6 +4,7 @@ import { Button } from '@web/components/button';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { Icon } from '@web/components/Icon';
 import { Text } from '@web/components/text';
+import { formatFileSize } from '@web/utils/format';
 
 /** Maximum thumbnail file size in bytes (5 MB) */
 const MAX_THUMBNAIL_SIZE = 5 * 1024 * 1024;
@@ -15,13 +16,6 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/png'];
 const MIME_TO_EXTENSION: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
-};
-
-/** Format bytes to a human-readable string */
-const formatFileSize = (bytes: number): string => {
-  if (bytes < 1024) return `${String(bytes)} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
 export interface ThumbnailUploadProps {
@@ -158,10 +152,11 @@ export const ThumbnailUpload: React.FC<ThumbnailUploadProps> = ({
 
       {/* File picker state */}
       {!hasFile && (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          fullWidth
           onClick={handleClick}
-          className="flex w-full items-center gap-3 rounded-lg border border-dashed border-border p-3 transition-colors hover:border-primary/50 hover:bg-muted/30"
+          className="h-auto! justify-start! gap-3 rounded-lg border border-border p-3 hover:border-primary/50 hover:bg-muted/30"
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted">
             <Icon
@@ -175,7 +170,7 @@ export const ThumbnailUpload: React.FC<ThumbnailUploadProps> = ({
               JPEG or PNG, up to 5 MB
             </Text>
           </div>
-        </button>
+        </Button>
       )}
 
       <input

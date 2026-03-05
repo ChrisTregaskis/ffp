@@ -2,7 +2,10 @@ import { useState } from 'react';
 
 import { Icon } from '@web/components/Icon/Icon';
 import { Icons } from '@web/components/Icon/types';
-import { Text } from '@web/components/text';
+
+import { getInputClassName } from '../shared/inputStyles';
+
+import { FormField } from './FormField';
 
 import type { UseFormRegister, FieldErrors, FieldValues, Path } from 'react-hook-form';
 
@@ -55,28 +58,18 @@ export const FormTextInput = <TFieldValues extends FieldValues>({
       aria-invalid={!!error}
       aria-describedby={error ? errorId : undefined}
       {...register(name)}
-      className={`
-        w-full px-3 py-2 border rounded-md shadow-sm
-        ${isPassword ? 'pr-10' : ''}
-        focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
-        ${error ? 'border-red-500' : 'border-gray-300'}
-      `}
+      className={`${getInputClassName(!!error)} w-full px-3 py-2 ${isPassword ? 'pr-10' : ''}`}
     />
   );
 
   return (
-    <div className="mb-4">
-      <label htmlFor={inputId} className="block mb-1">
-        <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'muted-foreground' }}>
-          {label}
-        </Text>
-        {isRequired && (
-          <Text styleProps={{ colour: 'destructive' }} className="ml-1">
-            *
-          </Text>
-        )}
-      </label>
-
+    <FormField
+      htmlFor={inputId}
+      label={label}
+      isRequired={isRequired}
+      error={error}
+      errorId={errorId}
+    >
       {isPassword ? (
         <div className="relative">
           {inputElement}
@@ -97,18 +90,6 @@ export const FormTextInput = <TFieldValues extends FieldValues>({
       ) : (
         inputElement
       )}
-
-      {error && (
-        <Text
-          as="p"
-          id={errorId}
-          styleProps={{ size: 'sm', colour: 'destructive' }}
-          className="mt-1"
-          role="alert"
-        >
-          {error}
-        </Text>
-      )}
-    </div>
+    </FormField>
   );
 };

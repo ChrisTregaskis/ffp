@@ -4,7 +4,8 @@ import { Button } from '@web/components/button';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { Icon } from '@web/components/Icon';
 import { Text } from '@web/components/text';
-import { formatFileSize, useUploadVideoModal } from '@web/hooks/videos/useUploadVideoModal';
+import { useUploadVideoModal } from '@web/hooks/videos/useUploadVideoModal';
+import { formatFileSize } from '@web/utils/format';
 
 import { Modal } from '../Modal';
 
@@ -236,7 +237,6 @@ export const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
           {/* Metadata form with submit button */}
           <VideoMetadataForm
             hasFile={hasValidFile}
-            detectedDuration={state.detectedDuration}
             onSubmit={handleSubmit}
             onCancel={handleClose}
             isSubmitting={state.thumbnailUploading}

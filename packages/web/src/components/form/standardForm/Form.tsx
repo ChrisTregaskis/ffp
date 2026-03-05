@@ -82,7 +82,7 @@ export const Form = <TFieldValues extends FieldValues>({
             label={field.label}
             options={field.inputOptions ?? []}
             placeholder={field.placeholder}
-            register={methods.register}
+            control={methods.control}
             errors={formState.errors}
             isRequired={field.validation?.isRequired}
           />

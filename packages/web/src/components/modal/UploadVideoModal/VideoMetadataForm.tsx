@@ -1,16 +1,17 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@web/components/button';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
+import { getInputClassName } from '@web/components/form/shared/inputStyles';
 import { FormSelect } from '@web/components/form/standardForm/FormSelect';
 import type { SelectOption } from '@web/components/form/standardForm/FormSelect';
 import { FormTagInput } from '@web/components/form/standardForm/FormTagInput';
 import { FormTextarea } from '@web/components/form/standardForm/FormTextarea';
 import { Text } from '@web/components/text';
-import type { VideoMetadataValues } from '@web/hooks/videos/useUploadVideoModal';
+import type { VideoMetadataValues } from '@web/hooks/videos/types';
 
-/** Internal form values — durationSeconds is a string from the input */
+/** Internal form values */
 interface VideoMetadataFormValues {
   title: string;
   description: string;
@@ -19,7 +20,6 @@ interface VideoMetadataFormValues {
   bodyParts: string[];
   equipment: string[];
   tags: string[];
-  durationSeconds: string;
 }
 
 const MOVEMENT_TYPE_OPTIONS: SelectOption[] = [
@@ -38,8 +38,6 @@ const DIFFICULTY_OPTIONS: SelectOption[] = [
 export interface VideoMetadataFormProps {
   /** Whether a valid video file has been selected */
   hasFile: boolean;
-  /** Duration in seconds auto-detected from the video file (null if not yet available) */
-  detectedDuration?: number | null;
   /** Called when the form is submitted with valid metadata */
   onSubmit: (data: VideoMetadataValues) => void;
   /** Called when cancel is clicked */
@@ -54,12 +52,12 @@ export interface VideoMetadataFormProps {
  * Video metadata form for the upload modal.
  *
  * Collects title, description, movement type, difficulty, body parts, equipment,
- * tags, and duration. Returns a VideoMetadataValues object on submit — the parent
- * hook handles assembling the full CreateVideoInput with upload-derived fields.
+ * and tags. Returns a VideoMetadataValues object on submit — the parent
+ * hook handles assembling the full CreateVideoInput with upload-derived fields
+ * (duration, file size, S3 key, etc.).
  */
 export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
   hasFile,
-  detectedDuration,
   onSubmit,
   onCancel,
   isSubmitting = false,
@@ -69,7 +67,6 @@ export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
     register,
     handleSubmit,
     control,
-    setValue,
     formState: { errors },
   } = useForm<VideoMetadataFormValues>({
     defaultValues: {
@@ -80,22 +77,13 @@ export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
       bodyParts: [],
       equipment: [],
       tags: [],
-      durationSeconds: '',
     },
   });
-
-  // Auto-fill duration when detected from file metadata
-  useEffect(() => {
-    if (detectedDuration !== null && detectedDuration !== undefined) {
-      setValue('durationSeconds', String(detectedDuration));
-    }
-  }, [detectedDuration, setValue]);
 
   const handleFormSubmit = useCallback(
     (values: VideoMetadataFormValues) => {
       const metadata: VideoMetadataValues = {
         title: values.title,
-        durationSeconds: parseInt(values.durationSeconds, 10),
         bodyParts: values.bodyParts,
         equipment: values.equipment,
         description: values.description || undefined,
@@ -115,7 +103,6 @@ export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
   );
 
   const titleError = errors.title?.message;
-  const durationError = errors.durationSeconds?.message;
 
   return (
     <form
@@ -147,7 +134,7 @@ export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
               required: 'Video Title is required',
               maxLength: { value: 255, message: 'Maximum length is 255 characters' },
             })}
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${titleError ? 'border-red-500' : 'border-gray-300'}`}
+            className={`${getInputClassName(!!titleError)} w-full px-3 py-2`}
           />
           {titleError && (
             <Text
@@ -167,7 +154,7 @@ export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
           label="Movement Type"
           options={MOVEMENT_TYPE_OPTIONS}
           placeholder="Select type..."
-          register={register}
+          control={control}
           errors={errors}
         />
       </div>
@@ -189,7 +176,7 @@ export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
           label="Difficulty"
           options={DIFFICULTY_OPTIONS}
           placeholder="Select level..."
-          register={register}
+          control={control}
           errors={errors}
         />
         <FormTagInput
@@ -217,54 +204,6 @@ export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
         control={control}
         errors={errors}
       />
-
-      {/* Row 5: Duration (half-width) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2">
-        <div className="mb-4">
-          <label htmlFor="durationSeconds" className="block mb-1">
-            <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'muted-foreground' }}>
-              Duration (seconds)
-            </Text>
-            <Text styleProps={{ colour: 'destructive' }} className="ml-1">
-              *
-            </Text>
-          </label>
-          <input
-            id="durationSeconds"
-            type="number"
-            min={0}
-            step={1}
-            placeholder="e.g. 120"
-            aria-required
-            aria-invalid={!!durationError}
-            aria-describedby={durationError ? 'durationSeconds-error' : undefined}
-            {...register('durationSeconds', {
-              required: 'Duration is required',
-              validate: (value) => {
-                const num = parseInt(value, 10);
-
-                if (isNaN(num)) return 'Duration must be a number';
-                if (num < 0) return 'Duration must be non-negative';
-                if (!Number.isInteger(num)) return 'Duration must be a whole number';
-
-                return true;
-              },
-            })}
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${durationError ? 'border-red-500' : 'border-gray-300'}`}
-          />
-          {durationError && (
-            <Text
-              as="p"
-              id="durationSeconds-error"
-              styleProps={{ size: 'sm', colour: 'destructive' }}
-              className="mt-1"
-              role="alert"
-            >
-              {durationError}
-            </Text>
-          )}
-        </div>
-      </div>
 
       {/* Form actions */}
       <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-4">
