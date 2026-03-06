@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { Button } from '@web/components/button';
 import { Icon } from '@web/components/Icon';
 import { Icons } from '@web/components/Icon/types';
 import { Logo } from '@web/components/logo';
@@ -74,7 +75,7 @@ export const SideMenu: React.FC<SideMenuProps> = ({ handleLogout }) => {
 
       {/* Main Navigation */}
       <nav className="flex-1 w-full justify-center overflow-y-auto">
-        <div className="flex-col w-full space-y-1 justify-center ">
+        <div className="flex w-full flex-col space-y-1">
           {contextNavItems
             ? contextNavItems.map((item) => (
                 <NavItem
@@ -103,24 +104,21 @@ export const SideMenu: React.FC<SideMenuProps> = ({ handleLogout }) => {
         <div className="space-y-1">
           {/* Collapse/Expand Toggle */}
           <ClickScale scale={0.97} duration={0.1}>
-            <button
+            <Button
+              variant="ghost"
               onClick={toggleCollapsed}
-              className={`flex w-full items-center gap-3 py-3 text-white transition-colors duration-150 hover:bg-secondary ${isCollapsed ? 'justify-center' : 'px-4'}`}
-              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              <div className="flex items-center gap-3">
+              icon={
                 <Icon
                   name={isCollapsed ? Icons.LEFTPANELOPEN : Icons.LEFTPANELCLOSE}
                   styleProps={{ size: 'md', colour: 'currentColor' }}
-                  ariaLabel={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                 />
-                {!isCollapsed && (
-                  <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'white' }}>
-                    Collapse
-                  </Text>
-                )}
-              </div>
-            </button>
+              }
+              className={`w-full text-white hover:bg-secondary ${isCollapsed ? 'justify-center' : 'justify-start'}`}
+            >
+              {!isCollapsed && (
+                <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'white' }}>Collapse</Text>
+              )}
+            </Button>
           </ClickScale>
 
           {footerNavItems.map((item) => (

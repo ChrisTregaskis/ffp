@@ -1,8 +1,10 @@
 import { useCallback, useMemo } from 'react';
 
 import { Button } from '@web/components/button/Button';
+import { IconButton } from '@web/components/button/IconButton';
 import { Icon } from '@web/components/Icon/Icon';
 import { Icons } from '@web/components/Icon/types';
+import { Text } from '@web/components/text';
 
 import { useFieldsForm } from '../hooks/useFieldsForm';
 import { FieldDataType } from '../shared/FieldDataType';
@@ -148,21 +150,28 @@ export const Form = <TFieldValues extends FieldValues>({
 
   return (
     <form onSubmit={handleFormSubmit} className="space-y-4">
-      {/* Enhanced form-level error display */}
+      {/* Form-level error display */}
       {errorMessage && (
-        <div role="alert" className="rounded-md bg-error-50 border border-error-200 p-4 mb-6">
+        <div
+          role="alert"
+          className="rounded-md bg-destructive/10 border border-destructive/20 p-4 mb-6"
+        >
           <div className="flex items-start">
-            <Icon name={Icons.ALERTCIRCLE} styleProps={{ size: 'sm', colour: '#dc2626' }} />
-            <p className="ml-3 text-sm text-error-700 flex-1">{errorMessage}</p>
+            <Icon
+              name={Icons.ALERTCIRCLE}
+              styleProps={{ size: 'sm', colour: 'var(--color-destructive)' }}
+            />
+            <Text as="p" styleProps={{ size: 'sm', colour: 'destructive' }} className="ml-3 flex-1">
+              {errorMessage}
+            </Text>
             {onClearFormError && (
-              <button
-                type="button"
+              <IconButton
+                icon={Icons.CLOSE}
+                size="sm"
+                ariaLabel="Dismiss error"
                 onClick={onClearFormError}
-                className="ml-auto text-error-400 hover:text-error-600 transition-colors"
-                aria-label="Dismiss error"
-              >
-                <Icon name={Icons.CLOSE} styleProps={{ size: 'xs', colour: 'currentColor' }} />
-              </button>
+                className="ml-auto text-destructive/60 hover:text-destructive"
+              />
             )}
           </div>
         </div>

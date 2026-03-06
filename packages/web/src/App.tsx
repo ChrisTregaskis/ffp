@@ -1,5 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import React from 'react';
 
 import { ErrorBoundary } from '@web/components/error';
 import { ToastProvider } from '@web/contexts/toast/ToastContext';
@@ -16,7 +17,7 @@ import { Router } from '@web/pages/routes/Router';
  * Route-level errors are caught by ErrorBoundary to prevent full app crashes.
  * TanStack Query provides data fetching, caching, and state management.
  */
-function App(): JSX.Element {
+const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
@@ -27,6 +28,6 @@ function App(): JSX.Element {
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
-}
+};
 
 export default App;

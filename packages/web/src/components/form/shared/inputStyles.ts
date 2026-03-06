@@ -13,7 +13,7 @@ export const getInputClassName = (
       ? 'focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent'
       : 'focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent';
 
-  const border = error ? 'border-red-500' : 'border-gray-300';
+  const border = error ? 'border-destructive' : 'border-border';
 
   return `min-h-[42px] border rounded-md bg-white shadow-sm hover:border-primary ${focusRing} ${border}`;
 };

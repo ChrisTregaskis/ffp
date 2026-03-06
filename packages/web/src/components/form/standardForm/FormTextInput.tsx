@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Icon } from '@web/components/Icon/Icon';
+import { IconButton } from '@web/components/button/IconButton';
 import { Icons } from '@web/components/Icon/types';
 
 import { getInputClassName } from '../shared/inputStyles';
@@ -73,19 +73,15 @@ export const FormTextInput = <TFieldValues extends FieldValues>({
       {isPassword ? (
         <div className="relative">
           {inputElement}
-          <button
-            type="button"
+          <IconButton
+            icon={showPassword ? Icons.VISIBILITYOFF : Icons.VISIBILITY}
+            size="sm"
+            ariaLabel={showPassword ? 'Hide password' : 'Show password'}
             onClick={() => {
               setShowPassword(!showPassword);
             }}
             className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
-          >
-            <Icon
-              name={showPassword ? Icons.VISIBILITYOFF : Icons.VISIBILITY}
-              styleProps={{ size: 'sm', colour: 'currentColor' }}
-            />
-          </button>
+          />
         </div>
       ) : (
         inputElement

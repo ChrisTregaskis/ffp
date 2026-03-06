@@ -106,7 +106,8 @@ export const useVideoUpload = (
   const videoXhrRef = useRef<XMLHttpRequest | null>(null);
   const thumbnailXhrRef = useRef<XMLHttpRequest | null>(null);
 
-  // Ref to always read the latest state in async callbacks
+  // Ref to always read the latest state in async callbacks (avoids stale closures
+  // without adding state to useCallback deps, which would cause unnecessary re-renders)
   const stateRef = useRef(state);
   stateRef.current = state;
 
@@ -204,13 +205,11 @@ export const useVideoUpload = (
         })
           .then(() => {
             logger.debug('Thumbnail upload complete', { thumbnailKey: thumbKey });
-
             dispatch({ type: 'THUMBNAIL_COMPLETE', thumbnailKey: thumbKey });
           })
           .catch((error: unknown) => {
             const message = error instanceof Error ? error.message : 'Thumbnail upload failed.';
             logger.error('Thumbnail upload failed', { error: message });
-
             dispatch({ type: 'THUMBNAIL_ERROR', error: message });
           });
       })
@@ -284,8 +283,8 @@ export const useVideoUpload = (
             mimeType: 'video/mp4',
             status: 'draft',
             description: metadata.description,
-            movementType: metadata.movementType as CreateVideoInput['movementType'],
-            difficulty: metadata.difficulty as CreateVideoInput['difficulty'],
+            movementType: metadata.movementType,
+            difficulty: metadata.difficulty,
             tags: metadata.tags,
             thumbnailKey: thumbKey ?? undefined,
           };

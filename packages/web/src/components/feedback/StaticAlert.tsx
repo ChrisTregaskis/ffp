@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { IconButton } from '@web/components/button/IconButton';
 import { Icon, type IconColour } from '@web/components/Icon/Icon';
 import { Icons } from '@web/components/Icon/types';

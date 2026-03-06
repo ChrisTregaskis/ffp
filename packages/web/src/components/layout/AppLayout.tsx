@@ -1,3 +1,4 @@
+import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { getNavigationItems } from '@web/config/navigation';

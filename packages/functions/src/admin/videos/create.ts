@@ -1,4 +1,3 @@
-import { type CreateVideoInput } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
@@ -18,7 +17,7 @@ interface CreateVideoResponse {
  * Lambda handler for POST /admin/videos
  *
  * Creates a new video record in the database with metadata and S3 key.
- * Validates input against createVideoSchema. Status defaults to 'draft'.
+ * Validates input against createVideoSchema (in service layer). Status defaults to 'draft'.
  * Admin role required.
  */
 export const handler = withErrorHandling(
@@ -33,15 +32,15 @@ export const handler = withErrorHandling(
       throw new ValidationError('Request body is required');
     }
 
-    let input: CreateVideoInput;
+    let body: unknown;
 
     try {
-      input = JSON.parse(event.body) as CreateVideoInput;
+      body = JSON.parse(event.body);
     } catch {
       throw new ValidationError('Invalid JSON in request body');
     }
 
-    const video = await createVideo(context, input);
+    const video = await createVideo(context, body);
 
     return { video };
   }

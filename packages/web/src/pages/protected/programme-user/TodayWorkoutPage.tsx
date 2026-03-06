@@ -14,7 +14,7 @@ export const TodayWorkoutPage: React.FC = () => {
       <PageHeader title="Today's Workout" subtitle="Your scheduled workout session for today" />
 
       <Card className="p-8">
-        <div className="flex flex-col items-centre justify-center py-12">
+        <div className="flex flex-col items-center justify-center py-12">
           <Title as="h3" colour="muted-foreground" className="mb-2">
             Coming Soon
           </Title>

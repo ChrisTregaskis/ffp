@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useController } from 'react-hook-form';
 
-import { Icon } from '@web/components/Icon/Icon';
+import { IconButton } from '@web/components/button/IconButton';
+import { Icons } from '@web/components/Icon/types';
 
 import { getInputClassName } from '../shared/inputStyles';
 
@@ -111,16 +112,15 @@ export const FormTagInput = <TFieldValues extends FieldValues>({
             className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-sm text-foreground"
           >
             {tag}
-            <button
-              type="button"
+            <IconButton
+              icon={Icons.CLOSE}
+              size="sm"
+              ariaLabel={`Remove ${tag}`}
               onClick={() => {
                 removeTag(index);
               }}
               className="text-muted-foreground hover:text-foreground transition-colors"
-              aria-label={`Remove ${tag}`}
-            >
-              <Icon name="Close" styleProps={{ size: 'xs', colour: 'currentColor' }} />
-            </button>
+            />
           </span>
         ))}
         <input

@@ -2,6 +2,7 @@ import { getDb } from '@ffp/database';
 import type { VideoRecord } from '@ffp/database/schema';
 
 import { NotFoundError, ValidationError } from '../lib/errors';
+import { createLogger } from '../lib/logger';
 import {
   createVideoSchema,
   videoFilterSchema,
@@ -12,11 +13,7 @@ import {
 import * as videoRepository from './video.repository';
 
 import type { TenantContext } from '../lib/context';
-import type {
-  CreateVideoInput,
-  VideoListResponse,
-  VideoDetailResponse,
-} from '../schemas/video.schema';
+import type { VideoListResponse, VideoDetailResponse } from '../schemas/video.schema';
 
 interface GetVideoOptions {
   /** When true, returns the video regardless of status. Defaults to false (active only). */
@@ -36,13 +33,20 @@ interface VideoFilterRawInput {
  * Create a new video record with validated input.
  * Status defaults to 'draft' via schema default.
  */
-export async function createVideo(
-  _ctx: TenantContext,
-  input: CreateVideoInput
-): Promise<VideoRecord> {
+export async function createVideo(ctx: TenantContext, input: unknown): Promise<VideoRecord> {
   const validated = createVideoSchema.parse(input);
   const db = getDb();
-  return await videoRepository.insertVideo(db, validated);
+  const record = await videoRepository.insertVideo(db, validated);
+
+  const logger = createLogger(ctx);
+  logger.info('Video record created', {
+    action: 'video_created',
+    videoId: record.id,
+    s3Key: record.s3Key,
+    status: record.status,
+  });
+
+  return record;
 }
 
 export async function listVideos(_ctx: TenantContext): Promise<VideoListResponse[]> {

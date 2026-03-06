@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { Text } from '@web/components/text';
 
 import type { ReactNode } from 'react';

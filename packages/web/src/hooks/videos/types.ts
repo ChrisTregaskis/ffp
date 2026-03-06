@@ -1,3 +1,5 @@
+import type { CreateVideoInput } from '@ffp/core';
+
 import type React from 'react';
 
 /** Upload lifecycle phases */
@@ -7,8 +9,8 @@ export type UploadPhase = 'idle' | 'uploading' | 'creating' | 'success' | 'error
 export interface VideoMetadataValues {
   title: string;
   description?: string;
-  movementType?: string;
-  difficulty?: string;
+  movementType?: CreateVideoInput['movementType'];
+  difficulty?: CreateVideoInput['difficulty'];
   bodyParts: string[];
   equipment: string[];
   tags: string[];
