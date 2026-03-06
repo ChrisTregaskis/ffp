@@ -28,7 +28,7 @@ export const ProgrammeOverviewPage: React.FC = () => {
   // Loading state
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12">
+      <div className="max-w-3xl px-4 py-12">
         <SectionPanel>
           <div className="flex flex-col items-center gap-4 px-6 py-16">
             <LoadingSpinner size="lg" />
@@ -44,7 +44,7 @@ export const ProgrammeOverviewPage: React.FC = () => {
   // Error / no programme state
   if (isError || !programme) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12">
+      <div className="max-w-3xl px-4 py-12">
         <StaticAlert
           variant="warning"
           message="No active programme found. Please complete an assessment to receive your personalised programme."
@@ -54,7 +54,7 @@ export const ProgrammeOverviewPage: React.FC = () => {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
+    <div className="max-w-3xl space-y-6 px-4 py-8">
       {/* Header: programme name + status badge */}
       <div className="flex items-center gap-4">
         <IconBadge name={Icons.ACTIVITY} size="lg" variant="primary" appearance="solid" />

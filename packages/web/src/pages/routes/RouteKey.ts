@@ -43,6 +43,8 @@ export enum RouteKey {
   ADMIN_TEMPLATES = 'admin-templates',
   /** Admin video library management page */
   ADMIN_VIDEOS = 'admin-videos',
+  /** Admin video upload page */
+  ADMIN_VIDEO_UPLOAD = 'admin-video-upload',
 
   // Development-only component showcase routes (excluded in production)
   /** Component showcase landing page */

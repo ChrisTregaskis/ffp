@@ -1,12 +1,17 @@
 import { useCallback, useMemo } from 'react';
 
 import { Button } from '@web/components/button/Button';
+import { IconButton } from '@web/components/button/IconButton';
 import { Icon } from '@web/components/Icon/Icon';
 import { Icons } from '@web/components/Icon/types';
+import { Text } from '@web/components/text';
 
 import { useFieldsForm } from '../hooks/useFieldsForm';
 import { FieldDataType } from '../shared/FieldDataType';
 
+import { FormSelect } from './FormSelect';
+import { FormTagInput } from './FormTagInput';
+import { FormTextarea } from './FormTextarea';
 import { FormTextInput } from './FormTextInput';
 
 import type { Field, SubmitHandler } from '../shared/types';
@@ -55,37 +60,81 @@ export const Form = <TFieldValues extends FieldValues>({
   const sortedFields = useMemo(() => [...fields].sort((a, b) => a.order - b.order), [fields]);
 
   const renderField = (field: Field<TFieldValues>): JSX.Element => {
-    // Determine field type based on dataType, with fallback to name/pattern detection
-    let inputType: 'text' | 'email' | 'password' = 'text';
+    const key = String(field.name);
 
-    // Prefer explicit dataType over naming conventions
-    if (field.dataType === FieldDataType.PASSWORD) {
-      inputType = 'password';
-    } else {
-      // Fallback: Determine field type based on name and validation pattern
-      const fieldName = String(field.name).toLowerCase();
-      if (fieldName.includes('password')) {
-        inputType = 'password';
-      } else if (
-        fieldName.includes('email') ||
-        field.validation?.pattern?.toString().includes('@')
-      ) {
-        inputType = 'email';
+    switch (field.dataType) {
+      case FieldDataType.TEXTAREA:
+        return (
+          <FormTextarea
+            key={key}
+            name={field.name}
+            label={field.label}
+            placeholder={field.placeholder}
+            register={methods.register}
+            errors={formState.errors}
+            isRequired={field.validation?.isRequired}
+          />
+        );
+
+      case FieldDataType.SELECT:
+        return (
+          <FormSelect
+            key={key}
+            name={field.name}
+            label={field.label}
+            options={field.inputOptions ?? []}
+            placeholder={field.placeholder}
+            control={methods.control}
+            errors={formState.errors}
+            isRequired={field.validation?.isRequired}
+          />
+        );
+
+      case FieldDataType.TAG_INPUT:
+        return (
+          <FormTagInput
+            key={key}
+            name={field.name}
+            label={field.label}
+            placeholder={field.placeholder}
+            control={methods.control}
+            errors={formState.errors}
+            isRequired={field.validation?.isRequired}
+          />
+        );
+
+      default: {
+        let inputType: 'text' | 'email' | 'password' = 'text';
+
+        if (field.dataType === FieldDataType.PASSWORD) {
+          inputType = 'password';
+        } else {
+          const fieldName = String(field.name).toLowerCase();
+
+          if (fieldName.includes('password')) {
+            inputType = 'password';
+          } else if (
+            fieldName.includes('email') ||
+            field.validation?.pattern?.toString().includes('@')
+          ) {
+            inputType = 'email';
+          }
+        }
+
+        return (
+          <FormTextInput
+            key={key}
+            name={field.name}
+            label={field.label}
+            type={inputType}
+            placeholder={field.placeholder}
+            register={methods.register}
+            errors={formState.errors}
+            isRequired={field.validation?.isRequired}
+          />
+        );
       }
     }
-
-    return (
-      <FormTextInput
-        key={String(field.name)}
-        name={field.name}
-        label={field.label}
-        type={inputType}
-        placeholder={field.placeholder}
-        register={methods.register}
-        errors={formState.errors}
-        isRequired={field.validation?.isRequired}
-      />
-    );
   };
 
   // Determine if form is currently submitting (internal or external state)
@@ -101,21 +150,28 @@ export const Form = <TFieldValues extends FieldValues>({
 
   return (
     <form onSubmit={handleFormSubmit} className="space-y-4">
-      {/* Enhanced form-level error display */}
+      {/* Form-level error display */}
       {errorMessage && (
-        <div role="alert" className="rounded-md bg-error-50 border border-error-200 p-4 mb-6">
+        <div
+          role="alert"
+          className="rounded-md bg-destructive/10 border border-destructive/20 p-4 mb-6"
+        >
           <div className="flex items-start">
-            <Icon name={Icons.ALERTCIRCLE} styleProps={{ size: 'sm', colour: '#dc2626' }} />
-            <p className="ml-3 text-sm text-error-700 flex-1">{errorMessage}</p>
+            <Icon
+              name={Icons.ALERTCIRCLE}
+              styleProps={{ size: 'sm', colour: 'var(--color-destructive)' }}
+            />
+            <Text as="p" styleProps={{ size: 'sm', colour: 'destructive' }} className="ml-3 flex-1">
+              {errorMessage}
+            </Text>
             {onClearFormError && (
-              <button
-                type="button"
+              <IconButton
+                icon={Icons.CLOSE}
+                size="sm"
+                ariaLabel="Dismiss error"
                 onClick={onClearFormError}
-                className="ml-auto text-error-400 hover:text-error-600 transition-colors"
-                aria-label="Dismiss error"
-              >
-                <Icon name={Icons.CLOSE} styleProps={{ size: 'xs', colour: 'currentColor' }} />
-              </button>
+                className="ml-auto text-destructive/60 hover:text-destructive"
+              />
             )}
           </div>
         </div>

@@ -6,6 +6,8 @@ export enum FieldDataType {
   PASSWORD = 'Password',
   NUMBER = 'Number',
   SELECT = 'Select',
+  TEXTAREA = 'Textarea',
+  TAG_INPUT = 'TagInput',
   CHECKBOX = 'Checkbox',
   /** Assessment Specific */
   PAIN_SCALE = 'PainScale',

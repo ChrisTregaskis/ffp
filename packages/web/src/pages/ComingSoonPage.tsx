@@ -3,20 +3,21 @@ import React from 'react';
 import { Card } from '@web/components/Card';
 import { Icon } from '@web/components/Icon';
 import type { IconName } from '@web/components/Icon/types';
+import { PageContainer, PageHeader } from '@web/components/layout';
 import { Text, Title } from '@web/components/text';
 
 export interface ComingSoonPageProps {
-  // Title for the page
+  /** Title for the page */
   title: string;
-  // Optional description of the feature
+  /** Optional description of the feature */
   description?: string;
-  // Optional icon name from Icomoon library
+  /** Optional icon name */
   icon?: IconName;
 }
 
 /**
- * Reusable "Coming Soon" page component for placeholder routes
- * Used for features that will be implemented in future sprints
+ * Reusable "Coming Soon" page component for placeholder routes.
+ * Used for features that will be implemented in future sprints.
  */
 export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({
   title,
@@ -24,18 +25,11 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({
   icon = 'Clock',
 }) => {
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <Title as="h1" colour="foreground" className="mb-2">
-          {title}
-        </Title>
-        {description && (
-          <Text styleProps={{ size: 'base', colour: 'muted-foreground' }}>{description}</Text>
-        )}
-      </div>
+    <PageContainer>
+      <PageHeader title={title} subtitle={description} />
 
       <Card className="p-8">
-        <div className="flex flex-col items-centre justify-center py-12">
+        <div className="flex flex-col items-center justify-center py-12">
           <div className="mb-4">
             <Icon
               name={icon}
@@ -50,6 +44,6 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({
           </Text>
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 };

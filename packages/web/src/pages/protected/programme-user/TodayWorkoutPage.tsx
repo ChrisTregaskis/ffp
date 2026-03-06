@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { Card } from '@web/components/Card';
+import { PageContainer, PageHeader } from '@web/components/layout';
 import { Title, Text } from '@web/components/text';
 
 /**
@@ -9,18 +10,11 @@ import { Title, Text } from '@web/components/text';
  */
 export const TodayWorkoutPage: React.FC = () => {
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <Title as="h1" colour="foreground" className="mb-2">
-          Today&apos;s Workout
-        </Title>
-        <Text styleProps={{ size: 'base', colour: 'muted-foreground' }}>
-          Your scheduled workout session for today
-        </Text>
-      </div>
+    <PageContainer>
+      <PageHeader title="Today's Workout" subtitle="Your scheduled workout session for today" />
 
       <Card className="p-8">
-        <div className="flex flex-col items-centre justify-center py-12">
+        <div className="flex flex-col items-center justify-center py-12">
           <Title as="h3" colour="muted-foreground" className="mb-2">
             Coming Soon
           </Title>
@@ -29,6 +23,6 @@ export const TodayWorkoutPage: React.FC = () => {
           </Text>
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 };
