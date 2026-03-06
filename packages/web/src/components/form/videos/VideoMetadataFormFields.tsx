@@ -108,8 +108,8 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
         rows={3}
       />
 
-      {/* Row 3: Difficulty + Body Parts + Equipment (3-col) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      {/* Row 3: Difficulty + Equipment (2-col) */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormSelect
           name="difficulty"
           label="Difficulty"
@@ -117,14 +117,6 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
           placeholder="Select level..."
           control={control}
           errors={errors}
-        />
-        <FormTagInput
-          name="bodyParts"
-          label="Body Parts"
-          placeholder="e.g. hamstrings"
-          control={control}
-          errors={errors}
-          isRequired
         />
         <FormTagInput
           name="equipment"
@@ -135,7 +127,17 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
         />
       </div>
 
-      {/* Row 4: Tags (full-width) */}
+      {/* Row 4: Body Parts (full-width) */}
+      <FormTagInput
+        name="bodyParts"
+        label="Body Parts"
+        placeholder="e.g. hamstrings"
+        control={control}
+        errors={errors}
+        isRequired
+      />
+
+      {/* Row 5: Tags (full-width) */}
       <FormTagInput
         name="tags"
         label="Tags"

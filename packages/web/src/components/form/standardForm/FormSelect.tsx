@@ -181,7 +181,7 @@ export const FormSelect = <TFieldValues extends FieldValues>({
           aria-describedby={error ? errorId : undefined}
           onClick={handleToggle}
           onKeyDown={handleKeyDown}
-          className={`${getInputClassName(!!error)} flex w-full items-center justify-between px-3 py-2 text-left`}
+          className={`${getInputClassName(!!error)} flex w-full cursor-pointer items-center justify-between px-3 py-2 text-left`}
         >
           {selectedOption ? (
             <Text>{selectedOption.label}</Text>

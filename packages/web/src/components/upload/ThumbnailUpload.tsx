@@ -119,7 +119,7 @@ export const ThumbnailUpload: React.FC<ThumbnailUploadProps> = ({
 
       {/* Preview state */}
       {hasFile && previewUrl && (
-        <div className="flex items-start gap-4 rounded-lg border border-border bg-muted/30 p-3">
+        <div className="flex items-start gap-4 rounded-lg border border-border bg-white p-3">
           <img
             src={previewUrl}
             alt="Thumbnail preview"
@@ -160,7 +160,7 @@ export const ThumbnailUpload: React.FC<ThumbnailUploadProps> = ({
           variant="ghost"
           fullWidth
           onClick={handleOpenFilePicker}
-          className="h-auto! justify-start! gap-3 rounded-lg border border-border p-3 hover:border-primary/50 hover:bg-muted/30"
+          className="h-auto! justify-start! gap-3 rounded-lg border border-border bg-white p-3 hover:border-primary/50 hover:bg-white"
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted">
             <Icon

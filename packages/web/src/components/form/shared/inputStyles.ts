@@ -15,5 +15,5 @@ export const getInputClassName = (
 
   const border = error ? 'border-red-500' : 'border-gray-300';
 
-  return `min-h-[42px] border rounded-md shadow-sm ${focusRing} ${border}`;
+  return `min-h-[42px] border rounded-md bg-white shadow-sm hover:border-primary ${focusRing} ${border}`;
 };

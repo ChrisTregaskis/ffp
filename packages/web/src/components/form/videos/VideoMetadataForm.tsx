@@ -18,6 +18,8 @@ export interface VideoMetadataFormProps {
   isSubmitting?: boolean;
   /** Error message to display above the form */
   errorMessage?: string | null;
+  /** Additional class names for the form wrapper */
+  className?: string;
 }
 
 /**
@@ -34,6 +36,7 @@ export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
   onCancel,
   isSubmitting = false,
   errorMessage,
+  className,
 }) => {
   const handleFormSubmit = useCallback(
     (values: VideoMetadataFormValues) => {
@@ -54,6 +57,7 @@ export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
 
   return (
     <ComposableForm<VideoMetadataFormValues>
+      className={className}
       onSubmit={handleFormSubmit}
       defaultValues={{
         title: '',

@@ -102,7 +102,7 @@ const VARIANT_CONFIG: Record<
  */
 export const StaticAlert: React.FC<StaticAlertProps> = ({
   variant = 'error',
-  appearance = 'soft',
+  appearance = 'solid',
   message,
   onDismiss,
   className = '',
