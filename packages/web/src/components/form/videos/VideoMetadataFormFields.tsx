@@ -1,26 +1,16 @@
-import React, { useCallback, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import React from 'react';
 
 import { Button } from '@web/components/button';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
+import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
 import { getInputClassName } from '@web/components/form/shared/inputStyles';
 import { FormSelect } from '@web/components/form/standardForm/FormSelect';
 import type { SelectOption } from '@web/components/form/standardForm/FormSelect';
 import { FormTagInput } from '@web/components/form/standardForm/FormTagInput';
 import { FormTextarea } from '@web/components/form/standardForm/FormTextarea';
 import { Text } from '@web/components/text';
-import type { VideoMetadataValues } from '@web/hooks/videos/types';
 
-/** Internal form values */
-interface VideoMetadataFormValues {
-  title: string;
-  description: string;
-  movementType: string;
-  difficulty: string;
-  bodyParts: string[];
-  equipment: string[];
-  tags: string[];
-}
+import type { VideoMetadataFormValues } from './types';
 
 const MOVEMENT_TYPE_OPTIONS: SelectOption[] = [
   { label: 'Stretch', value: 'stretch' },
@@ -35,11 +25,9 @@ const DIFFICULTY_OPTIONS: SelectOption[] = [
   { label: 'Advanced', value: 'advanced' },
 ];
 
-export interface VideoMetadataFormProps {
+export interface VideoMetadataFormFieldsProps {
   /** Whether a valid video file has been selected */
   hasFile: boolean;
-  /** Called when the form is submitted with valid metadata */
-  onSubmit: (data: VideoMetadataValues) => void;
   /** Called when cancel is clicked */
   onCancel: () => void;
   /** Whether the submit action is in progress (disables + shows loading) */
@@ -48,68 +36,19 @@ export interface VideoMetadataFormProps {
   errorMessage?: string | null;
 }
 
-/**
- * Video metadata form for the upload modal.
- *
- * Collects title, description, movement type, difficulty, body parts, equipment,
- * and tags. Returns a VideoMetadataValues object on submit — the parent
- * hook handles assembling the full CreateVideoInput with upload-derived fields
- * (duration, file size, S3 key, etc.).
- */
-export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
+/** Inner fields component that consumes composable form context */
+export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = ({
   hasFile,
-  onSubmit,
   onCancel,
   isSubmitting = false,
   errorMessage,
 }) => {
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors },
-  } = useForm<VideoMetadataFormValues>({
-    defaultValues: {
-      title: '',
-      description: '',
-      movementType: '',
-      difficulty: '',
-      bodyParts: [],
-      equipment: [],
-      tags: [],
-    },
-  });
-
-  const handleFormSubmit = useCallback(
-    (values: VideoMetadataFormValues) => {
-      const metadata: VideoMetadataValues = {
-        title: values.title,
-        bodyParts: values.bodyParts,
-        equipment: values.equipment,
-        description: values.description || undefined,
-        movementType: values.movementType || undefined,
-        difficulty: values.difficulty || undefined,
-        tags: values.tags,
-      };
-
-      onSubmit(metadata);
-    },
-    [onSubmit]
-  );
-
-  const onFormSubmit = useMemo(
-    () => handleSubmit(handleFormSubmit),
-    [handleSubmit, handleFormSubmit]
-  );
+  const { register, control, errors } = useComposableFormContext<VideoMetadataFormValues>();
 
   const titleError = errors.title?.message;
 
   return (
-    <form
-      onSubmit={(e) => {
-        void onFormSubmit(e);
-      }}
-    >
+    <>
       {errorMessage && <StaticAlert variant="error" message={errorMessage} className="mb-4" />}
 
       {/* Row 1: Title + Movement Type (2-col) */}
@@ -214,6 +153,6 @@ export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
           Upload Video
         </Button>
       </div>
-    </form>
+    </>
   );
 };

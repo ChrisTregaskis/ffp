@@ -57,11 +57,14 @@ export const ThumbnailUpload: React.FC<ThumbnailUploadProps> = ({
 
       event.target.value = '';
 
-      if (!file) return;
+      if (!file) {
+        return;
+      }
 
       // Validate type
       if (!ACCEPTED_TYPES.includes(file.type)) {
         setValidationError('Only JPEG and PNG images are accepted.');
+
         return;
       }
 
@@ -70,6 +73,7 @@ export const ThumbnailUpload: React.FC<ThumbnailUploadProps> = ({
         setValidationError(
           `Image is too large (${formatFileSize(file.size)}). Maximum size is 5 MB.`
         );
+
         return;
       }
 
@@ -97,7 +101,7 @@ export const ThumbnailUpload: React.FC<ThumbnailUploadProps> = ({
     onClear();
   }, [previewUrl, onClear]);
 
-  const handleClick = useCallback(() => {
+  const handleOpenFilePicker = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
 
@@ -155,7 +159,7 @@ export const ThumbnailUpload: React.FC<ThumbnailUploadProps> = ({
         <Button
           variant="ghost"
           fullWidth
-          onClick={handleClick}
+          onClick={handleOpenFilePicker}
           className="h-auto! justify-start! gap-3 rounded-lg border border-border p-3 hover:border-primary/50 hover:bg-muted/30"
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted">

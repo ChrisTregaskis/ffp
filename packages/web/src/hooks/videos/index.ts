@@ -1,9 +1,9 @@
-export { useUploadVideoModal } from './useUploadVideoModal';
+export { useVideoUpload } from './useVideoUpload';
 
 export type {
   Action,
-  ModalPhase,
-  UploadVideoModalState,
-  UseUploadVideoModalReturn,
+  UploadPhase,
+  VideoUploadState,
+  UseVideoUploadReturn,
   VideoMetadataValues,
 } from './types';

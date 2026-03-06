@@ -1,7 +1,7 @@
 import type React from 'react';
 
-/** Modal lifecycle phases */
-export type ModalPhase = 'idle' | 'uploading' | 'creating' | 'success' | 'error';
+/** Upload lifecycle phases */
+export type UploadPhase = 'idle' | 'uploading' | 'creating' | 'success' | 'error';
 
 /** User-entered metadata values from the form (no upload-derived fields) */
 export interface VideoMetadataValues {
@@ -14,8 +14,8 @@ export interface VideoMetadataValues {
   tags: string[];
 }
 
-export interface UploadVideoModalState {
-  phase: ModalPhase;
+export interface VideoUploadState {
+  phase: UploadPhase;
   selectedFile: File | null;
   fileValidationError: string | null;
   isDragOver: boolean;
@@ -30,8 +30,8 @@ export interface UploadVideoModalState {
   submitError: string | null;
 }
 
-export interface UseUploadVideoModalReturn {
-  state: UploadVideoModalState;
+export interface UseVideoUploadReturn {
+  state: VideoUploadState;
   handleDragOver: (event: React.DragEvent) => void;
   handleDragLeave: (event: React.DragEvent) => void;
   handleDrop: (event: React.DragEvent) => void;

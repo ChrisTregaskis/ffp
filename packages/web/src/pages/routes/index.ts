@@ -1,5 +1,6 @@
 import type { UserRole } from '@ffp/core';
 
+import type { ContextNavItem } from '@web/config/navigation';
 import { USER_ROLE } from '@web/constants/roles';
 import { ComingSoonPage } from '@web/pages/ComingSoonPage';
 import { AssessmentProgressComponentsPage } from '@web/pages/dev/AssessmentProgressComponentsPage';
@@ -17,6 +18,7 @@ import { MotionShowcasePage } from '@web/pages/dev/MotionShowcasePage';
 import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
+import { VideoUploadPage } from '@web/pages/protected/admin/video-upload';
 import { VideoLibraryPage } from '@web/pages/protected/admin/VideoLibraryPage';
 import { HomePage } from '@web/pages/protected/HomePage';
 import { AccountSettingsPage } from '@web/pages/protected/programme-user/AccountSettingsPage';
@@ -61,6 +63,8 @@ export interface AppRoute {
   devOnly?: boolean;
   /** Roles permitted to access this route (undefined = all authenticated users) */
   allowedRoles?: UserRole[];
+  /** Context-aware sidebar navigation items (overrides default role-based nav when present) */
+  contextNavItems?: ContextNavItem[];
 }
 
 /**
@@ -69,6 +73,7 @@ export interface AppRoute {
  */
 export type RoutesConfig = Record<RouteKey, AppRoute>;
 
+const adminBasePath = '/admin';
 const componentsBasePath = '/components';
 
 // Destructure user roles for easier reference
@@ -209,7 +214,7 @@ export const routes: RoutesConfig = {
 
   // System Admin Routes (placeholders)
   [RouteKey.ADMIN_CUSTOMERS]: {
-    path: '/admin/customers',
+    path: `${adminBasePath}/customers`,
     pageComponent: () =>
       ComingSoonPage({
         title: 'Customers',
@@ -220,7 +225,7 @@ export const routes: RoutesConfig = {
     allowedRoles: [SYSTEM_ADMIN],
   },
   [RouteKey.ADMIN_USERS]: {
-    path: '/admin/users',
+    path: `${adminBasePath}/users`,
     pageComponent: () =>
       ComingSoonPage({
         title: 'Users',
@@ -231,7 +236,7 @@ export const routes: RoutesConfig = {
     allowedRoles: [SYSTEM_ADMIN],
   },
   [RouteKey.ADMIN_ASSESSMENTS]: {
-    path: '/admin/assessments',
+    path: `${adminBasePath}/assessments`,
     pageComponent: () =>
       ComingSoonPage({
         title: 'Assessments',
@@ -242,7 +247,7 @@ export const routes: RoutesConfig = {
     allowedRoles: [SYSTEM_ADMIN],
   },
   [RouteKey.ADMIN_TEMPLATES]: {
-    path: '/admin/templates',
+    path: `${adminBasePath}/templates`,
     pageComponent: () =>
       ComingSoonPage({
         title: 'Session Templates',
@@ -253,10 +258,20 @@ export const routes: RoutesConfig = {
     allowedRoles: [SYSTEM_ADMIN],
   },
   [RouteKey.ADMIN_VIDEOS]: {
-    path: '/admin/videos',
+    path: `${adminBasePath}/videos`,
     pageComponent: VideoLibraryPage,
     title: 'Video Library',
     allowedRoles: [SYSTEM_ADMIN],
+  },
+  [RouteKey.ADMIN_VIDEO_UPLOAD]: {
+    path: `${adminBasePath}/videos/upload`,
+    pageComponent: VideoUploadPage,
+    title: 'Upload Video',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      { label: 'Back to Video Library', icon: 'ArrowLeft', path: `${adminBasePath}/videos` },
+    ],
   },
 
   // Development-only routes (component showcase)

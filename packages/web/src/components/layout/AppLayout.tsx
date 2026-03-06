@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { getNavigationItems } from '@web/config/navigation';
 import { SidebarProvider } from '@web/contexts/sidebar/SidebarContext';
@@ -23,6 +23,7 @@ const AppLayoutContent: React.FC<PropsWithChildren> = ({ children }) => {
   const { isCollapsed } = useSidebar();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Hanlder for triggering logout. Asyncronous but we don't need wait for it to finish.
   const triggerLogout = (): void => {
@@ -37,17 +38,43 @@ const AppLayoutContent: React.FC<PropsWithChildren> = ({ children }) => {
       });
   };
 
+  // Check if current route has context-specific navigation
+  const matchedRoute = Object.values(routes).find((route) => route.path === location.pathname);
+  const contextNavItems = matchedRoute?.contextNavItems;
+
   // Get navigation items for mobile menu
-  const navItems: MobileMenuNavItem[] = user
-    ? getNavigationItems(user.role, triggerLogout).map((item) => ({
+  const roleNavItems = user ? getNavigationItems(user.role, triggerLogout) : [];
+
+  const navItems: MobileMenuNavItem[] = contextNavItems
+    ? [
+        // Context nav items replace the main section
+        ...contextNavItems.map((item) => ({
+          key: item.path,
+          label: item.label,
+          icon: item.icon,
+          path: item.path,
+          section: 'main' as const,
+        })),
+        // Keep footer items (settings, logout)
+        ...roleNavItems
+          .filter((item) => item.section === 'footer')
+          .map((item) => ({
+            key: item.key,
+            label: item.label,
+            icon: item.icon,
+            path: item.path,
+            section: item.section,
+            onClick: item.onClick,
+          })),
+      ]
+    : roleNavItems.map((item) => ({
         key: item.key,
         label: item.label,
         icon: item.icon,
         path: item.path,
         section: item.section,
         onClick: item.onClick,
-      }))
-    : [];
+      }));
 
   // Calculate main content margin based on sidebar state
   const mainContentMargin = isCollapsed ? 'lg:ml-20' : 'lg:ml-[230px]';

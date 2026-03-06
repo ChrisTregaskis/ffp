@@ -10,17 +10,12 @@ import { detectVideoDuration } from './helpers/detectVideoDuration';
 import { uploadToS3 } from './helpers/uploadToS3';
 import { ACCEPTED_VIDEO_MIME_TYPE, validateVideoFile } from './helpers/validateVideoFile';
 
-import type {
-  Action,
-  UploadVideoModalState,
-  UseUploadVideoModalReturn,
-  VideoMetadataValues,
-} from './types';
+import type { Action, VideoUploadState, UseVideoUploadReturn, VideoMetadataValues } from './types';
 import type React from 'react';
 
-const logger = createLogger('useUploadVideoModal');
+const logger = createLogger('useVideoUpload');
 
-const INITIAL_STATE: UploadVideoModalState = {
+const INITIAL_STATE: VideoUploadState = {
   phase: 'idle',
   selectedFile: null,
   fileValidationError: null,
@@ -35,7 +30,7 @@ const INITIAL_STATE: UploadVideoModalState = {
   submitError: null,
 };
 
-const reducer = (state: UploadVideoModalState, action: Action): UploadVideoModalState => {
+const reducer = (state: VideoUploadState, action: Action): VideoUploadState => {
   switch (action.type) {
     case 'SET_DRAG_OVER':
       return { ...state, isDragOver: action.isDragOver };
@@ -102,10 +97,10 @@ const reducer = (state: UploadVideoModalState, action: Action): UploadVideoModal
   }
 };
 
-export const useUploadVideoModal = (
+export const useVideoUpload = (
   onClose: () => void,
   onVideoCreated?: () => void
-): UseUploadVideoModalReturn => {
+): UseVideoUploadReturn => {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoXhrRef = useRef<XMLHttpRequest | null>(null);
@@ -209,11 +204,13 @@ export const useUploadVideoModal = (
         })
           .then(() => {
             logger.debug('Thumbnail upload complete', { thumbnailKey: thumbKey });
+
             dispatch({ type: 'THUMBNAIL_COMPLETE', thumbnailKey: thumbKey });
           })
           .catch((error: unknown) => {
             const message = error instanceof Error ? error.message : 'Thumbnail upload failed.';
             logger.error('Thumbnail upload failed', { error: message });
+
             dispatch({ type: 'THUMBNAIL_ERROR', error: message });
           });
       })
@@ -243,24 +240,27 @@ export const useUploadVideoModal = (
         detectedDuration,
       } = stateRef.current;
 
-      if (!file || fileValidationError) return;
+      if (!file || fileValidationError) {
+        return;
+      }
 
       if (detectedDuration === null) {
         addToast('Could not detect video duration. Please try a different file.', {
           variant: 'error',
         });
+
         return;
       }
 
       dispatch({ type: 'UPLOAD_STARTED' });
 
-      // 1. Get presigned URL for the video
+      // Get presigned URL for the video
       adminVideosApi
         .getUploadUrl()
         .then((urlResponse) => {
           logger.debug('Presigned URL received', { videoS3Key: urlResponse.videoS3Key });
 
-          // 2. Upload video file to S3
+          // Upload video file to S3
           return uploadToS3(file, urlResponse.videoUploadUrl, ACCEPTED_VIDEO_MIME_TYPE, {
             onProgress: (percent) => {
               dispatch({ type: 'UPLOAD_PROGRESS', progress: percent });
@@ -271,7 +271,7 @@ export const useUploadVideoModal = (
         .then((urlResponse) => {
           logger.debug('Video upload complete', { videoS3Key: urlResponse.videoS3Key });
 
-          // 3. Create video record via API
+          // Create video record via API
           dispatch({ type: 'CREATE_STARTED' });
 
           const input: CreateVideoInput = {
@@ -294,6 +294,7 @@ export const useUploadVideoModal = (
         })
         .then((response) => {
           logger.debug('Video created successfully', { videoId: response.video.id });
+
           dispatch({ type: 'CREATE_SUCCESS' });
           addToast('Video created successfully', { variant: 'success' });
           onVideoCreated?.();
@@ -308,7 +309,7 @@ export const useUploadVideoModal = (
     [addToast, onVideoCreated]
   );
 
-  // --- Modal lifecycle ---
+  // --- Page lifecycle ---
 
   const resetAll = useCallback(() => {
     if (videoXhrRef.current) {
@@ -325,7 +326,10 @@ export const useUploadVideoModal = (
   }, []);
 
   const handleClose = useCallback(() => {
-    if (isBusy) return;
+    if (isBusy) {
+      return;
+    }
+
     resetAll();
     onClose();
   }, [isBusy, resetAll, onClose]);

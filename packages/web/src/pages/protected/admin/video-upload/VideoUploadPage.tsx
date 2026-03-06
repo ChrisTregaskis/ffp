@@ -1,38 +1,32 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@web/components/button';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
+import { StatusResult } from '@web/components/feedback/StatusResult';
+import { VideoMetadataForm } from '@web/components/form/videos/VideoMetadataForm';
 import { Icon } from '@web/components/Icon';
+import { PageContainer, PageHeader } from '@web/components/layout';
 import { Text } from '@web/components/text';
-import { useUploadVideoModal } from '@web/hooks/videos/useUploadVideoModal';
+import { ThumbnailUpload } from '@web/components/upload';
+import { useVideoUpload } from '@web/hooks/videos';
+import { RouteKey, routes } from '@web/pages/routes';
 import { formatFileSize } from '@web/utils/format';
 
-import { Modal } from '../Modal';
-
-import { ThumbnailUpload } from './ThumbnailUpload';
-import { VideoMetadataForm } from './VideoMetadataForm';
-
-export interface UploadVideoModalProps {
-  /** Whether the modal is visible */
-  isOpen: boolean;
-  /** Callback to close the modal */
-  onClose: () => void;
-  /** Called after a video record is successfully created */
-  onVideoCreated?: () => void;
-}
-
 /**
- * Upload video modal — restructured UX flow
+ * Full-page video upload flow.
  *
  * Shows drop zone, metadata form, and thumbnail picker all at once.
  * On submit: upload to S3 with progress, then create video record.
- * On success: offer Close or Upload Another.
+ * On success: offer "Back to Library" or "Upload Another".
  */
-export const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
-  isOpen,
-  onClose,
-  onVideoCreated,
-}) => {
+export const VideoUploadPage: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleClose = (): void => {
+    void navigate(routes[RouteKey.ADMIN_VIDEOS].path);
+  };
+
   const {
     state,
     handleDragOver,
@@ -44,50 +38,44 @@ export const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
     handleThumbnailSelected,
     handleThumbnailClear,
     handleSubmit,
-    handleClose,
+    handleClose: handleCloseUpload,
     handleReset,
     fileInputRef,
     hasValidFile,
-    canClose,
-  } = useUploadVideoModal(onClose, onVideoCreated);
+  } = useVideoUpload(handleClose);
 
   const { phase, selectedFile, fileValidationError, isDragOver } = state;
   const showForm = phase === 'idle' || phase === 'error';
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title="Upload New Video"
-      subtitle="Add a new exercise video with description, tags, and metadata."
-      size="lg"
-      closeOnBackdropClick={canClose}
-      closeOnEscape={canClose}
-    >
-      {/* ── Success view ── */}
+    <PageContainer>
+      <PageHeader
+        title="Upload New Video"
+        subtitle="Add a new exercise video with description, tags, and metadata."
+      />
+
+      {/* Success view */}
       {phase === 'success' && (
-        <div className="flex flex-col items-center py-6">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/20">
-            <Icon name="CheckCircle" styleProps={{ size: 'xl', colour: 'var(--color-success)' }} />
-          </div>
-          <Text styleProps={{ weight: 'semibold', size: 'lg' }} className="mb-2">
-            Video Created
-          </Text>
-          <Text as="p" styleProps={{ colour: 'muted-foreground' }} className="mb-6 text-center">
-            Your video has been created successfully with status &ldquo;draft&rdquo;.
-          </Text>
-          <div className="flex gap-3">
-            <Button variant="secondary" onClick={handleClose}>
-              Close
-            </Button>
-            <Button variant="primary" onClick={handleReset}>
-              Upload Another
-            </Button>
-          </div>
-        </div>
+        <StatusResult
+          icon="CheckCircle"
+          iconColour="var(--color-success)"
+          iconBg="bg-success/20"
+          title="Video Created"
+          description="Your video has been created successfully with status \u201cdraft\u201d."
+          actions={
+            <>
+              <Button variant="secondary" onClick={handleCloseUpload}>
+                Back to Library
+              </Button>
+              <Button variant="primary" onClick={handleReset}>
+                Upload Another
+              </Button>
+            </>
+          }
+        />
       )}
 
-      {/* ── Progress view (uploading or creating) ── */}
+      {/* Progress view (uploading or creating) */}
       {(phase === 'uploading' || phase === 'creating') && (
         <div className="py-4">
           {phase === 'uploading' && (
@@ -132,7 +120,7 @@ export const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
         </div>
       )}
 
-      {/* ── Form view (idle or error) ── */}
+      {/* Form view (idle or error) */}
       {showForm && (
         <>
           {/* Submit error alert */}
@@ -238,11 +226,11 @@ export const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
           <VideoMetadataForm
             hasFile={hasValidFile}
             onSubmit={handleSubmit}
-            onCancel={handleClose}
+            onCancel={handleCloseUpload}
             isSubmitting={state.thumbnailUploading}
           />
         </>
       )}
-    </Modal>
+    </PageContainer>
   );
 };

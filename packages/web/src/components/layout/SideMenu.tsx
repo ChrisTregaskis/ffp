@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { Icon } from '@web/components/Icon';
 import { Icons } from '@web/components/Icon/types';
@@ -7,7 +7,7 @@ import { Logo } from '@web/components/logo';
 import { SlideWidth, ClickScale } from '@web/components/motion';
 import { Text } from '@web/components/text';
 import { getNavigationItems } from '@web/config/navigation';
-import type { NavItem as NavItemType } from '@web/config/navigation';
+import type { ContextNavItem, NavItem as NavItemType } from '@web/config/navigation';
 import { useAuth } from '@web/hooks/useAuth';
 import { useSidebar } from '@web/hooks/useSidebar';
 import { RouteKey, routes } from '@web/pages/routes';
@@ -21,14 +21,20 @@ interface SideMenuProps {
   handleLogout: () => void;
 }
 
-/**
- * Desktop sidebar navigation menu with collapsible functionality
- * Shouldn't be used on mobile view
- */
+const getContextNavItems = (pathname: string): ContextNavItem[] | undefined => {
+  const matchedRoute = Object.values(routes).find((route) => route.path === pathname);
+
+  return matchedRoute?.contextNavItems;
+};
+
 export const SideMenu: React.FC<SideMenuProps> = ({ handleLogout }) => {
   const { user } = useAuth();
   const { isCollapsed, toggleCollapsed } = useSidebar();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check if current route has context-specific navigation
+  const contextNavItems = getContextNavItems(location.pathname);
 
   // Get navigation items for the current user role
   const navItems: NavItemType[] = user ? getNavigationItems(user.role, handleLogout) : [];
@@ -69,16 +75,26 @@ export const SideMenu: React.FC<SideMenuProps> = ({ handleLogout }) => {
       {/* Main Navigation */}
       <nav className="flex-1 w-full justify-center overflow-y-auto">
         <div className="flex-col w-full space-y-1 justify-center ">
-          {mainNavItems.map((item) => (
-            <NavItem
-              key={item.key}
-              label={item.label}
-              icon={item.icon}
-              path={item.path}
-              isCollapsed={isCollapsed}
-              onClick={item.onClick}
-            />
-          ))}
+          {contextNavItems
+            ? contextNavItems.map((item) => (
+                <NavItem
+                  key={item.path}
+                  label={item.label}
+                  icon={item.icon}
+                  path={item.path}
+                  isCollapsed={isCollapsed}
+                />
+              ))
+            : mainNavItems.map((item) => (
+                <NavItem
+                  key={item.key}
+                  label={item.label}
+                  icon={item.icon}
+                  path={item.path}
+                  isCollapsed={isCollapsed}
+                  onClick={item.onClick}
+                />
+              ))}
         </div>
       </nav>
 
