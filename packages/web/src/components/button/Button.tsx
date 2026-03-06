@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { LoadingSpinner } from '@web/components/LoadingSpinner';
 
 import { ClickScale } from '../motion';
@@ -13,7 +15,8 @@ export type ButtonVariant =
   | 'success'
   | 'destructive'
   | 'neutral'
-  | 'link';
+  | 'link'
+  | 'ghost';
 
 /**
  * Available button sizes.
@@ -28,12 +31,13 @@ const VARIANT_CLASS_MAP: Record<ButtonVariant, string> = {
   primary:
     'bg-gradient-to-r from-ffp-primary-blue to-ffp-dark-blue text-primary-foreground hover:opacity-90 active:opacity-80 shadow-sm',
   secondary:
-    'border-2 border-primary text-primary hover:bg-primary/10 active:bg-primary/20 shadow-sm',
+    'bg-white border-2 border-primary text-primary hover:bg-primary/10 active:bg-primary/20 shadow-sm',
   success: 'bg-success text-white hover:bg-success/90 active:bg-success/80 shadow-sm',
   destructive:
     'bg-destructive text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80 shadow-sm',
   neutral: 'bg-muted text-muted-foreground hover:bg-muted/80 active:bg-muted/70 shadow-sm',
   link: 'text-primary underline-offset-4 hover:underline active:text-primary/80',
+  ghost: 'bg-transparent hover:bg-muted/30 active:bg-muted/50 text-foreground',
 };
 
 /**
@@ -56,6 +60,7 @@ const SPINNER_COLOUR_MAP: Record<ButtonVariant, string> = {
   destructive: 'rgba(255, 255, 255, 0.8)', // White on red background
   neutral: 'rgba(113, 113, 130, 0.8)', // Muted foreground on muted background
   link: 'rgba(109, 159, 255, 0.6)', // Primary blue (no background)
+  ghost: 'rgba(113, 113, 130, 0.8)', // Muted foreground on transparent background
 };
 
 export interface ButtonProps {

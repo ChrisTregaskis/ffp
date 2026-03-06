@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { IconButton } from '@web/components/button/IconButton';
 import { Icon, type IconColour } from '@web/components/Icon/Icon';
 import { Icons } from '@web/components/Icon/types';
@@ -102,7 +104,7 @@ const VARIANT_CONFIG: Record<
  */
 export const StaticAlert: React.FC<StaticAlertProps> = ({
   variant = 'error',
-  appearance = 'soft',
+  appearance = 'solid',
   message,
   onDismiss,
   className = '',

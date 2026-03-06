@@ -156,6 +156,14 @@ export default $config({
       },
     });
 
+    // Stage-aware CORS origins — used by API Gateway and S3 buckets
+    const allowedOrigins =
+      $app.stage === 'production'
+        ? ['https://app.fitforpurpose.app'] // TODO: Replace with actual production domain when available
+        : $app.stage === 'staging'
+          ? ['https://staging.fitforpurpose.app'] // TODO: Replace with actual staging domain when available
+          : ['http://localhost:3000']; // Dev server (for 'dev', personal stages, etc.)
+
     // S3 Buckets for video and asset storage
     // NOTE: SST enforces one BucketPolicy per Bucket (auto-created by the component).
     // We cannot reference videoCdn ARN here (circular dependency: Bucket → Policy → CDN → Bucket).
@@ -165,9 +173,9 @@ export default $config({
     // TODO: Add SourceArn condition when architecture supports it (e.g., post-deploy policy update)
     const videosBucket = new sst.aws.Bucket('VideosBucket', {
       cors: {
-        allowHeaders: ['*'],
-        allowMethods: ['GET', 'HEAD'],
-        allowOrigins: ['*'], // Will be restricted to specific origins in production
+        allowHeaders: ['Content-Type', 'Content-Length'],
+        allowMethods: ['GET', 'HEAD', 'PUT'],
+        allowOrigins: allowedOrigins,
       },
       policy: [
         {
@@ -194,9 +202,9 @@ export default $config({
 
     const assetsBucket = new sst.aws.Bucket('AssetsBucket', {
       cors: {
-        allowHeaders: ['*'],
-        allowMethods: ['GET', 'HEAD'],
-        allowOrigins: ['*'], // Will be restricted to specific origins in production
+        allowHeaders: ['Content-Type', 'Content-Length'],
+        allowMethods: ['GET', 'HEAD', 'PUT'],
+        allowOrigins: allowedOrigins,
       },
       transform: {
         bucket: (args: any) => {
@@ -307,15 +315,6 @@ export default $config({
     });
 
     // API Gateway with Cognito JWT Authorizer
-    // CORS origins are stage-aware to support different environments
-    // Any stage other than 'staging' or 'production' defaults to localhost (for dev and personal stages)
-    const allowedOrigins =
-      $app.stage === 'production'
-        ? ['https://app.fitforpurpose.app'] // TODO: Replace with actual production domain when available
-        : $app.stage === 'staging'
-          ? ['https://staging.fitforpurpose.app'] // TODO: Replace with actual staging domain when available
-          : ['http://localhost:3000']; // Dev server (for 'dev', personal stages, etc.)
-
     const api = new sst.aws.ApiGatewayV2('Api', {
       cors: {
         allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
@@ -417,9 +416,29 @@ export default $config({
     });
 
     // Admin domain routes (system_admin role required - validated in handlers)
+    // Includes S3 bucket names for presigned video/thumbnail upload URLs
+    const adminHandlerEnv = {
+      environment: {
+        ...handlerEnv.environment,
+        VIDEOS_BUCKET_NAME: videosBucket.name,
+        ASSETS_BUCKET_NAME: assetsBucket.name,
+      },
+    };
     api.route(
       'ANY /admin/{proxy+}',
-      { handler: `${repositoryFunctionsPath}/admin/index.handler`, ...handlerEnv },
+      {
+        handler: `${repositoryFunctionsPath}/admin/index.handler`,
+        ...adminHandlerEnv,
+        permissions: [
+          {
+            actions: ['s3:PutObject'],
+            resources: [
+              $interpolate`arn:aws:s3:::${videosBucket.name}/*`,
+              $interpolate`arn:aws:s3:::${assetsBucket.name}/*`,
+            ],
+          },
+        ],
+      },
       args
     );
 

@@ -2,7 +2,7 @@ import { and, eq, arrayOverlaps, type SQL } from 'drizzle-orm';
 
 import type { DbClient } from '@ffp/database';
 import type { Difficulty, MovementType } from '@ffp/database/constants';
-import { videos, type VideoRecord } from '@ffp/database/schema';
+import { videos, type VideoRecord, type NewVideo } from '@ffp/database/schema';
 
 export interface VideoFilters {
   /** Filter by target body parts — matches videos that overlap with any of the provided values */
@@ -15,6 +15,11 @@ export interface VideoFilters {
   movementType?: MovementType;
   /** Filter by tags — matches videos that overlap with any of the provided values */
   tags?: string[];
+}
+
+export async function insertVideo(db: DbClient, input: NewVideo): Promise<VideoRecord> {
+  const records = await db.insert(videos).values(input).returning();
+  return records[0];
 }
 
 export async function findVideoById(db: DbClient, videoId: string): Promise<VideoRecord | null> {

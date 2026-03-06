@@ -33,7 +33,7 @@ export const UnauthorizedPage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-full w-full items-center justify-center bg-muted px-4 py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen w-full items-center justify-center bg-muted px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           {/* Unauthorised Icon */}

@@ -2,15 +2,16 @@
 
 **Last Updated**: 3rd March 2026
 **Current EPIC**: FFP-3 Video Management
-**Sprint Status**: Sprint 8 - Video UI & Integration (next)
+**Sprint Status**: Sprint 8 - Video UI & Integration (active — FFP-320 in progress)
 
 ---
 
-## Next: Sprint 8 - Video UI & Integration (~27 pts)
+## Active: Sprint 8 - Video UI & Integration (~27 pts)
 
 **Dates**: 4th March - 24th March 2026
 **Sprint Goal**: Admin video upload/management UI, video player component, integration verification, documentation update.
 **Epic**: FFP-3 Video Management
+**Branch**: `feature/sprint8`
 
 **Key documents**:
 
@@ -18,17 +19,160 @@
 - `.claude/research/ffp-3-epic-plan.md` - Final epic plan (stories, ACs, subtasks, sprint allocation)
 - `.claude/research/programme-data-model-research.md` - Authoritative programme data model
 
-**Planned stories** (from FFP-3 epic plan):
-
-- FFP-320 — Admin Video Upload & Management UI
-- FFP-141 — Video Player Component
-- Integration verification & documentation update stories
-
 **Prerequisites from Sprint 7** (all met):
 
 - Video catalogue schema + APIs (FFP-282, FFP-300)
 - CloudFront OAC + signed URL infrastructure (FFP-288, FFP-294)
 - Programme-video relationship schema + service evolution (FFP-307)
+
+---
+
+### FFP-320: Admin Video Upload (8 pts) — Implementation Plan
+
+**Summary**: Admin user (physiotherapist) uploads exercise videos via browser directly to S3 using presigned PUT URLs, then submits metadata to create a video record with status `draft`.
+
+**What already exists**:
+
+- Video DB schema (videos table with all fields incl. s3_key, thumbnail_key, status)
+- Zod schemas: `createVideoSchema`, `updateVideoSchema`, `videoFilterSchema` in `packages/core/src/schemas/video.schema.ts`
+- Video service + repository (read-only: list, get, filter) in `packages/core/src/videos/`
+- Admin router at `packages/functions/src/admin/index.ts` (route registry pattern)
+- Frontend route `ADMIN_VIDEOS` at `/admin/videos` (currently `ComingSoonPage` placeholder)
+- S3 VideosBucket + AssetsBucket deployed (CORS: GET/HEAD only — **needs PUT**)
+- CloudFront video-signing service (for GET/streaming, not uploads)
+
+**Infrastructure prerequisite** (not in Jira — include with FFP-321):
+
+- Update VideosBucket and AssetsBucket CORS to allow PUT method for presigned upload support
+
+#### Phase 1 — Backend APIs (FFP-321 + FFP-327) ✅ COMPLETE
+
+**FFP-321**: Presigned upload URL endpoint (`POST /admin/videos/upload-url`)
+
+- New file: `packages/functions/src/admin/videos/get-upload-url.ts`
+- New service: `packages/core/src/videos/video-upload.service.ts` using `@aws-sdk/s3-request-presigner`
+- S3 key format: `library/{uuid}.mp4`, 15-min TTL
+- Returns: `{ videoUploadUrl, videoS3Key, thumbnailUploadUrl, thumbnailKey, expiresIn }`
+- Admin role check enforced, route registered in admin router
+- Thumbnail presigned PUT URL for AssetsBucket (`thumbnails/{uuid}.{ext}`) included in same response
+- Infrastructure: VideosBucket + AssetsBucket CORS updated to allow PUT; admin Lambda has S3 env vars + `s3:PutObject` permissions
+
+**FFP-327**: Video creation endpoint (`POST /admin/videos`)
+
+- New file: `packages/functions/src/admin/videos/create.ts`
+- Added `insertVideo()` to repository, `createVideo()` to service
+- Validates with existing `createVideoSchema`, creates record with status `draft`
+- Admin role check enforced, route registered in admin router
+
+#### Phase 2 — Upload UI (FFP-322 + FFP-324 + FFP-323) ✅ COMPLETE
+
+**Refactor note**: After initial implementation, the page was restructured per the prototype MVP spec (`.claude/research/video-library-ui-mvp-spec.md`). The upload flow moved from a standalone page into a modal dialog. A reusable `Modal` component was built using existing `Backdrop` + `ScaleFade` motion wrappers.
+
+**FFP-322**: Video Library Management page with upload modal
+
+- New file: `packages/web/src/pages/protected/admin/VideoLibraryPage.tsx` — page shell with header + empty state
+- New file: `packages/web/src/pages/protected/admin/UploadVideoModal.tsx` — upload flow in modal
+- New file: `packages/web/src/components/modal/Modal.tsx` — reusable modal component (Backdrop + ScaleFade, Escape/scroll lock/focus management)
+- Replaced `ComingSoonPage` placeholder in route config
+- Drag-and-drop zone + click-to-select file picker inside modal
+
+**FFP-324**: Client-side file validation (built into upload modal)
+
+- MP4 only (`video/mp4`), max 500 MB
+- Inline validation errors via StaticAlert inside modal
+- Upload button disabled when validation fails
+
+**FFP-323**: Browser-to-S3 upload with progress
+
+- Fetches presigned URL from `POST /admin/videos/upload-url` via `adminVideosApi`
+- XHR PUT to presigned URL with `Content-Type: video/mp4`
+- Progress bar showing upload percentage with aria attributes
+- Error handling with user-friendly messages via StaticAlert
+- Modal close disabled during upload to prevent data loss
+- On success, shows completion state (metadata form wiring in Phase 3)
+- Supporting files: `useVideoUpload` hook, `admin-videos.ts` API client
+
+#### Phase 3 — Metadata, Thumbnails & Integration (FFP-326 + FFP-325 + FFP-328) ✅ COMPLETE
+
+**FFP-326**: Video metadata form component (inside upload modal)
+
+- Form appears below upload zone after successful file upload
+- Fields: title, description (textarea), movementType (select), difficulty (select), bodyParts (tag input), equipment (tag input), tags (tag input), durationSeconds
+- 4-row responsive layout: 2-col → full → 3-col → full
+- Form infrastructure extended: `TEXTAREA`, `SELECT`, `TAG_INPUT` field types added to `FieldDataType` and `Form.renderField()`
+- New components: `FormTextarea`, `FormSelect`, `FormTagInput` — consistent styling with existing `FormTextInput`
+- Client-side validation via react-hook-form (title required/max 255, duration required/non-negative integer)
+- Submit/Cancel footer buttons within form
+
+**FFP-325**: Thumbnail upload flow (inside upload modal)
+
+- Optional image file picker (JPEG/PNG, max 5 MB) inside the modal
+- Upload to AssetsBucket via presigned URL (requests new URL with `thumbnailExtension`)
+- Thumbnail preview with progress bar after selection
+- Upload can proceed without thumbnail
+
+**FFP-328**: End-to-end wiring (modal-based flow)
+
+- Full modal flow: select file → validate → S3 upload with progress → metadata form + optional thumbnail → submit → create video record → success state → upload another or close
+- Added `createVideo()` method to `admin-videos.ts` API client
+- Modal close/Escape/backdrop disabled during upload and submission
+- "Upload Another" resets all modal state
+- Error handling at each step via StaticAlert, success via ToastAlert
+- Toast notification on successful video creation
+
+#### Phase 3 Continuation — Modal UX Restructure ✅ COMPLETE
+
+**Restructured UX flow** based on review feedback:
+
+- **Old flow**: Select file → upload to S3 → then show metadata form (sequential steps)
+- **New flow**: Drop zone + metadata form + thumbnail picker all visible from the start; user fills in any order; submit triggers upload + create; progress view during upload; success view
+- New `useUploadVideoModal` hook with `useReducer` replacing 15+ `useState` calls — phases: `idle` | `uploading` | `creating` | `success` | `error`
+- `VideoMetadataForm` refactored: removed `s3Key`/`fileSizeBytes`/`thumbnailKey` props, added `hasFile: boolean`, returns `VideoMetadataValues` (user-entered fields only), button changed to "Upload Video"
+- Modal component rewritten as thin rendering layer over the hook
+- `UploadVideoFooter` component no longer used (form has own buttons)
+
+#### Phase 4 — Video Deletion API (FFP-436)
+
+**FFP-436**: Delete video endpoint (`DELETE /admin/videos/:id`) — prerequisite for clean e2e testing
+
+- Admin-only endpoint to delete a video record + S3 objects (video file + thumbnail)
+- Deletes S3 objects first (VideosBucket + AssetsBucket), then DB record
+- Returns 404 if video not found, 403 for non-admin
+- Requires `s3:DeleteObject` permission on both buckets
+- Hard delete for now — soft-delete deferred to production readiness
+- **Must be completed before e2e verification** to avoid manual test cleanup overhead
+
+#### Post-Phase 4 — Manual Verification (requires `sst dev`)
+
+Once the modal restructure is complete, verify the full end-to-end flow:
+
+- [ ] Upload a valid MP4 video via the modal (file selection, progress, completion)
+- [ ] Fill in all metadata fields (title, description, movement type, difficulty, body parts, equipment, tags, duration)
+- [ ] Attempt invalid metadata (missing required title, negative duration, empty body parts) — confirm validation errors shown
+- [ ] Upload with optional thumbnail (JPEG/PNG) — confirm preview and upload
+- [ ] Submit and confirm video record created successfully (toast notification, success state)
+- [ ] Use "Upload Another" to reset and upload a second video
+- [ ] Verify the created video is retrievable via existing APIs:
+  - `GET /videos` (list) — new video appears in catalogue
+  - `GET /videos/:id` (detail) — full record returned with correct metadata
+  - Postman collection tests pass against the new video record
+- [ ] Delete the test video via `DELETE /admin/videos/:id`
+  - Confirm `GET /videos/:id` returns 404 after deletion
+  - Confirm S3 objects removed from VideosBucket and AssetsBucket
+
+#### Execution Notes
+
+- **Single branch**: All sub-tasks on `feature/ffp-320-admin-video-upload`
+- **Tests**: Deferred to MVP launch
+- **Videos table is RLS-excluded** (system-managed, cross-tenant) — no tenant context needed for video CRUD
+- **Postman**: Update collection with new admin video endpoints after Phase 1
+- **Prototype spec discovered**: `.claude/research/video-library-ui-mvp-spec.md` — describes full Video Library page with search/filters/cards grid. Only the upload modal and page shell are in Sprint 8 scope. Video list UI deferred.
+- **Jira tickets updated**: Sprint 8 sub-task descriptions updated to reflect modal-based flow, data shape reconciliation, and form infrastructure prerequisites. FFP-322, FFP-324, FFP-323 transitioned to Done.
+- **Form infrastructure gaps for Phase 3**: `FieldDataType` enum needs `TEXTAREA`; `Form` component only renders text/password inputs — needs `SELECT`, `TEXTAREA`, and multi-value handling for metadata form
+- **Future scope identified from prototype spec** (not in Sprint 8 — do NOT create tickets):
+  - **Video Library list view**: search/filters card + responsive video cards grid (likely FFP-4 or later sprint)
+  - **Video Card component**: thumbnail, category/difficulty badges, duration, tags, activate/deactivate toggle
+  - **Reusable Modal component**: available at `packages/web/src/components/modal/` for future use across the app
 
 ---
 
