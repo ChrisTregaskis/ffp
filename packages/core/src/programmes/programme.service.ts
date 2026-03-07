@@ -142,6 +142,7 @@ export async function generateProgramme(
 /** Fetch the current user's active programme, or null if none exists. */
 export async function getActiveProgramme(context: TenantContext): Promise<Programme | null> {
   const userId = await getUserIdFromContext(context);
+
   return await findProgrammeByUserId(context.tenantId, userId);
 }
 

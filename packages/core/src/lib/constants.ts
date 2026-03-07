@@ -77,6 +77,7 @@ function createUppercaseConstants<T extends Record<string, string>>(
   for (const [key, value] of Object.entries(enumObj)) {
     result[key.toUpperCase()] = value;
   }
+
   return result as { [K in keyof T as Uppercase<K & string>]: T[K] };
 }
 

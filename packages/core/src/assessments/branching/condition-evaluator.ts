@@ -98,6 +98,7 @@ function evaluateAnswerCondition(
         actualAnswer.some((actual) => String(actual) === String(expected))
       );
     }
+
     return answerValue.some((expected) => String(actualAnswer) === String(expected));
   }
 

@@ -45,7 +45,9 @@ export const useFieldsForm = <TFieldValues extends FieldValues>({
     const rules: RegisterOptions<TFieldValues> = {};
     const { validation } = field;
 
-    if (!validation) return rules;
+    if (!validation) {
+      return rules;
+    }
 
     if (validation.isRequired) {
       rules.required = `${field.label} is required`;

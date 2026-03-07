@@ -48,6 +48,7 @@ function getUploadConfig(): { config: VideoUploadConfig; client: S3Client } {
       'Video upload configuration not initialised. Call setVideoUploadConfig() at Lambda cold start.'
     );
   }
+
   return { config: cachedConfig, client: s3Client };
 }
 

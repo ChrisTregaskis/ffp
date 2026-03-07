@@ -11,6 +11,7 @@ function normaliseCriterion<T>(field: SortField<T>): SortCriterion<T> {
   if (typeof field === 'object' && 'field' in field) {
     return { direction: 'asc', ...field };
   }
+
   return { field, direction: 'asc' };
 }
 
@@ -21,9 +22,17 @@ function compareValues(a: unknown, b: unknown, direction: SortDirection): number
   const multiplier = direction === 'asc' ? 1 : -1;
 
   // Handle null/undefined - push to end regardless of direction
-  if (a == null && b == null) return 0;
-  if (a == null) return 1;
-  if (b == null) return -1;
+  if (a == null && b == null) {
+    return 0;
+  }
+
+  if (a == null) {
+    return 1;
+  }
+
+  if (b == null) {
+    return -1;
+  }
 
   // Handle Date objects
   if (a instanceof Date && b instanceof Date) {

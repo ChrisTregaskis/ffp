@@ -31,6 +31,7 @@ export const handler = withErrorHandling(
     if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
       throw new ForbiddenError('Only system admins can create customers');
     }
+
     // Parse and validate request body
     // Both V1 and V2 events have a `body` property (string | null)
     const body = JSON.parse(event.body ?? '{}') as unknown;

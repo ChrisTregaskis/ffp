@@ -328,6 +328,7 @@ export async function saveProgress(
 
     // Save answers to user_assessment_answers table
     const answersToSave = convertAnswersToSaveFormat(data.answers);
+
     if (answersToSave.length > 0) {
       await answerRepository.saveAnswers(tenantId, assessmentId, answersToSave, { tx });
     }

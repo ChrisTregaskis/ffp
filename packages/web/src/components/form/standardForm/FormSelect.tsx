@@ -76,6 +76,7 @@ export const FormSelect = <TFieldValues extends FieldValues>({
     };
 
     document.addEventListener('mousedown', handleMouseDown);
+
     return () => {
       document.removeEventListener('mousedown', handleMouseDown);
     };
@@ -98,6 +99,7 @@ export const FormSelect = <TFieldValues extends FieldValues>({
         const selectedIdx = options.findIndex((opt) => String(opt.value) === String(value));
         setHighlightedIndex(selectedIdx >= 0 ? selectedIdx : 0);
       }
+
       return !prev;
     });
   }, [options, value]);
@@ -115,6 +117,7 @@ export const FormSelect = <TFieldValues extends FieldValues>({
       switch (event.key) {
         case 'ArrowDown': {
           event.preventDefault();
+
           if (!isOpen) {
             setIsOpen(true);
             const selectedIdx = options.findIndex((opt) => String(opt.value) === String(value));
@@ -122,23 +125,28 @@ export const FormSelect = <TFieldValues extends FieldValues>({
           } else {
             setHighlightedIndex((prev) => (prev < options.length - 1 ? prev + 1 : prev));
           }
+
           break;
         }
         case 'ArrowUp': {
           event.preventDefault();
+
           if (isOpen) {
             setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : prev));
           }
+
           break;
         }
         case 'Enter':
         case ' ': {
           event.preventDefault();
+
           if (isOpen && highlightedIndex >= 0 && highlightedIndex < options.length) {
             handleSelect(options[highlightedIndex]);
           } else if (!isOpen) {
             handleToggle();
           }
+
           break;
         }
         case 'Escape': {
@@ -146,12 +154,14 @@ export const FormSelect = <TFieldValues extends FieldValues>({
             event.preventDefault();
             setIsOpen(false);
           }
+
           break;
         }
         case 'Tab': {
           if (isOpen) {
             setIsOpen(false);
           }
+
           break;
         }
       }

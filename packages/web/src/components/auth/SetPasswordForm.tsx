@@ -137,18 +137,21 @@ export const SetPasswordForm: React.FC<SetPasswordFormProps> = ({
       // Validate passwords match
       if (!passwordsMatch) {
         setInternalError('Passwords do not match');
+
         return;
       }
 
       // Validate all requirements are met
       if (!passwordValidation.allRequirementsMet) {
         setInternalError('Please meet all password requirements');
+
         return;
       }
 
       try {
         setInternalLoading(true);
         setInternalError(null);
+
         if (onClearError) {
           onClearError();
         }

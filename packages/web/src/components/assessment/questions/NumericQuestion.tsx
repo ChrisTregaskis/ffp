@@ -31,23 +31,29 @@ export const NumericQuestion: React.FC<QuestionComponentProps> = ({
 
   const handleInputChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>): void => {
-      if (disabled) return;
+      if (disabled) {
+        return;
+      }
 
       const inputValue = event.target.value;
 
       // Allow empty input (clearing the field)
       if (inputValue === '') {
         onChange(null);
+
         return;
       }
 
       const numericValue = parseFloat(inputValue);
+
       if (!isNaN(numericValue)) {
         // Clamp value within min/max bounds when defined
         let clampedValue = numericValue;
+
         if (maxValue !== undefined && clampedValue > maxValue) {
           clampedValue = maxValue;
         }
+
         if (minValue !== undefined && clampedValue < minValue) {
           clampedValue = minValue;
         }

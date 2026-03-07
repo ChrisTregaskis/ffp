@@ -243,6 +243,7 @@ const sanitiseEventForLogging = (
   if (sanitised.body && typeof sanitised.body === 'string') {
     try {
       const body = JSON.parse(sanitised.body) as unknown;
+
       if (body && typeof body === 'object') {
         const bodyObj = body as Record<string, unknown>;
 

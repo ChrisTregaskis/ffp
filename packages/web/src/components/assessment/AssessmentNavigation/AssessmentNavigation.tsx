@@ -77,6 +77,7 @@ export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
   const handleContinue = useCallback(() => {
     if (onContinue) {
       onContinue();
+
       return;
     }
 
@@ -86,6 +87,7 @@ export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
   const handleBack = useCallback(() => {
     if (onBack) {
       onBack();
+
       return;
     }
 

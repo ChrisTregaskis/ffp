@@ -683,6 +683,7 @@ const StepRendererDemo: React.FC = () => {
   /** Wraps step content with an optional progress bar (as the real orchestrator does) */
   const withProgress = (type: FlowStepType, content: JSX.Element): JSX.Element => {
     const showProgress = !STEPS_WITHOUT_PROGRESS.includes(type);
+
     return (
       <div className="space-y-6">
         {showProgress && (

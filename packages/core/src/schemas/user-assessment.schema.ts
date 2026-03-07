@@ -81,6 +81,7 @@ export const statusTransitionSchema = z
   })
   .superRefine((data, ctx) => {
     const allowedTransitions = VALID_STATUS_TRANSITIONS[data.fromStatus];
+
     if (!allowedTransitions.includes(data.toStatus)) {
       ctx.addIssue({
         code: 'custom',
@@ -95,6 +96,7 @@ export const isValidStatusTransition = (
   toStatus: UserAssessmentStatus
 ): boolean => {
   const result = statusTransitionSchema.safeParse({ fromStatus, toStatus });
+
   return result.success;
 };
 

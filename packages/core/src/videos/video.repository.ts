@@ -19,6 +19,7 @@ export interface VideoFilters {
 
 export async function insertVideo(db: DbClient, input: NewVideo): Promise<VideoRecord> {
   const records = await db.insert(videos).values(input).returning();
+
   return records[0];
 }
 

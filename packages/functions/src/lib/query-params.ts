@@ -16,10 +16,14 @@
  * parseArrayParam(undefined)            // undefined
  */
 export function parseArrayParam(value: string | undefined): string[] | undefined {
-  if (!value) return undefined;
+  if (!value) {
+    return undefined;
+  }
+
   const items = value
     .split(',')
     .map((s) => decodeURIComponent(s.trim()))
     .filter(Boolean);
+
   return items.length > 0 ? items : undefined;
 }

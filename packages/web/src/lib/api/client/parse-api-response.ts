@@ -27,6 +27,7 @@ export function parseApiResponse<T>(
       if (obj && typeof obj === 'object') {
         return (obj as Record<string, unknown>)[String(key)];
       }
+
       return undefined;
     }, response),
   }));

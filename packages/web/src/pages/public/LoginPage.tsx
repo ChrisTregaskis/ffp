@@ -47,6 +47,7 @@ export const LoginPage = (): JSX.Element => {
           const setPasswordPath = routes[RouteKey.SET_PASSWORD].path;
           const emailParam = encodeURIComponent(data.email);
           void navigate(`${setPasswordPath}?email=${emailParam}&skipTempPassword=true`);
+
           return;
         }
 

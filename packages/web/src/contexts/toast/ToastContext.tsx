@@ -56,10 +56,12 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
 
     setToasts((prev) => {
       const updated = [...prev, newToast];
+
       // Trim oldest toasts if over limit
       if (updated.length > MAX_TOASTS) {
         return updated.slice(updated.length - MAX_TOASTS);
       }
+
       return updated;
     });
 

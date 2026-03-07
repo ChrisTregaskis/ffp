@@ -24,6 +24,7 @@ export const UnauthorizedPage: React.FC = () => {
     if (!user) {
       // Fallback: navigate to login if user is somehow not authenticated
       void navigate(routes[RouteKey.LOGIN].path);
+
       return;
     }
 

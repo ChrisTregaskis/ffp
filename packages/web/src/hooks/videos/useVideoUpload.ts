@@ -191,6 +191,7 @@ export const useVideoUpload = (
       .then((response) => {
         if (!response.thumbnailUploadUrl || !response.thumbnailKey) {
           dispatch({ type: 'THUMBNAIL_ERROR', error: 'Failed to get thumbnail upload URL.' });
+
           return;
         }
 
