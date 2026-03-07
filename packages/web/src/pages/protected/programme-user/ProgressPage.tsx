@@ -32,7 +32,7 @@ export const ProgressPage: React.FC = () => {
   };
 
   return (
-    <PageContainer>
+    <PageContainer centred>
       <PageHeader
         title="Progress & Analytics"
         subtitle="Track your workout progress and view performance analytics"

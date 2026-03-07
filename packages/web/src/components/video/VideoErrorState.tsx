@@ -10,7 +10,7 @@ export interface VideoErrorStateProps {
 /** Error state shown when the video URL fails to load or the video cannot play. */
 export const VideoErrorState: React.FC<VideoErrorStateProps> = ({ onRetry }) => (
   <div className="flex h-full w-full flex-col items-center justify-center gap-3">
-    <IconBadge name={Icons.ALERTTRIANGLE} size="lg" variant="warning" />
+    <IconBadge name={Icons.ALERTTRIANGLE} size="lg" variant="warning" appearance="solid" />
     <Text as="p" styleProps={{ size: 'lg', weight: 'semibold', colour: 'foreground' }}>
       Unable to Load Video
     </Text>

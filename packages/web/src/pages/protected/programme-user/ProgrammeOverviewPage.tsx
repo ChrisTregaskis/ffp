@@ -3,6 +3,7 @@ import React from 'react';
 import { SectionHeader, SectionPanel } from '@web/components/assessment';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { IconBadge, Icons } from '@web/components/Icon';
+import { PageContainer } from '@web/components/layout';
 import { LoadingSpinner } from '@web/components/LoadingSpinner';
 import { Text } from '@web/components/text';
 import { useActiveProgrammeQuery } from '@web/hooks/programmes';
@@ -28,7 +29,7 @@ export const ProgrammeOverviewPage: React.FC = () => {
   // Loading state
   if (isLoading) {
     return (
-      <div className="max-w-3xl px-4 py-12">
+      <PageContainer centred>
         <SectionPanel>
           <div className="flex flex-col items-center gap-4 px-6 py-16">
             <LoadingSpinner size="lg" />
@@ -37,24 +38,25 @@ export const ProgrammeOverviewPage: React.FC = () => {
             </Text>
           </div>
         </SectionPanel>
-      </div>
+      </PageContainer>
     );
   }
 
   // Error / no programme state
   if (isError || !programme) {
     return (
-      <div className="max-w-3xl px-4 py-12">
+      <PageContainer centred>
         <StaticAlert
           variant="warning"
           message="No active programme found. Please complete an assessment to receive your personalised programme."
         />
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="max-w-3xl space-y-6 px-4 py-8">
+    <PageContainer centred>
+      <div className="space-y-6">
       {/* Header: programme name + status badge */}
       <div className="flex items-center gap-4">
         <IconBadge name={Icons.ACTIVITY} size="lg" variant="primary" appearance="solid" />
@@ -112,6 +114,7 @@ export const ProgrammeOverviewPage: React.FC = () => {
           </Text>
         </div>
       </SectionPanel>
-    </div>
+      </div>
+    </PageContainer>
   );
 };

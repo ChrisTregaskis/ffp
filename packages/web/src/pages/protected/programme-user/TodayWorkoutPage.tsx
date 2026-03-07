@@ -10,7 +10,7 @@ import { Title, Text } from '@web/components/text';
  */
 export const TodayWorkoutPage: React.FC = () => {
   return (
-    <PageContainer>
+    <PageContainer centred>
       <PageHeader title="Today's Workout" subtitle="Your scheduled workout session for today" />
 
       <Card className="p-8">

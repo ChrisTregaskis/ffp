@@ -228,7 +228,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
           <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
             {NEXT_STEPS.map((step) => (
               <div key={step.heading} className="flex flex-col items-center text-center">
-                <IconBadge name={step.icon} size="lg" variant="primary" appearance="solid" />
+                <IconBadge name={step.icon} size="lg" variant="secondary" appearance="soft" />
                 <Text
                   as="h3"
                   styleProps={{ weight: 'semibold', colour: 'ffp-navy' }}
