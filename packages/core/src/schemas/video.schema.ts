@@ -130,6 +130,22 @@ export const videoDetailResponseSchema = videoSchema.omit({
   mimeType: true,
 });
 
+/** Response schema for GET /videos — list wrapper with count */
+export const videoListApiResponseSchema = z.object({
+  videos: z.array(videoListResponseSchema),
+  count: z.number().int().nonnegative(),
+});
+
+/** Response schema for GET /videos/{id}/signed-url — time-limited CloudFront URL */
+export const signedVideoUrlResponseSchema = z.object({
+  /** Time-limited CloudFront signed URL for video playback */
+  signedUrl: z.string().min(1),
+  /** ISO 8601 timestamp when the signed URL expires */
+  expiresAt: z.string(),
+  /** The video ID that was requested */
+  videoId: z.guid(),
+});
+
 export type VideoStatus = z.infer<typeof videoStatusSchema>;
 export type Difficulty = z.infer<typeof difficultySchema>;
 export type MovementType = z.infer<typeof movementTypeSchema>;
@@ -141,3 +157,5 @@ export type UploadUrlRequest = z.infer<typeof uploadUrlRequestSchema>;
 export type UploadUrlResponse = z.infer<typeof uploadUrlResponseSchema>;
 export type VideoListResponse = z.infer<typeof videoListResponseSchema>;
 export type VideoDetailResponse = z.infer<typeof videoDetailResponseSchema>;
+export type VideoListApiResponse = z.infer<typeof videoListApiResponseSchema>;
+export type SignedVideoUrlResponse = z.infer<typeof signedVideoUrlResponseSchema>;

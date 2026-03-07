@@ -11,7 +11,7 @@ export type {
 } from './client';
 
 // Endpoint exports
-export { adminVideosApi, assessmentsApi, programmesApi } from './endpoints';
+export { adminVideosApi, assessmentsApi, programmesApi, videosApi } from './endpoints';
 export type {
   ActiveProgrammeResponse,
   AssessmentFlow,
@@ -23,6 +23,11 @@ export type {
   StartAssessmentResponse,
   SubmitAssessmentRequest,
   SubmitAssessmentResponse,
+  SignedVideoUrlResponse,
+  VideoDetailResponse,
+  VideoFilterInput,
+  VideoListApiResponse,
+  VideoListResponse,
   UploadUrlRequest,
   UploadUrlResponse,
 } from './endpoints';

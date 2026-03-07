@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Button } from '@web/components/button/Button';
 import { PageContainer, PageHeader } from '@web/components/layout';
 import { LoadingSpinner } from '@web/components/LoadingSpinner/LoadingSpinner';
 import { Title, Text } from '@web/components/text';
@@ -28,7 +27,7 @@ import { RouteKey, routes } from '@web/pages/routes';
  * - Navigation to assessments and programmes
  */
 export const HomePage = (): JSX.Element => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const isProgrammeUser = user?.role === USER_ROLE.PROGRAMME_USER;
@@ -64,10 +63,6 @@ export const HomePage = (): JSX.Element => {
     }
   }, [user, navigate, isProgrammeUser, assessmentStatus]);
 
-  const handleLogout = (): void => {
-    void logout();
-  };
-
   // Show loading spinner while checking programme status for programme users
   if (isProgrammeUser && isStatusLoading) {
     return (
@@ -78,15 +73,8 @@ export const HomePage = (): JSX.Element => {
   }
 
   return (
-    <PageContainer>
-      <PageHeader
-        title="Dashboard"
-        actions={
-          <Button variant="destructive" onClick={handleLogout}>
-            Sign out
-          </Button>
-        }
-      />
+    <PageContainer centred>
+      <PageHeader title="Dashboard" />
 
       <div className="max-w-4xl space-y-6">
         {/* User info card */}

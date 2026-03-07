@@ -10,7 +10,7 @@ import { Title, Text } from '@web/components/text';
  */
 export const AccountSettingsPage: React.FC = () => {
   return (
-    <PageContainer>
+    <PageContainer centred>
       <PageHeader
         title="Account Settings"
         subtitle="Manage your account preferences and profile information"
