@@ -307,9 +307,11 @@ async function transitionAssessmentStatusInTx(
   if (toStatus === 'in_progress' && !currentRecord.startedAt) {
     updateData.startedAt = now;
   }
+
   if (toStatus === 'submitted') {
     updateData.submittedAt = now;
   }
+
   if (toStatus === 'completed') {
     updateData.completedAt = now;
   }
@@ -449,6 +451,7 @@ export async function appendAssessmentWarnings(
   // If transaction provided, use it directly
   if (tx) {
     await doAppend(tx);
+
     return;
   }
 

@@ -13,6 +13,7 @@ export const handler = withErrorHandling(
     const context = extractUserContext(event);
 
     const videoId = event.pathParameters?.id;
+
     if (!videoId) {
       throw new ValidationError('Video ID is required in path');
     }

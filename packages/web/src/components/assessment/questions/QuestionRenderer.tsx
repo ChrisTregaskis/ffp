@@ -76,6 +76,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
       return <VideoResponseQuestion {...commonProps} videoUrl={videoUrl} />;
     default: {
       const _exhaustiveCheck: never = question.type;
+
       return <UnsupportedQuestion questionType={_exhaustiveCheck as string} />;
     }
   }

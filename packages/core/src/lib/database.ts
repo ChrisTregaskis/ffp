@@ -16,6 +16,7 @@ function validateUUID(value: string, paramName: string): void {
   if (!value) {
     throw new Error(`${paramName} is required for RLS context`);
   }
+
   if (!UUID_REGEX.test(value)) {
     throw new Error(`${paramName} must be a valid UUID format (got: ${value.substring(0, 20)}...)`);
   }
@@ -44,6 +45,7 @@ function getSSLConfig(): boolean | { rejectUnauthorized: boolean; ca: string } {
   // SST uses stage names like 'dev', personal stages, 'staging', 'production'
   // Only enable SSL for staging and production
   const stage = process.env.SST_STAGE ?? process.env.ENVIRONMENT;
+
   if (stage !== 'staging' && stage !== 'production') {
     return false;
   }
@@ -58,6 +60,7 @@ function getSSLConfig(): boolean | { rejectUnauthorized: boolean; ca: string } {
   // Load AWS RDS CA certificate bundle for staging/production
   // This ensures we're connecting to a legitimate AWS RDS instance
   const caPath = path.join(__dirname, '../../certs/rds-ca-bundle.pem');
+
   return {
     rejectUnauthorized: true,
     ca: fs.readFileSync(caPath, 'utf-8'),
@@ -145,6 +148,7 @@ export async function withRLS<T>(
 ): Promise<T> {
   return await db.transaction(async (tx) => {
     await setRLSContext(tx, tenantId, userId);
+
     return await callback(tx);
   });
 }

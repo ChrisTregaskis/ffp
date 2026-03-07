@@ -84,6 +84,7 @@ export const handler = async (event: ScheduledEvent, context: Context): Promise<
 
     if (count === 0) {
       sysLogger.info('No jobs to process');
+
       return;
     }
 
@@ -175,6 +176,7 @@ export async function processJobByType<T extends JobType>(
 
       // Validate result matches schema (runtime safety check)
       const resultValidation = scoreAssessmentResultSchema.safeParse(result);
+
       if (!resultValidation.success) {
         throw new ValidationError('Invalid score_assessment result from handler', {
           jobId: job.id,
@@ -200,6 +202,7 @@ export async function processJobByType<T extends JobType>(
 
       // Validate result matches schema (runtime safety check)
       const resultValidation = generateProgrammeResultSchema.safeParse(result);
+
       if (!resultValidation.success) {
         throw new ValidationError('Invalid generate_programme result from handler', {
           jobId: job.id,

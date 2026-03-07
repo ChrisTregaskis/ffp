@@ -121,6 +121,7 @@ export const assessmentReducer = (
     default: {
       // Exhaustive check - TypeScript will error if we miss an action type
       const _exhaustiveCheck: never = action;
+
       return _exhaustiveCheck;
     }
   }

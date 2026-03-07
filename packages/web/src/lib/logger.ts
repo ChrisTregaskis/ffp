@@ -90,6 +90,7 @@ const shouldLog = (level: LogLevel, minLogLevel: LogLevel): boolean =>
 const serialiseContextData = (data: unknown, depth = 0, seen = new WeakSet()): unknown => {
   // Protection 1: Maximum depth limit (prevent stack overflow)
   const MAX_DEPTH = 10;
+
   if (depth > MAX_DEPTH) {
     return '[Max Depth Exceeded]';
   }
@@ -99,6 +100,7 @@ const serialiseContextData = (data: unknown, depth = 0, seen = new WeakSet()): u
     if (seen.has(data)) {
       return '[Circular Reference]';
     }
+
     seen.add(data);
   }
 
@@ -122,6 +124,7 @@ const serialiseContextData = (data: unknown, depth = 0, seen = new WeakSet()): u
     for (const [key, value] of Object.entries(data)) {
       serialised[key] = serialiseContextData(value, depth + 1, seen);
     }
+
     return serialised;
   }
 
@@ -189,6 +192,7 @@ const formatLog = (
 const resolveMinLogLevel = (): LogLevel => {
   const envLogLevel = import.meta.env.VITE_LOG_LEVEL as LogLevel | undefined;
   const defaultLevel = import.meta.env.PROD ? LogLevel.INFO : LogLevel.DEBUG;
+
   return envLogLevel ?? defaultLevel;
 };
 
@@ -220,25 +224,35 @@ export const createLogger = (moduleName: string): BrowserLogger => {
 
   return {
     debug: (message: string, context?: LogContext): void => {
-      if (!shouldLog(LogLevel.DEBUG, minLogLevel)) return;
+      if (!shouldLog(LogLevel.DEBUG, minLogLevel)) {
+        return;
+      }
+
       // eslint-disable-next-line no-console
       console.debug(...formatLog(LogLevel.DEBUG, moduleName, message, context));
     },
 
     info: (message: string, context?: LogContext): void => {
-      if (!shouldLog(LogLevel.INFO, minLogLevel)) return;
+      if (!shouldLog(LogLevel.INFO, minLogLevel)) {
+        return;
+      }
+
       // eslint-disable-next-line no-console
       console.info(...formatLog(LogLevel.INFO, moduleName, message, context));
     },
 
     warn: (message: string, context?: LogContext): void => {
-      if (!shouldLog(LogLevel.WARN, minLogLevel)) return;
+      if (!shouldLog(LogLevel.WARN, minLogLevel)) {
+        return;
+      }
 
       console.warn(...formatLog(LogLevel.WARN, moduleName, message, context));
     },
 
     error: (message: string, context?: LogContext): void => {
-      if (!shouldLog(LogLevel.ERROR, minLogLevel)) return;
+      if (!shouldLog(LogLevel.ERROR, minLogLevel)) {
+        return;
+      }
 
       console.error(...formatLog(LogLevel.ERROR, moduleName, message, context));
     },

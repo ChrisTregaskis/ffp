@@ -47,6 +47,7 @@ export const ProtectedRoute = ({
   // Log unauthorised access attempts (TODO: Add sentry or something for security observation?)
   useEffect(() => {
     const hasAllowedRoles = currentRoute?.allowedRoles && currentRoute.allowedRoles.length > 0;
+
     if (user && !userHasAccess && hasAllowedRoles) {
       logUnauthorisedAccess(user.userId, location.pathname, user.role);
     }

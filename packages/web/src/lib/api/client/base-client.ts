@@ -170,6 +170,7 @@ export abstract class BaseHttpClient {
       if (!response.ok) {
         const error = await ApiError.fromResponse(response);
         const retryResponse = await this.runErrorInterceptors(error, context);
+
         return this.parseResponse<T>(retryResponse);
       }
 
@@ -222,6 +223,7 @@ export abstract class BaseHttpClient {
         controller.abort();
         break;
       }
+
       signal.addEventListener(
         'abort',
         () => {

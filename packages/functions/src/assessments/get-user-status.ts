@@ -14,6 +14,7 @@ import {
 export const handler = withErrorHandling(
   async (event: APIGatewayProxyEventV2WithJWT): Promise<UserAssessmentStatusResponse> => {
     const context = extractUserContext(event);
+
     return assessmentService.getUserAssessmentStatus(context);
   }
 );

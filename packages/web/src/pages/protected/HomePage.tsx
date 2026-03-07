@@ -37,17 +37,21 @@ export const HomePage = (): JSX.Element => {
 
   // Redirect users to their role-appropriate home page
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
     // Customer admins should go to the customer dashboard
     if (user.role === USER_ROLE.CUSTOMER_OWNER || user.role === USER_ROLE.CUSTOMER_ADMIN) {
       void navigate(routes[RouteKey.CUSTOMER_DASHBOARD].path, { replace: true });
+
       return;
     }
 
     // System admins should go to the admin customers page
     if (user.role === USER_ROLE.SYSTEM_ADMIN) {
       void navigate(routes[RouteKey.ADMIN_CUSTOMERS].path, { replace: true });
+
       return;
     }
 

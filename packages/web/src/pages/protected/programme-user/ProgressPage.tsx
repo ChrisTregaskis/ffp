@@ -21,7 +21,9 @@ export const ProgressPage: React.FC = () => {
   const { data: assessmentStatus } = useUserAssessmentStatusQuery();
 
   const handleStartReassessment = (): void => {
-    if (!assessmentStatus?.assessmentFlowId) return;
+    if (!assessmentStatus?.assessmentFlowId) {
+      return;
+    }
 
     // One-time flag consumed by AssessmentOrchestrator to distinguish
     // an intentional CTA click from a page reload (which should resume).

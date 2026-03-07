@@ -6,6 +6,7 @@ export const minutesToMs = (minutes: number): number => {
   if (minutes < 0) {
     throw new Error('Minutes cannot be negative');
   }
+
   return minutes * 60 * 1000;
 };
 
@@ -17,5 +18,6 @@ export const secondsToMs = (seconds: number): number => {
   if (seconds < 0) {
     throw new Error('Seconds cannot be negative');
   }
+
   return seconds * 1000;
 };
