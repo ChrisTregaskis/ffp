@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { Button } from '@web/components/button';
 import { IconBadge, Icons } from '@web/components/Icon';
 import { Text } from '@web/components/text';

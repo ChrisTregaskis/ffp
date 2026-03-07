@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { IconBadge, Icons } from '../Icon';
 import { Text } from '../text';
 

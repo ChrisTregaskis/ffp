@@ -50,10 +50,12 @@ export const videosApi = {
       }
     }
 
-    const path = basePath;
-    const response = await ffpClient.get(path, { params, signal });
+    const response = await ffpClient.get(basePath, { params, signal });
 
-    return parseApiResponse(videoListApiResponseSchema, response, { method: 'GET', path });
+    return parseApiResponse(videoListApiResponseSchema, response, {
+      method: 'GET',
+      path: basePath,
+    });
   },
 
   /** Get a single video by ID (detail view) */

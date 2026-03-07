@@ -1,10 +1,13 @@
-import { useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { useVideoSignedUrlQuery } from '@web/hooks/videos';
+import { createLogger } from '@web/lib/logger';
 
 import { VideoErrorState } from './VideoErrorState';
 import { VideoLoadingSkeleton } from './VideoLoadingSkeleton';
 import { VideoUnavailablePlaceholder } from './VideoUnavailablePlaceholder';
+
+const logger = createLogger('VideoPlayer');
 
 export interface VideoPlayerProps {
   /** Video ID — fetches a signed CloudFront URL via the signed URL hook */
@@ -55,9 +58,18 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     void refetch();
   }, [refetch]);
 
-  const handleVideoError = useCallback(() => {
-    setHasPlaybackError(true);
-  }, []);
+  const handleVideoError = useCallback(
+    (e: React.SyntheticEvent<HTMLVideoElement>) => {
+      const mediaError = e.currentTarget.error;
+      logger.error('Video playback error', {
+        videoId,
+        code: mediaError?.code,
+        message: mediaError?.message,
+      });
+      setHasPlaybackError(true);
+    },
+    [videoId]
+  );
 
   const renderContent = (): React.ReactNode => {
     if (hasNoSource) {

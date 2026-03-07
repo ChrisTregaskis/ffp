@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { LoadingSpinner } from '@web/components/LoadingSpinner';
 import { Text } from '@web/components/text';
 
