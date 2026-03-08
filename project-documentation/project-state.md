@@ -34,13 +34,41 @@
 
 ---
 
-### FFP-437: Reusable Table Component & Backend Pagination Pattern (5 SP) — To Do
+### FFP-437: Reusable Table Component & Backend Pagination Pattern (5 SP) — In Progress
 
-**Branch**: `feature/sprint8`
+**Branch**: `feature/ffp-437-table-component`
 **Scope**: Full-stack. Reusable TanStack Table v8 wrapper with server-side pagination/sorting, column helpers, row actions column. Backend pagination Zod schemas and Drizzle helper.
 **Blocks**: FFP-329 (FFP-332 video list page, FFP-335 filtering)
 **Spec**: `.claude/research/table/ffp-data-table-spec.md`
 **Reference**: `.claude/research/table/tanstack-table-pattern-EXAMPLE.md`
+**No sub-tasks in Jira** — story is self-contained, broken into implementation phases below.
+
+**Prerequisites**:
+
+- Install `@tanstack/react-table` in `@ffp/web`
+- Date formatting: use `Intl.DateTimeFormat` (no `date-fns` needed for MVP)
+
+**What already exists**: Spike branch created, detailed spec and reference pattern docs. No implementation code yet.
+
+#### Implementation Phases (single branch)
+
+| Phase | Scope                                       | Files                                                                                      | Notes                                                                                                                                                                                            |
+| ----- | ------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1     | Backend pagination schemas + Drizzle helper | `packages/core/src/lib/pagination.ts`                                                      | Zod schemas (`paginationInputSchema`, `paginationMetaSchema`), `createPaginatedResponseSchema` factory, `buildPaginationMeta`, `applyPagination` Drizzle helper. Export from `@ffp/core` barrel. |
+| 2     | Frontend types + column helper factory      | `packages/web/src/components/table/types.ts`, `column-helpers.ts`                          | `TableState`, `TableProps`, `RowAction<T>`, `ColumnOptions`. `createColumns<T>()` factory with 7 helpers: text, number, date, status, tags, duration, actions.                                   |
+| 3     | Table sub-components                        | `TableEmpty.tsx`, `TableLoading.tsx`, `TableError.tsx`, `TableHeader.tsx`, `TableBody.tsx` | Loading = skeleton rows, empty = customisable message, error = retry button. Header renders sort indicators. Body dispatches to loading/empty/error states.                                      |
+| 4     | Pagination + column visibility              | `TablePagination.tsx`, `TableColumnVisibility.tsx`                                         | Pagination: results summary, page nav (sliding window), page size selector. Column visibility: modal with checkboxes, uses column `label` as display text.                                       |
+| 5     | Table orchestrator + hook + barrel export   | `Table.tsx`, `useServerTable.ts`, `index.ts`                                               | Table wires TanStack Table instance with `manualPagination`/`manualSorting`. `useServerTable` hook: state via `useState`, 300ms debounce, page reset on sort change, memoised `queryParams`.     |
+
+**Key design decisions**:
+
+- Filters are **external to the table** — page-level controls, not column headers
+- Server-side mode only (`manualPagination: true`, `manualSorting: true`)
+- Single `createColumns<T>()` factory (no dual helper)
+- Actions as column helper, not table prop
+- 300ms debounce on state changes via `useServerTable`
+- Column visibility uses `label` as single source of truth (no `stringHeader` duplication)
+- Tests deferred until MVP launch
 
 ---
 
