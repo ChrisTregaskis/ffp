@@ -679,7 +679,6 @@ The `project-documentation/` directory contains comprehensive documentation opti
 
 - **`sprint-planning/jira-standards/`** - Ticket templates (Epic, Story, Task, Bug)
 - **`sprint-planning/outputs/`** - Sprint plans, decisions
-- **`progress-log.md`** - Detailed session history
 
 ### Turborepo Specific
 

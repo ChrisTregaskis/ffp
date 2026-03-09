@@ -16,6 +16,7 @@ import { LoadingSpinnerComponentsPage } from '@web/pages/dev/LoadingSpinnerCompo
 import { LogoComponentsPage } from '@web/pages/dev/LogoComponentsPage';
 import { MotionShowcasePage } from '@web/pages/dev/MotionShowcasePage';
 import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsPage';
+import { TableComponentsPage } from '@web/pages/dev/TableComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
 import { VideoUploadPage } from '@web/pages/protected/admin/video-upload';
@@ -392,6 +393,14 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: ToastAlertComponentsPage,
     title: 'Toast Alert Components',
+    excludeFromMainNavbar: true,
+    devOnly: true,
+  },
+  [RouteKey.COMPONENTS_TABLE]: {
+    path: `${componentsBasePath}/table`,
+    public: true,
+    pageComponent: TableComponentsPage,
+    title: 'Table Components',
     excludeFromMainNavbar: true,
     devOnly: true,
   },

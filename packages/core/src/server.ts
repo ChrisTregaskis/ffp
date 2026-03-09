@@ -19,6 +19,7 @@
 
 export * from './lib/constants';
 export * from './lib/database';
+export * from './lib/pagination';
 export * from './lib/errors';
 export * from './lib/lambda-wrapper';
 export * from './lib/cognito';

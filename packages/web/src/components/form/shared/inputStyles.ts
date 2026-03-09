@@ -6,7 +6,8 @@
  */
 export const getInputClassName = (
   error: boolean,
-  variant: 'input' | 'container' = 'input'
+  variant: 'input' | 'container' = 'input',
+  compact = false
 ): string => {
   const focusRing =
     variant === 'input'
@@ -14,6 +15,7 @@ export const getInputClassName = (
       : 'focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent';
 
   const border = error ? 'border-destructive' : 'border-border';
+  const minHeight = compact ? '' : 'min-h-[42px]';
 
-  return `min-h-[42px] border rounded-md bg-white shadow-sm hover:border-primary ${focusRing} ${border}`;
+  return `${minHeight} border rounded-md bg-white shadow-sm hover:border-primary ${focusRing} ${border}`;
 };
