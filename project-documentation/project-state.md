@@ -101,13 +101,13 @@ Frontend:
 
 #### Execution Order
 
-| Order | Sub-tasks         | Summary                              | Notes                                                                                                                                                                   |
-| ----- | ----------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | FFP-330 + FFP-331 | Backend APIs (list + update)         | `findAllVideos` + `updateVideo` repo fns, service fns, handlers. GET includes pagination + filter params (search, status, difficulty). PUT includes status transitions. |
-| 2     | FFP-332 + FFP-335 | Video list page with Table + filters | Replace `VideoLibraryPage` placeholder. `adminVideosApi.list()`, `useAdminVideosQuery`, `useApiTable`, `Table` + columns, `TableControls` with filters/search.          |
-| 3     | FFP-333 + FFP-334 | Edit page + status management        | `/admin/videos/:id` route, reuse `VideoMetadataFormFields`, status select, `useUpdateVideoMutation`, confirmation dialog for archiving, list quick-actions.             |
-| 4     | FFP-336           | Video preview modal                  | Preview button in `ActionsCell`, `Modal` + `VideoPlayer`, reuse `useVideoSignedUrlQuery`.                                                                               |
-| —     | —                 | Manual verification                  | E2E: upload → list → filter → edit → status change → preview. Verify all statuses visible in admin list.                                                                |
+| Order | Sub-tasks         | Summary                              | Notes                                                                                                                                                                                                |
+| ----- | ----------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | FFP-330 + FFP-331 | Backend APIs (list + update)         | FFP-330 ✅ DONE. `findAllVideos` + `countAllVideos` repo fns, `listAdminVideos` service fn, `GET /admin/videos` handler with pagination + filters. FFP-331 next: `updateVideo` repo/service/handler. |
+| 2     | FFP-332 + FFP-335 | Video list page with Table + filters | Replace `VideoLibraryPage` placeholder. `adminVideosApi.list()`, `useAdminVideosQuery`, `useApiTable`, `Table` + columns, `TableControls` with filters/search.                                       |
+| 3     | FFP-333 + FFP-334 | Edit page + status management        | `/admin/videos/:id` route, reuse `VideoMetadataFormFields`, status select, `useUpdateVideoMutation`, confirmation dialog for archiving, list quick-actions.                                          |
+| 4     | FFP-336           | Video preview modal                  | Preview button in `ActionsCell`, `Modal` + `VideoPlayer`, reuse `useVideoSignedUrlQuery`.                                                                                                            |
+| —     | —                 | Manual verification                  | E2E: upload → list → filter → edit → status change → preview. Verify all statuses visible in admin list.                                                                                             |
 
 ---
 

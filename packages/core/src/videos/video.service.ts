@@ -3,17 +3,25 @@ import type { VideoRecord } from '@ffp/database/schema';
 
 import { NotFoundError, ValidationError } from '../lib/errors';
 import { createLogger } from '../lib/logger';
+import { buildPaginationMeta } from '../schemas/pagination.schema';
 import {
   createVideoSchema,
   videoFilterSchema,
   videoListResponseSchema,
   videoDetailResponseSchema,
+  adminVideoFilterSchema,
+  adminVideoListResponseSchema,
 } from '../schemas/video.schema';
 
 import * as videoRepository from './video.repository';
 
 import type { TenantContext } from '../lib/context';
-import type { VideoListResponse, VideoDetailResponse } from '../schemas/video.schema';
+import type { PaginationInput, PaginationMeta } from '../schemas/pagination.schema';
+import type {
+  VideoListResponse,
+  VideoDetailResponse,
+  AdminVideoListResponse,
+} from '../schemas/video.schema';
 
 interface GetVideoOptions {
   /** When true, returns the video regardless of status. Defaults to false (active only). */
@@ -27,6 +35,13 @@ interface VideoFilterRawInput {
   difficulty?: string;
   movementType?: string;
   tags?: string[];
+}
+
+/** Raw admin filter input before Zod validation */
+interface AdminVideoFilterRawInput {
+  search?: string;
+  status?: string;
+  difficulty?: string;
 }
 
 /**
@@ -91,4 +106,29 @@ export async function listVideosByFilter(
   const records = await videoRepository.findByFilters(db, parseResult.data);
 
   return records.map((record) => videoListResponseSchema.parse(record));
+}
+
+export async function listAdminVideos(
+  _ctx: TenantContext,
+  paginationInput: PaginationInput,
+  rawFilters: AdminVideoFilterRawInput
+): Promise<{ data: AdminVideoListResponse[]; pagination: PaginationMeta }> {
+  const parseResult = adminVideoFilterSchema.safeParse(rawFilters);
+
+  if (!parseResult.success) {
+    throw new ValidationError('Invalid admin video filter parameters', {
+      errors: parseResult.error.issues,
+    });
+  }
+
+  const filters = parseResult.data;
+  const db = getDb();
+
+  const records = await videoRepository.findAllVideos(db, paginationInput, filters);
+  const total = await videoRepository.countAllVideos(db, filters);
+
+  return {
+    data: records.map((record) => adminVideoListResponseSchema.parse(record)),
+    pagination: buildPaginationMeta(paginationInput, total),
+  };
 }

@@ -1,8 +1,13 @@
-import { and, eq, arrayOverlaps, type SQL } from 'drizzle-orm';
+import { and, eq, arrayOverlaps, ilike, count, type SQL, type Column } from 'drizzle-orm';
 
 import type { DbClient } from '@ffp/database';
 import type { Difficulty, MovementType } from '@ffp/database/constants';
 import { videos, type VideoRecord, type NewVideo } from '@ffp/database/schema';
+
+import { applyPagination } from '../lib/pagination';
+
+import type { PaginationInput } from '../schemas/pagination.schema';
+import type { AdminVideoFilterInput } from '../schemas/video.schema';
 
 export interface VideoFilters {
   /** Filter by target body parts — matches videos that overlap with any of the provided values */
@@ -16,6 +21,35 @@ export interface VideoFilters {
   /** Filter by tags — matches videos that overlap with any of the provided values */
   tags?: string[];
 }
+
+/** Columns available for sorting on the admin video list */
+const ADMIN_SORTABLE_COLUMNS: Partial<Record<string, Column>> = {
+  title: videos.title,
+  status: videos.status,
+  difficulty: videos.difficulty,
+  durationSeconds: videos.durationSeconds,
+  createdAt: videos.createdAt,
+  updatedAt: videos.updatedAt,
+};
+
+/** Build WHERE conditions for admin video list filters. */
+const buildAdminFilterConditions = (filters: AdminVideoFilterInput): SQL[] => {
+  const conditions: SQL[] = [];
+
+  if (filters.search) {
+    conditions.push(ilike(videos.title, `%${filters.search}%`));
+  }
+
+  if (filters.status) {
+    conditions.push(eq(videos.status, filters.status));
+  }
+
+  if (filters.difficulty) {
+    conditions.push(eq(videos.difficulty, filters.difficulty));
+  }
+
+  return conditions;
+};
 
 export async function insertVideo(db: DbClient, input: NewVideo): Promise<VideoRecord> {
   const records = await db.insert(videos).values(input).returning();
@@ -65,4 +99,41 @@ export async function findByFilters(db: DbClient, filters: VideoFilters): Promis
     .from(videos)
     .where(and(...conditions))
     .orderBy(videos.title);
+}
+
+/**
+ * Returns all videos (any status) with pagination and optional filters.
+ * For admin use — no status restriction applied by default.
+ */
+export async function findAllVideos(
+  db: DbClient,
+  paginationInput: PaginationInput,
+  filters: AdminVideoFilterInput
+): Promise<VideoRecord[]> {
+  const conditions = buildAdminFilterConditions(filters);
+
+  const query = db
+    .select()
+    .from(videos)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .$dynamic();
+
+  return await applyPagination(query, paginationInput, ADMIN_SORTABLE_COLUMNS);
+}
+
+/**
+ * Returns total count of videos matching admin filters (for pagination metadata).
+ */
+export async function countAllVideos(
+  db: DbClient,
+  filters: AdminVideoFilterInput
+): Promise<number> {
+  const conditions = buildAdminFilterConditions(filters);
+
+  const result = await db
+    .select({ count: count() })
+    .from(videos)
+    .where(conditions.length > 0 ? and(...conditions) : undefined);
+
+  return result[0].count;
 }
