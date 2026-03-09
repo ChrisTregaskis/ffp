@@ -16,6 +16,7 @@ import { handler as updateTemplateHandler } from './templates/update-template';
 import { handler as createVideoHandler } from './videos/create';
 import { handler as getUploadUrlHandler } from './videos/get-upload-url';
 import { handler as listVideosHandler } from './videos/list';
+import { handler as updateVideoHandler } from './videos/update';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
@@ -41,6 +42,7 @@ const routes: RouteRegistry = {
   },
   PUT: {
     '/assessment-templates/{id}': updateTemplateHandler,
+    '/videos/{id}': updateVideoHandler,
   },
   DELETE: {
     '/assessment-templates/{id}': deactivateTemplateHandler,

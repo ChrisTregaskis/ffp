@@ -7,7 +7,7 @@ import { videos, type VideoRecord, type NewVideo } from '@ffp/database/schema';
 import { applyPagination } from '../lib/pagination';
 
 import type { PaginationInput } from '../schemas/pagination.schema';
-import type { AdminVideoFilterInput } from '../schemas/video.schema';
+import type { AdminVideoFilterInput, UpdateVideoInput } from '../schemas/video.schema';
 
 export interface VideoFilters {
   /** Filter by target body parts — matches videos that overlap with any of the provided values */
@@ -121,9 +121,6 @@ export async function findAllVideos(
   return await applyPagination(query, paginationInput, ADMIN_SORTABLE_COLUMNS);
 }
 
-/**
- * Returns total count of videos matching admin filters (for pagination metadata).
- */
 export async function countAllVideos(
   db: DbClient,
   filters: AdminVideoFilterInput
@@ -136,4 +133,18 @@ export async function countAllVideos(
     .where(conditions.length > 0 ? and(...conditions) : undefined);
 
   return result[0].count;
+}
+
+export async function updateVideo(
+  db: DbClient,
+  videoId: string,
+  data: UpdateVideoInput
+): Promise<VideoRecord | null> {
+  const records = await db
+    .update(videos)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(videos.id, videoId))
+    .returning();
+
+  return records[0] ?? null;
 }

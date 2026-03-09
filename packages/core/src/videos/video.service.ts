@@ -6,6 +6,7 @@ import { createLogger } from '../lib/logger';
 import { buildPaginationMeta } from '../schemas/pagination.schema';
 import {
   createVideoSchema,
+  updateVideoSchema,
   videoFilterSchema,
   videoListResponseSchema,
   videoDetailResponseSchema,
@@ -43,6 +44,13 @@ interface AdminVideoFilterRawInput {
   status?: string;
   difficulty?: string;
 }
+
+/** Valid status transitions: current status → allowed next statuses */
+const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
+  draft: ['active'],
+  active: ['archived'],
+  archived: ['draft', 'active'],
+};
 
 /**
  * Create a new video record with validated input.
@@ -131,4 +139,45 @@ export async function listAdminVideos(
     data: records.map((record) => adminVideoListResponseSchema.parse(record)),
     pagination: buildPaginationMeta(paginationInput, total),
   };
+}
+
+export async function updateVideo(
+  ctx: TenantContext,
+  videoId: string,
+  input: unknown
+): Promise<VideoDetailResponse> {
+  const validated = updateVideoSchema.parse(input);
+
+  const db = getDb();
+  const existing = await videoRepository.findVideoById(db, videoId);
+
+  if (!existing) {
+    throw new NotFoundError('Video');
+  }
+
+  if (validated.status && validated.status !== existing.status) {
+    const allowed = VALID_STATUS_TRANSITIONS[existing.status] ?? [];
+
+    if (!allowed.includes(validated.status)) {
+      throw new ValidationError(
+        `Cannot transition from '${existing.status}' to '${validated.status}'`
+      );
+    }
+  }
+
+  const updated = await videoRepository.updateVideo(db, videoId, validated);
+
+  if (!updated) {
+    throw new NotFoundError('Video');
+  }
+
+  const logger = createLogger(ctx);
+  logger.info('Video updated', {
+    action: 'video_updated',
+    videoId: updated.id,
+    status: updated.status,
+    previousStatus: existing.status,
+  });
+
+  return videoDetailResponseSchema.parse(updated);
 }
