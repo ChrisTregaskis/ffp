@@ -1,5 +1,10 @@
 export { adminVideosApi } from './admin-videos';
-export type { CreateVideoInput, UploadUrlRequest, UploadUrlResponse } from './admin-videos';
+export type {
+  CreateVideoInput,
+  PaginatedAdminVideoResponse,
+  UploadUrlRequest,
+  UploadUrlResponse,
+} from './admin-videos';
 
 export { assessmentsApi } from './assessments';
 export type {

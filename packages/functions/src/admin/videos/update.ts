@@ -18,7 +18,6 @@ interface UpdateVideoResponse {
  *
  * Updates video metadata and/or status. Supports partial updates.
  * Status transitions are validated: draft→active, active→archived, archived→active.
- * Admin role required.
  */
 export const handler = withErrorHandling(
   async (event: APIGatewayProxyEventV2WithJWT): Promise<UpdateVideoResponse> => {

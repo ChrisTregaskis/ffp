@@ -15,7 +15,7 @@ interface TableHeaderProps<TData> {
 export const TableHeader = <TData,>({
   headerGroups,
 }: TableHeaderProps<TData>): React.ReactElement => (
-  <thead className="border-b-2 border-primary/20 bg-primary">
+  <thead className="border-b-2 border-ffp-navy/20 bg-ffp-navy">
     {headerGroups.map((headerGroup) => (
       <tr key={headerGroup.id}>
         {headerGroup.headers.map((header) => {

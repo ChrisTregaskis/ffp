@@ -139,8 +139,9 @@ export const videoDetailResponseSchema = videoSchema.omit({
   mimeType: true,
 });
 
-/** Response schema for admin video list — includes timestamps for admin context */
+/** Response schema for admin video list — includes description and timestamps for admin context */
 export const adminVideoListResponseSchema = videoListResponseSchema.extend({
+  description: z.string().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });

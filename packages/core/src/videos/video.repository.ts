@@ -1,4 +1,4 @@
-import { and, eq, arrayOverlaps, ilike, count, type SQL, type Column } from 'drizzle-orm';
+import { and, eq, or, arrayOverlaps, ilike, count, type SQL, type Column } from 'drizzle-orm';
 
 import type { DbClient } from '@ffp/database';
 import type { Difficulty, MovementType } from '@ffp/database/constants';
@@ -37,7 +37,12 @@ const buildAdminFilterConditions = (filters: AdminVideoFilterInput): SQL[] => {
   const conditions: SQL[] = [];
 
   if (filters.search) {
-    conditions.push(ilike(videos.title, `%${filters.search}%`));
+    const pattern = `%${filters.search}%`;
+    const searchCondition = or(ilike(videos.title, pattern), ilike(videos.description, pattern));
+
+    if (searchCondition) {
+      conditions.push(searchCondition);
+    }
   }
 
   if (filters.status) {

@@ -118,7 +118,7 @@ export const Table = <TData extends Record<string, unknown>>({
   });
 
   return (
-    <div className="w-full" data-table-id={tableId}>
+    <div className="min-w-0 w-full" data-table-id={tableId}>
       {/* Toolbar: custom controls or default column visibility */}
       {renderControls ? (
         <div className="pb-3">{renderControls(table.getAllColumns())}</div>
