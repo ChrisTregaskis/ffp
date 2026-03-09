@@ -47,66 +47,67 @@
 
 ### FFP-329: Admin Video Metadata Management (8 SP) — Implementation Plan
 
-**Branch**: `feature/sprint8` (single branch — all sub-tasks tightly coupled)
+**Branch**: `feature/ffp-329-vid-metadata-management-implementation` (single branch — all sub-tasks tightly coupled)
 **Scope**: Full-stack. Admin CRUD for video catalogue: list all videos (inc. draft/archived), edit metadata, manage status transitions, filter/search, video preview.
-**Dependency**: FFP-320 (Admin Video Upload) — DONE, FFP-437 (Table + Pagination) — blocks FFP-332/335
+**Dependencies**: FFP-320 (Admin Video Upload) — DONE, FFP-437 (Reusable Table + Pagination) — DONE
 **Blocks**: FFP-343 (Sprint 8 Integration & Verification)
 
 **What already exists**:
 
-- DB schema: `videos` table with status enum (`draft`/`active`/`archived`), difficulty, movement_type, body_parts, equipment, tags, GIN indexes
-- Core services: `video.service.ts` (create, list active, get, filter), `video-signing.service.ts` (CloudFront signed URLs)
-- Core repository: `video.repository.ts` (insert, findById, findAllActive, findByFilters)
-- Zod schemas: `updateVideoSchema` exists and ready to use
-- Admin handlers: `POST /admin/videos/upload-url`, `POST /admin/videos` (create record)
-- Public APIs: `GET /videos` (active only), `GET /videos/:id`, `GET /videos/:id/signed-url`
-- Frontend: `VideoLibraryPage.tsx` (placeholder — empty state only), `VideoUploadPage.tsx` (complete)
-- Form components: `VideoMetadataForm`, `VideoMetadataFormFields` (reusable for editing)
-- Video components: `VideoPlayer` (HTML5, dual-mode), `VideoLoadingSkeleton`, `VideoErrorState`
-- Hooks: `useVideosQuery` (active only), `useVideoQuery`, `useVideoSignedUrlQuery`, `useVideoUpload`
-- API client: `adminVideosApi` (getUploadUrl, createVideo), `videosApi` (list, get, getSignedUrl)
-- Query keys: hierarchical factory in `videos.ts`
+- **DB schema**: `videos` table with status enum (`draft`/`active`/`archived`), difficulty, movement_type, body_parts, equipment, tags, GIN indexes
+- **Table component** (FFP-437): `Table` (TanStack Table v8, manual pagination/sorting), `TableControls` (search + filter dropdowns + column visibility + clear all), `createColumns<T>()` factory (7 cell types: Text, Number, Date, Status, Tags, Duration, Actions), `useApiTable` hook (300ms debounce, page reset on sort/search/filter change, memoised `queryParams`)
+- **Pagination pattern** (FFP-437): `paginationInputSchema`, `paginationMetaSchema`, `createPaginatedResponseSchema`, `buildPaginationMeta`, `applyPagination` Drizzle helper
+- **Core services**: `video.service.ts` (create, listVideos, getVideo, listVideosByFilter), `video-signing.service.ts` (CloudFront signed URLs)
+- **Core repository**: `video.repository.ts` (insertVideo, findVideoById, findAllActive, findByFilters)
+- **Zod schemas**: `createVideoSchema`, `updateVideoSchema`, `videoListResponseSchema`, `videoFilterSchema`
+- **Admin handlers**: `POST /admin/videos/upload-url`, `POST /admin/videos` (create record)
+- **Public APIs**: `GET /videos` (active only), `GET /videos/:id`, `GET /videos/:id/signed-url`
+- **Frontend pages**: `VideoLibraryPage.tsx` (placeholder — empty state), `VideoUploadPage.tsx` (complete)
+- **Form components**: `VideoMetadataForm`, `VideoMetadataFormFields` (reusable for editing)
+- **Video components**: `VideoPlayer` (HTML5, dual-mode), `VideoLoadingSkeleton`, `VideoErrorState`
+- **Hooks**: `useVideosQuery` (active only), `useVideoQuery`, `useVideoSignedUrlQuery`, `useVideoUpload`
+- **API client**: `adminVideosApi` (getUploadUrl, createVideo), `videosApi` (list, get, getSignedUrl)
+- **Shared components**: `Modal`, `PageContainer`, `PageHeader`, `StatusResult`, `SearchInput`, `Select`, `Button`, `IconButton`, `Panel`
 
 **What needs building**:
 
 Backend:
 
-- `updateVideo` repository function + `findAllVideos` (admin, all statuses)
-- `updateVideo` service function + `listAdminVideos` service function
-- `GET /admin/videos` handler (list all statuses, with optional filters)
-- `PUT /admin/videos/{id}` handler (partial metadata update + status transitions)
+- `findAllVideos(db, paginationInput, filters)` — admin repository fn (all statuses, paginated, filterable)
+- `updateVideo(db, id, data)` — repository fn
+- `listAdminVideos(ctx, paginationInput, filters)` — service fn
+- `updateVideo(ctx, id, data)` — service fn with status transition validation
+- `GET /admin/videos` handler — paginated, with query params: page, pageSize, sortBy, sortDirection, search, status, difficulty
+- `PUT /admin/videos/{id}` handler — partial metadata update including status changes
+- Admin video filter schema (extends `videoFilterSchema` with search + status params)
 
 Frontend:
 
-- `adminVideosApi.list()` + `adminVideosApi.updateVideo()` API client methods
-- `useAdminVideosQuery` hook + `useUpdateVideoMutation` hook
-- `VideoLibraryPage.tsx` — replace placeholder with real table/grid (status badges, thumbnails, actions)
-- Video edit page at `/admin/videos/{id}/edit` — reuse `VideoMetadataFormFields`
-- Status management controls (quick-action buttons on list + status field in edit form)
-- Client-side filter/search (status, difficulty, title search)
-- Video preview modal (reuse `VideoPlayer` + `useVideoSignedUrlQuery`)
+- `adminVideosApi.list(params)` + `adminVideosApi.updateVideo(id, data)` API client methods
+- `useAdminVideosQuery(params)` hook + `useUpdateVideoMutation()` hook
+- `VideoLibraryPage.tsx` — replace placeholder with `Table` + `TableControls` + column definitions
+- `/admin/videos/:id` edit page — reuse `VideoMetadataFormFields`, status dropdown, `useUpdateVideoMutation`
+- Status quick-actions in list `ActionsCell` (Publish, Archive) + confirmation dialog for archiving
+- Video preview modal — `VideoPlayer` + `useVideoSignedUrlQuery` in `Modal`
 
 **Amended requirements**:
 
-- FFP-332: Ticket says `VideosPage.tsx` — use existing `VideoLibraryPage.tsx` instead (already in routes)
-- FFP-333: Use a dedicated edit page (`/admin/videos/{id}`) not a modal — consistent with upload being a dedicated page. No `/edit` suffix needed: admin context implies editing, no read-only detail view planned
-- FFP-334: Status management merges into FFP-333 (edit form) and FFP-332 (list quick-actions). Not a separate UI concern — status is a field on the update API.
-- FFP-335: Server-side filtering via query params on `GET /admin/videos` (status, difficulty, title search). Filter UI is page-level, external to Table.
-- FFP-336: `VideoPlayer` and `useVideoSignedUrlQuery` already exist — just wire into a preview modal on the list page
-- Tests deferred until MVP launch per sprint policy
+- **FFP-332**: Ticket says `VideosPage.tsx` — use existing `VideoLibraryPage.tsx` (already in routes). Uses `Table` component from FFP-437 with `useApiTable` hook — not a custom table/grid.
+- **FFP-333**: Dedicated edit page at `/admin/videos/:id` (not modal) — consistent with upload being a dedicated page. No `/edit` suffix: admin context implies editing, no read-only detail view planned.
+- **FFP-334**: Merges into FFP-333 (status field in edit form) and FFP-332 (quick-action buttons in `ActionsCell`). Not a separate UI concern — status is just a field on the update API.
+- **FFP-335**: Merges into FFP-330 (backend filter params) and FFP-332 (frontend `TableControls`). Server-side filtering via query params on `GET /admin/videos`. Filter UI uses `TableControls` from FFP-437 (search input with debounce, filter dropdowns) — page-level, external to Table. Building filters alongside the table from the start is more natural than retrofitting.
+- **FFP-336**: `VideoPlayer` and `useVideoSignedUrlQuery` already exist — just wire into a preview modal on the list page.
+- Tests deferred until MVP launch per sprint policy.
 
 #### Execution Order
 
-| Order | Key           | Summary                                         | Notes                                                                                                                  |
-| ----- | ------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 0     | FFP-437       | Reusable Table + backend pagination pattern     | Prerequisite: `pagination.ts` schemas/helpers, `Table` component, column helpers, `useApiTable` hook                   |
-| 1     | FFP-330       | GET /admin/videos API (all statuses, paginated) | Backend: admin `findAll` repo fn, service fn, handler. Uses pagination pattern from FFP-437                            |
-| 2     | FFP-331       | PUT /admin/videos/{id} API (metadata + status)  | Backend: `updateVideo` repo fn, service fn with status transition validation, handler                                  |
-| 3     | FFP-332       | Admin video list page with Table                | Frontend: replace VideoLibraryPage placeholder. adminVideosApi.list(), useAdminVideosQuery, Table + columns            |
-| 4     | FFP-333 + 334 | Video edit page + status management controls    | Frontend: `/admin/videos/:id` route, reuse VideoMetadataFormFields, status dropdown, mutation hook, list quick-actions |
-| 5     | FFP-335       | Filter and search on admin video list           | Frontend: server-side. Status filter, difficulty filter, title search with debounce, clear filters                     |
-| 6     | FFP-336       | Video preview with signed URL                   | Frontend: preview button on list, modal with VideoPlayer, reuse useVideoSignedUrlQuery                                 |
-| —     | —             | Manual verification                             | E2E: upload → list → edit → status change → filter → preview. Verify all statuses visible in admin list.               |
+| Order | Sub-tasks         | Summary                              | Notes                                                                                                                                                                   |
+| ----- | ----------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | FFP-330 + FFP-331 | Backend APIs (list + update)         | `findAllVideos` + `updateVideo` repo fns, service fns, handlers. GET includes pagination + filter params (search, status, difficulty). PUT includes status transitions. |
+| 2     | FFP-332 + FFP-335 | Video list page with Table + filters | Replace `VideoLibraryPage` placeholder. `adminVideosApi.list()`, `useAdminVideosQuery`, `useApiTable`, `Table` + columns, `TableControls` with filters/search.          |
+| 3     | FFP-333 + FFP-334 | Edit page + status management        | `/admin/videos/:id` route, reuse `VideoMetadataFormFields`, status select, `useUpdateVideoMutation`, confirmation dialog for archiving, list quick-actions.             |
+| 4     | FFP-336           | Video preview modal                  | Preview button in `ActionsCell`, `Modal` + `VideoPlayer`, reuse `useVideoSignedUrlQuery`.                                                                               |
+| —     | —                 | Manual verification                  | E2E: upload → list → filter → edit → status change → preview. Verify all statuses visible in admin list.                                                                |
 
 ---
 
