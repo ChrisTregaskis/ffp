@@ -63,7 +63,11 @@ const SPINNER_COLOUR_MAP: Record<ButtonVariant, string> = {
   ghost: 'rgba(113, 113, 130, 0.8)', // Muted foreground on transparent background
 };
 
-export interface ButtonProps {
+export interface ButtonProps
+  extends Omit<
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    'onClick' | 'type' | 'disabled' | 'className' | 'children'
+  > {
   /** Button content */
   children: ReactNode;
   /** Visual style variant @default 'primary' */
@@ -107,6 +111,7 @@ export const Button: React.FC<ButtonProps> = ({
   onClick,
   type = 'button',
   className = '',
+  ...rest
 }) => {
   const variantClass = VARIANT_CLASS_MAP[variant];
   const sizeClass = SIZE_CLASS_MAP[size];
@@ -152,6 +157,7 @@ export const Button: React.FC<ButtonProps> = ({
         onClick={onClick}
         aria-disabled={isDisabled}
         aria-busy={loading}
+        {...rest}
       >
         {leftContent}
         {children}

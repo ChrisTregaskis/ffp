@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 8th March 2026
+**Last Updated**: 9th March 2026
 **Current EPIC**: FFP-3 Video Management
 **Sprint Status**: Sprint 8 - Video UI & Integration (active — FFP-329 next)
 
@@ -34,41 +34,14 @@
 
 ---
 
-### FFP-437: Reusable Table Component & Backend Pagination Pattern (5 SP) — In Progress
+### FFP-437: Reusable Table Component & Backend Pagination Pattern (5 SP) — COMPLETE
 
 **Branch**: `feature/ffp-437-table-component`
-**Scope**: Full-stack. Reusable TanStack Table v8 wrapper with server-side pagination/sorting, column helpers, row actions column. Backend pagination Zod schemas and Drizzle helper.
-**Blocks**: FFP-329 (FFP-332 video list page, FFP-335 filtering)
-**Spec**: `.claude/research/table/ffp-data-table-spec.md`
-**Reference**: `.claude/research/table/tanstack-table-pattern-EXAMPLE.md`
-**No sub-tasks in Jira** — story is self-contained, broken into implementation phases below.
+**Deliverables**: Backend pagination schemas (`paginationInputSchema`, `paginationMetaSchema`, `createPaginatedResponseSchema`, `buildPaginationMeta`) + `applyPagination` Drizzle helper. Frontend `Table` component (TanStack Table v8 wrapper with `manualPagination`/`manualSorting`), `createColumns<T>()` factory (7 cell components: TextCell, NumberCell, DateCell, StatusCell, TagsCell, DurationCell, ActionsCell), `useApiTable` hook (300ms debounce, page reset on sort change, memoised queryParams). Sub-components: TableHeader, SortIndicator, TableBody, TablePagination, PageSizeSelect, TableColumnVisibility, TableControls, TableLoading/TableEmpty/TableError states.
 
-**Prerequisites**:
+**DRY refactoring pass**: `useClickOutside` hook (shared by 4 components), headless `BaseSelect` (Select + FormSelect are thin wrappers), `ButtonProps` extended with native HTML attributes, `DropdownMenu` uses `Button` + `renderContent` prop, `TablePagination` uses `Button`, alignment utility functions for table columns. `Panel` primitive (lightweight surface for toolbars/control bars). `SearchInput` clear button uses `IconButton`. `formatDate` and `formatDuration` lifted to shared `utils/format.ts`.
 
-- Install `@tanstack/react-table` in `@ffp/web`
-- Date formatting: use `Intl.DateTimeFormat` (no `date-fns` needed for MVP)
-
-**What already exists**: Spike branch created, detailed spec and reference pattern docs. No implementation code yet.
-
-#### Implementation Phases (single branch)
-
-| Phase | Scope                                       | Files                                                                                      | Notes                                                                                                                                                                                            |
-| ----- | ------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1     | Backend pagination schemas + Drizzle helper | `packages/core/src/lib/pagination.ts`                                                      | Zod schemas (`paginationInputSchema`, `paginationMetaSchema`), `createPaginatedResponseSchema` factory, `buildPaginationMeta`, `applyPagination` Drizzle helper. Export from `@ffp/core` barrel. |
-| 2     | Frontend types + column helper factory      | `packages/web/src/components/table/types.ts`, `column-helpers.ts`                          | `TableState`, `TableProps`, `RowAction<T>`, `ColumnOptions`. `createColumns<T>()` factory with 7 helpers: text, number, date, status, tags, duration, actions.                                   |
-| 3     | Table sub-components                        | `TableEmpty.tsx`, `TableLoading.tsx`, `TableError.tsx`, `TableHeader.tsx`, `TableBody.tsx` | Loading = skeleton rows, empty = customisable message, error = retry button. Header renders sort indicators. Body dispatches to loading/empty/error states.                                      |
-| 4     | Pagination + column visibility              | `TablePagination.tsx`, `TableColumnVisibility.tsx`                                         | Pagination: results summary, page nav (sliding window), page size selector. Column visibility: modal with checkboxes, uses column `label` as display text.                                       |
-| 5     | Table orchestrator + hook + barrel export   | `Table.tsx`, `useServerTable.ts`, `index.ts`                                               | Table wires TanStack Table instance with `manualPagination`/`manualSorting`. `useServerTable` hook: state via `useState`, 300ms debounce, page reset on sort change, memoised `queryParams`.     |
-
-**Key design decisions**:
-
-- Filters are **external to the table** — page-level controls, not column headers
-- Server-side mode only (`manualPagination: true`, `manualSorting: true`)
-- Single `createColumns<T>()` factory (no dual helper)
-- Actions as column helper, not table prop
-- 300ms debounce on state changes via `useServerTable`
-- Column visibility uses `label` as single source of truth (no `stringHeader` duplication)
-- Tests deferred until MVP launch
+**Key design decisions**: Filters external to table (page-level), server-side only, actions as column helper, `Intl.DateTimeFormat('en-GB')` for dates, pagination schemas browser-safe via `@ffp/core`, Drizzle helper server-only via `@ffp/core/server`.
 
 ---
 
@@ -126,7 +99,7 @@ Frontend:
 
 | Order | Key           | Summary                                         | Notes                                                                                                                  |
 | ----- | ------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 0     | FFP-437       | Reusable Table + backend pagination pattern     | Prerequisite: `pagination.ts` schemas/helpers, `Table` component, column helpers, `useServerTable` hook                |
+| 0     | FFP-437       | Reusable Table + backend pagination pattern     | Prerequisite: `pagination.ts` schemas/helpers, `Table` component, column helpers, `useApiTable` hook                   |
 | 1     | FFP-330       | GET /admin/videos API (all statuses, paginated) | Backend: admin `findAll` repo fn, service fn, handler. Uses pagination pattern from FFP-437                            |
 | 2     | FFP-331       | PUT /admin/videos/{id} API (metadata + status)  | Backend: `updateVideo` repo fn, service fn with status transition validation, handler                                  |
 | 3     | FFP-332       | Admin video list page with Table                | Frontend: replace VideoLibraryPage placeholder. adminVideosApi.list(), useAdminVideosQuery, Table + columns            |
@@ -327,5 +300,4 @@ await db.transaction(async (tx) => {
 
 ---
 
-**For session history**: `progress-log.md`
 **For implementation details**: domain-specific docs in `project-documentation/`

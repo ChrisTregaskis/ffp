@@ -24,3 +24,6 @@ export * from './job.schema';
 
 // Branching schemas
 export * from './warning.schema';
+
+// Pagination schemas
+export * from './pagination.schema';
