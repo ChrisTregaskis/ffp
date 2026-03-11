@@ -20,6 +20,8 @@ export interface VideoPlayerProps {
   autoPlay?: boolean;
   /** Accessible label for the video element */
   ariaLabel?: string;
+  /** Background variant for the player container @default 'muted' */
+  variant?: 'muted' | 'white';
 }
 
 /**
@@ -35,6 +37,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   className,
   autoPlay = false,
   ariaLabel,
+  variant = 'muted',
 }) => {
   const [hasPlaybackError, setHasPlaybackError] = useState(false);
 
@@ -106,7 +109,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   };
 
   return (
-    <div className={`aspect-video overflow-hidden rounded-2xl bg-muted ${className ?? ''}`.trim()}>
+    <div
+      className={`aspect-video overflow-hidden rounded-2xl ${variant === 'white' ? 'bg-white' : 'bg-muted'} ${className ?? ''}`.trim()}
+    >
       {renderContent()}
     </div>
   );

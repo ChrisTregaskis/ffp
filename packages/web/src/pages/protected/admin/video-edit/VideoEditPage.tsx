@@ -7,6 +7,7 @@ import { PageState } from '@web/components/feedback/PageState';
 import { ComposableForm } from '@web/components/form/composableForm';
 import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
 import { ArchiveVideoModal } from '@web/components/modal';
+import { VideoPlayer } from '@web/components/video/VideoPlayer';
 import { useToast } from '@web/hooks/useToast';
 import { useUpdateVideoMutation, useVideoQuery } from '@web/hooks/videos';
 import { RouteKey, routes } from '@web/pages/routes';
@@ -182,6 +183,15 @@ export const VideoEditPage: React.FC = () => {
             message={error?.message}
             actionLabel="Back to Video Library"
             onAction={handleNavigateBack}
+          />
+        )}
+
+        {video && (
+          <VideoPlayer
+            videoId={id}
+            ariaLabel={`Preview of ${video.title}`}
+            variant="white"
+            className="mb-6"
           />
         )}
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { matchPath, useLocation, useNavigate } from 'react-router-dom';
 
 import { Button } from '@web/components/button';
 import { Icon } from '@web/components/Icon';
@@ -23,7 +23,9 @@ interface SideMenuProps {
 }
 
 const getContextNavItems = (pathname: string): ContextNavItem[] | undefined => {
-  const matchedRoute = Object.values(routes).find((route) => route.path === pathname);
+  const matchedRoute = Object.values(routes).find(
+    (route) => route.contextNavItems && matchPath(route.path, pathname)
+  );
 
   return matchedRoute?.contextNavItems;
 };
