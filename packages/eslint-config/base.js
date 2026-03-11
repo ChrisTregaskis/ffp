@@ -85,6 +85,15 @@ module.exports = {
     'import/no-duplicates': 'error',
     'import/no-unresolved': 'off', // TypeScript handles this
 
+    // Block and statement formatting
+    curly: ['error', 'all'],
+    'padding-line-between-statements': [
+      'error',
+      { blankLine: 'always', prev: 'if', next: '*' },
+      { blankLine: 'always', prev: '*', next: 'if' },
+      { blankLine: 'always', prev: '*', next: 'return' },
+    ],
+
     // Code quality
     'no-console': ['warn', { allow: ['warn', 'error'] }],
     'prefer-const': 'error',
@@ -93,4 +102,13 @@ module.exports = {
     'prefer-template': 'error',
     'prefer-arrow-callback': 'error',
   },
+  overrides: [
+    {
+      files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
+      rules: {
+        curly: 'off',
+        'padding-line-between-statements': 'off',
+      },
+    },
+  ],
 };

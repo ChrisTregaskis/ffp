@@ -71,6 +71,7 @@ CLAUDE.local.md
 .claude/worktrees/
 .claude/_claude_chat_output.md
 .claude/sprint-planning/stakeholder-update
+.claude/debug
 
 project-documentation/sprint-planning/outputs/*.md
 project-documentation/sprint-planning/outputs/**/*.md

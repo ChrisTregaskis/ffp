@@ -33,8 +33,14 @@ export interface DemoTabsProps {
  */
 export const DemoTabs: React.FC<DemoTabsProps> = ({ tabs, defaultTab }) => {
   const getInitialTab = (): string => {
-    if (defaultTab) return defaultTab;
-    if (tabs.length > 0) return tabs[0].id;
+    if (defaultTab) {
+      return defaultTab;
+    }
+
+    if (tabs.length > 0) {
+      return tabs[0].id;
+    }
+
     return '';
   };
 
@@ -48,6 +54,7 @@ export const DemoTabs: React.FC<DemoTabsProps> = ({ tabs, defaultTab }) => {
       <div className="flex flex-wrap gap-1 border-b border-border">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
+
           return (
             <button
               key={tab.id}

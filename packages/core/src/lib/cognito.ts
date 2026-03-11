@@ -299,6 +299,7 @@ export class CognitoService {
           throw new UnauthorisedError('Invalid email or password');
         }
       }
+
       throw error;
     }
   }
@@ -352,6 +353,7 @@ export class CognitoService {
           throw new UnauthorisedError('Refresh token is invalid or expired');
         }
       }
+
       throw error;
     }
   }
@@ -400,10 +402,12 @@ export class CognitoService {
         if (error.name === 'NotAuthorizedException') {
           throw new UnauthorisedError('Session expired or invalid');
         }
+
         if (error.name === 'InvalidPasswordException') {
           throw new ValidationError('Password does not meet requirements');
         }
       }
+
       throw error;
     }
   }

@@ -34,6 +34,7 @@ const ALREADY_SUBMITTED_STATUSES: UserAssessmentStatus[] = ['submitted', 'scored
 /** Safely parse a string to FlowStepType, returning fallback if invalid. */
 const toFlowStepType = (value: string, fallback: FlowStepType): FlowStepType => {
   const result = flowStepTypeSchema.safeParse(value);
+
   return result.success ? result.data : fallback;
 };
 

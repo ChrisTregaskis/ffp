@@ -85,9 +85,11 @@ export async function completeJob<TResult extends Record<string, unknown>>(
     if (error instanceof NotFoundError) {
       throw error;
     }
+
     if (error instanceof Error) {
       throw new JobProcessorError(`Failed to complete job ${jobId}`, error);
     }
+
     throw new JobProcessorError(`Failed to complete job ${jobId}`);
   }
 }
@@ -292,6 +294,7 @@ export async function pollAndClaimJobs(config: JobProcessorConfig = {}): Promise
     if (error instanceof Error) {
       throw new JobProcessorError('Failed to poll and claim jobs', error);
     }
+
     throw new JobProcessorError('Failed to poll and claim jobs');
   }
 }

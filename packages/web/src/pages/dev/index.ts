@@ -96,9 +96,8 @@ export const componentCategories: ComponentCategory[] = [
   },
   {
     title: 'Table Components',
-    description: 'Data tables, grids, and lists',
+    description: 'Server-side paginated data tables with sorting and column helpers',
     path: `${basePath}/table`,
-    examples: ['Basic table', 'Sortable table', 'Paginated table'],
-    comingSoon: true,
+    examples: ['Column helpers', 'Sorting', 'Pagination', 'States', 'Actions', 'Column visibility'],
   },
 ];

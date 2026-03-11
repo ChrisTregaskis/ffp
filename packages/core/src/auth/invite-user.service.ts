@@ -68,6 +68,7 @@ export async function inviteUserService(
         'System admins must provide tenantId and customerId when inviting users'
       );
     }
+
     targetTenantId = input.tenantId;
     targetCustomerId = input.customerId;
 
@@ -80,6 +81,7 @@ export async function inviteUserService(
     if (!ctx.tenantId || !ctx.customerId) {
       throw new ValidationError('Customer owner context missing tenantId or customerId');
     }
+
     targetTenantId = ctx.tenantId;
     targetCustomerId = ctx.customerId;
 

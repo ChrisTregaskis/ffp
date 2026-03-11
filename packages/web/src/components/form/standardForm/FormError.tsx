@@ -19,7 +19,9 @@ export interface FormErrorProps {
  * - Accessible error messaging with optional id for aria-describedby
  */
 export const FormError: React.FC<FormErrorProps> = ({ message, id }) => {
-  if (!message) return null;
+  if (!message) {
+    return null;
+  }
 
   return (
     <div id={id} className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md" role="alert">

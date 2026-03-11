@@ -38,11 +38,15 @@ const patternToRegex = (pattern: string): { regex: RegExp; paramNames: string[] 
   const regexStr = pattern
     .replace(/[.*+?^${}()|[\]\\]/g, (char) => {
       // Don't escape our {param} braces - handle them specially
-      if (char === '{' || char === '}') return char;
+      if (char === '{' || char === '}') {
+        return char;
+      }
+
       return `\\${char}`;
     })
     .replace(/\{([^}]+)\}/g, (_, paramName: string) => {
       paramNames.push(paramName);
+
       return '([^/]+)'; // Capture group for path segment
     });
 

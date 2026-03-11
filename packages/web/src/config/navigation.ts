@@ -12,6 +12,19 @@ const CUSTOMER_ADMIN = USER_ROLE.CUSTOMER_ADMIN;
 const SYSTEM_ADMIN = USER_ROLE.SYSTEM_ADMIN;
 
 /**
+ * Context-aware navigation item for routes that override the default sidebar.
+ * Used for sub-pages
+ */
+export interface ContextNavItem {
+  /** Display label */
+  label: string;
+  /** Icomoon icon name */
+  icon: IconName;
+  /** URL path to navigate to */
+  path: string;
+}
+
+/**
  * Navigation item configuration
  */
 export interface NavItem {

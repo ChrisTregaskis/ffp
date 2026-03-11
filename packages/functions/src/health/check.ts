@@ -27,6 +27,7 @@ export const handler = (_event: APIGatewayProxyEventV2): Promise<APIGatewayProxy
     });
   } catch (error) {
     console.error('Health check error:', error);
+
     return Promise.resolve({
       statusCode: 500,
       headers: {

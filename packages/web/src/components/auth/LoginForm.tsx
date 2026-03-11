@@ -39,6 +39,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       if (onClearError) {
         onClearError();
       }
+
       await onSubmit(data);
     },
     [onClearError, onSubmit]

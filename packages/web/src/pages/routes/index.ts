@@ -1,5 +1,6 @@
 import type { UserRole } from '@ffp/core';
 
+import type { ContextNavItem } from '@web/config/navigation';
 import { USER_ROLE } from '@web/constants/roles';
 import { ComingSoonPage } from '@web/pages/ComingSoonPage';
 import { AssessmentProgressComponentsPage } from '@web/pages/dev/AssessmentProgressComponentsPage';
@@ -15,8 +16,12 @@ import { LoadingSpinnerComponentsPage } from '@web/pages/dev/LoadingSpinnerCompo
 import { LogoComponentsPage } from '@web/pages/dev/LogoComponentsPage';
 import { MotionShowcasePage } from '@web/pages/dev/MotionShowcasePage';
 import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsPage';
+import { TableComponentsPage } from '@web/pages/dev/TableComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
+import { VideoEditPage } from '@web/pages/protected/admin/video-edit';
+import { VideoUploadPage } from '@web/pages/protected/admin/video-upload';
+import { VideoLibraryPage } from '@web/pages/protected/admin/VideoLibraryPage';
 import { HomePage } from '@web/pages/protected/HomePage';
 import { AccountSettingsPage } from '@web/pages/protected/programme-user/AccountSettingsPage';
 import { AssessmentPage } from '@web/pages/protected/programme-user/AssessmentPage';
@@ -60,6 +65,8 @@ export interface AppRoute {
   devOnly?: boolean;
   /** Roles permitted to access this route (undefined = all authenticated users) */
   allowedRoles?: UserRole[];
+  /** Context-aware sidebar navigation items (overrides default role-based nav when present) */
+  contextNavItems?: ContextNavItem[];
 }
 
 /**
@@ -68,6 +75,7 @@ export interface AppRoute {
  */
 export type RoutesConfig = Record<RouteKey, AppRoute>;
 
+const adminBasePath = '/admin';
 const componentsBasePath = '/components';
 
 // Destructure user roles for easier reference
@@ -208,7 +216,7 @@ export const routes: RoutesConfig = {
 
   // System Admin Routes (placeholders)
   [RouteKey.ADMIN_CUSTOMERS]: {
-    path: '/admin/customers',
+    path: `${adminBasePath}/customers`,
     pageComponent: () =>
       ComingSoonPage({
         title: 'Customers',
@@ -219,7 +227,7 @@ export const routes: RoutesConfig = {
     allowedRoles: [SYSTEM_ADMIN],
   },
   [RouteKey.ADMIN_USERS]: {
-    path: '/admin/users',
+    path: `${adminBasePath}/users`,
     pageComponent: () =>
       ComingSoonPage({
         title: 'Users',
@@ -230,7 +238,7 @@ export const routes: RoutesConfig = {
     allowedRoles: [SYSTEM_ADMIN],
   },
   [RouteKey.ADMIN_ASSESSMENTS]: {
-    path: '/admin/assessments',
+    path: `${adminBasePath}/assessments`,
     pageComponent: () =>
       ComingSoonPage({
         title: 'Assessments',
@@ -241,7 +249,7 @@ export const routes: RoutesConfig = {
     allowedRoles: [SYSTEM_ADMIN],
   },
   [RouteKey.ADMIN_TEMPLATES]: {
-    path: '/admin/templates',
+    path: `${adminBasePath}/templates`,
     pageComponent: () =>
       ComingSoonPage({
         title: 'Session Templates',
@@ -252,15 +260,30 @@ export const routes: RoutesConfig = {
     allowedRoles: [SYSTEM_ADMIN],
   },
   [RouteKey.ADMIN_VIDEOS]: {
-    path: '/admin/videos',
-    pageComponent: () =>
-      ComingSoonPage({
-        title: 'Video Library',
-        description: 'Manage exercise video library',
-        icon: 'Video',
-      }),
+    path: `${adminBasePath}/videos`,
+    pageComponent: VideoLibraryPage,
     title: 'Video Library',
     allowedRoles: [SYSTEM_ADMIN],
+  },
+  [RouteKey.ADMIN_VIDEO_UPLOAD]: {
+    path: `${adminBasePath}/videos/upload`,
+    pageComponent: VideoUploadPage,
+    title: 'Upload Video',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      { label: 'Back to Video Library', icon: 'ArrowLeft', path: `${adminBasePath}/videos` },
+    ],
+  },
+  [RouteKey.ADMIN_VIDEO_EDIT]: {
+    path: `${adminBasePath}/videos/:id`,
+    pageComponent: VideoEditPage,
+    title: 'Edit Video',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      { label: 'Back to Video Library', icon: 'ArrowLeft', path: `${adminBasePath}/videos` },
+    ],
   },
 
   // Development-only routes (component showcase)
@@ -381,6 +404,14 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: ToastAlertComponentsPage,
     title: 'Toast Alert Components',
+    excludeFromMainNavbar: true,
+    devOnly: true,
+  },
+  [RouteKey.COMPONENTS_TABLE]: {
+    path: `${componentsBasePath}/table`,
+    public: true,
+    pageComponent: TableComponentsPage,
+    title: 'Table Components',
     excludeFromMainNavbar: true,
     devOnly: true,
   },

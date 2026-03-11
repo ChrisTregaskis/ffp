@@ -56,6 +56,7 @@ function getSigningConfig(): VideoSigningConfig {
       'Video signing configuration not initialised. Call setVideoSigningConfig() at Lambda cold start.'
     );
   }
+
   return cachedConfig;
 }
 

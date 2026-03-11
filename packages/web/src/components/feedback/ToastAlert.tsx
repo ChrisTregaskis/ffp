@@ -72,7 +72,9 @@ export const ToastAlert: React.FC<ToastAlertProps> = ({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (duration <= 0) return;
+    if (duration <= 0) {
+      return;
+    }
 
     timerRef.current = setTimeout(() => {
       onDismiss(id);

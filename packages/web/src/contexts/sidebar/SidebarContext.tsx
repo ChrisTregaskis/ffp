@@ -12,6 +12,7 @@ export const SidebarProvider: React.FC<PropsWithChildren> = ({ children }) => {
   // Load collapsed state from localStorage
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
+
     return stored === 'true';
   });
 

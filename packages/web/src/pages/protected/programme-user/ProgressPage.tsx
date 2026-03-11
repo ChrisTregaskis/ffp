@@ -5,6 +5,7 @@ import { SectionHeader, SectionPanel } from '@web/components/assessment';
 import { Button } from '@web/components/button';
 import { Card } from '@web/components/Card';
 import { Icons } from '@web/components/Icon';
+import { PageContainer, PageHeader } from '@web/components/layout';
 import { Text, Title } from '@web/components/text';
 import { useUserAssessmentStatusQuery } from '@web/hooks/assessments';
 import { routes, RouteKey } from '@web/pages/routes';
@@ -20,7 +21,9 @@ export const ProgressPage: React.FC = () => {
   const { data: assessmentStatus } = useUserAssessmentStatusQuery();
 
   const handleStartReassessment = (): void => {
-    if (!assessmentStatus?.assessmentFlowId) return;
+    if (!assessmentStatus?.assessmentFlowId) {
+      return;
+    }
 
     // One-time flag consumed by AssessmentOrchestrator to distinguish
     // an intentional CTA click from a page reload (which should resume).
@@ -31,15 +34,11 @@ export const ProgressPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <Title as="h1" colour="foreground" className="mb-2">
-          Progress & Analytics
-        </Title>
-        <Text styleProps={{ size: 'base', colour: 'muted-foreground' }}>
-          Track your workout progress and view performance analytics
-        </Text>
-      </div>
+    <PageContainer centred>
+      <PageHeader
+        title="Progress & Analytics"
+        subtitle="Track your workout progress and view performance analytics"
+      />
 
       {/* Reassessment CTA */}
       <SectionPanel className="mb-6 p-6">
@@ -71,6 +70,6 @@ export const ProgressPage: React.FC = () => {
           </Text>
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 };

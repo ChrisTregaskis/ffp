@@ -58,6 +58,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ navItems, className = ''
     // passive: true essentially means we commit to not preventing default scroll behaviour.
     // This helps avoid janky behaviour
     window.addEventListener('scroll', handleScroll, { passive: true });
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };

@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { Icon, type IconColour, type IconSize } from '@web/components/Icon/Icon';
 import type { IconName } from '@web/components/Icon/types';
 

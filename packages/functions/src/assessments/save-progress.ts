@@ -20,6 +20,7 @@ export const handler = withErrorHandling(
 
     // Extract assessmentId from path parameters
     const assessmentId = event.pathParameters?.id;
+
     if (!assessmentId) {
       throw new ValidationError('Assessment ID is required in path');
     }

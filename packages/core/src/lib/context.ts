@@ -356,6 +356,7 @@ export function getActorDisplayName(actor: Actor): string {
   if (isUserActor(actor)) {
     return `${actor.email} (${actor.userRole})`;
   }
+
   return `System: ${actor.systemId}`;
 }
 

@@ -161,7 +161,9 @@ async function createProgrammePhasesInTx(
   tx: Transaction,
   phases: NewProgrammePhase[]
 ): Promise<void> {
-  if (phases.length === 0) return;
+  if (phases.length === 0) {
+    return;
+  }
 
   await tx.insert(programmePhases).values(phases);
 }
@@ -296,7 +298,9 @@ export async function createProgrammePhases(
   phases: NewProgrammePhase[],
   options: CreateProgrammePhasesOptions = {}
 ): Promise<void> {
-  if (phases.length === 0) return;
+  if (phases.length === 0) {
+    return;
+  }
 
   const { tx } = options;
 

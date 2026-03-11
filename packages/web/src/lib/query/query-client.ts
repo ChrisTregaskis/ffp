@@ -13,11 +13,14 @@ import { minutesToMs } from '@web/utils/time';
  */
 const shouldRetry = (failureCount: number, error: unknown): boolean => {
   // Stop after 3 retries
-  if (failureCount >= 3) return false;
+  if (failureCount >= 3) {
+    return false;
+  }
 
   // Check for HTTP error status codes
   if (error && typeof error === 'object' && 'status' in error) {
     const status = (error as { status: number }).status;
+
     return RETRYABLE_STATUS_CODES.has(status);
   }
 

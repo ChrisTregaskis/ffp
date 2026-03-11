@@ -63,6 +63,7 @@ export const assessmentQuestionSchema = z
       if (data.type === 'video-response') {
         return !!data.videoId;
       }
+
       return true;
     },
     {
@@ -76,6 +77,7 @@ export const assessmentQuestionSchema = z
       if (data.type === 'single-choice' || data.type === 'multi-choice') {
         return data.options && data.options.length >= 2;
       }
+
       return true;
     },
     {

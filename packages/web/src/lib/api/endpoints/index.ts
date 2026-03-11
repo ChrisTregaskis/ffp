@@ -1,3 +1,12 @@
+export { adminVideosApi } from './admin-videos';
+export type {
+  CreateVideoInput,
+  PaginatedAdminVideoResponse,
+  UpdateVideoInput,
+  UploadUrlRequest,
+  UploadUrlResponse,
+} from './admin-videos';
+
 export { assessmentsApi } from './assessments';
 export type {
   AssessmentFlow,
@@ -13,5 +22,11 @@ export type {
 export { programmesApi } from './programmes';
 export type { ActiveProgrammeResponse } from './programmes';
 
-// Future exports:
-// export { usersApi } from './users';
+export { videosApi } from './videos';
+export type {
+  SignedVideoUrlResponse,
+  VideoDetailResponse,
+  VideoFilterInput,
+  VideoListApiResponse,
+  VideoListResponse,
+} from './videos';

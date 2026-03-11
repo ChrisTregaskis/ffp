@@ -35,6 +35,7 @@ export const SlideWidth: React.FC<SlideWidthProps> = ({
       if (typeof width === 'number') {
         return `${String(width)}px`;
       }
+
       return width;
     };
 

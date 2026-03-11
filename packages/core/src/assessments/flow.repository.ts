@@ -85,6 +85,7 @@ export async function findActiveById(flowId: string): Promise<AssessmentFlow | n
 function extractDefaultFlowId(settings: unknown): string | null {
   if (typeof settings === 'object' && settings !== null) {
     const obj = settings as Record<string, unknown>;
+
     if (typeof obj.defaultAssessmentFlowId === 'string') {
       return obj.defaultAssessmentFlowId;
     }

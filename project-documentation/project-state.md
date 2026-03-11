@@ -1,16 +1,17 @@
 # FFP - Project State
 
-**Last Updated**: 3rd March 2026
+**Last Updated**: 11th March 2026
 **Current EPIC**: FFP-3 Video Management
-**Sprint Status**: Sprint 8 - Video UI & Integration (next)
+**Sprint Status**: Sprint 8 - Video UI & Integration (complete)
 
 ---
 
-## Next: Sprint 8 - Video UI & Integration (~27 pts)
+## Active: Sprint 8 - Video UI & Integration (~27 pts)
 
-**Dates**: TBD
+**Dates**: 4th March - 24th March 2026
 **Sprint Goal**: Admin video upload/management UI, video player component, integration verification, documentation update.
 **Epic**: FFP-3 Video Management
+**Branch**: `feature/sprint8`
 
 **Key documents**:
 
@@ -18,17 +19,89 @@
 - `.claude/research/ffp-3-epic-plan.md` - Final epic plan (stories, ACs, subtasks, sprint allocation)
 - `.claude/research/programme-data-model-research.md` - Authoritative programme data model
 
-**Planned stories** (from FFP-3 epic plan):
-
-- FFP-320 — Admin Video Upload & Management UI
-- FFP-141 — Video Player Component
-- Integration verification & documentation update stories
-
 **Prerequisites from Sprint 7** (all met):
 
 - Video catalogue schema + APIs (FFP-282, FFP-300)
 - CloudFront OAC + signed URL infrastructure (FFP-288, FFP-294)
 - Programme-video relationship schema + service evolution (FFP-307)
+
+---
+
+### FFP-337: Video Player Component (5 SP) — COMPLETE
+
+**Branch**: `feature/ffp-337-video-player-component` (merged)
+**Deliverables**: VideoPlayer component (dual-mode: videoId/src), TanStack Query hooks (`useVideosQuery`, `useVideoQuery`, `useVideoSignedUrlQuery`), `videosApi` client, loading/error/retry states, responsive styling.
+
+---
+
+### FFP-437: Reusable Table Component & Backend Pagination Pattern (5 SP) — COMPLETE
+
+**Branch**: `feature/ffp-437-table-component`
+**Deliverables**: Backend pagination schemas (`paginationInputSchema`, `paginationMetaSchema`, `createPaginatedResponseSchema`, `buildPaginationMeta`) + `applyPagination` Drizzle helper. Frontend `Table` component (TanStack Table v8 wrapper with `manualPagination`/`manualSorting`), `createColumns<T>()` factory (7 cell components: TextCell, NumberCell, DateCell, StatusCell, TagsCell, DurationCell, ActionsCell), `useApiTable` hook (300ms debounce, page reset on sort change, memoised queryParams). Sub-components: TableHeader, SortIndicator, TableBody, TablePagination, PageSizeSelect, TableColumnVisibility, TableControls, TableLoading/TableEmpty/TableError states.
+
+**DRY refactoring pass**: `useClickOutside` hook (shared by 4 components), headless `BaseSelect` (Select + FormSelect are thin wrappers), `ButtonProps` extended with native HTML attributes, `DropdownMenu` uses `Button` + `renderContent` prop, `TablePagination` uses `Button`, alignment utility functions for table columns. `Panel` primitive (lightweight surface for toolbars/control bars). `SearchInput` clear button uses `IconButton`. `formatDate` and `formatDuration` lifted to shared `utils/format.ts`.
+
+**Key design decisions**: Filters external to table (page-level), server-side only, actions as column helper, `Intl.DateTimeFormat('en-GB')` for dates, pagination schemas browser-safe via `@ffp/core`, Drizzle helper server-only via `@ffp/core/server`.
+
+---
+
+### FFP-329: Admin Video Metadata Management (8 SP) — ✅ COMPLETE
+
+**Branch**: `feature/ffp-329-vid-metadata-management-implementation` (merged)
+**Deliverables**: Full-stack admin CRUD for video catalogue — list all videos (paginated, filtered, all statuses), edit metadata, status transitions (`draft→active→archived`, restore), inline video preview.
+
+- **Backend**: `GET /admin/videos` (paginated, filtered), `PUT /admin/videos/{id}` (partial update + status transitions), admin video filter schema, `findAllVideos` + `updateVideo` repository/service fns
+- **Frontend**: `VideoLibraryPage` with `Table` + `TableControls` (search, status/difficulty filters, column visibility), `VideoEditPage` with `VideoEditFormFields` + inline `VideoPlayer` preview, `useAdminVideosQuery`, `useUpdateVideoMutation`, `ArchiveVideoModal`, list quick-actions (Edit, Publish, Archive, Restore)
+- **Shared components**: `PageState` (loading/error), `ContentPanel`, `DropdownMenu`, `ComposableForm`
+
+---
+
+### FFP-343: Sprint 8 Integration & Verification (3 SP) — ✅ COMPLETE
+
+**Deliverables**: Manual E2E verification (upload → metadata → activate → signed URL → playback), OAC security verification (direct S3 blocked, unsigned CloudFront rejected), Postman collection updated (all 7 video endpoints), project documentation updated.
+
+---
+
+### FFP-320: Admin Video Upload (8 pts) — ✅ COMPLETE
+
+**Summary**: Browser-to-S3 video upload with presigned PUT URLs, metadata form, optional thumbnail, and video record creation.
+
+**Key deliverables**:
+
+- **Backend**: `POST /admin/videos/upload-url` (presigned S3 PUT), `POST /admin/videos` (create record), `DELETE /admin/videos/:id` (hard delete + S3 cleanup)
+- **Upload page**: Dedicated `/admin/videos/upload` page with drag-and-drop, XHR progress bar, metadata form (title, description, movement type, difficulty, body parts, equipment, tags, duration), optional thumbnail
+- **State management**: `useVideoUpload` hook with `useReducer` — phases: `idle` | `uploading` | `creating` | `success` | `error`
+- **Form infrastructure**: `FormTextarea`, `FormSelect`, `FormTagInput` components; `TEXTAREA`, `SELECT`, `TAG_INPUT` field types
+- **Reusable components**: `Modal`, `PageContainer`, `PageHeader`, `StatusResult`, context-aware sidebar navigation
+- **Infrastructure**: VideosBucket + AssetsBucket CORS updated for PUT; admin Lambda has `s3:PutObject` + `s3:DeleteObject` permissions
+
+---
+
+## Planned: FFP-439 — Admin Programme Template Management (~34 pts)
+
+**Status**: Epic and stories created in Jira. Subtasks pending. Scheduled after FFP-3 completes.
+**Epic**: FFP-439
+**Estimated Sprint**: Sprint 9 (single sprint)
+
+**Business value**: Enable system admins to create, edit, and manage programme templates via the admin UI. Currently templates are only populated via seed data — no APIs or admin interface exist.
+
+**Key design decision**: Extend `videos` table with default exercise prescription fields (sets, reps, duration, rest, notes) rather than introducing a separate exercise entity. Videos are exercise demonstrations — the video catalogue effectively is the exercise library. Prescription pre-populates from video defaults when adding to a session, overridable per-session.
+
+**Stories (7)**:
+
+| Key     | Summary                                        | SP  | Labels                      |
+| ------- | ---------------------------------------------- | --- | --------------------------- |
+| FFP-441 | Video default exercise prescription fields     | 3   | backend, frontend, database |
+| FFP-442 | Programme template backend APIs                | 5   | backend                     |
+| FFP-443 | Phase & session backend APIs (CRUD + reorder)  | 5   | backend                     |
+| FFP-444 | Session exercise backend APIs (CRUD + reorder) | 5   | backend                     |
+| FFP-445 | Programme template admin list page             | 5   | frontend                    |
+| FFP-446 | Template detail & hierarchy editing UI         | 8   | frontend                    |
+| FFP-447 | Integration verification & documentation       | 3   | testing, documentation      |
+
+**Dependencies**: FFP-3 (Video Management) must be complete. Existing DB schema for all template tables (Sprint 7). Table component (FFP-437).
+
+**Out of scope**: Drag-and-drop reordering (MVP uses move up/down), template duplication/cloning, template versioning, bulk import/export.
 
 ---
 
@@ -200,12 +273,12 @@ await db.transaction(async (tx) => {
 
 - ✅ FFP-1: Application Setup & Foundation
 - ✅ FFP-2: Assessment Engine (Sprints 3-6)
-- 🏃 FFP-3: Video Management (Sprint 7-8) — Sprint 7 complete, Sprint 8 next
+- ✅ FFP-3: Video Management (Sprint 7-8)
+- ⏳ FFP-439: Admin Programme Template Management (~34 pts, 1 sprint) — after FFP-3, before FFP-4
 - ⏳ FFP-4: Programme Execution & Progress
 - ⏳ FFP-109: Deployment Readiness (staging + production)
 - ⏳ FFP-6: Customer & User Onboarding
 
 ---
 
-**For session history**: `progress-log.md`
 **For implementation details**: domain-specific docs in `project-documentation/`

@@ -43,6 +43,10 @@ export enum RouteKey {
   ADMIN_TEMPLATES = 'admin-templates',
   /** Admin video library management page */
   ADMIN_VIDEOS = 'admin-videos',
+  /** Admin video upload page */
+  ADMIN_VIDEO_UPLOAD = 'admin-video-upload',
+  /** Admin video edit page */
+  ADMIN_VIDEO_EDIT = 'admin-video-edit',
 
   // Development-only component showcase routes (excluded in production)
   /** Component showcase landing page */
@@ -75,4 +79,6 @@ export enum RouteKey {
   COMPONENTS_ASSESSMENT_SCREENS = 'components-assessment-screens',
   /** Toast alert components showcase */
   COMPONENTS_TOAST_ALERT = 'components-toast-alert',
+  /** Table components showcase */
+  COMPONENTS_TABLE = 'components-table',
 }
