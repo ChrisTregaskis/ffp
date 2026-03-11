@@ -88,7 +88,7 @@ Frontend:
 - `VideoLibraryPage.tsx` — replace placeholder with `Table` + `TableControls` + column definitions
 - `/admin/videos/:id` edit page — reuse `VideoMetadataFormFields`, status dropdown, `useUpdateVideoMutation`
 - Status quick-actions in list `ActionsCell` (Publish, Archive) + confirmation dialog for archiving
-- Video preview modal — `VideoPlayer` + `useVideoSignedUrlQuery` in `Modal`
+- Inline video preview on edit page — `VideoPlayer` + `useVideoSignedUrlQuery` above form
 
 **Amended requirements**:
 
@@ -96,7 +96,7 @@ Frontend:
 - **FFP-333**: Dedicated edit page at `/admin/videos/:id` (not modal) — consistent with upload being a dedicated page. No `/edit` suffix: admin context implies editing, no read-only detail view planned.
 - **FFP-334**: Merges into FFP-333 (status field in edit form) and FFP-332 (quick-action buttons in `ActionsCell`). Not a separate UI concern — status is just a field on the update API.
 - **FFP-335**: Merges into FFP-330 (backend filter params) and FFP-332 (frontend `TableControls`). Server-side filtering via query params on `GET /admin/videos`. Filter UI uses `TableControls` from FFP-437 (search input with debounce, filter dropdowns) — page-level, external to Table. Building filters alongside the table from the start is more natural than retrofitting.
-- **FFP-336**: `VideoPlayer` and `useVideoSignedUrlQuery` already exist — just wire into a preview modal on the list page.
+- **FFP-336**: `VideoPlayer` and `useVideoSignedUrlQuery` already exist — render inline on edit page above the form (not a modal, no list page preview action).
 - Tests deferred until MVP launch per sprint policy.
 
 #### Execution Order
@@ -106,7 +106,7 @@ Frontend:
 | 1     | FFP-330 + FFP-331 | Backend APIs (list + update)         | ✅ DONE. FFP-330: `GET /admin/videos` (paginated, filtered). FFP-331: `PUT /admin/videos/{id}` (partial update, status transitions: draft→active, active→archived, archived→draft/active). Postman requests added for both.                                                                                                                                                                                                       |
 | 2     | FFP-332 + FFP-335 | Video list page with Table + filters | ✅ DONE. `adminVideosApi.list()`, `useAdminVideosQuery`, `useApiTable`, `Table` with 9 columns + `TableControls` (search + status/difficulty filters). Default visibility hides movementType/updatedAt/tags. Context-aware empty state.                                                                                                                                                                                           |
 | 3     | FFP-333 + FFP-334 | Edit page + status management        | ✅ DONE. `/admin/videos/:id` edit page with `VideoEditFormFields` (reuses `VideoMetadataFormFields` + status dropdown via `additionalFields` slot), `useUpdateVideoMutation`, `ArchiveVideoModal` (shared). List quick-actions: Edit, Publish, Archive (confirm), Restore. Edit page loads all statuses via `?include_inactive=true`. `PageState` component for loading/error states. Sticky table header, dropdown overflow fix. |
-| 4     | FFP-336           | Video preview modal                  | Preview button in `ActionsCell`, `Modal` + `VideoPlayer`, reuse `useVideoSignedUrlQuery`.                                                                                                                                                                                                                                                                                                                                         |
+| 4     | FFP-336           | Inline video preview on edit page    | `VideoPlayer` + `useVideoSignedUrlQuery` rendered above form on edit page. No list page preview action — users navigate to edit page to preview.                                                                                                                                                                                                                                                                                  |
 | —     | —                 | Manual verification                  | E2E: upload → list → filter → edit → status change → preview. Verify all statuses visible in admin list.                                                                                                                                                                                                                                                                                                                          |
 
 ---
