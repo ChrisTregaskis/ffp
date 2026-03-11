@@ -1,180 +1,101 @@
 # FFP - Project State
 
 **Last Updated**: 11th March 2026
-**Current EPIC**: FFP-3 Video Management
-**Sprint Status**: Sprint 8 - Video UI & Integration (complete)
+**Current EPIC**: FFP-439 Admin Programme Template Management
+**Sprint Status**: Sprint 9 - Programme Template (starting)
 
 ---
 
-## Active: Sprint 8 - Video UI & Integration (~27 pts)
+## Active: Sprint 9 - Programme Template (~34 pts)
 
-**Dates**: 4th March - 24th March 2026
-**Sprint Goal**: Admin video upload/management UI, video player component, integration verification, documentation update.
-**Epic**: FFP-3 Video Management
-**Branch**: `feature/sprint8`
+**Dates**: 12th March – 2nd April 2026
+**Sprint Goal**: Full CRUD for admin programme template hierarchy — templates, phases, sessions, exercises — with video default prescription fields and admin UI.
+**Epic**: FFP-439 (Admin Programme Template Management)
+**Branch**: `feature/sprint9`
+
+**Execution plan**: `.claude/plans/sprint-9-execution-plan.md`
 
 **Key documents**:
 
-- `.claude/research/video-management-research.md` - Video infrastructure research & confirmed decisions
-- `.claude/research/ffp-3-epic-plan.md` - Final epic plan (stories, ACs, subtasks, sprint allocation)
-- `.claude/research/programme-data-model-research.md` - Authoritative programme data model
+- `.claude/research/programme/programme-data-model-research.md` - Authoritative programme data model
+- `.claude/plans/sprint-9-execution-plan.md` - Full dependency graph, worktree assessment, subtask breakdown
 
-**Prerequisites from Sprint 7** (all met):
+**Prerequisites** (all met):
 
-- Video catalogue schema + APIs (FFP-282, FFP-300)
-- CloudFront OAC + signed URL infrastructure (FFP-288, FFP-294)
-- Programme-video relationship schema + service evolution (FFP-307)
-
----
-
-### FFP-337: Video Player Component (5 SP) — COMPLETE
-
-**Branch**: `feature/ffp-337-video-player-component` (merged)
-**Deliverables**: VideoPlayer component (dual-mode: videoId/src), TanStack Query hooks (`useVideosQuery`, `useVideoQuery`, `useVideoSignedUrlQuery`), `videosApi` client, loading/error/retry states, responsive styling.
-
----
-
-### FFP-437: Reusable Table Component & Backend Pagination Pattern (5 SP) — COMPLETE
-
-**Branch**: `feature/ffp-437-table-component`
-**Deliverables**: Backend pagination schemas (`paginationInputSchema`, `paginationMetaSchema`, `createPaginatedResponseSchema`, `buildPaginationMeta`) + `applyPagination` Drizzle helper. Frontend `Table` component (TanStack Table v8 wrapper with `manualPagination`/`manualSorting`), `createColumns<T>()` factory (7 cell components: TextCell, NumberCell, DateCell, StatusCell, TagsCell, DurationCell, ActionsCell), `useApiTable` hook (300ms debounce, page reset on sort change, memoised queryParams). Sub-components: TableHeader, SortIndicator, TableBody, TablePagination, PageSizeSelect, TableColumnVisibility, TableControls, TableLoading/TableEmpty/TableError states.
-
-**DRY refactoring pass**: `useClickOutside` hook (shared by 4 components), headless `BaseSelect` (Select + FormSelect are thin wrappers), `ButtonProps` extended with native HTML attributes, `DropdownMenu` uses `Button` + `renderContent` prop, `TablePagination` uses `Button`, alignment utility functions for table columns. `Panel` primitive (lightweight surface for toolbars/control bars). `SearchInput` clear button uses `IconButton`. `formatDate` and `formatDuration` lifted to shared `utils/format.ts`.
-
-**Key design decisions**: Filters external to table (page-level), server-side only, actions as column helper, `Intl.DateTimeFormat('en-GB')` for dates, pagination schemas browser-safe via `@ffp/core`, Drizzle helper server-only via `@ffp/core/server`.
-
----
-
-### FFP-329: Admin Video Metadata Management (8 SP) — ✅ COMPLETE
-
-**Branch**: `feature/ffp-329-vid-metadata-management-implementation` (merged)
-**Deliverables**: Full-stack admin CRUD for video catalogue — list all videos (paginated, filtered, all statuses), edit metadata, status transitions (`draft→active→archived`, restore), inline video preview.
-
-- **Backend**: `GET /admin/videos` (paginated, filtered), `PUT /admin/videos/{id}` (partial update + status transitions), admin video filter schema, `findAllVideos` + `updateVideo` repository/service fns
-- **Frontend**: `VideoLibraryPage` with `Table` + `TableControls` (search, status/difficulty filters, column visibility), `VideoEditPage` with `VideoEditFormFields` + inline `VideoPlayer` preview, `useAdminVideosQuery`, `useUpdateVideoMutation`, `ArchiveVideoModal`, list quick-actions (Edit, Publish, Archive, Restore)
-- **Shared components**: `PageState` (loading/error), `ContentPanel`, `DropdownMenu`, `ComposableForm`
-
----
-
-### FFP-343: Sprint 8 Integration & Verification (3 SP) — ✅ COMPLETE
-
-**Deliverables**: Manual E2E verification (upload → metadata → activate → signed URL → playback), OAC security verification (direct S3 blocked, unsigned CloudFront rejected), Postman collection updated (all 7 video endpoints), project documentation updated.
-
----
-
-### FFP-320: Admin Video Upload (8 pts) — ✅ COMPLETE
-
-**Summary**: Browser-to-S3 video upload with presigned PUT URLs, metadata form, optional thumbnail, and video record creation.
-
-**Key deliverables**:
-
-- **Backend**: `POST /admin/videos/upload-url` (presigned S3 PUT), `POST /admin/videos` (create record), `DELETE /admin/videos/:id` (hard delete + S3 cleanup)
-- **Upload page**: Dedicated `/admin/videos/upload` page with drag-and-drop, XHR progress bar, metadata form (title, description, movement type, difficulty, body parts, equipment, tags, duration), optional thumbnail
-- **State management**: `useVideoUpload` hook with `useReducer` — phases: `idle` | `uploading` | `creating` | `success` | `error`
-- **Form infrastructure**: `FormTextarea`, `FormSelect`, `FormTagInput` components; `TEXTAREA`, `SELECT`, `TAG_INPUT` field types
-- **Reusable components**: `Modal`, `PageContainer`, `PageHeader`, `StatusResult`, context-aware sidebar navigation
-- **Infrastructure**: VideosBucket + AssetsBucket CORS updated for PUT; admin Lambda has `s3:PutObject` + `s3:DeleteObject` permissions
-
----
-
-## Planned: FFP-439 — Admin Programme Template Management (~34 pts)
-
-**Status**: Epic and stories created in Jira. Subtasks pending. Scheduled after FFP-3 completes.
-**Epic**: FFP-439
-**Estimated Sprint**: Sprint 9 (single sprint)
-
-**Business value**: Enable system admins to create, edit, and manage programme templates via the admin UI. Currently templates are only populated via seed data — no APIs or admin interface exist.
+- ✅ FFP-3 (Video Management) complete — video catalogue, CloudFront signed URLs, admin CRUD
+- ✅ Programme template DB schema (Sprint 7) — `programme_templates`, `template_phases`, `template_sessions`, `session_exercises`
+- ✅ Table component + pagination pattern (FFP-437)
+- ✅ Seed data — Gentle Mobility Programme hierarchy (4 phases, 12 sessions, 40 exercises)
 
 **Key design decision**: Extend `videos` table with default exercise prescription fields (sets, reps, duration, rest, notes) rather than introducing a separate exercise entity. Videos are exercise demonstrations — the video catalogue effectively is the exercise library. Prescription pre-populates from video defaults when adding to a session, overridable per-session.
 
-**Stories (7)**:
+### Execution Order
 
-| Key     | Summary                                        | SP  | Labels                      |
-| ------- | ---------------------------------------------- | --- | --------------------------- |
-| FFP-441 | Video default exercise prescription fields     | 3   | backend, frontend, database |
-| FFP-442 | Programme template backend APIs                | 5   | backend                     |
-| FFP-443 | Phase & session backend APIs (CRUD + reorder)  | 5   | backend                     |
-| FFP-444 | Session exercise backend APIs (CRUD + reorder) | 5   | backend                     |
-| FFP-445 | Programme template admin list page             | 5   | frontend                    |
-| FFP-446 | Template detail & hierarchy editing UI         | 8   | frontend                    |
-| FFP-447 | Integration verification & documentation       | 3   | testing, documentation      |
-
-**Dependencies**: FFP-3 (Video Management) must be complete. Existing DB schema for all template tables (Sprint 7). Table component (FFP-437).
+| Phase | Track        | Key     | Summary                                    | Pts | Status |
+| ----- | ------------ | ------- | ------------------------------------------ | --- | ------ |
+| 1     | Main         | FFP-441 | Video default exercise prescription fields | 3   | To Do  |
+| 1     | Main         | FFP-442 | Programme template backend APIs            | 5   | To Do  |
+| 2     | Main         | FFP-443 | Phase & session backend APIs               | 5   | To Do  |
+| 2     | **Worktree** | FFP-445 | Programme template admin list page         | 5   | To Do  |
+| 3     | Main         | FFP-444 | Session exercise backend APIs              | 5   | To Do  |
+| 4     | Main         | FFP-446 | Template detail & hierarchy editing UI     | 8   | To Do  |
+| 5     | Main         | FFP-447 | Integration verification & documentation   | 3   | To Do  |
 
 **Out of scope**: Drag-and-drop reordering (MVP uses move up/down), template duplication/cloning, template versioning, bulk import/export.
 
 ---
 
-## Completed: Sprint 7 - Video Infrastructure & APIs (~28 pts)
+## Completed: FFP-3 Video Management (Sprints 7-8, ~55 pts)
 
-**Dates**: 23rd February - 3rd March 2026
-**Sprint Goal**: Video catalogue schema, CloudFront signed URLs, video APIs, programme-video relationships.
-**Epic**: FFP-3 Video Management
+**Dates**: 23rd February – 24th March 2026
+**Sprint Goal**: Video catalogue, CloudFront signed URLs, admin upload/management UI, video player, programme-video relationships.
 
-| Key     | Story                                                   | Pts | Status |
-| ------- | ------------------------------------------------------- | --- | ------ |
-| FFP-282 | Video Catalogue Database Schema                         | 5   | Done   |
-| FFP-288 | CloudFront OAC & Signed URL Infrastructure              | 5   | Done   |
-| FFP-294 | Signed URL Generation Service                           | 5   | Done   |
-| FFP-300 | Video Catalogue APIs                                    | 5   | Done   |
-| FFP-307 | Programme-Video Relationship Schema & Service Evolution | 8   | Done   |
+| Sprint | Focus                  | Pts | Key Stories                                                                       |
+| ------ | ---------------------- | --- | --------------------------------------------------------------------------------- |
+| 7      | Infrastructure & APIs  | 28  | Video schema, CloudFront OAC, signed URLs, catalogue APIs, programme-video schema |
+| 8      | Admin UI & Integration | 27  | Video player, table component, admin CRUD, upload, verification                   |
 
-### Key Deliverables (Sprint 7)
+### Key Deliverables
 
-- **Video catalogue**: Drizzle schema with GIN indexes, 10 seed videos, list/filter/get APIs, Postman collection
+- **Video catalogue**: Drizzle schema with GIN indexes, 10 seed videos, list/filter/get APIs
 - **CloudFront signed URLs**: RSA key pair, SST OAC + Key Group, `video-signing.service.ts` with key caching
-- **Programme structure**: 4 new DB tables (`template_phases`, `template_sessions`, `session_exercises`, `programme_phases`), migration 0018, RLS on `programme_phases`
-- **Template metadata**: `programme_templates` extended with `total_phases`, `sessions_per_phase`, `difficulty`; `programmes` extended with 7 lifecycle columns
-- **Service evolution**: `generateProgramme()` eagerly creates phase rows, snapshots template metadata, `archiveProgramme()` sets lifecycle columns (`archivedAt`, `archivedReason`, `replacedByProgrammeId`)
-- **Seed data**: Complete Gentle Mobility Programme template hierarchy (4 phases, 12 sessions, 40 exercises)
-- **Zod schemas**: `programme-structure.schema.ts` (template hierarchy), updated `programme.schema.ts` (phase status, lifecycle fields)
+- **Programme structure**: 4 DB tables (`template_phases`, `template_sessions`, `session_exercises`, `programme_phases`), Gentle Mobility seed hierarchy
+- **Programme lifecycle**: `generateProgramme()` eagerly creates phases, `archiveProgramme()` with lifecycle columns
+- **Admin video management**: Full CRUD — upload (presigned S3 PUT), metadata editing, status transitions (`draft→active→archived`, restore), inline preview
+- **VideoPlayer component**: Dual-mode (videoId/src), TanStack Query hooks, loading/error/retry states
 
-### Backlog Items Created (Sprint 7)
+### Key Patterns & Decisions (Video Management + Admin UI)
 
-- `programmes` table RLS policy gap — table has `tenant_id` but not in `apply-rls.ts` (pre-existing, tracked for FFP-4)
+| Area                   | Decision                                                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **Table Component**    | TanStack Table v8, `createColumns<T>()` factory (7 cell types), `useApiTable` hook, server-side pagination/sorting |
+| **Pagination**         | Backend schemas (`paginationInputSchema`, `buildPaginationMeta`) + `applyPagination` Drizzle helper                |
+| **Admin CRUD Pattern** | List page (Table + TableControls + filters) → Edit page (ComposableForm + inline preview)                          |
+| **Upload Pattern**     | Presigned S3 PUT URLs, `useVideoUpload` hook with `useReducer` phases (`idle→uploading→creating→success→error`)    |
+| **Video Status**       | `draft→active→archived` with restore; status transitions via `PUT /admin/videos/{id}`                              |
+| **Reusable Layout**    | `PageContainer`, `PageHeader`, `StatusResult`, `ContentPanel`, `ComposableForm`, `Panel`                           |
+| **DRY Components**     | `BaseSelect` (headless), `useClickOutside` hook, `formatDate`/`formatDuration` in shared utils                     |
+| **Context Nav**        | `contextNavItems` on routes for pages that override sidebar navigation                                             |
+| **Date Formatting**    | `Intl.DateTimeFormat('en-GB')` throughout                                                                          |
+| **RLS Exclusions**     | System-managed tables (videos, templates, phases, sessions, exercises) — cross-tenant by design                    |
 
----
+### Programme Data Model Decisions (from Sprint 6 planning)
 
-## Completed: Sprint 6 - Frontend Completion (~26 pts)
-
-**Dates**: 16th February - 22nd February 2026
-**Sprint Goal**: End-to-end assessment flow working, demo-ready MVP.
-
-| Key     | Story                                        | Pts | Type  | Status |
-| ------- | -------------------------------------------- | --- | ----- | ------ |
-| FFP-137 | Assessment Navigation Component              | 3   | Story | Done   |
-| FFP-140 | Assessment Step Screens                      | 5   | Story | Done   |
-| FFP-272 | E2E Assessment Flow Integration              | 5   | Story | Done   |
-| FFP-273 | ToastAlert Notification Component            | 3   | Task  | Done   |
-| FFP-229 | Assessment Engine Epic Clean Up              | 8   | Story | Done   |
-| FFP-279 | Update deterministic seed UUIDs to RFC 4122  | -   | Task  | Done   |
-| FFP-280 | Align Zod versions across monorepo (v3 → v4) | -   | Task  | Done   |
-| FFP-233 | Backend Required Question Validation         | 3   | Story | Done   |
-| FFP-230 | Stale Job Detection                          | 2   | Story | Done   |
-| FFP-254 | FFP-3 Epic Planning & Sprint Definition      | 5   | Story | Done   |
-
-### FFP-3 Planning Outcomes (from Sprint 6)
-
-**FFP-3 scope**: 2 sprints, ~55 pts (Sprint 7: 28 pts, Sprint 8: 27 pts)
-
-- Sprint 7: Video catalogue schema, CloudFront OAC + signed URLs, video catalogue APIs, programme-video relationship schema
-- Sprint 8: Admin video upload/management UI, video player component, integration verification, docs update
-
-**Programme data model research complete** (`.claude/research/programme-data-model-research.md`):
-
-- Confirmed: Programme → Phases → Sessions → Exercises (status-driven, not calendar-based)
-- "Phases" replace "weeks" as the structural unit (co-founder decision, 1st March 2026) — avoids implying weekly cadence
+- Programme → Phases → Sessions → Exercises (status-driven, not calendar-based)
+- "Phases" replace "weeks" as the structural unit (co-founder decision, 1st March 2026)
 - Hybrid instantiation: phases created eagerly at assignment, sessions/completions lazily
 - Normalised `exercise_completions` table (not JSONB)
 - `programme_phases` (user-layer, RLS) created in FFP-3; `user_sessions` and `exercise_completions` deferred to FFP-4
 
-**FFP-4 epic updated** in Jira with confirmed data model, prerequisites from FFP-3, and design decisions.
+### Backlog Items
+
+- `programmes` table RLS policy gap — table has `tenant_id` but not in `apply-rls.ts` (tracked for FFP-4)
 
 ---
 
-## Completed: FFP-2 Assessment Engine (Sprints 3-6, 96 pts)
+## Completed: FFP-2 Assessment Engine (Sprints 3-6, ~96 pts)
 
-**86 story points** across 4 sprints. E2E assessment flow working and tested.
+**Dates**: Sprints 3-6. E2E assessment flow working and tested.
 
 | Sprint | Focus                | Pts | Key Deliverables                                                      |
 | ------ | -------------------- | --- | --------------------------------------------------------------------- |
@@ -273,9 +194,9 @@ await db.transaction(async (tx) => {
 
 - ✅ FFP-1: Application Setup & Foundation
 - ✅ FFP-2: Assessment Engine (Sprints 3-6)
-- ✅ FFP-3: Video Management (Sprint 7-8)
-- ⏳ FFP-439: Admin Programme Template Management (~34 pts, 1 sprint) — after FFP-3, before FFP-4
-- ⏳ FFP-4: Programme Execution & Progress
+- ✅ FFP-3: Video Management (Sprints 7-8)
+- 🏃 FFP-439: Admin Programme Template Management (Sprint 9, ~34 pts)
+- ⏳ FFP-4: Programme Execution & Progress (Sprints 10-12)
 - ⏳ FFP-109: Deployment Readiness (staging + production)
 - ⏳ FFP-6: Customer & User Onboarding
 
