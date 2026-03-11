@@ -43,6 +43,39 @@
 
 **Out of scope**: Drag-and-drop reordering (MVP uses move up/down), template duplication/cloning, template versioning, bulk import/export.
 
+### Active Story: FFP-441 — Video Default Exercise Prescription Fields (3 pts)
+
+**Branch**: `feature/sprint9` (single branch for entire story)
+**Goal**: Add 5 nullable default prescription columns to `videos` table, expose through all layers, add UI section on video edit page.
+
+**Columns**: `default_sets` (integer), `default_reps` (varchar 20), `default_duration_seconds` (integer), `default_rest_seconds` (integer), `default_notes` (text) — all nullable.
+
+**Sub-task execution order**:
+
+| Order | Key     | Summary                                     | Layer     | Status |
+| ----- | ------- | ------------------------------------------- | --------- | ------ |
+| 1     | FFP-448 | Migration: 5 nullable columns on `videos`   | Database  | To Do  |
+| 2     | FFP-449 | Zod schemas: prescription fields            | Core      | To Do  |
+| 3     | FFP-450 | Repository & service: persist/return fields | Core      | To Do  |
+| 4     | FFP-451 | Handlers: accept/return prescription fields | Functions | To Do  |
+| 5     | FFP-452 | Prescription form section on edit page      | Web       | To Do  |
+| 6     | FFP-453 | Postman collection update                   | Postman   | To Do  |
+
+**Amended requirements**:
+
+- FFP-452: Prescription section targets **video edit page only** (`VideoEditFormFields.tsx`), not the upload form. Update upload success screen buttons: primary "Set Default Prescription" → navigates to `/admin/videos/:id` (edit page), secondary "Back to Video Library" → navigates to `/admin/videos` (replaces current "Upload Another" button).
+- Tests deferred per sprint convention.
+
+**Key files to modify**:
+
+- `packages/database/src/schema/videos.ts` — add 5 columns
+- `packages/core/src/schemas/video.schema.ts` — extend create, update, and response schemas
+- `packages/core/src/videos/video.repository.ts` — include new columns in insert/update/select
+- `packages/core/src/videos/video.service.ts` — pass fields through
+- `packages/functions/src/admin/videos/create.ts`, `update.ts` — accept fields in body
+- `packages/web/src/pages/protected/admin/video-edit/VideoEditFormFields.tsx` — add prescription section
+- `packages/web/src/pages/protected/admin/video-edit/types.ts` — extend form values type
+
 ---
 
 ## Completed: FFP-3 Video Management (Sprints 7-8, ~55 pts)
