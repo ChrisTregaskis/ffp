@@ -129,7 +129,7 @@ export const Table = <TData extends Record<string, unknown>>({
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-muted bg-white">
+      <div className="rounded-lg border border-muted bg-white">
         <table className="w-full border-collapse">
           <TableHeader headerGroups={table.getHeaderGroups()} />
           <TableBody

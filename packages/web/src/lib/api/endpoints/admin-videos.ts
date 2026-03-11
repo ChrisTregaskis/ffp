@@ -4,10 +4,17 @@ import type {
   AdminVideoFilterInput,
   CreateVideoInput,
   PaginationInput,
+  UpdateVideoInput,
   UploadUrlRequest,
   UploadUrlResponse,
+  VideoDetailResponse,
 } from '@ffp/core';
-import { paginatedAdminVideoResponseSchema, uploadUrlResponseSchema, videoSchema } from '@ffp/core';
+import {
+  paginatedAdminVideoResponseSchema,
+  uploadUrlResponseSchema,
+  videoDetailResponseSchema,
+  videoSchema,
+} from '@ffp/core';
 
 import { ffpClient, parseApiResponse } from '../client';
 
@@ -32,14 +39,6 @@ export const adminVideosApi = {
     const response = await ffpClient.post(path, request ?? {});
 
     return parseApiResponse(uploadUrlResponseSchema, response, { method: 'POST', path });
-  },
-
-  /** Creates a video record with metadata after successful S3 upload. */
-  createVideo: async (input: CreateVideoInput): Promise<{ video: z.infer<typeof videoSchema> }> => {
-    const path = basePath;
-    const response = await ffpClient.post(path, input);
-
-    return parseApiResponse(createVideoResponseSchema, response, { method: 'POST', path });
   },
 
   /** Lists all videos (all statuses) with pagination, search, and filters. */
@@ -74,7 +73,28 @@ export const adminVideosApi = {
       path: basePath,
     });
   },
+
+  /** Creates a video record with metadata after successful S3 upload. */
+  createVideo: async (input: CreateVideoInput): Promise<{ video: z.infer<typeof videoSchema> }> => {
+    const path = basePath;
+    const response = await ffpClient.post(path, input);
+
+    return parseApiResponse(createVideoResponseSchema, response, { method: 'POST', path });
+  },
+
+  /** Updates video metadata (partial update including status transitions). */
+  updateVideo: async (id: string, data: UpdateVideoInput): Promise<VideoDetailResponse> => {
+    const path = `${basePath}/${id}`;
+    const response = await ffpClient.put(path, data);
+
+    const parsed = parseApiResponse(z.object({ video: videoDetailResponseSchema }), response, {
+      method: 'PUT',
+      path,
+    });
+
+    return parsed.video;
+  },
 };
 
 // Re-export types for consumers
-export type { CreateVideoInput, UploadUrlRequest, UploadUrlResponse };
+export type { CreateVideoInput, UpdateVideoInput, UploadUrlRequest, UploadUrlResponse };

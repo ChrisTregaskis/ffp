@@ -1,16 +1,25 @@
 import type { AdminVideoListResponse } from '@ffp/core';
 
 import { createColumns } from '@web/components/table';
+import type { RowAction } from '@web/components/table';
 
 import { VIDEO_STATUS_MAP } from './constants';
 import { VideoTitleCell } from './VideoTitleCell';
+
+import type { ColumnDef } from '@tanstack/react-table';
 
 /** Row type for the admin video list — extends Record<string, unknown> for TanStack Table */
 export type VideoRow = AdminVideoListResponse & Record<string, unknown>;
 
 const columns = createColumns<VideoRow>();
 
-export const videoColumns = [
+/**
+ * Build column definitions for the admin video list table.
+ * Accepts row actions to enable Edit/Publish/Archive quick-actions.
+ */
+export const buildVideoColumns = (
+  actions: RowAction<VideoRow>[] | ((row: VideoRow) => RowAction<VideoRow>[])
+): ColumnDef<VideoRow>[] => [
   {
     ...columns.text('title', {
       label: 'Video',
@@ -28,4 +37,5 @@ export const videoColumns = [
   columns.tags('tags', { label: 'Tags', maxVisible: 2 }),
   columns.date('createdAt', { label: 'Created', sortable: true }),
   columns.date('updatedAt', { label: 'Updated', sortable: true }),
+  columns.actions({ actions }),
 ];

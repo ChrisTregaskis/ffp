@@ -19,6 +19,7 @@ export type {
   AssessmentTemplate,
   CreateVideoInput,
   PaginatedAdminVideoResponse,
+  UpdateVideoInput,
   SaveProgressRequest,
   SaveProgressResponse,
   StartAssessmentResponse,

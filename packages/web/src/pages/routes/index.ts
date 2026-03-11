@@ -19,6 +19,7 @@ import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsP
 import { TableComponentsPage } from '@web/pages/dev/TableComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
+import { VideoEditPage } from '@web/pages/protected/admin/video-edit';
 import { VideoUploadPage } from '@web/pages/protected/admin/video-upload';
 import { VideoLibraryPage } from '@web/pages/protected/admin/VideoLibraryPage';
 import { HomePage } from '@web/pages/protected/HomePage';
@@ -268,6 +269,16 @@ export const routes: RoutesConfig = {
     path: `${adminBasePath}/videos/upload`,
     pageComponent: VideoUploadPage,
     title: 'Upload Video',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      { label: 'Back to Video Library', icon: 'ArrowLeft', path: `${adminBasePath}/videos` },
+    ],
+  },
+  [RouteKey.ADMIN_VIDEO_EDIT]: {
+    path: `${adminBasePath}/videos/:id`,
+    pageComponent: VideoEditPage,
+    title: 'Edit Video',
     allowedRoles: [SYSTEM_ADMIN],
     excludeFromMainNavbar: true,
     contextNavItems: [

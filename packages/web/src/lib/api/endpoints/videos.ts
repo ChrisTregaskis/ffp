@@ -59,9 +59,18 @@ export const videosApi = {
   },
 
   /** Get a single video by ID (detail view) */
-  get: async (videoId: string, signal?: AbortSignal): Promise<VideoDetailResponse> => {
+  get: async (
+    videoId: string,
+    options?: { includeInactive?: boolean; signal?: AbortSignal }
+  ): Promise<VideoDetailResponse> => {
     const path = `${basePath}/${videoId}`;
-    const response = await ffpClient.get(path, { signal });
+    const params: Record<string, string> = {};
+
+    if (options?.includeInactive) {
+      params.include_inactive = 'true';
+    }
+
+    const response = await ffpClient.get(path, { params, signal: options?.signal });
 
     return parseApiResponse(videoDetailResponseSchema, response, { method: 'GET', path });
   },

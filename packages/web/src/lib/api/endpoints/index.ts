@@ -2,6 +2,7 @@ export { adminVideosApi } from './admin-videos';
 export type {
   CreateVideoInput,
   PaginatedAdminVideoResponse,
+  UpdateVideoInput,
   UploadUrlRequest,
   UploadUrlResponse,
 } from './admin-videos';
