@@ -23,7 +23,7 @@ FFP uses a serverless-first AWS architecture optimised for multi-tenant SaaS. MV
 | **API**        | API Gateway       | REST API, JWT authoriser, throttling         |
 | **Compute**    | Lambda            | Node.js 18+ handlers, single responsibility  |
 | **Database**   | RDS PostgreSQL    | Multi-tenant via RLS, Drizzle ORM            |
-| **Storage**    | S3 + CloudFront   | Videos, assets, signed URLs                  |
+| **Storage**    | S3 + CloudFront   | Videos (OAC + signed URLs), assets           |
 | **Secrets**    | Secrets Manager   | DB credentials, API keys                     |
 | **Monitoring** | CloudWatch        | Logs, metrics, alarms                        |
 | **DNS**        | Route53           | Domain routing                               |
@@ -75,9 +75,11 @@ MVP uses AWS default VPC for cost optimisation (~£30/month NAT Gateway savings)
 
 **Traffic Flow:**
 
-1. User → CloudFront (Frontend/Videos) → S3
+1. User → CloudFront (Frontend) → S3
 2. User → Cognito (Auth) → JWT Token
 3. User → API Gateway (with JWT) → Lambda → RDS
+4. Lambda → S3 presigned URL → User uploads directly to S3
+5. User → API (signed URL request) → Lambda → CloudFront signed URL → CloudFront (OAC) → S3 video
 
 ---
 
@@ -170,6 +172,33 @@ Handler → Service → Entity (optional) → Repository → Drizzle Schema → 
 | **Drizzle**    | `packages/database/src/schema/`                 | Database table definitions                                                   |
 
 **See:** `coding-standards.md` for detailed code examples of each layer.
+
+---
+
+## Video Delivery: CloudFront OAC + Signed URLs
+
+Video content is secured via CloudFront Origin Access Control (OAC):
+
+```
+┌──────────────┐     signed URL      ┌──────────────────┐     OAC      ┌──────────────┐
+│  Browser     │ ──────────────────→  │  CloudFront CDN  │ ──────────→  │  S3 Bucket   │
+│              │                      │  (Key Group)     │              │  (no public)  │
+└──────────────┘                      └──────────────────┘              └──────────────┘
+       ↑                                                                       ↑
+       │ presigned PUT URL                                                     │
+       └───────────────────── Admin upload (browser → S3 direct) ──────────────┘
+```
+
+**Security model:**
+
+- S3 bucket has no public access — all reads go through CloudFront OAC
+- CloudFront requires signed URLs (RSA 2048, 15-minute TTL)
+- `video-signing.service.ts` generates signed URLs via `@aws-sdk/cloudfront-signer`
+- Admin uploads use presigned S3 PUT URLs (browser uploads directly, no Lambda proxy)
+
+**Admin video management** provides full CRUD via admin APIs and UI pages (library list, upload, edit with inline preview). Videos follow a `draft → active → archived` lifecycle.
+
+**See:** `video-management.md` for full details on upload workflow, APIs, and troubleshooting.
 
 ---
 

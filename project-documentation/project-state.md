@@ -2,7 +2,7 @@
 
 **Last Updated**: 11th March 2026
 **Current EPIC**: FFP-3 Video Management
-**Sprint Status**: Sprint 8 - Video UI & Integration (active — FFP-329 next)
+**Sprint Status**: Sprint 8 - Video UI & Integration (complete)
 
 ---
 
@@ -45,69 +45,20 @@
 
 ---
 
-### FFP-329: Admin Video Metadata Management (8 SP) — Implementation Plan
+### FFP-329: Admin Video Metadata Management (8 SP) — ✅ COMPLETE
 
-**Branch**: `feature/ffp-329-vid-metadata-management-implementation` (single branch — all sub-tasks tightly coupled)
-**Scope**: Full-stack. Admin CRUD for video catalogue: list all videos (inc. draft/archived), edit metadata, manage status transitions, filter/search, video preview.
-**Dependencies**: FFP-320 (Admin Video Upload) — DONE, FFP-437 (Reusable Table + Pagination) — DONE
-**Blocks**: FFP-343 (Sprint 8 Integration & Verification)
+**Branch**: `feature/ffp-329-vid-metadata-management-implementation` (merged)
+**Deliverables**: Full-stack admin CRUD for video catalogue — list all videos (paginated, filtered, all statuses), edit metadata, status transitions (`draft→active→archived`, restore), inline video preview.
 
-**What already exists**:
+- **Backend**: `GET /admin/videos` (paginated, filtered), `PUT /admin/videos/{id}` (partial update + status transitions), admin video filter schema, `findAllVideos` + `updateVideo` repository/service fns
+- **Frontend**: `VideoLibraryPage` with `Table` + `TableControls` (search, status/difficulty filters, column visibility), `VideoEditPage` with `VideoEditFormFields` + inline `VideoPlayer` preview, `useAdminVideosQuery`, `useUpdateVideoMutation`, `ArchiveVideoModal`, list quick-actions (Edit, Publish, Archive, Restore)
+- **Shared components**: `PageState` (loading/error), `ContentPanel`, `DropdownMenu`, `ComposableForm`
 
-- **DB schema**: `videos` table with status enum (`draft`/`active`/`archived`), difficulty, movement_type, body_parts, equipment, tags, GIN indexes
-- **Table component** (FFP-437): `Table` (TanStack Table v8, manual pagination/sorting), `TableControls` (search + filter dropdowns + column visibility + clear all), `createColumns<T>()` factory (7 cell types: Text, Number, Date, Status, Tags, Duration, Actions), `useApiTable` hook (300ms debounce, page reset on sort/search/filter change, memoised `queryParams`)
-- **Pagination pattern** (FFP-437): `paginationInputSchema`, `paginationMetaSchema`, `createPaginatedResponseSchema`, `buildPaginationMeta`, `applyPagination` Drizzle helper
-- **Core services**: `video.service.ts` (create, listVideos, getVideo, listVideosByFilter), `video-signing.service.ts` (CloudFront signed URLs)
-- **Core repository**: `video.repository.ts` (insertVideo, findVideoById, findAllActive, findByFilters)
-- **Zod schemas**: `createVideoSchema`, `updateVideoSchema`, `videoListResponseSchema`, `videoFilterSchema`
-- **Admin handlers**: `POST /admin/videos/upload-url`, `POST /admin/videos` (create record)
-- **Public APIs**: `GET /videos` (active only), `GET /videos/:id`, `GET /videos/:id/signed-url`
-- **Frontend pages**: `VideoLibraryPage.tsx` (placeholder — empty state), `VideoUploadPage.tsx` (complete)
-- **Form components**: `VideoMetadataForm`, `VideoMetadataFormFields` (reusable for editing)
-- **Video components**: `VideoPlayer` (HTML5, dual-mode), `VideoLoadingSkeleton`, `VideoErrorState`
-- **Hooks**: `useVideosQuery` (active only), `useVideoQuery`, `useVideoSignedUrlQuery`, `useVideoUpload`
-- **API client**: `adminVideosApi` (getUploadUrl, createVideo), `videosApi` (list, get, getSignedUrl)
-- **Shared components**: `Modal`, `PageContainer`, `PageHeader`, `StatusResult`, `SearchInput`, `Select`, `Button`, `IconButton`, `Panel`
+---
 
-**What needs building**:
+### FFP-343: Sprint 8 Integration & Verification (3 SP) — ✅ COMPLETE
 
-Backend:
-
-- `findAllVideos(db, paginationInput, filters)` — admin repository fn (all statuses, paginated, filterable)
-- `updateVideo(db, id, data)` — repository fn
-- `listAdminVideos(ctx, paginationInput, filters)` — service fn
-- `updateVideo(ctx, id, data)` — service fn with status transition validation
-- `GET /admin/videos` handler — paginated, with query params: page, pageSize, sortBy, sortDirection, search, status, difficulty
-- `PUT /admin/videos/{id}` handler — partial metadata update including status changes
-- Admin video filter schema (extends `videoFilterSchema` with search + status params)
-
-Frontend:
-
-- `adminVideosApi.list(params)` + `adminVideosApi.updateVideo(id, data)` API client methods
-- `useAdminVideosQuery(params)` hook + `useUpdateVideoMutation()` hook
-- `VideoLibraryPage.tsx` — replace placeholder with `Table` + `TableControls` + column definitions
-- `/admin/videos/:id` edit page — reuse `VideoMetadataFormFields`, status dropdown, `useUpdateVideoMutation`
-- Status quick-actions in list `ActionsCell` (Publish, Archive) + confirmation dialog for archiving
-- Inline video preview on edit page — `VideoPlayer` + `useVideoSignedUrlQuery` above form
-
-**Amended requirements**:
-
-- **FFP-332**: Ticket says `VideosPage.tsx` — use existing `VideoLibraryPage.tsx` (already in routes). Uses `Table` component from FFP-437 with `useApiTable` hook — not a custom table/grid.
-- **FFP-333**: Dedicated edit page at `/admin/videos/:id` (not modal) — consistent with upload being a dedicated page. No `/edit` suffix: admin context implies editing, no read-only detail view planned.
-- **FFP-334**: Merges into FFP-333 (status field in edit form) and FFP-332 (quick-action buttons in `ActionsCell`). Not a separate UI concern — status is just a field on the update API.
-- **FFP-335**: Merges into FFP-330 (backend filter params) and FFP-332 (frontend `TableControls`). Server-side filtering via query params on `GET /admin/videos`. Filter UI uses `TableControls` from FFP-437 (search input with debounce, filter dropdowns) — page-level, external to Table. Building filters alongside the table from the start is more natural than retrofitting.
-- **FFP-336**: `VideoPlayer` and `useVideoSignedUrlQuery` already exist — render inline on edit page above the form (not a modal, no list page preview action).
-- Tests deferred until MVP launch per sprint policy.
-
-#### Execution Order
-
-| Order | Sub-tasks         | Summary                              | Notes                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| ----- | ----------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | FFP-330 + FFP-331 | Backend APIs (list + update)         | ✅ DONE. FFP-330: `GET /admin/videos` (paginated, filtered). FFP-331: `PUT /admin/videos/{id}` (partial update, status transitions: draft→active, active→archived, archived→draft/active). Postman requests added for both.                                                                                                                                                                                                       |
-| 2     | FFP-332 + FFP-335 | Video list page with Table + filters | ✅ DONE. `adminVideosApi.list()`, `useAdminVideosQuery`, `useApiTable`, `Table` with 9 columns + `TableControls` (search + status/difficulty filters). Default visibility hides movementType/updatedAt/tags. Context-aware empty state.                                                                                                                                                                                           |
-| 3     | FFP-333 + FFP-334 | Edit page + status management        | ✅ DONE. `/admin/videos/:id` edit page with `VideoEditFormFields` (reuses `VideoMetadataFormFields` + status dropdown via `additionalFields` slot), `useUpdateVideoMutation`, `ArchiveVideoModal` (shared). List quick-actions: Edit, Publish, Archive (confirm), Restore. Edit page loads all statuses via `?include_inactive=true`. `PageState` component for loading/error states. Sticky table header, dropdown overflow fix. |
-| 4     | FFP-336           | Inline video preview on edit page    | ✅ DONE. `VideoPlayer` rendered inline above form in `ContentPanel`. `variant` prop added to `VideoPlayer` (`'muted'` default / `'white'`). Side menu `getContextNavItems` fixed to use `matchPath` for parameterised routes. Backlog ticket FFP-438 created for video file replacement.                                                                                                                                          |
-| —     | —                 | Manual verification                  | E2E: upload → list → filter → edit → status change → preview. Verify all statuses visible in admin list.                                                                                                                                                                                                                                                                                                                          |
+**Deliverables**: Manual E2E verification (upload → metadata → activate → signed URL → playback), OAC security verification (direct S3 blocked, unsigned CloudFront rejected), Postman collection updated (all 7 video endpoints), project documentation updated.
 
 ---
 
@@ -322,7 +273,7 @@ await db.transaction(async (tx) => {
 
 - ✅ FFP-1: Application Setup & Foundation
 - ✅ FFP-2: Assessment Engine (Sprints 3-6)
-- 🏃 FFP-3: Video Management (Sprint 7-8) — Sprint 7 complete, Sprint 8 active
+- ✅ FFP-3: Video Management (Sprint 7-8)
 - ⏳ FFP-439: Admin Programme Template Management (~34 pts, 1 sprint) — after FFP-3, before FFP-4
 - ⏳ FFP-4: Programme Execution & Progress
 - ⏳ FFP-109: Deployment Readiness (staging + production)
