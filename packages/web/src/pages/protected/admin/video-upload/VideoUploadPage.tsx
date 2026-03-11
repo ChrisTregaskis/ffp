@@ -36,12 +36,11 @@ export const VideoUploadPage: React.FC = () => {
     handleClearFile,
     handleSubmit,
     handleClose: handleCloseUpload,
-    handleReset,
     fileInputRef,
     hasValidFile,
   } = useVideoUpload(handleClose);
 
-  const { phase, selectedFile, fileValidationError, isDragOver } = state;
+  const { phase, selectedFile, fileValidationError, isDragOver, createdVideoId } = state;
   const showForm = phase === 'idle' || phase === 'error';
 
   return (
@@ -64,11 +63,20 @@ export const VideoUploadPage: React.FC = () => {
               actions={
                 <>
                   <Button variant="secondary" onClick={handleCloseUpload}>
-                    Back to Library
+                    Back to Video Library
                   </Button>
-                  <Button variant="primary" onClick={handleReset}>
-                    Upload Another
-                  </Button>
+                  {createdVideoId && (
+                    <Button
+                      variant="primary"
+                      onClick={() => {
+                        void navigate(
+                          routes[RouteKey.ADMIN_VIDEO_EDIT].path.replace(':id', createdVideoId)
+                        );
+                      }}
+                    >
+                      Set Default Prescription
+                    </Button>
+                  )}
                 </>
               }
             />

@@ -43,6 +43,12 @@ export const VideoEditPage: React.FC = () => {
       bodyParts: video.bodyParts,
       equipment: video.equipment,
       tags: video.tags,
+      defaultSets: video.defaultSets != null ? String(video.defaultSets) : '',
+      defaultReps: video.defaultReps ?? '',
+      defaultDurationSeconds:
+        video.defaultDurationSeconds != null ? String(video.defaultDurationSeconds) : '',
+      defaultRestSeconds: video.defaultRestSeconds != null ? String(video.defaultRestSeconds) : '',
+      defaultNotes: video.defaultNotes ?? '',
     };
   }, [video]);
 
@@ -99,6 +105,40 @@ export const VideoEditPage: React.FC = () => {
 
       if (!arraysEqual(values.tags, video.tags)) {
         payload.tags = values.tags;
+      }
+
+      // Prescription fields — convert empty strings to null, string numbers to integers
+      const toIntOrNull = (val: string): number | null => (val ? parseInt(val, 10) : null);
+      const toStringOrNull = (val: string): string | null => val || null;
+
+      const newSets = toIntOrNull(values.defaultSets);
+
+      if (newSets !== (video.defaultSets ?? null)) {
+        payload.defaultSets = newSets;
+      }
+
+      const newReps = toStringOrNull(values.defaultReps);
+
+      if (newReps !== (video.defaultReps ?? null)) {
+        payload.defaultReps = newReps;
+      }
+
+      const newDuration = toIntOrNull(values.defaultDurationSeconds);
+
+      if (newDuration !== (video.defaultDurationSeconds ?? null)) {
+        payload.defaultDurationSeconds = newDuration;
+      }
+
+      const newRest = toIntOrNull(values.defaultRestSeconds);
+
+      if (newRest !== (video.defaultRestSeconds ?? null)) {
+        payload.defaultRestSeconds = newRest;
+      }
+
+      const newNotes = toStringOrNull(values.defaultNotes);
+
+      if (newNotes !== (video.defaultNotes ?? null)) {
+        payload.defaultNotes = newNotes;
       }
 
       return payload;

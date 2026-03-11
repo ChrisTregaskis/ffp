@@ -67,9 +67,16 @@ export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
         bodyParts: [],
         equipment: [],
         tags: [],
+        status: '',
+        defaultSets: '',
+        defaultReps: '',
+        defaultDurationSeconds: '',
+        defaultRestSeconds: '',
+        defaultNotes: '',
       }}
     >
       <VideoMetadataFormFields
+        variant="upload"
         onCancel={onCancel}
         isSubmitting={isSubmitting}
         errorMessage={errorMessage}
