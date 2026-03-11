@@ -126,6 +126,34 @@ Frontend:
 
 ---
 
+## Planned: FFP-439 — Admin Programme Template Management (~34 pts)
+
+**Status**: Epic and stories created in Jira. Subtasks pending. Scheduled after FFP-3 completes.
+**Epic**: FFP-439
+**Estimated Sprint**: Sprint 9 (single sprint)
+
+**Business value**: Enable system admins to create, edit, and manage programme templates via the admin UI. Currently templates are only populated via seed data — no APIs or admin interface exist.
+
+**Key design decision**: Extend `videos` table with default exercise prescription fields (sets, reps, duration, rest, notes) rather than introducing a separate exercise entity. Videos are exercise demonstrations — the video catalogue effectively is the exercise library. Prescription pre-populates from video defaults when adding to a session, overridable per-session.
+
+**Stories (7)**:
+
+| Key     | Summary                                        | SP  | Labels                      |
+| ------- | ---------------------------------------------- | --- | --------------------------- |
+| FFP-441 | Video default exercise prescription fields     | 3   | backend, frontend, database |
+| FFP-442 | Programme template backend APIs                | 5   | backend                     |
+| FFP-443 | Phase & session backend APIs (CRUD + reorder)  | 5   | backend                     |
+| FFP-444 | Session exercise backend APIs (CRUD + reorder) | 5   | backend                     |
+| FFP-445 | Programme template admin list page             | 5   | frontend                    |
+| FFP-446 | Template detail & hierarchy editing UI         | 8   | frontend                    |
+| FFP-447 | Integration verification & documentation       | 3   | testing, documentation      |
+
+**Dependencies**: FFP-3 (Video Management) must be complete. Existing DB schema for all template tables (Sprint 7). Table component (FFP-437).
+
+**Out of scope**: Drag-and-drop reordering (MVP uses move up/down), template duplication/cloning, template versioning, bulk import/export.
+
+---
+
 ## Completed: Sprint 7 - Video Infrastructure & APIs (~28 pts)
 
 **Dates**: 23rd February - 3rd March 2026
@@ -294,7 +322,8 @@ await db.transaction(async (tx) => {
 
 - ✅ FFP-1: Application Setup & Foundation
 - ✅ FFP-2: Assessment Engine (Sprints 3-6)
-- 🏃 FFP-3: Video Management (Sprint 7-8) — Sprint 7 complete, Sprint 8 next
+- 🏃 FFP-3: Video Management (Sprint 7-8) — Sprint 7 complete, Sprint 8 active
+- ⏳ FFP-439: Admin Programme Template Management (~34 pts, 1 sprint) — after FFP-3, before FFP-4
 - ⏳ FFP-4: Programme Execution & Progress
 - ⏳ FFP-109: Deployment Readiness (staging + production)
 - ⏳ FFP-6: Customer & User Onboarding
