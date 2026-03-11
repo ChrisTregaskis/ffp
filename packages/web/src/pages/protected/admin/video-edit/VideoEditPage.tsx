@@ -187,7 +187,12 @@ export const VideoEditPage: React.FC = () => {
         )}
 
         {video && (
-          <VideoPlayer videoId={id} ariaLabel={`Preview of ${video.title}`} variant="white" className="mb-6" />
+          <VideoPlayer
+            videoId={id}
+            ariaLabel={`Preview of ${video.title}`}
+            variant="white"
+            className="mb-6"
+          />
         )}
 
         {video && defaultValues && (

@@ -109,7 +109,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   };
 
   return (
-    <div className={`aspect-video overflow-hidden rounded-2xl ${variant === 'white' ? 'bg-white' : 'bg-muted'} ${className ?? ''}`.trim()}>
+    <div
+      className={`aspect-video overflow-hidden rounded-2xl ${variant === 'white' ? 'bg-white' : 'bg-muted'} ${className ?? ''}`.trim()}
+    >
       {renderContent()}
     </div>
   );
