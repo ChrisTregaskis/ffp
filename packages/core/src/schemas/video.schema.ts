@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 import { VIDEO_STATUSES, DIFFICULTIES, MOVEMENT_TYPES } from '@ffp/database/constants';
 
+import { createPaginatedResponseSchema } from './pagination.schema';
+
 export const videoStatusSchema = z.enum(VIDEO_STATUSES);
 export const difficultySchema = z.enum(DIFFICULTIES);
 export const movementTypeSchema = z.enum(MOVEMENT_TYPES);
@@ -95,6 +97,13 @@ export const videoFilterSchema = z.object({
   tags: z.array(z.string().min(1)).optional(),
 });
 
+/** Filter criteria for admin video list — includes search and status (all statuses visible) */
+export const adminVideoFilterSchema = z.object({
+  search: z.string().optional(),
+  status: videoStatusSchema.optional(),
+  difficulty: difficultySchema.optional(),
+});
+
 /** Response schema for presigned upload URL endpoint */
 export const uploadUrlResponseSchema = z.object({
   /** Presigned PUT URL for uploading the video file to S3 */
@@ -130,6 +139,18 @@ export const videoDetailResponseSchema = videoSchema.omit({
   mimeType: true,
 });
 
+/** Response schema for admin video list — includes description and timestamps for admin context */
+export const adminVideoListResponseSchema = videoListResponseSchema.extend({
+  description: z.string().nullable(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+});
+
+/** Paginated response schema for GET /admin/videos */
+export const paginatedAdminVideoResponseSchema = createPaginatedResponseSchema(
+  adminVideoListResponseSchema
+);
+
 /** Response schema for GET /videos — list wrapper with count */
 export const videoListApiResponseSchema = z.object({
   videos: z.array(videoListResponseSchema),
@@ -153,6 +174,8 @@ export type Video = z.infer<typeof videoSchema>;
 export type CreateVideoInput = z.infer<typeof createVideoSchema>;
 export type UpdateVideoInput = z.infer<typeof updateVideoSchema>;
 export type VideoFilterInput = z.infer<typeof videoFilterSchema>;
+export type AdminVideoFilterInput = z.infer<typeof adminVideoFilterSchema>;
+export type AdminVideoListResponse = z.infer<typeof adminVideoListResponseSchema>;
 export type UploadUrlRequest = z.infer<typeof uploadUrlRequestSchema>;
 export type UploadUrlResponse = z.infer<typeof uploadUrlResponseSchema>;
 export type VideoListResponse = z.infer<typeof videoListResponseSchema>;

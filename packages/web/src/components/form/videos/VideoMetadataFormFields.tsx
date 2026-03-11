@@ -5,43 +5,41 @@ import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
 import { getInputClassName } from '@web/components/form/shared/inputStyles';
 import { FormSelect } from '@web/components/form/standardForm/FormSelect';
-import type { SelectOption } from '@web/components/form/standardForm/FormSelect';
 import { FormTagInput } from '@web/components/form/standardForm/FormTagInput';
 import { FormTextarea } from '@web/components/form/standardForm/FormTextarea';
 import { Text } from '@web/components/text';
 
+import { DIFFICULTY_OPTIONS, MOVEMENT_TYPE_OPTIONS } from './constants';
+
 import type { VideoMetadataFormValues } from './types';
-
-const MOVEMENT_TYPE_OPTIONS: SelectOption[] = [
-  { label: 'Stretch', value: 'stretch' },
-  { label: 'Strength', value: 'strength' },
-  { label: 'Mobility', value: 'mobility' },
-  { label: 'Balance', value: 'balance' },
-];
-
-const DIFFICULTY_OPTIONS: SelectOption[] = [
-  { label: 'Beginner', value: 'beginner' },
-  { label: 'Intermediate', value: 'intermediate' },
-  { label: 'Advanced', value: 'advanced' },
-];
+import type { ReactNode } from 'react';
 
 export interface VideoMetadataFormFieldsProps {
-  /** Whether a valid video file has been selected */
-  hasFile: boolean;
   /** Called when cancel is clicked */
   onCancel: () => void;
   /** Whether the submit action is in progress (disables + shows loading) */
   isSubmitting?: boolean;
   /** Error message to display above the form */
   errorMessage?: string | null;
+  /** Submit button label @default "Upload Video" */
+  submitLabel?: string;
+  /** Whether the submit button is disabled @default false */
+  submitDisabled?: boolean;
+  /** Whether the cancel button is disabled @default false */
+  cancelDisabled?: boolean;
+  /** Additional fields rendered after the title row (e.g. Status for edit mode) */
+  additionalFields?: ReactNode;
 }
 
-/** Inner fields component that consumes composable form context */
+/** Shared metadata fields for video upload and edit forms */
 export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = ({
-  hasFile,
   onCancel,
   isSubmitting = false,
   errorMessage,
+  submitLabel = 'Upload Video',
+  submitDisabled = false,
+  cancelDisabled = false,
+  additionalFields,
 }) => {
   const { register, control, errors } = useComposableFormContext<VideoMetadataFormValues>();
 
@@ -98,6 +96,9 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
         />
       </div>
 
+      {/* Additional fields slot */}
+      {additionalFields}
+
       {/* Row 2: Description (full-width) */}
       <FormTextarea
         name="description"
@@ -148,11 +149,11 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
 
       {/* Form actions */}
       <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-4">
-        <Button variant="secondary" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel} disabled={cancelDisabled}>
           Cancel
         </Button>
-        <Button type="submit" disabled={!hasFile} loading={isSubmitting}>
-          Upload Video
+        <Button type="submit" disabled={submitDisabled} loading={isSubmitting}>
+          {submitLabel}
         </Button>
       </div>
     </>

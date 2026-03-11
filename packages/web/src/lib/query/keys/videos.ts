@@ -18,6 +18,12 @@ export const videoKeys = {
   /** Video list filtered by specific criteria */
   list: (filters?: VideoFilterInput) => [...videoKeys.lists(), filters ?? {}] as const,
 
+  /** Admin video list queries (paginated, all statuses) */
+  adminLists: () => [...videoKeys.all, 'admin-list'] as const,
+
+  /** Admin video list with specific pagination and filter params */
+  adminList: (params: Record<string, unknown>) => [...videoKeys.adminLists(), params] as const,
+
   /** Single video detail queries */
   details: () => [...videoKeys.all, 'detail'] as const,
 

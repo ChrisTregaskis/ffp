@@ -18,6 +18,8 @@ export type {
   AssessmentResultsResponse,
   AssessmentTemplate,
   CreateVideoInput,
+  PaginatedAdminVideoResponse,
+  UpdateVideoInput,
   SaveProgressRequest,
   SaveProgressResponse,
   StartAssessmentResponse,

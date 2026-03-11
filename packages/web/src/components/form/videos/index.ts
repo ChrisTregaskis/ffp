@@ -1,3 +1,4 @@
+export { DIFFICULTY_OPTIONS, MOVEMENT_TYPE_OPTIONS } from './constants';
 export { VideoMetadataForm } from './VideoMetadataForm';
 export type { VideoMetadataFormProps } from './VideoMetadataForm';
 export { VideoMetadataFormFields } from './VideoMetadataFormFields';

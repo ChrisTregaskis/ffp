@@ -70,10 +70,10 @@ export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
       }}
     >
       <VideoMetadataFormFields
-        hasFile={hasFile}
         onCancel={onCancel}
         isSubmitting={isSubmitting}
         errorMessage={errorMessage}
+        submitDisabled={!hasFile}
       />
     </ComposableForm>
   );
