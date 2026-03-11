@@ -55,7 +55,7 @@
 | Order | Key     | Summary                                     | Layer     | Status |
 | ----- | ------- | ------------------------------------------- | --------- | ------ |
 | 1     | FFP-448 | Migration: 5 nullable columns on `videos`   | Database  | Done   |
-| 2     | FFP-449 | Zod schemas: prescription fields            | Core      | To Do  |
+| 2     | FFP-449 | Zod schemas: prescription fields            | Core      | Done   |
 | 3     | FFP-450 | Repository & service: persist/return fields | Core      | To Do  |
 | 4     | FFP-451 | Handlers: accept/return prescription fields | Functions | To Do  |
 | 5     | FFP-452 | Prescription form section on edit page      | Web       | To Do  |
