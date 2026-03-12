@@ -7,10 +7,18 @@ import {
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
 import { handler as createCustomerHandler } from './create-customer';
+import { handler as createPhaseHandler } from './programme-templates/create-phase';
+import { handler as createSessionHandler } from './programme-templates/create-session';
 import { handler as createProgrammeTemplateHandler } from './programme-templates/create-template';
 import { handler as deactivateProgrammeTemplateHandler } from './programme-templates/deactivate-template';
+import { handler as deletePhaseHandler } from './programme-templates/delete-phase';
+import { handler as deleteSessionHandler } from './programme-templates/delete-session';
 import { handler as getProgrammeTemplateHandler } from './programme-templates/get-template';
 import { handler as listProgrammeTemplatesHandler } from './programme-templates/list-templates';
+import { handler as reorderPhasesHandler } from './programme-templates/reorder-phases';
+import { handler as reorderSessionsHandler } from './programme-templates/reorder-sessions';
+import { handler as updatePhaseHandler } from './programme-templates/update-phase';
+import { handler as updateSessionHandler } from './programme-templates/update-session';
 import { handler as updateProgrammeTemplateHandler } from './programme-templates/update-template';
 import { handler as createTemplateHandler } from './templates/create-template';
 import { handler as deactivateTemplateHandler } from './templates/deactivate-template';
@@ -38,6 +46,8 @@ const routes: RouteRegistry = {
     '/assessment-templates': createTemplateHandler,
     '/assessment-templates/{id}/duplicate': duplicateTemplateHandler,
     '/programme-templates': createProgrammeTemplateHandler,
+    '/programme-templates/{id}/phases': createPhaseHandler,
+    '/phases/{id}/sessions': createSessionHandler,
     '/videos': createVideoHandler,
     '/videos/upload-url': getUploadUrlHandler,
   },
@@ -52,10 +62,16 @@ const routes: RouteRegistry = {
     '/assessment-templates/{id}': updateTemplateHandler,
     '/programme-templates/{id}': updateProgrammeTemplateHandler,
     '/programme-templates/{id}/deactivate': deactivateProgrammeTemplateHandler,
+    '/programme-templates/{id}/phases/reorder': reorderPhasesHandler,
+    '/phases/{id}': updatePhaseHandler,
+    '/phases/{id}/sessions/reorder': reorderSessionsHandler,
+    '/sessions/{id}': updateSessionHandler,
     '/videos/{id}': updateVideoHandler,
   },
   DELETE: {
     '/assessment-templates/{id}': deactivateTemplateHandler,
+    '/phases/{id}': deletePhaseHandler,
+    '/sessions/{id}': deleteSessionHandler,
   },
 };
 

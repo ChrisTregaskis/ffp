@@ -3,7 +3,11 @@ import { z } from 'zod';
 import { PROGRAMME_STATUSES, PHASE_STATUSES, DIFFICULTIES } from '@ffp/database/constants';
 
 import { createPaginatedResponseSchema, paginationInputSchema } from './pagination.schema';
-import { templatePhaseWithSessionsSchema } from './programme-structure.schema';
+import {
+  templatePhaseSchema,
+  templateSessionSchema,
+  templatePhaseWithSessionsSchema,
+} from './programme-structure.schema';
 
 // System-managed lookup table for programme templates.
 export const programmeTemplateSchema = z.object({
@@ -201,6 +205,70 @@ export const createProgrammePhaseSchema = programmePhaseSchema.pick({
   name: true,
 });
 
+/** Create phase request body — name and description optional, phaseNumber auto-assigned */
+export const createPhaseRequestSchema = z.object({
+  name: templatePhaseSchema.shape.name.optional(),
+  description: templatePhaseSchema.shape.description.optional(),
+});
+
+/** Update phase request body — all fields optional (partial update) */
+export const updatePhaseRequestSchema = z
+  .object({
+    name: templatePhaseSchema.shape.name,
+    description: templatePhaseSchema.shape.description,
+  })
+  .partial();
+
+/** Reorder phases request body — ordered array of phase IDs */
+export const reorderPhasesRequestSchema = z.object({
+  orderedIds: z.array(z.guid()).min(1),
+});
+
+/** Phase response — full phase record for API responses */
+export const phaseResponseSchema = templatePhaseSchema.pick({
+  id: true,
+  programmeTemplateId: true,
+  phaseNumber: true,
+  name: true,
+  description: true,
+  sessionCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+/** Create session request body — all fields optional, sessionNumber auto-assigned */
+export const createSessionRequestSchema = z.object({
+  name: templateSessionSchema.shape.name.optional(),
+  description: templateSessionSchema.shape.description.optional(),
+  estimatedDurationMinutes: templateSessionSchema.shape.estimatedDurationMinutes.optional(),
+});
+
+/** Update session request body — all fields optional (partial update) */
+export const updateSessionRequestSchema = z
+  .object({
+    name: templateSessionSchema.shape.name,
+    description: templateSessionSchema.shape.description,
+    estimatedDurationMinutes: templateSessionSchema.shape.estimatedDurationMinutes,
+  })
+  .partial();
+
+/** Reorder sessions request body — ordered array of session IDs */
+export const reorderSessionsRequestSchema = z.object({
+  orderedIds: z.array(z.guid()).min(1),
+});
+
+/** Session response — full session record for API responses */
+export const sessionResponseSchema = templateSessionSchema.pick({
+  id: true,
+  templatePhaseId: true,
+  sessionNumber: true,
+  name: true,
+  description: true,
+  estimatedDurationMinutes: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type Programme = z.infer<typeof programmeSchema>;
 export type ActiveProgrammeResponse = z.infer<typeof activeProgrammeResponseSchema>;
 export type ReplaceProgrammeRequest = z.infer<typeof replaceProgrammeRequestSchema>;
@@ -216,3 +284,11 @@ export type PhaseStatus = z.infer<typeof phaseStatusSchema>;
 export type CreateProgrammeInput = z.infer<typeof createProgrammeSchema>;
 export type ProgrammePhase = z.infer<typeof programmePhaseSchema>;
 export type CreateProgrammePhaseInput = z.infer<typeof createProgrammePhaseSchema>;
+export type CreatePhaseRequest = z.infer<typeof createPhaseRequestSchema>;
+export type UpdatePhaseRequest = z.infer<typeof updatePhaseRequestSchema>;
+export type ReorderPhasesRequest = z.infer<typeof reorderPhasesRequestSchema>;
+export type PhaseResponse = z.infer<typeof phaseResponseSchema>;
+export type CreateSessionRequest = z.infer<typeof createSessionRequestSchema>;
+export type UpdateSessionRequest = z.infer<typeof updateSessionRequestSchema>;
+export type ReorderSessionsRequest = z.infer<typeof reorderSessionsRequestSchema>;
+export type SessionResponse = z.infer<typeof sessionResponseSchema>;

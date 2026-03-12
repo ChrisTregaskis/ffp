@@ -3,11 +3,12 @@ import {
   extractUserContext,
   withErrorHandling,
   ForbiddenError,
-  ValidationError,
   isUserActor,
   createVideo,
 } from '@ffp/core/server';
 import type { VideoRecord } from '@ffp/database/schema';
+
+import { parseJsonBody } from '../../lib/request-body';
 
 interface CreateVideoResponse {
   video: VideoRecord;
@@ -28,18 +29,7 @@ export const handler = withErrorHandling(
       throw new ForbiddenError('Only system administrators can create videos');
     }
 
-    if (!event.body) {
-      throw new ValidationError('Request body is required');
-    }
-
-    let body: unknown;
-
-    try {
-      body = JSON.parse(event.body);
-    } catch {
-      throw new ValidationError('Invalid JSON in request body');
-    }
-
+    const body = parseJsonBody(event.body);
     const video = await createVideo(context, body);
 
     return { video };

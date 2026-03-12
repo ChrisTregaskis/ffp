@@ -9,6 +9,8 @@ import {
   updateVideo,
 } from '@ffp/core/server';
 
+import { parseJsonBody } from '../../lib/request-body';
+
 interface UpdateVideoResponse {
   video: VideoDetailResponse;
 }
@@ -33,18 +35,7 @@ export const handler = withErrorHandling(
       throw new ValidationError('Video ID is required');
     }
 
-    if (!event.body) {
-      throw new ValidationError('Request body is required');
-    }
-
-    let body: unknown;
-
-    try {
-      body = JSON.parse(event.body);
-    } catch {
-      throw new ValidationError('Invalid JSON in request body');
-    }
-
+    const body = parseJsonBody(event.body);
     const video = await updateVideo(context, videoId, body);
 
     return { video };
