@@ -60,7 +60,7 @@
 
 | Order | Key     | Summary                                | Layer     | Status |
 | ----- | ------- | -------------------------------------- | --------- | ------ |
-| 1     | FFP-456 | Zod request/response schemas           | Core      | To Do  |
+| 1     | FFP-456 | Zod request/response schemas           | Core      | Done   |
 | 2     | FFP-454 | Repository with CRUD operations        | Core      | To Do  |
 | 3     | FFP-455 | Service with validation logic          | Core      | To Do  |
 | 4     | FFP-457 | Lambda handlers (5 endpoints)          | Functions | To Do  |
