@@ -1,7 +1,7 @@
-import { eq, max } from 'drizzle-orm';
+import { count, eq, max } from 'drizzle-orm';
 
 import type { DbQueryClient } from '@ffp/database';
-import { templatePhases, type TemplatePhaseRecord } from '@ffp/database/schema';
+import { programmePhases, templatePhases, type TemplatePhaseRecord } from '@ffp/database/schema';
 
 import type { CreatePhaseRequest, UpdatePhaseRequest } from '../schemas/programme.schema';
 
@@ -25,6 +25,19 @@ export async function findPhaseById(
   const records = await db.select().from(templatePhases).where(eq(templatePhases.id, id)).limit(1);
 
   return records[0] ?? null;
+}
+
+/** Counts how many user programme phases reference a given template phase. */
+export async function countProgrammePhasesByTemplatePhaseId(
+  db: DbQueryClient,
+  templatePhaseId: string
+): Promise<number> {
+  const [result] = await db
+    .select({ total: count() })
+    .from(programmePhases)
+    .where(eq(programmePhases.templatePhaseId, templatePhaseId));
+
+  return result.total;
 }
 
 /**

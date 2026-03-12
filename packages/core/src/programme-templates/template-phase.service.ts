@@ -1,7 +1,7 @@
 import { getDb } from '@ffp/database';
 import type { TemplatePhaseRecord } from '@ffp/database/schema';
 
-import { NotFoundError, ValidationError } from '../lib/errors';
+import { ConflictError, NotFoundError, ValidationError } from '../lib/errors';
 import {
   createPhaseRequestSchema,
   updatePhaseRequestSchema,
@@ -96,6 +96,18 @@ export async function deletePhase(phaseId: string): Promise<void> {
 
     if (!template) {
       throw new NotFoundError('Programme template', phase.programmeTemplateId);
+    }
+
+    // Guard: prevent deletion if any user programmes reference this phase
+    const activeProgrammeCount = await phaseRepository.countProgrammePhasesByTemplatePhaseId(
+      tx,
+      phaseId
+    );
+
+    if (activeProgrammeCount > 0) {
+      throw new ConflictError(
+        `Cannot delete phase: ${String(activeProgrammeCount)} programme(s) currently reference it`
+      );
     }
 
     await phaseRepository.deletePhase(tx, phaseId);
