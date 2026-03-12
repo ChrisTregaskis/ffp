@@ -31,64 +31,83 @@
 
 ### Execution Order
 
-| Phase | Track        | Key     | Summary                                    | Pts | Status |
-| ----- | ------------ | ------- | ------------------------------------------ | --- | ------ |
-| 1     | Main         | FFP-441 | Video default exercise prescription fields | 3   | Done   |
-| 1     | Main         | FFP-442 | Programme template backend APIs            | 5   | To Do  |
-| 2     | Main         | FFP-443 | Phase & session backend APIs               | 5   | To Do  |
-| 2     | **Worktree** | FFP-445 | Programme template admin list page         | 5   | To Do  |
-| 3     | Main         | FFP-444 | Session exercise backend APIs              | 5   | To Do  |
-| 4     | Main         | FFP-446 | Template detail & hierarchy editing UI     | 8   | To Do  |
-| 5     | Main         | FFP-447 | Integration verification & documentation   | 3   | To Do  |
+| Phase | Track        | Key     | Summary                                    | Pts | Status      |
+| ----- | ------------ | ------- | ------------------------------------------ | --- | ----------- |
+| 1     | Main         | FFP-441 | Video default exercise prescription fields | 3   | Done        |
+| 1     | Main         | FFP-442 | Programme template backend APIs            | 5   | Done        |
+| 2     | Main         | FFP-443 | Phase & session backend APIs               | 5   | In Progress |
+| 2     | **Worktree** | FFP-445 | Programme template admin list page         | 5   | To Do       |
+| 3     | Main         | FFP-444 | Session exercise backend APIs              | 5   | To Do       |
+| 4     | Main         | FFP-446 | Template detail & hierarchy editing UI     | 8   | To Do       |
+| 5     | Main         | FFP-447 | Integration verification & documentation   | 3   | To Do       |
 
 **Out of scope**: Drag-and-drop reordering (MVP uses move up/down), template duplication/cloning, template versioning, bulk import/export.
 
-### Active Story: FFP-442 — Programme Template CRUD APIs (5 pts)
+### Active Story: FFP-443 — Phase & Session Management APIs (5 pts)
 
-**Branch**: `feature/ffp-442-programme-template-apis`
-**Goal**: Backend APIs for listing, viewing, creating, updating, and deactivating programme templates. Follows Handler → Service → Repository pattern. No RLS needed (system-managed table).
+**Branch**: `feature/sprint9` (continuing on sprint branch)
+**Goal**: Backend APIs for CRUD and reorder of template phases and template sessions. Phases belong to a programme template; sessions belong to a phase. Both support ordering. Parent metadata (totalPhases, sessionCount) stays consistent. System-managed tables (no RLS). Cascade deletes configured at DB level.
 
-**Endpoints**:
+**Endpoints (8 total)**:
 
-- `GET /admin/programme-templates` — paginated list with search/filter (difficulty, isActive)
-- `GET /admin/programme-templates/:id` — detail with nested hierarchy (phases → sessions → exercises)
-- `POST /admin/programme-templates` — create with slug uniqueness
-- `PUT /admin/programme-templates/:id` — update metadata, re-validate slug if changed
-- `PUT /admin/programme-templates/:id/deactivate` — set isActive to false
+Phase endpoints:
+
+- `POST /admin/programme-templates/:templateId/phases` — create phase
+- `PUT /admin/phases/:id` — update phase
+- `DELETE /admin/phases/:id` — delete phase (cascade to sessions + exercises)
+- `PUT /admin/programme-templates/:templateId/phases/reorder` — reorder phases
+
+Session endpoints:
+
+- `POST /admin/phases/:phaseId/sessions` — create session
+- `PUT /admin/sessions/:id` — update session
+- `DELETE /admin/sessions/:id` — delete session (cascade to exercises)
+- `PUT /admin/phases/:phaseId/sessions/reorder` — reorder sessions
 
 **Sub-task execution order** (single branch, all sub-tasks together):
 
 | Order | Key     | Summary                                | Layer     | Status |
 | ----- | ------- | -------------------------------------- | --------- | ------ |
-| 1     | FFP-456 | Zod request/response schemas           | Core      | Done   |
-| 2     | FFP-454 | Repository with CRUD operations        | Core      | Done   |
-| 3     | FFP-455 | Service with validation logic          | Core      | Done   |
-| 4     | FFP-457 | Lambda handlers (5 endpoints)          | Functions | Done   |
-| 5     | FFP-458 | SST routes for programme template APIs | Infra     | Done   |
-| 6     | FFP-459 | Postman requests for all endpoints     | Postman   | Done   |
+| 1     | —       | Zod schemas for phases/sessions        | Core      | To Do  |
+| 2     | FFP-460 | Phase repository with CRUD + reorder   | Core      | To Do  |
+| 3     | FFP-461 | Phase service with validation + sync   | Core      | To Do  |
+| 4     | FFP-462 | Lambda handlers for phase endpoints    | Functions | To Do  |
+| 5     | FFP-463 | Session repository with CRUD + reorder | Core      | To Do  |
+| 6     | FFP-464 | Session service with validation + sync | Core      | To Do  |
+| 7     | FFP-465 | Lambda handlers for session endpoints  | Functions | To Do  |
+| 8     | FFP-466 | Admin router registration (8 routes)   | Functions | To Do  |
+| 9     | FFP-467 | Postman requests for all endpoints     | Postman   | To Do  |
 
 **Amended requirements**:
 
-- Schemas (FFP-456): file placed at `packages/core/src/programme-templates/programme-template-api.schema.ts`. Reuse existing `paginationInputSchema` and `buildPaginationMeta` from core.
-- Repository (FFP-454): No RLS context needed — programme templates are system-managed, cross-tenant by design. Use direct Drizzle queries following video repository pattern.
-- Handlers (FFP-457): All endpoints require `SYSTEM_ADMIN` role check. Files in `packages/functions/src/admin/programme-templates/`.
-- Tests deferred per sprint convention.
+- **Schemas (implicit)**: No Jira sub-task for schemas (FFP-442 had FFP-456). Add Zod schemas for phase and session create/update/reorder/response to existing `packages/core/src/schemas/programme.schema.ts` (follows FFP-442 convention — no separate "api" schema files).
+- **FFP-464 parent sync correction**: Ticket says "update template sessionsPerPhase" — this is incorrect. Session create/delete should update `template_phases.sessionCount` (the phase's own count), not the template's `sessionsPerPhase`. The template's `sessionsPerPhase` is a configuration default, not a live aggregate.
+- **FFP-461 parent sync**: Phase create/delete correctly updates `programme_templates.totalPhases`.
+- **FFP-466 SST routes**: SST uses `ANY /admin/{proxy+}` catch-all — no SST config changes needed. The actual work is adding 8 routes to the admin router at `packages/functions/src/admin/index.ts`.
+- **No RLS**: All tables are system-managed, cross-tenant by design. Follow programme-template repository pattern.
+- **Handlers**: All endpoints require `SYSTEM_ADMIN` role check. Files in `packages/functions/src/admin/programme-templates/`.
+- **Tests deferred** per sprint convention.
 
 **New files to create**:
 
-- `packages/core/src/programme-templates/programme-template-api.schema.ts` — Zod API schemas
-- `packages/core/src/programme-templates/programme-template.repository.ts` — CRUD data access
-- `packages/core/src/programme-templates/programme-template.service.ts` — business logic
-- `packages/functions/src/admin/programme-templates/list-templates.ts` — GET list handler
-- `packages/functions/src/admin/programme-templates/get-template.ts` — GET detail handler
-- `packages/functions/src/admin/programme-templates/create-template.ts` — POST handler
-- `packages/functions/src/admin/programme-templates/update-template.ts` — PUT handler
-- `packages/functions/src/admin/programme-templates/deactivate-template.ts` — PUT deactivate handler
+- `packages/core/src/programme-templates/template-phase.repository.ts` — Phase CRUD + reorder data access
+- `packages/core/src/programme-templates/template-phase.service.ts` — Phase business logic + parent sync
+- `packages/core/src/programme-templates/template-session.repository.ts` — Session CRUD + reorder data access
+- `packages/core/src/programme-templates/template-session.service.ts` — Session business logic + parent sync
+- `packages/functions/src/admin/programme-templates/create-phase.ts` — POST handler
+- `packages/functions/src/admin/programme-templates/update-phase.ts` — PUT handler
+- `packages/functions/src/admin/programme-templates/delete-phase.ts` — DELETE handler
+- `packages/functions/src/admin/programme-templates/reorder-phases.ts` — PUT reorder handler
+- `packages/functions/src/admin/programme-templates/create-session.ts` — POST handler
+- `packages/functions/src/admin/programme-templates/update-session.ts` — PUT handler
+- `packages/functions/src/admin/programme-templates/delete-session.ts` — DELETE handler
+- `packages/functions/src/admin/programme-templates/reorder-sessions.ts` — PUT reorder handler
 
 **Existing files to modify**:
 
-- SST API route config (add 5 new admin routes)
-- `packages/core/src/index.ts` — export new programme-template modules
+- `packages/functions/src/admin/index.ts` — add 8 routes to admin router
+- `packages/core/src/programme-templates/index.ts` — export new phase/session modules
+- `packages/core/src/server.ts` — re-export if needed
 
 ---
 
