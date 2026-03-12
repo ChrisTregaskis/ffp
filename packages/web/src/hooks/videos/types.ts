@@ -30,6 +30,8 @@ export interface VideoUploadState {
   thumbnailError: string | null;
   thumbnailKey: string | null;
   submitError: string | null;
+  /** ID of the created video record (set on success) */
+  createdVideoId: string | null;
 }
 
 export interface UseVideoUploadReturn {
@@ -61,7 +63,7 @@ export type Action =
   | { type: 'UPLOAD_STARTED' }
   | { type: 'UPLOAD_PROGRESS'; progress: number }
   | { type: 'CREATE_STARTED' }
-  | { type: 'CREATE_SUCCESS' }
+  | { type: 'CREATE_SUCCESS'; videoId: string }
   | { type: 'SUBMIT_ERROR'; error: string }
   | { type: 'THUMBNAIL_SELECTED'; file: File }
   | { type: 'THUMBNAIL_UPLOADING' }
