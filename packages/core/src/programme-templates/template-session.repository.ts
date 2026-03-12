@@ -108,7 +108,7 @@ export async function reorderSessions(
   for (let i = 0; i < orderedIds.length; i++) {
     await db
       .update(templateSessions)
-      .set({ sessionNumber: i + 1 })
+      .set({ sessionNumber: i + 1, updatedAt: new Date() })
       .where(eq(templateSessions.id, orderedIds[i]));
   }
 

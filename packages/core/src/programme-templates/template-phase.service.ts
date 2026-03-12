@@ -41,14 +41,14 @@ export async function createPhase(templateId: string, input: unknown): Promise<P
   const validated = createPhaseRequestSchema.parse(input);
   const db = getDb();
 
-  const template = await templateRepository.findTemplateById(db, templateId);
-
-  if (!template) {
-    throw new NotFoundError('Programme template', templateId);
-  }
-
   // Create phase and sync parent in a transaction
   const phase = await db.transaction(async (tx) => {
+    const template = await templateRepository.findTemplateById(tx, templateId);
+
+    if (!template) {
+      throw new NotFoundError('Programme template', templateId);
+    }
+
     const created = await phaseRepository.insertPhase(tx, templateId, validated);
 
     // Update template totalPhases
@@ -84,20 +84,20 @@ export async function updatePhase(phaseId: string, input: unknown): Promise<Phas
 export async function deletePhase(phaseId: string): Promise<void> {
   const db = getDb();
 
-  const phase = await phaseRepository.findPhaseById(db, phaseId);
-
-  if (!phase) {
-    throw new NotFoundError('Template phase', phaseId);
-  }
-
-  const template = await templateRepository.findTemplateById(db, phase.programmeTemplateId);
-
-  if (!template) {
-    throw new NotFoundError('Programme template', phase.programmeTemplateId);
-  }
-
   // Delete, renumber, and sync parent in a transaction
   await db.transaction(async (tx) => {
+    const phase = await phaseRepository.findPhaseById(tx, phaseId);
+
+    if (!phase) {
+      throw new NotFoundError('Template phase', phaseId);
+    }
+
+    const template = await templateRepository.findTemplateById(tx, phase.programmeTemplateId);
+
+    if (!template) {
+      throw new NotFoundError('Programme template', phase.programmeTemplateId);
+    }
+
     await phaseRepository.deletePhase(tx, phaseId);
     await phaseRepository.renumberPhases(tx, phase.programmeTemplateId);
     await templateRepository.updateTemplate(tx, phase.programmeTemplateId, {
@@ -127,7 +127,7 @@ export async function reorderPhases(templateId: string, input: unknown): Promise
   const invalidIds = validated.orderedIds.filter((id) => !existingIds.has(id));
 
   if (invalidIds.length > 0) {
-    throw new ValidationError(`Phase IDs do not belong to this template: ${invalidIds.join(', ')}`);
+    throw new ValidationError('One or more phase IDs do not belong to this template');
   }
 
   if (validated.orderedIds.length !== existingPhases.length) {

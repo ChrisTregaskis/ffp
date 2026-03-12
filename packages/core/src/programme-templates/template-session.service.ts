@@ -41,14 +41,14 @@ export async function createSession(phaseId: string, input: unknown): Promise<Se
   const validated = createSessionRequestSchema.parse(input);
   const db = getDb();
 
-  const phase = await phaseRepository.findPhaseById(db, phaseId);
-
-  if (!phase) {
-    throw new NotFoundError('Template phase', phaseId);
-  }
-
   // Create session and sync parent in a transaction
   const session = await db.transaction(async (tx) => {
+    const phase = await phaseRepository.findPhaseById(tx, phaseId);
+
+    if (!phase) {
+      throw new NotFoundError('Template phase', phaseId);
+    }
+
     const created = await sessionRepository.insertSession(tx, phaseId, validated);
 
     // Update phase sessionCount
@@ -82,20 +82,20 @@ export async function updateSession(sessionId: string, input: unknown): Promise<
 export async function deleteSession(sessionId: string): Promise<void> {
   const db = getDb();
 
-  const session = await sessionRepository.findSessionById(db, sessionId);
-
-  if (!session) {
-    throw new NotFoundError('Template session', sessionId);
-  }
-
-  const phase = await phaseRepository.findPhaseById(db, session.templatePhaseId);
-
-  if (!phase) {
-    throw new NotFoundError('Template phase', session.templatePhaseId);
-  }
-
   // Delete, renumber, and sync parent in a transaction
   await db.transaction(async (tx) => {
+    const session = await sessionRepository.findSessionById(tx, sessionId);
+
+    if (!session) {
+      throw new NotFoundError('Template session', sessionId);
+    }
+
+    const phase = await phaseRepository.findPhaseById(tx, session.templatePhaseId);
+
+    if (!phase) {
+      throw new NotFoundError('Template phase', session.templatePhaseId);
+    }
+
     await sessionRepository.deleteSession(tx, sessionId);
     await sessionRepository.renumberSessions(tx, session.templatePhaseId);
     await phaseRepository.updateSessionCount(
@@ -127,7 +127,7 @@ export async function reorderSessions(phaseId: string, input: unknown): Promise<
   const invalidIds = validated.orderedIds.filter((id) => !existingIds.has(id));
 
   if (invalidIds.length > 0) {
-    throw new ValidationError(`Session IDs do not belong to this phase: ${invalidIds.join(', ')}`);
+    throw new ValidationError('One or more session IDs do not belong to this phase');
   }
 
   if (validated.orderedIds.length !== existingSessions.length) {

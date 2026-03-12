@@ -115,7 +115,7 @@ export async function reorderPhases(
   for (let i = 0; i < orderedIds.length; i++) {
     await db
       .update(templatePhases)
-      .set({ phaseNumber: i + 1 })
+      .set({ phaseNumber: i + 1, updatedAt: new Date() })
       .where(eq(templatePhases.id, orderedIds[i]));
   }
 
