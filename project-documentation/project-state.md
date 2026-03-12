@@ -61,7 +61,7 @@
 | Order | Key     | Summary                                | Layer     | Status |
 | ----- | ------- | -------------------------------------- | --------- | ------ |
 | 1     | FFP-456 | Zod request/response schemas           | Core      | Done   |
-| 2     | FFP-454 | Repository with CRUD operations        | Core      | To Do  |
+| 2     | FFP-454 | Repository with CRUD operations        | Core      | Done   |
 | 3     | FFP-455 | Service with validation logic          | Core      | To Do  |
 | 4     | FFP-457 | Lambda handlers (5 endpoints)          | Functions | To Do  |
 | 5     | FFP-458 | SST routes for programme template APIs | Infra     | To Do  |
@@ -137,6 +137,7 @@
 ### Backlog Items
 
 - `programmes` table RLS policy gap — table has `tenant_id` but not in `apply-rls.ts` (tracked for FFP-4)
+- Bump `tsconfig.base.json` target/lib from ES2022 → ES2024 — Lambda runtime is nodejs24.x, enables `Object.groupBy`, `Map.groupBy` etc.
 
 ---
 

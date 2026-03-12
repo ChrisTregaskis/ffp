@@ -34,4 +34,5 @@ export * from './auth';
 export * from './assessments';
 export * from './jobs';
 export * from './programmes';
+export * from './programme-templates';
 export * from './videos';
