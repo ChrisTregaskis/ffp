@@ -7,6 +7,11 @@ import {
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
 import { handler as createCustomerHandler } from './create-customer';
+import { handler as createProgrammeTemplateHandler } from './programme-templates/create-template';
+import { handler as deactivateProgrammeTemplateHandler } from './programme-templates/deactivate-template';
+import { handler as getProgrammeTemplateHandler } from './programme-templates/get-template';
+import { handler as listProgrammeTemplatesHandler } from './programme-templates/list-templates';
+import { handler as updateProgrammeTemplateHandler } from './programme-templates/update-template';
 import { handler as createTemplateHandler } from './templates/create-template';
 import { handler as deactivateTemplateHandler } from './templates/deactivate-template';
 import { handler as duplicateTemplateHandler } from './templates/duplicate-template';
@@ -32,16 +37,21 @@ const routes: RouteRegistry = {
     '/create-customer': createCustomerHandler,
     '/assessment-templates': createTemplateHandler,
     '/assessment-templates/{id}/duplicate': duplicateTemplateHandler,
+    '/programme-templates': createProgrammeTemplateHandler,
     '/videos': createVideoHandler,
     '/videos/upload-url': getUploadUrlHandler,
   },
   GET: {
     '/assessment-templates': listTemplatesHandler,
     '/assessment-templates/{id}': getTemplateHandler,
+    '/programme-templates': listProgrammeTemplatesHandler,
+    '/programme-templates/{id}': getProgrammeTemplateHandler,
     '/videos': listVideosHandler,
   },
   PUT: {
     '/assessment-templates/{id}': updateTemplateHandler,
+    '/programme-templates/{id}': updateProgrammeTemplateHandler,
+    '/programme-templates/{id}/deactivate': deactivateProgrammeTemplateHandler,
     '/videos/{id}': updateVideoHandler,
   },
   DELETE: {

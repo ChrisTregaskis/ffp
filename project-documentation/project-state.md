@@ -33,7 +33,7 @@
 
 | Phase | Track        | Key     | Summary                                    | Pts | Status |
 | ----- | ------------ | ------- | ------------------------------------------ | --- | ------ |
-| 1     | Main         | FFP-441 | Video default exercise prescription fields | 3   | To Do  |
+| 1     | Main         | FFP-441 | Video default exercise prescription fields | 3   | Done   |
 | 1     | Main         | FFP-442 | Programme template backend APIs            | 5   | To Do  |
 | 2     | Main         | FFP-443 | Phase & session backend APIs               | 5   | To Do  |
 | 2     | **Worktree** | FFP-445 | Programme template admin list page         | 5   | To Do  |
@@ -43,38 +43,52 @@
 
 **Out of scope**: Drag-and-drop reordering (MVP uses move up/down), template duplication/cloning, template versioning, bulk import/export.
 
-### Active Story: FFP-441 — Video Default Exercise Prescription Fields (3 pts)
+### Active Story: FFP-442 — Programme Template CRUD APIs (5 pts)
 
-**Branch**: `feature/sprint9` (single branch for entire story)
-**Goal**: Add 5 nullable default prescription columns to `videos` table, expose through all layers, add UI section on video edit page.
+**Branch**: `feature/ffp-442-programme-template-apis`
+**Goal**: Backend APIs for listing, viewing, creating, updating, and deactivating programme templates. Follows Handler → Service → Repository pattern. No RLS needed (system-managed table).
 
-**Columns**: `default_sets` (integer), `default_reps` (varchar 20), `default_duration_seconds` (integer), `default_rest_seconds` (integer), `default_notes` (text) — all nullable.
+**Endpoints**:
 
-**Sub-task execution order**:
+- `GET /admin/programme-templates` — paginated list with search/filter (difficulty, isActive)
+- `GET /admin/programme-templates/:id` — detail with nested hierarchy (phases → sessions → exercises)
+- `POST /admin/programme-templates` — create with slug uniqueness
+- `PUT /admin/programme-templates/:id` — update metadata, re-validate slug if changed
+- `PUT /admin/programme-templates/:id/deactivate` — set isActive to false
 
-| Order | Key     | Summary                                     | Layer     | Status |
-| ----- | ------- | ------------------------------------------- | --------- | ------ |
-| 1     | FFP-448 | Migration: 5 nullable columns on `videos`   | Database  | Done   |
-| 2     | FFP-449 | Zod schemas: prescription fields            | Core      | Done   |
-| 3     | FFP-450 | Repository & service: persist/return fields | Core      | Done   |
-| 4     | FFP-451 | Handlers: accept/return prescription fields | Functions | Done   |
-| 5     | FFP-452 | Prescription form section on edit page      | Web       | Done   |
-| 6     | FFP-453 | Postman collection update                   | Postman   | To Do  |
+**Sub-task execution order** (single branch, all sub-tasks together):
+
+| Order | Key     | Summary                                | Layer     | Status |
+| ----- | ------- | -------------------------------------- | --------- | ------ |
+| 1     | FFP-456 | Zod request/response schemas           | Core      | Done   |
+| 2     | FFP-454 | Repository with CRUD operations        | Core      | Done   |
+| 3     | FFP-455 | Service with validation logic          | Core      | Done   |
+| 4     | FFP-457 | Lambda handlers (5 endpoints)          | Functions | Done   |
+| 5     | FFP-458 | SST routes for programme template APIs | Infra     | Done   |
+| 6     | FFP-459 | Postman requests for all endpoints     | Postman   | Done   |
 
 **Amended requirements**:
 
-- FFP-452: Prescription section targets **video edit page only** (`VideoEditFormFields.tsx`), not the upload form. Update upload success screen buttons: primary "Set Default Prescription" → navigates to `/admin/videos/:id` (edit page), secondary "Back to Video Library" → navigates to `/admin/videos` (replaces current "Upload Another" button).
+- Schemas (FFP-456): file placed at `packages/core/src/programme-templates/programme-template-api.schema.ts`. Reuse existing `paginationInputSchema` and `buildPaginationMeta` from core.
+- Repository (FFP-454): No RLS context needed — programme templates are system-managed, cross-tenant by design. Use direct Drizzle queries following video repository pattern.
+- Handlers (FFP-457): All endpoints require `SYSTEM_ADMIN` role check. Files in `packages/functions/src/admin/programme-templates/`.
 - Tests deferred per sprint convention.
 
-**Key files to modify**:
+**New files to create**:
 
-- `packages/database/src/schema/videos.ts` — add 5 columns
-- `packages/core/src/schemas/video.schema.ts` — extend create, update, and response schemas
-- `packages/core/src/videos/video.repository.ts` — include new columns in insert/update/select
-- `packages/core/src/videos/video.service.ts` — pass fields through
-- `packages/functions/src/admin/videos/create.ts`, `update.ts` — accept fields in body
-- `packages/web/src/pages/protected/admin/video-edit/VideoEditFormFields.tsx` — add prescription section
-- `packages/web/src/pages/protected/admin/video-edit/types.ts` — extend form values type
+- `packages/core/src/programme-templates/programme-template-api.schema.ts` — Zod API schemas
+- `packages/core/src/programme-templates/programme-template.repository.ts` — CRUD data access
+- `packages/core/src/programme-templates/programme-template.service.ts` — business logic
+- `packages/functions/src/admin/programme-templates/list-templates.ts` — GET list handler
+- `packages/functions/src/admin/programme-templates/get-template.ts` — GET detail handler
+- `packages/functions/src/admin/programme-templates/create-template.ts` — POST handler
+- `packages/functions/src/admin/programme-templates/update-template.ts` — PUT handler
+- `packages/functions/src/admin/programme-templates/deactivate-template.ts` — PUT deactivate handler
+
+**Existing files to modify**:
+
+- SST API route config (add 5 new admin routes)
+- `packages/core/src/index.ts` — export new programme-template modules
 
 ---
 
@@ -123,6 +137,7 @@
 ### Backlog Items
 
 - `programmes` table RLS policy gap — table has `tenant_id` but not in `apply-rls.ts` (tracked for FFP-4)
+- Bump `tsconfig.base.json` target/lib from ES2022 → ES2024 — Lambda runtime is nodejs24.x, enables `Object.groupBy`, `Map.groupBy` etc.
 
 ---
 
