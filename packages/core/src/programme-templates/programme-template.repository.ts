@@ -1,6 +1,6 @@
 import { and, eq, or, ilike, inArray, count, type SQL, type Column } from 'drizzle-orm';
 
-import type { DbClient } from '@ffp/database';
+import type { DbQueryClient } from '@ffp/database';
 import {
   programmeTemplates,
   type ProgrammeTemplateRecord,
@@ -54,7 +54,7 @@ const buildFilterConditions = (filters: Omit<TemplateListQuery, keyof Pagination
 
 /** Returns paginated programme templates with optional filters. */
 export async function findAllTemplates(
-  db: DbClient,
+  db: DbQueryClient,
   paginationInput: PaginationInput,
   filters: Omit<TemplateListQuery, keyof PaginationInput>
 ): Promise<ProgrammeTemplateRecord[]> {
@@ -71,7 +71,7 @@ export async function findAllTemplates(
 
 /** Returns total count of templates matching the given filters. */
 export async function countAllTemplates(
-  db: DbClient,
+  db: DbQueryClient,
   filters: Omit<TemplateListQuery, keyof PaginationInput>
 ): Promise<number> {
   const conditions = buildFilterConditions(filters);
@@ -86,7 +86,7 @@ export async function countAllTemplates(
 
 /** Returns a single template by ID, or null if not found. */
 export async function findTemplateById(
-  db: DbClient,
+  db: DbQueryClient,
   templateId: string
 ): Promise<ProgrammeTemplateRecord | null> {
   const records = await db
@@ -100,7 +100,7 @@ export async function findTemplateById(
 
 /** Returns a single template by slug, or null if not found. */
 export async function findTemplateBySlug(
-  db: DbClient,
+  db: DbQueryClient,
   slug: string
 ): Promise<ProgrammeTemplateRecord | null> {
   const records = await db
@@ -117,7 +117,7 @@ export async function findTemplateBySlug(
  * phases → sessions → exercises (ordered by position).
  */
 export async function findTemplateHierarchy(
-  db: DbClient,
+  db: DbQueryClient,
   templateId: string
 ): Promise<{ phases: TemplatePhaseWithSessions[] }> {
   // Fetch all levels in parallel — no RLS needed
@@ -210,7 +210,7 @@ export async function findTemplateHierarchy(
 
 /** Inserts a new programme template and returns the created record. */
 export async function insertTemplate(
-  db: DbClient,
+  db: DbQueryClient,
   input: NewProgrammeTemplate
 ): Promise<ProgrammeTemplateRecord> {
   const records = await db.insert(programmeTemplates).values(input).returning();
@@ -220,7 +220,7 @@ export async function insertTemplate(
 
 /** Updates a programme template and returns the updated record, or null if not found. */
 export async function updateTemplate(
-  db: DbClient,
+  db: DbQueryClient,
   templateId: string,
   data: UpdateProgrammeTemplateInput
 ): Promise<ProgrammeTemplateRecord | null> {
@@ -235,7 +235,7 @@ export async function updateTemplate(
 
 /** Sets isActive to false for a template. Returns the updated record, or null if not found. */
 export async function deactivateTemplate(
-  db: DbClient,
+  db: DbQueryClient,
   templateId: string
 ): Promise<ProgrammeTemplateRecord | null> {
   const records = await db

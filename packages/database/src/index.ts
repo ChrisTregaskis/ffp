@@ -23,4 +23,4 @@ export type { LogContext, DatabaseLogger } from './lib/logger';
 
 // Re-export database client
 export { getDb, withDb, closeDb } from './client';
-export type { DbClient } from './client';
+export type { DbClient, DbQueryClient } from './client';

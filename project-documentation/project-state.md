@@ -68,10 +68,10 @@ Session endpoints:
 
 | Order | Key     | Summary                                | Layer     | Status |
 | ----- | ------- | -------------------------------------- | --------- | ------ |
-| 1     | —       | Zod schemas for phases/sessions        | Core      | To Do  |
-| 2     | FFP-460 | Phase repository with CRUD + reorder   | Core      | To Do  |
-| 3     | FFP-461 | Phase service with validation + sync   | Core      | To Do  |
-| 4     | FFP-462 | Lambda handlers for phase endpoints    | Functions | To Do  |
+| 1     | —       | Zod schemas for phases/sessions        | Core      | Done   |
+| 2     | FFP-460 | Phase repository with CRUD + reorder   | Core      | Done   |
+| 3     | FFP-461 | Phase service with validation + sync   | Core      | Done   |
+| 4     | FFP-462 | Lambda handlers for phase endpoints    | Functions | Done   |
 | 5     | FFP-463 | Session repository with CRUD + reorder | Core      | To Do  |
 | 6     | FFP-464 | Session service with validation + sync | Core      | To Do  |
 | 7     | FFP-465 | Lambda handlers for session endpoints  | Functions | To Do  |
