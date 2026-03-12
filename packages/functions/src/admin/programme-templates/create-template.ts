@@ -4,10 +4,11 @@ import {
   extractUserContext,
   withErrorHandling,
   ForbiddenError,
-  ValidationError,
   isUserActor,
   programmeTemplateService,
 } from '@ffp/core/server';
+
+import { parseJsonBody } from '../../lib/request-body';
 
 interface CreateTemplateResponse {
   template: TemplateDetailResponse;
@@ -28,18 +29,7 @@ export const handler = withErrorHandling(
       throw new ForbiddenError('Only system administrators can create programme templates');
     }
 
-    if (!event.body) {
-      throw new ValidationError('Request body is required');
-    }
-
-    let body: unknown;
-
-    try {
-      body = JSON.parse(event.body);
-    } catch {
-      throw new ValidationError('Invalid JSON in request body');
-    }
-
+    const body = parseJsonBody(event.body);
     const template = await programmeTemplateService.createTemplate(body);
 
     return { template };

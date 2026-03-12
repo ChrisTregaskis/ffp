@@ -72,6 +72,18 @@ export async function updatePhase(
   return records[0] ?? null;
 }
 
+/** Updates a phase's sessionCount. Used by session service to sync parent metadata. */
+export async function updateSessionCount(
+  db: DbQueryClient,
+  phaseId: string,
+  sessionCount: number
+): Promise<void> {
+  await db
+    .update(templatePhases)
+    .set({ sessionCount, updatedAt: new Date() })
+    .where(eq(templatePhases.id, phaseId));
+}
+
 /** Deletes a phase by ID. Returns true if a row was deleted. DB cascade handles children. */
 export async function deletePhase(db: DbQueryClient, id: string): Promise<boolean> {
   const result = await db.delete(templatePhases).where(eq(templatePhases.id, id)).returning();

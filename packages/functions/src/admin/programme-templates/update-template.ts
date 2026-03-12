@@ -9,6 +9,8 @@ import {
   programmeTemplateService,
 } from '@ffp/core/server';
 
+import { parseJsonBody } from '../../lib/request-body';
+
 interface UpdateTemplateResponse {
   template: TemplateDetailResponse;
 }
@@ -33,18 +35,7 @@ export const handler = withErrorHandling(
       throw new ValidationError('Template ID is required');
     }
 
-    if (!event.body) {
-      throw new ValidationError('Request body is required');
-    }
-
-    let body: unknown;
-
-    try {
-      body = JSON.parse(event.body);
-    } catch {
-      throw new ValidationError('Invalid JSON in request body');
-    }
-
+    const body = parseJsonBody(event.body);
     const template = await programmeTemplateService.updateTemplate(templateId, body);
 
     return { template };

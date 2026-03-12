@@ -132,7 +132,7 @@ export async function reorderPhases(templateId: string, input: unknown): Promise
 
   if (validated.orderedIds.length !== existingPhases.length) {
     throw new ValidationError(
-      `Expected ${existingPhases.length} phase IDs but received ${validated.orderedIds.length}`
+      `Expected ${String(existingPhases.length)} phase IDs but received ${String(validated.orderedIds.length)}`
     );
   }
 

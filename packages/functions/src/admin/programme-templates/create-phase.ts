@@ -9,6 +9,8 @@ import {
   templatePhaseService,
 } from '@ffp/core/server';
 
+import { parseJsonBody } from '../../lib/request-body';
+
 interface CreatePhaseResponse {
   phase: PhaseResponse;
 }
@@ -33,16 +35,7 @@ export const handler = withErrorHandling(
       throw new ValidationError('Template ID is required');
     }
 
-    let body: unknown = {};
-
-    if (event.body) {
-      try {
-        body = JSON.parse(event.body);
-      } catch {
-        throw new ValidationError('Invalid JSON in request body');
-      }
-    }
-
+    const body = parseJsonBody(event.body, { required: false });
     const phase = await templatePhaseService.createPhase(templateId, body);
 
     return { phase };

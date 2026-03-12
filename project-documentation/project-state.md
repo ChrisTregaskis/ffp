@@ -72,9 +72,9 @@ Session endpoints:
 | 2     | FFP-460 | Phase repository with CRUD + reorder   | Core      | Done   |
 | 3     | FFP-461 | Phase service with validation + sync   | Core      | Done   |
 | 4     | FFP-462 | Lambda handlers for phase endpoints    | Functions | Done   |
-| 5     | FFP-463 | Session repository with CRUD + reorder | Core      | To Do  |
-| 6     | FFP-464 | Session service with validation + sync | Core      | To Do  |
-| 7     | FFP-465 | Lambda handlers for session endpoints  | Functions | To Do  |
+| 5     | FFP-463 | Session repository with CRUD + reorder | Core      | Done   |
+| 6     | FFP-464 | Session service with validation + sync | Core      | Done   |
+| 7     | FFP-465 | Lambda handlers for session endpoints  | Functions | Done   |
 | 8     | FFP-466 | Admin router registration (8 routes)   | Functions | To Do  |
 | 9     | FFP-467 | Postman requests for all endpoints     | Postman   | To Do  |
 

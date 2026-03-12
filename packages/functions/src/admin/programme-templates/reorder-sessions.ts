@@ -1,4 +1,4 @@
-import type { PhaseResponse } from '@ffp/core';
+import type { SessionResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
@@ -6,27 +6,28 @@ import {
   ForbiddenError,
   ValidationError,
   isUserActor,
-  templatePhaseService,
+  templateSessionService,
 } from '@ffp/core/server';
 
 import { parseJsonBody } from '../../lib/request-body';
 
-interface UpdatePhaseResponse {
-  phase: PhaseResponse;
+interface ReorderSessionsResponse {
+  sessions: SessionResponse[];
 }
 
 /**
- * Lambda handler for PUT /admin/phases/{id}
+ * Lambda handler for PUT /admin/phases/{id}/sessions/reorder
  *
- * Updates a template phase. Supports partial updates (name, description).
+ * Reorders sessions within a template phase.
+ * Accepts an array of session IDs in the desired order.
  * Admin role required.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<UpdatePhaseResponse> => {
+  async (event: APIGatewayProxyEventV2WithJWT): Promise<ReorderSessionsResponse> => {
     const context = extractUserContext(event);
 
     if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can update template phases');
+      throw new ForbiddenError('Only system administrators can reorder template sessions');
     }
 
     const phaseId = event.pathParameters?.id;
@@ -36,8 +37,8 @@ export const handler = withErrorHandling(
     }
 
     const body = parseJsonBody(event.body);
-    const phase = await templatePhaseService.updatePhase(phaseId, body);
+    const sessions = await templateSessionService.reorderSessions(phaseId, body);
 
-    return { phase };
+    return { sessions };
   }
 );
