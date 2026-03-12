@@ -65,7 +65,7 @@
 | 3     | FFP-455 | Service with validation logic          | Core      | Done   |
 | 4     | FFP-457 | Lambda handlers (5 endpoints)          | Functions | Done   |
 | 5     | FFP-458 | SST routes for programme template APIs | Infra     | Done   |
-| 6     | FFP-459 | Postman requests for all endpoints     | Postman   | To Do  |
+| 6     | FFP-459 | Postman requests for all endpoints     | Postman   | Done   |
 
 **Amended requirements**:
 

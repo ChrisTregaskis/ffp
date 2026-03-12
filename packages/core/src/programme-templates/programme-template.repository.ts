@@ -1,4 +1,4 @@
-import { and, eq, or, ilike, count, type SQL, type Column } from 'drizzle-orm';
+import { and, eq, or, ilike, inArray, count, type SQL, type Column } from 'drizzle-orm';
 
 import type { DbClient } from '@ffp/database';
 import {
@@ -131,7 +131,7 @@ export async function findTemplateHierarchy(
       .select()
       .from(templateSessions)
       .where(
-        eq(
+        inArray(
           templateSessions.templatePhaseId,
           // Subquery: all phase IDs for this template
           db
@@ -145,13 +145,13 @@ export async function findTemplateHierarchy(
       .select()
       .from(sessionExercises)
       .where(
-        eq(
+        inArray(
           sessionExercises.templateSessionId,
           db
             .select({ id: templateSessions.id })
             .from(templateSessions)
             .where(
-              eq(
+              inArray(
                 templateSessions.templatePhaseId,
                 db
                   .select({ id: templatePhases.id })
