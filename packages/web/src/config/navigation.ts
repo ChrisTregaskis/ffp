@@ -153,7 +153,7 @@ export const systemAdminNavItems: NavItem[] = [
   },
   {
     key: RouteKey.ADMIN_TEMPLATES,
-    label: 'Session Templates',
+    label: 'Programme Templates',
     icon: 'FileText',
     path: routes[RouteKey.ADMIN_TEMPLATES].path,
     roles: [SYSTEM_ADMIN],

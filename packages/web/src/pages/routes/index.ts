@@ -19,6 +19,7 @@ import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsP
 import { TableComponentsPage } from '@web/pages/dev/TableComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
+import { TemplateListPage } from '@web/pages/protected/admin/TemplateListPage';
 import { VideoEditPage } from '@web/pages/protected/admin/video-edit';
 import { VideoUploadPage } from '@web/pages/protected/admin/video-upload';
 import { VideoLibraryPage } from '@web/pages/protected/admin/VideoLibraryPage';
@@ -250,13 +251,8 @@ export const routes: RoutesConfig = {
   },
   [RouteKey.ADMIN_TEMPLATES]: {
     path: `${adminBasePath}/templates`,
-    pageComponent: () =>
-      ComingSoonPage({
-        title: 'Session Templates',
-        description: 'Manage workout session templates',
-        icon: 'FileText',
-      }),
-    title: 'Session Templates',
+    pageComponent: TemplateListPage,
+    title: 'Programme Templates',
     allowedRoles: [SYSTEM_ADMIN],
   },
   [RouteKey.ADMIN_VIDEOS]: {
