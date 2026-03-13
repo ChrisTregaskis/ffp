@@ -1,6 +1,6 @@
 import type { UserRole } from '@ffp/core';
 
-import type { ContextNavItem } from '@web/config/navigation';
+import type { IconName } from '@web/components/Icon/types';
 import { USER_ROLE } from '@web/constants/roles';
 import { ComingSoonPage } from '@web/pages/ComingSoonPage';
 import { AssessmentProgressComponentsPage } from '@web/pages/dev/AssessmentProgressComponentsPage';
@@ -39,6 +39,19 @@ import { RouteKey } from './RouteKey';
 import type { FC } from 'react';
 
 export { RouteKey };
+
+/**
+ * Context-aware navigation item for routes that override the default sidebar.
+ * Used for sub-pages
+ */
+export interface ContextNavItem {
+  /** Display label */
+  label: string;
+  /** Icomoon icon name */
+  icon: IconName;
+  /** URL path to navigate to */
+  path: string;
+}
 
 /**
  * Configuration for a single application route.
