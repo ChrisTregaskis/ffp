@@ -1,3 +1,12 @@
+export { adminProgrammeTemplatesApi } from './admin-programme-templates';
+export type {
+  AdminTemplateFilterInput,
+  CreateProgrammeTemplateInput,
+  PaginatedTemplateListResponse,
+  TemplateDetailResponse,
+  UpdateProgrammeTemplateInput,
+} from './admin-programme-templates';
+
 export { adminVideosApi } from './admin-videos';
 export type {
   CreateVideoInput,
