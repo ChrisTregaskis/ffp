@@ -54,8 +54,8 @@
 | ----- | ------- | --------------------------------------------- | ----- | ------ |
 | 1     | FFP-474 | API client methods for template endpoints     | Web   | Done   |
 | 2     | FFP-475 | TanStack Query hooks for list and mutations   | Web   | Done   |
-| 3     | FFP-476 | Column definitions for template list table    | Web   | To Do  |
-| 4     | FFP-479 | Context-aware empty state component           | Web   | To Do  |
+| 3     | FFP-476 | Column definitions for template list table    | Web   | Done   |
+| 4     | FFP-479 | Context-aware empty state component           | Web   | Done   |
 | 5     | FFP-477 | TemplateListPage with Table and TableControls | Web   | To Do  |
 | 6     | FFP-478 | Route config and sidebar navigation update    | Web   | To Do  |
 
