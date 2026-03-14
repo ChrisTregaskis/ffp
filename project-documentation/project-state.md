@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 11th March 2026
+**Last Updated**: 12th March 2026
 **Current EPIC**: FFP-439 Admin Programme Template Management
 **Sprint Status**: Sprint 9 - Programme Template (starting)
 
@@ -31,83 +31,64 @@
 
 ### Execution Order
 
-| Phase | Track        | Key     | Summary                                    | Pts | Status      |
-| ----- | ------------ | ------- | ------------------------------------------ | --- | ----------- |
-| 1     | Main         | FFP-441 | Video default exercise prescription fields | 3   | Done        |
-| 1     | Main         | FFP-442 | Programme template backend APIs            | 5   | Done        |
-| 2     | Main         | FFP-443 | Phase & session backend APIs               | 5   | In Progress |
-| 2     | **Worktree** | FFP-445 | Programme template admin list page         | 5   | To Do       |
-| 3     | Main         | FFP-444 | Session exercise backend APIs              | 5   | To Do       |
-| 4     | Main         | FFP-446 | Template detail & hierarchy editing UI     | 8   | To Do       |
-| 5     | Main         | FFP-447 | Integration verification & documentation   | 3   | To Do       |
+| Phase | Track | Key     | Summary                                    | Pts | Status      |
+| ----- | ----- | ------- | ------------------------------------------ | --- | ----------- |
+| 1     | Main  | FFP-441 | Video default exercise prescription fields | 3   | Done        |
+| 1     | Main  | FFP-442 | Programme template backend APIs            | 5   | Done        |
+| 2     | Main  | FFP-443 | Phase & session backend APIs               | 5   | Done        |
+| 2     | Main  | FFP-445 | Programme template admin list page         | 5   | In Progress |
+| 3     | Main  | FFP-444 | Session exercise backend APIs              | 5   | To Do       |
+| 4     | Main  | FFP-446 | Template detail & hierarchy editing UI     | 8   | To Do       |
+| 5     | Main  | FFP-447 | Integration verification & documentation   | 3   | To Do       |
 
 **Out of scope**: Drag-and-drop reordering (MVP uses move up/down), template duplication/cloning, template versioning, bulk import/export.
 
-### Active Story: FFP-443 — Phase & Session Management APIs (5 pts)
+### Active Story: FFP-445 — Programme Template List Page (5 pts)
 
 **Branch**: `feature/sprint9` (continuing on sprint branch)
-**Goal**: Backend APIs for CRUD and reorder of template phases and template sessions. Phases belong to a programme template; sessions belong to a phase. Both support ordering. Parent metadata (totalPhases, sessionCount) stays consistent. System-managed tables (no RLS). Cascade deletes configured at DB level.
-
-**Endpoints (8 total)**:
-
-Phase endpoints:
-
-- `POST /admin/programme-templates/:templateId/phases` — create phase
-- `PUT /admin/phases/:id` — update phase
-- `DELETE /admin/phases/:id` — delete phase (cascade to sessions + exercises)
-- `PUT /admin/programme-templates/:templateId/phases/reorder` — reorder phases
-
-Session endpoints:
-
-- `POST /admin/phases/:phaseId/sessions` — create session
-- `PUT /admin/sessions/:id` — update session
-- `DELETE /admin/sessions/:id` — delete session (cascade to exercises)
-- `PUT /admin/phases/:phaseId/sessions/reorder` — reorder sessions
+**Goal**: Replace the Coming Soon placeholder at `/admin/templates` with a functional list page following the Video Library pattern (FFP-332). Reuses Table component (FFP-437), TableControls, and useApiTable hook.
 
 **Sub-task execution order** (single branch, all sub-tasks together):
 
-| Order | Key     | Summary                                | Layer     | Status |
-| ----- | ------- | -------------------------------------- | --------- | ------ |
-| 1     | —       | Zod schemas for phases/sessions        | Core      | Done   |
-| 2     | FFP-460 | Phase repository with CRUD + reorder   | Core      | Done   |
-| 3     | FFP-461 | Phase service with validation + sync   | Core      | Done   |
-| 4     | FFP-462 | Lambda handlers for phase endpoints    | Functions | Done   |
-| 5     | FFP-463 | Session repository with CRUD + reorder | Core      | Done   |
-| 6     | FFP-464 | Session service with validation + sync | Core      | Done   |
-| 7     | FFP-465 | Lambda handlers for session endpoints  | Functions | Done   |
-| 8     | FFP-466 | Admin router registration (8 routes)   | Functions | Done   |
-| 9     | FFP-467 | Postman requests for all endpoints     | Postman   | Done   |
+| Order | Key     | Summary                                       | Layer | Status |
+| ----- | ------- | --------------------------------------------- | ----- | ------ |
+| 1     | FFP-474 | API client methods for template endpoints     | Web   | Done   |
+| 2     | FFP-475 | TanStack Query hooks for list and mutations   | Web   | Done   |
+| 3     | FFP-476 | Column definitions for template list table    | Web   | Done   |
+| 4     | FFP-479 | Context-aware empty state component           | Web   | Done   |
+| 5     | FFP-477 | TemplateListPage with Table and TableControls | Web   | Done   |
+| 6     | FFP-478 | Route config and sidebar navigation update    | Web   | Done   |
 
 **Amended requirements**:
 
-- **Schemas (implicit)**: No Jira sub-task for schemas (FFP-442 had FFP-456). Add Zod schemas for phase and session create/update/reorder/response to existing `packages/core/src/schemas/programme.schema.ts` (follows FFP-442 convention — no separate "api" schema files).
-- **FFP-464 parent sync correction**: Ticket says "update template sessionsPerPhase" — this is incorrect. Session create/delete should update `template_phases.sessionCount` (the phase's own count), not the template's `sessionsPerPhase`. The template's `sessionsPerPhase` is a configuration default, not a live aggregate.
-- **FFP-461 parent sync**: Phase create/delete correctly updates `programme_templates.totalPhases`.
-- **FFP-466 SST routes**: SST uses `ANY /admin/{proxy+}` catch-all — no SST config changes needed. The actual work is adding 8 routes to the admin router at `packages/functions/src/admin/index.ts`.
-- **No RLS**: All tables are system-managed, cross-tenant by design. Follow programme-template repository pattern.
-- **Handlers**: All endpoints require `SYSTEM_ADMIN` role check. Files in `packages/functions/src/admin/programme-templates/`.
+- **Route title correction**: Current route says "Session Templates" — should be "Programme Templates" to match the domain model.
+- **AC5 View Detail/Edit actions**: Detail page is out of scope for this story (covered in FFP-446). Actions will navigate to `${adminBasePath}/templates/:id` which will initially 404 / show Coming Soon until FFP-446 is implemented. Alternatively, disable these actions for now.
+- **Status column**: `isActive` is a boolean, not a multi-state enum like video status. Map to "Active"/"Inactive" using StatusCell with a simple two-value `statusMap`.
+- **AC5 Deactivate/Activate**: Toggle `isActive` via existing `PUT /admin/programme-templates/:id` endpoint (update mutation with `{ isActive: true/false }`).
+- **AC6 Create Template**: Button navigates to future creation route. Wire to `${adminBasePath}/templates/create` — will 404 until FFP-446.
+- **FFP-474 API client**: Follow `admin-videos.ts` pattern. Base path `/admin/programme-templates`. Methods: `list`, `get`, `create`, `update`, `deactivate`. Response validation via `parseApiResponse` with existing Zod schemas from `@ffp/core` (`paginatedTemplateListResponseSchema`, `templateDetailResponseSchema`).
+- **FFP-475 Query hooks**: Follow `useAdminVideosQuery` pattern. Query keys in `lib/query/keys/programme-templates.ts`. Hooks in `hooks/programme-templates/`.
+- **FFP-476 Columns**: Use `createColumns<TemplateRow>()` factory. Columns: Name (text, sortable), Slug (text), Difficulty (text, sortable), Phases (number — `totalPhases`), Sessions/Phase (number — `sessionsPerPhase`), Status (status — `isActive` mapped), Created (date, sortable), Actions.
+- **FFP-479 Empty state**: Follow `VideoLibraryEmptyState` pattern with `StatusResult`. Two states: no templates ("Create Template" CTA) vs no filter results ("Clear Filters" hint).
+- **FFP-478 Route update**: Replace `ComingSoonPage` with `TemplateListPage`. Update title to "Programme Templates". Sidebar nav entry likely already exists — verify and update label/icon if needed.
 - **Tests deferred** per sprint convention.
 
 **New files to create**:
 
-- `packages/core/src/programme-templates/template-phase.repository.ts` — Phase CRUD + reorder data access
-- `packages/core/src/programme-templates/template-phase.service.ts` — Phase business logic + parent sync
-- `packages/core/src/programme-templates/template-session.repository.ts` — Session CRUD + reorder data access
-- `packages/core/src/programme-templates/template-session.service.ts` — Session business logic + parent sync
-- `packages/functions/src/admin/programme-templates/create-phase.ts` — POST handler
-- `packages/functions/src/admin/programme-templates/update-phase.ts` — PUT handler
-- `packages/functions/src/admin/programme-templates/delete-phase.ts` — DELETE handler
-- `packages/functions/src/admin/programme-templates/reorder-phases.ts` — PUT reorder handler
-- `packages/functions/src/admin/programme-templates/create-session.ts` — POST handler
-- `packages/functions/src/admin/programme-templates/update-session.ts` — PUT handler
-- `packages/functions/src/admin/programme-templates/delete-session.ts` — DELETE handler
-- `packages/functions/src/admin/programme-templates/reorder-sessions.ts` — PUT reorder handler
+- `packages/web/src/lib/api/endpoints/admin-programme-templates.ts` — API client methods
+- `packages/web/src/lib/query/keys/programme-templates.ts` — Query key factory
+- `packages/web/src/hooks/programme-templates/useAdminTemplatesQuery.ts` — List query hook
+- `packages/web/src/hooks/programme-templates/useTemplateMutations.ts` — Update/deactivate mutations
+- `packages/web/src/hooks/programme-templates/index.ts` — Barrel export
+- `packages/web/src/pages/protected/admin/programme-template-list/columns.tsx` — Column definitions
+- `packages/web/src/pages/protected/admin/programme-template-list/constants.ts` — Status map, filter config
+- `packages/web/src/pages/protected/admin/programme-template-list/TemplateListEmptyState.tsx` — Empty state
+- `packages/web/src/pages/protected/admin/TemplateListPage.tsx` — Main page component
 
 **Existing files to modify**:
 
-- `packages/functions/src/admin/index.ts` — add 8 routes to admin router
-- `packages/core/src/programme-templates/index.ts` — export new phase/session modules
-- `packages/core/src/server.ts` — re-export if needed
+- `packages/web/src/pages/routes/index.ts` — Replace ComingSoonPage with TemplateListPage, update title
+- `packages/web/src/config/navigation.ts` — Verify/update Templates nav item label and icon
 
 ---
 

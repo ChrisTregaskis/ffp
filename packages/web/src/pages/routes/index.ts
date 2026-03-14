@@ -1,6 +1,6 @@
 import type { UserRole } from '@ffp/core';
 
-import type { ContextNavItem } from '@web/config/navigation';
+import type { IconName } from '@web/components/Icon/types';
 import { USER_ROLE } from '@web/constants/roles';
 import { ComingSoonPage } from '@web/pages/ComingSoonPage';
 import { AssessmentProgressComponentsPage } from '@web/pages/dev/AssessmentProgressComponentsPage';
@@ -19,6 +19,7 @@ import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsP
 import { TableComponentsPage } from '@web/pages/dev/TableComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
+import { TemplateListPage } from '@web/pages/protected/admin/TemplateListPage';
 import { VideoEditPage } from '@web/pages/protected/admin/video-edit';
 import { VideoUploadPage } from '@web/pages/protected/admin/video-upload';
 import { VideoLibraryPage } from '@web/pages/protected/admin/VideoLibraryPage';
@@ -38,6 +39,19 @@ import { RouteKey } from './RouteKey';
 import type { FC } from 'react';
 
 export { RouteKey };
+
+/**
+ * Context-aware navigation item for routes that override the default sidebar.
+ * Used for sub-pages
+ */
+export interface ContextNavItem {
+  /** Display label */
+  label: string;
+  /** Icomoon icon name */
+  icon: IconName;
+  /** URL path to navigate to */
+  path: string;
+}
 
 /**
  * Configuration for a single application route.
@@ -250,13 +264,8 @@ export const routes: RoutesConfig = {
   },
   [RouteKey.ADMIN_TEMPLATES]: {
     path: `${adminBasePath}/templates`,
-    pageComponent: () =>
-      ComingSoonPage({
-        title: 'Session Templates',
-        description: 'Manage workout session templates',
-        icon: 'FileText',
-      }),
-    title: 'Session Templates',
+    pageComponent: TemplateListPage,
+    title: 'Programme Templates',
     allowedRoles: [SYSTEM_ADMIN],
   },
   [RouteKey.ADMIN_VIDEOS]: {
