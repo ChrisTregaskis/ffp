@@ -4,6 +4,7 @@ import { PROGRAMME_STATUSES, PHASE_STATUSES, DIFFICULTIES } from '@ffp/database/
 
 import { createPaginatedResponseSchema, paginationInputSchema } from './pagination.schema';
 import {
+  sessionExerciseSchema,
   templatePhaseSchema,
   templateSessionSchema,
   templatePhaseWithSessionsSchema,
@@ -269,6 +270,62 @@ export const sessionResponseSchema = templateSessionSchema.pick({
   updatedAt: true,
 });
 
+// ---------- Exercise API Schemas ----------
+
+/** Create exercise request body — videoId required, prescription fields optional (pre-populated from video defaults) */
+export const createExerciseRequestSchema = z.object({
+  videoId: z.guid(),
+  sets: sessionExerciseSchema.shape.sets.optional(),
+  reps: sessionExerciseSchema.shape.reps.optional(),
+  durationSeconds: sessionExerciseSchema.shape.durationSeconds.optional(),
+  restSeconds: sessionExerciseSchema.shape.restSeconds.optional(),
+  notes: sessionExerciseSchema.shape.notes.optional(),
+});
+
+/** Update exercise request body — all fields optional (partial update) */
+export const updateExerciseRequestSchema = z
+  .object({
+    videoId: z.guid(),
+    sets: sessionExerciseSchema.shape.sets,
+    reps: sessionExerciseSchema.shape.reps,
+    durationSeconds: sessionExerciseSchema.shape.durationSeconds,
+    restSeconds: sessionExerciseSchema.shape.restSeconds,
+    notes: sessionExerciseSchema.shape.notes,
+  })
+  .partial();
+
+/** Reorder exercises request body — ordered array of exercise IDs */
+export const reorderExercisesRequestSchema = z.object({
+  orderedIds: z.array(z.guid()).min(1),
+});
+
+/** Video summary embedded in exercise responses — lightweight video metadata for display */
+export const exerciseVideoSummarySchema = z.object({
+  id: z.guid(),
+  title: z.string(),
+  thumbnailKey: z.string().nullable(),
+  status: z.string(),
+});
+
+/** Exercise response — exercise fields with embedded video summary */
+export const exerciseResponseSchema = sessionExerciseSchema
+  .pick({
+    id: true,
+    templateSessionId: true,
+    videoId: true,
+    orderIndex: true,
+    sets: true,
+    reps: true,
+    durationSeconds: true,
+    restSeconds: true,
+    notes: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    video: exerciseVideoSummarySchema,
+  });
+
 export type Programme = z.infer<typeof programmeSchema>;
 export type ActiveProgrammeResponse = z.infer<typeof activeProgrammeResponseSchema>;
 export type ReplaceProgrammeRequest = z.infer<typeof replaceProgrammeRequestSchema>;
@@ -292,3 +349,8 @@ export type CreateSessionRequest = z.infer<typeof createSessionRequestSchema>;
 export type UpdateSessionRequest = z.infer<typeof updateSessionRequestSchema>;
 export type ReorderSessionsRequest = z.infer<typeof reorderSessionsRequestSchema>;
 export type SessionResponse = z.infer<typeof sessionResponseSchema>;
+export type CreateExerciseRequest = z.infer<typeof createExerciseRequestSchema>;
+export type UpdateExerciseRequest = z.infer<typeof updateExerciseRequestSchema>;
+export type ReorderExercisesRequest = z.infer<typeof reorderExercisesRequestSchema>;
+export type ExerciseResponse = z.infer<typeof exerciseResponseSchema>;
+export type ExerciseVideoSummary = z.infer<typeof exerciseVideoSummarySchema>;
