@@ -15,6 +15,14 @@ export interface ExerciseWithVideo extends SessionExerciseRecord {
   video: ExerciseVideoSummary;
 }
 
+/** Lightweight video columns selected when joining exercises with video data. */
+const videoSummaryColumns = {
+  id: videos.id,
+  title: videos.title,
+  thumbnailKey: videos.thumbnailKey,
+  status: videos.status,
+} as const;
+
 /** Returns all exercises for a session, ordered by orderIndex, with video data. */
 export async function findExercisesBySessionId(
   db: DbQueryClient,
@@ -23,12 +31,7 @@ export async function findExercisesBySessionId(
   const rows = await db
     .select({
       exercise: sessionExercises,
-      video: {
-        id: videos.id,
-        title: videos.title,
-        thumbnailKey: videos.thumbnailKey,
-        status: videos.status,
-      },
+      video: videoSummaryColumns,
     })
     .from(sessionExercises)
     .innerJoin(videos, eq(sessionExercises.videoId, videos.id))
@@ -46,12 +49,7 @@ export async function findExerciseById(
   const rows = await db
     .select({
       exercise: sessionExercises,
-      video: {
-        id: videos.id,
-        title: videos.title,
-        thumbnailKey: videos.thumbnailKey,
-        status: videos.status,
-      },
+      video: videoSummaryColumns,
     })
     .from(sessionExercises)
     .innerJoin(videos, eq(sessionExercises.videoId, videos.id))

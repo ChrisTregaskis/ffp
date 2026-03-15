@@ -18,7 +18,6 @@ interface ListExercisesResponse {
  *
  * Returns all exercises for a template session, ordered by orderIndex.
  * Each exercise includes embedded video summary data.
- * Admin role required.
  */
 export const handler = withErrorHandling(
   async (event: APIGatewayProxyEventV2WithJWT): Promise<ListExercisesResponse> => {

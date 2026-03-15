@@ -50,15 +50,15 @@ export async function createExercise(sessionId: string, input: unknown): Promise
     throw new NotFoundError('Template session', sessionId);
   }
 
-  // Validate video exists and is active
+  // Validate video exists and is active (outside transaction — video repo uses DbClient)
   const video = await videoRepository.findVideoById(db, validated.videoId);
 
   if (!video) {
-    throw new ValidationError(`Video not found: ${validated.videoId}`);
+    throw new ValidationError('Video not found');
   }
 
   if (video.status !== 'active') {
-    throw new ValidationError(`Video is not active: ${validated.videoId}`);
+    throw new ValidationError('Video is not active');
   }
 
   // Pre-populate prescription from video defaults where not explicitly provided
@@ -73,14 +73,16 @@ export async function createExercise(sessionId: string, input: unknown): Promise
 
   const exercise = await exerciseRepository.insertExercise(db, sessionId, prescription);
 
-  // Fetch with video join for the response
-  const withVideo = await exerciseRepository.findExerciseById(db, exercise.id);
-
-  if (!withVideo) {
-    throw new NotFoundError('Session exercise', exercise.id);
-  }
-
-  return toResponse(withVideo);
+  // Build response from insert result + already-fetched video data
+  return toResponse({
+    ...exercise,
+    video: {
+      id: video.id,
+      title: video.title,
+      thumbnailKey: video.thumbnailKey,
+      status: video.status,
+    },
+  });
 }
 
 /** Updates an exercise. Validates video if videoId is changed. */
@@ -96,11 +98,11 @@ export async function updateExercise(
     const video = await videoRepository.findVideoById(db, validated.videoId);
 
     if (!video) {
-      throw new ValidationError(`Video not found: ${validated.videoId}`);
+      throw new ValidationError('Video not found');
     }
 
     if (video.status !== 'active') {
-      throw new ValidationError(`Video is not active: ${validated.videoId}`);
+      throw new ValidationError('Video is not active');
     }
   }
 
@@ -150,30 +152,29 @@ export async function reorderExercises(
   const validated = reorderExercisesRequestSchema.parse(input);
   const db = getDb();
 
-  const session = await sessionRepository.findSessionById(db, sessionId);
-
-  if (!session) {
-    throw new NotFoundError('Template session', sessionId);
-  }
-
-  // Validate all IDs belong to this session
-  const existingExercises = await exerciseRepository.findExercisesBySessionId(db, sessionId);
-  const existingIds = new Set(existingExercises.map((e) => e.id));
-
-  const invalidIds = validated.orderedIds.filter((id) => !existingIds.has(id));
-
-  if (invalidIds.length > 0) {
-    throw new ValidationError('One or more exercise IDs do not belong to this session');
-  }
-
-  if (validated.orderedIds.length !== existingExercises.length) {
-    throw new ValidationError(
-      `Expected ${String(existingExercises.length)} exercise IDs but received ${String(validated.orderedIds.length)}`
-    );
-  }
-
-  // Reorder in a transaction
   const reordered = await db.transaction(async (tx) => {
+    const session = await sessionRepository.findSessionById(tx, sessionId);
+
+    if (!session) {
+      throw new NotFoundError('Template session', sessionId);
+    }
+
+    // Validate all IDs belong to this session
+    const existingExercises = await exerciseRepository.findExercisesBySessionId(tx, sessionId);
+    const existingIds = new Set(existingExercises.map((e) => e.id));
+
+    const invalidIds = validated.orderedIds.filter((id) => !existingIds.has(id));
+
+    if (invalidIds.length > 0) {
+      throw new ValidationError('One or more exercise IDs do not belong to this session');
+    }
+
+    if (validated.orderedIds.length !== existingExercises.length) {
+      throw new ValidationError(
+        `Expected ${String(existingExercises.length)} exercise IDs but received ${String(validated.orderedIds.length)}`
+      );
+    }
+
     return await exerciseRepository.reorderExercises(tx, sessionId, validated.orderedIds);
   });
 

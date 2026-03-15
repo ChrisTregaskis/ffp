@@ -270,8 +270,6 @@ export const sessionResponseSchema = templateSessionSchema.pick({
   updatedAt: true,
 });
 
-// ---------- Exercise API Schemas ----------
-
 /** Create exercise request body — videoId required, prescription fields optional (pre-populated from video defaults) */
 export const createExerciseRequestSchema = z.object({
   videoId: z.guid(),
@@ -282,7 +280,7 @@ export const createExerciseRequestSchema = z.object({
   notes: sessionExerciseSchema.shape.notes.optional(),
 });
 
-/** Update exercise request body — all fields optional (partial update) */
+/** Update exercise request body — all fields optional (partial update), at least one required */
 export const updateExerciseRequestSchema = z
   .object({
     videoId: z.guid(),
@@ -292,7 +290,10 @@ export const updateExerciseRequestSchema = z
     restSeconds: sessionExerciseSchema.shape.restSeconds,
     notes: sessionExerciseSchema.shape.notes,
   })
-  .partial();
+  .partial()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field must be provided for update',
+  });
 
 /** Reorder exercises request body — ordered array of exercise IDs */
 export const reorderExercisesRequestSchema = z.object({
