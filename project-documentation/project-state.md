@@ -55,8 +55,8 @@
 | 1     | FFP-472 | Zod request/response schemas for exercises       | Core    | Done   |
 | 2     | FFP-468 | Session exercise repository (CRUD + reorder)     | Core    | Done   |
 | 3     | FFP-469 | Session exercise service (video default pre-pop) | Core    | Done   |
-| 4     | FFP-470 | Lambda handlers for exercise endpoints           | Funcs   | To Do  |
-| 5     | FFP-471 | SST routes for exercise endpoints                | Infra   | To Do  |
+| 4     | FFP-470 | Lambda handlers for exercise endpoints           | Funcs   | Done   |
+| 5     | FFP-471 | SST routes for exercise endpoints                | Infra   | Done   |
 | 6     | FFP-473 | Postman requests for exercise endpoints          | Postman | To Do  |
 
 **Amended requirements**:

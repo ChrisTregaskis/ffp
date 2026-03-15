@@ -7,16 +7,21 @@ import {
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
 import { handler as createCustomerHandler } from './create-customer';
+import { handler as createExerciseHandler } from './programme-templates/create-exercise';
 import { handler as createPhaseHandler } from './programme-templates/create-phase';
 import { handler as createSessionHandler } from './programme-templates/create-session';
 import { handler as createProgrammeTemplateHandler } from './programme-templates/create-template';
 import { handler as deactivateProgrammeTemplateHandler } from './programme-templates/deactivate-template';
+import { handler as deleteExerciseHandler } from './programme-templates/delete-exercise';
 import { handler as deletePhaseHandler } from './programme-templates/delete-phase';
 import { handler as deleteSessionHandler } from './programme-templates/delete-session';
 import { handler as getProgrammeTemplateHandler } from './programme-templates/get-template';
+import { handler as listExercisesHandler } from './programme-templates/list-exercises';
 import { handler as listProgrammeTemplatesHandler } from './programme-templates/list-templates';
+import { handler as reorderExercisesHandler } from './programme-templates/reorder-exercises';
 import { handler as reorderPhasesHandler } from './programme-templates/reorder-phases';
 import { handler as reorderSessionsHandler } from './programme-templates/reorder-sessions';
+import { handler as updateExerciseHandler } from './programme-templates/update-exercise';
 import { handler as updatePhaseHandler } from './programme-templates/update-phase';
 import { handler as updateSessionHandler } from './programme-templates/update-session';
 import { handler as updateProgrammeTemplateHandler } from './programme-templates/update-template';
@@ -48,6 +53,7 @@ const routes: RouteRegistry = {
     '/programme-templates': createProgrammeTemplateHandler,
     '/programme-templates/{id}/phases': createPhaseHandler,
     '/phases/{id}/sessions': createSessionHandler,
+    '/sessions/{id}/exercises': createExerciseHandler,
     '/videos': createVideoHandler,
     '/videos/upload-url': getUploadUrlHandler,
   },
@@ -56,6 +62,7 @@ const routes: RouteRegistry = {
     '/assessment-templates/{id}': getTemplateHandler,
     '/programme-templates': listProgrammeTemplatesHandler,
     '/programme-templates/{id}': getProgrammeTemplateHandler,
+    '/sessions/{id}/exercises': listExercisesHandler,
     '/videos': listVideosHandler,
   },
   PUT: {
@@ -65,11 +72,14 @@ const routes: RouteRegistry = {
     '/programme-templates/{id}/phases/reorder': reorderPhasesHandler,
     '/phases/{id}': updatePhaseHandler,
     '/phases/{id}/sessions/reorder': reorderSessionsHandler,
+    '/exercises/{id}': updateExerciseHandler,
     '/sessions/{id}': updateSessionHandler,
+    '/sessions/{id}/exercises/reorder': reorderExercisesHandler,
     '/videos/{id}': updateVideoHandler,
   },
   DELETE: {
     '/assessment-templates/{id}': deactivateTemplateHandler,
+    '/exercises/{id}': deleteExerciseHandler,
     '/phases/{id}': deletePhaseHandler,
     '/sessions/{id}': deleteSessionHandler,
   },
