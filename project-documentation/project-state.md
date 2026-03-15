@@ -36,59 +36,101 @@
 | 1     | Main  | FFP-441 | Video default exercise prescription fields | 3   | Done        |
 | 1     | Main  | FFP-442 | Programme template backend APIs            | 5   | Done        |
 | 2     | Main  | FFP-443 | Phase & session backend APIs               | 5   | Done        |
-| 2     | Main  | FFP-445 | Programme template admin list page         | 5   | In Progress |
-| 3     | Main  | FFP-444 | Session exercise backend APIs              | 5   | To Do       |
+| 2     | Main  | FFP-445 | Programme template admin list page         | 5   | Done        |
+| 3     | Main  | FFP-444 | Session exercise backend APIs              | 5   | In Progress |
 | 4     | Main  | FFP-446 | Template detail & hierarchy editing UI     | 8   | To Do       |
 | 5     | Main  | FFP-447 | Integration verification & documentation   | 3   | To Do       |
 
 **Out of scope**: Drag-and-drop reordering (MVP uses move up/down), template duplication/cloning, template versioning, bulk import/export.
 
-### Active Story: FFP-445 — Programme Template List Page (5 pts)
+### Active Story: FFP-444 — Session Exercise Management APIs (5 pts)
 
 **Branch**: `feature/sprint9` (continuing on sprint branch)
-**Goal**: Replace the Coming Soon placeholder at `/admin/templates` with a functional list page following the Video Library pattern (FFP-332). Reuses Table component (FFP-437), TableControls, and useApiTable hook.
+**Goal**: Backend CRUD + reorder APIs for session exercises — the leaf nodes of the template hierarchy. Each exercise links to a video with prescription data (sets, reps, duration, rest, notes). Prescription pre-populates from video defaults.
 
 **Sub-task execution order** (single branch, all sub-tasks together):
 
-| Order | Key     | Summary                                       | Layer | Status |
-| ----- | ------- | --------------------------------------------- | ----- | ------ |
-| 1     | FFP-474 | API client methods for template endpoints     | Web   | Done   |
-| 2     | FFP-475 | TanStack Query hooks for list and mutations   | Web   | Done   |
-| 3     | FFP-476 | Column definitions for template list table    | Web   | Done   |
-| 4     | FFP-479 | Context-aware empty state component           | Web   | Done   |
-| 5     | FFP-477 | TemplateListPage with Table and TableControls | Web   | Done   |
-| 6     | FFP-478 | Route config and sidebar navigation update    | Web   | Done   |
+| Order | Key     | Summary                                          | Layer   | Status |
+| ----- | ------- | ------------------------------------------------ | ------- | ------ |
+| 1     | FFP-472 | Zod request/response schemas for exercises       | Core    | Done   |
+| 2     | FFP-468 | Session exercise repository (CRUD + reorder)     | Core    | Done   |
+| 3     | FFP-469 | Session exercise service (video default pre-pop) | Core    | Done   |
+| 4     | FFP-470 | Lambda handlers for exercise endpoints           | Funcs   | Done   |
+| 5     | FFP-471 | SST routes for exercise endpoints                | Infra   | Done   |
+| 6     | FFP-473 | Postman requests for exercise endpoints          | Postman | Done   |
 
 **Amended requirements**:
 
-- **Route title correction**: Current route says "Session Templates" — should be "Programme Templates" to match the domain model.
-- **AC5 View Detail/Edit actions**: Detail page is out of scope for this story (covered in FFP-446). Actions will navigate to `${adminBasePath}/templates/:id` which will initially 404 / show Coming Soon until FFP-446 is implemented. Alternatively, disable these actions for now.
-- **Status column**: `isActive` is a boolean, not a multi-state enum like video status. Map to "Active"/"Inactive" using StatusCell with a simple two-value `statusMap`.
-- **AC5 Deactivate/Activate**: Toggle `isActive` via existing `PUT /admin/programme-templates/:id` endpoint (update mutation with `{ isActive: true/false }`).
-- **AC6 Create Template**: Button navigates to future creation route. Wire to `${adminBasePath}/templates/create` — will 404 until FFP-446.
-- **FFP-474 API client**: Follow `admin-videos.ts` pattern. Base path `/admin/programme-templates`. Methods: `list`, `get`, `create`, `update`, `deactivate`. Response validation via `parseApiResponse` with existing Zod schemas from `@ffp/core` (`paginatedTemplateListResponseSchema`, `templateDetailResponseSchema`).
-- **FFP-475 Query hooks**: Follow `useAdminVideosQuery` pattern. Query keys in `lib/query/keys/programme-templates.ts`. Hooks in `hooks/programme-templates/`.
-- **FFP-476 Columns**: Use `createColumns<TemplateRow>()` factory. Columns: Name (text, sortable), Slug (text), Difficulty (text, sortable), Phases (number — `totalPhases`), Sessions/Phase (number — `sessionsPerPhase`), Status (status — `isActive` mapped), Created (date, sortable), Actions.
-- **FFP-479 Empty state**: Follow `VideoLibraryEmptyState` pattern with `StatusResult`. Two states: no templates ("Create Template" CTA) vs no filter results ("Clear Filters" hint).
-- **FFP-478 Route update**: Replace `ComingSoonPage` with `TemplateListPage`. Update title to "Programme Templates". Sidebar nav entry likely already exists — verify and update label/icon if needed.
+- **FFP-472 scope reduced**: Ticket title says "phase, session, and exercise" but phase and session schemas already exist in `programme.schema.ts` (lines 208-270). Only **exercise-specific** API request/response schemas are needed:
+  - `createExerciseRequestSchema` — requires `videoId`, optional prescription fields (`sets`, `reps`, `durationSeconds`, `restSeconds`, `notes`). Note: `templateSessionId` comes from URL path param, `orderIndex` is auto-assigned — neither belongs in the request body.
+  - `updateExerciseRequestSchema` — optional `videoId` + optional prescription fields (partial update).
+  - `reorderExercisesRequestSchema` — `orderedIds: z.array(z.guid()).min(1)` (matches existing reorder pattern).
+  - `exerciseResponseSchema` — exercise fields + joined video metadata for display.
+  - Type exports for all schemas.
+  - Note: `createSessionExerciseSchema` already exists in `programme-structure.schema.ts` (lines 93-106) for internal/seed use — the new API request schemas are separate (no `templateSessionId` or `orderIndex`).
+- **FFP-468 orderIndex**: Exercises use 0-based `orderIndex` (unlike phases/sessions which use 1-based `phaseNumber`/`sessionNumber`). The reorder/renumber logic should follow the existing negative-value pattern to avoid unique constraint violations, but with 0-based indexing.
+- **FFP-468 video join**: `findExercisesBySessionId` and `findExerciseById` should join video data (at minimum `id`, `title`, `thumbnailUrl`, `status`, default prescription fields) so the response includes video context.
+- **FFP-469 video validation**: Service must validate video exists AND is active (`status = 'active'`). Reject with 400 for non-existent or inactive video. Use existing video repository's `findVideoById` or equivalent.
+- **FFP-469 pre-population logic**: For each prescription field (`sets`, `reps`, `durationSeconds`, `restSeconds`, `notes`), use the explicit value if provided, otherwise fall back to the video's `defaultSets`, `defaultReps`, `defaultDurationSeconds`, `defaultRestSeconds`, `defaultNotes`.
+- **FFP-469 session validation**: Validate session exists before creating exercise. 404 for non-existent session.
+- **FFP-470 route paths** (aligned with existing patterns):
+  - `POST /sessions/{id}/exercises` — create exercise under session
+  - `PUT /exercises/{id}` — update exercise
+  - `DELETE /exercises/{id}` — delete exercise
+  - `PUT /sessions/{id}/exercises/reorder` — reorder exercises
+  - Note: these are relative to the admin API base path (no `/admin` prefix in handler routes).
+- **FFP-470 list endpoint**: The story description mentions `findExercisesBySessionId` in the repository but no explicit list handler. A `GET /sessions/{id}/exercises` handler is needed for the upcoming UI (FFP-446) to fetch exercises for a session. Add this as part of FFP-470.
+- **FFP-470 response codes**: Create → 201, Update → 200, Delete → 204, Reorder → 200, List → 200.
+- **FFP-471**: Routes added to `packages/functions/src/admin/index.ts` following existing pattern (grouped with other programme template routes).
 - **Tests deferred** per sprint convention.
 
 **New files to create**:
 
-- `packages/web/src/lib/api/endpoints/admin-programme-templates.ts` — API client methods
-- `packages/web/src/lib/query/keys/programme-templates.ts` — Query key factory
-- `packages/web/src/hooks/programme-templates/useAdminTemplatesQuery.ts` — List query hook
-- `packages/web/src/hooks/programme-templates/useTemplateMutations.ts` — Update/deactivate mutations
-- `packages/web/src/hooks/programme-templates/index.ts` — Barrel export
-- `packages/web/src/pages/protected/admin/programme-template-list/columns.tsx` — Column definitions
-- `packages/web/src/pages/protected/admin/programme-template-list/constants.ts` — Status map, filter config
-- `packages/web/src/pages/protected/admin/programme-template-list/TemplateListEmptyState.tsx` — Empty state
-- `packages/web/src/pages/protected/admin/TemplateListPage.tsx` — Main page component
+- `packages/core/src/programme-templates/session-exercise.repository.ts` — CRUD + reorder data access
+- `packages/core/src/programme-templates/session-exercise.service.ts` — Business logic + video pre-population
+- `packages/functions/src/admin/programme-templates/list-exercises.ts` — GET handler
+- `packages/functions/src/admin/programme-templates/create-exercise.ts` — POST handler
+- `packages/functions/src/admin/programme-templates/update-exercise.ts` — PUT handler
+- `packages/functions/src/admin/programme-templates/delete-exercise.ts` — DELETE handler
+- `packages/functions/src/admin/programme-templates/reorder-exercises.ts` — PUT reorder handler
 
 **Existing files to modify**:
 
-- `packages/web/src/pages/routes/index.ts` — Replace ComingSoonPage with TemplateListPage, update title
-- `packages/web/src/config/navigation.ts` — Verify/update Templates nav item label and icon
+- `packages/core/src/schemas/programme.schema.ts` — Add exercise request/response schemas + type exports
+- `packages/core/src/programme-templates/index.ts` — Export new repository and service
+- `packages/core/src/index.ts` — Export new schemas if not already barrel-exported
+- `packages/functions/src/admin/index.ts` — Add 5 exercise routes to SST config
+
+---
+
+## Up Next: Sprint 10 — Customer & User Onboarding (~18 pts)
+
+**Epic**: FFP-6 (MVP: Customer & User Onboarding)
+**Sprint Goal**: Admin CRUD for customers and programme users — backend APIs and admin UI for both, including Cognito user provisioning.
+
+**Prerequisites**:
+
+- ✅ Customers and users database schema (existing)
+- ✅ POST /admin/create-customer endpoint (existing)
+- ✅ Table component + pagination pattern (FFP-437)
+- ✅ Admin UI patterns (Video Library, Programme Template List)
+
+### Execution Order
+
+| Phase | Key     | Summary                           | Layer    | Pts | Status |
+| ----- | ------- | --------------------------------- | -------- | --- | ------ |
+| 1     | FFP-494 | Customer admin backend APIs       | Backend  | 3   | To Do  |
+| 2     | FFP-495 | Customer admin UI                 | Frontend | 5   | To Do  |
+| 3     | FFP-496 | Programme user admin backend APIs | Backend  | 5   | To Do  |
+| 4     | FFP-497 | Programme user admin UI           | Frontend | 5   | To Do  |
+
+**Key design decisions**:
+
+- Customers first, then users (users require customer association)
+- User creation provisions Cognito user with custom attributes (tenantId, customerId, role)
+- tenantId derived from customer record, never from client input
+- Email and customer read-only after user creation
+- No user deletion — future story
 
 ---
 
@@ -244,9 +286,9 @@ await db.transaction(async (tx) => {
 - ✅ FFP-2: Assessment Engine (Sprints 3-6)
 - ✅ FFP-3: Video Management (Sprints 7-8)
 - 🏃 FFP-439: Admin Programme Template Management (Sprint 9, ~34 pts)
-- ⏳ FFP-4: Programme Execution & Progress (Sprints 10-12)
+- ⏳ FFP-6: Customer & User Onboarding (Sprint 10, ~18 pts)
+- ⏳ FFP-4: Programme Execution & Progress (Sprints 11-13)
 - ⏳ FFP-109: Deployment Readiness (staging + production)
-- ⏳ FFP-6: Customer & User Onboarding
 
 ---
 
