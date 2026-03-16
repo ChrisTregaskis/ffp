@@ -2,10 +2,10 @@ import React from 'react';
 
 import type { VideoStatus } from '@ffp/core';
 
-import { Button } from '@web/components/button';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
 import { getInputClassName } from '@web/components/form/shared/inputStyles';
+import { FormActions } from '@web/components/form/standardForm/FormActions';
 import { FormNumberInput } from '@web/components/form/standardForm/FormNumberInput';
 import { FormRow } from '@web/components/form/standardForm/FormRow';
 import { FormSelect } from '@web/components/form/standardForm/FormSelect';
@@ -264,15 +264,13 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
         </div>
       )}
 
-      {/* Form actions */}
-      <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-4">
-        <Button variant="secondary" onClick={onCancel} disabled={cancelDisabled}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={submitDisabled} loading={isSubmitting}>
-          {submitLabel}
-        </Button>
-      </div>
+      <FormActions
+        onCancel={onCancel}
+        submitLabel={submitLabel}
+        isSubmitting={isSubmitting}
+        cancelDisabled={cancelDisabled}
+        submitDisabled={submitDisabled}
+      />
     </>
   );
 };
