@@ -19,6 +19,7 @@ import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsP
 import { TableComponentsPage } from '@web/pages/dev/TableComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
+import { TemplateDetailPage } from '@web/pages/protected/admin/template-detail';
 import { TemplateListPage } from '@web/pages/protected/admin/TemplateListPage';
 import { VideoEditPage } from '@web/pages/protected/admin/video-edit';
 import { VideoUploadPage } from '@web/pages/protected/admin/video-upload';
@@ -267,6 +268,20 @@ export const routes: RoutesConfig = {
     pageComponent: TemplateListPage,
     title: 'Programme Templates',
     allowedRoles: [SYSTEM_ADMIN],
+  },
+  [RouteKey.ADMIN_TEMPLATE_DETAIL]: {
+    path: `${adminBasePath}/templates/:id`,
+    pageComponent: TemplateDetailPage,
+    title: 'Template Detail',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Programme Templates',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/templates`,
+      },
+    ],
   },
   [RouteKey.ADMIN_VIDEOS]: {
     path: `${adminBasePath}/videos`,

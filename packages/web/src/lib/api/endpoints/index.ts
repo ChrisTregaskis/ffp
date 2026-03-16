@@ -1,4 +1,19 @@
 export { adminProgrammeTemplatesApi } from './admin-programme-templates';
+export { adminExercisesApi, adminPhasesApi, adminSessionsApi } from './admin-template-hierarchy';
+export type {
+  CreateExerciseRequest,
+  CreatePhaseRequest,
+  CreateSessionRequest,
+  ExerciseResponse,
+  PhaseResponse,
+  ReorderExercisesRequest,
+  ReorderPhasesRequest,
+  ReorderSessionsRequest,
+  SessionResponse,
+  UpdateExerciseRequest,
+  UpdatePhaseRequest,
+  UpdateSessionRequest,
+} from './admin-template-hierarchy';
 export type {
   AdminTemplateFilterInput,
   CreateProgrammeTemplateInput,
