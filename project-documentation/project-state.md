@@ -66,8 +66,8 @@
 | 1     | 3     | FFP-482 | useTemplateDetailQuery hook                        | Hooks   | Done   |
 | 1     | 4     | FFP-481 | Mutation hooks for phases, sessions, exercises     | Hooks   | Done   |
 | 2     | 5     | FFP-483 | TemplateDetailPage with metadata editing           | Page    | Done   |
-| 3     | 6     | FFP-484 | PhaseCard and PhaseForm components                 | UI      | To Do  |
-| 3     | 7     | FFP-485 | SessionCard and SessionForm components             | UI      | To Do  |
+| 3     | 6     | FFP-484 | PhaseCard and PhaseForm components                 | UI      | Done   |
+| 3     | 7     | FFP-485 | SessionCard and SessionForm components             | UI      | Done   |
 | 4     | 8     | FFP-487 | VideoSelector component                            | UI      | To Do  |
 | 4     | 9     | FFP-486 | ExerciseRow and ExerciseForm components            | UI      | To Do  |
 | 5     | 10    | FFP-488 | Template creation flow from list page              | UI/Flow | To Do  |
