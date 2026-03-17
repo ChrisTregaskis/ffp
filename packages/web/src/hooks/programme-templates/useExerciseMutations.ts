@@ -26,6 +26,20 @@ export interface ReorderExercisesVariables {
   orderedIds: string[];
 }
 
+/** Invalidates both template detail and session exercise queries. */
+const invalidateExerciseQueries = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  templateId: string
+): void => {
+  void queryClient.invalidateQueries({
+    queryKey: programmeTemplateKeys.detail(templateId),
+  });
+
+  void queryClient.invalidateQueries({
+    queryKey: programmeTemplateKeys.sessionExercises(),
+  });
+};
+
 /** Mutation hook for creating an exercise within a session. */
 export const useCreateExerciseMutation = (
   templateId: string
@@ -36,9 +50,7 @@ export const useCreateExerciseMutation = (
     mutationFn: ({ sessionId, data }: CreateExerciseVariables) =>
       adminExercisesApi.create(sessionId, data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: programmeTemplateKeys.detail(templateId),
-      });
+      invalidateExerciseQueries(queryClient, templateId);
     },
   });
 };
@@ -53,9 +65,7 @@ export const useUpdateExerciseMutation = (
     mutationFn: ({ exerciseId, data }: UpdateExerciseVariables) =>
       adminExercisesApi.update(exerciseId, data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: programmeTemplateKeys.detail(templateId),
-      });
+      invalidateExerciseQueries(queryClient, templateId);
     },
   });
 };
@@ -69,9 +79,7 @@ export const useDeleteExerciseMutation = (
   return useMutation({
     mutationFn: ({ exerciseId }: DeleteExerciseVariables) => adminExercisesApi.delete(exerciseId),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: programmeTemplateKeys.detail(templateId),
-      });
+      invalidateExerciseQueries(queryClient, templateId);
     },
   });
 };
@@ -86,9 +94,7 @@ export const useReorderExercisesMutation = (
     mutationFn: ({ sessionId, orderedIds }: ReorderExercisesVariables) =>
       adminExercisesApi.reorder(sessionId, { orderedIds }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: programmeTemplateKeys.detail(templateId),
-      });
+      invalidateExerciseQueries(queryClient, templateId);
     },
   });
 };

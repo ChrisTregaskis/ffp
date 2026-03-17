@@ -35,6 +35,7 @@ export type {
   ReorderSessionsVariables,
   UpdateSessionVariables,
 } from './useSessionMutations';
+export { useSessionExercisesQuery } from './useSessionExercisesQuery';
 export { useTemplateDetailQuery } from './useTemplateDetailQuery';
 export {
   useCreateTemplateMutation,

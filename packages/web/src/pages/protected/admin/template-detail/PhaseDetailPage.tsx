@@ -2,9 +2,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { Button } from '@web/components/button';
+import { EmptyState } from '@web/components/feedback/EmptyState';
 import { PageState } from '@web/components/feedback/PageState';
 import { Icon } from '@web/components/Icon';
-import { PageContainer, PageHeader } from '@web/components/layout';
+import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
 import { InlineFormPanel, SessionCard } from '@web/components/programme-templates';
 import { SessionForm } from '@web/components/programme-templates/SessionForm';
 import type { SessionFormValues } from '@web/components/programme-templates/SessionForm';
@@ -189,7 +190,7 @@ export const PhaseDetailPage: React.FC = () => {
       )}
 
       {phase && (
-        <>
+        <ContentPanel>
           {/* Phase summary */}
           {phase.description && (
             <div className="mb-4 rounded-lg border border-border bg-white px-5 py-4">
@@ -215,26 +216,27 @@ export const PhaseDetailPage: React.FC = () => {
 
           {/* Session cards */}
           {sessions.length === 0 && !isAddingSession ? (
-            <div className="rounded-lg border border-dashed border-border py-8 text-center">
-              <Text as="p" styleProps={{ colour: 'muted-foreground' }} className="mb-3">
-                No sessions yet. Add the first session to this phase.
-              </Text>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  setIsAddingSession(true);
-                }}
-              >
-                + Add Session
-              </Button>
-            </div>
+            <EmptyState
+              message="No sessions yet. Add the first session to this phase."
+              action={
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setIsAddingSession(true);
+                  }}
+                >
+                  + Add Session
+                </Button>
+              }
+            />
           ) : (
             <div className="space-y-3">
               {sessions.map((session, index) => (
                 <SessionCard
                   key={session.id}
                   session={session}
+                  templateId={templateId ?? ''}
                   isFirst={index === 0}
                   isLast={index === sessions.length - 1}
                   onUpdate={handleUpdateSession}
@@ -250,7 +252,7 @@ export const PhaseDetailPage: React.FC = () => {
               ))}
             </div>
           )}
-        </>
+        </ContentPanel>
       )}
     </PageContainer>
   );

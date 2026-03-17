@@ -68,8 +68,8 @@
 | 2     | 5     | FFP-483 | TemplateDetailPage with metadata editing           | Page    | Done   |
 | 3     | 6     | FFP-484 | PhaseCard and PhaseForm components                 | UI      | Done   |
 | 3     | 7     | FFP-485 | SessionCard and SessionForm components             | UI      | Done   |
-| 4     | 8     | FFP-487 | VideoSelector component                            | UI      | To Do  |
-| 4     | 9     | FFP-486 | ExerciseRow and ExerciseForm components            | UI      | To Do  |
+| 4     | 8     | FFP-487 | VideoSelector component                            | UI      | Done   |
+| 4     | 9     | FFP-486 | ExerciseRow and ExerciseForm components            | UI      | Done   |
 | 5     | 10    | FFP-488 | Template creation flow from list page              | UI/Flow | To Do  |
 
 **Groupings**:

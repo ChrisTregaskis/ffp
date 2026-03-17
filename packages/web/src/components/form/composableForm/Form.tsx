@@ -33,6 +33,9 @@ export const ComposableForm = <TFieldValues extends FieldValues>({
     register,
     control,
     handleSubmit,
+    setValue,
+    watch,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<TFieldValues>({ defaultValues });
 
@@ -44,8 +47,18 @@ export const ComposableForm = <TFieldValues extends FieldValues>({
   );
 
   // Generic context requires type erasure; consumer restores type via useComposableFormContext<T>()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-  const contextValue = { register, control, errors, handleSubmit, isSubmitting } as any;
+  /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
+  const contextValue = {
+    register,
+    control,
+    errors,
+    handleSubmit,
+    isSubmitting,
+    setValue,
+    watch,
+    getValues,
+  } as any;
+  /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 
   return (
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
