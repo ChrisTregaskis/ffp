@@ -14,6 +14,9 @@ import type { PaginationInput } from '../schemas/pagination.schema';
 import type { TemplatePhaseWithSessions } from '../schemas/programme-structure.schema';
 import type { UpdateProgrammeTemplateInput, TemplateListQuery } from '../schemas/programme.schema';
 
+/** Internal update type — extends the API input with fields managed by the system (e.g., totalPhases) */
+type TemplateUpdateData = UpdateProgrammeTemplateInput & { totalPhases?: number };
+
 /** Columns available for sorting on the admin template list */
 const SORTABLE_COLUMNS: Partial<Record<string, Column>> = {
   name: programmeTemplates.name,
@@ -222,7 +225,7 @@ export async function insertTemplate(
 export async function updateTemplate(
   db: DbQueryClient,
   templateId: string,
-  data: UpdateProgrammeTemplateInput
+  data: TemplateUpdateData
 ): Promise<ProgrammeTemplateRecord | null> {
   const records = await db
     .update(programmeTemplates)

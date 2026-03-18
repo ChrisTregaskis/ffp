@@ -49,7 +49,6 @@ const DEFAULT_PROGRAMME_TEMPLATES: NewProgrammeTemplate[] = [
       'Focuses on gentle range-of-motion work and pain management techniques.',
     isActive: true,
     totalPhases: 4,
-    sessionsPerPhase: 3,
     difficulty: 'beginner',
   },
   {
@@ -61,7 +60,6 @@ const DEFAULT_PROGRAMME_TEMPLATES: NewProgrammeTemplate[] = [
       'Builds core stability and basic movement patterns before progressing.',
     isActive: true,
     totalPhases: 6,
-    sessionsPerPhase: 3,
     difficulty: 'beginner',
   },
   {
@@ -73,7 +71,6 @@ const DEFAULT_PROGRAMME_TEMPLATES: NewProgrammeTemplate[] = [
       'Includes compound movements and progressive overload principles.',
     isActive: true,
     totalPhases: 8,
-    sessionsPerPhase: 4,
     difficulty: 'advanced',
   },
   {
@@ -85,7 +82,6 @@ const DEFAULT_PROGRAMME_TEMPLATES: NewProgrammeTemplate[] = [
       'Default recommendation when no specific programme mapping matches.',
     isActive: true,
     totalPhases: 6,
-    sessionsPerPhase: 3,
     difficulty: 'intermediate',
   },
 ];
