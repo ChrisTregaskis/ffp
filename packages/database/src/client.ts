@@ -155,3 +155,12 @@ export const closeDb = async () => {
 
 // Type exports for external use
 export type DbClient = ReturnType<typeof getDb>;
+
+/**
+ * Broader type that accepts both DbClient and PgTransaction.
+ * Use this for repository functions that may be called within a transaction.
+ */
+export type DbQueryClient = Pick<
+  DbClient,
+  'select' | 'insert' | 'update' | 'delete' | 'execute' | 'query'
+>;

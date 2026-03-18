@@ -86,7 +86,12 @@ export function generateSignedVideoUrl(s3Key: string): {
 }
 
 /**
- * Look up a video, verify it is active, and generate a signed playback URL.
+ * Look up a video and generate a signed playback URL.
+ *
+ * Video status does NOT gate playback access — draft, active, and archived
+ * videos are all playable. Status gates selection (which videos can be added
+ * to new templates/sessions), not streaming.
+ *
  * Logs structured audit events for video access (FFP-299).
  */
 export async function getSignedVideoUrl(
@@ -98,11 +103,11 @@ export async function getSignedVideoUrl(
 
   const video = await videoRepository.findVideoById(db, videoId);
 
-  if (!video || video.status !== 'active') {
+  if (!video) {
     logger.warn('Video access denied', {
       action: 'video_access_denied',
       videoId,
-      reason: !video ? 'not_found' : 'inactive',
+      reason: 'not_found',
     });
 
     throw new NotFoundError('Video');
@@ -113,6 +118,7 @@ export async function getSignedVideoUrl(
   logger.info('Signed URL generated', {
     action: 'video_access',
     videoId,
+    status: video.status,
     expiresAt,
   });
 

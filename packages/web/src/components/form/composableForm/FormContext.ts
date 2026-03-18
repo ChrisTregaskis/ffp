@@ -4,8 +4,11 @@ import type {
   Control,
   FieldErrors,
   FieldValues,
+  UseFormGetValues,
   UseFormHandleSubmit,
   UseFormRegister,
+  UseFormSetValue,
+  UseFormWatch,
 } from 'react-hook-form';
 
 export interface FormContextValue<TFieldValues extends FieldValues = FieldValues> {
@@ -14,6 +17,9 @@ export interface FormContextValue<TFieldValues extends FieldValues = FieldValues
   errors: FieldErrors<TFieldValues>;
   handleSubmit: UseFormHandleSubmit<TFieldValues>;
   isSubmitting: boolean;
+  setValue: UseFormSetValue<TFieldValues>;
+  watch: UseFormWatch<TFieldValues>;
+  getValues: UseFormGetValues<TFieldValues>;
 }
 
 const FormContext = createContext<FormContextValue | null>(null);

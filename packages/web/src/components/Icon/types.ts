@@ -2,8 +2,8 @@
  * Auto-generated icon types from Icomoon selection.json
  * DO NOT EDIT MANUALLY - Run 'pnpm icon:generate' to update
  *
- * Generated: 2025-11-22T09:12:30.821Z
- * Total icons: 68
+ * Generated: 2026-03-17T21:15:57.395Z
+ * Total icons: 69
  */
 
 export enum Icons {
@@ -48,6 +48,7 @@ export enum Icons {
   MAXIMIZE = 'Maximize',
   MENU = 'Menu',
   MOREHORIZONTAL = 'MoreHorizontal',
+  NEWTAB = 'NewTab',
   PANELLEFT = 'PanelLeft',
   PAUSE = 'Pause',
   PHONE = 'Phone',

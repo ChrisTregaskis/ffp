@@ -38,6 +38,16 @@ export const videoSchema = z.object({
   equipment: z.array(z.string().min(1)),
   /** Flexible tags for filtering (e.g., ['post-surgery', 'knee', 'warm-up']) */
   tags: z.array(z.string().min(1)),
+  /** Default number of sets when used as an exercise (e.g., 3) */
+  defaultSets: z.number().int().positive().nullable(),
+  /** Default reps — supports ranges (e.g., '8-12', '10') */
+  defaultReps: z.string().max(20).nullable(),
+  /** Default duration in seconds (e.g., 30 for a 30-second hold) */
+  defaultDurationSeconds: z.number().int().positive().nullable(),
+  /** Default rest period in seconds between sets (e.g., 60) */
+  defaultRestSeconds: z.number().int().positive().nullable(),
+  /** Default exercise notes (e.g., 'Keep core engaged throughout') */
+  defaultNotes: z.string().nullable(),
   /** Timestamp when record was created */
   createdAt: z.coerce.date(),
   /** Timestamp when record was last modified */
@@ -62,6 +72,11 @@ export const createVideoSchema = videoSchema
     difficulty: videoSchema.shape.difficulty.optional(),
     movementType: videoSchema.shape.movementType.optional(),
     tags: videoSchema.shape.tags.optional().default([]),
+    defaultSets: videoSchema.shape.defaultSets.optional(),
+    defaultReps: videoSchema.shape.defaultReps.optional(),
+    defaultDurationSeconds: videoSchema.shape.defaultDurationSeconds.optional(),
+    defaultRestSeconds: videoSchema.shape.defaultRestSeconds.optional(),
+    defaultNotes: videoSchema.shape.defaultNotes.optional(),
   });
 
 /** Schema for updating video metadata (partial — media properties are immutable) */
@@ -76,6 +91,11 @@ export const updateVideoSchema = videoSchema
     bodyParts: true,
     equipment: true,
     tags: true,
+    defaultSets: true,
+    defaultReps: true,
+    defaultDurationSeconds: true,
+    defaultRestSeconds: true,
+    defaultNotes: true,
   })
   .partial();
 

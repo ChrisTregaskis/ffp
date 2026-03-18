@@ -1,14 +1,15 @@
 import {
   createBrowserRouter,
   createRoutesFromElements,
-  Navigate,
   Route,
   RouterProvider,
 } from 'react-router-dom';
 
+import { NotFoundPage } from '@web/pages/NotFoundPage';
+
 import { ProtectedRoute } from './ProtectedRoute';
 
-import { RouteKey, routes } from '.';
+import { routes } from '.';
 
 /**
  * Main application router component.
@@ -21,7 +22,7 @@ import { RouteKey, routes } from '.';
  * - Public routes: Render directly (e.g., /login)
  * - Protected routes: Wrapped in ProtectedRoute for auth checks
  * - Dev-only routes: Excluded in production builds
- * - Catch-all: Redirects to home (will redirect to login if not authed)
+ * - Catch-all: Shows a 404 "Page not found" page
  *
  * Protected routes are automatically wrapped with:
  * - Authentication check (redirects to /login if not authenticated)
@@ -81,8 +82,8 @@ export const Router = (): JSX.Element => {
             );
           })}
 
-        {/* Catch-all: redirect to home (which will redirect to login if not authed) */}
-        <Route path="*" element={<Navigate to={routes[RouteKey.HOME].path} replace />} />
+        {/* Catch-all: show 404 page for unmatched routes */}
+        <Route path="*" element={<NotFoundPage />} />
       </>
     )
   );

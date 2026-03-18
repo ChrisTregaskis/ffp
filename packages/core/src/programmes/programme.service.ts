@@ -107,7 +107,6 @@ export async function generateProgramme(
       name: template.name,
       description: template.description,
       totalPhases: template.totalPhases,
-      sessionsPerPhase: template.sessionsPerPhase,
     },
     { tx }
   );

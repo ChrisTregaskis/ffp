@@ -43,6 +43,14 @@ export enum RouteKey {
   ADMIN_TEMPLATES = 'admin-templates',
   /** Admin video library management page */
   ADMIN_VIDEOS = 'admin-videos',
+  /** Admin programme template create page */
+  ADMIN_TEMPLATE_CREATE = 'admin-template-create',
+  /** Admin programme template detail page */
+  ADMIN_TEMPLATE_DETAIL = 'admin-template-detail',
+  /** Admin template phases list page */
+  ADMIN_TEMPLATE_PHASES = 'admin-template-phases',
+  /** Admin template phase detail page (sessions within a phase) */
+  ADMIN_TEMPLATE_PHASE_DETAIL = 'admin-template-phase-detail',
   /** Admin video upload page */
   ADMIN_VIDEO_UPLOAD = 'admin-video-upload',
   /** Admin video edit page */

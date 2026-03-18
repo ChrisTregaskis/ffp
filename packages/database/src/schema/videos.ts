@@ -59,6 +59,16 @@ export const videos = pgTable(
     equipment: text('equipment').array().notNull(),
     /** Flexible tags for filtering (e.g., ['post-surgery', 'knee', 'warm-up']) */
     tags: text('tags').array().notNull().default([]),
+    /** Default number of sets when used as an exercise (e.g., 3) */
+    defaultSets: integer('default_sets'),
+    /** Default reps — supports ranges (e.g., '8-12', '10') */
+    defaultReps: varchar('default_reps', { length: 20 }),
+    /** Default duration in seconds (e.g., 30 for a 30-second hold) */
+    defaultDurationSeconds: integer('default_duration_seconds'),
+    /** Default rest period in seconds between sets (e.g., 60) */
+    defaultRestSeconds: integer('default_rest_seconds'),
+    /** Default exercise notes (e.g., 'Keep core engaged throughout') */
+    defaultNotes: text('default_notes'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },

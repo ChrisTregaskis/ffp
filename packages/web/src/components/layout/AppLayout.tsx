@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { getNavigationItems } from '@web/config/navigation';
+import { getContextNavItems, getNavigationItems } from '@web/config/navigation';
 import { SidebarProvider } from '@web/contexts/sidebar/SidebarContext';
 import { useAuth } from '@web/hooks/useAuth';
 import { useSidebar } from '@web/hooks/useSidebar';
@@ -40,8 +40,7 @@ const AppLayoutContent: React.FC<PropsWithChildren> = ({ children }) => {
   };
 
   // Check if current route has context-specific navigation
-  const matchedRoute = Object.values(routes).find((route) => route.path === location.pathname);
-  const contextNavItems = matchedRoute?.contextNavItems;
+  const contextNavItems = getContextNavItems(location.pathname);
 
   // Get navigation items for mobile menu
   const roleNavItems = user ? getNavigationItems(user.role, triggerLogout) : [];

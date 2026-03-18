@@ -1,6 +1,6 @@
 import type { UserRole } from '@ffp/core';
 
-import type { ContextNavItem } from '@web/config/navigation';
+import type { IconName } from '@web/components/Icon/types';
 import { USER_ROLE } from '@web/constants/roles';
 import { ComingSoonPage } from '@web/pages/ComingSoonPage';
 import { AssessmentProgressComponentsPage } from '@web/pages/dev/AssessmentProgressComponentsPage';
@@ -19,6 +19,13 @@ import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsP
 import { TableComponentsPage } from '@web/pages/dev/TableComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
+import { TemplateCreatePage } from '@web/pages/protected/admin/template-create';
+import {
+  PhaseDetailPage,
+  PhasesPage,
+  TemplateDetailPage,
+} from '@web/pages/protected/admin/template-detail';
+import { TemplateListPage } from '@web/pages/protected/admin/TemplateListPage';
 import { VideoEditPage } from '@web/pages/protected/admin/video-edit';
 import { VideoUploadPage } from '@web/pages/protected/admin/video-upload';
 import { VideoLibraryPage } from '@web/pages/protected/admin/VideoLibraryPage';
@@ -38,6 +45,19 @@ import { RouteKey } from './RouteKey';
 import type { FC } from 'react';
 
 export { RouteKey };
+
+/**
+ * Context-aware navigation item for routes that override the default sidebar.
+ * Used for sub-pages
+ */
+export interface ContextNavItem {
+  /** Display label */
+  label: string;
+  /** Icomoon icon name */
+  icon: IconName;
+  /** URL path to navigate to */
+  path: string;
+}
 
 /**
  * Configuration for a single application route.
@@ -65,8 +85,11 @@ export interface AppRoute {
   devOnly?: boolean;
   /** Roles permitted to access this route (undefined = all authenticated users) */
   allowedRoles?: UserRole[];
-  /** Context-aware sidebar navigation items (overrides default role-based nav when present) */
-  contextNavItems?: ContextNavItem[];
+  /**
+   * Context-aware sidebar navigation items (overrides default role-based nav when present).
+   * Can be static items or a function that receives matched route params for dynamic paths.
+   */
+  contextNavItems?: ContextNavItem[] | ((params: Record<string, string>) => ContextNavItem[]);
 }
 
 /**
@@ -250,14 +273,85 @@ export const routes: RoutesConfig = {
   },
   [RouteKey.ADMIN_TEMPLATES]: {
     path: `${adminBasePath}/templates`,
-    pageComponent: () =>
-      ComingSoonPage({
-        title: 'Session Templates',
-        description: 'Manage workout session templates',
-        icon: 'FileText',
-      }),
-    title: 'Session Templates',
+    pageComponent: TemplateListPage,
+    title: 'Programme Templates',
     allowedRoles: [SYSTEM_ADMIN],
+  },
+  [RouteKey.ADMIN_TEMPLATE_CREATE]: {
+    path: `${adminBasePath}/templates/create`,
+    pageComponent: TemplateCreatePage,
+    title: 'Create Template',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Programme Templates',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/templates`,
+      },
+    ],
+  },
+  [RouteKey.ADMIN_TEMPLATE_DETAIL]: {
+    path: `${adminBasePath}/templates/:id`,
+    pageComponent: TemplateDetailPage,
+    title: 'Template Detail',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: (params) => [
+      {
+        label: 'Back to Programme Templates',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/templates`,
+      },
+      {
+        label: 'Template Details',
+        icon: 'FileText',
+        path: `${adminBasePath}/templates/${params.id}`,
+      },
+      {
+        label: 'Phases',
+        icon: 'ClipboardList',
+        path: `${adminBasePath}/templates/${params.id}/phases`,
+      },
+    ],
+  },
+  [RouteKey.ADMIN_TEMPLATE_PHASES]: {
+    path: `${adminBasePath}/templates/:id/phases`,
+    pageComponent: PhasesPage,
+    title: 'Template Phases',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: (params) => [
+      {
+        label: 'Back to Programme Templates',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/templates`,
+      },
+      {
+        label: 'Template Details',
+        icon: 'FileText',
+        path: `${adminBasePath}/templates/${params.id}`,
+      },
+      {
+        label: 'Phases',
+        icon: 'ClipboardList',
+        path: `${adminBasePath}/templates/${params.id}/phases`,
+      },
+    ],
+  },
+  [RouteKey.ADMIN_TEMPLATE_PHASE_DETAIL]: {
+    path: `${adminBasePath}/templates/:id/phases/:phaseId`,
+    pageComponent: PhaseDetailPage,
+    title: 'Phase Detail',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: (params) => [
+      {
+        label: 'Back to Phases',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/templates/${params.id}/phases`,
+      },
+    ],
   },
   [RouteKey.ADMIN_VIDEOS]: {
     path: `${adminBasePath}/videos`,

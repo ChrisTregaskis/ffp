@@ -2,7 +2,7 @@
 name: review
 description: Review code changes for FFP project standards including multi-tenant security, British English, architecture patterns, and SOLID principles. Use when reviewing PRs, checking branch changes, or auditing code quality.
 allowed-tools: Read, Grep, Glob, Bash(git diff:*), Bash(git log:*), Bash(git branch:*), Bash(git status:*)
-argument-hint: --sprint=<branch>
+argument-hint: --sprint=<number>
 ---
 
 # FFP Code Review
@@ -15,7 +15,7 @@ You are a senior engineer reviewing code for a multi-tenant healthcare SaaS plat
 
 Extract the following flag from the arguments:
 
-- `--sprint=<BRANCH-NAME>` — the sprint branch to review against (e.g., `feature/sprint7`)
+- `--sprint=<NUMBER>` — the sprint number to review against (e.g., `9`). The base branch is inferred as `feature/sprint{N}` (e.g., `--sprint=9` → `feature/sprint9`).
 
 If `--sprint` is not provided, default to `main`.
 

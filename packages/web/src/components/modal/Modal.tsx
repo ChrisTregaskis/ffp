@@ -30,6 +30,8 @@ export interface ModalProps {
   closeOnBackdropClick?: boolean;
   /** Whether pressing Escape closes the modal @default true */
   closeOnEscape?: boolean;
+  /** Whether to hide the border dividers between header, body, and footer @default false */
+  hideDividers?: boolean;
   /** Additional classes for the modal container */
   className?: string;
 }
@@ -57,6 +59,7 @@ export const Modal: React.FC<ModalProps> = ({
   size = 'md',
   closeOnBackdropClick = true,
   closeOnEscape = true,
+  hideDividers = false,
   className = '',
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
@@ -139,7 +142,9 @@ export const Modal: React.FC<ModalProps> = ({
                 className={`w-full ${SIZE_CLASS_MAP[size]} max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-white shadow-xl outline-none ${className}`.trim()}
               >
                 {/* Header */}
-                <div className="flex items-start justify-between border-b border-border px-6 py-4">
+                <div
+                  className={`flex items-start justify-between px-6 py-4${hideDividers ? '' : ' border-b border-border'}`}
+                >
                   <div>
                     <Title as="h2">{title}</Title>
                     {subtitle && (
@@ -166,7 +171,9 @@ export const Modal: React.FC<ModalProps> = ({
 
                 {/* Footer (optional) */}
                 {footer && (
-                  <div className="flex items-center justify-end gap-3 border-t border-border px-6 py-4">
+                  <div
+                    className={`flex items-center justify-end gap-3 px-6 py-4${hideDividers ? '' : ' border-t border-border'}`}
+                  >
                     {footer}
                   </div>
                 )}

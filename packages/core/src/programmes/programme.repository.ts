@@ -73,7 +73,6 @@ async function createProgrammeInTx(
       name: input.name,
       description: input.description ?? null,
       totalPhases: input.totalPhases ?? null,
-      sessionsPerPhase: input.sessionsPerPhase ?? null,
     })
     .returning();
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { matchPath, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { Button } from '@web/components/button';
 import { Icon } from '@web/components/Icon';
@@ -7,8 +7,8 @@ import { Icons } from '@web/components/Icon/types';
 import { Logo } from '@web/components/logo';
 import { SlideWidth, ClickScale } from '@web/components/motion';
 import { Text } from '@web/components/text';
-import { getNavigationItems } from '@web/config/navigation';
-import type { ContextNavItem, NavItem as NavItemType } from '@web/config/navigation';
+import { getContextNavItems, getNavigationItems } from '@web/config/navigation';
+import type { NavItem as NavItemType } from '@web/config/navigation';
 import { useAuth } from '@web/hooks/useAuth';
 import { useSidebar } from '@web/hooks/useSidebar';
 import { RouteKey, routes } from '@web/pages/routes';
@@ -21,14 +21,6 @@ const SIDEBAR_COLLAPSED_WIDTH = 80; // 20 * 4 = 80px (w-20)
 interface SideMenuProps {
   handleLogout: () => void;
 }
-
-const getContextNavItems = (pathname: string): ContextNavItem[] | undefined => {
-  const matchedRoute = Object.values(routes).find(
-    (route) => route.contextNavItems && matchPath(route.path, pathname)
-  );
-
-  return matchedRoute?.contextNavItems;
-};
 
 export const SideMenu: React.FC<SideMenuProps> = ({ handleLogout }) => {
   const { user } = useAuth();

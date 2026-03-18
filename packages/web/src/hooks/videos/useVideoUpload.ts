@@ -28,6 +28,7 @@ const INITIAL_STATE: VideoUploadState = {
   thumbnailError: null,
   thumbnailKey: null,
   submitError: null,
+  createdVideoId: null,
 };
 
 const reducer = (state: VideoUploadState, action: Action): VideoUploadState => {
@@ -54,7 +55,7 @@ const reducer = (state: VideoUploadState, action: Action): VideoUploadState => {
       return { ...state, phase: 'creating' };
 
     case 'CREATE_SUCCESS':
-      return { ...state, phase: 'success' };
+      return { ...state, phase: 'success', createdVideoId: action.videoId };
 
     case 'SUBMIT_ERROR':
       return { ...state, phase: 'error', submitError: action.error };
@@ -295,7 +296,7 @@ export const useVideoUpload = (
         .then((response) => {
           logger.debug('Video created successfully', { videoId: response.video.id });
 
-          dispatch({ type: 'CREATE_SUCCESS' });
+          dispatch({ type: 'CREATE_SUCCESS', videoId: response.video.id });
           addToast('Video created successfully', { variant: 'success' });
           onVideoCreated?.();
         })

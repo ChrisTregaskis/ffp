@@ -238,6 +238,68 @@ See `testing-strategy.md` for full details.
 
 ---
 
+## API Endpoints
+
+### Admin — Programme Template Management
+
+All require `system_admin` role. No RLS (system-managed tables).
+
+| Method | Path                                            | Handler               | Description                                                       |
+| ------ | ----------------------------------------------- | --------------------- | ----------------------------------------------------------------- |
+| GET    | `/admin/programme-templates`                    | `list-templates`      | Paginated list with search, difficulty, isActive filters          |
+| GET    | `/admin/programme-templates/:id`                | `get-template`        | Full template with nested phases > sessions > exercises           |
+| POST   | `/admin/programme-templates`                    | `create-template`     | Create template (name, slug, difficulty, description)             |
+| PUT    | `/admin/programme-templates/:id`                | `update-template`     | Partial update (name, slug, difficulty, description, isActive)    |
+| PUT    | `/admin/programme-templates/:id/deactivate`     | `deactivate-template` | Set isActive=false                                                |
+| POST   | `/admin/programme-templates/:id/phases`         | `create-phase`        | Create phase (auto-assigns phaseNumber, increments totalPhases)   |
+| PUT    | `/admin/phases/:id`                             | `update-phase`        | Update phase name/description                                     |
+| DELETE | `/admin/phases/:id`                             | `delete-phase`        | Delete phase + cascade sessions/exercises, decrements totalPhases |
+| PUT    | `/admin/programme-templates/:id/phases/reorder` | `reorder-phases`      | Reorder phases by ordered ID array                                |
+| POST   | `/admin/phases/:id/sessions`                    | `create-session`      | Create session (auto-assigns sessionNumber)                       |
+| PUT    | `/admin/sessions/:id`                           | `update-session`      | Update session name/description/duration                          |
+| DELETE | `/admin/sessions/:id`                           | `delete-session`      | Delete session + cascade exercises                                |
+| PUT    | `/admin/phases/:id/sessions/reorder`            | `reorder-sessions`    | Reorder sessions by ordered ID array                              |
+| GET    | `/admin/sessions/:id/exercises`                 | `list-exercises`      | List exercises with embedded video summaries                      |
+| POST   | `/admin/sessions/:id/exercises`                 | `create-exercise`     | Create exercise (videoId + prescription fields)                   |
+| PUT    | `/admin/exercises/:id`                          | `update-exercise`     | Update exercise video/prescription                                |
+| DELETE | `/admin/exercises/:id`                          | `delete-exercise`     | Delete exercise, re-indexes siblings                              |
+| PUT    | `/admin/sessions/:id/exercises/reorder`         | `reorder-exercises`   | Reorder exercises by ordered ID array                             |
+
+### Admin — Video Management
+
+| Method | Path                       | Handler             | Description                                            |
+| ------ | -------------------------- | ------------------- | ------------------------------------------------------ |
+| GET    | `/admin/videos`            | `list-admin-videos` | Paginated list with search, status, difficulty filters |
+| POST   | `/admin/videos`            | `create-video`      | Create video metadata record                           |
+| PUT    | `/admin/videos/:id`        | `update-video`      | Update video metadata and status transitions           |
+| POST   | `/admin/videos/upload-url` | `get-upload-url`    | Generate presigned S3 PUT URL for video upload         |
+
+### Public — Videos
+
+| Method | Path                     | Handler          | Description                                   |
+| ------ | ------------------------ | ---------------- | --------------------------------------------- |
+| GET    | `/videos`                | `list-videos`    | Paginated active videos (public catalogue)    |
+| GET    | `/videos/:id`            | `get-video`      | Video detail with default prescription fields |
+| GET    | `/videos/:id/signed-url` | `get-signed-url` | CloudFront signed URL for video playback      |
+
+### Assessments (RLS-protected)
+
+| Method | Path                       | Handler             | Description                               |
+| ------ | -------------------------- | ------------------- | ----------------------------------------- |
+| POST   | `/assessments/start`       | `start-assessment`  | Start new assessment from flow template   |
+| PUT    | `/assessments/:id/save`    | `save-progress`     | Save assessment answers (partial)         |
+| POST   | `/assessments/:id/submit`  | `submit-assessment` | Submit for scoring + programme generation |
+| GET    | `/assessments/:id/results` | `get-results`       | Poll for scores (null until complete)     |
+
+### Programmes (RLS-protected)
+
+| Method | Path                  | Handler                | Description                                |
+| ------ | --------------------- | ---------------------- | ------------------------------------------ |
+| GET    | `/programmes/active`  | `get-active-programme` | Current user's active programme            |
+| POST   | `/programmes/replace` | `replace-programme`    | Replace active programme from reassessment |
+
+---
+
 ## Phase 1 MVP Scope
 
 ### ✅ In Scope

@@ -28,10 +28,8 @@ export const programmeTemplates = pgTable(
     description: text('description'),
     /** Whether this template is available for new programme generation */
     isActive: boolean('is_active').notNull().default(true),
-    /** Total number of phases in the programme */
-    totalPhases: integer('total_phases').notNull().default(12),
-    /** Default number of sessions per phase */
-    sessionsPerPhase: integer('sessions_per_phase').notNull().default(3),
+    /** Total number of phases — auto-computed from actual phase count */
+    totalPhases: integer('total_phases').notNull().default(0),
     /** Programme difficulty level (shared enum with videos) */
     difficulty: difficultyEnum('difficulty').notNull().default('beginner'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
