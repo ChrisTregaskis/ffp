@@ -1400,6 +1400,30 @@
       "setIdx": 0,
       "setId": 2,
       "iconIdx": 67
+    },
+    {
+      "icon": {
+        "paths": [
+          "M192 64v768h768v-768h-768zM896 768h-640v-640h640v640zM128 896v-672l-64-64v800h800l-64-64h-672z",
+          "M352 256l160 160-192 192 96 96 192-192 160 160v-416z"
+        ],
+        "tags": ["new-tab", "out", "external", "outside", "popout", "link", "blank"],
+        "defaultCode": 60030,
+        "grid": 16,
+        "attrs": []
+      },
+      "attrs": [],
+      "properties": {
+        "ligatures": "new-tab, out2",
+        "name": "NewTab",
+        "order": 212,
+        "id": 383,
+        "prevSize": 32,
+        "code": 60030
+      },
+      "setIdx": 1,
+      "setId": 1,
+      "iconIdx": 382
     }
   ],
   "height": 1024,

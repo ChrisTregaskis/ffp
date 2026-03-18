@@ -11,7 +11,7 @@ import { programmeTemplateKeys } from '@web/lib/query/keys';
 
 import type { UseMutationResult } from '@tanstack/react-query';
 
-interface UpdateTemplateVariables {
+export interface UpdateTemplateVariables {
   id: string;
   data: UpdateProgrammeTemplateInput;
 }

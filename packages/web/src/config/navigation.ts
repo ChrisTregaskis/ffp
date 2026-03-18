@@ -1,11 +1,35 @@
+import { matchPath } from 'react-router-dom';
+
 import type { UserRole } from '@ffp/core';
 
 import type { IconName } from '@web/components/Icon/types';
 import { USER_ROLE } from '@web/constants/roles';
+import type { ContextNavItem } from '@web/pages/routes';
 import { routes } from '@web/pages/routes';
 import { RouteKey } from '@web/pages/routes/RouteKey';
 
 export type { ContextNavItem } from '@web/pages/routes';
+
+/** Resolve context nav items for the current path, supporting both static and dynamic (function) forms */
+export const getContextNavItems = (pathname: string): ContextNavItem[] | undefined => {
+  for (const route of Object.values(routes)) {
+    if (!route.contextNavItems) {
+      continue;
+    }
+
+    const match = matchPath(route.path, pathname);
+
+    if (match) {
+      if (typeof route.contextNavItems === 'function') {
+        return route.contextNavItems(match.params as Record<string, string>);
+      }
+
+      return route.contextNavItems;
+    }
+  }
+
+  return undefined;
+};
 
 // Destructure user roles for easier reference
 const PROGRAMME_USER = USER_ROLE.PROGRAMME_USER;

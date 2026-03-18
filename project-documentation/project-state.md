@@ -1,8 +1,8 @@
 # FFP - Project State
 
-**Last Updated**: 12th March 2026
+**Last Updated**: 15th March 2026
 **Current EPIC**: FFP-439 Admin Programme Template Management
-**Sprint Status**: Sprint 9 - Programme Template (starting)
+**Sprint Status**: Sprint 9 - Programme Template (in progress)
 
 ---
 
@@ -37,69 +37,65 @@
 | 1     | Main  | FFP-442 | Programme template backend APIs            | 5   | Done        |
 | 2     | Main  | FFP-443 | Phase & session backend APIs               | 5   | Done        |
 | 2     | Main  | FFP-445 | Programme template admin list page         | 5   | Done        |
-| 3     | Main  | FFP-444 | Session exercise backend APIs              | 5   | In Progress |
-| 4     | Main  | FFP-446 | Template detail & hierarchy editing UI     | 8   | To Do       |
+| 3     | Main  | FFP-444 | Session exercise backend APIs              | 5   | Done        |
+| 4     | Main  | FFP-446 | Template detail & hierarchy editing UI     | 8   | In Progress |
 | 5     | Main  | FFP-447 | Integration verification & documentation   | 3   | To Do       |
 
 **Out of scope**: Drag-and-drop reordering (MVP uses move up/down), template duplication/cloning, template versioning, bulk import/export.
 
-### Active Story: FFP-444 — Session Exercise Management APIs (5 pts)
+### Active Story: FFP-446 — Programme Template Detail Page (8 pts)
 
-**Branch**: `feature/sprint9` (continuing on sprint branch)
-**Goal**: Backend CRUD + reorder APIs for session exercises — the leaf nodes of the template hierarchy. Each exercise links to a video with prescription data (sets, reps, duration, rest, notes). Prescription pre-populates from video defaults.
+**Branch**: `feature/ffp-446-programme-template-detail-page` (dedicated branch)
+**Goal**: Full detail page at `/admin/programme-templates/:id` showing template hierarchy (phases > sessions > exercises) with CRUD, reorder, and video selection at every level. Largest frontend story in the sprint.
+
+**Prerequisites** (all met):
+
+- ✅ All backend APIs complete (FFP-441 through FFP-444) — template, phase, session, exercise CRUD + reorder
+- ✅ Template list page (FFP-445) — navigates to detail via `${path}/${row.id}`
+- ✅ `templateDetailResponseSchema` exists — nested phases > sessions > exercises with embedded video summary
+- ✅ `adminProgrammeTemplatesApi` exists — `list`, `get`, `create`, `update`, `deactivate`
+- ✅ `useAdminTemplatesQuery` + `useTemplateMutations` exist — list query + create/update/deactivate mutations
+- ✅ Seed data — Gentle Mobility Programme (4 phases, 12 sessions, 40 exercises)
 
 **Sub-task execution order** (single branch, all sub-tasks together):
 
-| Order | Key     | Summary                                          | Layer   | Status |
-| ----- | ------- | ------------------------------------------------ | ------- | ------ |
-| 1     | FFP-472 | Zod request/response schemas for exercises       | Core    | Done   |
-| 2     | FFP-468 | Session exercise repository (CRUD + reorder)     | Core    | Done   |
-| 3     | FFP-469 | Session exercise service (video default pre-pop) | Core    | Done   |
-| 4     | FFP-470 | Lambda handlers for exercise endpoints           | Funcs   | Done   |
-| 5     | FFP-471 | SST routes for exercise endpoints                | Infra   | Done   |
-| 6     | FFP-473 | Postman requests for exercise endpoints          | Postman | Done   |
+| Group | Order | Key     | Summary                                            | Layer   | Status |
+| ----- | ----- | ------- | -------------------------------------------------- | ------- | ------ |
+| 1     | 1     | FFP-489 | Route configuration for template detail page       | Routes  | Done   |
+| 1     | 2     | FFP-480 | API client methods for phases, sessions, exercises | API     | Done   |
+| 1     | 3     | FFP-482 | useTemplateDetailQuery hook                        | Hooks   | Done   |
+| 1     | 4     | FFP-481 | Mutation hooks for phases, sessions, exercises     | Hooks   | Done   |
+| 2     | 5     | FFP-483 | TemplateDetailPage with metadata editing           | Page    | Done   |
+| 3     | 6     | FFP-484 | PhaseCard and PhaseForm components                 | UI      | Done   |
+| 3     | 7     | FFP-485 | SessionCard and SessionForm components             | UI      | Done   |
+| 4     | 8     | FFP-487 | VideoSelector component                            | UI      | Done   |
+| 4     | 9     | FFP-486 | ExerciseRow and ExerciseForm components            | UI      | Done   |
+| 5     | 10    | FFP-488 | Template creation flow from list page              | UI/Flow | Done   |
+
+**Groupings**:
+
+- **Group 1 (Foundation)**: Route + API client + query/mutation hooks — data layer plumbing
+- **Group 2 (Page Shell)**: Detail page with metadata display/edit, loading/error states, breadcrumb
+- **Group 3 (Hierarchy Cards)**: Phase and session collapsible cards with CRUD + reorder
+- **Group 4 (Exercise Layer)**: Video selector + exercise row/form with prescription pre-population
+- **Group 5 (Creation Flow)**: Create template from list page → navigate to detail
 
 **Amended requirements**:
 
-- **FFP-472 scope reduced**: Ticket title says "phase, session, and exercise" but phase and session schemas already exist in `programme.schema.ts` (lines 208-270). Only **exercise-specific** API request/response schemas are needed:
-  - `createExerciseRequestSchema` — requires `videoId`, optional prescription fields (`sets`, `reps`, `durationSeconds`, `restSeconds`, `notes`). Note: `templateSessionId` comes from URL path param, `orderIndex` is auto-assigned — neither belongs in the request body.
-  - `updateExerciseRequestSchema` — optional `videoId` + optional prescription fields (partial update).
-  - `reorderExercisesRequestSchema` — `orderedIds: z.array(z.guid()).min(1)` (matches existing reorder pattern).
-  - `exerciseResponseSchema` — exercise fields + joined video metadata for display.
-  - Type exports for all schemas.
-  - Note: `createSessionExerciseSchema` already exists in `programme-structure.schema.ts` (lines 93-106) for internal/seed use — the new API request schemas are separate (no `templateSessionId` or `orderIndex`).
-- **FFP-468 orderIndex**: Exercises use 0-based `orderIndex` (unlike phases/sessions which use 1-based `phaseNumber`/`sessionNumber`). The reorder/renumber logic should follow the existing negative-value pattern to avoid unique constraint violations, but with 0-based indexing.
-- **FFP-468 video join**: `findExercisesBySessionId` and `findExerciseById` should join video data (at minimum `id`, `title`, `thumbnailUrl`, `status`, default prescription fields) so the response includes video context.
-- **FFP-469 video validation**: Service must validate video exists AND is active (`status = 'active'`). Reject with 400 for non-existent or inactive video. Use existing video repository's `findVideoById` or equivalent.
-- **FFP-469 pre-population logic**: For each prescription field (`sets`, `reps`, `durationSeconds`, `restSeconds`, `notes`), use the explicit value if provided, otherwise fall back to the video's `defaultSets`, `defaultReps`, `defaultDurationSeconds`, `defaultRestSeconds`, `defaultNotes`.
-- **FFP-469 session validation**: Validate session exists before creating exercise. 404 for non-existent session.
-- **FFP-470 route paths** (aligned with existing patterns):
-  - `POST /sessions/{id}/exercises` — create exercise under session
-  - `PUT /exercises/{id}` — update exercise
-  - `DELETE /exercises/{id}` — delete exercise
-  - `PUT /sessions/{id}/exercises/reorder` — reorder exercises
-  - Note: these are relative to the admin API base path (no `/admin` prefix in handler routes).
-- **FFP-470 list endpoint**: The story description mentions `findExercisesBySessionId` in the repository but no explicit list handler. A `GET /sessions/{id}/exercises` handler is needed for the upcoming UI (FFP-446) to fetch exercises for a session. Add this as part of FFP-470.
-- **FFP-470 response codes**: Create → 201, Update → 200, Delete → 204, Reorder → 200, List → 200.
-- **FFP-471**: Routes added to `packages/functions/src/admin/index.ts` following existing pattern (grouped with other programme template routes).
+- **FFP-489 path**: Ticket says `/admin/templates/:id` but existing convention uses `/admin/programme-templates`. Use `/admin/programme-templates/:id` to match list page path. Add `contextNavItems` with "Back to Programme Templates" (follows video upload pattern).
+- **FFP-480 scope**: Template CRUD methods already exist in `adminProgrammeTemplatesApi`. Only **phase, session, and exercise** methods are needed. Backend route paths to target:
+  - Phases: `POST /programme-templates/{id}/phases`, `PUT /phases/{id}`, `DELETE /phases/{id}`, `PUT /programme-templates/{id}/phases/reorder`
+  - Sessions: `POST /phases/{id}/sessions`, `PUT /sessions/{id}`, `DELETE /sessions/{id}`, `PUT /phases/{id}/sessions/reorder`
+  - Exercises: `POST /sessions/{id}/exercises`, `GET /sessions/{id}/exercises`, `PUT /exercises/{id}`, `DELETE /exercises/{id}`, `PUT /sessions/{id}/exercises/reorder`
+- **FFP-482**: Uses existing `adminProgrammeTemplatesApi.get()`. Query key: `programmeTemplateKeys.detail(templateId)`. Enabled only when `templateId` is defined.
+- **FFP-481**: Three hook files (`usePhaseMutations`, `useSessionMutations`, `useExerciseMutations`). All mutations invalidate `programmeTemplateKeys.detail(templateId)` on success for hierarchy refresh.
+- **FFP-483 path**: Use `/admin/programme-templates/:id` (not `/admin/templates/:id`). Follow `PageContainer` + `PageHeader` layout pattern. Metadata editing via inline form (not modal).
+- **FFP-484**: PhaseCard is collapsible — collapsed shows name + session count, expanded shows child SessionCards. Move up/down disabled at boundary positions.
+- **FFP-485**: SessionCard nested inside PhaseCard — collapsed shows name + exercise count, expanded shows child ExerciseRows. Same reorder pattern.
+- **FFP-487**: VideoSelector uses `adminVideosApi.list()` with search filter (debounced). Display title + difficulty + movement type. On select, callback provides video data including default prescription fields for pre-population.
+- **FFP-486**: ExerciseForm includes VideoSelector for new exercises + prescription fields. On video selection, pre-populate prescription from video defaults (`defaultSets`, `defaultReps`, `defaultDurationSeconds`, `defaultRestSeconds`, `defaultNotes`). Existing exercises show video name + prescription summary.
+- **FFP-488**: "Create Template" button on list page → modal/inline form for metadata (name, slug auto-generated from name, description, difficulty) → on save, navigate to detail page. Handle 409 for duplicate slug.
 - **Tests deferred** per sprint convention.
-
-**New files to create**:
-
-- `packages/core/src/programme-templates/session-exercise.repository.ts` — CRUD + reorder data access
-- `packages/core/src/programme-templates/session-exercise.service.ts` — Business logic + video pre-population
-- `packages/functions/src/admin/programme-templates/list-exercises.ts` — GET handler
-- `packages/functions/src/admin/programme-templates/create-exercise.ts` — POST handler
-- `packages/functions/src/admin/programme-templates/update-exercise.ts` — PUT handler
-- `packages/functions/src/admin/programme-templates/delete-exercise.ts` — DELETE handler
-- `packages/functions/src/admin/programme-templates/reorder-exercises.ts` — PUT reorder handler
-
-**Existing files to modify**:
-
-- `packages/core/src/schemas/programme.schema.ts` — Add exercise request/response schemas + type exports
-- `packages/core/src/programme-templates/index.ts` — Export new repository and service
-- `packages/core/src/index.ts` — Export new schemas if not already barrel-exported
-- `packages/functions/src/admin/index.ts` — Add 5 exercise routes to SST config
 
 ---
 
