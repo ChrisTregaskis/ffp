@@ -126,7 +126,7 @@ export const TemplateListPage: React.FC = () => {
         error={error?.message}
         onStateChange={onStateChange}
         defaultSort={{ id: 'createdAt', desc: true }}
-        defaultColumnVisibility={{ slug: false, sessionsPerPhase: false }}
+        defaultColumnVisibility={{ slug: false }}
         getRowId={(row) => row.id}
         emptyState={
           <TemplateListEmptyState

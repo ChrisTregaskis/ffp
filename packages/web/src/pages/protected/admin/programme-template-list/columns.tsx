@@ -29,7 +29,6 @@ export const buildTemplateColumns = (
   columns.text('slug', { label: 'Slug' }),
   columns.text('difficulty', { label: 'Difficulty', sortable: true }),
   columns.number('totalPhases', { label: 'Phases' }),
-  columns.number('sessionsPerPhase', { label: 'Sessions/Phase' }),
   columns.status('status', { label: 'Status', statusMap: TEMPLATE_STATUS_MAP }),
   columns.date('createdAt', { label: 'Created', sortable: true }),
   columns.actions({ actions }),

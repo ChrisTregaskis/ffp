@@ -1,6 +1,6 @@
 # FFP - Project State
 
-**Last Updated**: 15th March 2026
+**Last Updated**: 18th March 2026
 **Current EPIC**: FFP-439 Admin Programme Template Management
 **Sprint Status**: Sprint 9 - Programme Template (in progress)
 
@@ -31,70 +31,58 @@
 
 ### Execution Order
 
-| Phase | Track | Key     | Summary                                    | Pts | Status      |
-| ----- | ----- | ------- | ------------------------------------------ | --- | ----------- |
-| 1     | Main  | FFP-441 | Video default exercise prescription fields | 3   | Done        |
-| 1     | Main  | FFP-442 | Programme template backend APIs            | 5   | Done        |
-| 2     | Main  | FFP-443 | Phase & session backend APIs               | 5   | Done        |
-| 2     | Main  | FFP-445 | Programme template admin list page         | 5   | Done        |
-| 3     | Main  | FFP-444 | Session exercise backend APIs              | 5   | Done        |
-| 4     | Main  | FFP-446 | Template detail & hierarchy editing UI     | 8   | In Progress |
-| 5     | Main  | FFP-447 | Integration verification & documentation   | 3   | To Do       |
+| Phase | Track | Key     | Summary                                    | Pts | Status |
+| ----- | ----- | ------- | ------------------------------------------ | --- | ------ |
+| 1     | Main  | FFP-441 | Video default exercise prescription fields | 3   | Done   |
+| 1     | Main  | FFP-442 | Programme template backend APIs            | 5   | Done   |
+| 2     | Main  | FFP-443 | Phase & session backend APIs               | 5   | Done   |
+| 2     | Main  | FFP-445 | Programme template admin list page         | 5   | Done   |
+| 3     | Main  | FFP-444 | Session exercise backend APIs              | 5   | Done   |
+| 4     | Main  | FFP-446 | Template detail & hierarchy editing UI     | 8   | Done   |
+| 5     | Main  | FFP-447 | Integration verification & documentation   | 3   | Done   |
 
 **Out of scope**: Drag-and-drop reordering (MVP uses move up/down), template duplication/cloning, template versioning, bulk import/export.
 
-### Active Story: FFP-446 — Programme Template Detail Page (8 pts)
+### Active Story: FFP-447 — Integration Verification & Documentation (3 pts)
 
-**Branch**: `feature/ffp-446-programme-template-detail-page` (dedicated branch)
-**Goal**: Full detail page at `/admin/programme-templates/:id` showing template hierarchy (phases > sessions > exercises) with CRUD, reorder, and video selection at every level. Largest frontend story in the sprint.
+**Branch**: `feature/ffp-447-admin-programme-template-verification`
+**Goal**: Final verification story for the Admin Programme Template Management epic (FFP-439). Covers a schema cleanup (drop `sessions_per_phase`, auto-compute `total_phases`), manual E2E testing, Postman collection updates, and project documentation.
 
 **Prerequisites** (all met):
 
-- ✅ All backend APIs complete (FFP-441 through FFP-444) — template, phase, session, exercise CRUD + reorder
-- ✅ Template list page (FFP-445) — navigates to detail via `${path}/${row.id}`
-- ✅ `templateDetailResponseSchema` exists — nested phases > sessions > exercises with embedded video summary
-- ✅ `adminProgrammeTemplatesApi` exists — `list`, `get`, `create`, `update`, `deactivate`
-- ✅ `useAdminTemplatesQuery` + `useTemplateMutations` exist — list query + create/update/deactivate mutations
+- ✅ All backend APIs complete (FFP-441 through FFP-444)
+- ✅ Template detail page complete (FFP-446) — full hierarchy CRUD, reorder, video selection
+- ✅ Template list page (FFP-445) — with active filter, create flow
 - ✅ Seed data — Gentle Mobility Programme (4 phases, 12 sessions, 40 exercises)
 
 **Sub-task execution order** (single branch, all sub-tasks together):
 
-| Group | Order | Key     | Summary                                            | Layer   | Status |
-| ----- | ----- | ------- | -------------------------------------------------- | ------- | ------ |
-| 1     | 1     | FFP-489 | Route configuration for template detail page       | Routes  | Done   |
-| 1     | 2     | FFP-480 | API client methods for phases, sessions, exercises | API     | Done   |
-| 1     | 3     | FFP-482 | useTemplateDetailQuery hook                        | Hooks   | Done   |
-| 1     | 4     | FFP-481 | Mutation hooks for phases, sessions, exercises     | Hooks   | Done   |
-| 2     | 5     | FFP-483 | TemplateDetailPage with metadata editing           | Page    | Done   |
-| 3     | 6     | FFP-484 | PhaseCard and PhaseForm components                 | UI      | Done   |
-| 3     | 7     | FFP-485 | SessionCard and SessionForm components             | UI      | Done   |
-| 4     | 8     | FFP-487 | VideoSelector component                            | UI      | Done   |
-| 4     | 9     | FFP-486 | ExerciseRow and ExerciseForm components            | UI      | Done   |
-| 5     | 10    | FFP-488 | Template creation flow from list page              | UI/Flow | Done   |
+| Order | Key     | Summary                                         | Type          | Status |
+| ----- | ------- | ----------------------------------------------- | ------------- | ------ |
+| 1     | FFP-516 | Drop sessionsPerPhase, auto-compute totalPhases | Code (DB/API) | Done   |
+| 2     | FFP-490 | Full CRUD flow end-to-end manual testing        | Verification  | Done   |
+| 2     | FFP-491 | Cascade delete behaviour verification           | Verification  | Done   |
+| 3     | FFP-492 | Postman collection with template test flows     | Postman       | Done   |
+| 4     | FFP-493 | Project documentation update                    | Documentation | Done   |
 
 **Groupings**:
 
-- **Group 1 (Foundation)**: Route + API client + query/mutation hooks — data layer plumbing
-- **Group 2 (Page Shell)**: Detail page with metadata display/edit, loading/error states, breadcrumb
-- **Group 3 (Hierarchy Cards)**: Phase and session collapsible cards with CRUD + reorder
-- **Group 4 (Exercise Layer)**: Video selector + exercise row/form with prescription pre-population
-- **Group 5 (Creation Flow)**: Create template from list page → navigate to detail
+- **Group 1 (Schema Cleanup)**: FFP-516 — migration + schema + backend + frontend + seed data changes. Must be first as it changes the API contract.
+- **Group 2 (Manual Verification)**: FFP-490 + FFP-491 — done together by the user against running dev environment. FFP-491 is a subset of FFP-490's checklist.
+- **Group 3 (Postman)**: FFP-492 — update/verify Postman collection after schema changes are confirmed working.
+- **Group 4 (Documentation)**: FFP-493 — final documentation pass, mark FFP-439 epic as complete.
 
 **Amended requirements**:
 
-- **FFP-489 path**: Ticket says `/admin/templates/:id` but existing convention uses `/admin/programme-templates`. Use `/admin/programme-templates/:id` to match list page path. Add `contextNavItems` with "Back to Programme Templates" (follows video upload pattern).
-- **FFP-480 scope**: Template CRUD methods already exist in `adminProgrammeTemplatesApi`. Only **phase, session, and exercise** methods are needed. Backend route paths to target:
-  - Phases: `POST /programme-templates/{id}/phases`, `PUT /phases/{id}`, `DELETE /phases/{id}`, `PUT /programme-templates/{id}/phases/reorder`
-  - Sessions: `POST /phases/{id}/sessions`, `PUT /sessions/{id}`, `DELETE /sessions/{id}`, `PUT /phases/{id}/sessions/reorder`
-  - Exercises: `POST /sessions/{id}/exercises`, `GET /sessions/{id}/exercises`, `PUT /exercises/{id}`, `DELETE /exercises/{id}`, `PUT /sessions/{id}/exercises/reorder`
-- **FFP-482**: Uses existing `adminProgrammeTemplatesApi.get()`. Query key: `programmeTemplateKeys.detail(templateId)`. Enabled only when `templateId` is defined.
-- **FFP-481**: Three hook files (`usePhaseMutations`, `useSessionMutations`, `useExerciseMutations`). All mutations invalidate `programmeTemplateKeys.detail(templateId)` on success for hierarchy refresh.
-- **FFP-483 path**: Use `/admin/programme-templates/:id` (not `/admin/templates/:id`). Follow `PageContainer` + `PageHeader` layout pattern. Metadata editing via inline form (not modal).
-- **FFP-484**: PhaseCard is collapsible — collapsed shows name + session count, expanded shows child SessionCards. Move up/down disabled at boundary positions.
-- **FFP-485**: SessionCard nested inside PhaseCard — collapsed shows name + exercise count, expanded shows child ExerciseRows. Same reorder pattern.
-- **FFP-487**: VideoSelector uses `adminVideosApi.list()` with search filter (debounced). Display title + difficulty + movement type. On select, callback provides video data including default prescription fields for pre-population.
-- **FFP-486**: ExerciseForm includes VideoSelector for new exercises + prescription fields. On video selection, pre-populate prescription from video defaults (`defaultSets`, `defaultReps`, `defaultDurationSeconds`, `defaultRestSeconds`, `defaultNotes`). Existing exercises show video name + prescription summary.
-- **FFP-488**: "Create Template" button on list page → modal/inline form for metadata (name, slug auto-generated from name, description, difficulty) → on save, navigate to detail page. Handle 409 for duplicate slug.
+- **FFP-516 scope**: `sessions_per_phase` column exists in DB schema, backend Zod schemas (create/update/response), list page columns, and seed data. `total_phases` exists in same places. Changes needed:
+  - DB: Migration to drop `sessions_per_phase` column. Keep `total_phases` column but make it auto-computed.
+  - Backend: Remove `sessionsPerPhase` from all Zod schemas. Remove `totalPhases` from create/update input schemas (auto-managed). Keep in response schemas.
+  - Backend handlers: Increment `totalPhases` on phase create, decrement on phase delete.
+  - Frontend: Remove "Sessions/Phase" column from list page. "Phases" column stays (reads `totalPhases`).
+  - Seed data: Remove `sessionsPerPhase` values. Keep `totalPhases` (matches actual phase count).
+  - Programme service: Remove `sessionsPerPhase` snapshot from `generateProgramme()`. Keep `totalPhases` snapshot.
+- **FFP-491 amended**: Ticket says "Verify template totalPhases and sessionsPerPhase update correctly after deletes" — after FFP-516, `sessionsPerPhase` won't exist. Amend to: verify `totalPhases` decrements correctly when phases are deleted.
+- **FFP-490 + FFP-491 overlap**: Cascade delete testing is part of the full CRUD checklist. Both sub-tasks will be verified in a single manual testing pass.
 - **Tests deferred** per sprint convention.
 
 ---
@@ -281,7 +269,7 @@ await db.transaction(async (tx) => {
 - ✅ FFP-1: Application Setup & Foundation
 - ✅ FFP-2: Assessment Engine (Sprints 3-6)
 - ✅ FFP-3: Video Management (Sprints 7-8)
-- 🏃 FFP-439: Admin Programme Template Management (Sprint 9, ~34 pts)
+- ✅ FFP-439: Admin Programme Template Management (Sprint 9, ~34 pts)
 - ⏳ FFP-6: Customer & User Onboarding (Sprint 10, ~18 pts)
 - ⏳ FFP-4: Programme Execution & Progress (Sprints 11-13)
 - ⏳ FFP-109: Deployment Readiness (staging + production)

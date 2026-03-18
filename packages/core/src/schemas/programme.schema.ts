@@ -22,10 +22,8 @@ export const programmeTemplateSchema = z.object({
   description: z.string().nullable(),
   /** Whether this template is available for new programme generation */
   isActive: z.boolean(),
-  /** Total number of phases in the programme */
-  totalPhases: z.number().int().positive(),
-  /** Default number of sessions per phase */
-  sessionsPerPhase: z.number().int().positive(),
+  /** Total number of phases — auto-computed from actual phase count */
+  totalPhases: z.number().int().nonnegative(),
   /** Programme difficulty level (shared enum with videos) */
   difficulty: z.enum(DIFFICULTIES),
   /** Timestamp when record was created */
@@ -43,8 +41,6 @@ export const createProgrammeTemplateSchema = programmeTemplateSchema
   .extend({
     description: programmeTemplateSchema.shape.description.optional(),
     isActive: programmeTemplateSchema.shape.isActive.optional(),
-    totalPhases: programmeTemplateSchema.shape.totalPhases.optional(),
-    sessionsPerPhase: programmeTemplateSchema.shape.sessionsPerPhase.optional(),
     difficulty: programmeTemplateSchema.shape.difficulty.optional(),
   });
 
@@ -57,8 +53,6 @@ export const updateProgrammeTemplateSchema = programmeTemplateSchema
   .extend({
     description: programmeTemplateSchema.shape.description,
     isActive: programmeTemplateSchema.shape.isActive,
-    totalPhases: programmeTemplateSchema.shape.totalPhases,
-    sessionsPerPhase: programmeTemplateSchema.shape.sessionsPerPhase,
     difficulty: programmeTemplateSchema.shape.difficulty,
   })
   .partial();
@@ -83,7 +77,6 @@ export const templateListResponseSchema = programmeTemplateSchema.pick({
   name: true,
   difficulty: true,
   totalPhases: true,
-  sessionsPerPhase: true,
   isActive: true,
   createdAt: true,
   updatedAt: true,
@@ -130,9 +123,7 @@ export const programmeSchema = z.object({
   /** Successor programme (self-referential linked list) */
   replacedByProgrammeId: z.guid().nullable(),
   /** Snapshot of template's total phases at assignment time */
-  totalPhases: z.number().int().positive().nullable(),
-  /** Snapshot of template's sessions per phase at assignment time */
-  sessionsPerPhase: z.number().int().positive().nullable(),
+  totalPhases: z.number().int().nonnegative().nullable(),
   /** Timestamp when record was created */
   createdAt: z.coerce.date(),
   /** Timestamp when record was last modified */
@@ -149,7 +140,6 @@ export const createProgrammeSchema = programmeSchema
   .extend({
     description: programmeSchema.shape.description.optional(),
     totalPhases: programmeSchema.shape.totalPhases.optional(),
-    sessionsPerPhase: programmeSchema.shape.sessionsPerPhase.optional(),
   });
 
 /** Response schema for the active programme endpoint */
