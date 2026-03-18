@@ -31,15 +31,15 @@
 
 ### Execution Order
 
-| Phase | Track | Key     | Summary                                    | Pts | Status      |
-| ----- | ----- | ------- | ------------------------------------------ | --- | ----------- |
-| 1     | Main  | FFP-441 | Video default exercise prescription fields | 3   | Done        |
-| 1     | Main  | FFP-442 | Programme template backend APIs            | 5   | Done        |
-| 2     | Main  | FFP-443 | Phase & session backend APIs               | 5   | Done        |
-| 2     | Main  | FFP-445 | Programme template admin list page         | 5   | Done        |
-| 3     | Main  | FFP-444 | Session exercise backend APIs              | 5   | Done        |
-| 4     | Main  | FFP-446 | Template detail & hierarchy editing UI     | 8   | Done        |
-| 5     | Main  | FFP-447 | Integration verification & documentation   | 3   | In Progress |
+| Phase | Track | Key     | Summary                                    | Pts | Status |
+| ----- | ----- | ------- | ------------------------------------------ | --- | ------ |
+| 1     | Main  | FFP-441 | Video default exercise prescription fields | 3   | Done   |
+| 1     | Main  | FFP-442 | Programme template backend APIs            | 5   | Done   |
+| 2     | Main  | FFP-443 | Phase & session backend APIs               | 5   | Done   |
+| 2     | Main  | FFP-445 | Programme template admin list page         | 5   | Done   |
+| 3     | Main  | FFP-444 | Session exercise backend APIs              | 5   | Done   |
+| 4     | Main  | FFP-446 | Template detail & hierarchy editing UI     | 8   | Done   |
+| 5     | Main  | FFP-447 | Integration verification & documentation   | 3   | Done   |
 
 **Out of scope**: Drag-and-drop reordering (MVP uses move up/down), template duplication/cloning, template versioning, bulk import/export.
 
@@ -60,10 +60,10 @@
 | Order | Key     | Summary                                         | Type          | Status |
 | ----- | ------- | ----------------------------------------------- | ------------- | ------ |
 | 1     | FFP-516 | Drop sessionsPerPhase, auto-compute totalPhases | Code (DB/API) | Done   |
-| 2     | FFP-490 | Full CRUD flow end-to-end manual testing        | Verification  | To Do  |
-| 2     | FFP-491 | Cascade delete behaviour verification           | Verification  | To Do  |
-| 3     | FFP-492 | Postman collection with template test flows     | Postman       | To Do  |
-| 4     | FFP-493 | Project documentation update                    | Documentation | To Do  |
+| 2     | FFP-490 | Full CRUD flow end-to-end manual testing        | Verification  | Done   |
+| 2     | FFP-491 | Cascade delete behaviour verification           | Verification  | Done   |
+| 3     | FFP-492 | Postman collection with template test flows     | Postman       | Done   |
+| 4     | FFP-493 | Project documentation update                    | Documentation | Done   |
 
 **Groupings**:
 
@@ -269,7 +269,7 @@ await db.transaction(async (tx) => {
 - ✅ FFP-1: Application Setup & Foundation
 - ✅ FFP-2: Assessment Engine (Sprints 3-6)
 - ✅ FFP-3: Video Management (Sprints 7-8)
-- 🏃 FFP-439: Admin Programme Template Management (Sprint 9, ~34 pts)
+- ✅ FFP-439: Admin Programme Template Management (Sprint 9, ~34 pts)
 - ⏳ FFP-6: Customer & User Onboarding (Sprint 10, ~18 pts)
 - ⏳ FFP-4: Programme Execution & Progress (Sprints 11-13)
 - ⏳ FFP-109: Deployment Readiness (staging + production)
