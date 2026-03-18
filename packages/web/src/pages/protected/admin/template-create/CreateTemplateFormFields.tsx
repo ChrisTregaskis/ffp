@@ -6,9 +6,8 @@ import { FormRow } from '@web/components/form/standardForm/FormRow';
 import { FormSelect } from '@web/components/form/standardForm/FormSelect';
 import { FormTextarea } from '@web/components/form/standardForm/FormTextarea';
 import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
+import { DIFFICULTY_OPTIONS } from '@web/components/form/templates/constants';
 import { toSlug } from '@web/utils/string';
-
-import { DIFFICULTY_OPTIONS } from './constants';
 
 import type { CreateTemplateFormValues } from './types';
 

@@ -155,13 +155,15 @@ export const TemplateDetailPage: React.FC = () => {
                   </Text>
                 </div>
               </div>
-              <span
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold text-white ${
+              <Text
+                as="span"
+                styleProps={{ size: 'xs', weight: 'semibold' }}
+                className={`inline-flex items-center rounded-full px-3 py-1 text-white ${
                   template.isActive ? 'bg-success' : 'bg-muted-foreground'
                 }`}
               >
                 {template.isActive ? 'Active' : 'Inactive'}
-              </span>
+              </Text>
             </div>
 
             <ComposableForm<TemplateMetadataFormValues>

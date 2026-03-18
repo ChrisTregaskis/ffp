@@ -92,7 +92,7 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
       setIsLoadingDetail(true);
 
       try {
-        const detail = await videosApi.get(videoId, { includeInactive: true });
+        const detail = await videosApi.get(videoId);
         onSelect(detail);
         setIsOpen(false);
         setSearch('');

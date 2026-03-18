@@ -82,7 +82,11 @@ export const PhasesPage: React.FC = () => {
         return;
       }
 
-      void navigate(`${routes[RouteKey.ADMIN_TEMPLATES].path}/${templateId}/phases/${row.id}`);
+      void navigate(
+        routes[RouteKey.ADMIN_TEMPLATE_PHASE_DETAIL].path
+          .replace(':id', templateId)
+          .replace(':phaseId', row.id)
+      );
     },
     [navigate, templateId]
   );
@@ -275,7 +279,7 @@ export const PhasesPage: React.FC = () => {
           setDeleteTarget(null);
         }}
         onConfirm={handleConfirmDelete}
-        isLoading={isMutating}
+        isLoading={deletePhase.isPending}
         title="Delete Phase"
         message="This will permanently delete this phase and all sessions and exercises within it. This action cannot be undone."
       />

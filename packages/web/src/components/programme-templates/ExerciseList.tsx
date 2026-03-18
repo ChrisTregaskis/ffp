@@ -263,7 +263,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
           setDeleteTarget(null);
         }}
         onConfirm={handleConfirmDelete}
-        isLoading={isMutating}
+        isLoading={deleteExercise.isPending}
         title="Delete Exercise"
         message="This will permanently delete this exercise. This action cannot be undone."
       />

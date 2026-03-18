@@ -156,7 +156,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
           <SessionForm
             initialValues={{
               name: session.name ?? '',
-              description: '',
+              description: '', // Description not included in nested template detail response
               estimatedDurationMinutes: session.estimatedDurationMinutes
                 ? String(session.estimatedDurationMinutes)
                 : '',

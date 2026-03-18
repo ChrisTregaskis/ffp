@@ -15,7 +15,6 @@ import {
   useDeleteSessionMutation,
   useReorderSessionsMutation,
   useTemplateDetailQuery,
-  useUpdatePhaseMutation,
   useUpdateSessionMutation,
 } from '@web/hooks/programme-templates';
 import { useToast } from '@web/hooks/useToast';
@@ -29,14 +28,12 @@ export const PhaseDetailPage: React.FC = () => {
 
   const { data: template, isLoading, error } = useTemplateDetailQuery(templateId ?? '');
 
-  const updatePhase = useUpdatePhaseMutation(templateId ?? '');
   const createSession = useCreateSessionMutation(templateId ?? '');
   const updateSession = useUpdateSessionMutation(templateId ?? '');
   const deleteSession = useDeleteSessionMutation(templateId ?? '');
   const reorderSessions = useReorderSessionsMutation(templateId ?? '');
 
   const isMutating =
-    updatePhase.isPending ||
     createSession.isPending ||
     updateSession.isPending ||
     deleteSession.isPending ||
@@ -54,7 +51,7 @@ export const PhaseDetailPage: React.FC = () => {
       return;
     }
 
-    void navigate(`${routes[RouteKey.ADMIN_TEMPLATES].path}/${templateId}/phases`);
+    void navigate(routes[RouteKey.ADMIN_TEMPLATE_PHASES].path.replace(':id', templateId));
   }, [navigate, templateId]);
 
   const handleNavigateToTemplates = useCallback(() => {
