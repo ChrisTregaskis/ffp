@@ -10,6 +10,8 @@ interface UseApiTableOptions {
   defaultPageSize?: number;
   /** Default sort column and direction */
   defaultSort?: { id: string; desc: boolean };
+  /** Default filter values applied on initial load */
+  defaultFilters?: TableFilterValues;
 }
 
 interface UseApiTableReturn {
@@ -47,7 +49,7 @@ const DEBOUNCE_MS = 300;
  * and memoises queryParams to prevent unnecessary re-fetches.
  */
 export const useApiTable = (options: UseApiTableOptions = {}): UseApiTableReturn => {
-  const { defaultPageSize = 10, defaultSort } = options;
+  const { defaultPageSize = 10, defaultSort, defaultFilters = {} } = options;
 
   const [tableState, setTableState] = useState<TableState>({
     page: 1,
@@ -58,7 +60,7 @@ export const useApiTable = (options: UseApiTableOptions = {}): UseApiTableReturn
 
   // Search and filter state (immediate values for controlled inputs)
   const [search, setSearch] = useState('');
-  const [filterValues, setFilterValues] = useState<TableFilterValues>({});
+  const [filterValues, setFilterValues] = useState<TableFilterValues>(defaultFilters);
 
   // Debounced versions of all state
   const [debouncedState, setDebouncedState] = useState<TableState>(tableState);
@@ -115,9 +117,9 @@ export const useApiTable = (options: UseApiTableOptions = {}): UseApiTableReturn
 
   const clearAll = useCallback(() => {
     setSearch('');
-    setFilterValues({});
+    setFilterValues(defaultFilters);
     setTableState((prev) => ({ ...prev, page: 1 }));
-  }, []);
+  }, [defaultFilters]);
 
   const hasActiveControls = useMemo(
     () => search.length > 0 || Object.values(filterValues).some((v) => v !== ''),

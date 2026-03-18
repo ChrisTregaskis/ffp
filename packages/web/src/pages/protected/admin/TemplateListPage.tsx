@@ -37,6 +37,7 @@ export const TemplateListPage: React.FC = () => {
   } = useApiTable({
     defaultPageSize: 10,
     defaultSort: { id: 'createdAt', desc: true },
+    defaultFilters: { isActive: 'true' },
   });
 
   const adminFilters: AdminTemplateFilterInput = useMemo(

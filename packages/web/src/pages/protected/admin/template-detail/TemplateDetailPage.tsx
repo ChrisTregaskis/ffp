@@ -36,8 +36,6 @@ export const TemplateDetailPage: React.FC = () => {
       description: template.description ?? '',
       difficulty: template.difficulty,
       isActive: String(template.isActive),
-      totalPhases: String(template.totalPhases),
-      sessionsPerPhase: String(template.sessionsPerPhase),
     };
   }, [template]);
 
@@ -76,18 +74,6 @@ export const TemplateDetailPage: React.FC = () => {
 
       if (newIsActive !== template.isActive) {
         payload.isActive = newIsActive;
-      }
-
-      const newTotalPhases = parseInt(values.totalPhases, 10);
-
-      if (newTotalPhases !== template.totalPhases) {
-        payload.totalPhases = newTotalPhases;
-      }
-
-      const newSessionsPerPhase = parseInt(values.sessionsPerPhase, 10);
-
-      if (newSessionsPerPhase !== template.sessionsPerPhase) {
-        payload.sessionsPerPhase = newSessionsPerPhase;
       }
 
       return payload;

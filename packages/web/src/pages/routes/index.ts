@@ -19,6 +19,7 @@ import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsP
 import { TableComponentsPage } from '@web/pages/dev/TableComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
+import { TemplateCreatePage } from '@web/pages/protected/admin/template-create';
 import {
   PhaseDetailPage,
   PhasesPage,
@@ -275,6 +276,20 @@ export const routes: RoutesConfig = {
     pageComponent: TemplateListPage,
     title: 'Programme Templates',
     allowedRoles: [SYSTEM_ADMIN],
+  },
+  [RouteKey.ADMIN_TEMPLATE_CREATE]: {
+    path: `${adminBasePath}/templates/create`,
+    pageComponent: TemplateCreatePage,
+    title: 'Create Template',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Programme Templates',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/templates`,
+      },
+    ],
   },
   [RouteKey.ADMIN_TEMPLATE_DETAIL]: {
     path: `${adminBasePath}/templates/:id`,

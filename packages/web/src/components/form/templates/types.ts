@@ -10,8 +10,4 @@ export interface TemplateMetadataFormValues {
   difficulty: string;
   /** Whether the template is active ('true' or 'false' for select compatibility) */
   isActive: string;
-  /** Number of phases */
-  totalPhases: string;
-  /** Sessions per phase */
-  sessionsPerPhase: string;
 }
