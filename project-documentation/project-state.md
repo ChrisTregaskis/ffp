@@ -41,6 +41,28 @@
 - Email and customer read-only after user creation
 - No user deletion — future story
 
+### Active Story: FFP-494 — Customer Management APIs (3 pts)
+
+**Branch**: `feature/sprint10`
+**Goal**: Add list, get, and update endpoints for customer admin management. Existing `POST /admin/create-customer` already handles creation.
+
+**Sub-task execution order** (single branch, all sub-tasks together):
+
+| Order | Key     | Summary                                | Status |
+| ----- | ------- | -------------------------------------- | ------ |
+| 1     | FFP-498 | Zod schemas for list, get, update      | To Do  |
+| 2     | FFP-499 | Customer repository: list, get, update | To Do  |
+| 3     | FFP-500 | Customer service: list, get, update    | To Do  |
+| 4     | FFP-501 | Lambda handlers and route registration | To Do  |
+
+**Amended requirements**:
+
+- **FFP-498**: `customer.schema.ts` already has `customerSchema`, `updateCustomerSchema`, `customerAddressSchema`, `customerStatusSchema`. Only need to add list query schema and response schemas. Detail response extends existing `customerSchema`.
+- **FFP-499**: Ticket says extend `admin.repository.ts` — will keep customer code there since it's the existing location. No RLS needed (system_admin cross-tenant). Uses `getDb()` pattern (newer, consistent with videos/templates).
+- **FFP-500**: Follow newer pattern — `getDb()` directly in service, not `RequestContext`. Thin orchestration with structured logging.
+- **FFP-501**: Handlers in `packages/functions/src/admin/customers/`. Routes: `GET /customers`, `GET /customers/{id}`, `PUT /customers/{id}`.
+- **Tests deferred** per sprint convention.
+
 ---
 
 ## Completed: FFP-439 Admin Programme Template Management (Sprint 9, ~34 pts)

@@ -1,35 +1,34 @@
+import { getDb } from '@ffp/database';
+
+import { NotFoundError } from '../lib/errors';
 import { createLogger } from '../lib/logger';
+import {
+  customerListResponseSchema,
+  customerDetailResponseSchema,
+  updateCustomerSchema,
+  customerFilterSchema,
+} from '../schemas/customer.schema';
+import { buildPaginationMeta } from '../schemas/pagination.schema';
 
-import { createCustomer as createCustomerInRepo } from './admin.repository';
+import {
+  createCustomer as createCustomerInRepo,
+  listCustomers as listCustomersInRepo,
+  countCustomers as countCustomersInRepo,
+  getCustomerById as getCustomerByIdInRepo,
+  updateCustomer as updateCustomerInRepo,
+} from './admin.repository';
 
+import type { TenantContext } from '../lib/context';
 import type { RequestContext } from '../lib/request-context';
 import type { CreateCustomerInput, CreateCustomerResponse } from '../schemas/admin.schema';
+import type { CustomerListResponse, CustomerDetailResponse } from '../schemas/customer.schema';
+import type { PaginationInput, PaginationMeta } from '../schemas/pagination.schema';
 
 /**
  * Create a new customer tenant and customer record
  *
- * Orchestrates the customer creation process:
- * 1. Validates input (handled by Zod schema at handler level)
- * 2. Creates tenant and customer records via repository
- * 3. Logs the operation with admin context
- * 4. Returns tenant and customer identifiers
- *
  * This is a privileged operation that bypasses RLS. The handler
  * should validate that the requesting user has system_admin role.
- *
- * Note: "customer" represents a business/care home organisation in the system.
- *
- * @param ctx - Request context containing database client and tenant context
- * @param input - Validated customer creation input
- * @returns Object containing tenantId, customerId, and customerName
- *
- * @example
- * ```typescript
- * const ctx = createRequestContext(adminContext);
- * const result = await createCustomerService(ctx, {
- *   customerName: "Acme Physiotherapy"
- * });
- * ```
  */
 export async function createCustomerService(
   ctx: RequestContext,
@@ -41,7 +40,6 @@ export async function createCustomerService(
     customerName: input.customerName,
   });
 
-  // Create customer via repository (transaction-based)
   const result = await createCustomerInRepo(ctx.db, input.customerName);
 
   logger.info('Customer created successfully', {
@@ -55,4 +53,84 @@ export async function createCustomerService(
     customerId: result.customerId,
     customerName: input.customerName,
   };
+}
+
+/**
+ * List customers with pagination, search, and status filter.
+ */
+export async function listCustomersService(
+  ctx: TenantContext,
+  paginationInput: PaginationInput,
+  rawFilters: { search?: string; status?: string }
+): Promise<{ data: CustomerListResponse[]; pagination: PaginationMeta }> {
+  const filters = customerFilterSchema.parse(rawFilters);
+  const db = getDb();
+
+  const [records, total] = await Promise.all([
+    listCustomersInRepo(db, paginationInput, filters),
+    countCustomersInRepo(db, filters),
+  ]);
+
+  const logger = createLogger(ctx);
+  logger.info('Customers listed', {
+    action: 'customers_listed',
+    total,
+    page: paginationInput.page,
+    filters,
+  });
+
+  return {
+    data: records.map((record) => customerListResponseSchema.parse(record)),
+    pagination: buildPaginationMeta(paginationInput, total),
+  };
+}
+
+/**
+ * Get a single customer by ID. Throws NotFoundError if not found.
+ */
+export async function getCustomerService(
+  ctx: TenantContext,
+  customerId: string
+): Promise<CustomerDetailResponse> {
+  const db = getDb();
+  const customer = await getCustomerByIdInRepo(db, customerId);
+
+  if (!customer) {
+    throw new NotFoundError('Customer', customerId);
+  }
+
+  const logger = createLogger(ctx);
+  logger.info('Customer retrieved', {
+    action: 'customer_retrieved',
+    customerId,
+  });
+
+  return customerDetailResponseSchema.parse(customer);
+}
+
+/**
+ * Update a customer record. Throws NotFoundError if not found.
+ */
+export async function updateCustomerService(
+  ctx: TenantContext,
+  customerId: string,
+  input: unknown
+): Promise<CustomerDetailResponse> {
+  const validated = updateCustomerSchema.parse(input);
+  const db = getDb();
+
+  const updated = await updateCustomerInRepo(db, customerId, validated);
+
+  if (!updated) {
+    throw new NotFoundError('Customer', customerId);
+  }
+
+  const logger = createLogger(ctx);
+  logger.info('Customer updated', {
+    action: 'customer_updated',
+    customerId: updated.id,
+    status: updated.status,
+  });
+
+  return customerDetailResponseSchema.parse(updated);
 }
