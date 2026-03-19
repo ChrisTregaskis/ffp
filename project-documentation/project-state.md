@@ -1,103 +1,28 @@
 # FFP - Project State
 
-**Last Updated**: 18th March 2026
-**Current EPIC**: FFP-439 Admin Programme Template Management
-**Sprint Status**: Sprint 9 - Programme Template (in progress)
+**Last Updated**: 19th March 2026
+**Current EPIC**: FFP-6 Customer & User Onboarding
+**Sprint Status**: Sprint 10 - Customer & User Management (in progress)
 
 ---
 
-## Active: Sprint 9 - Programme Template (~34 pts)
+## Active: Sprint 10 — Customer & User Management (~18 pts)
 
-**Dates**: 12th March – 2nd April 2026
-**Sprint Goal**: Full CRUD for admin programme template hierarchy — templates, phases, sessions, exercises — with video default prescription fields and admin UI.
-**Epic**: FFP-439 (Admin Programme Template Management)
-**Branch**: `feature/sprint9`
-
-**Execution plan**: `.claude/plans/sprint-9-execution-plan.md`
-
-**Key documents**:
-
-- `.claude/research/programme/programme-data-model-research.md` - Authoritative programme data model
-- `.claude/plans/sprint-9-execution-plan.md` - Full dependency graph, worktree assessment, subtask breakdown
-
-**Prerequisites** (all met):
-
-- ✅ FFP-3 (Video Management) complete — video catalogue, CloudFront signed URLs, admin CRUD
-- ✅ Programme template DB schema (Sprint 7) — `programme_templates`, `template_phases`, `template_sessions`, `session_exercises`
-- ✅ Table component + pagination pattern (FFP-437)
-- ✅ Seed data — Gentle Mobility Programme hierarchy (4 phases, 12 sessions, 40 exercises)
-
-**Key design decision**: Extend `videos` table with default exercise prescription fields (sets, reps, duration, rest, notes) rather than introducing a separate exercise entity. Videos are exercise demonstrations — the video catalogue effectively is the exercise library. Prescription pre-populates from video defaults when adding to a session, overridable per-session.
-
-### Execution Order
-
-| Phase | Track | Key     | Summary                                    | Pts | Status |
-| ----- | ----- | ------- | ------------------------------------------ | --- | ------ |
-| 1     | Main  | FFP-441 | Video default exercise prescription fields | 3   | Done   |
-| 1     | Main  | FFP-442 | Programme template backend APIs            | 5   | Done   |
-| 2     | Main  | FFP-443 | Phase & session backend APIs               | 5   | Done   |
-| 2     | Main  | FFP-445 | Programme template admin list page         | 5   | Done   |
-| 3     | Main  | FFP-444 | Session exercise backend APIs              | 5   | Done   |
-| 4     | Main  | FFP-446 | Template detail & hierarchy editing UI     | 8   | Done   |
-| 5     | Main  | FFP-447 | Integration verification & documentation   | 3   | Done   |
-
-**Out of scope**: Drag-and-drop reordering (MVP uses move up/down), template duplication/cloning, template versioning, bulk import/export.
-
-### Active Story: FFP-447 — Integration Verification & Documentation (3 pts)
-
-**Branch**: `feature/ffp-447-admin-programme-template-verification`
-**Goal**: Final verification story for the Admin Programme Template Management epic (FFP-439). Covers a schema cleanup (drop `sessions_per_phase`, auto-compute `total_phases`), manual E2E testing, Postman collection updates, and project documentation.
-
-**Prerequisites** (all met):
-
-- ✅ All backend APIs complete (FFP-441 through FFP-444)
-- ✅ Template detail page complete (FFP-446) — full hierarchy CRUD, reorder, video selection
-- ✅ Template list page (FFP-445) — with active filter, create flow
-- ✅ Seed data — Gentle Mobility Programme (4 phases, 12 sessions, 40 exercises)
-
-**Sub-task execution order** (single branch, all sub-tasks together):
-
-| Order | Key     | Summary                                         | Type          | Status |
-| ----- | ------- | ----------------------------------------------- | ------------- | ------ |
-| 1     | FFP-516 | Drop sessionsPerPhase, auto-compute totalPhases | Code (DB/API) | Done   |
-| 2     | FFP-490 | Full CRUD flow end-to-end manual testing        | Verification  | Done   |
-| 2     | FFP-491 | Cascade delete behaviour verification           | Verification  | Done   |
-| 3     | FFP-492 | Postman collection with template test flows     | Postman       | Done   |
-| 4     | FFP-493 | Project documentation update                    | Documentation | Done   |
-
-**Groupings**:
-
-- **Group 1 (Schema Cleanup)**: FFP-516 — migration + schema + backend + frontend + seed data changes. Must be first as it changes the API contract.
-- **Group 2 (Manual Verification)**: FFP-490 + FFP-491 — done together by the user against running dev environment. FFP-491 is a subset of FFP-490's checklist.
-- **Group 3 (Postman)**: FFP-492 — update/verify Postman collection after schema changes are confirmed working.
-- **Group 4 (Documentation)**: FFP-493 — final documentation pass, mark FFP-439 epic as complete.
-
-**Amended requirements**:
-
-- **FFP-516 scope**: `sessions_per_phase` column exists in DB schema, backend Zod schemas (create/update/response), list page columns, and seed data. `total_phases` exists in same places. Changes needed:
-  - DB: Migration to drop `sessions_per_phase` column. Keep `total_phases` column but make it auto-computed.
-  - Backend: Remove `sessionsPerPhase` from all Zod schemas. Remove `totalPhases` from create/update input schemas (auto-managed). Keep in response schemas.
-  - Backend handlers: Increment `totalPhases` on phase create, decrement on phase delete.
-  - Frontend: Remove "Sessions/Phase" column from list page. "Phases" column stays (reads `totalPhases`).
-  - Seed data: Remove `sessionsPerPhase` values. Keep `totalPhases` (matches actual phase count).
-  - Programme service: Remove `sessionsPerPhase` snapshot from `generateProgramme()`. Keep `totalPhases` snapshot.
-- **FFP-491 amended**: Ticket says "Verify template totalPhases and sessionsPerPhase update correctly after deletes" — after FFP-516, `sessionsPerPhase` won't exist. Amend to: verify `totalPhases` decrements correctly when phases are deleted.
-- **FFP-490 + FFP-491 overlap**: Cascade delete testing is part of the full CRUD checklist. Both sub-tasks will be verified in a single manual testing pass.
-- **Tests deferred** per sprint convention.
-
----
-
-## Up Next: Sprint 10 — Customer & User Onboarding (~18 pts)
-
-**Epic**: FFP-6 (MVP: Customer & User Onboarding)
+**Dates**: 19th March – 9th April 2026
 **Sprint Goal**: Admin CRUD for customers and programme users — backend APIs and admin UI for both, including Cognito user provisioning.
+**Epic**: FFP-6 (MVP: Customer & User Onboarding)
+**Branch**: `feature/sprint10`
 
-**Prerequisites**:
+**Execution plan**: `.claude/plans/sprint-10-execution-plan.md`
+
+**Prerequisites** (all met):
 
 - ✅ Customers and users database schema (existing)
-- ✅ POST /admin/create-customer endpoint (existing)
+- ✅ `POST /admin/create-customer` endpoint (existing)
 - ✅ Table component + pagination pattern (FFP-437)
 - ✅ Admin UI patterns (Video Library, Programme Template List)
+- ✅ ComposableForm, PageContainer, PageHeader, StatusResult components
+- ✅ Cognito user pool and admin SDK configuration
 
 ### Execution Order
 
@@ -115,6 +40,43 @@
 - tenantId derived from customer record, never from client input
 - Email and customer read-only after user creation
 - No user deletion — future story
+
+---
+
+## Completed: FFP-439 Admin Programme Template Management (Sprint 9, ~34 pts)
+
+**Dates**: 12th March – 19th March 2026
+**Sprint Goal**: Full CRUD for admin programme template hierarchy — templates, phases, sessions, exercises — with video default prescription fields and admin UI.
+
+| Phase | Key     | Summary                                    | Pts |
+| ----- | ------- | ------------------------------------------ | --- |
+| 1     | FFP-441 | Video default exercise prescription fields | 3   |
+| 1     | FFP-442 | Programme template backend APIs            | 5   |
+| 2     | FFP-443 | Phase & session backend APIs               | 5   |
+| 2     | FFP-445 | Programme template admin list page         | 5   |
+| 3     | FFP-444 | Session exercise backend APIs              | 5   |
+| 4     | FFP-446 | Template detail & hierarchy editing UI     | 8   |
+| 5     | FFP-447 | Integration verification & documentation   | 3   |
+
+### Key Deliverables
+
+- **Template CRUD**: Full hierarchy management — templates, phases, sessions, exercises with move up/down reordering
+- **Video prescription defaults**: Extended `videos` table with sets, reps, duration, rest, notes — pre-populates when adding to sessions
+- **Admin UI**: Template list page with active filter + template detail page with collapsible hierarchy editing
+- **Schema cleanup**: Dropped `sessions_per_phase`, auto-computed `total_phases` on phase create/delete
+- **Postman**: Full test flows for template hierarchy CRUD
+
+### Key Patterns & Decisions (Programme Templates)
+
+| Area                     | Decision                                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------ |
+| **Hierarchy CRUD**       | Nested accordion UI — phases → sessions → exercises, each with inline create/edit/delete/reorder |
+| **Reorder**              | Move up/down buttons (drag-and-drop deferred), `sort_order` column with swap logic               |
+| **Video as Exercise**    | No separate exercise entity — videos table extended with default prescription fields             |
+| **Prescription Pattern** | Defaults from video, overridable per session-exercise via `session_exercises` join table         |
+| **Auto-compute**         | `total_phases` incremented/decremented on phase create/delete, not user-editable                 |
+
+**Out of scope**: Drag-and-drop reordering, template duplication/cloning, template versioning, bulk import/export.
 
 ---
 
