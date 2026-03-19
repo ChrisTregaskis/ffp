@@ -7,6 +7,9 @@ import {
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
 import { handler as createCustomerHandler } from './create-customer';
+import { handler as getCustomerHandler } from './customers/get-customer';
+import { handler as listCustomersHandler } from './customers/list-customers';
+import { handler as updateCustomerHandler } from './customers/update-customer';
 import { handler as createExerciseHandler } from './programme-templates/create-exercise';
 import { handler as createPhaseHandler } from './programme-templates/create-phase';
 import { handler as createSessionHandler } from './programme-templates/create-session';
@@ -60,6 +63,8 @@ const routes: RouteRegistry = {
   GET: {
     '/assessment-templates': listTemplatesHandler,
     '/assessment-templates/{id}': getTemplateHandler,
+    '/customers': listCustomersHandler,
+    '/customers/{id}': getCustomerHandler,
     '/programme-templates': listProgrammeTemplatesHandler,
     '/programme-templates/{id}': getProgrammeTemplateHandler,
     '/sessions/{id}/exercises': listExercisesHandler,
@@ -67,6 +72,7 @@ const routes: RouteRegistry = {
   },
   PUT: {
     '/assessment-templates/{id}': updateTemplateHandler,
+    '/customers/{id}': updateCustomerHandler,
     '/programme-templates/{id}': updateProgrammeTemplateHandler,
     '/programme-templates/{id}/deactivate': deactivateProgrammeTemplateHandler,
     '/programme-templates/{id}/phases/reorder': reorderPhasesHandler,

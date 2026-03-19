@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 import { CUSTOMER_STATUSES } from '@ffp/database/constants';
 
+import { paginationInputSchema, createPaginatedResponseSchema } from './pagination.schema';
+
 export const customerStatusSchema = z.enum(CUSTOMER_STATUSES);
 
 export const customerAddressSchema = z
@@ -47,8 +49,43 @@ export const updateCustomerSchema = customerSchema
   })
   .partial();
 
+/** Query parameters for GET /admin/customers */
+export const customerListQuerySchema = paginationInputSchema.extend({
+  /** Free-text search across name and account code */
+  search: z.string().optional(),
+  /** Filter by customer status */
+  status: customerStatusSchema.optional(),
+});
+
+/** Response schema for customer list items */
+export const customerListResponseSchema = customerSchema.pick({
+  id: true,
+  name: true,
+  accountCode: true,
+  status: true,
+  createdAt: true,
+});
+
+/** Response schema for customer detail (full record) */
+export const customerDetailResponseSchema = customerSchema;
+
+/** Paginated response schema for GET /admin/customers */
+export const paginatedCustomerResponseSchema = createPaginatedResponseSchema(
+  customerListResponseSchema
+);
+
+/** Filter parameters extracted from query (excludes pagination) */
+export const customerFilterSchema = z.object({
+  search: z.string().optional(),
+  status: customerStatusSchema.optional(),
+});
+
 export type CustomerStatus = z.infer<typeof customerStatusSchema>;
 export type CustomerAddress = z.infer<typeof customerAddressSchema>;
 export type Customer = z.infer<typeof customerSchema>;
 export type InsertCustomerInput = z.infer<typeof insertCustomerSchema>;
 export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;
+export type CustomerListQuery = z.infer<typeof customerListQuerySchema>;
+export type CustomerListResponse = z.infer<typeof customerListResponseSchema>;
+export type CustomerDetailResponse = z.infer<typeof customerDetailResponseSchema>;
+export type CustomerFilterInput = z.infer<typeof customerFilterSchema>;
