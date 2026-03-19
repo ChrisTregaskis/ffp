@@ -4,7 +4,7 @@ import type { DbClient } from '@ffp/database';
 import { tenants, customers } from '@ffp/database/schema';
 import type { Customer as CustomerRecord } from '@ffp/database/schema';
 
-import { applyPagination } from '../lib/pagination';
+import { applyPagination, escapeLikePattern } from '../lib/pagination';
 import { generateRandomAlphanumeric } from '../lib/random';
 
 import type { CustomerFilterInput, UpdateCustomerInput } from '../schemas/customer.schema';
@@ -120,7 +120,7 @@ function buildCustomerFilterConditions(filters: CustomerFilterInput): (SQL | und
   const conditions: (SQL | undefined)[] = [];
 
   if (filters.search) {
-    const pattern = `%${filters.search}%`;
+    const pattern = `%${escapeLikePattern(filters.search)}%`;
     conditions.push(or(ilike(customers.name, pattern), ilike(customers.accountCode, pattern)));
   }
 

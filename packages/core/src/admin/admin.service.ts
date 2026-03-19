@@ -59,7 +59,7 @@ export async function createCustomerService(
  * List customers with pagination, search, and status filter.
  */
 export async function listCustomersService(
-  _ctx: TenantContext,
+  ctx: TenantContext,
   paginationInput: PaginationInput,
   rawFilters: { search?: string; status?: string }
 ): Promise<{ data: CustomerListResponse[]; pagination: PaginationMeta }> {
@@ -71,6 +71,14 @@ export async function listCustomersService(
     countCustomersInRepo(db, filters),
   ]);
 
+  const logger = createLogger(ctx);
+  logger.info('Customers listed', {
+    action: 'customers_listed',
+    total,
+    page: paginationInput.page,
+    filters,
+  });
+
   return {
     data: records.map((record) => customerListResponseSchema.parse(record)),
     pagination: buildPaginationMeta(paginationInput, total),
@@ -80,13 +88,22 @@ export async function listCustomersService(
 /**
  * Get a single customer by ID. Throws NotFoundError if not found.
  */
-export async function getCustomerService(customerId: string): Promise<CustomerDetailResponse> {
+export async function getCustomerService(
+  ctx: TenantContext,
+  customerId: string
+): Promise<CustomerDetailResponse> {
   const db = getDb();
   const customer = await getCustomerByIdInRepo(db, customerId);
 
   if (!customer) {
     throw new NotFoundError('Customer', customerId);
   }
+
+  const logger = createLogger(ctx);
+  logger.info('Customer retrieved', {
+    action: 'customer_retrieved',
+    customerId,
+  });
 
   return customerDetailResponseSchema.parse(customer);
 }

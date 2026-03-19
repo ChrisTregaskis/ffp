@@ -3,6 +3,7 @@ import {
   extractUserContext,
   withErrorHandling,
   ForbiddenError,
+  ValidationError,
   isUserActor,
   getCustomerService,
 } from '@ffp/core/server';
@@ -22,8 +23,8 @@ export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2Wit
   const customerId = event.pathParameters?.id;
 
   if (!customerId) {
-    throw new ForbiddenError('Customer ID is required');
+    throw new ValidationError('Customer ID is required');
   }
 
-  return await getCustomerService(customerId);
+  return await getCustomerService(context, customerId);
 });
