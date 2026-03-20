@@ -437,6 +437,10 @@ export default $config({
               $interpolate`arn:aws:s3:::${assetsBucket.name}/*`,
             ],
           },
+          {
+            actions: cognitoPermissionActions,
+            resources: [userPool.arn],
+          },
         ],
       },
       args
