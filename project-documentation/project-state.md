@@ -41,27 +41,28 @@
 - Email and customer read-only after user creation
 - No user deletion — future story
 
-### Active Story: FFP-496 — Programme User Management APIs (5 pts)
+### Active Story: FFP-497 — Programme User Management UI (5 pts)
 
 **Branch**: `feature/sprint10`
-**Goal**: Backend APIs for programme user admin management — list, get, create (with Cognito provisioning), and update. Users are associated with customers; tenantId derived from customer record.
+**Goal**: Admin UI for programme user management — list page with table, create/edit forms with customer selector, routes, and navigation. Follows CustomerListPage and CustomerEditPage patterns.
 
 **Sub-task execution order** (single branch, all sub-tasks together):
 
-| Order | Key     | Summary                                        | Status |
-| ----- | ------- | ---------------------------------------------- | ------ |
-| 1     | FFP-507 | Zod schemas for user list, get, create, update | To Do  |
-| 2     | FFP-508 | User repository: list, get, create, update     | To Do  |
-| 3     | FFP-509 | User service with Cognito provisioning         | To Do  |
-| 4     | FFP-510 | Lambda handlers and route registration         | To Do  |
+| Order | Key     | Summary                                           | Status |
+| ----- | ------- | ------------------------------------------------- | ------ |
+| 1     | FFP-511 | API client methods for user admin endpoints       | To Do  |
+| 2     | FFP-512 | TanStack Query hooks for user list/mutations      | To Do  |
+| 3     | FFP-515 | Route config and sidebar navigation               | To Do  |
+| 4     | FFP-513 | UserListPage with table, columns, and empty state | To Do  |
+| 5     | FFP-514 | User create and edit pages with customer selector | To Do  |
 
 **Amended requirements**:
 
-- **FFP-507**: `user.schema.ts` already has `userSchema`, `createUserSchema`, `userRoleSchema`. Need admin-specific schemas: list query (pagination + search + customerId filter), admin create input (email, firstName, lastName, customerId — no cognitoSub/tenantId/role from client), admin update input, list response (with customerName from join), detail response. Use `z.coerce.date()` for dates (same fix as customer schema).
-- **FFP-508**: New file `admin-user.repository.ts`. List query joins `customers` table for `customerName`. Uses `withAdminContext` for cross-tenant access (same pattern as customer admin). Search across firstName, lastName, email via ILIKE. `getUserByEmail` for duplicate check.
-- **FFP-509**: New file `admin-user.service.ts`. Create flow: validate customer exists (via customer repo) → check email uniqueness → `CognitoService.inviteUser()` (sets custom:tenantId, custom:customerId, custom:role) → DB insert → return. Rollback: `CognitoService.deleteUser()` if DB insert fails. Use `getDb()` + `withAdminContext` pattern.
-- **FFP-510**: Handlers in `packages/functions/src/admin/users/`. Routes: `GET /users`, `GET /users/{id}`, `POST /users`, `PUT /users/{id}`. POST returns 201 status code (override `withErrorHandling` default 200).
-- **Users table has RLS** — admin queries use `withAdminContext` (admin bypass policy added in FFP-495).
+- **FFP-511**: Follow `admin-customers.ts` pattern. Use `paginatedUserResponseSchema` and `userDetailResponseSchema` from `@ffp/core`. List endpoint supports search, customerId, and role filters.
+- **FFP-512**: Follow customer hooks pattern. Query key factory + list/detail/mutation hooks. Create mutation needs to handle 409 Conflict for duplicate email.
+- **FFP-515**: Moved before pages. Add `ADMIN_USER_CREATE` and `ADMIN_USER_EDIT` to `RouteKey`. Replace `ComingSoonPage` for users.
+- **FFP-513**: Follow `CustomerListPage` pattern. Columns: Name (firstName + lastName), Email, Customer, Role, Created, Actions. Default filter: `role=programme_user`. Row actions: Edit.
+- **FFP-514**: Single `UserEditPage` for create and edit. Customer selector uses `FormSelect` loaded from customer list API. Email and customer read-only in edit mode. Handle 409 Conflict inline. Optional phone and date of birth fields.
 - **Tests deferred** per sprint convention.
 
 **End-of-sprint note**: Before merging `feature/sprint10` to `main`, run manual E2E verification via Claude Code (same approach as Sprint 9 — FFP-447). Cover full CRUD flows for customers and users, cascade behaviours, and Postman collection updates.

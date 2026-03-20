@@ -17,6 +17,8 @@ export interface TableFilterConfig {
   label: string;
   /** Available filter options (excluding "All") */
   options: SelectOption[];
+  /** Custom width class for the filter dropdown @default "sm:w-40" */
+  widthClass?: string;
 }
 
 export type TableFilterValues = Record<string, string | number>;
@@ -28,6 +30,8 @@ export interface TableControlsProps<TData> {
   onSearchChange: (value: string) => void;
   /** Search placeholder text */
   searchPlaceholder?: string;
+  /** Custom width class for the search input @default "sm:w-56" */
+  searchWidthClass?: string;
   /** Filter dropdown configurations */
   filters?: TableFilterConfig[];
   /** Current filter values */
@@ -52,6 +56,7 @@ export const TableControls = <TData,>({
   search,
   onSearchChange,
   searchPlaceholder,
+  searchWidthClass,
   filters,
   filterValues,
   onFilterChange,
@@ -76,7 +81,7 @@ export const TableControls = <TData,>({
         value={search}
         onChange={onSearchChange}
         placeholder={searchPlaceholder}
-        className="w-full sm:w-56"
+        className={`w-full ${searchWidthClass ?? 'sm:w-56'}`}
       />
 
       {filtersWithAll?.map((filter) => (
@@ -89,7 +94,7 @@ export const TableControls = <TData,>({
           options={filter.options}
           ariaLabel={filter.label}
           placeholder={filter.label}
-          className="w-full sm:w-40"
+          className={`w-full ${filter.widthClass ?? 'sm:w-40'}`}
         />
       ))}
 

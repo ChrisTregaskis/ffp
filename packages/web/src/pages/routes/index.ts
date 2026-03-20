@@ -28,6 +28,8 @@ import {
   TemplateDetailPage,
 } from '@web/pages/protected/admin/template-detail';
 import { TemplateListPage } from '@web/pages/protected/admin/TemplateListPage';
+import { UserEditPage } from '@web/pages/protected/admin/user-edit';
+import { UserListPage } from '@web/pages/protected/admin/user-list';
 import { VideoEditPage } from '@web/pages/protected/admin/video-edit';
 import { VideoUploadPage } from '@web/pages/protected/admin/video-upload';
 import { VideoLibraryPage } from '@web/pages/protected/admin/VideoLibraryPage';
@@ -268,14 +270,29 @@ export const routes: RoutesConfig = {
   },
   [RouteKey.ADMIN_USERS]: {
     path: `${adminBasePath}/users`,
-    pageComponent: () =>
-      ComingSoonPage({
-        title: 'Users',
-        description: 'Manage all users across the platform',
-        icon: 'Users',
-      }),
+    pageComponent: UserListPage,
     title: 'Users',
     allowedRoles: [SYSTEM_ADMIN],
+  },
+  [RouteKey.ADMIN_USER_CREATE]: {
+    path: `${adminBasePath}/users/create`,
+    pageComponent: UserEditPage,
+    title: 'Create User',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      { label: 'Back to Users', icon: 'ArrowLeft', path: `${adminBasePath}/users` },
+    ],
+  },
+  [RouteKey.ADMIN_USER_EDIT]: {
+    path: `${adminBasePath}/users/:id`,
+    pageComponent: UserEditPage,
+    title: 'Edit User',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      { label: 'Back to Users', icon: 'ArrowLeft', path: `${adminBasePath}/users` },
+    ],
   },
   [RouteKey.ADMIN_ASSESSMENTS]: {
     path: `${adminBasePath}/assessments`,

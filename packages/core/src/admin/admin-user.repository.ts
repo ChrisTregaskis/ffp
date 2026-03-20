@@ -1,4 +1,4 @@
-import { and, eq, or, ilike, count, type Column, type SQL } from 'drizzle-orm';
+import { and, eq, or, ilike, inArray, count, type Column, type SQL } from 'drizzle-orm';
 
 import type { DbClient } from '@ffp/database';
 import type { UserRole } from '@ffp/database/constants';
@@ -70,7 +70,13 @@ function buildUserFilterConditions(filters: UserFilterInput): (SQL | undefined)[
   }
 
   if (filters.role) {
-    conditions.push(eq(users.role, filters.role));
+    const roles = filters.role.split(',').map((r) => r.trim()) as UserRole[];
+
+    if (roles.length === 1) {
+      conditions.push(eq(users.role, roles[0]));
+    } else {
+      conditions.push(inArray(users.role, roles));
+    }
   }
 
   return conditions;

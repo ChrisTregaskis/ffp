@@ -31,6 +31,15 @@ export type {
   UpdateProgrammeTemplateInput,
 } from './admin-programme-templates';
 
+export { adminUsersApi } from './admin-users';
+export type {
+  AdminCreateUserInput,
+  AdminUpdateUserInput,
+  AdminUserFilterInput,
+  PaginatedUserResponse,
+  UserDetailResponse as AdminUserDetailResponse,
+} from './admin-users';
+
 export { adminVideosApi } from './admin-videos';
 export type {
   CreateVideoInput,

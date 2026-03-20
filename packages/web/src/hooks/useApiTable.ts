@@ -117,9 +117,9 @@ export const useApiTable = (options: UseApiTableOptions = {}): UseApiTableReturn
 
   const clearAll = useCallback(() => {
     setSearch('');
-    setFilterValues(defaultFilters);
+    setFilterValues({});
     setTableState((prev) => ({ ...prev, page: 1 }));
-  }, [defaultFilters]);
+  }, []);
 
   const hasActiveControls = useMemo(
     () => search.length > 0 || Object.values(filterValues).some((v) => v !== ''),
