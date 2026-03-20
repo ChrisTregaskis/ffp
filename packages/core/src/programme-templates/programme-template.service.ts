@@ -28,10 +28,8 @@ export async function listTemplates(
 ): Promise<{ data: TemplateListResponse[]; pagination: PaginationMeta }> {
   const db = getDb();
 
-  const [records, total] = await Promise.all([
-    templateRepository.findAllTemplates(db, paginationInput, filters),
-    templateRepository.countAllTemplates(db, filters),
-  ]);
+  const records = await templateRepository.findAllTemplates(db, paginationInput, filters);
+  const total = await templateRepository.countAllTemplates(db, filters);
 
   return {
     data: records.map((record) => templateListResponseSchema.parse(record)),

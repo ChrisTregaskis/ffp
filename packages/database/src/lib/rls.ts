@@ -192,12 +192,12 @@ export const setAdminContext = async (tx: NodePgDatabase<any>): Promise<void> =>
  * });
  * ```
  */
-export const withAdminContext = async <T>(
-  db: NodePgDatabase<any>,
-  callback: (tx: NodePgDatabase<any>) => Promise<T>
+export const withAdminContext = async <TDb extends NodePgDatabase<any>, T>(
+  db: TDb,
+  callback: (tx: TDb) => Promise<T>
 ): Promise<T> => {
   return await db.transaction(async (tx) => {
     await setAdminContext(tx);
-    return await callback(tx);
+    return await callback(tx as unknown as TDb);
   });
 };
