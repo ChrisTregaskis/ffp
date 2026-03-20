@@ -41,27 +41,31 @@
 - Email and customer read-only after user creation
 - No user deletion — future story
 
-### Active Story: FFP-494 — Customer Management APIs (3 pts)
+### Active Story: FFP-495 — Customer Management UI (5 pts)
 
 **Branch**: `feature/sprint10`
-**Goal**: Add list, get, and update endpoints for customer admin management. Existing `POST /admin/create-customer` already handles creation.
+**Goal**: Admin UI for customer management — list page with table, create/edit forms, routes, and navigation. Follows TemplateListPage and VideoEditPage patterns.
 
 **Sub-task execution order** (single branch, all sub-tasks together):
 
-| Order | Key     | Summary                                | Status |
-| ----- | ------- | -------------------------------------- | ------ |
-| 1     | FFP-498 | Zod schemas for list, get, update      | To Do  |
-| 2     | FFP-499 | Customer repository: list, get, update | To Do  |
-| 3     | FFP-500 | Customer service: list, get, update    | To Do  |
-| 4     | FFP-501 | Lambda handlers and route registration | To Do  |
+| Order | Key     | Summary                                            | Status |
+| ----- | ------- | -------------------------------------------------- | ------ |
+| 1     | FFP-502 | API client methods for customer admin endpoints    | To Do  |
+| 2     | FFP-503 | TanStack Query hooks for customer list/mutations   | To Do  |
+| 3     | FFP-506 | Route config and sidebar navigation                | To Do  |
+| 4     | FFP-504 | CustomerListPage with table, columns, empty state  | To Do  |
+| 5     | FFP-505 | Customer create and edit pages with ComposableForm | To Do  |
 
 **Amended requirements**:
 
-- **FFP-498**: `customer.schema.ts` already has `customerSchema`, `updateCustomerSchema`, `customerAddressSchema`, `customerStatusSchema`. Only need to add list query schema and response schemas. Detail response extends existing `customerSchema`.
-- **FFP-499**: Ticket says extend `admin.repository.ts` — will keep customer code there since it's the existing location. No RLS needed (system_admin cross-tenant). Uses `getDb()` pattern (newer, consistent with videos/templates).
-- **FFP-500**: Follow newer pattern — `getDb()` directly in service, not `RequestContext`. Thin orchestration with structured logging.
-- **FFP-501**: Handlers in `packages/functions/src/admin/customers/`. Routes: `GET /customers`, `GET /customers/{id}`, `PUT /customers/{id}`.
+- **FFP-502**: Backend returns data directly (not wrapped). Use `paginatedCustomerResponseSchema` and `customerDetailResponseSchema` from `@ffp/core`. Create endpoint uses existing `POST /admin/create-customer` path.
+- **FFP-503**: Follow `useAdminTemplatesQuery` + `useTemplateMutations` patterns. Query key factory + list/detail/mutation hooks.
+- **FFP-506**: Moved before pages — add `ADMIN_CUSTOMER_CREATE` and `ADMIN_CUSTOMER_EDIT` to `RouteKey`. Replace `ComingSoonPage` for customers.
+- **FFP-504**: Follow `TemplateListPage` pattern. Status filter (active/suspended/inactive), search by name/account code. Row actions: Edit + status toggle.
+- **FFP-505**: Single `CustomerEditPage` for create (no `:id`) and edit (with `:id`). Address fields: line1, line2, city, county, postcode, country. Status only in edit mode.
 - **Tests deferred** per sprint convention.
+
+**End-of-sprint note**: Before merging `feature/sprint10` to `main`, run manual E2E verification via Claude Code (same approach as Sprint 9 — FFP-447). Cover full CRUD flows for customers and users, cascade behaviours, and Postman collection updates.
 
 ---
 

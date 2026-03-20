@@ -19,6 +19,8 @@ import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsP
 import { TableComponentsPage } from '@web/pages/dev/TableComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
+import { CustomerEditPage } from '@web/pages/protected/admin/customer-edit';
+import { CustomerListPage } from '@web/pages/protected/admin/customer-list';
 import { TemplateCreatePage } from '@web/pages/protected/admin/template-create';
 import {
   PhaseDetailPage,
@@ -240,14 +242,29 @@ export const routes: RoutesConfig = {
   // System Admin Routes (placeholders)
   [RouteKey.ADMIN_CUSTOMERS]: {
     path: `${adminBasePath}/customers`,
-    pageComponent: () =>
-      ComingSoonPage({
-        title: 'Customers',
-        description: 'Manage customer organisations',
-        icon: 'Building',
-      }),
+    pageComponent: CustomerListPage,
     title: 'Customers',
     allowedRoles: [SYSTEM_ADMIN],
+  },
+  [RouteKey.ADMIN_CUSTOMER_CREATE]: {
+    path: `${adminBasePath}/customers/create`,
+    pageComponent: CustomerEditPage,
+    title: 'Create Customer',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      { label: 'Back to Customers', icon: 'ArrowLeft', path: `${adminBasePath}/customers` },
+    ],
+  },
+  [RouteKey.ADMIN_CUSTOMER_EDIT]: {
+    path: `${adminBasePath}/customers/:id`,
+    pageComponent: CustomerEditPage,
+    title: 'Edit Customer',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      { label: 'Back to Customers', icon: 'ArrowLeft', path: `${adminBasePath}/customers` },
+    ],
   },
   [RouteKey.ADMIN_USERS]: {
     path: `${adminBasePath}/users`,

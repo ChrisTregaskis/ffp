@@ -7,6 +7,12 @@
  * **Tables with RLS policies:**
  * - tenants, customers, users, user_assessments, user_assessment_answers, programme_phases
  *
+ * **Admin bypass policy:**
+ * - customers and users tables have an additional permissive policy that grants
+ *   full access when `app.is_admin = 'true'` is set. This allows system_admin
+ *   queries to operate cross-tenant without disabling RLS.
+ *   Use `setAdminContext(tx)` from `@ffp/database` to activate.
+ *
  * **Tables intentionally without RLS (for MVP):**
  * - process_jobs: Job processor runs with BYPASSRLS to claim jobs across tenants.
  *   RLS will be added when user-facing job queries are implemented (see process-jobs.ts).
@@ -50,7 +56,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
 
   const tables = rlsCheck.rows as Array<{ tablename: string; rowsecurity: boolean }>;
 
-  // Check if all tables have RLS enabled (6 tables now)
+  // Check if all tables have RLS enabled (6 tables)
   const allTablesHaveRLS = tables.length === 6 && tables.every((t) => t.rowsecurity === true);
 
   if (allTablesHaveRLS) {
@@ -134,9 +140,21 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     `);
 
     await tx.execute(sql`
+      DROP POLICY IF EXISTS customer_admin_bypass ON customers;
+    `);
+
+    // Tenant isolation: normal users see only their tenant's customers
+    await tx.execute(sql`
       CREATE POLICY customer_isolation ON customers
         FOR ALL
         USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+    `);
+
+    // Admin bypass: system_admin queries set app.is_admin = 'true' for cross-tenant access
+    await tx.execute(sql`
+      CREATE POLICY customer_admin_bypass ON customers
+        FOR ALL
+        USING (current_setting('app.is_admin', true) = 'true');
     `);
 
     // ============================================================================
@@ -160,9 +178,21 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     `);
 
     await tx.execute(sql`
+      DROP POLICY IF EXISTS user_admin_bypass ON users;
+    `);
+
+    // Tenant isolation: normal users see only their tenant's users
+    await tx.execute(sql`
       CREATE POLICY user_isolation ON users
         FOR ALL
         USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+    `);
+
+    // Admin bypass: system_admin queries set app.is_admin = 'true' for cross-tenant access
+    await tx.execute(sql`
+      CREATE POLICY user_admin_bypass ON users
+        FOR ALL
+        USING (current_setting('app.is_admin', true) = 'true');
     `);
 
     // ============================================================================

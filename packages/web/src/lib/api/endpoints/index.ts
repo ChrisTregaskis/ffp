@@ -1,3 +1,12 @@
+export { adminCustomersApi } from './admin-customers';
+export type {
+  AdminCustomerFilterInput,
+  CreateCustomerInput,
+  CustomerDetailResponse,
+  PaginatedCustomerResponse,
+  UpdateCustomerInput,
+} from './admin-customers';
+
 export { adminProgrammeTemplatesApi } from './admin-programme-templates';
 export { adminExercisesApi, adminPhasesApi, adminSessionsApi } from './admin-template-hierarchy';
 export type {

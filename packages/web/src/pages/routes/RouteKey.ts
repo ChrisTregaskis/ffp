@@ -41,6 +41,10 @@ export enum RouteKey {
   ADMIN_ASSESSMENTS = 'admin-assessments',
   /** Admin session templates management page */
   ADMIN_TEMPLATES = 'admin-templates',
+  /** Admin customer create page */
+  ADMIN_CUSTOMER_CREATE = 'admin-customer-create',
+  /** Admin customer edit page */
+  ADMIN_CUSTOMER_EDIT = 'admin-customer-edit',
   /** Admin video library management page */
   ADMIN_VIDEOS = 'admin-videos',
   /** Admin programme template create page */
