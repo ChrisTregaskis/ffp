@@ -24,8 +24,8 @@ export const customerSchema = z.object({
   accountCode: z.string().min(1).max(50),
   address: customerAddressSchema,
   status: customerStatusSchema,
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 /**

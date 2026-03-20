@@ -149,3 +149,55 @@ export const withRLS = async <T>(
     return await callback(tx);
   });
 };
+
+/**
+ * Set admin context to bypass tenant-scoped RLS policies
+ *
+ * Sets `app.is_admin = 'true'` which activates the `admin_bypass` permissive
+ * policies on customers and users tables. This allows system_admin queries
+ * to operate cross-tenant without disabling RLS entirely.
+ *
+ * Must be called within a transaction. The setting is automatically cleared
+ * when the transaction ends.
+ *
+ * @param tx - Drizzle transaction instance
+ *
+ * @example
+ * ```typescript
+ * const customers = await db.transaction(async (tx) => {
+ *   await setAdminContext(tx);
+ *   return await tx.select().from(customers);
+ * });
+ * ```
+ */
+export const setAdminContext = async (tx: NodePgDatabase<any>): Promise<void> => {
+  await tx.execute(sql.raw(`SET LOCAL app.is_admin = 'true'`));
+};
+
+/**
+ * Execute a callback within a transaction with admin bypass context
+ *
+ * Convenience wrapper that sets `app.is_admin = 'true'` and executes
+ * the callback. All queries within the callback will bypass tenant
+ * isolation on tables with admin_bypass policies (customers, users).
+ *
+ * @param db - Drizzle database instance
+ * @param callback - Function to execute within admin context
+ * @returns Result of callback function
+ *
+ * @example
+ * ```typescript
+ * const allCustomers = await withAdminContext(db, async (tx) => {
+ *   return await tx.select().from(customers);
+ * });
+ * ```
+ */
+export const withAdminContext = async <T>(
+  db: NodePgDatabase<any>,
+  callback: (tx: NodePgDatabase<any>) => Promise<T>
+): Promise<T> => {
+  return await db.transaction(async (tx) => {
+    await setAdminContext(tx);
+    return await callback(tx);
+  });
+};

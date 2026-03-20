@@ -1,4 +1,4 @@
-import { getDb } from '@ffp/database';
+import { getDb, withAdminContext, type DbClient } from '@ffp/database';
 
 import { NotFoundError } from '../lib/errors';
 import { createLogger } from '../lib/logger';
@@ -57,6 +57,7 @@ export async function createCustomerService(
 
 /**
  * List customers with pagination, search, and status filter.
+ * Uses admin context to bypass tenant RLS for cross-tenant visibility.
  */
 export async function listCustomersService(
   ctx: TenantContext,
@@ -66,10 +67,15 @@ export async function listCustomersService(
   const filters = customerFilterSchema.parse(rawFilters);
   const db = getDb();
 
-  const [records, total] = await Promise.all([
-    listCustomersInRepo(db, paginationInput, filters),
-    countCustomersInRepo(db, filters),
-  ]);
+  const { records, total } = await withAdminContext(db, async (tx) => {
+    const dbTx = tx as unknown as DbClient;
+    const [records, total] = await Promise.all([
+      listCustomersInRepo(dbTx, paginationInput, filters),
+      countCustomersInRepo(dbTx, filters),
+    ]);
+
+    return { records, total };
+  });
 
   const logger = createLogger(ctx);
   logger.info('Customers listed', {
@@ -87,13 +93,17 @@ export async function listCustomersService(
 
 /**
  * Get a single customer by ID. Throws NotFoundError if not found.
+ * Uses admin context to bypass tenant RLS for cross-tenant visibility.
  */
 export async function getCustomerService(
   ctx: TenantContext,
   customerId: string
 ): Promise<CustomerDetailResponse> {
   const db = getDb();
-  const customer = await getCustomerByIdInRepo(db, customerId);
+
+  const customer = await withAdminContext(db, async (tx) => {
+    return await getCustomerByIdInRepo(tx as unknown as DbClient, customerId);
+  });
 
   if (!customer) {
     throw new NotFoundError('Customer', customerId);
@@ -110,6 +120,7 @@ export async function getCustomerService(
 
 /**
  * Update a customer record. Throws NotFoundError if not found.
+ * Uses admin context to bypass tenant RLS for cross-tenant visibility.
  */
 export async function updateCustomerService(
   ctx: TenantContext,
@@ -119,7 +130,9 @@ export async function updateCustomerService(
   const validated = updateCustomerSchema.parse(input);
   const db = getDb();
 
-  const updated = await updateCustomerInRepo(db, customerId, validated);
+  const updated = await withAdminContext(db, async (tx) => {
+    return await updateCustomerInRepo(tx as unknown as DbClient, customerId, validated);
+  });
 
   if (!updated) {
     throw new NotFoundError('Customer', customerId);
