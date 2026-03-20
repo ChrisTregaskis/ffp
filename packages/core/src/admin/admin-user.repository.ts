@@ -2,8 +2,10 @@ import { and, eq, or, ilike, count, type Column, type SQL } from 'drizzle-orm';
 
 import type { DbClient } from '@ffp/database';
 import type { UserRole } from '@ffp/database/constants';
-import { users, customers } from '@ffp/database/schema';
+import { users, customers, type NewUser } from '@ffp/database/schema';
 
+import { formatDateOnly } from '../lib/date';
+import { InternalServerError } from '../lib/errors';
 import { applyPagination, escapeLikePattern } from '../lib/pagination';
 
 import type { PaginationInput } from '../schemas/pagination.schema';
@@ -65,6 +67,10 @@ function buildUserFilterConditions(filters: UserFilterInput): (SQL | undefined)[
 
   if (filters.customerId) {
     conditions.push(eq(users.customerId, filters.customerId));
+  }
+
+  if (filters.role) {
+    conditions.push(eq(users.role, filters.role));
   }
 
   return conditions;
@@ -191,7 +197,7 @@ export async function createUser(
       role: data.role,
       customerId: data.customerId,
       phone: data.phone ?? null,
-      dateOfBirth: data.dateOfBirth ? data.dateOfBirth.toISOString().split('T')[0] : null,
+      dateOfBirth: data.dateOfBirth ? formatDateOnly(data.dateOfBirth) : null,
     })
     .returning();
 
@@ -199,7 +205,7 @@ export async function createUser(
   const result = await getUserById(db, inserted.id);
 
   if (!result) {
-    throw new Error(`Failed to fetch newly created user ${inserted.id}`);
+    throw new InternalServerError('Failed to fetch newly created user');
   }
 
   return result;
@@ -213,7 +219,7 @@ export async function updateUser(
   userId: string,
   data: AdminUpdateUserInput
 ): Promise<UserWithCustomerName | null> {
-  const setData: Record<string, unknown> = { updatedAt: new Date() };
+  const setData: Partial<NewUser> = { updatedAt: new Date() };
 
   if (data.firstName !== undefined) {
     setData.firstName = data.firstName;
@@ -228,7 +234,7 @@ export async function updateUser(
   }
 
   if (data.dateOfBirth !== undefined) {
-    setData.dateOfBirth = data.dateOfBirth ? data.dateOfBirth.toISOString().split('T')[0] : null;
+    setData.dateOfBirth = data.dateOfBirth ? formatDateOnly(data.dateOfBirth) : null;
   }
 
   const records = await db.update(users).set(setData).where(eq(users.id, userId)).returning();

@@ -123,48 +123,48 @@ export async function findTemplateHierarchy(
   db: DbQueryClient,
   templateId: string
 ): Promise<{ phases: TemplatePhaseWithSessions[] }> {
-  // Fetch all hierarchy levels sequentially — no RLS needed
-  const phaseRows = await db
-    .select()
-    .from(templatePhases)
-    .where(eq(templatePhases.programmeTemplateId, templateId))
-    .orderBy(templatePhases.phaseNumber);
-
-  const sessionRows = await db
-    .select()
-    .from(templateSessions)
-    .where(
-      inArray(
-        templateSessions.templatePhaseId,
-        db
-          .select({ id: templatePhases.id })
-          .from(templatePhases)
-          .where(eq(templatePhases.programmeTemplateId, templateId))
+  // Fetch all hierarchy levels in parallel — independent queries, no shared transaction
+  const [phaseRows, sessionRows, exerciseRows] = await Promise.all([
+    db
+      .select()
+      .from(templatePhases)
+      .where(eq(templatePhases.programmeTemplateId, templateId))
+      .orderBy(templatePhases.phaseNumber),
+    db
+      .select()
+      .from(templateSessions)
+      .where(
+        inArray(
+          templateSessions.templatePhaseId,
+          db
+            .select({ id: templatePhases.id })
+            .from(templatePhases)
+            .where(eq(templatePhases.programmeTemplateId, templateId))
+        )
       )
-    )
-    .orderBy(templateSessions.sessionNumber);
-
-  const exerciseRows = await db
-    .select()
-    .from(sessionExercises)
-    .where(
-      inArray(
-        sessionExercises.templateSessionId,
-        db
-          .select({ id: templateSessions.id })
-          .from(templateSessions)
-          .where(
-            inArray(
-              templateSessions.templatePhaseId,
-              db
-                .select({ id: templatePhases.id })
-                .from(templatePhases)
-                .where(eq(templatePhases.programmeTemplateId, templateId))
+      .orderBy(templateSessions.sessionNumber),
+    db
+      .select()
+      .from(sessionExercises)
+      .where(
+        inArray(
+          sessionExercises.templateSessionId,
+          db
+            .select({ id: templateSessions.id })
+            .from(templateSessions)
+            .where(
+              inArray(
+                templateSessions.templatePhaseId,
+                db
+                  .select({ id: templatePhases.id })
+                  .from(templatePhases)
+                  .where(eq(templatePhases.programmeTemplateId, templateId))
+              )
             )
-          )
+        )
       )
-    )
-    .orderBy(sessionExercises.orderIndex);
+      .orderBy(sessionExercises.orderIndex),
+  ]);
 
   // Build exercise lookup: sessionId → exercises[]
   const exercisesBySession = new Map<string, typeof exerciseRows>();

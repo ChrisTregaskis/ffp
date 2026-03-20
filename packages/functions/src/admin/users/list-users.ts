@@ -32,6 +32,7 @@ export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2Wit
   const rawFilters = {
     search: params.search ?? undefined,
     customerId: params.customerId ?? undefined,
+    role: params.role ?? undefined,
   };
 
   return await listUsersService(context, paginationInput, rawFilters);

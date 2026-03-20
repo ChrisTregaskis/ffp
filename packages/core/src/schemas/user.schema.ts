@@ -118,12 +118,15 @@ export const userListQuerySchema = paginationInputSchema.extend({
   search: z.string().optional(),
   /** Filter by customer ID */
   customerId: z.string().optional(),
+  /** Filter by user role */
+  role: userRoleSchema.optional(),
 });
 
 /** Filter parameters extracted from query (excludes pagination) */
 export const userFilterSchema = z.object({
   search: z.string().optional(),
   customerId: z.string().optional(),
+  role: userRoleSchema.optional(),
 });
 
 /** Response schema for user list items — includes customerName from join */
