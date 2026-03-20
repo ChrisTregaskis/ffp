@@ -1,4 +1,4 @@
-import { getDb, withAdminContext, type DbClient } from '@ffp/database';
+import { getDb, withAdminContext } from '@ffp/database';
 
 import { NotFoundError } from '../lib/errors';
 import { createLogger } from '../lib/logger';
@@ -68,11 +68,8 @@ export async function listCustomersService(
   const db = getDb();
 
   const { records, total } = await withAdminContext(db, async (tx) => {
-    const dbTx = tx as unknown as DbClient;
-    const [records, total] = await Promise.all([
-      listCustomersInRepo(dbTx, paginationInput, filters),
-      countCustomersInRepo(dbTx, filters),
-    ]);
+    const records = await listCustomersInRepo(tx, paginationInput, filters);
+    const total = await countCustomersInRepo(tx, filters);
 
     return { records, total };
   });
@@ -102,7 +99,7 @@ export async function getCustomerService(
   const db = getDb();
 
   const customer = await withAdminContext(db, async (tx) => {
-    return await getCustomerByIdInRepo(tx as unknown as DbClient, customerId);
+    return await getCustomerByIdInRepo(tx, customerId);
   });
 
   if (!customer) {
@@ -131,7 +128,7 @@ export async function updateCustomerService(
   const db = getDb();
 
   const updated = await withAdminContext(db, async (tx) => {
-    return await updateCustomerInRepo(tx as unknown as DbClient, customerId, validated);
+    return await updateCustomerInRepo(tx, customerId, validated);
   });
 
   if (!updated) {

@@ -123,7 +123,7 @@ export async function findTemplateHierarchy(
   db: DbQueryClient,
   templateId: string
 ): Promise<{ phases: TemplatePhaseWithSessions[] }> {
-  // Fetch all levels in parallel — no RLS needed
+  // Fetch all hierarchy levels in parallel — independent queries, no shared transaction
   const [phaseRows, sessionRows, exerciseRows] = await Promise.all([
     db
       .select()
@@ -136,7 +136,6 @@ export async function findTemplateHierarchy(
       .where(
         inArray(
           templateSessions.templatePhaseId,
-          // Subquery: all phase IDs for this template
           db
             .select({ id: templatePhases.id })
             .from(templatePhases)

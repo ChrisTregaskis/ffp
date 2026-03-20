@@ -34,6 +34,10 @@ import { handler as duplicateTemplateHandler } from './templates/duplicate-templ
 import { handler as getTemplateHandler } from './templates/get-template';
 import { handler as listTemplatesHandler } from './templates/list-templates';
 import { handler as updateTemplateHandler } from './templates/update-template';
+import { handler as createUserHandler } from './users/create-user';
+import { handler as getUserHandler } from './users/get-user';
+import { handler as listUsersHandler } from './users/list-users';
+import { handler as updateUserHandler } from './users/update-user';
 import { handler as createVideoHandler } from './videos/create';
 import { handler as getUploadUrlHandler } from './videos/get-upload-url';
 import { handler as listVideosHandler } from './videos/list';
@@ -57,6 +61,7 @@ const routes: RouteRegistry = {
     '/programme-templates/{id}/phases': createPhaseHandler,
     '/phases/{id}/sessions': createSessionHandler,
     '/sessions/{id}/exercises': createExerciseHandler,
+    '/users': createUserHandler,
     '/videos': createVideoHandler,
     '/videos/upload-url': getUploadUrlHandler,
   },
@@ -68,11 +73,14 @@ const routes: RouteRegistry = {
     '/programme-templates': listProgrammeTemplatesHandler,
     '/programme-templates/{id}': getProgrammeTemplateHandler,
     '/sessions/{id}/exercises': listExercisesHandler,
+    '/users': listUsersHandler,
+    '/users/{id}': getUserHandler,
     '/videos': listVideosHandler,
   },
   PUT: {
     '/assessment-templates/{id}': updateTemplateHandler,
     '/customers/{id}': updateCustomerHandler,
+    '/users/{id}': updateUserHandler,
     '/programme-templates/{id}': updateProgrammeTemplateHandler,
     '/programme-templates/{id}/deactivate': deactivateProgrammeTemplateHandler,
     '/programme-templates/{id}/phases/reorder': reorderPhasesHandler,
