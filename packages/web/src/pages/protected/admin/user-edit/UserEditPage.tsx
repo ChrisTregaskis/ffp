@@ -34,6 +34,7 @@ export const UserEditPage: React.FC = () => {
         firstName: '',
         lastName: '',
         customerId: '',
+        customerDisplay: '',
         phone: '',
         dateOfBirth: '',
       };
@@ -43,7 +44,8 @@ export const UserEditPage: React.FC = () => {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      customerId: user.customerName ?? '',
+      customerId: user.customerId ?? '',
+      customerDisplay: user.customerName ?? '',
       phone: user.phone ?? '',
       dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
     };
@@ -208,7 +210,6 @@ export const UserEditPage: React.FC = () => {
           <ComposableForm<UserFormValues> onSubmit={handleFormSubmit} defaultValues={defaultValues}>
             <UserFormFields
               isEditMode={isEditMode}
-              customerDisplayName={user?.customerName ?? undefined}
               onCancel={handleNavigateBack}
               isSubmitting={isPending}
               errorMessage={submitError}

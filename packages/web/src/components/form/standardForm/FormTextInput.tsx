@@ -17,6 +17,8 @@ export interface FormTextInputProps<TFieldValues extends FieldValues> {
   register: UseFormRegister<TFieldValues>;
   errors: FieldErrors<TFieldValues>;
   isRequired?: boolean;
+  /** Disables the input (read-only appearance with reduced opacity) */
+  disabled?: boolean;
 }
 
 /**
@@ -40,6 +42,7 @@ export const FormTextInput = <TFieldValues extends FieldValues>({
   register,
   errors,
   isRequired,
+  disabled = false,
 }: FormTextInputProps<TFieldValues>): JSX.Element => {
   const [showPassword, setShowPassword] = useState(false);
   const error = errors[name]?.message as string | undefined;
@@ -49,16 +52,19 @@ export const FormTextInput = <TFieldValues extends FieldValues>({
   const isPassword = type === 'password';
   const inputType = isPassword && showPassword ? 'text' : type;
 
+  const disabledClassName = disabled ? 'cursor-not-allowed opacity-60 bg-muted' : '';
+
   const inputElement = (
     <input
       id={inputId}
       type={inputType}
       placeholder={placeholder}
+      disabled={disabled}
       aria-required={isRequired}
       aria-invalid={!!error}
       aria-describedby={error ? errorId : undefined}
-      {...register(name)}
-      className={`${getInputClassName(!!error)} w-full px-3 py-2 ${isPassword ? 'pr-10' : ''}`}
+      {...register(name, { disabled })}
+      className={`${getInputClassName(!!error)} w-full px-3 py-2 ${isPassword ? 'pr-10' : ''} ${disabledClassName}`}
     />
   );
 

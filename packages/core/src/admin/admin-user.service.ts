@@ -164,7 +164,11 @@ export async function createUserService(
       throw new InternalServerError('Unable to create user — service configuration error');
     }
 
-    throw cognitoError;
+    logger.error('Unexpected Cognito error during user creation', {
+      action: 'cognito_unexpected_error',
+      error: cognitoError instanceof Error ? cognitoError.message : String(cognitoError),
+    });
+    throw new InternalServerError('Unable to create user — an unexpected error occurred');
   }
 
   logger.info('Cognito user created', {

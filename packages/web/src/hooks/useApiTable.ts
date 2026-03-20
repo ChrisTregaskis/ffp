@@ -65,7 +65,7 @@ export const useApiTable = (options: UseApiTableOptions = {}): UseApiTableReturn
   // Debounced versions of all state
   const [debouncedState, setDebouncedState] = useState<TableState>(tableState);
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [debouncedFilters, setDebouncedFilters] = useState<TableFilterValues>({});
+  const [debouncedFilters, setDebouncedFilters] = useState<TableFilterValues>(defaultFilters);
 
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
