@@ -40,7 +40,10 @@ export async function createCustomerService(
     customerName: input.customerName,
   });
 
-  const result = await createCustomerInRepo(ctx.db, input.customerName);
+  const db = getDb();
+  const result = await withAdminContext(db, async (tx) => {
+    return await createCustomerInRepo(tx, input.customerName);
+  });
 
   logger.info('Customer created successfully', {
     tenantId: result.tenantId,

@@ -102,6 +102,10 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
       DROP POLICY IF EXISTS tenant_write_isolation ON tenants;
     `);
 
+    await tx.execute(sql`
+      DROP POLICY IF EXISTS tenant_admin_bypass ON tenants;
+    `);
+
     // Read policy: own tenant + platform tenant (for default flow lookup)
     await tx.execute(sql`
       CREATE POLICY tenant_read_isolation ON tenants
@@ -117,6 +121,13 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
       CREATE POLICY tenant_write_isolation ON tenants
         FOR ALL
         USING (id = current_setting('app.tenant_id', true)::uuid);
+    `);
+
+    // Admin bypass: system_admin queries set app.is_admin = 'true' for cross-tenant access
+    await tx.execute(sql`
+      CREATE POLICY tenant_admin_bypass ON tenants
+        FOR ALL
+        USING (current_setting('app.is_admin', true) = 'true');
     `);
 
     // ============================================================================

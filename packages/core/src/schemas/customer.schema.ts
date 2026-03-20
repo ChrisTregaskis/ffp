@@ -15,6 +15,7 @@ export const customerAddressSchema = z
     postcode: z.string().max(10).optional(),
     country: z.string().max(100).optional(),
   })
+  .nullable()
   .optional();
 
 export const customerSchema = z.object({

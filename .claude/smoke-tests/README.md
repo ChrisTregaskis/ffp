@@ -18,7 +18,20 @@ Manual E2E smoke tests executed via Claude Code + Puppeteer MCP. These serve as 
 
 ## Running a Smoke Test
 
-Pass the relevant guide as a prompt to Claude Code:
+Use the `/smoke-test` command with the sprint number:
+
+```
+/smoke-test 10
+```
+
+This will:
+
+1. Read the sprint context from project state and execution plan
+2. Generate a test guide in `.claude/smoke-tests/`
+3. Launch Puppeteer and ask you to log in
+4. Execute all test journeys and report results
+
+For running an existing test guide directly:
 
 ```
 Run the smoke test in .claude/smoke-tests/sprint-9-programme-templates.md
@@ -41,6 +54,7 @@ Run all smoke tests in .claude/smoke-tests/ sequentially
 
 ## Test Guides
 
-| Guide                             | Sprint   | Coverage                                                                                                  |
-| --------------------------------- | -------- | --------------------------------------------------------------------------------------------------------- |
-| `sprint-9-programme-templates.md` | Sprint 9 | Template CRUD, phase/session/exercise hierarchy, video selection, cascade deletes, seed data verification |
+| Guide                                   | Sprint    | Coverage                                                                                                  |
+| --------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------- |
+| `sprint-9-programme-templates.md`       | Sprint 9  | Template CRUD, phase/session/exercise hierarchy, video selection, cascade deletes, seed data verification |
+| `sprint-10-customer-user-management.md` | Sprint 10 | Customer CRUD, user CRUD with Cognito provisioning, customer selector, role filtering, navigation         |
