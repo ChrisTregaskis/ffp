@@ -81,14 +81,16 @@ export const setRLSContext = async (
   // We use sql.raw() with multiple layers of defence:
   // 1. UUID format validation (only allows hexadecimal digits and hyphens)
   // 2. SQL escaping (escape single quotes using PostgreSQL standard)
+  // SET LOCAL scopes to the current transaction — prevents GUC leaking across
+  // requests in connection-pooled environments (Lambda with pg.Pool).
   const escapedOrganisationId = escapeLiteral(organisationId);
-  await db.execute(sql.raw(`SET app.organisation_id = '${escapedOrganisationId}'`));
+  await db.execute(sql.raw(`SET LOCAL app.organisation_id = '${escapedOrganisationId}'`));
 
   // Optionally set user_id context variable
   if (userId) {
     validateUUID(userId, 'userId');
     const escapedUserId = escapeLiteral(userId);
-    await db.execute(sql.raw(`SET app.user_id = '${escapedUserId}'`));
+    await db.execute(sql.raw(`SET LOCAL app.user_id = '${escapedUserId}'`));
   }
 };
 

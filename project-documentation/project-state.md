@@ -195,8 +195,9 @@
 
 ### Backlog Items
 
-- `programmes` table RLS policy gap — table has `tenant_id` but not in `apply-rls.ts` (tracked for FFP-4)
+- `programmes` table RLS policy gap — table has `organisation_id` but not in `apply-rls.ts` (tracked for FFP-4)
 - Bump `tsconfig.base.json` target/lib from ES2022 → ES2024 — Lambda runtime is nodejs24.x, enables `Object.groupBy`, `Map.groupBy` etc.
+- Consolidate duplicate RLS utilities — `setRLSContext`/`withRLS` exist in both `@ffp/database` and `@ffp/core`. Should have one canonical location to prevent divergence (e.g., the SET vs SET LOCAL inconsistency caught in Sprint 10.5 review)
 
 ---
 
