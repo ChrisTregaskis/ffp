@@ -1,6 +1,6 @@
 import {
   createSystemContext,
-  SYSTEM_PLACEHOLDER_TENANT_ID,
+  SYSTEM_PLACEHOLDER_ORGANISATION_ID,
   type APIGatewayProxyEventV2WithJWT,
 } from '@ffp/core/server';
 
@@ -18,7 +18,7 @@ import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
 const ROUTER_CONTEXT = createSystemContext({
   systemId: 'assessments-router',
-  tenantId: SYSTEM_PLACEHOLDER_TENANT_ID,
+  organisationId: SYSTEM_PLACEHOLDER_ORGANISATION_ID,
 });
 
 /**

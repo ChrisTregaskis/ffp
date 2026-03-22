@@ -11,7 +11,7 @@ import {
 /**
  * Lambda handler for GET /admin/users/{id}
  *
- * Returns a single programme user by ID with customer details. Admin role required.
+ * Returns a single programme user by ID with location details. Admin role required.
  */
 export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2WithJWT) => {
   const context = extractUserContext(event);

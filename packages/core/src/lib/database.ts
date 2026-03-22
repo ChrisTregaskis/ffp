@@ -102,7 +102,7 @@ export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
  * Sets the Row-Level Security (RLS) context for the current transaction
  *
  * This function sets PostgreSQL session variables that are used by RLS policies
- * to enforce multi-tenant data isolation.
+ * to enforce multi-organisation data isolation.
  *
  * Note: PostgreSQL's SET command doesn't support parameterised queries ($1, $2, etc.)
  * We use sql.raw() with multiple layers of defence:
@@ -110,18 +110,18 @@ export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
  * 2. SQL escaping (escape single quotes using PostgreSQL standard)
  *
  * @param tx - Database transaction instance
- * @param tenantId - UUID of the tenant
+ * @param organisationId - UUID of the organisation
  * @param userId - Optional UUID of the user
  *
  */
 export async function setRLSContext(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-  tenantId: string,
+  organisationId: string,
   userId?: string
 ): Promise<void> {
-  validateUUID(tenantId, 'tenantId');
-  const escapedTenantId = escapeLiteral(tenantId);
-  await tx.execute(sql.raw(`SET LOCAL app.tenant_id = '${escapedTenantId}'`));
+  validateUUID(organisationId, 'organisationId');
+  const escapedOrganisationId = escapeLiteral(organisationId);
+  await tx.execute(sql.raw(`SET LOCAL app.organisation_id = '${escapedOrganisationId}'`));
 
   if (userId) {
     validateUUID(userId, 'userId');
@@ -134,20 +134,20 @@ export async function setRLSContext(
  * Transaction wrapper that automatically sets RLS context
  *
  * This is the recommended way to perform database operations in the application.
- * It ensures that all queries within the transaction are scoped to the tenant.
+ * It ensures that all queries within the transaction are scoped to the organisation.
  *
- * @param tenantId - UUID of the tenant
+ * @param organisationId - UUID of the organisation
  * @param userId - Optional UUID of the user
  * @param callback - Async function to execute within the transaction
  * @returns Result of the callback function
  */
 export async function withRLS<T>(
-  tenantId: string,
+  organisationId: string,
   userId: string | undefined,
   callback: (tx: Parameters<Parameters<typeof db.transaction>[0]>[0]) => Promise<T>
 ): Promise<T> {
   return await db.transaction(async (tx) => {
-    await setRLSContext(tx, tenantId, userId);
+    await setRLSContext(tx, organisationId, userId);
 
     return await callback(tx);
   });

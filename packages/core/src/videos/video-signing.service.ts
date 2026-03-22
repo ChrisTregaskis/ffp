@@ -7,7 +7,7 @@ import { createLogger } from '../lib/logger';
 
 import * as videoRepository from './video.repository';
 
-import type { TenantContext } from '../lib/context';
+import type { OrganisationContext } from '../lib/context';
 
 /** Configuration for CloudFront signed URL generation */
 export interface VideoSigningConfig {
@@ -95,7 +95,7 @@ export function generateSignedVideoUrl(s3Key: string): {
  * Logs structured audit events for video access (FFP-299).
  */
 export async function getSignedVideoUrl(
-  context: TenantContext,
+  context: OrganisationContext,
   videoId: string
 ): Promise<SignedVideoUrlResponse> {
   const logger = createLogger(context);

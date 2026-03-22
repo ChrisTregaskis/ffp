@@ -4,8 +4,8 @@
  * This module exports Node.js-specific functionality that should ONLY be used
  * in server-side code (@ffp/functions, not @ffp/web):
  * - Database connections and utilities
- * - Tenant context extraction utilities
- * - Request context utilities (unified db + tenant context)
+ * - Organisation context extraction utilities
+ * - Request context utilities (unified db + organisation context)
  * - Error classes for API responses
  * - Lambda function wrappers
  * - AWS Cognito service utilities
@@ -14,7 +14,7 @@
  * - Admin domain (server-only operations)
  * - Auth domain (authentication and authorization)
  *
- * Import using: import { db, withRLS, ValidationError, withErrorHandling, cognito, extractUserContext, createRequestContext, createLogger, generateRandomAlphanumeric, createCustomerService } from '@ffp/core/server';
+ * Import using: import { db, withRLS, ValidationError, withErrorHandling, cognito, extractUserContext, createRequestContext, createLogger, generateRandomAlphanumeric, createLocationService } from '@ffp/core/server';
  */
 
 export * from './lib/constants';

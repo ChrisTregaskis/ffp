@@ -1,6 +1,6 @@
 import {
   createSystemContext,
-  SYSTEM_PLACEHOLDER_TENANT_ID,
+  SYSTEM_PLACEHOLDER_ORGANISATION_ID,
   type APIGatewayProxyEventV2WithJWT,
 } from '@ffp/core/server';
 
@@ -45,10 +45,10 @@ import { handler as updateVideoHandler } from './videos/update';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
-/** Uses placeholder tenantId as routing happens before authentication. */
+/** Uses placeholder organisationId as routing happens before authentication. */
 const ROUTER_CONTEXT = createSystemContext({
   systemId: 'admin-router',
-  tenantId: SYSTEM_PLACEHOLDER_TENANT_ID,
+  organisationId: SYSTEM_PLACEHOLDER_ORGANISATION_ID,
 });
 
 /** Route registry mapping HTTP methods to path handlers. */

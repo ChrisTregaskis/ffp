@@ -30,15 +30,15 @@ export interface GenerateProgrammeJobPayload {
  */
 export async function processGenerateProgramme(
   payload: GenerateProgrammeJobPayload,
-  tenantId: string
+  organisationId: string
 ): Promise<GenerateProgrammeResult> {
   const logger = createSystemLogger('generate-programme-handler');
 
-  return await withRLS(tenantId, undefined, async (tx) => {
+  return await withRLS(organisationId, undefined, async (tx) => {
     // Generate or retrieve existing programme
     const result = await generateProgramme(
       {
-        tenantId,
+        organisationId,
         userId: payload.userId,
         recommendedTemplateSlug: payload.recommendedTemplateSlug ?? null,
       },
@@ -68,7 +68,9 @@ export async function processGenerateProgramme(
       .where(eq(userAssessments.id, payload.assessmentSubmissionId));
 
     // Transition assessment to completed (validates state machine, sets completedAt)
-    await transitionAssessmentStatus(tenantId, payload.assessmentSubmissionId, 'completed', { tx });
+    await transitionAssessmentStatus(organisationId, payload.assessmentSubmissionId, 'completed', {
+      tx,
+    });
 
     // MVP defaults — exercise catalogue not yet built
     return {

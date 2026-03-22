@@ -1,47 +1,42 @@
-import { type CreateCustomerResponse, createCustomerSchema } from '@ffp/core';
+import { type CreateOrganisationResponse, createOrganisationRequestSchema } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
   withErrorHandling,
   ForbiddenError,
   isUserActor,
-  createCustomerService,
+  createOrganisationService,
   createRequestContext,
 } from '@ffp/core/server';
 
 /**
  * Lambda handler for POST /admin/create-customer
  *
- * Protected endpoint that requires JWT authentication and system_admin role.
- * Creates both tenant and customer records in a single transaction.
+ * DEPRECATED: This endpoint will be replaced by separate
+ * POST /admin/organisations and POST /admin/organisations/:orgId/locations
+ * endpoints in FFP-521.
  *
- * Note: "customer" represents a business/care home organisation in the system.
- *
- * Request body:
- * ```json
- * { "customerName": "Sunshine Carehome" }
- * ```
+ * Currently creates an organisation only (no longer creates a location).
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<CreateCustomerResponse> => {
+  async (event: APIGatewayProxyEventV2WithJWT): Promise<CreateOrganisationResponse> => {
     // Extract user context from JWT (throws UnauthorisedError if missing)
     const context = extractUserContext(event);
 
     // Validate system_admin role
     if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system admins can create customers');
+      throw new ForbiddenError('Only system admins can create organisations');
     }
 
     // Parse and validate request body
-    // Both V1 and V2 events have a `body` property (string | null)
     const body = JSON.parse(event.body ?? '{}') as unknown;
-    const input = createCustomerSchema.parse(body);
+    const input = createOrganisationRequestSchema.parse(body);
 
-    // Create unified request context (db + tenant context)
+    // Create unified request context (db + organisation context)
     const ctx = createRequestContext(context);
 
-    // Create customer via service
-    const result = await createCustomerService(ctx, input);
+    // Create organisation via service
+    const result = await createOrganisationService(ctx, input);
 
     return result;
   }

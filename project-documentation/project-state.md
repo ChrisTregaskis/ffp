@@ -84,7 +84,7 @@
 
 | Phase | Key     | Summary                                     | Layer    | Pts | Status |
 | ----- | ------- | ------------------------------------------- | -------- | --- | ------ |
-| 1     | FFP-519 | DB migration — rename tables/columns/RLS    | Database | 8   | To Do  |
+| 1     | FFP-519 | DB migration — rename tables/columns/RLS    | Database | 8   | Done   |
 | 2     | FFP-520 | Backend service split + renames (~28 files) | Backend  | 8   | To Do  |
 | 3     | FFP-521 | Lambda handlers + API routes                | Backend  | 5   | To Do  |
 | 4     | FFP-522 | Organisation list and create/edit pages     | Frontend | 5   | To Do  |
@@ -98,28 +98,19 @@
 - Each story has a Claude Code verification subtask as a handoff gate
 - Merge strategy: `feature/sprint10.5` → `feature/sprint10` → `main`
 
-### Active Story: FFP-519 — DB Migration (8 pts)
+### Active Story: FFP-520 — Backend service split + renames (8 pts)
 
-**Goal**: Rename all database tables, columns, enums, and indexes from tenant/customer to organisation/location terminology. Add status column to organisations.
+**Goal**: Split `createCustomer` into `createOrganisation` + `createLocation`, rename all ~28 core files from tenant/customer to organisation/location terminology. Update Zod schemas, context types, auth constants, and all domain files.
 
 **Sub-task execution order** (single branch):
 
-| Order | Key     | Summary                                                     | Status |
-| ----- | ------- | ----------------------------------------------------------- | ------ |
-| 1     | FFP-531 | Create migration SQL — renames + status column              | Done   |
-| 2     | FFP-532 | Update Drizzle schema files — organisations.ts/locations.ts | Done   |
-| 3     | FFP-533 | Update RLS policies/helpers — new names and GUC variable    | Done   |
-| 4     | FFP-525 | Verify DB migration + RLS integrity (Claude Code handoff)   | To Do  |
-
-**Tables affected by column rename** (`tenant_id` → `organisation_id`, `customer_id` → `location_id`):
-`users`, `locations` (formerly customers), `programmes`, `programme_phases`, `process_jobs`, `user_assessments`, `user_assessment_answers`
-
-**Key changes**:
-
-- Enums: `tenant_type` → `organisation_type`, `customer_status` → `location_status`, new `organisation_status`
-- RLS GUC: `app.tenant_id` → `app.organisation_id`
-- Constants: `tenant.constants.ts` → `organisation.constants.ts`, `customer.constants.ts` → `location.constants.ts`
-- Tests: All integration and RLS tests updated for new table/column names
+| Order | Key     | Summary                                                              | Status |
+| ----- | ------- | -------------------------------------------------------------------- | ------ |
+| 1     | FFP-534 | Split createCustomer into createOrganisation + createLocation        | Done   |
+| 2     | FFP-535 | Update Zod schemas — new organisation.schema.ts, customer → location | Done   |
+| 3     | FFP-536 | Update user service/repository and auth context types                | Done   |
+| 4     | FFP-537 | Update remaining core files (~20 files across all domains)           | Done   |
+| 5     | FFP-526 | Verify backend build + type safety (Claude Code handoff)             | To Do  |
 
 ---
 

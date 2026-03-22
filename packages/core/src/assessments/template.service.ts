@@ -1,6 +1,6 @@
 import { getDb } from '@ffp/database';
 
-import { getUserIdFromContext, type TenantContext } from '../lib/context';
+import { getUserIdFromContext, type OrganisationContext } from '../lib/context';
 import { InternalServerError, NotFoundError, ValidationError } from '../lib/errors';
 import {
   createAssessmentTemplateSchema,
@@ -19,7 +19,7 @@ export type CreateTemplateInput = Omit<CreateAssessmentTemplateInput, 'createdBy
 
 /** Create a new assessment template */
 export async function createTemplateService(
-  ctx: TenantContext,
+  ctx: OrganisationContext,
   input: CreateTemplateInput
 ): Promise<AssessmentTemplate> {
   const userId = await getUserIdFromContext(ctx);
@@ -46,7 +46,7 @@ export async function createTemplateService(
 
 /** Update an existing assessment template */
 export async function updateTemplateService(
-  _ctx: TenantContext,
+  _ctx: OrganisationContext,
   templateId: string,
   input: UpdateAssessmentTemplateInput
 ): Promise<AssessmentTemplate> {
@@ -66,7 +66,7 @@ export async function updateTemplateService(
 
 /** Deactivate an assessment template (soft delete) */
 export async function deactivateTemplateService(
-  _ctx: TenantContext,
+  _ctx: OrganisationContext,
   templateId: string
 ): Promise<void> {
   const db = getDb();
@@ -76,7 +76,7 @@ export async function deactivateTemplateService(
 
 /** Duplicate an assessment template */
 export async function duplicateTemplateService(
-  ctx: TenantContext,
+  ctx: OrganisationContext,
   templateId: string,
   newName: string
 ): Promise<AssessmentTemplateWithQuestions> {
@@ -119,10 +119,10 @@ export async function duplicateTemplateService(
 
 /**
  * Get an assessment template by ID with questions
- * @param _ctx - Tenant context (unused for system content, but maintains consistent API)
+ * @param _ctx - Organisation context (unused for system content, but maintains consistent API)
  */
 export async function getTemplateService(
-  _ctx: TenantContext,
+  _ctx: OrganisationContext,
   templateId: string
 ): Promise<AssessmentTemplateWithQuestions | null> {
   const db = getDb();
@@ -132,10 +132,10 @@ export async function getTemplateService(
 
 /**
  * List assessment templates
- * @param _ctx - Tenant context (unused for system content, but maintains consistent API)
+ * @param _ctx - Organisation context (unused for system content, but maintains consistent API)
  */
 export async function listTemplatesService(
-  _ctx: TenantContext,
+  _ctx: OrganisationContext,
   options?: { activeOnly?: boolean }
 ): Promise<AssessmentTemplate[]> {
   const db = getDb();

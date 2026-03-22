@@ -1,10 +1,10 @@
 /**
- * Tenant Context Extraction Utilities
+ * Organisation Context Extraction Utilities
  *
  * Provides actor-based context extraction for both user-triggered requests
  * (API Gateway with JWT) and system-triggered requests (job queues, scheduled tasks).
  *
- * All contexts include tenantId (RLS isolation boundary) and flow through layers
+ * All contexts include organisationId (RLS isolation boundary) and flow through layers
  * (Handler → Service → Repository).
  *
  * @module lib/context
@@ -16,7 +16,7 @@ import { type APIGatewayProxyEventV2, type APIGatewayEventRequestContextV2 } fro
 
 import * as userRepository from '../users/user.repository';
 
-import { COGNITO_CUSTOM_ATTRIBUTES, SYSTEM_PLACEHOLDER_TENANT_ID } from './constants';
+import { COGNITO_CUSTOM_ATTRIBUTES, SYSTEM_PLACEHOLDER_ORGANISATION_ID } from './constants';
 import { UnauthorisedError, ValidationError } from './errors';
 
 /**
@@ -26,8 +26,8 @@ interface JWTClaims {
   sub: string;
   email: string;
   [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: string;
-  [COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID]: string;
-  [COGNITO_CUSTOM_ATTRIBUTES.CUSTOMER_ID]?: string;
+  [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: string;
+  [COGNITO_CUSTOM_ATTRIBUTES.LOCATION_ID]?: string;
   [key: string]: unknown;
 }
 
@@ -107,47 +107,39 @@ export type Actor = UserActor | SystemActor;
 export type PlatformSettings = Record<string, unknown>;
 
 /**
- * Enhanced tenant context supporting both user and system actors
+ * Enhanced organisation context supporting both user and system actors
  *
  * This context flows through all layers of the application and provides
  * the necessary information for multi-tenant isolation, logging, and auditing.
  */
-export interface TenantContext {
+export interface OrganisationContext {
   /** The actor performing the operation (user or system) */
   actor: Actor;
-  /** Tenant ID for Row-Level Security isolation */
-  tenantId: string;
-  /** Customer ID within the tenant (nullable for super admins) */
-  customerId: string | null;
+  /** Organisation ID for Row-Level Security isolation */
+  organisationId: string;
+  /** Location ID within the organisation (nullable for super admins and individual users) */
+  locationId: string | null;
   /** Unique request ID for tracing and logging */
   requestId: string;
   /** Timestamp when the context was created */
   timestamp: Date;
-  /** Optional platform settings for the tenant */
+  /** Optional platform settings for the organisation */
   settings?: PlatformSettings;
-  /** Optional list of enabled modules for the tenant */
+  /** Optional list of enabled modules for the organisation */
   enabledModules?: string[];
 }
 
 /**
  * Extract context from API Gateway user request
  *
- * Parses JWT claims from the API Gateway event and creates a TenantContext
+ * Parses JWT claims from the API Gateway event and creates an OrganisationContext
  * with a UserActor. This should be used for all authenticated API requests.
  *
  * @param event - API Gateway proxy event with JWT authoriser
- * @returns TenantContext with user actor
+ * @returns OrganisationContext with user actor
  * @throws UnauthorisedError if JWT claims are missing or invalid
- *
- * @example
- * ```typescript
- * export const handler = async (event: APIGatewayProxyEventV2WithJWT) => {
- *   const context = extractUserContext(event);
- *   // Use context for RLS, logging, etc.
- * };
- * ```
  */
-export function extractUserContext(event: APIGatewayProxyEventV2WithJWT): TenantContext {
+export function extractUserContext(event: APIGatewayProxyEventV2WithJWT): OrganisationContext {
   const { authorizer } = event.requestContext;
 
   if (!hasJWTClaims(authorizer)) {
@@ -160,7 +152,7 @@ export function extractUserContext(event: APIGatewayProxyEventV2WithJWT): Tenant
   const sub = claims.sub;
   const role = claims[COGNITO_CUSTOM_ATTRIBUTES.ROLE];
   const email = claims.email;
-  const tenantId = claims[COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID];
+  const organisationId = claims[COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID];
 
   if (!sub || typeof sub !== 'string') {
     throw new UnauthorisedError('Missing or invalid sub claim');
@@ -174,8 +166,8 @@ export function extractUserContext(event: APIGatewayProxyEventV2WithJWT): Tenant
     throw new UnauthorisedError('Missing or invalid email claim');
   }
 
-  if (!tenantId || typeof tenantId !== 'string') {
-    throw new UnauthorisedError('Missing or invalid tenantId claim');
+  if (!organisationId || typeof organisationId !== 'string') {
+    throw new UnauthorisedError('Missing or invalid organisationId claim');
   }
 
   return {
@@ -185,8 +177,8 @@ export function extractUserContext(event: APIGatewayProxyEventV2WithJWT): Tenant
       userRole: role,
       email,
     },
-    tenantId,
-    customerId: claims[COGNITO_CUSTOM_ATTRIBUTES.CUSTOMER_ID] ?? null,
+    organisationId,
+    locationId: claims[COGNITO_CUSTOM_ATTRIBUTES.LOCATION_ID] ?? null,
     requestId: event.requestContext.requestId,
     timestamp: new Date(),
   };
@@ -195,35 +187,26 @@ export function extractUserContext(event: APIGatewayProxyEventV2WithJWT): Tenant
 /**
  * Create context for system-triggered operations
  *
- * Creates a TenantContext with a SystemActor for background jobs, scheduled tasks,
+ * Creates an OrganisationContext with a SystemActor for background jobs, scheduled tasks,
  * or other system operations that aren't directly triggered by user requests.
  *
  * @param params - Parameters for creating the system context
- * @returns TenantContext with system actor
- *
- * @example
- * ```typescript
- * const context = createSystemContext({
- *   systemId: 'assessment-processor',
- *   tenantId: tenant.id,
- *   triggeredBy: userId, // Optional: if user initiated
- * });
- * ```
+ * @returns OrganisationContext with system actor
  */
 export function createSystemContext(params: {
   systemId: string;
-  tenantId: string;
-  customerId?: string | null;
+  organisationId: string;
+  locationId?: string | null;
   triggeredBy?: string;
   jobId?: string;
-}): TenantContext {
+}): OrganisationContext {
   // Validate required parameters
   if (!params.systemId || typeof params.systemId !== 'string') {
     throw new ValidationError('systemId is required and must be a non-empty string');
   }
 
-  if (!params.tenantId || typeof params.tenantId !== 'string') {
-    throw new ValidationError('tenantId is required and must be a non-empty string');
+  if (!params.organisationId || typeof params.organisationId !== 'string') {
+    throw new ValidationError('organisationId is required and must be a non-empty string');
   }
 
   return {
@@ -233,8 +216,8 @@ export function createSystemContext(params: {
       triggeredBy: params.triggeredBy,
       jobId: params.jobId,
     },
-    tenantId: params.tenantId,
-    customerId: params.customerId ?? null,
+    organisationId: params.organisationId,
+    locationId: params.locationId ?? null,
     requestId: randomUUID(),
     timestamp: new Date(),
   };
@@ -245,26 +228,14 @@ export function createSystemContext(params: {
  *
  * Convenience function for extracting context from SQS or other job queue messages.
  * Wraps createSystemContext with a job-specific interface.
- *
- * @param jobMessage - Job queue message with tenant and job information
- * @returns TenantContext with system actor
- *
- * @example
- * ```typescript
- * export const jobHandler = async (event: SQSEvent) => {
- *   const message = JSON.parse(event.Records[0].body);
- *   const context = extractJobContext(message);
- *   // Process job with context
- * };
- * ```
  */
 export function extractJobContext(jobMessage: {
-  tenantId: string;
-  customerId?: string;
+  organisationId: string;
+  locationId?: string;
   userId?: string;
   jobId: string;
   jobType: string;
-}): TenantContext {
+}): OrganisationContext {
   // Validate required fields from job message
   if (!jobMessage.jobId || typeof jobMessage.jobId !== 'string') {
     throw new ValidationError('Job message missing required field: jobId');
@@ -274,46 +245,33 @@ export function extractJobContext(jobMessage: {
     throw new ValidationError('Job message missing required field: jobType');
   }
 
-  if (!jobMessage.tenantId || typeof jobMessage.tenantId !== 'string') {
-    throw new ValidationError('Job message missing required field: tenantId');
+  if (!jobMessage.organisationId || typeof jobMessage.organisationId !== 'string') {
+    throw new ValidationError('Job message missing required field: organisationId');
   }
 
   return createSystemContext({
     systemId: jobMessage.jobType,
-    tenantId: jobMessage.tenantId,
-    customerId: jobMessage.customerId,
+    organisationId: jobMessage.organisationId,
+    locationId: jobMessage.locationId,
     triggeredBy: jobMessage.userId,
     jobId: jobMessage.jobId,
   });
 }
 
 /**
- * Type guard to check if an actor is a user actor
- *
- * @param actor - Actor to check
- * @returns True if actor is a UserActor
- */
-/**
  * Create a system context for Lambda cold start operations.
  *
  * A factory (not a constant) because each cold start should get its own
  * timestamp and requestId. Use this for structured logging during
- * Lambda initialisation, before any tenant context is available.
+ * Lambda initialisation, before any organisation context is available.
  *
  * @param systemId - Identifier for the handler (e.g., 'video-signed-url-handler')
- * @returns TenantContext with system actor and placeholder tenant ID
- *
- * @example
- * ```typescript
- * const coldCtx = createColdStartContext('video-signed-url-handler');
- * const logger = createLogger(coldCtx);
- * logger.error('Missing env vars');
- * ```
+ * @returns OrganisationContext with system actor and placeholder organisation ID
  */
-export function createColdStartContext(systemId: string): TenantContext {
+export function createColdStartContext(systemId: string): OrganisationContext {
   return createSystemContext({
     systemId,
-    tenantId: SYSTEM_PLACEHOLDER_TENANT_ID,
+    organisationId: SYSTEM_PLACEHOLDER_ORGANISATION_ID,
   });
 }
 
@@ -341,16 +299,6 @@ export function isSystemActor(actor: Actor): actor is SystemActor {
  * Get a human-readable display name for an actor
  *
  * Used for logging and audit trails to identify who performed an operation.
- *
- * @param actor - Actor to get display name for
- * @returns Human-readable display name
- *
- * @example
- * ```typescript
- * const displayName = getActorDisplayName(context.actor);
- * // User: "john@example.com (customer_owner)"
- * // System: "System: assessment-processor"
- * ```
  */
 export function getActorDisplayName(actor: Actor): string {
   if (isUserActor(actor)) {
@@ -361,28 +309,22 @@ export function getActorDisplayName(actor: Actor): string {
 }
 
 /**
- * Extract and resolve userId from TenantContext
+ * Extract and resolve userId from OrganisationContext
  *
  * Resolves the Cognito sub (from JWT) to the database user ID.
  * Use this in services that require user-initiated operations.
  *
- * @param context - Tenant context to extract and resolve userId from
+ * @param context - Organisation context to extract and resolve userId from
  * @returns The user's database ID
  * @throws UnauthorisedError if actor is not a user or user not found in database
- *
- * @example
- * ```typescript
- * const userId = await getUserIdFromContext(context);
- * await userAssessmentRepository.findResumable(context.tenantId, userId, flowId);
- * ```
  */
-export async function getUserIdFromContext(context: TenantContext): Promise<string> {
+export async function getUserIdFromContext(context: OrganisationContext): Promise<string> {
   if (!isUserActor(context.actor)) {
     throw new UnauthorisedError('This operation requires a user context');
   }
 
   const cognitoSub = context.actor.userId;
-  const user = await userRepository.findUserByCognitoSub(context.tenantId, cognitoSub);
+  const user = await userRepository.findUserByCognitoSub(context.organisationId, cognitoSub);
 
   if (!user) {
     throw new UnauthorisedError('User not found in database');

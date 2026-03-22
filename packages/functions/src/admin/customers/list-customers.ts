@@ -5,19 +5,19 @@ import {
   withErrorHandling,
   ForbiddenError,
   isUserActor,
-  listCustomersService,
+  listLocationsService,
 } from '@ffp/core/server';
 
 /**
  * Lambda handler for GET /admin/customers
  *
- * Lists all customers with pagination, search, and status filter.
+ * Lists all locations with pagination, search, and status filter.
  */
 export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2WithJWT) => {
   const context = extractUserContext(event);
 
   if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-    throw new ForbiddenError('Only system administrators can list customers');
+    throw new ForbiddenError('Only system administrators can list locations');
   }
 
   const params = event.queryStringParameters ?? {};
@@ -34,5 +34,5 @@ export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2Wit
     status: params.status ?? undefined,
   };
 
-  return await listCustomersService(context, paginationInput, rawFilters);
+  return await listLocationsService(context, paginationInput, rawFilters);
 });

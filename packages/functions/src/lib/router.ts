@@ -1,5 +1,5 @@
 import { createLogger } from '@ffp/core/server';
-import type { TenantContext, APIGatewayProxyEventV2WithJWT } from '@ffp/core/server';
+import type { OrganisationContext, APIGatewayProxyEventV2WithJWT } from '@ffp/core/server';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
@@ -151,7 +151,7 @@ export const validateAndMatchRoute = (
   event: APIGatewayProxyEventV2WithJWT,
   routes: RouteRegistry,
   domainName: string,
-  routerContext: TenantContext
+  routerContext: OrganisationContext
 ): RouteValidationResult => {
   const logger = createLogger(routerContext);
 

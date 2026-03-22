@@ -1,4 +1,4 @@
-import type { Tenant, Customer, User } from '../src/schema/index.js';
+import type { Organisation, Location, User } from '../src/schema/index.js';
 
 /**
  * Utility type to convert Date fields to string (for JSON serialisation)
@@ -9,22 +9,22 @@ type DateFieldsToString<T> = {
 };
 
 /**
- * Platform tenant seed data (from JSON config)
- * Same as Tenant type but with string timestamps for JSON compatibility
+ * Platform organisation seed data (from JSON config)
+ * Same as Organisation type but with string timestamps for JSON compatibility
  */
-export type PlatformTenantSeed = DateFieldsToString<Tenant>;
+export type PlatformOrganisationSeed = DateFieldsToString<Organisation>;
 
 /**
- * Test customer tenant seed data (from JSON config)
- * Same as Tenant type but with string timestamps for JSON compatibility
+ * Test location organisation seed data (from JSON config)
+ * Same as Organisation type but with string timestamps for JSON compatibility
  */
-export type TestCustomerTenantSeed = DateFieldsToString<Tenant>;
+export type TestLocationOrganisationSeed = DateFieldsToString<Organisation>;
 
 /**
- * Test customer seed data (from JSON config)
- * Same as Customer type but with string timestamps for JSON compatibility
+ * Test location seed data (from JSON config)
+ * Same as Location type but with string timestamps for JSON compatibility
  */
-export type TestCustomerSeed = DateFieldsToString<Customer>;
+export type TestLocationSeed = DateFieldsToString<Location>;
 
 /**
  * Super admin user seed data (from JSON config)
@@ -62,13 +62,13 @@ export interface TestUserCognitoSeed {
  * Complete seed data configuration
  */
 export interface SeedConfig {
-  platformTenant: PlatformTenantSeed;
+  platformOrganisation: PlatformOrganisationSeed;
   superAdminUser: SuperAdminUserSeed;
   superAdminCognito: SuperAdminCognitoSeed;
-  testCustomerTenant: TestCustomerTenantSeed;
-  testCustomer: TestCustomerSeed;
-  testCustomerAdminUser: TestUserSeed;
-  testCustomerAdminCognito: TestUserCognitoSeed;
-  testCustomerProgrammeUser: TestUserSeed;
-  testCustomerProgrammeUserCognito: TestUserCognitoSeed;
+  testLocationOrganisation: TestLocationOrganisationSeed;
+  testLocation: TestLocationSeed;
+  testLocationAdminUser: TestUserSeed;
+  testLocationAdminCognito: TestUserCognitoSeed;
+  testLocationProgrammeUser: TestUserSeed;
+  testLocationProgrammeUserCognito: TestUserCognitoSeed;
 }

@@ -11,7 +11,7 @@ import {
 /**
  * Lambda handler for GET /admin/users
  *
- * Lists all programme users with pagination, search, and customer filter.
+ * Lists all programme users with pagination, search, and location filter.
  */
 export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2WithJWT) => {
   const context = extractUserContext(event);
@@ -31,7 +31,7 @@ export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2Wit
 
   const rawFilters = {
     search: params.search ?? undefined,
-    customerId: params.customerId ?? undefined,
+    locationId: params.locationId ?? undefined,
     role: params.role ?? undefined,
   };
 

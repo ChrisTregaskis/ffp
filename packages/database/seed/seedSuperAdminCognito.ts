@@ -5,7 +5,7 @@ import {
 } from '@aws-sdk/client-cognito-identity-provider';
 import { COGNITO_CUSTOM_ATTRIBUTES } from '../../core/src/lib/constants.js';
 import { createLogger } from '../src/lib/logger.js';
-import type { SuperAdminCognitoSeed, PlatformTenantSeed } from './types.js';
+import type { SuperAdminCognitoSeed, PlatformOrganisationSeed } from './types.js';
 
 const logger = createLogger('seed-super-admin-cognito');
 
@@ -41,12 +41,12 @@ const validateEnvironment = (): void => {
  * Note: This imports from @ffp/core which is a dev-time dependency for seeding only.
  *
  * @param cognitoData - Super admin Cognito seed data from config
- * @param tenantData - Platform tenant data (schema-derived, for custom attributes)
+ * @param organisationData - Platform organisation data (schema-derived, for custom attributes)
  * @throws {Error} If Cognito operation fails
  */
 export const seedSuperAdminCognito = async (
   cognitoData: SuperAdminCognitoSeed,
-  tenantData: PlatformTenantSeed
+  organisationData: PlatformOrganisationSeed
 ): Promise<AdminCreateUserCommandOutput> => {
   logger.info('Seeding super admin in Cognito...');
 
@@ -64,7 +64,7 @@ export const seedSuperAdminCognito = async (
           { Name: 'email_verified', Value: 'true' },
           { Name: 'given_name', Value: 'System' },
           { Name: 'family_name', Value: 'Admin' },
-          { Name: COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID, Value: tenantData.id },
+          { Name: COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID, Value: organisationData.id },
           { Name: COGNITO_CUSTOM_ATTRIBUTES.ROLE, Value: 'system_admin' },
         ],
         TemporaryPassword: cognitoData.temporaryPassword,

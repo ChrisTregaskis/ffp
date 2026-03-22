@@ -5,26 +5,26 @@ import {
   ForbiddenError,
   ValidationError,
   isUserActor,
-  getCustomerService,
+  getLocationService,
 } from '@ffp/core/server';
 
 /**
  * Lambda handler for GET /admin/customers/{id}
  *
- * Returns a single customer by ID. Admin role required.
+ * Returns a single location by ID. Admin role required.
  */
 export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2WithJWT) => {
   const context = extractUserContext(event);
 
   if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-    throw new ForbiddenError('Only system administrators can view customer details');
+    throw new ForbiddenError('Only system administrators can view location details');
   }
 
-  const customerId = event.pathParameters?.id;
+  const locationId = event.pathParameters?.id;
 
-  if (!customerId) {
-    throw new ValidationError('Customer ID is required');
+  if (!locationId) {
+    throw new ValidationError('Location ID is required');
   }
 
-  return await getCustomerService(context, customerId);
+  return await getLocationService(context, locationId);
 });

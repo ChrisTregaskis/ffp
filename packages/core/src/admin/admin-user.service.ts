@@ -20,20 +20,20 @@ import {
   createUser as createUserInRepo,
   updateUser as updateUserInRepo,
 } from './admin-user.repository';
-import { getCustomerById as getCustomerByIdInRepo } from './admin.repository';
+import { getLocationById as getLocationByIdInRepo } from './admin.repository';
 
-import type { TenantContext } from '../lib/context';
+import type { OrganisationContext } from '../lib/context';
 import type { PaginationInput, PaginationMeta } from '../schemas/pagination.schema';
 import type { UserListResponse, UserDetailResponse } from '../schemas/user.schema';
 
 /**
- * List programme users with pagination, search, and customer filter.
- * Uses admin context to bypass tenant RLS for cross-tenant visibility.
+ * List programme users with pagination, search, and location filter.
+ * Uses admin context to bypass organisation RLS for cross-organisation visibility.
  */
 export async function listUsersService(
-  ctx: TenantContext,
+  ctx: OrganisationContext,
   paginationInput: PaginationInput,
-  rawFilters: { search?: string; customerId?: string }
+  rawFilters: { search?: string; locationId?: string }
 ): Promise<{ data: UserListResponse[]; pagination: PaginationMeta }> {
   const filters = userFilterSchema.parse(rawFilters);
   const db = getDb();
@@ -61,10 +61,10 @@ export async function listUsersService(
 
 /**
  * Get a single programme user by ID. Throws NotFoundError if not found.
- * Uses admin context to bypass tenant RLS for cross-tenant visibility.
+ * Uses admin context to bypass organisation RLS for cross-organisation visibility.
  */
 export async function getUserService(
-  ctx: TenantContext,
+  ctx: OrganisationContext,
   userId: string
 ): Promise<UserDetailResponse> {
   const db = getDb();
@@ -91,30 +91,30 @@ export async function getUserService(
  *
  * Orchestrates:
  * 1. Validate input
- * 2. Verify customer exists (derive tenantId)
+ * 2. Verify location exists (derive organisationId)
  * 3. Check email uniqueness
  * 4. Create Cognito user with custom attributes
  * 5. Create DB record with cognitoSub
  * 6. Rollback Cognito user if DB insert fails
  */
 export async function createUserService(
-  ctx: TenantContext,
+  ctx: OrganisationContext,
   input: unknown
 ): Promise<UserDetailResponse> {
   const validated = adminCreateUserInputSchema.parse(input);
   const logger = createLogger(ctx);
   const db = getDb();
 
-  // Step 1: Verify customer exists and get tenantId
-  const customer = await withAdminContext(db, async (tx) => {
-    return await getCustomerByIdInRepo(tx, validated.customerId);
+  // Step 1: Verify location exists and get organisationId
+  const location = await withAdminContext(db, async (tx) => {
+    return await getLocationByIdInRepo(tx, validated.locationId);
   });
 
-  if (!customer) {
-    throw new ValidationError('Customer not found', { customerId: validated.customerId });
+  if (!location) {
+    throw new ValidationError('Location not found', { locationId: validated.locationId });
   }
 
-  const tenantId = customer.tenantId;
+  const organisationId = location.organisationId;
 
   // Step 2: Check email uniqueness
   const existingUser = await withAdminContext(db, async (tx) => {
@@ -129,8 +129,8 @@ export async function createUserService(
   logger.info('Creating Cognito user', {
     action: 'cognito_user_creating',
     email: validated.email,
-    customerId: validated.customerId,
-    tenantId,
+    locationId: validated.locationId,
+    organisationId,
   });
 
   let cognitoSub: string;
@@ -140,8 +140,8 @@ export async function createUserService(
       email: validated.email,
       firstName: validated.firstName,
       lastName: validated.lastName,
-      tenantId,
-      customerId: validated.customerId,
+      organisationId,
+      locationId: validated.locationId,
       role: 'programme_user',
     });
 
@@ -180,13 +180,13 @@ export async function createUserService(
   try {
     const user = await withAdminContext(db, async (tx) => {
       return await createUserInRepo(tx, {
-        tenantId,
+        organisationId,
         email: validated.email,
         cognitoSub,
         firstName: validated.firstName,
         lastName: validated.lastName,
         role: 'programme_user',
-        customerId: validated.customerId,
+        locationId: validated.locationId,
         phone: validated.phone,
         dateOfBirth: validated.dateOfBirth,
       });
@@ -196,8 +196,8 @@ export async function createUserService(
       action: 'user_created',
       userId: user.id,
       email: validated.email,
-      customerId: validated.customerId,
-      tenantId,
+      locationId: validated.locationId,
+      organisationId,
     });
 
     return userDetailResponseSchema.parse(user);
@@ -230,10 +230,10 @@ export async function createUserService(
 
 /**
  * Update a programme user. Throws NotFoundError if not found.
- * Uses admin context to bypass tenant RLS for cross-tenant visibility.
+ * Uses admin context to bypass organisation RLS for cross-organisation visibility.
  */
 export async function updateUserService(
-  ctx: TenantContext,
+  ctx: OrganisationContext,
   userId: string,
   input: unknown
 ): Promise<UserDetailResponse> {

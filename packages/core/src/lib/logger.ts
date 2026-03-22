@@ -7,7 +7,7 @@
  * @module lib/logger
  */
 
-import { getActorDisplayName, isSystemActor, type TenantContext } from './context';
+import { getActorDisplayName, isSystemActor, type OrganisationContext } from './context';
 
 /**
  * Log severity levels
@@ -32,7 +32,7 @@ interface LogEntry {
   level: LogLevel;
   message: string;
   requestId: string;
-  tenantId: string;
+  organisationId: string;
   actor: string;
   duration: number;
   triggeredBy?: string;
@@ -124,7 +124,10 @@ const resolveMinLogLevel = (minLogLevel?: LogLevel): LogLevel =>
  * const prodLogger = createLogger(context, LogLevel.INFO); // Suppresses DEBUG logs
  * ```
  */
-export const createLogger = (context: TenantContext, minLogLevel?: LogLevel): TenantLogger => {
+export const createLogger = (
+  context: OrganisationContext,
+  minLogLevel?: LogLevel
+): TenantLogger => {
   const resolvedMinLevel = resolveMinLogLevel(minLogLevel);
   const startTime = context.timestamp;
 
@@ -149,7 +152,7 @@ export const createLogger = (context: TenantContext, minLogLevel?: LogLevel): Te
       level,
       message,
       requestId: context.requestId,
-      tenantId: context.tenantId,
+      organisationId: context.organisationId,
       actor: getActorDisplayName(contextActor),
       duration: getDuration(),
     };
@@ -283,7 +286,7 @@ export const createSystemLogger = (
  * ```
  */
 export async function withRequestLogging<T>(
-  context: TenantContext,
+  context: OrganisationContext,
   operation: string,
   fn: () => Promise<T>
 ): Promise<T> {
