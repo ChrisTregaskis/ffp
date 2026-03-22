@@ -9,9 +9,10 @@ import {
 } from '@ffp/core/server';
 
 /**
- * Lambda handler for GET /admin/customers
+ * Lambda handler for GET /admin/locations
  *
- * Lists all locations with pagination, search, and status filter.
+ * Lists all locations with pagination, search, status, and organisation filter.
+ * Admin role required.
  */
 export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2WithJWT) => {
   const context = extractUserContext(event);
@@ -32,6 +33,7 @@ export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2Wit
   const rawFilters = {
     search: params.search ?? undefined,
     status: params.status ?? undefined,
+    organisationId: params.organisationId ?? undefined,
   };
 
   return await listLocationsService(context, paginationInput, rawFilters);

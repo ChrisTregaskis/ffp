@@ -9,7 +9,7 @@ import {
 } from '@ffp/core/server';
 
 /**
- * Lambda handler for PUT /admin/customers/{id}
+ * Lambda handler for PUT /admin/locations/{id}
  *
  * Updates a location's name, address, or status. Admin role required.
  */

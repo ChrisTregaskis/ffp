@@ -85,7 +85,7 @@
 | Phase | Key     | Summary                                     | Layer    | Pts | Status |
 | ----- | ------- | ------------------------------------------- | -------- | --- | ------ |
 | 1     | FFP-519 | DB migration — rename tables/columns/RLS    | Database | 8   | Done   |
-| 2     | FFP-520 | Backend service split + renames (~28 files) | Backend  | 8   | To Do  |
+| 2     | FFP-520 | Backend service split + renames (~28 files) | Backend  | 8   | Done   |
 | 3     | FFP-521 | Lambda handlers + API routes                | Backend  | 5   | To Do  |
 | 4     | FFP-522 | Organisation list and create/edit pages     | Frontend | 5   | To Do  |
 | 5     | FFP-523 | Rename customer → location pages + users    | Frontend | 5   | To Do  |
@@ -110,7 +110,20 @@
 | 2     | FFP-535 | Update Zod schemas — new organisation.schema.ts, customer → location | Done   |
 | 3     | FFP-536 | Update user service/repository and auth context types                | Done   |
 | 4     | FFP-537 | Update remaining core files (~20 files across all domains)           | Done   |
-| 5     | FFP-526 | Verify backend build + type safety (Claude Code handoff)             | To Do  |
+| 5     | FFP-526 | Verify backend build + type safety (Claude Code handoff)             | Done   |
+
+### Active Story: FFP-521 — Lambda handlers + API routes (5 pts)
+
+**Goal**: New handler files for organisations and locations, updated admin router, old customer handlers removed, Postman collection updated.
+
+**Sub-task execution order** (single branch):
+
+| Order | Key     | Summary                                                         | Status |
+| ----- | ------- | --------------------------------------------------------------- | ------ |
+| 1     | FFP-538 | Create organisation Lambda handlers (create, list, get, update) | Done   |
+| 2     | FFP-539 | Rename customer handlers → location, add create-location        | Done   |
+| 3     | FFP-540 | Update SST API route config and Postman collection              | Done   |
+| 4     | FFP-527 | Verify API smoke test (Claude Code handoff)                     | To Do  |
 
 ---
 

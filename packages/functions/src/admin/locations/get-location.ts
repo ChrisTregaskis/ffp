@@ -9,7 +9,7 @@ import {
 } from '@ffp/core/server';
 
 /**
- * Lambda handler for GET /admin/customers/{id}
+ * Lambda handler for GET /admin/locations/{id}
  *
  * Returns a single location by ID. Admin role required.
  */
