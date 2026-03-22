@@ -1,25 +1,25 @@
 /**
  * Apply RLS Policies Module
  *
- * This module applies Row-Level Security (RLS) policies to all tenant-scoped tables.
+ * This module applies Row-Level Security (RLS) policies to all organisation-scoped tables.
  * It is idempotent and can be run multiple times safely.
  *
  * **Tables with RLS policies:**
- * - tenants, customers, users, user_assessments, user_assessment_answers, programme_phases
+ * - organisations, locations, users, user_assessments, user_assessment_answers, programme_phases
  *
  * **Admin bypass policy:**
- * - customers and users tables have an additional permissive policy that grants
+ * - locations and users tables have an additional permissive policy that grants
  *   full access when `app.is_admin = 'true'` is set. This allows system_admin
- *   queries to operate cross-tenant without disabling RLS.
+ *   queries to operate cross-organisation without disabling RLS.
  *   Use `setAdminContext(tx)` from `@ffp/database` to activate.
  *
  * **Tables intentionally without RLS (for MVP):**
- * - process_jobs: Job processor runs with BYPASSRLS to claim jobs across tenants.
+ * - process_jobs: Job processor runs with BYPASSRLS to claim jobs across organisations.
  *   RLS will be added when user-facing job queries are implemented (see process-jobs.ts).
  * - assessment_templates, assessment_flows, questions, template_questions:
- *   System-managed content, no tenant isolation.
+ *   System-managed content, no organisation isolation.
  * - programme_templates, template_phases, template_sessions, session_exercises, videos:
- *   System-managed content, shared across all tenants.
+ *   System-managed content, shared across all organisations.
  *
  * @module migrations/apply-rls
  */
@@ -31,13 +31,13 @@ import { createLogger } from '../lib/logger';
 const logger = createLogger('apply-rls');
 
 /**
- * Apply RLS policies to all tenant-scoped tables
+ * Apply RLS policies to all organisation-scoped tables
  *
  * This function is idempotent - it checks if RLS is already applied before making changes.
  * It will:
- * 1. Enable RLS on tenants, customers, and users tables
+ * 1. Enable RLS on organisations, locations, and users tables
  * 2. Force RLS in non-production environments (for testing)
- * 3. Create isolation policies using app.tenant_id context variable
+ * 3. Create isolation policies using app.organisation_id context variable
  *
  * @param db - Drizzle database instance
  * @returns Promise<void>
@@ -50,7 +50,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     SELECT tablename, rowsecurity
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('tenants', 'customers', 'users', 'user_assessments', 'user_assessment_answers', 'programme_phases')
+    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'programme_phases')
     ORDER BY tablename
   `);
 
@@ -68,13 +68,13 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
   // Apply RLS to all tables in a transaction
   await db.transaction(async (tx) => {
     // ============================================================================
-    // TENANTS TABLE RLS
+    // ORGANISATIONS TABLE RLS
     // ============================================================================
 
-    logger.debug('Enabling RLS on tenants table...');
+    logger.debug('Enabling RLS on organisations table...');
 
     await tx.execute(sql`
-      ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE organisations ENABLE ROW LEVEL SECURITY;
     `);
 
     // Force RLS in development/test environments (for testing with superuser)
@@ -85,85 +85,105 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     if (!isProduction) {
       logger.debug('Forcing RLS for environment', { environment });
       await tx.execute(sql`
-        ALTER TABLE tenants FORCE ROW LEVEL SECURITY;
+        ALTER TABLE organisations FORCE ROW LEVEL SECURITY;
       `);
     }
 
     // Drop existing policies (for idempotency)
     await tx.execute(sql`
-      DROP POLICY IF EXISTS tenant_isolation ON tenants;
+      DROP POLICY IF EXISTS tenant_isolation ON organisations;
     `);
 
     await tx.execute(sql`
-      DROP POLICY IF EXISTS tenant_read_isolation ON tenants;
+      DROP POLICY IF EXISTS tenant_read_isolation ON organisations;
     `);
 
     await tx.execute(sql`
-      DROP POLICY IF EXISTS tenant_write_isolation ON tenants;
+      DROP POLICY IF EXISTS tenant_write_isolation ON organisations;
     `);
 
     await tx.execute(sql`
-      DROP POLICY IF EXISTS tenant_admin_bypass ON tenants;
+      DROP POLICY IF EXISTS tenant_admin_bypass ON organisations;
     `);
 
-    // Read policy: own tenant + platform tenant (for default flow lookup)
     await tx.execute(sql`
-      CREATE POLICY tenant_read_isolation ON tenants
+      DROP POLICY IF EXISTS organisation_read_isolation ON organisations;
+    `);
+
+    await tx.execute(sql`
+      DROP POLICY IF EXISTS organisation_write_isolation ON organisations;
+    `);
+
+    await tx.execute(sql`
+      DROP POLICY IF EXISTS organisation_admin_bypass ON organisations;
+    `);
+
+    // Read policy: own organisation + platform organisation (for default flow lookup)
+    await tx.execute(sql`
+      CREATE POLICY organisation_read_isolation ON organisations
         FOR SELECT
         USING (
-          id = current_setting('app.tenant_id', true)::uuid
+          id = current_setting('app.organisation_id', true)::uuid
           OR type = 'platform'
         );
     `);
 
-    // Write policy: own tenant only
+    // Write policy: own organisation only
     await tx.execute(sql`
-      CREATE POLICY tenant_write_isolation ON tenants
+      CREATE POLICY organisation_write_isolation ON organisations
         FOR ALL
-        USING (id = current_setting('app.tenant_id', true)::uuid);
+        USING (id = current_setting('app.organisation_id', true)::uuid);
     `);
 
-    // Admin bypass: system_admin queries set app.is_admin = 'true' for cross-tenant access
+    // Admin bypass: system_admin queries set app.is_admin = 'true' for cross-organisation access
     await tx.execute(sql`
-      CREATE POLICY tenant_admin_bypass ON tenants
+      CREATE POLICY organisation_admin_bypass ON organisations
         FOR ALL
         USING (current_setting('app.is_admin', true) = 'true');
     `);
 
     // ============================================================================
-    // CUSTOMERS TABLE RLS
+    // LOCATIONS TABLE RLS
     // ============================================================================
 
-    logger.debug('Enabling RLS on customers table...');
+    logger.debug('Enabling RLS on locations table...');
 
     await tx.execute(sql`
-      ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE locations ENABLE ROW LEVEL SECURITY;
     `);
 
     if (!isProduction) {
       await tx.execute(sql`
-        ALTER TABLE customers FORCE ROW LEVEL SECURITY;
+        ALTER TABLE locations FORCE ROW LEVEL SECURITY;
       `);
     }
 
     await tx.execute(sql`
-      DROP POLICY IF EXISTS customer_isolation ON customers;
+      DROP POLICY IF EXISTS customer_isolation ON locations;
     `);
 
     await tx.execute(sql`
-      DROP POLICY IF EXISTS customer_admin_bypass ON customers;
+      DROP POLICY IF EXISTS customer_admin_bypass ON locations;
     `);
 
-    // Tenant isolation: normal users see only their tenant's customers
     await tx.execute(sql`
-      CREATE POLICY customer_isolation ON customers
+      DROP POLICY IF EXISTS location_isolation ON locations;
+    `);
+
+    await tx.execute(sql`
+      DROP POLICY IF EXISTS location_admin_bypass ON locations;
+    `);
+
+    // Organisation isolation: normal users see only their organisation's locations
+    await tx.execute(sql`
+      CREATE POLICY location_isolation ON locations
         FOR ALL
-        USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
     `);
 
-    // Admin bypass: system_admin queries set app.is_admin = 'true' for cross-tenant access
+    // Admin bypass: system_admin queries set app.is_admin = 'true' for cross-organisation access
     await tx.execute(sql`
-      CREATE POLICY customer_admin_bypass ON customers
+      CREATE POLICY location_admin_bypass ON locations
         FOR ALL
         USING (current_setting('app.is_admin', true) = 'true');
     `);
@@ -192,14 +212,14 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
       DROP POLICY IF EXISTS user_admin_bypass ON users;
     `);
 
-    // Tenant isolation: normal users see only their tenant's users
+    // Organisation isolation: normal users see only their organisation's users
     await tx.execute(sql`
       CREATE POLICY user_isolation ON users
         FOR ALL
-        USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
     `);
 
-    // Admin bypass: system_admin queries set app.is_admin = 'true' for cross-tenant access
+    // Admin bypass: system_admin queries set app.is_admin = 'true' for cross-organisation access
     await tx.execute(sql`
       CREATE POLICY user_admin_bypass ON users
         FOR ALL
@@ -227,9 +247,13 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     `);
 
     await tx.execute(sql`
-      CREATE POLICY user_assessment_tenant_isolation ON user_assessments
+      DROP POLICY IF EXISTS user_assessment_organisation_isolation ON user_assessments;
+    `);
+
+    await tx.execute(sql`
+      CREATE POLICY user_assessment_organisation_isolation ON user_assessments
         FOR ALL
-        USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
     `);
 
     // ============================================================================
@@ -253,9 +277,13 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     `);
 
     await tx.execute(sql`
-      CREATE POLICY user_assessment_answers_tenant_isolation ON user_assessment_answers
+      DROP POLICY IF EXISTS user_assessment_answers_organisation_isolation ON user_assessment_answers;
+    `);
+
+    await tx.execute(sql`
+      CREATE POLICY user_assessment_answers_organisation_isolation ON user_assessment_answers
         FOR ALL
-        USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
     `);
 
     // ============================================================================
@@ -279,9 +307,13 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     `);
 
     await tx.execute(sql`
-      CREATE POLICY programme_phases_tenant_isolation ON programme_phases
+      DROP POLICY IF EXISTS programme_phases_organisation_isolation ON programme_phases;
+    `);
+
+    await tx.execute(sql`
+      CREATE POLICY programme_phases_organisation_isolation ON programme_phases
         FOR ALL
-        USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
     `);
   });
 
@@ -292,7 +324,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     SELECT tablename, rowsecurity
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('tenants', 'customers', 'users', 'user_assessments', 'user_assessment_answers', 'programme_phases')
+    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'programme_phases')
     ORDER BY tablename
   `);
 

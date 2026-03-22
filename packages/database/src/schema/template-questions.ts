@@ -41,11 +41,6 @@ export const templateQuestions = pgTable(
   ]
 );
 
-/**
- * Relations definition for template questions
- * - Belongs to an assessment template
- * - Belongs to a question
- */
 export const templateQuestionsRelations = relations(templateQuestions, ({ one }) => ({
   template: one(assessmentTemplates, {
     fields: [templateQuestions.templateId],
@@ -57,12 +52,7 @@ export const templateQuestionsRelations = relations(templateQuestions, ({ one })
   }),
 }));
 
-// Zod schema for inserting a template question
 export const insertTemplateQuestionSchema = createInsertSchema(templateQuestions);
-
-// Zod schema for selecting a template question
 export const selectTemplateQuestionSchema = createSelectSchema(templateQuestions);
-
 export type TemplateQuestionRecord = typeof templateQuestions.$inferSelect;
-
 export type NewTemplateQuestion = typeof templateQuestions.$inferInsert;
