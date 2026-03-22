@@ -1,4 +1,4 @@
-import { and, eq, or, ilike, count, type Column, type SQL } from 'drizzle-orm';
+import { and, eq, ne, or, ilike, count, type Column, type SQL } from 'drizzle-orm';
 
 import type { DbClient } from '@ffp/database';
 import { organisations, locations } from '@ffp/database/schema';
@@ -120,16 +120,20 @@ export async function createLocation(
   };
 }
 
+/** Excludes platform organisation from admin CRUD queries */
+const EXCLUDE_PLATFORM = ne(organisations.type, 'platform');
+
 /**
  * List organisations with pagination and search.
  * No RLS — system_admin operates cross-organisation.
+ * Platform organisation is always excluded from results.
  */
 export async function listOrganisations(
   db: DbClient,
   paginationInput: PaginationInput,
   filters: { search?: string; status?: string }
 ): Promise<OrganisationRecord[]> {
-  const conditions: (SQL | undefined)[] = [];
+  const conditions: (SQL | undefined)[] = [EXCLUDE_PLATFORM];
 
   if (filters.search) {
     const pattern = `%${escapeLikePattern(filters.search)}%`;
@@ -149,7 +153,7 @@ export async function listOrganisations(
   const query = db
     .select()
     .from(organisations)
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .$dynamic();
 
   return await applyPagination(query, paginationInput, ORGANISATION_SORTABLE_COLUMNS);
@@ -157,12 +161,13 @@ export async function listOrganisations(
 
 /**
  * Count organisations matching filter conditions (for pagination metadata).
+ * Platform organisation is always excluded from count.
  */
 export async function countOrganisations(
   db: DbClient,
   filters: { search?: string; status?: string }
 ): Promise<number> {
-  const conditions: (SQL | undefined)[] = [];
+  const conditions: (SQL | undefined)[] = [EXCLUDE_PLATFORM];
 
   if (filters.search) {
     const pattern = `%${escapeLikePattern(filters.search)}%`;
@@ -176,25 +181,30 @@ export async function countOrganisations(
   const result = await db
     .select({ count: count() })
     .from(organisations)
-    .where(conditions.length > 0 ? and(...conditions) : undefined);
+    .where(and(...conditions));
 
   return result[0].count;
 }
 
 /**
  * Get a single organisation by ID, or null if not found.
+ * Returns null for platform organisation (protected from direct access).
  */
 export async function getOrganisationById(
   db: DbClient,
   organisationId: string
 ): Promise<OrganisationRecord | null> {
-  const records = await db.select().from(organisations).where(eq(organisations.id, organisationId));
+  const records = await db
+    .select()
+    .from(organisations)
+    .where(and(eq(organisations.id, organisationId), EXCLUDE_PLATFORM));
 
   return records[0] ?? null;
 }
 
 /**
  * Update an organisation record. Returns the updated record or null if not found.
+ * Platform organisation is protected from updates.
  */
 export async function updateOrganisation(
   db: DbClient,
@@ -204,7 +214,7 @@ export async function updateOrganisation(
   const records = await db
     .update(organisations)
     .set({ ...data, updatedAt: new Date() })
-    .where(eq(organisations.id, organisationId))
+    .where(and(eq(organisations.id, organisationId), EXCLUDE_PLATFORM))
     .returning();
 
   return records[0] ?? null;

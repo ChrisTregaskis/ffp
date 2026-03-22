@@ -21,8 +21,8 @@ export const organisationSchema = z.object({
   name: z.string().min(1).max(255),
   status: organisationStatusSchema,
   settings: organisationSettingsSchema,
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 export const createOrganisationSchema = organisationSchema.pick({

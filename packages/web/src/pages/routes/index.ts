@@ -19,8 +19,11 @@ import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsP
 import { TableComponentsPage } from '@web/pages/dev/TableComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
-import { CustomerEditPage } from '@web/pages/protected/admin/customer-edit';
-import { CustomerListPage } from '@web/pages/protected/admin/customer-list';
+// Customer pages temporarily disabled — will be replaced by location pages in FFP-523
+// import { CustomerEditPage } from '@web/pages/protected/admin/customer-edit';
+// import { CustomerListPage } from '@web/pages/protected/admin/customer-list';
+import { OrganisationEditPage } from '@web/pages/protected/admin/organisation-edit';
+import { OrganisationListPage } from '@web/pages/protected/admin/organisation-list';
 import { TemplateCreatePage } from '@web/pages/protected/admin/template-create';
 import {
   PhaseDetailPage,
@@ -242,31 +245,76 @@ export const routes: RoutesConfig = {
   },
 
   // System Admin Routes (placeholders)
+  [RouteKey.ADMIN_ORGANISATIONS]: {
+    path: `${adminBasePath}/organisations`,
+    pageComponent: OrganisationListPage,
+    title: 'Organisations',
+    allowedRoles: [SYSTEM_ADMIN],
+  },
+  [RouteKey.ADMIN_ORGANISATION_CREATE]: {
+    path: `${adminBasePath}/organisations/create`,
+    pageComponent: OrganisationEditPage,
+    title: 'Create Organisation',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Organisations',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/organisations`,
+      },
+    ],
+  },
+  [RouteKey.ADMIN_ORGANISATION_EDIT]: {
+    path: `${adminBasePath}/organisations/:id`,
+    pageComponent: OrganisationEditPage,
+    title: 'Edit Organisation',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Organisations',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/organisations`,
+      },
+    ],
+  },
+  // Customer routes temporarily replaced with placeholders — FFP-523 will replace with location pages
   [RouteKey.ADMIN_CUSTOMERS]: {
     path: `${adminBasePath}/customers`,
-    pageComponent: CustomerListPage,
+    pageComponent: () =>
+      ComingSoonPage({
+        title: 'Customers',
+        description: 'Being replaced by Locations in FFP-523',
+        icon: 'Building',
+      }),
     title: 'Customers',
     allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
   },
   [RouteKey.ADMIN_CUSTOMER_CREATE]: {
     path: `${adminBasePath}/customers/create`,
-    pageComponent: CustomerEditPage,
+    pageComponent: () =>
+      ComingSoonPage({
+        title: 'Create Customer',
+        description: 'Being replaced by Create Location in FFP-523',
+        icon: 'Building',
+      }),
     title: 'Create Customer',
     allowedRoles: [SYSTEM_ADMIN],
     excludeFromMainNavbar: true,
-    contextNavItems: [
-      { label: 'Back to Customers', icon: 'ArrowLeft', path: `${adminBasePath}/customers` },
-    ],
   },
   [RouteKey.ADMIN_CUSTOMER_EDIT]: {
     path: `${adminBasePath}/customers/:id`,
-    pageComponent: CustomerEditPage,
+    pageComponent: () =>
+      ComingSoonPage({
+        title: 'Edit Customer',
+        description: 'Being replaced by Edit Location in FFP-523',
+        icon: 'Building',
+      }),
     title: 'Edit Customer',
     allowedRoles: [SYSTEM_ADMIN],
     excludeFromMainNavbar: true,
-    contextNavItems: [
-      { label: 'Back to Customers', icon: 'ArrowLeft', path: `${adminBasePath}/customers` },
-    ],
   },
   [RouteKey.ADMIN_USERS]: {
     path: `${adminBasePath}/users`,

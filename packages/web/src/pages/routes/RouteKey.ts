@@ -49,6 +49,12 @@ export enum RouteKey {
   ADMIN_USER_CREATE = 'admin-user-create',
   /** Admin user edit page */
   ADMIN_USER_EDIT = 'admin-user-edit',
+  /** Admin organisations management page */
+  ADMIN_ORGANISATIONS = 'admin-organisations',
+  /** Admin organisation create page */
+  ADMIN_ORGANISATION_CREATE = 'admin-organisation-create',
+  /** Admin organisation edit page */
+  ADMIN_ORGANISATION_EDIT = 'admin-organisation-edit',
   /** Admin video library management page */
   ADMIN_VIDEOS = 'admin-videos',
   /** Admin programme template create page */

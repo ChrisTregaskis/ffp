@@ -1,87 +1,53 @@
-import { type z } from 'zod';
+/**
+ * STUB: Customer API client — temporarily stubbed during organisation/location refactor.
+ * Will be replaced by admin-locations.ts in FFP-523.
+ *
+ * These stubs prevent import crashes while the customer schemas have been
+ * removed from @ffp/core but consumer code hasn't been updated yet.
+ */
 
-import type {
-  CreateCustomerInput,
-  CustomerDetailResponse,
-  PaginationInput,
-  UpdateCustomerInput,
-} from '@ffp/core';
-import {
-  createCustomerResponseSchema,
-  customerDetailResponseSchema,
-  paginatedCustomerResponseSchema,
-} from '@ffp/core';
+import type { PaginationInput } from '@ffp/core';
 
-import { ffpClient, parseApiResponse } from '../client';
-
-const basePath = '/admin/customers';
-
-/** Paginated customer list response type */
-export type PaginatedCustomerResponse = z.infer<typeof paginatedCustomerResponseSchema>;
-
-/** Filter parameters for the customer list endpoint */
+/** Stub filter input */
 export interface AdminCustomerFilterInput {
   search?: string;
   status?: string;
 }
 
-/** These endpoints require system_admin role. */
+/** Stub types — these will be removed in FFP-523 */
+export type PaginatedCustomerResponse = { data: never[]; pagination: { total: number; page: number; pageSize: number; totalPages: number } };
+export type CreateCustomerInput = { customerName: string };
+export type CustomerDetailResponse = Record<string, unknown>;
+export type UpdateCustomerInput = Record<string, unknown>;
+
+/** Stubbed API — all methods throw to surface if accidentally called */
 export const adminCustomersApi = {
-  /** Lists all customers with pagination, search, and status filter. */
   list: async (
     pagination: PaginationInput,
-    filters: AdminCustomerFilterInput,
-    signal?: AbortSignal
+    _filters: AdminCustomerFilterInput,
+    _signal?: AbortSignal
   ): Promise<PaginatedCustomerResponse> => {
-    const params: Record<string, string | undefined> = {
-      page: String(pagination.page),
-      pageSize: String(pagination.pageSize),
-      sortBy: pagination.sortBy,
-      sortDirection: pagination.sortDirection,
+    // Return empty list instead of crashing
+    return {
+      data: [],
+      pagination: {
+        total: 0,
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+        totalPages: 0,
+      },
     };
-
-    if (filters.search) {
-      params.search = filters.search;
-    }
-
-    if (filters.status) {
-      params.status = filters.status;
-    }
-
-    const response = await ffpClient.get(basePath, { params, signal });
-
-    return parseApiResponse(paginatedCustomerResponseSchema, response, {
-      method: 'GET',
-      path: basePath,
-    });
   },
 
-  /** Retrieves a single customer by ID. */
-  get: async (id: string): Promise<CustomerDetailResponse> => {
-    const path = `${basePath}/${id}`;
-    const response = await ffpClient.get(path);
-
-    return parseApiResponse(customerDetailResponseSchema, response, { method: 'GET', path });
+  get: async (_id: string): Promise<CustomerDetailResponse> => {
+    throw new Error('Customer API has been replaced — use location API');
   },
 
-  /** Creates a new customer organisation (tenant + customer record). */
-  create: async (
-    data: CreateCustomerInput
-  ): Promise<z.infer<typeof createCustomerResponseSchema>> => {
-    const path = '/admin/create-customer';
-    const response = await ffpClient.post(path, data);
-
-    return parseApiResponse(createCustomerResponseSchema, response, { method: 'POST', path });
+  create: async (_data: CreateCustomerInput): Promise<Record<string, unknown>> => {
+    throw new Error('Customer API has been replaced — use organisation API');
   },
 
-  /** Updates customer details (name, address, status). */
-  update: async (id: string, data: UpdateCustomerInput): Promise<CustomerDetailResponse> => {
-    const path = `${basePath}/${id}`;
-    const response = await ffpClient.put(path, data);
-
-    return parseApiResponse(customerDetailResponseSchema, response, { method: 'PUT', path });
+  update: async (_id: string, _data: UpdateCustomerInput): Promise<CustomerDetailResponse> => {
+    throw new Error('Customer API has been replaced — use location API');
   },
 };
-
-// Re-export types for consumers
-export type { CreateCustomerInput, UpdateCustomerInput, CustomerDetailResponse };

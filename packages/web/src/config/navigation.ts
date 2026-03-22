@@ -144,13 +144,14 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
   // System Admin navigation
   const systemAdminNavItems: NavItem[] = [
     {
-      key: RouteKey.ADMIN_CUSTOMERS,
-      label: 'Customers',
+      key: RouteKey.ADMIN_ORGANISATIONS,
+      label: 'Organisations',
       icon: 'Building',
-      path: routes[RouteKey.ADMIN_CUSTOMERS].path,
+      path: routes[RouteKey.ADMIN_ORGANISATIONS].path,
       roles: [SYSTEM_ADMIN],
       section: 'main',
     },
+    // Customers nav hidden — being replaced by Locations in FFP-523
     {
       key: RouteKey.ADMIN_USERS,
       label: 'Users',
