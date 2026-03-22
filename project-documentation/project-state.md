@@ -1,8 +1,8 @@
 # FFP - Project State
 
-**Last Updated**: 19th March 2026
+**Last Updated**: 22nd March 2026
 **Current EPIC**: FFP-6 Customer & User Onboarding
-**Sprint Status**: Sprint 10 - Customer & User Management (in progress)
+**Sprint Status**: Sprint 10.5 - Organisation & Location Refactor (next up)
 
 ---
 
@@ -65,7 +65,38 @@
 - **FFP-514**: Single `UserEditPage` for create and edit. Customer selector uses `FormSelect` loaded from customer list API. Email and customer read-only in edit mode. Handle 409 Conflict inline. Optional phone and date of birth fields.
 - **Tests deferred** per sprint convention.
 
-**End-of-sprint note**: Before merging `feature/sprint10` to `main`, run manual E2E verification via Claude Code (same approach as Sprint 9 — FFP-447). Cover full CRUD flows for customers and users, cascade behaviours, and Postman collection updates.
+**End-of-sprint note**: Before merging `feature/sprint10` to `main`, Sprint 10.5 must land first (organisation/location refactor).
+
+---
+
+## Next Up: Sprint 10.5 — Organisation & Location Refactor (~34 pts)
+
+**Branch**: `feature/sprint10.5` (branched from `feature/sprint10`)
+**Epic**: FFP-6 (MVP: Customer & User Onboarding)
+**Spec**: `.claude/plans/organisation-location-refactor.md`
+**Execution plan**: `.claude/plans/sprint-10.5-execution-plan.md`
+
+**Purpose**: Sprint 10 built customer and user management with a 1:1 tenant-to-customer model. Sprint 10.5 corrects this to support multi-location businesses: one organisation (formerly tenant) can have many locations (formerly customers). This is a structural refactor that must land before merging Sprint 10 to main.
+
+**What changes**: Tables renamed (`tenants` → `organisations`, `customers` → `locations`), columns/enums/indexes/RLS all updated, backend services split (`createCustomer` → `createOrganisation` + `createLocation`), new API endpoints, frontend pages renamed, documentation updated.
+
+### Execution Order
+
+| Phase | Key     | Summary                                     | Layer    | Pts | Status |
+| ----- | ------- | ------------------------------------------- | -------- | --- | ------ |
+| 1     | FFP-519 | DB migration — rename tables/columns/RLS    | Database | 8   | To Do  |
+| 2     | FFP-520 | Backend service split + renames (~28 files) | Backend  | 8   | To Do  |
+| 3     | FFP-521 | Lambda handlers + API routes                | Backend  | 5   | To Do  |
+| 4     | FFP-522 | Organisation list and create/edit pages     | Frontend | 5   | To Do  |
+| 5     | FFP-523 | Rename customer → location pages + users    | Frontend | 5   | To Do  |
+| 6     | FFP-524 | Documentation cleanup + E2E smoke test      | Docs     | 3   | To Do  |
+
+**Key decisions**:
+
+- Strictly sequential — each story depends on the previous (FFP-522/523 can theoretically parallel but share nav/route files)
+- Cognito attributes unchanged — code aliases them (`ORGANISATION_ID: 'custom:tenantId'`)
+- Each story has a Claude Code verification subtask as a handoff gate
+- Merge strategy: `feature/sprint10.5` → `feature/sprint10` → `main`
 
 ---
 
