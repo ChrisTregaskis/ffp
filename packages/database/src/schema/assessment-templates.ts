@@ -41,11 +41,6 @@ export const assessmentTemplates = pgTable(
   ]
 );
 
-/**
- * Relations definition for assessment templates
- * - May have a creator (user who created the template)
- * - Has many template questions (via join table)
- */
 export const assessmentTemplatesRelations = relations(assessmentTemplates, ({ one, many }) => ({
   createdByUser: one(users, {
     fields: [assessmentTemplates.createdBy],
@@ -55,9 +50,6 @@ export const assessmentTemplatesRelations = relations(assessmentTemplates, ({ on
 }));
 
 export const insertAssessmentTemplateSchema = createInsertSchema(assessmentTemplates);
-
 export const selectAssessmentTemplateSchema = createSelectSchema(assessmentTemplates);
-
 export type AssessmentTemplateRecord = typeof assessmentTemplates.$inferSelect;
-
 export type NewAssessmentTemplate = typeof assessmentTemplates.$inferInsert;

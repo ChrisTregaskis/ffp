@@ -69,7 +69,7 @@
 
 ---
 
-## Next Up: Sprint 10.5 — Organisation & Location Refactor (~34 pts)
+## Active: Sprint 10.5 — Organisation & Location Refactor (~34 pts)
 
 **Branch**: `feature/sprint10.5` (branched from `feature/sprint10`)
 **Epic**: FFP-6 (MVP: Customer & User Onboarding)
@@ -97,6 +97,29 @@
 - Cognito attributes unchanged — code aliases them (`ORGANISATION_ID: 'custom:tenantId'`)
 - Each story has a Claude Code verification subtask as a handoff gate
 - Merge strategy: `feature/sprint10.5` → `feature/sprint10` → `main`
+
+### Active Story: FFP-519 — DB Migration (8 pts)
+
+**Goal**: Rename all database tables, columns, enums, and indexes from tenant/customer to organisation/location terminology. Add status column to organisations.
+
+**Sub-task execution order** (single branch):
+
+| Order | Key     | Summary                                                     | Status |
+| ----- | ------- | ----------------------------------------------------------- | ------ |
+| 1     | FFP-531 | Create migration SQL — renames + status column              | Done   |
+| 2     | FFP-532 | Update Drizzle schema files — organisations.ts/locations.ts | Done   |
+| 3     | FFP-533 | Update RLS policies/helpers — new names and GUC variable    | Done   |
+| 4     | FFP-525 | Verify DB migration + RLS integrity (Claude Code handoff)   | To Do  |
+
+**Tables affected by column rename** (`tenant_id` → `organisation_id`, `customer_id` → `location_id`):
+`users`, `locations` (formerly customers), `programmes`, `programme_phases`, `process_jobs`, `user_assessments`, `user_assessment_answers`
+
+**Key changes**:
+
+- Enums: `tenant_type` → `organisation_type`, `customer_status` → `location_status`, new `organisation_status`
+- RLS GUC: `app.tenant_id` → `app.organisation_id`
+- Constants: `tenant.constants.ts` → `organisation.constants.ts`, `customer.constants.ts` → `location.constants.ts`
+- Tests: All integration and RLS tests updated for new table/column names
 
 ---
 

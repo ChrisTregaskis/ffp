@@ -46,43 +46,43 @@ const escapeLiteral = (value: string): string => {
 /**
  * Set RLS context variables for multi-tenant isolation
  *
- * Sets the app.tenant_id session variable that RLS policies use to filter queries.
+ * Sets the app.organisation_id session variable that RLS policies use to filter queries.
  * Optionally sets app.user_id for user-specific operations.
  *
  * @param db - Drizzle database instance or transaction
- * @param tenantId - Tenant UUID for RLS filtering (required)
+ * @param organisationId - Organisation UUID for RLS filtering (required)
  * @param userId - Optional user UUID for user-specific operations
  *
  * @example
  * ```typescript
- * // Set tenant context only
- * await setRLSContext(db, tenantId);
+ * // Set organisation context only
+ * await setRLSContext(db, organisationId);
  *
- * // Set both tenant and user context
- * await setRLSContext(db, tenantId, userId);
+ * // Set both organisation and user context
+ * await setRLSContext(db, organisationId, userId);
  * ```
  *
- * @throws {Error} If tenantId is not provided or invalid
+ * @throws {Error} If organisationId is not provided or invalid
  */
 export const setRLSContext = async (
   db: NodePgDatabase<any>,
-  tenantId: string,
+  organisationId: string,
   userId?: string
 ): Promise<void> => {
-  if (!tenantId) {
-    throw new Error('tenantId is required for RLS context');
+  if (!organisationId) {
+    throw new Error('organisationId is required for RLS context');
   }
 
   // Validate UUID format to prevent SQL injection
-  validateUUID(tenantId, 'tenantId');
+  validateUUID(organisationId, 'organisationId');
 
-  // Set tenant_id context variable (required for RLS filtering)
+  // Set organisation_id context variable (required for RLS filtering)
   // Note: PostgreSQL's SET command doesn't support parameterised queries ($1, $2, etc.)
   // We use sql.raw() with multiple layers of defence:
   // 1. UUID format validation (only allows hexadecimal digits and hyphens)
   // 2. SQL escaping (escape single quotes using PostgreSQL standard)
-  const escapedTenantId = escapeLiteral(tenantId);
-  await db.execute(sql.raw(`SET app.tenant_id = '${escapedTenantId}'`));
+  const escapedOrganisationId = escapeLiteral(organisationId);
+  await db.execute(sql.raw(`SET app.organisation_id = '${escapedOrganisationId}'`));
 
   // Optionally set user_id context variable
   if (userId) {
@@ -98,52 +98,52 @@ export const setRLSContext = async (
  * Wraps the callback in a database transaction and automatically sets
  * the RLS context variables before executing the callback function.
  * This ensures all queries within the callback are properly filtered
- * by the tenant boundary.
+ * by the organisation boundary.
  *
  * @param db - Drizzle database instance
- * @param tenantId - Tenant UUID for RLS filtering (required)
+ * @param organisationId - Organisation UUID for RLS filtering (required)
  * @param userId - Optional user UUID for user-specific operations
  * @param callback - Function to execute within RLS context
  * @returns Result of callback function
  *
  * @example
  * ```typescript
- * // Query users within tenant context
- * const tenantUsers = await withRLS(db, tenantId, undefined, async (tx) => {
+ * // Query users within organisation context
+ * const orgUsers = await withRLS(db, organisationId, undefined, async (tx) => {
  *   return await tx.query.users.findMany();
  * });
  *
- * // Create a user within tenant and user context
- * const newUser = await withRLS(db, tenantId, userId, async (tx) => {
+ * // Create a user within organisation and user context
+ * const newUser = await withRLS(db, organisationId, userId, async (tx) => {
  *   return await tx.insert(users).values({
  *     email: 'user@example.com',
- *     tenantId: tenantId,
+ *     organisationId: organisationId,
  *     // ... other fields
  *   });
  * });
  * ```
  *
- * @throws {Error} If tenantId is not provided or callback fails
+ * @throws {Error} If organisationId is not provided or callback fails
  */
 export const withRLS = async <T>(
   db: NodePgDatabase<any>,
-  tenantId: string,
+  organisationId: string,
   userId: string | undefined,
   callback: (tx: NodePgDatabase<any>) => Promise<T>
 ): Promise<T> => {
-  if (!tenantId) {
-    throw new Error('tenantId is required for RLS context');
+  if (!organisationId) {
+    throw new Error('organisationId is required for RLS context');
   }
 
   // Validate UUID formats early (defence in depth)
-  validateUUID(tenantId, 'tenantId');
+  validateUUID(organisationId, 'organisationId');
   if (userId) {
     validateUUID(userId, 'userId');
   }
 
   return await db.transaction(async (tx) => {
     // Set RLS context at start of transaction
-    await setRLSContext(tx, tenantId, userId);
+    await setRLSContext(tx, organisationId, userId);
 
     // Execute callback with transaction that has RLS context set
     return await callback(tx);
@@ -151,11 +151,11 @@ export const withRLS = async <T>(
 };
 
 /**
- * Set admin context to bypass tenant-scoped RLS policies
+ * Set admin context to bypass organisation-scoped RLS policies
  *
  * Sets `app.is_admin = 'true'` which activates the `admin_bypass` permissive
- * policies on customers and users tables. This allows system_admin queries
- * to operate cross-tenant without disabling RLS entirely.
+ * policies on locations and users tables. This allows system_admin queries
+ * to operate cross-organisation without disabling RLS entirely.
  *
  * Must be called within a transaction. The setting is automatically cleared
  * when the transaction ends.
@@ -164,9 +164,9 @@ export const withRLS = async <T>(
  *
  * @example
  * ```typescript
- * const customers = await db.transaction(async (tx) => {
+ * const locations = await db.transaction(async (tx) => {
  *   await setAdminContext(tx);
- *   return await tx.select().from(customers);
+ *   return await tx.select().from(locations);
  * });
  * ```
  */
@@ -178,8 +178,8 @@ export const setAdminContext = async (tx: NodePgDatabase<any>): Promise<void> =>
  * Execute a callback within a transaction with admin bypass context
  *
  * Convenience wrapper that sets `app.is_admin = 'true'` and executes
- * the callback. All queries within the callback will bypass tenant
- * isolation on tables with admin_bypass policies (customers, users).
+ * the callback. All queries within the callback will bypass organisation
+ * isolation on tables with admin_bypass policies (locations, users).
  *
  * @param db - Drizzle database instance
  * @param callback - Function to execute within admin context
@@ -187,8 +187,8 @@ export const setAdminContext = async (tx: NodePgDatabase<any>): Promise<void> =>
  *
  * @example
  * ```typescript
- * const allCustomers = await withAdminContext(db, async (tx) => {
- *   return await tx.select().from(customers);
+ * const allLocations = await withAdminContext(db, async (tx) => {
+ *   return await tx.select().from(locations);
  * });
  * ```
  */

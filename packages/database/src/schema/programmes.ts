@@ -11,7 +11,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { relations } from 'drizzle-orm';
-import { tenants } from './tenants';
+import { organisations } from './organisations';
 import { users } from './users';
 import { programmeTemplates } from './programme-templates';
 import { PROGRAMME_STATUSES } from '../constants/programme.constants';
@@ -25,7 +25,7 @@ export const programmeStatusEnum = pgEnum('programme_status', [...PROGRAMME_STAT
  * Each programme is linked to a user and references the template used for generation.
  *
  * **Indexes optimised for common queries:**
- * - tenant_user: Find all programmes for a user within a tenant
+ * - organisation_user: Find all programmes for a user within an organisation
  * - status: Filter by programme status (e.g., find all active)
  * - template: Find programmes generated from a specific template
  */
@@ -33,9 +33,9 @@ export const programmes = pgTable(
   'programmes',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    tenantId: uuid('tenant_id')
+    organisationId: uuid('organisation_id')
       .notNull()
-      .references(() => tenants.id, { onDelete: 'cascade' }),
+      .references(() => organisations.id, { onDelete: 'cascade' }),
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
@@ -70,24 +70,16 @@ export const programmes = pgTable(
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => [
-    index('idx_programmes_tenant_user').on(table.tenantId, table.userId),
+    index('idx_programmes_organisation_user').on(table.organisationId, table.userId),
     index('idx_programmes_status').on(table.status),
     index('idx_programmes_template').on(table.programmeTemplateId),
   ]
 );
 
-/**
- * Relations definition for programmes
- * - Belongs to a tenant (for RLS isolation)
- * - Belongs to a user
- * - References a programme template
- * - Self-referential: may be replaced by another programme
- * - Has many programme phases
- */
 export const programmesRelations = relations(programmes, ({ one }) => ({
-  tenant: one(tenants, {
-    fields: [programmes.tenantId],
-    references: [tenants.id],
+  organisation: one(organisations, {
+    fields: [programmes.organisationId],
+    references: [organisations.id],
   }),
   user: one(users, {
     fields: [programmes.userId],

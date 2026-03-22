@@ -17,7 +17,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { getDb, closeDb } from '../src/client';
-import { users, tenants, customers } from '../src/schema';
+import { users, organisations, locations } from '../src/schema';
 import { withRLS } from '../src/lib/rls';
 import { eq, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
@@ -41,10 +41,10 @@ describe('Drizzle Integration Tests', () => {
     // This ensures no leftover data from manual testing or seed scripts interferes
     await db.execute(sql`TRUNCATE TABLE user_assessments CASCADE`);
     await db.execute(sql`TRUNCATE TABLE users CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE customers CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE locations CASCADE`);
     await db.execute(sql`TRUNCATE TABLE assessment_flows CASCADE`);
     await db.execute(sql`TRUNCATE TABLE process_jobs CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE tenants CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE organisations CASCADE`);
   });
 
   afterAll(async () => {
@@ -58,104 +58,104 @@ describe('Drizzle Integration Tests', () => {
     // Order respects FK constraints (CASCADE handles dependencies)
     await db.execute(sql`TRUNCATE TABLE user_assessments CASCADE`);
     await db.execute(sql`TRUNCATE TABLE users CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE customers CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE locations CASCADE`);
     await db.execute(sql`TRUNCATE TABLE assessment_flows CASCADE`);
     await db.execute(sql`TRUNCATE TABLE process_jobs CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE tenants CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE organisations CASCADE`);
   });
 
   describe('Basic CRUD Operations', () => {
-    it('should create and query tenant successfully', async () => {
-      const tenantId = randomUUID();
+    it('should create and query organisation successfully', async () => {
+      const orgId = randomUUID();
 
-      // Use withRLS to set context and create tenant
-      const tenant = await withRLS(db, tenantId, undefined, async (tx) => {
-        const [newTenant] = await tx
-          .insert(tenants)
+      // Use withRLS to set context and create organisation
+      const org = await withRLS(db, orgId, undefined, async (tx) => {
+        const [newOrg] = await tx
+          .insert(organisations)
           .values({
-            id: tenantId,
+            id: orgId,
             type: 'individual',
-            name: 'Test Tenant',
+            name: 'Test Organisation',
             settings: { theme: 'light' },
           })
           .returning();
 
-        return newTenant;
+        return newOrg;
       });
 
-      expect(tenant).toBeDefined();
-      expect(tenant.id).toBe(tenantId);
-      expect(tenant.name).toBe('Test Tenant');
-      expect(tenant.type).toBe('individual');
+      expect(org).toBeDefined();
+      expect(org.id).toBe(orgId);
+      expect(org.name).toBe('Test Organisation');
+      expect(org.type).toBe('individual');
 
       // Query it back
-      const queriedTenant = await withRLS(db, tenantId, undefined, async (tx) => {
-        const [result] = await tx.select().from(tenants).where(eq(tenants.id, tenantId));
+      const queriedOrg = await withRLS(db, orgId, undefined, async (tx) => {
+        const [result] = await tx.select().from(organisations).where(eq(organisations.id, orgId));
 
         return result;
       });
 
-      expect(queriedTenant).toBeDefined();
-      expect(queriedTenant.name).toBe('Test Tenant');
+      expect(queriedOrg).toBeDefined();
+      expect(queriedOrg.name).toBe('Test Organisation');
     });
 
-    it('should create and query customer successfully', async () => {
-      const tenantId = randomUUID();
+    it('should create and query location successfully', async () => {
+      const orgId = randomUUID();
 
-      // Create tenant and customer in transaction
-      const { customer } = await withRLS(db, tenantId, undefined, async (tx) => {
-        // Create tenant first
-        const [newTenant] = await tx
-          .insert(tenants)
+      // Create organisation and location in transaction
+      const { location } = await withRLS(db, orgId, undefined, async (tx) => {
+        // Create organisation first
+        const [newOrg] = await tx
+          .insert(organisations)
           .values({
-            id: tenantId,
+            id: orgId,
             type: 'business',
-            name: 'Business Tenant',
+            name: 'Business Organisation',
           })
           .returning();
 
-        // Create customer
-        const [newCustomer] = await tx
-          .insert(customers)
+        // Create location
+        const [newLocation] = await tx
+          .insert(locations)
           .values({
-            tenantId: tenantId,
-            name: 'Test Customer',
+            organisationId: orgId,
+            name: 'Test Location',
             accountCode: 'TEST-001',
             status: 'active',
           })
           .returning();
 
-        return { tenant: newTenant, customer: newCustomer };
+        return { organisation: newOrg, location: newLocation };
       });
 
-      expect(customer).toBeDefined();
-      expect(customer.tenantId).toBe(tenantId);
-      expect(customer.name).toBe('Test Customer');
+      expect(location).toBeDefined();
+      expect(location.organisationId).toBe(orgId);
+      expect(location.name).toBe('Test Location');
 
       // Query it back
-      const queriedCustomer = await withRLS(db, tenantId, undefined, async (tx) => {
-        const [result] = await tx.select().from(customers).where(eq(customers.id, customer.id));
+      const queriedLocation = await withRLS(db, orgId, undefined, async (tx) => {
+        const [result] = await tx.select().from(locations).where(eq(locations.id, location.id));
 
         return result;
       });
 
-      expect(queriedCustomer).toBeDefined();
-      expect(queriedCustomer.accountCode).toBe('TEST-001');
+      expect(queriedLocation).toBeDefined();
+      expect(queriedLocation.accountCode).toBe('TEST-001');
     });
 
     it('should create and query user successfully', async () => {
-      const tenantId = randomUUID();
+      const orgId = randomUUID();
       const userId = randomUUID();
 
-      // Create tenant and user
-      const { user } = await withRLS(db, tenantId, undefined, async (tx) => {
-        // Create tenant
-        const [newTenant] = await tx
-          .insert(tenants)
+      // Create organisation and user
+      const { user } = await withRLS(db, orgId, undefined, async (tx) => {
+        // Create organisation
+        const [newOrg] = await tx
+          .insert(organisations)
           .values({
-            id: tenantId,
+            id: orgId,
             type: 'individual',
-            name: 'Test Tenant',
+            name: 'Test Organisation',
           })
           .returning();
 
@@ -164,7 +164,7 @@ describe('Drizzle Integration Tests', () => {
           .insert(users)
           .values({
             id: userId,
-            tenantId: tenantId,
+            organisationId: orgId,
             email: 'test@example.com',
             cognitoSub: 'cognito-123',
             firstName: 'John',
@@ -173,7 +173,7 @@ describe('Drizzle Integration Tests', () => {
           })
           .returning();
 
-        return { tenant: newTenant, user: newUser };
+        return { organisation: newOrg, user: newUser };
       });
 
       expect(user).toBeDefined();
@@ -181,7 +181,7 @@ describe('Drizzle Integration Tests', () => {
       expect(user.email).toBe('test@example.com');
 
       // Query it back
-      const queriedUser = await withRLS(db, tenantId, undefined, async (tx) => {
+      const queriedUser = await withRLS(db, orgId, undefined, async (tx) => {
         const [result] = await tx.select().from(users).where(eq(users.id, userId));
 
         return result;
@@ -191,26 +191,29 @@ describe('Drizzle Integration Tests', () => {
       expect(queriedUser.firstName).toBe('John');
     });
 
-    it('should update tenant successfully', async () => {
-      const tenantId = randomUUID();
+    it('should update organisation successfully', async () => {
+      const orgId = randomUUID();
 
-      // Create tenant
-      await withRLS(db, tenantId, undefined, async (tx) => {
-        await tx.insert(tenants).values({
-          id: tenantId,
+      // Create organisation
+      await withRLS(db, orgId, undefined, async (tx) => {
+        await tx.insert(organisations).values({
+          id: orgId,
           type: 'individual',
           name: 'Original Name',
         });
       });
 
-      // Update tenant
-      await withRLS(db, tenantId, undefined, async (tx) => {
-        await tx.update(tenants).set({ name: 'Updated Name' }).where(eq(tenants.id, tenantId));
+      // Update organisation
+      await withRLS(db, orgId, undefined, async (tx) => {
+        await tx
+          .update(organisations)
+          .set({ name: 'Updated Name' })
+          .where(eq(organisations.id, orgId));
       });
 
       // Verify update
-      const updated = await withRLS(db, tenantId, undefined, async (tx) => {
-        const [result] = await tx.select().from(tenants).where(eq(tenants.id, tenantId));
+      const updated = await withRLS(db, orgId, undefined, async (tx) => {
+        const [result] = await tx.select().from(organisations).where(eq(organisations.id, orgId));
 
         return result;
       });
@@ -218,38 +221,38 @@ describe('Drizzle Integration Tests', () => {
       expect(updated.name).toBe('Updated Name');
     });
 
-    it('should delete customer successfully', async () => {
-      const tenantId = randomUUID();
+    it('should delete location successfully', async () => {
+      const orgId = randomUUID();
 
-      // Create tenant and customer
-      const customerId = await withRLS(db, tenantId, undefined, async (tx) => {
-        await tx.insert(tenants).values({
-          id: tenantId,
+      // Create organisation and location
+      const locationId = await withRLS(db, orgId, undefined, async (tx) => {
+        await tx.insert(organisations).values({
+          id: orgId,
           type: 'business',
-          name: 'Test Tenant',
+          name: 'Test Organisation',
         });
 
-        const [customer] = await tx
-          .insert(customers)
+        const [location] = await tx
+          .insert(locations)
           .values({
-            tenantId: tenantId,
-            name: 'Test Customer',
+            organisationId: orgId,
+            name: 'Test Location',
             accountCode: 'DEL-001',
             status: 'active',
           })
           .returning();
 
-        return customer.id;
+        return location.id;
       });
 
-      // Delete customer
-      await withRLS(db, tenantId, undefined, async (tx) => {
-        await tx.delete(customers).where(eq(customers.id, customerId));
+      // Delete location
+      await withRLS(db, orgId, undefined, async (tx) => {
+        await tx.delete(locations).where(eq(locations.id, locationId));
       });
 
       // Verify deletion
-      const deleted = await withRLS(db, tenantId, undefined, async (tx) => {
-        const result = await tx.select().from(customers).where(eq(customers.id, customerId));
+      const deleted = await withRLS(db, orgId, undefined, async (tx) => {
+        const result = await tx.select().from(locations).where(eq(locations.id, locationId));
 
         return result;
       });
@@ -260,12 +263,12 @@ describe('Drizzle Integration Tests', () => {
 
   describe('Connection Pool Behaviour', () => {
     it('should reuse database connections from pool', async () => {
-      const tenantId = randomUUID();
+      const orgId = randomUUID();
 
-      // Create tenant first
-      await withRLS(db, tenantId, undefined, async (tx) => {
-        await tx.insert(tenants).values({
-          id: tenantId,
+      // Create organisation first
+      await withRLS(db, orgId, undefined, async (tx) => {
+        await tx.insert(organisations).values({
+          id: orgId,
           type: 'individual',
           name: 'Pool Test',
         });
@@ -275,8 +278,8 @@ describe('Drizzle Integration Tests', () => {
       const queries = Array(5)
         .fill(null)
         .map(() =>
-          withRLS(db, tenantId, undefined, async (tx) => {
-            return await tx.select().from(tenants).limit(1);
+          withRLS(db, orgId, undefined, async (tx) => {
+            return await tx.select().from(organisations).limit(1);
           })
         );
 
@@ -290,12 +293,12 @@ describe('Drizzle Integration Tests', () => {
     });
 
     it('should handle concurrent inserts correctly', async () => {
-      const tenantId = randomUUID();
+      const orgId = randomUUID();
 
-      // Create tenant first
-      await withRLS(db, tenantId, undefined, async (tx) => {
-        await tx.insert(tenants).values({
-          id: tenantId,
+      // Create organisation first
+      await withRLS(db, orgId, undefined, async (tx) => {
+        await tx.insert(organisations).values({
+          id: orgId,
           type: 'individual',
           name: 'Concurrent Test',
         });
@@ -305,12 +308,12 @@ describe('Drizzle Integration Tests', () => {
       const userPromises = Array(5)
         .fill(null)
         .map((_, i) =>
-          withRLS(db, tenantId, undefined, async (tx) => {
+          withRLS(db, orgId, undefined, async (tx) => {
             const [user] = await tx
               .insert(users)
               .values({
                 id: randomUUID(),
-                tenantId: tenantId,
+                organisationId: orgId,
                 email: `user${i}@test.com`,
                 cognitoSub: `cognito-${i}`,
                 firstName: `User${i}`,
@@ -334,16 +337,16 @@ describe('Drizzle Integration Tests', () => {
 
   describe('Database Constraints', () => {
     it('should enforce foreign key constraints', async () => {
-      const invalidTenantId = randomUUID();
+      const invalidOrgId = randomUUID();
       const userId = randomUUID();
 
-      // Try to create user without valid tenant (should fail)
+      // Try to create user without valid organisation (should fail)
       await expect(async () => {
         // Note: We still need to set RLS context, but the FK will fail
-        await withRLS(db, invalidTenantId, undefined, async (tx) => {
+        await withRLS(db, invalidOrgId, undefined, async (tx) => {
           await tx.insert(users).values({
             id: userId,
-            tenantId: invalidTenantId, // Non-existent tenant
+            organisationId: invalidOrgId, // Non-existent organisation
             email: 'test@example.com',
             cognitoSub: 'cognito-123',
             firstName: 'John',
@@ -355,19 +358,19 @@ describe('Drizzle Integration Tests', () => {
     });
 
     it('should enforce unique email constraint', async () => {
-      const tenantId = randomUUID();
+      const orgId = randomUUID();
 
-      // Create tenant and first user
-      await withRLS(db, tenantId, undefined, async (tx) => {
-        await tx.insert(tenants).values({
-          id: tenantId,
+      // Create organisation and first user
+      await withRLS(db, orgId, undefined, async (tx) => {
+        await tx.insert(organisations).values({
+          id: orgId,
           type: 'individual',
-          name: 'Test Tenant',
+          name: 'Test Organisation',
         });
 
         await tx.insert(users).values({
           id: randomUUID(),
-          tenantId: tenantId,
+          organisationId: orgId,
           email: 'duplicate@test.com',
           cognitoSub: 'cognito-1',
           firstName: 'User',
@@ -378,10 +381,10 @@ describe('Drizzle Integration Tests', () => {
 
       // Try to create second user with same email (should fail)
       await expect(async () => {
-        await withRLS(db, tenantId, undefined, async (tx) => {
+        await withRLS(db, orgId, undefined, async (tx) => {
           await tx.insert(users).values({
             id: randomUUID(),
-            tenantId: tenantId,
+            organisationId: orgId,
             email: 'duplicate@test.com', // Duplicate
             cognitoSub: 'cognito-2',
             firstName: 'User',
@@ -393,30 +396,30 @@ describe('Drizzle Integration Tests', () => {
     });
 
     it('should enforce unique account code constraint', async () => {
-      const tenantId = randomUUID();
+      const orgId = randomUUID();
 
-      // Create tenant and first customer
-      await withRLS(db, tenantId, undefined, async (tx) => {
-        await tx.insert(tenants).values({
-          id: tenantId,
+      // Create organisation and first location
+      await withRLS(db, orgId, undefined, async (tx) => {
+        await tx.insert(organisations).values({
+          id: orgId,
           type: 'business',
-          name: 'Test Tenant',
+          name: 'Test Organisation',
         });
 
-        await tx.insert(customers).values({
-          tenantId: tenantId,
-          name: 'Customer One',
+        await tx.insert(locations).values({
+          organisationId: orgId,
+          name: 'Location One',
           accountCode: 'DUPLICATE',
           status: 'active',
         });
       });
 
-      // Try to create second customer with same account code (should fail)
+      // Try to create second location with same account code (should fail)
       await expect(async () => {
-        await withRLS(db, tenantId, undefined, async (tx) => {
-          await tx.insert(customers).values({
-            tenantId: tenantId,
-            name: 'Customer Two',
+        await withRLS(db, orgId, undefined, async (tx) => {
+          await tx.insert(locations).values({
+            organisationId: orgId,
+            name: 'Location Two',
             accountCode: 'DUPLICATE', // Duplicate
             status: 'active',
           });
@@ -424,21 +427,21 @@ describe('Drizzle Integration Tests', () => {
       }).rejects.toThrow();
     });
 
-    it('should cascade delete when tenant is deleted', async () => {
-      const tenantId = randomUUID();
+    it('should cascade delete when organisation is deleted', async () => {
+      const orgId = randomUUID();
       const userId = randomUUID();
 
-      // Create tenant and user
-      await withRLS(db, tenantId, undefined, async (tx) => {
-        await tx.insert(tenants).values({
-          id: tenantId,
+      // Create organisation and user
+      await withRLS(db, orgId, undefined, async (tx) => {
+        await tx.insert(organisations).values({
+          id: orgId,
           type: 'individual',
-          name: 'Test Tenant',
+          name: 'Test Organisation',
         });
 
         await tx.insert(users).values({
           id: userId,
-          tenantId: tenantId,
+          organisationId: orgId,
           email: 'cascade@test.com',
           cognitoSub: 'cognito-cascade',
           firstName: 'Cascade',
@@ -447,13 +450,13 @@ describe('Drizzle Integration Tests', () => {
         });
       });
 
-      // Delete tenant (should cascade to user)
-      await withRLS(db, tenantId, undefined, async (tx) => {
-        await tx.delete(tenants).where(eq(tenants.id, tenantId));
+      // Delete organisation (should cascade to user)
+      await withRLS(db, orgId, undefined, async (tx) => {
+        await tx.delete(organisations).where(eq(organisations.id, orgId));
       });
 
       // Verify user was also deleted
-      // Note: After tenant deletion, we can't use RLS context, so use raw query
+      // Note: After organisation deletion, we can't use RLS context, so use raw query
       const [userCheck] = await db.select().from(users).where(eq(users.id, userId));
 
       expect(userCheck).toBeUndefined();
@@ -462,23 +465,23 @@ describe('Drizzle Integration Tests', () => {
 
   describe('Transactions', () => {
     it('should handle transactions correctly', async () => {
-      const tenantId = randomUUID();
+      const orgId = randomUUID();
 
       // Transaction using withRLS (which uses db.transaction internally)
-      await withRLS(db, tenantId, undefined, async (tx) => {
-        // Create tenant
-        await tx.insert(tenants).values({
-          id: tenantId,
+      await withRLS(db, orgId, undefined, async (tx) => {
+        // Create organisation
+        await tx.insert(organisations).values({
+          id: orgId,
           type: 'business',
           name: 'Transaction Test',
         });
 
-        // Create customer
-        const [customer] = await tx
-          .insert(customers)
+        // Create location
+        const [location] = await tx
+          .insert(locations)
           .values({
-            tenantId: tenantId,
-            name: 'Test Customer',
+            organisationId: orgId,
+            name: 'Test Location',
             accountCode: 'TXN-001',
             status: 'active',
           })
@@ -487,8 +490,8 @@ describe('Drizzle Integration Tests', () => {
         // Create user
         await tx.insert(users).values({
           id: randomUUID(),
-          tenantId: tenantId,
-          customerId: customer.id,
+          organisationId: orgId,
+          locationId: location.id,
           email: 'txn@test.com',
           cognitoSub: 'cognito-txn',
           firstName: 'Transaction',
@@ -498,7 +501,7 @@ describe('Drizzle Integration Tests', () => {
       });
 
       // Verify all data was inserted
-      const allUsers = await withRLS(db, tenantId, undefined, async (tx) => {
+      const allUsers = await withRLS(db, orgId, undefined, async (tx) => {
         return await tx.select().from(users);
       });
 
@@ -506,21 +509,21 @@ describe('Drizzle Integration Tests', () => {
     });
 
     it('should rollback transaction on error', async () => {
-      const tenantId = randomUUID();
+      const orgId = randomUUID();
 
       await expect(async () => {
-        await withRLS(db, tenantId, undefined, async (tx) => {
-          // Create tenant
-          await tx.insert(tenants).values({
-            id: tenantId,
+        await withRLS(db, orgId, undefined, async (tx) => {
+          // Create organisation
+          await tx.insert(organisations).values({
+            id: orgId,
             type: 'individual',
             name: 'Rollback Test',
           });
 
-          // Force an error (duplicate email won't work without existing user, so use invalid FK)
+          // Force an error (invalid FK - different organisation)
           await tx.insert(users).values({
             id: randomUUID(),
-            tenantId: randomUUID(), // Invalid FK - different tenant
+            organisationId: randomUUID(), // Invalid FK - different organisation
             email: 'rollback@test.com',
             cognitoSub: 'cognito-fail',
             firstName: 'Fail',
@@ -530,55 +533,55 @@ describe('Drizzle Integration Tests', () => {
         });
       }).rejects.toThrow();
 
-      // Verify tenant was NOT created (transaction rolled back)
-      // Use raw query since tenant doesn't exist
-      const [tenantCheck] = await db.select().from(tenants).where(eq(tenants.id, tenantId));
+      // Verify organisation was NOT created (transaction rolled back)
+      // Use raw query since organisation doesn't exist
+      const [orgCheck] = await db.select().from(organisations).where(eq(organisations.id, orgId));
 
-      expect(tenantCheck).toBeUndefined();
+      expect(orgCheck).toBeUndefined();
     });
 
     it('should support nested operations in transaction', async () => {
-      const tenantId = randomUUID();
+      const orgId = randomUUID();
 
-      const result = await withRLS(db, tenantId, undefined, async (tx) => {
-        // Create tenant
-        const [tenant] = await tx
-          .insert(tenants)
+      const result = await withRLS(db, orgId, undefined, async (tx) => {
+        // Create organisation
+        const [org] = await tx
+          .insert(organisations)
           .values({
-            id: tenantId,
+            id: orgId,
             type: 'business',
             name: 'Nested Test',
           })
           .returning();
 
-        // Create multiple customers
-        const [customer1] = await tx
-          .insert(customers)
+        // Create multiple locations
+        const [location1] = await tx
+          .insert(locations)
           .values({
-            tenantId: tenantId,
-            name: 'Customer 1',
+            organisationId: orgId,
+            name: 'Location 1',
             accountCode: 'NESTED-001',
             status: 'active',
           })
           .returning();
 
-        const [customer2] = await tx
-          .insert(customers)
+        const [location2] = await tx
+          .insert(locations)
           .values({
-            tenantId: tenantId,
-            name: 'Customer 2',
+            organisationId: orgId,
+            name: 'Location 2',
             accountCode: 'NESTED-002',
             status: 'active',
           })
           .returning();
 
-        // Create users for each customer
+        // Create users for each location
         const [user1] = await tx
           .insert(users)
           .values({
             id: randomUUID(),
-            tenantId: tenantId,
-            customerId: customer1.id,
+            organisationId: orgId,
+            locationId: location1.id,
             email: 'user1@nested.com',
             cognitoSub: 'cognito-nested-1',
             firstName: 'User',
@@ -591,8 +594,8 @@ describe('Drizzle Integration Tests', () => {
           .insert(users)
           .values({
             id: randomUUID(),
-            tenantId: tenantId,
-            customerId: customer2.id,
+            organisationId: orgId,
+            locationId: location2.id,
             email: 'user2@nested.com',
             cognitoSub: 'cognito-nested-2',
             firstName: 'User',
@@ -601,73 +604,72 @@ describe('Drizzle Integration Tests', () => {
           })
           .returning();
 
-        return { tenant, customers: [customer1, customer2], users: [user1, user2] };
+        return { organisation: org, locations: [location1, location2], users: [user1, user2] };
       });
 
-      expect(result.tenant).toBeDefined();
-      expect(result.customers).toHaveLength(2);
+      expect(result.organisation).toBeDefined();
+      expect(result.locations).toHaveLength(2);
       expect(result.users).toHaveLength(2);
     });
   });
 
   describe('Row-Level Security', () => {
-    it('should isolate data between tenants', async () => {
-      const tenant1Id = randomUUID();
-      const tenant2Id = randomUUID();
+    it('should isolate data between organisations', async () => {
+      const org1Id = randomUUID();
+      const org2Id = randomUUID();
 
-      // Create two separate tenants with users
-      // Use withRLS to properly enforce RLS policies during setup
-      await withRLS(db, tenant1Id, undefined, async (tx) => {
-        await tx.insert(tenants).values({
-          id: tenant1Id,
+      // Create two separate organisations with users
+      await withRLS(db, org1Id, undefined, async (tx) => {
+        await tx.insert(organisations).values({
+          id: org1Id,
           type: 'individual',
-          name: 'Tenant 1',
+          name: 'Organisation 1',
         });
 
         await tx.insert(users).values({
           id: randomUUID(),
-          tenantId: tenant1Id,
-          email: 'tenant1@test.com',
-          cognitoSub: 'cognito-tenant1',
-          firstName: 'Tenant',
+          organisationId: org1Id,
+          email: 'org1@test.com',
+          cognitoSub: 'cognito-org1',
+          firstName: 'Org',
           lastName: 'One',
           role: 'programme_user',
         });
       });
 
-      await withRLS(db, tenant2Id, undefined, async (tx) => {
-        await tx.insert(tenants).values({
-          id: tenant2Id,
+      await withRLS(db, org2Id, undefined, async (tx) => {
+        await tx.insert(organisations).values({
+          id: org2Id,
           type: 'individual',
-          name: 'Tenant 2',
+          name: 'Organisation 2',
         });
 
         await tx.insert(users).values({
           id: randomUUID(),
-          tenantId: tenant2Id,
-          email: 'tenant2@test.com',
-          cognitoSub: 'cognito-tenant2',
-          firstName: 'Tenant',
+          organisationId: org2Id,
+          email: 'org2@test.com',
+          cognitoSub: 'cognito-org2',
+          firstName: 'Org',
           lastName: 'Two',
           role: 'programme_user',
         });
       });
 
-      // Query as tenant 1 - should only see tenant 1's users
-      const tenant1Users = await withRLS(db, tenant1Id, undefined, async (tx) => {
+      // Query as organisation 1 - should only see organisation 1's users
+      const org1Users = await withRLS(db, org1Id, undefined, async (tx) => {
         return await tx.select().from(users);
       });
 
-      expect(tenant1Users).toHaveLength(1);
-      expect(tenant1Users[0].email).toBe('tenant1@test.com');
+      expect(org1Users).toHaveLength(1);
+      expect(org1Users[0].email).toBe('org1@test.com');
 
-      // Query as tenant 2 - should only see tenant 2's users
-      const tenant2Users = await withRLS(db, tenant2Id, undefined, async (tx) => {
+      // Query as organisation 2 - should only see organisation 2's users
+      const org2Users = await withRLS(db, org2Id, undefined, async (tx) => {
         return await tx.select().from(users);
       });
 
-      expect(tenant2Users).toHaveLength(1);
-      expect(tenant2Users[0].email).toBe('tenant2@test.com');
+      expect(org2Users).toHaveLength(1);
+      expect(org2Users[0].email).toBe('org2@test.com');
     });
   });
 });
