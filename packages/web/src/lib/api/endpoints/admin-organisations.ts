@@ -74,7 +74,7 @@ export const adminOrganisationsApi = {
   create: async (
     data: CreateOrganisationInput
   ): Promise<z.infer<typeof createOrganisationResponseSchema>> => {
-    const path = `${basePath}`;
+    const path = basePath;
     const response = await ffpClient.post(path, data);
 
     return parseApiResponse(createOrganisationResponseSchema, response, { method: 'POST', path });
