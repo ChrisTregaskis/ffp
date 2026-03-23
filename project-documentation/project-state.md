@@ -1,8 +1,41 @@
 # FFP - Project State
 
 **Last Updated**: 23rd March 2026
-**Current EPIC**: FFP-6 Customer & User Onboarding
-**Sprint Status**: Sprint 10 + 10.5 complete — merging to main
+**Current EPIC**: FFP-4 Programme Execution & Progress (discovery phase)
+**Sprint Status**: Sprint 10 + 10.5 complete on main. FFP-4 UX discovery in progress.
+
+---
+
+## In Progress: FFP-4 Programme Execution & Progress — UX Discovery
+
+**Branch**: `discovery/programme-execution-ux`
+**Status**: Discovery prototype complete — awaiting co-founder review before production build
+
+Conducted UX research across leading physio/fitness platforms and built interactive prototypes for the three core user-facing pages: dashboard, programme overview (vertical timeline), and session workout.
+
+**Prototype routes** (dev-only, no auth):
+- `/components/programme/dashboard` — user landing page
+- `/components/programme/overview` — timeline programme view with scroll-driven reveal
+- `/components/programme/session` — full-screen exercise execution
+
+**Key decisions made**:
+- Vertical timeline with scroll-driven animation for programme overview (not accordion)
+- Exercise-first session layout with collapsible sidebar
+- Dashboard order: Session → Phase → Programme (immediate to broad)
+- "Your Next Session" framing (not "Today's Session")
+- User-initiated rest timer (not auto-triggered)
+- Two-intent exit flow: pause vs done for today
+- Dark blue (`ffp-dark-blue`) for active states, solid colour badges throughout
+- Media container abstraction on session page (future CV integration)
+
+**Open questions**:
+- Progress page — may be redundant given dashboard + overview coverage. Reassessment CTA needs a home.
+- Rest days / session frequency — awaiting co-founder input
+- UX specialist review recommended for session workout page
+
+**Next steps**: Co-founder review of prototype → update Jira tickets → production build
+
+**Full details**: `.claude/research/programme/programme-execution-ux-research.md`
 
 ---
 
