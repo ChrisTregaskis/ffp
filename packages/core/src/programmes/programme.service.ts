@@ -3,7 +3,7 @@ import { eq, and } from 'drizzle-orm';
 import { userAssessments } from '@ffp/database/schema';
 
 import * as userAssessmentRepo from '../assessments/user-assessment.repository';
-import { getUserIdFromContext, type TenantContext } from '../lib/context';
+import { getUserIdFromContext, type OrganisationContext } from '../lib/context';
 import { withRLS } from '../lib/database';
 import { ForbiddenError, NotFoundError, ValidationError } from '../lib/errors';
 
@@ -21,7 +21,7 @@ import type { Programme, NewProgrammePhase } from './programme.repository';
 import type { Transaction } from '../lib/database';
 
 export interface GenerateProgrammeInput {
-  tenantId: string;
+  organisationId: string;
   /** User who completed the assessment */
   userId: string;
   /** Programme template slug from scoring result (e.g., 'gentle-mobility-programme') */
@@ -60,15 +60,15 @@ export async function generateProgramme(
   input: GenerateProgrammeInput,
   options: GenerateProgrammeOptions = {}
 ): Promise<GenerateProgrammeResult> {
-  const { tenantId, userId, recommendedTemplateSlug, replaceExisting } = input;
+  const { organisationId, userId, recommendedTemplateSlug, replaceExisting } = input;
   const { tx } = options;
 
   // Check for existing active programme
-  const existing = await findProgrammeByUserId(tenantId, userId, { tx });
+  const existing = await findProgrammeByUserId(organisationId, userId, { tx });
 
   if (existing && replaceExisting) {
     // Reassessment path — archive the old programme and create a new one below
-    await archiveProgramme(tenantId, existing.id, userId, { tx, reason: 'reassessment' });
+    await archiveProgramme(organisationId, existing.id, userId, { tx, reason: 'reassessment' });
   } else if (existing) {
     // Retake path — return the existing active programme
     return {
@@ -101,7 +101,7 @@ export async function generateProgramme(
   // Create programme from template, snapshotting structure metadata
   const programme = await createProgramme(
     {
-      tenantId,
+      organisationId,
       userId,
       programmeTemplateId: template.id,
       name: template.name,
@@ -116,19 +116,19 @@ export async function generateProgramme(
 
   if (phases.length > 0) {
     const phaseInputs: NewProgrammePhase[] = phases.map((phase) => ({
-      tenantId,
+      organisationId,
       programmeId: programme.id,
       templatePhaseId: phase.id,
       phaseNumber: phase.phaseNumber,
       name: phase.name,
     }));
 
-    await createProgrammePhases(tenantId, phaseInputs, { tx });
+    await createProgrammePhases(organisationId, phaseInputs, { tx });
   }
 
   // Link the archived programme to its replacement (if we archived one above)
   if (existing && replaceExisting) {
-    await setReplacementProgramme(tenantId, existing.id, programme.id, { tx });
+    await setReplacementProgramme(organisationId, existing.id, programme.id, { tx });
   }
 
   return {
@@ -139,10 +139,10 @@ export async function generateProgramme(
 }
 
 /** Fetch the current user's active programme, or null if none exists. */
-export async function getActiveProgramme(context: TenantContext): Promise<Programme | null> {
+export async function getActiveProgramme(context: OrganisationContext): Promise<Programme | null> {
   const userId = await getUserIdFromContext(context);
 
-  return await findProgrammeByUserId(context.tenantId, userId);
+  return await findProgrammeByUserId(context.organisationId, userId);
 }
 
 /**
@@ -155,14 +155,14 @@ export async function getActiveProgramme(context: TenantContext): Promise<Progra
  */
 export async function replaceProgramme(
   input: ReplaceProgrammeInput,
-  context: TenantContext
+  context: OrganisationContext
 ): Promise<ReplaceProgrammeResult> {
   const userId = await getUserIdFromContext(context);
-  const { tenantId } = context;
+  const { organisationId } = context;
 
   // Fetch the assessment to read its scores
   const assessment = await userAssessmentRepo.findUserAssessmentById(
-    tenantId,
+    organisationId,
     input.assessmentId,
     userId
   );
@@ -196,10 +196,10 @@ export async function replaceProgramme(
   }
 
   // Use a single transaction for the atomic archive + create + link
-  return await withRLS(tenantId, userId, async (tx) => {
+  return await withRLS(organisationId, userId, async (tx) => {
     const result = await generateProgramme(
       {
-        tenantId,
+        organisationId,
         userId,
         recommendedTemplateSlug: recommendedSlug,
         replaceExisting: true,

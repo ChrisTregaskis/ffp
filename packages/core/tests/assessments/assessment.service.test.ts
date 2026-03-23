@@ -17,7 +17,7 @@ import * as questionRepository from '../../src/questions/question.repository';
 import type { UserAssessmentAnswer } from '../../src/assessments/answer.repository';
 import type { AssessmentFlow, FlowStepWithConfig } from '../../src/assessments/flow.repository';
 import type { UserAssessment } from '../../src/assessments/user-assessment.repository';
-import type { TenantContext, UserActor } from '../../src/lib/context';
+import type { OrganisationContext, UserActor } from '../../src/lib/context';
 import type { QuestionWithConfig } from '../../src/questions/question.repository';
 
 type ContextModule = typeof contextModule;
@@ -59,15 +59,15 @@ const mockedJobQueueService = vi.mocked(jobQueueService);
 const mockedAnswerRepo = vi.mocked(answerRepository);
 const mockedQuestionRepo = vi.mocked(questionRepository);
 
-const createUserContext = (): TenantContext => ({
+const createUserContext = (): OrganisationContext => ({
   actor: {
     type: 'user',
     userId: randomUUID(),
     userRole: 'programme_user',
     email: 'test@example.com',
   } as UserActor,
-  tenantId: randomUUID(),
-  customerId: randomUUID(),
+  organisationId: randomUUID(),
+  locationId: randomUUID(),
   requestId: randomUUID(),
   timestamp: new Date(),
 });
@@ -94,7 +94,7 @@ describe('Assessment Service', () => {
       const databaseUserId = randomUUID();
       const mockAssessment: UserAssessment = {
         id: randomUUID(),
-        tenantId: context.tenantId,
+        organisationId: context.organisationId,
         userId: databaseUserId,
         flowId,
         currentStep: 1,
@@ -147,7 +147,7 @@ describe('Assessment Service', () => {
       const questionId = randomUUID();
       const existingAssessment: UserAssessment = {
         id: randomUUID(),
-        tenantId: context.tenantId,
+        organisationId: context.organisationId,
         userId: databaseUserId,
         flowId,
         currentStep: 3,
@@ -167,7 +167,7 @@ describe('Assessment Service', () => {
       const storedAnswers: UserAssessmentAnswer[] = [
         {
           id: randomUUID(),
-          tenantId: context.tenantId,
+          organisationId: context.organisationId,
           userAssessmentId: existingAssessment.id,
           questionId,
           answerValue: 4,
@@ -226,7 +226,7 @@ describe('Assessment Service', () => {
   describe('submitAssessment', () => {
     const createMockAssessment = (overrides: Partial<UserAssessment> = {}): UserAssessment => ({
       id: randomUUID(),
-      tenantId: randomUUID(),
+      organisationId: randomUUID(),
       userId: randomUUID(),
       flowId: randomUUID(),
       currentStep: 3,
@@ -350,10 +350,12 @@ describe('Assessment Service', () => {
     });
 
     beforeEach(() => {
-      mockedDatabaseModule.withRLS.mockImplementation(async (_tenantId, _userId, callback) => {
-        const mockTx = {} as Parameters<typeof callback>[0];
-        return await callback(mockTx);
-      });
+      mockedDatabaseModule.withRLS.mockImplementation(
+        async (_organisationId, _userId, callback) => {
+          const mockTx = {} as Parameters<typeof callback>[0];
+          return await callback(mockTx);
+        }
+      );
     });
 
     it('successfully submits assessment with merged answers and enqueues scoring job', async () => {
@@ -370,7 +372,7 @@ describe('Assessment Service', () => {
       const existingDbAnswers: UserAssessmentAnswer[] = [
         {
           id: randomUUID(),
-          tenantId: context.tenantId,
+          organisationId: context.organisationId,
           userAssessmentId: assessmentId,
           questionId: questionId1,
           answerValue: 3,
@@ -385,7 +387,7 @@ describe('Assessment Service', () => {
 
       const assessment = createMockAssessment({
         id: assessmentId,
-        tenantId: context.tenantId,
+        organisationId: context.organisationId,
         userId: databaseUserId,
         flowId,
         status: 'in_progress',
@@ -427,14 +429,14 @@ describe('Assessment Service', () => {
 
       // Verify answers saved via answerRepository
       expect(mockedAnswerRepo.saveAnswers).toHaveBeenCalledWith(
-        context.tenantId,
+        context.organisationId,
         assessmentId,
         expect.arrayContaining([expect.objectContaining({ questionId: questionId2 })]),
         expect.objectContaining({ tx: expect.anything() as unknown })
       );
 
       expect(mockedUserAssessmentRepo.transitionAssessmentStatus).toHaveBeenCalledWith(
-        context.tenantId,
+        context.organisationId,
         assessmentId,
         'submitted',
         expect.objectContaining({ tx: expect.anything() as unknown })
@@ -463,7 +465,7 @@ describe('Assessment Service', () => {
 
       const assessment = createMockAssessment({
         id: assessmentId,
-        tenantId: context.tenantId,
+        organisationId: context.organisationId,
         userId: databaseUserId,
         status: 'submitted',
         submittedAt: new Date(),
@@ -492,7 +494,7 @@ describe('Assessment Service', () => {
 
       const assessment = createMockAssessment({
         id: assessmentId,
-        tenantId: context.tenantId,
+        organisationId: context.organisationId,
         userId: databaseUserId,
         status: 'completed',
         completedAt: new Date(),
@@ -524,7 +526,7 @@ describe('Assessment Service', () => {
       const existingDbAnswers: UserAssessmentAnswer[] = [
         {
           id: randomUUID(),
-          tenantId: context.tenantId,
+          organisationId: context.organisationId,
           userAssessmentId: assessmentId,
           questionId: questionId1,
           answerValue: 3,
@@ -534,7 +536,7 @@ describe('Assessment Service', () => {
 
       const assessment = createMockAssessment({
         id: assessmentId,
-        tenantId: context.tenantId,
+        organisationId: context.organisationId,
         userId: databaseUserId,
         flowId,
         status: 'in_progress',
@@ -588,7 +590,7 @@ describe('Assessment Service', () => {
       const existingDbAnswers: UserAssessmentAnswer[] = [
         {
           id: randomUUID(),
-          tenantId: context.tenantId,
+          organisationId: context.organisationId,
           userAssessmentId: assessmentId,
           questionId: questionId1,
           answerValue: 7,
@@ -596,7 +598,7 @@ describe('Assessment Service', () => {
         },
         {
           id: randomUUID(),
-          tenantId: context.tenantId,
+          organisationId: context.organisationId,
           userAssessmentId: assessmentId,
           questionId: questionId2,
           answerValue: 3,
@@ -606,7 +608,7 @@ describe('Assessment Service', () => {
 
       const assessment = createMockAssessment({
         id: assessmentId,
-        tenantId: context.tenantId,
+        organisationId: context.organisationId,
         userId: databaseUserId,
         flowId,
         status: 'in_progress',
@@ -678,7 +680,7 @@ describe('Assessment Service', () => {
 
       const assessment = createMockAssessment({
         id: assessmentId,
-        tenantId: context.tenantId,
+        organisationId: context.organisationId,
         userId: databaseUserId,
         flowId,
         status: 'in_progress',
@@ -705,7 +707,7 @@ describe('Assessment Service', () => {
 
       const assessment = createMockAssessment({
         id: assessmentId,
-        tenantId: context.tenantId,
+        organisationId: context.organisationId,
         userId: databaseUserId,
         flowId,
         status: 'in_progress',
@@ -752,7 +754,7 @@ describe('Assessment Service', () => {
       const existingDbAnswers: UserAssessmentAnswer[] = [
         {
           id: randomUUID(),
-          tenantId: context.tenantId,
+          organisationId: context.organisationId,
           userAssessmentId: assessmentId,
           questionId: requiredQuestionId,
           answerValue: 5,
@@ -762,7 +764,7 @@ describe('Assessment Service', () => {
 
       const assessment = createMockAssessment({
         id: assessmentId,
-        tenantId: context.tenantId,
+        organisationId: context.organisationId,
         userId: databaseUserId,
         flowId,
         status: 'in_progress',

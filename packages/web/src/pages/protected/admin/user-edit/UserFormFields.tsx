@@ -6,12 +6,12 @@ import { FormActions } from '@web/components/form/standardForm/FormActions';
 import { FormRow } from '@web/components/form/standardForm/FormRow';
 import { FormSelect } from '@web/components/form/standardForm/FormSelect';
 import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
-import { useAdminCustomersQuery } from '@web/hooks/customers';
+import { useAdminLocationsQuery } from '@web/hooks/locations';
 
 import type { UserFormValues } from './types';
 
 export interface UserFormFieldsProps {
-  /** Whether this is edit mode (email and customer are read-only) */
+  /** Whether this is edit mode (email and location are read-only) */
   isEditMode: boolean;
   /** Called when cancel is clicked */
   onCancel: () => void;
@@ -30,20 +30,20 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
 }) => {
   const { register, control, errors } = useComposableFormContext<UserFormValues>();
 
-  // Load customers for the selector (fetch all active customers, no pagination needed for selector)
-  const { data: customersData } = useAdminCustomersQuery(
+  // Load locations for the selector (fetch all active locations, no pagination needed for selector)
+  const { data: locationsData } = useAdminLocationsQuery(
     { page: 1, pageSize: 100, sortDirection: 'asc', sortBy: 'name' },
     {},
     { enabled: !isEditMode }
   );
 
-  const customerOptions = useMemo(
+  const locationOptions = useMemo(
     () =>
-      customersData?.data.map((customer) => ({
-        label: `${customer.name} (${customer.accountCode})`,
-        value: customer.id,
+      locationsData?.data.map((location) => ({
+        label: `${location.name} (${location.accountCode})`,
+        value: location.id,
       })) ?? [],
-    [customersData]
+    [locationsData]
   );
 
   return (
@@ -82,21 +82,21 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
         />
       </FormRow>
 
-      {/* Customer — disabled input in edit mode, selector in create mode */}
+      {/* Location — disabled input in edit mode, selector in create mode */}
       {isEditMode ? (
         <FormTextInput
-          name="customerDisplay"
-          label="Customer"
+          name="locationDisplay"
+          label="Location"
           register={register}
           errors={errors}
           disabled
         />
       ) : (
         <FormSelect
-          name="customerId"
-          label="Customer"
-          options={customerOptions}
-          placeholder="Select a customer..."
+          name="locationId"
+          label="Location"
+          options={locationOptions}
+          placeholder="Select a location..."
           control={control}
           errors={errors}
           isRequired

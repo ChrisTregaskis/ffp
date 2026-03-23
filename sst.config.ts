@@ -92,8 +92,8 @@ export default $config({
             {
               name: 'customerId',
               attributeDataType: 'String',
-              mutable: true, // Can be changed if user switches customers
-              required: false, // Optional: only for users under customer organisations
+              mutable: true, // Can be changed if user switches locations
+              required: false, // Optional: only for users under business organisations
               stringAttributeConstraints: {
                 minLength: '1',
                 maxLength: '256',

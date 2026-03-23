@@ -21,11 +21,11 @@ import { Pool } from 'pg';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../src/schema/index.js';
 import { createLogger } from '../src/lib/logger.js';
-import { seedPlatformTenant } from './seedPlatformTenant.js';
+import { seedPlatformOrganisation } from './seedPlatformTenant.js';
 import { seedSuperAdminCognito } from './seedSuperAdminCognito.js';
 import { seedSuperAdminDatabase } from './seedSuperAdminDatabase.js';
-import { seedTestTenant } from './seedTestTenant.js';
-import { seedTestCustomer } from './seedTestCustomer.js';
+import { seedTestOrganisation } from './seedTestTenant.js';
+import { seedTestLocation } from './seedTestCustomer.js';
 import { seedTestUserCognito } from './seedTestUserCognito.js';
 import { seedTestUserDatabase } from './seedTestUserDatabase.js';
 import { seedProgrammeTemplates } from './seedProgrammeTemplates.js';
@@ -137,15 +137,15 @@ export const seedDatabase = async (
       ALTER TABLE users NO FORCE ROW LEVEL SECURITY;
     `);
 
-    // Seed 1: Platform tenant
+    // Seed 1: Platform organisation
     await db.transaction(async (tx) => {
       const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
       txWithClient.$client = db.$client;
-      await seedPlatformTenant(txWithClient, config.platformTenant);
+      await seedPlatformOrganisation(txWithClient, config.platformOrganisation);
     });
 
     // Seed 2: Super admin user (Cognito)
-    await seedSuperAdminCognito(config.superAdminCognito, config.platformTenant);
+    await seedSuperAdminCognito(config.superAdminCognito, config.platformOrganisation);
 
     // Seed 3: Super admin user (Database)
     await db.transaction(async (tx) => {
@@ -154,46 +154,46 @@ export const seedDatabase = async (
       await seedSuperAdminDatabase(txWithClient, config.superAdminUser);
     });
 
-    // Seed 4: Test customer tenant
+    // Seed 4: Test location organisation
     await db.transaction(async (tx) => {
       const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
       txWithClient.$client = db.$client;
-      await seedTestTenant(txWithClient, config.testCustomerTenant);
+      await seedTestOrganisation(txWithClient, config.testLocationOrganisation);
     });
 
-    // Seed 5: Test customer
+    // Seed 5: Test location
     await db.transaction(async (tx) => {
       const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
       txWithClient.$client = db.$client;
-      await seedTestCustomer(txWithClient, config.testCustomer);
+      await seedTestLocation(txWithClient, config.testLocation);
     });
 
-    // Seed 6: Test customer admin user (Cognito)
+    // Seed 6: Test location admin user (Cognito)
     await seedTestUserCognito(
-      config.testCustomerAdminCognito,
-      config.testCustomerAdminUser,
-      config.testCustomerTenant
+      config.testLocationAdminCognito,
+      config.testLocationAdminUser,
+      config.testLocationOrganisation
     );
 
-    // Seed 7: Test customer admin user (Database)
+    // Seed 7: Test location admin user (Database)
     await db.transaction(async (tx) => {
       const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
       txWithClient.$client = db.$client;
-      await seedTestUserDatabase(txWithClient, config.testCustomerAdminUser);
+      await seedTestUserDatabase(txWithClient, config.testLocationAdminUser);
     });
 
     // Seed 8: Test programme user (Cognito)
     await seedTestUserCognito(
-      config.testCustomerProgrammeUserCognito,
-      config.testCustomerProgrammeUser,
-      config.testCustomerTenant
+      config.testLocationProgrammeUserCognito,
+      config.testLocationProgrammeUser,
+      config.testLocationOrganisation
     );
 
     // Seed 9: Test programme user (Database)
     await db.transaction(async (tx) => {
       const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
       txWithClient.$client = db.$client;
-      await seedTestUserDatabase(txWithClient, config.testCustomerProgrammeUser);
+      await seedTestUserDatabase(txWithClient, config.testLocationProgrammeUser);
     });
 
     // Fresh mode: truncate content tables before re-seeding (preserves identity data)
@@ -207,7 +207,7 @@ export const seedDatabase = async (
     }
 
     // Seed 10: Programme templates (no RLS, system-managed lookup table, idempotent)
-    // No tenant dependency - these are global templates referenced by scoring config
+    // No organisation dependency - these are global templates referenced by scoring config
     await seedProgrammeTemplates(db);
 
     // Seed 11: Questions (no RLS, idempotent)

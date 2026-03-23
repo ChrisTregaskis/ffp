@@ -60,7 +60,7 @@ import { UserSchema } from '@ffp/core';
 const userData = {
   email: 'user@example.com',
   name: 'John Doe',
-  tenantId: 'tenant-123',
+  organisationId: 'org-123',
 };
 
 // Validate with Zod

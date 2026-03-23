@@ -36,16 +36,16 @@ export interface ScoreAssessmentJobPayload {
  */
 export async function processScoreAssessment(
   payload: ScoreAssessmentJobPayload,
-  tenantId: string
+  organisationId: string
 ): Promise<ScoreAssessmentResult> {
   const db = getDb();
 
   // Scoring jobs are system operations triggered by authenticated user submissions.
-  // Tenant-level RLS isolation (userId = undefined) is sufficient because:
+  // Organisation-level RLS isolation (userId = undefined) is sufficient because:
   // 1. Jobs are only created via submitAssessment() which validates user ownership
-  // 2. The job payload contains userAssessmentId which is tenant-scoped
+  // 2. The job payload contains userAssessmentId which is organisation-scoped
   // 3. User-level RLS would require passing userId through the job queue unnecessarily
-  return await withRLS(db, tenantId, undefined, async (tx) => {
+  return await withRLS(db, organisationId, undefined, async (tx) => {
     // Type assertion: tx is compatible with DbClient for query operations
     // The $client property is only used for connection management, not queries
     const dbTx = tx as unknown as DbClient;
@@ -145,7 +145,7 @@ export async function processScoreAssessment(
     const logger = createSystemLogger('score-assessment-handler');
     const systemContext = createSystemContext({
       systemId: 'score-assessment-handler',
-      tenantId,
+      organisationId,
     });
 
     const generateJobId = await queueJob(

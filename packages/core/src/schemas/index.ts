@@ -2,8 +2,8 @@
 export * from './admin.schema';
 export * from './auth.schema';
 export * from './user.schema';
-export * from './tenant.schema';
-export * from './customer.schema';
+export * from './organisation.schema';
+export * from './location.schema';
 
 // Assessment schemas
 export * from './assessment-question.schema';

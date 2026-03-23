@@ -1,15 +1,19 @@
 import {
   createSystemContext,
-  SYSTEM_PLACEHOLDER_TENANT_ID,
+  SYSTEM_PLACEHOLDER_ORGANISATION_ID,
   type APIGatewayProxyEventV2WithJWT,
 } from '@ffp/core/server';
 
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
-import { handler as createCustomerHandler } from './create-customer';
-import { handler as getCustomerHandler } from './customers/get-customer';
-import { handler as listCustomersHandler } from './customers/list-customers';
-import { handler as updateCustomerHandler } from './customers/update-customer';
+import { handler as createLocationHandler } from './locations/create-location';
+import { handler as getLocationHandler } from './locations/get-location';
+import { handler as listLocationsHandler } from './locations/list-locations';
+import { handler as updateLocationHandler } from './locations/update-location';
+import { handler as createOrganisationHandler } from './organisations/create-organisation';
+import { handler as getOrganisationHandler } from './organisations/get-organisation';
+import { handler as listOrganisationsHandler } from './organisations/list-organisations';
+import { handler as updateOrganisationHandler } from './organisations/update-organisation';
 import { handler as createExerciseHandler } from './programme-templates/create-exercise';
 import { handler as createPhaseHandler } from './programme-templates/create-phase';
 import { handler as createSessionHandler } from './programme-templates/create-session';
@@ -45,16 +49,17 @@ import { handler as updateVideoHandler } from './videos/update';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
-/** Uses placeholder tenantId as routing happens before authentication. */
+/** Uses placeholder organisationId as routing happens before authentication. */
 const ROUTER_CONTEXT = createSystemContext({
   systemId: 'admin-router',
-  tenantId: SYSTEM_PLACEHOLDER_TENANT_ID,
+  organisationId: SYSTEM_PLACEHOLDER_ORGANISATION_ID,
 });
 
 /** Route registry mapping HTTP methods to path handlers. */
 const routes: RouteRegistry = {
   POST: {
-    '/create-customer': createCustomerHandler,
+    '/organisations': createOrganisationHandler,
+    '/organisations/{orgId}/locations': createLocationHandler,
     '/assessment-templates': createTemplateHandler,
     '/assessment-templates/{id}/duplicate': duplicateTemplateHandler,
     '/programme-templates': createProgrammeTemplateHandler,
@@ -66,10 +71,12 @@ const routes: RouteRegistry = {
     '/videos/upload-url': getUploadUrlHandler,
   },
   GET: {
+    '/organisations': listOrganisationsHandler,
+    '/organisations/{id}': getOrganisationHandler,
+    '/locations': listLocationsHandler,
+    '/locations/{id}': getLocationHandler,
     '/assessment-templates': listTemplatesHandler,
     '/assessment-templates/{id}': getTemplateHandler,
-    '/customers': listCustomersHandler,
-    '/customers/{id}': getCustomerHandler,
     '/programme-templates': listProgrammeTemplatesHandler,
     '/programme-templates/{id}': getProgrammeTemplateHandler,
     '/sessions/{id}/exercises': listExercisesHandler,
@@ -78,8 +85,9 @@ const routes: RouteRegistry = {
     '/videos': listVideosHandler,
   },
   PUT: {
+    '/organisations/{id}': updateOrganisationHandler,
+    '/locations/{id}': updateLocationHandler,
     '/assessment-templates/{id}': updateTemplateHandler,
-    '/customers/{id}': updateCustomerHandler,
     '/users/{id}': updateUserHandler,
     '/programme-templates/{id}': updateProgrammeTemplateHandler,
     '/programme-templates/{id}/deactivate': deactivateProgrammeTemplateHandler,

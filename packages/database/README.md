@@ -6,7 +6,7 @@ Database layer for Fit For Purpose (FFP) application.
 
 This package provides:
 
-- **Drizzle ORM schemas** for tenants, customers, and users tables
+- **Drizzle ORM schemas** for organisations, locations, and users tables
 - **Type-safe database access** with automatic TypeScript type inference
 - **Migration management** via Drizzle Kit
 - **Row-Level Security (RLS)** utilities for multi-tenant data isolation
@@ -21,8 +21,8 @@ This package provides:
 ```typescript
 // ✅ Import client and schemas from package root
 import { getDb, withDb, type DbClient } from '@ffp/database';
-import { users, customers, tenants } from '@ffp/database/schema';
-import type { User, Customer, Tenant } from '@ffp/database/schema';
+import { users, locations, organisations } from '@ffp/database/schema';
+import type { User, Location, Organisation } from '@ffp/database/schema';
 
 // ⚠️ Avoid: Direct client import (internal implementation detail)
 import { getDb } from '@ffp/database/client'; // Don't do this
@@ -178,7 +178,7 @@ pnpm --filter=@ffp/database test --coverage
 - **RLS Tests** (`src/lib/rls.test.ts`) - 16 tests
   - RLS context utilities
   - UUID validation
-  - Cross-tenant isolation
+  - Cross-organisation isolation
 
 **Total: 68 tests**
 
@@ -205,36 +205,36 @@ pnpm --filter=@ffp/database test --coverage
 
 FFP uses a three-tier multi-tenant architecture:
 
-1. **Tenants** (root) - Individual or business organisations
+1. **Organisations** (root) - Individual or business entities
    - `type`: 'individual' | 'business'
-   - Root of the tenant hierarchy
+   - Root of the organisation hierarchy
 
-2. **Customers** (middle) - Billing entities for business tenants
-   - Only exists for business tenants
-   - Handles subscription and billing
+2. **Locations** (middle) - Physical locations within business organisations
+   - Only exists for business organisations
+   - Handles location-specific configuration
 
 3. **Users** (leaf) - Individual user accounts
-   - Linked to either tenant (individual) or customer (business)
-   - All user actions scoped by `tenant_id`
+   - Linked to either organisation (individual) or location (business)
+   - All user actions scoped by `organisation_id`
 
 ### Row-Level Security
 
-All tenant-scoped tables use PostgreSQL Row-Level Security (RLS) for automatic data isolation.
+All organisation-scoped tables use PostgreSQL Row-Level Security (RLS) for automatic data isolation.
 
 **RLS is applied automatically** when you run `pnpm db:migrate` - no manual setup required!
 
 **RLS Policies:**
 
 ```sql
--- Applied automatically to all tenant-scoped tables
-CREATE POLICY tenant_isolation ON tenants
-  USING (id = current_setting('app.tenant_id')::uuid);
+-- Applied automatically to all organisation-scoped tables
+CREATE POLICY organisation_isolation ON organisations
+  USING (id = current_setting('app.organisation_id')::uuid);
 
-CREATE POLICY customer_isolation ON customers
-  USING (tenant_id = current_setting('app.tenant_id')::uuid);
+CREATE POLICY location_isolation ON locations
+  USING (organisation_id = current_setting('app.organisation_id')::uuid);
 
 CREATE POLICY user_isolation ON users
-  USING (tenant_id = current_setting('app.tenant_id')::uuid);
+  USING (organisation_id = current_setting('app.organisation_id')::uuid);
 ```
 
 **Environment Behaviour:**
@@ -248,13 +248,13 @@ CREATE POLICY user_isolation ON users
 import { withRLS, setRLSContext } from '@ffp/database';
 
 // Option 1: Use withRLS for automatic transaction handling (RECOMMENDED)
-const users = await withRLS(db, tenantId, undefined, async (tx) => {
+const users = await withRLS(db, organisationId, undefined, async (tx) => {
   return await tx.select().from(users);
 });
 
 // Option 2: Set context manually
 await db.transaction(async (tx) => {
-  await setRLSContext(tx, tenantId, userId);
+  await setRLSContext(tx, organisationId, userId);
   return await tx.select().from(users);
 });
 ```
@@ -283,7 +283,7 @@ Seed data is defined in JSON configuration files located in `seed/config/`:
    ```
 
 2. Edit `db-seed.local.dev.json` with your actual values:
-   - Platform tenant ID, name, timestamps
+   - Platform organisation ID, name, timestamps
    - Super admin user ID, email, Cognito sub, timestamps
    - Temporary password for Cognito
 
@@ -309,7 +309,7 @@ pnpm seed:db test
 
 Individual seed functions are organised in separate files:
 
-- **`seed/seedPlatformTenant.ts`** - Seeds platform tenant
+- **`seed/seedPlatformOrganisation.ts`** - Seeds platform organisation
 - **`seed/index.ts`** - Orchestrates all seed operations
 
 **Adding new seed data:**
@@ -378,10 +378,10 @@ psql -h localhost -U root_user -d postgres -c "\du"
 ## Security Notes
 
 - **Never disable RLS policies** in production
-- **Always validate tenant context** before queries
+- **Always validate organisation context** before queries
 - **Use parameterised queries** (Drizzle handles this automatically)
 - **Encrypt sensitive data** at rest and in transit
-- **Audit all data access** with tenant/user context
+- **Audit all data access** with organisation/user context
 
 ## Resources
 

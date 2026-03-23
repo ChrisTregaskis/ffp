@@ -6,7 +6,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { InternalServerError } from '../lib/errors';
 import { createLogger } from '../lib/logger';
 
-import type { TenantContext } from '../lib/context';
+import type { OrganisationContext } from '../lib/context';
 import type { UploadUrlResponse } from '../schemas/video.schema';
 
 /** Configuration for S3 presigned upload URL generation */
@@ -68,12 +68,12 @@ const THUMBNAIL_CONTENT_TYPES: Record<string, string> = {
  * Both URLs expire after 15 minutes. The browser uses these to PUT files
  * directly to S3 without passing through the API.
  *
- * @param context - Tenant context for structured logging
+ * @param context - Organisation context for structured logging
  * @param thumbnailExtension - Optional file extension for thumbnail ('jpg', 'jpeg', 'png')
  * @returns Presigned upload URLs and S3 keys
  */
 export async function generateUploadUrls(
-  context: TenantContext,
+  context: OrganisationContext,
   thumbnailExtension?: string
 ): Promise<UploadUrlResponse> {
   const logger = createLogger(context);

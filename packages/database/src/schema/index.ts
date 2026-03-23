@@ -5,8 +5,8 @@
  * @module schema
  */
 
-export * from './tenants';
-export * from './customers';
+export * from './organisations';
+export * from './locations';
 export * from './users';
 export * from './assessment-templates';
 export * from './assessment-flows';

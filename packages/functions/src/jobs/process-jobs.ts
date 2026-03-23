@@ -50,8 +50,8 @@ export type JobResult = JobResultMap[JobType];
  * - Job handlers are placeholder stubs until scoring/programme services are built
  *
  * **RLS Strategy:**
- * - Processor runs with standard DB connection (not tenant-scoped)
- * - Each job handler will set tenant context for tenant-scoped operations
+ * - Processor runs with standard DB connection (not organisation-scoped)
+ * - Each job handler will set organisation context for organisation-scoped operations
  *
  * @param event - EventBridge scheduled event (unused but required by Lambda signature)
  * @param context - Lambda execution context for timeout tracking
@@ -95,9 +95,9 @@ export const handler = async (event: ScheduledEvent, context: Context): Promise<
     let failed = 0;
 
     for (const job of claimedJobs) {
-      // Create tenant-aware context for structured logging
+      // Create organisation-aware context for structured logging
       const jobContext = extractJobContext({
-        tenantId: job.tenantId,
+        organisationId: job.organisationId,
         jobId: job.id,
         jobType: job.type,
       });
@@ -172,7 +172,7 @@ export async function processJobByType<T extends JobType>(
         });
       }
 
-      const result = await handleScoreAssessment(parseResult.data, job.tenantId);
+      const result = await handleScoreAssessment(parseResult.data, job.organisationId);
 
       // Validate result matches schema (runtime safety check)
       const resultValidation = scoreAssessmentResultSchema.safeParse(result);
@@ -198,7 +198,7 @@ export async function processJobByType<T extends JobType>(
         });
       }
 
-      const result = await handleGenerateProgramme(parseResult.data, job.tenantId);
+      const result = await handleGenerateProgramme(parseResult.data, job.organisationId);
 
       // Validate result matches schema (runtime safety check)
       const resultValidation = generateProgrammeResultSchema.safeParse(result);
@@ -225,15 +225,15 @@ export async function processJobByType<T extends JobType>(
 /** Delegate to core scoring handler */
 async function handleScoreAssessment(
   payload: { userAssessmentId: string; flowId: string; userId: string },
-  tenantId: string
+  organisationId: string
 ): Promise<ScoreAssessmentResult> {
-  return await processScoreAssessment(payload, tenantId);
+  return await processScoreAssessment(payload, organisationId);
 }
 
 /** Delegate to core programme generation handler */
 async function handleGenerateProgramme(
   payload: GenerateProgrammePayload,
-  tenantId: string
+  organisationId: string
 ): Promise<GenerateProgrammeResult> {
-  return await processGenerateProgramme(payload, tenantId);
+  return await processGenerateProgramme(payload, organisationId);
 }

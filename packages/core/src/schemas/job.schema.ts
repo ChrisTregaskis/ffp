@@ -101,8 +101,8 @@ export const jobResultSchema = z.discriminatedUnion('type', [
 export const processJobSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.guid(),
-  /** Tenant ID for RLS isolation */
-  tenantId: z.guid(),
+  /** Organisation ID for RLS isolation */
+  organisationId: z.guid(),
   /** Job type determining payload/result structure */
   type: jobTypeSchema,
   /** Current job status */
@@ -131,7 +131,7 @@ export const processJobSchema = z.object({
 
 export const createProcessJobSchema = processJobSchema
   .pick({
-    tenantId: true,
+    organisationId: true,
     type: true,
     payload: true,
   })

@@ -39,11 +39,11 @@ export interface AppendWarningsOptions {
 export async function createUserAssessment(
   input: CreateUserAssessmentInput
 ): Promise<UserAssessment> {
-  return await withRLS(input.tenantId, input.userId, async (tx) => {
+  return await withRLS(input.organisationId, input.userId, async (tx) => {
     const [record] = await tx
       .insert(userAssessments)
       .values({
-        tenantId: input.tenantId,
+        organisationId: input.organisationId,
         userId: input.userId,
         flowId: input.flowId,
         currentStep: 1,
@@ -56,11 +56,11 @@ export async function createUserAssessment(
 }
 
 export async function findUserAssessmentById(
-  tenantId: string,
+  organisationId: string,
   assessmentId: string,
   userId?: string
 ): Promise<UserAssessment | null> {
-  return await withRLS(tenantId, userId, async (tx) => {
+  return await withRLS(organisationId, userId, async (tx) => {
     const records = await tx
       .select()
       .from(userAssessments)
@@ -76,11 +76,11 @@ export async function findUserAssessmentById(
 }
 
 export async function findByUserId(
-  tenantId: string,
+  organisationId: string,
   userId: string,
   options?: { status?: UserAssessmentStatus }
 ): Promise<UserAssessment[]> {
-  return await withRLS(tenantId, userId, async (tx) => {
+  return await withRLS(organisationId, userId, async (tx) => {
     const conditions = [eq(userAssessments.userId, userId)];
 
     if (options?.status) {
@@ -97,11 +97,11 @@ export async function findByUserId(
 }
 
 export async function findAssessmentInProgress(
-  tenantId: string,
+  organisationId: string,
   userId: string,
   flowId?: string
 ): Promise<UserAssessment | null> {
-  return await withRLS(tenantId, userId, async (tx) => {
+  return await withRLS(organisationId, userId, async (tx) => {
     const conditions = [
       eq(userAssessments.userId, userId),
       eq(userAssessments.status, 'in_progress'),
@@ -127,11 +127,11 @@ export async function findAssessmentInProgress(
 
 /** Returns an existing assessment that can be resumed (not_started or in_progress). */
 export async function findResumableAssessment(
-  tenantId: string,
+  organisationId: string,
   userId: string,
   flowId: string
 ): Promise<UserAssessment | null> {
-  return await withRLS(tenantId, userId, async (tx) => {
+  return await withRLS(organisationId, userId, async (tx) => {
     const records = await tx
       .select()
       .from(userAssessments)
@@ -155,11 +155,11 @@ export async function findResumableAssessment(
 
 /** Returns the most recent assessment that has been submitted (submitted, scored, or completed). */
 export async function findSubmittedAssessment(
-  tenantId: string,
+  organisationId: string,
   userId: string,
   flowId: string
 ): Promise<UserAssessment | null> {
-  return await withRLS(tenantId, userId, async (tx) => {
+  return await withRLS(organisationId, userId, async (tx) => {
     const records = await tx
       .select()
       .from(userAssessments)
@@ -190,11 +190,11 @@ export async function findSubmittedAssessment(
  * Used when starting a reassessment to ensure only one active assessment exists.
  */
 export async function abandonInProgressAssessments(
-  tenantId: string,
+  organisationId: string,
   userId: string,
   flowId: string
 ): Promise<number> {
-  return await withRLS(tenantId, userId, async (tx) => {
+  return await withRLS(organisationId, userId, async (tx) => {
     const result = await tx
       .update(userAssessments)
       .set({ status: 'abandoned' as const, updatedAt: new Date() })
@@ -249,7 +249,7 @@ async function updateAssessmentProgressInTx(
  * Use answerRepository.saveAnswers() to save answers separately.
  */
 export async function updateAssessmentProgress(
-  tenantId: string,
+  organisationId: string,
   assessmentId: string,
   data: UpdateUserAssessmentInput,
   options: UpdateAssessmentProgressOptions = {}
@@ -262,7 +262,7 @@ export async function updateAssessmentProgress(
   }
 
   // Otherwise, create new transaction with RLS
-  return await withRLS(tenantId, userId, async (newTx) => {
+  return await withRLS(organisationId, userId, async (newTx) => {
     return updateAssessmentProgressInTx(newTx, assessmentId, data);
   });
 }
@@ -330,7 +330,7 @@ async function transitionAssessmentStatusInTx(
  * Updates relevant timestamp fields based on the target status.
  */
 export async function transitionAssessmentStatus(
-  tenantId: string,
+  organisationId: string,
   assessmentId: string,
   toStatus: UserAssessmentStatus,
   options: TransitionAssessmentStatusOptions = {}
@@ -343,7 +343,7 @@ export async function transitionAssessmentStatus(
   }
 
   // Otherwise, create new transaction with RLS
-  return await withRLS(tenantId, userId, async (newTx) => {
+  return await withRLS(organisationId, userId, async (newTx) => {
     return transitionAssessmentStatusInTx(newTx, assessmentId, toStatus);
   });
 }
@@ -353,12 +353,12 @@ export async function transitionAssessmentStatus(
  * Typically followed by transitionStatus to 'scored'.
  */
 export async function updateAssessmentScores(
-  tenantId: string,
+  organisationId: string,
   assessmentId: string,
   scores: UserAssessmentScores,
   userId?: string
 ): Promise<UserAssessment> {
-  return await withRLS(tenantId, userId, async (tx) => {
+  return await withRLS(organisationId, userId, async (tx) => {
     const existing = await tx
       .select()
       .from(userAssessments)
@@ -387,12 +387,12 @@ export async function updateAssessmentScores(
  * Typically followed by transitionStatus to 'completed'.
  */
 export async function linkAssessmentToProgramme(
-  tenantId: string,
+  organisationId: string,
   assessmentId: string,
   programmeId: string,
   userId?: string
 ): Promise<UserAssessment> {
-  return await withRLS(tenantId, userId, async (tx) => {
+  return await withRLS(organisationId, userId, async (tx) => {
     const existing = await tx
       .select()
       .from(userAssessments)
@@ -418,7 +418,7 @@ export async function linkAssessmentToProgramme(
 
 /** Append warnings to an assessment's warnings_shown array */
 export async function appendAssessmentWarnings(
-  tenantId: string,
+  organisationId: string,
   assessmentId: string,
   warnings: Warning[],
   options: AppendWarningsOptions = {}
@@ -445,7 +445,12 @@ export async function appendAssessmentWarnings(
         warningsShown: sql`COALESCE(${userAssessments.warningsShown}, '[]'::jsonb) || ${warningsJson}::jsonb`,
         updatedAt: new Date(),
       })
-      .where(and(eq(userAssessments.id, assessmentId), eq(userAssessments.tenantId, tenantId)));
+      .where(
+        and(
+          eq(userAssessments.id, assessmentId),
+          eq(userAssessments.organisationId, organisationId)
+        )
+      );
   };
 
   // If transaction provided, use it directly
@@ -456,7 +461,7 @@ export async function appendAssessmentWarnings(
   }
 
   // Otherwise, create new transaction with RLS
-  await withRLS(tenantId, undefined, async (newTx) => {
+  await withRLS(organisationId, undefined, async (newTx) => {
     await doAppend(newTx);
   });
 }

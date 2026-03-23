@@ -2,8 +2,8 @@
  * Auto-generated icon types from Icomoon selection.json
  * DO NOT EDIT MANUALLY - Run 'pnpm icon:generate' to update
  *
- * Generated: 2026-03-17T21:15:57.395Z
- * Total icons: 69
+ * Generated: 2026-03-23T07:29:20.752Z
+ * Total icons: 70
  */
 
 export enum Icons {
@@ -43,6 +43,7 @@ export enum Icons {
   HOME = 'Home',
   LEFTPANELCLOSE = 'LeftPanelClose',
   LEFTPANELOPEN = 'LeftPanelOpen',
+  LOCATION = 'Location',
   LOGOUT = 'LogOut',
   MAIL = 'Mail',
   MAXIMIZE = 'Maximize',

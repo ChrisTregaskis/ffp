@@ -1,71 +1,64 @@
 # FFP - Project State
 
-**Last Updated**: 19th March 2026
+**Last Updated**: 23rd March 2026
 **Current EPIC**: FFP-6 Customer & User Onboarding
-**Sprint Status**: Sprint 10 - Customer & User Management (in progress)
+**Sprint Status**: Sprint 10 + 10.5 complete — merging to main
 
 ---
 
-## Active: Sprint 10 — Customer & User Management (~18 pts)
+## Completed: Sprint 10 + 10.5 — Customer & User Management + Organisation/Location Refactor (~52 pts)
 
-**Dates**: 19th March – 9th April 2026
-**Sprint Goal**: Admin CRUD for customers and programme users — backend APIs and admin UI for both, including Cognito user provisioning.
+**Dates**: 19th March – 23rd March 2026
 **Epic**: FFP-6 (MVP: Customer & User Onboarding)
-**Branch**: `feature/sprint10`
+**Merge strategy**: `feature/sprint10.5` → `feature/sprint10` → `main`
 
-**Execution plan**: `.claude/plans/sprint-10-execution-plan.md`
+### Sprint 10 (~18 pts) — Customer & User Management
 
-**Prerequisites** (all met):
+**Goal**: Admin CRUD for customers and programme users — backend APIs and admin UI for both, including Cognito user provisioning.
 
-- ✅ Customers and users database schema (existing)
-- ✅ `POST /admin/create-customer` endpoint (existing)
-- ✅ Table component + pagination pattern (FFP-437)
-- ✅ Admin UI patterns (Video Library, Programme Template List)
-- ✅ ComposableForm, PageContainer, PageHeader, StatusResult components
-- ✅ Cognito user pool and admin SDK configuration
+| Key     | Summary                           | Pts |
+| ------- | --------------------------------- | --- |
+| FFP-494 | Customer admin backend APIs       | 3   |
+| FFP-495 | Customer admin UI                 | 5   |
+| FFP-496 | Programme user admin backend APIs | 5   |
+| FFP-497 | Programme user admin UI           | 5   |
 
-### Execution Order
+### Sprint 10.5 (~34 pts) — Organisation/Location Refactor
 
-| Phase | Key     | Summary                           | Layer    | Pts | Status |
-| ----- | ------- | --------------------------------- | -------- | --- | ------ |
-| 1     | FFP-494 | Customer admin backend APIs       | Backend  | 3   | To Do  |
-| 2     | FFP-495 | Customer admin UI                 | Frontend | 5   | To Do  |
-| 3     | FFP-496 | Programme user admin backend APIs | Backend  | 5   | To Do  |
-| 4     | FFP-497 | Programme user admin UI           | Frontend | 5   | To Do  |
+**Goal**: Rename tenant/customer model to organisation/location — supporting multi-location businesses (one organisation, many locations). Full-stack refactor across database, backend, API, frontend, and documentation.
 
-**Key design decisions**:
+| Key     | Summary                                  | Layer    | Pts |
+| ------- | ---------------------------------------- | -------- | --- |
+| FFP-519 | DB migration — rename tables/columns/RLS | Database | 8   |
+| FFP-520 | Backend service split + renames          | Backend  | 8   |
+| FFP-521 | Lambda handlers + API routes             | Backend  | 5   |
+| FFP-522 | Organisation list and create/edit pages  | Frontend | 5   |
+| FFP-523 | Location pages + user page updates       | Frontend | 5   |
+| FFP-524 | Documentation cleanup + E2E smoke test   | Docs     | 3   |
 
-- Customers first, then users (users require customer association)
-- User creation provisions Cognito user with custom attributes (tenantId, customerId, role)
-- tenantId derived from customer record, never from client input
-- Email and customer read-only after user creation
-- No user deletion — future story
+### Key Deliverables
 
-### Active Story: FFP-497 — Programme User Management UI (5 pts)
+- **Data model**: `tenants` → `organisations`, `customers` → `locations` (1:N relationship)
+- **Database**: Migration 0021 — renames tables, columns, enums, indexes, FK constraints, RLS policies. New `organisation_status` enum and `status` column on organisations
+- **RLS**: GUC variable `app.tenant_id` → `app.organisation_id`, all policies renamed, `SET LOCAL` for transaction-scoped context
+- **Backend**: `createCustomer` split into `createOrganisation` + `createLocation`. `OrganisationContext` replaces `TenantContext`. ~40 files renamed across core/functions/seed
+- **API**: New endpoints — `/admin/organisations` (CRUD), `/admin/organisations/{orgId}/locations` (create), `/admin/locations` (list/get/update). Old `/admin/customers` and `/admin/create-customer` removed
+- **Frontend**: Organisation and location admin pages (list + create/edit). User pages updated — location dropdown replaces customer dropdown. `AuthUser.tenantId` → `organisationId`
+- **Security**: Platform organisation excluded from admin CRUD queries. Cognito attributes unchanged (aliased via `COGNITO_CUSTOM_ATTRIBUTES`)
+- **Documentation**: All 20+ markdown files updated. Git hooks re-enabled
+- **Postman**: Organisation Management + Location Management folders (8 requests). Old Create Customer deleted
 
-**Branch**: `feature/sprint10`
-**Goal**: Admin UI for programme user management — list page with table, create/edit forms with customer selector, routes, and navigation. Follows CustomerListPage and CustomerEditPage patterns.
+### Key Patterns & Decisions (Organisation/Location)
 
-**Sub-task execution order** (single branch, all sub-tasks together):
-
-| Order | Key     | Summary                                           | Status |
-| ----- | ------- | ------------------------------------------------- | ------ |
-| 1     | FFP-511 | API client methods for user admin endpoints       | To Do  |
-| 2     | FFP-512 | TanStack Query hooks for user list/mutations      | To Do  |
-| 3     | FFP-515 | Route config and sidebar navigation               | To Do  |
-| 4     | FFP-513 | UserListPage with table, columns, and empty state | To Do  |
-| 5     | FFP-514 | User create and edit pages with customer selector | To Do  |
-
-**Amended requirements**:
-
-- **FFP-511**: Follow `admin-customers.ts` pattern. Use `paginatedUserResponseSchema` and `userDetailResponseSchema` from `@ffp/core`. List endpoint supports search, customerId, and role filters.
-- **FFP-512**: Follow customer hooks pattern. Query key factory + list/detail/mutation hooks. Create mutation needs to handle 409 Conflict for duplicate email.
-- **FFP-515**: Moved before pages. Add `ADMIN_USER_CREATE` and `ADMIN_USER_EDIT` to `RouteKey`. Replace `ComingSoonPage` for users.
-- **FFP-513**: Follow `CustomerListPage` pattern. Columns: Name (firstName + lastName), Email, Customer, Role, Created, Actions. Default filter: `role=programme_user`. Row actions: Edit.
-- **FFP-514**: Single `UserEditPage` for create and edit. Customer selector uses `FormSelect` loaded from customer list API. Email and customer read-only in edit mode. Handle 409 Conflict inline. Optional phone and date of birth fields.
-- **Tests deferred** per sprint convention.
-
-**End-of-sprint note**: Before merging `feature/sprint10` to `main`, run manual E2E verification via Claude Code (same approach as Sprint 9 — FFP-447). Cover full CRUD flows for customers and users, cascade behaviours, and Postman collection updates.
+| Area                   | Decision                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------- |
+| **Cognito Attributes** | Immutable — code aliases `ORGANISATION_ID: 'custom:tenantId'`, `LOCATION_ID: 'custom:customerId'` |
+| **Platform Exclusion** | `ne(organisations.type, 'platform')` filter on all admin CRUD queries                             |
+| **User Role Values**   | `customer_owner`, `customer_admin` unchanged — PostgreSQL enum values                             |
+| **Location Create**    | Nested under org: `POST /admin/organisations/{orgId}/locations`                                   |
+| **Location List**      | Top-level with filter: `GET /admin/locations?organisationId=`                                     |
+| **User → Location**    | `organisationId` derived from location record, never from client input                            |
+| **RLS SET LOCAL**      | Transaction-scoped to prevent GUC leaking across pooled connections                               |
 
 ---
 
@@ -84,14 +77,6 @@
 | 4     | FFP-446 | Template detail & hierarchy editing UI     | 8   |
 | 5     | FFP-447 | Integration verification & documentation   | 3   |
 
-### Key Deliverables
-
-- **Template CRUD**: Full hierarchy management — templates, phases, sessions, exercises with move up/down reordering
-- **Video prescription defaults**: Extended `videos` table with sets, reps, duration, rest, notes — pre-populates when adding to sessions
-- **Admin UI**: Template list page with active filter + template detail page with collapsible hierarchy editing
-- **Schema cleanup**: Dropped `sessions_per_phase`, auto-computed `total_phases` on phase create/delete
-- **Postman**: Full test flows for template hierarchy CRUD
-
 ### Key Patterns & Decisions (Programme Templates)
 
 | Area                     | Decision                                                                                         |
@@ -101,8 +86,6 @@
 | **Video as Exercise**    | No separate exercise entity — videos table extended with default prescription fields             |
 | **Prescription Pattern** | Defaults from video, overridable per session-exercise via `session_exercises` join table         |
 | **Auto-compute**         | `total_phases` incremented/decremented on phase create/delete, not user-editable                 |
-
-**Out of scope**: Drag-and-drop reordering, template duplication/cloning, template versioning, bulk import/export.
 
 ---
 
@@ -116,15 +99,6 @@
 | 7      | Infrastructure & APIs  | 28  | Video schema, CloudFront OAC, signed URLs, catalogue APIs, programme-video schema |
 | 8      | Admin UI & Integration | 27  | Video player, table component, admin CRUD, upload, verification                   |
 
-### Key Deliverables
-
-- **Video catalogue**: Drizzle schema with GIN indexes, 10 seed videos, list/filter/get APIs
-- **CloudFront signed URLs**: RSA key pair, SST OAC + Key Group, `video-signing.service.ts` with key caching
-- **Programme structure**: 4 DB tables (`template_phases`, `template_sessions`, `session_exercises`, `programme_phases`), Gentle Mobility seed hierarchy
-- **Programme lifecycle**: `generateProgramme()` eagerly creates phases, `archiveProgramme()` with lifecycle columns
-- **Admin video management**: Full CRUD — upload (presigned S3 PUT), metadata editing, status transitions (`draft→active→archived`, restore), inline preview
-- **VideoPlayer component**: Dual-mode (videoId/src), TanStack Query hooks, loading/error/retry states
-
 ### Key Patterns & Decisions (Video Management + Admin UI)
 
 | Area                   | Decision                                                                                                           |
@@ -135,10 +109,9 @@
 | **Upload Pattern**     | Presigned S3 PUT URLs, `useVideoUpload` hook with `useReducer` phases (`idle→uploading→creating→success→error`)    |
 | **Video Status**       | `draft→active→archived` with restore; status transitions via `PUT /admin/videos/{id}`                              |
 | **Reusable Layout**    | `PageContainer`, `PageHeader`, `StatusResult`, `ContentPanel`, `ComposableForm`, `Panel`                           |
-| **DRY Components**     | `BaseSelect` (headless), `useClickOutside` hook, `formatDate`/`formatDuration` in shared utils                     |
 | **Context Nav**        | `contextNavItems` on routes for pages that override sidebar navigation                                             |
 | **Date Formatting**    | `Intl.DateTimeFormat('en-GB')` throughout                                                                          |
-| **RLS Exclusions**     | System-managed tables (videos, templates, phases, sessions, exercises) — cross-tenant by design                    |
+| **RLS Exclusions**     | System-managed tables (videos, templates, phases, sessions, exercises) — cross-organisation by design              |
 
 ### Programme Data Model Decisions (from Sprint 6 planning)
 
@@ -150,8 +123,10 @@
 
 ### Backlog Items
 
-- `programmes` table RLS policy gap — table has `tenant_id` but not in `apply-rls.ts` (tracked for FFP-4)
+- `programmes` table RLS policy gap — table has `organisation_id` but not in `apply-rls.ts` (tracked for FFP-4)
 - Bump `tsconfig.base.json` target/lib from ES2022 → ES2024 — Lambda runtime is nodejs24.x, enables `Object.groupBy`, `Map.groupBy` etc.
+- Consolidate duplicate RLS utilities — `setRLSContext`/`withRLS` exist in both `@ffp/database` and `@ffp/core`. Should have one canonical location to prevent divergence
+- Icon enum refactor — convert string icon names in navigation.ts to use Icons const enum
 
 ---
 
@@ -168,24 +143,17 @@
 
 ### Key Patterns & Decisions (Assessment Engine)
 
-| Area                    | Decision                                                                       |
-| ----------------------- | ------------------------------------------------------------------------------ |
-| **State Machine**       | `not_started → in_progress → submitted → scored → completed` (+ `abandoned`)   |
-| **Job Queue**           | DB-driven polling, `FOR UPDATE SKIP LOCKED`, exponential backoff, 2 job types  |
-| **Stale Job Detection** | Per-type configurable thresholds, EventBridge cron (5 min), staging/prod only  |
-| **Scoring**             | Multi-dimensional with weighted dimensions, flow-level config                  |
-| **Branching**           | `goto_step`, `show_warning` actions with condition evaluators                  |
-| **Flow Steps**          | `intro`, `questions`, `transition`, `video-assessment`, `results`              |
-| **Programme Gen**       | `score_assessment` → `generate_programme` job chain, retakes skip creation     |
-| **Question Renderers**  | Factory pattern with `QuestionComponentProps`, dispatches `SET_ANSWER`         |
-| **Frontend State**      | React Context + useReducer (audited 2026, kept over Zustand/XState/Jotai)      |
-| **API Client**          | TanStack Query with typed hooks in `hooks/assessments/`                        |
-| **Zod Transforms**      | Backend → frontend shape mapping at parse time (configOverrides applied)       |
-| **Assessment Route**    | `/assessment` fullscreen (excludeLayout), orchestrator pattern                 |
-| **Submit Flow**         | User-initiated (no useEffect), "Complete Assessment" on final submittable step |
-| **Results Polling**     | `useAssessmentResultsQuery` polls every 2s, stops on scores                    |
-| **First Login**         | Redirect programme users without programme to assessment via user-status API   |
-| **Admin API**           | Thin service layer, repository handles logic                                   |
+| Area                | Decision                                                                      |
+| ------------------- | ----------------------------------------------------------------------------- |
+| **State Machine**   | `not_started → in_progress → submitted → scored → completed` (+ `abandoned`)  |
+| **Job Queue**       | DB-driven polling, `FOR UPDATE SKIP LOCKED`, exponential backoff, 2 job types |
+| **Scoring**         | Multi-dimensional with weighted dimensions, flow-level config                 |
+| **Branching**       | `goto_step`, `show_warning` actions with condition evaluators                 |
+| **Programme Gen**   | `score_assessment` → `generate_programme` job chain, retakes skip creation    |
+| **Frontend State**  | React Context + useReducer (audited 2026, kept over Zustand/XState/Jotai)     |
+| **API Client**      | TanStack Query with typed hooks in `hooks/assessments/`                       |
+| **Results Polling** | `useAssessmentResultsQuery` polls every 2s, stops on scores                   |
+| **First Login**     | Redirect programme users without programme to assessment via user-status API  |
 
 ### Deferred to Backlog
 
@@ -208,14 +176,14 @@
 
 ```typescript
 await db.transaction(async (tx) => {
-  await setRLSContext(tx, context.tenantId);
+  await setRLSContext(tx, context.organisationId);
   return await tx.query.users.findMany();
 });
 ```
 
-**JWT Claims**: `custom:tenantId`, `custom:customerId`, `custom:role`
+**JWT Claims**: `custom:tenantId` (maps to organisationId), `custom:customerId` (maps to locationId), `custom:role`
 
-**RLS exclusions**: `process_jobs`, `assessment_templates`, `assessment_flows`, `questions`, `template_questions`, `programme_templates`, `template_phases`, `template_sessions`, `session_exercises`, `videos` (system-managed, cross-tenant by design)
+**RLS exclusions**: `process_jobs`, `assessment_templates`, `assessment_flows`, `questions`, `template_questions`, `programme_templates`, `template_phases`, `template_sessions`, `session_exercises`, `videos` (system-managed, cross-organisation by design)
 
 ### Frontend Architecture
 
@@ -258,7 +226,7 @@ await db.transaction(async (tx) => {
 - ✅ FFP-2: Assessment Engine (Sprints 3-6)
 - ✅ FFP-3: Video Management (Sprints 7-8)
 - ✅ FFP-439: Admin Programme Template Management (Sprint 9, ~34 pts)
-- ⏳ FFP-6: Customer & User Onboarding (Sprint 10, ~18 pts)
+- ✅ FFP-6: Customer & User Onboarding (Sprints 10-10.5, ~52 pts)
 - ⏳ FFP-4: Programme Execution & Progress (Sprints 11-13)
 - ⏳ FFP-109: Deployment Readiness (staging + production)
 

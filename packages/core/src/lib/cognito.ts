@@ -4,6 +4,10 @@
  * Provides a typed, simplified interface to AWS Cognito operations.
  * Centralises Cognito interactions to avoid direct SDK usage throughout the codebase.
  *
+ * Note: Cognito custom attributes are immutable — they remain custom:tenantId and
+ * custom:customerId internally. The code uses organisationId/locationId naming,
+ * but maps to the original Cognito attribute names via COGNITO_CUSTOM_ATTRIBUTES.
+ *
  * All methods throw errors that should be caught by the Lambda error handler.
  */
 
@@ -52,8 +56,8 @@ export interface InviteUserParams {
   email: string;
   firstName: string;
   lastName: string;
-  tenantId: string;
-  customerId: string;
+  organisationId: string;
+  locationId: string;
   role: string;
 }
 
@@ -64,8 +68,8 @@ export interface CreateUserParams {
   email: string;
   firstName: string;
   lastName: string;
-  tenantId: string;
-  customerId: string | null;
+  organisationId: string;
+  locationId: string | null;
   role: string;
   temporaryPassword?: string;
 }
@@ -102,22 +106,6 @@ export class CognitoService {
    * an email invitation with a temporary password.
    *
    * The user must change their password on first login.
-   *
-   * @param params - User invitation parameters
-   * @returns Cognito admin create user response
-   * @throws {Error} If Cognito operation fails
-   *
-   * @example
-   * ```typescript
-   * const response = await CognitoService.inviteUser({
-   *   email: 'user@example.com',
-   *   firstName: 'John',
-   *   lastName: 'Smith',
-   *   tenantId: 'tenant-123',
-   *   customerId: 'customer-456',
-   *   role: 'practitioner'
-   * });
-   * ```
    */
   static async inviteUser(params: InviteUserParams): Promise<AdminCreateUserCommandOutput> {
     validateEnvironment();
@@ -132,8 +120,8 @@ export class CognitoService {
           { Name: 'email_verified', Value: 'true' },
           { Name: 'given_name', Value: params.firstName },
           { Name: 'family_name', Value: params.lastName },
-          { Name: COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID, Value: params.tenantId },
-          { Name: COGNITO_CUSTOM_ATTRIBUTES.CUSTOMER_ID, Value: params.customerId },
+          { Name: COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID, Value: params.organisationId },
+          { Name: COGNITO_CUSTOM_ATTRIBUTES.LOCATION_ID, Value: params.locationId },
           { Name: COGNITO_CUSTOM_ATTRIBUTES.ROLE, Value: params.role },
         ],
         DesiredDeliveryMediums: ['EMAIL'],
@@ -146,28 +134,6 @@ export class CognitoService {
    *
    * Similar to inviteUser() but allows specifying a temporary password
    * instead of having Cognito generate one.
-   *
-   * Useful for:
-   * - Automated testing
-   * - Custom onboarding flows
-   * - Migrating users from another system
-   *
-   * @param params - User creation parameters
-   * @returns Cognito admin create user response
-   * @throws {Error} If Cognito operation fails
-   *
-   * @example
-   * ```typescript
-   * const response = await CognitoService.createUser({
-   *   email: 'user@example.com',
-   *   firstName: 'Jane',
-   *   lastName: 'Doe',
-   *   tenantId: 'tenant-123',
-   *   customerId: null, // Super admin has no customer
-   *   role: 'super_admin',
-   *   temporaryPassword: 'TempPass123!'
-   * });
-   * ```
    */
   static async createUser(params: CreateUserParams): Promise<AdminCreateUserCommandOutput> {
     validateEnvironment();
@@ -178,15 +144,15 @@ export class CognitoService {
       { Name: 'email_verified', Value: 'true' },
       { Name: 'given_name', Value: params.firstName },
       { Name: 'family_name', Value: params.lastName },
-      { Name: COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID, Value: params.tenantId },
+      { Name: COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID, Value: params.organisationId },
       { Name: COGNITO_CUSTOM_ATTRIBUTES.ROLE, Value: params.role },
     ];
 
-    // Only add customerId if it's not null (system admins don't have a customer)
-    if (params.customerId !== null) {
+    // Only add locationId if it's not null (system admins don't have a location)
+    if (params.locationId !== null) {
       userAttributes.push({
-        Name: COGNITO_CUSTOM_ATTRIBUTES.CUSTOMER_ID,
-        Value: params.customerId,
+        Name: COGNITO_CUSTOM_ATTRIBUTES.LOCATION_ID,
+        Value: params.locationId,
       });
     }
 
@@ -211,24 +177,6 @@ export class CognitoService {
    *
    * !IMPORTANT: This is a destructive operation and cannot be undone.
    * Use with caution and only for rollback scenarios.
-   *
-   * @param username - The username (email) of the user to delete
-   * @throws {Error} If Cognito operation fails
-   *
-   * @example
-   * ```typescript
-   * try {
-   *   // Create Cognito user
-   *   const cognitoUser = await CognitoService.createUser(params);
-   *
-   *   // Attempt database insert
-   *   await db.insert(users).values(userData);
-   * } catch (dbError) {
-   *   // Rollback: Delete Cognito user if database fails
-   *   await CognitoService.deleteUser(cognitoUser.User!.Username!);
-   *   throw dbError;
-   * }
-   * ```
    */
   static async deleteUser(username: string): Promise<void> {
     validateEnvironment();
@@ -246,31 +194,6 @@ export class CognitoService {
    * Authenticate a user with email and password
    *
    * Performs USER_PASSWORD_AUTH flow to obtain JWT tokens.
-   *
-   * Returns:
-   * - AccessToken: Short-lived token for API requests (1 hour)
-   * - IdToken: Contains user claims (tenantId, role, etc.)
-   * - RefreshToken: Long-lived token for obtaining new access tokens
-   *
-   * @param params - Login credentials
-   * @returns Cognito authentication response with tokens
-   * @throws {UnauthorisedError} If credentials are invalid
-   * @throws {Error} If Cognito operation fails
-   *
-   * @example
-   * ```typescript
-   * try {
-   *   const response = await CognitoService.login({
-   *     email: 'user@example.com',
-   *     password: 'SecurePass123!'
-   *   });
-   *   const { AccessToken, IdToken, RefreshToken } = response.AuthenticationResult;
-   * } catch (error) {
-   *   if (error instanceof UnauthorisedError) {
-   *     // Invalid credentials
-   *   }
-   * }
-   * ```
    */
   static async login(params: LoginParams): Promise<InitiateAuthCommandOutput> {
     validateEnvironment();
@@ -290,7 +213,6 @@ export class CognitoService {
     } catch (error) {
       // Convert Cognito errors to our error types
       if (error instanceof Error) {
-        // NotAuthorizedException, UserNotFoundException, InvalidPasswordException
         if (
           error.name === 'NotAuthorizedException' ||
           error.name === 'UserNotFoundException' ||
@@ -309,27 +231,6 @@ export class CognitoService {
    *
    * Uses a refresh token to obtain new access and ID tokens without
    * requiring the user to re-enter credentials.
-   *
-   * Access tokens expire after 1 hour, so this endpoint should be called
-   * when the frontend detects an expired token.
-   *
-   * @param refreshToken - The refresh token from a previous login
-   * @returns Cognito authentication response with new tokens
-   * @throws {UnauthorisedError} If refresh token is invalid or expired
-   * @throws {Error} If Cognito operation fails
-   *
-   * @example
-   * ```typescript
-   * try {
-   *   const response = await CognitoService.refreshToken(storedRefreshToken);
-   *   const { AccessToken, IdToken } = response.AuthenticationResult;
-   *   // Note: Refresh token is NOT returned in refresh response
-   * } catch (error) {
-   *   if (error instanceof UnauthorisedError) {
-   *     // Refresh token expired, user must login again
-   *   }
-   * }
-   * ```
    */
   static async refreshToken(refreshToken: string): Promise<InitiateAuthCommandOutput> {
     validateEnvironment();
@@ -346,9 +247,7 @@ export class CognitoService {
         })
       );
     } catch (error) {
-      // Convert Cognito errors to our error types
       if (error instanceof Error) {
-        // NotAuthorizedException means the refresh token is invalid/expired
         if (error.name === 'NotAuthorizedException') {
           throw new UnauthorisedError('Refresh token is invalid or expired');
         }
@@ -362,26 +261,12 @@ export class CognitoService {
    * Complete new password challenge
    *
    * Called after a user with a temporary password logs in and receives
-   * a NEW_PASSWORD_REQUIRED challenge. Sets the user's permanent password
-   * and returns authentication tokens.
-   *
-   * This is typically used for:
-   * - Users invited via /auth/invite-user
-   * - Users created by system admins with temporary passwords
-   * - Password reset flows
-   *
-   * @param params - Challenge response parameters
-   * @returns Cognito authentication response with tokens
-   * @throws {UnauthorisedError} If session is expired or invalid
-   * @throws {ValidationError} If password doesn't meet requirements
-   * @throws {Error} If Cognito operation fails
-   *
+   * a NEW_PASSWORD_REQUIRED challenge.
    */
   static async completeNewPassword(
     params: CompleteNewPasswordParams
   ): Promise<InitiateAuthCommandOutput> {
     validateEnvironment();
-    // Guaranteed by validateEnvironment()
     const clientId = process.env.COGNITO_CLIENT_ID;
 
     try {
@@ -397,7 +282,6 @@ export class CognitoService {
         })
       );
     } catch (error) {
-      // Convert Cognito errors to our error types
       if (error instanceof Error) {
         if (error.name === 'NotAuthorizedException') {
           throw new UnauthorisedError('Session expired or invalid');

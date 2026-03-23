@@ -17,12 +17,12 @@ import { evaluateNextStep, createEvaluationContext } from './branching';
 import * as flowRepository from './flow.repository';
 import * as userAssessmentRepository from './user-assessment.repository';
 
-// System logger for assessment data integrity issues (no tenant context needed)
+// System logger for assessment data integrity issues (no organisation context needed)
 const systemLogger = createSystemLogger('assessment-service');
 
 import type { UserAssessmentAnswer, SaveAnswerInput } from './answer.repository';
 import type { FlowStepWithConfig } from './flow.repository';
-import type { TenantContext } from '../lib/context';
+import type { OrganisationContext } from '../lib/context';
 import type {
   AssessmentResultsResponse,
   FlowStepSummary,
@@ -166,11 +166,11 @@ function extractAnswerValue(answerValue: unknown): AnswerValue {
  */
 export async function startAssessment(
   flowId: string,
-  context: TenantContext,
+  context: OrganisationContext,
   options: { isReassessment?: boolean } = {}
 ): Promise<StartAssessmentResponse> {
   const userId = await getUserIdFromContext(context);
-  const { tenantId } = context;
+  const { organisationId } = context;
 
   // Validate flow exists and is active
   const flow = await flowRepository.findActiveById(flowId);
@@ -187,13 +187,13 @@ export async function startAssessment(
 
   if (options.isReassessment) {
     // Reassessment: abandon any in-progress assessments for this flow, then create fresh
-    await userAssessmentRepository.abandonInProgressAssessments(tenantId, userId, flowId);
+    await userAssessmentRepository.abandonInProgressAssessments(organisationId, userId, flowId);
   } else {
     // Normal path: try to resume an existing assessment
 
     // Check for existing resumable assessment
     const existingAssessment = await userAssessmentRepository.findResumableAssessment(
-      tenantId,
+      organisationId,
       userId,
       flowId
     );
@@ -201,7 +201,7 @@ export async function startAssessment(
     if (existingAssessment) {
       // Load answers from user_assessment_answers table
       const storedAnswers = await answerRepository.findByAssessmentId(
-        tenantId,
+        organisationId,
         existingAssessment.id,
         { userId }
       );
@@ -222,7 +222,7 @@ export async function startAssessment(
 
     // Check for already-submitted assessment (handles hard reload after submission)
     const submittedAssessment = await userAssessmentRepository.findSubmittedAssessment(
-      tenantId,
+      organisationId,
       userId,
       flowId
     );
@@ -233,7 +233,7 @@ export async function startAssessment(
       const resultsStepOrder = resultsStep?.order ?? steps.length;
 
       const storedAnswers = await answerRepository.findByAssessmentId(
-        tenantId,
+        organisationId,
         submittedAssessment.id,
         { userId }
       );
@@ -255,7 +255,7 @@ export async function startAssessment(
 
   // Create new assessment
   const newAssessment = await userAssessmentRepository.createUserAssessment({
-    tenantId,
+    organisationId,
     userId,
     flowId,
   });
@@ -294,14 +294,17 @@ export async function startAssessment(
 export async function saveProgress(
   assessmentId: string,
   data: SaveProgressRequest,
-  context: TenantContext
+  context: OrganisationContext
 ): Promise<SaveProgressResponse> {
-  const { tenantId } = context;
+  const { organisationId } = context;
   const userId = await getUserIdFromContext(context);
   const db = getDb();
 
   // Fetch assessment by ID (RLS enforced)
-  const assessment = await userAssessmentRepository.findUserAssessmentById(tenantId, assessmentId);
+  const assessment = await userAssessmentRepository.findUserAssessmentById(
+    organisationId,
+    assessmentId
+  );
 
   if (!assessment) {
     throw new NotFoundError('Assessment', assessmentId);
@@ -313,11 +316,11 @@ export async function saveProgress(
   }
 
   // Execute all writes in a single transaction for atomicity
-  return await withRLS(tenantId, userId, async (tx) => {
+  return await withRLS(organisationId, userId, async (tx) => {
     // If status is 'not_started', transition to 'in_progress'
     if (assessment.status === 'not_started') {
       await userAssessmentRepository.transitionAssessmentStatus(
-        tenantId,
+        organisationId,
         assessmentId,
         'in_progress',
         {
@@ -330,12 +333,12 @@ export async function saveProgress(
     const answersToSave = convertAnswersToSaveFormat(data.answers);
 
     if (answersToSave.length > 0) {
-      await answerRepository.saveAnswers(tenantId, assessmentId, answersToSave, { tx });
+      await answerRepository.saveAnswers(organisationId, assessmentId, answersToSave, { tx });
     }
 
     // Update currentStep
     const updatedAssessment = await userAssessmentRepository.updateAssessmentProgress(
-      tenantId,
+      organisationId,
       assessmentId,
       { currentStep: data.currentStep },
       { tx }
@@ -368,7 +371,7 @@ export async function saveProgress(
 
     // Fetch all answers for the assessment (including ones just saved)
     // Pass tx to read within the same transaction (sees uncommitted writes)
-    const allAnswers = await answerRepository.findByAssessmentId(tenantId, assessmentId, {
+    const allAnswers = await answerRepository.findByAssessmentId(organisationId, assessmentId, {
       userId,
       tx,
     });
@@ -407,7 +410,7 @@ export async function saveProgress(
     // Persist warnings if any were triggered
     if (branchResult.warnings.length > 0) {
       await userAssessmentRepository.appendAssessmentWarnings(
-        tenantId,
+        organisationId,
         assessmentId,
         branchResult.warnings,
         {
@@ -480,13 +483,16 @@ function findMissingRequiredQuestions(
 export async function submitAssessment(
   assessmentId: string,
   data: SubmitAssessmentRequest,
-  context: TenantContext
+  context: OrganisationContext
 ): Promise<SubmitAssessmentResponse> {
-  const { tenantId } = context;
+  const { organisationId } = context;
   const userId = await getUserIdFromContext(context);
 
   // Fetch assessment (RLS enforced)
-  const assessment = await userAssessmentRepository.findUserAssessmentById(tenantId, assessmentId);
+  const assessment = await userAssessmentRepository.findUserAssessmentById(
+    organisationId,
+    assessmentId
+  );
 
   if (!assessment) {
     throw new NotFoundError('Assessment', assessmentId);
@@ -514,7 +520,7 @@ export async function submitAssessment(
   }
 
   // Load existing answers from user_assessment_answers table
-  const existingAnswers = await answerRepository.findByAssessmentId(tenantId, assessmentId, {
+  const existingAnswers = await answerRepository.findByAssessmentId(organisationId, assessmentId, {
     userId,
   });
 
@@ -536,7 +542,7 @@ export async function submitAssessment(
   // This ensures we only validate required questions from steps the user actually visited,
   // supporting branching flows where some steps are skipped
   const visitedTemplateIds = await answerRepository.findVisitedTemplateIds(
-    tenantId,
+    organisationId,
     assessmentId,
     userId
   );
@@ -577,16 +583,21 @@ export async function submitAssessment(
 
   // Execute all writes in a single transaction for atomicity
   // If any step fails, all changes are rolled back
-  return await withRLS(tenantId, userId, async (tx) => {
+  return await withRLS(organisationId, userId, async (tx) => {
     // Save new answers to user_assessment_answers table
     if (newAnswersToSave.length > 0) {
-      await answerRepository.saveAnswers(tenantId, assessmentId, newAnswersToSave, { tx });
+      await answerRepository.saveAnswers(organisationId, assessmentId, newAnswersToSave, { tx });
     }
 
     // Transition status to 'submitted'
-    await userAssessmentRepository.transitionAssessmentStatus(tenantId, assessmentId, 'submitted', {
-      tx,
-    });
+    await userAssessmentRepository.transitionAssessmentStatus(
+      organisationId,
+      assessmentId,
+      'submitted',
+      {
+        tx,
+      }
+    );
 
     // Enqueue score_assessment job
     // Uses flowId for scoring config (flow owns combined dimensions from all templates)
@@ -617,14 +628,14 @@ export async function submitAssessment(
  */
 export async function getAssessmentResults(
   assessmentId: string,
-  context: TenantContext
+  context: OrganisationContext
 ): Promise<AssessmentResultsResponse> {
-  const { tenantId } = context;
+  const { organisationId } = context;
   const userId = await getUserIdFromContext(context);
 
-  // Fetch assessment by ID (RLS enforced for tenant, userId for fine-grained RLS)
+  // Fetch assessment by ID (RLS enforced for organisation, userId for fine-grained RLS)
   const assessment = await userAssessmentRepository.findUserAssessmentById(
-    tenantId,
+    organisationId,
     assessmentId,
     userId
   );
@@ -633,7 +644,7 @@ export async function getAssessmentResults(
     throw new NotFoundError('Assessment', assessmentId);
   }
 
-  // Validate user ownership (RLS enforces tenant, not user isolation)
+  // Validate user ownership (RLS enforces organisation, not user isolation)
   if (assessment.userId !== userId) {
     throw new NotFoundError('Assessment', assessmentId);
   }
@@ -648,7 +659,7 @@ export async function getAssessmentResults(
 
   if (assessment.programmeId) {
     const programme = await programmeRepository.findProgrammeById(
-      tenantId,
+      organisationId,
       assessment.programmeId,
       {
         userId,
@@ -672,25 +683,25 @@ export async function getAssessmentResults(
  * default assessment flow ID so the frontend can redirect to the assessment.
  */
 export async function getUserAssessmentStatus(
-  context: TenantContext
+  context: OrganisationContext
 ): Promise<UserAssessmentStatusResponse> {
   const userId = await getUserIdFromContext(context);
 
   // Check if user has an active programme
-  const programme = await programmeRepository.findProgrammeByUserId(context.tenantId, userId);
+  const programme = await programmeRepository.findProgrammeByUserId(context.organisationId, userId);
 
   // Always look up the default flow — needed for reassessments too.
-  // findDefaultForTenant throws if no flow is configured, which is expected for
+  // findDefaultForOrganisation throws if no flow is configured, which is expected for
   // tenants that haven't set one up yet — return null gracefully.
   let flowId: string | null = null;
 
   try {
-    const flow = await flowRepository.findDefaultForTenant(context.tenantId);
+    const flow = await flowRepository.findDefaultForOrganisation(context.organisationId);
 
     flowId = flow?.id ?? null;
   } catch (error) {
     if (error instanceof InternalServerError) {
-      // No default flow configured for this tenant — not an error for this endpoint
+      // No default flow configured for this organisation — not an error for this endpoint
     } else {
       throw error;
     }

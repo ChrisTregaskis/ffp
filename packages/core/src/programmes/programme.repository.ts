@@ -67,7 +67,7 @@ async function createProgrammeInTx(
   const [record] = await tx
     .insert(programmes)
     .values({
-      tenantId: input.tenantId,
+      organisationId: input.organisationId,
       userId: input.userId,
       programmeTemplateId: input.programmeTemplateId,
       name: input.name,
@@ -177,14 +177,14 @@ export async function createProgramme(
     return createProgrammeInTx(tx, input);
   }
 
-  return await withRLS(input.tenantId, input.userId, async (newTx) => {
+  return await withRLS(input.organisationId, input.userId, async (newTx) => {
     return createProgrammeInTx(newTx, input);
   });
 }
 
-/** Returns the first active programme for the given user within the tenant. */
+/** Returns the first active programme for the given user within the organisation. */
 export async function findProgrammeByUserId(
-  tenantId: string,
+  organisationId: string,
   userId: string,
   options: FindByUserIdOptions = {}
 ): Promise<Programme | null> {
@@ -194,13 +194,13 @@ export async function findProgrammeByUserId(
     return findProgrammeByUserIdInTx(tx, userId);
   }
 
-  return await withRLS(tenantId, userId, async (newTx) => {
+  return await withRLS(organisationId, userId, async (newTx) => {
     return findProgrammeByUserIdInTx(newTx, userId);
   });
 }
 
 export async function findProgrammeById(
-  tenantId: string,
+  organisationId: string,
   programmeId: string,
   options: FindByIdOptions = {}
 ): Promise<Programme | null> {
@@ -210,14 +210,14 @@ export async function findProgrammeById(
     return findProgrammeByIdInTx(tx, programmeId);
   }
 
-  return await withRLS(tenantId, userId, async (newTx) => {
+  return await withRLS(organisationId, userId, async (newTx) => {
     return findProgrammeByIdInTx(newTx, programmeId);
   });
 }
 
 /** Archives a programme — sets status, archivedAt, and optional reason. */
 export async function archiveProgramme(
-  tenantId: string,
+  organisationId: string,
   programmeId: string,
   userId: string,
   options: ArchiveProgrammeOptions = {}
@@ -228,14 +228,14 @@ export async function archiveProgramme(
     return archiveProgrammeInTx(tx, programmeId, userId, reason);
   }
 
-  await withRLS(tenantId, userId, async (newTx) => {
+  await withRLS(organisationId, userId, async (newTx) => {
     return archiveProgrammeInTx(newTx, programmeId, userId, reason);
   });
 }
 
 /** Links an archived programme to its replacement (sets replacedByProgrammeId). */
 export async function setReplacementProgramme(
-  tenantId: string,
+  organisationId: string,
   archivedProgrammeId: string,
   replacementProgrammeId: string,
   options: SetReplacementProgrammeOptions = {}
@@ -246,7 +246,7 @@ export async function setReplacementProgramme(
     return setReplacementProgrammeInTx(tx, archivedProgrammeId, replacementProgrammeId);
   }
 
-  await withRLS(tenantId, undefined, async (newTx) => {
+  await withRLS(organisationId, undefined, async (newTx) => {
     return setReplacementProgrammeInTx(newTx, archivedProgrammeId, replacementProgrammeId);
   });
 }
@@ -293,7 +293,7 @@ export async function findTemplatePhases(
 
 /** Batch inserts programme_phases rows. RLS context must be set when using a transaction. */
 export async function createProgrammePhases(
-  tenantId: string,
+  organisationId: string,
   phases: NewProgrammePhase[],
   options: CreateProgrammePhasesOptions = {}
 ): Promise<void> {
@@ -307,7 +307,7 @@ export async function createProgrammePhases(
     return createProgrammePhasesInTx(tx, phases);
   }
 
-  await withRLS(tenantId, undefined, async (newTx) => {
+  await withRLS(organisationId, undefined, async (newTx) => {
     return createProgrammePhasesInTx(newTx, phases);
   });
 }

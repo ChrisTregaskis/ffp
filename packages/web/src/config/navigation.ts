@@ -144,10 +144,18 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
   // System Admin navigation
   const systemAdminNavItems: NavItem[] = [
     {
-      key: RouteKey.ADMIN_CUSTOMERS,
-      label: 'Customers',
+      key: RouteKey.ADMIN_ORGANISATIONS,
+      label: 'Organisations',
       icon: 'Building',
-      path: routes[RouteKey.ADMIN_CUSTOMERS].path,
+      path: routes[RouteKey.ADMIN_ORGANISATIONS].path,
+      roles: [SYSTEM_ADMIN],
+      section: 'main',
+    },
+    {
+      key: RouteKey.ADMIN_LOCATIONS,
+      label: 'Locations',
+      icon: 'Location',
+      path: routes[RouteKey.ADMIN_LOCATIONS].path,
       roles: [SYSTEM_ADMIN],
       section: 'main',
     },

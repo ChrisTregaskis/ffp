@@ -14,7 +14,7 @@ All logs use JSON format for parsing and filtering:
   "service": "AssessmentService",
   "message": "Assessment created",
   "timestamp": "2025-10-05T14:30:00.000Z",
-  "tenantId": "uuid",
+  "organisationId": "uuid",
   "userId": "uuid",
   "correlationId": "req-abc-123"
 }
@@ -31,10 +31,10 @@ All logs use JSON format for parsing and filtering:
 ## Key CloudWatch Insights Queries
 
 ```sql
--- Errors by tenant
-fields @timestamp, message, tenantId, userId, error
+-- Errors by organisation
+fields @timestamp, message, organisationId, userId, error
 | filter level = "ERROR"
-| filter tenantId = "uuid"
+| filter organisationId = "uuid"
 | sort @timestamp desc
 
 -- API response times (5-minute buckets)
@@ -82,7 +82,7 @@ Track via CloudWatch custom namespace `FFP/Business`:
 
 1. Check CloudWatch dashboard — identify affected service
 2. Filter recent ERROR logs, check for recent deployments
-3. Assess impact (users/tenants affected)
+3. Assess impact (users/organisations affected)
 4. Rollback or hotfix
 5. Monitor 30 minutes post-fix
 6. Document post-mortem

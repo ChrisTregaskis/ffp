@@ -1,6 +1,6 @@
 import {
   createSystemContext,
-  SYSTEM_PLACEHOLDER_TENANT_ID,
+  SYSTEM_PLACEHOLDER_ORGANISATION_ID,
   type APIGatewayProxyEventV2WithJWT,
 } from '@ffp/core/server';
 
@@ -14,11 +14,11 @@ import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
 /**
  * Infrastructure-level system context for router logging.
- * Uses placeholder tenantId as routing happens before authentication.
+ * Uses placeholder organisationId as routing happens before authentication.
  */
 const ROUTER_CONTEXT = createSystemContext({
   systemId: 'auth-router',
-  tenantId: SYSTEM_PLACEHOLDER_TENANT_ID,
+  organisationId: SYSTEM_PLACEHOLDER_ORGANISATION_ID,
 });
 
 /**

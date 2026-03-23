@@ -9,7 +9,7 @@ import { minutesToMs } from '@web/utils/time';
 
 import type { UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
 
-/** Fetches a paginated list of users with search, customer, and role filters. */
+/** Fetches a paginated list of users with search, location, and role filters. */
 export const useAdminUsersQuery = (
   pagination: PaginationInput,
   filters: AdminUserFilterInput,

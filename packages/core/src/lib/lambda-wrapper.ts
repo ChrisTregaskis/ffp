@@ -5,7 +5,7 @@
  * Wraps handler functions to catch errors and convert them to properly formatted
  * API Gateway responses.
  *
- * Integrates structured logging for all requests with tenant context awareness.
+ * Integrates structured logging for all requests with organisation context awareness.
  */
 
 import { ZodError } from 'zod';
@@ -53,7 +53,7 @@ interface ErrorResponseBody {
  * Wraps a Lambda handler with error handling and structured logging middleware
  *
  * This wrapper:
- * 1. Extracts tenant context and creates structured logger
+ * 1. Extracts organisation context and creates structured logger
  * 2. Logs request start with path and method
  * 3. Executes the handler and returns success responses (200)
  * 4. Logs request completion with status code

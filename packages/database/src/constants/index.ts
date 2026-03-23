@@ -13,12 +13,12 @@
  */
 
 export * from './branching.constants';
-export * from './customer.constants';
+export * from './location.constants';
 export * from './flow.constants';
 export * from './job.constants';
 export * from './programme.constants';
 export * from './question.constants';
-export * from './tenant.constants';
+export * from './organisation.constants';
 export * from './user.constants';
 export * from './user-assessment.constants';
 export * from './video.constants';

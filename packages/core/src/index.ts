@@ -2,7 +2,7 @@
 // This package is imported by both @ffp/web and @ffp/functions
 
 // Schemas (validation + types - single source of truth)
-// All types (User, UserRole, Tenant, TenantType, Customer, CustomerStatus, etc.)
+// All types (User, UserRole, Organisation, OrganisationType, Location, LocationStatus, etc.)
 // are exported from schemas - Zod schemas are the authoritative source
 export * from './schemas';
 

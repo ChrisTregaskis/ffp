@@ -1,6 +1,6 @@
 import { getDb, processJobs, type JobType } from '@ffp/database';
 
-import type { TenantContext } from '../lib/context';
+import type { OrganisationContext } from '../lib/context';
 import type { Transaction } from '../lib/database';
 import type { GenerateProgrammePayload, ScoreAssessmentPayload } from '../schemas/job.schema';
 
@@ -46,7 +46,7 @@ export interface QueueJobOptions {
  * @typeParam T - The job type, used to infer the correct payload type
  * @param type - The type of job to queue (e.g., 'score_assessment', 'generate_programme')
  * @param payload - Job-specific data required for processing (type-safe based on job type)
- * @param context - Tenant context for RLS isolation
+ * @param context - Organisation context for RLS isolation
  * @param options - Optional configuration for priority, retry behaviour, and transaction
  * @returns The UUID of the created job for tracking
  *
@@ -54,7 +54,7 @@ export interface QueueJobOptions {
 export async function queueJob<T extends JobType>(
   type: T,
   payload: JobPayloadMap[T],
-  context: TenantContext,
+  context: OrganisationContext,
   options: QueueJobOptions = {}
 ): Promise<string> {
   const { priority = 4, maxAttempts = 3, tx } = options;
@@ -65,7 +65,7 @@ export async function queueJob<T extends JobType>(
   const [job] = await dbClient
     .insert(processJobs)
     .values({
-      tenantId: context.tenantId,
+      organisationId: context.organisationId,
       type,
       payload,
       priority,

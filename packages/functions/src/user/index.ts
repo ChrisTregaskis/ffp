@@ -17,7 +17,7 @@ const routes: RouteRegistry = {
     // '/profile': getUserProfileHandler,
   },
   POST: {
-    '/invite-user': inviteUserHandler, // Invite new user to tenant/customer
+    '/invite-user': inviteUserHandler, // Invite new user to organisation/location
     // Future user routes:
     // '/update-profile': updateProfileHandler,
   },

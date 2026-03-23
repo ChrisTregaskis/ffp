@@ -18,12 +18,6 @@ import { assessmentTemplates } from './assessment-templates';
 import type { FlowStepConfig } from '../constants/flow.constants';
 import type { NextStepRule } from '../constants/branching.constants';
 
-/**
- * Flow step type enum
- *
- * Uses shared constants from @ffp/database/constants/flow.constants.ts
- * to ensure synchronisation with Zod schemas in @ffp/core.
- */
 export const flowStepTypeEnum = pgEnum('flow_step_type', [...FLOW_STEP_TYPES]);
 
 /**
@@ -118,9 +112,6 @@ export const flowStepsRelations = relations(flowSteps, ({ one }) => ({
 }));
 
 export const insertFlowStepSchema = createInsertSchema(flowSteps);
-
 export const selectFlowStepSchema = createSelectSchema(flowSteps);
-
 export type FlowStepRecord = typeof flowSteps.$inferSelect;
-
 export type NewFlowStep = typeof flowSteps.$inferInsert;

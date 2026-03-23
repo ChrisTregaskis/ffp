@@ -32,19 +32,25 @@ export enum RouteKey {
   /** Support and help page */
   SUPPORT_HELP = 'support-help',
 
-  // System Admin Routes (placeholders)
-  /** Admin customers management page */
-  ADMIN_CUSTOMERS = 'admin-customers',
+  // System Admin Routes
+  /** Admin organisations management page */
+  ADMIN_ORGANISATIONS = 'admin-organisations',
+  /** Admin organisation create page */
+  ADMIN_ORGANISATION_CREATE = 'admin-organisation-create',
+  /** Admin organisation edit page */
+  ADMIN_ORGANISATION_EDIT = 'admin-organisation-edit',
+  /** Admin locations management page */
+  ADMIN_LOCATIONS = 'admin-locations',
+  /** Admin location create page */
+  ADMIN_LOCATION_CREATE = 'admin-location-create',
+  /** Admin location edit page */
+  ADMIN_LOCATION_EDIT = 'admin-location-edit',
   /** Admin users management page */
   ADMIN_USERS = 'admin-users',
   /** Admin assessments management page */
   ADMIN_ASSESSMENTS = 'admin-assessments',
   /** Admin session templates management page */
   ADMIN_TEMPLATES = 'admin-templates',
-  /** Admin customer create page */
-  ADMIN_CUSTOMER_CREATE = 'admin-customer-create',
-  /** Admin customer edit page */
-  ADMIN_CUSTOMER_EDIT = 'admin-customer-edit',
   /** Admin user create page */
   ADMIN_USER_CREATE = 'admin-user-create',
   /** Admin user edit page */

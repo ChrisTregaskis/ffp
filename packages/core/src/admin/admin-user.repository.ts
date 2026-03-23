@@ -2,7 +2,7 @@ import { and, eq, or, ilike, inArray, count, type Column, type SQL } from 'drizz
 
 import type { DbClient } from '@ffp/database';
 import { USER_ROLES, type UserRole } from '@ffp/database/constants';
-import { users, customers, type NewUser } from '@ffp/database/schema';
+import { users, locations, type NewUser } from '@ffp/database/schema';
 
 import { formatDateOnly } from '../lib/date';
 import { InternalServerError } from '../lib/errors';
@@ -19,33 +19,33 @@ const USER_SORTABLE_COLUMNS: Partial<Record<string, Column>> = {
   createdAt: users.createdAt,
 };
 
-/** Row type returned by list query (user fields + customerName from join) */
-export interface UserWithCustomerName {
+/** Row type returned by list query (user fields + locationName from join) */
+export interface UserWithLocationName {
   id: string;
-  tenantId: string;
+  organisationId: string;
   email: string;
   cognitoSub: string;
   firstName: string;
   lastName: string;
   role: string;
-  customerId: string | null;
+  locationId: string | null;
   profileImageUrl: string | null;
   phone: string | null;
   dateOfBirth: string | null;
   createdAt: Date;
   updatedAt: Date;
-  customerName: string | null;
+  locationName: string | null;
 }
 
 /** Input for creating a user record in the database */
 export interface CreateUserDbInput {
-  tenantId: string;
+  organisationId: string;
   email: string;
   cognitoSub: string;
   firstName: string;
   lastName: string;
   role: UserRole;
-  customerId: string;
+  locationId: string;
   phone?: string | null;
   dateOfBirth?: Date | null;
 }
@@ -65,8 +65,8 @@ function buildUserFilterConditions(filters: UserFilterInput): (SQL | undefined)[
     );
   }
 
-  if (filters.customerId) {
-    conditions.push(eq(users.customerId, filters.customerId));
+  if (filters.locationId) {
+    conditions.push(eq(users.locationId, filters.locationId));
   }
 
   if (filters.role) {
@@ -86,35 +86,35 @@ function buildUserFilterConditions(filters: UserFilterInput): (SQL | undefined)[
 }
 
 /**
- * List users with pagination, search, and customer filter.
- * Joins customers table for customerName.
+ * List users with pagination, search, and location filter.
+ * Joins locations table for locationName.
  */
 export async function listUsers(
   db: DbClient,
   paginationInput: PaginationInput,
   filters: UserFilterInput
-): Promise<UserWithCustomerName[]> {
+): Promise<UserWithLocationName[]> {
   const conditions = buildUserFilterConditions(filters);
 
   const query = db
     .select({
       id: users.id,
-      tenantId: users.tenantId,
+      organisationId: users.organisationId,
       email: users.email,
       cognitoSub: users.cognitoSub,
       firstName: users.firstName,
       lastName: users.lastName,
       role: users.role,
-      customerId: users.customerId,
+      locationId: users.locationId,
       profileImageUrl: users.profileImageUrl,
       phone: users.phone,
       dateOfBirth: users.dateOfBirth,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
-      customerName: customers.name,
+      locationName: locations.name,
     })
     .from(users)
-    .leftJoin(customers, eq(users.customerId, customers.id))
+    .leftJoin(locations, eq(users.locationId, locations.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .$dynamic();
 
@@ -122,7 +122,7 @@ export async function listUsers(
     query,
     paginationInput,
     USER_SORTABLE_COLUMNS
-  )) as UserWithCustomerName[];
+  )) as UserWithLocationName[];
 }
 
 /**
@@ -140,34 +140,34 @@ export async function countUsers(db: DbClient, filters: UserFilterInput): Promis
 }
 
 /**
- * Get a single user by ID with customer name. Returns null if not found.
+ * Get a single user by ID with location name. Returns null if not found.
  */
 export async function getUserById(
   db: DbClient,
   userId: string
-): Promise<UserWithCustomerName | null> {
+): Promise<UserWithLocationName | null> {
   const records = await db
     .select({
       id: users.id,
-      tenantId: users.tenantId,
+      organisationId: users.organisationId,
       email: users.email,
       cognitoSub: users.cognitoSub,
       firstName: users.firstName,
       lastName: users.lastName,
       role: users.role,
-      customerId: users.customerId,
+      locationId: users.locationId,
       profileImageUrl: users.profileImageUrl,
       phone: users.phone,
       dateOfBirth: users.dateOfBirth,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
-      customerName: customers.name,
+      locationName: locations.name,
     })
     .from(users)
-    .leftJoin(customers, eq(users.customerId, customers.id))
+    .leftJoin(locations, eq(users.locationId, locations.id))
     .where(eq(users.id, userId));
 
-  const record = records[0] as UserWithCustomerName | undefined;
+  const record = records[0] as UserWithLocationName | undefined;
 
   return record ?? null;
 }
@@ -189,28 +189,28 @@ export async function getUserByEmail(
 }
 
 /**
- * Insert a new user record. Returns the created record with customer name.
+ * Insert a new user record. Returns the created record with location name.
  */
 export async function createUser(
   db: DbClient,
   data: CreateUserDbInput
-): Promise<UserWithCustomerName> {
+): Promise<UserWithLocationName> {
   const [inserted] = await db
     .insert(users)
     .values({
-      tenantId: data.tenantId,
+      organisationId: data.organisationId,
       email: data.email,
       cognitoSub: data.cognitoSub,
       firstName: data.firstName,
       lastName: data.lastName,
       role: data.role,
-      customerId: data.customerId,
+      locationId: data.locationId,
       phone: data.phone ?? null,
       dateOfBirth: data.dateOfBirth ? formatDateOnly(data.dateOfBirth) : null,
     })
     .returning();
 
-  // Re-fetch with customer name join
+  // Re-fetch with location name join
   const result = await getUserById(db, inserted.id);
 
   if (!result) {
@@ -221,13 +221,13 @@ export async function createUser(
 }
 
 /**
- * Update a user record. Returns the updated record with customer name, or null if not found.
+ * Update a user record. Returns the updated record with location name, or null if not found.
  */
 export async function updateUser(
   db: DbClient,
   userId: string,
   data: AdminUpdateUserInput
-): Promise<UserWithCustomerName | null> {
+): Promise<UserWithLocationName | null> {
   const setData: Partial<NewUser> = { updatedAt: new Date() };
 
   if (data.firstName !== undefined) {
@@ -252,6 +252,6 @@ export async function updateUser(
     return null;
   }
 
-  // Re-fetch with customer name join
+  // Re-fetch with location name join
   return await getUserById(db, records[0].id);
 }

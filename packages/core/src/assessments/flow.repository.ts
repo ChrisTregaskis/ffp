@@ -4,7 +4,7 @@ import type { DbClient } from '@ffp/database';
 import {
   assessmentFlows,
   flowSteps,
-  tenants,
+  organisations,
   type AssessmentFlowRecord,
   type FlowStepRecord,
 } from '@ffp/database/schema';
@@ -79,7 +79,7 @@ export async function findActiveById(flowId: string): Promise<AssessmentFlow | n
 }
 
 /**
- * Extract `defaultAssessmentFlowId` from a tenant settings JSONB value.
+ * Extract `defaultAssessmentFlowId` from an organisation settings JSONB value.
  * Returns the flow ID string if present, otherwise null.
  */
 function extractDefaultFlowId(settings: unknown): string | null {
@@ -95,47 +95,49 @@ function extractDefaultFlowId(settings: unknown): string | null {
 }
 
 /**
- * Find the default assessment flow for a tenant
+ * Find the default assessment flow for an organisation
  *
  * Lookup hierarchy:
- * 1. Tenant's own `settings.defaultAssessmentFlowId` — per-tenant override
- * 2. Platform tenant's `settings.defaultAssessmentFlowId` — global default (required)
+ * 1. Organisation's own `settings.defaultAssessmentFlowId` — per-organisation override
+ * 2. Platform organisation's `settings.defaultAssessmentFlowId` — global default (required)
  *
  * At each level, the configured flow is validated as still active.
- * This allows customer admins to set a tenant-specific default, while
- * platform admins control the global default for all tenants.
+ * This allows location admins to set an organisation-specific default, while
+ * platform admins control the global default for all organisations.
  *
- * @param tenantId - The tenant UUID to check settings for
+ * @param organisationId - The organisation UUID to check settings for
  * @throws InternalServerError if no default assessment flow is configured
  */
-export async function findDefaultForTenant(tenantId: string): Promise<AssessmentFlow | null> {
-  // Check tenant's own settings for a configured default
-  const tenantFlowId = await withRLS(tenantId, undefined, async (tx) => {
+export async function findDefaultForOrganisation(
+  organisationId: string
+): Promise<AssessmentFlow | null> {
+  // Check organisation's own settings for a configured default
+  const organisationFlowId = await withRLS(organisationId, undefined, async (tx) => {
     const records = await tx
-      .select({ settings: tenants.settings })
-      .from(tenants)
-      .where(eq(tenants.id, tenantId))
+      .select({ settings: organisations.settings })
+      .from(organisations)
+      .where(eq(organisations.id, organisationId))
       .limit(1);
 
     return extractDefaultFlowId(records[0]?.settings);
   });
 
-  if (tenantFlowId) {
-    const flow = await findActiveById(tenantFlowId);
+  if (organisationFlowId) {
+    const flow = await findActiveById(organisationFlowId);
 
     if (flow) {
       return flow;
     }
   }
 
-  // Check platform tenant settings for a global default
-  // Uses the user's tenant RLS context — the tenant_isolation policy allows
-  // any tenant to also read the platform tenant row (type = 'platform')
-  const platformFlowId = await withRLS(tenantId, undefined, async (tx) => {
+  // Check platform organisation settings for a global default
+  // Uses the user's organisation RLS context — the organisation_isolation policy allows
+  // any organisation to also read the platform organisation row (type = 'platform')
+  const platformFlowId = await withRLS(organisationId, undefined, async (tx) => {
     const records = await tx
-      .select({ settings: tenants.settings })
-      .from(tenants)
-      .where(eq(tenants.type, 'platform'))
+      .select({ settings: organisations.settings })
+      .from(organisations)
+      .where(eq(organisations.type, 'platform'))
       .limit(1);
 
     return extractDefaultFlowId(records[0]?.settings);
@@ -151,7 +153,7 @@ export async function findDefaultForTenant(tenantId: string): Promise<Assessment
     // Configured flow ID exists but is inactive or missing
     logger.error('Platform default assessment flow is not active or does not exist', {
       platformFlowId,
-      tenantId,
+      organisationId,
     });
 
     throw new InternalServerError(
@@ -168,7 +170,7 @@ export async function findDefaultForTenant(tenantId: string): Promise<Assessment
 
   if (fallbackRecords[0]) {
     logger.warn('No default assessment flow configured — falling back to first active flow', {
-      tenantId,
+      organisationId,
       flowId: fallbackRecords[0].id,
     });
 
@@ -176,7 +178,7 @@ export async function findDefaultForTenant(tenantId: string): Promise<Assessment
   }
 
   // No flows exist at all
-  logger.error('No default assessment flow configured', { tenantId });
+  logger.error('No default assessment flow configured', { organisationId });
 
   throw new InternalServerError('No default assessment flow is configured.');
 }

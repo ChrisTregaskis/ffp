@@ -158,7 +158,7 @@ export const FormComponentsPage = (): JSX.Element => {
                   </li>
                   <li>
                     <Text className="text-gray-600" styleProps={{ size: 'sm' }}>
-                      User object with tenantId and role after success
+                      User object with organisationId and role after success
                     </Text>
                   </li>
                   <li>

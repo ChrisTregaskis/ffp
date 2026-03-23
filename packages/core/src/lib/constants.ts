@@ -1,27 +1,27 @@
-import { customerStatusSchema } from '../schemas/customer.schema';
-import { tenantTypeSchema } from '../schemas/tenant.schema';
+import { locationStatusSchema } from '../schemas/location.schema';
+import { organisationTypeSchema } from '../schemas/organisation.schema';
 import { userRoleSchema } from '../schemas/user.schema';
 
 export const APP_NAME = 'FFP - Fitness & Physiotherapy Platform';
 export const APP_VERSION = '0.0.1';
 
 /**
- * Platform tenant ID for system administrators
+ * Platform organisation ID for system administrators
  *
- * System administrators don't belong to a specific customer tenant.
- * They use this special "platform" tenant ID which grants them access
- * to all tenants via RLS policy bypass.
+ * System administrators don't belong to a specific business organisation.
+ * They use this special "platform" organisation ID which grants them access
+ * to all organisations via RLS policy bypass.
  *
- * Note: This is a reserved tenant ID and should never be used for
- * regular customer tenants!
+ * Note: This is a reserved organisation ID and should never be used for
+ * regular business organisations!
  */
-export const PLATFORM_TENANT_ID = 'platform';
+export const PLATFORM_ORGANISATION_ID = 'platform';
 
 /**
- * Placeholder tenant ID for system-level operations where no real tenant exists.
+ * Placeholder organisation ID for system-level operations where no real organisation exists.
  * Used by routers (pre-auth routing) and cold start logging.
  */
-export const SYSTEM_PLACEHOLDER_TENANT_ID = '00000000-0000-0000-8000-000000000000';
+export const SYSTEM_PLACEHOLDER_ORGANISATION_ID = '00000000-0000-0000-8000-000000000000';
 
 // Email validation pattern.
 export const EMAIL_PATTERN = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
@@ -59,9 +59,18 @@ export const PASSWORD_FULL_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za
  */
 export const PASSWORD_MIN_LENGTH = 8;
 
+/**
+ * Cognito custom attribute mappings
+ *
+ * Cognito attributes are immutable once created — they cannot be renamed or deleted.
+ * The actual attribute names remain custom:tenantId and custom:customerId, but code
+ * uses ORGANISATION_ID and LOCATION_ID aliases for clarity.
+ */
 export const COGNITO_CUSTOM_ATTRIBUTES = {
-  TENANT_ID: 'custom:tenantId',
-  CUSTOMER_ID: 'custom:customerId',
+  /** Maps to custom:tenantId in Cognito (immutable attribute name) */
+  ORGANISATION_ID: 'custom:tenantId',
+  /** Maps to custom:customerId in Cognito (immutable attribute name) */
+  LOCATION_ID: 'custom:customerId',
   ROLE: 'custom:role',
 } as const;
 
@@ -82,7 +91,7 @@ function createUppercaseConstants<T extends Record<string, string>>(
 }
 
 /**
- * User role, Tenant type and Customer status constants - Derived from Zod schema (single source of truth)
+ * User role, Organisation type and Location status constants - Derived from Zod schema (single source of truth)
  *
  * These constants are automatically derived from relevant schema, ie: userRoleSchema in ../schemas/user.schema.ts
  * Aim is to make it easier to stay in sync.
@@ -91,5 +100,5 @@ function createUppercaseConstants<T extends Record<string, string>>(
  * For typing, import relevant type ie: UserRole type from @ffp/core schemas
  */
 export const USER_ROLES = createUppercaseConstants(userRoleSchema.enum);
-export const TENANT_TYPES = createUppercaseConstants(tenantTypeSchema.enum);
-export const CUSTOMER_STATUS = createUppercaseConstants(customerStatusSchema.enum);
+export const ORGANISATION_TYPES = createUppercaseConstants(organisationTypeSchema.enum);
+export const LOCATION_STATUSES = createUppercaseConstants(locationStatusSchema.enum);

@@ -1,11 +1,23 @@
-export { adminCustomersApi } from './admin-customers';
+export { adminLocationsApi } from './admin-locations';
 export type {
-  AdminCustomerFilterInput,
-  CreateCustomerInput,
-  CustomerDetailResponse,
-  PaginatedCustomerResponse,
-  UpdateCustomerInput,
-} from './admin-customers';
+  AdminLocationFilterInput,
+  CreateLocationMutationInput,
+  PaginatedLocationResponse,
+} from './admin-locations';
+export type {
+  CreateLocationInput,
+  LocationDetailResponse,
+  UpdateLocationInput,
+} from './admin-locations';
+
+export { adminOrganisationsApi } from './admin-organisations';
+export type {
+  AdminOrganisationFilterInput,
+  CreateOrganisationInput,
+  OrganisationDetailResponse,
+  PaginatedOrganisationResponse,
+  UpdateOrganisationInput,
+} from './admin-organisations';
 
 export { adminProgrammeTemplatesApi } from './admin-programme-templates';
 export { adminExercisesApi, adminPhasesApi, adminSessionsApi } from './admin-template-hierarchy';

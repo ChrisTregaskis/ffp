@@ -69,8 +69,8 @@ describe('CognitoService', () => {
         email: 'user@example.com',
         firstName: 'John',
         lastName: 'Smith',
-        tenantId: 'tenant-123',
-        customerId: 'customer-456',
+        organisationId: 'tenant-123',
+        locationId: 'customer-456',
         role: 'programme_user',
       };
 
@@ -84,8 +84,8 @@ describe('CognitoService', () => {
           { Name: 'email_verified', Value: 'true' },
           { Name: 'given_name', Value: 'John' },
           { Name: 'family_name', Value: 'Smith' },
-          { Name: COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID, Value: 'tenant-123' },
-          { Name: COGNITO_CUSTOM_ATTRIBUTES.CUSTOMER_ID, Value: 'customer-456' },
+          { Name: COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID, Value: 'tenant-123' },
+          { Name: COGNITO_CUSTOM_ATTRIBUTES.LOCATION_ID, Value: 'customer-456' },
           { Name: COGNITO_CUSTOM_ATTRIBUTES.ROLE, Value: 'programme_user' },
         ],
         DesiredDeliveryMediums: ['EMAIL'],
@@ -101,8 +101,8 @@ describe('CognitoService', () => {
         email: 'user@example.com',
         firstName: 'John',
         lastName: 'Smith',
-        tenantId: 'tenant-123',
-        customerId: 'customer-456',
+        organisationId: 'tenant-123',
+        locationId: 'customer-456',
         role: 'programme_user',
       };
 
@@ -124,8 +124,8 @@ describe('CognitoService', () => {
         email: 'user@example.com',
         firstName: 'John',
         lastName: 'Smith',
-        tenantId: 'tenant-123',
-        customerId: 'customer-456',
+        organisationId: 'tenant-123',
+        locationId: 'customer-456',
         role: 'programme_user',
       };
 
@@ -136,7 +136,7 @@ describe('CognitoService', () => {
   });
 
   describe('createUser', () => {
-    it('should create user with customerId when provided', async () => {
+    it('should create user with locationId when provided', async () => {
       mockSend.mockResolvedValueOnce({
         User: { Username: 'user@example.com' },
       });
@@ -145,8 +145,8 @@ describe('CognitoService', () => {
         email: 'user@example.com',
         firstName: 'Jane',
         lastName: 'Doe',
-        tenantId: 'tenant-123',
-        customerId: 'customer-456',
+        organisationId: 'tenant-123',
+        locationId: 'customer-456',
         role: 'customer_owner',
       };
 
@@ -155,13 +155,13 @@ describe('CognitoService', () => {
       expect(AdminCreateUserCommand).toHaveBeenCalledWith(
         expect.objectContaining({
           UserAttributes: expect.arrayContaining([
-            { Name: COGNITO_CUSTOM_ATTRIBUTES.CUSTOMER_ID, Value: 'customer-456' },
+            { Name: COGNITO_CUSTOM_ATTRIBUTES.LOCATION_ID, Value: 'customer-456' },
           ]),
         })
       );
     });
 
-    it('should create user without customerId when null (system admin)', async () => {
+    it('should create user without locationId when null (system admin)', async () => {
       mockSend.mockResolvedValueOnce({
         User: { Username: 'admin@example.com' },
       });
@@ -170,8 +170,8 @@ describe('CognitoService', () => {
         email: 'admin@example.com',
         firstName: 'Admin',
         lastName: 'User',
-        tenantId: 'platform',
-        customerId: null,
+        organisationId: 'platform',
+        locationId: null,
         role: 'system_admin',
       };
 
@@ -179,7 +179,7 @@ describe('CognitoService', () => {
 
       const commandCall = vi.mocked(AdminCreateUserCommand).mock.calls[0][0];
       const hasCustomerId = commandCall.UserAttributes?.some(
-        (attr) => attr.Name === COGNITO_CUSTOM_ATTRIBUTES.CUSTOMER_ID
+        (attr) => attr.Name === COGNITO_CUSTOM_ATTRIBUTES.LOCATION_ID
       );
 
       expect(hasCustomerId).toBe(false);
@@ -194,8 +194,8 @@ describe('CognitoService', () => {
         email: 'user@example.com',
         firstName: 'Test',
         lastName: 'User',
-        tenantId: 'tenant-123',
-        customerId: 'customer-456',
+        organisationId: 'tenant-123',
+        locationId: 'customer-456',
         role: 'programme_user',
         temporaryPassword: 'TempPass123!',
       };
@@ -218,8 +218,8 @@ describe('CognitoService', () => {
         email: 'user@example.com',
         firstName: 'Test',
         lastName: 'User',
-        tenantId: 'tenant-123',
-        customerId: 'customer-456',
+        organisationId: 'tenant-123',
+        locationId: 'customer-456',
         role: 'programme_user',
       };
 
@@ -236,8 +236,8 @@ describe('CognitoService', () => {
         email: 'user@example.com',
         firstName: 'Test',
         lastName: 'User',
-        tenantId: 'tenant-123',
-        customerId: 'customer-456',
+        organisationId: 'tenant-123',
+        locationId: 'customer-456',
         role: 'programme_user',
       };
 

@@ -8,13 +8,13 @@ export const userRoleSchema = z.enum(USER_ROLES);
 
 export const userSchema = z.object({
   id: z.guid(),
-  tenantId: z.guid(),
+  organisationId: z.guid(),
   email: z.email().max(255),
   cognitoSub: z.string().max(255),
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
   role: userRoleSchema,
-  customerId: z.guid().nullable(),
+  locationId: z.guid().nullable(),
   profileImageUrl: z.url().nullable(),
   phone: z.string().max(20).nullable(),
   dateOfBirth: z.coerce.date().nullable(),
@@ -31,7 +31,7 @@ export const createUserSchema = userSchema
     role: true,
   })
   .extend({
-    customerId: userSchema.shape.customerId.optional(),
+    locationId: userSchema.shape.locationId.optional(),
     profileImageUrl: userSchema.shape.profileImageUrl.optional(),
     phone: userSchema.shape.phone.optional(),
     dateOfBirth: userSchema.shape.dateOfBirth.optional(),
@@ -42,6 +42,7 @@ export const createUserSchema = userSchema
  * Used to validate and type JWT payload on authentication
  *
  * Note: Cognito's 'sub' claim uses their internal identifier format (not UUID)
+ * Note: Cognito attribute names are immutable — custom:tenantId maps to organisationId
  */
 export const jwtUserClaimsSchema = z.object({
   sub: z.string(),
@@ -53,15 +54,15 @@ export const jwtUserClaimsSchema = z.object({
 export const invitableRoleSchema = z.enum(INVITABLE_ROLES);
 
 /**
- * Determines if a programme user can be invited based on customerId presence.
- * Individual users (customerId = null) cannot be invited.
- * Customer users (customerId present) can be invited.
+ * Determines if a programme user can be invited based on locationId presence.
+ * Individual users (locationId = null) cannot be invited.
+ * Location users (locationId present) can be invited.
  */
-export const canInviteProgrammeUser = (customerId: string | null): boolean => {
-  return customerId !== null;
+export const canInviteProgrammeUser = (locationId: string | null): boolean => {
+  return locationId !== null;
 };
 
-/** The schema validates that tenantId and customerId are provided together or both omitted. */
+/** The schema validates that organisationId and locationId are provided together or both omitted. */
 export const inviteUserSchema = z
   .object({
     email: z.email().max(255, 'Email must be 255 characters or less'),
@@ -76,35 +77,35 @@ export const inviteUserSchema = z
     role: invitableRoleSchema,
 
     // Optional: Only required for super_admin invites
-    tenantId: z.guid({ message: 'Tenant ID must be a valid GUID' }).optional(),
-    customerId: z.guid({ message: 'Customer ID must be a valid GUID' }).optional(),
+    organisationId: z.guid({ message: 'Organisation ID must be a valid GUID' }).optional(),
+    locationId: z.guid({ message: 'Location ID must be a valid GUID' }).optional(),
   })
   .refine(
     (data) => {
       // Both must be provided together or both omitted
-      const hasTenant = !!data.tenantId;
-      const hasCustomer = !!data.customerId;
+      const hasOrganisation = !!data.organisationId;
+      const hasLocation = !!data.locationId;
 
       // A symmetric equality check is used here to ensure both are either present or absent
-      return hasTenant === hasCustomer;
+      return hasOrganisation === hasLocation;
     },
     {
-      message: 'Tenant ID and customer ID must both be provided or both omitted',
-      path: ['tenantId'],
+      message: 'Organisation ID and location ID must both be provided or both omitted',
+      path: ['organisationId'],
     }
   );
 
-/** Admin create user input — admin provides these fields, server derives tenantId/cognitoSub/role */
+/** Admin create user input — admin provides these fields, server derives organisationId/cognitoSub/role */
 export const adminCreateUserInputSchema = z.object({
   email: z.email().max(255, 'Email must be 255 characters or less'),
   firstName: z.string().min(1, 'First name is required').max(100),
   lastName: z.string().min(1, 'Last name is required').max(100),
-  customerId: z.guid({ message: 'Customer ID is required' }),
+  locationId: z.guid({ message: 'Location ID is required' }),
   phone: z.string().max(20).optional(),
   dateOfBirth: z.coerce.date().optional(),
 });
 
-/** Admin update user input — mutable fields only (email and customer are read-only) */
+/** Admin update user input — mutable fields only (email and location are read-only) */
 export const adminUpdateUserInputSchema = z.object({
   firstName: z.string().min(1).max(100).optional(),
   lastName: z.string().min(1).max(100).optional(),
@@ -116,8 +117,8 @@ export const adminUpdateUserInputSchema = z.object({
 export const userListQuerySchema = paginationInputSchema.extend({
   /** Free-text search across name and email */
   search: z.string().optional(),
-  /** Filter by customer ID */
-  customerId: z.string().optional(),
+  /** Filter by location ID */
+  locationId: z.string().optional(),
   /** Filter by user role */
   role: userRoleSchema.optional(),
 });
@@ -125,11 +126,11 @@ export const userListQuerySchema = paginationInputSchema.extend({
 /** Filter parameters extracted from query (excludes pagination) */
 export const userFilterSchema = z.object({
   search: z.string().optional(),
-  customerId: z.string().optional(),
+  locationId: z.string().optional(),
   role: userRoleSchema.optional(),
 });
 
-/** Response schema for user list items — includes customerName from join */
+/** Response schema for user list items — includes locationName from join */
 export const userListResponseSchema = userSchema
   .pick({
     id: true,
@@ -137,16 +138,16 @@ export const userListResponseSchema = userSchema
     firstName: true,
     lastName: true,
     role: true,
-    customerId: true,
+    locationId: true,
     createdAt: true,
   })
   .extend({
-    customerName: z.string().nullable(),
+    locationName: z.string().nullable(),
   });
 
-/** Response schema for user detail — full record with customerName */
+/** Response schema for user detail — full record with locationName */
 export const userDetailResponseSchema = userSchema.extend({
-  customerName: z.string().nullable(),
+  locationName: z.string().nullable(),
 });
 
 /** Paginated response schema for GET /admin/users */
