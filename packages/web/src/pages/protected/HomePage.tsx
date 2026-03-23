@@ -41,7 +41,7 @@ export const HomePage = (): JSX.Element => {
       return;
     }
 
-    // Customer admins should go to the customer dashboard
+    // Location admins/owners should go to the location dashboard
     if (user.role === USER_ROLE.CUSTOMER_OWNER || user.role === USER_ROLE.CUSTOMER_ADMIN) {
       void navigate(routes[RouteKey.CUSTOMER_DASHBOARD].path, { replace: true });
 

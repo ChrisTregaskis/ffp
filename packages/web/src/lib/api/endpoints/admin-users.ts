@@ -24,7 +24,7 @@ export interface AdminUserFilterInput {
 
 /** These endpoints require system_admin role. */
 export const adminUsersApi = {
-  /** Lists all users with pagination, search, customer, and role filters. */
+  /** Lists all users with pagination, search, location, and role filters. */
   list: async (
     pagination: PaginationInput,
     filters: AdminUserFilterInput,
@@ -57,7 +57,7 @@ export const adminUsersApi = {
     });
   },
 
-  /** Retrieves a single user by ID with customer details. */
+  /** Retrieves a single user by ID with location details. */
   get: async (id: string): Promise<UserDetailResponse> => {
     const path = `${basePath}/${id}`;
     const response = await ffpClient.get(path);

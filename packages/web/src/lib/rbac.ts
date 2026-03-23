@@ -32,7 +32,7 @@ export const getRoleHomePath = (role: UserRole): RouteKey => {
 
     case USER_ROLE.CUSTOMER_OWNER:
     case USER_ROLE.CUSTOMER_ADMIN:
-      // Customer admins/owners see the customer dashboard
+      // Location admins/owners see the location dashboard
       return RouteKey.CUSTOMER_DASHBOARD;
 
     case USER_ROLE.SYSTEM_ADMIN:
