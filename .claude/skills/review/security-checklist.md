@@ -16,12 +16,12 @@ export const findUserById = async (
 ): Promise<User | null> => {
   return await db.transaction(async (tx) => {
     // CRITICAL: Set RLS context first
-    await setRLSContext(tx, context.tenantId);
+    await setRLSContext(tx, context.organisationId);
 
     return await tx.query.users.findFirst({
       where: and(
         eq(users.id, userId),
-        eq(users.tenant_id, context.tenantId) // Belt and braces
+        eq(users.organisation_id, context.organisationId) // Belt and braces
       ),
     });
   });
@@ -29,21 +29,21 @@ export const findUserById = async (
 
 // WRONG: Missing RLS context
 export const findUserById = async (userId: string): Promise<User | null> => {
-  // CRITICAL BUG: No RLS context = leaks all tenants!
+  // CRITICAL BUG: No RLS context = leaks all organisations!
   return await db.query.users.findFirst({
     where: eq(users.id, userId),
   });
 };
 
-// WRONG: RLS context but missing tenant_id filter
+// WRONG: RLS context but missing organisation_id filter
 export const findUserById = async (
   context: RequestContext,
   userId: string
 ): Promise<User | null> => {
   return await db.transaction(async (tx) => {
-    await setRLSContext(tx, context.tenantId);
+    await setRLSContext(tx, context.organisationId);
 
-    // WRONG: Missing tenant_id in where clause
+    // WRONG: Missing organisation_id in where clause
     // RLS should catch this, but don't rely on it alone!
     return await tx.query.users.findFirst({
       where: eq(users.id, userId),
@@ -54,10 +54,10 @@ export const findUserById = async (
 
 **Checklist:**
 
-- [ ] Every `db.transaction()` has `setRLSContext(tx, context.tenantId)`
-- [ ] Every query has `eq(table.tenant_id, context.tenantId)` in where clause
+- [ ] Every `db.transaction()` has `setRLSContext(tx, context.organisationId)`
+- [ ] Every query has `eq(table.organisation_id, context.organisationId)` in where clause
 - [ ] No direct `db.query.*` calls (always use transactions)
-- [ ] `context.tenantId` is never from client input (only JWT)
+- [ ] `context.organisationId` is never from client input (only JWT)
 
 ### Cognito JWT Claims
 
@@ -74,9 +74,8 @@ export const extractUserContext = (event: APIGatewayProxyEvent): RequestContext 
 
   return {
     userId: claims.sub,
-    tenantId: claims['custom:tenantId'], // CORRECT: custom: prefix
+    organisationId: claims['custom:tenantId'], // CORRECT: custom: prefix (maps to organisationId)
     role: claims['custom:role'] as UserRole,
-    parentBusinessId: claims['custom:parentBusinessId'],
   };
 };
 
@@ -86,7 +85,7 @@ export const extractUserContext = (event: APIGatewayProxyEvent): RequestContext 
 
   return {
     userId: claims.sub,
-    tenantId: claims.tenantId, // WRONG: undefined!
+    organisationId: claims.tenantId, // WRONG: undefined!
     role: claims.role as UserRole, // WRONG: undefined!
   };
 };
@@ -136,10 +135,10 @@ export const createUser = async (
 
 ```typescript
 // CORRECT: Parameterised query
-await tx.execute(sql`SET app.tenant_id = ${tenantId}`);
+await tx.execute(sql`SET app.organisation_id = ${organisationId}`);
 
 // WRONG: String concatenation - SQL injection risk!
-await tx.execute(`SET app.tenant_id = '${tenantId}'`);
+await tx.execute(`SET app.organisation_id = '${organisationId}'`);
 
 // CORRECT: Drizzle query builder (parameterised)
 await tx.query.users.findMany({
@@ -187,7 +186,7 @@ const apiKey = 'sk_live_abc123xyz789';
 // CORRECT: Generic user-facing error, detailed internal log
 try {
   await db.transaction(async (tx) => {
-    await setRLSContext(tx, context.tenantId);
+    await setRLSContext(tx, context.organisationId);
     return await tx.query.users.findFirst({ ... });
   });
 } catch (error) {
@@ -195,7 +194,7 @@ try {
   logger.error('Database query failed', {
     error,
     userId: context.userId,
-    tenantId: context.tenantId,
+    organisationId: context.organisationId,
   });
 
   // Return generic message to user
@@ -236,8 +235,8 @@ export const deleteUser = async (context: RequestContext, userId: string): Promi
     throw new NotFoundError('User not found');
   }
 
-  if (user.tenant_id !== context.tenantId) {
-    throw new ForbiddenError('Cannot delete user from another tenant');
+  if (user.organisation_id !== context.organisationId) {
+    throw new ForbiddenError('Cannot delete user from another organisation');
   }
 
   await userRepository.delete(context, userId);
@@ -253,7 +252,7 @@ export const deleteUser = async (context: RequestContext, userId: string): Promi
 **Checklist:**
 
 - [ ] Role-based access control (RBAC) enforced in services
-- [ ] Cross-tenant access blocked explicitly
+- [ ] Cross-organisation access blocked explicitly
 - [ ] Resource ownership verified before mutations
 - [ ] Proper error types (ForbiddenError vs UnauthorisedError)
 
@@ -275,7 +274,7 @@ export const updateUserRole = async (
     action: 'USER_ROLE_UPDATED',
     actorId: context.userId,
     actorRole: context.role,
-    tenantId: context.tenantId,
+    organisationId: context.organisationId,
     targetUserId: userId,
     oldRole: user.role,
     newRole: newRole,
@@ -299,7 +298,7 @@ export const updateUserRole = async (
 **Checklist:**
 
 - [ ] Sensitive actions logged (create, update, delete)
-- [ ] Logs include: actor, tenant, action, timestamp
+- [ ] Logs include: actor, organisation, action, timestamp
 - [ ] Logs use structured format (JSON)
 - [ ] No sensitive data (passwords, tokens) in logs
 
@@ -307,7 +306,7 @@ export const updateUserRole = async (
 
 **Ensure these are addressed:**
 
-1. **Broken Access Control**: RLS + tenant_id validation
+1. **Broken Access Control**: RLS + organisation_id validation
 2. **Cryptographic Failures**: TLS 1.3, encryption at rest (KMS)
 3. **Injection**: Parameterised queries, Zod validation
 4. **Insecure Design**: Multi-tenant architecture with RLS

@@ -82,14 +82,14 @@
 
 ### Execution Order
 
-| Phase | Key     | Summary                                     | Layer    | Pts | Status |
-| ----- | ------- | ------------------------------------------- | -------- | --- | ------ |
-| 1     | FFP-519 | DB migration — rename tables/columns/RLS    | Database | 8   | Done   |
-| 2     | FFP-520 | Backend service split + renames (~28 files) | Backend  | 8   | Done   |
-| 3     | FFP-521 | Lambda handlers + API routes                | Backend  | 5   | Done   |
-| 4     | FFP-522 | Organisation list and create/edit pages     | Frontend | 5   | Done   |
-| 5     | FFP-523 | Rename customer → location pages + users    | Frontend | 5   | Done   |
-| 6     | FFP-524 | Documentation cleanup + E2E smoke test      | Docs     | 3   | To Do  |
+| Phase | Key     | Summary                                     | Layer    | Pts | Status      |
+| ----- | ------- | ------------------------------------------- | -------- | --- | ----------- |
+| 1     | FFP-519 | DB migration — rename tables/columns/RLS    | Database | 8   | Done        |
+| 2     | FFP-520 | Backend service split + renames (~28 files) | Backend  | 8   | Done        |
+| 3     | FFP-521 | Lambda handlers + API routes                | Backend  | 5   | Done        |
+| 4     | FFP-522 | Organisation list and create/edit pages     | Frontend | 5   | Done        |
+| 5     | FFP-523 | Rename customer → location pages + users    | Frontend | 5   | Done        |
+| 6     | FFP-524 | Documentation cleanup + E2E smoke test      | Docs     | 3   | In Progress |
 
 **Key decisions**:
 

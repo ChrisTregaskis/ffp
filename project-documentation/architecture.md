@@ -17,16 +17,16 @@ FFP uses a serverless-first AWS architecture optimised for multi-tenant SaaS. MV
 
 ### Core Services
 
-| Category       | Service           | Purpose                                      |
-| -------------- | ----------------- | -------------------------------------------- |
-| **Auth**       | Cognito User Pool | JWT auth, custom attributes (tenantId, role) |
-| **API**        | API Gateway       | REST API, JWT authoriser, throttling         |
-| **Compute**    | Lambda            | Node.js 18+ handlers, single responsibility  |
-| **Database**   | RDS PostgreSQL    | Multi-tenant via RLS, Drizzle ORM            |
-| **Storage**    | S3 + CloudFront   | Videos (OAC + signed URLs), assets           |
-| **Secrets**    | Secrets Manager   | DB credentials, API keys                     |
-| **Monitoring** | CloudWatch        | Logs, metrics, alarms                        |
-| **DNS**        | Route53           | Domain routing                               |
+| Category       | Service           | Purpose                                                                      |
+| -------------- | ----------------- | ---------------------------------------------------------------------------- |
+| **Auth**       | Cognito User Pool | JWT auth, custom attributes (`custom:tenantId` maps to organisationId, role) |
+| **API**        | API Gateway       | REST API, JWT authoriser, throttling                                         |
+| **Compute**    | Lambda            | Node.js 18+ handlers, single responsibility                                  |
+| **Database**   | RDS PostgreSQL    | Multi-tenant via RLS, Drizzle ORM                                            |
+| **Storage**    | S3 + CloudFront   | Videos (OAC + signed URLs), assets                                           |
+| **Secrets**    | Secrets Manager   | DB credentials, API keys                                                     |
+| **Monitoring** | CloudWatch        | Logs, metrics, alarms                                                        |
+| **DNS**        | Route53           | Domain routing                                                               |
 
 ### MVP VPC Strategy
 
@@ -219,12 +219,12 @@ All contexts flow through layers and enforce RLS via the `withRLS()` wrapper:
 
 ```typescript
 // CORRECT: Use withRLS wrapper (sets RLS context automatically)
-const users = await withRLS(tenantId, userId, async (tx) => {
+const users = await withRLS(organisationId, userId, async (tx) => {
   return await tx.query.users.findMany();
 });
 
 // WRONG: Direct query without RLS context
-await db.query.users.findMany(); // Leaks all tenants!
+await db.query.users.findMany(); // Leaks all organisations!
 ```
 
 **See:** `authentication.md` for context extraction patterns and detailed examples.

@@ -1,5 +1,3 @@
-# Temporarily disabled during Sprint 10.5 organisation/location refactor
-# Re-enable after FFP-524 (final story) when all packages are updated
-# pnpm lint
-# pnpm format:check
-# pnpm build
+pnpm lint
+pnpm format:check
+pnpm build

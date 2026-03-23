@@ -64,11 +64,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const input = UserSchema.parse(body);
 
     // 2. Extract tenant context from JWT
-    const tenantId = event.requestContext.authorizer?.claims['custom:tenantId'];
+    const organisationId = event.requestContext.authorizer?.claims['custom:tenantId'];
 
     // 3. Execute business logic via service
     const userService = new UserService(userRepository);
-    const user = await userService.createUser({ ...input, tenantId });
+    const user = await userService.createUser({ ...input, organisationId });
 
     // 4. Return success response
     return successResponse(user, 201);
@@ -130,7 +130,7 @@ export const errorResponse = (error: unknown, statusCode = 500) => {
 Every handler must:
 
 - [ ] Validate all input with Zod schemas
-- [ ] Extract and validate `tenantId` from JWT
+- [ ] Extract and validate `organisationId` from JWT (via `custom:tenantId`)
 - [ ] Set database RLS context before queries
 - [ ] Never expose internal error details in production
 - [ ] Log security events (failed auth, invalid tokens)

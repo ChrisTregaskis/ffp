@@ -61,7 +61,7 @@ import { useLocalStorage } from '@web/hooks/useLocalStorage';
 Authentication is handled via **AWS Cognito** using the AWS Amplify SDK. The implementation includes:
 
 - **AuthContext** (`src/contexts/AuthContext.tsx`) - Global auth state management with React Context
-- **JWT Claims Parsing** - Extracts multi-tenant context (`tenantId`, `role`) from Cognito ID tokens
+- **JWT Claims Parsing** - Extracts multi-tenant context (`organisationId`, `role`) from Cognito ID tokens
 - **Zod Validation** - Runtime validation of JWT claims using `@ffp/core` schemas
 - **Invite-only** - No public sign-up (admin-controlled user creation only)
 
@@ -100,7 +100,7 @@ function MyComponent() {
   return (
     <div>
       <Text>Welcome, {user.email}</Text>
-      <Text>Tenant: {user.tenantId}</Text>
+      <Text>Organisation: {user.organisationId}</Text>
       <Text>Role: {user.role}</Text>
       <Button onClick={() => logout()}>Log out</Button>
     </div>

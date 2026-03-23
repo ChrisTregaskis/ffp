@@ -14,7 +14,7 @@ AWS Cognito for authentication with custom JWT attributes supporting multi-tenan
 
 ### Admin Onboarding (Two-Step)
 
-1. **Create customer account** — `POST /admin/create-customer` (system admin only) → creates tenant + customer
+1. **Create organisation** — `POST /admin/organisations` (system admin only) → creates organisation + location
 2. **Invite business owner** — `POST /auth/invite-user` (system admin) → creates Cognito user + DB record, sends temporary password email
 
 ### User Invitation
@@ -50,13 +50,15 @@ Both are **public endpoints** (no JWT required).
 {
   "sub": "user-uuid",
   "email": "user@business.com",
-  "custom:tenantId": "tenant-uuid",
-  "custom:customerId": "customer-uuid",
+  "custom:tenantId": "org-uuid",
+  "custom:customerId": "location-uuid",
   "custom:role": "customer_owner"
 }
 ```
 
-**Access claims with `custom:` prefix** — `claims['custom:tenantId']`, not `claims.tenantId`.
+**Note**: Cognito attributes retain their original names (`custom:tenantId`, `custom:customerId`) as they are immutable. In application code, these map to `organisationId` and `locationId` respectively.
+
+**Access claims with `custom:` prefix** — `claims['custom:tenantId']` (maps to organisationId), not `claims.tenantId`.
 
 ## Actor-Based Context
 
@@ -68,15 +70,15 @@ The system supports both user-triggered and system-triggered requests, unified t
 | Job queue (SQS)   | `extractJobContext(message)`  | `SystemActor` (systemId, triggeredBy) |
 | Scheduled tasks   | `createSystemContext(config)` | `SystemActor` (systemId)              |
 
-Context flows identically through all layers: **Handler/Worker → Service → Repository**. Repository uses `context.tenantId` to set RLS regardless of actor type.
+Context flows identically through all layers: **Handler/Worker → Service → Repository**. Repository uses `context.organisationId` to set RLS regardless of actor type.
 
 **Implementation:** `packages/core/src/lib/context.ts` (types + extraction functions, ~60 unit tests)
 
 ## Three-Tier Architecture
 
-- **Tier 1 (Tenant)**: Top-level RLS isolation boundary
-- **Tier 2 (Customer)**: Business entity within tenant (billing level)
-- **Tier 3 (User)**: Individual user, linked to customer and tenant
+- **Tier 1 (Organisation)**: Top-level RLS isolation boundary
+- **Tier 2 (Location)**: Business entity within organisation (billing level)
+- **Tier 3 (User)**: Individual user, linked to location and organisation
 
 ## Token Management
 
@@ -94,11 +96,11 @@ Enforced by Cognito: minimum 8 characters, uppercase, lowercase, digit, special 
 
 ## Common Issues
 
-**`custom:tenantId` is undefined:**
+**`custom:tenantId` is undefined (maps to organisationId):**
 
 - Ensure custom attributes marked "readable" in Cognito console
 - Verify attributes were set during AdminCreateUser
-- Use `claims['custom:tenantId']` not `claims.tenantId`
+- Use `claims['custom:tenantId']` not `claims.tenantId` — the Cognito attribute name is immutable
 
 **Invited users can't login:**
 

@@ -54,13 +54,13 @@ Load these to understand current standards and sprint goals:
 ### [CRITICAL] Security & Multi-Tenant Safety
 
 - [ ] RLS context set in all database transactions (`setRLSContext`)
-- [ ] `tenant_id` validated in all queries (belt and braces with RLS)
-- [ ] Cognito claims use `custom:` prefix (`claims['custom:tenantId']`)
+- [ ] `organisation_id` validated in all queries (belt and braces with RLS)
+- [ ] Cognito claims use `custom:` prefix (`claims['custom:tenantId']` maps to organisationId)
 - [ ] Parameterised queries only (no SQL string concatenation)
 - [ ] No secrets, API keys, or credentials committed
 - [ ] Input validation with Zod schemas at service boundaries
 - [ ] Error messages don't leak sensitive data (tenant IDs, stack traces)
-- [ ] NEVER trust client-provided `tenantId` — always extract from JWT
+- [ ] NEVER trust client-provided `organisationId` — always extract from JWT
 
 ### [HIGH] Architecture Compliance
 
@@ -88,15 +88,15 @@ Load these to understand current standards and sprint goals:
 ```typescript
 // RLS — CORRECT
 await db.transaction(async (tx) => {
-  await setRLSContext(tx, context.tenantId);
+  await setRLSContext(tx, context.organisationId);
   return await tx.query.users.findMany();
 });
 
-// JWT Claims — CORRECT
-const tenantId = claims['custom:tenantId'];
+// JWT Claims — CORRECT (custom:tenantId maps to organisationId)
+const organisationId = claims['custom:tenantId'];
 
-// Tenant Filter — CORRECT
-where: and(eq(users.id, userId), eq(users.tenant_id, tenantId));
+// Organisation Filter — CORRECT
+where: and(eq(users.id, userId), eq(users.organisation_id, organisationId));
 ```
 
 ## Output Format
