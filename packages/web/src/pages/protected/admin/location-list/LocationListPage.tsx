@@ -7,6 +7,7 @@ import { PageContainer, PageHeader } from '@web/components/layout';
 import { Table, TableControls } from '@web/components/table';
 import type { RowAction } from '@web/components/table';
 import { useAdminLocationsQuery, useUpdateLocationMutation } from '@web/hooks/locations';
+import { useAdminOrganisationsQuery } from '@web/hooks/organisations';
 import { useApiTable } from '@web/hooks/useApiTable';
 import { useToast } from '@web/hooks/useToast';
 import type { AdminLocationFilterInput } from '@web/lib/api/endpoints';
@@ -49,7 +50,21 @@ export const LocationListPage: React.FC = () => {
 
   const { data, isLoading, error } = useAdminLocationsQuery(queryParams, adminFilters);
 
-  const locationRows = useMemo(() => (data ? data.data.map(toLocationRow) : []), [data]);
+  // Fetch all organisations to resolve names for the Organisation column
+  const { data: organisationsData } = useAdminOrganisationsQuery(
+    { page: 1, pageSize: 100, sortBy: 'name', sortDirection: 'asc' },
+    {}
+  );
+
+  const organisationMap = useMemo(
+    () => Object.fromEntries((organisationsData?.data ?? []).map((org) => [org.id, org.name])),
+    [organisationsData]
+  );
+
+  const locationRows = useMemo(
+    () => (data ? data.data.map((loc) => toLocationRow(loc, organisationMap)) : []),
+    [data, organisationMap]
+  );
 
   const handleCreateClick = useCallback((): void => {
     void navigate(routes[RouteKey.ADMIN_LOCATION_CREATE].path);

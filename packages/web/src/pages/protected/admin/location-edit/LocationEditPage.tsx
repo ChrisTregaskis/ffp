@@ -11,6 +11,7 @@ import {
   useLocationDetailQuery,
   useUpdateLocationMutation,
 } from '@web/hooks/locations';
+import { useOrganisationDetailQuery } from '@web/hooks/organisations';
 import { useToast } from '@web/hooks/useToast';
 import { RouteKey, routes } from '@web/pages/routes';
 
@@ -30,6 +31,12 @@ export const LocationEditPage: React.FC = () => {
     isLoading,
     error,
   } = useLocationDetailQuery(id ?? '', { enabled: isEditMode });
+
+  // Resolve organisation name for edit mode display
+  const { data: organisation } = useOrganisationDetailQuery(location?.organisationId ?? '', {
+    enabled: isEditMode && !!location?.organisationId,
+  });
+
   const createMutation = useCreateLocationMutation();
   const updateMutation = useUpdateLocationMutation();
 
@@ -54,7 +61,7 @@ export const LocationEditPage: React.FC = () => {
     return {
       locationName: location.name,
       organisationId: location.organisationId,
-      organisationDisplay: location.organisationId,
+      organisationDisplay: organisation?.name ?? location.organisationId,
       addressLine1: location.address?.line1 ?? '',
       addressLine2: location.address?.line2 ?? '',
       city: location.address?.city ?? '',
@@ -63,7 +70,7 @@ export const LocationEditPage: React.FC = () => {
       country: location.address?.country ?? '',
       status: location.status,
     };
-  }, [isEditMode, location]);
+  }, [isEditMode, location, organisation]);
 
   const handleNavigateBack = useCallback(() => {
     void navigate(routes[RouteKey.ADMIN_LOCATIONS].path);
