@@ -55,17 +55,20 @@ vi.mock('@ffp/database', async () => {
  */
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-async function setTestRLSContext(db: ReturnType<typeof drizzle>, tenantId: string): Promise<void> {
-  if (!UUID_REGEX.test(tenantId)) {
-    throw new Error(`Invalid UUID format for RLS context: ${tenantId}`);
+async function setTestRLSContext(
+  db: ReturnType<typeof drizzle>,
+  organisationId: string
+): Promise<void> {
+  if (!UUID_REGEX.test(organisationId)) {
+    throw new Error(`Invalid UUID format for RLS context: ${organisationId}`);
   }
-  await db.execute(sql.raw(`SET app.tenant_id = '${tenantId}'`));
+  await db.execute(sql.raw(`SET app.organisation_id = '${organisationId}'`));
 }
 
 describe('Job Processor Service', () => {
   let pool: Pool;
   let db: ReturnType<typeof drizzle>;
-  let testTenantId: string;
+  let testOrganisationId: string;
 
   beforeAll(async () => {
     pool = new Pool({
@@ -86,26 +89,26 @@ describe('Job Processor Service', () => {
   });
 
   beforeEach(async () => {
-    // Create unique test tenant for each test
-    testTenantId = randomUUID();
+    // Create unique test organisation for each test
+    testOrganisationId = randomUUID();
 
-    await setTestRLSContext(db, testTenantId);
-    await db.insert(schema.tenants).values({
-      id: testTenantId,
-      name: `Test Tenant ${testTenantId.slice(0, 8)}`,
+    await setTestRLSContext(db, testOrganisationId);
+    await db.insert(schema.organisations).values({
+      id: testOrganisationId,
+      name: `Test Organisation ${testOrganisationId.slice(0, 8)}`,
       type: 'business',
     });
 
-    // Ensure no leftover jobs exist for this tenant (defensive cleanup)
-    await db.execute(sql`DELETE FROM process_jobs WHERE tenant_id = ${testTenantId}`);
+    // Ensure no leftover jobs exist for this organisation (defensive cleanup)
+    await db.execute(sql`DELETE FROM process_jobs WHERE organisation_id = ${testOrganisationId}`);
   });
 
   afterEach(async () => {
     // Clean up test data
-    if (testTenantId) {
-      await db.execute(sql`DELETE FROM process_jobs WHERE tenant_id = ${testTenantId}`);
-      await setTestRLSContext(db, testTenantId);
-      await db.execute(sql`DELETE FROM tenants WHERE id = ${testTenantId}`);
+    if (testOrganisationId) {
+      await db.execute(sql`DELETE FROM process_jobs WHERE organisation_id = ${testOrganisationId}`);
+      await setTestRLSContext(db, testOrganisationId);
+      await db.execute(sql`DELETE FROM organisations WHERE id = ${testOrganisationId}`);
     }
   });
 
@@ -122,7 +125,7 @@ describe('Job Processor Service', () => {
     const [job] = await db
       .insert(schema.processJobs)
       .values({
-        tenantId: testTenantId,
+        organisationId: testOrganisationId,
         type: 'score_assessment',
         status: 'queued',
         priority: 4,

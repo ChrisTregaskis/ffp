@@ -4,7 +4,7 @@
  * Tests createLogger and withRequestLogging to ensure:
  * - Correct JSON output format for CloudWatch
  * - Actor-aware logging (user vs system)
- * - Request ID and tenant ID tracking
+ * - Request ID and organisation ID tracking
  * - Performance timing (duration)
  * - Log levels (DEBUG, INFO, WARN, ERROR)
  * - Error handling in withRequestLogging
@@ -14,7 +14,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createLogger, LogLevel, withRequestLogging } from '../../src/lib/logger';
 
-import type { TenantContext } from '../../src/lib/context';
+import type { OrganisationContext } from '../../src/lib/context';
 
 /**
  * Helper interface for typed log entry parsing in tests
@@ -24,7 +24,7 @@ interface ParsedLogEntry {
   level: string;
   message: string;
   requestId: string;
-  tenantId: string;
+  organisationId: string;
   actor: string;
   duration: number;
   triggeredBy?: string;
@@ -57,8 +57,8 @@ function parseLogEntry(logCall: string): ParsedLogEntry {
   if (typeof entry.requestId !== 'string') {
     throw new Error('Log entry missing or invalid requestId');
   }
-  if (typeof entry.tenantId !== 'string') {
-    throw new Error('Log entry missing or invalid tenantId');
+  if (typeof entry.organisationId !== 'string') {
+    throw new Error('Log entry missing or invalid organisationId');
   }
   if (typeof entry.actor !== 'string') {
     throw new Error('Log entry missing or invalid actor');
@@ -72,7 +72,7 @@ function parseLogEntry(logCall: string): ParsedLogEntry {
     level: entry.level,
     message: entry.message,
     requestId: entry.requestId,
-    tenantId: entry.tenantId,
+    organisationId: entry.organisationId,
     actor: entry.actor,
     duration: entry.duration,
     triggeredBy: typeof entry.triggeredBy === 'string' ? entry.triggeredBy : undefined,
@@ -93,15 +93,15 @@ describe('Logger', () => {
   });
 
   describe('UserActor logging', () => {
-    const mockUserContext: TenantContext = {
+    const mockUserContext: OrganisationContext = {
       actor: {
         type: 'user',
         userId: 'user-123',
         userRole: 'customer_owner',
         email: 'test@example.com',
       },
-      tenantId: 'tenant-456',
-      customerId: 'customer-789',
+      organisationId: 'tenant-456',
+      locationId: 'customer-789',
       requestId: 'request-abc',
       timestamp: new Date('2025-01-06T10:00:00.000Z'),
     };
@@ -117,7 +117,7 @@ describe('Logger', () => {
         level: 'INFO',
         message: 'Test message',
         requestId: 'request-abc',
-        tenantId: 'tenant-456',
+        organisationId: 'tenant-456',
         actor: 'test@example.com (customer_owner)',
       });
       expect(logEntry.timestamp).toBeDefined();
@@ -195,15 +195,15 @@ describe('Logger', () => {
   });
 
   describe('SystemActor logging', () => {
-    const mockSystemContext: TenantContext = {
+    const mockSystemContext: OrganisationContext = {
       actor: {
         type: 'system',
         systemId: 'assessment-processor',
         triggeredBy: 'user-123',
         jobId: 'job-xyz',
       },
-      tenantId: 'tenant-456',
-      customerId: null,
+      organisationId: 'tenant-456',
+      locationId: null,
       requestId: 'request-def',
       timestamp: new Date('2025-01-06T10:00:00.000Z'),
     };
@@ -229,7 +229,7 @@ describe('Logger', () => {
     });
 
     it('should not include triggeredBy when absent', () => {
-      const systemContextNoTrigger: TenantContext = {
+      const systemContextNoTrigger: OrganisationContext = {
         ...mockSystemContext,
         actor: {
           type: 'system',
@@ -248,15 +248,15 @@ describe('Logger', () => {
   });
 
   describe('log() method', () => {
-    const mockContext: TenantContext = {
+    const mockContext: OrganisationContext = {
       actor: {
         type: 'user',
         userId: 'user-123',
         userRole: 'super_admin',
         email: 'admin@example.com',
       },
-      tenantId: 'tenant-456',
-      customerId: null,
+      organisationId: 'tenant-456',
+      locationId: null,
       requestId: 'request-ghi',
       timestamp: new Date('2025-01-06T10:00:00.000Z'),
     };
@@ -278,15 +278,15 @@ describe('Logger', () => {
 
   describe('Performance timing', () => {
     it('should track duration from context timestamp', async () => {
-      const mockContext: TenantContext = {
+      const mockContext: OrganisationContext = {
         actor: {
           type: 'user',
           userId: 'user-123',
           userRole: 'customer_owner',
           email: 'test@example.com',
         },
-        tenantId: 'tenant-456',
-        customerId: 'customer-789',
+        organisationId: 'tenant-456',
+        locationId: 'customer-789',
         requestId: 'request-jkl',
         timestamp: new Date(Date.now() - 100), // 100ms ago
       };
@@ -307,15 +307,15 @@ describe('Logger', () => {
   });
 
   describe('JSON output format', () => {
-    const mockContext: TenantContext = {
+    const mockContext: OrganisationContext = {
       actor: {
         type: 'user',
         userId: 'user-123',
         userRole: 'customer_owner',
         email: 'test@example.com',
       },
-      tenantId: 'tenant-456',
-      customerId: 'customer-789',
+      organisationId: 'tenant-456',
+      locationId: 'customer-789',
       requestId: 'request-mno',
       timestamp: new Date('2025-01-06T10:00:00.000Z'),
     };
@@ -345,7 +345,7 @@ describe('Logger', () => {
       expect(logEntry.level).toBeDefined();
       expect(logEntry.message).toBeDefined();
       expect(logEntry.requestId).toBeDefined();
-      expect(logEntry.tenantId).toBeDefined();
+      expect(logEntry.organisationId).toBeDefined();
       expect(logEntry.actor).toBeDefined();
       expect(logEntry.duration).toBeDefined();
 
@@ -355,15 +355,15 @@ describe('Logger', () => {
   });
 
   describe('Log level filtering', () => {
-    const mockContext: TenantContext = {
+    const mockContext: OrganisationContext = {
       actor: {
         type: 'user',
         userId: 'user-123',
         userRole: 'customer_owner',
         email: 'test@example.com',
       },
-      tenantId: 'tenant-456',
-      customerId: 'customer-789',
+      organisationId: 'tenant-456',
+      locationId: 'customer-789',
       requestId: 'request-filter',
       timestamp: new Date('2025-01-06T10:00:00.000Z'),
     };
@@ -487,15 +487,15 @@ describe('withRequestLogging', () => {
     vi.clearAllMocks();
   });
 
-  const mockContext: TenantContext = {
+  const mockContext: OrganisationContext = {
     actor: {
       type: 'user',
       userId: 'user-123',
       userRole: 'customer_owner',
       email: 'test@example.com',
     },
-    tenantId: 'tenant-456',
-    customerId: 'customer-789',
+    organisationId: 'tenant-456',
+    locationId: 'customer-789',
     requestId: 'request-pqr',
     timestamp: new Date('2025-01-06T10:00:00.000Z'),
   };

@@ -8,7 +8,7 @@ import {
 } from '../../src/schemas/user.schema';
 
 describe('inviteUserSchema', () => {
-  describe('customer owner invites (no tenant/customer)', () => {
+  describe('location owner invites (no organisation/location)', () => {
     it('validates invite with customer_admin role', () => {
       const result = inviteUserSchema.safeParse({
         email: 'user@business.com',
@@ -32,15 +32,15 @@ describe('inviteUserSchema', () => {
     });
   });
 
-  describe('super admin invites (with tenant/customer)', () => {
-    it('validates invite with both tenant and customer IDs', () => {
+  describe('super admin invites (with organisation/location)', () => {
+    it('validates invite with both organisation and location IDs', () => {
       const result = inviteUserSchema.safeParse({
         email: 'user@business.com',
         firstName: 'Jane',
         lastName: 'Doe',
         role: 'programme_user',
-        tenantId: '550e8400-e29b-41d4-a716-446655440000',
-        customerId: '550e8400-e29b-41d4-a716-446655440001',
+        organisationId: '550e8400-e29b-41d4-a716-446655440000',
+        locationId: '550e8400-e29b-41d4-a716-446655440001',
       });
 
       expect(result.success).toBe(true);
@@ -48,14 +48,14 @@ describe('inviteUserSchema', () => {
   });
 
   describe('validation errors', () => {
-    it('rejects tenant ID without customer ID', () => {
+    it('rejects organisation ID without location ID', () => {
       const result = inviteUserSchema.safeParse({
         email: 'user@business.com',
         firstName: 'Jane',
         lastName: 'Doe',
         role: 'customer_admin',
-        tenantId: '550e8400-e29b-41d4-a716-446655440000',
-        // customerId missing
+        organisationId: '550e8400-e29b-41d4-a716-446655440000',
+        // locationId missing
       });
 
       expect(result.success).toBe(false);
@@ -64,14 +64,14 @@ describe('inviteUserSchema', () => {
       }
     });
 
-    it('rejects customer ID without tenant ID', () => {
+    it('rejects location ID without organisation ID', () => {
       const result = inviteUserSchema.safeParse({
         email: 'user@business.com',
         firstName: 'Jane',
         lastName: 'Doe',
         role: 'customer_admin',
-        customerId: '550e8400-e29b-41d4-a716-446655440001',
-        // tenantId missing
+        locationId: '550e8400-e29b-41d4-a716-446655440001',
+        // organisationId missing
       });
 
       expect(result.success).toBe(false);
@@ -182,14 +182,14 @@ describe('inviteUserSchema', () => {
       }
     });
 
-    it('rejects invalid UUID format for tenant ID', () => {
+    it('rejects invalid UUID format for organisation ID', () => {
       const result = inviteUserSchema.safeParse({
         email: 'user@business.com',
         firstName: 'Jane',
         lastName: 'Doe',
         role: 'customer_admin',
-        tenantId: 'not-a-uuid',
-        customerId: '550e8400-e29b-41d4-a716-446655440001',
+        organisationId: 'not-a-uuid',
+        locationId: '550e8400-e29b-41d4-a716-446655440001',
       });
 
       expect(result.success).toBe(false);
@@ -198,14 +198,14 @@ describe('inviteUserSchema', () => {
       }
     });
 
-    it('rejects invalid UUID format for customer ID', () => {
+    it('rejects invalid UUID format for location ID', () => {
       const result = inviteUserSchema.safeParse({
         email: 'user@business.com',
         firstName: 'Jane',
         lastName: 'Doe',
         role: 'customer_admin',
-        tenantId: '550e8400-e29b-41d4-a716-446655440000',
-        customerId: 'not-a-uuid',
+        organisationId: '550e8400-e29b-41d4-a716-446655440000',
+        locationId: 'not-a-uuid',
       });
 
       expect(result.success).toBe(false);
@@ -219,13 +219,13 @@ describe('inviteUserSchema', () => {
 describe('userSchema', () => {
   const validUserBase = {
     id: '123e4567-e89b-12d3-a456-426614174000',
-    tenantId: '123e4567-e89b-12d3-a456-426614174001',
+    organisationId: '123e4567-e89b-12d3-a456-426614174001',
     email: 'test@example.com',
     cognitoSub: 'cognito-sub-123',
     firstName: 'John',
     lastName: 'Doe',
     role: 'customer_admin' as const,
-    customerId: null,
+    locationId: null,
     profileImageUrl: null,
     phone: null,
     createdAt: new Date(),
@@ -372,11 +372,11 @@ describe('createUserSchema', () => {
 });
 
 describe('canInviteProgrammeUser', () => {
-  it('should allow invitation for customer users (customerId present)', () => {
-    expect(canInviteProgrammeUser('customer-123')).toBe(true);
+  it('should allow invitation for location users (locationId present)', () => {
+    expect(canInviteProgrammeUser('location-123')).toBe(true);
   });
 
-  it('should deny invitation for individual users (customerId null)', () => {
+  it('should deny invitation for individual users (locationId null)', () => {
     expect(canInviteProgrammeUser(null)).toBe(false);
   });
 });

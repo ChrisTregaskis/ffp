@@ -46,12 +46,11 @@ const validScores = {
 
 const validUserAssessment = {
   id: validUuid,
-  tenantId: validUuid,
+  organisationId: validUuid,
   userId: validUuid2,
   flowId: validUuid3,
   currentStep: 1,
   status: 'not_started' as const,
-  answers: {},
   scores: null,
   programmeId: null,
   startedAt: null,
@@ -371,7 +370,7 @@ describe('userAssessmentSchema', () => {
   it('should reject assessment without required fields', () => {
     const assessment = {
       id: validUuid,
-      tenantId: validUuid,
+      organisationId: validUuid,
       // missing userId, flowId, etc.
     };
     const result = userAssessmentSchema.safeParse(assessment);
@@ -413,7 +412,7 @@ describe('userAssessmentSchema', () => {
 describe('createUserAssessmentSchema', () => {
   it('should accept valid create input', () => {
     const input = {
-      tenantId: validUuid,
+      organisationId: validUuid,
       userId: validUuid2,
       flowId: validUuid3,
     };
@@ -421,7 +420,7 @@ describe('createUserAssessmentSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('should reject input without tenantId', () => {
+  it('should reject input without organisationId', () => {
     const input = {
       userId: validUuid2,
       flowId: validUuid3,
@@ -432,7 +431,7 @@ describe('createUserAssessmentSchema', () => {
 
   it('should reject input without userId', () => {
     const input = {
-      tenantId: validUuid,
+      organisationId: validUuid,
       flowId: validUuid3,
     };
     const result = createUserAssessmentSchema.safeParse(input);
@@ -441,7 +440,7 @@ describe('createUserAssessmentSchema', () => {
 
   it('should reject input without flowId', () => {
     const input = {
-      tenantId: validUuid,
+      organisationId: validUuid,
       userId: validUuid2,
     };
     const result = createUserAssessmentSchema.safeParse(input);
@@ -450,7 +449,7 @@ describe('createUserAssessmentSchema', () => {
 
   it('should reject input with invalid UUID format', () => {
     const input = {
-      tenantId: 'not-a-uuid',
+      organisationId: 'not-a-uuid',
       userId: validUuid2,
       flowId: validUuid3,
     };

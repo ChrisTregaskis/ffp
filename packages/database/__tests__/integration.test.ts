@@ -455,11 +455,14 @@ describe('Drizzle Integration Tests', () => {
         await tx.delete(organisations).where(eq(organisations.id, orgId));
       });
 
-      // Verify user was also deleted
-      // Note: After organisation deletion, we can't use RLS context, so use raw query
-      const [userCheck] = await db.select().from(users).where(eq(users.id, userId));
+      // Verify user was also deleted via cascade
+      // Set RLS context to the deleted org's ID so the UUID cast succeeds;
+      // since the data was cascade-deleted, we expect no rows returned.
+      const userCheckResult = await withRLS(db, orgId, undefined, async (tx) => {
+        return await tx.select().from(users).where(eq(users.id, userId));
+      });
 
-      expect(userCheck).toBeUndefined();
+      expect(userCheckResult).toHaveLength(0);
     });
   });
 
@@ -534,10 +537,13 @@ describe('Drizzle Integration Tests', () => {
       }).rejects.toThrow();
 
       // Verify organisation was NOT created (transaction rolled back)
-      // Use raw query since organisation doesn't exist
-      const [orgCheck] = await db.select().from(organisations).where(eq(organisations.id, orgId));
+      // Set RLS context to the rolled-back org's ID so the UUID cast succeeds;
+      // since the transaction was rolled back, we expect no rows returned.
+      const orgCheckResult = await withRLS(db, orgId, undefined, async (tx) => {
+        return await tx.select().from(organisations).where(eq(organisations.id, orgId));
+      });
 
-      expect(orgCheck).toBeUndefined();
+      expect(orgCheckResult).toHaveLength(0);
     });
 
     it('should support nested operations in transaction', async () => {
