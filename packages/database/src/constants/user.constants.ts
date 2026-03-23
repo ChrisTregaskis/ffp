@@ -3,11 +3,11 @@
  *
  * Defines the hierarchical role system:
  * - system_admin: Platform administrator (highest privilege)
- * - customer_owner: Owner of a customer account (business)
- * - customer_admin: Administrator within a customer organisation
- * - programme_user: User accessing workout programmes (individual or customer user)
- *   - Individual users: customerId = null (cannot be invited)
- *   - Customer users: customerId present (can be invited)
+ * - customer_owner: Owner of a location account (business)
+ * - customer_admin: Administrator within an organisation
+ * - programme_user: User accessing workout programmes (individual or location user)
+ *   - Individual users: locationId = null (cannot be invited)
+ *   - Location users: locationId present (can be invited)
  */
 export const USER_ROLES = [
   'system_admin',

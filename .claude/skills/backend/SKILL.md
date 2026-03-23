@@ -50,38 +50,38 @@ Handler → Service → Entity (optional) → Repository → Drizzle Schema
 
 ### RLS Context — Tenant-Scoped Database Operations
 
-All queries against tenant-scoped tables (those with `tenant_id`) must set RLS context. Shared/global tables (e.g., question templates, lookup data) do not require RLS.
+All queries against organisation-scoped tables (those with `organisation_id`) must set RLS context. Shared/global tables (e.g., question templates, lookup data) do not require RLS.
 
 ```typescript
-// CORRECT — tenant-scoped data
+// CORRECT — organisation-scoped data
 await db.transaction(async (tx) => {
-  await setRLSContext(tx, context.tenantId);
+  await setRLSContext(tx, context.organisationId);
   return await tx.query.users.findMany();
 });
 
-// WRONG — LEAKS ALL TENANT DATA
+// WRONG — LEAKS ALL ORGANISATION DATA
 await db.query.users.findMany();
 
-// OK — shared/global data (no tenant_id column)
+// OK — shared/global data (no organisation_id column)
 await db.query.questionTemplates.findMany();
 ```
 
 ### JWT Claims — custom: Prefix
 
 ```typescript
-// CORRECT
-const tenantId = claims['custom:tenantId'];
+// CORRECT — custom:tenantId maps to organisationId
+const organisationId = claims['custom:tenantId'];
 const role = claims['custom:role'];
 
 // WRONG — returns undefined
-const tenantId = claims.tenantId;
+const organisationId = claims.tenantId;
 ```
 
 ### Tenant Validation — Every Query
 
 ```typescript
 // CORRECT
-where: and(eq(users.id, userId), eq(users.tenant_id, tenantId));
+where: and(eq(users.id, userId), eq(users.organisation_id, organisationId));
 
 // WRONG — DATA LEAK
 where: eq(users.id, userId);
@@ -106,7 +106,7 @@ throw new NotFoundError('User not found');
 throw new AuthorisationError('Insufficient permissions');
 
 // WRONG — leaks internal data
-throw new Error(`User ${userId} in tenant ${tenantId} not found`);
+throw new Error(`User ${userId} in organisation ${organisationId} not found`);
 ```
 
 ## Before Writing Code

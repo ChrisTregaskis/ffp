@@ -1,11 +1,11 @@
 /**
- * Unit tests for tenant context extraction utilities
+ * Unit tests for organisation context extraction utilities
  *
  * Tests actor-based context extraction for both user-triggered requests
  * (API Gateway with JWT) and system-triggered requests (job queues, scheduled tasks).
  *
  * Critical security tests:
- * - Multi-tenant isolation via tenantId validation
+ * - Multi-tenant isolation via organisationId validation
  * - JWT claim validation (missing/invalid claims)
  * - Actor type guards and display names
  */
@@ -20,7 +20,7 @@ import {
   isUserActor,
   isSystemActor,
   getActorDisplayName,
-  type TenantContext,
+  type OrganisationContext,
   type APIGatewayProxyEventV2WithJWT,
   type UserActor,
   type SystemActor,
@@ -107,8 +107,8 @@ function createIncompleteAPIGatewayEvent(
  * Type for incomplete job messages (for error testing)
  */
 type PartialJobMessage = Partial<{
-  tenantId: string | number | null;
-  customerId: string;
+  organisationId: string | number | null;
+  locationId: string;
   userId: string;
   jobId: string | number;
   jobType: string | boolean;
@@ -132,8 +132,8 @@ function expectJobContextToThrow(
  */
 type PartialSystemContextParams = Partial<{
   systemId: string | number | undefined;
-  tenantId: string | number | undefined;
-  customerId: string | null;
+  organisationId: string | number | undefined;
+  locationId: string | null;
   triggeredBy: string;
   jobId: string;
 }>;
@@ -156,7 +156,7 @@ describe('extractUserContext', () => {
     it('should extract context from valid JWT with all required claims', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID]: 'tenant-456',
+        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
         [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
         email: 'test@example.com',
       });
@@ -169,17 +169,17 @@ describe('extractUserContext', () => {
         expect(context.actor.userRole).toBe('customer_owner');
         expect(context.actor.email).toBe('test@example.com');
       }
-      expect(context.tenantId).toBe('tenant-456');
-      expect(context.customerId).toBeNull();
+      expect(context.organisationId).toBe('tenant-456');
+      expect(context.locationId).toBeNull();
       expect(context.requestId).toBe('test-request-123');
       expect(context.timestamp).toBeInstanceOf(Date);
     });
 
-    it('should extract context from valid JWT with customerId present', () => {
+    it('should extract context from valid JWT with locationId present', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID]: 'tenant-456',
-        [COGNITO_CUSTOM_ATTRIBUTES.CUSTOMER_ID]: 'customer-789',
+        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
+        [COGNITO_CUSTOM_ATTRIBUTES.LOCATION_ID]: 'customer-789',
         [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
         email: 'test@example.com',
       });
@@ -192,16 +192,16 @@ describe('extractUserContext', () => {
         expect(context.actor.userRole).toBe('customer_owner');
         expect(context.actor.email).toBe('test@example.com');
       }
-      expect(context.tenantId).toBe('tenant-456');
-      expect(context.customerId).toBe('customer-789');
+      expect(context.organisationId).toBe('tenant-456');
+      expect(context.locationId).toBe('customer-789');
       expect(context.requestId).toBe('test-request-123');
       expect(context.timestamp).toBeInstanceOf(Date);
     });
 
-    it('should extract context from valid JWT without customerId (null for super admins)', () => {
+    it('should extract context from valid JWT without locationId (null for super admins)', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'admin-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID]: 'platform',
+        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'platform',
         [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'system_admin',
         email: 'admin@platform.com',
       });
@@ -213,13 +213,13 @@ describe('extractUserContext', () => {
         expect(context.actor.userId).toBe('admin-123');
         expect(context.actor.userRole).toBe('system_admin');
       }
-      expect(context.customerId).toBeNull();
+      expect(context.locationId).toBeNull();
     });
 
     it('should use event.requestContext.requestId for generated requestId', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID]: 'tenant-456',
+        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
         [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
         email: 'test@example.com',
       });
@@ -232,7 +232,7 @@ describe('extractUserContext', () => {
     it('should create timestamp as Date object', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID]: 'tenant-456',
+        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
         [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
         email: 'test@example.com',
       });
@@ -288,7 +288,7 @@ describe('extractUserContext', () => {
   describe('Missing required claims', () => {
     it('should throw UnauthorisedError when sub claim is missing', () => {
       const event = createMockAPIGatewayEvent({
-        [COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID]: 'tenant-456',
+        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
         [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
         email: 'test@example.com',
       });
@@ -297,7 +297,7 @@ describe('extractUserContext', () => {
       expect(() => extractUserContext(event)).toThrow('Missing or invalid sub claim');
     });
 
-    it('should throw UnauthorisedError when tenantId claim is missing', () => {
+    it('should throw UnauthorisedError when organisationId claim is missing', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
         [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
@@ -305,13 +305,13 @@ describe('extractUserContext', () => {
       });
 
       expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
-      expect(() => extractUserContext(event)).toThrow('Missing or invalid tenantId claim');
+      expect(() => extractUserContext(event)).toThrow('Missing or invalid organisationId claim');
     });
 
     it('should throw UnauthorisedError when role claim is missing', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID]: 'tenant-456',
+        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
         email: 'test@example.com',
       });
 
@@ -322,7 +322,7 @@ describe('extractUserContext', () => {
     it('should throw UnauthorisedError when email claim is missing', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID]: 'tenant-456',
+        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
         [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
       });
 
@@ -335,7 +335,7 @@ describe('extractUserContext', () => {
     it('should throw UnauthorisedError when sub is not a string', () => {
       const event = createMockAPIGatewayEvent({
         sub: 123, // number instead of string
-        [COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID]: 'tenant-456',
+        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
         [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
         email: 'test@example.com',
       });
@@ -344,22 +344,22 @@ describe('extractUserContext', () => {
       expect(() => extractUserContext(event)).toThrow('Missing or invalid sub claim');
     });
 
-    it('should throw UnauthorisedError when tenantId is not a string', () => {
+    it('should throw UnauthorisedError when organisationId is not a string', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID]: 456, // number instead of string
+        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 456, // number instead of string
         [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
         email: 'test@example.com',
       });
 
       expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
-      expect(() => extractUserContext(event)).toThrow('Missing or invalid tenantId claim');
+      expect(() => extractUserContext(event)).toThrow('Missing or invalid organisationId claim');
     });
 
     it('should throw UnauthorisedError when role is not a string', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID]: 'tenant-456',
+        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
         [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: true, // boolean instead of string
         email: 'test@example.com',
       });
@@ -371,7 +371,7 @@ describe('extractUserContext', () => {
     it('should throw UnauthorisedError when email is not a string', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID]: 'tenant-456',
+        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
         [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
         email: ['test@example.com'], // array instead of string
       });
@@ -383,7 +383,7 @@ describe('extractUserContext', () => {
     it('should throw UnauthorisedError when sub is empty string', () => {
       const event = createMockAPIGatewayEvent({
         sub: '',
-        [COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID]: 'tenant-456',
+        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
         [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
         email: 'test@example.com',
       });
@@ -392,16 +392,16 @@ describe('extractUserContext', () => {
       expect(() => extractUserContext(event)).toThrow('Missing or invalid sub claim');
     });
 
-    it('should throw UnauthorisedError when tenantId is empty string', () => {
+    it('should throw UnauthorisedError when organisationId is empty string', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID]: '',
+        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: '',
         [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
         email: 'test@example.com',
       });
 
       expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
-      expect(() => extractUserContext(event)).toThrow('Missing or invalid tenantId claim');
+      expect(() => extractUserContext(event)).toThrow('Missing or invalid organisationId claim');
     });
   });
 });
@@ -411,7 +411,7 @@ describe('createSystemContext', () => {
     it('should create valid system context with all required parameters', () => {
       const context = createSystemContext({
         systemId: 'assessment-processor',
-        tenantId: 'tenant-123',
+        organisationId: 'tenant-123',
       });
 
       expect(context.actor.type).toBe('system');
@@ -420,8 +420,8 @@ describe('createSystemContext', () => {
         expect(context.actor.triggeredBy).toBeUndefined();
         expect(context.actor.jobId).toBeUndefined();
       }
-      expect(context.tenantId).toBe('tenant-123');
-      expect(context.customerId).toBeNull();
+      expect(context.organisationId).toBe('tenant-123');
+      expect(context.locationId).toBeNull();
       expect(context.requestId).toBeDefined();
       expect(context.timestamp).toBeInstanceOf(Date);
     });
@@ -429,7 +429,7 @@ describe('createSystemContext', () => {
     it('should create system context with optional triggeredBy', () => {
       const context = createSystemContext({
         systemId: 'assessment-processor',
-        tenantId: 'tenant-123',
+        organisationId: 'tenant-123',
         triggeredBy: 'user-456',
       });
 
@@ -442,7 +442,7 @@ describe('createSystemContext', () => {
     it('should create system context with optional jobId', () => {
       const context = createSystemContext({
         systemId: 'assessment-processor',
-        tenantId: 'tenant-123',
+        organisationId: 'tenant-123',
         jobId: 'job-789',
       });
 
@@ -452,30 +452,30 @@ describe('createSystemContext', () => {
       }
     });
 
-    it('should create system context with optional customerId', () => {
+    it('should create system context with optional locationId', () => {
       const context = createSystemContext({
         systemId: 'assessment-processor',
-        tenantId: 'tenant-123',
-        customerId: 'customer-456',
+        organisationId: 'tenant-123',
+        locationId: 'customer-456',
       });
 
-      expect(context.customerId).toBe('customer-456');
+      expect(context.locationId).toBe('customer-456');
     });
 
-    it('should create system context with explicit null customerId', () => {
+    it('should create system context with explicit null locationId', () => {
       const context = createSystemContext({
         systemId: 'assessment-processor',
-        tenantId: 'tenant-123',
-        customerId: null,
+        organisationId: 'tenant-123',
+        locationId: null,
       });
 
-      expect(context.customerId).toBeNull();
+      expect(context.locationId).toBeNull();
     });
 
     it('should generate a valid UUID for requestId', () => {
       const context = createSystemContext({
         systemId: 'assessment-processor',
-        tenantId: 'tenant-123',
+        organisationId: 'tenant-123',
       });
 
       // UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
@@ -487,7 +487,7 @@ describe('createSystemContext', () => {
       const before = new Date();
       const context = createSystemContext({
         systemId: 'assessment-processor',
-        tenantId: 'tenant-123',
+        organisationId: 'tenant-123',
       });
       const after = new Date();
 
@@ -499,12 +499,12 @@ describe('createSystemContext', () => {
     it('should create different requestIds for multiple calls', () => {
       const context1 = createSystemContext({
         systemId: 'assessment-processor',
-        tenantId: 'tenant-123',
+        organisationId: 'tenant-123',
       });
 
       const context2 = createSystemContext({
         systemId: 'assessment-processor',
-        tenantId: 'tenant-123',
+        organisationId: 'tenant-123',
       });
 
       expect(context1.requestId).not.toBe(context2.requestId);
@@ -516,7 +516,7 @@ describe('createSystemContext', () => {
       expectSystemContextToThrow(
         {
           systemId: undefined,
-          tenantId: 'tenant-123',
+          organisationId: 'tenant-123',
         },
         ValidationError,
         'systemId is required and must be a non-empty string'
@@ -527,7 +527,7 @@ describe('createSystemContext', () => {
       expectSystemContextToThrow(
         {
           systemId: '',
-          tenantId: 'tenant-123',
+          organisationId: 'tenant-123',
         },
         ValidationError,
         'systemId is required and must be a non-empty string'
@@ -538,43 +538,43 @@ describe('createSystemContext', () => {
       expectSystemContextToThrow(
         {
           systemId: 123,
-          tenantId: 'tenant-123',
+          organisationId: 'tenant-123',
         },
         ValidationError,
         'systemId is required and must be a non-empty string'
       );
     });
 
-    it('should throw ValidationError when tenantId is missing', () => {
+    it('should throw ValidationError when organisationId is missing', () => {
       expectSystemContextToThrow(
         {
           systemId: 'assessment-processor',
-          tenantId: undefined,
+          organisationId: undefined,
         },
         ValidationError,
-        'tenantId is required and must be a non-empty string'
+        'organisationId is required and must be a non-empty string'
       );
     });
 
-    it('should throw ValidationError when tenantId is empty string', () => {
+    it('should throw ValidationError when organisationId is empty string', () => {
       expectSystemContextToThrow(
         {
           systemId: 'assessment-processor',
-          tenantId: '',
+          organisationId: '',
         },
         ValidationError,
-        'tenantId is required and must be a non-empty string'
+        'organisationId is required and must be a non-empty string'
       );
     });
 
-    it('should throw ValidationError when tenantId is not a string', () => {
+    it('should throw ValidationError when organisationId is not a string', () => {
       expectSystemContextToThrow(
         {
           systemId: 'assessment-processor',
-          tenantId: 456,
+          organisationId: 456,
         },
         ValidationError,
-        'tenantId is required and must be a non-empty string'
+        'organisationId is required and must be a non-empty string'
       );
     });
   });
@@ -586,8 +586,8 @@ describe('extractJobContext', () => {
       const jobMessage = {
         jobId: 'job-123',
         jobType: 'assessment-processor',
-        tenantId: 'tenant-456',
-        customerId: 'customer-789',
+        organisationId: 'tenant-456',
+        locationId: 'customer-789',
         userId: 'user-101',
       };
 
@@ -599,8 +599,8 @@ describe('extractJobContext', () => {
         expect(context.actor.jobId).toBe('job-123');
         expect(context.actor.triggeredBy).toBe('user-101');
       }
-      expect(context.tenantId).toBe('tenant-456');
-      expect(context.customerId).toBe('customer-789');
+      expect(context.organisationId).toBe('tenant-456');
+      expect(context.locationId).toBe('customer-789');
       expect(context.requestId).toBeDefined();
       expect(context.timestamp).toBeInstanceOf(Date);
     });
@@ -609,7 +609,7 @@ describe('extractJobContext', () => {
       const jobMessage = {
         jobId: 'job-123',
         jobType: 'assessment-processor',
-        tenantId: 'tenant-456',
+        organisationId: 'tenant-456',
         userId: 'user-101',
       };
 
@@ -618,20 +618,20 @@ describe('extractJobContext', () => {
       if (isSystemActor(context.actor)) {
         expect(context.actor.triggeredBy).toBe('user-101');
       }
-      expect(context.customerId).toBeNull();
+      expect(context.locationId).toBeNull();
     });
 
-    it('should extract context from job message with optional customerId', () => {
+    it('should extract context from job message with optional locationId', () => {
       const jobMessage = {
         jobId: 'job-123',
         jobType: 'assessment-processor',
-        tenantId: 'tenant-456',
-        customerId: 'customer-789',
+        organisationId: 'tenant-456',
+        locationId: 'customer-789',
       };
 
       const context = extractJobContext(jobMessage);
 
-      expect(context.customerId).toBe('customer-789');
+      expect(context.locationId).toBe('customer-789');
       if (isSystemActor(context.actor)) {
         expect(context.actor.triggeredBy).toBeUndefined();
       }
@@ -641,7 +641,7 @@ describe('extractJobContext', () => {
       const jobMessage = {
         jobId: 'job-123',
         jobType: 'assessment-processor',
-        tenantId: 'tenant-456',
+        organisationId: 'tenant-456',
       };
 
       const context = extractJobContext(jobMessage);
@@ -649,14 +649,14 @@ describe('extractJobContext', () => {
       if (isSystemActor(context.actor)) {
         expect(context.actor.triggeredBy).toBeUndefined();
       }
-      expect(context.customerId).toBeNull();
+      expect(context.locationId).toBeNull();
     });
 
     it('should use jobType as systemId', () => {
       const jobMessage = {
         jobId: 'job-123',
         jobType: 'daily-report-generator',
-        tenantId: 'tenant-456',
+        organisationId: 'tenant-456',
       };
 
       const context = extractJobContext(jobMessage);
@@ -670,7 +670,7 @@ describe('extractJobContext', () => {
       const jobMessage = {
         jobId: 'job-123',
         jobType: 'assessment-processor',
-        tenantId: 'tenant-456',
+        organisationId: 'tenant-456',
       };
 
       const context = extractJobContext(jobMessage);
@@ -686,7 +686,7 @@ describe('extractJobContext', () => {
       expectJobContextToThrow(
         {
           jobType: 'assessment-processor',
-          tenantId: 'tenant-456',
+          organisationId: 'tenant-456',
         },
         ValidationError,
         'Job message missing required field: jobId'
@@ -698,7 +698,7 @@ describe('extractJobContext', () => {
         {
           jobId: '',
           jobType: 'assessment-processor',
-          tenantId: 'tenant-456',
+          organisationId: 'tenant-456',
         },
         ValidationError,
         'Job message missing required field: jobId'
@@ -710,7 +710,7 @@ describe('extractJobContext', () => {
         {
           jobId: 123,
           jobType: 'assessment-processor',
-          tenantId: 'tenant-456',
+          organisationId: 'tenant-456',
         },
         ValidationError,
         'Job message missing required field: jobId'
@@ -721,7 +721,7 @@ describe('extractJobContext', () => {
       expectJobContextToThrow(
         {
           jobId: 'job-123',
-          tenantId: 'tenant-456',
+          organisationId: 'tenant-456',
         },
         ValidationError,
         'Job message missing required field: jobType'
@@ -733,7 +733,7 @@ describe('extractJobContext', () => {
         {
           jobId: 'job-123',
           jobType: '',
-          tenantId: 'tenant-456',
+          organisationId: 'tenant-456',
         },
         ValidationError,
         'Job message missing required field: jobType'
@@ -745,45 +745,45 @@ describe('extractJobContext', () => {
         {
           jobId: 'job-123',
           jobType: true,
-          tenantId: 'tenant-456',
+          organisationId: 'tenant-456',
         },
         ValidationError,
         'Job message missing required field: jobType'
       );
     });
 
-    it('should throw ValidationError when tenantId is missing', () => {
+    it('should throw ValidationError when organisationId is missing', () => {
       expectJobContextToThrow(
         {
           jobId: 'job-123',
           jobType: 'assessment-processor',
         },
         ValidationError,
-        'Job message missing required field: tenantId'
+        'Job message missing required field: organisationId'
       );
     });
 
-    it('should throw ValidationError when tenantId is empty string', () => {
+    it('should throw ValidationError when organisationId is empty string', () => {
       expectJobContextToThrow(
         {
           jobId: 'job-123',
           jobType: 'assessment-processor',
-          tenantId: '',
+          organisationId: '',
         },
         ValidationError,
-        'Job message missing required field: tenantId'
+        'Job message missing required field: organisationId'
       );
     });
 
-    it('should throw ValidationError when tenantId is not a string', () => {
+    it('should throw ValidationError when organisationId is not a string', () => {
       expectJobContextToThrow(
         {
           jobId: 'job-123',
           jobType: 'assessment-processor',
-          tenantId: null,
+          organisationId: null,
         },
         ValidationError,
-        'Job message missing required field: tenantId'
+        'Job message missing required field: organisationId'
       );
     });
   });
@@ -812,15 +812,15 @@ describe('Type guards', () => {
     });
 
     it('should narrow type to UserActor when true', () => {
-      const context: TenantContext = {
+      const context: OrganisationContext = {
         actor: {
           type: 'user',
           userId: 'user-123',
           userRole: 'customer_owner',
           email: 'test@example.com',
         },
-        tenantId: 'tenant-456',
-        customerId: null,
+        organisationId: 'tenant-456',
+        locationId: null,
         requestId: 'request-123',
         timestamp: new Date(),
       };
@@ -855,14 +855,14 @@ describe('Type guards', () => {
     });
 
     it('should narrow type to SystemActor when true', () => {
-      const context: TenantContext = {
+      const context: OrganisationContext = {
         actor: {
           type: 'system',
           systemId: 'assessment-processor',
           jobId: 'job-123',
         },
-        tenantId: 'tenant-456',
-        customerId: null,
+        organisationId: 'tenant-456',
+        locationId: null,
         requestId: 'request-123',
         timestamp: new Date(),
       };
@@ -941,7 +941,7 @@ describe('getActorDisplayName', () => {
   it('should work with context from extractUserContext', () => {
     const event = createMockAPIGatewayEvent({
       sub: 'user-123',
-      [COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID]: 'tenant-456',
+      [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
       [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
       email: 'sarah@example.com',
     });
@@ -955,7 +955,7 @@ describe('getActorDisplayName', () => {
   it('should work with context from createSystemContext', () => {
     const context = createSystemContext({
       systemId: 'nightly-backup',
-      tenantId: 'tenant-123',
+      organisationId: 'tenant-123',
     });
 
     const displayName = getActorDisplayName(context.actor);

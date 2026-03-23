@@ -16,7 +16,7 @@ import {
 
 import * as videoRepository from './video.repository';
 
-import type { TenantContext } from '../lib/context';
+import type { OrganisationContext } from '../lib/context';
 import type { PaginationInput, PaginationMeta } from '../schemas/pagination.schema';
 import type {
   VideoListResponse,
@@ -56,7 +56,7 @@ const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
  * Create a new video record with validated input.
  * Status defaults to 'draft' via schema default.
  */
-export async function createVideo(ctx: TenantContext, input: unknown): Promise<VideoRecord> {
+export async function createVideo(ctx: OrganisationContext, input: unknown): Promise<VideoRecord> {
   const validated = createVideoSchema.parse(input);
   const db = getDb();
   const record = await videoRepository.insertVideo(db, validated);
@@ -72,7 +72,7 @@ export async function createVideo(ctx: TenantContext, input: unknown): Promise<V
   return record;
 }
 
-export async function listVideos(_ctx: TenantContext): Promise<VideoListResponse[]> {
+export async function listVideos(_ctx: OrganisationContext): Promise<VideoListResponse[]> {
   const db = getDb();
   const records = await videoRepository.findAllActive(db);
 
@@ -80,7 +80,7 @@ export async function listVideos(_ctx: TenantContext): Promise<VideoListResponse
 }
 
 export async function getVideo(
-  _ctx: TenantContext,
+  _ctx: OrganisationContext,
   videoId: string,
   options: GetVideoOptions = {}
 ): Promise<VideoDetailResponse> {
@@ -99,7 +99,7 @@ export async function getVideo(
 }
 
 export async function listVideosByFilter(
-  _ctx: TenantContext,
+  _ctx: OrganisationContext,
   filters: VideoFilterRawInput
 ): Promise<VideoListResponse[]> {
   const parseResult = videoFilterSchema.safeParse(filters);
@@ -117,7 +117,7 @@ export async function listVideosByFilter(
 }
 
 export async function listAdminVideos(
-  _ctx: TenantContext,
+  _ctx: OrganisationContext,
   paginationInput: PaginationInput,
   rawFilters: AdminVideoFilterRawInput
 ): Promise<{ data: AdminVideoListResponse[]; pagination: PaginationMeta }> {
@@ -142,7 +142,7 @@ export async function listAdminVideos(
 }
 
 export async function updateVideo(
-  ctx: TenantContext,
+  ctx: OrganisationContext,
   videoId: string,
   input: unknown
 ): Promise<VideoDetailResponse> {

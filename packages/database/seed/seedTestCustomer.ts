@@ -2,32 +2,32 @@ import { Pool } from 'pg';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
 import * as schema from '../src/schema/index.js';
-import { customers } from '../src/schema/index.js';
+import { locations } from '../src/schema/index.js';
 import { createLogger } from '../src/lib/logger.js';
-import type { TestCustomerSeed } from './types.js';
+import type { TestLocationSeed } from './types.js';
 
-const logger = createLogger('seed-test-customer');
+const logger = createLogger('seed-test-location');
 
 /**
- * Seeds the test customer with exact data from configuration.
+ * Seeds the test location with exact data from configuration.
  * Idempotent: uses upsert to update existing records or insert new ones.
  */
-export const seedTestCustomer = async (
+export const seedTestLocation = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool },
-  data: TestCustomerSeed
+  data: TestLocationSeed
 ): Promise<void> => {
-  logger.info('Seeding test customer...');
+  logger.info('Seeding test location...');
 
   // Bypass RLS for seed operation (audit trail via logs)
   logger.warn('RLS BYPASSED for seed operation');
   await db.execute(sql`SET LOCAL row_security = off`);
 
-  // Upsert test customer - insert or update if exists
+  // Upsert test location - insert or update if exists
   await db
-    .insert(customers)
+    .insert(locations)
     .values({
       id: data.id,
-      tenantId: data.tenantId,
+      organisationId: data.organisationId,
       name: data.name,
       accountCode: data.accountCode,
       address: data.address,
@@ -36,9 +36,9 @@ export const seedTestCustomer = async (
       updatedAt: sql`${data.updatedAt}::timestamp`,
     })
     .onConflictDoUpdate({
-      target: customers.id,
+      target: locations.id,
       set: {
-        tenantId: data.tenantId,
+        organisationId: data.organisationId,
         name: data.name,
         accountCode: data.accountCode,
         address: data.address,
@@ -47,10 +47,10 @@ export const seedTestCustomer = async (
       },
     });
 
-  logger.info('Test customer seeded', {
+  logger.info('Test location seeded', {
     id: data.id,
     name: data.name,
     accountCode: data.accountCode,
-    tenantId: data.tenantId,
+    organisationId: data.organisationId,
   });
 };

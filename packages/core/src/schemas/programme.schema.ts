@@ -100,8 +100,8 @@ export const phaseStatusSchema = z.enum(PHASE_STATUSES);
 export const programmeSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.guid(),
-  /** Tenant ID for RLS isolation */
-  tenantId: z.guid(),
+  /** Organisation ID for RLS isolation */
+  organisationId: z.guid(),
   /** User who owns this programme */
   userId: z.guid(),
   /** FK to programme_templates table */
@@ -132,7 +132,7 @@ export const programmeSchema = z.object({
 
 export const createProgrammeSchema = programmeSchema
   .pick({
-    tenantId: true,
+    organisationId: true,
     userId: true,
     programmeTemplateId: true,
     name: true,
@@ -169,8 +169,8 @@ export const replaceProgrammeResponseSchema = z.object({
 export const programmePhaseSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.guid(),
-  /** Tenant ID for RLS isolation */
-  tenantId: z.guid(),
+  /** Organisation ID for RLS isolation */
+  organisationId: z.guid(),
   /** Parent programme */
   programmeId: z.guid(),
   /** Source template phase */
@@ -189,7 +189,7 @@ export const programmePhaseSchema = z.object({
 
 /** Create programme phase schema — used internally by generateProgramme service */
 export const createProgrammePhaseSchema = programmePhaseSchema.pick({
-  tenantId: true,
+  organisationId: true,
   programmeId: true,
   templatePhaseId: true,
   phaseNumber: true,

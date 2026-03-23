@@ -645,8 +645,8 @@ describe('withErrorHandling', () => {
                 sub: 'user-123',
                 email: 'test@example.com',
                 'custom:role': 'customer_owner',
-                'custom:tenantId': 'tenant-456',
-                'custom:customerId': 'customer-789',
+                'custom:tenantId': 'org-456',
+                'custom:customerId': 'location-789',
               },
             },
           },
@@ -723,11 +723,11 @@ describe('withErrorHandling', () => {
 
       const startLog = JSON.parse(consoleLogSpy.mock.calls[0][0] as string) as {
         actor: string;
-        tenantId: string;
+        organisationId: string;
       };
 
       expect(startLog.actor).toBe('test@example.com (customer_owner)');
-      expect(startLog.tenantId).toBe('tenant-456');
+      expect(startLog.organisationId).toBe('org-456');
     });
 
     it('should fall back to console.error for unauthenticated requests', async () => {

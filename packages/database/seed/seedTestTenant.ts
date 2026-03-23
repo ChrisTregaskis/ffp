@@ -2,29 +2,29 @@ import { Pool } from 'pg';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
 import * as schema from '../src/schema/index.js';
-import { tenants } from '../src/schema/index.js';
+import { organisations } from '../src/schema/index.js';
 import { createLogger } from '../src/lib/logger.js';
-import type { TestCustomerTenantSeed } from './types.js';
+import type { TestLocationOrganisationSeed } from './types.js';
 
-const logger = createLogger('seed-test-tenant');
+const logger = createLogger('seed-test-organisation');
 
 /**
- * Seeds the test customer tenant with exact data from configuration.
+ * Seeds the test location organisation with exact data from configuration.
  * Idempotent: uses upsert to update existing records or insert new ones.
  */
-export const seedTestTenant = async (
+export const seedTestOrganisation = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool },
-  data: TestCustomerTenantSeed
+  data: TestLocationOrganisationSeed
 ): Promise<void> => {
-  logger.info('Seeding test customer tenant...');
+  logger.info('Seeding test location organisation...');
 
   // Bypass RLS for seed operation (audit trail via logs)
   logger.warn('RLS BYPASSED for seed operation');
   await db.execute(sql`SET LOCAL row_security = off`);
 
-  // Upsert test customer tenant - insert or update if exists
+  // Upsert test location organisation - insert or update if exists
   await db
-    .insert(tenants)
+    .insert(organisations)
     .values({
       id: data.id,
       type: data.type,
@@ -34,7 +34,7 @@ export const seedTestTenant = async (
       updatedAt: sql`${data.updatedAt}::timestamp`,
     })
     .onConflictDoUpdate({
-      target: tenants.id,
+      target: organisations.id,
       set: {
         type: data.type,
         name: data.name,
@@ -43,5 +43,9 @@ export const seedTestTenant = async (
       },
     });
 
-  logger.info('Test customer tenant seeded', { id: data.id, name: data.name, type: data.type });
+  logger.info('Test location organisation seeded', {
+    id: data.id,
+    name: data.name,
+    type: data.type,
+  });
 };

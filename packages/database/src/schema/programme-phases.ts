@@ -10,7 +10,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { PHASE_STATUSES } from '../constants/programme.constants';
-import { tenants } from './tenants';
+import { organisations } from './organisations';
 import { programmes } from './programmes';
 import { templatePhases } from './template-phases';
 
@@ -23,16 +23,16 @@ export const phaseStatusEnum = pgEnum('phase_status', [...PHASE_STATUSES]);
  * Each row represents a user's copy of a template phase, tracking their
  * progress through the programme structure.
  *
- * **RLS enforced** — tenant_id column with row-level security policies.
+ * **RLS enforced** — organisation_id column with row-level security policies.
  */
 export const programmePhases = pgTable(
   'programme_phases',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    /** Tenant for RLS isolation */
-    tenantId: uuid('tenant_id')
+    /** Organisation for RLS isolation */
+    organisationId: uuid('organisation_id')
       .notNull()
-      .references(() => tenants.id, { onDelete: 'cascade' }),
+      .references(() => organisations.id, { onDelete: 'cascade' }),
     /** Parent programme */
     programmeId: uuid('programme_id')
       .notNull()
@@ -52,7 +52,7 @@ export const programmePhases = pgTable(
   },
   (table) => [
     uniqueIndex('idx_programme_phases_programme_phase').on(table.programmeId, table.phaseNumber),
-    index('idx_programme_phases_tenant').on(table.tenantId),
+    index('idx_programme_phases_organisation').on(table.organisationId),
     index('idx_programme_phases_programme').on(table.programmeId),
   ]
 );

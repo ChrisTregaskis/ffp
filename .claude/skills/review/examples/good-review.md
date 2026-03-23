@@ -18,7 +18,7 @@ This is an example of a well-formatted code review following FFP standards.
 
 **Location**: `packages/core/src/users/user.repository.ts:45-52`
 
-**Issue**: Direct database query without setting RLS context, allowing potential cross-tenant data leaks.
+**Issue**: Direct database query without setting RLS context, allowing potential cross-organisation data leaks.
 
 ```typescript
 // WRONG: CURRENT CODE (WRONG)
@@ -39,19 +39,19 @@ export const findUserById = async (
 ): Promise<User | null> => {
   return await db.transaction(async (tx) => {
     // CRITICAL: Set RLS context
-    await setRLSContext(tx, context.tenantId);
+    await setRLSContext(tx, context.organisationId);
 
     return await tx.query.users.findFirst({
       where: and(
         eq(users.id, userId),
-        eq(users.tenant_id, context.tenantId) // Explicit tenant check
+        eq(users.organisation_id, context.organisationId) // Explicit organisation check
       ),
     });
   });
 };
 ```
 
-**Why**: Without RLS context, PostgreSQL row-level security policies won't filter by tenant, allowing any tenant to access any user's data.
+**Why**: Without RLS context, PostgreSQL row-level security policies won't filter by organisation, allowing any organisation to access any user's data.
 
 **Priority**: CRITICAL - This is a severe security vulnerability that violates multi-tenant isolation.
 
@@ -70,7 +70,7 @@ const extractContext = (event: APIGatewayProxyEvent): RequestContext => {
 
   return {
     userId: claims.sub,
-    tenantId: claims.tenantId, // undefined!
+    organisationId: claims.tenantId, // undefined!
     role: claims.role as UserRole, // undefined!
   };
 };
@@ -89,7 +89,7 @@ const extractContext = (event: APIGatewayProxyEvent): RequestContext => {
 
   return {
     userId: claims.sub,
-    tenantId: claims['custom:tenantId'], // CORRECT: custom: prefix
+    organisationId: claims['custom:tenantId'], // CORRECT: custom: prefix (maps to organisationId)
     role: claims['custom:role'] as UserRole,
   };
 };

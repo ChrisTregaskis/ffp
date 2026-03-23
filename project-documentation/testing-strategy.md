@@ -13,7 +13,7 @@ Pragmatic testing approach optimised for solo development (8h/week): fast unit t
 
 ## Non-Negotiable Tests
 
-1. **RLS multi-tenant isolation** — prevents cross-tenant data leakage (integration tests)
+1. **RLS multi-tenant isolation** — prevents cross-organisation data leakage (integration tests)
 2. **Authentication/authorisation** — JWT parsing, role validation, context extraction (unit tests)
 3. **Input validation** — all Zod schemas (unit tests)
 4. **Assessment scoring logic** — core business value (unit tests)
@@ -51,7 +51,7 @@ turbo test --filter=@ffp/database  # Package-specific
 ```
 packages/core/src/
 ├── lib/
-│   ├── context.test.ts            # Tenant context extraction
+│   ├── context.test.ts            # Organisation context extraction
 │   ├── errors.test.ts             # Custom error hierarchy
 │   ├── logger.test.ts             # Structured logging
 │   ├── cognito.test.ts            # Cognito service wrapper
@@ -62,7 +62,7 @@ packages/core/src/
 
 packages/database/
 ├── __tests__/
-│   ├── helpers.ts                 # withTestDb, withRLS, createTestTenant, createTestUser
+│   ├── helpers.ts                 # withTestDb, withRLS, createTestOrganisation, createTestUser
 │   ├── integration.test.ts        # Database integration tests
 │   └── drizzle.test.ts            # Smoke tests
 └── src/
@@ -75,10 +75,10 @@ packages/database/
 Located in `packages/database/__tests__/helpers.ts`:
 
 - `withTestDb(fn)` — runs test in transaction with automatic rollback
-- `withRLS(db, tenantId, fn)` — sets RLS context for test block
-- `createTestTenant(db, type)` — creates test tenant
-- `createTestUser(db, tenantId, email)` — creates test user
-- `createTestCustomer(db, tenantId)` — creates test customer
+- `withRLS(db, organisationId, fn)` — sets RLS context for test block
+- `createTestOrganisation(db, type)` — creates test organisation
+- `createTestUser(db, organisationId, email)` — creates test user
+- `createTestLocation(db, organisationId)` — creates test location
 
 All integration tests run in transactions — no database pollution.
 

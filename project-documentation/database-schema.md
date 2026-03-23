@@ -2,7 +2,7 @@
 
 ## Overview
 
-FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolation, accessed through Drizzle ORM for type-safe database operations. All tenant-scoped tables enforce RLS policies to prevent cross-tenant data access.
+FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolation, accessed through Drizzle ORM for type-safe database operations. All organisation-scoped tables enforce RLS policies to prevent cross-organisation data access.
 
 ---
 
@@ -14,13 +14,13 @@ FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolatio
 - **Strong isolation**: Database-enforced security (not just application-level)
 - **Type-safe queries**: Drizzle provides end-to-end TypeScript type safety
 - **Serverless-optimised**: Lightweight ORM perfect for Lambda functions
-- **Easy analytics**: Query across tenants when needed (system admin)
+- **Easy analytics**: Query across organisations when needed (system admin)
 - **ACID guarantees**: Full transaction support
 
 ### Trade-offs
 
 - Requires careful query design
-- All queries must include tenant context
+- All queries must include organisation context
 - Must test data isolation thoroughly
 
 ---
@@ -48,18 +48,18 @@ FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolatio
 │                       DATABASE SCHEMA (ERD)                             │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
-│  MULTI-TENANT HIERARCHY                                                 │
+│  MULTI-TENANT HIERARCHY (Organisation/Location)                         │
 │  ══════════════════════                                                 │
 │                                                                         │
-│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐                │
-│  │   tenants   │────▶│  customers  │────▶│    users    │                │
-│  │─────────────│     │─────────────│     │─────────────│                │
-│  │ id          │     │ tenant_id   │     │ tenant_id   │                │
-│  │ name        │     │ id          │     │ customer_id │                │
-│  │ type        │     │ name        │     │ email       │                │
-│  │ subdomain   │     │ status      │     │ role        │                │
-│  │ status      │     │ owner_id    │     │ cognito_sub │                │
-│  └─────────────┘     └─────────────┘     └─────────────┘                │
+│  ┌───────────────┐   ┌─────────────┐     ┌─────────────┐                │
+│  │ organisations │──▶│  locations  │────▶│    users    │                │
+│  │───────────────│   │─────────────│     │─────────────│                │
+│  │ id            │   │ org_id      │     │ org_id      │                │
+│  │ name          │   │ id          │     │ location_id │                │
+│  │ type          │   │ name        │     │ email       │                │
+│  │ subdomain     │   │ status      │     │ role        │                │
+│  │ status        │   │ owner_id    │     │ cognito_sub │                │
+│  └───────────────┘   └─────────────┘     └─────────────┘                │
 │        │                                        │                       │
 │        │                                        │                       │
 │        ▼                                        ▼                       │
@@ -70,7 +70,7 @@ FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolatio
 │  │  ┌───────────────────┐    ┌─────────────────────────┐            │   │
 │  │  │  user_assessments │───▶│ user_assessment_answers │            │   │
 │  │  │───────────────────│    │─────────────────────────│            │   │
-│  │  │ tenant_id         │    │ tenant_id               │            │   │
+│  │  │ organisation_id   │    │ organisation_id         │            │   │
 │  │  │ user_id           │    │ user_assessment_id      │            │   │
 │  │  │ flow_id           │    │ question_id             │            │   │
 │  │  │ current_step_id   │    │ answer_value            │            │   │
@@ -84,7 +84,7 @@ FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolatio
 │  │  ┌───────────────────┐    ┌───────────────────┐                  │   │
 │  │  │    programs       │    │  process_jobs     │                  │   │
 │  │  │───────────────────│    │───────────────────│                  │   │
-│  │  │ tenant_id         │    │ tenant_id         │                  │   │
+│  │  │ organisation_id   │    │ organisation_id   │                  │   │
 │  │  │ user_id           │    │ type              │                  │   │
 │  │  │ assessment_id     │    │ status            │                  │   │
 │  │  │ duration_weeks    │    │ payload           │                  │   │
@@ -135,18 +135,18 @@ FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolatio
 
 ## Table Classification
 
-### RLS-Protected Tables (Tenant Data)
+### RLS-Protected Tables (Organisation Data)
 
-These tables contain user/customer data and **require RLS policies**:
+These tables contain user/location data and **require RLS policies**:
 
-| Table                     | RLS Policy        | Description            |
-| ------------------------- | ----------------- | ---------------------- |
-| `users`                   | `tenant_id` match | User accounts          |
-| `customers`               | `tenant_id` match | Customer organisations |
-| `user_assessments`        | `tenant_id` match | Assessment instances   |
-| `user_assessment_answers` | `tenant_id` match | Individual answers     |
-| `programs`                | `tenant_id` match | Generated programmes   |
-| `process_jobs`            | `tenant_id` match | Async job queue        |
+| Table                     | RLS Policy              | Description          |
+| ------------------------- | ----------------------- | -------------------- |
+| `users`                   | `organisation_id` match | User accounts        |
+| `locations`               | `organisation_id` match | Location entities    |
+| `user_assessments`        | `organisation_id` match | Assessment instances |
+| `user_assessment_answers` | `organisation_id` match | Individual answers   |
+| `programs`                | `organisation_id` match | Generated programmes |
+| `process_jobs`            | `organisation_id` match | Async job queue      |
 
 ### System Content Tables (No RLS)
 
@@ -154,7 +154,7 @@ These tables contain shared content accessible to all authenticated users:
 
 | Table                  | Description                                       |
 | ---------------------- | ------------------------------------------------- |
-| `tenants`              | Tenant registry (platform-managed)                |
+| `organisations`        | Organisation registry (platform-managed)          |
 | `assessment_templates` | Assessment question configuration                 |
 | `assessment_flows`     | Assessment journey with flow-level scoring config |
 | `flow_steps`           | Normalised step definitions with branching rules  |
@@ -172,10 +172,10 @@ These tables contain shared content accessible to all authenticated users:
 
 ```typescript
 // ✅ CORRECT: Application code imports types from @ffp/core
-import { User, UserRole, Tenant, Customer } from '@ffp/core';
+import { User, UserRole, Organisation, Location } from '@ffp/core';
 
 // ✅ CORRECT: Repository code imports table schemas from @ffp/database
-import { users, customers, tenants } from '@ffp/database/schema';
+import { users, locations, organisations } from '@ffp/database/schema';
 
 // ✅ CORRECT: But repositories return types from @ffp/core
 import type { User } from '@ffp/core';
@@ -183,10 +183,10 @@ import type { User } from '@ffp/core';
 
 ### Package Responsibilities
 
-| Import From     | Use For                                  |
-| --------------- | ---------------------------------------- |
-| `@ffp/core`     | Types (User, Tenant), Validation schemas |
-| `@ffp/database` | Table definitions, DB operations         |
+| Import From     | Use For                                        |
+| --------------- | ---------------------------------------------- |
+| `@ffp/core`     | Types (User, Organisation), Validation schemas |
+| `@ffp/database` | Table definitions, DB operations               |
 
 ---
 
@@ -201,11 +201,11 @@ import type { User } from '@ffp/core';
 │                                                                         │
 │  1. REQUEST ARRIVES                                                     │
 │     ─────────────────                                                   │
-│     JWT contains: tenantId, userId, role                                │
+│     JWT contains: organisationId, userId, role                          │
 │                                                                         │
 │  2. SET RLS CONTEXT                                                     │
 │     ─────────────────                                                   │
-│     SET app.tenant_id = 'uuid-here';                                    │
+│     SET app.organisation_id = 'uuid-here';                              │
 │     SET app.user_id = 'uuid-here';                                      │
 │                                                                         │
 │  3. QUERY EXECUTES                                                      │
@@ -215,12 +215,12 @@ import type { User } from '@ffp/core';
 │  4. RLS POLICY APPLIED                                                  │
 │     ────────────────────                                                │
 │     PostgreSQL automatically filters:                                   │
-│     WHERE tenant_id = current_setting('app.tenant_id')::UUID            │
+│     WHERE organisation_id = current_setting('app.organisation_id')::UUID│
 │                                                                         │
 │  5. RESULT                                                              │
 │     ────────                                                            │
-│     Only rows matching tenant_id are returned                           │
-│     Cross-tenant access is IMPOSSIBLE at database level                 │
+│     Only rows matching organisation_id are returned                     │
+│     Cross-organisation access is IMPOSSIBLE at database level           │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -228,22 +228,22 @@ import type { User } from '@ffp/core';
 ### RLS Policy Pattern
 
 ```sql
--- Standard tenant isolation policy
-CREATE POLICY tenant_isolation_users ON users
+-- Standard organisation isolation policy
+CREATE POLICY organisation_isolation_users ON users
   FOR ALL
-  USING (tenant_id = current_setting('app.tenant_id', true)::UUID);
+  USING (organisation_id = current_setting('app.organisation_id', true)::UUID);
 ```
 
 ### System Admin Multi-Tenant Access
 
-System administrators (`role='system_admin'`) can access all tenants:
+System administrators (`role='system_admin'`) can access all organisations:
 
 ```sql
 -- Policy with system_admin bypass
-CREATE POLICY tenant_isolation_users ON users
+CREATE POLICY organisation_isolation_users ON users
   FOR ALL
   USING (
-    tenant_id = current_setting('app.tenant_id', true)::UUID
+    organisation_id = current_setting('app.organisation_id', true)::UUID
     OR
     EXISTS (
       SELECT 1 FROM users u
@@ -258,8 +258,8 @@ CREATE POLICY tenant_isolation_users ON users
 ```typescript
 import { withRLS } from '@ffp/database';
 
-// All queries within this transaction are automatically filtered by tenant
-const assessments = await withRLS(tenantId, userId, async (tx) => {
+// All queries within this transaction are automatically filtered by organisation
+const assessments = await withRLS(organisationId, userId, async (tx) => {
   return await tx.select().from(userAssessments);
 });
 ```
@@ -284,12 +284,12 @@ const pool = new Pool({
 
 ```typescript
 export const withRLS = async <T>(
-  tenantId: string,
+  organisationId: string,
   userId: string | undefined,
   callback: (tx: typeof db) => Promise<T>
 ): Promise<T> => {
   return await db.transaction(async (tx) => {
-    await tx.execute(sql`SET app.tenant_id = ${tenantId}`);
+    await tx.execute(sql`SET app.organisation_id = ${organisationId}`);
     if (userId) {
       await tx.execute(sql`SET app.user_id = ${userId}`);
     }
@@ -338,8 +338,8 @@ export const handler = async () => {
 
 | Table                   | File Path                                                 |
 | ----------------------- | --------------------------------------------------------- |
-| Tenants                 | `packages/database/src/schema/tenants.ts`                 |
-| Customers               | `packages/database/src/schema/customers.ts`               |
+| Organisations           | `packages/database/src/schema/organisations.ts`           |
+| Locations               | `packages/database/src/schema/locations.ts`               |
 | Users                   | `packages/database/src/schema/users.ts`                   |
 | Assessment Templates    | `packages/database/src/schema/assessment-templates.ts`    |
 | Assessment Flows        | `packages/database/src/schema/assessment-flows.ts`        |
@@ -368,19 +368,19 @@ export const handler = async () => {
 
 All schemas include appropriate indexes:
 
-- `tenant_id` indexed on all RLS tables
+- `organisation_id` indexed on all RLS tables
 - `user_id` indexed for user-specific queries
-- Composite indexes for common query patterns (e.g., `tenant_id + user_id`)
+- Composite indexes for common query patterns (e.g., `organisation_id + user_id`)
 - Unique indexes for business constraints
 
 ### Query Best Practices
 
-| Practice                | Example                                    |
-| ----------------------- | ------------------------------------------ |
-| Specify columns         | `.select({ id, name })` not `.select()`    |
-| Use LIMIT               | `.limit(20)` for list queries              |
-| Use prepared statements | `.prepare('query_name')` for hot paths     |
-| Include tenant filter   | Always filter by `tenant_id` even with RLS |
+| Practice                | Example                                          |
+| ----------------------- | ------------------------------------------------ |
+| Specify columns         | `.select({ id, name })` not `.select()`          |
+| Use LIMIT               | `.limit(20)` for list queries                    |
+| Use prepared statements | `.prepare('query_name')` for hot paths           |
+| Include org filter      | Always filter by `organisation_id` even with RLS |
 
 ### Prepared Statements
 
@@ -422,24 +422,24 @@ psql -h $DB_HOST -U $DB_USER -d $DB_NAME < backup.sql
 
 ### Critical Test Cases
 
-| Test Case                          | Expected Result                 |
-| ---------------------------------- | ------------------------------- |
-| Query from wrong tenant context    | Returns empty result            |
-| Insert with wrong tenant_id        | RLS blocks or query fails       |
-| System admin cross-tenant query    | Returns data from all tenants   |
-| Customer sub-user sees parent data | Returns data within same tenant |
+| Test Case                         | Expected Result                       |
+| --------------------------------- | ------------------------------------- |
+| Query from wrong org context      | Returns empty result                  |
+| Insert with wrong organisation_id | RLS blocks or query fails             |
+| System admin cross-org query      | Returns data from all organisations   |
+| Location user sees parent data    | Returns data within same organisation |
 
 ### Integration Test Pattern
 
 ```typescript
-it('prevents cross-tenant data access', async () => {
-  // Create data in tenant1 context
-  const assessment = await withRLS(tenant1.id, user1.id, async (tx) => {
+it('prevents cross-organisation data access', async () => {
+  // Create data in org1 context
+  const assessment = await withRLS(org1.id, user1.id, async (tx) => {
     return await tx.insert(userAssessments).values({...}).returning();
   });
 
-  // Query from tenant2 context - should NOT see tenant1 data
-  const results = await withRLS(tenant2.id, user2.id, async (tx) => {
+  // Query from org2 context - should NOT see org1 data
+  const results = await withRLS(org2.id, user2.id, async (tx) => {
     return await tx.select().from(userAssessments);
   });
 

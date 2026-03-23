@@ -31,7 +31,7 @@ export interface UpsertAnswerOptions {
  * Find all answers for an assessment
  */
 export async function findByAssessmentId(
-  tenantId: string,
+  organisationId: string,
   assessmentId: string,
   options: FindByAssessmentIdOptions = {}
 ): Promise<UserAssessmentAnswer[]> {
@@ -50,17 +50,17 @@ export async function findByAssessmentId(
   }
 
   // Otherwise, create new transaction with RLS
-  return await withRLS(tenantId, userId, doQuery);
+  return await withRLS(organisationId, userId, doQuery);
 }
 
-// RLS is enforced via tenant context.
+// RLS is enforced via organisation context.
 export async function findByAssessmentAndQuestion(
-  tenantId: string,
+  organisationId: string,
   assessmentId: string,
   questionId: string,
   userId?: string
 ): Promise<UserAssessmentAnswer | null> {
-  return await withRLS(tenantId, userId, async (tx) => {
+  return await withRLS(organisationId, userId, async (tx) => {
     const records = await tx
       .select()
       .from(userAssessmentAnswers)
@@ -83,7 +83,7 @@ export async function findByAssessmentAndQuestion(
  */
 async function upsertAnswerInTx(
   tx: Transaction,
-  tenantId: string,
+  organisationId: string,
   assessmentId: string,
   questionId: string,
   answerValue: AnswerValue
@@ -93,7 +93,7 @@ async function upsertAnswerInTx(
   const [record] = await tx
     .insert(userAssessmentAnswers)
     .values({
-      tenantId,
+      organisationId,
       userAssessmentId: assessmentId,
       questionId,
       answerValue,
@@ -118,7 +118,7 @@ async function upsertAnswerInTx(
  * Uses PostgreSQL ON CONFLICT for atomic upsert operation.
  */
 export async function upsertAnswer(
-  tenantId: string,
+  organisationId: string,
   assessmentId: string,
   questionId: string,
   answerValue: AnswerValue,
@@ -128,12 +128,12 @@ export async function upsertAnswer(
 
   // If transaction provided, use it directly (caller must set RLS)
   if (tx) {
-    return upsertAnswerInTx(tx, tenantId, assessmentId, questionId, answerValue);
+    return upsertAnswerInTx(tx, organisationId, assessmentId, questionId, answerValue);
   }
 
   // Otherwise, create new transaction with RLS
-  return await withRLS(tenantId, userId, async (newTx) => {
-    return upsertAnswerInTx(newTx, tenantId, assessmentId, questionId, answerValue);
+  return await withRLS(organisationId, userId, async (newTx) => {
+    return upsertAnswerInTx(newTx, organisationId, assessmentId, questionId, answerValue);
   });
 }
 
@@ -151,7 +151,7 @@ export interface SaveAnswersOptions {
  */
 async function saveAnswersInTx(
   tx: Transaction,
-  tenantId: string,
+  organisationId: string,
   assessmentId: string,
   answers: SaveAnswerInput[]
 ): Promise<UserAssessmentAnswer[]> {
@@ -162,7 +162,7 @@ async function saveAnswersInTx(
   const now = new Date();
 
   const values = answers.map((answer) => ({
-    tenantId,
+    organisationId,
     userAssessmentId: assessmentId,
     questionId: answer.questionId,
     answerValue: answer.answerValue,
@@ -200,7 +200,7 @@ async function saveAnswersInTx(
  * or updated if it already exists for the assessment/question combination.
  */
 export async function saveAnswers(
-  tenantId: string,
+  organisationId: string,
   assessmentId: string,
   answers: SaveAnswerInput[],
   options: SaveAnswersOptions = {}
@@ -209,12 +209,12 @@ export async function saveAnswers(
 
   // If transaction provided, use it directly (caller must set RLS)
   if (tx) {
-    return saveAnswersInTx(tx, tenantId, assessmentId, answers);
+    return saveAnswersInTx(tx, organisationId, assessmentId, answers);
   }
 
   // Otherwise, create new transaction with RLS
-  return await withRLS(tenantId, userId, async (newTx) => {
-    return saveAnswersInTx(newTx, tenantId, assessmentId, answers);
+  return await withRLS(organisationId, userId, async (newTx) => {
+    return saveAnswersInTx(newTx, organisationId, assessmentId, answers);
   });
 }
 
@@ -224,11 +224,11 @@ export async function saveAnswers(
  * Used when resetting an assessment. Typically followed by status transition.
  */
 export async function deleteByAssessmentId(
-  tenantId: string,
+  organisationId: string,
   assessmentId: string,
   userId?: string
 ): Promise<void> {
-  await withRLS(tenantId, userId, async (tx) => {
+  await withRLS(organisationId, userId, async (tx) => {
     await tx
       .delete(userAssessmentAnswers)
       .where(eq(userAssessmentAnswers.userAssessmentId, assessmentId));
@@ -239,7 +239,7 @@ export async function deleteByAssessmentId(
  * Delete specific answers by question IDs
  */
 export async function deleteByQuestionIds(
-  tenantId: string,
+  organisationId: string,
   assessmentId: string,
   questionIds: string[],
   userId?: string
@@ -248,7 +248,7 @@ export async function deleteByQuestionIds(
     return;
   }
 
-  await withRLS(tenantId, userId, async (tx) => {
+  await withRLS(organisationId, userId, async (tx) => {
     await tx
       .delete(userAssessmentAnswers)
       .where(
@@ -268,11 +268,11 @@ export async function deleteByQuestionIds(
  * only check required questions from steps the user actually visited.
  */
 export async function findVisitedTemplateIds(
-  tenantId: string,
+  organisationId: string,
   assessmentId: string,
   userId?: string
 ): Promise<string[]> {
-  return await withRLS(tenantId, userId, async (tx) => {
+  return await withRLS(organisationId, userId, async (tx) => {
     const results = await tx
       .selectDistinct({ templateId: templateQuestions.templateId })
       .from(userAssessmentAnswers)

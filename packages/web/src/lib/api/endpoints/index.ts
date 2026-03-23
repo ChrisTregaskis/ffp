@@ -1,3 +1,24 @@
+export { adminLocationsApi } from './admin-locations';
+export type {
+  AdminLocationFilterInput,
+  CreateLocationMutationInput,
+  PaginatedLocationResponse,
+} from './admin-locations';
+export type {
+  CreateLocationInput,
+  LocationDetailResponse,
+  UpdateLocationInput,
+} from './admin-locations';
+
+export { adminOrganisationsApi } from './admin-organisations';
+export type {
+  AdminOrganisationFilterInput,
+  CreateOrganisationInput,
+  OrganisationDetailResponse,
+  PaginatedOrganisationResponse,
+  UpdateOrganisationInput,
+} from './admin-organisations';
+
 export { adminProgrammeTemplatesApi } from './admin-programme-templates';
 export { adminExercisesApi, adminPhasesApi, adminSessionsApi } from './admin-template-hierarchy';
 export type {
@@ -21,6 +42,15 @@ export type {
   TemplateDetailResponse,
   UpdateProgrammeTemplateInput,
 } from './admin-programme-templates';
+
+export { adminUsersApi } from './admin-users';
+export type {
+  AdminCreateUserInput,
+  AdminUpdateUserInput,
+  AdminUserFilterInput,
+  PaginatedUserResponse,
+  UserDetailResponse as AdminUserDetailResponse,
+} from './admin-users';
 
 export { adminVideosApi } from './admin-videos';
 export type {

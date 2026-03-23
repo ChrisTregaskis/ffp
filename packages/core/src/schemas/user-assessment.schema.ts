@@ -32,8 +32,8 @@ export { userAssessmentScoresSchema };
 export const userAssessmentSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.guid(),
-  /** Tenant ID for RLS isolation */
-  tenantId: z.guid(),
+  /** Organisation ID for RLS isolation */
+  organisationId: z.guid(),
   /** User who owns this assessment */
   userId: z.guid(),
   /** Assessment flow being followed */
@@ -60,7 +60,7 @@ export const userAssessmentSchema = z.object({
 
 /** Derived from userAssessmentSchema - picks fields required for creation */
 export const createUserAssessmentSchema = userAssessmentSchema.pick({
-  tenantId: true,
+  organisationId: true,
   userId: true,
   flowId: true,
 });

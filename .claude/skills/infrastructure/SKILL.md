@@ -24,18 +24,18 @@ You are a principal DevOps engineer specialising in AWS serverless architecture 
 
 ## AWS Service Map
 
-| Service              | Purpose                       | Key Concern                                |
-| -------------------- | ----------------------------- | ------------------------------------------ |
-| **Lambda**           | API handlers, background jobs | Cold starts, memory, timeout configuration |
-| **API Gateway**      | HTTP routing, authorisation   | Rate limiting, CORS, JWT validation        |
-| **RDS (PostgreSQL)** | Data storage with RLS         | Multi-tenant isolation, VPC placement      |
-| **Cognito**          | Authentication, JWT issuance  | Custom attributes (`tenantId`, `role`)     |
-| **S3**               | Video/asset storage           | Signed URLs, bucket policies, encryption   |
-| **CloudFront**       | CDN for video delivery        | Cache policies, origin access              |
-| **VPC**              | Network isolation             | Private subnets for RDS, NAT for Lambda    |
-| **KMS**              | Encryption keys               | At-rest encryption for all data stores     |
-| **CloudWatch**       | Logging and monitoring        | Structured JSON logs, Insights queries     |
-| **Secrets Manager**  | Sensitive configuration       | DB credentials, API keys, rotation         |
+| Service              | Purpose                       | Key Concern                                                          |
+| -------------------- | ----------------------------- | -------------------------------------------------------------------- |
+| **Lambda**           | API handlers, background jobs | Cold starts, memory, timeout configuration                           |
+| **API Gateway**      | HTTP routing, authorisation   | Rate limiting, CORS, JWT validation                                  |
+| **RDS (PostgreSQL)** | Data storage with RLS         | Multi-tenant isolation, VPC placement                                |
+| **Cognito**          | Authentication, JWT issuance  | Custom attributes (`custom:tenantId` maps to organisationId, `role`) |
+| **S3**               | Video/asset storage           | Signed URLs, bucket policies, encryption                             |
+| **CloudFront**       | CDN for video delivery        | Cache policies, origin access                                        |
+| **VPC**              | Network isolation             | Private subnets for RDS, NAT for Lambda                              |
+| **KMS**              | Encryption keys               | At-rest encryption for all data stores                               |
+| **CloudWatch**       | Logging and monitoring        | Structured JSON logs, Insights queries                               |
+| **Secrets Manager**  | Sensitive configuration       | DB credentials, API keys, rotation                                   |
 
 ## SST Patterns
 
@@ -80,7 +80,7 @@ Infrastructure is defined as code in `stacks/` using SST Ion.
 
 ```typescript
 logger.info('User created', {
-  tenantId: context.tenantId,
+  organisationId: context.organisationId,
   userId: result.id,
   action: 'CREATE_USER',
   timestamp: new Date().toISOString(),

@@ -1,6 +1,6 @@
-import { APP_NAME, TENANT_TYPES, USER_ROLES } from '../lib/constants';
+import { APP_NAME, ORGANISATION_TYPES, USER_ROLES } from '../lib/constants';
 
-import type { Tenant } from '../schemas/tenant.schema';
+import type { Organisation } from '../schemas/organisation.schema';
 import type { User } from '../schemas/user.schema';
 
 /**
@@ -9,7 +9,7 @@ import type { User } from '../schemas/user.schema';
  */
 
 export interface PathAliasTest {
-  tenant: Tenant;
+  organisation: Organisation;
   user: User;
   appName: string;
 }
@@ -18,10 +18,11 @@ export interface PathAliasTest {
  * Test function demonstrating internal path aliases work
  */
 export const testPathAliases = (): PathAliasTest => {
-  const mockTenant: Tenant = {
-    id: 'test-tenant-id',
-    name: 'Test Tenant',
-    type: TENANT_TYPES.BUSINESS,
+  const mockOrganisation: Organisation = {
+    id: 'test-organisation-id',
+    name: 'Test Organisation',
+    type: ORGANISATION_TYPES.BUSINESS,
+    status: 'active',
     settings: {},
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -33,9 +34,9 @@ export const testPathAliases = (): PathAliasTest => {
     firstName: 'Test',
     lastName: 'User',
     email: 'test@example.com',
-    tenantId: mockTenant.id,
+    organisationId: mockOrganisation.id,
     role: USER_ROLES.CUSTOMER_ADMIN,
-    customerId: null,
+    locationId: null,
     profileImageUrl: null,
     phone: null,
     dateOfBirth: null,
@@ -44,7 +45,7 @@ export const testPathAliases = (): PathAliasTest => {
   };
 
   return {
-    tenant: mockTenant,
+    organisation: mockOrganisation,
     user: mockUser,
     appName: APP_NAME,
   };

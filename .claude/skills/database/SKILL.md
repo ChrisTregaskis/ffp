@@ -55,14 +55,14 @@ Schema file change → db:generate → review SQL → db:migrate
 
 ## Schema Patterns
 
-### Tenant-Scoped Tables Need tenant_id
+### Organisation-Scoped Tables Need organisation_id
 
 ```typescript
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
-  tenantId: uuid('tenant_id')
+  organisationId: uuid('organisation_id')
     .notNull()
-    .references(() => tenants.id),
+    .references(() => organisations.id),
   // ... domain columns
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -74,17 +74,17 @@ export const users = pgTable('users', {
 ```sql
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY tenant_isolation ON users
-  USING (tenant_id = current_setting('app.tenant_id')::uuid);
+CREATE POLICY organisation_isolation ON users
+  USING (organisation_id = current_setting('app.organisation_id')::uuid);
 ```
 
 ### Repository Data Access
 
 ```typescript
 // CORRECT: RLS context in transaction
-async findByTenant(context: ActorContext): Promise<User[]> {
+async findByOrganisation(context: ActorContext): Promise<User[]> {
   return await db.transaction(async (tx) => {
-    await setRLSContext(tx, context.tenantId);
+    await setRLSContext(tx, context.organisationId);
     return await tx.query.users.findMany();
   });
 }
@@ -92,7 +92,7 @@ async findByTenant(context: ActorContext): Promise<User[]> {
 
 ## Security (Non-Negotiable)
 
-- **RLS on tenant-scoped tables** — any table with a `tenant_id` column must have RLS enabled. Shared/global tables (e.g., question templates, lookup data) do not require RLS as they are not tenant-specific.
+- **RLS on organisation-scoped tables** — any table with an `organisation_id` column must have RLS enabled. Shared/global tables (e.g., question templates, lookup data) do not require RLS as they are not organisation-specific.
 - **Parameterised queries only** — Drizzle `sql` template tag, never string concatenation
 - **Separate DB users** — `DB_MIGRATE_USER` for migrations, `DB_USER` for runtime application queries
 - **Encryption at rest** via KMS

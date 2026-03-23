@@ -6,7 +6,7 @@
  *
  * Tests job queuing operations against a real PostgreSQL database (ffp_test).
  * These tests verify that the service correctly creates jobs with proper
- * tenant isolation and default values.
+ * organisation isolation and default values.
  *
  * Prerequisites:
  * - ffp_test database must exist
@@ -25,7 +25,7 @@ import * as schema from '@ffp/database/schema';
 import { queueJob } from '../../src/jobs/job-queue.service';
 
 import type { JobPayloadMap } from '../../src/jobs/job-queue.service';
-import type { TenantContext, UserActor } from '../../src/lib/context';
+import type { OrganisationContext, UserActor } from '../../src/lib/context';
 
 // We need to mock getDb but keep other exports
 // Using hoisted mock with partial implementation
@@ -56,18 +56,21 @@ vi.mock('@ffp/database', async () => {
  */
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-async function setTestRLSContext(db: ReturnType<typeof drizzle>, tenantId: string): Promise<void> {
-  if (!UUID_REGEX.test(tenantId)) {
-    throw new Error(`Invalid UUID format for RLS context: ${tenantId}`);
+async function setTestRLSContext(
+  db: ReturnType<typeof drizzle>,
+  organisationId: string
+): Promise<void> {
+  if (!UUID_REGEX.test(organisationId)) {
+    throw new Error(`Invalid UUID format for RLS context: ${organisationId}`);
   }
-  await db.execute(sql.raw(`SET app.tenant_id = '${tenantId}'`));
+  await db.execute(sql.raw(`SET app.organisation_id = '${organisationId}'`));
 }
 
 describe('Job Queue Service', () => {
   let pool: Pool;
   let db: ReturnType<typeof drizzle>;
-  let testTenantId: string;
-  let testContext: TenantContext;
+  let testOrganisationId: string;
+  let testContext: OrganisationContext;
 
   beforeAll(() => {
     pool = new Pool({
@@ -84,15 +87,15 @@ describe('Job Queue Service', () => {
   });
 
   beforeEach(async () => {
-    // Create unique test tenant for each test to avoid conflicts with parallel tests
+    // Create unique test organisation for each test to avoid conflicts with parallel tests
     // We don't truncate tables to avoid deadlocks with other test files
-    testTenantId = randomUUID();
+    testOrganisationId = randomUUID();
 
-    // Set RLS context first since tenants table has RLS enabled
-    await setTestRLSContext(db, testTenantId);
-    await db.insert(schema.tenants).values({
-      id: testTenantId,
-      name: `Test Tenant ${testTenantId.slice(0, 8)}`,
+    // Set RLS context first since organisations table has RLS enabled
+    await setTestRLSContext(db, testOrganisationId);
+    await db.insert(schema.organisations).values({
+      id: testOrganisationId,
+      name: `Test Organisation ${testOrganisationId.slice(0, 8)}`,
       type: 'business',
     });
 
@@ -106,19 +109,19 @@ describe('Job Queue Service', () => {
 
     testContext = {
       actor: userActor,
-      tenantId: testTenantId,
-      customerId: null,
+      organisationId: testOrganisationId,
+      locationId: null,
       requestId: randomUUID(),
       timestamp: new Date(),
     };
   });
 
   afterEach(async () => {
-    // Clean up test data created by this test (delete by tenant_id to avoid conflicts)
-    if (testTenantId) {
-      await db.execute(sql`DELETE FROM process_jobs WHERE tenant_id = ${testTenantId}`);
-      await setTestRLSContext(db, testTenantId);
-      await db.execute(sql`DELETE FROM tenants WHERE id = ${testTenantId}`);
+    // Clean up test data created by this test (delete by organisation_id to avoid conflicts)
+    if (testOrganisationId) {
+      await db.execute(sql`DELETE FROM process_jobs WHERE organisation_id = ${testOrganisationId}`);
+      await setTestRLSContext(db, testOrganisationId);
+      await db.execute(sql`DELETE FROM organisations WHERE id = ${testOrganisationId}`);
     }
   });
 
@@ -147,7 +150,7 @@ describe('Job Queue Service', () => {
         .where(sql`id = ${jobId}`);
 
       expect(job).toBeDefined();
-      expect(job.tenantId).toBe(testTenantId);
+      expect(job.organisationId).toBe(testOrganisationId);
       expect(job.type).toBe('score_assessment');
       expect(job.status).toBe('queued');
       expect(job.priority).toBe(4); // Default priority
@@ -249,21 +252,21 @@ describe('Job Queue Service', () => {
       expect(job.payload).toEqual(payload);
     });
 
-    it('associates job with correct tenant from context', async () => {
-      // Create a second tenant
-      const secondTenantId = randomUUID();
-      await setTestRLSContext(db, secondTenantId);
-      await db.insert(schema.tenants).values({
-        id: secondTenantId,
-        name: `Second Tenant ${secondTenantId.slice(0, 8)}`,
+    it('associates job with correct organisation from context', async () => {
+      // Create a second organisation
+      const secondOrganisationId = randomUUID();
+      await setTestRLSContext(db, secondOrganisationId);
+      await db.insert(schema.organisations).values({
+        id: secondOrganisationId,
+        name: `Second Organisation ${secondOrganisationId.slice(0, 8)}`,
         type: 'business',
       });
-      // Reset RLS context back to first tenant for subsequent operations
-      await setTestRLSContext(db, testTenantId);
+      // Reset RLS context back to first organisation for subsequent operations
+      await setTestRLSContext(db, testOrganisationId);
 
-      const secondContext: TenantContext = {
+      const secondContext: OrganisationContext = {
         ...testContext,
-        tenantId: secondTenantId,
+        organisationId: secondOrganisationId,
       };
 
       const payload = {
@@ -273,7 +276,7 @@ describe('Job Queue Service', () => {
         responses: [{ questionId: randomUUID(), answerValue: 5 }],
       } as unknown as JobPayloadMap['score_assessment'];
 
-      // Queue jobs for different tenants
+      // Queue jobs for different organisations
       const job1Id = await queueJob('score_assessment', payload, testContext);
       const job2Id = await queueJob('score_assessment', payload, secondContext);
 
@@ -287,13 +290,15 @@ describe('Job Queue Service', () => {
         .from(schema.processJobs)
         .where(sql`id = ${job2Id}`);
 
-      expect(job1.tenantId).toBe(testTenantId);
-      expect(job2.tenantId).toBe(secondTenantId);
+      expect(job1.organisationId).toBe(testOrganisationId);
+      expect(job2.organisationId).toBe(secondOrganisationId);
 
-      // Clean up second tenant's data
-      await db.execute(sql`DELETE FROM process_jobs WHERE tenant_id = ${secondTenantId}`);
-      await setTestRLSContext(db, secondTenantId);
-      await db.execute(sql`DELETE FROM tenants WHERE id = ${secondTenantId}`);
+      // Clean up second organisation's data
+      await db.execute(
+        sql`DELETE FROM process_jobs WHERE organisation_id = ${secondOrganisationId}`
+      );
+      await setTestRLSContext(db, secondOrganisationId);
+      await db.execute(sql`DELETE FROM organisations WHERE id = ${secondOrganisationId}`);
     });
   });
 });

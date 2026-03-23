@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
    *
    * Retrieves the current user from Cognito and parses the JWT ID token to extract:
    * - User ID and email (standard claims)
-   * - Tenant ID (custom:tenantId)
+   * - Organisation ID (custom:tenantId — Cognito attribute name is immutable)
    * - User role (custom:role)
    *
    * Uses Zod schema validation from @ffp/core to ensure JWT claims are valid.
@@ -64,10 +64,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
       const claims = jwtUserClaimsSchema.parse(idToken.payload);
 
       // TypeScript now knows claims are correctly typed with all required fields
+      // Note: Cognito attribute 'custom:tenantId' is immutable — it maps to organisationId
       setUser({
         userId: claims.sub,
         email: claims.email,
-        tenantId: claims['custom:tenantId'],
+        organisationId: claims['custom:tenantId'],
         role: claims['custom:role'], // Type-safe UserRole from @ffp/core
       });
     } catch (err) {

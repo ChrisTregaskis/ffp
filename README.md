@@ -137,8 +137,8 @@ ffp/
 │   ├── database/                # Database schemas and migrations (@ffp/database)
 │   │   ├── src/
 │   │   │   ├── schema/          # Drizzle database schemas
-│   │   │   │   ├── tenants.ts
-│   │   │   │   ├── customers.ts
+│   │   │   │   ├── organisations.ts
+│   │   │   │   ├── locations.ts
 │   │   │   │   ├── users.ts
 │   │   │   │   └── index.ts
 │   │   │   └── index.ts         # Public exports

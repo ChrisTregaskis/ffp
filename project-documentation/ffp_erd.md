@@ -6,8 +6,8 @@ PostgreSQL database with Row-Level Security (RLS) for multi-tenant isolation. Sc
 
 **Key Principles:**
 
-- All tenant-scoped tables include `tenant_id` for RLS policies
-- System-managed content (templates, questions, videos) has no `tenant_id`
+- All organisation-scoped tables include `organisation_id` for RLS policies
+- System-managed content (templates, questions, videos) has no `organisation_id`
 - UUIDs for all primary keys
 - Timestamps for audit trails
 - Enums synchronised between PostgreSQL and Zod via `packages/database/src/constants/`
@@ -20,20 +20,20 @@ PostgreSQL database with Row-Level Security (RLS) for multi-tenant isolation. Sc
 
 ```mermaid
 erDiagram
-    tenants ||--o{ customers : "has"
-    tenants ||--o{ users : "has"
-    customers ||--o{ users : "employs"
+    organisations ||--o{ locations : "has"
+    organisations ||--o{ users : "has"
+    locations ||--o{ users : "employs"
 
-    tenants {
+    organisations {
         uuid id PK
         enum type "individual|business|platform"
         varchar name
         jsonb settings
     }
 
-    customers {
+    locations {
         uuid id PK
-        uuid tenant_id FK "RLS"
+        uuid organisation_id FK "RLS"
         varchar name
         varchar account_code
         jsonb address
@@ -42,8 +42,8 @@ erDiagram
 
     users {
         uuid id PK
-        uuid tenant_id FK "RLS"
-        uuid customer_id FK "nullable"
+        uuid organisation_id FK "RLS"
+        uuid location_id FK "nullable"
         varchar email UK
         varchar cognito_sub UK
         enum role "system_admin|customer_owner|customer_admin|programme_user"
@@ -109,7 +109,7 @@ erDiagram
 
     user_assessments {
         uuid id PK
-        uuid tenant_id FK "RLS"
+        uuid organisation_id FK "RLS"
         uuid user_id FK
         uuid flow_id FK
         uuid programme_id FK "nullable"
@@ -122,7 +122,7 @@ erDiagram
 
     user_assessment_answers {
         uuid id PK
-        uuid tenant_id FK "RLS (denormalised)"
+        uuid organisation_id FK "RLS (denormalised)"
         uuid user_assessment_id FK
         uuid question_id FK
         jsonb answer_value
@@ -146,7 +146,7 @@ erDiagram
 
     programmes {
         uuid id PK
-        uuid tenant_id FK "RLS"
+        uuid organisation_id FK "RLS"
         uuid user_id FK
         uuid programme_template_id FK
         varchar name
@@ -155,7 +155,7 @@ erDiagram
 
     process_jobs {
         uuid id PK
-        uuid tenant_id FK "RLS"
+        uuid organisation_id FK "RLS"
         enum type "score_assessment|generate_programme"
         enum status "queued|processing|completed|failed|cancelled"
         integer priority
@@ -170,21 +170,21 @@ erDiagram
 
 ## RLS Summary
 
-| Table                     | Tenant-Scoped | Notes                                                              |
-| ------------------------- | :-----------: | ------------------------------------------------------------------ |
-| `tenants`                 |       -       | Root entity                                                        |
-| `customers`               |      ✅       |                                                                    |
-| `users`                   |      ✅       |                                                                    |
-| `user_assessments`        |      ✅       |                                                                    |
-| `user_assessment_answers` |      ✅       | Denormalised `tenant_id` for policy efficiency                     |
-| `programmes`              |      ✅       |                                                                    |
-| `process_jobs`            |      ✅       | Job processor uses BYPASSRLS to claim; handlers set tenant context |
-| `assessment_flows`        |       -       | System content                                                     |
-| `flow_steps`              |       -       | System content                                                     |
-| `assessment_templates`    |       -       | System content                                                     |
-| `questions`               |       -       | System content                                                     |
-| `template_questions`      |       -       | System join table                                                  |
-| `programme_templates`     |       -       | System lookup                                                      |
+| Table                     | Org-Scoped | Notes                                                                    |
+| ------------------------- | :--------: | ------------------------------------------------------------------------ |
+| `organisations`           |     -      | Root entity                                                              |
+| `locations`               |     ✅     |                                                                          |
+| `users`                   |     ✅     |                                                                          |
+| `user_assessments`        |     ✅     |                                                                          |
+| `user_assessment_answers` |     ✅     | Denormalised `organisation_id` for policy efficiency                     |
+| `programmes`              |     ✅     |                                                                          |
+| `process_jobs`            |     ✅     | Job processor uses BYPASSRLS to claim; handlers set organisation context |
+| `assessment_flows`        |     -      | System content                                                           |
+| `flow_steps`              |     -      | System content                                                           |
+| `assessment_templates`    |     -      | System content                                                           |
+| `questions`               |     -      | System content                                                           |
+| `template_questions`      |     -      | System join table                                                        |
+| `programme_templates`     |     -      | System lookup                                                            |
 
 ---
 
@@ -196,7 +196,7 @@ These will be planned via Jira stories when needed. Concepts only — no schema 
 
 - **programme_sessions** — scheduled workout sessions within a programme (session number, scheduled/completed dates, status lifecycle)
 - **session_exercises** — exercises within a session, referencing the video library (sets, reps, duration, rest, order)
-- Missed session handling configurable per tenant via `tenants.settings.missedSessionStrategy`
+- Missed session handling configurable per organisation via `organisations.settings.missedSessionStrategy`
 
 ### Progress Tracking
 
@@ -222,7 +222,7 @@ These will be planned via Jira stories when needed. Concepts only — no schema 
 ### Audit Logging
 
 - **audit_logs** — authentication events, data modifications, authorisation failures, compliance events
-- Tenant-scoped with special RLS (system admins see all, business owners see their tenant)
+- Organisation-scoped with special RLS (system admins see all, business owners see their organisation)
 - Retention strategy: hot (PostgreSQL) → warm (S3 + Athena) → cold (Glacier)
 - Partitioned by month for efficient archival
 

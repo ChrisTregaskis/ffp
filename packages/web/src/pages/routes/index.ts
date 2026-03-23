@@ -19,6 +19,10 @@ import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsP
 import { TableComponentsPage } from '@web/pages/dev/TableComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
+import { LocationEditPage } from '@web/pages/protected/admin/location-edit';
+import { LocationListPage } from '@web/pages/protected/admin/location-list';
+import { OrganisationEditPage } from '@web/pages/protected/admin/organisation-edit';
+import { OrganisationListPage } from '@web/pages/protected/admin/organisation-list';
 import { TemplateCreatePage } from '@web/pages/protected/admin/template-create';
 import {
   PhaseDetailPage,
@@ -26,6 +30,8 @@ import {
   TemplateDetailPage,
 } from '@web/pages/protected/admin/template-detail';
 import { TemplateListPage } from '@web/pages/protected/admin/TemplateListPage';
+import { UserEditPage } from '@web/pages/protected/admin/user-edit';
+import { UserListPage } from '@web/pages/protected/admin/user-list';
 import { VideoEditPage } from '@web/pages/protected/admin/video-edit';
 import { VideoUploadPage } from '@web/pages/protected/admin/video-upload';
 import { VideoLibraryPage } from '@web/pages/protected/admin/VideoLibraryPage';
@@ -238,27 +244,99 @@ export const routes: RoutesConfig = {
   },
 
   // System Admin Routes (placeholders)
-  [RouteKey.ADMIN_CUSTOMERS]: {
-    path: `${adminBasePath}/customers`,
-    pageComponent: () =>
-      ComingSoonPage({
-        title: 'Customers',
-        description: 'Manage customer organisations',
-        icon: 'Building',
-      }),
-    title: 'Customers',
+  [RouteKey.ADMIN_ORGANISATIONS]: {
+    path: `${adminBasePath}/organisations`,
+    pageComponent: OrganisationListPage,
+    title: 'Organisations',
     allowedRoles: [SYSTEM_ADMIN],
+  },
+  [RouteKey.ADMIN_ORGANISATION_CREATE]: {
+    path: `${adminBasePath}/organisations/create`,
+    pageComponent: OrganisationEditPage,
+    title: 'Create Organisation',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Organisations',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/organisations`,
+      },
+    ],
+  },
+  [RouteKey.ADMIN_ORGANISATION_EDIT]: {
+    path: `${adminBasePath}/organisations/:id`,
+    pageComponent: OrganisationEditPage,
+    title: 'Edit Organisation',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Organisations',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/organisations`,
+      },
+    ],
+  },
+  [RouteKey.ADMIN_LOCATIONS]: {
+    path: `${adminBasePath}/locations`,
+    pageComponent: LocationListPage,
+    title: 'Locations',
+    allowedRoles: [SYSTEM_ADMIN],
+  },
+  [RouteKey.ADMIN_LOCATION_CREATE]: {
+    path: `${adminBasePath}/locations/create`,
+    pageComponent: LocationEditPage,
+    title: 'Create Location',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Locations',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/locations`,
+      },
+    ],
+  },
+  [RouteKey.ADMIN_LOCATION_EDIT]: {
+    path: `${adminBasePath}/locations/:id`,
+    pageComponent: LocationEditPage,
+    title: 'Edit Location',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Locations',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/locations`,
+      },
+    ],
   },
   [RouteKey.ADMIN_USERS]: {
     path: `${adminBasePath}/users`,
-    pageComponent: () =>
-      ComingSoonPage({
-        title: 'Users',
-        description: 'Manage all users across the platform',
-        icon: 'Users',
-      }),
+    pageComponent: UserListPage,
     title: 'Users',
     allowedRoles: [SYSTEM_ADMIN],
+  },
+  [RouteKey.ADMIN_USER_CREATE]: {
+    path: `${adminBasePath}/users/create`,
+    pageComponent: UserEditPage,
+    title: 'Create User',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      { label: 'Back to Users', icon: 'ArrowLeft', path: `${adminBasePath}/users` },
+    ],
+  },
+  [RouteKey.ADMIN_USER_EDIT]: {
+    path: `${adminBasePath}/users/:id`,
+    pageComponent: UserEditPage,
+    title: 'Edit User',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      { label: 'Back to Users', icon: 'ArrowLeft', path: `${adminBasePath}/users` },
+    ],
   },
   [RouteKey.ADMIN_ASSESSMENTS]: {
     path: `${adminBasePath}/assessments`,

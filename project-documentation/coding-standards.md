@@ -31,7 +31,7 @@ export const userSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
   role: userRoleSchema,
-  tenantId: z.string().uuid(),
+  organisationId: z.string().uuid(),
 });
 
 export type User = z.infer<typeof userSchema>;
@@ -103,12 +103,12 @@ export const users = pgTable(
   'users',
   {
     id: uuid('id').primaryKey(),
-    tenantId: uuid('tenant_id').notNull(),
+    organisationId: uuid('organisation_id').notNull(),
     email: varchar('email', { length: 255 }).notNull().unique(),
     role: userRoleEnum('role').notNull(),
   },
   (table) => ({
-    tenantIdIdx: index('idx_users_tenant_id').on(table.tenantId),
+    organisationIdIdx: index('idx_users_organisation_id').on(table.organisationId),
   })
 );
 ```
@@ -139,15 +139,15 @@ const query = `SELECT * FROM users WHERE id = '${userId}'`;
 
 ### RLS Context (Critical)
 
-**Every database operation must set RLS context for tenant isolation.**
+**Every database operation must set RLS context for organisation isolation.**
 
 ```typescript
 // ✅ Always use withRLS wrapper
-const users = await withRLS(tenantId, userId, async (tx) => {
+const users = await withRLS(organisationId, userId, async (tx) => {
   return await tx.query.users.findMany();
 });
 
-// ❌ Direct queries leak all tenant data
+// ❌ Direct queries leak all organisation data
 await db.query.users.findMany();
 ```
 
@@ -157,7 +157,7 @@ await db.query.users.findMany();
 // Insert with returning
 const [newUser] = await db
   .insert(users)
-  .values({ id, tenantId, email, role: 'programme_user' })
+  .values({ id, organisationId, email, role: 'programme_user' })
   .returning();
 
 // Update
@@ -187,7 +187,7 @@ await db.transaction(async (tx) => {
 });
 
 // With RLS context
-await withRLS(tenantId, userId, async (tx) => {
+await withRLS(organisationId, userId, async (tx) => {
   // All operations in this callback have RLS enforced
 });
 ```
@@ -203,7 +203,7 @@ For the decision tree on when to use each layer, see `architecture.md`.
 ```typescript
 // packages/functions/users/create-user.ts
 export const handler = withErrorHandling(async (event) => {
-  const context = extractTenantContext(event);
+  const context = extractUserContext(event);
   const body = JSON.parse(event.body || '{}');
   const user = await createUserService(body, context);
   return { statusCode: 201, body: JSON.stringify(user) };
@@ -214,7 +214,7 @@ export const handler = withErrorHandling(async (event) => {
 
 ```typescript
 // packages/core/users/user.service.ts
-export const createUserService = async (data: unknown, context: TenantContext) => {
+export const createUserService = async (data: unknown, context: RequestContext) => {
   const validated = createUserSchema.parse(data);
 
   const existing = await userRepository.findByEmail(validated.email, context);
@@ -230,17 +230,17 @@ export const createUserService = async (data: unknown, context: TenantContext) =
 ```typescript
 // packages/core/users/user.repository.ts
 export const userRepository = {
-  async create(data: NewUser, context: TenantContext): Promise<User> {
+  async create(data: NewUser, context: RequestContext): Promise<User> {
     return await withRLS(context, async (tx) => {
       const [user] = await tx
         .insert(users)
-        .values({ ...data, tenantId: context.tenantId })
+        .values({ ...data, organisationId: context.organisationId })
         .returning();
       return user;
     });
   },
 
-  async findById(id: string, context: TenantContext): Promise<User | null> {
+  async findById(id: string, context: RequestContext): Promise<User | null> {
     return await withRLS(context, async (tx) => {
       return await tx.query.users.findFirst({ where: eq(users.id, id) });
     });
@@ -391,7 +391,7 @@ export class Logger {
 
 // Usage
 const logger = new Logger('UserService');
-logger.info('User created', { tenantId, userId });
+logger.info('User created', { organisationId, userId });
 ```
 
 ---
@@ -486,7 +486,7 @@ describe('UserService', () => {
 - [ ] No `any` types
 - [ ] RLS context set in all database queries
 - [ ] Error handling with custom error classes
-- [ ] Structured logging with tenant context
+- [ ] Structured logging with organisation context
 - [ ] No sensitive data in logs
 
 ### Drizzle-Specific
@@ -499,5 +499,5 @@ describe('UserService', () => {
 ### Multi-Tenant Security
 
 - [ ] All queries use `withRLS()` wrapper
-- [ ] Tenant context extracted from JWT (not request body)
-- [ ] No cross-tenant data access possible
+- [ ] Organisation context extracted from JWT (not request body)
+- [ ] No cross-organisation data access possible

@@ -139,7 +139,7 @@ ffp/
 │   │   │   │   ├── program.repository.ts
 │   │   │   │   └── program.schema.ts
 │   │   │   ├── lib/               # Cross-cutting utilities
-│   │   │   │   ├── context.ts     # Tenant context extraction
+│   │   │   │   ├── context.ts     # Organisation context extraction
 │   │   │   │   ├── errors.ts      # Custom error classes
 │   │   │   │   ├── logger.ts      # Structured logging
 │   │   │   │   └── cognito.ts     # Cognito service wrapper
@@ -171,8 +171,8 @@ ffp/
 │   ├── database/                  # Database schemas and migrations (@ffp/database)
 │   │   ├── src/
 │   │   │   ├── schema/            # Drizzle database schemas
-│   │   │   │   ├── tenants.ts
-│   │   │   │   ├── customers.ts
+│   │   │   │   ├── organisations.ts
+│   │   │   │   ├── locations.ts
 │   │   │   │   ├── users.ts
 │   │   │   │   └── index.ts
 │   │   │   ├── lib/               # Database utilities
@@ -217,7 +217,7 @@ See `project-documentation/architecture.md` for detailed layer responsibilities 
 - **Backend**: Node.js + AWS Lambda + API Gateway
 - **Database**: PostgreSQL (RDS) with Row-Level Security (RLS)
 - **ORM**: Drizzle (type-safe, parameterized queries)
-- **Auth**: AWS Cognito (JWT with custom attributes: tenantId, role)
+- **Auth**: AWS Cognito (JWT with custom attributes: `custom:tenantId` maps to organisationId, role)
 - **Infrastructure**: SST (Serverless Stack)
 - **Testing**: Vitest, Playwright (future), MSW (future)
 
@@ -346,12 +346,12 @@ git commit -m "FFP-23: Add comprehensive monorepo tests"
 
 ## Multi-Tenant Security (Critical)
 
-**ALWAYS enforce tenant isolation**:
+**ALWAYS enforce organisation isolation**:
 
 - Database uses Row-Level Security (RLS) policies
-- JWT contains `tenantId` custom attribute (extracted from Cognito)
+- JWT contains `custom:tenantId` attribute (maps to organisationId, extracted from Cognito)
 - All Drizzle queries MUST set RLS context before operations
-- Never trust client-provided tenantId - always use JWT value
+- Never trust client-provided organisationId - always use JWT value
 
 ### Actor-Based Context (User & System Requests)
 
@@ -367,7 +367,7 @@ const context = extractJobContext(jobMessage);
 // Scheduled tasks: Create explicitly
 const context = createSystemContext({
   systemId: 'daily-report-job',
-  tenantId: tenant.id,
+  organisationId: organisation.id,
 });
 ```
 
@@ -376,12 +376,12 @@ All contexts flow through layers (Handler → Service → Repository) and enforc
 ```typescript
 // CORRECT: Set RLS context in transaction
 await db.transaction(async (tx) => {
-  await setRLSContext(tx, context.tenantId);
+  await setRLSContext(tx, context.organisationId);
   return await tx.query.users.findMany();
 });
 
 // WRONG: Direct query without RLS context
-await db.query.users.findMany(); // Leaks all tenants!
+await db.query.users.findMany(); // Leaks all organisations!
 ```
 
 **See `architecture.md` for full actor architecture and `authentication.md` for context extraction patterns.**

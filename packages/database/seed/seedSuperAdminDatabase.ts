@@ -27,13 +27,13 @@ export const seedSuperAdminDatabase = async (
     .insert(users)
     .values({
       id: data.id,
-      tenantId: data.tenantId,
+      organisationId: data.organisationId,
       email: data.email,
       cognitoSub: data.cognitoSub,
       firstName: data.firstName,
       lastName: data.lastName,
       role: data.role,
-      customerId: data.customerId,
+      locationId: data.locationId,
       profileImageUrl: data.profileImageUrl,
       phone: data.phone,
       dateOfBirth: data.dateOfBirth,
@@ -43,13 +43,13 @@ export const seedSuperAdminDatabase = async (
     .onConflictDoUpdate({
       target: users.id,
       set: {
-        tenantId: data.tenantId,
+        organisationId: data.organisationId,
         email: data.email,
         cognitoSub: data.cognitoSub,
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role,
-        customerId: data.customerId,
+        locationId: data.locationId,
         profileImageUrl: data.profileImageUrl,
         phone: data.phone,
         dateOfBirth: data.dateOfBirth,
@@ -60,7 +60,7 @@ export const seedSuperAdminDatabase = async (
   logger.info('Super admin seeded in database', {
     id: data.id,
     email: data.email,
-    tenantId: data.tenantId,
+    organisationId: data.organisationId,
     role: data.role,
   });
 };

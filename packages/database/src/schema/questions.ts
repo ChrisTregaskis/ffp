@@ -13,10 +13,6 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { QUESTION_TYPES, SCORE_DIMENSIONS } from '../constants/question.constants';
 import type { QuestionOption, QuestionValidation } from '../types';
 
-/**
- * Uses shared constants from @ffp/database/constants/question.constants.ts
- * to ensure synchronisation with Zod schemas in @ffp/core.
- */
 export const questionTypeEnum = pgEnum('question_type', [...QUESTION_TYPES]);
 export const scoreDimensionEnum = pgEnum('score_dimension', [...SCORE_DIMENSIONS]);
 
@@ -64,12 +60,7 @@ export const questions = pgTable(
   ]
 );
 
-// Zod schema for inserting a question
 export const insertQuestionSchema = createInsertSchema(questions);
-
-// Zod schema for selecting a question
 export const selectQuestionSchema = createSelectSchema(questions);
-
 export type QuestionRecord = typeof questions.$inferSelect;
-
 export type NewQuestion = typeof questions.$inferInsert;

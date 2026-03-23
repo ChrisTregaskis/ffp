@@ -5,9 +5,9 @@
  * This script should only be run once during initial platform setup per environment.
  *
  * What it does:
- * 1. Creates a platform tenant (type='platform') in the database
+ * 1. Creates a platform organisation (type='platform') in the database
  * 2. Creates a super admin user in AWS Cognito
- * 3. Links the Cognito user to the platform tenant in the database
+ * 3. Links the Cognito user to the platform organisation in the database
  *
  * Usage:
  *   pnpm bootstrap:super-admin
@@ -26,7 +26,7 @@
  *   - Staging/Prod: Use RDS master user (created when RDS instance was provisioned)
  *
  * Security Note:
- *   !This script bypasses RLS to create the initial tenant (chicken-and-egg problem)
+ *   !This script bypasses RLS to create the initial organisation (chicken-and-egg problem)
  *   !Intended usage is to only run this once per environment during initial setup
  *   - Regular application code will use DB_USER (without BYPASSRLS)
  */
@@ -35,7 +35,7 @@ import { Pool } from 'pg';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
 import * as schema from '../packages/database/src/schema/index.js';
-import { tenants, users } from '../packages/database/src/schema/index.js';
+import { organisations, users } from '../packages/database/src/schema/index.js';
 import { CognitoService } from '../packages/core/src/lib/cognito.js';
 import { ConflictError } from '../packages/core/src/lib/errors.js';
 import { terminalPrefix, TerminalPrefix } from '../packages/database/src/lib/terminal-logger.js';
@@ -47,7 +47,7 @@ config(); // Load environment variables
  * Configuration
  */
 const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
-const PLATFORM_TENANT_NAME = 'FFP Platform';
+const PLATFORM_ORGANISATION_NAME = 'FFP Platform';
 const TEMPORARY_PASSWORD = 'TempPass123!'; // User must change on first login
 
 /**
@@ -85,46 +85,50 @@ const validateEnvironment = () => {
 };
 
 /**
- * Creates the platform tenant in the database
+ * Creates the platform organisation in the database
  */
-const createPlatformTenant = async (db: NodePgDatabase<typeof schema> & { $client: Pool }) => {
-  console.log(`${terminalPrefix(TerminalPrefix.INFO)} Creating platform tenant...`);
+const createPlatformOrganisation = async (
+  db: NodePgDatabase<typeof schema> & { $client: Pool }
+) => {
+  console.log(`${terminalPrefix(TerminalPrefix.INFO)} Creating platform organisation...`);
 
-  // Bypass RLS for bootstrap operation (chicken-and-egg: can't set tenant context without a tenant)
+  // Bypass RLS for bootstrap operation (chicken-and-egg: can't set organisation context without an organisation)
   console.log(`${terminalPrefix(TerminalPrefix.WARNING)} RLS BYPASSED: Bootstrap operation only`);
   await db.$client.query('SET LOCAL row_security = off');
   await db.$client.query(
     `COMMENT ON TRANSACTION IS 'BOOTSTRAP: RLS bypassed for initial platform setup - script: bootstrap-super-admin.ts'`
   );
 
-  // Check if platform tenant already exists
-  const existingTenant = await db.query.tenants.findFirst({
-    where: eq(tenants.type, 'platform'),
+  // Check if platform organisation already exists
+  const existingOrganisation = await db.query.organisations.findFirst({
+    where: eq(organisations.type, 'platform'),
   });
 
-  if (existingTenant) {
+  if (existingOrganisation) {
     console.log(`${terminalPrefix(TerminalPrefix.WARNING)} Platform tenant already exists`);
-    return existingTenant;
+    return existingOrganisation;
   }
 
-  // Create new platform tenant
-  const [tenant] = await db
-    .insert(tenants)
+  // Create new platform organisation
+  const [organisation] = await db
+    .insert(organisations)
     .values({
       type: 'platform',
-      name: PLATFORM_TENANT_NAME,
+      name: PLATFORM_ORGANISATION_NAME,
       settings: {},
     })
     .returning();
 
-  console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} Platform tenant created: ${tenant.id}`);
-  return tenant;
+  console.log(
+    `${terminalPrefix(TerminalPrefix.SUCCESS)} Platform tenant created: ${organisation.id}`
+  );
+  return organisation;
 };
 
 /**
  * Creates the super admin user in Cognito
  */
-const createCognitoUser = async (tenantId: string) => {
+const createCognitoUser = async (organisationId: string) => {
   console.log(`${terminalPrefix(TerminalPrefix.INFO)} Creating Cognito user...`);
 
   try {
@@ -132,8 +136,8 @@ const createCognitoUser = async (tenantId: string) => {
       email: SUPER_ADMIN_EMAIL!,
       firstName: 'Super',
       lastName: 'Admin',
-      tenantId: tenantId,
-      customerId: null, // Super admin has no customer
+      organisationId: organisationId,
+      locationId: null, // Super admin has no location
       role: 'system_admin',
       temporaryPassword: TEMPORARY_PASSWORD,
     });
@@ -172,7 +176,7 @@ const createCognitoUser = async (tenantId: string) => {
  */
 const createDatabaseUser = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool },
-  tenantId: string,
+  organisationId: string,
   cognitoSub: string
 ) => {
   console.log(`${terminalPrefix(TerminalPrefix.INFO)} Creating database user record...`);
@@ -198,13 +202,13 @@ const createDatabaseUser = async (
   const [user] = await db
     .insert(users)
     .values({
-      tenantId: tenantId,
+      organisationId: organisationId,
       email: SUPER_ADMIN_EMAIL!,
       cognitoSub: cognitoSub,
       firstName: 'Super',
       lastName: 'Admin',
       role: 'system_admin',
-      customerId: null, // Super admin has no customer
+      locationId: null, // Super admin has no location
     })
     .returning();
 
@@ -234,14 +238,14 @@ const main = async () => {
   const db = drizzle({ client: pool, schema });
 
   try {
-    // Step 1: Create platform tenant
-    const tenant = await createPlatformTenant(db);
+    // Step 1: Create platform organisation
+    const organisation = await createPlatformOrganisation(db);
 
     // Step 2: Create Cognito user
-    const cognitoSub = await createCognitoUser(tenant.id);
+    const cognitoSub = await createCognitoUser(organisation.id);
 
     // Step 3: Create database user record (UUID generated by database)
-    await createDatabaseUser(db, tenant.id, cognitoSub);
+    await createDatabaseUser(db, organisation.id, cognitoSub);
 
     // Success!
     console.log(`\n${terminalPrefix(TerminalPrefix.SUCCESS)} Super admin bootstrap complete!\n`);

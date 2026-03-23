@@ -5,7 +5,7 @@ import {
 } from '@aws-sdk/client-cognito-identity-provider';
 import { COGNITO_CUSTOM_ATTRIBUTES } from '../../core/src/lib/constants.js';
 import { createLogger } from '../src/lib/logger.js';
-import type { TestUserCognitoSeed, TestUserSeed, TestCustomerTenantSeed } from './types.js';
+import type { TestUserCognitoSeed, TestUserSeed, TestLocationOrganisationSeed } from './types.js';
 
 const logger = createLogger('seed-test-user-cognito');
 
@@ -41,7 +41,7 @@ const validateEnvironment = (): void => {
 export const seedTestUserCognito = async (
   cognitoData: TestUserCognitoSeed,
   userData: TestUserSeed,
-  tenantData: TestCustomerTenantSeed
+  organisationData: TestLocationOrganisationSeed
 ): Promise<AdminCreateUserCommandOutput> => {
   logger.info(`Seeding test user in Cognito (${userData.role})...`);
 
@@ -59,7 +59,7 @@ export const seedTestUserCognito = async (
           { Name: 'email_verified', Value: 'true' },
           { Name: 'given_name', Value: userData.firstName },
           { Name: 'family_name', Value: userData.lastName },
-          { Name: COGNITO_CUSTOM_ATTRIBUTES.TENANT_ID, Value: tenantData.id },
+          { Name: COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID, Value: organisationData.id },
           { Name: COGNITO_CUSTOM_ATTRIBUTES.ROLE, Value: userData.role },
         ],
         TemporaryPassword: cognitoData.temporaryPassword,

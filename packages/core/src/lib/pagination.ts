@@ -27,3 +27,17 @@ export const applyPagination = <T extends PgSelect>(
 
   return result;
 };
+
+/**
+ * Escapes SQL LIKE wildcard characters (% and _) in user input.
+ * Use when building ILIKE patterns from search strings.
+ *
+ * @example
+ * ```typescript
+ * const pattern = `%${escapeLikePattern(userInput)}%`;
+ * conditions.push(ilike(table.name, pattern));
+ * ```
+ */
+export const escapeLikePattern = (input: string): string => {
+  return input.replace(/%/g, '\\%').replace(/_/g, '\\_');
+};

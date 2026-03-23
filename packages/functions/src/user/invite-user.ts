@@ -13,8 +13,8 @@ import {
  *
  * Protected endpoint that requires JWT authentication.
  * Supports two modes:
- * 1. customer_owner: Invites users to their own tenant/customer (context from JWT)
- * 2. system_admin: Can invite users to ANY tenant/customer (must specify in request)
+ * 1. customer_owner: Invites users to their own organisation/location (context from JWT)
+ * 2. system_admin: Can invite users to ANY organisation/location (must specify in request)
  *
  * Creates Cognito user with temporary password and database record.
  * Implements rollback pattern: if database fails, Cognito user is deleted.
@@ -28,7 +28,7 @@ export const handler = withErrorHandling(
     const body = JSON.parse(event.body ?? '{}') as unknown;
     const input = inviteUserSchema.parse(body);
 
-    // Create unified request context (db + tenant context)
+    // Create unified request context (db + organisation context)
     const ctx = createRequestContext(context);
 
     // Invite user via service

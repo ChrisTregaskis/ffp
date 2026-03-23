@@ -3,7 +3,7 @@
  *
  * Tests CRUD operations against a real PostgreSQL database (ffp_test).
  * These tests verify that the repository correctly interacts with the database
- * and enforces RLS (Row-Level Security) for multi-tenant isolation.
+ * and enforces RLS (Row-Level Security) for multi-organisation isolation.
  *
  * Prerequisites:
  * - ffp_test database must exist
@@ -28,7 +28,7 @@ const TEST_RUN_ID = randomUUID().substring(0, 8);
 
 /**
  * UUID validation regex (RFC 4122 compliant)
- * Used to validate tenant IDs before setting RLS context
+ * Used to validate organisation IDs before setting RLS context
  */
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -39,12 +39,15 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
  * so we use sql.raw() with UUID validation to prevent injection.
  * This mirrors the pattern used in @ffp/core's database.ts setRLSContext.
  */
-async function setTestRLSContext(db: ReturnType<typeof drizzle>, tenantId: string): Promise<void> {
-  if (!UUID_REGEX.test(tenantId)) {
-    throw new Error(`Invalid UUID format for tenantId: ${tenantId}`);
+async function setTestRLSContext(
+  db: ReturnType<typeof drizzle>,
+  organisationId: string
+): Promise<void> {
+  if (!UUID_REGEX.test(organisationId)) {
+    throw new Error(`Invalid UUID format for organisationId: ${organisationId}`);
   }
-  // Safe: tenantId is validated as UUID (only hex digits and hyphens)
-  await db.execute(sql.raw(`SET app.tenant_id = '${tenantId}'`));
+  // Safe: organisationId is validated as UUID (only hex digits and hyphens)
+  await db.execute(sql.raw(`SET app.organisation_id = '${organisationId}'`));
 }
 
 describe('User Assessment Repository', () => {
@@ -52,9 +55,9 @@ describe('User Assessment Repository', () => {
   let db: ReturnType<typeof drizzle>;
 
   // Test data IDs
-  let tenantAId: string;
-  let tenantBId: string;
-  let customerAId: string;
+  let organisationAId: string;
+  let organisationBId: string;
+  let locationAId: string;
   let userA1Id: string;
   let userB1Id: string;
   let flowId: string;
@@ -73,49 +76,49 @@ describe('User Assessment Repository', () => {
   });
 
   beforeEach(async () => {
-    // Create test data for two tenants before EACH test
+    // Create test data for two organisations before EACH test
     // Use unique UUIDs to avoid conflicts with parallel tests
-    tenantAId = randomUUID();
-    tenantBId = randomUUID();
+    organisationAId = randomUUID();
+    organisationBId = randomUUID();
 
-    // Create Tenant A (use TEST_RUN_ID in name for easy cleanup)
-    await setTestRLSContext(db, tenantAId);
+    // Create Organisation A (use TEST_RUN_ID in name for easy cleanup)
+    await setTestRLSContext(db, organisationAId);
     await db.execute(sql`
-      INSERT INTO tenants (id, type, name, settings)
-      VALUES (${tenantAId}, 'business', ${`Test Tenant A [${TEST_RUN_ID}]`}, '{}')
+      INSERT INTO organisations (id, type, name, settings)
+      VALUES (${organisationAId}, 'business', ${`Test Organisation A [${TEST_RUN_ID}]`}, '{}')
     `);
 
-    // Create Tenant B
-    await setTestRLSContext(db, tenantBId);
+    // Create Organisation B
+    await setTestRLSContext(db, organisationBId);
     await db.execute(sql`
-      INSERT INTO tenants (id, type, name, settings)
-      VALUES (${tenantBId}, 'individual', ${`Test Tenant B [${TEST_RUN_ID}]`}, '{}')
+      INSERT INTO organisations (id, type, name, settings)
+      VALUES (${organisationBId}, 'individual', ${`Test Organisation B [${TEST_RUN_ID}]`}, '{}')
     `);
 
-    // Create Customer A (belongs to Tenant A)
-    // Use customerAId (UUID) for unique account_code to avoid conflicts
-    await setTestRLSContext(db, tenantAId);
-    customerAId = randomUUID();
-    const customerAccountCode = customerAId.substring(0, 8);
+    // Create Location A (belongs to Organisation A)
+    // Use locationAId (UUID) for unique account_code to avoid conflicts
+    await setTestRLSContext(db, organisationAId);
+    locationAId = randomUUID();
+    const locationAccountCode = locationAId.substring(0, 8);
     await db.execute(sql`
-      INSERT INTO customers (id, tenant_id, name, account_code, status)
-      VALUES (${customerAId}, ${tenantAId}, 'Customer A', ${`CUST-${customerAccountCode}`}, 'active')
+      INSERT INTO locations (id, organisation_id, name, account_code, status)
+      VALUES (${locationAId}, ${organisationAId}, 'Location A', ${`LOC-${locationAccountCode}`}, 'active')
     `);
 
-    // Create User A1 (Tenant A)
+    // Create User A1 (Organisation A)
     // Use unique UUID-based values to avoid conflicts
     userA1Id = randomUUID();
     await db.execute(sql`
-      INSERT INTO users (id, tenant_id, customer_id, email, cognito_sub, first_name, last_name, role)
-      VALUES (${userA1Id}, ${tenantAId}, ${customerAId}, ${`user-${userA1Id.substring(0, 8)}@test.com`}, ${`cognito-${userA1Id.substring(0, 8)}`}, 'Alice', 'Anderson', 'programme_user')
+      INSERT INTO users (id, organisation_id, location_id, email, cognito_sub, first_name, last_name, role)
+      VALUES (${userA1Id}, ${organisationAId}, ${locationAId}, ${`user-${userA1Id.substring(0, 8)}@test.com`}, ${`cognito-${userA1Id.substring(0, 8)}`}, 'Alice', 'Anderson', 'programme_user')
     `);
 
-    // Create User B1 (Tenant B - individual user, no customer)
-    await setTestRLSContext(db, tenantBId);
+    // Create User B1 (Organisation B - individual user, no location)
+    await setTestRLSContext(db, organisationBId);
     userB1Id = randomUUID();
     await db.execute(sql`
-      INSERT INTO users (id, tenant_id, customer_id, email, cognito_sub, first_name, last_name, role)
-      VALUES (${userB1Id}, ${tenantBId}, NULL, ${`user-${userB1Id.substring(0, 8)}@test.com`}, ${`cognito-${userB1Id.substring(0, 8)}`}, 'Bob', 'Brown', 'programme_user')
+      INSERT INTO users (id, organisation_id, location_id, email, cognito_sub, first_name, last_name, role)
+      VALUES (${userB1Id}, ${organisationBId}, NULL, ${`user-${userB1Id.substring(0, 8)}@test.com`}, ${`cognito-${userB1Id.substring(0, 8)}`}, 'Bob', 'Brown', 'programme_user')
     `);
 
     // Create Assessment Flow (shared, no RLS - flows are system-managed)
@@ -141,14 +144,14 @@ describe('User Assessment Repository', () => {
       )
     `);
 
-    // Create Programme (belongs to Tenant A, linked to User A1)
-    await setTestRLSContext(db, tenantAId);
+    // Create Programme (belongs to Organisation A, linked to User A1)
+    await setTestRLSContext(db, organisationAId);
     programmeId = randomUUID();
     await db.execute(sql`
-      INSERT INTO programmes (id, tenant_id, user_id, programme_template_id, name)
+      INSERT INTO programmes (id, organisation_id, user_id, programme_template_id, name)
       VALUES (
         ${programmeId},
-        ${tenantAId},
+        ${organisationAId},
         ${userA1Id},
         ${programmeTemplateId},
         ${`Test Programme [${TEST_RUN_ID}]`}
@@ -166,9 +169,15 @@ describe('User Assessment Repository', () => {
       await db.execute(sql`DELETE FROM programmes WHERE id = ${programmeId}`);
       await db.execute(sql`DELETE FROM programme_templates WHERE id = ${programmeTemplateId}`);
       await db.execute(sql`DELETE FROM assessment_flows WHERE id = ${flowId}`);
-      await db.execute(sql`DELETE FROM users WHERE tenant_id = ANY(${[tenantAId, tenantBId]})`);
-      await db.execute(sql`DELETE FROM customers WHERE tenant_id = ANY(${[tenantAId, tenantBId]})`);
-      await db.execute(sql`DELETE FROM tenants WHERE id = ANY(${[tenantAId, tenantBId]})`);
+      await db.execute(
+        sql`DELETE FROM users WHERE organisation_id = ANY(${[organisationAId, organisationBId]})`
+      );
+      await db.execute(
+        sql`DELETE FROM locations WHERE organisation_id = ANY(${[organisationAId, organisationBId]})`
+      );
+      await db.execute(
+        sql`DELETE FROM organisations WHERE id = ANY(${[organisationAId, organisationBId]})`
+      );
     } catch {
       // Ignore cleanup errors - unique UUIDs ensure no conflicts between tests
     }
@@ -181,12 +190,12 @@ describe('User Assessment Repository', () => {
   describe('create', () => {
     it('creates an assessment with not_started status', async () => {
       const result = await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
 
-      expect(result.tenantId).toBe(tenantAId);
+      expect(result.organisationId).toBe(organisationAId);
       expect(result.userId).toBe(userA1Id);
       expect(result.flowId).toBe(flowId);
       expect(result.status).toBe('not_started');
@@ -203,12 +212,15 @@ describe('User Assessment Repository', () => {
   describe('findById', () => {
     it('returns assessment when found', async () => {
       const created = await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
 
-      const result = await userAssessmentRepository.findUserAssessmentById(tenantAId, created.id);
+      const result = await userAssessmentRepository.findUserAssessmentById(
+        organisationAId,
+        created.id
+      );
 
       expect(result).not.toBeNull();
       expect(result?.id).toBe(created.id);
@@ -217,22 +229,25 @@ describe('User Assessment Repository', () => {
 
     it('returns null when not found', async () => {
       const result = await userAssessmentRepository.findUserAssessmentById(
-        tenantAId,
+        organisationAId,
         '550e8400-e29b-41d4-a716-446655440000'
       );
 
       expect(result).toBeNull();
     });
 
-    it('returns null when accessing other tenant assessment (RLS)', async () => {
+    it('returns null when accessing other organisation assessment (RLS)', async () => {
       const created = await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
 
-      // Try to access Tenant A's assessment from Tenant B context
-      const result = await userAssessmentRepository.findUserAssessmentById(tenantBId, created.id);
+      // Try to access Organisation A's assessment from Organisation B context
+      const result = await userAssessmentRepository.findUserAssessmentById(
+        organisationBId,
+        created.id
+      );
 
       expect(result).toBeNull();
     });
@@ -241,17 +256,17 @@ describe('User Assessment Repository', () => {
   describe('findByUserId', () => {
     it('returns all assessments for a user', async () => {
       await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
       await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
 
-      const result = await userAssessmentRepository.findByUserId(tenantAId, userA1Id);
+      const result = await userAssessmentRepository.findByUserId(organisationAId, userA1Id);
 
       expect(result).toHaveLength(2);
       expect(result.every((a) => a.userId === userA1Id)).toBe(true);
@@ -259,26 +274,26 @@ describe('User Assessment Repository', () => {
 
     it('filters by status when provided', async () => {
       const assessment = await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
       await userAssessmentRepository.transitionAssessmentStatus(
-        tenantAId,
+        organisationAId,
         assessment.id,
         'in_progress'
       );
 
       await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
 
-      const inProgress = await userAssessmentRepository.findByUserId(tenantAId, userA1Id, {
+      const inProgress = await userAssessmentRepository.findByUserId(organisationAId, userA1Id, {
         status: 'in_progress',
       });
-      const notStarted = await userAssessmentRepository.findByUserId(tenantAId, userA1Id, {
+      const notStarted = await userAssessmentRepository.findByUserId(organisationAId, userA1Id, {
         status: 'not_started',
       });
 
@@ -290,17 +305,20 @@ describe('User Assessment Repository', () => {
   describe('findInProgress', () => {
     it('returns in-progress assessment for user', async () => {
       const assessment = await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
       await userAssessmentRepository.transitionAssessmentStatus(
-        tenantAId,
+        organisationAId,
         assessment.id,
         'in_progress'
       );
 
-      const result = await userAssessmentRepository.findAssessmentInProgress(tenantAId, userA1Id);
+      const result = await userAssessmentRepository.findAssessmentInProgress(
+        organisationAId,
+        userA1Id
+      );
 
       expect(result).not.toBeNull();
       expect(result?.status).toBe('in_progress');
@@ -308,35 +326,38 @@ describe('User Assessment Repository', () => {
 
     it('returns null when no in-progress assessment', async () => {
       await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
 
-      const result = await userAssessmentRepository.findAssessmentInProgress(tenantAId, userA1Id);
+      const result = await userAssessmentRepository.findAssessmentInProgress(
+        organisationAId,
+        userA1Id
+      );
 
       expect(result).toBeNull();
     });
 
     it('filters by flowId when provided', async () => {
       const assessment = await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
       await userAssessmentRepository.transitionAssessmentStatus(
-        tenantAId,
+        organisationAId,
         assessment.id,
         'in_progress'
       );
 
       const withFlow = await userAssessmentRepository.findAssessmentInProgress(
-        tenantAId,
+        organisationAId,
         userA1Id,
         flowId
       );
       const wrongFlow = await userAssessmentRepository.findAssessmentInProgress(
-        tenantAId,
+        organisationAId,
         userA1Id,
         '550e8400-e29b-41d4-a716-446655440000'
       );
@@ -349,13 +370,13 @@ describe('User Assessment Repository', () => {
   describe('findResumable', () => {
     it('returns resumable assessment (not_started or in_progress)', async () => {
       const assessment = await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
 
       const result = await userAssessmentRepository.findResumableAssessment(
-        tenantAId,
+        organisationAId,
         userA1Id,
         flowId
       );
@@ -364,16 +385,16 @@ describe('User Assessment Repository', () => {
       expect(result?.id).toBe(assessment.id);
     });
 
-    it('respects RLS tenant isolation', async () => {
+    it('respects RLS organisation isolation', async () => {
       await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
 
-      // Tenant B should not see Tenant A's assessment
+      // Organisation B should not see Organisation A's assessment
       const result = await userAssessmentRepository.findResumableAssessment(
-        tenantBId,
+        organisationBId,
         userA1Id,
         flowId
       );
@@ -385,13 +406,13 @@ describe('User Assessment Repository', () => {
   describe('updateProgress', () => {
     it('updates currentStep', async () => {
       const assessment = await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
 
       const result = await userAssessmentRepository.updateAssessmentProgress(
-        tenantAId,
+        organisationAId,
         assessment.id,
         {
           currentStep: 3,
@@ -406,14 +427,14 @@ describe('User Assessment Repository', () => {
       // Answer storage has been moved to the user_assessment_answers table
       // and should be handled via answerRepository.saveAnswers().
       const assessment = await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
 
       // Update with currentStep only
       const result = await userAssessmentRepository.updateAssessmentProgress(
-        tenantAId,
+        organisationAId,
         assessment.id,
         {
           currentStep: 5,
@@ -427,7 +448,7 @@ describe('User Assessment Repository', () => {
     it('throws NotFoundError when assessment not found', async () => {
       await expect(
         userAssessmentRepository.updateAssessmentProgress(
-          tenantAId,
+          organisationAId,
           '550e8400-e29b-41d4-a716-446655440000',
           {
             currentStep: 2,
@@ -440,13 +461,13 @@ describe('User Assessment Repository', () => {
   describe('transitionStatus', () => {
     it('transitions from not_started to in_progress', async () => {
       const assessment = await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
 
       const result = await userAssessmentRepository.transitionAssessmentStatus(
-        tenantAId,
+        organisationAId,
         assessment.id,
         'in_progress'
       );
@@ -457,18 +478,18 @@ describe('User Assessment Repository', () => {
 
     it('transitions from in_progress to submitted', async () => {
       const assessment = await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
       await userAssessmentRepository.transitionAssessmentStatus(
-        tenantAId,
+        organisationAId,
         assessment.id,
         'in_progress'
       );
 
       const result = await userAssessmentRepository.transitionAssessmentStatus(
-        tenantAId,
+        organisationAId,
         assessment.id,
         'submitted'
       );
@@ -479,18 +500,18 @@ describe('User Assessment Repository', () => {
 
     it('transitions from in_progress to abandoned', async () => {
       const assessment = await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
       await userAssessmentRepository.transitionAssessmentStatus(
-        tenantAId,
+        organisationAId,
         assessment.id,
         'in_progress'
       );
 
       const result = await userAssessmentRepository.transitionAssessmentStatus(
-        tenantAId,
+        organisationAId,
         assessment.id,
         'abandoned'
       );
@@ -500,21 +521,25 @@ describe('User Assessment Repository', () => {
 
     it('throws ValidationError for invalid transition', async () => {
       const assessment = await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
 
       // Cannot go directly from not_started to submitted
       await expect(
-        userAssessmentRepository.transitionAssessmentStatus(tenantAId, assessment.id, 'submitted')
+        userAssessmentRepository.transitionAssessmentStatus(
+          organisationAId,
+          assessment.id,
+          'submitted'
+        )
       ).rejects.toThrow(ValidationError);
     });
 
     it('throws NotFoundError when assessment not found', async () => {
       await expect(
         userAssessmentRepository.transitionAssessmentStatus(
-          tenantAId,
+          organisationAId,
           '550e8400-e29b-41d4-a716-446655440000',
           'in_progress'
         )
@@ -525,7 +550,7 @@ describe('User Assessment Repository', () => {
   describe('updateScores', () => {
     it('updates scores on assessment', async () => {
       const assessment = await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
@@ -545,7 +570,7 @@ describe('User Assessment Repository', () => {
       };
 
       const result = await userAssessmentRepository.updateAssessmentScores(
-        tenantAId,
+        organisationAId,
         assessment.id,
         scores
       );
@@ -558,7 +583,7 @@ describe('User Assessment Repository', () => {
     it('throws NotFoundError when assessment not found', async () => {
       await expect(
         userAssessmentRepository.updateAssessmentScores(
-          tenantAId,
+          organisationAId,
           '550e8400-e29b-41d4-a716-446655440000',
           {
             dimensions: [],
@@ -574,13 +599,13 @@ describe('User Assessment Repository', () => {
   describe('linkProgramme', () => {
     it('links programme to assessment', async () => {
       const assessment = await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
 
       const result = await userAssessmentRepository.linkAssessmentToProgramme(
-        tenantAId,
+        organisationAId,
         assessment.id,
         programmeId
       );
@@ -591,7 +616,7 @@ describe('User Assessment Repository', () => {
     it('throws NotFoundError when assessment not found', async () => {
       await expect(
         userAssessmentRepository.linkAssessmentToProgramme(
-          tenantAId,
+          organisationAId,
           '550e8400-e29b-41d4-a716-446655440000',
           randomUUID()
         )
@@ -599,32 +624,32 @@ describe('User Assessment Repository', () => {
     });
   });
 
-  describe('Cross-Tenant Isolation', () => {
-    it('cannot access other tenant assessments via findById', async () => {
-      const tenantAAssessment = await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+  describe('Cross-Organisation Isolation', () => {
+    it('cannot access other organisation assessments via findById', async () => {
+      const organisationAAssessment = await userAssessmentRepository.createUserAssessment({
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
 
-      // Tenant B cannot see Tenant A's assessment
+      // Organisation B cannot see Organisation A's assessment
       const result = await userAssessmentRepository.findUserAssessmentById(
-        tenantBId,
-        tenantAAssessment.id
+        organisationBId,
+        organisationAAssessment.id
       );
 
       expect(result).toBeNull();
     });
 
-    it('cannot access other tenant assessments via findByUserId', async () => {
+    it('cannot access other organisation assessments via findByUserId', async () => {
       await userAssessmentRepository.createUserAssessment({
-        tenantId: tenantAId,
+        organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
 
-      // Tenant B querying for Tenant A user returns empty (RLS visibility)
-      const result = await userAssessmentRepository.findByUserId(tenantBId, userA1Id);
+      // Organisation B querying for Organisation A user returns empty (RLS visibility)
+      const result = await userAssessmentRepository.findByUserId(organisationBId, userA1Id);
 
       expect(result).toHaveLength(0);
     });
