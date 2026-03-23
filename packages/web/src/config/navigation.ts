@@ -151,7 +151,14 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
       roles: [SYSTEM_ADMIN],
       section: 'main',
     },
-    // Customers nav hidden — being replaced by Locations in FFP-523
+    {
+      key: RouteKey.ADMIN_LOCATIONS,
+      label: 'Locations',
+      icon: 'Location',
+      path: routes[RouteKey.ADMIN_LOCATIONS].path,
+      roles: [SYSTEM_ADMIN],
+      section: 'main',
+    },
     {
       key: RouteKey.ADMIN_USERS,
       label: 'Users',

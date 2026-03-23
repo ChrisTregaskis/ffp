@@ -32,7 +32,7 @@ export const buildUserColumns = (
 ): ColumnDef<UserRow>[] => [
   columns.text('fullName', { label: 'Name', sortable: true }),
   columns.text('email', { label: 'Email', sortable: true }),
-  columns.text('customerName', { label: 'Customer' }),
+  columns.text('locationName', { label: 'Location' }),
   columns.text('role', {
     label: 'Role',
     cell: (value) => ROLE_LABELS[value as string] ?? String(value),

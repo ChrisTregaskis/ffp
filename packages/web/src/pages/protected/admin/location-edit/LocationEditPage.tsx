@@ -1,24 +1,24 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import type { UpdateCustomerInput } from '@ffp/core';
+import type { UpdateLocationInput } from '@ffp/core';
 
 import { PageState } from '@web/components/feedback/PageState';
 import { ComposableForm } from '@web/components/form/composableForm';
 import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
 import {
-  useCreateCustomerMutation,
-  useCustomerDetailQuery,
-  useUpdateCustomerMutation,
-} from '@web/hooks/customers';
+  useCreateLocationMutation,
+  useLocationDetailQuery,
+  useUpdateLocationMutation,
+} from '@web/hooks/locations';
 import { useToast } from '@web/hooks/useToast';
 import { RouteKey, routes } from '@web/pages/routes';
 
-import { CustomerFormFields } from './CustomerFormFields';
+import { LocationFormFields } from './LocationFormFields';
 
-import type { CustomerFormValues } from './types';
+import type { LocationFormValues } from './types';
 
-export const CustomerEditPage: React.FC = () => {
+export const LocationEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToast } = useToast();
@@ -26,19 +26,21 @@ export const CustomerEditPage: React.FC = () => {
   const isEditMode = !!id;
 
   const {
-    data: customer,
+    data: location,
     isLoading,
     error,
-  } = useCustomerDetailQuery(id ?? '', { enabled: isEditMode });
-  const createMutation = useCreateCustomerMutation();
-  const updateMutation = useUpdateCustomerMutation();
+  } = useLocationDetailQuery(id ?? '', { enabled: isEditMode });
+  const createMutation = useCreateLocationMutation();
+  const updateMutation = useUpdateLocationMutation();
 
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const defaultValues = useMemo((): CustomerFormValues => {
-    if (!isEditMode || !customer) {
+  const defaultValues = useMemo((): LocationFormValues => {
+    if (!isEditMode || !location) {
       return {
-        customerName: '',
+        locationName: '',
+        organisationId: '',
+        organisationDisplay: '',
         addressLine1: '',
         addressLine2: '',
         city: '',
@@ -50,23 +52,25 @@ export const CustomerEditPage: React.FC = () => {
     }
 
     return {
-      customerName: customer.name,
-      addressLine1: customer.address?.line1 ?? '',
-      addressLine2: customer.address?.line2 ?? '',
-      city: customer.address?.city ?? '',
-      county: customer.address?.county ?? '',
-      postcode: customer.address?.postcode ?? '',
-      country: customer.address?.country ?? '',
-      status: customer.status,
+      locationName: location.name,
+      organisationId: location.organisationId,
+      organisationDisplay: location.organisationId,
+      addressLine1: location.address?.line1 ?? '',
+      addressLine2: location.address?.line2 ?? '',
+      city: location.address?.city ?? '',
+      county: location.address?.county ?? '',
+      postcode: location.address?.postcode ?? '',
+      country: location.address?.country ?? '',
+      status: location.status,
     };
-  }, [isEditMode, customer]);
+  }, [isEditMode, location]);
 
   const handleNavigateBack = useCallback(() => {
-    void navigate(routes[RouteKey.ADMIN_CUSTOMERS].path);
+    void navigate(routes[RouteKey.ADMIN_LOCATIONS].path);
   }, [navigate]);
 
   /** Build address object from form values, returning undefined if all fields are empty */
-  const buildAddress = useCallback((values: CustomerFormValues): UpdateCustomerInput['address'] => {
+  const buildAddress = useCallback((values: LocationFormValues): UpdateLocationInput['address'] => {
     const address = {
       line1: values.addressLine1 || undefined,
       line2: values.addressLine2 || undefined,
@@ -84,14 +88,14 @@ export const CustomerEditPage: React.FC = () => {
 
   /** Handle create submission */
   const handleCreate = useCallback(
-    (values: CustomerFormValues) => {
+    (values: LocationFormValues) => {
       setSubmitError(null);
 
       createMutation.mutate(
-        { customerName: values.customerName },
+        { organisationId: values.organisationId, data: { locationName: values.locationName } },
         {
           onSuccess: () => {
-            addToast('Customer created successfully', { variant: 'success' });
+            addToast('Location created successfully', { variant: 'success' });
             handleNavigateBack();
           },
           onError: (err) => {
@@ -105,24 +109,24 @@ export const CustomerEditPage: React.FC = () => {
 
   /** Build update payload with only changed fields */
   const buildUpdatePayload = useCallback(
-    (values: CustomerFormValues): UpdateCustomerInput => {
-      const payload: UpdateCustomerInput = {};
+    (values: LocationFormValues): UpdateLocationInput => {
+      const payload: UpdateLocationInput = {};
 
-      if (!customer) {
+      if (!location) {
         return payload;
       }
 
-      if (values.customerName !== customer.name) {
-        payload.name = values.customerName;
+      if (values.locationName !== location.name) {
+        payload.name = values.locationName;
       }
 
-      if (values.status !== customer.status) {
-        payload.status = values.status as UpdateCustomerInput['status'];
+      if (values.status !== location.status) {
+        payload.status = values.status as UpdateLocationInput['status'];
       }
 
       // Compare address fields
       const newAddress = buildAddress(values);
-      const currentAddress = customer.address;
+      const currentAddress = location.address;
       const addressChanged =
         (values.addressLine1 || '') !== (currentAddress?.line1 ?? '') ||
         (values.addressLine2 || '') !== (currentAddress?.line2 ?? '') ||
@@ -137,12 +141,12 @@ export const CustomerEditPage: React.FC = () => {
 
       return payload;
     },
-    [customer, buildAddress]
+    [location, buildAddress]
   );
 
   /** Handle edit submission */
   const handleUpdate = useCallback(
-    (values: CustomerFormValues) => {
+    (values: LocationFormValues) => {
       if (!id) {
         return;
       }
@@ -161,7 +165,7 @@ export const CustomerEditPage: React.FC = () => {
         { id, data: payload },
         {
           onSuccess: () => {
-            addToast('Customer updated successfully', { variant: 'success' });
+            addToast('Location updated successfully', { variant: 'success' });
             handleNavigateBack();
           },
           onError: (err) => {
@@ -174,7 +178,7 @@ export const CustomerEditPage: React.FC = () => {
   );
 
   const handleFormSubmit = useCallback(
-    (values: CustomerFormValues) => {
+    (values: LocationFormValues) => {
       if (isEditMode) {
         handleUpdate(values);
       } else {
@@ -189,23 +193,23 @@ export const CustomerEditPage: React.FC = () => {
 
   return (
     <PageContainer>
-      <PageHeader title={isEditMode ? 'Edit Customer' : 'Create Customer'} />
+      <PageHeader title={isEditMode ? 'Edit Location' : 'Create Location'} />
 
       <ContentPanel>
         {isLoadingOrError ? (
           <PageState
             isLoading={isLoading}
-            title="Unable to load customer"
+            title="Unable to load location"
             message={error?.message}
-            actionLabel="Back to Customers"
+            actionLabel="Back to Locations"
             onAction={handleNavigateBack}
           />
         ) : (
-          <ComposableForm<CustomerFormValues>
+          <ComposableForm<LocationFormValues>
             onSubmit={handleFormSubmit}
             defaultValues={defaultValues}
           >
-            <CustomerFormFields
+            <LocationFormFields
               isEditMode={isEditMode}
               onCancel={handleNavigateBack}
               isSubmitting={isPending}

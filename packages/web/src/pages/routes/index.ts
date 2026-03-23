@@ -19,9 +19,8 @@ import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsP
 import { TableComponentsPage } from '@web/pages/dev/TableComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
-// Customer pages temporarily disabled — will be replaced by location pages in FFP-523
-// import { CustomerEditPage } from '@web/pages/protected/admin/customer-edit';
-// import { CustomerListPage } from '@web/pages/protected/admin/customer-list';
+import { LocationEditPage } from '@web/pages/protected/admin/location-edit';
+import { LocationListPage } from '@web/pages/protected/admin/location-list';
 import { OrganisationEditPage } from '@web/pages/protected/admin/organisation-edit';
 import { OrganisationListPage } from '@web/pages/protected/admin/organisation-list';
 import { TemplateCreatePage } from '@web/pages/protected/admin/template-create';
@@ -279,42 +278,39 @@ export const routes: RoutesConfig = {
       },
     ],
   },
-  // Customer routes temporarily replaced with placeholders — FFP-523 will replace with location pages
-  [RouteKey.ADMIN_CUSTOMERS]: {
-    path: `${adminBasePath}/customers`,
-    pageComponent: () =>
-      ComingSoonPage({
-        title: 'Customers',
-        description: 'Being replaced by Locations in FFP-523',
-        icon: 'Building',
-      }),
-    title: 'Customers',
+  [RouteKey.ADMIN_LOCATIONS]: {
+    path: `${adminBasePath}/locations`,
+    pageComponent: LocationListPage,
+    title: 'Locations',
     allowedRoles: [SYSTEM_ADMIN],
-    excludeFromMainNavbar: true,
   },
-  [RouteKey.ADMIN_CUSTOMER_CREATE]: {
-    path: `${adminBasePath}/customers/create`,
-    pageComponent: () =>
-      ComingSoonPage({
-        title: 'Create Customer',
-        description: 'Being replaced by Create Location in FFP-523',
-        icon: 'Building',
-      }),
-    title: 'Create Customer',
+  [RouteKey.ADMIN_LOCATION_CREATE]: {
+    path: `${adminBasePath}/locations/create`,
+    pageComponent: LocationEditPage,
+    title: 'Create Location',
     allowedRoles: [SYSTEM_ADMIN],
     excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Locations',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/locations`,
+      },
+    ],
   },
-  [RouteKey.ADMIN_CUSTOMER_EDIT]: {
-    path: `${adminBasePath}/customers/:id`,
-    pageComponent: () =>
-      ComingSoonPage({
-        title: 'Edit Customer',
-        description: 'Being replaced by Edit Location in FFP-523',
-        icon: 'Building',
-      }),
-    title: 'Edit Customer',
+  [RouteKey.ADMIN_LOCATION_EDIT]: {
+    path: `${adminBasePath}/locations/:id`,
+    pageComponent: LocationEditPage,
+    title: 'Edit Location',
     allowedRoles: [SYSTEM_ADMIN],
     excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Locations',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/locations`,
+      },
+    ],
   },
   [RouteKey.ADMIN_USERS]: {
     path: `${adminBasePath}/users`,

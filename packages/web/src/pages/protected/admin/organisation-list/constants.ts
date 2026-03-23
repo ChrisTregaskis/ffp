@@ -6,7 +6,7 @@ export const ORGANISATION_STATUS_MAP: Partial<Record<string, StatusConfig>> = {
   inactive: { label: 'Inactive', colour: 'grey' },
 };
 
-const STATUS_FILTER_OPTIONS = [
+export const STATUS_FILTER_OPTIONS = [
   { label: 'Active', value: 'active' },
   { label: 'Suspended', value: 'suspended' },
   { label: 'Inactive', value: 'inactive' },

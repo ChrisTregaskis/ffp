@@ -5,14 +5,9 @@ import { useComposableFormContext } from '@web/components/form/composableForm/Fo
 import { FormActions } from '@web/components/form/standardForm/FormActions';
 import { FormSelect } from '@web/components/form/standardForm/FormSelect';
 import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
+import { STATUS_FILTER_OPTIONS } from '@web/pages/protected/admin/organisation-list/constants';
 
 import type { OrganisationFormValues } from './types';
-
-const STATUS_OPTIONS = [
-  { label: 'Active', value: 'active' },
-  { label: 'Suspended', value: 'suspended' },
-  { label: 'Inactive', value: 'inactive' },
-];
 
 export interface OrganisationFormFieldsProps {
   /** Whether this is edit mode (shows status field) */
@@ -53,7 +48,7 @@ export const OrganisationFormFields: React.FC<OrganisationFormFieldsProps> = ({
         <FormSelect
           name="status"
           label="Status"
-          options={STATUS_OPTIONS}
+          options={STATUS_FILTER_OPTIONS}
           control={control}
           errors={errors}
         />

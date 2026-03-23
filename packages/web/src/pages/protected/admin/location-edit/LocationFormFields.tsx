@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
@@ -6,17 +6,13 @@ import { FormActions } from '@web/components/form/standardForm/FormActions';
 import { FormRow } from '@web/components/form/standardForm/FormRow';
 import { FormSelect } from '@web/components/form/standardForm/FormSelect';
 import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
+import { useAdminOrganisationsQuery } from '@web/hooks/organisations';
+import { STATUS_FILTER_OPTIONS } from '@web/pages/protected/admin/location-list/constants';
 
-import type { CustomerFormValues } from './types';
+import type { LocationFormValues } from './types';
 
-const STATUS_OPTIONS = [
-  { label: 'Active', value: 'active' },
-  { label: 'Suspended', value: 'suspended' },
-  { label: 'Inactive', value: 'inactive' },
-];
-
-export interface CustomerFormFieldsProps {
-  /** Whether this is edit mode (shows status field) */
+export interface LocationFormFieldsProps {
+  /** Whether this is edit mode (shows status field, organisation read-only) */
   isEditMode: boolean;
   /** Called when cancel is clicked */
   onCancel: () => void;
@@ -26,23 +22,60 @@ export interface CustomerFormFieldsProps {
   errorMessage?: string | null;
 }
 
-/** Form fields for creating/editing a customer */
-export const CustomerFormFields: React.FC<CustomerFormFieldsProps> = ({
+/** Form fields for creating/editing a location */
+export const LocationFormFields: React.FC<LocationFormFieldsProps> = ({
   isEditMode,
   onCancel,
   isSubmitting = false,
   errorMessage,
 }) => {
-  const { register, control, errors } = useComposableFormContext<CustomerFormValues>();
+  const { register, control, errors } = useComposableFormContext<LocationFormValues>();
+
+  // Load organisations for the selector (fetch all active, no pagination needed for selector)
+  const { data: organisationsData } = useAdminOrganisationsQuery(
+    { page: 1, pageSize: 100, sortDirection: 'asc', sortBy: 'name' },
+    {},
+    { enabled: !isEditMode }
+  );
+
+  const organisationOptions = useMemo(
+    () =>
+      organisationsData?.data.map((org) => ({
+        label: org.name,
+        value: org.id,
+      })) ?? [],
+    [organisationsData]
+  );
 
   return (
     <>
       {errorMessage && <StaticAlert variant="error" message={errorMessage} className="mb-4" />}
 
-      {/* Customer Name */}
+      {/* Organisation — selector in create mode, read-only in edit mode */}
+      {isEditMode ? (
+        <FormTextInput
+          name="organisationDisplay"
+          label="Organisation"
+          register={register}
+          errors={errors}
+          disabled
+        />
+      ) : (
+        <FormSelect
+          name="organisationId"
+          label="Organisation"
+          options={organisationOptions}
+          placeholder="Select an organisation..."
+          control={control}
+          errors={errors}
+          isRequired
+        />
+      )}
+
+      {/* Location Name */}
       <FormTextInput
-        name="customerName"
-        label="Customer Name"
+        name="locationName"
+        label="Location Name"
         placeholder="e.g. Sunshine Care Home"
         register={register}
         errors={errors}
@@ -54,7 +87,7 @@ export const CustomerFormFields: React.FC<CustomerFormFieldsProps> = ({
         <FormSelect
           name="status"
           label="Status"
-          options={STATUS_OPTIONS}
+          options={STATUS_FILTER_OPTIONS}
           control={control}
           errors={errors}
         />
@@ -115,7 +148,7 @@ export const CustomerFormFields: React.FC<CustomerFormFieldsProps> = ({
 
       <FormActions
         onCancel={onCancel}
-        submitLabel={isEditMode ? 'Save Changes' : 'Create Customer'}
+        submitLabel={isEditMode ? 'Save Changes' : 'Create Location'}
         isSubmitting={isSubmitting}
       />
     </>

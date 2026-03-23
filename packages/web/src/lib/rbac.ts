@@ -36,8 +36,8 @@ export const getRoleHomePath = (role: UserRole): RouteKey => {
       return RouteKey.CUSTOMER_DASHBOARD;
 
     case USER_ROLE.SYSTEM_ADMIN:
-      // System admins see the customers management page
-      return RouteKey.ADMIN_CUSTOMERS;
+      // System admins see the organisations management page
+      return RouteKey.ADMIN_ORGANISATIONS;
 
     default:
       // Fallback to standard home page for any unknown roles

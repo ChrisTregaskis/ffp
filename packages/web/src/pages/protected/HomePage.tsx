@@ -16,7 +16,7 @@ import { RouteKey, routes } from '@web/pages/routes';
  * Handles role-based redirects:
  * - Programme users (programme_user): Shows this dashboard
  * - Customer admins (customer_owner, customer_admin): Redirects to /dashboard
- * - System admins (system_admin): Redirects to /admin/customers
+ * - System admins (system_admin): Redirects to /admin/organisations
  *
  * Displays basic user information from the authenticated session.
  *
@@ -48,9 +48,9 @@ export const HomePage = (): JSX.Element => {
       return;
     }
 
-    // System admins should go to the admin customers page
+    // System admins should go to the admin organisations page
     if (user.role === USER_ROLE.SYSTEM_ADMIN) {
-      void navigate(routes[RouteKey.ADMIN_CUSTOMERS].path, { replace: true });
+      void navigate(routes[RouteKey.ADMIN_ORGANISATIONS].path, { replace: true });
 
       return;
     }
@@ -115,14 +115,14 @@ export const HomePage = (): JSX.Element => {
                   as="span"
                   styleProps={{ size: 'sm', weight: 'medium', colour: 'muted-foreground' }}
                 >
-                  Tenant ID
+                  Organisation ID
                 </Text>
                 <Text
                   as="p"
                   styleProps={{ size: 'sm', colour: 'foreground' }}
                   className="mt-1 font-mono"
                 >
-                  {user.tenantId}
+                  {user.organisationId}
                 </Text>
               </div>
               <div>

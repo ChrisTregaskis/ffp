@@ -18,7 +18,7 @@ export type PaginatedUserResponse = z.infer<typeof paginatedUserResponseSchema>;
 /** Filter parameters for the user list endpoint */
 export interface AdminUserFilterInput {
   search?: string;
-  customerId?: string;
+  locationId?: string;
   role?: string;
 }
 
@@ -41,8 +41,8 @@ export const adminUsersApi = {
       params.search = filters.search;
     }
 
-    if (filters.customerId) {
-      params.customerId = filters.customerId;
+    if (filters.locationId) {
+      params.locationId = filters.locationId;
     }
 
     if (filters.role) {

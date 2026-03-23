@@ -1,5 +1,7 @@
-export interface CustomerFormValues {
-  customerName: string;
+export interface LocationFormValues {
+  locationName: string;
+  organisationId: string;
+  organisationDisplay: string;
   addressLine1: string;
   addressLine2: string;
   city: string;

@@ -33,9 +33,9 @@ export const PathAliasTest: React.FC = () => {
             {JSON.stringify(
               {
                 tenant: {
-                  id: testData.tenant.id,
-                  name: testData.tenant.name,
-                  type: testData.tenant.type,
+                  id: testData.organisation.id,
+                  name: testData.organisation.name,
+                  type: testData.organisation.type,
                 },
                 user: {
                   id: testData.user.id,

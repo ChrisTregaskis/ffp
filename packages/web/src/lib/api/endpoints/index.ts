@@ -1,12 +1,14 @@
-// Customer API stubbed — will be replaced by location API in FFP-523
-export { adminCustomersApi } from './admin-customers';
+export { adminLocationsApi } from './admin-locations';
 export type {
-  AdminCustomerFilterInput,
-  CreateCustomerInput,
-  CustomerDetailResponse,
-  PaginatedCustomerResponse,
-  UpdateCustomerInput,
-} from './admin-customers';
+  AdminLocationFilterInput,
+  CreateLocationMutationInput,
+  PaginatedLocationResponse,
+} from './admin-locations';
+export type {
+  CreateLocationInput,
+  LocationDetailResponse,
+  UpdateLocationInput,
+} from './admin-locations';
 
 export { adminOrganisationsApi } from './admin-organisations';
 export type {

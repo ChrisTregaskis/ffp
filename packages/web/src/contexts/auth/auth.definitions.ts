@@ -2,15 +2,15 @@ import { createContext } from 'react';
 
 import { type UserRole } from '@ffp/core';
 
-/** User object containing authentication and tenant context extracted from JWT. */
+/** User object containing authentication and organisation context extracted from JWT. */
 export interface AuthUser {
   /** Unique user identifier from Cognito (maps to cognitoSub in database) */
   userId: string;
   /** User's email address */
   email: string;
-  /** Tenant ID for multi-tenant isolation */
-  tenantId: string;
-  /** User's role within the tenant (imported from @ffp/core - single source of truth) */
+  /** Organisation ID for multi-tenant isolation (mapped from Cognito custom:tenantId claim) */
+  organisationId: string;
+  /** User's role within the organisation (imported from @ffp/core - single source of truth) */
   role: UserRole;
 }
 

@@ -33,8 +33,8 @@ export const UserEditPage: React.FC = () => {
         email: '',
         firstName: '',
         lastName: '',
-        customerId: '',
-        customerDisplay: '',
+        locationId: '',
+        locationDisplay: '',
         phone: '',
         dateOfBirth: '',
       };
@@ -44,8 +44,8 @@ export const UserEditPage: React.FC = () => {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      customerId: user.customerId ?? '',
-      customerDisplay: user.customerName ?? '',
+      locationId: user.locationId ?? '',
+      locationDisplay: user.locationName ?? '',
       phone: user.phone ?? '',
       dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
     };
@@ -85,7 +85,7 @@ export const UserEditPage: React.FC = () => {
         email: values.email,
         firstName: values.firstName,
         lastName: values.lastName,
-        customerId: values.customerId,
+        locationId: values.locationId,
         phone: values.phone || undefined,
         dateOfBirth: parseDateOfBirth(values.dateOfBirth),
       };

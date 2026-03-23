@@ -6,22 +6,22 @@ import { Icon } from '@web/components/Icon';
 import { PageContainer, PageHeader } from '@web/components/layout';
 import { Table, TableControls } from '@web/components/table';
 import type { RowAction } from '@web/components/table';
-import { useAdminCustomersQuery, useUpdateCustomerMutation } from '@web/hooks/customers';
+import { useAdminLocationsQuery, useUpdateLocationMutation } from '@web/hooks/locations';
 import { useApiTable } from '@web/hooks/useApiTable';
 import { useToast } from '@web/hooks/useToast';
-import type { AdminCustomerFilterInput } from '@web/lib/api/endpoints';
+import type { AdminLocationFilterInput } from '@web/lib/api/endpoints';
 import { RouteKey, routes } from '@web/pages/routes';
 
-import { buildCustomerColumns, toCustomerRow } from './columns';
+import { buildLocationColumns, toLocationRow } from './columns';
 import { TABLE_FILTERS } from './constants';
-import { CustomerListEmptyState } from './CustomerListEmptyState';
+import { LocationListEmptyState } from './LocationListEmptyState';
 
-import type { CustomerRow } from './columns';
+import type { LocationRow } from './columns';
 
-export const CustomerListPage: React.FC = () => {
+export const LocationListPage: React.FC = () => {
   const navigate = useNavigate();
   const { addToast } = useToast();
-  const updateMutation = useUpdateCustomerMutation();
+  const updateMutation = useUpdateLocationMutation();
 
   const {
     onStateChange,
@@ -39,7 +39,7 @@ export const CustomerListPage: React.FC = () => {
     defaultSort: { id: 'createdAt', desc: true },
   });
 
-  const adminFilters: AdminCustomerFilterInput = useMemo(
+  const adminFilters: AdminLocationFilterInput = useMemo(
     () => ({
       search: debouncedSearch || undefined,
       status: debouncedFilters.status ? String(debouncedFilters.status) : undefined,
@@ -47,24 +47,24 @@ export const CustomerListPage: React.FC = () => {
     [debouncedSearch, debouncedFilters]
   );
 
-  const { data, isLoading, error } = useAdminCustomersQuery(queryParams, adminFilters);
+  const { data, isLoading, error } = useAdminLocationsQuery(queryParams, adminFilters);
 
-  const customerRows = useMemo(() => (data ? data.data.map(toCustomerRow) : []), [data]);
+  const locationRows = useMemo(() => (data ? data.data.map(toLocationRow) : []), [data]);
 
   const handleCreateClick = useCallback((): void => {
-    void navigate(routes[RouteKey.ADMIN_CUSTOMER_CREATE].path);
+    void navigate(routes[RouteKey.ADMIN_LOCATION_CREATE].path);
   }, [navigate]);
 
   const handleEditClick = useCallback(
-    (row: CustomerRow): void => {
-      void navigate(`${routes[RouteKey.ADMIN_CUSTOMERS].path}/${row.id}`);
+    (row: LocationRow): void => {
+      void navigate(`${routes[RouteKey.ADMIN_LOCATIONS].path}/${row.id}`);
     },
     [navigate]
   );
 
-  /** Toggle customer status between active and inactive */
+  /** Toggle location status between active and inactive */
   const handleToggleActive = useCallback(
-    (row: CustomerRow): void => {
+    (row: LocationRow): void => {
       const newStatus = row.status === 'active' ? 'inactive' : 'active';
       updateMutation.mutate(
         { id: row.id, data: { status: newStatus } },
@@ -83,7 +83,7 @@ export const CustomerListPage: React.FC = () => {
   );
 
   const rowActions = useCallback(
-    (row: CustomerRow): RowAction<CustomerRow>[] => [
+    (row: LocationRow): RowAction<LocationRow>[] => [
       {
         label: 'Edit',
         onClick: handleEditClick,
@@ -97,28 +97,28 @@ export const CustomerListPage: React.FC = () => {
     [handleEditClick, handleToggleActive]
   );
 
-  const customerColumns = useMemo(() => buildCustomerColumns(rowActions), [rowActions]);
+  const locationColumns = useMemo(() => buildLocationColumns(rowActions), [rowActions]);
 
   return (
     <PageContainer>
       <PageHeader
-        title="Customers"
-        subtitle="Manage customer organisations — create, edit, and control access"
+        title="Locations"
+        subtitle="Manage location sites — create, edit, and control access"
         actions={
           <Button
             variant="primary"
             icon={<Icon name="Plus" styleProps={{ size: 'sm', colour: 'currentColor' }} />}
             onClick={handleCreateClick}
           >
-            Create Customer
+            Create Location
           </Button>
         }
       />
 
-      <Table<CustomerRow>
-        tableId="admin-customers"
-        data={customerRows}
-        columns={customerColumns}
+      <Table<LocationRow>
+        tableId="admin-locations"
+        data={locationRows}
+        columns={locationColumns}
         totalRows={data?.pagination.total ?? 0}
         isLoading={isLoading}
         error={error?.message}
@@ -126,7 +126,7 @@ export const CustomerListPage: React.FC = () => {
         defaultSort={{ id: 'createdAt', desc: true }}
         getRowId={(row) => row.id}
         emptyState={
-          <CustomerListEmptyState
+          <LocationListEmptyState
             hasFilters={hasActiveControls}
             onCreateClick={handleCreateClick}
           />
