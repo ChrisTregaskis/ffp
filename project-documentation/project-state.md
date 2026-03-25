@@ -14,11 +14,13 @@
 Conducted UX research across leading physio/fitness platforms and built interactive prototypes for the three core user-facing pages: dashboard, programme overview (vertical timeline), and session workout.
 
 **Prototype routes** (dev-only, no auth):
+
 - `/components/programme/dashboard` — user landing page
 - `/components/programme/overview` — timeline programme view with scroll-driven reveal
 - `/components/programme/session` — full-screen exercise execution
 
 **Key decisions made**:
+
 - Vertical timeline with scroll-driven animation for programme overview (not accordion)
 - Exercise-first session layout with collapsible sidebar
 - Dashboard order: Session → Phase → Programme (immediate to broad)
@@ -29,6 +31,7 @@ Conducted UX research across leading physio/fitness platforms and built interact
 - Media container abstraction on session page (future CV integration)
 
 **Open questions**:
+
 - Progress page — may be redundant given dashboard + overview coverage. Reassessment CTA needs a home.
 - Rest days / session frequency — awaiting co-founder input
 - UX specialist review recommended for session workout page

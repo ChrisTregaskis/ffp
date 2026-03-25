@@ -18,6 +18,7 @@ import {
   getCompletedSessionsCount,
   MOCK_VIDEO_URL,
 } from './mock-data';
+import { MockSideNavLayout } from './MockSideNav';
 
 import type { MockPhase, MockSession } from './mock-data';
 
@@ -179,141 +180,147 @@ export const DashboardMock: React.FC = () => {
   const hasProgramme = mockProgramme.status === 'active';
 
   return (
-    <div className="min-h-screen bg-muted/20">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-        {/* Greeting */}
-        <FadeSlideIn>
-          <div className="mb-8">
-            <Title as="h1" className="mb-1">
-              Good morning, Sarah
-            </Title>
-            <Text as="p" styleProps={{ size: 'lg', colour: 'muted-foreground' }}>
-              {hasProgramme
-                ? "Here's where you are in your programme."
-                : 'Welcome to Fit For Purpose.'}
-            </Text>
-          </div>
-        </FadeSlideIn>
-
-        {!hasProgramme ? (
-          <FadeSlideIn delay={0.1}>
-            <EmptyProgrammeState />
+    <MockSideNavLayout activeItem="dashboard">
+      <div className="min-h-screen bg-muted/20">
+        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+          {/* Greeting */}
+          <FadeSlideIn>
+            <div className="mb-8">
+              <Title as="h1" className="mb-1">
+                Good morning, Sarah
+              </Title>
+              <Text as="p" styleProps={{ size: 'lg', colour: 'muted-foreground' }}>
+                {hasProgramme
+                  ? "Here's where you are in your programme."
+                  : 'Welcome to Fit For Purpose.'}
+              </Text>
+            </div>
           </FadeSlideIn>
-        ) : (
-          <>
-            {/* Next Session Card */}
-            {currentSession && currentPhase && (
-              <FadeSlideIn delay={0.1}>
-                <div className="mb-8">
-                  <NextSessionCard
-                    session={currentSession}
-                    phase={currentPhase}
-                    onStart={() => {
-                      void navigate('/components/programme/session');
-                    }}
-                    onViewProgramme={() => {
-                      void navigate('/components/programme/overview');
-                    }}
-                  />
-                </div>
-              </FadeSlideIn>
-            )}
 
-            {/* Current Phase Detail */}
-            {currentPhase && (
-              <FadeSlideIn delay={0.2}>
-                <Card>
-                  <div className="p-5">
-                    <div className="mb-1 flex items-center gap-2">
-                      <span className="inline-flex items-center rounded-md bg-ffp-dark-blue px-2 py-0.5 text-xs font-medium text-white">
-                        Current
-                      </span>
-                      <Title as="h4">
-                        Phase {String(currentPhase.phaseNumber)}: {currentPhase.name}
-                      </Title>
+          {!hasProgramme ? (
+            <FadeSlideIn delay={0.1}>
+              <EmptyProgrammeState />
+            </FadeSlideIn>
+          ) : (
+            <>
+              {/* Next Session Card */}
+              {currentSession && currentPhase && (
+                <FadeSlideIn delay={0.1}>
+                  <div className="mb-8">
+                    <NextSessionCard
+                      session={currentSession}
+                      phase={currentPhase}
+                      onStart={() => {
+                        void navigate('/components/programme/session');
+                      }}
+                      onViewProgramme={() => {
+                        void navigate('/components/programme/overview');
+                      }}
+                    />
+                  </div>
+                </FadeSlideIn>
+              )}
+
+              {/* Current Phase Detail */}
+              {currentPhase && (
+                <FadeSlideIn delay={0.2}>
+                  <Card>
+                    <div className="p-5">
+                      <div className="mb-1 flex items-center gap-2">
+                        <span className="inline-flex items-center rounded-md bg-ffp-dark-blue px-2 py-0.5 text-xs font-medium text-white">
+                          Current
+                        </span>
+                        <Title as="h4">
+                          Phase {String(currentPhase.phaseNumber)}: {currentPhase.name}
+                        </Title>
+                      </div>
+                      <Text
+                        as="p"
+                        styleProps={{ size: 'sm', colour: 'muted-foreground' }}
+                        className="mb-4"
+                      >
+                        {currentPhase.description}
+                      </Text>
+
+                      <div className="mb-2 flex items-center justify-between">
+                        <Text
+                          styleProps={{
+                            size: 'xs',
+                            weight: 'semibold',
+                            colour: 'muted-foreground',
+                          }}
+                          className="uppercase tracking-wide"
+                        >
+                          Phase Progress
+                        </Text>
+                        <Text styleProps={{ size: 'sm', weight: 'medium' }}>
+                          {String(currentPhaseCompletedSessions)} of{' '}
+                          {String(currentPhaseTotalSessions)} sessions
+                        </Text>
+                      </div>
+                      <ProgressBar percent={phaseProgressPercent} className="mb-4" />
+
+                      {/* Session dots */}
+                      <div className="flex gap-2">
+                        {currentPhase.sessions.map((session) => (
+                          <div
+                            key={session.id}
+                            className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium ${
+                              session.status === 'completed'
+                                ? 'bg-ffp-green text-white'
+                                : session.status === 'in_progress'
+                                  ? 'bg-ffp-dark-blue text-white'
+                                  : 'bg-muted text-muted-foreground'
+                            }`}
+                          >
+                            {session.status === 'completed' ? (
+                              <Icon
+                                name={Icons.CHECK}
+                                styleProps={{ size: 'xs', colour: '#ffffff' }}
+                              />
+                            ) : (
+                              String(session.sessionNumber)
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <Text
-                      as="p"
-                      styleProps={{ size: 'sm', colour: 'muted-foreground' }}
-                      className="mb-4"
-                    >
-                      {currentPhase.description}
-                    </Text>
+                  </Card>
+                </FadeSlideIn>
+              )}
+
+              {/* Programme Overview */}
+              <FadeSlideIn delay={0.3}>
+                <Card className="mt-6">
+                  <div className="p-5">
+                    <div className="mb-4">
+                      <Title as="h3" className="mb-1">
+                        {mockProgramme.name}
+                      </Title>
+                      <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
+                        {mockProgramme.description}
+                      </Text>
+                    </div>
 
                     <div className="mb-2 flex items-center justify-between">
                       <Text
                         styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}
                         className="uppercase tracking-wide"
                       >
-                        Phase Progress
+                        Programme Progress
                       </Text>
                       <Text styleProps={{ size: 'sm', weight: 'medium' }}>
-                        {String(currentPhaseCompletedSessions)} of{' '}
-                        {String(currentPhaseTotalSessions)} sessions
+                        {String(completedPhases)} of {String(totalPhases)} phases
                       </Text>
                     </div>
-                    <ProgressBar percent={phaseProgressPercent} className="mb-4" />
-
-                    {/* Session dots */}
-                    <div className="flex gap-2">
-                      {currentPhase.sessions.map((session) => (
-                        <div
-                          key={session.id}
-                          className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium ${
-                            session.status === 'completed'
-                              ? 'bg-ffp-green text-white'
-                              : session.status === 'in_progress'
-                                ? 'bg-ffp-dark-blue text-white'
-                                : 'bg-muted text-muted-foreground'
-                          }`}
-                        >
-                          {session.status === 'completed' ? (
-                            <Icon
-                              name={Icons.CHECK}
-                              styleProps={{ size: 'xs', colour: '#ffffff' }}
-                            />
-                          ) : (
-                            String(session.sessionNumber)
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                    <ProgressBar percent={(completedPhases / totalPhases) * 100} />
                   </div>
                 </Card>
               </FadeSlideIn>
-            )}
-
-            {/* Programme Overview */}
-            <FadeSlideIn delay={0.3}>
-              <Card className="mt-6">
-                <div className="p-5">
-                  <div className="mb-4">
-                    <Title as="h3" className="mb-1">
-                      {mockProgramme.name}
-                    </Title>
-                    <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-                      {mockProgramme.description}
-                    </Text>
-                  </div>
-
-                  <div className="mb-2 flex items-center justify-between">
-                    <Text
-                      styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}
-                      className="uppercase tracking-wide"
-                    >
-                      Programme Progress
-                    </Text>
-                    <Text styleProps={{ size: 'sm', weight: 'medium' }}>
-                      {String(completedPhases)} of {String(totalPhases)} phases
-                    </Text>
-                  </div>
-                  <ProgressBar percent={(completedPhases / totalPhases) * 100} />
-                </div>
-              </Card>
-            </FadeSlideIn>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </MockSideNavLayout>
   );
 };

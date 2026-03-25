@@ -59,7 +59,7 @@ const createExercise = (
   completed: boolean,
   instructions: MockExercise['instructions'],
   notes: string | null = null,
-  durationSeconds: number | null = null,
+  durationSeconds: number | null = null
 ): MockExercise => ({
   id,
   name,
@@ -96,27 +96,20 @@ export const mockProgramme: MockProgramme = {
           estimatedDurationMinutes: 20,
           status: 'completed',
           exercises: [
-            createExercise(
-              'ex-001',
-              'Seated Hamstring Stretch',
-              3,
-              '30s hold',
-              30,
-              true,
-              {
-                setup:
-                  'Sit on the edge of a sturdy chair with one leg extended straight in front of you, heel on the floor.',
-                execution:
-                  'Keeping your back straight, lean forward gently from the hips until you feel a stretch along the back of your thigh. Hold for 30 seconds, then switch legs.',
-                tips: [
-                  'Keep your back straight — avoid rounding your shoulders',
-                  'The stretch should feel comfortable, not painful',
-                  'Breathe normally throughout',
-                ],
-              },
-            ),
+            createExercise('ex-001', 'Seated Hamstring Stretch', 3, '30s hold', 30, true, {
+              setup:
+                'Sit on the edge of a sturdy chair with one leg extended straight in front of you, heel on the floor.',
+              execution:
+                'Keeping your back straight, lean forward gently from the hips until you feel a stretch along the back of your thigh. Hold for 30 seconds, then switch legs.',
+              tips: [
+                'Keep your back straight — avoid rounding your shoulders',
+                'The stretch should feel comfortable, not painful',
+                'Breathe normally throughout',
+              ],
+            }),
             createExercise('ex-002', 'Pelvic Tilts', 3, '10', 30, true, {
-              setup: 'Lie on your back with knees bent and feet flat on the floor, hip-width apart.',
+              setup:
+                'Lie on your back with knees bent and feet flat on the floor, hip-width apart.',
               execution:
                 'Gently flatten your lower back against the floor by tilting your pelvis upward. Hold for 3 seconds, then release. Repeat 10 times.',
               tips: [
@@ -126,7 +119,8 @@ export const mockProgramme: MockProgramme = {
               ],
             }),
             createExercise('ex-003', 'Cat-Cow Stretch', 3, '8', 20, true, {
-              setup: 'Position yourself on hands and knees, with wrists under shoulders and knees under hips.',
+              setup:
+                'Position yourself on hands and knees, with wrists under shoulders and knees under hips.',
               execution:
                 'Inhale: drop your belly toward the floor, lift your head and tailbone (cow). Exhale: round your spine toward the ceiling, tucking chin and tailbone (cat). Flow between positions.',
               tips: [
@@ -145,7 +139,8 @@ export const mockProgramme: MockProgramme = {
           status: 'completed',
           exercises: [
             createExercise('ex-004', 'Hip Circles', 3, '10 each side', 20, true, {
-              setup: 'Stand with feet hip-width apart, hands on hips. Use a wall for balance if needed.',
+              setup:
+                'Stand with feet hip-width apart, hands on hips. Use a wall for balance if needed.',
               execution:
                 'Make large, slow circles with your hips — forward, right, back, left. Complete 10 circles, then reverse direction.',
               tips: [
@@ -164,12 +159,13 @@ export const mockProgramme: MockProgramme = {
               ],
             }),
             createExercise('ex-006', 'Knee Extensions', 3, '12', 30, true, {
-              setup: 'Sit in a sturdy chair with your back against the backrest, feet flat on the floor.',
+              setup:
+                'Sit in a sturdy chair with your back against the backrest, feet flat on the floor.',
               execution:
                 'Slowly straighten one knee, lifting your foot until your leg is fully extended. Hold for 2 seconds at the top, then slowly lower. Alternate legs.',
               tips: [
                 'Keep your thigh firmly on the seat',
-                'Control the lowering phase — don\'t let gravity do the work',
+                "Control the lowering phase — don't let gravity do the work",
                 'If it feels too easy, pause for 3 seconds at the top',
               ],
             }),
@@ -224,7 +220,7 @@ export const mockProgramme: MockProgramme = {
           exercises: [
             createExercise('ex-009', 'Wall Push-Ups', 3, '12', 45, true, {
               setup:
-                'Stand arm\'s length from a wall, feet shoulder-width apart. Place palms flat on the wall at shoulder height.',
+                "Stand arm's length from a wall, feet shoulder-width apart. Place palms flat on the wall at shoulder height.",
               execution:
                 'Bend your elbows to bring your chest toward the wall, keeping your body in a straight line. Push back to start.',
               tips: [
@@ -241,7 +237,7 @@ export const mockProgramme: MockProgramme = {
               tips: [
                 'Keep your back straight — avoid leaning backward',
                 'Focus on squeezing between your shoulder blades',
-                'Control the release — don\'t let the band snap back',
+                "Control the release — don't let the band snap back",
               ],
             }),
           ],
@@ -265,14 +261,13 @@ export const mockProgramme: MockProgramme = {
               ],
             }),
             createExercise('ex-012', 'Heel Raises', 3, '15', 30, true, {
-              setup:
-                'Stand behind a chair, holding the back for balance. Feet hip-width apart.',
+              setup: 'Stand behind a chair, holding the back for balance. Feet hip-width apart.',
               execution:
                 'Rise up onto your toes as high as you can. Hold for 2 seconds at the top, then slowly lower back down.',
               tips: [
                 'Control the lowering — take 3 seconds to come down',
                 'Keep your weight distributed evenly across all toes',
-                'Don\'t lean forward on the chair',
+                "Don't lean forward on the chair",
               ],
             }),
           ],
@@ -284,25 +279,17 @@ export const mockProgramme: MockProgramme = {
           estimatedDurationMinutes: 25,
           status: 'in_progress',
           exercises: [
-            createExercise(
-              'ex-013',
-              'Seated Hamstring Stretch',
-              3,
-              '30s hold',
-              30,
-              false,
-              {
-                setup:
-                  'Sit on the edge of a sturdy chair with one leg extended straight in front of you, heel on the floor.',
-                execution:
-                  'Keeping your back straight, lean forward gently from the hips until you feel a stretch along the back of your thigh. Hold for 30 seconds, then switch legs.',
-                tips: [
-                  'Keep your back straight — avoid rounding your shoulders',
-                  'The stretch should feel comfortable, not painful',
-                  'Breathe normally throughout',
-                ],
-              },
-            ),
+            createExercise('ex-013', 'Seated Hamstring Stretch', 3, '30s hold', 30, false, {
+              setup:
+                'Sit on the edge of a sturdy chair with one leg extended straight in front of you, heel on the floor.',
+              execution:
+                'Keeping your back straight, lean forward gently from the hips until you feel a stretch along the back of your thigh. Hold for 30 seconds, then switch legs.',
+              tips: [
+                'Keep your back straight — avoid rounding your shoulders',
+                'The stretch should feel comfortable, not painful',
+                'Breathe normally throughout',
+              ],
+            }),
             createExercise('ex-014', 'Glute Bridges', 3, '12', 30, false, {
               setup:
                 'Lie on your back with knees bent, feet flat on the floor, hip-width apart. Arms by your sides.',
@@ -311,7 +298,7 @@ export const mockProgramme: MockProgramme = {
               tips: [
                 'Drive through your heels, not your toes',
                 'Squeeze your glutes at the top for 2 seconds',
-                'Don\'t arch your lower back — keep your core engaged',
+                "Don't arch your lower back — keep your core engaged",
               ],
             }),
             createExercise('ex-015', 'Side-Lying Leg Raises', 3, '10 each side', 30, false, {
@@ -320,7 +307,7 @@ export const mockProgramme: MockProgramme = {
               execution:
                 'Keeping your leg straight, slowly raise your top leg to about 45 degrees. Hold briefly, then lower with control. Complete all reps, then switch sides.',
               tips: [
-                'Keep your hips stacked — don\'t roll backward',
+                "Keep your hips stacked — don't roll backward",
                 'Lift from the hip, not by tilting your pelvis',
                 'Control the lowering — no dropping',
               ],
@@ -332,14 +319,13 @@ export const mockProgramme: MockProgramme = {
                 'Hold a straight line from head to heels. Engage your core, squeeze your glutes, and breathe steadily. Hold for 20-30 seconds.',
               tips: [
                 'If this is too challenging, keep your knees on the floor',
-                'Don\'t let your hips sag or pike up',
-                'Keep breathing — don\'t hold your breath',
+                "Don't let your hips sag or pike up",
+                "Keep breathing — don't hold your breath",
                 'Stop immediately if you feel lower back pain',
               ],
             }),
             createExercise('ex-017', 'Standing Balance', 3, '20s each side', 20, false, {
-              setup:
-                'Stand near a wall or chair for support if needed. Feet hip-width apart.',
+              setup: 'Stand near a wall or chair for support if needed. Feet hip-width apart.',
               execution:
                 'Shift your weight onto one foot and slowly lift the other foot off the ground. Hold for 20 seconds, then switch sides.',
               tips: [
@@ -349,8 +335,7 @@ export const mockProgramme: MockProgramme = {
               ],
             }),
             createExercise('ex-018', 'Cool-Down Breathing', 1, '5 breaths', 0, false, {
-              setup:
-                'Sit or lie comfortably. Place one hand on your chest and one on your belly.',
+              setup: 'Sit or lie comfortably. Place one hand on your chest and one on your belly.',
               execution:
                 'Breathe in slowly through your nose for 4 seconds, feeling your belly rise. Hold for 2 seconds. Exhale slowly through your mouth for 6 seconds. Repeat 5 times.',
               tips: [
@@ -377,10 +362,7 @@ export const mockProgramme: MockProgramme = {
               setup: 'Stand with feet shoulder-width apart.',
               execution:
                 'Bend forward and touch your toes (or as close as you can), then bend your knees into a squat, lift your chest, and stand up tall. Reverse the movement.',
-              tips: [
-                'Go only as deep as comfortable',
-                'Keep the movement flowing and controlled',
-              ],
+              tips: ['Go only as deep as comfortable', 'Keep the movement flowing and controlled'],
             }),
           ],
         },
@@ -506,11 +488,15 @@ export const mockProgramme: MockProgramme = {
 export const getCurrentSession = (): MockSession | null => {
   const activePhase = mockProgramme.phases.find((p) => p.status === 'in_progress');
 
-  if (!activePhase) {return null;}
+  if (!activePhase) {
+    return null;
+  }
 
   const inProgress = activePhase.sessions.find((s) => s.status === 'in_progress');
 
-  if (inProgress) {return inProgress;}
+  if (inProgress) {
+    return inProgress;
+  }
 
   return activePhase.sessions.find((s) => s.status === 'not_started') ?? null;
 };

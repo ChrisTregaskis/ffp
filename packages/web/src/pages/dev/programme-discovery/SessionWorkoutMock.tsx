@@ -43,8 +43,16 @@ interface PrescriptionBadgeProps {
 }
 
 const PrescriptionBadge: React.FC<PrescriptionBadgeProps> = ({ label, icon, variant = 'blue' }) => (
-  <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium ${variant === 'purple' ? '' : 'text-white'} ${BADGE_COLOURS[variant]}`}>
-    <Icon name={icon} styleProps={{ size: 'xs', colour: variant === 'purple' ? 'var(--color-ffp-dark-blue)' : '#ffffff' }} />
+  <span
+    className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium ${variant === 'purple' ? '' : 'text-white'} ${BADGE_COLOURS[variant]}`}
+  >
+    <Icon
+      name={icon}
+      styleProps={{
+        size: 'xs',
+        colour: variant === 'purple' ? 'var(--color-ffp-dark-blue)' : '#ffffff',
+      }}
+    />
     {label}
   </span>
 );
@@ -247,9 +255,7 @@ const RestTimer: React.FC<RestTimerProps> = ({ seconds, onComplete, onSkip }) =>
             </defs>
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <Text styleProps={{ size: '3xl', weight: 'bold' }}>
-              {String(remaining)}s
-            </Text>
+            <Text styleProps={{ size: '3xl', weight: 'bold' }}>{String(remaining)}s</Text>
           </div>
         </div>
 
@@ -260,7 +266,9 @@ const RestTimer: React.FC<RestTimerProps> = ({ seconds, onComplete, onSkip }) =>
           <Button
             variant="secondary"
             size="sm"
-            onClick={() => { setRemaining((prev) => prev + 15); }}
+            onClick={() => {
+              setRemaining((prev) => prev + 15);
+            }}
           >
             +15s
           </Button>
@@ -406,7 +414,9 @@ export const SessionWorkoutMock: React.FC = () => {
 
   const [exercises, setExercises] = useState<MockExercise[]>(session?.exercises ?? []);
   const [activeExerciseIndex, setActiveExerciseIndex] = useState<number>(() => {
-    if (!session) {return 0;}
+    if (!session) {
+      return 0;
+    }
 
     const idx = session.exercises.findIndex((e) => !e.completed);
 
@@ -423,9 +433,7 @@ export const SessionWorkoutMock: React.FC = () => {
 
   // Advance to next exercise
   const advanceToNext = useCallback(() => {
-    const nextIncomplete = exercises.findIndex(
-      (e, i) => i > activeExerciseIndex && !e.completed,
-    );
+    const nextIncomplete = exercises.findIndex((e, i) => i > activeExerciseIndex && !e.completed);
 
     if (nextIncomplete >= 0) {
       setActiveExerciseIndex(nextIncomplete);
@@ -438,34 +446,36 @@ export const SessionWorkoutMock: React.FC = () => {
   const completeExercise = useCallback(() => {
     setExercises((prev) =>
       prev.map((ex, i) => {
-        if (i !== activeExerciseIndex) {return ex;}
+        if (i !== activeExerciseIndex) {
+          return ex;
+        }
 
         return {
           ...ex,
           completed: true,
           setsCompleted: ex.setsCompleted.map(() => true),
         };
-      }),
+      })
     );
 
-    const hasNext = exercises.some(
-      (e, i) => i > activeExerciseIndex && !e.completed,
-    );
+    const hasNext = exercises.some((e, i) => i > activeExerciseIndex && !e.completed);
 
     if (hasNext) {
       // Brief pause before advancing (breathing room)
-      setTimeout(() => { advanceToNext(); }, 400);
+      setTimeout(() => {
+        advanceToNext();
+      }, 400);
     } else {
       // All exercises done
-      setTimeout(() => { setIsComplete(true); }, 600);
+      setTimeout(() => {
+        setIsComplete(true);
+      }, 600);
     }
   }, [activeExerciseIndex, exercises, advanceToNext]);
 
   // Skip current exercise
   const skipExercise = useCallback(() => {
-    const nextIndex = exercises.findIndex(
-      (e, i) => i > activeExerciseIndex && !e.completed,
-    );
+    const nextIndex = exercises.findIndex((e, i) => i > activeExerciseIndex && !e.completed);
 
     if (nextIndex >= 0) {
       setActiveExerciseIndex(nextIndex);
@@ -485,7 +495,9 @@ export const SessionWorkoutMock: React.FC = () => {
       <div className="flex h-screen bg-white">
         <CompletionScreen
           session={{ ...session, exercises }}
-          onBackToProgramme={() => { void navigate('/components/programme/overview'); }}
+          onBackToProgramme={() => {
+            void navigate('/components/programme/overview');
+          }}
         />
       </div>
     );
@@ -497,7 +509,9 @@ export const SessionWorkoutMock: React.FC = () => {
       <header className="flex flex-shrink-0 items-center justify-between border-b border-border bg-white px-4 py-3">
         <button
           type="button"
-          onClick={() => { setShowExitDialog(true); }}
+          onClick={() => {
+            setShowExitDialog(true);
+          }}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
         >
           <Icon name={Icons.CLOSE} styleProps={{ size: 'md' }} />
@@ -516,7 +530,9 @@ export const SessionWorkoutMock: React.FC = () => {
         {/* Desktop sidebar toggle */}
         <button
           type="button"
-          onClick={() => { setSidebarOpen(!sidebarOpen); }}
+          onClick={() => {
+            setSidebarOpen(!sidebarOpen);
+          }}
           className="hidden text-muted-foreground hover:text-foreground lg:block"
         >
           <Icon
@@ -566,7 +582,9 @@ export const SessionWorkoutMock: React.FC = () => {
                       exercise={exercise}
                       index={index}
                       isCurrent={index === activeExerciseIndex}
-                      onClick={() => { setActiveExerciseIndex(index); }}
+                      onClick={() => {
+                        setActiveExerciseIndex(index);
+                      }}
                     />
                   ))}
                 </div>
@@ -642,7 +660,9 @@ export const SessionWorkoutMock: React.FC = () => {
                   <Button
                     variant="secondary"
                     size="lg"
-                    onClick={() => { setShowRestTimer(true); }}
+                    onClick={() => {
+                      setShowRestTimer(true);
+                    }}
                   >
                     <Icon name={Icons.CLOCK} styleProps={{ size: 'sm' }} />
                     Rest
@@ -660,7 +680,9 @@ export const SessionWorkoutMock: React.FC = () => {
           <div className="border-t border-border bg-white px-4 py-3 lg:hidden">
             <button
               type="button"
-              onClick={() => { setSidebarOpen(!sidebarOpen); }}
+              onClick={() => {
+                setSidebarOpen(!sidebarOpen);
+              }}
               className="flex w-full items-center justify-between"
             >
               <Text styleProps={{ size: 'sm', weight: 'medium' }}>
@@ -707,8 +729,12 @@ export const SessionWorkoutMock: React.FC = () => {
         {showRestTimer && (
           <RestTimer
             seconds={activeExercise.restSeconds}
-            onComplete={() => { setShowRestTimer(false); }}
-            onSkip={() => { setShowRestTimer(false); }}
+            onComplete={() => {
+              setShowRestTimer(false);
+            }}
+            onSkip={() => {
+              setShowRestTimer(false);
+            }}
           />
         )}
       </AnimatePresence>
@@ -719,9 +745,15 @@ export const SessionWorkoutMock: React.FC = () => {
           <ExitDialog
             completedCount={completedCount}
             totalCount={exercises.length}
-            onPause={() => { void navigate('/components/programme/overview'); }}
-            onDone={() => { void navigate('/components/programme/overview'); }}
-            onCancel={() => { setShowExitDialog(false); }}
+            onPause={() => {
+              void navigate('/components/programme/overview');
+            }}
+            onDone={() => {
+              void navigate('/components/programme/overview');
+            }}
+            onCancel={() => {
+              setShowExitDialog(false);
+            }}
           />
         )}
       </AnimatePresence>

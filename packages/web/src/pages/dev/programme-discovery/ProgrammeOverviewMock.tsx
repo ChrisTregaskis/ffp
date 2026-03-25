@@ -16,6 +16,7 @@ import {
   getCompletedPhasesCount,
   getCompletedSessionsCount,
 } from './mock-data';
+import { MockSideNavLayout } from './MockSideNav';
 
 import type { MockPhase, MockSession } from './mock-data';
 
@@ -332,49 +333,51 @@ export const ProgrammeOverviewMock: React.FC = () => {
   const programmeProgressPercent = (completedPhases / totalPhases) * 100;
 
   return (
-    <div className="min-h-screen bg-muted/20">
-      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-        {/* Programme Header */}
-        <FadeSlideIn delay={0.1}>
-          <div className="mb-8">
-            <Title as="h1" className="mb-2">
-              {mockProgramme.name}
-            </Title>
-            <Text as="p" styleProps={{ colour: 'muted-foreground' }} className="mb-4">
-              {mockProgramme.description}
-            </Text>
+    <MockSideNavLayout activeItem="programme">
+      <div className="min-h-screen bg-muted/20">
+        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+          {/* Programme Header */}
+          <FadeSlideIn delay={0.1}>
+            <div className="mb-8">
+              <Title as="h1" className="mb-2">
+                {mockProgramme.name}
+              </Title>
+              <Text as="p" styleProps={{ colour: 'muted-foreground' }} className="mb-4">
+                {mockProgramme.description}
+              </Text>
 
-            <div className="mb-2 flex items-center justify-between">
-              <Text
-                styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}
-                className="uppercase tracking-wide"
-              >
-                Overall Progress
-              </Text>
-              <Text styleProps={{ size: 'sm', weight: 'medium' }}>
-                {String(completedPhases)} of {String(totalPhases)} phases
-              </Text>
+              <div className="mb-2 flex items-center justify-between">
+                <Text
+                  styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}
+                  className="uppercase tracking-wide"
+                >
+                  Overall Progress
+                </Text>
+                <Text styleProps={{ size: 'sm', weight: 'medium' }}>
+                  {String(completedPhases)} of {String(totalPhases)} phases
+                </Text>
+              </div>
+              <ProgressBar percent={programmeProgressPercent} />
             </div>
-            <ProgressBar percent={programmeProgressPercent} />
-          </div>
-        </FadeSlideIn>
+          </FadeSlideIn>
 
-        {/* Timeline */}
-        <div>
-          {mockProgramme.phases.map((phase, index) => (
-            <PhaseTimelineCard
-              key={phase.id}
-              phase={phase}
-              isFirst={index === 0}
-              isLast={index === mockProgramme.phases.length - 1}
-              nextSession={nextSession}
-              onStartSession={() => {
-                void navigate('/components/programme/session');
-              }}
-            />
-          ))}
+          {/* Timeline */}
+          <div>
+            {mockProgramme.phases.map((phase, index) => (
+              <PhaseTimelineCard
+                key={phase.id}
+                phase={phase}
+                isFirst={index === 0}
+                isLast={index === mockProgramme.phases.length - 1}
+                nextSession={nextSession}
+                onStartSession={() => {
+                  void navigate('/components/programme/session');
+                }}
+              />
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </MockSideNavLayout>
   );
 };
