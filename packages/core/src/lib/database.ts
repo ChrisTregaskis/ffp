@@ -1,34 +1,7 @@
-import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
-/**
- * Strict UUID validation regex (RFC 4122 compliant)
- * Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
- */
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/**
- * Validate that a string is a properly formatted UUID
- * This prevents SQL injection when setting RLS context
- */
-function validateUUID(value: string, paramName: string): void {
-  if (!value) {
-    throw new Error(`${paramName} is required for RLS context`);
-  }
-
-  if (!UUID_REGEX.test(value)) {
-    throw new Error(`${paramName} must be a valid UUID format (got: ${value.substring(0, 20)}...)`);
-  }
-}
-
-/**
- * Safely escape a string literal for use in SQL
- * PostgreSQL's SET command requires literal values and doesn't support parameterised queries.
- */
-function escapeLiteral(value: string): string {
-  return value.replace(/'/g, "''");
-}
+import { setRLSContext as setRLSContextBase } from '@ffp/database';
 
 /**
  * Gets SSL configuration based on environment
@@ -101,33 +74,19 @@ export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 /**
  * Sets the Row-Level Security (RLS) context for the current transaction
  *
- * This function sets PostgreSQL session variables that are used by RLS policies
- * to enforce multi-organisation data isolation.
- *
- * Note: PostgreSQL's SET command doesn't support parameterised queries ($1, $2, etc.)
- * We use sql.raw() with multiple layers of defence:
- * 1. UUID format validation (only allows hexadecimal digits and hyphens)
- * 2. SQL escaping (escape single quotes using PostgreSQL standard)
+ * Delegates to @ffp/database's canonical implementation for UUID validation,
+ * SQL escaping, and SET LOCAL execution.
  *
  * @param tx - Database transaction instance
  * @param organisationId - UUID of the organisation
  * @param userId - Optional UUID of the user
- *
  */
 export async function setRLSContext(
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  tx: Transaction,
   organisationId: string,
   userId?: string
 ): Promise<void> {
-  validateUUID(organisationId, 'organisationId');
-  const escapedOrganisationId = escapeLiteral(organisationId);
-  await tx.execute(sql.raw(`SET LOCAL app.organisation_id = '${escapedOrganisationId}'`));
-
-  if (userId) {
-    validateUUID(userId, 'userId');
-    const escapedUserId = escapeLiteral(userId);
-    await tx.execute(sql.raw(`SET LOCAL app.user_id = '${escapedUserId}'`));
-  }
+  await setRLSContextBase(tx, organisationId, userId);
 }
 
 /**
