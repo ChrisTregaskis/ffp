@@ -401,6 +401,14 @@ describe('RLS Utility Functions', () => {
             p.policyname === 'user_assessment_answers_organisation_isolation'
         )
       ).toBe(true);
+
+      // Check programme_organisation_isolation policy exists
+      expect(
+        policies.some(
+          (p: any) =>
+            p.tablename === 'programmes' && p.policyname === 'programme_organisation_isolation'
+        )
+      ).toBe(true);
     });
   });
 });
