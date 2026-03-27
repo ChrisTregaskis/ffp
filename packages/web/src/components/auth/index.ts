@@ -1,9 +1,9 @@
-import { EMAIL_PATTERN, PASSWORD_FULL_PATTERN } from '@ffp/core';
+import { EMAIL_PATTERN } from '@ffp/core';
 
 import {
   type LoginFormData,
   type SetPasswordCredentialsData,
-  type SetPasswordNewPasswordData,
+  type ForgotPasswordRequestData,
 } from '@web/schemas/auth.schema';
 
 import { type Field, FieldDataType } from '../form';
@@ -11,7 +11,7 @@ import { type Field, FieldDataType } from '../form';
 /**
  * Re-export form data types from schema for convenience
  */
-export type { LoginFormData, SetPasswordCredentialsData, SetPasswordNewPasswordData };
+export type { LoginFormData, SetPasswordCredentialsData, ForgotPasswordRequestData };
 
 /**
  * Login form field configuration
@@ -68,29 +68,18 @@ export const setPasswordCredentialsFields: Field<SetPasswordCredentialsData>[] =
 ];
 
 /**
- * Set password form field configuration (Step 2: New Password)
+ * Forgot password form field configuration (Step 1: Request code)
  */
-export const setPasswordNewPasswordFields: Field<SetPasswordNewPasswordData>[] = [
+export const forgotPasswordRequestFields: Field<ForgotPasswordRequestData>[] = [
   {
     order: 1,
-    name: 'password',
-    label: 'New password',
-    dataType: FieldDataType.PASSWORD,
-    placeholder: 'Create a secure password',
+    name: 'email',
+    label: 'Email',
+    dataType: FieldDataType.STRING,
+    placeholder: 'name@example.com',
     validation: {
       isRequired: true,
-      minLength: 8,
-      pattern: PASSWORD_FULL_PATTERN,
-    },
-  },
-  {
-    order: 2,
-    name: 'confirmPassword',
-    label: 'Confirm password',
-    dataType: FieldDataType.PASSWORD,
-    placeholder: 'Re-enter your password',
-    validation: {
-      isRequired: true,
+      pattern: EMAIL_PATTERN,
     },
   },
 ];

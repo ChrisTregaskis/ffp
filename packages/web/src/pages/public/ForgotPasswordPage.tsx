@@ -1,77 +1,224 @@
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Button } from '@web/components/button/Button';
-import { Card } from '@web/components/Card/Card';
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
+import { type ForgotPasswordRequestData } from '@web/components/auth';
+import { ForgotPasswordConfirmForm } from '@web/components/auth/ForgotPasswordConfirmForm';
+import { ForgotPasswordRequestForm } from '@web/components/auth/ForgotPasswordRequestForm';
+import { ForgotPasswordSuccess } from '@web/components/auth/ForgotPasswordSuccess';
 import { AuthLayout } from '@web/components/layout/AuthLayout';
-import { Text, Title } from '@web/components/text';
+import { CardTransition, type CardTransitionDirection } from '@web/components/motion';
+import { useCooldownTimer } from '@web/hooks/useCooldownTimer';
+import { resetPassword, confirmResetPassword } from '@web/lib/auth';
 import { RouteKey, routes } from '@web/pages/routes';
 
 /**
- * Forgot Password page component (placeholder).
- *
- * This is a placeholder page that will be implemented with full
- * password reset functionality in a future ticket.
- *
- * Current behaviour:
- * - Displays informative message about future implementation
- * - Provides link back to login page
- * - Uses consistent AuthLayout styling
- *
- * Future implementation will include:
- * - Email input for password reset request
- * - Cognito password reset flow
- * - Verification code entry
- * - New password form
+ * Steps in the forgot password flow
  */
-export const ForgotPasswordPage = (): JSX.Element => {
+enum ForgotPasswordStep {
+  REQUEST_CODE = 'REQUEST_CODE',
+  CONFIRM_RESET = 'CONFIRM_RESET',
+  SUCCESS = 'SUCCESS',
+}
+
+/** Cooldown duration for the resend code button (in seconds) */
+const RESEND_COOLDOWN_SECONDS = 60;
+
+/**
+ * Maps Cognito error names to user-friendly messages.
+ *
+ * Security: UserNotFoundException returns a generic message to prevent
+ * email enumeration attacks.
+ */
+const getErrorMessage = (error: unknown): string => {
+  if (!(error instanceof Error)) {
+    return 'An unexpected error occurred. Please try again.';
+  }
+
+  switch (error.name) {
+    case 'UserNotFoundException':
+    case 'InvalidParameterException':
+      return 'If an account exists with this email, a verification code has been sent.';
+    case 'LimitExceededException':
+      return 'Too many attempts. Please try again later.';
+    case 'ExpiredCodeException':
+      return 'This code has expired. Please request a new one.';
+    case 'CodeMismatchException':
+      return 'Invalid code. Please check and try again.';
+    case 'InvalidPasswordException':
+      return 'Password does not meet requirements. Please check and try again.';
+    default:
+      return error.message || 'An unexpected error occurred. Please try again.';
+  }
+};
+
+/**
+ * Forgot password page component.
+ *
+ * Orchestrates a three-step flow for self-service password reset:
+ * 1. Request — user enters email, receives verification code via Cognito
+ * 2. Confirm — user enters code and sets new password
+ * 3. Success — confirmation with link back to sign in
+ */
+export const ForgotPasswordPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const handleBackToLogin = (): void => {
+  const [currentStep, setCurrentStep] = useState<ForgotPasswordStep>(
+    ForgotPasswordStep.REQUEST_CODE
+  );
+  const [direction, setDirection] = useState<CardTransitionDirection>('forward');
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const { cooldown: resendCooldown, startCooldown: startCooldownTimer } =
+    useCooldownTimer(RESEND_COOLDOWN_SECONDS);
+
+  const clearError = useCallback((): void => {
+    setError(null);
+  }, []);
+
+  const handleBackToLogin = useCallback((): void => {
     void navigate(routes[RouteKey.LOGIN].path);
-  };
+  }, [navigate]);
+
+  /**
+   * Calls Cognito's resetPassword to send a verification code.
+   * Always advances to confirm step to prevent email enumeration.
+   */
+  const handleRequestCode = useCallback(
+    async (data: ForgotPasswordRequestData): Promise<void> => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        setEmail(data.email);
+
+        await resetPassword({ username: data.email });
+
+        setDirection('forward');
+        setCurrentStep(ForgotPasswordStep.CONFIRM_RESET);
+        startCooldownTimer();
+      } catch (err) {
+        // For UserNotFoundException, still advance to prevent enumeration
+        if (err instanceof Error && err.name === 'UserNotFoundException') {
+          setDirection('forward');
+          setCurrentStep(ForgotPasswordStep.CONFIRM_RESET);
+          startCooldownTimer();
+
+          return;
+        }
+
+        setError(getErrorMessage(err));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [startCooldownTimer]
+  );
+
+  const handleResendCode = useCallback(async (): Promise<void> => {
+    if (resendCooldown > 0 || !email) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      await resetPassword({ username: email });
+      startCooldownTimer();
+    } catch (err) {
+      if (err instanceof Error && err.name === 'UserNotFoundException') {
+        startCooldownTimer();
+
+        return;
+      }
+
+      setError(getErrorMessage(err));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [email, resendCooldown, startCooldownTimer]);
+
+  /**
+   * Submits the verification code and new password to Cognito.
+   */
+  const handleConfirmReset = useCallback(
+    async (code: string, newPassword: string): Promise<void> => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        await confirmResetPassword({
+          username: email,
+          confirmationCode: code,
+          newPassword,
+        });
+
+        setDirection('forward');
+        setCurrentStep(ForgotPasswordStep.SUCCESS);
+      } catch (err) {
+        setError(getErrorMessage(err));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [email]
+  );
+
+  /** Resolve the current step's transition key and content */
+  const { transitionKey, content } = useMemo(() => {
+    switch (currentStep) {
+      case ForgotPasswordStep.REQUEST_CODE:
+        return {
+          transitionKey: 'request-step',
+          content: (
+            <ForgotPasswordRequestForm
+              onSubmit={handleRequestCode}
+              isLoading={isLoading}
+              error={error}
+              onClearError={clearError}
+              onBackToLogin={handleBackToLogin}
+            />
+          ),
+        };
+      case ForgotPasswordStep.CONFIRM_RESET:
+        return {
+          transitionKey: 'confirm-step',
+          content: (
+            <ForgotPasswordConfirmForm
+              onSubmit={handleConfirmReset}
+              onResendCode={handleResendCode}
+              isLoading={isLoading}
+              error={error}
+              onClearError={clearError}
+              onBackToLogin={handleBackToLogin}
+              resendCooldown={resendCooldown}
+            />
+          ),
+        };
+      case ForgotPasswordStep.SUCCESS:
+        return {
+          transitionKey: 'success-step',
+          content: <ForgotPasswordSuccess onBackToLogin={handleBackToLogin} />,
+        };
+    }
+  }, [
+    currentStep,
+    handleRequestCode,
+    handleConfirmReset,
+    handleResendCode,
+    handleBackToLogin,
+    clearError,
+    isLoading,
+    error,
+    resendCooldown,
+  ]);
 
   return (
     <AuthLayout>
-      <Card>
-        <div className="space-y-6 text-center">
-          {/* Info icon */}
-          <div className="flex justify-center">
-            <div className="rounded-full bg-primary/10 p-3">
-              <Icon
-                name={Icons.HELPCIRCLE}
-                styleProps={{ size: 'xl', colour: 'var(--color-primary)' }}
-              />
-            </div>
-          </div>
-
-          <Title>For your password?</Title>
-
-          {/* Placeholder message */}
-          <div className="space-y-2">
-            <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-              Password reset functionality is not yet implemented.
-            </Text>
-            <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-              This feature will be added in a future update and will allow you to reset your
-              password via email verification.
-            </Text>
-          </div>
-
-          {/* Contact info */}
-          <div className="rounded-md bg-info/10 p-4">
-            <Text as="p" styleProps={{ size: 'sm', colour: 'info' }}>
-              If you need to reset your password, please contact your system administrator.
-            </Text>
-          </div>
-
-          {/* Back to login button */}
-          <Button variant="primary" fullWidth onClick={handleBackToLogin}>
-            Back to sign in
-          </Button>
-        </div>
-      </Card>
+      <CardTransition transitionKey={transitionKey} direction={direction}>
+        {content}
+      </CardTransition>
     </AuthLayout>
   );
 };
