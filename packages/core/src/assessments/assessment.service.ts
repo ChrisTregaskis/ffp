@@ -419,6 +419,22 @@ export async function saveProgress(
       );
     }
 
+    // Persist the next step position so resume returns to the correct step.
+    // The client sends the *current* step, but after branching we know where
+    // the user is heading — store that so a future resume lands there.
+    if (branchResult.nextStepId) {
+      const nextStepRecord = flowSteps.find((s) => s.id === branchResult.nextStepId);
+
+      if (nextStepRecord) {
+        await userAssessmentRepository.updateAssessmentProgress(
+          organisationId,
+          assessmentId,
+          { currentStep: nextStepRecord.order },
+          { tx }
+        );
+      }
+    }
+
     // Return success response with branching evaluation results
     return {
       success: true as const,
