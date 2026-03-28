@@ -92,6 +92,16 @@ async function findProgrammeByUserIdInTx(
   return records[0] ?? null;
 }
 
+async function hasAnyProgrammeByUserIdInTx(tx: Transaction, userId: string): Promise<boolean> {
+  const records = await tx
+    .select({ id: programmes.id })
+    .from(programmes)
+    .where(eq(programmes.userId, userId))
+    .limit(1);
+
+  return records.length > 0;
+}
+
 async function findProgrammeByIdInTx(
   tx: Transaction,
   programmeId: string
@@ -196,6 +206,23 @@ export async function findProgrammeByUserId(
 
   return await withRLS(organisationId, userId, async (newTx) => {
     return findProgrammeByUserIdInTx(newTx, userId);
+  });
+}
+
+/** Checks whether any programme exists for the user (regardless of status). */
+export async function hasAnyProgrammeByUserId(
+  organisationId: string,
+  userId: string,
+  options: FindByUserIdOptions = {}
+): Promise<boolean> {
+  const { tx } = options;
+
+  if (tx) {
+    return hasAnyProgrammeByUserIdInTx(tx, userId);
+  }
+
+  return await withRLS(organisationId, userId, async (newTx) => {
+    return hasAnyProgrammeByUserIdInTx(newTx, userId);
   });
 }
 

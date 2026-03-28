@@ -124,6 +124,7 @@
 ### Backlog Items
 
 - Icon enum refactor — convert string icon names in navigation.ts to use Icons const enum
+- Assessment resume should return to exact question, not section start — on re-login, user resumes at section 2/9 step 1/6 instead of section 4/9 step 1/6 where they left off. Answers are preserved but navigation position resets to current section start. Discovered during FFP-281 E2E testing.
 
 ---
 

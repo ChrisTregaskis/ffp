@@ -223,6 +223,8 @@ export const assessmentResultsResponseSchema = z.object({
 export const userAssessmentStatusResponseSchema = z.object({
   /** Whether the user has an active programme */
   hasProgramme: z.boolean(),
+  /** Whether the user has ever had any programme (regardless of current status) */
+  hasEverHadProgramme: z.boolean(),
   /** Assessment flow ID to redirect to (null if user has a programme or no active flow) */
   assessmentFlowId: z.guid().nullable(),
 });
