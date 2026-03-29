@@ -23,9 +23,12 @@ import { eq, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { setRLSContext, withRLS } from './rls';
 import { users, organisations, locations } from '../schema';
+import { canConnectToDatabase } from './test-utils';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
-describe('RLS Utility Functions', () => {
+const dbAvailable = await canConnectToDatabase();
+
+describe.runIf(dbAvailable)('RLS Utility Functions', () => {
   let db: NodePgDatabase<any>;
   let pool: Pool;
 

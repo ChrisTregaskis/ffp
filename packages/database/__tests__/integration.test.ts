@@ -19,10 +19,13 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { getDb, closeDb } from '../src/client';
 import { users, organisations, locations } from '../src/schema';
 import { withRLS } from '../src/lib/rls';
+import { canConnectToDatabase } from '../src/lib/test-utils';
 import { eq, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 
-describe('Drizzle Integration Tests', () => {
+const dbAvailable = await canConnectToDatabase();
+
+describe.runIf(dbAvailable)('Drizzle Integration Tests', () => {
   let db: ReturnType<typeof getDb>;
 
   beforeAll(async () => {
