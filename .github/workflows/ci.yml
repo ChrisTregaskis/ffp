@@ -18,6 +18,21 @@ jobs:
     name: Quality Checks
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: root_user
+          POSTGRES_PASSWORD: root_password
+          POSTGRES_DB: ffp_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -53,6 +68,23 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Setup test database
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: root_user
+          PGPASSWORD: root_password
+          PGDATABASE: ffp_test
+        run: |
+          # Create test_user (no BYPASSRLS so RLS policies are enforced)
+          psql -c "CREATE USER test_user WITH PASSWORD 'test_password';"
+          psql -c "GRANT CONNECT ON DATABASE ffp_test TO test_user;"
+          psql -c "GRANT USAGE ON SCHEMA public TO test_user;"
+
+          # Run migrations (schema + RLS policies + permissions)
+          cd packages/database
+          DB_HOST=localhost DB_PORT=5432 DB_NAME=ffp_test DB_MIGRATE_USER=root_user DB_PASSWORD=root_password DB_USER=test_user ENVIRONMENT=development pnpm db:migrate
 
       - name: Test
         run: pnpm test
