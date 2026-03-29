@@ -123,10 +123,8 @@
 
 ### Backlog Items
 
-- `programmes` table RLS policy gap — table has `organisation_id` but not in `apply-rls.ts` (tracked for FFP-4)
-- Bump `tsconfig.base.json` target/lib from ES2022 → ES2024 — Lambda runtime is nodejs24.x, enables `Object.groupBy`, `Map.groupBy` etc.
-- Consolidate duplicate RLS utilities — `setRLSContext`/`withRLS` exist in both `@ffp/database` and `@ffp/core`. Should have one canonical location to prevent divergence
 - Icon enum refactor — convert string icon names in navigation.ts to use Icons const enum
+- Assessment resume should return to exact question, not section start — on re-login, user resumes at section 2/9 step 1/6 instead of section 4/9 step 1/6 where they left off. Answers are preserved but navigation position resets to current section start. Discovered during FFP-281 E2E testing.
 
 ---
 

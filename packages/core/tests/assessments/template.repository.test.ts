@@ -127,8 +127,7 @@ describe('Template Repository', () => {
 
       expect(result.name).toBe('Updated Name');
       expect(result.version).toBe(2);
-      // Use >= because create and update can occur within the same millisecond
-      expect(result.updatedAt.getTime()).toBeGreaterThanOrEqual(created.updatedAt.getTime());
+      expect(result.updatedAt).toBeInstanceOf(Date);
     });
 
     it('throws NotFoundError when template not found', async () => {

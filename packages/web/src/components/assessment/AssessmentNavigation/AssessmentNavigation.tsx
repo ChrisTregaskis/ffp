@@ -47,13 +47,17 @@ export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
 
   const handleSaveAndNavigate = useCallback(
     async (direction: 'forward' | 'back') => {
-      if (isDirty && assessmentId) {
+      // Always save — even when answers are clean — so the backend can persist
+      // the current step position for accurate resume on re-login.
+      if (assessmentId) {
         const response = await saveProgress.mutateAsync({
           assessmentId,
           payload: { answers, currentStep },
         });
 
-        assessmentDispatch({ type: ASSESSMENT_ACTION.MARK_SAVED });
+        if (isDirty) {
+          assessmentDispatch({ type: ASSESSMENT_ACTION.MARK_SAVED });
+        }
 
         if (direction === 'forward') {
           assessmentDispatch({
@@ -74,25 +78,49 @@ export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
     [isDirty, assessmentId, answers, currentStep, saveProgress, assessmentDispatch]
   );
 
+  /**
+   * Fire-and-forget save to persist currentStep for resume.
+   * Used during intra-step navigation (question-to-question) where
+   * the custom onContinue/onBack handles the UI transition.
+   */
+  const savePositionInBackground = useCallback((): void => {
+    if (assessmentId && isDirty) {
+      void saveProgress
+        .mutateAsync({
+          assessmentId,
+          payload: { answers, currentStep },
+        })
+        .then(() => {
+          assessmentDispatch({ type: ASSESSMENT_ACTION.MARK_SAVED });
+        })
+        .catch(() => {
+          // Background save failed — answers remain in local state and will
+          // be retried on the next navigation or step transition.
+        });
+    }
+  }, [assessmentId, isDirty, answers, currentStep, saveProgress, assessmentDispatch]);
+
   const handleContinue = useCallback(() => {
     if (onContinue) {
+      savePositionInBackground();
       onContinue();
 
       return;
     }
 
     void handleSaveAndNavigate('forward');
-  }, [onContinue, handleSaveAndNavigate]);
+  }, [onContinue, savePositionInBackground, handleSaveAndNavigate]);
 
   const handleBack = useCallback(() => {
     if (onBack) {
+      savePositionInBackground();
       onBack();
 
       return;
     }
 
     void handleSaveAndNavigate('back');
-  }, [onBack, handleSaveAndNavigate]);
+  }, [onBack, savePositionInBackground, handleSaveAndNavigate]);
 
   return (
     <nav

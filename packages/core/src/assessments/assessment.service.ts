@@ -419,6 +419,22 @@ export async function saveProgress(
       );
     }
 
+    // Persist the next step position so resume returns to the correct step.
+    // The client sends the *current* step, but after branching we know where
+    // the user is heading — store that so a future resume lands there.
+    if (branchResult.nextStepId) {
+      const nextStepRecord = flowSteps.find((s) => s.id === branchResult.nextStepId);
+
+      if (nextStepRecord) {
+        await userAssessmentRepository.updateAssessmentProgress(
+          organisationId,
+          assessmentId,
+          { currentStep: nextStepRecord.order },
+          { tx }
+        );
+      }
+    }
+
     // Return success response with branching evaluation results
     return {
       success: true as const,
@@ -679,8 +695,13 @@ export async function getAssessmentResults(
 }
 
 /**
- * Checks whether the user has an active programme. If not, returns the
- * default assessment flow ID so the frontend can redirect to the assessment.
+ * Checks the user's programme status and returns the default assessment flow ID.
+ *
+ * The frontend uses this to decide whether to redirect to the assessment flow:
+ * - `hasProgramme` — user has an active programme (no redirect)
+ * - `hasEverHadProgramme` — user has had a programme before (no forced redirect,
+ *   but can optionally reassess)
+ * - Neither — first-time user, redirect to assessment
  */
 export async function getUserAssessmentStatus(
   context: OrganisationContext
@@ -689,6 +710,12 @@ export async function getUserAssessmentStatus(
 
   // Check if user has an active programme
   const programme = await programmeRepository.findProgrammeByUserId(context.organisationId, userId);
+
+  // Check if user has ever had any programme (regardless of status)
+  const hasEverHadProgramme = await programmeRepository.hasAnyProgrammeByUserId(
+    context.organisationId,
+    userId
+  );
 
   // Always look up the default flow — needed for reassessments too.
   // findDefaultForOrganisation throws if no flow is configured, which is expected for
@@ -709,6 +736,7 @@ export async function getUserAssessmentStatus(
 
   return {
     hasProgramme: !!programme,
+    hasEverHadProgramme,
     assessmentFlowId: flowId,
   };
 }

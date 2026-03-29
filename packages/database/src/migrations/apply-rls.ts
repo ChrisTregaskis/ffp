@@ -5,7 +5,7 @@
  * It is idempotent and can be run multiple times safely.
  *
  * **Tables with RLS policies:**
- * - organisations, locations, users, user_assessments, user_assessment_answers, programme_phases
+ * - organisations, locations, users, user_assessments, user_assessment_answers, programmes, programme_phases
  *
  * **Admin bypass policy:**
  * - locations and users tables have an additional permissive policy that grants
@@ -50,14 +50,14 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     SELECT tablename, rowsecurity
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'programme_phases')
+    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'programmes', 'programme_phases')
     ORDER BY tablename
   `);
 
   const tables = rlsCheck.rows as Array<{ tablename: string; rowsecurity: boolean }>;
 
   // Check if all tables have RLS enabled (6 tables)
-  const allTablesHaveRLS = tables.length === 6 && tables.every((t) => t.rowsecurity === true);
+  const allTablesHaveRLS = tables.length === 7 && tables.every((t) => t.rowsecurity === true);
 
   if (allTablesHaveRLS) {
     logger.info('RLS already enabled on all tables, re-applying policies to pick up any changes...');
@@ -287,6 +287,32 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     `);
 
     // ============================================================================
+    // PROGRAMMES TABLE RLS
+    // ============================================================================
+
+    logger.debug('Enabling RLS on programmes table...');
+
+    await tx.execute(sql`
+      ALTER TABLE programmes ENABLE ROW LEVEL SECURITY;
+    `);
+
+    if (!isProduction) {
+      await tx.execute(sql`
+        ALTER TABLE programmes FORCE ROW LEVEL SECURITY;
+      `);
+    }
+
+    await tx.execute(sql`
+      DROP POLICY IF EXISTS programme_organisation_isolation ON programmes;
+    `);
+
+    await tx.execute(sql`
+      CREATE POLICY programme_organisation_isolation ON programmes
+        FOR ALL
+        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+    `);
+
+    // ============================================================================
     // PROGRAMME_PHASES TABLE RLS
     // ============================================================================
 
@@ -324,7 +350,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     SELECT tablename, rowsecurity
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'programme_phases')
+    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'programmes', 'programme_phases')
     ORDER BY tablename
   `);
 
