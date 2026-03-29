@@ -2,8 +2,7 @@ import { Button } from '@web/components/button/Button';
 import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
 import { PasswordInput } from '@web/components/form/password/PasswordInput';
 import { PasswordRequirementsList } from '@web/components/form/password/PasswordRequirementsList';
-import { getInputClassName } from '@web/components/form/shared/inputStyles';
-import { FormField } from '@web/components/form/standardForm/FormField';
+import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
 import type { PasswordValidationResult } from '@web/utils/passwordStrength';
 
 /** Form values managed by ComposableForm / react-hook-form */
@@ -52,21 +51,23 @@ export const ForgotPasswordConfirmFormFields: React.FC<ForgotPasswordConfirmForm
     <>
       {/* Verification code input */}
       <div className="space-y-2">
-        <FormField htmlFor="code" label="Verification code" error={errors.code?.message}>
-          <input
-            type="text"
-            id="code"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            placeholder="Enter 6-digit code"
-            disabled={isLoading}
-            {...register('code', {
-              required: 'Verification code is required',
-              pattern: { value: /^\d{6}$/, message: 'Code must be 6 digits' },
-            })}
-            className={`${getInputClassName(!!errors.code)} w-full px-3 py-2 tracking-widest disabled:cursor-not-allowed disabled:bg-muted`}
-          />
-        </FormField>
+        <FormTextInput<ConfirmResetFormValues>
+          name="code"
+          label="Verification code"
+          placeholder="Enter 6-digit code"
+          register={register}
+          errors={errors}
+          disabled={isLoading}
+          registerOptions={{
+            required: 'Verification code is required',
+            pattern: { value: /^\d{6}$/, message: 'Code must be 6 digits' },
+          }}
+          inputProps={{
+            inputMode: 'numeric',
+            autoComplete: 'one-time-code',
+          }}
+          inputClassName="tracking-widest"
+        />
 
         <div className="flex justify-end">
           <Button

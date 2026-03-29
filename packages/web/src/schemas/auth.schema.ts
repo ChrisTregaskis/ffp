@@ -89,22 +89,6 @@ export const forgotPasswordRequestSchema = z.object({
   email: z.string().regex(EMAIL_PATTERN, 'Invalid email address'),
 });
 
-export const forgotPasswordConfirmSchema = z
-  .object({
-    code: z
-      .string()
-      .min(1, 'Verification code is required')
-      .regex(/^\d{6}$/, 'Code must be 6 digits'),
-    password: passwordSchema,
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  });
-
 export type SetPasswordCredentialsData = z.infer<typeof setPasswordCredentialsSchema>;
-export type SetPasswordNewPasswordData = z.infer<typeof setPasswordNewPasswordSchema>;
 export type SetPasswordFormData = z.infer<typeof setPasswordSchema>;
 export type ForgotPasswordRequestData = z.infer<typeof forgotPasswordRequestSchema>;
-export type ForgotPasswordConfirmData = z.infer<typeof forgotPasswordConfirmSchema>;

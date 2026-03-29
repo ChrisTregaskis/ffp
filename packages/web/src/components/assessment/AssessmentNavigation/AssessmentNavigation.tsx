@@ -47,6 +47,8 @@ export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
 
   const handleSaveAndNavigate = useCallback(
     async (direction: 'forward' | 'back') => {
+      // Always save — even when answers are clean — so the backend can persist
+      // the current step position for accurate resume on re-login.
       if (assessmentId) {
         const response = await saveProgress.mutateAsync({
           assessmentId,
@@ -83,11 +85,18 @@ export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
    */
   const savePositionInBackground = useCallback((): void => {
     if (assessmentId && isDirty) {
-      void saveProgress.mutateAsync({
-        assessmentId,
-        payload: { answers, currentStep },
-      });
-      assessmentDispatch({ type: ASSESSMENT_ACTION.MARK_SAVED });
+      void saveProgress
+        .mutateAsync({
+          assessmentId,
+          payload: { answers, currentStep },
+        })
+        .then(() => {
+          assessmentDispatch({ type: ASSESSMENT_ACTION.MARK_SAVED });
+        })
+        .catch(() => {
+          // Background save failed — answers remain in local state and will
+          // be retried on the next navigation or step transition.
+        });
     }
   }, [assessmentId, isDirty, answers, currentStep, saveProgress, assessmentDispatch]);
 
