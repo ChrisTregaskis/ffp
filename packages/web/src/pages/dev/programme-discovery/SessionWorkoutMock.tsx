@@ -212,68 +212,48 @@ const RestTimer: React.FC<RestTimerProps> = ({ seconds, onComplete, onSkip }) =>
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="flex h-full flex-col items-center justify-center text-center"
     >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-xs rounded-2xl bg-white p-8 text-center shadow-xl"
-      >
-        <Text
-          as="p"
-          styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}
-          className="mb-4 uppercase tracking-wide"
-        >
-          Rest
-        </Text>
+      <Title as="h2" className="mb-6">
+        Rest
+      </Title>
 
-        {/* Circular progress */}
-        <div className="relative mx-auto mb-6 h-32 w-32">
-          <svg className="h-full w-full -rotate-90" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="52" fill="none" stroke="#ececf0" strokeWidth="8" />
-            <circle
-              cx="60"
-              cy="60"
-              r="52"
-              fill="none"
-              stroke="url(#restGradient)"
-              strokeWidth="8"
-              strokeLinecap="round"
-              strokeDasharray={String(2 * Math.PI * 52)}
-              strokeDashoffset={String(2 * Math.PI * 52 * (1 - progressPercent / 100))}
-              className="transition-all duration-1000 ease-linear"
-            />
-            <defs>
-              <linearGradient id="restGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="var(--color-ffp-primary-blue)" />
-                <stop offset="100%" stopColor="var(--color-ffp-dark-blue)" />
-              </linearGradient>
-            </defs>
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Text styleProps={{ size: '3xl', weight: 'bold' }}>{String(remaining)}s</Text>
-          </div>
+      {/* Circular progress */}
+      <div className="relative mx-auto mb-8 h-48 w-48">
+        <svg className="h-full w-full -rotate-90" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="#ececf0" strokeWidth="6" />
+          <circle
+            cx="60"
+            cy="60"
+            r="52"
+            fill="none"
+            stroke="url(#restGradient)"
+            strokeWidth="6"
+            strokeLinecap="round"
+            strokeDasharray={String(2 * Math.PI * 52)}
+            strokeDashoffset={String(2 * Math.PI * 52 * (1 - progressPercent / 100))}
+            className="transition-all duration-1000 ease-linear"
+          />
+          <defs>
+            <linearGradient id="restGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="var(--color-ffp-primary-blue)" />
+              <stop offset="100%" stopColor="var(--color-ffp-dark-blue)" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Text styleProps={{ size: '4xl', weight: 'bold' }}>{String(remaining)}s</Text>
         </div>
+      </div>
 
-        <div className="flex justify-center gap-3">
-          <Button variant="neutral" size="sm" onClick={onSkip}>
-            Skip Rest
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              setRemaining((prev) => prev + 15);
-            }}
-          >
-            +15s
-          </Button>
-        </div>
-      </motion.div>
+      <div className="flex justify-center">
+        <Button variant="secondary" size="md" onClick={onSkip}>
+          Skip Rest
+        </Button>
+      </div>
     </motion.div>
   );
 };
@@ -596,84 +576,105 @@ export const SessionWorkoutMock: React.FC = () => {
         {/* Main Exercise Area */}
         <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           <AnimatePresence mode="wait">
-            <motion.div
-              key={activeExercise.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25 }}
-              className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6"
-            >
-              {/* Exercise Title */}
-              <Title as="h2" className="mb-4">
-                {activeExercise.name}
-              </Title>
-
-              {/* Video Player */}
-              <div className="mb-6 overflow-hidden rounded-xl bg-black shadow-md">
-                <video
-                  key={activeExercise.id}
-                  src={MOCK_VIDEO_URL}
-                  className="aspect-video w-full"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  controls
+            {showRestTimer ? (
+              <motion.div
+                key="rest-timer"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.25 }}
+                className="flex flex-1 items-center justify-center"
+              >
+                <RestTimer
+                  seconds={activeExercise.restSeconds}
+                  onComplete={() => {
+                    setShowRestTimer(false);
+                  }}
+                  onSkip={() => {
+                    setShowRestTimer(false);
+                  }}
                 />
-              </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key={activeExercise.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.25 }}
+                className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6"
+              >
+                {/* Exercise Title */}
+                <Title as="h2" className="mb-4">
+                  {activeExercise.name}
+                </Title>
 
-              {/* Prescription Badges */}
-              <div className="mb-6 flex flex-wrap gap-2">
-                <PrescriptionBadge
-                  label={`${String(activeExercise.sets)} ${activeExercise.sets === 1 ? 'set' : 'sets'} × ${activeExercise.reps}`}
-                  icon={Icons.REPEAT}
-                  variant="blue"
-                />
-                {activeExercise.restSeconds > 0 && (
-                  <PrescriptionBadge
-                    label={`${String(activeExercise.restSeconds)}s rest`}
-                    icon={Icons.CLOCK}
-                    variant="purple"
+                {/* Video Player */}
+                <div className="mb-6 overflow-hidden rounded-xl bg-black shadow-md">
+                  <video
+                    key={activeExercise.id}
+                    src={MOCK_VIDEO_URL}
+                    className="aspect-video w-full"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    controls
                   />
-                )}
-                {activeExercise.durationSeconds != null && (
+                </div>
+
+                {/* Prescription Badges */}
+                <div className="mb-6 flex flex-wrap gap-2">
                   <PrescriptionBadge
-                    label={`${String(activeExercise.durationSeconds)}s`}
-                    icon={Icons.CLOCK}
-                    variant="green"
+                    label={`${String(activeExercise.sets)} ${activeExercise.sets === 1 ? 'set' : 'sets'} × ${activeExercise.reps}`}
+                    icon={Icons.REPEAT}
+                    variant="blue"
                   />
-                )}
-              </div>
+                  {activeExercise.restSeconds > 0 && (
+                    <PrescriptionBadge
+                      label={`${String(activeExercise.restSeconds)}s rest`}
+                      icon={Icons.CLOCK}
+                      variant="purple"
+                    />
+                  )}
+                  {activeExercise.durationSeconds != null && (
+                    <PrescriptionBadge
+                      label={`${String(activeExercise.durationSeconds)}s`}
+                      icon={Icons.CLOCK}
+                      variant="green"
+                    />
+                  )}
+                </div>
 
-              {/* Exercise Detail Accordion */}
-              <div className="mb-6">
-                <ExerciseDetail exercise={activeExercise} />
-              </div>
+                {/* Exercise Detail Accordion */}
+                <div className="mb-6">
+                  <ExerciseDetail exercise={activeExercise} />
+                </div>
 
-              {/* Action Buttons — secondary left, primary right */}
-              <div className="flex justify-end gap-3">
-                <Button variant="neutral" size="lg" onClick={skipExercise}>
-                  Skip
-                </Button>
-                {activeExercise.restSeconds > 0 && (
-                  <Button
-                    variant="secondary"
-                    size="lg"
-                    onClick={() => {
-                      setShowRestTimer(true);
-                    }}
-                  >
-                    <Icon name={Icons.CLOCK} styleProps={{ size: 'sm' }} />
-                    Rest
+                {/* Action Buttons — secondary left, primary right */}
+                <div className="flex justify-end gap-3">
+                  <Button variant="neutral" size="md" onClick={skipExercise}>
+                    Skip
                   </Button>
-                )}
-                <Button variant="primary" size="lg" onClick={completeExercise}>
-                  <Icon name={Icons.CHECK} styleProps={{ size: 'sm', colour: '#ffffff' }} />
-                  Mark Complete
-                </Button>
-              </div>
-            </motion.div>
+                  {activeExercise.restSeconds > 0 && (
+                    <Button
+                      variant="secondary"
+                      size="md"
+                      onClick={() => {
+                        setShowRestTimer(true);
+                      }}
+                    >
+                      <Icon name={Icons.CLOCK} styleProps={{ size: 'sm' }} />
+                      Rest
+                    </Button>
+                  )}
+                  <Button variant="primary" size="md" onClick={completeExercise}>
+                    <Icon name={Icons.CHECK} styleProps={{ size: 'sm', colour: '#ffffff' }} />
+                    Mark Complete
+                  </Button>
+                </div>
+              </motion.div>
+            )}
           </AnimatePresence>
 
           {/* ─── Mobile Exercise Drawer ──────────────────────────────────── */}
@@ -723,21 +724,6 @@ export const SessionWorkoutMock: React.FC = () => {
           </div>
         </main>
       </div>
-
-      {/* ─── Rest Timer ─────────────────────────────────────────────────── */}
-      <AnimatePresence>
-        {showRestTimer && (
-          <RestTimer
-            seconds={activeExercise.restSeconds}
-            onComplete={() => {
-              setShowRestTimer(false);
-            }}
-            onSkip={() => {
-              setShowRestTimer(false);
-            }}
-          />
-        )}
-      </AnimatePresence>
 
       {/* ─── Exit Dialog ────────────────────────────────────────────────── */}
       <AnimatePresence>

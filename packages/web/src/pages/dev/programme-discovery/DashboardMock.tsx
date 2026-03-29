@@ -14,7 +14,7 @@ import {
   mockProgramme,
   getCurrentPhase,
   getCurrentSession,
-  getCompletedPhasesCount,
+  // getCompletedPhasesCount,
   getCompletedSessionsCount,
   MOCK_VIDEO_URL,
 } from './mock-data';
@@ -166,9 +166,9 @@ export const DashboardMock: React.FC = () => {
 
   const currentPhase = useMemo(() => getCurrentPhase(), []);
   const currentSession = useMemo(() => getCurrentSession(), []);
-  const completedPhases = useMemo(() => getCompletedPhasesCount(), []);
+  // const completedPhases = useMemo(() => getCompletedPhasesCount(), []);
 
-  const totalPhases = mockProgramme.phases.length;
+  // const totalPhases = mockProgramme.phases.length;
 
   const currentPhaseCompletedSessions = currentPhase ? getCompletedSessionsCount(currentPhase) : 0;
   const currentPhaseTotalSessions = currentPhase ? currentPhase.sessions.length : 0;
@@ -290,7 +290,7 @@ export const DashboardMock: React.FC = () => {
               )}
 
               {/* Programme Overview */}
-              <FadeSlideIn delay={0.3}>
+              {/* <FadeSlideIn delay={0.3}>
                 <Card className="mt-6">
                   <div className="p-5">
                     <div className="mb-4">
@@ -316,7 +316,7 @@ export const DashboardMock: React.FC = () => {
                     <ProgressBar percent={(completedPhases / totalPhases) * 100} />
                   </div>
                 </Card>
-              </FadeSlideIn>
+              </FadeSlideIn> */}
             </>
           )}
         </div>
