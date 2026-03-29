@@ -68,7 +68,7 @@ export const HomePage = (): JSX.Element => {
     if (isProgrammeUser && assessmentStatus && shouldRedirectToAssessment(assessmentStatus)) {
       const assessmentPath = routes[RouteKey.ASSESSMENT].path;
 
-      void navigate(`${assessmentPath}?flowId=${assessmentStatus.assessmentFlowId}`, {
+      void navigate(`${assessmentPath}?flowId=${String(assessmentStatus.assessmentFlowId)}`, {
         replace: true,
       });
     }
