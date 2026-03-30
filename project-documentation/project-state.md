@@ -12,7 +12,7 @@
 
 **Discovery branch**: `discovery/programme-execution-ux` (prototype pages for reference, cleanup in FFP-550)
 
-### Sprint 13: Backend + Assessment Page (~26 SP)
+### Sprint 11: Backend + Assessment Page (~26 SP)
 
 | Key     | Summary                                                             | SP  |
 | ------- | ------------------------------------------------------------------- | --- |
@@ -22,7 +22,7 @@
 | FFP-363 | Progress Summary API (simplified)                                   | 5   |
 | FFP-553 | Assessment page for programme users (MVP — reassessment CTA)        | 3   |
 
-### Sprint 14: Frontend Pages + Polish (~30 SP)
+### Sprint 12: Frontend Pages + Polish (~30 SP)
 
 | Key     | Summary                                                                | SP  |
 | ------- | ---------------------------------------------------------------------- | --- |
