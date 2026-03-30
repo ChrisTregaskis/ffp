@@ -44,12 +44,12 @@ interface PrescriptionBadgeProps {
 
 const PrescriptionBadge: React.FC<PrescriptionBadgeProps> = ({ label, icon, variant = 'blue' }) => (
   <span
-    className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium ${variant === 'purple' ? '' : 'text-white'} ${BADGE_COLOURS[variant]}`}
+    className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium ${variant === 'purple' ? '' : 'text-white'} ${BADGE_COLOURS[variant]}`}
   >
     <Icon
       name={icon}
       styleProps={{
-        size: 'xs',
+        size: 'sm',
         colour: variant === 'purple' ? 'var(--color-ffp-dark-blue)' : '#ffffff',
       }}
     />
