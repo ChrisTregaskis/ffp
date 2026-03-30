@@ -9,7 +9,6 @@ import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { LoadingSpinner } from '@web/components/LoadingSpinner';
 import { Text } from '@web/components/text';
 import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
-import { REASSESSMENT_START_KEY } from './assessment.constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import {
   useAssessmentTemplateQuery,
@@ -18,6 +17,8 @@ import {
 } from '@web/hooks/assessments';
 import { useReplaceProgrammeMutation } from '@web/hooks/programmes';
 import { routes, RouteKey } from '@web/pages/routes';
+
+import { REASSESSMENT_START_KEY } from './assessment.constants';
 
 interface AssessmentOrchestratorProps {
   /** Assessment flow ID to start or resume */
