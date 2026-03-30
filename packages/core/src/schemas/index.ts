@@ -16,6 +16,9 @@ export * from './user-assessment.schema';
 export * from './programme.schema';
 export * from './programme-structure.schema';
 
+// Session schemas
+export * from './session.schema';
+
 // Video schemas
 export * from './video.schema';
 

@@ -2,13 +2,69 @@
 
 **Last Updated**: 30th March 2026
 **Current EPIC**: FFP-4 Programme Execution & Progress
-**Sprint Status**: Sprint planning complete. Ready for Sprint 13.
+**Sprint Status**: Sprint 11 in progress. Picking up FFP-354.
 
 ---
 
-## Next Up: FFP-4 Programme Execution & Progress — Sprints 11–12 (~56 SP)
+## Current: FFP-354 — User Sessions & Exercise Completions Schema (5 SP)
 
-**Status**: Discovery complete, co-founder approved, sprint planning done. Ready to build.
+**Branch**: `feature/sprint11`
+**Status**: All 3 groups complete — ready for review
+
+### Amendments from Jira (Reconciled with Current State)
+
+1. **`tenant_id` → `organisation_id`**: Jira description references `tenant_id` columns/FKs — must be `organisation_id` per Sprint 10.5 refactor. RLS GUC is `app.organisation_id`.
+2. **Add `paused_at` column**: Sprint planning brief (§9, decision 1) confirms `paused_at` timestamp on `user_sessions` for MVP pause tracking. Not in Jira subtask ACs — adding it.
+3. **Constants pattern**: Define `SESSION_STATUSES` in `@ffp/database/src/constants/session.constants.ts` (follows existing pattern from `programme.constants.ts`).
+4. **Zod schemas location**: Jira says `packages/core/src/sessions/session.schema.ts` — this is a new domain directory, confirmed correct.
+
+### Implementation Order (3 Groups, Single Branch)
+
+**Group 1 — Drizzle Schemas + Exports** (FFP-355, FFP-356, FFP-360):
+
+- Create `packages/database/src/constants/session.constants.ts` — `SESSION_STATUSES` enum values
+- Create `packages/database/src/schema/user-sessions.ts` — table + `sessionStatusEnum` pgEnum
+  - Columns: id, organisation_id, programme_phase_id, template_session_id, session_number, status, paused_at, started_at, completed_at, skipped_at, created_at, updated_at
+  - Unique: `(programme_phase_id, session_number)`
+  - FKs: restrict on programme_phase_id and template_session_id, cascade on organisation_id
+- Create `packages/database/src/schema/exercise-completions.ts` — table
+  - Columns: id, organisation_id, user_session_id, session_exercise_id, video_id, completed, completed_at, skipped, notes, metadata (JSONB), created_at, updated_at
+  - Unique: `(user_session_id, session_exercise_id)`
+  - FKs: cascade on user_session_id, restrict on session_exercise_id and video_id, cascade on organisation_id
+- Update `packages/database/src/schema/index.ts` — export new tables, enum, types
+
+**Group 2 — Migration + RLS** (FFP-357, FFP-358):
+
+- Run `pnpm db:generate` to create migration SQL
+- Review generated SQL — verify RLS policies, indexes, constraints
+- Add RLS policies (may need manual SQL in migration): `organisation_id = current_setting('app.organisation_id', true)::UUID`
+- Run `pnpm db:migrate` to apply
+- Verify in `pnpm db:studio`
+
+**Group 3 — Zod Schemas** (FFP-359):
+
+- Create `packages/core/src/sessions/` domain directory
+- Create `packages/core/src/sessions/session.schema.ts`:
+  - `StartSessionRequestSchema` — `{ programmePhaseId, templateSessionId }`
+  - `UpdateSessionStatusSchema` — `{ status }`
+  - `ToggleExerciseCompletionSchema` — `{ completed: boolean }`
+  - `UserSessionResponseSchema` — full session shape
+  - `ExerciseCompletionResponseSchema` — completion shape
+- Export inferred types
+
+### Reference Files
+
+- Schema pattern: `packages/database/src/schema/programme-phases.ts`
+- Constants pattern: `packages/database/src/constants/programme.constants.ts`
+- RLS: `packages/database/src/lib/rls.ts` (`withRLS()`, `SET LOCAL app.organisation_id`)
+- Zod pattern: `packages/core/src/programmes/programme.schema.ts`
+- Data model: `.claude/research/programme-data-model-research.md` §2.3
+
+---
+
+## FFP-4 Programme Execution & Progress — Sprints 11–12 (~56 SP)
+
+**Status**: Sprint 11 in progress.
 
 **Discovery branch**: `discovery/programme-execution-ux` (prototype pages for reference, cleanup in FFP-550)
 

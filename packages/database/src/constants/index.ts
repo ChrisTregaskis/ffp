@@ -17,6 +17,7 @@ export * from './location.constants';
 export * from './flow.constants';
 export * from './job.constants';
 export * from './programme.constants';
+export * from './session.constants';
 export * from './question.constants';
 export * from './organisation.constants';
 export * from './user.constants';
