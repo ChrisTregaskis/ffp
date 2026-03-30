@@ -98,7 +98,6 @@ export const toggleExerciseCompletionResponseSchema = z.object({
   cascade: cascadeResultSchema,
 });
 
-export type SessionStatus = z.infer<typeof sessionStatusSchema>;
 export type StartSessionRequest = z.infer<typeof startSessionRequestSchema>;
 export type UpdateSessionStatus = z.infer<typeof updateSessionStatusSchema>;
 export type ToggleExerciseCompletionRequest = z.infer<typeof toggleExerciseCompletionSchema>;
