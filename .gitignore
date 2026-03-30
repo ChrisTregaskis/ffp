@@ -82,6 +82,8 @@ project-documentation/refactoring/
 
 # Postman (managed via Postman MCP server, not local files)
 postman/
+# video for testing
+packages/web/public/videos
 
 # AWS RDS CA certificate (public certificate - safe to commit)
 # curl -o packages/core/certs/rds-ca-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem

@@ -1,8 +1,58 @@
 # FFP - Project State
 
-**Last Updated**: 23rd March 2026
-**Current EPIC**: FFP-6 Customer & User Onboarding
-**Sprint Status**: Sprint 10 + 10.5 complete — merging to main
+**Last Updated**: 30th March 2026
+**Current EPIC**: FFP-4 Programme Execution & Progress
+**Sprint Status**: Sprint planning complete. Ready for Sprint 13.
+
+---
+
+## Next Up: FFP-4 Programme Execution & Progress — Sprints 11–12 (~56 SP)
+
+**Status**: Discovery complete, co-founder approved, sprint planning done. Ready to build.
+
+**Discovery branch**: `discovery/programme-execution-ux` (prototype pages for reference, cleanup in FFP-550)
+
+### Sprint 13: Backend + Assessment Page (~26 SP)
+
+| Key     | Summary                                                             | SP  |
+| ------- | ------------------------------------------------------------------- | --- |
+| FFP-354 | Schema: user_sessions + exercise_completions (includes `paused_at`) | 5   |
+| FFP-361 | Programme Detail API with Tiered Visibility                         | 5   |
+| FFP-362 | Session Lifecycle & Exercise Completion APIs                        | 8   |
+| FFP-363 | Progress Summary API (simplified)                                   | 5   |
+| FFP-553 | Assessment page for programme users (MVP — reassessment CTA)        | 3   |
+
+### Sprint 14: Frontend Pages + Polish (~30 SP)
+
+| Key     | Summary                                                                | SP  |
+| ------- | ---------------------------------------------------------------------- | --- |
+| FFP-386 | Dashboard Page (hero session card, phase detail, programme progress)   | 8   |
+| FFP-387 | Programme Overview (vertical timeline, scroll-driven reveal)           | 8   |
+| FFP-388 | Session Workout (full-screen, exercise-first, rest timer, exit dialog) | 8   |
+| FFP-416 | Progress Page (programme/phase progress only, reduced scope)           | 3   |
+| FFP-417 | Integration verification and documentation                             | 3   |
+| FFP-550 | Remove discovery prototype mock pages                                  | 1   |
+
+### Key Decisions from Discovery
+
+- Vertical timeline with scroll-driven animation for programme overview
+- Exercise-first session layout with collapsible sidebar, full-screen mode
+- Dashboard order: Session → Phase → Programme (immediate to broad)
+- "Your Next Session" framing (not "Today's Session")
+- User-initiated rest timer (replaces content inline, no auto-advance)
+- Two-intent exit flow: pause vs done for today
+- Dark blue (`ffp-dark-blue`) for active states, solid colour badges throughout
+- Exercise detail is inline (not separate page) — FFP-415 deleted
+- Reassessment CTA moved from Progress to new Assessment page (FFP-553)
+- `paused_at` flag on sessions for MVP; full audit trail deferred (FFP-551)
+- ProgressBar extracted from existing AssessmentProgress component
+- Rest timer and scroll animations included in MVP
+- Media container abstraction on session page (future CV integration)
+
+**Full planning details**: `.claude/research/programme/ffp4-sprint-planning-brief.md`
+**UX research & design decisions**: `.claude/research/programme/programme-execution-ux-research.md`
+
+**Full details**: `.claude/research/programme/programme-execution-ux-research.md`
 
 ---
 
@@ -225,7 +275,7 @@ await db.transaction(async (tx) => {
 - ✅ FFP-3: Video Management (Sprints 7-8)
 - ✅ FFP-439: Admin Programme Template Management (Sprint 9, ~34 pts)
 - ✅ FFP-6: Customer & User Onboarding (Sprints 10-10.5, ~52 pts)
-- ⏳ FFP-4: Programme Execution & Progress (Sprints 11-13)
+- ⏳ FFP-4: Programme Execution & Progress (Sprints 11-12)
 - ⏳ FFP-109: Deployment Readiness (staging + production)
 
 ---

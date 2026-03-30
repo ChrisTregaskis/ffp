@@ -103,4 +103,14 @@ export enum RouteKey {
   COMPONENTS_TOAST_ALERT = 'components-toast-alert',
   /** Table components showcase */
   COMPONENTS_TABLE = 'components-table',
+
+  // Discovery prototype routes (programme execution UX exploration)
+  /** Programme discovery: session workout prototype */
+  DISCOVERY_SESSION_WORKOUT = 'discovery-session-workout',
+  /** Programme discovery: programme overview prototype */
+  DISCOVERY_PROGRAMME_OVERVIEW = 'discovery-programme-overview',
+  /** Programme discovery: dashboard prototype */
+  DISCOVERY_DASHBOARD = 'discovery-dashboard',
+  /** Programme discovery: progress page prototype */
+  DISCOVERY_PROGRESS = 'discovery-progress',
 }
