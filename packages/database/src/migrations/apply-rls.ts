@@ -5,7 +5,7 @@
  * It is idempotent and can be run multiple times safely.
  *
  * **Tables with RLS policies:**
- * - organisations, locations, users, user_assessments, user_assessment_answers, programmes, programme_phases
+ * - organisations, locations, users, user_assessments, user_assessment_answers, programmes, programme_phases, user_sessions, exercise_completions
  *
  * **Admin bypass policy:**
  * - locations and users tables have an additional permissive policy that grants
@@ -50,14 +50,14 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     SELECT tablename, rowsecurity
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'programmes', 'programme_phases')
+    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'programmes', 'programme_phases', 'user_sessions', 'exercise_completions')
     ORDER BY tablename
   `);
 
   const tables = rlsCheck.rows as Array<{ tablename: string; rowsecurity: boolean }>;
 
-  // Check if all tables have RLS enabled (6 tables)
-  const allTablesHaveRLS = tables.length === 7 && tables.every((t) => t.rowsecurity === true);
+  // Check if all tables have RLS enabled (9 tables)
+  const allTablesHaveRLS = tables.length === 9 && tables.every((t) => t.rowsecurity === true);
 
   if (allTablesHaveRLS) {
     logger.info('RLS already enabled on all tables, re-applying policies to pick up any changes...');
@@ -341,6 +341,58 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
         FOR ALL
         USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
     `);
+
+    // ============================================================================
+    // USER_SESSIONS TABLE RLS
+    // ============================================================================
+
+    logger.debug('Enabling RLS on user_sessions table...');
+
+    await tx.execute(sql`
+      ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;
+    `);
+
+    if (!isProduction) {
+      await tx.execute(sql`
+        ALTER TABLE user_sessions FORCE ROW LEVEL SECURITY;
+      `);
+    }
+
+    await tx.execute(sql`
+      DROP POLICY IF EXISTS user_sessions_organisation_isolation ON user_sessions;
+    `);
+
+    await tx.execute(sql`
+      CREATE POLICY user_sessions_organisation_isolation ON user_sessions
+        FOR ALL
+        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+    `);
+
+    // ============================================================================
+    // EXERCISE_COMPLETIONS TABLE RLS
+    // ============================================================================
+
+    logger.debug('Enabling RLS on exercise_completions table...');
+
+    await tx.execute(sql`
+      ALTER TABLE exercise_completions ENABLE ROW LEVEL SECURITY;
+    `);
+
+    if (!isProduction) {
+      await tx.execute(sql`
+        ALTER TABLE exercise_completions FORCE ROW LEVEL SECURITY;
+      `);
+    }
+
+    await tx.execute(sql`
+      DROP POLICY IF EXISTS exercise_completions_organisation_isolation ON exercise_completions;
+    `);
+
+    await tx.execute(sql`
+      CREATE POLICY exercise_completions_organisation_isolation ON exercise_completions
+        FOR ALL
+        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+    `);
   });
 
   logger.info('RLS policies applied successfully');
@@ -350,7 +402,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     SELECT tablename, rowsecurity
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'programmes', 'programme_phases')
+    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'programmes', 'programme_phases', 'user_sessions', 'exercise_completions')
     ORDER BY tablename
   `);
 
