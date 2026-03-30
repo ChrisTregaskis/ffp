@@ -120,7 +120,7 @@ describe('TypeScript Path Aliases', () => {
       const baseTsconfig = parseJsonc(resolve(rootDir, 'tsconfig.base.json'));
 
       expect(webTsconfig.compilerOptions.target).toBe('ES2020');
-      expect(baseTsconfig.compilerOptions.target).toBe('ES2022');
+      expect(baseTsconfig.compilerOptions.target).toBe('ES2024');
     });
   });
 

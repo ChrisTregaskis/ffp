@@ -7,7 +7,19 @@ import { getInputClassName } from '../shared/inputStyles';
 
 import { FormField } from './FormField';
 
-import type { UseFormRegister, FieldErrors, FieldValues, Path } from 'react-hook-form';
+import type {
+  UseFormRegister,
+  FieldErrors,
+  FieldValues,
+  Path,
+  RegisterOptions,
+} from 'react-hook-form';
+
+/** Native input attributes that can be forwarded to the underlying <input> element */
+type NativeInputProps = Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  'name' | 'type' | 'placeholder' | 'disabled' | 'id' | 'className'
+>;
 
 export interface FormTextInputProps<TFieldValues extends FieldValues> {
   name: Path<TFieldValues>;
@@ -19,6 +31,12 @@ export interface FormTextInputProps<TFieldValues extends FieldValues> {
   isRequired?: boolean;
   /** Disables the input (read-only appearance with reduced opacity) */
   disabled?: boolean;
+  /** Additional native input attributes (e.g. inputMode, autoComplete) */
+  inputProps?: NativeInputProps;
+  /** Extra CSS classes appended to the input element */
+  inputClassName?: string;
+  /** Additional react-hook-form register options (e.g. required, pattern) */
+  registerOptions?: RegisterOptions<TFieldValues, Path<TFieldValues>>;
 }
 
 /**
@@ -43,6 +61,9 @@ export const FormTextInput = <TFieldValues extends FieldValues>({
   errors,
   isRequired,
   disabled = false,
+  inputProps,
+  inputClassName,
+  registerOptions,
 }: FormTextInputProps<TFieldValues>): JSX.Element => {
   const [showPassword, setShowPassword] = useState(false);
   const error = errors[name]?.message as string | undefined;
@@ -63,8 +84,9 @@ export const FormTextInput = <TFieldValues extends FieldValues>({
       aria-required={isRequired}
       aria-invalid={!!error}
       aria-describedby={error ? errorId : undefined}
-      {...register(name, { disabled })}
-      className={`${getInputClassName(!!error)} w-full px-3 py-2 ${isPassword ? 'pr-10' : ''} ${disabledClassName}`}
+      {...inputProps}
+      {...register(name, { disabled, ...registerOptions })}
+      className={`${getInputClassName(!!error)} w-full px-3 py-2 ${isPassword ? 'pr-10' : ''} ${disabledClassName}${inputClassName ? ` ${inputClassName}` : ''}`}
     />
   );
 

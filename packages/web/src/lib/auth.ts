@@ -1,5 +1,12 @@
 import { Amplify } from 'aws-amplify';
-import { signIn, signOut, getCurrentUser, fetchAuthSession } from 'aws-amplify/auth';
+import {
+  signIn,
+  signOut,
+  getCurrentUser,
+  fetchAuthSession,
+  resetPassword,
+  confirmResetPassword,
+} from 'aws-amplify/auth';
 
 /**
  * Initialise AWS Amplify with Cognito authentication configuration.
@@ -24,7 +31,9 @@ Amplify.configure({
  * - signOut: End the current user session
  * - getCurrentUser: Retrieve the currently authenticated user
  * - fetchAuthSession: Get the current JWT tokens and session info
+ * - resetPassword: Initiate a forgot password flow (sends verification code)
+ * - confirmResetPassword: Complete password reset with verification code and new password
  *
  * Note: signUp is not included as FFP uses invite-only user creation (admin-only onboarding).
  */
-export { signIn, signOut, getCurrentUser, fetchAuthSession };
+export { signIn, signOut, getCurrentUser, fetchAuthSession, resetPassword, confirmResetPassword };

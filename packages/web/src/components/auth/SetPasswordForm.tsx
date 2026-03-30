@@ -8,7 +8,6 @@ import { Form } from '@web/components/form';
 import { PasswordInput } from '@web/components/form/password/PasswordInput';
 import { PasswordRequirementsList } from '@web/components/form/password/PasswordRequirementsList';
 import { CardTransition, type CardTransitionDirection } from '@web/components/motion';
-import { Text } from '@web/components/text/Text';
 import { validatePassword } from '@web/utils/passwordStrength';
 
 import { setPasswordCredentialsFields, type SetPasswordCredentialsData } from '.';
@@ -275,12 +274,7 @@ export const SetPasswordForm: React.FC<SetPasswordFormProps> = ({
           />
 
           {/* Password requirements list */}
-          <div className="space-y-3">
-            <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'foreground' }}>
-              Password requirements:
-            </Text>
-            <PasswordRequirementsList requirements={passwordValidation.requirements} />
-          </div>
+          <PasswordRequirementsList requirements={passwordValidation.requirements} />
 
           {/* Confirm password input */}
           <PasswordInput

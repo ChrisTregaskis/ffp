@@ -85,9 +85,10 @@ export const setPasswordSchema = z.object({
   confirmPassword: z.string().min(1, 'Please confirm your password'),
 });
 
-/**
- * Inferred TypeScript types
- */
+export const forgotPasswordRequestSchema = z.object({
+  email: z.string().regex(EMAIL_PATTERN, 'Invalid email address'),
+});
+
 export type SetPasswordCredentialsData = z.infer<typeof setPasswordCredentialsSchema>;
-export type SetPasswordNewPasswordData = z.infer<typeof setPasswordNewPasswordSchema>;
 export type SetPasswordFormData = z.infer<typeof setPasswordSchema>;
+export type ForgotPasswordRequestData = z.infer<typeof forgotPasswordRequestSchema>;

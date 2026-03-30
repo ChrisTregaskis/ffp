@@ -5,7 +5,7 @@ import { PageContainer, PageHeader } from '@web/components/layout';
 import { LoadingSpinner } from '@web/components/LoadingSpinner/LoadingSpinner';
 import { Title, Text } from '@web/components/text';
 import { USER_ROLE } from '@web/constants/roles';
-import { useUserAssessmentStatusQuery } from '@web/hooks/assessments';
+import { shouldRedirectToAssessment, useUserAssessmentStatusQuery } from '@web/hooks/assessments';
 import { useAuth } from '@web/hooks/useAuth';
 import { RouteKey, routes } from '@web/pages/routes';
 
@@ -35,6 +35,13 @@ export const HomePage = (): JSX.Element => {
     enabled: isProgrammeUser,
   });
 
+  // Whether a redirect is pending (used to suppress layout flash)
+  const isRedirecting =
+    user?.role === USER_ROLE.CUSTOMER_OWNER ||
+    user?.role === USER_ROLE.CUSTOMER_ADMIN ||
+    user?.role === USER_ROLE.SYSTEM_ADMIN ||
+    (isProgrammeUser && assessmentStatus && shouldRedirectToAssessment(assessmentStatus));
+
   // Redirect users to their role-appropriate home page
   useEffect(() => {
     if (!user) {
@@ -55,22 +62,23 @@ export const HomePage = (): JSX.Element => {
       return;
     }
 
-    // Programme users without an active programme → redirect to assessment
-    if (isProgrammeUser && assessmentStatus) {
-      if (!assessmentStatus.hasProgramme && assessmentStatus.assessmentFlowId) {
-        const assessmentPath = routes[RouteKey.ASSESSMENT].path;
+    // Programme users who have never had a programme → redirect to assessment
+    // Users who previously had a programme (completed/archived) land on the dashboard
+    // and can optionally start a new assessment from the Progress page.
+    if (isProgrammeUser && assessmentStatus && shouldRedirectToAssessment(assessmentStatus)) {
+      const assessmentPath = routes[RouteKey.ASSESSMENT].path;
 
-        void navigate(`${assessmentPath}?flowId=${assessmentStatus.assessmentFlowId}`, {
-          replace: true,
-        });
-      }
+      void navigate(`${assessmentPath}?flowId=${String(assessmentStatus.assessmentFlowId)}`, {
+        replace: true,
+      });
     }
   }, [user, navigate, isProgrammeUser, assessmentStatus]);
 
-  // Show loading spinner while checking programme status for programme users
-  if (isProgrammeUser && isStatusLoading) {
+  // Show full-screen overlay spinner while loading status or redirecting.
+  // Uses fixed positioning to cover the entire viewport including the sidebar.
+  if ((isProgrammeUser && isStatusLoading) || isRedirecting) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
         <LoadingSpinner size="lg" variant="center" />
       </div>
     );
