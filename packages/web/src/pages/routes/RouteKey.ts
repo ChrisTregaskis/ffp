@@ -19,6 +19,8 @@ export enum RouteKey {
   PROGRAMME_OVERVIEW = 'programme-overview',
   /** Progress and analytics page */
   PROGRESS = 'progress',
+  /** Assessment overview with reassessment CTA */
+  ASSESSMENT_OVERVIEW = 'assessment-overview',
   /** Account settings page */
   ACCOUNT_SETTINGS = 'account-settings',
 

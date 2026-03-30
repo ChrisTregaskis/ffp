@@ -42,6 +42,7 @@ import { VideoUploadPage } from '@web/pages/protected/admin/video-upload';
 import { VideoLibraryPage } from '@web/pages/protected/admin/VideoLibraryPage';
 import { HomePage } from '@web/pages/protected/HomePage';
 import { AccountSettingsPage } from '@web/pages/protected/programme-user/AccountSettingsPage';
+import { AssessmentOverviewPage } from '@web/pages/protected/programme-user/AssessmentOverviewPage';
 import { AssessmentPage } from '@web/pages/protected/programme-user/AssessmentPage';
 import { ProgrammeOverviewPage } from '@web/pages/protected/programme-user/ProgrammeOverviewPage';
 import { ProgressPage } from '@web/pages/protected/programme-user/ProgressPage';
@@ -193,6 +194,12 @@ export const routes: RoutesConfig = {
     path: '/progress',
     pageComponent: ProgressPage,
     title: 'Progress',
+    allowedRoles: [PROGRAMME_USER],
+  },
+  [RouteKey.ASSESSMENT_OVERVIEW]: {
+    path: '/assessment-overview',
+    pageComponent: AssessmentOverviewPage,
+    title: 'Assessment',
     allowedRoles: [PROGRAMME_USER],
   },
   [RouteKey.ACCOUNT_SETTINGS]: {

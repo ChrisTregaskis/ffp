@@ -103,6 +103,14 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
       roles: [PROGRAMME_USER],
       section: 'main',
     },
+    {
+      key: RouteKey.ASSESSMENT_OVERVIEW,
+      label: 'Assessment',
+      icon: 'ClipboardList',
+      path: routes[RouteKey.ASSESSMENT_OVERVIEW].path,
+      roles: [PROGRAMME_USER],
+      section: 'main',
+    },
   ];
 
   // Customer Owner/Admin navigation
