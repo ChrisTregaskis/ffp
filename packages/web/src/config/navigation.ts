@@ -73,17 +73,9 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
   const programmeUserNavItems: NavItem[] = [
     {
       key: RouteKey.HOME,
-      label: 'Home',
+      label: 'Dashboard',
       icon: 'Home',
       path: routes[RouteKey.HOME].path,
-      roles: [PROGRAMME_USER],
-      section: 'main',
-    },
-    {
-      key: RouteKey.TODAY_WORKOUT,
-      label: "Today's Workout",
-      icon: 'Calendar',
-      path: routes[RouteKey.TODAY_WORKOUT].path,
       roles: [PROGRAMME_USER],
       section: 'main',
     },
@@ -92,14 +84,6 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
       label: 'Programme Overview',
       icon: 'Activity',
       path: routes[RouteKey.PROGRAMME_OVERVIEW].path,
-      roles: [PROGRAMME_USER],
-      section: 'main',
-    },
-    {
-      key: RouteKey.PROGRESS,
-      label: 'Progress',
-      icon: 'TrendingUp',
-      path: routes[RouteKey.PROGRESS].path,
       roles: [PROGRAMME_USER],
       section: 'main',
     },

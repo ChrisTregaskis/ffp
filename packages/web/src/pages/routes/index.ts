@@ -46,7 +46,6 @@ import { AssessmentOverviewPage } from '@web/pages/protected/programme-user/Asse
 import { AssessmentPage } from '@web/pages/protected/programme-user/AssessmentPage';
 import { ProgrammeOverviewPage } from '@web/pages/protected/programme-user/ProgrammeOverviewPage';
 import { ProgressPage } from '@web/pages/protected/programme-user/ProgressPage';
-import { TodayWorkoutPage } from '@web/pages/protected/programme-user/TodayWorkoutPage';
 import { ForgotPasswordPage } from '@web/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@web/pages/public/LoginPage';
 import { SetPasswordPage } from '@web/pages/public/SetPasswordPage';
@@ -177,12 +176,6 @@ export const routes: RoutesConfig = {
     allowedRoles: [PROGRAMME_USER],
     excludeLayout: true,
     excludeFromMainNavbar: true,
-  },
-  [RouteKey.TODAY_WORKOUT]: {
-    path: '/today-workout',
-    pageComponent: TodayWorkoutPage,
-    title: "Today's Workout",
-    allowedRoles: [PROGRAMME_USER],
   },
   [RouteKey.PROGRAMME_OVERVIEW]: {
     path: '/programme-overview',
