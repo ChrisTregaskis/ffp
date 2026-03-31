@@ -6,14 +6,11 @@
 
 ---
 
-## Current: FFP-553 — Assessment Page for Programme Users (3 SP)
+## Completed: FFP-553 — Assessment Page for Programme Users (3 SP) ✅
 
 **Branch**: `feature/sprint11`
-**Status**: Complete — ready for review
 
-### Summary
-
-Create an assessment overview page accessible from the programme user sidebar. For MVP this page contains only the reassessment CTA (moved from ProgressPage). Post-MVP, scores and trends will be added (FFP-552, backlog).
+Delivered: New `/assessment-overview` page with reassessment CTA. Programme user sidebar simplified to 3 items (Dashboard, Programme Overview, Assessment). TodayWorkoutPage stub deleted. `REASSESSMENT_START_KEY` constant extracted.
 
 ### Acceptance Criteria
 
