@@ -42,10 +42,10 @@ import { VideoUploadPage } from '@web/pages/protected/admin/video-upload';
 import { VideoLibraryPage } from '@web/pages/protected/admin/VideoLibraryPage';
 import { HomePage } from '@web/pages/protected/HomePage';
 import { AccountSettingsPage } from '@web/pages/protected/programme-user/AccountSettingsPage';
+import { AssessmentOverviewPage } from '@web/pages/protected/programme-user/AssessmentOverviewPage';
 import { AssessmentPage } from '@web/pages/protected/programme-user/AssessmentPage';
 import { ProgrammeOverviewPage } from '@web/pages/protected/programme-user/ProgrammeOverviewPage';
 import { ProgressPage } from '@web/pages/protected/programme-user/ProgressPage';
-import { TodayWorkoutPage } from '@web/pages/protected/programme-user/TodayWorkoutPage';
 import { ForgotPasswordPage } from '@web/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@web/pages/public/LoginPage';
 import { SetPasswordPage } from '@web/pages/public/SetPasswordPage';
@@ -177,12 +177,6 @@ export const routes: RoutesConfig = {
     excludeLayout: true,
     excludeFromMainNavbar: true,
   },
-  [RouteKey.TODAY_WORKOUT]: {
-    path: '/today-workout',
-    pageComponent: TodayWorkoutPage,
-    title: "Today's Workout",
-    allowedRoles: [PROGRAMME_USER],
-  },
   [RouteKey.PROGRAMME_OVERVIEW]: {
     path: '/programme-overview',
     pageComponent: ProgrammeOverviewPage,
@@ -193,6 +187,12 @@ export const routes: RoutesConfig = {
     path: '/progress',
     pageComponent: ProgressPage,
     title: 'Progress',
+    allowedRoles: [PROGRAMME_USER],
+  },
+  [RouteKey.ASSESSMENT_OVERVIEW]: {
+    path: '/assessment-overview',
+    pageComponent: AssessmentOverviewPage,
+    title: 'Assessment',
     allowedRoles: [PROGRAMME_USER],
   },
   [RouteKey.ACCOUNT_SETTINGS]: {
