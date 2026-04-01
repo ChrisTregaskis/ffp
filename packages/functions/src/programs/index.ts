@@ -7,6 +7,7 @@ import {
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
 import { handler as getActiveHandler } from './get-active';
+import { handler as getDetailHandler } from './get-detail';
 import { handler as replaceActiveHandler } from './replace-active';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
@@ -23,6 +24,7 @@ const ROUTER_CONTEXT = createSystemContext({
 const routes: RouteRegistry = {
   GET: {
     '/active': getActiveHandler,
+    '/active/detail': getDetailHandler,
   },
   PUT: {
     '/active/replace': replaceActiveHandler,

@@ -6,14 +6,14 @@ import {
   updateExerciseRequestSchema,
   reorderExercisesRequestSchema,
   exerciseResponseSchema,
-} from '../schemas/programme.schema';
+} from '../schemas/programme/programme.schema';
 import * as videoRepository from '../videos/video.repository';
 
 import * as exerciseRepository from './session-exercise.repository';
 import * as sessionRepository from './template-session.repository';
 
 import type { ExerciseWithVideo } from './session-exercise.repository';
-import type { ExerciseResponse } from '../schemas/programme.schema';
+import type { ExerciseResponse } from '../schemas/programme/programme.schema';
 
 /** Maps an exercise-with-video row to the API response shape. */
 const toResponse = (record: ExerciseWithVideo): ExerciseResponse =>

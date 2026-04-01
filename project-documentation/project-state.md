@@ -2,7 +2,67 @@
 
 **Last Updated**: 30th March 2026
 **Current EPIC**: FFP-4 Programme Execution & Progress
-**Sprint Status**: Sprint 11 in progress. Picking up FFP-553.
+**Sprint Status**: Sprint 11 in progress. Phase 2 — picking up FFP-361.
+
+---
+
+## Current: FFP-361 — Programme Detail API with Tiered Visibility (5 SP)
+
+**Branch**: `feature/sprint11`
+**Status**: Groups 1-3 complete (FFP-364, FFP-365, FFP-366, FFP-367, FFP-368). FFP-369 (Postman) deferred — ready for review.
+
+### Summary
+
+The primary data source for dashboard and programme overview pages. Returns the full programme hierarchy with tiered visibility — current/completed phases include full exercise detail, future phases show only session summaries.
+
+### Amendments from Jira
+
+1. **Handler directory**: Jira says `packages/functions/src/programmes/` but actual path is `packages/functions/src/programs/` (established before British English convention).
+2. **Schema location**: Jira says `packages/core/src/programmes/programme.schema.ts` — actual location is `packages/core/src/schemas/programme.schema.ts`. Extend existing file.
+3. **Route registration**: Uses existing `RouteRegistry` dispatcher in `packages/functions/src/programs/index.ts` — no SST config change needed.
+
+### Implementation Order (3 Groups, Single Branch)
+
+**Group 1 — Schema + Repository** (FFP-366, FFP-364):
+
+- Extend `packages/core/src/schemas/programme.schema.ts` with `ProgrammeDetailResponseSchema`
+  - Tiered phase shape: full-detail (current/completed) vs summary-only (future)
+  - Nested schemas for session, exercise, video metadata, user session, completion
+- Add repository methods to `packages/core/src/programmes/programme.repository.ts`:
+  - `findProgrammeWithPhases(userId)` — programme + programme_phases (RLS)
+  - `findTemplateStructure(templateId)` — template_phases → sessions → exercises → videos (no RLS)
+  - `findUserSessionsForPhases(phaseIds)` — user_sessions + exercise_completions (RLS)
+
+**Group 2 — Service** (FFP-365):
+
+- Add `getProgrammeDetail()` to `packages/core/src/programmes/programme.service.ts`
+  - Orchestrate 3 repository calls
+  - Determine current phase (first not_started or in_progress)
+  - Apply tiered visibility: merge template + user data for accessible phases, summaries for future
+  - Return 404-appropriate error when no active programme
+
+**Group 3 — Handler + Route + Postman** (FFP-367, FFP-368, FFP-369):
+
+- Create `packages/functions/src/programs/get-detail.ts` handler
+- Add `GET /active/detail` to route dispatcher in `packages/functions/src/programs/index.ts`
+- Update Postman collection (deferred — do last)
+
+### Key Design Decisions
+
+- **No pagination**: Max ~144 exercises per programme (~10-20 KB JSON)
+- **3 separate queries** merged in service: programme+phases (RLS), template structure (no RLS), user sessions (RLS)
+- **Current phase**: First `programme_phase` with status `not_started` or `in_progress` (ordered by `phaseNumber`)
+- **Tiered visibility**: Current/completed → full detail; future → session summaries only
+
+### Reference Files
+
+- Service: `packages/core/src/programmes/programme.service.ts`
+- Repository: `packages/core/src/programmes/programme.repository.ts`
+- Handler pattern: `packages/functions/src/programs/get-active.ts`
+- Route dispatcher: `packages/functions/src/programs/index.ts`
+- Schemas: `packages/core/src/schemas/programme.schema.ts`, `programme-structure.schema.ts`
+- Response shape: `.claude/research/ffp-4-frontend-api-research.md` §2.1
+- DB schemas: `packages/database/src/schema/programmes.ts`, `programme-phases.ts`, `template-*.ts`, `user-sessions.ts`, `exercise-completions.ts`
 
 ---
 
@@ -11,39 +71,6 @@
 **Branch**: `feature/sprint11`
 
 Delivered: New `/assessment-overview` page with reassessment CTA. Programme user sidebar simplified to 3 items (Dashboard, Programme Overview, Assessment). TodayWorkoutPage stub deleted. `REASSESSMENT_START_KEY` constant extracted.
-
-### Acceptance Criteria
-
-- AC1: New route `/assessment-overview` accessible to `programme_user` role
-- AC2: Page shows a clear CTA to start a new assessment (reassessment flow)
-- AC3: CTA navigates to existing AssessmentPage with `?reassess=true` and the user's `assessmentFlowId`
-- AC4: Uses existing `useUserAssessmentStatusQuery` to get `assessmentFlowId`
-- AC5: Uses `PageContainer` and `PageHeader` components
-- AC6: Added to programme user sidebar navigation
-- AC7: Remove the reassessment CTA from the existing ProgressPage
-
-### Implementation Plan (Single Group, Single Branch)
-
-No subtasks in Jira — all work done as one unit:
-
-1. Add `ASSESSMENT_OVERVIEW` to `RouteKey` enum
-2. Create `AssessmentOverviewPage.tsx` in `pages/protected/programme-user/`
-   - Uses `PageContainer` (centred), `PageHeader`
-   - Uses `SectionPanel` + `SectionHeader` with reassessment CTA (lifted from ProgressPage)
-   - Uses `useUserAssessmentStatusQuery` for `assessmentFlowId`
-   - Reuses exact `handleStartReassessment` pattern (sessionStorage flag + navigate)
-3. Add route config in `routes/index.ts` — path `/assessment-overview`, `allowedRoles: [PROGRAMME_USER]`
-4. Add nav item to `programmeUserNavItems` in `navigation.ts`
-5. Remove reassessment CTA section from `ProgressPage.tsx`
-
-### Reference Files
-
-- CTA source: `packages/web/src/pages/protected/programme-user/ProgressPage.tsx` (lines 23-60)
-- Hook: `packages/web/src/hooks/assessments/useUserAssessmentStatusQuery.ts`
-- Routes: `packages/web/src/pages/routes/index.ts`
-- Route keys: `packages/web/src/pages/routes/RouteKey.ts`
-- Navigation: `packages/web/src/config/navigation.ts` (programmeUserNavItems, lines 72-106)
-- Layout: `packages/web/src/components/layout/PageContainer.tsx`, `PageHeader.tsx`
 
 ---
 
