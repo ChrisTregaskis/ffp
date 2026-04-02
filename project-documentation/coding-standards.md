@@ -40,21 +40,21 @@ export type User = z.infer<typeof userSchema>;
 **Import pattern:**
 
 ```typescript
-// ✅ Import types and schemas from @ffp/core
+// [✓] Import types and schemas from @ffp/core
 import { User, UserRole, createUserSchema } from '@ffp/core';
 
-// ✅ Use constants for comparisons
+// [✓] Use constants for comparisons
 import { USER_ROLES } from '@ffp/core';
 if (user.role === USER_ROLES.SYSTEM_ADMIN) {
   /* ... */
 }
 
-// ❌ Don't use TypeScript enums
+// [✗]  Don't use TypeScript enums
 enum UserRole {
   SYSTEM_ADMIN = 'system_admin',
 }
 
-// ❌ Don't define types separately from schemas
+// [✗]  Don't define types separately from schemas
 interface User {
   id: string;
   email: string;
@@ -64,20 +64,20 @@ interface User {
 ### Type Safety Rules
 
 ```typescript
-// ❌ Never use any
+// [✗]  Never use any
 function process(data: any) {}
 
-// ✅ Use unknown with type guards
+// [✓] Use unknown with type guards
 function process(data: unknown) {
   if (isValidData(data)) {
     /* TypeScript knows the type */
   }
 }
 
-// ✅ Use optional chaining and nullish coalescing
+// [✓] Use optional chaining and nullish coalescing
 const name = user?.profile?.displayName ?? 'Guest';
 
-// ❌ Avoid non-null assertions
+// [✗]  Avoid non-null assertions
 const name = user!.firstName;
 ```
 
@@ -133,7 +133,7 @@ const program = await db.query.programs.findFirst({
   with: { sessions: { with: { exercises: true } } },
 });
 
-// ❌ Never use string concatenation (SQL injection risk)
+// [✗]  Never use string concatenation (SQL injection risk)
 const query = `SELECT * FROM users WHERE id = '${userId}'`;
 ```
 
@@ -142,12 +142,12 @@ const query = `SELECT * FROM users WHERE id = '${userId}'`;
 **Every database operation must set RLS context for organisation isolation.**
 
 ```typescript
-// ✅ Always use withRLS wrapper
+// [✓] Always use withRLS wrapper
 const users = await withRLS(organisationId, userId, async (tx) => {
   return await tx.query.users.findMany();
 });
 
-// ❌ Direct queries leak all organisation data
+// [✗]  Direct queries leak all organisation data
 await db.query.users.findMany();
 ```
 
@@ -403,7 +403,7 @@ logger.info('User created', { organisationId, userId });
 **Always use arrow functions with `React.FC` typing.**
 
 ```typescript
-// ✅ Correct
+// [✓] Correct
 interface CardProps {
   title: string;
   onAction: () => void;
@@ -418,7 +418,7 @@ export const Card: React.FC<CardProps> = ({ title, onAction }) => {
   );
 };
 
-// ❌ Don't use function declarations
+// [✗]  Don't use function declarations
 export function Card({ title, onAction }: CardProps) { }
 ```
 

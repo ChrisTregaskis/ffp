@@ -6,23 +6,25 @@ Run an E2E smoke test for a sprint's deliverables using Puppeteer MCP against th
 
 ## Argument Parsing
 
-The argument should be the sprint number (e.g., `10`) or sprint name (e.g., `Sprint 10`). If no argument is provided, infer the current sprint from `project-documentation/project-state.md`.
+The argument should be the sprint number (e.g., `10`) or sprint name (e.g., `Sprint 10`). If no argument is provided, infer the current sprint from `.claude/local/project-state.md` or Jira.
 
 ---
 
 ## Phase 1: Gather Sprint Context
 
-1. **Read project state** from `project-documentation/project-state.md` to understand:
+1. **Read project state** from `.claude/local/project-state.md` if it exists, to understand:
    - What stories were delivered in this sprint
    - What features, pages, and API endpoints were added
    - Key design decisions and patterns
    - What was explicitly out of scope
 
-2. **Read the execution plan** from `.claude/plans/sprint-<N>-execution-plan.md` if it exists, for the full subtask breakdown.
+   If the file does not exist, fetch sprint details from **Jira** using Atlassian MCP tools: `project = FFP AND sprint = "Sprint <N>"`.
 
-3. **Check for existing smoke tests** in `.claude/smoke-tests/` — avoid duplicating tests that already exist for prior sprints.
+2. **Read the execution plan** from `.claude/local/plans/sprint-<N>-execution-plan.md` if it exists, for the full subtask breakdown.
 
-4. **Read Puppeteer tips** from `.claude/smoke-tests/README.md` for MCP-specific guidance (custom selects, action menus, variable scoping, etc.).
+3. **Check for existing smoke tests** in `.claude/local/smoke-tests/` — avoid duplicating tests that already exist for prior sprints. If the directory does not exist, create it.
+
+4. **Read Puppeteer tips** from `.claude/local/smoke-tests/README.md` if it exists, for MCP-specific guidance (custom selects, action menus, variable scoping, etc.).
 
 ---
 
@@ -38,7 +40,7 @@ The argument should be the sprint number (e.g., `10`) or sprint name (e.g., `Spr
 
 6. **Organise journeys** by feature area (e.g., Customer Management, User Management), with numbered steps and expected outcomes.
 
-7. **Write the test guide** to `.claude/smoke-tests/sprint-<N>-<slug>.md` following the established format:
+7. **Write the test guide** to `.claude/local/smoke-tests/sprint-<N>-<slug>.md` following the established format:
 
    ```markdown
    # Sprint <N> — <Feature> Smoke Test
@@ -63,7 +65,7 @@ The argument should be the sprint number (e.g., `10`) or sprint name (e.g., `Spr
    **Expected**: <outcome>
    ```
 
-8. **Update the README** table in `.claude/smoke-tests/README.md` with the new test guide.
+8. **Update the README** table in `.claude/local/smoke-tests/README.md` with the new test guide (create it if it doesn't exist).
 
 ---
 

@@ -2,14 +2,6 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Team Contacts
-
-**Dev Team:**
-When asked to "email the dev team" or "send to dev team", use these addresses:
-
-- c.tregaskis+ffp.dev.team@gmail.com
-- chris.tregaskis@wongdoody.com
-
 ## Language & Spelling Preference
 
 **IMPORTANT**: Always use **British English spelling** for FFP-specific code and documentation.
@@ -43,10 +35,7 @@ When integrating with third-party frameworks or npm packages that use American E
 
 **Fit For Purpose (FFP)** is a multi-tenant physiotherapy SaaS platform built as a monorepo. The platform uses dynamic assessment engines to generate personalised workout programmes from a curated video catalogue.
 
-- **Solo developer**: Christopher Tregaskis
-- **Current phase**: Sprint 1 (Foundation) - FFP-7 in progress (88% complete)
 - **Critical requirement**: Multi-tenant isolation via PostgreSQL Row-Level Security (RLS)
-- **Timeline**: 198 hours across 6 sprints (~6.2 months at 8h/week)
 
 ## Essential Commands
 
@@ -185,7 +174,7 @@ ffp/
 │   └── prettier-config/           # Shared Prettier configuration
 ├── stacks/                        # SST infrastructure-as-code (future)
 ├── tests/                         # Root-level monorepo tests
-└── project-documentation/         # Detailed docs (always check project-state.md)
+└── project-documentation/         # Detailed docs
 ```
 
 ### Domain-Organised Backend Architecture
@@ -338,7 +327,7 @@ git commit -m "FFP-23: Add comprehensive monorepo tests"
 
 ### When Adding New Features
 
-1. Check `project-documentation/project-state.md` for current sprint progress
+1. Check Jira for current sprint progress and acceptance criteria
 2. Follow acceptance criteria defined in Jira subtasks
 3. Build order matters: changes to `@ffp/core` require rebuilding dependents
 4. Run `pnpm lint-format` before committing
@@ -502,7 +491,6 @@ pnpm db:check
 
 - `README.md` - Comprehensive guide: commands, workflows, project structure, troubleshooting
 - `CLAUDE.md` - This file: AI assistant guidance, essential commands, architecture overview
-- `project-documentation/project-state.md` - Current sprint status, next tasks, decisions
 - `project-documentation/architecture.md` - Full AWS architecture, cost breakdown, diagrams
 
 **Package level**:
@@ -512,11 +500,6 @@ pnpm db:check
 - `packages/web/README.md` - Package-specific: tech stack, dependencies, testing patterns
 
 **Note**: Package READMEs are intentionally concise and reference root README for common commands and workflows.
-
-**Claude Code working files**:
-
-- `.claude/prompts/` - Session handover prompts and next-session prompts
-- `.claude/plans/` - Implementation plans, testing guides, design documents
 
 **Configuration**:
 
@@ -600,8 +583,6 @@ For large implementations (4+ phases), break into separate sessions:
 
 ## Project Constraints
 
-- **Solo developer**: 8 hours/week capacity
-- **Phase 1 focus**: Foundation infrastructure (no premature optimisation)
 - **Security first**: Healthcare data, OWASP compliance required
 - **Cost conscious**: Target ~£54-87/month AWS spend in Phase 1
-- **Test coverage**: 8% minimum (will increase in later phases)
+- **No premature optimisation**: Solid patterns, simple implementations
