@@ -402,7 +402,13 @@ export async function findProgrammeWithPhases(
     const programmeRows = await tx
       .select()
       .from(programmes)
-      .where(and(eq(programmes.userId, userId), eq(programmes.status, 'active')))
+      .where(
+        and(
+          eq(programmes.organisationId, organisationId),
+          eq(programmes.userId, userId),
+          eq(programmes.status, 'active')
+        )
+      )
       .limit(1);
 
     if (programmeRows.length === 0) {
@@ -415,7 +421,12 @@ export async function findProgrammeWithPhases(
     const phases = await tx
       .select()
       .from(programmePhases)
-      .where(eq(programmePhases.programmeId, programme.id))
+      .where(
+        and(
+          eq(programmePhases.organisationId, organisationId),
+          eq(programmePhases.programmeId, programme.id)
+        )
+      )
       .orderBy(asc(programmePhases.phaseNumber));
 
     // Fetch template summary (system-managed, but within same transaction for consistency)
@@ -536,7 +547,12 @@ export async function findUserSessionsForPhases(
     const sessions = await tx
       .select()
       .from(userSessions)
-      .where(inArray(userSessions.programmePhaseId, phaseIds))
+      .where(
+        and(
+          eq(userSessions.organisationId, organisationId),
+          inArray(userSessions.programmePhaseId, phaseIds)
+        )
+      )
       .orderBy(asc(userSessions.programmePhaseId), asc(userSessions.sessionNumber));
 
     if (sessions.length === 0) {
@@ -549,7 +565,12 @@ export async function findUserSessionsForPhases(
     const completions = await tx
       .select()
       .from(exerciseCompletions)
-      .where(inArray(exerciseCompletions.userSessionId, sessionIds));
+      .where(
+        and(
+          eq(exerciseCompletions.organisationId, organisationId),
+          inArray(exerciseCompletions.userSessionId, sessionIds)
+        )
+      );
 
     // Group completions by session
     const completionsBySession = new Map<string, ExerciseCompletionRecord[]>();

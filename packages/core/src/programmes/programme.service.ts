@@ -270,7 +270,7 @@ export async function getProgrammeDetail(
   const currentPhase = phases.find((p) => p.status === 'not_started' || p.status === 'in_progress');
   const currentPhaseNumber = currentPhase?.phaseNumber ?? null;
 
-  // Identify accessible phase IDs (current + completed)
+  // Accessible = completed + in_progress + current (which may be not_started)
   const accessiblePhaseIds = phases
     .filter(
       (p) => p.status === 'completed' || p.status === 'in_progress' || p.id === currentPhase?.id
