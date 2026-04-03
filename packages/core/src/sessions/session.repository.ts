@@ -100,6 +100,33 @@ export async function updateSessionStatus(
   return records[0];
 }
 
+/** Sets pausedAt timestamp on a session (status remains in_progress). */
+export async function pauseSession(
+  tx: Transaction,
+  sessionId: string,
+  timestamp: Date
+): Promise<UserSessionRecord> {
+  const records = await tx
+    .update(userSessions)
+    .set({ pausedAt: timestamp, updatedAt: timestamp })
+    .where(eq(userSessions.id, sessionId))
+    .returning();
+
+  if (records.length === 0) {
+    throw new NotFoundError('Session', sessionId);
+  }
+
+  return records[0];
+}
+
+/** Clears pausedAt timestamp on a session (used when resuming). */
+export async function clearPausedAt(tx: Transaction, sessionId: string): Promise<void> {
+  await tx
+    .update(userSessions)
+    .set({ pausedAt: null, updatedAt: new Date() })
+    .where(eq(userSessions.id, sessionId));
+}
+
 /** Finds the programme phase by ID within an existing RLS transaction. */
 export async function findProgrammePhaseById(
   tx: Transaction,

@@ -7,6 +7,7 @@ import {
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
 import { handler as completeHandler } from './complete';
+import { handler as pauseHandler } from './pause';
 import { handler as skipHandler } from './skip';
 import { handler as startHandler } from './start';
 
@@ -23,6 +24,7 @@ const routes: RouteRegistry = {
   },
   PUT: {
     '/{id}/complete': completeHandler,
+    '/{id}/pause': pauseHandler,
     '/{id}/skip': skipHandler,
   },
 };

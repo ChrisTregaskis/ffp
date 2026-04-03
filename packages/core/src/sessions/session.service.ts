@@ -51,10 +51,16 @@ export async function startSession(
     );
 
     if (existing) {
+      // Clear pausedAt if resuming a paused session
+      if (existing.pausedAt) {
+        await sessionRepo.clearPausedAt(tx, existing.id);
+      }
+
       const completions = await exerciseRepo.findCompletionsBySessionId(tx, existing.id);
 
       return {
         ...existing,
+        pausedAt: null,
         exerciseCompletions: completions,
       };
     }
@@ -130,6 +136,48 @@ export async function skipSession(
   context: OrganisationContext
 ): Promise<{ session: UserSessionRecord; cascade: CascadeResult }> {
   return await updateSessionWithCascade(sessionId, 'skipped', context);
+}
+
+/**
+ * Pause an in-progress session.
+ * Sets pausedAt timestamp; status remains in_progress.
+ * No cascade — pausing does not complete anything.
+ */
+export async function pauseSession(
+  sessionId: string,
+  context: OrganisationContext
+): Promise<UserSessionRecord> {
+  const userId = await getUserIdFromContext(context);
+  const { organisationId } = context;
+
+  return await withRLS(organisationId, userId, async (tx) => {
+    const session = await sessionRepo.findUserSessionById(tx, sessionId);
+
+    if (!session) {
+      throw new NotFoundError('Session', sessionId);
+    }
+
+    // Verify session belongs to user's active programme
+    const programme = await findProgrammeByUserId(organisationId, userId, { tx });
+
+    if (!programme) {
+      throw new NotFoundError('Active programme');
+    }
+
+    const phase = await sessionRepo.findProgrammePhaseById(tx, session.programmePhaseId);
+
+    if (!phase || phase.programmeId !== programme.id) {
+      throw new ForbiddenError('Session does not belong to your active programme.');
+    }
+
+    if (session.status !== 'in_progress') {
+      throw new ValidationError(
+        `Only in-progress sessions can be paused. Current status: ${session.status}.`
+      );
+    }
+
+    return await sessionRepo.pauseSession(tx, sessionId, new Date());
+  });
 }
 
 /**
