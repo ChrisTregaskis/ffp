@@ -7,7 +7,7 @@ import { InternalServerError } from '../lib/errors';
 import { createLogger } from '../lib/logger';
 
 import type { OrganisationContext } from '../lib/context';
-import type { UploadUrlResponse } from '../schemas/video.schema';
+import type { UploadUrlResponse } from '../schemas/video/video.schema';
 
 /** Configuration for S3 presigned upload URL generation */
 export interface VideoUploadConfig {

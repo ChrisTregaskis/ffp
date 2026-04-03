@@ -411,7 +411,7 @@ export default $config({
       ...handlerEnv,
     });
     api.route('OPTIONS /programmes/{proxy+}', {
-      handler: `${repositoryFunctionsPath}/programs/index.handler`,
+      handler: `${repositoryFunctionsPath}/programmes/index.handler`,
       ...handlerEnv,
     });
     api.route('OPTIONS /sessions/{proxy+}', {
@@ -480,7 +480,7 @@ export default $config({
     // Programmes domain routes (authenticated users - programme data)
     api.route(
       'ANY /programmes/{proxy+}',
-      { handler: `${repositoryFunctionsPath}/programs/index.handler`, ...handlerEnv },
+      { handler: `${repositoryFunctionsPath}/programmes/index.handler`, ...handlerEnv },
       args
     );
 

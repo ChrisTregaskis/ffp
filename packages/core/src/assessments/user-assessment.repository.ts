@@ -11,7 +11,7 @@ import {
   getAllowedTransitions,
   type CreateUserAssessmentInput,
   type UpdateUserAssessmentInput,
-} from '../schemas/user-assessment.schema';
+} from '../schemas/user-assessment/user-assessment.schema';
 import { warningsArraySchema, type Warning } from '../schemas/warning.schema';
 
 export type UserAssessment = UserAssessmentRecord;
