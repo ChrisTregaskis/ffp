@@ -11,8 +11,11 @@ import { templatePhases, templateSessions, sessionExercises } from '@ffp/databas
 import { applyPagination } from '../lib/pagination';
 
 import type { PaginationInput } from '../schemas/pagination.schema';
+import type {
+  UpdateProgrammeTemplateInput,
+  TemplateListQuery,
+} from '../schemas/programme/programme.schema';
 import type { TemplatePhaseWithSessions } from '../schemas/programme-structure.schema';
-import type { UpdateProgrammeTemplateInput, TemplateListQuery } from '../schemas/programme.schema';
 
 /** Internal update type — extends the API input with fields managed by the system (e.g., totalPhases) */
 type TemplateUpdateData = UpdateProgrammeTemplateInput & { totalPhases?: number };

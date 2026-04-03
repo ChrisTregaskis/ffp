@@ -61,18 +61,9 @@ vitest.config.d.ts
 # Local config (personal, not shared)
 CLAUDE.local.md
 .claude.md
-.claude-prompts/*
 .claude/review-context.md
-.claude/screenshots*
-.claude/plans/
-.claude/prompts/
-.claude/docs/
-.claude/research/
+.claude/local/
 .claude/worktrees/
-.claude/_claude_chat_output.md
-.claude/sprint-planning/stakeholder-update
-.claude/debug
-.claude/smoke-tests/
 
 project-documentation/sprint-planning/outputs/*.md
 project-documentation/sprint-planning/outputs/**/*.md

@@ -302,7 +302,7 @@ All require `system_admin` role. No RLS (system-managed tables).
 
 ## Phase 1 MVP Scope
 
-### ✅ In Scope
+### [✓] In Scope
 
 - Individual + business accounts
 - Dynamic assessment engine
@@ -312,7 +312,7 @@ All require `system_admin` role. No RLS (system-managed tables).
 - Basic CloudWatch monitoring
 - Multi-tenant RLS isolation
 
-### ❌ Deferred (Phase 2+)
+### [✗] Deferred (Phase 2+)
 
 - Multi-AZ RDS
 - Video transcoding/multiple qualities

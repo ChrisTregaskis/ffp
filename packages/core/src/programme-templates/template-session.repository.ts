@@ -3,7 +3,10 @@ import { eq, max } from 'drizzle-orm';
 import type { DbQueryClient } from '@ffp/database';
 import { templateSessions, type TemplateSessionRecord } from '@ffp/database/schema';
 
-import type { CreateSessionRequest, UpdateSessionRequest } from '../schemas/programme.schema';
+import type {
+  CreateSessionRequest,
+  UpdateSessionRequest,
+} from '../schemas/programme/programme.schema';
 
 /** Returns all sessions for a phase, ordered by sessionNumber. */
 export async function findSessionsByPhaseId(

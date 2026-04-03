@@ -173,12 +173,12 @@ erDiagram
 | Table                     | Org-Scoped | Notes                                                                    |
 | ------------------------- | :--------: | ------------------------------------------------------------------------ |
 | `organisations`           |     -      | Root entity                                                              |
-| `locations`               |     ✅     |                                                                          |
-| `users`                   |     ✅     |                                                                          |
-| `user_assessments`        |     ✅     |                                                                          |
-| `user_assessment_answers` |     ✅     | Denormalised `organisation_id` for policy efficiency                     |
-| `programmes`              |     ✅     |                                                                          |
-| `process_jobs`            |     ✅     | Job processor uses BYPASSRLS to claim; handlers set organisation context |
+| `locations`               |    [✓]     |                                                                          |
+| `users`                   |    [✓]     |                                                                          |
+| `user_assessments`        |    [✓]     |                                                                          |
+| `user_assessment_answers` |    [✓]     | Denormalised `organisation_id` for policy efficiency                     |
+| `programmes`              |    [✓]     |                                                                          |
+| `process_jobs`            |    [✓]     | Job processor uses BYPASSRLS to claim; handlers set organisation context |
 | `assessment_flows`        |     -      | System content                                                           |
 | `flow_steps`              |     -      | System content                                                           |
 | `assessment_templates`    |     -      | System content                                                           |

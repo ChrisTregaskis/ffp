@@ -1,18 +1,29 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray, asc } from 'drizzle-orm';
 
 import {
   programmes,
   programmeTemplates,
   templatePhases,
+  templateSessions,
+  sessionExercises,
   programmePhases,
+  userSessions,
+  exerciseCompletions,
+  videos,
   type ProgrammeRecord,
   type ProgrammeTemplateRecord,
   type TemplatePhaseRecord,
   type NewProgrammePhase,
+  type ProgrammePhaseRecord,
+  type UserSessionRecord,
+  type ExerciseCompletionRecord,
+  type TemplateSessionRecord,
+  type SessionExerciseRecord,
+  type VideoRecord,
 } from '@ffp/database/schema';
 
 import { db, withRLS, type Transaction } from '../lib/database';
-import { type CreateProgrammeInput } from '../schemas/programme.schema';
+import { type CreateProgrammeInput } from '../schemas/programme/programme.schema';
 
 export type Programme = ProgrammeRecord;
 
@@ -58,6 +69,45 @@ export interface FindTemplatePhasesOptions {
 export interface CreateProgrammePhasesOptions {
   /** Optional transaction for atomic operations. If provided, RLS must be set by caller. */
   tx?: Transaction;
+}
+
+/** Programme with its phases, returned from findProgrammeWithPhases. */
+export interface ProgrammeWithPhases {
+  programme: ProgrammeRecord;
+  phases: ProgrammePhaseRecord[];
+  template: { name: string; difficulty: string | null } | null;
+}
+
+/** Slim video fields needed for exercise detail display. */
+export type ExerciseVideoSummary = Pick<
+  VideoRecord,
+  'id' | 'title' | 'thumbnailKey' | 'durationSeconds' | 'difficulty'
+>;
+
+/** Exercise record with embedded video metadata. */
+export type ExerciseWithVideo = SessionExerciseRecord & { video: ExerciseVideoSummary };
+
+/** Full template session with exercises and video metadata. */
+export interface TemplateSessionWithExercises {
+  session: TemplateSessionRecord;
+  exercises: ExerciseWithVideo[];
+}
+
+/** Template phase with its sessions, used within TemplateStructure. */
+export interface TemplatePhaseWithSessions {
+  phase: TemplatePhaseRecord;
+  sessions: TemplateSessionWithExercises[];
+}
+
+/** Template structure keyed by template phase ID. */
+export interface TemplateStructure {
+  phases: Map<string, TemplatePhaseWithSessions>;
+}
+
+/** User session with its exercise completions. */
+export interface UserSessionWithCompletions {
+  session: UserSessionRecord;
+  completions: ExerciseCompletionRecord[];
 }
 
 async function createProgrammeInTx(
@@ -339,7 +389,218 @@ export async function createProgrammePhases(
   });
 }
 
+/**
+ * Fetch the user's active programme with programme_phases and template summary.
+ * RLS-scoped — returns null if no active programme exists.
+ */
+export async function findProgrammeWithPhases(
+  organisationId: string,
+  userId: string
+): Promise<ProgrammeWithPhases | null> {
+  return await withRLS(organisationId, userId, async (tx) => {
+    // Fetch active programme
+    const programmeRows = await tx
+      .select()
+      .from(programmes)
+      .where(
+        and(
+          eq(programmes.organisationId, organisationId),
+          eq(programmes.userId, userId),
+          eq(programmes.status, 'active')
+        )
+      )
+      .limit(1);
+
+    if (programmeRows.length === 0) {
+      return null;
+    }
+
+    const programme = programmeRows[0];
+
+    // Fetch programme phases (user-layer, RLS-scoped)
+    const phases = await tx
+      .select()
+      .from(programmePhases)
+      .where(
+        and(
+          eq(programmePhases.organisationId, organisationId),
+          eq(programmePhases.programmeId, programme.id)
+        )
+      )
+      .orderBy(asc(programmePhases.phaseNumber));
+
+    // Fetch template summary (system-managed, but within same transaction for consistency)
+    const templateRows = await tx
+      .select({
+        name: programmeTemplates.name,
+        difficulty: programmeTemplates.difficulty,
+      })
+      .from(programmeTemplates)
+      .where(eq(programmeTemplates.id, programme.programmeTemplateId))
+      .limit(1);
+
+    return {
+      programme,
+      phases,
+      template: templateRows[0] ?? null,
+    };
+  });
+}
+
+/**
+ * Fetch the full template structure: phases → sessions → exercises → videos.
+ * No RLS required — system-managed lookup tables.
+ */
+export async function findTemplateStructure(templateId: string): Promise<TemplateStructure> {
+  // Fetch all template phases
+  const tPhases = await db
+    .select()
+    .from(templatePhases)
+    .where(eq(templatePhases.programmeTemplateId, templateId))
+    .orderBy(asc(templatePhases.phaseNumber));
+
+  if (tPhases.length === 0) {
+    return { phases: new Map() };
+  }
+
+  const phaseIds = tPhases.map((p) => p.id);
+
+  // Fetch all sessions for these phases
+  const tSessions = await db
+    .select()
+    .from(templateSessions)
+    .where(inArray(templateSessions.templatePhaseId, phaseIds))
+    .orderBy(asc(templateSessions.templatePhaseId), asc(templateSessions.sessionNumber));
+
+  const sessionIds = tSessions.map((s) => s.id);
+
+  // Fetch all exercises with video metadata for these sessions
+  const exerciseRows =
+    sessionIds.length > 0
+      ? await db
+          .select({
+            exercise: sessionExercises,
+            video: {
+              id: videos.id,
+              title: videos.title,
+              thumbnailKey: videos.thumbnailKey,
+              durationSeconds: videos.durationSeconds,
+              difficulty: videos.difficulty,
+            },
+          })
+          .from(sessionExercises)
+          .innerJoin(videos, eq(sessionExercises.videoId, videos.id))
+          .where(inArray(sessionExercises.templateSessionId, sessionIds))
+          .orderBy(asc(sessionExercises.templateSessionId), asc(sessionExercises.orderIndex))
+      : [];
+
+  // Group exercises by session
+  const exercisesBySession = new Map<string, ExerciseWithVideo[]>();
+  for (const row of exerciseRows) {
+    const sessionId = row.exercise.templateSessionId;
+    const list = exercisesBySession.get(sessionId) ?? [];
+    list.push({ ...row.exercise, video: row.video });
+    exercisesBySession.set(sessionId, list);
+  }
+
+  // Group sessions by phase
+  const sessionsByPhase = new Map<string, TemplateSessionWithExercises[]>();
+
+  for (const session of tSessions) {
+    const phaseId = session.templatePhaseId;
+    const list = sessionsByPhase.get(phaseId) ?? [];
+    list.push({
+      session,
+      exercises: exercisesBySession.get(session.id) ?? [],
+    });
+    sessionsByPhase.set(phaseId, list);
+  }
+
+  // Build phase map
+  const phaseMap = new Map<string, TemplatePhaseWithSessions>();
+
+  for (const phase of tPhases) {
+    phaseMap.set(phase.id, {
+      phase,
+      sessions: sessionsByPhase.get(phase.id) ?? [],
+    });
+  }
+
+  return { phases: phaseMap };
+}
+
+/**
+ * Fetch user_sessions and exercise_completions for the given programme phase IDs.
+ * RLS-scoped — only returns data for the authenticated user's organisation.
+ */
+export async function findUserSessionsForPhases(
+  organisationId: string,
+  userId: string,
+  phaseIds: string[]
+): Promise<Map<string, UserSessionWithCompletions[]>> {
+  if (phaseIds.length === 0) {
+    return new Map();
+  }
+
+  return await withRLS(organisationId, userId, async (tx) => {
+    // Fetch user sessions for the given phases
+    const sessions = await tx
+      .select()
+      .from(userSessions)
+      .where(
+        and(
+          eq(userSessions.organisationId, organisationId),
+          inArray(userSessions.programmePhaseId, phaseIds)
+        )
+      )
+      .orderBy(asc(userSessions.programmePhaseId), asc(userSessions.sessionNumber));
+
+    if (sessions.length === 0) {
+      return new Map<string, UserSessionWithCompletions[]>();
+    }
+
+    const sessionIds = sessions.map((s) => s.id);
+
+    // Fetch exercise completions for these sessions
+    const completions = await tx
+      .select()
+      .from(exerciseCompletions)
+      .where(
+        and(
+          eq(exerciseCompletions.organisationId, organisationId),
+          inArray(exerciseCompletions.userSessionId, sessionIds)
+        )
+      );
+
+    // Group completions by session
+    const completionsBySession = new Map<string, ExerciseCompletionRecord[]>();
+
+    for (const completion of completions) {
+      const sessionId = completion.userSessionId;
+      const list = completionsBySession.get(sessionId) ?? [];
+      list.push(completion);
+      completionsBySession.set(sessionId, list);
+    }
+
+    // Group sessions with completions by phase
+    const result = new Map<string, UserSessionWithCompletions[]>();
+
+    for (const session of sessions) {
+      const phaseId = session.programmePhaseId;
+      const list = result.get(phaseId) ?? [];
+      list.push({
+        session,
+        completions: completionsBySession.get(session.id) ?? [],
+      });
+      result.set(phaseId, list);
+    }
+
+    return result;
+  });
+}
+
 export type { CreateProgrammeInput };
 export type { ProgrammeTemplateRecord };
 export type { TemplatePhaseRecord };
 export type { NewProgrammePhase };
+export type { ProgrammePhaseRecord };

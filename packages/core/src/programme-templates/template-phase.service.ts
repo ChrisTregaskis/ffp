@@ -7,12 +7,12 @@ import {
   updatePhaseRequestSchema,
   reorderPhasesRequestSchema,
   phaseResponseSchema,
-} from '../schemas/programme.schema';
+} from '../schemas/programme/programme.schema';
 
 import * as templateRepository from './programme-template.repository';
 import * as phaseRepository from './template-phase.repository';
 
-import type { PhaseResponse } from '../schemas/programme.schema';
+import type { PhaseResponse } from '../schemas/programme/programme.schema';
 
 /** Maps a phase record to the API response shape. */
 const toResponse = (record: TemplatePhaseRecord): PhaseResponse =>

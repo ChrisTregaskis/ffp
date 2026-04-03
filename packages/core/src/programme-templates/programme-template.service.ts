@@ -7,7 +7,7 @@ import {
   updateProgrammeTemplateSchema,
   templateListResponseSchema,
   templateDetailResponseSchema,
-} from '../schemas/programme.schema';
+} from '../schemas/programme/programme.schema';
 
 import * as templateRepository from './programme-template.repository';
 
@@ -16,7 +16,7 @@ import type {
   TemplateListResponse,
   TemplateDetailResponse,
   TemplateListQuery,
-} from '../schemas/programme.schema';
+} from '../schemas/programme/programme.schema';
 
 /** Filter fields extracted from the full query (pagination fields handled separately) */
 type TemplateFilters = Omit<TemplateListQuery, keyof PaginationInput>;

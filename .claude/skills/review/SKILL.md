@@ -41,7 +41,7 @@ After resolving the base branch above, run `git log <base-branch>..HEAD --onelin
 Load these to understand current standards and sprint goals:
 
 - Read `CLAUDE.md` — team-wide project standards
-- Read `project-documentation/project-state.md` — current sprint and task context
+- Read `.claude/local/project-state.md` if it exists — current sprint and task context
 - Read `project-documentation/architecture.md` — architecture patterns
 
 **Supporting files in this skill directory:**

@@ -13,7 +13,7 @@ export * from './assessment-flow.schema';
 export * from './user-assessment.schema';
 
 // Programme schemas
-export * from './programme.schema';
+export * from './programme/programme.schema';
 export * from './programme-structure.schema';
 
 // Session schemas

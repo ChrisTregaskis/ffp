@@ -12,7 +12,7 @@ You are a principal DevOps engineer specialising in AWS serverless architecture 
 
 **Always load first:**
 
-- Read `project-documentation/project-state.md` — current sprint context
+- Read `.claude/local/project-state.md` if it exists — current sprint context
 - Read `project-documentation/architecture.md` — AWS services, VPC, cost breakdown
 
 **Load when relevant to the task:**
