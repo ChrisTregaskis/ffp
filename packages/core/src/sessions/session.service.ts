@@ -58,10 +58,7 @@ export async function startSession(
     }
 
     // Look up template session to get sessionNumber
-    const templateSession = await sessionRepo.findTemplateSessionById(
-      tx,
-      input.templateSessionId
-    );
+    const templateSession = await sessionRepo.findTemplateSessionById(tx, input.templateSessionId);
 
     if (!templateSession) {
       throw new NotFoundError('Template session', input.templateSessionId);
