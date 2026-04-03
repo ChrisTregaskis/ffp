@@ -1,4 +1,4 @@
-import { eq, and, inArray, asc } from 'drizzle-orm';
+import { eq, and, inArray, asc, count } from 'drizzle-orm';
 
 import {
   programmes,
@@ -597,6 +597,167 @@ export async function findUserSessionsForPhases(
 
     return result;
   });
+}
+
+/** Aggregate progress counts for a programme. */
+export interface ProgressCounts {
+  phases: { total: number; completed: number };
+  sessions: { total: number; completed: number; skipped: number };
+  exercises: { total: number; completed: number };
+}
+
+/**
+ * Count aggregate progress for a programme.
+ *
+ * - Phase totals/completed from programme_phases (user-layer, RLS)
+ * - Session totals from template layer (template_sessions per phase)
+ * - Session completed/skipped from user layer (user_sessions, RLS)
+ * - Exercise totals from template layer (session_exercises per session)
+ * - Exercise completed from user layer (exercise_completions, RLS)
+ *
+ * All queries run within a single RLS transaction for consistency.
+ */
+export async function countProgress(
+  organisationId: string,
+  userId: string,
+  programmeId: string,
+  templateId: string,
+  phaseIds: string[]
+): Promise<ProgressCounts> {
+  return await withRLS(organisationId, userId, async (tx) => {
+    // Phase counts (user-layer, RLS-scoped)
+    const [totalPhasesResult] = await tx
+      .select({ value: count() })
+      .from(programmePhases)
+      .where(eq(programmePhases.programmeId, programmeId));
+
+    const [completedPhasesResult] = await tx
+      .select({ value: count() })
+      .from(programmePhases)
+      .where(
+        and(eq(programmePhases.programmeId, programmeId), eq(programmePhases.status, 'completed'))
+      );
+
+    // Session totals from template layer (no RLS needed — system-managed)
+    const templatePhaseIds = await tx
+      .select({ id: templatePhases.id })
+      .from(templatePhases)
+      .where(eq(templatePhases.programmeTemplateId, templateId));
+
+    const tPhaseIds = templatePhaseIds.map((p) => p.id);
+
+    const [totalSessionsResult] =
+      tPhaseIds.length > 0
+        ? await tx
+            .select({ value: count() })
+            .from(templateSessions)
+            .where(inArray(templateSessions.templatePhaseId, tPhaseIds))
+        : [{ value: 0 }];
+
+    // Session completed/skipped from user layer (RLS-scoped)
+    const [completedSessionsResult] =
+      phaseIds.length > 0
+        ? await tx
+            .select({ value: count() })
+            .from(userSessions)
+            .where(
+              and(
+                eq(userSessions.organisationId, organisationId),
+                inArray(userSessions.programmePhaseId, phaseIds),
+                eq(userSessions.status, 'completed')
+              )
+            )
+        : [{ value: 0 }];
+
+    const [skippedSessionsResult] =
+      phaseIds.length > 0
+        ? await tx
+            .select({ value: count() })
+            .from(userSessions)
+            .where(
+              and(
+                eq(userSessions.organisationId, organisationId),
+                inArray(userSessions.programmePhaseId, phaseIds),
+                eq(userSessions.status, 'skipped')
+              )
+            )
+        : [{ value: 0 }];
+
+    // Exercise totals from template layer (session_exercises per template session)
+    const templateSessionIds =
+      tPhaseIds.length > 0
+        ? (
+            await tx
+              .select({ id: templateSessions.id })
+              .from(templateSessions)
+              .where(inArray(templateSessions.templatePhaseId, tPhaseIds))
+          ).map((s) => s.id)
+        : [];
+
+    const [totalExercisesResult] =
+      templateSessionIds.length > 0
+        ? await tx
+            .select({ value: count() })
+            .from(sessionExercises)
+            .where(inArray(sessionExercises.templateSessionId, templateSessionIds))
+        : [{ value: 0 }];
+
+    // Exercise completed from user layer (RLS-scoped)
+    const userSessionIds =
+      phaseIds.length > 0
+        ? (
+            await tx
+              .select({ id: userSessions.id })
+              .from(userSessions)
+              .where(
+                and(
+                  eq(userSessions.organisationId, organisationId),
+                  inArray(userSessions.programmePhaseId, phaseIds)
+                )
+              )
+          ).map((s) => s.id)
+        : [];
+
+    const [completedExercisesResult] =
+      userSessionIds.length > 0
+        ? await tx
+            .select({ value: count() })
+            .from(exerciseCompletions)
+            .where(
+              and(
+                eq(exerciseCompletions.organisationId, organisationId),
+                inArray(exerciseCompletions.userSessionId, userSessionIds),
+                eq(exerciseCompletions.completed, true)
+              )
+            )
+        : [{ value: 0 }];
+
+    return {
+      phases: {
+        total: totalPhasesResult.value,
+        completed: completedPhasesResult.value,
+      },
+      sessions: {
+        total: totalSessionsResult.value,
+        completed: completedSessionsResult.value,
+        skipped: skippedSessionsResult.value,
+      },
+      exercises: {
+        total: totalExercisesResult.value,
+        completed: completedExercisesResult.value,
+      },
+    };
+  });
+}
+
+/** Count template sessions for a specific template phase. No RLS needed — system-managed table. */
+export async function countTemplateSessionsForPhase(templatePhaseId: string): Promise<number> {
+  const [result] = await db
+    .select({ value: count() })
+    .from(templateSessions)
+    .where(eq(templateSessions.templatePhaseId, templatePhaseId));
+
+  return result.value;
 }
 
 export type { CreateProgrammeInput };

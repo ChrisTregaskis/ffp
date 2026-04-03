@@ -7,9 +7,12 @@ import * as userAssessmentRepo from '../assessments/user-assessment.repository';
 import { getUserIdFromContext, type OrganisationContext } from '../lib/context';
 import { withRLS } from '../lib/database';
 import { ForbiddenError, NotFoundError, ValidationError } from '../lib/errors';
+import { calculatePercent } from '../lib/math';
 
 import {
   archiveProgramme,
+  countProgress,
+  countTemplateSessionsForPhase,
   createProgramme,
   createProgrammePhases,
   findProgrammeByUserId,
@@ -23,7 +26,10 @@ import {
 
 import type { Programme, NewProgrammePhase } from './programme.repository';
 import type { Transaction } from '../lib/database';
-import type { ProgrammeDetailResponse } from '../schemas/programme/programme.schema';
+import type {
+  ProgrammeDetailResponse,
+  ProgressSummaryResponse,
+} from '../schemas/programme/programme.schema';
 
 export interface GenerateProgrammeInput {
   organisationId: string;
@@ -387,5 +393,81 @@ export async function getProgrammeDetail(
     },
     currentPhaseNumber,
     phases: detailPhases,
+  };
+}
+
+/**
+ * Fetch aggregate progress summary for the user's active programme.
+ *
+ * Totals come from the template layer (always complete).
+ * Completed/skipped counts come from the user layer (lazily created).
+ * All percentages calculated at query time via SQL COUNT aggregates.
+ */
+export async function getProgressSummary(
+  context: OrganisationContext
+): Promise<ProgressSummaryResponse> {
+  const userId = await getUserIdFromContext(context);
+  const { organisationId } = context;
+
+  // Fetch programme + phases
+  const result = await findProgrammeWithPhases(organisationId, userId);
+
+  if (!result) {
+    throw new NotFoundError('Active programme');
+  }
+
+  const { programme, phases } = result;
+
+  // Determine current phase (first not_started or in_progress, ordered by phaseNumber)
+  const currentPhase = phases.find((p) => p.status === 'not_started' || p.status === 'in_progress');
+  const currentPhaseNumber = currentPhase?.phaseNumber ?? null;
+
+  const phaseIds = phases.map((p) => p.id);
+
+  // Aggregate counts within a single RLS transaction
+  const counts = await countProgress(
+    organisationId,
+    userId,
+    programme.id,
+    programme.programmeTemplateId,
+    phaseIds
+  );
+
+  // Calculate current phase progress (sessions completed+skipped / total sessions in phase)
+  let currentPhaseProgressPercent = 0;
+
+  if (currentPhase) {
+    // Total sessions from template layer (exact count for this phase)
+    const phaseSessionTotal = await countTemplateSessionsForPhase(currentPhase.templatePhaseId);
+
+    // Completed+skipped user sessions for the current phase only
+    const currentPhaseUserSessions = await findUserSessionsForPhases(organisationId, userId, [
+      currentPhase.id,
+    ]);
+    const currentPhaseSessions = currentPhaseUserSessions.get(currentPhase.id) ?? [];
+    const currentPhaseCompleted = currentPhaseSessions.filter(
+      (s) => s.session.status === 'completed' || s.session.status === 'skipped'
+    ).length;
+
+    currentPhaseProgressPercent = calculatePercent(currentPhaseCompleted, phaseSessionTotal);
+  }
+
+  return {
+    programmeId: programme.id,
+    programmeName: programme.name,
+    totalPhases: counts.phases.total,
+    completedPhases: counts.phases.completed,
+    currentPhaseNumber,
+    totalSessions: counts.sessions.total,
+    completedSessions: counts.sessions.completed,
+    skippedSessions: counts.sessions.skipped,
+    totalExercises: counts.exercises.total,
+    completedExercises: counts.exercises.completed,
+    overallProgressPercent: calculatePercent(
+      counts.sessions.completed + counts.sessions.skipped,
+      counts.sessions.total
+    ),
+    currentPhaseProgressPercent,
+    startedAt: programme.startedAt,
   };
 }
