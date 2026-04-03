@@ -98,6 +98,27 @@ export const toggleExerciseCompletionResponseSchema = z.object({
   cascade: cascadeResultSchema,
 });
 
+/** Path params for PUT /sessions/{id}/complete and PUT /sessions/{id}/skip */
+export const sessionParamsSchema = z.object({
+  id: z.guid(),
+});
+
+/** Path params for PUT /exercises/{completionId}/complete */
+export const exerciseCompletionParamsSchema = z.object({
+  completionId: z.guid(),
+});
+
+/** Response from manual session complete/skip — includes cascade results */
+export const sessionStatusResponseSchema = z.object({
+  /** Updated session */
+  session: userSessionResponseSchema,
+  /** Cascade completion results */
+  cascade: cascadeResultSchema,
+});
+
+/** Response from start session — session with completions */
+export const startSessionResponseSchema = userSessionWithCompletionsSchema;
+
 export type StartSessionRequest = z.infer<typeof startSessionRequestSchema>;
 export type UpdateSessionStatus = z.infer<typeof updateSessionStatusSchema>;
 export type ToggleExerciseCompletionRequest = z.infer<typeof toggleExerciseCompletionSchema>;
@@ -108,3 +129,7 @@ export type CascadeResult = z.infer<typeof cascadeResultSchema>;
 export type ToggleExerciseCompletionResponse = z.infer<
   typeof toggleExerciseCompletionResponseSchema
 >;
+export type SessionParams = z.infer<typeof sessionParamsSchema>;
+export type ExerciseCompletionParams = z.infer<typeof exerciseCompletionParamsSchema>;
+export type SessionStatusResponse = z.infer<typeof sessionStatusResponseSchema>;
+export type StartSessionResponse = z.infer<typeof startSessionResponseSchema>;

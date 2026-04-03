@@ -1,57 +1,103 @@
 # FFP - Project State
 
-**Last Updated**: 30th March 2026
+**Last Updated**: 31st March 2026
 **Current EPIC**: FFP-4 Programme Execution & Progress
-**Sprint Status**: Sprint 11 in progress. Picking up FFP-553.
+**Sprint Status**: Sprint 11 in progress. Working on FFP-362 (parallel worktree).
+
+---
+
+## In Progress: FFP-362 — Session Lifecycle & Exercise Completion APIs (8 SP)
+
+**Branch**: `feature/ffp-362-session-lifecycle-exercise-completion-apis`
+**Worktree**: `.claude/worktrees/ffp-362`
+**Parallel with**: FFP-361 (Programme Detail API) on `feature/ffp-361-programme-detail-api`
+
+Core mutation APIs for programme execution: lazy session creation, exercise completion toggling, and cascading completion engine (session → phase → programme).
+
+### Acceptance Criteria
+
+- AC1: `POST /sessions/start` — lazy session creation with exercise_completions, idempotent
+- AC2: Idempotent — returns existing session if already started
+- AC3: First session in phase updates parent phase status to `in_progress`
+- AC4: `PUT /exercises/{completionId}/complete` — toggle with cascade results
+- AC5: Cascading completion — session auto-completes when all exercises done
+- AC6: Cascading completion — phase and programme auto-complete when children done
+- AC7: `PUT /sessions/{id}/complete` and `PUT /sessions/{id}/skip` — manual with cascade
+- AC8: RLS enforcement + belt-and-braces ownership validation
+
+### Implementation Plan
+
+All sub-tasks on single branch. Tests deferred to MVP launch.
+
+**Group 1: Data Access Layer (Repositories)**
+
+| Order | Key     | Summary                                              |
+| ----- | ------- | ---------------------------------------------------- |
+| 1     | FFP-370 | Session repository — CRUD with RLS                   |
+| 2     | FFP-371 | Exercise repository — completion toggle with RLS     |
+
+New domains: `packages/core/src/sessions/`, `packages/core/src/exercises/`
+
+**Group 2: Zod Schemas**
+
+| Order | Key     | Summary                                              |
+| ----- | ------- | ---------------------------------------------------- |
+| 3     | FFP-375 | Request/response schemas for session + exercise APIs |
+
+Extends existing `packages/core/src/schemas/session.schema.ts` (already has base schemas from FFP-354). May need additional request param schemas.
+
+**Group 3: Business Logic (Services)**
+
+| Order | Key     | Summary                                              |
+| ----- | ------- | ---------------------------------------------------- |
+| 4     | FFP-372 | Session service — startSession() lazy creation       |
+| 5     | FFP-373 | Exercise service — toggleExerciseCompletion() + cascade |
+| 6     | FFP-374 | Session service — completeSession() / skipSession()  |
+
+Cascade logic: single method, early exit. Worst case 7 queries, average 2. All within one RLS transaction.
+
+**Group 4: Lambda Handlers + Routing**
+
+| Order | Key     | Summary                                              |
+| ----- | ------- | ---------------------------------------------------- |
+| 7     | FFP-376 | Session handlers — start, complete, skip             |
+| 8     | FFP-377 | Exercise handler — toggle completion                 |
+| 9     | FFP-378 | SST route configuration for sessions + exercises     |
+
+New SST routes: `ANY /sessions/{proxy+}`, `ANY /exercises/{proxy+}`
+
+**Group 5: Postman (Deferred)**
+
+| Order | Key     | Summary                                              |
+| ----- | ------- | ---------------------------------------------------- |
+| 10    | FFP-379 | Postman collection updates                           |
+
+### Amendments from Current State
+
+- **Schemas already exist**: `session.schema.ts` already has `startSessionRequestSchema`, `toggleExerciseCompletionSchema`, `cascadeResultSchema`, etc. from FFP-354. FFP-375 may only need param schemas for path parameters.
+- **No database changes needed**: FFP-354 delivered `user_sessions` + `exercise_completions` tables with migration 0022.
+- **Existing programme repository**: Has `findProgrammeByUserId`, `findProgrammeById` — cascade logic can use these. May need a status update method added for cascade programme completion.
+- **Existing programme router**: `packages/functions/src/programs/index.ts` has `GET /active` and `PUT /active/replace`. Session/exercise routes are separate routers.
+
+### Key Files
+
+- Session schemas: `packages/core/src/schemas/session.schema.ts`
+- Programme repo: `packages/core/src/programmes/programme.repository.ts`
+- Programme router: `packages/functions/src/programs/index.ts`
+- Database schemas: `packages/database/src/schema/` (user_sessions, exercise_completions)
+- SST config: `sst.config.ts`
 
 ---
 
 ## Completed: FFP-553 — Assessment Page for Programme Users (3 SP) ✅
 
-**Branch**: `feature/sprint11`
-
-Delivered: New `/assessment-overview` page with reassessment CTA. Programme user sidebar simplified to 3 items (Dashboard, Programme Overview, Assessment). TodayWorkoutPage stub deleted. `REASSESSMENT_START_KEY` constant extracted.
-
-### Acceptance Criteria
-
-- AC1: New route `/assessment-overview` accessible to `programme_user` role
-- AC2: Page shows a clear CTA to start a new assessment (reassessment flow)
-- AC3: CTA navigates to existing AssessmentPage with `?reassess=true` and the user's `assessmentFlowId`
-- AC4: Uses existing `useUserAssessmentStatusQuery` to get `assessmentFlowId`
-- AC5: Uses `PageContainer` and `PageHeader` components
-- AC6: Added to programme user sidebar navigation
-- AC7: Remove the reassessment CTA from the existing ProgressPage
-
-### Implementation Plan (Single Group, Single Branch)
-
-No subtasks in Jira — all work done as one unit:
-
-1. Add `ASSESSMENT_OVERVIEW` to `RouteKey` enum
-2. Create `AssessmentOverviewPage.tsx` in `pages/protected/programme-user/`
-   - Uses `PageContainer` (centred), `PageHeader`
-   - Uses `SectionPanel` + `SectionHeader` with reassessment CTA (lifted from ProgressPage)
-   - Uses `useUserAssessmentStatusQuery` for `assessmentFlowId`
-   - Reuses exact `handleStartReassessment` pattern (sessionStorage flag + navigate)
-3. Add route config in `routes/index.ts` — path `/assessment-overview`, `allowedRoles: [PROGRAMME_USER]`
-4. Add nav item to `programmeUserNavItems` in `navigation.ts`
-5. Remove reassessment CTA section from `ProgressPage.tsx`
-
-### Reference Files
-
-- CTA source: `packages/web/src/pages/protected/programme-user/ProgressPage.tsx` (lines 23-60)
-- Hook: `packages/web/src/hooks/assessments/useUserAssessmentStatusQuery.ts`
-- Routes: `packages/web/src/pages/routes/index.ts`
-- Route keys: `packages/web/src/pages/routes/RouteKey.ts`
-- Navigation: `packages/web/src/config/navigation.ts` (programmeUserNavItems, lines 72-106)
-- Layout: `packages/web/src/components/layout/PageContainer.tsx`, `PageHeader.tsx`
+Delivered: New `/assessment-overview` page with reassessment CTA. Programme user sidebar simplified. TodayWorkoutPage stub deleted.
 
 ---
 
 ## Completed: FFP-354 — User Sessions & Exercise Completions Schema (5 SP) ✅
 
-**Branch**: `feature/sprint11`
-
-Delivered: Drizzle schemas for `user_sessions` + `exercise_completions`, `session_status` enum, migration 0022, RLS policies (9 tables total), Zod validation schemas in `packages/core/src/schemas/session.schema.ts`. Key amendments: `tenant_id` → `organisation_id`, added `paused_at` column.
+Delivered: Drizzle schemas for `user_sessions` + `exercise_completions`, `session_status` enum, migration 0022, RLS policies (9 tables total), Zod validation schemas. Key amendments: `tenant_id` → `organisation_id`, added `paused_at` column.
 
 ---
 

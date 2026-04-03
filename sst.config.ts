@@ -414,6 +414,14 @@ export default $config({
       handler: `${repositoryFunctionsPath}/programs/index.handler`,
       ...handlerEnv,
     });
+    api.route('OPTIONS /sessions/{proxy+}', {
+      handler: `${repositoryFunctionsPath}/sessions/index.handler`,
+      ...handlerEnv,
+    });
+    api.route('OPTIONS /exercises/{proxy+}', {
+      handler: `${repositoryFunctionsPath}/exercises/index.handler`,
+      ...handlerEnv,
+    });
 
     // Admin domain routes (system_admin role required - validated in handlers)
     // Includes S3 bucket names for presigned video/thumbnail upload URLs
@@ -473,6 +481,20 @@ export default $config({
     api.route(
       'ANY /programmes/{proxy+}',
       { handler: `${repositoryFunctionsPath}/programs/index.handler`, ...handlerEnv },
+      args
+    );
+
+    // Sessions domain routes (authenticated users - session lifecycle)
+    api.route(
+      'ANY /sessions/{proxy+}',
+      { handler: `${repositoryFunctionsPath}/sessions/index.handler`, ...handlerEnv },
+      args
+    );
+
+    // Exercises domain routes (authenticated users - exercise completion)
+    api.route(
+      'ANY /exercises/{proxy+}',
+      { handler: `${repositoryFunctionsPath}/exercises/index.handler`, ...handlerEnv },
       args
     );
 
