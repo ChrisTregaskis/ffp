@@ -41,6 +41,7 @@ export async function toggleExerciseCompletion(
     .where(eq(exerciseCompletions.id, completionId))
     .returning();
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- belt-and-braces guard on .returning()
   if (!record) {
     throw new NotFoundError('Exercise completion', completionId);
   }

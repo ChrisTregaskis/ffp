@@ -22,6 +22,7 @@ export async function createUserSession(
 ): Promise<UserSessionRecord> {
   const [record] = await tx.insert(userSessions).values(input).returning();
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- belt-and-braces guard on .returning()
   if (!record) {
     throw new NotFoundError('Failed to create user session');
   }
@@ -82,7 +83,7 @@ export async function updateSessionStatus(
     updates.startedAt = timestamp;
   } else if (status === 'completed') {
     updates.completedAt = timestamp;
-  } else if (status === 'skipped') {
+  } else {
     updates.skippedAt = timestamp;
   }
 
@@ -92,6 +93,7 @@ export async function updateSessionStatus(
     .where(eq(userSessions.id, sessionId))
     .returning();
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- belt-and-braces guard on .returning()
   if (!record) {
     throw new NotFoundError('Session', sessionId);
   }
