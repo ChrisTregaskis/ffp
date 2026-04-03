@@ -12,7 +12,6 @@ import { calculatePercent } from '../lib/math';
 import {
   archiveProgramme,
   countProgress,
-  countTemplateSessionsForPhase,
   createProgramme,
   createProgrammePhases,
   findProgrammeByUserId,
@@ -424,33 +423,22 @@ export async function getProgressSummary(
 
   const phaseIds = phases.map((p) => p.id);
 
-  // Aggregate counts within a single RLS transaction
+  // Aggregate counts within a single RLS transaction (includes current phase progress)
   const counts = await countProgress(
     organisationId,
     userId,
     programme.id,
     programme.programmeTemplateId,
-    phaseIds
+    phaseIds,
+    currentPhase
+      ? { phaseId: currentPhase.id, templatePhaseId: currentPhase.templatePhaseId }
+      : undefined
   );
 
-  // Calculate current phase progress (sessions completed+skipped / total sessions in phase)
-  let currentPhaseProgressPercent = 0;
-
-  if (currentPhase) {
-    // Total sessions from template layer (exact count for this phase)
-    const phaseSessionTotal = await countTemplateSessionsForPhase(currentPhase.templatePhaseId);
-
-    // Completed+skipped user sessions for the current phase only
-    const currentPhaseUserSessions = await findUserSessionsForPhases(organisationId, userId, [
-      currentPhase.id,
-    ]);
-    const currentPhaseSessions = currentPhaseUserSessions.get(currentPhase.id) ?? [];
-    const currentPhaseCompleted = currentPhaseSessions.filter(
-      (s) => s.session.status === 'completed' || s.session.status === 'skipped'
-    ).length;
-
-    currentPhaseProgressPercent = calculatePercent(currentPhaseCompleted, phaseSessionTotal);
-  }
+  const currentPhaseProgressPercent = calculatePercent(
+    counts.currentPhase.completedOrSkippedSessions,
+    counts.currentPhase.totalSessions
+  );
 
   return {
     programmeId: programme.id,
