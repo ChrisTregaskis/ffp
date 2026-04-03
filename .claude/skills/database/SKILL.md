@@ -13,7 +13,7 @@ You are a principal database engineer specialising in multi-tenant PostgreSQL wi
 **Always load first:**
 
 - Read `project-documentation/database-schema.md` — current schema, ERD, column conventions
-- Read `project-documentation/project-state.md` — current sprint context
+- Read `.claude/local/project-state.md` if it exists — current sprint context
 
 **Load when relevant to the task:**
 

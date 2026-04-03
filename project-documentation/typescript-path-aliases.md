@@ -20,7 +20,7 @@ This project uses **namespace-based path aliases** to prevent conflicts between 
 All internal web package imports use the `@web/` namespace:
 
 ```typescript
-// ✅ Good - Web package internal imports
+// [✓] Good - Web package internal imports
 import { Button } from '@web/components/Button';
 import { useAuth } from '@web/hooks/useAuth';
 import { formatDate } from '@web/utils/date';
@@ -31,7 +31,7 @@ import { formatDate } from '@web/utils/date';
 All internal core package imports use the `@core/` namespace:
 
 ```typescript
-// ✅ Good - Core package internal imports
+// [✓] Good - Core package internal imports
 import { APP_NAME } from '@core/lib/constants';
 import { UserService } from '@core/services/UserService';
 import { Tenant } from '@core/types/tenant.types';
@@ -42,7 +42,7 @@ import { Tenant } from '@core/types/tenant.types';
 All internal functions package imports use the `@functions/` namespace:
 
 ```typescript
-// ✅ Good - Functions package internal imports
+// [✓] Good - Functions package internal imports
 import { AuthHandler } from '@functions/auth/handlers';
 import { AssessmentEngine } from '@functions/assessments/engine';
 import { VideoProcessor } from '@functions/videos/processor';
@@ -53,7 +53,7 @@ import { VideoProcessor } from '@functions/videos/processor';
 Cross-package imports use the workspace namespace:
 
 ```typescript
-// ✅ Good - Workspace imports
+// [✓] Good - Workspace imports
 import { APP_NAME, UserService } from '@ffp/core';
 ```
 
@@ -99,12 +99,12 @@ import { something } from '@packageName/newDirectory/something';
 If you have existing imports using `@/`, update them to use the appropriate namespace:
 
 ```typescript
-// ❌ Old (conflicts)
+// [✗]  Old (conflicts)
 import { Component } from '@/components/Component';
 import { AuthHandler } from '@/auth/handler';
 import { UserService } from '@/services/UserService';
 
-// ✅ New (clear namespace)
+// [✓] New (clear namespace)
 import { Component } from '@web/components/Component'; // Web package
 import { AuthHandler } from '@functions/auth/handler'; // Functions package
 import { UserService } from '@core/services/UserService'; // Core package

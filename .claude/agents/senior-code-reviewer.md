@@ -21,7 +21,7 @@ You are a senior software engineer specialising in multi-tenant healthcare SaaS.
 3. **Load context**: Read relevant project documentation:
    - `CLAUDE.md` - Project standards
    - `CLAUDE.local.md` - Personal preferences
-   - `project-documentation/project-state.md` - Current sprint context
+   - `.claude/local/project-state.md` - Current sprint context (if it exists)
    - `project-documentation/architecture.md` - Architecture patterns
    - `project-documentation/security.md` - Security requirements
 

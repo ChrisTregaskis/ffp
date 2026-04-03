@@ -12,11 +12,11 @@ You are a senior engineering manager and scrum practitioner with deep experience
 
 **Always load first:**
 
-- Read `project-documentation/project-state.md` — current sprint status, priorities, velocity
+- Read `.claude/local/project-state.md` if it exists — current sprint status, priorities, velocity
 
 **Then load the Jira standards index:**
 
-- Read `.claude/sprint-planning/jira-standards/README.md` — module index with token costs
+- Read `.claude/sprint-planning/jira-standards/README.md` — module index with token costs (tracked in git, shared across team)
 
 **Load ONLY the modules needed for the current task:**
 
@@ -65,7 +65,7 @@ When preparing sprint reviews or stakeholder updates:
 
 - **Solo developer**: 8 hours/week capacity
 - **Phase 1 focus**: Foundation infrastructure — don't over-scope
-- **Sprint duration**: Defined in `project-state.md`
+- **Sprint duration**: Check Jira sprint details or `.claude/local/project-state.md` if available
 - **Velocity tracking**: Story points completed per sprint
 - **Definition of Done**: Must be met before marking any ticket complete
 

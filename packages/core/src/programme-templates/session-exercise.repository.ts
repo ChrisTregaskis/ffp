@@ -8,7 +8,7 @@ import type {
   CreateExerciseRequest,
   ExerciseVideoSummary,
   UpdateExerciseRequest,
-} from '../schemas/programme.schema';
+} from '../schemas/programme/programme.schema';
 
 /** Row shape returned by queries that join exercise + video data. */
 export interface ExerciseWithVideo extends SessionExerciseRecord {

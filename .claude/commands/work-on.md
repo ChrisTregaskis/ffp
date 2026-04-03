@@ -6,11 +6,11 @@ You are implementing a sub-task from an active user story. The Jira ticket key f
 
 ## Setup
 
-1. **Read the implementation plan** from `project-documentation/project-state.md` — this is the source of truth for what needs to be done, execution order, and branch groupings. The parent user story context is already documented here from the `/pick-up` step.
+1. **Read the implementation plan** from `.claude/local/project-state.md` if it exists — this is the source of truth for what needs to be done, execution order, and branch groupings. The parent user story context is already documented here from the `/pick-up` step. **If this file does not exist**, warn the user: _"⚠ `.claude/local/project-state.md` not found — using Jira as sole context source. See `project-documentation/project-state.md` for setup instructions."_ Then continue using Jira context only.
 
 2. **Fetch the sub-task** from Jira using the Atlassian MCP tools. Get the full ticket details (description, acceptance criteria, status).
 
-3. **Reconcile**: If the Jira ticket conflicts with `project-state.md`, treat `project-state.md` as the source of truth. Flag any discrepancies and clarify with the user before proceeding.
+3. **Reconcile**: If `project-state.md` exists and the Jira ticket conflicts with it, treat `project-state.md` as the source of truth. Flag any discrepancies and clarify with the user before proceeding. If `project-state.md` does not exist, treat Jira as the source of truth.
 
 4. **Read `.claude/review-context.md`** to understand what's already been done on this branch:
    - If this is the **first sub-task** of the user story, you will need to completely rewrite `review-context.md` with fresh context for this user story
@@ -61,7 +61,7 @@ You are implementing a sub-task from an active user story. The Jira ticket key f
     - Follow the existing format (see current file for structure): goals, requirements with acceptance criteria checklist, changes table per sub-task, areas to focus, known limitations, testing notes
     - This file accumulates all work for the user story — it will be used for full review and developer testing once all sub-tasks are complete
 
-11. **Update `project-documentation/project-state.md`**:
+11. **Update `.claude/local/project-state.md`** (skip this step if the file does not exist):
     - Mark the sub-task as completed in the implementation plan
     - Note any decisions made or deviations from the plan
     - Keep the updates concise
@@ -74,5 +74,5 @@ You are implementing a sub-task from an active user story. The Jira ticket key f
 - Do not run `git add`, `git commit`, or `git push`
 - Do not move to the next sub-task without user review
 - Defer tests unless absolutely critical
-- `project-state.md` is the source of truth over Jira tickets
+- `.claude/local/project-state.md` is the source of truth over Jira tickets (when it exists)
 - Load the appropriate Claude skill for the domain of work

@@ -147,14 +147,14 @@ Configuration:
   Database: ffp_dev
   User: root_user
 
-✅ Successfully connected to PostgreSQL database!
+[✓] Successfully connected to PostgreSQL database!
 
 PostgreSQL Version:
   PostgreSQL 16.x.x ...
 
-✅ Database exists
+[✓] Database exists
 
-✅ Connection test completed successfully!
+[✓] Connection test completed successfully!
 
 ```
 
@@ -295,10 +295,10 @@ pnpm db:test
 
 ## Security Notes
 
-- ✅ Use strong passwords for database users
-- ✅ Keep `.env` file private (never commit to Git)
-- ✅ Use different credentials for dev/staging/production
-- ✅ Regularly update PostgreSQL to latest patch version
+- [✓] Use strong passwords for database users
+- [✓] Keep `.env` file private (never commit to Git)
+- [✓] Use different credentials for dev/staging/production
+- [✓] Regularly update PostgreSQL to latest patch version
 
 ## Production Database
 

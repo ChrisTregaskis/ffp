@@ -6,16 +6,18 @@ Analyse the upcoming sprint and produce an execution plan with recommended story
 
 ## Argument Parsing
 
-The argument should be the sprint number (e.g., `8`) or sprint name (e.g., `Sprint 8`). If no argument is provided, infer the next sprint from `project-documentation/project-state.md`.
+The argument should be the sprint number (e.g., `8`) or sprint name (e.g., `Sprint 8`). If no argument is provided, infer the next sprint from `.claude/local/project-state.md` or Jira.
 
 ---
 
 ## Phase 1: Gather Sprint Context
 
-1. **Read project state** from `project-documentation/project-state.md` to understand:
+1. **Read project state** from `.claude/local/project-state.md` if it exists, to understand:
    - What sprint just completed and its key deliverables
    - What the next sprint's goal and scope are
    - Prerequisites and dependencies from prior sprints
+
+   If the file does not exist, gather this context from **Jira** using Atlassian MCP tools.
 
 2. **Fetch sprint issues from Jira** using the Atlassian MCP tools:
    - Search for all issues in the sprint: `project = FFP AND sprint = "Sprint <N>"`
@@ -28,7 +30,7 @@ The argument should be the sprint number (e.g., `8`) or sprint name (e.g., `Spri
      - Issue links and dependencies (blocks/is blocked by)
 
 3. **Read the epic plan** if one exists:
-   - Check `.claude/research/` for any epic plan files related to this sprint's epic
+   - Check `.claude/local/research/` for any epic plan files related to this sprint's epic (if the directory exists)
    - These contain detailed subtask breakdowns, ACs, and technical notes that may be more current than Jira
 
 ---
@@ -88,7 +90,7 @@ The argument should be the sprint number (e.g., `8`) or sprint name (e.g., `Spri
 
 ## Phase 5: Create Execution Plan
 
-9. **Write the execution plan** to `.claude/plans/sprint-<N>-execution-plan.md` using this structure:
+9. **Write the execution plan** to `.claude/local/plans/sprint-<N>-execution-plan.md` using this structure:
 
    ```markdown
    # Sprint <N> — Execution Plan
@@ -161,7 +163,7 @@ After creating the execution plan file, provide a summary to the user:
 End with:
 
 ```
-✅ Sprint <N> execution plan saved to .claude/plans/sprint-<N>-execution-plan.md
+✅ Sprint <N> execution plan saved to .claude/local/plans/sprint-<N>-execution-plan.md
 
 Ready to start? Pick up the first user story:
   /pick-up <first-story-key>

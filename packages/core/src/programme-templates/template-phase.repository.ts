@@ -3,7 +3,7 @@ import { count, eq, max } from 'drizzle-orm';
 import type { DbQueryClient } from '@ffp/database';
 import { programmePhases, templatePhases, type TemplatePhaseRecord } from '@ffp/database/schema';
 
-import type { CreatePhaseRequest, UpdatePhaseRequest } from '../schemas/programme.schema';
+import type { CreatePhaseRequest, UpdatePhaseRequest } from '../schemas/programme/programme.schema';
 
 /** Returns all phases for a template, ordered by phaseNumber. */
 export async function findPhasesByTemplateId(

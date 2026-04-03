@@ -171,13 +171,13 @@ These tables contain shared content accessible to all authenticated users:
 ### Import Rules
 
 ```typescript
-// ✅ CORRECT: Application code imports types from @ffp/core
+// [✓] CORRECT: Application code imports types from @ffp/core
 import { User, UserRole, Organisation, Location } from '@ffp/core';
 
-// ✅ CORRECT: Repository code imports table schemas from @ffp/database
+// [✓] CORRECT: Repository code imports table schemas from @ffp/database
 import { users, locations, organisations } from '@ffp/database/schema';
 
-// ✅ CORRECT: But repositories return types from @ffp/core
+// [✓] CORRECT: But repositories return types from @ffp/core
 import type { User } from '@ffp/core';
 ```
 

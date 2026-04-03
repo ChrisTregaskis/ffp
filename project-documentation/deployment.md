@@ -19,8 +19,8 @@ FFP uses SST (Serverless Stack) for infrastructure-as-code, S3 + CloudFront for 
 Use project-specific stage names, never the default macOS username (causes cross-project lock conflicts and state corruption):
 
 ```bash
-sst dev --stage ct-ffp           # ✅ Project-specific
-sst dev                          # ❌ Defaults to username, conflicts across projects
+sst dev --stage ct-ffp           # [✓] Project-specific
+sst dev                          # [✗]  Defaults to username, conflicts across projects
 ```
 
 ### Database Migrations (Drizzle)

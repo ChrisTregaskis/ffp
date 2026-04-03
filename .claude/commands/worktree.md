@@ -25,7 +25,7 @@ If any flag is missing, ask the user for the missing values before proceeding.
    - **Domain directories**: Which `packages/core/<domain>/`, `packages/functions/<domain>/` directories does each story touch?
    - **Shared infrastructure**: SST stacks, package dependencies, configuration files
    - **Shared utilities**: `packages/core/lib/`, shared types, error classes
-   - **project-state.md**: Will always conflict — this is trivially resolvable, note it but don't block on it
+   - **`.claude/local/project-state.md`**: If it exists, will always conflict between worktrees — this is trivially resolvable, note it but don't block on it
 
    Rate each dimension: ✓ Low / ⚠ Medium / ✗ High
 
@@ -42,7 +42,7 @@ If any flag is missing, ask the user for the missing values before proceeding.
      Domain dirs:       <detail>                    <rating>
      Shared infra:      <detail>                    <rating>
      Shared utilities:  <detail>                    <rating>
-     project-state.md:  Will conflict (trivial)     ⚠ Expected
+     project-state.md:  Will conflict if exists      ⚠ Expected
 
    Overall Risk: <LOW|MEDIUM|HIGH> — <recommendation>
    ```
@@ -80,7 +80,7 @@ If any flag is missing, ask the user for the missing values before proceeding.
 The worktree absolute path is: `<repo-root>/.claude/worktrees/<jira-key-lowercase>`
 
 9. **Read project context** from the **worktree** copy:
-   - `<worktree-path>/project-documentation/project-state.md` — current sprint status, what's been completed, decisions made
+   - `<worktree-path>/.claude/local/project-state.md` — current sprint status, what's been completed, decisions made. **If this file does not exist**, warn the user: _"⚠ `.claude/local/project-state.md` not found — using Jira as sole context source. See `project-documentation/project-state.md` for setup instructions."_ Then continue using Jira context only.
    - Any other relevant documents in `<worktree-path>/project-documentation/` that relate to this user story's domain (e.g., `architecture.md`, `database-schema.md`, `authentication.md`)
 
 10. **Evaluate and reconcile** the pick-up story's sub-tasks against current project state:
@@ -94,8 +94,8 @@ The worktree absolute path is: `<repo-root>/.claude/worktrees/<jira-key-lowercas
     - Group sub-tasks that are small enough to be completed together — preference is to keep the entire user story on one branch where practical
     - Unless absolutely critical, **defer all tests until MVP launch**
 
-12. **Update the worktree copy of `project-state.md`** with the implementation plan:
-    - File path: `<worktree-path>/project-documentation/project-state.md`
+12. **Update the worktree copy of `project-state.md`** with the implementation plan (skip this step if the file does not exist):
+    - File path: `<worktree-path>/.claude/local/project-state.md`
     - Clean up/remove the previous user story's implementation plan to keep context lean
     - Add the new implementation plan with:
       - User story summary
@@ -117,7 +117,7 @@ After completing all phases, provide:
 5. **Next steps** — always end with this section, clearly formatted:
 
    ```
-   ✅ Pick-up complete — implementation plan is in project-state.md
+   ✅ Pick-up complete — implementation plan is in .claude/local/project-state.md
 
    ┌─────────────────────────────────────────────────────────┐
    │  NEXT STEPS                                             │
