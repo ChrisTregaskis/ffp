@@ -82,8 +82,8 @@ export const userSessionWithCompletionsSchema = userSessionResponseSchema.extend
 
 /** Cascade result returned from exercise completion toggle */
 export const cascadeResultSchema = z.object({
-  /** Whether the parent session was auto-completed */
-  sessionCompleted: z.boolean(),
+  /** Whether the parent session was auto-completed (only meaningful from exercise toggle) */
+  sessionAutoCompleted: z.boolean(),
   /** Whether the parent phase was auto-completed */
   phaseCompleted: z.boolean(),
   /** Whether the entire programme was auto-completed */

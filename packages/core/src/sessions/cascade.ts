@@ -18,7 +18,7 @@ export async function runCascade(
   programmeId: string
 ): Promise<CascadeResult> {
   const result: CascadeResult = {
-    sessionCompleted: false,
+    sessionAutoCompleted: false,
     phaseCompleted: false,
     programmeCompleted: false,
   };

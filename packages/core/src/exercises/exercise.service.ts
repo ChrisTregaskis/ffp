@@ -61,19 +61,19 @@ export async function toggleExerciseCompletion(
 
     // Run cascade — check session → phase → programme completion
     const cascade: CascadeResult = {
-      sessionCompleted: false,
+      sessionAutoCompleted: false,
       phaseCompleted: false,
       programmeCompleted: false,
     };
 
-    if (completed) {
+    if (completed && session.status !== 'completed' && session.status !== 'skipped') {
       // Check if all exercises in this session are now completed
       const counts = await exerciseRepo.countCompletionsBySessionId(tx, session.id);
 
       if (counts.total > 0 && counts.completed >= counts.total) {
         // Auto-complete the session
         await sessionRepo.updateSessionStatus(tx, session.id, 'completed', new Date());
-        cascade.sessionCompleted = true;
+        cascade.sessionAutoCompleted = true;
 
         // Run phase → programme cascade
         const phaseCascade = await runCascade(tx, session.programmePhaseId, programme.id);
