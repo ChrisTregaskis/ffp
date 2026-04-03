@@ -10,7 +10,7 @@ export * from './assessment-question.schema';
 export * from './scoring-config.schema';
 export * from './assessment-template.schema';
 export * from './assessment-flow.schema';
-export * from './user-assessment.schema';
+export * from './user-assessment/user-assessment.schema';
 
 // Programme schemas
 export * from './programme/programme.schema';
@@ -20,7 +20,7 @@ export * from './programme-structure.schema';
 export * from './session.schema';
 
 // Video schemas
-export * from './video.schema';
+export * from './video/video.schema';
 
 // Job schemas
 export * from './job.schema';

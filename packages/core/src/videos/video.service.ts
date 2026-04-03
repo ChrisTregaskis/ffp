@@ -12,7 +12,7 @@ import {
   videoDetailResponseSchema,
   adminVideoFilterSchema,
   adminVideoListResponseSchema,
-} from '../schemas/video.schema';
+} from '../schemas/video/video.schema';
 
 import * as videoRepository from './video.repository';
 
@@ -22,7 +22,7 @@ import type {
   VideoListResponse,
   VideoDetailResponse,
   AdminVideoListResponse,
-} from '../schemas/video.schema';
+} from '../schemas/video/video.schema';
 
 interface GetVideoOptions {
   /** When true, returns the video regardless of status. Defaults to false (active only). */

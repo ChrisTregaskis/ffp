@@ -26,7 +26,7 @@ export default defineConfig({
       '@functions/auth': resolve(__dirname, 'src/auth'),
       '@functions/assessments': resolve(__dirname, 'src/assessments'),
       '@functions/business': resolve(__dirname, 'src/business'),
-      '@functions/programs': resolve(__dirname, 'src/programs'),
+      '@functions/programmes': resolve(__dirname, 'src/programmes'),
       '@functions/videos': resolve(__dirname, 'src/videos'),
       '@functions/utils': resolve(__dirname, 'src/utils'),
       '@functions/types': resolve(__dirname, 'src/types'),
