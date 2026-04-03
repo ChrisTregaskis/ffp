@@ -8,6 +8,7 @@ import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
 import { handler as getActiveHandler } from './get-active';
 import { handler as getDetailHandler } from './get-detail';
+import { handler as getProgressHandler } from './get-progress';
 import { handler as replaceActiveHandler } from './replace-active';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
@@ -25,6 +26,7 @@ const routes: RouteRegistry = {
   GET: {
     '/active': getActiveHandler,
     '/active/detail': getDetailHandler,
+    '/active/progress': getProgressHandler,
   },
   PUT: {
     '/active/replace': replaceActiveHandler,
