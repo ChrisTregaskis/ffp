@@ -9,7 +9,7 @@ You are picking up a new user story for implementation planning. The Jira ticket
 2. **Fetch all sub-tasks** individually to get their full details (description, acceptance criteria, status).
 
 3. **Review project context** by reading:
-   - `project-documentation/project-state.md` — current sprint status, what's been completed, decisions made
+   - `.claude/local/project-state.md` — current sprint status, what's been completed, decisions made. **If this file does not exist**, warn the user: _"⚠ `.claude/local/project-state.md` not found — using Jira as sole context source. See `project-documentation/project-state.md` for setup instructions."_ Then continue using Jira context only.
    - Any other relevant documents in `project-documentation/` that relate to this user story's domain (e.g., `architecture.md`, `database-schema.md`, `authentication.md`, `assessment-engine.md`)
 
 4. **Evaluate and reconcile** the sub-tasks against current project state:
@@ -23,7 +23,7 @@ You are picking up a new user story for implementation planning. The Jira ticket
    - Group sub-tasks that are small enough to be completed together on the same branch — preference is to keep the entire user story on one branch where practical
    - Unless absolutely critical, **defer all tests until MVP launch**
 
-6. **Update `project-documentation/project-state.md`** with the implementation plan:
+6. **Update `.claude/local/project-state.md`** with the implementation plan (skip this step if the file does not exist):
    - Clean up/remove the previous user story's implementation plan to keep context lean
    - Add the new implementation plan with:
      - User story summary

@@ -18,6 +18,8 @@ export * from './template-phases';
 export * from './template-sessions';
 export * from './session-exercises';
 export * from './programme-phases';
+export * from './user-sessions';
+export * from './exercise-completions';
 export * from './user-assessments';
 export * from './questions';
 export * from './template-questions';

@@ -660,7 +660,6 @@ The `project-documentation/` directory contains comprehensive documentation opti
 
 ### Core Documentation
 
-- **`project-state.md`** - Current phase, sprint progress, next tasks
 - **`architecture.md`** - AWS services, infrastructure design
 - **`authentication.md`** - Cognito setup, multi-tenant auth
 - **`database-schema.md`** - PostgreSQL schema, RLS policies
@@ -684,7 +683,7 @@ The `project-documentation/` directory contains comprehensive documentation opti
 
 - **`sprint-planning/outputs/2025-10-20_2100_TURBOREPO_CACHING.md`** - Caching strategies, performance
 
-**Getting Started**: Always check `project-state.md` first for current context and active tasks.
+**Getting Started**: Check the Jira board for current sprint context and active tasks.
 
 ---
 

@@ -33,7 +33,7 @@ import type {
   SubmitAssessmentResponse,
   UserAssessmentAnswers,
   UserAssessmentStatusResponse,
-} from '../schemas/user-assessment.schema';
+} from '../schemas/user-assessment/user-assessment.schema';
 
 /**
  * Convert answers from database table format to API response format

@@ -411,7 +411,15 @@ export default $config({
       ...handlerEnv,
     });
     api.route('OPTIONS /programmes/{proxy+}', {
-      handler: `${repositoryFunctionsPath}/programs/index.handler`,
+      handler: `${repositoryFunctionsPath}/programmes/index.handler`,
+      ...handlerEnv,
+    });
+    api.route('OPTIONS /sessions/{proxy+}', {
+      handler: `${repositoryFunctionsPath}/sessions/index.handler`,
+      ...handlerEnv,
+    });
+    api.route('OPTIONS /exercises/{proxy+}', {
+      handler: `${repositoryFunctionsPath}/exercises/index.handler`,
       ...handlerEnv,
     });
 
@@ -472,7 +480,21 @@ export default $config({
     // Programmes domain routes (authenticated users - programme data)
     api.route(
       'ANY /programmes/{proxy+}',
-      { handler: `${repositoryFunctionsPath}/programs/index.handler`, ...handlerEnv },
+      { handler: `${repositoryFunctionsPath}/programmes/index.handler`, ...handlerEnv },
+      args
+    );
+
+    // Sessions domain routes (authenticated users - session lifecycle)
+    api.route(
+      'ANY /sessions/{proxy+}',
+      { handler: `${repositoryFunctionsPath}/sessions/index.handler`, ...handlerEnv },
+      args
+    );
+
+    // Exercises domain routes (authenticated users - exercise completion)
+    api.route(
+      'ANY /exercises/{proxy+}',
+      { handler: `${repositoryFunctionsPath}/exercises/index.handler`, ...handlerEnv },
       args
     );
 

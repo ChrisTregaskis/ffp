@@ -14,7 +14,7 @@
       "@functions/auth/*": ["./auth/*"],
       "@functions/assessments/*": ["./assessments/*"],
       "@functions/business/*": ["./business/*"],
-      "@functions/programs/*": ["./programs/*"],
+      "@functions/programmes/*": ["./programmes/*"],
       "@functions/videos/*": ["./videos/*"],
 
       // Common directories (future-ready)

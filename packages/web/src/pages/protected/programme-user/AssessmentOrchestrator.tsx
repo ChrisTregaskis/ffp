@@ -18,6 +18,8 @@ import {
 import { useReplaceProgrammeMutation } from '@web/hooks/programmes';
 import { routes, RouteKey } from '@web/pages/routes';
 
+import { REASSESSMENT_START_KEY } from './assessment.constants';
+
 interface AssessmentOrchestratorProps {
   /** Assessment flow ID to start or resume */
   flowId: string;
@@ -107,8 +109,8 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
   // The sessionStorage flag distinguishes an intentional CTA click (fresh start)
   // from a page reload (which should resume the in-progress assessment).
   useEffect(() => {
-    const isFreshStart = sessionStorage.getItem('ffp-reassessment-start') === 'true';
-    sessionStorage.removeItem('ffp-reassessment-start');
+    const isFreshStart = sessionStorage.getItem(REASSESSMENT_START_KEY) === 'true';
+    sessionStorage.removeItem(REASSESSMENT_START_KEY);
 
     const shouldStartNew = isReassessment && isFreshStart;
 

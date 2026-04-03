@@ -7,12 +7,12 @@ import {
   updateSessionRequestSchema,
   reorderSessionsRequestSchema,
   sessionResponseSchema,
-} from '../schemas/programme.schema';
+} from '../schemas/programme/programme.schema';
 
 import * as phaseRepository from './template-phase.repository';
 import * as sessionRepository from './template-session.repository';
 
-import type { SessionResponse } from '../schemas/programme.schema';
+import type { SessionResponse } from '../schemas/programme/programme.schema';
 
 /** Maps a session record to the API response shape. */
 const toResponse = (record: TemplateSessionRecord): SessionResponse =>

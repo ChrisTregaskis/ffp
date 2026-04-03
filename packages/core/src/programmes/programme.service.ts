@@ -1,24 +1,34 @@
 import { eq, and } from 'drizzle-orm';
 
+import { DIFFICULTIES } from '@ffp/database/constants';
 import { userAssessments } from '@ffp/database/schema';
 
 import * as userAssessmentRepo from '../assessments/user-assessment.repository';
 import { getUserIdFromContext, type OrganisationContext } from '../lib/context';
 import { withRLS } from '../lib/database';
 import { ForbiddenError, NotFoundError, ValidationError } from '../lib/errors';
+import { calculatePercent } from '../lib/math';
 
 import {
   archiveProgramme,
+  countProgress,
   createProgramme,
   createProgrammePhases,
   findProgrammeByUserId,
+  findProgrammeWithPhases,
   findTemplateBySlug,
   findTemplatePhases,
+  findTemplateStructure,
+  findUserSessionsForPhases,
   setReplacementProgramme,
 } from './programme.repository';
 
 import type { Programme, NewProgrammePhase } from './programme.repository';
 import type { Transaction } from '../lib/database';
+import type {
+  ProgrammeDetailResponse,
+  ProgressSummaryResponse,
+} from '../schemas/programme/programme.schema';
 
 export interface GenerateProgrammeInput {
   organisationId: string;
@@ -218,4 +228,234 @@ export async function replaceProgramme(
       programmeName: result.programmeName,
     };
   });
+}
+
+type Difficulty = (typeof DIFFICULTIES)[number];
+
+const DEFAULT_DIFFICULTY: Difficulty = 'beginner';
+
+function isDifficulty(value: string | null | undefined): value is Difficulty {
+  return typeof value === 'string' && (DIFFICULTIES as readonly string[]).includes(value);
+}
+
+/** Build template summary from repository data, with safe defaults. */
+function buildTemplateSummary(template: { name: string; difficulty: string | null } | null): {
+  name: string;
+  difficulty: Difficulty;
+} {
+  return {
+    name: template?.name ?? 'Unknown',
+    difficulty: isDifficulty(template?.difficulty) ? template.difficulty : DEFAULT_DIFFICULTY,
+  };
+}
+
+/**
+ * Fetch the active programme with full hierarchy and tiered visibility.
+ *
+ * - Current/completed phases: full exercise detail + user session data
+ * - Future phases: session summaries only (name, exercise count)
+ * - Current phase: first programme_phase with status not_started or in_progress
+ */
+export async function getProgrammeDetail(
+  context: OrganisationContext
+): Promise<ProgrammeDetailResponse> {
+  const userId = await getUserIdFromContext(context);
+  const { organisationId } = context;
+
+  // Fetch programme + phases (RLS-scoped)
+  const result = await findProgrammeWithPhases(organisationId, userId);
+
+  if (!result) {
+    throw new NotFoundError('Active programme');
+  }
+
+  const { programme, phases, template } = result;
+
+  // Determine current phase (first not_started or in_progress, ordered by phaseNumber)
+  const currentPhase = phases.find((p) => p.status === 'not_started' || p.status === 'in_progress');
+  const currentPhaseNumber = currentPhase?.phaseNumber ?? null;
+
+  // Accessible = completed + in_progress + current (which may be not_started)
+  const accessiblePhaseIds = phases
+    .filter(
+      (p) => p.status === 'completed' || p.status === 'in_progress' || p.id === currentPhase?.id
+    )
+    .map((p) => p.id);
+
+  // Fetch template structure (no RLS — system-managed)
+  const templateStructure = await findTemplateStructure(programme.programmeTemplateId);
+
+  // Fetch user sessions for accessible phases only (RLS-scoped)
+  const userSessionsByPhase =
+    accessiblePhaseIds.length > 0
+      ? await findUserSessionsForPhases(organisationId, userId, accessiblePhaseIds)
+      : new Map<string, never[]>();
+
+  // Merge and apply tiered visibility
+  const detailPhases = phases.map((phase) => {
+    const isAccessible = accessiblePhaseIds.includes(phase.id);
+    const templatePhaseData = templateStructure.phases.get(phase.templatePhaseId);
+    const phaseSessions = userSessionsByPhase.get(phase.id) ?? [];
+
+    // Build session index by templateSessionId for quick lookup
+    const userSessionIndex = new Map(phaseSessions.map((us) => [us.session.templateSessionId, us]));
+
+    const sessions = (templatePhaseData?.sessions ?? []).map((ts) => {
+      const exerciseCount = ts.exercises.length;
+      const userSessionData = userSessionIndex.get(ts.session.id);
+
+      if (!isAccessible) {
+        // Future phase — summary only (no exercises or user session data)
+        return {
+          templateSessionId: ts.session.id,
+          sessionNumber: ts.session.sessionNumber,
+          name: ts.session.name,
+          description: ts.session.description,
+          estimatedDurationMinutes: ts.session.estimatedDurationMinutes,
+          exerciseCount,
+          userSession: undefined,
+          exercises: undefined,
+        };
+      }
+
+      // Current/completed phase — full detail
+      // Build completion index by sessionExerciseId
+      const completionIndex = new Map(
+        (userSessionData?.completions ?? []).map((c) => [c.sessionExerciseId, c])
+      );
+
+      return {
+        templateSessionId: ts.session.id,
+        sessionNumber: ts.session.sessionNumber,
+        name: ts.session.name,
+        description: ts.session.description,
+        estimatedDurationMinutes: ts.session.estimatedDurationMinutes,
+        exerciseCount,
+        userSession: userSessionData
+          ? {
+              id: userSessionData.session.id,
+              status: userSessionData.session.status,
+              startedAt: userSessionData.session.startedAt,
+              completedAt: userSessionData.session.completedAt,
+              skippedAt: userSessionData.session.skippedAt,
+            }
+          : null,
+        exercises: ts.exercises.map((ex) => {
+          const completion = completionIndex.get(ex.id);
+
+          return {
+            sessionExerciseId: ex.id,
+            orderIndex: ex.orderIndex,
+            sets: ex.sets,
+            reps: ex.reps,
+            durationSeconds: ex.durationSeconds,
+            restSeconds: ex.restSeconds,
+            notes: ex.notes,
+            video: {
+              id: ex.video.id,
+              title: ex.video.title,
+              thumbnailKey: ex.video.thumbnailKey,
+              durationSeconds: ex.video.durationSeconds,
+              difficulty: ex.video.difficulty,
+            },
+            completion: completion
+              ? {
+                  id: completion.id,
+                  completed: completion.completed,
+                  completedAt: completion.completedAt,
+                  skipped: completion.skipped,
+                }
+              : null,
+          };
+        }),
+      };
+    });
+
+    return {
+      id: phase.id,
+      phaseNumber: phase.phaseNumber,
+      name: phase.name,
+      status: phase.status,
+      sessions,
+    };
+  });
+
+  return {
+    programme: {
+      id: programme.id,
+      name: programme.name,
+      description: programme.description,
+      status: programme.status,
+      startedAt: programme.startedAt,
+      totalPhases: programme.totalPhases,
+      template: buildTemplateSummary(template),
+    },
+    currentPhaseNumber,
+    phases: detailPhases,
+  };
+}
+
+/**
+ * Fetch aggregate progress summary for the user's active programme.
+ *
+ * Totals come from the template layer (always complete).
+ * Completed/skipped counts come from the user layer (lazily created).
+ * All percentages calculated at query time via SQL COUNT aggregates.
+ */
+export async function getProgressSummary(
+  context: OrganisationContext
+): Promise<ProgressSummaryResponse> {
+  const userId = await getUserIdFromContext(context);
+  const { organisationId } = context;
+
+  // Fetch programme + phases
+  const result = await findProgrammeWithPhases(organisationId, userId);
+
+  if (!result) {
+    throw new NotFoundError('Active programme');
+  }
+
+  const { programme, phases } = result;
+
+  // Determine current phase (first not_started or in_progress, ordered by phaseNumber)
+  const currentPhase = phases.find((p) => p.status === 'not_started' || p.status === 'in_progress');
+  const currentPhaseNumber = currentPhase?.phaseNumber ?? null;
+
+  const phaseIds = phases.map((p) => p.id);
+
+  // Aggregate counts within a single RLS transaction (includes current phase progress)
+  const counts = await countProgress(
+    organisationId,
+    userId,
+    programme.id,
+    programme.programmeTemplateId,
+    phaseIds,
+    currentPhase
+      ? { phaseId: currentPhase.id, templatePhaseId: currentPhase.templatePhaseId }
+      : undefined
+  );
+
+  const currentPhaseProgressPercent = calculatePercent(
+    counts.currentPhase.completedOrSkippedSessions,
+    counts.currentPhase.totalSessions
+  );
+
+  return {
+    programmeId: programme.id,
+    programmeName: programme.name,
+    totalPhases: counts.phases.total,
+    completedPhases: counts.phases.completed,
+    currentPhaseNumber,
+    totalSessions: counts.sessions.total,
+    completedSessions: counts.sessions.completed,
+    skippedSessions: counts.sessions.skipped,
+    totalExercises: counts.exercises.total,
+    completedExercises: counts.exercises.completed,
+    overallProgressPercent: calculatePercent(
+      counts.sessions.completed + counts.sessions.skipped,
+      counts.sessions.total
+    ),
+    currentPhaseProgressPercent,
+    startedAt: programme.startedAt,
+  };
 }

@@ -69,7 +69,7 @@ export const SideMenu: React.FC<SideMenuProps> = ({ handleLogout }) => {
 
       {/* Main Navigation */}
       <nav className="flex-1 w-full justify-center overflow-y-auto">
-        <div className="flex w-full flex-col space-y-1">
+        <div className="flex w-full flex-col">
           {contextNavItems
             ? contextNavItems.map((item) => (
                 <NavItem

@@ -7,7 +7,7 @@ import { videos, type VideoRecord, type NewVideo } from '@ffp/database/schema';
 import { applyPagination } from '../lib/pagination';
 
 import type { PaginationInput } from '../schemas/pagination.schema';
-import type { AdminVideoFilterInput, UpdateVideoInput } from '../schemas/video.schema';
+import type { AdminVideoFilterInput, UpdateVideoInput } from '../schemas/video/video.schema';
 
 export interface VideoFilters {
   /** Filter by target body parts — matches videos that overlap with any of the provided values */
