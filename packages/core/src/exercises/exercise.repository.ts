@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { and, count, eq } from 'drizzle-orm';
 
 import {
   exerciseCompletions,
@@ -31,7 +31,7 @@ export async function toggleExerciseCompletion(
   completionId: string,
   completed: boolean
 ): Promise<ExerciseCompletionRecord> {
-  const [record] = await tx
+  const records = await tx
     .update(exerciseCompletions)
     .set({
       completed,
@@ -41,12 +41,11 @@ export async function toggleExerciseCompletion(
     .where(eq(exerciseCompletions.id, completionId))
     .returning();
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- belt-and-braces guard on .returning()
-  if (!record) {
+  if (records.length === 0) {
     throw new NotFoundError('Exercise completion', completionId);
   }
 
-  return record;
+  return records[0];
 }
 
 /** Finds a single exercise completion by ID. */
@@ -79,15 +78,25 @@ export async function countCompletionsBySessionId(
   tx: Transaction,
   userSessionId: string
 ): Promise<{ total: number; completed: number }> {
-  const result = await tx
-    .select({
-      total: sql<number>`count(*)::int`,
-      completed: sql<number>`count(*) filter (where ${exerciseCompletions.completed} = true)::int`,
-    })
+  const [totalResult] = await tx
+    .select({ value: count() })
     .from(exerciseCompletions)
     .where(eq(exerciseCompletions.userSessionId, userSessionId));
 
-  return result[0] ?? { total: 0, completed: 0 };
+  const [completedResult] = await tx
+    .select({ value: count() })
+    .from(exerciseCompletions)
+    .where(
+      and(
+        eq(exerciseCompletions.userSessionId, userSessionId),
+        eq(exerciseCompletions.completed, true)
+      )
+    );
+
+  return {
+    total: totalResult.value,
+    completed: completedResult.value,
+  };
 }
 
 /**

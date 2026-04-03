@@ -1,5 +1,6 @@
-import { eq, and, sql } from 'drizzle-orm';
+import { and, count, eq, inArray } from 'drizzle-orm';
 
+import type { PhaseStatus, SessionStatus } from '@ffp/database/constants';
 import {
   userSessions,
   programmePhases,
@@ -20,14 +21,13 @@ export async function createUserSession(
   tx: Transaction,
   input: NewUserSession
 ): Promise<UserSessionRecord> {
-  const [record] = await tx.insert(userSessions).values(input).returning();
+  const records = await tx.insert(userSessions).values(input).returning();
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- belt-and-braces guard on .returning()
-  if (!record) {
+  if (records.length === 0) {
     throw new NotFoundError('Failed to create user session');
   }
 
-  return record;
+  return records[0];
 }
 
 /** Finds a user session by ID within an existing RLS transaction. */
@@ -71,7 +71,7 @@ export async function findUserSessionByPhaseAndTemplate(
 export async function updateSessionStatus(
   tx: Transaction,
   sessionId: string,
-  status: 'in_progress' | 'completed' | 'skipped',
+  status: Extract<SessionStatus, 'in_progress' | 'completed' | 'skipped'>,
   timestamp: Date
 ): Promise<UserSessionRecord> {
   const updates: Partial<NewUserSession> = {
@@ -87,18 +87,17 @@ export async function updateSessionStatus(
     updates.skippedAt = timestamp;
   }
 
-  const [record] = await tx
+  const records = await tx
     .update(userSessions)
     .set(updates)
     .where(eq(userSessions.id, sessionId))
     .returning();
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- belt-and-braces guard on .returning()
-  if (!record) {
+  if (records.length === 0) {
     throw new NotFoundError('Session', sessionId);
   }
 
-  return record;
+  return records[0];
 }
 
 /** Finds the programme phase by ID within an existing RLS transaction. */
@@ -119,7 +118,7 @@ export async function findProgrammePhaseById(
 export async function updatePhaseStatus(
   tx: Transaction,
   phaseId: string,
-  status: 'not_started' | 'in_progress' | 'completed'
+  status: PhaseStatus
 ): Promise<void> {
   await tx
     .update(programmePhases)
@@ -132,15 +131,25 @@ export async function countSessionsByPhase(
   tx: Transaction,
   programmePhaseId: string
 ): Promise<{ total: number; completedOrSkipped: number }> {
-  const result = await tx
-    .select({
-      total: sql<number>`count(*)::int`,
-      completedOrSkipped: sql<number>`count(*) filter (where ${userSessions.status} in ('completed', 'skipped'))::int`,
-    })
+  const [totalResult] = await tx
+    .select({ value: count() })
     .from(userSessions)
     .where(eq(userSessions.programmePhaseId, programmePhaseId));
 
-  return result[0] ?? { total: 0, completedOrSkipped: 0 };
+  const [completedResult] = await tx
+    .select({ value: count() })
+    .from(userSessions)
+    .where(
+      and(
+        eq(userSessions.programmePhaseId, programmePhaseId),
+        inArray(userSessions.status, ['completed', 'skipped'])
+      )
+    );
+
+  return {
+    total: totalResult.value,
+    completedOrSkipped: completedResult.value,
+  };
 }
 
 /**
@@ -169,37 +178,41 @@ export async function countPhasesByProgramme(
   tx: Transaction,
   programmeId: string
 ): Promise<{ total: number; completed: number }> {
-  const result = await tx
-    .select({
-      total: sql<number>`count(*)::int`,
-      completed: sql<number>`count(*) filter (where ${programmePhases.status} = 'completed')::int`,
-    })
+  const [totalResult] = await tx
+    .select({ value: count() })
     .from(programmePhases)
     .where(eq(programmePhases.programmeId, programmeId));
 
-  return result[0] ?? { total: 0, completed: 0 };
+  const [completedResult] = await tx
+    .select({ value: count() })
+    .from(programmePhases)
+    .where(
+      and(eq(programmePhases.programmeId, programmeId), eq(programmePhases.status, 'completed'))
+    );
+
+  return {
+    total: totalResult.value,
+    completed: completedResult.value,
+  };
 }
 
 /**
  * Counts total template sessions for a phase.
  * Used to determine if all sessions have been started/completed.
- * No RLS required — template_sessions is a system-managed table.
  */
 export async function countTemplateSessionsByPhase(
   tx: Transaction,
   templatePhaseId: string
 ): Promise<number> {
-  const result = await tx
-    .select({
-      count: sql<number>`count(*)::int`,
-    })
+  const [result] = await tx
+    .select({ value: count() })
     .from(templateSessions)
     .where(eq(templateSessions.templatePhaseId, templatePhaseId));
 
-  return result[0]?.count ?? 0;
+  return result.value;
 }
 
-/** Sets programme startedAt if not already set. */
+/** Sets programme startedAt. */
 export async function updateProgrammeStartedAt(
   tx: Transaction,
   programmeId: string,

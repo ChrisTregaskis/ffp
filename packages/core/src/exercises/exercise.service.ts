@@ -2,25 +2,26 @@ import { getUserIdFromContext, type OrganisationContext } from '../lib/context';
 import { withRLS } from '../lib/database';
 import { ForbiddenError, NotFoundError } from '../lib/errors';
 import { findProgrammeByUserId } from '../programmes/programme.repository';
+import { runCascade } from '../sessions/cascade';
 import * as sessionRepo from '../sessions/session.repository';
-import { runCascade } from '../sessions/session.service';
 
 import * as exerciseRepo from './exercise.repository';
 
-import type { ToggleExerciseCompletionResponse } from '../schemas/session.schema';
+import type { ExerciseCompletionRecord } from './exercise.repository';
+import type { CascadeResult } from '../schemas/session.schema';
 
 /**
  * Toggle exercise completion and run cascading completion.
  *
  * Updates the exercise_completion record, then checks if the session,
  * phase, and programme should auto-complete. Returns cascade results
- * so the frontend can show celebratory UI without additional API calls.
+ * so the frontend can update accordingly.
  */
 export async function toggleExerciseCompletion(
   completionId: string,
   completed: boolean,
   context: OrganisationContext
-): Promise<ToggleExerciseCompletionResponse> {
+): Promise<{ exerciseCompletion: ExerciseCompletionRecord; cascade: CascadeResult }> {
   const userId = await getUserIdFromContext(context);
   const { organisationId } = context;
 
@@ -32,7 +33,7 @@ export async function toggleExerciseCompletion(
       throw new NotFoundError('Exercise completion', completionId);
     }
 
-    // Belt-and-braces: verify exercise belongs to user's active programme
+    // verify exercise belongs to user's active programme
     const programme = await findProgrammeByUserId(organisationId, userId, { tx });
 
     if (!programme) {
@@ -59,7 +60,7 @@ export async function toggleExerciseCompletion(
     );
 
     // Run cascade — check session → phase → programme completion
-    const cascade = {
+    const cascade: CascadeResult = {
       sessionCompleted: false,
       phaseCompleted: false,
       programmeCompleted: false,
@@ -84,6 +85,6 @@ export async function toggleExerciseCompletion(
     return {
       exerciseCompletion: updatedCompletion,
       cascade,
-    } as ToggleExerciseCompletionResponse;
+    };
   });
 }

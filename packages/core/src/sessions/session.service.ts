@@ -1,13 +1,15 @@
 import * as exerciseRepo from '../exercises/exercise.repository';
 import { getUserIdFromContext, type OrganisationContext } from '../lib/context';
-import { withRLS, type Transaction } from '../lib/database';
+import { withRLS } from '../lib/database';
 import { ForbiddenError, NotFoundError, ValidationError } from '../lib/errors';
 import { findProgrammeByUserId } from '../programmes/programme.repository';
 
+import { runCascade } from './cascade';
 import * as sessionRepo from './session.repository';
 
 import type { UserSessionRecord } from './session.repository';
-import type { CascadeResult, UserSessionWithCompletions } from '../schemas/session.schema';
+import type { ExerciseCompletionRecord } from '../exercises/exercise.repository';
+import type { CascadeResult } from '../schemas/session.schema';
 
 /**
  * Start a session (lazy creation).
@@ -19,12 +21,12 @@ import type { CascadeResult, UserSessionWithCompletions } from '../schemas/sessi
 export async function startSession(
   input: { programmePhaseId: string; templateSessionId: string },
   context: OrganisationContext
-): Promise<UserSessionWithCompletions> {
+): Promise<UserSessionRecord & { exerciseCompletions: ExerciseCompletionRecord[] }> {
   const userId = await getUserIdFromContext(context);
   const { organisationId } = context;
 
   return await withRLS(organisationId, userId, async (tx) => {
-    // Belt-and-braces: verify the phase belongs to the user's active programme
+    // verify the phase belongs to the user's active programme
     const programme = await findProgrammeByUserId(organisationId, userId, { tx });
 
     if (!programme) {
@@ -54,7 +56,7 @@ export async function startSession(
       return {
         ...existing,
         exerciseCompletions: completions,
-      } as UserSessionWithCompletions;
+      };
     }
 
     // Look up template session to get sessionNumber
@@ -104,7 +106,7 @@ export async function startSession(
     return {
       ...session,
       exerciseCompletions: completions,
-    } as UserSessionWithCompletions;
+    };
   });
 }
 
@@ -149,7 +151,7 @@ async function updateSessionWithCascade(
       throw new NotFoundError('Session', sessionId);
     }
 
-    // Belt-and-braces: verify session belongs to user's active programme
+    // verify session belongs to user's active programme
     const programme = await findProgrammeByUserId(organisationId, userId, { tx });
 
     if (!programme) {
@@ -175,59 +177,4 @@ async function updateSessionWithCascade(
 
     return { session: updatedSession, cascade };
   });
-}
-
-/**
- * Cascading completion engine.
- *
- * Checks whether the phase should auto-complete (all sessions completed/skipped),
- * then whether the programme should auto-complete (all phases completed).
- * Early exit when cascade doesn't trigger.
- *
- * @internal Exported for use by exercise.service only — do not import in handlers.
- */
-export async function runCascade(
-  tx: Transaction,
-  programmePhaseId: string,
-  programmeId: string
-): Promise<CascadeResult> {
-  const result: CascadeResult = {
-    sessionCompleted: false,
-    phaseCompleted: false,
-    programmeCompleted: false,
-  };
-
-  // Check phase completion — are all sessions in this phase completed or skipped?
-  const phase = await sessionRepo.findProgrammePhaseById(tx, programmePhaseId);
-
-  if (!phase || phase.status === 'completed') {
-    return result; // Already completed, nothing to cascade
-  }
-
-  // Count template sessions for this phase to know total expected
-  const templateSessionCount = await sessionRepo.countTemplateSessionsByPhase(
-    tx,
-    phase.templatePhaseId
-  );
-
-  const sessionCounts = await sessionRepo.countSessionsByPhase(tx, programmePhaseId);
-
-  // Phase is complete when all template sessions have user sessions that are completed/skipped
-  if (
-    sessionCounts.total >= templateSessionCount &&
-    sessionCounts.completedOrSkipped >= templateSessionCount
-  ) {
-    await sessionRepo.updatePhaseStatus(tx, programmePhaseId, 'completed');
-    result.phaseCompleted = true;
-
-    // Check programme completion — are all phases completed?
-    const phaseCounts = await sessionRepo.countPhasesByProgramme(tx, programmeId);
-
-    if (phaseCounts.total > 0 && phaseCounts.completed >= phaseCounts.total) {
-      await sessionRepo.updateProgrammeCompleted(tx, programmeId, new Date());
-      result.programmeCompleted = true;
-    }
-  }
-
-  return result;
 }
