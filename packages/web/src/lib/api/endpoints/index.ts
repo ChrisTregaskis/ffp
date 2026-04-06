@@ -74,7 +74,11 @@ export type {
 } from './assessments';
 
 export { programmesApi } from './programmes';
-export type { ActiveProgrammeResponse } from './programmes';
+export type {
+  ActiveProgrammeResponse,
+  ProgrammeDetailResponse,
+  ProgressSummaryResponse,
+} from './programmes';
 
 export { videosApi } from './videos';
 export type {

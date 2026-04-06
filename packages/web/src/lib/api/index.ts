@@ -14,6 +14,8 @@ export type {
 export { adminVideosApi, assessmentsApi, programmesApi, videosApi } from './endpoints';
 export type {
   ActiveProgrammeResponse,
+  ProgrammeDetailResponse,
+  ProgressSummaryResponse,
   AssessmentFlow,
   AssessmentResultsResponse,
   AssessmentTemplate,
