@@ -32,7 +32,9 @@ You are picking up a new user story for implementation planning. The Jira ticket
      - Dependencies and prerequisites
    - Keep the format consistent with what's already in the file
 
-7. **Ask clarifying questions** if anything is ambiguous or if you spot conflicts between ticket requirements and current project state.
+7. **Rename the session** to match the user story: `FFP-{key number} {Jira story title}` (e.g., `FFP-386 Dashboard Page`). Use the `/rename` command.
+
+8. **Ask clarifying questions** if anything is ambiguous or if you spot conflicts between ticket requirements and current project state.
 
 ## Output
 

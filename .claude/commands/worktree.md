@@ -14,6 +14,10 @@ Extract the following flags from the arguments:
 
 If any flag is missing, ask the user for the missing values before proceeding.
 
+## Session Setup
+
+**Rename the session** to `FFP-{pick-up key number} {Jira story title} (Worktree)` (e.g., `FFP-282 Video Catalogue Schema (Worktree)`). Use the `/rename` command after fetching the story details.
+
 ## Phase 1: Conflict Assessment
 
 1. **Fetch both user stories** from Jira using the Atlassian MCP tools. Get full ticket details including description, acceptance criteria, and all linked sub-tasks/child issues for both stories.
