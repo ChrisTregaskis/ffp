@@ -81,7 +81,7 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
     },
     {
       key: RouteKey.PROGRAMME_OVERVIEW,
-      label: 'Programme Overview',
+      label: 'My Programme',
       icon: 'Activity',
       path: routes[RouteKey.PROGRAMME_OVERVIEW].path,
       roles: [PROGRAMME_USER],
