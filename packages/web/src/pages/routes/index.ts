@@ -46,6 +46,7 @@ import { AssessmentOverviewPage } from '@web/pages/protected/programme-user/Asse
 import { AssessmentPage } from '@web/pages/protected/programme-user/AssessmentPage';
 import { ProgrammeOverviewPage } from '@web/pages/protected/programme-user/ProgrammeOverviewPage';
 import { ProgressPage } from '@web/pages/protected/programme-user/ProgressPage';
+import { SessionPage } from '@web/pages/protected/programme-user/SessionPage';
 import { ForgotPasswordPage } from '@web/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@web/pages/public/LoginPage';
 import { SetPasswordPage } from '@web/pages/public/SetPasswordPage';
@@ -173,6 +174,14 @@ export const routes: RoutesConfig = {
     path: '/assessment',
     pageComponent: AssessmentPage,
     title: 'Assessment',
+    allowedRoles: [PROGRAMME_USER],
+    excludeLayout: true,
+    excludeFromMainNavbar: true,
+  },
+  [RouteKey.SESSION_WORKOUT]: {
+    path: '/programme/session/:phaseId/:templateSessionId',
+    pageComponent: SessionPage,
+    title: 'Session Workout',
     allowedRoles: [PROGRAMME_USER],
     excludeLayout: true,
     excludeFromMainNavbar: true,

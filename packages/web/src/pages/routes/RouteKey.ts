@@ -19,6 +19,8 @@ export enum RouteKey {
   PROGRESS = 'progress',
   /** Assessment overview with reassessment CTA */
   ASSESSMENT_OVERVIEW = 'assessment-overview',
+  /** Full-screen session workout page (no app layout) */
+  SESSION_WORKOUT = 'session-workout',
   /** Account settings page */
   ACCOUNT_SETTINGS = 'account-settings',
 

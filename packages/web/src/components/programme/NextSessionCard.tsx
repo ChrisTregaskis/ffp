@@ -47,8 +47,7 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
     isResumable && totalExercises > 0 ? (completedExercises / totalExercises) * 100 : 0;
 
   const handleStart = (): void => {
-    // TODO: Session page route will be added in FFP-388
-    void navigate('/programme-overview');
+    void navigate(`/programme/session/${phase.id}/${session.templateSessionId}`);
   };
 
   const handleViewProgramme = (): void => {
