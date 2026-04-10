@@ -1,7 +1,11 @@
 export { EmptyProgrammeState } from './EmptyProgrammeState';
 export { NextSessionCard } from './NextSessionCard';
 export { PhaseDetailCard } from './PhaseDetailCard';
+export { PrescriptionBadge } from './PrescriptionBadge';
 export { SessionDot } from './SessionDot';
+export { StatusBadge } from './StatusBadge';
 export type { NextSessionCardProps } from './NextSessionCard';
 export type { PhaseDetailCardProps } from './PhaseDetailCard';
+export type { PrescriptionBadgeProps } from './PrescriptionBadge';
 export type { SessionDotProps } from './SessionDot';
+export type { StatusBadgeProps } from './StatusBadge';

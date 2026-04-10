@@ -62,6 +62,9 @@ export type {
 } from './admin-videos';
 
 export { assessmentsApi } from './assessments';
+
+export { exercisesApi } from './exercises';
+export type { ToggleExerciseCompletionResponse } from './exercises';
 export type {
   AssessmentFlow,
   AssessmentResultsResponse,
@@ -74,6 +77,9 @@ export type {
 } from './assessments';
 
 export { programmesApi } from './programmes';
+
+export { sessionsApi } from './sessions';
+export type { StartSessionRequest, StartSessionResponse, SessionStatusResponse } from './sessions';
 export type {
   ActiveProgrammeResponse,
   ProgrammeDetailResponse,
