@@ -80,6 +80,9 @@ export type {
   ProgressSummaryResponse,
 } from './programmes';
 
+export { usersApi } from './users';
+export type { UserProfileResponse } from './users';
+
 export { videosApi } from './videos';
 export type {
   SignedVideoUrlResponse,

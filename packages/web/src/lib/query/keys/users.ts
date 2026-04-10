@@ -4,4 +4,6 @@ export const userKeys = {
   list: (params: Record<string, unknown>) => [...userKeys.lists(), params] as const,
   details: () => [...userKeys.all, 'detail'] as const,
   detail: (userId: string) => [...userKeys.details(), userId] as const,
+  /** Authenticated user's profile */
+  me: () => [...userKeys.all, 'me'] as const,
 };

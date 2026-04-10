@@ -9,6 +9,7 @@ import { Icons } from '@web/components/Icon/types';
 import { ProgressBar } from '@web/components/ProgressBar';
 import { Text } from '@web/components/text/Text';
 import { Title } from '@web/components/text/Title';
+import { VideoUnavailablePlaceholder } from '@web/components/video';
 
 type Phase = ProgrammeDetailResponse['phases'][number];
 type Session = Phase['sessions'][number];
@@ -54,19 +55,14 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
 
   return (
     <Card>
-      <div className="flex flex-col lg:flex-row lg:items-stretch">
-        {/* Video preview placeholder — signed thumbnail URLs deferred */}
-        <div className="relative overflow-hidden rounded-t-lg bg-ffp-dark-blue/10 lg:w-2/5 lg:rounded-l-lg lg:rounded-tr-none">
-          <div className="flex aspect-video items-center justify-center lg:h-full">
-            <Icon
-              name={Icons.PLAY}
-              styleProps={{ size: 'xl', colour: 'var(--color-ffp-dark-blue)' }}
-            />
-          </div>
+      <div className="flex flex-col lg:flex-row lg:items-stretch lg:gap-6">
+        {/* Video preview — signed thumbnail URLs deferred, uses shared placeholder */}
+        <div className="flex min-h-[200px] items-center justify-center rounded-lg bg-secondary/30 p-6 lg:w-2/5">
+          <VideoUnavailablePlaceholder />
         </div>
 
         {/* Content */}
-        <div className="flex flex-1 flex-col justify-between p-5 lg:p-6">
+        <div className="mt-4 flex flex-1 flex-col justify-between lg:mt-0">
           <div>
             <Text
               as="p"

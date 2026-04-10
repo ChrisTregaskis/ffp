@@ -71,6 +71,11 @@ export const PhaseDetailCard: React.FC<PhaseDetailCardProps> = ({ phase, progres
             Phase {String(phase.phaseNumber)}: {phase.name ?? `Phase ${String(phase.phaseNumber)}`}
           </Title>
         </div>
+        {phase.description && (
+          <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mt-2">
+            {phase.description}
+          </Text>
+        )}
 
         <div className="mb-2 mt-4 flex items-center justify-between">
           <Text

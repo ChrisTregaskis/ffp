@@ -12,7 +12,7 @@ export const EmptyProgrammeState: React.FC = () => (
     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
       <Icon
         name={Icons.CLIPBOARDLIST}
-        styleProps={{ size: 'xl', colour: 'var(--color-muted-foreground)' }}
+        styleProps={{ size: 'xl', colour: 'var(--color-primary)' }}
       />
     </div>
     <Title as="h3" className="mb-2">
