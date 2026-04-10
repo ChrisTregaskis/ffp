@@ -4,6 +4,8 @@ export { PhaseDetailCard } from './PhaseDetailCard';
 export { PrescriptionBadge } from './PrescriptionBadge';
 export { SessionDot } from './SessionDot';
 export { StatusBadge } from './StatusBadge';
+export { StepIndicator } from './StepIndicator';
+export type { StepIndicatorProps } from './StepIndicator';
 export type { NextSessionCardProps } from './NextSessionCard';
 export type { PhaseDetailCardProps } from './PhaseDetailCard';
 export type { PrescriptionBadgeProps } from './PrescriptionBadge';

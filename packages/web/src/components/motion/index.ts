@@ -1,17 +1,21 @@
+export { FadeSlide } from './FadeSlide';
 export { FadeSlideIn } from './FadeSlideIn';
 export { SpringScale } from './SpringScale';
 export { ScaleFade } from './ScaleFade';
 export { ClickScale } from './ClickScale';
+export { CollapsibleSidebar } from './CollapsibleSidebar';
 export { CardTransition } from './CardTransition';
 export { SlideWidth } from './SlideWidth';
 export { SlideVertical } from './SlideVertical';
 export { SlideDrawer } from './SlideDrawer';
 export { Backdrop } from './Backdrop';
 
+export type { FadeSlideProps } from './FadeSlide';
 export type { FadeSlideInProps } from './FadeSlideIn';
 export type { SpringScaleProps } from './SpringScale';
 export type { ScaleFadeProps } from './ScaleFade';
 export type { ClickScaleProps } from './ClickScale';
+export type { CollapsibleSidebarProps } from './CollapsibleSidebar';
 export type { CardTransitionProps, CardTransitionDirection } from './CardTransition';
 export type { SlideWidthProps } from './SlideWidth';
 export type { SlideVerticalProps } from './SlideVertical';

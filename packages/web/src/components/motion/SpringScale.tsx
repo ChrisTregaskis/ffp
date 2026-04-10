@@ -11,6 +11,8 @@ export interface SpringScaleProps {
   stiffness?: number;
   /** Spring damping (higher = less bouncy) @default 20 */
   damping?: number;
+  /** Animation delay in seconds @default 0 */
+  delay?: number;
   /** Additional custom classes */
   className?: string;
 }
@@ -27,6 +29,7 @@ export const SpringScale: React.FC<SpringScaleProps> = ({
   initialScale = 0.8,
   stiffness = 260,
   damping = 20,
+  delay = 0,
   className = '',
 }) => {
   return (
@@ -37,6 +40,7 @@ export const SpringScale: React.FC<SpringScaleProps> = ({
         type: 'spring',
         stiffness,
         damping,
+        delay,
       }}
       className={className}
     >
