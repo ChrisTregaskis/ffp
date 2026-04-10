@@ -47,10 +47,9 @@ export const SideMenu: React.FC<SideMenuProps> = ({ handleLogout }) => {
       className="fixed left-0 top-0 z-40 hidden h-screen border-r border-white bg-ffp-navy shadow-md lg:flex lg:flex-col"
     >
       {/* Header Section */}
-      <div className="flex items-center border-b border-white p-6">
-        {/* Logo and App Name */}
+      <div className="border-b border-white/20">
         <div
-          className="flex cursor-pointer items-center gap-3"
+          className={`flex cursor-pointer items-center gap-3 border-l-4 border-transparent py-5 text-white ${isCollapsed ? 'justify-center' : 'px-4'}`}
           onClick={() => {
             void navigate(routes[RouteKey.HOME].path);
           }}
@@ -58,7 +57,7 @@ export const SideMenu: React.FC<SideMenuProps> = ({ handleLogout }) => {
           tabIndex={0}
           aria-label="Go to home"
         >
-          <Logo variant="white" size="sm" />
+          <Logo variant="white" size="xs" className="h-5 w-auto" />
           {!isCollapsed && (
             <Text styleProps={{ size: 'lg', weight: 'semibold', colour: 'white' }}>
               Fit For Purpose

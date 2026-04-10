@@ -21,3 +21,20 @@ export const secondsToMs = (seconds: number): number => {
 
   return seconds * 1000;
 };
+
+/**
+ * Get a time-based greeting (Good morning / Good afternoon / Good evening)
+ */
+export const getGreeting = (): string => {
+  const hour = new Date().getHours();
+
+  if (hour < 12) {
+    return 'Good morning';
+  }
+
+  if (hour < 18) {
+    return 'Good afternoon';
+  }
+
+  return 'Good evening';
+};

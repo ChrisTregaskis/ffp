@@ -374,7 +374,8 @@ export async function getProgrammeDetail(
     return {
       id: phase.id,
       phaseNumber: phase.phaseNumber,
-      name: phase.name,
+      name: phase.name ?? templatePhaseData?.phase.name ?? null,
+      description: templatePhaseData?.phase.description ?? null,
       status: phase.status,
       sessions,
     };

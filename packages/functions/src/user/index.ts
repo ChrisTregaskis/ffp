@@ -1,10 +1,20 @@
-import { extractUserContext, type APIGatewayProxyEventV2WithJWT } from '@ffp/core/server';
+import {
+  createSystemContext,
+  SYSTEM_PLACEHOLDER_ORGANISATION_ID,
+  type APIGatewayProxyEventV2WithJWT,
+} from '@ffp/core/server';
 
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
+import { handler as getMeHandler } from './get-me';
 import { handler as inviteUserHandler } from './invite-user';
 
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
+
+const ROUTER_CONTEXT = createSystemContext({
+  systemId: 'user-router',
+  organisationId: SYSTEM_PLACEHOLDER_ORGANISATION_ID,
+});
 
 /**
  * Route registry mapping HTTP methods to path handlers.
@@ -12,9 +22,7 @@ import type { APIGatewayProxyResultV2 } from 'aws-lambda';
  */
 const routes: RouteRegistry = {
   GET: {
-    // Future user routes:
-    // '/me': getCurrentUserHandler,
-    // '/profile': getUserProfileHandler,
+    '/me': getMeHandler,
   },
   POST: {
     '/invite-user': inviteUserHandler, // Invite new user to organisation/location
@@ -39,10 +47,7 @@ const routes: RouteRegistry = {
 export const handler = async (
   event: APIGatewayProxyEventV2WithJWT
 ): Promise<APIGatewayProxyResultV2> => {
-  // Extract user context from validated JWT claims
-  const context = extractUserContext(event);
-
-  const result = validateAndMatchRoute(event, routes, 'user', context);
+  const result = validateAndMatchRoute(event, routes, 'user', ROUTER_CONTEXT);
 
   if (result.type === 'error') {
     return result.response;

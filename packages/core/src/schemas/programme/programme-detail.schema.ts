@@ -62,6 +62,7 @@ const detailPhaseSchema = z.object({
   id: z.guid(),
   phaseNumber: z.number().int().positive(),
   name: z.string().nullable(),
+  description: z.string().nullable(),
   status: z.enum(PHASE_STATUSES),
   sessions: z.array(detailSessionSchema),
 });

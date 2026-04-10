@@ -35,6 +35,7 @@ import { seedAssessmentFlows } from './seedAssessmentFlows.js';
 import { seedFlowSteps } from './seedFlowSteps.js';
 import { seedVideos } from './seedVideos.js';
 import { seedTemplateHierarchy } from './seedTemplateHierarchy.js';
+import { seedProgrammeUserData } from './seedProgrammeUserData.js';
 import type { SeedConfig } from './types.js';
 
 const logger = createLogger('seed');
@@ -132,9 +133,13 @@ export const seedDatabase = async (
     // FORCE RLS applies even to superusers, so we need to disable it during seeding
     logger.info('Disabling FORCE RLS for seeding...');
     await db.$client.query(`
-      ALTER TABLE tenants NO FORCE ROW LEVEL SECURITY;
-      ALTER TABLE customers NO FORCE ROW LEVEL SECURITY;
+      ALTER TABLE organisations NO FORCE ROW LEVEL SECURITY;
+      ALTER TABLE locations NO FORCE ROW LEVEL SECURITY;
       ALTER TABLE users NO FORCE ROW LEVEL SECURITY;
+      ALTER TABLE programmes NO FORCE ROW LEVEL SECURITY;
+      ALTER TABLE programme_phases NO FORCE ROW LEVEL SECURITY;
+      ALTER TABLE user_sessions NO FORCE ROW LEVEL SECURITY;
+      ALTER TABLE exercise_completions NO FORCE ROW LEVEL SECURITY;
     `);
 
     // Seed 1: Platform organisation
@@ -201,7 +206,8 @@ export const seedDatabase = async (
       logger.info('Fresh mode: truncating seed content tables (preserving identity data)...');
       await db.$client.query(`
         TRUNCATE assessment_flows, assessment_templates, questions, programme_templates, videos,
-                 template_phases, template_sessions, session_exercises CASCADE;
+                 template_phases, template_sessions, session_exercises,
+                 programmes, programme_phases, user_sessions, exercise_completions CASCADE;
       `);
       logger.info('Content tables truncated');
     }
@@ -233,6 +239,10 @@ export const seedDatabase = async (
     // Must run AFTER programme templates (FK) and videos (FK)
     await seedTemplateHierarchy(db);
 
+    // Seed 17: Programme user data — active programme, phases, sessions (RLS tables, idempotent)
+    // Must run AFTER template hierarchy (FK) and test programme user (FK)
+    await seedProgrammeUserData(db);
+
     logger.info('Database seeding complete!');
   } catch (error) {
     logger.error('Database seeding failed', {
@@ -244,9 +254,13 @@ export const seedDatabase = async (
     logger.info('Re-enabling FORCE RLS...');
     try {
       await db.$client.query(`
-        ALTER TABLE tenants FORCE ROW LEVEL SECURITY;
-        ALTER TABLE customers FORCE ROW LEVEL SECURITY;
+        ALTER TABLE organisations FORCE ROW LEVEL SECURITY;
+        ALTER TABLE locations FORCE ROW LEVEL SECURITY;
         ALTER TABLE users FORCE ROW LEVEL SECURITY;
+        ALTER TABLE programmes FORCE ROW LEVEL SECURITY;
+        ALTER TABLE programme_phases FORCE ROW LEVEL SECURITY;
+        ALTER TABLE user_sessions FORCE ROW LEVEL SECURITY;
+        ALTER TABLE exercise_completions FORCE ROW LEVEL SECURITY;
       `);
       logger.info('FORCE RLS re-enabled');
     } catch (rlsError) {
@@ -273,3 +287,9 @@ export {
   TEMPLATE_SESSION_IDS,
   SESSION_EXERCISE_IDS,
 } from './seedTemplateHierarchy.js';
+export {
+  seedProgrammeUserData,
+  PROGRAMME_IDS,
+  PROGRAMME_PHASE_IDS,
+  USER_SESSION_IDS,
+} from './seedProgrammeUserData.js';
