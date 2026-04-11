@@ -128,8 +128,7 @@ export const Table = <TData extends Record<string, unknown>>({
         </div>
       )}
 
-      {/* Table */}
-      <div className="rounded-lg border border-muted bg-white">
+      <div className="overflow-hidden rounded-lg border border-muted bg-white">
         <table className="w-full border-collapse">
           <TableHeader headerGroups={table.getHeaderGroups()} />
           <TableBody
@@ -144,7 +143,6 @@ export const Table = <TData extends Record<string, unknown>>({
         </table>
       </div>
 
-      {/* Pagination */}
       <TablePagination
         page={pagination.pageIndex + 1}
         pageSize={pagination.pageSize}
