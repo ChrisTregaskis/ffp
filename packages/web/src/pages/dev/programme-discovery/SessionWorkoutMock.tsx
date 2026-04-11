@@ -1,11 +1,12 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@web/components/button';
 import { Icon } from '@web/components/Icon/Icon';
 import { Icons } from '@web/components/Icon/types';
 import { ClickScale } from '@web/components/motion/ClickScale';
+import { RestTimerBar } from '@web/components/session';
 import { Text } from '@web/components/text/Text';
 import { Title } from '@web/components/text/Title';
 
@@ -172,92 +173,6 @@ const ExerciseSidebarItem: React.FC<ExerciseSidebarItemProps> = ({
   </ClickScale>
 );
 
-// ─── Rest Timer ──────────────────────────────────────────────────────────────
-
-interface RestTimerProps {
-  seconds: number;
-  onComplete: () => void;
-  onSkip: () => void;
-}
-
-const RestTimer: React.FC<RestTimerProps> = ({ seconds, onComplete, onSkip }) => {
-  const [remaining, setRemaining] = useState(seconds);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    intervalRef.current = setInterval(() => {
-      setRemaining((prev) => {
-        if (prev <= 1) {
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-          }
-
-          onComplete();
-
-          return 0;
-        }
-
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [onComplete, seconds]);
-
-  const progressPercent = ((seconds - remaining) / seconds) * 100;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      className="flex h-full flex-col items-center justify-center text-center"
-    >
-      <Title as="h2" className="mb-6">
-        Rest
-      </Title>
-
-      {/* Circular progress */}
-      <div className="relative mx-auto mb-8 h-48 w-48">
-        <svg className="h-full w-full -rotate-90" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="52" fill="none" stroke="#ececf0" strokeWidth="6" />
-          <circle
-            cx="60"
-            cy="60"
-            r="52"
-            fill="none"
-            stroke="url(#restGradient)"
-            strokeWidth="6"
-            strokeLinecap="round"
-            strokeDasharray={String(2 * Math.PI * 52)}
-            strokeDashoffset={String(2 * Math.PI * 52 * (1 - progressPercent / 100))}
-            className="transition-all duration-1000 ease-linear"
-          />
-          <defs>
-            <linearGradient id="restGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="var(--color-ffp-primary-blue)" />
-              <stop offset="100%" stopColor="var(--color-ffp-dark-blue)" />
-            </linearGradient>
-          </defs>
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Text styleProps={{ size: '4xl', weight: 'bold' }}>{String(remaining)}s</Text>
-        </div>
-      </div>
-
-      <div className="flex justify-center">
-        <Button variant="secondary" size="md" onClick={onSkip}>
-          Skip Rest
-        </Button>
-      </div>
-    </motion.div>
-  );
-};
-
 // ─── Completion Screen ───────────────────────────────────────────────────────
 
 interface CompletionScreenProps {
@@ -404,6 +319,7 @@ export const SessionWorkoutMock: React.FC = () => {
   });
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [showRestTimer, setShowRestTimer] = useState(false);
+  const [restDuration, setRestDuration] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -535,6 +451,19 @@ export const SessionWorkoutMock: React.FC = () => {
         />
       </div>
 
+      {/* ─── Rest Timer Bar ──────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showRestTimer && restDuration > 0 && (
+          <RestTimerBar
+            key={restDuration}
+            seconds={restDuration}
+            onComplete={() => {
+              setShowRestTimer(false);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       {/* ─── Main Content Area ──────────────────────────────────────────── */}
       <div className="flex min-h-0 flex-1">
         {/* Exercise Sidebar (desktop) */}
@@ -576,105 +505,85 @@ export const SessionWorkoutMock: React.FC = () => {
         {/* Main Exercise Area */}
         <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           <AnimatePresence mode="wait">
-            {showRestTimer ? (
-              <motion.div
-                key="rest-timer"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.25 }}
-                className="flex flex-1 items-center justify-center"
-              >
-                <RestTimer
-                  seconds={activeExercise.restSeconds}
-                  onComplete={() => {
-                    setShowRestTimer(false);
-                  }}
-                  onSkip={() => {
-                    setShowRestTimer(false);
-                  }}
+            <motion.div
+              key={activeExercise.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25 }}
+              className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6"
+            >
+              {/* Exercise Title */}
+              <Title as="h2" className="mb-4">
+                {activeExercise.name}
+              </Title>
+
+              {/* Video Player */}
+              <div className="mb-6 overflow-hidden rounded-xl bg-black shadow-md">
+                <video
+                  key={activeExercise.id}
+                  src={MOCK_VIDEO_URL}
+                  className="aspect-video w-full"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  controls
                 />
-              </motion.div>
-            ) : (
-              <motion.div
-                key={activeExercise.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.25 }}
-                className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6"
-              >
-                {/* Exercise Title */}
-                <Title as="h2" className="mb-4">
-                  {activeExercise.name}
-                </Title>
+              </div>
 
-                {/* Video Player */}
-                <div className="mb-6 overflow-hidden rounded-xl bg-black shadow-md">
-                  <video
-                    key={activeExercise.id}
-                    src={MOCK_VIDEO_URL}
-                    className="aspect-video w-full"
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    controls
-                  />
-                </div>
-
-                {/* Prescription Badges */}
-                <div className="mb-6 flex flex-wrap gap-2">
+              {/* Prescription Badges */}
+              <div className="mb-6 flex flex-wrap gap-2">
+                <PrescriptionBadge
+                  label={`${String(activeExercise.sets)} ${activeExercise.sets === 1 ? 'set' : 'sets'} × ${activeExercise.reps}`}
+                  icon={Icons.REPEAT}
+                  variant="blue"
+                />
+                {activeExercise.restSeconds > 0 && (
                   <PrescriptionBadge
-                    label={`${String(activeExercise.sets)} ${activeExercise.sets === 1 ? 'set' : 'sets'} × ${activeExercise.reps}`}
-                    icon={Icons.REPEAT}
-                    variant="blue"
+                    label={`${String(activeExercise.restSeconds)}s rest`}
+                    icon={Icons.CLOCK}
+                    variant="purple"
                   />
-                  {activeExercise.restSeconds > 0 && (
-                    <PrescriptionBadge
-                      label={`${String(activeExercise.restSeconds)}s rest`}
-                      icon={Icons.CLOCK}
-                      variant="purple"
-                    />
-                  )}
-                  {activeExercise.durationSeconds != null && (
-                    <PrescriptionBadge
-                      label={`${String(activeExercise.durationSeconds)}s`}
-                      icon={Icons.CLOCK}
-                      variant="green"
-                    />
-                  )}
-                </div>
+                )}
+                {activeExercise.durationSeconds != null && (
+                  <PrescriptionBadge
+                    label={`${String(activeExercise.durationSeconds)}s`}
+                    icon={Icons.CLOCK}
+                    variant="green"
+                  />
+                )}
+              </div>
 
-                {/* Exercise Detail Accordion */}
-                <div className="mb-6">
-                  <ExerciseDetail exercise={activeExercise} />
-                </div>
+              {/* Exercise Detail Accordion */}
+              <div className="mb-6">
+                <ExerciseDetail exercise={activeExercise} />
+              </div>
 
-                {/* Action Buttons — secondary left, primary right */}
-                <div className="flex justify-end gap-3">
-                  <Button variant="neutral" size="md" onClick={skipExercise}>
-                    Skip
+              {/* Action Buttons — secondary left, primary right */}
+              <div className="flex justify-end gap-3">
+                <Button variant="neutral" size="md" onClick={skipExercise}>
+                  Skip
+                </Button>
+                {activeExercise.restSeconds > 0 && (
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    onClick={() => {
+                      setRestDuration(90);
+                      setShowRestTimer(true);
+                    }}
+                  >
+                    <Icon name={Icons.CLOCK} styleProps={{ size: 'sm' }} />
+                    Rest
                   </Button>
-                  {activeExercise.restSeconds > 0 && (
-                    <Button
-                      variant="secondary"
-                      size="md"
-                      onClick={() => {
-                        setShowRestTimer(true);
-                      }}
-                    >
-                      <Icon name={Icons.CLOCK} styleProps={{ size: 'sm' }} />
-                      Rest
-                    </Button>
-                  )}
-                  <Button variant="primary" size="md" onClick={completeExercise}>
-                    <Icon name={Icons.CHECK} styleProps={{ size: 'sm', colour: '#ffffff' }} />
-                    Mark Complete
-                  </Button>
-                </div>
-              </motion.div>
-            )}
+                )}
+                <Button variant="primary" size="md" onClick={completeExercise}>
+                  <Icon name={Icons.CHECK} styleProps={{ size: 'sm', colour: '#ffffff' }} />
+                  Mark Complete
+                </Button>
+              </div>
+            </motion.div>
           </AnimatePresence>
 
           {/* ─── Mobile Exercise Drawer ──────────────────────────────────── */}

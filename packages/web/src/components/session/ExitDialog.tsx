@@ -30,7 +30,7 @@ export const ExitDialog: React.FC<ExitDialogProps> = ({
   onCancel,
 }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-    <ScaleFade className="max-w-sm rounded-xl bg-white p-6 shadow-lg">
+    <ScaleFade className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
       <Title as="h3" className="mb-2">
         Leaving session?
       </Title>

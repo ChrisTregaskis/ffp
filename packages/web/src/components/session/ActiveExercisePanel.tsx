@@ -3,12 +3,11 @@ import { Icon } from '@web/components/Icon/Icon';
 import { Icons } from '@web/components/Icon/types';
 import { PrescriptionBadge } from '@web/components/programme/PrescriptionBadge';
 import { Title } from '@web/components/text/Title';
-import { VideoUnavailablePlaceholder } from '@web/components/video';
+import { VideoPlayer } from '@web/components/video';
 
 import { ExerciseDetail } from './ExerciseDetail';
 import { ExerciseTransition } from './ExerciseTransition';
 
-import type { ExerciseInstruction } from './ExerciseDetail';
 import type { SessionExercise } from './types';
 
 export interface ActiveExercisePanelProps {
@@ -16,27 +15,15 @@ export interface ActiveExercisePanelProps {
   exercise: SessionExercise;
   /** Whether the completion mutation is pending */
   isPending: boolean;
+  /** Whether the rest timer is currently active */
+  isResting: boolean;
   /** Called when "Mark Complete" is clicked */
   onMarkComplete: () => void;
   /** Called when "Skip" is clicked */
   onSkip: () => void;
-  /** Called when "Rest" is clicked */
-  onRest: () => void;
+  /** Called when "Rest" is clicked (starts timer), or "Cancel Rest" (stops timer) */
+  onRestToggle: () => void;
 }
-
-/** Parse notes into structured instructions */
-const parseInstructions = (notes: string | null): ExerciseInstruction | null => {
-  if (!notes) {
-    return null;
-  }
-
-  // Simple parse — treat full notes as execution if not structured
-  return {
-    setup: '',
-    execution: notes,
-    tips: [],
-  };
-};
 
 /**
  * Main panel showing the currently active exercise.
@@ -47,11 +34,11 @@ const parseInstructions = (notes: string | null): ExerciseInstruction | null => 
 export const ActiveExercisePanel: React.FC<ActiveExercisePanelProps> = ({
   exercise,
   isPending,
+  isResting,
   onMarkComplete,
   onSkip,
-  onRest,
+  onRestToggle,
 }) => {
-  const instructions = parseInstructions(exercise.notes);
   const hasRest = exercise.restSeconds !== null && exercise.restSeconds > 0;
 
   return (
@@ -59,16 +46,12 @@ export const ActiveExercisePanel: React.FC<ActiveExercisePanelProps> = ({
       exerciseKey={exercise.completionId}
       className="mx-auto max-w-3xl px-4 py-6 sm:px-6"
     >
-      {/* Exercise title */}
       <Title as="h2" className="mb-4">
         {exercise.title}
       </Title>
 
-      {/* Video placeholder */}
-      <div className="mb-6 overflow-hidden rounded-xl bg-secondary/30">
-        <div className="flex aspect-video items-center justify-center">
-          <VideoUnavailablePlaceholder />
-        </div>
+      <div className="mb-6 overflow-hidden rounded-xl">
+        <VideoPlayer videoId={exercise.videoId} ariaLabel={exercise.title} />
       </div>
 
       {/* Prescription badges */}
@@ -94,14 +77,12 @@ export const ActiveExercisePanel: React.FC<ActiveExercisePanelProps> = ({
         )}
       </div>
 
-      {/* Exercise instructions */}
-      {instructions?.execution && (
+      {exercise.notes && (
         <div className="mb-6">
-          <ExerciseDetail instructions={instructions} />
+          <ExerciseDetail notes={exercise.notes} />
         </div>
       )}
 
-      {/* Action buttons */}
       <div className="flex justify-end gap-3">
         <Button variant="neutral" size="md" onClick={onSkip}>
           Skip
@@ -111,9 +92,9 @@ export const ActiveExercisePanel: React.FC<ActiveExercisePanelProps> = ({
             variant="secondary"
             size="md"
             icon={<Icon name={Icons.CLOCK} styleProps={{ size: 'sm', colour: 'currentColor' }} />}
-            onClick={onRest}
+            onClick={onRestToggle}
           >
-            Rest
+            {isResting ? 'Cancel Rest' : 'Rest'}
           </Button>
         )}
         <Button

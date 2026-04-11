@@ -422,6 +422,10 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 2,
     reps: '10',
     restSeconds: 45,
+    notes:
+      'Stand with feet shoulder-width apart, arms by your sides.\n' +
+      'Lower your hips back and down as if sitting into a chair. Keep chest up and knees tracking over toes. Push through heels to stand.\n\n' +
+      '**Use a chair behind you** for confidence. Keep weight in your heels. Go only as low as comfortable.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p2s3-e1'],
@@ -431,7 +435,10 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 2,
     reps: '8-12',
     restSeconds: 45,
-    notes: 'Light resistance band. Focus on squeezing shoulder blades together.',
+    notes:
+      'Sit tall on a chair with feet flat. Loop resistance band around feet and hold ends.\n' +
+      'Pull elbows back, **squeezing shoulder blades together**. Slowly return to start.\n\n' +
+      'Keep shoulders down, away from ears. Squeeze at the top for 2 seconds.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p2s3-e2'],
@@ -441,6 +448,10 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 2,
     reps: '30s hold',
     restSeconds: 30,
+    notes:
+      'Sit on the edge of a chair with one leg extended straight ahead, heel on floor.\n' +
+      'Hinge forward at the hips keeping back straight. **Hold the stretch without bouncing.**\n\n' +
+      'Keep the extended leg slightly soft at the knee. Breathe deeply into the stretch.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p2s3-e3'],
@@ -450,6 +461,10 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 2,
     reps: '10',
     restSeconds: 45,
+    notes:
+      'Lie on your back with knees bent, feet flat on the floor, hip-width apart. Arms by your sides.\n' +
+      'Push through your heels to lift your hips toward the ceiling until your body forms a straight line from shoulders to knees. **Squeeze your glutes at the top.** Lower slowly.\n\n' +
+      "Drive through your heels, not your toes. Don't arch your lower back — keep your core engaged.",
   },
   // ── Phase 3, Session 1: Lower Body Strength ──
   {

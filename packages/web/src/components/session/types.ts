@@ -9,6 +9,8 @@ export type DetailExercise = NonNullable<DetailSession['exercises']>[number];
 export interface SessionExercise {
   /** Exercise completion ID (from completion record) */
   completionId: string;
+  /** Video ID for signed URL lookup */
+  videoId: string;
   /** Exercise title (from video) */
   title: string;
   /** Prescription fields (from session_exercises) */
@@ -24,6 +26,7 @@ export interface SessionExercise {
 /** Map a detail exercise from the API to a flat SessionExercise for components */
 export const toSessionExercise = (exercise: DetailExercise): SessionExercise => ({
   completionId: exercise.completion?.id ?? exercise.sessionExerciseId,
+  videoId: exercise.video.id,
   title: exercise.video.title,
   sets: exercise.sets,
   reps: exercise.reps,

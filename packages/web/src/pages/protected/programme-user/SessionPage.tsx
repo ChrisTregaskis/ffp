@@ -9,7 +9,7 @@ import {
   ActiveExercisePanel,
   ExerciseSidebar,
   ExitDialog,
-  RestTimer,
+  RestTimerBar,
   SessionHeader,
   toSessionExercise,
 } from '@web/components/session';
@@ -66,7 +66,7 @@ export const SessionPage: React.FC = () => {
 
   const [activeExerciseIndex, setActiveExerciseIndex] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [showRestTimer, setShowRestTimer] = useState(false);
+  const [restSeconds, setRestSeconds] = useState<number | null>(null);
   const [showExitDialog, setShowExitDialog] = useState(false);
 
   // Find session data from programme detail
@@ -176,13 +176,19 @@ export const SessionPage: React.FC = () => {
     advanceToNext();
   }, [advanceToNext]);
 
-  // Rest timer
-  const handleRest = useCallback((): void => {
-    setShowRestTimer(true);
-  }, []);
+  // Rest timer — toggle on/off, capture seconds so it persists across exercise changes
+  const isResting = restSeconds !== null;
+
+  const handleRestToggle = useCallback((): void => {
+    if (isResting) {
+      setRestSeconds(null);
+    } else {
+      setRestSeconds(activeExercise.restSeconds ?? null);
+    }
+  }, [isResting, activeExercise.restSeconds]);
 
   const handleRestComplete = useCallback((): void => {
-    setShowRestTimer(false);
+    setRestSeconds(null);
   }, []);
 
   // Exit dialog
@@ -239,6 +245,13 @@ export const SessionPage: React.FC = () => {
 
       <ProgressBar percent={progressPercent} className="h-1! rounded-none!" />
 
+      {/* Rest timer bar — sits above content, exercises remain visible */}
+      <AnimatePresence>
+        {restSeconds !== null && (
+          <RestTimerBar key={restSeconds} seconds={restSeconds} onComplete={handleRestComplete} />
+        )}
+      </AnimatePresence>
+
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Exercise sidebar (desktop) */}
@@ -252,24 +265,15 @@ export const SessionPage: React.FC = () => {
         {/* Main exercise area */}
         <div className="flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
-            {showRestTimer && activeExercise.restSeconds ? (
-              <div key="rest-timer" className="flex flex-1 items-center justify-center py-16">
-                <RestTimer
-                  seconds={activeExercise.restSeconds}
-                  onComplete={handleRestComplete}
-                  onSkip={handleRestComplete}
-                />
-              </div>
-            ) : (
-              <ActiveExercisePanel
-                key={activeExercise.completionId}
-                exercise={activeExercise}
-                isPending={toggleExercise.isPending}
-                onMarkComplete={handleMarkComplete}
-                onSkip={handleSkip}
-                onRest={handleRest}
-              />
-            )}
+            <ActiveExercisePanel
+              key={activeExercise.completionId}
+              exercise={activeExercise}
+              isPending={toggleExercise.isPending}
+              isResting={isResting}
+              onMarkComplete={handleMarkComplete}
+              onSkip={handleSkip}
+              onRestToggle={handleRestToggle}
+            />
           </AnimatePresence>
         </div>
       </div>

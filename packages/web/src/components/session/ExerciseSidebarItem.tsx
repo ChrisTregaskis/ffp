@@ -50,7 +50,7 @@ export const ExerciseSidebarItem: React.FC<ExerciseSidebarItemProps> = ({
     <ClickScale scale={0.97} duration={0.1}>
       <button
         onClick={onClick}
-        className={`flex w-full items-center gap-3 px-3 py-2.5 ${bgClass} ${opacityClass}`}
+        className={`flex w-full cursor-pointer items-center gap-3 px-3 py-2.5 ${bgClass} ${opacityClass}`}
         aria-current={isCurrent ? 'step' : undefined}
       >
         <StepIndicator

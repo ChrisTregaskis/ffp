@@ -28,7 +28,7 @@ export const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
   isOpen,
   onExerciseClick,
 }) => (
-  <CollapsibleSidebar isOpen={isOpen}>
+  <CollapsibleSidebar isOpen={isOpen} className="bg-muted/30">
     <div className="py-4">
       <Text
         as="h3"

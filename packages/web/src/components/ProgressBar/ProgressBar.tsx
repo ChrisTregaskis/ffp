@@ -5,15 +5,30 @@ export interface ProgressBarProps {
   percent: number;
   /** Additional CSS classes for the track container */
   className?: string;
+  /** Animation duration in seconds @default 0.8 */
+  duration?: number;
+  /** Animation easing @default 'easeOut' */
+  ease?: 'easeOut' | 'linear';
+  /** Animation delay in seconds @default 0.3 */
+  delay?: number;
+  /** Whether to animate from 0 on mount @default true */
+  animateFromZero?: boolean;
 }
 
 /**
  * Animated progress bar with gradient fill.
  *
  * Uses a gradient from theme colours.
- * Width animates from 0 to the target percentage on mount.
+ * Supports both mount animation (default) and live updates (for countdowns).
  */
-export const ProgressBar: React.FC<ProgressBarProps> = ({ percent, className = '' }) => {
+export const ProgressBar: React.FC<ProgressBarProps> = ({
+  percent,
+  className = '',
+  duration = 0.8,
+  ease = 'easeOut',
+  delay = 0.3,
+  animateFromZero = true,
+}) => {
   const clampedPercent = Math.min(100, Math.max(0, percent));
 
   return (
@@ -26,9 +41,9 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ percent, className = '
     >
       <motion.div
         className="h-full rounded-full bg-linear-to-r from-ffp-primary-blue to-ffp-dark-blue"
-        initial={{ width: 0 }}
+        initial={animateFromZero ? { width: 0 } : false}
         animate={{ width: `${String(clampedPercent)}%` }}
-        transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
+        transition={{ duration, ease, delay }}
       />
     </div>
   );

@@ -1,32 +1,25 @@
-import { BulletList } from './BulletList';
-import { LabelledSection } from './LabelledSection';
-
-export interface ExerciseInstruction {
-  setup: string;
-  execution: string;
-  tips: string[];
-}
+import { Text } from '@web/components/text/Text';
+import { parseExerciseNotes } from '@web/utils/exercise-instructions';
 
 export interface ExerciseDetailProps {
-  /** Exercise instructions with setup, execution, and tips */
-  instructions: ExerciseInstruction;
+  /** Exercise notes/instructions text */
+  notes: string;
 }
 
 /**
- * Always-visible exercise instructions panel.
- *
- * Displays Setup, Execution, and Tips sections in a muted container.
+ * Exercise instructions panel.
  */
-export const ExerciseDetail: React.FC<ExerciseDetailProps> = ({ instructions }) => (
-  <div className="space-y-3 rounded-lg bg-muted/30 px-4 py-4">
-    <LabelledSection label="Setup">{instructions.setup}</LabelledSection>
-
-    <LabelledSection label="Execution">{instructions.execution}</LabelledSection>
-
-    {instructions.tips.length > 0 && (
-      <LabelledSection label="Tips">
-        <BulletList items={instructions.tips} />
-      </LabelledSection>
-    )}
+export const ExerciseDetail: React.FC<ExerciseDetailProps> = ({ notes }) => (
+  <div className="rounded-lg bg-muted/30 px-4 py-4">
+    <Text
+      as="h4"
+      styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}
+      className="mb-2 uppercase tracking-wide"
+    >
+      Instructions
+    </Text>
+    <Text as="p" styleProps={{ size: 'sm' }}>
+      {parseExerciseNotes(notes)}
+    </Text>
   </div>
 );
