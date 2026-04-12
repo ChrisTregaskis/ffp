@@ -6,6 +6,7 @@ import { Text } from '@web/components/text/Text';
 import { Title } from '@web/components/text/Title';
 
 import { SessionDot } from './SessionDot';
+import { StatusBadge } from './StatusBadge';
 
 type Phase = ProgrammeDetailResponse['phases'][number];
 type Session = Phase['sessions'][number];
@@ -64,9 +65,7 @@ export const PhaseDetailCard: React.FC<PhaseDetailCardProps> = ({ phase, progres
     <Card>
       <div className="p-5">
         <div className="mb-1 flex items-center gap-2">
-          <span className="inline-flex items-center rounded-md bg-ffp-dark-blue px-2 py-0.5 text-xs font-medium text-white">
-            Current
-          </span>
+          <StatusBadge label="Current" variant="current" />
           <Title as="h4">
             Phase {String(phase.phaseNumber)}: {phase.name ?? `Phase ${String(phase.phaseNumber)}`}
           </Title>

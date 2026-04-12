@@ -2,8 +2,8 @@
  * Auto-generated icon types from Icomoon selection.json
  * DO NOT EDIT MANUALLY - Run 'pnpm icon:generate' to update
  *
- * Generated: 2026-03-23T07:29:20.752Z
- * Total icons: 70
+ * Generated: 2026-04-11T16:04:40.785Z
+ * Total icons: 71
  */
 
 export enum Icons {
@@ -56,6 +56,7 @@ export enum Icons {
   PLAY = 'Play',
   PLUS = 'Plus',
   RECEIPT = 'Receipt',
+  RELOAD = 'Reload',
   REPEAT = 'Repeat',
   SAVE = 'Save',
   SEARCH = 'Search',

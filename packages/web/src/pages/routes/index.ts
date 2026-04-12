@@ -41,11 +41,11 @@ import { VideoEditPage } from '@web/pages/protected/admin/video-edit';
 import { VideoUploadPage } from '@web/pages/protected/admin/video-upload';
 import { VideoLibraryPage } from '@web/pages/protected/admin/VideoLibraryPage';
 import { HomePage } from '@web/pages/protected/HomePage';
-import { AccountSettingsPage } from '@web/pages/protected/programme-user/AccountSettingsPage';
 import { AssessmentOverviewPage } from '@web/pages/protected/programme-user/AssessmentOverviewPage';
 import { AssessmentPage } from '@web/pages/protected/programme-user/AssessmentPage';
 import { ProgrammeOverviewPage } from '@web/pages/protected/programme-user/ProgrammeOverviewPage';
 import { ProgressPage } from '@web/pages/protected/programme-user/ProgressPage';
+import { SessionPage } from '@web/pages/protected/programme-user/SessionPage';
 import { ForgotPasswordPage } from '@web/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@web/pages/public/LoginPage';
 import { SetPasswordPage } from '@web/pages/public/SetPasswordPage';
@@ -177,6 +177,14 @@ export const routes: RoutesConfig = {
     excludeLayout: true,
     excludeFromMainNavbar: true,
   },
+  [RouteKey.SESSION_WORKOUT]: {
+    path: '/programme/session/:phaseId/:templateSessionId',
+    pageComponent: SessionPage,
+    title: 'Session Workout',
+    allowedRoles: [PROGRAMME_USER],
+    excludeLayout: true,
+    excludeFromMainNavbar: true,
+  },
   [RouteKey.PROGRAMME_OVERVIEW]: {
     path: '/programme-overview',
     pageComponent: ProgrammeOverviewPage,
@@ -195,13 +203,6 @@ export const routes: RoutesConfig = {
     title: 'Assessment',
     allowedRoles: [PROGRAMME_USER],
   },
-  [RouteKey.ACCOUNT_SETTINGS]: {
-    path: '/account-settings',
-    pageComponent: AccountSettingsPage,
-    title: 'Account Settings',
-    allowedRoles: [PROGRAMME_USER, CUSTOMER_OWNER, CUSTOMER_ADMIN, SYSTEM_ADMIN],
-  },
-
   // Customer Owner/Admin Routes (placeholders)
   [RouteKey.CUSTOMER_DASHBOARD]: {
     path: '/dashboard',

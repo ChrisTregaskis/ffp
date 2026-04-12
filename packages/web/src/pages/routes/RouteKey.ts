@@ -19,9 +19,8 @@ export enum RouteKey {
   PROGRESS = 'progress',
   /** Assessment overview with reassessment CTA */
   ASSESSMENT_OVERVIEW = 'assessment-overview',
-  /** Account settings page */
-  ACCOUNT_SETTINGS = 'account-settings',
-
+  /** Full-screen session workout page (no app layout) */
+  SESSION_WORKOUT = 'session-workout',
   // Customer Owner/Admin Routes (placeholders)
   /** Customer dashboard with KPIs and engagement graphs */
   CUSTOMER_DASHBOARD = 'customer-dashboard',

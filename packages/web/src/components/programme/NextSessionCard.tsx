@@ -10,6 +10,9 @@ import { ProgressBar } from '@web/components/ProgressBar';
 import { Text } from '@web/components/text/Text';
 import { Title } from '@web/components/text/Title';
 import { VideoUnavailablePlaceholder } from '@web/components/video';
+import { shortId } from '@web/hooks/useShortNavigate';
+
+import { PrescriptionBadge } from './PrescriptionBadge';
 
 type Phase = ProgrammeDetailResponse['phases'][number];
 type Session = Phase['sessions'][number];
@@ -21,6 +24,8 @@ export interface NextSessionCardProps {
   phase: Phase;
   /** Total sessions in the phase */
   totalPhaseSessions: number;
+  /** Total phases in the programme */
+  totalPhases: number;
 }
 
 /**
@@ -34,6 +39,7 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
   session,
   phase,
   totalPhaseSessions,
+  totalPhases,
 }) => {
   const navigate = useNavigate();
   const isResumable = session.userSession?.status === 'in_progress';
@@ -45,8 +51,7 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
     isResumable && totalExercises > 0 ? (completedExercises / totalExercises) * 100 : 0;
 
   const handleStart = (): void => {
-    // TODO: Session page route will be added in FFP-388
-    void navigate('/programme-overview');
+    void navigate(`/programme/session/${shortId(phase.id)}/${shortId(session.templateSessionId)}`);
   };
 
   const handleViewProgramme = (): void => {
@@ -63,7 +68,7 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
 
         {/* Content */}
         <div className="mt-4 flex flex-1 flex-col justify-between lg:mt-0">
-          <div>
+          <>
             <Text
               as="p"
               styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}
@@ -75,7 +80,7 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
               {session.name ?? `Session ${String(session.sessionNumber)}`}
             </Title>
             <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-4">
-              Phase {String(phase.phaseNumber)}:{' '}
+              Phase {String(phase.phaseNumber)} of {String(totalPhases)}:{' '}
               {phase.name ?? `Phase ${String(phase.phaseNumber)}`} · Session{' '}
               {String(session.sessionNumber)} of {String(totalPhaseSessions)}
             </Text>
@@ -94,18 +99,22 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
             )}
 
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-md bg-ffp-dark-blue px-2 py-1 text-xs font-medium text-white">
-                <Icon name={Icons.REPEAT} styleProps={{ size: 'xs', colour: '#ffffff' }} />
-                {String(totalExercises)} exercises
-              </span>
+              <PrescriptionBadge
+                label={`${String(totalExercises)} exercises`}
+                icon={Icons.REPEAT}
+                variant="blue"
+                size="sm"
+              />
               {session.estimatedDurationMinutes && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-ffp-dark-blue px-2 py-1 text-xs font-medium text-white">
-                  <Icon name={Icons.CLOCK} styleProps={{ size: 'xs', colour: '#ffffff' }} />
-                  {String(session.estimatedDurationMinutes)} min
-                </span>
+                <PrescriptionBadge
+                  label={`${String(session.estimatedDurationMinutes)} min`}
+                  icon={Icons.CLOCK}
+                  variant="blue"
+                  size="sm"
+                />
               )}
             </div>
-          </div>
+          </>
 
           <div className="mt-8 flex justify-end gap-3">
             <Button variant="neutral" size="md" onClick={handleViewProgramme}>
