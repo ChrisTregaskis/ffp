@@ -68,6 +68,15 @@ export async function findVideoById(db: DbClient, videoId: string): Promise<Vide
   return records[0] ?? null;
 }
 
+export async function findVideoByPublicId(
+  db: DbClient,
+  publicId: string
+): Promise<VideoRecord | null> {
+  const records = await db.select().from(videos).where(eq(videos.publicId, publicId)).limit(1);
+
+  return records[0] ?? null;
+}
+
 export async function findAllActive(db: DbClient): Promise<VideoRecord[]> {
   return await db.select().from(videos).where(eq(videos.status, 'active')).orderBy(videos.title);
 }

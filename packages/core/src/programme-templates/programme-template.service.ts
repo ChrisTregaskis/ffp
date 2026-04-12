@@ -37,16 +37,16 @@ export async function listTemplates(
   };
 }
 
-/** Returns a single template with its full nested hierarchy. */
-export async function getTemplate(templateId: string): Promise<TemplateDetailResponse> {
+/** Returns a single template with its full nested hierarchy. Resolved by public ID. */
+export async function getTemplate(publicId: string): Promise<TemplateDetailResponse> {
   const db = getDb();
-  const template = await templateRepository.findTemplateById(db, templateId);
+  const template = await templateRepository.findTemplateByPublicId(db, publicId);
 
   if (!template) {
     throw new NotFoundError('Programme template');
   }
 
-  const hierarchy = await templateRepository.findTemplateHierarchy(db, templateId);
+  const hierarchy = await templateRepository.findTemplateHierarchy(db, template.id);
 
   return templateDetailResponseSchema.parse({
     ...template,

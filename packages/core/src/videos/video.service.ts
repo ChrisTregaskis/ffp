@@ -81,11 +81,11 @@ export async function listVideos(_ctx: OrganisationContext): Promise<VideoListRe
 
 export async function getVideo(
   _ctx: OrganisationContext,
-  videoId: string,
+  publicId: string,
   options: GetVideoOptions = {}
 ): Promise<VideoDetailResponse> {
   const db = getDb();
-  const record = await videoRepository.findVideoById(db, videoId);
+  const record = await videoRepository.findVideoByPublicId(db, publicId);
 
   if (!record) {
     throw new NotFoundError('Video');

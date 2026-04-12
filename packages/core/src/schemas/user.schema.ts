@@ -8,6 +8,7 @@ export const userRoleSchema = z.enum(USER_ROLES);
 
 export const userSchema = z.object({
   id: z.guid(),
+  publicId: z.string().length(12),
   organisationId: z.guid(),
   email: z.email().max(255),
   cognitoSub: z.string().max(255),
@@ -134,6 +135,7 @@ export const userFilterSchema = z.object({
 export const userListResponseSchema = userSchema
   .pick({
     id: true,
+    publicId: true,
     email: true,
     firstName: true,
     lastName: true,

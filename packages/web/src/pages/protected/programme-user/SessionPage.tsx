@@ -1,6 +1,6 @@
 import { AnimatePresence } from 'motion/react';
 import { useCallback, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
@@ -17,7 +17,6 @@ import type { SessionExercise } from '@web/components/session';
 import { useToggleExerciseMutation } from '@web/hooks/exercises';
 import { useProgrammeDetailQuery } from '@web/hooks/programmes';
 import { useCompleteSessionMutation, useStartSessionMutation } from '@web/hooks/sessions';
-import { useShortParams } from '@web/hooks/useShortParams';
 import { useToast } from '@web/hooks/useToast';
 
 import { SessionPageState } from './SessionPageState';
@@ -34,8 +33,8 @@ const findSessionData = (
   templateSessionId: string
 ): { phase: Phase; session: Session } | null => {
   for (const phase of detail.phases) {
-    if (phase.id === phaseId) {
-      const session = phase.sessions.find((s) => s.templateSessionId === templateSessionId);
+    if (phase.publicId === phaseId) {
+      const session = phase.sessions.find((s) => s.templateSessionPublicId === templateSessionId);
 
       if (session) {
         return { phase, session };
@@ -53,7 +52,7 @@ const findSessionData = (
  * Layout: excludeLayout (no app sidebar). Top bar + exercise sidebar + main panel.
  */
 export const SessionPage: React.FC = () => {
-  const { phaseId, templateSessionId } = useShortParams<{
+  const { phaseId, templateSessionId } = useParams<{
     phaseId: string;
     templateSessionId: string;
   }>();

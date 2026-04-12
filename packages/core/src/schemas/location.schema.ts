@@ -20,6 +20,7 @@ export const locationAddressSchema = z
 
 export const locationSchema = z.object({
   id: z.guid(),
+  publicId: z.string().length(12),
   organisationId: z.guid(),
   name: z.string().min(1).max(255),
   accountCode: z.string().min(1).max(50),
@@ -63,6 +64,7 @@ export const locationListQuerySchema = paginationInputSchema.extend({
 /** Response schema for location list items */
 export const locationListResponseSchema = locationSchema.pick({
   id: true,
+  publicId: true,
   organisationId: true,
   name: true,
   accountCode: true,

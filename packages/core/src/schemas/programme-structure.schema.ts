@@ -4,6 +4,8 @@ import { z } from 'zod';
 export const templatePhaseSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.guid(),
+  /** Public identifier for URLs (nanoid, 12 chars) */
+  publicId: z.string().length(12),
   /** Parent programme template */
   programmeTemplateId: z.guid(),
   /** Ordinal position within the template (1-based) */
@@ -111,6 +113,7 @@ export const createSessionExerciseSchema = sessionExerciseSchema
 export const templatePhaseWithSessionsSchema = templatePhaseSchema
   .pick({
     id: true,
+    publicId: true,
     phaseNumber: true,
     name: true,
     description: true,

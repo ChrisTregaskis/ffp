@@ -308,6 +308,7 @@ export async function getProgrammeDetail(
         // Future phase — summary only (no exercises or user session data)
         return {
           templateSessionId: ts.session.id,
+          templateSessionPublicId: ts.session.publicId,
           sessionNumber: ts.session.sessionNumber,
           name: ts.session.name,
           description: ts.session.description,
@@ -326,6 +327,7 @@ export async function getProgrammeDetail(
 
       return {
         templateSessionId: ts.session.id,
+        templateSessionPublicId: ts.session.publicId,
         sessionNumber: ts.session.sessionNumber,
         name: ts.session.name,
         description: ts.session.description,
@@ -373,6 +375,7 @@ export async function getProgrammeDetail(
 
     return {
       id: phase.id,
+      publicId: phase.publicId,
       phaseNumber: phase.phaseNumber,
       name: phase.name ?? templatePhaseData?.phase.name ?? null,
       description: templatePhaseData?.phase.description ?? null,

@@ -173,6 +173,40 @@ export async function getUserById(
 }
 
 /**
+ * Get a single user by public ID with location name. Returns null if not found.
+ */
+export async function getUserByPublicId(
+  db: DbClient,
+  publicId: string
+): Promise<UserWithLocationName | null> {
+  const records = await db
+    .select({
+      id: users.id,
+      publicId: users.publicId,
+      organisationId: users.organisationId,
+      email: users.email,
+      cognitoSub: users.cognitoSub,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      role: users.role,
+      locationId: users.locationId,
+      profileImageUrl: users.profileImageUrl,
+      phone: users.phone,
+      dateOfBirth: users.dateOfBirth,
+      createdAt: users.createdAt,
+      updatedAt: users.updatedAt,
+      locationName: locations.name,
+    })
+    .from(users)
+    .leftJoin(locations, eq(users.locationId, locations.id))
+    .where(eq(users.publicId, publicId));
+
+  const record = records[0] as UserWithLocationName | undefined;
+
+  return record ?? null;
+}
+
+/**
  * Find a user by email (for duplicate check). Returns the user record or null.
  */
 export async function getUserByEmail(

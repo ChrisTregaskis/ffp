@@ -9,6 +9,8 @@ import { templatePhaseWithSessionsSchema } from '../programme-structure.schema';
 export const programmeTemplateSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.guid(),
+  /** Public identifier for URLs (nanoid, 12 chars) */
+  publicId: z.string().length(12),
   /** Unique slug for referencing in scoring config (e.g., 'gentle-mobility-programme') */
   slug: z.string().min(1).max(255),
   /** Display name (e.g., 'Gentle Mobility Programme') */
@@ -68,6 +70,7 @@ export const templateListQuerySchema = paginationInputSchema.extend({
 /** Response schema for template list items — lightweight metadata for browsing */
 export const templateListResponseSchema = programmeTemplateSchema.pick({
   id: true,
+  publicId: true,
   slug: true,
   name: true,
   difficulty: true,

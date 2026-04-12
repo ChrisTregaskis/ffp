@@ -10,7 +10,6 @@ import { ProgressBar } from '@web/components/ProgressBar';
 import { Text } from '@web/components/text/Text';
 import { Title } from '@web/components/text/Title';
 import { VideoUnavailablePlaceholder } from '@web/components/video';
-import { shortId } from '@web/hooks/useShortNavigate';
 
 import { PrescriptionBadge } from './PrescriptionBadge';
 
@@ -51,7 +50,7 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
     isResumable && totalExercises > 0 ? (completedExercises / totalExercises) * 100 : 0;
 
   const handleStart = (): void => {
-    void navigate(`/programme/session/${shortId(phase.id)}/${shortId(session.templateSessionId)}`);
+    void navigate(`/programme/session/${phase.publicId}/${session.templateSessionPublicId}`);
   };
 
   const handleViewProgramme = (): void => {

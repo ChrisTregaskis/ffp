@@ -203,6 +203,22 @@ export async function getOrganisationById(
 }
 
 /**
+ * Get a single organisation by public ID, or null if not found.
+ * Returns null for platform organisation (protected from direct access).
+ */
+export async function getOrganisationByPublicId(
+  db: DbClient,
+  publicId: string
+): Promise<OrganisationRecord | null> {
+  const records = await db
+    .select()
+    .from(organisations)
+    .where(and(eq(organisations.publicId, publicId), EXCLUDE_PLATFORM));
+
+  return records[0] ?? null;
+}
+
+/**
  * Update an organisation record. Returns the updated record or null if not found.
  * Platform organisation is protected from updates.
  */
@@ -290,6 +306,18 @@ export async function getLocationById(
   locationId: string
 ): Promise<LocationRecord | null> {
   const records = await db.select().from(locations).where(eq(locations.id, locationId));
+
+  return records[0] ?? null;
+}
+
+/**
+ * Get a single location by public ID, or null if not found.
+ */
+export async function getLocationByPublicId(
+  db: DbClient,
+  publicId: string
+): Promise<LocationRecord | null> {
+  const records = await db.select().from(locations).where(eq(locations.publicId, publicId));
 
   return records[0] ?? null;
 }
