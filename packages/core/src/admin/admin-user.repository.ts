@@ -22,6 +22,7 @@ const USER_SORTABLE_COLUMNS: Partial<Record<string, Column>> = {
 /** Row type returned by list query (user fields + locationName from join) */
 export interface UserWithLocationName {
   id: string;
+  publicId: string;
   organisationId: string;
   email: string;
   cognitoSub: string;
@@ -36,6 +37,25 @@ export interface UserWithLocationName {
   updatedAt: Date;
   locationName: string | null;
 }
+
+/** Shared column selection for user queries that join location name */
+const userWithLocationColumns = {
+  id: users.id,
+  publicId: users.publicId,
+  organisationId: users.organisationId,
+  email: users.email,
+  cognitoSub: users.cognitoSub,
+  firstName: users.firstName,
+  lastName: users.lastName,
+  role: users.role,
+  locationId: users.locationId,
+  profileImageUrl: users.profileImageUrl,
+  phone: users.phone,
+  dateOfBirth: users.dateOfBirth,
+  createdAt: users.createdAt,
+  updatedAt: users.updatedAt,
+  locationName: locations.name,
+};
 
 /** Input for creating a user record in the database */
 export interface CreateUserDbInput {
@@ -97,23 +117,7 @@ export async function listUsers(
   const conditions = buildUserFilterConditions(filters);
 
   const query = db
-    .select({
-      id: users.id,
-      publicId: users.publicId,
-      organisationId: users.organisationId,
-      email: users.email,
-      cognitoSub: users.cognitoSub,
-      firstName: users.firstName,
-      lastName: users.lastName,
-      role: users.role,
-      locationId: users.locationId,
-      profileImageUrl: users.profileImageUrl,
-      phone: users.phone,
-      dateOfBirth: users.dateOfBirth,
-      createdAt: users.createdAt,
-      updatedAt: users.updatedAt,
-      locationName: locations.name,
-    })
+    .select(userWithLocationColumns)
     .from(users)
     .leftJoin(locations, eq(users.locationId, locations.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
@@ -148,23 +152,7 @@ export async function getUserById(
   userId: string
 ): Promise<UserWithLocationName | null> {
   const records = await db
-    .select({
-      id: users.id,
-      publicId: users.publicId,
-      organisationId: users.organisationId,
-      email: users.email,
-      cognitoSub: users.cognitoSub,
-      firstName: users.firstName,
-      lastName: users.lastName,
-      role: users.role,
-      locationId: users.locationId,
-      profileImageUrl: users.profileImageUrl,
-      phone: users.phone,
-      dateOfBirth: users.dateOfBirth,
-      createdAt: users.createdAt,
-      updatedAt: users.updatedAt,
-      locationName: locations.name,
-    })
+    .select(userWithLocationColumns)
     .from(users)
     .leftJoin(locations, eq(users.locationId, locations.id))
     .where(eq(users.id, userId));
@@ -182,23 +170,7 @@ export async function getUserByPublicId(
   publicId: string
 ): Promise<UserWithLocationName | null> {
   const records = await db
-    .select({
-      id: users.id,
-      publicId: users.publicId,
-      organisationId: users.organisationId,
-      email: users.email,
-      cognitoSub: users.cognitoSub,
-      firstName: users.firstName,
-      lastName: users.lastName,
-      role: users.role,
-      locationId: users.locationId,
-      profileImageUrl: users.profileImageUrl,
-      phone: users.phone,
-      dateOfBirth: users.dateOfBirth,
-      createdAt: users.createdAt,
-      updatedAt: users.updatedAt,
-      locationName: locations.name,
-    })
+    .select(userWithLocationColumns)
     .from(users)
     .leftJoin(locations, eq(users.locationId, locations.id))
     .where(eq(users.publicId, publicId));
