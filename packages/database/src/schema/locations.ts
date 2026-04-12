@@ -1,4 +1,6 @@
 import { pgTable, uuid, varchar, timestamp, jsonb, pgEnum, index } from 'drizzle-orm/pg-core';
+
+import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { relations } from 'drizzle-orm';
 import { organisations } from './organisations';
@@ -14,6 +16,7 @@ export const locations = pgTable(
   'locations',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    publicId: publicIdColumn(),
     organisationId: uuid('organisation_id')
       .notNull()
       .references(() => organisations.id, { onDelete: 'cascade' }),
@@ -32,6 +35,7 @@ export const locations = pgTable(
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => [
+    publicIdIndex('locations', table.publicId),
     index('idx_locations_organisation_id').on(table.organisationId),
     index('idx_locations_account_code').on(table.accountCode),
     index('idx_locations_status').on(table.status),

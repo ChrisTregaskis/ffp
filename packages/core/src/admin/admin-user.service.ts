@@ -15,7 +15,7 @@ import {
 import {
   listUsers as listUsersInRepo,
   countUsers as countUsersInRepo,
-  getUserById as getUserByIdInRepo,
+  getUserByPublicId as getUserByPublicIdInRepo,
   getUserByEmail as getUserByEmailInRepo,
   createUser as createUserInRepo,
   updateUser as updateUserInRepo,
@@ -60,27 +60,27 @@ export async function listUsersService(
 }
 
 /**
- * Get a single programme user by ID. Throws NotFoundError if not found.
+ * Get a single programme user by public ID. Throws NotFoundError if not found.
  * Uses admin context to bypass organisation RLS for cross-organisation visibility.
  */
 export async function getUserService(
   ctx: OrganisationContext,
-  userId: string
+  publicId: string
 ): Promise<UserDetailResponse> {
   const db = getDb();
 
   const user = await withAdminContext(db, async (tx) => {
-    return await getUserByIdInRepo(tx, userId);
+    return await getUserByPublicIdInRepo(tx, publicId);
   });
 
   if (!user) {
-    throw new NotFoundError('User', userId);
+    throw new NotFoundError('User', publicId);
   }
 
   const logger = createLogger(ctx);
   logger.info('User retrieved', {
     action: 'user_retrieved',
-    userId,
+    publicId,
   });
 
   return userDetailResponseSchema.parse(user);

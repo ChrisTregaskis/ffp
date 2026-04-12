@@ -21,10 +21,11 @@ import {
   listOrganisations as listOrganisationsInRepo,
   countOrganisations as countOrganisationsInRepo,
   getOrganisationById as getOrganisationByIdInRepo,
+  getOrganisationByPublicId as getOrganisationByPublicIdInRepo,
   updateOrganisation as updateOrganisationInRepo,
   listLocations as listLocationsInRepo,
   countLocations as countLocationsInRepo,
-  getLocationById as getLocationByIdInRepo,
+  getLocationByPublicId as getLocationByPublicIdInRepo,
   updateLocation as updateLocationInRepo,
 } from './admin.repository';
 
@@ -107,27 +108,27 @@ export async function listOrganisationsService(
 }
 
 /**
- * Get a single organisation by ID. Throws NotFoundError if not found.
+ * Get a single organisation by public ID. Throws NotFoundError if not found.
  * Uses admin context to bypass RLS for cross-organisation visibility.
  */
 export async function getOrganisationService(
   ctx: OrganisationContext,
-  organisationId: string
+  publicId: string
 ): Promise<OrganisationDetailResponse> {
   const db = getDb();
 
   const organisation = await withAdminContext(db, async (tx) => {
-    return await getOrganisationByIdInRepo(tx, organisationId);
+    return await getOrganisationByPublicIdInRepo(tx, publicId);
   });
 
   if (!organisation) {
-    throw new NotFoundError('Organisation', organisationId);
+    throw new NotFoundError('Organisation', publicId);
   }
 
   const logger = createLogger(ctx);
   logger.info('Organisation retrieved', {
     action: 'organisation_retrieved',
-    organisationId,
+    publicId,
   });
 
   return organisationDetailResponseSchema.parse(organisation);
@@ -243,27 +244,27 @@ export async function listLocationsService(
 }
 
 /**
- * Get a single location by ID. Throws NotFoundError if not found.
+ * Get a single location by public ID. Throws NotFoundError if not found.
  * Uses admin context to bypass RLS for cross-organisation visibility.
  */
 export async function getLocationService(
   ctx: OrganisationContext,
-  locationId: string
+  publicId: string
 ): Promise<LocationDetailResponse> {
   const db = getDb();
 
   const location = await withAdminContext(db, async (tx) => {
-    return await getLocationByIdInRepo(tx, locationId);
+    return await getLocationByPublicIdInRepo(tx, publicId);
   });
 
   if (!location) {
-    throw new NotFoundError('Location', locationId);
+    throw new NotFoundError('Location', publicId);
   }
 
   const logger = createLogger(ctx);
   logger.info('Location retrieved', {
     action: 'location_retrieved',
-    locationId,
+    publicId,
   });
 
   return locationDetailResponseSchema.parse(location);

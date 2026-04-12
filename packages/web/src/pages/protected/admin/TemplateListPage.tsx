@@ -59,7 +59,7 @@ export const TemplateListPage: React.FC = () => {
 
   const handleViewClick = useCallback(
     (row: TemplateRow): void => {
-      void navigate(`${routes[RouteKey.ADMIN_TEMPLATES].path}/${row.id}`);
+      void navigate(`${routes[RouteKey.ADMIN_TEMPLATES].path}/${row.publicId}`);
     },
     [navigate]
   );

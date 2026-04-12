@@ -10,6 +10,8 @@ export const movementTypeSchema = z.enum(MOVEMENT_TYPES);
 export const videoSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.guid(),
+  /** Public identifier for URLs (nanoid, 12 chars) */
+  publicId: z.string().length(12),
   /** Display title (e.g., "Seated Hamstring Stretch") */
   title: z.string().min(1).max(255),
   /** Detailed exercise instructions */

@@ -27,6 +27,7 @@ import { swapAdjacentItem } from '@web/utils/reorder';
 /** Row shape for the phases table */
 export type PhaseRow = {
   id: string;
+  publicId: string;
   phaseNumber: number;
   name: string;
   description: string;
@@ -35,6 +36,7 @@ export type PhaseRow = {
 
 const toPhaseRow = (phase: TemplatePhaseWithSessions): PhaseRow => ({
   id: phase.id,
+  publicId: phase.publicId,
   phaseNumber: phase.phaseNumber,
   name: phase.name ?? `Phase ${String(phase.phaseNumber)}`,
   description: phase.description ?? '',
@@ -85,7 +87,7 @@ export const PhasesPage: React.FC = () => {
       void navigate(
         routes[RouteKey.ADMIN_TEMPLATE_PHASE_DETAIL].path
           .replace(':id', templateId)
-          .replace(':phaseId', row.id)
+          .replace(':phaseId', row.publicId)
       );
     },
     [navigate, templateId]

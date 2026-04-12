@@ -17,6 +17,9 @@ export * from './types';
 // Re-export RLS utilities
 export * from './lib/rls';
 
+// Re-export public ID utilities
+export { generatePublicId, publicIdColumn, publicIdIndex } from './lib/public-id';
+
 // Re-export logger utilities
 export { createLogger, DatabaseLogLevel } from './lib/logger';
 export type { LogContext, DatabaseLogger } from './lib/logger';

@@ -84,15 +84,15 @@ describe('User Assessment Repository', () => {
     // Create Organisation A (use TEST_RUN_ID in name for easy cleanup)
     await setTestRLSContext(db, organisationAId);
     await db.execute(sql`
-      INSERT INTO organisations (id, type, name, settings)
-      VALUES (${organisationAId}, 'business', ${`Test Organisation A [${TEST_RUN_ID}]`}, '{}')
+      INSERT INTO organisations (id, public_id, type, name, settings)
+      VALUES (${organisationAId}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, 'business', ${`Test Organisation A [${TEST_RUN_ID}]`}, '{}')
     `);
 
     // Create Organisation B
     await setTestRLSContext(db, organisationBId);
     await db.execute(sql`
-      INSERT INTO organisations (id, type, name, settings)
-      VALUES (${organisationBId}, 'individual', ${`Test Organisation B [${TEST_RUN_ID}]`}, '{}')
+      INSERT INTO organisations (id, public_id, type, name, settings)
+      VALUES (${organisationBId}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, 'individual', ${`Test Organisation B [${TEST_RUN_ID}]`}, '{}')
     `);
 
     // Create Location A (belongs to Organisation A)
@@ -101,24 +101,24 @@ describe('User Assessment Repository', () => {
     locationAId = randomUUID();
     const locationAccountCode = locationAId.substring(0, 8);
     await db.execute(sql`
-      INSERT INTO locations (id, organisation_id, name, account_code, status)
-      VALUES (${locationAId}, ${organisationAId}, 'Location A', ${`LOC-${locationAccountCode}`}, 'active')
+      INSERT INTO locations (id, public_id, organisation_id, name, account_code, status)
+      VALUES (${locationAId}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, ${organisationAId}, 'Location A', ${`LOC-${locationAccountCode}`}, 'active')
     `);
 
     // Create User A1 (Organisation A)
     // Use unique UUID-based values to avoid conflicts
     userA1Id = randomUUID();
     await db.execute(sql`
-      INSERT INTO users (id, organisation_id, location_id, email, cognito_sub, first_name, last_name, role)
-      VALUES (${userA1Id}, ${organisationAId}, ${locationAId}, ${`user-${userA1Id.substring(0, 8)}@test.com`}, ${`cognito-${userA1Id.substring(0, 8)}`}, 'Alice', 'Anderson', 'programme_user')
+      INSERT INTO users (id, public_id, organisation_id, location_id, email, cognito_sub, first_name, last_name, role)
+      VALUES (${userA1Id}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, ${organisationAId}, ${locationAId}, ${`user-${userA1Id.substring(0, 8)}@test.com`}, ${`cognito-${userA1Id.substring(0, 8)}`}, 'Alice', 'Anderson', 'programme_user')
     `);
 
     // Create User B1 (Organisation B - individual user, no location)
     await setTestRLSContext(db, organisationBId);
     userB1Id = randomUUID();
     await db.execute(sql`
-      INSERT INTO users (id, organisation_id, location_id, email, cognito_sub, first_name, last_name, role)
-      VALUES (${userB1Id}, ${organisationBId}, NULL, ${`user-${userB1Id.substring(0, 8)}@test.com`}, ${`cognito-${userB1Id.substring(0, 8)}`}, 'Bob', 'Brown', 'programme_user')
+      INSERT INTO users (id, public_id, organisation_id, location_id, email, cognito_sub, first_name, last_name, role)
+      VALUES (${userB1Id}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, ${organisationBId}, NULL, ${`user-${userB1Id.substring(0, 8)}@test.com`}, ${`cognito-${userB1Id.substring(0, 8)}`}, 'Bob', 'Brown', 'programme_user')
     `);
 
     // Create Assessment Flow (shared, no RLS - flows are system-managed)
@@ -135,9 +135,10 @@ describe('User Assessment Repository', () => {
     // Create Programme Template (shared, no RLS - templates are system-managed)
     programmeTemplateId = randomUUID();
     await db.execute(sql`
-      INSERT INTO programme_templates (id, slug, name, is_active)
+      INSERT INTO programme_templates (id, public_id, slug, name, is_active)
       VALUES (
         ${programmeTemplateId},
+        ${randomUUID().replace(/-/g, '').slice(0, 12)},
         ${`test-template-${TEST_RUN_ID}`},
         ${`Test Template [${TEST_RUN_ID}]`},
         true
@@ -148,9 +149,10 @@ describe('User Assessment Repository', () => {
     await setTestRLSContext(db, organisationAId);
     programmeId = randomUUID();
     await db.execute(sql`
-      INSERT INTO programmes (id, organisation_id, user_id, programme_template_id, name)
+      INSERT INTO programmes (id, public_id, organisation_id, user_id, programme_template_id, name)
       VALUES (
         ${programmeId},
+        ${randomUUID().replace(/-/g, '').slice(0, 12)},
         ${organisationAId},
         ${userA1Id},
         ${programmeTemplateId},

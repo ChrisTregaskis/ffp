@@ -60,7 +60,7 @@ export const VideoLibraryPage: React.FC = () => {
 
   const handleEditClick = useCallback(
     (row: VideoRow): void => {
-      void navigate(`${routes[RouteKey.ADMIN_VIDEOS].path}/${row.id}`);
+      void navigate(`${routes[RouteKey.ADMIN_VIDEOS].path}/${row.publicId}`);
     },
     [navigate]
   );

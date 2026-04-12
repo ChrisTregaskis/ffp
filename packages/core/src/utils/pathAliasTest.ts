@@ -20,6 +20,7 @@ export interface PathAliasTest {
 export const testPathAliases = (): PathAliasTest => {
   const mockOrganisation: Organisation = {
     id: 'test-organisation-id',
+    publicId: 'abc123def456',
     name: 'Test Organisation',
     type: ORGANISATION_TYPES.BUSINESS,
     status: 'active',
@@ -30,6 +31,7 @@ export const testPathAliases = (): PathAliasTest => {
 
   const mockUser: User = {
     id: 'test-user-id',
+    publicId: 'usr123def456',
     cognitoSub: 'test-cognito-sub',
     firstName: 'Test',
     lastName: 'User',

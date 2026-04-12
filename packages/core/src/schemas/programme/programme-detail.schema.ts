@@ -46,6 +46,7 @@ const detailUserSessionSchema = z.object({
 /** Session within a phase — tiered: full detail or summary only */
 const detailSessionSchema = z.object({
   templateSessionId: z.guid(),
+  templateSessionPublicId: z.string().length(12),
   sessionNumber: z.number().int().positive(),
   name: z.string().nullable(),
   description: z.string().nullable(),
@@ -60,6 +61,7 @@ const detailSessionSchema = z.object({
 /** Phase with sessions — tiered visibility applied */
 const detailPhaseSchema = z.object({
   id: z.guid(),
+  publicId: z.string().length(12),
   phaseNumber: z.number().int().positive(),
   name: z.string().nullable(),
   description: z.string().nullable(),

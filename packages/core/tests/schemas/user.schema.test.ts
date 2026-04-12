@@ -219,6 +219,7 @@ describe('inviteUserSchema', () => {
 describe('userSchema', () => {
   const validUserBase = {
     id: '123e4567-e89b-12d3-a456-426614174000',
+    publicId: 'abc123def456',
     organisationId: '123e4567-e89b-12d3-a456-426614174001',
     email: 'test@example.com',
     cognitoSub: 'cognito-sub-123',

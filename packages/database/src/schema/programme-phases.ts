@@ -10,6 +10,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { PHASE_STATUSES } from '../constants/programme.constants';
+import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 import { organisations } from './organisations';
 import { programmes } from './programmes';
 import { templatePhases } from './template-phases';
@@ -29,6 +30,7 @@ export const programmePhases = pgTable(
   'programme_phases',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    publicId: publicIdColumn(),
     /** Organisation for RLS isolation */
     organisationId: uuid('organisation_id')
       .notNull()
@@ -51,6 +53,7 @@ export const programmePhases = pgTable(
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => [
+    publicIdIndex('programme_phases', table.publicId),
     uniqueIndex('idx_programme_phases_programme_phase').on(table.programmeId, table.phaseNumber),
     index('idx_programme_phases_organisation').on(table.organisationId),
     index('idx_programme_phases_programme').on(table.programmeId),
