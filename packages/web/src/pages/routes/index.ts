@@ -43,7 +43,7 @@ import { VideoLibraryPage } from '@web/pages/protected/admin/VideoLibraryPage';
 import { HomePage } from '@web/pages/protected/HomePage';
 import { AssessmentOverviewPage } from '@web/pages/protected/programme-user/AssessmentOverviewPage';
 import { AssessmentPage } from '@web/pages/protected/programme-user/AssessmentPage';
-import { ProgrammeOverviewPage } from '@web/pages/protected/programme-user/ProgrammeOverviewPage';
+import { ProgrammePage } from '@web/pages/protected/programme-user/ProgrammePage';
 import { ProgressPage } from '@web/pages/protected/programme-user/ProgressPage';
 import { SessionPage } from '@web/pages/protected/programme-user/SessionPage';
 import { ForgotPasswordPage } from '@web/pages/public/ForgotPasswordPage';
@@ -187,7 +187,7 @@ export const routes: RoutesConfig = {
   },
   [RouteKey.PROGRAMME_OVERVIEW]: {
     path: '/programme-overview',
-    pageComponent: ProgrammeOverviewPage,
+    pageComponent: ProgrammePage,
     title: 'Programme Overview',
     allowedRoles: [PROGRAMME_USER],
   },
