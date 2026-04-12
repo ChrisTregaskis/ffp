@@ -127,21 +127,21 @@ export const SessionPage: React.FC = () => {
   ]);
 
   // Derived values
-  const activeExercise = exercises[activeExerciseIndex];
+  const activeExercise = exercises.at(activeExerciseIndex);
   const completedCount = exercises.filter((e) => e.completed).length;
   const progressPercent = exercises.length > 0 ? (completedCount / exercises.length) * 100 : 0;
 
-  // Start session on first visit
+  // Start session — use resolved UUIDs from sessionData, not publicId URL params
   const handleStartSession = useCallback((): void => {
-    if (!phaseId || !templateSessionId || startSession.isPending) {
+    if (!sessionData || startSession.isPending) {
       return;
     }
 
     startSession.mutate({
-      programmePhaseId: phaseId,
-      templateSessionId,
+      programmePhaseId: sessionData.phase.id,
+      templateSessionId: sessionData.session.templateSessionId,
     });
-  }, [phaseId, templateSessionId, startSession]);
+  }, [sessionData, startSession]);
 
   // Advance to next uncompleted exercise
   const advanceToNext = useCallback((): void => {
@@ -154,7 +154,7 @@ export const SessionPage: React.FC = () => {
 
   // Mark exercise complete
   const handleMarkComplete = useCallback((): void => {
-    if (toggleExercise.isPending) {
+    if (toggleExercise.isPending || !activeExercise) {
       return;
     }
 
@@ -195,9 +195,9 @@ export const SessionPage: React.FC = () => {
     if (isResting) {
       setRestSeconds(null);
     } else {
-      setRestSeconds(activeExercise.restSeconds ?? null);
+      setRestSeconds(activeExercise?.restSeconds ?? null);
     }
-  }, [isResting, activeExercise.restSeconds]);
+  }, [isResting, activeExercise?.restSeconds]);
 
   const handleRestComplete = useCallback((): void => {
     setRestSeconds(null);
@@ -252,6 +252,11 @@ export const SessionPage: React.FC = () => {
         onBackToProgramme={handleBackToProgramme}
       />
     );
+  }
+
+  // Type narrowing guard — pageState logic ensures exercises.length > 0 before reaching here
+  if (!activeExercise) {
+    return <SessionPageState state="not-found" onBackToProgramme={handleBackToProgramme} />;
   }
 
   // Workout render — sessionData guaranteed non-null when pageState === 'workout'

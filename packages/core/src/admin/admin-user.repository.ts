@@ -99,6 +99,7 @@ export async function listUsers(
   const query = db
     .select({
       id: users.id,
+      publicId: users.publicId,
       organisationId: users.organisationId,
       email: users.email,
       cognitoSub: users.cognitoSub,
@@ -149,6 +150,7 @@ export async function getUserById(
   const records = await db
     .select({
       id: users.id,
+      publicId: users.publicId,
       organisationId: users.organisationId,
       email: users.email,
       cognitoSub: users.cognitoSub,
