@@ -82,11 +82,11 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({
   }
 
   // Upcoming
-  const textColour = context === 'dark' ? 'muted-foreground' : 'muted-foreground';
-
   return (
     <div className={`${baseClasses} ${upcomingClasses[context]}`} aria-label={ariaLabel}>
-      <Text styleProps={{ size: TEXT_SIZE[size], colour: textColour }}>{String(stepNumber)}</Text>
+      <Text styleProps={{ size: TEXT_SIZE[size], colour: 'muted-foreground' }}>
+        {String(stepNumber)}
+      </Text>
     </div>
   );
 };

@@ -112,8 +112,20 @@ export const SessionPage: React.FC = () => {
       return 'completed';
     }
 
+    if (exercises.length === 0) {
+      return 'not-found';
+    }
+
     return 'workout';
-  }, [isDetailLoading, sessionData, phaseId, templateSessionId, needsStart, isComplete]);
+  }, [
+    isDetailLoading,
+    sessionData,
+    phaseId,
+    templateSessionId,
+    needsStart,
+    isComplete,
+    exercises.length,
+  ]);
 
   // Derived values
   const activeExercise = exercises[activeExerciseIndex];
@@ -203,11 +215,19 @@ export const SessionPage: React.FC = () => {
 
   const handleDone = useCallback((): void => {
     if (userSessionId) {
-      completeSession.mutate(userSessionId);
+      completeSession.mutate(userSessionId, {
+        onSuccess: () => {
+          void navigate('/');
+        },
+        onError: () => {
+          addToast('Failed to complete session. Please try again.', { variant: 'error' });
+          setShowExitDialog(false);
+        },
+      });
+    } else {
+      void navigate('/');
     }
-
-    void navigate('/');
-  }, [userSessionId, completeSession, navigate]);
+  }, [userSessionId, completeSession, navigate, addToast]);
 
   const handleBackToProgramme = useCallback((): void => {
     void navigate('/');

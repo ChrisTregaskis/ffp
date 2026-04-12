@@ -22,6 +22,8 @@ export interface RestTimerBarProps {
 export const RestTimerBar: React.FC<RestTimerBarProps> = ({ seconds, onComplete }) => {
   const [remaining, setRemaining] = useState(seconds);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     intervalRef.current = setInterval(() => {
@@ -31,7 +33,7 @@ export const RestTimerBar: React.FC<RestTimerBarProps> = ({ seconds, onComplete 
             clearInterval(intervalRef.current);
           }
 
-          onComplete();
+          onCompleteRef.current();
 
           return 0;
         }
@@ -45,7 +47,7 @@ export const RestTimerBar: React.FC<RestTimerBarProps> = ({ seconds, onComplete 
         clearInterval(intervalRef.current);
       }
     };
-  }, [onComplete]);
+  }, []);
 
   const progressPercent = (remaining / seconds) * 100;
 
