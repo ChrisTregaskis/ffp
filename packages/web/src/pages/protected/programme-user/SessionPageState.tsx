@@ -1,6 +1,5 @@
-import { Button } from '@web/components/button';
 import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import { SessionCompletionState } from '@web/components/session';
+import { SessionCompletionState, SessionStartScreen } from '@web/components/session';
 import { Text } from '@web/components/text/Text';
 
 export type SessionState = 'loading' | 'not-found' | 'needs-start' | 'completed' | 'workout';
@@ -10,11 +9,17 @@ export interface SessionPageStateProps {
   state: 'loading' | 'not-found' | 'needs-start' | 'completed';
   /** Session name (for needs-start and completed states) */
   sessionName?: string;
+  /** Session description */
+  sessionDescription?: string | null;
+  /** Phase context (e.g., "Phase 1: Gentle Awareness") */
+  phaseContext?: string;
+  /** Number of exercises in the session */
+  exerciseCount?: number;
   /** Whether the start mutation is pending */
   isStarting?: boolean;
   /** Number of exercises completed (for completed state) */
   exercisesCompleted?: number;
-  /** Estimated duration in minutes (for completed state) */
+  /** Estimated duration in minutes (for completed and needs-start states) */
   estimatedDurationMinutes?: number | null;
   /** Called when "Start Session" is clicked */
   onStart?: () => void;
@@ -31,6 +36,9 @@ export interface SessionPageStateProps {
 export const SessionPageState: React.FC<SessionPageStateProps> = ({
   state,
   sessionName,
+  sessionDescription,
+  phaseContext,
+  exerciseCount = 0,
   isStarting = false,
   exercisesCompleted = 0,
   estimatedDurationMinutes,
@@ -56,20 +64,16 @@ export const SessionPageState: React.FC<SessionPageStateProps> = ({
 
     case 'needs-start':
       return (
-        <div className="flex h-screen flex-col items-center justify-center gap-4">
-          <Text as="p" styleProps={{ size: 'lg', colour: 'muted-foreground' }}>
-            {sessionName ?? 'Session'}
-          </Text>
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={onStart}
-            loading={isStarting}
-            disabled={isStarting}
-          >
-            Start Session
-          </Button>
-        </div>
+        <SessionStartScreen
+          sessionName={sessionName ?? 'Session'}
+          sessionDescription={sessionDescription}
+          phaseContext={phaseContext}
+          exerciseCount={exerciseCount}
+          estimatedDurationMinutes={estimatedDurationMinutes}
+          isStarting={isStarting}
+          onStart={onStart}
+          onBack={onBackToProgramme}
+        />
       );
 
     case 'completed':

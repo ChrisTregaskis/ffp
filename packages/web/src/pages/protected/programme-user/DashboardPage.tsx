@@ -3,6 +3,7 @@ import { FadeSlideIn } from '@web/components/motion/FadeSlideIn';
 import { EmptyProgrammeState } from '@web/components/programme/EmptyProgrammeState';
 import { NextSessionCard } from '@web/components/programme/NextSessionCard';
 import { PhaseDetailCard } from '@web/components/programme/PhaseDetailCard';
+import { ProgrammeCompleteState } from '@web/components/programme/ProgrammeCompleteState';
 import { Text } from '@web/components/text/Text';
 import { Title } from '@web/components/text/Title';
 import { useProgrammeDetailQuery, useProgressSummaryQuery } from '@web/hooks/programmes';
@@ -62,6 +63,9 @@ export const DashboardPage: React.FC = () => {
 
   const currentPhase = findCurrentPhase(detail.phases, detail.currentPhaseNumber);
   const nextSession = currentPhase ? findNextSession(currentPhase) : undefined;
+  const isProgrammeComplete =
+    detail.programme.status === 'completed' ||
+    (progress.completedPhases === progress.totalPhases && progress.totalPhases > 0);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
@@ -72,32 +76,46 @@ export const DashboardPage: React.FC = () => {
             {greeting}
           </Title>
           <Text as="p" styleProps={{ size: 'lg', colour: 'muted-foreground' }}>
-            Here&apos;s where you are in your programme.
+            {isProgrammeComplete
+              ? 'Congratulations on completing your programme.'
+              : "Here's where you are in your programme."}
           </Text>
         </div>
       </FadeSlideIn>
 
-      {/* Your Next Session hero card — full width */}
-      {nextSession && currentPhase && (
+      {isProgrammeComplete ? (
         <FadeSlideIn delay={0.1}>
-          <div className="mb-6">
-            <NextSessionCard
-              session={nextSession}
-              phase={currentPhase}
-              totalPhaseSessions={currentPhase.sessions.length}
-            />
-          </div>
-        </FadeSlideIn>
-      )}
-
-      {/* Current Phase Detail */}
-      {currentPhase && (
-        <FadeSlideIn delay={0.2}>
-          <PhaseDetailCard
-            phase={currentPhase}
-            progressPercent={progress.currentPhaseProgressPercent}
+          <ProgrammeCompleteState
+            completedPhases={progress.completedPhases}
+            completedSessions={progress.completedSessions}
           />
         </FadeSlideIn>
+      ) : (
+        <>
+          {/* Your Next Session hero card — full width */}
+          {nextSession && currentPhase && (
+            <FadeSlideIn delay={0.1}>
+              <div className="mb-6">
+                <NextSessionCard
+                  session={nextSession}
+                  phase={currentPhase}
+                  totalPhaseSessions={currentPhase.sessions.length}
+                  totalPhases={progress.totalPhases}
+                />
+              </div>
+            </FadeSlideIn>
+          )}
+
+          {/* Current Phase Detail */}
+          {currentPhase && (
+            <FadeSlideIn delay={0.2}>
+              <PhaseDetailCard
+                phase={currentPhase}
+                progressPercent={progress.currentPhaseProgressPercent}
+              />
+            </FadeSlideIn>
+          )}
+        </>
       )}
     </div>
   );

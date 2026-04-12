@@ -10,6 +10,7 @@ import { ProgressBar } from '@web/components/ProgressBar';
 import { Text } from '@web/components/text/Text';
 import { Title } from '@web/components/text/Title';
 import { VideoUnavailablePlaceholder } from '@web/components/video';
+import { shortId } from '@web/hooks/useShortNavigate';
 
 import { PrescriptionBadge } from './PrescriptionBadge';
 
@@ -23,6 +24,8 @@ export interface NextSessionCardProps {
   phase: Phase;
   /** Total sessions in the phase */
   totalPhaseSessions: number;
+  /** Total phases in the programme */
+  totalPhases: number;
 }
 
 /**
@@ -36,6 +39,7 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
   session,
   phase,
   totalPhaseSessions,
+  totalPhases,
 }) => {
   const navigate = useNavigate();
   const isResumable = session.userSession?.status === 'in_progress';
@@ -47,7 +51,7 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
     isResumable && totalExercises > 0 ? (completedExercises / totalExercises) * 100 : 0;
 
   const handleStart = (): void => {
-    void navigate(`/programme/session/${phase.id}/${session.templateSessionId}`);
+    void navigate(`/programme/session/${shortId(phase.id)}/${shortId(session.templateSessionId)}`);
   };
 
   const handleViewProgramme = (): void => {
@@ -76,7 +80,7 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
               {session.name ?? `Session ${String(session.sessionNumber)}`}
             </Title>
             <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-4">
-              Phase {String(phase.phaseNumber)}:{' '}
+              Phase {String(phase.phaseNumber)} of {String(totalPhases)}:{' '}
               {phase.name ?? `Phase ${String(phase.phaseNumber)}`} · Session{' '}
               {String(session.sessionNumber)} of {String(totalPhaseSessions)}
             </Text>

@@ -50,6 +50,7 @@ You are a senior software engineer specialising in multi-tenant healthcare SaaS.
 - [ ] No business logic in handlers
 - [ ] Services orchestrate, don't do data access directly
 - [ ] Repositories handle RLS properly
+- [ ] New interfaces/types in `@ffp/web` or `@ffp/functions` checked against `@ffp/core` schemas and types — avoid duplicating types that already exist or could be inferred (e.g., using `z.infer<>` from Zod schemas, re-exporting from core)
 
 ### Code Quality
 

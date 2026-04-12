@@ -9,6 +9,8 @@ export { LabelledSection } from './LabelledSection';
 export { RestTimerBar } from './RestTimerBar';
 export { SessionHeader } from './SessionHeader';
 export { SessionCompletionState } from './SessionCompletionState';
+export { SessionStartScreen } from './SessionStartScreen';
+export type { SessionStartScreenProps } from './SessionStartScreen';
 export { toSessionExercise } from './types';
 export type { BulletListProps } from './BulletList';
 export type { ActiveExercisePanelProps } from './ActiveExercisePanel';
