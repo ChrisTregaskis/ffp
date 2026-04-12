@@ -10,6 +10,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { templatePhases } from './template-phases';
+import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 
 /**
  * Template sessions table definition
@@ -23,6 +24,7 @@ export const templateSessions = pgTable(
   'template_sessions',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    publicId: publicIdColumn(),
     /** Parent template phase */
     templatePhaseId: uuid('template_phase_id')
       .notNull()
@@ -39,6 +41,7 @@ export const templateSessions = pgTable(
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => [
+    publicIdIndex('template_sessions', table.publicId),
     uniqueIndex('idx_template_sessions_phase_session').on(
       table.templatePhaseId,
       table.sessionNumber

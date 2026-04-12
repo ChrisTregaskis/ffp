@@ -10,6 +10,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { programmeTemplates } from './programme-templates';
+import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 
 /**
  * Template phases table definition
@@ -25,6 +26,7 @@ export const templatePhases = pgTable(
   'template_phases',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    publicId: publicIdColumn(),
     /** Parent programme template */
     programmeTemplateId: uuid('programme_template_id')
       .notNull()
@@ -41,6 +43,7 @@ export const templatePhases = pgTable(
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => [
+    publicIdIndex('template_phases', table.publicId),
     uniqueIndex('idx_template_phases_template_phase').on(
       table.programmeTemplateId,
       table.phaseNumber

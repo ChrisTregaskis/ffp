@@ -11,6 +11,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { VIDEO_STATUSES, DIFFICULTIES, MOVEMENT_TYPES } from '../constants/video.constants';
+import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 
 export const videoStatusEnum = pgEnum('video_status', [...VIDEO_STATUSES]);
 export const difficultyEnum = pgEnum('difficulty', [...DIFFICULTIES]);
@@ -33,6 +34,7 @@ export const videos = pgTable(
   'videos',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    publicId: publicIdColumn(),
     /** Display title (e.g., "Seated Hamstring Stretch") */
     title: varchar('title', { length: 255 }).notNull(),
     /** Detailed exercise instructions */
@@ -73,6 +75,7 @@ export const videos = pgTable(
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => [
+    publicIdIndex('videos', table.publicId),
     index('idx_videos_status').on(table.status),
     index('idx_videos_body_parts').using('gin', table.bodyParts),
     index('idx_videos_equipment').using('gin', table.equipment),
