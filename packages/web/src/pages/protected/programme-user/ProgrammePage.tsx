@@ -1,8 +1,10 @@
 import { PageContainer } from '@web/components/layout/PageContainer';
 import { PageLoadingState } from '@web/components/layout/PageLoadingState';
 import { EmptyProgrammeState } from '@web/components/programme/EmptyProgrammeState';
+import { PhaseTimelineCard } from '@web/components/programme/PhaseTimelineCard';
 import { ProgrammeHeader } from '@web/components/programme/ProgrammeHeader';
 import { useProgrammeDetailQuery } from '@web/hooks/programmes';
+import { findCurrentPhase, findNextSession } from '@web/utils/programme';
 
 /**
  * Programme overview page with vertical timeline.
@@ -27,6 +29,8 @@ export const ProgrammePage: React.FC = () => {
 
   const { programme, phases } = detail;
   const completedPhases = phases.filter((p) => p.status === 'completed').length;
+  const currentPhase = findCurrentPhase(phases, detail.currentPhaseNumber);
+  const nextSession = currentPhase ? findNextSession(currentPhase) : undefined;
 
   return (
     <div className="min-h-screen bg-muted/20">
@@ -38,7 +42,17 @@ export const ProgrammePage: React.FC = () => {
           totalPhases={phases.length}
         />
 
-        {/* Timeline — Group 2 will add PhaseTimelineCard components here */}
+        <>
+          {phases.map((phase, index) => (
+            <PhaseTimelineCard
+              key={phase.id}
+              phase={phase}
+              isFirst={index === 0}
+              isLast={index === phases.length - 1}
+              nextSession={currentPhase?.id === phase.id ? nextSession : undefined}
+            />
+          ))}
+        </>
       </PageContainer>
     </div>
   );

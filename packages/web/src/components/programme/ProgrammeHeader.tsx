@@ -28,24 +28,21 @@ export const ProgrammeHeader: React.FC<ProgrammeHeaderProps> = ({
 
   return (
     <FadeSlideIn delay={0.1}>
-      <div>
+      <div className="mb-8">
         <PageHeader title={name} subtitle={description ?? undefined} />
 
-        {/* Overall progress — white strip for contrast on muted background */}
-        <div className="rounded-lg bg-white p-4 shadow-sm">
-          <div className="mb-2 flex items-center justify-between">
-            <Text
-              styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}
-              className="uppercase tracking-wide"
-            >
-              Overall Progress
-            </Text>
-            <Text styleProps={{ size: 'sm', weight: 'medium' }}>
-              {String(completedPhases)} of {String(totalPhases)} phases
-            </Text>
-          </div>
-          <ProgressBar percent={progressPercent} />
+        <div className="mb-2 flex items-center justify-between">
+          <Text
+            styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}
+            className="uppercase tracking-wide"
+          >
+            Overall Progress
+          </Text>
+          <Text styleProps={{ size: 'sm', weight: 'medium' }}>
+            {String(completedPhases)} of {String(totalPhases)} phases
+          </Text>
         </div>
+        <ProgressBar percent={progressPercent} trackClassName="bg-white" />
       </div>
     </FadeSlideIn>
   );
