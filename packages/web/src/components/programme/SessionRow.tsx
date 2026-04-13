@@ -54,7 +54,7 @@ export const SessionRow: React.FC<SessionRowProps> = ({ session, phasePublicId, 
         </span>
 
         {/* Session details */}
-        <>
+        <div>
           <Text
             styleProps={{
               size: 'sm',
@@ -70,7 +70,7 @@ export const SessionRow: React.FC<SessionRowProps> = ({ session, phasePublicId, 
               ? ` · ${String(session.estimatedDurationMinutes)} min`
               : ''}
           </Text>
-        </>
+        </div>
       </div>
 
       {isNext && (
