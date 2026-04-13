@@ -1,13 +1,3 @@
-# NOT ROOT LEVEL README!
-
-For some reason this GitHub repo insists on displaying .github/README.md instead of the ROOT level README.md.
-
-kmt
-
-Click on the ROOT level README.md for project overview, setup instructions etc.
-
----
-
 # GitHub Configuration
 
 This directory contains GitHub-specific configuration files for the FFP project.
@@ -21,7 +11,7 @@ Automated CI/CD pipelines:
 1. **`auto-pr.yml`** - Automatically creates draft PRs when pushing to feature branches
 2. **`ci.yml`** - Quality checks (typecheck, lint, build, test) on every push
 
-📖 **Detailed guide:** [WORKFLOWS.md](./WORKFLOWS.md)
+**Detailed guide:** [WORKFLOWS.md](./WORKFLOWS.md)
 
 ### Templates
 
@@ -37,9 +27,9 @@ Automated CI/CD pipelines:
 
 ```bash
 Repository Settings → Actions → General
-├── ✅ Allow all actions and reusable workflows
-└── ✅ Read and write permissions
-    └── ✅ Allow GitHub Actions to create and approve pull requests
+├── Allow all actions and reusable workflows
+└── Read and write permissions
+    └── Allow GitHub Actions to create and approve pull requests
 ```
 
 ### 2. Create Feature Branch
@@ -58,14 +48,14 @@ git commit -m "FFP-20: Configure TypeScript paths"
 git push -u origin FFP-20-typescript-paths
 ```
 
-### 4. Auto-PR Created! 🎉
+### 4. Auto-PR Created
 
 GitHub Actions will:
 
-- ✅ Create draft PR automatically
-- ✅ Add Jira ticket link
-- ✅ Run CI checks
-- ✅ Add helpful commands in comments
+- Create draft PR automatically
+- Add Jira ticket link
+- Run CI checks
+- Add helpful commands in comments
 
 ## Branch Naming Conventions
 
@@ -80,10 +70,10 @@ Auto-PR triggers on:
 
 All workflows use `GITHUB_TOKEN` (no secrets needed):
 
-- ✅ Read repository
-- ✅ Create pull requests
-- ✅ Add comments
-- ✅ Run status checks
+- Read repository
+- Create pull requests
+- Add comments
+- Run status checks
 
 ## Files Overview
 
@@ -195,7 +185,7 @@ Estimated FFP usage:
 - CI checks: ~3 min/push × ~20 pushes/month = 60 min
 - Auto-PR: ~0.5 min/push × ~20 pushes/month = 10 min
 
-**Total: ~70 min/month** (well within free tier ✅)
+**Total: ~70 min/month** (well within free tier)
 
 ## Customisation
 
@@ -302,12 +292,12 @@ Edit `ci.yml` and add steps:
 
 1. Settings → Actions → General
 2. Workflow permissions → **Read and write permissions**
-3. ✅ **Allow GitHub Actions to create and approve pull requests**
+3. **Allow GitHub Actions to create and approve pull requests**
 4. Save
 
 ## Best Practices
 
-### ✅ Do
+### Do
 
 - Use FFP ticket numbers in branch names (`FFP-20-feature`)
 - Write descriptive commit messages
@@ -316,7 +306,7 @@ Edit `ci.yml` and add steps:
 - Use draft PRs for work in progress
 - Review CI results before merging
 
-### ❌ Don't
+### Don't
 
 - Push directly to `main` (unless intentional)
 - Ignore CI failures
@@ -328,10 +318,10 @@ Edit `ci.yml` and add steps:
 
 ### Secrets Management
 
-- ✅ Use `GITHUB_TOKEN` (automatically provided)
-- ❌ Never commit AWS credentials or API keys
-- ✅ Use GitHub Secrets for sensitive data
-- ✅ Use AWS Secrets Manager for production secrets
+- Use `GITHUB_TOKEN` (automatically provided)
+- Never commit AWS credentials or API keys
+- Use GitHub Secrets for sensitive data
+- Use AWS Secrets Manager for production secrets
 
 ### Branch Protection
 
@@ -340,10 +330,10 @@ Recommended for `main` branch:
 ```
 Settings → Branches → Add rule
 ├── Branch name pattern: main
-├── ✅ Require pull request before merging
-├── ✅ Require status checks to pass (CI)
-├── ✅ Require branches to be up to date
-└── ✅ Do not allow bypassing the above settings
+├── Require pull request before merging
+├── Require status checks to pass (CI)
+├── Require branches to be up to date
+└── Do not allow bypassing the above settings
 ```
 
 ## Resources
@@ -363,5 +353,5 @@ Settings → Branches → Add rule
 
 ---
 
-**Last Updated:** October 20, 2025  
+**Last Updated:** April 2026  
 **Maintained By:** Christopher Tregaskis
