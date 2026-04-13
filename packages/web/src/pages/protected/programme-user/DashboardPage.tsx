@@ -1,11 +1,11 @@
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
+import { PageContainer } from '@web/components/layout/PageContainer';
+import { PageHeader } from '@web/components/layout/PageHeader';
+import { PageLoadingState } from '@web/components/layout/PageLoadingState';
 import { FadeSlideIn } from '@web/components/motion/FadeSlideIn';
 import { EmptyProgrammeState } from '@web/components/programme/EmptyProgrammeState';
 import { NextSessionCard } from '@web/components/programme/NextSessionCard';
 import { PhaseDetailCard } from '@web/components/programme/PhaseDetailCard';
 import { ProgrammeCompleteState } from '@web/components/programme/ProgrammeCompleteState';
-import { Text } from '@web/components/text/Text';
-import { Title } from '@web/components/text/Title';
 import { useProgrammeDetailQuery, useProgressSummaryQuery } from '@web/hooks/programmes';
 import { useUserProfileQuery } from '@web/hooks/users';
 import { findCurrentPhase, findNextSession } from '@web/utils/programme';
@@ -35,29 +35,16 @@ export const DashboardPage: React.FC = () => {
 
   // Loading state — centred vertically
   if (isLoading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <LoadingSpinner size="lg" />
-          <Text as="p" styleProps={{ size: 'base', colour: 'muted-foreground' }}>
-            Loading your dashboard...
-          </Text>
-        </div>
-      </div>
-    );
+    return <PageLoadingState message="Loading your dashboard..." />;
   }
 
   // Error or no data — show empty programme state
   if (isError || !detail || !progress) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-        <div className="mb-8">
-          <Title as="h1" className="mb-1">
-            {greeting}
-          </Title>
-        </div>
+      <PageContainer centred maxWidth="medium">
+        <PageHeader title={greeting} />
         <EmptyProgrammeState />
-      </div>
+      </PageContainer>
     );
   }
 
@@ -68,19 +55,17 @@ export const DashboardPage: React.FC = () => {
     (progress.completedPhases === progress.totalPhases && progress.totalPhases > 0);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+    <PageContainer centred maxWidth="medium">
       {/* Greeting */}
       <FadeSlideIn>
-        <div className="mb-8">
-          <Title as="h1" className="mb-1">
-            {greeting}
-          </Title>
-          <Text as="p" styleProps={{ size: 'lg', colour: 'muted-foreground' }}>
-            {isProgrammeComplete
+        <PageHeader
+          title={greeting}
+          subtitle={
+            isProgrammeComplete
               ? 'Congratulations on completing your programme.'
-              : "Here's where you are in your programme."}
-          </Text>
-        </div>
+              : "Here's where you are in your programme."
+          }
+        />
       </FadeSlideIn>
 
       {isProgrammeComplete ? (
@@ -117,6 +102,6 @@ export const DashboardPage: React.FC = () => {
           )}
         </>
       )}
-    </div>
+    </PageContainer>
   );
 };

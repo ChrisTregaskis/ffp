@@ -5,6 +5,8 @@ export interface ProgressBarProps {
   percent: number;
   /** Additional CSS classes for the track container */
   className?: string;
+  /** Override the track background colour @default 'bg-muted' */
+  trackClassName?: string;
   /** Animation duration in seconds @default 0.8 */
   duration?: number;
   /** Animation easing @default 'easeOut' */
@@ -24,16 +26,19 @@ export interface ProgressBarProps {
 export const ProgressBar: React.FC<ProgressBarProps> = ({
   percent,
   className = '',
+  trackClassName = 'bg-muted',
   duration = 0.8,
   ease = 'easeOut',
   delay = 0.3,
   animateFromZero = true,
 }) => {
+  const MIN_VISUAL_PERCENT = 3;
   const clampedPercent = Math.min(100, Math.max(0, percent));
+  const visualPercent = clampedPercent > 0 ? clampedPercent : MIN_VISUAL_PERCENT;
 
   return (
     <div
-      className={`h-2 w-full overflow-hidden rounded-full bg-muted ${className}`.trim()}
+      className={`h-2 w-full overflow-hidden rounded-full ${trackClassName} ${className}`.trim()}
       role="progressbar"
       aria-valuenow={Math.round(clampedPercent)}
       aria-valuemin={0}
@@ -42,7 +47,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
       <motion.div
         className="h-full rounded-full bg-linear-to-r from-ffp-primary-blue to-ffp-dark-blue"
         initial={animateFromZero ? { width: 0 } : false}
-        animate={{ width: `${String(clampedPercent)}%` }}
+        animate={{ width: `${String(visualPercent)}%` }}
         transition={{ duration, ease, delay }}
       />
     </div>
