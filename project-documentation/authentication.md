@@ -109,4 +109,4 @@ Enforced by Cognito: minimum 8 characters, uppercase, lowercase, digit, special 
 
 ---
 
-_Self-service registration (Phase 2) requires Stripe billing integration. See Jira backlog for future auth enhancements (FFP-258). Frontend AuthContext provider will be implemented when web UI is built._
+_Self-service registration (Phase 2) requires Stripe billing integration. See Jira backlog for future auth enhancements (FFP-258). Frontend AuthContext provider is implemented in `packages/web/src/contexts/AuthContext.tsx`._

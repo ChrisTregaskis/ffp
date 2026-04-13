@@ -38,36 +38,26 @@ turbo build --filter=@ffp/core
 
 ```bash
 # Local development with hot-reload
-npm run dev
-turbo dev
+sst dev --stage ct-ffp
 
 # Deploy to environment
-npm run deploy --stage dev
-
-# View logs
-npm run logs -- --stage dev --function assessments
+sst deploy --stage staging
 
 # Database migrations
-turbo db:migrate --filter=@ffp/core
+pnpm db:migrate
 ```
 
 ### Testing Commands
 
 ```bash
 # Fast unit tests (during development)
-npm run test:unit
-
-# RLS tests (before commits)
-npm run test:rls
+pnpm test
 
 # Watch mode (TDD)
-npm run test:watch
-
-# E2E tests (before deployments)
-npm run test:e2e
+pnpm test:root:watch
 
 # Coverage report
-npm run test:coverage
+pnpm test:coverage
 ```
 
 ---
@@ -98,13 +88,9 @@ ffp/
 │       │   ├── contexts/
 │       │   └── lib/
 │       └── package.json
-├── stacks/                # SST infrastructure
-│   ├── AuthStack.ts
-│   ├── DatabaseStack.ts
-│   ├── ApiStack.ts
-│   └── StorageStack.ts
-└── schema/                # Drizzle schemas
-    └── index.ts
+├── sst.config.ts          # SST v3 Ion configuration
+└── packages/database/     # Drizzle schemas and migrations
+    └── src/schema/
 ```
 
 ### Workspace Dependencies

@@ -4,7 +4,7 @@ Lambda function handlers for FFP API endpoints.
 
 ---
 
-## 🎯 Overview
+## Overview
 
 This package contains AWS Lambda function handlers for the FFP API. Each handler:
 
@@ -16,7 +16,7 @@ This package contains AWS Lambda function handlers for the FFP API. Each handler
 
 ---
 
-## 🚀 Usage
+## Usage
 
 ### Importing from @ffp/core
 
@@ -47,7 +47,7 @@ import { successResponse, errorResponse } from '@functions/utils/response';
 
 ---
 
-## 🏗 Handler Pattern
+## Handler Pattern
 
 All Lambda handlers follow this pattern:
 
@@ -109,7 +109,7 @@ export const errorResponse = (error: unknown, statusCode = 500) => {
 
 ---
 
-## 📦 Dependencies
+## Dependencies
 
 ### Production Dependencies
 
@@ -125,7 +125,7 @@ export const errorResponse = (error: unknown, statusCode = 500) => {
 
 ---
 
-## 🔒 Security Checklist
+## Security Checklist
 
 Every handler must:
 
@@ -142,27 +142,13 @@ Every handler must:
 
 ---
 
-## 🎯 Current Status
+## Current Status
 
-### ✅ Complete
-
-- Package structure created
-- TypeScript configuration with strict mode
-- Workspace dependency on `@ffp/core`
-- Intra-package path aliases (`@functions/*`)
-- Testing framework configured
-
-### ⏸️ Awaiting Future Sprints
-
-- **FFP-8**: SST Infrastructure setup
-- **FFP-9**: Cognito authentication handlers
-- **Future**: Assessment CRUD endpoints
-- **Future**: Program generation endpoints
-- **Future**: Video management endpoints
+Core handlers implemented across auth, assessments, programmes, videos, admin, and business domains. See `src/` for the full handler inventory.
 
 ---
 
-## 📚 Further Reading
+## Further Reading
 
 For detailed commands, project structure, and workflows, see:
 

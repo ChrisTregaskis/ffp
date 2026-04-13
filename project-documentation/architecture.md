@@ -233,11 +233,11 @@ await db.query.users.findMany(); // Leaks all organisations!
 
 ## Environment Strategy
 
-| Environment | Purpose                        | Database Changes                       |
-| ----------- | ------------------------------ | -------------------------------------- |
-| **dev**     | Personal developer environment | `drizzle-kit push` for rapid iteration |
-| **staging** | Shared QA/demo environment     | `db:generate` + `db:migrate`           |
-| **prod**    | Customer-facing                | Strict migration review process        |
+| Environment | Purpose                        | Database Changes                |
+| ----------- | ------------------------------ | ------------------------------- |
+| **dev**     | Personal developer environment | `db:generate` + `db:migrate`    |
+| **staging** | Shared QA/demo environment     | `db:generate` + `db:migrate`    |
+| **prod**    | Customer-facing                | Strict migration review process |
 
 **See:** `deployment.md` for SST configuration and CI/CD details.
 

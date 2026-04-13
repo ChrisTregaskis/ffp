@@ -639,12 +639,11 @@ System administrators can manage assessment templates via basic CRUD forms.
 
 ### Post-MVP Features
 
-1. **Conditional Logic** - Dynamic question trees based on previous answers
-2. **Visual Template Builder** - Drag-and-drop question ordering with preview
-3. **A/B Testing** - Multiple template versions with random assignment
-4. **Advanced Analytics** - Dropout points, question difficulty analysis
-5. **Assessment Reminders** - Email notifications for abandoned assessments
-6. **Offline Support** - Local storage sync when back online
+1. **Visual Template Builder** - Drag-and-drop question ordering with preview
+2. **A/B Testing** - Multiple template versions with random assignment
+3. **Advanced Analytics** - Dropout points, question difficulty analysis
+4. **Assessment Reminders** - Email notifications for abandoned assessments
+5. **Offline Support** - Local storage sync when back online
 
 ---
 

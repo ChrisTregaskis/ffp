@@ -20,7 +20,7 @@ Use project-specific stage names, never the default macOS username (causes cross
 
 ```bash
 sst dev --stage ct-ffp           # [✓] Project-specific
-sst dev                          # [✗]  Defaults to username, conflicts across projects
+sst dev                          # [✗] Defaults to username, conflicts across projects
 ```
 
 ### Database Migrations (Drizzle)
