@@ -104,7 +104,6 @@ export const reorderExercisesRequestSchema = z.object({
 export const exerciseVideoSummarySchema = z.object({
   id: z.guid(),
   title: z.string(),
-  thumbnailKey: z.string().nullable(),
   status: z.string(),
 });
 

@@ -24,11 +24,6 @@ export interface VideoUploadState {
   uploadProgress: number;
   /** Duration in seconds detected from video file metadata (null if not yet detected or failed) */
   detectedDuration: number | null;
-  thumbnailFile: File | null;
-  thumbnailUploading: boolean;
-  thumbnailProgress: number;
-  thumbnailError: string | null;
-  thumbnailKey: string | null;
   submitError: string | null;
   /** ID of the created video record (set on success) */
   createdVideoId: string | null;
@@ -42,8 +37,6 @@ export interface UseVideoUploadReturn {
   handleFileInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleClickSelect: () => void;
   handleClearFile: () => void;
-  handleThumbnailSelected: (file: File, extension: string) => void;
-  handleThumbnailClear: () => void;
   /** Called by the form with user-entered metadata — orchestrates upload + create */
   handleSubmit: (metadata: VideoMetadataValues) => void;
   handleClose: () => void;
@@ -65,10 +58,4 @@ export type Action =
   | { type: 'CREATE_STARTED' }
   | { type: 'CREATE_SUCCESS'; videoId: string }
   | { type: 'SUBMIT_ERROR'; error: string }
-  | { type: 'THUMBNAIL_SELECTED'; file: File }
-  | { type: 'THUMBNAIL_UPLOADING' }
-  | { type: 'THUMBNAIL_PROGRESS'; progress: number }
-  | { type: 'THUMBNAIL_COMPLETE'; thumbnailKey: string }
-  | { type: 'THUMBNAIL_ERROR'; error: string }
-  | { type: 'THUMBNAIL_CLEARED' }
   | { type: 'RESET' };

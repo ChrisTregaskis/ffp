@@ -5,14 +5,8 @@ import { createPaginatedResponseSchema } from '../pagination.schema';
 import { videoListResponseSchema } from './video-catalogue.schema';
 import { difficultySchema, videoStatusSchema } from './video-entity.schema';
 
-/** Allowed thumbnail file extensions for upload */
-const THUMBNAIL_EXTENSIONS = ['jpg', 'jpeg', 'png'] as const;
-
 /** Request schema for generating presigned upload URLs */
-export const uploadUrlRequestSchema = z.object({
-  /** Optional thumbnail file extension — when provided, a thumbnail upload URL is also generated */
-  thumbnailExtension: z.enum(THUMBNAIL_EXTENSIONS).optional(),
-});
+export const uploadUrlRequestSchema = z.object({});
 
 /** Filter criteria for admin video list — includes search and status (all statuses visible) */
 export const adminVideoFilterSchema = z.object({
@@ -27,10 +21,6 @@ export const uploadUrlResponseSchema = z.object({
   videoUploadUrl: z.url(),
   /** S3 object key for the video (e.g., 'library/{uuid}.mp4') */
   videoS3Key: z.string().min(1),
-  /** Presigned PUT URL for uploading the thumbnail (null if not requested) */
-  thumbnailUploadUrl: z.url().nullable(),
-  /** S3 object key for the thumbnail (null if not requested) */
-  thumbnailKey: z.string().min(1).nullable(),
   /** URL validity period in seconds */
   expiresIn: z.number().int().positive(),
 });

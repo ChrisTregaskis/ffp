@@ -22,11 +22,6 @@ const INITIAL_STATE: VideoUploadState = {
   isDragOver: false,
   uploadProgress: 0,
   detectedDuration: null,
-  thumbnailFile: null,
-  thumbnailUploading: false,
-  thumbnailProgress: 0,
-  thumbnailError: null,
-  thumbnailKey: null,
   submitError: null,
   createdVideoId: null,
 };
@@ -60,36 +55,6 @@ const reducer = (state: VideoUploadState, action: Action): VideoUploadState => {
     case 'SUBMIT_ERROR':
       return { ...state, phase: 'error', submitError: action.error };
 
-    case 'THUMBNAIL_SELECTED':
-      return { ...state, thumbnailFile: action.file, thumbnailError: null };
-
-    case 'THUMBNAIL_UPLOADING':
-      return { ...state, thumbnailUploading: true, thumbnailProgress: 0 };
-
-    case 'THUMBNAIL_PROGRESS':
-      return { ...state, thumbnailProgress: action.progress };
-
-    case 'THUMBNAIL_COMPLETE':
-      return {
-        ...state,
-        thumbnailUploading: false,
-        thumbnailProgress: 100,
-        thumbnailKey: action.thumbnailKey,
-      };
-
-    case 'THUMBNAIL_ERROR':
-      return { ...state, thumbnailUploading: false, thumbnailError: action.error };
-
-    case 'THUMBNAIL_CLEARED':
-      return {
-        ...state,
-        thumbnailFile: null,
-        thumbnailUploading: false,
-        thumbnailProgress: 0,
-        thumbnailError: null,
-        thumbnailKey: null,
-      };
-
     case 'RESET':
       return INITIAL_STATE;
 
@@ -105,8 +70,6 @@ export const useVideoUpload = (
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoXhrRef = useRef<XMLHttpRequest | null>(null);
-  const thumbnailXhrRef = useRef<XMLHttpRequest | null>(null);
-
   // Ref to always read the latest state in async callbacks (avoids stale closures
   // without adding state to useCallback deps, which would cause unnecessary re-renders)
   const stateRef = useRef(state);
@@ -181,65 +144,11 @@ export const useVideoUpload = (
     [selectFile]
   );
 
-  // --- Thumbnail ---
-
-  const handleThumbnailSelected = useCallback((file: File, extension: string) => {
-    dispatch({ type: 'THUMBNAIL_SELECTED', file });
-    dispatch({ type: 'THUMBNAIL_UPLOADING' });
-
-    adminVideosApi
-      .getUploadUrl({ thumbnailExtension: extension as 'jpg' | 'jpeg' | 'png' })
-      .then((response) => {
-        if (!response.thumbnailUploadUrl || !response.thumbnailKey) {
-          dispatch({ type: 'THUMBNAIL_ERROR', error: 'Failed to get thumbnail upload URL.' });
-
-          return;
-        }
-
-        const thumbKey = response.thumbnailKey;
-        const contentType = extension === 'png' ? 'image/png' : 'image/jpeg';
-
-        uploadToS3(file, response.thumbnailUploadUrl, contentType, {
-          onProgress: (percent) => {
-            dispatch({ type: 'THUMBNAIL_PROGRESS', progress: percent });
-          },
-          xhrRef: thumbnailXhrRef,
-        })
-          .then(() => {
-            logger.debug('Thumbnail upload complete', { thumbnailKey: thumbKey });
-            dispatch({ type: 'THUMBNAIL_COMPLETE', thumbnailKey: thumbKey });
-          })
-          .catch((error: unknown) => {
-            const message = error instanceof Error ? error.message : 'Thumbnail upload failed.';
-            logger.error('Thumbnail upload failed', { error: message });
-            dispatch({ type: 'THUMBNAIL_ERROR', error: message });
-          });
-      })
-      .catch((error: unknown) => {
-        const message = error instanceof Error ? error.message : 'Failed to upload thumbnail.';
-        dispatch({ type: 'THUMBNAIL_ERROR', error: message });
-      });
-  }, []);
-
-  const handleThumbnailClear = useCallback(() => {
-    if (thumbnailXhrRef.current) {
-      thumbnailXhrRef.current.abort();
-      thumbnailXhrRef.current = null;
-    }
-
-    dispatch({ type: 'THUMBNAIL_CLEARED' });
-  }, []);
-
   // --- Submit: upload video to S3 then create record ---
 
   const handleSubmit = useCallback(
     (metadata: VideoMetadataValues) => {
-      const {
-        selectedFile: file,
-        fileValidationError,
-        thumbnailKey: thumbKey,
-        detectedDuration,
-      } = stateRef.current;
+      const { selectedFile: file, fileValidationError, detectedDuration } = stateRef.current;
 
       if (!file || fileValidationError) {
         return;
@@ -288,7 +197,6 @@ export const useVideoUpload = (
             movementType: metadata.movementType,
             difficulty: metadata.difficulty,
             tags: metadata.tags,
-            thumbnailKey: thumbKey ?? undefined,
           };
 
           return adminVideosApi.createVideo(input);
@@ -318,11 +226,6 @@ export const useVideoUpload = (
       videoXhrRef.current = null;
     }
 
-    if (thumbnailXhrRef.current) {
-      thumbnailXhrRef.current.abort();
-      thumbnailXhrRef.current = null;
-    }
-
     dispatch({ type: 'RESET' });
   }, []);
 
@@ -347,8 +250,6 @@ export const useVideoUpload = (
     handleFileInputChange,
     handleClickSelect,
     handleClearFile,
-    handleThumbnailSelected,
-    handleThumbnailClear,
     handleSubmit,
     handleClose,
     handleReset,

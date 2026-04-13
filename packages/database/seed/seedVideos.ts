@@ -49,7 +49,7 @@ const DEFAULT_VIDEOS: NewVideo[] = [
       'A gentle seated stretch targeting the hamstrings. Ideal for users with limited mobility ' +
       'or those recovering from lower back issues. Perform slowly and hold for 20-30 seconds each side.',
     s3Key: 'library/77777777-7777-7777-8777-777777770001.mp4',
-    thumbnailKey: 'thumbnails/77777777-7777-7777-8777-777777770001.jpg',
+
     durationSeconds: 180,
     fileSizeBytes: 45_000_000,
     mimeType: 'video/mp4',
@@ -67,7 +67,7 @@ const DEFAULT_VIDEOS: NewVideo[] = [
       'A standing quadriceps stretch with optional wall support for balance. ' +
       'Hold each side for 20-30 seconds, focusing on keeping the knees together.',
     s3Key: 'library/77777777-7777-7777-8777-777777770002.mp4',
-    thumbnailKey: 'thumbnails/77777777-7777-7777-8777-777777770002.jpg',
+
     durationSeconds: 150,
     fileSizeBytes: 38_000_000,
     mimeType: 'video/mp4',
@@ -85,7 +85,7 @@ const DEFAULT_VIDEOS: NewVideo[] = [
       'Strengthen the upper back and improve posture with this seated resistance band row. ' +
       'Perform 3 sets of 10-12 repetitions with controlled movement.',
     s3Key: 'library/77777777-7777-7777-8777-777777770003.mp4',
-    thumbnailKey: 'thumbnails/77777777-7777-7777-8777-777777770003.jpg',
+
     durationSeconds: 240,
     fileSizeBytes: 62_000_000,
     mimeType: 'video/mp4',
@@ -103,7 +103,7 @@ const DEFAULT_VIDEOS: NewVideo[] = [
       'A fundamental lower-body strength exercise. Focus on proper form: chest up, ' +
       'knees tracking over toes, and sitting back into the heels. Perform 3 sets of 12-15 reps.',
     s3Key: 'library/77777777-7777-7777-8777-777777770004.mp4',
-    thumbnailKey: 'thumbnails/77777777-7777-7777-8777-777777770004.jpg',
+
     durationSeconds: 300,
     fileSizeBytes: 78_000_000,
     mimeType: 'video/mp4',
@@ -121,7 +121,7 @@ const DEFAULT_VIDEOS: NewVideo[] = [
       'Improve proprioception and ankle stability with this single-leg balance exercise. ' +
       'Hold for 30 seconds each side. Progress by closing your eyes or standing on an uneven surface.',
     s3Key: 'library/77777777-7777-7777-8777-777777770005.mp4',
-    thumbnailKey: 'thumbnails/77777777-7777-7777-8777-777777770005.jpg',
+
     durationSeconds: 120,
     fileSizeBytes: 30_000_000,
     mimeType: 'video/mp4',
@@ -139,7 +139,7 @@ const DEFAULT_VIDEOS: NewVideo[] = [
       'A gentle spinal mobilisation exercise performed on all fours. Alternate between ' +
       'arching and rounding the back, synchronising with your breath. Perform 10-12 repetitions.',
     s3Key: 'library/77777777-7777-7777-8777-777777770006.mp4',
-    thumbnailKey: 'thumbnails/77777777-7777-7777-8777-777777770006.jpg',
+
     durationSeconds: 200,
     fileSizeBytes: 52_000_000,
     mimeType: 'video/mp4',
@@ -157,7 +157,7 @@ const DEFAULT_VIDEOS: NewVideo[] = [
       'A modified push-up using a wall for support, suitable for beginners or those building ' +
       'upper-body strength. Perform 3 sets of 10-15 reps with a controlled tempo.',
     s3Key: 'library/77777777-7777-7777-8777-777777770007.mp4',
-    thumbnailKey: 'thumbnails/77777777-7777-7777-8777-777777770007.jpg',
+
     durationSeconds: 210,
     fileSizeBytes: 55_000_000,
     mimeType: 'video/mp4',
@@ -175,7 +175,7 @@ const DEFAULT_VIDEOS: NewVideo[] = [
       'Improve ankle range of motion with controlled circular movements. ' +
       'Perform 10 circles in each direction per ankle. Useful for post-ankle injury rehabilitation.',
     s3Key: 'library/77777777-7777-7777-8777-777777770008.mp4',
-    thumbnailKey: 'thumbnails/77777777-7777-7777-8777-777777770008.jpg',
+
     durationSeconds: 150,
     fileSizeBytes: 35_000_000,
     mimeType: 'video/mp4',
@@ -193,7 +193,7 @@ const DEFAULT_VIDEOS: NewVideo[] = [
       'An advanced glute bridge variation with a 3-second hold at the top. ' +
       'Targets the glutes and hamstrings while engaging the core. Perform 3 sets of 12 reps.',
     s3Key: 'library/77777777-7777-7777-8777-777777770009.mp4',
-    thumbnailKey: 'thumbnails/77777777-7777-7777-8777-777777770009.jpg',
+
     durationSeconds: 270,
     fileSizeBytes: 68_000_000,
     mimeType: 'video/mp4',
@@ -211,7 +211,7 @@ const DEFAULT_VIDEOS: NewVideo[] = [
       'An overhead pressing exercise using a resistance band. Currently in review — ' +
       'awaiting final filming approval before publishing to the catalogue.',
     s3Key: 'library/77777777-7777-7777-8777-777777770010.mp4',
-    thumbnailKey: null,
+
     durationSeconds: 250,
     fileSizeBytes: 65_000_000,
     mimeType: 'video/mp4',

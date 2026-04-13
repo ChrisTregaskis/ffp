@@ -15,7 +15,7 @@ import { formatFileSize } from '@web/utils/format';
 /**
  * Full-page video upload flow.
  *
- * Shows drop zone, metadata form, and thumbnail picker all at once.
+ * Shows drop zone and metadata form.
  * On submit: upload to S3 with progress, then create video record.
  * On success: offer "Back to Library" or "Upload Another".
  */
@@ -224,7 +224,7 @@ export const VideoUploadPage: React.FC = () => {
               hasFile={hasValidFile}
               onSubmit={handleSubmit}
               onCancel={handleCloseUpload}
-              isSubmitting={state.thumbnailUploading}
+              isSubmitting={state.phase === 'uploading' || state.phase === 'creating'}
             />
           </>
         )}

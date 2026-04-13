@@ -79,7 +79,6 @@ export async function createExercise(sessionId: string, input: unknown): Promise
     video: {
       id: video.id,
       title: video.title,
-      thumbnailKey: video.thumbnailKey,
       status: video.status,
     },
   });

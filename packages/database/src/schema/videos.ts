@@ -41,8 +41,6 @@ export const videos = pgTable(
     description: text('description'),
     /** S3 object key (e.g., 'library/{uuid}.mp4') — not a full URL */
     s3Key: varchar('s3_key', { length: 500 }).notNull().unique(),
-    /** S3 key for thumbnail image */
-    thumbnailKey: varchar('thumbnail_key', { length: 500 }),
     /** Video duration in seconds */
     durationSeconds: integer('duration_seconds').notNull(),
     /** File size in bytes (bigint for large files) */
