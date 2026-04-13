@@ -126,8 +126,8 @@ export const PhaseTimelineCard: React.FC<PhaseTimelineCardProps> = ({
                   </div>
                   <ProgressBar percent={progressPercent} className="mb-4" />
 
-                  {/* Sessions list */}
-                  <div className="space-y-2">
+                  {/* Sessions list — 2-col on desktop, stacked on tablet */}
+                  <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
                     {phase.sessions.map((session) => (
                       <SessionRow
                         key={session.templateSessionId}
