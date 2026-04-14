@@ -76,11 +76,15 @@ export const createVideoSchema = videoSchema
     defaultNotes: videoSchema.shape.defaultNotes.optional(),
   });
 
-/** Schema for updating video metadata (partial — media properties are immutable) */
+/** Schema for updating video metadata and media properties (all partial) */
 export const updateVideoSchema = videoSchema
   .pick({
     title: true,
     description: true,
+    s3Key: true,
+    durationSeconds: true,
+    fileSizeBytes: true,
+    mimeType: true,
     status: true,
     difficulty: true,
     movementType: true,

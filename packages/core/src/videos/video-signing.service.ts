@@ -92,7 +92,6 @@ export function generateSignedVideoUrl(s3Key: string): {
  * videos are all playable. Status gates selection (which videos can be added
  * to new templates/sessions), not streaming.
  *
- * Logs structured audit events for video access (FFP-299).
  */
 export async function getSignedVideoUrl(
   context: OrganisationContext,
@@ -101,7 +100,10 @@ export async function getSignedVideoUrl(
   const logger = createLogger(context);
   const db = getDb();
 
-  const video = await videoRepository.findVideoById(db, videoId);
+  // Support lookup by UUID (exercise data, most common) or publicId (URL params)
+  const video =
+    (await videoRepository.findVideoById(db, videoId)) ??
+    (await videoRepository.findVideoByPublicId(db, videoId));
 
   if (!video) {
     logger.warn('Video access denied', {
@@ -122,5 +124,5 @@ export async function getSignedVideoUrl(
     expiresAt,
   });
 
-  return { signedUrl, expiresAt, videoId };
+  return { signedUrl, expiresAt, videoId: video.id };
 }

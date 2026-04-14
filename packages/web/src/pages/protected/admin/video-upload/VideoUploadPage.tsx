@@ -7,6 +7,7 @@ import { StatusResult } from '@web/components/feedback/StatusResult';
 import { VideoMetadataForm } from '@web/components/form/videos/VideoMetadataForm';
 import { Icon } from '@web/components/Icon';
 import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
+import { ProgressBar } from '@web/components/ProgressBar';
 import { Text } from '@web/components/text';
 import { useVideoUpload } from '@web/hooks/videos';
 import { RouteKey, routes } from '@web/pages/routes';
@@ -27,20 +28,19 @@ export const VideoUploadPage: React.FC = () => {
   };
 
   const {
-    state,
+    fileSelection,
+    progress,
+    isDragOver,
     handleDragOver,
     handleDragLeave,
     handleDrop,
-    handleFileInputChange,
-    handleClickSelect,
-    handleClearFile,
     handleSubmit,
     handleClose: handleCloseUpload,
-    fileInputRef,
     hasValidFile,
   } = useVideoUpload(handleClose);
 
-  const { phase, selectedFile, fileValidationError, isDragOver, createdVideoId } = state;
+  const { phase, uploadProgress, submitError, createdVideoId } = progress;
+  const { file: selectedFile, validationError: fileValidationError } = fileSelection;
   const showForm = phase === 'idle' || phase === 'error';
 
   return (
@@ -90,23 +90,13 @@ export const VideoUploadPage: React.FC = () => {
               <>
                 <div className="mb-4 flex items-center justify-between">
                   <Text styleProps={{ weight: 'medium' }}>
-                    {state.uploadProgress === 0 ? 'Preparing upload...' : 'Uploading...'}
+                    {uploadProgress === 0 ? 'Preparing upload...' : 'Uploading...'}
                   </Text>
                   <Text styleProps={{ colour: 'muted-foreground', size: 'sm' }}>
-                    {String(state.uploadProgress)}%
+                    {String(uploadProgress)}%
                   </Text>
                 </div>
-                <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-linear-to-r from-ffp-primary-blue to-ffp-dark-blue transition-all duration-300 ease-out"
-                    style={{ width: `${String(state.uploadProgress)}%` }}
-                    role="progressbar"
-                    aria-valuenow={state.uploadProgress}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-label="Upload progress"
-                  />
-                </div>
+                <ProgressBar percent={uploadProgress} />
                 {selectedFile && (
                   <Text
                     as="p"
@@ -132,9 +122,7 @@ export const VideoUploadPage: React.FC = () => {
         {showForm && (
           <>
             {/* Submit error alert */}
-            {state.submitError && (
-              <StaticAlert variant="error" message={state.submitError} className="mb-4" />
-            )}
+            {submitError && <StaticAlert variant="error" message={submitError} className="mb-4" />}
 
             {/* Drop zone — shown when no valid file is selected */}
             {!hasValidFile && (
@@ -143,11 +131,11 @@ export const VideoUploadPage: React.FC = () => {
                 onDragEnter={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                onClick={handleClickSelect}
+                onClick={fileSelection.openFilePicker}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    handleClickSelect();
+                    fileSelection.openFilePicker();
                   }
                 }}
                 role="button"
@@ -192,7 +180,7 @@ export const VideoUploadPage: React.FC = () => {
                     </Text>
                   </div>
                 </div>
-                <Button variant="neutral" size="sm" onClick={handleClearFile}>
+                <Button variant="neutral" size="sm" onClick={fileSelection.clearFile}>
                   Remove
                 </Button>
               </div>
@@ -200,10 +188,10 @@ export const VideoUploadPage: React.FC = () => {
 
             {/* Hidden file input */}
             <input
-              ref={fileInputRef}
+              ref={fileSelection.fileInputRef}
               type="file"
               accept="video/mp4"
-              onChange={handleFileInputChange}
+              onChange={fileSelection.handleFileInputChange}
               className="hidden"
               aria-hidden="true"
             />
@@ -213,7 +201,7 @@ export const VideoUploadPage: React.FC = () => {
               <StaticAlert
                 variant="error"
                 message={fileValidationError}
-                onDismiss={handleClearFile}
+                onDismiss={fileSelection.clearFile}
                 className="mt-4"
               />
             )}
@@ -224,7 +212,7 @@ export const VideoUploadPage: React.FC = () => {
               hasFile={hasValidFile}
               onSubmit={handleSubmit}
               onCancel={handleCloseUpload}
-              isSubmitting={state.phase === 'uploading' || state.phase === 'creating'}
+              isSubmitting={false}
             />
           </>
         )}
