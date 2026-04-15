@@ -5,9 +5,6 @@ import { createPaginatedResponseSchema } from '../pagination.schema';
 import { videoListResponseSchema } from './video-catalogue.schema';
 import { difficultySchema, videoStatusSchema } from './video-entity.schema';
 
-/** Request schema for generating presigned upload URLs */
-export const uploadUrlRequestSchema = z.object({});
-
 /** Filter criteria for admin video list — includes search and status (all statuses visible) */
 export const adminVideoFilterSchema = z.object({
   search: z.string().optional(),
@@ -39,5 +36,4 @@ export const paginatedAdminVideoResponseSchema = createPaginatedResponseSchema(
 
 export type AdminVideoFilterInput = z.infer<typeof adminVideoFilterSchema>;
 export type AdminVideoListResponse = z.infer<typeof adminVideoListResponseSchema>;
-export type UploadUrlRequest = z.infer<typeof uploadUrlRequestSchema>;
 export type UploadUrlResponse = z.infer<typeof uploadUrlResponseSchema>;

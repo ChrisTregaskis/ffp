@@ -101,9 +101,7 @@ export async function getSignedVideoUrl(
   const db = getDb();
 
   // Support lookup by UUID (exercise data, most common) or publicId (URL params)
-  const video =
-    (await videoRepository.findVideoById(db, videoId)) ??
-    (await videoRepository.findVideoByPublicId(db, videoId));
+  const video = await videoRepository.findVideoByIdOrPublicId(db, videoId);
 
   if (!video) {
     logger.warn('Video access denied', {

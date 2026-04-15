@@ -212,7 +212,6 @@ export const VideoUploadPage: React.FC = () => {
               hasFile={hasValidFile}
               onSubmit={handleSubmit}
               onCancel={handleCloseUpload}
-              isSubmitting={false}
             />
           </>
         )}

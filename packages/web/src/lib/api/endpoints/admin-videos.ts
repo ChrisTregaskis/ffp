@@ -5,7 +5,6 @@ import type {
   CreateVideoInput,
   PaginationInput,
   UpdateVideoInput,
-  UploadUrlRequest,
   UploadUrlResponse,
   VideoDetailResponse,
 } from '@ffp/core';
@@ -33,10 +32,10 @@ export type PaginatedAdminVideoResponse = z.infer<typeof paginatedAdminVideoResp
  * These endpoints require system_admin role.
  */
 export const adminVideosApi = {
-  /** Returns presigned PUT URLs for direct browser-to-S3 upload. */
-  getUploadUrl: async (request?: UploadUrlRequest): Promise<UploadUrlResponse> => {
+  /** Returns a presigned PUT URL for direct browser-to-S3 upload. */
+  getUploadUrl: async (): Promise<UploadUrlResponse> => {
     const path = `${basePath}/upload-url`;
-    const response = await ffpClient.post(path, request ?? {});
+    const response = await ffpClient.post(path, {});
 
     return parseApiResponse(uploadUrlResponseSchema, response, { method: 'POST', path });
   },
@@ -97,4 +96,4 @@ export const adminVideosApi = {
 };
 
 // Re-export types for consumers
-export type { CreateVideoInput, UpdateVideoInput, UploadUrlRequest, UploadUrlResponse };
+export type { CreateVideoInput, UpdateVideoInput, UploadUrlResponse };

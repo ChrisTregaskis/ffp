@@ -63,6 +63,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
   const hasContent = renderContent != null;
 
   // Close on click outside — must check both trigger container and portaled dropdown
+  // Close on scroll — portal position is fixed at open time, so collapse instead of repositioning
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -80,10 +81,23 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
       }
     };
 
+    const handleScroll = (event: Event): void => {
+      const target = event.target as Node;
+      const inPortal = hasItems
+        ? listRef.current?.contains(target)
+        : portalContentRef.current?.contains(target);
+
+      if (!inPortal) {
+        setIsOpen(false);
+      }
+    };
+
     document.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('scroll', handleScroll, true);
 
     return () => {
       document.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('scroll', handleScroll, true);
     };
   }, [isOpen, hasItems]);
 
@@ -235,6 +249,8 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
           <div
             ref={portalContentRef}
             id={menuId}
+            role="dialog"
+            aria-label={label}
             style={{
               position: 'absolute',
               top: dropdownPos.top,

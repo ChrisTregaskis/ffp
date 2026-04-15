@@ -45,6 +45,5 @@ export type {
   StartSessionResponse,
   ToggleExerciseCompletionResponse,
   UserProfileResponse,
-  UploadUrlRequest,
   UploadUrlResponse,
 } from './endpoints';

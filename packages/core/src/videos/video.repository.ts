@@ -77,6 +77,20 @@ export async function findVideoByPublicId(
   return records[0] ?? null;
 }
 
+/** Look up a video by UUID or publicId in a single query. */
+export async function findVideoByIdOrPublicId(
+  db: DbClient,
+  identifier: string
+): Promise<VideoRecord | null> {
+  const records = await db
+    .select()
+    .from(videos)
+    .where(or(eq(videos.id, identifier), eq(videos.publicId, identifier)))
+    .limit(1);
+
+  return records[0] ?? null;
+}
+
 export async function findAllActive(db: DbClient): Promise<VideoRecord[]> {
   return await db.select().from(videos).where(eq(videos.status, 'active')).orderBy(videos.title);
 }
