@@ -9,4 +9,4 @@ Business account management and sub-user operations.
 - `get-analytics.ts` - Business analytics dashboard
 - `manage-sub-user.ts` - Update/deactivate sub-users
 
-**Status**: ⏸️ Awaiting Epic 5 - Business Portal
+**Status**: Awaiting Epic 5 - Business Portal

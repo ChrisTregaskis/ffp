@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { Button } from '@web/components/button';
 import { Icon } from '@web/components/Icon/Icon';
 import { Icons } from '@web/components/Icon/types';
-import { useClickOutside } from '@web/hooks/useClickOutside';
 
 import type { ReactNode } from 'react';
 
@@ -48,22 +48,58 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; minWidth: number }>({
+    top: 0,
+    left: 0,
+    minWidth: 140,
+  });
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const portalContentRef = useRef<HTMLDivElement>(null);
   const uniqueId = useId();
   const menuId = `${uniqueId}-menu`;
 
   const hasItems = items != null && items.length > 0;
   const hasContent = renderContent != null;
 
-  // Close on click outside
-  useClickOutside(
-    containerRef,
-    () => {
-      setIsOpen(false);
-    },
-    isOpen
-  );
+  // Close on click outside — must check both trigger container and portaled dropdown
+  // Close on scroll — portal position is fixed at open time, so collapse instead of repositioning
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const handleMouseDown = (event: MouseEvent): void => {
+      const target = event.target as Node;
+      const inTrigger = containerRef.current?.contains(target);
+      const inPortal = hasItems
+        ? listRef.current?.contains(target)
+        : portalContentRef.current?.contains(target);
+
+      if (!inTrigger && !inPortal) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleScroll = (event: Event): void => {
+      const target = event.target as Node;
+      const inPortal = hasItems
+        ? listRef.current?.contains(target)
+        : portalContentRef.current?.contains(target);
+
+      if (!inPortal) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('scroll', handleScroll, true);
+
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [isOpen, hasItems]);
 
   // Scroll highlighted item into view (only for items mode)
   useEffect(() => {
@@ -77,8 +113,20 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
 
   const handleToggle = useCallback(() => {
     setIsOpen((prev) => {
-      if (!prev && hasItems) {
-        setHighlightedIndex(0);
+      if (!prev) {
+        // Calculate position from trigger button before opening
+        if (containerRef.current) {
+          const rect = containerRef.current.getBoundingClientRect();
+          setDropdownPos({
+            top: rect.bottom + window.scrollY + 4,
+            left: rect.right + window.scrollX,
+            minWidth: Math.max(140, rect.width),
+          });
+        }
+
+        if (hasItems) {
+          setHighlightedIndex(0);
+        }
       }
 
       return !prev;
@@ -193,53 +241,77 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
         {label}
       </Button>
 
-      {/* Dropdown panel */}
-      {isOpen && hasContent && !hasItems && (
-        <div
-          id={menuId}
-          className="absolute right-0 z-50 mt-1 min-w-[140px] overflow-auto rounded-md border border-border bg-white shadow-lg max-h-60"
-        >
-          {renderContent()}
-        </div>
-      )}
+      {/* Dropdown panel — rendered via portal to escape overflow:hidden containers */}
+      {isOpen &&
+        hasContent &&
+        !hasItems &&
+        createPortal(
+          <div
+            ref={portalContentRef}
+            id={menuId}
+            role="dialog"
+            aria-label={label}
+            style={{
+              position: 'absolute',
+              top: dropdownPos.top,
+              left: dropdownPos.left,
+              transform: 'translateX(-100%)',
+              minWidth: dropdownPos.minWidth,
+            }}
+            className="z-50 overflow-auto rounded-md border border-border bg-white shadow-lg max-h-60"
+          >
+            {renderContent()}
+          </div>,
+          document.body
+        )}
 
-      {isOpen && hasItems && (
-        <ul
-          ref={listRef}
-          id={menuId}
-          role="menu"
-          aria-label={label}
-          className="absolute right-0 z-50 mt-1 min-w-[140px] overflow-auto rounded-md border border-border bg-white shadow-lg max-h-60"
-        >
-          {items.map((item, index) => {
-            const isHighlighted = index === highlightedIndex;
-            const isDanger = item.variant === 'danger';
+      {isOpen &&
+        hasItems &&
+        createPortal(
+          <ul
+            ref={listRef}
+            id={menuId}
+            role="menu"
+            aria-label={label}
+            style={{
+              position: 'absolute',
+              top: dropdownPos.top,
+              left: dropdownPos.left,
+              transform: 'translateX(-100%)',
+              minWidth: dropdownPos.minWidth,
+            }}
+            className="z-50 overflow-auto rounded-md border border-border bg-white shadow-lg max-h-60"
+          >
+            {items.map((item, index) => {
+              const isHighlighted = index === highlightedIndex;
+              const isDanger = item.variant === 'danger';
 
-            return (
-              <li
-                key={item.label}
-                role="menuitem"
-                aria-disabled={item.disabled}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSelect(item);
-                }}
-                onMouseEnter={() => {
-                  setHighlightedIndex(index);
-                }}
-                className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-sm ${
-                  item.disabled ? 'pointer-events-none opacity-50' : ''
-                } ${isHighlighted ? 'bg-primary/10' : ''} ${
-                  isDanger ? 'text-destructive' : 'text-foreground'
-                }`}
-              >
-                {item.icon && <item.icon className="h-4 w-4" />}
-                {item.label}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+              return (
+                <li
+                  key={item.label}
+                  role="menuitem"
+                  aria-disabled={item.disabled}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelect(item);
+                  }}
+                  onMouseEnter={() => {
+                    setHighlightedIndex(index);
+                  }}
+                  className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-sm ${
+                    item.disabled ? 'pointer-events-none opacity-50' : ''
+                  } ${isHighlighted ? 'bg-primary/10' : ''} ${
+                    isDanger ? 'text-destructive' : 'text-foreground'
+                  }`}
+                >
+                  {item.icon && <item.icon className="h-4 w-4" />}
+                  {item.label}
+                </li>
+              );
+            })}
+          </ul>,
+          document.body
+        )}
     </div>
   );
 };

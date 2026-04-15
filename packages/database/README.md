@@ -19,12 +19,12 @@ This package provides:
 **Recommended: Import from package root**
 
 ```typescript
-// ✅ Import client and schemas from package root
+// Import client and schemas from package root
 import { getDb, withDb, type DbClient } from '@ffp/database';
 import { users, locations, organisations } from '@ffp/database/schema';
 import type { User, Location, Organisation } from '@ffp/database/schema';
 
-// ⚠️ Avoid: Direct client import (internal implementation detail)
+// Avoid: Direct client import (internal implementation detail)
 import { getDb } from '@ffp/database/client'; // Don't do this
 ```
 
@@ -96,9 +96,6 @@ pnpm db:migrate
 
 # Apply schema migrations only (advanced)
 pnpm db:migrate:schema
-
-# Push schema directly (dev only, bypasses migrations)
-pnpm db:push
 
 # Open Drizzle Studio (visual database browser)
 pnpm db:studio
@@ -366,7 +363,7 @@ psql -h localhost -U root_user -d postgres -c "\du"
    pnpm db:migrate
    ```
 
-⚠️ **Security Critical**: Never skip setting RLS context in production queries!
+**Security Critical**: Never skip setting RLS context in production queries!
 
 ## Dependencies
 

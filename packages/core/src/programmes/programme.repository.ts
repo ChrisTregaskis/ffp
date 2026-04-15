@@ -1,4 +1,4 @@
-import { eq, and, inArray, asc, count } from 'drizzle-orm';
+import { eq, and, inArray, asc, desc, count } from 'drizzle-orm';
 
 import {
   programmes,
@@ -81,7 +81,7 @@ export interface ProgrammeWithPhases {
 /** Slim video fields needed for exercise detail display. */
 export type ExerciseVideoSummary = Pick<
   VideoRecord,
-  'id' | 'title' | 'thumbnailKey' | 'durationSeconds' | 'difficulty'
+  'id' | 'title' | 'durationSeconds' | 'difficulty'
 >;
 
 /** Exercise record with embedded video metadata. */
@@ -150,7 +150,8 @@ async function findProgrammeByUserIdInTx(
   const records = await tx
     .select()
     .from(programmes)
-    .where(and(eq(programmes.userId, userId), eq(programmes.status, 'active')))
+    .where(and(eq(programmes.userId, userId), inArray(programmes.status, ['active', 'completed'])))
+    .orderBy(desc(programmes.createdAt))
     .limit(1);
 
   return records[0] ?? null;
@@ -412,7 +413,7 @@ export async function findProgrammeWithPhases(
   userId: string
 ): Promise<ProgrammeWithPhases | null> {
   return await withRLS(organisationId, userId, async (tx) => {
-    // Fetch active programme
+    // Fetch active or completed programme (most recent first)
     const programmeRows = await tx
       .select()
       .from(programmes)
@@ -420,9 +421,10 @@ export async function findProgrammeWithPhases(
         and(
           eq(programmes.organisationId, organisationId),
           eq(programmes.userId, userId),
-          eq(programmes.status, 'active')
+          inArray(programmes.status, ['active', 'completed'])
         )
       )
+      .orderBy(desc(programmes.createdAt))
       .limit(1);
 
     if (programmeRows.length === 0) {
@@ -497,7 +499,6 @@ export async function findTemplateStructure(templateId: string): Promise<Templat
             video: {
               id: videos.id,
               title: videos.title,
-              thumbnailKey: videos.thumbnailKey,
               durationSeconds: videos.durationSeconds,
               difficulty: videos.difficulty,
             },

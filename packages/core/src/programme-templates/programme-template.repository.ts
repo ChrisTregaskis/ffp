@@ -104,6 +104,20 @@ export async function findTemplateById(
   return records[0] ?? null;
 }
 
+/** Returns a single template by public ID, or null if not found. */
+export async function findTemplateByPublicId(
+  db: DbQueryClient,
+  publicId: string
+): Promise<ProgrammeTemplateRecord | null> {
+  const records = await db
+    .select()
+    .from(programmeTemplates)
+    .where(eq(programmeTemplates.publicId, publicId))
+    .limit(1);
+
+  return records[0] ?? null;
+}
+
 /** Returns a single template by slug, or null if not found. */
 export async function findTemplateBySlug(
   db: DbQueryClient,
@@ -189,6 +203,7 @@ export async function findTemplateHierarchy(
   return {
     phases: phaseRows.map((phase) => ({
       id: phase.id,
+      publicId: phase.publicId,
       phaseNumber: phase.phaseNumber,
       name: phase.name,
       description: phase.description,

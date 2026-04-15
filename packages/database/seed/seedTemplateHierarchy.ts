@@ -294,6 +294,10 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 2,
     reps: '10 each side',
     restSeconds: 20,
+    notes:
+      'Sit with one leg crossed over the other. Slowly rotate the ankle in full circles.\n' +
+      '**Keep the movement smooth and controlled** — avoid jerky motions.\n\n' +
+      'If you feel clicking, reduce the circle size. Switch directions halfway through each set.',
   },
   // ── Phase 1, Session 2: Lower Body Basics ──
   {
@@ -324,6 +328,10 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 2,
     reps: '30s hold',
     restSeconds: 30,
+    notes:
+      'Sit on the edge of a chair with one leg extended, heel on floor.\n' +
+      'Lean forward from the hips until you feel a gentle pull behind the knee. **Hold steady — no bouncing.**\n\n' +
+      'Keep a slight bend in the extended knee. Breathe deeply and relax into the stretch.',
   },
   // ── Phase 1, Session 3: Upper Body Mobility ──
   {
@@ -334,6 +342,10 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 2,
     reps: '10',
     restSeconds: 30,
+    notes:
+      'Start on all fours with wrists under shoulders and knees under hips.\n' +
+      'Inhale: drop belly, lift chest and tailbone (cow). Exhale: round spine, tuck chin (cat).\n\n' +
+      '**Move slowly with your breath.** Each transition should take 3-4 seconds.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p1s3-e1'],
@@ -353,6 +365,8 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 2,
     reps: '10 each side',
     restSeconds: 20,
+    notes:
+      'Seated or standing. Draw smooth, full circles with each ankle. Reverse direction halfway.',
   },
   // ── Phase 2, Session 1: Core Activation ──
   {
@@ -373,6 +387,9 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 2,
     reps: '12',
     restSeconds: 30,
+    notes:
+      'Focus on initiating the movement from your pelvis, not your shoulders.\n' +
+      '**Exhale fully on the cat position** to deepen the core activation.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p2s1-e2'],
@@ -382,6 +399,10 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 2,
     reps: '10',
     restSeconds: 45,
+    notes:
+      "Stand arm's length from the wall. Place hands shoulder-width apart at chest height.\n" +
+      'Bend elbows to lower chest towards the wall, then push back. **Keep your body in a straight line.**\n\n' +
+      "Don't let your hips sag. Engage your core throughout.",
   },
   // ── Phase 2, Session 2: Balance Focus ──
   {
@@ -422,6 +443,10 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 2,
     reps: '10',
     restSeconds: 45,
+    notes:
+      'Stand with feet shoulder-width apart, arms by your sides.\n' +
+      'Lower your hips back and down as if sitting into a chair. Keep chest up and knees tracking over toes. Push through heels to stand.\n\n' +
+      '**Use a chair behind you** for confidence. Keep weight in your heels. Go only as low as comfortable.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p2s3-e1'],
@@ -431,7 +456,10 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 2,
     reps: '8-12',
     restSeconds: 45,
-    notes: 'Light resistance band. Focus on squeezing shoulder blades together.',
+    notes:
+      'Sit tall on a chair with feet flat. Loop resistance band around feet and hold ends.\n' +
+      'Pull elbows back, **squeezing shoulder blades together**. Slowly return to start.\n\n' +
+      'Keep shoulders down, away from ears. Squeeze at the top for 2 seconds.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p2s3-e2'],
@@ -441,6 +469,10 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 2,
     reps: '30s hold',
     restSeconds: 30,
+    notes:
+      'Sit on the edge of a chair with one leg extended straight ahead, heel on floor.\n' +
+      'Hinge forward at the hips keeping back straight. **Hold the stretch without bouncing.**\n\n' +
+      'Keep the extended leg slightly soft at the knee. Breathe deeply into the stretch.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p2s3-e3'],
@@ -450,6 +482,10 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 2,
     reps: '10',
     restSeconds: 45,
+    notes:
+      'Lie on your back with knees bent, feet flat on the floor, hip-width apart. Arms by your sides.\n' +
+      'Push through your heels to lift your hips toward the ceiling until your body forms a straight line from shoulders to knees. **Squeeze your glutes at the top.** Lower slowly.\n\n' +
+      "Drive through your heels, not your toes. Don't arch your lower back — keep your core engaged.",
   },
   // ── Phase 3, Session 1: Lower Body Strength ──
   {
@@ -460,6 +496,10 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 3,
     reps: '10-12',
     restSeconds: 45,
+    notes:
+      'Feet shoulder-width apart, toes slightly turned out.\n' +
+      'Sit back and down, keeping chest proud and knees tracking over toes. **Aim for thighs parallel to the floor.**\n\n' +
+      'Push through your whole foot to stand. Control the descent — 3 seconds down, 1 second up.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p3s1-e1'],
@@ -479,6 +519,10 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 2,
     reps: '30s hold',
     restSeconds: 30,
+    notes:
+      'Stand on one leg, pull opposite heel towards your glute. Hold the top of your foot.\n' +
+      '**Keep knees close together** and hips square. Use a wall for balance if needed.\n\n' +
+      'You should feel a stretch along the front of your thigh. Avoid arching your lower back.',
   },
   // ── Phase 3, Session 2: Upper Body and Core ──
   {
@@ -499,6 +543,10 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 3,
     reps: '10-12',
     restSeconds: 45,
+    notes:
+      'Sit tall with band looped around feet. Pull handles towards your ribcage.\n' +
+      '**Focus on squeezing your shoulder blades together** at the end of each pull.\n\n' +
+      'Keep elbows close to your body. Resist the urge to lean back — stay upright.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p3s2-e2'],
@@ -508,6 +556,8 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 2,
     reps: '15',
     restSeconds: 30,
+    notes:
+      'Use as a cool-down. Emphasise the exhale on the cat position to release upper back tension.',
   },
   // ── Phase 3, Session 3: Balance and Coordination ──
   {
@@ -528,6 +578,8 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 3,
     reps: '15 each side',
     restSeconds: 20,
+    notes:
+      'Increase the size of the circles compared to earlier phases. **Full range of motion** is the goal.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p3s3-e2'],
@@ -547,6 +599,9 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 3,
     reps: '12-15',
     restSeconds: 45,
+    notes:
+      'You should feel confident with this movement by now. Focus on depth and control.\n' +
+      '**Aim for full depth** — hips below knees if comfortable. Pause briefly at the bottom.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p4s1-e1'],
@@ -556,6 +611,10 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 3,
     reps: '12-15',
     restSeconds: 45,
+    notes:
+      'Progress check: can you move to a lower surface (e.g., kitchen counter)?\n' +
+      'If wall push-ups feel easy, **try a slight incline** for more challenge.\n\n' +
+      'Maintain strict form — body in a straight line throughout.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p4s1-e2'],
@@ -565,6 +624,9 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 3,
     reps: '15',
     restSeconds: 45,
+    notes:
+      'Add a 3-second hold at the top of each rep.\n' +
+      '**Squeeze glutes hard at the top** before lowering slowly. Keep core braced throughout.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p4s1-e3'],
@@ -574,6 +636,8 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 3,
     reps: '12',
     restSeconds: 45,
+    notes:
+      'Use a heavier band if the current one feels too easy. **Full squeeze at the back**, slow return.',
   },
   // ── Phase 4, Session 2: Mobility and Balance Review ──
   {
@@ -584,6 +648,9 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 3,
     reps: '45s hold',
     restSeconds: 30,
+    notes:
+      'Extended hold — focus on stillness. Fix your gaze on a point at eye level.\n' +
+      '**If 45 seconds feels manageable**, try closing your eyes for the last 10 seconds.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p4s2-e1'],
@@ -593,6 +660,7 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 3,
     reps: '15',
     restSeconds: 30,
+    notes: 'Slow, flowing transitions. Let each breath guide the movement fully before switching.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p4s2-e2'],
@@ -611,6 +679,9 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 2,
     reps: '45s hold',
     restSeconds: 30,
+    notes:
+      'Deep stretch — pull heel closer to glute than in earlier phases.\n' +
+      '**Keep hips square and core tight.** Breathe steadily through the hold.',
   },
   // ── Phase 4, Session 3: Full Programme Review ──
   {
@@ -621,6 +692,9 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 3,
     reps: '15',
     restSeconds: 45,
+    notes:
+      "Final session — show yourself how far you've come.\n" +
+      '**Full depth, controlled tempo.** 3 seconds down, pause, 1 second up.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p4s3-e1'],
@@ -630,6 +704,7 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 3,
     reps: '12',
     restSeconds: 45,
+    notes: 'Strong, deliberate pulls. Squeeze at the back for 2 seconds on every rep.',
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p4s3-e2'],
@@ -639,6 +714,8 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     sets: 3,
     reps: '15',
     restSeconds: 45,
+    notes:
+      "Hold at the top for 3 seconds each rep. **Keep tension in your glutes** throughout — don't rest at the bottom.",
   },
   {
     id: SESSION_EXERCISE_IDS['gm-p4s3-e3'],

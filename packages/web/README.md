@@ -8,7 +8,7 @@ React frontend for the Fit For Purpose platform.
 
 - **Framework**: React 18 with TypeScript (strict mode)
 - **Build Tool**: Vite (fast HMR, optimised builds)
-- **Styling**: TailwindCSS (to be configured in future sprint)
+- **Styling**: TailwindCSS
 - **Testing**: Vitest + React Testing Library
 - **Shared Logic**: `@ffp/core` (workspace dependency)
 
@@ -126,7 +126,7 @@ See `src/schemas/auth.schema.test.ts` for examples.
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Writing Component Tests
 

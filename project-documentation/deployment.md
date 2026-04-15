@@ -20,7 +20,7 @@ Use project-specific stage names, never the default macOS username (causes cross
 
 ```bash
 sst dev --stage ct-ffp           # [✓] Project-specific
-sst dev                          # [✗]  Defaults to username, conflicts across projects
+sst dev                          # [✗] Defaults to username, conflicts across projects
 ```
 
 ### Database Migrations (Drizzle)
@@ -160,23 +160,6 @@ When using `sst dev` (personal stage), CORS defaults to `http://localhost:5173`.
 - All deployments are manual via SST CLI
 - Rationale: learn SST patterns hands-on first, automate when deployment frequency becomes painful
 
-### Phase 2+: Full Automated Deployment
-
-- Automated staging deploys on `develop` merge
-- Automated production deploys on `main` merge
-- Database migration automation
-- Frontend build → S3 sync → CloudFront invalidation
-
-## Patterns to Implement
-
-### SST Resource Binding
-
-SST injects resource references (bucket names, pool IDs) into Lambda functions automatically - no manual environment variable wiring needed.
-
-### Pre-Deployment Migration Lambda
-
-A dedicated Lambda function for running Drizzle migrations during deployment, rather than running migrations from a local machine against remote databases.
-
 ### Rollback Strategy
 
 | Layer             | Approach                                                   |
@@ -223,4 +206,4 @@ A dedicated Lambda function for running Drizzle migrations during deployment, ra
 
 ---
 
-_Detailed implementation steps, GitHub Actions workflows, and SST stack configuration will be planned via Jira stories when deploying staging and production for the first time._
+_Phase 2 CI/CD automation and migration Lambda captured in Jira (FFP-109 epic)._

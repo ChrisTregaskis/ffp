@@ -269,9 +269,6 @@ pnpm db:generate
 # Apply migrations to database
 pnpm db:migrate
 
-# Push schema changes directly (development only)
-pnpm db:push
-
 # Open Drizzle Studio (database GUI)
 pnpm db:studio
 

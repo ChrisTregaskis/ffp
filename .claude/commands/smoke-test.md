@@ -10,6 +10,10 @@ The argument should be the sprint number (e.g., `10`) or sprint name (e.g., `Spr
 
 ---
 
+## Session Setup
+
+**Rename the session** to `Sprint {N} Smoke Test` (e.g., `Sprint 12 Smoke Test`). Use the `/rename` command.
+
 ## Phase 1: Gather Sprint Context
 
 1. **Read project state** from `.claude/local/project-state.md` if it exists, to understand:

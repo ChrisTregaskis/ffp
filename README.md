@@ -13,11 +13,11 @@ FFP combines evidence-based physiotherapy assessment with personalised exercise 
 
 Built as a Turborepo monorepo with strict TypeScript, the platform prioritises security (healthcare data compliance), multi-tenant isolation (PostgreSQL RLS), and developer experience (fast builds, HMR, comprehensive testing).
 
-**Current phase**: Sprint 1 (Foundation) - Setting up core infrastructure and development workflows.
+**Current phase**: Approaching MVP launch - core platform functionality in place, staging and production environments pending.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -70,7 +70,7 @@ pnpm test
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
@@ -84,7 +84,7 @@ pnpm test
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - **Monorepo**: Turborepo + pnpm workspaces
 - **Frontend**: React 18 + TypeScript + TailwindCSS + Vite
@@ -98,7 +98,7 @@ pnpm test
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 ffp/
@@ -159,7 +159,7 @@ ffp/
 ├── .husky/                      # Git hooks
 ├── .vscode/                     # VS Code settings
 │
-├── sst.config.ts                # SST v3 Ion configuration ✅
+├── sst.config.ts                # SST v3 Ion configuration
 ├── turbo.json                   # Turborepo pipeline configuration
 ├── tsconfig.base.json           # Base TypeScript config
 ├── pnpm-workspace.yaml          # pnpm workspace definition
@@ -173,7 +173,7 @@ ffp/
 
 ---
 
-## 💻 Development Commands
+## Development Commands
 
 ### Run All Packages in Development Mode
 
@@ -205,7 +205,7 @@ pnpm build
 
 # Build is fast with Turborepo caching:
 # - Cold build: ~10-15 seconds
-# - Warm cache: ~100-300ms ⚡
+# - Warm cache: ~100-300ms
 ```
 
 ### Testing Commands
@@ -264,7 +264,7 @@ rm -rf node_modules/.cache/turbo
 
 ---
 
-## 🎯 Turborepo Commands
+## Turborepo Commands
 
 ### Basic Usage
 
@@ -320,7 +320,7 @@ turbo run build --force
 
 ---
 
-## 📦 Workspace Dependencies
+## Workspace Dependencies
 
 ### How It Works
 
@@ -380,14 +380,14 @@ pnpm add -D -w vitest
 
 ---
 
-## 🔗 Path Aliases
+## Path Aliases
 
 ### Cross-Package Imports
 
 Use **workspace dependencies** for importing between packages:
 
 ```typescript
-// ✅ In @ffp/web or @ffp/functions
+// In @ffp/web or @ffp/functions
 import { UserSchema } from '@ffp/core';
 import { validateUser } from '@ffp/core/validation';
 ```
@@ -403,15 +403,15 @@ import { validateUser } from '@ffp/core/validation';
 Use **namespace-based aliases** for imports within the same package:
 
 ```typescript
-// ✅ In packages/web/src/pages/Dashboard.tsx
+// In packages/web/src/pages/Dashboard.tsx
 import { Button } from '@web/components/Button';
 import { useAuth } from '@web/contexts/AuthContext';
 
-// ✅ In packages/core/src/services/UserService.ts
+// In packages/core/src/services/UserService.ts
 import { UserRepository } from '@core/repositories/UserRepository';
 import type { User } from '@core/types/User';
 
-// ✅ In packages/functions/src/auth/register.ts
+// In packages/functions/src/auth/register.ts
 import { validateInput } from '@functions/utils/validation';
 ```
 
@@ -438,7 +438,7 @@ Each package has its own `tsconfig.json` with intra-package aliases:
 
 ---
 
-## 🔄 Common Workflows
+## Common Workflows
 
 ### Starting a New Feature
 
@@ -537,7 +537,7 @@ pnpm --filter @ffp/web test:ui
 
 ---
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Import Errors: "Cannot find module '@ffp/core'"
 
@@ -611,10 +611,10 @@ turbo build --dry --verbosity=2
 **Solution**: Use intra-package aliases or relative imports in tests:
 
 ```typescript
-// ✅ Good - intra-package alias
+// Good - intra-package alias
 import { Button } from '@web/components/Button';
 
-// ❌ Bad - workspace dependency in same package
+// Bad - workspace dependency in same package
 import { Button } from '@ffp/web/components/Button';
 ```
 
@@ -643,18 +643,18 @@ pnpm install
 **Solution**: Always use `pnpm`:
 
 ```bash
-# ✅ Correct
+# Correct
 pnpm install
 pnpm build
 
-# ❌ Wrong - will fail
+# Wrong - will fail
 npm install
 yarn build
 ```
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 The `project-documentation/` directory contains comprehensive documentation optimised for AI agent assistance and developer onboarding:
 
@@ -687,6 +687,6 @@ The `project-documentation/` directory contains comprehensive documentation opti
 
 ---
 
-## 📄 License
+## License
 
 Proprietary - All rights reserved

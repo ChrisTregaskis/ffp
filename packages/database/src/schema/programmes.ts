@@ -15,6 +15,7 @@ import { organisations } from './organisations';
 import { users } from './users';
 import { programmeTemplates } from './programme-templates';
 import { PROGRAMME_STATUSES } from '../constants/programme.constants';
+import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 
 export const programmeStatusEnum = pgEnum('programme_status', [...PROGRAMME_STATUSES]);
 
@@ -33,6 +34,7 @@ export const programmes = pgTable(
   'programmes',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    publicId: publicIdColumn(),
     organisationId: uuid('organisation_id')
       .notNull()
       .references(() => organisations.id, { onDelete: 'cascade' }),
@@ -70,6 +72,7 @@ export const programmes = pgTable(
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => [
+    publicIdIndex('programmes', table.publicId),
     index('idx_programmes_organisation_user').on(table.organisationId, table.userId),
     index('idx_programmes_status').on(table.status),
     index('idx_programmes_template').on(table.programmeTemplateId),

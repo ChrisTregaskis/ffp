@@ -10,14 +10,14 @@ export const movementTypeSchema = z.enum(MOVEMENT_TYPES);
 export const videoSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.guid(),
+  /** Public identifier for URLs (nanoid, 12 chars) */
+  publicId: z.string().length(12),
   /** Display title (e.g., "Seated Hamstring Stretch") */
   title: z.string().min(1).max(255),
   /** Detailed exercise instructions */
   description: z.string().nullable(),
   /** S3 object key (e.g., 'library/{uuid}.mp4') — not a full URL */
   s3Key: z.string().min(1).max(500),
-  /** S3 key for thumbnail image */
-  thumbnailKey: z.string().max(500).nullable(),
   /** Video duration in seconds */
   durationSeconds: z.number().int().nonnegative(),
   /** File size in bytes */
@@ -64,7 +64,6 @@ export const createVideoSchema = videoSchema
   })
   .extend({
     description: videoSchema.shape.description.optional(),
-    thumbnailKey: videoSchema.shape.thumbnailKey.optional(),
     mimeType: videoSchema.shape.mimeType.optional().default('video/mp4'),
     status: videoSchema.shape.status.optional().default('draft'),
     difficulty: videoSchema.shape.difficulty.optional(),
@@ -77,12 +76,15 @@ export const createVideoSchema = videoSchema
     defaultNotes: videoSchema.shape.defaultNotes.optional(),
   });
 
-/** Schema for updating video metadata (partial — media properties are immutable) */
+/** Schema for updating video metadata and media properties (all partial) */
 export const updateVideoSchema = videoSchema
   .pick({
     title: true,
     description: true,
-    thumbnailKey: true,
+    s3Key: true,
+    durationSeconds: true,
+    fileSizeBytes: true,
+    mimeType: true,
     status: true,
     difficulty: true,
     movementType: true,

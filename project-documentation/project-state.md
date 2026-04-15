@@ -23,4 +23,4 @@ If you choose to use it, a project-state file typically includes:
 
 ## How it's used
 
-Several Claude Code commands (`/pick-up`, `/work-on`, `/worktree`, `/smoke-test`, `/plan-sprint`) and skills will read from and write to `.claude/local/project-state.md` if it exists. When absent, they rely on Jira as the source of truth.
+Several Claude Code commands (`/pick-up`, `/work-on`, `/worktree`, `/smoke-test`, `/plan-sprint`) and skills will read from and write to `.claude/local/project-state.md` if it exists. When absent, they rely on Jira as the source of truth

@@ -19,7 +19,6 @@ export interface ExerciseWithVideo extends SessionExerciseRecord {
 const videoSummaryColumns = {
   id: videos.id,
   title: videos.title,
-  thumbnailKey: videos.thumbnailKey,
   status: videos.status,
 } as const;
 

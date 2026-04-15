@@ -192,23 +192,6 @@ erDiagram
 
 These will be planned via Jira stories when needed. Concepts only — no schema detail until implementation.
 
-### Sessions & Exercises
-
-- **programme_sessions** — scheduled workout sessions within a programme (session number, scheduled/completed dates, status lifecycle)
-- **session_exercises** — exercises within a session, referencing the video library (sets, reps, duration, rest, order)
-- Missed session handling configurable per organisation via `organisations.settings.missedSessionStrategy`
-
-### Progress Tracking
-
-- **user_progress** — tracks completion of individual exercises within sessions
-- Session completion derived from exercise completion status
-
-### Video Library
-
-- **videos** — system-managed exercise video catalogue (S3 key, difficulty, body parts, equipment tags)
-- No RLS — system content accessible to all authenticated users
-- GIN indexes for array column filtering (body_parts, equipment, tags)
-
 ### Notifications & Background Jobs
 
 - **notifications** — email/SMS/push notification queue and delivery log

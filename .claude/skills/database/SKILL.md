@@ -98,6 +98,7 @@ async findByOrganisation(context: ActorContext): Promise<User[]> {
 - **Encryption at rest** via KMS
 - **No secrets in migration files**
 - **Audit columns** (`created_at`, `updated_at`) on every table
+- **Public ID on URL-facing tables** — any table whose records appear in frontend URLs must include `publicId: publicIdColumn()` and `publicIdIndex()` (from `packages/database/src/lib/public-id.ts`). UUIDs remain as primary keys; `publicId` (nanoid, 12 chars) is used in URLs only
 
 ## When Issues Occur
 

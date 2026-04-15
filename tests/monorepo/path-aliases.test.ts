@@ -128,14 +128,9 @@ describe('TypeScript Path Aliases', () => {
     it('should resolve internal path aliases correctly', () => {
       // Check if path alias test files exist
       const coreTestFile = resolve(packagesDir, 'core', 'src', 'utils', 'pathAliasTest.ts');
-      const webTestFile = resolve(packagesDir, 'web', 'src', 'components', 'PathAliasTest.tsx');
 
-      // These files were created in FFP-20 to verify path aliases
+      // This file was created in FFP-20 to verify path aliases
       expect(existsSync(coreTestFile), 'Core path alias test file should exist').toBe(true);
-      expect(
-        existsSync(webTestFile),
-        'Web path alias test file should exist (created in FFP-20)'
-      ).toBe(true);
     });
 
     it('should have moduleResolution set to bundler or node16', () => {

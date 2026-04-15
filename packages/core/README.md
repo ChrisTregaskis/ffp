@@ -4,7 +4,7 @@ Shared business logic, types, schemas, and utilities for the FFP platform. This 
 
 ---
 
-## 🎯 Overview
+## Overview
 
 The `@ffp/core` package provides:
 
@@ -18,7 +18,7 @@ The `@ffp/core` package provides:
 
 ---
 
-## 🚀 Usage
+## Usage
 
 ### Importing in Other Packages
 
@@ -44,11 +44,11 @@ import { AppError, ValidationError } from '@ffp/core/errors';
 Use `@core/*` aliases for imports within this package:
 
 ```typescript
-// ✅ Good - using intra-package alias
+// Good - using intra-package alias
 import { UserRepository } from '@core/repositories/UserRepository';
 import type { User } from '@core/types/User';
 
-// ❌ Bad - using workspace dependency on itself
+// Bad - using workspace dependency on itself
 import { UserRepository } from '@ffp/core/repositories/UserRepository';
 ```
 
@@ -72,7 +72,7 @@ if (result.success) {
 
 ---
 
-## 📤 Exports
+## Exports
 
 All public exports are defined in `src/index.ts`:
 
@@ -95,7 +95,7 @@ export * from './errors';
 
 ---
 
-## 📦 Dependencies
+## Dependencies
 
 ### Production Dependencies
 
@@ -109,15 +109,15 @@ export * from './errors';
 
 ---
 
-## 🎯 Design Principles
+## Design Principles
 
 ### 1. Framework Agnostic
 
 This package should work in any JavaScript environment:
 
-- ✅ Node.js (Lambda functions)
-- ✅ Browser (React app)
-- ✅ Edge runtime (future)
+- Node.js (Lambda functions)
+- Browser (React app)
+- Edge runtime (future)
 
 **Don't include:**
 
@@ -152,7 +152,7 @@ Each module should have one clear purpose:
 
 ---
 
-## 📚 Further Reading
+## Further Reading
 
 For detailed commands, project structure, and workflows, see:
 

@@ -81,7 +81,7 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
     },
     {
       key: RouteKey.PROGRAMME_OVERVIEW,
-      label: 'Programme Overview',
+      label: 'My Programme',
       icon: 'Activity',
       path: routes[RouteKey.PROGRAMME_OVERVIEW].path,
       roles: [PROGRAMME_USER],
@@ -185,18 +185,6 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
     },
   ];
 
-  // Footer navigation (common across all roles)
-  const footerNavItems: NavItem[] = [
-    {
-      key: RouteKey.ACCOUNT_SETTINGS,
-      label: 'Account Settings',
-      icon: 'Settings',
-      path: routes[RouteKey.ACCOUNT_SETTINGS].path,
-      roles: [PROGRAMME_USER, CUSTOMER_OWNER, CUSTOMER_ADMIN, SYSTEM_ADMIN],
-      section: 'footer',
-    },
-  ];
-
   let mainNavItems: NavItem[] = [];
 
   // Determine which main navigation items to show based on role
@@ -211,9 +199,6 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
   // Filter items by role (additional safety check)
   const filteredMainItems = mainNavItems.filter((item) => item.roles.includes(userRole));
 
-  // Add footer items (filtered by role)
-  const filteredFooterItems = footerNavItems.filter((item) => item.roles.includes(userRole));
-
   // Add logout item
   const logoutItem: NavItem = {
     key: 'logout' as RouteKey, // Special case: not a route
@@ -225,5 +210,5 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
     onClick: onLogout,
   };
 
-  return [...filteredMainItems, ...filteredFooterItems, logoutItem];
+  return [...filteredMainItems, logoutItem];
 };

@@ -69,6 +69,8 @@ Load these to understand current standards and sprint goals:
 - [ ] Services orchestrate, repositories do data access
 - [ ] Error handling with custom error classes (not generic `Error`)
 - [ ] TypeScript strict mode (no `any` types, explicit return types)
+- [ ] New interfaces/types in `@ffp/web` or `@ffp/functions` checked against `@ffp/core` schemas and types — avoid duplicating types that already exist or could be inferred (e.g., using `z.infer<>` from Zod schemas, re-exporting from core)
+- [ ] URL-facing tables include `publicId` column (nanoid); frontend routes use `publicId`, not UUID
 
 ### [MEDIUM] Code Quality
 

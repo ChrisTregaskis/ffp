@@ -46,6 +46,10 @@ Handler → Service → Entity (optional) → Repository → Drizzle Schema
 - **Business logic**: Handler → Service → Repository
 - **Complex behaviour**: Handler → Service → Entity → Repository
 
+## URL-Facing Entity Resolution
+
+Entities displayed in frontend URLs use `publicId` (nanoid, 12 chars) instead of UUIDs. Repositories for URL-facing tables must provide both `findById` (for internal use, mutations) and `findByPublicId` (for resolving route params). Service "get detail" methods should resolve by `publicId`; update/delete methods continue using UUID `id`.
+
 ## Security (Non-Negotiable)
 
 ### RLS Context — Tenant-Scoped Database Operations

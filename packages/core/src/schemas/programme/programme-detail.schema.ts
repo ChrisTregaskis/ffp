@@ -8,7 +8,6 @@ import { programmeStatusSchema } from './programme-lifecycle.schema';
 const detailVideoSchema = z.object({
   id: z.guid(),
   title: z.string(),
-  thumbnailKey: z.string().nullable(),
   durationSeconds: z.number().int().positive(),
   difficulty: z.string().nullable(),
 });
@@ -46,6 +45,7 @@ const detailUserSessionSchema = z.object({
 /** Session within a phase — tiered: full detail or summary only */
 const detailSessionSchema = z.object({
   templateSessionId: z.guid(),
+  templateSessionPublicId: z.string().length(12),
   sessionNumber: z.number().int().positive(),
   name: z.string().nullable(),
   description: z.string().nullable(),
@@ -60,8 +60,10 @@ const detailSessionSchema = z.object({
 /** Phase with sessions — tiered visibility applied */
 const detailPhaseSchema = z.object({
   id: z.guid(),
+  publicId: z.string().length(12),
   phaseNumber: z.number().int().positive(),
   name: z.string().nullable(),
+  description: z.string().nullable(),
   status: z.enum(PHASE_STATUSES),
   sessions: z.array(detailSessionSchema),
 });

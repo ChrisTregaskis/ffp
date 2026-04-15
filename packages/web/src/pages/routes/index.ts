@@ -15,11 +15,6 @@ import { IconComponentsPage } from '@web/pages/dev/IconComponentsPage';
 import { LoadingSpinnerComponentsPage } from '@web/pages/dev/LoadingSpinnerComponentsPage';
 import { LogoComponentsPage } from '@web/pages/dev/LogoComponentsPage';
 import { MotionShowcasePage } from '@web/pages/dev/MotionShowcasePage';
-import {
-  DashboardMock,
-  ProgrammeOverviewMock,
-  SessionWorkoutMock,
-} from '@web/pages/dev/programme-discovery';
 import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsPage';
 import { TableComponentsPage } from '@web/pages/dev/TableComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
@@ -41,11 +36,11 @@ import { VideoEditPage } from '@web/pages/protected/admin/video-edit';
 import { VideoUploadPage } from '@web/pages/protected/admin/video-upload';
 import { VideoLibraryPage } from '@web/pages/protected/admin/VideoLibraryPage';
 import { HomePage } from '@web/pages/protected/HomePage';
-import { AccountSettingsPage } from '@web/pages/protected/programme-user/AccountSettingsPage';
 import { AssessmentOverviewPage } from '@web/pages/protected/programme-user/AssessmentOverviewPage';
 import { AssessmentPage } from '@web/pages/protected/programme-user/AssessmentPage';
-import { ProgrammeOverviewPage } from '@web/pages/protected/programme-user/ProgrammeOverviewPage';
+import { ProgrammePage } from '@web/pages/protected/programme-user/ProgrammePage';
 import { ProgressPage } from '@web/pages/protected/programme-user/ProgressPage';
+import { SessionPage } from '@web/pages/protected/programme-user/SessionPage';
 import { ForgotPasswordPage } from '@web/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@web/pages/public/LoginPage';
 import { SetPasswordPage } from '@web/pages/public/SetPasswordPage';
@@ -177,9 +172,17 @@ export const routes: RoutesConfig = {
     excludeLayout: true,
     excludeFromMainNavbar: true,
   },
+  [RouteKey.SESSION_WORKOUT]: {
+    path: '/programme/session/:phaseId/:templateSessionId',
+    pageComponent: SessionPage,
+    title: 'Session Workout',
+    allowedRoles: [PROGRAMME_USER],
+    excludeLayout: true,
+    excludeFromMainNavbar: true,
+  },
   [RouteKey.PROGRAMME_OVERVIEW]: {
     path: '/programme-overview',
-    pageComponent: ProgrammeOverviewPage,
+    pageComponent: ProgrammePage,
     title: 'Programme Overview',
     allowedRoles: [PROGRAMME_USER],
   },
@@ -195,13 +198,6 @@ export const routes: RoutesConfig = {
     title: 'Assessment',
     allowedRoles: [PROGRAMME_USER],
   },
-  [RouteKey.ACCOUNT_SETTINGS]: {
-    path: '/account-settings',
-    pageComponent: AccountSettingsPage,
-    title: 'Account Settings',
-    allowedRoles: [PROGRAMME_USER, CUSTOMER_OWNER, CUSTOMER_ADMIN, SYSTEM_ADMIN],
-  },
-
   // Customer Owner/Admin Routes (placeholders)
   [RouteKey.CUSTOMER_DASHBOARD]: {
     path: '/dashboard',
@@ -589,41 +585,6 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: TableComponentsPage,
     title: 'Table Components',
-    excludeFromMainNavbar: true,
-    devOnly: true,
-  },
-
-  // Discovery prototype routes (programme execution UX exploration)
-  [RouteKey.DISCOVERY_SESSION_WORKOUT]: {
-    path: `${componentsBasePath}/programme/session`,
-    public: true,
-    pageComponent: SessionWorkoutMock,
-    title: 'Discovery: Session Workout',
-    excludeFromMainNavbar: true,
-    excludeLayout: true,
-    devOnly: true,
-  },
-  [RouteKey.DISCOVERY_PROGRAMME_OVERVIEW]: {
-    path: `${componentsBasePath}/programme/overview`,
-    public: true,
-    pageComponent: ProgrammeOverviewMock,
-    title: 'Discovery: Programme Overview',
-    excludeFromMainNavbar: true,
-    devOnly: true,
-  },
-  [RouteKey.DISCOVERY_DASHBOARD]: {
-    path: `${componentsBasePath}/programme/dashboard`,
-    public: true,
-    pageComponent: DashboardMock,
-    title: 'Discovery: Dashboard',
-    excludeFromMainNavbar: true,
-    devOnly: true,
-  },
-  [RouteKey.DISCOVERY_PROGRESS]: {
-    path: `${componentsBasePath}/programme/progress`,
-    public: true,
-    pageComponent: () => null,
-    title: 'Discovery: Progress',
     excludeFromMainNavbar: true,
     devOnly: true,
   },

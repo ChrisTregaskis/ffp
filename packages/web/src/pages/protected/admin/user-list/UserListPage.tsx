@@ -55,7 +55,7 @@ export const UserListPage: React.FC = () => {
 
   const handleEditClick = useCallback(
     (row: UserRow): void => {
-      void navigate(`${routes[RouteKey.ADMIN_USERS].path}/${row.id}`);
+      void navigate(`${routes[RouteKey.ADMIN_USERS].path}/${row.publicId}`);
     },
     [navigate]
   );

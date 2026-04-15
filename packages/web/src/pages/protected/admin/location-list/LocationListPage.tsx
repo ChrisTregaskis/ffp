@@ -72,7 +72,7 @@ export const LocationListPage: React.FC = () => {
 
   const handleEditClick = useCallback(
     (row: LocationRow): void => {
-      void navigate(`${routes[RouteKey.ADMIN_LOCATIONS].path}/${row.id}`);
+      void navigate(`${routes[RouteKey.ADMIN_LOCATIONS].path}/${row.publicId}`);
     },
     [navigate]
   );

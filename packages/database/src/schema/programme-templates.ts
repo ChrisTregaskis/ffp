@@ -10,6 +10,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { difficultyEnum } from './videos';
+import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 
 /**
  * System-managed lookup table for programme templates. Referenced by:
@@ -20,6 +21,7 @@ export const programmeTemplates = pgTable(
   'programme_templates',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    publicId: publicIdColumn(),
     /** Unique slug for referencing in scoring config (e.g., 'gentle-mobility-programme') */
     slug: varchar('slug', { length: 255 }).notNull(),
     /** Display name (e.g., 'Gentle Mobility Programme') */
@@ -35,7 +37,10 @@ export const programmeTemplates = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  (table) => [uniqueIndex('idx_programme_templates_slug').on(table.slug)]
+  (table) => [
+    publicIdIndex('programme_templates', table.publicId),
+    uniqueIndex('idx_programme_templates_slug').on(table.slug),
+  ]
 );
 
 export const insertProgrammeTemplateSchema = createInsertSchema(programmeTemplates);

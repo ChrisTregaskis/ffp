@@ -57,11 +57,13 @@ export type {
   CreateVideoInput,
   PaginatedAdminVideoResponse,
   UpdateVideoInput,
-  UploadUrlRequest,
   UploadUrlResponse,
 } from './admin-videos';
 
 export { assessmentsApi } from './assessments';
+
+export { exercisesApi } from './exercises';
+export type { ToggleExerciseCompletionResponse } from './exercises';
 export type {
   AssessmentFlow,
   AssessmentResultsResponse,
@@ -74,7 +76,17 @@ export type {
 } from './assessments';
 
 export { programmesApi } from './programmes';
-export type { ActiveProgrammeResponse } from './programmes';
+
+export { sessionsApi } from './sessions';
+export type { StartSessionRequest, StartSessionResponse, SessionStatusResponse } from './sessions';
+export type {
+  ActiveProgrammeResponse,
+  ProgrammeDetailResponse,
+  ProgressSummaryResponse,
+} from './programmes';
+
+export { usersApi } from './users';
+export type { UserProfileResponse } from './users';
 
 export { videosApi } from './videos';
 export type {

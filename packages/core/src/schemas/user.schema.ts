@@ -8,6 +8,7 @@ export const userRoleSchema = z.enum(USER_ROLES);
 
 export const userSchema = z.object({
   id: z.guid(),
+  publicId: z.string().length(12),
   organisationId: z.guid(),
   email: z.email().max(255),
   cognitoSub: z.string().max(255),
@@ -134,6 +135,7 @@ export const userFilterSchema = z.object({
 export const userListResponseSchema = userSchema
   .pick({
     id: true,
+    publicId: true,
     email: true,
     firstName: true,
     lastName: true,
@@ -153,6 +155,14 @@ export const userDetailResponseSchema = userSchema.extend({
 /** Paginated response schema for GET /admin/users */
 export const paginatedUserResponseSchema = createPaginatedResponseSchema(userListResponseSchema);
 
+/** Response schema for GET /users/me — lightweight profile for authenticated user */
+export const userProfileResponseSchema = z.object({
+  firstName: z.string(),
+  lastName: z.string(),
+  email: z.email(),
+  role: userRoleSchema,
+});
+
 export type UserRole = z.infer<typeof userRoleSchema>;
 export type User = z.infer<typeof userSchema>;
 export type CreateUserInput = z.infer<typeof createUserSchema>;
@@ -164,3 +174,4 @@ export type UserListQuery = z.infer<typeof userListQuerySchema>;
 export type UserListResponse = z.infer<typeof userListResponseSchema>;
 export type UserDetailResponse = z.infer<typeof userDetailResponseSchema>;
 export type UserFilterInput = z.infer<typeof userFilterSchema>;
+export type UserProfileResponse = z.infer<typeof userProfileResponseSchema>;

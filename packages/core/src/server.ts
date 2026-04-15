@@ -37,4 +37,5 @@ export * from './jobs';
 export * from './programmes';
 export * from './programme-templates';
 export * from './sessions';
+export * from './users';
 export * from './videos';

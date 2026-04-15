@@ -74,6 +74,12 @@ className="bg-primary/10 border-success/20"
 - No sensitive data in URLs or client-side state
 - Sanitise any user-generated content before rendering
 
+## URL Entity Navigation
+
+- **Use `publicId` for URL navigation** — never put UUIDs in URLs. Navigate with `entity.publicId` (12-char nanoid)
+- **Route params resolve to `publicId`** — `useParams()` returns the `publicId` from the URL; pass it to detail query hooks which call `findByPublicId` on the backend
+- **Mutations use UUID `id`** — after fetching a record by `publicId`, mutations use the UUID `id` from the fetched record
+
 ## File Organisation
 
 ```

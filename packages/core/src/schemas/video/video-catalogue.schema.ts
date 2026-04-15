@@ -14,8 +14,8 @@ export const videoFilterSchema = z.object({
 /** Response schema for video list API — lightweight fields for catalogue browsing */
 export const videoListResponseSchema = videoSchema.pick({
   id: true,
+  publicId: true,
   title: true,
-  thumbnailKey: true,
   durationSeconds: true,
   status: true,
   difficulty: true,

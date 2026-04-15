@@ -311,9 +311,6 @@ pnpm db:generate
 # Apply migrations to database
 pnpm db:migrate
 
-# Push schema directly (dev only)
-pnpm db:push
-
 # Open Drizzle Studio (visual DB browser)
 pnpm db:studio
 ```
@@ -352,13 +349,9 @@ export const handler = async () => {
 
 ### Pending Schemas
 
-| Table            | Status      |
-| ---------------- | ----------- |
-| Programs         | Not started |
-| Program Sessions | Not started |
-| Videos           | Not started |
-| User Progress    | Not started |
-| Audit Logs       | Not started |
+| Table      | Status      |
+| ---------- | ----------- |
+| Audit Logs | Not started |
 
 ---
 

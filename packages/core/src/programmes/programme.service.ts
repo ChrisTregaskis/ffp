@@ -304,18 +304,19 @@ export async function getProgrammeDetail(
       const exerciseCount = ts.exercises.length;
       const userSessionData = userSessionIndex.get(ts.session.id);
 
+      const sessionBase = {
+        templateSessionId: ts.session.id,
+        templateSessionPublicId: ts.session.publicId,
+        sessionNumber: ts.session.sessionNumber,
+        name: ts.session.name,
+        description: ts.session.description,
+        estimatedDurationMinutes: ts.session.estimatedDurationMinutes,
+        exerciseCount,
+      };
+
       if (!isAccessible) {
         // Future phase — summary only (no exercises or user session data)
-        return {
-          templateSessionId: ts.session.id,
-          sessionNumber: ts.session.sessionNumber,
-          name: ts.session.name,
-          description: ts.session.description,
-          estimatedDurationMinutes: ts.session.estimatedDurationMinutes,
-          exerciseCount,
-          userSession: undefined,
-          exercises: undefined,
-        };
+        return { ...sessionBase, userSession: undefined, exercises: undefined };
       }
 
       // Current/completed phase — full detail
@@ -325,12 +326,7 @@ export async function getProgrammeDetail(
       );
 
       return {
-        templateSessionId: ts.session.id,
-        sessionNumber: ts.session.sessionNumber,
-        name: ts.session.name,
-        description: ts.session.description,
-        estimatedDurationMinutes: ts.session.estimatedDurationMinutes,
-        exerciseCount,
+        ...sessionBase,
         userSession: userSessionData
           ? {
               id: userSessionData.session.id,
@@ -354,7 +350,6 @@ export async function getProgrammeDetail(
             video: {
               id: ex.video.id,
               title: ex.video.title,
-              thumbnailKey: ex.video.thumbnailKey,
               durationSeconds: ex.video.durationSeconds,
               difficulty: ex.video.difficulty,
             },
@@ -373,8 +368,10 @@ export async function getProgrammeDetail(
 
     return {
       id: phase.id,
+      publicId: phase.publicId,
       phaseNumber: phase.phaseNumber,
-      name: phase.name,
+      name: phase.name ?? templatePhaseData?.phase.name ?? null,
+      description: templatePhaseData?.phase.description ?? null,
       status: phase.status,
       sessions,
     };

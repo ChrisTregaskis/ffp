@@ -28,9 +28,9 @@ FFP uses a serverless-first AWS architecture optimised for multi-tenant SaaS. MV
 | **Monitoring** | CloudWatch        | Logs, metrics, alarms                                                        |
 | **DNS**        | Route53           | Domain routing                                                               |
 
-### MVP VPC Strategy
+### VPC Strategy
 
-MVP uses AWS default VPC for cost optimisation (~£30/month NAT Gateway savings). Production will migrate to custom VPC with private subnets (FFP-101).
+MVP uses AWS default VPC for cost optimisation (~£30/month NAT Gateway savings).
 
 **See:** `deployment.md` for environment configuration, `security.md` for network security details.
 
@@ -108,7 +108,7 @@ FFP uses Turborepo for efficient monorepo management with smart caching and para
 
 **Shared Constants Pattern:** When both packages need the same values (e.g., enums), define in `@ffp/database` and import into `@ffp/core`.
 
-**See:** `REFERENCE.md` for detailed project structure and Turborepo commands.
+**See:** root `README.md` for project structure and Turborepo commands.
 
 ---
 
@@ -233,11 +233,11 @@ await db.query.users.findMany(); // Leaks all organisations!
 
 ## Environment Strategy
 
-| Environment | Purpose                        | Database Changes                       |
-| ----------- | ------------------------------ | -------------------------------------- |
-| **dev**     | Personal developer environment | `drizzle-kit push` for rapid iteration |
-| **staging** | Shared QA/demo environment     | `db:generate` + `db:migrate`           |
-| **prod**    | Customer-facing                | Strict migration review process        |
+| Environment | Purpose                        | Database Changes                |
+| ----------- | ------------------------------ | ------------------------------- |
+| **dev**     | Personal developer environment | `db:generate` + `db:migrate`    |
+| **staging** | Shared QA/demo environment     | `db:generate` + `db:migrate`    |
+| **prod**    | Customer-facing                | Strict migration review process |
 
 **See:** `deployment.md` for SST configuration and CI/CD details.
 
@@ -245,12 +245,10 @@ await db.query.users.findMany(); // Leaks all organisations!
 
 ## Related Documentation
 
-| Topic                             | Document                   |
-| --------------------------------- | -------------------------- |
-| Layer code examples               | `coding-standards.md`      |
-| Cost estimates                    | `REFERENCE.md`             |
-| Scalability & future architecture | `future-considerations.md` |
-| Security patterns                 | `security.md`              |
-| Authentication details            | `authentication.md`        |
-| Database schema                   | `database-schema.md`       |
-| Deployment & environments         | `deployment.md`            |
+| Topic                  | Document              |
+| ---------------------- | --------------------- |
+| Layer code examples    | `coding-standards.md` |
+| Security patterns      | `security.md`         |
+| Authentication details | `authentication.md`   |
+| Database schema        | `database-schema.md`  |
+| Deployment             | `deployment.md`       |

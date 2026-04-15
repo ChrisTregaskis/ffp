@@ -16,7 +16,9 @@ You are implementing a sub-task from an active user story. The Jira ticket key f
    - If this is the **first sub-task** of the user story, you will need to completely rewrite `review-context.md` with fresh context for this user story
    - If this is a **continuation**, the file will contain prior sub-task work — build on it
 
-5. **Load the relevant Claude skill** based on the requirements of the sub-task:
+5. **Rename the session** if not already named for the parent user story. Use `/rename` with the format `FFP-{key number} {Jira story title}` (e.g., `FFP-386 Dashboard Page`). Skip if the session is already named for this story.
+
+6. **Load the relevant Claude skill** based on the requirements of the sub-task:
    - Database schema/migration work → `/database`
    - Lambda handlers, services, repositories → `/backend`
    - React components, pages, hooks → `/frontend`
@@ -55,18 +57,18 @@ You are implementing a sub-task from an active user story. The Jira ticket key f
 
 ## On Completion
 
-10. **Update `.claude/review-context.md`**:
+11. **Update `.claude/review-context.md`**:
     - If first sub-task: completely rewrite with new user story context, branch info, requirements, and changes made
     - If continuation: append the new sub-task's changes to the existing file
     - Follow the existing format (see current file for structure): goals, requirements with acceptance criteria checklist, changes table per sub-task, areas to focus, known limitations, testing notes
     - This file accumulates all work for the user story — it will be used for full review and developer testing once all sub-tasks are complete
 
-11. **Update `.claude/local/project-state.md`** (skip this step if the file does not exist):
+12. **Update `.claude/local/project-state.md`** (skip this step if the file does not exist):
     - Mark the sub-task as completed in the implementation plan
     - Note any decisions made or deviations from the plan
     - Keep the updates concise
 
-12. **Summarise** what was done and confirm you're ready for the user's review before proceeding to the next sub-task.
+13. **Summarise** what was done and confirm you're ready for the user's review before proceeding to the next sub-task.
 
 ## Constraints
 

@@ -1,4 +1,6 @@
 import { pgTable, uuid, varchar, timestamp, jsonb, pgEnum } from 'drizzle-orm/pg-core';
+
+import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { relations } from 'drizzle-orm';
 import { users } from './users';
@@ -11,15 +13,20 @@ export const organisationStatusEnum = pgEnum('organisation_status', [...ORGANISA
  * Organisations table definition
  * Core table for multi-tenant architecture - no RLS needed as it's the root of organisation hierarchy
  */
-export const organisations = pgTable('organisations', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  type: organisationTypeEnum('type').notNull(),
-  name: varchar('name', { length: 255 }).notNull(),
-  status: organisationStatusEnum('status').notNull().default('active'),
-  settings: jsonb('settings').default({}),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+export const organisations = pgTable(
+  'organisations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    publicId: publicIdColumn(),
+    type: organisationTypeEnum('type').notNull(),
+    name: varchar('name', { length: 255 }).notNull(),
+    status: organisationStatusEnum('status').notNull().default('active'),
+    settings: jsonb('settings').default({}),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [publicIdIndex('organisations', table.publicId)]
+);
 
 export const organisationsRelations = relations(organisations, ({ many }) => ({
   users: many(users),

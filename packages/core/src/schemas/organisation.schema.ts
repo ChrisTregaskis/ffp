@@ -17,6 +17,7 @@ export const organisationSettingsSchema = z.record(z.string(), z.unknown()).defa
  */
 export const organisationSchema = z.object({
   id: z.guid(),
+  publicId: z.string().length(12),
   type: organisationTypeSchema,
   name: z.string().min(1).max(255),
   status: organisationStatusSchema,
@@ -40,6 +41,7 @@ export const updateOrganisationSchema = organisationSchema
 /** Response schema for organisation list items */
 export const organisationListResponseSchema = organisationSchema.pick({
   id: true,
+  publicId: true,
   name: true,
   status: true,
   createdAt: true,

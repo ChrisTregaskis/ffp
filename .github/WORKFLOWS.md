@@ -37,7 +37,7 @@ git commit -m "FFP-20: Configure TypeScript path mappings"
 # Push to GitHub
 git push origin FFP-20-typescript-paths
 
-# ✨ GitHub Actions automatically creates a draft PR!
+# GitHub Actions automatically creates a draft PR
 ```
 
 ### Skip auto-PR creation:
@@ -49,10 +49,10 @@ git push
 
 ### Generated PR includes:
 
-- ✅ Jira ticket link (if FFP-XX in branch name)
-- ✅ Basic template with checklist
-- ✅ Useful commands in comments
-- ✅ Created as **draft** (mark ready when complete)
+- Jira ticket link (if FFP-XX in branch name)
+- Basic template with checklist
+- Useful commands in comments
+- Created as **draft** (mark ready when complete)
 
 ---
 
@@ -83,17 +83,17 @@ pnpm test
 
 All workflows use the built-in `GITHUB_TOKEN` which has:
 
-- ✅ Read access to repository
-- ✅ Write access to pull requests
-- ✅ Permission to create branches
+- Read access to repository
+- Write access to pull requests
+- Permission to create branches
 
 ### 2. Enable GitHub Actions
 
 1. Go to repository **Settings** → **Actions** → **General**
 2. Ensure **"Allow all actions and reusable workflows"** is selected
 3. Set **Workflow permissions** to:
-   - ✅ **Read and write permissions**
-   - ✅ **Allow GitHub Actions to create and approve pull requests**
+   - **Read and write permissions**
+   - **Allow GitHub Actions to create and approve pull requests**
 
 ### 3. Branch Protection (Optional but Recommended)
 
@@ -102,9 +102,9 @@ For `main` branch:
 1. Settings → Branches → Add rule
 2. Branch name pattern: `main`
 3. Enable:
-   - ✅ Require pull request before merging
-   - ✅ Require status checks to pass (CI workflow)
-   - ✅ Require branches to be up to date
+   - Require pull request before merging
+   - Require status checks to pass (CI workflow)
+   - Require branches to be up to date
 
 ---
 
@@ -114,15 +114,15 @@ For `main` branch:
 
 **auto-pr.yml:**
 
-- ✅ Create draft PRs
-- ✅ Add comments to PRs
-- ✅ List existing PRs
+- Create draft PRs
+- Add comments to PRs
+- List existing PRs
 
 **ci.yml:**
 
-- ✅ Read code
-- ✅ Run tests/builds
-- ✅ Report status
+- Read code
+- Run tests/builds
+- Report status
 
 ---
 
@@ -222,10 +222,10 @@ gh run view <run-id> --log
 
 ### After first push:
 
-1. ✅ Verify auto-PR was created
-2. ✅ Check CI workflow runs successfully
-3. ✅ Review PR template and adjust if needed
-4. ✅ Mark PR ready and merge
+1. Verify auto-PR was created
+2. Check CI workflow runs successfully
+3. Review PR template and adjust if needed
+4. Mark PR ready and merge
 
 ### Optional enhancements:
 

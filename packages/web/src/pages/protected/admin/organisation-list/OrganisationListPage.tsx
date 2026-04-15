@@ -60,7 +60,7 @@ export const OrganisationListPage: React.FC = () => {
 
   const handleEditClick = useCallback(
     (row: OrganisationRow): void => {
-      void navigate(`${routes[RouteKey.ADMIN_ORGANISATIONS].path}/${row.id}`);
+      void navigate(`${routes[RouteKey.ADMIN_ORGANISATIONS].path}/${row.publicId}`);
     },
     [navigate]
   );

@@ -162,6 +162,20 @@
       "when": 1774885153575,
       "tag": "0022_long_wild_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1775983712954,
+      "tag": "0023_cynical_goliath",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1776084890587,
+      "tag": "0024_tearful_may_parker",
+      "breakpoints": true
     }
   ]
 }

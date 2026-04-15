@@ -17,5 +17,4 @@ stacks/
 
 ## Current Status
 
-- ✅ Directory structure created
-- ⏸️ Awaiting FFP-8 implementation
+SST v3 Ion infrastructure is configured in `sst.config.ts` at the project root. This directory contains supporting stack utilities.
