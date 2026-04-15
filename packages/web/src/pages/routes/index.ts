@@ -15,11 +15,6 @@ import { IconComponentsPage } from '@web/pages/dev/IconComponentsPage';
 import { LoadingSpinnerComponentsPage } from '@web/pages/dev/LoadingSpinnerComponentsPage';
 import { LogoComponentsPage } from '@web/pages/dev/LogoComponentsPage';
 import { MotionShowcasePage } from '@web/pages/dev/MotionShowcasePage';
-import {
-  DashboardMock,
-  ProgrammeOverviewMock,
-  SessionWorkoutMock,
-} from '@web/pages/dev/programme-discovery';
 import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsPage';
 import { TableComponentsPage } from '@web/pages/dev/TableComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
@@ -590,41 +585,6 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: TableComponentsPage,
     title: 'Table Components',
-    excludeFromMainNavbar: true,
-    devOnly: true,
-  },
-
-  // Discovery prototype routes (programme execution UX exploration)
-  [RouteKey.DISCOVERY_SESSION_WORKOUT]: {
-    path: `${componentsBasePath}/programme/session`,
-    public: true,
-    pageComponent: SessionWorkoutMock,
-    title: 'Discovery: Session Workout',
-    excludeFromMainNavbar: true,
-    excludeLayout: true,
-    devOnly: true,
-  },
-  [RouteKey.DISCOVERY_PROGRAMME_OVERVIEW]: {
-    path: `${componentsBasePath}/programme/overview`,
-    public: true,
-    pageComponent: ProgrammeOverviewMock,
-    title: 'Discovery: Programme Overview',
-    excludeFromMainNavbar: true,
-    devOnly: true,
-  },
-  [RouteKey.DISCOVERY_DASHBOARD]: {
-    path: `${componentsBasePath}/programme/dashboard`,
-    public: true,
-    pageComponent: DashboardMock,
-    title: 'Discovery: Dashboard',
-    excludeFromMainNavbar: true,
-    devOnly: true,
-  },
-  [RouteKey.DISCOVERY_PROGRESS]: {
-    path: `${componentsBasePath}/programme/progress`,
-    public: true,
-    pageComponent: () => null,
-    title: 'Discovery: Progress',
     excludeFromMainNavbar: true,
     devOnly: true,
   },

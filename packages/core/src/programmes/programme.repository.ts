@@ -81,7 +81,7 @@ export interface ProgrammeWithPhases {
 /** Slim video fields needed for exercise detail display. */
 export type ExerciseVideoSummary = Pick<
   VideoRecord,
-  'id' | 'title' | 'thumbnailKey' | 'durationSeconds' | 'difficulty'
+  'id' | 'title' | 'durationSeconds' | 'difficulty'
 >;
 
 /** Exercise record with embedded video metadata. */
@@ -499,7 +499,6 @@ export async function findTemplateStructure(templateId: string): Promise<Templat
             video: {
               id: videos.id,
               title: videos.title,
-              thumbnailKey: videos.thumbnailKey,
               durationSeconds: videos.durationSeconds,
               difficulty: videos.difficulty,
             },

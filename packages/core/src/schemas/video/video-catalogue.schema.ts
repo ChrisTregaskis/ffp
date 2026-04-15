@@ -16,7 +16,6 @@ export const videoListResponseSchema = videoSchema.pick({
   id: true,
   publicId: true,
   title: true,
-  thumbnailKey: true,
   durationSeconds: true,
   status: true,
   difficulty: true,

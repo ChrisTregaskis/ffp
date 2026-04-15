@@ -8,6 +8,7 @@ import { ComposableForm } from '@web/components/form/composableForm';
 import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
 import { ArchiveVideoModal } from '@web/components/modal';
 import { VideoPlayer } from '@web/components/video/VideoPlayer';
+import { VideoReplacer } from '@web/components/video/VideoReplacer';
 import { useToast } from '@web/hooks/useToast';
 import { useUpdateVideoMutation, useVideoQuery } from '@web/hooks/videos';
 import { RouteKey, routes } from '@web/pages/routes';
@@ -17,11 +18,11 @@ import { VideoEditFormFields } from './VideoEditFormFields';
 import type { VideoEditFormValues } from './types';
 
 export const VideoEditPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id = '' } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToast } = useToast();
 
-  const { data: video, isLoading, error } = useVideoQuery(id ?? '', { includeInactive: true });
+  const { data: video, isLoading, error } = useVideoQuery(id, { includeInactive: true });
   const updateMutation = useUpdateVideoMutation();
 
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
@@ -227,12 +228,15 @@ export const VideoEditPage: React.FC = () => {
         )}
 
         {video && (
-          <VideoPlayer
-            videoId={id}
-            ariaLabel={`Preview of ${video.title}`}
-            variant="white"
-            className="mb-6"
-          />
+          <>
+            <VideoPlayer
+              videoId={id}
+              ariaLabel={`Preview of ${video.title}`}
+              variant="white"
+              className="mb-4"
+            />
+            <VideoReplacer videoId={video.id} publicId={id} className="mb-6" />
+          </>
         )}
 
         {video && defaultValues && (

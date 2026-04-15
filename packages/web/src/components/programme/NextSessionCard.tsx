@@ -9,7 +9,7 @@ import { Icons } from '@web/components/Icon/types';
 import { ProgressBar } from '@web/components/ProgressBar';
 import { Text } from '@web/components/text/Text';
 import { Title } from '@web/components/text/Title';
-import { VideoUnavailablePlaceholder } from '@web/components/video';
+import { VideoPlayer } from '@web/components/video';
 
 import { PrescriptionBadge } from './PrescriptionBadge';
 
@@ -42,6 +42,7 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const isResumable = session.userSession?.status === 'in_progress';
+  const firstVideoId = session.exercises?.[0]?.video.id;
 
   const completedExercises = session.exercises?.filter((e) => e.completion?.completed).length ?? 0;
   const totalExercises = session.exerciseCount;
@@ -60,9 +61,42 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
   return (
     <Card>
       <div className="flex flex-col lg:flex-row lg:items-stretch lg:gap-6">
-        {/* Video preview — signed thumbnail URLs deferred, uses shared placeholder */}
-        <div className="flex min-h-[200px] items-center justify-center rounded-lg bg-secondary/30 p-6 lg:w-2/5">
-          <VideoUnavailablePlaceholder />
+        {/* Video preview — looping muted preview of first exercise, click to start session */}
+        <div
+          className="relative min-h-[200px] cursor-pointer overflow-hidden rounded-lg bg-muted lg:w-2/5"
+          onClick={handleStart}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              handleStart();
+            }
+          }}
+          aria-label={isResumable ? 'Continue session' : 'Start session'}
+        >
+          {firstVideoId ? (
+            <VideoPlayer
+              videoId={firstVideoId}
+              autoPlay
+              loop
+              muted
+              hideControls
+              cover
+              variant="muted"
+              className="!aspect-auto h-full !rounded-none"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <Icon name={Icons.PLAY} styleProps={{ size: 'xl', colour: 'var(--color-primary)' }} />
+            </div>
+          )}
+          {/* Overlay with play icon and label */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-transparent opacity-0 transition-all hover:bg-black/40 hover:opacity-100">
+            <Icon name={Icons.PLAY} styleProps={{ size: 'xl', colour: '#ffffff' }} />
+            <Text as="p" styleProps={{ size: 'sm', weight: 'medium' }} className="mt-2 text-white">
+              {isResumable ? 'Continue session' : 'Start session'}
+            </Text>
+          </div>
         </div>
 
         {/* Content */}

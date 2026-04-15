@@ -52,30 +52,18 @@ function getUploadConfig(): { config: VideoUploadConfig; client: S3Client } {
   return { config: cachedConfig, client: s3Client };
 }
 
-/** Allowed thumbnail extensions mapped to MIME content types */
-const THUMBNAIL_CONTENT_TYPES: Record<string, string> = {
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  png: 'image/png',
-};
-
 /**
- * Generate presigned S3 PUT URLs for video and optional thumbnail upload.
+ * Generate a presigned S3 PUT URL for video upload.
  *
  * Video key format: `library/{uuid}.mp4`
- * Thumbnail key format: `thumbnails/{uuid}.{ext}` (only when thumbnailExtension provided)
  *
- * Both URLs expire after 15 minutes. The browser uses these to PUT files
+ * URL expires after 15 minutes. The browser uses it to PUT the file
  * directly to S3 without passing through the API.
  *
  * @param context - Organisation context for structured logging
- * @param thumbnailExtension - Optional file extension for thumbnail ('jpg', 'jpeg', 'png')
- * @returns Presigned upload URLs and S3 keys
+ * @returns Presigned upload URL and S3 key
  */
-export async function generateUploadUrls(
-  context: OrganisationContext,
-  thumbnailExtension?: string
-): Promise<UploadUrlResponse> {
+export async function generateUploadUrls(context: OrganisationContext): Promise<UploadUrlResponse> {
   const logger = createLogger(context);
   const { config, client } = getUploadConfig();
 
@@ -92,38 +80,15 @@ export async function generateUploadUrls(
     expiresIn: UPLOAD_URL_TTL_SECONDS,
   });
 
-  let thumbnailUploadUrl: string | null = null;
-  let thumbnailKey: string | null = null;
-
-  if (thumbnailExtension) {
-    const thumbnailId = randomUUID();
-    thumbnailKey = `thumbnails/${thumbnailId}.${thumbnailExtension}`;
-
-    const contentType = THUMBNAIL_CONTENT_TYPES[thumbnailExtension] ?? 'image/jpeg';
-
-    const thumbnailCommand = new PutObjectCommand({
-      Bucket: config.assetsBucketName,
-      Key: thumbnailKey,
-      ContentType: contentType,
-    });
-
-    thumbnailUploadUrl = await getSignedUrl(client, thumbnailCommand, {
-      expiresIn: UPLOAD_URL_TTL_SECONDS,
-    });
-  }
-
   logger.info('Upload URLs generated', {
     action: 'upload_urls_generated',
     videoS3Key,
-    thumbnailKey,
     expiresIn: UPLOAD_URL_TTL_SECONDS,
   });
 
   return {
     videoUploadUrl,
     videoS3Key,
-    thumbnailUploadUrl,
-    thumbnailKey,
     expiresIn: UPLOAD_URL_TTL_SECONDS,
   };
 }

@@ -39,7 +39,7 @@ export const SessionRow: React.FC<SessionRowProps> = ({ session, phasePublicId, 
 
   return (
     <div
-      className={`flex items-center justify-between rounded-lg px-4 py-3 ${
+      className={`rounded-lg px-4 py-3 ${
         isNext ? 'bg-ffp-dark-blue/5' : isCompleted ? 'bg-muted/30' : ''
       }`}
     >
@@ -74,7 +74,7 @@ export const SessionRow: React.FC<SessionRowProps> = ({ session, phasePublicId, 
       </div>
 
       {isNext && (
-        <Button variant="primary" size="sm" onClick={handleStart}>
+        <Button variant="primary" size="sm" fullWidth onClick={handleStart} className="mt-3">
           <Icon name={Icons.PLAY} styleProps={{ size: 'xs', colour: '#ffffff' }} />
           {isInProgress ? 'Continue' : 'Start'}
         </Button>

@@ -8,7 +8,6 @@ import { programmeStatusSchema } from './programme-lifecycle.schema';
 const detailVideoSchema = z.object({
   id: z.guid(),
   title: z.string(),
-  thumbnailKey: z.string().nullable(),
   durationSeconds: z.number().int().positive(),
   difficulty: z.string().nullable(),
 });

@@ -57,7 +57,6 @@ export type {
   CreateVideoInput,
   PaginatedAdminVideoResponse,
   UpdateVideoInput,
-  UploadUrlRequest,
   UploadUrlResponse,
 } from './admin-videos';
 

@@ -19,13 +19,6 @@ The assessment engine is the core value proposition of FFP. It uses a **database
 9. **Video-guided**: Physical assessments include video demonstrations from S3 + CloudFront
 10. **Normalised steps**: Flow steps stored in dedicated `flow_steps` table with branching rules
 
-### Post-MVP Enhancements
-
-- Visual template builder (drag-and-drop)
-- A/B testing for assessment templates
-- Advanced analytics (dropout points, question difficulty)
-- Body-part-specific flows with branching to specialised templates
-
 ---
 
 ## User Journey
@@ -632,18 +625,6 @@ System administrators can manage assessment templates via basic CRUD forms.
 | Save Progress     | `packages/functions/src/assessments/save-progress.ts`     |
 | Submit Assessment | `packages/functions/src/assessments/submit-assessment.ts` |
 | Process Jobs      | `packages/functions/src/jobs/process-jobs.ts`             |
-
----
-
-## Future Enhancements
-
-### Post-MVP Features
-
-1. **Visual Template Builder** - Drag-and-drop question ordering with preview
-2. **A/B Testing** - Multiple template versions with random assignment
-3. **Advanced Analytics** - Dropout points, question difficulty analysis
-4. **Assessment Reminders** - Email notifications for abandoned assessments
-5. **Offline Support** - Local storage sync when back online
 
 ---
 

@@ -68,6 +68,7 @@ export const SessionPage: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [restSeconds, setRestSeconds] = useState<number | null>(null);
   const [showExitDialog, setShowExitDialog] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
 
   // Find session data from programme detail
   const sessionData = useMemo(() => {
@@ -103,8 +104,13 @@ export const SessionPage: React.FC = () => {
       return 'not-found';
     }
 
-    if (needsStart) {
+    if (needsStart && !hasStarted) {
       return 'needs-start';
+    }
+
+    // Session started but data hasn't refreshed yet — show loading
+    if (hasStarted && needsStart) {
+      return 'loading';
     }
 
     if (isComplete) {
@@ -122,6 +128,7 @@ export const SessionPage: React.FC = () => {
     phaseId,
     templateSessionId,
     needsStart,
+    hasStarted,
     isComplete,
     exercises.length,
   ]);
@@ -137,10 +144,17 @@ export const SessionPage: React.FC = () => {
       return;
     }
 
-    startSession.mutate({
-      programmePhaseId: sessionData.phase.id,
-      templateSessionId: sessionData.session.templateSessionId,
-    });
+    startSession.mutate(
+      {
+        programmePhaseId: sessionData.phase.id,
+        templateSessionId: sessionData.session.templateSessionId,
+      },
+      {
+        onSuccess: () => {
+          setHasStarted(true);
+        },
+      }
+    );
   }, [sessionData, startSession]);
 
   // Advance to next uncompleted exercise

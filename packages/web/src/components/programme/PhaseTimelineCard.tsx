@@ -62,7 +62,11 @@ export const PhaseTimelineCard: React.FC<PhaseTimelineCardProps> = ({
   const isInView = useInView(ref, { once: true, margin: '-80px 0px' });
 
   const isExpanded = isFirst || isInView;
-  const isAccessible = phase.status === 'completed' || phase.status === 'in_progress';
+  // Accessible if completed/in_progress, or if the backend sent exercise data (next phase to start)
+  const isAccessible =
+    phase.status === 'completed' ||
+    phase.status === 'in_progress' ||
+    phase.sessions.some((s) => s.exercises !== undefined);
 
   const completedSessions = phase.sessions.filter(
     (s) => s.userSession?.status === 'completed'
@@ -70,7 +74,10 @@ export const PhaseTimelineCard: React.FC<PhaseTimelineCardProps> = ({
   const totalSessions = phase.sessions.length;
   const progressPercent = totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0;
 
-  const { label: statusLabel, variant: statusVariant } = STATUS_BADGE_MAP[phase.status];
+  const isNextPhase = phase.status === 'not_started' && isAccessible;
+  const { label: statusLabel, variant: statusVariant } = isNextPhase
+    ? { label: 'Up Next', variant: 'current' as const }
+    : STATUS_BADGE_MAP[phase.status];
 
   return (
     <div ref={ref} className="flex gap-4">
@@ -95,8 +102,10 @@ export const PhaseTimelineCard: React.FC<PhaseTimelineCardProps> = ({
         <FadeSlideIn delay={isFirst ? 0 : 0.1} duration={isFirst ? 0 : 0.4} slideDistance={15}>
           <Card
             className={`${
-              phase.status === 'in_progress' ? 'ring-1 ring-ffp-dark-blue/10' : ''
-            } ${phase.status === 'not_started' ? 'opacity-70' : ''}`}
+              phase.status === 'in_progress' || (phase.status === 'not_started' && isAccessible)
+                ? 'ring-1 ring-ffp-dark-blue/10'
+                : ''
+            } ${phase.status === 'not_started' && !isAccessible ? 'opacity-70' : ''}`}
           >
             <div className="p-5">
               {/* Header — always visible */}

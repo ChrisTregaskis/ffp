@@ -1,4 +1,4 @@
-import { uploadUrlRequestSchema, type UploadUrlResponse } from '@ffp/core';
+import type { UploadUrlResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
   createColdStartContext,
@@ -38,22 +38,14 @@ if (!videosBucketName || !assetsBucketName) {
 /**
  * Lambda handler for POST /admin/videos/upload-url
  *
- * Generates presigned S3 PUT URLs for direct browser-to-S3 video upload.
- * Optionally generates a thumbnail upload URL when thumbnailExtension is provided.
+ * Generates a presigned S3 PUT URL for direct browser-to-S3 video upload.
  * Admin role required.
- *
- * Request body (optional):
- * ```json
- * { "thumbnailExtension": "jpg" }
- * ```
  *
  * Response:
  * ```json
  * {
  *   "videoUploadUrl": "https://...",
  *   "videoS3Key": "library/{uuid}.mp4",
- *   "thumbnailUploadUrl": "https://..." | null,
- *   "thumbnailKey": "thumbnails/{uuid}.jpg" | null,
  *   "expiresIn": 900
  * }
  * ```
@@ -66,10 +58,6 @@ export const handler = withErrorHandling(
       throw new ForbiddenError('Only system administrators can upload videos');
     }
 
-    // Parse optional request body for thumbnail extension
-    const body = event.body ? (JSON.parse(event.body) as unknown) : {};
-    const input = uploadUrlRequestSchema.parse(body);
-
-    return await generateUploadUrls(context, input.thumbnailExtension);
+    return await generateUploadUrls(context);
   }
 );
