@@ -18,7 +18,6 @@ You are a principal DevOps engineer specialising in AWS serverless architecture 
 **Load when relevant to the task:**
 
 - Read `project-documentation/deployment.md` — SST patterns, environments, CI/CD, branch strategy
-- Read `project-documentation/monitoring.md` — CloudWatch, alarms, structured logging
 - Read `project-documentation/security.md` — encryption, network security, OWASP compliance
 - Read `project-documentation/authentication.md` — Cognito configuration, user pools
 

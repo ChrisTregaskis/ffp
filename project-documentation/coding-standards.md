@@ -1,6 +1,21 @@
 # FFP - Coding Standards
 
-Consistent coding standards for the FFP codebase. For architecture details, see `architecture.md`. For commands, see `REFERENCE.md`.
+Consistent coding standards for the FFP codebase. For architecture details, see `architecture.md`.
+
+---
+
+## Path Alias Strategy
+
+Namespace-based path aliases prevent conflicts between packages:
+
+| Package       | Namespace     | Example                                                  |
+| ------------- | ------------- | -------------------------------------------------------- |
+| **Web**       | `@web/`       | `import { Button } from "@web/components/Button"`        |
+| **Core**      | `@core/`      | `import { UserService } from "@core/users/user.service"` |
+| **Functions** | `@functions/` | `import { handler } from "@functions/auth/login"`        |
+| **Workspace** | `@ffp/`       | `import { APP_NAME } from "@ffp/core"`                   |
+
+When adding new directories, update both `tsconfig.json` (paths) and Vite config (web package only).
 
 ---
 
