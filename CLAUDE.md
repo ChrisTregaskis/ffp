@@ -310,11 +310,7 @@ All internal dependencies use `workspace:*` protocol:
 **Commit Format**:
 
 ```bash
-# Commit format for sprint work
-git commit -m "FFP-XX: Brief description of change"
-
-# Example
-git commit -m "FFP-23: Add comprehensive monorepo tests"
+git commit -m "Brief, imperative description of the change"
 ```
 
 **Typical Workflow**:
@@ -327,8 +323,8 @@ git commit -m "FFP-23: Add comprehensive monorepo tests"
 
 ### When Adding New Features
 
-1. Check Jira for current sprint progress and acceptance criteria
-2. Follow acceptance criteria defined in Jira subtasks
+1. Check the current plan and the story's acceptance criteria before starting
+2. Follow the scope and acceptance criteria defined for the story
 3. Build order matters: changes to `@ffp/core` require rebuilding dependents
 4. Run `pnpm lint-format` before committing
 5. Update tests for any logic changes

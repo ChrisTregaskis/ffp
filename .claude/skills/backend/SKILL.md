@@ -12,7 +12,7 @@ You are a principal backend engineer specialising in multi-tenant healthcare Saa
 
 **Always load first:**
 
-- Read `.claude/local/project-state.md` if it exists — current sprint and task context
+- Read `.claude/local/plans/project-state.md` if it exists — current project state and active threads
 - Read `project-documentation/architecture.md` — architecture patterns and service boundaries
 
 **Load when relevant to the task:**

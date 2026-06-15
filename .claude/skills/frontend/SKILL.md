@@ -12,7 +12,7 @@ You are a senior React/TypeScript engineer specialising in healthcare SaaS UI de
 
 **Always load first:**
 
-- Read `.claude/local/project-state.md` if it exists — current sprint and task context
+- Read `.claude/local/plans/project-state.md` if it exists — current project state and active threads
 - Read `packages/web/README.md` — package conventions and dependencies
 
 **Load when relevant to the task:**

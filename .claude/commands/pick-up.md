@@ -1,53 +1,49 @@
-# Pick Up User Story
+# Pick Up Story — Scope & Draft Kickoff
 
-You are picking up a new user story for implementation planning. The Jira ticket key is: **$ARGUMENTS**
+You are acting as the **track principal**. Take one story, reconcile it against current reality, finalise its scope, and draft the **kickoff prompt** that a fresh implementation session will run. **Orchestrate, don't implement** — no feature code here.
 
-## Instructions
+**Arguments**: $ARGUMENTS — a story ID (e.g. `T1-2`) or slug. If a matching story file doesn't exist yet, create one from the epic plan.
 
-1. **Fetch the user story** from Jira using the Atlassian MCP tools. Get the full ticket details including description, acceptance criteria, and all linked sub-tasks/child issues.
+---
 
-2. **Fetch all sub-tasks** individually to get their full details (description, acceptance criteria, status).
+## Phase 1 — Load context
 
-3. **Review project context** by reading:
-   - `.claude/local/project-state.md` — current sprint status, what's been completed, decisions made. **If this file does not exist**, warn the user: _"⚠ `.claude/local/project-state.md` not found — using Jira as sole context source. See `project-documentation/project-state.md` for setup instructions."_ Then continue using Jira context only.
-   - Any other relevant documents in `project-documentation/` that relate to this user story's domain (e.g., `architecture.md`, `database-schema.md`, `authentication.md`, `assessment-engine.md`)
+1. Read `.claude/local/plans/project-state.md` (snapshot) and `.claude/local/plans/roadmap.md` (active threads).
+2. Read the parent epic plan in `.claude/local/plans/epics/<slug>.md` for this story's track and dependencies.
+3. Read the story file `.claude/local/plans/user-stories/<track-slug>/us-*.md` if it exists. If not, draft it now using the story shape in `CLAUDE.local.md`.
+4. Read the relevant `project-documentation/` and any `notes/spikes/` findings for the domain.
 
-4. **Evaluate and reconcile** the sub-tasks against current project state:
-   - Identify any outdated requirements (things already done, approaches that have changed)
-   - Note dependencies between sub-tasks
-   - Flag any blockers or prerequisites
-   - Amend requirements where the ticket is out of date vs reality
+## Phase 2 — Reconcile & finalise scope
 
-5. **Determine execution order** for the sub-tasks:
-   - Consider dependencies (which sub-tasks must come before others)
-   - Group sub-tasks that are small enough to be completed together on the same branch — preference is to keep the entire user story on one branch where practical
-   - Unless absolutely critical, **defer all tests until MVP launch**
+5. Reconcile the story against current reality: identify anything already done, approaches that have changed, new dependencies, or blockers. Amend the story's scope where it's out of date. **Supersede rather than delete** if scope changed materially — leave a pointer.
+6. Read 2–3 existing implementations in the same pattern so the kickoff can point at them (e.g. the FFP-439 template-CRUD pages when scoping assessment-flow CRUD).
+7. Confirm the branch name (one story, one branch). Note structural dependencies that must land first.
+8. Ask clarifying questions on any genuine ambiguity before drafting — use `AskUserQuestion` for real forks.
 
-6. **Update `.claude/local/project-state.md`** with the implementation plan (skip this step if the file does not exist):
-   - Clean up/remove the previous user story's implementation plan to keep context lean
-   - Add the new implementation plan with:
-     - User story summary
-     - Ordered sub-task list with groupings (which sub-tasks share a branch/PR)
-     - Any amended requirements or notes
-     - Dependencies and prerequisites
-   - Keep the format consistent with what's already in the file
+## Phase 3 — Draft the kickoff
 
-7. **Rename the session** to match the user story: `FFP-{key number} {Jira story title}` (e.g., `FFP-386 Dashboard Page`). Use the `/rename` command.
+9. Write **one** kickoff prompt to `.claude/local/plans/prompts/<story-id>-kickoff.md` using the kickoff shape from `CLAUDE.local.md`:
+   - intent (2–4 lines); read-first order; numbered in-scope items with gotchas inline; out-of-scope (and which story owns it); constraints (British English, no `.claude/local`/phase-gate jargon in shipped files, package boundaries, RLS); definition of done incl. gates (typecheck/lint/test/build); the "when done" block (write completion summary + reviewer brief, tell the principal, don't open the PR, STOP for review before wrap-up).
+   - The kickoff must tell the impl session which skill(s) to load: `/database`, `/backend`, `/frontend`, `/infrastructure`.
+10. Update the story file's status to "in progress" and `roadmap.md`'s working notes (dated entry). Refresh `project-state.md` active threads if the headline changed.
 
-8. **Ask clarifying questions** if anything is ambiguous or if you spot conflicts between ticket requirements and current project state.
+Draft **one kickoff at a time** — do not pre-draft the next story.
 
 ## Output
 
-After completing the above, provide a summary of:
+Summarise (brief): story intent, final scope (in/out), branch, dependencies, any amendments made. Then give me the kickoff to paste into the implementation pane:
 
-- The user story overview
-- Execution order with groupings
-- Any changes made to outdated requirements
-- Any questions or decisions needed before starting implementation
+```
+Kickoff saved to .claude/local/plans/prompts/<story-id>-kickoff.md
+
+In the implementation pane (bottom-right), start a fresh session and run:
+  /work-on <story-id>
+```
 
 ## Constraints
 
-- Use **British English** throughout
-- Do not run `git add`, `git commit`, or `git push`
-- Do not start implementation — this is planning only
-- Defer tests unless absolutely critical for the feature to work
+- British English throughout.
+- **Do not implement** — planning only.
+- **Do not run git mutations** — I control git. Reads + branch creation are fine.
+- Defer tests unless critical for the feature to function (Phase 1 philosophy).
+- `.claude/local/` is the source of truth — Jira is dormant, don't fetch from it.

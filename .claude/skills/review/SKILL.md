@@ -1,91 +1,88 @@
 ---
 name: review
-description: Review code changes for FFP project standards including multi-tenant security, British English, architecture patterns, and SOLID principles. Use when reviewing PRs, checking branch changes, or auditing code quality.
-allowed-tools: Read, Grep, Glob, Bash(git diff:*), Bash(git log:*), Bash(git branch:*), Bash(git status:*)
-argument-hint: --sprint=<number>
+description: Review code changes against FFP conventions — multi-tenant RLS isolation, British English, domain architecture, package/layer boundaries, theme components, SOLID. Use when reviewing a branch diff or PR for project-standards compliance. Surfaces findings to review-comments.md; never edits the code under review.
+argument-hint: --base=<branch>
 ---
 
-# FFP Code Review
+# FFP Conventions Review
 
-You are a senior engineer reviewing code for a multi-tenant healthcare SaaS platform. You prioritise security, architecture compliance, and code quality.
+You review code for a multi-tenant healthcare SaaS platform against **FFP-specific conventions**. You prioritise security, multi-tenant isolation, and architecture compliance.
 
-## Resolve Base Branch
+## How this fits the review workflow
 
-**Arguments**: $ARGUMENTS
+- **`/code-review`** (built-in) is the correctness/bug engine. **`/simplify`** (built-in) handles reuse/simplification/efficiency cleanups (and applies them).
+- **This skill** carries the FFP conventions those built-ins don't know: RLS, Cognito claim mapping, package/layer boundaries, British English, theme components/colours, `publicId` rules.
+- Run this alongside `/code-review` when auditing a branch. Findings from all passes accumulate in **one** `review-comments.md`.
 
-Extract the following flag from the arguments:
+## Two house rules (non-negotiable)
 
-- `--sprint=<NUMBER>` — the sprint number to review against (e.g., `9`). The base branch is inferred as `feature/sprint{N}` (e.g., `--sprint=9` → `feature/sprint9`).
+1. **Surface; never apply.** This pass writes findings only — it must **not** edit the code under review. Applying or declining a finding is the implementing session's call. Hand-off: `review-comments.md` out → author reads → author acts.
+2. **One rolling artefact.** All findings land in `.claude/local/notes/review-comments.md`. Summarise in chat with a _pointer_ to the file — don't scatter findings across chat.
 
-If `--sprint` is not provided, default to `main`.
+### Add-or-reconcile
 
-## Branch Changes
+Before writing, read the existing `.claude/local/notes/review-comments.md`:
 
-**Current Branch**: !`git branch --show-current`
+- **Same change under review** (a second angle, a re-run after fixes, or `/code-review` already wrote findings) → continue the finding numbers and **append**; mark resolved items as addressed; keep prior findings that still stand.
+- **Stale leftover** from a different branch/deliverable → **replace** wholesale.
 
-**Status**: !`git status --short`
+## Resolve base & gather the diff
 
-**Uncommitted changes** (staged + unstaged): !`git diff HEAD`
+**Arguments**: $ARGUMENTS — `--base=<branch>` sets the base to compare against. Default to `main`.
 
-After resolving the base branch above, run `git log <base-branch>..HEAD --oneline --no-decorate` and `git diff <base-branch>...HEAD` using Bash to get the commits and diff.
+- **Current branch**: !`git branch --show-current`
+- **Status**: !`git status --short`
+- Run `git log <base>..HEAD --oneline --no-decorate` and `git diff <base>...HEAD` to get commits and diff.
 
-## Review Context
+## Load context
 
-**Check for review context FIRST** — try to read `.claude/review-context.md`
+- Read `.claude/local/notes/review-context.md` — the reviewer brief (goals, changed-files tree, focus areas, known limitations, questions). If missing, note "No review context provided" and proceed generally.
+- Read `CLAUDE.md` (team standards), `.claude/local/plans/project-state.md` (current threads), `project-documentation/architecture.md` (patterns).
+- Read `security-checklist.md` (this skill dir) for OWASP coverage and code examples; `examples/good-review.md` for tone.
 
-- If exists: Extract goals, requirements, focus areas, known limitations, developer questions.
-- If missing: Note "No review context provided" and proceed with general review.
+## Review checklist
 
-## Project Context
+### [Blocking] Security & multi-tenant safety
 
-Load these to understand current standards and sprint goals:
-
-- Read `CLAUDE.md` — team-wide project standards
-- Read `.claude/local/project-state.md` if it exists — current sprint and task context
-- Read `project-documentation/architecture.md` — architecture patterns
-
-**Supporting files in this skill directory:**
-
-- Read `security-checklist.md` for detailed security patterns, OWASP coverage, and code examples
-- Read `examples/good-review.md` for expected output format and tone
-
-## Review Checklist
-
-### [CRITICAL] Security & Multi-Tenant Safety
-
-- [ ] RLS context set in all database transactions (`setRLSContext`)
-- [ ] `organisation_id` validated in all queries (belt and braces with RLS)
+- [ ] RLS context set in every database transaction (`setRLSContext`)
+- [ ] `organisation_id` validated in queries (belt-and-braces with RLS)
 - [ ] Cognito claims use `custom:` prefix (`claims['custom:tenantId']` maps to organisationId)
 - [ ] Parameterised queries only (no SQL string concatenation)
-- [ ] No secrets, API keys, or credentials committed
-- [ ] Input validation with Zod schemas at service boundaries
+- [ ] No secrets/keys/credentials committed
+- [ ] Input validation with Zod at service boundaries
 - [ ] Error messages don't leak sensitive data (tenant IDs, stack traces)
-- [ ] NEVER trust client-provided `organisationId` — always extract from JWT
+- [ ] NEVER trust client-provided `organisationId` — always from JWT
 
-### [HIGH] Architecture Compliance
+### [Warning] Architecture & boundaries
 
-- [ ] Domain-organised structure: Handler → Service → Repository
-- [ ] No business logic in handlers (handlers = HTTP interface only)
-- [ ] Services orchestrate, repositories do data access
-- [ ] Error handling with custom error classes (not generic `Error`)
-- [ ] TypeScript strict mode (no `any` types, explicit return types)
-- [ ] New interfaces/types in `@ffp/web` or `@ffp/functions` checked against `@ffp/core` schemas and types — avoid duplicating types that already exist or could be inferred (e.g., using `z.infer<>` from Zod schemas, re-exporting from core)
-- [ ] URL-facing tables include `publicId` column (nanoid); frontend routes use `publicId`, not UUID
+- [ ] Domain-organised: Handler → Service → (Entity) → Repository
+- [ ] No business logic in handlers (HTTP interface only); services orchestrate; repositories do data access
+- [ ] Custom error classes, not generic `Error`
+- [ ] TypeScript strict (no `any`, explicit return types)
+- [ ] `@ffp/web`/`@ffp/functions` types checked against `@ffp/core` — avoid duplicating types that exist or could be inferred (`z.infer<>`, re-export from core)
+- [ ] Package boundaries respected (`@ffp/database` never imports `@ffp/core`; web imports core only)
+- [ ] URL-facing tables include `publicId` (nanoid); frontend routes use `publicId`, not UUID
+- [ ] White-label discipline: client/brand/provider specifics in config + adapters, not generic feature logic
 
-### [MEDIUM] Code Quality
+### [Suggestion] Code quality
 
-- [ ] British English spelling in FFP-specific code (organise, colour, behaviour, programme)
-  - Exception: Framework integrations (TailwindCSS, library APIs) use framework's spelling
+- [ ] British English in FFP code (organise, colour, behaviour, programme) — framework APIs/Tailwind exempt
 - [ ] No emojis in code, comments, or user-facing strings
-- [ ] Themed components used (not raw `<h1>`-`<h5>`, `<p>`, `<span>`, `<button>`)
-- [ ] Theme colours used (not hard-coded `text-gray-XXX`, `bg-blue-XXX`)
-  - Available theme colours: `foreground`, `muted-foreground`, `primary`, `secondary`, `success`, `destructive`, `warning`, `info`
-  - Background/border with opacity: `bg-primary/10`, `border-destructive/20`
-  - Exceptions: gradients, structural layout, dev-only components
-- [ ] 2-space indentation, descriptive naming
-- [ ] Comments explain "why", not "what"
+- [ ] Themed components used (not raw `<h1>`–`<h5>`, `<p>`, `<span>`, `<button>`); one component per file
+- [ ] Theme colours (not hard-coded `text-gray-XXX`): `foreground`, `muted-foreground`, `primary`, `secondary`, `success`, `destructive`, `warning`, `info`; opacity via `bg-primary/10`
+- [ ] Comments explain "why", not "what"; descriptive naming; 2-space indentation
+- [ ] No `.claude/local` or phase/gate/track labels in shipped code
 
-### [CRITICAL] Multi-Tenant Safety (Quick Reference)
+### [Warning] Duplicate surface & helper extraction
+
+A required pre-merge check — structural duplication and bloat are flagged, not waved through.
+
+- [ ] **No parallel implementations of an existing procedure.** Before approving a new helper, grep for an existing one. Common shared surfaces: `applyPagination`, `escapeLikePattern`, `formatDateOnly`, `buildPaginationMeta`, `withAdminContext` (backend); `@ffp/core` schemas/types; web components (`ComposableForm`, `Table`, form fields) and hooks (`useApiTable`, `useXMutations`). Cite **both** locations (existing pattern + new duplicate) and name the helper to call instead. Compare structure, not text — near-verbatim bodies with renamed vars are still duplicates.
+- [ ] **Extend over re-create.** Re-implementing something `@ffp/core` already exports, or a second component/hook that duplicates an existing one, is Blocking unless the divergence is genuinely intentional (capture the rationale in a comment). Bring everyone up to the richer behaviour, not down.
+- [ ] **File bloat.** Files growing past ~200 lines are a prompt to ask whether they do one thing or several; extract general-purpose helpers to a shared module (`packages/core/lib/`, `@web/` shared) rather than leaving them buried in a feature. Dependency flows feature → lib, never lib → feature.
+- [ ] **Author TODOs flagging duplication** (`// TODO: abstract this`) — treat as the author already agreeing it should be removed.
+
+### Multi-tenant quick reference
 
 ```typescript
 // RLS — CORRECT
@@ -97,41 +94,32 @@ await db.transaction(async (tx) => {
 // JWT Claims — CORRECT (custom:tenantId maps to organisationId)
 const organisationId = claims['custom:tenantId'];
 
-// Organisation Filter — CORRECT
+// Organisation filter — CORRECT
 where: and(eq(users.id, userId), eq(users.organisation_id, organisationId));
 ```
 
-## Output Format
+## Finding format (write to `.claude/local/notes/review-comments.md`)
 
-```markdown
-# Code Review Summary
+Number findings sequentially across severities — **B** Blocking (must fix), **W** Warning (should fix), **S** Suggestion (consider). Each finding:
 
-**Branch**: [branch-name]
-**Base**: [base branch used]
-**Files Changed**: X files, +Y/-Z lines
-**Review Context**: [Yes/No] - [If yes, summarise key goals and focus areas]
+1. Number + category tag — e.g. `B1 [RLS]`, `W2 [Architecture]`, `S3 [British English]`
+2. File location — `path/to/file.ts:42`
+3. Summary — one line
+4. Reasoning — a short paragraph on _why it matters_ (what breaks, what's the risk)
+5. Current / Recommended code blocks where relevant
 
-## [CRITICAL] Issues (Must Fix Before Merge)
+Close with a severity-count table and one recommendation:
 
-[Specific file:line references with WRONG vs CORRECT code and explanation of why]
+- **Merge** (clean)
+- **Merge with follow-ups** (no blockers, warnings worth doing soon)
+- **Request changes** (blockers first)
 
-## [HIGH] Priority (Should Fix)
+Security/correctness outranks cleanup when space is tight. After writing, post a brief chat summary with the counts and a pointer to the file.
 
-[Architecture violations, type safety issues with remediation]
+## Review philosophy
 
-## [MEDIUM] Suggestions (Consider)
-
-[Code quality improvements with trade-offs noted]
-
-## Positive Observations
-
-[What was done well — reinforce good practices]
-```
-
-## Review Philosophy
-
-1. **Security first** — healthcare data requires zero tolerance for vulnerabilities
-2. **Constructive** — explain why, show how to fix, mentor don't just criticise
-3. **Specific** — file:line references with remediation code examples
-4. **Balanced** — acknowledge good practices alongside issues
-5. **Phase 1 context** — don't over-engineer; ship fast, iterate on feedback
+1. **Security first** — healthcare data, zero tolerance for tenant leaks.
+2. **Constructive** — explain why, show how to fix, mentor.
+3. **Specific** — file:line + remediation code.
+4. **Balanced** — acknowledge what's done well.
+5. **Phase 1 context** — don't over-engineer; ship fast, iterate.

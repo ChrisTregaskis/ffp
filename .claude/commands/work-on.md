@@ -1,80 +1,47 @@
-# Work On Sub-Task
+# Work On Story — Implementation Session
 
-You are implementing a sub-task from an active user story. The Jira ticket key for the sub-task is: **$ARGUMENTS**
+You are an **implementation session**: implement **one story on one branch**, then stop at the completion gate for review. This is the only session type that writes feature code.
 
-**Note**: This is a Jira ticket key, not a GitHub issue number.
+**Arguments**: $ARGUMENTS — the story ID (e.g. `T1-2`).
+
+---
 
 ## Setup
 
-1. **Read the implementation plan** from `.claude/local/project-state.md` if it exists — this is the source of truth for what needs to be done, execution order, and branch groupings. The parent user story context is already documented here from the `/pick-up` step. **If this file does not exist**, warn the user: _"⚠ `.claude/local/project-state.md` not found — using Jira as sole context source. See `project-documentation/project-state.md` for setup instructions."_ Then continue using Jira context only.
-
-2. **Fetch the sub-task** from Jira using the Atlassian MCP tools. Get the full ticket details (description, acceptance criteria, status).
-
-3. **Reconcile**: If `project-state.md` exists and the Jira ticket conflicts with it, treat `project-state.md` as the source of truth. Flag any discrepancies and clarify with the user before proceeding. If `project-state.md` does not exist, treat Jira as the source of truth.
-
-4. **Read `.claude/review-context.md`** to understand what's already been done on this branch:
-   - If this is the **first sub-task** of the user story, you will need to completely rewrite `review-context.md` with fresh context for this user story
-   - If this is a **continuation**, the file will contain prior sub-task work — build on it
-
-5. **Rename the session** if not already named for the parent user story. Use `/rename` with the format `FFP-{key number} {Jira story title}` (e.g., `FFP-386 Dashboard Page`). Skip if the session is already named for this story.
-
-6. **Load the relevant Claude skill** based on the requirements of the sub-task:
-   - Database schema/migration work → `/database`
-   - Lambda handlers, services, repositories → `/backend`
-   - React components, pages, hooks → `/frontend`
-   - SST infrastructure → `/infrastructure`
-   - Multiple domains → load the primary skill, reference others as needed
+1. **Read the kickoff** `.claude/local/plans/prompts/<story-id>-kickoff.md` — this is your brief: intent, read-first order, scope, constraints, definition of done. If it's missing, ask me for it (the track principal should have produced it via `/pick-up`).
+2. **Read the story file** `.claude/local/plans/user-stories/<track-slug>/us-*.md` and `.claude/local/plans/project-state.md` for context. The story file + kickoff are the source of truth; flag any conflict before proceeding.
+3. **Read `.claude/local/notes/review-context.md`** to see what's already on this branch:
+   - First story on the branch → you'll **replace** this file with a fresh reviewer brief on completion.
+   - Continuation → build on the existing content.
+4. **Rename the session** to the kickoff's session name (e.g. `T1-2 Assessment Flow Builder`) via `/rename`.
+5. **Confirm the branch.** Create it off the stated base if it doesn't exist (`git checkout -b <branch> <base>` is allowed). Never commit/push.
+6. **Load the relevant skill(s)** the kickoff names: `/database`, `/backend`, `/frontend`, `/infrastructure`.
 
 ## Implementation
 
-6. **Follow existing patterns** — this is critical for code consistency and quality:
+7. **Follow existing patterns** — read 2–3 existing files in the same pattern before writing new ones.
+   - **Backend**: layer order Schema → Repository → Service → Handler. Reuse shared utilities (`applyPagination`, `escapeLikePattern`, `formatDateOnly`, `buildPaginationMeta`, `withAdminContext`). Set RLS context in every transaction. Match existing signatures, error classes, logging.
+   - **Frontend**: use existing components, never raw HTML elements when a component exists (`FormTextInput`, `FormSelect`, `FormRow`, `FormActions`, `ComposableForm`, `PageContainer`, `PageHeader`, `ContentPanel`, `Table`, `TableControls`, `StatusResult`, `Button`, `Icon`, `Text`, `StaticAlert`, `PageState`). Follow the hook patterns (`useApiTable`, `useAdminXQuery`, `useXDetailQuery`, `useXMutations`), `ffpClient` + `parseApiResponse` + Zod, and the hierarchical query-key factory. One component per file.
+   - **General**: prefer extending existing files/utilities over new abstractions. If a new component variant or pattern is needed, **ask before inventing it**.
+8. **Implement to the acceptance criteria.** Apply the loaded skill's standards and the constraints in the kickoff (British English; no `.claude/local`/phase-gate jargon in shipped code; package boundaries; RLS; theme components/colours).
+9. **Defer tests** unless critical for the feature to function.
+10. **Run the gates** before presenting: `pnpm typecheck`, `pnpm lint`, `pnpm test` (as relevant), `pnpm build` if package boundaries changed.
 
-   **Backend (CRUD APIs):**
-   - Before writing new code, read existing implementations in the same domain (e.g., customer APIs when building user APIs)
-   - Follow the established layer pattern: Schema → Repository → Service → Handler
-   - Reuse shared utilities (`applyPagination`, `escapeLikePattern`, `formatDateOnly`, `buildPaginationMeta`, `withAdminContext`)
-   - Match the existing service method signatures, error handling patterns, and logging conventions
-   - If the pattern doesn't fit, ask the user before inventing a new approach
+## Completion gate
 
-   **Frontend (UI pages):**
-   - Before building a new page, read the most recent equivalent (e.g., `CustomerListPage` when building `UserListPage`)
-   - Use existing components — never create raw HTML elements when a component exists (`FormTextInput`, `FormSelect`, `FormRow`, `FormActions`, `ComposableForm`, `PageContainer`, `PageHeader`, `ContentPanel`, `Table`, `TableControls`, `StatusResult`, `Button`, `Icon`, `Text`, `StaticAlert`, `PageState`)
-   - Follow established hooks patterns (`useApiTable`, `useAdminXQuery`, `useXDetailQuery`, `useXMutations`)
-   - Match the API client pattern (`ffpClient` + `parseApiResponse` + Zod schema validation)
-   - Match the query key factory pattern (hierarchical `as const` tuples)
-   - If a new component variant is needed (e.g., `disabled` prop on `FormTextInput`), ask the user before adding it
+11. **Demonstrate the work and present status, then STOP.** Do **not** write the completion summary, set the story to done, or wrap up until I review and explicitly ask. If the story has multiple discrete chunks, check in between them and give me time for a light review before continuing.
 
-   **General:**
-   - Read 2-3 existing files in the same pattern before writing new ones
-   - Prefer extending existing files/utilities over creating new abstractions
-   - When in doubt about an approach, ask rather than guess
+## On wrap-up (only after I ask)
 
-7. **Implement the sub-task** following the acceptance criteria, implementation plan, and existing patterns. Apply the loaded skill's standards.
-
-8. **Do NOT move onto the next sub-task** until the user has reviewed the work. Check in between sub-tasks and give the user time to do a light code review before moving on, even if working on the same branch.
-
-9. **Defer tests** unless absolutely critical for the feature to function.
-
-## On Completion
-
-11. **Update `.claude/review-context.md`**:
-    - If first sub-task: completely rewrite with new user story context, branch info, requirements, and changes made
-    - If continuation: append the new sub-task's changes to the existing file
-    - Follow the existing format (see current file for structure): goals, requirements with acceptance criteria checklist, changes table per sub-task, areas to focus, known limitations, testing notes
-    - This file accumulates all work for the user story — it will be used for full review and developer testing once all sub-tasks are complete
-
-12. **Update `.claude/local/project-state.md`** (skip this step if the file does not exist):
-    - Mark the sub-task as completed in the implementation plan
-    - Note any decisions made or deviations from the plan
-    - Keep the updates concise
-
-13. **Summarise** what was done and confirm you're ready for the user's review before proceeding to the next sub-task.
+12. **Replace `.claude/local/notes/review-context.md`** with a reviewer brief: a changed-files tree with M/A markers + one clause per file, the story's goals, acceptance criteria checklist, areas to focus, known limitations, and any questions for the reviewer.
+13. **Write the completion summary** to `.claude/local/notes/<story-id>-completion-summary.md`: what shipped, deltas from scope, carry-forwards (grouped by destination track), open items.
+14. **Update** the story file status (→ done) and append a dated entry to `roadmap.md`; refresh `project-state.md` active threads.
+15. Tell me it's ready for review (`/full-review`, or `/code-review` for a quick correctness-only pass) and for commit — **do not open the PR**.
 
 ## Constraints
 
-- Use **British English** throughout
-- Do not run `git add`, `git commit`, or `git push`
-- Do not move to the next sub-task without user review
-- Defer tests unless absolutely critical
-- `.claude/local/project-state.md` is the source of truth over Jira tickets (when it exists)
-- Load the appropriate Claude skill for the domain of work
+- British English throughout.
+- **Do not run `git add`, `git commit`, `git push`, merge, or open a PR** — I control git. Branch creation + checkout are fine.
+- Stop at the completion gate; don't self-approve wrap-up.
+- Defer tests unless critical.
+- Jira is dormant — the story file + kickoff are the source of truth.
