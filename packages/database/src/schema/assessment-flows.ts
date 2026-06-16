@@ -10,6 +10,8 @@ import {
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
+import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
 import type { ScoringConfig } from '../types';
 
 /**
@@ -30,6 +32,7 @@ export const assessmentFlows = pgTable(
   'assessment_flows',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    publicId: publicIdColumn(),
     name: varchar('name', { length: 255 }).notNull(),
     description: text('description'),
 
@@ -44,7 +47,10 @@ export const assessmentFlows = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  (table) => [index('idx_assessment_flows_active').on(table.isActive)]
+  (table) => [
+    publicIdIndex('assessment_flows', table.publicId),
+    index('idx_assessment_flows_active').on(table.isActive),
+  ]
 );
 
 export const insertAssessmentFlowSchema = createInsertSchema(assessmentFlows);

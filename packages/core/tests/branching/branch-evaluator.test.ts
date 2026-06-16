@@ -34,6 +34,7 @@ describe('Branch Evaluator', () => {
   function createFlowStep(overrides: Partial<FlowStepRecord> = {}): FlowStepRecord {
     return {
       id: '55555555-5555-5555-8555-555555550001',
+      publicId: 'flowstep0001',
       flowId: '44444444-4444-4444-8444-444444440001',
       templateId: null,
       order: 1,

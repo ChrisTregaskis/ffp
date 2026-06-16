@@ -74,6 +74,7 @@ const createUserContext = (): OrganisationContext => ({
 
 const createMockFlow = (id: string): AssessmentFlow => ({
   id,
+  publicId: 'flow00000001',
   name: 'Test Flow',
   description: null,
   scoringConfig: null,
@@ -114,6 +115,7 @@ describe('Assessment Service', () => {
       const mockFlowSteps: FlowStepWithConfig[] = [
         {
           id: randomUUID(),
+          publicId: 'flowstep0001',
           flowId,
           templateId: null,
           order: 1,
@@ -179,6 +181,7 @@ describe('Assessment Service', () => {
       const mockFlowSteps: FlowStepWithConfig[] = [
         {
           id: randomUUID(),
+          publicId: 'flowstep0001',
           flowId,
           templateId: null,
           order: 1,
@@ -245,6 +248,7 @@ describe('Assessment Service', () => {
 
     const createMockFlowWithQuestions = (flowId: string, _templateId: string): AssessmentFlow => ({
       id: flowId,
+      publicId: 'flow00000001',
       name: 'Test Flow',
       description: null,
       scoringConfig: null,
@@ -259,6 +263,7 @@ describe('Assessment Service', () => {
     const createMockFlowSteps = (flowId: string, templateId: string): FlowStepWithConfig[] => [
       {
         id: randomUUID(),
+        publicId: 'flowstep0001',
         flowId,
         templateId: null,
         order: 1,
@@ -272,6 +277,7 @@ describe('Assessment Service', () => {
       },
       {
         id: randomUUID(),
+        publicId: 'flowstep0001',
         flowId,
         templateId,
         order: 2,
@@ -285,6 +291,7 @@ describe('Assessment Service', () => {
       },
       {
         id: randomUUID(),
+        publicId: 'flowstep0001',
         flowId,
         templateId: null,
         order: 3,
@@ -304,6 +311,7 @@ describe('Assessment Service', () => {
     const createMockFlowStepsNoQuestions = (flowId: string): FlowStepWithConfig[] => [
       {
         id: randomUUID(),
+        publicId: 'flowstep0001',
         flowId,
         templateId: null,
         order: 1,
@@ -317,6 +325,7 @@ describe('Assessment Service', () => {
       },
       {
         id: randomUUID(),
+        publicId: 'flowstep0001',
         flowId,
         templateId: null,
         order: 2,
@@ -336,6 +345,7 @@ describe('Assessment Service', () => {
       required = true
     ): QuestionWithConfig => ({
       id,
+      publicId: 'question0001',
       slug: `question-${id.slice(0, 8)}`,
       type,
       questionText: `Question ${id.slice(0, 8)}`,
@@ -715,6 +725,7 @@ describe('Assessment Service', () => {
 
       const flowWithNoQuestions: AssessmentFlow = {
         id: flowId,
+        publicId: 'flow00000001',
         name: 'Test Flow',
         description: null,
         scoringConfig: null,

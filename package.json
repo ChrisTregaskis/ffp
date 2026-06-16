@@ -34,7 +34,7 @@
     "db:verify": "turbo run db:verify --filter=@ffp/database",
     "bootstrap:super-admin": "tsx scripts/bootstrap-super-admin.ts",
     "seed:db": "tsx scripts/seed-database.ts",
-    "sst:dev": "sst dev --mode=basic",
+    "sst:dev": "sst dev --mode=mono",
     "sst:build": "sst build",
     "sst:deploy": "sst deploy",
     "sst:deploy:dev": "sst deploy --stage dev",

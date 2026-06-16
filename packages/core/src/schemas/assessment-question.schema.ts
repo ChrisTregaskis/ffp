@@ -42,6 +42,8 @@ export const assessmentQuestionSchema = z
   .object({
     /** Unique identifier for the question (UUID) */
     id: z.guid(),
+    /** Public identifier for URLs (nanoid, 12 chars) */
+    publicId: z.string().length(12),
     /** Type of question (determines UI component and validation) */
     type: questionTypeSchema,
     /** The question text displayed to the user */

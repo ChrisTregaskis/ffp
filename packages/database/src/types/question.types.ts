@@ -76,6 +76,8 @@ export type AnswerValue = z.infer<typeof answerValueSchema>;
  */
 export interface QuestionWithConfig {
   id: string;
+  /** Public identifier for URLs (nanoid, 12 chars) */
+  publicId: string;
   slug: string;
   type: string;
   questionText: string;

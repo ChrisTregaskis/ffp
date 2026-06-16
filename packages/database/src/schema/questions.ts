@@ -11,6 +11,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { QUESTION_TYPES, SCORE_DIMENSIONS } from '../constants/question.constants';
+import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 import type { QuestionOption, QuestionValidation } from '../types';
 
 export const questionTypeEnum = pgEnum('question_type', [...QUESTION_TYPES]);
@@ -32,6 +33,7 @@ export const questions = pgTable(
   'questions',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    publicId: publicIdColumn(),
     /** Human-readable identifier (e.g., 'goal-primary', 'pain-level') */
     slug: varchar('slug', { length: 100 }).notNull().unique(),
     /** Type of question determines UI and validation */
@@ -54,6 +56,7 @@ export const questions = pgTable(
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => [
+    publicIdIndex('questions', table.publicId),
     index('idx_questions_slug').on(table.slug),
     index('idx_questions_type').on(table.type),
     index('idx_questions_is_active').on(table.isActive),

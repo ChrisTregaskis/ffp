@@ -35,9 +35,11 @@ export const handler = withErrorHandling(
 
     return {
       id: flow.id,
+      publicId: flow.publicId,
       name: flow.name,
       description: flow.description ?? undefined,
       steps: steps.map((s) => ({
+        publicId: s.publicId,
         order: s.order,
         type: s.type,
         templateId: s.templateId ?? undefined,

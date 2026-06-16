@@ -176,6 +176,13 @@
       "when": 1776084890587,
       "tag": "0024_tearful_may_parker",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1781607467294,
+      "tag": "0025_dear_callisto",
+      "breakpoints": true
     }
   ]
 }

@@ -38,6 +38,7 @@ export async function findByTemplateId(
   const records = await db
     .select({
       id: questions.id,
+      publicId: questions.publicId,
       slug: questions.slug,
       type: questions.type,
       questionText: questions.questionText,
@@ -57,6 +58,7 @@ export async function findByTemplateId(
 
   return records.map((record) => ({
     id: record.id,
+    publicId: record.publicId,
     slug: record.slug,
     type: record.type,
     questionText: record.questionText,
@@ -86,6 +88,7 @@ export async function findByTemplateIds(
   const records = await db
     .select({
       id: questions.id,
+      publicId: questions.publicId,
       slug: questions.slug,
       type: questions.type,
       questionText: questions.questionText,
@@ -106,6 +109,7 @@ export async function findByTemplateIds(
 
   return records.map((record) => ({
     id: record.id,
+    publicId: record.publicId,
     slug: record.slug,
     type: record.type,
     questionText: record.questionText,

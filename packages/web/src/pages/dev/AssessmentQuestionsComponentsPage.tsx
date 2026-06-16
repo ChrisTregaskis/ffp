@@ -27,6 +27,7 @@ import { Text } from '@web/components/text';
 // Single choice mock questions
 const mockSingleChoiceQuestion: AssessmentQuestion = {
   id: 'q-single-1',
+  publicId: 'qsingle00001',
   type: 'single-choice',
   question: 'What is your primary goal for this programme?',
   description: 'Select the option that best describes your main objective.',
@@ -41,6 +42,7 @@ const mockSingleChoiceQuestion: AssessmentQuestion = {
 
 const mockSingleChoiceWithManyOptions: AssessmentQuestion = {
   id: 'q-single-2',
+  publicId: 'qsingle00002',
   type: 'single-choice',
   question: 'How often do you currently exercise?',
   options: [
@@ -55,6 +57,7 @@ const mockSingleChoiceWithManyOptions: AssessmentQuestion = {
 
 const mockSingleOptionalQuestion: AssessmentQuestion = {
   id: 'q-single-3',
+  publicId: 'qsingle00003',
   type: 'single-choice',
   question: 'Do you have any previous experience with physiotherapy?',
   options: [
@@ -77,6 +80,7 @@ const mockSingleDisabledDemoQuestion: AssessmentQuestion = {
 // Multi-choice mock questions
 const mockMultiChoiceQuestion: AssessmentQuestion = {
   id: 'q-multi-1',
+  publicId: 'qmulti000001',
   type: 'multi-choice',
   question: 'Which areas are you experiencing discomfort?',
   description: 'Select all that apply.',
@@ -93,6 +97,7 @@ const mockMultiChoiceQuestion: AssessmentQuestion = {
 
 const mockMultiChoiceOptional: AssessmentQuestion = {
   id: 'q-multi-2',
+  publicId: 'qmulti000002',
   type: 'multi-choice',
   question: 'Do you have any of these conditions?',
   description: 'Select all that apply, or leave blank if none.',
@@ -118,6 +123,7 @@ const mockMultiChoiceDisabledDemo: AssessmentQuestion = {
 // Text question mock questions
 const mockTextQuestion: AssessmentQuestion = {
   id: 'q-text-1',
+  publicId: 'qtext0000001',
   type: 'text',
   question: 'Please describe any specific concerns or goals you have for this programme',
   description: 'Share as much detail as you feel comfortable with.',
@@ -126,6 +132,7 @@ const mockTextQuestion: AssessmentQuestion = {
 
 const mockTextQuestionWithMaxLength: AssessmentQuestion = {
   id: 'q-text-2',
+  publicId: 'qtext0000002',
   type: 'text',
   question: 'Briefly describe your current exercise routine',
   description: 'Keep it concise (max 200 characters).',
@@ -134,6 +141,7 @@ const mockTextQuestionWithMaxLength: AssessmentQuestion = {
 
 const mockTextQuestionOptional: AssessmentQuestion = {
   id: 'q-text-3',
+  publicId: 'qtext0000003',
   type: 'text',
   question: 'Is there anything else you would like us to know?',
   description: 'This is optional.',
@@ -153,6 +161,7 @@ const mockTextQuestionDisabledDemo: AssessmentQuestion = {
 // Numeric question mock questions
 const mockNumericQuestion: AssessmentQuestion = {
   id: 'q-numeric-1',
+  publicId: 'qnumeric0001',
   type: 'numeric',
   question: 'How many repetitions can you complete comfortably?',
   description: 'Enter a number between 0 and 100.',
@@ -161,6 +170,7 @@ const mockNumericQuestion: AssessmentQuestion = {
 
 const mockNumericQuestionNoLimits: AssessmentQuestion = {
   id: 'q-numeric-2',
+  publicId: 'qnumeric0002',
   type: 'numeric',
   question: 'How many years have you been active?',
   validation: { required: true },
@@ -168,6 +178,7 @@ const mockNumericQuestionNoLimits: AssessmentQuestion = {
 
 const mockNumericQuestionOptional: AssessmentQuestion = {
   id: 'q-numeric-3',
+  publicId: 'qnumeric0003',
   type: 'numeric',
   question: 'How many days per week do you exercise?',
   description: 'Optional - leave blank if you prefer not to answer.',
@@ -187,6 +198,7 @@ const mockNumericQuestionDisabledDemo: AssessmentQuestion = {
 // Scale question mock questions
 const mockScaleQuestion: AssessmentQuestion = {
   id: 'q-scale-1',
+  publicId: 'qscale000001',
   type: 'scale',
   question: 'How would you rate your current pain level?',
   description: 'Select a number from 1 (no pain) to 10 (severe pain).',
@@ -195,6 +207,7 @@ const mockScaleQuestion: AssessmentQuestion = {
 
 const mockScaleQuestionCustomRange: AssessmentQuestion = {
   id: 'q-scale-2',
+  publicId: 'qscale000002',
   type: 'scale',
   question: 'How satisfied are you with your progress?',
   description: 'Rate from 1 to 5.',
@@ -203,6 +216,7 @@ const mockScaleQuestionCustomRange: AssessmentQuestion = {
 
 const mockScaleQuestionOptional: AssessmentQuestion = {
   id: 'q-scale-3',
+  publicId: 'qscale000003',
   type: 'scale',
   question: 'How confident do you feel about the exercises?',
   validation: { required: false },
@@ -221,6 +235,7 @@ const mockScaleQuestionDisabledDemo: AssessmentQuestion = {
 // Video response mock questions
 const mockVideoResponseQuestion: AssessmentQuestion = {
   id: 'q-video-1',
+  publicId: 'qvideo000001',
   type: 'video-response',
   question: 'Complete as many squats as you can in 30 seconds',
   description:
@@ -231,6 +246,7 @@ const mockVideoResponseQuestion: AssessmentQuestion = {
 
 const mockVideoResponseNoVideo: AssessmentQuestion = {
   id: 'q-video-2',
+  publicId: 'qvideo000002',
   type: 'video-response',
   question: 'Hold a plank position for as long as possible',
   description: 'Enter the duration in seconds.',
@@ -240,6 +256,7 @@ const mockVideoResponseNoVideo: AssessmentQuestion = {
 
 const mockVideoResponseOptional: AssessmentQuestion = {
   id: 'q-video-3',
+  publicId: 'qvideo000003',
   type: 'video-response',
   question: 'Optional: Complete the balance test',
   description: 'This exercise is optional. Enter your result if you completed it.',
