@@ -12,6 +12,7 @@ import { relations } from 'drizzle-orm';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { FLOW_STEP_TYPES } from '../constants/flow.constants';
+import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 import { assessmentFlows } from './assessment-flows';
 import { assessmentTemplates } from './assessment-templates';
 
@@ -39,6 +40,7 @@ export const flowSteps = pgTable(
   'flow_steps',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    publicId: publicIdColumn(),
 
     /** Parent flow this step belongs to */
     flowId: uuid('flow_id')
@@ -87,6 +89,7 @@ export const flowSteps = pgTable(
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => [
+    publicIdIndex('flow_steps', table.publicId),
     /** Index for fetching all steps for a flow */
     index('idx_flow_steps_flow_id').on(table.flowId),
     /** Composite index for ordering steps within a flow */

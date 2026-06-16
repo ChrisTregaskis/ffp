@@ -20,15 +20,18 @@ const QUESTION_UUID_2 = '11111111-1111-1111-8111-111111111002';
 const QUESTION_UUID_3 = '11111111-1111-1111-8111-111111111003';
 const QUESTION_UUID_4 = '11111111-1111-1111-8111-111111111004';
 const QUESTION_UUID_5 = '11111111-1111-1111-8111-111111111005';
+const VALID_PUBLIC_ID = 'abcdefgh1234';
 
 const validQuestion = {
   id: QUESTION_UUID_1,
+  publicId: VALID_PUBLIC_ID,
   type: 'text' as const,
   question: 'How are you feeling today?',
 };
 
 const validSingleChoiceQuestion = {
   id: QUESTION_UUID_2,
+  publicId: VALID_PUBLIC_ID,
   type: 'single-choice' as const,
   question: 'Rate your pain level',
   options: [
@@ -39,6 +42,7 @@ const validSingleChoiceQuestion = {
 
 const validVideoQuestion = {
   id: QUESTION_UUID_3,
+  publicId: VALID_PUBLIC_ID,
   type: 'video-response' as const,
   question: 'Perform the exercise shown',
   videoId: '550e8400-e29b-41d4-a716-446655440000',
@@ -62,6 +66,7 @@ const validScoringConfig = {
 
 const validTemplate = {
   id: '550e8400-e29b-41d4-a716-446655440000',
+  publicId: VALID_PUBLIC_ID,
   name: 'Test Template',
   description: 'A test template',
   version: 1,
@@ -99,6 +104,7 @@ describe('assessmentQuestionSchema', () => {
     it('accepts valid numeric question', () => {
       const result = assessmentQuestionSchema.safeParse({
         id: QUESTION_UUID_4,
+        publicId: VALID_PUBLIC_ID,
         type: 'numeric',
         question: 'Enter your age',
       });
@@ -108,6 +114,7 @@ describe('assessmentQuestionSchema', () => {
     it('accepts valid scale question', () => {
       const result = assessmentQuestionSchema.safeParse({
         id: QUESTION_UUID_5,
+        publicId: VALID_PUBLIC_ID,
         type: 'scale',
         question: 'Rate from 1-10',
       });
@@ -129,6 +136,7 @@ describe('assessmentQuestionSchema', () => {
     it('rejects video-response without videoId', () => {
       const result = assessmentQuestionSchema.safeParse({
         id: QUESTION_UUID_3,
+        publicId: VALID_PUBLIC_ID,
         type: 'video-response',
         question: 'Perform the exercise',
       });
@@ -143,6 +151,7 @@ describe('assessmentQuestionSchema', () => {
     it('rejects single-choice without options', () => {
       const result = assessmentQuestionSchema.safeParse({
         id: QUESTION_UUID_2,
+        publicId: VALID_PUBLIC_ID,
         type: 'single-choice',
         question: 'Pick one',
       });
@@ -155,6 +164,7 @@ describe('assessmentQuestionSchema', () => {
     it('rejects single-choice with only 1 option', () => {
       const result = assessmentQuestionSchema.safeParse({
         id: QUESTION_UUID_2,
+        publicId: VALID_PUBLIC_ID,
         type: 'single-choice',
         question: 'Pick one',
         options: [{ value: 'only', label: 'Only option' }],

@@ -11,6 +11,7 @@ import {
 
 // Test fixtures
 const validUuid = '550e8400-e29b-41d4-a716-446655440000';
+const validPublicId = 'abcdefgh1234';
 
 const validConfig = {
   title: 'Test Step',
@@ -18,6 +19,7 @@ const validConfig = {
 };
 
 const validIntroStep = {
+  publicId: validPublicId,
   order: 1,
   type: 'intro' as const,
   config: {
@@ -28,6 +30,7 @@ const validIntroStep = {
 };
 
 const validQuestionsStep = {
+  publicId: validPublicId,
   order: 2,
   type: 'questions' as const,
   templateId: validUuid,
@@ -38,6 +41,7 @@ const validQuestionsStep = {
 };
 
 const validTransitionStep = {
+  publicId: validPublicId,
   order: 3,
   type: 'transition' as const,
   config: {
@@ -48,6 +52,7 @@ const validTransitionStep = {
 };
 
 const validVideoAssessmentStep = {
+  publicId: validPublicId,
   order: 4,
   type: 'video-assessment' as const,
   templateId: validUuid,
@@ -59,6 +64,7 @@ const validVideoAssessmentStep = {
 };
 
 const validResultsStep = {
+  publicId: validPublicId,
   order: 5,
   type: 'results' as const,
   config: {
@@ -68,6 +74,7 @@ const validResultsStep = {
 };
 
 const validProgrammeOverviewStep = {
+  publicId: validPublicId,
   order: 6,
   type: 'programme-overview' as const,
   config: {
@@ -78,6 +85,7 @@ const validProgrammeOverviewStep = {
 
 const validFlow = {
   id: validUuid,
+  publicId: validPublicId,
   name: 'Standard Physiotherapy Assessment',
   description: 'Comprehensive assessment with physical tests',
   steps: [
@@ -218,6 +226,7 @@ describe('flowStepSchema', () => {
 
     it('accepts step without templateId (optional)', () => {
       const result = flowStepSchema.safeParse({
+        publicId: validPublicId,
         order: 1,
         type: 'intro',
         config: { title: 'Welcome' },

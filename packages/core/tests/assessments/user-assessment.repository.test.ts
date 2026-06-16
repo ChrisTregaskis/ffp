@@ -124,9 +124,10 @@ describe('User Assessment Repository', () => {
     // Create Assessment Flow (shared, no RLS - flows are system-managed)
     flowId = randomUUID();
     await db.execute(sql`
-      INSERT INTO assessment_flows (id, name, is_active)
+      INSERT INTO assessment_flows (id, public_id, name, is_active)
       VALUES (
         ${flowId},
+        ${randomUUID().replace(/-/g, '').slice(0, 12)},
         ${`Test Flow [${TEST_RUN_ID}]`},
         true
       )

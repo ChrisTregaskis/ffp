@@ -15,6 +15,8 @@ import {
 export const assessmentTemplateSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.guid(),
+  /** Public identifier for URLs (nanoid, 12 chars) */
+  publicId: z.string().length(12),
   /** Template name for identification and admin display */
   name: z.string().min(1).max(255),
   /** Optional description of the template purpose */
@@ -33,6 +35,7 @@ export const assessmentTemplateSchema = z.object({
 
 export const createAssessmentTemplateSchema = assessmentTemplateSchema.omit({
   id: true,
+  publicId: true,
   createdAt: true,
   updatedAt: true,
 });
@@ -40,6 +43,7 @@ export const createAssessmentTemplateSchema = assessmentTemplateSchema.omit({
 export const updateAssessmentTemplateSchema = assessmentTemplateSchema
   .omit({
     id: true,
+    publicId: true,
     version: true,
     createdBy: true,
     createdAt: true,
@@ -56,6 +60,8 @@ export const updateAssessmentTemplateSchema = assessmentTemplateSchema
 const templateQuestionResponseSchema = z.object({
   /** Question UUID */
   id: z.guid(),
+  /** Public identifier for URLs (nanoid, 12 chars) */
+  publicId: z.string().length(12),
   /** URL-friendly identifier (backend-only, stripped in transform) */
   slug: z.string(),
   /** Question type (determines UI component) */
@@ -100,6 +106,7 @@ export const assessmentTemplateWithQuestionsSchema = assessmentTemplateSchema.ex
     questions.map(
       (q): AssessmentQuestion => ({
         id: q.id,
+        publicId: q.publicId,
         type: q.type,
         question: q.configOverrides?.questionText ?? q.questionText,
         description: q.configOverrides?.description ?? q.description ?? undefined,
