@@ -10,8 +10,13 @@ import {
 } from '@ffp/database/schema';
 
 import { db, withRLS } from '../lib/database';
-import { InternalServerError } from '../lib/errors';
+import { InternalServerError, NotFoundError } from '../lib/errors';
 import { createSystemLogger } from '../lib/logger';
+
+import type {
+  CreateAssessmentFlowInput,
+  UpdateAssessmentFlowInput,
+} from '../schemas/assessment-flow.schema';
 
 const logger = createSystemLogger('flow-repository');
 
@@ -204,4 +209,98 @@ export async function findStepsByFlowId(
     .orderBy(asc(flowSteps.order), asc(flowSteps.id));
 
   return records;
+}
+
+/**
+ * Find an assessment flow by its public identifier.
+ *
+ * `assessment_flows` is RLS-excluded (system-managed catalogue), so no RLS
+ * context is set — mirroring the template repository. This is the lookup the
+ * admin surface routes on (URLs carry `publicId`, not the UUID).
+ */
+export async function findByPublicId(
+  dbClient: DbClient,
+  publicId: string
+): Promise<AssessmentFlow | null> {
+  const records = await dbClient
+    .select()
+    .from(assessmentFlows)
+    .where(eq(assessmentFlows.publicId, publicId))
+    .limit(1);
+
+  return records[0] ?? null;
+}
+
+/** List assessment flows, optionally restricted to active ones. */
+export async function findAllFlows(
+  dbClient: DbClient,
+  options?: { activeOnly?: boolean }
+): Promise<AssessmentFlow[]> {
+  const query = dbClient.select().from(assessmentFlows);
+
+  const records = options?.activeOnly
+    ? await query.where(eq(assessmentFlows.isActive, true))
+    : await query;
+
+  return records;
+}
+
+/** Create an assessment flow (metadata only — steps are authored separately). */
+export async function createFlow(
+  dbClient: DbClient,
+  data: CreateAssessmentFlowInput
+): Promise<AssessmentFlow> {
+  const [record] = await dbClient
+    .insert(assessmentFlows)
+    .values({
+      name: data.name,
+      description: data.description,
+      isActive: data.isActive,
+    })
+    .returning();
+
+  return record;
+}
+
+/** Update assessment flow metadata. */
+export async function updateFlow(
+  dbClient: DbClient,
+  flowId: string,
+  data: UpdateAssessmentFlowInput
+): Promise<AssessmentFlow> {
+  const existing = await findFlowById(dbClient, flowId);
+
+  if (!existing) {
+    throw new NotFoundError('Assessment flow', flowId);
+  }
+
+  const [record] = await dbClient
+    .update(assessmentFlows)
+    .set({
+      name: data.name,
+      description: data.description,
+      isActive: data.isActive,
+      updatedAt: new Date(),
+    })
+    .where(eq(assessmentFlows.id, flowId))
+    .returning();
+
+  return record;
+}
+
+/** Deactivate an assessment flow (soft delete). */
+export async function deactivateFlow(dbClient: DbClient, flowId: string): Promise<void> {
+  const existing = await findFlowById(dbClient, flowId);
+
+  if (!existing) {
+    throw new NotFoundError('Assessment flow', flowId);
+  }
+
+  await dbClient
+    .update(assessmentFlows)
+    .set({
+      isActive: false,
+      updatedAt: new Date(),
+    })
+    .where(eq(assessmentFlows.id, flowId));
 }

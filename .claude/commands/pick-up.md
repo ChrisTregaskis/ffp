@@ -24,6 +24,7 @@ You are acting as the **track principal**. Take one story, reconcile it against 
 
 9. Write **one** kickoff prompt to `.claude/local/plans/prompts/<story-id>-kickoff.md` using the kickoff shape from `CLAUDE.local.md`:
    - intent (2–4 lines); read-first order; numbered in-scope items with gotchas inline; out-of-scope (and which story owns it); constraints (British English, no `.claude/local`/phase-gate jargon in shipped files, package boundaries, RLS); definition of done incl. gates (typecheck/lint/test/build); the "when done" block (write completion summary + reviewer brief, tell the principal, don't open the PR, STOP for review before wrap-up).
+   - **A "Patterns & hygiene (acceptance criteria)" section** (per the kickoff shape): name the specific reference files to mirror; no duplicate surface; keep files focused; abstract only to remove real duplication and ask before inventing one; reuse existing utilities/error classes/logging. Make these first-class DoD items (applied as the impl writes, not deferred to the review pass), and reflect them in the Definition of done.
    - The kickoff must tell the impl session which skill(s) to load: `/database`, `/backend`, `/frontend`, `/infrastructure`.
 10. Update the story file's status to "in progress" and `roadmap.md`'s working notes (dated entry). Refresh `project-state.md` active threads if the headline changed.
 

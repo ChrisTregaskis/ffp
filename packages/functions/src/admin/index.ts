@@ -6,6 +6,11 @@ import {
 
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
+import { handler as createFlowHandler } from './assessment-flows/create-flow';
+import { handler as deactivateFlowHandler } from './assessment-flows/deactivate-flow';
+import { handler as getFlowHandler } from './assessment-flows/get-flow';
+import { handler as listFlowsHandler } from './assessment-flows/list-flows';
+import { handler as updateFlowHandler } from './assessment-flows/update-flow';
 import { handler as createLocationHandler } from './locations/create-location';
 import { handler as getLocationHandler } from './locations/get-location';
 import { handler as listLocationsHandler } from './locations/list-locations';
@@ -60,6 +65,7 @@ const routes: RouteRegistry = {
   POST: {
     '/organisations': createOrganisationHandler,
     '/organisations/{orgId}/locations': createLocationHandler,
+    '/assessment-flows': createFlowHandler,
     '/assessment-templates': createTemplateHandler,
     '/assessment-templates/{id}/duplicate': duplicateTemplateHandler,
     '/programme-templates': createProgrammeTemplateHandler,
@@ -75,6 +81,8 @@ const routes: RouteRegistry = {
     '/organisations/{id}': getOrganisationHandler,
     '/locations': listLocationsHandler,
     '/locations/{id}': getLocationHandler,
+    '/assessment-flows': listFlowsHandler,
+    '/assessment-flows/{publicId}': getFlowHandler,
     '/assessment-templates': listTemplatesHandler,
     '/assessment-templates/{id}': getTemplateHandler,
     '/programme-templates': listProgrammeTemplatesHandler,
@@ -87,6 +95,7 @@ const routes: RouteRegistry = {
   PUT: {
     '/organisations/{id}': updateOrganisationHandler,
     '/locations/{id}': updateLocationHandler,
+    '/assessment-flows/{publicId}': updateFlowHandler,
     '/assessment-templates/{id}': updateTemplateHandler,
     '/users/{id}': updateUserHandler,
     '/programme-templates/{id}': updateProgrammeTemplateHandler,
@@ -100,6 +109,7 @@ const routes: RouteRegistry = {
     '/videos/{id}': updateVideoHandler,
   },
   DELETE: {
+    '/assessment-flows/{publicId}': deactivateFlowHandler,
     '/assessment-templates/{id}': deactivateTemplateHandler,
     '/exercises/{id}': deleteExerciseHandler,
     '/phases/{id}': deletePhaseHandler,

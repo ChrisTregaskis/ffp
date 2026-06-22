@@ -22,13 +22,6 @@ export const flowStepSchema = z.object({
   config: flowStepConfigSchema,
 });
 
-/**
- * Step shape for create/update input. `publicId` is server-generated, so it is
- * omitted here — mirroring how the flow-level `publicId` is omitted from the
- * create/update derivations below.
- */
-export const createFlowStepSchema = flowStepSchema.omit({ publicId: true });
-
 export const assessmentFlowSchema = z.object({
   // UUID primary key
   id: z.guid(),
@@ -48,36 +41,36 @@ export const assessmentFlowSchema = z.object({
   updatedAt: z.coerce.date(),
 });
 
+/**
+ * Admin create input — flow metadata only (`name`, `description`, `isActive`).
+ * Steps are authored separately, not inline on create.
+ */
 export const createAssessmentFlowSchema = assessmentFlowSchema
   .omit({
     id: true,
     publicId: true,
+    steps: true,
     createdAt: true,
     updatedAt: true,
   })
   .extend({
     isActive: z.boolean().optional().default(true),
-    // Steps omit the server-generated publicId on create
-    steps: z.array(createFlowStepSchema).min(1, 'At least one step is required'),
   });
 
+/** Admin update input — partial flow metadata; steps are managed separately. */
 export const updateAssessmentFlowSchema = assessmentFlowSchema
   .omit({
     id: true,
     publicId: true,
+    steps: true,
     createdAt: true,
     updatedAt: true,
-  })
-  .extend({
-    // Steps omit the server-generated publicId on update
-    steps: z.array(createFlowStepSchema).min(1, 'At least one step is required'),
   })
   .partial();
 
 export type FlowStepType = z.infer<typeof flowStepTypeSchema>;
 export type FlowStepConfig = z.infer<typeof flowStepConfigSchema>;
-export type CreateFlowStep = z.infer<typeof createFlowStepSchema>;
 export type FlowStep = z.infer<typeof flowStepSchema>;
 export type AssessmentFlow = z.infer<typeof assessmentFlowSchema>;
-export type CreateAssessmentFlow = z.infer<typeof createAssessmentFlowSchema>;
-export type UpdateAssessmentFlow = z.infer<typeof updateAssessmentFlowSchema>;
+export type CreateAssessmentFlowInput = z.infer<typeof createAssessmentFlowSchema>;
+export type UpdateAssessmentFlowInput = z.infer<typeof updateAssessmentFlowSchema>;
