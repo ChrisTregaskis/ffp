@@ -100,4 +100,16 @@ export const componentCategories: ComponentCategory[] = [
     path: `${basePath}/table`,
     examples: ['Column helpers', 'Sorting', 'Pagination', 'States', 'Actions', 'Column visibility'],
   },
+  {
+    title: 'Assessment Admin (UX prototype)',
+    description: 'Clickable, mock-data exploration of the assessment authoring surface',
+    path: `${basePath}/assessment-admin`,
+    examples: [
+      'Flow list',
+      'Flow builder',
+      'Question bank',
+      'Template questions',
+      'Scoring config',
+    ],
+  },
 ];
