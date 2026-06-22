@@ -9,17 +9,21 @@ import {
   type UpdateAssessmentFlowInput,
 } from '../schemas/assessment-flow.schema';
 
+import { toAdminFlowStep, type AdminFlowStep } from './flow-step.branching';
 import * as flowRepository from './flow.repository';
 
-import type { AssessmentFlow, FlowStepWithConfig } from './flow.repository';
+import type { AssessmentFlow } from './flow.repository';
 
 export type { AssessmentFlow };
 export type CreateFlowInput = CreateAssessmentFlowInput;
 export type UpdateFlowInput = UpdateAssessmentFlowInput;
 
-/** An assessment flow with its ordered steps loaded. */
+/**
+ * An assessment flow with its ordered steps loaded for the admin surface. Each
+ * step carries a read-only `branchingRuleCount`; branching is not authored here.
+ */
 export interface AssessmentFlowWithSteps extends AssessmentFlow {
-  steps: FlowStepWithConfig[];
+  steps: AdminFlowStep[];
 }
 
 /**
@@ -56,7 +60,7 @@ export async function getFlowWithStepsService(
 
   const steps = await flowRepository.findStepsByFlowId(db, flow.id);
 
-  return { ...flow, steps };
+  return { ...flow, steps: steps.map(toAdminFlowStep) };
 }
 
 /** Create a new assessment flow (metadata only — steps are authored separately). */
