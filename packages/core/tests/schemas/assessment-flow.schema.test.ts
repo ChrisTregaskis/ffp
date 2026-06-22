@@ -437,15 +437,22 @@ describe('assessmentFlowSchema', () => {
 });
 
 describe('createAssessmentFlowSchema', () => {
+  // Admin create is metadata-only — steps are authored separately, not inline.
   const validCreateFlow = {
     name: 'New Assessment Flow',
     description: 'A new flow',
-    steps: [validIntroStep, validResultsStep],
     isActive: true,
   };
 
   it('accepts valid create input', () => {
     const result = createAssessmentFlowSchema.safeParse(validCreateFlow);
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts create input without a description', () => {
+    const result = createAssessmentFlowSchema.safeParse({
+      name: 'Minimal Flow',
+    });
     expect(result.success).toBe(true);
   });
 
@@ -473,6 +480,17 @@ describe('createAssessmentFlowSchema', () => {
     }
   });
 
+  it('strips steps if provided (metadata-only create)', () => {
+    const result = createAssessmentFlowSchema.safeParse({
+      ...validCreateFlow,
+      steps: [validIntroStep, validResultsStep],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect('steps' in result.data).toBe(false);
+    }
+  });
+
   it('defaults isActive to true when omitted', () => {
     const { isActive: _, ...flowWithoutActive } = validCreateFlow;
     const result = createAssessmentFlowSchema.safeParse(flowWithoutActive);
@@ -482,10 +500,10 @@ describe('createAssessmentFlowSchema', () => {
     }
   });
 
-  it('rejects empty steps array', () => {
+  it('rejects empty name', () => {
     const result = createAssessmentFlowSchema.safeParse({
       ...validCreateFlow,
-      steps: [],
+      name: '',
     });
     expect(result.success).toBe(false);
   });
@@ -513,13 +531,6 @@ describe('updateAssessmentFlowSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('accepts partial update with new steps', () => {
-    const result = updateAssessmentFlowSchema.safeParse({
-      steps: [validIntroStep, validResultsStep],
-    });
-    expect(result.success).toBe(true);
-  });
-
   it('accepts empty object (no updates)', () => {
     const result = updateAssessmentFlowSchema.safeParse({});
     expect(result.success).toBe(true);
@@ -528,20 +539,6 @@ describe('updateAssessmentFlowSchema', () => {
   it('validates fields when provided - empty name rejected', () => {
     const result = updateAssessmentFlowSchema.safeParse({
       name: '',
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it('validates fields when provided - empty steps rejected', () => {
-    const result = updateAssessmentFlowSchema.safeParse({
-      steps: [],
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it('validates fields when provided - invalid step rejected', () => {
-    const result = updateAssessmentFlowSchema.safeParse({
-      steps: [{ order: -1, type: 'intro', config: { title: 'Test' } }],
     });
     expect(result.success).toBe(false);
   });
