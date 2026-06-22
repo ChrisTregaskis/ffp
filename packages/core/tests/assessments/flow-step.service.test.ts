@@ -183,6 +183,23 @@ describe('flowStepService.reorderStepsService', () => {
     expect(mockedFlowStepRepo.reorderSteps).not.toHaveBeenCalled();
   });
 
+  it('rejects a reorder with duplicate step IDs (would silently drop a step)', async () => {
+    const flow = createFlow();
+    const stepA = createStep(flow.id, { order: 1 });
+    const stepB = createStep(flow.id, { order: 2 });
+
+    mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
+    mockedFlowRepo.findStepsByFlowId.mockResolvedValue([stepA, stepB]);
+
+    await expect(
+      flowStepService.reorderStepsService(createContext(), FLOW_PUBLIC_ID, {
+        orderedStepPublicIds: [stepA.publicId, stepA.publicId],
+      })
+    ).rejects.toBeInstanceOf(ValidationError);
+
+    expect(mockedFlowStepRepo.reorderSteps).not.toHaveBeenCalled();
+  });
+
   it('throws NotFoundError when the flow does not exist', async () => {
     mockedFlowRepo.findByPublicId.mockResolvedValue(null);
 

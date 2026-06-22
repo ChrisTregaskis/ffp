@@ -58,8 +58,9 @@ export async function createStep(
 }
 
 /**
- * Update a step's type, template link and/or config; branching fields are absent
- * from the input so stay untouched. Returns null if the step does not exist.
+ * Update a step's type, template link and/or config. Columns are mapped
+ * explicitly so branching fields stay un-authorable structurally, not just by
+ * schema omission. Returns null if the step does not exist.
  */
 export async function updateStep(
   dbClient: DbClient,
@@ -68,7 +69,12 @@ export async function updateStep(
 ): Promise<FlowStepRecord | null> {
   const records = await dbClient
     .update(flowSteps)
-    .set({ ...data, updatedAt: new Date() })
+    .set({
+      ...(data.type !== undefined && { type: data.type }),
+      ...(data.templateId !== undefined && { templateId: data.templateId }),
+      ...(data.config !== undefined && { config: data.config }),
+      updatedAt: new Date(),
+    })
     .where(eq(flowSteps.id, stepId))
     .returning();
 
@@ -89,7 +95,9 @@ export async function deactivateStep(dbClient: DbClient, stepId: string): Promis
 /**
  * Reassign `order` to each step's position in `orderedStepIds` (1-based) and
  * return the flow's active steps in their new order. `order` is not unique, so a
- * straight reassignment is safe (no negative-temp dance).
+ * straight reassignment is safe (no negative-temp dance). Intentionally not
+ * transactional: a partial write self-heals on the next reorder, and `tx` is not
+ * assignable to this module's `DbClient` signatures.
  */
 export async function reorderSteps(
   dbClient: DbClient,

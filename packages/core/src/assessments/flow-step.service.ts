@@ -17,7 +17,11 @@ import type { AssessmentFlow } from './flow.repository';
 
 export type { AdminFlowStep };
 
-/** Resolve a flow by public identifier or throw 404. */
+/**
+ * Resolve a flow by public identifier or throw 404. Not filtered on `isActive`:
+ * editing steps on a deactivated flow is allowed (consistent with the flow
+ * update/get surface, and lets a flow be fixed up before reactivation).
+ */
 async function resolveFlow(db: DbClient, flowPublicId: string): Promise<AssessmentFlow> {
   const flow = await flowRepository.findByPublicId(db, flowPublicId);
 
@@ -144,6 +148,12 @@ export async function reorderStepsService(
   }
 
   const { orderedStepPublicIds } = parseResult.data;
+
+  // Distinctness matters: `flow_steps.order` is non-unique, so a duplicate id
+  // would reassign one step twice and silently leave another unmoved.
+  if (new Set(orderedStepPublicIds).size !== orderedStepPublicIds.length) {
+    throw new ValidationError('Step IDs must be unique');
+  }
 
   if (orderedStepPublicIds.length !== activeSteps.length) {
     throw new ValidationError(
