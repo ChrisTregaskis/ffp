@@ -3,6 +3,7 @@ import type { UserRole } from '@ffp/core';
 import type { IconName } from '@web/components/Icon/types';
 import { USER_ROLE } from '@web/constants/roles';
 import { ComingSoonPage } from '@web/pages/ComingSoonPage';
+import { AssessmentAdminPrototypePage } from '@web/pages/dev/assessment-admin/AssessmentAdminPrototypePage';
 import { AssessmentProgressComponentsPage } from '@web/pages/dev/AssessmentProgressComponentsPage';
 import { AssessmentQuestionsComponentsPage } from '@web/pages/dev/AssessmentQuestionsComponentsPage';
 import { AssessmentScreensComponentsPage } from '@web/pages/dev/AssessmentScreensComponentsPage';
@@ -585,6 +586,14 @@ export const routes: RoutesConfig = {
     public: true,
     pageComponent: TableComponentsPage,
     title: 'Table Components',
+    excludeFromMainNavbar: true,
+    devOnly: true,
+  },
+  [RouteKey.COMPONENTS_ASSESSMENT_ADMIN]: {
+    path: `${componentsBasePath}/assessment-admin`,
+    public: true,
+    pageComponent: AssessmentAdminPrototypePage,
+    title: 'Assessment Admin UX Prototype',
     excludeFromMainNavbar: true,
     devOnly: true,
   },
