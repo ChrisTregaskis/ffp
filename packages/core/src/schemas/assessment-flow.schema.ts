@@ -68,9 +68,36 @@ export const updateAssessmentFlowSchema = assessmentFlowSchema
   })
   .partial();
 
+/**
+ * Admin create input for a single flow step.
+ *
+ * Branching is read-only in the admin surface — `nextStepRules` and
+ * `defaultNextStepId` are never accepted here. New steps are appended to the
+ * flow (the server assigns `order`), so `order` is not part of the input.
+ */
+export const createFlowStepSchema = z.object({
+  type: flowStepTypeSchema,
+  templateId: z.guid({ message: 'Invalid template ID format' }).optional(),
+  config: flowStepConfigSchema,
+});
+
+/** Admin update input — partial step metadata; branching fields are never authored here. */
+export const updateFlowStepSchema = createFlowStepSchema.partial();
+
+/**
+ * Reorder request — the flow's active step public identifiers in their desired
+ * order. The server reassigns `order` to match the array position (1-based).
+ */
+export const reorderFlowStepsSchema = z.object({
+  orderedStepPublicIds: z.array(z.string().length(12)).min(1, 'At least one step is required'),
+});
+
 export type FlowStepType = z.infer<typeof flowStepTypeSchema>;
 export type FlowStepConfig = z.infer<typeof flowStepConfigSchema>;
 export type FlowStep = z.infer<typeof flowStepSchema>;
 export type AssessmentFlow = z.infer<typeof assessmentFlowSchema>;
 export type CreateAssessmentFlowInput = z.infer<typeof createAssessmentFlowSchema>;
 export type UpdateAssessmentFlowInput = z.infer<typeof updateAssessmentFlowSchema>;
+export type CreateFlowStepInput = z.infer<typeof createFlowStepSchema>;
+export type UpdateFlowStepInput = z.infer<typeof updateFlowStepSchema>;
+export type ReorderFlowStepsInput = z.infer<typeof reorderFlowStepsSchema>;

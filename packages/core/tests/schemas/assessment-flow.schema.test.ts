@@ -7,6 +7,9 @@ import {
   assessmentFlowSchema,
   createAssessmentFlowSchema,
   updateAssessmentFlowSchema,
+  createFlowStepSchema,
+  updateFlowStepSchema,
+  reorderFlowStepsSchema,
 } from '../../src/schemas/assessment-flow.schema';
 
 // Test fixtures
@@ -540,6 +543,102 @@ describe('updateAssessmentFlowSchema', () => {
     const result = updateAssessmentFlowSchema.safeParse({
       name: '',
     });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('createFlowStepSchema', () => {
+  it('accepts a valid step without a template link', () => {
+    const result = createFlowStepSchema.safeParse({
+      type: 'intro',
+      config: { title: 'Welcome' },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts a valid step with a template link', () => {
+    const result = createFlowStepSchema.safeParse({
+      type: 'questions',
+      templateId: validUuid,
+      config: { title: 'Pre-assessment questions' },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects an unknown step type', () => {
+    const result = createFlowStepSchema.safeParse({
+      type: 'not-a-real-type',
+      config: { title: 'Welcome' },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects a missing config title', () => {
+    const result = createFlowStepSchema.safeParse({
+      type: 'intro',
+      config: {},
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects an invalid template ID format', () => {
+    const result = createFlowStepSchema.safeParse({
+      type: 'questions',
+      templateId: 'not-a-uuid',
+      config: { title: 'Questions' },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('does not accept branching fields (they are stripped, never authored)', () => {
+    const result = createFlowStepSchema.safeParse({
+      type: 'intro',
+      config: { title: 'Welcome' },
+      nextStepRules: [{ priority: 1 }],
+      defaultNextStepId: validUuid,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).not.toHaveProperty('nextStepRules');
+      expect(result.data).not.toHaveProperty('defaultNextStepId');
+    }
+  });
+});
+
+describe('updateFlowStepSchema', () => {
+  it('accepts a partial update with just config', () => {
+    const result = updateFlowStepSchema.safeParse({
+      config: { title: 'Updated title' },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts an empty object (no updates)', () => {
+    const result = updateFlowStepSchema.safeParse({});
+    expect(result.success).toBe(true);
+  });
+
+  it('validates fields when provided - unknown type rejected', () => {
+    const result = updateFlowStepSchema.safeParse({ type: 'bogus' });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('reorderFlowStepsSchema', () => {
+  it('accepts a non-empty array of public IDs', () => {
+    const result = reorderFlowStepsSchema.safeParse({
+      orderedStepPublicIds: [validPublicId, 'anotherId123'],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects an empty array', () => {
+    const result = reorderFlowStepsSchema.safeParse({ orderedStepPublicIds: [] });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects public IDs of the wrong length', () => {
+    const result = reorderFlowStepsSchema.safeParse({ orderedStepPublicIds: ['tooShort'] });
     expect(result.success).toBe(false);
   });
 });

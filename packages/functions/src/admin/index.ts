@@ -7,10 +7,14 @@ import {
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
 import { handler as createFlowHandler } from './assessment-flows/create-flow';
+import { handler as createStepHandler } from './assessment-flows/create-step';
 import { handler as deactivateFlowHandler } from './assessment-flows/deactivate-flow';
+import { handler as deleteStepHandler } from './assessment-flows/delete-step';
 import { handler as getFlowHandler } from './assessment-flows/get-flow';
 import { handler as listFlowsHandler } from './assessment-flows/list-flows';
+import { handler as reorderStepsHandler } from './assessment-flows/reorder-steps';
 import { handler as updateFlowHandler } from './assessment-flows/update-flow';
+import { handler as updateStepHandler } from './assessment-flows/update-step';
 import { handler as createLocationHandler } from './locations/create-location';
 import { handler as getLocationHandler } from './locations/get-location';
 import { handler as listLocationsHandler } from './locations/list-locations';
@@ -66,6 +70,7 @@ const routes: RouteRegistry = {
     '/organisations': createOrganisationHandler,
     '/organisations/{orgId}/locations': createLocationHandler,
     '/assessment-flows': createFlowHandler,
+    '/assessment-flows/{flowPublicId}/steps': createStepHandler,
     '/assessment-templates': createTemplateHandler,
     '/assessment-templates/{id}/duplicate': duplicateTemplateHandler,
     '/programme-templates': createProgrammeTemplateHandler,
@@ -96,6 +101,11 @@ const routes: RouteRegistry = {
     '/organisations/{id}': updateOrganisationHandler,
     '/locations/{id}': updateLocationHandler,
     '/assessment-flows/{publicId}': updateFlowHandler,
+    // `/steps/reorder` MUST precede `/steps/{stepPublicId}`: both are dynamic and
+    // the router matches in insertion order, so `{stepPublicId}` would otherwise
+    // capture the literal `reorder` segment and route to the update handler.
+    '/assessment-flows/{flowPublicId}/steps/reorder': reorderStepsHandler,
+    '/assessment-flows/{flowPublicId}/steps/{stepPublicId}': updateStepHandler,
     '/assessment-templates/{id}': updateTemplateHandler,
     '/users/{id}': updateUserHandler,
     '/programme-templates/{id}': updateProgrammeTemplateHandler,
@@ -110,6 +120,7 @@ const routes: RouteRegistry = {
   },
   DELETE: {
     '/assessment-flows/{publicId}': deactivateFlowHandler,
+    '/assessment-flows/{flowPublicId}/steps/{stepPublicId}': deleteStepHandler,
     '/assessment-templates/{id}': deactivateTemplateHandler,
     '/exercises/{id}': deleteExerciseHandler,
     '/phases/{id}': deletePhaseHandler,
