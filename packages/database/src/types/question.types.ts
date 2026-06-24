@@ -24,6 +24,8 @@ export interface QuestionValidation {
   min?: number;
   /** Maximum value for numeric/scale questions, or max length for text */
   max?: number;
+  /** Maximum number of options a user may select (multi-choice only) */
+  maxSelections?: number;
   /** Regex pattern for text validation */
   pattern?: string;
   /** Custom error message when validation fails */

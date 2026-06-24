@@ -36,6 +36,7 @@ export * from './exercises';
 export * from './jobs';
 export * from './programmes';
 export * from './programme-templates';
+export * from './questions';
 export * from './sessions';
 export * from './users';
 export * from './videos';

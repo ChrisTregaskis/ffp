@@ -41,6 +41,11 @@ import { handler as updateExerciseHandler } from './programme-templates/update-e
 import { handler as updatePhaseHandler } from './programme-templates/update-phase';
 import { handler as updateSessionHandler } from './programme-templates/update-session';
 import { handler as updateProgrammeTemplateHandler } from './programme-templates/update-template';
+import { handler as createQuestionHandler } from './questions/create-question';
+import { handler as deactivateQuestionHandler } from './questions/deactivate-question';
+import { handler as getQuestionHandler } from './questions/get-question';
+import { handler as listQuestionsHandler } from './questions/list-questions';
+import { handler as updateQuestionHandler } from './questions/update-question';
 import { handler as createTemplateHandler } from './templates/create-template';
 import { handler as deactivateTemplateHandler } from './templates/deactivate-template';
 import { handler as duplicateTemplateHandler } from './templates/duplicate-template';
@@ -73,6 +78,7 @@ const routes: RouteRegistry = {
     '/assessment-flows/{flowPublicId}/steps': createStepHandler,
     '/assessment-templates': createTemplateHandler,
     '/assessment-templates/{id}/duplicate': duplicateTemplateHandler,
+    '/questions': createQuestionHandler,
     '/programme-templates': createProgrammeTemplateHandler,
     '/programme-templates/{id}/phases': createPhaseHandler,
     '/phases/{id}/sessions': createSessionHandler,
@@ -90,6 +96,8 @@ const routes: RouteRegistry = {
     '/assessment-flows/{publicId}': getFlowHandler,
     '/assessment-templates': listTemplatesHandler,
     '/assessment-templates/{id}': getTemplateHandler,
+    '/questions': listQuestionsHandler,
+    '/questions/{publicId}': getQuestionHandler,
     '/programme-templates': listProgrammeTemplatesHandler,
     '/programme-templates/{id}': getProgrammeTemplateHandler,
     '/sessions/{id}/exercises': listExercisesHandler,
@@ -107,6 +115,7 @@ const routes: RouteRegistry = {
     '/assessment-flows/{flowPublicId}/steps/reorder': reorderStepsHandler,
     '/assessment-flows/{flowPublicId}/steps/{stepPublicId}': updateStepHandler,
     '/assessment-templates/{id}': updateTemplateHandler,
+    '/questions/{publicId}': updateQuestionHandler,
     '/users/{id}': updateUserHandler,
     '/programme-templates/{id}': updateProgrammeTemplateHandler,
     '/programme-templates/{id}/deactivate': deactivateProgrammeTemplateHandler,
@@ -122,6 +131,7 @@ const routes: RouteRegistry = {
     '/assessment-flows/{publicId}': deactivateFlowHandler,
     '/assessment-flows/{flowPublicId}/steps/{stepPublicId}': deleteStepHandler,
     '/assessment-templates/{id}': deactivateTemplateHandler,
+    '/questions/{publicId}': deactivateQuestionHandler,
     '/exercises/{id}': deleteExerciseHandler,
     '/phases/{id}': deletePhaseHandler,
     '/sessions/{id}': deleteSessionHandler,
