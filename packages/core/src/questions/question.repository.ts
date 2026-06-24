@@ -3,6 +3,13 @@ import { eq, inArray, asc, and } from 'drizzle-orm';
 import type { DbClient, QuestionWithConfig } from '@ffp/database';
 import { questions, templateQuestions, type QuestionRecord } from '@ffp/database/schema';
 
+import { NotFoundError } from '../lib/errors';
+
+import type {
+  CreateQuestionInput,
+  UpdateQuestionInput,
+} from '../schemas/assessment-question.schema';
+
 export type Question = QuestionRecord;
 
 /** Questions are system content (no RLS required) */
@@ -135,6 +142,85 @@ export async function findAllQuestions(
   return options?.activeOnly !== false
     ? await query.where(eq(questions.isActive, true))
     : await query;
+}
+
+/** Find a question by public identifier — the lookup the admin surface routes on. */
+export async function findQuestionByPublicId(
+  db: DbClient,
+  publicId: string
+): Promise<Question | null> {
+  const records = await db
+    .select()
+    .from(questions)
+    .where(eq(questions.publicId, publicId))
+    .limit(1);
+
+  return records[0] ?? null;
+}
+
+/** Create a question bank entry. */
+export async function createQuestion(db: DbClient, data: CreateQuestionInput): Promise<Question> {
+  const [record] = await db
+    .insert(questions)
+    .values({
+      slug: data.slug,
+      type: data.type,
+      questionText: data.questionText,
+      description: data.description,
+      options: data.options,
+      validation: data.validation,
+      videoId: data.videoId,
+      scoreDimension: data.scoreDimension,
+      isActive: data.isActive,
+    })
+    .returning();
+
+  return record;
+}
+
+/** Update a question. `slug` is immutable (absent from the input); undefined fields are untouched. */
+export async function updateQuestion(
+  db: DbClient,
+  questionId: string,
+  data: UpdateQuestionInput
+): Promise<Question> {
+  const existing = await findByQuestionId(db, questionId);
+
+  if (!existing) {
+    throw new NotFoundError('Question', questionId);
+  }
+
+  const [record] = await db
+    .update(questions)
+    .set({
+      type: data.type,
+      questionText: data.questionText,
+      description: data.description,
+      options: data.options,
+      validation: data.validation,
+      videoId: data.videoId,
+      scoreDimension: data.scoreDimension,
+      isActive: data.isActive,
+      updatedAt: new Date(),
+    })
+    .where(eq(questions.id, questionId))
+    .returning();
+
+  return record;
+}
+
+/** Deactivate a question (soft delete). */
+export async function deactivateQuestion(db: DbClient, questionId: string): Promise<void> {
+  const existing = await findByQuestionId(db, questionId);
+
+  if (!existing) {
+    throw new NotFoundError('Question', questionId);
+  }
+
+  await db
+    .update(questions)
+    .set({ isActive: false, updatedAt: new Date() })
+    .where(eq(questions.id, questionId));
 }
 
 export async function findSlugsByIds(
