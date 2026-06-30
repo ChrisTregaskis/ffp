@@ -1,16 +1,20 @@
 {
   "workbench.colorCustomizations": {
     "activityBar.background": "#091c41",
+    "activityBar.foreground": "#ffffff",
+    "activityBar.inactiveForeground": "#6d9fff",
+    "activityBarBadge.background": "#6d9fff",
+    "activityBarBadge.foreground": "#091c41",
     "titleBar.activeBackground": "#242f8e",
     "titleBar.activeForeground": "#ffffff",
-    "titleBar.inactiveBackground": "#0C2555",
-    "titleBar.inactiveForeground": "#FBFDFF",
-    "statusBar.background": "#0C2555",
-    "statusBar.foreground": "#FBFDFF",
-    "statusBar.debuggingBackground": "#0C2555",
-    "statusBar.debuggingForeground": "#FBFDFF",
-    "statusBar.noFolderBackground": "#0C2555",
-    "statusBar.noFolderForeground": "#FBFDFF"
+    "titleBar.inactiveBackground": "#091c41",
+    "titleBar.inactiveForeground": "#d7d0ff",
+    "statusBar.background": "#242f8e",
+    "statusBar.foreground": "#ffffff",
+    "statusBar.debuggingBackground": "#242f8e",
+    "statusBar.debuggingForeground": "#ffffff",
+    "statusBar.noFolderBackground": "#091c41",
+    "statusBar.noFolderForeground": "#ffffff"
   },
   "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
   "eslint.workingDirectories": [{ "mode": "auto" }],

@@ -41,7 +41,10 @@ export const PhaseDetailPage: React.FC = () => {
 
   const [isAddingSession, setIsAddingSession] = useState(false);
 
-  const phase = useMemo(() => template?.phases.find((p) => p.id === phaseId), [template, phaseId]);
+  const phase = useMemo(
+    () => template?.phases.find((p) => p.publicId === phaseId),
+    [template, phaseId]
+  );
 
   const displayName = phase?.name ?? `Phase ${String(phase?.phaseNumber ?? '')}`;
   const sessions = useMemo(() => phase?.sessions ?? [], [phase?.sessions]);
@@ -62,13 +65,13 @@ export const PhaseDetailPage: React.FC = () => {
 
   const handleCreateSession = useCallback(
     (values: SessionFormValues) => {
-      if (!phaseId) {
+      if (!phase) {
         return;
       }
 
       createSession.mutate(
         {
-          phaseId,
+          phaseId: phase.id,
           data: {
             name: values.name || null,
             description: values.description || null,
@@ -86,7 +89,7 @@ export const PhaseDetailPage: React.FC = () => {
         }
       );
     },
-    [phaseId, createSession, addToast]
+    [phase, createSession, addToast]
   );
 
   const handleUpdateSession = useCallback(
@@ -124,7 +127,7 @@ export const PhaseDetailPage: React.FC = () => {
 
   const handleSessionReorder = useCallback(
     (sessionId: string, direction: 'up' | 'down') => {
-      if (!phaseId) {
+      if (!phase) {
         return;
       }
 
@@ -139,14 +142,14 @@ export const PhaseDetailPage: React.FC = () => {
       }
 
       reorderSessions.mutate(
-        { phaseId, orderedIds: reordered },
+        { phaseId: phase.id, orderedIds: reordered },
         {
           onSuccess: () => addToast('Session order updated', { variant: 'success' }),
           onError: (err) => addToast(err.message, { variant: 'error' }),
         }
       );
     },
-    [phaseId, sessions, reorderSessions, addToast]
+    [phase, sessions, reorderSessions, addToast]
   );
 
   return (

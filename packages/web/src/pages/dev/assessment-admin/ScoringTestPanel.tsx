@@ -4,283 +4,213 @@ import { Icon, Icons } from '@web/components/Icon';
 import { Select } from '@web/components/select';
 import { Text } from '@web/components/text';
 
-import { DIMENSION_LABELS, iconVar, OPERATOR_LABELS } from './prototype-labels';
+import { iconVar } from './prototype-labels';
 import {
-  buildMaxAnswers,
-  buildMinAnswers,
-  buildModerateAnswers,
-  buildRandomAnswers,
-  checkCoverage,
-  simulateScoring,
-  type PresetMode,
-  type SampleAnswer,
-  type SampleAnswers,
-  type ScoreBand,
-} from './prototype-scoring';
+  ACTIVITY_CATEGORY_LABELS,
+  ACTIVITY_QUESTION_IDS,
+  AGE_QUESTION_ID,
+  computeLevel,
+  LEVEL_META,
+  type ActivityCategory,
+} from './prototype-level-model';
+import { type SampleAnswer, type SampleAnswers } from './prototype-scoring';
+import { SCROLL_CLASS } from './prototype-styles';
 import { TestAnswerInput } from './TestAnswerInput';
 
-import type { ProgrammeTemplateOption, PrototypeQuestion, ScoringConfig } from './prototype-types';
-
-const PRESET_OPTIONS = [
-  { value: 'min', label: 'Lowest' },
-  { value: 'moderate', label: 'Moderate' },
-  { value: 'max', label: 'Highest' },
-  { value: 'random', label: 'Randomised' },
-];
-
-const PRESET_BUILDERS: Record<
-  PresetMode,
-  (config: ScoringConfig, questions: PrototypeQuestion[]) => SampleAnswers
-> = {
-  min: buildMinAnswers,
-  moderate: buildModerateAnswers,
-  max: buildMaxAnswers,
-  random: buildRandomAnswers,
-};
+import type { LevelScenario, PrototypeQuestion } from './prototype-types';
 
 interface ScoringTestPanelProps {
-  config: ScoringConfig;
   questions: PrototypeQuestion[];
-  programmeTemplates: ProgrammeTemplateOption[];
+  scenarios: LevelScenario[];
   answers: SampleAnswers;
   onAnswersChange: (answers: SampleAnswers) => void;
-  /** Scroll to + highlight a mapping card in the editor */
-  onJumpToMapping: (index: number) => void;
 }
 
-const BAND_META: Record<
-  ScoreBand,
-  { label: string; colour: 'success' | 'warning' | 'destructive'; dot: string }
-> = {
-  strong: { label: 'strong', colour: 'success', dot: 'bg-success' },
-  building: { label: 'building', colour: 'warning', dot: 'bg-warning' },
-  support: { label: 'needs support', colour: 'destructive', dot: 'bg-destructive' },
-};
+const CATEGORY_ORDER: ActivityCategory[] = ['lower', 'moderate', 'higher'];
 
-/** Live scoring sandbox — feed in sample answers, see scores, the winning rule and coverage. */
+const optionLabel = (
+  question: PrototypeQuestion | undefined,
+  value: SampleAnswer | undefined
+): string => question?.options?.find((option) => option.value === value)?.label ?? '—';
+
+/** Scenario runner — pick a user-type scenario or amend answers, and see the level it produces. */
 export const ScoringTestPanel: React.FC<ScoringTestPanelProps> = ({
-  config,
   questions,
-  programmeTemplates,
+  scenarios,
   answers,
   onAnswersChange,
-  onJumpToMapping,
 }) => {
-  const result = useMemo(
-    () => simulateScoring(config, questions, answers),
-    [config, questions, answers]
-  );
-  const programmeLabels = useMemo(
-    () => new Map(programmeTemplates.map((p) => [p.slug, p.name])),
-    [programmeTemplates]
-  );
-  const coverage = useMemo(
-    () => checkCoverage(config, questions, programmeLabels),
-    [config, questions, programmeLabels]
-  );
+  const result = useMemo(() => computeLevel(questions, answers), [questions, answers]);
+  const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
 
-  // The active preset, or '' once the author tweaks an answer by hand.
-  const [preset, setPreset] = useState<PresetMode | ''>('');
+  const ageQuestion = questions.find((q) => q.id === AGE_QUESTION_ID);
+  const activeScenario = scenarios.find((s) => s.id === activeScenarioId);
+  const finalLevel = LEVEL_META[result.finalLevel];
 
-  const applyPreset = (mode: PresetMode): void => {
-    onAnswersChange(PRESET_BUILDERS[mode](config, questions));
-    setPreset(mode);
+  const applyScenario = (id: string): void => {
+    const scenario = scenarios.find((s) => s.id === id);
+
+    if (!scenario) {
+      return;
+    }
+
+    onAnswersChange({ ...scenario.answers });
+    setActiveScenarioId(id);
   };
 
   const setAnswer = (id: string, value: SampleAnswer): void => {
     onAnswersChange({ ...answers, [id]: value });
-    setPreset(''); // a manual change clears the preset selection
+    setActiveScenarioId(null); // a manual change clears the active scenario
   };
 
-  const orderedMappings = [...result.mappings].sort((a, b) => a.priority - b.priority);
-  const recommendedLabel =
-    result.programmeTemplateId === null
-      ? 'Default programme (no rule matched)'
-      : (programmeLabels.get(result.programmeTemplateId) ?? result.programmeTemplateId);
-
   return (
-    <div className="space-y-5">
-      {/* Preset */}
-      <div className="space-y-2">
-        <Text styleProps={{ size: 'sm', weight: 'semibold' }}>Sample answers</Text>
-        <Select
-          value={preset}
-          onChange={(value) => {
-            applyPreset(value as PresetMode);
-          }}
-          options={PRESET_OPTIONS}
-          ariaLabel="Sample answers preset"
-          placeholder="Choose a preset…"
-        />
-      </div>
+    <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-6">
+      {/* Inputs — its own container, scrollable when the answers run long */}
+      <div
+        className={`max-h-[calc(100vh-14rem)] space-y-5 overflow-y-auto rounded-lg border border-border bg-card p-4 shadow-sm ${SCROLL_CLASS}`}
+      >
+        <div className="space-y-1.5">
+          <Text styleProps={{ size: 'sm', weight: 'semibold' }}>Scenario</Text>
+          <Select
+            value={activeScenarioId ?? ''}
+            placeholder="Choose a user-type scenario…"
+            ariaLabel="Scenario"
+            options={scenarios.map((scenario) => ({ value: scenario.id, label: scenario.label }))}
+            onChange={(value) => {
+              applyScenario(String(value));
+            }}
+          />
+          {activeScenario && (
+            <div className="rounded-md border border-info/20 bg-info/10 p-2.5">
+              <Text styleProps={{ size: 'xs', weight: 'medium', colour: 'info' }}>
+                {activeScenario.expectation}
+              </Text>
+            </div>
+          )}
+        </div>
 
-      {/* Answer inputs, grouped by dimension */}
-      {config.dimensions.map((dimension) => (
-        <div key={dimension.name} className="space-y-2">
+        {/* Age — drives the bump, so it sits just under the scenario */}
+        {ageQuestion && (
+          <div className="space-y-1">
+            <Text styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}>
+              Age
+            </Text>
+            <Text as="p" styleProps={{ size: 'sm' }}>
+              {ageQuestion.questionText}
+            </Text>
+            <TestAnswerInput
+              question={ageQuestion}
+              value={answers[AGE_QUESTION_ID]}
+              onChange={(value) => {
+                setAnswer(AGE_QUESTION_ID, value);
+              }}
+            />
+          </div>
+        )}
+
+        {/* Activity answers */}
+        <div className="space-y-3">
           <Text styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}>
-            {DIMENSION_LABELS[dimension.name]}
+            Activity answers
           </Text>
-          {dimension.questionIds.map((id) => {
+          {ACTIVITY_QUESTION_IDS.map((id) => {
             const question = questions.find((q) => q.id === id);
 
             if (!question) {
               return null;
             }
 
-            const scored = question.type !== 'text' && question.type !== 'video-response';
-
             return (
               <div key={id} className="space-y-1">
                 <Text as="p" styleProps={{ size: 'sm' }}>
                   {question.questionText}
                 </Text>
-                {scored ? (
-                  <TestAnswerInput
-                    question={question}
-                    value={answers[id]}
-                    onChange={(value) => {
-                      setAnswer(id, value);
-                    }}
-                  />
-                ) : (
-                  <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
-                    Not scored — contributes 0.
-                  </Text>
-                )}
+                <TestAnswerInput
+                  question={question}
+                  value={answers[id]}
+                  onChange={(value) => {
+                    setAnswer(id, value);
+                  }}
+                />
               </div>
             );
           })}
-        </div>
-      ))}
-
-      {/* Results */}
-      <div className="space-y-3 border-t border-border pt-4">
-        <Text styleProps={{ size: 'sm', weight: 'semibold' }}>Result</Text>
-
-        {result.dimensions.map((dimension) => {
-          const band = BAND_META[dimension.band];
-
-          return (
-            <div key={dimension.name} className="flex items-center justify-between gap-2">
-              <Text styleProps={{ size: 'sm' }}>{dimension.label}</Text>
-              <div className="flex items-center gap-1.5">
-                <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-                  raw {dimension.rawScore}/{dimension.maxScore} · {dimension.normalised}%
-                </Text>
-                <span className={`h-2 w-2 rounded-full ${band.dot}`} aria-hidden />
-                <Text styleProps={{ size: 'xs', colour: band.colour }}>{band.label}</Text>
-              </div>
-            </div>
-          );
-        })}
-
-        <div className="rounded-md border border-primary/20 bg-primary/5 p-3">
-          <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>Recommended programme</Text>
-          <Text as="p" styleProps={{ size: 'sm', weight: 'semibold', colour: 'primary' }}>
-            {recommendedLabel}
-          </Text>
         </div>
       </div>
 
-      {/* Why — the rule trace */}
-      {orderedMappings.length > 0 && (
-        <div className="space-y-2">
-          <Text styleProps={{ size: 'sm', weight: 'semibold' }}>Why</Text>
-          {orderedMappings.map((mapping) => {
-            const isWinner = mapping.index === result.winnerIndex;
+      {/* Result — its own fixed container, no scroll */}
+      <div className="mt-6 space-y-3 rounded-lg border border-border bg-card p-4 shadow-sm lg:mt-0">
+        <Text styleProps={{ size: 'sm', weight: 'semibold' }}>Result</Text>
 
-            return (
-              <div
-                key={mapping.index}
-                className={`rounded-md border p-2.5 ${
-                  isWinner ? 'border-success bg-success/5' : 'border-border'
+        {/* Step 1 — activity tally */}
+        <div className="rounded-md border border-border bg-background p-3">
+          <Text styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}>
+            1 · Activity tally
+          </Text>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {CATEGORY_ORDER.map((category) => (
+              <span
+                key={category}
+                className={`rounded px-2 py-0.5 ${
+                  result.modalCategory === category ? 'bg-primary/10' : 'bg-muted'
                 }`}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onJumpToMapping(mapping.index);
-                    }}
-                    className="underline-offset-2 hover:underline"
-                  >
-                    <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'primary' }}>
-                      Rule {mapping.priority}
-                    </Text>
-                  </button>
-                  <Text
-                    styleProps={{
-                      size: 'xs',
-                      weight: 'medium',
-                      colour: isWinner ? 'success' : 'muted-foreground',
-                    }}
-                  >
-                    {isWinner ? 'matches — wins' : mapping.matched ? 'matches' : 'no match'}
-                  </Text>
-                </div>
-                <div className="mt-1 space-y-0.5">
-                  {mapping.conditions.map((condition, conditionIndex) => (
-                    <div key={conditionIndex} className="flex items-center gap-1.5">
-                      <Icon
-                        name={condition.pass ? Icons.CHECK : Icons.CLOSE}
-                        styleProps={{
-                          size: 'xs',
-                          colour: iconVar(condition.pass ? 'success' : 'destructive'),
-                        }}
-                      />
-                      <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
-                        {DIMENSION_LABELS[condition.dimension]}{' '}
-                        {OPERATOR_LABELS[condition.operator]} {condition.value} (got{' '}
-                        {condition.actual})
-                      </Text>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+                <Text
+                  styleProps={{
+                    size: 'xs',
+                    weight: 'medium',
+                    colour: result.modalCategory === category ? 'primary' : 'muted-foreground',
+                  }}
+                >
+                  {ACTIVITY_CATEGORY_LABELS[category]} ×{result.counts[category]}
+                </Text>
+              </span>
+            ))}
+          </div>
+          <Text as="p" styleProps={{ size: 'sm' }} className="mt-1.5">
+            {result.modalCategory
+              ? `Mostly ${ACTIVITY_CATEGORY_LABELS[result.modalCategory].toLowerCase()}`
+              : 'Mixed — no clear majority'}{' '}
+            → base{' '}
+            <Text styleProps={{ size: 'sm', weight: 'semibold' }}>Level {result.baseLevel}</Text>
+          </Text>
         </div>
-      )}
 
-      {/* Coverage */}
-      {coverage.length > 0 && (
-        <div className="space-y-2 border-t border-border pt-4">
-          <Text styleProps={{ size: 'sm', weight: 'semibold' }}>Coverage checks</Text>
-          {coverage.map((issue, index) => (
-            <button
-              key={index}
-              type="button"
-              disabled={issue.mappingIndex === undefined}
-              onClick={() => {
-                if (issue.mappingIndex !== undefined) {
-                  onJumpToMapping(issue.mappingIndex);
-                }
-              }}
-              className={`flex w-full items-start gap-2 rounded-md border p-2.5 text-left ${
-                issue.severity === 'warning'
-                  ? 'border-warning/30 bg-warning/10'
-                  : 'border-border bg-muted/40'
-              } ${issue.mappingIndex !== undefined ? 'hover:border-warning' : ''}`}
-            >
-              <Icon
-                name={issue.severity === 'warning' ? Icons.ALERTTRIANGLE : Icons.HELPCIRCLE}
-                styleProps={{
-                  size: 'sm',
-                  colour: iconVar(issue.severity === 'warning' ? 'warning' : 'muted-foreground'),
-                }}
-              />
-              <Text
-                styleProps={{
-                  size: 'xs',
-                  colour: issue.severity === 'warning' ? 'warning' : 'muted-foreground',
-                }}
-              >
-                {issue.message}
+        {/* Step 2 — age bump */}
+        <div className="rounded-md border border-border bg-background p-3">
+          <Text styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}>
+            2 · Age bump
+          </Text>
+          <Text as="p" styleProps={{ size: 'sm' }} className="mt-1.5">
+            {optionLabel(ageQuestion, answers[AGE_QUESTION_ID])} ·{' '}
+            <Text styleProps={{ size: 'sm', weight: 'medium' }}>
+              {result.ageBand === 'younger' ? 'under 40 (younger)' : '40+ (older)'}
+            </Text>{' '}
+            →{' '}
+            {result.bumped ? (
+              <Text styleProps={{ size: 'sm', weight: 'semibold', colour: 'primary' }}>
+                +1 level
               </Text>
-            </button>
-          ))}
+            ) : (
+              <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>no change</Text>
+            )}
+          </Text>
         </div>
-      )}
+
+        {/* Final level */}
+        <div className="rounded-md border border-primary/20 bg-primary/5 p-3">
+          <div className="flex items-center gap-2">
+            <Icon name={Icons.TARGET} styleProps={{ size: 'sm', colour: iconVar('primary') }} />
+            <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>Recommended level</Text>
+          </div>
+          <Text as="p" styleProps={{ size: 'sm', weight: 'semibold', colour: 'primary' }}>
+            {finalLevel.name}
+          </Text>
+          <Text as="p" styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
+            {finalLevel.tagline}
+          </Text>
+        </div>
+      </div>
     </div>
   );
 };

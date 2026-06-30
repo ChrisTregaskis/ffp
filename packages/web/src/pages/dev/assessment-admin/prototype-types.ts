@@ -57,6 +57,8 @@ export interface PrototypeQuestion {
   options?: QuestionOption[];
   validation?: QuestionValidation;
   scoreDimension?: ScoreDimension | null;
+  /** A scoring effect that isn't a dimension (e.g. age driving the level bump). */
+  scoringNote?: string;
   isActive: boolean;
 }
 
@@ -133,6 +135,21 @@ export interface ProgrammeTemplateOption {
   name: string;
 }
 
+/**
+ * A named answer scenario, described by user type (e.g. "Mostly lower · older"),
+ * used to check which level a set of answers produces. In the real product these
+ * would be generated per flow from its questions; here they are mock fixtures.
+ */
+export interface LevelScenario {
+  id: string;
+  /** The user type this scenario represents, e.g. "Mostly lower · older (40+)". */
+  label: string;
+  /** The level this scenario is expected to produce. */
+  expectation: string;
+  /** Sample answers keyed by question id (the activity trio + age). */
+  answers: Record<string, string>;
+}
+
 /** In-app navigation target (internal mini-router — keeps the prototype to one route) */
 export type PrototypeView =
   | { name: 'flows' }
@@ -145,4 +162,9 @@ export type PrototypeView =
   | { name: 'question-edit'; questionId: string }
   | { name: 'templates' }
   | { name: 'template-edit'; templateId: string }
-  | { name: 'scoring'; flowId: string };
+  | { name: 'scoring'; flowId: string }
+  | { name: 'programme-models' }
+  | { name: 'video-library' }
+  | { name: 'member-programmes' }
+  | { name: 'member-programme'; memberId: string }
+  | { name: 'member-programme-phase'; memberId: string; phaseId: string };

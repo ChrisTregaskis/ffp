@@ -31,7 +31,8 @@ export const TestAnswerInput: React.FC<TestAnswerInputProps> = ({ question, valu
               }`}
             >
               <Text styleProps={{ size: 'xs', colour: selected ? 'primary' : 'foreground' }}>
-                {option.label} ({String(option.score ?? 0)})
+                {option.label}
+                {option.score !== undefined ? ` (${String(option.score)})` : ''}
               </Text>
             </button>
           );
