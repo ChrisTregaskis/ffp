@@ -6,15 +6,14 @@
  * questions are reproduced faithfully; Q1 (demographics) is split into a gender
  * and an age question, since the prototype has no dedicated demographics type.
  *
- * Scoring stays faithful to how the real engine actually scores
- * (packages/core/src/assessments/scoring): single/multi-choice use option scores,
- * text answers score 0, and a dimension's maxScore equals the sum of its scored
- * questions' maxima. Hanan's "mostly A/B/C" level tally is approximated here as a
- * single summed "Activity & readiness" dimension (A=1, B=2, C=3) mapped to Levels
- * 1–3 by raw-score band — see the validation note for where that approximation
- * diverges from a true modal-category count. Throwaway, no DB.
+ * Level scoring follows the confirmed model (see prototype-level-model.ts): the
+ * three activity answers set a base level by a modal tally (mostly lower → Level
+ * 1, mixed → Level 2, mostly higher → Level 3), and under-40s are bumped up one
+ * level (capped at Level 3). Age is therefore a scored input, not just profiling.
+ * Throwaway, no DB.
  */
 import type {
+  LevelScenario,
   ProgrammeTemplateOption,
   PrototypeFlow,
   PrototypeQuestion,
@@ -45,7 +44,9 @@ export const INITIAL_QUESTIONS: PrototypeQuestion[] = [
     slug: 'demographics-age',
     type: 'single-choice',
     questionText: 'Which age bracket are you in?',
-    description: 'Used to personalise your experience — it does not affect your programme level.',
+    description:
+      'Scored: under-40s start one level higher, since they generally tolerate a touch more intensity.',
+    scoringNote: 'affects level (age bump)',
     options: [
       { value: 'under_20', label: 'Under 20' },
       { value: '20_30', label: '20–30' },
@@ -354,4 +355,79 @@ export const PROGRAMME_TEMPLATE_OPTIONS: ProgrammeTemplateOption[] = [
   { slug: 'level-2-active-wellness', name: 'Level 2 — Active Wellness / Moderate' },
   { slug: 'level-3-energized-dynamic', name: 'Level 3 — Energized / Dynamic' },
   { slug: 'default-wellbeing', name: 'Default Wellbeing (fallback)' },
+];
+
+/**
+ * Named answer scenarios, by user type, that exercise each level outcome. Used as a
+ * dropdown in the scenario runner to check the questions produce the right level —
+ * pick one, then amend any answer to feel the boundaries (e.g. the under-40 bump).
+ * In the real product these would be generated per flow from its own questions.
+ */
+export const LEVEL_SCENARIOS: LevelScenario[] = [
+  {
+    id: 'lower-older',
+    label: 'Mostly lower · older (40+)',
+    expectation: 'Expected: Level 1',
+    answers: {
+      'q-weekly-activity': 'low',
+      'q-exercise-tolerance': 'low',
+      'q-movement-comfort': 'stiff',
+      'q-demographics-age': '46_55',
+    },
+  },
+  {
+    id: 'lower-younger',
+    label: 'Mostly lower · younger (under 40)',
+    expectation: 'Expected: Level 2 (under-40 bump)',
+    answers: {
+      'q-weekly-activity': 'low',
+      'q-exercise-tolerance': 'low',
+      'q-movement-comfort': 'stiff',
+      'q-demographics-age': '20_30',
+    },
+  },
+  {
+    id: 'mixed-older',
+    label: 'Mixed · older (40+)',
+    expectation: 'Expected: Level 2',
+    answers: {
+      'q-weekly-activity': 'low',
+      'q-exercise-tolerance': 'moderate',
+      'q-movement-comfort': 'flexible',
+      'q-demographics-age': '46_55',
+    },
+  },
+  {
+    id: 'mixed-younger',
+    label: 'Mixed · younger (under 40)',
+    expectation: 'Expected: Level 3 (under-40 bump)',
+    answers: {
+      'q-weekly-activity': 'low',
+      'q-exercise-tolerance': 'moderate',
+      'q-movement-comfort': 'flexible',
+      'q-demographics-age': '31_40',
+    },
+  },
+  {
+    id: 'higher-older',
+    label: 'Mostly higher · older (40+)',
+    expectation: 'Expected: Level 3',
+    answers: {
+      'q-weekly-activity': 'active',
+      'q-exercise-tolerance': 'high',
+      'q-movement-comfort': 'flexible',
+      'q-demographics-age': '56_65',
+    },
+  },
+  {
+    id: 'higher-younger',
+    label: 'Mostly higher · younger (under 40)',
+    expectation: 'Expected: Level 3 (capped)',
+    answers: {
+      'q-weekly-activity': 'active',
+      'q-exercise-tolerance': 'high',
+      'q-movement-comfort': 'flexible',
+      'q-demographics-age': '20_30',
+    },
+  },
 ];

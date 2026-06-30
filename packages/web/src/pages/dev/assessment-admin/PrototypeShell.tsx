@@ -7,6 +7,10 @@ import { Text } from '@web/components/text';
 import { FlowBuilderView } from './FlowBuilderView';
 import { FlowListView } from './FlowListView';
 import { FlowMetadataView } from './FlowMetadataView';
+import { MemberProgrammeDetailView } from './MemberProgrammeDetailView';
+import { MemberProgrammePhaseView } from './MemberProgrammePhaseView';
+import { MemberProgrammesView } from './MemberProgrammesView';
+import { ProgrammeModelsView } from './ProgrammeModelsView';
 import { iconVar } from './prototype-labels';
 import { getContextNav, getMainNav } from './prototype-nav';
 import { PrototypeNavItem } from './PrototypeNavItem';
@@ -17,6 +21,7 @@ import { ScoringConfigView } from './ScoringConfigView';
 import { StepEditView } from './StepEditView';
 import { TemplateDetailView } from './TemplateDetailView';
 import { TemplateListView } from './TemplateListView';
+import { VideoLibraryView } from './VideoLibraryView';
 
 import type { PrototypeView } from './prototype-types';
 
@@ -40,6 +45,16 @@ const renderView = (view: PrototypeView): JSX.Element => {
       return <TemplateListView />;
     case 'template-edit':
       return <TemplateDetailView templateId={view.templateId} />;
+    case 'programme-models':
+      return <ProgrammeModelsView />;
+    case 'video-library':
+      return <VideoLibraryView />;
+    case 'member-programmes':
+      return <MemberProgrammesView />;
+    case 'member-programme':
+      return <MemberProgrammeDetailView memberId={view.memberId} />;
+    case 'member-programme-phase':
+      return <MemberProgrammePhaseView memberId={view.memberId} phaseId={view.phaseId} />;
     default:
       return <FlowListView />;
   }

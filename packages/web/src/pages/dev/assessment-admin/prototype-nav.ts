@@ -37,6 +37,22 @@ export const getMainNav = (view: PrototypeView, navigate: Navigate): NavEntry[] 
       navigate({ name: 'templates' });
     },
   },
+  {
+    label: 'Video library',
+    icon: Icons.VIDEO,
+    active: view.name === 'video-library',
+    onClick: () => {
+      navigate({ name: 'video-library' });
+    },
+  },
+  {
+    label: 'Member programmes',
+    icon: Icons.USERS,
+    active: view.name === 'member-programmes' || view.name === 'member-programme',
+    onClick: () => {
+      navigate({ name: 'member-programmes' });
+    },
+  },
 ];
 
 /**
@@ -66,6 +82,34 @@ export const getContextNav = (view: PrototypeView, navigate: Navigate): NavEntry
         active: false,
         onClick: () => {
           navigate({ name: 'templates' });
+        },
+      },
+    ];
+  }
+
+  if (view.name === 'member-programme') {
+    return [
+      {
+        label: 'Back to member programmes',
+        icon: Icons.ARROWLEFT,
+        active: false,
+        onClick: () => {
+          navigate({ name: 'member-programmes' });
+        },
+      },
+    ];
+  }
+
+  if (view.name === 'member-programme-phase') {
+    const { memberId } = view;
+
+    return [
+      {
+        label: 'Back to programme',
+        icon: Icons.ARROWLEFT,
+        active: false,
+        onClick: () => {
+          navigate({ name: 'member-programme', memberId });
         },
       },
     ];

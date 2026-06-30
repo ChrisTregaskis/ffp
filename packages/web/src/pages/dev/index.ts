@@ -104,12 +104,6 @@ export const componentCategories: ComponentCategory[] = [
     title: 'Assessment Admin (UX prototype)',
     description: 'Clickable, mock-data exploration of the assessment authoring surface',
     path: `${basePath}/assessment-admin`,
-    examples: [
-      'Flow list',
-      'Flow builder',
-      'Question bank',
-      'Template questions',
-      'Scoring config',
-    ],
+    examples: ['Flow builder', 'Question bank', 'Scoring (level model)', 'Programme models A vs B'],
   },
 ];

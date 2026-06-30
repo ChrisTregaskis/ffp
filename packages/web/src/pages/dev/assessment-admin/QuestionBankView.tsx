@@ -89,7 +89,9 @@ export const QuestionBankView: React.FC = () => {
                 {question.slug}
                 {question.scoreDimension
                   ? ` · scores ${DIMENSION_LABELS[question.scoreDimension]}`
-                  : ' · not scored'}
+                  : question.scoringNote
+                    ? ` · ${question.scoringNote}`
+                    : ' · not scored'}
                 {question.options ? ` · ${String(question.options.length)} options` : ''}
               </Text>
             </div>
