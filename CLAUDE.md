@@ -488,6 +488,7 @@ pnpm db:check
 - `README.md` - Comprehensive guide: commands, workflows, project structure, troubleshooting
 - `CLAUDE.md` - This file: AI assistant guidance, essential commands, architecture overview
 - `project-documentation/architecture.md` - Full AWS architecture, cost breakdown, diagrams
+- `project-documentation/prototype-hosting.md` - Showcase build + Cloudflare Pages hosting for the dev-only `/components/*` UX prototypes (gated stakeholder previews)
 
 **Package level**:
 
