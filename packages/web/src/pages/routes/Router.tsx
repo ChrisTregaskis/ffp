@@ -21,7 +21,8 @@ import { routes } from '.';
  * Route Structure:
  * - Public routes: Render directly (e.g., /login)
  * - Protected routes: Wrapped in ProtectedRoute for auth checks
- * - Dev-only routes: Excluded in production builds
+ * - Dev-only routes: Excluded in production builds, except in the showcase
+ *   build (VITE_SHOWCASE=true), which keeps them for stakeholder previews
  * - Catch-all: Shows a 404 "Page not found" page
  *
  * Protected routes are automatically wrapped with:
@@ -31,10 +32,13 @@ import { routes } from '.';
  */
 export const Router = (): JSX.Element => {
   const isProduction = import.meta.env.PROD;
+  // Showcase build keeps dev-only routes so stakeholders can preview the
+  // mock-data prototypes on a static host. Off by default in every real build.
+  const isShowcase = import.meta.env.VITE_SHOWCASE === 'true';
 
-  // Filter out dev-only routes in production
+  // Filter out dev-only routes in production (unless this is a showcase build)
   const availableRoutes = Object.entries(routes).filter(
-    ([, config]) => !config.devOnly || !isProduction
+    ([, config]) => !config.devOnly || !isProduction || isShowcase
   );
 
   // Separate public and protected routes from available routes

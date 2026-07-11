@@ -59,9 +59,10 @@ export const MemberProgrammePhaseView: React.FC<MemberProgrammePhaseViewProps> =
               setIsNoteOpen(false);
             }}
           >
-            In the live system a session&rsquo;s exercises come from the shared programme template,
-            so editing them would change the programme for every member on it. Per-member edits need
-            an override layer — the key real-build decision. Edits here are mock, scoped to this
+            In the live system a session&rsquo;s exercises come from the shared programme template.
+            The planned build adds a per-member override layer: a session inherits the template
+            until it&rsquo;s edited, then becomes this member&rsquo;s own copy — with a
+            reset-to-template option to drop back to inheriting. Edits here are mock, scoped to this
             member.
           </InfoNote>
         </div>
