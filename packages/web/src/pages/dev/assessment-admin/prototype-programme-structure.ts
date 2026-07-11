@@ -7,8 +7,10 @@
  * was generated from.
  *
  * Note on the real system: exercises live on the *shared template* (session_exercises
- * hangs off template_sessions), not per member — so a genuine per-member swap needs an
- * override layer in the real build. Here the edits are mock and scoped to one member.
+ * hangs off template_sessions), not per member. The planned build adds a per-member
+ * override layer (copy-on-write: a session inherits the template until edited, then
+ * becomes the member's own copy, resettable back to the template). Here the edits are
+ * mock and scoped to one member.
  */
 import { type Level } from './prototype-level-model';
 import { type PrototypeVideo, VIDEO_LIBRARY } from './prototype-videos';

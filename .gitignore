@@ -62,7 +62,7 @@ vitest.config.d.ts
 CLAUDE.local.md
 .claude.md
 .claude/review-context.md
-.claude/local/
+.claude/local
 .claude/worktrees/
 
 project-documentation/sprint-planning/outputs/*.md
