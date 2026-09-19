@@ -49,8 +49,8 @@ export const programmePhases = pgTable(
     name: varchar('name', { length: 255 }),
     /** Phase completion status */
     status: phaseStatusEnum('status').notNull().default('not_started'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     publicIdIndex('programme_phases', table.publicId),

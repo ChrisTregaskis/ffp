@@ -50,15 +50,15 @@ export const exerciseCompletions = pgTable(
     /** Whether the exercise was completed */
     completed: boolean('completed').notNull().default(false),
     /** When marked complete */
-    completedAt: timestamp('completed_at'),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
     /** Whether the exercise was skipped */
     skipped: boolean('skipped').notNull().default(false),
     /** User notes (e.g., "left knee felt tight") */
     notes: text('notes'),
     /** Variable optional data (pain_level, modifications, etc.) */
     metadata: jsonb('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     uniqueIndex('idx_exercise_completions_session_exercise').on(

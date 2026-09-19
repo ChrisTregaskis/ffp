@@ -43,7 +43,7 @@ export const userAssessmentAnswers = pgTable(
     /** The answer value - flexible JSONB to accommodate all question types */
     answerValue: jsonb('answer_value').$type<AnswerValue>().notNull(),
     /** When this answer was recorded/updated */
-    answeredAt: timestamp('answered_at').defaultNow().notNull(),
+    answeredAt: timestamp('answered_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     // One answer per question per assessment
