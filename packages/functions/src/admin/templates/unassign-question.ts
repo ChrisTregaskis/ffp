@@ -2,7 +2,7 @@ import {
   type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
   withErrorHandling,
-  templateService,
+  templateQuestionService,
   ValidationError,
   ForbiddenError,
   isUserActor,
@@ -39,7 +39,11 @@ export const handler = withErrorHandling(
       throw new ValidationError('Question ID is required in path');
     }
 
-    await templateService.unassignQuestionService(context, templatePublicId, questionPublicId);
+    await templateQuestionService.unassignQuestionService(
+      context,
+      templatePublicId,
+      questionPublicId
+    );
 
     return { success: true };
   }

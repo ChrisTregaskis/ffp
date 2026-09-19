@@ -8,6 +8,7 @@ import {
   reorderFlowStepsSchema,
 } from '../schemas/assessment-flow.schema';
 
+import { resolveOrderedChildIds } from './child-payload';
 import { flowHasBranching, toAdminFlowStep, type AdminFlowStep } from './flow-step.branching';
 import * as flowStepRepository from './flow-step.repository';
 import * as flowRepository from './flow.repository';
@@ -147,35 +148,17 @@ export async function reorderStepsService(
     );
   }
 
-  const { orderedStepPublicIds } = parseResult.data;
-
-  // Distinctness matters: `flow_steps.order` is non-unique, so a duplicate id
-  // would reassign one step twice and silently leave another unmoved.
-  if (new Set(orderedStepPublicIds).size !== orderedStepPublicIds.length) {
-    throw new ValidationError('Step IDs must be unique');
-  }
-
-  if (orderedStepPublicIds.length !== activeSteps.length) {
-    throw new ValidationError(
-      `Expected ${String(activeSteps.length)} step IDs but received ${String(orderedStepPublicIds.length)}`
-    );
-  }
-
-  const stepIdByPublicId = new Map(activeSteps.map((step) => [step.publicId, step.id]));
-
-  // Resolve each public identifier to its UUID, failing if any does not belong
-  // to the flow's active steps.
-  const orderedStepIds: string[] = [];
-
-  for (const publicId of orderedStepPublicIds) {
-    const stepId = stepIdByPublicId.get(publicId);
-
-    if (!stepId) {
-      throw new ValidationError('One or more step IDs do not belong to this flow');
+  // Distinctness matters here beyond the usual: `flow_steps.order` is
+  // non-unique, so a duplicate id would reassign one step twice and silently
+  // leave another unmoved.
+  const orderedStepIds = resolveOrderedChildIds(
+    parseResult.data.orderedStepPublicIds,
+    activeSteps,
+    {
+      noun: 'Step',
+      strangerMessage: 'One or more step IDs do not belong to this flow',
     }
-
-    orderedStepIds.push(stepId);
-  }
+  );
 
   const reordered = await flowStepRepository.reorderSteps(db, flow.id, orderedStepIds);
 
