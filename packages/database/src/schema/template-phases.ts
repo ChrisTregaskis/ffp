@@ -39,8 +39,8 @@ export const templatePhases = pgTable(
     description: text('description'),
     /** Number of sessions in this phase (1–7) */
     sessionCount: integer('session_count').notNull().default(3),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     publicIdIndex('template_phases', table.publicId),

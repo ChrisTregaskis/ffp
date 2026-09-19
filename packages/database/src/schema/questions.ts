@@ -52,8 +52,8 @@ export const questions = pgTable(
     scoreDimension: scoreDimensionEnum('score_dimension'),
     /** Whether this question is currently active and available for use */
     isActive: boolean('is_active').notNull().default(true),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     publicIdIndex('questions', table.publicId),
