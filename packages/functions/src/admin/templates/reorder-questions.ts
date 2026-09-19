@@ -2,7 +2,7 @@ import {
   type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
   withErrorHandling,
-  templateService,
+  templateQuestionService,
   ValidationError,
   ForbiddenError,
   isUserActor,
@@ -38,7 +38,7 @@ export const handler = withErrorHandling(
 
     const body = parseJsonBody(event.body);
 
-    const templateQuestions = await templateService.reorderQuestionsService(
+    const templateQuestions = await templateQuestionService.reorderQuestionsService(
       context,
       templatePublicId,
       body

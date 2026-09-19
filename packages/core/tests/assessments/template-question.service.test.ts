@@ -4,8 +4,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import type * as ffpDatabase from '@ffp/database';
 
+import * as templateQuestionService from '../../src/assessments/template-question.service';
 import * as templateRepository from '../../src/assessments/template.repository';
-import * as templateService from '../../src/assessments/template.service';
 import { ConflictError, NotFoundError, ValidationError } from '../../src/lib/errors';
 import * as questionRepository from '../../src/questions/question.repository';
 
@@ -117,7 +117,7 @@ beforeEach(() => {
   questionCount = 0;
 });
 
-describe('templateService.assignQuestionsService', () => {
+describe('templateQuestionService.assignQuestionsService', () => {
   it('appends the questions after the template current highest display order', async () => {
     const template = createTemplate();
     const existing = createQuestion();
@@ -135,7 +135,7 @@ describe('templateService.assignQuestionsService', () => {
       toAssigned(toAdd, 2),
     ]);
 
-    const result = await templateService.assignQuestionsService(
+    const result = await templateQuestionService.assignQuestionsService(
       createContext(),
       TEMPLATE_PUBLIC_ID,
       { questionPublicIds: [toAdd.publicId] }
@@ -164,7 +164,7 @@ describe('templateService.assignQuestionsService', () => {
     ]);
 
     await expect(
-      templateService.assignQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
+      templateQuestionService.assignQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
         questionPublicIds: [assigned.publicId],
       })
     ).rejects.toThrow(ConflictError);
@@ -180,7 +180,7 @@ describe('templateService.assignQuestionsService', () => {
     stubQuestionLookup([inactive]);
 
     await expect(
-      templateService.assignQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
+      templateQuestionService.assignQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
         questionPublicIds: [inactive.publicId],
       })
     ).rejects.toThrow(ValidationError);
@@ -196,10 +196,28 @@ describe('templateService.assignQuestionsService', () => {
     stubQuestionLookup([question]);
 
     await expect(
-      templateService.assignQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
+      templateQuestionService.assignQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
         questionPublicIds: [question.publicId, question.publicId],
       })
     ).rejects.toThrow(ValidationError);
+  });
+
+  it('assigns onto a deactivated template, so it can be fixed up before reactivation', async () => {
+    const template = { ...createTemplate(), isActive: false };
+    const toAdd = createQuestion();
+
+    mockedTemplateRepo.findTemplateByPublicId.mockResolvedValue(template);
+    stubQuestionLookup([toAdd]);
+    mockedTemplateRepo.findQuestionAssignmentsByTemplateId.mockResolvedValue([]);
+    mockedTemplateRepo.findMaxDisplayOrder.mockResolvedValue(0);
+    mockedTemplateRepo.assignQuestions.mockResolvedValue([]);
+    mockedQuestionRepo.findByTemplateId.mockResolvedValue([toAssigned(toAdd, 1)]);
+
+    await templateQuestionService.assignQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
+      questionPublicIds: [toAdd.publicId],
+    });
+
+    expect(mockedTemplateRepo.assignQuestions).toHaveBeenCalled();
   });
 
   it('404s on an unknown question', async () => {
@@ -209,14 +227,14 @@ describe('templateService.assignQuestionsService', () => {
     stubQuestionLookup([]);
 
     await expect(
-      templateService.assignQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
+      templateQuestionService.assignQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
         questionPublicIds: ['missingQ1234'],
       })
     ).rejects.toThrow(NotFoundError);
   });
 });
 
-describe('templateService.reorderQuestionsService', () => {
+describe('templateQuestionService.reorderQuestionsService', () => {
   it('resolves the supplied order to question IDs and hands it to the two-phase reorder', async () => {
     const template = createTemplate();
     const first = createQuestion();
@@ -227,7 +245,7 @@ describe('templateService.reorderQuestionsService', () => {
       .mockResolvedValueOnce([toAssigned(first, 1), toAssigned(second, 2)])
       .mockResolvedValueOnce([toAssigned(second, 1), toAssigned(first, 2)]);
 
-    const result = await templateService.reorderQuestionsService(
+    const result = await templateQuestionService.reorderQuestionsService(
       createContext(),
       TEMPLATE_PUBLIC_ID,
       { orderedQuestionPublicIds: [second.publicId, first.publicId] }
@@ -253,7 +271,7 @@ describe('templateService.reorderQuestionsService', () => {
     ]);
 
     await expect(
-      templateService.reorderQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
+      templateQuestionService.reorderQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
         orderedQuestionPublicIds: [first.publicId],
       })
     ).rejects.toThrow(ValidationError);
@@ -270,7 +288,7 @@ describe('templateService.reorderQuestionsService', () => {
     mockedQuestionRepo.findByTemplateId.mockResolvedValue([toAssigned(assigned, 1)]);
 
     await expect(
-      templateService.reorderQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
+      templateQuestionService.reorderQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
         orderedQuestionPublicIds: [stranger.publicId],
       })
     ).rejects.toThrow(ValidationError);
@@ -280,28 +298,36 @@ describe('templateService.reorderQuestionsService', () => {
 
   it('rejects a payload listing the same question twice', async () => {
     const template = createTemplate();
+    const first = createQuestion();
+    const second = createQuestion();
 
     mockedTemplateRepo.findTemplateByPublicId.mockResolvedValue(template);
+    mockedQuestionRepo.findByTemplateId.mockResolvedValue([
+      toAssigned(first, 1),
+      toAssigned(second, 2),
+    ]);
 
     await expect(
-      templateService.reorderQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
-        orderedQuestionPublicIds: ['quesABCDE123', 'quesABCDE123'],
+      templateQuestionService.reorderQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
+        orderedQuestionPublicIds: [first.publicId, first.publicId],
       })
     ).rejects.toThrow(ValidationError);
+
+    expect(mockedTemplateRepo.reorderTemplateQuestions).not.toHaveBeenCalled();
   });
 
   it('404s on an unknown template', async () => {
     mockedTemplateRepo.findTemplateByPublicId.mockResolvedValue(null);
 
     await expect(
-      templateService.reorderQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
+      templateQuestionService.reorderQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
         orderedQuestionPublicIds: ['quesABCDE123'],
       })
     ).rejects.toThrow(NotFoundError);
   });
 });
 
-describe('templateService.unassignQuestionService', () => {
+describe('templateQuestionService.unassignQuestionService', () => {
   it('removes the assignment and renumbers what is left', async () => {
     const template = createTemplate();
     const question = createQuestion();
@@ -310,7 +336,7 @@ describe('templateService.unassignQuestionService', () => {
     stubQuestionLookup([question]);
     mockedTemplateRepo.unassignQuestion.mockResolvedValue(true);
 
-    await templateService.unassignQuestionService(
+    await templateQuestionService.unassignQuestionService(
       createContext(),
       TEMPLATE_PUBLIC_ID,
       question.publicId
@@ -336,7 +362,7 @@ describe('templateService.unassignQuestionService', () => {
     mockedTemplateRepo.unassignQuestion.mockResolvedValue(false);
 
     await expect(
-      templateService.unassignQuestionService(
+      templateQuestionService.unassignQuestionService(
         createContext(),
         TEMPLATE_PUBLIC_ID,
         question.publicId

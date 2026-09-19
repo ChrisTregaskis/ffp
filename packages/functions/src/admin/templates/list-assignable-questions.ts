@@ -2,7 +2,7 @@ import {
   type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
   withErrorHandling,
-  templateService,
+  templateQuestionService,
   ValidationError,
   type Question,
 } from '@ffp/core/server';
@@ -28,7 +28,7 @@ export const handler = withErrorHandling(
       throw new ValidationError('Template ID is required in path');
     }
 
-    const questions = await templateService.listAssignableQuestionsService(
+    const questions = await templateQuestionService.listAssignableQuestionsService(
       context,
       templatePublicId
     );
