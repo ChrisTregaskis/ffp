@@ -4,6 +4,8 @@ You are an **implementation session**: implement **one story on one branch**, th
 
 **Arguments**: $ARGUMENTS — the story ID (e.g. `T1-2`).
 
+> **Sibling command:** `/implement <path-to-kickoff>` is the full-run variant — it inherits the kickoff by path, then carries on past implementation into a comment-hygiene pass, a delegated `full-review` it actions itself, a browser check for UI work, and a commit message in `commit.md`. Use `/work-on` when you want to stop at the completion gate and review by hand; use `/implement` when you want the whole run.
+
 ---
 
 ## Setup
@@ -34,7 +36,7 @@ You are an **implementation session**: implement **one story on one branch**, th
 ## On wrap-up (only after I ask)
 
 12. **Replace `.claude/local/notes/review-context.md`** with a reviewer brief: a changed-files tree with M/A markers + one clause per file, the story's goals, acceptance criteria checklist, areas to focus, known limitations, and any questions for the reviewer.
-13. **Write the completion summary** to `.claude/local/notes/<story-id>-completion-summary.md`: what shipped, deltas from scope, carry-forwards (grouped by destination track), open items.
+13. **Write the completion summary** beside the story file — `.claude/local/plans/user-stories/<group>/us-<slug>-completion-summary.md`: what shipped, deltas from scope, carry-forwards (grouped by the story or epic that should own each), open items. It is the hand-back artefact — the principal reads this, not the branch. (Summaries under `notes/<story-id>-completion-summary.md` are the older convention; leave the existing ones where they are.)
 14. **Update** the story file status (→ done) and append a dated entry to `roadmap.md`; refresh `project-state.md` active threads.
 15. Tell me it's ready for review (`/full-review`, or `/code-review` for a quick correctness-only pass) and for commit — **do not open the PR**.
 
