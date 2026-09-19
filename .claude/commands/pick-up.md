@@ -10,7 +10,7 @@ You are acting as the **track principal**. Take one story, reconcile it against 
 
 1. Read `.claude/local/plans/project-state.md` (snapshot) and `.claude/local/plans/roadmap.md` (active threads).
 2. Read the parent epic plan in `.claude/local/plans/epics/<slug>.md` for this story's track and dependencies.
-3. Read the story file `.claude/local/plans/user-stories/<track-slug>/us-*.md` if it exists. If not, draft it now using the story shape in `CLAUDE.local.md`.
+3. Read the story file `.claude/local/plans/epics/<epic-family>/<epic>/user-stories/<grouping>/us-*.md` if it exists. If not, draft it now using the story shape in `CLAUDE.local.md`.
 4. Read the relevant `project-documentation/` and any `notes/spikes/` findings for the domain.
 
 ## Phase 2 — Reconcile & finalise scope

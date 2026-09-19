@@ -11,7 +11,7 @@ You are an **implementation session**: implement **one story on one branch**, th
 ## Setup
 
 1. **Read the kickoff** `.claude/local/plans/prompts/<story-id>-kickoff.md` — this is your brief: intent, read-first order, scope, constraints, definition of done. If it's missing, ask me for it (the track principal should have produced it via `/pick-up`).
-2. **Read the story file** `.claude/local/plans/user-stories/<track-slug>/us-*.md` and `.claude/local/plans/project-state.md` for context. The story file + kickoff are the source of truth; flag any conflict before proceeding.
+2. **Read the story file** `.claude/local/plans/epics/<epic-family>/<epic>/user-stories/<grouping>/us-*.md` and `.claude/local/plans/project-state.md` for context. The story file + kickoff are the source of truth; flag any conflict before proceeding.
 3. **Read `.claude/local/notes/review-context.md`** to see what's already on this branch:
    - First story on the branch → you'll **replace** this file with a fresh reviewer brief on completion.
    - Continuation → build on the existing content.
@@ -36,7 +36,7 @@ You are an **implementation session**: implement **one story on one branch**, th
 ## On wrap-up (only after I ask)
 
 12. **Replace `.claude/local/notes/review-context.md`** with a reviewer brief: a changed-files tree with M/A markers + one clause per file, the story's goals, acceptance criteria checklist, areas to focus, known limitations, and any questions for the reviewer.
-13. **Write the completion summary** beside the story file — `.claude/local/plans/user-stories/<group>/us-<slug>-completion-summary.md`: what shipped, deltas from scope, carry-forwards (grouped by the story or epic that should own each), open items. It is the hand-back artefact — the principal reads this, not the branch. (Summaries under `notes/<story-id>-completion-summary.md` are the older convention; leave the existing ones where they are.)
+13. **Move the story into `complete/` and write the completion summary beside it** — `.claude/local/plans/epics/<epic-family>/<epic>/user-stories/complete/<grouping>/us-<slug>-completion-summary.md`: what shipped, deltas from scope, carry-forwards (grouped by the story or epic that should own each), open items. It is the hand-back artefact — the principal reads this, not the branch. The done story and its outcome travel together.
 14. **Update** the story file status (→ done) and append a dated entry to `roadmap.md`; refresh `project-state.md` active threads.
 15. Tell me it's ready for review (`/full-review`, or `/code-review` for a quick correctness-only pass) and for commit — **do not open the PR**.
 

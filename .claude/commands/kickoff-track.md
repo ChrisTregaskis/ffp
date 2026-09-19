@@ -45,7 +45,7 @@ Epic-principal action. Refine **one** track and draft the **track-principal hand
    ## How to run
 
    - `/pick-up <story-id>` one story at a time → hand me (the user) the impl kickoff to paste into an implementation session.
-   - Completion gate: the impl session stops after demonstrating work; I review and ask for wrap-up. Then absorb its `.claude/local/plans/user-stories/<group>/us-<slug>-completion-summary.md`, append a dated entry to `roadmap.md`, mark the story done, and sequence the next story.
+   - Completion gate: the impl session stops after demonstrating work; I review and ask for wrap-up. Then absorb its `.claude/local/plans/epics/<epic-family>/<epic>/user-stories/complete/<grouping>/us-<slug>-completion-summary.md`, append a dated entry to `roadmap.md`, mark the story done, and sequence the next story.
    - Don't pre-draft beyond the next story.
 
    ## On track completion

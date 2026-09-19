@@ -120,7 +120,7 @@ A table of checks and outcomes beats prose. **Anything that failed, or that you 
 **Every implementation session ends with a completion summary.** It is the hand-back artefact: the principal session that scoped this story reads the summary, not the branch, and it is how the plan stays true. A session that ends without one has dropped the work on the floor — but it is **my** call when to write it, because a summary written before review describes an unfinished session and has to be rewritten once findings land.
 
 29. **Replace `.claude/local/notes/review-context.md`** with a reviewer brief: a changed-files tree with M/A markers and one clause per file, the story's goals, the acceptance-criteria checklist, areas to focus on, known limitations, and any questions for the reviewer. Template: `.claude/local/notes/review-context-template.md`.
-30. **Write the completion summary beside the story file** — `.claude/local/plans/user-stories/<group>/us-<slug>-completion-summary.md`. It covers:
+30. **Move the story into `complete/` and write the completion summary beside it** — `.claude/local/plans/epics/<epic-family>/<epic>/user-stories/complete/<grouping>/us-<slug>-completion-summary.md`, so the done story and its outcome travel together. It covers:
     - **What shipped** — the actual surface, not a restatement of the scope list.
     - **Deltas from scope** — anything built differently from the kickoff, with the reason. This is the part principals most need and sessions most often omit.
     - **Carry-forwards**, grouped by where they go — the story or epic that should own each one. A carry-forward with no destination is a note nobody will action.
