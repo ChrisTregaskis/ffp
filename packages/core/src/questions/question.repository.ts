@@ -158,6 +158,18 @@ export async function findQuestionByPublicId(
   return records[0] ?? null;
 }
 
+/** Batch sibling of `findQuestionByPublicId`. Returns matches in no guaranteed order. */
+export async function findQuestionsByPublicIds(
+  db: DbClient,
+  publicIds: string[]
+): Promise<Question[]> {
+  if (publicIds.length === 0) {
+    return [];
+  }
+
+  return await db.select().from(questions).where(inArray(questions.publicId, publicIds));
+}
+
 /** Create a question bank entry. */
 export async function createQuestion(db: DbClient, data: CreateQuestionInput): Promise<Question> {
   const [record] = await db

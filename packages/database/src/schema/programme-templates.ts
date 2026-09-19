@@ -34,8 +34,8 @@ export const programmeTemplates = pgTable(
     totalPhases: integer('total_phases').notNull().default(0),
     /** Programme difficulty level (shared enum with videos) */
     difficulty: difficultyEnum('difficulty').notNull().default('beginner'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     publicIdIndex('programme_templates', table.publicId),

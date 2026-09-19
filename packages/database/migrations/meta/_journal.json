@@ -183,6 +183,13 @@
       "when": 1781607467294,
       "tag": "0025_dear_callisto",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1789817697709,
+      "tag": "0026_graceful_mandroid",
+      "breakpoints": true
     }
   ]
 }

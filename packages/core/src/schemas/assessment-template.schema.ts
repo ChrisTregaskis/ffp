@@ -119,7 +119,28 @@ export const assessmentTemplateWithQuestionsSchema = assessmentTemplateSchema.ex
   ),
 });
 
+/**
+ * Bulk-assign questions to a template. Assignments are appended in the order
+ * supplied. The upper bound keeps a single request from resolving and inserting
+ * an unbounded set inside one transaction.
+ */
+export const assignQuestionsSchema = z.object({
+  questionPublicIds: z
+    .array(z.string().length(12))
+    .min(1, 'At least one question is required')
+    .max(50, 'At most 50 questions can be assigned in one request'),
+});
+
+/** Reorder a template's assigned questions. Must list every currently assigned question exactly once. */
+export const reorderTemplateQuestionsSchema = z.object({
+  orderedQuestionPublicIds: z
+    .array(z.string().length(12))
+    .min(1, 'At least one question is required'),
+});
+
 export type AssessmentTemplate = z.infer<typeof assessmentTemplateSchema>;
 export type CreateAssessmentTemplateInput = z.infer<typeof createAssessmentTemplateSchema>;
 export type UpdateAssessmentTemplateInput = z.infer<typeof updateAssessmentTemplateSchema>;
 export type AssessmentTemplateWithQuestions = z.infer<typeof assessmentTemplateWithQuestionsSchema>;
+export type AssignQuestionsInput = z.infer<typeof assignQuestionsSchema>;
+export type ReorderTemplateQuestionsInput = z.infer<typeof reorderTemplateQuestionsSchema>;
