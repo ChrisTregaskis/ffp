@@ -26,7 +26,7 @@ export interface AdminAssessmentFlowFilterInput {
 
 const flowResponseSchema = z.object({ flow: assessmentFlowMetadataSchema });
 
-/** Reads are open to any authenticated user; writes require the system_admin role. */
+/** Every verb requires the system_admin role. */
 export const adminAssessmentFlowsApi = {
   /** Lists assessment flows with pagination, search, sort and a status filter. */
   list: async (

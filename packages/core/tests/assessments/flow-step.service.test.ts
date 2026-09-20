@@ -12,6 +12,7 @@ import { ConflictError, NotFoundError, ValidationError } from '../../src/lib/err
 
 import type { AssessmentFlow, FlowStepWithConfig } from '../../src/assessments/flow.repository';
 import type { OrganisationContext, UserActor } from '../../src/lib/context';
+import type { UpdateFlowStepInput } from '../../src/schemas/assessment-flow.schema';
 
 type FFPDatabaseModule = typeof ffpDatabase;
 
@@ -263,5 +264,129 @@ describe('flowStepService.createStepService', () => {
         config: {},
       })
     ).rejects.toBeInstanceOf(ValidationError);
+  });
+});
+
+describe('flowStepService.updateStepService', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    stepOrder = 0;
+  });
+
+  const arrangeStoredStep = (overrides: Partial<FlowStepWithConfig> = {}): FlowStepWithConfig => {
+    const flow = createFlow();
+    const step = createStep(flow.id, { type: 'questions', templateId: randomUUID(), ...overrides });
+
+    mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
+    mockedFlowStepRepo.findStepByPublicId.mockResolvedValue(step);
+    mockedFlowStepRepo.updateStep.mockResolvedValue(step);
+
+    return step;
+  };
+
+  const capturedUpdate = (): UpdateFlowStepInput => mockedFlowStepRepo.updateStep.mock.calls[0][2];
+
+  it('clears the template link on an explicit null', async () => {
+    const step = arrangeStoredStep({ type: 'intro' });
+
+    await flowStepService.updateStepService(createContext(), FLOW_PUBLIC_ID, step.publicId, {
+      templateId: null,
+    });
+
+    expect(capturedUpdate().templateId).toBeNull();
+    expect(mockedTemplateRepo.findTemplateById).not.toHaveBeenCalled();
+  });
+
+  it('clears the template link when null accompanies a move to a type that takes none', async () => {
+    const step = arrangeStoredStep();
+
+    await flowStepService.updateStepService(createContext(), FLOW_PUBLIC_ID, step.publicId, {
+      type: 'intro',
+      templateId: null,
+    });
+
+    expect(capturedUpdate()).toMatchObject({ type: 'intro', templateId: null });
+  });
+
+  it('refuses a null that would leave a template-linked step without a template', async () => {
+    const step = arrangeStoredStep();
+
+    await expect(
+      flowStepService.updateStepService(createContext(), FLOW_PUBLIC_ID, step.publicId, {
+        templateId: null,
+      })
+    ).rejects.toBeInstanceOf(ValidationError);
+
+    expect(mockedFlowStepRepo.updateStep).not.toHaveBeenCalled();
+  });
+
+  it('refuses a move to a template-linked type when no template is stored or sent', async () => {
+    const step = arrangeStoredStep({ type: 'intro', templateId: null });
+
+    await expect(
+      flowStepService.updateStepService(createContext(), FLOW_PUBLIC_ID, step.publicId, {
+        type: 'questions',
+      })
+    ).rejects.toBeInstanceOf(ValidationError);
+
+    expect(mockedFlowStepRepo.updateStep).not.toHaveBeenCalled();
+  });
+
+  it('clears a stale link on a save that resends an unchanged non-linking type', async () => {
+    const step = arrangeStoredStep({ type: 'intro' });
+
+    await flowStepService.updateStepService(createContext(), FLOW_PUBLIC_ID, step.publicId, {
+      type: 'intro',
+      config: { title: 'Renamed step' },
+    });
+
+    expect(capturedUpdate()).toMatchObject({ type: 'intro', templateId: null });
+  });
+
+  it('leaves the template link alone when templateId is omitted', async () => {
+    const step = arrangeStoredStep();
+
+    await flowStepService.updateStepService(createContext(), FLOW_PUBLIC_ID, step.publicId, {
+      config: { title: 'Renamed step' },
+    });
+
+    expect(capturedUpdate()).not.toHaveProperty('templateId');
+  });
+
+  it('clears the template link when the type changes to one that takes no template', async () => {
+    const step = arrangeStoredStep();
+
+    await flowStepService.updateStepService(createContext(), FLOW_PUBLIC_ID, step.publicId, {
+      type: 'intro',
+    });
+
+    expect(capturedUpdate()).toMatchObject({ type: 'intro', templateId: null });
+  });
+
+  it('keeps the template link when the type changes to another that takes one', async () => {
+    const step = arrangeStoredStep();
+
+    mockedTemplateRepo.findTemplateById.mockResolvedValue({ isActive: true } as never);
+
+    await flowStepService.updateStepService(createContext(), FLOW_PUBLIC_ID, step.publicId, {
+      type: 'video-assessment',
+    });
+
+    expect(capturedUpdate()).not.toHaveProperty('templateId');
+    expect(mockedTemplateRepo.findTemplateById).not.toHaveBeenCalled();
+  });
+
+  it('keeps an explicitly sent template link even when the type takes none', async () => {
+    const step = arrangeStoredStep();
+    const templateId = randomUUID();
+
+    mockedTemplateRepo.findTemplateById.mockResolvedValue({ isActive: true } as never);
+
+    await flowStepService.updateStepService(createContext(), FLOW_PUBLIC_ID, step.publicId, {
+      type: 'intro',
+      templateId,
+    });
+
+    expect(capturedUpdate()).toMatchObject({ type: 'intro', templateId });
   });
 });

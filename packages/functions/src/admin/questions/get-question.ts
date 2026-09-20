@@ -5,13 +5,20 @@ import {
   questionService,
   ValidationError,
   NotFoundError,
+  ForbiddenError,
+  isUserActor,
   type Question,
 } from '@ffp/core/server';
 
-/** GET /admin/questions/:publicId — fetch one question. Open to any authenticated user. */
+/** GET /admin/questions/:publicId — fetch one question. Requires the system_admin role. */
 export const handler = withErrorHandling(
   async (event: APIGatewayProxyEventV2WithJWT): Promise<Question> => {
     const context = extractUserContext(event);
+
+    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
+      throw new ForbiddenError('Only system administrators can view question details');
+    }
+
     const publicId = event.pathParameters?.publicId;
 
     if (!publicId) {

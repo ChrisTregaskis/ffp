@@ -102,6 +102,30 @@ const result = await userService.createUser(context, input);
 const data = JSON.parse(event.body);
 ```
 
+### Update Schemas — Optional Is Not Clearable
+
+**Any optional field a form can empty needs `.nullable()` on the update shape.** An update schema derived with `.partial()` inherits `.optional()`, which conflates two different intentions:
+
+- **omitted** → Drizzle's update set drops `undefined` keys → value **preserved** ✅
+- **`null`** → fails the parse, because optional ≠ nullable → **no payload can ever clear the field** ❌
+
+So a user empties the field, saves, and the old value silently survives. Found three times now — question `description`/`videoId`/`scoreDimension`, flow `description`, step `templateId` — because `.partial()` is the obvious way to derive an update shape and the bug is invisible until someone tries to empty something.
+
+```typescript
+// WRONG — can be set, can never be unset
+export const updateThingSchema = createThingSchema.partial();
+
+// CORRECT — explicit null clears, omitted still preserves
+export const updateThingSchema = thingWriteBaseSchema
+  .extend({ description: z.string().nullable() })
+  .partial();
+```
+
+Two related traps in the same area:
+
+- **`.partial()` does not strip a `.default()`.** A default on the base shape is reapplied when the field is omitted, so an update silently writes it — this is how a `PUT` omitting `isActive` reactivated soft-deleted rows. Put defaults on the **create** schema only.
+- **`.partial()` does not reach inside a nested object.** A `.default()` on a sub-field of a jsonb object still fires whenever the parent is sent.
+
 ### Error Handling — Custom Classes, No Leaks
 
 ```typescript

@@ -12,7 +12,7 @@ const templateListResponseSchema = z.object({
   count: z.number().int().nonnegative(),
 });
 
-/** Read-only, and open to any authenticated user despite the `/admin` prefix. */
+/** Read-only, and requires the system_admin role like every other `/admin` endpoint. */
 export const adminAssessmentTemplatesApi = {
   list: async (activeOnly = false, signal?: AbortSignal): Promise<AssessmentTemplate[]> => {
     const params = activeOnly ? { activeOnly: 'true' } : undefined;

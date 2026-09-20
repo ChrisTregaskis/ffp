@@ -6,6 +6,8 @@ import {
   createFlowStepSchema,
   updateFlowStepSchema,
   reorderFlowStepsSchema,
+  type FlowStepType,
+  type UpdateFlowStepInput,
 } from '../schemas/assessment-flow.schema';
 
 import { resolveOrderedChildIds } from './child-payload';
@@ -17,6 +19,9 @@ import { findTemplateById } from './template.repository';
 import type { AssessmentFlow } from './flow.repository';
 
 export type { AdminFlowStep };
+
+/** The only step types that link an assessment template; every other type carries none. */
+const TEMPLATE_LINKED_STEP_TYPES: readonly FlowStepType[] = ['questions', 'video-assessment'];
 
 /**
  * Resolve a flow by public identifier or throw 404. Not filtered on `isActive`:
@@ -34,7 +39,10 @@ async function resolveFlow(db: DbClient, flowPublicId: string): Promise<Assessme
 }
 
 /** Belt-and-braces over the FK: a linked template must exist and be active. */
-async function assertTemplateActive(db: DbClient, templateId: string | undefined): Promise<void> {
+async function assertTemplateActive(
+  db: DbClient,
+  templateId: string | null | undefined
+): Promise<void> {
   if (!templateId) {
     return;
   }
@@ -69,6 +77,49 @@ export async function createStepService(
   return toAdminFlowStep(step);
 }
 
+/**
+ * Drop the template link a non-linking type has no use for. Clearing beats
+ * rejecting — setting the type is deliberate — and a link the payload sets
+ * explicitly still wins. Deliberately not conditioned on the type *changing*:
+ * the rows most in need of clearing are those already storing a stale link
+ * under a non-linking type, so every save that resends the type self-heals.
+ */
+function applyTypeChangeCleanup(update: UpdateFlowStepInput): UpdateFlowStepInput {
+  const nextType = update.type;
+
+  if (!nextType || TEMPLATE_LINKED_STEP_TYPES.includes(nextType)) {
+    return update;
+  }
+
+  if (update.templateId !== undefined) {
+    return update;
+  }
+
+  return { ...update, templateId: null };
+}
+
+/**
+ * Judge the row the update will produce, not the payload: a partial need not
+ * resend the type or the link, so only the merged pair shows whether a step
+ * that renders a template would be left without one. Mirrors
+ * `assertMergedShape` in the question service.
+ */
+function assertMergedTemplateLink(
+  stored: { type: FlowStepType; templateId: string | null },
+  update: UpdateFlowStepInput
+): void {
+  const mergedType = update.type ?? stored.type;
+  // `??` would be wrong on a clearable field: an explicit `null` means clear,
+  // and must not fall through to the stored value.
+  const mergedTemplateId = update.templateId !== undefined ? update.templateId : stored.templateId;
+
+  if (TEMPLATE_LINKED_STEP_TYPES.includes(mergedType) && !mergedTemplateId) {
+    throw new ValidationError('A step of this type must link an assessment template', {
+      type: mergedType,
+    });
+  }
+}
+
 /** Update a step's type, template link and/or config. Branching is preserved. */
 export async function updateStepService(
   _ctx: OrganisationContext,
@@ -95,7 +146,11 @@ export async function updateStepService(
 
   await assertTemplateActive(db, parseResult.data.templateId);
 
-  const updated = await flowStepRepository.updateStep(db, step.id, parseResult.data);
+  const update = applyTypeChangeCleanup(parseResult.data);
+
+  assertMergedTemplateLink(step, update);
+
+  const updated = await flowStepRepository.updateStep(db, step.id, update);
 
   if (!updated) {
     throw new NotFoundError('Flow step', stepPublicId);

@@ -48,9 +48,9 @@ export const stepToFormValues = (step: AdminFlowStepView): FlowStepFormValues =>
 
 /**
  * `config` is replaced wholesale on update, so an omitted field clears it.
- * `templateId` is not: an omitted key leaves the column alone, so switching to
- * a type that takes no template leaves the old link on the row. It is only
- * read back for the types that link one.
+ * `templateId` is sent only for the types that link one; omitting it on a type
+ * change is what lets the server clear the stored link, so sending an explicit
+ * value here would override that clean-up.
  */
 export const formValuesToStepInput = (values: FlowStepFormValues): CreateFlowStepInput => {
   const minutes = Number.parseInt(values.estimatedMinutes, 10);

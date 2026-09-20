@@ -149,8 +149,14 @@ export const createFlowStepSchema = z.object({
   config: flowStepConfigSchema,
 });
 
-/** Admin update input — partial step metadata; branching fields are never authored here. */
-export const updateFlowStepSchema = createFlowStepSchema.partial();
+/**
+ * Admin update input — partial step metadata; branching fields are never
+ * authored here. `templateId` is nullable so a step moving to a type that takes
+ * no template can clear the link; omitting it leaves the stored value alone.
+ */
+export const updateFlowStepSchema = createFlowStepSchema.partial().extend({
+  templateId: z.guid({ message: 'Invalid template ID format' }).nullable().optional(),
+});
 
 /**
  * Reorder request — the flow's active step public identifiers in their desired

@@ -5,22 +5,26 @@ import {
   flowService,
   ValidationError,
   NotFoundError,
+  ForbiddenError,
+  isUserActor,
   type AssessmentFlowWithSteps,
 } from '@ffp/core/server';
 
 /**
  * Lambda handler for GET /admin/assessment-flows/:publicId
  *
- * Protected endpoint that requires JWT authentication.
  * Returns a single assessment flow with its steps and read-only scoring
- * configuration. Any authenticated user can view flows.
+ * configuration. Requires the system_admin role, matching every other verb on
+ * this resource.
  */
 export const handler = withErrorHandling(
   async (event: APIGatewayProxyEventV2WithJWT): Promise<AssessmentFlowWithSteps> => {
-    // Extract user context from JWT (validates authentication)
     const context = extractUserContext(event);
 
-    // Extract flow publicId from path parameters
+    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
+      throw new ForbiddenError('Only system administrators can view assessment flow details');
+    }
+
     const publicId = event.pathParameters?.publicId;
 
     if (!publicId) {
