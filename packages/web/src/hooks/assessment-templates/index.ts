@@ -1,0 +1,1 @@
+export { useAssessmentTemplatesQuery } from './useAssessmentTemplatesQuery';

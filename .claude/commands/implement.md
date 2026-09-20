@@ -107,6 +107,7 @@ Go through **the comments this branch added** — the diff, not the repository. 
 - **Snapshot before, compare after.** Record the relevant counts and rows before you start, and re-run the same queries at the end to show the seeded data is untouched. Put that comparison in the report.
 - **If you do corrupt a seeded row, restore it from the seed script, never from memory.** T2-7 overwrote a seeded question's text while "restoring" it from an assumed original. Read `packages/database/seed/` for the true value, diff against it, and confirm the row matches before moving on.
 - **Remove everything you created.** The database goes back to its prior state — no deactivated leftovers, no orphaned join rows. Where the API only soft-deletes, clean-up needs SQL, and **`DELETE` still needs my explicit go-ahead**: hand me the exact statement and ask. Ask once, at the end, with the results — not as a blocking question mid-run.
+- **Then verify the clean-up actually landed. Handing me a statement is not clean-up.** Re-run the snapshot queries and show the throwaway rows are gone and the seeded counts are back to baseline. Twice now a session has handed over its SQL, written its summary and moved on, and the rows were still there days later — once the statement was even a no-op, because a previous run had already cleared them, and nobody would have known. **A row count is the evidence; the statement is not.**
 
 ### 26. Report what actually happened
 
@@ -121,7 +122,7 @@ A table of checks and outcomes beats prose. **Anything that failed, or that you 
 
 ## Phase 8 — Report, then stop
 
-29. **Give me a lean summary** — what shipped, what the review returned and what you did with it, what running it actually showed (browser, API, database — whichever applied), anything you decided or assumed, and anything left undone. Fragments over sentences. No preamble, no restating the story, no closing offer. Bad news stays in however terse it gets: failures with their output, skipped steps, assumptions made.
+29. **Give me a lean summary** — what shipped, what the review returned and what you did with it, what running it actually showed (browser, API, database — whichever applied), **the environment's state (clean, or what is outstanding)**, anything you decided or assumed, and anything left undone. Fragments over sentences. No preamble, no restating the story, no closing offer. Bad news stays in however terse it gets: failures with their output, skipped steps, assumptions made.
 30. **Name the gate before you stop.** Close the summary with one line telling me the branch is ready for review and that **wrap-up is waiting on my word** — e.g. "Ready for review. Say the word and I'll write the completion summary for the principal." Do not write it yet, do not set the story to done, do not touch the roadmap or `project-state.md`, do not open a PR.
 31. **Then stop.** I review the branch and ask for wrap-up explicitly. Asking is my call and mine alone — never infer it from a "looks good", a merge, or silence.
 
@@ -129,15 +130,29 @@ A table of checks and outcomes beats prose. **Anything that failed, or that you 
 
 **Every implementation session ends with a completion summary.** It is the hand-back artefact: the principal session that scoped this story reads the summary, not the branch, and it is how the plan stays true. A session that ends without one has dropped the work on the floor — but it is **my** call when to write it, because a summary written before review describes an unfinished session and has to be rewritten once findings land.
 
-32. **Replace `.claude/local/notes/review-context.md`** with a reviewer brief: a changed-files tree with M/A markers and one clause per file, the story's goals, the acceptance-criteria checklist, areas to focus on, known limitations, and any questions for the reviewer. Template: `.claude/local/notes/review-context-template.md`.
-33. **Move the story into `complete/` and write the completion summary beside it** — `.claude/local/plans/epics/<epic-family>/<epic>/user-stories/complete/<grouping>/us-<slug>-completion-summary.md`, so the done story and its outcome travel together. It covers:
+### Before you write anything: the environment must be verified clean
+
+**The story is not done while `ffp_dev` still holds rows this session created.** Clean-up is part of the work, not an errand attached to the end of it, and a summary that declares the story complete over a dirty database is inaccurate on its face.
+
+So, first thing in this phase:
+
+32. **Re-run your snapshot queries and prove the state.** Throwaway rows gone, seeded counts back to baseline, no orphaned join rows, no deactivated leftovers. **Read the numbers — do not infer them from the fact that you handed me a statement.**
+    - **Clean** → say so with the counts, and carry on to the rest of the phase.
+    - **Not clean, and it needs my `DELETE`** → stop here, hand me the exact statement, and ask. Wait. When I confirm, re-run the check before continuing.
+    - **Nothing was ever created** → say that explicitly. Do not go quiet on it.
+
+**I can override this**, and sometimes will — if I say to write the summary anyway, write it. But then the summary's Environment section leads with **what is still outstanding and the exact statement that clears it**, in full, not as a footnote. An overridden gate that leaves no trace is the same failure with extra steps.
+
+33. **Replace `.claude/local/notes/review-context.md`** with a reviewer brief: a changed-files tree with M/A markers and one clause per file, the story's goals, the acceptance-criteria checklist, areas to focus on, known limitations, and any questions for the reviewer. Template: `.claude/local/notes/review-context-template.md`.
+34. **Move the story into `complete/` and write the completion summary beside it** — `.claude/local/plans/epics/<epic-family>/<epic>/user-stories/complete/<grouping>/us-<slug>-completion-summary.md`, so the done story and its outcome travel together. It covers:
     - **What shipped** — the actual surface, not a restatement of the scope list.
     - **Deltas from scope** — anything built differently from the kickoff, with the reason. This is the part principals most need and sessions most often omit.
     - **Carry-forwards**, grouped by where they go — the story or epic that should own each one. A carry-forward with no destination is a note nobody will action.
     - **Open items** — decisions the principal needs to take, review findings deliberately declined, and anything left undone.
-34. **Update the story file** — status → done, `Last updated` → today.
-35. **Append a dated entry to `.claude/local/plans/roadmap.md`** (newest first) and **refresh the active threads in `.claude/local/plans/project-state.md`**. A stale plan hands the next session a wrong picture.
-36. **Hand it back.** Tell me which principal session the summary is for and give me the one-line pointer to paste into that pane. Then stop — the principal absorbs it, not you.
+    - **Environment — REQUIRED, never omitted.** State `ffp_dev`'s condition in plain numbers: what you created, that it is gone, and the seeded counts matching the session-start snapshot. If anything is outstanding, this section carries the exact statement that clears it. A summary with no Environment section reads as "nobody checked", because that is usually what it means.
+35. **Update the story file** — status → done, `Last updated` → today.
+36. **Append a dated entry to `.claude/local/plans/roadmap.md`** (newest first) and **refresh the active threads in `.claude/local/plans/project-state.md`**. A stale plan hands the next session a wrong picture.
+37. **Hand it back.** Tell me which principal session the summary is for and give me the one-line pointer to paste into that pane. Then stop — the principal absorbs it, not you.
 
 ## Constraints
 

@@ -55,6 +55,14 @@ export const AssessmentFlowEditPage: React.FC = () => {
     void navigate(routes[RouteKey.ADMIN_ASSESSMENTS].path);
   }, [navigate]);
 
+  const handleNavigateToSteps = useCallback((): void => {
+    if (!publicId) {
+      return;
+    }
+
+    void navigate(routes[RouteKey.ADMIN_ASSESSMENT_FLOW_STEPS].path.replace(':publicId', publicId));
+  }, [navigate, publicId]);
+
   const handleCreate = useCallback(
     (values: AssessmentFlowFormValues): void => {
       setSubmitError(null);
@@ -174,15 +182,20 @@ export const AssessmentFlowEditPage: React.FC = () => {
 
   const headerActions =
     isEditMode && flow ? (
-      flow.isActive ? (
-        <Button variant="destructive" onClick={handleOpenDeactivateModal}>
-          Deactivate
+      <div className="flex gap-2">
+        <Button variant="secondary" onClick={handleNavigateToSteps}>
+          Edit Steps
         </Button>
-      ) : (
-        <Button variant="secondary" onClick={handleReactivate} loading={updateMutation.isPending}>
-          Reactivate
-        </Button>
-      )
+        {flow.isActive ? (
+          <Button variant="destructive" onClick={handleOpenDeactivateModal}>
+            Deactivate
+          </Button>
+        ) : (
+          <Button variant="secondary" onClick={handleReactivate} loading={updateMutation.isPending}>
+            Reactivate
+          </Button>
+        )}
+      </div>
     ) : undefined;
 
   return (

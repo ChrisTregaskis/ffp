@@ -2,12 +2,17 @@ import { z } from 'zod';
 
 import type {
   AssessmentFlowMetadata,
+  AssessmentFlowWithStepsView,
   CreateAssessmentFlowInput,
   PaginatedAssessmentFlowList,
   PaginationInput,
   UpdateAssessmentFlowInput,
 } from '@ffp/core';
-import { assessmentFlowMetadataSchema, paginatedAssessmentFlowListSchema } from '@ffp/core';
+import {
+  assessmentFlowMetadataSchema,
+  assessmentFlowWithStepsSchema,
+  paginatedAssessmentFlowListSchema,
+} from '@ffp/core';
 
 import { ffpClient, parseApiResponse } from '../client';
 
@@ -52,15 +57,12 @@ export const adminAssessmentFlowsApi = {
     });
   },
 
-  /**
-   * Retrieves a single flow by public identifier. The endpoint also returns the
-   * flow's steps; they are not parsed here because this surface edits metadata only.
-   */
-  get: async (publicId: string): Promise<AssessmentFlowMetadata> => {
+  /** One read serves both the metadata form and the step authoring page. */
+  get: async (publicId: string): Promise<AssessmentFlowWithStepsView> => {
     const path = `${basePath}/${publicId}`;
     const response = await ffpClient.get(path);
 
-    return parseApiResponse(assessmentFlowMetadataSchema, response, { method: 'GET', path });
+    return parseApiResponse(assessmentFlowWithStepsSchema, response, { method: 'GET', path });
   },
 
   /** Creates a new assessment flow (metadata only — steps are authored separately). */
@@ -95,4 +97,4 @@ export const adminAssessmentFlowsApi = {
 };
 
 // Re-export types for consumers
-export type { AssessmentFlowMetadata, PaginatedAssessmentFlowList };
+export type { AssessmentFlowMetadata, AssessmentFlowWithStepsView, PaginatedAssessmentFlowList };

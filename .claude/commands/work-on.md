@@ -37,8 +37,10 @@ You are an **implementation session**: implement **one story on one branch**, th
 
 ## On wrap-up (only after I ask)
 
+**First: verify the environment is clean.** The story is not done while `ffp_dev` holds rows this session created. Re-run your snapshot queries and read the numbers — throwaway rows gone, seeded counts back to baseline. Handing me a `DELETE` statement is not clean-up; a row count is the evidence. If it needs my go-ahead, stop and ask, then re-check before continuing. If nothing was created, say so rather than going quiet. I can override this, but then the completion summary leads with what is outstanding and the exact statement that clears it.
+
 14. **Replace `.claude/local/notes/review-context.md`** with a reviewer brief: a changed-files tree with M/A markers + one clause per file, the story's goals, acceptance criteria checklist, areas to focus, known limitations, and any questions for the reviewer.
-15. **Move the story into `complete/` and write the completion summary beside it** — `.claude/local/plans/epics/<epic-family>/<epic>/user-stories/complete/<grouping>/us-<slug>-completion-summary.md`: what shipped, deltas from scope, carry-forwards (grouped by the story or epic that should own each), open items. It is the hand-back artefact — the principal reads this, not the branch. The done story and its outcome travel together.
+15. **Move the story into `complete/` and write the completion summary beside it** — `.claude/local/plans/epics/<epic-family>/<epic>/user-stories/complete/<grouping>/us-<slug>-completion-summary.md`: what shipped, deltas from scope, carry-forwards (grouped by the story or epic that should own each), open items, and a **required Environment section** stating `ffp_dev`'s condition in plain numbers. It is the hand-back artefact — the principal reads this, not the branch. The done story and its outcome travel together.
 16. **Update** the story file status (→ done) and append a dated entry to `roadmap.md`; refresh `project-state.md` active threads.
 17. Tell me it's ready for review (`/full-review`, or `/code-review` for a quick correctness-only pass) and for commit — **do not open the PR**.
 
