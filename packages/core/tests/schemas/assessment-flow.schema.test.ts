@@ -7,6 +7,8 @@ import {
   assessmentFlowSchema,
   createAssessmentFlowSchema,
   updateAssessmentFlowSchema,
+  assessmentFlowListItemSchema,
+  assessmentFlowListFiltersSchema,
   createFlowStepSchema,
   updateFlowStepSchema,
   reorderFlowStepsSchema,
@@ -640,5 +642,63 @@ describe('reorderFlowStepsSchema', () => {
   it('rejects public IDs of the wrong length', () => {
     const result = reorderFlowStepsSchema.safeParse({ orderedStepPublicIds: ['tooShort'] });
     expect(result.success).toBe(false);
+  });
+});
+
+describe('updateAssessmentFlowSchema — description clearing', () => {
+  it('accepts an explicit null so an author can clear the description', () => {
+    const result = updateAssessmentFlowSchema.safeParse({ description: null });
+    expect(result.success).toBe(true);
+    expect(result.success && result.data.description).toBeNull();
+  });
+
+  it('leaves description absent when omitted, so a partial update preserves it', () => {
+    const result = updateAssessmentFlowSchema.safeParse({ name: 'Wellness baseline' });
+    expect(result.success).toBe(true);
+    expect(result.success && 'description' in result.data).toBe(false);
+  });
+
+  it('still rejects an empty name', () => {
+    const result = updateAssessmentFlowSchema.safeParse({ name: '' });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('assessmentFlowListItemSchema', () => {
+  const listRow = {
+    id: '11111111-1111-4111-8111-111111111111',
+    publicId: validPublicId,
+    name: 'Wellness baseline',
+    description: null,
+    isActive: true,
+    stepCount: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  it('accepts a row whose description is null, as the column stores it', () => {
+    const result = assessmentFlowListItemSchema.safeParse(listRow);
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects a negative step count', () => {
+    const result = assessmentFlowListItemSchema.safeParse({ ...listRow, stepCount: -1 });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('assessmentFlowListFiltersSchema', () => {
+  it('coerces the isActive query string to a boolean', () => {
+    expect(assessmentFlowListFiltersSchema.parse({ isActive: 'true' }).isActive).toBe(true);
+    expect(assessmentFlowListFiltersSchema.parse({ isActive: 'false' }).isActive).toBe(false);
+  });
+
+  it('leaves isActive undefined when absent, so the filter is not applied', () => {
+    expect(assessmentFlowListFiltersSchema.parse({}).isActive).toBeUndefined();
+  });
+
+  it('rejects an isActive value outside true/false', () => {
+    expect(assessmentFlowListFiltersSchema.safeParse({ isActive: '' }).success).toBe(false);
+    expect(assessmentFlowListFiltersSchema.safeParse({ isActive: 'yes' }).success).toBe(false);
   });
 });

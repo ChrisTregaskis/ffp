@@ -1,35 +1,53 @@
 import {
+  assessmentFlowListFiltersSchema,
+  paginationInputSchema,
+  type AssessmentFlowListItem,
+  type PaginationMeta,
+} from '@ffp/core';
+import {
   type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
   withErrorHandling,
+  ForbiddenError,
+  isUserActor,
   flowService,
-  type AssessmentFlow,
 } from '@ffp/core/server';
 
 interface ListFlowsResponse {
-  flows: AssessmentFlow[];
-  count: number;
+  data: AssessmentFlowListItem[];
+  pagination: PaginationMeta;
 }
 
 /**
  * Lambda handler for GET /admin/assessment-flows
  *
- * Protected endpoint that requires JWT authentication.
- * Returns all assessment flows. Any authenticated user can view flows.
+ * Lists assessment flows with pagination, search, sort and a status filter.
+ * Query params: page, pageSize, sortBy, sortDirection, search, isActive.
+ * Requires the system_admin role, matching every write verb on this resource —
+ * the isActive filter lets a caller enumerate retired flows deliberately.
  */
 export const handler = withErrorHandling(
   async (event: APIGatewayProxyEventV2WithJWT): Promise<ListFlowsResponse> => {
-    // Extract user context from JWT (validates authentication)
     const context = extractUserContext(event);
 
-    // Parse query parameters
-    const activeOnly = event.queryStringParameters?.activeOnly === 'true';
+    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
+      throw new ForbiddenError('Only system administrators can list assessment flows');
+    }
 
-    const flows = await flowService.listFlowsService(context, { activeOnly });
+    const params = event.queryStringParameters ?? {};
 
-    return {
-      flows,
-      count: flows.length,
-    };
+    const paginationInput = paginationInputSchema.parse({
+      page: params.page,
+      pageSize: params.pageSize,
+      sortBy: params.sortBy,
+      sortDirection: params.sortDirection,
+    });
+
+    const filters = assessmentFlowListFiltersSchema.parse({
+      search: params.search,
+      isActive: params.isActive,
+    });
+
+    return await flowService.listFlowsService(context, paginationInput, filters);
   }
 );
