@@ -30,7 +30,7 @@ You are an **implementation session**: inherit a kickoff, implement it on one br
 
 ## Phase 2 — Validate yourself
 
-12. **Run the gates and read the output**: `pnpm typecheck`, `pnpm lint` (0 warnings), `pnpm test`, and `pnpm build` where package boundaries changed. Green gates before you go near the review — do not delegate a review of code that does not compile.
+12. **Run the gates and read the output**: `pnpm typecheck`, `pnpm lint` (0 warnings), **`pnpm format:check`**, `pnpm test`, and `pnpm build` where package boundaries changed. **`lint` does not cover formatting in this repo** — T2-7 shipped five unformatted files behind a green lint run, so `format:check` is part of the set, not an extra. Green gates before you go near the review — do not delegate a review of code that does not compile.
 
 ## Phase 3 — Self-check against the neighbours
 
@@ -102,8 +102,10 @@ Go through **the comments this branch added** — the diff, not the repository. 
 
 ### 25. Keep `ffp_dev` clean — leave it exactly as you found it
 
-- **Never test against seeded data.** Create your own throwaway records and work on those. Touching a seeded template, flow or question corrupts the fixture every later session depends on.
+- **Never _write_ to seeded data. Always _read_ it.** The rule is about writes: create your own throwaway records for anything that mutates, because touching a seeded template, flow or question corrupts the fixture every later session depends on.
+- **But read-only probes across the seeded set are required, not merely allowed** — a GET of every seeded row through the changed code path, or a no-op request that exercises validation without writing. They risk nothing and they catch the thing throwaway records cannot: your new code meeting **data you did not create**. T2-7 shipped a regression that made all four seeded video-response questions uneditable; gates were green, the live run passed on throwaway records, and only the reviewer reasoning about stored seed data found it. A read-only sweep would have caught it first.
 - **Snapshot before, compare after.** Record the relevant counts and rows before you start, and re-run the same queries at the end to show the seeded data is untouched. Put that comparison in the report.
+- **If you do corrupt a seeded row, restore it from the seed script, never from memory.** T2-7 overwrote a seeded question's text while "restoring" it from an assumed original. Read `packages/database/seed/` for the true value, diff against it, and confirm the row matches before moving on.
 - **Remove everything you created.** The database goes back to its prior state — no deactivated leftovers, no orphaned join rows. Where the API only soft-deletes, clean-up needs SQL, and **`DELETE` still needs my explicit go-ahead**: hand me the exact statement and ask. Ask once, at the end, with the results — not as a blocking question mid-run.
 
 ### 26. Report what actually happened

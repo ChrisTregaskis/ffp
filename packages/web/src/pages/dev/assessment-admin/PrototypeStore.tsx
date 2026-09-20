@@ -11,6 +11,7 @@ import {
   INITIAL_TEMPLATES,
   PROGRAMME_TEMPLATE_OPTIONS,
 } from './prototype-data';
+import { PROTOTYPE_ENTRY_FLOW_ID } from './prototype-nav';
 import {
   addExerciseToSession,
   buildProgrammeStructure,
@@ -52,14 +53,6 @@ interface PrototypeStoreValue {
 
   view: PrototypeView;
   navigate: (view: PrototypeView) => void;
-
-  // Flows
-  createFlow: (meta: Pick<PrototypeFlow, 'name' | 'description' | 'isActive'>) => PrototypeFlow;
-  updateFlowMeta: (
-    flowId: string,
-    meta: Pick<PrototypeFlow, 'name' | 'description' | 'isActive'>
-  ) => void;
-  deleteFlow: (flowId: string) => void;
 
   // Steps
   addStep: (flowId: string, step: Omit<PrototypeStep, 'id' | 'order'>) => void;
@@ -117,7 +110,10 @@ export const PrototypeStoreProvider: React.FC<{ children: ReactNode }> = ({ chil
   const [templates, setTemplates] = useState<PrototypeTemplate[]>(INITIAL_TEMPLATES);
   const [memberStructures, setMemberStructures] =
     useState<Record<string, ProgrammePhase[]>>(seedMemberStructures);
-  const [view, setView] = useState<PrototypeView>({ name: 'flows' });
+  const [view, setView] = useState<PrototypeView>({
+    name: 'flow-builder',
+    flowId: PROTOTYPE_ENTRY_FLOW_ID,
+  });
 
   const value = useMemo<PrototypeStoreValue>(() => {
     const mutateFlow = (flowId: string, fn: (flow: PrototypeFlow) => PrototypeFlow): void => {
@@ -140,27 +136,6 @@ export const PrototypeStoreProvider: React.FC<{ children: ReactNode }> = ({ chil
       programmeTemplates: PROGRAMME_TEMPLATE_OPTIONS,
       view,
       navigate: setView,
-
-      createFlow: (meta) => {
-        const flow: PrototypeFlow = {
-          id: nextId('flow'),
-          publicId: makePublicId(),
-          ...meta,
-          steps: [],
-          scoringConfig: { dimensions: [], programmeMappings: [] },
-        };
-        setFlows((prev) => [...prev, flow]);
-
-        return flow;
-      },
-
-      updateFlowMeta: (flowId, meta) => {
-        mutateFlow(flowId, (flow) => ({ ...flow, ...meta }));
-      },
-
-      deleteFlow: (flowId) => {
-        setFlows((prev) => prev.filter((flow) => flow.id !== flowId));
-      },
 
       addStep: (flowId, step) => {
         mutateFlow(flowId, (flow) => {

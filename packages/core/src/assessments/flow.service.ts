@@ -3,16 +3,21 @@ import { getDb } from '@ffp/database';
 import { type OrganisationContext } from '../lib/context';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import {
+  assessmentFlowListItemSchema,
   createAssessmentFlowSchema,
   updateAssessmentFlowSchema,
+  type AssessmentFlowListFilters,
+  type AssessmentFlowListItem,
   type CreateAssessmentFlowInput,
   type UpdateAssessmentFlowInput,
 } from '../schemas/assessment-flow.schema';
+import { buildPaginationMeta } from '../schemas/pagination.schema';
 
 import { toAdminFlowStep, type AdminFlowStep } from './flow-step.branching';
 import * as flowRepository from './flow.repository';
 
 import type { AssessmentFlow } from './flow.repository';
+import type { PaginationInput, PaginationMeta } from '../schemas/pagination.schema';
 
 export type { AssessmentFlow };
 export type CreateFlowInput = CreateAssessmentFlowInput;
@@ -27,18 +32,26 @@ export interface AssessmentFlowWithSteps extends AssessmentFlow {
 }
 
 /**
- * List assessment flows.
+ * List assessment flows for the admin surface — one page of metadata rows, each
+ * carrying its step count, alongside the pagination metadata.
  *
  * @param _ctx - (unused for system catalogue content, but
  *   maintains a consistent service API)
  */
 export async function listFlowsService(
   _ctx: OrganisationContext,
-  options?: { activeOnly?: boolean }
-): Promise<AssessmentFlow[]> {
+  paginationInput: PaginationInput,
+  filters: AssessmentFlowListFilters
+): Promise<{ data: AssessmentFlowListItem[]; pagination: PaginationMeta }> {
   const db = getDb();
 
-  return await flowRepository.findAllFlows(db, options);
+  const records = await flowRepository.findFlowPage(db, paginationInput, filters);
+  const total = await flowRepository.countFlows(db, filters);
+
+  return {
+    data: records.map((record) => assessmentFlowListItemSchema.parse(record)),
+    pagination: buildPaginationMeta(paginationInput, total),
+  };
 }
 
 /**

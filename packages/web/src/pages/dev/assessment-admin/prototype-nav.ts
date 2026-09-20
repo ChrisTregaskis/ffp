@@ -11,14 +11,20 @@ export interface NavEntry {
 
 type Navigate = (view: PrototypeView) => void;
 
+/**
+ * The flow the prototype opens on. Flow browsing and metadata editing are now
+ * real admin pages, so the prototype drops straight into step authoring.
+ */
+export const PROTOTYPE_ENTRY_FLOW_ID = 'f-exercise-assessment';
+
 /** Top-level menu items (shown when not inside a flow / question). */
 export const getMainNav = (view: PrototypeView, navigate: Navigate): NavEntry[] => [
   {
-    label: 'Flows',
+    label: 'Flow steps',
     icon: Icons.CLIPBOARDLIST,
-    active: view.name === 'flows',
+    active: view.name === 'flow-builder' || view.name === 'step-edit',
     onClick: () => {
-      navigate({ name: 'flows' });
+      navigate({ name: 'flow-builder', flowId: PROTOTYPE_ENTRY_FLOW_ID });
     },
   },
   {
@@ -115,49 +121,18 @@ export const getContextNav = (view: PrototypeView, navigate: Navigate): NavEntry
     ];
   }
 
-  const inFlow =
-    view.name === 'flow-meta' ||
-    view.name === 'flow-builder' ||
-    view.name === 'scoring' ||
-    view.name === 'step-edit';
-
-  if (!inFlow) {
+  // Only the scoring screen swaps the sidebar now; step authoring is top level.
+  if (view.name !== 'scoring') {
     return null;
   }
 
-  const backToFlows: NavEntry = {
-    label: 'Back to flows',
-    icon: Icons.ARROWLEFT,
-    active: false,
-    onClick: () => {
-      navigate({ name: 'flows' });
-    },
-  };
-
-  // A flow being created has no builder/scoring yet — just the back link.
-  if (view.name === 'flow-meta' && view.flowId === 'new') {
-    return [
-      backToFlows,
-      { label: 'New flow', icon: Icons.FILETEXT, active: true, onClick: () => undefined },
-    ];
-  }
-
-  const flowId = view.flowId;
+  const { flowId } = view;
 
   return [
-    backToFlows,
     {
-      label: 'Edit details',
-      icon: Icons.FILETEXT,
-      active: view.name === 'flow-meta',
-      onClick: () => {
-        navigate({ name: 'flow-meta', flowId });
-      },
-    },
-    {
-      label: 'Build steps',
-      icon: Icons.CLIPBOARDLIST,
-      active: view.name === 'flow-builder' || view.name === 'step-edit',
+      label: 'Back to flow steps',
+      icon: Icons.ARROWLEFT,
+      active: false,
       onClick: () => {
         navigate({ name: 'flow-builder', flowId });
       },
@@ -165,7 +140,7 @@ export const getContextNav = (view: PrototypeView, navigate: Navigate): NavEntry
     {
       label: 'Scoring',
       icon: Icons.TARGET,
-      active: view.name === 'scoring',
+      active: true,
       onClick: () => {
         navigate({ name: 'scoring', flowId });
       },

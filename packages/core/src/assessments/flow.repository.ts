@@ -1,4 +1,4 @@
-import { eq, and, asc } from 'drizzle-orm';
+import { eq, and, asc, count, ilike, or, type Column, type SQL } from 'drizzle-orm';
 
 import type { DbClient } from '@ffp/database';
 import {
@@ -12,11 +12,15 @@ import {
 import { db, withRLS } from '../lib/database';
 import { InternalServerError, NotFoundError } from '../lib/errors';
 import { createSystemLogger } from '../lib/logger';
+import { applyPagination, escapeLikePattern } from '../lib/pagination';
 
 import type {
+  AssessmentFlowListFilters,
+  AssessmentFlowListItem,
   CreateAssessmentFlowInput,
   UpdateAssessmentFlowInput,
 } from '../schemas/assessment-flow.schema';
+import type { PaginationInput } from '../schemas/pagination.schema';
 
 const logger = createSystemLogger('flow-repository');
 
@@ -231,18 +235,85 @@ export async function findByPublicId(
   return records[0] ?? null;
 }
 
-/** List assessment flows, optionally restricted to active ones. */
-export async function findAllFlows(
+/** Columns the admin flow list may be sorted by. */
+const FLOW_SORTABLE_COLUMNS: Partial<Record<string, Column>> = {
+  name: assessmentFlows.name,
+  isActive: assessmentFlows.isActive,
+  createdAt: assessmentFlows.createdAt,
+  updatedAt: assessmentFlows.updatedAt,
+};
+
+/** Build WHERE conditions from the admin flow list filters. */
+const buildFlowFilterConditions = (filters: AssessmentFlowListFilters): SQL[] => {
+  const conditions: SQL[] = [];
+
+  if (filters.search) {
+    const pattern = `%${escapeLikePattern(filters.search)}%`;
+    const searchCondition = or(
+      ilike(assessmentFlows.name, pattern),
+      ilike(assessmentFlows.description, pattern)
+    );
+
+    if (searchCondition) {
+      conditions.push(searchCondition);
+    }
+  }
+
+  if (filters.isActive !== undefined) {
+    conditions.push(eq(assessmentFlows.isActive, filters.isActive));
+  }
+
+  return conditions;
+};
+
+/**
+ * List assessment flows for the admin surface — one page of metadata rows, each
+ * carrying its step count. The join is restricted to active steps so a
+ * soft-deleted step does not inflate the count.
+ */
+export async function findFlowPage(
   dbClient: DbClient,
-  options?: { activeOnly?: boolean }
-): Promise<AssessmentFlow[]> {
-  const query = dbClient.select().from(assessmentFlows);
+  paginationInput: PaginationInput,
+  filters: AssessmentFlowListFilters
+): Promise<AssessmentFlowListItem[]> {
+  const conditions = buildFlowFilterConditions(filters);
 
-  const records = options?.activeOnly
-    ? await query.where(eq(assessmentFlows.isActive, true))
-    : await query;
+  const query = dbClient
+    .select({
+      id: assessmentFlows.id,
+      publicId: assessmentFlows.publicId,
+      name: assessmentFlows.name,
+      description: assessmentFlows.description,
+      isActive: assessmentFlows.isActive,
+      createdAt: assessmentFlows.createdAt,
+      updatedAt: assessmentFlows.updatedAt,
+      stepCount: count(flowSteps.id),
+    })
+    .from(assessmentFlows)
+    .leftJoin(
+      flowSteps,
+      and(eq(flowSteps.flowId, assessmentFlows.id), eq(flowSteps.isActive, true))
+    )
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .groupBy(assessmentFlows.id)
+    .$dynamic();
 
-  return records;
+  return await applyPagination(query, paginationInput, FLOW_SORTABLE_COLUMNS);
+}
+
+/** Count assessment flows matching the given filters (for pagination metadata). */
+export async function countFlows(
+  dbClient: DbClient,
+  filters: AssessmentFlowListFilters
+): Promise<number> {
+  const conditions = buildFlowFilterConditions(filters);
+
+  const result = await dbClient
+    .select({ count: count() })
+    .from(assessmentFlows)
+    .where(conditions.length > 0 ? and(...conditions) : undefined);
+
+  return result[0].count;
 }
 
 /** Create an assessment flow (metadata only — steps are authored separately). */

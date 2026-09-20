@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 import { FLOW_STEP_TYPES } from '@ffp/database/constants';
 
+import { createPaginatedResponseSchema } from './pagination.schema';
+
 export const flowStepTypeSchema = z.enum(FLOW_STEP_TYPES);
 
 export const flowStepConfigSchema = z.object({
@@ -57,7 +59,11 @@ export const createAssessmentFlowSchema = assessmentFlowSchema
     isActive: z.boolean().optional().default(true),
   });
 
-/** Admin update input — partial flow metadata; steps are managed separately. */
+/**
+ * Admin update input — partial flow metadata; steps are managed separately.
+ * `description` is nullable so an author can clear it; omitting it leaves the
+ * stored value alone.
+ */
 export const updateAssessmentFlowSchema = assessmentFlowSchema
   .omit({
     id: true,
@@ -66,7 +72,49 @@ export const updateAssessmentFlowSchema = assessmentFlowSchema
     createdAt: true,
     updatedAt: true,
   })
-  .partial();
+  .partial()
+  .extend({
+    description: z.string().nullable().optional(),
+  });
+
+/**
+ * Flow metadata as the admin surface reads it back — no steps, and `description`
+ * nullable because the column is optional free text stored as NULL when unset.
+ */
+export const assessmentFlowMetadataSchema = assessmentFlowSchema
+  .pick({
+    id: true,
+    publicId: true,
+    name: true,
+    isActive: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    description: z.string().nullable(),
+  });
+
+/** A row of the admin flow list — metadata plus the number of active steps authored on it. */
+export const assessmentFlowListItemSchema = assessmentFlowMetadataSchema.extend({
+  stepCount: z.number().int().nonnegative(),
+});
+
+/**
+ * Filters for GET /admin/assessment-flows. Values arrive as query-string
+ * strings, so `isActive` is coerced rather than declared a boolean.
+ */
+export const assessmentFlowListFiltersSchema = z.object({
+  search: z.string().optional(),
+  isActive: z
+    .enum(['true', 'false'])
+    .transform((value) => value === 'true')
+    .optional(),
+});
+
+/** Paginated response for GET /admin/assessment-flows. */
+export const paginatedAssessmentFlowListSchema = createPaginatedResponseSchema(
+  assessmentFlowListItemSchema
+);
 
 /**
  * Admin create input for a single flow step.
@@ -96,6 +144,10 @@ export type FlowStepType = z.infer<typeof flowStepTypeSchema>;
 export type FlowStepConfig = z.infer<typeof flowStepConfigSchema>;
 export type FlowStep = z.infer<typeof flowStepSchema>;
 export type AssessmentFlow = z.infer<typeof assessmentFlowSchema>;
+export type AssessmentFlowMetadata = z.infer<typeof assessmentFlowMetadataSchema>;
+export type AssessmentFlowListItem = z.infer<typeof assessmentFlowListItemSchema>;
+export type AssessmentFlowListFilters = z.infer<typeof assessmentFlowListFiltersSchema>;
+export type PaginatedAssessmentFlowList = z.infer<typeof paginatedAssessmentFlowListSchema>;
 export type CreateAssessmentFlowInput = z.infer<typeof createAssessmentFlowSchema>;
 export type UpdateAssessmentFlowInput = z.infer<typeof updateAssessmentFlowSchema>;
 export type CreateFlowStepInput = z.infer<typeof createFlowStepSchema>;

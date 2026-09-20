@@ -1,3 +1,10 @@
+export { adminAssessmentFlowsApi } from './admin-assessment-flows';
+export type {
+  AdminAssessmentFlowFilterInput,
+  AssessmentFlowMetadata,
+  PaginatedAssessmentFlowList,
+} from './admin-assessment-flows';
+
 export { adminLocationsApi } from './admin-locations';
 export type {
   AdminLocationFilterInput,

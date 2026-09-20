@@ -48,6 +48,10 @@ export enum RouteKey {
   ADMIN_USERS = 'admin-users',
   /** Admin assessments management page */
   ADMIN_ASSESSMENTS = 'admin-assessments',
+  /** Admin assessment flow create page */
+  ADMIN_ASSESSMENT_FLOW_CREATE = 'admin-assessment-flow-create',
+  /** Admin assessment flow edit page */
+  ADMIN_ASSESSMENT_FLOW_EDIT = 'admin-assessment-flow-edit',
   /** Admin session templates management page */
   ADMIN_TEMPLATES = 'admin-templates',
   /** Admin user create page */
