@@ -13,7 +13,7 @@ import { getInputClassName } from '../shared/inputStyles';
 
 import { FormField } from './FormField';
 
-import type { Control, FieldErrors, FieldValues, Path } from 'react-hook-form';
+import type { Control, FieldErrors, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 
 export type { SelectOption };
 
@@ -25,12 +25,16 @@ export interface FormSelectProps<TFieldValues extends FieldValues> {
   control: Control<TFieldValues>;
   errors: FieldErrors<TFieldValues>;
   isRequired?: boolean;
+  /** Validation rules, as `registerOptions` is on the register-based inputs */
+  rules?: Omit<RegisterOptions<TFieldValues, Path<TFieldValues>>, 'valueAsNumber' | 'valueAsDate'>;
 }
 
 /**
  * Custom dropdown select component for standard forms.
  *
  * Replaces native `<select>` with a fully accessible custom dropdown.
+ *
+ * `isRequired` only marks the field; pass `rules` to make it refuse an empty value.
  */
 export const FormSelect = <TFieldValues extends FieldValues>({
   name,
@@ -40,6 +44,7 @@ export const FormSelect = <TFieldValues extends FieldValues>({
   control,
   errors,
   isRequired,
+  rules,
 }: FormSelectProps<TFieldValues>): JSX.Element => {
   const error = errors[name]?.message as string | undefined;
   const inputId = String(name);
@@ -50,6 +55,7 @@ export const FormSelect = <TFieldValues extends FieldValues>({
   } = useController({
     name,
     control,
+    rules,
     defaultValue: '' as TFieldValues[Path<TFieldValues>],
   });
 

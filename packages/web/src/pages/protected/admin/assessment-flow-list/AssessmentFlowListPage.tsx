@@ -75,6 +75,15 @@ export const AssessmentFlowListPage: React.FC = () => {
     [navigate]
   );
 
+  const handleEditStepsClick = useCallback(
+    (row: AssessmentFlowRow): void => {
+      void navigate(
+        routes[RouteKey.ADMIN_ASSESSMENT_FLOW_STEPS].path.replace(':publicId', row.publicId)
+      );
+    },
+    [navigate]
+  );
+
   const handleCloseDeactivateModal = useCallback((): void => {
     setFlowPendingDeactivation(null);
   }, []);
@@ -121,6 +130,10 @@ export const AssessmentFlowListPage: React.FC = () => {
         label: 'Edit Details',
         onClick: handleEditClick,
       },
+      {
+        label: 'Edit Steps',
+        onClick: handleEditStepsClick,
+      },
       row.isActive
         ? {
             label: 'Deactivate',
@@ -132,7 +145,7 @@ export const AssessmentFlowListPage: React.FC = () => {
             onClick: handleActivate,
           },
     ],
-    [handleEditClick, handleActivate]
+    [handleEditClick, handleEditStepsClick, handleActivate]
   );
 
   const flowColumns = useMemo(() => buildAssessmentFlowColumns(rowActions), [rowActions]);

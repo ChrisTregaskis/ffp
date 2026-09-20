@@ -100,6 +100,26 @@ export const assessmentFlowListItemSchema = assessmentFlowMetadataSchema.extend(
 });
 
 /**
+ * A step as the admin authoring surface reads it back. `templateId` is nullable
+ * because the column is unset for types that carry no template;
+ * `branchingRuleCount` is derived from `next_step_rules`, which are never
+ * authored here.
+ */
+export const adminFlowStepSchema = z.object({
+  publicId: z.string().length(12),
+  order: z.number().int().positive(),
+  type: flowStepTypeSchema,
+  templateId: z.guid().nullable(),
+  config: flowStepConfigSchema,
+  branchingRuleCount: z.number().int().nonnegative(),
+});
+
+/** Flow metadata plus its ordered active steps. */
+export const assessmentFlowWithStepsSchema = assessmentFlowMetadataSchema.extend({
+  steps: z.array(adminFlowStepSchema),
+});
+
+/**
  * Filters for GET /admin/assessment-flows. Values arrive as query-string
  * strings, so `isActive` is coerced rather than declared a boolean.
  */
@@ -145,6 +165,8 @@ export type FlowStepConfig = z.infer<typeof flowStepConfigSchema>;
 export type FlowStep = z.infer<typeof flowStepSchema>;
 export type AssessmentFlow = z.infer<typeof assessmentFlowSchema>;
 export type AssessmentFlowMetadata = z.infer<typeof assessmentFlowMetadataSchema>;
+export type AdminFlowStepView = z.infer<typeof adminFlowStepSchema>;
+export type AssessmentFlowWithStepsView = z.infer<typeof assessmentFlowWithStepsSchema>;
 export type AssessmentFlowListItem = z.infer<typeof assessmentFlowListItemSchema>;
 export type AssessmentFlowListFilters = z.infer<typeof assessmentFlowListFiltersSchema>;
 export type PaginatedAssessmentFlowList = z.infer<typeof paginatedAssessmentFlowListSchema>;

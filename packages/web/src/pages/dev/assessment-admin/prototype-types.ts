@@ -152,9 +152,6 @@ export interface LevelScenario {
 
 /** In-app navigation target (internal mini-router — keeps the prototype to one route) */
 export type PrototypeView =
-  | { name: 'flow-builder'; flowId: string }
-  // stepId may be the 'new' sentinel for adding a step
-  | { name: 'step-edit'; flowId: string; stepId: string }
   | { name: 'questions' }
   // questionId may be the 'new' sentinel for creating a question
   | { name: 'question-edit'; questionId: string }

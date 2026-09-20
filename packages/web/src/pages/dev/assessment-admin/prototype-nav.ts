@@ -11,20 +11,17 @@ export interface NavEntry {
 
 type Navigate = (view: PrototypeView) => void;
 
-/**
- * The flow the prototype opens on. Flow browsing and metadata editing are now
- * real admin pages, so the prototype drops straight into step authoring.
- */
+/** Scoring is the only flow-scoped screen the prototype still carries. */
 export const PROTOTYPE_ENTRY_FLOW_ID = 'f-exercise-assessment';
 
 /** Top-level menu items (shown when not inside a flow / question). */
 export const getMainNav = (view: PrototypeView, navigate: Navigate): NavEntry[] => [
   {
-    label: 'Flow steps',
-    icon: Icons.CLIPBOARDLIST,
-    active: view.name === 'flow-builder' || view.name === 'step-edit',
+    label: 'Scoring',
+    icon: Icons.TARGET,
+    active: view.name === 'scoring',
     onClick: () => {
-      navigate({ name: 'flow-builder', flowId: PROTOTYPE_ENTRY_FLOW_ID });
+      navigate({ name: 'scoring', flowId: PROTOTYPE_ENTRY_FLOW_ID });
     },
   },
   {
@@ -121,29 +118,5 @@ export const getContextNav = (view: PrototypeView, navigate: Navigate): NavEntry
     ];
   }
 
-  // Only the scoring screen swaps the sidebar now; step authoring is top level.
-  if (view.name !== 'scoring') {
-    return null;
-  }
-
-  const { flowId } = view;
-
-  return [
-    {
-      label: 'Back to flow steps',
-      icon: Icons.ARROWLEFT,
-      active: false,
-      onClick: () => {
-        navigate({ name: 'flow-builder', flowId });
-      },
-    },
-    {
-      label: 'Scoring',
-      icon: Icons.TARGET,
-      active: true,
-      onClick: () => {
-        navigate({ name: 'scoring', flowId });
-      },
-    },
-  ];
+  return null;
 };
