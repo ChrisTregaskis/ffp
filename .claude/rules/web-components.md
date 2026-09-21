@@ -9,7 +9,7 @@ Loads when editing the web package. The `frontend` skill carries the fuller guid
 
 ## Must hold
 
-- **Use existing components, never raw HTML** when one exists: `FormTextInput`, `FormSelect`, `FormRow`, `FormActions`, `ComposableForm`, `PageContainer`, `PageHeader`, `ContentPanel`, `Table`, `TableControls`, `StatusResult`, `Button`, `Icon`, `Text`, `StaticAlert`, `PageState`. Ask before adding a new component variant.
+- **Use existing components, never raw HTML** when one exists: `FormTextInput`, `FormSelect`, `FormRow`, `FormActions`, `ComposableForm`, `PageContainer`, `PageHeader`, `ContentPanel`, `Table`, `TableControls`, `StatusResult`, `ListEmptyState` (the two-branch empty state every admin list table uses), `EmptyState` (the dashed card for an empty section inside a page), `Button`, `Icon`, `Text`, `StaticAlert`, `PageState`. Ask before adding a new component variant.
 - **One component per file** — extract helper components to their own files, never co-locate.
 - **Theme colours only**, never hard-coded greys: `foreground`, `muted-foreground`, `primary`, `secondary`, `success`, `destructive`, `warning`, `info`. Opacity via `bg-primary/10`, `border-destructive/20`. (Exceptions: gradients, structural layout.)
 - **Themed text components**, not raw `<h1>`–`<h5>`/`<p>`/`<span>`/`<button>`.

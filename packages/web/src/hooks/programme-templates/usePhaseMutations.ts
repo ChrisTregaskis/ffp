@@ -8,21 +8,24 @@ import { programmeTemplateKeys } from '@web/lib/query/keys';
 import type { UseMutationResult } from '@tanstack/react-query';
 
 export interface CreatePhaseVariables {
+  /** Template UUID, not the publicId in the route */
   templateId: string;
   data: CreatePhaseRequest;
 }
 
 export interface UpdatePhaseVariables {
+  /** Phase UUID */
   phaseId: string;
   data: UpdatePhaseRequest;
 }
 
 export interface DeletePhaseVariables {
+  /** Phase UUID */
   phaseId: string;
-  templateId: string;
 }
 
 export interface ReorderPhasesVariables {
+  /** Template UUID, not the publicId in the route */
   templateId: string;
   orderedIds: string[];
 }

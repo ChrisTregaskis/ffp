@@ -182,7 +182,7 @@ export const AssessmentFlowEditPage: React.FC = () => {
 
   const headerActions =
     isEditMode && flow ? (
-      <div className="flex gap-2">
+      <>
         <Button variant="secondary" onClick={handleNavigateToSteps}>
           Edit Steps
         </Button>
@@ -195,7 +195,7 @@ export const AssessmentFlowEditPage: React.FC = () => {
             Reactivate
           </Button>
         )}
-      </div>
+      </>
     ) : undefined;
 
   return (

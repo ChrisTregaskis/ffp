@@ -84,14 +84,14 @@ export const TemplateDetailPage: React.FC = () => {
   /** Execute the update mutation */
   const executeUpdate = useCallback(
     (data: UpdateProgrammeTemplateInput) => {
-      if (!id) {
+      if (!template) {
         return;
       }
 
       setSubmitError(null);
 
       updateMutation.mutate(
-        { id, data },
+        { id: template.id, publicId: template.publicId, data },
         {
           onSuccess: () => {
             addToast('Template updated successfully', { variant: 'success' });
@@ -102,7 +102,7 @@ export const TemplateDetailPage: React.FC = () => {
         }
       );
     },
-    [id, updateMutation, addToast]
+    [template, updateMutation, addToast]
   );
 
   /** Handle form submission */

@@ -3,9 +3,9 @@ import React, { useCallback, useMemo, useState } from 'react';
 import type { AdminFlowStepView } from '@ffp/core';
 
 import { Accordion } from '@web/components/accordion';
-import { KebabMenu } from '@web/components/dropdown-menu';
+import { KebabMenu, reorderableItemActions } from '@web/components/dropdown-menu';
 import type { DropdownMenuItem } from '@web/components/dropdown-menu';
-import { DeleteConfirmModal } from '@web/components/programme-templates';
+import { DeleteConfirmModal } from '@web/components/modal';
 import { Text } from '@web/components/text';
 
 import { BranchingRuleBadge } from './BranchingRuleBadge';
@@ -84,30 +84,22 @@ export const FlowStepCard: React.FC<FlowStepCardProps> = ({
   }, [step.publicId, onDelete]);
 
   const menuItems: DropdownMenuItem[] = useMemo(
-    () => [
-      { label: 'Edit', onClick: handleEdit },
-      {
-        label: 'Move up',
-        onClick: () => {
+    () =>
+      reorderableItemActions({
+        onEdit: handleEdit,
+        onMoveUp: () => {
           onMoveUp(step.publicId);
         },
-        disabled: reorderDisabled || isFirst,
-      },
-      {
-        label: 'Move down',
-        onClick: () => {
+        onMoveDown: () => {
           onMoveDown(step.publicId);
         },
-        disabled: reorderDisabled || isLast,
-      },
-      {
-        label: 'Remove',
-        onClick: () => {
+        onDelete: () => {
           setShowDeleteConfirm(true);
         },
-        variant: 'danger',
-      },
-    ],
+        isFirst,
+        isLast,
+        reorderDisabled,
+      }),
     [handleEdit, onMoveUp, onMoveDown, step.publicId, reorderDisabled, isFirst, isLast]
   );
 
@@ -166,7 +158,7 @@ export const FlowStepCard: React.FC<FlowStepCardProps> = ({
         }}
         onConfirm={handleConfirmDelete}
         isLoading={isMutating}
-        title="Remove step"
+        title="Delete step"
         message="This step will no longer appear in the flow. Assessments already taken keep their record of it."
       />
     </>

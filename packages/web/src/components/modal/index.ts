@@ -2,5 +2,7 @@ export { ArchiveVideoModal } from './ArchiveVideoModal';
 export type { ArchiveVideoModalProps } from './ArchiveVideoModal';
 export { DeactivateAssessmentFlowModal } from './DeactivateAssessmentFlowModal';
 export type { DeactivateAssessmentFlowModalProps } from './DeactivateAssessmentFlowModal';
+export { DeleteConfirmModal } from './DeleteConfirmModal';
+export type { DeleteConfirmModalProps } from './DeleteConfirmModal';
 export { Modal } from './Modal';
 export type { ModalProps, ModalSize } from './Modal';

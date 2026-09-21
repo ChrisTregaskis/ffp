@@ -4,10 +4,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { TemplatePhaseWithSessions } from '@ffp/core';
 
 import { Button } from '@web/components/button';
+import { REORDERABLE_ACTION_LABELS } from '@web/components/dropdown-menu';
 import { PageState } from '@web/components/feedback/PageState';
 import { Icon } from '@web/components/Icon';
-import { PageContainer, PageHeader } from '@web/components/layout';
-import { DeleteConfirmModal, InlineFormPanel } from '@web/components/programme-templates';
+import { InlineFormPanel, PageContainer, PageHeader } from '@web/components/layout';
+import { DeleteConfirmModal } from '@web/components/modal';
 import { PhaseForm } from '@web/components/programme-templates/PhaseForm';
 import type { PhaseFormValues } from '@web/components/programme-templates/PhaseForm';
 import { Table, createColumns } from '@web/components/table';
@@ -95,7 +96,7 @@ export const PhasesPage: React.FC = () => {
 
   const handleReorder = useCallback(
     (row: PhaseRow, direction: 'up' | 'down') => {
-      if (!templateId) {
+      if (!template) {
         return;
       }
 
@@ -110,23 +111,23 @@ export const PhasesPage: React.FC = () => {
       }
 
       reorderPhases.mutate(
-        { templateId, orderedIds: reordered },
+        { templateId: template.id, orderedIds: reordered },
         {
           onSuccess: () => addToast('Phase order updated', { variant: 'success' }),
           onError: (err) => addToast(err.message, { variant: 'error' }),
         }
       );
     },
-    [templateId, phases, reorderPhases, addToast]
+    [template, phases, reorderPhases, addToast]
   );
 
   const handleConfirmDelete = useCallback(() => {
-    if (!deleteTarget || !templateId) {
+    if (!deleteTarget) {
       return;
     }
 
     deletePhase.mutate(
-      { phaseId: deleteTarget.id, templateId },
+      { phaseId: deleteTarget.id },
       {
         onSuccess: () => {
           addToast('Phase deleted', { variant: 'success' });
@@ -135,17 +136,17 @@ export const PhasesPage: React.FC = () => {
         onError: (err) => addToast(err.message, { variant: 'error' }),
       }
     );
-  }, [deleteTarget, templateId, deletePhase, addToast]);
+  }, [deleteTarget, deletePhase, addToast]);
 
   const handleCreatePhase = useCallback(
     (values: PhaseFormValues) => {
-      if (!templateId) {
+      if (!template) {
         return;
       }
 
       createPhase.mutate(
         {
-          templateId,
+          templateId: template.id,
           data: { name: values.name || null, description: values.description || null },
         },
         {
@@ -157,31 +158,33 @@ export const PhasesPage: React.FC = () => {
         }
       );
     },
-    [templateId, createPhase, addToast]
+    [template, createPhase, addToast]
   );
 
+  // Not the shared builder: RowAction's handlers and predicates take the row, which the
+  // DropdownMenuItem shape cannot express. Only the labels are shared.
   const rowActions = useCallback(
-    (row: PhaseRow): RowAction<PhaseRow>[] => [
+    (): RowAction<PhaseRow>[] => [
       {
-        label: 'Edit Phase',
+        label: REORDERABLE_ACTION_LABELS.edit,
         onClick: handleViewPhase,
       },
       {
-        label: 'Move Up',
+        label: REORDERABLE_ACTION_LABELS.moveUp,
         onClick: (r) => {
           handleReorder(r, 'up');
         },
-        disabled: () => row.phaseNumber === 1 || isMutating,
+        disabled: (r) => r.phaseNumber === 1 || isMutating,
       },
       {
-        label: 'Move Down',
+        label: REORDERABLE_ACTION_LABELS.moveDown,
         onClick: (r) => {
           handleReorder(r, 'down');
         },
-        disabled: () => row.phaseNumber === phaseRows.length || isMutating,
+        disabled: (r) => r.phaseNumber === phaseRows.length || isMutating,
       },
       {
-        label: 'Delete',
+        label: REORDERABLE_ACTION_LABELS.delete,
         onClick: (r) => {
           setDeleteTarget(r);
         },

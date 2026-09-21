@@ -99,6 +99,9 @@ export const UserListPage: React.FC = () => {
         defaultSort={{ id: 'createdAt', desc: true }}
         getRowId={(row) => row.id}
         emptyState={
+          // hasActiveControls, not hasNonDefaultControls: the default role narrows to one
+          // of three rather than setting a baseline, so an empty result means none of that
+          // role. A genuinely empty list reads as filtered too; "All Roles" shows the rest.
           <UserListEmptyState hasFilters={hasActiveControls} onCreateClick={handleCreateClick} />
         }
         renderControls={(cols) => (

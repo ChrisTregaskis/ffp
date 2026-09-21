@@ -47,7 +47,7 @@ export const TemplateCreatePage: React.FC = () => {
       createMutation.mutate(payload, {
         onSuccess: (template) => {
           addToast(`"${template.name}" created successfully`, { variant: 'success' });
-          void navigate(`${routes[RouteKey.ADMIN_TEMPLATES].path}/${template.id}`);
+          void navigate(`${routes[RouteKey.ADMIN_TEMPLATES].path}/${template.publicId}`);
         },
         onError: (err) => {
           if (ApiError.isApiError(err) && err.status === 409) {

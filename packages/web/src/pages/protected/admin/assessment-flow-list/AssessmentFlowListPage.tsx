@@ -44,6 +44,7 @@ export const AssessmentFlowListPage: React.FC = () => {
     debouncedFilters,
     clearAll,
     hasActiveControls,
+    hasNonDefaultControls,
   } = useApiTable({
     defaultPageSize: 10,
     defaultSort: { id: 'name', desc: false },
@@ -178,7 +179,7 @@ export const AssessmentFlowListPage: React.FC = () => {
         getRowId={(row) => row.id}
         emptyState={
           <AssessmentFlowListEmptyState
-            hasFilters={hasActiveControls}
+            hasFilters={hasNonDefaultControls}
             onCreateClick={handleCreateClick}
           />
         }

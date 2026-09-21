@@ -3,11 +3,11 @@ import React, { useCallback, useMemo, useState } from 'react';
 import type { TemplatePhaseWithSessions } from '@ffp/core';
 
 import { Accordion } from '@web/components/accordion';
-import { KebabMenu } from '@web/components/dropdown-menu';
+import { KebabMenu, reorderableItemActions } from '@web/components/dropdown-menu';
 import type { DropdownMenuItem } from '@web/components/dropdown-menu';
+import { DeleteConfirmModal } from '@web/components/modal';
 import { Text } from '@web/components/text';
 
-import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { ExerciseList } from './ExerciseList';
 import { SessionForm } from './SessionForm';
 
@@ -114,30 +114,21 @@ export const SessionCard: React.FC<SessionCardProps> = ({
   );
 
   const menuItems: DropdownMenuItem[] = useMemo(
-    () => [
-      { label: 'Edit', onClick: handleEdit },
-      {
-        label: 'Move up',
-        onClick: () => {
+    () =>
+      reorderableItemActions({
+        onEdit: handleEdit,
+        onMoveUp: () => {
           onMoveUp(session.id);
         },
-        disabled: isFirst,
-      },
-      {
-        label: 'Move down',
-        onClick: () => {
+        onMoveDown: () => {
           onMoveDown(session.id);
         },
-        disabled: isLast,
-      },
-      {
-        label: 'Delete',
-        onClick: () => {
+        onDelete: () => {
           setShowDeleteConfirm(true);
         },
-        variant: 'danger',
-      },
-    ],
+        isFirst,
+        isLast,
+      }),
     [handleEdit, onMoveUp, onMoveDown, session.id, isFirst, isLast]
   );
 

@@ -88,11 +88,11 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
   const videos = searchResults?.data ?? [];
 
   const handleSelect = useCallback(
-    async (videoId: string) => {
+    async (videoPublicId: string) => {
       setIsLoadingDetail(true);
 
       try {
-        const detail = await videosApi.get(videoId);
+        const detail = await videosApi.get(videoPublicId);
         onSelect(detail);
         setIsOpen(false);
         setSearch('');
@@ -181,7 +181,7 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
                 variant="ghost"
                 className="flex w-full items-center gap-3 rounded-none px-3 py-2 text-left hover:bg-muted"
                 onClick={() => {
-                  void handleSelect(video.id);
+                  void handleSelect(video.publicId);
                 }}
                 disabled={isLoadingDetail}
               >

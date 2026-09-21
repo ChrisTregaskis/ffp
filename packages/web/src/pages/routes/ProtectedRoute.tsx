@@ -6,6 +6,8 @@ import { LoadingSpinner } from '@web/components/LoadingSpinner/LoadingSpinner';
 import { useAuth } from '@web/hooks/useAuth';
 import { hasRole, logUnauthorisedAccess } from '@web/lib/rbac';
 
+import { matchRoute } from './matchRoute';
+
 import { RouteKey, routes } from '.';
 
 import type { PropsWithChildren } from 'react';
@@ -37,7 +39,9 @@ export const ProtectedRoute = ({
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  const currentRoute = Object.values(routes).find((route) => route.path === location.pathname);
+  // Matched by pattern: a parameterised path never equals a real pathname, so string
+  // equality leaves allowedRoles and the denial logging inert on any route with a param.
+  const currentRoute = matchRoute(location.pathname)?.route;
 
   const userHasAccess =
     !currentRoute?.allowedRoles ||
