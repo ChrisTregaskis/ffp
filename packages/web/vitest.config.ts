@@ -15,6 +15,12 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    // Any test that reaches the route table pulls in the page components and, through
+    // them, the API client, which throws at module scope when this is unset. The .env
+    // files are untracked, so the suite has to supply it rather than borrow a local one.
+    env: {
+      VITE_API_URL: 'http://localhost/test-api',
+    },
     include: ['src/**/*.{test,spec}.{ts,tsx}', 'tests/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['**/node_modules/**', '**/dist/**', '**/*.integration.test.ts'],
     coverage: {
