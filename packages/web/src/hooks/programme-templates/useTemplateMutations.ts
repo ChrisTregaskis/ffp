@@ -12,7 +12,10 @@ import { programmeTemplateKeys } from '@web/lib/query/keys';
 import type { UseMutationResult } from '@tanstack/react-query';
 
 export interface UpdateTemplateVariables {
+  /** Template UUID — what the endpoint resolves, not the publicId in the route */
   id: string;
+  /** Template publicId, when the caller has a detail query keyed on it to invalidate */
+  publicId?: string;
   data: UpdateProgrammeTemplateInput;
 }
 
@@ -45,9 +48,12 @@ export const useUpdateTemplateMutation = (): UseMutationResult<
       adminProgrammeTemplatesApi.update(id, data),
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: programmeTemplateKeys.lists() });
-      void queryClient.invalidateQueries({
-        queryKey: programmeTemplateKeys.detail(variables.id),
-      });
+
+      if (variables.publicId) {
+        void queryClient.invalidateQueries({
+          queryKey: programmeTemplateKeys.detail(variables.publicId),
+        });
+      }
     },
   });
 };

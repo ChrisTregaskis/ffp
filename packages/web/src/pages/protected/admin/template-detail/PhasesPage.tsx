@@ -96,7 +96,7 @@ export const PhasesPage: React.FC = () => {
 
   const handleReorder = useCallback(
     (row: PhaseRow, direction: 'up' | 'down') => {
-      if (!templateId) {
+      if (!template) {
         return;
       }
 
@@ -111,23 +111,23 @@ export const PhasesPage: React.FC = () => {
       }
 
       reorderPhases.mutate(
-        { templateId, orderedIds: reordered },
+        { templateId: template.id, orderedIds: reordered },
         {
           onSuccess: () => addToast('Phase order updated', { variant: 'success' }),
           onError: (err) => addToast(err.message, { variant: 'error' }),
         }
       );
     },
-    [templateId, phases, reorderPhases, addToast]
+    [template, phases, reorderPhases, addToast]
   );
 
   const handleConfirmDelete = useCallback(() => {
-    if (!deleteTarget || !templateId) {
+    if (!deleteTarget) {
       return;
     }
 
     deletePhase.mutate(
-      { phaseId: deleteTarget.id, templateId },
+      { phaseId: deleteTarget.id },
       {
         onSuccess: () => {
           addToast('Phase deleted', { variant: 'success' });
@@ -136,17 +136,17 @@ export const PhasesPage: React.FC = () => {
         onError: (err) => addToast(err.message, { variant: 'error' }),
       }
     );
-  }, [deleteTarget, templateId, deletePhase, addToast]);
+  }, [deleteTarget, deletePhase, addToast]);
 
   const handleCreatePhase = useCallback(
     (values: PhaseFormValues) => {
-      if (!templateId) {
+      if (!template) {
         return;
       }
 
       createPhase.mutate(
         {
-          templateId,
+          templateId: template.id,
           data: { name: values.name || null, description: values.description || null },
         },
         {
@@ -158,7 +158,7 @@ export const PhasesPage: React.FC = () => {
         }
       );
     },
-    [templateId, createPhase, addToast]
+    [template, createPhase, addToast]
   );
 
   // Not the shared builder: RowAction's handlers and predicates take the row, which the
