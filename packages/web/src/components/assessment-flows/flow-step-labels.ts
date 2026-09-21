@@ -1,4 +1,4 @@
-import { flowStepTypeSchema } from '@ffp/core';
+import { flowStepTypeSchema, TEMPLATE_LINKED_STEP_TYPES } from '@ffp/core';
 import type { FlowStepType } from '@ffp/core';
 
 import type { SelectOption } from '@web/components/select/types';
@@ -21,8 +21,6 @@ export const STEP_TYPE_DESCRIPTIONS: Record<FlowStepType, string> = {
   results: 'The member’s scores once the assessment is complete.',
   'programme-overview': 'A preview of the programme built from those results.',
 };
-
-export const TEMPLATE_LINKED_STEP_TYPES: FlowStepType[] = ['questions', 'video-assessment'];
 
 export const stepTypeLinksTemplate = (type: FlowStepType): boolean =>
   TEMPLATE_LINKED_STEP_TYPES.includes(type);

@@ -6,6 +6,7 @@ import {
   createFlowStepSchema,
   updateFlowStepSchema,
   reorderFlowStepsSchema,
+  TEMPLATE_LINKED_STEP_TYPES,
   type FlowStepType,
   type UpdateFlowStepInput,
 } from '../schemas/assessment-flow.schema';
@@ -19,9 +20,6 @@ import { findTemplateById } from './template.repository';
 import type { AssessmentFlow } from './flow.repository';
 
 export type { AdminFlowStep };
-
-/** The only step types that link an assessment template; every other type carries none. */
-const TEMPLATE_LINKED_STEP_TYPES: readonly FlowStepType[] = ['questions', 'video-assessment'];
 
 /**
  * Resolve a flow by public identifier or throw 404. Not filtered on `isActive`:

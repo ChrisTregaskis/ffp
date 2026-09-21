@@ -1,8 +1,9 @@
 import React from 'react';
 
 import { Button } from '@web/components/button';
-import { Modal } from '@web/components/modal/Modal';
 import { Text } from '@web/components/text';
+
+import { Modal } from './Modal';
 
 export interface DeleteConfirmModalProps {
   /** Whether the modal is visible */
@@ -19,7 +20,7 @@ export interface DeleteConfirmModalProps {
   message: string;
 }
 
-/** Confirmation modal for deleting hierarchy items (phases, sessions, exercises) */
+/** Confirmation modal for a destructive action on a named item, with the cascade copy supplied by the caller */
 export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   isOpen,
   onClose,

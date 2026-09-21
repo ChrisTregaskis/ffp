@@ -34,6 +34,7 @@ export const TemplateListPage: React.FC = () => {
     debouncedFilters,
     clearAll,
     hasActiveControls,
+    hasNonDefaultControls,
   } = useApiTable({
     defaultPageSize: 10,
     defaultSort: { id: 'createdAt', desc: true },
@@ -130,7 +131,7 @@ export const TemplateListPage: React.FC = () => {
         getRowId={(row) => row.id}
         emptyState={
           <TemplateListEmptyState
-            hasFilters={hasActiveControls}
+            hasFilters={hasNonDefaultControls}
             onCreateClick={handleCreateClick}
           />
         }

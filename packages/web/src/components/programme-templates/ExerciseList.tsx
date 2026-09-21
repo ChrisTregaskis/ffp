@@ -4,7 +4,9 @@ import type { ExerciseResponse } from '@ffp/core';
 
 import { Button } from '@web/components/button';
 import { Icon } from '@web/components/Icon';
+import { InlineFormPanel } from '@web/components/layout';
 import { LoadingSpinner } from '@web/components/LoadingSpinner';
+import { DeleteConfirmModal } from '@web/components/modal';
 import { Text } from '@web/components/text';
 import {
   useCreateExerciseMutation,
@@ -16,11 +18,9 @@ import {
 import { useToast } from '@web/hooks/useToast';
 import { swapAdjacentItem } from '@web/utils/reorder';
 
-import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { exerciseToFormValues } from './exercise-utils';
 import { ExerciseForm } from './ExerciseForm';
 import { ExerciseRow } from './ExerciseRow';
-import { InlineFormPanel } from './InlineFormPanel';
 
 import type { ExerciseFormValues } from './exercise-utils';
 

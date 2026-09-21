@@ -3,6 +3,8 @@ import { resolve } from 'path';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
+import { createWebAliasConfig } from './vite-alias-config';
+
 /**
  * Vitest configuration for @ffp/web package
  *
@@ -32,17 +34,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      // The app's own @web/* map, so what resolves in the browser resolves under test.
+      // @ffp/core differs deliberately: tests read the built output, the dev server source.
+      ...createWebAliasConfig(__dirname),
       '@ffp/core': resolve(__dirname, '../core/dist/index.js'),
-      '@web/assets': resolve(__dirname, 'src/assets'),
-      '@web/components': resolve(__dirname, 'src/components'),
-      '@web/contexts': resolve(__dirname, 'src/contexts'),
-      '@web/hooks': resolve(__dirname, 'src/hooks'),
-      '@web/lib': resolve(__dirname, 'src/lib'),
-      '@web/pages': resolve(__dirname, 'src/pages'),
-      '@web/schemas': resolve(__dirname, 'src/schemas'),
-      '@web/services': resolve(__dirname, 'src/services'),
-      '@web/utils': resolve(__dirname, 'src/utils'),
-      '@web/types': resolve(__dirname, 'src/types'),
     },
   },
 });

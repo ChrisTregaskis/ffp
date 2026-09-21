@@ -4,7 +4,7 @@ import { Text } from '@web/components/text';
 
 import type { PropsWithChildren } from 'react';
 
-interface InlineFormPanelProps {
+export interface InlineFormPanelProps {
   /** Title displayed above the form (e.g. "New Phase") */
   title: string;
 }

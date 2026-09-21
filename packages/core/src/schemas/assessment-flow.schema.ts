@@ -4,6 +4,8 @@ import { FLOW_STEP_TYPES } from '@ffp/database/constants';
 
 import { createPaginatedResponseSchema } from './pagination.schema';
 
+export { TEMPLATE_LINKED_STEP_TYPES } from '@ffp/database/constants';
+
 export const flowStepTypeSchema = z.enum(FLOW_STEP_TYPES);
 
 export const flowStepConfigSchema = z.object({

@@ -11,8 +11,7 @@ import { Button } from '@web/components/button';
 import { EmptyState } from '@web/components/feedback/EmptyState';
 import { PageState } from '@web/components/feedback/PageState';
 import { Icon, Icons } from '@web/components/Icon';
-import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
-import { InlineFormPanel } from '@web/components/programme-templates';
+import { ContentPanel, InlineFormPanel, PageContainer, PageHeader } from '@web/components/layout';
 import { Text } from '@web/components/text';
 import {
   useAssessmentFlowDetailQuery,

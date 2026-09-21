@@ -1,7 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { flowStepTypeSchema, type FlowStepType, type UserAssessmentStatus } from '@ffp/core';
+import {
+  flowStepTypeSchema,
+  TEMPLATE_LINKED_STEP_TYPES,
+  type FlowStepType,
+  type UserAssessmentStatus,
+} from '@ffp/core';
 
 import { AssessmentStepRenderer } from '@web/components/assessment/AssessmentStepRenderer/AssessmentStepRenderer';
 import { Button } from '@web/components/button';
@@ -26,9 +31,6 @@ interface AssessmentOrchestratorProps {
   /** Whether this assessment is a reassessment (user already has a programme) */
   isReassessment?: boolean;
 }
-
-/** Step types that require template questions to be fetched. */
-const QUESTION_STEP_TYPES: FlowStepType[] = ['questions', 'video-assessment'];
 
 /** Statuses indicating the assessment has already been submitted (skip re-submission on resume). */
 const ALREADY_SUBMITTED_STATUSES: UserAssessmentStatus[] = ['submitted', 'scored', 'completed'];
@@ -126,7 +128,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
   const stepType = currentStepSummary
     ? toFlowStepType(currentStepSummary.type, assessmentState.phase)
     : assessmentState.phase;
-  const needsQuestions = QUESTION_STEP_TYPES.includes(stepType);
+  const needsQuestions = TEMPLATE_LINKED_STEP_TYPES.includes(stepType);
   const templateId = currentStepSummary?.templateId ?? null;
 
   // Fetch template questions for question/video-assessment steps
@@ -142,14 +144,16 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
   // Determine if the current step is the last question/video step in the flow.
   // Used to show "Complete Assessment" CTA instead of "Continue" on the final question.
   const isLastSubmittableStep = useMemo(() => {
-    if (!QUESTION_STEP_TYPES.includes(stepType)) {
+    if (!TEMPLATE_LINKED_STEP_TYPES.includes(stepType)) {
       return false;
     }
 
     const currentOrder = currentStepSummary?.order ?? 0;
 
     return !assessmentState.steps.some(
-      (s) => s.order > currentOrder && QUESTION_STEP_TYPES.includes(toFlowStepType(s.type, 'intro'))
+      (s) =>
+        s.order > currentOrder &&
+        TEMPLATE_LINKED_STEP_TYPES.includes(toFlowStepType(s.type, 'intro'))
     );
   }, [stepType, currentStepSummary?.order, assessmentState.steps]);
 
