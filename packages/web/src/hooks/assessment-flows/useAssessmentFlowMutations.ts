@@ -4,6 +4,7 @@ import type { CreateAssessmentFlowInput, UpdateAssessmentFlowInput } from '@ffp/
 
 import type { AssessmentFlowMetadata } from '@web/lib/api/endpoints';
 import { adminAssessmentFlowsApi } from '@web/lib/api/endpoints';
+import { invalidateListsAndDetail } from '@web/lib/query';
 import { assessmentFlowKeys } from '@web/lib/query/keys';
 
 import type { UseMutationResult } from '@tanstack/react-query';
@@ -41,10 +42,7 @@ export const useUpdateAssessmentFlowMutation = (): UseMutationResult<
     mutationFn: ({ publicId, data }: UpdateAssessmentFlowVariables) =>
       adminAssessmentFlowsApi.update(publicId, data),
     onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: assessmentFlowKeys.lists() });
-      void queryClient.invalidateQueries({
-        queryKey: assessmentFlowKeys.detail(variables.publicId),
-      });
+      invalidateListsAndDetail(queryClient, assessmentFlowKeys, variables);
     },
   });
 };
@@ -56,8 +54,7 @@ export const useDeactivateAssessmentFlowMutation = (): UseMutationResult<void, E
   return useMutation({
     mutationFn: (publicId: string) => adminAssessmentFlowsApi.deactivate(publicId),
     onSuccess: (_data, publicId) => {
-      void queryClient.invalidateQueries({ queryKey: assessmentFlowKeys.lists() });
-      void queryClient.invalidateQueries({ queryKey: assessmentFlowKeys.detail(publicId) });
+      invalidateListsAndDetail(queryClient, assessmentFlowKeys, { publicId });
     },
   });
 };

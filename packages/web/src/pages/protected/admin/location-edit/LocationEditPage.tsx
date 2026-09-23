@@ -3,9 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import type { UpdateLocationInput } from '@ffp/core';
 
-import { PageState } from '@web/components/feedback/PageState';
-import { ComposableForm } from '@web/components/form/composableForm';
-import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
+import { AdminEditPageShell } from '@web/components/layout';
 import {
   useCreateLocationMutation,
   useLocationDetailQuery,
@@ -190,35 +188,25 @@ export const LocationEditPage: React.FC = () => {
   );
 
   const isPending = createMutation.isPending || updateMutation.isPending;
-  const isLoadingOrError = isEditMode && (isLoading || error);
 
   return (
-    <PageContainer>
-      <PageHeader title={isEditMode ? 'Edit Location' : 'Create Location'} />
-
-      <ContentPanel>
-        {isLoadingOrError ? (
-          <PageState
-            isLoading={isLoading}
-            title="Unable to load location"
-            message={error?.message}
-            actionLabel="Back to Locations"
-            onAction={handleNavigateBack}
-          />
-        ) : (
-          <ComposableForm<LocationFormValues>
-            onSubmit={handleFormSubmit}
-            defaultValues={defaultValues}
-          >
-            <LocationFormFields
-              isEditMode={isEditMode}
-              onCancel={handleNavigateBack}
-              isSubmitting={isPending}
-              errorMessage={submitError}
-            />
-          </ComposableForm>
-        )}
-      </ContentPanel>
-    </PageContainer>
+    <AdminEditPageShell<LocationFormValues>
+      title={isEditMode ? 'Edit Location' : 'Create Location'}
+      resourceLabel="location"
+      listLabel="Locations"
+      isEditMode={isEditMode}
+      isLoading={isLoading}
+      loadError={error}
+      onBack={handleNavigateBack}
+      defaultValues={defaultValues}
+      onSubmit={handleFormSubmit}
+    >
+      <LocationFormFields
+        isEditMode={isEditMode}
+        onCancel={handleNavigateBack}
+        isSubmitting={isPending}
+        errorMessage={submitError}
+      />
+    </AdminEditPageShell>
   );
 };

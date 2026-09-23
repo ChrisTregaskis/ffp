@@ -16,6 +16,9 @@ const USER_MESSAGE = 'Something went wrong saving this record. Please refresh th
  *
  * The diagnostic goes to the console and to `details`, never to `message`: the
  * edit screens render `message` straight into their error banner.
+ *
+ * `SplitIdentifierVariables` is the other half of this contract: it is how a
+ * caller carries both identifiers as far as the request.
  */
 export const assertUuidPathParam = (value: string, endpoint: string): string => {
   if (!uuidSchema.safeParse(value).success) {

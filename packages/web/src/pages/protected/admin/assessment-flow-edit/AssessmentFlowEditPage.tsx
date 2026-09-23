@@ -4,9 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { UpdateAssessmentFlowInput } from '@ffp/core';
 
 import { Button } from '@web/components/button';
-import { PageState } from '@web/components/feedback/PageState';
-import { ComposableForm } from '@web/components/form/composableForm';
-import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
+import { AdminEditPageShell } from '@web/components/layout';
 import { DeactivateAssessmentFlowModal } from '@web/components/modal';
 import {
   useAssessmentFlowDetailQuery,
@@ -188,7 +186,6 @@ export const AssessmentFlowEditPage: React.FC = () => {
   }, [publicId, updateMutation, addToast]);
 
   const isPending = createMutation.isPending || updateMutation.isPending;
-  const isLoadingOrError = isEditMode && (isLoading || !!error);
 
   const headerActions =
     isEditMode && flow ? (
@@ -212,48 +209,39 @@ export const AssessmentFlowEditPage: React.FC = () => {
     ) : undefined;
 
   return (
-    <PageContainer>
-      <PageHeader
-        title={isEditMode ? 'Edit Assessment Flow' : 'Create Assessment Flow'}
-        subtitle={
-          isEditMode
-            ? 'Update how this flow is named and described'
-            : 'Name the flow — its steps are added once it exists'
-        }
-        actions={headerActions}
+    <AdminEditPageShell<AssessmentFlowFormValues>
+      title={isEditMode ? 'Edit Assessment Flow' : 'Create Assessment Flow'}
+      subtitle={
+        isEditMode
+          ? 'Update how this flow is named and described'
+          : 'Name the flow — its steps are added once it exists'
+      }
+      headerActions={headerActions}
+      resourceLabel="flow"
+      listLabel="Assessment Flows"
+      isEditMode={isEditMode}
+      isLoading={isLoading}
+      loadError={error}
+      loadErrorMessage={error?.message ?? 'This assessment flow could not be found.'}
+      onBack={handleNavigateBack}
+      defaultValues={defaultValues}
+      onSubmit={handleFormSubmit}
+      footer={
+        <DeactivateAssessmentFlowModal
+          isOpen={isDeactivateModalOpen}
+          onClose={handleCloseDeactivateModal}
+          onConfirm={handleConfirmDeactivate}
+          isLoading={deactivateMutation.isPending}
+          flowName={flow?.name ?? ''}
+        />
+      }
+    >
+      <AssessmentFlowFormFields
+        isEditMode={isEditMode}
+        onCancel={handleNavigateBack}
+        isSubmitting={isPending}
+        errorMessage={submitError}
       />
-
-      <ContentPanel>
-        {isLoadingOrError ? (
-          <PageState
-            isLoading={isLoading}
-            title="Unable to load flow"
-            message={error?.message ?? 'This assessment flow could not be found.'}
-            actionLabel="Back to Assessment Flows"
-            onAction={handleNavigateBack}
-          />
-        ) : (
-          <ComposableForm<AssessmentFlowFormValues>
-            onSubmit={handleFormSubmit}
-            defaultValues={defaultValues}
-          >
-            <AssessmentFlowFormFields
-              isEditMode={isEditMode}
-              onCancel={handleNavigateBack}
-              isSubmitting={isPending}
-              errorMessage={submitError}
-            />
-          </ComposableForm>
-        )}
-      </ContentPanel>
-
-      <DeactivateAssessmentFlowModal
-        isOpen={isDeactivateModalOpen}
-        onClose={handleCloseDeactivateModal}
-        onConfirm={handleConfirmDeactivate}
-        isLoading={deactivateMutation.isPending}
-        flowName={flow?.name ?? ''}
-      />
-    </PageContainer>
+    </AdminEditPageShell>
   );
 };

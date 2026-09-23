@@ -2,16 +2,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { AdminCreateUserInput, AdminUpdateUserInput, UserDetailResponse } from '@ffp/core';
 
+import type { SplitIdentifierVariables } from '@web/lib/api/client';
 import { adminUsersApi } from '@web/lib/api/endpoints';
+import { invalidateListsAndDetail } from '@web/lib/query';
 import { userKeys } from '@web/lib/query/keys';
 
 import type { UseMutationResult } from '@tanstack/react-query';
 
-export interface UpdateUserVariables {
-  id: string;
-  publicId?: string;
-  data: AdminUpdateUserInput;
-}
+export type UpdateUserVariables = SplitIdentifierVariables<AdminUpdateUserInput>;
 
 /** Mutation hook for creating a programme user. */
 export const useCreateUserMutation = (): UseMutationResult<
@@ -40,13 +38,7 @@ export const useUpdateUserMutation = (): UseMutationResult<
   return useMutation({
     mutationFn: ({ id, data }: UpdateUserVariables) => adminUsersApi.update(id, data),
     onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-
-      if (variables.publicId) {
-        void queryClient.invalidateQueries({
-          queryKey: userKeys.detail(variables.publicId),
-        });
-      }
+      invalidateListsAndDetail(queryClient, userKeys, variables);
     },
   });
 };

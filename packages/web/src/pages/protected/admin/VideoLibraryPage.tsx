@@ -108,7 +108,7 @@ export const VideoLibraryPage: React.FC = () => {
     }
 
     updateMutation.mutate(
-      { id: archiveTarget.id, data: { status: 'archived' } },
+      { id: archiveTarget.id, publicId: archiveTarget.publicId, data: { status: 'archived' } },
       {
         onSuccess: () => {
           addToast(`"${archiveTarget.title}" archived`, { variant: 'success' });

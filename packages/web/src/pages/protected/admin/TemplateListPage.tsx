@@ -70,7 +70,7 @@ export const TemplateListPage: React.FC = () => {
     (row: TemplateRow): void => {
       const newIsActive = !row.isActive;
       updateMutation.mutate(
-        { id: row.id, data: { isActive: newIsActive } },
+        { id: row.id, publicId: row.publicId, data: { isActive: newIsActive } },
         {
           onSuccess: () => {
             const action = newIsActive ? 'activated' : 'deactivated';
