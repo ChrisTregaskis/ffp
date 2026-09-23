@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import {
+  FlowDescriptionPanel,
   FlowStepCard,
   FlowStepForm,
   formValuesToStepInput,
@@ -12,7 +13,6 @@ import { EmptyState } from '@web/components/feedback/EmptyState';
 import { PageState } from '@web/components/feedback/PageState';
 import { Icon, Icons } from '@web/components/Icon';
 import { ContentPanel, InlineFormPanel, PageContainer, PageHeader } from '@web/components/layout';
-import { Text } from '@web/components/text';
 import {
   useAssessmentFlowDetailQuery,
   useCreateFlowStepMutation,
@@ -20,7 +20,7 @@ import {
   useReorderFlowStepsMutation,
   useUpdateFlowStepMutation,
 } from '@web/hooks/assessment-flows';
-import { useAssessmentTemplatesQuery } from '@web/hooks/assessment-templates';
+import { useTemplateNameMap } from '@web/hooks/assessment-templates';
 import { useToast } from '@web/hooks/useToast';
 import { ApiError } from '@web/lib/api/client';
 import { RouteKey, routes } from '@web/pages/routes';
@@ -40,8 +40,7 @@ export const AssessmentFlowStepsPage: React.FC = () => {
   const flowPublicId = publicId ?? '';
 
   const { data: flow, isLoading, error } = useAssessmentFlowDetailQuery(flowPublicId);
-  // The whole catalogue: a retired template's name still has to render
-  const { data: templates } = useAssessmentTemplatesQuery();
+  const { templateNames } = useTemplateNameMap();
 
   const createStep = useCreateFlowStepMutation(flowPublicId);
   const updateStep = useUpdateFlowStepMutation(flowPublicId);
@@ -55,11 +54,6 @@ export const AssessmentFlowStepsPage: React.FC = () => {
 
   const steps = useMemo(() => flow?.steps ?? [], [flow?.steps]);
   const flowBranches = useMemo(() => flowStepsBranch(steps), [steps]);
-
-  const templateNames = useMemo(
-    () => new Map((templates ?? []).map((template) => [template.id, template.name])),
-    [templates]
-  );
 
   const handleNavigateToFlows = useCallback((): void => {
     void navigate(routes[RouteKey.ADMIN_ASSESSMENTS].path);
@@ -173,13 +167,7 @@ export const AssessmentFlowStepsPage: React.FC = () => {
 
       {flow && (
         <ContentPanel>
-          {flow.description && (
-            <div className="mb-4 rounded-lg border border-border bg-white px-5 py-4">
-              <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-                {flow.description}
-              </Text>
-            </div>
-          )}
+          {flow.description && <FlowDescriptionPanel description={flow.description} />}
 
           {flowBranches && <BranchingNotice />}
 

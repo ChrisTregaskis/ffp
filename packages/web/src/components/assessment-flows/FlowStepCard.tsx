@@ -6,13 +6,12 @@ import { Accordion } from '@web/components/accordion';
 import { KebabMenu, reorderableItemActions } from '@web/components/dropdown-menu';
 import type { DropdownMenuItem } from '@web/components/dropdown-menu';
 import { DeleteConfirmModal } from '@web/components/modal';
-import { Text } from '@web/components/text';
 
-import { BranchingRuleBadge } from './BranchingRuleBadge';
 import { stepToFormValues } from './flow-step-form-values';
-import { STEP_TYPE_LABELS, stepTypeLinksTemplate } from './flow-step-labels';
+import { stepTypeLinksTemplate } from './flow-step-labels';
 import { FlowStepDetails } from './FlowStepDetails';
 import { FlowStepForm } from './FlowStepForm';
+import { FlowStepSummary } from './FlowStepSummary';
 
 import type { FlowStepFormValues } from './flow-step-form-values';
 
@@ -104,30 +103,11 @@ export const FlowStepCard: React.FC<FlowStepCardProps> = ({
   );
 
   const trigger = (
-    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-      <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>{step.order}</Text>
-      <Text styleProps={{ size: 'sm', weight: 'medium' }} className="truncate">
-        {step.config.title}
-      </Text>
-      <span className="rounded bg-muted px-2 py-0.5">
-        <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
-          {STEP_TYPE_LABELS[step.type]}
-        </Text>
-      </span>
-      {linkedTemplateName && (
-        <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }} className="truncate">
-          {linkedTemplateName}
-        </Text>
-      )}
-      <BranchingRuleBadge ruleCount={step.branchingRuleCount} />
-      {sharesPosition && (
-        <span className="rounded-full bg-info/10 px-2.5 py-0.5">
-          <Text styleProps={{ size: 'xs', weight: 'medium', colour: 'info' }}>
-            Shares position {step.order}
-          </Text>
-        </span>
-      )}
-    </div>
+    <FlowStepSummary
+      step={step}
+      templateName={linkedTemplateName}
+      sharesPosition={sharesPosition}
+    />
   );
 
   return (

@@ -4,13 +4,13 @@ import { DIFFICULTIES } from '@ffp/database/constants';
 
 import { createPaginatedResponseSchema, paginationInputSchema } from '../pagination.schema';
 import { templatePhaseWithSessionsSchema } from '../programme-structure.schema';
+import { publicIdSchema } from '../public-id.schema';
 
 // System-managed lookup table for programme templates.
 export const programmeTemplateSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.guid(),
-  /** Public identifier for URLs (nanoid, 12 chars) */
-  publicId: z.string().length(12),
+  publicId: publicIdSchema,
   /** Unique slug for referencing in scoring config (e.g., 'gentle-mobility-programme') */
   slug: z.string().min(1).max(255),
   /** Display name (e.g., 'Gentle Mobility Programme') */

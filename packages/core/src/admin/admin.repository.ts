@@ -298,14 +298,37 @@ export async function countLocations(db: DbClient, filters: LocationFilterInput)
   return result[0].count;
 }
 
+/** Row type returned by the single-location queries (location fields + organisationName from join) */
+export interface LocationWithOrganisationName extends LocationRecord {
+  organisationName: string;
+}
+
+/** Shared column selection for location queries that join the organisation name */
+const locationWithOrganisationColumns = {
+  id: locations.id,
+  publicId: locations.publicId,
+  organisationId: locations.organisationId,
+  name: locations.name,
+  accountCode: locations.accountCode,
+  address: locations.address,
+  status: locations.status,
+  createdAt: locations.createdAt,
+  updatedAt: locations.updatedAt,
+  organisationName: organisations.name,
+};
+
 /**
  * Get a single location by ID, or null if not found.
  */
 export async function getLocationById(
   db: DbClient,
   locationId: string
-): Promise<LocationRecord | null> {
-  const records = await db.select().from(locations).where(eq(locations.id, locationId));
+): Promise<LocationWithOrganisationName | null> {
+  const records = await db
+    .select(locationWithOrganisationColumns)
+    .from(locations)
+    .innerJoin(organisations, eq(locations.organisationId, organisations.id))
+    .where(eq(locations.id, locationId));
 
   return records[0] ?? null;
 }
@@ -316,25 +339,34 @@ export async function getLocationById(
 export async function getLocationByPublicId(
   db: DbClient,
   publicId: string
-): Promise<LocationRecord | null> {
-  const records = await db.select().from(locations).where(eq(locations.publicId, publicId));
+): Promise<LocationWithOrganisationName | null> {
+  const records = await db
+    .select(locationWithOrganisationColumns)
+    .from(locations)
+    .innerJoin(organisations, eq(locations.organisationId, organisations.id))
+    .where(eq(locations.publicId, publicId));
 
   return records[0] ?? null;
 }
 
 /**
  * Update a location record. Returns the updated record or null if not found.
+ *
+ * The update is read back through the joined query because `returning()` cannot
+ * span the organisations join, and the detail response carries its name.
  */
 export async function updateLocation(
   db: DbClient,
   locationId: string,
   data: UpdateLocationInput
-): Promise<LocationRecord | null> {
+): Promise<LocationWithOrganisationName | null> {
   const records = await db
     .update(locations)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(locations.id, locationId))
-    .returning();
+    .returning({ id: locations.id });
 
-  return records[0] ?? null;
+  const updatedId = records[0]?.id;
+
+  return updatedId ? await getLocationById(db, updatedId) : null;
 }

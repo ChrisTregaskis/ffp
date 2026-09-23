@@ -143,7 +143,7 @@ export const UserEditPage: React.FC = () => {
   /** Handle edit submission */
   const handleUpdate = useCallback(
     (values: UserFormValues) => {
-      if (!id) {
+      if (!user) {
         return;
       }
 
@@ -164,7 +164,7 @@ export const UserEditPage: React.FC = () => {
       setSubmitError(null);
 
       updateMutation.mutate(
-        { id, data: payload },
+        { id: user.id, publicId: user.publicId, data: payload },
         {
           onSuccess: () => {
             addToast('User updated successfully', { variant: 'success' });
@@ -176,7 +176,7 @@ export const UserEditPage: React.FC = () => {
         }
       );
     },
-    [id, buildUpdatePayload, updateMutation, addToast, handleNavigateBack]
+    [user, buildUpdatePayload, updateMutation, addToast, handleNavigateBack]
   );
 
   const handleFormSubmit = useCallback(

@@ -6,7 +6,7 @@ import type {
 } from '@ffp/core';
 import { paginatedUserResponseSchema, userDetailResponseSchema } from '@ffp/core';
 
-import { ffpClient, parseApiResponse } from '../client';
+import { assertUuidPathParam, ffpClient, parseApiResponse } from '../client';
 
 import type { z } from 'zod';
 
@@ -75,7 +75,8 @@ export const adminUsersApi = {
 
   /** Updates user details (firstName, lastName, phone, dateOfBirth). */
   update: async (id: string, data: AdminUpdateUserInput): Promise<UserDetailResponse> => {
-    const path = `${basePath}/${id}`;
+    const checkedId = assertUuidPathParam(id, 'PUT /admin/users/{id}');
+    const path = `${basePath}/${checkedId}`;
     const response = await ffpClient.put(path, data);
 
     return parseApiResponse(userDetailResponseSchema, response, { method: 'PUT', path });

@@ -69,7 +69,7 @@ export const VideoLibraryPage: React.FC = () => {
   const handlePublish = useCallback(
     (row: VideoRow): void => {
       updateMutation.mutate(
-        { id: row.id, data: { status: 'active' } },
+        { id: row.id, publicId: row.publicId, data: { status: 'active' } },
         {
           onSuccess: () => {
             addToast(`"${row.title}" published successfully`, { variant: 'success' });
@@ -87,7 +87,7 @@ export const VideoLibraryPage: React.FC = () => {
   const handleRestore = useCallback(
     (row: VideoRow): void => {
       updateMutation.mutate(
-        { id: row.id, data: { status: 'active' } },
+        { id: row.id, publicId: row.publicId, data: { status: 'active' } },
         {
           onSuccess: () => {
             addToast(`"${row.title}" restored to active`, { variant: 'success' });

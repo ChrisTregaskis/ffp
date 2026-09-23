@@ -9,6 +9,7 @@ import type { UseMutationResult } from '@tanstack/react-query';
 
 interface UpdateVideoVariables {
   id: string;
+  publicId?: string;
   data: UpdateVideoInput;
 }
 
@@ -25,8 +26,12 @@ export const useUpdateVideoMutation = (): UseMutationResult<
     onSuccess: (_data, variables) => {
       // Invalidate admin list so table reflects updated data
       void queryClient.invalidateQueries({ queryKey: videoKeys.adminLists() });
-      // Invalidate the specific video detail cache
-      void queryClient.invalidateQueries({ queryKey: videoKeys.detail(variables.id) });
+
+      // The detail query is keyed on the publicId, so invalidating by UUID matches nothing
+      if (variables.publicId) {
+        void queryClient.invalidateQueries({ queryKey: videoKeys.detail(variables.publicId) });
+      }
+
       // Invalidate public lists too (status changes affect public catalogue)
       void queryClient.invalidateQueries({ queryKey: videoKeys.lists() });
     },

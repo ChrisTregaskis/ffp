@@ -22,6 +22,7 @@ import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
 import { AssessmentFlowEditPage } from '@web/pages/protected/admin/assessment-flow-edit';
 import { AssessmentFlowListPage } from '@web/pages/protected/admin/assessment-flow-list';
+import { AssessmentFlowPreviewPage } from '@web/pages/protected/admin/assessment-flow-preview';
 import { AssessmentFlowStepsPage } from '@web/pages/protected/admin/assessment-flow-steps';
 import { LocationEditPage } from '@web/pages/protected/admin/location-edit';
 import { LocationListPage } from '@web/pages/protected/admin/location-list';
@@ -381,6 +382,20 @@ export const routes: RoutesConfig = {
     path: `${adminBasePath}/assessments/:publicId/steps`,
     pageComponent: AssessmentFlowStepsPage,
     title: 'Assessment Flow Steps',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Assessment Flows',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/assessments`,
+      },
+    ],
+  },
+  [RouteKey.ADMIN_ASSESSMENT_FLOW_PREVIEW]: {
+    path: `${adminBasePath}/assessments/:publicId/preview`,
+    pageComponent: AssessmentFlowPreviewPage,
+    title: 'Assessment Flow Preview',
     allowedRoles: [SYSTEM_ADMIN],
     excludeFromMainNavbar: true,
     contextNavItems: [

@@ -9,6 +9,7 @@ import type { UseMutationResult } from '@tanstack/react-query';
 
 export interface UpdateUserVariables {
   id: string;
+  publicId?: string;
   data: AdminUpdateUserInput;
 }
 
@@ -40,7 +41,12 @@ export const useUpdateUserMutation = (): UseMutationResult<
     mutationFn: ({ id, data }: UpdateUserVariables) => adminUsersApi.update(id, data),
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      void queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.id) });
+
+      if (variables.publicId) {
+        void queryClient.invalidateQueries({
+          queryKey: userKeys.detail(variables.publicId),
+        });
+      }
     },
   });
 };

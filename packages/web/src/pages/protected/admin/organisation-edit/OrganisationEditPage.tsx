@@ -99,7 +99,7 @@ export const OrganisationEditPage: React.FC = () => {
   /** Handle edit submission */
   const handleUpdate = useCallback(
     (values: OrganisationFormValues) => {
-      if (!id) {
+      if (!organisation) {
         return;
       }
 
@@ -114,7 +114,7 @@ export const OrganisationEditPage: React.FC = () => {
       setSubmitError(null);
 
       updateMutation.mutate(
-        { id, data: payload },
+        { id: organisation.id, publicId: organisation.publicId, data: payload },
         {
           onSuccess: () => {
             addToast('Organisation updated successfully', { variant: 'success' });
@@ -126,7 +126,7 @@ export const OrganisationEditPage: React.FC = () => {
         }
       );
     },
-    [id, buildUpdatePayload, updateMutation, addToast, handleNavigateBack]
+    [organisation, buildUpdatePayload, updateMutation, addToast, handleNavigateBack]
   );
 
   const handleFormSubmit = useCallback(

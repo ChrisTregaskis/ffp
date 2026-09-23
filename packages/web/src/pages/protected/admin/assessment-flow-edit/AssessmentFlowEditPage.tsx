@@ -63,6 +63,16 @@ export const AssessmentFlowEditPage: React.FC = () => {
     void navigate(routes[RouteKey.ADMIN_ASSESSMENT_FLOW_STEPS].path.replace(':publicId', publicId));
   }, [navigate, publicId]);
 
+  const handleNavigateToPreview = useCallback((): void => {
+    if (!publicId) {
+      return;
+    }
+
+    void navigate(
+      routes[RouteKey.ADMIN_ASSESSMENT_FLOW_PREVIEW].path.replace(':publicId', publicId)
+    );
+  }, [navigate, publicId]);
+
   const handleCreate = useCallback(
     (values: AssessmentFlowFormValues): void => {
       setSubmitError(null);
@@ -183,6 +193,9 @@ export const AssessmentFlowEditPage: React.FC = () => {
   const headerActions =
     isEditMode && flow ? (
       <>
+        <Button variant="secondary" onClick={handleNavigateToPreview}>
+          Preview
+        </Button>
         <Button variant="secondary" onClick={handleNavigateToSteps}>
           Edit Steps
         </Button>

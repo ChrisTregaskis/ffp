@@ -14,6 +14,7 @@ import type { UseMutationResult } from '@tanstack/react-query';
 
 export interface UpdateLocationVariables {
   id: string;
+  publicId?: string;
   data: UpdateLocationInput;
 }
 
@@ -46,7 +47,12 @@ export const useUpdateLocationMutation = (): UseMutationResult<
     mutationFn: ({ id, data }: UpdateLocationVariables) => adminLocationsApi.update(id, data),
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: locationKeys.lists() });
-      void queryClient.invalidateQueries({ queryKey: locationKeys.detail(variables.id) });
+
+      if (variables.publicId) {
+        void queryClient.invalidateQueries({
+          queryKey: locationKeys.detail(variables.publicId),
+        });
+      }
     },
   });
 };

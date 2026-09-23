@@ -13,7 +13,7 @@ import {
   organisationListResponseSchema,
 } from '@ffp/core';
 
-import { ffpClient, parseApiResponse } from '../client';
+import { assertUuidPathParam, ffpClient, parseApiResponse } from '../client';
 
 const basePath = '/admin/organisations';
 
@@ -85,7 +85,8 @@ export const adminOrganisationsApi = {
     id: string,
     data: UpdateOrganisationInput
   ): Promise<OrganisationDetailResponse> => {
-    const path = `${basePath}/${id}`;
+    const checkedId = assertUuidPathParam(id, 'PUT /admin/organisations/{id}');
+    const path = `${basePath}/${checkedId}`;
     const response = await ffpClient.put(path, data);
 
     return parseApiResponse(organisationDetailResponseSchema, response, { method: 'PUT', path });

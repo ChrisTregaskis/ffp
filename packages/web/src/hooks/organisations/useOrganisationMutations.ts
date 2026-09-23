@@ -14,6 +14,7 @@ import type { UseMutationResult } from '@tanstack/react-query';
 
 export interface UpdateOrganisationVariables {
   id: string;
+  publicId?: string;
   data: UpdateOrganisationInput;
 }
 
@@ -46,7 +47,12 @@ export const useUpdateOrganisationMutation = (): UseMutationResult<
       adminOrganisationsApi.update(id, data),
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: organisationKeys.lists() });
-      void queryClient.invalidateQueries({ queryKey: organisationKeys.detail(variables.id) });
+
+      if (variables.publicId) {
+        void queryClient.invalidateQueries({
+          queryKey: organisationKeys.detail(variables.publicId),
+        });
+      }
     },
   });
 };

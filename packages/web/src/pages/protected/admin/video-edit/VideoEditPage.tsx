@@ -150,14 +150,14 @@ export const VideoEditPage: React.FC = () => {
   /** Execute the update mutation */
   const executeUpdate = useCallback(
     (data: UpdateVideoInput) => {
-      if (!id) {
+      if (!video) {
         return;
       }
 
       setSubmitError(null);
 
       updateMutation.mutate(
-        { id, data },
+        { id: video.id, publicId: video.publicId, data },
         {
           onSuccess: () => {
             addToast('Video updated successfully', { variant: 'success' });
@@ -169,7 +169,7 @@ export const VideoEditPage: React.FC = () => {
         }
       );
     },
-    [id, updateMutation, addToast, handleNavigateBack]
+    [video, updateMutation, addToast, handleNavigateBack]
   );
 
   /** Handle form submission — intercept archive transitions for confirmation */
