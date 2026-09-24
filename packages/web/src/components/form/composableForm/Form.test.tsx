@@ -1,9 +1,9 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React, { useEffect, useState } from 'react';
 import { createMemoryRouter, Link, RouterProvider } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
+import { FormTextInput } from '../standardForm/FormTextInput';
 
 import { ComposableForm } from './Form';
 import { useComposableFormContext } from './FormContext';
@@ -240,7 +240,26 @@ const editAndSave = async (onSubmit: ReturnType<typeof vi.fn>): Promise<void> =>
   });
 };
 
+// The data router builds a Request on every navigation, passing jsdom's AbortSignal to
+// Node's fetch Request, which rejects a foreign signal from Node 24. Nothing here aborts
+// a navigation, so the signal is dropped.
+class SignalFreeRequest extends Request {
+  constructor(input: RequestInfo | URL, init: RequestInit = {}) {
+    const rest = { ...init };
+    delete rest.signal;
+    super(input, rest);
+  }
+}
+
 describe('ComposableForm unsaved changes guard', () => {
+  beforeAll(() => {
+    vi.stubGlobal('Request', SignalFreeRequest);
+  });
+
+  afterAll(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('lets an untouched form navigate away', async () => {
     const { router } = renderGuarded();
 
