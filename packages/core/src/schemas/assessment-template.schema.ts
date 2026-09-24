@@ -7,6 +7,7 @@ import {
   scoreDimensionSchema,
   type AssessmentQuestion,
 } from './assessment-question.schema';
+import { publicIdSchema } from './public-id.schema';
 
 /**
  * NOTE: Questions are stored in a dedicated `questions` table and linked
@@ -15,8 +16,7 @@ import {
 export const assessmentTemplateSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.guid(),
-  /** Public identifier for URLs (nanoid, 12 chars) */
-  publicId: z.string().length(12),
+  publicId: publicIdSchema,
   /** Template name for identification and admin display */
   name: z.string().min(1).max(255),
   /** Optional description of the template purpose */
@@ -60,8 +60,7 @@ export const updateAssessmentTemplateSchema = assessmentTemplateSchema
 const templateQuestionResponseSchema = z.object({
   /** Question UUID */
   id: z.guid(),
-  /** Public identifier for URLs (nanoid, 12 chars) */
-  publicId: z.string().length(12),
+  publicId: publicIdSchema,
   /** URL-friendly identifier (backend-only, stripped in transform) */
   slug: z.string(),
   /** Question type (determines UI component) */
@@ -126,16 +125,14 @@ export const assessmentTemplateWithQuestionsSchema = assessmentTemplateSchema.ex
  */
 export const assignQuestionsSchema = z.object({
   questionPublicIds: z
-    .array(z.string().length(12))
+    .array(publicIdSchema)
     .min(1, 'At least one question is required')
     .max(50, 'At most 50 questions can be assigned in one request'),
 });
 
 /** Reorder a template's assigned questions. Must list every currently assigned question exactly once. */
 export const reorderTemplateQuestionsSchema = z.object({
-  orderedQuestionPublicIds: z
-    .array(z.string().length(12))
-    .min(1, 'At least one question is required'),
+  orderedQuestionPublicIds: z.array(publicIdSchema).min(1, 'At least one question is required'),
 });
 
 export type AssessmentTemplate = z.infer<typeof assessmentTemplateSchema>;

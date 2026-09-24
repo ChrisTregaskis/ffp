@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { FLOW_STEP_TYPES } from '@ffp/database/constants';
 
 import { createPaginatedResponseSchema } from './pagination.schema';
+import { publicIdSchema } from './public-id.schema';
 
 export { TEMPLATE_LINKED_STEP_TYPES } from '@ffp/database/constants';
 
@@ -18,8 +19,7 @@ export const flowStepConfigSchema = z.object({
 
 // For descriptions, packages/database/src/constants/flow.constants.ts
 export const flowStepSchema = z.object({
-  // Public identifier for URLs (nanoid, 12 chars)
-  publicId: z.string().length(12),
+  publicId: publicIdSchema,
   order: z.number().int().positive('Order must be a positive integer'),
   type: flowStepTypeSchema,
   templateId: z.guid({ message: 'Invalid template ID format' }).optional(),
@@ -29,8 +29,7 @@ export const flowStepSchema = z.object({
 export const assessmentFlowSchema = z.object({
   // UUID primary key
   id: z.guid(),
-  // Public identifier for URLs (nanoid, 12 chars)
-  publicId: z.string().length(12),
+  publicId: publicIdSchema,
   // Display name (required)
   name: z.string().min(1, 'Name is required'),
   // Optional explanatory text
@@ -108,7 +107,7 @@ export const assessmentFlowListItemSchema = assessmentFlowMetadataSchema.extend(
  * authored here.
  */
 export const adminFlowStepSchema = z.object({
-  publicId: z.string().length(12),
+  publicId: publicIdSchema,
   order: z.number().int().positive(),
   type: flowStepTypeSchema,
   templateId: z.guid().nullable(),
@@ -165,7 +164,7 @@ export const updateFlowStepSchema = createFlowStepSchema.partial().extend({
  * order. The server reassigns `order` to match the array position (1-based).
  */
 export const reorderFlowStepsSchema = z.object({
-  orderedStepPublicIds: z.array(z.string().length(12)).min(1, 'At least one step is required'),
+  orderedStepPublicIds: z.array(publicIdSchema).min(1, 'At least one step is required'),
 });
 
 export type FlowStepType = z.infer<typeof flowStepTypeSchema>;

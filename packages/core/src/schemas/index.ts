@@ -1,4 +1,5 @@
 // Schema exports
+export * from './public-id.schema';
 export * from './admin.schema';
 export * from './auth.schema';
 export * from './user.schema';

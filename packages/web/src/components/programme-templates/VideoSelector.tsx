@@ -12,13 +12,14 @@ import { Text } from '@web/components/text';
 import { adminVideosApi } from '@web/lib/api/endpoints';
 import { videosApi } from '@web/lib/api/endpoints/videos';
 import { videoKeys } from '@web/lib/query/keys';
+import { RouteKey, routes } from '@web/pages/routes';
 import { minutesToMs } from '@web/utils/time';
 
 const DEBOUNCE_MS = 300;
 const SEARCH_PAGE_SIZE = 10;
 
 export interface SelectedVideo {
-  id: string;
+  publicId: string;
   title: string;
 }
 
@@ -129,7 +130,11 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
           size="sm"
           icon={<Icon name={Icons.NEWTAB} styleProps={{ size: 'xs', colour: 'currentColor' }} />}
           onClick={() => {
-            window.open(`/admin/videos/${selectedVideo.id}`, '_blank', 'noopener,noreferrer');
+            window.open(
+              routes[RouteKey.ADMIN_VIDEO_EDIT].path.replace(':id', selectedVideo.publicId),
+              '_blank',
+              'noopener,noreferrer'
+            );
           }}
           disabled={disabled}
         >

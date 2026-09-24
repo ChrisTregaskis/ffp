@@ -8,7 +8,7 @@ import type {
 } from '@ffp/core';
 import { paginatedTemplateListResponseSchema, templateDetailResponseSchema } from '@ffp/core';
 
-import { ffpClient, parseApiResponse } from '../client';
+import { assertUuidPathParam, ffpClient, parseApiResponse } from '../client';
 
 const basePath = '/admin/programme-templates';
 
@@ -90,7 +90,8 @@ export const adminProgrammeTemplatesApi = {
     id: string,
     data: UpdateProgrammeTemplateInput
   ): Promise<TemplateDetailResponse> => {
-    const path = `${basePath}/${id}`;
+    const checkedId = assertUuidPathParam(id, 'PUT /admin/programme-templates/{id}');
+    const path = `${basePath}/${checkedId}`;
     const response = await ffpClient.put(path, data);
 
     const parsed = parseApiResponse(
@@ -104,7 +105,8 @@ export const adminProgrammeTemplatesApi = {
 
   /** Deactivates a programme template (sets isActive to false). */
   deactivate: async (id: string): Promise<TemplateDetailResponse> => {
-    const path = `${basePath}/${id}/deactivate`;
+    const checkedId = assertUuidPathParam(id, 'PUT /admin/programme-templates/{id}/deactivate');
+    const path = `${basePath}/${checkedId}/deactivate`;
     const response = await ffpClient.put(path, {});
 
     const parsed = parseApiResponse(

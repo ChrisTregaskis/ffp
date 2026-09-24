@@ -1,10 +1,10 @@
 /**
  * In-memory mock catalogue for the assessment-admin prototype.
  *
- * Populated from Hanan's first-draft question set (Employee Exercise Assessment
- * Flow — see .claude/local/plans/epics/assessment-management). The seven source
- * questions are reproduced faithfully; Q1 (demographics) is split into a gender
- * and an age question, since the prototype has no dedicated demographics type.
+ * Populated from the first-draft Employee Exercise Assessment question set. The
+ * seven source questions are reproduced faithfully; Q1 (demographics) is split
+ * into a gender and an age question, since the prototype has no dedicated
+ * demographics type.
  *
  * Level scoring follows the confirmed model (see prototype-level-model.ts): the
  * three activity answers set a base level by a modal tally (mostly lower → Level

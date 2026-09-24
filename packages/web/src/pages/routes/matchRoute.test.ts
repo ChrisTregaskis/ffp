@@ -57,6 +57,7 @@ describe('matchRoute', () => {
     ['/admin/users/abc123', RouteKey.ADMIN_USER_EDIT],
     ['/admin/assessments/abc123', RouteKey.ADMIN_ASSESSMENT_FLOW_EDIT],
     ['/admin/assessments/abc123/steps', RouteKey.ADMIN_ASSESSMENT_FLOW_STEPS],
+    ['/admin/assessments/abc123/preview', RouteKey.ADMIN_ASSESSMENT_FLOW_PREVIEW],
     ['/admin/videos/abc123', RouteKey.ADMIN_VIDEO_EDIT],
   ])('resolves %s so its system_admin restriction applies', (pathname, expectedKey) => {
     const matched = matchRoute(pathname);

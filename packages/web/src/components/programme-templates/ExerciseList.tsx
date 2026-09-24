@@ -178,7 +178,10 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
               <InlineFormPanel key={exercise.id} title="Edit Exercise">
                 <ExerciseForm
                   initialValues={exerciseToFormValues(exercise)}
-                  initialSelectedVideo={{ id: exercise.video.id, title: exercise.video.title }}
+                  initialSelectedVideo={{
+                    publicId: exercise.video.publicId,
+                    title: exercise.video.title,
+                  }}
                   onSubmit={(values) => {
                     handleUpdate(exercise.id, values);
                   }}

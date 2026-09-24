@@ -3,9 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import type { UpdateOrganisationInput } from '@ffp/core';
 
-import { PageState } from '@web/components/feedback/PageState';
-import { ComposableForm } from '@web/components/form/composableForm';
-import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
+import { AdminEditPageShell } from '@web/components/layout';
 import {
   useCreateOrganisationMutation,
   useOrganisationDetailQuery,
@@ -99,7 +97,7 @@ export const OrganisationEditPage: React.FC = () => {
   /** Handle edit submission */
   const handleUpdate = useCallback(
     (values: OrganisationFormValues) => {
-      if (!id) {
+      if (!organisation) {
         return;
       }
 
@@ -114,7 +112,7 @@ export const OrganisationEditPage: React.FC = () => {
       setSubmitError(null);
 
       updateMutation.mutate(
-        { id, data: payload },
+        { id: organisation.id, publicId: organisation.publicId, data: payload },
         {
           onSuccess: () => {
             addToast('Organisation updated successfully', { variant: 'success' });
@@ -126,7 +124,7 @@ export const OrganisationEditPage: React.FC = () => {
         }
       );
     },
-    [id, buildUpdatePayload, updateMutation, addToast, handleNavigateBack]
+    [organisation, buildUpdatePayload, updateMutation, addToast, handleNavigateBack]
   );
 
   const handleFormSubmit = useCallback(
@@ -141,35 +139,25 @@ export const OrganisationEditPage: React.FC = () => {
   );
 
   const isPending = createMutation.isPending || updateMutation.isPending;
-  const isLoadingOrError = isEditMode && (isLoading || error);
 
   return (
-    <PageContainer>
-      <PageHeader title={isEditMode ? 'Edit Organisation' : 'Create Organisation'} />
-
-      <ContentPanel>
-        {isLoadingOrError ? (
-          <PageState
-            isLoading={isLoading}
-            title="Unable to load organisation"
-            message={error?.message}
-            actionLabel="Back to Organisations"
-            onAction={handleNavigateBack}
-          />
-        ) : (
-          <ComposableForm<OrganisationFormValues>
-            onSubmit={handleFormSubmit}
-            defaultValues={defaultValues}
-          >
-            <OrganisationFormFields
-              isEditMode={isEditMode}
-              onCancel={handleNavigateBack}
-              isSubmitting={isPending}
-              errorMessage={submitError}
-            />
-          </ComposableForm>
-        )}
-      </ContentPanel>
-    </PageContainer>
+    <AdminEditPageShell<OrganisationFormValues>
+      title={isEditMode ? 'Edit Organisation' : 'Create Organisation'}
+      resourceLabel="organisation"
+      listLabel="Organisations"
+      isEditMode={isEditMode}
+      isLoading={isLoading}
+      loadError={error}
+      onBack={handleNavigateBack}
+      defaultValues={defaultValues}
+      onSubmit={handleFormSubmit}
+    >
+      <OrganisationFormFields
+        isEditMode={isEditMode}
+        onCancel={handleNavigateBack}
+        isSubmitting={isPending}
+        errorMessage={submitError}
+      />
+    </AdminEditPageShell>
   );
 };

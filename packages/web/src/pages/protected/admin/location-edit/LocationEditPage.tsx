@@ -3,15 +3,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import type { UpdateLocationInput } from '@ffp/core';
 
-import { PageState } from '@web/components/feedback/PageState';
-import { ComposableForm } from '@web/components/form/composableForm';
-import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
+import { AdminEditPageShell } from '@web/components/layout';
 import {
   useCreateLocationMutation,
   useLocationDetailQuery,
   useUpdateLocationMutation,
 } from '@web/hooks/locations';
-import { useOrganisationDetailQuery } from '@web/hooks/organisations';
 import { useToast } from '@web/hooks/useToast';
 import { RouteKey, routes } from '@web/pages/routes';
 
@@ -31,11 +28,6 @@ export const LocationEditPage: React.FC = () => {
     isLoading,
     error,
   } = useLocationDetailQuery(id ?? '', { enabled: isEditMode });
-
-  // Resolve organisation name for edit mode display
-  const { data: organisation } = useOrganisationDetailQuery(location?.organisationId ?? '', {
-    enabled: isEditMode && !!location?.organisationId,
-  });
 
   const createMutation = useCreateLocationMutation();
   const updateMutation = useUpdateLocationMutation();
@@ -61,7 +53,7 @@ export const LocationEditPage: React.FC = () => {
     return {
       locationName: location.name,
       organisationId: location.organisationId,
-      organisationDisplay: organisation?.name ?? location.organisationId,
+      organisationDisplay: location.organisationName,
       addressLine1: location.address?.line1 ?? '',
       addressLine2: location.address?.line2 ?? '',
       city: location.address?.city ?? '',
@@ -70,7 +62,7 @@ export const LocationEditPage: React.FC = () => {
       country: location.address?.country ?? '',
       status: location.status,
     };
-  }, [isEditMode, location, organisation]);
+  }, [isEditMode, location]);
 
   const handleNavigateBack = useCallback(() => {
     void navigate(routes[RouteKey.ADMIN_LOCATIONS].path);
@@ -154,7 +146,7 @@ export const LocationEditPage: React.FC = () => {
   /** Handle edit submission */
   const handleUpdate = useCallback(
     (values: LocationFormValues) => {
-      if (!id) {
+      if (!location) {
         return;
       }
 
@@ -169,7 +161,7 @@ export const LocationEditPage: React.FC = () => {
       setSubmitError(null);
 
       updateMutation.mutate(
-        { id, data: payload },
+        { id: location.id, publicId: location.publicId, data: payload },
         {
           onSuccess: () => {
             addToast('Location updated successfully', { variant: 'success' });
@@ -181,7 +173,7 @@ export const LocationEditPage: React.FC = () => {
         }
       );
     },
-    [id, buildUpdatePayload, updateMutation, addToast, handleNavigateBack]
+    [location, buildUpdatePayload, updateMutation, addToast, handleNavigateBack]
   );
 
   const handleFormSubmit = useCallback(
@@ -196,35 +188,25 @@ export const LocationEditPage: React.FC = () => {
   );
 
   const isPending = createMutation.isPending || updateMutation.isPending;
-  const isLoadingOrError = isEditMode && (isLoading || error);
 
   return (
-    <PageContainer>
-      <PageHeader title={isEditMode ? 'Edit Location' : 'Create Location'} />
-
-      <ContentPanel>
-        {isLoadingOrError ? (
-          <PageState
-            isLoading={isLoading}
-            title="Unable to load location"
-            message={error?.message}
-            actionLabel="Back to Locations"
-            onAction={handleNavigateBack}
-          />
-        ) : (
-          <ComposableForm<LocationFormValues>
-            onSubmit={handleFormSubmit}
-            defaultValues={defaultValues}
-          >
-            <LocationFormFields
-              isEditMode={isEditMode}
-              onCancel={handleNavigateBack}
-              isSubmitting={isPending}
-              errorMessage={submitError}
-            />
-          </ComposableForm>
-        )}
-      </ContentPanel>
-    </PageContainer>
+    <AdminEditPageShell<LocationFormValues>
+      title={isEditMode ? 'Edit Location' : 'Create Location'}
+      resourceLabel="location"
+      listLabel="Locations"
+      isEditMode={isEditMode}
+      isLoading={isLoading}
+      loadError={error}
+      onBack={handleNavigateBack}
+      defaultValues={defaultValues}
+      onSubmit={handleFormSubmit}
+    >
+      <LocationFormFields
+        isEditMode={isEditMode}
+        onCancel={handleNavigateBack}
+        isSubmitting={isPending}
+        errorMessage={submitError}
+      />
+    </AdminEditPageShell>
   );
 };

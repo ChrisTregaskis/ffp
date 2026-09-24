@@ -66,5 +66,5 @@ assessment_flows (scoring_config: jsonb, is_active)
 
 ## Authoring & testing
 
-- The catalogue ships with seed data — `packages/database/seed/seed{Questions,AssessmentTemplates,AssessmentFlows,FlowSteps}.ts` (idempotent, deterministic UUIDs) — and is also authored through the admin API under `packages/functions/src/admin/` (`assessment-flows/`, `questions/`, `templates/`). Those routes are keyed on `publicId` and gated on `system_admin`; the pre-existing template CRUD routes are still UUID-keyed.
+- The catalogue ships with seed data — `packages/database/seed/seed{Questions,AssessmentTemplates,AssessmentFlows,FlowSteps}.ts` (idempotent, deterministic UUIDs) — and is also authored through the admin API under `packages/functions/src/admin/` (`assessment-flows/`, `questions/`, `templates/`). Those routes are keyed on `publicId` and gated on `system_admin`; the pre-existing programme-template routes read by `publicId` but write by UUID, and their child resources (phases, sessions, exercises) are UUID-keyed throughout. The catalogue is `publicId` on the read and on every write, so a page here passes its route parameter straight through; `.claude/rules/identifiers.md` covers where that splits elsewhere.
 - Tests: `pnpm --filter=@ffp/core test`. Scoring/branching are pure and unit-test cleanly; user-lifecycle tests need RLS context.

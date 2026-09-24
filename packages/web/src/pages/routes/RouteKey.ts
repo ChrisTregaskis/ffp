@@ -54,6 +54,8 @@ export enum RouteKey {
   ADMIN_ASSESSMENT_FLOW_EDIT = 'admin-assessment-flow-edit',
   /** Admin assessment flow step authoring page */
   ADMIN_ASSESSMENT_FLOW_STEPS = 'admin-assessment-flow-steps',
+  /** Admin assessment flow read-only preview page */
+  ADMIN_ASSESSMENT_FLOW_PREVIEW = 'admin-assessment-flow-preview',
   /** Admin session templates management page */
   ADMIN_TEMPLATES = 'admin-templates',
   /** Admin user create page */

@@ -3,9 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import type { AdminCreateUserInput, AdminUpdateUserInput } from '@ffp/core';
 
-import { PageState } from '@web/components/feedback/PageState';
-import { ComposableForm } from '@web/components/form/composableForm';
-import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
+import { AdminEditPageShell } from '@web/components/layout';
 import { useCreateUserMutation, useUpdateUserMutation, useUserDetailQuery } from '@web/hooks/users';
 import { useToast } from '@web/hooks/useToast';
 import { RouteKey, routes } from '@web/pages/routes';
@@ -143,7 +141,7 @@ export const UserEditPage: React.FC = () => {
   /** Handle edit submission */
   const handleUpdate = useCallback(
     (values: UserFormValues) => {
-      if (!id) {
+      if (!user) {
         return;
       }
 
@@ -164,7 +162,7 @@ export const UserEditPage: React.FC = () => {
       setSubmitError(null);
 
       updateMutation.mutate(
-        { id, data: payload },
+        { id: user.id, publicId: user.publicId, data: payload },
         {
           onSuccess: () => {
             addToast('User updated successfully', { variant: 'success' });
@@ -176,7 +174,7 @@ export const UserEditPage: React.FC = () => {
         }
       );
     },
-    [id, buildUpdatePayload, updateMutation, addToast, handleNavigateBack]
+    [user, buildUpdatePayload, updateMutation, addToast, handleNavigateBack]
   );
 
   const handleFormSubmit = useCallback(
@@ -191,32 +189,25 @@ export const UserEditPage: React.FC = () => {
   );
 
   const isPending = createMutation.isPending || updateMutation.isPending;
-  const isLoadingOrError = isEditMode && (isLoading || error);
 
   return (
-    <PageContainer>
-      <PageHeader title={isEditMode ? 'Edit User' : 'Create User'} />
-
-      <ContentPanel>
-        {isLoadingOrError ? (
-          <PageState
-            isLoading={isLoading}
-            title="Unable to load user"
-            message={error?.message}
-            actionLabel="Back to Users"
-            onAction={handleNavigateBack}
-          />
-        ) : (
-          <ComposableForm<UserFormValues> onSubmit={handleFormSubmit} defaultValues={defaultValues}>
-            <UserFormFields
-              isEditMode={isEditMode}
-              onCancel={handleNavigateBack}
-              isSubmitting={isPending}
-              errorMessage={submitError}
-            />
-          </ComposableForm>
-        )}
-      </ContentPanel>
-    </PageContainer>
+    <AdminEditPageShell<UserFormValues>
+      title={isEditMode ? 'Edit User' : 'Create User'}
+      resourceLabel="user"
+      listLabel="Users"
+      isEditMode={isEditMode}
+      isLoading={isLoading}
+      loadError={error}
+      onBack={handleNavigateBack}
+      defaultValues={defaultValues}
+      onSubmit={handleFormSubmit}
+    >
+      <UserFormFields
+        isEditMode={isEditMode}
+        onCancel={handleNavigateBack}
+        isSubmitting={isPending}
+        errorMessage={submitError}
+      />
+    </AdminEditPageShell>
   );
 };

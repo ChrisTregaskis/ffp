@@ -19,7 +19,17 @@ You review code for a multi-tenant healthcare SaaS platform against **FFP-specif
 1. **Surface; never apply.** This pass writes findings only — it must **not** edit the code under review. Applying or declining a finding is the implementing session's call. Hand-off: `review-comments.md` out → author reads → author acts.
 2. **One rolling artefact.** All findings land in `.claude/local/notes/review-comments.md`. Summarise in chat with a _pointer_ to the file — don't scatter findings across chat.
 
-### Add-or-reconcile
+### Never recommend a destructive command
+
+**A review surfaces findings. It does not tell anyone to run `git checkout --`, `git reset`, `git clean`, a `DROP`, a `DELETE`, or anything else that destroys work.**
+
+This is not hypothetical. A review pass on T3-6 inferred from a diff that a sub-agent had "secretly" edited a file, called it a process breach, and recommended `git checkout --` on it. The edit was deliberate, verified in the browser, and fixed a live bug — running the command would have silently destroyed it. The implementing session checked the diff before acting, which is the only reason it survived.
+
+**You cannot tell, from a diff, why a change is there.** An unexplained edit is a question for the author, not evidence of a mistake. Write it as a finding — "this change is not covered by the brief; confirm it is intended" — and let the author answer.
+
+If you genuinely believe something should be reverted, say what and why, and leave the decision and the command to the author.
+
+## Add-or-reconcile
 
 Before writing, read the existing `.claude/local/notes/review-comments.md`:
 

@@ -70,7 +70,7 @@ export const OrganisationListPage: React.FC = () => {
     (row: OrganisationRow): void => {
       const newStatus = row.status === 'active' ? 'inactive' : 'active';
       updateMutation.mutate(
-        { id: row.id, data: { status: newStatus } },
+        { id: row.id, publicId: row.publicId, data: { status: newStatus } },
         {
           onSuccess: () => {
             const action = newStatus === 'active' ? 'activated' : 'deactivated';
