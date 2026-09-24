@@ -13,6 +13,7 @@ You are an **implementation session**: inherit a kickoff, implement it on one br
 1. **Read the kickoff in full.** It is the brief: intent, read-first order, numbered scope, what is out, patterns and hygiene, constraints, definition of done. If the path does not resolve, ask rather than guessing.
 2. **Move the kickoff to the consumed archive** — `mv .claude/local/plans/prompts/<name>.md .claude/local/plans/prompts/read/` (create `read/` if absent). Do this once you have actually loaded it to act on, not before.
 3. **Read the story file** the kickoff names, plus `.claude/local/plans/project-state.md`. The story file and the kickoff are the source of truth — **flag any conflict between them before writing code**, do not silently pick one.
+   - **A kickoff's premises are the principal's best understanding, not fact.** Where one narrows your scope — "X is already consistent, so migrating it is out of scope" — and it is cheap to check, check it. **If the evidence contradicts the kickoff, the evidence wins: stop and say so** rather than building on it or quietly widening scope. T3-7 was scoped as two small bugs on a premise that turned out to be wrong in every particular; it was four shipped screens that could not save at all, and it was caught only because that session probed the live API before writing code.
 4. **Read `.claude/local/notes/review-context.md`** to see what is already on this branch. First story on the branch → you will replace it. Continuation → build on it.
 5. **Rename the session** to the kickoff's session name via `/rename`.
 6. **Confirm the branch.** Create it off the stated base if it does not exist (`git checkout -b <branch> <base>` is fine). Never commit, push, merge or rebase.
@@ -86,7 +87,7 @@ Go through **the comments this branch added** — the diff, not the repository. 
 
 ### 24a. Browser check — user-facing surfaces
 
-- Puppeteer MCP against `http://localhost:3000`; launch with `defaultViewport: null` and `--start-maximized`, screenshot at full size, and reset the viewport afterwards or the page renders into a small box.
+- Claude in Chrome (`claude-in-chrome` skill) against `http://localhost:3000`, in a new tab of its own. Navigate and act by text (`find`, `read_page` filtered to interactive elements, `form_input`, `browser_batch`); screenshot only where the visual result is what you are verifying.
 - **Ask me to log in** — Cognito needs a human. Wait for my confirmation before continuing.
 - **Walk the actual acceptance criteria**, not a smoke test: the states the story added, the error and empty states, and one path through anything the review touched. Screenshot the key verification points, not every click.
 - A screenshot that contradicts the acceptance criteria is a defect to fix, not a caveat to note.

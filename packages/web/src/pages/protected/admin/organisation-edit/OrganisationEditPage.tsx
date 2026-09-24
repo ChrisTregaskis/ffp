@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import type { UpdateOrganisationInput } from '@ffp/core';
@@ -12,6 +12,7 @@ import {
 import { useToast } from '@web/hooks/useToast';
 import { RouteKey, routes } from '@web/pages/routes';
 
+import { EMPTY_ORGANISATION_VALUES, toOrganisationFormValues } from './organisation-form-values';
 import { OrganisationFormFields } from './OrganisationFormFields';
 
 import type { OrganisationFormValues } from './types';
@@ -33,30 +34,16 @@ export const OrganisationEditPage: React.FC = () => {
 
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const defaultValues = useMemo((): OrganisationFormValues => {
-    if (!isEditMode || !organisation) {
-      return {
-        organisationName: '',
-        status: 'active',
-      };
-    }
-
-    return {
-      organisationName: organisation.name,
-      status: organisation.status,
-    };
-  }, [isEditMode, organisation]);
-
   const handleNavigateBack = useCallback(() => {
     void navigate(routes[RouteKey.ADMIN_ORGANISATIONS].path);
   }, [navigate]);
 
   /** Handle create submission */
   const handleCreate = useCallback(
-    (values: OrganisationFormValues) => {
+    async (values: OrganisationFormValues): Promise<void> => {
       setSubmitError(null);
 
-      createMutation.mutate(
+      await createMutation.mutateAsync(
         { organisationName: values.organisationName },
         {
           onSuccess: () => {
@@ -96,7 +83,7 @@ export const OrganisationEditPage: React.FC = () => {
 
   /** Handle edit submission */
   const handleUpdate = useCallback(
-    (values: OrganisationFormValues) => {
+    async (values: OrganisationFormValues): Promise<void> => {
       if (!organisation) {
         return;
       }
@@ -111,7 +98,7 @@ export const OrganisationEditPage: React.FC = () => {
 
       setSubmitError(null);
 
-      updateMutation.mutate(
+      await updateMutation.mutateAsync(
         { id: organisation.id, publicId: organisation.publicId, data: payload },
         {
           onSuccess: () => {
@@ -127,21 +114,10 @@ export const OrganisationEditPage: React.FC = () => {
     [organisation, buildUpdatePayload, updateMutation, addToast, handleNavigateBack]
   );
 
-  const handleFormSubmit = useCallback(
-    (values: OrganisationFormValues) => {
-      if (isEditMode) {
-        handleUpdate(values);
-      } else {
-        handleCreate(values);
-      }
-    },
-    [isEditMode, handleUpdate, handleCreate]
-  );
-
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <AdminEditPageShell<OrganisationFormValues>
+    <AdminEditPageShell
       title={isEditMode ? 'Edit Organisation' : 'Create Organisation'}
       resourceLabel="organisation"
       listLabel="Organisations"
@@ -149,8 +125,11 @@ export const OrganisationEditPage: React.FC = () => {
       isLoading={isLoading}
       loadError={error}
       onBack={handleNavigateBack}
-      defaultValues={defaultValues}
-      onSubmit={handleFormSubmit}
+      record={organisation}
+      emptyValues={EMPTY_ORGANISATION_VALUES}
+      toFormValues={toOrganisationFormValues}
+      onCreate={handleCreate}
+      onUpdate={handleUpdate}
     >
       <OrganisationFormFields
         isEditMode={isEditMode}

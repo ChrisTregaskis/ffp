@@ -1,3 +1,5 @@
+import { useCallback, useMemo } from 'react';
+
 import { PageState } from '@web/components/feedback/PageState';
 import { ComposableForm } from '@web/components/form/composableForm';
 
@@ -6,9 +8,9 @@ import { PageContainer } from './PageContainer';
 import { PageHeader } from './PageHeader';
 
 import type { ReactNode } from 'react';
-import type { DefaultValues, FieldValues, SubmitHandler } from 'react-hook-form';
+import type { FieldValues } from 'react-hook-form';
 
-export interface AdminEditPageShellProps<TFormValues extends FieldValues> {
+export interface AdminEditPageShellProps<TFormValues extends FieldValues, TRecord> {
   title: string;
   subtitle?: string;
   headerActions?: ReactNode;
@@ -23,8 +25,14 @@ export interface AdminEditPageShellProps<TFormValues extends FieldValues> {
   /** Replaces the error's own message */
   loadErrorMessage?: string;
   onBack: () => void;
-  defaultValues: DefaultValues<TFormValues>;
-  onSubmit: SubmitHandler<TFormValues>;
+  /** The fetched record; the form re-seeds from it when a refetch changes it */
+  record: TRecord | undefined;
+  /** Seeds a create form. Define it and `toFormValues` at module level so the values memo holds. */
+  emptyValues: TFormValues;
+  toFormValues: (record: TRecord) => TFormValues;
+  /** Each returns the save's promise (`mutateAsync`, not `mutate`) so the form knows when it lands */
+  onCreate: (values: TFormValues) => Promise<void>;
+  onUpdate: (values: TFormValues) => Promise<void>;
   /** The form's field components */
   children: ReactNode;
   /** Rendered after the panel — modals and the like */
@@ -34,12 +42,12 @@ export interface AdminEditPageShellProps<TFormValues extends FieldValues> {
 /**
  * Page frame shared by the admin create/edit screens.
  *
- * The form must not mount before the record arrives: `ComposableForm` reads
- * `defaultValues` once, on mount, so a form mounted mid-fetch keeps the empty
- * ones and saves them over a real record. That condition is derived here rather
- * than passed in, because it is an invariant, not a caller's choice.
+ * The form must not mount before the record arrives: anything typed into the
+ * empty placeholder values would count as an edit and survive the re-seed, to be
+ * saved over the real record. That condition is derived here rather than passed
+ * in, because it is an invariant, not a caller's choice.
  */
-export const AdminEditPageShell = <TFormValues extends FieldValues>({
+export const AdminEditPageShell = <TFormValues extends FieldValues, TRecord>({
   title,
   subtitle,
   headerActions,
@@ -50,12 +58,26 @@ export const AdminEditPageShell = <TFormValues extends FieldValues>({
   loadError,
   loadErrorMessage,
   onBack,
-  defaultValues,
-  onSubmit,
+  record,
+  emptyValues,
+  toFormValues,
+  onCreate,
+  onUpdate,
   children,
   footer,
-}: AdminEditPageShellProps<TFormValues>): JSX.Element => {
+}: AdminEditPageShellProps<TFormValues, TRecord>): JSX.Element => {
   const isAwaitingRecord = isEditMode && (isLoading || !!loadError);
+
+  const values = useMemo(
+    (): TFormValues => (isEditMode && record ? toFormValues(record) : emptyValues),
+    [isEditMode, record, toFormValues, emptyValues]
+  );
+
+  const handleSubmit = useCallback(
+    (formValues: TFormValues): Promise<void> =>
+      isEditMode ? onUpdate(formValues) : onCreate(formValues),
+    [isEditMode, onUpdate, onCreate]
+  );
 
   return (
     <PageContainer>
@@ -71,7 +93,7 @@ export const AdminEditPageShell = <TFormValues extends FieldValues>({
             onAction={onBack}
           />
         ) : (
-          <ComposableForm<TFormValues> onSubmit={onSubmit} defaultValues={defaultValues}>
+          <ComposableForm<TFormValues> onSubmit={handleSubmit} values={values} guardUnsavedChanges>
             {children}
           </ComposableForm>
         )}
