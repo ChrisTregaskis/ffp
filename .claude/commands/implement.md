@@ -87,7 +87,7 @@ Go through **the comments this branch added** — the diff, not the repository. 
 
 ### 24a. Browser check — user-facing surfaces
 
-- Puppeteer MCP against `http://localhost:3000`; launch with `defaultViewport: null` and `--start-maximized`, screenshot at full size, and reset the viewport afterwards or the page renders into a small box.
+- Claude in Chrome (`claude-in-chrome` skill) against `http://localhost:3000`, in a new tab of its own. Navigate and act by text (`find`, `read_page` filtered to interactive elements, `form_input`, `browser_batch`); screenshot only where the visual result is what you are verifying.
 - **Ask me to log in** — Cognito needs a human. Wait for my confirmation before continuing.
 - **Walk the actual acceptance criteria**, not a smoke test: the states the story added, the error and empty states, and one path through anything the review touched. Screenshot the key verification points, not every click.
 - A screenshot that contradicts the acceptance criteria is a defect to fix, not a caveat to note.

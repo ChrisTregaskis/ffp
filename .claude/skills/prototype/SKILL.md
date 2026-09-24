@@ -110,9 +110,9 @@ so no one mistakes it for the real thing.
 
 ## Verify visually
 
-Drive the prototype in a browser (puppeteer or manual) and screenshot the key states. A prototype's
+Drive the prototype in a browser (Claude in Chrome or manual) and screenshot the key states. A prototype's
 whole value is the visual/interaction truth — confirm layouts hold, nav works, and any simulated
-logic produces the right numbers. (When using puppeteer: launch maximised, screenshot full-size.)
+logic produces the right numbers. (With Claude in Chrome: navigate by text, screenshot the states you are judging visually.)
 
 ## Gates — every change
 

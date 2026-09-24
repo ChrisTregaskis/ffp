@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import type { AdminCreateUserInput, AdminUpdateUserInput } from '@ffp/core';
@@ -8,6 +8,7 @@ import { useCreateUserMutation, useUpdateUserMutation, useUserDetailQuery } from
 import { useToast } from '@web/hooks/useToast';
 import { RouteKey, routes } from '@web/pages/routes';
 
+import { EMPTY_USER_VALUES, toUserFormValues } from './user-form-values';
 import { UserFormFields } from './UserFormFields';
 
 import type { UserFormValues } from './types';
@@ -24,30 +25,6 @@ export const UserEditPage: React.FC = () => {
   const updateMutation = useUpdateUserMutation();
 
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const formValues = useMemo((): UserFormValues => {
-    if (!isEditMode || !user) {
-      return {
-        email: '',
-        firstName: '',
-        lastName: '',
-        locationId: '',
-        locationDisplay: '',
-        phone: '',
-        dateOfBirth: '',
-      };
-    }
-
-    return {
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      locationId: user.locationId ?? '',
-      locationDisplay: user.locationName ?? '',
-      phone: user.phone ?? '',
-      dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
-    };
-  }, [isEditMode, user]);
 
   const handleNavigateBack = useCallback(() => {
     void navigate(routes[RouteKey.ADMIN_USERS].path);
@@ -177,17 +154,10 @@ export const UserEditPage: React.FC = () => {
     [user, buildUpdatePayload, updateMutation, addToast, handleNavigateBack]
   );
 
-  const handleFormSubmit = useCallback(
-    (values: UserFormValues): Promise<void> => {
-      return isEditMode ? handleUpdate(values) : handleCreate(values);
-    },
-    [isEditMode, handleUpdate, handleCreate]
-  );
-
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <AdminEditPageShell<UserFormValues>
+    <AdminEditPageShell
       title={isEditMode ? 'Edit User' : 'Create User'}
       resourceLabel="user"
       listLabel="Users"
@@ -195,8 +165,11 @@ export const UserEditPage: React.FC = () => {
       isLoading={isLoading}
       loadError={error}
       onBack={handleNavigateBack}
-      values={formValues}
-      onSubmit={handleFormSubmit}
+      record={user}
+      emptyValues={EMPTY_USER_VALUES}
+      toFormValues={toUserFormValues}
+      onCreate={handleCreate}
+      onUpdate={handleUpdate}
     >
       <UserFormFields
         isEditMode={isEditMode}

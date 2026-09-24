@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import type { UpdateAssessmentFlowInput } from '@ffp/core';
@@ -15,11 +15,13 @@ import {
 import { useToast } from '@web/hooks/useToast';
 import { RouteKey, routes } from '@web/pages/routes';
 
+import {
+  EMPTY_ASSESSMENT_FLOW_VALUES,
+  toAssessmentFlowFormValues,
+} from './assessment-flow-form-values';
 import { AssessmentFlowFormFields } from './AssessmentFlowFormFields';
 
 import type { AssessmentFlowFormValues } from './types';
-
-const EMPTY_VALUES: AssessmentFlowFormValues = { name: '', description: '' };
 
 export const AssessmentFlowEditPage: React.FC = () => {
   const { publicId } = useParams<{ publicId: string }>();
@@ -40,14 +42,6 @@ export const AssessmentFlowEditPage: React.FC = () => {
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
-
-  const formValues = useMemo((): AssessmentFlowFormValues => {
-    if (!isEditMode || !flow) {
-      return EMPTY_VALUES;
-    }
-
-    return { name: flow.name, description: flow.description ?? '' };
-  }, [isEditMode, flow]);
 
   const handleNavigateBack = useCallback((): void => {
     void navigate(routes[RouteKey.ADMIN_ASSESSMENTS].path);
@@ -130,13 +124,6 @@ export const AssessmentFlowEditPage: React.FC = () => {
     [publicId, updateMutation, addToast, handleNavigateBack]
   );
 
-  const handleFormSubmit = useCallback(
-    (values: AssessmentFlowFormValues): Promise<void> => {
-      return isEditMode ? handleUpdate(values) : handleCreate(values);
-    },
-    [isEditMode, handleUpdate, handleCreate]
-  );
-
   const handleOpenDeactivateModal = useCallback((): void => {
     setIsDeactivateModalOpen(true);
   }, []);
@@ -205,7 +192,7 @@ export const AssessmentFlowEditPage: React.FC = () => {
     ) : undefined;
 
   return (
-    <AdminEditPageShell<AssessmentFlowFormValues>
+    <AdminEditPageShell
       title={isEditMode ? 'Edit Assessment Flow' : 'Create Assessment Flow'}
       subtitle={
         isEditMode
@@ -220,8 +207,11 @@ export const AssessmentFlowEditPage: React.FC = () => {
       loadError={error}
       loadErrorMessage={error?.message ?? 'This assessment flow could not be found.'}
       onBack={handleNavigateBack}
-      values={formValues}
-      onSubmit={handleFormSubmit}
+      record={flow}
+      emptyValues={EMPTY_ASSESSMENT_FLOW_VALUES}
+      toFormValues={toAssessmentFlowFormValues}
+      onCreate={handleCreate}
+      onUpdate={handleUpdate}
       footer={
         <DeactivateAssessmentFlowModal
           isOpen={isDeactivateModalOpen}

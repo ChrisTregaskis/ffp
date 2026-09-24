@@ -206,6 +206,40 @@ const leaveViaLink = (): void => {
   fireEvent.click(screen.getByRole('link', { name: 'Preview' }));
 };
 
+// A save the test settles by hand, so it can act while the save is in flight
+const pendingSave = (): {
+  onSubmit: ReturnType<typeof vi.fn>;
+  land: () => Promise<void>;
+  fail: () => Promise<void>;
+} => {
+  const outcome = { land: (): void => undefined, fail: (): void => undefined };
+  const onSubmit = vi.fn(
+    () =>
+      new Promise<void>((resolve, reject) => {
+        outcome.land = resolve;
+        outcome.fail = () => {
+          reject(new Error('Save failed'));
+        };
+      })
+  );
+  const settle = (how: 'land' | 'fail'): Promise<void> =>
+    act(async () => {
+      outcome[how]();
+      await Promise.resolve();
+    });
+
+  return { onSubmit, land: () => settle('land'), fail: () => settle('fail') };
+};
+
+const editAndSave = async (onSubmit: ReturnType<typeof vi.fn>): Promise<void> => {
+  fireEvent.change(input('Name'), { target: { value: 'Harbour Studio North' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+  await waitFor(() => {
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+};
+
 describe('ComposableForm unsaved changes guard', () => {
   it('lets an untouched form navigate away', async () => {
     const { router } = renderGuarded();
@@ -280,26 +314,11 @@ describe('ComposableForm unsaved changes guard', () => {
   });
 
   it('treats the form as saved once a returned save resolves', async () => {
-    let settleSave: () => void = () => undefined;
-    const onSubmit = vi.fn(
-      () =>
-        new Promise<void>((resolve) => {
-          settleSave = resolve;
-        })
-    );
-    const { router, refetch } = renderGuarded(onSubmit);
+    const save = pendingSave();
+    const { router, refetch } = renderGuarded(save.onSubmit);
 
-    fireEvent.change(input('Name'), { target: { value: 'Harbour Studio North' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledTimes(1);
-    });
-
-    await act(async () => {
-      settleSave();
-      await Promise.resolve();
-    });
+    await editAndSave(save.onSubmit);
+    await save.land();
 
     // A clean form takes whatever the refetch brings, including a later edit made elsewhere
     refetch({ name: 'Harbour Studio West', status: 'active' });
@@ -313,15 +332,11 @@ describe('ComposableForm unsaved changes guard', () => {
   });
 
   it('keeps guarding when a returned save rejects', async () => {
-    const onSubmit = vi.fn(() => Promise.reject(new Error('Save failed')));
-    const { router, refetch } = renderGuarded(onSubmit);
+    const save = pendingSave();
+    const { router, refetch } = renderGuarded(save.onSubmit);
 
-    fireEvent.change(input('Name'), { target: { value: 'Harbour Studio North' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledTimes(1);
-    });
+    await editAndSave(save.onSubmit);
+    await save.fail();
 
     refetch(FRESH);
     expect(input('Name').value).toBe('Harbour Studio North');
@@ -333,24 +348,10 @@ describe('ComposableForm unsaved changes guard', () => {
   });
 
   it('holds a navigation made mid-save, then asks if the save fails', async () => {
-    let failSave: () => void = () => undefined;
-    const onSubmit = vi.fn(
-      () =>
-        new Promise<void>((_resolve, reject) => {
-          failSave = () => {
-            reject(new Error('Save failed'));
-          };
-        })
-    );
-    const { router } = renderGuarded(onSubmit);
+    const save = pendingSave();
+    const { router } = renderGuarded(save.onSubmit);
 
-    fireEvent.change(input('Name'), { target: { value: 'Harbour Studio North' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledTimes(1);
-    });
-
+    await editAndSave(save.onSubmit);
     leaveViaLink();
 
     // Held quietly while the outcome is unknown
@@ -360,10 +361,7 @@ describe('ComposableForm unsaved changes guard', () => {
     expect(screen.queryByText('Unsaved Changes')).toBeNull();
     expect(router.state.location.pathname).toBe('/edit');
 
-    await act(async () => {
-      failSave();
-      await Promise.resolve();
-    });
+    await save.fail();
 
     expect(await screen.findByText('Unsaved Changes')).toBeTruthy();
     expect(router.state.location.pathname).toBe('/edit');
@@ -371,28 +369,12 @@ describe('ComposableForm unsaved changes guard', () => {
   });
 
   it('lets a navigation made mid-save go ahead once the save lands', async () => {
-    let settleSave: () => void = () => undefined;
-    const onSubmit = vi.fn(
-      () =>
-        new Promise<void>((resolve) => {
-          settleSave = resolve;
-        })
-    );
-    const { router } = renderGuarded(onSubmit);
+    const save = pendingSave();
+    const { router } = renderGuarded(save.onSubmit);
 
-    fireEvent.change(input('Name'), { target: { value: 'Harbour Studio North' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledTimes(1);
-    });
-
+    await editAndSave(save.onSubmit);
     leaveViaLink();
-
-    await act(async () => {
-      settleSave();
-      await Promise.resolve();
-    });
+    await save.land();
 
     await waitFor(() => {
       expect(router.state.location.pathname).toBe('/preview');
@@ -400,28 +382,12 @@ describe('ComposableForm unsaved changes guard', () => {
   });
 
   it('keeps a re-seed that landed during the save once the save resolves', async () => {
-    let settleSave: () => void = () => undefined;
-    const onSubmit = vi.fn(
-      () =>
-        new Promise<void>((resolve) => {
-          settleSave = resolve;
-        })
-    );
-    const { refetch } = renderGuarded(onSubmit);
+    const save = pendingSave();
+    const { refetch } = renderGuarded(save.onSubmit);
 
-    fireEvent.change(input('Name'), { target: { value: 'Harbour Studio North' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledTimes(1);
-    });
-
+    await editAndSave(save.onSubmit);
     refetch(FRESH);
-
-    await act(async () => {
-      settleSave();
-      await Promise.resolve();
-    });
+    await save.land();
 
     expect(input('Status').value).toBe('inactive');
     expect(input('Name').value).toBe('Harbour Studio North');

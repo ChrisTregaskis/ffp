@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import type { UpdateLocationInput } from '@ffp/core';
@@ -12,6 +12,7 @@ import {
 import { useToast } from '@web/hooks/useToast';
 import { RouteKey, routes } from '@web/pages/routes';
 
+import { EMPTY_LOCATION_VALUES, toLocationFormValues } from './location-form-values';
 import { LocationFormFields } from './LocationFormFields';
 
 import type { LocationFormValues } from './types';
@@ -33,36 +34,6 @@ export const LocationEditPage: React.FC = () => {
   const updateMutation = useUpdateLocationMutation();
 
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const formValues = useMemo((): LocationFormValues => {
-    if (!isEditMode || !location) {
-      return {
-        locationName: '',
-        organisationId: '',
-        organisationDisplay: '',
-        addressLine1: '',
-        addressLine2: '',
-        city: '',
-        county: '',
-        postcode: '',
-        country: '',
-        status: 'active',
-      };
-    }
-
-    return {
-      locationName: location.name,
-      organisationId: location.organisationId,
-      organisationDisplay: location.organisationName,
-      addressLine1: location.address?.line1 ?? '',
-      addressLine2: location.address?.line2 ?? '',
-      city: location.address?.city ?? '',
-      county: location.address?.county ?? '',
-      postcode: location.address?.postcode ?? '',
-      country: location.address?.country ?? '',
-      status: location.status,
-    };
-  }, [isEditMode, location]);
 
   const handleNavigateBack = useCallback(() => {
     void navigate(routes[RouteKey.ADMIN_LOCATIONS].path);
@@ -176,17 +147,10 @@ export const LocationEditPage: React.FC = () => {
     [location, buildUpdatePayload, updateMutation, addToast, handleNavigateBack]
   );
 
-  const handleFormSubmit = useCallback(
-    (values: LocationFormValues): Promise<void> => {
-      return isEditMode ? handleUpdate(values) : handleCreate(values);
-    },
-    [isEditMode, handleUpdate, handleCreate]
-  );
-
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <AdminEditPageShell<LocationFormValues>
+    <AdminEditPageShell
       title={isEditMode ? 'Edit Location' : 'Create Location'}
       resourceLabel="location"
       listLabel="Locations"
@@ -194,8 +158,11 @@ export const LocationEditPage: React.FC = () => {
       isLoading={isLoading}
       loadError={error}
       onBack={handleNavigateBack}
-      values={formValues}
-      onSubmit={handleFormSubmit}
+      record={location}
+      emptyValues={EMPTY_LOCATION_VALUES}
+      toFormValues={toLocationFormValues}
+      onCreate={handleCreate}
+      onUpdate={handleUpdate}
     >
       <LocationFormFields
         isEditMode={isEditMode}
