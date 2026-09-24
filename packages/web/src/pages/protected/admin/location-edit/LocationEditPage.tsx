@@ -34,7 +34,7 @@ export const LocationEditPage: React.FC = () => {
 
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const defaultValues = useMemo((): LocationFormValues => {
+  const formValues = useMemo((): LocationFormValues => {
     if (!isEditMode || !location) {
       return {
         locationName: '',
@@ -87,10 +87,10 @@ export const LocationEditPage: React.FC = () => {
 
   /** Handle create submission */
   const handleCreate = useCallback(
-    (values: LocationFormValues) => {
+    async (values: LocationFormValues): Promise<void> => {
       setSubmitError(null);
 
-      createMutation.mutate(
+      await createMutation.mutateAsync(
         { organisationId: values.organisationId, data: { locationName: values.locationName } },
         {
           onSuccess: () => {
@@ -145,7 +145,7 @@ export const LocationEditPage: React.FC = () => {
 
   /** Handle edit submission */
   const handleUpdate = useCallback(
-    (values: LocationFormValues) => {
+    async (values: LocationFormValues): Promise<void> => {
       if (!location) {
         return;
       }
@@ -160,7 +160,7 @@ export const LocationEditPage: React.FC = () => {
 
       setSubmitError(null);
 
-      updateMutation.mutate(
+      await updateMutation.mutateAsync(
         { id: location.id, publicId: location.publicId, data: payload },
         {
           onSuccess: () => {
@@ -177,12 +177,8 @@ export const LocationEditPage: React.FC = () => {
   );
 
   const handleFormSubmit = useCallback(
-    (values: LocationFormValues) => {
-      if (isEditMode) {
-        handleUpdate(values);
-      } else {
-        handleCreate(values);
-      }
+    (values: LocationFormValues): Promise<void> => {
+      return isEditMode ? handleUpdate(values) : handleCreate(values);
     },
     [isEditMode, handleUpdate, handleCreate]
   );
@@ -198,7 +194,7 @@ export const LocationEditPage: React.FC = () => {
       isLoading={isLoading}
       loadError={error}
       onBack={handleNavigateBack}
-      defaultValues={defaultValues}
+      values={formValues}
       onSubmit={handleFormSubmit}
     >
       <LocationFormFields

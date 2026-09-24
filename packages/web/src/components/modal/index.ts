@@ -6,3 +6,5 @@ export { DeleteConfirmModal } from './DeleteConfirmModal';
 export type { DeleteConfirmModalProps } from './DeleteConfirmModal';
 export { Modal } from './Modal';
 export type { ModalProps, ModalSize } from './Modal';
+export { UnsavedChangesModal } from './UnsavedChangesModal';
+export type { UnsavedChangesModalProps } from './UnsavedChangesModal';

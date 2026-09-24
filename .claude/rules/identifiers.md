@@ -49,4 +49,4 @@ Four conventions are in use. Read the service before wiring a call:
 
 - **Never guard an endpoint keyed on `publicId`, or one that accepts either form.** The assertion would be a false constraint, and the permissive video lookup exists on purpose.
 
-- **A response that displays a related record's name carries that name.** Joining it into the read — `user.locationName`, `location.organisationName` — beats a second dependent query on the page: the form seeds its default values once on mount, so a name that arrives on a later render is never picked up.
+- **A response that displays a related record's name carries that name.** Joining it into the read — `user.locationName`, `location.organisationName` — beats a second dependent query on the page: one round trip, and the form's values arrive complete rather than re-seeding when the second query lands.

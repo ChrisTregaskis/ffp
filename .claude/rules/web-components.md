@@ -15,6 +15,7 @@ Loads when editing the web package. The `frontend` skill carries the fuller guid
 - **Themed text components**, not raw `<h1>`–`<h5>`/`<p>`/`<span>`/`<button>`.
 - React components as **arrow functions** with `React.FC` typing — never function declarations.
 - Server state via TanStack Query hooks (`useApiTable`, `useAdminXQuery`, `useXDetailQuery`, `useXMutations`); `ffpClient` + `parseApiResponse` + Zod schema validation; hierarchical `as const` query-key factories.
+- **Seed an edit form with `values`, a create form with `defaultValues`.** `ComposableForm` re-seeds from `values` whenever the query changes, keeping fields the user has edited; a static constant has nothing to re-seed from. A page whose form sets `guardUnsavedChanges` (every `AdminEditPageShell` page) returns its save's promise from `onSubmit` — `mutateAsync`, not `mutate` — so the form knows when the save has landed.
 - Import from `@ffp/core` only — **never** `@ffp/database`.
 - British English in FFP code/strings (Tailwind classes and library APIs exempt). No emojis.
 

@@ -6,7 +6,7 @@ import { PageContainer } from './PageContainer';
 import { PageHeader } from './PageHeader';
 
 import type { ReactNode } from 'react';
-import type { DefaultValues, FieldValues, SubmitHandler } from 'react-hook-form';
+import type { FieldValues } from 'react-hook-form';
 
 export interface AdminEditPageShellProps<TFormValues extends FieldValues> {
   title: string;
@@ -23,8 +23,10 @@ export interface AdminEditPageShellProps<TFormValues extends FieldValues> {
   /** Replaces the error's own message */
   loadErrorMessage?: string;
   onBack: () => void;
-  defaultValues: DefaultValues<TFormValues>;
-  onSubmit: SubmitHandler<TFormValues>;
+  /** Seeds the form, and re-seeds it when a refetch changes them */
+  values: TFormValues;
+  /** Returns the save's promise (`mutateAsync`, not `mutate`) so the form knows when it lands */
+  onSubmit: (values: TFormValues) => Promise<void>;
   /** The form's field components */
   children: ReactNode;
   /** Rendered after the panel — modals and the like */
@@ -34,10 +36,10 @@ export interface AdminEditPageShellProps<TFormValues extends FieldValues> {
 /**
  * Page frame shared by the admin create/edit screens.
  *
- * The form must not mount before the record arrives: `ComposableForm` reads
- * `defaultValues` once, on mount, so a form mounted mid-fetch keeps the empty
- * ones and saves them over a real record. That condition is derived here rather
- * than passed in, because it is an invariant, not a caller's choice.
+ * The form must not mount before the record arrives: anything typed into the
+ * empty placeholder values would count as an edit and survive the re-seed, to be
+ * saved over the real record. That condition is derived here rather than passed
+ * in, because it is an invariant, not a caller's choice.
  */
 export const AdminEditPageShell = <TFormValues extends FieldValues>({
   title,
@@ -50,7 +52,7 @@ export const AdminEditPageShell = <TFormValues extends FieldValues>({
   loadError,
   loadErrorMessage,
   onBack,
-  defaultValues,
+  values,
   onSubmit,
   children,
   footer,
@@ -71,7 +73,7 @@ export const AdminEditPageShell = <TFormValues extends FieldValues>({
             onAction={onBack}
           />
         ) : (
-          <ComposableForm<TFormValues> onSubmit={onSubmit} defaultValues={defaultValues}>
+          <ComposableForm<TFormValues> onSubmit={onSubmit} values={values} guardUnsavedChanges>
             {children}
           </ComposableForm>
         )}

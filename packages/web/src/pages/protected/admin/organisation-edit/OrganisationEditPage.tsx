@@ -33,7 +33,7 @@ export const OrganisationEditPage: React.FC = () => {
 
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const defaultValues = useMemo((): OrganisationFormValues => {
+  const formValues = useMemo((): OrganisationFormValues => {
     if (!isEditMode || !organisation) {
       return {
         organisationName: '',
@@ -53,10 +53,10 @@ export const OrganisationEditPage: React.FC = () => {
 
   /** Handle create submission */
   const handleCreate = useCallback(
-    (values: OrganisationFormValues) => {
+    async (values: OrganisationFormValues): Promise<void> => {
       setSubmitError(null);
 
-      createMutation.mutate(
+      await createMutation.mutateAsync(
         { organisationName: values.organisationName },
         {
           onSuccess: () => {
@@ -96,7 +96,7 @@ export const OrganisationEditPage: React.FC = () => {
 
   /** Handle edit submission */
   const handleUpdate = useCallback(
-    (values: OrganisationFormValues) => {
+    async (values: OrganisationFormValues): Promise<void> => {
       if (!organisation) {
         return;
       }
@@ -111,7 +111,7 @@ export const OrganisationEditPage: React.FC = () => {
 
       setSubmitError(null);
 
-      updateMutation.mutate(
+      await updateMutation.mutateAsync(
         { id: organisation.id, publicId: organisation.publicId, data: payload },
         {
           onSuccess: () => {
@@ -128,12 +128,8 @@ export const OrganisationEditPage: React.FC = () => {
   );
 
   const handleFormSubmit = useCallback(
-    (values: OrganisationFormValues) => {
-      if (isEditMode) {
-        handleUpdate(values);
-      } else {
-        handleCreate(values);
-      }
+    (values: OrganisationFormValues): Promise<void> => {
+      return isEditMode ? handleUpdate(values) : handleCreate(values);
     },
     [isEditMode, handleUpdate, handleCreate]
   );
@@ -149,7 +145,7 @@ export const OrganisationEditPage: React.FC = () => {
       isLoading={isLoading}
       loadError={error}
       onBack={handleNavigateBack}
-      defaultValues={defaultValues}
+      values={formValues}
       onSubmit={handleFormSubmit}
     >
       <OrganisationFormFields

@@ -25,7 +25,7 @@ export const UserEditPage: React.FC = () => {
 
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const defaultValues = useMemo((): UserFormValues => {
+  const formValues = useMemo((): UserFormValues => {
     if (!isEditMode || !user) {
       return {
         email: '',
@@ -70,7 +70,7 @@ export const UserEditPage: React.FC = () => {
 
   /** Handle create submission */
   const handleCreate = useCallback(
-    (values: UserFormValues) => {
+    async (values: UserFormValues): Promise<void> => {
       setSubmitError(null);
 
       if (values.dateOfBirth && isNaN(new Date(values.dateOfBirth).getTime())) {
@@ -88,7 +88,7 @@ export const UserEditPage: React.FC = () => {
         dateOfBirth: parseDateOfBirth(values.dateOfBirth),
       };
 
-      createMutation.mutate(input, {
+      await createMutation.mutateAsync(input, {
         onSuccess: () => {
           addToast('User created successfully', { variant: 'success' });
           handleNavigateBack();
@@ -140,7 +140,7 @@ export const UserEditPage: React.FC = () => {
 
   /** Handle edit submission */
   const handleUpdate = useCallback(
-    (values: UserFormValues) => {
+    async (values: UserFormValues): Promise<void> => {
       if (!user) {
         return;
       }
@@ -161,7 +161,7 @@ export const UserEditPage: React.FC = () => {
 
       setSubmitError(null);
 
-      updateMutation.mutate(
+      await updateMutation.mutateAsync(
         { id: user.id, publicId: user.publicId, data: payload },
         {
           onSuccess: () => {
@@ -178,12 +178,8 @@ export const UserEditPage: React.FC = () => {
   );
 
   const handleFormSubmit = useCallback(
-    (values: UserFormValues) => {
-      if (isEditMode) {
-        handleUpdate(values);
-      } else {
-        handleCreate(values);
-      }
+    (values: UserFormValues): Promise<void> => {
+      return isEditMode ? handleUpdate(values) : handleCreate(values);
     },
     [isEditMode, handleUpdate, handleCreate]
   );
@@ -199,7 +195,7 @@ export const UserEditPage: React.FC = () => {
       isLoading={isLoading}
       loadError={error}
       onBack={handleNavigateBack}
-      defaultValues={defaultValues}
+      values={formValues}
       onSubmit={handleFormSubmit}
     >
       <UserFormFields

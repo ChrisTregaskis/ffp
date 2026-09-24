@@ -41,7 +41,7 @@ export const AssessmentFlowEditPage: React.FC = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
 
-  const defaultValues = useMemo((): AssessmentFlowFormValues => {
+  const formValues = useMemo((): AssessmentFlowFormValues => {
     if (!isEditMode || !flow) {
       return EMPTY_VALUES;
     }
@@ -72,10 +72,10 @@ export const AssessmentFlowEditPage: React.FC = () => {
   }, [navigate, publicId]);
 
   const handleCreate = useCallback(
-    (values: AssessmentFlowFormValues): void => {
+    async (values: AssessmentFlowFormValues): Promise<void> => {
       setSubmitError(null);
 
-      createMutation.mutate(
+      await createMutation.mutateAsync(
         {
           name: values.name.trim(),
           description: values.description.trim() || undefined,
@@ -101,7 +101,7 @@ export const AssessmentFlowEditPage: React.FC = () => {
   );
 
   const handleUpdate = useCallback(
-    (values: AssessmentFlowFormValues): void => {
+    async (values: AssessmentFlowFormValues): Promise<void> => {
       if (!publicId) {
         return;
       }
@@ -114,7 +114,7 @@ export const AssessmentFlowEditPage: React.FC = () => {
         description: values.description.trim() || null,
       };
 
-      updateMutation.mutate(
+      await updateMutation.mutateAsync(
         { publicId, data: payload },
         {
           onSuccess: (updated) => {
@@ -131,12 +131,8 @@ export const AssessmentFlowEditPage: React.FC = () => {
   );
 
   const handleFormSubmit = useCallback(
-    (values: AssessmentFlowFormValues): void => {
-      if (isEditMode) {
-        handleUpdate(values);
-      } else {
-        handleCreate(values);
-      }
+    (values: AssessmentFlowFormValues): Promise<void> => {
+      return isEditMode ? handleUpdate(values) : handleCreate(values);
     },
     [isEditMode, handleUpdate, handleCreate]
   );
@@ -224,7 +220,7 @@ export const AssessmentFlowEditPage: React.FC = () => {
       loadError={error}
       loadErrorMessage={error?.message ?? 'This assessment flow could not be found.'}
       onBack={handleNavigateBack}
-      defaultValues={defaultValues}
+      values={formValues}
       onSubmit={handleFormSubmit}
       footer={
         <DeactivateAssessmentFlowModal

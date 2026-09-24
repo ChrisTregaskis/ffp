@@ -24,8 +24,8 @@ export const TemplateDetailPage: React.FC = () => {
 
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  /** Build default form values from template data */
-  const defaultValues = useMemo((): TemplateMetadataFormValues | undefined => {
+  /** Form values from template data */
+  const formValues = useMemo((): TemplateMetadataFormValues | undefined => {
     if (!template) {
       return undefined;
     }
@@ -136,7 +136,7 @@ export const TemplateDetailPage: React.FC = () => {
           />
         )}
 
-        {template && defaultValues && (
+        {template && formValues && (
           <>
             {/* Template summary card */}
             <div className="mb-6 flex items-center justify-between rounded-lg border border-border bg-white px-5 py-4">
@@ -168,7 +168,7 @@ export const TemplateDetailPage: React.FC = () => {
 
             <ComposableForm<TemplateMetadataFormValues>
               onSubmit={handleFormSubmit}
-              defaultValues={defaultValues}
+              values={formValues}
             >
               <TemplateMetadataFormFields
                 onCancel={handleNavigateBack}

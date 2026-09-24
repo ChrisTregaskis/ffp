@@ -29,8 +29,8 @@ export const VideoEditPage: React.FC = () => {
   const [pendingSubmitData, setPendingSubmitData] = useState<UpdateVideoInput | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  /** Build default form values from video data */
-  const defaultValues = useMemo((): VideoEditFormValues | undefined => {
+  /** Form values from video data */
+  const formValues = useMemo((): VideoEditFormValues | undefined => {
     if (!video) {
       return undefined;
     }
@@ -239,11 +239,8 @@ export const VideoEditPage: React.FC = () => {
           </>
         )}
 
-        {video && defaultValues && (
-          <ComposableForm<VideoEditFormValues>
-            onSubmit={handleFormSubmit}
-            defaultValues={defaultValues}
-          >
+        {video && formValues && (
+          <ComposableForm<VideoEditFormValues> onSubmit={handleFormSubmit} values={formValues}>
             <VideoEditFormFields
               currentStatus={video.status}
               onCancel={handleNavigateBack}
