@@ -24,11 +24,25 @@ export const FLOW_IDS = {
   BRANCHING_DEMO: '44444444-4444-4444-8444-444444440002',
 } as const;
 
-/** Deliberately simple: strong on both checks → level 2, otherwise level 1 */
+/**
+ * Deliberately simple: strong on both checks → level 2, otherwise level 1.
+ * Neither check feeds the risk level: the branch can skip the strength check,
+ * and a skipped check scores 0.
+ */
 const BRANCHING_DEMO_SCORING_CONFIG: ScoringConfig = {
   dimensions: [
-    { name: 'strength', questionIds: [QUESTION_IDS['squat-rating']], maxScore: 4 },
-    { name: 'balance', questionIds: [QUESTION_IDS['single-leg-duration']], maxScore: 4 },
+    {
+      name: 'strength',
+      questionIds: [QUESTION_IDS['squat-rating']],
+      maxScore: 4,
+      affectsRiskLevel: false,
+    },
+    {
+      name: 'balance',
+      questionIds: [QUESTION_IDS['single-leg-duration']],
+      maxScore: 4,
+      affectsRiskLevel: false,
+    },
   ],
   programmeMappings: [
     {
