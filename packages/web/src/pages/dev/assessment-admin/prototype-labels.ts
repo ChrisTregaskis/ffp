@@ -14,11 +14,11 @@ export const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
 };
 
 export const DIMENSION_LABELS: Record<ScoreDimension, string> = {
+  activity: 'Activity & readiness',
+  age: 'Age',
   strength: 'Strength',
-  balance: 'Balance',
   mobility: 'Mobility',
-  pain: 'Comfort', // wellness-neutral framing of the legacy "pain" dimension
-  general: 'Activity & readiness',
+  balance: 'Balance',
 };
 
 export const OPERATOR_LABELS: Record<ComparisonOperator, string> = {

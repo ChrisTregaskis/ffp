@@ -24,13 +24,13 @@ export type QuestionType = (typeof QUESTION_TYPES)[number];
  * Score dimension values
  *
  * Defines the dimensions used for assessment scoring:
+ * - activity: Everyday activity and exercise tolerance, which sets the level
+ * - age: Age bracket, which adjusts the level
  * - strength: Physical strength capacity
- * - balance: Balance and stability
  * - mobility: Range of motion and flexibility
- * - pain: Pain levels and impact
- * - general: General fitness or non-specific assessments
+ * - balance: Balance and stability
  */
-export const SCORE_DIMENSIONS = ['strength', 'balance', 'mobility', 'pain', 'general'] as const;
+export const SCORE_DIMENSIONS = ['activity', 'age', 'strength', 'mobility', 'balance'] as const;
 
 export type ScoreDimension = (typeof SCORE_DIMENSIONS)[number];
 

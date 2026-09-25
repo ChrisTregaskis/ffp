@@ -43,8 +43,8 @@ export const LEVEL_META: Record<Level, { slug: string; name: string; tagline: st
     tagline: 'Moderate, balanced effort',
   },
   3: {
-    slug: 'level-3-energized-dynamic',
-    name: 'Level 3 — Energized / Dynamic',
+    slug: 'level-3-energised-dynamic',
+    name: 'Level 3 — Energised / Dynamic',
     tagline: 'Higher intensity, dynamic',
   },
 };

@@ -51,14 +51,14 @@ const validVideoQuestion = {
 const validScoringConfig = {
   dimensions: [
     {
-      name: 'general' as const,
+      name: 'activity' as const,
       questionIds: [QUESTION_UUID_1],
       maxScore: 10,
     },
   ],
   programmeMappings: [
     {
-      conditions: [{ dimension: 'general' as const, operator: 'gte' as const, value: 5 }],
+      conditions: [{ dimension: 'activity' as const, operator: 'gte' as const, value: 5 }],
       programmeTemplateId: 'prog-1',
     },
   ],

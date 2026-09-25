@@ -6,20 +6,20 @@ import { calculateScores } from '../../src/assessments/scoring';
 
 import { createQuestion, createResponses } from './scoring-fixtures';
 
-const PAIN_LEVEL = '11111111-1111-4111-8111-111111110001';
-const PAIN_SCALE = '11111111-1111-4111-8111-111111110002';
-const GENERAL = '11111111-1111-4111-8111-111111110003';
+const MOBILITY_CHOICE = '11111111-1111-4111-8111-111111110001';
+const MOBILITY_SCALE = '11111111-1111-4111-8111-111111110002';
+const ACTIVITY = '11111111-1111-4111-8111-111111110003';
 const STRENGTH = '11111111-1111-4111-8111-111111110004';
 const BALANCE = '11111111-1111-4111-8111-111111110005';
 
 const QUESTIONS = [
-  createQuestion(PAIN_LEVEL, 'single-choice', [
+  createQuestion(MOBILITY_CHOICE, 'single-choice', [
     { value: 'none', label: 'None', score: 0 },
     { value: 'mild', label: 'Mild', score: 5 },
     { value: 'severe', label: 'Severe', score: 10 },
   ]),
-  createQuestion(PAIN_SCALE, 'scale'),
-  createQuestion(GENERAL, 'single-choice', [
+  createQuestion(MOBILITY_SCALE, 'scale'),
+  createQuestion(ACTIVITY, 'single-choice', [
     { value: '0', label: 'Rarely', score: 0 },
     { value: '1', label: 'Sometimes', score: 1 },
     { value: '2', label: 'Often', score: 2 },
@@ -39,19 +39,19 @@ const QUESTIONS = [
 /**
  * Mirrors the shape of the stored flow configs that predate modal scoring and
  * risk eligibility: no `scoringMode`, no `affectsRiskLevel`, mixed weights, the
- * inverted pain thresholds, and priority-ordered mappings ending in an
+ * inverted thresholds on the first dimension, and priority-ordered mappings ending in an
  * unconditional fallback. Every expected value below is worked by hand.
  */
 const STORED_CONFIG: ScoringConfig = {
   dimensions: [
     {
-      name: 'pain',
-      questionIds: [PAIN_LEVEL, PAIN_SCALE],
+      name: 'mobility',
+      questionIds: [MOBILITY_CHOICE, MOBILITY_SCALE],
       maxScore: 20,
       weight: 1,
       riskThresholds: { low: 15, moderate: 30 },
     },
-    { name: 'general', questionIds: [GENERAL], maxScore: 2, weight: 1 },
+    { name: 'activity', questionIds: [ACTIVITY], maxScore: 2, weight: 1 },
     {
       name: 'strength',
       questionIds: [STRENGTH],
@@ -81,12 +81,12 @@ const STORED_CONFIG: ScoringConfig = {
     },
     {
       priority: 2,
-      conditions: [{ dimension: 'pain', operator: 'gte', value: 20 }],
+      conditions: [{ dimension: 'mobility', operator: 'gte', value: 20 }],
       programmeTemplateId: 'gentle-mobility-programme',
     },
     {
       priority: 1,
-      conditions: [{ dimension: 'pain', operator: 'gte', value: 35 }],
+      conditions: [{ dimension: 'mobility', operator: 'gte', value: 35 }],
       programmeTemplateId: 'gentle-mobility-programme',
     },
   ],
@@ -95,9 +95,9 @@ const STORED_CONFIG: ScoringConfig = {
 describe('Summed scoring (regression pin)', () => {
   it('scores, weights, grades risk and matches a programme as before', () => {
     const responses = createResponses({
-      [PAIN_LEVEL]: 'mild',
-      [PAIN_SCALE]: 3,
-      [GENERAL]: '1',
+      [MOBILITY_CHOICE]: 'mild',
+      [MOBILITY_SCALE]: 3,
+      [ACTIVITY]: '1',
       [STRENGTH]: ['a', 'c'],
       [BALANCE]: 'fair',
     });
@@ -106,15 +106,15 @@ describe('Summed scoring (regression pin)', () => {
 
     expect(result.scores).toEqual([
       {
-        dimensionId: 'pain',
-        dimensionName: 'Pain',
+        dimensionId: 'mobility',
+        dimensionName: 'Mobility',
         rawScore: 8,
         normalisedScore: 40,
         category: 'low',
       },
       {
-        dimensionId: 'general',
-        dimensionName: 'General',
+        dimensionId: 'activity',
+        dimensionName: 'Activity',
         rawScore: 1,
         normalisedScore: 50,
         category: 'moderate',
@@ -143,20 +143,20 @@ describe('Summed scoring (regression pin)', () => {
 
   it('evaluates the lowest priority first', () => {
     const responses = createResponses({
-      [PAIN_LEVEL]: 'severe',
-      [PAIN_SCALE]: 10,
+      [MOBILITY_CHOICE]: 'severe',
+      [MOBILITY_SCALE]: 10,
       [BALANCE]: 'unsteady',
     });
 
     const result = calculateScores(responses, QUESTIONS, STORED_CONFIG);
 
-    // Pain 20 and strength 0 / balance 0 satisfy both priority 2 and priority 3
+    // Mobility 20 and strength 0 / balance 0 satisfy both priority 2 and priority 3
     expect(result.recommendedProgrammeId).toBe('gentle-mobility-programme');
   });
 
   it('falls through to the unconditional mapping', () => {
     const responses = createResponses({
-      [PAIN_LEVEL]: 'none',
+      [MOBILITY_CHOICE]: 'none',
       [STRENGTH]: ['a', 'b', 'c'],
       [BALANCE]: 'steady',
     });
@@ -177,9 +177,9 @@ describe('Summed scoring (regression pin)', () => {
 
   it('scores an explicit sum mode exactly as an unset one', () => {
     const responses = createResponses({
-      [PAIN_LEVEL]: 'mild',
-      [PAIN_SCALE]: 3,
-      [GENERAL]: '1',
+      [MOBILITY_CHOICE]: 'mild',
+      [MOBILITY_SCALE]: 3,
+      [ACTIVITY]: '1',
       [STRENGTH]: ['a', 'c'],
       [BALANCE]: 'fair',
     });

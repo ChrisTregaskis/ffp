@@ -1,4 +1,4 @@
-import type { FlowStepConfig, UserAssessmentScores } from '@ffp/core';
+import type { FlowStepConfig, ScoreDimension, UserAssessmentScores } from '@ffp/core';
 
 import { ASSESSMENT_MOTION, SectionHeader, SectionPanel } from '@web/components/assessment';
 import { Button } from '@web/components/button';
@@ -39,6 +39,9 @@ const RISK_BADGE_STYLES = {
   moderate: 'bg-warning text-white',
   high: 'bg-destructive text-white',
 } as const;
+
+/** Age adjusts a member's level but is not something they are scored on */
+const HIDDEN_DIMENSIONS: ReadonlySet<string> = new Set<ScoreDimension>(['age']);
 
 /** "What Happens Next" feature items */
 const NEXT_STEPS: { icon: IconName; heading: string; description: string }[] = [
@@ -155,25 +158,30 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
 
               <div className="space-y-3 px-5 pb-5">
                 {/* Dimension score rows */}
-                {scores.dimensions.map((dimension) => (
-                  <div
-                    key={dimension.dimensionId}
-                    className="flex items-center justify-between rounded-xl bg-muted/40 px-4 py-3"
-                  >
-                    <Text as="span" styleProps={{ weight: 'medium' }}>
-                      {dimension.dimensionName} Score:
-                    </Text>
-                    <Text as="span" styleProps={{ size: 'xl', weight: 'bold', colour: 'warning' }}>
-                      {String(dimension.normalisedScore)}
+                {scores.dimensions
+                  .filter((dimension) => !HIDDEN_DIMENSIONS.has(dimension.dimensionId))
+                  .map((dimension) => (
+                    <div
+                      key={dimension.dimensionId}
+                      className="flex items-center justify-between rounded-xl bg-muted/40 px-4 py-3"
+                    >
+                      <Text as="span" styleProps={{ weight: 'medium' }}>
+                        {dimension.dimensionName} Score:
+                      </Text>
                       <Text
                         as="span"
                         styleProps={{ size: 'xl', weight: 'bold', colour: 'warning' }}
                       >
-                        /100
+                        {String(dimension.normalisedScore)}
+                        <Text
+                          as="span"
+                          styleProps={{ size: 'xl', weight: 'bold', colour: 'warning' }}
+                        >
+                          /100
+                        </Text>
                       </Text>
-                    </Text>
-                  </div>
-                ))}
+                    </div>
+                  ))}
 
                 {/* Risk Level row */}
                 {scores.riskLevel && (

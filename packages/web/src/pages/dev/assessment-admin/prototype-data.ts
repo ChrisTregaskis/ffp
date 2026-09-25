@@ -86,7 +86,7 @@ export const INITIAL_QUESTIONS: PrototypeQuestion[] = [
       },
     ],
     validation: { required: true },
-    scoreDimension: 'general', // "Activity & readiness" in the UI
+    scoreDimension: 'activity',
     isActive: true,
   },
   // Q3 — exercise tolerance (A/B/C → 1/2/3).
@@ -114,7 +114,7 @@ export const INITIAL_QUESTIONS: PrototypeQuestion[] = [
       },
     ],
     validation: { required: true },
-    scoreDimension: 'general',
+    scoreDimension: 'activity',
     isActive: true,
   },
   // Q4 — how joints and muscles feel (A/B/C → 1/2/3).
@@ -142,7 +142,7 @@ export const INITIAL_QUESTIONS: PrototypeQuestion[] = [
       },
     ],
     validation: { required: true },
-    scoreDimension: 'general',
+    scoreDimension: 'activity',
     isActive: true,
   },
   // Q5 — main goal for the session. Shapes programme theme, not the readiness level → unscored.
@@ -293,7 +293,7 @@ export const INITIAL_FLOWS: PrototypeFlow[] = [
       // maxScore = 3 + 3 + 3 = 9.
       dimensions: [
         {
-          name: 'general', // "Activity & readiness" in the UI
+          name: 'activity',
           questionIds: ['q-weekly-activity', 'q-exercise-tolerance', 'q-movement-comfort'],
           maxScore: 9,
           weight: 1,
@@ -305,17 +305,17 @@ export const INITIAL_FLOWS: PrototypeFlow[] = [
       // raw ≤ 4 → Level 1 · raw ≥ 8 → Level 3 · otherwise (5–7) → Level 2.
       programmeMappings: [
         {
-          conditions: [{ dimension: 'general', operator: 'lte', value: 4 }],
+          conditions: [{ dimension: 'activity', operator: 'lte', value: 4 }],
           programmeTemplateId: 'level-1-gentle-mobility',
           priority: 1,
         },
         {
-          conditions: [{ dimension: 'general', operator: 'gte', value: 8 }],
-          programmeTemplateId: 'level-3-energized-dynamic',
+          conditions: [{ dimension: 'activity', operator: 'gte', value: 8 }],
+          programmeTemplateId: 'level-3-energised-dynamic',
           priority: 2,
         },
         {
-          conditions: [{ dimension: 'general', operator: 'gte', value: 5 }],
+          conditions: [{ dimension: 'activity', operator: 'gte', value: 5 }],
           programmeTemplateId: 'level-2-active-wellness',
           priority: 3,
         },
@@ -353,7 +353,7 @@ export const INITIAL_FLOWS: PrototypeFlow[] = [
 export const PROGRAMME_TEMPLATE_OPTIONS: ProgrammeTemplateOption[] = [
   { slug: 'level-1-gentle-mobility', name: 'Level 1 — Gentle / Mobility Focus' },
   { slug: 'level-2-active-wellness', name: 'Level 2 — Active Wellness / Moderate' },
-  { slug: 'level-3-energized-dynamic', name: 'Level 3 — Energized / Dynamic' },
+  { slug: 'level-3-energised-dynamic', name: 'Level 3 — Energised / Dynamic' },
   { slug: 'default-wellbeing', name: 'Default Wellbeing (fallback)' },
 ];
 
