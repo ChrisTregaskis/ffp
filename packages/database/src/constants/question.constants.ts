@@ -33,3 +33,16 @@ export type QuestionType = (typeof QUESTION_TYPES)[number];
 export const SCORE_DIMENSIONS = ['strength', 'balance', 'mobility', 'pain', 'general'] as const;
 
 export type ScoreDimension = (typeof SCORE_DIMENSIONS)[number];
+
+/**
+ * Scoring mode values
+ *
+ * Defines how a dimension combines its questions' scores:
+ * - sum: Adds the per-question scores together
+ * - modal: Takes the most frequent per-question score (for tallies such as
+ *   "mostly A / mixed / mostly C"), with no single most frequent resolving to
+ *   the middle of the scale
+ */
+export const SCORING_MODES = ['sum', 'modal'] as const;
+
+export type ScoringMode = (typeof SCORING_MODES)[number];
