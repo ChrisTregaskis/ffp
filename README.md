@@ -21,7 +21,7 @@ Built as a Turborepo monorepo with strict TypeScript, the platform prioritises s
 
 ### Prerequisites
 
-- **Node.js**: >= 20.0.0
+- **Node.js**: >= 24.0.0 — matches CI and the Lambda runtime; `nvm use` reads `.nvmrc`
 - **pnpm**: >= 9.0.0
 
 ### Installation

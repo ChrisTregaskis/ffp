@@ -85,8 +85,8 @@ export const flowSteps = pgTable(
     /** Whether this step is currently active in the flow */
     isActive: boolean('is_active').notNull().default(true),
 
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     publicIdIndex('flow_steps', table.publicId),

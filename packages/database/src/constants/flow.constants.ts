@@ -15,6 +15,12 @@ export const FLOW_STEP_TYPES = [
 
 export type FlowStepType = (typeof FLOW_STEP_TYPES)[number];
 
+/** The only step types that link an assessment template — and so the only ones whose template holds questions. */
+export const TEMPLATE_LINKED_STEP_TYPES: readonly FlowStepType[] = [
+  'questions',
+  'video-assessment',
+];
+
 export interface FlowStepConfig {
   // Display title for the step
   title: string;

@@ -20,6 +20,10 @@ import { StaticAlertComponentsPage } from '@web/pages/dev/StaticAlertComponentsP
 import { TableComponentsPage } from '@web/pages/dev/TableComponentsPage';
 import { TextComponentsPage } from '@web/pages/dev/TextComponentsPage';
 import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPage';
+import { AssessmentFlowEditPage } from '@web/pages/protected/admin/assessment-flow-edit';
+import { AssessmentFlowListPage } from '@web/pages/protected/admin/assessment-flow-list';
+import { AssessmentFlowPreviewPage } from '@web/pages/protected/admin/assessment-flow-preview';
+import { AssessmentFlowStepsPage } from '@web/pages/protected/admin/assessment-flow-steps';
 import { LocationEditPage } from '@web/pages/protected/admin/location-edit';
 import { LocationListPage } from '@web/pages/protected/admin/location-list';
 import { OrganisationEditPage } from '@web/pages/protected/admin/organisation-edit';
@@ -342,14 +346,65 @@ export const routes: RoutesConfig = {
   },
   [RouteKey.ADMIN_ASSESSMENTS]: {
     path: `${adminBasePath}/assessments`,
-    pageComponent: () =>
-      ComingSoonPage({
-        title: 'Assessments',
-        description: 'Manage assessment templates and configurations',
-        icon: 'ClipboardList',
-      }),
+    pageComponent: AssessmentFlowListPage,
     title: 'Assessments',
     allowedRoles: [SYSTEM_ADMIN],
+  },
+  [RouteKey.ADMIN_ASSESSMENT_FLOW_CREATE]: {
+    path: `${adminBasePath}/assessments/create`,
+    pageComponent: AssessmentFlowEditPage,
+    title: 'Create Assessment Flow',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Assessment Flows',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/assessments`,
+      },
+    ],
+  },
+  [RouteKey.ADMIN_ASSESSMENT_FLOW_EDIT]: {
+    path: `${adminBasePath}/assessments/:publicId`,
+    pageComponent: AssessmentFlowEditPage,
+    title: 'Edit Assessment Flow',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Assessment Flows',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/assessments`,
+      },
+    ],
+  },
+  [RouteKey.ADMIN_ASSESSMENT_FLOW_STEPS]: {
+    path: `${adminBasePath}/assessments/:publicId/steps`,
+    pageComponent: AssessmentFlowStepsPage,
+    title: 'Assessment Flow Steps',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Assessment Flows',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/assessments`,
+      },
+    ],
+  },
+  [RouteKey.ADMIN_ASSESSMENT_FLOW_PREVIEW]: {
+    path: `${adminBasePath}/assessments/:publicId/preview`,
+    pageComponent: AssessmentFlowPreviewPage,
+    title: 'Assessment Flow Preview',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Assessment Flows',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/assessments`,
+      },
+    ],
   },
   [RouteKey.ADMIN_TEMPLATES]: {
     path: `${adminBasePath}/templates`,

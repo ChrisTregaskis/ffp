@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm';
 
 import { getDb, withRLS, type DbClient } from '@ffp/database';
+import { TEMPLATE_LINKED_STEP_TYPES } from '@ffp/database/constants';
 import { userAssessments, userAssessmentAnswers } from '@ffp/database/schema';
 
 import { findFlowById, findStepsByFlowId } from '../../assessments/flow.repository';
@@ -67,9 +68,9 @@ export async function processScoreAssessment(
     // Fetch ALL steps for flow (normalised table)
     const steps = await findStepsByFlowId(dbTx, payload.flowId);
 
-    // Get template IDs from question and video-assessment steps
+    // Only the template-linked steps carry the questions that scoring reads
     const templateIds = steps
-      .filter((step) => step.type === 'questions' || step.type === 'video-assessment')
+      .filter((step) => TEMPLATE_LINKED_STEP_TYPES.includes(step.type))
       .map((step) => step.templateId)
       .filter((id): id is string => id !== null);
 

@@ -41,6 +41,7 @@ export const MemberProgrammesView: React.FC = () => {
     debouncedFilters,
     clearAll,
     hasActiveControls,
+    hasNonDefaultControls,
   } = useApiTable({
     defaultPageSize: 10,
     defaultSort: { id: 'createdAt', desc: true },
@@ -125,7 +126,7 @@ export const MemberProgrammesView: React.FC = () => {
         emptyState={
           <div className="px-6 py-10 text-center">
             <Text styleProps={{ colour: 'muted-foreground' }}>
-              {hasActiveControls ? 'No users match your search and filters.' : 'No users yet.'}
+              {hasNonDefaultControls ? 'No users match your search and filters.' : 'No users yet.'}
             </Text>
           </div>
         }

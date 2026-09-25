@@ -337,6 +337,72 @@ describe('withErrorHandling', () => {
     });
   });
 
+  describe('database driver error handling', () => {
+    /** Drizzle wraps the `pg` error, putting the failed SQL in the message. */
+    const wrappedDriverError = (code: string, constraint?: string): Error =>
+      Object.assign(
+        new Error('Failed query: insert into "questions" ...\nparams: alice@example.com'),
+        {
+          cause: Object.assign(new Error('duplicate key value violates unique constraint'), {
+            code,
+            constraint,
+          }),
+        }
+      );
+
+    it('should map a unique violation to 409', async () => {
+      const handler = withErrorHandling(() => {
+        throw wrappedDriverError('23505', 'questions_slug_unique');
+      });
+
+      const event = createMockEvent();
+      event.requestContext.requestId = '';
+
+      const result = await handler(event);
+      assertIsObject(result);
+
+      expect(result.statusCode).toBe(409);
+      const body = JSON.parse(result.body) as { error: string; message: string };
+      expect(body.error).toBe('CONFLICT');
+    });
+
+    it('should not disclose the constraint name or the query to the caller', async () => {
+      const handler = withErrorHandling(() => {
+        throw wrappedDriverError('23505', 'users_email_unique');
+      });
+
+      const event = createMockEvent();
+      event.requestContext.requestId = '';
+
+      const result = await handler(event);
+      assertIsObject(result);
+
+      expect(result.body).not.toContain('users_email_unique');
+      expect(result.body).not.toContain('insert into');
+      expect(result.body).not.toContain('alice@example.com');
+    });
+
+    it('should leave another SQLSTATE on the 500 path with a sanitised message', async () => {
+      const handler = withErrorHandling(() => {
+        throw wrappedDriverError('23503', 'questions_video_id_fkey');
+      });
+
+      const event = createMockEvent();
+      event.requestContext.requestId = '';
+
+      const result = await handler(event);
+      assertIsObject(result);
+
+      expect(result.statusCode).toBe(500);
+      const body = JSON.parse(result.body) as { error: string; message: string };
+      expect(body).toEqual({
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred',
+      });
+      expect(result.body).not.toContain('alice@example.com');
+    });
+  });
+
   describe('error logging', () => {
     it('should log errors to console', async () => {
       const handler = withErrorHandling(() => {

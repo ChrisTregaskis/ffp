@@ -45,8 +45,8 @@ export function calculateScores(
   // Calculate overall score (weighted average of normalised scores)
   const overallScore = calculateOverallScore(dimensionalScores, scoringConfig.dimensions);
 
-  // Determine risk level from lowest dimension score
-  const riskLevel = calculateRiskLevel(dimensionalScores);
+  // Determine risk level from the lowest risk-eligible dimension score
+  const riskLevel = calculateRiskLevel(dimensionalScores, scoringConfig.dimensions);
 
   // Find matching programme recommendation
   const recommendedProgrammeId = findMatchingProgramme(

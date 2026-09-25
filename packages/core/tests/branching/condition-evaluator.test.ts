@@ -185,9 +185,9 @@ describe('Condition Evaluator', () => {
 
     it('should match when score exceeds threshold (gt)', () => {
       const conditions: BranchCondition[] = [
-        { type: 'dimension_score', dimension: 'pain', operator: 'gt', value: 5 },
+        { type: 'dimension_score', dimension: 'mobility', operator: 'gt', value: 5 },
       ];
-      const context = createContext({}, { pain: 8 });
+      const context = createContext({}, { mobility: 8 });
 
       const result = evaluateConditions(conditions, context);
 
@@ -207,9 +207,9 @@ describe('Condition Evaluator', () => {
 
     it('should match exact score (eq)', () => {
       const conditions: BranchCondition[] = [
-        { type: 'dimension_score', dimension: 'general', operator: 'eq', value: 5 },
+        { type: 'dimension_score', dimension: 'activity', operator: 'eq', value: 5 },
       ];
-      const context = createContext({}, { general: 5 });
+      const context = createContext({}, { activity: 5 });
 
       const result = evaluateConditions(conditions, context);
 
@@ -231,7 +231,7 @@ describe('Condition Evaluator', () => {
       const conditions: BranchCondition[] = [
         { type: 'dimension_score', dimension: 'strength', operator: 'lt', value: 20 },
       ];
-      const context = createContext({}, { pain: 5 }); // No strength score
+      const context = createContext({}, { mobility: 5 }); // No strength score
 
       const result = evaluateConditions(conditions, context);
 
@@ -276,9 +276,9 @@ describe('Condition Evaluator', () => {
     it('should match when all conditions pass', () => {
       const conditions: BranchCondition[] = [
         { type: 'answer_value', questionSlug: 'radiating-pain', answerValue: 'yes' },
-        { type: 'dimension_score', dimension: 'pain', operator: 'gt', value: 5 },
+        { type: 'dimension_score', dimension: 'mobility', operator: 'gt', value: 5 },
       ];
-      const context = createContext({ 'radiating-pain': 'yes' }, { pain: 8 });
+      const context = createContext({ 'radiating-pain': 'yes' }, { mobility: 8 });
 
       const result = evaluateConditions(conditions, context);
 
@@ -288,9 +288,9 @@ describe('Condition Evaluator', () => {
     it('should not match when any condition fails', () => {
       const conditions: BranchCondition[] = [
         { type: 'answer_value', questionSlug: 'radiating-pain', answerValue: 'yes' },
-        { type: 'dimension_score', dimension: 'pain', operator: 'gt', value: 5 },
+        { type: 'dimension_score', dimension: 'mobility', operator: 'gt', value: 5 },
       ];
-      const context = createContext({ 'radiating-pain': 'no' }, { pain: 8 });
+      const context = createContext({ 'radiating-pain': 'no' }, { mobility: 8 });
 
       const result = evaluateConditions(conditions, context);
 
@@ -300,9 +300,9 @@ describe('Condition Evaluator', () => {
     it('should not match when second condition fails', () => {
       const conditions: BranchCondition[] = [
         { type: 'answer_value', questionSlug: 'radiating-pain', answerValue: 'yes' },
-        { type: 'dimension_score', dimension: 'pain', operator: 'gt', value: 5 },
+        { type: 'dimension_score', dimension: 'mobility', operator: 'gt', value: 5 },
       ];
-      const context = createContext({ 'radiating-pain': 'yes' }, { pain: 3 });
+      const context = createContext({ 'radiating-pain': 'yes' }, { mobility: 3 });
 
       const result = evaluateConditions(conditions, context);
 

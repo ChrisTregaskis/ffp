@@ -8,7 +8,7 @@ import type {
 } from '@ffp/core';
 import { sessionResponseSchema } from '@ffp/core';
 
-import { ffpClient, parseApiResponse } from '../../client';
+import { assertUuidPathParam, ffpClient, parseApiResponse } from '../../client';
 
 const sessionResponseEnvelope = z.object({ session: sessionResponseSchema });
 const sessionsResponseEnvelope = z.object({ sessions: z.array(sessionResponseSchema) });
@@ -17,7 +17,8 @@ const sessionsResponseEnvelope = z.object({ sessions: z.array(sessionResponseSch
 export const adminSessionsApi = {
   /** Creates a new session within a phase. */
   create: async (phaseId: string, data: CreateSessionRequest): Promise<SessionResponse> => {
-    const path = `/admin/phases/${phaseId}/sessions`;
+    const checkedPhaseId = assertUuidPathParam(phaseId, 'POST /admin/phases/{phaseId}/sessions');
+    const path = `/admin/phases/${checkedPhaseId}/sessions`;
     const response = await ffpClient.post(path, data);
 
     return parseApiResponse(sessionResponseEnvelope, response, { method: 'POST', path }).session;
@@ -25,7 +26,8 @@ export const adminSessionsApi = {
 
   /** Updates a session (partial update). */
   update: async (sessionId: string, data: UpdateSessionRequest): Promise<SessionResponse> => {
-    const path = `/admin/sessions/${sessionId}`;
+    const checkedSessionId = assertUuidPathParam(sessionId, 'PUT /admin/sessions/{sessionId}');
+    const path = `/admin/sessions/${checkedSessionId}`;
     const response = await ffpClient.put(path, data);
 
     return parseApiResponse(sessionResponseEnvelope, response, { method: 'PUT', path }).session;
@@ -33,13 +35,18 @@ export const adminSessionsApi = {
 
   /** Deletes a session and renumbers siblings. */
   delete: async (sessionId: string): Promise<void> => {
-    const path = `/admin/sessions/${sessionId}`;
+    const checkedSessionId = assertUuidPathParam(sessionId, 'DELETE /admin/sessions/{sessionId}');
+    const path = `/admin/sessions/${checkedSessionId}`;
     await ffpClient.delete(path);
   },
 
   /** Reorders sessions within a phase. */
   reorder: async (phaseId: string, data: ReorderSessionsRequest): Promise<SessionResponse[]> => {
-    const path = `/admin/phases/${phaseId}/sessions/reorder`;
+    const checkedPhaseId = assertUuidPathParam(
+      phaseId,
+      'PUT /admin/phases/{phaseId}/sessions/reorder'
+    );
+    const path = `/admin/phases/${checkedPhaseId}/sessions/reorder`;
     const response = await ffpClient.put(path, data);
 
     return parseApiResponse(sessionsResponseEnvelope, response, { method: 'PUT', path }).sessions;

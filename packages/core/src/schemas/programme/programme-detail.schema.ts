@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 import { PHASE_STATUSES, SESSION_STATUSES, DIFFICULTIES } from '@ffp/database/constants';
 
+import { publicIdSchema } from '../public-id.schema';
+
 import { programmeStatusSchema } from './programme-lifecycle.schema';
 
 /** Video metadata embedded in exercise detail */
@@ -45,7 +47,7 @@ const detailUserSessionSchema = z.object({
 /** Session within a phase — tiered: full detail or summary only */
 const detailSessionSchema = z.object({
   templateSessionId: z.guid(),
-  templateSessionPublicId: z.string().length(12),
+  templateSessionPublicId: publicIdSchema,
   sessionNumber: z.number().int().positive(),
   name: z.string().nullable(),
   description: z.string().nullable(),
@@ -60,7 +62,7 @@ const detailSessionSchema = z.object({
 /** Phase with sessions — tiered visibility applied */
 const detailPhaseSchema = z.object({
   id: z.guid(),
-  publicId: z.string().length(12),
+  publicId: publicIdSchema,
   phaseNumber: z.number().int().positive(),
   name: z.string().nullable(),
   description: z.string().nullable(),

@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
-import { QUESTION_TYPES } from '@ffp/database/constants';
+import { QUESTION_TYPES, SCORE_DIMENSIONS } from '@ffp/database/constants';
+
+import { publicIdSchema } from './public-id.schema';
 
 export const questionTypeSchema = z.enum(QUESTION_TYPES);
 
@@ -28,24 +30,14 @@ export const questionValidationSchema = z.object({
   customError: z.string().optional(),
 });
 
-/**
- * Score dimension enumeration - defines the scoring dimensions for assessments
- *
- * Questions can contribute to different scoring dimensions:
- * - strength: Physical strength assessments
- * - balance: Balance and stability assessments
- * - mobility: Range of motion and flexibility
- * - pain: Pain level and discomfort tracking
- * - general: General fitness or non-categorised scoring
- */
-export const scoreDimensionSchema = z.enum(['strength', 'balance', 'mobility', 'pain', 'general']);
+/** The scoring dimension a question contributes to (values from `SCORE_DIMENSIONS`) */
+export const scoreDimensionSchema = z.enum(SCORE_DIMENSIONS);
 
 export const assessmentQuestionSchema = z
   .object({
     /** Unique identifier for the question (UUID) */
     id: z.guid(),
-    /** Public identifier for URLs (nanoid, 12 chars) */
-    publicId: z.string().length(12),
+    publicId: publicIdSchema,
     /** Type of question (determines UI component and validation) */
     type: questionTypeSchema,
     /** The question text displayed to the user */
@@ -130,9 +122,9 @@ const questionWriteBaseSchema = z.object({
 function refineQuestionShape(
   data: {
     type?: QuestionType;
-    options?: QuestionOption[];
-    validation?: QuestionValidation;
-    videoId?: string;
+    options?: QuestionOption[] | null;
+    validation?: QuestionValidation | null;
+    videoId?: string | null;
   },
   ctx: z.RefinementCtx
 ): void {
@@ -166,11 +158,9 @@ function refineQuestionShape(
     }
   }
 
-  // min must not exceed max wherever both bounds are supplied (numeric/scale
-  // value bounds, text length bounds). video-response rejects min/max outright
-  // below, so it is excluded here to avoid a duplicate issue.
+  // min must not exceed max wherever both bounds are supplied — numeric/scale
+  // value bounds, text length bounds, video-response duration bounds.
   if (
-    type !== 'video-response' &&
     validation?.min !== undefined &&
     validation.max !== undefined &&
     validation.min > validation.max
@@ -182,24 +172,14 @@ function refineQuestionShape(
     });
   }
 
-  // video-response is completion-only: videoId required, no scoring range
-  if (type === 'video-response') {
-    if (!data.videoId) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'videoId is required for video-response question type',
-        path: ['videoId'],
-      });
-    }
-
-    if (validation?.min !== undefined || validation?.max !== undefined) {
-      ctx.addIssue({
-        code: 'custom',
-        message:
-          'video-response questions are completion-only and cannot define a scoring range (min/max)',
-        path: ['validation'],
-      });
-    }
+  // video-response needs a video. It may also carry a min/max duration, which
+  // the member-facing renderer uses as the bounds of the result input.
+  if (type === 'video-response' && !data.videoId) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'videoId is required for video-response question type',
+      path: ['videoId'],
+    });
   }
 }
 
@@ -208,10 +188,35 @@ export const createQuestionSchema = questionWriteBaseSchema
   .extend({ isActive: z.boolean().optional().default(true) })
   .superRefine(refineQuestionShape);
 
-/** Partial update; `slug` is immutable so it is omitted from the input. */
+/**
+ * Partial update; `slug` is immutable. The nullable fields clear on an explicit
+ * `null`. Per-type rules live on `questionShapeSchema` — a partial cannot see
+ * the fields it did not resend, so checking it alone both misses breaches and
+ * invents them.
+ */
 export const updateQuestionSchema = questionWriteBaseSchema
   .omit({ slug: true })
-  .partial()
+  .extend({
+    description: z.string().nullable(),
+    videoId: z.guid().nullable(),
+    scoreDimension: scoreDimensionSchema.nullable(),
+    // `.partial()` does not reach inside `validation`, so the `required` default
+    // would be forced true by any update touching it. Same trap as `isActive`.
+    validation: questionValidationSchema.extend({ required: z.boolean().optional() }),
+  })
+  .partial();
+
+/**
+ * The per-type rules over a whole question. Create applies them inline; update
+ * applies them to the merged row. Nullable because a stored row carries `null`.
+ */
+export const questionShapeSchema = z
+  .object({
+    type: questionTypeSchema,
+    options: z.array(questionOptionSchema).nullable().optional(),
+    validation: questionValidationSchema.nullable().optional(),
+    videoId: z.guid().nullable().optional(),
+  })
   .superRefine(refineQuestionShape);
 
 export type QuestionType = z.infer<typeof questionTypeSchema>;

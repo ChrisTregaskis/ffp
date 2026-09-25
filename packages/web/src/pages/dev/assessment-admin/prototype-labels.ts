@@ -2,12 +2,7 @@
  * Display labels + option lists for the assessment-admin prototype.
  * Throwaway — wellness vocabulary, British English.
  */
-import type {
-  ComparisonOperator,
-  FlowStepType,
-  QuestionType,
-  ScoreDimension,
-} from './prototype-types';
+import type { ComparisonOperator, QuestionType, ScoreDimension } from './prototype-types';
 
 export const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
   'single-choice': 'Single choice',
@@ -18,24 +13,12 @@ export const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
   'video-response': 'Video response',
 };
 
-export const STEP_TYPE_LABELS: Record<FlowStepType, string> = {
-  intro: 'Intro',
-  questions: 'Questions',
-  transition: 'Transition',
-  'video-assessment': 'Video assessment',
-  results: 'Results',
-  'programme-overview': 'Programme overview',
-};
-
-/** Step types that link to a template */
-export const TEMPLATE_LINKED_STEP_TYPES: FlowStepType[] = ['questions', 'video-assessment'];
-
 export const DIMENSION_LABELS: Record<ScoreDimension, string> = {
+  activity: 'Activity & readiness',
+  age: 'Age',
   strength: 'Strength',
-  balance: 'Balance',
   mobility: 'Mobility',
-  pain: 'Comfort', // wellness-neutral framing of the legacy "pain" dimension
-  general: 'Activity & readiness',
+  balance: 'Balance',
 };
 
 export const OPERATOR_LABELS: Record<ComparisonOperator, string> = {

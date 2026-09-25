@@ -15,7 +15,7 @@ import {
   videoSchema,
 } from '@ffp/core';
 
-import { ffpClient, parseApiResponse } from '../client';
+import { assertUuidPathParam, ffpClient, parseApiResponse } from '../client';
 
 const basePath = '/admin/videos';
 
@@ -83,7 +83,8 @@ export const adminVideosApi = {
 
   /** Updates video metadata (partial update including status transitions). */
   updateVideo: async (id: string, data: UpdateVideoInput): Promise<VideoDetailResponse> => {
-    const path = `${basePath}/${id}`;
+    const checkedId = assertUuidPathParam(id, 'PUT /admin/videos/{id}');
+    const path = `${basePath}/${checkedId}`;
     const response = await ffpClient.put(path, data);
 
     const parsed = parseApiResponse(z.object({ video: videoDetailResponseSchema }), response, {

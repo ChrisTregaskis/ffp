@@ -29,8 +29,8 @@ export const VideoEditPage: React.FC = () => {
   const [pendingSubmitData, setPendingSubmitData] = useState<UpdateVideoInput | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  /** Build default form values from video data */
-  const defaultValues = useMemo((): VideoEditFormValues | undefined => {
+  /** Form values from video data */
+  const formValues = useMemo((): VideoEditFormValues | undefined => {
     if (!video) {
       return undefined;
     }
@@ -150,14 +150,14 @@ export const VideoEditPage: React.FC = () => {
   /** Execute the update mutation */
   const executeUpdate = useCallback(
     (data: UpdateVideoInput) => {
-      if (!id) {
+      if (!video) {
         return;
       }
 
       setSubmitError(null);
 
       updateMutation.mutate(
-        { id, data },
+        { id: video.id, publicId: video.publicId, data },
         {
           onSuccess: () => {
             addToast('Video updated successfully', { variant: 'success' });
@@ -169,7 +169,7 @@ export const VideoEditPage: React.FC = () => {
         }
       );
     },
-    [id, updateMutation, addToast, handleNavigateBack]
+    [video, updateMutation, addToast, handleNavigateBack]
   );
 
   /** Handle form submission — intercept archive transitions for confirmation */
@@ -239,11 +239,8 @@ export const VideoEditPage: React.FC = () => {
           </>
         )}
 
-        {video && defaultValues && (
-          <ComposableForm<VideoEditFormValues>
-            onSubmit={handleFormSubmit}
-            defaultValues={defaultValues}
-          >
+        {video && formValues && (
+          <ComposableForm<VideoEditFormValues> onSubmit={handleFormSubmit} values={formValues}>
             <VideoEditFormFields
               currentStatus={video.status}
               onCancel={handleNavigateBack}

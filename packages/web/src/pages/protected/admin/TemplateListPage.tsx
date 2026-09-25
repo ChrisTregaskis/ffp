@@ -34,6 +34,7 @@ export const TemplateListPage: React.FC = () => {
     debouncedFilters,
     clearAll,
     hasActiveControls,
+    hasNonDefaultControls,
   } = useApiTable({
     defaultPageSize: 10,
     defaultSort: { id: 'createdAt', desc: true },
@@ -69,7 +70,7 @@ export const TemplateListPage: React.FC = () => {
     (row: TemplateRow): void => {
       const newIsActive = !row.isActive;
       updateMutation.mutate(
-        { id: row.id, data: { isActive: newIsActive } },
+        { id: row.id, publicId: row.publicId, data: { isActive: newIsActive } },
         {
           onSuccess: () => {
             const action = newIsActive ? 'activated' : 'deactivated';
@@ -130,7 +131,7 @@ export const TemplateListPage: React.FC = () => {
         getRowId={(row) => row.id}
         emptyState={
           <TemplateListEmptyState
-            hasFilters={hasActiveControls}
+            hasFilters={hasNonDefaultControls}
             onCreateClick={handleCreateClick}
           />
         }

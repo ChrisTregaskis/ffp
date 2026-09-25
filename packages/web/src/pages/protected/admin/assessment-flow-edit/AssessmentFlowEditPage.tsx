@@ -1,0 +1,233 @@
+import React, { useCallback, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+
+import type { UpdateAssessmentFlowInput } from '@ffp/core';
+
+import { Button } from '@web/components/button';
+import { AdminEditPageShell } from '@web/components/layout';
+import { DeactivateAssessmentFlowModal } from '@web/components/modal';
+import {
+  useAssessmentFlowDetailQuery,
+  useCreateAssessmentFlowMutation,
+  useDeactivateAssessmentFlowMutation,
+  useUpdateAssessmentFlowMutation,
+} from '@web/hooks/assessment-flows';
+import { useToast } from '@web/hooks/useToast';
+import { RouteKey, routes } from '@web/pages/routes';
+
+import {
+  EMPTY_ASSESSMENT_FLOW_VALUES,
+  toAssessmentFlowFormValues,
+} from './assessment-flow-form-values';
+import { AssessmentFlowFormFields } from './AssessmentFlowFormFields';
+
+import type { AssessmentFlowFormValues } from './types';
+
+export const AssessmentFlowEditPage: React.FC = () => {
+  const { publicId } = useParams<{ publicId: string }>();
+  const navigate = useNavigate();
+  const { addToast } = useToast();
+
+  const isEditMode = !!publicId;
+
+  const {
+    data: flow,
+    isLoading,
+    error,
+  } = useAssessmentFlowDetailQuery(publicId ?? '', { enabled: isEditMode });
+
+  const createMutation = useCreateAssessmentFlowMutation();
+  const updateMutation = useUpdateAssessmentFlowMutation();
+  const deactivateMutation = useDeactivateAssessmentFlowMutation();
+
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
+
+  const handleNavigateBack = useCallback((): void => {
+    void navigate(routes[RouteKey.ADMIN_ASSESSMENTS].path);
+  }, [navigate]);
+
+  const handleNavigateToSteps = useCallback((): void => {
+    if (!publicId) {
+      return;
+    }
+
+    void navigate(routes[RouteKey.ADMIN_ASSESSMENT_FLOW_STEPS].path.replace(':publicId', publicId));
+  }, [navigate, publicId]);
+
+  const handleNavigateToPreview = useCallback((): void => {
+    if (!publicId) {
+      return;
+    }
+
+    void navigate(
+      routes[RouteKey.ADMIN_ASSESSMENT_FLOW_PREVIEW].path.replace(':publicId', publicId)
+    );
+  }, [navigate, publicId]);
+
+  const handleCreate = useCallback(
+    async (values: AssessmentFlowFormValues): Promise<void> => {
+      setSubmitError(null);
+
+      await createMutation.mutateAsync(
+        {
+          name: values.name.trim(),
+          description: values.description.trim() || undefined,
+          isActive: true,
+        },
+        {
+          onSuccess: (created) => {
+            addToast(`"${created.name}" created successfully`, { variant: 'success' });
+            void navigate(
+              routes[RouteKey.ADMIN_ASSESSMENT_FLOW_EDIT].path.replace(
+                ':publicId',
+                created.publicId
+              )
+            );
+          },
+          onError: (err) => {
+            setSubmitError(err.message);
+          },
+        }
+      );
+    },
+    [createMutation, addToast, navigate]
+  );
+
+  const handleUpdate = useCallback(
+    async (values: AssessmentFlowFormValues): Promise<void> => {
+      if (!publicId) {
+        return;
+      }
+
+      setSubmitError(null);
+
+      // An emptied description is sent as null so the stored value is cleared
+      const payload: UpdateAssessmentFlowInput = {
+        name: values.name.trim(),
+        description: values.description.trim() || null,
+      };
+
+      await updateMutation.mutateAsync(
+        { publicId, data: payload },
+        {
+          onSuccess: (updated) => {
+            addToast(`"${updated.name}" updated successfully`, { variant: 'success' });
+            handleNavigateBack();
+          },
+          onError: (err) => {
+            setSubmitError(err.message);
+          },
+        }
+      );
+    },
+    [publicId, updateMutation, addToast, handleNavigateBack]
+  );
+
+  const handleOpenDeactivateModal = useCallback((): void => {
+    setIsDeactivateModalOpen(true);
+  }, []);
+
+  const handleCloseDeactivateModal = useCallback((): void => {
+    setIsDeactivateModalOpen(false);
+  }, []);
+
+  const handleConfirmDeactivate = useCallback((): void => {
+    if (!publicId) {
+      return;
+    }
+
+    deactivateMutation.mutate(publicId, {
+      onSuccess: () => {
+        addToast(`"${flow?.name ?? 'Flow'}" deactivated successfully`, { variant: 'success' });
+        setIsDeactivateModalOpen(false);
+        handleNavigateBack();
+      },
+      onError: (err) => {
+        addToast(err.message, { variant: 'error' });
+        setIsDeactivateModalOpen(false);
+      },
+    });
+  }, [publicId, deactivateMutation, addToast, flow?.name, handleNavigateBack]);
+
+  const handleReactivate = useCallback((): void => {
+    if (!publicId) {
+      return;
+    }
+
+    updateMutation.mutate(
+      { publicId, data: { isActive: true } },
+      {
+        onSuccess: (updated) => {
+          addToast(`"${updated.name}" reactivated successfully`, { variant: 'success' });
+        },
+        onError: (err) => {
+          addToast(err.message, { variant: 'error' });
+        },
+      }
+    );
+  }, [publicId, updateMutation, addToast]);
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
+  const headerActions =
+    isEditMode && flow ? (
+      <>
+        <Button variant="secondary" onClick={handleNavigateToPreview}>
+          Preview
+        </Button>
+        <Button variant="secondary" onClick={handleNavigateToSteps}>
+          Edit Steps
+        </Button>
+        {flow.isActive ? (
+          <Button variant="destructive" onClick={handleOpenDeactivateModal}>
+            Deactivate
+          </Button>
+        ) : (
+          <Button variant="secondary" onClick={handleReactivate} loading={updateMutation.isPending}>
+            Reactivate
+          </Button>
+        )}
+      </>
+    ) : undefined;
+
+  return (
+    <AdminEditPageShell
+      title={isEditMode ? 'Edit Assessment Flow' : 'Create Assessment Flow'}
+      subtitle={
+        isEditMode
+          ? 'Update how this flow is named and described'
+          : 'Name the flow — its steps are added once it exists'
+      }
+      headerActions={headerActions}
+      resourceLabel="flow"
+      listLabel="Assessment Flows"
+      isEditMode={isEditMode}
+      isLoading={isLoading}
+      loadError={error}
+      loadErrorMessage={error?.message ?? 'This assessment flow could not be found.'}
+      onBack={handleNavigateBack}
+      record={flow}
+      emptyValues={EMPTY_ASSESSMENT_FLOW_VALUES}
+      toFormValues={toAssessmentFlowFormValues}
+      onCreate={handleCreate}
+      onUpdate={handleUpdate}
+      footer={
+        <DeactivateAssessmentFlowModal
+          isOpen={isDeactivateModalOpen}
+          onClose={handleCloseDeactivateModal}
+          onConfirm={handleConfirmDeactivate}
+          isLoading={deactivateMutation.isPending}
+          flowName={flow?.name ?? ''}
+        />
+      }
+    >
+      <AssessmentFlowFormFields
+        isEditMode={isEditMode}
+        onCancel={handleNavigateBack}
+        isSubmitting={isPending}
+        errorMessage={submitError}
+      />
+    </AdminEditPageShell>
+  );
+};

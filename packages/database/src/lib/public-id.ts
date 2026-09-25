@@ -1,16 +1,9 @@
 import { varchar, uniqueIndex } from 'drizzle-orm/pg-core';
 import { nanoid } from 'nanoid';
 
-import type { IndexColumn } from 'drizzle-orm/pg-core';
+import { PUBLIC_ID_LENGTH } from '../constants/public-id.constants';
 
-/**
- * Default public ID length (12 chars).
- *
- * Uses standard nanoid URL-safe alphabet (A-Za-z0-9_-).
- * 12 chars gives ~71 bits of entropy — negligible collision probability
- * at our scale.
- */
-const PUBLIC_ID_LENGTH = 12;
+import type { IndexColumn } from 'drizzle-orm/pg-core';
 
 /**
  * Generate a new public ID.

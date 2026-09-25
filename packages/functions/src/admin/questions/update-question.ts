@@ -15,7 +15,11 @@ interface UpdateQuestionResponse {
   question: Question;
 }
 
-/** PUT /admin/questions/:publicId — update a question (slug is immutable). Requires system_admin. */
+/**
+ * PUT /admin/questions/:publicId — partial update, `slug` immutable. Requires
+ * system_admin. `updateQuestionService` owns the clearable-field, merged-
+ * validation and type-change clean-up contract.
+ */
 export const handler = withErrorHandling(
   async (event: APIGatewayProxyEventV2WithJWT): Promise<UpdateQuestionResponse> => {
     const context = extractUserContext(event);

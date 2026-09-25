@@ -1,5 +1,6 @@
 import type { QuestionWithConfig, DimensionConfig } from '@ffp/database';
 
+import { resolveModalScore } from './modal-scoring';
 import { calculateQuestionScore } from './question-scoring';
 import { getCategoryFromScore } from './risk-level';
 
@@ -55,7 +56,8 @@ export function buildResponseMap(responses: AssessmentResponse[]): Map<string, A
 /**
  * Calculate score for a single dimension
  *
- * Aggregates scores from all questions that contribute to this dimension.
+ * Aggregates scores from all questions that contribute to this dimension:
+ * summed by default, or the most frequent score in `modal` mode.
  *
  * @param dimensionConfig - Configuration for the dimension being scored
  * @param responseMap - Map of responses keyed by question ID
@@ -67,17 +69,10 @@ export function calculateDimensionScore(
   responseMap: Map<string, AssessmentResponse>,
   questionMap: QuestionMap
 ): DimensionalScore {
-  let rawScore = 0;
-
-  // Sum scores from all questions in this dimension
-  for (const questionId of dimensionConfig.questionIds) {
-    const response = responseMap.get(questionId);
-    const question = questionMap.get(questionId);
-
-    if (response && question) {
-      rawScore += calculateQuestionScore(question, response.answerValue);
-    }
-  }
+  const rawScore =
+    dimensionConfig.scoringMode === 'modal'
+      ? calculateModalRawScore(dimensionConfig, responseMap, questionMap)
+      : calculateSummedRawScore(dimensionConfig, responseMap, questionMap);
 
   // Normalise to 0-100 scale
   const normalisedScore =
@@ -93,6 +88,52 @@ export function calculateDimensionScore(
     normalisedScore,
     category,
   };
+}
+
+function calculateSummedRawScore(
+  dimensionConfig: DimensionConfig,
+  responseMap: Map<string, AssessmentResponse>,
+  questionMap: QuestionMap
+): number {
+  let rawScore = 0;
+
+  // Sum scores from all questions in this dimension
+  for (const questionId of dimensionConfig.questionIds) {
+    const response = responseMap.get(questionId);
+    const question = questionMap.get(questionId);
+
+    if (response && question) {
+      rawScore += calculateQuestionScore(question, response.answerValue);
+    }
+  }
+
+  return rawScore;
+}
+
+function calculateModalRawScore(
+  dimensionConfig: DimensionConfig,
+  responseMap: Map<string, AssessmentResponse>,
+  questionMap: QuestionMap
+): number {
+  const questions: QuestionWithConfig[] = [];
+  const answeredScores: number[] = [];
+
+  for (const questionId of dimensionConfig.questionIds) {
+    const question = questionMap.get(questionId);
+
+    if (!question) {
+      continue;
+    }
+
+    questions.push(question);
+    const response = responseMap.get(questionId);
+
+    if (response) {
+      answeredScores.push(calculateQuestionScore(question, response.answerValue));
+    }
+  }
+
+  return resolveModalScore(answeredScores, questions);
 }
 
 /**

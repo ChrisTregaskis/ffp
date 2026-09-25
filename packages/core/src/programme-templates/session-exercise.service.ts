@@ -78,6 +78,7 @@ export async function createExercise(sessionId: string, input: unknown): Promise
     ...exercise,
     video: {
       id: video.id,
+      publicId: video.publicId,
       title: video.title,
       status: video.status,
     },

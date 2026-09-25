@@ -4,6 +4,10 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../src/schema/index.js';
 import { questions } from '../src/schema/index.js';
 import { createLogger } from '../src/lib/logger.js';
+import {
+  AGE_BRACKET_OPTIONS,
+  LEVEL_QUESTION_IDS,
+} from '../src/constants/level-scoring.constants.js';
 
 import type { NewQuestion } from '../src/schema/questions.js';
 
@@ -33,164 +37,245 @@ export type VideoSlug = keyof typeof VIDEO_IDS;
  * template_questions and scoring configs to reference them reliably.
  *
  * UUID Pattern: 22222222-2222-2222-8222-2222222200XX
- * - Pre-assessment questions: 01xx
- * - Strength assessment questions: 02xx
- * - Balance assessment questions: 03xx
- * - Back pain general questions: 04xx
- * - Red flag screening questions: 05xx
+ * - Branching demo, getting started: 01xx
+ * - Branching demo, strength check: 02xx
+ * - Branching demo, balance check: 03xx
+ * - Wellness assessment: 07xx (the level questions come from LEVEL_QUESTION_IDS)
  */
 export const QUESTION_IDS = {
-  // Pre-assessment questions (template 11111111-1111-1111-8111-111111111101)
-  'goal-primary': '22222222-2222-2222-8222-222222220101',
-  'pain-level': '22222222-2222-2222-8222-222222220102',
-  'pain-location': '22222222-2222-2222-8222-222222220103',
-  'activity-level': '22222222-2222-2222-8222-222222220104',
-  'medical-conditions': '22222222-2222-2222-8222-222222220105',
-  'pain-area': '22222222-2222-2222-8222-222222220106', // Branching: determines next step
+  // Wellness assessment
+  gender: '22222222-2222-2222-8222-222222220701',
+  'age-bracket': LEVEL_QUESTION_IDS.ageBracket,
+  'weekly-activity': LEVEL_QUESTION_IDS.weeklyActivity,
+  'exercise-tolerance': LEVEL_QUESTION_IDS.exerciseTolerance,
+  'joint-comfort': LEVEL_QUESTION_IDS.jointComfort,
+  'session-goal': '22222222-2222-2222-8222-222222220706',
+  'focus-areas': '22222222-2222-2222-8222-222222220707',
+  'safety-check': '22222222-2222-2222-8222-222222220708',
 
-  // Strength assessment questions (template 11111111-1111-1111-8111-111111111102)
+  // Branching demo
+  'activity-level': '22222222-2222-2222-8222-222222220104',
+  'check-focus': '22222222-2222-2222-8222-222222220107',
   'squat-assessment': '22222222-2222-2222-8222-222222220201',
   'squat-rating': '22222222-2222-2222-8222-222222220202',
-  'pushup-assessment': '22222222-2222-2222-8222-222222220203',
-  'pushup-count': '22222222-2222-2222-8222-222222220204',
-  'strength-comfort': '22222222-2222-2222-8222-222222220205',
-
-  // Balance assessment questions (template 11111111-1111-1111-8111-111111111103)
   'single-leg-stand': '22222222-2222-2222-8222-222222220301',
   'single-leg-duration': '22222222-2222-2222-8222-222222220302',
-  'tandem-stand': '22222222-2222-2222-8222-222222220303',
-  'tandem-stability': '22222222-2222-2222-8222-222222220304',
-  'balance-confidence': '22222222-2222-2222-8222-222222220305',
-
-  // Back pain general questions (template 11111111-1111-1111-8111-111111111104)
-  'back-pain-duration': '22222222-2222-2222-8222-222222220401',
-  'back-pain-intensity': '22222222-2222-2222-8222-222222220402',
-  'back-pain-type': '22222222-2222-2222-8222-222222220403',
-  'back-pain-recurrence': '22222222-2222-2222-8222-222222220404',
-  'back-pain-typical-duration': '22222222-2222-2222-8222-222222220405',
-
-  // Red flag screening questions (template 11111111-1111-1111-8111-111111111105)
-  'radiating-pain': '22222222-2222-2222-8222-222222220501',
-  'numbness-tingling': '22222222-2222-2222-8222-222222220502',
-  incontinence: '22222222-2222-2222-8222-222222220503',
-  'saddle-numbness': '22222222-2222-2222-8222-222222220504',
-  'unexplained-weight-loss': '22222222-2222-2222-8222-222222220505',
-  'night-sweats': '22222222-2222-2222-8222-222222220506',
 } as const;
 
 export type QuestionSlug = keyof typeof QUESTION_IDS;
 
-/**
- * Pre-assessment questions
- * Questions about goals, pain levels, and medical history
- */
-const preAssessmentQuestions: NewQuestion[] = [
+/** Wellness assessment: "About you" */
+const aboutYouQuestions: NewQuestion[] = [
   {
-    id: QUESTION_IDS['goal-primary'],
-    slug: 'goal-primary',
+    id: QUESTION_IDS.gender,
+    slug: 'gender',
     type: 'single-choice',
-    questionText: 'What is your primary goal for this programme?',
-    description: 'Select the goal that best describes what you want to achieve',
+    questionText: 'Which best describes your gender?',
     options: [
-      { value: 'pain-reduction', label: 'Reduce pain and discomfort', score: 1 },
-      { value: 'strength', label: 'Build strength', score: 2 },
-      { value: 'mobility', label: 'Improve mobility and flexibility', score: 2 },
-      { value: 'balance', label: 'Improve balance and stability', score: 2 },
-      { value: 'general-fitness', label: 'General fitness improvement', score: 1 },
+      { value: 'female', label: 'Female' },
+      { value: 'male', label: 'Male' },
+      { value: 'prefer-not-to-say', label: 'Prefer not to say' },
     ],
     validation: { required: true },
-    scoreDimension: 'general',
+    scoreDimension: null,
     isActive: true,
   },
   {
-    id: QUESTION_IDS['pain-level'],
-    slug: 'pain-level',
-    type: 'scale',
-    questionText: 'How would you rate your current pain level?',
-    description: 'On a scale of 0 (no pain) to 10 (worst pain imaginable)',
-    validation: { required: true, min: 0, max: 10 },
-    scoreDimension: 'pain',
+    id: QUESTION_IDS['age-bracket'],
+    slug: 'age-bracket',
+    type: 'single-choice',
+    questionText: 'Which age bracket are you in?',
+    options: AGE_BRACKET_OPTIONS,
+    validation: { required: true },
+    scoreDimension: 'age',
     isActive: true,
   },
   {
-    id: QUESTION_IDS['pain-location'],
-    slug: 'pain-location',
-    type: 'multi-choice',
-    questionText: 'Where do you experience pain or discomfort?',
-    description: 'Select all areas that apply',
+    id: QUESTION_IDS['weekly-activity'],
+    slug: 'weekly-activity',
+    type: 'single-choice',
+    questionText: 'How would you describe your typical weekly physical activity?',
     options: [
-      { value: 'lower-back', label: 'Lower back', score: 1 },
-      { value: 'upper-back', label: 'Upper back/shoulders', score: 1 },
-      { value: 'neck', label: 'Neck', score: 1 },
-      { value: 'hips', label: 'Hips', score: 1 },
-      { value: 'knees', label: 'Knees', score: 1 },
-      { value: 'ankles-feet', label: 'Ankles/feet', score: 1 },
-      { value: 'none', label: 'No pain', score: 0 },
+      {
+        value: 'low',
+        label: 'Low: I mostly sit during the day and mainly walk for exercise.',
+        score: 1,
+      },
+      {
+        value: 'moderate',
+        label:
+          'Moderate: I do light cycling, yoga/pilates, or occasional workouts (1–2 times a week).',
+        score: 2,
+      },
+      {
+        value: 'active',
+        label:
+          'Active: I exercise regularly (3+ times a week) or play intense sport regularly, like football or rugby.',
+        score: 3,
+      },
     ],
-    validation: { required: false },
-    scoreDimension: 'pain',
+    validation: { required: true },
+    scoreDimension: 'activity',
     isActive: true,
   },
+  {
+    id: QUESTION_IDS['exercise-tolerance'],
+    slug: 'exercise-tolerance',
+    type: 'single-choice',
+    questionText: 'How would you describe your exercise tolerance?',
+    options: [
+      {
+        value: 'low',
+        label: 'Low: I can do light exercise like walks, but not much more intense than that.',
+        score: 1,
+      },
+      {
+        value: 'moderate',
+        label: 'Moderate: I could manage jogging, pilates or light gym sessions.',
+        score: 2,
+      },
+      {
+        value: 'high',
+        label: 'High: I can go on runs, play sport, do gym sessions and manage a high heart rate.',
+        score: 3,
+      },
+    ],
+    validation: { required: true },
+    scoreDimension: 'activity',
+    isActive: true,
+  },
+  {
+    id: QUESTION_IDS['joint-comfort'],
+    slug: 'joint-comfort',
+    type: 'single-choice',
+    questionText: 'How do your joints and muscles generally feel when you move or stretch?',
+    options: [
+      {
+        value: 'stiff',
+        label: 'I frequently feel stiff, tight, or have mild, nagging aches that make me cautious.',
+        score: 1,
+      },
+      {
+        value: 'occasionally-stiff',
+        label: 'I get occasional stiffness after a long day at the desk, but I move fairly easily.',
+        score: 2,
+      },
+      {
+        value: 'flexible',
+        label: 'I feel flexible, strong, and comfortable doing a wide range of movements.',
+        score: 3,
+      },
+    ],
+    validation: { required: true },
+    scoreDimension: 'activity',
+    isActive: true,
+  },
+];
+
+/** Wellness assessment: "Goals and safety" */
+const goalsAndSafetyQuestions: NewQuestion[] = [
+  {
+    id: QUESTION_IDS['session-goal'],
+    slug: 'session-goal',
+    type: 'single-choice',
+    questionText: "What is your main goal for today's session?",
+    options: [
+      {
+        value: 'relieve-tension',
+        label: 'Relieve tension & stiffness (great for long desk sessions)',
+      },
+      {
+        value: 'build-strength',
+        label: 'Build strength & stability (great for physical resilience)',
+      },
+      { value: 'boost-energy', label: 'Boost energy & get moving (great for a midday refresh)' },
+    ],
+    validation: { required: true },
+    scoreDimension: null,
+    isActive: true,
+  },
+  {
+    id: QUESTION_IDS['focus-areas'],
+    slug: 'focus-areas',
+    type: 'multi-choice',
+    questionText: 'Which areas of the body would you like to focus on?',
+    description: 'Select up to 2',
+    options: [
+      { value: 'neck-shoulders', label: 'Neck & Shoulders (ideal for easing typing tightness)' },
+      {
+        value: 'lower-back-core',
+        label: 'Lower Back & Core (great for supporting sitting posture)',
+      },
+      {
+        value: 'hips-lower-body',
+        label: 'Hips & Lower Body (perfect for opening up tight glutes and hip flexors)',
+      },
+      { value: 'full-body', label: 'Full Body Refresh (a balanced mix of everything)' },
+    ],
+    validation: { required: true, maxSelections: 2 },
+    scoreDimension: null,
+    isActive: true,
+  },
+  {
+    id: QUESTION_IDS['safety-check'],
+    slug: 'safety-check',
+    type: 'multi-choice',
+    questionText:
+      'To make sure we keep things safe and tailored to you, have you recently experienced any of the following?',
+    description: 'Select all that apply',
+    options: [
+      {
+        value: 'chest-pain',
+        label: 'Sudden chest pain or shortness of breath during mild activity',
+      },
+      { value: 'dizziness', label: 'Unexplained dizziness, fainting, or loss of balance' },
+      {
+        value: 'night-pain',
+        label: 'Severe, unrelenting pain during the night that prevents you from sleeping',
+      },
+      { value: 'none', label: 'None of the above' },
+    ],
+    validation: { required: true },
+    scoreDimension: null,
+    isActive: true,
+  },
+];
+
+/** Branching demo: "Getting started" */
+const gettingStartedQuestions: NewQuestion[] = [
   {
     id: QUESTION_IDS['activity-level'],
     slug: 'activity-level',
     type: 'single-choice',
     questionText: 'How would you describe your current activity level?',
     options: [
-      { value: 'sedentary', label: 'Sedentary (little to no exercise)', score: 1 },
-      { value: 'light', label: 'Lightly active (light exercise 1-3 days/week)', score: 2 },
-      {
-        value: 'moderate',
-        label: 'Moderately active (moderate exercise 3-5 days/week)',
-        score: 3,
-      },
-      { value: 'very-active', label: 'Very active (hard exercise 6-7 days/week)', score: 4 },
+      { value: 'sedentary', label: 'Sedentary (little to no exercise)' },
+      { value: 'light', label: 'Lightly active (light exercise 1-3 days/week)' },
+      { value: 'moderate', label: 'Moderately active (moderate exercise 3-5 days/week)' },
+      { value: 'very-active', label: 'Very active (hard exercise 6-7 days/week)' },
     ],
     validation: { required: true },
-    scoreDimension: 'general',
+    scoreDimension: null,
     isActive: true,
   },
   {
-    id: QUESTION_IDS['medical-conditions'],
-    slug: 'medical-conditions',
-    type: 'multi-choice',
-    questionText: 'Do you have any of the following conditions?',
-    description: 'Select all that apply. This helps us tailor your programme safely.',
-    options: [
-      { value: 'heart-condition', label: 'Heart condition', score: 0 },
-      { value: 'high-blood-pressure', label: 'High blood pressure', score: 0 },
-      { value: 'diabetes', label: 'Diabetes', score: 0 },
-      { value: 'arthritis', label: 'Arthritis', score: 0 },
-      { value: 'osteoporosis', label: 'Osteoporosis', score: 0 },
-      { value: 'recent-surgery', label: 'Recent surgery (within 6 months)', score: 0 },
-      { value: 'none', label: 'None of the above', score: 0 },
-    ],
-    validation: { required: true },
-    scoreDimension: 'general',
-    isActive: true,
-  },
-  {
-    id: QUESTION_IDS['pain-area'],
-    slug: 'pain-area',
+    id: QUESTION_IDS['check-focus'],
+    slug: 'check-focus',
     type: 'single-choice',
-    questionText: 'Which area is your primary concern?',
-    description:
-      'Select the main area you would like to focus on. This helps us tailor your assessment.',
+    questionText: 'Which movement check would you like to start with?',
+    description: 'Choosing balance skips the strength check.',
     options: [
-      { value: 'back', label: 'Back (lower or upper)', score: 0 },
-      { value: 'other', label: 'Other area (general assessment)', score: 0 },
+      { value: 'strength', label: 'Strength, then balance' },
+      { value: 'balance', label: 'Balance only' },
     ],
     validation: { required: true },
-    scoreDimension: 'general',
+    scoreDimension: null,
     isActive: true,
   },
 ];
 
-/**
- * Strength assessment questions
- * Video-based exercises to evaluate strength levels
- */
-const strengthAssessmentQuestions: NewQuestion[] = [
+/** Branching demo: "Strength check" */
+const strengthCheckQuestions: NewQuestion[] = [
   {
     id: QUESTION_IDS['squat-assessment'],
     slug: 'squat-assessment',
@@ -217,43 +302,10 @@ const strengthAssessmentQuestions: NewQuestion[] = [
     scoreDimension: 'strength',
     isActive: true,
   },
-  {
-    id: QUESTION_IDS['pushup-assessment'],
-    slug: 'pushup-assessment',
-    type: 'video-response',
-    questionText: 'Modified Push-up Test',
-    description: 'Perform as many modified push-ups as you can with good form',
-    videoId: VIDEO_IDS['modified-pushup-demo'],
-    validation: { required: true, min: 0, max: 100 },
-    scoreDimension: 'strength',
-    isActive: true,
-  },
-  {
-    id: QUESTION_IDS['pushup-count'],
-    slug: 'pushup-count',
-    type: 'numeric',
-    questionText: 'How many modified push-ups did you complete?',
-    validation: { required: true, min: 0, max: 50 },
-    scoreDimension: 'strength',
-    isActive: true,
-  },
-  {
-    id: QUESTION_IDS['strength-comfort'],
-    slug: 'strength-comfort',
-    type: 'scale',
-    questionText: 'How comfortable did you feel during the strength exercises?',
-    description: 'On a scale of 1 (very uncomfortable) to 10 (very comfortable)',
-    validation: { required: false, min: 1, max: 10 },
-    scoreDimension: 'strength',
-    isActive: true,
-  },
 ];
 
-/**
- * Balance assessment questions
- * Tests to measure stability and balance in different positions
- */
-const balanceAssessmentQuestions: NewQuestion[] = [
+/** Branching demo: "Balance check" */
+const balanceCheckQuestions: NewQuestion[] = [
   {
     id: QUESTION_IDS['single-leg-stand'],
     slug: 'single-leg-stand',
@@ -280,238 +332,17 @@ const balanceAssessmentQuestions: NewQuestion[] = [
     scoreDimension: 'balance',
     isActive: true,
   },
-  {
-    id: QUESTION_IDS['tandem-stand'],
-    slug: 'tandem-stand',
-    type: 'video-response',
-    questionText: 'Tandem Stand',
-    description: 'Stand with one foot directly in front of the other, heel to toe',
-    videoId: VIDEO_IDS['tandem-stand-demo'],
-    validation: { required: true, min: 0, max: 300 },
-    scoreDimension: 'balance',
-    isActive: true,
-  },
-  {
-    id: QUESTION_IDS['tandem-stability'],
-    slug: 'tandem-stability',
-    type: 'single-choice',
-    questionText: 'How stable did you feel during the tandem stand?',
-    options: [
-      { value: 'very-unstable', label: 'Very unstable - needed support', score: 1 },
-      { value: 'unstable', label: 'Unstable - wobbled significantly', score: 2 },
-      { value: 'somewhat-stable', label: 'Somewhat stable - minor wobbles', score: 3 },
-      { value: 'very-stable', label: 'Very stable - held position easily', score: 4 },
-    ],
-    validation: { required: true },
-    scoreDimension: 'balance',
-    isActive: true,
-  },
-  {
-    id: QUESTION_IDS['balance-confidence'],
-    slug: 'balance-confidence',
-    type: 'scale',
-    questionText: 'How confident do you feel about your balance in daily activities?',
-    description: 'On a scale of 1 (not confident) to 10 (very confident)',
-    validation: { required: true, min: 1, max: 10 },
-    scoreDimension: 'balance',
-    isActive: true,
-  },
-];
-
-/**
- * Back pain general questions
- * Clinical questions about back pain history and characteristics
- * Based on real physiotherapy assessment protocols
- */
-const backPainGeneralQuestions: NewQuestion[] = [
-  {
-    id: QUESTION_IDS['back-pain-duration'],
-    slug: 'back-pain-duration',
-    type: 'single-choice',
-    questionText: 'How long have you been experiencing your current back pain?',
-    description: 'Select the option that best describes the duration',
-    options: [
-      { value: 'less-1-week', label: 'Less than 1 week', score: 1 },
-      { value: '1-2-weeks', label: '1-2 weeks', score: 2 },
-      { value: '2-4-weeks', label: '2-4 weeks', score: 3 },
-      { value: '4-12-weeks', label: '4-12 weeks', score: 4 },
-      { value: 'over-12-weeks', label: 'More than 12 weeks', score: 5 },
-    ],
-    validation: { required: true },
-    scoreDimension: 'pain',
-    isActive: true,
-  },
-  {
-    id: QUESTION_IDS['back-pain-intensity'],
-    slug: 'back-pain-intensity',
-    type: 'scale',
-    questionText: 'On average, how would you rate your back pain intensity?',
-    description:
-      'On a scale of 0 (no pain) to 10 (worst pain imaginable). Think about your typical pain level over the past week.',
-    validation: { required: true, min: 0, max: 10 },
-    scoreDimension: 'pain',
-    isActive: true,
-  },
-  {
-    id: QUESTION_IDS['back-pain-type'],
-    slug: 'back-pain-type',
-    type: 'single-choice',
-    questionText: 'How would you best describe your back pain?',
-    description: 'Select the description that most closely matches your experience',
-    options: [
-      { value: 'sharp-shooting', label: 'Sharp or shooting pain', score: 4 },
-      { value: 'dull-aching', label: 'Dull or aching pain', score: 2 },
-      { value: 'only-when-moving', label: 'Pain only when moving', score: 1 },
-      { value: 'constant-intense', label: 'Constant and intense pain', score: 5 },
-    ],
-    validation: { required: true },
-    scoreDimension: 'pain',
-    isActive: true,
-  },
-  {
-    id: QUESTION_IDS['back-pain-recurrence'],
-    slug: 'back-pain-recurrence',
-    type: 'single-choice',
-    questionText: 'How many times has your back pain recurred in the last 3 years?',
-    description: 'Include any episodes of significant back pain',
-    options: [
-      { value: 'never', label: 'This is the first time', score: 1 },
-      { value: 'once', label: '1 previous episode', score: 2 },
-      { value: '2-5-times', label: '2-5 times', score: 3 },
-      { value: 'over-5-times', label: 'More than 5 times', score: 4 },
-    ],
-    validation: { required: true },
-    scoreDimension: 'pain',
-    isActive: true,
-  },
-  {
-    id: QUESTION_IDS['back-pain-typical-duration'],
-    slug: 'back-pain-typical-duration',
-    type: 'single-choice',
-    questionText: 'When you have had back pain before, how long did it typically last?',
-    description: 'Select the duration that best matches your experience',
-    options: [
-      { value: 'few-days', label: 'A few days', score: 1 },
-      { value: '1-2-weeks', label: '1-2 weeks', score: 2 },
-      { value: '3-6-weeks', label: '3-6 weeks', score: 3 },
-      { value: '7-12-weeks', label: '7-12 weeks', score: 4 },
-      { value: 'over-12-weeks', label: 'More than 12 weeks', score: 5 },
-      { value: 'not-applicable', label: 'Not applicable (first episode)', score: 0 },
-    ],
-    validation: { required: true },
-    scoreDimension: 'pain',
-    isActive: true,
-  },
-];
-
-/**
- * Red flag screening questions
- * Critical clinical questions to identify conditions requiring medical review
- * Any "yes" answer triggers a medical warning before proceeding with exercise
- *
- * These questions are based on standard physiotherapy red flag screening protocols.
- * All questions use yes/no format with score: 0 for no, 10 for yes (triggers warning threshold)
- */
-const redFlagScreeningQuestions: NewQuestion[] = [
-  {
-    id: QUESTION_IDS['radiating-pain'],
-    slug: 'radiating-pain',
-    type: 'single-choice',
-    questionText: 'Does your back pain radiate (travel) down your leg below the knee?',
-    description:
-      'Pain that travels from your back down into your leg may indicate nerve involvement',
-    options: [
-      { value: 'no', label: 'No', score: 0 },
-      { value: 'yes', label: 'Yes', score: 10 },
-    ],
-    validation: { required: true },
-    scoreDimension: 'pain',
-    isActive: true,
-  },
-  {
-    id: QUESTION_IDS['numbness-tingling'],
-    slug: 'numbness-tingling',
-    type: 'single-choice',
-    questionText: 'Do you experience pins and needles, numbness, or tingling in your feet or legs?',
-    description: 'These sensations may indicate nerve involvement',
-    options: [
-      { value: 'no', label: 'No', score: 0 },
-      { value: 'yes', label: 'Yes', score: 10 },
-    ],
-    validation: { required: true },
-    scoreDimension: 'pain',
-    isActive: true,
-  },
-  {
-    id: QUESTION_IDS['incontinence'],
-    slug: 'incontinence',
-    type: 'single-choice',
-    questionText:
-      'Have you experienced any difficulty controlling your bladder or bowel (incontinence)?',
-    description: 'This is an important symptom that requires immediate medical attention',
-    options: [
-      { value: 'no', label: 'No', score: 0 },
-      { value: 'yes', label: 'Yes', score: 10 },
-    ],
-    validation: { required: true },
-    scoreDimension: 'pain',
-    isActive: true,
-  },
-  {
-    id: QUESTION_IDS['saddle-numbness'],
-    slug: 'saddle-numbness',
-    type: 'single-choice',
-    questionText:
-      'Do you have any numbness around your genital area or inner thighs (saddle area)?',
-    description: 'This is an important symptom that requires immediate medical attention',
-    options: [
-      { value: 'no', label: 'No', score: 0 },
-      { value: 'yes', label: 'Yes', score: 10 },
-    ],
-    validation: { required: true },
-    scoreDimension: 'pain',
-    isActive: true,
-  },
-  {
-    id: QUESTION_IDS['unexplained-weight-loss'],
-    slug: 'unexplained-weight-loss',
-    type: 'single-choice',
-    questionText:
-      'Have you experienced unexplained weight loss of more than 10% of your body weight?',
-    description: 'Unexplained weight loss alongside back pain may require investigation',
-    options: [
-      { value: 'no', label: 'No', score: 0 },
-      { value: 'yes', label: 'Yes', score: 10 },
-    ],
-    validation: { required: true },
-    scoreDimension: 'pain',
-    isActive: true,
-  },
-  {
-    id: QUESTION_IDS['night-sweats'],
-    slug: 'night-sweats',
-    type: 'single-choice',
-    questionText: 'Have you been experiencing night sweats or fever alongside your back pain?',
-    description: 'These symptoms alongside back pain may require further investigation',
-    options: [
-      { value: 'no', label: 'No', score: 0 },
-      { value: 'yes', label: 'Yes', score: 10 },
-    ],
-    validation: { required: true },
-    scoreDimension: 'pain',
-    isActive: true,
-  },
 ];
 
 /**
  * All default questions to seed
  */
 const DEFAULT_QUESTIONS: NewQuestion[] = [
-  ...preAssessmentQuestions,
-  ...strengthAssessmentQuestions,
-  ...balanceAssessmentQuestions,
-  ...backPainGeneralQuestions,
-  ...redFlagScreeningQuestions,
+  ...aboutYouQuestions,
+  ...goalsAndSafetyQuestions,
+  ...gettingStartedQuestions,
+  ...strengthCheckQuestions,
+  ...balanceCheckQuestions,
 ];
 
 /**

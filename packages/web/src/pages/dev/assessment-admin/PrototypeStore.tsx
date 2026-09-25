@@ -11,6 +11,7 @@ import {
   INITIAL_TEMPLATES,
   PROGRAMME_TEMPLATE_OPTIONS,
 } from './prototype-data';
+import { PROTOTYPE_ENTRY_FLOW_ID } from './prototype-nav';
 import {
   addExerciseToSession,
   buildProgrammeStructure,
@@ -27,7 +28,6 @@ import type {
   ProgrammeTemplateOption,
   PrototypeFlow,
   PrototypeQuestion,
-  PrototypeStep,
   PrototypeTemplate,
   PrototypeView,
   ScoringConfig,
@@ -52,20 +52,6 @@ interface PrototypeStoreValue {
 
   view: PrototypeView;
   navigate: (view: PrototypeView) => void;
-
-  // Flows
-  createFlow: (meta: Pick<PrototypeFlow, 'name' | 'description' | 'isActive'>) => PrototypeFlow;
-  updateFlowMeta: (
-    flowId: string,
-    meta: Pick<PrototypeFlow, 'name' | 'description' | 'isActive'>
-  ) => void;
-  deleteFlow: (flowId: string) => void;
-
-  // Steps
-  addStep: (flowId: string, step: Omit<PrototypeStep, 'id' | 'order'>) => void;
-  updateStep: (flowId: string, step: PrototypeStep) => void;
-  deleteStep: (flowId: string, stepId: string) => void;
-  reorderStep: (flowId: string, fromIndex: number, toIndex: number) => void;
 
   // Questions
   saveQuestion: (question: PrototypeQuestion) => PrototypeQuestion;
@@ -108,16 +94,16 @@ const seedMemberStructures = (): Record<string, ProgrammePhase[]> => {
 
 const PrototypeStoreContext = createContext<PrototypeStoreValue | null>(null);
 
-const reindexSteps = (steps: PrototypeStep[]): PrototypeStep[] =>
-  steps.map((step, index) => ({ ...step, order: index + 1 }));
-
 export const PrototypeStoreProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [flows, setFlows] = useState<PrototypeFlow[]>(INITIAL_FLOWS);
   const [questions, setQuestions] = useState<PrototypeQuestion[]>(INITIAL_QUESTIONS);
   const [templates, setTemplates] = useState<PrototypeTemplate[]>(INITIAL_TEMPLATES);
   const [memberStructures, setMemberStructures] =
     useState<Record<string, ProgrammePhase[]>>(seedMemberStructures);
-  const [view, setView] = useState<PrototypeView>({ name: 'flows' });
+  const [view, setView] = useState<PrototypeView>({
+    name: 'scoring',
+    flowId: PROTOTYPE_ENTRY_FLOW_ID,
+  });
 
   const value = useMemo<PrototypeStoreValue>(() => {
     const mutateFlow = (flowId: string, fn: (flow: PrototypeFlow) => PrototypeFlow): void => {
@@ -140,73 +126,6 @@ export const PrototypeStoreProvider: React.FC<{ children: ReactNode }> = ({ chil
       programmeTemplates: PROGRAMME_TEMPLATE_OPTIONS,
       view,
       navigate: setView,
-
-      createFlow: (meta) => {
-        const flow: PrototypeFlow = {
-          id: nextId('flow'),
-          publicId: makePublicId(),
-          ...meta,
-          steps: [],
-          scoringConfig: { dimensions: [], programmeMappings: [] },
-        };
-        setFlows((prev) => [...prev, flow]);
-
-        return flow;
-      },
-
-      updateFlowMeta: (flowId, meta) => {
-        mutateFlow(flowId, (flow) => ({ ...flow, ...meta }));
-      },
-
-      deleteFlow: (flowId) => {
-        setFlows((prev) => prev.filter((flow) => flow.id !== flowId));
-      },
-
-      addStep: (flowId, step) => {
-        mutateFlow(flowId, (flow) => {
-          const newStep: PrototypeStep = {
-            ...step,
-            id: nextId('step'),
-            order: flow.steps.length + 1,
-          };
-
-          return { ...flow, steps: [...flow.steps, newStep] };
-        });
-      },
-
-      updateStep: (flowId, step) => {
-        mutateFlow(flowId, (flow) => ({
-          ...flow,
-          steps: flow.steps.map((existing) => (existing.id === step.id ? step : existing)),
-        }));
-      },
-
-      deleteStep: (flowId, stepId) => {
-        mutateFlow(flowId, (flow) => ({
-          ...flow,
-          steps: reindexSteps(flow.steps.filter((step) => step.id !== stepId)),
-        }));
-      },
-
-      reorderStep: (flowId, fromIndex, toIndex) => {
-        mutateFlow(flowId, (flow) => {
-          if (
-            fromIndex === toIndex ||
-            fromIndex < 0 ||
-            toIndex < 0 ||
-            fromIndex >= flow.steps.length ||
-            toIndex >= flow.steps.length
-          ) {
-            return flow;
-          }
-
-          const next = [...flow.steps];
-          const [moved] = next.splice(fromIndex, 1);
-          next.splice(toIndex, 0, moved);
-
-          return { ...flow, steps: reindexSteps(next) };
-        });
-      },
 
       saveQuestion: (question) => {
         const exists = questions.some((existing) => existing.id === question.id);

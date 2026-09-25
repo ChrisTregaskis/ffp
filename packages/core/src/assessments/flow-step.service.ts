@@ -6,8 +6,12 @@ import {
   createFlowStepSchema,
   updateFlowStepSchema,
   reorderFlowStepsSchema,
+  TEMPLATE_LINKED_STEP_TYPES,
+  type FlowStepType,
+  type UpdateFlowStepInput,
 } from '../schemas/assessment-flow.schema';
 
+import { resolveOrderedChildIds } from './child-payload';
 import { flowHasBranching, toAdminFlowStep, type AdminFlowStep } from './flow-step.branching';
 import * as flowStepRepository from './flow-step.repository';
 import * as flowRepository from './flow.repository';
@@ -33,7 +37,10 @@ async function resolveFlow(db: DbClient, flowPublicId: string): Promise<Assessme
 }
 
 /** Belt-and-braces over the FK: a linked template must exist and be active. */
-async function assertTemplateActive(db: DbClient, templateId: string | undefined): Promise<void> {
+async function assertTemplateActive(
+  db: DbClient,
+  templateId: string | null | undefined
+): Promise<void> {
   if (!templateId) {
     return;
   }
@@ -68,6 +75,49 @@ export async function createStepService(
   return toAdminFlowStep(step);
 }
 
+/**
+ * Drop the template link a non-linking type has no use for. Clearing beats
+ * rejecting — setting the type is deliberate — and a link the payload sets
+ * explicitly still wins. Deliberately not conditioned on the type *changing*:
+ * the rows most in need of clearing are those already storing a stale link
+ * under a non-linking type, so every save that resends the type self-heals.
+ */
+function applyTypeChangeCleanup(update: UpdateFlowStepInput): UpdateFlowStepInput {
+  const nextType = update.type;
+
+  if (!nextType || TEMPLATE_LINKED_STEP_TYPES.includes(nextType)) {
+    return update;
+  }
+
+  if (update.templateId !== undefined) {
+    return update;
+  }
+
+  return { ...update, templateId: null };
+}
+
+/**
+ * Judge the row the update will produce, not the payload: a partial need not
+ * resend the type or the link, so only the merged pair shows whether a step
+ * that renders a template would be left without one. Mirrors
+ * `assertMergedShape` in the question service.
+ */
+function assertMergedTemplateLink(
+  stored: { type: FlowStepType; templateId: string | null },
+  update: UpdateFlowStepInput
+): void {
+  const mergedType = update.type ?? stored.type;
+  // `??` would be wrong on a clearable field: an explicit `null` means clear,
+  // and must not fall through to the stored value.
+  const mergedTemplateId = update.templateId !== undefined ? update.templateId : stored.templateId;
+
+  if (TEMPLATE_LINKED_STEP_TYPES.includes(mergedType) && !mergedTemplateId) {
+    throw new ValidationError('A step of this type must link an assessment template', {
+      type: mergedType,
+    });
+  }
+}
+
 /** Update a step's type, template link and/or config. Branching is preserved. */
 export async function updateStepService(
   _ctx: OrganisationContext,
@@ -94,7 +144,11 @@ export async function updateStepService(
 
   await assertTemplateActive(db, parseResult.data.templateId);
 
-  const updated = await flowStepRepository.updateStep(db, step.id, parseResult.data);
+  const update = applyTypeChangeCleanup(parseResult.data);
+
+  assertMergedTemplateLink(step, update);
+
+  const updated = await flowStepRepository.updateStep(db, step.id, update);
 
   if (!updated) {
     throw new NotFoundError('Flow step', stepPublicId);
@@ -147,35 +201,17 @@ export async function reorderStepsService(
     );
   }
 
-  const { orderedStepPublicIds } = parseResult.data;
-
-  // Distinctness matters: `flow_steps.order` is non-unique, so a duplicate id
-  // would reassign one step twice and silently leave another unmoved.
-  if (new Set(orderedStepPublicIds).size !== orderedStepPublicIds.length) {
-    throw new ValidationError('Step IDs must be unique');
-  }
-
-  if (orderedStepPublicIds.length !== activeSteps.length) {
-    throw new ValidationError(
-      `Expected ${String(activeSteps.length)} step IDs but received ${String(orderedStepPublicIds.length)}`
-    );
-  }
-
-  const stepIdByPublicId = new Map(activeSteps.map((step) => [step.publicId, step.id]));
-
-  // Resolve each public identifier to its UUID, failing if any does not belong
-  // to the flow's active steps.
-  const orderedStepIds: string[] = [];
-
-  for (const publicId of orderedStepPublicIds) {
-    const stepId = stepIdByPublicId.get(publicId);
-
-    if (!stepId) {
-      throw new ValidationError('One or more step IDs do not belong to this flow');
+  // Distinctness matters here beyond the usual: `flow_steps.order` is
+  // non-unique, so a duplicate id would reassign one step twice and silently
+  // leave another unmoved.
+  const orderedStepIds = resolveOrderedChildIds(
+    parseResult.data.orderedStepPublicIds,
+    activeSteps,
+    {
+      noun: 'Step',
+      strangerMessage: 'One or more step IDs do not belong to this flow',
     }
-
-    orderedStepIds.push(stepId);
-  }
+  );
 
   const reordered = await flowStepRepository.reorderSteps(db, flow.id, orderedStepIds);
 

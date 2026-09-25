@@ -4,21 +4,17 @@ import { Icon, Icons } from '@web/components/Icon';
 import { Logo } from '@web/components/logo';
 import { Text } from '@web/components/text';
 
-import { FlowBuilderView } from './FlowBuilderView';
-import { FlowListView } from './FlowListView';
-import { FlowMetadataView } from './FlowMetadataView';
 import { MemberProgrammeDetailView } from './MemberProgrammeDetailView';
 import { MemberProgrammePhaseView } from './MemberProgrammePhaseView';
 import { MemberProgrammesView } from './MemberProgrammesView';
 import { ProgrammeModelsView } from './ProgrammeModelsView';
 import { iconVar } from './prototype-labels';
-import { getContextNav, getMainNav } from './prototype-nav';
+import { getContextNav, getMainNav, PROTOTYPE_ENTRY_FLOW_ID } from './prototype-nav';
 import { PrototypeNavItem } from './PrototypeNavItem';
 import { usePrototypeStore } from './PrototypeStore';
 import { QuestionBankView } from './QuestionBankView';
 import { QuestionEditorView } from './QuestionEditorView';
 import { ScoringConfigView } from './ScoringConfigView';
-import { StepEditView } from './StepEditView';
 import { TemplateDetailView } from './TemplateDetailView';
 import { TemplateListView } from './TemplateListView';
 import { VideoLibraryView } from './VideoLibraryView';
@@ -27,14 +23,6 @@ import type { PrototypeView } from './prototype-types';
 
 const renderView = (view: PrototypeView): JSX.Element => {
   switch (view.name) {
-    case 'flows':
-      return <FlowListView />;
-    case 'flow-meta':
-      return <FlowMetadataView flowId={view.flowId} />;
-    case 'flow-builder':
-      return <FlowBuilderView flowId={view.flowId} />;
-    case 'step-edit':
-      return <StepEditView flowId={view.flowId} stepId={view.stepId} />;
     case 'scoring':
       return <ScoringConfigView flowId={view.flowId} />;
     case 'questions':
@@ -56,7 +44,7 @@ const renderView = (view: PrototypeView): JSX.Element => {
     case 'member-programme-phase':
       return <MemberProgrammePhaseView memberId={view.memberId} phaseId={view.phaseId} />;
     default:
-      return <FlowListView />;
+      return <ScoringConfigView flowId={PROTOTYPE_ENTRY_FLOW_ID} />;
   }
 };
 
@@ -84,7 +72,7 @@ export const PrototypeShell: React.FC = () => {
         <button
           type="button"
           onClick={() => {
-            navigate({ name: 'flows' });
+            navigate({ name: 'scoring', flowId: PROTOTYPE_ENTRY_FLOW_ID });
           }}
           aria-label="Assessment authoring home"
           className={`flex items-center gap-3 border-b border-white/20 py-5 text-white ${

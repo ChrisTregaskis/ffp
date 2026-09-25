@@ -11,14 +11,17 @@ export interface NavEntry {
 
 type Navigate = (view: PrototypeView) => void;
 
+/** Scoring is the only flow-scoped screen the prototype still carries. */
+export const PROTOTYPE_ENTRY_FLOW_ID = 'f-exercise-assessment';
+
 /** Top-level menu items (shown when not inside a flow / question). */
 export const getMainNav = (view: PrototypeView, navigate: Navigate): NavEntry[] => [
   {
-    label: 'Flows',
-    icon: Icons.CLIPBOARDLIST,
-    active: view.name === 'flows',
+    label: 'Scoring',
+    icon: Icons.TARGET,
+    active: view.name === 'scoring',
     onClick: () => {
-      navigate({ name: 'flows' });
+      navigate({ name: 'scoring', flowId: PROTOTYPE_ENTRY_FLOW_ID });
     },
   },
   {
@@ -115,60 +118,5 @@ export const getContextNav = (view: PrototypeView, navigate: Navigate): NavEntry
     ];
   }
 
-  const inFlow =
-    view.name === 'flow-meta' ||
-    view.name === 'flow-builder' ||
-    view.name === 'scoring' ||
-    view.name === 'step-edit';
-
-  if (!inFlow) {
-    return null;
-  }
-
-  const backToFlows: NavEntry = {
-    label: 'Back to flows',
-    icon: Icons.ARROWLEFT,
-    active: false,
-    onClick: () => {
-      navigate({ name: 'flows' });
-    },
-  };
-
-  // A flow being created has no builder/scoring yet — just the back link.
-  if (view.name === 'flow-meta' && view.flowId === 'new') {
-    return [
-      backToFlows,
-      { label: 'New flow', icon: Icons.FILETEXT, active: true, onClick: () => undefined },
-    ];
-  }
-
-  const flowId = view.flowId;
-
-  return [
-    backToFlows,
-    {
-      label: 'Edit details',
-      icon: Icons.FILETEXT,
-      active: view.name === 'flow-meta',
-      onClick: () => {
-        navigate({ name: 'flow-meta', flowId });
-      },
-    },
-    {
-      label: 'Build steps',
-      icon: Icons.CLIPBOARDLIST,
-      active: view.name === 'flow-builder' || view.name === 'step-edit',
-      onClick: () => {
-        navigate({ name: 'flow-builder', flowId });
-      },
-    },
-    {
-      label: 'Scoring',
-      icon: Icons.TARGET,
-      active: view.name === 'scoring',
-      onClick: () => {
-        navigate({ name: 'scoring', flowId });
-      },
-    },
-  ];
+  return null;
 };

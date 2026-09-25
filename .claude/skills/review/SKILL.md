@@ -19,7 +19,17 @@ You review code for a multi-tenant healthcare SaaS platform against **FFP-specif
 1. **Surface; never apply.** This pass writes findings only — it must **not** edit the code under review. Applying or declining a finding is the implementing session's call. Hand-off: `review-comments.md` out → author reads → author acts.
 2. **One rolling artefact.** All findings land in `.claude/local/notes/review-comments.md`. Summarise in chat with a _pointer_ to the file — don't scatter findings across chat.
 
-### Add-or-reconcile
+### Never recommend a destructive command
+
+**A review surfaces findings. It does not tell anyone to run `git checkout --`, `git reset`, `git clean`, a `DROP`, a `DELETE`, or anything else that destroys work.**
+
+This is not hypothetical. A review pass on T3-6 inferred from a diff that a sub-agent had "secretly" edited a file, called it a process breach, and recommended `git checkout --` on it. The edit was deliberate, verified in the browser, and fixed a live bug — running the command would have silently destroyed it. The implementing session checked the diff before acting, which is the only reason it survived.
+
+**You cannot tell, from a diff, why a change is there.** An unexplained edit is a question for the author, not evidence of a mistake. Write it as a finding — "this change is not covered by the brief; confirm it is intended" — and let the author answer.
+
+If you genuinely believe something should be reverted, say what and why, and leave the decision and the command to the author.
+
+## Add-or-reconcile
 
 Before writing, read the existing `.claude/local/notes/review-comments.md`:
 
@@ -73,9 +83,11 @@ Before writing, read the existing `.claude/local/notes/review-comments.md`:
 - [ ] Comments explain "why", not "what"; descriptive naming; 2-space indentation
 - [ ] No `.claude/local` or phase/gate/track labels in shipped code
 
-### [Warning] Duplicate surface & helper extraction
+### [Warning] Duplicate surface, divergence & helper extraction
 
-A required pre-merge check — structural duplication and bloat are flagged, not waved through.
+A required pre-merge check — structural duplication, divergence from the established shape, and bloat are flagged, not waved through.
+
+- [ ] **Matches its neighbours.** Duplication is code written twice; **divergence is code written differently from the sibling that already does this job** — and it is the harder one to see, because nothing in the diff looks wrong. **Open the nearest sibling implementation before judging new code**: the other service in the domain, the other repository, the other handler on the same resource. Then check the new code against it for return contract (throws `NotFoundError` vs returns `null`), client type, error classes, transaction and RLS handling, gating, logging shape, naming and argument order. A deliberate divergence is fine — it needs a comment saying why. An accidental one is a finding: cite the sibling, name the specific difference, and say which shape should win.
 
 - [ ] **No parallel implementations of an existing procedure.** Before approving a new helper, grep for an existing one. Common shared surfaces: `applyPagination`, `escapeLikePattern`, `formatDateOnly`, `buildPaginationMeta`, `withAdminContext` (backend); `@ffp/core` schemas/types; web components (`ComposableForm`, `Table`, form fields) and hooks (`useApiTable`, `useXMutations`). Cite **both** locations (existing pattern + new duplicate) and name the helper to call instead. Compare structure, not text — near-verbatim bodies with renamed vars are still duplicates.
 - [ ] **Extend over re-create.** Re-implementing something `@ffp/core` already exports, or a second component/hook that duplicates an existing one, is Blocking unless the divergence is genuinely intentional (capture the rationale in a comment). Bring everyone up to the richer behaviour, not down.

@@ -52,11 +52,11 @@ export const programmes = pgTable(
     /** Programme lifecycle status */
     status: programmeStatusEnum('status').notNull().default('active'),
     /** When the user first started a session */
-    startedAt: timestamp('started_at'),
+    startedAt: timestamp('started_at', { withTimezone: true }),
     /** When all phases/sessions were completed */
-    completedAt: timestamp('completed_at'),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
     /** When the programme was archived */
-    archivedAt: timestamp('archived_at'),
+    archivedAt: timestamp('archived_at', { withTimezone: true }),
     /** Why archived: reassessment, manual, expired */
     archivedReason: varchar('archived_reason', { length: 50 }),
     /** Successor programme (self-referential linked list of programme history) */
@@ -68,8 +68,8 @@ export const programmes = pgTable(
     totalPhases: integer('total_phases'),
     /** Snapshot of template's sessions per phase at assignment time */
     sessionsPerPhase: integer('sessions_per_phase'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     publicIdIndex('programmes', table.publicId),

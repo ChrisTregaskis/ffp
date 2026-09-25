@@ -6,16 +6,15 @@ import type {
   UpdateLocationInput,
 } from '@ffp/core';
 
+import type { SplitIdentifierVariables } from '@web/lib/api/client';
 import type { CreateLocationMutationInput } from '@web/lib/api/endpoints';
 import { adminLocationsApi } from '@web/lib/api/endpoints';
+import { invalidateListsAndDetail } from '@web/lib/query';
 import { locationKeys } from '@web/lib/query/keys';
 
 import type { UseMutationResult } from '@tanstack/react-query';
 
-export interface UpdateLocationVariables {
-  id: string;
-  data: UpdateLocationInput;
-}
+export type UpdateLocationVariables = SplitIdentifierVariables<UpdateLocationInput>;
 
 /** Mutation hook for creating a location under an organisation. */
 export const useCreateLocationMutation = (): UseMutationResult<
@@ -45,8 +44,7 @@ export const useUpdateLocationMutation = (): UseMutationResult<
   return useMutation({
     mutationFn: ({ id, data }: UpdateLocationVariables) => adminLocationsApi.update(id, data),
     onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: locationKeys.lists() });
-      void queryClient.invalidateQueries({ queryKey: locationKeys.detail(variables.id) });
+      invalidateListsAndDetail(queryClient, locationKeys, variables);
     },
   });
 };

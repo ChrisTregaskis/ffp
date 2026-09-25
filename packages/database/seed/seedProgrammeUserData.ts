@@ -4,6 +4,7 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../src/schema/index.js';
 import { programmes, programmePhases, userSessions } from '../src/schema/index.js';
 import { createLogger } from '../src/lib/logger.js';
+import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.js';
 import { PROGRAMME_TEMPLATE_IDS } from './seedProgrammeTemplates.js';
 import { TEMPLATE_PHASE_IDS, TEMPLATE_SESSION_IDS } from './seedTemplateHierarchy.js';
 
@@ -55,14 +56,14 @@ const US = USER_SESSION_IDS;
 
 /**
  * Active programme for the test programme user.
- * Uses the Gentle Mobility Programme template (the only fully seeded template).
+ * Uses the level 1 shell, the only one with a full hierarchy.
  */
 const DEFAULT_PROGRAMME: NewProgramme = {
   id: PROGRAMME_IDS['test-user-active'],
   organisationId: TEST_ORGANISATION_ID,
   userId: TEST_USER_ID,
-  programmeTemplateId: PROGRAMME_TEMPLATE_IDS['gentle-mobility-programme'],
-  name: 'Gentle Mobility Programme',
+  programmeTemplateId: PROGRAMME_TEMPLATE_IDS[LEVEL_PROGRAMME_SLUGS[1]],
+  name: 'Level 1: Gentle Mobility',
   description:
     'A personalised programme focusing on gentle mobility, balance, and foundational strength.',
   status: 'active',
@@ -271,7 +272,7 @@ const seedUserSessions = async (
  * Seeds programme data for the test programme user.
  *
  * Creates:
- * - 1 active programme (Gentle Mobility Programme)
+ * - 1 active programme (level 1 shell)
  * - 4 programme phases (Phase 1 completed, Phase 2 in progress, Phases 3-4 not started)
  * - 6 user sessions (Phase 1: 3 completed, Phase 2: 2 completed + 1 in progress)
  *
