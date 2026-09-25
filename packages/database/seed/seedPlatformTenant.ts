@@ -4,6 +4,7 @@ import { sql } from 'drizzle-orm';
 import * as schema from '../src/schema/index.js';
 import { organisations } from '../src/schema/index.js';
 import { createLogger } from '../src/lib/logger.js';
+import { FLOW_IDS } from './seedAssessmentFlows.js';
 import type { PlatformOrganisationSeed } from './types.js';
 
 const logger = createLogger('seed-platform');
@@ -22,6 +23,12 @@ export const seedPlatformOrganisation = async (
   logger.warn('RLS BYPASSED for seed operation');
   await db.execute(sql`SET LOCAL row_security = off`);
 
+  // The platform default is the flow members get when their organisation sets none;
+  // without it the lookup falls back to an arbitrary active flow
+  const configured =
+    typeof data.settings === 'object' && data.settings !== null ? data.settings : {};
+  const settings = { defaultAssessmentFlowId: FLOW_IDS.WELLNESS, ...configured };
+
   // Upsert platform organisation - insert or update if exists
   await db
     .insert(organisations)
@@ -29,7 +36,7 @@ export const seedPlatformOrganisation = async (
       id: data.id,
       type: data.type,
       name: data.name,
-      settings: data.settings,
+      settings,
       createdAt: sql`${data.createdAt}::timestamp`,
       updatedAt: sql`${data.updatedAt}::timestamp`,
     })
@@ -38,7 +45,7 @@ export const seedPlatformOrganisation = async (
       set: {
         type: data.type,
         name: data.name,
-        settings: data.settings,
+        settings,
         updatedAt: sql`${data.updatedAt}::timestamp`,
       },
     });

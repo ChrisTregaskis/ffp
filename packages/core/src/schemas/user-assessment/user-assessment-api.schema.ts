@@ -106,7 +106,7 @@ export const assessmentResultsResponseSchema = z.object({
   scores: userAssessmentScoresSchema.nullable(),
   /** Recommended programme ID (null until programme assigned) */
   programmeId: z.guid().nullable(),
-  /** Display name of the recommended programme (null until programme assigned) */
+  /** Display name of the recommended programme (from the scoring recommendation, falling back to the linked programme; null when neither is known) */
   programmeName: z.string().nullable(),
 });
 

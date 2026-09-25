@@ -16,6 +16,7 @@ export * from './branching.constants';
 export * from './location.constants';
 export * from './flow.constants';
 export * from './job.constants';
+export * from './level-scoring.constants';
 export * from './programme.constants';
 export * from './public-id.constants';
 export * from './session.constants';

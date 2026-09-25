@@ -4,6 +4,7 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../src/schema/index.js';
 import { templatePhases, templateSessions, sessionExercises } from '../src/schema/index.js';
 import { createLogger } from '../src/lib/logger.js';
+import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.js';
 import { PROGRAMME_TEMPLATE_IDS } from './seedProgrammeTemplates.js';
 import { VIDEO_IDS } from './seedVideos.js';
 
@@ -17,13 +18,15 @@ const logger = createLogger('seed-template-hierarchy');
  * Deterministic UUIDs for template phases
  *
  * UUID Pattern: 88888888-8888-8888-8888-8888888800XX
- * Gentle Mobility Programme — 4 phases (01–04)
+ * Level 1 shell — 4 phases (01–04); level 2 and 3 shells — 1 phase each (05, 06)
  */
 export const TEMPLATE_PHASE_IDS = {
   'gentle-mobility-phase-1': '88888888-8888-8888-8888-888888880001',
   'gentle-mobility-phase-2': '88888888-8888-8888-8888-888888880002',
   'gentle-mobility-phase-3': '88888888-8888-8888-8888-888888880003',
   'gentle-mobility-phase-4': '88888888-8888-8888-8888-888888880004',
+  'active-wellness-phase-1': '88888888-8888-8888-8888-888888880005',
+  'energised-dynamic-phase-1': '88888888-8888-8888-8888-888888880006',
 } as const;
 
 /**
@@ -45,6 +48,8 @@ export const TEMPLATE_SESSION_IDS = {
   'gentle-mobility-s4-1': '99999999-9999-9999-8999-999999990010',
   'gentle-mobility-s4-2': '99999999-9999-9999-8999-999999990011',
   'gentle-mobility-s4-3': '99999999-9999-9999-8999-999999990012',
+  'active-wellness-s1-1': '99999999-9999-9999-8999-999999990013',
+  'energised-dynamic-s1-1': '99999999-9999-9999-8999-999999990014',
 } as const;
 
 /**
@@ -106,11 +111,15 @@ export const SESSION_EXERCISE_IDS = {
   'gm-p4s3-e1': '22222222-2222-2222-8222-222222220038',
   'gm-p4s3-e2': '22222222-2222-2222-8222-222222220039',
   'gm-p4s3-e3': '22222222-2222-2222-8222-222222220040',
+  'aw-p1s1-e0': '22222222-2222-2222-8222-222222220041',
+  'aw-p1s1-e1': '22222222-2222-2222-8222-222222220042',
+  'ed-p1s1-e0': '22222222-2222-2222-8222-222222220043',
+  'ed-p1s1-e1': '22222222-2222-2222-8222-222222220044',
 } as const;
 
 // ─── Template Phases ───────────────────────────────────────────────────────────
 
-const GENTLE_MOBILITY_TEMPLATE_ID = PROGRAMME_TEMPLATE_IDS['gentle-mobility-programme'];
+const GENTLE_MOBILITY_TEMPLATE_ID = PROGRAMME_TEMPLATE_IDS[LEVEL_PROGRAMME_SLUGS[1]];
 
 const DEFAULT_TEMPLATE_PHASES: NewTemplatePhase[] = [
   {
@@ -152,6 +161,23 @@ const DEFAULT_TEMPLATE_PHASES: NewTemplatePhase[] = [
       'Review and consolidation phase combining all movement patterns. ' +
       'Prepares the user for reassessment or progression to a new programme.',
     sessionCount: 3,
+  },
+  // Level 2 and level 3 shells: one phase, one session, just enough to generate a programme
+  {
+    id: TEMPLATE_PHASE_IDS['active-wellness-phase-1'],
+    programmeTemplateId: PROGRAMME_TEMPLATE_IDS[LEVEL_PROGRAMME_SLUGS[2]],
+    phaseNumber: 1,
+    name: 'Getting Moving',
+    description: 'Baseline movement and functional strength at a moderate pace.',
+    sessionCount: 1,
+  },
+  {
+    id: TEMPLATE_PHASE_IDS['energised-dynamic-phase-1'],
+    programmeTemplateId: PROGRAMME_TEMPLATE_IDS[LEVEL_PROGRAMME_SLUGS[3]],
+    phaseNumber: 1,
+    name: 'Full Energy',
+    description: 'Higher-intensity bodyweight work.',
+    sessionCount: 1,
   },
 ];
 
@@ -257,6 +283,22 @@ const DEFAULT_TEMPLATE_SESSIONS: NewTemplateSession[] = [
     name: 'Full Programme Review',
     description: 'Final session combining strength, mobility, and balance from all phases.',
     estimatedDurationMinutes: 30,
+  },
+  {
+    id: TEMPLATE_SESSION_IDS['active-wellness-s1-1'],
+    templatePhaseId: TEMPLATE_PHASE_IDS['active-wellness-phase-1'],
+    sessionNumber: 1,
+    name: 'Active Wellness Starter',
+    description: 'A moderate session of functional strength moves.',
+    estimatedDurationMinutes: 20,
+  },
+  {
+    id: TEMPLATE_SESSION_IDS['energised-dynamic-s1-1'],
+    templatePhaseId: TEMPLATE_PHASE_IDS['energised-dynamic-phase-1'],
+    sessionNumber: 1,
+    name: 'Energised Starter',
+    description: 'A brisk bodyweight session.',
+    estimatedDurationMinutes: 25,
   },
 ];
 
@@ -727,12 +769,48 @@ const DEFAULT_SESSION_EXERCISES: NewSessionExercise[] = [
     restSeconds: 30,
     notes: 'Final balance challenge — try with eyes closed for 10 seconds.',
   },
+  {
+    id: SESSION_EXERCISE_IDS['aw-p1s1-e0'],
+    templateSessionId: TEMPLATE_SESSION_IDS['active-wellness-s1-1'],
+    videoId: V['bodyweight-squat'],
+    orderIndex: 0,
+    sets: 3,
+    reps: '10',
+    restSeconds: 45,
+  },
+  {
+    id: SESSION_EXERCISE_IDS['aw-p1s1-e1'],
+    templateSessionId: TEMPLATE_SESSION_IDS['active-wellness-s1-1'],
+    videoId: V['glute-bridge'],
+    orderIndex: 1,
+    sets: 3,
+    reps: '12',
+    restSeconds: 45,
+  },
+  {
+    id: SESSION_EXERCISE_IDS['ed-p1s1-e0'],
+    templateSessionId: TEMPLATE_SESSION_IDS['energised-dynamic-s1-1'],
+    videoId: V['bodyweight-squat'],
+    orderIndex: 0,
+    sets: 4,
+    reps: '15',
+    restSeconds: 30,
+  },
+  {
+    id: SESSION_EXERCISE_IDS['ed-p1s1-e1'],
+    templateSessionId: TEMPLATE_SESSION_IDS['energised-dynamic-s1-1'],
+    videoId: V['wall-push-up'],
+    orderIndex: 1,
+    sets: 4,
+    reps: '15',
+    restSeconds: 30,
+  },
 ];
 
 // ─── Seed Functions ────────────────────────────────────────────────────────────
 
 /**
- * Seeds template phases for the Gentle Mobility Programme.
+ * Seeds template phases for the level shells.
  *
  * This seed is IDEMPOTENT — safe to run multiple times.
  * Phases are checked by ID before inserting (existing records are skipped).
@@ -869,7 +947,7 @@ const seedExercises = async (
 };
 
 /**
- * Seeds the complete template hierarchy for the Gentle Mobility Programme.
+ * Seeds the complete template hierarchy for the level shells.
  *
  * Calls seedPhases → seedSessions → seedExercises in FK dependency order.
  * Each sub-seed is idempotent — safe to run multiple times.
@@ -884,7 +962,7 @@ const seedExercises = async (
 export const seedTemplateHierarchy = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool }
 ): Promise<number> => {
-  logger.info('Seeding template hierarchy (Gentle Mobility Programme)...');
+  logger.info('Seeding template hierarchy (level shells)...');
 
   const phasesCreated = await seedPhases(db);
   const sessionsCreated = await seedSessions(db);

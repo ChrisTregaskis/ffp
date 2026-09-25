@@ -12,6 +12,7 @@ import * as jobQueueService from '../../src/jobs/job-queue.service';
 import * as contextModule from '../../src/lib/context';
 import * as databaseModule from '../../src/lib/database';
 import { NotFoundError, ValidationError } from '../../src/lib/errors';
+import * as programmeRepository from '../../src/programmes/programme.repository';
 import * as questionRepository from '../../src/questions/question.repository';
 
 import type { UserAssessmentAnswer } from '../../src/assessments/answer.repository';
@@ -28,6 +29,7 @@ vi.mock('../../src/assessments/flow.repository');
 vi.mock('../../src/assessments/user-assessment.repository');
 vi.mock('../../src/assessments/answer.repository');
 vi.mock('../../src/questions/question.repository');
+vi.mock('../../src/programmes/programme.repository');
 vi.mock('../../src/jobs/job-queue.service');
 vi.mock('../../src/lib/context', async (importOriginal) => {
   const actual = await importOriginal<ContextModule>();
@@ -58,6 +60,7 @@ const mockedDatabaseModule = vi.mocked(databaseModule);
 const mockedJobQueueService = vi.mocked(jobQueueService);
 const mockedAnswerRepo = vi.mocked(answerRepository);
 const mockedQuestionRepo = vi.mocked(questionRepository);
+const mockedProgrammeRepo = vi.mocked(programmeRepository);
 
 const createUserContext = (): OrganisationContext => ({
   actor: {
@@ -812,6 +815,91 @@ describe('Assessment Service', () => {
 
       expect(result.jobId).toBe(jobId);
       expect(mockedJobQueueService.queueJob).toHaveBeenCalled();
+    });
+  });
+
+  describe('getAssessmentResults', () => {
+    const userId = randomUUID();
+    const programmeId = randomUUID();
+
+    const createScoredAssessment = (recommendedTemplateSlug?: string): UserAssessment => ({
+      id: randomUUID(),
+      organisationId: randomUUID(),
+      userId,
+      flowId: randomUUID(),
+      currentStep: 4,
+      status: 'completed',
+      scores: { dimensions: [], recommendedTemplateSlug, scoredAt: new Date() },
+      programmeId,
+      visitedStepIds: [],
+      warningsShown: [],
+      startedAt: new Date(),
+      submittedAt: new Date(),
+      completedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    beforeEach(() => {
+      mockedContextModule.getUserIdFromContext.mockResolvedValue(userId);
+      mockedProgrammeRepo.findProgrammeById.mockResolvedValue({
+        name: 'Level 1: Gentle Mobility',
+      } as Awaited<ReturnType<typeof programmeRepository.findProgrammeById>>);
+    });
+
+    it('names the recommended programme, not the linked one, on a reassessment', async () => {
+      const assessment = createScoredAssessment('level-2-active-wellness');
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
+      mockedProgrammeRepo.findTemplateBySlug.mockResolvedValue({
+        name: 'Level 2: Active Wellness',
+        isActive: true,
+      } as Awaited<ReturnType<typeof programmeRepository.findTemplateBySlug>>);
+
+      const result = await assessmentService.getAssessmentResults(
+        assessment.id,
+        createUserContext()
+      );
+
+      expect(mockedProgrammeRepo.findTemplateBySlug).toHaveBeenCalledWith(
+        'level-2-active-wellness'
+      );
+      expect(result.programmeName).toBe('Level 2: Active Wellness');
+      expect(result.programmeId).toBe(programmeId);
+      expect(mockedProgrammeRepo.findProgrammeById).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['no longer exists', null],
+      ['is inactive', { name: 'Level 2: Active Wellness', isActive: false }],
+    ])(
+      'falls back to the linked programme when the recommended template %s',
+      async (_, template) => {
+        const assessment = createScoredAssessment('level-2-active-wellness');
+        mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
+        mockedProgrammeRepo.findTemplateBySlug.mockResolvedValue(
+          template as Awaited<ReturnType<typeof programmeRepository.findTemplateBySlug>>
+        );
+
+        const result = await assessmentService.getAssessmentResults(
+          assessment.id,
+          createUserContext()
+        );
+
+        expect(result.programmeName).toBe('Level 1: Gentle Mobility');
+      }
+    );
+
+    it('falls back to the linked programme when scoring recommended nothing', async () => {
+      const assessment = createScoredAssessment();
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
+
+      const result = await assessmentService.getAssessmentResults(
+        assessment.id,
+        createUserContext()
+      );
+
+      expect(mockedProgrammeRepo.findTemplateBySlug).not.toHaveBeenCalled();
+      expect(result.programmeName).toBe('Level 1: Gentle Mobility');
     });
   });
 });

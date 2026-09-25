@@ -18,7 +18,7 @@ export const QUESTION_TYPES = [
 ] as const;
 export type QuestionType = (typeof QUESTION_TYPES)[number];
 
-export const SCORE_DIMENSIONS = ['strength', 'balance', 'mobility', 'pain', 'general'] as const;
+export const SCORE_DIMENSIONS = ['activity', 'age', 'strength', 'mobility', 'balance'] as const;
 export type ScoreDimension = (typeof SCORE_DIMENSIONS)[number];
 
 export const FLOW_STEP_TYPES = [

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { QUESTION_TYPES } from '@ffp/database/constants';
+import { QUESTION_TYPES, SCORE_DIMENSIONS } from '@ffp/database/constants';
 
 import { publicIdSchema } from './public-id.schema';
 
@@ -30,17 +30,8 @@ export const questionValidationSchema = z.object({
   customError: z.string().optional(),
 });
 
-/**
- * Score dimension enumeration - defines the scoring dimensions for assessments
- *
- * Questions can contribute to different scoring dimensions:
- * - strength: Physical strength assessments
- * - balance: Balance and stability assessments
- * - mobility: Range of motion and flexibility
- * - pain: Pain level and discomfort tracking
- * - general: General fitness or non-categorised scoring
- */
-export const scoreDimensionSchema = z.enum(['strength', 'balance', 'mobility', 'pain', 'general']);
+/** The scoring dimension a question contributes to (values from `SCORE_DIMENSIONS`) */
+export const scoreDimensionSchema = z.enum(SCORE_DIMENSIONS);
 
 export const assessmentQuestionSchema = z
   .object({
