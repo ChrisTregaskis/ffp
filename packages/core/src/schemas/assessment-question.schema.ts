@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { QUESTION_TYPES, SCORE_DIMENSIONS } from '@ffp/database/constants';
 
+import { createPaginatedResponseSchema } from './pagination.schema';
 import { publicIdSchema } from './public-id.schema';
 
 export const questionTypeSchema = z.enum(QUESTION_TYPES);
@@ -28,6 +29,14 @@ export const questionValidationSchema = z.object({
   pattern: z.string().optional(),
   /** Custom error message for validation failures */
   customError: z.string().optional(),
+});
+
+/**
+ * Validation as stored: no `required` default, so a read or a partial update
+ * never reports or writes a value that was not supplied.
+ */
+const storedQuestionValidationSchema = questionValidationSchema.extend({
+  required: z.boolean().optional(),
 });
 
 /** The scoring dimension a question contributes to (values from `SCORE_DIMENSIONS`) */
@@ -200,9 +209,8 @@ export const updateQuestionSchema = questionWriteBaseSchema
     description: z.string().nullable(),
     videoId: z.guid().nullable(),
     scoreDimension: scoreDimensionSchema.nullable(),
-    // `.partial()` does not reach inside `validation`, so the `required` default
-    // would be forced true by any update touching it. Same trap as `isActive`.
-    validation: questionValidationSchema.extend({ required: z.boolean().optional() }),
+    // `.partial()` does not reach inside `validation`; same trap as `isActive`.
+    validation: storedQuestionValidationSchema.nullable(),
   })
   .partial();
 
@@ -219,6 +227,61 @@ export const questionShapeSchema = z
   })
   .superRefine(refineQuestionShape);
 
+/** A question as the admin surface reads it back; unset columns arrive as `null`. */
+export const adminQuestionSchema = z.object({
+  id: z.guid(),
+  publicId: publicIdSchema,
+  slug: z.string(),
+  type: questionTypeSchema,
+  questionText: z.string(),
+  description: z.string().nullable(),
+  options: z.array(questionOptionSchema).nullable(),
+  validation: storedQuestionValidationSchema.nullable(),
+  videoId: z.guid().nullable(),
+  scoreDimension: scoreDimensionSchema.nullable(),
+  isActive: z.boolean(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+});
+
+/**
+ * Where a question is referenced. Scoring config names questions by UUID in
+ * jsonb with no foreign key, so deactivating a scored question silently drops
+ * it from scoring — this is what lets the admin surface warn first.
+ */
+export const questionUsageSchema = z.object({
+  templateCount: z.number().int().nonnegative(),
+  scoringFlowCount: z.number().int().nonnegative(),
+});
+
+/**
+ * One question with its usage and linked video. `linkedVideo` is null when no
+ * video is linked or the stored `videoId` no longer resolves.
+ */
+export const adminQuestionDetailSchema = adminQuestionSchema.extend({
+  usage: questionUsageSchema,
+  linkedVideo: z.object({ publicId: publicIdSchema, title: z.string() }).nullable(),
+});
+
+/** The envelope get, create and update all answer with. */
+export const adminQuestionResponseSchema = z.object({ question: adminQuestionDetailSchema });
+
+/**
+ * Filters for GET /admin/questions. Values arrive as query-string strings, so
+ * `isActive` is coerced rather than declared a boolean.
+ */
+export const questionListFiltersSchema = z.object({
+  search: z.string().optional(),
+  type: questionTypeSchema.optional(),
+  isActive: z
+    .enum(['true', 'false'])
+    .transform((value) => value === 'true')
+    .optional(),
+});
+
+/** Paginated response for GET /admin/questions. */
+export const paginatedQuestionListSchema = createPaginatedResponseSchema(adminQuestionSchema);
+
 export type QuestionType = z.infer<typeof questionTypeSchema>;
 export type QuestionOption = z.infer<typeof questionOptionSchema>;
 export type QuestionValidation = z.infer<typeof questionValidationSchema>;
@@ -227,3 +290,9 @@ export type AssessmentQuestion = z.infer<typeof assessmentQuestionSchema>;
 export type QuestionsArray = z.infer<typeof questionsArraySchema>;
 export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;
 export type UpdateQuestionInput = z.infer<typeof updateQuestionSchema>;
+export type AdminQuestion = z.infer<typeof adminQuestionSchema>;
+export type QuestionUsage = z.infer<typeof questionUsageSchema>;
+export type AdminQuestionDetail = z.infer<typeof adminQuestionDetailSchema>;
+export type AdminQuestionResponse = z.infer<typeof adminQuestionResponseSchema>;
+export type QuestionListFilters = z.infer<typeof questionListFiltersSchema>;
+export type PaginatedQuestionList = z.infer<typeof paginatedQuestionListSchema>;

@@ -1,19 +1,29 @@
 import {
+  paginationInputSchema,
+  questionListFiltersSchema,
+  type AdminQuestion,
+  type PaginationMeta,
+} from '@ffp/core';
+import {
   type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
   withErrorHandling,
   questionService,
   ForbiddenError,
   isUserActor,
-  type Question,
 } from '@ffp/core/server';
 
 interface ListQuestionsResponse {
-  questions: Question[];
-  count: number;
+  data: AdminQuestion[];
+  pagination: PaginationMeta;
 }
 
-/** GET /admin/questions — list question bank entries. Requires the system_admin role. */
+/**
+ * GET /admin/questions — list question bank entries with pagination, search
+ * (question text and slug), sort and type / status filters.
+ * Query params: page, pageSize, sortBy, sortDirection, search, type, isActive.
+ * Requires the system_admin role.
+ */
 export const handler = withErrorHandling(
   async (event: APIGatewayProxyEventV2WithJWT): Promise<ListQuestionsResponse> => {
     const context = extractUserContext(event);
@@ -22,13 +32,21 @@ export const handler = withErrorHandling(
       throw new ForbiddenError('Only system administrators can list questions');
     }
 
-    const activeOnly = event.queryStringParameters?.activeOnly === 'true';
+    const params = event.queryStringParameters ?? {};
 
-    const questions = await questionService.listQuestionsService(context, { activeOnly });
+    const paginationInput = paginationInputSchema.parse({
+      page: params.page,
+      pageSize: params.pageSize,
+      sortBy: params.sortBy,
+      sortDirection: params.sortDirection,
+    });
 
-    return {
-      questions,
-      count: questions.length,
-    };
+    const filters = questionListFiltersSchema.parse({
+      search: params.search,
+      type: params.type,
+      isActive: params.isActive,
+    });
+
+    return await questionService.listQuestionsService(context, paginationInput, filters);
   }
 );

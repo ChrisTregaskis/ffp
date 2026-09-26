@@ -1,14 +1,24 @@
-import { getDb } from '@ffp/database';
+import { getDb, type DbClient } from '@ffp/database';
 
 import { type OrganisationContext } from '../lib/context';
 import { ConflictError, NotFoundError, ValidationError } from '../lib/errors';
 import {
+  adminQuestionSchema,
   createQuestionSchema,
   questionShapeSchema,
   updateQuestionSchema,
+  type AdminQuestion,
+  type AdminQuestionDetail,
+  type QuestionListFilters,
   type QuestionType,
   type UpdateQuestionInput,
 } from '../schemas/assessment-question.schema';
+import {
+  buildPaginationMeta,
+  type PaginationInput,
+  type PaginationMeta,
+} from '../schemas/pagination.schema';
+import * as videoRepository from '../videos/video.repository';
 
 import * as questionRepository from './question.repository';
 
@@ -24,31 +34,70 @@ const RANGED_QUESTION_TYPES: readonly QuestionType[] = [
   'video-response',
 ];
 
-/** List question bank entries. `_ctx` is unused — questions are system catalogue content. */
+/** List question bank entries — one page, filtered. `_ctx` is unused: questions are catalogue content. */
 export async function listQuestionsService(
   _ctx: OrganisationContext,
-  options?: { activeOnly?: boolean }
-): Promise<Question[]> {
+  paginationInput: PaginationInput,
+  filters: QuestionListFilters
+): Promise<{ data: AdminQuestion[]; pagination: PaginationMeta }> {
   const db = getDb();
 
-  return await questionRepository.findAllQuestions(db, options);
+  const records = await questionRepository.findQuestionPage(db, paginationInput, filters);
+  const total = await questionRepository.countQuestions(db, filters);
+
+  return {
+    data: records.map((record) => adminQuestionSchema.parse(record)),
+    pagination: buildPaginationMeta(paginationInput, total),
+  };
 }
 
-/** Get a question by public identifier. */
+/** The admin read of one question: the row, where it is used, and its linked video. */
+async function toQuestionDetail(db: DbClient, question: Question): Promise<AdminQuestionDetail> {
+  const [usage, video] = await Promise.all([
+    questionRepository.findQuestionUsage(db, question.id),
+    question.videoId ? videoRepository.findVideoById(db, question.videoId) : null,
+  ]);
+
+  return {
+    ...adminQuestionSchema.parse(question),
+    usage,
+    linkedVideo: video ? { publicId: video.publicId, title: video.title } : null,
+  };
+}
+
+/** Get a question by public identifier, with its usage and linked video. */
 export async function getQuestionService(
   _ctx: OrganisationContext,
   publicId: string
-): Promise<Question | null> {
+): Promise<AdminQuestionDetail | null> {
   const db = getDb();
 
-  return await questionRepository.findQuestionByPublicId(db, publicId);
+  const question = await questionRepository.findQuestionByPublicId(db, publicId);
+
+  return question ? await toQuestionDetail(db, question) : null;
+}
+
+/**
+ * `videoId` carries no foreign key, so a video that is missing or unpublished
+ * would only surface when a member reached the question.
+ */
+async function assertVideoActive(db: DbClient, videoId: string | null | undefined): Promise<void> {
+  if (!videoId) {
+    return;
+  }
+
+  const video = await videoRepository.findVideoById(db, videoId);
+
+  if (video?.status !== 'active') {
+    throw new ValidationError('Linked video not found or not active', { videoId });
+  }
 }
 
 /** Create a question. Enforces slug uniqueness (409 on collision). */
 export async function createQuestionService(
   _ctx: OrganisationContext,
   input: unknown
-): Promise<Question> {
+): Promise<AdminQuestionDetail> {
   const parseResult = createQuestionSchema.safeParse(input);
 
   if (!parseResult.success) {
@@ -65,7 +114,11 @@ export async function createQuestionService(
     });
   }
 
-  return await questionRepository.createQuestion(db, parseResult.data);
+  await assertVideoActive(db, parseResult.data.videoId);
+
+  const question = await questionRepository.createQuestion(db, parseResult.data);
+
+  return await toQuestionDetail(db, question);
 }
 
 /**
@@ -113,9 +166,9 @@ function assertMergedShape(stored: Question, update: UpdateQuestionInput): void 
   const parseResult = questionShapeSchema.safeParse({
     type: update.type ?? stored.type,
     options: update.options ?? stored.options,
-    validation: update.validation ?? stored.validation,
     // `??` would be wrong on a clearable field: an explicit `null` means clear,
     // and must not fall through to the stored value.
+    validation: update.validation !== undefined ? update.validation : stored.validation,
     videoId: update.videoId !== undefined ? update.videoId : stored.videoId,
   });
 
@@ -134,7 +187,7 @@ export async function updateQuestionService(
   _ctx: OrganisationContext,
   publicId: string,
   input: unknown
-): Promise<Question> {
+): Promise<AdminQuestionDetail> {
   const parseResult = updateQuestionSchema.safeParse(input);
 
   if (!parseResult.success) {
@@ -157,7 +210,15 @@ export async function updateQuestionService(
 
   assertMergedShape(question, update);
 
-  return await questionRepository.updateQuestion(db, question.id, update);
+  // Only a newly linked video is checked, so a stored link that has since gone
+  // stale does not block every other edit to the question.
+  if (update.videoId !== question.videoId) {
+    await assertVideoActive(db, update.videoId);
+  }
+
+  const updated = await questionRepository.updateQuestion(db, question.id, update);
+
+  return await toQuestionDetail(db, updated);
 }
 
 /** Deactivate a question (soft delete), resolved by public identifier. */
