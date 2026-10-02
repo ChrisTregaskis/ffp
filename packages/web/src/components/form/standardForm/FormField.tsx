@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { FieldError } from '@web/components/atoms/FieldError';
 import { Text } from '@web/components/text';
 
 import type { ReactNode } from 'react';
@@ -11,6 +12,10 @@ export interface FormFieldProps {
   label: string;
   /** Whether the field is required (shows asterisk) */
   isRequired?: boolean;
+  /** Short guidance shown under the control */
+  hint?: string;
+  /** Id for the hint element (for aria-describedby) */
+  hintId?: string;
   /** Error message to display */
   error?: string;
   /** Id for the error element (for aria-describedby) */
@@ -22,12 +27,14 @@ export interface FormFieldProps {
 }
 
 /**
- * Shared wrapper for form fields providing consistent label, required indicator, and error display.
+ * Shared wrapper for form fields providing consistent label, required indicator, hint and error display.
  */
 export const FormField: React.FC<FormFieldProps> = ({
   htmlFor,
   label,
   isRequired,
+  hint,
+  hintId,
   error,
   errorId,
   children,
@@ -45,16 +52,17 @@ export const FormField: React.FC<FormFieldProps> = ({
 
     {children}
 
-    {error && (
+    {hint && (
       <Text
         as="p"
-        id={errorId}
-        styleProps={{ size: 'sm', colour: 'destructive' }}
+        id={hintId}
+        styleProps={{ size: 'xs', colour: 'muted-foreground' }}
         className="mt-1"
-        role="alert"
       >
-        {error}
+        {hint}
       </Text>
     )}
+
+    {error && <FieldError id={errorId} message={error} />}
   </div>
 );

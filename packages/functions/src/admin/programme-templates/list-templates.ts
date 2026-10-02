@@ -33,12 +33,7 @@ export const handler = withErrorHandling(
 
     const params = event.queryStringParameters ?? {};
 
-    const paginationInput = paginationInputSchema.parse({
-      page: params.page,
-      pageSize: params.pageSize,
-      sortBy: params.sortBy,
-      sortDirection: params.sortDirection,
-    });
+    const paginationInput = paginationInputSchema.parse(params);
 
     const query = templateListQuerySchema.parse(params);
 

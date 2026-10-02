@@ -143,7 +143,7 @@ export async function findAllVideos(
   const query = db
     .select()
     .from(videos)
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .$dynamic();
 
   return await applyPagination(query, paginationInput, ADMIN_SORTABLE_COLUMNS);
@@ -158,7 +158,7 @@ export async function countAllVideos(
   const result = await db
     .select({ count: count() })
     .from(videos)
-    .where(conditions.length > 0 ? and(...conditions) : undefined);
+    .where(and(...conditions));
 
   return result[0].count;
 }

@@ -1,9 +1,6 @@
 import React from 'react';
 
-import { Button } from '@web/components/button';
-import { Text } from '@web/components/text';
-
-import { Modal } from './Modal';
+import { ConfirmModal } from './ConfirmModal';
 
 export interface UnsavedChangesModalProps {
   /** Whether the modal is visible */
@@ -20,24 +17,13 @@ export const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
   onStay,
   onLeave,
 }) => (
-  <Modal
+  <ConfirmModal
     isOpen={isOpen}
     onClose={onStay}
+    onConfirm={onLeave}
     title="Unsaved Changes"
-    size="sm"
-    footer={
-      <>
-        <Button variant="secondary" onClick={onStay}>
-          Keep Editing
-        </Button>
-        <Button variant="destructive" onClick={onLeave}>
-          Leave Without Saving
-        </Button>
-      </>
-    }
-  >
-    <Text as="p" styleProps={{ colour: 'muted-foreground' }}>
-      You have changes on this page that have not been saved. Leaving now will discard them.
-    </Text>
-  </Modal>
+    message="You have changes on this page that have not been saved. Leaving now will discard them."
+    confirmLabel="Leave Without Saving"
+    cancelLabel="Keep Editing"
+  />
 );

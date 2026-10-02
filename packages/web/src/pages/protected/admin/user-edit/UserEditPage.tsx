@@ -1,11 +1,11 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import type { AdminCreateUserInput, AdminUpdateUserInput } from '@ffp/core';
 
 import { AdminEditPageShell } from '@web/components/layout';
 import { useCreateUserMutation, useUpdateUserMutation, useUserDetailQuery } from '@web/hooks/users';
-import { useToast } from '@web/hooks/useToast';
+import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { RouteKey, routes } from '@web/pages/routes';
 
 import { EMPTY_USER_VALUES, toUserFormValues } from './user-form-values';
@@ -16,15 +16,13 @@ import type { UserFormValues } from './types';
 export const UserEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToast } = useToast();
+  const { submitError, setSubmitError, clearSubmitError, saveCallbacks } = useSaveFeedback();
 
   const isEditMode = !!id;
 
   const { data: user, isLoading, error } = useUserDetailQuery(id ?? '', { enabled: isEditMode });
   const createMutation = useCreateUserMutation();
   const updateMutation = useUpdateUserMutation();
-
-  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleNavigateBack = useCallback(() => {
     void navigate(routes[RouteKey.ADMIN_USERS].path);
@@ -48,7 +46,7 @@ export const UserEditPage: React.FC = () => {
   /** Handle create submission */
   const handleCreate = useCallback(
     async (values: UserFormValues): Promise<void> => {
-      setSubmitError(null);
+      clearSubmitError();
 
       if (values.dateOfBirth && isNaN(new Date(values.dateOfBirth).getTime())) {
         setSubmitError('Date of birth must be a valid date (YYYY-MM-DD)');
@@ -65,17 +63,19 @@ export const UserEditPage: React.FC = () => {
         dateOfBirth: parseDateOfBirth(values.dateOfBirth),
       };
 
-      await createMutation.mutateAsync(input, {
-        onSuccess: () => {
-          addToast('User created successfully', { variant: 'success' });
-          handleNavigateBack();
-        },
-        onError: (err) => {
-          setSubmitError(err.message);
-        },
-      });
+      await createMutation.mutateAsync(
+        input,
+        saveCallbacks('User created successfully', handleNavigateBack)
+      );
     },
-    [createMutation, addToast, handleNavigateBack, parseDateOfBirth]
+    [
+      clearSubmitError,
+      setSubmitError,
+      createMutation,
+      saveCallbacks,
+      handleNavigateBack,
+      parseDateOfBirth,
+    ]
   );
 
   /** Build update payload with only changed fields */
@@ -136,22 +136,22 @@ export const UserEditPage: React.FC = () => {
         return;
       }
 
-      setSubmitError(null);
+      clearSubmitError();
 
       await updateMutation.mutateAsync(
         { id: user.id, publicId: user.publicId, data: payload },
-        {
-          onSuccess: () => {
-            addToast('User updated successfully', { variant: 'success' });
-            handleNavigateBack();
-          },
-          onError: (err) => {
-            setSubmitError(err.message);
-          },
-        }
+        saveCallbacks('User updated successfully', handleNavigateBack)
       );
     },
-    [user, buildUpdatePayload, updateMutation, addToast, handleNavigateBack]
+    [
+      user,
+      buildUpdatePayload,
+      clearSubmitError,
+      setSubmitError,
+      updateMutation,
+      saveCallbacks,
+      handleNavigateBack,
+    ]
   );
 
   const isPending = createMutation.isPending || updateMutation.isPending;

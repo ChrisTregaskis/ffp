@@ -278,7 +278,7 @@ export async function listLocations(
   const query = db
     .select()
     .from(locations)
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .$dynamic();
 
   return await applyPagination(query, paginationInput, LOCATION_SORTABLE_COLUMNS);
@@ -293,7 +293,7 @@ export async function countLocations(db: DbClient, filters: LocationFilterInput)
   const result = await db
     .select({ count: count() })
     .from(locations)
-    .where(conditions.length > 0 ? and(...conditions) : undefined);
+    .where(and(...conditions));
 
   return result[0].count;
 }

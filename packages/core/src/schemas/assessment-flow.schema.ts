@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { FLOW_STEP_TYPES } from '@ffp/database/constants';
 
-import { createPaginatedResponseSchema } from './pagination.schema';
+import { booleanQueryParamSchema, createPaginatedResponseSchema } from './pagination.schema';
 import { publicIdSchema } from './public-id.schema';
 
 export { TEMPLATE_LINKED_STEP_TYPES } from '@ffp/database/constants';
@@ -126,10 +126,7 @@ export const assessmentFlowWithStepsSchema = assessmentFlowMetadataSchema.extend
  */
 export const assessmentFlowListFiltersSchema = z.object({
   search: z.string().optional(),
-  isActive: z
-    .enum(['true', 'false'])
-    .transform((value) => value === 'true')
-    .optional(),
+  isActive: booleanQueryParamSchema.optional(),
 });
 
 /** Paginated response for GET /admin/assessment-flows. */

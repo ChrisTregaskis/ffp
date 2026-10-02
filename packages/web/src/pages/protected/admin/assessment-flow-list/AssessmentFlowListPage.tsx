@@ -1,20 +1,14 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useCallback, useMemo } from 'react';
+import { generatePath, useNavigate } from 'react-router-dom';
 
-import { Button } from '@web/components/button';
-import { Icon } from '@web/components/Icon';
-import { PageContainer, PageHeader } from '@web/components/layout';
+import { AdminListPageShell } from '@web/components/layout';
+import type { ListEmptyStateControls } from '@web/components/layout';
 import { DeactivateAssessmentFlowModal } from '@web/components/modal';
-import { Table, TableControls } from '@web/components/table';
 import type { RowAction } from '@web/components/table';
 import {
   useAdminAssessmentFlowsQuery,
-  useDeactivateAssessmentFlowMutation,
-  useUpdateAssessmentFlowMutation,
+  useAssessmentFlowActivation,
 } from '@web/hooks/assessment-flows';
-import { useApiTable } from '@web/hooks/useApiTable';
-import { useToast } from '@web/hooks/useToast';
-import type { AdminAssessmentFlowFilterInput } from '@web/lib/api/endpoints';
 import { RouteKey, routes } from '@web/pages/routes';
 
 import { AssessmentFlowListEmptyState } from './AssessmentFlowListEmptyState';
@@ -23,45 +17,12 @@ import { ASSESSMENT_FLOW_TABLE_FILTERS } from './constants';
 
 import type { AssessmentFlowRow } from './columns';
 
+const DEFAULT_SORT = { id: 'name', desc: false };
+const DEFAULT_FILTERS = { isActive: 'true' };
+
 export const AssessmentFlowListPage: React.FC = () => {
   const navigate = useNavigate();
-  const { addToast } = useToast();
-  const deactivateMutation = useDeactivateAssessmentFlowMutation();
-  const updateMutation = useUpdateAssessmentFlowMutation();
-
-  const [flowPendingDeactivation, setFlowPendingDeactivation] = useState<AssessmentFlowRow | null>(
-    null
-  );
-
-  const {
-    onStateChange,
-    queryParams,
-    search,
-    onSearchChange,
-    filterValues,
-    onFilterChange,
-    debouncedSearch,
-    debouncedFilters,
-    clearAll,
-    hasActiveControls,
-    hasNonDefaultControls,
-  } = useApiTable({
-    defaultPageSize: 10,
-    defaultSort: { id: 'name', desc: false },
-    defaultFilters: { isActive: 'true' },
-  });
-
-  const flowFilters: AdminAssessmentFlowFilterInput = useMemo(
-    () => ({
-      search: debouncedSearch || undefined,
-      isActive: debouncedFilters.isActive ? String(debouncedFilters.isActive) : undefined,
-    }),
-    [debouncedSearch, debouncedFilters]
-  );
-
-  const { data, isLoading, error } = useAdminAssessmentFlowsQuery(queryParams, flowFilters);
-
-  const flowRows = useMemo(() => (data ? data.data.map(toAssessmentFlowRow) : []), [data]);
+  const activation = useAssessmentFlowActivation<AssessmentFlowRow>();
 
   const handleCreateClick = useCallback((): void => {
     void navigate(routes[RouteKey.ADMIN_ASSESSMENT_FLOW_CREATE].path);
@@ -70,7 +31,7 @@ export const AssessmentFlowListPage: React.FC = () => {
   const handleEditClick = useCallback(
     (row: AssessmentFlowRow): void => {
       void navigate(
-        routes[RouteKey.ADMIN_ASSESSMENT_FLOW_EDIT].path.replace(':publicId', row.publicId)
+        generatePath(routes[RouteKey.ADMIN_ASSESSMENT_FLOW_EDIT].path, { publicId: row.publicId })
       );
     },
     [navigate]
@@ -79,51 +40,13 @@ export const AssessmentFlowListPage: React.FC = () => {
   const handleEditStepsClick = useCallback(
     (row: AssessmentFlowRow): void => {
       void navigate(
-        routes[RouteKey.ADMIN_ASSESSMENT_FLOW_STEPS].path.replace(':publicId', row.publicId)
+        generatePath(routes[RouteKey.ADMIN_ASSESSMENT_FLOW_STEPS].path, { publicId: row.publicId })
       );
     },
     [navigate]
   );
 
-  const handleCloseDeactivateModal = useCallback((): void => {
-    setFlowPendingDeactivation(null);
-  }, []);
-
-  const handleConfirmDeactivate = useCallback((): void => {
-    if (!flowPendingDeactivation) {
-      return;
-    }
-
-    const { publicId, name } = flowPendingDeactivation;
-
-    deactivateMutation.mutate(publicId, {
-      onSuccess: () => {
-        addToast(`"${name}" deactivated successfully`, { variant: 'success' });
-        setFlowPendingDeactivation(null);
-      },
-      onError: (err) => {
-        addToast(err.message, { variant: 'error' });
-        setFlowPendingDeactivation(null);
-      },
-    });
-  }, [flowPendingDeactivation, deactivateMutation, addToast]);
-
-  const handleActivate = useCallback(
-    (row: AssessmentFlowRow): void => {
-      updateMutation.mutate(
-        { publicId: row.publicId, data: { isActive: true } },
-        {
-          onSuccess: () => {
-            addToast(`"${row.name}" activated successfully`, { variant: 'success' });
-          },
-          onError: (err) => {
-            addToast(err.message, { variant: 'error' });
-          },
-        }
-      );
-    },
-    [updateMutation, addToast]
-  );
+  const { requestDeactivate, activate } = activation;
 
   const rowActions = useCallback(
     (row: AssessmentFlowRow): RowAction<AssessmentFlowRow>[] => [
@@ -138,73 +61,52 @@ export const AssessmentFlowListPage: React.FC = () => {
       row.isActive
         ? {
             label: 'Deactivate',
-            onClick: setFlowPendingDeactivation,
+            onClick: requestDeactivate,
             variant: 'danger',
           }
         : {
             label: 'Activate',
-            onClick: handleActivate,
+            onClick: activate,
           },
     ],
-    [handleEditClick, handleEditStepsClick, handleActivate]
+    [handleEditClick, handleEditStepsClick, requestDeactivate, activate]
   );
 
   const flowColumns = useMemo(() => buildAssessmentFlowColumns(rowActions), [rowActions]);
 
+  const renderEmptyState = useCallback(
+    ({ hasNonDefaultControls }: ListEmptyStateControls) => (
+      <AssessmentFlowListEmptyState
+        hasFilters={hasNonDefaultControls}
+        onCreateClick={handleCreateClick}
+      />
+    ),
+    [handleCreateClick]
+  );
+
   return (
-    <PageContainer>
-      <PageHeader
-        title="Assessment Flows"
-        subtitle="Each flow is a sequence of steps that shapes a member's tailored programme"
-        actions={
-          <Button
-            variant="primary"
-            icon={<Icon name="Plus" styleProps={{ size: 'sm', colour: 'currentColor' }} />}
-            onClick={handleCreateClick}
-          >
-            Create Flow
-          </Button>
-        }
-      />
-
-      <Table<AssessmentFlowRow>
-        tableId="admin-assessment-flows"
-        data={flowRows}
-        columns={flowColumns}
-        totalRows={data?.pagination.total ?? 0}
-        isLoading={isLoading}
-        error={error?.message}
-        onStateChange={onStateChange}
-        defaultSort={{ id: 'name', desc: false }}
-        getRowId={(row) => row.id}
-        emptyState={
-          <AssessmentFlowListEmptyState
-            hasFilters={hasNonDefaultControls}
-            onCreateClick={handleCreateClick}
-          />
-        }
-        renderControls={(cols) => (
-          <TableControls
-            search={search}
-            onSearchChange={onSearchChange}
-            searchPlaceholder="Search by name or description..."
-            filters={ASSESSMENT_FLOW_TABLE_FILTERS}
-            filterValues={filterValues}
-            onFilterChange={onFilterChange}
-            columns={cols}
-            onClearAll={clearAll}
-            hasActiveControls={hasActiveControls}
-          />
-        )}
-      />
-
+    <AdminListPageShell
+      title="Assessment Flows"
+      subtitle="Each flow is a sequence of steps that shapes a member's tailored programme"
+      createLabel="Create Flow"
+      onCreate={handleCreateClick}
+      tableId="admin-assessment-flows"
+      defaultSort={DEFAULT_SORT}
+      defaultFilters={DEFAULT_FILTERS}
+      filters={ASSESSMENT_FLOW_TABLE_FILTERS}
+      searchPlaceholder="Search by name or description..."
+      useList={useAdminAssessmentFlowsQuery}
+      toRow={toAssessmentFlowRow}
+      columns={flowColumns}
+      renderEmptyState={renderEmptyState}
+    >
       <DeactivateAssessmentFlowModal
-        isOpen={!!flowPendingDeactivation}
-        onClose={handleCloseDeactivateModal}
-        onConfirm={handleConfirmDeactivate}
-        isLoading={deactivateMutation.isPending}
-        flowName={flowPendingDeactivation?.name ?? ''}
+        isOpen={!!activation.pending}
+        onClose={activation.cancelDeactivate}
+        onConfirm={activation.confirmDeactivate}
+        isLoading={activation.isDeactivating}
+        flowName={activation.pending?.name ?? ''}
       />
-    </PageContainer>
+    </AdminListPageShell>
   );
 };

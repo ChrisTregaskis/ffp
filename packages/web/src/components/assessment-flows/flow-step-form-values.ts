@@ -1,5 +1,7 @@
 import type { AdminFlowStepView, CreateFlowStepInput, FlowStepType } from '@ffp/core';
 
+import { fieldToNumber, numberToField } from '@web/utils/form-number';
+
 import { stepTypeLinksTemplate } from './flow-step-labels';
 
 /** All strings — form inputs hold strings, so conversion happens on the way out. */
@@ -39,8 +41,7 @@ export const stepToFormValues = (step: AdminFlowStepView): FlowStepFormValues =>
   type: step.type,
   title: step.config.title,
   description: step.config.description ?? '',
-  estimatedMinutes:
-    step.config.estimatedMinutes === undefined ? '' : String(step.config.estimatedMinutes),
+  estimatedMinutes: numberToField(step.config.estimatedMinutes),
   instructions: listToLines(step.config.instructions),
   safetyNotes: listToLines(step.config.safetyNotes),
   templateId: step.templateId ?? '',
@@ -53,7 +54,6 @@ export const stepToFormValues = (step: AdminFlowStepView): FlowStepFormValues =>
  * value here would override that clean-up.
  */
 export const formValuesToStepInput = (values: FlowStepFormValues): CreateFlowStepInput => {
-  const minutes = Number.parseInt(values.estimatedMinutes, 10);
   const description = values.description.trim();
   const instructions = linesToList(values.instructions);
   const safetyNotes = linesToList(values.safetyNotes);
@@ -67,7 +67,7 @@ export const formValuesToStepInput = (values: FlowStepFormValues): CreateFlowSte
       description: description || undefined,
       instructions: instructions.length > 0 ? instructions : undefined,
       safetyNotes: safetyNotes.length > 0 ? safetyNotes : undefined,
-      estimatedMinutes: Number.isNaN(minutes) ? undefined : minutes,
+      estimatedMinutes: fieldToNumber(values.estimatedMinutes),
     },
   };
 };

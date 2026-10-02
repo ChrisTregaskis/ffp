@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 
 import {
+  adminQuestionSchema,
   createQuestionSchema,
+  questionListFiltersSchema,
   questionShapeSchema,
   updateQuestionSchema,
 } from '../../src/schemas/assessment-question.schema';
@@ -353,5 +355,48 @@ describe('min/max bounds across types', () => {
     });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe('updateQuestionSchema — validation', () => {
+  it('accepts an explicit null, which clears the stored rules', () => {
+    const result = updateQuestionSchema.safeParse({ validation: null });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.validation).toBeNull();
+  });
+});
+
+describe('questionListFiltersSchema', () => {
+  it('coerces the status filter and accepts a question type', () => {
+    const result = questionListFiltersSchema.parse({ type: 'numeric', isActive: 'false' });
+
+    expect(result).toEqual({ type: 'numeric', isActive: false });
+  });
+
+  it('rejects an unknown question type', () => {
+    expect(questionListFiltersSchema.safeParse({ type: 'profile' }).success).toBe(false);
+  });
+});
+
+describe('adminQuestionSchema', () => {
+  it('reads validation back as stored, without injecting a required default', () => {
+    const result = adminQuestionSchema.parse({
+      id: validUuid,
+      publicId: 'quesABCDE123',
+      slug: 'wall-squat',
+      type: 'video-response',
+      questionText: 'Hold a wall squat',
+      description: null,
+      options: null,
+      validation: { min: 0, max: 300 },
+      videoId: validUuid,
+      scoreDimension: null,
+      isActive: true,
+      createdAt: '2026-09-26T10:00:00.000Z',
+      updatedAt: '2026-09-26T10:00:00.000Z',
+    });
+
+    expect(result.validation).toEqual({ min: 0, max: 300 });
   });
 });

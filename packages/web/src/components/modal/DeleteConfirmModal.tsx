@@ -1,9 +1,6 @@
 import React from 'react';
 
-import { Button } from '@web/components/button';
-import { Text } from '@web/components/text';
-
-import { Modal } from './Modal';
+import { ConfirmModal } from './ConfirmModal';
 
 export interface DeleteConfirmModalProps {
   /** Whether the modal is visible */
@@ -20,7 +17,7 @@ export interface DeleteConfirmModalProps {
   message: string;
 }
 
-/** Confirmation modal for a destructive action on a named item, with the cascade copy supplied by the caller */
+/** Confirmation modal for deleting a named item, with the cascade copy supplied by the caller */
 export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   isOpen,
   onClose,
@@ -29,25 +26,14 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   title,
   message,
 }) => (
-  <Modal
+  <ConfirmModal
     isOpen={isOpen}
     onClose={onClose}
+    onConfirm={onConfirm}
+    isLoading={isLoading}
     title={title}
-    size="sm"
+    message={message}
+    confirmLabel="Delete"
     hideDividers
-    footer={
-      <>
-        <Button variant="secondary" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button variant="destructive" onClick={onConfirm} loading={isLoading}>
-          Delete
-        </Button>
-      </>
-    }
-  >
-    <Text as="p" styleProps={{ colour: 'muted-foreground' }}>
-      {message}
-    </Text>
-  </Modal>
+  />
 );

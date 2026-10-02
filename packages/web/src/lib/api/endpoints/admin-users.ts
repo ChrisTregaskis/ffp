@@ -6,7 +6,7 @@ import type {
 } from '@ffp/core';
 import { paginatedUserResponseSchema, userDetailResponseSchema } from '@ffp/core';
 
-import { assertUuidPathParam, ffpClient, parseApiResponse } from '../client';
+import { assertUuidPathParam, ffpClient, parseApiResponse, toListParams } from '../client';
 
 import type { z } from 'zod';
 
@@ -30,26 +30,10 @@ export const adminUsersApi = {
     filters: AdminUserFilterInput,
     signal?: AbortSignal
   ): Promise<PaginatedUserResponse> => {
-    const params: Record<string, string | undefined> = {
-      page: String(pagination.page),
-      pageSize: String(pagination.pageSize),
-      sortBy: pagination.sortBy,
-      sortDirection: pagination.sortDirection,
-    };
-
-    if (filters.search) {
-      params.search = filters.search;
-    }
-
-    if (filters.locationId) {
-      params.locationId = filters.locationId;
-    }
-
-    if (filters.role) {
-      params.role = filters.role;
-    }
-
-    const response = await ffpClient.get(basePath, { params, signal });
+    const response = await ffpClient.get(basePath, {
+      params: toListParams(pagination, filters),
+      signal,
+    });
 
     return parseApiResponse(paginatedUserResponseSchema, response, {
       method: 'GET',

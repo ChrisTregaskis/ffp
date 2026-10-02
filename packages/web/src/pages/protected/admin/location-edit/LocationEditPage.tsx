@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import type { UpdateLocationInput } from '@ffp/core';
@@ -9,7 +9,7 @@ import {
   useLocationDetailQuery,
   useUpdateLocationMutation,
 } from '@web/hooks/locations';
-import { useToast } from '@web/hooks/useToast';
+import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { RouteKey, routes } from '@web/pages/routes';
 
 import { EMPTY_LOCATION_VALUES, toLocationFormValues } from './location-form-values';
@@ -20,7 +20,7 @@ import type { LocationFormValues } from './types';
 export const LocationEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToast } = useToast();
+  const { submitError, clearSubmitError, saveCallbacks } = useSaveFeedback();
 
   const isEditMode = !!id;
 
@@ -32,8 +32,6 @@ export const LocationEditPage: React.FC = () => {
 
   const createMutation = useCreateLocationMutation();
   const updateMutation = useUpdateLocationMutation();
-
-  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleNavigateBack = useCallback(() => {
     void navigate(routes[RouteKey.ADMIN_LOCATIONS].path);
@@ -59,22 +57,14 @@ export const LocationEditPage: React.FC = () => {
   /** Handle create submission */
   const handleCreate = useCallback(
     async (values: LocationFormValues): Promise<void> => {
-      setSubmitError(null);
+      clearSubmitError();
 
       await createMutation.mutateAsync(
         { organisationId: values.organisationId, data: { locationName: values.locationName } },
-        {
-          onSuccess: () => {
-            addToast('Location created successfully', { variant: 'success' });
-            handleNavigateBack();
-          },
-          onError: (err) => {
-            setSubmitError(err.message);
-          },
-        }
+        saveCallbacks('Location created successfully', handleNavigateBack)
       );
     },
-    [createMutation, addToast, handleNavigateBack]
+    [clearSubmitError, createMutation, saveCallbacks, handleNavigateBack]
   );
 
   /** Build update payload with only changed fields */
@@ -129,22 +119,21 @@ export const LocationEditPage: React.FC = () => {
         return;
       }
 
-      setSubmitError(null);
+      clearSubmitError();
 
       await updateMutation.mutateAsync(
         { id: location.id, publicId: location.publicId, data: payload },
-        {
-          onSuccess: () => {
-            addToast('Location updated successfully', { variant: 'success' });
-            handleNavigateBack();
-          },
-          onError: (err) => {
-            setSubmitError(err.message);
-          },
-        }
+        saveCallbacks('Location updated successfully', handleNavigateBack)
       );
     },
-    [location, buildUpdatePayload, updateMutation, addToast, handleNavigateBack]
+    [
+      location,
+      buildUpdatePayload,
+      clearSubmitError,
+      updateMutation,
+      saveCallbacks,
+      handleNavigateBack,
+    ]
   );
 
   const isPending = createMutation.isPending || updateMutation.isPending;

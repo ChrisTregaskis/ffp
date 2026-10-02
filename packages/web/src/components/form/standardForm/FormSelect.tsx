@@ -9,6 +9,8 @@ import { BaseSelect } from '@web/components/select/BaseSelect';
 import type { SelectOption } from '@web/components/select/types';
 import { Text } from '@web/components/text';
 
+import { getFieldDescriptionIds } from '../shared/fieldDescription';
+import { getFieldErrorMessage } from '../shared/fieldError';
 import { getInputClassName } from '../shared/inputStyles';
 
 import { FormField } from './FormField';
@@ -25,6 +27,8 @@ export interface FormSelectProps<TFieldValues extends FieldValues> {
   control: Control<TFieldValues>;
   errors: FieldErrors<TFieldValues>;
   isRequired?: boolean;
+  /** Short guidance shown under the select */
+  hint?: string;
   /** Validation rules, as `registerOptions` is on the register-based inputs */
   rules?: Omit<RegisterOptions<TFieldValues, Path<TFieldValues>>, 'valueAsNumber' | 'valueAsDate'>;
 }
@@ -44,11 +48,12 @@ export const FormSelect = <TFieldValues extends FieldValues>({
   control,
   errors,
   isRequired,
+  hint,
   rules,
 }: FormSelectProps<TFieldValues>): JSX.Element => {
-  const error = errors[name]?.message as string | undefined;
+  const error = getFieldErrorMessage(errors, name);
   const inputId = String(name);
-  const errorId = `${inputId}-error`;
+  const { hintId, errorId, describedBy } = getFieldDescriptionIds(inputId, { hint, error });
 
   const {
     field: { value, onChange },
@@ -64,6 +69,8 @@ export const FormSelect = <TFieldValues extends FieldValues>({
       htmlFor={inputId}
       label={label}
       isRequired={isRequired}
+      hint={hint}
+      hintId={hintId}
       error={error}
       errorId={errorId}
     >
@@ -84,7 +91,7 @@ export const FormSelect = <TFieldValues extends FieldValues>({
             aria-controls={isOpen ? listboxId : undefined}
             aria-required={isRequired}
             aria-invalid={!!error}
-            aria-describedby={error ? errorId : undefined}
+            aria-describedby={describedBy}
             onClick={onToggle}
             onKeyDown={onKeyDown}
             className={`${getInputClassName(!!error)} flex w-full cursor-pointer items-center justify-between px-3 py-2 text-left`}

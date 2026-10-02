@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { generatePath, useNavigate, useParams } from 'react-router-dom';
 
 import type { TemplatePhaseWithSessions } from '@ffp/core';
 
@@ -86,9 +86,10 @@ export const PhasesPage: React.FC = () => {
       }
 
       void navigate(
-        routes[RouteKey.ADMIN_TEMPLATE_PHASE_DETAIL].path
-          .replace(':id', templateId)
-          .replace(':phaseId', row.publicId)
+        generatePath(routes[RouteKey.ADMIN_TEMPLATE_PHASE_DETAIL].path, {
+          id: templateId,
+          phaseId: row.publicId,
+        })
       );
     },
     [navigate, templateId]

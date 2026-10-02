@@ -1,14 +1,5 @@
-import type { StatusConfig, TableFilterConfig } from '@web/components/table';
-
-export const TEMPLATE_STATUS_MAP: Partial<Record<string, StatusConfig>> = {
-  active: { label: 'Active', colour: 'success' },
-  inactive: { label: 'Inactive', colour: 'grey' },
-};
-
-const STATUS_FILTER_OPTIONS = [
-  { label: 'Active', value: 'true' },
-  { label: 'Inactive', value: 'false' },
-];
+import { ACTIVE_STATUS_FILTER } from '@web/components/table';
+import type { TableFilterConfig } from '@web/components/table';
 
 const DIFFICULTY_FILTER_OPTIONS = [
   { label: 'Beginner', value: 'beginner' },
@@ -17,6 +8,6 @@ const DIFFICULTY_FILTER_OPTIONS = [
 ];
 
 export const TABLE_FILTERS: TableFilterConfig[] = [
-  { key: 'isActive', label: 'Status', options: STATUS_FILTER_OPTIONS },
+  ACTIVE_STATUS_FILTER,
   { key: 'difficulty', label: 'Difficulty', options: DIFFICULTY_FILTER_OPTIONS },
 ];

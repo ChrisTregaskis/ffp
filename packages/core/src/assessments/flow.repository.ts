@@ -294,7 +294,7 @@ export async function findFlowPage(
       flowSteps,
       and(eq(flowSteps.flowId, assessmentFlows.id), eq(flowSteps.isActive, true))
     )
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .groupBy(assessmentFlows.id)
     .$dynamic();
 
@@ -311,7 +311,7 @@ export async function countFlows(
   const result = await dbClient
     .select({ count: count() })
     .from(assessmentFlows)
-    .where(conditions.length > 0 ? and(...conditions) : undefined);
+    .where(and(...conditions));
 
   return result[0].count;
 }

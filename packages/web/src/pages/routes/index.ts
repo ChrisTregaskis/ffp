@@ -28,6 +28,8 @@ import { LocationEditPage } from '@web/pages/protected/admin/location-edit';
 import { LocationListPage } from '@web/pages/protected/admin/location-list';
 import { OrganisationEditPage } from '@web/pages/protected/admin/organisation-edit';
 import { OrganisationListPage } from '@web/pages/protected/admin/organisation-list';
+import { QuestionEditPage } from '@web/pages/protected/admin/question-edit';
+import { QuestionListPage } from '@web/pages/protected/admin/question-list';
 import { TemplateCreatePage } from '@web/pages/protected/admin/template-create';
 import {
   PhaseDetailPage,
@@ -404,6 +406,32 @@ export const routes: RoutesConfig = {
         icon: 'ArrowLeft',
         path: `${adminBasePath}/assessments`,
       },
+    ],
+  },
+  [RouteKey.ADMIN_QUESTIONS]: {
+    path: `${adminBasePath}/questions`,
+    pageComponent: QuestionListPage,
+    title: 'Question Bank',
+    allowedRoles: [SYSTEM_ADMIN],
+  },
+  [RouteKey.ADMIN_QUESTION_CREATE]: {
+    path: `${adminBasePath}/questions/create`,
+    pageComponent: QuestionEditPage,
+    title: 'Create Question',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      { label: 'Back to Question Bank', icon: 'ArrowLeft', path: `${adminBasePath}/questions` },
+    ],
+  },
+  [RouteKey.ADMIN_QUESTION_EDIT]: {
+    path: `${adminBasePath}/questions/:publicId`,
+    pageComponent: QuestionEditPage,
+    title: 'Edit Question',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      { label: 'Back to Question Bank', icon: 'ArrowLeft', path: `${adminBasePath}/questions` },
     ],
   },
   [RouteKey.ADMIN_TEMPLATES]: {

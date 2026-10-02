@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { IconButton } from '@web/components/button/IconButton';
 import { Icons } from '@web/components/Icon/types';
 
+import { getFieldDescriptionIds } from '../shared/fieldDescription';
+import { getFieldErrorMessage } from '../shared/fieldError';
 import { getInputClassName } from '../shared/inputStyles';
 
 import { FormField } from './FormField';
@@ -18,7 +20,7 @@ import type {
 /** Native input attributes that can be forwarded to the underlying <input> element */
 type NativeInputProps = Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
-  'name' | 'type' | 'placeholder' | 'disabled' | 'id' | 'className'
+  'name' | 'type' | 'placeholder' | 'disabled' | 'readOnly' | 'id' | 'className'
 >;
 
 export interface FormTextInputProps<TFieldValues extends FieldValues> {
@@ -29,8 +31,12 @@ export interface FormTextInputProps<TFieldValues extends FieldValues> {
   register: UseFormRegister<TFieldValues>;
   errors: FieldErrors<TFieldValues>;
   isRequired?: boolean;
+  /** Short guidance shown under the input */
+  hint?: string;
   /** Disables the input (read-only appearance with reduced opacity) */
   disabled?: boolean;
+  /** Looks like `disabled`, but the value is still submitted */
+  readOnly?: boolean;
   /** Additional native input attributes (e.g. inputMode, autoComplete) */
   inputProps?: NativeInputProps;
   /** Extra CSS classes appended to the input element */
@@ -60,20 +66,22 @@ export const FormTextInput = <TFieldValues extends FieldValues>({
   register,
   errors,
   isRequired,
+  hint,
   disabled = false,
+  readOnly = false,
   inputProps,
   inputClassName,
   registerOptions,
 }: FormTextInputProps<TFieldValues>): JSX.Element => {
   const [showPassword, setShowPassword] = useState(false);
-  const error = errors[name]?.message as string | undefined;
+  const error = getFieldErrorMessage(errors, name);
   const inputId = String(name);
-  const errorId = `${inputId}-error`;
+  const { hintId, errorId, describedBy } = getFieldDescriptionIds(inputId, { hint, error });
 
   const isPassword = type === 'password';
   const inputType = isPassword && showPassword ? 'text' : type;
 
-  const disabledClassName = disabled ? 'cursor-not-allowed opacity-60 bg-muted' : '';
+  const lockedClassName = disabled || readOnly ? 'cursor-not-allowed opacity-60 bg-muted' : '';
 
   const inputElement = (
     <input
@@ -81,12 +89,13 @@ export const FormTextInput = <TFieldValues extends FieldValues>({
       type={inputType}
       placeholder={placeholder}
       disabled={disabled}
+      readOnly={readOnly}
       aria-required={isRequired}
       aria-invalid={!!error}
-      aria-describedby={error ? errorId : undefined}
+      aria-describedby={describedBy}
       {...inputProps}
       {...register(name, { disabled, ...registerOptions })}
-      className={`${getInputClassName(!!error)} w-full px-3 py-2 ${isPassword ? 'pr-10' : ''} ${disabledClassName}${inputClassName ? ` ${inputClassName}` : ''}`}
+      className={`${getInputClassName(!!error)} w-full px-3 py-2 ${isPassword ? 'pr-10' : ''} ${lockedClassName}${inputClassName ? ` ${inputClassName}` : ''}`}
     />
   );
 
@@ -95,6 +104,8 @@ export const FormTextInput = <TFieldValues extends FieldValues>({
       htmlFor={inputId}
       label={label}
       isRequired={isRequired}
+      hint={hint}
+      hintId={hintId}
       error={error}
       errorId={errorId}
     >

@@ -13,7 +13,7 @@ import {
   locationListResponseSchema,
 } from '@ffp/core';
 
-import { assertUuidPathParam, ffpClient, parseApiResponse } from '../client';
+import { assertUuidPathParam, ffpClient, parseApiResponse, toListParams } from '../client';
 
 const basePath = '/admin/locations';
 
@@ -44,26 +44,10 @@ export const adminLocationsApi = {
     filters: AdminLocationFilterInput,
     signal?: AbortSignal
   ): Promise<PaginatedLocationResponse> => {
-    const params: Record<string, string | undefined> = {
-      page: String(pagination.page),
-      pageSize: String(pagination.pageSize),
-      sortBy: pagination.sortBy,
-      sortDirection: pagination.sortDirection,
-    };
-
-    if (filters.search) {
-      params.search = filters.search;
-    }
-
-    if (filters.status) {
-      params.status = filters.status;
-    }
-
-    if (filters.organisationId) {
-      params.organisationId = filters.organisationId;
-    }
-
-    const response = await ffpClient.get(basePath, { params, signal });
+    const response = await ffpClient.get(basePath, {
+      params: toListParams(pagination, filters),
+      signal,
+    });
 
     return parseApiResponse(paginatedLocationResponseSchema, response, {
       method: 'GET',

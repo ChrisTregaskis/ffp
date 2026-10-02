@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { generatePath } from 'react-router-dom';
 
 import type { VideoDetailResponse } from '@ffp/core';
 
@@ -131,7 +132,7 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
           icon={<Icon name={Icons.NEWTAB} styleProps={{ size: 'xs', colour: 'currentColor' }} />}
           onClick={() => {
             window.open(
-              routes[RouteKey.ADMIN_VIDEO_EDIT].path.replace(':id', selectedVideo.publicId),
+              generatePath(routes[RouteKey.ADMIN_VIDEO_EDIT].path, { id: selectedVideo.publicId }),
               '_blank',
               'noopener,noreferrer'
             );

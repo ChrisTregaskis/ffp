@@ -1,9 +1,6 @@
 import React from 'react';
 
-import { Button } from '@web/components/button';
-import { Text } from '@web/components/text';
-
-import { Modal } from './Modal';
+import { ConfirmModal } from './ConfirmModal';
 
 export interface ArchiveVideoModalProps {
   /** Whether the modal is visible */
@@ -23,26 +20,14 @@ export const ArchiveVideoModal: React.FC<ArchiveVideoModalProps> = ({
   onConfirm,
   isLoading = false,
 }) => (
-  <Modal
+  <ConfirmModal
     isOpen={isOpen}
     onClose={onClose}
+    onConfirm={onConfirm}
+    isLoading={isLoading}
     title="Archive Video"
     subtitle="This will remove the video from the public catalogue."
-    size="sm"
-    footer={
-      <>
-        <Button variant="secondary" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button variant="destructive" onClick={onConfirm} loading={isLoading}>
-          Archive Video
-        </Button>
-      </>
-    }
-  >
-    <Text as="p" styleProps={{ colour: 'muted-foreground' }}>
-      Archived videos will no longer be available in the public catalogue. You can restore them
-      later by changing the status back to active.
-    </Text>
-  </Modal>
+    message="Archived videos will no longer be available in the public catalogue. You can restore them later by changing the status back to active."
+    confirmLabel="Archive Video"
+  />
 );

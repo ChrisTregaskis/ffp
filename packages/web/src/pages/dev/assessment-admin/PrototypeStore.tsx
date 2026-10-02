@@ -53,10 +53,6 @@ interface PrototypeStoreValue {
   view: PrototypeView;
   navigate: (view: PrototypeView) => void;
 
-  // Questions
-  saveQuestion: (question: PrototypeQuestion) => PrototypeQuestion;
-  toggleQuestionActive: (questionId: string) => void;
-
   // Templates
   createTemplate: (name: string) => PrototypeTemplate;
   renameTemplate: (templateId: string, name: string) => void;
@@ -96,7 +92,7 @@ const PrototypeStoreContext = createContext<PrototypeStoreValue | null>(null);
 
 export const PrototypeStoreProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [flows, setFlows] = useState<PrototypeFlow[]>(INITIAL_FLOWS);
-  const [questions, setQuestions] = useState<PrototypeQuestion[]>(INITIAL_QUESTIONS);
+  const [questions] = useState<PrototypeQuestion[]>(INITIAL_QUESTIONS);
   const [templates, setTemplates] = useState<PrototypeTemplate[]>(INITIAL_TEMPLATES);
   const [memberStructures, setMemberStructures] =
     useState<Record<string, ProgrammePhase[]>>(seedMemberStructures);
@@ -126,35 +122,6 @@ export const PrototypeStoreProvider: React.FC<{ children: ReactNode }> = ({ chil
       programmeTemplates: PROGRAMME_TEMPLATE_OPTIONS,
       view,
       navigate: setView,
-
-      saveQuestion: (question) => {
-        const exists = questions.some((existing) => existing.id === question.id);
-
-        if (exists) {
-          setQuestions((prev) =>
-            prev.map((existing) => (existing.id === question.id ? question : existing))
-          );
-
-          return question;
-        }
-
-        const created: PrototypeQuestion = {
-          ...question,
-          id: nextId('q'),
-          publicId: makePublicId(),
-        };
-        setQuestions((prev) => [...prev, created]);
-
-        return created;
-      },
-
-      toggleQuestionActive: (questionId) => {
-        setQuestions((prev) =>
-          prev.map((question) =>
-            question.id === questionId ? { ...question, isActive: !question.isActive } : question
-          )
-        );
-      },
 
       createTemplate: (name) => {
         const template: PrototypeTemplate = {

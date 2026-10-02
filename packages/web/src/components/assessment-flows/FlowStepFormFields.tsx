@@ -5,7 +5,6 @@ import { FormActions } from '@web/components/form/standardForm/FormActions';
 import { FormSelect } from '@web/components/form/standardForm/FormSelect';
 import { FormTextarea } from '@web/components/form/standardForm/FormTextarea';
 import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
-import { Text } from '@web/components/text';
 
 import { STEP_TYPE_DESCRIPTIONS, STEP_TYPE_OPTIONS } from './flow-step-labels';
 import { FlowStepConfigFields } from './FlowStepConfigFields';
@@ -36,11 +35,8 @@ export const FlowStepFormFields: React.FC<FlowStepFormFieldsProps> = ({
         control={control}
         errors={errors}
         isRequired
+        hint={STEP_TYPE_DESCRIPTIONS[type]}
       />
-
-      <Text as="p" styleProps={{ size: 'xs', colour: 'muted-foreground' }} className="-mt-2 mb-4">
-        {STEP_TYPE_DESCRIPTIONS[type]}
-      </Text>
 
       <FormTextInput<FlowStepFormValues>
         name="title"

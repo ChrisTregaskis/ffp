@@ -2,7 +2,11 @@ import { z } from 'zod';
 
 import { DIFFICULTIES } from '@ffp/database/constants';
 
-import { createPaginatedResponseSchema, paginationInputSchema } from '../pagination.schema';
+import {
+  booleanQueryParamSchema,
+  createPaginatedResponseSchema,
+  paginationInputSchema,
+} from '../pagination.schema';
 import { templatePhaseWithSessionsSchema } from '../programme-structure.schema';
 import { publicIdSchema } from '../public-id.schema';
 
@@ -61,10 +65,7 @@ export const templateListQuerySchema = paginationInputSchema.extend({
   /** Filter by difficulty level */
   difficulty: z.enum(DIFFICULTIES).optional(),
   /** Filter by active status (coerced from query string) */
-  isActive: z
-    .enum(['true', 'false'])
-    .transform((val) => val === 'true')
-    .optional(),
+  isActive: booleanQueryParamSchema.optional(),
 });
 
 /** Response schema for template list items — lightweight metadata for browsing */

@@ -15,7 +15,7 @@ import {
   videoSchema,
 } from '@ffp/core';
 
-import { assertUuidPathParam, ffpClient, parseApiResponse } from '../client';
+import { assertUuidPathParam, ffpClient, parseApiResponse, toListParams } from '../client';
 
 const basePath = '/admin/videos';
 
@@ -46,26 +46,10 @@ export const adminVideosApi = {
     filters: AdminVideoFilterInput,
     signal?: AbortSignal
   ): Promise<PaginatedAdminVideoResponse> => {
-    const params: Record<string, string | undefined> = {
-      page: String(pagination.page),
-      pageSize: String(pagination.pageSize),
-      sortBy: pagination.sortBy,
-      sortDirection: pagination.sortDirection,
-    };
-
-    if (filters.search) {
-      params.search = filters.search;
-    }
-
-    if (filters.status) {
-      params.status = filters.status;
-    }
-
-    if (filters.difficulty) {
-      params.difficulty = filters.difficulty;
-    }
-
-    const response = await ffpClient.get(basePath, { params, signal });
+    const response = await ffpClient.get(basePath, {
+      params: toListParams(pagination, filters),
+      signal,
+    });
 
     return parseApiResponse(paginatedAdminVideoResponseSchema, response, {
       method: 'GET',

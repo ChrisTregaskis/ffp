@@ -11,6 +11,11 @@ export const paginationInputSchema = z.object({
   sortDirection: z.enum(['asc', 'desc']).default('asc'),
 });
 
+/** A boolean that arrives as a query-string "true" / "false". */
+export const booleanQueryParamSchema = z
+  .enum(['true', 'false'])
+  .transform((value) => value === 'true');
+
 export const paginationMetaSchema = z.object({
   page: z.number(),
   pageSize: z.number(),
