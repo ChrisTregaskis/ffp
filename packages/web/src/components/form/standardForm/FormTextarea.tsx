@@ -1,3 +1,4 @@
+import { getFieldErrorMessage } from '../shared/fieldError';
 import { getInputClassName } from '../shared/inputStyles';
 
 import { FormField } from './FormField';
@@ -28,7 +29,7 @@ export const FormTextarea = <TFieldValues extends FieldValues>({
   isRequired,
   rows = 3,
 }: FormTextareaProps<TFieldValues>): JSX.Element => {
-  const error = errors[name]?.message as string | undefined;
+  const error = getFieldErrorMessage(errors, name);
   const inputId = String(name);
   const errorId = `${inputId}-error`;
 

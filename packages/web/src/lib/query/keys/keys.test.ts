@@ -5,6 +5,7 @@ import {
   locationKeys,
   organisationKeys,
   programmeTemplateKeys,
+  questionKeys,
   userKeys,
 } from './index';
 
@@ -20,6 +21,7 @@ describe('entity query keys', () => {
     ['users', userKeys],
     ['programme-templates', programmeTemplateKeys],
     ['assessment-flows', assessmentFlowKeys],
+    ['questions', questionKeys],
   ])('builds hierarchical keys for %s', (name, keys) => {
     expect(keys.all).toEqual([name]);
     expect(keys.lists()).toEqual([name, 'list']);

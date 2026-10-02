@@ -12,8 +12,6 @@ import { iconVar } from './prototype-labels';
 import { getContextNav, getMainNav, PROTOTYPE_ENTRY_FLOW_ID } from './prototype-nav';
 import { PrototypeNavItem } from './PrototypeNavItem';
 import { usePrototypeStore } from './PrototypeStore';
-import { QuestionBankView } from './QuestionBankView';
-import { QuestionEditorView } from './QuestionEditorView';
 import { ScoringConfigView } from './ScoringConfigView';
 import { TemplateDetailView } from './TemplateDetailView';
 import { TemplateListView } from './TemplateListView';
@@ -25,10 +23,6 @@ const renderView = (view: PrototypeView): JSX.Element => {
   switch (view.name) {
     case 'scoring':
       return <ScoringConfigView flowId={view.flowId} />;
-    case 'questions':
-      return <QuestionBankView />;
-    case 'question-edit':
-      return <QuestionEditorView questionId={view.questionId} />;
     case 'templates':
       return <TemplateListView />;
     case 'template-edit':
@@ -50,7 +44,7 @@ const renderView = (view: PrototypeView): JSX.Element => {
 
 /**
  * Chrome for the prototype: a navy side menu (mirroring the real `SideMenu`)
- * whose nav swaps to context links when inside a flow / question, plus the
+ * whose nav swaps to context links when inside a sub-section, plus the
  * active-view content area.
  */
 export const PrototypeShell: React.FC = () => {

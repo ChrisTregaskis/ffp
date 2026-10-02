@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { IconButton } from '@web/components/button/IconButton';
 import { Icons } from '@web/components/Icon/types';
 
+import { getFieldErrorMessage } from '../shared/fieldError';
 import { getInputClassName } from '../shared/inputStyles';
 
 import { FormField } from './FormField';
@@ -66,7 +67,7 @@ export const FormTextInput = <TFieldValues extends FieldValues>({
   registerOptions,
 }: FormTextInputProps<TFieldValues>): JSX.Element => {
   const [showPassword, setShowPassword] = useState(false);
-  const error = errors[name]?.message as string | undefined;
+  const error = getFieldErrorMessage(errors, name);
   const inputId = String(name);
   const errorId = `${inputId}-error`;
 

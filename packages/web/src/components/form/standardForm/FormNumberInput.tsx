@@ -1,3 +1,4 @@
+import { getFieldErrorMessage } from '../shared/fieldError';
 import { getInputClassName } from '../shared/inputStyles';
 
 import { FormField } from './FormField';
@@ -14,6 +15,10 @@ export interface FormNumberInputProps<TFieldValues extends FieldValues> {
   isRequired?: boolean;
   /** Custom validation function — return error message string or true if valid */
   validate?: (value: string) => string | true;
+  /** `"any"` allows decimals; the browser's default step of 1 refuses them */
+  step?: number | 'any';
+  /** Fields to re-validate when this one changes */
+  deps?: Path<TFieldValues>[];
 }
 
 /**
@@ -31,8 +36,10 @@ export const FormNumberInput = <TFieldValues extends FieldValues>({
   errors,
   isRequired,
   validate,
+  step,
+  deps,
 }: FormNumberInputProps<TFieldValues>): JSX.Element => {
-  const error = errors[name]?.message as string | undefined;
+  const error = getFieldErrorMessage(errors, name);
   const inputId = String(name);
   const errorId = `${inputId}-error`;
 
@@ -48,11 +55,12 @@ export const FormNumberInput = <TFieldValues extends FieldValues>({
         id={inputId}
         type="number"
         min={min}
+        step={step}
         placeholder={placeholder}
         aria-required={isRequired}
         aria-invalid={!!error}
         aria-describedby={error ? errorId : undefined}
-        {...register(name, { validate })}
+        {...register(name, { validate, deps })}
         className={`${getInputClassName(!!error)} w-full px-3 py-2`}
       />
     </FormField>

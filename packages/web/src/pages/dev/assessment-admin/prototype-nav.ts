@@ -14,7 +14,7 @@ type Navigate = (view: PrototypeView) => void;
 /** Scoring is the only flow-scoped screen the prototype still carries. */
 export const PROTOTYPE_ENTRY_FLOW_ID = 'f-exercise-assessment';
 
-/** Top-level menu items (shown when not inside a flow / question). */
+/** Top-level menu items (shown when not inside a sub-section). */
 export const getMainNav = (view: PrototypeView, navigate: Navigate): NavEntry[] => [
   {
     label: 'Scoring',
@@ -22,14 +22,6 @@ export const getMainNav = (view: PrototypeView, navigate: Navigate): NavEntry[] 
     active: view.name === 'scoring',
     onClick: () => {
       navigate({ name: 'scoring', flowId: PROTOTYPE_ENTRY_FLOW_ID });
-    },
-  },
-  {
-    label: 'Question bank',
-    icon: Icons.HELPCIRCLE,
-    active: view.name === 'questions',
-    onClick: () => {
-      navigate({ name: 'questions' });
     },
   },
   {
@@ -64,19 +56,6 @@ export const getMainNav = (view: PrototypeView, navigate: Navigate): NavEntry[] 
  * Returns null at top level (use the main nav then).
  */
 export const getContextNav = (view: PrototypeView, navigate: Navigate): NavEntry[] | null => {
-  if (view.name === 'question-edit') {
-    return [
-      {
-        label: 'Back to question bank',
-        icon: Icons.ARROWLEFT,
-        active: false,
-        onClick: () => {
-          navigate({ name: 'questions' });
-        },
-      },
-    ];
-  }
-
   if (view.name === 'template-edit') {
     return [
       {

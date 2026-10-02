@@ -9,6 +9,7 @@ import { BaseSelect } from '@web/components/select/BaseSelect';
 import type { SelectOption } from '@web/components/select/types';
 import { Text } from '@web/components/text';
 
+import { getFieldErrorMessage } from '../shared/fieldError';
 import { getInputClassName } from '../shared/inputStyles';
 
 import { FormField } from './FormField';
@@ -46,7 +47,7 @@ export const FormSelect = <TFieldValues extends FieldValues>({
   isRequired,
   rules,
 }: FormSelectProps<TFieldValues>): JSX.Element => {
-  const error = errors[name]?.message as string | undefined;
+  const error = getFieldErrorMessage(errors, name);
   const inputId = String(name);
   const errorId = `${inputId}-error`;
 

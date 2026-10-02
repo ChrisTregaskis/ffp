@@ -6,11 +6,11 @@ import {
   adminQuestionSchema,
   createQuestionSchema,
   questionShapeSchema,
+  RANGED_QUESTION_TYPES,
   updateQuestionSchema,
   type AdminQuestion,
   type AdminQuestionDetail,
   type QuestionListFilters,
-  type QuestionType,
   type UpdateQuestionInput,
 } from '../schemas/assessment-question.schema';
 import {
@@ -25,14 +25,6 @@ import * as questionRepository from './question.repository';
 import type { Question } from './question.repository';
 
 export type { Question };
-
-/** Types whose `validation` carries a numeric range — value, length or duration bounds. */
-const RANGED_QUESTION_TYPES: readonly QuestionType[] = [
-  'numeric',
-  'scale',
-  'text',
-  'video-response',
-];
 
 /** List question bank entries — one page, filtered. `_ctx` is unused: questions are catalogue content. */
 export async function listQuestionsService(

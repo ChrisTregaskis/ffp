@@ -7,6 +7,17 @@ import { publicIdSchema } from './public-id.schema';
 
 export const questionTypeSchema = z.enum(QUESTION_TYPES);
 
+/** Types that carry a list of options to choose from. */
+export const CHOICE_QUESTION_TYPES: readonly QuestionType[] = ['single-choice', 'multi-choice'];
+
+/** Types whose `validation` carries a numeric range — value, length or duration bounds. */
+export const RANGED_QUESTION_TYPES: readonly QuestionType[] = [
+  'numeric',
+  'scale',
+  'text',
+  'video-response',
+];
+
 export const questionOptionSchema = z.object({
   /** Unique value identifier for this option */
   value: z.string().min(1),
@@ -140,7 +151,7 @@ function refineQuestionShape(
   const { type, options, validation } = data;
 
   // Choice types require at least two options
-  if (type === 'single-choice' || type === 'multi-choice') {
+  if (type && CHOICE_QUESTION_TYPES.includes(type)) {
     if (!options || options.length < 2) {
       ctx.addIssue({
         code: 'custom',

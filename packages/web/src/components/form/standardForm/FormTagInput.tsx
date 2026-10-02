@@ -4,6 +4,7 @@ import { useController } from 'react-hook-form';
 import { IconButton } from '@web/components/button/IconButton';
 import { Icons } from '@web/components/Icon/types';
 
+import { getFieldErrorMessage } from '../shared/fieldError';
 import { getInputClassName } from '../shared/inputStyles';
 
 import { FormField } from './FormField';
@@ -35,7 +36,7 @@ export const FormTagInput = <TFieldValues extends FieldValues>({
   isRequired,
 }: FormTagInputProps<TFieldValues>): JSX.Element => {
   const [inputValue, setInputValue] = useState('');
-  const error = errors[name]?.message as string | undefined;
+  const error = getFieldErrorMessage(errors, name);
   const inputId = String(name);
   const errorId = `${inputId}-error`;
 
