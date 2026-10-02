@@ -6,3 +6,4 @@ export {
   useUpdateQuestionMutation,
 } from './useQuestionMutations';
 export type { UpdateQuestionVariables } from './useQuestionMutations';
+export { useQuestionActivation } from './useQuestionActivation';

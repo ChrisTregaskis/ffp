@@ -4,6 +4,7 @@ import { useController } from 'react-hook-form';
 import { IconButton } from '@web/components/button/IconButton';
 import { Icons } from '@web/components/Icon/types';
 
+import { getFieldDescriptionIds } from '../shared/fieldDescription';
 import { getFieldErrorMessage } from '../shared/fieldError';
 import { getInputClassName } from '../shared/inputStyles';
 
@@ -38,7 +39,7 @@ export const FormTagInput = <TFieldValues extends FieldValues>({
   const [inputValue, setInputValue] = useState('');
   const error = getFieldErrorMessage(errors, name);
   const inputId = String(name);
-  const errorId = `${inputId}-error`;
+  const { errorId, describedBy } = getFieldDescriptionIds(inputId, { error });
 
   const {
     field: { value, onChange },
@@ -136,7 +137,7 @@ export const FormTagInput = <TFieldValues extends FieldValues>({
           placeholder={tags.length === 0 ? placeholder : ''}
           aria-required={isRequired}
           aria-invalid={!!error}
-          aria-describedby={error ? errorId : undefined}
+          aria-describedby={describedBy}
           className="flex-1 min-w-[120px] border-0 px-1 py-0.5 text-sm outline-none bg-transparent"
         />
       </div>

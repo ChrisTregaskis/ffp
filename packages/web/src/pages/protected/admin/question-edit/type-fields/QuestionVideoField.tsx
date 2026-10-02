@@ -3,10 +3,10 @@ import { useController } from 'react-hook-form';
 
 import type { VideoDetailResponse } from '@ffp/core';
 
+import { FieldError } from '@web/components/atoms/FieldError';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
 import { VideoSelector } from '@web/components/programme-templates/VideoSelector';
-import { Text } from '@web/components/text';
 
 import type { QuestionFormValues } from '../types';
 
@@ -58,16 +58,7 @@ export const QuestionVideoField: React.FC = () => {
         onClear={handleClear}
         selectedVideo={videoTitle ? { publicId: videoPublicId, title: videoTitle } : null}
       />
-      {error?.message && (
-        <Text
-          as="p"
-          styleProps={{ size: 'sm', colour: 'destructive' }}
-          className="mt-1"
-          role="alert"
-        >
-          {error.message}
-        </Text>
-      )}
+      {error?.message && <FieldError message={error.message} />}
     </div>
   );
 };

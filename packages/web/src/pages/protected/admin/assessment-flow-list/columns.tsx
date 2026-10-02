@@ -1,9 +1,7 @@
 import type { AssessmentFlowListItem } from '@ffp/core';
 
-import { createColumns } from '@web/components/table';
+import { ACTIVE_STATUS_MAP, createColumns, toActiveStatus } from '@web/components/table';
 import type { RowAction } from '@web/components/table';
-
-import { ASSESSMENT_FLOW_STATUS_MAP } from './constants';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -16,7 +14,7 @@ export type AssessmentFlowRow = AssessmentFlowListItem & { status: string } & Re
 /** Maps an API list item to its table row with a computed status field */
 export const toAssessmentFlowRow = (flow: AssessmentFlowListItem): AssessmentFlowRow => ({
   ...flow,
-  status: flow.isActive ? 'active' : 'inactive',
+  status: toActiveStatus(flow.isActive),
 });
 
 const columns = createColumns<AssessmentFlowRow>();
@@ -33,6 +31,6 @@ export const buildAssessmentFlowColumns = (
   columns.text('name', { label: 'Name', sortable: true }),
   columns.text('description', { label: 'Description' }),
   columns.number('stepCount', { label: 'Steps' }),
-  columns.status('status', { label: 'Status', statusMap: ASSESSMENT_FLOW_STATUS_MAP }),
+  columns.status('status', { label: 'Status', statusMap: ACTIVE_STATUS_MAP }),
   columns.actions({ actions }),
 ];

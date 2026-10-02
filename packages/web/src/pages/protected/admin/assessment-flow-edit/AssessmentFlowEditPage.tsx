@@ -1,18 +1,18 @@
-import React, { useCallback, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useCallback } from 'react';
+import { generatePath, useNavigate, useParams } from 'react-router-dom';
 
-import type { UpdateAssessmentFlowInput } from '@ffp/core';
+import type { AssessmentFlowWithStepsView, UpdateAssessmentFlowInput } from '@ffp/core';
 
 import { Button } from '@web/components/button';
 import { AdminEditPageShell } from '@web/components/layout';
 import { DeactivateAssessmentFlowModal } from '@web/components/modal';
 import {
+  useAssessmentFlowActivation,
   useAssessmentFlowDetailQuery,
   useCreateAssessmentFlowMutation,
-  useDeactivateAssessmentFlowMutation,
   useUpdateAssessmentFlowMutation,
 } from '@web/hooks/assessment-flows';
-import { useToast } from '@web/hooks/useToast';
+import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { RouteKey, routes } from '@web/pages/routes';
 
 import {
@@ -26,7 +26,7 @@ import type { AssessmentFlowFormValues } from './types';
 export const AssessmentFlowEditPage: React.FC = () => {
   const { publicId } = useParams<{ publicId: string }>();
   const navigate = useNavigate();
-  const { addToast } = useToast();
+  const { submitError, clearSubmitError, saveCallbacks } = useSaveFeedback();
 
   const isEditMode = !!publicId;
 
@@ -38,21 +38,21 @@ export const AssessmentFlowEditPage: React.FC = () => {
 
   const createMutation = useCreateAssessmentFlowMutation();
   const updateMutation = useUpdateAssessmentFlowMutation();
-  const deactivateMutation = useDeactivateAssessmentFlowMutation();
-
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
 
   const handleNavigateBack = useCallback((): void => {
     void navigate(routes[RouteKey.ADMIN_ASSESSMENTS].path);
   }, [navigate]);
+
+  const activation = useAssessmentFlowActivation<AssessmentFlowWithStepsView>({
+    onDeactivated: handleNavigateBack,
+  });
 
   const handleNavigateToSteps = useCallback((): void => {
     if (!publicId) {
       return;
     }
 
-    void navigate(routes[RouteKey.ADMIN_ASSESSMENT_FLOW_STEPS].path.replace(':publicId', publicId));
+    void navigate(generatePath(routes[RouteKey.ADMIN_ASSESSMENT_FLOW_STEPS].path, { publicId }));
   }, [navigate, publicId]);
 
   const handleNavigateToPreview = useCallback((): void => {
@@ -60,14 +60,12 @@ export const AssessmentFlowEditPage: React.FC = () => {
       return;
     }
 
-    void navigate(
-      routes[RouteKey.ADMIN_ASSESSMENT_FLOW_PREVIEW].path.replace(':publicId', publicId)
-    );
+    void navigate(generatePath(routes[RouteKey.ADMIN_ASSESSMENT_FLOW_PREVIEW].path, { publicId }));
   }, [navigate, publicId]);
 
   const handleCreate = useCallback(
     async (values: AssessmentFlowFormValues): Promise<void> => {
-      setSubmitError(null);
+      clearSubmitError();
 
       await createMutation.mutateAsync(
         {
@@ -75,23 +73,19 @@ export const AssessmentFlowEditPage: React.FC = () => {
           description: values.description.trim() || undefined,
           isActive: true,
         },
-        {
-          onSuccess: (created) => {
-            addToast(`"${created.name}" created successfully`, { variant: 'success' });
+        saveCallbacks(
+          (created) => `"${created.name}" created successfully`,
+          (created) => {
             void navigate(
-              routes[RouteKey.ADMIN_ASSESSMENT_FLOW_EDIT].path.replace(
-                ':publicId',
-                created.publicId
-              )
+              generatePath(routes[RouteKey.ADMIN_ASSESSMENT_FLOW_EDIT].path, {
+                publicId: created.publicId,
+              })
             );
-          },
-          onError: (err) => {
-            setSubmitError(err.message);
-          },
-        }
+          }
+        )
       );
     },
-    [createMutation, addToast, navigate]
+    [clearSubmitError, createMutation, saveCallbacks, navigate]
   );
 
   const handleUpdate = useCallback(
@@ -100,7 +94,7 @@ export const AssessmentFlowEditPage: React.FC = () => {
         return;
       }
 
-      setSubmitError(null);
+      clearSubmitError();
 
       // An emptied description is sent as null so the stored value is cleared
       const payload: UpdateAssessmentFlowInput = {
@@ -110,63 +104,11 @@ export const AssessmentFlowEditPage: React.FC = () => {
 
       await updateMutation.mutateAsync(
         { publicId, data: payload },
-        {
-          onSuccess: (updated) => {
-            addToast(`"${updated.name}" updated successfully`, { variant: 'success' });
-            handleNavigateBack();
-          },
-          onError: (err) => {
-            setSubmitError(err.message);
-          },
-        }
+        saveCallbacks((updated) => `"${updated.name}" updated successfully`, handleNavigateBack)
       );
     },
-    [publicId, updateMutation, addToast, handleNavigateBack]
+    [publicId, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
   );
-
-  const handleOpenDeactivateModal = useCallback((): void => {
-    setIsDeactivateModalOpen(true);
-  }, []);
-
-  const handleCloseDeactivateModal = useCallback((): void => {
-    setIsDeactivateModalOpen(false);
-  }, []);
-
-  const handleConfirmDeactivate = useCallback((): void => {
-    if (!publicId) {
-      return;
-    }
-
-    deactivateMutation.mutate(publicId, {
-      onSuccess: () => {
-        addToast(`"${flow?.name ?? 'Flow'}" deactivated successfully`, { variant: 'success' });
-        setIsDeactivateModalOpen(false);
-        handleNavigateBack();
-      },
-      onError: (err) => {
-        addToast(err.message, { variant: 'error' });
-        setIsDeactivateModalOpen(false);
-      },
-    });
-  }, [publicId, deactivateMutation, addToast, flow?.name, handleNavigateBack]);
-
-  const handleReactivate = useCallback((): void => {
-    if (!publicId) {
-      return;
-    }
-
-    updateMutation.mutate(
-      { publicId, data: { isActive: true } },
-      {
-        onSuccess: (updated) => {
-          addToast(`"${updated.name}" reactivated successfully`, { variant: 'success' });
-        },
-        onError: (err) => {
-          addToast(err.message, { variant: 'error' });
-        },
-      }
-    );
-  }, [publicId, updateMutation, addToast]);
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
@@ -180,11 +122,22 @@ export const AssessmentFlowEditPage: React.FC = () => {
           Edit Steps
         </Button>
         {flow.isActive ? (
-          <Button variant="destructive" onClick={handleOpenDeactivateModal}>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              activation.requestDeactivate(flow);
+            }}
+          >
             Deactivate
           </Button>
         ) : (
-          <Button variant="secondary" onClick={handleReactivate} loading={updateMutation.isPending}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              activation.activate(flow);
+            }}
+            loading={activation.isActivating}
+          >
             Reactivate
           </Button>
         )}
@@ -214,10 +167,10 @@ export const AssessmentFlowEditPage: React.FC = () => {
       onUpdate={handleUpdate}
       footer={
         <DeactivateAssessmentFlowModal
-          isOpen={isDeactivateModalOpen}
-          onClose={handleCloseDeactivateModal}
-          onConfirm={handleConfirmDeactivate}
-          isLoading={deactivateMutation.isPending}
+          isOpen={!!activation.pending}
+          onClose={activation.cancelDeactivate}
+          onConfirm={activation.confirmDeactivate}
+          isLoading={activation.isDeactivating}
           flowName={flow?.name ?? ''}
         />
       }

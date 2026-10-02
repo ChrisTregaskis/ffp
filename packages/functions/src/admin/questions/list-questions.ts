@@ -34,18 +34,9 @@ export const handler = withErrorHandling(
 
     const params = event.queryStringParameters ?? {};
 
-    const paginationInput = paginationInputSchema.parse({
-      page: params.page,
-      pageSize: params.pageSize,
-      sortBy: params.sortBy,
-      sortDirection: params.sortDirection,
-    });
+    const paginationInput = paginationInputSchema.parse(params);
 
-    const filters = questionListFiltersSchema.parse({
-      search: params.search,
-      type: params.type,
-      isActive: params.isActive,
-    });
+    const filters = questionListFiltersSchema.parse(params);
 
     return await questionService.listQuestionsService(context, paginationInput, filters);
   }

@@ -16,6 +16,7 @@ import {
   useUpdateExerciseMutation,
 } from '@web/hooks/programme-templates';
 import { useToast } from '@web/hooks/useToast';
+import { fieldToNumber } from '@web/utils/form-number';
 import { swapAdjacentItem } from '@web/utils/reorder';
 
 import { exerciseToFormValues } from './exercise-utils';
@@ -70,12 +71,10 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
           sessionId,
           data: {
             videoId: values.videoId,
-            sets: values.sets ? parseInt(values.sets, 10) : undefined,
+            sets: fieldToNumber(values.sets),
             reps: values.reps || undefined,
-            durationSeconds: values.durationSeconds
-              ? parseInt(values.durationSeconds, 10)
-              : undefined,
-            restSeconds: values.restSeconds ? parseInt(values.restSeconds, 10) : undefined,
+            durationSeconds: fieldToNumber(values.durationSeconds),
+            restSeconds: fieldToNumber(values.restSeconds),
             notes: values.notes || undefined,
           },
         },
@@ -98,12 +97,10 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
           exerciseId,
           data: {
             videoId: values.videoId,
-            sets: values.sets ? parseInt(values.sets, 10) : undefined,
+            sets: fieldToNumber(values.sets),
             reps: values.reps || undefined,
-            durationSeconds: values.durationSeconds
-              ? parseInt(values.durationSeconds, 10)
-              : undefined,
-            restSeconds: values.restSeconds ? parseInt(values.restSeconds, 10) : undefined,
+            durationSeconds: fieldToNumber(values.durationSeconds),
+            restSeconds: fieldToNumber(values.restSeconds),
             notes: values.notes || undefined,
           },
         },

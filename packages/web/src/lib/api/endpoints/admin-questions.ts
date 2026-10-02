@@ -7,7 +7,7 @@ import type {
 } from '@ffp/core';
 import { adminQuestionResponseSchema, paginatedQuestionListSchema } from '@ffp/core';
 
-import { ffpClient, parseApiResponse } from '../client';
+import { ffpClient, parseApiResponse, toListParams } from '../client';
 
 const basePath = '/admin/questions';
 
@@ -26,17 +26,10 @@ export const adminQuestionsApi = {
     filters: AdminQuestionFilterInput,
     signal?: AbortSignal
   ): Promise<PaginatedQuestionList> => {
-    const params: Record<string, string | undefined> = {
-      page: String(pagination.page),
-      pageSize: String(pagination.pageSize),
-      sortBy: pagination.sortBy,
-      sortDirection: pagination.sortDirection,
-      search: filters.search,
-      type: filters.type,
-      isActive: filters.isActive,
-    };
-
-    const response = await ffpClient.get(basePath, { params, signal });
+    const response = await ffpClient.get(basePath, {
+      params: toListParams(pagination, filters),
+      signal,
+    });
 
     return parseApiResponse(paginatedQuestionListSchema, response, {
       method: 'GET',

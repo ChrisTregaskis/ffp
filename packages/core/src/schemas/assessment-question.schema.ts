@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { QUESTION_TYPES, SCORE_DIMENSIONS } from '@ffp/database/constants';
 
-import { createPaginatedResponseSchema } from './pagination.schema';
+import { booleanQueryParamSchema, createPaginatedResponseSchema } from './pagination.schema';
 import { publicIdSchema } from './public-id.schema';
 
 export const questionTypeSchema = z.enum(QUESTION_TYPES);
@@ -17,6 +17,15 @@ export const RANGED_QUESTION_TYPES: readonly QuestionType[] = [
   'text',
   'video-response',
 ];
+
+/** Kebab-case: lowercase letters and digits, separated by single hyphens. */
+export const QUESTION_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** `questions.slug` is varchar(100). */
+export const QUESTION_SLUG_MAX_LENGTH = 100;
+
+/** The fewest options a choice question may carry. */
+export const MIN_CHOICE_OPTIONS = 2;
 
 export const questionOptionSchema = z.object({
   /** Unique value identifier for this option */
@@ -106,13 +115,15 @@ export const questionsArraySchema = z
   .array(assessmentQuestionSchema)
   .min(1, 'At least one question is required');
 
-/** Kebab-case slug, capped to the `questions.slug` column (varchar 100). */
 const questionSlugSchema = z
   .string()
   .min(1, 'Slug is required')
-  .max(100, 'Slug must be 100 characters or fewer')
+  .max(
+    QUESTION_SLUG_MAX_LENGTH,
+    `Slug must be ${String(QUESTION_SLUG_MAX_LENGTH)} characters or fewer`
+  )
   .regex(
-    /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+    QUESTION_SLUG_PATTERN,
     'Slug must be kebab-case (lowercase letters, digits and single hyphens)'
   );
 
@@ -152,10 +163,10 @@ function refineQuestionShape(
 
   // Choice types require at least two options
   if (type && CHOICE_QUESTION_TYPES.includes(type)) {
-    if (!options || options.length < 2) {
+    if (!options || options.length < MIN_CHOICE_OPTIONS) {
       ctx.addIssue({
         code: 'custom',
-        message: 'At least 2 options are required for choice-based question types',
+        message: `At least ${String(MIN_CHOICE_OPTIONS)} options are required for choice-based question types`,
         path: ['options'],
       });
     }
@@ -284,10 +295,7 @@ export const adminQuestionResponseSchema = z.object({ question: adminQuestionDet
 export const questionListFiltersSchema = z.object({
   search: z.string().optional(),
   type: questionTypeSchema.optional(),
-  isActive: z
-    .enum(['true', 'false'])
-    .transform((value) => value === 'true')
-    .optional(),
+  isActive: booleanQueryParamSchema.optional(),
 });
 
 /** Paginated response for GET /admin/questions. */

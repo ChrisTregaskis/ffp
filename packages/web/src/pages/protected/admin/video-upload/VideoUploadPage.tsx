@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { generatePath, useNavigate } from 'react-router-dom';
 
 import { Button } from '@web/components/button';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
@@ -70,7 +70,9 @@ export const VideoUploadPage: React.FC = () => {
                       variant="primary"
                       onClick={() => {
                         void navigate(
-                          routes[RouteKey.ADMIN_VIDEO_EDIT].path.replace(':id', createdVideoId)
+                          generatePath(routes[RouteKey.ADMIN_VIDEO_EDIT].path, {
+                            id: createdVideoId,
+                          })
                         );
                       }}
                     >

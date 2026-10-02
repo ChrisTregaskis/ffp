@@ -8,7 +8,7 @@ import type {
 } from '@ffp/core';
 import { paginatedTemplateListResponseSchema, templateDetailResponseSchema } from '@ffp/core';
 
-import { assertUuidPathParam, ffpClient, parseApiResponse } from '../client';
+import { assertUuidPathParam, ffpClient, parseApiResponse, toListParams } from '../client';
 
 const basePath = '/admin/programme-templates';
 
@@ -30,26 +30,10 @@ export const adminProgrammeTemplatesApi = {
     filters: AdminTemplateFilterInput,
     signal?: AbortSignal
   ): Promise<PaginatedTemplateListResponse> => {
-    const params: Record<string, string | undefined> = {
-      page: String(pagination.page),
-      pageSize: String(pagination.pageSize),
-      sortBy: pagination.sortBy,
-      sortDirection: pagination.sortDirection,
-    };
-
-    if (filters.search) {
-      params.search = filters.search;
-    }
-
-    if (filters.difficulty) {
-      params.difficulty = filters.difficulty;
-    }
-
-    if (filters.isActive) {
-      params.isActive = filters.isActive;
-    }
-
-    const response = await ffpClient.get(basePath, { params, signal });
+    const response = await ffpClient.get(basePath, {
+      params: toListParams(pagination, filters),
+      signal,
+    });
 
     return parseApiResponse(paginatedTemplateListResponseSchema, response, {
       method: 'GET',

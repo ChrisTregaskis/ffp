@@ -13,7 +13,7 @@ import {
   organisationListResponseSchema,
 } from '@ffp/core';
 
-import { assertUuidPathParam, ffpClient, parseApiResponse } from '../client';
+import { assertUuidPathParam, ffpClient, parseApiResponse, toListParams } from '../client';
 
 const basePath = '/admin/organisations';
 
@@ -39,22 +39,10 @@ export const adminOrganisationsApi = {
     filters: AdminOrganisationFilterInput,
     signal?: AbortSignal
   ): Promise<PaginatedOrganisationResponse> => {
-    const params: Record<string, string | undefined> = {
-      page: String(pagination.page),
-      pageSize: String(pagination.pageSize),
-      sortBy: pagination.sortBy,
-      sortDirection: pagination.sortDirection,
-    };
-
-    if (filters.search) {
-      params.search = filters.search;
-    }
-
-    if (filters.status) {
-      params.status = filters.status;
-    }
-
-    const response = await ffpClient.get(basePath, { params, signal });
+    const response = await ffpClient.get(basePath, {
+      params: toListParams(pagination, filters),
+      signal,
+    });
 
     return parseApiResponse(paginatedOrganisationResponseSchema, response, {
       method: 'GET',

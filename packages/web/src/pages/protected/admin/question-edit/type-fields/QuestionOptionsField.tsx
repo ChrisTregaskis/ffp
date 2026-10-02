@@ -1,18 +1,18 @@
 import React, { useEffect, useRef } from 'react';
 import { useFieldArray } from 'react-hook-form';
 
+import { MIN_CHOICE_OPTIONS } from '@ffp/core';
+
 import { Button } from '@web/components/button';
 import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
 import { Icon } from '@web/components/Icon';
 import { Text, Title } from '@web/components/text';
 
-import { EMPTY_OPTION } from '../question-form-values';
+import { EMPTY_OPTION, emptyOptions } from '../question-form-values';
 
 import { QuestionOptionRow } from './QuestionOptionRow';
 
 import type { QuestionFormValues } from '../types';
-
-const MIN_OPTIONS = 2;
 
 /** The answer options of a choice question, in the order the member sees them. */
 export const QuestionOptionsField: React.FC = () => {
@@ -27,7 +27,7 @@ export const QuestionOptionsField: React.FC = () => {
 
   useEffect(() => {
     if (!hasSeeded.current && fields.length === 0) {
-      append([EMPTY_OPTION, EMPTY_OPTION]);
+      append(emptyOptions());
     }
 
     hasSeeded.current = true;
@@ -44,7 +44,7 @@ export const QuestionOptionsField: React.FC = () => {
           : 'Scores only count once the question scores a dimension — choose one above to use them.'}
       </Text>
       {hasStoredOptions && (
-        <Text as="p" styleProps={{ size: 'xs', colour: 'muted-foreground' }} className="-mt-2 mb-3">
+        <Text as="p" styleProps={{ size: 'xs', colour: 'muted-foreground' }} className="mb-3">
           A saved option’s stored value is fixed, because branching rules and members’ past answers
           match on it. Removing a saved option stops those matching too.
         </Text>
@@ -56,7 +56,7 @@ export const QuestionOptionsField: React.FC = () => {
           index={index}
           isFirst={index === 0}
           isLast={index === fields.length - 1}
-          canRemove={fields.length > MIN_OPTIONS}
+          canRemove={fields.length > MIN_CHOICE_OPTIONS}
           onMoveUp={() => {
             swap(index, index - 1);
           }}

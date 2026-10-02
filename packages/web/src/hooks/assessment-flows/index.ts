@@ -17,3 +17,4 @@ export type {
   ReorderFlowStepsVariables,
   UpdateFlowStepVariables,
 } from './useFlowStepMutations';
+export { useAssessmentFlowActivation } from './useAssessmentFlowActivation';

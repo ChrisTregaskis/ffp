@@ -1,9 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 
+import { QUESTION_SLUG_MAX_LENGTH, QUESTION_SLUG_PATTERN } from '@ffp/core';
 import type { AdminQuestionDetail } from '@ffp/core';
 
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
+import { useAutoSlug } from '@web/components/form/hooks/useAutoSlug';
 import { FormActions } from '@web/components/form/standardForm/FormActions';
 import { FormRow } from '@web/components/form/standardForm/FormRow';
 import { FormSelect } from '@web/components/form/standardForm/FormSelect';
@@ -15,16 +17,11 @@ import {
   QUESTION_TYPE_OPTIONS,
   SCORE_DIMENSION_OPTIONS,
 } from '@web/components/questions';
-import { Text } from '@web/components/text';
-import { toSlug } from '@web/utils/string';
 
 import { QuestionTypeChangeWarning } from './QuestionTypeChangeWarning';
 import { QuestionTypeFields } from './QuestionTypeFields';
 
 import type { QuestionFormValues } from './types';
-
-const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const SLUG_MAX_LENGTH = 100;
 
 export interface QuestionFormFieldsProps {
   isEditMode: boolean;
@@ -43,28 +40,15 @@ export const QuestionFormFields: React.FC<QuestionFormFieldsProps> = ({
   isSubmitting = false,
   errorMessage,
 }) => {
-  const { register, control, errors, watch, setValue, getValues } =
-    useComposableFormContext<QuestionFormValues>();
+  const { register, control, errors, watch } = useComposableFormContext<QuestionFormValues>();
 
   const type = watch('type');
-  const questionText = watch('questionText');
 
-  // The slug follows the text until the author edits it; it is fixed once the question exists
-  const lastAutoSlug = useRef('');
-
-  useEffect(() => {
-    if (isEditMode) {
-      return;
-    }
-
-    const currentSlug = getValues('slug');
-    const nextSlug = toSlug(questionText).slice(0, SLUG_MAX_LENGTH).replace(/-$/, '');
-
-    if (currentSlug === lastAutoSlug.current || currentSlug === '') {
-      setValue('slug', nextSlug);
-      lastAutoSlug.current = nextSlug;
-    }
-  }, [isEditMode, questionText, setValue, getValues]);
+  // The slug is fixed once the question exists, because flows and scoring refer to it
+  useAutoSlug<QuestionFormValues>('questionText', 'slug', {
+    enabled: !isEditMode,
+    maxLength: QUESTION_SLUG_MAX_LENGTH,
+  });
 
   return (
     <>
@@ -88,23 +72,23 @@ export const QuestionFormFields: React.FC<QuestionFormFieldsProps> = ({
         errors={errors}
         isRequired
         disabled={isEditMode}
+        hint={
+          isEditMode
+            ? 'The slug is fixed once a question exists, because flows and scoring refer to it.'
+            : undefined
+        }
         registerOptions={{
           required: 'Please give the question a slug',
           maxLength: {
-            value: SLUG_MAX_LENGTH,
-            message: `Keep the slug to ${String(SLUG_MAX_LENGTH)} characters`,
+            value: QUESTION_SLUG_MAX_LENGTH,
+            message: `Keep the slug to ${String(QUESTION_SLUG_MAX_LENGTH)} characters`,
           },
           pattern: {
-            value: SLUG_PATTERN,
+            value: QUESTION_SLUG_PATTERN,
             message: 'Use lowercase letters, numbers and single hyphens',
           },
         }}
       />
-      {isEditMode && (
-        <Text as="p" styleProps={{ size: 'xs', colour: 'muted-foreground' }} className="-mt-3 mb-4">
-          The slug is fixed once a question exists, because flows and scoring refer to it.
-        </Text>
-      )}
 
       <FormTextarea<QuestionFormValues>
         name="description"
@@ -123,6 +107,7 @@ export const QuestionFormFields: React.FC<QuestionFormFieldsProps> = ({
           control={control}
           errors={errors}
           isRequired
+          hint={QUESTION_TYPE_DESCRIPTIONS[type]}
         />
         <FormSelect<QuestionFormValues>
           name="scoreDimension"
@@ -132,10 +117,6 @@ export const QuestionFormFields: React.FC<QuestionFormFieldsProps> = ({
           errors={errors}
         />
       </FormRow>
-
-      <Text as="p" styleProps={{ size: 'xs', colour: 'muted-foreground' }} className="-mt-2 mb-4">
-        {QUESTION_TYPE_DESCRIPTIONS[type]}
-      </Text>
 
       {record && <QuestionTypeChangeWarning stored={record} nextType={type} />}
 

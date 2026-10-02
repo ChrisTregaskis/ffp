@@ -14,7 +14,7 @@ import {
   paginatedAssessmentFlowListSchema,
 } from '@ffp/core';
 
-import { ffpClient, parseApiResponse } from '../client';
+import { ffpClient, parseApiResponse, toListParams } from '../client';
 
 const basePath = '/admin/assessment-flows';
 
@@ -34,22 +34,10 @@ export const adminAssessmentFlowsApi = {
     filters: AdminAssessmentFlowFilterInput,
     signal?: AbortSignal
   ): Promise<PaginatedAssessmentFlowList> => {
-    const params: Record<string, string | undefined> = {
-      page: String(pagination.page),
-      pageSize: String(pagination.pageSize),
-      sortBy: pagination.sortBy,
-      sortDirection: pagination.sortDirection,
-    };
-
-    if (filters.search) {
-      params.search = filters.search;
-    }
-
-    if (filters.isActive) {
-      params.isActive = filters.isActive;
-    }
-
-    const response = await ffpClient.get(basePath, { params, signal });
+    const response = await ffpClient.get(basePath, {
+      params: toListParams(pagination, filters),
+      signal,
+    });
 
     return parseApiResponse(paginatedAssessmentFlowListSchema, response, {
       method: 'GET',

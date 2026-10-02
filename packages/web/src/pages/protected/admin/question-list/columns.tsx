@@ -1,10 +1,8 @@
 import type { AdminQuestion } from '@ffp/core';
 
 import { QUESTION_TYPE_LABELS, SCORE_DIMENSION_LABELS } from '@web/components/questions';
-import { createColumns } from '@web/components/table';
+import { ACTIVE_STATUS_MAP, createColumns, toActiveStatus } from '@web/components/table';
 import type { RowAction } from '@web/components/table';
-
-import { QUESTION_STATUS_MAP } from './constants';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -31,7 +29,7 @@ export const toQuestionRow = (question: AdminQuestion): QuestionRow => ({
   type: QUESTION_TYPE_LABELS[question.type],
   scoreDimension: question.scoreDimension ? SCORE_DIMENSION_LABELS[question.scoreDimension] : '—',
   isActive: question.isActive,
-  status: question.isActive ? 'active' : 'inactive',
+  status: toActiveStatus(question.isActive),
 });
 
 const columns = createColumns<QuestionRow>();
@@ -44,6 +42,6 @@ export const buildQuestionColumns = (
   columns.text('slug', { label: 'Slug', sortable: true }),
   columns.text('type', { label: 'Type', sortable: true }),
   columns.text('scoreDimension', { label: 'Scores towards', sortable: true }),
-  columns.status('status', { label: 'Status', statusMap: QUESTION_STATUS_MAP }),
+  columns.status('status', { label: 'Status', statusMap: ACTIVE_STATUS_MAP }),
   columns.actions({ actions }),
 ];

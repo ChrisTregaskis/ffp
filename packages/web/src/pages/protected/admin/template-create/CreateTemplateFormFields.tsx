@@ -1,13 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 
 import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
+import { useAutoSlug } from '@web/components/form/hooks/useAutoSlug';
 import { FormActions } from '@web/components/form/standardForm/FormActions';
 import { FormRow } from '@web/components/form/standardForm/FormRow';
 import { FormSelect } from '@web/components/form/standardForm/FormSelect';
 import { FormTextarea } from '@web/components/form/standardForm/FormTextarea';
 import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
 import { DIFFICULTY_OPTIONS } from '@web/components/form/templates/constants';
-import { toSlug } from '@web/utils/string';
 
 import type { CreateTemplateFormValues } from './types';
 
@@ -23,28 +23,9 @@ export const CreateTemplateFormFields: React.FC<CreateTemplateFormFieldsProps> =
   onCancel,
   isSubmitting = false,
 }) => {
-  const { register, control, errors, watch, setValue, getValues } =
-    useComposableFormContext<CreateTemplateFormValues>();
+  const { register, control, errors } = useComposableFormContext<CreateTemplateFormValues>();
 
-  /**
-   * Track the last slug value we auto-generated. If the current slug differs
-   * from this, the user has manually edited it and we stop auto-generating.
-   */
-  const lastAutoSlug = useRef('');
-
-  const nameValue = watch('name');
-
-  useEffect(() => {
-    const currentSlug = getValues('slug');
-    const newSlug = toSlug(nameValue);
-
-    // Only auto-generate if the current slug matches our last auto-generated value
-    // (or is empty, meaning the user hasn't typed anything yet)
-    if (currentSlug === lastAutoSlug.current || currentSlug === '') {
-      setValue('slug', newSlug);
-      lastAutoSlug.current = newSlug;
-    }
-  }, [nameValue, setValue, getValues]);
+  useAutoSlug<CreateTemplateFormValues>('name', 'slug');
 
   return (
     <>

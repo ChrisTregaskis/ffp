@@ -1,9 +1,6 @@
 import React from 'react';
 
-import { Button } from '@web/components/button';
-import { Text } from '@web/components/text';
-
-import { Modal } from './Modal';
+import { ConfirmModal } from './ConfirmModal';
 
 export interface DeactivateAssessmentFlowModalProps {
   /** Whether the modal is visible */
@@ -26,26 +23,14 @@ export const DeactivateAssessmentFlowModal: React.FC<DeactivateAssessmentFlowMod
   isLoading = false,
   flowName,
 }) => (
-  <Modal
+  <ConfirmModal
     isOpen={isOpen}
     onClose={onClose}
+    onConfirm={onConfirm}
+    isLoading={isLoading}
     title="Deactivate Flow"
     subtitle={flowName}
-    size="sm"
-    footer={
-      <>
-        <Button variant="secondary" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button variant="destructive" onClick={onConfirm} loading={isLoading}>
-          Deactivate Flow
-        </Button>
-      </>
-    }
-  >
-    <Text as="p" styleProps={{ colour: 'muted-foreground' }}>
-      Members will no longer be offered this flow. Its steps and wording are kept, so you can bring
-      it back into use later.
-    </Text>
-  </Modal>
+    message="Members will no longer be offered this flow. Its steps and wording are kept, so you can bring it back into use later."
+    confirmLabel="Deactivate Flow"
+  />
 );

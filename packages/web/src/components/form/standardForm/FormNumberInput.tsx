@@ -1,3 +1,4 @@
+import { getFieldDescriptionIds } from '../shared/fieldDescription';
 import { getFieldErrorMessage } from '../shared/fieldError';
 import { getInputClassName } from '../shared/inputStyles';
 
@@ -41,7 +42,7 @@ export const FormNumberInput = <TFieldValues extends FieldValues>({
 }: FormNumberInputProps<TFieldValues>): JSX.Element => {
   const error = getFieldErrorMessage(errors, name);
   const inputId = String(name);
-  const errorId = `${inputId}-error`;
+  const { errorId, describedBy } = getFieldDescriptionIds(inputId, { error });
 
   return (
     <FormField
@@ -59,7 +60,7 @@ export const FormNumberInput = <TFieldValues extends FieldValues>({
         placeholder={placeholder}
         aria-required={isRequired}
         aria-invalid={!!error}
-        aria-describedby={error ? errorId : undefined}
+        aria-describedby={describedBy}
         {...register(name, { validate, deps })}
         className={`${getInputClassName(!!error)} w-full px-3 py-2`}
       />

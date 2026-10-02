@@ -3,6 +3,8 @@ import { useController } from 'react-hook-form';
 import { Switch } from '@web/components/atoms/Switch';
 import { Text } from '@web/components/text';
 
+import { getFieldDescriptionIds } from '../shared/fieldDescription';
+
 import type { Control, FieldValues, Path } from 'react-hook-form';
 
 export interface FormToggleProps<TFieldValues extends FieldValues> {
@@ -28,7 +30,7 @@ export const FormToggle = <TFieldValues extends FieldValues>({
   } = useController({ name, control });
 
   const inputId = String(name);
-  const hintId = hint ? `${inputId}-hint` : undefined;
+  const { hintId, describedBy } = getFieldDescriptionIds(inputId, { hint });
 
   return (
     <div className="mb-4 flex items-center justify-between gap-4">
@@ -50,7 +52,7 @@ export const FormToggle = <TFieldValues extends FieldValues>({
         onChange={onChange}
         onBlur={onBlur}
         disabled={disabled}
-        ariaDescribedBy={hintId}
+        ariaDescribedBy={describedBy}
       />
     </div>
   );

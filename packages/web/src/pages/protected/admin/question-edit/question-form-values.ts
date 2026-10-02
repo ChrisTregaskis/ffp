@@ -1,4 +1,4 @@
-import { CHOICE_QUESTION_TYPES, RANGED_QUESTION_TYPES } from '@ffp/core';
+import { CHOICE_QUESTION_TYPES, MIN_CHOICE_OPTIONS, RANGED_QUESTION_TYPES } from '@ffp/core';
 import type {
   AdminQuestionDetail,
   CreateQuestionInput,
@@ -8,7 +8,7 @@ import type {
   UpdateQuestionInput,
 } from '@ffp/core';
 
-import { pluralise } from '@web/utils/string';
+import { fieldToNumber, numberToField } from '@web/utils/form-number';
 
 import type { QuestionFormValues, QuestionOptionFormValues } from './types';
 
@@ -19,14 +19,17 @@ export const EMPTY_OPTION: QuestionOptionFormValues = {
   isStored: false,
 };
 
+/** The blank options a choice question starts with — as few as it may carry. */
+export const emptyOptions = (): QuestionOptionFormValues[] =>
+  Array.from({ length: MIN_CHOICE_OPTIONS }, () => EMPTY_OPTION);
+
 export const EMPTY_QUESTION_VALUES: QuestionFormValues = {
   questionText: '',
   slug: '',
   description: '',
   type: 'single-choice',
   scoreDimension: '',
-  // A choice type needs at least two, so start with two to fill in
-  options: [EMPTY_OPTION, EMPTY_OPTION],
+  options: emptyOptions(),
   required: true,
   min: '',
   max: '',
@@ -41,21 +44,6 @@ export const EMPTY_QUESTION_VALUES: QuestionFormValues = {
 export const takesOptions = (type: QuestionType): boolean => CHOICE_QUESTION_TYPES.includes(type);
 
 export const takesRange = (type: QuestionType): boolean => RANGED_QUESTION_TYPES.includes(type);
-
-const numberToField = (value: number | undefined): string =>
-  value === undefined ? '' : String(value);
-
-const fieldToNumber = (value: string): number | undefined => {
-  const trimmed = value.trim();
-
-  if (trimmed === '') {
-    return undefined;
-  }
-
-  const parsed = Number(trimmed);
-
-  return Number.isNaN(parsed) ? undefined : parsed;
-};
 
 export const toQuestionFormValues = (question: AdminQuestionDetail): QuestionFormValues => ({
   questionText: question.questionText,
@@ -160,70 +148,4 @@ export const toUpdateQuestionInput = (
     videoId: values.type === 'video-response' ? values.videoId || null : undefined,
     scoreDimension: values.scoreDimension || null,
   };
-};
-
-/** What saving under a new type will drop from the stored question, for the warning. */
-export const describeTypeChangeLoss = (
-  stored: AdminQuestionDetail,
-  nextType: QuestionType
-): string[] => {
-  if (nextType === stored.type) {
-    return [];
-  }
-
-  const losses: string[] = [];
-  const optionCount = stored.options?.length ?? 0;
-
-  if (optionCount > 0 && !takesOptions(nextType)) {
-    losses.push(`its ${String(optionCount)} answer options and their scores`);
-  }
-
-  if (stored.validation?.maxSelections !== undefined && nextType !== 'multi-choice') {
-    losses.push('the cap on how many options a member can pick');
-  }
-
-  const hasRange = stored.validation?.min !== undefined || stored.validation?.max !== undefined;
-
-  if (hasRange && !takesRange(nextType)) {
-    losses.push('its minimum and maximum');
-  }
-
-  if (stored.videoId && nextType !== 'video-response') {
-    losses.push('its linked video');
-  }
-
-  return losses;
-};
-
-/** What a type change alters without dropping, for the same warning. */
-export const describeTypeChangeNotes = (
-  stored: AdminQuestionDetail,
-  nextType: QuestionType
-): string[] => {
-  if (nextType === stored.type) {
-    return [];
-  }
-
-  const notes: string[] = [];
-  const { templateCount, scoringFlowCount } = stored.usage;
-
-  if (scoringFlowCount > 0) {
-    notes.push(
-      `${pluralise(scoringFlowCount, 'flow scores', 'flows score')} this question, and its answers will count differently.`
-    );
-  }
-
-  if (templateCount > 0) {
-    notes.push(
-      `It is on ${pluralise(templateCount, 'assessment template', 'assessment templates')}, so members will see the new type there.`
-    );
-  }
-
-  const hasRange = stored.validation?.min !== undefined || stored.validation?.max !== undefined;
-
-  if (hasRange && takesRange(stored.type) && takesRange(nextType)) {
-    notes.push('Its minimum and maximum are kept, but will now mean something different.');
-  }
-
-  return notes;
 };

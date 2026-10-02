@@ -5,7 +5,7 @@ import type { AdminQuestionDetail, QuestionType } from '@ffp/core';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { QUESTION_TYPE_LABELS } from '@web/components/questions';
 
-import { describeTypeChangeLoss, describeTypeChangeNotes } from './question-form-values';
+import { describeTypeChangeLoss, describeTypeChangeNotes } from './question-type-change';
 
 export interface QuestionTypeChangeWarningProps {
   stored: AdminQuestionDetail;

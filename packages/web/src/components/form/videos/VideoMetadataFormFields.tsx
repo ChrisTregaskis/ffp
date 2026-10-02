@@ -2,6 +2,7 @@ import React from 'react';
 
 import type { VideoStatus } from '@ffp/core';
 
+import { FieldError } from '@web/components/atoms/FieldError';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
 import { getInputClassName } from '@web/components/form/shared/inputStyles';
@@ -116,17 +117,7 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
             })}
             className={`${getInputClassName(!!titleError)} w-full px-3 py-2`}
           />
-          {titleError && (
-            <Text
-              as="p"
-              id="title-error"
-              styleProps={{ size: 'sm', colour: 'destructive' }}
-              className="mt-1"
-              role="alert"
-            >
-              {titleError}
-            </Text>
-          )}
+          {titleError && <FieldError id="title-error" message={titleError} />}
         </div>
 
         <FormSelect

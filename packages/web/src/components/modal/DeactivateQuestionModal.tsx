@@ -2,12 +2,11 @@ import React from 'react';
 
 import type { QuestionUsage } from '@ffp/core';
 
-import { Button } from '@web/components/button';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { Text } from '@web/components/text';
 import { pluralise } from '@web/utils/string';
 
-import { Modal } from './Modal';
+import { ConfirmModal } from './ConfirmModal';
 
 export interface DeactivateQuestionModalProps {
   isOpen: boolean;
@@ -35,33 +34,17 @@ export const DeactivateQuestionModal: React.FC<DeactivateQuestionModalProps> = (
   const scoringFlowCount = usage?.scoringFlowCount ?? 0;
 
   return (
-    <Modal
+    <ConfirmModal
       isOpen={isOpen}
       onClose={onClose}
+      onConfirm={onConfirm}
+      isLoading={isLoading}
       title="Deactivate Question"
       subtitle={questionText}
-      size="sm"
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={onConfirm}
-            loading={isLoading}
-            disabled={!usage && !usageCheckFailed}
-          >
-            Deactivate Question
-          </Button>
-        </>
-      }
+      message="Members will no longer be asked this question. Its wording, options and scores are kept, so you can bring it back into use later."
+      confirmLabel="Deactivate Question"
+      confirmDisabled={!usage && !usageCheckFailed}
     >
-      <Text as="p" styleProps={{ colour: 'muted-foreground' }}>
-        Members will no longer be asked this question. Its wording, options and scores are kept, so
-        you can bring it back into use later.
-      </Text>
-
       {!usage && !usageCheckFailed && (
         <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mt-3">
           Checking where this question is used…
@@ -91,6 +74,6 @@ export const DeactivateQuestionModal: React.FC<DeactivateQuestionModalProps> = (
           message={`${pluralise(scoringFlowCount, 'flow scores', 'flows score')} it. ${scoringFlowCount === 1 ? 'Its' : 'Their'} level results will stop counting its answers.`}
         />
       )}
-    </Modal>
+    </ConfirmModal>
   );
 };

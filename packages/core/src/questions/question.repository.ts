@@ -191,7 +191,7 @@ export async function findQuestionPage(
   const query = db
     .select()
     .from(questions)
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .$dynamic();
 
   const sortBy =
@@ -214,7 +214,7 @@ export async function countQuestions(db: DbClient, filters: QuestionListFilters)
   const result = await db
     .select({ count: count() })
     .from(questions)
-    .where(conditions.length > 0 ? and(...conditions) : undefined);
+    .where(and(...conditions));
 
   return result[0].count;
 }

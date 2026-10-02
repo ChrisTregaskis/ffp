@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useCallback } from 'react';
+import { generatePath, useNavigate, useParams } from 'react-router-dom';
 
 import type { AdminQuestionDetail } from '@ffp/core';
 
@@ -8,11 +8,11 @@ import { AdminEditPageShell } from '@web/components/layout';
 import { DeactivateQuestionModal } from '@web/components/modal';
 import {
   useCreateQuestionMutation,
-  useDeactivateQuestionMutation,
+  useQuestionActivation,
   useQuestionDetailQuery,
   useUpdateQuestionMutation,
 } from '@web/hooks/questions';
-import { useToast } from '@web/hooks/useToast';
+import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { RouteKey, routes } from '@web/pages/routes';
 import { pluralise } from '@web/utils/string';
 
@@ -35,7 +35,7 @@ const describeUsage = (question: AdminQuestionDetail): string => {
 export const QuestionEditPage: React.FC = () => {
   const { publicId } = useParams<{ publicId: string }>();
   const navigate = useNavigate();
-  const { addToast } = useToast();
+  const { submitError, clearSubmitError, saveCallbacks } = useSaveFeedback();
 
   const isEditMode = !!publicId;
 
@@ -47,32 +47,29 @@ export const QuestionEditPage: React.FC = () => {
 
   const createMutation = useCreateQuestionMutation();
   const updateMutation = useUpdateQuestionMutation();
-  const deactivateMutation = useDeactivateQuestionMutation();
-
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
 
   const handleNavigateBack = useCallback((): void => {
     void navigate(routes[RouteKey.ADMIN_QUESTIONS].path);
   }, [navigate]);
 
+  const activation = useQuestionActivation<AdminQuestionDetail>({
+    onDeactivated: handleNavigateBack,
+  });
+
   const handleCreate = useCallback(
     async (values: QuestionFormValues): Promise<void> => {
-      setSubmitError(null);
+      clearSubmitError();
 
-      await createMutation.mutateAsync(toCreateQuestionInput(values), {
-        onSuccess: (created) => {
-          addToast('Question created successfully', { variant: 'success' });
+      await createMutation.mutateAsync(
+        toCreateQuestionInput(values),
+        saveCallbacks('Question created successfully', (created) => {
           void navigate(
-            routes[RouteKey.ADMIN_QUESTION_EDIT].path.replace(':publicId', created.publicId)
+            generatePath(routes[RouteKey.ADMIN_QUESTION_EDIT].path, { publicId: created.publicId })
           );
-        },
-        onError: (err) => {
-          setSubmitError(err.message);
-        },
-      });
+        })
+      );
     },
-    [createMutation, addToast, navigate]
+    [clearSubmitError, createMutation, saveCallbacks, navigate]
   );
 
   const handleUpdate = useCallback(
@@ -81,78 +78,37 @@ export const QuestionEditPage: React.FC = () => {
         return;
       }
 
-      setSubmitError(null);
+      clearSubmitError();
 
       await updateMutation.mutateAsync(
         { publicId, data: toUpdateQuestionInput(values, question) },
-        {
-          onSuccess: () => {
-            addToast('Question updated successfully', { variant: 'success' });
-            handleNavigateBack();
-          },
-          onError: (err) => {
-            setSubmitError(err.message);
-          },
-        }
+        saveCallbacks('Question updated successfully', handleNavigateBack)
       );
     },
-    [publicId, question, updateMutation, addToast, handleNavigateBack]
+    [publicId, question, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
   );
-
-  const handleOpenDeactivateModal = useCallback((): void => {
-    setIsDeactivateModalOpen(true);
-  }, []);
-
-  const handleCloseDeactivateModal = useCallback((): void => {
-    setIsDeactivateModalOpen(false);
-  }, []);
-
-  const handleConfirmDeactivate = useCallback((): void => {
-    if (!publicId) {
-      return;
-    }
-
-    deactivateMutation.mutate(publicId, {
-      onSuccess: () => {
-        addToast('Question deactivated successfully', { variant: 'success' });
-        setIsDeactivateModalOpen(false);
-        handleNavigateBack();
-      },
-      onError: (err) => {
-        addToast(err.message, { variant: 'error' });
-        setIsDeactivateModalOpen(false);
-      },
-    });
-  }, [publicId, deactivateMutation, addToast, handleNavigateBack]);
-
-  const handleReactivate = useCallback((): void => {
-    if (!publicId) {
-      return;
-    }
-
-    updateMutation.mutate(
-      { publicId, data: { isActive: true } },
-      {
-        onSuccess: () => {
-          addToast('Question reactivated successfully', { variant: 'success' });
-        },
-        onError: (err) => {
-          addToast(err.message, { variant: 'error' });
-        },
-      }
-    );
-  }, [publicId, updateMutation, addToast]);
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   const headerActions =
     isEditMode && question ? (
       question.isActive ? (
-        <Button variant="destructive" onClick={handleOpenDeactivateModal}>
+        <Button
+          variant="destructive"
+          onClick={() => {
+            activation.requestDeactivate(question);
+          }}
+        >
           Deactivate
         </Button>
       ) : (
-        <Button variant="secondary" onClick={handleReactivate} loading={updateMutation.isPending}>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            activation.activate(question);
+          }}
+          loading={activation.isActivating}
+        >
           Reactivate
         </Button>
       )
@@ -183,10 +139,10 @@ export const QuestionEditPage: React.FC = () => {
       onUpdate={handleUpdate}
       footer={
         <DeactivateQuestionModal
-          isOpen={isDeactivateModalOpen}
-          onClose={handleCloseDeactivateModal}
-          onConfirm={handleConfirmDeactivate}
-          isLoading={deactivateMutation.isPending}
+          isOpen={!!activation.pending}
+          onClose={activation.cancelDeactivate}
+          onConfirm={activation.confirmDeactivate}
+          isLoading={activation.isDeactivating}
           questionText={question?.questionText ?? ''}
           usage={question?.usage}
         />

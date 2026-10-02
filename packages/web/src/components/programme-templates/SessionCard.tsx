@@ -7,6 +7,7 @@ import { KebabMenu, reorderableItemActions } from '@web/components/dropdown-menu
 import type { DropdownMenuItem } from '@web/components/dropdown-menu';
 import { DeleteConfirmModal } from '@web/components/modal';
 import { Text } from '@web/components/text';
+import { fieldToNumber } from '@web/utils/form-number';
 
 import { ExerciseList } from './ExerciseList';
 import { SessionForm } from './SessionForm';
@@ -83,9 +84,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
       onUpdate(session.id, {
         name: values.name || null,
         description: values.description || null,
-        estimatedDurationMinutes: values.estimatedDurationMinutes
-          ? parseInt(values.estimatedDurationMinutes, 10)
-          : null,
+        estimatedDurationMinutes: fieldToNumber(values.estimatedDurationMinutes) ?? null,
       });
       setIsEditing(false);
     },

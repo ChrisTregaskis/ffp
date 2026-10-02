@@ -60,8 +60,7 @@ export const QuestionOptionRow: React.FC<QuestionOptionRowProps> = ({
           register={register}
           errors={errors}
           isRequired
-          inputProps={{ readOnly: isStored }}
-          inputClassName={isStored ? 'cursor-not-allowed opacity-60 bg-muted' : undefined}
+          readOnly={isStored}
           registerOptions={{
             required: 'Give the option a value',
             validate: (value, formValues) =>

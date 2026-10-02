@@ -4,6 +4,7 @@ export * from './shared/FieldDataType';
 
 // Hooks
 export * from './hooks/useFieldsForm';
+export * from './hooks/useAutoSlug';
 
 // Common form components
 export * from './RequiredIndicator';
