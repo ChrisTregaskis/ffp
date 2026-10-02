@@ -6,7 +6,7 @@ import { Icons } from '@web/components/Icon/types';
 
 import { Text, type TextColour } from '../text';
 
-export type AlertVariant = 'error' | 'warning' | 'success';
+export type AlertVariant = 'error' | 'warning' | 'success' | 'info';
 export type AlertAppearance = 'soft' | 'solid';
 
 export interface StaticAlertProps {
@@ -94,7 +94,27 @@ const VARIANT_CONFIG: Record<
       dismissClass: 'opacity-80 hover:opacity-100',
     },
   },
+  info: {
+    icon: Icons.HELPCIRCLE,
+    soft: {
+      bg: 'bg-info/20',
+      border: 'border-info/40',
+      iconColour: 'var(--color-info)',
+      textColour: 'info',
+      dismissClass: 'opacity-60 hover:opacity-100',
+    },
+    solid: {
+      bg: 'bg-info',
+      border: 'border-info',
+      iconColour: '#ffffff',
+      textColour: 'white',
+      dismissClass: 'opacity-80 hover:opacity-100',
+    },
+  },
 };
+
+/** Info explains rather than reports, so `status` announces it without cutting in. */
+const POLITE_VARIANTS: AlertVariant[] = ['info'];
 
 /**
  * Static alert component with variants and appearances.
@@ -114,7 +134,7 @@ export const StaticAlert: React.FC<StaticAlertProps> = ({
 
   return (
     <div
-      role="alert"
+      role={POLITE_VARIANTS.includes(variant) ? 'status' : 'alert'}
       className={`w-full rounded-md border ${styles.bg} ${styles.border} p-4 ${className}`.trim()}
     >
       <div className="flex items-center justify-center">

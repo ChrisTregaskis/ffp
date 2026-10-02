@@ -1,3 +1,4 @@
+import { type AdminQuestionResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
@@ -5,18 +6,13 @@ import {
   questionService,
   ForbiddenError,
   isUserActor,
-  type Question,
 } from '@ffp/core/server';
 
 import { parseJsonBody } from '../../lib/request-body';
 
-interface CreateQuestionResponse {
-  question: Question;
-}
-
 /** POST /admin/questions — create a question (slug must be unique). Requires system_admin. */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<CreateQuestionResponse> => {
+  async (event: APIGatewayProxyEventV2WithJWT): Promise<AdminQuestionResponse> => {
     const context = extractUserContext(event);
 
     if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {

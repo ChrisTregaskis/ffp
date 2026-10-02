@@ -22,8 +22,8 @@ export const organisations = pgTable(
     name: varchar('name', { length: 255 }).notNull(),
     status: organisationStatusEnum('status').notNull().default('active'),
     settings: jsonb('settings').default({}),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [publicIdIndex('organisations', table.publicId)]
 );

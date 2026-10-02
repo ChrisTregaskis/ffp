@@ -1,12 +1,12 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { generatePath, useNavigate, useParams } from 'react-router-dom';
 
 import { Button } from '@web/components/button';
 import { EmptyState } from '@web/components/feedback/EmptyState';
 import { PageState } from '@web/components/feedback/PageState';
 import { Icon } from '@web/components/Icon';
-import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
-import { InlineFormPanel, SessionCard } from '@web/components/programme-templates';
+import { ContentPanel, InlineFormPanel, PageContainer, PageHeader } from '@web/components/layout';
+import { SessionCard } from '@web/components/programme-templates';
 import { SessionForm } from '@web/components/programme-templates/SessionForm';
 import type { SessionFormValues } from '@web/components/programme-templates/SessionForm';
 import { Text } from '@web/components/text';
@@ -19,6 +19,7 @@ import {
 } from '@web/hooks/programme-templates';
 import { useToast } from '@web/hooks/useToast';
 import { RouteKey, routes } from '@web/pages/routes';
+import { fieldToNumber } from '@web/utils/form-number';
 import { swapAdjacentItem } from '@web/utils/reorder';
 
 export const PhaseDetailPage: React.FC = () => {
@@ -54,7 +55,7 @@ export const PhaseDetailPage: React.FC = () => {
       return;
     }
 
-    void navigate(routes[RouteKey.ADMIN_TEMPLATE_PHASES].path.replace(':id', templateId));
+    void navigate(generatePath(routes[RouteKey.ADMIN_TEMPLATE_PHASES].path, { id: templateId }));
   }, [navigate, templateId]);
 
   const handleNavigateToTemplates = useCallback(() => {
@@ -75,9 +76,7 @@ export const PhaseDetailPage: React.FC = () => {
           data: {
             name: values.name || null,
             description: values.description || null,
-            estimatedDurationMinutes: values.estimatedDurationMinutes
-              ? parseInt(values.estimatedDurationMinutes, 10)
-              : null,
+            estimatedDurationMinutes: fieldToNumber(values.estimatedDurationMinutes) ?? null,
           },
         },
         {

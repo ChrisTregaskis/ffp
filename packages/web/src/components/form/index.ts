@@ -4,6 +4,7 @@ export * from './shared/FieldDataType';
 
 // Hooks
 export * from './hooks/useFieldsForm';
+export * from './hooks/useAutoSlug';
 
 // Common form components
 export * from './RequiredIndicator';
@@ -14,6 +15,7 @@ export * from './standardForm/FormField';
 export * from './standardForm/FormTextInput';
 export * from './standardForm/FormTextarea';
 export * from './standardForm/FormSelect';
+export * from './standardForm/FormToggle';
 export * from './standardForm/FormTagInput';
 export * from './standardForm/FormError';
 

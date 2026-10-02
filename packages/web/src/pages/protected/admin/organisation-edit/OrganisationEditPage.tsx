@@ -1,19 +1,18 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import type { UpdateOrganisationInput } from '@ffp/core';
 
-import { PageState } from '@web/components/feedback/PageState';
-import { ComposableForm } from '@web/components/form/composableForm';
-import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
+import { AdminEditPageShell } from '@web/components/layout';
 import {
   useCreateOrganisationMutation,
   useOrganisationDetailQuery,
   useUpdateOrganisationMutation,
 } from '@web/hooks/organisations';
-import { useToast } from '@web/hooks/useToast';
+import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { RouteKey, routes } from '@web/pages/routes';
 
+import { EMPTY_ORGANISATION_VALUES, toOrganisationFormValues } from './organisation-form-values';
 import { OrganisationFormFields } from './OrganisationFormFields';
 
 import type { OrganisationFormValues } from './types';
@@ -21,7 +20,7 @@ import type { OrganisationFormValues } from './types';
 export const OrganisationEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToast } = useToast();
+  const { submitError, clearSubmitError, saveCallbacks } = useSaveFeedback();
 
   const isEditMode = !!id;
 
@@ -33,45 +32,21 @@ export const OrganisationEditPage: React.FC = () => {
   const createMutation = useCreateOrganisationMutation();
   const updateMutation = useUpdateOrganisationMutation();
 
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const defaultValues = useMemo((): OrganisationFormValues => {
-    if (!isEditMode || !organisation) {
-      return {
-        organisationName: '',
-        status: 'active',
-      };
-    }
-
-    return {
-      organisationName: organisation.name,
-      status: organisation.status,
-    };
-  }, [isEditMode, organisation]);
-
   const handleNavigateBack = useCallback(() => {
     void navigate(routes[RouteKey.ADMIN_ORGANISATIONS].path);
   }, [navigate]);
 
   /** Handle create submission */
   const handleCreate = useCallback(
-    (values: OrganisationFormValues) => {
-      setSubmitError(null);
+    async (values: OrganisationFormValues): Promise<void> => {
+      clearSubmitError();
 
-      createMutation.mutate(
+      await createMutation.mutateAsync(
         { organisationName: values.organisationName },
-        {
-          onSuccess: () => {
-            addToast('Organisation created successfully', { variant: 'success' });
-            handleNavigateBack();
-          },
-          onError: (err) => {
-            setSubmitError(err.message);
-          },
-        }
+        saveCallbacks('Organisation created successfully', handleNavigateBack)
       );
     },
-    [createMutation, addToast, handleNavigateBack]
+    [clearSubmitError, createMutation, saveCallbacks, handleNavigateBack]
   );
 
   /** Build update payload with only changed fields */
@@ -98,8 +73,8 @@ export const OrganisationEditPage: React.FC = () => {
 
   /** Handle edit submission */
   const handleUpdate = useCallback(
-    (values: OrganisationFormValues) => {
-      if (!id) {
+    async (values: OrganisationFormValues): Promise<void> => {
+      if (!organisation) {
         return;
       }
 
@@ -111,65 +86,46 @@ export const OrganisationEditPage: React.FC = () => {
         return;
       }
 
-      setSubmitError(null);
+      clearSubmitError();
 
-      updateMutation.mutate(
-        { id, data: payload },
-        {
-          onSuccess: () => {
-            addToast('Organisation updated successfully', { variant: 'success' });
-            handleNavigateBack();
-          },
-          onError: (err) => {
-            setSubmitError(err.message);
-          },
-        }
+      await updateMutation.mutateAsync(
+        { id: organisation.id, publicId: organisation.publicId, data: payload },
+        saveCallbacks('Organisation updated successfully', handleNavigateBack)
       );
     },
-    [id, buildUpdatePayload, updateMutation, addToast, handleNavigateBack]
-  );
-
-  const handleFormSubmit = useCallback(
-    (values: OrganisationFormValues) => {
-      if (isEditMode) {
-        handleUpdate(values);
-      } else {
-        handleCreate(values);
-      }
-    },
-    [isEditMode, handleUpdate, handleCreate]
+    [
+      organisation,
+      buildUpdatePayload,
+      clearSubmitError,
+      updateMutation,
+      saveCallbacks,
+      handleNavigateBack,
+    ]
   );
 
   const isPending = createMutation.isPending || updateMutation.isPending;
-  const isLoadingOrError = isEditMode && (isLoading || error);
 
   return (
-    <PageContainer>
-      <PageHeader title={isEditMode ? 'Edit Organisation' : 'Create Organisation'} />
-
-      <ContentPanel>
-        {isLoadingOrError ? (
-          <PageState
-            isLoading={isLoading}
-            title="Unable to load organisation"
-            message={error?.message}
-            actionLabel="Back to Organisations"
-            onAction={handleNavigateBack}
-          />
-        ) : (
-          <ComposableForm<OrganisationFormValues>
-            onSubmit={handleFormSubmit}
-            defaultValues={defaultValues}
-          >
-            <OrganisationFormFields
-              isEditMode={isEditMode}
-              onCancel={handleNavigateBack}
-              isSubmitting={isPending}
-              errorMessage={submitError}
-            />
-          </ComposableForm>
-        )}
-      </ContentPanel>
-    </PageContainer>
+    <AdminEditPageShell
+      title={isEditMode ? 'Edit Organisation' : 'Create Organisation'}
+      resourceLabel="organisation"
+      listLabel="Organisations"
+      isEditMode={isEditMode}
+      isLoading={isLoading}
+      loadError={error}
+      onBack={handleNavigateBack}
+      record={organisation}
+      emptyValues={EMPTY_ORGANISATION_VALUES}
+      toFormValues={toOrganisationFormValues}
+      onCreate={handleCreate}
+      onUpdate={handleUpdate}
+    >
+      <OrganisationFormFields
+        isEditMode={isEditMode}
+        onCancel={handleNavigateBack}
+        isSubmitting={isPending}
+        errorMessage={submitError}
+      />
+    </AdminEditPageShell>
   );
 };

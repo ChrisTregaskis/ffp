@@ -33,8 +33,8 @@ export const users = pgTable(
     profileImageUrl: text('profile_image_url'),
     phone: varchar('phone', { length: 20 }),
     dateOfBirth: date('date_of_birth'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     publicIdIndex('users', table.publicId),

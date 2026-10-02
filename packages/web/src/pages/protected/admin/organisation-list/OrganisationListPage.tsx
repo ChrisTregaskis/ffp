@@ -1,18 +1,14 @@
 import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Button } from '@web/components/button';
-import { Icon } from '@web/components/Icon';
-import { PageContainer, PageHeader } from '@web/components/layout';
-import { Table, TableControls } from '@web/components/table';
+import { AdminListPageShell } from '@web/components/layout';
+import type { ListEmptyStateControls } from '@web/components/layout';
 import type { RowAction } from '@web/components/table';
 import {
   useAdminOrganisationsQuery,
   useUpdateOrganisationMutation,
 } from '@web/hooks/organisations';
-import { useApiTable } from '@web/hooks/useApiTable';
 import { useToast } from '@web/hooks/useToast';
-import type { AdminOrganisationFilterInput } from '@web/lib/api/endpoints';
 import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildOrganisationColumns, toOrganisationRow } from './columns';
@@ -21,38 +17,12 @@ import { OrganisationListEmptyState } from './OrganisationListEmptyState';
 
 import type { OrganisationRow } from './columns';
 
+const DEFAULT_SORT = { id: 'createdAt', desc: true };
+
 export const OrganisationListPage: React.FC = () => {
   const navigate = useNavigate();
   const { addToast } = useToast();
   const updateMutation = useUpdateOrganisationMutation();
-
-  const {
-    onStateChange,
-    queryParams,
-    search,
-    onSearchChange,
-    filterValues,
-    onFilterChange,
-    debouncedSearch,
-    debouncedFilters,
-    clearAll,
-    hasActiveControls,
-  } = useApiTable({
-    defaultPageSize: 10,
-    defaultSort: { id: 'createdAt', desc: true },
-  });
-
-  const adminFilters: AdminOrganisationFilterInput = useMemo(
-    () => ({
-      search: debouncedSearch || undefined,
-      status: debouncedFilters.status ? String(debouncedFilters.status) : undefined,
-    }),
-    [debouncedSearch, debouncedFilters]
-  );
-
-  const { data, isLoading, error } = useAdminOrganisationsQuery(queryParams, adminFilters);
-
-  const organisationRows = useMemo(() => (data ? data.data.map(toOrganisationRow) : []), [data]);
 
   const handleCreateClick = useCallback((): void => {
     void navigate(routes[RouteKey.ADMIN_ORGANISATION_CREATE].path);
@@ -70,7 +40,7 @@ export const OrganisationListPage: React.FC = () => {
     (row: OrganisationRow): void => {
       const newStatus = row.status === 'active' ? 'inactive' : 'active';
       updateMutation.mutate(
-        { id: row.id, data: { status: newStatus } },
+        { id: row.id, publicId: row.publicId, data: { status: newStatus } },
         {
           onSuccess: () => {
             const action = newStatus === 'active' ? 'activated' : 'deactivated';
@@ -102,52 +72,30 @@ export const OrganisationListPage: React.FC = () => {
 
   const organisationColumns = useMemo(() => buildOrganisationColumns(rowActions), [rowActions]);
 
-  return (
-    <PageContainer>
-      <PageHeader
-        title="Organisations"
-        subtitle="Manage organisations — create, edit, and control access"
-        actions={
-          <Button
-            variant="primary"
-            icon={<Icon name="Plus" styleProps={{ size: 'sm', colour: 'currentColor' }} />}
-            onClick={handleCreateClick}
-          >
-            Create Organisation
-          </Button>
-        }
+  const renderEmptyState = useCallback(
+    ({ hasActiveControls }: ListEmptyStateControls) => (
+      <OrganisationListEmptyState
+        hasFilters={hasActiveControls}
+        onCreateClick={handleCreateClick}
       />
+    ),
+    [handleCreateClick]
+  );
 
-      <Table<OrganisationRow>
-        tableId="admin-organisations"
-        data={organisationRows}
-        columns={organisationColumns}
-        totalRows={data?.pagination.total ?? 0}
-        isLoading={isLoading}
-        error={error?.message}
-        onStateChange={onStateChange}
-        defaultSort={{ id: 'createdAt', desc: true }}
-        getRowId={(row) => row.id}
-        emptyState={
-          <OrganisationListEmptyState
-            hasFilters={hasActiveControls}
-            onCreateClick={handleCreateClick}
-          />
-        }
-        renderControls={(cols) => (
-          <TableControls
-            search={search}
-            onSearchChange={onSearchChange}
-            searchPlaceholder="Search by name..."
-            filters={TABLE_FILTERS}
-            filterValues={filterValues}
-            onFilterChange={onFilterChange}
-            columns={cols}
-            onClearAll={clearAll}
-            hasActiveControls={hasActiveControls}
-          />
-        )}
-      />
-    </PageContainer>
+  return (
+    <AdminListPageShell
+      title="Organisations"
+      subtitle="Manage organisations — create, edit, and control access"
+      createLabel="Create Organisation"
+      onCreate={handleCreateClick}
+      tableId="admin-organisations"
+      defaultSort={DEFAULT_SORT}
+      filters={TABLE_FILTERS}
+      searchPlaceholder="Search by name..."
+      useList={useAdminOrganisationsQuery}
+      toRow={toOrganisationRow}
+      columns={organisationColumns}
+      renderEmptyState={renderEmptyState}
+    />
   );
 };

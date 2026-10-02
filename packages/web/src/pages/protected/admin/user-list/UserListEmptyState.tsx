@@ -1,8 +1,6 @@
 import React from 'react';
 
-import { Button } from '@web/components/button';
-import { StatusResult } from '@web/components/feedback/StatusResult';
-import { Icon } from '@web/components/Icon';
+import { ListEmptyState } from '@web/components/feedback/ListEmptyState';
 
 interface UserListEmptyStateProps {
   /** Whether search or filter controls are active (changes messaging) */
@@ -14,35 +12,16 @@ interface UserListEmptyStateProps {
 export const UserListEmptyState: React.FC<UserListEmptyStateProps> = ({
   hasFilters,
   onCreateClick,
-}) => {
-  if (hasFilters) {
-    return (
-      <StatusResult
-        icon="Search"
-        iconColour="var(--color-muted-foreground)"
-        iconBg="bg-transparent"
-        title="No matching users"
-        description="Try adjusting your search or filters to find what you are looking for."
-      />
-    );
-  }
-
-  return (
-    <StatusResult
-      icon="Users"
-      iconColour="var(--color-primary)"
-      iconBg="bg-transparent"
-      title="No users yet"
-      description="Create your first programme user to start onboarding."
-      actions={
-        <Button
-          variant="secondary"
-          icon={<Icon name="Plus" styleProps={{ size: 'sm', colour: 'currentColor' }} />}
-          onClick={onCreateClick}
-        >
-          Create User
-        </Button>
-      }
-    />
-  );
-};
+}) => (
+  <ListEmptyState
+    hasFilters={hasFilters}
+    filteredTitle="No matching users"
+    icon="Users"
+    iconColour="var(--color-primary)"
+    title="No users yet"
+    description="Create your first programme user to start onboarding."
+    actionLabel="Create User"
+    actionIcon="Plus"
+    onAction={onCreateClick}
+  />
+);

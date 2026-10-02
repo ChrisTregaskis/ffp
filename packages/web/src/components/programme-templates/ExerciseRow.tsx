@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 
 import type { ExerciseResponse } from '@ffp/core';
 
-import { KebabMenu } from '@web/components/dropdown-menu';
+import { KebabMenu, reorderableItemActions } from '@web/components/dropdown-menu';
 import type { DropdownMenuItem } from '@web/components/dropdown-menu';
 import { Text } from '@web/components/text';
 
@@ -54,35 +54,23 @@ export const ExerciseRow: React.FC<ExerciseRowProps> = ({
   isMutating = false,
 }) => {
   const menuItems: DropdownMenuItem[] = useMemo(
-    () => [
-      {
-        label: 'Edit',
-        onClick: () => {
+    () =>
+      reorderableItemActions({
+        onEdit: () => {
           onEdit(exercise.id);
         },
-      },
-      {
-        label: 'Move up',
-        onClick: () => {
+        onMoveUp: () => {
           onMoveUp(exercise.id);
         },
-        disabled: isFirst,
-      },
-      {
-        label: 'Move down',
-        onClick: () => {
+        onMoveDown: () => {
           onMoveDown(exercise.id);
         },
-        disabled: isLast,
-      },
-      {
-        label: 'Delete',
-        onClick: () => {
+        onDelete: () => {
           onDelete(exercise.id);
         },
-        variant: 'danger',
-      },
-    ],
+        isFirst,
+        isLast,
+      }),
     [exercise.id, onEdit, onMoveUp, onMoveDown, onDelete, isFirst, isLast]
   );
 

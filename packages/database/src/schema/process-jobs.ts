@@ -44,12 +44,12 @@ export const processJobs = pgTable(
     /** Human-readable status message (e.g., progress info, failure reason) */
     message: text('message'),
     /** Earliest time this job can be retried (null = immediately available) */
-    retryAfter: timestamp('retry_after'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    retryAfter: timestamp('retry_after', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     /** When a worker started processing this job */
-    startedAt: timestamp('started_at'),
+    startedAt: timestamp('started_at', { withTimezone: true }),
     /** When the job completed (success or final failure) */
-    completedAt: timestamp('completed_at'),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
   },
   (table) => [
     index('idx_process_jobs_status').on(table.status),

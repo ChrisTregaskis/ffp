@@ -1,11 +1,12 @@
 import { z } from 'zod';
 
+import { publicIdSchema } from './public-id.schema';
+
 /** Full template phase record — maps to the template_phases database table */
 export const templatePhaseSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.guid(),
-  /** Public identifier for URLs (nanoid, 12 chars) */
-  publicId: z.string().length(12),
+  publicId: publicIdSchema,
   /** Parent programme template */
   programmeTemplateId: z.guid(),
   /** Ordinal position within the template (1-based) */

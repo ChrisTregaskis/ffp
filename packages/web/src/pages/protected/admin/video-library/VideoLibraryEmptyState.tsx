@@ -1,8 +1,6 @@
 import React from 'react';
 
-import { Button } from '@web/components/button';
-import { StatusResult } from '@web/components/feedback/StatusResult';
-import { Icon } from '@web/components/Icon';
+import { ListEmptyState } from '@web/components/feedback/ListEmptyState';
 
 interface VideoLibraryEmptyStateProps {
   /** Whether search or filter controls are active (changes messaging) */
@@ -14,35 +12,16 @@ interface VideoLibraryEmptyStateProps {
 export const VideoLibraryEmptyState: React.FC<VideoLibraryEmptyStateProps> = ({
   hasFilters,
   onUploadClick,
-}) => {
-  if (hasFilters) {
-    return (
-      <StatusResult
-        icon="Search"
-        iconColour="var(--color-muted-foreground)"
-        iconBg="bg-transparent"
-        title="No matching videos"
-        description="Try adjusting your search or filters to find what you are looking for."
-      />
-    );
-  }
-
-  return (
-    <StatusResult
-      icon="Video"
-      iconColour="var(--color-muted-foreground)"
-      iconBg="bg-transparent"
-      title="No videos yet"
-      description="Upload your first exercise video to start building the video library."
-      actions={
-        <Button
-          variant="secondary"
-          icon={<Icon name="Upload" styleProps={{ size: 'sm', colour: 'currentColor' }} />}
-          onClick={onUploadClick}
-        >
-          Upload Video
-        </Button>
-      }
-    />
-  );
-};
+}) => (
+  <ListEmptyState
+    hasFilters={hasFilters}
+    filteredTitle="No matching videos"
+    icon="Video"
+    iconColour="var(--color-muted-foreground)"
+    title="No videos yet"
+    description="Upload your first exercise video to start building the video library."
+    actionLabel="Upload Video"
+    actionIcon="Upload"
+    onAction={onUploadClick}
+  />
+);

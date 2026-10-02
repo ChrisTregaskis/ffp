@@ -2,14 +2,12 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { adminVideoFilterSchema } from '@ffp/core';
+import type { AdminVideoListResponse, PaginationInput } from '@ffp/core';
 
-import { Button } from '@web/components/button';
-import { Icon } from '@web/components/Icon';
-import { PageContainer, PageHeader } from '@web/components/layout';
+import { AdminListPageShell } from '@web/components/layout';
+import type { ListEmptyStateControls, ListFilterValues } from '@web/components/layout';
 import { ArchiveVideoModal } from '@web/components/modal';
-import { Table, TableControls } from '@web/components/table';
 import type { RowAction } from '@web/components/table';
-import { useApiTable } from '@web/hooks/useApiTable';
 import { useToast } from '@web/hooks/useToast';
 import { useAdminVideosQuery, useUpdateVideoMutation } from '@web/hooks/videos';
 import { RouteKey, routes } from '@web/pages/routes';
@@ -18,45 +16,30 @@ import { buildVideoColumns, type VideoRow } from './video-library/columns';
 import { TABLE_FILTERS } from './video-library/constants';
 import { VideoLibraryEmptyState } from './video-library/VideoLibraryEmptyState';
 
+const DEFAULT_SORT = { id: 'createdAt', desc: true };
+const DEFAULT_COLUMN_VISIBILITY = { movementType: false, updatedAt: false, tags: false };
+
+/** The video list takes enum-typed filters, so the raw values pass through its schema first. */
+const useVideoList = (
+  pagination: PaginationInput,
+  filters: ListFilterValues
+): ReturnType<typeof useAdminVideosQuery> => {
+  const parsed = adminVideoFilterSchema.safeParse(filters);
+
+  return useAdminVideosQuery(pagination, parsed.success ? parsed.data : {});
+};
+
+const toVideoRow = (video: AdminVideoListResponse): VideoRow => video as VideoRow;
+
 export const VideoLibraryPage: React.FC = () => {
   const navigate = useNavigate();
   const { addToast } = useToast();
   const updateMutation = useUpdateVideoMutation();
-
   const [archiveTarget, setArchiveTarget] = useState<VideoRow | null>(null);
 
-  const {
-    onStateChange,
-    queryParams,
-    search,
-    onSearchChange,
-    filterValues,
-    onFilterChange,
-    debouncedSearch,
-    debouncedFilters,
-    clearAll,
-    hasActiveControls,
-  } = useApiTable({
-    defaultPageSize: 10,
-    defaultSort: { id: 'createdAt', desc: true },
-  });
-
-  // Build filter params from debounced values — Zod validates and infers correct types
-  const adminFilters = useMemo(() => {
-    const result = adminVideoFilterSchema.safeParse({
-      search: debouncedSearch || undefined,
-      status: debouncedFilters.status || undefined,
-      difficulty: debouncedFilters.difficulty || undefined,
-    });
-
-    return result.success ? result.data : {};
-  }, [debouncedSearch, debouncedFilters]);
-
-  const { data, isLoading, error } = useAdminVideosQuery(queryParams, adminFilters);
-
-  const handleUploadClick = (): void => {
+  const handleUploadClick = useCallback((): void => {
     void navigate(routes[RouteKey.ADMIN_VIDEO_UPLOAD].path);
-  };
+  }, [navigate]);
 
   const handleEditClick = useCallback(
     (row: VideoRow): void => {
@@ -69,7 +52,7 @@ export const VideoLibraryPage: React.FC = () => {
   const handlePublish = useCallback(
     (row: VideoRow): void => {
       updateMutation.mutate(
-        { id: row.id, data: { status: 'active' } },
+        { id: row.id, publicId: row.publicId, data: { status: 'active' } },
         {
           onSuccess: () => {
             addToast(`"${row.title}" published successfully`, { variant: 'success' });
@@ -87,7 +70,7 @@ export const VideoLibraryPage: React.FC = () => {
   const handleRestore = useCallback(
     (row: VideoRow): void => {
       updateMutation.mutate(
-        { id: row.id, data: { status: 'active' } },
+        { id: row.id, publicId: row.publicId, data: { status: 'active' } },
         {
           onSuccess: () => {
             addToast(`"${row.title}" restored to active`, { variant: 'success' });
@@ -108,7 +91,7 @@ export const VideoLibraryPage: React.FC = () => {
     }
 
     updateMutation.mutate(
-      { id: archiveTarget.id, data: { status: 'archived' } },
+      { id: archiveTarget.id, publicId: archiveTarget.publicId, data: { status: 'archived' } },
       {
         onSuccess: () => {
           addToast(`"${archiveTarget.title}" archived`, { variant: 'success' });
@@ -153,54 +136,30 @@ export const VideoLibraryPage: React.FC = () => {
 
   const videoColumns = useMemo(() => buildVideoColumns(rowActions), [rowActions]);
 
+  const renderEmptyState = useCallback(
+    ({ hasActiveControls }: ListEmptyStateControls) => (
+      <VideoLibraryEmptyState hasFilters={hasActiveControls} onUploadClick={handleUploadClick} />
+    ),
+    [handleUploadClick]
+  );
+
   return (
-    <PageContainer>
-      <PageHeader
-        title="Video Library"
-        subtitle="Manage exercise videos — upload, edit metadata, and control availability"
-        actions={
-          <Button
-            variant="primary"
-            icon={<Icon name="Upload" styleProps={{ size: 'sm', colour: 'currentColor' }} />}
-            onClick={handleUploadClick}
-          >
-            Upload Video
-          </Button>
-        }
-      />
-
-      <Table<VideoRow>
-        tableId="admin-videos"
-        data={data ? (data.data as VideoRow[]) : []}
-        columns={videoColumns}
-        totalRows={data?.pagination.total ?? 0}
-        isLoading={isLoading}
-        error={error?.message}
-        onStateChange={onStateChange}
-        defaultSort={{ id: 'createdAt', desc: true }}
-        defaultColumnVisibility={{ movementType: false, updatedAt: false, tags: false }}
-        getRowId={(row) => row.id}
-        emptyState={
-          <VideoLibraryEmptyState
-            hasFilters={hasActiveControls}
-            onUploadClick={handleUploadClick}
-          />
-        }
-        renderControls={(cols) => (
-          <TableControls
-            search={search}
-            onSearchChange={onSearchChange}
-            searchPlaceholder="Search by title..."
-            filters={TABLE_FILTERS}
-            filterValues={filterValues}
-            onFilterChange={onFilterChange}
-            columns={cols}
-            onClearAll={clearAll}
-            hasActiveControls={hasActiveControls}
-          />
-        )}
-      />
-
+    <AdminListPageShell
+      title="Video Library"
+      subtitle="Manage exercise videos — upload, edit metadata, and control availability"
+      createLabel="Upload Video"
+      createIcon="Upload"
+      onCreate={handleUploadClick}
+      tableId="admin-videos"
+      defaultSort={DEFAULT_SORT}
+      defaultColumnVisibility={DEFAULT_COLUMN_VISIBILITY}
+      filters={TABLE_FILTERS}
+      searchPlaceholder="Search by title..."
+      useList={useVideoList}
+      toRow={toVideoRow}
+      columns={videoColumns}
+      renderEmptyState={renderEmptyState}
+    >
       <ArchiveVideoModal
         isOpen={!!archiveTarget}
         onClose={() => {
@@ -209,6 +168,6 @@ export const VideoLibraryPage: React.FC = () => {
         onConfirm={handleConfirmArchive}
         isLoading={updateMutation.isPending}
       />
-    </PageContainer>
+    </AdminListPageShell>
   );
 };

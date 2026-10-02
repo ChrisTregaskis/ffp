@@ -1,15 +1,16 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import type { UpdateProgrammeTemplateInput } from '@ffp/core';
 
 import { PageState } from '@web/components/feedback/PageState';
 import { ComposableForm } from '@web/components/form/composableForm';
-import { TemplateMetadataFormFields } from '@web/components/form/templates';
+import { TemplateMetadataFormFields, toTemplateSaveError } from '@web/components/form/templates';
 import type { TemplateMetadataFormValues } from '@web/components/form/templates';
 import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
 import { Text } from '@web/components/text';
 import { useTemplateDetailQuery, useUpdateTemplateMutation } from '@web/hooks/programme-templates';
+import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { useToast } from '@web/hooks/useToast';
 import { RouteKey, routes } from '@web/pages/routes';
 import { formatDate } from '@web/utils/format';
@@ -18,14 +19,13 @@ export const TemplateDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const { submitError, clearSubmitError, saveCallbacks } = useSaveFeedback();
 
   const { data: template, isLoading, error } = useTemplateDetailQuery(id ?? '');
   const updateMutation = useUpdateTemplateMutation();
 
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  /** Build default form values from template data */
-  const defaultValues = useMemo((): TemplateMetadataFormValues | undefined => {
+  /** Form values from template data */
+  const formValues = useMemo((): TemplateMetadataFormValues | undefined => {
     if (!template) {
       return undefined;
     }
@@ -81,33 +81,14 @@ export const TemplateDetailPage: React.FC = () => {
     [template]
   );
 
-  /** Execute the update mutation */
-  const executeUpdate = useCallback(
-    (data: UpdateProgrammeTemplateInput) => {
-      if (!id) {
+  const handleFormSubmit = useCallback(
+    async (values: TemplateMetadataFormValues): Promise<void> => {
+      if (!template) {
         return;
       }
 
-      setSubmitError(null);
+      clearSubmitError();
 
-      updateMutation.mutate(
-        { id, data },
-        {
-          onSuccess: () => {
-            addToast('Template updated successfully', { variant: 'success' });
-          },
-          onError: (err) => {
-            setSubmitError(err.message);
-          },
-        }
-      );
-    },
-    [id, updateMutation, addToast]
-  );
-
-  /** Handle form submission */
-  const handleFormSubmit = useCallback(
-    (values: TemplateMetadataFormValues) => {
       const payload = buildUpdatePayload(values);
 
       if (Object.keys(payload).length === 0) {
@@ -116,9 +97,14 @@ export const TemplateDetailPage: React.FC = () => {
         return;
       }
 
-      executeUpdate(payload);
+      await updateMutation.mutateAsync(
+        { id: template.id, publicId: template.publicId, data: payload },
+        saveCallbacks('Template updated successfully', undefined, {
+          mapError: toTemplateSaveError,
+        })
+      );
     },
-    [buildUpdatePayload, executeUpdate, addToast]
+    [template, buildUpdatePayload, addToast, clearSubmitError, updateMutation, saveCallbacks]
   );
 
   return (
@@ -136,7 +122,7 @@ export const TemplateDetailPage: React.FC = () => {
           />
         )}
 
-        {template && defaultValues && (
+        {template && formValues && (
           <>
             {/* Template summary card */}
             <div className="mb-6 flex items-center justify-between rounded-lg border border-border bg-white px-5 py-4">
@@ -168,7 +154,7 @@ export const TemplateDetailPage: React.FC = () => {
 
             <ComposableForm<TemplateMetadataFormValues>
               onSubmit={handleFormSubmit}
-              defaultValues={defaultValues}
+              values={formValues}
             >
               <TemplateMetadataFormFields
                 onCancel={handleNavigateBack}

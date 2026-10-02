@@ -9,9 +9,10 @@ import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout'
 import { ArchiveVideoModal } from '@web/components/modal';
 import { VideoPlayer } from '@web/components/video/VideoPlayer';
 import { VideoReplacer } from '@web/components/video/VideoReplacer';
-import { useToast } from '@web/hooks/useToast';
+import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { useUpdateVideoMutation, useVideoQuery } from '@web/hooks/videos';
 import { RouteKey, routes } from '@web/pages/routes';
+import { fieldToNumber, numberToField } from '@web/utils/form-number';
 
 import { VideoEditFormFields } from './VideoEditFormFields';
 
@@ -20,17 +21,16 @@ import type { VideoEditFormValues } from './types';
 export const VideoEditPage: React.FC = () => {
   const { id = '' } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToast } = useToast();
+  const { submitError, clearSubmitError, saveCallbacks } = useSaveFeedback();
 
   const { data: video, isLoading, error } = useVideoQuery(id, { includeInactive: true });
   const updateMutation = useUpdateVideoMutation();
 
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [pendingSubmitData, setPendingSubmitData] = useState<UpdateVideoInput | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  /** Build default form values from video data */
-  const defaultValues = useMemo((): VideoEditFormValues | undefined => {
+  /** Form values from video data */
+  const formValues = useMemo((): VideoEditFormValues | undefined => {
     if (!video) {
       return undefined;
     }
@@ -44,11 +44,10 @@ export const VideoEditPage: React.FC = () => {
       bodyParts: video.bodyParts,
       equipment: video.equipment,
       tags: video.tags,
-      defaultSets: video.defaultSets != null ? String(video.defaultSets) : '',
+      defaultSets: numberToField(video.defaultSets),
       defaultReps: video.defaultReps ?? '',
-      defaultDurationSeconds:
-        video.defaultDurationSeconds != null ? String(video.defaultDurationSeconds) : '',
-      defaultRestSeconds: video.defaultRestSeconds != null ? String(video.defaultRestSeconds) : '',
+      defaultDurationSeconds: numberToField(video.defaultDurationSeconds),
+      defaultRestSeconds: numberToField(video.defaultRestSeconds),
       defaultNotes: video.defaultNotes ?? '',
     };
   }, [video]);
@@ -108,11 +107,11 @@ export const VideoEditPage: React.FC = () => {
         payload.tags = values.tags;
       }
 
-      // Prescription fields — convert empty strings to null, string numbers to integers
-      const toIntOrNull = (val: string): number | null => (val ? parseInt(val, 10) : null);
+      // A blank prescription field clears the stored value, which takes null rather than undefined
+      const toNumberOrNull = (val: string): number | null => fieldToNumber(val) ?? null;
       const toStringOrNull = (val: string): string | null => val || null;
 
-      const newSets = toIntOrNull(values.defaultSets);
+      const newSets = toNumberOrNull(values.defaultSets);
 
       if (newSets !== (video.defaultSets ?? null)) {
         payload.defaultSets = newSets;
@@ -124,13 +123,13 @@ export const VideoEditPage: React.FC = () => {
         payload.defaultReps = newReps;
       }
 
-      const newDuration = toIntOrNull(values.defaultDurationSeconds);
+      const newDuration = toNumberOrNull(values.defaultDurationSeconds);
 
       if (newDuration !== (video.defaultDurationSeconds ?? null)) {
         payload.defaultDurationSeconds = newDuration;
       }
 
-      const newRest = toIntOrNull(values.defaultRestSeconds);
+      const newRest = toNumberOrNull(values.defaultRestSeconds);
 
       if (newRest !== (video.defaultRestSeconds ?? null)) {
         payload.defaultRestSeconds = newRest;
@@ -149,39 +148,34 @@ export const VideoEditPage: React.FC = () => {
 
   /** Execute the update mutation */
   const executeUpdate = useCallback(
-    (data: UpdateVideoInput) => {
-      if (!id) {
+    async (data: UpdateVideoInput): Promise<void> => {
+      if (!video) {
         return;
       }
 
-      setSubmitError(null);
+      clearSubmitError();
 
-      updateMutation.mutate(
-        { id, data },
-        {
-          onSuccess: () => {
-            addToast('Video updated successfully', { variant: 'success' });
-            handleNavigateBack();
-          },
-          onError: (err) => {
-            setSubmitError(err.message);
-          },
-        }
+      await updateMutation.mutateAsync(
+        { id: video.id, publicId: video.publicId, data },
+        saveCallbacks('Video updated successfully', handleNavigateBack)
       );
     },
-    [id, updateMutation, addToast, handleNavigateBack]
+    [video, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
   );
 
-  /** Handle form submission — intercept archive transitions for confirmation */
+  /**
+   * Handle form submission — intercept archive transitions for confirmation. Returns a
+   * promise only when a save starts, so the form never treats an opened modal as saved.
+   */
   const handleFormSubmit = useCallback(
-    (values: VideoEditFormValues) => {
+    (values: VideoEditFormValues): Promise<void> | undefined => {
       const payload = buildUpdatePayload(values);
 
       // If no changes, just navigate back
       if (Object.keys(payload).length === 0) {
         handleNavigateBack();
 
-        return;
+        return undefined;
       }
 
       // If archiving, show confirmation dialog
@@ -189,10 +183,10 @@ export const VideoEditPage: React.FC = () => {
         setPendingSubmitData(payload);
         setShowArchiveConfirm(true);
 
-        return;
+        return undefined;
       }
 
-      executeUpdate(payload);
+      return executeUpdate(payload);
     },
     [buildUpdatePayload, executeUpdate, handleNavigateBack]
   );
@@ -202,7 +196,9 @@ export const VideoEditPage: React.FC = () => {
     setShowArchiveConfirm(false);
 
     if (pendingSubmitData) {
-      executeUpdate(pendingSubmitData);
+      // Saved from the modal rather than the form, so nothing else awaits this; a failure
+      // already shows as the submit error
+      executeUpdate(pendingSubmitData).catch(() => undefined);
       setPendingSubmitData(null);
     }
   }, [pendingSubmitData, executeUpdate]);
@@ -239,11 +235,8 @@ export const VideoEditPage: React.FC = () => {
           </>
         )}
 
-        {video && defaultValues && (
-          <ComposableForm<VideoEditFormValues>
-            onSubmit={handleFormSubmit}
-            defaultValues={defaultValues}
-          >
+        {video && formValues && (
+          <ComposableForm<VideoEditFormValues> onSubmit={handleFormSubmit} values={formValues}>
             <VideoEditFormFields
               currentStatus={video.status}
               onCancel={handleNavigateBack}

@@ -1,9 +1,7 @@
 import type { TemplateListResponse } from '@ffp/core';
 
-import { createColumns } from '@web/components/table';
+import { ACTIVE_STATUS_MAP, createColumns, toActiveStatus } from '@web/components/table';
 import type { RowAction } from '@web/components/table';
-
-import { TEMPLATE_STATUS_MAP } from './constants';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -13,7 +11,7 @@ export type TemplateRow = TemplateListResponse & { status: string } & Record<str
 /** Maps API response to row type with computed status field */
 export const toTemplateRow = (template: TemplateListResponse): TemplateRow => ({
   ...template,
-  status: template.isActive ? 'active' : 'inactive',
+  status: toActiveStatus(template.isActive),
 });
 
 const columns = createColumns<TemplateRow>();
@@ -29,7 +27,7 @@ export const buildTemplateColumns = (
   columns.text('slug', { label: 'Slug' }),
   columns.text('difficulty', { label: 'Difficulty', sortable: true }),
   columns.number('totalPhases', { label: 'Phases' }),
-  columns.status('status', { label: 'Status', statusMap: TEMPLATE_STATUS_MAP }),
+  columns.status('status', { label: 'Status', statusMap: ACTIVE_STATUS_MAP }),
   columns.date('createdAt', { label: 'Created', sortable: true }),
   columns.actions({ actions }),
 ];

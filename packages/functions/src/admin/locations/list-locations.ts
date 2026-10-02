@@ -23,12 +23,7 @@ export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2Wit
 
   const params = event.queryStringParameters ?? {};
 
-  const paginationInput = paginationInputSchema.parse({
-    page: params.page,
-    pageSize: params.pageSize,
-    sortBy: params.sortBy,
-    sortDirection: params.sortDirection,
-  });
+  const paginationInput = paginationInputSchema.parse(params);
 
   const rawFilters = {
     search: params.search ?? undefined,

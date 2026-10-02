@@ -47,7 +47,7 @@ const ExerciseFormFields: React.FC<{
 
   const handleVideoSelect = useCallback(
     (video: VideoDetailResponse) => {
-      setSelectedVideo({ id: video.id, title: video.title });
+      setSelectedVideo({ publicId: video.publicId, title: video.title });
       setValue('videoId', video.id);
 
       // Pre-populate prescription from video defaults (only if fields are empty)

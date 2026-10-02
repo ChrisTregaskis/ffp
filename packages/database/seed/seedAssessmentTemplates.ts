@@ -17,22 +17,11 @@ const logger = createLogger('seed-assessment-templates');
  * assessment_flows to reference them reliably.
  */
 export const TEMPLATE_IDS = {
-  PRE_ASSESSMENT_QUESTIONS: '11111111-1111-1111-8111-111111111101',
-  STRENGTH_ASSESSMENT: '11111111-1111-1111-8111-111111111102',
-  BALANCE_ASSESSMENT: '11111111-1111-1111-8111-111111111103',
-  BACK_PAIN_GENERAL: '11111111-1111-1111-8111-111111111104',
-  RED_FLAG_SCREENING: '11111111-1111-1111-8111-111111111105',
-} as const;
-
-/**
- * Template names matching what's referenced in assessment flows
- */
-export const TEMPLATE_NAMES = {
-  PRE_ASSESSMENT_QUESTIONS: 'pre-assessment-questions-v1',
-  STRENGTH_ASSESSMENT: 'strength-assessment-v1',
-  BALANCE_ASSESSMENT: 'balance-assessment-v1',
-  BACK_PAIN_GENERAL: 'back-pain-general-v1',
-  RED_FLAG_SCREENING: 'red-flag-screening-v1',
+  ABOUT_YOU: '11111111-1111-1111-8111-111111111106',
+  GOALS_AND_SAFETY: '11111111-1111-1111-8111-111111111107',
+  GETTING_STARTED: '11111111-1111-1111-8111-111111111101',
+  STRENGTH_CHECK: '11111111-1111-1111-8111-111111111102',
+  BALANCE_CHECK: '11111111-1111-1111-8111-111111111103',
 } as const;
 
 /**
@@ -46,158 +35,73 @@ interface TemplateQuestionMapping {
 
 const templateQuestionMappings: TemplateQuestionMapping[] = [
   {
-    templateId: TEMPLATE_IDS.PRE_ASSESSMENT_QUESTIONS,
+    templateId: TEMPLATE_IDS.ABOUT_YOU,
     questionIds: [
-      'goal-primary',
-      'pain-level',
-      'pain-location',
-      'activity-level',
-      'medical-conditions',
-      'pain-area', // Branching question: determines next step (back vs other)
+      'gender',
+      'age-bracket',
+      'weekly-activity',
+      'exercise-tolerance',
+      'joint-comfort',
     ],
   },
   {
-    templateId: TEMPLATE_IDS.STRENGTH_ASSESSMENT,
-    questionIds: [
-      'squat-assessment',
-      'squat-rating',
-      'pushup-assessment',
-      'pushup-count',
-      'strength-comfort',
-    ],
+    templateId: TEMPLATE_IDS.GOALS_AND_SAFETY,
+    questionIds: ['session-goal', 'focus-areas', 'safety-check'],
   },
   {
-    templateId: TEMPLATE_IDS.BALANCE_ASSESSMENT,
-    questionIds: [
-      'single-leg-stand',
-      'single-leg-duration',
-      'tandem-stand',
-      'tandem-stability',
-      'balance-confidence',
-    ],
+    templateId: TEMPLATE_IDS.GETTING_STARTED,
+    questionIds: ['activity-level', 'check-focus'],
   },
   {
-    templateId: TEMPLATE_IDS.BACK_PAIN_GENERAL,
-    questionIds: [
-      'back-pain-duration',
-      'back-pain-intensity',
-      'back-pain-type',
-      'back-pain-recurrence',
-      'back-pain-typical-duration',
-    ],
+    templateId: TEMPLATE_IDS.STRENGTH_CHECK,
+    questionIds: ['squat-assessment', 'squat-rating'],
   },
   {
-    templateId: TEMPLATE_IDS.RED_FLAG_SCREENING,
-    questionIds: [
-      'radiating-pain',
-      'numbness-tingling',
-      'incontinence',
-      'saddle-numbness',
-      'unexplained-weight-loss',
-      'night-sweats',
-    ],
+    templateId: TEMPLATE_IDS.BALANCE_CHECK,
+    questionIds: ['single-leg-stand', 'single-leg-duration'],
   },
 ];
 
 /**
- * Pre-assessment questions template
- * Contains questions about goals, pain levels, and medical history
- *
- * Questions are now stored in the dedicated `questions` table and linked
- * via `template_questions` join table. See seedQuestions.ts for question data.
- *
- * NOTE: Scoring configuration lives at flow level (assessment_flows.scoringConfig).
- * See seedAssessmentFlows.ts for the combined scoring configuration.
- */
-const preAssessmentQuestionsTemplate: NewAssessmentTemplate = {
-  id: TEMPLATE_IDS.PRE_ASSESSMENT_QUESTIONS,
-  name: TEMPLATE_NAMES.PRE_ASSESSMENT_QUESTIONS,
-  description: 'Pre-assessment questions about goals, pain levels, and medical history',
-  version: 1,
-  isActive: true,
-};
-
-/**
- * Strength assessment template
- * Video-based exercises to evaluate strength levels
- *
- * Questions are now stored in the dedicated `questions` table and linked
- * via `template_questions` join table. See seedQuestions.ts for question data.
- *
- * NOTE: Scoring configuration lives at flow level (assessment_flows.scoringConfig).
- * See seedAssessmentFlows.ts for the combined scoring configuration.
- */
-const strengthAssessmentTemplate: NewAssessmentTemplate = {
-  id: TEMPLATE_IDS.STRENGTH_ASSESSMENT,
-  name: TEMPLATE_NAMES.STRENGTH_ASSESSMENT,
-  description: 'Video-guided strength assessment exercises',
-  version: 1,
-  isActive: true,
-};
-
-/**
- * Balance assessment template
- * Tests to measure stability and balance in different positions
- *
- * Questions are now stored in the dedicated `questions` table and linked
- * via `template_questions` join table. See seedQuestions.ts for question data.
- *
- * NOTE: Scoring configuration lives at flow level (assessment_flows.scoringConfig).
- * See seedAssessmentFlows.ts for the combined scoring configuration.
- */
-const balanceAssessmentTemplate: NewAssessmentTemplate = {
-  id: TEMPLATE_IDS.BALANCE_ASSESSMENT,
-  name: TEMPLATE_NAMES.BALANCE_ASSESSMENT,
-  description: 'Balance and stability assessment exercises',
-  version: 1,
-  isActive: true,
-};
-
-/**
- * Back pain general assessment template
- * Clinical questions about back pain history and characteristics
- *
- * Questions include duration, intensity, type, recurrence history, and typical duration.
- * Based on real physiotherapy assessment protocols.
- *
- * NOTE: Scoring configuration lives at flow level (assessment_flows.scoringConfig).
- * See seedAssessmentFlows.ts for the combined scoring configuration.
- */
-const backPainGeneralTemplate: NewAssessmentTemplate = {
-  id: TEMPLATE_IDS.BACK_PAIN_GENERAL,
-  name: TEMPLATE_NAMES.BACK_PAIN_GENERAL,
-  description: 'Clinical questions about back pain history and characteristics',
-  version: 1,
-  isActive: true,
-};
-
-/**
- * Red flag screening template
- * Critical clinical questions to identify conditions requiring medical review
- *
- * Contains 6 yes/no questions based on standard physiotherapy red flag screening protocols.
- * Any "yes" answer triggers a medical warning via branching rules before proceeding.
- *
- * NOTE: Scoring configuration lives at flow level (assessment_flows.scoringConfig).
- * See seedAssessmentFlows.ts for the combined scoring configuration.
- */
-const redFlagScreeningTemplate: NewAssessmentTemplate = {
-  id: TEMPLATE_IDS.RED_FLAG_SCREENING,
-  name: TEMPLATE_NAMES.RED_FLAG_SCREENING,
-  description: 'Critical clinical questions to identify conditions requiring medical review',
-  version: 1,
-  isActive: true,
-};
-
-/**
- * All default templates to seed
+ * All default templates to seed. Questions live in the `questions` table
+ * (seedQuestions.ts) and scoring lives on the flow (seedAssessmentFlows.ts).
  */
 const DEFAULT_TEMPLATES: NewAssessmentTemplate[] = [
-  preAssessmentQuestionsTemplate,
-  strengthAssessmentTemplate,
-  balanceAssessmentTemplate,
-  backPainGeneralTemplate,
-  redFlagScreeningTemplate,
+  {
+    id: TEMPLATE_IDS.ABOUT_YOU,
+    name: 'about-you-v1',
+    description: 'Age, gender and everyday activity, which set the starting level',
+    version: 1,
+    isActive: true,
+  },
+  {
+    id: TEMPLATE_IDS.GOALS_AND_SAFETY,
+    name: 'goals-and-safety-v1',
+    description: 'Session goal, focus areas and a safety check',
+    version: 1,
+    isActive: true,
+  },
+  {
+    id: TEMPLATE_IDS.GETTING_STARTED,
+    name: 'getting-started-v1',
+    description: 'Activity level and which movement check to start with',
+    version: 1,
+    isActive: true,
+  },
+  {
+    id: TEMPLATE_IDS.STRENGTH_CHECK,
+    name: 'strength-check-v1',
+    description: 'Video-guided strength check',
+    version: 1,
+    isActive: true,
+  },
+  {
+    id: TEMPLATE_IDS.BALANCE_CHECK,
+    name: 'balance-check-v1',
+    description: 'Video-guided balance check',
+    version: 1,
+    isActive: true,
+  },
 ];
 
 /**

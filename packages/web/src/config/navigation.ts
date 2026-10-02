@@ -1,34 +1,29 @@
-import { matchPath } from 'react-router-dom';
-
 import type { UserRole } from '@ffp/core';
 
 import type { IconName } from '@web/components/Icon/types';
 import { USER_ROLE } from '@web/constants/roles';
 import type { ContextNavItem } from '@web/pages/routes';
 import { routes } from '@web/pages/routes';
+import { matchRoute } from '@web/pages/routes/matchRoute';
 import { RouteKey } from '@web/pages/routes/RouteKey';
 
 export type { ContextNavItem } from '@web/pages/routes';
 
 /** Resolve context nav items for the current path, supporting both static and dynamic (function) forms */
 export const getContextNavItems = (pathname: string): ContextNavItem[] | undefined => {
-  for (const route of Object.values(routes)) {
-    if (!route.contextNavItems) {
-      continue;
-    }
+  const matched = matchRoute(pathname);
 
-    const match = matchPath(route.path, pathname);
-
-    if (match) {
-      if (typeof route.contextNavItems === 'function') {
-        return route.contextNavItems(match.params as Record<string, string>);
-      }
-
-      return route.contextNavItems;
-    }
+  if (!matched?.route.contextNavItems) {
+    return undefined;
   }
 
-  return undefined;
+  const { contextNavItems } = matched.route;
+
+  if (typeof contextNavItems === 'function') {
+    return contextNavItems(matched.params as Record<string, string>);
+  }
+
+  return contextNavItems;
 };
 
 // Destructure user roles for easier reference
@@ -164,6 +159,14 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
       label: 'Assessments',
       icon: 'ClipboardList',
       path: routes[RouteKey.ADMIN_ASSESSMENTS].path,
+      roles: [SYSTEM_ADMIN],
+      section: 'main',
+    },
+    {
+      key: RouteKey.ADMIN_QUESTIONS,
+      label: 'Question Bank',
+      icon: 'HelpCircle',
+      path: routes[RouteKey.ADMIN_QUESTIONS].path,
       roles: [SYSTEM_ADMIN],
       section: 'main',
     },

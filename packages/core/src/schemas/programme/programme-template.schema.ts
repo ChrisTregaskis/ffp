@@ -2,15 +2,19 @@ import { z } from 'zod';
 
 import { DIFFICULTIES } from '@ffp/database/constants';
 
-import { createPaginatedResponseSchema, paginationInputSchema } from '../pagination.schema';
+import {
+  booleanQueryParamSchema,
+  createPaginatedResponseSchema,
+  paginationInputSchema,
+} from '../pagination.schema';
 import { templatePhaseWithSessionsSchema } from '../programme-structure.schema';
+import { publicIdSchema } from '../public-id.schema';
 
 // System-managed lookup table for programme templates.
 export const programmeTemplateSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.guid(),
-  /** Public identifier for URLs (nanoid, 12 chars) */
-  publicId: z.string().length(12),
+  publicId: publicIdSchema,
   /** Unique slug for referencing in scoring config (e.g., 'gentle-mobility-programme') */
   slug: z.string().min(1).max(255),
   /** Display name (e.g., 'Gentle Mobility Programme') */
@@ -61,10 +65,7 @@ export const templateListQuerySchema = paginationInputSchema.extend({
   /** Filter by difficulty level */
   difficulty: z.enum(DIFFICULTIES).optional(),
   /** Filter by active status (coerced from query string) */
-  isActive: z
-    .enum(['true', 'false'])
-    .transform((val) => val === 'true')
-    .optional(),
+  isActive: booleanQueryParamSchema.optional(),
 });
 
 /** Response schema for template list items — lightweight metadata for browsing */

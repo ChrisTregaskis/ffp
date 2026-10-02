@@ -1,6 +1,7 @@
 // Assessments domain exports
 export * from './template.repository';
 export * as templateService from './template.service';
+export * as templateQuestionService from './template-question.service';
 export * as userAssessmentRepository from './user-assessment.repository';
 export * as flowRepository from './flow.repository';
 export * as flowService from './flow.service';

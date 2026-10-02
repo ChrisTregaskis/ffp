@@ -3,12 +3,13 @@ import { z } from 'zod';
 import { INVITABLE_ROLES, USER_ROLES } from '@ffp/database/constants';
 
 import { paginationInputSchema, createPaginatedResponseSchema } from './pagination.schema';
+import { publicIdSchema } from './public-id.schema';
 
 export const userRoleSchema = z.enum(USER_ROLES);
 
 export const userSchema = z.object({
   id: z.guid(),
-  publicId: z.string().length(12),
+  publicId: publicIdSchema,
   organisationId: z.guid(),
   email: z.email().max(255),
   cognitoSub: z.string().max(255),

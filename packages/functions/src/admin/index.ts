@@ -46,11 +46,15 @@ import { handler as deactivateQuestionHandler } from './questions/deactivate-que
 import { handler as getQuestionHandler } from './questions/get-question';
 import { handler as listQuestionsHandler } from './questions/list-questions';
 import { handler as updateQuestionHandler } from './questions/update-question';
+import { handler as assignQuestionsHandler } from './templates/assign-questions';
 import { handler as createTemplateHandler } from './templates/create-template';
 import { handler as deactivateTemplateHandler } from './templates/deactivate-template';
 import { handler as duplicateTemplateHandler } from './templates/duplicate-template';
 import { handler as getTemplateHandler } from './templates/get-template';
+import { handler as listAssignableQuestionsHandler } from './templates/list-assignable-questions';
 import { handler as listTemplatesHandler } from './templates/list-templates';
+import { handler as reorderTemplateQuestionsHandler } from './templates/reorder-questions';
+import { handler as unassignQuestionHandler } from './templates/unassign-question';
 import { handler as updateTemplateHandler } from './templates/update-template';
 import { handler as createUserHandler } from './users/create-user';
 import { handler as getUserHandler } from './users/get-user';
@@ -78,6 +82,7 @@ const routes: RouteRegistry = {
     '/assessment-flows/{flowPublicId}/steps': createStepHandler,
     '/assessment-templates': createTemplateHandler,
     '/assessment-templates/{id}/duplicate': duplicateTemplateHandler,
+    '/assessment-templates/{templatePublicId}/questions': assignQuestionsHandler,
     '/questions': createQuestionHandler,
     '/programme-templates': createProgrammeTemplateHandler,
     '/programme-templates/{id}/phases': createPhaseHandler,
@@ -96,6 +101,7 @@ const routes: RouteRegistry = {
     '/assessment-flows/{publicId}': getFlowHandler,
     '/assessment-templates': listTemplatesHandler,
     '/assessment-templates/{id}': getTemplateHandler,
+    '/assessment-templates/{templatePublicId}/assignable-questions': listAssignableQuestionsHandler,
     '/questions': listQuestionsHandler,
     '/questions/{publicId}': getQuestionHandler,
     '/programme-templates': listProgrammeTemplatesHandler,
@@ -115,6 +121,7 @@ const routes: RouteRegistry = {
     '/assessment-flows/{flowPublicId}/steps/reorder': reorderStepsHandler,
     '/assessment-flows/{flowPublicId}/steps/{stepPublicId}': updateStepHandler,
     '/assessment-templates/{id}': updateTemplateHandler,
+    '/assessment-templates/{templatePublicId}/questions/reorder': reorderTemplateQuestionsHandler,
     '/questions/{publicId}': updateQuestionHandler,
     '/users/{id}': updateUserHandler,
     '/programme-templates/{id}': updateProgrammeTemplateHandler,
@@ -131,6 +138,8 @@ const routes: RouteRegistry = {
     '/assessment-flows/{publicId}': deactivateFlowHandler,
     '/assessment-flows/{flowPublicId}/steps/{stepPublicId}': deleteStepHandler,
     '/assessment-templates/{id}': deactivateTemplateHandler,
+    '/assessment-templates/{templatePublicId}/questions/{questionPublicId}':
+      unassignQuestionHandler,
     '/questions/{publicId}': deactivateQuestionHandler,
     '/exercises/{id}': deleteExerciseHandler,
     '/phases/{id}': deletePhaseHandler,

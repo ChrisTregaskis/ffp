@@ -27,7 +27,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, actions
           <Text styleProps={{ size: 'base', colour: 'muted-foreground' }}>{subtitle}</Text>
         )}
       </div>
-      {actions}
+      {/* Wrapped so several buttons group on the right instead of spreading across the row */}
+      {actions && <div className="flex gap-2">{actions}</div>}
     </div>
   );
 };

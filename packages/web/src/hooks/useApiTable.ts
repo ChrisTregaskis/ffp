@@ -33,10 +33,16 @@ interface UseApiTableReturn {
   debouncedSearch: string;
   /** Debounced filter values for API calls */
   debouncedFilters: TableFilterValues;
-  /** Reset search, filters, and page to defaults */
+  /** Clear search and every filter, and return to page 1. Does not restore `defaultFilters`. */
   clearAll: () => void;
-  /** Whether any search or filter values are active */
+  /** Whether any search or filter values are set at all, defaults included */
   hasActiveControls: boolean;
+  /**
+   * Whether search, or a filter differing from its default, is narrowing the list. Lists
+   * whose default is a baseline view rather than a narrowing pass this to their empty
+   * state, so a page nobody has filtered still offers its create call to action.
+   */
+  hasNonDefaultControls: boolean;
 }
 
 const DEBOUNCE_MS = 300;
@@ -61,6 +67,10 @@ export const useApiTable = (options: UseApiTableOptions = {}): UseApiTableReturn
   // Search and filter state (immediate values for controlled inputs)
   const [search, setSearch] = useState('');
   const [filterValues, setFilterValues] = useState<TableFilterValues>(defaultFilters);
+
+  // Captured once, so the comparison below always matches what seeded filterValues, and
+  // a caller's inline literal never lands in a memo dependency array.
+  const defaultFiltersRef = useRef(defaultFilters);
 
   // Debounced versions of all state
   const [debouncedState, setDebouncedState] = useState<TableState>(tableState);
@@ -126,6 +136,15 @@ export const useApiTable = (options: UseApiTableOptions = {}): UseApiTableReturn
     [search, filterValues]
   );
 
+  const hasNonDefaultControls = useMemo(
+    () =>
+      search.length > 0 ||
+      Object.entries(filterValues).some(
+        ([key, value]) => value !== (defaultFiltersRef.current[key] ?? '')
+      ),
+    [search, filterValues]
+  );
+
   // Memoised query params for API calls
   const queryParams: PaginationInput = useMemo(
     () => ({
@@ -154,5 +173,6 @@ export const useApiTable = (options: UseApiTableOptions = {}): UseApiTableReturn
     debouncedFilters,
     clearAll,
     hasActiveControls,
+    hasNonDefaultControls,
   };
 };
