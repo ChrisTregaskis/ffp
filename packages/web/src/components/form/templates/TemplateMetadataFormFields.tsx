@@ -7,8 +7,8 @@ import { FormRow } from '@web/components/form/standardForm/FormRow';
 import { FormSelect } from '@web/components/form/standardForm/FormSelect';
 import { FormTextarea } from '@web/components/form/standardForm/FormTextarea';
 import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
-
-import { DIFFICULTY_OPTIONS, STATUS_OPTIONS } from './constants';
+import { ACTIVE_STATUS_FILTER } from '@web/components/table';
+import { DIFFICULTY_OPTIONS } from '@web/constants';
 
 import type { TemplateMetadataFormValues } from './types';
 
@@ -42,6 +42,7 @@ export const TemplateMetadataFormFields: React.FC<TemplateMetadataFormFieldsProp
           register={register}
           errors={errors}
           isRequired
+          registerOptions={{ required: 'Please give the template a name' }}
         />
         <FormTextInput
           name="slug"
@@ -50,6 +51,7 @@ export const TemplateMetadataFormFields: React.FC<TemplateMetadataFormFieldsProp
           register={register}
           errors={errors}
           isRequired
+          registerOptions={{ required: 'Please give the template a slug' }}
         />
       </FormRow>
 
@@ -63,11 +65,12 @@ export const TemplateMetadataFormFields: React.FC<TemplateMetadataFormFieldsProp
           control={control}
           errors={errors}
           isRequired
+          rules={{ required: 'Please choose a difficulty' }}
         />
         <FormSelect
           name="isActive"
           label="Status"
-          options={STATUS_OPTIONS}
+          options={ACTIVE_STATUS_FILTER.options}
           control={control}
           errors={errors}
         />

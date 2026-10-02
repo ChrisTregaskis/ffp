@@ -50,4 +50,17 @@ describe('useSaveFeedback', () => {
     });
     expect(result.current.submitError).toBeNull();
   });
+
+  it('shows the mapped message when a failure is mapped', () => {
+    const { result } = renderHook(() => useSaveFeedback());
+    const mapError = vi.fn((err: Error) => `Mapped: ${err.message}`);
+    const failure = new Error('Conflict');
+
+    act(() => {
+      result.current.saveCallbacks('Saved', undefined, { mapError }).onError(failure);
+    });
+
+    expect(mapError).toHaveBeenCalledWith(failure);
+    expect(result.current.submitError).toBe('Mapped: Conflict');
+  });
 });

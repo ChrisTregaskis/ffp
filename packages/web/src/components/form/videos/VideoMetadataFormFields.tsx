@@ -16,8 +16,9 @@ import { FormTextarea } from '@web/components/form/standardForm/FormTextarea';
 import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
 import { Text } from '@web/components/text';
 import { Title } from '@web/components/text/Title';
+import { DIFFICULTY_OPTIONS } from '@web/constants';
 
-import { DIFFICULTY_OPTIONS, MOVEMENT_TYPE_OPTIONS } from './constants';
+import { MOVEMENT_TYPE_OPTIONS } from './constants';
 
 import type { VideoMetadataFormValues } from './types';
 

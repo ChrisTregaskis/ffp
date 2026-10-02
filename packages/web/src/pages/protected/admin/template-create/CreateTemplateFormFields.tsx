@@ -7,7 +7,7 @@ import { FormRow } from '@web/components/form/standardForm/FormRow';
 import { FormSelect } from '@web/components/form/standardForm/FormSelect';
 import { FormTextarea } from '@web/components/form/standardForm/FormTextarea';
 import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
-import { DIFFICULTY_OPTIONS } from '@web/components/form/templates/constants';
+import { DIFFICULTY_OPTIONS } from '@web/constants';
 
 import type { CreateTemplateFormValues } from './types';
 
@@ -38,6 +38,7 @@ export const CreateTemplateFormFields: React.FC<CreateTemplateFormFieldsProps> =
           register={register}
           errors={errors}
           isRequired
+          registerOptions={{ required: 'Please give the template a name' }}
         />
         <FormTextInput
           name="slug"
@@ -46,6 +47,7 @@ export const CreateTemplateFormFields: React.FC<CreateTemplateFormFieldsProps> =
           register={register}
           errors={errors}
           isRequired
+          registerOptions={{ required: 'Please give the template a slug' }}
         />
       </FormRow>
 
@@ -59,6 +61,7 @@ export const CreateTemplateFormFields: React.FC<CreateTemplateFormFieldsProps> =
           control={control}
           errors={errors}
           isRequired
+          rules={{ required: 'Please choose a difficulty' }}
         />
         <div />
       </FormRow>
