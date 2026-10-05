@@ -1,5 +1,4 @@
-import { Button } from '@web/components/button';
-import { Text } from '@web/components/text';
+import { Button, Text } from '@web/components/atoms';
 
 interface TableErrorProps {
   /** Number of columns to span */

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import type { FlowStepType } from '@ffp/core';
 
-import { Text } from '@web/components/text';
+import { Text } from '@web/components/atoms';
 
 import { getPhaseLabel } from './utils';
 

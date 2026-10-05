@@ -1,8 +1,8 @@
 import React from 'react';
 
+import { Text, Title } from '@web/components/atoms';
 import { Card } from '@web/components/Card';
 import { PageContainer, PageHeader } from '@web/components/layout';
-import { Text, Title } from '@web/components/text';
 
 /**
  * Progress & Analytics page for programme users.

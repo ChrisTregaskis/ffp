@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Text } from '@web/components/text';
+import { Text } from '@web/components/atoms';
 
 import { InfoNote } from './InfoNote';
 import { ProgrammeSessionCard } from './ProgrammeSessionCard';

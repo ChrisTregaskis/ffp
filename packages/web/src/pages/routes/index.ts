@@ -1,6 +1,6 @@
 import type { UserRole } from '@ffp/core';
 
-import type { IconName } from '@web/components/Icon/types';
+import type { IconName } from '@web/components/atoms';
 import { USER_ROLE } from '@web/constants/roles';
 import { ComingSoonPage } from '@web/pages/ComingSoonPage';
 import { AssessmentAdminPrototypePage } from '@web/pages/dev/assessment-admin/AssessmentAdminPrototypePage';

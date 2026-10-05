@@ -1,8 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useController } from 'react-hook-form';
 
-import { IconButton } from '@web/components/button/IconButton';
-import { Icons } from '@web/components/Icon/types';
+import { IconButton, Icons } from '@web/components/atoms';
 
 import { getFieldDescriptionIds } from '../shared/fieldDescription';
 import { getFieldErrorMessage } from '../shared/fieldError';

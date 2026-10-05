@@ -1,6 +1,5 @@
 import { SectionPanel } from '@web/components/assessment';
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import { Text } from '@web/components/text';
+import { LoadingSpinner, Text } from '@web/components/atoms';
 
 export const ResultsLoadingState: React.FC = () => {
   return (

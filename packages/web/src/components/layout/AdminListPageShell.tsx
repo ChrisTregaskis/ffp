@@ -2,9 +2,8 @@ import { useMemo } from 'react';
 
 import type { PaginationInput } from '@ffp/core';
 
-import { Button } from '@web/components/button';
-import { Icon } from '@web/components/Icon';
-import type { IconName } from '@web/components/Icon/types';
+import { Button, Icon } from '@web/components/atoms';
+import type { IconName } from '@web/components/atoms';
 import { Table, TableControls } from '@web/components/table';
 import type { TableFilterConfig, TableFilterValues } from '@web/components/table';
 import { useApiTable } from '@web/hooks/useApiTable';

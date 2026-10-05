@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Button } from '@web/components/button';
+import { Button, Text } from '@web/components/atoms';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
@@ -10,7 +10,6 @@ import {
   ButtonSampleDisplay,
 } from '@web/components/dev';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { Text } from '@web/components/text';
 
 /**
  * StaticAlert components showcase page (development only).

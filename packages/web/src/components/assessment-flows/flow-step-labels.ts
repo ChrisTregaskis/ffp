@@ -1,7 +1,7 @@
 import { flowStepTypeSchema, TEMPLATE_LINKED_STEP_TYPES } from '@ffp/core';
 import type { FlowStepType } from '@ffp/core';
 
-import type { SelectOption } from '@web/components/select/types';
+import type { SelectOption } from '@web/components/molecules';
 
 export const STEP_TYPE_LABELS: Record<FlowStepType, string> = {
   intro: 'Intro',

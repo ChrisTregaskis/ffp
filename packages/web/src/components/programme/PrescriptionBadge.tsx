@@ -1,5 +1,5 @@
-import { Icon } from '@web/components/Icon/Icon';
-import type { IconName } from '@web/components/Icon/types';
+import { Icon } from '@web/components/atoms';
+import type { IconName } from '@web/components/atoms';
 
 type PrescriptionBadgeVariant = 'blue' | 'purple' | 'green';
 type PrescriptionBadgeSize = 'sm' | 'md';

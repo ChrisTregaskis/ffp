@@ -3,11 +3,9 @@ import { useRef } from 'react';
 
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
+import { ProgressBar, Text, Title } from '@web/components/atoms';
 import { Card } from '@web/components/Card/Card';
 import { FadeSlideIn } from '@web/components/motion/FadeSlideIn';
-import { ProgressBar } from '@web/components/ProgressBar/ProgressBar';
-import { Text } from '@web/components/text/Text';
-import { Title } from '@web/components/text/Title';
 
 import { ExpandableSection } from './ExpandableSection';
 import { SessionCountPill } from './SessionCountPill';

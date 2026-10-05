@@ -3,10 +3,8 @@ import { useFieldArray } from 'react-hook-form';
 
 import { MIN_CHOICE_OPTIONS } from '@ffp/core';
 
-import { Button } from '@web/components/button';
+import { Button, Icon, Text, Title } from '@web/components/atoms';
 import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
-import { Icon } from '@web/components/Icon';
-import { Text, Title } from '@web/components/text';
 
 import { EMPTY_OPTION, emptyOptions } from '../question-form-values';
 

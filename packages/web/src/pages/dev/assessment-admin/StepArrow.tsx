@@ -1,4 +1,4 @@
-import { Icon, Icons } from '@web/components/Icon';
+import { Icon, Icons } from '@web/components/atoms';
 
 import { iconVar } from './prototype-labels';
 

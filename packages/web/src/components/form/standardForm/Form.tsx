@@ -1,10 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-import { Button } from '@web/components/button/Button';
-import { IconButton } from '@web/components/button/IconButton';
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
-import { Text } from '@web/components/text';
+import { Button, IconButton, Icon, Icons, Text } from '@web/components/atoms';
 
 import { useFieldsForm } from '../hooks/useFieldsForm';
 import { FieldDataType } from '../shared/FieldDataType';

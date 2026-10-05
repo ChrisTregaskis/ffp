@@ -1,7 +1,5 @@
-import { Button, IconButton } from '@web/components/button';
-import { Icon, Icons } from '@web/components/Icon';
-import { Select } from '@web/components/select';
-import { Text } from '@web/components/text';
+import { Button, IconButton, Icon, Icons, Text } from '@web/components/atoms';
+import { Select } from '@web/components/molecules';
 
 import { ExerciseTags } from './ExerciseTags';
 import { type AssembledSlot } from './prototype-assembly';

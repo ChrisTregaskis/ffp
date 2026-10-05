@@ -1,4 +1,4 @@
-import { Text } from '@web/components/text/Text';
+import { Text } from '@web/components/atoms';
 import type { PasswordRequirement as PasswordReq } from '@web/utils/passwordStrength';
 
 import { PasswordRequirement } from './PasswordRequirement';

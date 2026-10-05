@@ -1,6 +1,5 @@
-import { Icon, IconBadge } from '@web/components/Icon';
-import type { IconBadgeVariant, IconColour, IconName } from '@web/components/Icon';
-import { Text } from '@web/components/text';
+import type { IconBadgeVariant, IconColour, IconName } from '@web/components/atoms';
+import { Icon, IconBadge, Text } from '@web/components/atoms';
 
 export interface SectionHeaderProps {
   /** Icon name */

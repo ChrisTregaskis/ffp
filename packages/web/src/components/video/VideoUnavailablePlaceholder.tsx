@@ -1,7 +1,6 @@
 import React from 'react';
 
-import { IconBadge, Icons } from '../Icon';
-import { Text } from '../text';
+import { IconBadge, Icons, Text } from '@web/components/atoms';
 
 /** Placeholder shown when no video source is available. */
 export const VideoUnavailablePlaceholder: React.FC = () => (

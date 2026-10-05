@@ -404,7 +404,7 @@ Use **namespace-based aliases** for imports within the same package:
 
 ```typescript
 // In packages/web/src/pages/Dashboard.tsx
-import { Button } from '@web/components/Button';
+import { Button } from '@web/components/atoms';
 import { useAuth } from '@web/contexts/AuthContext';
 
 // In packages/core/src/services/UserService.ts
@@ -485,16 +485,16 @@ pnpm turbo build --filter=@ffp/core
 ### Adding a New Component
 
 ```bash
-# 1. Create component in web package
-cd packages/web/src/components
-touch Button.tsx
+# 1. Create component in its level folder (atoms/, molecules/, organisms/, templates/)
+mkdir -p packages/web/src/components/atoms/Badge
+touch packages/web/src/components/atoms/Badge/{Badge.tsx,index.ts}
 
-# 2. Use intra-package alias
-# In Button.tsx, import other web components:
-# import { Icon } from '@web/components/Icon';
+# 2. Import a sibling at the same level by direct path, a lower level by its barrel
+# In atoms/Badge/Badge.tsx: import { Icon } from '../Icon';
+# In a molecule:            import { Icon } from '@web/components/atoms';
 
-# 3. Export if needed for other components
-# Add to components/index.ts
+# 3. Re-export it from the folder's index.ts and the level barrel
+# Add to components/atoms/index.ts
 
 # 4. Test component
 cd ../../..
@@ -612,10 +612,10 @@ turbo build --dry --verbosity=2
 
 ```typescript
 // Good - intra-package alias
-import { Button } from '@web/components/Button';
+import { Button } from '@web/components/atoms';
 
 // Bad - workspace dependency in same package
-import { Button } from '@ffp/web/components/Button';
+import { Button } from '@ffp/web/components/atoms';
 ```
 
 ### pnpm Install Fails

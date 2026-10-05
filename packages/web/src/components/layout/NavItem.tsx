@@ -1,10 +1,9 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-import { Icon } from '@web/components/Icon';
-import type { IconName } from '@web/components/Icon/types';
+import type { IconName } from '@web/components/atoms';
+import { Icon, Text } from '@web/components/atoms';
 import { ClickScale } from '@web/components/motion';
-import { Text } from '@web/components/text';
 
 export interface NavItemProps {
   // Display label for the navigation item

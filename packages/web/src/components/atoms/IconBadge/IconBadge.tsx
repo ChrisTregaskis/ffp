@@ -1,7 +1,6 @@
-import { Icon } from './Icon';
+import { Icon } from '../Icon';
 
-import type { IconColour, IconSize } from './Icon';
-import type { IconName } from './types';
+import type { IconColour, IconSize, IconName } from '../Icon';
 
 export type IconBadgeSize = 'sm' | 'md' | 'lg';
 export type IconBadgeVariant = 'secondary' | 'success' | 'primary' | 'warning' | 'muted';

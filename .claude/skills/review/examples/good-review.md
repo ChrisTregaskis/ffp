@@ -250,7 +250,7 @@ export const getUsersByTenant = async (context: RequestContext): Promise<User[]>
 
 ```typescript
 // CORRECT: CORRECT CODE
-import { Title, Text } from '@web/components/text';
+import { Title, Text } from '@web/components/atoms';
 
 <div className="mb-8">
   <Title as="h1" colour="foreground">Dashboard</Title>
@@ -283,7 +283,7 @@ import { Title, Text } from '@web/components/text';
 
 ```typescript
 // CORRECT: CORRECT CODE
-import { Text } from '@web/components/text';
+import { Text } from '@web/components/atoms';
 
 <div className="bg-destructive/10 border border-destructive/20 p-4">
   <Text as="p" styleProps={{ size: 'sm', colour: 'destructive' }}>

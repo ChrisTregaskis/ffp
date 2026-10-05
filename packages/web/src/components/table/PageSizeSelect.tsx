@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { Select } from '@web/components/select';
+import { Select } from '@web/components/molecules';
 
 interface PageSizeSelectProps {
   pageSize: number;

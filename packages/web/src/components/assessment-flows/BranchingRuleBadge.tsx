@@ -1,7 +1,6 @@
 import React from 'react';
 
-import { Icon, Icons } from '@web/components/Icon';
-import { Text } from '@web/components/text';
+import { Icon, Icons, Text } from '@web/components/atoms';
 
 export interface BranchingRuleBadgeProps {
   ruleCount: number;

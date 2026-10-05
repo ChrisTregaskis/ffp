@@ -1,6 +1,6 @@
+import { Text } from '@web/components/atoms';
 import { Table } from '@web/components/table';
 import type { RowAction } from '@web/components/table';
-import { Text } from '@web/components/text';
 
 import { buildPhaseColumns, type PhaseRow } from './phaseListColumns';
 import { LEVEL_META, levelTitle } from './prototype-level-model';

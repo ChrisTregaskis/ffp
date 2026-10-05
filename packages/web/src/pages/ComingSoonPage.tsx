@@ -1,10 +1,9 @@
 import React from 'react';
 
+import type { IconName } from '@web/components/atoms';
+import { Icon, Text, Title } from '@web/components/atoms';
 import { Card } from '@web/components/Card';
-import { Icon } from '@web/components/Icon';
-import type { IconName } from '@web/components/Icon/types';
 import { PageContainer, PageHeader } from '@web/components/layout';
-import { Text, Title } from '@web/components/text';
 
 export interface ComingSoonPageProps {
   /** Title for the page */

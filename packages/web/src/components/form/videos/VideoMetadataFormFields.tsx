@@ -2,7 +2,7 @@ import React from 'react';
 
 import type { VideoStatus } from '@ffp/core';
 
-import { FieldError } from '@web/components/atoms/FieldError';
+import { Text, Title, FieldError } from '@web/components/atoms';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
 import { getInputClassName } from '@web/components/form/shared/inputStyles';
@@ -14,8 +14,6 @@ import type { SelectOption } from '@web/components/form/standardForm/FormSelect'
 import { FormTagInput } from '@web/components/form/standardForm/FormTagInput';
 import { FormTextarea } from '@web/components/form/standardForm/FormTextarea';
 import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
-import { Text } from '@web/components/text';
-import { Title } from '@web/components/text/Title';
 import { DIFFICULTY_OPTIONS } from '@web/constants';
 
 import { MOVEMENT_TYPE_OPTIONS } from './constants';

@@ -1,7 +1,6 @@
 import React from 'react';
 
-import { Button } from '@web/components/button';
-import { Text } from '@web/components/text';
+import { Button, Text } from '@web/components/atoms';
 
 import { Modal } from './Modal';
 

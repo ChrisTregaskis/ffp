@@ -3,17 +3,15 @@ import { generatePath, useNavigate, useParams } from 'react-router-dom';
 
 import type { TemplatePhaseWithSessions } from '@ffp/core';
 
-import { Button } from '@web/components/button';
+import { Button, Icon, Text } from '@web/components/atoms';
 import { REORDERABLE_ACTION_LABELS } from '@web/components/dropdown-menu';
 import { PageState } from '@web/components/feedback/PageState';
-import { Icon } from '@web/components/Icon';
 import { InlineFormPanel, PageContainer, PageHeader } from '@web/components/layout';
 import { DeleteConfirmModal } from '@web/components/modal';
 import { PhaseForm } from '@web/components/programme-templates/PhaseForm';
 import type { PhaseFormValues } from '@web/components/programme-templates/PhaseForm';
 import { Table, createColumns } from '@web/components/table';
 import type { RowAction } from '@web/components/table';
-import { Text } from '@web/components/text';
 import {
   useCreatePhaseMutation,
   useDeletePhaseMutation,

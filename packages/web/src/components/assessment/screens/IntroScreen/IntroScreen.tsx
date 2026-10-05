@@ -8,10 +8,8 @@ import {
   SectionHeader,
   SectionPanel,
 } from '@web/components/assessment';
-import { Button } from '@web/components/button';
-import { Icons } from '@web/components/Icon';
+import { Button, Icons, Text } from '@web/components/atoms';
 import { ClickScale, FadeSlideIn } from '@web/components/motion';
-import { Text } from '@web/components/text';
 
 export interface IntroScreenProps {
   /** Step configuration from the assessment flow */

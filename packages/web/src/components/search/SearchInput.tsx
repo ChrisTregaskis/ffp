@@ -1,9 +1,7 @@
 import { useCallback, useRef } from 'react';
 
-import { IconButton } from '@web/components/button/IconButton';
+import { IconButton, Icon, Icons } from '@web/components/atoms';
 import { getInputClassName } from '@web/components/form/shared/inputStyles';
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
 
 export interface SearchInputProps {
   /** Current search value */

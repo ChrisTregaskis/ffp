@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Text } from '@web/components/text';
+import { Text } from '@web/components/atoms';
 
 export interface FormErrorProps {
   message?: string;

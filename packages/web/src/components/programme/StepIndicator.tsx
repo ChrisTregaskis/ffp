@@ -1,6 +1,4 @@
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
-import { Text } from '@web/components/text/Text';
+import { Icon, Icons, Text } from '@web/components/atoms';
 
 type StepIndicatorStatus = 'completed' | 'current' | 'upcoming';
 type StepIndicatorSize = 'sm' | 'md';

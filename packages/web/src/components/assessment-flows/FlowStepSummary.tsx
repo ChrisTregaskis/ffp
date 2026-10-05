@@ -2,7 +2,7 @@ import React from 'react';
 
 import type { AdminFlowStepView } from '@ffp/core';
 
-import { Text } from '@web/components/text';
+import { Text } from '@web/components/atoms';
 
 import { BranchingRuleBadge } from './BranchingRuleBadge';
 import { STEP_TYPE_LABELS } from './flow-step-labels';

@@ -1,11 +1,9 @@
+import { Icon, Icons, Text } from '@web/components/atoms';
 import { getInputClassName } from '@web/components/form/shared/inputStyles';
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
-import { Text } from '@web/components/text';
 
-import { BaseSelect } from './BaseSelect';
+import { BaseSelect } from '../BaseSelect';
 
-import type { SelectOption } from './types';
+import type { SelectOption } from '../BaseSelect';
 
 export type { SelectOption };
 

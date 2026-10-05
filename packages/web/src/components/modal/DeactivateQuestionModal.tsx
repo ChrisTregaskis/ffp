@@ -2,8 +2,8 @@ import React from 'react';
 
 import type { QuestionUsage } from '@ffp/core';
 
+import { Text } from '@web/components/atoms';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { Text } from '@web/components/text';
 import { pluralise } from '@web/utils/string';
 
 import { ConfirmModal } from './ConfirmModal';

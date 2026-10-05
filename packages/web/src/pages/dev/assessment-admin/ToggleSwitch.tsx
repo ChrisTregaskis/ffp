@@ -1,5 +1,4 @@
-import { Switch } from '@web/components/atoms/Switch';
-import { Text } from '@web/components/text';
+import { Text, Switch } from '@web/components/atoms';
 
 interface ToggleSwitchProps {
   checked: boolean;

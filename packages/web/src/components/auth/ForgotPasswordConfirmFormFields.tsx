@@ -1,4 +1,4 @@
-import { Button } from '@web/components/button/Button';
+import { Button } from '@web/components/atoms';
 import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
 import { PasswordInput } from '@web/components/form/password/PasswordInput';
 import { PasswordRequirementsList } from '@web/components/form/password/PasswordRequirementsList';

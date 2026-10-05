@@ -1,7 +1,6 @@
 import React from 'react';
 
-import { FieldError } from '@web/components/atoms/FieldError';
-import { Text } from '@web/components/text';
+import { Text, FieldError } from '@web/components/atoms';
 
 import type { ReactNode } from 'react';
 

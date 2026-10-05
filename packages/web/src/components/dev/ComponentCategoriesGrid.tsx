@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-import { Button } from '@web/components/button/Button';
-import { Text, Title } from '@web/components/text';
+import { Button, Text, Title } from '@web/components/atoms';
 
 export interface ComponentCategory {
   title: string;
