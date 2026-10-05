@@ -1,43 +1,26 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import type { UpdateProgrammeTemplateInput } from '@ffp/core';
 
-import { PageState } from '@web/components/feedback/PageState';
-import { ComposableForm } from '@web/components/form/composableForm';
 import { TemplateMetadataFormFields, toTemplateSaveError } from '@web/components/form/templates';
 import type { TemplateMetadataFormValues } from '@web/components/form/templates';
-import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
+import { AdminEditPageShell } from '@web/components/layout';
 import { Text } from '@web/components/text';
 import { useTemplateDetailQuery, useUpdateTemplateMutation } from '@web/hooks/programme-templates';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
-import { useToast } from '@web/hooks/useToast';
 import { RouteKey, routes } from '@web/pages/routes';
 import { formatDate } from '@web/utils/format';
+
+import { toTemplateFormValues } from './template-form-values';
 
 export const TemplateDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToast } = useToast();
   const { submitError, clearSubmitError, saveCallbacks } = useSaveFeedback();
 
   const { data: template, isLoading, error } = useTemplateDetailQuery(id ?? '');
   const updateMutation = useUpdateTemplateMutation();
-
-  /** Form values from template data */
-  const formValues = useMemo((): TemplateMetadataFormValues | undefined => {
-    if (!template) {
-      return undefined;
-    }
-
-    return {
-      name: template.name,
-      slug: template.slug,
-      description: template.description ?? '',
-      difficulty: template.difficulty,
-      isActive: String(template.isActive),
-    };
-  }, [template]);
 
   const handleNavigateBack = useCallback(() => {
     void navigate(routes[RouteKey.ADMIN_TEMPLATES].path);
@@ -81,90 +64,86 @@ export const TemplateDetailPage: React.FC = () => {
     [template]
   );
 
-  const handleFormSubmit = useCallback(
+  const handleUpdate = useCallback(
     async (values: TemplateMetadataFormValues): Promise<void> => {
       if (!template) {
         return;
       }
 
-      clearSubmitError();
-
       const payload = buildUpdatePayload(values);
 
       if (Object.keys(payload).length === 0) {
-        addToast('No changes to save', { variant: 'info' });
+        handleNavigateBack();
 
         return;
       }
 
+      clearSubmitError();
+
       await updateMutation.mutateAsync(
         { id: template.id, publicId: template.publicId, data: payload },
-        saveCallbacks('Template updated successfully', undefined, {
+        saveCallbacks('Template updated successfully', handleNavigateBack, {
           mapError: toTemplateSaveError,
         })
       );
     },
-    [template, buildUpdatePayload, addToast, clearSubmitError, updateMutation, saveCallbacks]
+    [
+      template,
+      buildUpdatePayload,
+      clearSubmitError,
+      updateMutation,
+      saveCallbacks,
+      handleNavigateBack,
+    ]
   );
 
   return (
-    <PageContainer>
-      <PageHeader title={template?.name ?? 'Template Detail'} />
-
-      <ContentPanel>
-        {(isLoading || error) && (
-          <PageState
-            isLoading={isLoading}
-            title="Unable to load template"
-            message={error?.message}
-            actionLabel="Back to Programme Templates"
-            onAction={handleNavigateBack}
-          />
-        )}
-
-        {template && formValues && (
-          <>
-            {/* Template summary card */}
-            <div className="mb-6 flex items-center justify-between rounded-lg border border-border bg-white px-5 py-4">
-              <div className="flex items-center gap-8">
-                <div className="flex items-center gap-2">
-                  <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>Created:</Text>
-                  <Text styleProps={{ size: 'sm', weight: 'medium' }}>
-                    {formatDate(template.createdAt)}
-                  </Text>
-                </div>
-                <div className="h-5 w-px bg-border" />
-                <div className="flex items-center gap-2">
-                  <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>Last updated:</Text>
-                  <Text styleProps={{ size: 'sm', weight: 'medium' }}>
-                    {formatDate(template.updatedAt)}
-                  </Text>
-                </div>
+    <AdminEditPageShell
+      title={template?.name ?? 'Template Detail'}
+      resourceLabel="template"
+      listLabel="Programme Templates"
+      isLoading={isLoading}
+      loadError={error}
+      onBack={handleNavigateBack}
+      record={template}
+      toFormValues={toTemplateFormValues}
+      onUpdate={handleUpdate}
+      beforeForm={
+        template && (
+          <div className="mb-6 flex items-center justify-between rounded-lg border border-border bg-white px-5 py-4">
+            <div className="flex items-center gap-8">
+              <div className="flex items-center gap-2">
+                <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>Created:</Text>
+                <Text styleProps={{ size: 'sm', weight: 'medium' }}>
+                  {formatDate(template.createdAt)}
+                </Text>
               </div>
-              <Text
-                as="span"
-                styleProps={{ size: 'xs', weight: 'semibold' }}
-                className={`inline-flex items-center rounded-full px-3 py-1 text-white ${
-                  template.isActive ? 'bg-success' : 'bg-muted-foreground'
-                }`}
-              >
-                {template.isActive ? 'Active' : 'Inactive'}
-              </Text>
+              <div className="h-5 w-px bg-border" />
+              <div className="flex items-center gap-2">
+                <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>Last updated:</Text>
+                <Text styleProps={{ size: 'sm', weight: 'medium' }}>
+                  {formatDate(template.updatedAt)}
+                </Text>
+              </div>
             </div>
-
-            <ComposableForm<TemplateMetadataFormValues>
-              onSubmit={handleFormSubmit}
-              values={formValues}
+            <Text
+              as="span"
+              styleProps={{ size: 'xs', weight: 'semibold' }}
+              className={`inline-flex items-center rounded-full px-3 py-1 text-white ${
+                template.isActive ? 'bg-success' : 'bg-muted-foreground'
+              }`}
             >
-              <TemplateMetadataFormFields
-                onCancel={handleNavigateBack}
-                isSubmitting={updateMutation.isPending}
-                errorMessage={submitError}
-              />
-            </ComposableForm>
-          </>
-        )}
-      </ContentPanel>
-    </PageContainer>
+              {template.isActive ? 'Active' : 'Inactive'}
+            </Text>
+          </div>
+        )
+      }
+    >
+      <TemplateMetadataFormFields
+        onCancel={handleNavigateBack}
+        isSubmitting={updateMutation.isPending}
+        errorMessage={submitError}
+      />
+    </AdminEditPageShell>
   );
 };
