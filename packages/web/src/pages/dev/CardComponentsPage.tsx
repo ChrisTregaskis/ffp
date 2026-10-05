@@ -1,4 +1,4 @@
-import { Button } from '@web/components/button';
+import { Button, LoadingSpinner, Text } from '@web/components/atoms';
 import { Card } from '@web/components/Card';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
@@ -8,8 +8,6 @@ import {
   DeveloperInstructions,
   ButtonSampleDisplay,
 } from '@web/components/dev';
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import { Text } from '@web/components/text';
 
 /**
  * Card components showcase page (development only).

@@ -1,7 +1,6 @@
 import { FeatureColumnGrid, SectionPanel } from '@web/components/assessment';
 import type { FeatureItem } from '@web/components/assessment';
-import { Icons } from '@web/components/Icon';
-import { Text } from '@web/components/text';
+import { Icons, Text } from '@web/components/atoms';
 
 const NEXT_STEPS: FeatureItem[] = [
   {

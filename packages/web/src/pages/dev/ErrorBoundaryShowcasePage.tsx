@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Button } from '@web/components/button';
+import { Button, Text } from '@web/components/atoms';
 import { Card } from '@web/components/Card';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
@@ -10,7 +10,6 @@ import {
   DeveloperInstructions,
 } from '@web/components/dev';
 import { ErrorBoundary } from '@web/components/error';
-import { Text } from '@web/components/text';
 
 /**
  * Component that throws an error when button is clicked

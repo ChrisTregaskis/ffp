@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 
-import { Icon, Icons } from '@web/components/Icon';
-import { Select } from '@web/components/select';
-import { Text } from '@web/components/text';
+import { Icon, Icons, Text } from '@web/components/atoms';
+import { Select } from '@web/components/molecules';
 
 import { iconVar } from './prototype-labels';
 import {

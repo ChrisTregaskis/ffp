@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react';
 
-import { Icon } from '@web/components/Icon';
-import { Icons } from '@web/components/Icon/types';
+import { Icon, Icons } from '@web/components/atoms';
 
 import type { ReactNode } from 'react';
 

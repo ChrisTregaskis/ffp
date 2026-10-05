@@ -153,7 +153,7 @@ ffp/
 │   │   └── dist/
 │   ├── web/                       # React frontend (@ffp/web)
 │   │   ├── src/
-│   │   │   ├── components/        # Atomic design structure (future)
+│   │   │   ├── components/        # Atomic design: atoms/ molecules/ organisms/ templates/ + domain folders
 │   │   │   ├── contexts/          # React contexts (future)
 │   │   │   └── pages/             # Page components (future)
 │   │   └── dist/

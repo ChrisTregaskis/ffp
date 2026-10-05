@@ -1,10 +1,8 @@
 import React from 'react';
 
-import { Button } from '@web/components/button';
+import { Button, Icon } from '@web/components/atoms';
+import type { IconColour, IconName } from '@web/components/atoms';
 import { StatusResult } from '@web/components/feedback/StatusResult';
-import { Icon } from '@web/components/Icon';
-import type { IconColour } from '@web/components/Icon/Icon';
-import type { IconName } from '@web/components/Icon/types';
 
 export interface ListEmptyStateProps {
   /** The list is narrowed, so no row is a match rather than an absence */

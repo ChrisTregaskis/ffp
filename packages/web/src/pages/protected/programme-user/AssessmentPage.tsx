@@ -1,8 +1,8 @@
 import React from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 
+import { LoadingSpinner } from '@web/components/atoms';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
 import { AssessmentProvider } from '@web/contexts/assessments/AssessmentProvider';
 import { useUserAssessmentStatusQuery } from '@web/hooks/assessments';
 import { routes, RouteKey } from '@web/pages/routes';

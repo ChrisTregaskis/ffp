@@ -3,11 +3,9 @@
 
 import { useController } from 'react-hook-form';
 
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
-import { BaseSelect } from '@web/components/select/BaseSelect';
-import type { SelectOption } from '@web/components/select/types';
-import { Text } from '@web/components/text';
+import { Icon, Icons, Text } from '@web/components/atoms';
+import { BaseSelect } from '@web/components/molecules';
+import type { SelectOption } from '@web/components/molecules';
 
 import { getFieldDescriptionIds } from '../shared/fieldDescription';
 import { getFieldErrorMessage } from '../shared/fieldError';

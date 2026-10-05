@@ -2,10 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { SectionHeader, SectionPanel } from '@web/components/assessment';
-import { Button } from '@web/components/button';
-import { Icons } from '@web/components/Icon';
+import { Button, Icons, Text } from '@web/components/atoms';
 import { PageContainer, PageHeader } from '@web/components/layout';
-import { Text } from '@web/components/text';
 import { useUserAssessmentStatusQuery } from '@web/hooks/assessments';
 import { routes, RouteKey } from '@web/pages/routes';
 

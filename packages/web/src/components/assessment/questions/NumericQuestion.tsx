@@ -1,7 +1,7 @@
 import { useCallback, useId } from 'react';
 
+import { Text } from '@web/components/atoms';
 import { RequiredIndicator } from '@web/components/form';
-import { Text } from '@web/components/text';
 
 import type { QuestionComponentProps } from './types';
 

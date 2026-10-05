@@ -1,7 +1,4 @@
-import { Button } from '@web/components/button';
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
-import { Text } from '@web/components/text/Text';
+import { Button, Icon, Icons, Text } from '@web/components/atoms';
 
 export interface SessionHeaderProps {
   /** Session name displayed in the centre */

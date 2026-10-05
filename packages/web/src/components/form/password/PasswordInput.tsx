@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
-import { IconButton } from '@web/components/button/IconButton';
-import { Text } from '@web/components/text/Text';
+import { IconButton, Text } from '@web/components/atoms';
 import type { PasswordStrength } from '@web/utils/passwordStrength';
 
 import { PasswordStrengthIndicator } from './PasswordStrengthIndicator';

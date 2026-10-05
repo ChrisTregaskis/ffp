@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 
-import { Button } from '@web/components/button/Button';
+import { Button, Text, Title } from '@web/components/atoms';
 import { Card } from '@web/components/Card/Card';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
@@ -23,7 +23,6 @@ import {
   SlideWidth,
   SpringScale,
 } from '@web/components/motion';
-import { Text, Title } from '@web/components/text';
 
 /**
  * Motion library showcase page (development only).

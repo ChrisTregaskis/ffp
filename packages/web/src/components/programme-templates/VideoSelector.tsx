@@ -4,12 +4,8 @@ import { generatePath } from 'react-router-dom';
 
 import type { VideoDetailResponse } from '@ffp/core';
 
-import { Button } from '@web/components/button';
-import { Icon } from '@web/components/Icon';
-import { Icons } from '@web/components/Icon/types';
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
+import { Button, Icon, Icons, LoadingSpinner, Text } from '@web/components/atoms';
 import { SearchInput } from '@web/components/search/SearchInput';
-import { Text } from '@web/components/text';
 import { adminVideosApi } from '@web/lib/api/endpoints';
 import { videosApi } from '@web/lib/api/endpoints/videos';
 import { videoKeys } from '@web/lib/query/keys';

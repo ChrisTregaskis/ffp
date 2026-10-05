@@ -1,6 +1,5 @@
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
+import { LoadingSpinner, Text } from '@web/components/atoms';
 import { SessionCompletionState, SessionStartScreen } from '@web/components/session';
-import { Text } from '@web/components/text/Text';
 
 export type SessionState = 'loading' | 'not-found' | 'needs-start' | 'completed' | 'workout';
 

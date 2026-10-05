@@ -1,12 +1,8 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { Button } from '@web/components/button';
-import { Icon } from '@web/components/Icon';
-import { Icons } from '@web/components/Icon/types';
-import { Logo } from '@web/components/logo';
+import { Button, Icon, Icons, Logo, Text } from '@web/components/atoms';
 import { SlideWidth, ClickScale } from '@web/components/motion';
-import { Text } from '@web/components/text';
 import { getContextNavItems, getNavigationItems } from '@web/config/navigation';
 import type { NavItem as NavItemType } from '@web/config/navigation';
 import { useAuth } from '@web/hooks/useAuth';

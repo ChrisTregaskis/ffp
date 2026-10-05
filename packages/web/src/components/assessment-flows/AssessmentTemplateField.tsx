@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
 import { FormSelect } from '@web/components/form/standardForm/FormSelect';
-import type { SelectOption } from '@web/components/select/types';
+import type { SelectOption } from '@web/components/molecules';
 import { useAssessmentTemplatesQuery } from '@web/hooks/assessment-templates';
 
 import type { FlowStepFormValues } from './flow-step-form-values';

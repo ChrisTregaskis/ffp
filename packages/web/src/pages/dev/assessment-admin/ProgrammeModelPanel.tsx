@@ -1,5 +1,4 @@
-import { Icon, Icons } from '@web/components/Icon';
-import { Text } from '@web/components/text';
+import { Icon, Icons, Text } from '@web/components/atoms';
 
 import { AssembledProgramme } from './AssembledProgramme';
 import { LevelShellCard } from './LevelShellCard';

@@ -1,6 +1,6 @@
+import { Text } from '@web/components/atoms';
 import { createColumns } from '@web/components/table';
 import type { RowAction, StatusConfig } from '@web/components/table';
-import { Text } from '@web/components/text';
 
 import { levelTitle } from './prototype-level-model';
 import { ROLE_LABELS, type PrototypeUser } from './prototype-users';

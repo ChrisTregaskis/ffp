@@ -1,9 +1,9 @@
+import { Text, Title } from '@web/components/atoms';
 import {
   ComponentCategoriesGrid,
   ComponentPageWrapper,
   DeveloperInstructions,
 } from '@web/components/dev';
-import { Text, Title } from '@web/components/text';
 
 import { componentCategories } from '.';
 

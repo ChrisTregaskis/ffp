@@ -1,4 +1,4 @@
-import { Button } from '@web/components/button';
+import { Button, Icon, Icons, Text, Title } from '@web/components/atoms';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
@@ -7,8 +7,6 @@ import {
   DeveloperInstructions,
   ButtonSampleDisplay,
 } from '@web/components/dev';
-import { Icon, Icons } from '@web/components/Icon';
-import { Text, Title } from '@web/components/text';
 
 /**
  * Button components showcase page (development only).
@@ -53,7 +51,7 @@ export const ButtonComponentsPage = (): JSX.Element => {
               Import the Button component:
             </Text>
             <code className="block rounded bg-muted p-2 text-xs">
-              {`import { Button } from '@web/components/button';`}
+              {`import { Button } from '@web/components/atoms';`}
             </code>
           </div>
           <div>

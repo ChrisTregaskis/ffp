@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Text, Title } from '@web/components/text';
+import { Text, Title } from '@web/components/atoms';
 
 import type { ReactNode } from 'react';
 

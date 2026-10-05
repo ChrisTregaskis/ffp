@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
-import { Button } from '@web/components/button';
-import { Icon, Icons } from '@web/components/Icon';
+import { Button, Icon, Icons } from '@web/components/atoms';
 
 import { InfoNote } from './InfoNote';
 import { LEVEL_SCENARIOS } from './prototype-data';

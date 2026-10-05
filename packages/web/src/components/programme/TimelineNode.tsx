@@ -2,8 +2,7 @@ import { motion } from 'motion/react';
 
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
-import { Icon, Icons } from '@web/components/Icon';
-import { Text } from '@web/components/text/Text';
+import { Icon, Icons, Text } from '@web/components/atoms';
 
 type Phase = ProgrammeDetailResponse['phases'][number];
 

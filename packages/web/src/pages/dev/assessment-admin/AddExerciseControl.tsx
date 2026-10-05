@@ -1,8 +1,7 @@
 import { useState } from 'react';
 
-import { Button } from '@web/components/button';
-import { Icon, Icons } from '@web/components/Icon';
-import { Select } from '@web/components/select';
+import { Button, Icon, Icons } from '@web/components/atoms';
+import { Select } from '@web/components/molecules';
 
 import { type PrototypeVideo } from './prototype-videos';
 

@@ -1,3 +1,4 @@
+import { Text, Title } from '@web/components/atoms';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
@@ -6,7 +7,6 @@ import {
   DeveloperInstructions,
   TextSampleDisplay,
 } from '@web/components/dev';
-import { Text, Title } from '@web/components/text';
 
 /**
  * Text component showcase page (development only).
@@ -51,7 +51,7 @@ export const TextComponentsPage = (): JSX.Element => {
               Import the components:
             </Text>
             <code className="block rounded bg-muted p-2 text-xs">
-              {`import { Text, Title } from '@web/components/text';`}
+              {`import { Text, Title } from '@web/components/atoms';`}
             </code>
           </div>
           <div>

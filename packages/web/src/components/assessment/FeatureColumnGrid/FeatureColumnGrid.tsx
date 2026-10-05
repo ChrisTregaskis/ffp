@@ -1,6 +1,5 @@
-import { IconBadge } from '@web/components/Icon';
-import type { IconName } from '@web/components/Icon';
-import { Text } from '@web/components/text';
+import type { IconName } from '@web/components/atoms';
+import { IconBadge, Text } from '@web/components/atoms';
 
 export interface FeatureItem {
   /** Icon to display in the badge */

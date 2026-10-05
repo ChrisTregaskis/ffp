@@ -1,8 +1,6 @@
+import { Logo, Title } from '@web/components/atoms';
 import { ErrorBoundary } from '@web/components/error';
-import { Logo } from '@web/components/logo/Logo';
 import { FadeSlideIn } from '@web/components/motion/FadeSlideIn';
-
-import { Title } from '../text';
 
 import type { ReactNode } from 'react';
 

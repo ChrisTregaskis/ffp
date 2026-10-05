@@ -1,4 +1,4 @@
-import { Text } from '@web/components/text';
+import { Text } from '@web/components/atoms';
 
 import { type GoalId } from './prototype-programmes';
 import { TagChip } from './TagChip';

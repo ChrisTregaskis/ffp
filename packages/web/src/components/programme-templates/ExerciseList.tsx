@@ -2,12 +2,9 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import type { ExerciseResponse } from '@ffp/core';
 
-import { Button } from '@web/components/button';
-import { Icon } from '@web/components/Icon';
+import { Button, Icon, LoadingSpinner, Text } from '@web/components/atoms';
 import { InlineFormPanel } from '@web/components/layout';
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
 import { DeleteConfirmModal } from '@web/components/modal';
-import { Text } from '@web/components/text';
 import {
   useCreateExerciseMutation,
   useDeleteExerciseMutation,

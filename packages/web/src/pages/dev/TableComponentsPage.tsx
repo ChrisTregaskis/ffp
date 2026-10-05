@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 
+import { Text } from '@web/components/atoms';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
@@ -15,7 +16,6 @@ import {
   type StatusConfig,
   type TableFilterConfig,
 } from '@web/components/table';
-import { Text } from '@web/components/text';
 import { useApiTable } from '@web/hooks/useApiTable';
 
 // ============================================================================

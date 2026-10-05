@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Button } from '@web/components/button/Button';
+import { Button } from '@web/components/atoms';
 import { Card } from '@web/components/Card/Card';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { Form } from '@web/components/form';

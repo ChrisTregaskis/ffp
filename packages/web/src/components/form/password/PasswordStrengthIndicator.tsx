@@ -1,4 +1,4 @@
-import { Text } from '@web/components/text/Text';
+import { Text } from '@web/components/atoms';
 import { PasswordStrength } from '@web/utils/passwordStrength';
 
 export interface PasswordStrengthIndicatorProps {

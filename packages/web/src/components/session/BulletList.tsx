@@ -1,4 +1,4 @@
-import { Text } from '@web/components/text/Text';
+import { Text } from '@web/components/atoms';
 
 export interface BulletListProps {
   /** List items to display */

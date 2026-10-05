@@ -1,4 +1,4 @@
-import { Button } from '@web/components/button';
+import { Button, Text } from '@web/components/atoms';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ButtonSampleDisplay,
@@ -8,7 +8,6 @@ import {
   DeveloperInstructions,
 } from '@web/components/dev';
 import { ToastAlert } from '@web/components/feedback/ToastAlert';
-import { Text } from '@web/components/text';
 import { ToastProvider } from '@web/contexts/toast/ToastContext';
 import { useToast } from '@web/hooks/useToast';
 

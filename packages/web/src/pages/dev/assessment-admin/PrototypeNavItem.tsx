@@ -1,5 +1,4 @@
-import { Icon, type Icons } from '@web/components/Icon';
-import { Text } from '@web/components/text';
+import { Icon, type Icons, Text } from '@web/components/atoms';
 
 interface PrototypeNavItemProps {
   label: string;

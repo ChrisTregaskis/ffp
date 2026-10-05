@@ -1,10 +1,13 @@
 import React from 'react';
 
-import { IconButton } from '@web/components/button/IconButton';
-import { Icon, type IconColour } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
-
-import { Text, type TextColour } from '../text';
+import {
+  IconButton,
+  Icons,
+  Icon,
+  type IconColour,
+  Text,
+  type TextColour,
+} from '@web/components/atoms';
 
 export type AlertVariant = 'error' | 'warning' | 'success' | 'info';
 export type AlertAppearance = 'soft' | 'solid';

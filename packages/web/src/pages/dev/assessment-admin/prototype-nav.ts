@@ -1,4 +1,4 @@
-import { Icons } from '@web/components/Icon';
+import { Icons } from '@web/components/atoms';
 
 import type { PrototypeView } from './prototype-types';
 

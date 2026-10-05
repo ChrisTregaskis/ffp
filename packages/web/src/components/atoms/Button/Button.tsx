@@ -1,8 +1,8 @@
 import React from 'react';
 
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
+import { ClickScale } from '@web/components/motion';
 
-import { ClickScale } from '../motion';
+import { LoadingSpinner } from '../LoadingSpinner';
 
 import type { ReactNode, MouseEvent } from 'react';
 

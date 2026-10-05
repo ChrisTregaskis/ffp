@@ -1,8 +1,5 @@
-import { Button } from '@web/components/button';
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
+import { Button, Icon, Icons, Title } from '@web/components/atoms';
 import { PrescriptionBadge } from '@web/components/programme/PrescriptionBadge';
-import { Title } from '@web/components/text/Title';
 import { VideoPlayer } from '@web/components/video';
 
 import { ExerciseDetail } from './ExerciseDetail';

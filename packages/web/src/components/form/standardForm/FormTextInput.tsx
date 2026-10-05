@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
-import { IconButton } from '@web/components/button/IconButton';
-import { Icons } from '@web/components/Icon/types';
+import { IconButton, Icons } from '@web/components/atoms';
 
 import { getFieldDescriptionIds } from '../shared/fieldDescription';
 import { getFieldErrorMessage } from '../shared/fieldError';

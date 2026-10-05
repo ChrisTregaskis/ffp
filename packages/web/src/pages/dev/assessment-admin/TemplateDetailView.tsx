@@ -1,8 +1,6 @@
 import { useState } from 'react';
 
-import { Button } from '@web/components/button';
-import { Icon, Icons } from '@web/components/Icon';
-import { Text } from '@web/components/text';
+import { Button, Icon, Icons, Text } from '@web/components/atoms';
 
 import { AddQuestionsModal } from './AddQuestionsModal';
 import { usePrototypeStore } from './PrototypeStore';

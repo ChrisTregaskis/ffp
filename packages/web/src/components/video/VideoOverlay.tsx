@@ -1,5 +1,4 @@
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
+import { Icon, Icons } from '@web/components/atoms';
 
 export interface VideoOverlayProps {
   /** Whether the video has finished playing */

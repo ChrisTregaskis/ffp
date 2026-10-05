@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button } from '@web/components/button';
+import { Button } from '@web/components/atoms';
 
 export interface FormActionsProps {
   /** Called when cancel is clicked */

@@ -1,4 +1,4 @@
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
+import { LoadingSpinner } from '@web/components/atoms';
 
 interface TableLoadingProps {
   /** Number of columns for the colspan */

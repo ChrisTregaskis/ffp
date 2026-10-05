@@ -1,7 +1,7 @@
 import { signIn, confirmSignIn, type ConfirmSignInInput } from 'aws-amplify/auth';
 import { useCallback, useState, useMemo } from 'react';
 
-import { Button } from '@web/components/button/Button';
+import { Button } from '@web/components/atoms';
 import { Card } from '@web/components/Card/Card';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { Form } from '@web/components/form';

@@ -1,4 +1,4 @@
-import type { TextColour } from './Text';
+import type { TextColour } from '../Text';
 import type { ReactNode } from 'react';
 
 /**

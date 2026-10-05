@@ -1,8 +1,6 @@
 import React from 'react';
 
-import { Button } from '@web/components/button';
-import { IconBadge, Icons } from '@web/components/Icon';
-import { Text } from '@web/components/text';
+import { Button, IconBadge, Icons, Text } from '@web/components/atoms';
 
 export interface VideoErrorStateProps {
   /** Callback to retry fetching the video URL */

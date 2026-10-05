@@ -3,7 +3,7 @@ import { generatePath, useNavigate, useParams } from 'react-router-dom';
 
 import type { AdminQuestionDetail } from '@ffp/core';
 
-import { Button } from '@web/components/button';
+import { Button } from '@web/components/atoms';
 import { AdminEditPageShell } from '@web/components/layout';
 import { DeactivateQuestionModal } from '@web/components/modal';
 import {

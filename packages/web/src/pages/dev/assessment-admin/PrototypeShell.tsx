@@ -1,8 +1,6 @@
 import { useState } from 'react';
 
-import { Icon, Icons } from '@web/components/Icon';
-import { Logo } from '@web/components/logo';
-import { Text } from '@web/components/text';
+import { Icon, Icons, Logo, Text } from '@web/components/atoms';
 
 import { MemberProgrammeDetailView } from './MemberProgrammeDetailView';
 import { MemberProgrammePhaseView } from './MemberProgrammePhaseView';

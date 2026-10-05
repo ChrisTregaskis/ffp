@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { LoadingSpinner } from '@web/components/LoadingSpinner/LoadingSpinner';
+import { LoadingSpinner } from '@web/components/atoms';
 import { USER_ROLE } from '@web/constants/roles';
 import { shouldRedirectToAssessment, useUserAssessmentStatusQuery } from '@web/hooks/assessments';
 import { useAuth } from '@web/hooks/useAuth';

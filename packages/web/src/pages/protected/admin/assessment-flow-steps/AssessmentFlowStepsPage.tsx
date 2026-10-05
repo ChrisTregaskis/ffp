@@ -8,10 +8,9 @@ import {
   formValuesToStepInput,
 } from '@web/components/assessment-flows';
 import type { FlowStepFormValues } from '@web/components/assessment-flows';
-import { Button } from '@web/components/button';
+import { Button, Icon, Icons } from '@web/components/atoms';
 import { EmptyState } from '@web/components/feedback/EmptyState';
 import { PageState } from '@web/components/feedback/PageState';
-import { Icon, Icons } from '@web/components/Icon';
 import { ContentPanel, InlineFormPanel, PageContainer, PageHeader } from '@web/components/layout';
 import {
   useAssessmentFlowDetailQuery,

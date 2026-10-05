@@ -3,8 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AnswerValue, FlowStepConfig, FlowStepType } from '@ffp/core';
 
 import { AssessmentProgress } from '@web/components/AssessmentProgress';
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import { Text } from '@web/components/text';
+import { LoadingSpinner, Text } from '@web/components/atoms';
 import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import { useAssessmentFlowQuery } from '@web/hooks/assessments';

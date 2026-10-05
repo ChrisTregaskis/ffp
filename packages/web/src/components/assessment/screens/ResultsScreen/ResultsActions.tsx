@@ -1,6 +1,5 @@
-import { Button } from '@web/components/button';
+import { Button, Text } from '@web/components/atoms';
 import { ClickScale } from '@web/components/motion';
-import { Text } from '@web/components/text';
 
 export interface ResultsActionsProps {
   isReassessment: boolean;

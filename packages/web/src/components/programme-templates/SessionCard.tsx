@@ -3,10 +3,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 import type { TemplatePhaseWithSessions } from '@ffp/core';
 
 import { Accordion } from '@web/components/accordion';
+import { Text } from '@web/components/atoms';
 import { KebabMenu, reorderableItemActions } from '@web/components/dropdown-menu';
 import type { DropdownMenuItem } from '@web/components/dropdown-menu';
 import { DeleteConfirmModal } from '@web/components/modal';
-import { Text } from '@web/components/text';
 import { fieldToNumber } from '@web/utils/form-number';
 
 import { ExerciseList } from './ExerciseList';

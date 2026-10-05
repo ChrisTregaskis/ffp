@@ -1,5 +1,4 @@
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import { Text } from '@web/components/text/Text';
+import { LoadingSpinner, Text } from '@web/components/atoms';
 
 export interface PageLoadingStateProps {
   /** Loading message displayed beneath the spinner */

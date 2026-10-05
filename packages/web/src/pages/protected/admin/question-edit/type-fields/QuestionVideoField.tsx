@@ -3,7 +3,7 @@ import { useController } from 'react-hook-form';
 
 import type { VideoDetailResponse } from '@ffp/core';
 
-import { FieldError } from '@web/components/atoms/FieldError';
+import { FieldError } from '@web/components/atoms';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
 import { VideoSelector } from '@web/components/programme-templates/VideoSelector';

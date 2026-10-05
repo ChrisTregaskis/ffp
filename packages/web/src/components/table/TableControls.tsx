@@ -1,10 +1,9 @@
 import { useMemo } from 'react';
 
-import { Button } from '@web/components/button';
-import { Panel } from '@web/components/panel';
+import { Button, Panel } from '@web/components/atoms';
+import { Select } from '@web/components/molecules';
+import type { SelectOption } from '@web/components/molecules';
 import { SearchInput } from '@web/components/search';
-import { Select } from '@web/components/select';
-import type { SelectOption } from '@web/components/select';
 
 import { TableColumnVisibility } from './TableColumnVisibility';
 

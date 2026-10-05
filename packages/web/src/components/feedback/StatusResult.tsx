@@ -1,9 +1,7 @@
 import React from 'react';
 
-import { Icon } from '@web/components/Icon';
-import type { IconColour } from '@web/components/Icon/Icon';
-import type { IconName } from '@web/components/Icon/types';
-import { Text } from '@web/components/text';
+import type { IconColour, IconName } from '@web/components/atoms';
+import { Icon, Text } from '@web/components/atoms';
 
 import type { ReactNode } from 'react';
 

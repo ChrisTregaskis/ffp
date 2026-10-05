@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 
-import { Button } from '@web/components/button';
-import { Icon, Icons } from '@web/components/Icon';
+import { Button, Icon, Icons } from '@web/components/atoms';
 import { Table, TableControls } from '@web/components/table';
 import type { RowAction } from '@web/components/table';
 import { useApiTable } from '@web/hooks/useApiTable';

@@ -5,12 +5,8 @@ import type { ProgressSummaryResponse } from '@ffp/core';
 
 import { FeatureColumnGrid } from '@web/components/assessment';
 import type { FeatureItem } from '@web/components/assessment';
-import { Button } from '@web/components/button';
+import { Button, Icon, Icons, Text, Title } from '@web/components/atoms';
 import { Card } from '@web/components/Card/Card';
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
-import { Text } from '@web/components/text/Text';
-import { Title } from '@web/components/text/Title';
 
 export type ProgrammeCompleteStateProps = Pick<
   ProgressSummaryResponse,

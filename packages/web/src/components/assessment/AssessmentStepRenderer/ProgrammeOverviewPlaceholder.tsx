@@ -1,4 +1,4 @@
-import { Text } from '@web/components/text';
+import { Text } from '@web/components/atoms';
 
 /** Placeholder for the programme overview step (deferred to FFP-3). */
 export const ProgrammeOverviewPlaceholder: React.FC = () => (

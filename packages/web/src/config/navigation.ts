@@ -1,6 +1,6 @@
 import type { UserRole } from '@ffp/core';
 
-import type { IconName } from '@web/components/Icon/types';
+import type { IconName } from '@web/components/atoms';
 import { USER_ROLE } from '@web/constants/roles';
 import type { ContextNavItem } from '@web/pages/routes';
 import { routes } from '@web/pages/routes';

@@ -2,9 +2,7 @@ import { useNavigate } from 'react-router-dom';
 
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
-import { Button } from '@web/components/button';
-import { Icon, Icons } from '@web/components/Icon';
-import { Text } from '@web/components/text/Text';
+import { Button, Icon, Icons, Text } from '@web/components/atoms';
 
 import { SessionStatusIcon } from './SessionStatusIcon';
 

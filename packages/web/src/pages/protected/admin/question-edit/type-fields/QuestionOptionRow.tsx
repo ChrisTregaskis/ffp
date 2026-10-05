@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { IconButton } from '@web/components/button/IconButton';
+import { IconButton } from '@web/components/atoms';
 import { REORDERABLE_ACTION_LABELS } from '@web/components/dropdown-menu';
 import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
 import { FormNumberInput } from '@web/components/form/standardForm/FormNumberInput';

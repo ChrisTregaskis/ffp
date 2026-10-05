@@ -1,10 +1,7 @@
 import { motion } from 'motion/react';
 import { useEffect, useRef } from 'react';
 
-import { IconButton } from '@web/components/button/IconButton';
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
-import { Text } from '@web/components/text';
+import { IconButton, Icon, Icons, Text } from '@web/components/atoms';
 
 export type ToastVariant = 'success' | 'error' | 'warning' | 'info';
 export type ToastPosition = 'top-right' | 'top-centre' | 'bottom-right' | 'bottom-centre';

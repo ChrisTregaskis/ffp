@@ -1,7 +1,7 @@
 import { difficultySchema } from '@ffp/core';
 import type { Difficulty } from '@ffp/core';
 
-import type { SelectOption } from '@web/components/select/types';
+import type { SelectOption } from '@web/components/molecules';
 
 const DIFFICULTY_LABELS: Record<Difficulty, string> = {
   beginner: 'Beginner',

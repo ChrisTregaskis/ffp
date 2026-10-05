@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Text } from '@web/components/text';
+import { Text } from '../Text';
 
 export interface FieldErrorProps {
   message: string;

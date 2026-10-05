@@ -1,11 +1,9 @@
 import React from 'react';
 
 import { SectionHeader, SectionPanel } from '@web/components/assessment';
+import { IconBadge, Icons, LoadingSpinner, Text } from '@web/components/atoms';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { IconBadge, Icons } from '@web/components/Icon';
 import { PageContainer } from '@web/components/layout';
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import { Text } from '@web/components/text';
 import { useActiveProgrammeQuery } from '@web/hooks/programmes';
 
 /** Format a date for display using British English locale */

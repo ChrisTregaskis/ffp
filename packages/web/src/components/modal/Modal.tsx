@@ -1,11 +1,9 @@
 import { AnimatePresence } from 'motion/react';
 import React, { useCallback, useEffect, useRef } from 'react';
 
-import { IconButton } from '@web/components/button/IconButton';
-import { Icons } from '@web/components/Icon/types';
+import { IconButton, Icons, Text, Title } from '@web/components/atoms';
 import { Backdrop } from '@web/components/motion/Backdrop';
 import { ScaleFade } from '@web/components/motion/ScaleFade';
-import { Text, Title } from '@web/components/text';
 
 import type { ReactNode } from 'react';
 

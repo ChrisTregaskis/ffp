@@ -1,9 +1,5 @@
-import { Button } from '@web/components/button';
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
+import { Button, Icon, Icons, Text, Title } from '@web/components/atoms';
 import { PrescriptionBadge } from '@web/components/programme/PrescriptionBadge';
-import { Text } from '@web/components/text/Text';
-import { Title } from '@web/components/text/Title';
 
 export interface SessionStartScreenProps {
   /** Session name */

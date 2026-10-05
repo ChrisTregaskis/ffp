@@ -1,6 +1,5 @@
-import { Icon } from '@web/components/Icon';
-import type { IconColour, IconName } from '@web/components/Icon';
-import { Text } from '@web/components/text';
+import type { IconColour, IconName } from '@web/components/atoms';
+import { Icon, Text } from '@web/components/atoms';
 
 export interface InstructionListProps {
   /** List items to render */

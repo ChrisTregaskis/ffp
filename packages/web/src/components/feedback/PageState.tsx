@@ -1,8 +1,6 @@
 import React from 'react';
 
-import { Button } from '@web/components/button';
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import { Text } from '@web/components/text';
+import { Button, LoadingSpinner, Text } from '@web/components/atoms';
 
 export interface PageStateProps {
   /** When true, shows a centred loading spinner instead of the error content */

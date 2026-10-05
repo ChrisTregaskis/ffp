@@ -1,6 +1,6 @@
+import { Text } from '@web/components/atoms';
 import { ClickScale } from '@web/components/motion';
 import { StepIndicator } from '@web/components/programme/StepIndicator';
-import { Text } from '@web/components/text/Text';
 
 export interface ExerciseSidebarItemProps {
   /** Exercise title */

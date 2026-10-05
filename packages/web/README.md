@@ -40,7 +40,7 @@ Use `@web/*` aliases for imports within the web package:
 
 ```typescript
 // Import components
-import { Button } from '@web/components/Button';
+import { Button } from '@web/components/atoms';
 
 // Import contexts
 import { useAuth } from '@web/contexts/AuthContext';
@@ -133,7 +133,7 @@ See `src/schemas/auth.schema.test.ts` for examples.
 ```typescript
 // Example: Button.test.tsx
 import { render, screen } from '@testing-library/react';
-import { Button } from '@web/components/Button';
+import { Button } from '@web/components/atoms';
 
 describe('Button', () => {
   it('renders with text', () => {

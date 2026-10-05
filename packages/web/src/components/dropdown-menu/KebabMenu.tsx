@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
+import { Icon, Icons } from '@web/components/atoms';
 import { useClickOutside } from '@web/hooks/useClickOutside';
 
 import type { DropdownMenuItem } from './DropdownMenu';

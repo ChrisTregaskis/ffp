@@ -2,11 +2,9 @@ import { AnimatePresence } from 'motion/react';
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
-import { IconButton } from '@web/components/button';
-import type { IconName } from '@web/components/Icon/types';
-import { Logo } from '@web/components/logo';
+import type { IconName } from '@web/components/atoms';
+import { IconButton, Logo, Text } from '@web/components/atoms';
 import { Backdrop, ClickScale, SlideDrawer, SlideVertical } from '@web/components/motion';
-import { Text } from '@web/components/text';
 
 import { NavItem } from './NavItem';
 

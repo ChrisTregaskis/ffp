@@ -1,5 +1,5 @@
+import { Button } from '@web/components/atoms';
 import { forgotPasswordRequestFields, type ForgotPasswordRequestData } from '@web/components/auth';
-import { Button } from '@web/components/button/Button';
 import { Card } from '@web/components/Card/Card';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
 import { Form } from '@web/components/form';

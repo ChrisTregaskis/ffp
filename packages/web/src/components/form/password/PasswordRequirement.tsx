@@ -1,5 +1,4 @@
-import { Icon } from '@web/components/Icon/Icon';
-import { Text } from '@web/components/text/Text';
+import { Icon, Text } from '@web/components/atoms';
 
 export interface PasswordRequirementProps {
   /** Description of the requirement */

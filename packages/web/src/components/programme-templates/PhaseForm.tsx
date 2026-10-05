@@ -1,10 +1,8 @@
 import React, { useCallback } from 'react';
 
 import { ComposableForm } from '@web/components/form/composableForm';
-import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
-import { FormActions } from '@web/components/form/standardForm/FormActions';
-import { FormTextarea } from '@web/components/form/standardForm/FormTextarea';
-import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
+
+import { PhaseFormFields } from './PhaseFormFields';
 
 export interface PhaseFormValues {
   name: string;
@@ -25,44 +23,6 @@ export interface PhaseFormProps {
 }
 
 const EMPTY_VALUES: PhaseFormValues = { name: '', description: '' };
-
-/** Fields for the phase inline form */
-const PhaseFormFields: React.FC<{
-  onCancel: () => void;
-  isSubmitting: boolean;
-  submitLabel: string;
-}> = ({ onCancel, isSubmitting, submitLabel }) => {
-  const { register, errors } = useComposableFormContext<PhaseFormValues>();
-
-  return (
-    <>
-      <FormTextInput<PhaseFormValues>
-        name="name"
-        label="Phase Name"
-        placeholder="e.g. Foundation Building"
-        register={register}
-        errors={errors}
-        isRequired
-      />
-
-      <FormTextarea<PhaseFormValues>
-        name="description"
-        label="Description"
-        placeholder="Optional phase description..."
-        register={register}
-        errors={errors}
-        rows={2}
-      />
-
-      <FormActions
-        onCancel={onCancel}
-        isSubmitting={isSubmitting}
-        submitLabel={submitLabel}
-        compact
-      />
-    </>
-  );
-};
 
 /** Inline form for creating or editing a phase */
 export const PhaseForm: React.FC<PhaseFormProps> = ({

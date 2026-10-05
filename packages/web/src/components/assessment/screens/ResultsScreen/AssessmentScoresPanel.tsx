@@ -1,8 +1,7 @@
 import type { ScoreDimension, UserAssessmentScores } from '@ffp/core';
 
 import { SectionHeader, SectionPanel } from '@web/components/assessment';
-import { Icons } from '@web/components/Icon';
-import { Text } from '@web/components/text';
+import { Icons, Text } from '@web/components/atoms';
 
 export interface AssessmentScoresPanelProps {
   scores: UserAssessmentScores;

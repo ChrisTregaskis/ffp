@@ -1,5 +1,5 @@
+import { Text } from '@web/components/atoms';
 import { DropdownMenu } from '@web/components/dropdown-menu';
-import { Text } from '@web/components/text';
 
 import type { Column } from '@tanstack/react-table';
 

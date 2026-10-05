@@ -7,9 +7,8 @@ import {
   FeatureColumnGrid,
   SectionHeader,
 } from '@web/components/assessment';
-import { Icon, Icons } from '@web/components/Icon';
+import { Icon, Icons, Text } from '@web/components/atoms';
 import { FadeSlideIn } from '@web/components/motion';
-import { Text } from '@web/components/text';
 
 import { StepCard } from '../StepCard';
 

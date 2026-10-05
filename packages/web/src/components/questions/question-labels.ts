@@ -1,7 +1,7 @@
 import { questionTypeSchema, scoreDimensionSchema } from '@ffp/core';
 import type { QuestionType, ScoreDimension } from '@ffp/core';
 
-import type { SelectOption } from '@web/components/select/types';
+import type { SelectOption } from '@web/components/molecules';
 
 export const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
   'single-choice': 'Single choice',

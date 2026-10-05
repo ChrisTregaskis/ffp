@@ -9,10 +9,8 @@ import {
 } from '@ffp/core';
 
 import { AssessmentStepRenderer } from '@web/components/assessment/AssessmentStepRenderer/AssessmentStepRenderer';
-import { Button } from '@web/components/button';
+import { Button, LoadingSpinner, Text } from '@web/components/atoms';
 import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import { Text } from '@web/components/text';
 import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import {
