@@ -10,7 +10,7 @@ import { PageHeader } from './PageHeader';
 import type { ReactNode } from 'react';
 import type { FieldValues } from 'react-hook-form';
 
-export interface AdminEditPageShellProps<TFormValues extends FieldValues, TRecord> {
+interface AdminEditPageShellBaseProps<TFormValues extends FieldValues, TRecord> {
   title: string;
   subtitle?: string;
   headerActions?: ReactNode;
@@ -18,8 +18,6 @@ export interface AdminEditPageShellProps<TFormValues extends FieldValues, TRecor
   resourceLabel: string;
   /** Plural, title case — "Locations" */
   listLabel: string;
-  /** Editing waits for a record; creating has nothing to wait for */
-  isEditMode: boolean;
   isLoading: boolean;
   loadError?: Error | null;
   /** Replaces the error's own message */
@@ -27,17 +25,42 @@ export interface AdminEditPageShellProps<TFormValues extends FieldValues, TRecor
   onBack: () => void;
   /** The fetched record; the form re-seeds from it when a refetch changes it */
   record: TRecord | undefined;
-  /** Seeds a create form. Define it and `toFormValues` at module level so the values memo holds. */
-  emptyValues: TFormValues;
+  /** Define it at module level so the values memo holds */
   toFormValues: (record: TRecord) => TFormValues;
-  /** Each returns the save's promise (`mutateAsync`, not `mutate`) so the form knows when it lands */
-  onCreate: (values: TFormValues) => Promise<void>;
+  /**
+   * Returns the save's promise (`mutateAsync`) so the form knows when it lands. A save behind
+   * a confirm returns one the modal settles exactly once; `VideoEditPage`'s archive shows how.
+   */
   onUpdate: (values: TFormValues) => Promise<void>;
+  /** Content above the form, outside it; shown only once the form is */
+  beforeForm?: ReactNode;
   /** The form's field components */
   children: ReactNode;
   /** Rendered after the panel — modals and the like */
   footer?: ReactNode;
 }
+
+interface CreateOrEditProps<TFormValues extends FieldValues> {
+  /** Editing waits for a record; creating has nothing to wait for */
+  isEditMode: boolean;
+  /** Seeds a create form. Define it at module level so the values memo holds. */
+  emptyValues: TFormValues;
+  /** Returns the save's promise, as `onUpdate` does */
+  onCreate: (values: TFormValues) => Promise<void>;
+}
+
+/** A page that only edits leaves out all three create props */
+interface EditOnlyProps {
+  isEditMode?: never;
+  emptyValues?: never;
+  onCreate?: never;
+}
+
+export type AdminEditPageShellProps<
+  TFormValues extends FieldValues,
+  TRecord,
+> = AdminEditPageShellBaseProps<TFormValues, TRecord> &
+  (CreateOrEditProps<TFormValues> | EditOnlyProps);
 
 /**
  * Page frame shared by the admin create/edit screens.
@@ -53,7 +76,7 @@ export const AdminEditPageShell = <TFormValues extends FieldValues, TRecord>({
   headerActions,
   resourceLabel,
   listLabel,
-  isEditMode,
+  isEditMode = true,
   isLoading,
   loadError,
   loadErrorMessage,
@@ -63,19 +86,21 @@ export const AdminEditPageShell = <TFormValues extends FieldValues, TRecord>({
   toFormValues,
   onCreate,
   onUpdate,
+  beforeForm,
   children,
   footer,
 }: AdminEditPageShellProps<TFormValues, TRecord>): JSX.Element => {
-  const isAwaitingRecord = isEditMode && (isLoading || !!loadError);
+  // A record in hand keeps the form, and the user's edits, even if a later refetch fails
+  const isAwaitingRecord = isEditMode && !record;
 
   const values = useMemo(
-    (): TFormValues => (isEditMode && record ? toFormValues(record) : emptyValues),
+    (): TFormValues | undefined => (isEditMode && record ? toFormValues(record) : emptyValues),
     [isEditMode, record, toFormValues, emptyValues]
   );
 
   const handleSubmit = useCallback(
     (formValues: TFormValues): Promise<void> =>
-      isEditMode ? onUpdate(formValues) : onCreate(formValues),
+      !isEditMode && onCreate ? onCreate(formValues) : onUpdate(formValues),
     [isEditMode, onUpdate, onCreate]
   );
 
@@ -86,16 +111,24 @@ export const AdminEditPageShell = <TFormValues extends FieldValues, TRecord>({
       <ContentPanel>
         {isAwaitingRecord ? (
           <PageState
-            isLoading={isLoading}
+            // A record still missing without an error is on its way
+            isLoading={isLoading || !loadError}
             title={`Unable to load ${resourceLabel}`}
             message={loadErrorMessage ?? loadError?.message}
             actionLabel={`Back to ${listLabel}`}
             onAction={onBack}
           />
         ) : (
-          <ComposableForm<TFormValues> onSubmit={handleSubmit} values={values} guardUnsavedChanges>
-            {children}
-          </ComposableForm>
+          <>
+            {beforeForm}
+            <ComposableForm<TFormValues>
+              onSubmit={handleSubmit}
+              values={values}
+              guardUnsavedChanges
+            >
+              {children}
+            </ComposableForm>
+          </>
         )}
       </ContentPanel>
 
