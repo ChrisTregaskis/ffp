@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+import type { ScoringConfig as StoredScoringConfig } from '@ffp/database';
+import { SCORING_MODES } from '@ffp/database/constants';
+
 import { scoreDimensionSchema } from './assessment-question.schema';
 
 /**
@@ -13,6 +16,8 @@ import { scoreDimensionSchema } from './assessment-question.schema';
 export const riskLevelSchema = z.enum(['low', 'moderate', 'high']);
 export const comparisonOperatorSchema = z.enum(['lt', 'lte', 'gt', 'gte', 'eq']);
 export const logicalOperatorSchema = z.enum(['and', 'or']);
+
+export const scoringModeSchema = z.enum(SCORING_MODES);
 
 export const riskThresholdsSchema = z.object({
   /** Score threshold for low risk (score >= this value = low risk) */
@@ -38,6 +43,10 @@ export const dimensionConfigSchema = z.object({
   weight: z.number().positive().default(1),
   /** Optional risk thresholds for this dimension */
   riskThresholds: riskThresholdsSchema.optional(),
+  /** How the questions' scores combine: summed, or the most frequent (default: 'sum') */
+  scoringMode: scoringModeSchema.default('sum'),
+  /** Whether this dimension feeds the overall risk level (default: true) */
+  affectsRiskLevel: z.boolean().default(true),
 });
 
 /**
@@ -56,7 +65,7 @@ export const programmeMappingConditionSchema = z.object({
 /**
  * Defines rules for automatically recommending programmes based on
  * assessment scores. Multiple conditions can be combined with logical operators.
- * Higher priority mappings are evaluated first.
+ * Mappings are evaluated lowest priority first; the first match wins.
  */
 export const programmeMappingSchema = z.object({
   /** Array of conditions that must be satisfied */
@@ -65,22 +74,28 @@ export const programmeMappingSchema = z.object({
   operator: logicalOperatorSchema.default('and'),
   /** ID of the programme template to recommend when conditions match */
   programmeTemplateId: z.string().min(1),
-  /** Priority for evaluation order (higher = checked first, default: 0) */
-  priority: z.number().int().default(0),
+  /** Evaluation order: lower is checked first, and a missing value is checked last */
+  priority: z.number().int().optional(),
 });
 
 /**
  * Defines how assessment responses are scored across dimensions and
  * how scores map to programme recommendations.
+ *
+ * `@ffp/database` holds the stored `ScoringConfig` interface the scoring code
+ * reads, and cannot import this schema. `satisfies` keeps a parsed config
+ * assignable to that interface; it cannot see a field the interface gains, so
+ * add new fields to both.
  */
 export const scoringConfigSchema = z.object({
   /** Array of dimension configurations for multi-dimensional scoring */
   dimensions: z.array(dimensionConfigSchema),
   /** Array of programme mappings for automatic recommendations */
   programmeMappings: z.array(programmeMappingSchema),
-});
+}) satisfies z.ZodType<StoredScoringConfig>;
 
 export type RiskLevel = z.infer<typeof riskLevelSchema>;
+export type ScoringMode = z.infer<typeof scoringModeSchema>;
 export type RiskThresholds = z.infer<typeof riskThresholdsSchema>;
 export type DimensionConfig = z.infer<typeof dimensionConfigSchema>;
 export type ComparisonOperator = z.infer<typeof comparisonOperatorSchema>;

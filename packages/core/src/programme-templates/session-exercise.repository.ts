@@ -18,6 +18,7 @@ export interface ExerciseWithVideo extends SessionExerciseRecord {
 /** Lightweight video columns selected when joining exercises with video data. */
 const videoSummaryColumns = {
   id: videos.id,
+  publicId: videos.publicId,
   title: videos.title,
   status: videos.status,
 } as const;

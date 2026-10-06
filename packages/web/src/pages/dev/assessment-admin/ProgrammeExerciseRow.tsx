@@ -1,6 +1,6 @@
-import { KebabMenu } from '@web/components/dropdown-menu';
-import type { DropdownMenuItem } from '@web/components/dropdown-menu';
-import { Text } from '@web/components/text';
+import { Text } from '@web/components/atoms';
+import { KebabMenu } from '@web/components/organisms';
+import type { DropdownMenuItem } from '@web/components/organisms';
 
 import { type ProgrammeExercise } from './prototype-programme-structure';
 

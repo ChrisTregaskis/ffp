@@ -1,5 +1,5 @@
+import { Text } from '@web/components/atoms';
 import { CollapsibleSidebar } from '@web/components/motion';
-import { Text } from '@web/components/text/Text';
 
 import { ExerciseSidebarItem } from './ExerciseSidebarItem';
 

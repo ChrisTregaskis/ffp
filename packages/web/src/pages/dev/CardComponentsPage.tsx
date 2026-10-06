@@ -1,5 +1,4 @@
-import { Button } from '@web/components/button';
-import { Card } from '@web/components/Card';
+import { Button, LoadingSpinner, Text } from '@web/components/atoms';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
@@ -8,8 +7,7 @@ import {
   DeveloperInstructions,
   ButtonSampleDisplay,
 } from '@web/components/dev';
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import { Text } from '@web/components/text';
+import { Card } from '@web/components/molecules';
 
 /**
  * Card components showcase page (development only).
@@ -52,7 +50,7 @@ export const CardComponentsPage = (): JSX.Element => {
               Import the Card component:
             </Text>
             <code className="block rounded bg-muted p-2 text-xs">
-              {`import { Card } from '@web/components/Card';`}
+              {`import { Card } from '@web/components/molecules';`}
             </code>
           </div>
           <div>

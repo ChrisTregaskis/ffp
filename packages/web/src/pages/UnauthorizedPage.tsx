@@ -1,10 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-import { Button } from '@web/components/button/Button';
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
-import { Text } from '@web/components/text/Text';
-import { Title } from '@web/components/text/Title';
+import { Button, Icon, Icons, Text, Title } from '@web/components/atoms';
 import { useAuth } from '@web/hooks/useAuth';
 import { getRoleHomePath } from '@web/lib/rbac';
 import { RouteKey, routes } from '@web/pages/routes';

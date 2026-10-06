@@ -29,8 +29,8 @@ export interface ScoringResult {
   scores: DimensionalScore[];
   /** Overall assessment score (weighted average of dimensions) */
   overallScore: number;
-  /** Risk level based on lowest dimension score */
-  riskLevel: RiskLevel;
+  /** Risk level based on the lowest risk-eligible dimension score; absent when none is eligible */
+  riskLevel?: RiskLevel;
   /** Recommended programme template ID, or null if no matching rule */
   recommendedProgrammeId: string | null;
   /** Timestamp when scoring completed */

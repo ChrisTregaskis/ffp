@@ -5,22 +5,25 @@ import {
   templateService,
   ValidationError,
   NotFoundError,
+  ForbiddenError,
+  isUserActor,
   type AssessmentTemplateWithQuestions,
 } from '@ffp/core/server';
 
 /**
  * Lambda handler for GET /admin/assessment-templates/:id
  *
- * Protected endpoint that requires JWT authentication.
- * Returns a single assessment template with its questions.
- * Any authenticated user can view templates.
+ * Returns a single assessment template with its questions. Requires the
+ * system_admin role, matching every other verb on this resource.
  */
 export const handler = withErrorHandling(
   async (event: APIGatewayProxyEventV2WithJWT): Promise<AssessmentTemplateWithQuestions> => {
-    // Extract user context from JWT (validates authentication)
     const context = extractUserContext(event);
 
-    // Extract templateId from path parameters
+    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
+      throw new ForbiddenError('Only system administrators can view assessment template details');
+    }
+
     const templateId = event.pathParameters?.id;
 
     if (!templateId) {

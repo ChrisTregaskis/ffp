@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { LOCATION_STATUSES } from '@ffp/database/constants';
 
 import { paginationInputSchema, createPaginatedResponseSchema } from './pagination.schema';
+import { publicIdSchema } from './public-id.schema';
 
 export const locationStatusSchema = z.enum(LOCATION_STATUSES);
 
@@ -20,7 +21,7 @@ export const locationAddressSchema = z
 
 export const locationSchema = z.object({
   id: z.guid(),
-  publicId: z.string().length(12),
+  publicId: publicIdSchema,
   organisationId: z.guid(),
   name: z.string().min(1).max(255),
   accountCode: z.string().min(1).max(50),
@@ -72,8 +73,13 @@ export const locationListResponseSchema = locationSchema.pick({
   createdAt: true,
 });
 
-/** Response schema for location detail (full record) */
-export const locationDetailResponseSchema = locationSchema;
+/**
+ * Response schema for location detail (full record). Carries the owning
+ * organisation's name so the edit screen can label it without a second lookup.
+ */
+export const locationDetailResponseSchema = locationSchema.extend({
+  organisationName: z.string(),
+});
 
 /** Paginated response schema for GET /admin/locations */
 export const paginatedLocationResponseSchema = createPaginatedResponseSchema(

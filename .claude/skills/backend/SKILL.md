@@ -102,6 +102,35 @@ const result = await userService.createUser(context, input);
 const data = JSON.parse(event.body);
 ```
 
+### Update Schemas — Optional Is Not Clearable
+
+**Any optional field a form can empty needs `.nullable()` on the update shape.** An update schema derived with `.partial()` inherits `.optional()`, which conflates two different intentions:
+
+- **omitted** → Drizzle's update set drops `undefined` keys → value **preserved** ✅
+- **`null`** → fails the parse, because optional ≠ nullable → **no payload can ever clear the field** ❌
+
+So a user empties the field, saves, and the old value silently survives. Found three times now — question `description`/`videoId`/`scoreDimension`, flow `description`, step `templateId` — because `.partial()` is the obvious way to derive an update shape and the bug is invisible until someone tries to empty something.
+
+**Widening the schema is only half of it. Validate the row the update will produce.** A field that is nullable in the shape can still be nulled into a state the system cannot serve — clearing a flow step's `templateId` while its type still needs one left members on a loading spinner that never resolved, silently, at every layer. The house answer is a merged-shape check in the service (`assertMergedShape`, `assertMergedTemplateLink`): load the stored row, apply the update, and judge the result rather than the payload.
+
+```typescript
+// WRONG — can be set, can never be unset
+export const updateThingSchema = createThingSchema.partial();
+
+// CORRECT — explicit null clears, omitted still preserves.
+// Match the existing call sites: .partial() first, then .extend() the clearable
+// fields as .nullable().optional(). Both orders work in Zod 4; this is the one
+// `updateFlowStepSchema` and `updateAssessmentFlowSchema` already use.
+export const updateThingSchema = thingWriteBaseSchema
+  .partial()
+  .extend({ description: z.string().nullable().optional() });
+```
+
+Two related traps in the same area:
+
+- **`.partial()` does not strip a `.default()`.** A default on the base shape is reapplied when the field is omitted, so an update silently writes it — this is how a `PUT` omitting `isActive` reactivated soft-deleted rows. Put defaults on the **create** schema only.
+- **`.partial()` does not reach inside a nested object.** A `.default()` on a sub-field of a jsonb object still fires whenever the parent is sent.
+
 ### Error Handling — Custom Classes, No Leaks
 
 ```typescript

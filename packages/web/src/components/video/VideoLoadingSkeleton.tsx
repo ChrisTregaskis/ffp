@@ -1,7 +1,6 @@
 import React from 'react';
 
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import { Text } from '@web/components/text';
+import { LoadingSpinner, Text } from '@web/components/atoms';
 
 /** Skeleton shown while the signed video URL is being fetched. */
 export const VideoLoadingSkeleton: React.FC = () => (

@@ -1,15 +1,14 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import type { AdminCreateUserInput, AdminUpdateUserInput } from '@ffp/core';
 
-import { PageState } from '@web/components/feedback/PageState';
-import { ComposableForm } from '@web/components/form/composableForm';
-import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
+import { AdminEditPageShell } from '@web/components/templates';
 import { useCreateUserMutation, useUpdateUserMutation, useUserDetailQuery } from '@web/hooks/users';
-import { useToast } from '@web/hooks/useToast';
+import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { RouteKey, routes } from '@web/pages/routes';
 
+import { EMPTY_USER_VALUES, toUserFormValues } from './user-form-values';
 import { UserFormFields } from './UserFormFields';
 
 import type { UserFormValues } from './types';
@@ -17,39 +16,13 @@ import type { UserFormValues } from './types';
 export const UserEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToast } = useToast();
+  const { submitError, setSubmitError, clearSubmitError, saveCallbacks } = useSaveFeedback();
 
   const isEditMode = !!id;
 
   const { data: user, isLoading, error } = useUserDetailQuery(id ?? '', { enabled: isEditMode });
   const createMutation = useCreateUserMutation();
   const updateMutation = useUpdateUserMutation();
-
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const defaultValues = useMemo((): UserFormValues => {
-    if (!isEditMode || !user) {
-      return {
-        email: '',
-        firstName: '',
-        lastName: '',
-        locationId: '',
-        locationDisplay: '',
-        phone: '',
-        dateOfBirth: '',
-      };
-    }
-
-    return {
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      locationId: user.locationId ?? '',
-      locationDisplay: user.locationName ?? '',
-      phone: user.phone ?? '',
-      dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
-    };
-  }, [isEditMode, user]);
 
   const handleNavigateBack = useCallback(() => {
     void navigate(routes[RouteKey.ADMIN_USERS].path);
@@ -72,8 +45,8 @@ export const UserEditPage: React.FC = () => {
 
   /** Handle create submission */
   const handleCreate = useCallback(
-    (values: UserFormValues) => {
-      setSubmitError(null);
+    async (values: UserFormValues): Promise<void> => {
+      clearSubmitError();
 
       if (values.dateOfBirth && isNaN(new Date(values.dateOfBirth).getTime())) {
         setSubmitError('Date of birth must be a valid date (YYYY-MM-DD)');
@@ -90,17 +63,19 @@ export const UserEditPage: React.FC = () => {
         dateOfBirth: parseDateOfBirth(values.dateOfBirth),
       };
 
-      createMutation.mutate(input, {
-        onSuccess: () => {
-          addToast('User created successfully', { variant: 'success' });
-          handleNavigateBack();
-        },
-        onError: (err) => {
-          setSubmitError(err.message);
-        },
-      });
+      await createMutation.mutateAsync(
+        input,
+        saveCallbacks('User created successfully', handleNavigateBack)
+      );
     },
-    [createMutation, addToast, handleNavigateBack, parseDateOfBirth]
+    [
+      clearSubmitError,
+      setSubmitError,
+      createMutation,
+      saveCallbacks,
+      handleNavigateBack,
+      parseDateOfBirth,
+    ]
   );
 
   /** Build update payload with only changed fields */
@@ -142,8 +117,8 @@ export const UserEditPage: React.FC = () => {
 
   /** Handle edit submission */
   const handleUpdate = useCallback(
-    (values: UserFormValues) => {
-      if (!id) {
+    async (values: UserFormValues): Promise<void> => {
+      if (!user) {
         return;
       }
 
@@ -161,62 +136,47 @@ export const UserEditPage: React.FC = () => {
         return;
       }
 
-      setSubmitError(null);
+      clearSubmitError();
 
-      updateMutation.mutate(
-        { id, data: payload },
-        {
-          onSuccess: () => {
-            addToast('User updated successfully', { variant: 'success' });
-            handleNavigateBack();
-          },
-          onError: (err) => {
-            setSubmitError(err.message);
-          },
-        }
+      await updateMutation.mutateAsync(
+        { id: user.id, publicId: user.publicId, data: payload },
+        saveCallbacks('User updated successfully', handleNavigateBack)
       );
     },
-    [id, buildUpdatePayload, updateMutation, addToast, handleNavigateBack]
-  );
-
-  const handleFormSubmit = useCallback(
-    (values: UserFormValues) => {
-      if (isEditMode) {
-        handleUpdate(values);
-      } else {
-        handleCreate(values);
-      }
-    },
-    [isEditMode, handleUpdate, handleCreate]
+    [
+      user,
+      buildUpdatePayload,
+      clearSubmitError,
+      setSubmitError,
+      updateMutation,
+      saveCallbacks,
+      handleNavigateBack,
+    ]
   );
 
   const isPending = createMutation.isPending || updateMutation.isPending;
-  const isLoadingOrError = isEditMode && (isLoading || error);
 
   return (
-    <PageContainer>
-      <PageHeader title={isEditMode ? 'Edit User' : 'Create User'} />
-
-      <ContentPanel>
-        {isLoadingOrError ? (
-          <PageState
-            isLoading={isLoading}
-            title="Unable to load user"
-            message={error?.message}
-            actionLabel="Back to Users"
-            onAction={handleNavigateBack}
-          />
-        ) : (
-          <ComposableForm<UserFormValues> onSubmit={handleFormSubmit} defaultValues={defaultValues}>
-            <UserFormFields
-              isEditMode={isEditMode}
-              onCancel={handleNavigateBack}
-              isSubmitting={isPending}
-              errorMessage={submitError}
-            />
-          </ComposableForm>
-        )}
-      </ContentPanel>
-    </PageContainer>
+    <AdminEditPageShell
+      title={isEditMode ? 'Edit User' : 'Create User'}
+      resourceLabel="user"
+      listLabel="Users"
+      isEditMode={isEditMode}
+      isLoading={isLoading}
+      loadError={error}
+      onBack={handleNavigateBack}
+      record={user}
+      emptyValues={EMPTY_USER_VALUES}
+      toFormValues={toUserFormValues}
+      onCreate={handleCreate}
+      onUpdate={handleUpdate}
+    >
+      <UserFormFields
+        isEditMode={isEditMode}
+        onCancel={handleNavigateBack}
+        isSubmitting={isPending}
+        errorMessage={submitError}
+      />
+    </AdminEditPageShell>
   );
 };

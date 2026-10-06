@@ -1,4 +1,4 @@
-import type { StatusConfig, TableFilterConfig } from '@web/components/table';
+import type { StatusConfig, TableFilterConfig } from '@web/components/organisms';
 
 export const ORGANISATION_STATUS_MAP: Partial<Record<string, StatusConfig>> = {
   active: { label: 'Active', colour: 'success' },

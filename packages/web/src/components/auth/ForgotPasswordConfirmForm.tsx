@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 
-import { Card } from '@web/components/Card/Card';
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { ComposableForm } from '@web/components/form/composableForm';
+import { Card, StaticAlert } from '@web/components/molecules';
+import { ComposableForm } from '@web/components/organisms';
 import { validatePassword } from '@web/utils/passwordStrength';
 
 import {

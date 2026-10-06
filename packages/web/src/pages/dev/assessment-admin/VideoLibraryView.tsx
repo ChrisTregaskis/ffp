@@ -1,10 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { Button } from '@web/components/button';
-import { Icon, Icons } from '@web/components/Icon';
-import { Table, TableControls } from '@web/components/table';
-import type { RowAction, TableFilterConfig } from '@web/components/table';
-import { Text } from '@web/components/text';
+import { Button, Icon, Icons, Text } from '@web/components/atoms';
+import { Table, TableControls } from '@web/components/organisms';
+import type { RowAction, TableFilterConfig } from '@web/components/organisms';
 import { useApiTable } from '@web/hooks/useApiTable';
 
 import { type PrototypeVideo, type VideoStatus, VIDEO_LIBRARY } from './prototype-videos';

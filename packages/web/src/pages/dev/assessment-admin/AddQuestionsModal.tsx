@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { Button } from '@web/components/button';
-import { Icon, Icons } from '@web/components/Icon';
-import { Modal } from '@web/components/modal';
-import { SearchInput } from '@web/components/search';
-import { Text } from '@web/components/text';
+import { Button, Icon, Icons, Text } from '@web/components/atoms';
+import { SearchInput } from '@web/components/molecules';
+import { Modal } from '@web/components/organisms';
 
 import { SCROLL_CLASS } from './prototype-styles';
 import { QuestionTypeBadge } from './QuestionTypeBadge';

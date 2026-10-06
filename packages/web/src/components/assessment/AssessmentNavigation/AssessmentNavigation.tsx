@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 
-import { Button, type ButtonVariant } from '@web/components/button';
-import { Icon, Icons } from '@web/components/Icon';
+import { Button, type ButtonVariant, Icon, Icons } from '@web/components/atoms';
 import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import { useSaveProgress } from '@web/hooks/assessments/useSaveProgress';

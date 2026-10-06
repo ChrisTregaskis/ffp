@@ -1,6 +1,6 @@
 # Smoke Test — E2E Verification
 
-Run an E2E smoke test against the running application using the Puppeteer MCP server.
+Run an E2E smoke test against the running application using the Claude in Chrome browser tools (`mcp__claude-in-chrome__*`). Invoke the `claude-in-chrome` skill before the first browser call.
 
 **Arguments**: $ARGUMENTS — an epic slug, a feature area (e.g. `assessment-flow-admin`), or `all` for a full-system pass. If absent, infer the most recently delivered work from `.claude/local/plans/roadmap.md`.
 
@@ -14,7 +14,7 @@ Rename the session to `Smoke Test — <area>` via `/rename`.
 
 1. Read `.claude/local/plans/project-state.md` and `.claude/local/plans/roadmap.md` to understand what was delivered, the pages/endpoints involved, key decisions, and what was explicitly out of scope.
 2. Read the relevant epic plan in `.claude/local/plans/epics/` and any completion summaries in `.claude/local/notes/` for the full story breakdown.
-3. Check `.claude/local/smoke-tests/` for existing guides — avoid duplicating coverage. Read `.claude/local/smoke-tests/README.md` for Puppeteer MCP tips (custom selects, action menus, variable scoping).
+3. Check `.claude/local/smoke-tests/` for existing guides — avoid duplicating coverage. Read `.claude/local/smoke-tests/README.md` for browser-driving tips (custom selects, action menus, token-lean page reading).
 
 ## Phase 2 — Generate the test plan
 
@@ -45,9 +45,9 @@ Rename the session to `Smoke Test — <area>` via `/rename`.
 
 ## Phase 3 — Execute
 
-8. Launch Puppeteer; navigate to `http://localhost:3000`.
+8. Call `tabs_context_mcp`, open a **new** tab with `tabs_create_mcp` (never reuse one of my tabs), and navigate it to `http://localhost:3000`.
 9. **Ask me to log in** — Cognito needs human interaction. Wait for my confirmation before proceeding.
-10. Execute each journey sequentially: screenshot key verification points (not every click); use `puppeteer_evaluate` when visual checks are ambiguous; if a step fails, screenshot the failure and continue to the next journey.
+10. Execute each journey sequentially. **Navigate by text, verify by eye:** locate and act on elements with `find` / `read_page` (filtered to interactive elements) and `form_input`, and group consecutive actions into one `browser_batch` call where possible. Take a screenshot (`computer` → screenshot) only at key verification points where the visual result matters — layout, spacing, colour, state changes — not to find the next click target. Use `read_console_messages` / `read_network_requests` (with a `pattern` filter) when a step misbehaves. If a step fails, screenshot the failure and continue to the next journey.
 
 ## Phase 4 — Report
 
@@ -61,7 +61,9 @@ Rename the session to `Smoke Test — <area>` via `/rename`.
 - **Do not run git mutations** — I control git.
 - Screenshot key points, not every click. Continue past a failed journey.
 - Happy paths + key error cases (smoke test, not exhaustive).
-- Puppeteer tools: `puppeteer_navigate`, `puppeteer_screenshot`, `puppeteer_click`, `puppeteer_fill`, `puppeteer_evaluate`.
+- Browser tools are deferred: load everything the run needs in **one** `ToolSearch` call (`tabs_context_mcp`, `tabs_create_mcp`, `navigate`, `computer`, `read_page`, `find`, `form_input`, `browser_batch`, `read_console_messages`, `read_network_requests`), not one call per tool.
+- Prefer text snapshots over screenshots for navigation; an unfiltered `read_page` on a large page is itself expensive, so filter to interactive elements or use `find`.
 - FFP uses custom `<button>` dropdowns (not native `<select>`), action menus as positioned dropdowns, and `button[type="submit"]` for form submission.
-- `puppeteer_evaluate` shares a global scope — don't redeclare `const` with the same name across calls.
+- Never trigger native `alert`/`confirm` dialogs — they block the extension. Warn me first if a journey must click something that raises one.
+- If the extension stops responding after 2–3 attempts, stop and ask rather than retrying.
 - Jira is dormant — don't fetch from it; `.claude/local/` is the source of truth.

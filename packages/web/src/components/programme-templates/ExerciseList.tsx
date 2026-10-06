@@ -2,10 +2,9 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import type { ExerciseResponse } from '@ffp/core';
 
-import { Button } from '@web/components/button';
-import { Icon } from '@web/components/Icon';
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import { Text } from '@web/components/text';
+import { Button, Icon, LoadingSpinner, Text } from '@web/components/atoms';
+import { InlineFormPanel } from '@web/components/molecules';
+import { DeleteConfirmModal } from '@web/components/organisms';
 import {
   useCreateExerciseMutation,
   useDeleteExerciseMutation,
@@ -14,13 +13,12 @@ import {
   useUpdateExerciseMutation,
 } from '@web/hooks/programme-templates';
 import { useToast } from '@web/hooks/useToast';
+import { fieldToNumber } from '@web/utils/form-number';
 import { swapAdjacentItem } from '@web/utils/reorder';
 
-import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { exerciseToFormValues } from './exercise-utils';
 import { ExerciseForm } from './ExerciseForm';
 import { ExerciseRow } from './ExerciseRow';
-import { InlineFormPanel } from './InlineFormPanel';
 
 import type { ExerciseFormValues } from './exercise-utils';
 
@@ -70,12 +68,10 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
           sessionId,
           data: {
             videoId: values.videoId,
-            sets: values.sets ? parseInt(values.sets, 10) : undefined,
+            sets: fieldToNumber(values.sets),
             reps: values.reps || undefined,
-            durationSeconds: values.durationSeconds
-              ? parseInt(values.durationSeconds, 10)
-              : undefined,
-            restSeconds: values.restSeconds ? parseInt(values.restSeconds, 10) : undefined,
+            durationSeconds: fieldToNumber(values.durationSeconds),
+            restSeconds: fieldToNumber(values.restSeconds),
             notes: values.notes || undefined,
           },
         },
@@ -98,12 +94,10 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
           exerciseId,
           data: {
             videoId: values.videoId,
-            sets: values.sets ? parseInt(values.sets, 10) : undefined,
+            sets: fieldToNumber(values.sets),
             reps: values.reps || undefined,
-            durationSeconds: values.durationSeconds
-              ? parseInt(values.durationSeconds, 10)
-              : undefined,
-            restSeconds: values.restSeconds ? parseInt(values.restSeconds, 10) : undefined,
+            durationSeconds: fieldToNumber(values.durationSeconds),
+            restSeconds: fieldToNumber(values.restSeconds),
             notes: values.notes || undefined,
           },
         },
@@ -178,7 +172,10 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
               <InlineFormPanel key={exercise.id} title="Edit Exercise">
                 <ExerciseForm
                   initialValues={exerciseToFormValues(exercise)}
-                  initialSelectedVideo={{ id: exercise.video.id, title: exercise.video.title }}
+                  initialSelectedVideo={{
+                    publicId: exercise.video.publicId,
+                    title: exercise.video.title,
+                  }}
                   onSubmit={(values) => {
                     handleUpdate(exercise.id, values);
                   }}

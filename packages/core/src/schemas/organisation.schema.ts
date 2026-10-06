@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 import { ORGANISATION_TYPES, ORGANISATION_STATUSES } from '@ffp/database/constants';
 
+import { publicIdSchema } from './public-id.schema';
+
 export const organisationTypeSchema = z.enum(ORGANISATION_TYPES);
 export const organisationStatusSchema = z.enum(ORGANISATION_STATUSES);
 
@@ -17,7 +19,7 @@ export const organisationSettingsSchema = z.record(z.string(), z.unknown()).defa
  */
 export const organisationSchema = z.object({
   id: z.guid(),
-  publicId: z.string().length(12),
+  publicId: publicIdSchema,
   type: organisationTypeSchema,
   name: z.string().min(1).max(255),
   status: organisationStatusSchema,

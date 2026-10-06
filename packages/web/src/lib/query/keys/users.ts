@@ -1,9 +1,9 @@
+import { createEntityKeys } from './create-entity-keys';
+
+const base = createEntityKeys('users');
+
 export const userKeys = {
-  all: ['users'] as const,
-  lists: () => [...userKeys.all, 'list'] as const,
-  list: (params: Record<string, unknown>) => [...userKeys.lists(), params] as const,
-  details: () => [...userKeys.all, 'detail'] as const,
-  detail: (userId: string) => [...userKeys.details(), userId] as const,
+  ...base,
   /** Authenticated user's profile */
-  me: () => [...userKeys.all, 'me'] as const,
+  me: () => [...base.all, 'me'] as const,
 };

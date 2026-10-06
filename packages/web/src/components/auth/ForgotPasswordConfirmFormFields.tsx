@@ -1,8 +1,6 @@
-import { Button } from '@web/components/button/Button';
-import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
-import { PasswordInput } from '@web/components/form/password/PasswordInput';
-import { PasswordRequirementsList } from '@web/components/form/password/PasswordRequirementsList';
-import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
+import { Button } from '@web/components/atoms';
+import { PasswordInput, PasswordRequirementsList, FormTextInput } from '@web/components/molecules';
+import { useComposableFormContext } from '@web/components/organisms';
 import type { PasswordValidationResult } from '@web/utils/passwordStrength';
 
 /** Form values managed by ComposableForm / react-hook-form */

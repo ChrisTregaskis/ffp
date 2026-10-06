@@ -1,13 +1,15 @@
 import { signIn, confirmSignIn, type ConfirmSignInInput } from 'aws-amplify/auth';
 import { useCallback, useState, useMemo } from 'react';
 
-import { Button } from '@web/components/button/Button';
-import { Card } from '@web/components/Card/Card';
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { Form } from '@web/components/form';
-import { PasswordInput } from '@web/components/form/password/PasswordInput';
-import { PasswordRequirementsList } from '@web/components/form/password/PasswordRequirementsList';
+import { Button } from '@web/components/atoms';
+import {
+  Card,
+  StaticAlert,
+  PasswordInput,
+  PasswordRequirementsList,
+} from '@web/components/molecules';
 import { CardTransition, type CardTransitionDirection } from '@web/components/motion';
+import { Form } from '@web/components/organisms';
 import { validatePassword } from '@web/utils/passwordStrength';
 
 import { setPasswordCredentialsFields, type SetPasswordCredentialsData } from '.';

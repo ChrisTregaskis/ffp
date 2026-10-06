@@ -1,10 +1,9 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Button } from '@web/components/button/Button';
-import { Card } from '@web/components/Card/Card';
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { Form } from '@web/components/form';
+import { Button } from '@web/components/atoms';
+import { Card, StaticAlert } from '@web/components/molecules';
+import { Form } from '@web/components/organisms';
 import { routes, RouteKey } from '@web/pages/routes';
 
 import { loginFields, type LoginFormData } from '.';

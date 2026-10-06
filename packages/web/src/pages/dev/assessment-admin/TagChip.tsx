@@ -1,4 +1,4 @@
-import { Text, type TextColour } from '@web/components/text';
+import { Text, type TextColour } from '@web/components/atoms';
 
 export type ChipTone = 'muted' | 'info' | 'success' | 'primary' | 'warning';
 

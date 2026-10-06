@@ -1,7 +1,7 @@
 import type { LocationListResponse } from '@ffp/core';
 
-import { createColumns } from '@web/components/table';
-import type { RowAction } from '@web/components/table';
+import { createColumns } from '@web/components/organisms';
+import type { RowAction } from '@web/components/organisms';
 
 import { LOCATION_STATUS_MAP } from './constants';
 

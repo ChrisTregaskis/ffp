@@ -2,13 +2,8 @@ import { useNavigate } from 'react-router-dom';
 
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
-import { Button } from '@web/components/button';
-import { Card } from '@web/components/Card/Card';
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
-import { ProgressBar } from '@web/components/ProgressBar';
-import { Text } from '@web/components/text/Text';
-import { Title } from '@web/components/text/Title';
+import { Button, Icon, Icons, ProgressBar, Text, Title } from '@web/components/atoms';
+import { Card } from '@web/components/molecules';
 import { VideoPlayer } from '@web/components/video';
 
 import { PrescriptionBadge } from './PrescriptionBadge';

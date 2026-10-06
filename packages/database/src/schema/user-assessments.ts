@@ -61,13 +61,13 @@ export const userAssessments = pgTable(
       onDelete: 'set null',
     }),
     /** When user started the assessment (null until status = in_progress) */
-    startedAt: timestamp('started_at'),
+    startedAt: timestamp('started_at', { withTimezone: true }),
     /** When user submitted the assessment (null until status = submitted) */
-    submittedAt: timestamp('submitted_at'),
+    submittedAt: timestamp('submitted_at', { withTimezone: true }),
     /** When assessment flow completed (null until status = completed) */
-    completedAt: timestamp('completed_at'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     index('idx_user_assessments_organisation_user').on(table.organisationId, table.userId),

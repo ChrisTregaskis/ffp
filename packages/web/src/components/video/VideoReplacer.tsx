@@ -1,9 +1,7 @@
 import React, { useCallback, useState } from 'react';
 
-import { Button } from '@web/components/button/Button';
-import { Modal } from '@web/components/modal/Modal';
-import { ProgressBar } from '@web/components/ProgressBar';
-import { Text } from '@web/components/text';
+import { Button, ProgressBar, Text } from '@web/components/atoms';
+import { ConfirmModal } from '@web/components/organisms';
 import { useVideoReplacement } from '@web/hooks/videos';
 import { formatFileSize } from '@web/utils/format';
 
@@ -144,29 +142,15 @@ export const VideoReplacer: React.FC<VideoReplacerProps> = ({ videoId, publicId,
         </div>
       )}
 
-      {/* Confirmation modal */}
-      <Modal
+      <ConfirmModal
         isOpen={showConfirm}
         onClose={handleCancelConfirm}
+        onConfirm={handleConfirm}
         title="Replace Video"
         subtitle="This will replace the existing video file."
-        size="sm"
-        footer={
-          <>
-            <Button variant="secondary" onClick={handleCancelConfirm}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={handleConfirm}>
-              Confirm replacement
-            </Button>
-          </>
-        }
-      >
-        <Text as="p" styleProps={{ colour: 'muted-foreground' }}>
-          The current video file will be replaced with the new upload. This cannot be undone. The
-          original file will no longer be available.
-        </Text>
-      </Modal>
+        message="The current video file will be replaced with the new upload. This cannot be undone. The original file will no longer be available."
+        confirmLabel="Confirm replacement"
+      />
     </div>
   );
 };

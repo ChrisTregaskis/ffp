@@ -1,57 +1,39 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import type { UpdateVideoInput, VideoStatus } from '@ffp/core';
 
-import { PageState } from '@web/components/feedback/PageState';
-import { ComposableForm } from '@web/components/form/composableForm';
-import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
-import { ArchiveVideoModal } from '@web/components/modal';
+import { AdminEditPageShell } from '@web/components/templates';
+import { ArchiveVideoModal } from '@web/components/video';
 import { VideoPlayer } from '@web/components/video/VideoPlayer';
 import { VideoReplacer } from '@web/components/video/VideoReplacer';
-import { useToast } from '@web/hooks/useToast';
+import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { useUpdateVideoMutation, useVideoQuery } from '@web/hooks/videos';
 import { RouteKey, routes } from '@web/pages/routes';
+import { fieldToNumber } from '@web/utils/form-number';
 
+import { toVideoFormValues } from './video-form-values';
 import { VideoEditFormFields } from './VideoEditFormFields';
 
 import type { VideoEditFormValues } from './types';
 
+/** An archive awaiting confirmation, with the settlers of the promise the form is awaiting */
+interface PendingArchive {
+  payload: UpdateVideoInput;
+  resolve: () => void;
+  reject: (reason: Error) => void;
+}
+
 export const VideoEditPage: React.FC = () => {
   const { id = '' } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToast } = useToast();
+  const { submitError, clearSubmitError, saveCallbacks } = useSaveFeedback();
 
   const { data: video, isLoading, error } = useVideoQuery(id, { includeInactive: true });
   const updateMutation = useUpdateVideoMutation();
 
-  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
-  const [pendingSubmitData, setPendingSubmitData] = useState<UpdateVideoInput | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  /** Build default form values from video data */
-  const defaultValues = useMemo((): VideoEditFormValues | undefined => {
-    if (!video) {
-      return undefined;
-    }
-
-    return {
-      title: video.title,
-      description: video.description ?? '',
-      movementType: video.movementType ?? '',
-      difficulty: video.difficulty ?? '',
-      status: video.status,
-      bodyParts: video.bodyParts,
-      equipment: video.equipment,
-      tags: video.tags,
-      defaultSets: video.defaultSets != null ? String(video.defaultSets) : '',
-      defaultReps: video.defaultReps ?? '',
-      defaultDurationSeconds:
-        video.defaultDurationSeconds != null ? String(video.defaultDurationSeconds) : '',
-      defaultRestSeconds: video.defaultRestSeconds != null ? String(video.defaultRestSeconds) : '',
-      defaultNotes: video.defaultNotes ?? '',
-    };
-  }, [video]);
+  const pendingArchiveRef = useRef<PendingArchive | null>(null);
+  const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
 
   const handleNavigateBack = useCallback(() => {
     void navigate(routes[RouteKey.ADMIN_VIDEOS].path);
@@ -108,11 +90,11 @@ export const VideoEditPage: React.FC = () => {
         payload.tags = values.tags;
       }
 
-      // Prescription fields — convert empty strings to null, string numbers to integers
-      const toIntOrNull = (val: string): number | null => (val ? parseInt(val, 10) : null);
+      // A blank prescription field clears the stored value, which takes null rather than undefined
+      const toNumberOrNull = (val: string): number | null => fieldToNumber(val) ?? null;
       const toStringOrNull = (val: string): string | null => val || null;
 
-      const newSets = toIntOrNull(values.defaultSets);
+      const newSets = toNumberOrNull(values.defaultSets);
 
       if (newSets !== (video.defaultSets ?? null)) {
         payload.defaultSets = newSets;
@@ -124,13 +106,13 @@ export const VideoEditPage: React.FC = () => {
         payload.defaultReps = newReps;
       }
 
-      const newDuration = toIntOrNull(values.defaultDurationSeconds);
+      const newDuration = toNumberOrNull(values.defaultDurationSeconds);
 
       if (newDuration !== (video.defaultDurationSeconds ?? null)) {
         payload.defaultDurationSeconds = newDuration;
       }
 
-      const newRest = toIntOrNull(values.defaultRestSeconds);
+      const newRest = toNumberOrNull(values.defaultRestSeconds);
 
       if (newRest !== (video.defaultRestSeconds ?? null)) {
         payload.defaultRestSeconds = newRest;
@@ -149,85 +131,83 @@ export const VideoEditPage: React.FC = () => {
 
   /** Execute the update mutation */
   const executeUpdate = useCallback(
-    (data: UpdateVideoInput) => {
-      if (!id) {
+    async (data: UpdateVideoInput): Promise<void> => {
+      if (!video) {
         return;
       }
 
-      setSubmitError(null);
+      clearSubmitError();
 
-      updateMutation.mutate(
-        { id, data },
-        {
-          onSuccess: () => {
-            addToast('Video updated successfully', { variant: 'success' });
-            handleNavigateBack();
-          },
-          onError: (err) => {
-            setSubmitError(err.message);
-          },
-        }
+      await updateMutation.mutateAsync(
+        { id: video.id, publicId: video.publicId, data },
+        saveCallbacks('Video updated successfully', handleNavigateBack)
       );
     },
-    [id, updateMutation, addToast, handleNavigateBack]
+    [video, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
   );
 
-  /** Handle form submission — intercept archive transitions for confirmation */
-  const handleFormSubmit = useCallback(
-    (values: VideoEditFormValues) => {
+  /**
+   * Handle form submission — an archive waits for confirmation. Its promise settles from the
+   * modal rather than when the modal opens, so an opened modal never reads as a landed save.
+   */
+  const handleUpdate = useCallback(
+    async (values: VideoEditFormValues): Promise<void> => {
       const payload = buildUpdatePayload(values);
 
-      // If no changes, just navigate back
       if (Object.keys(payload).length === 0) {
         handleNavigateBack();
 
         return;
       }
 
-      // If archiving, show confirmation dialog
       if (payload.status === 'archived') {
-        setPendingSubmitData(payload);
-        setShowArchiveConfirm(true);
+        await new Promise<void>((resolve, reject) => {
+          pendingArchiveRef.current = { payload, resolve, reject };
+          setIsArchiveConfirmOpen(true);
+        });
 
         return;
       }
 
-      executeUpdate(payload);
+      await executeUpdate(payload);
     },
     [buildUpdatePayload, executeUpdate, handleNavigateBack]
   );
 
-  /** Confirm archiving after dialog */
-  const handleConfirmArchive = useCallback(() => {
-    setShowArchiveConfirm(false);
+  // Taken rather than read, so a click landing during the modal's exit animation settles nothing
+  const takePendingArchive = useCallback((): PendingArchive | null => {
+    const pending = pendingArchiveRef.current;
+    pendingArchiveRef.current = null;
+    setIsArchiveConfirmOpen(false);
 
-    if (pendingSubmitData) {
-      executeUpdate(pendingSubmitData);
-      setPendingSubmitData(null);
-    }
-  }, [pendingSubmitData, executeUpdate]);
-
-  const handleCancelArchive = useCallback(() => {
-    setShowArchiveConfirm(false);
-    setPendingSubmitData(null);
+    return pending;
   }, []);
 
+  const handleConfirmArchive = useCallback(() => {
+    const pending = takePendingArchive();
+
+    if (pending) {
+      executeUpdate(pending.payload).then(pending.resolve, pending.reject);
+    }
+  }, [takePendingArchive, executeUpdate]);
+
+  const handleCancelArchive = useCallback(() => {
+    takePendingArchive()?.reject(new Error('Archive cancelled'));
+  }, [takePendingArchive]);
+
   return (
-    <PageContainer>
-      <PageHeader title="Edit Video" />
-
-      <ContentPanel>
-        {(isLoading || error) && (
-          <PageState
-            isLoading={isLoading}
-            title="Unable to load video"
-            message={error?.message}
-            actionLabel="Back to Video Library"
-            onAction={handleNavigateBack}
-          />
-        )}
-
-        {video && (
+    <AdminEditPageShell
+      title="Edit Video"
+      resourceLabel="video"
+      listLabel="Video Library"
+      isLoading={isLoading}
+      loadError={error}
+      onBack={handleNavigateBack}
+      record={video}
+      toFormValues={toVideoFormValues}
+      onUpdate={handleUpdate}
+      beforeForm={
+        video && (
           <>
             <VideoPlayer
               videoId={id}
@@ -237,29 +217,25 @@ export const VideoEditPage: React.FC = () => {
             />
             <VideoReplacer videoId={video.id} publicId={id} className="mb-6" />
           </>
-        )}
-
-        {video && defaultValues && (
-          <ComposableForm<VideoEditFormValues>
-            onSubmit={handleFormSubmit}
-            defaultValues={defaultValues}
-          >
-            <VideoEditFormFields
-              currentStatus={video.status}
-              onCancel={handleNavigateBack}
-              isSubmitting={updateMutation.isPending}
-              errorMessage={submitError}
-            />
-          </ComposableForm>
-        )}
-      </ContentPanel>
-
-      <ArchiveVideoModal
-        isOpen={showArchiveConfirm}
-        onClose={handleCancelArchive}
-        onConfirm={handleConfirmArchive}
-        isLoading={updateMutation.isPending}
-      />
-    </PageContainer>
+        )
+      }
+      footer={
+        <ArchiveVideoModal
+          isOpen={isArchiveConfirmOpen}
+          onClose={handleCancelArchive}
+          onConfirm={handleConfirmArchive}
+          isLoading={updateMutation.isPending}
+        />
+      }
+    >
+      {video && (
+        <VideoEditFormFields
+          currentStatus={video.status}
+          onCancel={handleNavigateBack}
+          isSubmitting={updateMutation.isPending}
+          errorMessage={submitError}
+        />
+      )}
+    </AdminEditPageShell>
   );
 };

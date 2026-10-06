@@ -10,7 +10,7 @@ The following MCP servers are configured:
 2. **Atlassian** - Jira work items and project management
 3. **Sequential Thinking** - Dynamic problem-solving
 4. **Brave Search** - Web search capabilities
-5. **Puppeteer** - Browser automation
+5. **Puppeteer** - Browser automation (retired for FFP: disabled for this project; browser work uses the built-in Claude in Chrome tools)
 6. **Tavily** - AI-powered search and research
 7. **Context7** - Up-to-date documentation for any framework/library
 8. **Gmail** - Email integration for sending notifications

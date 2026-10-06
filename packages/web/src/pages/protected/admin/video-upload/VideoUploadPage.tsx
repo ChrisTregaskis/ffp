@@ -1,14 +1,16 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { generatePath, useNavigate } from 'react-router-dom';
 
-import { Button } from '@web/components/button';
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { StatusResult } from '@web/components/feedback/StatusResult';
-import { VideoMetadataForm } from '@web/components/form/videos/VideoMetadataForm';
-import { Icon } from '@web/components/Icon';
-import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
-import { ProgressBar } from '@web/components/ProgressBar';
-import { Text } from '@web/components/text';
+import {
+  Button,
+  Icon,
+  ProgressBar,
+  Text,
+  ContentPanel,
+  PageContainer,
+} from '@web/components/atoms';
+import { StaticAlert, StatusResult, PageHeader } from '@web/components/molecules';
+import { VideoMetadataForm } from '@web/components/video';
 import { useVideoUpload } from '@web/hooks/videos';
 import { RouteKey, routes } from '@web/pages/routes';
 import { formatFileSize } from '@web/utils/format';
@@ -70,7 +72,9 @@ export const VideoUploadPage: React.FC = () => {
                       variant="primary"
                       onClick={() => {
                         void navigate(
-                          routes[RouteKey.ADMIN_VIDEO_EDIT].path.replace(':id', createdVideoId)
+                          generatePath(routes[RouteKey.ADMIN_VIDEO_EDIT].path, {
+                            id: createdVideoId,
+                          })
                         );
                       }}
                     >

@@ -1,3 +1,4 @@
+import { type AdminQuestionResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
@@ -5,13 +6,22 @@ import {
   questionService,
   ValidationError,
   NotFoundError,
-  type Question,
+  ForbiddenError,
+  isUserActor,
 } from '@ffp/core/server';
 
-/** GET /admin/questions/:publicId — fetch one question. Open to any authenticated user. */
+/**
+ * GET /admin/questions/:publicId — one question with where it is used and its
+ * linked video. Requires the system_admin role.
+ */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<Question> => {
+  async (event: APIGatewayProxyEventV2WithJWT): Promise<AdminQuestionResponse> => {
     const context = extractUserContext(event);
+
+    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
+      throw new ForbiddenError('Only system administrators can view question details');
+    }
+
     const publicId = event.pathParameters?.publicId;
 
     if (!publicId) {
@@ -24,6 +34,6 @@ export const handler = withErrorHandling(
       throw new NotFoundError('Question', publicId);
     }
 
-    return question;
+    return { question };
   }
 );

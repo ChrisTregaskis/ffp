@@ -17,7 +17,7 @@ import {
   VideoQuestionCard,
 } from '@web/components/assessment';
 import { AssessmentProgress } from '@web/components/AssessmentProgress';
-import { Button } from '@web/components/button';
+import { Button, Icon, Icons, Text } from '@web/components/atoms';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
@@ -25,8 +25,6 @@ import {
   ComponentSection,
   DeveloperInstructions,
 } from '@web/components/dev';
-import { Icon, Icons } from '@web/components/Icon';
-import { Text } from '@web/components/text';
 
 // ============================================================================
 // Mock flow step configs for demonstrations

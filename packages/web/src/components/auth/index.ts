@@ -1,12 +1,11 @@
 import { EMAIL_PATTERN } from '@ffp/core';
 
+import { type Field, FieldDataType } from '@web/components/organisms';
 import {
   type LoginFormData,
   type SetPasswordCredentialsData,
   type ForgotPasswordRequestData,
 } from '@web/schemas/auth.schema';
-
-import { type Field, FieldDataType } from '../form';
 
 /**
  * Re-export form data types from schema for convenience

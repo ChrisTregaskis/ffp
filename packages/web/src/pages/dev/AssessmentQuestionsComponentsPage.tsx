@@ -11,6 +11,7 @@ import {
   ScaleQuestion,
   VideoResponseQuestion,
 } from '@web/components/assessment';
+import { Text } from '@web/components/atoms';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
@@ -18,7 +19,6 @@ import {
   ComponentSection,
   DeveloperInstructions,
 } from '@web/components/dev';
-import { Text } from '@web/components/text';
 
 // ============================================================================
 // Mock question data for demonstrations
@@ -1008,7 +1008,7 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
               RequiredIndicator component (reusable):
             </Text>
             <code className="block whitespace-pre rounded bg-muted p-2 text-xs">
-              {`import { RequiredIndicator } from '@web/components/form';
+              {`import { RequiredIndicator } from '@web/components/atoms';
 
 <label>
   Email address <RequiredIndicator />

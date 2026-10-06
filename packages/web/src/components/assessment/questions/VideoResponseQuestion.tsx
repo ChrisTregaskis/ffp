@@ -2,8 +2,7 @@ import { useMemo, useId } from 'react';
 
 import type { AssessmentQuestion } from '@ffp/core';
 
-import { RequiredIndicator } from '@web/components/form';
-import { Text } from '@web/components/text';
+import { Text, RequiredIndicator } from '@web/components/atoms';
 import { VideoPlayer } from '@web/components/video';
 
 import { NumericQuestion } from './NumericQuestion';

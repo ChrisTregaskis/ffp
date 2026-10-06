@@ -7,15 +7,14 @@ import type {
   UpdateOrganisationInput,
 } from '@ffp/core';
 
+import type { SplitIdentifierVariables } from '@web/lib/api/client';
 import { adminOrganisationsApi } from '@web/lib/api/endpoints';
+import { invalidateListsAndDetail } from '@web/lib/query';
 import { organisationKeys } from '@web/lib/query/keys';
 
 import type { UseMutationResult } from '@tanstack/react-query';
 
-export interface UpdateOrganisationVariables {
-  id: string;
-  data: UpdateOrganisationInput;
-}
+export type UpdateOrganisationVariables = SplitIdentifierVariables<UpdateOrganisationInput>;
 
 /** Mutation hook for creating an organisation. */
 export const useCreateOrganisationMutation = (): UseMutationResult<
@@ -45,8 +44,7 @@ export const useUpdateOrganisationMutation = (): UseMutationResult<
     mutationFn: ({ id, data }: UpdateOrganisationVariables) =>
       adminOrganisationsApi.update(id, data),
     onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: organisationKeys.lists() });
-      void queryClient.invalidateQueries({ queryKey: organisationKeys.detail(variables.id) });
+      invalidateListsAndDetail(queryClient, organisationKeys, variables);
     },
   });
 };

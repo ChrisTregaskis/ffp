@@ -1,8 +1,31 @@
 import { z } from 'zod';
 
-import { QUESTION_TYPES } from '@ffp/database/constants';
+import { QUESTION_TYPES, SCORE_DIMENSIONS } from '@ffp/database/constants';
+
+import { booleanQueryParamSchema, createPaginatedResponseSchema } from './pagination.schema';
+import { publicIdSchema } from './public-id.schema';
 
 export const questionTypeSchema = z.enum(QUESTION_TYPES);
+
+/** Types that carry a list of options to choose from. */
+export const CHOICE_QUESTION_TYPES: readonly QuestionType[] = ['single-choice', 'multi-choice'];
+
+/** Types whose `validation` carries a numeric range — value, length or duration bounds. */
+export const RANGED_QUESTION_TYPES: readonly QuestionType[] = [
+  'numeric',
+  'scale',
+  'text',
+  'video-response',
+];
+
+/** Kebab-case: lowercase letters and digits, separated by single hyphens. */
+export const QUESTION_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** `questions.slug` is varchar(100). */
+export const QUESTION_SLUG_MAX_LENGTH = 100;
+
+/** The fewest options a choice question may carry. */
+export const MIN_CHOICE_OPTIONS = 2;
 
 export const questionOptionSchema = z.object({
   /** Unique value identifier for this option */
@@ -29,23 +52,21 @@ export const questionValidationSchema = z.object({
 });
 
 /**
- * Score dimension enumeration - defines the scoring dimensions for assessments
- *
- * Questions can contribute to different scoring dimensions:
- * - strength: Physical strength assessments
- * - balance: Balance and stability assessments
- * - mobility: Range of motion and flexibility
- * - pain: Pain level and discomfort tracking
- * - general: General fitness or non-categorised scoring
+ * Validation as stored: no `required` default, so a read or a partial update
+ * never reports or writes a value that was not supplied.
  */
-export const scoreDimensionSchema = z.enum(['strength', 'balance', 'mobility', 'pain', 'general']);
+const storedQuestionValidationSchema = questionValidationSchema.extend({
+  required: z.boolean().optional(),
+});
+
+/** The scoring dimension a question contributes to (values from `SCORE_DIMENSIONS`) */
+export const scoreDimensionSchema = z.enum(SCORE_DIMENSIONS);
 
 export const assessmentQuestionSchema = z
   .object({
     /** Unique identifier for the question (UUID) */
     id: z.guid(),
-    /** Public identifier for URLs (nanoid, 12 chars) */
-    publicId: z.string().length(12),
+    publicId: publicIdSchema,
     /** Type of question (determines UI component and validation) */
     type: questionTypeSchema,
     /** The question text displayed to the user */
@@ -94,13 +115,15 @@ export const questionsArraySchema = z
   .array(assessmentQuestionSchema)
   .min(1, 'At least one question is required');
 
-/** Kebab-case slug, capped to the `questions.slug` column (varchar 100). */
 const questionSlugSchema = z
   .string()
   .min(1, 'Slug is required')
-  .max(100, 'Slug must be 100 characters or fewer')
+  .max(
+    QUESTION_SLUG_MAX_LENGTH,
+    `Slug must be ${String(QUESTION_SLUG_MAX_LENGTH)} characters or fewer`
+  )
   .regex(
-    /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+    QUESTION_SLUG_PATTERN,
     'Slug must be kebab-case (lowercase letters, digits and single hyphens)'
   );
 
@@ -130,20 +153,20 @@ const questionWriteBaseSchema = z.object({
 function refineQuestionShape(
   data: {
     type?: QuestionType;
-    options?: QuestionOption[];
-    validation?: QuestionValidation;
-    videoId?: string;
+    options?: QuestionOption[] | null;
+    validation?: QuestionValidation | null;
+    videoId?: string | null;
   },
   ctx: z.RefinementCtx
 ): void {
   const { type, options, validation } = data;
 
   // Choice types require at least two options
-  if (type === 'single-choice' || type === 'multi-choice') {
-    if (!options || options.length < 2) {
+  if (type && CHOICE_QUESTION_TYPES.includes(type)) {
+    if (!options || options.length < MIN_CHOICE_OPTIONS) {
       ctx.addIssue({
         code: 'custom',
-        message: 'At least 2 options are required for choice-based question types',
+        message: `At least ${String(MIN_CHOICE_OPTIONS)} options are required for choice-based question types`,
         path: ['options'],
       });
     }
@@ -166,11 +189,9 @@ function refineQuestionShape(
     }
   }
 
-  // min must not exceed max wherever both bounds are supplied (numeric/scale
-  // value bounds, text length bounds). video-response rejects min/max outright
-  // below, so it is excluded here to avoid a duplicate issue.
+  // min must not exceed max wherever both bounds are supplied — numeric/scale
+  // value bounds, text length bounds, video-response duration bounds.
   if (
-    type !== 'video-response' &&
     validation?.min !== undefined &&
     validation.max !== undefined &&
     validation.min > validation.max
@@ -182,24 +203,14 @@ function refineQuestionShape(
     });
   }
 
-  // video-response is completion-only: videoId required, no scoring range
-  if (type === 'video-response') {
-    if (!data.videoId) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'videoId is required for video-response question type',
-        path: ['videoId'],
-      });
-    }
-
-    if (validation?.min !== undefined || validation?.max !== undefined) {
-      ctx.addIssue({
-        code: 'custom',
-        message:
-          'video-response questions are completion-only and cannot define a scoring range (min/max)',
-        path: ['validation'],
-      });
-    }
+  // video-response needs a video. It may also carry a min/max duration, which
+  // the member-facing renderer uses as the bounds of the result input.
+  if (type === 'video-response' && !data.videoId) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'videoId is required for video-response question type',
+      path: ['videoId'],
+    });
   }
 }
 
@@ -208,11 +219,87 @@ export const createQuestionSchema = questionWriteBaseSchema
   .extend({ isActive: z.boolean().optional().default(true) })
   .superRefine(refineQuestionShape);
 
-/** Partial update; `slug` is immutable so it is omitted from the input. */
+/**
+ * Partial update; `slug` is immutable. The nullable fields clear on an explicit
+ * `null`. Per-type rules live on `questionShapeSchema` — a partial cannot see
+ * the fields it did not resend, so checking it alone both misses breaches and
+ * invents them.
+ */
 export const updateQuestionSchema = questionWriteBaseSchema
   .omit({ slug: true })
-  .partial()
+  .extend({
+    description: z.string().nullable(),
+    videoId: z.guid().nullable(),
+    scoreDimension: scoreDimensionSchema.nullable(),
+    // `.partial()` does not reach inside `validation`; same trap as `isActive`.
+    validation: storedQuestionValidationSchema.nullable(),
+  })
+  .partial();
+
+/**
+ * The per-type rules over a whole question. Create applies them inline; update
+ * applies them to the merged row. Nullable because a stored row carries `null`.
+ */
+export const questionShapeSchema = z
+  .object({
+    type: questionTypeSchema,
+    options: z.array(questionOptionSchema).nullable().optional(),
+    validation: questionValidationSchema.nullable().optional(),
+    videoId: z.guid().nullable().optional(),
+  })
   .superRefine(refineQuestionShape);
+
+/** A question as the admin surface reads it back; unset columns arrive as `null`. */
+export const adminQuestionSchema = z.object({
+  id: z.guid(),
+  publicId: publicIdSchema,
+  slug: z.string(),
+  type: questionTypeSchema,
+  questionText: z.string(),
+  description: z.string().nullable(),
+  options: z.array(questionOptionSchema).nullable(),
+  validation: storedQuestionValidationSchema.nullable(),
+  videoId: z.guid().nullable(),
+  scoreDimension: scoreDimensionSchema.nullable(),
+  isActive: z.boolean(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+});
+
+/**
+ * Where a question is referenced. Scoring config names questions by UUID in
+ * jsonb with no foreign key, so deactivating a scored question silently drops
+ * it from scoring — this is what lets the admin surface warn first.
+ */
+export const questionUsageSchema = z.object({
+  templateCount: z.number().int().nonnegative(),
+  scoringFlowCount: z.number().int().nonnegative(),
+});
+
+/**
+ * One question with its usage and linked video. `linkedVideo` is null when no
+ * video is linked or the stored `videoId` no longer resolves.
+ */
+export const adminQuestionDetailSchema = adminQuestionSchema.extend({
+  usage: questionUsageSchema,
+  linkedVideo: z.object({ publicId: publicIdSchema, title: z.string() }).nullable(),
+});
+
+/** The envelope get, create and update all answer with. */
+export const adminQuestionResponseSchema = z.object({ question: adminQuestionDetailSchema });
+
+/**
+ * Filters for GET /admin/questions. Values arrive as query-string strings, so
+ * `isActive` is coerced rather than declared a boolean.
+ */
+export const questionListFiltersSchema = z.object({
+  search: z.string().optional(),
+  type: questionTypeSchema.optional(),
+  isActive: booleanQueryParamSchema.optional(),
+});
+
+/** Paginated response for GET /admin/questions. */
+export const paginatedQuestionListSchema = createPaginatedResponseSchema(adminQuestionSchema);
 
 export type QuestionType = z.infer<typeof questionTypeSchema>;
 export type QuestionOption = z.infer<typeof questionOptionSchema>;
@@ -222,3 +309,9 @@ export type AssessmentQuestion = z.infer<typeof assessmentQuestionSchema>;
 export type QuestionsArray = z.infer<typeof questionsArraySchema>;
 export type CreateQuestionInput = z.infer<typeof createQuestionSchema>;
 export type UpdateQuestionInput = z.infer<typeof updateQuestionSchema>;
+export type AdminQuestion = z.infer<typeof adminQuestionSchema>;
+export type QuestionUsage = z.infer<typeof questionUsageSchema>;
+export type AdminQuestionDetail = z.infer<typeof adminQuestionDetailSchema>;
+export type AdminQuestionResponse = z.infer<typeof adminQuestionResponseSchema>;
+export type QuestionListFilters = z.infer<typeof questionListFiltersSchema>;
+export type PaginatedQuestionList = z.infer<typeof paginatedQuestionListSchema>;

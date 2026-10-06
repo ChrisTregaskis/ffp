@@ -1,9 +1,7 @@
 import { useCallback } from 'react';
 
-import { Button } from '@web/components/button';
+import { Button, Text, Title } from '@web/components/atoms';
 import { ScaleFade } from '@web/components/motion';
-import { Text } from '@web/components/text/Text';
-import { Title } from '@web/components/text/Title';
 import { useKeyDown } from '@web/hooks/useKeyDown';
 
 export interface ExitDialogProps {

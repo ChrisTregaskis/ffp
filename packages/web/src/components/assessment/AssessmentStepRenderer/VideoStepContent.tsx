@@ -1,6 +1,5 @@
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
+import { LoadingSpinner, Text } from '@web/components/atoms';
 import { FadeSlideIn } from '@web/components/motion';
-import { Text } from '@web/components/text';
 
 import { AssessmentNavigation } from '../AssessmentNavigation';
 import { VideoQuestionCard } from '../cards/VideoQuestionCard';

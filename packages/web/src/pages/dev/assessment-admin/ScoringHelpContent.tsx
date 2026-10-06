@@ -1,4 +1,4 @@
-import { Text } from '@web/components/text';
+import { Text } from '@web/components/atoms';
 
 import { Chip } from './Chip';
 import { ExampleStep } from './ExampleStep';

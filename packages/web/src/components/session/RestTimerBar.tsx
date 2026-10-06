@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { ProgressBar, Text } from '@web/components/atoms';
 import { FadeSlide } from '@web/components/motion';
-import { ProgressBar } from '@web/components/ProgressBar';
-import { Text } from '@web/components/text/Text';
 import { formatDuration } from '@web/utils/format';
 
 export interface RestTimerBarProps {

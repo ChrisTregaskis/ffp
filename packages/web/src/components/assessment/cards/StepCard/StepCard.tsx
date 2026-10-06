@@ -1,5 +1,5 @@
 import { SectionPanel } from '@web/components/assessment/SectionPanel';
-import { Text } from '@web/components/text';
+import { Text } from '@web/components/atoms';
 
 import { QuestionSubProgress } from '../QuestionSubProgress';
 

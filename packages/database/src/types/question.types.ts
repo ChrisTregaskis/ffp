@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { ScoreDimension } from '../constants/question.constants';
+import type { ScoreDimension, ScoringMode } from '../constants/question.constants';
 
 /**
  * Question option for choice-based questions (single-choice, multi-choice)
@@ -119,6 +119,10 @@ export interface DimensionConfig {
   weight?: number;
   /** Thresholds for risk categorisation (optional) */
   riskThresholds?: RiskThresholds;
+  /** How the questions' scores combine (default: 'sum') */
+  scoringMode?: ScoringMode;
+  /** Whether this dimension feeds the overall risk level (default: true) */
+  affectsRiskLevel?: boolean;
 }
 
 /** Condition for programme mapping */
@@ -139,7 +143,7 @@ export interface ProgrammeMapping {
   operator?: LogicalOperator;
   /** ID of the programme template to recommend */
   programmeTemplateId: string;
-  /** Priority for selecting between matching mappings */
+  /** Evaluation order: lower is checked first, and a missing value is checked last */
   priority?: number;
 }
 

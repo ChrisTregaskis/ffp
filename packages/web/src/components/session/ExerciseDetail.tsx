@@ -1,4 +1,4 @@
-import { Text } from '@web/components/text/Text';
+import { Text } from '@web/components/atoms';
 import { parseExerciseNotes } from '@web/utils/exercise-instructions';
 
 export interface ExerciseDetailProps {

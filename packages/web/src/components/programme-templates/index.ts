@@ -1,11 +1,12 @@
-export { DeleteConfirmModal } from './DeleteConfirmModal';
 export { exerciseToFormValues, EMPTY_EXERCISE_VALUES } from './exercise-utils';
 export type { ExerciseFormValues } from './exercise-utils';
 export { ExerciseForm } from './ExerciseForm';
 export { ExerciseList } from './ExerciseList';
 export { ExerciseRow } from './ExerciseRow';
-export { InlineFormPanel } from './InlineFormPanel';
 export { SessionCard } from './SessionCard';
 export { SessionForm } from './SessionForm';
 export { VideoSelector } from './VideoSelector';
 export type { SelectedVideo } from './VideoSelector';
+export { toTemplateSaveError } from './template-save-error';
+export { TemplateMetadataFormFields } from './TemplateMetadataFormFields';
+export type { TemplateMetadataFormValues } from './types';

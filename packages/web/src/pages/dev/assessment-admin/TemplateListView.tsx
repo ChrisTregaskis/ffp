@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
 
-import { Button } from '@web/components/button';
-import { Icon, Icons } from '@web/components/Icon';
-import { Table, TableControls } from '@web/components/table';
-import type { RowAction } from '@web/components/table';
+import { Button, Icon, Icons } from '@web/components/atoms';
+import { Table, TableControls } from '@web/components/organisms';
+import type { RowAction } from '@web/components/organisms';
 import { useApiTable } from '@web/hooks/useApiTable';
 
 import { usePrototypeStore } from './PrototypeStore';

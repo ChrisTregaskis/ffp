@@ -1,6 +1,5 @@
-import { PageContainer } from '@web/components/layout/PageContainer';
-import { PageHeader } from '@web/components/layout/PageHeader';
-import { PageLoadingState } from '@web/components/layout/PageLoadingState';
+import { PageContainer } from '@web/components/atoms';
+import { PageHeader, PageLoadingState } from '@web/components/molecules';
 import { FadeSlideIn } from '@web/components/motion/FadeSlideIn';
 import { EmptyProgrammeState } from '@web/components/programme/EmptyProgrammeState';
 import { NextSessionCard } from '@web/components/programme/NextSessionCard';

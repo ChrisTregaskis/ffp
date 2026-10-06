@@ -1,4 +1,4 @@
-import { Title } from '@web/components/text';
+import { Title } from '@web/components/atoms';
 
 import type { ReactNode } from 'react';
 

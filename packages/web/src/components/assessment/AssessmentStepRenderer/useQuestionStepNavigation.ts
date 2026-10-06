@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import type { ButtonVariant } from '@web/components/button';
+import type { ButtonVariant } from '@web/components/atoms';
 import type { CardTransitionDirection } from '@web/components/motion';
 
 interface UseQuestionStepNavigationParams {

@@ -670,10 +670,17 @@ export async function getAssessmentResults(
     throw new ValidationError('Assessment not yet submitted');
   }
 
-  // Fetch programme name if a programme has been assigned
-  let programmeName: string | null = null;
+  // Name the programme scoring recommended. On a reassessment the linked
+  // programme is still the member's current one, so it names only the fallback.
+  const recommendedSlug = assessment.scores?.recommendedTemplateSlug;
+  const recommendedTemplate = recommendedSlug
+    ? await programmeRepository.findTemplateBySlug(recommendedSlug)
+    : null;
+  let programmeName: string | null = recommendedTemplate?.isActive
+    ? recommendedTemplate.name
+    : null;
 
-  if (assessment.programmeId) {
+  if (!programmeName && assessment.programmeId) {
     const programme = await programmeRepository.findProgrammeById(
       organisationId,
       assessment.programmeId,

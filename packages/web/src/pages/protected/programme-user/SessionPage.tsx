@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
-import { ProgressBar } from '@web/components/ProgressBar';
+import { ProgressBar } from '@web/components/atoms';
 import {
   ActiveExercisePanel,
   ExerciseSidebar,

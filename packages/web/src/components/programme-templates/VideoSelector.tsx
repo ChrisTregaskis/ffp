@@ -1,24 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { generatePath } from 'react-router-dom';
 
 import type { VideoDetailResponse } from '@ffp/core';
 
-import { Button } from '@web/components/button';
-import { Icon } from '@web/components/Icon';
-import { Icons } from '@web/components/Icon/types';
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import { SearchInput } from '@web/components/search/SearchInput';
-import { Text } from '@web/components/text';
+import { Button, Icon, Icons, LoadingSpinner, Text } from '@web/components/atoms';
+import { SearchInput } from '@web/components/molecules';
 import { adminVideosApi } from '@web/lib/api/endpoints';
 import { videosApi } from '@web/lib/api/endpoints/videos';
 import { videoKeys } from '@web/lib/query/keys';
+import { RouteKey, routes } from '@web/pages/routes';
 import { minutesToMs } from '@web/utils/time';
 
 const DEBOUNCE_MS = 300;
 const SEARCH_PAGE_SIZE = 10;
 
 export interface SelectedVideo {
-  id: string;
+  publicId: string;
   title: string;
 }
 
@@ -88,11 +86,11 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
   const videos = searchResults?.data ?? [];
 
   const handleSelect = useCallback(
-    async (videoId: string) => {
+    async (videoPublicId: string) => {
       setIsLoadingDetail(true);
 
       try {
-        const detail = await videosApi.get(videoId);
+        const detail = await videosApi.get(videoPublicId);
         onSelect(detail);
         setIsOpen(false);
         setSearch('');
@@ -129,7 +127,11 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
           size="sm"
           icon={<Icon name={Icons.NEWTAB} styleProps={{ size: 'xs', colour: 'currentColor' }} />}
           onClick={() => {
-            window.open(`/admin/videos/${selectedVideo.id}`, '_blank', 'noopener,noreferrer');
+            window.open(
+              generatePath(routes[RouteKey.ADMIN_VIDEO_EDIT].path, { id: selectedVideo.publicId }),
+              '_blank',
+              'noopener,noreferrer'
+            );
           }}
           disabled={disabled}
         >
@@ -181,7 +183,7 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
                 variant="ghost"
                 className="flex w-full items-center gap-3 rounded-none px-3 py-2 text-left hover:bg-muted"
                 onClick={() => {
-                  void handleSelect(video.id);
+                  void handleSelect(video.publicId);
                 }}
                 disabled={isLoadingDetail}
               >

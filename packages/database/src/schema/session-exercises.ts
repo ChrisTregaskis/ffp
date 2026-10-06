@@ -45,8 +45,8 @@ export const sessionExercises = pgTable(
     restSeconds: integer('rest_seconds'),
     /** Exercise-specific instructions from the physiotherapist */
     notes: text('notes'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     uniqueIndex('idx_session_exercises_session_order').on(

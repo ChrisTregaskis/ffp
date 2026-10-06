@@ -1,5 +1,4 @@
-import { Icon, Icons } from '@web/components/Icon';
-import { Text } from '@web/components/text/Text';
+import { Icon, Icons, Text } from '@web/components/atoms';
 
 export interface SessionStatusIconProps {
   /** Whether the session is completed */

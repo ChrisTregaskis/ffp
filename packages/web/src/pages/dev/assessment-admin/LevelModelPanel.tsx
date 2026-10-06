@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 
-import { Text } from '@web/components/text';
+import { Text } from '@web/components/atoms';
 
 import { LEVEL_META, type Level } from './prototype-level-model';
 
