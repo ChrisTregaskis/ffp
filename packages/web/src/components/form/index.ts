@@ -17,7 +17,6 @@ export * from './standardForm/FormTextarea';
 export * from './standardForm/FormSelect';
 export * from './standardForm/FormToggle';
 export * from './standardForm/FormTagInput';
-export * from './standardForm/FormError';
 
 // Composable form components
 export * from './composableForm';
