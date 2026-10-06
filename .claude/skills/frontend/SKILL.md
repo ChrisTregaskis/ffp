@@ -82,30 +82,30 @@ className="bg-primary/10 border-success/20"
 
 ## File Organisation
 
-The target layout: new components go in their level folder. Generic components not yet migrated still live in their family folders (`form/`, `feedback/`, `table/`, `modal/`, `layout/`, `Card/` and the like); import them from there.
-
 ```
 packages/web/src/
 ├── components/
 │   ├── atoms/<Name>/            generic; each wraps one raw element or primitive
 │   │   ├── <Name>.tsx           e.g. Button, IconButton, Text, Title, Icon, IconBadge, Switch, FieldError,
-│   │   └── index.ts                  LoadingSpinner, ProgressBar, Logo, Panel
+│   │   └── index.ts                  LoadingSpinner, ProgressBar, Logo, Panel, PageContainer, ContentPanel, FormRow
 │   ├── atoms/index.ts           level barrel: what consumers import
 │   ├── molecules/<Name>/        generic; atoms combined for one job
 │   │                            e.g. FormField, FormTextInput, FormSelect, FormToggle, Select, BaseSelect, StatusResult,
-│   │                                 EmptyState, StaticAlert, PageHeader, SearchInput, KebabMenu, Accordion, Card
+│   │                                 EmptyState, StaticAlert, PageHeader, SearchInput, Accordion, Card
 │   ├── organisms/<Name>/        generic; self-contained sections
 │   │                            e.g. Table (+ private TableHeader/TableBody/… files), Modal, ConfirmModal, DropdownMenu,
-│   │                                 ComposableForm, SideMenu, MobileMenu, ErrorFallback
+│   │                                 KebabMenu, ComposableForm, Form, MobileMenu, ErrorFallback
 │   ├── templates/<Name>/        page skeletons with slots
 │   │                            AppLayout, AuthLayout, AdminListPageShell, AdminEditPageShell
-│   ├── motion/                  behaviour wrappers: outside the levels
+│   ├── motion/  error/          behaviour wrappers and ErrorBoundary: outside the levels
 │   ├── dev/  demo/              pages/dev showcase scaffolding: outside the levels
-│   └── <domain>/                assessment, assessment-flows, auth, programme, programme-templates, questions, session, video
+│   └── <domain>/                assessment, assessment-flows, AssessmentProgress, auth, programme, programme-templates,
+│                                questions, session, video
 │                                flat files; molecules and organisms only; compose from the level folders;
 │                                domain presets live here (ArchiveVideoModal → video/, DeactivateQuestionModal → questions/)
 ├── hooks/                       # Custom React hooks
 ├── pages/                       # Page-level components
 ├── contexts/                    # React context providers
-└── lib/                         # Utilities, API clients, helpers
+├── utils/                       # Shared non-visual helpers (input styles, field ids and errors, formatting)
+└── lib/                         # API clients, query keys, logging
 ```
