@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 
 import type { CreateProgrammeTemplateInput } from '@ffp/core';
 
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { ComposableForm } from '@web/components/form/composableForm';
-import { toTemplateSaveError } from '@web/components/form/templates';
-import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
+import { ContentPanel, PageContainer } from '@web/components/atoms';
+import { StaticAlert, PageHeader } from '@web/components/molecules';
+import { ComposableForm } from '@web/components/organisms';
+import { toTemplateSaveError } from '@web/components/programme-templates';
 import { useCreateTemplateMutation } from '@web/hooks/programme-templates';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { RouteKey, routes } from '@web/pages/routes';

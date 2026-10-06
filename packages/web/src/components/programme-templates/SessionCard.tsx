@@ -2,12 +2,12 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import type { TemplatePhaseWithSessions } from '@ffp/core';
 
-import { Accordion } from '@web/components/accordion';
 import { Text } from '@web/components/atoms';
-import { KebabMenu, reorderableItemActions } from '@web/components/dropdown-menu';
-import type { DropdownMenuItem } from '@web/components/dropdown-menu';
-import { DeleteConfirmModal } from '@web/components/modal';
+import { Accordion } from '@web/components/molecules';
+import { KebabMenu, DeleteConfirmModal } from '@web/components/organisms';
+import type { DropdownMenuItem } from '@web/components/organisms';
 import { fieldToNumber } from '@web/utils/form-number';
+import { reorderableItemActions } from '@web/utils/reorderable-item-actions';
 
 import { ExerciseList } from './ExerciseList';
 import { SessionForm } from './SessionForm';

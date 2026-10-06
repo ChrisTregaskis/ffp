@@ -1,7 +1,7 @@
 import type { AssessmentFlowListItem } from '@ffp/core';
 
-import { ACTIVE_STATUS_MAP, createColumns, toActiveStatus } from '@web/components/table';
-import type { RowAction } from '@web/components/table';
+import { ACTIVE_STATUS_MAP, createColumns, toActiveStatus } from '@web/components/organisms';
+import type { RowAction } from '@web/components/organisms';
 
 import type { ColumnDef } from '@tanstack/react-table';
 

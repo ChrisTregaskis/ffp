@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ListEmptyState } from '@web/components/feedback/ListEmptyState';
+import { ListEmptyState } from '@web/components/molecules';
 
 interface LocationListEmptyStateProps {
   /** Whether search or filter controls are active (changes messaging) */

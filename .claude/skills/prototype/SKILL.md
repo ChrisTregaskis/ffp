@@ -46,9 +46,10 @@ rules that are _specific to prototypes_.
    instead. Prototype = exploring UX, disposable, mock data.
 2. **Survey real components first.** `Glob packages/web/src/components/**` and read 2–3 existing pages
    that already do something similar (list pages, edit pages, config editors). The prototype should
-   look like it belongs. Key groups available: `table/`, `form/`, `select/`, `button/`, `modal/`,
-   `dropdown-menu/`, `search/`, `panel/`, `feedback/` (StaticAlert), `Card/`, `Icon/`, `text/`,
-   `ProgressBar/`, `accordion/`, `tooltip/`.
+   look like it belongs. Generic components live in the level folders and are imported from their
+   barrels: `atoms/` (Button, Text, Icon, Panel, ProgressBar, FormRow, …), `molecules/` (Select,
+   FormTextInput, StaticAlert, Card, SearchInput, Accordion, …), `organisms/` (Table, Modal,
+   DropdownMenu, KebabMenu, ComposableForm, …) and `templates/` (AppLayout, AdminListPageShell, …).
 3. **Find the real domain shapes to mirror.** Read the relevant `@ffp/core` schemas / `@ffp/database`
    types so the mock types mirror real field names. Don't import them — **re-declare local types** in
    the prototype so it stays self-contained, but keep the names faithful.

@@ -3,9 +3,9 @@ import { generatePath, useNavigate, useParams } from 'react-router-dom';
 
 import type { AssessmentFlowWithStepsView, UpdateAssessmentFlowInput } from '@ffp/core';
 
+import { DeactivateAssessmentFlowModal } from '@web/components/assessment-flows';
 import { Button } from '@web/components/atoms';
-import { AdminEditPageShell } from '@web/components/layout';
-import { DeactivateAssessmentFlowModal } from '@web/components/modal';
+import { AdminEditPageShell } from '@web/components/templates';
 import {
   useAssessmentFlowActivation,
   useAssessmentFlowDetailQuery,

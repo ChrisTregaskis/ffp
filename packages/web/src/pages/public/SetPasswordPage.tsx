@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { SetPasswordForm } from '@web/components/auth/SetPasswordForm';
-import { AuthLayout } from '@web/components/layout/AuthLayout';
+import { AuthLayout } from '@web/components/templates';
 import { useAuth } from '@web/hooks/useAuth';
 import { RouteKey, routes } from '@web/pages/routes';
 

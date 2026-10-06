@@ -1,11 +1,13 @@
 import React from 'react';
 
-import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
-import { FormActions } from '@web/components/form/standardForm/FormActions';
-import { FormNumberInput } from '@web/components/form/standardForm/FormNumberInput';
-import { FormRow } from '@web/components/form/standardForm/FormRow';
-import { FormTextarea } from '@web/components/form/standardForm/FormTextarea';
-import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
+import { FormRow } from '@web/components/atoms';
+import {
+  FormActions,
+  FormNumberInput,
+  FormTextarea,
+  FormTextInput,
+} from '@web/components/molecules';
+import { useComposableFormContext } from '@web/components/organisms';
 
 import type { SessionFormValues } from './SessionForm';
 

@@ -1,11 +1,8 @@
 import React, { useMemo } from 'react';
 
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
-import { FormActions } from '@web/components/form/standardForm/FormActions';
-import { FormRow } from '@web/components/form/standardForm/FormRow';
-import { FormSelect } from '@web/components/form/standardForm/FormSelect';
-import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
+import { FormRow } from '@web/components/atoms';
+import { FormActions, StaticAlert, FormSelect, FormTextInput } from '@web/components/molecules';
+import { useComposableFormContext } from '@web/components/organisms';
 import { useAdminLocationsQuery } from '@web/hooks/locations';
 
 import type { UserFormValues } from './types';

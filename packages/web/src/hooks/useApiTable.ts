@@ -2,8 +2,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 
 import type { PaginationInput } from '@ffp/core';
 
-import type { TableFilterValues } from '@web/components/table/TableControls';
-import type { TableState } from '@web/components/table/types';
+import type { TableFilterValues, TableState } from '@web/components/organisms';
 
 interface UseApiTableOptions {
   /** Default page size @default 10 */

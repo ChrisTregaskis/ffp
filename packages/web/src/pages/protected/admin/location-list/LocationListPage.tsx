@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 
 import type { LocationListResponse } from '@ffp/core';
 
-import { AdminListPageShell } from '@web/components/layout';
-import type { ListEmptyStateControls } from '@web/components/layout';
-import type { RowAction } from '@web/components/table';
+import type { RowAction } from '@web/components/organisms';
+import { AdminListPageShell } from '@web/components/templates';
+import type { ListEmptyStateControls } from '@web/components/templates';
 import { useAdminLocationsQuery, useUpdateLocationMutation } from '@web/hooks/locations';
 import { useAdminOrganisationsQuery } from '@web/hooks/organisations';
 import { useToast } from '@web/hooks/useToast';

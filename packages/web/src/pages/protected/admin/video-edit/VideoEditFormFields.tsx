@@ -2,7 +2,7 @@ import React from 'react';
 
 import type { VideoStatus } from '@ffp/core';
 
-import { VideoMetadataFormFields } from '@web/components/form/videos';
+import { VideoMetadataFormFields } from '@web/components/video';
 
 export interface VideoEditFormFieldsProps {
   /** Current video status — determines which status transitions are available */

@@ -1,5 +1,5 @@
-import { PageContainer } from '@web/components/layout/PageContainer';
-import { PageLoadingState } from '@web/components/layout/PageLoadingState';
+import { PageContainer } from '@web/components/atoms';
+import { PageLoadingState } from '@web/components/molecules';
 import { EmptyProgrammeState } from '@web/components/programme/EmptyProgrammeState';
 import { PhaseTimelineCard } from '@web/components/programme/PhaseTimelineCard';
 import { ProgrammeHeader } from '@web/components/programme/ProgrammeHeader';

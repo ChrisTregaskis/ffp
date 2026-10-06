@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
 
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
-import { FormSelect } from '@web/components/form/standardForm/FormSelect';
+import { StaticAlert, FormSelect } from '@web/components/molecules';
 import type { SelectOption } from '@web/components/molecules';
+import { useComposableFormContext } from '@web/components/organisms';
 import { useAssessmentTemplatesQuery } from '@web/hooks/assessment-templates';
 
 import type { FlowStepFormValues } from './flow-step-form-values';

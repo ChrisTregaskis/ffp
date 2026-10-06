@@ -1,8 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 
+import { ErrorFallback } from '@web/components/organisms';
 import { createLogger } from '@web/lib/logger';
-
-import { ErrorFallback } from './ErrorFallback';
 
 const logger = createLogger('ErrorBoundary');
 

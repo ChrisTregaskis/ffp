@@ -1,11 +1,16 @@
 import React from 'react';
 import { generatePath, useNavigate } from 'react-router-dom';
 
-import { Button, Icon, ProgressBar, Text } from '@web/components/atoms';
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { StatusResult } from '@web/components/feedback/StatusResult';
-import { VideoMetadataForm } from '@web/components/form/videos/VideoMetadataForm';
-import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
+import {
+  Button,
+  Icon,
+  ProgressBar,
+  Text,
+  ContentPanel,
+  PageContainer,
+} from '@web/components/atoms';
+import { StaticAlert, StatusResult, PageHeader } from '@web/components/molecules';
+import { VideoMetadataForm } from '@web/components/video';
 import { useVideoUpload } from '@web/hooks/videos';
 import { RouteKey, routes } from '@web/pages/routes';
 import { formatFileSize } from '@web/utils/format';

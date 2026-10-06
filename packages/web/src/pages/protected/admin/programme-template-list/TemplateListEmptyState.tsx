@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ListEmptyState } from '@web/components/feedback/ListEmptyState';
+import { ListEmptyState } from '@web/components/molecules';
 
 interface TemplateListEmptyStateProps {
   /** Whether the list is narrowed beyond its default filter (changes messaging) */

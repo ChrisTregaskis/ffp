@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import type { UpdateLocationInput } from '@ffp/core';
 
-import { AdminEditPageShell } from '@web/components/layout';
+import { AdminEditPageShell } from '@web/components/templates';
 import {
   useCreateLocationMutation,
   useLocationDetailQuery,

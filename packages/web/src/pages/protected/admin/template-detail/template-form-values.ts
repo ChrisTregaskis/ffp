@@ -1,6 +1,6 @@
 import type { TemplateDetailResponse } from '@ffp/core';
 
-import type { TemplateMetadataFormValues } from '@web/components/form/templates';
+import type { TemplateMetadataFormValues } from '@web/components/programme-templates';
 
 export const toTemplateFormValues = (
   template: TemplateDetailResponse

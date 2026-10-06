@@ -2,7 +2,7 @@ import React from 'react';
 
 import type { AdminQuestionDetail, QuestionType } from '@ffp/core';
 
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
+import { StaticAlert } from '@web/components/molecules';
 import { QUESTION_TYPE_LABELS } from '@web/components/questions';
 
 import { describeTypeChangeLoss, describeTypeChangeNotes } from './question-type-change';

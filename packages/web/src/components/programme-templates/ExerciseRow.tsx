@@ -3,8 +3,9 @@ import React, { useMemo } from 'react';
 import type { ExerciseResponse } from '@ffp/core';
 
 import { Text } from '@web/components/atoms';
-import { KebabMenu, reorderableItemActions } from '@web/components/dropdown-menu';
-import type { DropdownMenuItem } from '@web/components/dropdown-menu';
+import { KebabMenu } from '@web/components/organisms';
+import type { DropdownMenuItem } from '@web/components/organisms';
+import { reorderableItemActions } from '@web/utils/reorderable-item-actions';
 
 export interface ExerciseRowProps {
   /** Exercise data with embedded video summary */

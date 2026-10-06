@@ -4,10 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { adminVideoFilterSchema } from '@ffp/core';
 import type { AdminVideoListResponse, PaginationInput } from '@ffp/core';
 
-import { AdminListPageShell } from '@web/components/layout';
-import type { ListEmptyStateControls, ListFilterValues } from '@web/components/layout';
-import { ArchiveVideoModal } from '@web/components/modal';
-import type { RowAction } from '@web/components/table';
+import type { RowAction } from '@web/components/organisms';
+import { AdminListPageShell } from '@web/components/templates';
+import type { ListEmptyStateControls, ListFilterValues } from '@web/components/templates';
+import { ArchiveVideoModal } from '@web/components/video';
 import { useToast } from '@web/hooks/useToast';
 import { useAdminVideosQuery, useUpdateVideoMutation } from '@web/hooks/videos';
 import { RouteKey, routes } from '@web/pages/routes';

@@ -8,10 +8,8 @@ import {
   formValuesToStepInput,
 } from '@web/components/assessment-flows';
 import type { FlowStepFormValues } from '@web/components/assessment-flows';
-import { Button, Icon, Icons } from '@web/components/atoms';
-import { EmptyState } from '@web/components/feedback/EmptyState';
-import { PageState } from '@web/components/feedback/PageState';
-import { ContentPanel, InlineFormPanel, PageContainer, PageHeader } from '@web/components/layout';
+import { Button, Icon, Icons, ContentPanel, PageContainer } from '@web/components/atoms';
+import { EmptyState, PageState, InlineFormPanel, PageHeader } from '@web/components/molecules';
 import {
   useAssessmentFlowDetailQuery,
   useCreateFlowStepMutation,

@@ -5,7 +5,7 @@ import {
   ComponentSection,
   DeveloperInstructions,
 } from '@web/components/dev';
-import { Form, type Field, FieldDataType } from '@web/components/form';
+import { Form, type Field, FieldDataType } from '@web/components/organisms';
 import { useAuth } from '@web/hooks/useAuth';
 
 interface LoginFormValues {

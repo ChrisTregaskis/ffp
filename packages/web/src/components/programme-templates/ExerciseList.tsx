@@ -3,8 +3,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 import type { ExerciseResponse } from '@ffp/core';
 
 import { Button, Icon, LoadingSpinner, Text } from '@web/components/atoms';
-import { InlineFormPanel } from '@web/components/layout';
-import { DeleteConfirmModal } from '@web/components/modal';
+import { InlineFormPanel } from '@web/components/molecules';
+import { DeleteConfirmModal } from '@web/components/organisms';
 import {
   useCreateExerciseMutation,
   useDeleteExerciseMutation,

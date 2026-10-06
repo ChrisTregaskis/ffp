@@ -1,9 +1,8 @@
 import React from 'react';
 
 import type { IconName } from '@web/components/atoms';
-import { Icon, Text, Title } from '@web/components/atoms';
-import { Card } from '@web/components/Card';
-import { PageContainer, PageHeader } from '@web/components/layout';
+import { Icon, Text, Title, PageContainer } from '@web/components/atoms';
+import { Card, PageHeader } from '@web/components/molecules';
 
 export interface ComingSoonPageProps {
   /** Title for the page */

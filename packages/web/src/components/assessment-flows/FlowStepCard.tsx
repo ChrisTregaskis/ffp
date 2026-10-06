@@ -2,10 +2,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import type { AdminFlowStepView } from '@ffp/core';
 
-import { Accordion } from '@web/components/accordion';
-import { KebabMenu, reorderableItemActions } from '@web/components/dropdown-menu';
-import type { DropdownMenuItem } from '@web/components/dropdown-menu';
-import { DeleteConfirmModal } from '@web/components/modal';
+import { Accordion } from '@web/components/molecules';
+import type { DropdownMenuItem } from '@web/components/organisms';
+import { KebabMenu, DeleteConfirmModal } from '@web/components/organisms';
+import { reorderableItemActions } from '@web/utils/reorderable-item-actions';
 
 import { stepToFormValues } from './flow-step-form-values';
 import { stepTypeLinksTemplate } from './flow-step-labels';

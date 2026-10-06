@@ -6,7 +6,7 @@ import type { ProgressSummaryResponse } from '@ffp/core';
 import { FeatureColumnGrid } from '@web/components/assessment';
 import type { FeatureItem } from '@web/components/assessment';
 import { Button, Icon, Icons, Text, Title } from '@web/components/atoms';
-import { Card } from '@web/components/Card/Card';
+import { Card } from '@web/components/molecules';
 
 export type ProgrammeCompleteStateProps = Pick<
   ProgressSummaryResponse,

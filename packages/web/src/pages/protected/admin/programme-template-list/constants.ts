@@ -1,5 +1,5 @@
-import { ACTIVE_STATUS_FILTER } from '@web/components/table';
-import type { TableFilterConfig } from '@web/components/table';
+import { ACTIVE_STATUS_FILTER } from '@web/components/organisms';
+import type { TableFilterConfig } from '@web/components/organisms';
 import { DIFFICULTY_OPTIONS } from '@web/constants';
 
 export const TABLE_FILTERS: TableFilterConfig[] = [

@@ -1,5 +1,5 @@
-import { createColumns } from '@web/components/table';
-import type { RowAction } from '@web/components/table';
+import { createColumns } from '@web/components/organisms';
+import type { RowAction } from '@web/components/organisms';
 
 import type { PrototypeTemplate } from './prototype-types';
 import type { ColumnDef } from '@tanstack/react-table';

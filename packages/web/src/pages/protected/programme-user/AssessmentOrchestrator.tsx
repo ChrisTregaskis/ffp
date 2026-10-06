@@ -10,7 +10,7 @@ import {
 
 import { AssessmentStepRenderer } from '@web/components/assessment/AssessmentStepRenderer/AssessmentStepRenderer';
 import { Button, LoadingSpinner, Text } from '@web/components/atoms';
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
+import { StaticAlert } from '@web/components/molecules';
 import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import {

@@ -2,10 +2,8 @@ import React, { useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { FlowDescriptionPanel } from '@web/components/assessment-flows';
-import { EmptyState } from '@web/components/feedback/EmptyState';
-import { PageState } from '@web/components/feedback/PageState';
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
+import { ContentPanel, PageContainer } from '@web/components/atoms';
+import { EmptyState, PageState, StaticAlert, PageHeader } from '@web/components/molecules';
 import { useAssessmentFlowDetailQuery } from '@web/hooks/assessment-flows';
 import { useTemplateNameMap } from '@web/hooks/assessment-templates';
 import { useDismissibleNotice } from '@web/hooks/useDismissibleNotice';

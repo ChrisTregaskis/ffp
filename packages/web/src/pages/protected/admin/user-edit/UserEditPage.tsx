@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import type { AdminCreateUserInput, AdminUpdateUserInput } from '@ffp/core';
 
-import { AdminEditPageShell } from '@web/components/layout';
+import { AdminEditPageShell } from '@web/components/templates';
 import { useCreateUserMutation, useUpdateUserMutation, useUserDetailQuery } from '@web/hooks/users';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { RouteKey, routes } from '@web/pages/routes';

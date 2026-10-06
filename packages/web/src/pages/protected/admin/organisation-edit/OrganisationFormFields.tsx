@@ -1,10 +1,7 @@
 import React from 'react';
 
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
-import { FormActions } from '@web/components/form/standardForm/FormActions';
-import { FormSelect } from '@web/components/form/standardForm/FormSelect';
-import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
+import { StaticAlert, FormActions, FormSelect, FormTextInput } from '@web/components/molecules';
+import { useComposableFormContext } from '@web/components/organisms';
 import { STATUS_FILTER_OPTIONS } from '@web/pages/protected/admin/organisation-list/constants';
 
 import type { OrganisationFormValues } from './types';

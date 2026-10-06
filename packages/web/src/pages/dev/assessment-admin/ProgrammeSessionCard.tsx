@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 import { Icon, Icons, Text } from '@web/components/atoms';
-import { KebabMenu } from '@web/components/dropdown-menu';
-import type { DropdownMenuItem } from '@web/components/dropdown-menu';
+import { KebabMenu } from '@web/components/organisms';
+import type { DropdownMenuItem } from '@web/components/organisms';
 
 import { AddExerciseControl } from './AddExerciseControl';
 import { ProgrammeExerciseRow } from './ProgrammeExerciseRow';

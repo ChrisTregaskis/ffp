@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { LoadingSpinner } from '@web/components/atoms';
-import { AppLayout } from '@web/components/layout/AppLayout';
+import { AppLayout } from '@web/components/templates';
 import { useAuth } from '@web/hooks/useAuth';
 import { hasRole, logUnauthorisedAccess } from '@web/lib/rbac';
 

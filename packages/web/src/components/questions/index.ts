@@ -5,3 +5,7 @@ export {
   SCORE_DIMENSION_LABELS,
   SCORE_DIMENSION_OPTIONS,
 } from './question-labels';
+export {
+  DeactivateQuestionModal,
+  type DeactivateQuestionModalProps,
+} from './DeactivateQuestionModal';

@@ -4,7 +4,7 @@ import { useFieldArray } from 'react-hook-form';
 import { MIN_CHOICE_OPTIONS } from '@ffp/core';
 
 import { Button, Icon, Text, Title } from '@web/components/atoms';
-import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
+import { useComposableFormContext } from '@web/components/organisms';
 
 import { EMPTY_OPTION, emptyOptions } from '../question-form-values';
 

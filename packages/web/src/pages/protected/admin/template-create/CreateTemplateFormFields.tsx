@@ -1,13 +1,10 @@
 import React from 'react';
 
-import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
-import { useAutoSlug } from '@web/components/form/hooks/useAutoSlug';
-import { FormActions } from '@web/components/form/standardForm/FormActions';
-import { FormRow } from '@web/components/form/standardForm/FormRow';
-import { FormSelect } from '@web/components/form/standardForm/FormSelect';
-import { FormTextarea } from '@web/components/form/standardForm/FormTextarea';
-import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
+import { FormRow } from '@web/components/atoms';
+import { FormActions, FormSelect, FormTextarea, FormTextInput } from '@web/components/molecules';
+import { useComposableFormContext } from '@web/components/organisms';
 import { DIFFICULTY_OPTIONS } from '@web/constants';
+import { useAutoSlug } from '@web/hooks/useAutoSlug';
 
 import type { CreateTemplateFormValues } from './types';
 

@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 
-import { ComposableForm } from '@web/components/form/composableForm';
+import { ComposableForm } from '@web/components/organisms';
 
 import { PhaseFormFields } from './PhaseFormFields';
 

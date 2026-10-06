@@ -1,5 +1,5 @@
-import { createColumns } from '@web/components/table';
-import type { RowAction, StatusConfig } from '@web/components/table';
+import { createColumns } from '@web/components/organisms';
+import type { RowAction, StatusConfig } from '@web/components/organisms';
 
 import { type PrototypeVideo } from './prototype-videos';
 import { VideoEssentialCell } from './VideoEssentialCell';

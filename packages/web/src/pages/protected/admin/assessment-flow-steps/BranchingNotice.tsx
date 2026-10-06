@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
+import { StaticAlert } from '@web/components/molecules';
 import { useDismissibleNotice } from '@web/hooks/useDismissibleNotice';
 
 const NOTICE_ID = 'assessment-flow-branching-reorder';

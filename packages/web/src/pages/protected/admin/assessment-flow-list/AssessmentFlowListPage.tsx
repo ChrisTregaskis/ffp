@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo } from 'react';
 import { generatePath, useNavigate } from 'react-router-dom';
 
-import { AdminListPageShell } from '@web/components/layout';
-import type { ListEmptyStateControls } from '@web/components/layout';
-import { DeactivateAssessmentFlowModal } from '@web/components/modal';
-import type { RowAction } from '@web/components/table';
+import { DeactivateAssessmentFlowModal } from '@web/components/assessment-flows';
+import type { RowAction } from '@web/components/organisms';
+import { AdminListPageShell } from '@web/components/templates';
+import type { ListEmptyStateControls } from '@web/components/templates';
 import {
   useAdminAssessmentFlowsQuery,
   useAssessmentFlowActivation,

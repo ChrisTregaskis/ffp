@@ -6,3 +6,7 @@ export { FlowStepCard } from './FlowStepCard';
 export { FlowStepDetails } from './FlowStepDetails';
 export { FlowStepForm } from './FlowStepForm';
 export { FlowStepSummary } from './FlowStepSummary';
+export {
+  DeactivateAssessmentFlowModal,
+  type DeactivateAssessmentFlowModalProps,
+} from './DeactivateAssessmentFlowModal';

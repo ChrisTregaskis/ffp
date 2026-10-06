@@ -1,5 +1,5 @@
 import { Icon, Icons, Text } from '@web/components/atoms';
-import { getInputClassName } from '@web/components/form/shared/inputStyles';
+import { getInputClassName } from '@web/utils/input-styles';
 
 import { BaseSelect } from '../BaseSelect';
 

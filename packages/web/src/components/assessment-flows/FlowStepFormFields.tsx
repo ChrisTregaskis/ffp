@@ -1,10 +1,7 @@
 import React from 'react';
 
-import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
-import { FormActions } from '@web/components/form/standardForm/FormActions';
-import { FormSelect } from '@web/components/form/standardForm/FormSelect';
-import { FormTextarea } from '@web/components/form/standardForm/FormTextarea';
-import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
+import { FormActions, FormSelect, FormTextarea, FormTextInput } from '@web/components/molecules';
+import { useComposableFormContext } from '@web/components/organisms';
 
 import { STEP_TYPE_DESCRIPTIONS, STEP_TYPE_OPTIONS } from './flow-step-labels';
 import { FlowStepConfigFields } from './FlowStepConfigFields';

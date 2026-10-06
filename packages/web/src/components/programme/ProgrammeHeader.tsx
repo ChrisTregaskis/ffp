@@ -1,7 +1,7 @@
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
 import { ProgressBar, Text } from '@web/components/atoms';
-import { PageHeader } from '@web/components/layout/PageHeader';
+import { PageHeader } from '@web/components/molecules';
 import { FadeSlideIn } from '@web/components/motion/FadeSlideIn';
 
 type Programme = ProgrammeDetailResponse['programme'];
