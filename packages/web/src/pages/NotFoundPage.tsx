@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 
 import { Button, Icons } from '@web/components/atoms';
-import { StatusResult } from '@web/components/feedback/StatusResult';
+import { StatusResult } from '@web/components/molecules';
 import { useAuth } from '@web/hooks/useAuth';
 import { getRoleHomePath } from '@web/lib/rbac';
 import { RouteKey, routes } from '@web/pages/routes';

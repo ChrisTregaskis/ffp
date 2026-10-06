@@ -9,7 +9,7 @@ import {
   DeveloperInstructions,
   ButtonSampleDisplay,
 } from '@web/components/dev';
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
+import { StaticAlert } from '@web/components/molecules';
 
 /**
  * StaticAlert components showcase page (development only).
@@ -95,7 +95,7 @@ export const StaticAlertComponentsPage = (): JSX.Element => {
               Code Example:
             </Text>
             <pre className="overflow-x-auto rounded bg-muted p-3 text-xs">
-              {`import { StaticAlert } from '@web/components/feedback/StaticAlert';
+              {`import { StaticAlert } from '@web/components/molecules';
 
 // Error alert
 <StaticAlert

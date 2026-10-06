@@ -4,9 +4,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { UpdateProgrammeTemplateInput } from '@ffp/core';
 
 import { Text } from '@web/components/atoms';
-import { TemplateMetadataFormFields, toTemplateSaveError } from '@web/components/form/templates';
-import type { TemplateMetadataFormValues } from '@web/components/form/templates';
-import { AdminEditPageShell } from '@web/components/layout';
+import {
+  TemplateMetadataFormFields,
+  toTemplateSaveError,
+} from '@web/components/programme-templates';
+import type { TemplateMetadataFormValues } from '@web/components/programme-templates';
+import { AdminEditPageShell } from '@web/components/templates';
 import { useTemplateDetailQuery, useUpdateTemplateMutation } from '@web/hooks/programme-templates';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { RouteKey, routes } from '@web/pages/routes';

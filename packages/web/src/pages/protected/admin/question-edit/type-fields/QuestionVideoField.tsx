@@ -4,8 +4,8 @@ import { useController } from 'react-hook-form';
 import type { VideoDetailResponse } from '@ffp/core';
 
 import { FieldError } from '@web/components/atoms';
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
+import { StaticAlert } from '@web/components/molecules';
+import { useComposableFormContext } from '@web/components/organisms';
 import { VideoSelector } from '@web/components/programme-templates/VideoSelector';
 
 import type { QuestionFormValues } from '../types';

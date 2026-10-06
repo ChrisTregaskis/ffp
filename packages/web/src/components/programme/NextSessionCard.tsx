@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
 import { Button, Icon, Icons, ProgressBar, Text, Title } from '@web/components/atoms';
-import { Card } from '@web/components/Card/Card';
+import { Card } from '@web/components/molecules';
 import { VideoPlayer } from '@web/components/video';
 
 import { PrescriptionBadge } from './PrescriptionBadge';

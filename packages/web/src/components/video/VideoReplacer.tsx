@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 
 import { Button, ProgressBar, Text } from '@web/components/atoms';
-import { ConfirmModal } from '@web/components/modal';
+import { ConfirmModal } from '@web/components/organisms';
 import { useVideoReplacement } from '@web/hooks/videos';
 import { formatFileSize } from '@web/utils/format';
 

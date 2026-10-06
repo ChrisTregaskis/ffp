@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 
-import { ComposableForm } from '@web/components/form/composableForm';
+import { ComposableForm } from '@web/components/organisms';
 
 import { EMPTY_EXERCISE_VALUES } from './exercise-utils';
 import { ExerciseFormFields } from './ExerciseFormFields';

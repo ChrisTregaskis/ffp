@@ -5,7 +5,7 @@ import { generatePath } from 'react-router-dom';
 import type { VideoDetailResponse } from '@ffp/core';
 
 import { Button, Icon, Icons, LoadingSpinner, Text } from '@web/components/atoms';
-import { SearchInput } from '@web/components/search/SearchInput';
+import { SearchInput } from '@web/components/molecules';
 import { adminVideosApi } from '@web/lib/api/endpoints';
 import { videosApi } from '@web/lib/api/endpoints/videos';
 import { videoKeys } from '@web/lib/query/keys';

@@ -1008,7 +1008,7 @@ export const AssessmentQuestionsComponentsPage = (): JSX.Element => {
               RequiredIndicator component (reusable):
             </Text>
             <code className="block whitespace-pre rounded bg-muted p-2 text-xs">
-              {`import { RequiredIndicator } from '@web/components/form';
+              {`import { RequiredIndicator } from '@web/components/atoms';
 
 <label>
   Email address <RequiredIndicator />

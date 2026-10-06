@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
-import { FormNumberInput } from '@web/components/form/standardForm/FormNumberInput';
+import { FormNumberInput } from '@web/components/molecules';
+import { useComposableFormContext } from '@web/components/organisms';
 
 import type { QuestionFormValues } from '../types';
 

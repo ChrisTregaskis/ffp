@@ -15,7 +15,7 @@ import {
   type TableState,
   type StatusConfig,
   type TableFilterConfig,
-} from '@web/components/table';
+} from '@web/components/organisms';
 import { useApiTable } from '@web/hooks/useApiTable';
 
 // ============================================================================
@@ -196,7 +196,7 @@ export const TableComponentsPage = (): JSX.Element => {
               Import and define columns:
             </Text>
             <code className="block whitespace-pre rounded bg-muted p-2 text-xs">
-              {`import { Table, createColumns } from '@web/components/table';
+              {`import { Table, createColumns } from '@web/components/organisms';
 import { useApiTable } from '@web/hooks/useApiTable';
 
 const columns = createColumns<VideoRow>();

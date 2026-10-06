@@ -3,8 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import type { UpdateVideoInput, VideoStatus } from '@ffp/core';
 
-import { AdminEditPageShell } from '@web/components/layout';
-import { ArchiveVideoModal } from '@web/components/modal';
+import { AdminEditPageShell } from '@web/components/templates';
+import { ArchiveVideoModal } from '@web/components/video';
 import { VideoPlayer } from '@web/components/video/VideoPlayer';
 import { VideoReplacer } from '@web/components/video/VideoReplacer';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';

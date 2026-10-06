@@ -1,8 +1,8 @@
 import { useCallback, useMemo } from 'react';
 
 import { Text } from '@web/components/atoms';
-import { Table, TableControls } from '@web/components/table';
-import type { RowAction, TableFilterConfig } from '@web/components/table';
+import { Table, TableControls } from '@web/components/organisms';
+import type { RowAction, TableFilterConfig } from '@web/components/organisms';
 import { useApiTable } from '@web/hooks/useApiTable';
 
 import { MemberProgrammesIterationNote } from './MemberProgrammesIterationNote';

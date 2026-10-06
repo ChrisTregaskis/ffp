@@ -1,5 +1,5 @@
 import { Button, Icon, Icons, Text } from '@web/components/atoms';
-import { Card } from '@web/components/Card/Card';
+import { Card } from '@web/components/molecules';
 
 export interface ForgotPasswordSuccessProps {
   /** Navigate back to sign in */

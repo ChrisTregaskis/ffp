@@ -1,10 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { generatePath, useNavigate, useParams } from 'react-router-dom';
 
-import { Button, Icon, Text } from '@web/components/atoms';
-import { EmptyState } from '@web/components/feedback/EmptyState';
-import { PageState } from '@web/components/feedback/PageState';
-import { ContentPanel, InlineFormPanel, PageContainer, PageHeader } from '@web/components/layout';
+import { Button, Icon, Text, ContentPanel, PageContainer } from '@web/components/atoms';
+import { EmptyState, PageState, InlineFormPanel, PageHeader } from '@web/components/molecules';
 import { SessionCard } from '@web/components/programme-templates';
 import { SessionForm } from '@web/components/programme-templates/SessionForm';
 import type { SessionFormValues } from '@web/components/programme-templates/SessionForm';

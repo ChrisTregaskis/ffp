@@ -3,15 +3,12 @@ import { generatePath, useNavigate, useParams } from 'react-router-dom';
 
 import type { TemplatePhaseWithSessions } from '@ffp/core';
 
-import { Button, Icon, Text } from '@web/components/atoms';
-import { REORDERABLE_ACTION_LABELS } from '@web/components/dropdown-menu';
-import { PageState } from '@web/components/feedback/PageState';
-import { InlineFormPanel, PageContainer, PageHeader } from '@web/components/layout';
-import { DeleteConfirmModal } from '@web/components/modal';
+import { Button, Icon, Text, PageContainer } from '@web/components/atoms';
+import { PageState, InlineFormPanel, PageHeader } from '@web/components/molecules';
+import { DeleteConfirmModal, Table, createColumns } from '@web/components/organisms';
+import type { RowAction } from '@web/components/organisms';
 import { PhaseForm } from '@web/components/programme-templates/PhaseForm';
 import type { PhaseFormValues } from '@web/components/programme-templates/PhaseForm';
-import { Table, createColumns } from '@web/components/table';
-import type { RowAction } from '@web/components/table';
 import {
   useCreatePhaseMutation,
   useDeletePhaseMutation,
@@ -22,6 +19,7 @@ import {
 import { useToast } from '@web/hooks/useToast';
 import { RouteKey, routes } from '@web/pages/routes';
 import { swapAdjacentItem } from '@web/utils/reorder';
+import { REORDERABLE_ACTION_LABELS } from '@web/utils/reorderable-item-actions';
 
 /** Row shape for the phases table */
 export type PhaseRow = {

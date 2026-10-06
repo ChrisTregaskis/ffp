@@ -1,5 +1,5 @@
 import { Icon, Icons, Text, Title } from '@web/components/atoms';
-import { Card } from '@web/components/Card/Card';
+import { Card } from '@web/components/molecules';
 
 /**
  * Empty state when the user has no active programme.

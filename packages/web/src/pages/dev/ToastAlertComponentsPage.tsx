@@ -7,7 +7,7 @@ import {
   ComponentSection,
   DeveloperInstructions,
 } from '@web/components/dev';
-import { ToastAlert } from '@web/components/feedback/ToastAlert';
+import { ToastAlert } from '@web/components/molecules';
 import { ToastProvider } from '@web/contexts/toast/ToastContext';
 import { useToast } from '@web/hooks/useToast';
 

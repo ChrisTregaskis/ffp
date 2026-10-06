@@ -2,7 +2,6 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 
 import { Button, Text, Title } from '@web/components/atoms';
-import { Card } from '@web/components/Card/Card';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageHeader,
@@ -10,6 +9,7 @@ import {
   ComponentSection,
   DeveloperInstructions,
 } from '@web/components/dev';
+import { Card } from '@web/components/molecules';
 import {
   Backdrop,
   CardTransition,

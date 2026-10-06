@@ -3,20 +3,22 @@ import React from 'react';
 import { QUESTION_SLUG_MAX_LENGTH, QUESTION_SLUG_PATTERN } from '@ffp/core';
 import type { AdminQuestionDetail } from '@ffp/core';
 
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
-import { useAutoSlug } from '@web/components/form/hooks/useAutoSlug';
-import { FormActions } from '@web/components/form/standardForm/FormActions';
-import { FormRow } from '@web/components/form/standardForm/FormRow';
-import { FormSelect } from '@web/components/form/standardForm/FormSelect';
-import { FormTextarea } from '@web/components/form/standardForm/FormTextarea';
-import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
-import { FormToggle } from '@web/components/form/standardForm/FormToggle';
+import { FormRow } from '@web/components/atoms';
+import {
+  FormActions,
+  StaticAlert,
+  FormSelect,
+  FormTextarea,
+  FormTextInput,
+  FormToggle,
+} from '@web/components/molecules';
+import { useComposableFormContext } from '@web/components/organisms';
 import {
   QUESTION_TYPE_DESCRIPTIONS,
   QUESTION_TYPE_OPTIONS,
   SCORE_DIMENSION_OPTIONS,
 } from '@web/components/questions';
+import { useAutoSlug } from '@web/hooks/useAutoSlug';
 
 import { QuestionTypeChangeWarning } from './QuestionTypeChangeWarning';
 import { QuestionTypeFields } from './QuestionTypeFields';

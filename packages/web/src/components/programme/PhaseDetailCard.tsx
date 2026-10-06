@@ -1,7 +1,7 @@
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
 import { ProgressBar, Text, Title } from '@web/components/atoms';
-import { Card } from '@web/components/Card/Card';
+import { Card } from '@web/components/molecules';
 
 import { SessionDot } from './SessionDot';
 import { StatusBadge } from './StatusBadge';

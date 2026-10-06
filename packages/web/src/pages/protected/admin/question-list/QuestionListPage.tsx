@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo } from 'react';
 import { generatePath, useNavigate } from 'react-router-dom';
 
-import { AdminListPageShell } from '@web/components/layout';
-import type { ListEmptyStateControls } from '@web/components/layout';
-import { DeactivateQuestionModal } from '@web/components/modal';
-import type { RowAction } from '@web/components/table';
+import type { RowAction } from '@web/components/organisms';
+import { DeactivateQuestionModal } from '@web/components/questions';
+import { AdminListPageShell } from '@web/components/templates';
+import type { ListEmptyStateControls } from '@web/components/templates';
 import {
   useAdminQuestionsQuery,
   useQuestionActivation,

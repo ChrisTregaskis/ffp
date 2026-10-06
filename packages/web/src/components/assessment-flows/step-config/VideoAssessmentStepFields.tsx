@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
-import { FormTextarea } from '@web/components/form/standardForm/FormTextarea';
+import { FormTextarea } from '@web/components/molecules';
+import { useComposableFormContext } from '@web/components/organisms';
 
 import { AssessmentTemplateField } from '../AssessmentTemplateField';
 import { StepEstimatedMinutesField } from '../StepEstimatedMinutesField';

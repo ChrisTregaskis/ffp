@@ -1,4 +1,4 @@
-import type { StatusConfig, TableFilterConfig } from '@web/components/table';
+import type { StatusConfig, TableFilterConfig } from '@web/components/organisms';
 import { DIFFICULTY_OPTIONS } from '@web/constants';
 
 export const VIDEO_STATUS_MAP: Partial<Record<string, StatusConfig>> = {

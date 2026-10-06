@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ComposableForm } from '@web/components/form/composableForm';
+import { ComposableForm } from '@web/components/organisms';
 
 import { EMPTY_FLOW_STEP_VALUES } from './flow-step-form-values';
 import { FlowStepFormFields } from './FlowStepFormFields';

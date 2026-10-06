@@ -1,8 +1,7 @@
 import React from 'react';
 
-import { Text, Title } from '@web/components/atoms';
-import { Card } from '@web/components/Card';
-import { PageContainer, PageHeader } from '@web/components/layout';
+import { Text, Title, PageContainer } from '@web/components/atoms';
+import { Card, PageHeader } from '@web/components/molecules';
 
 /**
  * Progress & Analytics page for programme users.

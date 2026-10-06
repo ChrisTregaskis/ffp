@@ -2,13 +2,14 @@ import React, { useCallback, useState } from 'react';
 
 import type { VideoDetailResponse } from '@ffp/core';
 
-import { Text } from '@web/components/atoms';
-import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
-import { FormActions } from '@web/components/form/standardForm/FormActions';
-import { FormNumberInput } from '@web/components/form/standardForm/FormNumberInput';
-import { FormRow } from '@web/components/form/standardForm/FormRow';
-import { FormTextarea } from '@web/components/form/standardForm/FormTextarea';
-import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
+import { Text, FormRow } from '@web/components/atoms';
+import {
+  FormActions,
+  FormNumberInput,
+  FormTextarea,
+  FormTextInput,
+} from '@web/components/molecules';
+import { useComposableFormContext } from '@web/components/organisms';
 
 import { VideoSelector } from './VideoSelector';
 

@@ -1,7 +1,6 @@
 import { useCallback, useId } from 'react';
 
-import { Text } from '@web/components/atoms';
-import { RequiredIndicator } from '@web/components/form';
+import { Text, RequiredIndicator } from '@web/components/atoms';
 
 import { OptionLabel } from './OptionLabel';
 
