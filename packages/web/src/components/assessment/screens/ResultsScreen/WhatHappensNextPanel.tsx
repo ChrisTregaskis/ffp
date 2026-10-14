@@ -1,6 +1,7 @@
-import { FeatureColumnGrid, SectionPanel } from '@web/components/assessment';
-import type { FeatureItem } from '@web/components/assessment';
 import { Icons, Text } from '@web/components/atoms';
+
+import { FeatureColumnGrid, type FeatureItem } from '../../FeatureColumnGrid';
+import { SectionPanel } from '../../SectionPanel';
 
 const NEXT_STEPS: FeatureItem[] = [
   {

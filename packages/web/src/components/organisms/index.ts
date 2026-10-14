@@ -26,6 +26,8 @@ export {
   type BaseColumnOptions,
   ACTIVE_STATUS_FILTER,
   ACTIVE_STATUS_MAP,
+  SUSPENDABLE_STATUS_FILTER,
+  SUSPENDABLE_STATUS_MAP,
   toActiveStatus,
 } from './Table';
 export { UnsavedChangesModal, type UnsavedChangesModalProps } from './UnsavedChangesModal';

@@ -1,3 +1,5 @@
+import { COLOUR_CLASS_MAP } from './colour-classes';
+
 import type { ReactNode } from 'react';
 
 /**
@@ -26,25 +28,6 @@ export type TextSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl
  * Available font weights based on FFP theme.
  */
 export type TextWeight = 'normal' | 'medium' | 'semibold' | 'bold';
-
-/**
- * Map colours to explicit Tailwind class names.
- * Required for Tailwind JIT compiler to detect and generate classes.
- */
-const COLOUR_CLASS_MAP: Record<TextColour, string> = {
-  primary: 'text-primary',
-  secondary: 'text-secondary',
-  success: 'text-success',
-  destructive: 'text-destructive',
-  foreground: 'text-foreground',
-  'muted-foreground': 'text-muted-foreground',
-  'card-foreground': 'text-card-foreground',
-  'accent-foreground': 'text-accent-foreground',
-  warning: 'text-warning',
-  info: 'text-info',
-  white: 'text-white',
-  'ffp-navy': 'text-ffp-navy',
-};
 
 /**
  * Map weights to explicit Tailwind class names.

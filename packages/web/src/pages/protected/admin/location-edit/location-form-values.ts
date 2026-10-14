@@ -1,4 +1,4 @@
-import type { LocationDetailResponse } from '@ffp/core';
+import type { LocationDetailResponse, UpdateLocationInput } from '@ffp/core';
 
 import type { LocationFormValues } from './types';
 
@@ -27,3 +27,50 @@ export const toLocationFormValues = (location: LocationDetailResponse): Location
   country: location.address?.country ?? '',
   status: location.status,
 });
+
+/** The address from the form, or undefined when every field is blank. */
+const toAddress = (values: LocationFormValues): UpdateLocationInput['address'] => {
+  const address = {
+    line1: values.addressLine1 || undefined,
+    line2: values.addressLine2 || undefined,
+    city: values.city || undefined,
+    county: values.county || undefined,
+    postcode: values.postcode || undefined,
+    country: values.country || undefined,
+  };
+
+  const hasValues = Object.values(address).some((v) => v !== undefined);
+
+  return hasValues ? address : undefined;
+};
+
+/** Only the fields that differ from the stored location; an empty object means nothing changed. */
+export const toUpdateLocationInput = (
+  values: LocationFormValues,
+  location: LocationDetailResponse
+): UpdateLocationInput => {
+  const payload: UpdateLocationInput = {};
+
+  if (values.locationName !== location.name) {
+    payload.name = values.locationName;
+  }
+
+  if (values.status !== location.status) {
+    payload.status = values.status as UpdateLocationInput['status'];
+  }
+
+  const currentAddress = location.address;
+  const addressChanged =
+    (values.addressLine1 || '') !== (currentAddress?.line1 ?? '') ||
+    (values.addressLine2 || '') !== (currentAddress?.line2 ?? '') ||
+    (values.city || '') !== (currentAddress?.city ?? '') ||
+    (values.county || '') !== (currentAddress?.county ?? '') ||
+    (values.postcode || '') !== (currentAddress?.postcode ?? '') ||
+    (values.country || '') !== (currentAddress?.country ?? '');
+
+  if (addressChanged) {
+    payload.address = toAddress(values);
+  }
+
+  return payload;
+};

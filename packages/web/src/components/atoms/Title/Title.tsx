@@ -1,3 +1,5 @@
+import { COLOUR_CLASS_MAP } from '../Text/colour-classes';
+
 import type { TextColour } from '../Text';
 import type { ReactNode } from 'react';
 
@@ -15,25 +17,6 @@ const SIZE_MAP: Record<TitleLevel, string> = {
   h3: 'text-2xl',
   h4: 'text-xl',
   h5: 'text-lg',
-};
-
-/**
- * Map colours to explicit Tailwind class names.
- * Required for Tailwind JIT compiler to detect and generate classes.
- */
-const COLOUR_CLASS_MAP: Record<TextColour, string> = {
-  primary: 'text-primary',
-  secondary: 'text-secondary',
-  success: 'text-success',
-  destructive: 'text-destructive',
-  foreground: 'text-foreground',
-  'muted-foreground': 'text-muted-foreground',
-  'card-foreground': 'text-card-foreground',
-  'accent-foreground': 'text-accent-foreground',
-  warning: 'text-warning',
-  info: 'text-info',
-  white: 'text-white',
-  'ffp-navy': 'text-ffp-navy',
 };
 
 export interface TitleProps {

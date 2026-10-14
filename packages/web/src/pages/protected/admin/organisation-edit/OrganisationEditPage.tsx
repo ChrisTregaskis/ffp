@@ -1,8 +1,6 @@
 import React, { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import type { UpdateOrganisationInput } from '@ffp/core';
-
 import { AdminEditPageShell } from '@web/components/templates';
 import {
   useCreateOrganisationMutation,
@@ -12,7 +10,11 @@ import {
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { RouteKey, routes } from '@web/pages/routes';
 
-import { EMPTY_ORGANISATION_VALUES, toOrganisationFormValues } from './organisation-form-values';
+import {
+  EMPTY_ORGANISATION_VALUES,
+  toOrganisationFormValues,
+  toUpdateOrganisationInput,
+} from './organisation-form-values';
 import { OrganisationFormFields } from './OrganisationFormFields';
 
 import type { OrganisationFormValues } from './types';
@@ -49,28 +51,6 @@ export const OrganisationEditPage: React.FC = () => {
     [clearSubmitError, createMutation, saveCallbacks, handleNavigateBack]
   );
 
-  /** Build update payload with only changed fields */
-  const buildUpdatePayload = useCallback(
-    (values: OrganisationFormValues): UpdateOrganisationInput => {
-      const payload: UpdateOrganisationInput = {};
-
-      if (!organisation) {
-        return payload;
-      }
-
-      if (values.organisationName !== organisation.name) {
-        payload.name = values.organisationName;
-      }
-
-      if (values.status !== organisation.status) {
-        payload.status = values.status as UpdateOrganisationInput['status'];
-      }
-
-      return payload;
-    },
-    [organisation]
-  );
-
   /** Handle edit submission */
   const handleUpdate = useCallback(
     async (values: OrganisationFormValues): Promise<void> => {
@@ -78,7 +58,7 @@ export const OrganisationEditPage: React.FC = () => {
         return;
       }
 
-      const payload = buildUpdatePayload(values);
+      const payload = toUpdateOrganisationInput(values, organisation);
 
       if (Object.keys(payload).length === 0) {
         handleNavigateBack();
@@ -93,14 +73,7 @@ export const OrganisationEditPage: React.FC = () => {
         saveCallbacks('Organisation updated successfully', handleNavigateBack)
       );
     },
-    [
-      organisation,
-      buildUpdatePayload,
-      clearSubmitError,
-      updateMutation,
-      saveCallbacks,
-      handleNavigateBack,
-    ]
+    [organisation, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
   );
 
   const isPending = createMutation.isPending || updateMutation.isPending;

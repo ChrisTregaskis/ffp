@@ -1,17 +1,4 @@
-import type { StatusConfig, TableFilterConfig } from '@web/components/organisms';
+import { SUSPENDABLE_STATUS_FILTER } from '@web/components/organisms';
+import type { TableFilterConfig } from '@web/components/organisms';
 
-export const ORGANISATION_STATUS_MAP: Partial<Record<string, StatusConfig>> = {
-  active: { label: 'Active', colour: 'success' },
-  suspended: { label: 'Suspended', colour: 'warning' },
-  inactive: { label: 'Inactive', colour: 'grey' },
-};
-
-export const STATUS_FILTER_OPTIONS = [
-  { label: 'Active', value: 'active' },
-  { label: 'Suspended', value: 'suspended' },
-  { label: 'Inactive', value: 'inactive' },
-];
-
-export const TABLE_FILTERS: TableFilterConfig[] = [
-  { key: 'status', label: 'Status', options: STATUS_FILTER_OPTIONS },
-];
+export const TABLE_FILTERS: TableFilterConfig[] = [SUSPENDABLE_STATUS_FILTER];

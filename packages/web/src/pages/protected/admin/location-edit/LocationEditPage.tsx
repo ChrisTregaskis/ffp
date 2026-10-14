@@ -1,8 +1,6 @@
 import React, { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import type { UpdateLocationInput } from '@ffp/core';
-
 import { AdminEditPageShell } from '@web/components/templates';
 import {
   useCreateLocationMutation,
@@ -12,7 +10,11 @@ import {
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { RouteKey, routes } from '@web/pages/routes';
 
-import { EMPTY_LOCATION_VALUES, toLocationFormValues } from './location-form-values';
+import {
+  EMPTY_LOCATION_VALUES,
+  toLocationFormValues,
+  toUpdateLocationInput,
+} from './location-form-values';
 import { LocationFormFields } from './LocationFormFields';
 
 import type { LocationFormValues } from './types';
@@ -37,23 +39,6 @@ export const LocationEditPage: React.FC = () => {
     void navigate(routes[RouteKey.ADMIN_LOCATIONS].path);
   }, [navigate]);
 
-  /** Build address object from form values, returning undefined if all fields are empty */
-  const buildAddress = useCallback((values: LocationFormValues): UpdateLocationInput['address'] => {
-    const address = {
-      line1: values.addressLine1 || undefined,
-      line2: values.addressLine2 || undefined,
-      city: values.city || undefined,
-      county: values.county || undefined,
-      postcode: values.postcode || undefined,
-      country: values.country || undefined,
-    };
-
-    // Return undefined if all fields are empty
-    const hasValues = Object.values(address).some((v) => v !== undefined);
-
-    return hasValues ? address : undefined;
-  }, []);
-
   /** Handle create submission */
   const handleCreate = useCallback(
     async (values: LocationFormValues): Promise<void> => {
@@ -67,43 +52,6 @@ export const LocationEditPage: React.FC = () => {
     [clearSubmitError, createMutation, saveCallbacks, handleNavigateBack]
   );
 
-  /** Build update payload with only changed fields */
-  const buildUpdatePayload = useCallback(
-    (values: LocationFormValues): UpdateLocationInput => {
-      const payload: UpdateLocationInput = {};
-
-      if (!location) {
-        return payload;
-      }
-
-      if (values.locationName !== location.name) {
-        payload.name = values.locationName;
-      }
-
-      if (values.status !== location.status) {
-        payload.status = values.status as UpdateLocationInput['status'];
-      }
-
-      // Compare address fields
-      const newAddress = buildAddress(values);
-      const currentAddress = location.address;
-      const addressChanged =
-        (values.addressLine1 || '') !== (currentAddress?.line1 ?? '') ||
-        (values.addressLine2 || '') !== (currentAddress?.line2 ?? '') ||
-        (values.city || '') !== (currentAddress?.city ?? '') ||
-        (values.county || '') !== (currentAddress?.county ?? '') ||
-        (values.postcode || '') !== (currentAddress?.postcode ?? '') ||
-        (values.country || '') !== (currentAddress?.country ?? '');
-
-      if (addressChanged) {
-        payload.address = newAddress;
-      }
-
-      return payload;
-    },
-    [location, buildAddress]
-  );
-
   /** Handle edit submission */
   const handleUpdate = useCallback(
     async (values: LocationFormValues): Promise<void> => {
@@ -111,7 +59,7 @@ export const LocationEditPage: React.FC = () => {
         return;
       }
 
-      const payload = buildUpdatePayload(values);
+      const payload = toUpdateLocationInput(values, location);
 
       if (Object.keys(payload).length === 0) {
         handleNavigateBack();
@@ -126,14 +74,7 @@ export const LocationEditPage: React.FC = () => {
         saveCallbacks('Location updated successfully', handleNavigateBack)
       );
     },
-    [
-      location,
-      buildUpdatePayload,
-      clearSubmitError,
-      updateMutation,
-      saveCallbacks,
-      handleNavigateBack,
-    ]
+    [location, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
   );
 
   const isPending = createMutation.isPending || updateMutation.isPending;

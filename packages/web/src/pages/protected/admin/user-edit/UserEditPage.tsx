@@ -1,14 +1,19 @@
 import React, { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import type { AdminCreateUserInput, AdminUpdateUserInput } from '@ffp/core';
+import type { AdminCreateUserInput } from '@ffp/core';
 
 import { AdminEditPageShell } from '@web/components/templates';
 import { useCreateUserMutation, useUpdateUserMutation, useUserDetailQuery } from '@web/hooks/users';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { RouteKey, routes } from '@web/pages/routes';
 
-import { EMPTY_USER_VALUES, toUserFormValues } from './user-form-values';
+import {
+  EMPTY_USER_VALUES,
+  parseDateOfBirth,
+  toUpdateUserInput,
+  toUserFormValues,
+} from './user-form-values';
 import { UserFormFields } from './UserFormFields';
 
 import type { UserFormValues } from './types';
@@ -27,21 +32,6 @@ export const UserEditPage: React.FC = () => {
   const handleNavigateBack = useCallback(() => {
     void navigate(routes[RouteKey.ADMIN_USERS].path);
   }, [navigate]);
-
-  /** Parse and validate date of birth string, returning undefined if empty or invalid */
-  const parseDateOfBirth = useCallback((value: string): Date | undefined => {
-    if (!value) {
-      return undefined;
-    }
-
-    const date = new Date(value);
-
-    if (isNaN(date.getTime())) {
-      return undefined;
-    }
-
-    return date;
-  }, []);
 
   /** Handle create submission */
   const handleCreate = useCallback(
@@ -68,51 +58,7 @@ export const UserEditPage: React.FC = () => {
         saveCallbacks('User created successfully', handleNavigateBack)
       );
     },
-    [
-      clearSubmitError,
-      setSubmitError,
-      createMutation,
-      saveCallbacks,
-      handleNavigateBack,
-      parseDateOfBirth,
-    ]
-  );
-
-  /** Build update payload with only changed fields */
-  const buildUpdatePayload = useCallback(
-    (values: UserFormValues): AdminUpdateUserInput => {
-      const payload: AdminUpdateUserInput = {};
-
-      if (!user) {
-        return payload;
-      }
-
-      if (values.firstName !== user.firstName) {
-        payload.firstName = values.firstName;
-      }
-
-      if (values.lastName !== user.lastName) {
-        payload.lastName = values.lastName;
-      }
-
-      const newPhone = values.phone || null;
-
-      if (newPhone !== (user.phone ?? null)) {
-        payload.phone = newPhone;
-      }
-
-      const newDob = values.dateOfBirth || null;
-      const currentDob = user.dateOfBirth
-        ? new Date(user.dateOfBirth).toISOString().split('T')[0]
-        : null;
-
-      if (newDob !== currentDob) {
-        payload.dateOfBirth = newDob ? (parseDateOfBirth(newDob) ?? null) : null;
-      }
-
-      return payload;
-    },
-    [user, parseDateOfBirth]
+    [clearSubmitError, setSubmitError, createMutation, saveCallbacks, handleNavigateBack]
   );
 
   /** Handle edit submission */
@@ -128,7 +74,7 @@ export const UserEditPage: React.FC = () => {
         return;
       }
 
-      const payload = buildUpdatePayload(values);
+      const payload = toUpdateUserInput(values, user);
 
       if (Object.keys(payload).length === 0) {
         handleNavigateBack();
@@ -143,15 +89,7 @@ export const UserEditPage: React.FC = () => {
         saveCallbacks('User updated successfully', handleNavigateBack)
       );
     },
-    [
-      user,
-      buildUpdatePayload,
-      clearSubmitError,
-      setSubmitError,
-      updateMutation,
-      saveCallbacks,
-      handleNavigateBack,
-    ]
+    [user, clearSubmitError, setSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
   );
 
   const isPending = createMutation.isPending || updateMutation.isPending;

@@ -1,12 +1,10 @@
 import type { AnswerValue, AssessmentQuestion, FlowStepConfig } from '@ffp/core';
 
-import {
-  ASSESSMENT_MOTION,
-  AssessmentNavigation,
-  QuestionRenderer,
-} from '@web/components/assessment';
 import { CardTransition, type CardTransitionDirection } from '@web/components/motion';
 
+import { AssessmentNavigation } from '../../AssessmentNavigation';
+import { ASSESSMENT_MOTION } from '../../motion.constants';
+import { QuestionRenderer } from '../../questions';
 import { StepCard } from '../StepCard';
 
 import type { ReactNode } from 'react';

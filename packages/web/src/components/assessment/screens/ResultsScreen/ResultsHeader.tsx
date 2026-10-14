@@ -1,6 +1,7 @@
-import { ASSESSMENT_MOTION } from '@web/components/assessment';
 import { IconBadge, Icons, Text } from '@web/components/atoms';
 import { FadeSlideIn, SpringScale } from '@web/components/motion';
+
+import { ASSESSMENT_MOTION } from '../../motion.constants';
 
 export interface ResultsHeaderProps {
   description: string;

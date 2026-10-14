@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Text, FieldError } from '@web/components/atoms';
+import { Text, FieldError, RequiredIndicator } from '@web/components/atoms';
 
 import type { ReactNode } from 'react';
 
@@ -42,11 +42,7 @@ export const FormField: React.FC<FormFieldProps> = ({
   <div className={className ?? 'mb-4'}>
     <label htmlFor={htmlFor} className="block mb-1">
       <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'muted-foreground' }}>{label}</Text>
-      {isRequired && (
-        <Text styleProps={{ colour: 'destructive' }} className="ml-1">
-          *
-        </Text>
-      )}
+      {isRequired && <RequiredIndicator />}
     </label>
 
     {children}

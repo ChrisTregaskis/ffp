@@ -3,12 +3,12 @@ import { useRef } from 'react';
 
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
-import { ProgressBar, Text, Title } from '@web/components/atoms';
+import { Icons, ProgressBar, Text, Title } from '@web/components/atoms';
 import { Card } from '@web/components/molecules';
 import { FadeSlideIn } from '@web/components/motion/FadeSlideIn';
 
 import { ExpandableSection } from './ExpandableSection';
-import { SessionCountPill } from './SessionCountPill';
+import { PrescriptionBadge } from './PrescriptionBadge';
 import { SessionRow } from './SessionRow';
 import { StatusBadge } from './StatusBadge';
 import { TimelineLine } from './TimelineLine';
@@ -150,7 +150,12 @@ export const PhaseTimelineCard: React.FC<PhaseTimelineCardProps> = ({
               {/* Expanded content — upcoming phases: session count pill only */}
               <ExpandableSection isVisible={isExpanded && !isAccessible} duration={0.3}>
                 <div className="mt-3">
-                  <SessionCountPill count={totalSessions} />
+                  <PrescriptionBadge
+                    label={`${String(totalSessions)} sessions`}
+                    icon={Icons.REPEAT}
+                    variant="blue"
+                    size="sm"
+                  />
                 </div>
               </ExpandableSection>
             </div>
