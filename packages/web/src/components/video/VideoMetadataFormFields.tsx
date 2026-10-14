@@ -2,7 +2,7 @@ import React from 'react';
 
 import type { VideoStatus } from '@ffp/core';
 
-import { Text, Title, FieldError, FormRow } from '@web/components/atoms';
+import { Text, Title, FieldError, FormRow, RequiredIndicator } from '@web/components/atoms';
 import type { SelectOption } from '@web/components/molecules';
 import {
   FormActions,
@@ -100,9 +100,7 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
             <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'muted-foreground' }}>
               Video Title
             </Text>
-            <Text styleProps={{ colour: 'destructive' }} className="ml-1">
-              *
-            </Text>
+            <RequiredIndicator />
           </label>
           <input
             id="title"

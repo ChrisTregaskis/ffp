@@ -1,5 +1,7 @@
-import { SectionHeader, SectionPanel } from '@web/components/assessment';
 import { Icons, Text } from '@web/components/atoms';
+
+import { SectionHeader } from '../../SectionHeader';
+import { SectionPanel } from '../../SectionPanel';
 
 export interface RecommendedProgrammePanelProps {
   name: string;

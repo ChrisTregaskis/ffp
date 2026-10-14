@@ -1,8 +1,6 @@
 import React, { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import type { UpdateProgrammeTemplateInput } from '@ffp/core';
-
 import { Text } from '@web/components/atoms';
 import {
   TemplateMetadataFormFields,
@@ -15,7 +13,7 @@ import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { RouteKey, routes } from '@web/pages/routes';
 import { formatDate } from '@web/utils/format';
 
-import { toTemplateFormValues } from './template-form-values';
+import { toTemplateFormValues, toUpdateTemplateInput } from './template-form-values';
 
 export const TemplateDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,51 +27,13 @@ export const TemplateDetailPage: React.FC = () => {
     void navigate(routes[RouteKey.ADMIN_TEMPLATES].path);
   }, [navigate]);
 
-  /** Build update payload — only include changed fields */
-  const buildUpdatePayload = useCallback(
-    (values: TemplateMetadataFormValues): UpdateProgrammeTemplateInput => {
-      const payload: UpdateProgrammeTemplateInput = {};
-
-      if (!template) {
-        return payload;
-      }
-
-      if (values.name !== template.name) {
-        payload.name = values.name;
-      }
-
-      if (values.slug !== template.slug) {
-        payload.slug = values.slug;
-      }
-
-      const descValue = values.description || null;
-
-      if (descValue !== (template.description ?? null)) {
-        payload.description = descValue;
-      }
-
-      if (values.difficulty !== template.difficulty) {
-        payload.difficulty = values.difficulty as UpdateProgrammeTemplateInput['difficulty'];
-      }
-
-      const newIsActive = values.isActive === 'true';
-
-      if (newIsActive !== template.isActive) {
-        payload.isActive = newIsActive;
-      }
-
-      return payload;
-    },
-    [template]
-  );
-
   const handleUpdate = useCallback(
     async (values: TemplateMetadataFormValues): Promise<void> => {
       if (!template) {
         return;
       }
 
-      const payload = buildUpdatePayload(values);
+      const payload = toUpdateTemplateInput(values, template);
 
       if (Object.keys(payload).length === 0) {
         handleNavigateBack();
@@ -90,14 +50,7 @@ export const TemplateDetailPage: React.FC = () => {
         })
       );
     },
-    [
-      template,
-      buildUpdatePayload,
-      clearSubmitError,
-      updateMutation,
-      saveCallbacks,
-      handleNavigateBack,
-    ]
+    [template, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
   );
 
   return (

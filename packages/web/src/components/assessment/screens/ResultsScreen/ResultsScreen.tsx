@@ -1,7 +1,8 @@
 import type { FlowStepConfig, UserAssessmentScores } from '@ffp/core';
 
-import { ASSESSMENT_MOTION } from '@web/components/assessment';
 import { FadeSlideIn } from '@web/components/motion';
+
+import { ASSESSMENT_MOTION } from '../../motion.constants';
 
 import { AssessmentScoresPanel } from './AssessmentScoresPanel';
 import { RecommendedProgrammePanel } from './RecommendedProgrammePanel';

@@ -1,9 +1,7 @@
 import type { LocationListResponse } from '@ffp/core';
 
-import { createColumns } from '@web/components/organisms';
+import { createColumns, SUSPENDABLE_STATUS_MAP } from '@web/components/organisms';
 import type { RowAction } from '@web/components/organisms';
-
-import { LOCATION_STATUS_MAP } from './constants';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -34,7 +32,7 @@ export const buildLocationColumns = (
   columns.text('name', { label: 'Name', sortable: true }),
   columns.text('organisationName', { label: 'Organisation' }),
   columns.text('accountCode', { label: 'Account Code' }),
-  columns.status('status', { label: 'Status', statusMap: LOCATION_STATUS_MAP }),
+  columns.status('status', { label: 'Status', statusMap: SUSPENDABLE_STATUS_MAP }),
   columns.date('createdAt', { label: 'Created', sortable: true }),
   columns.actions({ actions }),
 ];

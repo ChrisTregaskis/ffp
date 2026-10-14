@@ -1,9 +1,7 @@
 import type { OrganisationListResponse } from '@ffp/core';
 
-import { createColumns } from '@web/components/organisms';
+import { createColumns, SUSPENDABLE_STATUS_MAP } from '@web/components/organisms';
 import type { RowAction } from '@web/components/organisms';
-
-import { ORGANISATION_STATUS_MAP } from './constants';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -25,7 +23,7 @@ export const buildOrganisationColumns = (
   actions: RowAction<OrganisationRow>[] | ((row: OrganisationRow) => RowAction<OrganisationRow>[])
 ): ColumnDef<OrganisationRow>[] => [
   columns.text('name', { label: 'Name', sortable: true }),
-  columns.status('status', { label: 'Status', statusMap: ORGANISATION_STATUS_MAP }),
+  columns.status('status', { label: 'Status', statusMap: SUSPENDABLE_STATUS_MAP }),
   columns.date('createdAt', { label: 'Created', sortable: true }),
   columns.actions({ actions }),
 ];

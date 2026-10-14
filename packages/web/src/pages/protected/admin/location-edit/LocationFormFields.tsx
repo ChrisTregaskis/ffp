@@ -2,9 +2,8 @@ import React, { useMemo } from 'react';
 
 import { FormRow } from '@web/components/atoms';
 import { FormActions, StaticAlert, FormSelect, FormTextInput } from '@web/components/molecules';
-import { useComposableFormContext } from '@web/components/organisms';
+import { SUSPENDABLE_STATUS_FILTER, useComposableFormContext } from '@web/components/organisms';
 import { useAdminOrganisationsQuery } from '@web/hooks/organisations';
-import { STATUS_FILTER_OPTIONS } from '@web/pages/protected/admin/location-list/constants';
 
 import type { LocationFormValues } from './types';
 
@@ -84,7 +83,7 @@ export const LocationFormFields: React.FC<LocationFormFieldsProps> = ({
         <FormSelect
           name="status"
           label="Status"
-          options={STATUS_FILTER_OPTIONS}
+          options={SUSPENDABLE_STATUS_FILTER.options}
           control={control}
           errors={errors}
         />

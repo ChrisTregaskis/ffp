@@ -1,8 +1,7 @@
 import React from 'react';
 
 import { StaticAlert, FormActions, FormSelect, FormTextInput } from '@web/components/molecules';
-import { useComposableFormContext } from '@web/components/organisms';
-import { STATUS_FILTER_OPTIONS } from '@web/pages/protected/admin/organisation-list/constants';
+import { SUSPENDABLE_STATUS_FILTER, useComposableFormContext } from '@web/components/organisms';
 
 import type { OrganisationFormValues } from './types';
 
@@ -45,7 +44,7 @@ export const OrganisationFormFields: React.FC<OrganisationFormFieldsProps> = ({
         <FormSelect
           name="status"
           label="Status"
-          options={STATUS_FILTER_OPTIONS}
+          options={SUSPENDABLE_STATUS_FILTER.options}
           control={control}
           errors={errors}
         />

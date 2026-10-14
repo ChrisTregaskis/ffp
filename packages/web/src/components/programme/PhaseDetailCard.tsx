@@ -3,8 +3,8 @@ import type { ProgrammeDetailResponse } from '@ffp/core';
 import { ProgressBar, Text, Title } from '@web/components/atoms';
 import { Card } from '@web/components/molecules';
 
-import { SessionDot } from './SessionDot';
 import { StatusBadge } from './StatusBadge';
+import { StepIndicator } from './StepIndicator';
 
 type Phase = ProgrammeDetailResponse['phases'][number];
 type Session = Phase['sessions'][number];
@@ -90,10 +90,12 @@ export const PhaseDetailCard: React.FC<PhaseDetailCardProps> = ({ phase, progres
         {/* Session dots */}
         <div className="flex flex-wrap gap-2">
           {phase.sessions.map((session) => (
-            <SessionDot
+            <StepIndicator
               key={session.templateSessionId}
-              sessionNumber={session.sessionNumber}
+              stepNumber={session.sessionNumber}
               status={getSessionDotStatus(session, currentSessionNumber)}
+              size="md"
+              context="light"
             />
           ))}
         </div>

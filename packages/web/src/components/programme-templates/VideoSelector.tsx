@@ -4,7 +4,14 @@ import { generatePath } from 'react-router-dom';
 
 import type { VideoDetailResponse } from '@ffp/core';
 
-import { Button, Icon, Icons, LoadingSpinner, Text } from '@web/components/atoms';
+import {
+  Button,
+  Icon,
+  Icons,
+  LoadingSpinner,
+  RequiredIndicator,
+  Text,
+} from '@web/components/atoms';
 import { SearchInput } from '@web/components/molecules';
 import { adminVideosApi } from '@web/lib/api/endpoints';
 import { videosApi } from '@web/lib/api/endpoints/videos';
@@ -150,7 +157,8 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
         styleProps={{ size: 'sm', weight: 'medium', colour: 'foreground' }}
         className="mb-1 block"
       >
-        Video <span className="text-destructive">*</span>
+        Video
+        <RequiredIndicator />
       </Text>
 
       <SearchInput

@@ -1,7 +1,8 @@
 import { Button } from '@web/components/atoms';
-import { forgotPasswordRequestFields, type ForgotPasswordRequestData } from '@web/components/auth';
 import { Card, StaticAlert } from '@web/components/molecules';
 import { Form } from '@web/components/organisms';
+
+import { forgotPasswordRequestFields, type ForgotPasswordRequestData } from '.';
 
 export interface ForgotPasswordRequestFormProps {
   /** Callback when email is submitted */
