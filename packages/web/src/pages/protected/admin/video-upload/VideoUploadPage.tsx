@@ -10,8 +10,9 @@ import {
   ContentPanel,
   PageContainer,
   PressableArea,
+  Surface,
 } from '@web/components/atoms';
-import { StaticAlert, StatusResult, PageHeader } from '@web/components/molecules';
+import { LoadingState, StaticAlert, StatusResult, PageHeader } from '@web/components/molecules';
 import { VideoMetadataForm } from '@web/components/video';
 import { useVideoUpload } from '@web/hooks/videos';
 import { RouteKey, routes } from '@web/pages/routes';
@@ -57,11 +58,11 @@ export const VideoUploadPage: React.FC = () => {
       <ContentPanel>
         {/* Success view */}
         {phase === 'success' && (
-          <div className="rounded-lg border border-border bg-white p-6">
+          <Surface padding="lg">
             <StatusResult
               icon="CheckCircle"
-              iconColour="var(--color-white)"
-              iconBg="bg-success"
+              iconVariant="success"
+              iconAppearance="solid"
               title="Video Created"
               description={`Your video has been created successfully with status "draft".`}
               actions={
@@ -86,12 +87,12 @@ export const VideoUploadPage: React.FC = () => {
                 </>
               }
             />
-          </div>
+          </Surface>
         )}
 
         {/* Progress view (uploading or creating) */}
         {(phase === 'uploading' || phase === 'creating') && (
-          <div className="rounded-lg border border-border bg-white p-6">
+          <Surface padding="lg">
             {phase === 'uploading' && (
               <>
                 <div className="mb-4 flex items-center justify-between">
@@ -116,12 +117,11 @@ export const VideoUploadPage: React.FC = () => {
             )}
 
             {phase === 'creating' && (
-              <div className="flex flex-col items-center py-6">
-                <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
-                <Text styleProps={{ weight: 'medium' }}>Creating video record...</Text>
+              <div className="py-6">
+                <LoadingState layout="fill" message="Creating video record..." />
               </div>
             )}
-          </div>
+          </Surface>
         )}
 
         {/* Form view (idle or error) */}
@@ -142,7 +142,7 @@ export const VideoUploadPage: React.FC = () => {
                 className={`flex w-full flex-col items-center rounded-lg border-2 border-dashed p-10 transition-colors ${
                   isDragOver
                     ? 'border-primary bg-primary/5'
-                    : 'border-border bg-white hover:border-primary/50 hover:bg-muted/30'
+                    : 'border-border bg-card hover:border-primary/50 hover:bg-muted/30'
                 }`}
               >
                 <span className="mb-3">
@@ -168,7 +168,7 @@ export const VideoUploadPage: React.FC = () => {
 
             {/* File info card — shown when a valid file is selected */}
             {hasValidFile && selectedFile && (
-              <div className="flex items-center justify-between rounded-lg border border-border bg-white p-4">
+              <Surface padding="md" className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Icon name="Video" styleProps={{ size: 'md', colour: 'var(--color-primary)' }} />
                   <div>
@@ -181,7 +181,7 @@ export const VideoUploadPage: React.FC = () => {
                 <Button variant="neutral" size="sm" onClick={fileSelection.clearFile}>
                   Remove
                 </Button>
-              </div>
+              </Surface>
             )}
 
             <FileInput

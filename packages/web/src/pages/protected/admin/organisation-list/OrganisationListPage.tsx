@@ -4,18 +4,25 @@ import { useNavigate } from 'react-router-dom';
 import { DeactivateOrganisationModal } from '@web/components/organisations';
 import type { RowAction } from '@web/components/organisms';
 import { AdminListPageShell } from '@web/components/templates';
-import type { ListEmptyStateControls } from '@web/components/templates';
+import type { AdminListEmptyState } from '@web/components/templates';
 import { useAdminOrganisationsQuery, useOrganisationActivation } from '@web/hooks/organisations';
 import { toActivationRowAction } from '@web/hooks/useActivationActions';
 import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildOrganisationColumns, toOrganisationRow } from './columns';
 import { TABLE_FILTERS } from './constants';
-import { OrganisationListEmptyState } from './OrganisationListEmptyState';
 
 import type { OrganisationRow } from './columns';
 
 const DEFAULT_SORT = { id: 'createdAt', desc: true };
+
+const EMPTY_STATE: AdminListEmptyState = {
+  filteredTitle: 'No matching organisations',
+  icon: 'Building',
+  iconVariant: 'primary',
+  title: 'No organisations yet',
+  description: 'Create your first organisation to start managing your platform.',
+};
 
 export const OrganisationListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -48,16 +55,6 @@ export const OrganisationListPage: React.FC = () => {
 
   const organisationColumns = useMemo(() => buildOrganisationColumns(rowActions), [rowActions]);
 
-  const renderEmptyState = useCallback(
-    ({ hasActiveControls }: ListEmptyStateControls) => (
-      <OrganisationListEmptyState
-        hasFilters={hasActiveControls}
-        onCreateClick={handleCreateClick}
-      />
-    ),
-    [handleCreateClick]
-  );
-
   return (
     <AdminListPageShell
       title="Organisations"
@@ -71,7 +68,7 @@ export const OrganisationListPage: React.FC = () => {
       useList={useAdminOrganisationsQuery}
       toRow={toOrganisationRow}
       columns={organisationColumns}
-      renderEmptyState={renderEmptyState}
+      emptyState={EMPTY_STATE}
     >
       <DeactivateOrganisationModal
         isOpen={!!activation.pending}

@@ -4,7 +4,7 @@ import { generatePath, useNavigate } from 'react-router-dom';
 import type { RowAction } from '@web/components/organisms';
 import { DeactivateQuestionModal } from '@web/components/questions';
 import { AdminListPageShell } from '@web/components/templates';
-import type { ListEmptyStateControls } from '@web/components/templates';
+import type { AdminListEmptyState } from '@web/components/templates';
 import {
   useAdminQuestionsQuery,
   useQuestionActivation,
@@ -15,12 +15,20 @@ import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildQuestionColumns, toQuestionRow } from './columns';
 import { QUESTION_TABLE_FILTERS } from './constants';
-import { QuestionListEmptyState } from './QuestionListEmptyState';
 
 import type { QuestionRow } from './columns';
 
 const DEFAULT_SORT = { id: 'questionText', desc: false };
+
 const DEFAULT_FILTERS = { isActive: 'true' };
+
+const EMPTY_STATE: AdminListEmptyState = {
+  filteredTitle: 'No matching questions',
+  icon: 'HelpCircle',
+  iconVariant: 'neutral',
+  title: 'No questions yet',
+  description: 'Write your first question to start building assessments from the bank.',
+};
 
 export const QuestionListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -59,16 +67,6 @@ export const QuestionListPage: React.FC = () => {
 
   const questionColumns = useMemo(() => buildQuestionColumns(rowActions), [rowActions]);
 
-  const renderEmptyState = useCallback(
-    ({ hasNonDefaultControls }: ListEmptyStateControls) => (
-      <QuestionListEmptyState
-        hasFilters={hasNonDefaultControls}
-        onCreateClick={handleCreateClick}
-      />
-    ),
-    [handleCreateClick]
-  );
-
   return (
     <AdminListPageShell
       title="Question Bank"
@@ -83,7 +81,7 @@ export const QuestionListPage: React.FC = () => {
       useList={useAdminQuestionsQuery}
       toRow={toQuestionRow}
       columns={questionColumns}
-      renderEmptyState={renderEmptyState}
+      emptyState={EMPTY_STATE}
     >
       <DeactivateQuestionModal
         isOpen={!!activation.pending}

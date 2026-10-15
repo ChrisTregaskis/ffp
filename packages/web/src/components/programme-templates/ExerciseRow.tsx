@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 
 import type { ExerciseResponse } from '@ffp/core';
 
-import { Text } from '@web/components/atoms';
+import { Surface, Text } from '@web/components/atoms';
 import { KebabMenu } from '@web/components/organisms';
 import type { DropdownMenuItem } from '@web/components/organisms';
 import { reorderableItemActions } from '@web/utils/reorderable-item-actions';
@@ -76,7 +76,7 @@ export const ExerciseRow: React.FC<ExerciseRowProps> = ({
   );
 
   return (
-    <div className="flex items-center gap-3 rounded-md border border-border bg-white px-3 py-2">
+    <Surface radius="md" padding="row" className="flex items-center gap-3">
       {/* Order indicator */}
       <Text
         styleProps={{ size: 'xs', colour: 'muted-foreground', weight: 'medium' }}
@@ -111,6 +111,6 @@ export const ExerciseRow: React.FC<ExerciseRowProps> = ({
       <div className="flex shrink-0 items-center">
         <KebabMenu items={menuItems} disabled={isMutating} />
       </div>
-    </div>
+    </Surface>
   );
 };

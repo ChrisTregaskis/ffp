@@ -1,6 +1,6 @@
 export {
   AdminListPageShell,
   type AdminListPageShellProps,
-  type ListEmptyStateControls,
+  type AdminListEmptyState,
   type ListFilterValues,
 } from './AdminListPageShell';

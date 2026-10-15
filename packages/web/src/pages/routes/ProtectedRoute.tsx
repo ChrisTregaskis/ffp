@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
-import { LoadingSpinner } from '@web/components/atoms';
 import { SignInServiceUnavailable } from '@web/components/auth/SignInServiceUnavailable';
+import { LoadingState } from '@web/components/molecules';
 import { AppLayout, AuthLayout } from '@web/components/templates';
 import { useAuth } from '@web/hooks/useAuth';
 import { hasRole, logUnauthorisedAccess } from '@web/lib/rbac';
@@ -61,11 +61,7 @@ export const ProtectedRoute = ({
 
   // Show loading spinner while checking authentication
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <LoadingSpinner size="lg" variant="center" />
-      </div>
-    );
+    return <LoadingState layout="screen" />;
   }
 
   if (authUnavailable) {

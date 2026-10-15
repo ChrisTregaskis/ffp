@@ -1,12 +1,11 @@
 import React, { useCallback, useRef, useState } from 'react';
 
+import { LoadingState } from '@web/components/molecules';
 import { useVideoSignedUrlQuery } from '@web/hooks/videos';
 import { createLogger } from '@web/lib/logger';
 
-import { VideoErrorState } from './VideoErrorState';
-import { VideoLoadingSkeleton } from './VideoLoadingSkeleton';
 import { VideoOverlay } from './VideoOverlay';
-import { VideoUnavailablePlaceholder } from './VideoUnavailablePlaceholder';
+import { VideoPlaceholder } from './VideoPlaceholder';
 
 const logger = createLogger('VideoPlayer');
 
@@ -122,15 +121,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   const renderContent = (): React.ReactNode => {
     if (hasNoSource) {
-      return <VideoUnavailablePlaceholder />;
+      return <VideoPlaceholder reason="unavailable" />;
     }
 
     if (showLoading) {
-      return <VideoLoadingSkeleton />;
+      return <LoadingState layout="fill" message="Loading video..." className="animate-pulse" />;
     }
 
     if (showError) {
-      return <VideoErrorState onRetry={handleRetry} />;
+      return <VideoPlaceholder reason="error" onRetry={handleRetry} />;
     }
 
     if (videoSrc) {
@@ -165,7 +164,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       );
     }
 
-    return <VideoUnavailablePlaceholder />;
+    return <VideoPlaceholder reason="unavailable" />;
   };
 
   return (

@@ -8,7 +8,6 @@ export * from './AssessmentNavigation';
 export * from './FeatureColumnGrid';
 export * from './InstructionList';
 export * from './SectionHeader';
-export * from './SectionPanel';
 
 // Question components
 export * from './questions';

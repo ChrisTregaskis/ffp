@@ -1,8 +1,8 @@
 import React from 'react';
 
 import type { IconName } from '@web/components/atoms';
-import { Icon, Text, Title, PageContainer } from '@web/components/atoms';
-import { Card, PageHeader } from '@web/components/molecules';
+import { PageContainer } from '@web/components/atoms';
+import { ComingSoon, PageHeader } from '@web/components/molecules';
 
 export interface ComingSoonPageProps {
   /** Title for the page */
@@ -26,22 +26,7 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({
     <PageContainer>
       <PageHeader title={title} subtitle={description} />
 
-      <Card className="p-8">
-        <div className="flex flex-col items-center justify-center py-12">
-          <div className="mb-4">
-            <Icon
-              name={icon}
-              styleProps={{ size: 'xl', colour: 'var(--color-muted-foreground)' }}
-            />
-          </div>
-          <Title as="h3" colour="muted-foreground" className="mb-2">
-            Coming Soon
-          </Title>
-          <Text styleProps={{ size: 'base', colour: 'muted-foreground' }}>
-            This feature will be implemented in a future sprint.
-          </Text>
-        </div>
-      </Card>
+      <ComingSoon icon={icon} message="This feature will be implemented in a future sprint." />
     </PageContainer>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 
-import { Icon, Icons, PressableArea } from '@web/components/atoms';
+import { Icon, Icons, PressableArea, Surface } from '@web/components/atoms';
 
 import type { ReactNode } from 'react';
 
@@ -49,7 +49,7 @@ export const Accordion: React.FC<AccordionProps> = ({
   }, [toggleDisabled, isControlled, onToggle]);
 
   return (
-    <div className="rounded-md border border-border bg-white">
+    <Surface radius="md">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2">
         <PressableArea
@@ -70,6 +70,6 @@ export const Accordion: React.FC<AccordionProps> = ({
 
       {/* Collapsible content */}
       {isExpanded && <div className="border-t border-border px-3 py-3">{children}</div>}
-    </div>
+    </Surface>
   );
 };

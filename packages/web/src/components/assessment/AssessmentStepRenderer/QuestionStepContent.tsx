@@ -1,8 +1,7 @@
-import { LoadingSpinner, Text } from '@web/components/atoms';
+import { LoadingState } from '@web/components/molecules';
 import { FadeSlideIn } from '@web/components/motion';
 
 import { AssessmentNavigation } from '../AssessmentNavigation';
-import { QuestionCard } from '../cards/QuestionCard';
 import { ASSESSMENT_MOTION } from '../motion.constants';
 
 import { useQuestionStepNavigation } from './useQuestionStepNavigation';
@@ -10,12 +9,14 @@ import { useQuestionStepNavigation } from './useQuestionStepNavigation';
 import type { QuestionStepContentProps } from './types';
 
 /**
- * Renders QuestionCard with intra-step navigation between questions.
+ * Renders a question step's card (`QuestionCard`, or `VideoQuestionCard` for a video step)
+ * with intra-step navigation between questions.
  *
  * Continue/Back override AssessmentNavigation for moves between questions;
  * on the last/first question, falls through to default step-level navigation.
  */
 export const QuestionStepContent: React.FC<QuestionStepContentProps> = ({
+  card: QuestionCardComponent,
   config,
   questions,
   questionIndex,
@@ -50,20 +51,13 @@ export const QuestionStepContent: React.FC<QuestionStepContentProps> = ({
   });
 
   if (!currentQuestion) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-3 py-16">
-        <LoadingSpinner size="lg" variant="center" />
-        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-          Loading questions...
-        </Text>
-      </div>
-    );
+    return <LoadingState message="Loading questions..." />;
   }
 
   return (
     <div className="mx-auto max-w-3xl">
       <FadeSlideIn duration={ASSESSMENT_MOTION.duration.entrance}>
-        <QuestionCard
+        <QuestionCardComponent
           config={config}
           question={currentQuestion}
           questionNumber={questionIndex + 1}

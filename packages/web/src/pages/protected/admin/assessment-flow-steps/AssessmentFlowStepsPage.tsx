@@ -2,14 +2,19 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import {
-  FlowDescriptionPanel,
   FlowStepCard,
   FlowStepForm,
   formValuesToStepInput,
 } from '@web/components/assessment-flows';
 import type { FlowStepFormValues } from '@web/components/assessment-flows';
 import { Button, Icon, Icons, ContentPanel, PageContainer } from '@web/components/atoms';
-import { EmptyState, PageState, InlineFormPanel, PageHeader } from '@web/components/molecules';
+import {
+  DescriptionPanel,
+  EmptyState,
+  PageState,
+  InlineFormPanel,
+  PageHeader,
+} from '@web/components/molecules';
 import {
   useAssessmentFlowDetailQuery,
   useCreateFlowStepMutation,
@@ -164,7 +169,7 @@ export const AssessmentFlowStepsPage: React.FC = () => {
 
       {flow && (
         <ContentPanel>
-          {flow.description && <FlowDescriptionPanel description={flow.description} />}
+          {flow.description && <DescriptionPanel description={flow.description} />}
 
           {flowBranches && <BranchingNotice />}
 

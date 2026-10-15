@@ -1,7 +1,6 @@
-import { Icons, Text } from '@web/components/atoms';
+import { Icons, Surface, Text } from '@web/components/atoms';
 
 import { SectionHeader } from '../../SectionHeader';
-import { SectionPanel } from '../../SectionPanel';
 
 export interface RecommendedProgrammePanelProps {
   name: string;
@@ -13,7 +12,7 @@ export const RecommendedProgrammePanel: React.FC<RecommendedProgrammePanelProps>
   description,
 }) => {
   return (
-    <SectionPanel variant="tinted" className="flex flex-col">
+    <Surface as="section" variant="tinted" className="flex flex-col">
       <div className="px-5 pt-5 pb-4">
         <SectionHeader icon={Icons.TRENDINGUP} title="Recommended Programme" as="h2" />
       </div>
@@ -30,6 +29,6 @@ export const RecommendedProgrammePanel: React.FC<RecommendedProgrammePanelProps>
           {description}
         </Text>
       </div>
-    </SectionPanel>
+    </Surface>
   );
 };

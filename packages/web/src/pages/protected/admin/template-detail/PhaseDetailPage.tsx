@@ -1,8 +1,14 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { generatePath, useNavigate, useParams } from 'react-router-dom';
 
-import { Button, Icon, Text, ContentPanel, PageContainer } from '@web/components/atoms';
-import { EmptyState, PageState, InlineFormPanel, PageHeader } from '@web/components/molecules';
+import { Button, Icon, ContentPanel, PageContainer } from '@web/components/atoms';
+import {
+  DescriptionPanel,
+  EmptyState,
+  PageState,
+  InlineFormPanel,
+  PageHeader,
+} from '@web/components/molecules';
 import { SessionCard } from '@web/components/programme-templates';
 import { SessionForm } from '@web/components/programme-templates/SessionForm';
 import type { SessionFormValues } from '@web/components/programme-templates/SessionForm';
@@ -187,13 +193,7 @@ export const PhaseDetailPage: React.FC = () => {
       {phase && (
         <ContentPanel>
           {/* Phase summary */}
-          {phase.description && (
-            <div className="mb-4 rounded-lg border border-border bg-white px-5 py-4">
-              <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-                {phase.description}
-              </Text>
-            </div>
-          )}
+          {phase.description && <DescriptionPanel description={phase.description} />}
 
           {/* Add session form */}
           {isAddingSession && (

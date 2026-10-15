@@ -7,6 +7,8 @@ export {
   type SelectOption,
 } from './BaseSelect';
 export { Card, type CardProps } from './Card';
+export { ComingSoon, type ComingSoonProps } from './ComingSoon';
+export { DescriptionPanel, type DescriptionPanelProps } from './DescriptionPanel';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { FormActions, type FormActionsProps } from './FormActions';
 export { FormField, type FormFieldProps } from './FormField';
@@ -17,10 +19,10 @@ export { FormTextInput, type FormTextInputProps } from './FormTextInput';
 export { FormToggle, type FormToggleProps } from './FormToggle';
 export { InlineFormPanel, type InlineFormPanelProps } from './InlineFormPanel';
 export { ListEmptyState, type ListEmptyStateProps } from './ListEmptyState';
+export { LoadingState, type LoadingStateProps, type LoadingStateLayout } from './LoadingState';
 export { MenuList, type MenuListProps, type MenuListItem } from './MenuList';
 export { NavItem, type NavItemProps } from './NavItem';
 export { PageHeader, type PageHeaderProps } from './PageHeader';
-export { PageLoadingState, type PageLoadingStateProps } from './PageLoadingState';
 export { PageState, type PageStateProps } from './PageState';
 export { PasswordInput, type PasswordInputProps } from './PasswordInput';
 export { PasswordRequirement, type PasswordRequirementProps } from './PasswordRequirement';

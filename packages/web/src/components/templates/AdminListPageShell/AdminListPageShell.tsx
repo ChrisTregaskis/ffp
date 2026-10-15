@@ -4,7 +4,8 @@ import type { PaginationInput } from '@ffp/core';
 
 import type { IconName } from '@web/components/atoms';
 import { Button, Icon, PageContainer } from '@web/components/atoms';
-import { PageHeader } from '@web/components/molecules';
+import { ListEmptyState, PageHeader } from '@web/components/molecules';
+import type { ListEmptyStateProps } from '@web/components/molecules';
 import { Table, TableControls } from '@web/components/organisms';
 import type { TableFilterConfig, TableFilterValues } from '@web/components/organisms';
 import { useApiTable } from '@web/hooks/useApiTable';
@@ -21,10 +22,17 @@ interface ListPage<TItem> {
   pagination: { total: number };
 }
 
-export interface ListEmptyStateControls {
-  hasActiveControls: boolean;
-  hasNonDefaultControls: boolean;
-}
+/** What an empty list says. Its call to action is the header's create button. */
+export type AdminListEmptyState = Pick<
+  ListEmptyStateProps,
+  'filteredTitle' | 'icon' | 'iconVariant' | 'title' | 'description'
+> & {
+  /**
+   * The default filters narrow the list rather than set a baseline view, so an empty list on
+   * its defaults reads as filtered and offers no create call to action
+   */
+  defaultsNarrow?: boolean;
+};
 
 export interface AdminListPageShellProps<
   TItem,
@@ -52,8 +60,8 @@ export interface AdminListPageShellProps<
   /** Keep it stable (module level, or memoised) so the rows memo holds */
   toRow: (item: TItem) => TRow;
   columns: ColumnDef<TRow>[];
-  /** Each list decides whether its default filters count as narrowing the results */
-  renderEmptyState: (controls: ListEmptyStateControls) => ReactNode;
+  /** Define at module level */
+  emptyState: AdminListEmptyState;
   /** Rendered after the table — modals and the like */
   children?: ReactNode;
 }
@@ -75,7 +83,7 @@ export const AdminListPageShell = <TItem, TRow extends { id: string } & Record<s
   useList,
   toRow,
   columns,
-  renderEmptyState,
+  emptyState,
   children,
 }: AdminListPageShellProps<TItem, TRow>): JSX.Element => {
   const {
@@ -134,7 +142,19 @@ export const AdminListPageShell = <TItem, TRow extends { id: string } & Record<s
         defaultSort={defaultSort}
         defaultColumnVisibility={defaultColumnVisibility}
         getRowId={(row) => row.id}
-        emptyState={renderEmptyState({ hasActiveControls, hasNonDefaultControls })}
+        emptyState={
+          <ListEmptyState
+            hasFilters={emptyState.defaultsNarrow ? hasActiveControls : hasNonDefaultControls}
+            filteredTitle={emptyState.filteredTitle}
+            icon={emptyState.icon}
+            iconVariant={emptyState.iconVariant}
+            title={emptyState.title}
+            description={emptyState.description}
+            actionLabel={createLabel}
+            actionIcon={createIcon}
+            onAction={onCreate}
+          />
+        }
         renderControls={(cols) => (
           <TableControls
             search={search}

@@ -4,7 +4,7 @@ import { generatePath, useNavigate } from 'react-router-dom';
 import { DeactivateAssessmentFlowModal } from '@web/components/assessment-flows';
 import type { RowAction } from '@web/components/organisms';
 import { AdminListPageShell } from '@web/components/templates';
-import type { ListEmptyStateControls } from '@web/components/templates';
+import type { AdminListEmptyState } from '@web/components/templates';
 import {
   useAdminAssessmentFlowsQuery,
   useAssessmentFlowActivation,
@@ -12,14 +12,22 @@ import {
 import { toActivationRowAction } from '@web/hooks/useActivationActions';
 import { RouteKey, routes } from '@web/pages/routes';
 
-import { AssessmentFlowListEmptyState } from './AssessmentFlowListEmptyState';
 import { buildAssessmentFlowColumns, toAssessmentFlowRow } from './columns';
 import { ASSESSMENT_FLOW_TABLE_FILTERS } from './constants';
 
 import type { AssessmentFlowRow } from './columns';
 
 const DEFAULT_SORT = { id: 'name', desc: false };
+
 const DEFAULT_FILTERS = { isActive: 'true' };
+
+const EMPTY_STATE: AdminListEmptyState = {
+  filteredTitle: 'No matching flows',
+  icon: 'ClipboardList',
+  iconVariant: 'neutral',
+  title: 'No assessment flows yet',
+  description: 'Create your first flow to start shaping the wellness journey members take.',
+};
 
 export const AssessmentFlowListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -66,16 +74,6 @@ export const AssessmentFlowListPage: React.FC = () => {
 
   const flowColumns = useMemo(() => buildAssessmentFlowColumns(rowActions), [rowActions]);
 
-  const renderEmptyState = useCallback(
-    ({ hasNonDefaultControls }: ListEmptyStateControls) => (
-      <AssessmentFlowListEmptyState
-        hasFilters={hasNonDefaultControls}
-        onCreateClick={handleCreateClick}
-      />
-    ),
-    [handleCreateClick]
-  );
-
   return (
     <AdminListPageShell
       title="Assessment Flows"
@@ -90,7 +88,7 @@ export const AssessmentFlowListPage: React.FC = () => {
       useList={useAdminAssessmentFlowsQuery}
       toRow={toAssessmentFlowRow}
       columns={flowColumns}
-      renderEmptyState={renderEmptyState}
+      emptyState={EMPTY_STATE}
     >
       <DeactivateAssessmentFlowModal
         isOpen={!!activation.pending}

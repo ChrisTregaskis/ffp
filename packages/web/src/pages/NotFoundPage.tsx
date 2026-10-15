@@ -1,10 +1,6 @@
-import { useNavigate } from 'react-router-dom';
-
 import { Button, Icons } from '@web/components/atoms';
 import { StatusResult } from '@web/components/molecules';
-import { useAuth } from '@web/hooks/useAuth';
-import { getRoleHomePath } from '@web/lib/rbac';
-import { RouteKey, routes } from '@web/pages/routes';
+import { useGoHome } from '@web/hooks/useGoHome';
 
 /**
  * Page not found (404) component
@@ -14,27 +10,13 @@ import { RouteKey, routes } from '@web/pages/routes';
  * their role-appropriate home page.
  */
 export const NotFoundPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-
-  const handleGoHome = (): void => {
-    if (!user) {
-      void navigate(routes[RouteKey.LOGIN].path);
-
-      return;
-    }
-
-    const homeRouteKey = getRoleHomePath(user.role);
-    void navigate(routes[homeRouteKey].path);
-  };
+  const handleGoHome = useGoHome();
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-muted px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
         <StatusResult
           icon={Icons.SEARCH}
-          iconColour="var(--color-muted-foreground)"
-          iconBg="bg-muted-foreground/20"
           title="Page not found"
           description="The page you are looking for does not exist or has been moved."
           actions={

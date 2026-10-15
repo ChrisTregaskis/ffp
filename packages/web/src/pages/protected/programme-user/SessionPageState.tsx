@@ -1,4 +1,5 @@
-import { LoadingSpinner, Text } from '@web/components/atoms';
+import { Text } from '@web/components/atoms';
+import { LoadingState } from '@web/components/molecules';
 import { SessionCompletionState, SessionStartScreen } from '@web/components/session';
 
 export type SessionState = 'loading' | 'not-found' | 'needs-start' | 'completed' | 'workout';
@@ -46,11 +47,7 @@ export const SessionPageState: React.FC<SessionPageStateProps> = ({
 }) => {
   switch (state) {
     case 'loading':
-      return (
-        <div className="flex h-screen items-center justify-center">
-          <LoadingSpinner size="lg" />
-        </div>
-      );
+      return <LoadingState layout="screen" />;
 
     case 'not-found':
       return (

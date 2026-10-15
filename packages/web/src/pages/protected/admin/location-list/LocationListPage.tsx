@@ -6,7 +6,7 @@ import type { LocationListResponse } from '@ffp/core';
 import { DeactivateLocationModal } from '@web/components/locations';
 import type { RowAction } from '@web/components/organisms';
 import { AdminListPageShell } from '@web/components/templates';
-import type { ListEmptyStateControls } from '@web/components/templates';
+import type { AdminListEmptyState } from '@web/components/templates';
 import { useAdminLocationsQuery, useLocationActivation } from '@web/hooks/locations';
 import { useAdminOrganisationsQuery } from '@web/hooks/organisations';
 import { toActivationRowAction } from '@web/hooks/useActivationActions';
@@ -14,11 +14,18 @@ import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildLocationColumns, toLocationRow } from './columns';
 import { TABLE_FILTERS } from './constants';
-import { LocationListEmptyState } from './LocationListEmptyState';
 
 import type { LocationRow } from './columns';
 
 const DEFAULT_SORT = { id: 'createdAt', desc: true };
+
+const EMPTY_STATE: AdminListEmptyState = {
+  filteredTitle: 'No matching locations',
+  icon: 'Globe',
+  iconVariant: 'primary',
+  title: 'No locations yet',
+  description: 'Create your first location to start managing sites within organisations.',
+};
 
 export const LocationListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -67,13 +74,6 @@ export const LocationListPage: React.FC = () => {
 
   const locationColumns = useMemo(() => buildLocationColumns(rowActions), [rowActions]);
 
-  const renderEmptyState = useCallback(
-    ({ hasActiveControls }: ListEmptyStateControls) => (
-      <LocationListEmptyState hasFilters={hasActiveControls} onCreateClick={handleCreateClick} />
-    ),
-    [handleCreateClick]
-  );
-
   return (
     <AdminListPageShell
       title="Locations"
@@ -87,7 +87,7 @@ export const LocationListPage: React.FC = () => {
       useList={useAdminLocationsQuery}
       toRow={toRow}
       columns={locationColumns}
-      renderEmptyState={renderEmptyState}
+      emptyState={EMPTY_STATE}
     >
       <DeactivateLocationModal
         isOpen={!!activation.pending}

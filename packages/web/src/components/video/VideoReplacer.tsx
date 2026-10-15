@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 
-import { Button, FileInput, ProgressBar, Text } from '@web/components/atoms';
+import { Button, FileInput, ProgressBar, Surface, Text } from '@web/components/atoms';
 import { ConfirmModal } from '@web/components/organisms';
 import { useVideoReplacement } from '@web/hooks/videos';
 import { formatFileSize } from '@web/utils/format';
@@ -59,7 +59,7 @@ export const VideoReplacer: React.FC<VideoReplacerProps> = ({ videoId, publicId,
       )}
 
       {!isIdle && (
-        <div className="rounded-lg border border-border bg-card p-4">
+        <Surface padding="md">
           {/* File info */}
           {fileSelection.file && (
             <div className="min-w-0">
@@ -137,7 +137,7 @@ export const VideoReplacer: React.FC<VideoReplacerProps> = ({ videoId, publicId,
               </Button>
             </div>
           )}
-        </div>
+        </Surface>
       )}
 
       <ConfirmModal

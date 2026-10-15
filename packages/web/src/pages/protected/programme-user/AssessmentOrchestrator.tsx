@@ -9,8 +9,8 @@ import {
 } from '@ffp/core';
 
 import { AssessmentStepRenderer } from '@web/components/assessment/AssessmentStepRenderer/AssessmentStepRenderer';
-import { Button, LoadingSpinner, Text } from '@web/components/atoms';
-import { StaticAlert } from '@web/components/molecules';
+import { Button } from '@web/components/atoms';
+import { LoadingState, StaticAlert } from '@web/components/molecules';
 import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import {
@@ -187,15 +187,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
 
   // Loading state: starting or resuming assessment
   if (isStartPending) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3">
-        <LoadingSpinner size="lg" variant="center" />
-
-        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-          Loading your assessment...
-        </Text>
-      </div>
-    );
+    return <LoadingState layout="screen" message="Loading your assessment..." />;
   }
 
   // Error state: start assessment failed
@@ -233,15 +225,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
 
   // Submission loading state: submitting assessment answers
   if (isSubmitPending) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3">
-        <LoadingSpinner size="lg" variant="center" />
-
-        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-          Submitting your assessment...
-        </Text>
-      </div>
-    );
+    return <LoadingState layout="screen" message="Submitting your assessment..." />;
   }
 
   // Submission error state

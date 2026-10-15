@@ -1,8 +1,7 @@
 import React from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 
-import { LoadingSpinner } from '@web/components/atoms';
-import { StaticAlert } from '@web/components/molecules';
+import { LoadingState, StaticAlert } from '@web/components/molecules';
 import { AssessmentProvider } from '@web/contexts/assessments/AssessmentProvider';
 import { useUserAssessmentStatusQuery } from '@web/hooks/assessments';
 import { routes, RouteKey } from '@web/pages/routes';
@@ -28,8 +27,8 @@ export const AssessmentPage: React.FC = () => {
   // Show loading while checking programme status
   if (isStatusLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-gray-50 via-ffp-light-purple/10 to-gray-50">
-        <LoadingSpinner size="lg" variant="center" />
+      <div className="bg-linear-to-br from-gray-50 via-ffp-light-purple/10 to-gray-50">
+        <LoadingState layout="screen" />
       </div>
     );
   }

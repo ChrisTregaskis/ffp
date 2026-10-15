@@ -4,20 +4,28 @@ import { useNavigate } from 'react-router-dom';
 import type { RowAction } from '@web/components/organisms';
 import { DeactivateTemplateModal } from '@web/components/programme-templates';
 import { AdminListPageShell } from '@web/components/templates';
-import type { ListEmptyStateControls } from '@web/components/templates';
+import type { AdminListEmptyState } from '@web/components/templates';
 import { useAdminTemplatesQuery, useTemplateActivation } from '@web/hooks/programme-templates';
 import { toActivationRowAction } from '@web/hooks/useActivationActions';
 import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildTemplateColumns, toTemplateRow } from './programme-template-list/columns';
 import { TABLE_FILTERS } from './programme-template-list/constants';
-import { TemplateListEmptyState } from './programme-template-list/TemplateListEmptyState';
 
 import type { TemplateRow } from './programme-template-list/columns';
 
 const DEFAULT_SORT = { id: 'createdAt', desc: true };
+
 const DEFAULT_FILTERS = { isActive: 'true' };
 const DEFAULT_COLUMN_VISIBILITY = { slug: false };
+
+const EMPTY_STATE: AdminListEmptyState = {
+  filteredTitle: 'No matching templates',
+  icon: 'ClipboardList',
+  iconVariant: 'neutral',
+  title: 'No programme templates yet',
+  description: 'Create your first programme template to start building workout programmes.',
+};
 
 export const TemplateListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -49,16 +57,6 @@ export const TemplateListPage: React.FC = () => {
 
   const templateColumns = useMemo(() => buildTemplateColumns(rowActions), [rowActions]);
 
-  const renderEmptyState = useCallback(
-    ({ hasNonDefaultControls }: ListEmptyStateControls) => (
-      <TemplateListEmptyState
-        hasFilters={hasNonDefaultControls}
-        onCreateClick={handleCreateClick}
-      />
-    ),
-    [handleCreateClick]
-  );
-
   return (
     <AdminListPageShell
       title="Programme Templates"
@@ -74,7 +72,7 @@ export const TemplateListPage: React.FC = () => {
       useList={useAdminTemplatesQuery}
       toRow={toTemplateRow}
       columns={templateColumns}
-      renderEmptyState={renderEmptyState}
+      emptyState={EMPTY_STATE}
     >
       <DeactivateTemplateModal
         isOpen={!!activation.pending}

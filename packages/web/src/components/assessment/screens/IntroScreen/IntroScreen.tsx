@@ -1,13 +1,12 @@
 import type { FlowStepConfig } from '@ffp/core';
 
-import { Button, Icons, Text } from '@web/components/atoms';
+import { Button, Icons, Surface, Text } from '@web/components/atoms';
 import { ClickScale, FadeSlideIn } from '@web/components/motion';
 
 import { FeatureColumnGrid, type FeatureItem } from '../../FeatureColumnGrid';
 import { InstructionList } from '../../InstructionList';
 import { ASSESSMENT_MOTION } from '../../motion.constants';
 import { SectionHeader } from '../../SectionHeader';
-import { SectionPanel } from '../../SectionPanel';
 
 export interface IntroScreenProps {
   /** Step configuration from the assessment flow */
@@ -67,7 +66,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ config, onStart }) => 
 
       {/* What to Expect */}
       <FadeSlideIn delay={stagger.second} duration={duration.entrance}>
-        <SectionPanel>
+        <Surface as="section" variant="section">
           <div className="px-6 pt-6 pb-5">
             <SectionHeader
               icon={Icons.CLOCK}
@@ -83,13 +82,13 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ config, onStart }) => 
           </div>
 
           <FeatureColumnGrid features={INTRO_FEATURES} headingLevel="h3" className="px-6 py-8" />
-        </SectionPanel>
+        </Surface>
       </FadeSlideIn>
 
       {/* Before You Begin checklist */}
       {instructions && instructions.length > 0 && (
         <FadeSlideIn delay={stagger.third} duration={duration.entrance}>
-          <SectionPanel variant="gradient" className="p-6">
+          <Surface as="section" variant="gradient" padding="lg">
             <InstructionList
               items={instructions}
               title="Before You Begin:"
@@ -98,7 +97,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ config, onStart }) => 
               bulletIcon={Icons.CHECKCIRCLE}
               bulletColour="var(--color-success)"
             />
-          </SectionPanel>
+          </Surface>
         </FadeSlideIn>
       )}
 

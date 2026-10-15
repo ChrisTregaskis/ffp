@@ -1,9 +1,5 @@
-import { useNavigate } from 'react-router-dom';
-
 import { Button, Icon, Icons, Text, Title } from '@web/components/atoms';
-import { useAuth } from '@web/hooks/useAuth';
-import { getRoleHomePath } from '@web/lib/rbac';
-import { RouteKey, routes } from '@web/pages/routes';
+import { useGoHome } from '@web/hooks/useGoHome';
 
 /**
  * Unauthorised access page component
@@ -13,21 +9,7 @@ import { RouteKey, routes } from '@web/pages/routes';
  * to navigate to their role-appropriate home page.
  */
 export const UnauthorizedPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-
-  const handleGoHome = (): void => {
-    if (!user) {
-      // Fallback: navigate to login if user is somehow not authenticated
-      void navigate(routes[RouteKey.LOGIN].path);
-
-      return;
-    }
-
-    // Navigate to role-specific home page
-    const homeRouteKey = getRoleHomePath(user.role);
-    void navigate(routes[homeRouteKey].path);
-  };
+  const handleGoHome = useGoHome();
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-muted px-4 py-12 sm:px-6 lg:px-8">

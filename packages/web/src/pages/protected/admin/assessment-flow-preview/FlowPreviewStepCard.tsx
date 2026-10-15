@@ -7,6 +7,7 @@ import {
   FlowStepSummary,
   stepTypeLinksTemplate,
 } from '@web/components/assessment-flows';
+import { Surface } from '@web/components/atoms';
 
 export interface FlowPreviewStepCardProps {
   step: AdminFlowStepView;
@@ -18,8 +19,8 @@ export interface FlowPreviewStepCardProps {
 
 /**
  * One step as the preview shows it: the builder's summary row with its detail
- * body always open. The frame mirrors `Accordion`'s markup rather than reusing
- * it, because `Accordion` always renders an interactive chevron.
+ * body always open. It shares `Accordion`'s frame rather than reusing `Accordion`,
+ * because `Accordion` always renders an interactive chevron.
  */
 export const FlowPreviewStepCard: React.FC<FlowPreviewStepCardProps> = ({
   step,
@@ -29,7 +30,7 @@ export const FlowPreviewStepCard: React.FC<FlowPreviewStepCardProps> = ({
   const linkedTemplateName = stepTypeLinksTemplate(step.type) ? templateName : undefined;
 
   return (
-    <div className="rounded-md border border-border bg-white">
+    <Surface radius="md">
       <div className="flex items-center justify-between px-3 py-2">
         <FlowStepSummary
           step={step}
@@ -40,6 +41,6 @@ export const FlowPreviewStepCard: React.FC<FlowPreviewStepCardProps> = ({
       <div className="border-t border-border px-3 py-3">
         <FlowStepDetails step={step} templateName={linkedTemplateName} />
       </div>
-    </div>
+    </Surface>
   );
 };

@@ -1,11 +1,9 @@
-import { LoadingSpinner, Text } from '@web/components/atoms';
-
-import { SectionPanel } from '../../SectionPanel';
+import { LoadingSpinner, Surface, Text } from '@web/components/atoms';
 
 export const ResultsLoadingState: React.FC = () => {
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-8">
-      <SectionPanel>
+      <Surface as="section" variant="section">
         <div className="flex flex-col items-center gap-5 px-6 py-16">
           <div className="animate-pulse rounded-full bg-primary/10 p-5">
             <LoadingSpinner size="lg" />
@@ -23,7 +21,7 @@ export const ResultsLoadingState: React.FC = () => {
             </Text>
           </div>
         </div>
-      </SectionPanel>
+      </Surface>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Text } from '@web/components/atoms';
+import { Surface, Text } from '@web/components/atoms';
 
 import type { ReactNode } from 'react';
 
@@ -14,11 +14,11 @@ export interface EmptyStateProps {
 /** Dashed-border empty state card for lists and tables with no data. */
 export const EmptyState: React.FC<EmptyStateProps> = ({ message, action }) => {
   return (
-    <div className="rounded-lg border border-dashed border-border bg-white py-8 text-center">
+    <Surface variant="dashed" className="py-8 text-center">
       <Text as="p" styleProps={{ colour: 'muted-foreground' }} className={action ? 'mb-3' : ''}>
         {message}
       </Text>
       {action}
-    </div>
+    </Surface>
   );
 };

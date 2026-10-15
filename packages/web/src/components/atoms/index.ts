@@ -33,7 +33,6 @@ export {
 } from './LoadingSpinner';
 export { Logo, type LogoProps, type LogoVariant, type LogoSize } from './Logo';
 export { PageContainer } from './PageContainer';
-export { Panel, type PanelProps } from './Panel';
 export {
   PasswordStrengthIndicator,
   type PasswordStrengthIndicatorProps,
@@ -50,6 +49,15 @@ export {
   type StatusCircleAppearance,
   type StatusCircleCurrentMarker,
 } from './StatusCircle';
+export {
+  Surface,
+  type SurfaceProps,
+  type SurfaceVariant,
+  type SurfacePadding,
+  type SurfaceRadius,
+  type SurfaceBorder,
+  type SurfaceElement,
+} from './Surface';
 export { Switch, type SwitchProps } from './Switch';
 export {
   Text,
