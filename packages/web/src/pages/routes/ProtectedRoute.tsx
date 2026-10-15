@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { LoadingSpinner } from '@web/components/atoms';
-import { AppLayout } from '@web/components/templates';
+import { SignInServiceUnavailable } from '@web/components/auth/SignInServiceUnavailable';
+import { AppLayout, AuthLayout } from '@web/components/templates';
 import { useAuth } from '@web/hooks/useAuth';
 import { hasRole, logUnauthorisedAccess } from '@web/lib/rbac';
 
@@ -23,6 +24,7 @@ interface ProtectedRouteProps extends PropsWithChildren {
  * Ensures user is authenticated and authorised before rendering protected pages.
  * Handles the following scenarios:
  * - User is loading: Shows loading spinner
+ * - Sign-in service unreachable: Shows a retry state instead of signing the user out
  * - User is not authenticated: Redirects to login page
  * - User lacks required role: Redirects to unauthorised page
  * - User is authenticated and authorised: Renders page content (with or without AppLayout)
@@ -36,7 +38,7 @@ export const ProtectedRoute = ({
   children,
   excludeLayout = false,
 }: ProtectedRouteProps): JSX.Element => {
-  const { user, loading } = useAuth();
+  const { user, loading, authUnavailable, checkAuth } = useAuth();
   const location = useLocation();
 
   // Matched by pattern: a parameterised path never equals a real pathname, so string
@@ -63,6 +65,14 @@ export const ProtectedRoute = ({
       <div className="flex min-h-screen items-center justify-center">
         <LoadingSpinner size="lg" variant="center" />
       </div>
+    );
+  }
+
+  if (authUnavailable) {
+    return (
+      <AuthLayout>
+        <SignInServiceUnavailable onRetry={() => void checkAuth()} />
+      </AuthLayout>
     );
   }
 

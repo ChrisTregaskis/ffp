@@ -156,13 +156,23 @@ export default $config({
       },
     });
 
+    // Dev server origins for 'dev' and personal stages. Each role gets its own *.localhost
+    // origin because Amplify keeps one signed-in user per origin, so three roles can stay
+    // signed in side by side. Chrome resolves *.localhost to loopback and Vite serves it.
+    const localDevOrigins = [
+      'http://localhost:3000',
+      'http://admin.localhost:3000',
+      'http://customer.localhost:3000',
+      'http://member.localhost:3000',
+    ];
+
     // Stage-aware CORS origins — used by API Gateway and S3 buckets
     const allowedOrigins =
       $app.stage === 'production'
         ? ['https://app.fitforpurpose.app'] // TODO: Replace with actual production domain when available
         : $app.stage === 'staging'
           ? ['https://staging.fitforpurpose.app'] // TODO: Replace with actual staging domain when available
-          : ['http://localhost:3000']; // Dev server (for 'dev', personal stages, etc.)
+          : localDevOrigins;
 
     // S3 Buckets for video and asset storage
     // NOTE: SST enforces one BucketPolicy per Bucket (auto-created by the component).

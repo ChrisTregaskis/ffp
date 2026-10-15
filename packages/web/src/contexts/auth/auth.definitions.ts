@@ -22,6 +22,8 @@ export interface AuthContextType {
   loading: boolean;
   /** Error message from authentication operations */
   error: string | null;
+  /** True when the sign-in service could not be reached, so the session could not be confirmed */
+  authUnavailable: boolean;
   /** Authenticate user with email and password */
   login: (email: string, password: string) => Promise<void>;
   /** End the current user session */
