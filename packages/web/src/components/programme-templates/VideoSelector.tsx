@@ -6,6 +6,7 @@ import type { VideoDetailResponse } from '@ffp/core';
 
 import {
   Button,
+  FloatingPanel,
   Icon,
   Icons,
   LoadingSpinner,
@@ -171,7 +172,7 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
 
       {/* Dropdown results */}
       {isOpen && debouncedSearch.length >= 2 && (
-        <div className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-border bg-white shadow-lg">
+        <FloatingPanel className="absolute mt-1 w-full">
           {isSearching && (
             <div className="px-3 py-2">
               <LoadingSpinner size="sm" variant="center" />
@@ -220,7 +221,7 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
               <LoadingSpinner size="sm" variant="center" />
             </div>
           )}
-        </div>
+        </FloatingPanel>
       )}
     </div>
   );

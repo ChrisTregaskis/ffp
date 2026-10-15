@@ -1,6 +1,7 @@
 export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from './Button';
 export { ContentPanel } from './ContentPanel';
 export { FieldError, type FieldErrorProps } from './FieldError';
+export { FloatingPanel, type FloatingPanelProps } from './FloatingPanel';
 export { FormRow, type FormRowProps } from './FormRow';
 export {
   Icon,

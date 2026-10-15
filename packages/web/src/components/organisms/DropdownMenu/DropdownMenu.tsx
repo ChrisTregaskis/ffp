@@ -1,22 +1,14 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { Button, Icon, Icons } from '@web/components/atoms';
+import { Button, FloatingPanel, Icon, Icons } from '@web/components/atoms';
+import { MenuList, type MenuListItem } from '@web/components/molecules';
+import { useClickOutside } from '@web/hooks/useClickOutside';
+import { useMenuButton } from '@web/hooks/useMenuButton';
 
-import type { ReactNode } from 'react';
+import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
-export interface DropdownMenuItem {
-  /** Display label */
-  label: string;
-  /** Click handler */
-  onClick: () => void;
-  /** Visual variant */
-  variant?: 'default' | 'danger';
-  /** Disabled state */
-  disabled?: boolean;
-  /** Icon component */
-  icon?: React.ComponentType<{ className?: string }>;
-}
+export type DropdownMenuItem = MenuListItem;
 
 export interface DropdownMenuProps {
   /** Button label */
@@ -31,11 +23,14 @@ export interface DropdownMenuProps {
   className?: string;
 }
 
+const NO_ITEMS: DropdownMenuItem[] = [];
+
 /**
  * Dropdown menu component.
  *
- * Renders a Button-styled trigger that opens a dropdown list of actions.
- * Supports either structured menu items or custom content via renderContent.
+ * Renders a Button-styled trigger that opens either a menu of actions or, with
+ * renderContent, a popover of custom content. The panel is portalled to escape
+ * overflow:hidden containers.
  */
 export const DropdownMenu: React.FC<DropdownMenuProps> = ({
   label,
@@ -44,186 +39,123 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
   size = 'sm',
   className,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; minWidth: number }>({
-    top: 0,
-    left: 0,
-    minWidth: 140,
-  });
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [panelPosition, setPanelPosition] = useState({ top: 0, left: 0, minWidth: 140 });
   const containerRef = useRef<HTMLDivElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
-  const portalContentRef = useRef<HTMLDivElement>(null);
-  const uniqueId = useId();
-  const menuId = `${uniqueId}-menu`;
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const popoverTriggerRef = useRef<HTMLElement | null>(null);
+  const popoverId = `${useId()}-popover`;
 
   const hasItems = items != null && items.length > 0;
   const hasContent = renderContent != null;
 
-  // Close on click outside — must check both trigger container and portaled dropdown
-  // Close on scroll — portal position is fixed at open time, so collapse instead of repositioning
+  // The portal is placed once, from the trigger, as the panel opens
+  const placePanel = useCallback((): void => {
+    if (!containerRef.current) {
+      return;
+    }
+
+    const rect = containerRef.current.getBoundingClientRect();
+    setPanelPosition({
+      top: rect.bottom + window.scrollY + 4,
+      left: rect.right + window.scrollX,
+      minWidth: Math.max(140, rect.width),
+    });
+  }, []);
+
+  const menu = useMenuButton(items ?? NO_ITEMS, placePanel);
+  const { close: closeMenu, menuRef } = menu;
+
+  const closePopover = useCallback((): void => {
+    setIsPopoverOpen(false);
+  }, []);
+
+  useClickOutside([containerRef, popoverRef], closePopover, isPopoverOpen);
+
+  const isOpen = hasItems ? menu.isOpen : isPopoverOpen;
+
+  // A scroll would leave the portal behind its trigger, so collapse instead of repositioning
   useEffect(() => {
     if (!isOpen) {
       return;
     }
 
-    const handleMouseDown = (event: MouseEvent): void => {
-      const target = event.target as Node;
-      const inTrigger = containerRef.current?.contains(target);
-      const inPortal = hasItems
-        ? listRef.current?.contains(target)
-        : portalContentRef.current?.contains(target);
-
-      if (!inTrigger && !inPortal) {
-        setIsOpen(false);
-      }
-    };
-
     const handleScroll = (event: Event): void => {
-      const target = event.target as Node;
-      const inPortal = hasItems
-        ? listRef.current?.contains(target)
-        : portalContentRef.current?.contains(target);
+      const panel = hasItems ? menuRef.current : popoverRef.current;
 
-      if (!inPortal) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('scroll', handleScroll, true);
-
-    return () => {
-      document.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('scroll', handleScroll, true);
-    };
-  }, [isOpen, hasItems]);
-
-  // Scroll highlighted item into view (only for items mode)
-  useEffect(() => {
-    if (!isOpen || !hasItems || highlightedIndex < 0 || !listRef.current) {
-      return;
-    }
-
-    const menuItems = listRef.current.querySelectorAll('[role="menuitem"]');
-    menuItems[highlightedIndex].scrollIntoView({ block: 'nearest' });
-  }, [isOpen, hasItems, highlightedIndex]);
-
-  const handleToggle = useCallback(() => {
-    setIsOpen((prev) => {
-      if (!prev) {
-        // Calculate position from trigger button before opening
-        if (containerRef.current) {
-          const rect = containerRef.current.getBoundingClientRect();
-          setDropdownPos({
-            top: rect.bottom + window.scrollY + 4,
-            left: rect.right + window.scrollX,
-            minWidth: Math.max(140, rect.width),
-          });
-        }
-
-        if (hasItems) {
-          setHighlightedIndex(0);
-        }
-      }
-
-      return !prev;
-    });
-  }, [hasItems]);
-
-  const handleSelect = useCallback((item: DropdownMenuItem) => {
-    if (item.disabled) {
-      return;
-    }
-
-    item.onClick();
-    setIsOpen(false);
-  }, []);
-
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (!hasItems) {
-        // For renderContent mode, only handle Escape
-        if (event.key === 'Escape' && isOpen) {
-          event.preventDefault();
-          setIsOpen(false);
-        }
-
+      if (event.target instanceof Node && panel?.contains(event.target)) {
         return;
       }
 
-      switch (event.key) {
-        case 'ArrowDown': {
-          event.preventDefault();
+      if (hasItems) {
+        closeMenu();
+      } else {
+        closePopover();
+      }
+    };
 
-          if (!isOpen) {
-            setIsOpen(true);
-            setHighlightedIndex(0);
-          } else {
-            setHighlightedIndex((prev) => (prev < items.length - 1 ? prev + 1 : prev));
-          }
+    window.addEventListener('scroll', handleScroll, true);
 
-          break;
-        }
-        case 'ArrowUp': {
-          event.preventDefault();
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [isOpen, hasItems, menuRef, closeMenu, closePopover]);
 
-          if (isOpen) {
-            setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : prev));
-          }
+  const handlePopoverToggle = useCallback(
+    (event: MouseEvent<HTMLElement>): void => {
+      event.stopPropagation();
 
-          break;
-        }
-        case 'Enter':
-        case ' ': {
-          event.preventDefault();
+      if (!isPopoverOpen) {
+        popoverTriggerRef.current = event.currentTarget;
+        placePanel();
+      }
 
-          if (isOpen && highlightedIndex >= 0 && highlightedIndex < items.length) {
-            handleSelect(items[highlightedIndex]);
-          } else if (!isOpen) {
-            handleToggle();
-          }
+      setIsPopoverOpen(!isPopoverOpen);
+    },
+    [isPopoverOpen, placePanel]
+  );
 
-          break;
-        }
-        case 'Escape': {
-          if (isOpen) {
-            event.preventDefault();
-            setIsOpen(false);
-          }
-
-          break;
-        }
-        case 'Tab': {
-          if (isOpen) {
-            setIsOpen(false);
-          }
-
-          break;
-        }
+  const handlePopoverKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLElement>): void => {
+      if (event.key === 'Escape' && isPopoverOpen) {
+        event.preventDefault();
+        // Keeps an enclosing dialog's Escape from also firing
+        event.stopPropagation();
+        setIsPopoverOpen(false);
+        popoverTriggerRef.current?.focus();
       }
     },
-    [isOpen, highlightedIndex, items, hasItems, handleSelect, handleToggle]
+    [isPopoverOpen]
   );
 
   if (!hasItems && !hasContent) {
     return null;
   }
 
+  const triggerProps = hasItems
+    ? menu.triggerProps
+    : {
+        'aria-haspopup': 'dialog' as const,
+        'aria-expanded': isPopoverOpen,
+        'aria-controls': isPopoverOpen ? popoverId : undefined,
+        onClick: handlePopoverToggle,
+        onKeyDown: handlePopoverKeyDown,
+      };
+
+  const panelStyle: CSSProperties = {
+    position: 'absolute',
+    top: panelPosition.top,
+    left: panelPosition.left,
+    transform: 'translateX(-100%)',
+    minWidth: panelPosition.minWidth,
+  };
+
   return (
     <div ref={containerRef} className={`relative inline-block ${className ?? ''}`}>
-      {/* Trigger button */}
       <Button
         variant="secondary"
         size={size}
-        aria-expanded={isOpen}
-        aria-haspopup={hasItems ? 'menu' : 'true'}
-        aria-controls={isOpen ? menuId : undefined}
-        onClick={(e) => {
-          e.stopPropagation();
-          handleToggle();
-        }}
-        onKeyDown={handleKeyDown}
+        {...triggerProps}
         icon={
           <Icon
             name={Icons.CHEVRONDOWN}
@@ -239,75 +171,37 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
         {label}
       </Button>
 
-      {/* Dropdown panel — rendered via portal to escape overflow:hidden containers */}
-      {isOpen &&
+      {isPopoverOpen &&
         hasContent &&
         !hasItems &&
         createPortal(
-          <div
-            ref={portalContentRef}
-            id={menuId}
+          <FloatingPanel
+            forwardedRef={popoverRef}
+            id={popoverId}
             role="dialog"
             aria-label={label}
-            style={{
-              position: 'absolute',
-              top: dropdownPos.top,
-              left: dropdownPos.left,
-              transform: 'translateX(-100%)',
-              minWidth: dropdownPos.minWidth,
-            }}
-            className="z-50 overflow-auto rounded-md border border-border bg-white shadow-lg max-h-60"
+            onKeyDown={handlePopoverKeyDown}
+            style={panelStyle}
           >
             {renderContent()}
-          </div>,
+          </FloatingPanel>,
           document.body
         )}
 
-      {isOpen &&
+      {menu.isOpen &&
         hasItems &&
         createPortal(
-          <ul
-            ref={listRef}
-            id={menuId}
-            role="menu"
-            aria-label={label}
-            style={{
-              position: 'absolute',
-              top: dropdownPos.top,
-              left: dropdownPos.left,
-              transform: 'translateX(-100%)',
-              minWidth: dropdownPos.minWidth,
-            }}
-            className="z-50 overflow-auto rounded-md border border-border bg-white shadow-lg max-h-60"
-          >
-            {items.map((item, index) => {
-              const isHighlighted = index === highlightedIndex;
-              const isDanger = item.variant === 'danger';
-
-              return (
-                <li
-                  key={item.label}
-                  role="menuitem"
-                  aria-disabled={item.disabled}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSelect(item);
-                  }}
-                  onMouseEnter={() => {
-                    setHighlightedIndex(index);
-                  }}
-                  className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-sm ${
-                    item.disabled ? 'pointer-events-none opacity-50' : ''
-                  } ${isHighlighted ? 'bg-primary/10' : ''} ${
-                    isDanger ? 'text-destructive' : 'text-foreground'
-                  }`}
-                >
-                  {item.icon && <item.icon className="h-4 w-4" />}
-                  {item.label}
-                </li>
-              );
-            })}
-          </ul>,
+          <MenuList
+            id={menu.menuId}
+            ariaLabel={label}
+            items={items}
+            activeIndex={menu.activeIndex}
+            onActivate={menu.activate}
+            onHover={menu.focusItem}
+            onKeyDown={menu.onMenuKeyDown}
+            forwardedRef={menuRef}
+            style={panelStyle}
+          />,
           document.body
         )}
     </div>
