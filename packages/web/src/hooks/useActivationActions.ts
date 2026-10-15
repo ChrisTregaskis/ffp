@@ -2,24 +2,20 @@ import { useCallback, useState } from 'react';
 
 import { useToast } from '@web/hooks/useToast';
 
-import type { UseMutationResult } from '@tanstack/react-query';
-
-interface ActivationTarget {
-  publicId: string;
-}
-
 export interface ActivationCallbacks {
   onSuccess: () => void;
   onError: (err: Error) => void;
 }
 
-interface UseActivationActionsOptions<TTarget extends ActivationTarget> {
-  deactivate: Pick<UseMutationResult<void, Error, string>, 'mutate' | 'isPending'>;
+interface UseActivationActionsOptions<TTarget> {
   /**
-   * Brings a record back into use. A callback rather than the update mutation
-   * itself, so each resource keeps its own update variables.
+   * Takes a record out of use. Both actions are callbacks rather than mutations,
+   * so each resource builds its own variables from the record.
    */
-  activate: (publicId: string, callbacks: ActivationCallbacks) => void;
+  deactivate: (target: TTarget, callbacks: ActivationCallbacks) => void;
+  isDeactivating: boolean;
+  /** Brings a record back into use */
+  activate: (target: TTarget, callbacks: ActivationCallbacks) => void;
   isActivating: boolean;
   /** Names the record in the toast, e.g. `() => 'Question'`. Keep it stable (module level). */
   describe: (target: TTarget) => string;
@@ -27,7 +23,7 @@ interface UseActivationActionsOptions<TTarget extends ActivationTarget> {
   onDeactivated?: () => void;
 }
 
-export interface ActivationActions<TTarget extends ActivationTarget> {
+export interface ActivationActions<TTarget> {
   /** The record awaiting the deactivate confirmation, if any */
   pending: TTarget | null;
   requestDeactivate: (target: TTarget) => void;
@@ -39,8 +35,9 @@ export interface ActivationActions<TTarget extends ActivationTarget> {
 }
 
 /** Deactivate-with-confirmation and activate for a soft-deletable record, with their toasts. */
-export const useActivationActions = <TTarget extends ActivationTarget>({
+export const useActivationActions = <TTarget>({
   deactivate,
+  isDeactivating,
   activate,
   isActivating,
   describe,
@@ -48,7 +45,6 @@ export const useActivationActions = <TTarget extends ActivationTarget>({
 }: UseActivationActionsOptions<TTarget>): ActivationActions<TTarget> => {
   const { addToast } = useToast();
   const [pending, setPending] = useState<TTarget | null>(null);
-  const { mutate: mutateDeactivate } = deactivate;
 
   const cancelDeactivate = useCallback((): void => {
     setPending(null);
@@ -59,22 +55,23 @@ export const useActivationActions = <TTarget extends ActivationTarget>({
       return;
     }
 
-    mutateDeactivate(pending.publicId, {
+    deactivate(pending, {
       onSuccess: () => {
         addToast(`${describe(pending)} deactivated successfully`, { variant: 'success' });
-        setPending(null);
+        // A record requested while this one was in flight keeps its modal
+        setPending((current) => (current === pending ? null : current));
         onDeactivated?.();
       },
       onError: (err) => {
         addToast(err.message, { variant: 'error' });
-        setPending(null);
+        setPending((current) => (current === pending ? null : current));
       },
     });
-  }, [pending, mutateDeactivate, describe, onDeactivated, addToast]);
+  }, [pending, deactivate, describe, onDeactivated, addToast]);
 
   const handleActivate = useCallback(
     (target: TTarget): void => {
-      activate(target.publicId, {
+      activate(target, {
         onSuccess: () => {
           addToast(`${describe(target)} activated successfully`, { variant: 'success' });
         },
@@ -92,7 +89,7 @@ export const useActivationActions = <TTarget extends ActivationTarget>({
     cancelDeactivate,
     confirmDeactivate,
     activate: handleActivate,
-    isDeactivating: deactivate.isPending,
+    isDeactivating,
     isActivating,
   };
 };

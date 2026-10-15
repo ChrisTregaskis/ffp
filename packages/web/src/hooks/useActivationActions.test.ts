@@ -17,45 +17,40 @@ interface Target {
 const TARGET: Target = { publicId: 'aaaaaaaaaaaa', name: 'Daily check' };
 const describeTarget = (target: Target): string => `"${target.name}"`;
 
-interface DeactivateCallbacks {
-  onSuccess: () => void;
-  onError: (err: Error) => void;
-}
-
 interface Setup {
   result: { current: ActivationActions<Target> };
-  mutate: ReturnType<typeof vi.fn>;
+  deactivate: ReturnType<typeof vi.fn>;
   activate: ReturnType<typeof vi.fn>;
   onDeactivated: ReturnType<typeof vi.fn>;
 }
 
-const setup = (outcome: 'success' | 'error', onDeactivated = vi.fn()): Setup => {
-  const mutate = vi.fn((_publicId: string, callbacks: DeactivateCallbacks) => {
+const setup = (
+  outcome: 'success' | 'error',
+  onDeactivated = vi.fn(),
+  { isDeactivating = false, isActivating = false } = {}
+): Setup => {
+  const settle = (_target: Target, callbacks: ActivationCallbacks): void => {
     if (outcome === 'success') {
       callbacks.onSuccess();
     } else {
       callbacks.onError(new Error('It went wrong'));
     }
-  });
-  const activate = vi.fn((_publicId: string, callbacks: ActivationCallbacks) => {
-    if (outcome === 'success') {
-      callbacks.onSuccess();
-    } else {
-      callbacks.onError(new Error('It went wrong'));
-    }
-  });
+  };
+  const deactivate = vi.fn(settle);
+  const activate = vi.fn(settle);
 
   const { result } = renderHook(() =>
     useActivationActions<Target>({
-      deactivate: { mutate, isPending: false } as never,
+      deactivate,
+      isDeactivating,
       activate,
-      isActivating: false,
+      isActivating,
       describe: describeTarget,
       onDeactivated,
     })
   );
 
-  return { result, mutate, activate, onDeactivated };
+  return { result, deactivate, activate, onDeactivated };
 };
 
 describe('useActivationActions', () => {
@@ -78,7 +73,7 @@ describe('useActivationActions', () => {
   });
 
   it('deactivates the pending record, toasts, clears it and runs onDeactivated', () => {
-    const { result, mutate, onDeactivated } = setup('success');
+    const { result, deactivate, onDeactivated } = setup('success');
 
     act(() => {
       result.current.requestDeactivate(TARGET);
@@ -87,7 +82,7 @@ describe('useActivationActions', () => {
       result.current.confirmDeactivate();
     });
 
-    expect(mutate).toHaveBeenCalledWith('aaaaaaaaaaaa', expect.anything());
+    expect(deactivate).toHaveBeenCalledWith(TARGET, expect.anything());
     expect(addToast).toHaveBeenCalledWith('"Daily check" deactivated successfully', {
       variant: 'success',
     });
@@ -110,14 +105,47 @@ describe('useActivationActions', () => {
     expect(onDeactivated).not.toHaveBeenCalled();
   });
 
+  it('keeps a record requested while an earlier deactivation was in flight', () => {
+    let settle: ActivationCallbacks | undefined;
+    const deactivate = vi.fn((_target: Target, callbacks: ActivationCallbacks) => {
+      settle = callbacks;
+    });
+    const other: Target = { publicId: 'bbbbbbbbbbbb', name: 'Evening stretch' };
+
+    const { result } = renderHook(() =>
+      useActivationActions<Target>({
+        deactivate,
+        isDeactivating: false,
+        activate: vi.fn(),
+        isActivating: false,
+        describe: describeTarget,
+      })
+    );
+
+    act(() => {
+      result.current.requestDeactivate(TARGET);
+    });
+    act(() => {
+      result.current.confirmDeactivate();
+    });
+    act(() => {
+      result.current.requestDeactivate(other);
+    });
+    act(() => {
+      settle?.onSuccess();
+    });
+
+    expect(result.current.pending).toBe(other);
+  });
+
   it('does nothing on confirm when nothing is pending', () => {
-    const { result, mutate } = setup('success');
+    const { result, deactivate } = setup('success');
 
     act(() => {
       result.current.confirmDeactivate();
     });
 
-    expect(mutate).not.toHaveBeenCalled();
+    expect(deactivate).not.toHaveBeenCalled();
   });
 
   it('activates a record and toasts', () => {
@@ -127,9 +155,26 @@ describe('useActivationActions', () => {
       result.current.activate(TARGET);
     });
 
-    expect(activate).toHaveBeenCalledWith('aaaaaaaaaaaa', expect.anything());
+    expect(activate).toHaveBeenCalledWith(TARGET, expect.anything());
     expect(addToast).toHaveBeenCalledWith('"Daily check" activated successfully', {
       variant: 'success',
     });
+  });
+
+  it('shows a failed activation', () => {
+    const { result } = setup('error');
+
+    act(() => {
+      result.current.activate(TARGET);
+    });
+
+    expect(addToast).toHaveBeenCalledWith('It went wrong', { variant: 'error' });
+  });
+
+  it('passes the pending flags through', () => {
+    const { result } = setup('success', vi.fn(), { isDeactivating: true, isActivating: true });
+
+    expect(result.current.isDeactivating).toBe(true);
+    expect(result.current.isActivating).toBe(true);
   });
 });

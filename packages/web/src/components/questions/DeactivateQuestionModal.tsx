@@ -54,7 +54,7 @@ export const DeactivateQuestionModal: React.FC<DeactivateQuestionModalProps> = (
         <StaticAlert
           variant="warning"
           className="mt-3"
-          message="We could not check where this question is used. You can still deactivate it, and reactivate it later if needed."
+          message="We could not check where this question is used. You can still deactivate it, and activate it again later if needed."
         />
       )}
 

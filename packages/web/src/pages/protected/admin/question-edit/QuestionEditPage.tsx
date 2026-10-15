@@ -3,7 +3,7 @@ import { generatePath, useNavigate, useParams } from 'react-router-dom';
 
 import type { AdminQuestionDetail } from '@ffp/core';
 
-import { Button } from '@web/components/atoms';
+import { ActivationToggleButton } from '@web/components/molecules';
 import { DeactivateQuestionModal } from '@web/components/questions';
 import { AdminEditPageShell } from '@web/components/templates';
 import {
@@ -92,26 +92,16 @@ export const QuestionEditPage: React.FC = () => {
 
   const headerActions =
     isEditMode && question ? (
-      question.isActive ? (
-        <Button
-          variant="destructive"
-          onClick={() => {
-            activation.requestDeactivate(question);
-          }}
-        >
-          Deactivate
-        </Button>
-      ) : (
-        <Button
-          variant="secondary"
-          onClick={() => {
-            activation.activate(question);
-          }}
-          loading={activation.isActivating}
-        >
-          Reactivate
-        </Button>
-      )
+      <ActivationToggleButton
+        isActive={question.isActive}
+        onDeactivate={() => {
+          activation.requestDeactivate(question);
+        }}
+        onActivate={() => {
+          activation.activate(question);
+        }}
+        isActivating={activation.isActivating}
+      />
     ) : undefined;
 
   return (

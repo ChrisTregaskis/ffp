@@ -5,6 +5,7 @@ import type { AssessmentFlowWithStepsView, UpdateAssessmentFlowInput } from '@ff
 
 import { DeactivateAssessmentFlowModal } from '@web/components/assessment-flows';
 import { Button } from '@web/components/atoms';
+import { ActivationToggleButton } from '@web/components/molecules';
 import { AdminEditPageShell } from '@web/components/templates';
 import {
   useAssessmentFlowActivation,
@@ -121,26 +122,16 @@ export const AssessmentFlowEditPage: React.FC = () => {
         <Button variant="secondary" onClick={handleNavigateToSteps}>
           Edit Steps
         </Button>
-        {flow.isActive ? (
-          <Button
-            variant="destructive"
-            onClick={() => {
-              activation.requestDeactivate(flow);
-            }}
-          >
-            Deactivate
-          </Button>
-        ) : (
-          <Button
-            variant="secondary"
-            onClick={() => {
-              activation.activate(flow);
-            }}
-            loading={activation.isActivating}
-          >
-            Reactivate
-          </Button>
-        )}
+        <ActivationToggleButton
+          isActive={flow.isActive}
+          onDeactivate={() => {
+            activation.requestDeactivate(flow);
+          }}
+          onActivate={() => {
+            activation.activate(flow);
+          }}
+          isActivating={activation.isActivating}
+        />
       </>
     ) : undefined;
 
