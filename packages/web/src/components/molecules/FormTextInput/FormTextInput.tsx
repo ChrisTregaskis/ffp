@@ -1,11 +1,9 @@
-import { useState } from 'react';
-
-import { IconButton, Icons } from '@web/components/atoms';
+import { Input } from '@web/components/atoms';
 import { getFieldDescriptionIds } from '@web/utils/field-description';
 import { getFieldErrorMessage } from '@web/utils/field-error';
-import { getInputClassName } from '@web/utils/input-styles';
 
 import { FormField } from '../FormField';
+import { PasswordVisibilityInput } from '../PasswordVisibilityInput';
 
 import type {
   UseFormRegister,
@@ -18,13 +16,17 @@ import type {
 /** Native input attributes that can be forwarded to the underlying <input> element */
 type NativeInputProps = Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
-  'name' | 'type' | 'placeholder' | 'disabled' | 'readOnly' | 'id' | 'className'
+  'name' | 'type' | 'placeholder' | 'disabled' | 'readOnly' | 'id' | 'className' | 'size'
 >;
 
-export interface FormTextInputProps<TFieldValues extends FieldValues> {
-  name: Path<TFieldValues>;
+export interface FormTextInputProps<
+  TFieldValues extends FieldValues,
+  TName extends Path<TFieldValues> = Path<TFieldValues>,
+> {
+  name: TName;
   label: string;
-  type?: 'text' | 'email' | 'password';
+  /** A number field still holds a string; convert it on submit (`utils/form-number.ts`) */
+  type?: 'text' | 'email' | 'password' | 'number';
   placeholder?: string;
   register: UseFormRegister<TFieldValues>;
   errors: FieldErrors<TFieldValues>;
@@ -35,28 +37,26 @@ export interface FormTextInputProps<TFieldValues extends FieldValues> {
   disabled?: boolean;
   /** Looks like `disabled`, but the value is still submitted */
   readOnly?: boolean;
-  /** Additional native input attributes (e.g. inputMode, autoComplete) */
+  /** Additional native input attributes (e.g. inputMode, autoComplete, min, step) */
   inputProps?: NativeInputProps;
   /** Extra CSS classes appended to the input element */
   inputClassName?: string;
-  /** Additional react-hook-form register options (e.g. required, pattern) */
-  registerOptions?: RegisterOptions<TFieldValues, Path<TFieldValues>>;
+  /**
+   * Additional react-hook-form register options (e.g. required, pattern, validate, deps).
+   * With a `validate`, leave out the explicit type argument so `name` infers the field and the validator gets its value type.
+   */
+  registerOptions?: RegisterOptions<TFieldValues, TName>;
 }
 
 /**
- * Text input field component for standard forms
+ * A labelled text, email, password or number input bound to a react-hook-form field.
  *
- * Supports text, email, and password input types with consistent styling.
- *
- * Features:
- * - Multiple input types: text (default), email, password
- * - Password visibility toggle (show/hide button)
- * - Accessible label with required indicator
- * - Error state styling
- * - Error message display
- * - Tailwind CSS styling with FFP theme
+ * A password field gets the show/hide toggle.
  */
-export const FormTextInput = <TFieldValues extends FieldValues>({
+export const FormTextInput = <
+  TFieldValues extends FieldValues,
+  TName extends Path<TFieldValues> = Path<TFieldValues>,
+>({
   name,
   label,
   type = 'text',
@@ -70,32 +70,26 @@ export const FormTextInput = <TFieldValues extends FieldValues>({
   inputProps,
   inputClassName,
   registerOptions,
-}: FormTextInputProps<TFieldValues>): JSX.Element => {
-  const [showPassword, setShowPassword] = useState(false);
+}: FormTextInputProps<TFieldValues, TName>): JSX.Element => {
   const error = getFieldErrorMessage(errors, name);
   const inputId = String(name);
   const { hintId, errorId, describedBy } = getFieldDescriptionIds(inputId, { hint, error });
+  const { ref, ...field } = register(name, { disabled, ...registerOptions });
 
-  const isPassword = type === 'password';
-  const inputType = isPassword && showPassword ? 'text' : type;
-
-  const lockedClassName = disabled || readOnly ? 'cursor-not-allowed opacity-60 bg-muted' : '';
-
-  const inputElement = (
-    <input
-      id={inputId}
-      type={inputType}
-      placeholder={placeholder}
-      disabled={disabled}
-      readOnly={readOnly}
-      aria-required={isRequired}
-      aria-invalid={!!error}
-      aria-describedby={describedBy}
-      {...inputProps}
-      {...register(name, { disabled, ...registerOptions })}
-      className={`${getInputClassName(!!error)} w-full px-3 py-2 ${isPassword ? 'pr-10' : ''} ${lockedClassName}${inputClassName ? ` ${inputClassName}` : ''}`}
-    />
-  );
+  const controlProps = {
+    id: inputId,
+    placeholder,
+    disabled,
+    readOnly,
+    hasError: !!error,
+    'aria-required': isRequired,
+    'aria-invalid': !!error,
+    'aria-describedby': describedBy,
+    ...inputProps,
+    ...field,
+    forwardedRef: ref,
+    className: inputClassName,
+  };
 
   return (
     <FormField
@@ -107,21 +101,10 @@ export const FormTextInput = <TFieldValues extends FieldValues>({
       error={error}
       errorId={errorId}
     >
-      {isPassword ? (
-        <div className="relative">
-          {inputElement}
-          <IconButton
-            icon={showPassword ? Icons.VISIBILITYOFF : Icons.VISIBILITY}
-            size="sm"
-            ariaLabel={showPassword ? 'Hide password' : 'Show password'}
-            onClick={() => {
-              setShowPassword(!showPassword);
-            }}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
-          />
-        </div>
+      {type === 'password' ? (
+        <PasswordVisibilityInput {...controlProps} />
       ) : (
-        inputElement
+        <Input type={type} {...controlProps} />
       )}
     </FormField>
   );

@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 
-import { Button, ProgressBar, Text } from '@web/components/atoms';
+import { Button, FileInput, ProgressBar, Text } from '@web/components/atoms';
 import { ConfirmModal } from '@web/components/organisms';
 import { useVideoReplacement } from '@web/hooks/videos';
 import { formatFileSize } from '@web/utils/format';
@@ -43,12 +43,10 @@ export const VideoReplacer: React.FC<VideoReplacerProps> = ({ videoId, publicId,
 
   return (
     <div className={className}>
-      <input
-        ref={fileSelection.fileInputRef}
-        type="file"
+      <FileInput
+        forwardedRef={fileSelection.fileInputRef}
         accept="video/mp4"
         onChange={fileSelection.handleFileInputChange}
-        className="hidden"
         aria-label="Select replacement video file"
       />
 

@@ -3,10 +3,9 @@
 
 import { useController } from 'react-hook-form';
 
-import { Icon, Icons, Text } from '@web/components/atoms';
+import { SelectTrigger } from '@web/components/atoms';
 import { getFieldDescriptionIds } from '@web/utils/field-description';
 import { getFieldErrorMessage } from '@web/utils/field-error';
-import { getInputClassName } from '@web/utils/input-styles';
 
 import { BaseSelect, type SelectOption } from '../BaseSelect';
 import { FormField } from '../FormField';
@@ -78,30 +77,20 @@ export const FormSelect = <TFieldValues extends FieldValues>({
         options={options}
         listboxAriaLabel={label}
         renderTrigger={({ isOpen, selectedOption, onToggle, onKeyDown, listboxId }) => (
-          <button
+          <SelectTrigger
             id={inputId}
-            type="button"
-            role="combobox"
-            aria-expanded={isOpen}
-            aria-haspopup="listbox"
-            aria-controls={isOpen ? listboxId : undefined}
+            isOpen={isOpen}
+            listboxId={listboxId}
+            isPlaceholder={!selectedOption}
+            hasError={!!error}
             aria-required={isRequired}
             aria-invalid={!!error}
             aria-describedby={describedBy}
             onClick={onToggle}
             onKeyDown={onKeyDown}
-            className={`${getInputClassName(!!error)} flex w-full cursor-pointer items-center justify-between px-3 py-2 text-left`}
           >
-            {selectedOption ? (
-              <Text>{selectedOption.label}</Text>
-            ) : (
-              <Text styleProps={{ colour: 'muted-foreground' }}>{placeholder ?? 'Select...'}</Text>
-            )}
-            <Icon
-              name={Icons.CHEVRONDOWN}
-              styleProps={{ size: 'sm', colour: 'var(--color-muted-foreground)' }}
-            />
-          </button>
+            {selectedOption ? selectedOption.label : (placeholder ?? 'Select...')}
+          </SelectTrigger>
         )}
       />
     </FormField>

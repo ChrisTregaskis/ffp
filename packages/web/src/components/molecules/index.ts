@@ -10,7 +10,6 @@ export { Card, type CardProps } from './Card';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { FormActions, type FormActionsProps } from './FormActions';
 export { FormField, type FormFieldProps } from './FormField';
-export { FormNumberInput, type FormNumberInputProps } from './FormNumberInput';
 export { FormSelect, type FormSelectProps } from './FormSelect';
 export { FormTagInput, type FormTagInputProps } from './FormTagInput';
 export { FormTextarea, type FormTextareaProps } from './FormTextarea';
@@ -29,6 +28,11 @@ export {
   PasswordRequirementsList,
   type PasswordRequirementsListProps,
 } from './PasswordRequirementsList';
+export {
+  PasswordVisibilityInput,
+  type PasswordVisibilityInputProps,
+  type PasswordToggleSize,
+} from './PasswordVisibilityInput';
 export { SearchInput, type SearchInputProps } from './SearchInput';
 export { Select, type SelectProps } from './Select';
 export {

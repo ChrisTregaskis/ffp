@@ -1,15 +1,8 @@
 import { useEffect } from 'react';
 
-import type { RefObject } from 'react';
+import { getFocusableElements } from '@web/utils/focusable';
 
-const FOCUSABLE_SELECTOR = [
-  'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
-  '[tabindex]:not([tabindex="-1"])',
-].join(',');
+import type { RefObject } from 'react';
 
 /**
  * Hook that keeps keyboard focus inside a container while it is active.
@@ -42,7 +35,7 @@ export const useFocusTrap = (ref: RefObject<HTMLElement | null>, enabled = true)
         return;
       }
 
-      const focusable = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+      const focusable = getFocusableElements(container);
       const first = focusable.at(0);
       const last = focusable.at(-1);
       const active = document.activeElement;

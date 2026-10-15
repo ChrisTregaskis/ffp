@@ -3,12 +3,7 @@ import React, { useCallback, useState } from 'react';
 import type { VideoDetailResponse } from '@ffp/core';
 
 import { Text, FormRow } from '@web/components/atoms';
-import {
-  FormActions,
-  FormNumberInput,
-  FormTextarea,
-  FormTextInput,
-} from '@web/components/molecules';
+import { FormActions, FormTextarea, FormTextInput } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
 
 import { VideoSelector } from './VideoSelector';
@@ -77,13 +72,14 @@ export const ExerciseFormFields: React.FC<{
       {videoId && (
         <>
           <FormRow>
-            <FormNumberInput<ExerciseFormValues>
+            <FormTextInput<ExerciseFormValues>
               name="sets"
+              type="number"
               label="Sets"
               placeholder="e.g. 3"
-              min={1}
               register={register}
               errors={errors}
+              inputProps={{ min: 1 }}
             />
             <FormTextInput<ExerciseFormValues>
               name="reps"
@@ -95,21 +91,23 @@ export const ExerciseFormFields: React.FC<{
           </FormRow>
 
           <FormRow>
-            <FormNumberInput<ExerciseFormValues>
+            <FormTextInput<ExerciseFormValues>
               name="durationSeconds"
+              type="number"
               label="Duration (seconds)"
               placeholder="Optional"
-              min={1}
               register={register}
               errors={errors}
+              inputProps={{ min: 1 }}
             />
-            <FormNumberInput<ExerciseFormValues>
+            <FormTextInput<ExerciseFormValues>
               name="restSeconds"
+              type="number"
               label="Rest (seconds)"
               placeholder="Optional"
-              min={0}
               register={register}
               errors={errors}
+              inputProps={{ min: 0 }}
             />
           </FormRow>
 

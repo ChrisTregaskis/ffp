@@ -1,5 +1,4 @@
-import { Icon, Icons, Text } from '@web/components/atoms';
-import { getInputClassName } from '@web/utils/input-styles';
+import { SelectTrigger } from '@web/components/atoms';
 
 import { BaseSelect } from '../BaseSelect';
 
@@ -43,30 +42,17 @@ export const Select: React.FC<SelectProps> = ({
     listboxAriaLabel={ariaLabel}
     className={className}
     renderTrigger={({ isOpen, selectedOption, onToggle, onKeyDown, listboxId }) => (
-      <button
-        type="button"
-        role="combobox"
-        aria-expanded={isOpen}
-        aria-haspopup="listbox"
-        aria-controls={isOpen ? listboxId : undefined}
+      <SelectTrigger
+        size="sm"
+        isOpen={isOpen}
+        listboxId={listboxId}
+        isPlaceholder={selectedOption == null && !!placeholder}
         aria-label={ariaLabel}
         onClick={onToggle}
         onKeyDown={onKeyDown}
-        className={`${getInputClassName(false, 'input', true)} flex w-full cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-left text-sm`}
       >
-        <Text
-          styleProps={{
-            size: 'sm',
-            ...(!(selectedOption != null) && placeholder ? { colour: 'muted-foreground' } : {}),
-          }}
-        >
-          {selectedOption?.label ?? placeholder ?? String(value)}
-        </Text>
-        <Icon
-          name={Icons.CHEVRONDOWN}
-          styleProps={{ size: 'sm', colour: 'var(--color-muted-foreground)' }}
-        />
-      </button>
+        {selectedOption?.label ?? placeholder ?? String(value)}
+      </SelectTrigger>
     )}
   />
 );

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Text, FormRow } from '@web/components/atoms';
-import { FormNumberInput } from '@web/components/molecules';
+import { FormTextInput } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
 
 import type { QuestionFormValues } from '../types';
@@ -43,23 +43,25 @@ export const ValidationRangeFields: React.FC<ValidationRangeFieldsProps> = ({
         {hint}
       </Text>
       <FormRow>
-        <FormNumberInput<QuestionFormValues>
+        <FormTextInput
           name="min"
+          type="number"
           label={minLabel}
           placeholder={minPlaceholder}
-          step="any"
           register={register}
           errors={errors}
-          validate={validateMin}
+          inputProps={{ step: 'any' }}
+          registerOptions={{ validate: validateMin }}
         />
-        <FormNumberInput<QuestionFormValues>
+        <FormTextInput
           name="max"
+          type="number"
           label={maxLabel}
           placeholder={maxPlaceholder}
-          step="any"
           register={register}
           errors={errors}
-          deps={['min']}
+          inputProps={{ step: 'any' }}
+          registerOptions={{ deps: ['min'] }}
         />
       </FormRow>
     </>

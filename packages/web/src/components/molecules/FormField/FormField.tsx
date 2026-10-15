@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Text, FieldError, RequiredIndicator } from '@web/components/atoms';
+import { Text, FieldError, Label } from '@web/components/atoms';
 
 import type { ReactNode } from 'react';
 
@@ -11,6 +11,8 @@ export interface FormFieldProps {
   label: string;
   /** Whether the field is required (shows asterisk) */
   isRequired?: boolean;
+  /** Shown at the far end of the label row, such as a password's strength */
+  labelAside?: ReactNode;
   /** Short guidance shown under the control */
   hint?: string;
   /** Id for the hint element (for aria-describedby) */
@@ -32,6 +34,7 @@ export const FormField: React.FC<FormFieldProps> = ({
   htmlFor,
   label,
   isRequired,
+  labelAside,
   hint,
   hintId,
   error,
@@ -40,10 +43,18 @@ export const FormField: React.FC<FormFieldProps> = ({
   className,
 }) => (
   <div className={className ?? 'mb-4'}>
-    <label htmlFor={htmlFor} className="block mb-1">
-      <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'muted-foreground' }}>{label}</Text>
-      {isRequired && <RequiredIndicator />}
-    </label>
+    {labelAside ? (
+      <div className="mb-1 flex items-center justify-between">
+        <Label htmlFor={htmlFor} isRequired={isRequired}>
+          {label}
+        </Label>
+        {labelAside}
+      </div>
+    ) : (
+      <Label htmlFor={htmlFor} isRequired={isRequired} className="block mb-1">
+        {label}
+      </Label>
+    )}
 
     {children}
 

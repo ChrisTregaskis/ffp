@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { IconButton } from '@web/components/atoms';
-import { FormNumberInput, FormTextInput } from '@web/components/molecules';
+import { FormTextInput } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
 import { REORDERABLE_ACTION_LABELS } from '@web/utils/reorderable-item-actions';
 
@@ -67,13 +67,14 @@ export const QuestionOptionRow: React.FC<QuestionOptionRowProps> = ({
                 .length <= 1 || 'Each option needs its own value',
           }}
         />
-        <FormNumberInput<QuestionFormValues>
+        <FormTextInput<QuestionFormValues>
           name={optionPath(index, 'score')}
+          type="number"
           label="Score"
           placeholder="None"
-          step="any"
           register={register}
           errors={errors}
+          inputProps={{ step: 'any' }}
         />
       </div>
 

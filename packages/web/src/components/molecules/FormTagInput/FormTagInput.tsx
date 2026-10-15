@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useController } from 'react-hook-form';
 
-import { IconButton, Icons } from '@web/components/atoms';
+import { IconButton, Icons, Input } from '@web/components/atoms';
 import { getFieldDescriptionIds } from '@web/utils/field-description';
 import { getFieldErrorMessage } from '@web/utils/field-error';
 import { getInputClassName } from '@web/utils/input-styles';
@@ -123,9 +123,9 @@ export const FormTagInput = <TFieldValues extends FieldValues>({
             />
           </span>
         ))}
-        <input
+        <Input
           id={inputId}
-          type="text"
+          appearance="bare"
           value={inputValue}
           onChange={(e) => {
             setInputValue(e.target.value);

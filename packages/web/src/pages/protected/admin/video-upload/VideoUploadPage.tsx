@@ -3,6 +3,7 @@ import { generatePath, useNavigate } from 'react-router-dom';
 
 import {
   Button,
+  FileInput,
   Icon,
   ProgressBar,
   Text,
@@ -190,13 +191,10 @@ export const VideoUploadPage: React.FC = () => {
               </div>
             )}
 
-            {/* Hidden file input */}
-            <input
-              ref={fileSelection.fileInputRef}
-              type="file"
+            <FileInput
+              forwardedRef={fileSelection.fileInputRef}
               accept="video/mp4"
               onChange={fileSelection.handleFileInputChange}
-              className="hidden"
               aria-hidden="true"
             />
 

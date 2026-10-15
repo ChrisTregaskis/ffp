@@ -19,3 +19,6 @@ export const getInputClassName = (
 
   return `${minHeight} border rounded-md bg-white shadow-sm hover:border-primary ${focusRing} ${border}`;
 };
+
+/** Added to a field that is disabled or read-only */
+export const LOCKED_INPUT_CLASSES = 'cursor-not-allowed opacity-60 bg-muted';
