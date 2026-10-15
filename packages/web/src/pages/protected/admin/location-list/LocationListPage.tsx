@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 
 import type { LocationListResponse } from '@ffp/core';
 
-import { ConfirmModal } from '@web/components/organisms';
+import { DeactivateLocationModal } from '@web/components/locations';
 import type { RowAction } from '@web/components/organisms';
 import { AdminListPageShell } from '@web/components/templates';
 import type { ListEmptyStateControls } from '@web/components/templates';
 import { useAdminLocationsQuery, useLocationActivation } from '@web/hooks/locations';
 import { useAdminOrganisationsQuery } from '@web/hooks/organisations';
+import { toActivationRowAction } from '@web/hooks/useActivationActions';
 import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildLocationColumns, toLocationRow } from './columns';
@@ -59,16 +60,7 @@ export const LocationListPage: React.FC = () => {
         label: 'Edit',
         onClick: handleEditClick,
       },
-      row.status === 'active'
-        ? {
-            label: 'Deactivate',
-            onClick: requestDeactivate,
-            variant: 'danger',
-          }
-        : {
-            label: 'Activate',
-            onClick: activate,
-          },
+      toActivationRowAction(row.status === 'active', { requestDeactivate, activate }),
     ],
     [handleEditClick, requestDeactivate, activate]
   );
@@ -97,15 +89,12 @@ export const LocationListPage: React.FC = () => {
       columns={locationColumns}
       renderEmptyState={renderEmptyState}
     >
-      <ConfirmModal
+      <DeactivateLocationModal
         isOpen={!!activation.pending}
         onClose={activation.cancelDeactivate}
         onConfirm={activation.confirmDeactivate}
         isLoading={activation.isDeactivating}
-        title="Deactivate Location"
-        subtitle={activation.pending?.name}
-        message="Its details and members are kept, so you can activate it again later."
-        confirmLabel="Deactivate Location"
+        locationName={activation.pending?.name ?? ''}
       />
     </AdminListPageShell>
   );

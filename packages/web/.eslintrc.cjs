@@ -12,6 +12,8 @@ const DOMAIN_FOLDERS = [
   'assessment-flows',
   'AssessmentProgress',
   'auth',
+  'locations',
+  'organisations',
   'programme',
   'programme-templates',
   'questions',

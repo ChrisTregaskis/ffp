@@ -1,12 +1,16 @@
 import React, { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import type { UpdateOrganisationInput } from '@ffp/core';
+
+import { DeactivateOrganisationModal } from '@web/components/organisations';
 import { AdminEditPageShell } from '@web/components/templates';
 import {
   useCreateOrganisationMutation,
   useOrganisationDetailQuery,
   useUpdateOrganisationMutation,
 } from '@web/hooks/organisations';
+import { useConfirmBeforeSave } from '@web/hooks/useConfirmBeforeSave';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { RouteKey, routes } from '@web/pages/routes';
 
@@ -51,7 +55,27 @@ export const OrganisationEditPage: React.FC = () => {
     [clearSubmitError, createMutation, saveCallbacks, handleNavigateBack]
   );
 
-  /** Handle edit submission */
+  /** Execute the update mutation */
+  const executeUpdate = useCallback(
+    async (data: UpdateOrganisationInput): Promise<void> => {
+      if (!organisation) {
+        return;
+      }
+
+      clearSubmitError();
+
+      await updateMutation.mutateAsync(
+        { id: organisation.id, publicId: organisation.publicId, data },
+        saveCallbacks('Organisation updated successfully', handleNavigateBack)
+      );
+    },
+    [organisation, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
+  );
+
+  const deactivateConfirm = useConfirmBeforeSave(executeUpdate);
+  const { requestConfirm: requestDeactivateConfirm } = deactivateConfirm;
+
+  /** Handle edit submission — taking the organisation out of use waits for confirmation */
   const handleUpdate = useCallback(
     async (values: OrganisationFormValues): Promise<void> => {
       if (!organisation) {
@@ -66,14 +90,15 @@ export const OrganisationEditPage: React.FC = () => {
         return;
       }
 
-      clearSubmitError();
+      if (payload.status === 'inactive') {
+        await requestDeactivateConfirm(payload);
 
-      await updateMutation.mutateAsync(
-        { id: organisation.id, publicId: organisation.publicId, data: payload },
-        saveCallbacks('Organisation updated successfully', handleNavigateBack)
-      );
+        return;
+      }
+
+      await executeUpdate(payload);
     },
-    [organisation, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
+    [organisation, executeUpdate, requestDeactivateConfirm, handleNavigateBack]
   );
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -92,6 +117,14 @@ export const OrganisationEditPage: React.FC = () => {
       toFormValues={toOrganisationFormValues}
       onCreate={handleCreate}
       onUpdate={handleUpdate}
+      footer={
+        <DeactivateOrganisationModal
+          isOpen={deactivateConfirm.isConfirmOpen}
+          onClose={deactivateConfirm.cancel}
+          onConfirm={deactivateConfirm.confirm}
+          organisationName={organisation?.name ?? ''}
+        />
+      }
     >
       <OrganisationFormFields
         isEditMode={isEditMode}

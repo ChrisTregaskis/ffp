@@ -9,6 +9,7 @@ import {
   useAdminAssessmentFlowsQuery,
   useAssessmentFlowActivation,
 } from '@web/hooks/assessment-flows';
+import { toActivationRowAction } from '@web/hooks/useActivationActions';
 import { RouteKey, routes } from '@web/pages/routes';
 
 import { AssessmentFlowListEmptyState } from './AssessmentFlowListEmptyState';
@@ -58,16 +59,7 @@ export const AssessmentFlowListPage: React.FC = () => {
         label: 'Edit Steps',
         onClick: handleEditStepsClick,
       },
-      row.isActive
-        ? {
-            label: 'Deactivate',
-            onClick: requestDeactivate,
-            variant: 'danger',
-          }
-        : {
-            label: 'Activate',
-            onClick: activate,
-          },
+      toActivationRowAction(row.isActive, { requestDeactivate, activate }),
     ],
     [handleEditClick, handleEditStepsClick, requestDeactivate, activate]
   );

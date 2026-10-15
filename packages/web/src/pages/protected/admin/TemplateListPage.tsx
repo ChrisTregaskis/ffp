@@ -1,11 +1,12 @@
 import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { ConfirmModal } from '@web/components/organisms';
 import type { RowAction } from '@web/components/organisms';
+import { DeactivateTemplateModal } from '@web/components/programme-templates';
 import { AdminListPageShell } from '@web/components/templates';
 import type { ListEmptyStateControls } from '@web/components/templates';
 import { useAdminTemplatesQuery, useTemplateActivation } from '@web/hooks/programme-templates';
+import { toActivationRowAction } from '@web/hooks/useActivationActions';
 import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildTemplateColumns, toTemplateRow } from './programme-template-list/columns';
@@ -41,16 +42,7 @@ export const TemplateListPage: React.FC = () => {
         label: 'View Detail',
         onClick: handleViewClick,
       },
-      row.isActive
-        ? {
-            label: 'Deactivate',
-            onClick: requestDeactivate,
-            variant: 'danger',
-          }
-        : {
-            label: 'Activate',
-            onClick: activate,
-          },
+      toActivationRowAction(row.isActive, { requestDeactivate, activate }),
     ],
     [handleViewClick, requestDeactivate, activate]
   );
@@ -84,15 +76,12 @@ export const TemplateListPage: React.FC = () => {
       columns={templateColumns}
       renderEmptyState={renderEmptyState}
     >
-      <ConfirmModal
+      <DeactivateTemplateModal
         isOpen={!!activation.pending}
         onClose={activation.cancelDeactivate}
         onConfirm={activation.confirmDeactivate}
         isLoading={activation.isDeactivating}
-        title="Deactivate Template"
-        subtitle={activation.pending?.name}
-        message="Members will no longer be given this programme. Its phases and sessions are kept, so you can activate it again later."
-        confirmLabel="Deactivate Template"
+        templateName={activation.pending?.name ?? ''}
       />
     </AdminListPageShell>
   );

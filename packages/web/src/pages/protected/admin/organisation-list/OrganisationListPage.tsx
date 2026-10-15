@@ -1,11 +1,12 @@
 import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { ConfirmModal } from '@web/components/organisms';
+import { DeactivateOrganisationModal } from '@web/components/organisations';
 import type { RowAction } from '@web/components/organisms';
 import { AdminListPageShell } from '@web/components/templates';
 import type { ListEmptyStateControls } from '@web/components/templates';
 import { useAdminOrganisationsQuery, useOrganisationActivation } from '@web/hooks/organisations';
+import { toActivationRowAction } from '@web/hooks/useActivationActions';
 import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildOrganisationColumns, toOrganisationRow } from './columns';
@@ -40,16 +41,7 @@ export const OrganisationListPage: React.FC = () => {
         label: 'Edit',
         onClick: handleEditClick,
       },
-      row.status === 'active'
-        ? {
-            label: 'Deactivate',
-            onClick: requestDeactivate,
-            variant: 'danger',
-          }
-        : {
-            label: 'Activate',
-            onClick: activate,
-          },
+      toActivationRowAction(row.status === 'active', { requestDeactivate, activate }),
     ],
     [handleEditClick, requestDeactivate, activate]
   );
@@ -81,15 +73,12 @@ export const OrganisationListPage: React.FC = () => {
       columns={organisationColumns}
       renderEmptyState={renderEmptyState}
     >
-      <ConfirmModal
+      <DeactivateOrganisationModal
         isOpen={!!activation.pending}
         onClose={activation.cancelDeactivate}
         onConfirm={activation.confirmDeactivate}
         isLoading={activation.isDeactivating}
-        title="Deactivate Organisation"
-        subtitle={activation.pending?.name}
-        message="Its locations and members are kept, so you can activate it again later."
-        confirmLabel="Deactivate Organisation"
+        organisationName={activation.pending?.name ?? ''}
       />
     </AdminListPageShell>
   );

@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 
+import type { RowAction } from '@web/components/organisms';
 import { useToast } from '@web/hooks/useToast';
 
 export interface ActivationCallbacks {
@@ -93,3 +94,15 @@ export const useActivationActions = <TTarget>({
     isActivating,
   };
 };
+
+/**
+ * The list row's Deactivate (asks first) or Activate action. Pass the two
+ * callbacks rather than the whole result, which is a new object every render.
+ */
+export const toActivationRowAction = <TRow>(
+  isActive: boolean,
+  { requestDeactivate, activate }: Pick<ActivationActions<TRow>, 'requestDeactivate' | 'activate'>
+): RowAction<TRow> =>
+  isActive
+    ? { label: 'Deactivate', onClick: requestDeactivate, variant: 'danger' }
+    : { label: 'Activate', onClick: activate };

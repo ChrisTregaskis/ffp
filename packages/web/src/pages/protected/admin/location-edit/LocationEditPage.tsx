@@ -1,12 +1,16 @@
 import React, { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import type { UpdateLocationInput } from '@ffp/core';
+
+import { DeactivateLocationModal } from '@web/components/locations';
 import { AdminEditPageShell } from '@web/components/templates';
 import {
   useCreateLocationMutation,
   useLocationDetailQuery,
   useUpdateLocationMutation,
 } from '@web/hooks/locations';
+import { useConfirmBeforeSave } from '@web/hooks/useConfirmBeforeSave';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { RouteKey, routes } from '@web/pages/routes';
 
@@ -52,7 +56,27 @@ export const LocationEditPage: React.FC = () => {
     [clearSubmitError, createMutation, saveCallbacks, handleNavigateBack]
   );
 
-  /** Handle edit submission */
+  /** Execute the update mutation */
+  const executeUpdate = useCallback(
+    async (data: UpdateLocationInput): Promise<void> => {
+      if (!location) {
+        return;
+      }
+
+      clearSubmitError();
+
+      await updateMutation.mutateAsync(
+        { id: location.id, publicId: location.publicId, data },
+        saveCallbacks('Location updated successfully', handleNavigateBack)
+      );
+    },
+    [location, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
+  );
+
+  const deactivateConfirm = useConfirmBeforeSave(executeUpdate);
+  const { requestConfirm: requestDeactivateConfirm } = deactivateConfirm;
+
+  /** Handle edit submission — taking the location out of use waits for confirmation */
   const handleUpdate = useCallback(
     async (values: LocationFormValues): Promise<void> => {
       if (!location) {
@@ -67,14 +91,15 @@ export const LocationEditPage: React.FC = () => {
         return;
       }
 
-      clearSubmitError();
+      if (payload.status === 'inactive') {
+        await requestDeactivateConfirm(payload);
 
-      await updateMutation.mutateAsync(
-        { id: location.id, publicId: location.publicId, data: payload },
-        saveCallbacks('Location updated successfully', handleNavigateBack)
-      );
+        return;
+      }
+
+      await executeUpdate(payload);
     },
-    [location, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
+    [location, executeUpdate, requestDeactivateConfirm, handleNavigateBack]
   );
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -93,6 +118,14 @@ export const LocationEditPage: React.FC = () => {
       toFormValues={toLocationFormValues}
       onCreate={handleCreate}
       onUpdate={handleUpdate}
+      footer={
+        <DeactivateLocationModal
+          isOpen={deactivateConfirm.isConfirmOpen}
+          onClose={deactivateConfirm.cancel}
+          onConfirm={deactivateConfirm.confirm}
+          locationName={location?.name ?? ''}
+        />
+      }
     >
       <LocationFormFields
         isEditMode={isEditMode}

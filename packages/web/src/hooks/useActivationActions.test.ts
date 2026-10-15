@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useActivationActions } from './useActivationActions';
+import { toActivationRowAction, useActivationActions } from './useActivationActions';
 
 import type { ActivationActions, ActivationCallbacks } from './useActivationActions';
 
@@ -176,5 +176,25 @@ describe('useActivationActions', () => {
 
     expect(result.current.isDeactivating).toBe(true);
     expect(result.current.isActivating).toBe(true);
+  });
+});
+
+describe('toActivationRowAction', () => {
+  const requestDeactivate = vi.fn();
+  const activate = vi.fn();
+
+  it('offers a danger Deactivate that asks first when active', () => {
+    expect(toActivationRowAction<Target>(true, { requestDeactivate, activate })).toEqual({
+      label: 'Deactivate',
+      onClick: requestDeactivate,
+      variant: 'danger',
+    });
+  });
+
+  it('offers Activate when not active', () => {
+    expect(toActivationRowAction<Target>(false, { requestDeactivate, activate })).toEqual({
+      label: 'Activate',
+      onClick: activate,
+    });
   });
 });

@@ -26,7 +26,7 @@ interface AdminEditPageShellBaseProps<TFormValues extends FieldValues, TRecord> 
   toFormValues: (record: TRecord) => TFormValues;
   /**
    * Returns the save's promise (`mutateAsync`) so the form knows when it lands. A save behind
-   * a confirm returns one the modal settles exactly once; `VideoEditPage`'s archive shows how.
+   * a confirm returns one the modal settles exactly once, through `useConfirmBeforeSave`.
    */
   onUpdate: (values: TFormValues) => Promise<void>;
   /** Content above the form, outside it; shown only once the form is */

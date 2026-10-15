@@ -10,6 +10,7 @@ import {
   useQuestionActivation,
   useQuestionDetailQuery,
 } from '@web/hooks/questions';
+import { toActivationRowAction } from '@web/hooks/useActivationActions';
 import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildQuestionColumns, toQuestionRow } from './columns';
@@ -51,16 +52,7 @@ export const QuestionListPage: React.FC = () => {
         label: 'Edit',
         onClick: handleEditClick,
       },
-      row.isActive
-        ? {
-            label: 'Deactivate',
-            onClick: requestDeactivate,
-            variant: 'danger',
-          }
-        : {
-            label: 'Activate',
-            onClick: activate,
-          },
+      toActivationRowAction(row.isActive, { requestDeactivate, activate }),
     ],
     [handleEditClick, requestDeactivate, activate]
   );
