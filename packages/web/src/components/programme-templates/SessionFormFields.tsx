@@ -1,12 +1,7 @@
 import React from 'react';
 
 import { FormRow } from '@web/components/atoms';
-import {
-  FormActions,
-  FormNumberInput,
-  FormTextarea,
-  FormTextInput,
-} from '@web/components/molecules';
+import { FormActions, FormTextarea, FormTextInput } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
 
 import type { SessionFormValues } from './SessionForm';
@@ -31,13 +26,14 @@ export const SessionFormFields: React.FC<{
           isRequired
         />
 
-        <FormNumberInput<SessionFormValues>
+        <FormTextInput<SessionFormValues>
           name="estimatedDurationMinutes"
+          type="number"
           label="Duration (minutes)"
           placeholder="e.g. 30"
-          min={1}
           register={register}
           errors={errors}
+          inputProps={{ min: 1 }}
         />
       </FormRow>
 

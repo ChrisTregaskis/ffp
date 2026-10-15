@@ -2,11 +2,10 @@ import React from 'react';
 
 import type { VideoStatus } from '@ffp/core';
 
-import { Text, Title, FieldError, FormRow, RequiredIndicator } from '@web/components/atoms';
+import { Text, Title, FormRow } from '@web/components/atoms';
 import type { SelectOption } from '@web/components/molecules';
 import {
   FormActions,
-  FormNumberInput,
   FormSelect,
   StaticAlert,
   FormTagInput,
@@ -15,7 +14,6 @@ import {
 } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
 import { DIFFICULTY_OPTIONS } from '@web/constants';
-import { getInputClassName } from '@web/utils/input-styles';
 
 import { MOVEMENT_TYPE_OPTIONS } from './constants';
 
@@ -86,7 +84,6 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
   const { register, control, errors } = useComposableFormContext<VideoMetadataFormValues>();
 
   const isEdit = variant === 'edit';
-  const titleError = errors.title?.message;
   const statusOptions = currentStatus ? STATUS_OPTIONS_BY_CURRENT[currentStatus] : [];
 
   return (
@@ -95,28 +92,18 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
 
       {/* Row 1: Title + Movement Type (2-col) */}
       <FormRow>
-        <div className="mb-4">
-          <label htmlFor="title" className="mb-1 block">
-            <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'muted-foreground' }}>
-              Video Title
-            </Text>
-            <RequiredIndicator />
-          </label>
-          <input
-            id="title"
-            type="text"
-            placeholder="e.g. Seated Hamstring Stretch"
-            aria-required
-            aria-invalid={!!titleError}
-            aria-describedby={titleError ? 'title-error' : undefined}
-            {...register('title', {
-              required: 'Video Title is required',
-              maxLength: { value: 255, message: 'Maximum length is 255 characters' },
-            })}
-            className={`${getInputClassName(!!titleError)} w-full px-3 py-2`}
-          />
-          {titleError && <FieldError id="title-error" message={titleError} />}
-        </div>
+        <FormTextInput
+          name="title"
+          label="Video Title"
+          placeholder="e.g. Seated Hamstring Stretch"
+          register={register}
+          errors={errors}
+          isRequired
+          registerOptions={{
+            required: 'Video Title is required',
+            maxLength: { value: 255, message: 'Maximum length is 255 characters' },
+          }}
+        />
 
         <FormSelect
           name="movementType"
@@ -201,14 +188,15 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
 
           {/* Sets + Reps (2-col) */}
           <FormRow>
-            <FormNumberInput
+            <FormTextInput
               name="defaultSets"
+              type="number"
               label="Sets"
               placeholder="e.g. 3"
-              min={1}
               register={register}
               errors={errors}
-              validate={validatePositiveInteger}
+              inputProps={{ min: 1 }}
+              registerOptions={{ validate: validatePositiveInteger }}
             />
             <FormTextInput
               name="defaultReps"
@@ -221,23 +209,25 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
 
           {/* Duration + Rest (2-col) */}
           <FormRow>
-            <FormNumberInput
+            <FormTextInput
               name="defaultDurationSeconds"
+              type="number"
               label="Duration (seconds)"
               placeholder="e.g. 30"
-              min={1}
               register={register}
               errors={errors}
-              validate={validatePositiveInteger}
+              inputProps={{ min: 1 }}
+              registerOptions={{ validate: validatePositiveInteger }}
             />
-            <FormNumberInput
+            <FormTextInput
               name="defaultRestSeconds"
+              type="number"
               label="Rest (seconds)"
               placeholder="e.g. 60"
-              min={1}
               register={register}
               errors={errors}
-              validate={validatePositiveInteger}
+              inputProps={{ min: 1 }}
+              registerOptions={{ validate: validatePositiveInteger }}
             />
           </FormRow>
 

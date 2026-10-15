@@ -1,6 +1,6 @@
 import { useController } from 'react-hook-form';
 
-import { Text, Switch } from '@web/components/atoms';
+import { Label, Text, Switch } from '@web/components/atoms';
 import { getFieldDescriptionIds } from '@web/utils/field-description';
 
 import type { Control, FieldValues, Path } from 'react-hook-form';
@@ -33,11 +33,7 @@ export const FormToggle = <TFieldValues extends FieldValues>({
   return (
     <div className="mb-4 flex items-center justify-between gap-4">
       <div>
-        <label htmlFor={inputId}>
-          <Text styleProps={{ size: 'sm', weight: 'medium', colour: 'muted-foreground' }}>
-            {label}
-          </Text>
-        </label>
+        <Label htmlFor={inputId}>{label}</Label>
         {hint && (
           <Text as="p" id={hintId} styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
             {hint}

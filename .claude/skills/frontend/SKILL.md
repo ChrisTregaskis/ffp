@@ -37,7 +37,7 @@ You are a senior React/TypeScript engineer specialising in healthcare SaaS UI de
 | `<h1>`, `<h2>`, `<h3>` | `<Title as="h1" colour="foreground">`                                   |
 | `<p>`, `<span>`        | `<Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>` |
 | `<button>`             | `<Button variant="primary">` or `<IconButton>`                          |
-| `<input>`              | `<FormTextInput>`                                                       |
+| `<input>`              | `<FormTextInput>` in a form, or the `Input` atom                        |
 
 **Acceptable raw HTML**: `div`, `section`, `nav`, `header`, `footer`, `ul`, `ol`, `li`, `form`, semantic layout elements.
 
@@ -88,10 +88,12 @@ packages/web/src/
 │   ├── atoms/<Name>/            generic; each wraps one raw element or primitive
 │   │   ├── <Name>.tsx           e.g. Button, IconButton, Text, Title, Icon, IconBadge, Switch, FieldError,
 │   │   └── index.ts                  LoadingSpinner, ProgressBar, Logo, Panel, PageContainer, ContentPanel, FormRow,
-│   │                                 FloatingPanel
+│   │                                 FloatingPanel, and the form controls: Input, Textarea, Label, Checkbox,
+│   │                                 FileInput, SelectTrigger
 │   ├── atoms/index.ts           level barrel: what consumers import
 │   ├── molecules/<Name>/        generic; atoms combined for one job
-│   │                            e.g. FormField, FormTextInput, FormSelect, FormToggle, Select, BaseSelect, StatusResult,
+│   │                            e.g. FormField, FormTextInput (text, email, password, number), FormSelect, FormToggle,
+│   │                                 PasswordVisibilityInput, Select, BaseSelect, StatusResult,
 │   │                                 EmptyState, StaticAlert, PageHeader, SearchInput, Accordion, Card, MenuList
 │   ├── organisms/<Name>/        generic; self-contained sections
 │   │                            e.g. Table (+ private TableHeader/TableBody/… files), Modal, ConfirmModal, DropdownMenu,

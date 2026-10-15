@@ -1,6 +1,6 @@
+import { Textarea } from '@web/components/atoms';
 import { getFieldDescriptionIds } from '@web/utils/field-description';
 import { getFieldErrorMessage } from '@web/utils/field-error';
-import { getInputClassName } from '@web/utils/input-styles';
 
 import { FormField } from '../FormField';
 
@@ -33,6 +33,7 @@ export const FormTextarea = <TFieldValues extends FieldValues>({
   const error = getFieldErrorMessage(errors, name);
   const inputId = String(name);
   const { errorId, describedBy } = getFieldDescriptionIds(inputId, { error });
+  const { ref, ...field } = register(name);
 
   return (
     <FormField
@@ -42,15 +43,16 @@ export const FormTextarea = <TFieldValues extends FieldValues>({
       error={error}
       errorId={errorId}
     >
-      <textarea
+      <Textarea
         id={inputId}
         placeholder={placeholder}
         rows={rows}
+        hasError={!!error}
         aria-required={isRequired}
         aria-invalid={!!error}
         aria-describedby={describedBy}
-        {...register(name)}
-        className={`${getInputClassName(!!error)} w-full px-3 py-2 resize-y`}
+        {...field}
+        forwardedRef={ref}
       />
     </FormField>
   );

@@ -5,6 +5,7 @@ import { Button, FloatingPanel, Icon, Icons } from '@web/components/atoms';
 import { MenuList, type MenuListItem } from '@web/components/molecules';
 import { useClickOutside } from '@web/hooks/useClickOutside';
 import { useMenuButton } from '@web/hooks/useMenuButton';
+import { getFocusableElements } from '@web/utils/focusable';
 
 import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
@@ -66,13 +67,30 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
   const menu = useMenuButton(items ?? NO_ITEMS, placePanel);
   const { close: closeMenu, menuRef } = menu;
 
+  // Focus left in the panel would drop to <body> as it unmounts, so it returns to the trigger
   const closePopover = useCallback((): void => {
+    const active = document.activeElement;
     setIsPopoverOpen(false);
+
+    if (active instanceof Node && popoverRef.current?.contains(active)) {
+      popoverTriggerRef.current?.focus({ preventScroll: true });
+    }
   }, []);
 
   useClickOutside([containerRef, popoverRef], closePopover, isPopoverOpen);
 
   const isOpen = hasItems ? menu.isOpen : isPopoverOpen;
+
+  // The panel is portalled to the end of <body>, out of the trigger's tab order, so focus is taken in
+  useEffect(() => {
+    const panel = popoverRef.current;
+
+    if (!isPopoverOpen || !panel) {
+      return;
+    }
+
+    (getFocusableElements(panel).at(0) ?? panel).focus({ preventScroll: true });
+  }, [isPopoverOpen]);
 
   // A scroll would leave the portal behind its trigger, so collapse instead of repositioning
   useEffect(() => {
@@ -128,6 +146,29 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
     [isPopoverOpen]
   );
 
+  // Tabbing past either end leaves the popover, back to its trigger, rather than into the browser
+  const handlePanelKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLElement>): void => {
+      if (event.key !== 'Tab') {
+        handlePopoverKeyDown(event);
+
+        return;
+      }
+
+      const panel = popoverRef.current;
+      const focusable = panel ? getFocusableElements(panel) : [];
+      const edge = event.shiftKey ? focusable.at(0) : focusable.at(-1);
+      // A click on the panel's padding focuses the panel itself, which sits before its first control
+      const isLeavingFromPanel = event.shiftKey && document.activeElement === panel;
+
+      if (edge === undefined || document.activeElement === edge || isLeavingFromPanel) {
+        event.preventDefault();
+        closePopover();
+      }
+    },
+    [handlePopoverKeyDown, closePopover]
+  );
+
   if (!hasItems && !hasContent) {
     return null;
   }
@@ -180,7 +221,8 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
             id={popoverId}
             role="dialog"
             aria-label={label}
-            onKeyDown={handlePopoverKeyDown}
+            tabIndex={-1}
+            onKeyDown={handlePanelKeyDown}
             style={panelStyle}
           >
             {renderContent()}

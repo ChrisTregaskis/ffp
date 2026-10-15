@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { FormNumberInput } from '@web/components/molecules';
+import { FormTextInput } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
 
 import type { FlowStepFormValues } from './flow-step-form-values';
@@ -10,13 +10,14 @@ export const StepEstimatedMinutesField: React.FC = () => {
   const { register, errors } = useComposableFormContext<FlowStepFormValues>();
 
   return (
-    <FormNumberInput<FlowStepFormValues>
+    <FormTextInput<FlowStepFormValues>
       name="estimatedMinutes"
+      type="number"
       label="Estimated minutes"
       placeholder="Optional"
-      min={1}
       register={register}
       errors={errors}
+      inputProps={{ min: 1 }}
     />
   );
 };

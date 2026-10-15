@@ -1,4 +1,4 @@
-import { Text } from '@web/components/atoms';
+import { Checkbox, Label } from '@web/components/atoms';
 
 import { DropdownMenu } from '../DropdownMenu';
 
@@ -33,20 +33,19 @@ export const TableColumnVisibility = <TData,>({
             const label = meta?.label ?? column.id;
 
             return (
-              <label
+              <Label
                 key={column.id}
+                variant="option"
+                control={
+                  <Checkbox
+                    checked={column.getIsVisible()}
+                    onChange={column.getToggleVisibilityHandler()}
+                  />
+                }
                 className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted/50"
               >
-                <input
-                  type="checkbox"
-                  checked={column.getIsVisible()}
-                  onChange={column.getToggleVisibilityHandler()}
-                  className="h-4 w-4 rounded border-muted-foreground text-primary focus:ring-primary"
-                />
-                <Text as="span" styleProps={{ size: 'sm', colour: 'foreground' }}>
-                  {label}
-                </Text>
-              </label>
+                {label}
+              </Label>
             );
           })}
         </div>

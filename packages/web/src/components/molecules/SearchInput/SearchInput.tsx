@@ -1,7 +1,6 @@
 import { useCallback, useRef } from 'react';
 
-import { IconButton, Icon, Icons } from '@web/components/atoms';
-import { getInputClassName } from '@web/utils/input-styles';
+import { IconButton, Icon, Icons, Input } from '@web/components/atoms';
 
 export interface SearchInputProps {
   /** Current search value */
@@ -46,16 +45,16 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         />
       </div>
 
-      <input
-        ref={inputRef}
-        type="text"
+      <Input
+        forwardedRef={inputRef}
+        size="sm"
         value={value}
         onChange={(e) => {
           onChange(e.target.value);
         }}
         placeholder={placeholder}
         aria-label={ariaLabel}
-        className={`${getInputClassName(false, 'input', true)} w-full py-1.5 pl-9 pr-8 text-sm`}
+        className="pl-9 pr-8"
       />
 
       {/* Clear button */}

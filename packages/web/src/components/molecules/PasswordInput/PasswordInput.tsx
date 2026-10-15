@@ -1,7 +1,18 @@
-import { useState } from 'react';
-
-import { IconButton, Text, PasswordStrengthIndicator } from '@web/components/atoms';
+import { PasswordStrengthIndicator } from '@web/components/atoms';
+import { getFieldDescriptionIds } from '@web/utils/field-description';
 import type { PasswordStrength } from '@web/utils/passwordStrength';
+
+import { FormField } from '../FormField';
+import { PasswordVisibilityInput } from '../PasswordVisibilityInput';
+
+/** The sign-in screens' larger, softer input, kept apart from the admin field look */
+const AUTH_INPUT_CLASSES =
+  'w-full rounded-lg border px-4 py-3 text-base transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-muted';
+
+const AUTH_INPUT_STATE_CLASSES = {
+  valid: 'border-border focus:border-primary focus:ring-primary',
+  error: 'border-destructive focus:border-destructive focus:ring-destructive',
+};
 
 export interface PasswordInputProps {
   /** Input label */
@@ -26,14 +37,7 @@ export interface PasswordInputProps {
   disabled?: boolean;
 }
 
-/**
- * Password input component with show/hide toggle and strength indicator.
- *
- * Features:
- * - Toggle to show/hide password characters
- * - Password strength indicator in top-right corner (when showStrength is true)
- * - Error state styling
- */
+/** A controlled password field for the sign-in screens, with the show/hide toggle and an optional strength reading. */
 export const PasswordInput: React.FC<PasswordInputProps> = ({
   label,
   placeholder,
@@ -46,70 +50,36 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
   showStrength = false,
   disabled = false,
 }) => {
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-
-  const handleToggleVisibility = (): void => {
-    setIsPasswordVisible(!isPasswordVisible);
-  };
+  const error = hasError ? errorMessage : undefined;
+  const { errorId, describedBy } = getFieldDescriptionIds(name, { error });
 
   return (
-    <div className="space-y-2">
-      {/* Label row with strength indicator */}
-      <div className="flex items-center justify-between">
-        <label htmlFor={name}>
-          <Text styleProps={{ size: 'sm', weight: 'medium' }} className="text-foreground">
-            {label}
-          </Text>
-        </label>
-        {/* Password strength indicator (aligned right in label row) */}
-        {showStrength && <PasswordStrengthIndicator strength={strength ?? null} />}
-      </div>
-
-      {/* Input container with relative positioning for visibility toggle */}
-      <div className="relative">
-        {/* Input field */}
-        <input
-          type={isPasswordVisible ? 'text' : 'password'}
-          id={name}
-          name={name}
-          value={value}
-          onChange={(e) => {
-            onChange(e.target.value);
-          }}
-          placeholder={placeholder}
-          disabled={disabled}
-          className={`
-            w-full rounded-lg border px-4 py-3 pr-12 text-base
-            transition-colors duration-200
-            focus:outline-none focus:ring-2 focus:ring-offset-2
-            disabled:cursor-not-allowed disabled:bg-muted
-            ${
-              hasError
-                ? 'border-destructive focus:border-destructive focus:ring-destructive'
-                : 'border-border focus:border-primary focus:ring-primary'
-            }
-          `}
-        />
-
-        {/* Show/Hide visibility toggle using IconButton */}
-        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-          <IconButton
-            icon={isPasswordVisible ? 'VisibilityOff' : 'Visibility'}
-            size="md"
-            onClick={handleToggleVisibility}
-            ariaLabel={isPasswordVisible ? 'Hide password' : 'Show password'}
-            disabled={disabled}
-            className="text-muted-foreground hover:text-foreground"
-          />
-        </div>
-      </div>
-
-      {/* Error message */}
-      {hasError && errorMessage && (
-        <Text styleProps={{ size: 'sm' }} className="text-destructive">
-          {errorMessage}
-        </Text>
-      )}
-    </div>
+    // The auth forms space their fields themselves, so the wrapper adds no margin
+    <FormField
+      htmlFor={name}
+      label={label}
+      labelAside={
+        showStrength ? <PasswordStrengthIndicator strength={strength ?? null} /> : undefined
+      }
+      error={error}
+      errorId={errorId}
+      className=""
+    >
+      <PasswordVisibilityInput
+        id={name}
+        name={name}
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+        }}
+        placeholder={placeholder}
+        disabled={disabled}
+        appearance="bare"
+        toggleSize="md"
+        aria-invalid={hasError}
+        aria-describedby={describedBy}
+        className={`${AUTH_INPUT_CLASSES} ${AUTH_INPUT_STATE_CLASSES[hasError ? 'error' : 'valid']}`}
+      />
+    </FormField>
   );
 };

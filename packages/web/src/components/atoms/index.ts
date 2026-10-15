@@ -1,6 +1,8 @@
 export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from './Button';
+export { Checkbox, type CheckboxProps } from './Checkbox';
 export { ContentPanel } from './ContentPanel';
 export { FieldError, type FieldErrorProps } from './FieldError';
+export { FileInput, type FileInputProps } from './FileInput';
 export { FloatingPanel, type FloatingPanelProps } from './FloatingPanel';
 export { FormRow, type FormRowProps } from './FormRow';
 export {
@@ -21,6 +23,8 @@ export {
   type IconBadgeShape,
 } from './IconBadge';
 export { IconButton, type IconButtonProps } from './IconButton';
+export { Input, type InputProps, type InputSize, type InputAppearance } from './Input';
+export { Label, type LabelProps, type LabelVariant } from './Label';
 export {
   LoadingSpinner,
   type LoadingSpinnerProps,
@@ -36,6 +40,7 @@ export {
 } from './PasswordStrengthIndicator';
 export { ProgressBar, type ProgressBarProps } from './ProgressBar';
 export { RequiredIndicator } from './RequiredIndicator';
+export { SelectTrigger, type SelectTriggerProps, type SelectTriggerSize } from './SelectTrigger';
 export { Switch, type SwitchProps } from './Switch';
 export {
   Text,
@@ -45,4 +50,5 @@ export {
   type TextSize,
   type TextWeight,
 } from './Text';
+export { Textarea, type TextareaProps } from './Textarea';
 export { Title, type TitleProps, type TitleLevel } from './Title';

@@ -14,7 +14,8 @@ import { Text } from '../Text';
  * ```
  */
 export const RequiredIndicator: React.FC = () => (
-  <Text as="span" styleProps={{ colour: 'destructive' }} className="ml-1" aria-hidden="true">
-    *<span className="sr-only"> (required)</span>
+  <Text as="span" styleProps={{ colour: 'destructive' }} className="ml-1">
+    <span aria-hidden="true">*</span>
+    <span className="sr-only"> (required)</span>
   </Text>
 );

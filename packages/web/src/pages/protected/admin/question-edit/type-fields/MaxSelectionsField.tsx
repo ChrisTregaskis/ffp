@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { FormNumberInput } from '@web/components/molecules';
+import { FormTextInput } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
 
 import type { QuestionFormValues } from '../types';
@@ -26,14 +26,15 @@ export const MaxSelectionsField: React.FC = () => {
   };
 
   return (
-    <FormNumberInput<QuestionFormValues>
+    <FormTextInput
       name="maxSelections"
+      type="number"
       label={`Most options a member can pick (up to ${String(optionCount)})`}
       placeholder="No limit"
-      min={1}
       register={register}
       errors={errors}
-      validate={validate}
+      inputProps={{ min: 1 }}
+      registerOptions={{ validate }}
     />
   );
 };
