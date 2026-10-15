@@ -6,7 +6,7 @@ import type { AdminVideoListResponse, PaginationInput } from '@ffp/core';
 
 import type { RowAction } from '@web/components/organisms';
 import { AdminListPageShell } from '@web/components/templates';
-import type { ListEmptyStateControls, ListFilterValues } from '@web/components/templates';
+import type { AdminListEmptyState, ListFilterValues } from '@web/components/templates';
 import { ArchiveVideoModal } from '@web/components/video';
 import { useToast } from '@web/hooks/useToast';
 import { useAdminVideosQuery, useUpdateVideoMutation } from '@web/hooks/videos';
@@ -14,9 +14,9 @@ import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildVideoColumns, type VideoRow } from './video-library/columns';
 import { TABLE_FILTERS } from './video-library/constants';
-import { VideoLibraryEmptyState } from './video-library/VideoLibraryEmptyState';
 
 const DEFAULT_SORT = { id: 'createdAt', desc: true };
+
 const DEFAULT_COLUMN_VISIBILITY = { movementType: false, updatedAt: false, tags: false };
 
 /** The video list takes enum-typed filters, so the raw values pass through its schema first. */
@@ -30,6 +30,14 @@ const useVideoList = (
 };
 
 const toVideoRow = (video: AdminVideoListResponse): VideoRow => video as VideoRow;
+
+const EMPTY_STATE: AdminListEmptyState = {
+  filteredTitle: 'No matching videos',
+  icon: 'Video',
+  iconVariant: 'neutral',
+  title: 'No videos yet',
+  description: 'Upload your first exercise video to start building the video library.',
+};
 
 export const VideoLibraryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -136,13 +144,6 @@ export const VideoLibraryPage: React.FC = () => {
 
   const videoColumns = useMemo(() => buildVideoColumns(rowActions), [rowActions]);
 
-  const renderEmptyState = useCallback(
-    ({ hasActiveControls }: ListEmptyStateControls) => (
-      <VideoLibraryEmptyState hasFilters={hasActiveControls} onUploadClick={handleUploadClick} />
-    ),
-    [handleUploadClick]
-  );
-
   return (
     <AdminListPageShell
       title="Video Library"
@@ -158,7 +159,7 @@ export const VideoLibraryPage: React.FC = () => {
       useList={useVideoList}
       toRow={toVideoRow}
       columns={videoColumns}
-      renderEmptyState={renderEmptyState}
+      emptyState={EMPTY_STATE}
     >
       <ArchiveVideoModal
         isOpen={!!archiveTarget}

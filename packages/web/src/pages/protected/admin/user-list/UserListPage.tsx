@@ -3,18 +3,28 @@ import { useNavigate } from 'react-router-dom';
 
 import type { RowAction } from '@web/components/organisms';
 import { AdminListPageShell } from '@web/components/templates';
-import type { ListEmptyStateControls } from '@web/components/templates';
+import type { AdminListEmptyState } from '@web/components/templates';
 import { useAdminUsersQuery } from '@web/hooks/users';
 import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildUserColumns, toUserRow } from './columns';
 import { TABLE_FILTERS } from './constants';
-import { UserListEmptyState } from './UserListEmptyState';
 
 import type { UserRow } from './columns';
 
 const DEFAULT_SORT = { id: 'createdAt', desc: true };
 const DEFAULT_FILTERS = { role: 'programme_user' };
+
+const EMPTY_STATE: AdminListEmptyState = {
+  filteredTitle: 'No matching users',
+  icon: 'Users',
+  iconVariant: 'primary',
+  title: 'No users yet',
+  description: 'Create your first programme user to start onboarding.',
+  // The default role narrows to one of three rather than setting a baseline, so an empty
+  // result means none of that role; "All Roles" shows the rest
+  defaultsNarrow: true,
+};
 
 export const UserListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -42,16 +52,6 @@ export const UserListPage: React.FC = () => {
 
   const userColumns = useMemo(() => buildUserColumns(rowActions), [rowActions]);
 
-  // hasActiveControls, not hasNonDefaultControls: the default role narrows to one
-  // of three rather than setting a baseline, so an empty result means none of that
-  // role. A genuinely empty list reads as filtered too; "All Roles" shows the rest.
-  const renderEmptyState = useCallback(
-    ({ hasActiveControls }: ListEmptyStateControls) => (
-      <UserListEmptyState hasFilters={hasActiveControls} onCreateClick={handleCreateClick} />
-    ),
-    [handleCreateClick]
-  );
-
   return (
     <AdminListPageShell
       title="Users"
@@ -67,7 +67,7 @@ export const UserListPage: React.FC = () => {
       useList={useAdminUsersQuery}
       toRow={toUserRow}
       columns={userColumns}
-      renderEmptyState={renderEmptyState}
+      emptyState={EMPTY_STATE}
     />
   );
 };

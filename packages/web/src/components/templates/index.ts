@@ -2,7 +2,7 @@ export { AdminEditPageShell, type AdminEditPageShellProps } from './AdminEditPag
 export {
   AdminListPageShell,
   type AdminListPageShellProps,
-  type ListEmptyStateControls,
+  type AdminListEmptyState,
   type ListFilterValues,
 } from './AdminListPageShell';
 export { AppLayout } from './AppLayout';
