@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { Button, Icon, Icons, Logo, Text } from '@web/components/atoms';
+import { Button, Icon, Icons, Logo, PressableArea, Text } from '@web/components/atoms';
 import { NavItem } from '@web/components/molecules';
 import { SlideWidth, ClickScale } from '@web/components/motion';
 import { getContextNavItems, getNavigationItems } from '@web/config/navigation';
@@ -43,13 +43,11 @@ export const SideMenu: React.FC<SideMenuProps> = ({ handleLogout }) => {
     >
       {/* Header Section */}
       <div className="border-b border-white/20">
-        <div
-          className={`flex cursor-pointer items-center gap-3 border-l-4 border-transparent py-5 text-white ${isCollapsed ? 'justify-center' : 'px-4'}`}
+        <PressableArea
+          className={`flex w-full items-center gap-3 border-l-4 border-transparent py-5 text-white ${isCollapsed ? 'justify-center' : 'px-4'}`}
           onClick={() => {
             void navigate(routes[RouteKey.HOME].path);
           }}
-          role="button"
-          tabIndex={0}
           aria-label="Go to home"
         >
           <Logo variant="white" size="xs" className="h-5 w-auto" />
@@ -58,7 +56,7 @@ export const SideMenu: React.FC<SideMenuProps> = ({ handleLogout }) => {
               Fit For Purpose
             </Text>
           )}
-        </div>
+        </PressableArea>
       </div>
 
       {/* Main Navigation */}

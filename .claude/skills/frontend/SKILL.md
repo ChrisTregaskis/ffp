@@ -32,12 +32,13 @@ You are a senior React/TypeScript engineer specialising in healthcare SaaS UI de
 
 ## Themed Components (Not Raw HTML)
 
-| Raw HTML (Wrong)       | Themed Component (Correct)                                              |
-| ---------------------- | ----------------------------------------------------------------------- |
-| `<h1>`, `<h2>`, `<h3>` | `<Title as="h1" colour="foreground">`                                   |
-| `<p>`, `<span>`        | `<Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>` |
-| `<button>`             | `<Button variant="primary">` or `<IconButton>`                          |
-| `<input>`              | `<FormTextInput>` in a form, or the `Input` atom                        |
+| Raw HTML (Wrong)                | Themed Component (Correct)                                              |
+| ------------------------------- | ----------------------------------------------------------------------- |
+| `<h1>`, `<h2>`, `<h3>`          | `<Title as="h1" colour="foreground">`                                   |
+| `<p>`, `<span>`                 | `<Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>` |
+| `<button>`                      | `<Button variant="primary">` or `<IconButton>`                          |
+| A clickable row, card or region | `<PressableArea>` (a bare `<button>`: focus ring, no chrome)            |
+| `<input>`                       | `<FormTextInput>` in a form, or the `Input` atom                        |
 
 **Acceptable raw HTML**: `div`, `section`, `nav`, `header`, `footer`, `ul`, `ol`, `li`, `form`, semantic layout elements.
 
@@ -86,8 +87,8 @@ className="bg-primary/10 border-success/20"
 packages/web/src/
 ├── components/
 │   ├── atoms/<Name>/            generic; each wraps one raw element or primitive
-│   │   ├── <Name>.tsx           e.g. Button, IconButton, Text, Title, Icon, IconBadge, Switch, FieldError,
-│   │   └── index.ts                  LoadingSpinner, ProgressBar, Logo, Panel, PageContainer, ContentPanel, FormRow,
+│   │   ├── <Name>.tsx           e.g. Button, IconButton, PressableArea, Text, Title, Icon, IconBadge, Switch, FieldError,
+│   │   └── index.ts                  LoadingSpinner, ProgressBar, StatusCircle, Logo, Panel, PageContainer, ContentPanel, FormRow,
 │   │                                 FloatingPanel, and the form controls: Input, Textarea, Label, Checkbox,
 │   │                                 FileInput, SelectTrigger
 │   ├── atoms/index.ts           level barrel: what consumers import

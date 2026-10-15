@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import type { FlowStepType } from '@ffp/core';
 
-import { Text } from '@web/components/atoms';
+import { ProgressBar, Text } from '@web/components/atoms';
 
 import { getPhaseLabel } from './utils';
 
@@ -37,14 +37,7 @@ export const AssessmentProgress: React.FC<AssessmentProgressProps> = ({
   const phaseLabel = getPhaseLabel(phase);
 
   return (
-    <div
-      className={`w-full ${className}`.trim()}
-      role="progressbar"
-      aria-valuenow={percentage}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-label={`Assessment progress: ${String(percentage)}% complete, ${phaseLabel}`}
-    >
+    <div className={`w-full ${className}`.trim()}>
       {/* Phase label and step counter row */}
       <div className="mb-2 flex items-center justify-between">
         <Text as="span" styleProps={{ size: 'sm', weight: 'medium', colour: 'foreground' }}>
@@ -55,13 +48,13 @@ export const AssessmentProgress: React.FC<AssessmentProgressProps> = ({
         </Text>
       </div>
 
-      {/* Progress bar track */}
-      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className="h-full rounded-full bg-linear-to-r from-ffp-primary-blue to-ffp-dark-blue transition-all duration-300 ease-out"
-          style={{ width: `${String(percentage)}%` }}
-        />
-      </div>
+      <ProgressBar
+        percent={percentage}
+        aria-label={`Assessment progress: ${String(percentage)}% complete, ${phaseLabel}`}
+        animateFromZero={false}
+        duration={0.3}
+        delay={0}
+      />
     </div>
   );
 };

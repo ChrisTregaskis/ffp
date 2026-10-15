@@ -30,11 +30,7 @@ export const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
 }) => (
   <CollapsibleSidebar isOpen={isOpen} className="bg-muted/30">
     <div className="py-4">
-      <Text
-        as="h3"
-        styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}
-        className="mb-2 px-3 uppercase tracking-wide"
-      >
+      <Text as="h3" variant="eyebrow" className="mb-2 px-3">
         Exercises
       </Text>
       {exercises.map((exercise, idx) => (

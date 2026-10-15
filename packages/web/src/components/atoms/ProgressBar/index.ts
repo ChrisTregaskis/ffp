@@ -1,1 +1,1 @@
-export { ProgressBar, type ProgressBarProps } from './ProgressBar';
+export { ProgressBar, type ProgressBarProps, type ProgressBarSize } from './ProgressBar';

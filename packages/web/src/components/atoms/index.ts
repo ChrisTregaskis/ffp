@@ -38,9 +38,18 @@ export {
   PasswordStrengthIndicator,
   type PasswordStrengthIndicatorProps,
 } from './PasswordStrengthIndicator';
-export { ProgressBar, type ProgressBarProps } from './ProgressBar';
+export { PressableArea, type PressableAreaProps } from './PressableArea';
+export { ProgressBar, type ProgressBarProps, type ProgressBarSize } from './ProgressBar';
 export { RequiredIndicator } from './RequiredIndicator';
 export { SelectTrigger, type SelectTriggerProps, type SelectTriggerSize } from './SelectTrigger';
+export {
+  StatusCircle,
+  type StatusCircleProps,
+  type StatusCircleStatus,
+  type StatusCircleSize,
+  type StatusCircleAppearance,
+  type StatusCircleCurrentMarker,
+} from './StatusCircle';
 export { Switch, type SwitchProps } from './Switch';
 export {
   Text,
@@ -49,6 +58,7 @@ export {
   type TextColour,
   type TextSize,
   type TextWeight,
+  type TextVariant,
 } from './Text';
 export { Textarea, type TextareaProps } from './Textarea';
 export { Title, type TitleProps, type TitleLevel } from './Title';

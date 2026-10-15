@@ -1,4 +1,4 @@
-import { Text } from '@web/components/atoms';
+import { ProgressBar, Text } from '@web/components/atoms';
 
 export interface QuestionSubProgressProps {
   /** 1-based question number */
@@ -10,8 +10,7 @@ export interface QuestionSubProgressProps {
 /**
  * Question sub-progress indicator for assessment cards.
  *
- * Displays "Question X of Y" label with a visual progress bar
- * and remaining count. Uses the same gradient as AssessmentProgress.
+ * A thin progress bar with an "X/Y" count beside it.
  */
 export const QuestionSubProgress: React.FC<QuestionSubProgressProps> = ({
   questionNumber,
@@ -22,12 +21,15 @@ export const QuestionSubProgress: React.FC<QuestionSubProgressProps> = ({
   return (
     <div>
       <div className="mt-2 flex items-center gap-3">
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full rounded-full bg-linear-to-r from-ffp-primary-blue to-ffp-dark-blue transition-all duration-300 ease-out"
-            style={{ width: `${String(percentage)}%` }}
-          />
-        </div>
+        <ProgressBar
+          percent={percentage}
+          size="sm"
+          className="flex-1"
+          aria-label={`Question ${String(questionNumber)} of ${String(totalQuestions)}`}
+          animateFromZero={false}
+          duration={0.3}
+          delay={0}
+        />
         <Text
           as="span"
           styleProps={{ size: 'xs', colour: 'muted-foreground' }}

@@ -1,8 +1,19 @@
 import { motion } from 'motion/react';
 
+export type ProgressBarSize = 'sm' | 'md';
+
+const SIZE_CLASSES: Record<ProgressBarSize, string> = {
+  sm: 'h-1.5',
+  md: 'h-2',
+};
+
 export interface ProgressBarProps {
   /** Progress percentage (0–100) */
   percent: number;
+  /** Track height @default 'md' */
+  size?: ProgressBarSize;
+  /** Accessible name for the progress bar */
+  'aria-label'?: string;
   /** Additional CSS classes for the track container */
   className?: string;
   /** Override the track background colour @default 'bg-muted' */
@@ -25,6 +36,8 @@ export interface ProgressBarProps {
  */
 export const ProgressBar: React.FC<ProgressBarProps> = ({
   percent,
+  size = 'md',
+  'aria-label': ariaLabel,
   className = '',
   trackClassName = 'bg-muted',
   duration = 0.8,
@@ -38,11 +51,12 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
 
   return (
     <div
-      className={`h-2 w-full overflow-hidden rounded-full ${trackClassName} ${className}`.trim()}
+      className={`${SIZE_CLASSES[size]} w-full overflow-hidden rounded-full ${trackClassName} ${className}`.trim()}
       role="progressbar"
       aria-valuenow={Math.round(clampedPercent)}
       aria-valuemin={0}
       aria-valuemax={100}
+      aria-label={ariaLabel}
     >
       <motion.div
         className="h-full rounded-full bg-linear-to-r from-ffp-primary-blue to-ffp-dark-blue"
