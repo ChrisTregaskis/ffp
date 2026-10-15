@@ -16,18 +16,28 @@ interface UseQuestionActivationOptions {
 export const useQuestionActivation = <TTarget extends { publicId: string }>({
   onDeactivated,
 }: UseQuestionActivationOptions = {}): ActivationActions<TTarget> => {
+  const deactivateMutation = useDeactivateQuestionMutation();
   const updateMutation = useUpdateQuestionMutation();
+  const { mutate: deactivateQuestion } = deactivateMutation;
   const { mutate: updateQuestion } = updateMutation;
 
+  const deactivate = useCallback(
+    ({ publicId }: TTarget, callbacks: ActivationCallbacks): void => {
+      deactivateQuestion(publicId, callbacks);
+    },
+    [deactivateQuestion]
+  );
+
   const activate = useCallback(
-    (publicId: string, callbacks: ActivationCallbacks): void => {
+    ({ publicId }: TTarget, callbacks: ActivationCallbacks): void => {
       updateQuestion({ publicId, data: { isActive: true } }, callbacks);
     },
     [updateQuestion]
   );
 
   return useActivationActions<TTarget>({
-    deactivate: useDeactivateQuestionMutation(),
+    deactivate,
+    isDeactivating: deactivateMutation.isPending,
     activate,
     isActivating: updateMutation.isPending,
     describe: describeQuestion,

@@ -99,8 +99,8 @@ packages/web/src/
 │   │                            AppLayout, AuthLayout, AdminListPageShell, AdminEditPageShell
 │   ├── motion/  error/          behaviour wrappers and ErrorBoundary: outside the levels
 │   ├── dev/  demo/              pages/dev showcase scaffolding: outside the levels
-│   └── <domain>/                assessment, assessment-flows, AssessmentProgress, auth, programme, programme-templates,
-│                                questions, session, video
+│   └── <domain>/                assessment, assessment-flows, AssessmentProgress, auth, locations, organisations,
+│                                programme, programme-templates, questions, session, video
 │                                flat files; molecules and organisms only; compose from the level folders;
 │                                domain presets live here (ArchiveVideoModal → video/, DeactivateQuestionModal → questions/)
 ├── hooks/                       # Custom React hooks

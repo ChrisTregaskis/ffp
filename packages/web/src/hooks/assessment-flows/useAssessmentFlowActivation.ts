@@ -24,18 +24,28 @@ interface UseAssessmentFlowActivationOptions {
 export const useAssessmentFlowActivation = <TTarget extends NamedFlow>({
   onDeactivated,
 }: UseAssessmentFlowActivationOptions = {}): ActivationActions<TTarget> => {
+  const deactivateMutation = useDeactivateAssessmentFlowMutation();
   const updateMutation = useUpdateAssessmentFlowMutation();
+  const { mutate: deactivateFlow } = deactivateMutation;
   const { mutate: updateFlow } = updateMutation;
 
+  const deactivate = useCallback(
+    ({ publicId }: TTarget, callbacks: ActivationCallbacks): void => {
+      deactivateFlow(publicId, callbacks);
+    },
+    [deactivateFlow]
+  );
+
   const activate = useCallback(
-    (publicId: string, callbacks: ActivationCallbacks): void => {
+    ({ publicId }: TTarget, callbacks: ActivationCallbacks): void => {
       updateFlow({ publicId, data: { isActive: true } }, callbacks);
     },
     [updateFlow]
   );
 
   return useActivationActions<TTarget>({
-    deactivate: useDeactivateAssessmentFlowMutation(),
+    deactivate,
+    isDeactivating: deactivateMutation.isPending,
     activate,
     isActivating: updateMutation.isPending,
     describe: describeFlow,

@@ -1,14 +1,12 @@
 import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { DeactivateOrganisationModal } from '@web/components/organisations';
 import type { RowAction } from '@web/components/organisms';
 import { AdminListPageShell } from '@web/components/templates';
 import type { ListEmptyStateControls } from '@web/components/templates';
-import {
-  useAdminOrganisationsQuery,
-  useUpdateOrganisationMutation,
-} from '@web/hooks/organisations';
-import { useToast } from '@web/hooks/useToast';
+import { useAdminOrganisationsQuery, useOrganisationActivation } from '@web/hooks/organisations';
+import { toActivationRowAction } from '@web/hooks/useActivationActions';
 import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildOrganisationColumns, toOrganisationRow } from './columns';
@@ -21,8 +19,7 @@ const DEFAULT_SORT = { id: 'createdAt', desc: true };
 
 export const OrganisationListPage: React.FC = () => {
   const navigate = useNavigate();
-  const { addToast } = useToast();
-  const updateMutation = useUpdateOrganisationMutation();
+  const activation = useOrganisationActivation<OrganisationRow>();
 
   const handleCreateClick = useCallback((): void => {
     void navigate(routes[RouteKey.ADMIN_ORGANISATION_CREATE].path);
@@ -35,39 +32,18 @@ export const OrganisationListPage: React.FC = () => {
     [navigate]
   );
 
-  /** Toggle organisation status between active and inactive */
-  const handleToggleActive = useCallback(
-    (row: OrganisationRow): void => {
-      const newStatus = row.status === 'active' ? 'inactive' : 'active';
-      updateMutation.mutate(
-        { id: row.id, publicId: row.publicId, data: { status: newStatus } },
-        {
-          onSuccess: () => {
-            const action = newStatus === 'active' ? 'activated' : 'deactivated';
-            addToast(`"${row.name}" ${action} successfully`, { variant: 'success' });
-          },
-          onError: (err) => {
-            addToast(err.message, { variant: 'error' });
-          },
-        }
-      );
-    },
-    [updateMutation, addToast]
-  );
+  const { requestDeactivate, activate } = activation;
 
+  // A suspended organisation offers Activate, as an inactive one does
   const rowActions = useCallback(
     (row: OrganisationRow): RowAction<OrganisationRow>[] => [
       {
         label: 'Edit',
         onClick: handleEditClick,
       },
-      {
-        label: row.status === 'active' ? 'Deactivate' : 'Activate',
-        onClick: handleToggleActive,
-        variant: row.status === 'active' ? 'danger' : 'default',
-      },
+      toActivationRowAction(row.status === 'active', { requestDeactivate, activate }),
     ],
-    [handleEditClick, handleToggleActive]
+    [handleEditClick, requestDeactivate, activate]
   );
 
   const organisationColumns = useMemo(() => buildOrganisationColumns(rowActions), [rowActions]);
@@ -96,6 +72,14 @@ export const OrganisationListPage: React.FC = () => {
       toRow={toOrganisationRow}
       columns={organisationColumns}
       renderEmptyState={renderEmptyState}
-    />
+    >
+      <DeactivateOrganisationModal
+        isOpen={!!activation.pending}
+        onClose={activation.cancelDeactivate}
+        onConfirm={activation.confirmDeactivate}
+        isLoading={activation.isDeactivating}
+        organisationName={activation.pending?.name ?? ''}
+      />
+    </AdminListPageShell>
   );
 };

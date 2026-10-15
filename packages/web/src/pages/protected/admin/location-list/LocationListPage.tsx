@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 
 import type { LocationListResponse } from '@ffp/core';
 
+import { DeactivateLocationModal } from '@web/components/locations';
 import type { RowAction } from '@web/components/organisms';
 import { AdminListPageShell } from '@web/components/templates';
 import type { ListEmptyStateControls } from '@web/components/templates';
-import { useAdminLocationsQuery, useUpdateLocationMutation } from '@web/hooks/locations';
+import { useAdminLocationsQuery, useLocationActivation } from '@web/hooks/locations';
 import { useAdminOrganisationsQuery } from '@web/hooks/organisations';
-import { useToast } from '@web/hooks/useToast';
+import { toActivationRowAction } from '@web/hooks/useActivationActions';
 import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildLocationColumns, toLocationRow } from './columns';
@@ -21,8 +22,7 @@ const DEFAULT_SORT = { id: 'createdAt', desc: true };
 
 export const LocationListPage: React.FC = () => {
   const navigate = useNavigate();
-  const { addToast } = useToast();
-  const updateMutation = useUpdateLocationMutation();
+  const activation = useLocationActivation<LocationRow>();
 
   // Fetch all organisations to resolve names for the Organisation column
   const { data: organisationsData } = useAdminOrganisationsQuery(
@@ -51,39 +51,18 @@ export const LocationListPage: React.FC = () => {
     [navigate]
   );
 
-  /** Toggle location status between active and inactive */
-  const handleToggleActive = useCallback(
-    (row: LocationRow): void => {
-      const newStatus = row.status === 'active' ? 'inactive' : 'active';
-      updateMutation.mutate(
-        { id: row.id, publicId: row.publicId, data: { status: newStatus } },
-        {
-          onSuccess: () => {
-            const action = newStatus === 'active' ? 'activated' : 'deactivated';
-            addToast(`"${row.name}" ${action} successfully`, { variant: 'success' });
-          },
-          onError: (err) => {
-            addToast(err.message, { variant: 'error' });
-          },
-        }
-      );
-    },
-    [updateMutation, addToast]
-  );
+  const { requestDeactivate, activate } = activation;
 
+  // A suspended location offers Activate, as an inactive one does
   const rowActions = useCallback(
     (row: LocationRow): RowAction<LocationRow>[] => [
       {
         label: 'Edit',
         onClick: handleEditClick,
       },
-      {
-        label: row.status === 'active' ? 'Deactivate' : 'Activate',
-        onClick: handleToggleActive,
-        variant: row.status === 'active' ? 'danger' : 'default',
-      },
+      toActivationRowAction(row.status === 'active', { requestDeactivate, activate }),
     ],
-    [handleEditClick, handleToggleActive]
+    [handleEditClick, requestDeactivate, activate]
   );
 
   const locationColumns = useMemo(() => buildLocationColumns(rowActions), [rowActions]);
@@ -109,6 +88,14 @@ export const LocationListPage: React.FC = () => {
       toRow={toRow}
       columns={locationColumns}
       renderEmptyState={renderEmptyState}
-    />
+    >
+      <DeactivateLocationModal
+        isOpen={!!activation.pending}
+        onClose={activation.cancelDeactivate}
+        onConfirm={activation.confirmDeactivate}
+        isLoading={activation.isDeactivating}
+        locationName={activation.pending?.name ?? ''}
+      />
+    </AdminListPageShell>
   );
 };

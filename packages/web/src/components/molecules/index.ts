@@ -1,4 +1,5 @@
 export { Accordion, type AccordionProps } from './Accordion';
+export { ActivationToggleButton, type ActivationToggleButtonProps } from './ActivationToggleButton';
 export {
   BaseSelect,
   type BaseSelectProps,

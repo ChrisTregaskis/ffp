@@ -1,3 +1,7 @@
+export {
+  DeactivateTemplateModal,
+  type DeactivateTemplateModalProps,
+} from './DeactivateTemplateModal';
 export { exerciseToFormValues, EMPTY_EXERCISE_VALUES } from './exercise-utils';
 export type { ExerciseFormValues } from './exercise-utils';
 export { ExerciseForm } from './ExerciseForm';

@@ -1,14 +1,18 @@
 import React, { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import type { UpdateProgrammeTemplateInput } from '@ffp/core';
+
 import { Text } from '@web/components/atoms';
 import {
+  DeactivateTemplateModal,
   TemplateMetadataFormFields,
   toTemplateSaveError,
 } from '@web/components/programme-templates';
 import type { TemplateMetadataFormValues } from '@web/components/programme-templates';
 import { AdminEditPageShell } from '@web/components/templates';
 import { useTemplateDetailQuery, useUpdateTemplateMutation } from '@web/hooks/programme-templates';
+import { useConfirmBeforeSave } from '@web/hooks/useConfirmBeforeSave';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { RouteKey, routes } from '@web/pages/routes';
 import { formatDate } from '@web/utils/format';
@@ -27,6 +31,29 @@ export const TemplateDetailPage: React.FC = () => {
     void navigate(routes[RouteKey.ADMIN_TEMPLATES].path);
   }, [navigate]);
 
+  /** Execute the update mutation */
+  const executeUpdate = useCallback(
+    async (data: UpdateProgrammeTemplateInput): Promise<void> => {
+      if (!template) {
+        return;
+      }
+
+      clearSubmitError();
+
+      await updateMutation.mutateAsync(
+        { id: template.id, publicId: template.publicId, data },
+        saveCallbacks('Template updated successfully', handleNavigateBack, {
+          mapError: toTemplateSaveError,
+        })
+      );
+    },
+    [template, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
+  );
+
+  const deactivateConfirm = useConfirmBeforeSave(executeUpdate);
+  const { requestConfirm: requestDeactivateConfirm } = deactivateConfirm;
+
+  /** Handle form submission — taking the template out of use waits for confirmation */
   const handleUpdate = useCallback(
     async (values: TemplateMetadataFormValues): Promise<void> => {
       if (!template) {
@@ -41,16 +68,15 @@ export const TemplateDetailPage: React.FC = () => {
         return;
       }
 
-      clearSubmitError();
+      if (payload.isActive === false) {
+        await requestDeactivateConfirm(payload);
 
-      await updateMutation.mutateAsync(
-        { id: template.id, publicId: template.publicId, data: payload },
-        saveCallbacks('Template updated successfully', handleNavigateBack, {
-          mapError: toTemplateSaveError,
-        })
-      );
+        return;
+      }
+
+      await executeUpdate(payload);
     },
-    [template, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
+    [template, executeUpdate, requestDeactivateConfirm, handleNavigateBack]
   );
 
   return (
@@ -64,6 +90,14 @@ export const TemplateDetailPage: React.FC = () => {
       record={template}
       toFormValues={toTemplateFormValues}
       onUpdate={handleUpdate}
+      footer={
+        <DeactivateTemplateModal
+          isOpen={deactivateConfirm.isConfirmOpen}
+          onClose={deactivateConfirm.cancel}
+          onConfirm={deactivateConfirm.confirm}
+          templateName={template?.name ?? ''}
+        />
+      }
       beforeForm={
         template && (
           <div className="mb-6 flex items-center justify-between rounded-lg border border-border bg-white px-5 py-4">

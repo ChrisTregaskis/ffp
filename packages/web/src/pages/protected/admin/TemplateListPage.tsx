@@ -2,10 +2,11 @@ import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import type { RowAction } from '@web/components/organisms';
+import { DeactivateTemplateModal } from '@web/components/programme-templates';
 import { AdminListPageShell } from '@web/components/templates';
 import type { ListEmptyStateControls } from '@web/components/templates';
-import { useAdminTemplatesQuery, useUpdateTemplateMutation } from '@web/hooks/programme-templates';
-import { useToast } from '@web/hooks/useToast';
+import { useAdminTemplatesQuery, useTemplateActivation } from '@web/hooks/programme-templates';
+import { toActivationRowAction } from '@web/hooks/useActivationActions';
 import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildTemplateColumns, toTemplateRow } from './programme-template-list/columns';
@@ -20,8 +21,7 @@ const DEFAULT_COLUMN_VISIBILITY = { slug: false };
 
 export const TemplateListPage: React.FC = () => {
   const navigate = useNavigate();
-  const { addToast } = useToast();
-  const updateMutation = useUpdateTemplateMutation();
+  const activation = useTemplateActivation<TemplateRow>();
 
   const handleCreateClick = useCallback((): void => {
     void navigate(`${routes[RouteKey.ADMIN_TEMPLATES].path}/create`);
@@ -34,25 +34,7 @@ export const TemplateListPage: React.FC = () => {
     [navigate]
   );
 
-  /** Toggle isActive status via update mutation */
-  const handleToggleActive = useCallback(
-    (row: TemplateRow): void => {
-      const newIsActive = !row.isActive;
-      updateMutation.mutate(
-        { id: row.id, publicId: row.publicId, data: { isActive: newIsActive } },
-        {
-          onSuccess: () => {
-            const action = newIsActive ? 'activated' : 'deactivated';
-            addToast(`"${row.name}" ${action} successfully`, { variant: 'success' });
-          },
-          onError: (err) => {
-            addToast(err.message, { variant: 'error' });
-          },
-        }
-      );
-    },
-    [updateMutation, addToast]
-  );
+  const { requestDeactivate, activate } = activation;
 
   const rowActions = useCallback(
     (row: TemplateRow): RowAction<TemplateRow>[] => [
@@ -60,13 +42,9 @@ export const TemplateListPage: React.FC = () => {
         label: 'View Detail',
         onClick: handleViewClick,
       },
-      {
-        label: row.isActive ? 'Deactivate' : 'Activate',
-        onClick: handleToggleActive,
-        variant: row.isActive ? 'danger' : 'default',
-      },
+      toActivationRowAction(row.isActive, { requestDeactivate, activate }),
     ],
-    [handleViewClick, handleToggleActive]
+    [handleViewClick, requestDeactivate, activate]
   );
 
   const templateColumns = useMemo(() => buildTemplateColumns(rowActions), [rowActions]);
@@ -97,6 +75,14 @@ export const TemplateListPage: React.FC = () => {
       toRow={toTemplateRow}
       columns={templateColumns}
       renderEmptyState={renderEmptyState}
-    />
+    >
+      <DeactivateTemplateModal
+        isOpen={!!activation.pending}
+        onClose={activation.cancelDeactivate}
+        onConfirm={activation.confirmDeactivate}
+        isLoading={activation.isDeactivating}
+        templateName={activation.pending?.name ?? ''}
+      />
+    </AdminListPageShell>
   );
 };
