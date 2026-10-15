@@ -1,8 +1,6 @@
 import type { UploadUrlResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  createColdStartContext,
-  createLogger,
   extractUserContext,
   withErrorHandling,
   ForbiddenError,
@@ -11,23 +9,20 @@ import {
   generateUploadUrls,
 } from '@ffp/core/server';
 
-// Cold start: initialise S3 upload config from environment variables.
-// These are set by SST in sst.config.ts (adminHandlerEnv).
+// Cold start: initialise S3 upload config from environment variables (adminHandlerEnv in
+// sst.config.ts). The admin router imports this module into every admin Lambda, including
+// the CORS preflight one that has no bucket variables, so a missing variable is only
+// reported when an upload is actually requested.
 const videosBucketName = process.env.VIDEOS_BUCKET_NAME;
 const assetsBucketName = process.env.ASSETS_BUCKET_NAME;
 const region = process.env.AWS_REGION ?? 'eu-west-2';
 
-const coldStartContext = createColdStartContext('admin-video-upload-handler');
-const coldStartLogger = createLogger(coldStartContext);
+const missingEnv = [
+  !videosBucketName && 'VIDEOS_BUCKET_NAME',
+  !assetsBucketName && 'ASSETS_BUCKET_NAME',
+].filter(Boolean);
 
-if (!videosBucketName || !assetsBucketName) {
-  const missing = [
-    !videosBucketName && 'VIDEOS_BUCKET_NAME',
-    !assetsBucketName && 'ASSETS_BUCKET_NAME',
-  ].filter(Boolean);
-
-  coldStartLogger.error(`Video upload disabled — missing env vars: ${missing.join(', ')}`);
-} else {
+if (videosBucketName && assetsBucketName) {
   setVideoUploadConfig({
     videosBucketName,
     assetsBucketName,
@@ -56,6 +51,11 @@ export const handler = withErrorHandling(
 
     if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
       throw new ForbiddenError('Only system administrators can upload videos');
+    }
+
+    // A plain Error, so the response stays a generic 500 while the log names the variables
+    if (missingEnv.length > 0) {
+      throw new Error(`Video upload is not configured: missing ${missingEnv.join(', ')}`);
     }
 
     return await generateUploadUrls(context);
