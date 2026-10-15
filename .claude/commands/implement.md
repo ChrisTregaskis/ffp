@@ -168,7 +168,7 @@ So, first thing in this phase:
 
 ## Constraints
 
-- **Git history is mine.** Never run `add`, `commit`, `push`, `merge`, `rebase`, `tag`, `cherry-pick` or `reset --hard`. Read-only git, plus `checkout` and branch creation, are fine.
+- **Git history writes need my explicit go-ahead.** Commit, push and PR merge (into `assessment`) only after I've reviewed the code and said so in the conversation, for exactly the steps I named; follow `CLAUDE.local.md` → Commit & Merge Flow. `main` is always mine: never commit on, push to, open a PR into or merge into `main`, whatever the go-ahead says. Never force-push, rebase, local merge, tag, cherry-pick or `reset --hard`. Read-only git, plus `checkout` and branch creation, are fine.
 - **Infrastructure mutations are handed to me as exact commands** — SST/Terraform apply, deploys, secrets. Read-only inspection is fine.
 - **Never read `.env`.**
 - British English throughout; wellness vocabulary in new copy.
