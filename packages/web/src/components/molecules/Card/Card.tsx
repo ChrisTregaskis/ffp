@@ -1,4 +1,4 @@
-import { Text, Title } from '@web/components/atoms';
+import { Surface, Text, Title } from '@web/components/atoms';
 
 import type { ReactNode } from 'react';
 
@@ -32,7 +32,7 @@ export const Card: React.FC<CardProps> = ({
   const headerAlignment = centerHeader ? 'text-center' : '';
 
   return (
-    <div className={`bg-white rounded-lg shadow-md border border-border p-8 ${className}`.trim()}>
+    <Surface variant="elevated" padding="xl" className={className}>
       {hasHeader && (
         <div className={`mb-6 ${headerAlignment}`.trim()}>
           {title && (
@@ -48,6 +48,6 @@ export const Card: React.FC<CardProps> = ({
         </div>
       )}
       <div className={contentClassName}>{children}</div>
-    </div>
+    </Surface>
   );
 };

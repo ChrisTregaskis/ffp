@@ -3,18 +3,20 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AnswerValue, FlowStepConfig, FlowStepType } from '@ffp/core';
 
 import { AssessmentProgress } from '@web/components/AssessmentProgress';
-import { LoadingSpinner, Text } from '@web/components/atoms';
+import { Text } from '@web/components/atoms';
+import { LoadingState } from '@web/components/molecules';
 import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import { useAssessmentFlowQuery } from '@web/hooks/assessments';
 
+import { QuestionCard } from '../cards/QuestionCard';
 import { TransitionCard } from '../cards/TransitionCard';
+import { VideoQuestionCard } from '../cards/VideoQuestionCard';
 import { IntroScreen } from '../screens/IntroScreen';
 
 import { ProgrammeOverviewPlaceholder } from './ProgrammeOverviewPlaceholder';
 import { QuestionStepContent } from './QuestionStepContent';
 import { ResultsStepContent } from './ResultsStepContent';
-import { VideoStepContent } from './VideoStepContent';
 
 import type { AssessmentStepRendererProps } from './types';
 
@@ -85,14 +87,7 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
   );
 
   if (isFlowLoading || !currentStepSummary) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3">
-        <LoadingSpinner size="lg" variant="center" />
-        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-          Loading assessment...
-        </Text>
-      </div>
-    );
+    return <LoadingState layout="screen" message="Loading assessment..." />;
   }
 
   const renderStepContent = (): JSX.Element => {
@@ -110,6 +105,9 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
       case 'questions':
         return (
           <QuestionStepContent
+            // Keyed by type so moving between a questions and a video step mounts afresh
+            key={stepType}
+            card={QuestionCard}
             config={config}
             questions={questions}
             questionIndex={questionIndex}
@@ -124,7 +122,9 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
 
       case 'video-assessment':
         return (
-          <VideoStepContent
+          <QuestionStepContent
+            key={stepType}
+            card={VideoQuestionCard}
             config={config}
             questions={questions}
             questionIndex={questionIndex}

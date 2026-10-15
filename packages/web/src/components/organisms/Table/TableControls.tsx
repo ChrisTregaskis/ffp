@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { Button, Panel } from '@web/components/atoms';
+import { Button, Surface } from '@web/components/atoms';
 import type { SelectOption } from '@web/components/molecules';
 import { Select, SearchInput } from '@web/components/molecules';
 
@@ -73,7 +73,7 @@ export const TableControls = <TData,>({
   );
 
   return (
-    <Panel className="flex flex-wrap items-center gap-2">
+    <Surface padding="sm" border="muted" className="flex flex-wrap items-center gap-2">
       {/* Left side: search + filters */}
       <SearchInput
         value={search}
@@ -105,6 +105,6 @@ export const TableControls = <TData,>({
 
       {/* Right side: Columns */}
       <TableColumnVisibility columns={columns} />
-    </Panel>
+    </Surface>
   );
 };

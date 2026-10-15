@@ -1,13 +1,16 @@
+import { useCallback } from 'react';
+
 import { PageContainer } from '@web/components/atoms';
-import { PageHeader, PageLoadingState } from '@web/components/molecules';
+import { LoadingState, PageHeader } from '@web/components/molecules';
 import { FadeSlideIn } from '@web/components/motion/FadeSlideIn';
 import { EmptyProgrammeState } from '@web/components/programme/EmptyProgrammeState';
 import { NextSessionCard } from '@web/components/programme/NextSessionCard';
 import { PhaseDetailCard } from '@web/components/programme/PhaseDetailCard';
 import { ProgrammeCompleteState } from '@web/components/programme/ProgrammeCompleteState';
+import { ProgrammeLoadError } from '@web/components/programme/ProgrammeLoadError';
 import { useProgrammeDetailQuery, useProgressSummaryQuery } from '@web/hooks/programmes';
 import { useUserProfileQuery } from '@web/hooks/users';
-import { findCurrentPhase, findNextSession } from '@web/utils/programme';
+import { findCurrentPhase, findNextSession, isProgrammeLoadFailure } from '@web/utils/programme';
 import { getGreeting } from '@web/utils/time';
 
 /**
@@ -17,28 +20,47 @@ export const DashboardPage: React.FC = () => {
   const { data: profile } = useUserProfileQuery();
   const {
     data: detail,
-    isLoading: isDetailLoading,
-    isError: isDetailError,
+    isPending: isDetailPending,
+    error: detailError,
+    refetch: refetchDetail,
   } = useProgrammeDetailQuery();
   const {
     data: progress,
-    isLoading: isProgressLoading,
-    isError: isProgressError,
+    isPending: isProgressPending,
+    error: progressError,
+    refetch: refetchProgress,
   } = useProgressSummaryQuery();
 
-  const isLoading = isDetailLoading || isProgressLoading;
-  const isError = isDetailError || isProgressError;
+  // Pending, not loading: a retry paused while the tab is hidden has no data and no error yet
+  const isPending = isDetailPending || isProgressPending;
+  const isLoadFailure =
+    isProgrammeLoadFailure(detailError) || isProgrammeLoadFailure(progressError);
+
+  const handleRetry = useCallback(() => {
+    void refetchDetail();
+    void refetchProgress();
+  }, [refetchDetail, refetchProgress]);
 
   const displayName = profile?.firstName ?? '';
   const greeting = displayName ? `${getGreeting()}, ${displayName}` : getGreeting();
 
   // Loading state — centred vertically
-  if (isLoading) {
-    return <PageLoadingState message="Loading your dashboard..." />;
+  if (isPending) {
+    return <LoadingState layout="page" message="Loading your dashboard..." />;
   }
 
-  // Error or no data — show empty programme state
-  if (isError || !detail || !progress) {
+  // A failed refetch keeps the data it had, so only fail when there is nothing to show
+  if (isLoadFailure && (!detail || !progress)) {
+    return (
+      <PageContainer centred maxWidth="medium">
+        <PageHeader title={greeting} />
+        <ProgrammeLoadError onRetry={handleRetry} />
+      </PageContainer>
+    );
+  }
+
+  // No active programme: both queries answer not-found
+  if (!detail || !progress) {
     return (
       <PageContainer centred maxWidth="medium">
         <PageHeader title={greeting} />

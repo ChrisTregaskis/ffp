@@ -11,6 +11,7 @@ import {
   Icons,
   LoadingSpinner,
   RequiredIndicator,
+  Surface,
   Text,
 } from '@web/components/atoms';
 import { SearchInput } from '@web/components/molecules';
@@ -125,7 +126,7 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
   // Show selected video
   if (selectedVideo) {
     return (
-      <div className="flex items-center gap-3 rounded-md border border-border bg-white px-3 py-2">
+      <Surface radius="md" padding="row" className="flex items-center gap-3">
         <Icon name={Icons.VIDEO} styleProps={{ size: 'sm', colour: 'var(--color-primary)' }} />
         <Text styleProps={{ size: 'sm', weight: 'medium' }} className="flex-1 truncate">
           {selectedVideo.title}
@@ -148,7 +149,7 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
         <Button variant="ghost" size="sm" onClick={handleChange} disabled={disabled}>
           Change
         </Button>
-      </div>
+      </Surface>
     );
   }
 

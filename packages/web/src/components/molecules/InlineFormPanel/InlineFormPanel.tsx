@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Text } from '@web/components/atoms';
+import { Surface, Text } from '@web/components/atoms';
 
 import type { PropsWithChildren } from 'react';
 
@@ -14,10 +14,10 @@ export const InlineFormPanel: React.FC<PropsWithChildren<InlineFormPanelProps>> 
   title,
   children,
 }) => (
-  <div className="mb-4 rounded-lg border border-dashed border-border bg-white p-4">
+  <Surface variant="dashed" padding="md" className="mb-4">
     <Text styleProps={{ size: 'sm', weight: 'semibold', colour: 'foreground' }} className="mb-3">
       {title}
     </Text>
     {children}
-  </div>
+  </Surface>
 );

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { LoadingSpinner } from '@web/components/atoms';
+import { LoadingState } from '@web/components/molecules';
 import { USER_ROLE } from '@web/constants/roles';
 import { shouldRedirectToAssessment, useUserAssessmentStatusQuery } from '@web/hooks/assessments';
 import { useAuth } from '@web/hooks/useAuth';
@@ -68,8 +68,8 @@ export const HomePage = (): JSX.Element => {
   // Uses fixed positioning to cover the entire viewport including the sidebar.
   if ((isProgrammeUser && isStatusLoading) || isRedirecting) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
-        <LoadingSpinner size="lg" variant="center" />
+      <div className="fixed inset-0 z-50 bg-background">
+        <LoadingState layout="fill" />
       </div>
     );
   }

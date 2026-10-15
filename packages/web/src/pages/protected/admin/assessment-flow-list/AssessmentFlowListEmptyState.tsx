@@ -17,7 +17,7 @@ export const AssessmentFlowListEmptyState: React.FC<AssessmentFlowListEmptyState
     hasFilters={hasFilters}
     filteredTitle="No matching flows"
     icon="ClipboardList"
-    iconColour="var(--color-muted-foreground)"
+    iconVariant="neutral"
     title="No assessment flows yet"
     description="Create your first flow to start shaping the wellness journey members take."
     actionLabel="Create Flow"

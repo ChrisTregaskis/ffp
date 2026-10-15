@@ -1,7 +1,6 @@
-import { Icons, Text } from '@web/components/atoms';
+import { Icons, Surface, Text } from '@web/components/atoms';
 
 import { FeatureColumnGrid, type FeatureItem } from '../../FeatureColumnGrid';
-import { SectionPanel } from '../../SectionPanel';
 
 const NEXT_STEPS: FeatureItem[] = [
   {
@@ -23,11 +22,11 @@ const NEXT_STEPS: FeatureItem[] = [
 
 export const WhatHappensNextPanel: React.FC = () => {
   return (
-    <SectionPanel variant="tinted" className="p-6">
+    <Surface as="section" variant="tinted" padding="lg">
       <Text as="h2" styleProps={{ size: 'xl', weight: 'bold', colour: 'ffp-navy' }}>
         What Happens Next?
       </Text>
       <FeatureColumnGrid features={NEXT_STEPS} className="mt-6" />
-    </SectionPanel>
+    </Surface>
   );
 };

@@ -1,5 +1,8 @@
 import type { AnswerValue, AssessmentQuestion, FlowStepConfig } from '@ffp/core';
 
+import type { QuestionCardProps } from '../cards/QuestionCard';
+import type { ComponentType } from 'react';
+
 export interface AssessmentStepRendererProps {
   /** Questions for the current question/video step (provided by parent) */
   questions?: AssessmentQuestion[];
@@ -20,6 +23,8 @@ export interface AssessmentStepRendererProps {
 }
 
 export interface QuestionStepContentProps {
+  /** The card each question renders in */
+  card: ComponentType<QuestionCardProps>;
   config: FlowStepConfig;
   questions: AssessmentQuestion[];
   questionIndex: number;

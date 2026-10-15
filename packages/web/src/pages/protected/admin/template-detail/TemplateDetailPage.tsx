@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import type { UpdateProgrammeTemplateInput } from '@ffp/core';
 
-import { Text } from '@web/components/atoms';
+import { Surface, Text } from '@web/components/atoms';
 import {
   DeactivateTemplateModal,
   TemplateMetadataFormFields,
@@ -100,7 +100,7 @@ export const TemplateDetailPage: React.FC = () => {
       }
       beforeForm={
         template && (
-          <div className="mb-6 flex items-center justify-between rounded-lg border border-border bg-white px-5 py-4">
+          <Surface padding="bar" className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-2">
                 <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>Created:</Text>
@@ -125,7 +125,7 @@ export const TemplateDetailPage: React.FC = () => {
             >
               {template.isActive ? 'Active' : 'Inactive'}
             </Text>
-          </div>
+          </Surface>
         )
       }
     >

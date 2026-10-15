@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Button, Icon } from '@web/components/atoms';
-import type { IconColour, IconName } from '@web/components/atoms';
+import type { IconBadgeVariant, IconName } from '@web/components/atoms';
 
 import { StatusResult } from '../StatusResult';
 
@@ -13,7 +13,7 @@ export interface ListEmptyStateProps {
   /** Icon for the nothing-here-yet case */
   icon: IconName;
   /** Icon colour for the nothing-here-yet case */
-  iconColour: IconColour;
+  iconVariant: IconBadgeVariant;
   /** Heading for the nothing-here-yet case, e.g. "No users yet" */
   title: string;
   /** Supporting copy for the nothing-here-yet case */
@@ -34,7 +34,7 @@ export const ListEmptyState: React.FC<ListEmptyStateProps> = ({
   hasFilters,
   filteredTitle,
   icon,
-  iconColour,
+  iconVariant,
   title,
   description,
   actionLabel,
@@ -45,8 +45,7 @@ export const ListEmptyState: React.FC<ListEmptyStateProps> = ({
     return (
       <StatusResult
         icon="Search"
-        iconColour="var(--color-muted-foreground)"
-        iconBg="bg-transparent"
+        iconAppearance="plain"
         title={filteredTitle}
         description="Try adjusting your search or filters to find what you are looking for."
       />
@@ -56,8 +55,8 @@ export const ListEmptyState: React.FC<ListEmptyStateProps> = ({
   return (
     <StatusResult
       icon={icon}
-      iconColour={iconColour}
-      iconBg="bg-transparent"
+      iconVariant={iconVariant}
+      iconAppearance="plain"
       title={title}
       description={description}
       actions={

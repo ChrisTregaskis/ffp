@@ -17,8 +17,7 @@ export const SignInServiceUnavailable: React.FC<SignInServiceUnavailableProps> =
   <Card>
     <StatusResult
       icon={Icons.ALERTTRIANGLE}
-      iconColour="var(--color-warning)"
-      iconBg="bg-warning/20"
+      iconVariant="warning"
       title="Can't reach the sign-in service"
       description="We couldn't confirm your sign-in just now. Check your connection, then try again."
       actions={

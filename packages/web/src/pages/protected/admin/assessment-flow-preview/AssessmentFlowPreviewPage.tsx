@@ -1,9 +1,14 @@
 import React, { useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { FlowDescriptionPanel } from '@web/components/assessment-flows';
 import { ContentPanel, PageContainer } from '@web/components/atoms';
-import { EmptyState, PageState, StaticAlert, PageHeader } from '@web/components/molecules';
+import {
+  DescriptionPanel,
+  EmptyState,
+  PageState,
+  StaticAlert,
+  PageHeader,
+} from '@web/components/molecules';
 import { useAssessmentFlowDetailQuery } from '@web/hooks/assessment-flows';
 import { useTemplateNameMap } from '@web/hooks/assessment-templates';
 import { useDismissibleNotice } from '@web/hooks/useDismissibleNotice';
@@ -57,7 +62,7 @@ export const AssessmentFlowPreviewPage: React.FC = () => {
           content too rather than rendering a stale flow under an error card */}
       {flow && !error && !templateNamesPending && (
         <ContentPanel>
-          {flow.description && <FlowDescriptionPanel description={flow.description} />}
+          {flow.description && <DescriptionPanel description={flow.description} />}
 
           {flowBranches && !isDismissed && (
             <StaticAlert

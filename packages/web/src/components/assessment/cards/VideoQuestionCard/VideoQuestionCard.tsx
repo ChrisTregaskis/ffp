@@ -58,13 +58,14 @@ export const VideoQuestionCard: React.FC<VideoQuestionCardProps> = ({
       totalQuestions={totalQuestions}
       footer={footer ?? <AssessmentNavigation />}
     >
-      <div className="py-5">
-        {config.instructions && config.instructions.length > 0 && (
+      {config.instructions && config.instructions.length > 0 && (
+        <div className="py-5">
+          {/* Surface's gradient carries the section shadow, which an inset inside the card must not */}
           <div className="rounded-2xl bg-linear-to-br from-secondary/40 to-primary/10 p-5">
             <InstructionList items={config.instructions} title="Instructions:" />
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Video question content */}
       <CardTransition

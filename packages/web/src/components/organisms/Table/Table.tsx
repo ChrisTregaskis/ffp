@@ -7,6 +7,8 @@ import {
 } from '@tanstack/react-table';
 import { useState, useMemo, useCallback } from 'react';
 
+import { Surface } from '@web/components/atoms';
+
 import { TableBody } from './TableBody';
 import { TableColumnVisibility } from './TableColumnVisibility';
 import { TableHeader } from './TableHeader';
@@ -128,7 +130,7 @@ export const Table = <TData extends Record<string, unknown>>({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-muted bg-white">
+      <Surface border="muted" className="overflow-hidden">
         <table className="w-full border-collapse">
           <TableHeader headerGroups={table.getHeaderGroups()} />
           <TableBody
@@ -141,7 +143,7 @@ export const Table = <TData extends Record<string, unknown>>({
             onRetry={onRetry}
           />
         </table>
-      </div>
+      </Surface>
 
       <TablePagination
         page={pagination.pageIndex + 1}

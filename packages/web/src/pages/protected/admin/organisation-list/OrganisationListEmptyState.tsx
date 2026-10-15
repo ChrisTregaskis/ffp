@@ -17,7 +17,7 @@ export const OrganisationListEmptyState: React.FC<OrganisationListEmptyStateProp
     hasFilters={hasFilters}
     filteredTitle="No matching organisations"
     icon="Building"
-    iconColour="var(--color-primary)"
+    iconVariant="primary"
     title="No organisations yet"
     description="Create your first organisation to start managing your platform."
     actionLabel="Create Organisation"

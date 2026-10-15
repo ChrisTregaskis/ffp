@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { SectionHeader, SectionPanel } from '@web/components/assessment';
-import { Button, Icons, Text, PageContainer } from '@web/components/atoms';
+import { SectionHeader } from '@web/components/assessment';
+import { Button, Icons, Surface, Text, PageContainer } from '@web/components/atoms';
 import { PageHeader } from '@web/components/molecules';
 import { useUserAssessmentStatusQuery } from '@web/hooks/assessments';
 import { routes, RouteKey } from '@web/pages/routes';
@@ -33,7 +33,7 @@ export const AssessmentOverviewPage: React.FC = () => {
         subtitle="Review your assessment and update your programme recommendation"
       />
 
-      <SectionPanel className="mb-6 p-6">
+      <Surface as="section" variant="section" padding="lg" className="mb-6">
         <SectionHeader
           icon={Icons.REPEAT}
           title="Reassess Your Programme"
@@ -49,7 +49,7 @@ export const AssessmentOverviewPage: React.FC = () => {
             Start New Assessment
           </Button>
         </div>
-      </SectionPanel>
+      </Surface>
 
       <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
         Assessment scores and trends will be available in a future update.

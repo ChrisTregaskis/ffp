@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { Text, Title, PageContainer } from '@web/components/atoms';
-import { Card, PageHeader } from '@web/components/molecules';
+import { PageContainer } from '@web/components/atoms';
+import { ComingSoon, PageHeader } from '@web/components/molecules';
 
 /**
  * Progress & Analytics page for programme users.
@@ -17,16 +17,7 @@ export const ProgressPage: React.FC = () => {
         subtitle="Track your workout progress and view performance analytics"
       />
 
-      <Card className="p-8">
-        <div className="flex flex-col items-center justify-center py-12">
-          <Title as="h3" colour="muted-foreground" className="mb-2">
-            Coming Soon
-          </Title>
-          <Text styleProps={{ size: 'base', colour: 'muted-foreground' }}>
-            Progress tracking and analytics functionality will be implemented in a future sprint.
-          </Text>
-        </div>
-      </Card>
+      <ComingSoon message="Progress tracking and analytics functionality will be implemented in a future sprint." />
     </PageContainer>
   );
 };
