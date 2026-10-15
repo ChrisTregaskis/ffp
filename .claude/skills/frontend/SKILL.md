@@ -87,11 +87,12 @@ packages/web/src/
 ├── components/
 │   ├── atoms/<Name>/            generic; each wraps one raw element or primitive
 │   │   ├── <Name>.tsx           e.g. Button, IconButton, Text, Title, Icon, IconBadge, Switch, FieldError,
-│   │   └── index.ts                  LoadingSpinner, ProgressBar, Logo, Panel, PageContainer, ContentPanel, FormRow
+│   │   └── index.ts                  LoadingSpinner, ProgressBar, Logo, Panel, PageContainer, ContentPanel, FormRow,
+│   │                                 FloatingPanel
 │   ├── atoms/index.ts           level barrel: what consumers import
 │   ├── molecules/<Name>/        generic; atoms combined for one job
 │   │                            e.g. FormField, FormTextInput, FormSelect, FormToggle, Select, BaseSelect, StatusResult,
-│   │                                 EmptyState, StaticAlert, PageHeader, SearchInput, Accordion, Card
+│   │                                 EmptyState, StaticAlert, PageHeader, SearchInput, Accordion, Card, MenuList
 │   ├── organisms/<Name>/        generic; self-contained sections
 │   │                            e.g. Table (+ private TableHeader/TableBody/… files), Modal, ConfirmModal, DropdownMenu,
 │   │                                 KebabMenu, ComposableForm, Form, MobileMenu, ErrorFallback

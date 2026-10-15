@@ -202,6 +202,25 @@ const renderGuarded = (
   };
 };
 
+// Records whether text reaches the DOM at any point, however briefly; a modal opened
+// for one render stays mounted through its exit animation
+const watchForText = (text: string): { seen: () => boolean; stop: () => void } => {
+  let seen = false;
+  const observer = new MutationObserver((records) => {
+    seen ||= records.some((record) =>
+      Array.from(record.addedNodes).some((node) => node.textContent?.includes(text))
+    );
+  });
+  observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+
+  return {
+    seen: () => seen,
+    stop: () => {
+      observer.disconnect();
+    },
+  };
+};
+
 const leaveViaLink = (): void => {
   fireEvent.click(screen.getByRole('link', { name: 'Preview' }));
 };
@@ -323,13 +342,15 @@ describe('ComposableForm unsaved changes guard', () => {
         void router.navigate('/preview');
       });
 
+    const prompt = watchForText('Unsaved Changes');
     fireEvent.change(input('Name'), { target: { value: 'Harbour Studio North' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
       expect(router.state.location.pathname).toBe('/preview');
     });
-    expect(screen.queryByText('Unsaved Changes')).toBeNull();
+    prompt.stop();
+    expect(prompt.seen()).toBe(false);
   });
 
   it('treats the form as saved once a returned save resolves', async () => {
@@ -391,6 +412,7 @@ describe('ComposableForm unsaved changes guard', () => {
     const save = pendingSave();
     const { router } = renderGuarded(save.onSubmit);
 
+    const prompt = watchForText('Unsaved Changes');
     await editAndSave(save.onSubmit);
     leaveViaLink();
     await save.land();
@@ -398,6 +420,8 @@ describe('ComposableForm unsaved changes guard', () => {
     await waitFor(() => {
       expect(router.state.location.pathname).toBe('/preview');
     });
+    prompt.stop();
+    expect(prompt.seen()).toBe(false);
   });
 
   it('keeps a re-seed that landed during the save once the save resolves', async () => {

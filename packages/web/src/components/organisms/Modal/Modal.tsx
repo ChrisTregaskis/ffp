@@ -4,6 +4,8 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { IconButton, Icons, Text, Title } from '@web/components/atoms';
 import { Backdrop } from '@web/components/motion/Backdrop';
 import { ScaleFade } from '@web/components/motion/ScaleFade';
+import { useFocusTrap } from '@web/hooks/useFocusTrap';
+import { useKeyDown } from '@web/hooks/useKeyDown';
 
 import type { ReactNode } from 'react';
 
@@ -45,7 +47,7 @@ const SIZE_CLASS_MAP: Record<ModalSize, string> = {
  * Reusable modal dialog component
  *
  * Built on top of the existing Backdrop and ScaleFade motion components.
- * Supports keyboard dismissal, focus trapping, and body scroll locking.
+ * Supports keyboard dismissal, focus trapping with focus restore, and body scroll locking.
  */
 export const Modal: React.FC<ModalProps> = ({
   isOpen,
@@ -61,50 +63,22 @@ export const Modal: React.FC<ModalProps> = ({
   className = '',
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
 
-  // Escape key handler
+  useKeyDown('Escape', onClose, isOpen && closeOnEscape);
+  useFocusTrap(modalRef, isOpen);
+
+  // Restores the value it replaced rather than clearing it, so a closed modal leaves another
+  // modal's lock alone and stacked modals unlock in the order they close
   useEffect(() => {
-    if (!isOpen || !closeOnEscape) {
+    if (!isOpen) {
       return;
     }
 
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, closeOnEscape, onClose]);
-
-  // Body scroll lock + focus management
-  useEffect(() => {
-    if (isOpen) {
-      // Store currently focused element to restore later
-      previousFocusRef.current = document.activeElement as HTMLElement | null;
-
-      // Lock body scroll
-      document.body.style.overflow = 'hidden';
-
-      // Focus the modal container
-      requestAnimationFrame(() => {
-        modalRef.current?.focus();
-      });
-    } else {
-      // Restore body scroll
-      document.body.style.overflow = '';
-
-      // Restore focus to previously focused element
-      previousFocusRef.current?.focus();
-    }
-
-    return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = previousOverflow;
     };
   }, [isOpen]);
 

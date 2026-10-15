@@ -222,6 +222,10 @@ export const SessionPage: React.FC = () => {
     setShowExitDialog(true);
   }, []);
 
+  const handleExitCancel = useCallback((): void => {
+    setShowExitDialog(false);
+  }, []);
+
   const handlePause = useCallback((): void => {
     void navigate('/');
   }, [navigate]);
@@ -325,19 +329,14 @@ export const SessionPage: React.FC = () => {
       </div>
 
       {/* Exit dialog */}
-      <AnimatePresence>
-        {showExitDialog && (
-          <ExitDialog
-            completedCount={completedCount}
-            totalCount={exercises.length}
-            onPause={handlePause}
-            onDone={handleDone}
-            onCancel={() => {
-              setShowExitDialog(false);
-            }}
-          />
-        )}
-      </AnimatePresence>
+      <ExitDialog
+        isOpen={showExitDialog}
+        completedCount={completedCount}
+        totalCount={exercises.length}
+        onPause={handlePause}
+        onDone={handleDone}
+        onCancel={handleExitCancel}
+      />
     </div>
   );
 };

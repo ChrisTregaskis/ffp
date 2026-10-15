@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useBlocker } from 'react-router-dom';
 
 import { UnsavedChangesModal } from '../UnsavedChangesModal';
@@ -30,10 +30,27 @@ export const UnsavedChangesGuard: React.FC<UnsavedChangesGuardProps> = ({
     )
   );
 
-  // The router may report the hold a render after the save lands, so wait for it
+  const proceededRef = useRef(false);
+
+  // The router reports blocker changes in a transition, so it can report the hold a render
+  // after the save lands and still report it held a render after proceeding. The release
+  // stays set until the hold is gone, or that render would open the prompt.
   useEffect(() => {
-    if (releaseHeld && blocker.state === 'blocked') {
-      blocker.proceed();
+    if (!releaseHeld) {
+      return;
+    }
+
+    if (blocker.state === 'blocked') {
+      if (!proceededRef.current) {
+        proceededRef.current = true;
+        blocker.proceed();
+      }
+
+      return;
+    }
+
+    if (proceededRef.current) {
+      proceededRef.current = false;
       onReleased();
     }
   }, [releaseHeld, blocker, onReleased]);

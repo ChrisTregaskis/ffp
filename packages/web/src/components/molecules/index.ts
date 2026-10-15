@@ -18,6 +18,7 @@ export { FormTextInput, type FormTextInputProps } from './FormTextInput';
 export { FormToggle, type FormToggleProps } from './FormToggle';
 export { InlineFormPanel, type InlineFormPanelProps } from './InlineFormPanel';
 export { ListEmptyState, type ListEmptyStateProps } from './ListEmptyState';
+export { MenuList, type MenuListProps, type MenuListItem } from './MenuList';
 export { NavItem, type NavItemProps } from './NavItem';
 export { PageHeader, type PageHeaderProps } from './PageHeader';
 export { PageLoadingState, type PageLoadingStateProps } from './PageLoadingState';

@@ -2,7 +2,13 @@ import React from 'react';
 
 import { Icon, type IconColour, type IconSize, type IconName } from '../Icon';
 
-export interface IconButtonProps {
+import type { MouseEvent } from 'react';
+
+export interface IconButtonProps
+  extends Omit<
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    'onClick' | 'type' | 'disabled' | 'className' | 'children' | 'aria-label'
+  > {
   /** Icon to display */
   icon: IconName;
   /** Size of the icon @default 'md' */
@@ -10,7 +16,7 @@ export interface IconButtonProps {
   /** Colour of the icon @default 'currentColor' */
   colour?: IconColour;
   /** Click handler */
-  onClick?: () => void;
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
   /** Accessible label for screen readers */
   ariaLabel: string;
   /** Button type @default 'button' */
@@ -40,6 +46,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
   type = 'button',
   disabled = false,
   className = '',
+  ...rest
 }) => {
   return (
     <button
@@ -48,6 +55,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
       disabled={disabled}
       aria-label={ariaLabel}
       className={`inline-flex items-center justify-center transition-opacity hover:opacity-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${className}`.trim()}
+      {...rest}
     >
       <Icon name={icon} styleProps={{ size, colour }} />
     </button>

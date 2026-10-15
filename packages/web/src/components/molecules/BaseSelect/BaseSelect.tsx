@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
+import { FloatingPanel } from '@web/components/atoms';
 import { useClickOutside } from '@web/hooks/useClickOutside';
 
 import type { SelectOption } from './types';
@@ -163,12 +164,13 @@ export const BaseSelect: React.FC<BaseSelectProps> = ({
       })}
 
       {isOpen && (
-        <ul
-          ref={listRef}
+        <FloatingPanel
+          as="ul"
+          forwardedRef={listRef}
           id={listboxId}
           role="listbox"
           aria-label={listboxAriaLabel}
-          className="absolute z-50 mt-1 w-full overflow-auto rounded-md border border-border bg-white shadow-lg max-h-60"
+          className="absolute mt-1 w-full"
         >
           {options.map((option, index) => {
             const isSelected = String(option.value) === String(value);
@@ -193,7 +195,7 @@ export const BaseSelect: React.FC<BaseSelectProps> = ({
               </li>
             );
           })}
-        </ul>
+        </FloatingPanel>
       )}
     </div>
   );
