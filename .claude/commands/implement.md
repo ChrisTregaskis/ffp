@@ -87,8 +87,19 @@ Go through **the comments this branch added** — the diff, not the repository. 
 
 ### 24a. Browser check — user-facing surfaces
 
-- Claude in Chrome (`claude-in-chrome` skill) against `http://localhost:3000`, in a new tab of its own. Navigate and act by text (`find`, `read_page` filtered to interactive elements, `form_input`, `browser_batch`); screenshot only where the visual result is what you are verifying.
-- **Ask me to log in** — Cognito needs a human. Wait for my confirmation before continuing.
+- Claude in Chrome (`claude-in-chrome` skill), in a new tab of its own, on **the origin for the role you are testing as**. Each origin keeps its own signed-in user, so all three roles stay signed in side by side and you switch role by switching tab:
+
+  | Role           | Origin                           |
+  | -------------- | -------------------------------- |
+  | System Admin   | `http://admin.localhost:3000`    |
+  | Customer Admin | `http://customer.localhost:3000` |
+  | Programme User | `http://member.localhost:3000`   |
+
+  Plain `http://localhost:3000` still works, but holds only one user at a time. Navigate and act by text (`find`, `read_page` filtered to interactive elements, `form_input`, `browser_batch`); screenshot only where the visual result is what you are verifying.
+
+- **Never press Log out in a role tab.** Log out revokes the refresh token, so that role's session is gone for good and I have to sign in again. To act as another role, switch to its origin.
+- **Reload once before deciding a session has gone.** If a role tab lands on `/login` or shows "Can't reach the sign-in service", reload (or press Try again) first. Only ask me to sign in if it still lands on `/login`.
+- **Ask me to log in** when a role's origin has no session — Cognito needs a human, and I sign in once per role. Wait for my confirmation before continuing.
 - **Walk the actual acceptance criteria**, not a smoke test: the states the story added, the error and empty states, and one path through anything the review touched. Screenshot the key verification points, not every click.
 - A screenshot that contradicts the acceptance criteria is a defect to fix, not a caveat to note.
 
