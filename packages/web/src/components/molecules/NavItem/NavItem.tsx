@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import type { IconName } from '@web/components/atoms';
-import { Icon, Text } from '@web/components/atoms';
+import { Icon, PressableArea, Text } from '@web/components/atoms';
 import { ClickScale } from '@web/components/motion';
 
 export interface NavItemProps {
@@ -75,10 +75,9 @@ export const NavItem: React.FC<NavItemProps> = ({
   if (onClick) {
     return (
       <ClickScale scale={0.97} duration={0.1}>
-        {/* This is a custom button for navigation only, so not utilising Button.tsx */}
-        <button onClick={onClick} className={`w-full ${baseClasses}`} aria-label={label}>
+        <PressableArea onClick={onClick} className={baseClasses} aria-label={label}>
           {content}
-        </button>
+        </PressableArea>
       </ClickScale>
     );
   }

@@ -65,11 +65,19 @@ export interface TextStyleProps {
   size?: TextSize;
 }
 
-export interface TextProps {
+/**
+ * A named text style. `eyebrow`: the small uppercase label above a section or a value
+ * (extra-small, semibold, muted, wide tracking).
+ */
+export type TextVariant = 'eyebrow';
+
+const VARIANT_CLASSES: Record<TextVariant, string> = {
+  eyebrow: `${COLOUR_CLASS_MAP['muted-foreground']} ${WEIGHT_CLASS_MAP.semibold} ${SIZE_CLASS_MAP.xs} uppercase tracking-wide`,
+};
+
+interface TextBaseProps {
   /** Text content */
   children: ReactNode;
-  /** Style properties */
-  styleProps?: TextStyleProps;
   /** HTML element to render @default 'span' */
   as?: 'span' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5';
   /** If provided, truncates text to this length and appends '...' */
@@ -82,6 +90,20 @@ export interface TextProps {
   role?: string;
 }
 
+/** A variant sets the whole style, so it takes no `styleProps` */
+export type TextProps = TextBaseProps &
+  (
+    | {
+        /** Style properties */
+        styleProps?: TextStyleProps;
+        variant?: undefined;
+      }
+    | {
+        styleProps?: never;
+        variant: TextVariant;
+      }
+  );
+
 /**
  * Text component for consistent typography across the application.
  *
@@ -91,6 +113,7 @@ export interface TextProps {
 export const Text: React.FC<TextProps> = ({
   children,
   styleProps,
+  variant,
   as = 'span',
   truncationLength,
   className = '',
@@ -101,11 +124,11 @@ export const Text: React.FC<TextProps> = ({
   const weight = styleProps?.weight ?? 'normal';
   const size = styleProps?.size ?? 'base';
 
-  const colourClass = COLOUR_CLASS_MAP[colour];
-  const weightClass = WEIGHT_CLASS_MAP[weight];
-  const sizeClass = SIZE_CLASS_MAP[size];
+  const styleClasses = variant
+    ? VARIANT_CLASSES[variant]
+    : `${COLOUR_CLASS_MAP[colour]} ${WEIGHT_CLASS_MAP[weight]} ${SIZE_CLASS_MAP[size]}`;
 
-  const classes = `${colourClass} ${weightClass} ${sizeClass} ${className}`.trim();
+  const classes = `${styleClasses} ${className}`.trim();
 
   // Apply truncation if specified
   const formattedChildren =

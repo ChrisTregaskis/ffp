@@ -5,4 +5,5 @@ export {
   type TextColour,
   type TextSize,
   type TextWeight,
+  type TextVariant,
 } from './Text';

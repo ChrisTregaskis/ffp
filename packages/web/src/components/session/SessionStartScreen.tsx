@@ -38,11 +38,7 @@ export const SessionStartScreen: React.FC<SessionStartScreenProps> = ({
 }) => (
   <div className="flex h-screen flex-col items-center justify-center px-6 text-center">
     {phaseContext && (
-      <Text
-        as="p"
-        styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}
-        className="mb-2 uppercase tracking-wide"
-      >
+      <Text as="p" variant="eyebrow" className="mb-2">
         {phaseContext}
       </Text>
     )}

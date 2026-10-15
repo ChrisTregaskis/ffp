@@ -9,6 +9,7 @@ import {
   Text,
   ContentPanel,
   PageContainer,
+  PressableArea,
 } from '@web/components/atoms';
 import { StaticAlert, StatusResult, PageHeader } from '@web/components/molecules';
 import { VideoMetadataForm } from '@web/components/video';
@@ -131,28 +132,20 @@ export const VideoUploadPage: React.FC = () => {
 
             {/* Drop zone — shown when no valid file is selected */}
             {!hasValidFile && (
-              <div
+              <PressableArea
                 onDragOver={handleDragOver}
                 onDragEnter={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={fileSelection.openFilePicker}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    fileSelection.openFilePicker();
-                  }
-                }}
-                role="button"
-                tabIndex={0}
                 aria-label="Select video file to upload"
-                className={`flex cursor-pointer flex-col items-center rounded-lg border-2 border-dashed p-10 transition-colors ${
+                className={`flex w-full flex-col items-center rounded-lg border-2 border-dashed p-10 transition-colors ${
                   isDragOver
                     ? 'border-primary bg-primary/5'
                     : 'border-border bg-white hover:border-primary/50 hover:bg-muted/30'
                 }`}
               >
-                <div className="mb-3">
+                <span className="mb-3">
                   <Icon
                     name="Upload"
                     styleProps={{
@@ -160,7 +153,7 @@ export const VideoUploadPage: React.FC = () => {
                       colour: isDragOver ? 'var(--color-primary)' : 'var(--color-muted-foreground)',
                     }}
                   />
-                </div>
+                </span>
                 <Text styleProps={{ weight: 'medium', size: 'lg' }} className="mb-1">
                   {isDragOver ? 'Drop your video here' : 'Drag and drop your video here'}
                 </Text>
@@ -170,7 +163,7 @@ export const VideoUploadPage: React.FC = () => {
                 <Text styleProps={{ colour: 'muted-foreground', size: 'xs' }} className="mt-2">
                   MP4 format, up to 500 MB
                 </Text>
-              </div>
+              </PressableArea>
             )}
 
             {/* File info card — shown when a valid file is selected */}

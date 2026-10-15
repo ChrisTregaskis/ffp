@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 
-import { Icon, Icons } from '@web/components/atoms';
+import { Icon, Icons, PressableArea } from '@web/components/atoms';
 
 import type { ReactNode } from 'react';
 
@@ -52,10 +52,9 @@ export const Accordion: React.FC<AccordionProps> = ({
     <div className="rounded-md border border-border bg-white">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2">
-        <button
-          type="button"
+        <PressableArea
           onClick={handleToggle}
-          className="flex min-w-0 flex-1 cursor-pointer items-center gap-2"
+          className="flex min-w-0 flex-1 items-center gap-2"
           aria-expanded={isExpanded}
           disabled={toggleDisabled}
         >
@@ -64,7 +63,7 @@ export const Accordion: React.FC<AccordionProps> = ({
             styleProps={{ size: 'sm', colour: 'currentColor' }}
           />
           {trigger}
-        </button>
+        </PressableArea>
 
         {actions && <div className="flex items-center gap-0.5">{actions}</div>}
       </div>

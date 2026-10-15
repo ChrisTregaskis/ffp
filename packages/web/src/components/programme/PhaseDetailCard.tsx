@@ -1,10 +1,11 @@
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
-import { ProgressBar, Text, Title } from '@web/components/atoms';
+import type { StatusCircleStatus } from '@web/components/atoms';
+import { StatusCircle, Text, Title } from '@web/components/atoms';
 import { Card } from '@web/components/molecules';
 
+import { ProgressSummary } from './ProgressSummary';
 import { StatusBadge } from './StatusBadge';
-import { StepIndicator } from './StepIndicator';
 
 type Phase = ProgrammeDetailResponse['phases'][number];
 type Session = Phase['sessions'][number];
@@ -20,7 +21,7 @@ export interface PhaseDetailCardProps {
 const getSessionDotStatus = (
   session: Session,
   currentSessionNumber: number | null
-): 'completed' | 'current' | 'upcoming' => {
+): StatusCircleStatus => {
   const userStatus = session.userSession?.status;
 
   if (userStatus === 'completed' || userStatus === 'skipped') {
@@ -74,30 +75,28 @@ export const PhaseDetailCard: React.FC<PhaseDetailCardProps> = ({ phase, progres
           </Text>
         )}
 
-        <div className="mb-2 mt-4 flex items-center justify-between">
-          <Text
-            styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}
-            className="uppercase tracking-wide"
-          >
-            Phase Progress
-          </Text>
-          <Text styleProps={{ size: 'sm', weight: 'medium' }}>
-            {String(completedSessions)} of {String(phase.sessions.length)} sessions
-          </Text>
-        </div>
-        <ProgressBar percent={progressPercent} className="mb-4" />
+        <ProgressSummary
+          label="Phase Progress"
+          count={`${String(completedSessions)} of ${String(phase.sessions.length)} sessions`}
+          percent={progressPercent}
+          className="mb-4 mt-4"
+        />
 
         {/* Session dots */}
         <div className="flex flex-wrap gap-2">
-          {phase.sessions.map((session) => (
-            <StepIndicator
-              key={session.templateSessionId}
-              stepNumber={session.sessionNumber}
-              status={getSessionDotStatus(session, currentSessionNumber)}
-              size="md"
-              context="light"
-            />
-          ))}
+          {phase.sessions.map((session) => {
+            const status = getSessionDotStatus(session, currentSessionNumber);
+
+            return (
+              <StatusCircle
+                key={session.templateSessionId}
+                number={session.sessionNumber}
+                status={status}
+                size="md"
+                aria-label={`Step ${String(session.sessionNumber)}: ${status}`}
+              />
+            );
+          })}
         </div>
       </div>
     </Card>

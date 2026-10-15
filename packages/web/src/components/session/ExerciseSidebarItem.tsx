@@ -1,6 +1,6 @@
-import { Text } from '@web/components/atoms';
+import type { StatusCircleStatus } from '@web/components/atoms';
+import { PressableArea, StatusCircle, Text } from '@web/components/atoms';
 import { ClickScale } from '@web/components/motion';
-import { StepIndicator } from '@web/components/programme/StepIndicator';
 
 export interface ExerciseSidebarItemProps {
   /** Exercise title */
@@ -15,11 +15,7 @@ export interface ExerciseSidebarItemProps {
   onClick: () => void;
 }
 
-/** Derive StepIndicator status from sidebar item state */
-const getStepStatus = (
-  isCurrent: boolean,
-  isCompleted: boolean
-): 'completed' | 'current' | 'upcoming' => {
+const getStepStatus = (isCurrent: boolean, isCompleted: boolean): StatusCircleStatus => {
   if (isCompleted) {
     return 'completed';
   }
@@ -34,7 +30,7 @@ const getStepStatus = (
 /**
  * Sidebar navigation item for a session exercise.
  *
- * Uses StepIndicator (dark context) for status and dark-blue background for active exercise.
+ * The active exercise sits on dark blue, so its status circle takes the inverse appearance.
  */
 export const ExerciseSidebarItem: React.FC<ExerciseSidebarItemProps> = ({
   title,
@@ -45,19 +41,22 @@ export const ExerciseSidebarItem: React.FC<ExerciseSidebarItemProps> = ({
 }) => {
   const bgClass = isCurrent ? 'bg-ffp-dark-blue text-white' : 'hover:bg-muted/50';
   const opacityClass = isCompleted && !isCurrent ? 'opacity-60' : '';
+  const status = getStepStatus(isCurrent, isCompleted);
 
   return (
     <ClickScale scale={0.97} duration={0.1}>
-      <button
+      <PressableArea
         onClick={onClick}
-        className={`flex w-full cursor-pointer items-center gap-3 px-3 py-2.5 ${bgClass} ${opacityClass}`}
+        className={`flex w-full items-center gap-3 px-3 py-2.5 ${bgClass} ${opacityClass}`}
         aria-current={isCurrent ? 'step' : undefined}
       >
-        <StepIndicator
-          stepNumber={index}
-          status={getStepStatus(isCurrent, isCompleted)}
+        <StatusCircle
+          number={index}
+          status={status}
           size="sm"
-          context={isCurrent ? 'dark' : 'light'}
+          appearance={isCurrent ? 'inverse' : 'filled'}
+          currentMarker={isCurrent ? 'dot' : 'number'}
+          aria-label={`Step ${String(index)}: ${status}`}
         />
 
         <Text
@@ -70,7 +69,7 @@ export const ExerciseSidebarItem: React.FC<ExerciseSidebarItemProps> = ({
         >
           {title}
         </Text>
-      </button>
+      </PressableArea>
     </ClickScale>
   );
 };
