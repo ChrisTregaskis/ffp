@@ -10,13 +10,13 @@ import type {
 } from '@ffp/core';
 
 import {
+  AssessmentProgress,
   IntroScreen,
   QuestionCard,
   ResultsScreen,
   TransitionCard,
   VideoQuestionCard,
 } from '@web/components/assessment';
-import { AssessmentProgress } from '@web/components/AssessmentProgress';
 import { Button, Icon, Icons, Text } from '@web/components/atoms';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
@@ -780,7 +780,7 @@ const StepRendererDemo: React.FC = () => {
             Programme Overview
           </Text>
           <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mt-2">
-            Programme details will be available when FFP-3 is complete.
+            Your programme details will appear here soon.
           </Text>
         </div>
       ),

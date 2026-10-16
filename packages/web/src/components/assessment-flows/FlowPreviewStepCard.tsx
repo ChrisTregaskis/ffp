@@ -2,12 +2,11 @@ import React from 'react';
 
 import type { AdminFlowStepView } from '@ffp/core';
 
-import {
-  FlowStepDetails,
-  FlowStepSummary,
-  stepTypeLinksTemplate,
-} from '@web/components/assessment-flows';
 import { Surface } from '@web/components/atoms';
+
+import { stepTypeLinksTemplate } from './flow-step-labels';
+import { FlowStepDetails } from './FlowStepDetails';
+import { FlowStepSummary } from './FlowStepSummary';
 
 export interface FlowPreviewStepCardProps {
   step: AdminFlowStepView;

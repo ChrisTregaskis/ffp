@@ -2,12 +2,10 @@ import type { UserRole } from '@ffp/core';
 
 import type { IconName } from '@web/components/atoms';
 import { USER_ROLE } from '@web/constants/roles';
-import type { ContextNavItem } from '@web/pages/routes';
-import { routes } from '@web/pages/routes';
-import { matchRoute } from '@web/pages/routes/matchRoute';
-import { RouteKey } from '@web/pages/routes/RouteKey';
 
-export type { ContextNavItem } from '@web/pages/routes';
+import { matchRoute, RouteKey, routes } from './routes';
+
+import type { ContextNavItem } from './routes';
 
 /** Resolve context nav items for the current path, supporting both static and dynamic (function) forms */
 export const getContextNavItems = (pathname: string): ContextNavItem[] | undefined => {
@@ -54,10 +52,6 @@ export interface NavItem {
 
 /**
  * Get navigation items filtered by user role.
- *
- * Nav item arrays are defined inside this function (rather than at module scope)
- * to avoid a circular dependency: routes/index.ts imports ContextNavItem from here,
- * and this file imports routes — eagerly accessing routes at module init would fail.
  *
  * @param userRole - The current user's role
  * @param onLogout - Logout handler function

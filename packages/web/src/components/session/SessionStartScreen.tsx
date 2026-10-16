@@ -1,5 +1,5 @@
 import { Button, Icon, Icons, Text, Title } from '@web/components/atoms';
-import { PrescriptionBadge } from '@web/components/programme/PrescriptionBadge';
+import { PrescriptionBadge } from '@web/components/molecules';
 
 export interface SessionStartScreenProps {
   /** Session name */

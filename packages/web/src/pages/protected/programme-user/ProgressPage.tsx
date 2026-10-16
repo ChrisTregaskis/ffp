@@ -6,8 +6,7 @@ import { ComingSoon, PageHeader } from '@web/components/molecules';
 /**
  * Progress & Analytics page for programme users.
  *
- * Displays programme and phase progress statistics.
- * Analytics functionality will be implemented in Sprint 12 (FFP-416).
+ * A placeholder until progress tracking is built.
  */
 export const ProgressPage: React.FC = () => {
   return (
@@ -17,7 +16,7 @@ export const ProgressPage: React.FC = () => {
         subtitle="Track your workout progress and view performance analytics"
       />
 
-      <ComingSoon message="Progress tracking and analytics functionality will be implemented in a future sprint." />
+      <ComingSoon message="Progress tracking is on its way." />
     </PageContainer>
   );
 };

@@ -1,9 +1,9 @@
 import type { AnswerValue, AssessmentQuestion, FlowStepConfig } from '@ffp/core';
 
+import { InstructionList } from '@web/components/molecules';
 import { CardTransition, type CardTransitionDirection } from '@web/components/motion';
 
 import { AssessmentNavigation } from '../../AssessmentNavigation';
-import { InstructionList } from '../../InstructionList';
 import { ASSESSMENT_MOTION } from '../../motion.constants';
 import { QuestionRenderer } from '../../questions';
 import { StepCard } from '../StepCard';

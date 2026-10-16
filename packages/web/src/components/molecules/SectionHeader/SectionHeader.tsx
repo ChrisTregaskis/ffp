@@ -26,7 +26,6 @@ export interface SectionHeaderProps {
  * Section header with icon, title, and optional description.
  *
  * Supports two icon styles: a plain inline icon or a badge-wrapped icon.
- * Used across assessment cards and screens for consistent section headings.
  */
 export const SectionHeader: React.FC<SectionHeaderProps> = ({
   icon,

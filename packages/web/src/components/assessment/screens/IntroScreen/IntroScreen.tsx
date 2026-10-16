@@ -1,12 +1,15 @@
 import type { FlowStepConfig } from '@ffp/core';
 
 import { Button, Icons, Surface, Text } from '@web/components/atoms';
+import {
+  FeatureColumnGrid,
+  InstructionList,
+  SectionHeader,
+  type FeatureItem,
+} from '@web/components/molecules';
 import { ClickScale, FadeSlideIn } from '@web/components/motion';
 
-import { FeatureColumnGrid, type FeatureItem } from '../../FeatureColumnGrid';
-import { InstructionList } from '../../InstructionList';
 import { ASSESSMENT_MOTION } from '../../motion.constants';
-import { SectionHeader } from '../../SectionHeader';
 
 export interface IntroScreenProps {
   /** Step configuration from the assessment flow */

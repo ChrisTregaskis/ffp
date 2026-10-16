@@ -12,7 +12,7 @@ export interface TimelineLineProps {
 /**
  * Animated vertical connecting line between timeline nodes.
  *
- * Scales from top (origin-top) when the phase scrolls into view.
+ * Scales from the top (origin-top) when expanded.
  */
 export const TimelineLine: React.FC<TimelineLineProps> = ({
   colourClassName,

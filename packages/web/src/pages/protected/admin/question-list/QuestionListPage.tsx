@@ -5,13 +5,13 @@ import type { RowAction } from '@web/components/organisms';
 import { DeactivateQuestionModal } from '@web/components/questions';
 import { AdminListPageShell } from '@web/components/templates';
 import type { AdminListEmptyState } from '@web/components/templates';
+import { RouteKey, routes } from '@web/config/routes';
 import {
   useAdminQuestionsQuery,
   useQuestionActivation,
   useQuestionDetailQuery,
 } from '@web/hooks/questions';
 import { toActivationRowAction } from '@web/hooks/useActivationActions';
-import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildQuestionColumns, toQuestionRow } from './columns';
 import { QUESTION_TABLE_FILTERS } from './constants';

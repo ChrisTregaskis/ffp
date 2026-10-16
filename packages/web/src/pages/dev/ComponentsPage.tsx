@@ -45,15 +45,21 @@ export const ComponentsPage = (): JSX.Element => {
         <DeveloperInstructions title="Adding New Components">
           <ol className="list-decimal space-y-1 pl-5">
             <li>
-              Add route key to <code className="rounded bg-muted px-1">RouteKey.ts</code>
+              Add route key to{' '}
+              <code className="rounded bg-muted px-1">config/routes/route-key.ts</code>
+            </li>
+            <li>
+              Add route config to{' '}
+              <code className="rounded bg-muted px-1">config/routes/route-config.ts</code> (dev-only
+              section)
             </li>
             <li>
               Create component demo page in{' '}
               <code className="rounded bg-muted px-1">pages/dev/</code>
             </li>
             <li>
-              Add route config to <code className="rounded bg-muted px-1">routes/index.ts</code>{' '}
-              (dev-only section)
+              Bind the page in <code className="rounded bg-muted px-1">PAGE_COMPONENTS</code> in{' '}
+              <code className="rounded bg-muted px-1">pages/routes/index.ts</code>
             </li>
             <li>Update this landing page with the new category</li>
           </ol>

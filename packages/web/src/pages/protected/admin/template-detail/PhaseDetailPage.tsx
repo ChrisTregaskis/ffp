@@ -12,6 +12,7 @@ import {
 import { SessionCard } from '@web/components/programme-templates';
 import { SessionForm } from '@web/components/programme-templates/SessionForm';
 import type { SessionFormValues } from '@web/components/programme-templates/SessionForm';
+import { RouteKey, routes } from '@web/config/routes';
 import {
   useCreateSessionMutation,
   useDeleteSessionMutation,
@@ -20,7 +21,6 @@ import {
   useUpdateSessionMutation,
 } from '@web/hooks/programme-templates';
 import { useToast } from '@web/hooks/useToast';
-import { RouteKey, routes } from '@web/pages/routes';
 import { fieldToNumber } from '@web/utils/form-number';
 import { swapAdjacentItem } from '@web/utils/reorder';
 

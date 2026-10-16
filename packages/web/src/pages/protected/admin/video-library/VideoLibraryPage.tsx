@@ -8,12 +8,12 @@ import type { RowAction } from '@web/components/organisms';
 import { AdminListPageShell } from '@web/components/templates';
 import type { AdminListEmptyState, ListFilterValues } from '@web/components/templates';
 import { ArchiveVideoModal } from '@web/components/video';
+import { RouteKey, routes } from '@web/config/routes';
 import { useToast } from '@web/hooks/useToast';
 import { useAdminVideosQuery, useUpdateVideoMutation } from '@web/hooks/videos';
-import { RouteKey, routes } from '@web/pages/routes';
 
-import { buildVideoColumns, type VideoRow } from './video-library/columns';
-import { TABLE_FILTERS } from './video-library/constants';
+import { buildVideoColumns, type VideoRow } from './columns';
+import { TABLE_FILTERS } from './constants';
 
 const DEFAULT_SORT = { id: 'createdAt', desc: true };
 

@@ -2,7 +2,7 @@ import type { AdminQuestion } from '@ffp/core';
 
 import { ACTIVE_STATUS_MAP, createColumns, toActiveStatus } from '@web/components/organisms';
 import type { RowAction } from '@web/components/organisms';
-import { QUESTION_TYPE_LABELS, SCORE_DIMENSION_LABELS } from '@web/components/questions';
+import { QUESTION_TYPE_LABELS, SCORE_DIMENSION_LABELS } from '@web/constants';
 
 import type { ColumnDef } from '@tanstack/react-table';
 

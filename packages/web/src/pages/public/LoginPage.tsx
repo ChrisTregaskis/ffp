@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 
 import { LoginForm } from '@web/components/auth/LoginForm';
 import { AuthLayout } from '@web/components/templates';
+import { RouteKey, routes } from '@web/config/routes';
 import { useAuth } from '@web/hooks/useAuth';
-import { RouteKey, routes } from '@web/pages/routes';
 import type { LoginFormData } from '@web/schemas/auth.schema';
 
 /**

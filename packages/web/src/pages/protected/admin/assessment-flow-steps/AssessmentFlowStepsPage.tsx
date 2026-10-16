@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import {
+  BranchingNotice,
   FlowStepCard,
   FlowStepForm,
   formValuesToStepInput,
@@ -15,6 +16,7 @@ import {
   InlineFormPanel,
   PageHeader,
 } from '@web/components/molecules';
+import { RouteKey, routes } from '@web/config/routes';
 import {
   useAssessmentFlowDetailQuery,
   useCreateFlowStepMutation,
@@ -25,11 +27,14 @@ import {
 import { useTemplateNameMap } from '@web/hooks/assessment-templates';
 import { useToast } from '@web/hooks/useToast';
 import { ApiError } from '@web/lib/api/client';
-import { RouteKey, routes } from '@web/pages/routes';
 import { flowStepsBranch, stepSharesOrder } from '@web/utils/flow-branching';
 import { swapAdjacentItem } from '@web/utils/reorder';
 
-import { BranchingNotice } from './BranchingNotice';
+const BRANCHING_MESSAGE =
+  'This flow sends members down different paths depending on their answers, so its steps have a set position and cannot be moved. Everything else about a step can still be edited.';
+
+/** One dismissal is remembered — the reason does not change between flows. */
+const BRANCHING_NOTICE_ID = 'assessment-flow-branching-reorder';
 
 const REORDER_REFUSED_MESSAGE =
   'This flow sends members down different paths, so its steps have a set position and could not be moved.';
@@ -171,7 +176,9 @@ export const AssessmentFlowStepsPage: React.FC = () => {
         <ContentPanel>
           {flow.description && <DescriptionPanel description={flow.description} />}
 
-          {flowBranches && <BranchingNotice />}
+          {flowBranches && (
+            <BranchingNotice noticeId={BRANCHING_NOTICE_ID} message={BRANCHING_MESSAGE} />
+          )}
 
           {isAddingStep && (
             <InlineFormPanel title="New Step">

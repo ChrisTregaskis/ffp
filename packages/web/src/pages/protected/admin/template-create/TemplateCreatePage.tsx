@@ -7,9 +7,9 @@ import { ContentPanel, PageContainer } from '@web/components/atoms';
 import { StaticAlert, PageHeader } from '@web/components/molecules';
 import { ComposableForm } from '@web/components/organisms';
 import { toTemplateSaveError } from '@web/components/programme-templates';
+import { RouteKey, routes } from '@web/config/routes';
 import { useCreateTemplateMutation } from '@web/hooks/programme-templates';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
-import { RouteKey, routes } from '@web/pages/routes';
 
 import { CreateTemplateFormFields } from './CreateTemplateFormFields';
 

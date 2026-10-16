@@ -14,8 +14,7 @@ export interface ComingSoonPageProps {
 }
 
 /**
- * Reusable "Coming Soon" page component for placeholder routes.
- * Used for features that will be implemented in future sprints.
+ * Reusable "Coming Soon" page for a route whose feature is not built yet.
  */
 export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({
   title,
@@ -26,7 +25,7 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({
     <PageContainer>
       <PageHeader title={title} subtitle={description} />
 
-      <ComingSoon icon={icon} message="This feature will be implemented in a future sprint." />
+      <ComingSoon icon={icon} message="We're still building this. Check back soon." />
     </PageContainer>
   );
 };

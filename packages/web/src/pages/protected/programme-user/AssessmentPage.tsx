@@ -2,9 +2,9 @@ import React from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 
 import { LoadingState, StaticAlert } from '@web/components/molecules';
+import { routes, RouteKey } from '@web/config/routes';
 import { AssessmentProvider } from '@web/contexts/assessments/AssessmentProvider';
 import { useUserAssessmentStatusQuery } from '@web/hooks/assessments';
-import { routes, RouteKey } from '@web/pages/routes';
 
 import { AssessmentOrchestrator } from './AssessmentOrchestrator';
 

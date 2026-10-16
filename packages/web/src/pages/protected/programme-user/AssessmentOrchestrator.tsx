@@ -11,6 +11,7 @@ import {
 import { AssessmentStepRenderer } from '@web/components/assessment/AssessmentStepRenderer/AssessmentStepRenderer';
 import { Button } from '@web/components/atoms';
 import { LoadingState, StaticAlert } from '@web/components/molecules';
+import { routes, RouteKey } from '@web/config/routes';
 import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import {
@@ -19,7 +20,6 @@ import {
   useSubmitAssessment,
 } from '@web/hooks/assessments';
 import { useReplaceProgrammeMutation } from '@web/hooks/programmes';
-import { routes, RouteKey } from '@web/pages/routes';
 
 import { REASSESSMENT_START_KEY } from './assessment.constants';
 

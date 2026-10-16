@@ -1,6 +1,5 @@
 export { ActiveExercisePanel } from './ActiveExercisePanel';
 export { ExerciseDetail } from './ExerciseDetail';
-export { ExerciseTransition } from './ExerciseTransition';
 export { ExerciseSidebar } from './ExerciseSidebar';
 export { ExerciseSidebarItem } from './ExerciseSidebarItem';
 export { ExitDialog } from './ExitDialog';
@@ -12,7 +11,6 @@ export type { SessionStartScreenProps } from './SessionStartScreen';
 export { toSessionExercise } from './types';
 export type { ActiveExercisePanelProps } from './ActiveExercisePanel';
 export type { ExerciseDetailProps } from './ExerciseDetail';
-export type { ExerciseTransitionProps } from './ExerciseTransition';
 export type { ExerciseSidebarProps } from './ExerciseSidebar';
 export type { ExerciseSidebarItemProps } from './ExerciseSidebarItem';
 export type { ExitDialogProps } from './ExitDialog';

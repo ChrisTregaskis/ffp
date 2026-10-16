@@ -81,21 +81,21 @@ model without a backend. Internal navigation can be a state-based mini-router (a
 
 ## Wiring the single dev route
 
-Three small edits to the tracked routing files (mirror an existing `/components/*` showcase entry):
+Four small edits to the tracked routing files (mirror an existing `/components/*` showcase entry):
 
-1. **`pages/routes/RouteKey.ts`** — add `COMPONENTS_<NAME>` to the enum.
-2. **`pages/routes/index.ts`** — add the route block:
+1. **`config/routes/route-key.ts`** — add `COMPONENTS_<NAME>` to the enum.
+2. **`config/routes/route-config.ts`** — add the route's configuration (no page here; navigation code never imports a page):
    ```ts
    [RouteKey.COMPONENTS_<NAME>]: {
      path: `${componentsBasePath}/<name>`,
      public: true,
-     pageComponent: <Name>PrototypePage,
      title: '<Name> UX Prototype',
      excludeFromMainNavbar: true,
      devOnly: true,
    },
    ```
-3. **`pages/dev/index.ts`** — add a `componentCategories` entry so it shows in the dev catalogue.
+3. **`pages/routes/index.ts`** — bind the page in `PAGE_COMPONENTS`: `[RouteKey.COMPONENTS_<NAME>]: <Name>PrototypePage,`.
+4. **`pages/dev/index.ts`** — add a `componentCategories` entry so it shows in the dev catalogue.
 
 Add a small persistent banner in the shell (e.g. "UX prototype — mock data only, nothing is saved")
 so no one mistakes it for the real thing.

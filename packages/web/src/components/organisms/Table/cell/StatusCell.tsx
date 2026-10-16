@@ -1,25 +1,29 @@
+import { Badge } from '@web/components/atoms';
+import type { BadgeAppearance, BadgeVariant } from '@web/components/atoms';
+
 import type { StatusConfig } from '../types';
 import type { CellContext } from '@tanstack/react-table';
 import type { ReactNode } from 'react';
 
-/**
- * Status colour map — maps colour names to Tailwind background + text classes.
- * Uses FFP theme colours for consistency.
- */
-const STATUS_COLOUR_MAP: Record<string, { bg: string; text: string }> = {
-  success: { bg: 'bg-success', text: 'text-white' },
-  warning: { bg: 'bg-warning', text: 'text-white' },
-  destructive: { bg: 'bg-destructive', text: 'text-white' },
-  primary: { bg: 'bg-primary', text: 'text-white' },
-  info: { bg: 'bg-info', text: 'text-white' },
-  muted: { bg: 'bg-muted', text: 'text-muted-foreground' },
-  grey: { bg: 'bg-muted', text: 'text-muted-foreground' },
-  amber: { bg: 'bg-warning', text: 'text-white' },
-  green: { bg: 'bg-success', text: 'text-white' },
-};
+interface StatusBadgeStyle {
+  variant: BadgeVariant;
+  appearance: BadgeAppearance;
+}
 
-const getStatusClasses = (colour: string): { bg: string; text: string } =>
-  STATUS_COLOUR_MAP[colour] ?? STATUS_COLOUR_MAP.muted;
+const MUTED: StatusBadgeStyle = { variant: 'muted', appearance: 'soft' };
+
+/** Maps a status map's colour name, including the `grey` / `amber` / `green` aliases, to a badge. */
+const STATUS_COLOUR_MAP: Record<string, StatusBadgeStyle> = {
+  success: { variant: 'success', appearance: 'solid' },
+  warning: { variant: 'warning', appearance: 'solid' },
+  destructive: { variant: 'destructive', appearance: 'solid' },
+  primary: { variant: 'primary', appearance: 'solid' },
+  info: { variant: 'info', appearance: 'solid' },
+  muted: MUTED,
+  grey: MUTED,
+  amber: { variant: 'warning', appearance: 'solid' },
+  green: { variant: 'success', appearance: 'solid' },
+};
 
 interface StatusCellProps<TData> {
   info: CellContext<TData, unknown>;
@@ -39,13 +43,5 @@ export const StatusCell = <TData,>({ info, statusMap }: StatusCellProps<TData>):
     return value;
   }
 
-  const { bg, text } = getStatusClasses(config.colour);
-
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${bg} ${text}`}
-    >
-      {config.label}
-    </span>
-  );
+  return <Badge label={config.label} {...(STATUS_COLOUR_MAP[config.colour] ?? MUTED)} />;
 };
