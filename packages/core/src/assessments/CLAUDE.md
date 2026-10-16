@@ -52,7 +52,7 @@ assessment_flows (scoring_config: jsonb, is_active)
 - **Scoring and branching are pure functions** — no side effects, no DB. Keep them that way; they're reusable for preview/dry-run. Persisting belongs in services/repositories.
 - **Extend, don't fork:** new catalogue admin work should mirror the template-CRUD layering here (schema → repository → service → handler) and, on the web side, the programme-template patterns (`SessionCard`, `swapAdjacentItem`, mutation hooks) together with the shared UI those screens draw on (`InlineFormPanel` in `components/molecules/`, `DeleteConfirmModal` (on `ConfirmModal`) in `components/organisms/`, `reorderableItemActions` in `utils/`).
 - **A parent and its children get a service each:** `flow.service.ts` / `flow-step.service.ts` and `template.service.ts` / `template-question.service.ts`. The child service owns the `resolve<Parent>` lookup; the parent service does not import the child.
-- **Wellness positioning:** prefer wellness-neutral language in new copy; avoid introducing clinical/medical framing. (The existing `show_warning` `seek_medical` type predates this — don't rely on or extend clinical phrasing in new work.)
+- **Wellness positioning:** prefer wellness-neutral language in new copy; avoid introducing clinical/medical framing. The `seek_medical` warning type is the one that holds the member's result for their consent; its name predates the positioning, so keep the member-facing copy it carries as advice to speak to a health professional, never a diagnosis.
 
 ## Gotchas
 

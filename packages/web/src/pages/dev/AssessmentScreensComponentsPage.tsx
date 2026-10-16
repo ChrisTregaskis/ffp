@@ -14,6 +14,7 @@ import {
   IntroScreen,
   QuestionCard,
   ResultsScreen,
+  SafetyConsentScreen,
   TransitionCard,
   VideoQuestionCard,
 } from '@web/components/assessment';
@@ -281,6 +282,17 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
       id: 'results',
       label: 'ResultsScreen',
       content: <ResultsScreenDemo onViewProgramme={handleAction('onViewProgramme called')} />,
+    },
+    {
+      id: 'safety-consent',
+      label: 'SafetyConsentScreen',
+      content: (
+        <SafetyConsentScreen
+          advice="Before you start, please speak to a health professional about what you have selected, to make sure these sessions are right for you."
+          onConfirm={handleAction('onConfirm called')}
+          isConfirming={false}
+        />
+      ),
     },
     {
       id: 'step-renderer',

@@ -1,5 +1,6 @@
 import type { UserAssessmentStatusResponse } from '@web/lib/api/endpoints/assessments';
 
+import { useAcknowledgeSafetyAdvice } from './useAcknowledgeSafetyAdvice';
 import { useAssessmentFlowQuery } from './useAssessmentFlowQuery';
 import { useAssessmentResultsQuery } from './useAssessmentResultsQuery';
 import { useAssessmentTemplateQuery } from './useAssessmentTemplateQuery';
@@ -21,6 +22,7 @@ export const shouldRedirectToAssessment = (status: UserAssessmentStatusResponse)
   !status.hasProgramme && !status.hasEverHadProgramme && !!status.assessmentFlowId;
 
 export {
+  useAcknowledgeSafetyAdvice,
   useAssessmentFlowQuery,
   useAssessmentResultsQuery,
   useAssessmentTemplateQuery,

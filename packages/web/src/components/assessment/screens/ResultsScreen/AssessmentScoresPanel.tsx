@@ -10,12 +10,6 @@ export interface AssessmentScoresPanelProps {
 /** Age adjusts a member's level but is not something they are scored on */
 const HIDDEN_DIMENSIONS: ReadonlySet<string> = new Set<ScoreDimension>(['age']);
 
-const RISK_BADGE_STYLES = {
-  low: 'bg-success text-white',
-  moderate: 'bg-warning text-white',
-  high: 'bg-destructive text-white',
-} as const;
-
 export const AssessmentScoresPanel: React.FC<AssessmentScoresPanelProps> = ({ scores }) => {
   const visibleDimensions = scores.dimensions.filter(
     (dimension) => !HIDDEN_DIMENSIONS.has(dimension.dimensionId)
@@ -44,21 +38,6 @@ export const AssessmentScoresPanel: React.FC<AssessmentScoresPanelProps> = ({ sc
             </Text>
           </div>
         ))}
-
-        {scores.riskLevel && (
-          <div className="flex items-center justify-between rounded-xl bg-muted/40 px-4 py-3">
-            <Text as="span" styleProps={{ weight: 'medium' }}>
-              Risk Level:
-            </Text>
-            <Text
-              as="span"
-              styleProps={{ size: 'sm', weight: 'bold' }}
-              className={`rounded-lg px-4 py-1.5 ${RISK_BADGE_STYLES[scores.riskLevel]}`}
-            >
-              {scores.riskLevel.charAt(0).toUpperCase() + scores.riskLevel.slice(1)}
-            </Text>
-          </div>
-        )}
       </div>
     </Surface>
   );
