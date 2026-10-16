@@ -65,6 +65,7 @@ export const LocationFormFields: React.FC<LocationFormFieldsProps> = ({
           control={control}
           errors={errors}
           isRequired
+          rules={{ required: 'Please choose an organisation' }}
         />
       )}
 
@@ -76,6 +77,7 @@ export const LocationFormFields: React.FC<LocationFormFieldsProps> = ({
         register={register}
         errors={errors}
         isRequired
+        registerOptions={{ required: 'Please give the location a name' }}
       />
 
       {/* Status (edit mode only) */}

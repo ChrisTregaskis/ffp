@@ -165,6 +165,7 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
         control={control}
         errors={errors}
         isRequired
+        rules={{ required: 'Please add at least one body part' }}
       />
 
       {/* Row 5: Tags (full-width) */}

@@ -8,7 +8,7 @@ import { getInputClassName } from '@web/utils/input-styles';
 
 import { FormField } from '../FormField';
 
-import type { Control, FieldErrors, FieldValues, Path } from 'react-hook-form';
+import type { Control, FieldErrors, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 
 export interface FormTagInputProps<TFieldValues extends FieldValues> {
   name: Path<TFieldValues>;
@@ -17,6 +17,8 @@ export interface FormTagInputProps<TFieldValues extends FieldValues> {
   control: Control<TFieldValues>;
   errors: FieldErrors<TFieldValues>;
   isRequired?: boolean;
+  /** Validation rules, as `registerOptions` is on the register-based inputs; `required` refuses an empty list */
+  rules?: Omit<RegisterOptions<TFieldValues, Path<TFieldValues>>, 'valueAsNumber' | 'valueAsDate'>;
 }
 
 /**
@@ -25,6 +27,8 @@ export interface FormTagInputProps<TFieldValues extends FieldValues> {
  * Allows entering multiple string values as tags. Press Enter or comma
  * to add a tag. Click the remove button to delete a tag.
  * Stores the value as a string array in react-hook-form.
+ *
+ * `isRequired` only marks the field; pass `rules` to make it refuse an empty value.
  */
 export const FormTagInput = <TFieldValues extends FieldValues>({
   name,
@@ -33,6 +37,7 @@ export const FormTagInput = <TFieldValues extends FieldValues>({
   control,
   errors,
   isRequired,
+  rules,
 }: FormTagInputProps<TFieldValues>): JSX.Element => {
   const [inputValue, setInputValue] = useState('');
   const error = getFieldErrorMessage(errors, name);
@@ -44,6 +49,7 @@ export const FormTagInput = <TFieldValues extends FieldValues>({
   } = useController({
     name,
     control,
+    rules,
     defaultValue: [] as unknown as TFieldValues[Path<TFieldValues>],
   });
 
