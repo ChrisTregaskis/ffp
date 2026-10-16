@@ -197,6 +197,20 @@
       "when": 1790320294332,
       "tag": "0027_gray_marvel_apes",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1792170492390,
+      "tag": "0028_lucky_taskmaster",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792170592469,
+      "tag": "0029_misty_moon_knight",
+      "breakpoints": true
     }
   ]
 }

@@ -66,6 +66,11 @@ export const userAssessments = pgTable(
     submittedAt: timestamp('submitted_at', { withTimezone: true }),
     /** When assessment flow completed (null until status = completed) */
     completedAt: timestamp('completed_at', { withTimezone: true }),
+    /**
+     * When the member confirmed they had acted on the safety advice their answers raised
+     * (null until then, and always null when no safety warning fired)
+     */
+    safetyAcknowledgedAt: timestamp('safety_acknowledged_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },

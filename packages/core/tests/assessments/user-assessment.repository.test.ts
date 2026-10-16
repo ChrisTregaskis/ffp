@@ -17,6 +17,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
+import * as safetyTriggerRepository from '../../src/assessments/safety-trigger.repository';
 import * as userAssessmentRepository from '../../src/assessments/user-assessment.repository';
 import { NotFoundError, ValidationError } from '../../src/lib/errors';
 
@@ -655,6 +656,106 @@ describe('User Assessment Repository', () => {
       const result = await userAssessmentRepository.findByUserId(organisationBId, userA1Id);
 
       expect(result).toHaveLength(0);
+    });
+  });
+
+  describe('Safety triggers and acknowledgement', () => {
+    const createTriggered = async (): Promise<string> => {
+      const assessment = await userAssessmentRepository.createUserAssessment({
+        organisationId: organisationAId,
+        userId: userA1Id,
+        flowId,
+      });
+
+      await safetyTriggerRepository.recordTrigger({
+        organisationId: organisationAId,
+        userAssessmentId: assessment.id,
+        userId: userA1Id,
+        questionSlug: 'safety-check',
+        selectedOptions: ['dizziness'],
+        warningMessage: 'Please speak to a health professional before you start.',
+      });
+
+      return assessment.id;
+    };
+
+    it('records an assessment once, ignoring a second record', async () => {
+      const assessmentId = await createTriggered();
+
+      await safetyTriggerRepository.recordTrigger({
+        organisationId: organisationAId,
+        userAssessmentId: assessmentId,
+        userId: userA1Id,
+        questionSlug: 'safety-check',
+        selectedOptions: ['chest-pain'],
+        warningMessage: 'A second message',
+      });
+
+      await setTestRLSContext(db, organisationAId);
+      const rows = await db.execute(
+        sql`SELECT selected_options FROM assessment_safety_triggers WHERE user_assessment_id = ${assessmentId}`
+      );
+
+      expect(rows.rows).toEqual([{ selected_options: ['dizziness'] }]);
+    });
+
+    it('hides a trigger from another organisation (RLS)', async () => {
+      const assessmentId = await createTriggered();
+
+      expect(
+        await safetyTriggerRepository.findByAssessmentId(organisationAId, assessmentId)
+      ).not.toBeNull();
+      expect(
+        await safetyTriggerRepository.findByAssessmentId(organisationBId, assessmentId)
+      ).toBeNull();
+    });
+
+    it('refuses a trigger written into another organisation (RLS)', async () => {
+      const assessment = await userAssessmentRepository.createUserAssessment({
+        organisationId: organisationAId,
+        userId: userA1Id,
+        flowId,
+      });
+
+      await expect(
+        db.transaction(async (tx) => {
+          await tx.execute(sql.raw(`SET LOCAL app.organisation_id = '${organisationBId}'`));
+          await tx.execute(sql`
+            INSERT INTO assessment_safety_triggers
+              (organisation_id, user_assessment_id, user_id, selected_options, warning_message)
+            VALUES (${organisationAId}, ${assessment.id}, ${userA1Id}, '[]', 'Advice')
+          `);
+        })
+      ).rejects.toMatchObject({
+        cause: { message: expect.stringMatching(/row-level security/) as unknown },
+      });
+      expect(
+        await safetyTriggerRepository.findByAssessmentId(organisationAId, assessment.id)
+      ).toBeNull();
+    });
+
+    it('keeps the first acknowledgement on a repeat', async () => {
+      const assessmentId = await createTriggered();
+
+      const first = await userAssessmentRepository.acknowledgeSafetyAdvice(
+        organisationAId,
+        assessmentId
+      );
+      const second = await userAssessmentRepository.acknowledgeSafetyAdvice(
+        organisationAId,
+        assessmentId
+      );
+
+      expect(first.safetyAcknowledgedAt).toBeInstanceOf(Date);
+      expect(second.safetyAcknowledgedAt).toEqual(first.safetyAcknowledgedAt);
+    });
+
+    it('cannot acknowledge another organisation’s assessment (RLS)', async () => {
+      const assessmentId = await createTriggered();
+
+      await expect(
+        userAssessmentRepository.acknowledgeSafetyAdvice(organisationBId, assessmentId)
+      ).rejects.toThrow(NotFoundError);
     });
   });
 });

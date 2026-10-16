@@ -5,7 +5,7 @@
  * It is idempotent and can be run multiple times safely.
  *
  * **Tables with RLS policies:**
- * - organisations, locations, users, user_assessments, user_assessment_answers, programmes, programme_phases, user_sessions, exercise_completions
+ * - organisations, locations, users, user_assessments, user_assessment_answers, assessment_safety_triggers, programmes, programme_phases, user_sessions, exercise_completions
  *
  * **Admin bypass policy:**
  * - locations and users tables have an additional permissive policy that grants
@@ -50,14 +50,14 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     SELECT tablename, rowsecurity
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'programmes', 'programme_phases', 'user_sessions', 'exercise_completions')
+    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'assessment_safety_triggers', 'programmes', 'programme_phases', 'user_sessions', 'exercise_completions')
     ORDER BY tablename
   `);
 
   const tables = rlsCheck.rows as Array<{ tablename: string; rowsecurity: boolean }>;
 
-  // Check if all tables have RLS enabled (9 tables)
-  const allTablesHaveRLS = tables.length === 9 && tables.every((t) => t.rowsecurity === true);
+  // Check if all tables have RLS enabled (10 tables)
+  const allTablesHaveRLS = tables.length === 10 && tables.every((t) => t.rowsecurity === true);
 
   if (allTablesHaveRLS) {
     logger.info('RLS already enabled on all tables, re-applying policies to pick up any changes...');
@@ -287,6 +287,32 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     `);
 
     // ============================================================================
+    // ASSESSMENT_SAFETY_TRIGGERS TABLE RLS
+    // ============================================================================
+
+    logger.debug('Enabling RLS on assessment_safety_triggers table...');
+
+    await tx.execute(sql`
+      ALTER TABLE assessment_safety_triggers ENABLE ROW LEVEL SECURITY;
+    `);
+
+    if (!isProduction) {
+      await tx.execute(sql`
+        ALTER TABLE assessment_safety_triggers FORCE ROW LEVEL SECURITY;
+      `);
+    }
+
+    await tx.execute(sql`
+      DROP POLICY IF EXISTS assessment_safety_triggers_organisation_isolation ON assessment_safety_triggers;
+    `);
+
+    await tx.execute(sql`
+      CREATE POLICY assessment_safety_triggers_organisation_isolation ON assessment_safety_triggers
+        FOR ALL
+        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+    `);
+
+    // ============================================================================
     // PROGRAMMES TABLE RLS
     // ============================================================================
 
@@ -402,7 +428,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     SELECT tablename, rowsecurity
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'programmes', 'programme_phases', 'user_sessions', 'exercise_completions')
+    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'assessment_safety_triggers', 'programmes', 'programme_phases', 'user_sessions', 'exercise_completions')
     ORDER BY tablename
   `);
 

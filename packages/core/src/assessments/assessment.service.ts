@@ -1,5 +1,4 @@
-import { getDb } from '@ffp/database';
-import type { AnswerValue } from '@ffp/database';
+import { getDb, type AnswerValue, type DbClient } from '@ffp/database';
 
 import { queueJob } from '../jobs/job-queue.service';
 import { getUserIdFromContext } from '../lib/context';
@@ -18,8 +17,10 @@ import {
   loadFlowQuestions,
 } from './answer-validation';
 import * as answerRepository from './answer.repository';
-import { evaluateNextStep, createEvaluationContext } from './branching';
+import { evaluateNextStep, createEvaluationContext, type BranchingAnswers } from './branching';
 import * as flowRepository from './flow.repository';
+import { findSafetyTrigger, toSafetyGate } from './safety-gate';
+import * as safetyTriggerRepository from './safety-trigger.repository';
 import * as userAssessmentRepository from './user-assessment.repository';
 
 // System logger for assessment data integrity issues (no organisation context needed)
@@ -32,6 +33,7 @@ import type { OrganisationContext } from '../lib/context';
 import type {
   AssessmentResultsResponse,
   FlowStepSummary,
+  SafetyGate,
   StartAssessmentResponse,
   SaveProgressRequest,
   SaveProgressResponse,
@@ -130,6 +132,46 @@ async function findOwnAssessment(
   }
 
   return assessment;
+}
+
+async function toBranchingAnswers(
+  db: DbClient,
+  assessmentId: string,
+  answers: SaveAnswerInput[]
+): Promise<BranchingAnswers> {
+  const idToSlugMap = await findSlugsByIds(
+    db,
+    answers.map((answer) => answer.questionId)
+  );
+
+  return answers.map((answer) => {
+    const slug = idToSlugMap.get(answer.questionId);
+
+    if (!slug) {
+      // Log but don't fail - not essential
+      systemLogger.warn('Question slug not found for answer', {
+        questionId: answer.questionId,
+        assessmentId,
+      });
+    }
+
+    return {
+      questionSlug: slug ?? answer.questionId, // Fallback to ID if slug not found
+      value: answer.answerValue,
+    };
+  });
+}
+
+async function loadSafetyGate(
+  organisationId: string,
+  assessment: UserAssessment,
+  userId: string
+): Promise<SafetyGate> {
+  const trigger = await safetyTriggerRepository.findByAssessmentId(organisationId, assessment.id, {
+    userId,
+  });
+
+  return toSafetyGate(trigger, assessment);
 }
 
 /**
@@ -278,6 +320,7 @@ export async function startAssessment(
         flowId: existingAssessment.flowId,
         isResumed: true,
         steps,
+        safetyGate: null,
       };
     }
 
@@ -310,6 +353,7 @@ export async function startAssessment(
         flowId: submittedAssessment.flowId,
         isResumed: true,
         steps,
+        safetyGate: await loadSafetyGate(organisationId, submittedAssessment, userId),
       };
     }
   }
@@ -329,6 +373,7 @@ export async function startAssessment(
     flowId: newAssessment.flowId,
     isResumed: false,
     steps,
+    safetyGate: null,
   };
 }
 
@@ -443,27 +488,14 @@ export async function saveProgress(
       tx,
     });
 
-    // Build question ID to slug map for branching conditions
-    const questionIds = allAnswers.map((a) => a.questionId);
-    const idToSlugMap = await findSlugsByIds(db, questionIds);
-
-    // Convert answers to slug-keyed format for branching evaluation
-    const answersForBranching = allAnswers.map((answer) => {
-      const slug = idToSlugMap.get(answer.questionId);
-
-      if (!slug) {
-        // Log but don't fail - not essential
-        systemLogger.warn('Question slug not found for answer', {
-          questionId: answer.questionId,
-          assessmentId,
-        });
-      }
-
-      return {
-        questionSlug: slug ?? answer.questionId, // Fallback to ID if slug not found
-        value: extractAnswerValue(answer.answerValue),
-      };
-    });
+    const answersForBranching = await toBranchingAnswers(
+      db,
+      assessmentId,
+      allAnswers.map((answer) => ({
+        questionId: answer.questionId,
+        answerValue: extractAnswerValue(answer.answerValue),
+      }))
+    );
 
     // Create evaluation context and evaluate branching rules
     const evalContext = createEvaluationContext(
@@ -518,7 +550,9 @@ export async function saveProgress(
  * Submit an assessment for scoring
  *
  * Validates the assessment can be submitted, saves final answers,
- * transitions status to 'submitted', and enqueues a scoring job.
+ * transitions status to 'submitted', and enqueues a scoring job. Answers that
+ * raise a safety warning are recorded once, which gates the member's result
+ * until they acknowledge it (`acknowledgeSafetyAdvice`).
  *
  * @throws NotFoundError if assessment doesn't exist or belongs to another member
  * @throws ValidationError if assessment is already submitted
@@ -582,10 +616,22 @@ export async function submitAssessment(
     .filter(([, answerValue]) => isAnswerProvided(answerValue))
     .map(([questionId, answerValue]) => ({ questionId, answerValue }));
 
+  const safetyTrigger = findSafetyTrigger(
+    flowSteps,
+    await toBranchingAnswers(db, assessmentId, responses)
+  );
+
   // Execute all writes in a single transaction for atomicity
   // If any step fails, all changes are rolled back
   return await withRLS(organisationId, userId, async (tx) => {
     await writeAnswerChanges(tx, organisationId, assessmentId, submittedValues);
+
+    if (safetyTrigger) {
+      await safetyTriggerRepository.recordTrigger(
+        { organisationId, userAssessmentId: assessmentId, userId, ...safetyTrigger },
+        { tx }
+      );
+    }
 
     // Transition status to 'submitted'
     await userAssessmentRepository.transitionAssessmentStatus(
@@ -666,7 +712,46 @@ export async function getAssessmentResults(
     scores: assessment.scores,
     programmeId: assessment.programmeId,
     programmeName,
+    safetyGate: await loadSafetyGate(organisationId, assessment, userId),
   };
+}
+
+/**
+ * Record the member's confirmation that they have acted on the safety advice their
+ * answers raised, which releases their result. A repeat keeps the first confirmation.
+ * The programme is generated either way: this gates what the member is shown, not
+ * what the system does.
+ *
+ * @throws NotFoundError if assessment doesn't exist or belongs to another member
+ * @throws ValidationError if the assessment raised no safety advice
+ */
+export async function acknowledgeSafetyAdvice(
+  assessmentId: string,
+  context: OrganisationContext
+): Promise<SafetyGate> {
+  const { organisationId } = context;
+  const userId = await getUserIdFromContext(context);
+
+  const assessment = await findOwnAssessment(organisationId, assessmentId, userId);
+  const trigger = await safetyTriggerRepository.findByAssessmentId(organisationId, assessmentId, {
+    userId,
+  });
+
+  if (!trigger) {
+    throw new ValidationError('This assessment has no safety advice to acknowledge');
+  }
+
+  if (assessment.safetyAcknowledgedAt) {
+    return toSafetyGate(trigger, assessment);
+  }
+
+  const acknowledged = await userAssessmentRepository.acknowledgeSafetyAdvice(
+    organisationId,
+    assessmentId,
+    userId
+  );
+
+  return toSafetyGate(trigger, acknowledged);
 }
 
 /**

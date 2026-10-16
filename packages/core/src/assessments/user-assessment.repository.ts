@@ -465,3 +465,35 @@ export async function appendAssessmentWarnings(
     await doAppend(newTx);
   });
 }
+
+/**
+ * Record the member's consent to the safety advice their answers raised. The first
+ * acknowledgement stands: a repeat keeps the original timestamp.
+ */
+export async function acknowledgeSafetyAdvice(
+  organisationId: string,
+  assessmentId: string,
+  userId?: string
+): Promise<UserAssessment> {
+  return await withRLS(organisationId, userId, async (tx) => {
+    const records = await tx
+      .update(userAssessments)
+      .set({
+        safetyAcknowledgedAt: sql`COALESCE(${userAssessments.safetyAcknowledgedAt}, now())`,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(userAssessments.id, assessmentId),
+          eq(userAssessments.organisationId, organisationId)
+        )
+      )
+      .returning();
+
+    if (records.length === 0) {
+      throw new NotFoundError('User assessment', assessmentId);
+    }
+
+    return records[0];
+  });
+}

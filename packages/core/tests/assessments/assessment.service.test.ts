@@ -7,6 +7,7 @@ import type * as ffpDatabase from '@ffp/database';
 import * as answerRepository from '../../src/assessments/answer.repository';
 import * as assessmentService from '../../src/assessments/assessment.service';
 import * as flowRepository from '../../src/assessments/flow.repository';
+import * as safetyTriggerRepository from '../../src/assessments/safety-trigger.repository';
 import * as userAssessmentRepository from '../../src/assessments/user-assessment.repository';
 import * as jobQueueService from '../../src/jobs/job-queue.service';
 import * as contextModule from '../../src/lib/context';
@@ -17,6 +18,7 @@ import * as questionRepository from '../../src/questions/question.repository';
 
 import type { UserAssessmentAnswer } from '../../src/assessments/answer.repository';
 import type { AssessmentFlow, FlowStepWithConfig } from '../../src/assessments/flow.repository';
+import type { AssessmentSafetyTrigger } from '../../src/assessments/safety-trigger.repository';
 import type { UserAssessment } from '../../src/assessments/user-assessment.repository';
 import type { OrganisationContext, UserActor } from '../../src/lib/context';
 import type {
@@ -32,6 +34,7 @@ type AnswerValue = ffpDatabase.AnswerValue;
 vi.mock('../../src/assessments/flow.repository');
 vi.mock('../../src/assessments/user-assessment.repository');
 vi.mock('../../src/assessments/answer.repository');
+vi.mock('../../src/assessments/safety-trigger.repository');
 vi.mock('../../src/questions/question.repository');
 vi.mock('../../src/programmes/programme.repository');
 vi.mock('../../src/jobs/job-queue.service');
@@ -65,6 +68,7 @@ const mockedJobQueueService = vi.mocked(jobQueueService);
 const mockedAnswerRepo = vi.mocked(answerRepository);
 const mockedQuestionRepo = vi.mocked(questionRepository);
 const mockedProgrammeRepo = vi.mocked(programmeRepository);
+const mockedSafetyTriggerRepo = vi.mocked(safetyTriggerRepository);
 
 const createUserContext = (): OrganisationContext => ({
   actor: {
@@ -109,6 +113,7 @@ const createMockAssessment = (overrides: Partial<UserAssessment> = {}): UserAsse
   startedAt: new Date(),
   submittedAt: null,
   completedAt: null,
+  safetyAcknowledgedAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   ...overrides,
@@ -230,6 +235,8 @@ const createMockQuestion = (
 describe('Assessment Service', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    mockedQuestionRepo.findSlugsByIds.mockResolvedValue(new Map());
+    mockedSafetyTriggerRepo.findByAssessmentId.mockResolvedValue(null);
   });
 
   describe('startAssessment', () => {
@@ -1218,6 +1225,7 @@ describe('Assessment Service', () => {
       startedAt: new Date(),
       submittedAt: new Date(),
       completedAt: new Date(),
+      safetyAcknowledgedAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -1282,6 +1290,252 @@ describe('Assessment Service', () => {
 
       expect(mockedProgrammeRepo.findTemplateBySlug).not.toHaveBeenCalled();
       expect(result.programmeName).toBe('Level 1: Gentle Mobility');
+    });
+  });
+
+  describe('safety gate', () => {
+    const SAFETY_SLUG = 'safety-check';
+    const ADVICE = 'Please speak to a health professional before you start.';
+
+    interface SafetySetUp {
+      context: OrganisationContext;
+      userId: string;
+      assessment: UserAssessment;
+      questionId: string;
+    }
+
+    const setUp = (overrides: Partial<UserAssessment> = {}): SafetySetUp => {
+      const context = createUserContext();
+      const userId = randomUUID();
+      const flowId = randomUUID();
+      const templateId = randomUUID();
+      const questionId = randomUUID();
+      const steps = createMockFlowSteps(flowId, templateId);
+
+      steps[1].nextStepRules = [
+        {
+          priority: 1,
+          conditions: [
+            {
+              type: 'answer_value',
+              questionSlug: SAFETY_SLUG,
+              answerValue: ['chest-pain', 'dizziness', 'night-pain'],
+            },
+          ],
+          action: {
+            type: 'show_warning',
+            warningMessage: ADVICE,
+            warningType: 'seek_medical',
+            continueAfterWarning: true,
+          },
+        },
+      ];
+
+      const question = {
+        ...createMockQuestion(questionId, 'multi-choice', true),
+        slug: SAFETY_SLUG,
+        options: ['chest-pain', 'dizziness', 'night-pain', 'none'].map((value) => ({
+          value,
+          label: value,
+        })),
+      };
+      const assessment = createMockAssessment({
+        organisationId: context.organisationId,
+        userId,
+        flowId,
+        ...overrides,
+      });
+
+      mockedContextModule.getUserIdFromContext.mockResolvedValue(userId);
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
+      mockedFlowRepo.findById.mockResolvedValue(createMockFlow(flowId));
+      mockedFlowRepo.findStepsByFlowId.mockResolvedValue(steps);
+      mockedQuestionRepo.findByTemplateIds.mockResolvedValue(inTemplate([question], templateId));
+      mockedQuestionRepo.findSlugsByIds.mockResolvedValue(new Map([[questionId, SAFETY_SLUG]]));
+      mockedAnswerRepo.findByAssessmentId.mockResolvedValue([]);
+      mockedJobQueueService.queueJob.mockResolvedValue(randomUUID());
+      mockedDatabaseModule.withRLS.mockImplementation(async (_org, _user, callback) => {
+        return await callback({} as Parameters<typeof callback>[0]);
+      });
+
+      return { context, userId, assessment, questionId };
+    };
+
+    const submit = async (
+      { context, assessment, questionId }: SafetySetUp,
+      answerValue: AnswerValue
+    ): Promise<unknown> =>
+      assessmentService.submitAssessment(
+        assessment.id,
+        { answers: { [questionId]: { questionId, answerValue } } },
+        context
+      );
+
+    const createTrigger = (assessment: UserAssessment): AssessmentSafetyTrigger => ({
+      id: randomUUID(),
+      organisationId: assessment.organisationId,
+      userAssessmentId: assessment.id,
+      userId: assessment.userId,
+      questionSlug: SAFETY_SLUG,
+      selectedOptions: ['dizziness'],
+      warningMessage: ADVICE,
+      triggeredAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    describe('submitAssessment', () => {
+      it('records a red flag once, inside the submit transaction', async () => {
+        const setUpResult = setUp();
+
+        await submit(setUpResult, ['dizziness', 'night-pain']);
+
+        expect(mockedSafetyTriggerRepo.recordTrigger).toHaveBeenCalledTimes(1);
+        expect(mockedSafetyTriggerRepo.recordTrigger).toHaveBeenCalledWith(
+          {
+            organisationId: setUpResult.context.organisationId,
+            userAssessmentId: setUpResult.assessment.id,
+            userId: setUpResult.userId,
+            questionSlug: SAFETY_SLUG,
+            selectedOptions: ['dizziness', 'night-pain'],
+            warningMessage: ADVICE,
+          },
+          { tx: expect.anything() as unknown }
+        );
+      });
+
+      it('counts a red flag ticked alongside "none", recording only the red flag', async () => {
+        const setUpResult = setUp();
+
+        await submit(setUpResult, ['none', 'chest-pain']);
+
+        expect(mockedSafetyTriggerRepo.recordTrigger).toHaveBeenCalledWith(
+          expect.objectContaining({ selectedOptions: ['chest-pain'] }),
+          expect.anything()
+        );
+      });
+
+      it('records nothing when no red flag is chosen', async () => {
+        const setUpResult = setUp();
+
+        await submit(setUpResult, ['none']);
+
+        expect(mockedSafetyTriggerRepo.recordTrigger).not.toHaveBeenCalled();
+        expect(mockedJobQueueService.queueJob).toHaveBeenCalledTimes(1);
+      });
+
+      it('records nothing for a refused submit or a repeat submit', async () => {
+        const refused = setUp();
+
+        await expect(submit(refused, ['not-an-option'])).rejects.toThrow(ValidationError);
+
+        const repeated = setUp({ status: 'submitted' });
+
+        await expect(submit(repeated, ['dizziness'])).rejects.toThrow(ValidationError);
+        expect(mockedSafetyTriggerRepo.recordTrigger).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('gate state', () => {
+      it('reports the gate on results until the member acknowledges it', async () => {
+        const { context, assessment } = setUp({ status: 'completed' });
+
+        mockedSafetyTriggerRepo.findByAssessmentId.mockResolvedValue(createTrigger(assessment));
+
+        const result = await assessmentService.getAssessmentResults(assessment.id, context);
+
+        expect(result.safetyGate).toEqual({ required: true, acknowledgedAt: null, advice: ADVICE });
+      });
+
+      it('reports no gate on results when nothing was triggered', async () => {
+        const { context, assessment } = setUp({ status: 'completed' });
+
+        const result = await assessmentService.getAssessmentResults(assessment.id, context);
+
+        expect(result.safetyGate).toEqual({ required: false, acknowledgedAt: null, advice: null });
+      });
+
+      it('carries the same gate when resuming a submitted assessment', async () => {
+        const acknowledgedAt = new Date('2026-10-16T09:00:00.000Z');
+        const { context, assessment } = setUp({
+          status: 'completed',
+          safetyAcknowledgedAt: acknowledgedAt,
+        });
+
+        mockedFlowRepo.findActiveById.mockResolvedValue(createMockFlow(assessment.flowId));
+        mockedUserAssessmentRepo.findResumableAssessment.mockResolvedValue(null);
+        mockedUserAssessmentRepo.findSubmittedAssessment.mockResolvedValue(assessment);
+        mockedSafetyTriggerRepo.findByAssessmentId.mockResolvedValue(createTrigger(assessment));
+
+        const result = await assessmentService.startAssessment(assessment.flowId, context);
+
+        expect(result.safetyGate).toEqual({
+          required: true,
+          acknowledgedAt: acknowledgedAt.toISOString(),
+          advice: ADVICE,
+        });
+      });
+    });
+
+    describe('acknowledgeSafetyAdvice', () => {
+      it('records the acknowledgement', async () => {
+        const { context, assessment } = setUp({ status: 'completed' });
+        const acknowledgedAt = new Date();
+
+        mockedSafetyTriggerRepo.findByAssessmentId.mockResolvedValue(createTrigger(assessment));
+        mockedUserAssessmentRepo.acknowledgeSafetyAdvice.mockResolvedValue({
+          ...assessment,
+          safetyAcknowledgedAt: acknowledgedAt,
+        });
+
+        const gate = await assessmentService.acknowledgeSafetyAdvice(assessment.id, context);
+
+        expect(gate.acknowledgedAt).toBe(acknowledgedAt.toISOString());
+        expect(mockedUserAssessmentRepo.acknowledgeSafetyAdvice).toHaveBeenCalledWith(
+          context.organisationId,
+          assessment.id,
+          assessment.userId
+        );
+      });
+
+      it('keeps the first acknowledgement on a repeat', async () => {
+        const firstAcknowledgedAt = new Date('2026-10-16T09:00:00.000Z');
+        const { context, assessment } = setUp({
+          status: 'completed',
+          safetyAcknowledgedAt: firstAcknowledgedAt,
+        });
+
+        mockedSafetyTriggerRepo.findByAssessmentId.mockResolvedValue(createTrigger(assessment));
+
+        const gate = await assessmentService.acknowledgeSafetyAdvice(assessment.id, context);
+
+        expect(gate.acknowledgedAt).toBe(firstAcknowledgedAt.toISOString());
+        expect(mockedUserAssessmentRepo.acknowledgeSafetyAdvice).not.toHaveBeenCalled();
+      });
+
+      it('refuses an assessment that raised no safety advice', async () => {
+        const { context, assessment } = setUp({ status: 'completed' });
+
+        await expect(
+          assessmentService.acknowledgeSafetyAdvice(assessment.id, context)
+        ).rejects.toThrow(ValidationError);
+        expect(mockedUserAssessmentRepo.acknowledgeSafetyAdvice).not.toHaveBeenCalled();
+      });
+
+      it('refuses another member’s assessment as not found', async () => {
+        const { context, assessment } = setUp({ status: 'completed' });
+
+        mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue({
+          ...assessment,
+          userId: randomUUID(),
+        });
+        mockedSafetyTriggerRepo.findByAssessmentId.mockResolvedValue(createTrigger(assessment));
+
+        await expect(
+          assessmentService.acknowledgeSafetyAdvice(assessment.id, context)
+        ).rejects.toThrow(NotFoundError);
+        expect(mockedUserAssessmentRepo.acknowledgeSafetyAdvice).not.toHaveBeenCalled();
+      });
     });
   });
 });

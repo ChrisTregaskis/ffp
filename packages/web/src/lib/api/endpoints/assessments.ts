@@ -2,6 +2,7 @@ import {
   assessmentFlowSchema,
   assessmentResultsResponseSchema,
   assessmentTemplateWithQuestionsSchema,
+  safetyGateSchema,
   saveProgressResponseSchema,
   startAssessmentResponseSchema,
   submitAssessmentResponseSchema,
@@ -10,6 +11,7 @@ import {
   type AssessmentResultsResponse,
   type AssessmentTemplate,
   type AssessmentTemplateWithQuestions,
+  type SafetyGate,
   type SaveProgressRequest,
   type SaveProgressResponse,
   type StartAssessmentResponse,
@@ -137,6 +139,17 @@ export const assessmentsApi = {
 
     return parseApiResponse(assessmentResultsResponseSchema, response, { method: 'GET', path });
   },
+
+  /**
+   * Confirm the member has acted on the safety advice their answers raised,
+   * which releases their result. A repeat keeps the first confirmation.
+   */
+  acknowledgeSafetyAdvice: async (assessmentId: string): Promise<SafetyGate> => {
+    const path = `${basePath}/${assessmentId}/safety-acknowledgement`;
+    const response = await ffpClient.post(path);
+
+    return parseApiResponse(safetyGateSchema, response, { method: 'POST', path });
+  },
 };
 
 // Re-export types for consumers
@@ -145,6 +158,7 @@ export type {
   AssessmentResultsResponse,
   AssessmentTemplate,
   AssessmentTemplateWithQuestions,
+  SafetyGate,
   SaveProgressRequest,
   SaveProgressResponse,
   StartAssessmentResponse,

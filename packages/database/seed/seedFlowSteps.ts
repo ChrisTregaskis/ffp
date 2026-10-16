@@ -51,7 +51,7 @@ const SAFETY_CHECK_RULES: NextStepRule[] = [
       type: 'show_warning',
       warningMessage:
         'Before you start, please speak to a health professional about what you have selected, to make sure these sessions are right for you.',
-      warningType: 'caution',
+      warningType: 'seek_medical',
       continueAfterWarning: true,
     },
   },

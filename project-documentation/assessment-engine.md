@@ -418,6 +418,10 @@ Warnings are tracked on the `user_assessments` record for audit purposes:
 ];
 ```
 
+### Safety Consent Gate
+
+A `seek_medical` warning raised by the submitted answers gates the member's result: they are shown the advice and must confirm they have acted on it before the result unlocks. Submit evaluates the flow's branching rules over the full answer set (the safety question sits on the last step, which is submitted rather than saved), and records one row per assessment in `assessment_safety_triggers` (the options that fired it, the advice shown, when). The results and resume responses carry `safetyGate: { required, acknowledgedAt, advice }`; `POST /assessments/{id}/safety-acknowledgement` sets `user_assessments.safety_acknowledged_at` once. Programme generation is not held back: the gate is what the member is shown, not what the system does. `warnings_shown` stays as the save-time audit trail and is not the count.
+
 ### Step ID vs Order for Navigation
 
 **Problem**: Branching creates parallel paths where multiple steps occupy the same logical "tier":

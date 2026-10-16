@@ -793,6 +793,7 @@ describe('startAssessmentResponseSchema', () => {
     flowId: validUuid2,
     isResumed: false,
     steps: [validStepSummary],
+    safetyGate: null,
   };
 
   it('should accept valid response for new assessment', () => {
