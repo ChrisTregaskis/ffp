@@ -57,6 +57,7 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
         errors={errors}
         isRequired={!isEditMode}
         disabled={isEditMode}
+        registerOptions={{ required: !isEditMode && 'Please give the user an email address' }}
       />
 
       {/* First Name + Last Name */}
@@ -68,6 +69,7 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
           register={register}
           errors={errors}
           isRequired
+          registerOptions={{ required: 'Please give the user a first name' }}
         />
         <FormTextInput
           name="lastName"
@@ -76,6 +78,7 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
           register={register}
           errors={errors}
           isRequired
+          registerOptions={{ required: 'Please give the user a last name' }}
         />
       </FormRow>
 
@@ -97,6 +100,7 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
           control={control}
           errors={errors}
           isRequired
+          rules={{ required: 'Please choose a location' }}
         />
       )}
 

@@ -37,6 +37,7 @@ export const OrganisationFormFields: React.FC<OrganisationFormFieldsProps> = ({
         register={register}
         errors={errors}
         isRequired
+        registerOptions={{ required: 'Please give the organisation a name' }}
       />
 
       {/* Status (edit mode only) */}

@@ -24,6 +24,10 @@ export const SessionFormFields: React.FC<{
           register={register}
           errors={errors}
           isRequired
+          registerOptions={{
+            // The form trims on submit, so a name of only spaces would save empty
+            validate: (value) => value.trim() !== '' || 'Please give the session a name',
+          }}
         />
 
         <FormTextInput<SessionFormValues>

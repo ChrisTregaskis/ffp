@@ -1,18 +1,12 @@
 import { signIn, confirmSignIn, type ConfirmSignInInput } from 'aws-amplify/auth';
-import { useCallback, useState, useMemo } from 'react';
+import { useCallback, useState } from 'react';
 
-import { Button } from '@web/components/atoms';
-import {
-  Card,
-  StaticAlert,
-  PasswordInput,
-  PasswordRequirementsList,
-} from '@web/components/molecules';
 import { CardTransition, type CardTransitionDirection } from '@web/components/motion';
-import { Form } from '@web/components/organisms';
-import { validatePassword } from '@web/utils/passwordStrength';
+import { useNewPasswordFields } from '@web/hooks/useNewPasswordFields';
+import type { SetPasswordCredentialsData } from '@web/schemas/auth.schema';
 
-import { setPasswordCredentialsFields, type SetPasswordCredentialsData } from '.';
+import { SetPasswordCredentialsStep } from './SetPasswordCredentialsStep';
+import { SetPasswordNewPasswordStep } from './SetPasswordNewPasswordStep';
 
 export interface SetPasswordFormProps {
   /** Callback when password is successfully set and user is authenticated */
@@ -63,22 +57,20 @@ export const SetPasswordForm: React.FC<SetPasswordFormProps> = ({
     skipTempPasswordStep && initialEmail ? { email: initialEmail, temporaryPassword: '' } : null
   );
 
-  // Password step state
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
+  // Held here rather than in step 2 so the entries survive going back to step 1
+  const newPassword = useNewPasswordFields();
 
   const isLoading = externalLoading || internalLoading;
   const error = externalError ?? internalError;
 
-  // Validate password in real-time
-  const passwordValidation = useMemo(() => validatePassword(password), [password]);
+  // Clears both, because the alert shows whichever is set
+  const handleDismissError = useCallback((): void => {
+    setInternalError(null);
 
-  // Check if passwords match
-  const passwordsMatch = password === confirmPassword;
-  const showConfirmPasswordError = Boolean(
-    confirmPasswordTouched && confirmPassword && !passwordsMatch
-  );
+    if (onClearError) {
+      onClearError();
+    }
+  }, [onClearError]);
 
   /**
    * Handle credentials submission (Step 1)
@@ -131,54 +123,54 @@ export const SetPasswordForm: React.FC<SetPasswordFormProps> = ({
    * Completes the NEW_PASSWORD_REQUIRED challenge by setting the user's
    * permanent password.
    */
-  const handleNewPasswordSubmit = useCallback(
-    async (e: React.FormEvent): Promise<void> => {
-      e.preventDefault();
+  const handleNewPasswordSubmit = useCallback(async (): Promise<void> => {
+    // The submit button is disabled until both hold; this guards a submit that gets past it
+    if (!newPassword.passwordsMatch) {
+      setInternalError('Passwords do not match');
 
-      // Validate passwords match
-      if (!passwordsMatch) {
-        setInternalError('Passwords do not match');
+      return;
+    }
 
-        return;
+    if (!newPassword.validation.allRequirementsMet) {
+      setInternalError('Please meet all password requirements');
+
+      return;
+    }
+
+    try {
+      setInternalLoading(true);
+      setInternalError(null);
+
+      if (onClearError) {
+        onClearError();
       }
 
-      // Validate all requirements are met
-      if (!passwordValidation.allRequirementsMet) {
-        setInternalError('Please meet all password requirements');
+      // Complete the new password challenge
+      const confirmInput: ConfirmSignInInput = {
+        challengeResponse: newPassword.password,
+      };
 
-        return;
+      const result = await confirmSignIn(confirmInput);
+
+      if (result.isSignedIn) {
+        // Password successfully set, user is now authenticated
+        await onSuccess();
+      } else {
+        throw new Error('Failed to complete password setup. Please try again.');
       }
-
-      try {
-        setInternalLoading(true);
-        setInternalError(null);
-
-        if (onClearError) {
-          onClearError();
-        }
-
-        // Complete the new password challenge
-        const confirmInput: ConfirmSignInInput = {
-          challengeResponse: password,
-        };
-
-        const result = await confirmSignIn(confirmInput);
-
-        if (result.isSignedIn) {
-          // Password successfully set, user is now authenticated
-          await onSuccess();
-        } else {
-          throw new Error('Failed to complete password setup. Please try again.');
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to set new password';
-        setInternalError(errorMessage);
-      } finally {
-        setInternalLoading(false);
-      }
-    },
-    [password, passwordsMatch, passwordValidation.allRequirementsMet, onClearError, onSuccess]
-  );
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to set new password';
+      setInternalError(errorMessage);
+    } finally {
+      setInternalLoading(false);
+    }
+  }, [
+    newPassword.password,
+    newPassword.passwordsMatch,
+    newPassword.validation.allRequirementsMet,
+    onClearError,
+    onSuccess,
+  ]);
 
   /**
    * Handle going back to credentials step
@@ -194,132 +186,31 @@ export const SetPasswordForm: React.FC<SetPasswordFormProps> = ({
     }
   }, [onClearError]);
 
-  // Render credentials step
   if (currentStep === SetPasswordStep.ENTER_CREDENTIALS) {
     return (
       <CardTransition transitionKey="credentials-step" direction={direction}>
-        <Card
-          title="Set your password"
-          subtitle="Enter your email and temporary password to get started."
-          centerHeader
-        >
-          {/* Error display */}
-          {error && (
-            <StaticAlert
-              variant="error"
-              message={error}
-              onDismiss={
-                onClearError ??
-                (() => {
-                  setInternalError(null);
-                })
-              }
-              className="mb-6"
-            />
-          )}
-
-          {/* Credentials form */}
-          <div className="space-y-6">
-            <Form
-              fields={setPasswordCredentialsFields}
-              onSubmit={handleCredentialsSubmit}
-              submitLabel={isLoading ? 'Verifying...' : 'Continue'}
-              isSubmitting={isLoading}
-              defaultValues={initialEmail ? { email: initialEmail } : undefined}
-            />
-          </div>
-        </Card>
+        <SetPasswordCredentialsStep
+          initialEmail={initialEmail}
+          isLoading={isLoading}
+          error={error}
+          onDismissError={handleDismissError}
+          onSubmit={handleCredentialsSubmit}
+        />
       </CardTransition>
     );
   }
 
-  // Render new password step
   return (
     <CardTransition transitionKey="password-step" direction={direction}>
-      <Card
-        title="Create your password"
-        subtitle={`Set a secure password for ${credentials?.email ?? 'your account'}.`}
-        centerHeader
-      >
-        {/* Error display */}
-        {error && (
-          <StaticAlert
-            variant="error"
-            message={error}
-            onDismiss={
-              onClearError ??
-              (() => {
-                setInternalError(null);
-              })
-            }
-            className="mb-6"
-          />
-        )}
-
-        {/* New password form */}
-        <form
-          onSubmit={(e) => {
-            void handleNewPasswordSubmit(e);
-          }}
-          className="space-y-6"
-        >
-          {/* Password input with strength indicator */}
-          <PasswordInput
-            label="New password"
-            placeholder="Create a secure password"
-            value={password}
-            onChange={setPassword}
-            name="password"
-            strength={passwordValidation.strength}
-            showStrength
-            disabled={isLoading}
-          />
-
-          {/* Password requirements list */}
-          <PasswordRequirementsList requirements={passwordValidation.requirements} />
-
-          {/* Confirm password input */}
-          <PasswordInput
-            label="Confirm password"
-            placeholder="Re-enter your password"
-            value={confirmPassword}
-            onChange={(value) => {
-              setConfirmPassword(value);
-              setConfirmPasswordTouched(true);
-            }}
-            name="confirmPassword"
-            hasError={showConfirmPasswordError}
-            errorMessage="Passwords do not match"
-            disabled={isLoading}
-          />
-
-          {/* Submit button */}
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            className="w-full"
-            disabled={isLoading || !passwordValidation.allRequirementsMet || !passwordsMatch}
-          >
-            {isLoading ? 'Setting password...' : 'Set password'}
-          </Button>
-
-          {/* Back button - only show if user can go back to credentials step */}
-          {!skipTempPasswordStep && (
-            <div className="flex justify-center -mt-2">
-              <Button
-                variant="link"
-                size="sm"
-                onClick={handleGoBack}
-                type="button"
-                disabled={isLoading}
-              >
-                Go back
-              </Button>
-            </div>
-          )}
-        </form>
-      </Card>
+      <SetPasswordNewPasswordStep
+        email={credentials?.email}
+        newPassword={newPassword}
+        isLoading={isLoading}
+        error={error}
+        onDismissError={handleDismissError}
+        onSubmit={handleNewPasswordSubmit}
+        onGoBack={skipTempPasswordStep ? undefined : handleGoBack}
+      />
     </CardTransition>
   );
 };

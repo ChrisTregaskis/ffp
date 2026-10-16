@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { type ForgotPasswordRequestData } from '@web/components/auth';
 import { ForgotPasswordConfirmForm } from '@web/components/auth/ForgotPasswordConfirmForm';
 import { ForgotPasswordRequestForm } from '@web/components/auth/ForgotPasswordRequestForm';
 import { ForgotPasswordSuccess } from '@web/components/auth/ForgotPasswordSuccess';
@@ -10,6 +9,7 @@ import { AuthLayout } from '@web/components/templates';
 import { useCooldownTimer } from '@web/hooks/useCooldownTimer';
 import { resetPassword, confirmResetPassword } from '@web/lib/auth';
 import { RouteKey, routes } from '@web/pages/routes';
+import type { ForgotPasswordRequestData } from '@web/schemas/auth.schema';
 
 /**
  * Steps in the forgot password flow
