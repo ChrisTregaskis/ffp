@@ -15,7 +15,7 @@ export type AlertAppearance = 'soft' | 'solid';
 export interface StaticAlertProps {
   /** Alert variant determining colour and icon */
   variant?: AlertVariant;
-  /** Visual appearance @default 'soft' */
+  /** Visual appearance @default 'solid' */
   appearance?: AlertAppearance;
   /** Alert message to display */
   message: string;

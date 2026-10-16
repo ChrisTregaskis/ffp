@@ -99,7 +99,7 @@ packages/web/src/
 │   │                                 DescriptionPanel, ComingSoon
 │   ├── organisms/<Name>/        generic; self-contained sections
 │   │                            e.g. Table (+ private TableHeader/TableBody/… files), Modal, ConfirmModal, DropdownMenu,
-│   │                                 KebabMenu, ComposableForm, Form, MobileMenu, ErrorFallback
+│   │                                 KebabMenu, ComposableForm, MobileMenu, ErrorFallback
 │   ├── templates/<Name>/        page skeletons with slots
 │   │                            AppLayout, AuthLayout, AdminListPageShell, AdminEditPageShell
 │   ├── motion/  error/          behaviour wrappers and ErrorBoundary: outside the levels
