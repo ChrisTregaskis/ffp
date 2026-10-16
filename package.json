@@ -34,6 +34,7 @@
     "db:verify": "turbo run db:verify --filter=@ffp/database",
     "bootstrap:super-admin": "tsx scripts/bootstrap-super-admin.ts",
     "seed:db": "tsx scripts/seed-database.ts",
+    "seed:video-assets": "tsx scripts/seed-video-assets.ts",
     "sst:dev": "sst dev --mode=mono",
     "sst:build": "sst build",
     "sst:deploy": "sst deploy",

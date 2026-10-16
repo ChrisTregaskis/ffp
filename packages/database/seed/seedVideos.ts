@@ -224,6 +224,9 @@ const DEFAULT_VIDEOS: NewVideo[] = [
   },
 ];
 
+/** Where each seeded video's media is expected in the videos bucket (see `seedVideoAssets`) */
+export const SEED_VIDEO_S3_KEYS: string[] = DEFAULT_VIDEOS.map((video) => video.s3Key);
+
 /**
  * Seeds exercise videos for the video catalogue.
  *
