@@ -1,5 +1,5 @@
-import { Button, Icon, Icons, Text } from '@web/components/atoms';
-import { Card } from '@web/components/molecules';
+import { Button, Icons } from '@web/components/atoms';
+import { Card, StatusResult } from '@web/components/molecules';
 
 export interface ForgotPasswordSuccessProps {
   /** Navigate back to sign in */
@@ -14,29 +14,18 @@ export interface ForgotPasswordSuccessProps {
 export const ForgotPasswordSuccess: React.FC<ForgotPasswordSuccessProps> = ({ onBackToLogin }) => {
   return (
     <Card>
-      <div className="space-y-6 text-center">
-        <div className="flex justify-center">
-          <div className="rounded-full bg-success/10 p-3">
-            <Icon
-              name={Icons.CHECKCIRCLE}
-              styleProps={{ size: 'xl', colour: 'var(--color-success)' }}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Text as="p" styleProps={{ size: 'lg', weight: 'semibold', colour: 'foreground' }}>
-            Password reset successfully
-          </Text>
-          <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-            Your password has been updated. You can now sign in with your new password.
-          </Text>
-        </div>
-
-        <Button variant="primary" fullWidth onClick={onBackToLogin}>
-          Back to sign in
-        </Button>
-      </div>
+      <StatusResult
+        icon={Icons.CHECKCIRCLE}
+        iconVariant="success"
+        title="Password reset successfully"
+        description="Your password has been updated. You can now sign in with your new password."
+        spacing="compact"
+        actions={
+          <Button variant="primary" fullWidth onClick={onBackToLogin}>
+            Back to sign in
+          </Button>
+        }
+      />
     </Card>
   );
 };

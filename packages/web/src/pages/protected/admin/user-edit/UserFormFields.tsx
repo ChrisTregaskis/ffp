@@ -1,7 +1,13 @@
 import React, { useMemo } from 'react';
 
 import { FormRow } from '@web/components/atoms';
-import { FormActions, StaticAlert, FormSelect, FormTextInput } from '@web/components/molecules';
+import {
+  FormActions,
+  FormEmailInput,
+  FormSelect,
+  FormTextInput,
+  StaticAlert,
+} from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
 import { useAdminLocationsQuery } from '@web/hooks/locations';
 
@@ -48,16 +54,14 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
       {errorMessage && <StaticAlert variant="error" message={errorMessage} className="mb-4" />}
 
       {/* Email — disabled in edit mode */}
-      <FormTextInput
+      <FormEmailInput
         name="email"
         label="Email"
-        type="email"
         placeholder="user@example.com"
         register={register}
         errors={errors}
-        isRequired={!isEditMode}
+        requiredMessage={isEditMode ? undefined : 'Please give the user an email address'}
         disabled={isEditMode}
-        registerOptions={{ required: !isEditMode && 'Please give the user an email address' }}
       />
 
       {/* First Name + Last Name */}

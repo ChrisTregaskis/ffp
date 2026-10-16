@@ -21,7 +21,7 @@ export const HomePage = (): JSX.Element => {
   const navigate = useNavigate();
 
   const isProgrammeUser = user?.role === USER_ROLE.PROGRAMME_USER;
-  const { data: assessmentStatus, isLoading: isStatusLoading } = useUserAssessmentStatusQuery({
+  const { data: assessmentStatus, isPending: isStatusPending } = useUserAssessmentStatusQuery({
     enabled: isProgrammeUser,
   });
 
@@ -66,7 +66,8 @@ export const HomePage = (): JSX.Element => {
 
   // Show full-screen overlay spinner while loading status or redirecting.
   // Uses fixed positioning to cover the entire viewport including the sidebar.
-  if ((isProgrammeUser && isStatusLoading) || isRedirecting) {
+  // Pending, not loading: a paused retry would otherwise show the dashboard before the redirect
+  if ((isProgrammeUser && isStatusPending) || isRedirecting) {
     return (
       <div className="fixed inset-0 z-50 bg-background">
         <LoadingState layout="fill" />

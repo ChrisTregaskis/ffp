@@ -25,7 +25,7 @@ const DEFAULT_FILTERS = { isActive: 'true' };
 const EMPTY_STATE: AdminListEmptyState = {
   filteredTitle: 'No matching questions',
   icon: 'HelpCircle',
-  iconVariant: 'neutral',
+  iconVariant: 'primary',
   title: 'No questions yet',
   description: 'Write your first question to start building assessments from the bank.',
 };

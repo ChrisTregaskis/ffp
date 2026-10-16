@@ -22,6 +22,7 @@ export const LoginFormFields: React.FC<LoginFormFieldsProps> = ({ isLoading }) =
         label="Password"
         type="password"
         placeholder="••••••••"
+        inputProps={{ autoComplete: 'current-password' }}
         register={register}
         errors={errors}
         isRequired

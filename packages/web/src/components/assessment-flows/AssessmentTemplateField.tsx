@@ -20,7 +20,7 @@ const RETIRED_TEMPLATE_MESSAGE =
  */
 export const AssessmentTemplateField: React.FC = () => {
   const { control, errors, watch } = useComposableFormContext<FlowStepFormValues>();
-  const { data: templates, isLoading, error } = useAssessmentTemplatesQuery();
+  const { data: templates, isPending, error } = useAssessmentTemplatesQuery();
 
   const selectedTemplateId = watch('templateId');
 
@@ -70,7 +70,7 @@ export const AssessmentTemplateField: React.FC = () => {
         name="templateId"
         label="Linked template"
         options={options}
-        placeholder={isLoading ? 'Loading templates…' : 'Select a template'}
+        placeholder={isPending ? 'Loading templates…' : 'Select a template'}
         control={control}
         errors={errors}
         isRequired

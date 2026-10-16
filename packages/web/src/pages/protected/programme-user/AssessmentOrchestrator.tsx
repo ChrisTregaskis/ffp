@@ -9,8 +9,7 @@ import {
 } from '@ffp/core';
 
 import { AssessmentStepRenderer } from '@web/components/assessment/AssessmentStepRenderer/AssessmentStepRenderer';
-import { Button } from '@web/components/atoms';
-import { LoadingState, StaticAlert } from '@web/components/molecules';
+import { ErrorRetryState, LoadingState } from '@web/components/molecules';
 import { routes, RouteKey } from '@web/config/routes';
 import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
@@ -62,6 +61,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
 
   const {
     mutate: startMutate,
+    variables: startVariables,
     isPending: isStartPending,
     isError: isStartError,
   } = useStartAssessment({
@@ -130,7 +130,11 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
   const templateId = currentStepSummary?.templateId ?? null;
 
   // Fetch template questions for question/video-assessment steps
-  const { data: template, error: templateError } = useAssessmentTemplateQuery(templateId ?? '', {
+  const {
+    data: template,
+    error: templateError,
+    refetch: refetchTemplate,
+  } = useAssessmentTemplateQuery(templateId ?? '', {
     enabled: needsQuestions && !!templateId,
   });
 
@@ -190,67 +194,42 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
     return <LoadingState layout="screen" message="Loading your assessment..." />;
   }
 
-  // Error state: start assessment failed
   if (isStartError) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
-        <StaticAlert
-          variant="error"
-          message="Unable to start the assessment. Please try again later."
-        />
-
-        <Button
-          variant="secondary"
-          onClick={() => {
-            startMutate({ flowId });
-          }}
-        >
-          Try Again
-        </Button>
-      </div>
+      <ErrorRetryState
+        layout="screen"
+        title="We couldn't load your assessment just now."
+        // Retry with the same arguments: the fresh-start flag was cleared from sessionStorage on mount
+        onRetry={() => {
+          startMutate(startVariables);
+        }}
+      />
     );
   }
 
-  // Error state: template questions failed to load
-  if (needsQuestions && templateError) {
+  if (needsQuestions && templateError && !template) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
-        <StaticAlert
-          variant="error"
-          message="Unable to load assessment questions. Please try again later."
-        />
-      </div>
+      <ErrorRetryState
+        layout="screen"
+        title="We couldn't load the questions just now."
+        onRetry={() => {
+          void refetchTemplate();
+        }}
+      />
     );
   }
 
-  // Submission loading state: submitting assessment answers
   if (isSubmitPending) {
     return <LoadingState layout="screen" message="Submitting your assessment..." />;
   }
 
-  // Submission error state
   if (isSubmitError) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
-        <StaticAlert
-          variant="error"
-          message="Unable to submit your assessment. Please try again."
-        />
-
-        <Button
-          variant="secondary"
-          onClick={() => {
-            if (assessmentState.assessmentId) {
-              submitMutate({
-                assessmentId: assessmentState.assessmentId,
-                payload: { answers: assessmentState.answers },
-              });
-            }
-          }}
-        >
-          Try Again
-        </Button>
-      </div>
+      <ErrorRetryState
+        layout="screen"
+        title="We couldn't send your answers just now."
+        onRetry={handleSubmitAssessment}
+      />
     );
   }
 

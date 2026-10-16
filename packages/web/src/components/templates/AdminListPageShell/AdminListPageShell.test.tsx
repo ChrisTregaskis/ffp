@@ -61,13 +61,13 @@ const renderShell = (
 
 const emptyList = vi.fn(() => ({
   data: { data: [], pagination: { total: 0 } },
-  isLoading: false,
+  isPending: false,
   error: null,
 }));
 
 describe('AdminListPageShell', () => {
   it('sends the search and each configured filter, with blanks as undefined', () => {
-    const useList = vi.fn(() => ({ data: undefined, isLoading: false, error: null }));
+    const useList = vi.fn(() => ({ data: undefined, isPending: false, error: null }));
 
     renderShell(useList);
 
@@ -80,7 +80,7 @@ describe('AdminListPageShell', () => {
   it('maps each item to a row and renders it', () => {
     const useList = vi.fn(() => ({
       data: { data: [{ id: 'a', name: 'First thing' }], pagination: { total: 1 } },
-      isLoading: false,
+      isPending: false,
       error: null,
     }));
 
@@ -113,5 +113,11 @@ describe('AdminListPageShell', () => {
     renderShell(emptyList, { ...EMPTY_STATE, defaultsNarrow: true });
 
     expect(screen.getByText('No matching things')).toBeTruthy();
+  });
+
+  it('keeps loading, not empty, while the list is pending without data or error', () => {
+    renderShell(vi.fn(() => ({ data: undefined, isPending: true, error: null })));
+
+    expect(screen.queryByText('No things yet')).toBeNull();
   });
 });

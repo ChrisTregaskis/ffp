@@ -49,7 +49,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   return (
     <AuthFormCard
       title="Welcome back"
-      subtitle="Sign into your physiotherapy account."
+      subtitle="Sign in to your account."
       error={error}
       onDismissError={onClearError}
     >

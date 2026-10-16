@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 
-import { LoadingState, StaticAlert } from '@web/components/molecules';
+import { ErrorRetryState, LoadingState, StaticAlert } from '@web/components/molecules';
 import { routes, RouteKey } from '@web/config/routes';
 import { AssessmentProvider } from '@web/contexts/assessments/AssessmentProvider';
 import { useUserAssessmentStatusQuery } from '@web/hooks/assessments';
@@ -19,13 +19,33 @@ export const AssessmentPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const flowId = searchParams.get('flowId');
   const reassessParam = searchParams.get('reassess') === 'true';
-  const { data: assessmentStatus, isLoading: isStatusLoading } = useUserAssessmentStatusQuery();
+  const {
+    data: assessmentStatus,
+    isPending: isStatusPending,
+    error: statusError,
+    refetch: refetchStatus,
+  } = useUserAssessmentStatusQuery();
 
   // Only treat as reassessment if param is set AND user actually has a programme
   const isReassessment = reassessParam && !!assessmentStatus?.hasProgramme;
 
-  // Show loading while checking programme status
-  if (isStatusLoading) {
+  // Without the status we can't tell whether the member already has a programme, so don't start
+  if (statusError && !assessmentStatus) {
+    return (
+      <div className="bg-linear-to-br from-gray-50 via-ffp-light-purple/10 to-gray-50">
+        <ErrorRetryState
+          layout="screen"
+          title="We couldn't load your assessment just now."
+          onRetry={() => {
+            void refetchStatus();
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Pending, not loading: a retry paused while the tab is hidden has no data and no error yet
+  if (isStatusPending) {
     return (
       <div className="bg-linear-to-br from-gray-50 via-ffp-light-purple/10 to-gray-50">
         <LoadingState layout="screen" />
@@ -34,7 +54,7 @@ export const AssessmentPage: React.FC = () => {
   }
 
   // Redirect users with an active programme away — unless this is an explicit reassessment
-  if (assessmentStatus?.hasProgramme && !reassessParam) {
+  if (assessmentStatus.hasProgramme && !reassessParam) {
     return <Navigate to={routes[RouteKey.PROGRAMME_OVERVIEW].path} replace />;
   }
 

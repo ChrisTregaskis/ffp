@@ -22,6 +22,7 @@ export const NewPasswordFields: React.FC<NewPasswordFieldsProps> = ({
       value={newPassword.password}
       onChange={newPassword.setPassword}
       name="password"
+      autoComplete="new-password"
       strength={newPassword.validation.strength}
       showStrength
       disabled={isLoading}
@@ -35,6 +36,7 @@ export const NewPasswordFields: React.FC<NewPasswordFieldsProps> = ({
       value={newPassword.confirmPassword}
       onChange={newPassword.setConfirmPassword}
       name="confirmPassword"
+      autoComplete="new-password"
       hasError={newPassword.showConfirmPasswordError}
       errorMessage="Passwords do not match"
       disabled={isLoading}

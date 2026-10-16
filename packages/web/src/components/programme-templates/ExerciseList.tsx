@@ -40,7 +40,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
   const { addToast } = useToast();
 
   // Fetch exercises with video summaries
-  const { data: exercises, isLoading } = useSessionExercisesQuery(sessionId);
+  const { data: exercises, isPending } = useSessionExercisesQuery(sessionId);
 
   // Mutation hooks
   const createExercise = useCreateExerciseMutation(templateId);
@@ -153,8 +153,8 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
     [sessionId, exerciseList, reorderExercises, addToast]
   );
 
-  // Loading state
-  if (isLoading && exerciseCount > 0) {
+  // Pending, not loading: a paused retry would otherwise read as "No exercises yet"
+  if (isPending && exerciseCount > 0) {
     return (
       <div className="py-2">
         <LoadingSpinner size="sm" variant="center" />

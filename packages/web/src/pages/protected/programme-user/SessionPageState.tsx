@@ -1,12 +1,18 @@
 import { Text } from '@web/components/atoms';
-import { LoadingState } from '@web/components/molecules';
+import { ErrorRetryState, LoadingState } from '@web/components/molecules';
 import { SessionCompletionState, SessionStartScreen } from '@web/components/session';
 
-export type SessionState = 'loading' | 'not-found' | 'needs-start' | 'completed' | 'workout';
+export type SessionState =
+  | 'loading'
+  | 'error'
+  | 'not-found'
+  | 'needs-start'
+  | 'completed'
+  | 'workout';
 
 export interface SessionPageStateProps {
   /** Current page state */
-  state: 'loading' | 'not-found' | 'needs-start' | 'completed';
+  state: Exclude<SessionState, 'workout'>;
   /** Session name (for needs-start and completed states) */
   sessionName?: string;
   /** Session description */
@@ -25,12 +31,14 @@ export interface SessionPageStateProps {
   onStart?: () => void;
   /** Called when "Back to Programme" is clicked (completed state) */
   onBackToProgramme: () => void;
+  /** Fetches the session again (error state) */
+  onRetry: () => void;
 }
 
 /**
  * Non-workout states for the session page.
  *
- * Handles loading, not found, session start, and completion states
+ * Handles loading, error, not found, session start, and completion states
  * so the main SessionPage can focus on the workout flow.
  */
 export const SessionPageState: React.FC<SessionPageStateProps> = ({
@@ -44,10 +52,20 @@ export const SessionPageState: React.FC<SessionPageStateProps> = ({
   estimatedDurationMinutes,
   onStart,
   onBackToProgramme,
+  onRetry,
 }) => {
   switch (state) {
     case 'loading':
       return <LoadingState layout="screen" />;
+
+    case 'error':
+      return (
+        <ErrorRetryState
+          layout="screen"
+          title="We couldn't load this session just now."
+          onRetry={onRetry}
+        />
+      );
 
     case 'not-found':
       return (

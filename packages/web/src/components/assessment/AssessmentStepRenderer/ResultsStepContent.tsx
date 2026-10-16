@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from 'react';
 
+import { ErrorRetryState } from '@web/components/molecules';
 import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import { useAssessmentResultsQuery } from '@web/hooks/assessments';
@@ -19,7 +20,12 @@ export const ResultsStepContent: React.FC<ResultsStepContentProps> = ({
   isReplacing = false,
 }) => {
   const { assessmentDispatch } = useAssessment();
-  const { data: results, isLoading } = useAssessmentResultsQuery(assessmentId ?? '');
+  const {
+    data: results,
+    isLoading,
+    error,
+    refetch,
+  } = useAssessmentResultsQuery(assessmentId ?? '');
 
   // Sync polled scores into assessment context state
   useEffect(() => {
@@ -42,6 +48,17 @@ export const ResultsStepContent: React.FC<ResultsStepContentProps> = ({
   const handleReplaceProgramme = useCallback(() => {
     onReplaceProgramme?.();
   }, [onReplaceProgramme]);
+
+  const handleRetry = useCallback(() => {
+    void refetch();
+  }, [refetch]);
+
+  // Polling stops on a persistent error, so without scores the loader would spin forever
+  if (error && !results?.scores) {
+    return (
+      <ErrorRetryState title="We couldn't load your results just now." onRetry={handleRetry} />
+    );
+  }
 
   return (
     <ResultsScreen
