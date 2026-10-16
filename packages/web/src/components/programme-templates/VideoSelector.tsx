@@ -15,10 +15,10 @@ import {
   Text,
 } from '@web/components/atoms';
 import { SearchInput } from '@web/components/molecules';
+import { RouteKey, routes } from '@web/config/routes';
 import { adminVideosApi } from '@web/lib/api/endpoints';
 import { videosApi } from '@web/lib/api/endpoints/videos';
 import { videoKeys } from '@web/lib/query/keys';
-import { RouteKey, routes } from '@web/pages/routes';
 import { minutesToMs } from '@web/utils/time';
 
 const DEBOUNCE_MS = 300;

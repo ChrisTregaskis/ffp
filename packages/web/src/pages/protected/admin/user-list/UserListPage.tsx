@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import type { RowAction } from '@web/components/organisms';
 import { AdminListPageShell } from '@web/components/templates';
 import type { AdminListEmptyState } from '@web/components/templates';
+import { RouteKey, routes } from '@web/config/routes';
 import { useAdminUsersQuery } from '@web/hooks/users';
-import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildUserColumns, toUserRow } from './columns';
 import { TABLE_FILTERS } from './constants';

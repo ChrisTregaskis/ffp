@@ -14,8 +14,8 @@ import {
 } from '@web/components/atoms';
 import { LoadingState, StaticAlert, StatusResult, PageHeader } from '@web/components/molecules';
 import { VideoMetadataForm } from '@web/components/video';
+import { RouteKey, routes } from '@web/config/routes';
 import { useVideoUpload } from '@web/hooks/videos';
-import { RouteKey, routes } from '@web/pages/routes';
 import { formatFileSize } from '@web/utils/format';
 
 /**
@@ -103,7 +103,7 @@ export const VideoUploadPage: React.FC = () => {
                     {String(uploadProgress)}%
                   </Text>
                 </div>
-                <ProgressBar percent={uploadProgress} />
+                <ProgressBar percent={uploadProgress} aria-label="Upload progress" />
                 {selectedFile && (
                   <Text
                     as="p"

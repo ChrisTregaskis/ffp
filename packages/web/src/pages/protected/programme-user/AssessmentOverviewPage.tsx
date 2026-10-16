@@ -1,11 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { SectionHeader } from '@web/components/assessment';
 import { Button, Icons, Surface, Text, PageContainer } from '@web/components/atoms';
-import { PageHeader } from '@web/components/molecules';
+import { PageHeader, SectionHeader } from '@web/components/molecules';
+import { routes, RouteKey } from '@web/config/routes';
 import { useUserAssessmentStatusQuery } from '@web/hooks/assessments';
-import { routes, RouteKey } from '@web/pages/routes';
 
 import { REASSESSMENT_START_KEY } from './assessment.constants';
 

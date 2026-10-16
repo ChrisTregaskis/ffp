@@ -99,7 +99,11 @@ export const VideoReplacer: React.FC<VideoReplacerProps> = ({ videoId, publicId,
                   {progress.uploadProgress}%
                 </Text>
               </div>
-              <ProgressBar percent={progress.uploadProgress} className="mt-1" />
+              <ProgressBar
+                percent={progress.uploadProgress}
+                aria-label="Upload progress"
+                className="mt-1"
+              />
             </div>
           )}
 

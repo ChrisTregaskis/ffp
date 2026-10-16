@@ -6,9 +6,9 @@ import { ForgotPasswordRequestForm } from '@web/components/auth/ForgotPasswordRe
 import { ForgotPasswordSuccess } from '@web/components/auth/ForgotPasswordSuccess';
 import { CardTransition, type CardTransitionDirection } from '@web/components/motion';
 import { AuthLayout } from '@web/components/templates';
+import { RouteKey, routes } from '@web/config/routes';
 import { useCooldownTimer } from '@web/hooks/useCooldownTimer';
 import { resetPassword, confirmResetPassword } from '@web/lib/auth';
-import { RouteKey, routes } from '@web/pages/routes';
 import type { ForgotPasswordRequestData } from '@web/schemas/auth.schema';
 
 /**

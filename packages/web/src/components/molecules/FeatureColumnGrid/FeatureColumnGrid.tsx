@@ -22,9 +22,8 @@ export interface FeatureColumnGridProps {
 /**
  * Responsive 3-column grid of icon badge features.
  *
- * Each column displays an IconBadge, a heading, and a description.
- * Used in assessment intro screens and transition cards to summarise
- * what a section contains.
+ * Each column displays an IconBadge, a heading, and a description,
+ * summarising what a section contains.
  */
 export const FeatureColumnGrid: React.FC<FeatureColumnGridProps> = ({
   features,

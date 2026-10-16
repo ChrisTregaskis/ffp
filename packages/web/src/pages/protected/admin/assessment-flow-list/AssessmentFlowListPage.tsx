@@ -5,12 +5,12 @@ import { DeactivateAssessmentFlowModal } from '@web/components/assessment-flows'
 import type { RowAction } from '@web/components/organisms';
 import { AdminListPageShell } from '@web/components/templates';
 import type { AdminListEmptyState } from '@web/components/templates';
+import { RouteKey, routes } from '@web/config/routes';
 import {
   useAdminAssessmentFlowsQuery,
   useAssessmentFlowActivation,
 } from '@web/hooks/assessment-flows';
 import { toActivationRowAction } from '@web/hooks/useActivationActions';
-import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildAssessmentFlowColumns, toAssessmentFlowRow } from './columns';
 import { ASSESSMENT_FLOW_TABLE_FILTERS } from './constants';

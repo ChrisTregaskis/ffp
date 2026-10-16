@@ -1,11 +1,10 @@
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
 import type { StatusCircleStatus } from '@web/components/atoms';
-import { StatusCircle, Text, Title } from '@web/components/atoms';
+import { Badge, StatusCircle, Text, Title } from '@web/components/atoms';
 import { Card } from '@web/components/molecules';
 
 import { ProgressSummary } from './ProgressSummary';
-import { StatusBadge } from './StatusBadge';
 
 type Phase = ProgrammeDetailResponse['phases'][number];
 type Session = Phase['sessions'][number];
@@ -64,7 +63,7 @@ export const PhaseDetailCard: React.FC<PhaseDetailCardProps> = ({ phase, progres
     <Card>
       <div className="p-5">
         <div className="mb-1 flex items-center gap-2">
-          <StatusBadge label="Current" variant="current" />
+          <Badge label="Current" variant="brand" appearance="solid" shape="md" />
           <Title as="h4">
             Phase {String(phase.phaseNumber)}: {phase.name ?? `Phase ${String(phase.phaseNumber)}`}
           </Title>

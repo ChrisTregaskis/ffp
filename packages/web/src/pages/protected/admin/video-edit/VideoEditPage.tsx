@@ -7,10 +7,10 @@ import { AdminEditPageShell } from '@web/components/templates';
 import { ArchiveVideoModal, VideoMetadataFormFields } from '@web/components/video';
 import { VideoPlayer } from '@web/components/video/VideoPlayer';
 import { VideoReplacer } from '@web/components/video/VideoReplacer';
+import { RouteKey, routes } from '@web/config/routes';
 import { useConfirmBeforeSave } from '@web/hooks/useConfirmBeforeSave';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { useUpdateVideoMutation, useVideoQuery } from '@web/hooks/videos';
-import { RouteKey, routes } from '@web/pages/routes';
 
 import { toUpdateVideoInput, toVideoFormValues } from './video-form-values';
 

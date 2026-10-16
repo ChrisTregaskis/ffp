@@ -2,11 +2,11 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { LoadingState } from '@web/components/molecules';
+import { RouteKey, routes } from '@web/config/routes';
 import { USER_ROLE } from '@web/constants/roles';
 import { shouldRedirectToAssessment, useUserAssessmentStatusQuery } from '@web/hooks/assessments';
 import { useAuth } from '@web/hooks/useAuth';
 import { DashboardPage } from '@web/pages/protected/programme-user/DashboardPage';
-import { RouteKey, routes } from '@web/pages/routes';
 
 /**
  * Home page — role-based entry point for authenticated users.

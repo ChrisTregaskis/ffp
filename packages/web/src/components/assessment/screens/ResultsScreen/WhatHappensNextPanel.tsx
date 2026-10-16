@@ -1,6 +1,5 @@
 import { Icons, Surface, Text } from '@web/components/atoms';
-
-import { FeatureColumnGrid, type FeatureItem } from '../../FeatureColumnGrid';
+import { FeatureColumnGrid, type FeatureItem } from '@web/components/molecules';
 
 const NEXT_STEPS: FeatureItem[] = [
   {

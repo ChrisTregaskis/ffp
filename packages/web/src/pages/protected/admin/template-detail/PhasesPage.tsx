@@ -9,6 +9,7 @@ import { DeleteConfirmModal, Table, createColumns } from '@web/components/organi
 import type { RowAction } from '@web/components/organisms';
 import { PhaseForm } from '@web/components/programme-templates/PhaseForm';
 import type { PhaseFormValues } from '@web/components/programme-templates/PhaseForm';
+import { RouteKey, routes } from '@web/config/routes';
 import {
   useCreatePhaseMutation,
   useDeletePhaseMutation,
@@ -17,7 +18,6 @@ import {
   useUpdatePhaseMutation,
 } from '@web/hooks/programme-templates';
 import { useToast } from '@web/hooks/useToast';
-import { RouteKey, routes } from '@web/pages/routes';
 import { swapAdjacentItem } from '@web/utils/reorder';
 import { REORDERABLE_ACTION_LABELS } from '@web/utils/reorderable-item-actions';
 

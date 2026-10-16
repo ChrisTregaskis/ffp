@@ -9,7 +9,7 @@ import { NotFoundPage } from '@web/pages/NotFoundPage';
 
 import { ProtectedRoute } from './ProtectedRoute';
 
-import { routes } from '.';
+import { appRoutes } from '.';
 
 /**
  * Main application router component.
@@ -37,7 +37,7 @@ export const Router = (): JSX.Element => {
   const isShowcase = import.meta.env.VITE_SHOWCASE === 'true';
 
   // Filter out dev-only routes in production (unless this is a showcase build)
-  const availableRoutes = Object.entries(routes).filter(
+  const availableRoutes = Object.entries(appRoutes).filter(
     ([, config]) => !config.devOnly || !isProduction || isShowcase
   );
 

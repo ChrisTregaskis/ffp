@@ -5,9 +5,9 @@ import { DeactivateOrganisationModal } from '@web/components/organisations';
 import type { RowAction } from '@web/components/organisms';
 import { AdminListPageShell } from '@web/components/templates';
 import type { AdminListEmptyState } from '@web/components/templates';
+import { RouteKey, routes } from '@web/config/routes';
 import { useAdminOrganisationsQuery, useOrganisationActivation } from '@web/hooks/organisations';
 import { toActivationRowAction } from '@web/hooks/useActivationActions';
-import { RouteKey, routes } from '@web/pages/routes';
 
 import { buildOrganisationColumns, toOrganisationRow } from './columns';
 import { TABLE_FILTERS } from './constants';

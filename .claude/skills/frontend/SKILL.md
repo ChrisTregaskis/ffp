@@ -89,22 +89,23 @@ packages/web/src/
 │   ├── atoms/<Name>/            generic; each wraps one raw element or primitive
 │   │   ├── <Name>.tsx           e.g. Button, IconButton, PressableArea, Text, Title, Icon, IconBadge, Switch, FieldError,
 │   │   └── index.ts                  LoadingSpinner, ProgressBar, StatusCircle, Logo, Surface, PageContainer, ContentPanel, FormRow,
-│   │                                 FloatingPanel, and the form controls: Input, Textarea, Label, Checkbox,
+│   │                                 FloatingPanel, Badge, and the form controls: Input, Textarea, Label, Checkbox,
 │   │                                 FileInput, SelectTrigger
 │   ├── atoms/index.ts           level barrel: what consumers import
 │   ├── molecules/<Name>/        generic; atoms combined for one job
 │   │                            e.g. FormField, FormTextInput (text, email, password, number), FormSelect, FormToggle,
 │   │                                 PasswordVisibilityInput, Select, BaseSelect, StatusResult, LoadingState,
 │   │                                 EmptyState, StaticAlert, PageHeader, SearchInput, Accordion, Card, MenuList,
-│   │                                 DescriptionPanel, ComingSoon
+│   │                                 DescriptionPanel, ComingSoon, PrescriptionBadge, SectionHeader, InstructionList,
+│   │                                 FeatureColumnGrid
 │   ├── organisms/<Name>/        generic; self-contained sections
 │   │                            e.g. Table (+ private TableHeader/TableBody/… files), Modal, ConfirmModal, DropdownMenu,
 │   │                                 KebabMenu, ComposableForm, MobileMenu, ErrorFallback
 │   ├── templates/<Name>/        page skeletons with slots
 │   │                            AppLayout, AuthLayout, AdminListPageShell, AdminEditPageShell
-│   ├── motion/  error/          behaviour wrappers and ErrorBoundary: outside the levels
+│   ├── motion/  error/          behaviour wrappers (incl. ExpandableSection, TimelineLine) and ErrorBoundary: outside the levels
 │   ├── dev/  demo/              pages/dev showcase scaffolding: outside the levels
-│   └── <domain>/                assessment, assessment-flows, AssessmentProgress, auth, locations, organisations,
+│   └── <domain>/                assessment, assessment-flows, auth, locations, organisations,
 │                                programme, programme-templates, questions, session, video
 │                                flat files; molecules and organisms only; compose from the level folders;
 │                                domain presets live here (ArchiveVideoModal → video/, DeactivateQuestionModal → questions/)

@@ -7,6 +7,7 @@ import { DeactivateAssessmentFlowModal } from '@web/components/assessment-flows'
 import { Button } from '@web/components/atoms';
 import { ActivationToggleButton } from '@web/components/molecules';
 import { AdminEditPageShell } from '@web/components/templates';
+import { RouteKey, routes } from '@web/config/routes';
 import {
   useAssessmentFlowActivation,
   useAssessmentFlowDetailQuery,
@@ -14,7 +15,6 @@ import {
   useUpdateAssessmentFlowMutation,
 } from '@web/hooks/assessment-flows';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
-import { RouteKey, routes } from '@web/pages/routes';
 
 import {
   EMPTY_ASSESSMENT_FLOW_VALUES,

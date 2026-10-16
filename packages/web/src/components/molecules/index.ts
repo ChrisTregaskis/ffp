@@ -10,6 +10,11 @@ export { Card, type CardProps } from './Card';
 export { ComingSoon, type ComingSoonProps } from './ComingSoon';
 export { DescriptionPanel, type DescriptionPanelProps } from './DescriptionPanel';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
+export {
+  FeatureColumnGrid,
+  type FeatureColumnGridProps,
+  type FeatureItem,
+} from './FeatureColumnGrid';
 export { FormActions, type FormActionsProps } from './FormActions';
 export { FormField, type FormFieldProps } from './FormField';
 export { FormSelect, type FormSelectProps } from './FormSelect';
@@ -18,6 +23,7 @@ export { FormTextarea, type FormTextareaProps } from './FormTextarea';
 export { FormTextInput, type FormTextInputProps } from './FormTextInput';
 export { FormToggle, type FormToggleProps } from './FormToggle';
 export { InlineFormPanel, type InlineFormPanelProps } from './InlineFormPanel';
+export { InstructionList, type InstructionListProps } from './InstructionList';
 export { ListEmptyState, type ListEmptyStateProps } from './ListEmptyState';
 export { LoadingState, type LoadingStateProps, type LoadingStateLayout } from './LoadingState';
 export { MenuList, type MenuListProps, type MenuListItem } from './MenuList';
@@ -35,7 +41,14 @@ export {
   type PasswordVisibilityInputProps,
   type PasswordToggleSize,
 } from './PasswordVisibilityInput';
+export {
+  PrescriptionBadge,
+  type PrescriptionBadgeProps,
+  type PrescriptionBadgeVariant,
+  type PrescriptionBadgeSize,
+} from './PrescriptionBadge';
 export { SearchInput, type SearchInputProps } from './SearchInput';
+export { SectionHeader, type SectionHeaderProps } from './SectionHeader';
 export { Select, type SelectProps } from './Select';
 export {
   StaticAlert,

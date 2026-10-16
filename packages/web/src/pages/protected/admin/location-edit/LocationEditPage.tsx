@@ -5,6 +5,7 @@ import type { UpdateLocationInput } from '@ffp/core';
 
 import { DeactivateLocationModal } from '@web/components/locations';
 import { AdminEditPageShell } from '@web/components/templates';
+import { RouteKey, routes } from '@web/config/routes';
 import {
   useCreateLocationMutation,
   useLocationDetailQuery,
@@ -12,7 +13,6 @@ import {
 } from '@web/hooks/locations';
 import { useConfirmBeforeSave } from '@web/hooks/useConfirmBeforeSave';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
-import { RouteKey, routes } from '@web/pages/routes';
 
 import {
   EMPTY_LOCATION_VALUES,

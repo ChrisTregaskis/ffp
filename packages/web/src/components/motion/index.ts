@@ -9,6 +9,8 @@ export { SlideWidth } from './SlideWidth';
 export { SlideVertical } from './SlideVertical';
 export { SlideDrawer } from './SlideDrawer';
 export { Backdrop } from './Backdrop';
+export { ExpandableSection } from './ExpandableSection';
+export { TimelineLine } from './TimelineLine';
 
 export type { FadeSlideProps } from './FadeSlide';
 export type { FadeSlideInProps } from './FadeSlideIn';
@@ -21,3 +23,5 @@ export type { SlideWidthProps } from './SlideWidth';
 export type { SlideVerticalProps } from './SlideVertical';
 export type { SlideDrawerProps, DrawerPosition } from './SlideDrawer';
 export type { BackdropProps } from './Backdrop';
+export type { ExpandableSectionProps } from './ExpandableSection';
+export type { TimelineLineProps } from './TimelineLine';

@@ -2,7 +2,7 @@ import React from 'react';
 
 import type { AdminFlowStepView } from '@ffp/core';
 
-import { Text } from '@web/components/atoms';
+import { Badge, Text } from '@web/components/atoms';
 
 import { BranchingRuleBadge } from './BranchingRuleBadge';
 import { STEP_TYPE_LABELS } from './flow-step-labels';
@@ -29,23 +29,13 @@ export const FlowStepSummary: React.FC<FlowStepSummaryProps> = ({
     <Text styleProps={{ size: 'sm', weight: 'medium' }} className="truncate">
       {step.config.title}
     </Text>
-    <span className="rounded bg-muted px-2 py-0.5">
-      <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
-        {STEP_TYPE_LABELS[step.type]}
-      </Text>
-    </span>
+    <Badge label={STEP_TYPE_LABELS[step.type]} shape="lg" />
     {templateName && (
       <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }} className="truncate">
         {templateName}
       </Text>
     )}
     <BranchingRuleBadge ruleCount={step.branchingRuleCount} />
-    {sharesPosition && (
-      <span className="rounded-full bg-info/10 px-2.5 py-0.5">
-        <Text styleProps={{ size: 'xs', weight: 'medium', colour: 'info' }}>
-          Shares position {step.order}
-        </Text>
-      </span>
-    )}
+    {sharesPosition && <Badge label={`Shares position ${String(step.order)}`} variant="info" />}
   </div>
 );

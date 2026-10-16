@@ -17,7 +17,7 @@ import {
   QUESTION_TYPE_DESCRIPTIONS,
   QUESTION_TYPE_OPTIONS,
   SCORE_DIMENSION_OPTIONS,
-} from '@web/components/questions';
+} from '@web/constants';
 import { useAutoSlug } from '@web/hooks/useAutoSlug';
 
 import { QuestionTypeChangeWarning } from './QuestionTypeChangeWarning';

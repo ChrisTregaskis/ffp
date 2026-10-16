@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { matchRoute } from './matchRoute';
-
-import { RouteKey, routes } from '.';
+import { routes } from './route-config';
+import { RouteKey } from './route-key';
 
 /** What an admin list route declares; its detail routes must say the same. */
 const adminRoles = routes[RouteKey.ADMIN_TEMPLATES].allowedRoles;

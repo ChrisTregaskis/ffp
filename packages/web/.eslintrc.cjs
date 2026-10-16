@@ -10,7 +10,6 @@ const LEVELS = ['atoms', 'molecules', 'organisms', 'templates'];
 const DOMAIN_FOLDERS = [
   'assessment',
   'assessment-flows',
-  'AssessmentProgress',
   'auth',
   'locations',
   'organisations',
@@ -22,6 +21,7 @@ const DOMAIN_FOLDERS = [
 ];
 
 const COMPONENTS = './src/components';
+const PAGES = './src/pages';
 
 // Zones resolve through the TypeScript resolver, so alias and relative imports are held alike.
 const levelBoundaryZones = LEVELS.flatMap((level, index) => [
@@ -30,8 +30,9 @@ const levelBoundaryZones = LEVELS.flatMap((level, index) => [
     from: [
       ...LEVELS.slice(index + 1).map((higher) => `${COMPONENTS}/${higher}`),
       ...DOMAIN_FOLDERS.map((domain) => `${COMPONENTS}/${domain}`),
+      PAGES,
     ],
-    message: `Imports point down: ${level} may import only lower levels, and never a domain folder.`,
+    message: `Imports point down: ${level} may import only lower levels, and never a domain folder or a page.`,
   },
   {
     target: `${COMPONENTS}/${level}`,
@@ -39,6 +40,13 @@ const levelBoundaryZones = LEVELS.flatMap((level, index) => [
     message: `A component never imports its own level's barrel; import the sibling by its path (../Name).`,
   },
 ]);
+
+// Navigation data lives in config/routes, so nothing outside pages/ needs a page.
+const noPageImportZone = {
+  target: ['./src/components', './src/hooks', './src/lib', './src/config', './src/contexts'],
+  from: PAGES,
+  message: 'Only pages import pages. Read route keys and paths from @web/config/routes.',
+};
 
 module.exports = {
   extends: ['@ffp/eslint-config/react'],
@@ -77,6 +85,9 @@ module.exports = {
       },
     ],
     // basePath pins the zones to this package, so they hold whichever directory ESLint runs from.
-    'import/no-restricted-paths': ['error', { basePath: __dirname, zones: levelBoundaryZones }],
+    'import/no-restricted-paths': [
+      'error',
+      { basePath: __dirname, zones: [...levelBoundaryZones, noPageImportZone] },
+    ],
   },
 };

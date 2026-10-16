@@ -4,10 +4,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { MobileMenu } from '@web/components/organisms';
 import type { MobileMenuNavItem } from '@web/components/organisms';
 import { getContextNavItems, getNavigationItems } from '@web/config/navigation';
+import { RouteKey, routes } from '@web/config/routes';
 import { useAuth } from '@web/hooks/useAuth';
 import { useSidebar } from '@web/hooks/useSidebar';
 import { createLogger } from '@web/lib/logger';
-import { RouteKey, routes } from '@web/pages/routes';
 
 import { SideMenu } from './SideMenu';
 

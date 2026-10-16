@@ -6,9 +6,9 @@ import { NavItem } from '@web/components/molecules';
 import { SlideWidth, ClickScale } from '@web/components/motion';
 import { getContextNavItems, getNavigationItems } from '@web/config/navigation';
 import type { NavItem as NavItemType } from '@web/config/navigation';
+import { RouteKey, routes } from '@web/config/routes';
 import { useAuth } from '@web/hooks/useAuth';
 import { useSidebar } from '@web/hooks/useSidebar';
-import { RouteKey, routes } from '@web/pages/routes';
 
 const SIDEBAR_EXPANDED_WIDTH = 230;
 const SIDEBAR_COLLAPSED_WIDTH = 80; // 20 * 4 = 80px (w-20)

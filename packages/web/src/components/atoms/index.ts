@@ -1,3 +1,11 @@
+export {
+  Badge,
+  type BadgeProps,
+  type BadgeVariant,
+  type BadgeAppearance,
+  type BadgeSize,
+  type BadgeShape,
+} from './Badge';
 export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from './Button';
 export { Checkbox, type CheckboxProps } from './Checkbox';
 export { ContentPanel } from './ContentPanel';

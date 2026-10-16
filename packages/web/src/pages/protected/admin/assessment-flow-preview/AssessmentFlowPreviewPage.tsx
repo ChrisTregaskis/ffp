@@ -1,21 +1,13 @@
 import React, { useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { BranchingNotice, FlowPreviewStepCard } from '@web/components/assessment-flows';
 import { ContentPanel, PageContainer } from '@web/components/atoms';
-import {
-  DescriptionPanel,
-  EmptyState,
-  PageState,
-  StaticAlert,
-  PageHeader,
-} from '@web/components/molecules';
+import { DescriptionPanel, EmptyState, PageState, PageHeader } from '@web/components/molecules';
+import { RouteKey, routes } from '@web/config/routes';
 import { useAssessmentFlowDetailQuery } from '@web/hooks/assessment-flows';
 import { useTemplateNameMap } from '@web/hooks/assessment-templates';
-import { useDismissibleNotice } from '@web/hooks/useDismissibleNotice';
-import { RouteKey, routes } from '@web/pages/routes';
 import { flowStepsBranch, stepSharesOrder } from '@web/utils/flow-branching';
-
-import { FlowPreviewStepCard } from './FlowPreviewStepCard';
 
 const BRANCHING_MESSAGE =
   'This flow sends members down different paths depending on their answers, so some steps share a position and not everyone sees every step.';
@@ -32,7 +24,6 @@ export const AssessmentFlowPreviewPage: React.FC = () => {
   // Step detail renders open here, so an unresolved template name would read as
   // an unconfigured step
   const { templateNames, isPending: templateNamesPending } = useTemplateNameMap();
-  const { isDismissed, dismiss } = useDismissibleNotice(BRANCHING_NOTICE_ID);
 
   const steps = useMemo(() => flow?.steps ?? [], [flow?.steps]);
   const flowBranches = useMemo(() => flowStepsBranch(steps), [steps]);
@@ -64,14 +55,8 @@ export const AssessmentFlowPreviewPage: React.FC = () => {
         <ContentPanel>
           {flow.description && <DescriptionPanel description={flow.description} />}
 
-          {flowBranches && !isDismissed && (
-            <StaticAlert
-              variant="info"
-              appearance="soft"
-              message={BRANCHING_MESSAGE}
-              onDismiss={dismiss}
-              className="mb-4"
-            />
+          {flowBranches && (
+            <BranchingNotice noticeId={BRANCHING_NOTICE_ID} message={BRANCHING_MESSAGE} />
           )}
 
           {steps.length === 0 ? (

@@ -1,27 +1,15 @@
 import { matchRoutes } from 'react-router-dom';
 
-import { routes } from '.';
+import { routes } from './route-config';
 
-import type { AppRoute } from '.';
+import type { RouteConfig } from './route-config';
 
 export interface MatchedRoute {
-  route: AppRoute;
+  route: RouteConfig;
   params: Record<string, string | undefined>;
 }
 
-interface RouteBranch {
-  path: string;
-  route: AppRoute;
-}
-
-let branches: RouteBranch[] | undefined;
-
-/**
- * Built on first call rather than at module scope, so this module never reads `routes`
- * while `./index` is still initialising.
- */
-const routeBranches = (): RouteBranch[] =>
-  (branches ??= Object.values(routes).map((route) => ({ path: route.path, route })));
+const ROUTE_BRANCHES = Object.values(routes).map((route) => ({ path: route.path, route }));
 
 /**
  * Resolve the route configuration for a pathname, with its matched params. Ranked by
@@ -29,7 +17,7 @@ const routeBranches = (): RouteBranch[] =>
  * when the router picks the page.
  */
 export const matchRoute = (pathname: string): MatchedRoute | undefined => {
-  const matched = matchRoutes(routeBranches(), pathname)?.[0];
+  const matched = matchRoutes(ROUTE_BRANCHES, pathname)?.[0];
 
   return matched ? { route: matched.route.route, params: matched.params } : undefined;
 };

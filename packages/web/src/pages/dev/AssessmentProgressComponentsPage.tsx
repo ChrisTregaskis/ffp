@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import type { FlowStepType } from '@ffp/core';
 
-import { AssessmentProgress } from '@web/components/AssessmentProgress';
+import { AssessmentProgress } from '@web/components/assessment';
 import { Button, Icon, Icons, Text, Title } from '@web/components/atoms';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
@@ -64,7 +64,7 @@ export const AssessmentProgressComponentsPage = (): JSX.Element => {
               Import the AssessmentProgress component:
             </Text>
             <code className="block rounded bg-muted p-2 text-xs">
-              {`import { AssessmentProgress } from '@web/components/AssessmentProgress';`}
+              {`import { AssessmentProgress } from '@web/components/assessment';`}
             </code>
           </div>
           <div>
@@ -121,7 +121,7 @@ export const AssessmentProgressComponentsPage = (): JSX.Element => {
               Phase label utility function:
             </Text>
             <code className="block rounded bg-muted p-2 text-xs">
-              {`import { getPhaseLabel } from '@web/components/AssessmentProgress';
+              {`import { getPhaseLabel } from '@web/components/assessment';
 
 const label = getPhaseLabel('questions'); // "Pre-Assessment"`}
             </code>

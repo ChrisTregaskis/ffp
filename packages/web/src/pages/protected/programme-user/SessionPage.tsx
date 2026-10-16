@@ -293,7 +293,11 @@ export const SessionPage: React.FC = () => {
         }}
       />
 
-      <ProgressBar percent={progressPercent} className="h-1! rounded-none!" />
+      <ProgressBar
+        percent={progressPercent}
+        aria-label="Session progress"
+        className="h-1! rounded-none!"
+      />
 
       {/* Rest timer bar — sits above content, exercises remain visible */}
       <AnimatePresence>

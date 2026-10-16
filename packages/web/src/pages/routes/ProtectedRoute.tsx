@@ -4,12 +4,9 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { SignInServiceUnavailable } from '@web/components/auth/SignInServiceUnavailable';
 import { LoadingState } from '@web/components/molecules';
 import { AppLayout, AuthLayout } from '@web/components/templates';
+import { matchRoute, RouteKey, routes } from '@web/config/routes';
 import { useAuth } from '@web/hooks/useAuth';
 import { hasRole, logUnauthorisedAccess } from '@web/lib/rbac';
-
-import { matchRoute } from './matchRoute';
-
-import { RouteKey, routes } from '.';
 
 import type { PropsWithChildren } from 'react';
 

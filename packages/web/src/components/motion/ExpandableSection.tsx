@@ -18,8 +18,7 @@ export interface ExpandableSectionProps {
 /**
  * Expandable section that animates height from 0 to auto with fade.
  *
- * Wraps AnimatePresence + motion.div for height reveal animations
- * used within phase timeline cards.
+ * Wraps AnimatePresence + motion.div for a height reveal.
  */
 export const ExpandableSection: React.FC<ExpandableSectionProps> = ({
   isVisible,

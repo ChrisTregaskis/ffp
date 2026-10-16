@@ -5,14 +5,14 @@ import type { RowAction } from '@web/components/organisms';
 import { DeactivateTemplateModal } from '@web/components/programme-templates';
 import { AdminListPageShell } from '@web/components/templates';
 import type { AdminListEmptyState } from '@web/components/templates';
+import { RouteKey, routes } from '@web/config/routes';
 import { useAdminTemplatesQuery, useTemplateActivation } from '@web/hooks/programme-templates';
 import { toActivationRowAction } from '@web/hooks/useActivationActions';
-import { RouteKey, routes } from '@web/pages/routes';
 
-import { buildTemplateColumns, toTemplateRow } from './programme-template-list/columns';
-import { TABLE_FILTERS } from './programme-template-list/constants';
+import { buildTemplateColumns, toTemplateRow } from './columns';
+import { TABLE_FILTERS } from './constants';
 
-import type { TemplateRow } from './programme-template-list/columns';
+import type { TemplateRow } from './columns';
 
 const DEFAULT_SORT = { id: 'createdAt', desc: true };
 

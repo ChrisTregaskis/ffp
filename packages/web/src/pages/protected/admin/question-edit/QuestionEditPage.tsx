@@ -6,6 +6,7 @@ import type { AdminQuestionDetail } from '@ffp/core';
 import { ActivationToggleButton } from '@web/components/molecules';
 import { DeactivateQuestionModal } from '@web/components/questions';
 import { AdminEditPageShell } from '@web/components/templates';
+import { RouteKey, routes } from '@web/config/routes';
 import {
   useCreateQuestionMutation,
   useQuestionActivation,
@@ -13,7 +14,6 @@ import {
   useUpdateQuestionMutation,
 } from '@web/hooks/questions';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
-import { RouteKey, routes } from '@web/pages/routes';
 import { pluralise } from '@web/utils/string';
 
 import {

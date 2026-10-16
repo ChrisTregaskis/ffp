@@ -63,6 +63,7 @@ export const RestTimerBar: React.FC<RestTimerBarProps> = ({ seconds, onComplete 
           ease="linear"
           delay={0}
           animateFromZero={false}
+          aria-label="Rest time remaining"
           className="flex-1"
         />
 

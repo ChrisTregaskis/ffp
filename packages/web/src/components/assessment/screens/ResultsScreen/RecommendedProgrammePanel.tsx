@@ -1,6 +1,5 @@
 import { Icons, Surface, Text } from '@web/components/atoms';
-
-import { SectionHeader } from '../../SectionHeader';
+import { SectionHeader } from '@web/components/molecules';
 
 export interface RecommendedProgrammePanelProps {
   name: string;

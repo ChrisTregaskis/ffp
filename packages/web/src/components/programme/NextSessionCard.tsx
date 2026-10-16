@@ -11,10 +11,8 @@ import {
   Text,
   Title,
 } from '@web/components/atoms';
-import { Card } from '@web/components/molecules';
+import { Card, PrescriptionBadge } from '@web/components/molecules';
 import { VideoPlayer } from '@web/components/video';
-
-import { PrescriptionBadge } from './PrescriptionBadge';
 
 type Phase = ProgrammeDetailResponse['phases'][number];
 type Session = Phase['sessions'][number];
@@ -119,7 +117,7 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
                 >
                   {String(completedExercises)} of {String(totalExercises)} exercises done
                 </Text>
-                <ProgressBar percent={exerciseProgress} />
+                <ProgressBar percent={exerciseProgress} aria-label="Session exercise progress" />
               </div>
             )}
 

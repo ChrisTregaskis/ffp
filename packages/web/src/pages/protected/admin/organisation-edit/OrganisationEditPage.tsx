@@ -5,6 +5,7 @@ import type { UpdateOrganisationInput } from '@ffp/core';
 
 import { DeactivateOrganisationModal } from '@web/components/organisations';
 import { AdminEditPageShell } from '@web/components/templates';
+import { RouteKey, routes } from '@web/config/routes';
 import {
   useCreateOrganisationMutation,
   useOrganisationDetailQuery,
@@ -12,7 +13,6 @@ import {
 } from '@web/hooks/organisations';
 import { useConfirmBeforeSave } from '@web/hooks/useConfirmBeforeSave';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
-import { RouteKey, routes } from '@web/pages/routes';
 
 import {
   EMPTY_ORGANISATION_VALUES,

@@ -1,3 +1,5 @@
+import { Badge } from '@web/components/atoms';
+
 import type { CellContext } from '@tanstack/react-table';
 import type { ReactNode } from 'react';
 
@@ -19,18 +21,9 @@ export const TagsCell = <TData,>({ info, maxVisible = 3 }: TagsCellProps<TData>)
   return (
     <div className="flex flex-wrap gap-1">
       {visible.map((tag) => (
-        <span
-          key={tag}
-          className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-        >
-          {tag}
-        </span>
+        <Badge key={tag} label={tag} />
       ))}
-      {remaining > 0 && (
-        <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-          +{remaining} more
-        </span>
-      )}
+      {remaining > 0 && <Badge label={`+${String(remaining)} more`} />}
     </div>
   );
 };

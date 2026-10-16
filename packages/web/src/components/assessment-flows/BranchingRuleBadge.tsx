@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Icon, Icons, Text } from '@web/components/atoms';
+import { Badge, Icons } from '@web/components/atoms';
 
 export interface BranchingRuleBadgeProps {
   ruleCount: number;
@@ -13,14 +13,11 @@ export const BranchingRuleBadge: React.FC<BranchingRuleBadgeProps> = ({ ruleCoun
   }
 
   return (
-    <span
-      className="flex items-center gap-1 rounded-full bg-info/10 px-2.5 py-0.5"
+    <Badge
+      label={`${String(ruleCount)} ${ruleCount === 1 ? 'rule' : 'rules'}`}
+      icon={Icons.REPEAT}
+      variant="info"
       title="This step routes conditionally. Rules are not editable here."
-    >
-      <Icon name={Icons.REPEAT} styleProps={{ size: 'xs', colour: 'var(--color-info)' }} />
-      <Text styleProps={{ size: 'xs', weight: 'medium', colour: 'info' }}>
-        {ruleCount} {ruleCount === 1 ? 'rule' : 'rules'}
-      </Text>
-    </span>
+    />
   );
 };

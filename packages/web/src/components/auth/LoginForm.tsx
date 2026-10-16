@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@web/components/atoms';
 import { ComposableForm } from '@web/components/organisms';
-import { routes, RouteKey } from '@web/pages/routes';
+import { routes, RouteKey } from '@web/config/routes';
 import type { LoginFormData } from '@web/schemas/auth.schema';
 
 import { AuthFormCard } from './AuthFormCard';

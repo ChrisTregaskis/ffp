@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import type { UpdateProgrammeTemplateInput } from '@ffp/core';
 
-import { Surface, Text } from '@web/components/atoms';
+import { Badge, Surface, Text } from '@web/components/atoms';
 import {
   DeactivateTemplateModal,
   TemplateMetadataFormFields,
@@ -11,10 +11,10 @@ import {
 } from '@web/components/programme-templates';
 import type { TemplateMetadataFormValues } from '@web/components/programme-templates';
 import { AdminEditPageShell } from '@web/components/templates';
+import { RouteKey, routes } from '@web/config/routes';
 import { useTemplateDetailQuery, useUpdateTemplateMutation } from '@web/hooks/programme-templates';
 import { useConfirmBeforeSave } from '@web/hooks/useConfirmBeforeSave';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
-import { RouteKey, routes } from '@web/pages/routes';
 import { formatDate } from '@web/utils/format';
 
 import { toTemplateFormValues, toUpdateTemplateInput } from './template-form-values';
@@ -116,15 +116,12 @@ export const TemplateDetailPage: React.FC = () => {
                 </Text>
               </div>
             </div>
-            <Text
-              as="span"
-              styleProps={{ size: 'xs', weight: 'semibold' }}
-              className={`inline-flex items-center rounded-full px-3 py-1 text-white ${
-                template.isActive ? 'bg-success' : 'bg-muted-foreground'
-              }`}
-            >
-              {template.isActive ? 'Active' : 'Inactive'}
-            </Text>
+            <Badge
+              label={template.isActive ? 'Active' : 'Inactive'}
+              variant={template.isActive ? 'success' : 'muted'}
+              appearance="solid"
+              size="sm"
+            />
           </Surface>
         )
       }
