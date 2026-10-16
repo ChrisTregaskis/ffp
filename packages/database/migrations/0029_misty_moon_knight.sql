@@ -1,0 +1,1 @@
+ALTER TABLE "assessment_safety_triggers" ALTER COLUMN "question_slug" DROP NOT NULL;

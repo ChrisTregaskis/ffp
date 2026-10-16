@@ -139,14 +139,15 @@ FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolatio
 
 These tables contain user/location data and **require RLS policies**:
 
-| Table                     | RLS Policy              | Description          |
-| ------------------------- | ----------------------- | -------------------- |
-| `users`                   | `organisation_id` match | User accounts        |
-| `locations`               | `organisation_id` match | Location entities    |
-| `user_assessments`        | `organisation_id` match | Assessment instances |
-| `user_assessment_answers` | `organisation_id` match | Individual answers   |
-| `programs`                | `organisation_id` match | Generated programmes |
-| `process_jobs`            | `organisation_id` match | Async job queue      |
+| Table                        | RLS Policy              | Description                                                |
+| ---------------------------- | ----------------------- | ---------------------------------------------------------- |
+| `users`                      | `organisation_id` match | User accounts                                              |
+| `locations`                  | `organisation_id` match | Location entities                                          |
+| `user_assessments`           | `organisation_id` match | Assessment instances                                       |
+| `user_assessment_answers`    | `organisation_id` match | Individual answers                                         |
+| `assessment_safety_triggers` | `organisation_id` match | One row per submitted assessment that raised safety advice |
+| `programs`                   | `organisation_id` match | Generated programmes                                       |
+| `process_jobs`               | `organisation_id` match | Async job queue                                            |
 
 ### System Content Tables (No RLS)
 

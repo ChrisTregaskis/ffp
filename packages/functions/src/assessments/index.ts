@@ -6,6 +6,7 @@ import {
 
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
+import { handler as acknowledgeSafetyAdviceHandler } from './acknowledge-safety-advice';
 import { handler as getFlowHandler } from './get-flow';
 import { handler as getResultsHandler } from './get-results';
 import { handler as getTemplateHandler } from './get-template';
@@ -29,6 +30,7 @@ const routes: RouteRegistry = {
   POST: {
     '/start': startAssessmentHandler,
     '/{id}/submit': submitAssessmentHandler,
+    '/{id}/safety-acknowledgement': acknowledgeSafetyAdviceHandler,
   },
   GET: {
     '/user-status': getUserStatusHandler,
