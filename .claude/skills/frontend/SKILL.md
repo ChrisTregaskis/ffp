@@ -93,8 +93,8 @@ packages/web/src/
 │   │                                 FileInput, SelectTrigger
 │   ├── atoms/index.ts           level barrel: what consumers import
 │   ├── molecules/<Name>/        generic; atoms combined for one job
-│   │                            e.g. FormField, FormTextInput (text, email, password, number), FormSelect, FormToggle,
-│   │                                 PasswordVisibilityInput, Select, BaseSelect, StatusResult, LoadingState,
+│   │                            e.g. FormField, FormTextInput (text, password, number), FormEmailInput, FormSelect, FormToggle,
+│   │                                 PasswordVisibilityInput, Select, BaseSelect, StatusResult, ErrorRetryState, LoadingState,
 │   │                                 EmptyState, StaticAlert, PageHeader, SearchInput, Accordion, Card, MenuList,
 │   │                                 DescriptionPanel, ComingSoon, PrescriptionBadge, SectionHeader, InstructionList,
 │   │                                 FeatureColumnGrid

@@ -302,6 +302,22 @@ pnpm seed:db test
 - Seeds automatically manage FORCE RLS (disables during seeding, re-enables after)
 - Requires `BOOTSTRAP_DB_USER` with appropriate permissions (superuser or database owner)
 
+### Seeding Video Media
+
+The seeded videos point at `library/77777777-…-7777777700NN.mp4` keys that nothing else uploads, so on a fresh stage they fail to play. After `pnpm seed:db`, put a sample clip at every seeded key:
+
+```bash
+# Bucket and region from .sst/outputs.json (the stage sst dev or sst deploy last ran)
+pnpm seed:video-assets
+
+# A specific stage's videos bucket
+pnpm seed:video-assets -- --bucket <videos-bucket-name>
+```
+
+- Uploads `seed/assets/sample-exercise.mp4` (a five-second silent test pattern, about 165 KB) to each key from `SEED_VIDEO_S3_KEYS` in `seed/seedVideos.ts`
+- **Idempotent**: a key that already holds an object is skipped, so real media is never replaced
+- Writes to S3 with the AWS credentials of the shell that runs it; it is kept apart from `seed:db` so a database-only seed never touches a bucket
+
 ### Seed Architecture
 
 Individual seed functions are organised in separate files:

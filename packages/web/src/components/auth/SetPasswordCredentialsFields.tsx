@@ -24,6 +24,7 @@ export const SetPasswordCredentialsFields: React.FC<SetPasswordCredentialsFields
         label="Temporary password"
         type="password"
         placeholder="Enter temporary password from email"
+        inputProps={{ autoComplete: 'current-password' }}
         register={register}
         errors={errors}
         isRequired

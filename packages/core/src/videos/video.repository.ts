@@ -1,4 +1,5 @@
 import { and, eq, or, arrayOverlaps, ilike, count, type SQL, type Column } from 'drizzle-orm';
+import { z } from 'zod';
 
 import type { DbClient } from '@ffp/database';
 import type { Difficulty, MovementType } from '@ffp/database/constants';
@@ -77,16 +78,19 @@ export async function findVideoByPublicId(
   return records[0] ?? null;
 }
 
-/** Look up a video by UUID or publicId in a single query. */
+/**
+ * Look up a video by UUID or publicId.
+ *
+ * Compares the uuid `id` column only when the value is UUID-shaped: Postgres rejects any other
+ * value at the cast (22P02) before an OR could match `public_id`, and a 12-character publicId is
+ * never UUID-shaped.
+ */
 export async function findVideoByIdOrPublicId(
   db: DbClient,
   identifier: string
 ): Promise<VideoRecord | null> {
-  const records = await db
-    .select()
-    .from(videos)
-    .where(or(eq(videos.id, identifier), eq(videos.publicId, identifier)))
-    .limit(1);
+  const column = z.guid().safeParse(identifier).success ? videos.id : videos.publicId;
+  const records = await db.select().from(videos).where(eq(column, identifier)).limit(1);
 
   return records[0] ?? null;
 }

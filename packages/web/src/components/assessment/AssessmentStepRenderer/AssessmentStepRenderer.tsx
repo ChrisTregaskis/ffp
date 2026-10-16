@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AnswerValue, FlowStepConfig, FlowStepType } from '@ffp/core';
 
 import { Text } from '@web/components/atoms';
-import { LoadingState } from '@web/components/molecules';
+import { ErrorRetryState, LoadingState } from '@web/components/molecules';
 import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import { useAssessmentFlowQuery } from '@web/hooks/assessments';
@@ -40,7 +40,12 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
   isReplacing = false,
 }) => {
   const { assessmentState, assessmentDispatch } = useAssessment();
-  const { data: flow, isLoading: isFlowLoading } = useAssessmentFlowQuery(assessmentState.flowId);
+  const {
+    data: flow,
+    isPending: isFlowPending,
+    error: flowError,
+    refetch: refetchFlow,
+  } = useAssessmentFlowQuery(assessmentState.flowId);
   const [questionIndex, setQuestionIndex] = useState(0);
 
   useEffect(() => {
@@ -57,6 +62,7 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
     [flow?.steps, currentStepSummary?.order]
   );
 
+  // The summary's title stands in only when the flow loaded without a step at this order
   const config: FlowStepConfig = useMemo(
     () => flowStep?.config ?? { title: currentStepSummary?.config.title ?? '' },
     [flowStep?.config, currentStepSummary?.config.title]
@@ -86,7 +92,20 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
     [assessmentDispatch]
   );
 
-  if (isFlowLoading || !currentStepSummary) {
+  // A failed refetch keeps the flow it had, so only fail when there is no flow to show
+  if (flowError && !flow) {
+    return (
+      <ErrorRetryState
+        layout="screen"
+        title="We couldn't load your assessment just now."
+        onRetry={() => {
+          void refetchFlow();
+        }}
+      />
+    );
+  }
+
+  if (isFlowPending || !currentStepSummary) {
     return <LoadingState layout="screen" message="Loading assessment..." />;
   }
 

@@ -25,8 +25,8 @@ export interface FormTextInputProps<
 > {
   name: TName;
   label: string;
-  /** A number field still holds a string; convert it on submit (`utils/form-number.ts`) */
-  type?: 'text' | 'email' | 'password' | 'number';
+  /** A number field still holds a string; convert it on submit (`utils/form-number.ts`). Email fields use `FormEmailInput`. */
+  type?: 'text' | 'password' | 'number';
   placeholder?: string;
   register: UseFormRegister<TFieldValues>;
   errors: FieldErrors<TFieldValues>;
@@ -49,7 +49,7 @@ export interface FormTextInputProps<
 }
 
 /**
- * A labelled text, email, password or number input bound to a react-hook-form field.
+ * A labelled text, password or number input bound to a react-hook-form field.
  *
  * A password field gets the show/hide toggle.
  */

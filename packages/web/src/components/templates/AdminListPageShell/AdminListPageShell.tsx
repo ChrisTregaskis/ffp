@@ -56,7 +56,7 @@ export interface AdminListPageShellProps<
   useList: (
     pagination: PaginationInput,
     filters: ListFilterValues
-  ) => Pick<UseQueryResult<ListPage<TItem>>, 'data' | 'isLoading' | 'error'>;
+  ) => Pick<UseQueryResult<ListPage<TItem>>, 'data' | 'isPending' | 'error'>;
   /** Keep it stable (module level, or memoised) so the rows memo holds */
   toRow: (item: TItem) => TRow;
   columns: ColumnDef<TRow>[];
@@ -111,7 +111,9 @@ export const AdminListPageShell = <TItem, TRow extends { id: string } & Record<s
     return values;
   }, [debouncedSearch, debouncedFilters, filters]);
 
-  const { data, isLoading, error } = useList(queryParams, listFilters);
+  // Pending, not loading: a retry paused while the tab is hidden has no data and no error yet,
+  // and would otherwise read as an empty list
+  const { data, isPending, error } = useList(queryParams, listFilters);
 
   const rows = useMemo(() => (data ? data.data.map(toRow) : []), [data, toRow]);
 
@@ -136,7 +138,7 @@ export const AdminListPageShell = <TItem, TRow extends { id: string } & Record<s
         data={rows}
         columns={columns}
         totalRows={data?.pagination.total ?? 0}
-        isLoading={isLoading}
+        isLoading={isPending}
         error={error?.message}
         onStateChange={onStateChange}
         defaultSort={defaultSort}

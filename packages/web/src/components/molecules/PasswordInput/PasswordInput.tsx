@@ -35,6 +35,8 @@ export interface PasswordInputProps {
   showStrength?: boolean;
   /** Whether the field is disabled */
   disabled?: boolean;
+  /** e.g. `new-password`, so password managers offer to generate and save it */
+  autoComplete?: string;
 }
 
 /** A controlled password field for the sign-in screens, with the show/hide toggle and an optional strength reading. */
@@ -49,6 +51,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
   strength,
   showStrength = false,
   disabled = false,
+  autoComplete,
 }) => {
   const error = hasError ? errorMessage : undefined;
   const { errorId, describedBy } = getFieldDescriptionIds(name, { error });
@@ -74,6 +77,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
         }}
         placeholder={placeholder}
         disabled={disabled}
+        autoComplete={autoComplete}
         appearance="bare"
         toggleSize="md"
         aria-invalid={hasError}

@@ -24,7 +24,7 @@ const DEFAULT_FILTERS = { isActive: 'true' };
 const EMPTY_STATE: AdminListEmptyState = {
   filteredTitle: 'No matching flows',
   icon: 'ClipboardList',
-  iconVariant: 'neutral',
+  iconVariant: 'primary',
   title: 'No assessment flows yet',
   description: 'Create your first flow to start shaping the wellness journey members take.',
 };

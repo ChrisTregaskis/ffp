@@ -22,7 +22,7 @@ const DEFAULT_COLUMN_VISIBILITY = { slug: false };
 const EMPTY_STATE: AdminListEmptyState = {
   filteredTitle: 'No matching templates',
   icon: 'ClipboardList',
-  iconVariant: 'neutral',
+  iconVariant: 'primary',
   title: 'No programme templates yet',
   description: 'Create your first programme template to start building workout programmes.',
 };

@@ -62,7 +62,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const isFetchEnabled = !!videoId && !src;
   const {
     data: signedUrlData,
-    isLoading,
+    isPending,
     isError: isFetchError,
     refetch,
   } = useVideoSignedUrlQuery(videoId ?? '', {
@@ -71,7 +71,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   const videoSrc = src ?? signedUrlData?.signedUrl;
   const hasNoSource = !videoId && !src;
-  const showLoading = isFetchEnabled && isLoading;
+  // Pending, not loading: a paused retry would otherwise read as "Video Unavailable"
+  const showLoading = isFetchEnabled && isPending;
   const showError = isFetchError || hasPlaybackError;
   const showOverlay = videoSrc && !showLoading && !showError && (!isPlaying || hasEnded);
 

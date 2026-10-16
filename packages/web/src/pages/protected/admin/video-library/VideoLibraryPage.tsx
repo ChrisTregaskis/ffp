@@ -34,7 +34,7 @@ const toVideoRow = (video: AdminVideoListResponse): VideoRow => video as VideoRo
 const EMPTY_STATE: AdminListEmptyState = {
   filteredTitle: 'No matching videos',
   icon: 'Video',
-  iconVariant: 'neutral',
+  iconVariant: 'primary',
   title: 'No videos yet',
   description: 'Upload your first exercise video to start building the video library.',
 };

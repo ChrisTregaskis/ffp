@@ -9,7 +9,8 @@ export type IconBadgeVariant =
   | 'primary'
   | 'warning'
   | 'muted'
-  | 'neutral';
+  | 'neutral'
+  | 'destructive';
 /** `soft` translucent fill · `solid` filled · `plain` no fill, the icon alone in the variant's colour */
 export type IconBadgeAppearance = 'soft' | 'solid' | 'plain';
 export type IconBadgeShape = 'square' | 'circle';
@@ -48,6 +49,10 @@ const BADGE_VARIANT_MAP: Record<
   neutral: {
     soft: { bg: 'bg-muted-foreground/20', colour: 'var(--color-muted-foreground)' },
     solid: { bg: 'bg-muted-foreground', colour: '#ffffff' },
+  },
+  destructive: {
+    soft: { bg: 'bg-destructive/20', colour: 'var(--color-destructive)' },
+    solid: { bg: 'bg-destructive', colour: '#ffffff' },
   },
 };
 
