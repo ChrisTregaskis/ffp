@@ -9,26 +9,11 @@ import {
   LEVEL_QUESTION_IDS,
 } from '../src/constants/level-scoring.constants.js';
 
+import { VIDEO_IDS } from './seedVideos.js';
+
 import type { NewQuestion } from '../src/schema/questions.js';
 
 const logger = createLogger('seed-questions');
-
-/**
- * Deterministic UUIDs for demo videos
- *
- * These are placeholder UUIDs for videos referenced by questions.
- * When actual videos are seeded, they should use these IDs.
- *
- * UUID Pattern: 33333333-3333-3333-8333-3333333300XX
- */
-export const VIDEO_IDS = {
-  'wall-squat-demo': '33333333-3333-3333-8333-333333330001',
-  'modified-pushup-demo': '33333333-3333-3333-8333-333333330002',
-  'single-leg-stand-demo': '33333333-3333-3333-8333-333333330003',
-  'tandem-stand-demo': '33333333-3333-3333-8333-333333330004',
-} as const;
-
-export type VideoSlug = keyof typeof VIDEO_IDS;
 
 /**
  * Deterministic UUIDs for questions
@@ -282,7 +267,7 @@ const strengthCheckQuestions: NewQuestion[] = [
     type: 'video-response',
     questionText: 'Wall Squat Hold',
     description: 'Hold a wall squat position for as long as comfortable',
-    videoId: VIDEO_IDS['wall-squat-demo'],
+    videoId: VIDEO_IDS['bodyweight-squat'],
     validation: { required: true, min: 0, max: 300 },
     scoreDimension: 'strength',
     isActive: true,
@@ -312,7 +297,7 @@ const balanceCheckQuestions: NewQuestion[] = [
     type: 'video-response',
     questionText: 'Single Leg Stand',
     description: 'Stand on one leg for as long as you can safely manage',
-    videoId: VIDEO_IDS['single-leg-stand-demo'],
+    videoId: VIDEO_IDS['single-leg-balance'],
     validation: { required: true, min: 0, max: 300 },
     scoreDimension: 'balance',
     isActive: true,

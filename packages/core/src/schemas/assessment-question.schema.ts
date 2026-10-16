@@ -82,34 +82,7 @@ export const assessmentQuestionSchema = z
     /** Scoring dimension this question contributes to */
     scoreDimension: scoreDimensionSchema.optional(),
   })
-  .refine(
-    (data) => {
-      // Require videoId when question type is video-response
-      if (data.type === 'video-response') {
-        return !!data.videoId;
-      }
-
-      return true;
-    },
-    {
-      message: 'videoId is required for video-response question type',
-      path: ['videoId'],
-    }
-  )
-  .refine(
-    (data) => {
-      // Require at least 2 options for choice-based question types
-      if (data.type === 'single-choice' || data.type === 'multi-choice') {
-        return data.options && data.options.length >= 2;
-      }
-
-      return true;
-    },
-    {
-      message: 'At least 2 options are required for choice-based question types',
-      path: ['options'],
-    }
-  );
+  .superRefine(refineQuestionShape);
 
 export const questionsArraySchema = z
   .array(assessmentQuestionSchema)

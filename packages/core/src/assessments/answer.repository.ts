@@ -1,7 +1,7 @@
 import { eq, and, inArray } from 'drizzle-orm';
 
 import type { AnswerValue } from '@ffp/database';
-import { userAssessmentAnswers, templateQuestions } from '@ffp/database/schema';
+import { userAssessmentAnswers } from '@ffp/database/schema';
 
 import { withRLS, type Transaction } from '../lib/database';
 
@@ -257,31 +257,5 @@ export async function deleteByQuestionIds(
           inArray(userAssessmentAnswers.questionId, questionIds)
         )
       );
-  });
-}
-
-/**
- * Find distinct template IDs from the user's saved answers
- *
- * Derives which templates the user visited by joining their answers
- * with the template_questions table. Used for submit validation to
- * only check required questions from steps the user actually visited.
- */
-export async function findVisitedTemplateIds(
-  organisationId: string,
-  assessmentId: string,
-  userId?: string
-): Promise<string[]> {
-  return await withRLS(organisationId, userId, async (tx) => {
-    const results = await tx
-      .selectDistinct({ templateId: templateQuestions.templateId })
-      .from(userAssessmentAnswers)
-      .innerJoin(
-        templateQuestions,
-        eq(userAssessmentAnswers.questionId, templateQuestions.questionId)
-      )
-      .where(eq(userAssessmentAnswers.userAssessmentId, assessmentId));
-
-    return results.map((r) => r.templateId);
   });
 }

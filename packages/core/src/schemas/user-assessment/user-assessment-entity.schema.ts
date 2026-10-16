@@ -24,7 +24,19 @@ export const userAnswerSchema = z.object({
  * Keyed by questionId for efficient lookup and updates.
  * Stored as JSONB in the database.
  */
-export const userAssessmentAnswersSchema = z.record(z.guid(), userAnswerSchema);
+export const userAssessmentAnswersSchema = z
+  .record(z.guid(), userAnswerSchema)
+  .superRefine((answers, ctx) => {
+    for (const [key, answer] of Object.entries(answers)) {
+      if (answer.questionId !== key) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'An answer must be keyed by its own questionId',
+          path: [key, 'questionId'],
+        });
+      }
+    }
+  });
 
 export { userAssessmentScoresSchema };
 

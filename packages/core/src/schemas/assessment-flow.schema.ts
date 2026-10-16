@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { FLOW_STEP_TYPES } from '@ffp/database/constants';
+import { FLOW_STEP_TYPES, TEMPLATE_LINKED_STEP_TYPES } from '@ffp/database/constants';
 
 import { booleanQueryParamSchema, createPaginatedResponseSchema } from './pagination.schema';
 import { publicIdSchema } from './public-id.schema';
@@ -8,6 +8,16 @@ import { publicIdSchema } from './public-id.schema';
 export { TEMPLATE_LINKED_STEP_TYPES } from '@ffp/database/constants';
 
 export const flowStepTypeSchema = z.enum(FLOW_STEP_TYPES);
+
+/** The templates a flow's steps show questions from, in step order (a template may repeat). */
+export function findTemplateIdsOfSteps(
+  steps: readonly { type: FlowStepType; templateId: string | null }[]
+): string[] {
+  return steps
+    .filter((step) => TEMPLATE_LINKED_STEP_TYPES.includes(step.type))
+    .map((step) => step.templateId)
+    .filter((id): id is string => id !== null);
+}
 
 export const flowStepConfigSchema = z.object({
   title: z.string().min(1, 'Title is required'),

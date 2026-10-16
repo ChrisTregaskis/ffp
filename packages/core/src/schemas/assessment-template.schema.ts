@@ -8,6 +8,7 @@ import {
   type AssessmentQuestion,
 } from './assessment-question.schema';
 import { publicIdSchema } from './public-id.schema';
+import { resolveEffectiveValidation } from './question-answer.schema';
 
 /**
  * NOTE: Questions are stored in a dedicated `questions` table and linked
@@ -110,7 +111,7 @@ export const assessmentTemplateWithQuestionsSchema = assessmentTemplateSchema.ex
         question: q.configOverrides?.questionText ?? q.questionText,
         description: q.configOverrides?.description ?? q.description ?? undefined,
         options: q.options ?? undefined,
-        validation: q.configOverrides?.validation ?? q.validation ?? undefined,
+        validation: resolveEffectiveValidation(q) ?? undefined,
         videoId: q.videoId ?? undefined,
         scoreDimension: q.scoreDimension ?? undefined,
       })

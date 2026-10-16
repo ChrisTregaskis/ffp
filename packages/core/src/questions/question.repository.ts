@@ -89,14 +89,20 @@ export async function findByTemplateId(
   }));
 }
 
+/** A template's question, carrying the template it was loaded through. */
+export type TemplateQuestionWithConfig = QuestionWithConfig & { templateId: string };
+
 /**
- * Find all questions for multiple templates, ordered by display order within each template
+ * Find all questions for multiple templates, ordered by display order within each template.
+ * Active questions only, unless `includeInactive` is set: a member still sees a
+ * deactivated question that remains assigned, so their answers to it need its rules.
  * @returns Questions with template-specific config, ordered by templateId then displayOrder
  */
 export async function findByTemplateIds(
   db: DbClient,
-  templateIds: string[]
-): Promise<QuestionWithConfig[]> {
+  templateIds: string[],
+  options: { includeInactive?: boolean } = {}
+): Promise<TemplateQuestionWithConfig[]> {
   if (templateIds.length === 0) {
     return [];
   }
@@ -120,7 +126,12 @@ export async function findByTemplateIds(
     })
     .from(templateQuestions)
     .innerJoin(questions, eq(templateQuestions.questionId, questions.id))
-    .where(and(inArray(templateQuestions.templateId, templateIds), eq(questions.isActive, true)))
+    .where(
+      and(
+        inArray(templateQuestions.templateId, templateIds),
+        options.includeInactive ? undefined : eq(questions.isActive, true)
+      )
+    )
     .orderBy(asc(templateQuestions.templateId), asc(templateQuestions.displayOrder));
 
   return records.map((record) => ({
@@ -137,6 +148,7 @@ export async function findByTemplateIds(
     isActive: record.isActive,
     displayOrder: record.displayOrder,
     configOverrides: record.configOverrides,
+    templateId: record.templateId,
   }));
 }
 

@@ -1,7 +1,6 @@
 import { eq } from 'drizzle-orm';
 
 import { getDb, withRLS, type DbClient } from '@ffp/database';
-import { TEMPLATE_LINKED_STEP_TYPES } from '@ffp/database/constants';
 import { userAssessments, userAssessmentAnswers } from '@ffp/database/schema';
 
 import { findFlowById, findStepsByFlowId } from '../../assessments/flow.repository';
@@ -10,6 +9,7 @@ import { createSystemContext } from '../../lib/context';
 import { NotFoundError, ValidationError } from '../../lib/errors';
 import { createSystemLogger } from '../../lib/logger';
 import { findByTemplateIds } from '../../questions/question.repository';
+import { findTemplateIdsOfSteps } from '../../schemas/assessment-flow.schema';
 import {
   assessmentResponseSchema,
   type AssessmentResponse,
@@ -69,10 +69,7 @@ export async function processScoreAssessment(
     const steps = await findStepsByFlowId(dbTx, payload.flowId);
 
     // Only the template-linked steps carry the questions that scoring reads
-    const templateIds = steps
-      .filter((step) => TEMPLATE_LINKED_STEP_TYPES.includes(step.type))
-      .map((step) => step.templateId)
-      .filter((id): id is string => id !== null);
+    const templateIds = findTemplateIdsOfSteps(steps);
 
     if (templateIds.length === 0) {
       throw new ValidationError(`Flow ${payload.flowId} has no question templates. Cannot score.`);
