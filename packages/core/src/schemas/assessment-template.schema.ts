@@ -6,8 +6,10 @@ import {
   questionValidationSchema,
   scoreDimensionSchema,
   type AssessmentQuestion,
+  type QuestionValidation,
 } from './assessment-question.schema';
 import { publicIdSchema } from './public-id.schema';
+import { resolveEffectiveValidation } from './question-answer.schema';
 
 /**
  * NOTE: Questions are stored in a dedicated `questions` table and linked
@@ -91,6 +93,12 @@ const templateQuestionResponseSchema = z.object({
     .nullable(),
 });
 
+const withInactiveOptional = (
+  validation: QuestionValidation | null,
+  isActive: boolean
+): QuestionValidation | undefined =>
+  isActive ? (validation ?? undefined) : { ...validation, required: false };
+
 /**
  * Assessment template with questions — extends the base template
  * with a transformed templateQuestions array.
@@ -110,7 +118,8 @@ export const assessmentTemplateWithQuestionsSchema = assessmentTemplateSchema.ex
         question: q.configOverrides?.questionText ?? q.questionText,
         description: q.configOverrides?.description ?? q.description ?? undefined,
         options: q.options ?? undefined,
-        validation: q.configOverrides?.validation ?? q.validation ?? undefined,
+        // A deactivated question still assigned is shown but never required, as the server holds it
+        validation: withInactiveOptional(resolveEffectiveValidation(q), q.isActive),
         videoId: q.videoId ?? undefined,
         scoreDimension: q.scoreDimension ?? undefined,
       })

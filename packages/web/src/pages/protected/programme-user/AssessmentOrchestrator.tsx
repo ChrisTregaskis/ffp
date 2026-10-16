@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -15,10 +15,12 @@ import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import {
   useAssessmentTemplateQuery,
+  useShowRefusedAnswers,
   useStartAssessment,
   useSubmitAssessment,
 } from '@web/hooks/assessments';
 import { useReplaceProgrammeMutation } from '@web/hooks/programmes';
+import { toQuestionFieldErrors } from '@web/utils/assessment-field-errors';
 
 import { REASSESSMENT_START_KEY } from './assessment.constants';
 
@@ -88,16 +90,30 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
     },
   });
 
+  const showRefusedAnswers = useShowRefusedAnswers();
+  const [isRefusalUnshown, setIsRefusalUnshown] = useState(false);
+
   const {
     mutate: submitMutate,
     isPending: isSubmitPending,
-    isError: isSubmitError,
+    error: submitError,
   } = useSubmitAssessment({
     onSuccess: () => {
       hasSubmittedRef.current = true;
       assessmentDispatch({ type: ASSESSMENT_ACTION.NEXT_STEP });
     },
+    onError: (error) => {
+      void showRefusedAnswers(toQuestionFieldErrors(error)).then((isShown) => {
+        setIsRefusalUnshown(!isShown);
+      });
+    },
   });
+
+  // A refusal shown on its questions takes the member back to them rather than to a failure
+  // screen; any other failure, or a refusal naming no question the flow shows, gets the screen
+  const isSubmitFailure =
+    submitError !== null &&
+    (Object.keys(toQuestionFieldErrors(submitError)).length === 0 || isRefusalUnshown);
 
   const { mutate: replaceMutate, isPending: isReplacePending } = useReplaceProgrammeMutation({
     onSuccess: () => {
@@ -167,6 +183,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
       return;
     }
 
+    setIsRefusalUnshown(false);
     submitMutate({
       assessmentId: assessmentState.assessmentId,
       payload: { answers: assessmentState.answers },
@@ -223,7 +240,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
     return <LoadingState layout="screen" message="Submitting your assessment..." />;
   }
 
-  if (isSubmitError) {
+  if (isSubmitFailure) {
     return (
       <ErrorRetryState
         layout="screen"

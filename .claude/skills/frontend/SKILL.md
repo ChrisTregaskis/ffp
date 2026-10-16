@@ -89,7 +89,7 @@ packages/web/src/
 │   ├── atoms/<Name>/            generic; each wraps one raw element or primitive
 │   │   ├── <Name>.tsx           e.g. Button, IconButton, PressableArea, Text, Title, Icon, IconBadge, Switch, FieldError,
 │   │   └── index.ts                  LoadingSpinner, ProgressBar, StatusCircle, Logo, Surface, PageContainer, ContentPanel, FormRow,
-│   │                                 FloatingPanel, Badge, and the form controls: Input, Textarea, Label, Checkbox,
+│   │                                 FloatingPanel, Badge, and the form controls: Input, Textarea, Label, Checkbox, Radio,
 │   │                                 FileInput, SelectTrigger
 │   ├── atoms/index.ts           level barrel: what consumers import
 │   ├── molecules/<Name>/        generic; atoms combined for one job

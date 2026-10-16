@@ -1,15 +1,14 @@
-import { useCallback, useId } from 'react';
+import { useCallback } from 'react';
 
-import { Text, RequiredIndicator } from '@web/components/atoms';
+import { DEFAULT_SCALE_RANGE, isAnswerRequired } from '@ffp/core';
+
+import { FieldError, PressableArea, Text } from '@web/components/atoms';
+
+import { QuestionFieldset } from './QuestionFieldset';
+import { QuestionHeader } from './QuestionHeader';
+import { useQuestionFieldIds } from './useQuestionFieldIds';
 
 import type { QuestionComponentProps } from './types';
-
-/**
- * Default scale range for scale questions (1-10).
- * Can be overridden via validation.min and validation.max.
- */
-const DEFAULT_SCALE_MIN = 1;
-const DEFAULT_SCALE_MAX = 10;
 
 /**
  * Scale question component - renders a 1-10 button scale.
@@ -25,18 +24,15 @@ export const ScaleQuestion: React.FC<QuestionComponentProps> = ({
   disabled = false,
   error,
 }) => {
-  const instanceId = useId();
-  const questionId = `question-${question.id}-${instanceId}`;
-  const errorId = `${questionId}-error`;
-  const descriptionId = question.description ? `${questionId}-description` : undefined;
-  const isRequired = question.validation?.required !== false;
+  const { errorId, descriptionId, scaleId, describedBy } = useQuestionFieldIds(question);
+  const isRequired = isAnswerRequired(question.validation);
 
   // Parse current value as number (or undefined)
   const currentValue = typeof value === 'number' ? value : undefined;
 
   // Use validation min/max or defaults
-  const scaleMin = question.validation?.min ?? DEFAULT_SCALE_MIN;
-  const scaleMax = question.validation?.max ?? DEFAULT_SCALE_MAX;
+  const scaleMin = question.validation?.min ?? DEFAULT_SCALE_RANGE.min;
+  const scaleMax = question.validation?.max ?? DEFAULT_SCALE_RANGE.max;
 
   // Generate scale values array
   const scaleValues: number[] = [];
@@ -54,32 +50,8 @@ export const ScaleQuestion: React.FC<QuestionComponentProps> = ({
   );
 
   return (
-    <fieldset
-      className="space-y-5"
-      aria-describedby={
-        [descriptionId, error ? errorId : undefined].filter(Boolean).join(' ') || undefined
-      }
-    >
-      <legend className="sr-only">{question.question}</legend>
-
-      {/* Question text */}
-      <div className="space-y-1">
-        <Text
-          as="p"
-          styleProps={{ size: 'xl', weight: 'medium', colour: 'foreground' }}
-          className="leading-relaxed"
-        >
-          {question.question}
-          {isRequired && <RequiredIndicator />}
-        </Text>
-
-        {/* Description / helper text */}
-        {question.description && (
-          <Text as="p" id={descriptionId} styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-            {question.description}
-          </Text>
-        )}
-      </div>
+    <QuestionFieldset legend={question.question} describedBy={describedBy(!!error)}>
+      <QuestionHeader question={question} descriptionId={descriptionId} />
 
       {/* Scale buttons */}
       <div className="space-y-3">
@@ -91,13 +63,11 @@ export const ScaleQuestion: React.FC<QuestionComponentProps> = ({
         >
           {scaleValues.map((scaleValue) => {
             const isSelected = currentValue === scaleValue;
-            const buttonId = `${questionId}-scale-${String(scaleValue)}`;
 
             return (
-              <button
+              <PressableArea
                 key={scaleValue}
-                type="button"
-                id={buttonId}
+                id={scaleId(scaleValue)}
                 onClick={() => {
                   handleSelect(scaleValue);
                 }}
@@ -105,10 +75,12 @@ export const ScaleQuestion: React.FC<QuestionComponentProps> = ({
                 role="radio"
                 aria-checked={isSelected}
                 aria-invalid={!!error}
+                // The focus-visible ring and disabled opacity restate the scale's own over PressableArea's defaults
                 className={`
                   flex h-11 w-11 items-center justify-center rounded-lg border-2
                   text-base font-semibold transition-all duration-200
                   focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2
+                  focus-visible:ring-primary/50
                   ${
                     isSelected
                       ? 'border-primary bg-primary text-primary-foreground shadow-md'
@@ -116,11 +88,11 @@ export const ScaleQuestion: React.FC<QuestionComponentProps> = ({
                         ? 'border-destructive bg-card text-foreground hover:bg-destructive/10'
                         : 'border-border bg-card text-foreground hover:border-primary hover:bg-primary/10'
                   }
-                  ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
+                  ${disabled ? 'cursor-not-allowed disabled:opacity-60' : 'cursor-pointer'}
                 `}
               >
                 {scaleValue}
-              </button>
+              </PressableArea>
             );
           })}
         </div>
@@ -136,18 +108,7 @@ export const ScaleQuestion: React.FC<QuestionComponentProps> = ({
         </div>
       </div>
 
-      {/* Error message */}
-      {error && (
-        <Text
-          as="p"
-          id={errorId}
-          styleProps={{ size: 'sm', colour: 'destructive' }}
-          role="alert"
-          className="animate-in fade-in slide-in-from-top-2 duration-200"
-        >
-          {error}
-        </Text>
-      )}
-    </fieldset>
+      {error && <FieldError animated id={errorId} message={error} />}
+    </QuestionFieldset>
   );
 };

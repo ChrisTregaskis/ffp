@@ -14,6 +14,8 @@ export const createInitialState = (flowId: string): AssessmentState => ({
   isDirty: false,
   scores: null,
   warnings: [],
+  fieldErrors: {},
+  refusalCount: 0,
 });
 
 /**

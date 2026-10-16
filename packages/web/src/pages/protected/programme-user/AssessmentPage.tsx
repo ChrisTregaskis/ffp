@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 
+import { AssessmentBackdrop } from '@web/components/assessment';
 import { ErrorRetryState, LoadingState, StaticAlert } from '@web/components/molecules';
 import { routes, RouteKey } from '@web/config/routes';
 import { AssessmentProvider } from '@web/contexts/assessments/AssessmentProvider';
@@ -32,7 +33,7 @@ export const AssessmentPage: React.FC = () => {
   // Without the status we can't tell whether the member already has a programme, so don't start
   if (statusError && !assessmentStatus) {
     return (
-      <div className="bg-linear-to-br from-gray-50 via-ffp-light-purple/10 to-gray-50">
+      <AssessmentBackdrop>
         <ErrorRetryState
           layout="screen"
           title="We couldn't load your assessment just now."
@@ -40,16 +41,16 @@ export const AssessmentPage: React.FC = () => {
             void refetchStatus();
           }}
         />
-      </div>
+      </AssessmentBackdrop>
     );
   }
 
   // Pending, not loading: a retry paused while the tab is hidden has no data and no error yet
   if (isStatusPending) {
     return (
-      <div className="bg-linear-to-br from-gray-50 via-ffp-light-purple/10 to-gray-50">
+      <AssessmentBackdrop>
         <LoadingState layout="screen" />
-      </div>
+      </AssessmentBackdrop>
     );
   }
 
@@ -60,20 +61,20 @@ export const AssessmentPage: React.FC = () => {
 
   if (!flowId) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-gray-50 via-ffp-light-purple/10 to-gray-50 p-6">
+      <AssessmentBackdrop className="flex min-h-screen items-center justify-center p-6">
         <StaticAlert
           variant="error"
           message="No assessment flow specified. Please return to the home page."
         />
-      </div>
+      </AssessmentBackdrop>
     );
   }
 
   return (
     <AssessmentProvider flowId={flowId}>
-      <div className="min-h-screen bg-linear-to-br from-gray-50 via-ffp-light-purple/10 to-gray-50">
+      <AssessmentBackdrop className="min-h-screen">
         <AssessmentOrchestrator flowId={flowId} isReassessment={isReassessment} />
-      </div>
+      </AssessmentBackdrop>
     </AssessmentProvider>
   );
 };

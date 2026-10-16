@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createInitialState } from '@web/contexts/assessments/helpers';
+import { ApiError } from '@web/lib/api';
 
 import { AssessmentOrchestrator } from './AssessmentOrchestrator';
 
@@ -12,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   useAssessmentTemplateQuery: vi.fn(),
   useStartAssessment: vi.fn(),
   useSubmitAssessment: vi.fn(),
+  showRefusedAnswers: vi.fn(() => Promise.resolve(true)),
 }));
 
 vi.mock('@web/contexts/assessments/useAssessment', () => ({ useAssessment: mocks.useAssessment }));
@@ -19,6 +21,7 @@ vi.mock('@web/hooks/assessments', () => ({
   useAssessmentTemplateQuery: mocks.useAssessmentTemplateQuery,
   useStartAssessment: mocks.useStartAssessment,
   useSubmitAssessment: mocks.useSubmitAssessment,
+  useShowRefusedAnswers: () => mocks.showRefusedAnswers,
 }));
 vi.mock('@web/hooks/programmes', () => ({
   useReplaceProgrammeMutation: () => ({ mutate: vi.fn(), isPending: false }),
@@ -33,8 +36,14 @@ const refetchTemplate = vi.fn();
 
 const mutation = (
   mutate: () => void,
-  state: { isPending?: boolean; isError?: boolean; variables?: unknown } = {}
-): Record<string, unknown> => ({ mutate, isPending: false, isError: false, ...state });
+  state: { isPending?: boolean; isError?: boolean; error?: unknown; variables?: unknown } = {}
+): Record<string, unknown> => ({
+  mutate,
+  isPending: false,
+  isError: false,
+  error: state.isError ? new Error('Network error') : null,
+  ...state,
+});
 
 const renderOrchestrator = (): void => {
   render(
@@ -103,5 +112,41 @@ describe('AssessmentOrchestrator', () => {
       assessmentId: 'assessment-1',
       payload: { answers: {} },
     });
+  });
+
+  it('takes the member back to a refused answer instead of the failure screen', () => {
+    const questionId = '3ad90ada-14f9-4883-a502-56dc6cf73ab1';
+    const refusal = new ApiError(400, 'VALIDATION_ERROR', 'Some answers need your attention', [
+      { path: `answers.${questionId}`, code: 'required', message: 'Please answer this question.' },
+    ]);
+    mocks.useSubmitAssessment.mockImplementation((options: { onError: (e: unknown) => void }) => {
+      options.onError(refusal);
+
+      return mutation(submitMutate, { isError: true, error: refusal });
+    });
+
+    renderOrchestrator();
+
+    expect(mocks.showRefusedAnswers).toHaveBeenCalledWith({
+      [questionId]: 'Please answer this question.',
+    });
+    expect(screen.queryByText("We couldn't send your answers just now.")).toBeNull();
+    expect(screen.getByText('Step')).toBeTruthy();
+  });
+
+  it('shows the failure screen when a refusal names no question the flow shows', async () => {
+    const refusal = new ApiError(400, 'VALIDATION_ERROR', 'Some answers need your attention', [
+      { path: 'answers.q-unknown', code: 'unknown_question', message: 'Not in this assessment.' },
+    ]);
+    mocks.showRefusedAnswers.mockResolvedValue(false);
+    mocks.useSubmitAssessment.mockImplementation((options: { onError: (e: unknown) => void }) => {
+      options.onError(refusal);
+
+      return mutation(submitMutate, { isError: true, error: refusal });
+    });
+
+    renderOrchestrator();
+
+    expect(await screen.findByText("We couldn't send your answers just now.")).toBeTruthy();
   });
 });

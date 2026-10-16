@@ -5,12 +5,16 @@ import { Text, type TextStyleProps } from '../Text';
 
 import type { LabelHTMLAttributes, ReactNode } from 'react';
 
-/** `field` names a control placed below it; `option` sits beside the checkbox or radio it wraps */
-export type LabelVariant = 'field' | 'option';
+/**
+ * `field` names a control placed below it; `option` sits beside the checkbox or radio it wraps;
+ * `choice` is `option` at a member's answer-option size.
+ */
+export type LabelVariant = 'field' | 'option' | 'choice';
 
 const TEXT_STYLES: Record<LabelVariant, TextStyleProps> = {
   field: { size: 'sm', weight: 'medium', colour: 'muted-foreground' },
   option: { size: 'sm', colour: 'foreground' },
+  choice: { size: 'base', colour: 'foreground' },
 };
 
 export interface LabelProps
@@ -23,7 +27,7 @@ export interface LabelProps
   isRequired?: boolean;
   /** A control the label wraps, rendered before the text (a checkbox or radio) */
   control?: ReactNode;
-  /** Layout classes for the `<label>` */
+  /** Layout classes for the `<label>`, or a card's look when the whole label is the hit area */
   className?: string;
 }
 

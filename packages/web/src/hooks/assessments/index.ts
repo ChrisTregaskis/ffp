@@ -4,6 +4,7 @@ import { useAssessmentFlowQuery } from './useAssessmentFlowQuery';
 import { useAssessmentResultsQuery } from './useAssessmentResultsQuery';
 import { useAssessmentTemplateQuery } from './useAssessmentTemplateQuery';
 import { useSaveProgress } from './useSaveProgress';
+import { useShowRefusedAnswers } from './useShowRefusedAnswers';
 import { useStartAssessment } from './useStartAssessment';
 import { useSubmitAssessment } from './useSubmitAssessment';
 import { useUserAssessmentStatusQuery } from './useUserAssessmentStatusQuery';
@@ -24,6 +25,7 @@ export {
   useAssessmentResultsQuery,
   useAssessmentTemplateQuery,
   useSaveProgress,
+  useShowRefusedAnswers,
   useStartAssessment,
   useSubmitAssessment,
   useUserAssessmentStatusQuery,

@@ -23,6 +23,8 @@ export interface VideoQuestionCardProps {
   value: AnswerValue | null;
   /** Callback when the answer changes */
   onAnswer: (questionId: string, value: AnswerValue | null) => void;
+  /** Why the answer cannot stand, shown on the question */
+  error?: string;
   /** Signed CloudFront URL for the video */
   videoUrl?: string;
   /** Navigation direction for question transition animation @default 'forward' */
@@ -46,6 +48,7 @@ export const VideoQuestionCard: React.FC<VideoQuestionCardProps> = ({
   totalQuestions,
   value,
   onAnswer,
+  error,
   videoUrl,
   direction = 'forward',
   footer,
@@ -77,6 +80,7 @@ export const VideoQuestionCard: React.FC<VideoQuestionCardProps> = ({
           question={question}
           value={value}
           onChange={onAnswer}
+          error={error}
           videoUrl={videoUrl}
         />
       </CardTransition>

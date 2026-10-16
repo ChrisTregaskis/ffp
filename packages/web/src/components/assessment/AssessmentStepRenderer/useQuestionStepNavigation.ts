@@ -8,10 +8,8 @@ interface UseQuestionStepNavigationParams {
   totalQuestions: number;
   currentStep: number;
   isLastSubmittableStep: boolean;
-  /** Whether the current question requires an answer */
-  isCurrentQuestionRequired: boolean;
-  /** Whether the current question has been answered */
-  isCurrentQuestionAnswered: boolean;
+  /** Whether the current answer keeps its question's rules (an empty optional answer does) */
+  isCurrentAnswerValid: boolean;
   onSubmitAssessment?: () => void;
   onQuestionIndexChange: (index: number | ((prev: number) => number)) => void;
 }
@@ -37,8 +35,7 @@ export const useQuestionStepNavigation = ({
   totalQuestions,
   currentStep,
   isLastSubmittableStep,
-  isCurrentQuestionRequired,
-  isCurrentQuestionAnswered,
+  isCurrentAnswerValid,
   onSubmitAssessment,
   onQuestionIndexChange,
 }: UseQuestionStepNavigationParams): QuestionStepNavigation => {
@@ -74,8 +71,7 @@ export const useQuestionStepNavigation = ({
     };
   };
 
-  // Disable Continue when a required question has no answer
-  const continueDisabled = isCurrentQuestionRequired && !isCurrentQuestionAnswered;
+  const continueDisabled = !isCurrentAnswerValid;
 
   return {
     direction,

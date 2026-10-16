@@ -15,6 +15,7 @@ import { describeDriverError, translateDatabaseError } from './database-errors.j
 import { BaseError, InternalServerError } from './errors.js';
 import { createLogger, type TenantLogger } from './logger.js';
 
+import type { ApiErrorBody, ApiFieldError } from '../schemas/api-error.schema.js';
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
 /**
@@ -39,16 +40,6 @@ const SENSITIVE_BODY_FIELDS = [
  * should never appear in logs.
  */
 const SENSITIVE_HEADERS = ['authorization', 'Authorization'] as const;
-
-/**
- * Error response body format
- */
-interface ErrorResponseBody {
-  error: string;
-  message: string;
-  requestId?: string;
-  details?: Record<string, unknown> | unknown[];
-}
 
 /**
  * Wraps a Lambda handler with error handling and structured logging middleware
@@ -171,7 +162,7 @@ export const withErrorHandling = <TResult>(
 
       // Handle application errors (our custom error classes)
       if (error instanceof BaseError) {
-        const errorBody: ErrorResponseBody = {
+        const errorBody: ApiErrorBody = {
           error: error.code,
           message: error.message,
           ...(requestId && { requestId }),
@@ -193,15 +184,17 @@ export const withErrorHandling = <TResult>(
 
       // Handle Zod validation errors
       if (error instanceof ZodError) {
-        const errorBody: ErrorResponseBody = {
+        const errorBody: ApiErrorBody = {
           error: 'VALIDATION_ERROR',
           message: 'Invalid request data',
           ...(requestId && { requestId }),
-          details: error.issues.map((err) => ({
-            path: err.path.join('.'),
-            message: err.message,
-            code: err.code,
-          })),
+          details: error.issues.map(
+            (err): ApiFieldError => ({
+              path: err.path.join('.'),
+              message: err.message,
+              code: err.code,
+            })
+          ),
         };
 
         return {
@@ -215,7 +208,7 @@ export const withErrorHandling = <TResult>(
 
       // Handle unexpected errors (don't expose internal details)
       const internalError = new InternalServerError();
-      const errorBody: ErrorResponseBody = {
+      const errorBody: ApiErrorBody = {
         error: internalError.code,
         message: internalError.message,
         ...(requestId && { requestId }),

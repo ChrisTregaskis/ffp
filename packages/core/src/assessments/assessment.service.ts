@@ -3,15 +3,20 @@ import type { AnswerValue } from '@ffp/database';
 
 import { queueJob } from '../jobs/job-queue.service';
 import { getUserIdFromContext } from '../lib/context';
-import { withRLS } from '../lib/database';
+import { withRLS, type Transaction } from '../lib/database';
 import { InternalServerError, NotFoundError, ValidationError } from '../lib/errors';
 import { createSystemLogger } from '../lib/logger';
 import { programmeRepository } from '../programmes';
-import {
-  findByTemplateIds as findQuestionsByTemplateIds,
-  findSlugsByIds,
-} from '../questions/question.repository';
+import { findSlugsByIds } from '../questions/question.repository';
+import { isAnswerProvided } from '../schemas/question-answer.schema';
 
+import {
+  assertNoAnswerErrors,
+  findChangedAnswers,
+  findSaveErrors,
+  findSubmitErrors,
+  loadFlowQuestions,
+} from './answer-validation';
 import * as answerRepository from './answer.repository';
 import { evaluateNextStep, createEvaluationContext } from './branching';
 import * as flowRepository from './flow.repository';
@@ -22,6 +27,7 @@ const systemLogger = createSystemLogger('assessment-service');
 
 import type { UserAssessmentAnswer, SaveAnswerInput } from './answer.repository';
 import type { FlowStepWithConfig } from './flow.repository';
+import type { UserAssessment } from './user-assessment.repository';
 import type { OrganisationContext } from '../lib/context';
 import type {
   AssessmentResultsResponse,
@@ -69,6 +75,61 @@ function convertAnswersToSaveFormat(answers: UserAssessmentAnswers): SaveAnswerI
     questionId: answer.questionId,
     answerValue: answer.answerValue,
   }));
+}
+
+function toAnswerValuesById(answers: SaveAnswerInput[]): Map<string, AnswerValue> {
+  return new Map(answers.map((answer) => [answer.questionId, answer.answerValue]));
+}
+
+/** Store a request's changed answers; a blank one deletes the stored answer instead. */
+async function writeAnswerChanges(
+  tx: Transaction,
+  organisationId: string,
+  assessmentId: string,
+  changedAnswers: ReadonlyMap<string, AnswerValue>
+): Promise<void> {
+  const changes = [...changedAnswers];
+  const given = changes
+    .filter(([, answerValue]) => isAnswerProvided(answerValue))
+    .map(([questionId, answerValue]) => ({ questionId, answerValue }));
+  const clearedIds = changes
+    .filter(([, answerValue]) => !isAnswerProvided(answerValue))
+    .map(([questionId]) => questionId);
+
+  if (given.length > 0) {
+    await answerRepository.saveAnswers(organisationId, assessmentId, given, { tx });
+  }
+
+  await answerRepository.deleteByQuestionIds(organisationId, assessmentId, clearedIds, { tx });
+}
+
+function toStoredValuesById(answers: UserAssessmentAnswer[]): Map<string, AnswerValue> {
+  return new Map(
+    answers.map((answer) => [answer.questionId, extractAnswerValue(answer.answerValue)])
+  );
+}
+
+/**
+ * Load the caller's own assessment. RLS isolates organisations, not members, so
+ * another member's assessment in the same organisation is refused here, as not
+ * found so its existence is not disclosed.
+ */
+async function findOwnAssessment(
+  organisationId: string,
+  assessmentId: string,
+  userId: string
+): Promise<UserAssessment> {
+  const assessment = await userAssessmentRepository.findUserAssessmentById(
+    organisationId,
+    assessmentId,
+    userId
+  );
+
+  if (!assessment || assessment.userId !== userId) {
+    throw new NotFoundError('Assessment', assessmentId);
+  }
+
+  return assessment;
 }
 
 /**
@@ -278,8 +339,10 @@ export async function startAssessment(
  * Handles status transition from 'not_started' to 'in_progress' on first save.
  * Evaluates branching rules to determine the next step and any warnings.
  *
- * @throws NotFoundError if assessment doesn't exist or not accessible
+ * @throws NotFoundError if assessment doesn't exist or belongs to another member
  * @throws ValidationError if assessment is submitted/completed
+ * @throws ValidationError if an answer is not part of the flow or breaks its question's
+ *   rules; `details` names each failing question (see `assertNoAnswerErrors`)
  *
  * @example
  * ```typescript
@@ -300,19 +363,31 @@ export async function saveProgress(
   const userId = await getUserIdFromContext(context);
   const db = getDb();
 
-  // Fetch assessment by ID (RLS enforced)
-  const assessment = await userAssessmentRepository.findUserAssessmentById(
-    organisationId,
-    assessmentId
-  );
-
-  if (!assessment) {
-    throw new NotFoundError('Assessment', assessmentId);
-  }
+  const assessment = await findOwnAssessment(organisationId, assessmentId, userId);
 
   // Validate assessment is not submitted/completed
   if (assessment.status === 'submitted' || assessment.status === 'completed') {
     throw new ValidationError('Cannot modify submitted assessment');
+  }
+
+  const flowSteps = await flowRepository.findStepsByFlowId(db, assessment.flowId);
+  const sentAnswers = convertAnswersToSaveFormat(data.answers);
+  let changedAnswers = new Map<string, AnswerValue>();
+
+  if (sentAnswers.length > 0) {
+    const storedAnswers = await answerRepository.findByAssessmentId(organisationId, assessmentId, {
+      userId,
+    });
+    changedAnswers = findChangedAnswers(
+      toAnswerValuesById(sentAnswers),
+      toStoredValuesById(storedAnswers)
+    );
+
+    if (changedAnswers.size > 0) {
+      const flowQuestions = await loadFlowQuestions(db, flowSteps);
+
+      assertNoAnswerErrors(findSaveErrors(changedAnswers, flowQuestions));
+    }
   }
 
   // Execute all writes in a single transaction for atomicity
@@ -329,12 +404,7 @@ export async function saveProgress(
       );
     }
 
-    // Save answers to user_assessment_answers table
-    const answersToSave = convertAnswersToSaveFormat(data.answers);
-
-    if (answersToSave.length > 0) {
-      await answerRepository.saveAnswers(organisationId, assessmentId, answersToSave, { tx });
-    }
+    await writeAnswerChanges(tx, organisationId, assessmentId, changedAnswers);
 
     // Update currentStep
     const updatedAssessment = await userAssessmentRepository.updateAssessmentProgress(
@@ -343,9 +413,6 @@ export async function saveProgress(
       { currentStep: data.currentStep },
       { tx }
     );
-
-    // Fetch flow steps for branching evaluation
-    const flowSteps = await flowRepository.findStepsByFlowId(db, assessment.flowId);
 
     // Find the current step record by order
     const currentStepRecord = flowSteps.find((s) => s.order === data.currentStep);
@@ -448,46 +515,15 @@ export async function saveProgress(
 }
 
 /**
- * Get required question IDs from the given templates
- * returns IDs where validation.required is true (or undefined,
- * as required defaults to true).
- * @returns Array of required question IDs
- */
-async function getRequiredQuestionIds(templateIds: string[]): Promise<string[]> {
-  if (templateIds.length === 0) {
-    return [];
-  }
-
-  const db = getDb();
-
-  // Fetch all questions via the template_questions join table
-  const questions = await findQuestionsByTemplateIds(db, templateIds);
-
-  // Extract required question IDs (validation.required defaults to true)
-  return questions.filter((q) => q.validation?.required !== false).map((q) => q.id);
-}
-
-/**
- * Validate that all required questions have been answered
- *
- * @returns Array of missing question IDs (empty if all required questions answered)
- */
-function findMissingRequiredQuestions(
-  requiredQuestionIds: string[],
-  answeredQuestionIds: string[]
-): string[] {
-  return requiredQuestionIds.filter((questionId) => !answeredQuestionIds.includes(questionId));
-}
-
-/**
  * Submit an assessment for scoring
  *
  * Validates the assessment can be submitted, saves final answers,
  * transitions status to 'submitted', and enqueues a scoring job.
  *
- * @throws NotFoundError if assessment doesn't exist or not accessible
+ * @throws NotFoundError if assessment doesn't exist or belongs to another member
  * @throws ValidationError if assessment is already submitted
- * @throws ValidationError if required questions are missing answers
+ * @throws ValidationError if an answer breaks its rules, a submitted answer is not part of
+ *   the flow, or a required question is unanswered; `details` names each failing question
  *
  * @example
  * ```typescript
@@ -504,15 +540,7 @@ export async function submitAssessment(
   const { organisationId } = context;
   const userId = await getUserIdFromContext(context);
 
-  // Fetch assessment (RLS enforced)
-  const assessment = await userAssessmentRepository.findUserAssessmentById(
-    organisationId,
-    assessmentId
-  );
-
-  if (!assessment) {
-    throw new NotFoundError('Assessment', assessmentId);
-  }
+  const assessment = await findOwnAssessment(organisationId, assessmentId, userId);
 
   // Validate not already submitted
   if (assessment.status === 'submitted' || assessment.status === 'completed') {
@@ -540,70 +568,24 @@ export async function submitAssessment(
     userId,
   });
 
-  // Convert request answers to save format
-  const newAnswersToSave = convertAnswersToSaveFormat(data.answers);
-
-  // Build array of all answered question IDs (existing + new)
-  const answeredQuestionIds: string[] = [];
-
-  for (const answer of existingAnswers) {
-    answeredQuestionIds.push(answer.questionId);
-  }
-
-  for (const answer of newAnswersToSave) {
-    answeredQuestionIds.push(answer.questionId);
-  }
-
-  // Get template IDs from visited steps (derived from saved answers)
-  // This ensures we only validate required questions from steps the user actually visited,
-  // supporting branching flows where some steps are skipped
-  const visitedTemplateIds = await answerRepository.findVisitedTemplateIds(
-    organisationId,
-    assessmentId,
-    userId
+  const storedValues = toStoredValuesById(existingAnswers);
+  const submittedValues = findChangedAnswers(
+    toAnswerValuesById(convertAnswersToSaveFormat(data.answers)),
+    storedValues
   );
+  const flowQuestions = await loadFlowQuestions(db, flowSteps);
 
-  // Validate required questions are answered (only from visited templates)
-  const requiredQuestionIds = await getRequiredQuestionIds(visitedTemplateIds);
-  const missingQuestionIds = findMissingRequiredQuestions(requiredQuestionIds, answeredQuestionIds);
+  assertNoAnswerErrors(findSubmitErrors(storedValues, submittedValues, flowQuestions));
 
-  if (missingQuestionIds.length > 0) {
-    throw new ValidationError('Required questions are missing answers', {
-      missingQuestionIds,
-    });
-  }
-
-  // Build responses array for scoring job from all answers
-  // Combine existing answers with new answers (new answers override existing)
-  // Extract the actual value from JSONB structure for the job payload
-  const allAnswersMap = new Map<string, { questionId: string; answerValue: AnswerValue }>();
-
-  for (const answer of existingAnswers) {
-    const extractedValue = extractAnswerValue(answer.answerValue);
-
-    allAnswersMap.set(answer.questionId, {
-      questionId: answer.questionId,
-      answerValue: extractedValue,
-    });
-  }
-
-  for (const answer of newAnswersToSave) {
-    const extractedValue = extractAnswerValue(answer.answerValue);
-    allAnswersMap.set(answer.questionId, {
-      questionId: answer.questionId,
-      answerValue: extractedValue,
-    });
-  }
-
-  const responses = Array.from(allAnswersMap.values());
+  // The scoring job reads every answer, the submitted ones overriding those stored
+  const responses = [...new Map([...storedValues, ...submittedValues])]
+    .filter(([, answerValue]) => isAnswerProvided(answerValue))
+    .map(([questionId, answerValue]) => ({ questionId, answerValue }));
 
   // Execute all writes in a single transaction for atomicity
   // If any step fails, all changes are rolled back
   return await withRLS(organisationId, userId, async (tx) => {
-    // Save new answers to user_assessment_answers table
-    if (newAnswersToSave.length > 0) {
-      await answerRepository.saveAnswers(organisationId, assessmentId, newAnswersToSave, { tx });
-    }
+    await writeAnswerChanges(tx, organisationId, assessmentId, submittedValues);
 
     // Transition status to 'submitted'
     await userAssessmentRepository.transitionAssessmentStatus(
@@ -649,21 +631,7 @@ export async function getAssessmentResults(
   const { organisationId } = context;
   const userId = await getUserIdFromContext(context);
 
-  // Fetch assessment by ID (RLS enforced for organisation, userId for fine-grained RLS)
-  const assessment = await userAssessmentRepository.findUserAssessmentById(
-    organisationId,
-    assessmentId,
-    userId
-  );
-
-  if (!assessment) {
-    throw new NotFoundError('Assessment', assessmentId);
-  }
-
-  // Validate user ownership (RLS enforces organisation, not user isolation)
-  if (assessment.userId !== userId) {
-    throw new NotFoundError('Assessment', assessmentId);
-  }
+  const assessment = await findOwnAssessment(organisationId, assessmentId, userId);
 
   // Validate assessment has been submitted
   if (assessment.status === 'not_started' || assessment.status === 'in_progress') {

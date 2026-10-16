@@ -1,6 +1,12 @@
-import { useCallback, useId } from 'react';
+import { useCallback } from 'react';
 
-import { Text, RequiredIndicator } from '@web/components/atoms';
+import { isAnswerRequired } from '@ffp/core';
+
+import { FieldError, Text, Textarea } from '@web/components/atoms';
+
+import { QuestionFieldset } from './QuestionFieldset';
+import { QuestionHeader } from './QuestionHeader';
+import { useQuestionFieldIds } from './useQuestionFieldIds';
 
 import type { QuestionComponentProps } from './types';
 
@@ -17,11 +23,8 @@ export const TextQuestion: React.FC<QuestionComponentProps> = ({
   disabled = false,
   error,
 }) => {
-  const instanceId = useId();
-  const questionId = `question-${question.id}-${instanceId}`;
-  const errorId = `${questionId}-error`;
-  const descriptionId = question.description ? `${questionId}-description` : undefined;
-  const isRequired = question.validation?.required !== false;
+  const { questionId, labelId, errorId, descriptionId, describedBy } =
+    useQuestionFieldIds(question);
   const currentValue = typeof value === 'string' ? value : '';
 
   const maxLength = question.validation?.max;
@@ -39,45 +42,22 @@ export const TextQuestion: React.FC<QuestionComponentProps> = ({
   const isOverLimit = maxLength !== undefined && characterCount > maxLength;
 
   return (
-    <fieldset
-      className="space-y-5"
-      aria-describedby={
-        [descriptionId, error ? errorId : undefined].filter(Boolean).join(' ') || undefined
-      }
-    >
-      <legend className="sr-only">{question.question}</legend>
+    <QuestionFieldset legend={question.question} describedBy={describedBy(!!error)}>
+      <QuestionHeader question={question} textId={labelId} descriptionId={descriptionId} />
 
-      {/* Question text */}
-      <div className="space-y-1">
-        <label htmlFor={questionId} className="block leading-relaxed">
-          <Text as="span" styleProps={{ size: 'xl', weight: 'medium', colour: 'foreground' }}>
-            {question.question}
-            {isRequired && <RequiredIndicator />}
-          </Text>
-        </label>
-
-        {/* Description / helper text */}
-        {question.description && (
-          <Text as="p" id={descriptionId} styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-            {question.description}
-          </Text>
-        )}
-      </div>
-
-      {/* Textarea input */}
       <div className="space-y-2">
-        <textarea
+        <Textarea
+          appearance="bare"
           id={questionId}
           value={currentValue}
           onChange={handleChange}
           disabled={disabled}
           rows={4}
           maxLength={maxLength}
+          aria-labelledby={labelId}
           aria-invalid={!!error || isOverLimit}
-          aria-describedby={
-            [descriptionId, error ? errorId : undefined].filter(Boolean).join(' ') || undefined
-          }
-          aria-required={isRequired}
+          aria-describedby={describedBy(!!error)}
+          aria-required={isAnswerRequired(question.validation)}
           placeholder="Enter your response..."
           className={`
             w-full rounded-lg border-2 bg-card p-4 resize-y
@@ -109,18 +89,7 @@ export const TextQuestion: React.FC<QuestionComponentProps> = ({
         )}
       </div>
 
-      {/* Error message */}
-      {error && (
-        <Text
-          as="p"
-          id={errorId}
-          styleProps={{ size: 'sm', colour: 'destructive' }}
-          role="alert"
-          className="animate-in fade-in slide-in-from-top-2 duration-200"
-        >
-          {error}
-        </Text>
-      )}
-    </fieldset>
+      {error && <FieldError animated id={errorId} message={error} />}
+    </QuestionFieldset>
   );
 };

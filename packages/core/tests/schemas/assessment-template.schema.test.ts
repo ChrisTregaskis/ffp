@@ -3,9 +3,11 @@ import { describe, it, expect } from 'vitest';
 import {
   assessmentQuestionSchema,
   questionsArraySchema,
+  type AssessmentQuestion,
 } from '../../src/schemas/assessment-question.schema';
 import {
   assessmentTemplateSchema,
+  assessmentTemplateWithQuestionsSchema,
   createAssessmentTemplateSchema,
   updateAssessmentTemplateSchema,
 } from '../../src/schemas/assessment-template.schema';
@@ -414,5 +416,57 @@ describe('updateAssessmentTemplateSchema', () => {
       name: '', // Invalid - empty string
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe('assessmentTemplateWithQuestionsSchema', () => {
+  const row = (overrides: Record<string, unknown>): Record<string, unknown> => ({
+    id: QUESTION_UUID_1,
+    publicId: 'question0001',
+    slug: 'focus-areas',
+    type: 'multi-choice',
+    questionText: 'Which areas?',
+    description: null,
+    options: [
+      { value: 'a', label: 'A' },
+      { value: 'b', label: 'B' },
+    ],
+    validation: { required: true, maxSelections: 1 },
+    videoId: null,
+    scoreDimension: null,
+    isActive: true,
+    displayOrder: 1,
+    configOverrides: null,
+    ...overrides,
+  });
+
+  const parseQuestion = (overrides: Record<string, unknown>): AssessmentQuestion =>
+    assessmentTemplateWithQuestionsSchema.parse({
+      id: '11111111-1111-1111-8111-111111111106',
+      publicId: 'template0001',
+      name: 'Goals',
+      description: null,
+      version: 1,
+      isActive: true,
+      createdBy: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      templateQuestions: [row(overrides)],
+    }).templateQuestions[0];
+
+  it('applies a template override to the member’s validation', () => {
+    expect(
+      parseQuestion({ configOverrides: { validation: { required: false } } }).validation
+    ).toEqual({ required: false });
+  });
+
+  it('never requires a deactivated question, as the server does not', () => {
+    expect(parseQuestion({ isActive: false }).validation).toEqual({
+      required: false,
+      maxSelections: 1,
+    });
+    expect(parseQuestion({ isActive: false, validation: null }).validation).toEqual({
+      required: false,
+    });
   });
 });
