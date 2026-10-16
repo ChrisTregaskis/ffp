@@ -7,7 +7,7 @@ export {
   type BadgeShape,
 } from './Badge';
 export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from './Button';
-export { Checkbox, type CheckboxProps } from './Checkbox';
+export { Checkbox, type CheckboxProps, type CheckboxVariant } from './Checkbox';
 export { ContentPanel } from './ContentPanel';
 export { FieldError, type FieldErrorProps } from './FieldError';
 export { FileInput, type FileInputProps } from './FileInput';
@@ -47,6 +47,7 @@ export {
 } from './PasswordStrengthIndicator';
 export { PressableArea, type PressableAreaProps } from './PressableArea';
 export { ProgressBar, type ProgressBarProps, type ProgressBarSize } from './ProgressBar';
+export { Radio, type RadioProps, type RadioVariant } from './Radio';
 export { RequiredIndicator } from './RequiredIndicator';
 export { SelectTrigger, type SelectTriggerProps, type SelectTriggerSize } from './SelectTrigger';
 export {

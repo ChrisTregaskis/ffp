@@ -1,15 +1,21 @@
-import { useCallback, useId, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { Text, RequiredIndicator } from '@web/components/atoms';
+import { isAnswerRequired } from '@ffp/core';
 
-import { OptionLabel } from './OptionLabel';
+import { FieldError } from '@web/components/atoms';
+
+import { ChoiceOption } from './ChoiceOption';
+import { QuestionFieldset } from './QuestionFieldset';
+import { QuestionHeader } from './QuestionHeader';
+import { useQuestionFieldIds } from './useQuestionFieldIds';
 
 import type { QuestionComponentProps } from './types';
 
 /**
  * Multi choice question component - renders checkbox group.
  *
- * Displays a question with multiple options where several can be selected.
+ * Displays a question with multiple options where several can be selected, up to
+ * `validation.maxSelections`: once the cap is reached the unselected options are disabled.
  * Uses native checkbox inputs for accessibility and form integration.
  */
 export const MultiChoiceQuestion: React.FC<QuestionComponentProps> = ({
@@ -19,14 +25,18 @@ export const MultiChoiceQuestion: React.FC<QuestionComponentProps> = ({
   disabled = false,
   error,
 }) => {
-  const instanceId = useId();
-  const questionId = `question-${question.id}-${instanceId}`;
-  const errorId = `${questionId}-error`;
-  const descriptionId = question.description ? `${questionId}-description` : undefined;
-  const isRequired = question.validation?.required !== false;
+  const { questionId, errorId, descriptionId, optionId, describedBy } =
+    useQuestionFieldIds(question);
 
-  // Ensure value is always an array for multi-choice (memoised to prevent unnecessary re-renders)
-  const currentValues = useMemo<string[]>(() => (Array.isArray(value) ? value : []), [value]);
+  // Only offered options count: a stored choice since removed from the question has no control to
+  // clear it, so the member's next click drops it rather than leaving the answer stuck invalid
+  const currentValues = useMemo<string[]>(() => {
+    const offered = new Set(question.options?.map((option) => option.value));
+
+    return Array.isArray(value) ? value.filter((choice) => offered.has(choice)) : [];
+  }, [value, question.options]);
+  const maxSelections = question.validation?.maxSelections;
+  const isAtCap = maxSelections !== undefined && currentValues.length >= maxSelections;
 
   const handleToggle = useCallback(
     (optionValue: string): void => {
@@ -35,100 +45,48 @@ export const MultiChoiceQuestion: React.FC<QuestionComponentProps> = ({
       }
 
       const isCurrentlySelected = currentValues.includes(optionValue);
+
+      if (!isCurrentlySelected && isAtCap) {
+        return;
+      }
+
       const newValues = isCurrentlySelected
         ? currentValues.filter((v) => v !== optionValue)
         : [...currentValues, optionValue];
 
       onChange(newValues);
     },
-    [disabled, currentValues, onChange]
+    [disabled, currentValues, isAtCap, onChange]
   );
 
   return (
-    <fieldset
-      className="space-y-5"
-      aria-describedby={
-        [descriptionId, error ? errorId : undefined].filter(Boolean).join(' ') || undefined
-      }
-    >
-      <legend className="sr-only">{question.question}</legend>
+    <QuestionFieldset legend={question.question} describedBy={describedBy(!!error)}>
+      <QuestionHeader question={question} descriptionId={descriptionId} />
 
-      {/* Question text */}
-      <div className="space-y-1">
-        <Text
-          as="p"
-          styleProps={{ size: 'xl', weight: 'medium', colour: 'foreground' }}
-          className="leading-relaxed"
-        >
-          {question.question}
-          {isRequired && <RequiredIndicator />}
-        </Text>
-
-        {/* Description / helper text */}
-        {question.description && (
-          <Text as="p" id={descriptionId} styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-            {question.description}
-          </Text>
-        )}
-      </div>
-
-      {/* Checkbox options */}
-      <div className="space-y-3" role="group" aria-required={isRequired}>
+      <div className="space-y-3" role="group" aria-required={isAnswerRequired(question.validation)}>
         {question.options?.map((option) => {
-          const optionId = `${questionId}-option-${option.value}`;
           const isSelected = currentValues.includes(option.value);
 
           return (
-            <OptionLabel
+            <ChoiceOption
               key={option.value}
-              htmlFor={optionId}
+              type="checkbox"
+              id={optionId(option.value)}
+              name={questionId}
+              value={option.value}
+              label={option.label}
               isSelected={isSelected}
               hasError={!!error}
-              disabled={disabled}
-            >
-              <input
-                type="checkbox"
-                id={optionId}
-                name={questionId}
-                value={option.value}
-                checked={isSelected}
-                onChange={() => {
-                  handleToggle(option.value);
-                }}
-                disabled={disabled}
-                aria-invalid={!!error}
-                className={`
-                  h-5 w-5 rounded border-2 appearance-none
-                  transition-all duration-200
-                  ${isSelected ? 'border-primary bg-primary bg-checkbox-tick' : 'border-border bg-card'}
-                  focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2
-                  ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}
-                `}
-              />
-              <Text
-                as="span"
-                styleProps={{ size: 'base', colour: 'foreground' }}
-                className="flex-1"
-              >
-                {option.label}
-              </Text>
-            </OptionLabel>
+              disabled={disabled || (isAtCap && !isSelected)}
+              onSelect={() => {
+                handleToggle(option.value);
+              }}
+            />
           );
         })}
       </div>
 
-      {/* Error message */}
-      {error && (
-        <Text
-          as="p"
-          id={errorId}
-          styleProps={{ size: 'sm', colour: 'destructive' }}
-          role="alert"
-          className="animate-in fade-in slide-in-from-top-2 duration-200"
-        >
-          {error}
-        </Text>
-      )}
-    </fieldset>
+      {error && <FieldError animated id={errorId} message={error} />}
+    </QuestionFieldset>
   );
 };

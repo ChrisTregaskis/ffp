@@ -242,14 +242,16 @@ export async function deleteByQuestionIds(
   organisationId: string,
   assessmentId: string,
   questionIds: string[],
-  userId?: string
+  options: SaveAnswersOptions = {}
 ): Promise<void> {
   if (questionIds.length === 0) {
     return;
   }
 
-  await withRLS(organisationId, userId, async (tx) => {
-    await tx
+  const { userId, tx } = options;
+
+  const doDelete = async (dbTx: Transaction): Promise<void> => {
+    await dbTx
       .delete(userAssessmentAnswers)
       .where(
         and(
@@ -257,5 +259,12 @@ export async function deleteByQuestionIds(
           inArray(userAssessmentAnswers.questionId, questionIds)
         )
       );
-  });
+  };
+
+  // If transaction provided, use it directly (caller must set RLS)
+  if (tx) {
+    return doDelete(tx);
+  }
+
+  await withRLS(organisationId, userId, doDelete);
 }

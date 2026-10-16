@@ -1,3 +1,7 @@
+import { useEffect, useRef } from 'react';
+
+import { validateAnswer } from '@ffp/core';
+
 import { LoadingState } from '@web/components/molecules';
 import { FadeSlideIn } from '@web/components/motion';
 
@@ -14,6 +18,9 @@ import type { QuestionStepContentProps } from './types';
  *
  * Continue/Back override AssessmentNavigation for moves between questions;
  * on the last/first question, falls through to default step-level navigation.
+ * Continue waits until the answer keeps the question's rules (the same check the server
+ * makes); a rule broken by a value already entered shows on the question, as does any
+ * message the server sent for it, and a refused question in this step is brought into view.
  */
 export const QuestionStepContent: React.FC<QuestionStepContentProps> = ({
   card: QuestionCardComponent,
@@ -22,14 +29,44 @@ export const QuestionStepContent: React.FC<QuestionStepContentProps> = ({
   questionIndex,
   onQuestionIndexChange,
   answers,
+  fieldErrors,
+  refusalCount,
   currentStep,
   onAnswer,
   isLastSubmittableStep = false,
   onSubmitAssessment,
 }) => {
   const currentQuestion = questions.length > 0 ? questions[questionIndex] : undefined;
-  const isCurrentQuestionRequired = currentQuestion?.validation?.required !== false;
-  const isCurrentQuestionAnswered = !!currentQuestion && currentQuestion.id in answers;
+  const currentValue =
+    currentQuestion && currentQuestion.id in answers
+      ? answers[currentQuestion.id].answerValue
+      : null;
+  const clientIssue = currentQuestion
+    ? validateAnswer(currentQuestion, currentValue).at(0)
+    : undefined;
+  // The server's message first; a rule broken by what the member entered next, but not a
+  // blank required answer, which only holds Continue back
+  const error =
+    currentQuestion && currentQuestion.id in fieldErrors
+      ? fieldErrors[currentQuestion.id]
+      : clientIssue && clientIssue.code !== 'required'
+        ? clientIssue.message
+        : undefined;
+
+  // Read at jump time only: answering clears a question's error, and must not move the member on
+  const fieldErrorsRef = useRef(fieldErrors);
+  fieldErrorsRef.current = fieldErrors;
+
+  // Once per refusal, and again when this step's questions arrive
+  useEffect(() => {
+    const firstRefusedIndex = questions.findIndex(
+      (question) => question.id in fieldErrorsRef.current
+    );
+
+    if (firstRefusedIndex >= 0) {
+      onQuestionIndexChange(firstRefusedIndex);
+    }
+  }, [refusalCount, questions, onQuestionIndexChange]);
 
   const {
     direction,
@@ -44,8 +81,7 @@ export const QuestionStepContent: React.FC<QuestionStepContentProps> = ({
     totalQuestions: questions.length,
     currentStep,
     isLastSubmittableStep,
-    isCurrentQuestionRequired,
-    isCurrentQuestionAnswered,
+    isCurrentAnswerValid: !clientIssue,
     onSubmitAssessment,
     onQuestionIndexChange,
   });
@@ -62,8 +98,9 @@ export const QuestionStepContent: React.FC<QuestionStepContentProps> = ({
           question={currentQuestion}
           questionNumber={questionIndex + 1}
           totalQuestions={questions.length}
-          value={currentQuestion.id in answers ? answers[currentQuestion.id].answerValue : null}
+          value={currentValue}
           onAnswer={onAnswer}
+          error={error}
           direction={direction}
           footer={
             <AssessmentNavigation

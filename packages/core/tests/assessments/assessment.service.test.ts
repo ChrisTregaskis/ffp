@@ -934,7 +934,6 @@ describe('Assessment Service', () => {
 
       it.each([
         ['over the cap', ['a', 'b', 'c'], 'too_many_selections'],
-        ['an empty selection on a required question', [], 'required'],
         ['an option not offered', ['z'], 'invalid_option'],
       ])('rejects %s', async (_case, value, code) => {
         const { context, assessmentId, capped } = setUp();
@@ -950,6 +949,47 @@ describe('Assessment Service', () => {
         expect(details).toEqual([expect.objectContaining({ path: `answers.${capped.id}`, code })]);
         expect(mockedAnswerRepo.saveAnswers).not.toHaveBeenCalled();
         expect(mockedDatabaseModule.withRLS).not.toHaveBeenCalled();
+      });
+
+      it.each([
+        ['an empty selection', []],
+        ['blank text', '  '],
+      ])('clears a stored answer on %s, even for a required question', async (_case, value) => {
+        const { context, assessmentId, capped } = setUp();
+
+        mockedAnswerRepo.findByAssessmentId.mockResolvedValue([
+          storedAnswer(context, assessmentId, capped.id, ['a']),
+        ]);
+        mockedUserAssessmentRepo.updateAssessmentProgress.mockResolvedValue(createMockAssessment());
+
+        await assessmentService.saveProgress(
+          assessmentId,
+          { answers: answer(capped.id, value), currentStep: 99 },
+          context
+        );
+
+        expect(mockedAnswerRepo.saveAnswers).not.toHaveBeenCalled();
+        expect(mockedAnswerRepo.deleteByQuestionIds).toHaveBeenCalledWith(
+          context.organisationId,
+          assessmentId,
+          [capped.id],
+          expect.objectContaining({ tx: expect.anything() as unknown })
+        );
+      });
+
+      it('still rejects a blank answer to a question outside the flow', async () => {
+        const { context, assessmentId } = setUp();
+        const strangerId = randomUUID();
+
+        const details = await rejectionDetails(
+          assessmentService.saveProgress(
+            assessmentId,
+            { answers: answer(strangerId, []), currentStep: 2 },
+            context
+          )
+        );
+
+        expect(details).toEqual([expect.objectContaining({ code: 'unknown_question' })]);
       });
 
       it('rejects an answer to a question outside the flow', async () => {
@@ -1036,10 +1076,11 @@ describe('Assessment Service', () => {
 
     describe('submitAssessment', () => {
       it('treats a stored empty selection as unanswered', async () => {
-        const { context, assessmentId, capped } = setUp();
+        const { context, assessmentId, capped, optional } = setUp();
 
         mockedAnswerRepo.findByAssessmentId.mockResolvedValue([
           storedAnswer(context, assessmentId, capped.id, []),
+          storedAnswer(context, assessmentId, optional.id, 4),
         ]);
 
         const details = await rejectionDetails(
@@ -1112,6 +1153,35 @@ describe('Assessment Service', () => {
         );
 
         expect(mockedJobQueueService.queueJob).toHaveBeenCalled();
+      });
+
+      it('clears an emptied optional answer and leaves it out of scoring', async () => {
+        const { context, assessmentId, capped, optional } = setUp();
+
+        mockedAnswerRepo.findByAssessmentId.mockResolvedValue([
+          storedAnswer(context, assessmentId, capped.id, ['a']),
+          storedAnswer(context, assessmentId, optional.id, 4),
+        ]);
+        mockedJobQueueService.queueJob.mockResolvedValue(randomUUID());
+
+        await assessmentService.submitAssessment(
+          assessmentId,
+          { answers: { ...answer(capped.id, ['a']), ...answer(optional.id, '') } },
+          context
+        );
+
+        expect(mockedAnswerRepo.deleteByQuestionIds).toHaveBeenCalledWith(
+          context.organisationId,
+          assessmentId,
+          [optional.id],
+          expect.objectContaining({ tx: expect.anything() as unknown })
+        );
+        expect(mockedJobQueueService.queueJob).toHaveBeenCalledWith(
+          'score_assessment',
+          expect.objectContaining({ responses: [{ questionId: capped.id, answerValue: ['a'] }] }),
+          context,
+          expect.anything()
+        );
       });
 
       it('refuses another member’s assessment as not found', async () => {

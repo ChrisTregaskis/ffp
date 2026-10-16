@@ -205,3 +205,21 @@ describe('findChangedAnswers', () => {
     expect([...changed.keys()]).toEqual(['new', 'edited']);
   });
 });
+
+describe('findSubmitErrors with a blank answer', () => {
+  const emptied = randomUUID();
+  const flowQuestions = new Map([
+    [
+      'q-emptied',
+      {
+        templateIds: [emptied],
+        rules: { type: 'multi-choice' as const, validation: { required: false } },
+      },
+    ],
+    ['q-other', { templateIds: [emptied], rules: { type: 'numeric' as const } }],
+  ]);
+
+  it('does not count a blank answer as reaching its template', () => {
+    expect(findSubmitErrors(new Map(), new Map([['q-emptied', []]]), flowQuestions)).toEqual([]);
+  });
+});

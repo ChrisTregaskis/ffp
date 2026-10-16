@@ -1,6 +1,9 @@
 // Motion constants
 export * from './motion.constants';
 
+// Full-screen backdrop
+export * from './AssessmentBackdrop';
+
 // Navigation
 export * from './AssessmentNavigation';
 

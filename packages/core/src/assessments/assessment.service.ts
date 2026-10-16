@@ -3,11 +3,12 @@ import type { AnswerValue } from '@ffp/database';
 
 import { queueJob } from '../jobs/job-queue.service';
 import { getUserIdFromContext } from '../lib/context';
-import { withRLS } from '../lib/database';
+import { withRLS, type Transaction } from '../lib/database';
 import { InternalServerError, NotFoundError, ValidationError } from '../lib/errors';
 import { createSystemLogger } from '../lib/logger';
 import { programmeRepository } from '../programmes';
 import { findSlugsByIds } from '../questions/question.repository';
+import { isAnswerProvided } from '../schemas/question-answer.schema';
 
 import {
   assertNoAnswerErrors,
@@ -78,6 +79,28 @@ function convertAnswersToSaveFormat(answers: UserAssessmentAnswers): SaveAnswerI
 
 function toAnswerValuesById(answers: SaveAnswerInput[]): Map<string, AnswerValue> {
   return new Map(answers.map((answer) => [answer.questionId, answer.answerValue]));
+}
+
+/** Store a request's changed answers; a blank one deletes the stored answer instead. */
+async function writeAnswerChanges(
+  tx: Transaction,
+  organisationId: string,
+  assessmentId: string,
+  changedAnswers: ReadonlyMap<string, AnswerValue>
+): Promise<void> {
+  const changes = [...changedAnswers];
+  const given = changes
+    .filter(([, answerValue]) => isAnswerProvided(answerValue))
+    .map(([questionId, answerValue]) => ({ questionId, answerValue }));
+  const clearedIds = changes
+    .filter(([, answerValue]) => !isAnswerProvided(answerValue))
+    .map(([questionId]) => questionId);
+
+  if (given.length > 0) {
+    await answerRepository.saveAnswers(organisationId, assessmentId, given, { tx });
+  }
+
+  await answerRepository.deleteByQuestionIds(organisationId, assessmentId, clearedIds, { tx });
 }
 
 function toStoredValuesById(answers: UserAssessmentAnswer[]): Map<string, AnswerValue> {
@@ -349,13 +372,13 @@ export async function saveProgress(
 
   const flowSteps = await flowRepository.findStepsByFlowId(db, assessment.flowId);
   const sentAnswers = convertAnswersToSaveFormat(data.answers);
-  let answersToSave: SaveAnswerInput[] = [];
+  let changedAnswers = new Map<string, AnswerValue>();
 
   if (sentAnswers.length > 0) {
     const storedAnswers = await answerRepository.findByAssessmentId(organisationId, assessmentId, {
       userId,
     });
-    const changedAnswers = findChangedAnswers(
+    changedAnswers = findChangedAnswers(
       toAnswerValuesById(sentAnswers),
       toStoredValuesById(storedAnswers)
     );
@@ -365,8 +388,6 @@ export async function saveProgress(
 
       assertNoAnswerErrors(findSaveErrors(changedAnswers, flowQuestions));
     }
-
-    answersToSave = sentAnswers.filter((answer) => changedAnswers.has(answer.questionId));
   }
 
   // Execute all writes in a single transaction for atomicity
@@ -383,9 +404,7 @@ export async function saveProgress(
       );
     }
 
-    if (answersToSave.length > 0) {
-      await answerRepository.saveAnswers(organisationId, assessmentId, answersToSave, { tx });
-    }
+    await writeAnswerChanges(tx, organisationId, assessmentId, changedAnswers);
 
     // Update currentStep
     const updatedAssessment = await userAssessmentRepository.updateAssessmentProgress(
@@ -554,26 +573,19 @@ export async function submitAssessment(
     toAnswerValuesById(convertAnswersToSaveFormat(data.answers)),
     storedValues
   );
-  const newAnswersToSave = [...submittedValues].map(([questionId, answerValue]) => ({
-    questionId,
-    answerValue,
-  }));
   const flowQuestions = await loadFlowQuestions(db, flowSteps);
 
   assertNoAnswerErrors(findSubmitErrors(storedValues, submittedValues, flowQuestions));
 
   // The scoring job reads every answer, the submitted ones overriding those stored
-  const responses = [...new Map([...storedValues, ...submittedValues])].map(
-    ([questionId, answerValue]) => ({ questionId, answerValue })
-  );
+  const responses = [...new Map([...storedValues, ...submittedValues])]
+    .filter(([, answerValue]) => isAnswerProvided(answerValue))
+    .map(([questionId, answerValue]) => ({ questionId, answerValue }));
 
   // Execute all writes in a single transaction for atomicity
   // If any step fails, all changes are rolled back
   return await withRLS(organisationId, userId, async (tx) => {
-    // Save new answers to user_assessment_answers table
-    if (newAnswersToSave.length > 0) {
-      await answerRepository.saveAnswers(organisationId, assessmentId, newAnswersToSave, { tx });
-    }
+    await writeAnswerChanges(tx, organisationId, assessmentId, submittedValues);
 
     // Transition status to 'submitted'
     await userAssessmentRepository.transitionAssessmentStatus(

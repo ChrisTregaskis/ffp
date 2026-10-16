@@ -22,7 +22,7 @@ const INTRO_FEATURES: FeatureItem[] = [
   {
     icon: Icons.CLIPBOARDLIST,
     heading: 'Pre-Assessment Questions',
-    description: 'Quick questions about your goals and pain levels',
+    description: 'Quick questions about your goals and how you move',
   },
   {
     icon: Icons.VIDEO,
@@ -32,7 +32,7 @@ const INTRO_FEATURES: FeatureItem[] = [
   {
     icon: Icons.CHECKCIRCLE,
     heading: 'Personalised Programme',
-    description: 'Custom physiotherapy programme based on your assessment results',
+    description: 'A movement programme shaped by your answers',
   },
 ];
 

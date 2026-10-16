@@ -30,6 +30,10 @@ export interface QuestionStepContentProps {
   questionIndex: number;
   onQuestionIndexChange: (index: number | ((prev: number) => number)) => void;
   answers: Record<string, { questionId: string; answerValue: AnswerValue }>;
+  /** The server's message per refused question, keyed by questionId */
+  fieldErrors: Record<string, string>;
+  /** Changes with each refusal, so a refused question is brought into view once per refusal */
+  refusalCount: number;
   currentStep: number;
   onAnswer: (questionId: string, value: AnswerValue | null) => void;
   /** Whether the current step is the last question/video step in the flow */

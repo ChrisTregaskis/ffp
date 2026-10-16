@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import type { AnswerValue, FlowStepConfig, FlowStepType } from '@ffp/core';
 
@@ -47,10 +47,14 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
     refetch: refetchFlow,
   } = useAssessmentFlowQuery(assessmentState.flowId);
   const [questionIndex, setQuestionIndex] = useState(0);
+  const [indexedStepId, setIndexedStepId] = useState(assessmentState.currentStepId);
 
-  useEffect(() => {
+  // Reset to the first question during render, not in an effect: a parent's effect runs after
+  // its children's, and would undo a step's jump back to a refused answer
+  if (indexedStepId !== assessmentState.currentStepId) {
+    setIndexedStepId(assessmentState.currentStepId);
     setQuestionIndex(0);
-  }, [assessmentState.currentStepId]);
+  }
 
   const currentStepSummary = useMemo(
     () => assessmentState.steps.find((s) => s.id === assessmentState.currentStepId),
@@ -132,6 +136,8 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
             questionIndex={questionIndex}
             onQuestionIndexChange={setQuestionIndex}
             answers={assessmentState.answers}
+            fieldErrors={assessmentState.fieldErrors}
+            refusalCount={assessmentState.refusalCount}
             currentStep={assessmentState.currentStep}
             onAnswer={handleAnswer}
             isLastSubmittableStep={isLastSubmittableStep}
@@ -149,6 +155,8 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
             questionIndex={questionIndex}
             onQuestionIndexChange={setQuestionIndex}
             answers={assessmentState.answers}
+            fieldErrors={assessmentState.fieldErrors}
+            refusalCount={assessmentState.refusalCount}
             currentStep={assessmentState.currentStep}
             onAnswer={handleAnswer}
             isLastSubmittableStep={isLastSubmittableStep}

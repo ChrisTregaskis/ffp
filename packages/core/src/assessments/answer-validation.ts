@@ -107,13 +107,19 @@ export function findChangedAnswers(
   );
 }
 
-/** The answers being saved: each must belong to the flow and keep its question's rules. */
+/**
+ * The answers being saved: each must belong to the flow and keep its question's
+ * rules. A blank answer clears the stored one, so a member can empty a required
+ * question and still move back; submit is where required is enforced.
+ */
 export function findSaveErrors(
   answers: AnswerValuesById,
   flowQuestions: ReadonlyMap<string, FlowQuestion>
 ): ApiFieldError[] {
   return [...answers].flatMap(([questionId, value]) =>
-    ruleErrors(questionId, value, flowQuestions)
+    isAnswerProvided(value) || !flowQuestions.has(questionId)
+      ? ruleErrors(questionId, value, flowQuestions)
+      : []
   );
 }
 
@@ -132,12 +138,15 @@ export function findSubmitErrors(
   flowQuestions: ReadonlyMap<string, FlowQuestion>
 ): ApiFieldError[] {
   const answers = new Map([...storedAnswers, ...submittedAnswers]);
+  // A blank answer reaches nothing: save deletes it, so it must not count only until a reload
   const reachedTemplateIds = new Set(
-    [...answers.keys()].flatMap((id) => {
-      const templateIds = flowQuestions.get(id)?.templateIds ?? [];
+    [...answers]
+      .filter(([, value]) => isAnswerProvided(value))
+      .flatMap(([id]) => {
+        const templateIds = flowQuestions.get(id)?.templateIds ?? [];
 
-      return templateIds.length === 1 ? templateIds : [];
-    })
+        return templateIds.length === 1 ? templateIds : [];
+      })
   );
 
   const flowErrors = [...flowQuestions].flatMap(([questionId, question]) => {

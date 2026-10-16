@@ -1,9 +1,12 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Button, type ButtonVariant, Icon, Icons } from '@web/components/atoms';
+import { StaticAlert } from '@web/components/molecules';
 import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import { useSaveProgress } from '@web/hooks/assessments/useSaveProgress';
+import { useShowRefusedAnswers } from '@web/hooks/assessments/useShowRefusedAnswers';
+import { toQuestionFieldErrors } from '@web/utils/assessment-field-errors';
 
 export interface AssessmentNavigationProps {
   /** Whether to show the Back button (hide on first step) */
@@ -28,6 +31,8 @@ export interface AssessmentNavigationProps {
  * Provides Back and Continue buttons with auto-save behaviour.
  * When answers are dirty, saves progress before navigating.
  * Supports branching via nextStepId from save response.
+ * A refused save keeps the member on the step: answers the server named carry its message
+ * on their question, and any other failure shows above the buttons.
  */
 export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
   showBack = true,
@@ -40,8 +45,11 @@ export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
 }) => {
   const { assessmentState, assessmentDispatch } = useAssessment();
   const saveProgress = useSaveProgress();
+  const showRefusedAnswers = useShowRefusedAnswers();
 
   const { assessmentId, answers, currentStep, isDirty } = assessmentState;
+  // Set by a step-level save whose failure could not be shown on a question; background saves stay quiet
+  const [hasSaveFailed, setHasSaveFailed] = useState(false);
   const isSaving = saveProgress.isPending;
 
   const handleSaveAndNavigate = useCallback(
@@ -49,10 +57,23 @@ export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
       // Always save — even when answers are clean — so the backend can persist
       // the current step position for accurate resume on re-login.
       if (assessmentId) {
-        const response = await saveProgress.mutateAsync({
-          assessmentId,
-          payload: { answers, currentStep },
-        });
+        let response;
+
+        try {
+          response = await saveProgress.mutateAsync({
+            assessmentId,
+            payload: { answers, currentStep },
+          });
+        } catch (error) {
+          // A refusal is shown on its questions; one that cannot be, and any other failure, here
+          const isShown = await showRefusedAnswers(toQuestionFieldErrors(error));
+
+          setHasSaveFailed(!isShown);
+
+          return;
+        }
+
+        setHasSaveFailed(false);
 
         if (isDirty) {
           assessmentDispatch({ type: ASSESSMENT_ACTION.MARK_SAVED });
@@ -74,13 +95,22 @@ export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
         }
       }
     },
-    [isDirty, assessmentId, answers, currentStep, saveProgress, assessmentDispatch]
+    [
+      isDirty,
+      assessmentId,
+      answers,
+      currentStep,
+      saveProgress,
+      assessmentDispatch,
+      showRefusedAnswers,
+    ]
   );
 
   /**
    * Fire-and-forget save to persist currentStep for resume.
    * Used during intra-step navigation (question-to-question) where
-   * the custom onContinue/onBack handles the UI transition.
+   * the custom onContinue/onBack handles the UI transition. A failure stays quiet: the
+   * answers stay dirty, and the step-level save resends them and shows any refusal.
    */
   const savePositionInBackground = useCallback((): void => {
     if (assessmentId && isDirty) {
@@ -122,33 +152,41 @@ export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
   }, [onBack, savePositionInBackground, handleSaveAndNavigate]);
 
   return (
-    <nav
-      className={`flex items-center justify-between ${className}`.trim()}
-      aria-label="Assessment navigation"
-    >
-      <div>
-        {showBack && (
-          <Button
-            variant="secondary"
-            onClick={handleBack}
-            disabled={isSaving}
-            icon={<Icon name={Icons.CHEVRONLEFT} styleProps={{ size: 'sm' }} />}
-          >
-            Back
-          </Button>
-        )}
-      </div>
-
-      <Button
-        variant={continueVariant}
-        onClick={handleContinue}
-        disabled={isSaving || continueDisabled}
-        loading={isSaving}
-        icon={<Icon name={Icons.CHEVRONRIGHT} styleProps={{ size: 'sm' }} />}
-        iconPosition="right"
+    <div className="space-y-4">
+      {hasSaveFailed && (
+        <StaticAlert
+          variant="error"
+          message="We couldn't save your answers just now. Please try again."
+        />
+      )}
+      <nav
+        className={`flex items-center justify-between ${className}`.trim()}
+        aria-label="Assessment navigation"
       >
-        {isSaving ? 'Saving...' : continueLabel}
-      </Button>
-    </nav>
+        <div>
+          {showBack && (
+            <Button
+              variant="secondary"
+              onClick={handleBack}
+              disabled={isSaving}
+              icon={<Icon name={Icons.CHEVRONLEFT} styleProps={{ size: 'sm' }} />}
+            >
+              Back
+            </Button>
+          )}
+        </div>
+
+        <Button
+          variant={continueVariant}
+          onClick={handleContinue}
+          disabled={isSaving || continueDisabled}
+          loading={isSaving}
+          icon={<Icon name={Icons.CHEVRONRIGHT} styleProps={{ size: 'sm' }} />}
+          iconPosition="right"
+        >
+          {isSaving ? 'Saving...' : continueLabel}
+        </Button>
+      </nav>
+    </div>
   );
 };
