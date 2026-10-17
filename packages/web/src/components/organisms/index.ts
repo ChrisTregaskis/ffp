@@ -11,6 +11,7 @@ export { ErrorFallback, type ErrorFallbackProps } from './ErrorFallback';
 export { KebabMenu, type KebabMenuProps } from './KebabMenu';
 export { MobileMenu, type MobileMenuProps, type MobileMenuNavItem } from './MobileMenu';
 export { Modal, type ModalProps, type ModalSize } from './Modal';
+export { SlideOver, type SlideOverProps } from './SlideOver';
 export {
   Table,
   TableControls,

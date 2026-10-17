@@ -15,7 +15,7 @@ interface UpdateTemplateResponse {
 }
 
 /**
- * Lambda handler for PUT /admin/assessment-templates/:id
+ * Lambda handler for PUT /admin/assessment-templates/:publicId
  *
  * Updates an existing assessment template.
  *
@@ -31,10 +31,10 @@ export const handler = withErrorHandling(
       throw new ForbiddenError('Only system administrators can manage templates');
     }
 
-    // Extract templateId from path parameters
-    const templateId = event.pathParameters?.id;
+    // Extract template publicId from path parameters
+    const templatePublicId = event.pathParameters?.publicId;
 
-    if (!templateId) {
+    if (!templatePublicId) {
       throw new ValidationError('Template ID is required in path');
     }
 
@@ -52,7 +52,7 @@ export const handler = withErrorHandling(
     }
 
     // Update template via service (handles Zod validation, version auto-increments)
-    const template = await templateService.updateTemplateService(context, templateId, input);
+    const template = await templateService.updateTemplateService(context, templatePublicId, input);
 
     return { template };
   }

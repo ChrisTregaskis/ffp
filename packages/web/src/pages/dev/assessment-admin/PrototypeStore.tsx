@@ -1,17 +1,11 @@
 /**
  * In-memory store + internal navigation for the assessment-admin prototype.
- * Throwaway: holds the whole mock catalogue in React state and exposes mutators.
+ * Throwaway: holds the mock member programmes in React state and exposes mutators.
  * No persistence, no network — refresh resets everything.
  */
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 
-import {
-  INITIAL_FLOWS,
-  INITIAL_QUESTIONS,
-  INITIAL_TEMPLATES,
-  PROGRAMME_TEMPLATE_OPTIONS,
-} from './prototype-data';
-import { PROTOTYPE_ENTRY_FLOW_ID } from './prototype-nav';
+import { PROTOTYPE_HOME_VIEW } from './prototype-nav';
 import {
   addExerciseToSession,
   buildProgrammeStructure,
@@ -24,47 +18,11 @@ import {
 } from './prototype-programme-structure';
 import { USERS } from './prototype-users';
 
-import type {
-  ProgrammeTemplateOption,
-  PrototypeFlow,
-  PrototypeQuestion,
-  PrototypeTemplate,
-  PrototypeView,
-  ScoringConfig,
-} from './prototype-types';
-
-let idCounter = 0;
-/** Local id generator — fine for a throwaway in-memory prototype. */
-const nextId = (prefix: string): string => {
-  idCounter += 1;
-
-  return `${prefix}-${Date.now().toString(36)}-${String(idCounter)}`;
-};
-
-const makePublicId = (): string =>
-  Math.random().toString(36).slice(2, 14).padEnd(12, '0').slice(0, 12);
+import type { PrototypeView } from './prototype-types';
 
 interface PrototypeStoreValue {
-  flows: PrototypeFlow[];
-  questions: PrototypeQuestion[];
-  templates: PrototypeTemplate[];
-  programmeTemplates: ProgrammeTemplateOption[];
-
   view: PrototypeView;
   navigate: (view: PrototypeView) => void;
-
-  // Templates
-  createTemplate: (name: string) => PrototypeTemplate;
-  renameTemplate: (templateId: string, name: string) => void;
-  deleteTemplate: (templateId: string) => void;
-
-  // Template-question assignment
-  assignQuestion: (templateId: string, questionId: string) => void;
-  unassignQuestion: (templateId: string, questionId: string) => void;
-  reorderTemplateQuestion: (templateId: string, fromIndex: number, toIndex: number) => void;
-
-  // Scoring
-  updateScoringConfig: (flowId: string, config: ScoringConfig) => void;
 
   // Member programme structures (phases → sessions → exercises)
   memberStructures: Record<string, ProgrammePhase[]>;
@@ -91,96 +49,14 @@ const seedMemberStructures = (): Record<string, ProgrammePhase[]> => {
 const PrototypeStoreContext = createContext<PrototypeStoreValue | null>(null);
 
 export const PrototypeStoreProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [flows, setFlows] = useState<PrototypeFlow[]>(INITIAL_FLOWS);
-  const [questions] = useState<PrototypeQuestion[]>(INITIAL_QUESTIONS);
-  const [templates, setTemplates] = useState<PrototypeTemplate[]>(INITIAL_TEMPLATES);
   const [memberStructures, setMemberStructures] =
     useState<Record<string, ProgrammePhase[]>>(seedMemberStructures);
-  const [view, setView] = useState<PrototypeView>({
-    name: 'scoring',
-    flowId: PROTOTYPE_ENTRY_FLOW_ID,
-  });
+  const [view, setView] = useState<PrototypeView>(PROTOTYPE_HOME_VIEW);
 
   const value = useMemo<PrototypeStoreValue>(() => {
-    const mutateFlow = (flowId: string, fn: (flow: PrototypeFlow) => PrototypeFlow): void => {
-      setFlows((prev) => prev.map((flow) => (flow.id === flowId ? fn(flow) : flow)));
-    };
-
-    const mutateTemplate = (
-      templateId: string,
-      fn: (template: PrototypeTemplate) => PrototypeTemplate
-    ): void => {
-      setTemplates((prev) =>
-        prev.map((template) => (template.id === templateId ? fn(template) : template))
-      );
-    };
-
     return {
-      flows,
-      questions,
-      templates,
-      programmeTemplates: PROGRAMME_TEMPLATE_OPTIONS,
       view,
       navigate: setView,
-
-      createTemplate: (name) => {
-        const template: PrototypeTemplate = {
-          id: nextId('template'),
-          publicId: makePublicId(),
-          name,
-          questionIds: [],
-        };
-        setTemplates((prev) => [...prev, template]);
-
-        return template;
-      },
-
-      renameTemplate: (templateId, name) => {
-        mutateTemplate(templateId, (template) => ({ ...template, name }));
-      },
-
-      deleteTemplate: (templateId) => {
-        setTemplates((prev) => prev.filter((template) => template.id !== templateId));
-      },
-
-      assignQuestion: (templateId, questionId) => {
-        mutateTemplate(templateId, (template) =>
-          template.questionIds.includes(questionId)
-            ? template
-            : { ...template, questionIds: [...template.questionIds, questionId] }
-        );
-      },
-
-      unassignQuestion: (templateId, questionId) => {
-        mutateTemplate(templateId, (template) => ({
-          ...template,
-          questionIds: template.questionIds.filter((id) => id !== questionId),
-        }));
-      },
-
-      reorderTemplateQuestion: (templateId, fromIndex, toIndex) => {
-        mutateTemplate(templateId, (template) => {
-          if (
-            fromIndex === toIndex ||
-            fromIndex < 0 ||
-            toIndex < 0 ||
-            fromIndex >= template.questionIds.length ||
-            toIndex >= template.questionIds.length
-          ) {
-            return template;
-          }
-
-          const next = [...template.questionIds];
-          const [moved] = next.splice(fromIndex, 1);
-          next.splice(toIndex, 0, moved);
-
-          return { ...template, questionIds: next };
-        });
-      },
-
-      updateScoringConfig: (flowId, config) => {
-        mutateFlow(flowId, (flow) => ({ ...flow, scoringConfig: config }));
-      },
 
       memberStructures,
 
@@ -226,7 +102,7 @@ export const PrototypeStoreProvider: React.FC<{ children: ReactNode }> = ({ chil
         }));
       },
     };
-  }, [flows, questions, templates, memberStructures, view]);
+  }, [memberStructures, view]);
 
   return <PrototypeStoreContext.Provider value={value}>{children}</PrototypeStoreContext.Provider>;
 };

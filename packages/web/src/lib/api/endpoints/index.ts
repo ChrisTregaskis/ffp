@@ -7,6 +7,13 @@ export type {
 } from './admin-assessment-flows';
 
 export { adminAssessmentTemplatesApi } from './admin-assessment-templates';
+export type {
+  AdminAssessmentTemplateDetail,
+  AdminAssessmentTemplateFilterInput,
+  PaginatedAssessmentTemplateList,
+} from './admin-assessment-templates';
+
+export { adminTemplateQuestionsApi } from './admin-template-questions';
 
 export { adminFlowStepsApi } from './admin-flow-steps';
 

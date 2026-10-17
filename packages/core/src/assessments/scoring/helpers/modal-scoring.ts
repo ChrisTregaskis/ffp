@@ -15,8 +15,8 @@ import type { QuestionWithConfig } from '@ffp/database';
  *   rounded, so an even-width scale (1-4) resolves to a fraction (2.5). Where
  *   the questions carry no option scores, the answered scores define the scale,
  *   not the questions' own range.
- * - **No answered questions** resolve to 0, matching what a summed dimension
- *   scores with nothing answered.
+ * - **No answered questions** resolve to 0 (a guard; the dimension scorer
+ *   marks such a dimension unassessed first).
  *
  * @param answeredScores - Per-question scores for the answered questions
  * @param questions - The dimension's questions, which define the scale

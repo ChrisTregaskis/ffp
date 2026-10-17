@@ -11,6 +11,7 @@ export * from './location.schema';
 export * from './assessment-question.schema';
 export * from './question-answer.schema';
 export * from './scoring-config.schema';
+export * from './scoring-dry-run.schema';
 export * from './assessment-template.schema';
 export * from './assessment-flow.schema';
 export * from './user-assessment/user-assessment.schema';

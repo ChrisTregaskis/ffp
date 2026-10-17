@@ -16,7 +16,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
-import { questions } from '@ffp/database/schema';
+import { assessmentFlows, flowSteps, questions } from '@ffp/database/schema';
 
 import * as templateRepository from '../../src/assessments/template.repository';
 
@@ -94,28 +94,76 @@ describe('Template Repository', () => {
     });
   });
 
-  describe('findAll', () => {
-    it('returns all templates', async () => {
-      await templateRepository.createTemplate(db, validCreateInput);
-      await templateRepository.createTemplate(db, { ...validCreateInput, name: 'Second Template' });
+  describe('findTemplatePage', () => {
+    const firstPage = { page: 1, pageSize: 10, sortDirection: 'asc' as const };
 
-      const result = await templateRepository.findAllTemplates(db);
-
-      expect(result).toHaveLength(2);
-    });
-
-    it('filters to active only when activeOnly is true', async () => {
-      const active = await templateRepository.createTemplate(db, validCreateInput);
+    it('sorts by name by default and filters on status', async () => {
+      await templateRepository.createTemplate(db, { ...validCreateInput, name: 'Beta' });
+      await templateRepository.createTemplate(db, { ...validCreateInput, name: 'Alpha' });
       await templateRepository.createTemplate(db, {
         ...validCreateInput,
-        name: 'Inactive',
+        name: 'Retired',
         isActive: false,
       });
 
-      const result = await templateRepository.findAllTemplates(db, { activeOnly: true });
+      const all = await templateRepository.findTemplatePage(db, firstPage, {});
+      const active = await templateRepository.findTemplatePage(db, firstPage, { isActive: true });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe(active.id);
+      expect(all.map((template) => template.name)).toEqual(['Alpha', 'Beta', 'Retired']);
+      expect(active.map((template) => template.name)).toEqual(['Alpha', 'Beta']);
+      expect(await templateRepository.countTemplates(db, { isActive: false })).toBe(1);
+    });
+
+    it('searches name and description, treating wildcards literally', async () => {
+      await templateRepository.createTemplate(db, { ...validCreateInput, name: '100% effort' });
+      await templateRepository.createTemplate(db, { ...validCreateInput, name: 'Other' });
+
+      const result = await templateRepository.findTemplatePage(db, firstPage, { search: '%' });
+
+      expect(result.map((template) => template.name)).toEqual(['100% effort']);
+    });
+
+    it('counts assigned questions and the flows linking the template without multiplying them', async () => {
+      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const [first, second] = await db
+        .insert(questions)
+        .values(
+          ['page-count-a', 'page-count-b'].map((slug) => ({
+            slug,
+            type: 'text' as const,
+            questionText: slug,
+          }))
+        )
+        .returning();
+
+      await templateRepository.assignQuestions(db, template.id, [first.id, second.id], 1);
+
+      const [flow] = await db
+        .insert(assessmentFlows)
+        .values({ name: 'Page count flow' })
+        .returning();
+
+      await db.insert(flowSteps).values(
+        [1, 2].map((order) => ({
+          flowId: flow.id,
+          order,
+          type: 'questions' as const,
+          templateId: template.id,
+          config: { title: `Step ${String(order)}` },
+        }))
+      );
+
+      try {
+        const [row] = await templateRepository.findTemplatePage(db, firstPage, {});
+
+        expect(row.questionCount).toBe(2);
+        expect(row.flowCount).toBe(1);
+      } finally {
+        await db.execute(sql`DELETE FROM flow_steps WHERE flow_id = ${flow.id}`);
+        await db.execute(sql`DELETE FROM assessment_flows WHERE id = ${flow.id}`);
+        await db.execute(sql`DELETE FROM template_questions WHERE template_id = ${template.id}`);
+        await db.execute(sql`DELETE FROM questions WHERE id IN (${first.id}, ${second.id})`);
+      }
     });
   });
 

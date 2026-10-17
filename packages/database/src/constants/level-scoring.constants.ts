@@ -17,6 +17,12 @@ export const LEVEL_PROGRAMME_SLUGS = {
 
 export type Level = keyof typeof LEVEL_PROGRAMME_SLUGS;
 
+export function levelForProgrammeSlug(slug: string): Level | null {
+  const entry = Object.entries(LEVEL_PROGRAMME_SLUGS).find(([, levelSlug]) => levelSlug === slug);
+
+  return entry ? (Number(entry[0]) as Level) : null;
+}
+
 const UNDER_FORTY = 1;
 const FORTY_AND_OVER = 0;
 

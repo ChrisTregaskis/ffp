@@ -10,6 +10,7 @@ const LEVELS = ['atoms', 'molecules', 'organisms', 'templates'];
 const DOMAIN_FOLDERS = [
   'assessment',
   'assessment-flows',
+  'assessment-templates',
   'auth',
   'locations',
   'organisations',

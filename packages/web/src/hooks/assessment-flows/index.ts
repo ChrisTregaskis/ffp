@@ -1,6 +1,11 @@
 export { useAdminAssessmentFlowsQuery } from './useAdminAssessmentFlowsQuery';
 export { useAssessmentFlowDetailQuery } from './useAssessmentFlowDetailQuery';
 export {
+  useFlowScoringDryRunQuery,
+  type FlowScoringDryRunQueryResult,
+  type ScoredDryRun,
+} from './useFlowScoringDryRunQuery';
+export {
   useCreateAssessmentFlowMutation,
   useDeactivateAssessmentFlowMutation,
   useUpdateAssessmentFlowMutation,

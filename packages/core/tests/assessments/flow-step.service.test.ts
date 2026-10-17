@@ -223,11 +223,13 @@ describe('flowStepService.createStepService', () => {
     const created = createStep(flow.id, { order: 4, type: 'questions' });
 
     mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
+    mockedTemplateRepo.findTemplateById.mockResolvedValue({ isActive: true } as never);
     mockedFlowStepRepo.findMaxOrderForFlow.mockResolvedValue(3);
     mockedFlowStepRepo.createStep.mockResolvedValue(created);
 
     const result = await flowStepService.createStepService(createContext(), FLOW_PUBLIC_ID, {
       type: 'questions',
+      templateId: randomUUID(),
       config: { title: 'Questions' },
     });
 
@@ -255,6 +257,39 @@ describe('flowStepService.createStepService', () => {
     ).rejects.toBeInstanceOf(ValidationError);
 
     expect(mockedFlowStepRepo.createStep).not.toHaveBeenCalled();
+  });
+
+  it('refuses a template-linked type created without a template', async () => {
+    // The flow resolves, so only the template check can stop the write
+    const flow = createFlow();
+
+    mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
+    mockedFlowStepRepo.findMaxOrderForFlow.mockResolvedValue(0);
+    mockedFlowStepRepo.createStep.mockResolvedValue(createStep(flow.id, { type: 'questions' }));
+
+    await expect(
+      flowStepService.createStepService(createContext(), FLOW_PUBLIC_ID, {
+        type: 'questions',
+        config: { title: 'Questions' },
+      })
+    ).rejects.toBeInstanceOf(ValidationError);
+
+    expect(mockedFlowStepRepo.createStep).not.toHaveBeenCalled();
+  });
+
+  it('creates a step that takes no template without one', async () => {
+    const flow = createFlow();
+
+    mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
+    mockedFlowStepRepo.findMaxOrderForFlow.mockResolvedValue(0);
+    mockedFlowStepRepo.createStep.mockResolvedValue(createStep(flow.id, { type: 'intro' }));
+
+    await flowStepService.createStepService(createContext(), FLOW_PUBLIC_ID, {
+      type: 'intro',
+      config: { title: 'Welcome' },
+    });
+
+    expect(mockedFlowStepRepo.createStep).toHaveBeenCalledOnce();
   });
 
   it('rejects invalid input (missing config title)', async () => {

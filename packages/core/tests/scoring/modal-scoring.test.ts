@@ -127,8 +127,15 @@ describe('Modal scoring', () => {
       expect(scorePattern('C,,').rawScore).toBe(3);
     });
 
-    it('score 0 when none is answered, as a summed dimension does', () => {
-      expect(scorePattern('').rawScore).toBe(0);
+    it('are counted, so a partly answered dimension says how much it rests on', () => {
+      expect(scorePattern('A,A,').answeredCount).toBe(2);
+    });
+
+    it('mark the dimension unassessed when none is answered, with no category', () => {
+      const score = scorePattern('');
+
+      expect(score.answeredCount).toBe(0);
+      expect(score.category).toBeUndefined();
     });
   });
 
@@ -141,6 +148,7 @@ describe('Modal scoring', () => {
       rawScore: 2,
       normalisedScore: 67,
       category: 'moderate',
+      answeredCount: 3,
     });
   });
 });

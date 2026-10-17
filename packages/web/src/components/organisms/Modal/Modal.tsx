@@ -1,9 +1,10 @@
 import { AnimatePresence } from 'motion/react';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 
 import { IconButton, Icons, Text, Title } from '@web/components/atoms';
 import { Backdrop } from '@web/components/motion/Backdrop';
 import { ScaleFade } from '@web/components/motion/ScaleFade';
+import { useBodyScrollLock } from '@web/hooks/useBodyScrollLock';
 import { useFocusTrap } from '@web/hooks/useFocusTrap';
 import { useKeyDown } from '@web/hooks/useKeyDown';
 
@@ -66,21 +67,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   useKeyDown('Escape', onClose, isOpen && closeOnEscape);
   useFocusTrap(modalRef, isOpen);
-
-  // Restores the value it replaced rather than clearing it, so a closed modal leaves another
-  // modal's lock alone and stacked modals unlock in the order they close
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [isOpen]);
+  useBodyScrollLock(isOpen);
 
   const handleBackdropClick = useCallback(() => {
     if (closeOnBackdropClick) {

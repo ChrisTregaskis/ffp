@@ -157,6 +157,14 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
       section: 'main',
     },
     {
+      key: RouteKey.ADMIN_ASSESSMENT_TEMPLATES,
+      label: 'Assessment Templates',
+      icon: 'CheckCircle',
+      path: routes[RouteKey.ADMIN_ASSESSMENT_TEMPLATES].path,
+      roles: [SYSTEM_ADMIN],
+      section: 'main',
+    },
+    {
       key: RouteKey.ADMIN_QUESTIONS,
       label: 'Question Bank',
       icon: 'HelpCircle',

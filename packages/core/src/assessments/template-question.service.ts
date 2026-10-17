@@ -6,31 +6,13 @@ import * as questionRepository from '../questions/question.repository';
 import {
   assignQuestionsSchema,
   reorderTemplateQuestionsSchema,
-  type AssessmentTemplate,
 } from '../schemas/assessment-template.schema';
 
 import { assertDistinctPublicIds, resolveOrderedChildIds } from './child-payload';
 import * as templateRepository from './template.repository';
+import { resolveTemplate } from './template.service';
 
 import type { Question, QuestionWithConfig } from '../questions/question.repository';
-
-/**
- * Resolve a template by public identifier or throw 404. Not filtered on
- * `isActive`: composing questions on a deactivated template is allowed, so it
- * can be fixed up before being reactivated.
- */
-async function resolveTemplate(
-  db: DbClient,
-  templatePublicId: string
-): Promise<AssessmentTemplate> {
-  const template = await templateRepository.findTemplateByPublicId(db, templatePublicId);
-
-  if (!template) {
-    throw new NotFoundError('Assessment template', templatePublicId);
-  }
-
-  return template;
-}
 
 /**
  * Resolve the supplied public identifiers to active questions, preserving the

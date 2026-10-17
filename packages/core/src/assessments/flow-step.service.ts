@@ -64,6 +64,9 @@ export async function createStepService(
     throw new ValidationError('Invalid flow step input', { errors: parseResult.error.issues });
   }
 
+  // A new step has no stored row, so the payload is the whole merged shape
+  assertMergedTemplateLink({ type: parseResult.data.type, templateId: null }, parseResult.data);
+
   const db = getDb();
   const flow = await resolveFlow(db, flowPublicId);
 

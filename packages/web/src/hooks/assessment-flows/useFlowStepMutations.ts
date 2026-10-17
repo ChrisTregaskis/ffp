@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AdminFlowStepView, CreateFlowStepInput, UpdateFlowStepInput } from '@ffp/core';
 
 import { adminFlowStepsApi } from '@web/lib/api/endpoints';
+import { invalidateTemplateUsage } from '@web/lib/query';
 import { assessmentFlowKeys } from '@web/lib/query/keys';
 
 import type { UseMutationResult } from '@tanstack/react-query';
@@ -20,13 +21,17 @@ export interface ReorderFlowStepsVariables {
   orderedStepPublicIds: string[];
 }
 
-/** Detail serves both the metadata form and the step list; a list row carries a step count. */
+/**
+ * Detail serves both the metadata form and the step list; a list row carries a
+ * step count; and a step's template link is where that template is used.
+ */
 const useStepCacheInvalidation = (flowPublicId: string): (() => void) => {
   const queryClient = useQueryClient();
 
   return () => {
     void queryClient.invalidateQueries({ queryKey: assessmentFlowKeys.detail(flowPublicId) });
     void queryClient.invalidateQueries({ queryKey: assessmentFlowKeys.lists() });
+    invalidateTemplateUsage(queryClient);
   };
 };
 

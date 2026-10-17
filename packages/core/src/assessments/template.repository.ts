@@ -1,8 +1,24 @@
-import { and, asc, eq, inArray, max, notInArray } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  count,
+  countDistinct,
+  eq,
+  ilike,
+  inArray,
+  max,
+  notInArray,
+  or,
+  sql,
+  type Column,
+  type SQL,
+} from 'drizzle-orm';
 
 import type { DbClient, DbQueryClient } from '@ffp/database';
 import {
+  assessmentFlows,
   assessmentTemplates,
+  flowSteps,
   questions,
   templateQuestions,
   type AssessmentTemplateRecord,
@@ -10,13 +26,18 @@ import {
 } from '@ffp/database/schema';
 
 import { NotFoundError } from '../lib/errors';
+import { applyPagination, escapeLikePattern } from '../lib/pagination';
 import { findByTemplateId as findQuestionsByTemplateId } from '../questions/question.repository';
 
 import type { Question, QuestionWithConfig } from '../questions/question.repository';
 import type {
+  AssessmentTemplateListFilters,
+  AssessmentTemplateListItem,
   CreateAssessmentTemplateInput,
+  TemplateFlowUsage,
   UpdateAssessmentTemplateInput,
 } from '../schemas/assessment-template.schema';
+import type { PaginationInput } from '../schemas/pagination.schema';
 
 export type AssessmentTemplate = AssessmentTemplateRecord;
 
@@ -68,17 +89,131 @@ export async function findTemplatesByIds(
   return records;
 }
 
-export async function findAllTemplates(
+const TEMPLATE_SORTABLE_COLUMNS: Partial<Record<string, Column>> = {
+  name: assessmentTemplates.name,
+  isActive: assessmentTemplates.isActive,
+  createdAt: assessmentTemplates.createdAt,
+  updatedAt: assessmentTemplates.updatedAt,
+};
+
+/** Build WHERE conditions from the admin template list filters. */
+const buildTemplateFilterConditions = (filters: AssessmentTemplateListFilters): SQL[] => {
+  const conditions: SQL[] = [];
+
+  if (filters.search) {
+    const pattern = `%${escapeLikePattern(filters.search)}%`;
+    const searchCondition = or(
+      ilike(assessmentTemplates.name, pattern),
+      ilike(assessmentTemplates.description, pattern)
+    );
+
+    if (searchCondition) {
+      conditions.push(searchCondition);
+    }
+  }
+
+  if (filters.isActive !== undefined) {
+    conditions.push(eq(assessmentTemplates.isActive, filters.isActive));
+  }
+
+  return conditions;
+};
+
+/**
+ * One page of the admin template list, each row carrying its question count and
+ * the number of flows with an active step linking it. The counts are grouped in
+ * subqueries so the two joins cannot multiply each other. Sorts by name when the
+ * caller names no sort, because the shared helper applies no ordering without one.
+ */
+export async function findTemplatePage(
   db: DbClient,
-  options?: { activeOnly?: boolean }
-): Promise<AssessmentTemplate[]> {
-  const query = db.select().from(assessmentTemplates);
+  paginationInput: PaginationInput,
+  filters: AssessmentTemplateListFilters
+): Promise<AssessmentTemplateListItem[]> {
+  const conditions = buildTemplateFilterConditions(filters);
 
-  const records = options?.activeOnly
-    ? await query.where(eq(assessmentTemplates.isActive, true))
-    : await query;
+  const questionCounts = db
+    .select({
+      templateId: templateQuestions.templateId,
+      questionCount: count().as('question_count'),
+    })
+    .from(templateQuestions)
+    .groupBy(templateQuestions.templateId)
+    .as('question_counts');
 
-  return records;
+  const flowCounts = db
+    .select({
+      templateId: flowSteps.templateId,
+      flowCount: countDistinct(flowSteps.flowId).as('flow_count'),
+    })
+    .from(flowSteps)
+    .where(eq(flowSteps.isActive, true))
+    .groupBy(flowSteps.templateId)
+    .as('flow_counts');
+
+  const query = db
+    .select({
+      id: assessmentTemplates.id,
+      publicId: assessmentTemplates.publicId,
+      name: assessmentTemplates.name,
+      description: assessmentTemplates.description,
+      version: assessmentTemplates.version,
+      isActive: assessmentTemplates.isActive,
+      createdBy: assessmentTemplates.createdBy,
+      createdAt: assessmentTemplates.createdAt,
+      updatedAt: assessmentTemplates.updatedAt,
+      questionCount: sql<number>`coalesce(${questionCounts.questionCount}, 0)`.mapWith(Number),
+      flowCount: sql<number>`coalesce(${flowCounts.flowCount}, 0)`.mapWith(Number),
+    })
+    .from(assessmentTemplates)
+    .leftJoin(questionCounts, eq(questionCounts.templateId, assessmentTemplates.id))
+    .leftJoin(flowCounts, eq(flowCounts.templateId, assessmentTemplates.id))
+    .where(and(...conditions))
+    .$dynamic();
+
+  const sortBy =
+    paginationInput.sortBy && TEMPLATE_SORTABLE_COLUMNS[paginationInput.sortBy]
+      ? paginationInput.sortBy
+      : 'name';
+
+  return await applyPagination(
+    query,
+    { ...paginationInput, sortBy },
+    TEMPLATE_SORTABLE_COLUMNS,
+    assessmentTemplates.id
+  );
+}
+
+/** Count templates matching the given filters (for pagination metadata). */
+export async function countTemplates(
+  db: DbClient,
+  filters: AssessmentTemplateListFilters
+): Promise<number> {
+  const conditions = buildTemplateFilterConditions(filters);
+
+  const result = await db
+    .select({ count: count() })
+    .from(assessmentTemplates)
+    .where(and(...conditions));
+
+  return result[0].count;
+}
+
+/** The flows with an active step linking the template, by name. */
+export async function findTemplateFlowUsage(
+  db: DbClient,
+  templateId: string
+): Promise<TemplateFlowUsage[]> {
+  return await db
+    .selectDistinct({
+      publicId: assessmentFlows.publicId,
+      name: assessmentFlows.name,
+      isActive: assessmentFlows.isActive,
+    })
+    .from(flowSteps)
+    .innerJoin(assessmentFlows, eq(assessmentFlows.id, flowSteps.flowId))
+    .where(and(eq(flowSteps.templateId, templateId), eq(flowSteps.isActive, true)))
+    .orderBy(asc(assessmentFlows.name));
 }
 
 export async function createTemplate(
