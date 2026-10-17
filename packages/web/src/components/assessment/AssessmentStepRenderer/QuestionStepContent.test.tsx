@@ -1,5 +1,5 @@
-import { render, screen, type RenderResult } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, type RenderResult } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AnswerValue, AssessmentQuestion } from '@ffp/core';
 
@@ -11,9 +11,20 @@ import { QuestionStepContent } from './QuestionStepContent';
 
 import type { ReactElement } from 'react';
 
+const navigation = vi.hoisted(() => ({
+  assessmentId: null as string | null,
+  isDirty: false,
+  mutateAsync: vi.fn(),
+}));
+
 vi.mock('@web/contexts/assessments/useAssessment', () => ({
   useAssessment: () => ({
-    assessmentState: createInitialState('flow-1'),
+    assessmentState: {
+      ...createInitialState('flow-1'),
+      assessmentId: navigation.assessmentId,
+      isDirty: navigation.isDirty,
+      currentStep: 2,
+    },
     assessmentDispatch: vi.fn(),
   }),
 }));
@@ -21,7 +32,7 @@ vi.mock('@web/hooks/assessments/useShowRefusedAnswers', () => ({
   useShowRefusedAnswers: () => vi.fn(),
 }));
 vi.mock('@web/hooks/assessments/useSaveProgress', () => ({
-  useSaveProgress: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useSaveProgress: () => ({ mutateAsync: navigation.mutateAsync, isPending: false }),
 }));
 
 const focus: AssessmentQuestion = {
@@ -54,6 +65,8 @@ interface StepOptions {
   refusalCount?: number;
   questionIndex?: number;
   onQuestionIndexChange?: (index: number | ((prev: number) => number)) => void;
+  isLastSubmittableStep?: boolean;
+  onSubmitAssessment?: () => void;
 }
 
 const questions = [focus, goal];
@@ -64,6 +77,8 @@ const step = ({
   refusalCount = 0,
   questionIndex = 0,
   onQuestionIndexChange = vi.fn(),
+  isLastSubmittableStep = false,
+  onSubmitAssessment,
 }: StepOptions): ReactElement => (
   <QuestionStepContent
     card={QuestionCard}
@@ -81,6 +96,8 @@ const step = ({
     refusalCount={refusalCount}
     currentStep={2}
     onAnswer={vi.fn()}
+    isLastSubmittableStep={isLastSubmittableStep}
+    onSubmitAssessment={onSubmitAssessment}
   />
 );
 
@@ -157,5 +174,57 @@ describe('QuestionStepContent', () => {
     );
 
     expect(onQuestionIndexChange).not.toHaveBeenCalled();
+  });
+
+  describe('saving the position', () => {
+    const answered = { [focus.id]: ['neck'], [goal.id]: 'move' };
+    const savedPayloads = (): unknown[] =>
+      navigation.mutateAsync.mock.calls.map(([input]) => (input as { payload: unknown }).payload);
+
+    beforeEach(() => {
+      navigation.assessmentId = 'assessment-1';
+      navigation.isDirty = true;
+      navigation.mutateAsync.mockReset().mockResolvedValue({ nextStepId: null });
+    });
+
+    it('keeps the position on the step for a move between its questions', () => {
+      renderStep({ answers: answered, questionIndex: 0 });
+
+      fireEvent.click(continueButton());
+
+      expect(savedPayloads()).toEqual([expect.not.objectContaining({ advance: true })]);
+    });
+
+    it('advances the position when Continue leaves the step', () => {
+      renderStep({ answers: answered, questionIndex: 1 });
+
+      fireEvent.click(continueButton());
+
+      expect(savedPayloads()).toEqual([expect.objectContaining({ advance: true })]);
+    });
+
+    it('does not advance the position when Back leaves the step', () => {
+      renderStep({ answers: answered, questionIndex: 0 });
+
+      fireEvent.click(screen.getByRole('button', { name: /Back/ }));
+
+      expect(savedPayloads()).toEqual([expect.objectContaining({ advance: false })]);
+    });
+
+    it('submits without a save racing it', () => {
+      const onSubmitAssessment = vi.fn();
+
+      renderStep({
+        answers: answered,
+        questionIndex: 1,
+        isLastSubmittableStep: true,
+        onSubmitAssessment,
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /Complete Assessment/ }));
+
+      expect(onSubmitAssessment).toHaveBeenCalledTimes(1);
+      expect(navigation.mutateAsync).not.toHaveBeenCalled();
+    });
   });
 });

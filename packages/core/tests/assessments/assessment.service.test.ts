@@ -1363,4 +1363,140 @@ describe('Assessment Service', () => {
       });
     });
   });
+
+  describe('resume position', () => {
+    // intro → three question steps → results; the first question step branches past the second
+    const createPositionFlow = (flowId: string): FlowStepWithConfig[] => {
+      const step = (
+        order: number,
+        type: FlowStepWithConfig['type'],
+        templateId: string | null
+      ): FlowStepWithConfig => ({
+        id: randomUUID(),
+        publicId: `flowstep000${String(order)}`,
+        flowId,
+        templateId,
+        order,
+        type,
+        config: { title: `Step ${String(order)}` },
+        nextStepRules: null,
+        defaultNextStepId: null,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      const templateId = randomUUID();
+      const steps = [
+        step(1, 'intro', null),
+        step(2, 'questions', templateId),
+        step(3, 'questions', templateId),
+        step(4, 'questions', templateId),
+        step(5, 'results', null),
+      ];
+
+      steps[1].defaultNextStepId = steps[3].id;
+
+      return steps;
+    };
+
+    const setUp = (): { context: OrganisationContext; assessmentId: string } => {
+      const context = createUserContext();
+      const userId = randomUUID();
+      const flowId = randomUUID();
+      const assessment = createMockAssessment({
+        organisationId: context.organisationId,
+        userId,
+        flowId,
+      });
+
+      mockedContextModule.getUserIdFromContext.mockResolvedValue(userId);
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
+      mockedUserAssessmentRepo.updateAssessmentProgress.mockResolvedValue(assessment);
+      mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createPositionFlow(flowId));
+      mockedAnswerRepo.findByAssessmentId.mockResolvedValue([]);
+      mockedDatabaseModule.withRLS.mockImplementation(async (_org, _user, callback) => {
+        return await callback({} as Parameters<typeof callback>[0]);
+      });
+
+      return { context, assessmentId: assessment.id };
+    };
+
+    const storedSteps = (): unknown[] =>
+      mockedUserAssessmentRepo.updateAssessmentProgress.mock.calls.map(
+        ([, , progress]) => progress.currentStep
+      );
+
+    describe('saveProgress', () => {
+      it('keeps the position on the step for a save made between its questions', async () => {
+        const { context, assessmentId } = setUp();
+
+        await assessmentService.saveProgress(
+          assessmentId,
+          { answers: {}, currentStep: 3 },
+          context
+        );
+
+        expect(storedSteps()).toEqual([3]);
+      });
+
+      it('moves the position on for a step-level advance', async () => {
+        const { context, assessmentId } = setUp();
+
+        await assessmentService.saveProgress(
+          assessmentId,
+          { answers: {}, currentStep: 1, advance: true },
+          context
+        );
+
+        expect(storedSteps().at(-1)).toBe(2);
+      });
+
+      it('stores the step branching picks on an advance', async () => {
+        const { context, assessmentId } = setUp();
+
+        const response = await assessmentService.saveProgress(
+          assessmentId,
+          { answers: {}, currentStep: 2, advance: true },
+          context
+        );
+
+        expect(storedSteps().at(-1)).toBe(4);
+        expect(response.nextStepId).not.toBeNull();
+      });
+
+      it('never stores a step past the last question step', async () => {
+        const { context, assessmentId } = setUp();
+
+        await assessmentService.saveProgress(
+          assessmentId,
+          { answers: {}, currentStep: 4, advance: true },
+          context
+        );
+
+        expect(storedSteps()).toEqual([4, 4]);
+      });
+    });
+
+    describe('startAssessment', () => {
+      it.each([
+        ['on the step it was saved at', 3, 3],
+        ['on the last question step, not results, after a save on that step', 5, 4],
+      ])('resumes %s', async (_case, stored, expected) => {
+        const context = createUserContext();
+        const flowId = randomUUID();
+
+        mockedContextModule.getUserIdFromContext.mockResolvedValue(randomUUID());
+        mockedFlowRepo.findActiveById.mockResolvedValue(createMockFlow(flowId));
+        mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createPositionFlow(flowId));
+        mockedUserAssessmentRepo.findResumableAssessment.mockResolvedValue(
+          createMockAssessment({ flowId, currentStep: stored })
+        );
+        mockedAnswerRepo.findByAssessmentId.mockResolvedValue([]);
+
+        const result = await assessmentService.startAssessment(flowId, context);
+
+        expect(result.currentStep).toBe(expected);
+      });
+    });
+  });
 });

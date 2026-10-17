@@ -1,4 +1,4 @@
-import type { UserAssessmentScores } from '@ffp/core';
+import type { MemberAssessmentScores } from '@ffp/core';
 
 import { Icons, Surface, Text } from '@web/components/atoms';
 import { SectionHeader } from '@web/components/molecules';
@@ -6,7 +6,7 @@ import { SectionHeader } from '@web/components/molecules';
 import { visibleScoreDimensions } from './visible-score-dimensions';
 
 export interface AssessmentScoresPanelProps {
-  scores: UserAssessmentScores;
+  scores: MemberAssessmentScores;
 }
 
 export const AssessmentScoresPanel: React.FC<AssessmentScoresPanelProps> = ({ scores }) => {

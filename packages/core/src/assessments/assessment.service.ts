@@ -19,6 +19,7 @@ import {
 import * as answerRepository from './answer.repository';
 import { evaluateNextStep, createEvaluationContext, type BranchingAnswers } from './branching';
 import * as flowRepository from './flow.repository';
+import { toResumableStep } from './resume-step';
 import { findSafetyTrigger, toSafetyGate } from './safety-gate';
 import * as safetyTriggerRepository from './safety-trigger.repository';
 import * as userAssessmentRepository from './user-assessment.repository';
@@ -314,7 +315,7 @@ export async function startAssessment(
       // Return existing assessment with isResumed=true
       return {
         assessmentId: existingAssessment.id,
-        currentStep: existingAssessment.currentStep,
+        currentStep: toResumableStep(existingAssessment.currentStep, flowSteps),
         status: existingAssessment.status,
         answers,
         flowId: existingAssessment.flowId,
@@ -380,7 +381,8 @@ export async function startAssessment(
 /**
  * Save assessment progress
  *
- * Persists user's answers and current step when navigating (Continue/Back).
+ * Persists user's answers and current step when navigating (Continue/Back). The stored step
+ * moves on to the next one only when `advance` is set, on a step-level Continue.
  * Handles status transition from 'not_started' to 'in_progress' on first save.
  * Evaluates branching rules to determine the next step and any warnings.
  *
@@ -393,7 +395,8 @@ export async function startAssessment(
  * ```typescript
  * const response = await saveProgress(assessmentId, {
  *   answers: { 'q1-uuid': { questionId: 'q1-uuid', answerValue: 5 } },
- *   currentStep: 2
+ *   currentStep: 2,
+ *   advance: true,
  * }, context);
  * // response.nextStepId - UUID of next step (from branching evaluation)
  * // response.warnings - Any warnings triggered by branching rules
@@ -518,17 +521,17 @@ export async function saveProgress(
       );
     }
 
-    // Persist the next step position so resume returns to the correct step.
-    // The client sends the *current* step, but after branching we know where
-    // the user is heading — store that so a future resume lands there.
-    if (branchResult.nextStepId) {
+    // On a step-level advance, store the step branching picks so a resume lands there. Saves
+    // made between questions inside a step keep the position on that step, or a resume would
+    // skip the questions still to come.
+    if (data.advance && branchResult.nextStepId) {
       const nextStepRecord = flowSteps.find((s) => s.id === branchResult.nextStepId);
 
       if (nextStepRecord) {
         await userAssessmentRepository.updateAssessmentProgress(
           organisationId,
           assessmentId,
-          { currentStep: nextStepRecord.order },
+          { currentStep: toResumableStep(nextStepRecord.order, flowSteps) },
           { tx }
         );
       }

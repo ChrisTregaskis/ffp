@@ -76,6 +76,7 @@ export const QuestionStepContent: React.FC<QuestionStepContentProps> = ({
     continueDisabled,
     continueHandler,
     backHandler,
+    isFinalSubmit,
   } = useQuestionStepNavigation({
     questionIndex,
     totalQuestions: questions.length,
@@ -109,6 +110,7 @@ export const QuestionStepContent: React.FC<QuestionStepContentProps> = ({
               continueVariant={continueVariant}
               continueDisabled={continueDisabled}
               onContinue={continueHandler}
+              isSubmit={isFinalSubmit}
               onBack={backHandler}
             />
           }

@@ -46,6 +46,8 @@ Several conventions are in use. Read the service before wiring a call:
 
 - **Guard UUID-keyed path parameters at the API client** with `assertUuidPathParam` (`packages/web/src/lib/api/client/`). Postgres only rejects the wrong shape when the value reaches the comparison, which surfaces as an opaque 500 (`22P02`, shown as "Database driver error") with nothing naming the caller.
 
+- **Member handlers guard their UUID path parameters on the server too**, with `assertUuidOrNotFound` (`packages/core/src/lib/path-params.ts`): a malformed id answers 404 like any missing record. The member assessment routes (template, flow, results, save, submit, safety acknowledgement) use it; the session and exercise routes parse their parameters with `z.guid()` schemas instead (a 400). Admin routes are not guarded, and `22P02` is deliberately left unmapped in `translateDatabaseError`, so an internal identifier mix-up still surfaces as a 500 rather than passing for a caller's mistake.
+
 - **The guard covers path parameters only — body fields have the same failure mode and are on you.** `videoId` on `POST /admin/sessions/{sessionId}/exercises` and `PUT /admin/exercises/{exerciseId}` resolves by UUID (`findVideoById`), so a publicId sent in the body produces the identical opaque 500 with nothing guarding it. Check a body identifier by hand against the column the service compares it to.
 
 - **Never guard an endpoint keyed on `publicId`, or one that accepts either form.** The assertion would be a false constraint, and the permissive video lookup exists on purpose.
