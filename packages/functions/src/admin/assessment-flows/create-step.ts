@@ -1,11 +1,9 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
+  withSystemAdmin,
   flowStepService,
   ValidationError,
-  ForbiddenError,
-  isUserActor,
   type AdminFlowStep,
 } from '@ffp/core/server';
 
@@ -23,22 +21,19 @@ interface CreateStepResponse {
  * not authored here.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<CreateStepResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can manage flow steps',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<CreateStepResponse> => {
+      const flowPublicId = event.pathParameters?.flowPublicId;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can manage flow steps');
+      if (!flowPublicId) {
+        throw new ValidationError('Flow ID is required in path');
+      }
+
+      const body = parseJsonBody(event.body);
+      const step = await flowStepService.createStepService(context, flowPublicId, body);
+
+      return { step };
     }
-
-    const flowPublicId = event.pathParameters?.flowPublicId;
-
-    if (!flowPublicId) {
-      throw new ValidationError('Flow ID is required in path');
-    }
-
-    const body = parseJsonBody(event.body);
-    const step = await flowStepService.createStepService(context, flowPublicId, body);
-
-    return { step };
-  }
+  )
 );

@@ -6,11 +6,9 @@ import {
 } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
+  withSystemAdmin,
   templateService,
-  ForbiddenError,
-  isUserActor,
 } from '@ffp/core/server';
 
 interface ListTemplatesResponse {
@@ -27,19 +25,16 @@ interface ListTemplatesResponse {
  * this resource.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<ListTemplatesResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can list assessment templates',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<ListTemplatesResponse> => {
+      const params = event.queryStringParameters ?? {};
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can list assessment templates');
+      const paginationInput = paginationInputSchema.parse(params);
+
+      const filters = assessmentTemplateListFiltersSchema.parse(params);
+
+      return await templateService.listTemplatesService(context, paginationInput, filters);
     }
-
-    const params = event.queryStringParameters ?? {};
-
-    const paginationInput = paginationInputSchema.parse(params);
-
-    const filters = assessmentTemplateListFiltersSchema.parse(params);
-
-    return await templateService.listTemplatesService(context, paginationInput, filters);
-  }
+  )
 );

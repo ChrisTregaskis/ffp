@@ -1,11 +1,9 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
+  withSystemAdmin,
   templateQuestionService,
   ValidationError,
-  ForbiddenError,
-  isUserActor,
   type Question,
 } from '@ffp/core/server';
 
@@ -21,27 +19,27 @@ interface ListAssignableQuestionsResponse {
  * assignment UI adds from. Requires the system_admin role.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<ListAssignableQuestionsResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can list assignable questions',
+    async (
+      event: APIGatewayProxyEventV2WithJWT,
+      context
+    ): Promise<ListAssignableQuestionsResponse> => {
+      const templatePublicId = event.pathParameters?.templatePublicId;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can list assignable questions');
+      if (!templatePublicId) {
+        throw new ValidationError('Template ID is required in path');
+      }
+
+      const questions = await templateQuestionService.listAssignableQuestionsService(
+        context,
+        templatePublicId
+      );
+
+      return {
+        questions,
+        count: questions.length,
+      };
     }
-
-    const templatePublicId = event.pathParameters?.templatePublicId;
-
-    if (!templatePublicId) {
-      throw new ValidationError('Template ID is required in path');
-    }
-
-    const questions = await templateQuestionService.listAssignableQuestionsService(
-      context,
-      templatePublicId
-    );
-
-    return {
-      questions,
-      count: questions.length,
-    };
-  }
+  )
 );

@@ -1,10 +1,8 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
+  withSystemAdmin,
   ValidationError,
-  isUserActor,
   sessionExerciseService,
 } from '@ffp/core/server';
 
@@ -15,21 +13,18 @@ import {
  * to maintain a contiguous 0-based orderIndex sequence.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<null> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can delete session exercises',
+    async (event: APIGatewayProxyEventV2WithJWT): Promise<null> => {
+      const exerciseId = event.pathParameters?.id;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can delete session exercises');
+      if (!exerciseId) {
+        throw new ValidationError('Exercise ID is required');
+      }
+
+      await sessionExerciseService.deleteExercise(exerciseId);
+
+      return null;
     }
-
-    const exerciseId = event.pathParameters?.id;
-
-    if (!exerciseId) {
-      throw new ValidationError('Exercise ID is required');
-    }
-
-    await sessionExerciseService.deleteExercise(exerciseId);
-
-    return null;
-  }
+  )
 );

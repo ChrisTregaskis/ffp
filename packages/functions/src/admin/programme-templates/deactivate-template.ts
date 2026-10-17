@@ -1,11 +1,9 @@
 import type { TemplateDetailResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
+  withSystemAdmin,
   ValidationError,
-  isUserActor,
   programmeTemplateService,
 } from '@ffp/core/server';
 
@@ -20,21 +18,18 @@ interface DeactivateTemplateResponse {
  * Admin role required.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<DeactivateTemplateResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can deactivate programme templates',
+    async (event: APIGatewayProxyEventV2WithJWT): Promise<DeactivateTemplateResponse> => {
+      const templateId = event.pathParameters?.id;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can deactivate programme templates');
+      if (!templateId) {
+        throw new ValidationError('Template ID is required');
+      }
+
+      const template = await programmeTemplateService.deactivateTemplate(templateId);
+
+      return { template };
     }
-
-    const templateId = event.pathParameters?.id;
-
-    if (!templateId) {
-      throw new ValidationError('Template ID is required');
-    }
-
-    const template = await programmeTemplateService.deactivateTemplate(templateId);
-
-    return { template };
-  }
+  )
 );

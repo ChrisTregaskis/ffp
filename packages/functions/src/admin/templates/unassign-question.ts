@@ -1,11 +1,9 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
+  withSystemAdmin,
   templateQuestionService,
   ValidationError,
-  ForbiddenError,
-  isUserActor,
 } from '@ffp/core/server';
 
 interface UnassignQuestionResponse {
@@ -21,30 +19,27 @@ interface UnassignQuestionResponse {
  * the remaining display orders.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<UnassignQuestionResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can manage template questions',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<UnassignQuestionResponse> => {
+      const templatePublicId = event.pathParameters?.templatePublicId;
+      const questionPublicId = event.pathParameters?.questionPublicId;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can manage template questions');
+      if (!templatePublicId) {
+        throw new ValidationError('Template ID is required in path');
+      }
+
+      if (!questionPublicId) {
+        throw new ValidationError('Question ID is required in path');
+      }
+
+      await templateQuestionService.unassignQuestionService(
+        context,
+        templatePublicId,
+        questionPublicId
+      );
+
+      return { success: true };
     }
-
-    const templatePublicId = event.pathParameters?.templatePublicId;
-    const questionPublicId = event.pathParameters?.questionPublicId;
-
-    if (!templatePublicId) {
-      throw new ValidationError('Template ID is required in path');
-    }
-
-    if (!questionPublicId) {
-      throw new ValidationError('Question ID is required in path');
-    }
-
-    await templateQuestionService.unassignQuestionService(
-      context,
-      templatePublicId,
-      questionPublicId
-    );
-
-    return { success: true };
-  }
+  )
 );

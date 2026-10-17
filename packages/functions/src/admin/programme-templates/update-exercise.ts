@@ -1,11 +1,9 @@
 import type { ExerciseResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
+  withSystemAdmin,
   ValidationError,
-  isUserActor,
   sessionExerciseService,
 } from '@ffp/core/server';
 
@@ -21,22 +19,19 @@ interface UpdateExerciseResponse {
  * Updates a session exercise. Supports partial updates
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<UpdateExerciseResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can update session exercises',
+    async (event: APIGatewayProxyEventV2WithJWT): Promise<UpdateExerciseResponse> => {
+      const exerciseId = event.pathParameters?.id;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can update session exercises');
+      if (!exerciseId) {
+        throw new ValidationError('Exercise ID is required');
+      }
+
+      const body = parseJsonBody(event.body);
+      const exercise = await sessionExerciseService.updateExercise(exerciseId, body);
+
+      return { exercise };
     }
-
-    const exerciseId = event.pathParameters?.id;
-
-    if (!exerciseId) {
-      throw new ValidationError('Exercise ID is required');
-    }
-
-    const body = parseJsonBody(event.body);
-    const exercise = await sessionExerciseService.updateExercise(exerciseId, body);
-
-    return { exercise };
-  }
+  )
 );

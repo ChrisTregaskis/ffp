@@ -22,8 +22,9 @@ pnpm-lock.yaml
 package-lock.json
 yarn.lock
 
-# Claude Code worktrees
+# Claude Code worktrees, and local settings Claude Code rewrites itself
 .claude/worktrees
+.claude/settings.local.json
 
 # Temporary files
 *.tmp

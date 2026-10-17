@@ -1,12 +1,10 @@
 import { type AdminQuestionResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
+  withSystemAdmin,
   questionService,
   ValidationError,
-  ForbiddenError,
-  isUserActor,
 } from '@ffp/core/server';
 
 import { parseJsonBody } from '../../lib/request-body';
@@ -17,22 +15,19 @@ import { parseJsonBody } from '../../lib/request-body';
  * validation and type-change clean-up contract.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<AdminQuestionResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can manage questions',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<AdminQuestionResponse> => {
+      const publicId = event.pathParameters?.publicId;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can manage questions');
+      if (!publicId) {
+        throw new ValidationError('Question ID is required in path');
+      }
+
+      const body = parseJsonBody(event.body);
+      const question = await questionService.updateQuestionService(context, publicId, body);
+
+      return { question };
     }
-
-    const publicId = event.pathParameters?.publicId;
-
-    if (!publicId) {
-      throw new ValidationError('Question ID is required in path');
-    }
-
-    const body = parseJsonBody(event.body);
-    const question = await questionService.updateQuestionService(context, publicId, body);
-
-    return { question };
-  }
+  )
 );
