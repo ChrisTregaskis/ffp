@@ -6,10 +6,8 @@ import {
 } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
-  isUserActor,
+  withSystemAdmin,
   flowService,
 } from '@ffp/core/server';
 
@@ -27,19 +25,16 @@ interface ListFlowsResponse {
  * the isActive filter lets a caller enumerate retired flows deliberately.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<ListFlowsResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can list assessment flows',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<ListFlowsResponse> => {
+      const params = event.queryStringParameters ?? {};
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can list assessment flows');
+      const paginationInput = paginationInputSchema.parse(params);
+
+      const filters = assessmentFlowListFiltersSchema.parse(params);
+
+      return await flowService.listFlowsService(context, paginationInput, filters);
     }
-
-    const params = event.queryStringParameters ?? {};
-
-    const paginationInput = paginationInputSchema.parse(params);
-
-    const filters = assessmentFlowListFiltersSchema.parse(params);
-
-    return await flowService.listFlowsService(context, paginationInput, filters);
-  }
+  )
 );

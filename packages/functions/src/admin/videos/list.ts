@@ -1,10 +1,8 @@
 import { paginationInputSchema } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
-  isUserActor,
+  withSystemAdmin,
   listAdminVideos,
 } from '@ffp/core/server';
 
@@ -15,22 +13,21 @@ import {
  * Query params: page, pageSize, sortBy, sortDirection, search, status, difficulty.
  * Admin role required.
  */
-export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2WithJWT) => {
-  const context = extractUserContext(event);
+export const handler = withErrorHandling(
+  withSystemAdmin(
+    'Only system administrators can list admin videos',
+    async (event: APIGatewayProxyEventV2WithJWT, context) => {
+      const params = event.queryStringParameters ?? {};
 
-  if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-    throw new ForbiddenError('Only system administrators can list admin videos');
-  }
+      const paginationInput = paginationInputSchema.parse(params);
 
-  const params = event.queryStringParameters ?? {};
+      const rawFilters = {
+        search: params.search ?? undefined,
+        status: params.status ?? undefined,
+        difficulty: params.difficulty ?? undefined,
+      };
 
-  const paginationInput = paginationInputSchema.parse(params);
-
-  const rawFilters = {
-    search: params.search ?? undefined,
-    status: params.status ?? undefined,
-    difficulty: params.difficulty ?? undefined,
-  };
-
-  return await listAdminVideos(context, paginationInput, rawFilters);
-});
+      return await listAdminVideos(context, paginationInput, rawFilters);
+    }
+  )
+);

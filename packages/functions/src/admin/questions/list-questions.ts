@@ -6,11 +6,9 @@ import {
 } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
+  withSystemAdmin,
   questionService,
-  ForbiddenError,
-  isUserActor,
 } from '@ffp/core/server';
 
 interface ListQuestionsResponse {
@@ -25,19 +23,16 @@ interface ListQuestionsResponse {
  * Requires the system_admin role.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<ListQuestionsResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can list questions',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<ListQuestionsResponse> => {
+      const params = event.queryStringParameters ?? {};
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can list questions');
+      const paginationInput = paginationInputSchema.parse(params);
+
+      const filters = questionListFiltersSchema.parse(params);
+
+      return await questionService.listQuestionsService(context, paginationInput, filters);
     }
-
-    const params = event.queryStringParameters ?? {};
-
-    const paginationInput = paginationInputSchema.parse(params);
-
-    const filters = questionListFiltersSchema.parse(params);
-
-    return await questionService.listQuestionsService(context, paginationInput, filters);
-  }
+  )
 );

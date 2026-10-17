@@ -1,10 +1,8 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
+  withSystemAdmin,
   ValidationError,
-  isUserActor,
   getUserService,
 } from '@ffp/core/server';
 
@@ -13,18 +11,17 @@ import {
  *
  * Returns a single programme user by ID with location details. Admin role required.
  */
-export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2WithJWT) => {
-  const context = extractUserContext(event);
+export const handler = withErrorHandling(
+  withSystemAdmin(
+    'Only system administrators can view user details',
+    async (event: APIGatewayProxyEventV2WithJWT, context) => {
+      const userId = event.pathParameters?.id;
 
-  if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-    throw new ForbiddenError('Only system administrators can view user details');
-  }
+      if (!userId) {
+        throw new ValidationError('User ID is required');
+      }
 
-  const userId = event.pathParameters?.id;
-
-  if (!userId) {
-    throw new ValidationError('User ID is required');
-  }
-
-  return await getUserService(context, userId);
-});
+      return await getUserService(context, userId);
+    }
+  )
+);

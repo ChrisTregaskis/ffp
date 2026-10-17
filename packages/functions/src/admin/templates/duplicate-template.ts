@@ -1,11 +1,9 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
+  withSystemAdmin,
   templateService,
   ValidationError,
-  ForbiddenError,
-  isUserActor,
   type AssessmentTemplateWithQuestions,
 } from '@ffp/core/server';
 
@@ -23,47 +21,42 @@ interface DuplicateTemplateResponse {
  * Duplicates an existing assessment template with a new name.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<DuplicateTemplateResponse> => {
-    // Extract user context from JWT (validates authentication)
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can manage templates',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<DuplicateTemplateResponse> => {
+      // Extract template publicId from path
+      const templatePublicId = event.pathParameters?.publicId;
 
-    // Validate system_admin role
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can manage templates');
+      if (!templatePublicId) {
+        throw new ValidationError('Template ID is required in path');
+      }
+
+      // Parse request body
+      if (!event.body) {
+        throw new ValidationError('Request body is required');
+      }
+
+      let input: DuplicateTemplateRequest;
+
+      try {
+        input = JSON.parse(event.body) as DuplicateTemplateRequest;
+      } catch {
+        throw new ValidationError('Invalid JSON in request body');
+      }
+
+      // Validate name is provided
+      if (!input.name || typeof input.name !== 'string' || input.name.trim().length === 0) {
+        throw new ValidationError('Name is required for the duplicated template');
+      }
+
+      // Duplicate template via service (handles NotFoundError if source doesn't exist)
+      const template = await templateService.duplicateTemplateService(
+        context,
+        templatePublicId,
+        input.name.trim()
+      );
+
+      return { template };
     }
-
-    // Extract template publicId from path
-    const templatePublicId = event.pathParameters?.publicId;
-
-    if (!templatePublicId) {
-      throw new ValidationError('Template ID is required in path');
-    }
-
-    // Parse request body
-    if (!event.body) {
-      throw new ValidationError('Request body is required');
-    }
-
-    let input: DuplicateTemplateRequest;
-
-    try {
-      input = JSON.parse(event.body) as DuplicateTemplateRequest;
-    } catch {
-      throw new ValidationError('Invalid JSON in request body');
-    }
-
-    // Validate name is provided
-    if (!input.name || typeof input.name !== 'string' || input.name.trim().length === 0) {
-      throw new ValidationError('Name is required for the duplicated template');
-    }
-
-    // Duplicate template via service (handles NotFoundError if source doesn't exist)
-    const template = await templateService.duplicateTemplateService(
-      context,
-      templatePublicId,
-      input.name.trim()
-    );
-
-    return { template };
-  }
+  )
 );

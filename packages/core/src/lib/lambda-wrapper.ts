@@ -12,7 +12,7 @@ import { ZodError } from 'zod';
 
 import { extractUserContext, type APIGatewayProxyEventV2WithJWT } from './context.js';
 import { describeDriverError, translateDatabaseError } from './database-errors.js';
-import { BaseError, InternalServerError } from './errors.js';
+import { BaseError, ForbiddenError, InternalServerError } from './errors.js';
 import { createLogger, type TenantLogger } from './logger.js';
 
 import type { ApiErrorBody, ApiFieldError } from '../schemas/api-error.schema.js';
@@ -53,7 +53,7 @@ const SENSITIVE_HEADERS = ['authorization', 'Authorization'] as const;
  * 6. Catches BaseError instances and returns appropriate status codes
  * 7. Catches ZodError instances and returns validation errors (400)
  * 8. Catches unexpected errors and returns 500 with sanitised message
- * 9. Logs all errors with context for debugging
+ * 9. Logs all errors with context for debugging (a 403 refusal at warn, without a stack)
  *
  * Security: Ensures sensitive information is never exposed in error messages or logs
  *
@@ -113,8 +113,16 @@ export const withErrorHandling = <TResult>(
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       const requestId = event.requestContext?.requestId;
 
-      // Log error with structured logging if available, otherwise fall back to console
-      if (logger) {
+      // A refusal is expected behaviour, not a failure: warn without a stack or the event,
+      // but keep the route so the line stands alone at a WARN log level.
+      if (logger && error instanceof ForbiddenError) {
+        logger.warn('Request refused', {
+          error: error.message,
+          errorType: error.code,
+          method: event.requestContext.http.method,
+          path: event.rawPath,
+        });
+      } else if (logger) {
         logger.error('Request failed', {
           // For ZodError, use the structured issues array instead of the
           // stringified message; for a driver error, `database` below carries

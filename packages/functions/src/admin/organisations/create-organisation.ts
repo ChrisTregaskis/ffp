@@ -1,10 +1,8 @@
 import { type CreateOrganisationResponse, createOrganisationRequestSchema } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
-  isUserActor,
+  withSystemAdmin,
   createOrganisationService,
   createRequestContext,
 } from '@ffp/core/server';
@@ -20,18 +18,15 @@ import {
  * ```
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<CreateOrganisationResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system admins can create organisations',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<CreateOrganisationResponse> => {
+      const body = JSON.parse(event.body ?? '{}') as unknown;
+      const input = createOrganisationRequestSchema.parse(body);
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system admins can create organisations');
+      const ctx = createRequestContext(context);
+
+      return await createOrganisationService(ctx, input);
     }
-
-    const body = JSON.parse(event.body ?? '{}') as unknown;
-    const input = createOrganisationRequestSchema.parse(body);
-
-    const ctx = createRequestContext(context);
-
-    return await createOrganisationService(ctx, input);
-  }
+  )
 );

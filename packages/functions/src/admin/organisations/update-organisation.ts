@@ -1,10 +1,8 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
+  withSystemAdmin,
   ValidationError,
-  isUserActor,
   updateOrganisationService,
 } from '@ffp/core/server';
 
@@ -13,20 +11,19 @@ import {
  *
  * Updates an organisation's name, status, or settings. Admin role required.
  */
-export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2WithJWT) => {
-  const context = extractUserContext(event);
+export const handler = withErrorHandling(
+  withSystemAdmin(
+    'Only system administrators can update organisations',
+    async (event: APIGatewayProxyEventV2WithJWT, context) => {
+      const organisationId = event.pathParameters?.id;
 
-  if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-    throw new ForbiddenError('Only system administrators can update organisations');
-  }
+      if (!organisationId) {
+        throw new ValidationError('Organisation ID is required');
+      }
 
-  const organisationId = event.pathParameters?.id;
+      const body = JSON.parse(event.body ?? '{}') as unknown;
 
-  if (!organisationId) {
-    throw new ValidationError('Organisation ID is required');
-  }
-
-  const body = JSON.parse(event.body ?? '{}') as unknown;
-
-  return await updateOrganisationService(context, organisationId, body);
-});
+      return await updateOrganisationService(context, organisationId, body);
+    }
+  )
+);

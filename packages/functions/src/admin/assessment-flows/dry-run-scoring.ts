@@ -1,12 +1,10 @@
 import type { ScoringDryRunResult } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
+  withSystemAdmin,
   scoringDryRunService,
   ValidationError,
-  ForbiddenError,
-  isUserActor,
 } from '@ffp/core/server';
 
 import { parseJsonBody } from '../../lib/request-body';
@@ -17,21 +15,18 @@ import { parseJsonBody } from '../../lib/request-body';
  * Requires the system_admin role. Saves nothing.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<ScoringDryRunResult> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can test assessment flow scoring',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<ScoringDryRunResult> => {
+      const publicId = event.pathParameters?.publicId;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can test assessment flow scoring');
+      if (!publicId) {
+        throw new ValidationError('Flow ID is required in path');
+      }
+
+      const body = parseJsonBody(event.body);
+
+      return scoringDryRunService.dryRunFlowScoringService(context, publicId, body);
     }
-
-    const publicId = event.pathParameters?.publicId;
-
-    if (!publicId) {
-      throw new ValidationError('Flow ID is required in path');
-    }
-
-    const body = parseJsonBody(event.body);
-
-    return scoringDryRunService.dryRunFlowScoringService(context, publicId, body);
-  }
+  )
 );

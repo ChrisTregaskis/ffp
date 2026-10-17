@@ -1,9 +1,7 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
-  isUserActor,
+  withSystemAdmin,
   createVideo,
 } from '@ffp/core/server';
 import type { VideoRecord } from '@ffp/database/schema';
@@ -22,16 +20,13 @@ interface CreateVideoResponse {
  * Admin role required.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<CreateVideoResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can create videos',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<CreateVideoResponse> => {
+      const body = parseJsonBody(event.body);
+      const video = await createVideo(context, body);
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can create videos');
+      return { video };
     }
-
-    const body = parseJsonBody(event.body);
-    const video = await createVideo(context, body);
-
-    return { video };
-  }
+  )
 );

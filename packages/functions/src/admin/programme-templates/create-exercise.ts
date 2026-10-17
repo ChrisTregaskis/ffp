@@ -1,11 +1,9 @@
 import type { ExerciseResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
+  withSystemAdmin,
   ValidationError,
-  isUserActor,
   sessionExerciseService,
 } from '@ffp/core/server';
 
@@ -22,22 +20,19 @@ interface CreateExerciseResponse {
  * Pre-populates prescription from video defaults when not explicitly provided.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<CreateExerciseResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can create session exercises',
+    async (event: APIGatewayProxyEventV2WithJWT): Promise<CreateExerciseResponse> => {
+      const sessionId = event.pathParameters?.id;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can create session exercises');
+      if (!sessionId) {
+        throw new ValidationError('Session ID is required');
+      }
+
+      const body = parseJsonBody(event.body);
+      const exercise = await sessionExerciseService.createExercise(sessionId, body);
+
+      return { exercise };
     }
-
-    const sessionId = event.pathParameters?.id;
-
-    if (!sessionId) {
-      throw new ValidationError('Session ID is required');
-    }
-
-    const body = parseJsonBody(event.body);
-    const exercise = await sessionExerciseService.createExercise(sessionId, body);
-
-    return { exercise };
-  }
+  )
 );

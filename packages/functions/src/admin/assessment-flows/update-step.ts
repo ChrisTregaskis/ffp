@@ -1,11 +1,9 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
+  withSystemAdmin,
   flowStepService,
   ValidationError,
-  ForbiddenError,
-  isUserActor,
   type AdminFlowStep,
 } from '@ffp/core/server';
 
@@ -23,27 +21,29 @@ interface UpdateStepResponse {
  * untouched — it is never authored through this surface.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<UpdateStepResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can manage flow steps',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<UpdateStepResponse> => {
+      const flowPublicId = event.pathParameters?.flowPublicId;
+      const stepPublicId = event.pathParameters?.stepPublicId;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can manage flow steps');
+      if (!flowPublicId) {
+        throw new ValidationError('Flow ID is required in path');
+      }
+
+      if (!stepPublicId) {
+        throw new ValidationError('Step ID is required in path');
+      }
+
+      const body = parseJsonBody(event.body);
+      const step = await flowStepService.updateStepService(
+        context,
+        flowPublicId,
+        stepPublicId,
+        body
+      );
+
+      return { step };
     }
-
-    const flowPublicId = event.pathParameters?.flowPublicId;
-    const stepPublicId = event.pathParameters?.stepPublicId;
-
-    if (!flowPublicId) {
-      throw new ValidationError('Flow ID is required in path');
-    }
-
-    if (!stepPublicId) {
-      throw new ValidationError('Step ID is required in path');
-    }
-
-    const body = parseJsonBody(event.body);
-    const step = await flowStepService.updateStepService(context, flowPublicId, stepPublicId, body);
-
-    return { step };
-  }
+  )
 );

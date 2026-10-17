@@ -1,10 +1,8 @@
 import type { UploadUrlResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
-  isUserActor,
+  withSystemAdmin,
   setVideoUploadConfig,
   generateUploadUrls,
 } from '@ffp/core/server';
@@ -46,18 +44,15 @@ if (videosBucketName && assetsBucketName) {
  * ```
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<UploadUrlResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can upload videos',
+    async (_event: APIGatewayProxyEventV2WithJWT, context): Promise<UploadUrlResponse> => {
+      // A plain Error, so the response stays a generic 500 while the log names the variables
+      if (missingEnv.length > 0) {
+        throw new Error(`Video upload is not configured: missing ${missingEnv.join(', ')}`);
+      }
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can upload videos');
+      return await generateUploadUrls(context);
     }
-
-    // A plain Error, so the response stays a generic 500 while the log names the variables
-    if (missingEnv.length > 0) {
-      throw new Error(`Video upload is not configured: missing ${missingEnv.join(', ')}`);
-    }
-
-    return await generateUploadUrls(context);
-  }
+  )
 );

@@ -1,11 +1,9 @@
 import type { PhaseResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
+  withSystemAdmin,
   ValidationError,
-  isUserActor,
   templatePhaseService,
 } from '@ffp/core/server';
 
@@ -22,22 +20,19 @@ interface CreatePhaseResponse {
  * Auto-assigns phaseNumber and updates template totalPhases.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<CreatePhaseResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can create template phases',
+    async (event: APIGatewayProxyEventV2WithJWT): Promise<CreatePhaseResponse> => {
+      const templateId = event.pathParameters?.id;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can create template phases');
+      if (!templateId) {
+        throw new ValidationError('Template ID is required');
+      }
+
+      const body = parseJsonBody(event.body, { required: false });
+      const phase = await templatePhaseService.createPhase(templateId, body);
+
+      return { phase };
     }
-
-    const templateId = event.pathParameters?.id;
-
-    if (!templateId) {
-      throw new ValidationError('Template ID is required');
-    }
-
-    const body = parseJsonBody(event.body, { required: false });
-    const phase = await templatePhaseService.createPhase(templateId, body);
-
-    return { phase };
-  }
+  )
 );

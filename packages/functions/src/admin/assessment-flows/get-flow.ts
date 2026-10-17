@@ -1,12 +1,10 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
+  withSystemAdmin,
   flowService,
   ValidationError,
   NotFoundError,
-  ForbiddenError,
-  isUserActor,
   type AssessmentFlowWithSteps,
 } from '@ffp/core/server';
 
@@ -18,25 +16,22 @@ import {
  * this resource.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<AssessmentFlowWithSteps> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can view assessment flow details',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<AssessmentFlowWithSteps> => {
+      const publicId = event.pathParameters?.publicId;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can view assessment flow details');
+      if (!publicId) {
+        throw new ValidationError('Flow ID is required in path');
+      }
+
+      const flow = await flowService.getFlowWithStepsService(context, publicId);
+
+      if (!flow) {
+        throw new NotFoundError('Assessment flow', publicId);
+      }
+
+      return flow;
     }
-
-    const publicId = event.pathParameters?.publicId;
-
-    if (!publicId) {
-      throw new ValidationError('Flow ID is required in path');
-    }
-
-    const flow = await flowService.getFlowWithStepsService(context, publicId);
-
-    if (!flow) {
-      throw new NotFoundError('Assessment flow', publicId);
-    }
-
-    return flow;
-  }
+  )
 );

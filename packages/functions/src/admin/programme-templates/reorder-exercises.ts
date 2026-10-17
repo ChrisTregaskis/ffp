@@ -1,11 +1,9 @@
 import type { ExerciseResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
+  withSystemAdmin,
   ValidationError,
-  isUserActor,
   sessionExerciseService,
 } from '@ffp/core/server';
 
@@ -22,22 +20,19 @@ interface ReorderExercisesResponse {
  * Accepts an array of exercise IDs in the desired order.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<ReorderExercisesResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can reorder session exercises',
+    async (event: APIGatewayProxyEventV2WithJWT): Promise<ReorderExercisesResponse> => {
+      const sessionId = event.pathParameters?.id;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can reorder session exercises');
+      if (!sessionId) {
+        throw new ValidationError('Session ID is required');
+      }
+
+      const body = parseJsonBody(event.body);
+      const exercises = await sessionExerciseService.reorderExercises(sessionId, body);
+
+      return { exercises };
     }
-
-    const sessionId = event.pathParameters?.id;
-
-    if (!sessionId) {
-      throw new ValidationError('Session ID is required');
-    }
-
-    const body = parseJsonBody(event.body);
-    const exercises = await sessionExerciseService.reorderExercises(sessionId, body);
-
-    return { exercises };
-  }
+  )
 );
