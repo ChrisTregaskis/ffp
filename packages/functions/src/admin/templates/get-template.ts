@@ -1,39 +1,34 @@
+import type { AdminAssessmentTemplateDetail } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
+  withSystemAdmin,
   templateService,
   ValidationError,
-  NotFoundError,
-  type AssessmentTemplateWithQuestions,
 } from '@ffp/core/server';
 
 /**
- * Lambda handler for GET /admin/assessment-templates/:id
+ * Lambda handler for GET /admin/assessment-templates/:publicId
  *
- * Protected endpoint that requires JWT authentication.
- * Returns a single assessment template with its questions.
- * Any authenticated user can view templates.
+ * Returns a single assessment template with its questions as stored and the
+ * flows that use it. Requires the system_admin role, matching every other verb
+ * on this resource. The member read of the same template is
+ * `GET /assessments/templates/:id`, keyed by the UUID a flow step carries.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<AssessmentTemplateWithQuestions> => {
-    // Extract user context from JWT (validates authentication)
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can view assessment template details',
+    async (
+      event: APIGatewayProxyEventV2WithJWT,
+      context
+    ): Promise<AdminAssessmentTemplateDetail> => {
+      const templatePublicId = event.pathParameters?.publicId;
 
-    // Extract templateId from path parameters
-    const templateId = event.pathParameters?.id;
+      if (!templatePublicId) {
+        throw new ValidationError('Template ID is required in path');
+      }
 
-    if (!templateId) {
-      throw new ValidationError('Template ID is required in path');
+      return await templateService.getAdminTemplateService(context, templatePublicId);
     }
-
-    // Service functions consistently take ctx as first parameter
-    const template = await templateService.getTemplateService(context, templateId);
-
-    if (!template) {
-      throw new NotFoundError('Assessment template', templateId);
-    }
-
-    return template;
-  }
+  )
 );

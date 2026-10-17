@@ -63,8 +63,7 @@ packages/core/src/
 packages/database/
 ├── __tests__/
 │   ├── helpers.ts                 # withTestDb, withRLS, createTestOrganisation, createTestUser
-│   ├── integration.test.ts        # Database integration tests
-│   └── drizzle.test.ts            # Smoke tests
+│   └── integration.test.ts        # Database integration tests
 └── src/
     ├── lib/rls.test.ts            # RLS-specific tests
     └── client.test.ts             # Client connection tests

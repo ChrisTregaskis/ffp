@@ -1,8 +1,9 @@
-import { forgotPasswordRequestFields, type ForgotPasswordRequestData } from '@web/components/auth';
-import { Button } from '@web/components/button/Button';
-import { Card } from '@web/components/Card/Card';
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { Form } from '@web/components/form';
+import { Button } from '@web/components/atoms';
+import { ComposableForm } from '@web/components/organisms';
+import type { ForgotPasswordRequestData } from '@web/schemas/auth.schema';
+
+import { AuthFormCard } from './AuthFormCard';
+import { ForgotPasswordRequestFormFields } from './ForgotPasswordRequestFormFields';
 
 export interface ForgotPasswordRequestFormProps {
   /** Callback when email is submitted */
@@ -17,6 +18,8 @@ export interface ForgotPasswordRequestFormProps {
   onBackToLogin: () => void;
 }
 
+const EMPTY_VALUES: ForgotPasswordRequestData = { email: '' };
+
 /**
  * Forgot password request form — step 1 of the reset flow.
  *
@@ -28,37 +31,25 @@ export const ForgotPasswordRequestForm: React.FC<ForgotPasswordRequestFormProps>
   error,
   onClearError,
   onBackToLogin,
-}) => {
-  return (
-    <Card
-      title="Reset your password"
-      subtitle="Enter your email and we'll send you a verification code."
-      centerHeader
+}) => (
+  <AuthFormCard
+    title="Reset your password"
+    subtitle="Enter your email and we'll send you a verification code."
+    error={error}
+    onDismissError={onClearError}
+  >
+    <ComposableForm<ForgotPasswordRequestData>
+      onSubmit={onSubmit}
+      defaultValues={EMPTY_VALUES}
+      className="space-y-4"
     >
-      {error && (
-        <StaticAlert variant="error" message={error} onDismiss={onClearError} className="mb-6" />
-      )}
+      <ForgotPasswordRequestFormFields isLoading={isLoading} />
+    </ComposableForm>
 
-      <div className="space-y-6">
-        <Form
-          fields={forgotPasswordRequestFields}
-          onSubmit={onSubmit}
-          submitLabel={isLoading ? 'Sending code...' : 'Send verification code'}
-          isSubmitting={isLoading}
-        />
-
-        <div className="flex justify-center -mt-2">
-          <Button
-            variant="link"
-            size="sm"
-            onClick={onBackToLogin}
-            type="button"
-            disabled={isLoading}
-          >
-            Back to sign in
-          </Button>
-        </div>
-      </div>
-    </Card>
-  );
-};
+    <div className="flex justify-center -mt-2">
+      <Button variant="link" size="sm" onClick={onBackToLogin} type="button" disabled={isLoading}>
+        Back to sign in
+      </Button>
+    </div>
+  </AuthFormCard>
+);

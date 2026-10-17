@@ -1,11 +1,9 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
+  withSystemAdmin,
   flowStepService,
   ValidationError,
-  ForbiddenError,
-  isUserActor,
 } from '@ffp/core/server';
 
 interface DeleteStepResponse {
@@ -20,26 +18,23 @@ interface DeleteStepResponse {
  * assessments that reference the step ID stay intact; order gaps are harmless.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<DeleteStepResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can manage flow steps',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<DeleteStepResponse> => {
+      const flowPublicId = event.pathParameters?.flowPublicId;
+      const stepPublicId = event.pathParameters?.stepPublicId;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can manage flow steps');
+      if (!flowPublicId) {
+        throw new ValidationError('Flow ID is required in path');
+      }
+
+      if (!stepPublicId) {
+        throw new ValidationError('Step ID is required in path');
+      }
+
+      await flowStepService.deleteStepService(context, flowPublicId, stepPublicId);
+
+      return { success: true };
     }
-
-    const flowPublicId = event.pathParameters?.flowPublicId;
-    const stepPublicId = event.pathParameters?.stepPublicId;
-
-    if (!flowPublicId) {
-      throw new ValidationError('Flow ID is required in path');
-    }
-
-    if (!stepPublicId) {
-      throw new ValidationError('Step ID is required in path');
-    }
-
-    await flowStepService.deleteStepService(context, flowPublicId, stepPublicId);
-
-    return { success: true };
-  }
+  )
 );

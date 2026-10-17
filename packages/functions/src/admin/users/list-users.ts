@@ -1,10 +1,8 @@
 import { paginationInputSchema } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
-  isUserActor,
+  withSystemAdmin,
   listUsersService,
 } from '@ffp/core/server';
 
@@ -13,27 +11,21 @@ import {
  *
  * Lists all programme users with pagination, search, and location filter.
  */
-export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2WithJWT) => {
-  const context = extractUserContext(event);
+export const handler = withErrorHandling(
+  withSystemAdmin(
+    'Only system administrators can list users',
+    async (event: APIGatewayProxyEventV2WithJWT, context) => {
+      const params = event.queryStringParameters ?? {};
 
-  if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-    throw new ForbiddenError('Only system administrators can list users');
-  }
+      const paginationInput = paginationInputSchema.parse(params);
 
-  const params = event.queryStringParameters ?? {};
+      const rawFilters = {
+        search: params.search ?? undefined,
+        locationId: params.locationId ?? undefined,
+        role: params.role ?? undefined,
+      };
 
-  const paginationInput = paginationInputSchema.parse({
-    page: params.page,
-    pageSize: params.pageSize,
-    sortBy: params.sortBy,
-    sortDirection: params.sortDirection,
-  });
-
-  const rawFilters = {
-    search: params.search ?? undefined,
-    locationId: params.locationId ?? undefined,
-    role: params.role ?? undefined,
-  };
-
-  return await listUsersService(context, paginationInput, rawFilters);
-});
+      return await listUsersService(context, paginationInput, rawFilters);
+    }
+  )
+);

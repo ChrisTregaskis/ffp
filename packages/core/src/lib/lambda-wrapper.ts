@@ -11,9 +11,11 @@
 import { ZodError } from 'zod';
 
 import { extractUserContext, type APIGatewayProxyEventV2WithJWT } from './context.js';
-import { BaseError, InternalServerError } from './errors.js';
+import { describeDriverError, translateDatabaseError } from './database-errors.js';
+import { BaseError, ForbiddenError, InternalServerError } from './errors.js';
 import { createLogger, type TenantLogger } from './logger.js';
 
+import type { ApiErrorBody, ApiFieldError } from '../schemas/api-error.schema.js';
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 
 /**
@@ -40,16 +42,6 @@ const SENSITIVE_BODY_FIELDS = [
 const SENSITIVE_HEADERS = ['authorization', 'Authorization'] as const;
 
 /**
- * Error response body format
- */
-interface ErrorResponseBody {
-  error: string;
-  message: string;
-  requestId?: string;
-  details?: Record<string, unknown> | unknown[];
-}
-
-/**
  * Wraps a Lambda handler with error handling and structured logging middleware
  *
  * This wrapper:
@@ -57,10 +49,11 @@ interface ErrorResponseBody {
  * 2. Logs request start with path and method
  * 3. Executes the handler and returns success responses (200)
  * 4. Logs request completion with status code
- * 5. Catches BaseError instances and returns appropriate status codes
- * 6. Catches ZodError instances and returns validation errors (400)
- * 7. Catches unexpected errors and returns 500 with sanitised message
- * 8. Logs all errors with context for debugging
+ * 5. Translates PostgreSQL driver errors into the application error hierarchy
+ * 6. Catches BaseError instances and returns appropriate status codes
+ * 7. Catches ZodError instances and returns validation errors (400)
+ * 8. Catches unexpected errors and returns 500 with sanitised message
+ * 9. Logs all errors with context for debugging (a 403 refusal at warn, without a stack)
  *
  * Security: Ensures sensitive information is never exposed in error messages or logs
  *
@@ -108,22 +101,42 @@ export const withErrorHandling = <TResult>(
         },
         body: JSON.stringify(result),
       };
-    } catch (error) {
+    } catch (rawError) {
+      const error = translateDatabaseError(rawError);
+
+      // Diagnostics come from the raw error; the response comes from the
+      // translated one. A driver error's own message carries the failed SQL and
+      // its bound parameters, so it is summarised rather than logged.
+      const driverDetail = describeDriverError(rawError);
+
       // Extract requestId for tracing (optional for tests)
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       const requestId = event.requestContext?.requestId;
 
-      // Log error with structured logging if available, otherwise fall back to console
-      if (logger) {
+      // A refusal is expected behaviour, not a failure: warn without a stack or the event,
+      // but keep the route so the line stands alone at a WARN log level.
+      if (logger && error instanceof ForbiddenError) {
+        logger.warn('Request refused', {
+          error: error.message,
+          errorType: error.code,
+          method: event.requestContext.http.method,
+          path: event.rawPath,
+        });
+      } else if (logger) {
         logger.error('Request failed', {
-          // For ZodError, use the structured issues array instead of the stringified message
+          // For ZodError, use the structured issues array instead of the
+          // stringified message; for a driver error, `database` below carries
+          // the detail and the message would carry the query parameters.
           error:
             error instanceof ZodError
               ? error.issues
-              : error instanceof Error
-                ? error.message
-                : 'Unknown error',
+              : driverDetail
+                ? 'Database driver error'
+                : error instanceof Error
+                  ? error.message
+                  : 'Unknown error',
           stack: error instanceof Error && !(error instanceof ZodError) ? error.stack : undefined,
+          ...(driverDetail && { database: driverDetail }),
           errorType:
             error instanceof ZodError
               ? 'VALIDATION_ERROR'
@@ -136,14 +149,19 @@ export const withErrorHandling = <TResult>(
       } else {
         // Fallback to console.error for unauthenticated requests
         console.error('Lambda error:', {
-          // For ZodError, use the structured issues array instead of the stringified message
+          // For ZodError, use the structured issues array instead of the
+          // stringified message; for a driver error, `database` below carries
+          // the detail and the message would carry the query parameters.
           error:
             error instanceof ZodError
               ? error.issues
-              : error instanceof Error
-                ? error.message
-                : 'Unknown error',
+              : driverDetail
+                ? 'Database driver error'
+                : error instanceof Error
+                  ? error.message
+                  : 'Unknown error',
           stack: error instanceof Error && !(error instanceof ZodError) ? error.stack : undefined,
+          ...(driverDetail && { database: driverDetail }),
           requestId,
           // Sanitise event data to avoid logging sensitive information
           event: sanitiseEventForLogging(event),
@@ -152,7 +170,7 @@ export const withErrorHandling = <TResult>(
 
       // Handle application errors (our custom error classes)
       if (error instanceof BaseError) {
-        const errorBody: ErrorResponseBody = {
+        const errorBody: ApiErrorBody = {
           error: error.code,
           message: error.message,
           ...(requestId && { requestId }),
@@ -174,15 +192,17 @@ export const withErrorHandling = <TResult>(
 
       // Handle Zod validation errors
       if (error instanceof ZodError) {
-        const errorBody: ErrorResponseBody = {
+        const errorBody: ApiErrorBody = {
           error: 'VALIDATION_ERROR',
           message: 'Invalid request data',
           ...(requestId && { requestId }),
-          details: error.issues.map((err) => ({
-            path: err.path.join('.'),
-            message: err.message,
-            code: err.code,
-          })),
+          details: error.issues.map(
+            (err): ApiFieldError => ({
+              path: err.path.join('.'),
+              message: err.message,
+              code: err.code,
+            })
+          ),
         };
 
         return {
@@ -196,7 +216,7 @@ export const withErrorHandling = <TResult>(
 
       // Handle unexpected errors (don't expose internal details)
       const internalError = new InternalServerError();
-      const errorBody: ErrorResponseBody = {
+      const errorBody: ApiErrorBody = {
         error: internalError.code,
         message: internalError.message,
         ...(requestId && { requestId }),

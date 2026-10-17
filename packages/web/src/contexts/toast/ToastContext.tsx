@@ -1,7 +1,7 @@
 import { AnimatePresence } from 'motion/react';
 import { useCallback, useRef, useState } from 'react';
 
-import { ToastAlert, type ToastPosition } from '@web/components/feedback/ToastAlert';
+import { ToastAlert, type ToastPosition } from '@web/components/molecules';
 
 import { ToastContext, type ToastItem, type ToastOptions } from './toast.definitions';
 

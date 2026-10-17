@@ -1,3 +1,4 @@
+import { LoadingSpinner, Text, Title } from '@web/components/atoms';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
@@ -6,8 +7,6 @@ import {
   DeveloperInstructions,
   ButtonSampleDisplay,
 } from '@web/components/dev';
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import { Text, Title } from '@web/components/text';
 
 /**
  * LoadingSpinner components showcase page (development only).
@@ -50,7 +49,7 @@ export const LoadingSpinnerComponentsPage = (): JSX.Element => {
               Import the LoadingSpinner component:
             </Text>
             <code className="block rounded bg-muted p-2 text-xs">
-              {`import { LoadingSpinner } from '@web/components/LoadingSpinner';`}
+              {`import { LoadingSpinner } from '@web/components/atoms';`}
             </code>
           </div>
           <div>

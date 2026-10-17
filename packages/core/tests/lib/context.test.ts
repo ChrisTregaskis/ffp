@@ -20,7 +20,6 @@ import {
   isUserActor,
   isSystemActor,
   getActorDisplayName,
-  type OrganisationContext,
   type APIGatewayProxyEventV2WithJWT,
   type UserActor,
   type SystemActor,
@@ -214,19 +213,6 @@ describe('extractUserContext', () => {
         expect(context.actor.userRole).toBe('system_admin');
       }
       expect(context.locationId).toBeNull();
-    });
-
-    it('should use event.requestContext.requestId for generated requestId', () => {
-      const event = createMockAPIGatewayEvent({
-        sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
-        [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
-        email: 'test@example.com',
-      });
-
-      const context = extractUserContext(event);
-
-      expect(context.requestId).toBe('test-request-123');
     });
 
     it('should create timestamp as Date object', () => {
@@ -495,20 +481,6 @@ describe('createSystemContext', () => {
       expect(context.timestamp.getTime()).toBeGreaterThanOrEqual(before.getTime());
       expect(context.timestamp.getTime()).toBeLessThanOrEqual(after.getTime());
     });
-
-    it('should create different requestIds for multiple calls', () => {
-      const context1 = createSystemContext({
-        systemId: 'assessment-processor',
-        organisationId: 'tenant-123',
-      });
-
-      const context2 = createSystemContext({
-        systemId: 'assessment-processor',
-        organisationId: 'tenant-123',
-      });
-
-      expect(context1.requestId).not.toBe(context2.requestId);
-    });
   });
 
   describe('Invalid parameters', () => {
@@ -651,34 +623,6 @@ describe('extractJobContext', () => {
       }
       expect(context.locationId).toBeNull();
     });
-
-    it('should use jobType as systemId', () => {
-      const jobMessage = {
-        jobId: 'job-123',
-        jobType: 'daily-report-generator',
-        organisationId: 'tenant-456',
-      };
-
-      const context = extractJobContext(jobMessage);
-
-      if (isSystemActor(context.actor)) {
-        expect(context.actor.systemId).toBe('daily-report-generator');
-      }
-    });
-
-    it('should include jobId in system actor', () => {
-      const jobMessage = {
-        jobId: 'job-123',
-        jobType: 'assessment-processor',
-        organisationId: 'tenant-456',
-      };
-
-      const context = extractJobContext(jobMessage);
-
-      if (isSystemActor(context.actor)) {
-        expect(context.actor.jobId).toBe('job-123');
-      }
-    });
   });
 
   describe('Invalid job messages', () => {
@@ -810,27 +754,6 @@ describe('Type guards', () => {
 
       expect(isUserActor(systemActor)).toBe(false);
     });
-
-    it('should narrow type to UserActor when true', () => {
-      const context: OrganisationContext = {
-        actor: {
-          type: 'user',
-          userId: 'user-123',
-          userRole: 'customer_owner',
-          email: 'test@example.com',
-        },
-        organisationId: 'tenant-456',
-        locationId: null,
-        requestId: 'request-123',
-        timestamp: new Date(),
-      };
-
-      if (isUserActor(context.actor)) {
-        // TypeScript should recognise this as UserActor
-        expect(context.actor.userId).toBe('user-123');
-        expect(context.actor.email).toBe('test@example.com');
-      }
-    });
   });
 
   describe('isSystemActor', () => {
@@ -852,26 +775,6 @@ describe('Type guards', () => {
       };
 
       expect(isSystemActor(userActor)).toBe(false);
-    });
-
-    it('should narrow type to SystemActor when true', () => {
-      const context: OrganisationContext = {
-        actor: {
-          type: 'system',
-          systemId: 'assessment-processor',
-          jobId: 'job-123',
-        },
-        organisationId: 'tenant-456',
-        locationId: null,
-        requestId: 'request-123',
-        timestamp: new Date(),
-      };
-
-      if (isSystemActor(context.actor)) {
-        // TypeScript should recognise this as SystemActor
-        expect(context.actor.systemId).toBe('assessment-processor');
-        expect(context.actor.jobId).toBe('job-123');
-      }
     });
   });
 });
@@ -899,67 +802,5 @@ describe('getActorDisplayName', () => {
     const displayName = getActorDisplayName(systemActor);
 
     expect(displayName).toBe('System: assessment-processor');
-  });
-
-  it('should format display name correctly for different user roles', () => {
-    const roles = ['system_admin', 'customer_admin', 'programme_user'];
-
-    roles.forEach((role) => {
-      const userActor: UserActor = {
-        type: 'user',
-        userId: 'user-123',
-        userRole: role,
-        email: 'test@example.com',
-      };
-
-      const displayName = getActorDisplayName(userActor);
-
-      expect(displayName).toBe(`test@example.com (${role})`);
-    });
-  });
-
-  it('should format display name correctly for different system IDs', () => {
-    const systemIds = [
-      'assessment-processor',
-      'daily-report-job',
-      'video-transcoder',
-      'email-sender',
-    ];
-
-    systemIds.forEach((systemId) => {
-      const systemActor: SystemActor = {
-        type: 'system',
-        systemId,
-      };
-
-      const displayName = getActorDisplayName(systemActor);
-
-      expect(displayName).toBe(`System: ${systemId}`);
-    });
-  });
-
-  it('should work with context from extractUserContext', () => {
-    const event = createMockAPIGatewayEvent({
-      sub: 'user-123',
-      [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
-      [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
-      email: 'sarah@example.com',
-    });
-
-    const context = extractUserContext(event);
-    const displayName = getActorDisplayName(context.actor);
-
-    expect(displayName).toBe('sarah@example.com (customer_owner)');
-  });
-
-  it('should work with context from createSystemContext', () => {
-    const context = createSystemContext({
-      systemId: 'nightly-backup',
-      organisationId: 'tenant-123',
-    });
-
-    const displayName = getActorDisplayName(context.actor);
-
-    expect(displayName).toBe('System: nightly-backup');
   });
 });

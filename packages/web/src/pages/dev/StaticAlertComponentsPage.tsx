@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Button } from '@web/components/button';
+import { Button, Text } from '@web/components/atoms';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
@@ -9,14 +9,13 @@ import {
   DeveloperInstructions,
   ButtonSampleDisplay,
 } from '@web/components/dev';
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { Text } from '@web/components/text';
+import { StaticAlert } from '@web/components/molecules';
 
 /**
  * StaticAlert components showcase page (development only).
  *
  * Demonstrates all static alert component features:
- * - Error, warning, and success variants
+ * - Error, warning, success and info variants
  * - Dismissible and non-dismissible alerts
  * - Real-world usage examples
  * - Accessibility features
@@ -34,7 +33,7 @@ export const StaticAlertComponentsPage = (): JSX.Element => {
     <ComponentPageWrapper maxWidth="6xl">
       <ComponentPageHeader
         title="Static Alert Components"
-        description="Contextual alerts for errors, warnings, and success messages"
+        description="Contextual alerts for errors, warnings, success and informational messages"
         showBackLink
       />
 
@@ -66,6 +65,11 @@ export const StaticAlertComponentsPage = (): JSX.Element => {
               <li>
                 <Text styleProps={{ size: 'sm' }}>System warnings and notifications</Text>
               </li>
+              <li>
+                <Text styleProps={{ size: 'sm' }}>
+                  Explaining a constraint the reader cannot change (the info variant)
+                </Text>
+              </li>
             </ul>
           </div>
 
@@ -91,7 +95,7 @@ export const StaticAlertComponentsPage = (): JSX.Element => {
               Code Example:
             </Text>
             <pre className="overflow-x-auto rounded bg-muted p-3 text-xs">
-              {`import { StaticAlert } from '@web/components/feedback/StaticAlert';
+              {`import { StaticAlert } from '@web/components/molecules';
 
 // Error alert
 <StaticAlert
@@ -111,7 +115,19 @@ export const StaticAlertComponentsPage = (): JSX.Element => {
   variant="success"
   message="Changes saved"
   onDismiss={() => setSuccess(null)}
-/>`}
+/>
+
+// Info alert the reader only needs to see once
+const { isDismissed, dismiss } = useDismissibleNotice('my-notice');
+
+{!isDismissed && (
+  <StaticAlert
+    variant="info"
+    appearance="soft"
+    message="Why this cannot be changed"
+    onDismiss={dismiss}
+  />
+)}`}
             </pre>
           </div>
         </div>
@@ -127,7 +143,7 @@ export const StaticAlertComponentsPage = (): JSX.Element => {
 const VariantsDemo: React.FC = () => (
   <div className="space-y-6">
     <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-      Three alert variants for different severity levels.
+      Four alert variants for different severity levels.
     </Text>
     <ButtonSampleDisplay label="Error Alert">
       <StaticAlert variant="error" message="Invalid email or password. Please try again." />
@@ -142,6 +158,13 @@ const VariantsDemo: React.FC = () => (
 
     <ButtonSampleDisplay label="Success Alert">
       <StaticAlert variant="success" message="Your changes have been saved successfully." />
+    </ButtonSampleDisplay>
+
+    <ButtonSampleDisplay label="Info Alert">
+      <StaticAlert
+        variant="info"
+        message="Steps on a branching flow have a set position and cannot be moved."
+      />
     </ButtonSampleDisplay>
   </div>
 );
@@ -199,6 +222,21 @@ const AppearancesDemo: React.FC = () => (
             variant="success"
             appearance="solid"
             message="Solid: Your changes have been saved."
+          />
+        </div>
+      </ButtonSampleDisplay>
+
+      <ButtonSampleDisplay label="Info — Soft vs Solid">
+        <div className="space-y-3">
+          <StaticAlert
+            variant="info"
+            appearance="soft"
+            message="Soft: This flow branches, so its steps cannot be reordered."
+          />
+          <StaticAlert
+            variant="info"
+            appearance="solid"
+            message="Solid: This flow branches, so its steps cannot be reordered."
           />
         </div>
       </ButtonSampleDisplay>
@@ -342,13 +380,14 @@ const AccessibilityDemo: React.FC = () => (
     <ul className="list-disc space-y-2 pl-6">
       <li>
         <Text styleProps={{ size: 'sm' }}>
-          <code className="rounded bg-muted px-1">role=&quot;alert&quot;</code> attribute for screen
-          readers
+          <code className="rounded bg-muted px-1">role=&quot;alert&quot;</code> on error and
+          warning; <code className="rounded bg-muted px-1">role=&quot;status&quot;</code> on success
+          and info, which announces without interrupting
         </Text>
       </li>
       <li>
         <Text styleProps={{ size: 'sm' }}>
-          Semantic colour coding (red=error, yellow=warning, green=success)
+          Semantic colour coding (red=error, yellow=warning, green=success, blue=info)
         </Text>
       </li>
       <li>

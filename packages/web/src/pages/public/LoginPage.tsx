@@ -2,11 +2,11 @@ import { signIn } from 'aws-amplify/auth';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { type LoginFormData } from '@web/components/auth';
 import { LoginForm } from '@web/components/auth/LoginForm';
-import { AuthLayout } from '@web/components/layout/AuthLayout';
+import { AuthLayout } from '@web/components/templates';
+import { RouteKey, routes } from '@web/config/routes';
 import { useAuth } from '@web/hooks/useAuth';
-import { RouteKey, routes } from '@web/pages/routes';
+import type { LoginFormData } from '@web/schemas/auth.schema';
 
 /**
  * Login page component.

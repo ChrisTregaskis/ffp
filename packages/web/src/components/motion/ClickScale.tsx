@@ -28,7 +28,8 @@ export const ClickScale: React.FC<ClickScaleProps> = ({
   className = '',
 }) => {
   return (
-    <motion.div whileTap={{ scale }} transition={{ duration }} className={className}>
+    // whileTap would otherwise make the wrapper focusable, a second tab stop before the control it wraps
+    <motion.div whileTap={{ scale }} transition={{ duration }} tabIndex={-1} className={className}>
       {children}
     </motion.div>
   );

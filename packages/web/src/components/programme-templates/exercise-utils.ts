@@ -1,5 +1,7 @@
 import type { ExerciseResponse } from '@ffp/core';
 
+import { numberToField } from '@web/utils/form-number';
+
 export interface ExerciseFormValues {
   videoId: string;
   sets: string;
@@ -23,7 +25,7 @@ export const exerciseToFormValues = (exercise: ExerciseResponse): ExerciseFormVa
   videoId: exercise.videoId,
   sets: String(exercise.sets),
   reps: exercise.reps,
-  durationSeconds: exercise.durationSeconds ? String(exercise.durationSeconds) : '',
-  restSeconds: exercise.restSeconds != null ? String(exercise.restSeconds) : '',
+  durationSeconds: numberToField(exercise.durationSeconds),
+  restSeconds: numberToField(exercise.restSeconds),
   notes: exercise.notes ?? '',
 });

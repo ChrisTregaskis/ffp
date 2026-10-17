@@ -1,14 +1,23 @@
-import { eq, inArray, asc, and } from 'drizzle-orm';
+import { eq, inArray, asc, and, count, ilike, or, sql, type Column, type SQL } from 'drizzle-orm';
 
 import type { DbClient, QuestionWithConfig } from '@ffp/database';
-import { questions, templateQuestions, type QuestionRecord } from '@ffp/database/schema';
+import {
+  assessmentFlows,
+  questions,
+  templateQuestions,
+  type QuestionRecord,
+} from '@ffp/database/schema';
 
 import { NotFoundError } from '../lib/errors';
+import { applyPagination, escapeLikePattern } from '../lib/pagination';
 
 import type {
   CreateQuestionInput,
+  QuestionListFilters,
+  QuestionUsage,
   UpdateQuestionInput,
 } from '../schemas/assessment-question.schema';
+import type { PaginationInput } from '../schemas/pagination.schema';
 
 export type Question = QuestionRecord;
 
@@ -80,14 +89,20 @@ export async function findByTemplateId(
   }));
 }
 
+/** A template's question, carrying the template it was loaded through. */
+export type TemplateQuestionWithConfig = QuestionWithConfig & { templateId: string };
+
 /**
- * Find all questions for multiple templates, ordered by display order within each template
+ * Find all questions for multiple templates, ordered by display order within each template.
+ * Active questions only, unless `includeInactive` is set: a member still sees a
+ * deactivated question that remains assigned, so their answers to it need its rules.
  * @returns Questions with template-specific config, ordered by templateId then displayOrder
  */
 export async function findByTemplateIds(
   db: DbClient,
-  templateIds: string[]
-): Promise<QuestionWithConfig[]> {
+  templateIds: string[],
+  options: { includeInactive?: boolean } = {}
+): Promise<TemplateQuestionWithConfig[]> {
   if (templateIds.length === 0) {
     return [];
   }
@@ -111,7 +126,12 @@ export async function findByTemplateIds(
     })
     .from(templateQuestions)
     .innerJoin(questions, eq(templateQuestions.questionId, questions.id))
-    .where(and(inArray(templateQuestions.templateId, templateIds), eq(questions.isActive, true)))
+    .where(
+      and(
+        inArray(templateQuestions.templateId, templateIds),
+        options.includeInactive ? undefined : eq(questions.isActive, true)
+      )
+    )
     .orderBy(asc(templateQuestions.templateId), asc(templateQuestions.displayOrder));
 
   return records.map((record) => ({
@@ -128,20 +148,108 @@ export async function findByTemplateIds(
     isActive: record.isActive,
     displayOrder: record.displayOrder,
     configOverrides: record.configOverrides,
+    templateId: record.templateId,
   }));
 }
 
-/**
- * Find all active questions unless explicitly requested otherwise */
-export async function findAllQuestions(
-  db: DbClient,
-  options?: { activeOnly?: boolean }
-): Promise<Question[]> {
-  const query = db.select().from(questions);
+const QUESTION_SORTABLE_COLUMNS: Partial<Record<string, Column>> = {
+  questionText: questions.questionText,
+  slug: questions.slug,
+  type: questions.type,
+  scoreDimension: questions.scoreDimension,
+  isActive: questions.isActive,
+  createdAt: questions.createdAt,
+  updatedAt: questions.updatedAt,
+};
 
-  return options?.activeOnly !== false
-    ? await query.where(eq(questions.isActive, true))
-    : await query;
+/** Build WHERE conditions from the admin question list filters. */
+const buildQuestionFilterConditions = (filters: QuestionListFilters): SQL[] => {
+  const conditions: SQL[] = [];
+
+  if (filters.search) {
+    const pattern = `%${escapeLikePattern(filters.search)}%`;
+    const searchCondition = or(
+      ilike(questions.questionText, pattern),
+      ilike(questions.slug, pattern)
+    );
+
+    if (searchCondition) {
+      conditions.push(searchCondition);
+    }
+  }
+
+  if (filters.type) {
+    conditions.push(eq(questions.type, filters.type));
+  }
+
+  if (filters.isActive !== undefined) {
+    conditions.push(eq(questions.isActive, filters.isActive));
+  }
+
+  return conditions;
+};
+
+/**
+ * One page of the admin question list. Sorts by question text when the caller
+ * names no sort, because the shared helper applies no ordering without one.
+ */
+export async function findQuestionPage(
+  db: DbClient,
+  paginationInput: PaginationInput,
+  filters: QuestionListFilters
+): Promise<Question[]> {
+  const conditions = buildQuestionFilterConditions(filters);
+
+  const query = db
+    .select()
+    .from(questions)
+    .where(and(...conditions))
+    .$dynamic();
+
+  const sortBy =
+    paginationInput.sortBy && QUESTION_SORTABLE_COLUMNS[paginationInput.sortBy]
+      ? paginationInput.sortBy
+      : 'questionText';
+
+  return await applyPagination(
+    query,
+    { ...paginationInput, sortBy },
+    QUESTION_SORTABLE_COLUMNS,
+    questions.id
+  );
+}
+
+/** Count questions matching the given filters (for pagination metadata). */
+export async function countQuestions(db: DbClient, filters: QuestionListFilters): Promise<number> {
+  const conditions = buildQuestionFilterConditions(filters);
+
+  const result = await db
+    .select({ count: count() })
+    .from(questions)
+    .where(and(...conditions));
+
+  return result[0].count;
+}
+
+/**
+ * Where a question is referenced: its template assignments, and the flows whose
+ * scoring config names it. Scoring config is jsonb holding question UUIDs, so
+ * the flow check is a jsonpath match evaluated in the database.
+ */
+export async function findQuestionUsage(db: DbClient, questionId: string): Promise<QuestionUsage> {
+  const [templates] = await db
+    .select({ count: count() })
+    .from(templateQuestions)
+    .where(eq(templateQuestions.questionId, questionId));
+
+  const [flows] = await db
+    .select({ count: count() })
+    .from(assessmentFlows)
+    .where(
+      sql`jsonb_path_exists(${assessmentFlows.scoringConfig}, '$.dimensions[*].questionIds[*] ? (@ == $id)', jsonb_build_object('id', ${questionId}::text))`
+    );
+
+  return { templateCount: templates.count, scoringFlowCount: flows.count };
 }
 
 /** Find a question by public identifier — the lookup the admin surface routes on. */
@@ -156,6 +264,18 @@ export async function findQuestionByPublicId(
     .limit(1);
 
   return records[0] ?? null;
+}
+
+/** Batch sibling of `findQuestionByPublicId`. Returns matches in no guaranteed order. */
+export async function findQuestionsByPublicIds(
+  db: DbClient,
+  publicIds: string[]
+): Promise<Question[]> {
+  if (publicIds.length === 0) {
+    return [];
+  }
+
+  return await db.select().from(questions).where(inArray(questions.publicId, publicIds));
 }
 
 /** Create a question bank entry. */

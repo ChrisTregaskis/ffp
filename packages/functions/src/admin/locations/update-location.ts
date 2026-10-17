@@ -1,10 +1,8 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
+  withSystemAdmin,
   ValidationError,
-  isUserActor,
   updateLocationService,
 } from '@ffp/core/server';
 
@@ -13,20 +11,19 @@ import {
  *
  * Updates a location's name, address, or status. Admin role required.
  */
-export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2WithJWT) => {
-  const context = extractUserContext(event);
+export const handler = withErrorHandling(
+  withSystemAdmin(
+    'Only system administrators can update locations',
+    async (event: APIGatewayProxyEventV2WithJWT, context) => {
+      const locationId = event.pathParameters?.id;
 
-  if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-    throw new ForbiddenError('Only system administrators can update locations');
-  }
+      if (!locationId) {
+        throw new ValidationError('Location ID is required');
+      }
 
-  const locationId = event.pathParameters?.id;
+      const body = JSON.parse(event.body ?? '{}') as unknown;
 
-  if (!locationId) {
-    throw new ValidationError('Location ID is required');
-  }
-
-  const body = JSON.parse(event.body ?? '{}') as unknown;
-
-  return await updateLocationService(context, locationId, body);
-});
+      return await updateLocationService(context, locationId, body);
+    }
+  )
+);

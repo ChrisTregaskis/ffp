@@ -2,9 +2,10 @@ import React, { useMemo } from 'react';
 
 import type { ExerciseResponse } from '@ffp/core';
 
-import { KebabMenu } from '@web/components/dropdown-menu';
-import type { DropdownMenuItem } from '@web/components/dropdown-menu';
-import { Text } from '@web/components/text';
+import { Surface, Text } from '@web/components/atoms';
+import { KebabMenu } from '@web/components/organisms';
+import type { DropdownMenuItem } from '@web/components/organisms';
+import { reorderableItemActions } from '@web/utils/reorderable-item-actions';
 
 export interface ExerciseRowProps {
   /** Exercise data with embedded video summary */
@@ -54,40 +55,28 @@ export const ExerciseRow: React.FC<ExerciseRowProps> = ({
   isMutating = false,
 }) => {
   const menuItems: DropdownMenuItem[] = useMemo(
-    () => [
-      {
-        label: 'Edit',
-        onClick: () => {
+    () =>
+      reorderableItemActions({
+        onEdit: () => {
           onEdit(exercise.id);
         },
-      },
-      {
-        label: 'Move up',
-        onClick: () => {
+        onMoveUp: () => {
           onMoveUp(exercise.id);
         },
-        disabled: isFirst,
-      },
-      {
-        label: 'Move down',
-        onClick: () => {
+        onMoveDown: () => {
           onMoveDown(exercise.id);
         },
-        disabled: isLast,
-      },
-      {
-        label: 'Delete',
-        onClick: () => {
+        onDelete: () => {
           onDelete(exercise.id);
         },
-        variant: 'danger',
-      },
-    ],
+        isFirst,
+        isLast,
+      }),
     [exercise.id, onEdit, onMoveUp, onMoveDown, onDelete, isFirst, isLast]
   );
 
   return (
-    <div className="flex items-center gap-3 rounded-md border border-border bg-white px-3 py-2">
+    <Surface radius="md" padding="row" className="flex items-center gap-3">
       {/* Order indicator */}
       <Text
         styleProps={{ size: 'xs', colour: 'muted-foreground', weight: 'medium' }}
@@ -122,6 +111,6 @@ export const ExerciseRow: React.FC<ExerciseRowProps> = ({
       <div className="flex shrink-0 items-center">
         <KebabMenu items={menuItems} disabled={isMutating} />
       </div>
-    </div>
+    </Surface>
   );
 };

@@ -8,6 +8,9 @@ import { minutesToMs } from '@web/utils/time';
 
 import type { UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
 
+/** How long a fetched template stays fresh; shared with imperative fetches of it. */
+export const ASSESSMENT_TEMPLATE_STALE_TIME = minutesToMs(10);
+
 /**
  * Fetch assessment template by ID (includes questions)
  *
@@ -22,7 +25,7 @@ export const useAssessmentTemplateQuery = (
   return useQuery({
     queryKey: assessmentKeys.template(templateId),
     queryFn: ({ signal }) => assessmentsApi.getTemplate(templateId, signal),
-    staleTime: minutesToMs(10),
+    staleTime: ASSESSMENT_TEMPLATE_STALE_TIME,
     enabled: !!templateId,
     ...options,
   });

@@ -2,16 +2,17 @@ import { useNavigate } from 'react-router-dom';
 
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
-import { Button } from '@web/components/button';
-import { Card } from '@web/components/Card/Card';
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
-import { ProgressBar } from '@web/components/ProgressBar';
-import { Text } from '@web/components/text/Text';
-import { Title } from '@web/components/text/Title';
+import {
+  Button,
+  Icon,
+  Icons,
+  PressableArea,
+  ProgressBar,
+  Text,
+  Title,
+} from '@web/components/atoms';
+import { Card, PrescriptionBadge } from '@web/components/molecules';
 import { VideoPlayer } from '@web/components/video';
-
-import { PrescriptionBadge } from './PrescriptionBadge';
 
 type Phase = ProgrammeDetailResponse['phases'][number];
 type Session = Phase['sessions'][number];
@@ -61,19 +62,9 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
   return (
     <Card>
       <div className="flex flex-col lg:flex-row lg:items-stretch lg:gap-6">
-        {/* Video preview — looping muted preview of first exercise, click to start session */}
-        <div
-          className="relative min-h-[200px] cursor-pointer overflow-hidden rounded-lg bg-muted lg:w-2/5"
-          onClick={handleStart}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              handleStart();
-            }
-          }}
-          aria-label={isResumable ? 'Continue session' : 'Start session'}
-        >
+        {/* Looping preview of the first exercise; clicking it starts the session. The hit area lies
+            over the player, not around it: the player's error state has a retry button, and buttons can't nest. */}
+        <div className="relative min-h-[200px] overflow-hidden rounded-lg bg-muted lg:w-2/5">
           {firstVideoId ? (
             <VideoPlayer
               videoId={firstVideoId}
@@ -90,23 +81,22 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
               <Icon name={Icons.PLAY} styleProps={{ size: 'xl', colour: 'var(--color-primary)' }} />
             </div>
           )}
-          {/* Overlay with play icon and label */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-transparent opacity-0 transition-all hover:bg-black/40 hover:opacity-100">
+          <PressableArea
+            onClick={handleStart}
+            aria-label={isResumable ? 'Continue session' : 'Start session'}
+            className="absolute inset-0 flex flex-col items-center justify-center bg-transparent opacity-0 transition-all hover:bg-black/40 hover:opacity-100 focus-visible:bg-black/40 focus-visible:opacity-100 focus-visible:ring-inset"
+          >
             <Icon name={Icons.PLAY} styleProps={{ size: 'xl', colour: '#ffffff' }} />
-            <Text as="p" styleProps={{ size: 'sm', weight: 'medium' }} className="mt-2 text-white">
+            <Text styleProps={{ size: 'sm', weight: 'medium' }} className="mt-2 text-white">
               {isResumable ? 'Continue session' : 'Start session'}
             </Text>
-          </div>
+          </PressableArea>
         </div>
 
         {/* Content */}
         <div className="mt-4 flex flex-1 flex-col justify-between lg:mt-0">
           <>
-            <Text
-              as="p"
-              styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}
-              className="mb-1 uppercase tracking-wide"
-            >
+            <Text as="p" variant="eyebrow" className="mb-1">
               {isResumable ? 'Continue where you left off' : 'Your next session'}
             </Text>
             <Title as="h3" className="mb-1">
@@ -127,7 +117,7 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
                 >
                   {String(completedExercises)} of {String(totalExercises)} exercises done
                 </Text>
-                <ProgressBar percent={exerciseProgress} />
+                <ProgressBar percent={exerciseProgress} aria-label="Session exercise progress" />
               </div>
             )}
 

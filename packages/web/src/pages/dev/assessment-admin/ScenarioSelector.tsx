@@ -1,5 +1,5 @@
-import { Select } from '@web/components/select';
-import { Text } from '@web/components/text';
+import { Text } from '@web/components/atoms';
+import { Select } from '@web/components/molecules';
 
 import { LEVEL_META, type Level } from './prototype-level-model';
 import {

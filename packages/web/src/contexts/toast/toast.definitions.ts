@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import { type ToastVariant } from '@web/components/feedback/ToastAlert';
+import type { ToastVariant } from '@web/components/molecules';
 
 /** Options for creating a toast notification */
 export interface ToastOptions {

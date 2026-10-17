@@ -1,10 +1,8 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
+  withSystemAdmin,
   ValidationError,
-  isUserActor,
   templateSessionService,
 } from '@ffp/core/server';
 
@@ -17,21 +15,18 @@ import {
  * Admin role required.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<null> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can delete template sessions',
+    async (event: APIGatewayProxyEventV2WithJWT): Promise<null> => {
+      const sessionId = event.pathParameters?.id;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can delete template sessions');
+      if (!sessionId) {
+        throw new ValidationError('Session ID is required');
+      }
+
+      await templateSessionService.deleteSession(sessionId);
+
+      return null;
     }
-
-    const sessionId = event.pathParameters?.id;
-
-    if (!sessionId) {
-      throw new ValidationError('Session ID is required');
-    }
-
-    await templateSessionService.deleteSession(sessionId);
-
-    return null;
-  }
+  )
 );

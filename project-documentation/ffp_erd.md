@@ -61,6 +61,7 @@ erDiagram
     assessment_flows ||--o{ user_assessments : "uses"
     users ||--o{ user_assessments : "completes"
     user_assessments ||--o{ user_assessment_answers : "contains"
+    user_assessments ||--o| assessment_safety_triggers : "raised"
     questions ||--o{ user_assessment_answers : "answered by"
     programmes ||--o{ user_assessments : "associated"
 
@@ -118,6 +119,18 @@ erDiagram
         jsonb scores "nullable"
         jsonb visited_step_ids
         jsonb warnings_shown
+        timestamp safety_acknowledged_at "nullable"
+    }
+
+    assessment_safety_triggers {
+        uuid id PK
+        uuid organisation_id FK "RLS"
+        uuid user_assessment_id FK "unique"
+        uuid user_id FK
+        text question_slug "nullable"
+        jsonb selected_options
+        text warning_message
+        timestamp triggered_at
     }
 
     user_assessment_answers {
@@ -170,21 +183,22 @@ erDiagram
 
 ## RLS Summary
 
-| Table                     | Org-Scoped | Notes                                                                    |
-| ------------------------- | :--------: | ------------------------------------------------------------------------ |
-| `organisations`           |     -      | Root entity                                                              |
-| `locations`               |    [✓]     |                                                                          |
-| `users`                   |    [✓]     |                                                                          |
-| `user_assessments`        |    [✓]     |                                                                          |
-| `user_assessment_answers` |    [✓]     | Denormalised `organisation_id` for policy efficiency                     |
-| `programmes`              |    [✓]     |                                                                          |
-| `process_jobs`            |    [✓]     | Job processor uses BYPASSRLS to claim; handlers set organisation context |
-| `assessment_flows`        |     -      | System content                                                           |
-| `flow_steps`              |     -      | System content                                                           |
-| `assessment_templates`    |     -      | System content                                                           |
-| `questions`               |     -      | System content                                                           |
-| `template_questions`      |     -      | System join table                                                        |
-| `programme_templates`     |     -      | System lookup                                                            |
+| Table                        | Org-Scoped | Notes                                                                    |
+| ---------------------------- | :--------: | ------------------------------------------------------------------------ |
+| `organisations`              |     -      | Root entity                                                              |
+| `locations`                  |    [✓]     |                                                                          |
+| `users`                      |    [✓]     |                                                                          |
+| `user_assessments`           |    [✓]     |                                                                          |
+| `user_assessment_answers`    |    [✓]     | Denormalised `organisation_id` for policy efficiency                     |
+| `assessment_safety_triggers` |    [✓]     | One row per assessment that raised safety advice                         |
+| `programmes`                 |    [✓]     |                                                                          |
+| `process_jobs`               |    [✓]     | Job processor uses BYPASSRLS to claim; handlers set organisation context |
+| `assessment_flows`           |     -      | System content                                                           |
+| `flow_steps`                 |     -      | System content                                                           |
+| `assessment_templates`       |     -      | System content                                                           |
+| `questions`                  |     -      | System content                                                           |
+| `template_questions`         |     -      | System join table                                                        |
+| `programme_templates`        |     -      | System lookup                                                            |
 
 ---
 

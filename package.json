@@ -34,6 +34,7 @@
     "db:verify": "turbo run db:verify --filter=@ffp/database",
     "bootstrap:super-admin": "tsx scripts/bootstrap-super-admin.ts",
     "seed:db": "tsx scripts/seed-database.ts",
+    "seed:video-assets": "tsx scripts/seed-video-assets.ts",
     "sst:dev": "sst dev --mode=mono",
     "sst:build": "sst build",
     "sst:deploy": "sst deploy",
@@ -68,7 +69,7 @@
   },
   "packageManager": "pnpm@9.12.3",
   "engines": {
-    "node": ">=20.0.0",
+    "node": ">=24.0.0",
     "pnpm": ">=9.0.0"
   }
 }

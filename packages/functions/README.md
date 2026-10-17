@@ -138,6 +138,9 @@ Every handler must:
 - [ ] Rate limit public endpoints
 - [ ] Sanitise user input
 - [ ] Return appropriate HTTP status codes
+
+Every `/admin/` handler is also gated on `system_admin` with `withErrorHandling(withSystemAdmin('<endpoint message>', async (event, context) => …))`. It is the only guard on the RLS-excluded catalogue and admin-bypass tables, and it logs each refusal.
+
 - [ ] Include CORS headers
 
 ---

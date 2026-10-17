@@ -1,7 +1,12 @@
-import { useCallback, useId } from 'react';
+import { useCallback } from 'react';
 
-import { RequiredIndicator } from '@web/components/form';
-import { Text } from '@web/components/text';
+import { isAnswerRequired } from '@ffp/core';
+
+import { FieldError, Input, Text } from '@web/components/atoms';
+
+import { QuestionFieldset } from './QuestionFieldset';
+import { QuestionHeader } from './QuestionHeader';
+import { useQuestionFieldIds } from './useQuestionFieldIds';
 
 import type { QuestionComponentProps } from './types';
 
@@ -17,11 +22,7 @@ export const NumericQuestion: React.FC<QuestionComponentProps> = ({
   disabled = false,
   error,
 }) => {
-  const instanceId = useId();
-  const questionId = `question-${question.id}-${instanceId}`;
-  const errorId = `${questionId}-error`;
-  const descriptionId = question.description ? `${questionId}-description` : undefined;
-  const isRequired = question.validation?.required !== false;
+  const { questionId, errorId, descriptionId, describedBy } = useQuestionFieldIds(question);
 
   // Parse current value as number (or undefined)
   const currentValue = typeof value === 'number' ? value : undefined;
@@ -71,36 +72,12 @@ export const NumericQuestion: React.FC<QuestionComponentProps> = ({
   );
 
   return (
-    <fieldset
-      className="space-y-5"
-      aria-describedby={
-        [descriptionId, error ? errorId : undefined].filter(Boolean).join(' ') || undefined
-      }
-    >
-      <legend className="sr-only">{question.question}</legend>
+    <QuestionFieldset legend={question.question} describedBy={describedBy(!!error)}>
+      <QuestionHeader question={question} descriptionId={descriptionId} />
 
-      {/* Question text */}
-      <div className="space-y-1">
-        <Text
-          as="p"
-          styleProps={{ size: 'xl', weight: 'medium', colour: 'foreground' }}
-          className="leading-relaxed"
-        >
-          {question.question}
-          {isRequired && <RequiredIndicator />}
-        </Text>
-
-        {/* Description / helper text */}
-        {question.description && (
-          <Text as="p" id={descriptionId} styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-            {question.description}
-          </Text>
-        )}
-      </div>
-
-      {/* Numeric input */}
       <div className="flex items-center gap-2">
-        <input
+        <Input
+          appearance="bare"
           type="number"
           id={questionId}
           value={currentValue ?? ''}
@@ -109,10 +86,8 @@ export const NumericQuestion: React.FC<QuestionComponentProps> = ({
           min={minValue}
           max={maxValue}
           aria-invalid={!!error}
-          aria-describedby={
-            [descriptionId, error ? errorId : undefined].filter(Boolean).join(' ') || undefined
-          }
-          aria-required={isRequired}
+          aria-describedby={describedBy(!!error)}
+          aria-required={isAnswerRequired(question.validation)}
           placeholder="0"
           className={`
             h-12 w-24 rounded-lg border-2 bg-card px-4 text-center text-lg font-medium
@@ -137,18 +112,7 @@ export const NumericQuestion: React.FC<QuestionComponentProps> = ({
         )}
       </div>
 
-      {/* Error message */}
-      {error && (
-        <Text
-          as="p"
-          id={errorId}
-          styleProps={{ size: 'sm', colour: 'destructive' }}
-          role="alert"
-          className="animate-in fade-in slide-in-from-top-2 duration-200"
-        >
-          {error}
-        </Text>
-      )}
-    </fieldset>
+      {error && <FieldError animated id={errorId} message={error} />}
+    </QuestionFieldset>
   );
 };

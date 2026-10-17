@@ -1,13 +1,9 @@
 import React, { useMemo } from 'react';
 
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
-import { FormActions } from '@web/components/form/standardForm/FormActions';
-import { FormRow } from '@web/components/form/standardForm/FormRow';
-import { FormSelect } from '@web/components/form/standardForm/FormSelect';
-import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
+import { FormRow } from '@web/components/atoms';
+import { FormActions, StaticAlert, FormSelect, FormTextInput } from '@web/components/molecules';
+import { SUSPENDABLE_STATUS_FILTER, useComposableFormContext } from '@web/components/organisms';
 import { useAdminOrganisationsQuery } from '@web/hooks/organisations';
-import { STATUS_FILTER_OPTIONS } from '@web/pages/protected/admin/location-list/constants';
 
 import type { LocationFormValues } from './types';
 
@@ -69,6 +65,7 @@ export const LocationFormFields: React.FC<LocationFormFieldsProps> = ({
           control={control}
           errors={errors}
           isRequired
+          rules={{ required: 'Please choose an organisation' }}
         />
       )}
 
@@ -80,6 +77,7 @@ export const LocationFormFields: React.FC<LocationFormFieldsProps> = ({
         register={register}
         errors={errors}
         isRequired
+        registerOptions={{ required: 'Please give the location a name' }}
       />
 
       {/* Status (edit mode only) */}
@@ -87,7 +85,7 @@ export const LocationFormFields: React.FC<LocationFormFieldsProps> = ({
         <FormSelect
           name="status"
           label="Status"
-          options={STATUS_FILTER_OPTIONS}
+          options={SUSPENDABLE_STATUS_FILTER.options}
           control={control}
           errors={errors}
         />

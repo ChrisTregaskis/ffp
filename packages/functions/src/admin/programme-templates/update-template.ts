@@ -1,11 +1,9 @@
 import type { TemplateDetailResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
+  withSystemAdmin,
   ValidationError,
-  isUserActor,
   programmeTemplateService,
 } from '@ffp/core/server';
 
@@ -22,22 +20,19 @@ interface UpdateTemplateResponse {
  * Re-validates slug uniqueness if slug is changed.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<UpdateTemplateResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can update programme templates',
+    async (event: APIGatewayProxyEventV2WithJWT): Promise<UpdateTemplateResponse> => {
+      const templateId = event.pathParameters?.id;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can update programme templates');
+      if (!templateId) {
+        throw new ValidationError('Template ID is required');
+      }
+
+      const body = parseJsonBody(event.body);
+      const template = await programmeTemplateService.updateTemplate(templateId, body);
+
+      return { template };
     }
-
-    const templateId = event.pathParameters?.id;
-
-    if (!templateId) {
-      throw new ValidationError('Template ID is required');
-    }
-
-    const body = parseJsonBody(event.body);
-    const template = await programmeTemplateService.updateTemplate(templateId, body);
-
-    return { template };
-  }
+  )
 );

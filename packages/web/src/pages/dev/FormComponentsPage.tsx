@@ -1,54 +1,25 @@
+import { Text, Title } from '@web/components/atoms';
+import { LoginForm } from '@web/components/auth/LoginForm';
 import {
   ComponentPageWrapper,
   ComponentPageHeader,
   ComponentSection,
   DeveloperInstructions,
 } from '@web/components/dev';
-import { Form, type Field, FieldDataType } from '@web/components/form';
-import { Text, Title } from '@web/components/text';
 import { useAuth } from '@web/hooks/useAuth';
-
-interface LoginFormValues {
-  email: string;
-  password: string;
-}
-
-const loginFields: Field<LoginFormValues>[] = [
-  {
-    order: 1,
-    name: 'email',
-    label: 'Email Address',
-    dataType: FieldDataType.STRING,
-    placeholder: 'you@example.com',
-    validation: {
-      isRequired: true,
-      pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-    },
-  },
-  {
-    order: 2,
-    name: 'password',
-    label: 'Password',
-    dataType: FieldDataType.STRING,
-    placeholder: '••••••••',
-    validation: {
-      isRequired: true,
-      minLength: 8,
-    },
-  },
-];
+import type { LoginFormData } from '@web/schemas/auth.schema';
 
 /**
  * Form components showcase page (development only).
  *
- * Demonstrates the Form component with a live authentication flow.
+ * Demonstrates the sign-in form with a live authentication flow.
  * This page is interactive rather than purely visual — it connects
  * to the AuthContext for real login/logout behaviour.
  */
 export const FormComponentsPage = (): JSX.Element => {
   const { user, loading, error, login, logout } = useAuth();
 
-  const handleSubmit = async (values: LoginFormValues): Promise<void> => {
+  const handleSubmit = async (values: LoginFormData): Promise<void> => {
     // eslint-disable-next-line no-console
     console.log('Login attempt:', { email: values.email });
 
@@ -81,8 +52,8 @@ export const FormComponentsPage = (): JSX.Element => {
 
       <ComponentSection title="Authentication Form">
         <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
-          Live authentication flow using the Form component with email/password validation. Connect
-          to the AuthContext for real login/logout behaviour.
+          Live authentication flow using the sign-in form with email/password validation. Connect to
+          the AuthContext for real login/logout behaviour.
         </Text>
 
         <div className="rounded-lg bg-white p-8 shadow">
@@ -148,7 +119,7 @@ export const FormComponentsPage = (): JSX.Element => {
                   </li>
                   <li>
                     <Text className="text-gray-600" styleProps={{ size: 'sm' }}>
-                      Password validation (minimum 8 characters)
+                      Password required
                     </Text>
                   </li>
                   <li>
@@ -185,12 +156,7 @@ export const FormComponentsPage = (): JSX.Element => {
                 </div>
               )}
 
-              <Form
-                fields={loginFields}
-                onSubmit={handleSubmit}
-                submitLabel={loading ? 'Logging in...' : 'Login'}
-                isSubmitting={loading}
-              />
+              <LoginForm onSubmit={handleSubmit} isLoading={loading} />
             </>
           )}
         </div>

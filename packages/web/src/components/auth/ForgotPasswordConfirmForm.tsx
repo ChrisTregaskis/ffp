@@ -1,10 +1,7 @@
-import { useMemo, useState } from 'react';
+import { ComposableForm } from '@web/components/organisms';
+import { useNewPasswordFields } from '@web/hooks/useNewPasswordFields';
 
-import { Card } from '@web/components/Card/Card';
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { ComposableForm } from '@web/components/form/composableForm';
-import { validatePassword } from '@web/utils/passwordStrength';
-
+import { AuthFormCard } from './AuthFormCard';
 import {
   ForgotPasswordConfirmFormFields,
   type ConfirmResetFormValues,
@@ -30,8 +27,8 @@ export interface ForgotPasswordConfirmFormProps {
 /**
  * Forgot password confirm form — step 2 of the reset flow.
  *
- * Uses ComposableForm for the verification code field and controlled
- * PasswordInput components for password entry with real-time strength feedback.
+ * The verification code is a form field; the new password is controlled state, for its live
+ * strength reading.
  */
 export const ForgotPasswordConfirmForm: React.FC<ForgotPasswordConfirmFormProps> = ({
   onSubmit,
@@ -42,31 +39,19 @@ export const ForgotPasswordConfirmForm: React.FC<ForgotPasswordConfirmFormProps>
   onBackToLogin,
   resendCooldown,
 }) => {
-  // Password state — controlled for real-time strength validation
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
-
-  const passwordValidation = useMemo(() => validatePassword(password), [password]);
-  const passwordsMatch = password === confirmPassword;
-  const showConfirmPasswordError = Boolean(
-    confirmPasswordTouched && confirmPassword && !passwordsMatch
-  );
+  const newPassword = useNewPasswordFields();
 
   const handleFormSubmit = async (data: ConfirmResetFormValues): Promise<void> => {
-    await onSubmit(data.code, password);
+    await onSubmit(data.code, newPassword.password);
   };
 
   return (
-    <Card
+    <AuthFormCard
       title="Set a new password"
       subtitle="Enter the verification code sent to your email and choose a new password."
-      centerHeader
+      error={error}
+      onDismissError={onClearError}
     >
-      {error && (
-        <StaticAlert variant="error" message={error} onDismiss={onClearError} className="mb-6" />
-      )}
-
       <ComposableForm<ConfirmResetFormValues>
         onSubmit={handleFormSubmit}
         defaultValues={{ code: '' }}
@@ -76,19 +61,10 @@ export const ForgotPasswordConfirmForm: React.FC<ForgotPasswordConfirmFormProps>
           onResendCode={onResendCode}
           isLoading={isLoading}
           resendCooldown={resendCooldown}
-          password={password}
-          onPasswordChange={setPassword}
-          confirmPassword={confirmPassword}
-          onConfirmPasswordChange={(value) => {
-            setConfirmPassword(value);
-            setConfirmPasswordTouched(true);
-          }}
-          passwordValidation={passwordValidation}
-          passwordsMatch={passwordsMatch}
-          showConfirmPasswordError={showConfirmPasswordError}
+          newPassword={newPassword}
           onBackToLogin={onBackToLogin}
         />
       </ComposableForm>
-    </Card>
+    </AuthFormCard>
   );
 };

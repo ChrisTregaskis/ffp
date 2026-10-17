@@ -1,5 +1,4 @@
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
+import { Icon, Icons, PressableArea } from '@web/components/atoms';
 
 export interface VideoOverlayProps {
   /** Whether the video has finished playing */
@@ -15,18 +14,13 @@ export interface VideoOverlayProps {
  * and a replay icon persistently after the video ends.
  */
 export const VideoOverlay: React.FC<VideoOverlayProps> = ({ hasEnded, onClick }) => (
-  <div
-    role="button"
-    tabIndex={0}
+  <PressableArea
     aria-label={hasEnded ? 'Replay video' : 'Play video'}
     onClick={onClick}
-    onKeyDown={(e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        onClick();
-      }
-    }}
-    className={`absolute inset-0 flex cursor-pointer items-center justify-center transition-opacity ${
-      hasEnded ? 'bg-black/20' : 'bg-transparent opacity-0 hover:bg-black/20 hover:opacity-100'
+    className={`absolute inset-0 flex items-center justify-center transition-opacity focus-visible:ring-inset ${
+      hasEnded
+        ? 'bg-black/20'
+        : 'bg-transparent opacity-0 hover:bg-black/20 hover:opacity-100 focus-visible:bg-black/20 focus-visible:opacity-100'
     }`}
   >
     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90">
@@ -35,5 +29,5 @@ export const VideoOverlay: React.FC<VideoOverlayProps> = ({ hasEnded, onClick })
         styleProps={{ size: 'lg', colour: 'var(--color-ffp-dark-blue)' }}
       />
     </div>
-  </div>
+  </PressableArea>
 );

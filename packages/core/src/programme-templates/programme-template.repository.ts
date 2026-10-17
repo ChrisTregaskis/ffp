@@ -69,7 +69,7 @@ export async function findAllTemplates(
   const query = db
     .select()
     .from(programmeTemplates)
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .$dynamic();
 
   return await applyPagination(query, paginationInput, SORTABLE_COLUMNS);
@@ -85,7 +85,7 @@ export async function countAllTemplates(
   const result = await db
     .select({ count: count() })
     .from(programmeTemplates)
-    .where(conditions.length > 0 ? and(...conditions) : undefined);
+    .where(and(...conditions));
 
   return result[0].count;
 }
@@ -130,6 +130,25 @@ export async function findTemplateBySlug(
     .limit(1);
 
   return records[0] ?? null;
+}
+
+/** Returns the slug, name and status of each template carrying one of the slugs. */
+export async function findTemplateNamesBySlugs(
+  db: DbQueryClient,
+  slugs: string[]
+): Promise<{ slug: string; name: string; isActive: boolean }[]> {
+  if (slugs.length === 0) {
+    return [];
+  }
+
+  return db
+    .select({
+      slug: programmeTemplates.slug,
+      name: programmeTemplates.name,
+      isActive: programmeTemplates.isActive,
+    })
+    .from(programmeTemplates)
+    .where(inArray(programmeTemplates.slug, slugs));
 }
 
 /**

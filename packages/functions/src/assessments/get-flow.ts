@@ -3,6 +3,7 @@ import {
   type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
   withErrorHandling,
+  assertUuidOrNotFound,
   flowRepository,
   db,
   ValidationError,
@@ -24,6 +25,8 @@ export const handler = withErrorHandling(
     if (!flowId) {
       throw new ValidationError('Flow ID is required in path');
     }
+
+    assertUuidOrNotFound(flowId, 'Assessment flow');
 
     const flow = await flowRepository.findById(flowId);
 

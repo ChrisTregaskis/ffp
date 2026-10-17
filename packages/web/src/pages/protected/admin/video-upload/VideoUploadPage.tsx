@@ -1,16 +1,21 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { generatePath, useNavigate } from 'react-router-dom';
 
-import { Button } from '@web/components/button';
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { StatusResult } from '@web/components/feedback/StatusResult';
-import { VideoMetadataForm } from '@web/components/form/videos/VideoMetadataForm';
-import { Icon } from '@web/components/Icon';
-import { ContentPanel, PageContainer, PageHeader } from '@web/components/layout';
-import { ProgressBar } from '@web/components/ProgressBar';
-import { Text } from '@web/components/text';
+import {
+  Button,
+  FileInput,
+  Icon,
+  ProgressBar,
+  Text,
+  ContentPanel,
+  PageContainer,
+  PressableArea,
+  Surface,
+} from '@web/components/atoms';
+import { LoadingState, StaticAlert, StatusResult, PageHeader } from '@web/components/molecules';
+import { VideoMetadataForm } from '@web/components/video';
+import { RouteKey, routes } from '@web/config/routes';
 import { useVideoUpload } from '@web/hooks/videos';
-import { RouteKey, routes } from '@web/pages/routes';
 import { formatFileSize } from '@web/utils/format';
 
 /**
@@ -53,11 +58,11 @@ export const VideoUploadPage: React.FC = () => {
       <ContentPanel>
         {/* Success view */}
         {phase === 'success' && (
-          <div className="rounded-lg border border-border bg-white p-6">
+          <Surface padding="lg">
             <StatusResult
               icon="CheckCircle"
-              iconColour="var(--color-white)"
-              iconBg="bg-success"
+              iconVariant="success"
+              iconAppearance="solid"
               title="Video Created"
               description={`Your video has been created successfully with status "draft".`}
               actions={
@@ -70,7 +75,9 @@ export const VideoUploadPage: React.FC = () => {
                       variant="primary"
                       onClick={() => {
                         void navigate(
-                          routes[RouteKey.ADMIN_VIDEO_EDIT].path.replace(':id', createdVideoId)
+                          generatePath(routes[RouteKey.ADMIN_VIDEO_EDIT].path, {
+                            id: createdVideoId,
+                          })
                         );
                       }}
                     >
@@ -80,12 +87,12 @@ export const VideoUploadPage: React.FC = () => {
                 </>
               }
             />
-          </div>
+          </Surface>
         )}
 
         {/* Progress view (uploading or creating) */}
         {(phase === 'uploading' || phase === 'creating') && (
-          <div className="rounded-lg border border-border bg-white p-6">
+          <Surface padding="lg">
             {phase === 'uploading' && (
               <>
                 <div className="mb-4 flex items-center justify-between">
@@ -96,7 +103,7 @@ export const VideoUploadPage: React.FC = () => {
                     {String(uploadProgress)}%
                   </Text>
                 </div>
-                <ProgressBar percent={uploadProgress} />
+                <ProgressBar percent={uploadProgress} aria-label="Upload progress" />
                 {selectedFile && (
                   <Text
                     as="p"
@@ -110,12 +117,11 @@ export const VideoUploadPage: React.FC = () => {
             )}
 
             {phase === 'creating' && (
-              <div className="flex flex-col items-center py-6">
-                <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
-                <Text styleProps={{ weight: 'medium' }}>Creating video record...</Text>
+              <div className="py-6">
+                <LoadingState layout="fill" message="Creating video record..." />
               </div>
             )}
-          </div>
+          </Surface>
         )}
 
         {/* Form view (idle or error) */}
@@ -126,28 +132,20 @@ export const VideoUploadPage: React.FC = () => {
 
             {/* Drop zone — shown when no valid file is selected */}
             {!hasValidFile && (
-              <div
+              <PressableArea
                 onDragOver={handleDragOver}
                 onDragEnter={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={fileSelection.openFilePicker}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    fileSelection.openFilePicker();
-                  }
-                }}
-                role="button"
-                tabIndex={0}
                 aria-label="Select video file to upload"
-                className={`flex cursor-pointer flex-col items-center rounded-lg border-2 border-dashed p-10 transition-colors ${
+                className={`flex w-full flex-col items-center rounded-lg border-2 border-dashed p-10 transition-colors ${
                   isDragOver
                     ? 'border-primary bg-primary/5'
-                    : 'border-border bg-white hover:border-primary/50 hover:bg-muted/30'
+                    : 'border-border bg-card hover:border-primary/50 hover:bg-muted/30'
                 }`}
               >
-                <div className="mb-3">
+                <span className="mb-3">
                   <Icon
                     name="Upload"
                     styleProps={{
@@ -155,7 +153,7 @@ export const VideoUploadPage: React.FC = () => {
                       colour: isDragOver ? 'var(--color-primary)' : 'var(--color-muted-foreground)',
                     }}
                   />
-                </div>
+                </span>
                 <Text styleProps={{ weight: 'medium', size: 'lg' }} className="mb-1">
                   {isDragOver ? 'Drop your video here' : 'Drag and drop your video here'}
                 </Text>
@@ -165,12 +163,12 @@ export const VideoUploadPage: React.FC = () => {
                 <Text styleProps={{ colour: 'muted-foreground', size: 'xs' }} className="mt-2">
                   MP4 format, up to 500 MB
                 </Text>
-              </div>
+              </PressableArea>
             )}
 
             {/* File info card — shown when a valid file is selected */}
             {hasValidFile && selectedFile && (
-              <div className="flex items-center justify-between rounded-lg border border-border bg-white p-4">
+              <Surface padding="md" className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Icon name="Video" styleProps={{ size: 'md', colour: 'var(--color-primary)' }} />
                   <div>
@@ -183,16 +181,13 @@ export const VideoUploadPage: React.FC = () => {
                 <Button variant="neutral" size="sm" onClick={fileSelection.clearFile}>
                   Remove
                 </Button>
-              </div>
+              </Surface>
             )}
 
-            {/* Hidden file input */}
-            <input
-              ref={fileSelection.fileInputRef}
-              type="file"
+            <FileInput
+              forwardedRef={fileSelection.fileInputRef}
               accept="video/mp4"
               onChange={fileSelection.handleFileInputChange}
-              className="hidden"
               aria-hidden="true"
             />
 

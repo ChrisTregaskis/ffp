@@ -1,7 +1,4 @@
-import { Button } from '@web/components/button';
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
-import { Text } from '@web/components/text/Text';
+import { Button, Icon, Icons, Text } from '@web/components/atoms';
 
 export interface SessionHeaderProps {
   /** Session name displayed in the centre */
@@ -57,7 +54,13 @@ export const SessionHeader: React.FC<SessionHeaderProps> = ({
 
     {/* Right: Sidebar toggle (desktop only) */}
     <div className="hidden lg:block">
-      <Button variant="ghost" size="sm" onClick={onToggleSidebar}>
+      {/* Button rather than IconButton keeps the ghost padding, hover and press animation of the exit button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onToggleSidebar}
+        aria-label={sidebarOpen ? 'Hide exercise list' : 'Show exercise list'}
+      >
         <Icon
           name={sidebarOpen ? Icons.LEFTPANELCLOSE : Icons.LEFTPANELOPEN}
           styleProps={{ size: 'sm', colour: 'currentColor' }}

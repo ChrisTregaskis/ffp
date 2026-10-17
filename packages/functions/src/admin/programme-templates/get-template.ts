@@ -1,11 +1,9 @@
 import type { TemplateDetailResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
+  withSystemAdmin,
   ValidationError,
-  isUserActor,
   programmeTemplateService,
 } from '@ffp/core/server';
 
@@ -20,21 +18,18 @@ interface GetTemplateResponse {
  * (phases → sessions → exercises). Admin role required.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<GetTemplateResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can view programme templates',
+    async (event: APIGatewayProxyEventV2WithJWT): Promise<GetTemplateResponse> => {
+      const templateId = event.pathParameters?.id;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can view programme templates');
+      if (!templateId) {
+        throw new ValidationError('Template ID is required');
+      }
+
+      const template = await programmeTemplateService.getTemplate(templateId);
+
+      return { template };
     }
-
-    const templateId = event.pathParameters?.id;
-
-    if (!templateId) {
-      throw new ValidationError('Template ID is required');
-    }
-
-    const template = await programmeTemplateService.getTemplate(templateId);
-
-    return { template };
-  }
+  )
 );

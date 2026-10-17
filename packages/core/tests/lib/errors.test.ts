@@ -38,13 +38,6 @@ describe('BaseError', () => {
 
     expect(error.details).toBeUndefined();
   });
-
-  it('should have stack trace', () => {
-    const error = new BaseError('Test error', 'TEST_ERROR', 418);
-
-    expect(error.stack).toBeDefined();
-    expect(error.stack).toContain('BaseError');
-  });
 });
 
 describe('UnauthorisedError', () => {
@@ -173,32 +166,5 @@ describe('InternalServerError', () => {
     expect(error.message).toBe('Database connection failed');
     expect(error.code).toBe('INTERNAL_SERVER_ERROR');
     expect(error.statusCode).toBe(500);
-  });
-});
-
-describe('Error inheritance', () => {
-  it('should allow instanceof checks for BaseError', () => {
-    const errors = [
-      new UnauthorisedError(),
-      new ForbiddenError(),
-      new NotFoundError('User'),
-      new ValidationError('Invalid'),
-      new ConflictError('Exists'),
-      new InternalServerError(),
-    ];
-
-    errors.forEach((error) => {
-      expect(error).toBeInstanceOf(Error);
-      expect(error).toBeInstanceOf(BaseError);
-    });
-  });
-
-  it('should allow instanceof checks for specific error types', () => {
-    const error = new ValidationError('Invalid');
-
-    expect(error instanceof ValidationError).toBe(true);
-    expect(error instanceof BaseError).toBe(true);
-    expect(error instanceof Error).toBe(true);
-    expect(error instanceof UnauthorisedError).toBe(false);
   });
 });

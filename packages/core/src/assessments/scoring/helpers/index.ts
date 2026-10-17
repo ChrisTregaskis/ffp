@@ -6,7 +6,11 @@
 
 export { calculateQuestionScore } from './question-scoring';
 export { calculateRiskLevel, getCategoryFromScore } from './risk-level';
-export { findMatchingProgramme } from './programme-matching';
+export {
+  findMatchingMapping,
+  findMatchingProgramme,
+  type MatchedMapping,
+} from './programme-matching';
 export {
   buildQuestionMap,
   buildResponseMap,

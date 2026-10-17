@@ -1,11 +1,11 @@
 import React from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
+import { AssessmentBackdrop } from '@web/components/assessment';
+import { ErrorRetryState, LoadingState, StaticAlert } from '@web/components/molecules';
+import { routes, RouteKey } from '@web/config/routes';
 import { AssessmentProvider } from '@web/contexts/assessments/AssessmentProvider';
 import { useUserAssessmentStatusQuery } from '@web/hooks/assessments';
-import { routes, RouteKey } from '@web/pages/routes';
 
 import { AssessmentOrchestrator } from './AssessmentOrchestrator';
 
@@ -20,41 +20,61 @@ export const AssessmentPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const flowId = searchParams.get('flowId');
   const reassessParam = searchParams.get('reassess') === 'true';
-  const { data: assessmentStatus, isLoading: isStatusLoading } = useUserAssessmentStatusQuery();
+  const {
+    data: assessmentStatus,
+    isPending: isStatusPending,
+    error: statusError,
+    refetch: refetchStatus,
+  } = useUserAssessmentStatusQuery();
 
   // Only treat as reassessment if param is set AND user actually has a programme
   const isReassessment = reassessParam && !!assessmentStatus?.hasProgramme;
 
-  // Show loading while checking programme status
-  if (isStatusLoading) {
+  // Without the status we can't tell whether the member already has a programme, so don't start
+  if (statusError && !assessmentStatus) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-gray-50 via-ffp-light-purple/10 to-gray-50">
-        <LoadingSpinner size="lg" variant="center" />
-      </div>
+      <AssessmentBackdrop>
+        <ErrorRetryState
+          layout="screen"
+          title="We couldn't load your assessment just now."
+          onRetry={() => {
+            void refetchStatus();
+          }}
+        />
+      </AssessmentBackdrop>
+    );
+  }
+
+  // Pending, not loading: a retry paused while the tab is hidden has no data and no error yet
+  if (isStatusPending) {
+    return (
+      <AssessmentBackdrop>
+        <LoadingState layout="screen" />
+      </AssessmentBackdrop>
     );
   }
 
   // Redirect users with an active programme away — unless this is an explicit reassessment
-  if (assessmentStatus?.hasProgramme && !reassessParam) {
+  if (assessmentStatus.hasProgramme && !reassessParam) {
     return <Navigate to={routes[RouteKey.PROGRAMME_OVERVIEW].path} replace />;
   }
 
   if (!flowId) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-gray-50 via-ffp-light-purple/10 to-gray-50 p-6">
+      <AssessmentBackdrop className="flex min-h-screen items-center justify-center p-6">
         <StaticAlert
           variant="error"
           message="No assessment flow specified. Please return to the home page."
         />
-      </div>
+      </AssessmentBackdrop>
     );
   }
 
   return (
     <AssessmentProvider flowId={flowId}>
-      <div className="min-h-screen bg-linear-to-br from-gray-50 via-ffp-light-purple/10 to-gray-50">
+      <AssessmentBackdrop className="min-h-screen">
         <AssessmentOrchestrator flowId={flowId} isReassessment={isReassessment} />
-      </div>
+      </AssessmentBackdrop>
     </AssessmentProvider>
   );
 };

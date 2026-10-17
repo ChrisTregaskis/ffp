@@ -1,7 +1,7 @@
 import type { UserListResponse } from '@ffp/core';
 
-import { createColumns } from '@web/components/table';
-import type { RowAction } from '@web/components/table';
+import { createColumns } from '@web/components/organisms';
+import type { RowAction } from '@web/components/organisms';
 
 import type { ColumnDef } from '@tanstack/react-table';
 

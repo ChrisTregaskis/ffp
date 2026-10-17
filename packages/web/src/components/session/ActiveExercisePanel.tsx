@@ -1,12 +1,9 @@
-import { Button } from '@web/components/button';
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
-import { PrescriptionBadge } from '@web/components/programme/PrescriptionBadge';
-import { Title } from '@web/components/text/Title';
+import { Button, Icon, Icons, Title } from '@web/components/atoms';
+import { PrescriptionBadge } from '@web/components/molecules';
+import { FadeSlide } from '@web/components/motion';
 import { VideoPlayer } from '@web/components/video';
 
 import { ExerciseDetail } from './ExerciseDetail';
-import { ExerciseTransition } from './ExerciseTransition';
 
 import type { SessionExercise } from './types';
 
@@ -42,10 +39,7 @@ export const ActiveExercisePanel: React.FC<ActiveExercisePanelProps> = ({
   const hasRest = exercise.restSeconds !== null && exercise.restSeconds > 0;
 
   return (
-    <ExerciseTransition
-      exerciseKey={exercise.completionId}
-      className="mx-auto max-w-3xl px-4 py-6 sm:px-6"
-    >
+    <FadeSlide key={exercise.completionId} className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
       <Title as="h2" className="mb-4">
         {exercise.title}
       </Title>
@@ -108,6 +102,6 @@ export const ActiveExercisePanel: React.FC<ActiveExercisePanelProps> = ({
           Mark Complete
         </Button>
       </div>
-    </ExerciseTransition>
+    </FadeSlide>
   );
 };

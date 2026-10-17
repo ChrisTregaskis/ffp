@@ -2,11 +2,7 @@ import { useNavigate } from 'react-router-dom';
 
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
-import { Button } from '@web/components/button';
-import { Icon, Icons } from '@web/components/Icon';
-import { Text } from '@web/components/text/Text';
-
-import { SessionStatusIcon } from './SessionStatusIcon';
+import { Button, Icon, Icons, StatusCircle, Text } from '@web/components/atoms';
 
 type Phase = ProgrammeDetailResponse['phases'][number];
 type Session = Phase['sessions'][number];
@@ -46,10 +42,12 @@ export const SessionRow: React.FC<SessionRowProps> = ({ session, phasePublicId, 
       <div className="flex items-center gap-3">
         {/* Status icon */}
         <span className="flex h-6 w-6 shrink-0 items-center justify-center">
-          <SessionStatusIcon
-            isCompleted={isCompleted}
-            isNext={isNext}
-            sessionNumber={session.sessionNumber}
+          <StatusCircle
+            number={session.sessionNumber}
+            status={isCompleted ? 'completed' : isNext ? 'current' : 'upcoming'}
+            size="xs"
+            appearance="outlined"
+            currentMarker="dot"
           />
         </span>
 

@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
-import { ProgressBar } from '@web/components/ProgressBar';
+import { ProgressBar } from '@web/components/atoms';
 import {
   ActiveExercisePanel,
   ExerciseSidebar,
@@ -18,6 +18,7 @@ import { useToggleExerciseMutation } from '@web/hooks/exercises';
 import { useProgrammeDetailQuery } from '@web/hooks/programmes';
 import { useCompleteSessionMutation, useStartSessionMutation } from '@web/hooks/sessions';
 import { useToast } from '@web/hooks/useToast';
+import { isProgrammeLoadFailure } from '@web/utils/programme';
 
 import { SessionPageState } from './SessionPageState';
 
@@ -58,7 +59,12 @@ export const SessionPage: React.FC = () => {
   }>();
   const navigate = useNavigate();
 
-  const { data: detail, isLoading: isDetailLoading } = useProgrammeDetailQuery();
+  const {
+    data: detail,
+    isPending: isDetailPending,
+    error: detailError,
+    refetch: refetchDetail,
+  } = useProgrammeDetailQuery();
   const { addToast } = useToast();
   const startSession = useStartSessionMutation();
   const completeSession = useCompleteSessionMutation();
@@ -96,8 +102,14 @@ export const SessionPage: React.FC = () => {
 
   // Derive page state for clean rendering
   const pageState: SessionState = useMemo(() => {
-    if (isDetailLoading) {
+    // Pending, not loading: a retry paused while the tab is hidden has no data and no error yet
+    if (isDetailPending) {
       return 'loading';
+    }
+
+    // Not found only when there is no programme; any other failure can be retried
+    if (!detail && isProgrammeLoadFailure(detailError)) {
+      return 'error';
     }
 
     if (!sessionData || !phaseId || !templateSessionId) {
@@ -123,7 +135,9 @@ export const SessionPage: React.FC = () => {
 
     return 'workout';
   }, [
-    isDetailLoading,
+    isDetailPending,
+    detail,
+    detailError,
     sessionData,
     phaseId,
     templateSessionId,
@@ -222,6 +236,10 @@ export const SessionPage: React.FC = () => {
     setShowExitDialog(true);
   }, []);
 
+  const handleExitCancel = useCallback((): void => {
+    setShowExitDialog(false);
+  }, []);
+
   const handlePause = useCallback((): void => {
     void navigate('/');
   }, [navigate]);
@@ -246,6 +264,10 @@ export const SessionPage: React.FC = () => {
     void navigate('/');
   }, [navigate]);
 
+  const handleRetry = useCallback((): void => {
+    void refetchDetail();
+  }, [refetchDetail]);
+
   // Non-workout states (loading, not found, needs start, completed)
   if (pageState !== 'workout') {
     return (
@@ -264,13 +286,20 @@ export const SessionPage: React.FC = () => {
         estimatedDurationMinutes={sessionData?.session.estimatedDurationMinutes}
         onStart={handleStartSession}
         onBackToProgramme={handleBackToProgramme}
+        onRetry={handleRetry}
       />
     );
   }
 
   // Type narrowing guard — pageState logic ensures exercises.length > 0 before reaching here
   if (!activeExercise) {
-    return <SessionPageState state="not-found" onBackToProgramme={handleBackToProgramme} />;
+    return (
+      <SessionPageState
+        state="not-found"
+        onBackToProgramme={handleBackToProgramme}
+        onRetry={handleRetry}
+      />
+    );
   }
 
   // Workout render — sessionData guaranteed non-null when pageState === 'workout'
@@ -289,7 +318,11 @@ export const SessionPage: React.FC = () => {
         }}
       />
 
-      <ProgressBar percent={progressPercent} className="h-1! rounded-none!" />
+      <ProgressBar
+        percent={progressPercent}
+        aria-label="Session progress"
+        className="h-1! rounded-none!"
+      />
 
       {/* Rest timer bar — sits above content, exercises remain visible */}
       <AnimatePresence>
@@ -325,19 +358,14 @@ export const SessionPage: React.FC = () => {
       </div>
 
       {/* Exit dialog */}
-      <AnimatePresence>
-        {showExitDialog && (
-          <ExitDialog
-            completedCount={completedCount}
-            totalCount={exercises.length}
-            onPause={handlePause}
-            onDone={handleDone}
-            onCancel={() => {
-              setShowExitDialog(false);
-            }}
-          />
-        )}
-      </AnimatePresence>
+      <ExitDialog
+        isOpen={showExitDialog}
+        completedCount={completedCount}
+        totalCount={exercises.length}
+        onPause={handlePause}
+        onDone={handleDone}
+        onCancel={handleExitCancel}
+      />
     </div>
   );
 };

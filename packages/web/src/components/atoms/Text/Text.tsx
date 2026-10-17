@@ -1,0 +1,146 @@
+import { COLOUR_CLASS_MAP } from './colour-classes';
+
+import type { ReactNode } from 'react';
+
+/**
+ * Available text colours based on FFP theme.
+ */
+export type TextColour =
+  | 'primary'
+  | 'secondary'
+  | 'success'
+  | 'destructive'
+  | 'foreground'
+  | 'muted-foreground'
+  | 'card-foreground'
+  | 'accent-foreground'
+  | 'warning'
+  | 'info'
+  | 'white'
+  | 'ffp-navy';
+
+/**
+ * Available text sizes based on FFP theme.
+ */
+export type TextSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl';
+
+/**
+ * Available font weights based on FFP theme.
+ */
+export type TextWeight = 'normal' | 'medium' | 'semibold' | 'bold';
+
+/**
+ * Map weights to explicit Tailwind class names.
+ */
+const WEIGHT_CLASS_MAP: Record<TextWeight, string> = {
+  normal: 'font-normal',
+  medium: 'font-medium',
+  semibold: 'font-semibold',
+  bold: 'font-bold',
+};
+
+/**
+ * Map sizes to explicit Tailwind class names.
+ */
+const SIZE_CLASS_MAP: Record<TextSize, string> = {
+  xs: 'text-xs',
+  sm: 'text-sm',
+  base: 'text-base',
+  lg: 'text-lg',
+  xl: 'text-xl',
+  '2xl': 'text-2xl',
+  '3xl': 'text-3xl',
+  '4xl': 'text-4xl',
+};
+
+/**
+ * Text style properties.
+ */
+export interface TextStyleProps {
+  /** Text colour @default 'foreground' */
+  colour?: TextColour;
+  /** Font weight @default 'normal' */
+  weight?: TextWeight;
+  /** Text size @default 'base' */
+  size?: TextSize;
+}
+
+/**
+ * A named text style. `eyebrow`: the small uppercase label above a section or a value
+ * (extra-small, semibold, muted, wide tracking).
+ */
+export type TextVariant = 'eyebrow';
+
+const VARIANT_CLASSES: Record<TextVariant, string> = {
+  eyebrow: `${COLOUR_CLASS_MAP['muted-foreground']} ${WEIGHT_CLASS_MAP.semibold} ${SIZE_CLASS_MAP.xs} uppercase tracking-wide`,
+};
+
+interface TextBaseProps {
+  /** Text content */
+  children: ReactNode;
+  /** HTML element to render @default 'span' */
+  as?: 'span' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5';
+  /** If provided, truncates text to this length and appends '...' */
+  truncationLength?: number;
+  /** Additional custom classes */
+  className?: string;
+  /** HTML id attribute */
+  id?: string;
+  /** ARIA role attribute */
+  role?: string;
+}
+
+/** A variant sets the whole style, so it takes no `styleProps` */
+export type TextProps = TextBaseProps &
+  (
+    | {
+        /** Style properties */
+        styleProps?: TextStyleProps;
+        variant?: undefined;
+      }
+    | {
+        styleProps?: never;
+        variant: TextVariant;
+      }
+  );
+
+/**
+ * Text component for consistent typography across the application.
+ *
+ * Uses FFP theme colours, sizes, and weights defined in index.css.
+ *
+ */
+export const Text: React.FC<TextProps> = ({
+  children,
+  styleProps,
+  variant,
+  as = 'span',
+  truncationLength,
+  className = '',
+  id,
+  role,
+}): JSX.Element => {
+  const colour = styleProps?.colour ?? 'foreground';
+  const weight = styleProps?.weight ?? 'normal';
+  const size = styleProps?.size ?? 'base';
+
+  const styleClasses = variant
+    ? VARIANT_CLASSES[variant]
+    : `${COLOUR_CLASS_MAP[colour]} ${WEIGHT_CLASS_MAP[weight]} ${SIZE_CLASS_MAP[size]}`;
+
+  const classes = `${styleClasses} ${className}`.trim();
+
+  // Apply truncation if specified
+  const formattedChildren =
+    truncationLength && typeof children === 'string' && children.length > truncationLength
+      ? `${children.slice(0, truncationLength)}...`
+      : children;
+
+  const Component = as;
+
+  return (
+    <Component className={classes} id={id} role={role}>
+      {formattedChildren}
+    </Component>
+  );
+};

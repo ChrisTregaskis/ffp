@@ -28,7 +28,8 @@ export type BranchActionType = (typeof BRANCH_ACTION_TYPES)[number];
  *
  * - info: Informational message, no concern
  * - caution: User should be aware, may need attention
- * - seek_medical: User should consult a medical professional
+ * - seek_medical: the member is advised to speak to a health professional before starting;
+ *   their result waits until they confirm they have
  */
 export const WARNING_TYPES = ['info', 'caution', 'seek_medical'] as const;
 

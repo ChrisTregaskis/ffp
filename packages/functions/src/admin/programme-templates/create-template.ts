@@ -1,10 +1,8 @@
 import type { TemplateDetailResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
-  isUserActor,
+  withSystemAdmin,
   programmeTemplateService,
 } from '@ffp/core/server';
 
@@ -22,16 +20,13 @@ interface CreateTemplateResponse {
  * Admin role required.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<CreateTemplateResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can create programme templates',
+    async (event: APIGatewayProxyEventV2WithJWT): Promise<CreateTemplateResponse> => {
+      const body = parseJsonBody(event.body);
+      const template = await programmeTemplateService.createTemplate(body);
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can create programme templates');
+      return { template };
     }
-
-    const body = parseJsonBody(event.body);
-    const template = await programmeTemplateService.createTemplate(body);
-
-    return { template };
-  }
+  )
 );

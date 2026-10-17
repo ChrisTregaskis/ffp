@@ -1,5 +1,4 @@
-import { SectionPanel } from '@web/components/assessment/SectionPanel';
-import { Text } from '@web/components/text';
+import { Surface, Text } from '@web/components/atoms';
 
 import { QuestionSubProgress } from '../QuestionSubProgress';
 
@@ -18,7 +17,7 @@ export interface StepCardProps {
   totalQuestions?: number;
   /** Extra content rendered after the title block */
   headerExtra?: ReactNode;
-  /** Footer content rendered below a border separator (e.g. AssessmentNavigation) */
+  /** Footer content rendered below the body (e.g. AssessmentNavigation) */
   footer?: ReactNode;
   /** Card body content */
   children: ReactNode;
@@ -31,7 +30,7 @@ export interface StepCardProps {
  *
  * Provides three zones — header (title + description + optional sub-progress),
  * content (children), and footer — inside a single elevated card container.
- * Each zone manages its own padding so the footer border-t extends full width.
+ * Each zone manages its own padding.
  *
  * When both `questionNumber` and `totalQuestions` are provided, a
  * QuestionSubProgress bar is rendered automatically in the header.
@@ -54,7 +53,7 @@ export const StepCard: React.FC<StepCardProps> = ({
     questionNumber !== undefined && totalQuestions !== undefined && totalQuestions > 0;
 
   return (
-    <SectionPanel as="div" className={className}>
+    <Surface variant="section" className={className}>
       {/* Header zone */}
       <div
         className={`rounded-t-2xl bg-linear-to-r from-secondary/20 to-transparent px-6 pt-6 pb-4 ${alignClass}`}
@@ -84,6 +83,6 @@ export const StepCard: React.FC<StepCardProps> = ({
 
       {/* Footer zone */}
       {footer && <div className="px-6 py-4">{footer}</div>}
-    </SectionPanel>
+    </Surface>
   );
 };

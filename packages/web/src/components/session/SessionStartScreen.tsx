@@ -1,9 +1,5 @@
-import { Button } from '@web/components/button';
-import { Icon } from '@web/components/Icon/Icon';
-import { Icons } from '@web/components/Icon/types';
-import { PrescriptionBadge } from '@web/components/programme/PrescriptionBadge';
-import { Text } from '@web/components/text/Text';
-import { Title } from '@web/components/text/Title';
+import { Button, Icon, Icons, Text, Title } from '@web/components/atoms';
+import { PrescriptionBadge } from '@web/components/molecules';
 
 export interface SessionStartScreenProps {
   /** Session name */
@@ -42,11 +38,7 @@ export const SessionStartScreen: React.FC<SessionStartScreenProps> = ({
 }) => (
   <div className="flex h-screen flex-col items-center justify-center px-6 text-center">
     {phaseContext && (
-      <Text
-        as="p"
-        styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}
-        className="mb-2 uppercase tracking-wide"
-      >
+      <Text as="p" variant="eyebrow" className="mb-2">
         {phaseContext}
       </Text>
     )}

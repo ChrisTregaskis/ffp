@@ -46,6 +46,20 @@ export const flowStepSummarySchema = z.object({
   defaultNextStepId: z.guid().nullable().optional(),
 });
 
+/**
+ * The consent gate on the member's result. `required` says the answers raised safety
+ * advice and stays true afterwards; the result is held while `required` is true and
+ * `acknowledgedAt` is null.
+ */
+export const safetyGateSchema = z.object({
+  /** True when the answers raised a safety warning */
+  required: z.boolean(),
+  /** ISO 8601 timestamp of the member's confirmation (null until they give it) */
+  acknowledgedAt: z.iso.datetime().nullable(),
+  /** The advice the member was given (null when none was) */
+  advice: z.string().nullable(),
+});
+
 export const startAssessmentResponseSchema = z.object({
   /** Unique identifier for the assessment */
   assessmentId: z.guid(),
@@ -63,6 +77,8 @@ export const startAssessmentResponseSchema = z.object({
   isResumed: z.boolean(),
   /** Flow steps for client-side navigation (from normalised flow_steps table) */
   steps: z.array(flowStepSummarySchema),
+  /** The result's consent gate, when resuming a submitted assessment (null before submission) */
+  safetyGate: safetyGateSchema.nullable(),
 });
 
 export const saveProgressRequestSchema = z.object({
@@ -70,6 +86,11 @@ export const saveProgressRequestSchema = z.object({
   answers: userAssessmentAnswersSchema,
   /** Current step index in the flow (1-based) */
   currentStep: z.number().int().positive({ message: 'currentStep must be a positive integer' }),
+  /**
+   * True when the member is leaving `currentStep` for the next step. Only then is the stored
+   * position moved on to the step branching picks; any other save keeps it on `currentStep`.
+   */
+  advance: z.boolean().optional(),
 });
 
 export const saveProgressResponseSchema = z.object({
@@ -99,15 +120,26 @@ export const submitAssessmentResponseSchema = z.object({
   message: z.string(),
 });
 
+/**
+ * The scores a member is shown. The risk level and the recommended template are scoring
+ * internals the member surface never displays; the admin dry-run keeps both.
+ */
+export const memberAssessmentScoresSchema = userAssessmentScoresSchema.omit({
+  riskLevel: true,
+  recommendedTemplateSlug: true,
+});
+
 export const assessmentResultsResponseSchema = z.object({
   /** Current assessment status (submitted, scored, completed, etc.) */
   status: userAssessmentStatusSchema,
   /** Calculated assessment scores (null until scoring completes) */
-  scores: userAssessmentScoresSchema.nullable(),
+  scores: memberAssessmentScoresSchema.nullable(),
   /** Recommended programme ID (null until programme assigned) */
   programmeId: z.guid().nullable(),
-  /** Display name of the recommended programme (null until programme assigned) */
+  /** Display name of the recommended programme (from the scoring recommendation, falling back to the linked programme; null when neither is known) */
   programmeName: z.string().nullable(),
+  /** The consent gate on the result (held while required and not yet acknowledged) */
+  safetyGate: safetyGateSchema,
 });
 
 export const userAssessmentStatusResponseSchema = z.object({
@@ -122,10 +154,12 @@ export const userAssessmentStatusResponseSchema = z.object({
 export type SubmitAssessmentInput = z.infer<typeof submitAssessmentSchema>;
 export type StartAssessmentRequest = z.infer<typeof startAssessmentRequestSchema>;
 export type FlowStepSummary = z.infer<typeof flowStepSummarySchema>;
+export type SafetyGate = z.infer<typeof safetyGateSchema>;
 export type StartAssessmentResponse = z.infer<typeof startAssessmentResponseSchema>;
 export type SaveProgressRequest = z.infer<typeof saveProgressRequestSchema>;
 export type SaveProgressResponse = z.infer<typeof saveProgressResponseSchema>;
 export type SubmitAssessmentRequest = z.infer<typeof submitAssessmentRequestSchema>;
 export type SubmitAssessmentResponse = z.infer<typeof submitAssessmentResponseSchema>;
+export type MemberAssessmentScores = z.infer<typeof memberAssessmentScoresSchema>;
 export type AssessmentResultsResponse = z.infer<typeof assessmentResultsResponseSchema>;
 export type UserAssessmentStatusResponse = z.infer<typeof userAssessmentStatusResponseSchema>;

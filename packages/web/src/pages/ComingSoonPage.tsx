@@ -1,10 +1,8 @@
 import React from 'react';
 
-import { Card } from '@web/components/Card';
-import { Icon } from '@web/components/Icon';
-import type { IconName } from '@web/components/Icon/types';
-import { PageContainer, PageHeader } from '@web/components/layout';
-import { Text, Title } from '@web/components/text';
+import type { IconName } from '@web/components/atoms';
+import { PageContainer } from '@web/components/atoms';
+import { ComingSoon, PageHeader } from '@web/components/molecules';
 
 export interface ComingSoonPageProps {
   /** Title for the page */
@@ -16,8 +14,7 @@ export interface ComingSoonPageProps {
 }
 
 /**
- * Reusable "Coming Soon" page component for placeholder routes.
- * Used for features that will be implemented in future sprints.
+ * Reusable "Coming Soon" page for a route whose feature is not built yet.
  */
 export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({
   title,
@@ -28,22 +25,7 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({
     <PageContainer>
       <PageHeader title={title} subtitle={description} />
 
-      <Card className="p-8">
-        <div className="flex flex-col items-center justify-center py-12">
-          <div className="mb-4">
-            <Icon
-              name={icon}
-              styleProps={{ size: 'xl', colour: 'var(--color-muted-foreground)' }}
-            />
-          </div>
-          <Title as="h3" colour="muted-foreground" className="mb-2">
-            Coming Soon
-          </Title>
-          <Text styleProps={{ size: 'base', colour: 'muted-foreground' }}>
-            This feature will be implemented in a future sprint.
-          </Text>
-        </div>
-      </Card>
+      <ComingSoon icon={icon} message="We're still building this. Check back soon." />
     </PageContainer>
   );
 };

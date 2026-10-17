@@ -1,16 +1,16 @@
 import type { FlowStepConfig } from '@ffp/core';
 
-import type { FeatureItem } from '@web/components/assessment';
+import { Icons } from '@web/components/atoms';
 import {
-  ASSESSMENT_MOTION,
-  AssessmentNavigation,
   FeatureColumnGrid,
+  InstructionList,
   SectionHeader,
-} from '@web/components/assessment';
-import { Icon, Icons } from '@web/components/Icon';
+  type FeatureItem,
+} from '@web/components/molecules';
 import { FadeSlideIn } from '@web/components/motion';
-import { Text } from '@web/components/text';
 
+import { AssessmentNavigation } from '../../AssessmentNavigation';
+import { ASSESSMENT_MOTION } from '../../motion.constants';
 import { StepCard } from '../StepCard';
 
 import type { ReactNode } from 'react';
@@ -94,19 +94,12 @@ export const TransitionCard: React.FC<TransitionCardProps> = ({
               badgeVariant="warning"
               className="mb-4"
             />
-            <ul className="space-y-3">
-              {safetyNotes.map((note) => (
-                <li key={note} className="flex items-start gap-3">
-                  <Icon
-                    name={Icons.SHIELD}
-                    styleProps={{ size: 'md', colour: 'var(--color-warning)' }}
-                  />
-                  <Text as="span" styleProps={{ size: 'sm' }}>
-                    {note}
-                  </Text>
-                </li>
-              ))}
-            </ul>
+            <InstructionList
+              items={safetyNotes}
+              bulletStyle="icon"
+              bulletIcon={Icons.SHIELD}
+              bulletColour="var(--color-warning)"
+            />
           </section>
         )}
       </StepCard>

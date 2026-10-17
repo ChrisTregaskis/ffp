@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-import { Text, Title } from '@web/components/text';
+import { Text, Title } from '@web/components/atoms';
 
 interface ComponentPageHeaderProps {
   title: string;

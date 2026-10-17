@@ -10,7 +10,7 @@ Namespace-based path aliases prevent conflicts between packages:
 
 | Package       | Namespace     | Example                                                  |
 | ------------- | ------------- | -------------------------------------------------------- |
-| **Web**       | `@web/`       | `import { Button } from "@web/components/Button"`        |
+| **Web**       | `@web/`       | `import { Button } from "@web/components/atoms"`         |
 | **Core**      | `@core/`      | `import { UserService } from "@core/users/user.service"` |
 | **Functions** | `@functions/` | `import { handler } from "@functions/auth/login"`        |
 | **Workspace** | `@ffp/`       | `import { APP_NAME } from "@ffp/core"`                   |

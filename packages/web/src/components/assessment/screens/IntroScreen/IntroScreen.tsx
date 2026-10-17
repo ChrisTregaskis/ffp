@@ -1,17 +1,15 @@
 import type { FlowStepConfig } from '@ffp/core';
 
-import type { FeatureItem } from '@web/components/assessment';
+import { Button, Icons, Surface, Text } from '@web/components/atoms';
 import {
-  ASSESSMENT_MOTION,
   FeatureColumnGrid,
   InstructionList,
   SectionHeader,
-  SectionPanel,
-} from '@web/components/assessment';
-import { Button } from '@web/components/button';
-import { Icons } from '@web/components/Icon';
+  type FeatureItem,
+} from '@web/components/molecules';
 import { ClickScale, FadeSlideIn } from '@web/components/motion';
-import { Text } from '@web/components/text';
+
+import { ASSESSMENT_MOTION } from '../../motion.constants';
 
 export interface IntroScreenProps {
   /** Step configuration from the assessment flow */
@@ -24,7 +22,7 @@ const INTRO_FEATURES: FeatureItem[] = [
   {
     icon: Icons.CLIPBOARDLIST,
     heading: 'Pre-Assessment Questions',
-    description: 'Quick questions about your goals and pain levels',
+    description: 'Quick questions about your goals and how you move',
   },
   {
     icon: Icons.VIDEO,
@@ -34,7 +32,7 @@ const INTRO_FEATURES: FeatureItem[] = [
   {
     icon: Icons.CHECKCIRCLE,
     heading: 'Personalised Programme',
-    description: 'Custom physiotherapy programme based on your assessment results',
+    description: 'A movement programme shaped by your answers',
   },
 ];
 
@@ -71,7 +69,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ config, onStart }) => 
 
       {/* What to Expect */}
       <FadeSlideIn delay={stagger.second} duration={duration.entrance}>
-        <SectionPanel>
+        <Surface as="section" variant="section">
           <div className="px-6 pt-6 pb-5">
             <SectionHeader
               icon={Icons.CLOCK}
@@ -87,13 +85,13 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ config, onStart }) => 
           </div>
 
           <FeatureColumnGrid features={INTRO_FEATURES} headingLevel="h3" className="px-6 py-8" />
-        </SectionPanel>
+        </Surface>
       </FadeSlideIn>
 
       {/* Before You Begin checklist */}
       {instructions && instructions.length > 0 && (
         <FadeSlideIn delay={stagger.third} duration={duration.entrance}>
-          <SectionPanel variant="gradient" className="p-6">
+          <Surface as="section" variant="gradient" padding="lg">
             <InstructionList
               items={instructions}
               title="Before You Begin:"
@@ -102,7 +100,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ config, onStart }) => 
               bulletIcon={Icons.CHECKCIRCLE}
               bulletColour="var(--color-success)"
             />
-          </SectionPanel>
+          </Surface>
         </FadeSlideIn>
       )}
 

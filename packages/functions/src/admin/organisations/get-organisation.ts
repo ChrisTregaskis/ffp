@@ -1,10 +1,8 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
+  withSystemAdmin,
   ValidationError,
-  isUserActor,
   getOrganisationService,
 } from '@ffp/core/server';
 
@@ -13,18 +11,17 @@ import {
  *
  * Returns a single organisation by ID. Admin role required.
  */
-export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2WithJWT) => {
-  const context = extractUserContext(event);
+export const handler = withErrorHandling(
+  withSystemAdmin(
+    'Only system administrators can view organisation details',
+    async (event: APIGatewayProxyEventV2WithJWT, context) => {
+      const organisationId = event.pathParameters?.id;
 
-  if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-    throw new ForbiddenError('Only system administrators can view organisation details');
-  }
+      if (!organisationId) {
+        throw new ValidationError('Organisation ID is required');
+      }
 
-  const organisationId = event.pathParameters?.id;
-
-  if (!organisationId) {
-    throw new ValidationError('Organisation ID is required');
-  }
-
-  return await getOrganisationService(context, organisationId);
-});
+      return await getOrganisationService(context, organisationId);
+    }
+  )
+);

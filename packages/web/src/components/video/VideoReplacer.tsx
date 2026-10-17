@@ -1,9 +1,7 @@
 import React, { useCallback, useState } from 'react';
 
-import { Button } from '@web/components/button/Button';
-import { Modal } from '@web/components/modal/Modal';
-import { ProgressBar } from '@web/components/ProgressBar';
-import { Text } from '@web/components/text';
+import { Button, FileInput, ProgressBar, Surface, Text } from '@web/components/atoms';
+import { ConfirmModal } from '@web/components/organisms';
 import { useVideoReplacement } from '@web/hooks/videos';
 import { formatFileSize } from '@web/utils/format';
 
@@ -45,12 +43,10 @@ export const VideoReplacer: React.FC<VideoReplacerProps> = ({ videoId, publicId,
 
   return (
     <div className={className}>
-      <input
-        ref={fileSelection.fileInputRef}
-        type="file"
+      <FileInput
+        forwardedRef={fileSelection.fileInputRef}
         accept="video/mp4"
         onChange={fileSelection.handleFileInputChange}
-        className="hidden"
         aria-label="Select replacement video file"
       />
 
@@ -63,7 +59,7 @@ export const VideoReplacer: React.FC<VideoReplacerProps> = ({ videoId, publicId,
       )}
 
       {!isIdle && (
-        <div className="rounded-lg border border-border bg-card p-4">
+        <Surface padding="md">
           {/* File info */}
           {fileSelection.file && (
             <div className="min-w-0">
@@ -103,7 +99,11 @@ export const VideoReplacer: React.FC<VideoReplacerProps> = ({ videoId, publicId,
                   {progress.uploadProgress}%
                 </Text>
               </div>
-              <ProgressBar percent={progress.uploadProgress} className="mt-1" />
+              <ProgressBar
+                percent={progress.uploadProgress}
+                aria-label="Upload progress"
+                className="mt-1"
+              />
             </div>
           )}
 
@@ -141,32 +141,18 @@ export const VideoReplacer: React.FC<VideoReplacerProps> = ({ videoId, publicId,
               </Button>
             </div>
           )}
-        </div>
+        </Surface>
       )}
 
-      {/* Confirmation modal */}
-      <Modal
+      <ConfirmModal
         isOpen={showConfirm}
         onClose={handleCancelConfirm}
+        onConfirm={handleConfirm}
         title="Replace Video"
         subtitle="This will replace the existing video file."
-        size="sm"
-        footer={
-          <>
-            <Button variant="secondary" onClick={handleCancelConfirm}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={handleConfirm}>
-              Confirm replacement
-            </Button>
-          </>
-        }
-      >
-        <Text as="p" styleProps={{ colour: 'muted-foreground' }}>
-          The current video file will be replaced with the new upload. This cannot be undone. The
-          original file will no longer be available.
-        </Text>
-      </Modal>
+        message="The current video file will be replaced with the new upload. This cannot be undone. The original file will no longer be available."
+        confirmLabel="Confirm replacement"
+      />
     </div>
   );
 };

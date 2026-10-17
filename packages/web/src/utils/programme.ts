@@ -1,5 +1,7 @@
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
+import { ApiError } from '@web/lib/api/client';
+
 type Phase = ProgrammeDetailResponse['phases'][number];
 type Session = Phase['sessions'][number];
 
@@ -23,3 +25,7 @@ export const findNextSession = (phase: Phase): Session | undefined => {
     return !status || status === 'not_started' || status === 'in_progress';
   });
 };
+
+/** A failed programme query; a not-found means there is no active programme, which is not a failure */
+export const isProgrammeLoadFailure = (error: unknown): boolean =>
+  error != null && !(ApiError.isApiError(error) && error.isNotFound);

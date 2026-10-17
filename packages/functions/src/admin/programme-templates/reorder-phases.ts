@@ -1,11 +1,9 @@
 import type { PhaseResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
+  withSystemAdmin,
   ValidationError,
-  isUserActor,
   templatePhaseService,
 } from '@ffp/core/server';
 
@@ -23,22 +21,19 @@ interface ReorderPhasesResponse {
  * Admin role required.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<ReorderPhasesResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can reorder template phases',
+    async (event: APIGatewayProxyEventV2WithJWT): Promise<ReorderPhasesResponse> => {
+      const templateId = event.pathParameters?.id;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can reorder template phases');
+      if (!templateId) {
+        throw new ValidationError('Template ID is required');
+      }
+
+      const body = parseJsonBody(event.body);
+      const phases = await templatePhaseService.reorderPhases(templateId, body);
+
+      return { phases };
     }
-
-    const templateId = event.pathParameters?.id;
-
-    if (!templateId) {
-      throw new ValidationError('Template ID is required');
-    }
-
-    const body = parseJsonBody(event.body);
-    const phases = await templatePhaseService.reorderPhases(templateId, body);
-
-    return { phases };
-  }
+  )
 );

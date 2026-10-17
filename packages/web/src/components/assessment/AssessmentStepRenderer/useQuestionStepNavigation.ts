@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import type { ButtonVariant } from '@web/components/button';
+import type { ButtonVariant } from '@web/components/atoms';
 import type { CardTransitionDirection } from '@web/components/motion';
 
 interface UseQuestionStepNavigationParams {
@@ -8,10 +8,8 @@ interface UseQuestionStepNavigationParams {
   totalQuestions: number;
   currentStep: number;
   isLastSubmittableStep: boolean;
-  /** Whether the current question requires an answer */
-  isCurrentQuestionRequired: boolean;
-  /** Whether the current question has been answered */
-  isCurrentQuestionAnswered: boolean;
+  /** Whether the current answer keeps its question's rules (an empty optional answer does) */
+  isCurrentAnswerValid: boolean;
   onSubmitAssessment?: () => void;
   onQuestionIndexChange: (index: number | ((prev: number) => number)) => void;
 }
@@ -24,6 +22,8 @@ interface QuestionStepNavigation {
   continueDisabled: boolean;
   continueHandler: (() => void) | undefined;
   backHandler: (() => void) | undefined;
+  /** Whether Continue submits the assessment rather than moving on */
+  isFinalSubmit: boolean;
 }
 
 /**
@@ -37,8 +37,7 @@ export const useQuestionStepNavigation = ({
   totalQuestions,
   currentStep,
   isLastSubmittableStep,
-  isCurrentQuestionRequired,
-  isCurrentQuestionAnswered,
+  isCurrentAnswerValid,
   onSubmitAssessment,
   onQuestionIndexChange,
 }: UseQuestionStepNavigationParams): QuestionStepNavigation => {
@@ -74,8 +73,7 @@ export const useQuestionStepNavigation = ({
     };
   };
 
-  // Disable Continue when a required question has no answer
-  const continueDisabled = isCurrentQuestionRequired && !isCurrentQuestionAnswered;
+  const continueDisabled = !isCurrentAnswerValid;
 
   return {
     direction,
@@ -85,5 +83,6 @@ export const useQuestionStepNavigation = ({
     continueDisabled,
     continueHandler: getContinueHandler(),
     backHandler: getBackHandler(),
+    isFinalSubmit,
   };
 };

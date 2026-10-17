@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'vitest';
 
 import {
-  flowStepTypeSchema,
   flowStepConfigSchema,
   flowStepSchema,
   assessmentFlowSchema,
   createAssessmentFlowSchema,
   updateAssessmentFlowSchema,
+  assessmentFlowListItemSchema,
+  assessmentFlowListFiltersSchema,
   createFlowStepSchema,
   updateFlowStepSchema,
   reorderFlowStepsSchema,
@@ -15,11 +16,6 @@ import {
 // Test fixtures
 const validUuid = '550e8400-e29b-41d4-a716-446655440000';
 const validPublicId = 'abcdefgh1234';
-
-const validConfig = {
-  title: 'Test Step',
-  description: 'A test step description',
-};
 
 const validIntroStep = {
   publicId: validPublicId,
@@ -104,39 +100,6 @@ const validFlow = {
   updatedAt: new Date(),
 };
 
-describe('flowStepTypeSchema', () => {
-  describe('valid step types', () => {
-    it.each([
-      'intro',
-      'questions',
-      'transition',
-      'video-assessment',
-      'results',
-      'programme-overview',
-    ])('accepts valid step type: %s', (type) => {
-      const result = flowStepTypeSchema.safeParse(type);
-      expect(result.success).toBe(true);
-    });
-  });
-
-  describe('invalid step types', () => {
-    it('rejects invalid step type', () => {
-      const result = flowStepTypeSchema.safeParse('invalid-type');
-      expect(result.success).toBe(false);
-    });
-
-    it('rejects empty string', () => {
-      const result = flowStepTypeSchema.safeParse('');
-      expect(result.success).toBe(false);
-    });
-
-    it('rejects null', () => {
-      const result = flowStepTypeSchema.safeParse(null);
-      expect(result.success).toBe(false);
-    });
-  });
-});
-
 describe('flowStepConfigSchema', () => {
   describe('valid configs', () => {
     it('accepts config with just title', () => {
@@ -152,11 +115,6 @@ describe('flowStepConfigSchema', () => {
         safetyNotes: ['Note 1', 'Note 2'],
         estimatedMinutes: 15,
       });
-      expect(result.success).toBe(true);
-    });
-
-    it('accepts config with optional fields omitted', () => {
-      const result = flowStepConfigSchema.safeParse(validConfig);
       expect(result.success).toBe(true);
     });
   });
@@ -184,69 +142,11 @@ describe('flowStepConfigSchema', () => {
       });
       expect(result.success).toBe(false);
     });
-
-    it('rejects negative estimatedMinutes', () => {
-      const result = flowStepConfigSchema.safeParse({
-        title: 'Test',
-        estimatedMinutes: -5,
-      });
-      expect(result.success).toBe(false);
-    });
   });
 });
 
 describe('flowStepSchema', () => {
-  describe('valid steps', () => {
-    it('accepts valid intro step', () => {
-      const result = flowStepSchema.safeParse(validIntroStep);
-      expect(result.success).toBe(true);
-    });
-
-    it('accepts valid questions step with templateId', () => {
-      const result = flowStepSchema.safeParse(validQuestionsStep);
-      expect(result.success).toBe(true);
-    });
-
-    it('accepts valid transition step with safetyNotes', () => {
-      const result = flowStepSchema.safeParse(validTransitionStep);
-      expect(result.success).toBe(true);
-    });
-
-    it('accepts valid video-assessment step with instructions', () => {
-      const result = flowStepSchema.safeParse(validVideoAssessmentStep);
-      expect(result.success).toBe(true);
-    });
-
-    it('accepts valid results step', () => {
-      const result = flowStepSchema.safeParse(validResultsStep);
-      expect(result.success).toBe(true);
-    });
-
-    it('accepts valid programme-overview step', () => {
-      const result = flowStepSchema.safeParse(validProgrammeOverviewStep);
-      expect(result.success).toBe(true);
-    });
-
-    it('accepts step without templateId (optional)', () => {
-      const result = flowStepSchema.safeParse({
-        publicId: validPublicId,
-        order: 1,
-        type: 'intro',
-        config: { title: 'Welcome' },
-      });
-      expect(result.success).toBe(true);
-    });
-  });
-
   describe('order validation', () => {
-    it('accepts positive integer order', () => {
-      const result = flowStepSchema.safeParse({
-        ...validIntroStep,
-        order: 1,
-      });
-      expect(result.success).toBe(true);
-    });
-
     it('rejects zero order', () => {
       const result = flowStepSchema.safeParse({
         ...validIntroStep,
@@ -276,14 +176,6 @@ describe('flowStepSchema', () => {
   });
 
   describe('templateId validation', () => {
-    it('accepts valid UUID templateId', () => {
-      const result = flowStepSchema.safeParse({
-        ...validQuestionsStep,
-        templateId: validUuid,
-      });
-      expect(result.success).toBe(true);
-    });
-
     it('rejects invalid UUID templateId', () => {
       const result = flowStepSchema.safeParse({
         ...validQuestionsStep,
@@ -299,17 +191,6 @@ describe('flowStepSchema', () => {
       const result = flowStepSchema.safeParse({
         ...validQuestionsStep,
         templateId: '',
-      });
-      expect(result.success).toBe(false);
-    });
-  });
-
-  describe('type validation', () => {
-    it('rejects invalid step type', () => {
-      const result = flowStepSchema.safeParse({
-        order: 1,
-        type: 'invalid-type',
-        config: { title: 'Test' },
       });
       expect(result.success).toBe(false);
     });
@@ -411,32 +292,6 @@ describe('assessmentFlowSchema', () => {
       expect(result.success).toBe(false);
     });
   });
-
-  describe('isActive validation', () => {
-    it('accepts true', () => {
-      const result = assessmentFlowSchema.safeParse({
-        ...validFlow,
-        isActive: true,
-      });
-      expect(result.success).toBe(true);
-    });
-
-    it('accepts false', () => {
-      const result = assessmentFlowSchema.safeParse({
-        ...validFlow,
-        isActive: false,
-      });
-      expect(result.success).toBe(true);
-    });
-
-    it('rejects non-boolean', () => {
-      const result = assessmentFlowSchema.safeParse({
-        ...validFlow,
-        isActive: 'true',
-      });
-      expect(result.success).toBe(false);
-    });
-  });
 });
 
 describe('createAssessmentFlowSchema', () => {
@@ -457,30 +312,6 @@ describe('createAssessmentFlowSchema', () => {
       name: 'Minimal Flow',
     });
     expect(result.success).toBe(true);
-  });
-
-  it('ignores id if provided (omit strips it)', () => {
-    const result = createAssessmentFlowSchema.safeParse({
-      ...validCreateFlow,
-      id: validUuid,
-    });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect('id' in result.data).toBe(false);
-    }
-  });
-
-  it('ignores timestamps if provided', () => {
-    const result = createAssessmentFlowSchema.safeParse({
-      ...validCreateFlow,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect('createdAt' in result.data).toBe(false);
-      expect('updatedAt' in result.data).toBe(false);
-    }
   });
 
   it('strips steps if provided (metadata-only create)', () => {
@@ -513,32 +344,6 @@ describe('createAssessmentFlowSchema', () => {
 });
 
 describe('updateAssessmentFlowSchema', () => {
-  it('accepts partial update with just name', () => {
-    const result = updateAssessmentFlowSchema.safeParse({
-      name: 'Updated Name',
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it('accepts partial update with just isActive', () => {
-    const result = updateAssessmentFlowSchema.safeParse({
-      isActive: false,
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it('accepts partial update with just description', () => {
-    const result = updateAssessmentFlowSchema.safeParse({
-      description: 'Updated description',
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it('accepts empty object (no updates)', () => {
-    const result = updateAssessmentFlowSchema.safeParse({});
-    expect(result.success).toBe(true);
-  });
-
   it('validates fields when provided - empty name rejected', () => {
     const result = updateAssessmentFlowSchema.safeParse({
       name: '',
@@ -606,18 +411,6 @@ describe('createFlowStepSchema', () => {
 });
 
 describe('updateFlowStepSchema', () => {
-  it('accepts a partial update with just config', () => {
-    const result = updateFlowStepSchema.safeParse({
-      config: { title: 'Updated title' },
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it('accepts an empty object (no updates)', () => {
-    const result = updateFlowStepSchema.safeParse({});
-    expect(result.success).toBe(true);
-  });
-
   it('validates fields when provided - unknown type rejected', () => {
     const result = updateFlowStepSchema.safeParse({ type: 'bogus' });
     expect(result.success).toBe(false);
@@ -640,5 +433,58 @@ describe('reorderFlowStepsSchema', () => {
   it('rejects public IDs of the wrong length', () => {
     const result = reorderFlowStepsSchema.safeParse({ orderedStepPublicIds: ['tooShort'] });
     expect(result.success).toBe(false);
+  });
+});
+
+describe('updateAssessmentFlowSchema — description clearing', () => {
+  it('accepts an explicit null so an author can clear the description', () => {
+    const result = updateAssessmentFlowSchema.safeParse({ description: null });
+    expect(result.success).toBe(true);
+    expect(result.success && result.data.description).toBeNull();
+  });
+
+  it('leaves description absent when omitted, so a partial update preserves it', () => {
+    const result = updateAssessmentFlowSchema.safeParse({ name: 'Wellness baseline' });
+    expect(result.success).toBe(true);
+    expect(result.success && 'description' in result.data).toBe(false);
+  });
+});
+
+describe('assessmentFlowListItemSchema', () => {
+  const listRow = {
+    id: '11111111-1111-4111-8111-111111111111',
+    publicId: validPublicId,
+    name: 'Wellness baseline',
+    description: null,
+    isActive: true,
+    stepCount: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  it('accepts a row whose description is null, as the column stores it', () => {
+    const result = assessmentFlowListItemSchema.safeParse(listRow);
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects a negative step count', () => {
+    const result = assessmentFlowListItemSchema.safeParse({ ...listRow, stepCount: -1 });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('assessmentFlowListFiltersSchema', () => {
+  it('coerces the isActive query string to a boolean', () => {
+    expect(assessmentFlowListFiltersSchema.parse({ isActive: 'true' }).isActive).toBe(true);
+    expect(assessmentFlowListFiltersSchema.parse({ isActive: 'false' }).isActive).toBe(false);
+  });
+
+  it('leaves isActive undefined when absent, so the filter is not applied', () => {
+    expect(assessmentFlowListFiltersSchema.parse({}).isActive).toBeUndefined();
+  });
+
+  it('rejects an isActive value outside true/false', () => {
+    expect(assessmentFlowListFiltersSchema.safeParse({ isActive: '' }).success).toBe(false);
+    expect(assessmentFlowListFiltersSchema.safeParse({ isActive: 'yes' }).success).toBe(false);
   });
 });

@@ -1,11 +1,9 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
+  withSystemAdmin,
   templateService,
   ValidationError,
-  ForbiddenError,
-  isUserActor,
 } from '@ffp/core/server';
 
 interface DeactivateTemplateResponse {
@@ -13,30 +11,25 @@ interface DeactivateTemplateResponse {
 }
 
 /**
- * Lambda handler for DELETE /admin/assessment-templates/:id
+ * Lambda handler for DELETE /admin/assessment-templates/:publicId
  *
  * Deactivates an assessment template (soft delete - sets isActive to false).
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<DeactivateTemplateResponse> => {
-    // Extract user context from JWT (validates authentication)
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can manage templates',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<DeactivateTemplateResponse> => {
+      // Extract template publicId from path parameters
+      const templatePublicId = event.pathParameters?.publicId;
 
-    // Validate system_admin role
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can manage templates');
+      if (!templatePublicId) {
+        throw new ValidationError('Template ID is required in path');
+      }
+
+      // Deactivate template via service (soft delete)
+      await templateService.deactivateTemplateService(context, templatePublicId);
+
+      return { success: true };
     }
-
-    // Extract templateId from path parameters
-    const templateId = event.pathParameters?.id;
-
-    if (!templateId) {
-      throw new ValidationError('Template ID is required in path');
-    }
-
-    // Deactivate template via service (soft delete)
-    await templateService.deactivateTemplateService(context, templateId);
-
-    return { success: true };
-  }
+  )
 );

@@ -1,4 +1,4 @@
-import { Text } from '@web/components/text';
+import { Text } from '@web/components/atoms';
 
 export interface TagToggleOption {
   value: string;

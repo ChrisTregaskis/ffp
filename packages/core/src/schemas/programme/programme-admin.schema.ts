@@ -5,6 +5,7 @@ import {
   templatePhaseSchema,
   templateSessionSchema,
 } from '../programme-structure.schema';
+import { publicIdSchema } from '../public-id.schema';
 
 /** Create phase request body — name and description optional, phaseNumber auto-assigned */
 export const createPhaseRequestSchema = z.object({
@@ -103,6 +104,7 @@ export const reorderExercisesRequestSchema = z.object({
 /** Video summary embedded in exercise responses — lightweight video metadata for display */
 export const exerciseVideoSummarySchema = z.object({
   id: z.guid(),
+  publicId: publicIdSchema,
   title: z.string(),
   status: z.string(),
 });

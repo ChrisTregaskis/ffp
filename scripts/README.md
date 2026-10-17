@@ -11,11 +11,12 @@ Operational scripts for environment setup, database management, and deployment v
 
 ## Database
 
-| Script                  | Command          | Purpose                                                                               |
-| ----------------------- | ---------------- | ------------------------------------------------------------------------------------- |
-| `seed-database.ts`      | `pnpm seed:db`   | Seeds environment with initial data. Supports `--fresh` flag to truncate first        |
-| `test-db-connection.ts` | `pnpm db:test`   | Quick connectivity check — useful for debugging connection issues                     |
-| `verify-migration.ts`   | `pnpm db:verify` | Verifies tables, enums, indexes, foreign keys, and RLS policies exist after migration |
+| Script                  | Command                  | Purpose                                                                                                                   |
+| ----------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `seed-database.ts`      | `pnpm seed:db`           | Seeds environment with initial data. Supports `--fresh` flag to truncate first                                            |
+| `seed-video-assets.ts`  | `pnpm seed:video-assets` | Puts a sample clip at every seeded video's S3 key (bucket from `.sst/outputs.json`, or `--bucket`). Skips keys that exist |
+| `test-db-connection.ts` | `pnpm db:test`           | Quick connectivity check — useful for debugging connection issues                                                         |
+| `verify-migration.ts`   | `pnpm db:verify`         | Verifies tables, enums, indexes, foreign keys, and RLS policies exist after migration                                     |
 
 ## Deployment Verification
 
@@ -30,7 +31,7 @@ Operational scripts for environment setup, database management, and deployment v
 3. Run database migrations: `pnpm db:migrate`
 4. Verify migration: `pnpm db:verify`
 5. Bootstrap super admin: `pnpm bootstrap:super-admin`
-6. Seed data (if needed): `pnpm seed:db`
+6. Seed data (if needed): `pnpm seed:db`, then `pnpm seed:video-assets -- --bucket <videos-bucket>` so the seeded videos play
 7. Verify CloudFront OAC: `bash scripts/verify-cloudfront-oac.sh <stage>`
 
 See `project-documentation/deployment.md` for full deployment documentation.

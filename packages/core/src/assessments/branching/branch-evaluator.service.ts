@@ -130,6 +130,9 @@ function resolveDefaultNextStep(
   return nextTierSteps[0]?.id ?? null;
 }
 
+/** Answers keyed by question slug, the form branching conditions name them in */
+export type BranchingAnswers = { questionSlug: string; value: AnswerValue }[];
+
 /**
  * Create evaluation context from answers
  *
@@ -138,7 +141,7 @@ function resolveDefaultNextStep(
 export function createEvaluationContext(
   currentStepId: string,
   allSteps: FlowStepRecord[],
-  answers: { questionSlug: string; value: AnswerValue }[]
+  answers: BranchingAnswers
 ): BranchEvaluationContext {
   const answerMap = new Map<string, AnswerValue>();
 

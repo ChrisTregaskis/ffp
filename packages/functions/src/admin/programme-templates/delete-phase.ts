@@ -1,10 +1,8 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
+  withSystemAdmin,
   ValidationError,
-  isUserActor,
   templatePhaseService,
 } from '@ffp/core/server';
 
@@ -17,21 +15,18 @@ import {
  * Admin role required.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<null> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can delete template phases',
+    async (event: APIGatewayProxyEventV2WithJWT): Promise<null> => {
+      const phaseId = event.pathParameters?.id;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can delete template phases');
+      if (!phaseId) {
+        throw new ValidationError('Phase ID is required');
+      }
+
+      await templatePhaseService.deletePhase(phaseId);
+
+      return null;
     }
-
-    const phaseId = event.pathParameters?.id;
-
-    if (!phaseId) {
-      throw new ValidationError('Phase ID is required');
-    }
-
-    await templatePhaseService.deletePhase(phaseId);
-
-    return null;
-  }
+  )
 );
