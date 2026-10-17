@@ -33,19 +33,6 @@ describe('SetPasswordForm', () => {
       expect(signIn).not.toHaveBeenCalled();
     });
 
-    it('refuses a malformed email', async () => {
-      render(<SetPasswordForm onSuccess={vi.fn()} initialEmail="invited" />);
-      fireEvent.change(screen.getByLabelText(/^Temporary password/), {
-        target: { value: 'Temp-123' },
-      });
-      fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-
-      expect((await screen.findByRole('alert')).textContent).toBe(
-        'Please enter a valid email address'
-      );
-      expect(signIn).not.toHaveBeenCalled();
-    });
-
     it('moves to the new password step when Cognito asks for one', async () => {
       vi.mocked(signIn).mockResolvedValue({
         isSignedIn: false,

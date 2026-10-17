@@ -122,7 +122,7 @@ Run tests:
 turbo test --filter=@ffp/web
 ```
 
-See `src/schemas/auth.schema.test.ts` for examples.
+See `src/components/molecules/FormEmailInput/FormEmailInput.test.tsx` for an example.
 
 ---
 

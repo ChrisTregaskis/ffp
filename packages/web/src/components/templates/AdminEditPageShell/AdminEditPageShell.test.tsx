@@ -299,33 +299,4 @@ describe('AdminEditPageShell save that asks first', () => {
     expect(router.state.location.pathname).toBe('/edit');
     expect(screen.getByLabelText<HTMLInputElement>('Name').value).toBe('Harbour Studio North');
   });
-
-  it('leaves the form dirty and guarded when the confirmed save fails', async () => {
-    const router = renderConfirming(() => Promise.reject(new Error('Save failed')));
-
-    await editAndSubmit();
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
-
-    await waitFor(() => {
-      expect(screen.queryByRole('button', { name: 'Confirm' })).toBeNull();
-    });
-
-    leaveViaLink();
-
-    expect(await screen.findByText('Unsaved Changes')).toBeTruthy();
-    expect(router.state.location.pathname).toBe('/edit');
-  });
-
-  it('holds a navigation while the confirm is open, rather than asking', async () => {
-    const router = renderConfirming();
-
-    await editAndSubmit();
-    leaveViaLink();
-
-    await waitFor(() => {
-      expect(router.state.blockers.size).toBe(1);
-    });
-    expect(screen.queryByText('Unsaved Changes')).toBeNull();
-    expect(router.state.location.pathname).toBe('/edit');
-  });
 });

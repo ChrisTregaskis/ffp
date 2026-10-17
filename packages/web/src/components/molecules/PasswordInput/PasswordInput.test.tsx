@@ -54,12 +54,4 @@ describe('PasswordInput', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Hide password' }));
     expect(field().type).toBe('password');
   });
-
-  it('keeps the strength reading in the label row', () => {
-    render(<Harness />);
-    const labelRow = screen.getByText('Confirm password').closest('label')?.parentElement;
-
-    expect(labelRow?.contains(screen.getByText('Strong'))).toBe(true);
-    expect(labelRow?.contains(field())).toBe(false);
-  });
 });

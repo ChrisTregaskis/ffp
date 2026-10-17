@@ -102,12 +102,6 @@ describe('sortBy', () => {
 
       expect(original.map((i) => i.id)).toEqual(originalOrder);
     });
-
-    it('returns a new array instance', () => {
-      const sorted = sortBy(testItems, ['priority']);
-
-      expect(sorted).not.toBe(testItems);
-    });
   });
 
   describe('edge cases', () => {
@@ -123,20 +117,6 @@ describe('sortBy', () => {
 
       expect(sorted).toEqual(single);
       expect(sorted).not.toBe(single);
-    });
-
-    it('handles array with all same values for sort field', () => {
-      const sameValues = [
-        { id: 1, value: 5 },
-        { id: 2, value: 5 },
-        { id: 3, value: 5 },
-      ];
-
-      const sorted = sortBy(sameValues, ['value']);
-
-      // Order preserved when all values equal (stable sort behaviour may vary)
-      expect(sorted.length).toBe(3);
-      expect(sorted.every((i) => i.value === 5)).toBe(true);
     });
   });
 

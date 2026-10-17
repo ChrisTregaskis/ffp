@@ -136,11 +136,11 @@ psql -h localhost -U root_user -d postgres -c "\du"
 #### Running Tests
 
 ```bash
-# All tests (unit + integration - 68 tests)
+# All tests (unit + integration - 42 tests)
 pnpm --filter=@ffp/database test
 
 # Unit tests only (no database required)
-pnpm --filter=@ffp/database test drizzle.test
+pnpm --filter=@ffp/database test client.test
 
 # Integration tests only (requires test database)
 pnpm --filter=@ffp/database test integration.test
@@ -154,30 +154,20 @@ pnpm --filter=@ffp/database test --coverage
 
 #### Test Coverage
 
-- **Unit Tests** (`__tests__/drizzle.test.ts`) - 16 tests
-  - Connection pool configuration
-  - Schema type inference
-  - Migration structure validation
-  - No database connection required
+- **Integration Tests** (`__tests__/integration.test.ts`) - 5 tests
+  - Database constraints (foreign key, unique, cascade)
+  - Transaction rollback
 
-- **Integration Tests** (`__tests__/integration.test.ts`) - 15 tests
-  - CRUD operations with RLS enforcement
-  - Connection pool behaviour
-  - Database constraints (foreign keys, unique)
-  - Transaction handling (commit/rollback)
-  - Multi-tenant data isolation
-
-- **Client Tests** (`src/client.test.ts`) - 21 tests
+- **Client Tests** (`src/client.test.ts`) - 21 tests, no database required
   - Connection pool singleton pattern
   - Environment variable validation
   - SSL configuration
 
 - **RLS Tests** (`src/lib/rls.test.ts`) - 16 tests
   - RLS context utilities
-  - UUID validation
-  - Cross-organisation isolation
+  - Cross-organisation read isolation
 
-**Total: 68 tests**
+**Total: 42 tests**
 
 #### Troubleshooting
 

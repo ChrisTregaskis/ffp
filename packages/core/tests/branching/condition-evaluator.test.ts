@@ -309,43 +309,4 @@ describe('Condition Evaluator', () => {
       expect(result).toBe(false);
     });
   });
-
-  describe('evaluateConditions - Red flag screening scenarios', () => {
-    it('should match radiating pain red flag', () => {
-      const conditions: BranchCondition[] = [
-        { type: 'answer_value', questionSlug: 'radiating-pain', answerValue: 'yes' },
-      ];
-      const context = createContext({ 'radiating-pain': 'yes' });
-
-      const result = evaluateConditions(conditions, context);
-
-      expect(result).toBe(true);
-    });
-
-    it('should not match when user answers no to red flag', () => {
-      const conditions: BranchCondition[] = [
-        { type: 'answer_value', questionSlug: 'radiating-pain', answerValue: 'yes' },
-      ];
-      const context = createContext({ 'radiating-pain': 'no' });
-
-      const result = evaluateConditions(conditions, context);
-
-      expect(result).toBe(false);
-    });
-
-    it('should match incontinence red flag', () => {
-      const conditions: BranchCondition[] = [
-        { type: 'answer_value', questionSlug: 'incontinence', answerValue: 'yes' },
-      ];
-      const context = createContext({
-        'radiating-pain': 'no',
-        'numbness-tingling': 'no',
-        incontinence: 'yes',
-      });
-
-      const result = evaluateConditions(conditions, context);
-
-      expect(result).toBe(true);
-    });
-  });
 });

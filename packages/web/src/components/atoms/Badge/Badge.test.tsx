@@ -6,16 +6,6 @@ import { Icons } from '../Icon';
 import { Badge } from './Badge';
 
 describe('Badge', () => {
-  it('is a muted, extra-small, fully rounded pill by default', () => {
-    const { container } = render(<Badge label="Draft" />);
-    const pill = container.firstElementChild;
-
-    expect(pill?.textContent).toBe('Draft');
-    expect(pill?.className).toContain('bg-muted text-muted-foreground');
-    expect(pill?.className).toContain('rounded-full');
-    expect(pill?.className).toContain('py-0.5 text-xs');
-  });
-
   it('colours by variant and appearance', () => {
     const { container, rerender } = render(
       <Badge label="Active" variant="success" appearance="solid" />

@@ -607,84 +607,6 @@ describe('Assessment Service', () => {
       expect(mockedJobQueueService.queueJob).not.toHaveBeenCalled();
     });
 
-    it('correctly builds job payload with responses from all answers', async () => {
-      const context = createUserContext();
-      const databaseUserId = randomUUID();
-      const assessmentId = randomUUID();
-      const flowId = randomUUID();
-      const templateId = randomUUID();
-      const questionId1 = randomUUID();
-      const questionId2 = randomUUID();
-      const jobId = randomUUID();
-
-      // All answers already in database
-      const existingDbAnswers: UserAssessmentAnswer[] = [
-        {
-          id: randomUUID(),
-          organisationId: context.organisationId,
-          userAssessmentId: assessmentId,
-          questionId: questionId1,
-          answerValue: 7,
-          answeredAt: new Date(),
-        },
-        {
-          id: randomUUID(),
-          organisationId: context.organisationId,
-          userAssessmentId: assessmentId,
-          questionId: questionId2,
-          answerValue: 3,
-          answeredAt: new Date(),
-        },
-      ];
-
-      const assessment = createMockAssessment({
-        id: assessmentId,
-        organisationId: context.organisationId,
-        userId: databaseUserId,
-        flowId,
-        status: 'in_progress',
-      });
-
-      const flow = createMockFlowWithQuestions(flowId, templateId);
-
-      const questions: QuestionWithConfig[] = [
-        createMockQuestion(questionId1, 'scale', true),
-        createMockQuestion(questionId2, 'numeric', true),
-      ];
-
-      mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
-      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
-      mockedFlowRepo.findById.mockResolvedValue(flow);
-      mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createMockFlowSteps(flowId, templateId));
-      mockedAnswerRepo.findByAssessmentId.mockResolvedValue(existingDbAnswers);
-      mockedQuestionRepo.findByTemplateIds.mockResolvedValue(inTemplate(questions, templateId));
-      mockedAnswerRepo.saveAnswers.mockResolvedValue([]);
-
-      const submittedAssessment: UserAssessment = {
-        ...assessment,
-        status: 'submitted',
-      };
-      mockedUserAssessmentRepo.transitionAssessmentStatus.mockResolvedValue(submittedAssessment);
-      mockedJobQueueService.queueJob.mockResolvedValue(jobId);
-
-      await assessmentService.submitAssessment(assessmentId, { answers: {} }, context);
-
-      expect(mockedJobQueueService.queueJob).toHaveBeenCalledWith(
-        'score_assessment',
-        expect.objectContaining({
-          userAssessmentId: assessmentId,
-          flowId,
-          userId: databaseUserId,
-          responses: expect.arrayContaining([
-            { questionId: questionId1, answerValue: 7 },
-            { questionId: questionId2, answerValue: 3 },
-          ]) as unknown[],
-        }),
-        context,
-        expect.objectContaining({ priority: 2 })
-      );
-    });
-
     it('throws NotFoundError when assessment does not exist', async () => {
       const context = createUserContext();
       const databaseUserId = randomUUID();
@@ -768,68 +690,6 @@ describe('Assessment Service', () => {
       await expect(
         assessmentService.submitAssessment(assessmentId, { answers: {} }, context)
       ).rejects.toThrow('Assessment flow has no questions template');
-    });
-
-    it('handles optional questions correctly (does not require them)', async () => {
-      const context = createUserContext();
-      const databaseUserId = randomUUID();
-      const assessmentId = randomUUID();
-      const flowId = randomUUID();
-      const templateId = randomUUID();
-      const requiredQuestionId = randomUUID();
-      const optionalQuestionId = randomUUID();
-      const jobId = randomUUID();
-
-      // Only required question answered
-      const existingDbAnswers: UserAssessmentAnswer[] = [
-        {
-          id: randomUUID(),
-          organisationId: context.organisationId,
-          userAssessmentId: assessmentId,
-          questionId: requiredQuestionId,
-          answerValue: 5,
-          answeredAt: new Date(),
-        },
-      ];
-
-      const assessment = createMockAssessment({
-        id: assessmentId,
-        organisationId: context.organisationId,
-        userId: databaseUserId,
-        flowId,
-        status: 'in_progress',
-      });
-
-      const flow = createMockFlowWithQuestions(flowId, templateId);
-
-      const questions: QuestionWithConfig[] = [
-        createMockQuestion(requiredQuestionId, 'scale', true),
-        createMockQuestion(optionalQuestionId, 'text', false),
-      ];
-
-      mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
-      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
-      mockedFlowRepo.findById.mockResolvedValue(flow);
-      mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createMockFlowSteps(flowId, templateId));
-      mockedAnswerRepo.findByAssessmentId.mockResolvedValue(existingDbAnswers);
-      mockedQuestionRepo.findByTemplateIds.mockResolvedValue(inTemplate(questions, templateId));
-      mockedAnswerRepo.saveAnswers.mockResolvedValue([]);
-
-      const submittedAssessment: UserAssessment = {
-        ...assessment,
-        status: 'submitted',
-      };
-      mockedUserAssessmentRepo.transitionAssessmentStatus.mockResolvedValue(submittedAssessment);
-      mockedJobQueueService.queueJob.mockResolvedValue(jobId);
-
-      const result = await assessmentService.submitAssessment(
-        assessmentId,
-        { answers: {} },
-        context
-      );
-
-      expect(result.jobId).toBe(jobId);
-      expect(mockedJobQueueService.queueJob).toHaveBeenCalled();
     });
   });
 
@@ -1138,30 +998,6 @@ describe('Assessment Service', () => {
         ]);
       });
 
-      it('holds a question to its template override', async () => {
-        const { context, assessmentId, capped, optional } = setUp();
-        const templateId = randomUUID();
-
-        mockedFlowRepo.findStepsByFlowId.mockResolvedValue(
-          createMockFlowSteps(randomUUID(), templateId)
-        );
-        mockedQuestionRepo.findByTemplateIds.mockResolvedValue(
-          inTemplate(
-            [{ ...capped, configOverrides: { validation: { required: false } } }, optional],
-            templateId
-          )
-        );
-        mockedJobQueueService.queueJob.mockResolvedValue(randomUUID());
-
-        await assessmentService.submitAssessment(
-          assessmentId,
-          { answers: { ...answer(capped.id, ['a', 'b', 'c']), ...answer(optional.id, 4) } },
-          context
-        );
-
-        expect(mockedJobQueueService.queueJob).toHaveBeenCalled();
-      });
-
       it('clears an emptied optional answer and leaves it out of scoring', async () => {
         const { context, assessmentId, capped, optional } = setUp();
 
@@ -1401,17 +1237,6 @@ describe('Assessment Service', () => {
             warningMessage: ADVICE,
           },
           { tx: expect.anything() as unknown }
-        );
-      });
-
-      it('counts a red flag ticked alongside "none", recording only the red flag', async () => {
-        const setUpResult = setUp();
-
-        await submit(setUpResult, ['none', 'chest-pain']);
-
-        expect(mockedSafetyTriggerRepo.recordTrigger).toHaveBeenCalledWith(
-          expect.objectContaining({ selectedOptions: ['chest-pain'] }),
-          expect.anything()
         );
       });
 

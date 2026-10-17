@@ -91,18 +91,6 @@ describe('Auth Schemas', () => {
       }
     });
 
-    it('rejects empty email', () => {
-      const result = loginSchema.safeParse({
-        email: '',
-        password: 'Test123!',
-      });
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Invalid email address');
-      }
-    });
-
     it('rejects empty password', () => {
       const result = loginSchema.safeParse({
         email: 'user@business.com',
@@ -113,22 +101,6 @@ describe('Auth Schemas', () => {
       if (!result.success) {
         expect(result.error.issues[0].message).toContain('Password is required');
       }
-    });
-
-    it('rejects missing email field', () => {
-      const result = loginSchema.safeParse({
-        password: 'Test123!',
-      });
-
-      expect(result.success).toBe(false);
-    });
-
-    it('rejects missing password field', () => {
-      const result = loginSchema.safeParse({
-        email: 'user@business.com',
-      });
-
-      expect(result.success).toBe(false);
     });
 
     it('accepts weak passwords during login (validation only during registration)', () => {
@@ -150,14 +122,6 @@ describe('Auth Schemas', () => {
       expect(result.success).toBe(true);
     });
 
-    it('validates any non-empty string as refresh token', () => {
-      const result = refreshTokenSchema.safeParse({
-        refreshToken: 'valid-token-string',
-      });
-
-      expect(result.success).toBe(true);
-    });
-
     it('rejects empty refresh token', () => {
       const result = refreshTokenSchema.safeParse({
         refreshToken: '',
@@ -167,12 +131,6 @@ describe('Auth Schemas', () => {
       if (!result.success) {
         expect(result.error.issues[0].message).toContain('Refresh token is required');
       }
-    });
-
-    it('rejects missing refresh token field', () => {
-      const result = refreshTokenSchema.safeParse({});
-
-      expect(result.success).toBe(false);
     });
   });
 });

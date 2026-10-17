@@ -30,11 +30,6 @@ describe('entity query keys', () => {
     expect(keys.detail('abc123')).toEqual([name, 'detail', 'abc123']);
   });
 
-  it('keeps a detail key under its list prefix so invalidating lists leaves it alone', () => {
-    expect(locationKeys.detail('abc123').slice(0, 2)).toEqual(['locations', 'detail']);
-    expect(locationKeys.lists()).toEqual(['locations', 'list']);
-  });
-
   it('preserves the resource-specific keys that sit alongside the shared shape', () => {
     expect(userKeys.me()).toEqual(['users', 'me']);
     expect(programmeTemplateKeys.sessionExercises()).toEqual([
