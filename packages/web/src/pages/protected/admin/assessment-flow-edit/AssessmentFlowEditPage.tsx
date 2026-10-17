@@ -64,6 +64,14 @@ export const AssessmentFlowEditPage: React.FC = () => {
     void navigate(generatePath(routes[RouteKey.ADMIN_ASSESSMENT_FLOW_PREVIEW].path, { publicId }));
   }, [navigate, publicId]);
 
+  const handleNavigateToScoring = useCallback((): void => {
+    if (!publicId) {
+      return;
+    }
+
+    void navigate(generatePath(routes[RouteKey.ADMIN_ASSESSMENT_FLOW_SCORING].path, { publicId }));
+  }, [navigate, publicId]);
+
   const handleCreate = useCallback(
     async (values: AssessmentFlowFormValues): Promise<void> => {
       clearSubmitError();
@@ -118,6 +126,9 @@ export const AssessmentFlowEditPage: React.FC = () => {
       <>
         <Button variant="secondary" onClick={handleNavigateToPreview}>
           Preview
+        </Button>
+        <Button variant="secondary" onClick={handleNavigateToScoring}>
+          Scoring
         </Button>
         <Button variant="secondary" onClick={handleNavigateToSteps}>
           Edit Steps

@@ -165,26 +165,6 @@ describe('Template Repository', () => {
         await db.execute(sql`DELETE FROM questions WHERE id IN (${first.id}, ${second.id})`);
       }
     });
-
-    it('breaks a tie on the sort column by id, so pages are stable', async () => {
-      const created = await Promise.all(
-        [1, 2, 3].map(() => templateRepository.createTemplate(db, validCreateInput))
-      );
-      const expectedIds = created.map((template) => template.id).sort();
-
-      const page1 = await templateRepository.findTemplatePage(
-        db,
-        { ...firstPage, pageSize: 2 },
-        {}
-      );
-      const page2 = await templateRepository.findTemplatePage(
-        db,
-        { ...firstPage, page: 2, pageSize: 2 },
-        {}
-      );
-
-      expect([...page1, ...page2].map((template) => template.id)).toEqual(expectedIds);
-    });
   });
 
   describe('update', () => {

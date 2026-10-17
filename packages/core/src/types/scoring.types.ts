@@ -33,6 +33,8 @@ export interface ScoringResult {
   riskLevel?: RiskLevel;
   /** Recommended programme template ID, or null if no matching rule */
   recommendedProgrammeId: string | null;
+  /** Index of the matched rule in `programmeMappings`, or null */
+  matchedMappingIndex: number | null;
   /** Timestamp when scoring completed */
   scoredAt: string;
 }

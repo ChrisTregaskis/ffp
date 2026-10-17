@@ -10,6 +10,7 @@ import { handler as createFlowHandler } from './assessment-flows/create-flow';
 import { handler as createStepHandler } from './assessment-flows/create-step';
 import { handler as deactivateFlowHandler } from './assessment-flows/deactivate-flow';
 import { handler as deleteStepHandler } from './assessment-flows/delete-step';
+import { handler as dryRunScoringHandler } from './assessment-flows/dry-run-scoring';
 import { handler as getFlowHandler } from './assessment-flows/get-flow';
 import { handler as listFlowsHandler } from './assessment-flows/list-flows';
 import { handler as reorderStepsHandler } from './assessment-flows/reorder-steps';
@@ -80,6 +81,7 @@ const routes: RouteRegistry = {
     '/organisations/{orgId}/locations': createLocationHandler,
     '/assessment-flows': createFlowHandler,
     '/assessment-flows/{flowPublicId}/steps': createStepHandler,
+    '/assessment-flows/{publicId}/scoring/dry-run': dryRunScoringHandler,
     '/assessment-templates': createTemplateHandler,
     '/assessment-templates/{publicId}/duplicate': duplicateTemplateHandler,
     '/assessment-templates/{templatePublicId}/questions': assignQuestionsHandler,

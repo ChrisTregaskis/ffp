@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 import type { ScoringConfig } from '@ffp/database';
 
-import { calculateScores } from '../../src/assessments/scoring';
+import { calculateScores, findMatchingProgramme } from '../../src/assessments/scoring';
 
 import { createQuestion, createResponses } from './scoring-fixtures';
 
@@ -111,6 +111,7 @@ describe('Summed scoring (regression pin)', () => {
         rawScore: 8,
         normalisedScore: 40,
         category: 'low',
+        answeredCount: 2,
       },
       {
         dimensionId: 'activity',
@@ -118,6 +119,7 @@ describe('Summed scoring (regression pin)', () => {
         rawScore: 1,
         normalisedScore: 50,
         category: 'moderate',
+        answeredCount: 1,
       },
       {
         dimensionId: 'strength',
@@ -125,6 +127,7 @@ describe('Summed scoring (regression pin)', () => {
         rawScore: 12,
         normalisedScore: 75,
         category: 'low',
+        answeredCount: 1,
       },
       {
         dimensionId: 'balance',
@@ -132,6 +135,7 @@ describe('Summed scoring (regression pin)', () => {
         rawScore: 3,
         normalisedScore: 50,
         category: 'low',
+        answeredCount: 1,
       },
     ]);
     // (40 + 50 + 75 × 1.5 + 50 × 1.2) / 4.7 = 55.85
@@ -150,7 +154,7 @@ describe('Summed scoring (regression pin)', () => {
 
     const result = calculateScores(responses, QUESTIONS, STORED_CONFIG);
 
-    // Mobility 20 and strength 0 / balance 0 satisfy both priority 2 and priority 3
+    // Mobility 20 satisfies priority 2 before the unconditional fallback; strength is unanswered, so priority 3 cannot match
     expect(result.recommendedProgrammeId).toBe('gentle-mobility-programme');
   });
 
@@ -166,13 +170,46 @@ describe('Summed scoring (regression pin)', () => {
     expect(result.recommendedProgrammeId).toBe('general-wellness-programme');
   });
 
-  it('grades high risk from the lowest dimension, with nothing answered', () => {
+  it('marks every dimension unassessed with nothing answered, grading none of them', () => {
     const result = calculateScores([], QUESTIONS, STORED_CONFIG);
 
-    expect(result.scores.map((score) => score.rawScore)).toEqual([0, 0, 0, 0]);
+    expect(result.scores.map((score) => score.answeredCount)).toEqual([0, 0, 0, 0]);
     expect(result.overallScore).toBe(0);
-    expect(result.riskLevel).toBe('high');
-    expect(result.recommendedProgrammeId).toBe('foundation-programme');
+    expect(result.riskLevel).toBeUndefined();
+    // No condition can hold on an unassessed dimension, so only the unconditional mapping matches
+    expect(result.recommendedProgrammeId).toBe('general-wellness-programme');
+  });
+
+  it('leaves an unanswered dimension out of the overall score and the risk level', () => {
+    const responses = createResponses({
+      [MOBILITY_CHOICE]: 'mild',
+      [MOBILITY_SCALE]: 3,
+      [ACTIVITY]: '1',
+      [BALANCE]: 'fair',
+    });
+
+    const result = calculateScores(responses, QUESTIONS, STORED_CONFIG);
+
+    // Strength unanswered: (40 + 50 + 50 × 1.2) / 3.2 = 46.88, not 41 with strength at 0
+    expect(result.overallScore).toBe(47);
+    // Strength at 0 would grade high; the lowest assessed dimension is mobility at 40
+    expect(result.riskLevel).toBe('moderate');
+  });
+
+  it('treats a stored score that predates answeredCount as assessed', () => {
+    const stored = {
+      dimensionId: 'balance',
+      dimensionName: 'Balance',
+      rawScore: 0,
+      normalisedScore: 0,
+    };
+
+    expect(
+      findMatchingProgramme(
+        [stored, { ...stored, dimensionId: 'strength' }],
+        STORED_CONFIG.programmeMappings.slice(1, 2)
+      )
+    ).toBe('foundation-programme');
   });
 
   it('scores an explicit sum mode exactly as an unset one', () => {

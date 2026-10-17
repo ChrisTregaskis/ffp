@@ -305,6 +305,19 @@ export const routes: RoutesConfig = {
       },
     ],
   },
+  [RouteKey.ADMIN_ASSESSMENT_FLOW_SCORING]: {
+    path: `${adminBasePath}/assessments/:publicId/scoring`,
+    title: 'Assessment Flow Scoring',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Assessment Flows',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/assessments`,
+      },
+    ],
+  },
   [RouteKey.ADMIN_ASSESSMENT_TEMPLATES]: {
     path: `${adminBasePath}/assessment-templates`,
     title: 'Assessment Templates',

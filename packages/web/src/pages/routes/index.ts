@@ -21,6 +21,7 @@ import { ToastAlertComponentsPage } from '@web/pages/dev/ToastAlertComponentsPag
 import { AssessmentFlowEditPage } from '@web/pages/protected/admin/assessment-flow-edit';
 import { AssessmentFlowListPage } from '@web/pages/protected/admin/assessment-flow-list';
 import { AssessmentFlowPreviewPage } from '@web/pages/protected/admin/assessment-flow-preview';
+import { AssessmentFlowScoringPage } from '@web/pages/protected/admin/assessment-flow-scoring';
 import { AssessmentFlowStepsPage } from '@web/pages/protected/admin/assessment-flow-steps';
 import { AssessmentTemplateEditPage } from '@web/pages/protected/admin/assessment-template-edit';
 import { AssessmentTemplateListPage } from '@web/pages/protected/admin/assessment-template-list';
@@ -109,6 +110,7 @@ const PAGE_COMPONENTS: Record<RouteKey, FC> = {
   [RouteKey.ADMIN_ASSESSMENT_FLOW_EDIT]: AssessmentFlowEditPage,
   [RouteKey.ADMIN_ASSESSMENT_FLOW_STEPS]: AssessmentFlowStepsPage,
   [RouteKey.ADMIN_ASSESSMENT_FLOW_PREVIEW]: AssessmentFlowPreviewPage,
+  [RouteKey.ADMIN_ASSESSMENT_FLOW_SCORING]: AssessmentFlowScoringPage,
   [RouteKey.ADMIN_ASSESSMENT_TEMPLATES]: AssessmentTemplateListPage,
   [RouteKey.ADMIN_ASSESSMENT_TEMPLATE_CREATE]: AssessmentTemplateEditPage,
   [RouteKey.ADMIN_ASSESSMENT_TEMPLATE_EDIT]: AssessmentTemplateEditPage,

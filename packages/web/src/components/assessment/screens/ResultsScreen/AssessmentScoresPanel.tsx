@@ -1,19 +1,20 @@
-import type { ScoreDimension, UserAssessmentScores } from '@ffp/core';
+import type { UserAssessmentScores } from '@ffp/core';
 
 import { Icons, Surface, Text } from '@web/components/atoms';
 import { SectionHeader } from '@web/components/molecules';
+
+import { visibleScoreDimensions } from './visible-score-dimensions';
 
 export interface AssessmentScoresPanelProps {
   scores: UserAssessmentScores;
 }
 
-/** Age adjusts a member's level but is not something they are scored on */
-const HIDDEN_DIMENSIONS: ReadonlySet<string> = new Set<ScoreDimension>(['age']);
-
 export const AssessmentScoresPanel: React.FC<AssessmentScoresPanelProps> = ({ scores }) => {
-  const visibleDimensions = scores.dimensions.filter(
-    (dimension) => !HIDDEN_DIMENSIONS.has(dimension.dimensionId)
-  );
+  const visibleDimensions = visibleScoreDimensions(scores);
+
+  if (visibleDimensions.length === 0) {
+    return null;
+  }
 
   return (
     <Surface as="section" variant="section">

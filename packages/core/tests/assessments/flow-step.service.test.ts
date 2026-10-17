@@ -260,6 +260,13 @@ describe('flowStepService.createStepService', () => {
   });
 
   it('refuses a template-linked type created without a template', async () => {
+    // The flow resolves, so only the template check can stop the write
+    const flow = createFlow();
+
+    mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
+    mockedFlowStepRepo.findMaxOrderForFlow.mockResolvedValue(0);
+    mockedFlowStepRepo.createStep.mockResolvedValue(createStep(flow.id, { type: 'questions' }));
+
     await expect(
       flowStepService.createStepService(createContext(), FLOW_PUBLIC_ID, {
         type: 'questions',

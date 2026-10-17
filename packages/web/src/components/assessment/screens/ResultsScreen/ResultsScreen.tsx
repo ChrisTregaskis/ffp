@@ -9,6 +9,7 @@ import { RecommendedProgrammePanel } from './RecommendedProgrammePanel';
 import { ResultsActions } from './ResultsActions';
 import { ResultsHeader } from './ResultsHeader';
 import { ResultsLoadingState } from './ResultsLoadingState';
+import { visibleScoreDimensions } from './visible-score-dimensions';
 import { WhatHappensNextPanel } from './WhatHappensNextPanel';
 
 export interface ResultsScreenProps {
@@ -71,7 +72,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
       />
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {scores && (
+        {scores && visibleScoreDimensions(scores).length > 0 && (
           <FadeSlideIn delay={stagger.second} duration={duration.entrance}>
             <AssessmentScoresPanel scores={scores} />
           </FadeSlideIn>

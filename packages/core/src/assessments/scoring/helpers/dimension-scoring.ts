@@ -1,10 +1,14 @@
 import type { QuestionWithConfig, DimensionConfig } from '@ffp/database';
 
+import {
+  isAssessed,
+  type AssessmentResponse,
+  type DimensionalScore,
+} from '../../../schemas/job.schema';
+
 import { resolveModalScore } from './modal-scoring';
 import { calculateQuestionScore } from './question-scoring';
 import { getCategoryFromScore } from './risk-level';
-
-import type { AssessmentResponse, DimensionalScore } from '../../../schemas/job.schema';
 
 /**
  * Question lookup map for efficient access during scoring
@@ -69,6 +73,16 @@ export function calculateDimensionScore(
   responseMap: Map<string, AssessmentResponse>,
   questionMap: QuestionMap
 ): DimensionalScore {
+  const dimensionId = dimensionConfig.name;
+  const dimensionName = formatDimensionName(dimensionConfig.name);
+  const answeredCount = dimensionConfig.questionIds.filter(
+    (questionId) => responseMap.has(questionId) && questionMap.has(questionId)
+  ).length;
+
+  if (answeredCount === 0) {
+    return { dimensionId, dimensionName, rawScore: 0, normalisedScore: 0, answeredCount };
+  }
+
   const rawScore =
     dimensionConfig.scoringMode === 'modal'
       ? calculateModalRawScore(dimensionConfig, responseMap, questionMap)
@@ -81,13 +95,7 @@ export function calculateDimensionScore(
   // Determine category based on normalised score
   const category = getCategoryFromScore(normalisedScore, dimensionConfig.riskThresholds);
 
-  return {
-    dimensionId: dimensionConfig.name,
-    dimensionName: formatDimensionName(dimensionConfig.name),
-    rawScore,
-    normalisedScore,
-    category,
-  };
+  return { dimensionId, dimensionName, rawScore, normalisedScore, category, answeredCount };
 }
 
 function calculateSummedRawScore(
@@ -149,7 +157,9 @@ export function calculateOverallScore(
   dimensionalScores: DimensionalScore[],
   dimensionConfigs: DimensionConfig[]
 ): number {
-  if (dimensionalScores.length === 0) {
+  const assessedScores = dimensionalScores.filter(isAssessed);
+
+  if (assessedScores.length === 0) {
     return 0;
   }
 
@@ -163,7 +173,7 @@ export function calculateOverallScore(
   let weightedSum = 0;
   let totalWeight = 0;
 
-  for (const score of dimensionalScores) {
+  for (const score of assessedScores) {
     const weight = weightMap.get(score.dimensionId) ?? 1;
     weightedSum += score.normalisedScore * weight;
     totalWeight += weight;

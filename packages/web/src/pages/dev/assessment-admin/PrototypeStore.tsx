@@ -1,12 +1,11 @@
 /**
  * In-memory store + internal navigation for the assessment-admin prototype.
- * Throwaway: holds the whole mock catalogue in React state and exposes mutators.
+ * Throwaway: holds the mock member programmes in React state and exposes mutators.
  * No persistence, no network — refresh resets everything.
  */
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 
-import { INITIAL_FLOWS, INITIAL_QUESTIONS, PROGRAMME_TEMPLATE_OPTIONS } from './prototype-data';
-import { PROTOTYPE_ENTRY_FLOW_ID } from './prototype-nav';
+import { PROTOTYPE_HOME_VIEW } from './prototype-nav';
 import {
   addExerciseToSession,
   buildProgrammeStructure,
@@ -19,24 +18,11 @@ import {
 } from './prototype-programme-structure';
 import { USERS } from './prototype-users';
 
-import type {
-  ProgrammeTemplateOption,
-  PrototypeFlow,
-  PrototypeQuestion,
-  PrototypeView,
-  ScoringConfig,
-} from './prototype-types';
+import type { PrototypeView } from './prototype-types';
 
 interface PrototypeStoreValue {
-  flows: PrototypeFlow[];
-  questions: PrototypeQuestion[];
-  programmeTemplates: ProgrammeTemplateOption[];
-
   view: PrototypeView;
   navigate: (view: PrototypeView) => void;
-
-  // Scoring
-  updateScoringConfig: (flowId: string, config: ScoringConfig) => void;
 
   // Member programme structures (phases → sessions → exercises)
   memberStructures: Record<string, ProgrammePhase[]>;
@@ -63,30 +49,14 @@ const seedMemberStructures = (): Record<string, ProgrammePhase[]> => {
 const PrototypeStoreContext = createContext<PrototypeStoreValue | null>(null);
 
 export const PrototypeStoreProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [flows, setFlows] = useState<PrototypeFlow[]>(INITIAL_FLOWS);
-  const [questions] = useState<PrototypeQuestion[]>(INITIAL_QUESTIONS);
   const [memberStructures, setMemberStructures] =
     useState<Record<string, ProgrammePhase[]>>(seedMemberStructures);
-  const [view, setView] = useState<PrototypeView>({
-    name: 'scoring',
-    flowId: PROTOTYPE_ENTRY_FLOW_ID,
-  });
+  const [view, setView] = useState<PrototypeView>(PROTOTYPE_HOME_VIEW);
 
   const value = useMemo<PrototypeStoreValue>(() => {
-    const mutateFlow = (flowId: string, fn: (flow: PrototypeFlow) => PrototypeFlow): void => {
-      setFlows((prev) => prev.map((flow) => (flow.id === flowId ? fn(flow) : flow)));
-    };
-
     return {
-      flows,
-      questions,
-      programmeTemplates: PROGRAMME_TEMPLATE_OPTIONS,
       view,
       navigate: setView,
-
-      updateScoringConfig: (flowId, config) => {
-        mutateFlow(flowId, (flow) => ({ ...flow, scoringConfig: config }));
-      },
 
       memberStructures,
 
@@ -132,7 +102,7 @@ export const PrototypeStoreProvider: React.FC<{ children: ReactNode }> = ({ chil
         }));
       },
     };
-  }, [flows, questions, memberStructures, view]);
+  }, [memberStructures, view]);
 
   return <PrototypeStoreContext.Provider value={value}>{children}</PrototypeStoreContext.Provider>;
 };

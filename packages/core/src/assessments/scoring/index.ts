@@ -11,6 +11,7 @@ export { calculateScores, toJobResult } from './scoring.service';
 export {
   calculateQuestionScore,
   calculateRiskLevel,
+  findMatchingMapping,
   findMatchingProgramme,
   calculateDimensionScore,
   calculateOverallScore,

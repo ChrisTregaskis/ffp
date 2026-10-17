@@ -2,8 +2,8 @@ import type { DimensionConfig } from '@ffp/database';
 
 import { LOW_RISK_THRESHOLD, MODERATE_RISK_THRESHOLD } from '../../../constants';
 import { ValidationError } from '../../../lib/errors';
+import { isAssessed, type DimensionalScore } from '../../../schemas/job.schema';
 
-import type { DimensionalScore } from '../../../schemas/job.schema';
 import type { RiskLevel } from '../../../types';
 
 /**
@@ -20,7 +20,8 @@ import type { RiskLevel } from '../../../types';
  *
  * A dimension configured with `affectsRiskLevel: false` is left out, because a
  * low score there is not a concern: an age dimension scores every over-40 low.
- * When no dimension is eligible there is no risk level to report.
+ * Unassessed dimensions are left out too. When no dimension is eligible there
+ * is no risk level to report.
  *
  * @param dimensionalScores - Array of calculated dimension scores
  * @param dimensionConfigs - Dimension configurations carrying risk eligibility
@@ -42,7 +43,9 @@ export function calculateRiskLevel(
       .filter((config) => config.affectsRiskLevel === false)
       .map((config) => config.name)
   );
-  const eligibleScores = dimensionalScores.filter((s) => !ineligible.has(s.dimensionId));
+  const eligibleScores = dimensionalScores.filter(
+    (s) => isAssessed(s) && !ineligible.has(s.dimensionId)
+  );
 
   if (eligibleScores.length === 0) {
     return undefined;

@@ -6,12 +6,15 @@ import type {
   CreateAssessmentFlowInput,
   PaginatedAssessmentFlowList,
   PaginationInput,
+  ScoringDryRunRequest,
+  ScoringDryRunResult,
   UpdateAssessmentFlowInput,
 } from '@ffp/core';
 import {
   assessmentFlowMetadataSchema,
   assessmentFlowWithStepsSchema,
   paginatedAssessmentFlowListSchema,
+  scoringDryRunResultSchema,
 } from '@ffp/core';
 
 import { ffpClient, parseApiResponse, toListParams } from '../client';
@@ -63,6 +66,18 @@ export const adminAssessmentFlowsApi = {
     });
 
     return parsed.flow;
+  },
+
+  /** Scores answers against the flow's scoring config; saves nothing. */
+  dryRunScoring: async (
+    publicId: string,
+    request: ScoringDryRunRequest,
+    signal?: AbortSignal
+  ): Promise<ScoringDryRunResult> => {
+    const path = `${basePath}/${publicId}/scoring/dry-run`;
+    const response = await ffpClient.post(path, request, { signal });
+
+    return parseApiResponse(scoringDryRunResultSchema, response, { method: 'POST', path });
   },
 
   /** Updates an assessment flow's metadata. */

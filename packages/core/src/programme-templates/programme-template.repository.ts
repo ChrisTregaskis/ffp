@@ -132,6 +132,25 @@ export async function findTemplateBySlug(
   return records[0] ?? null;
 }
 
+/** Returns the slug, name and status of each template carrying one of the slugs. */
+export async function findTemplateNamesBySlugs(
+  db: DbQueryClient,
+  slugs: string[]
+): Promise<{ slug: string; name: string; isActive: boolean }[]> {
+  if (slugs.length === 0) {
+    return [];
+  }
+
+  return db
+    .select({
+      slug: programmeTemplates.slug,
+      name: programmeTemplates.name,
+      isActive: programmeTemplates.isActive,
+    })
+    .from(programmeTemplates)
+    .where(inArray(programmeTemplates.slug, slugs));
+}
+
 /**
  * Returns the full nested hierarchy for a template:
  * phases → sessions → exercises (ordered by position).

@@ -11,19 +11,10 @@ export interface NavEntry {
 
 type Navigate = (view: PrototypeView) => void;
 
-/** Scoring is the only flow-scoped screen the prototype still carries. */
-export const PROTOTYPE_ENTRY_FLOW_ID = 'f-exercise-assessment';
+export const PROTOTYPE_HOME_VIEW: PrototypeView = { name: 'video-library' };
 
 /** Top-level menu items (shown when not inside a sub-section). */
 export const getMainNav = (view: PrototypeView, navigate: Navigate): NavEntry[] => [
-  {
-    label: 'Scoring',
-    icon: Icons.TARGET,
-    active: view.name === 'scoring',
-    onClick: () => {
-      navigate({ name: 'scoring', flowId: PROTOTYPE_ENTRY_FLOW_ID });
-    },
-  },
   {
     label: 'Video library',
     icon: Icons.VIDEO,

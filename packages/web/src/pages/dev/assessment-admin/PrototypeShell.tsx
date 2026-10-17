@@ -7,18 +7,15 @@ import { MemberProgrammePhaseView } from './MemberProgrammePhaseView';
 import { MemberProgrammesView } from './MemberProgrammesView';
 import { ProgrammeModelsView } from './ProgrammeModelsView';
 import { iconVar } from './prototype-labels';
-import { getContextNav, getMainNav, PROTOTYPE_ENTRY_FLOW_ID } from './prototype-nav';
+import { getContextNav, getMainNav, PROTOTYPE_HOME_VIEW } from './prototype-nav';
 import { PrototypeNavItem } from './PrototypeNavItem';
 import { usePrototypeStore } from './PrototypeStore';
-import { ScoringConfigView } from './ScoringConfigView';
 import { VideoLibraryView } from './VideoLibraryView';
 
 import type { PrototypeView } from './prototype-types';
 
 const renderView = (view: PrototypeView): JSX.Element => {
   switch (view.name) {
-    case 'scoring':
-      return <ScoringConfigView flowId={view.flowId} />;
     case 'programme-models':
       return <ProgrammeModelsView />;
     case 'video-library':
@@ -29,8 +26,6 @@ const renderView = (view: PrototypeView): JSX.Element => {
       return <MemberProgrammeDetailView memberId={view.memberId} />;
     case 'member-programme-phase':
       return <MemberProgrammePhaseView memberId={view.memberId} phaseId={view.phaseId} />;
-    default:
-      return <ScoringConfigView flowId={PROTOTYPE_ENTRY_FLOW_ID} />;
   }
 };
 
@@ -58,7 +53,7 @@ export const PrototypeShell: React.FC = () => {
         <button
           type="button"
           onClick={() => {
-            navigate({ name: 'scoring', flowId: PROTOTYPE_ENTRY_FLOW_ID });
+            navigate(PROTOTYPE_HOME_VIEW);
           }}
           aria-label="Assessment authoring home"
           className={`flex items-center gap-3 border-b border-white/20 py-5 text-white ${

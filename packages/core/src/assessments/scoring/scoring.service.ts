@@ -6,7 +6,7 @@ import {
   calculateDimensionScore,
   calculateOverallScore,
   calculateRiskLevel,
-  findMatchingProgramme,
+  findMatchingMapping,
 } from './helpers';
 
 import type { AssessmentResponse, ScoreAssessmentResult } from '../../schemas/job.schema';
@@ -48,17 +48,14 @@ export function calculateScores(
   // Determine risk level from the lowest risk-eligible dimension score
   const riskLevel = calculateRiskLevel(dimensionalScores, scoringConfig.dimensions);
 
-  // Find matching programme recommendation
-  const recommendedProgrammeId = findMatchingProgramme(
-    dimensionalScores,
-    scoringConfig.programmeMappings
-  );
+  const matched = findMatchingMapping(dimensionalScores, scoringConfig.programmeMappings);
 
   return {
     scores: dimensionalScores,
     overallScore,
     riskLevel,
-    recommendedProgrammeId,
+    recommendedProgrammeId: matched?.mapping.programmeTemplateId ?? null,
+    matchedMappingIndex: matched?.index ?? null,
     scoredAt: new Date().toISOString(),
   };
 }
