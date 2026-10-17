@@ -4,7 +4,7 @@ import type { CreateAssessmentFlowInput, UpdateAssessmentFlowInput } from '@ffp/
 
 import type { AssessmentFlowMetadata } from '@web/lib/api/endpoints';
 import { adminAssessmentFlowsApi } from '@web/lib/api/endpoints';
-import { invalidateListsAndDetail } from '@web/lib/query';
+import { invalidateListsAndDetail, invalidateTemplateUsage } from '@web/lib/query';
 import { assessmentFlowKeys } from '@web/lib/query/keys';
 
 import type { UseMutationResult } from '@tanstack/react-query';
@@ -43,6 +43,7 @@ export const useUpdateAssessmentFlowMutation = (): UseMutationResult<
       adminAssessmentFlowsApi.update(publicId, data),
     onSuccess: (_data, variables) => {
       invalidateListsAndDetail(queryClient, assessmentFlowKeys, variables);
+      invalidateTemplateUsage(queryClient);
     },
   });
 };
@@ -55,6 +56,7 @@ export const useDeactivateAssessmentFlowMutation = (): UseMutationResult<void, E
     mutationFn: (publicId: string) => adminAssessmentFlowsApi.deactivate(publicId),
     onSuccess: (_data, publicId) => {
       invalidateListsAndDetail(queryClient, assessmentFlowKeys, { publicId });
+      invalidateTemplateUsage(queryClient);
     },
   });
 };

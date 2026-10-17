@@ -1,4 +1,9 @@
-import type { AssessmentTemplate } from '@ffp/core';
+import {
+  assessmentTemplateListFiltersSchema,
+  paginationInputSchema,
+  type AssessmentTemplateListItem,
+  type PaginationMeta,
+} from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
@@ -8,19 +13,18 @@ import {
   isUserActor,
 } from '@ffp/core/server';
 
-/**
- * Response type for list templates endpoint
- */
 interface ListTemplatesResponse {
-  templates: AssessmentTemplate[];
-  count: number;
+  data: AssessmentTemplateListItem[];
+  pagination: PaginationMeta;
 }
 
 /**
  * Lambda handler for GET /admin/assessment-templates
  *
- * Returns all assessment templates. Requires the system_admin role, matching
- * every other verb on this resource.
+ * Lists assessment templates with pagination, search (name and description),
+ * sort and a status filter. Query params: page, pageSize, sortBy, sortDirection,
+ * search, isActive. Requires the system_admin role, matching every other verb on
+ * this resource.
  */
 export const handler = withErrorHandling(
   async (event: APIGatewayProxyEventV2WithJWT): Promise<ListTemplatesResponse> => {
@@ -30,14 +34,12 @@ export const handler = withErrorHandling(
       throw new ForbiddenError('Only system administrators can list assessment templates');
     }
 
-    const activeOnly = event.queryStringParameters?.activeOnly === 'true';
+    const params = event.queryStringParameters ?? {};
 
-    // Service functions consistently take ctx as first parameter
-    const templates = await templateService.listTemplatesService(context, { activeOnly });
+    const paginationInput = paginationInputSchema.parse(params);
 
-    return {
-      templates,
-      count: templates.length,
-    };
+    const filters = assessmentTemplateListFiltersSchema.parse(params);
+
+    return await templateService.listTemplatesService(context, paginationInput, filters);
   }
 );

@@ -305,6 +305,37 @@ export const routes: RoutesConfig = {
       },
     ],
   },
+  [RouteKey.ADMIN_ASSESSMENT_TEMPLATES]: {
+    path: `${adminBasePath}/assessment-templates`,
+    title: 'Assessment Templates',
+    allowedRoles: [SYSTEM_ADMIN],
+  },
+  [RouteKey.ADMIN_ASSESSMENT_TEMPLATE_CREATE]: {
+    path: `${adminBasePath}/assessment-templates/create`,
+    title: 'Create Assessment Template',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Assessment Templates',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/assessment-templates`,
+      },
+    ],
+  },
+  [RouteKey.ADMIN_ASSESSMENT_TEMPLATE_EDIT]: {
+    path: `${adminBasePath}/assessment-templates/:publicId`,
+    title: 'Edit Assessment Template',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      {
+        label: 'Back to Assessment Templates',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/assessment-templates`,
+      },
+    ],
+  },
   [RouteKey.ADMIN_QUESTIONS]: {
     path: `${adminBasePath}/questions`,
     title: 'Question Bank',

@@ -8,6 +8,7 @@ import {
   type AssessmentQuestion,
   type QuestionValidation,
 } from './assessment-question.schema';
+import { booleanQueryParamSchema, createPaginatedResponseSchema } from './pagination.schema';
 import { publicIdSchema } from './public-id.schema';
 import { resolveEffectiveValidation } from './question-answer.schema';
 
@@ -35,12 +36,18 @@ export const assessmentTemplateSchema = z.object({
   updatedAt: z.coerce.date(),
 });
 
-export const createAssessmentTemplateSchema = assessmentTemplateSchema.omit({
-  id: true,
-  publicId: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const createAssessmentTemplateSchema = assessmentTemplateSchema
+  .omit({
+    id: true,
+    publicId: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    description: z.string().nullable().optional(),
+    version: z.number().int().positive().optional().default(1),
+    isActive: z.boolean().optional().default(true),
+  });
 
 export const updateAssessmentTemplateSchema = assessmentTemplateSchema
   .omit({
@@ -53,13 +60,34 @@ export const updateAssessmentTemplateSchema = assessmentTemplateSchema
   })
   .partial();
 
+/** A row of the admin template list — the template plus how much it holds and where it is used. */
+export const assessmentTemplateListItemSchema = assessmentTemplateSchema.extend({
+  /** Questions assigned to the template */
+  questionCount: z.number().int().nonnegative(),
+  /** Flows with an active step linking the template */
+  flowCount: z.number().int().nonnegative(),
+});
+
 /**
- * Raw question shape as returned by the backend (QuestionWithConfig).
- *
- * Used internally for parsing the API response before transforming
- * to the frontend AssessmentQuestion shape.
+ * Filters for GET /admin/assessment-templates. Values arrive as query-string
+ * strings, so `isActive` is coerced rather than declared a boolean.
  */
-const templateQuestionResponseSchema = z.object({
+export const assessmentTemplateListFiltersSchema = z.object({
+  search: z.string().optional(),
+  isActive: booleanQueryParamSchema.optional(),
+});
+
+/** Paginated response for GET /admin/assessment-templates. */
+export const paginatedAssessmentTemplateListSchema = createPaginatedResponseSchema(
+  assessmentTemplateListItemSchema
+);
+
+/**
+ * Raw question shape as returned by the backend (QuestionWithConfig). The
+ * member read transforms it into an AssessmentQuestion; the admin read keeps
+ * it as stored, because authoring needs the slug, status and display order.
+ */
+export const templateQuestionResponseSchema = z.object({
   /** Question UUID */
   id: z.guid(),
   publicId: publicIdSchema,
@@ -127,6 +155,19 @@ export const assessmentTemplateWithQuestionsSchema = assessmentTemplateSchema.ex
   ),
 });
 
+/** A flow whose active steps link the template — what recomposing it reaches. */
+export const templateFlowUsageSchema = z.object({
+  publicId: publicIdSchema,
+  name: z.string(),
+  isActive: z.boolean(),
+});
+
+/** The admin read of one template: the row, its questions as stored, and the flows using it. */
+export const adminAssessmentTemplateDetailSchema = assessmentTemplateSchema.extend({
+  templateQuestions: z.array(templateQuestionResponseSchema),
+  flows: z.array(templateFlowUsageSchema),
+});
+
 /**
  * Bulk-assign questions to a template. Assignments are appended in the order
  * supplied. The upper bound keeps a single request from resolving and inserting
@@ -146,6 +187,17 @@ export const reorderTemplateQuestionsSchema = z.object({
 
 export type AssessmentTemplate = z.infer<typeof assessmentTemplateSchema>;
 export type CreateAssessmentTemplateInput = z.infer<typeof createAssessmentTemplateSchema>;
+/** What a caller sends to create a template: the creator comes from the actor, the rest may default. */
+export type CreateAssessmentTemplateRequest = Omit<
+  z.input<typeof createAssessmentTemplateSchema>,
+  'createdBy'
+>;
+export type AssessmentTemplateListItem = z.infer<typeof assessmentTemplateListItemSchema>;
+export type AssessmentTemplateListFilters = z.infer<typeof assessmentTemplateListFiltersSchema>;
+export type PaginatedAssessmentTemplateList = z.infer<typeof paginatedAssessmentTemplateListSchema>;
+export type TemplateQuestionResponse = z.infer<typeof templateQuestionResponseSchema>;
+export type TemplateFlowUsage = z.infer<typeof templateFlowUsageSchema>;
+export type AdminAssessmentTemplateDetail = z.infer<typeof adminAssessmentTemplateDetailSchema>;
 export type UpdateAssessmentTemplateInput = z.infer<typeof updateAssessmentTemplateSchema>;
 export type AssessmentTemplateWithQuestions = z.infer<typeof assessmentTemplateWithQuestionsSchema>;
 export type AssignQuestionsInput = z.infer<typeof assignQuestionsSchema>;

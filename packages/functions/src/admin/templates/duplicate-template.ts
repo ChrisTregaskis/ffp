@@ -18,7 +18,7 @@ interface DuplicateTemplateResponse {
 }
 
 /**
- * Lambda handler for POST /admin/assessment-templates/:id/duplicate
+ * Lambda handler for POST /admin/assessment-templates/:publicId/duplicate
  *
  * Duplicates an existing assessment template with a new name.
  */
@@ -32,10 +32,10 @@ export const handler = withErrorHandling(
       throw new ForbiddenError('Only system administrators can manage templates');
     }
 
-    // Extract template ID from path
-    const templateId = event.pathParameters?.id;
+    // Extract template publicId from path
+    const templatePublicId = event.pathParameters?.publicId;
 
-    if (!templateId) {
+    if (!templatePublicId) {
       throw new ValidationError('Template ID is required in path');
     }
 
@@ -60,7 +60,7 @@ export const handler = withErrorHandling(
     // Duplicate template via service (handles NotFoundError if source doesn't exist)
     const template = await templateService.duplicateTemplateService(
       context,
-      templateId,
+      templatePublicId,
       input.name.trim()
     );
 

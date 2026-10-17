@@ -1,0 +1,1 @@
+export { AssessmentTemplateEditPage } from './AssessmentTemplateEditPage';

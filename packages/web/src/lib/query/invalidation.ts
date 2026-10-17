@@ -1,5 +1,7 @@
 import type { SplitIdentifierVariables } from '@web/lib/api/client';
 
+import { assessmentTemplateKeys } from './keys';
+
 import type { QueryClient } from '@tanstack/react-query';
 
 interface ListDetailKeys {
@@ -26,4 +28,13 @@ export const invalidateListsAndDetail = (
   if (publicId) {
     void queryClient.invalidateQueries({ queryKey: keys.detail(publicId) });
   }
+};
+
+/**
+ * A template's list row and detail carry the flows that use it, so a flow or
+ * step write that can link, unlink or rename one refreshes them.
+ */
+export const invalidateTemplateUsage = (queryClient: QueryClient): void => {
+  void queryClient.invalidateQueries({ queryKey: assessmentTemplateKeys.lists() });
+  void queryClient.invalidateQueries({ queryKey: assessmentTemplateKeys.details() });
 };

@@ -13,7 +13,7 @@ interface DeactivateTemplateResponse {
 }
 
 /**
- * Lambda handler for DELETE /admin/assessment-templates/:id
+ * Lambda handler for DELETE /admin/assessment-templates/:publicId
  *
  * Deactivates an assessment template (soft delete - sets isActive to false).
  */
@@ -27,15 +27,15 @@ export const handler = withErrorHandling(
       throw new ForbiddenError('Only system administrators can manage templates');
     }
 
-    // Extract templateId from path parameters
-    const templateId = event.pathParameters?.id;
+    // Extract template publicId from path parameters
+    const templatePublicId = event.pathParameters?.publicId;
 
-    if (!templateId) {
+    if (!templatePublicId) {
       throw new ValidationError('Template ID is required in path');
     }
 
     // Deactivate template via service (soft delete)
-    await templateService.deactivateTemplateService(context, templateId);
+    await templateService.deactivateTemplateService(context, templatePublicId);
 
     return { success: true };
   }

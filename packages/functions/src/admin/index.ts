@@ -81,7 +81,7 @@ const routes: RouteRegistry = {
     '/assessment-flows': createFlowHandler,
     '/assessment-flows/{flowPublicId}/steps': createStepHandler,
     '/assessment-templates': createTemplateHandler,
-    '/assessment-templates/{id}/duplicate': duplicateTemplateHandler,
+    '/assessment-templates/{publicId}/duplicate': duplicateTemplateHandler,
     '/assessment-templates/{templatePublicId}/questions': assignQuestionsHandler,
     '/questions': createQuestionHandler,
     '/programme-templates': createProgrammeTemplateHandler,
@@ -100,7 +100,7 @@ const routes: RouteRegistry = {
     '/assessment-flows': listFlowsHandler,
     '/assessment-flows/{publicId}': getFlowHandler,
     '/assessment-templates': listTemplatesHandler,
-    '/assessment-templates/{id}': getTemplateHandler,
+    '/assessment-templates/{publicId}': getTemplateHandler,
     '/assessment-templates/{templatePublicId}/assignable-questions': listAssignableQuestionsHandler,
     '/questions': listQuestionsHandler,
     '/questions/{publicId}': getQuestionHandler,
@@ -120,7 +120,7 @@ const routes: RouteRegistry = {
     // capture the literal `reorder` segment and route to the update handler.
     '/assessment-flows/{flowPublicId}/steps/reorder': reorderStepsHandler,
     '/assessment-flows/{flowPublicId}/steps/{stepPublicId}': updateStepHandler,
-    '/assessment-templates/{id}': updateTemplateHandler,
+    '/assessment-templates/{publicId}': updateTemplateHandler,
     '/assessment-templates/{templatePublicId}/questions/reorder': reorderTemplateQuestionsHandler,
     '/questions/{publicId}': updateQuestionHandler,
     '/users/{id}': updateUserHandler,
@@ -137,7 +137,7 @@ const routes: RouteRegistry = {
   DELETE: {
     '/assessment-flows/{publicId}': deactivateFlowHandler,
     '/assessment-flows/{flowPublicId}/steps/{stepPublicId}': deleteStepHandler,
-    '/assessment-templates/{id}': deactivateTemplateHandler,
+    '/assessment-templates/{publicId}': deactivateTemplateHandler,
     '/assessment-templates/{templatePublicId}/questions/{questionPublicId}':
       unassignQuestionHandler,
     '/questions/{publicId}': deactivateQuestionHandler,

@@ -25,14 +25,6 @@ export const getMainNav = (view: PrototypeView, navigate: Navigate): NavEntry[] 
     },
   },
   {
-    label: 'Templates',
-    icon: Icons.FILETEXT,
-    active: view.name === 'templates',
-    onClick: () => {
-      navigate({ name: 'templates' });
-    },
-  },
-  {
     label: 'Video library',
     icon: Icons.VIDEO,
     active: view.name === 'video-library',
@@ -56,19 +48,6 @@ export const getMainNav = (view: PrototypeView, navigate: Navigate): NavEntry[] 
  * Returns null at top level (use the main nav then).
  */
 export const getContextNav = (view: PrototypeView, navigate: Navigate): NavEntry[] | null => {
-  if (view.name === 'template-edit') {
-    return [
-      {
-        label: 'Back to templates',
-        icon: Icons.ARROWLEFT,
-        active: false,
-        onClick: () => {
-          navigate({ name: 'templates' });
-        },
-      },
-    ];
-  }
-
   if (view.name === 'member-programme') {
     return [
       {

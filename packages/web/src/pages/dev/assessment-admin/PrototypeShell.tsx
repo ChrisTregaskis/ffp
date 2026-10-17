@@ -11,8 +11,6 @@ import { getContextNav, getMainNav, PROTOTYPE_ENTRY_FLOW_ID } from './prototype-
 import { PrototypeNavItem } from './PrototypeNavItem';
 import { usePrototypeStore } from './PrototypeStore';
 import { ScoringConfigView } from './ScoringConfigView';
-import { TemplateDetailView } from './TemplateDetailView';
-import { TemplateListView } from './TemplateListView';
 import { VideoLibraryView } from './VideoLibraryView';
 
 import type { PrototypeView } from './prototype-types';
@@ -21,10 +19,6 @@ const renderView = (view: PrototypeView): JSX.Element => {
   switch (view.name) {
     case 'scoring':
       return <ScoringConfigView flowId={view.flowId} />;
-    case 'templates':
-      return <TemplateListView />;
-    case 'template-edit':
-      return <TemplateDetailView templateId={view.templateId} />;
     case 'programme-models':
       return <ProgrammeModelsView />;
     case 'video-library':

@@ -269,7 +269,8 @@ const buildFlowFilterConditions = (filters: AssessmentFlowListFilters): SQL[] =>
 /**
  * List assessment flows for the admin surface — one page of metadata rows, each
  * carrying its step count. The join is restricted to active steps so a
- * soft-deleted step does not inflate the count.
+ * soft-deleted step does not inflate the count. Sorts by name when the caller
+ * names no sort, because the shared helper applies no ordering without one.
  */
 export async function findFlowPage(
   dbClient: DbClient,
@@ -298,7 +299,17 @@ export async function findFlowPage(
     .groupBy(assessmentFlows.id)
     .$dynamic();
 
-  return await applyPagination(query, paginationInput, FLOW_SORTABLE_COLUMNS);
+  const sortBy =
+    paginationInput.sortBy && FLOW_SORTABLE_COLUMNS[paginationInput.sortBy]
+      ? paginationInput.sortBy
+      : 'name';
+
+  return await applyPagination(
+    query,
+    { ...paginationInput, sortBy },
+    FLOW_SORTABLE_COLUMNS,
+    assessmentFlows.id
+  );
 }
 
 /** Count assessment flows matching the given filters (for pagination metadata). */

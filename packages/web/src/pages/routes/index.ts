@@ -22,6 +22,8 @@ import { AssessmentFlowEditPage } from '@web/pages/protected/admin/assessment-fl
 import { AssessmentFlowListPage } from '@web/pages/protected/admin/assessment-flow-list';
 import { AssessmentFlowPreviewPage } from '@web/pages/protected/admin/assessment-flow-preview';
 import { AssessmentFlowStepsPage } from '@web/pages/protected/admin/assessment-flow-steps';
+import { AssessmentTemplateEditPage } from '@web/pages/protected/admin/assessment-template-edit';
+import { AssessmentTemplateListPage } from '@web/pages/protected/admin/assessment-template-list';
 import { LocationEditPage } from '@web/pages/protected/admin/location-edit';
 import { LocationListPage } from '@web/pages/protected/admin/location-list';
 import { OrganisationEditPage } from '@web/pages/protected/admin/organisation-edit';
@@ -107,6 +109,9 @@ const PAGE_COMPONENTS: Record<RouteKey, FC> = {
   [RouteKey.ADMIN_ASSESSMENT_FLOW_EDIT]: AssessmentFlowEditPage,
   [RouteKey.ADMIN_ASSESSMENT_FLOW_STEPS]: AssessmentFlowStepsPage,
   [RouteKey.ADMIN_ASSESSMENT_FLOW_PREVIEW]: AssessmentFlowPreviewPage,
+  [RouteKey.ADMIN_ASSESSMENT_TEMPLATES]: AssessmentTemplateListPage,
+  [RouteKey.ADMIN_ASSESSMENT_TEMPLATE_CREATE]: AssessmentTemplateEditPage,
+  [RouteKey.ADMIN_ASSESSMENT_TEMPLATE_EDIT]: AssessmentTemplateEditPage,
   [RouteKey.ADMIN_QUESTIONS]: QuestionListPage,
   [RouteKey.ADMIN_QUESTION_CREATE]: QuestionEditPage,
   [RouteKey.ADMIN_QUESTION_EDIT]: QuestionEditPage,

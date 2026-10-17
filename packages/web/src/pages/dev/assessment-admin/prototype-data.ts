@@ -17,7 +17,6 @@ import type {
   ProgrammeTemplateOption,
   PrototypeFlow,
   PrototypeQuestion,
-  PrototypeTemplate,
 } from './prototype-types';
 
 export const INITIAL_QUESTIONS: PrototypeQuestion[] = [
@@ -207,27 +206,6 @@ export const INITIAL_QUESTIONS: PrototypeQuestion[] = [
     validation: { required: true },
     scoreDimension: null,
     isActive: true,
-  },
-];
-
-export const INITIAL_TEMPLATES: PrototypeTemplate[] = [
-  {
-    id: 't-about-you',
-    publicId: 'taboutyou001',
-    name: 'About you',
-    questionIds: [
-      'q-demographics-gender',
-      'q-demographics-age',
-      'q-weekly-activity',
-      'q-exercise-tolerance',
-      'q-movement-comfort',
-    ],
-  },
-  {
-    id: 't-goals-safety',
-    publicId: 'tgoalsafe001',
-    name: 'Goals & safety check',
-    questionIds: ['q-session-goal', 'q-focus-areas', 'q-safety-screen'],
   },
 ];
 

@@ -121,14 +121,6 @@ export interface PrototypeFlow {
   scoringConfig: ScoringConfig;
 }
 
-export interface PrototypeTemplate {
-  id: string;
-  publicId: string;
-  name: string;
-  /** Ordered question assignment (template_questions.display_order) */
-  questionIds: string[];
-}
-
 export interface ProgrammeTemplateOption {
   /** Slug used by scoring_config.programmeMappings (seed data uses slugs) */
   slug: string;
@@ -152,8 +144,6 @@ export interface LevelScenario {
 
 /** In-app navigation target (internal mini-router — keeps the prototype to one route) */
 export type PrototypeView =
-  | { name: 'templates' }
-  | { name: 'template-edit'; templateId: string }
   | { name: 'scoring'; flowId: string }
   | { name: 'programme-models' }
   | { name: 'video-library' }
