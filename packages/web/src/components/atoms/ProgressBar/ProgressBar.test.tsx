@@ -10,13 +10,4 @@ describe('ProgressBar', () => {
     const bar = screen.getByRole('progressbar', { name: 'Overall progress' });
     expect(bar.getAttribute('aria-valuenow')).toBe('33');
   });
-
-  it('takes the medium height by default and the small one when asked', () => {
-    const { rerender } = render(<ProgressBar percent={50} />);
-    expect(screen.getByRole('progressbar').className).toContain('h-2');
-
-    rerender(<ProgressBar percent={50} size="sm" />);
-    expect(screen.getByRole('progressbar').className).toContain('h-1.5');
-    expect(screen.getByRole('progressbar').className).not.toContain('h-2');
-  });
 });

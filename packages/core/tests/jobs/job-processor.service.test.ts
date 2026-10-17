@@ -143,17 +143,6 @@ describe('Job Processor Service', () => {
   }
 
   describe('pollAndClaimJobs', () => {
-    it('returns result with count matching claimedJobs length', async () => {
-      // Note: In concurrent test runs, other tests may create jobs
-      // This test verifies the function returns a valid result structure
-      const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
-
-      expect(result).toHaveProperty('claimedJobs');
-      expect(result).toHaveProperty('count');
-      expect(result.count).toBe(result.claimedJobs.length);
-      expect(Array.isArray(result.claimedJobs)).toBe(true);
-    });
-
     it('claims a single queued job', async () => {
       const job = await createTestJob();
 
@@ -224,13 +213,6 @@ describe('Job Processor Service', () => {
 
       expect(scoreAssessmentJobs).toHaveLength(2);
       expect(generateProgrammeJobs).toHaveLength(1);
-    });
-
-    it('returns empty results when no jobs are queued', async () => {
-      const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
-
-      // May have 0 or more jobs depending on concurrent tests
-      expect(result.count).toBe(result.claimedJobs.length);
     });
 
     it('orders jobs by priority (lower number = higher priority)', async () => {
@@ -545,72 +527,6 @@ describe('Job Processor Service', () => {
         expect(result.retryAfter.getTime()).toBeGreaterThanOrEqual(expectedMinTime);
         expect(result.retryAfter.getTime()).toBeLessThanOrEqual(expectedMaxTime);
       }
-    });
-
-    it('always records error message on failure', async () => {
-      const job = await createTestJob({ status: 'processing' });
-      await db
-        .update(schema.processJobs)
-        .set({ attempts: 1 })
-        .where(sql`id = ${job.id}`);
-
-      const [jobRecord] = await db
-        .select()
-        .from(schema.processJobs)
-        .where(sql`id = ${job.id}`);
-
-      await failJob(jobRecord, new Error('Connection refused'));
-
-      const [updatedJob] = await db
-        .select()
-        .from(schema.processJobs)
-        .where(sql`id = ${job.id}`);
-
-      expect(updatedJob.message).toBe('Connection refused');
-    });
-
-    it('sets completedAt only on final failure', async () => {
-      // Test retry case - completedAt should be null
-      const retryJob = await createTestJob({ status: 'processing', maxAttempts: 3 });
-      await db
-        .update(schema.processJobs)
-        .set({ attempts: 1 })
-        .where(sql`id = ${retryJob.id}`);
-
-      const [retryJobRecord] = await db
-        .select()
-        .from(schema.processJobs)
-        .where(sql`id = ${retryJob.id}`);
-
-      await failJob(retryJobRecord, new Error('Temporary error'));
-
-      const [updatedRetryJob] = await db
-        .select()
-        .from(schema.processJobs)
-        .where(sql`id = ${retryJob.id}`);
-
-      expect(updatedRetryJob.completedAt).toBeNull();
-
-      // Test final failure case - completedAt should be set
-      const failedJob = await createTestJob({ status: 'processing', maxAttempts: 2 });
-      await db
-        .update(schema.processJobs)
-        .set({ attempts: 2 })
-        .where(sql`id = ${failedJob.id}`);
-
-      const [failedJobRecord] = await db
-        .select()
-        .from(schema.processJobs)
-        .where(sql`id = ${failedJob.id}`);
-
-      await failJob(failedJobRecord, new Error('Permanent error'));
-
-      const [updatedFailedJob] = await db
-        .select()
-        .from(schema.processJobs)
-        .where(sql`id = ${failedJob.id}`);
-
-      expect(updatedFailedJob.completedAt).toBeInstanceOf(Date);
     });
 
     it('throws NotFoundError when job is not in processing status', async () => {

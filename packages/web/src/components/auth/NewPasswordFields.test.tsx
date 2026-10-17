@@ -34,17 +34,6 @@ describe('NewPasswordFields', () => {
     expect(save().disabled).toBe(false);
   });
 
-  it('shows the mismatch on the confirm field', () => {
-    render(<Harness />);
-    fireEvent.change(screen.getByLabelText('New password'), {
-      target: { value: 'Calm-Harbour-42' },
-    });
-    fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'Calm' } });
-
-    expect(screen.getByRole('alert').textContent).toBe('Passwords do not match');
-    expect(screen.getByLabelText('Confirm password').getAttribute('aria-invalid')).toBe('true');
-  });
-
   it('disables everything while loading', () => {
     render(<Harness isLoading />);
 

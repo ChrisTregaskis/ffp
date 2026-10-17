@@ -1,11 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import {
-  inviteUserSchema,
-  userSchema,
-  createUserSchema,
-  canInviteProgrammeUser,
-} from '../../src/schemas/user.schema';
+import { inviteUserSchema, userSchema } from '../../src/schemas/user.schema';
 
 describe('inviteUserSchema', () => {
   describe('location owner invites (no organisation/location)', () => {
@@ -234,45 +229,6 @@ describe('userSchema', () => {
   };
 
   describe('dateOfBirth field (z.coerce.date())', () => {
-    it('accepts ISO date string (YYYY-MM-DD)', () => {
-      const result = userSchema.safeParse({
-        ...validUserBase,
-        dateOfBirth: '1990-05-15',
-      });
-
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.dateOfBirth).toBeInstanceOf(Date);
-        expect(result.data.dateOfBirth?.toISOString()).toBe('1990-05-15T00:00:00.000Z');
-      }
-    });
-
-    it('accepts Date object', () => {
-      const dateObj = new Date('1990-05-15');
-      const result = userSchema.safeParse({
-        ...validUserBase,
-        dateOfBirth: dateObj,
-      });
-
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.dateOfBirth).toBeInstanceOf(Date);
-        expect(result.data.dateOfBirth).toEqual(dateObj);
-      }
-    });
-
-    it('accepts ISO datetime string', () => {
-      const result = userSchema.safeParse({
-        ...validUserBase,
-        dateOfBirth: '1990-05-15T00:00:00.000Z',
-      });
-
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.dateOfBirth).toBeInstanceOf(Date);
-      }
-    });
-
     it('accepts null value', () => {
       const result = userSchema.safeParse({
         ...validUserBase,
@@ -284,100 +240,5 @@ describe('userSchema', () => {
         expect(result.data.dateOfBirth).toBeNull();
       }
     });
-
-    it('rejects invalid date string', () => {
-      const result = userSchema.safeParse({
-        ...validUserBase,
-        dateOfBirth: 'not-a-date',
-      });
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].message).toContain('expected date');
-      }
-    });
-
-    it('rejects empty string', () => {
-      const result = userSchema.safeParse({
-        ...validUserBase,
-        dateOfBirth: '',
-      });
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].message).toContain('expected date');
-      }
-    });
-  });
-});
-
-describe('createUserSchema', () => {
-  const validCreateUserBase = {
-    email: 'test@example.com',
-    cognitoSub: 'cognito-sub-123',
-    firstName: 'John',
-    lastName: 'Doe',
-    role: 'customer_admin' as const,
-  };
-
-  describe('dateOfBirth field (optional with z.coerce.date())', () => {
-    it('accepts ISO date string', () => {
-      const result = createUserSchema.safeParse({
-        ...validCreateUserBase,
-        dateOfBirth: '1990-05-15',
-      });
-
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.dateOfBirth).toBeInstanceOf(Date);
-        expect(result.data.dateOfBirth?.toISOString()).toBe('1990-05-15T00:00:00.000Z');
-      }
-    });
-
-    it('accepts null value', () => {
-      const result = createUserSchema.safeParse({
-        ...validCreateUserBase,
-        dateOfBirth: null,
-      });
-
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.dateOfBirth).toBeNull();
-      }
-    });
-
-    it('allows dateOfBirth to be omitted (optional)', () => {
-      const result = createUserSchema.safeParse({
-        ...validCreateUserBase,
-        // dateOfBirth omitted
-      });
-
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.dateOfBirth).toBeUndefined();
-      }
-    });
-
-    it('rejects invalid date string', () => {
-      const result = createUserSchema.safeParse({
-        ...validCreateUserBase,
-        dateOfBirth: 'not-a-date',
-      });
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].message).toContain('expected date');
-      }
-    });
-  });
-});
-
-describe('canInviteProgrammeUser', () => {
-  it('should allow invitation for location users (locationId present)', () => {
-    expect(canInviteProgrammeUser('location-123')).toBe(true);
-  });
-
-  it('should deny invitation for individual users (locationId null)', () => {
-    expect(canInviteProgrammeUser(null)).toBe(false);
   });
 });

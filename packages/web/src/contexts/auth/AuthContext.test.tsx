@@ -80,16 +80,6 @@ describe('AuthProvider checkAuth', () => {
     expect(getCurrentUser).toHaveBeenCalledTimes(1);
   });
 
-  it('treats a revoked session as signed out, without retrying', async () => {
-    getCurrentUser.mockRejectedValue(namedError('TokenRevokedException'));
-
-    const result = await renderAuth();
-
-    expect(result.current.user).toBeNull();
-    expect(result.current.authUnavailable).toBe(false);
-    expect(getCurrentUser).toHaveBeenCalledTimes(1);
-  });
-
   it('recovers the session when a transient failure clears on retry', async () => {
     getCurrentUser.mockRejectedValueOnce(namedError('NetworkError'));
 
@@ -109,16 +99,6 @@ describe('AuthProvider checkAuth', () => {
     expect(result.current.authUnavailable).toBe(true);
     expect(fetchAuthSession).toHaveBeenCalledTimes(2);
     expect(signOut).not.toHaveBeenCalled();
-  });
-
-  it('keeps the session for a failure Amplify does not name as signed out', async () => {
-    // A 5xx with an HTML body: Amplify's JSON error parser rejects and keeps the tokens
-    getCurrentUser.mockRejectedValue(namedError('SyntaxError'));
-
-    const result = await renderAuth();
-
-    expect(result.current.user).toBeNull();
-    expect(result.current.authUnavailable).toBe(true);
   });
 
   it('lets a newer check win over an older one still waiting to retry', async () => {

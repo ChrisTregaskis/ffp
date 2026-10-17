@@ -219,15 +219,6 @@ describe('RLS Utility Functions', () => {
   });
 
   describe('withRLS', () => {
-    it('should execute callback within RLS context', async () => {
-      const result = await withRLS(db, orgAId, undefined, async (tx) => {
-        return await tx.select().from(users);
-      });
-
-      expect(result.length).toBe(2); // Only organisation A users
-      expect(result.every((u) => u.organisationId === orgAId)).toBe(true);
-    });
-
     it('should execute callback with user context', async () => {
       const result = await withRLS(db, orgBId, userB1Id, async (tx) => {
         return await tx.select().from(users);

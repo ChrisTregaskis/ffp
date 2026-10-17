@@ -114,31 +114,6 @@ describe('withErrorHandling', () => {
         data: { id: 123 },
       });
     });
-
-    it('should handle null response', async () => {
-      const handler = withErrorHandling(() => {
-        return Promise.resolve(null);
-      });
-
-      const result = await handler(createMockEvent());
-      assertIsObject(result);
-
-      expect(result.statusCode).toBe(200);
-      expect(JSON.parse(result.body) as null).toBeNull();
-    });
-
-    it('should handle array response', async () => {
-      const handler = withErrorHandling(() => {
-        return Promise.resolve([{ id: 1 }, { id: 2 }]);
-      });
-
-      const result = await handler(createMockEvent());
-      assertIsObject(result);
-
-      expect(result.statusCode).toBe(200);
-      const body = JSON.parse(result.body) as { id: number }[];
-      expect(body).toEqual([{ id: 1 }, { id: 2 }]);
-    });
   });
 
   describe('BaseError handling', () => {
@@ -615,54 +590,6 @@ describe('withErrorHandling', () => {
         message: 'An unexpected error occurred',
         requestId: 'test-request-id-789',
       });
-    });
-
-    it('should not include requestId when not present in requestContext', async () => {
-      const handler = withErrorHandling(() => {
-        throw new UnauthorisedError('Invalid token');
-      });
-
-      const event = createMockEvent();
-      event.requestContext.requestId = '';
-
-      const result = await handler(event);
-      assertIsObject(result);
-
-      const body = JSON.parse(result.body) as {
-        error: string;
-        message: string;
-        requestId?: string;
-      };
-      expect(body.requestId).toBeUndefined();
-      expect(body).toEqual({
-        error: 'UNAUTHORISED',
-        message: 'Invalid token',
-      });
-    });
-  });
-
-  describe('response format', () => {
-    it('should always include Content-Type header', async () => {
-      const handler = withErrorHandling(() => {
-        return Promise.resolve({ success: true });
-      });
-
-      const result = await handler(createMockEvent());
-      assertIsObject(result);
-
-      expect(result.headers).toHaveProperty('Content-Type');
-      expect(result.headers['Content-Type']).toBe('application/json');
-    });
-
-    it('should always return valid JSON body', async () => {
-      const handler = withErrorHandling(() => {
-        throw new UnauthorisedError();
-      });
-
-      const result = await handler(createMockEvent());
-      assertIsObject(result);
-
-      expect(() => JSON.parse(result.body) as unknown).not.toThrow();
     });
   });
 

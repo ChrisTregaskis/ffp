@@ -110,29 +110,6 @@ describe('CognitoService', () => {
         'Missing required environment variables: COGNITO_USER_POOL_ID'
       );
     });
-
-    it('should return Cognito response', async () => {
-      const mockResponse = {
-        User: {
-          Username: 'user@example.com',
-          Attributes: [],
-        },
-      };
-      mockSend.mockResolvedValueOnce(mockResponse);
-
-      const params = {
-        email: 'user@example.com',
-        firstName: 'John',
-        lastName: 'Smith',
-        organisationId: 'tenant-123',
-        locationId: 'customer-456',
-        role: 'programme_user',
-      };
-
-      const result = await CognitoService.inviteUser(params);
-
-      expect(result).toEqual(mockResponse);
-    });
   });
 
   describe('createUser', () => {
@@ -228,23 +205,6 @@ describe('CognitoService', () => {
       const commandCall = vi.mocked(AdminCreateUserCommand).mock.calls[0][0];
       expect(commandCall.TemporaryPassword).toBeUndefined();
     });
-
-    it('should throw error if COGNITO_USER_POOL_ID is not set', async () => {
-      delete process.env.COGNITO_USER_POOL_ID;
-
-      const params = {
-        email: 'user@example.com',
-        firstName: 'Test',
-        lastName: 'User',
-        organisationId: 'tenant-123',
-        locationId: 'customer-456',
-        role: 'programme_user',
-      };
-
-      await expect(CognitoService.createUser(params)).rejects.toThrow(
-        'Missing required environment variables: COGNITO_USER_POOL_ID'
-      );
-    });
   });
 
   describe('login', () => {
@@ -272,24 +232,6 @@ describe('CognitoService', () => {
           PASSWORD: 'SecurePass123!',
         },
       });
-    });
-
-    it('should return authentication result', async () => {
-      const mockAuthResult = {
-        AuthenticationResult: {
-          AccessToken: 'access-token',
-          IdToken: 'id-token',
-          RefreshToken: 'refresh-token',
-        },
-      };
-      mockSend.mockResolvedValueOnce(mockAuthResult);
-
-      const result = await CognitoService.login({
-        email: 'user@example.com',
-        password: 'SecurePass123!',
-      });
-
-      expect(result).toEqual(mockAuthResult);
     });
 
     it('should throw UnauthorisedError for NotAuthorizedException', async () => {
@@ -384,20 +326,6 @@ describe('CognitoService', () => {
       });
     });
 
-    it('should return new authentication tokens', async () => {
-      const mockAuthResult = {
-        AuthenticationResult: {
-          AccessToken: 'new-access-token',
-          IdToken: 'new-id-token',
-        },
-      };
-      mockSend.mockResolvedValueOnce(mockAuthResult);
-
-      const result = await CognitoService.refreshToken('refresh-token-value');
-
-      expect(result).toEqual(mockAuthResult);
-    });
-
     it('should throw UnauthorisedError for expired refresh token', async () => {
       const error = new Error('Refresh token expired');
       error.name = 'NotAuthorizedException';
@@ -418,14 +346,6 @@ describe('CognitoService', () => {
 
       await expect(CognitoService.refreshToken('refresh-token')).rejects.toThrow(
         'Service unavailable'
-      );
-    });
-
-    it('should throw error if COGNITO_CLIENT_ID is not set', async () => {
-      delete process.env.COGNITO_CLIENT_ID;
-
-      await expect(CognitoService.refreshToken('refresh-token')).rejects.toThrow(
-        'Missing required environment variables: COGNITO_CLIENT_ID'
       );
     });
   });

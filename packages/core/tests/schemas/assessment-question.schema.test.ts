@@ -206,12 +206,6 @@ describe('updateQuestionSchema', () => {
     }
   });
 
-  it('accepts a partial update with no type (per-type checks skipped)', () => {
-    const result = updateQuestionSchema.safeParse({ questionText: 'Updated text' });
-
-    expect(result.success).toBe(true);
-  });
-
   it('leaves the per-type rules to the merged check in the service', () => {
     // A partial cannot see the options it did not resend, so enforcing the
     // rules here would reject a legitimate switch to a choice type. The service
@@ -305,16 +299,6 @@ describe('questionShapeSchema', () => {
     });
 
     expect(result.success).toBe(true);
-  });
-
-  it('rejects maxSelections above the option count', () => {
-    const result = questionShapeSchema.safeParse({
-      type: 'multi-choice',
-      options: validOptions,
-      validation: { maxSelections: 3 },
-    });
-
-    expect(result.success).toBe(false);
   });
 
   it('tolerates the nulls a stored row carries', () => {

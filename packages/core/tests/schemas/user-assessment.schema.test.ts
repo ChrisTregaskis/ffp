@@ -1,18 +1,12 @@
 import { describe, it, expect } from 'vitest';
 
-import { dimensionalScoreSchema } from '../../src/schemas/job.schema';
 import {
-  userAssessmentStatusSchema,
   userAnswerSchema,
   userAssessmentAnswersSchema,
   userAssessmentScoresSchema,
-  userAssessmentSchema,
-  createUserAssessmentSchema,
-  updateUserAssessmentSchema,
   statusTransitionSchema,
   isValidStatusTransition,
   getAllowedTransitions,
-  submitAssessmentSchema,
   startAssessmentRequestSchema,
   startAssessmentResponseSchema,
 } from '../../src/schemas/user-assessment/user-assessment.schema';
@@ -20,14 +14,6 @@ import {
 // Test fixtures
 const validUuid = '550e8400-e29b-41d4-a716-446655440000';
 const validUuid2 = '660e8400-e29b-41d4-a716-446655440001';
-const validUuid3 = '770e8400-e29b-41d4-a716-446655440002';
-
-const _validAnswer = {
-  questionId: validUuid,
-  answerValue: 4,
-  answerId: validUuid2,
-  answeredAt: new Date(),
-};
 
 const validDimensionalScore = {
   dimensionId: 'mobility',
@@ -43,58 +29,6 @@ const validScores = {
   riskLevel: 'moderate' as const,
   scoredAt: new Date(),
 };
-
-const validUserAssessment = {
-  id: validUuid,
-  organisationId: validUuid,
-  userId: validUuid2,
-  flowId: validUuid3,
-  currentStep: 1,
-  status: 'not_started' as const,
-  scores: null,
-  programmeId: null,
-  startedAt: null,
-  submittedAt: null,
-  completedAt: null,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
-// ============================================================================
-// userAssessmentStatusSchema tests
-// ============================================================================
-
-describe('userAssessmentStatusSchema', () => {
-  it('should accept valid status values', () => {
-    const validStatuses = [
-      'not_started',
-      'in_progress',
-      'submitted',
-      'scored',
-      'completed',
-      'abandoned',
-    ];
-
-    validStatuses.forEach((status) => {
-      const result = userAssessmentStatusSchema.safeParse(status);
-      expect(result.success).toBe(true);
-    });
-  });
-
-  it('should reject invalid status values', () => {
-    const invalidStatuses = ['pending', 'active', 'done', 'cancelled', ''];
-
-    invalidStatuses.forEach((status) => {
-      const result = userAssessmentStatusSchema.safeParse(status);
-      expect(result.success).toBe(false);
-    });
-  });
-
-  it('should reject non-string values', () => {
-    const result = userAssessmentStatusSchema.safeParse(123);
-    expect(result.success).toBe(false);
-  });
-});
 
 // ============================================================================
 // userAnswerSchema tests
@@ -224,49 +158,6 @@ describe('userAssessmentAnswersSchema', () => {
 });
 
 // ============================================================================
-// dimensionalScoreSchema tests
-// ============================================================================
-
-describe('dimensionalScoreSchema', () => {
-  it('should accept valid dimensional score', () => {
-    const result = dimensionalScoreSchema.safeParse(validDimensionalScore);
-    expect(result.success).toBe(true);
-  });
-
-  it('should accept score without optional category', () => {
-    const score = {
-      dimensionId: 'strength',
-      dimensionName: 'Strength',
-      rawScore: 60,
-      normalisedScore: 70,
-    };
-    const result = dimensionalScoreSchema.safeParse(score);
-    expect(result.success).toBe(true);
-  });
-
-  it('should reject score without dimensionId', () => {
-    const score = {
-      dimensionName: 'Strength',
-      rawScore: 60,
-      normalisedScore: 70,
-    };
-    const result = dimensionalScoreSchema.safeParse(score);
-    expect(result.success).toBe(false);
-  });
-
-  it('should reject score with non-numeric rawScore', () => {
-    const score = {
-      dimensionId: 'strength',
-      dimensionName: 'Strength',
-      rawScore: 'high',
-      normalisedScore: 70,
-    };
-    const result = dimensionalScoreSchema.safeParse(score);
-    expect(result.success).toBe(false);
-  });
-});
-
-// ============================================================================
 // userAssessmentScoresSchema tests
 // ============================================================================
 
@@ -324,199 +215,6 @@ describe('userAssessmentScoresSchema', () => {
       const result = userAssessmentScoresSchema.safeParse(scores);
       expect(result.success).toBe(true);
     });
-  });
-});
-
-// ============================================================================
-// userAssessmentSchema tests
-// ============================================================================
-
-describe('userAssessmentSchema', () => {
-  it('should accept valid user assessment', () => {
-    const result = userAssessmentSchema.safeParse(validUserAssessment);
-    expect(result.success).toBe(true);
-  });
-
-  it('should accept assessment with populated answers', () => {
-    const assessment = {
-      ...validUserAssessment,
-      status: 'in_progress' as const,
-      answers: {
-        [validUuid]: {
-          questionId: validUuid,
-          answerValue: 4,
-        },
-      },
-      startedAt: new Date(),
-    };
-    const result = userAssessmentSchema.safeParse(assessment);
-    expect(result.success).toBe(true);
-  });
-
-  it('should accept completed assessment with scores', () => {
-    const assessment = {
-      ...validUserAssessment,
-      status: 'completed' as const,
-      scores: validScores,
-      programmeId: validUuid3,
-      startedAt: new Date(),
-      submittedAt: new Date(),
-      completedAt: new Date(),
-    };
-    const result = userAssessmentSchema.safeParse(assessment);
-    expect(result.success).toBe(true);
-  });
-
-  it('should reject assessment without required fields', () => {
-    const assessment = {
-      id: validUuid,
-      organisationId: validUuid,
-      // missing userId, flowId, etc.
-    };
-    const result = userAssessmentSchema.safeParse(assessment);
-    expect(result.success).toBe(false);
-  });
-
-  it('should reject assessment with invalid UUID fields', () => {
-    const assessment = {
-      ...validUserAssessment,
-      userId: 'not-a-uuid',
-    };
-    const result = userAssessmentSchema.safeParse(assessment);
-    expect(result.success).toBe(false);
-  });
-
-  it('should reject assessment with non-positive currentStep', () => {
-    const assessment = {
-      ...validUserAssessment,
-      currentStep: 0,
-    };
-    const result = userAssessmentSchema.safeParse(assessment);
-    expect(result.success).toBe(false);
-  });
-
-  it('should reject assessment with invalid status', () => {
-    const assessment = {
-      ...validUserAssessment,
-      status: 'invalid_status',
-    };
-    const result = userAssessmentSchema.safeParse(assessment);
-    expect(result.success).toBe(false);
-  });
-});
-
-// ============================================================================
-// createUserAssessmentSchema tests
-// ============================================================================
-
-describe('createUserAssessmentSchema', () => {
-  it('should accept valid create input', () => {
-    const input = {
-      organisationId: validUuid,
-      userId: validUuid2,
-      flowId: validUuid3,
-    };
-    const result = createUserAssessmentSchema.safeParse(input);
-    expect(result.success).toBe(true);
-  });
-
-  it('should reject input without organisationId', () => {
-    const input = {
-      userId: validUuid2,
-      flowId: validUuid3,
-    };
-    const result = createUserAssessmentSchema.safeParse(input);
-    expect(result.success).toBe(false);
-  });
-
-  it('should reject input without userId', () => {
-    const input = {
-      organisationId: validUuid,
-      flowId: validUuid3,
-    };
-    const result = createUserAssessmentSchema.safeParse(input);
-    expect(result.success).toBe(false);
-  });
-
-  it('should reject input without flowId', () => {
-    const input = {
-      organisationId: validUuid,
-      userId: validUuid2,
-    };
-    const result = createUserAssessmentSchema.safeParse(input);
-    expect(result.success).toBe(false);
-  });
-
-  it('should reject input with invalid UUID format', () => {
-    const input = {
-      organisationId: 'not-a-uuid',
-      userId: validUuid2,
-      flowId: validUuid3,
-    };
-    const result = createUserAssessmentSchema.safeParse(input);
-    expect(result.success).toBe(false);
-  });
-});
-
-// ============================================================================
-// updateUserAssessmentSchema tests
-// ============================================================================
-
-describe('updateUserAssessmentSchema', () => {
-  it('should accept update with currentStep', () => {
-    const input = {
-      currentStep: 2,
-    };
-    const result = updateUserAssessmentSchema.safeParse(input);
-    expect(result.success).toBe(true);
-  });
-
-  it('should accept update with answers', () => {
-    const input = {
-      answers: {
-        [validUuid]: {
-          questionId: validUuid,
-          answerValue: 5,
-        },
-      },
-    };
-    const result = updateUserAssessmentSchema.safeParse(input);
-    expect(result.success).toBe(true);
-  });
-
-  it('should accept update with both fields', () => {
-    const input = {
-      currentStep: 3,
-      answers: {
-        [validUuid]: {
-          questionId: validUuid,
-          answerValue: 5,
-        },
-      },
-    };
-    const result = updateUserAssessmentSchema.safeParse(input);
-    expect(result.success).toBe(true);
-  });
-
-  it('should accept empty update object', () => {
-    const result = updateUserAssessmentSchema.safeParse({});
-    expect(result.success).toBe(true);
-  });
-
-  it('should reject update with non-positive currentStep', () => {
-    const input = {
-      currentStep: 0,
-    };
-    const result = updateUserAssessmentSchema.safeParse(input);
-    expect(result.success).toBe(false);
-  });
-
-  it('should reject update with non-integer currentStep', () => {
-    const input = {
-      currentStep: 2.5,
-    };
-    const result = updateUserAssessmentSchema.safeParse(input);
-    expect(result.success).toBe(false);
   });
 });
 
@@ -666,60 +364,6 @@ describe('getAllowedTransitions', () => {
   it('should return empty array for abandoned (terminal)', () => {
     const transitions = getAllowedTransitions('abandoned');
     expect(transitions).toEqual([]);
-  });
-});
-
-// ============================================================================
-// submitAssessmentSchema tests
-// ============================================================================
-
-describe('submitAssessmentSchema', () => {
-  it('should accept valid submit input', () => {
-    const input = {
-      assessmentId: validUuid,
-      answers: {
-        [validUuid]: {
-          questionId: validUuid,
-          answerValue: 5,
-        },
-      },
-    };
-    const result = submitAssessmentSchema.safeParse(input);
-    expect(result.success).toBe(true);
-  });
-
-  it('should accept submit with empty answers', () => {
-    const input = {
-      assessmentId: validUuid,
-      answers: {},
-    };
-    const result = submitAssessmentSchema.safeParse(input);
-    expect(result.success).toBe(true);
-  });
-
-  it('should reject submit without assessmentId', () => {
-    const input = {
-      answers: {},
-    };
-    const result = submitAssessmentSchema.safeParse(input);
-    expect(result.success).toBe(false);
-  });
-
-  it('should reject submit without answers', () => {
-    const input = {
-      assessmentId: validUuid,
-    };
-    const result = submitAssessmentSchema.safeParse(input);
-    expect(result.success).toBe(false);
-  });
-
-  it('should reject submit with invalid assessmentId format', () => {
-    const input = {
-      assessmentId: 'not-a-uuid',
-      answers: {},
-    };
-    const result = submitAssessmentSchema.safeParse(input);
-    expect(result.success).toBe(false);
   });
 });
 

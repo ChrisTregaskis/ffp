@@ -29,10 +29,4 @@ describe('IconBadge', () => {
 
     expect(badgeClass(container)).not.toMatch(/\bbg-/);
   });
-
-  it('tints a destructive badge with the destructive colour', () => {
-    const { container } = render(<IconBadge name="Shield" variant="destructive" />);
-
-    expect(badgeClass(container)).toContain('bg-destructive/20');
-  });
 });

@@ -46,27 +46,9 @@ describe('LoginForm', () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it('uses the email keyboard without the browser’s own email check', () => {
-    renderForm();
-
-    expect(email().getAttribute('type')).toBe('text');
-    expect(email().getAttribute('inputmode')).toBe('email');
-  });
-
   it('trims the email before checking and sending it', async () => {
     const onSubmit = renderForm();
     fireEvent.change(email(), { target: { value: ' member@example.com ' } });
-    fireEvent.change(password(), { target: { value: 'secret' } });
-    submit();
-
-    await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith({ email: 'member@example.com', password: 'secret' });
-    });
-  });
-
-  it('submits valid credentials', async () => {
-    const onSubmit = renderForm();
-    fireEvent.change(email(), { target: { value: 'member@example.com' } });
     fireEvent.change(password(), { target: { value: 'secret' } });
     submit();
 

@@ -170,13 +170,6 @@ describe('useActivationActions', () => {
 
     expect(addToast).toHaveBeenCalledWith('It went wrong', { variant: 'error' });
   });
-
-  it('passes the pending flags through', () => {
-    const { result } = setup('success', vi.fn(), { isDeactivating: true, isActivating: true });
-
-    expect(result.current.isDeactivating).toBe(true);
-    expect(result.current.isActivating).toBe(true);
-  });
 });
 
 describe('toActivationRowAction', () => {

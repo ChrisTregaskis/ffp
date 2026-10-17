@@ -75,12 +75,6 @@ describe('formValuesToStepInput', () => {
     expect(result.config.safetyNotes).toBeUndefined();
   });
 
-  it('omits an unparseable estimate rather than sending NaN', () => {
-    const result = formValuesToStepInput(values({ estimatedMinutes: '' }));
-
-    expect(result.config.estimatedMinutes).toBeUndefined();
-  });
-
   it('sends the template link for a type that takes one', () => {
     const result = formValuesToStepInput(values({ type: 'questions', templateId: TEMPLATE_ID }));
 

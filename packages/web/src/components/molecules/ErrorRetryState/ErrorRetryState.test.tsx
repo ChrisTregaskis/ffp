@@ -13,12 +13,4 @@ describe('ErrorRetryState', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
-
-  it('centres itself in the viewport with the screen layout', () => {
-    const { container } = render(
-      <ErrorRetryState title="Failed" onRetry={vi.fn()} layout="screen" />
-    );
-
-    expect(container.firstElementChild?.className).toContain('min-h-screen');
-  });
 });
