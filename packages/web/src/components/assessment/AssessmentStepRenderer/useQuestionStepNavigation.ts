@@ -22,6 +22,8 @@ interface QuestionStepNavigation {
   continueDisabled: boolean;
   continueHandler: (() => void) | undefined;
   backHandler: (() => void) | undefined;
+  /** Whether Continue submits the assessment rather than moving on */
+  isFinalSubmit: boolean;
 }
 
 /**
@@ -81,5 +83,6 @@ export const useQuestionStepNavigation = ({
     continueDisabled,
     continueHandler: getContinueHandler(),
     backHandler: getBackHandler(),
+    isFinalSubmit,
   };
 };

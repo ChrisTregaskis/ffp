@@ -1,4 +1,4 @@
-import type { FlowStepConfig, UserAssessmentScores } from '@ffp/core';
+import type { FlowStepConfig, MemberAssessmentScores } from '@ffp/core';
 
 import { FadeSlideIn } from '@web/components/motion';
 
@@ -16,7 +16,7 @@ export interface ResultsScreenProps {
   /** Step configuration from the assessment flow */
   config: FlowStepConfig;
   /** Calculated assessment scores (null while loading) */
-  scores: UserAssessmentScores | null;
+  scores: MemberAssessmentScores | null;
   /** Whether scoring is still in progress */
   isLoading: boolean;
   /** Generated programme ID (null while programme is being created) */

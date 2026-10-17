@@ -19,6 +19,11 @@ export interface AssessmentNavigationProps {
   continueDisabled?: boolean;
   /** Custom handler for Continue — overrides default save-then-navigate */
   onContinue?: () => void;
+  /**
+   * Whether `onContinue` submits the assessment. The submit sends every answer itself, so no
+   * background save is fired alongside it to race the submission.
+   */
+  isSubmit?: boolean;
   /** Custom handler for Back — overrides default save-then-navigate */
   onBack?: () => void;
   /** Additional CSS classes for the container */
@@ -40,6 +45,7 @@ export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
   continueVariant = 'primary',
   continueDisabled = false,
   onContinue,
+  isSubmit = false,
   onBack,
   className = '',
 }) => {
@@ -62,7 +68,7 @@ export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
         try {
           response = await saveProgress.mutateAsync({
             assessmentId,
-            payload: { answers, currentStep },
+            payload: { answers, currentStep, advance: direction === 'forward' },
           });
         } catch (error) {
           // A refusal is shown on its questions; one that cannot be, and any other failure, here
@@ -131,14 +137,17 @@ export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
 
   const handleContinue = useCallback(() => {
     if (onContinue) {
-      savePositionInBackground();
+      if (!isSubmit) {
+        savePositionInBackground();
+      }
+
       onContinue();
 
       return;
     }
 
     void handleSaveAndNavigate('forward');
-  }, [onContinue, savePositionInBackground, handleSaveAndNavigate]);
+  }, [onContinue, isSubmit, savePositionInBackground, handleSaveAndNavigate]);
 
   const handleBack = useCallback(() => {
     if (onBack) {

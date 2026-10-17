@@ -6,7 +6,7 @@ import type {
   DimensionalScore,
   FlowStepConfig,
   FlowStepType,
-  UserAssessmentScores,
+  MemberAssessmentScores,
 } from '@ffp/core';
 
 import {
@@ -120,13 +120,12 @@ const mockDimensions: DimensionalScore[] = [
   },
 ];
 
-const mockFullScores: UserAssessmentScores = {
+const mockFullScores: MemberAssessmentScores = {
   dimensions: mockDimensions,
-  riskLevel: 'moderate',
   scoredAt: new Date('2026-02-08T10:30:00Z'),
 };
 
-const mockMinimalScores: UserAssessmentScores = {
+const mockMinimalScores: MemberAssessmentScores = {
   dimensions: [
     {
       dimensionId: 'mobility',
@@ -138,7 +137,7 @@ const mockMinimalScores: UserAssessmentScores = {
   scoredAt: new Date('2026-02-08T10:30:00Z'),
 };
 
-const mockHighRiskScores: UserAssessmentScores = {
+const mockHighRiskScores: MemberAssessmentScores = {
   dimensions: [
     {
       dimensionId: 'mobility',
@@ -163,7 +162,6 @@ const mockHighRiskScores: UserAssessmentScores = {
     },
   ],
   overallScore: 22,
-  riskLevel: 'high',
   scoredAt: new Date('2026-02-08T10:30:00Z'),
 };
 

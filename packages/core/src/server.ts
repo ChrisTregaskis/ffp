@@ -23,6 +23,7 @@ export * from './lib/pagination';
 export * from './lib/errors';
 export * from './lib/lambda-wrapper';
 export * from './lib/system-admin-gate';
+export * from './lib/path-params';
 export * from './lib/cognito';
 export * from './lib/context';
 export * from './lib/request-context';

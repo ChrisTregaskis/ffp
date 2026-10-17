@@ -1,7 +1,7 @@
 import type {
   FlowStepType,
   FlowStepSummary,
-  UserAssessmentScores,
+  MemberAssessmentScores,
   UserAnswer,
   AssessmentWarning,
 } from '@ffp/core';
@@ -28,7 +28,7 @@ export interface AssessmentState {
   /** Whether there are unsaved changes */
   isDirty: boolean;
   /** Calculated scores (null until assessment is scored) */
-  scores: UserAssessmentScores | null;
+  scores: MemberAssessmentScores | null;
   /** Warnings displayed during assessment (from branching rules) */
   warnings: AssessmentWarning[];
   /** The server's message per question it refused, keyed by questionId; cleared as each is answered */
@@ -145,7 +145,7 @@ export interface MarkSavedAction {
 export interface SetScoresAction {
   type: typeof ASSESSMENT_ACTION.SET_SCORES;
   payload: {
-    scores: UserAssessmentScores;
+    scores: MemberAssessmentScores;
   };
 }
 

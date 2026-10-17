@@ -3,6 +3,7 @@ import {
   type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
   withErrorHandling,
+  assertUuidOrNotFound,
   assessmentService,
   ValidationError,
 } from '@ffp/core/server';
@@ -22,6 +23,8 @@ export const handler = withErrorHandling(
     if (!assessmentId) {
       throw new ValidationError('Assessment ID is required in path');
     }
+
+    assertUuidOrNotFound(assessmentId, 'Assessment');
 
     return await assessmentService.acknowledgeSafetyAdvice(assessmentId, context);
   }

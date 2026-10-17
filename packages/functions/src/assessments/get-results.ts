@@ -1,8 +1,9 @@
-import { type AssessmentResultsResponse } from '@ffp/core';
+import { type AssessmentResultsResponse, assessmentResultsResponseSchema } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
   withErrorHandling,
+  assertUuidOrNotFound,
   assessmentService,
   ValidationError,
 } from '@ffp/core/server';
@@ -23,9 +24,12 @@ export const handler = withErrorHandling(
       throw new ValidationError('Assessment ID is required in path');
     }
 
+    assertUuidOrNotFound(assessmentId, 'Assessment');
+
     // Get assessment results via service
     const result = await assessmentService.getAssessmentResults(assessmentId, context);
 
-    return result;
+    // The stored scores carry scoring internals a member is not shown; the schema drops them
+    return assessmentResultsResponseSchema.parse(result);
   }
 );
