@@ -13,7 +13,7 @@ export interface SessionExercise {
   videoId: string;
   /** Exercise title (from video) */
   title: string;
-  /** Prescription fields (from session_exercises) */
+  /** Prescription fields (from the member's own session exercises) */
   sets: number;
   reps: string;
   restSeconds: number | null;

@@ -1,3 +1,5 @@
+import { asc, eq } from 'drizzle-orm';
+
 import {
   userSessionExercises,
   type NewUserSessionExercise,
@@ -18,4 +20,16 @@ export async function createUserSessionExercises(
   }
 
   return await tx.insert(userSessionExercises).values(exercises).returning();
+}
+
+/** Finds a member session's exercises, in order, within an existing RLS transaction. */
+export async function findUserSessionExercisesBySessionId(
+  tx: Transaction,
+  userSessionId: string
+): Promise<UserSessionExerciseRecord[]> {
+  return await tx
+    .select()
+    .from(userSessionExercises)
+    .where(eq(userSessionExercises.userSessionId, userSessionId))
+    .orderBy(asc(userSessionExercises.orderIndex));
 }

@@ -6,6 +6,7 @@ import { findProgrammeByUserId } from '../programmes/programme.repository';
 
 import { runCascade } from './cascade';
 import * as sessionRepo from './session.repository';
+import * as userSessionExerciseRepo from './user-session-exercise.repository';
 
 import type { UserSessionRecord } from './session.repository';
 import type { ExerciseCompletionRecord } from '../exercises/exercise.repository';
@@ -70,18 +71,17 @@ export async function startSession(
     const now = new Date();
     const session = await sessionRepo.updateSessionStatus(tx, existing.id, 'in_progress', now);
 
-    // Create exercise completions from template exercises
-    const templateExercises = await exerciseRepo.findSessionExercisesByTemplateSession(
+    const memberExercises = await userSessionExerciseRepo.findUserSessionExercisesBySessionId(
       tx,
-      input.templateSessionId
+      session.id
     );
 
     const completions = await exerciseRepo.createExerciseCompletions(
       tx,
-      templateExercises.map((exercise) => ({
+      memberExercises.map((exercise) => ({
         organisationId,
         userSessionId: session.id,
-        sessionExerciseId: exercise.id,
+        userSessionExerciseId: exercise.id,
         videoId: exercise.videoId,
       }))
     );

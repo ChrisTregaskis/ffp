@@ -30,8 +30,8 @@ export const exerciseCompletionResponseSchema = z.object({
   id: z.guid(),
   /** Parent user session */
   userSessionId: z.guid(),
-  /** Template exercise reference */
-  sessionExerciseId: z.guid(),
+  /** The member's exercise this completes */
+  userSessionExerciseId: z.guid(),
   /** Denormalised video reference */
   videoId: z.guid(),
   /** Whether the exercise was completed */

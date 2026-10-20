@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
@@ -7,18 +6,13 @@ import { describe, it, expect, beforeEach, afterEach, afterAll } from 'vitest';
 
 import {
   exerciseCompletions,
-  locations,
-  organisations,
   programmePhases,
   programmes,
-  programmeTemplates,
   sessionExercises,
   templatePhases,
   templateSessions,
   userSessionExercises,
   userSessions,
-  users,
-  videos,
   type ExerciseCompletionRecord,
   type ProgrammePhaseRecord,
   type ProgrammeRecord,
@@ -27,10 +21,17 @@ import {
 
 import { closePool, withRLS } from '../../src/lib/database';
 import { NotFoundError } from '../../src/lib/errors';
-import { generateProgramme } from '../../src/programmes/programme.service';
 import { startSession } from '../../src/sessions/session.service';
 
-import type { OrganisationContext, UserActor } from '../../src/lib/context';
+import {
+  createFixture,
+  generateFor,
+  memberContext,
+  removeFixture,
+  TEMPLATE_SHAPE,
+  type Fixture,
+} from './programme-fixture';
+
 import type { Transaction } from '../../src/lib/database';
 
 const BACKFILL_MIGRATION = resolve(
@@ -44,21 +45,6 @@ const backfillStatements = (): string[] =>
     .split('--> statement-breakpoint')
     .map((statement) => statement.trim())
     .filter((statement) => statement.includes('INSERT INTO'));
-
-/** Template fixture: phase 1 has two sessions (2 + 1 exercises), phase 2 one session (2). */
-const TEMPLATE_SHAPE = [
-  { phaseNumber: 1, sessions: [2, 1] },
-  { phaseNumber: 2, sessions: [2] },
-];
-
-interface Fixture {
-  organisationId: string;
-  userId: string;
-  cognitoSub: string;
-  templateId: string;
-  templateSlug: string;
-  videoIds: string[];
-}
 
 interface ProgrammeState {
   programme: ProgrammeRecord;
@@ -83,108 +69,6 @@ interface MemberSession {
   sessionNumber: number;
   status: string;
   exercises: MemberExercise[];
-}
-
-const shortId = (): string => randomUUID().replace(/-/g, '').slice(0, 12);
-
-async function createFixture(): Promise<Fixture> {
-  const organisationId = randomUUID();
-  const userId = randomUUID();
-  const templateId = randomUUID();
-  const templateSlug = `materialisation-${shortId()}`;
-  const videoIds = [randomUUID(), randomUUID()];
-  const cognitoSub = `cognito-${shortId()}`;
-
-  await withRLS(organisationId, undefined, async (tx) => {
-    await tx.insert(organisations).values({
-      id: organisationId,
-      type: 'business',
-      name: `Materialisation test ${templateSlug}`,
-      settings: {},
-    });
-
-    const locationId = randomUUID();
-    await tx.insert(locations).values({
-      id: locationId,
-      organisationId,
-      name: 'Materialisation location',
-      accountCode: `LOC-${shortId()}`,
-      status: 'active',
-    });
-
-    await tx.insert(users).values({
-      id: userId,
-      organisationId,
-      locationId,
-      email: `materialisation-${shortId()}@test.com`,
-      cognitoSub,
-      firstName: 'Mara',
-      lastName: 'Member',
-      role: 'programme_user',
-    });
-
-    await tx.insert(videos).values(
-      videoIds.map((id, index) => ({
-        id,
-        title: `Materialisation video ${String(index)}`,
-        s3Key: `tests/materialisation/${shortId()}.mp4`,
-        durationSeconds: 60,
-        fileSizeBytes: 1024,
-        bodyParts: ['knee'],
-        equipment: [],
-      }))
-    );
-
-    await tx.insert(programmeTemplates).values({
-      id: templateId,
-      slug: templateSlug,
-      name: 'Materialisation template',
-      totalPhases: TEMPLATE_SHAPE.length,
-    });
-
-    for (const phaseShape of TEMPLATE_SHAPE) {
-      const [phase] = await tx
-        .insert(templatePhases)
-        .values({
-          programmeTemplateId: templateId,
-          phaseNumber: phaseShape.phaseNumber,
-          name: `Phase ${String(phaseShape.phaseNumber)}`,
-        })
-        .returning();
-
-      for (const [sessionIndex, exerciseCount] of phaseShape.sessions.entries()) {
-        const [session] = await tx
-          .insert(templateSessions)
-          .values({ templatePhaseId: phase.id, sessionNumber: sessionIndex + 1 })
-          .returning();
-
-        await tx.insert(sessionExercises).values(
-          Array.from({ length: exerciseCount }, (_, orderIndex) => ({
-            templateSessionId: session.id,
-            videoId: videoIds[orderIndex % videoIds.length],
-            orderIndex,
-            sets: 2 + orderIndex,
-            reps: `${String(8 + orderIndex)}-12`,
-            durationSeconds: orderIndex === 0 ? null : 30,
-            restSeconds: 45,
-            notes: `Note ${String(phaseShape.phaseNumber)}.${String(sessionIndex)}.${String(orderIndex)}`,
-          }))
-        );
-      }
-    }
-  });
-
-  return { organisationId, userId, cognitoSub, templateId, templateSlug, videoIds };
-}
-
-async function removeFixture(fixture: Fixture): Promise<void> {
-  await withRLS(fixture.organisationId, undefined, async (tx) => {
-    // user_sessions restrict their phase, so they go before the organisation cascade
-    await tx.delete(userSessions).where(eq(userSessions.organisationId, fixture.organisationId));
-    await tx.delete(organisations).where(eq(organisations.id, fixture.organisationId));
-    await tx.delete(programmeTemplates).where(eq(programmeTemplates.id, fixture.templateId));
-    await tx.delete(videos).where(inArray(videos.id, fixture.videoIds));
-  });
 }
 
 /** Every session and exercise the member layer holds for a programme, in order. */
@@ -288,19 +172,7 @@ describe('Programme materialisation', () => {
     await closePool();
   });
 
-  const generate = (): Promise<string> =>
-    withRLS(fixture.organisationId, fixture.userId, async (tx) => {
-      const result = await generateProgramme(
-        {
-          organisationId: fixture.organisationId,
-          userId: fixture.userId,
-          recommendedTemplateSlug: fixture.templateSlug,
-        },
-        { tx }
-      );
-
-      return result.programmeId;
-    });
+  const generate = (): Promise<string> => generateFor(fixture);
 
   it('writes a not_started session and its exercises for every template session', async () => {
     const programmeId = await generate();
@@ -430,19 +302,6 @@ describe('Programme materialisation', () => {
   });
 
   describe('startSession', () => {
-    const memberContext = (): OrganisationContext => ({
-      actor: {
-        type: 'user',
-        userId: fixture.cognitoSub,
-        userRole: 'programme_user',
-        email: 'member@test.com',
-      } as UserActor,
-      organisationId: fixture.organisationId,
-      locationId: null,
-      requestId: randomUUID(),
-      timestamp: new Date(),
-    });
-
     /** The generated programme's phases with their member sessions, in order. */
     const readProgramme = (programmeId: string): Promise<ProgrammeState> =>
       withRLS(fixture.organisationId, fixture.userId, async (tx) => {
@@ -485,7 +344,7 @@ describe('Programme materialisation', () => {
 
       const started = await startSession(
         { programmePhaseId: phases[0].id, templateSessionId: target?.templateSessionId ?? '' },
-        memberContext()
+        memberContext(fixture)
       );
 
       const after = await readProgramme(programmeId);
@@ -508,8 +367,8 @@ describe('Programme materialisation', () => {
         templateSessionId: target?.templateSessionId ?? '',
       };
 
-      const first = await startSession(input, memberContext());
-      const second = await startSession(input, memberContext());
+      const first = await startSession(input, memberContext(fixture));
+      const second = await startSession(input, memberContext(fixture));
       const after = await readProgramme(programmeId);
 
       expect(second.id).toBe(first.id);
@@ -530,7 +389,7 @@ describe('Programme materialisation', () => {
             programmePhaseId: phases[0].id,
             templateSessionId: otherPhaseSession?.templateSessionId ?? '',
           },
-          memberContext()
+          memberContext(fixture)
         )
       ).rejects.toBeInstanceOf(NotFoundError);
 
