@@ -80,6 +80,15 @@ function createMockEvent(
   return { ...defaultEvent, ...overrides } as APIGatewayProxyEventV2WithJWT;
 }
 
+/** Drizzle wraps the `pg` error, putting the failed SQL in the message. */
+const wrappedDriverError = (code: string, constraint?: string): Error =>
+  Object.assign(new Error('Failed query: insert into "questions" ...\nparams: alice@example.com'), {
+    cause: Object.assign(new Error('duplicate key value violates unique constraint'), {
+      code,
+      constraint,
+    }),
+  });
+
 describe('withErrorHandling', () => {
   // Suppress console.error for all tests to avoid cluttering test output
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
@@ -313,18 +322,6 @@ describe('withErrorHandling', () => {
   });
 
   describe('database driver error handling', () => {
-    /** Drizzle wraps the `pg` error, putting the failed SQL in the message. */
-    const wrappedDriverError = (code: string, constraint?: string): Error =>
-      Object.assign(
-        new Error('Failed query: insert into "questions" ...\nparams: alice@example.com'),
-        {
-          cause: Object.assign(new Error('duplicate key value violates unique constraint'), {
-            code,
-            constraint,
-          }),
-        }
-      );
-
     it('should map a unique violation to 409', async () => {
       const handler = withErrorHandling(() => {
         throw wrappedDriverError('23505', 'questions_slug_unique');
@@ -355,6 +352,28 @@ describe('withErrorHandling', () => {
       expect(result.body).not.toContain('users_email_unique');
       expect(result.body).not.toContain('insert into');
       expect(result.body).not.toContain('alice@example.com');
+    });
+
+    it('should log a unique violation by SQLSTATE and constraint, not the query or its parameters', async () => {
+      const handler = withErrorHandling(() => {
+        throw wrappedDriverError('23505', 'users_email_unique');
+      });
+
+      const event = createMockEvent();
+      event.requestContext.requestId = '';
+
+      await handler(event);
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Lambda error:',
+        expect.objectContaining({
+          error: 'Database driver error',
+          database: { sqlState: '23505', constraint: 'users_email_unique' },
+        })
+      );
+      const logged = JSON.stringify(consoleErrorSpy.mock.calls);
+      expect(logged).not.toContain('insert into');
+      expect(logged).not.toContain('alice@example.com');
     });
 
     it('should leave another SQLSTATE on the 500 path with a sanitised message', async () => {
@@ -704,6 +723,64 @@ describe('withErrorHandling', () => {
       expect(errorLog.message).toBe('Request failed');
       expect(errorLog.context?.error).toBe('Invalid data');
       expect(errorLog.context?.errorType).toBe('VALIDATION_ERROR');
+    });
+
+    const loggedEntries = (): { message: string; context?: Record<string, unknown> }[] =>
+      consoleLogSpy.mock.calls.map(
+        (call) =>
+          JSON.parse(call[0] as string) as { message: string; context?: Record<string, unknown> }
+      );
+
+    const failureContext = (): Record<string, unknown> | undefined =>
+      loggedEntries().find((entry) => entry.message === 'Request failed')?.context;
+
+    it('should redact the token and password from the event logged for a failed authenticated request', async () => {
+      const handler = withErrorHandling(() => {
+        throw new Error('Unexpected failure');
+      });
+
+      const event: APIGatewayProxyEventV2WithJWT = {
+        ...createAuthenticatedEvent({ path: '/auth/change-password', httpMethod: 'POST' }),
+        headers: {
+          authorization: 'Bearer sentinel-bearer-token',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ email: 'test@example.com', password: 'sentinel-password' }),
+      };
+
+      await handler(event);
+
+      const loggedEvent = failureContext()?.sanitisedEvent as {
+        headers: Record<string, string>;
+        body: string;
+      };
+      expect(loggedEvent.headers).toEqual({
+        authorization: '[REDACTED]',
+        'content-type': 'application/json',
+      });
+      expect(JSON.parse(loggedEvent.body)).toEqual({
+        email: 'test@example.com',
+        password: '[REDACTED]',
+      });
+      const logged = JSON.stringify(consoleLogSpy.mock.calls);
+      expect(logged).not.toContain('sentinel-bearer-token');
+      expect(logged).not.toContain('sentinel-password');
+    });
+
+    it('should log a unique violation on an authenticated request without the query or its parameters', async () => {
+      const handler = withErrorHandling(() => {
+        throw wrappedDriverError('23505', 'users_email_unique');
+      });
+
+      await handler(createAuthenticatedEvent());
+
+      expect(failureContext()).toMatchObject({
+        error: 'Database driver error',
+        database: { sqlState: '23505', constraint: 'users_email_unique' },
+      });
+      const logged = JSON.stringify(consoleLogSpy.mock.calls);
+      expect(logged).not.toContain('insert into');
+      expect(logged).not.toContain('alice@example.com');
     });
 
     it('should include actor information in structured logs', async () => {

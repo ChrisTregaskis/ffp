@@ -12,7 +12,6 @@
 
 import { describe, it, expect } from 'vitest';
 
-import { COGNITO_CUSTOM_ATTRIBUTES } from '../../src/lib/constants';
 import {
   extractUserContext,
   createSystemContext,
@@ -155,8 +154,8 @@ describe('extractUserContext', () => {
     it('should extract context from valid JWT with all required claims', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
-        [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
+        'custom:tenantId': 'tenant-456',
+        'custom:role': 'customer_owner',
         email: 'test@example.com',
       });
 
@@ -177,9 +176,9 @@ describe('extractUserContext', () => {
     it('should extract context from valid JWT with locationId present', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
-        [COGNITO_CUSTOM_ATTRIBUTES.LOCATION_ID]: 'customer-789',
-        [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
+        'custom:tenantId': 'tenant-456',
+        'custom:customerId': 'customer-789',
+        'custom:role': 'customer_owner',
         email: 'test@example.com',
       });
 
@@ -200,8 +199,8 @@ describe('extractUserContext', () => {
     it('should extract context from valid JWT without locationId (null for super admins)', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'admin-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'platform',
-        [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'system_admin',
+        'custom:tenantId': 'platform',
+        'custom:role': 'system_admin',
         email: 'admin@platform.com',
       });
 
@@ -215,11 +214,29 @@ describe('extractUserContext', () => {
       expect(context.locationId).toBeNull();
     });
 
+    it('takes the organisation from custom:tenantId over a header, the body and a look-alike claim', () => {
+      const event: APIGatewayProxyEventV2WithJWT = {
+        ...createMockAPIGatewayEvent({
+          sub: 'user-123',
+          'custom:tenantId': 'org-from-tenant-claim',
+          'custom:organisationId': 'org-from-look-alike-claim',
+          'custom:role': 'customer_owner',
+          email: 'test@example.com',
+        }),
+        headers: { 'x-organisation-id': 'org-from-header' },
+        body: JSON.stringify({ organisationId: 'org-from-body' }),
+      };
+
+      const context = extractUserContext(event);
+
+      expect(context.organisationId).toBe('org-from-tenant-claim');
+    });
+
     it('should create timestamp as Date object', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
-        [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
+        'custom:tenantId': 'tenant-456',
+        'custom:role': 'customer_owner',
         email: 'test@example.com',
       });
 
@@ -274,8 +291,8 @@ describe('extractUserContext', () => {
   describe('Missing required claims', () => {
     it('should throw UnauthorisedError when sub claim is missing', () => {
       const event = createMockAPIGatewayEvent({
-        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
-        [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
+        'custom:tenantId': 'tenant-456',
+        'custom:role': 'customer_owner',
         email: 'test@example.com',
       });
 
@@ -286,7 +303,7 @@ describe('extractUserContext', () => {
     it('should throw UnauthorisedError when organisationId claim is missing', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
+        'custom:role': 'customer_owner',
         email: 'test@example.com',
       });
 
@@ -297,7 +314,7 @@ describe('extractUserContext', () => {
     it('should throw UnauthorisedError when role claim is missing', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
+        'custom:tenantId': 'tenant-456',
         email: 'test@example.com',
       });
 
@@ -308,8 +325,8 @@ describe('extractUserContext', () => {
     it('should throw UnauthorisedError when email claim is missing', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
-        [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
+        'custom:tenantId': 'tenant-456',
+        'custom:role': 'customer_owner',
       });
 
       expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
@@ -321,8 +338,8 @@ describe('extractUserContext', () => {
     it('should throw UnauthorisedError when sub is not a string', () => {
       const event = createMockAPIGatewayEvent({
         sub: 123, // number instead of string
-        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
-        [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
+        'custom:tenantId': 'tenant-456',
+        'custom:role': 'customer_owner',
         email: 'test@example.com',
       });
 
@@ -333,8 +350,8 @@ describe('extractUserContext', () => {
     it('should throw UnauthorisedError when organisationId is not a string', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 456, // number instead of string
-        [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
+        'custom:tenantId': 456, // number instead of string
+        'custom:role': 'customer_owner',
         email: 'test@example.com',
       });
 
@@ -345,8 +362,8 @@ describe('extractUserContext', () => {
     it('should throw UnauthorisedError when role is not a string', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
-        [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: true, // boolean instead of string
+        'custom:tenantId': 'tenant-456',
+        'custom:role': true, // boolean instead of string
         email: 'test@example.com',
       });
 
@@ -357,8 +374,8 @@ describe('extractUserContext', () => {
     it('should throw UnauthorisedError when email is not a string', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
-        [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
+        'custom:tenantId': 'tenant-456',
+        'custom:role': 'customer_owner',
         email: ['test@example.com'], // array instead of string
       });
 
@@ -369,8 +386,8 @@ describe('extractUserContext', () => {
     it('should throw UnauthorisedError when sub is empty string', () => {
       const event = createMockAPIGatewayEvent({
         sub: '',
-        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: 'tenant-456',
-        [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
+        'custom:tenantId': 'tenant-456',
+        'custom:role': 'customer_owner',
         email: 'test@example.com',
       });
 
@@ -381,8 +398,8 @@ describe('extractUserContext', () => {
     it('should throw UnauthorisedError when organisationId is empty string', () => {
       const event = createMockAPIGatewayEvent({
         sub: 'user-123',
-        [COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID]: '',
-        [COGNITO_CUSTOM_ATTRIBUTES.ROLE]: 'customer_owner',
+        'custom:tenantId': '',
+        'custom:role': 'customer_owner',
         email: 'test@example.com',
       });
 
