@@ -128,25 +128,23 @@ export const useVideoUpload = (
             s3Key: videoS3Key,
             fileSizeBytes: file.size,
             durationSeconds: detectedDuration,
-            bodyParts: metadata.bodyParts,
             equipment: metadata.equipment,
             mimeType: 'video/mp4',
             status: 'draft',
             description: metadata.description,
-            movementType: metadata.movementType,
             difficulty: metadata.difficulty,
             tags: metadata.tags,
           };
 
           return adminVideosApi.createVideo(input);
         })
-        .then((response) => {
-          logger.debug('Video created successfully', { videoId: response.video.id });
+        .then((video) => {
+          logger.debug('Video created successfully', { videoId: video.id });
 
           setProgress((prev) => ({
             ...prev,
             phase: 'success',
-            createdVideoId: response.video.publicId,
+            createdVideoId: video.publicId,
           }));
           addToast('Video created successfully', { variant: 'success' });
           onVideoCreated?.();

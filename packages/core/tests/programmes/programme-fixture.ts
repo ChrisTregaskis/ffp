@@ -94,7 +94,6 @@ export async function createFixture(): Promise<Fixture> {
         s3Key: `tests/materialisation/${shortId()}.mp4`,
         durationSeconds: 60,
         fileSizeBytes: 1024,
-        bodyParts: ['knee'],
         equipment: [],
       }))
     );

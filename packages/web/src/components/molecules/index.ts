@@ -21,6 +21,11 @@ export {
   type FeatureItem,
 } from './FeatureColumnGrid';
 export { FormActions, type FormActionsProps } from './FormActions';
+export {
+  FormCheckboxGroup,
+  type FormCheckboxGroupProps,
+  type CheckboxGroupOption,
+} from './FormCheckboxGroup';
 export { FormEmailInput, type FormEmailInputProps } from './FormEmailInput';
 export { FormField, type FormFieldProps } from './FormField';
 export { FormSelect, type FormSelectProps } from './FormSelect';

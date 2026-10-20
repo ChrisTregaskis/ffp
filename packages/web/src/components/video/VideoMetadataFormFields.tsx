@@ -6,6 +6,7 @@ import { Text, Title, FormRow } from '@web/components/atoms';
 import type { SelectOption } from '@web/components/molecules';
 import {
   FormActions,
+  FormCheckboxGroup,
   FormSelect,
   StaticAlert,
   FormTagInput,
@@ -14,8 +15,9 @@ import {
 } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
 import { DIFFICULTY_OPTIONS } from '@web/constants';
+import { useTagCategoriesQuery } from '@web/hooks/tags';
 
-import { MOVEMENT_TYPE_OPTIONS } from './constants';
+import { toTagOptions } from './tag-options';
 
 import type { VideoMetadataFormValues } from './types';
 
@@ -68,6 +70,8 @@ export interface VideoMetadataFormFieldsProps {
   cancelDisabled?: boolean;
   /** Current video status — determines available status transitions (edit variant only) */
   currentStatus?: VideoStatus;
+  /** Tag publicIds the video was loaded with, so an inactive one stays listed (edit variant only) */
+  carriedTagIds?: string[];
 }
 
 /** Shared metadata fields for video upload and edit forms */
@@ -80,8 +84,11 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
   submitDisabled = false,
   cancelDisabled = false,
   currentStatus,
+  carriedTagIds = [],
 }) => {
   const { register, control, errors } = useComposableFormContext<VideoMetadataFormValues>();
+  const { data: tagCategories, isError: tagsFailed } = useTagCategoriesQuery();
+  const tagsHint = tagsFailed ? 'Tags could not be loaded. Reload to try again.' : undefined;
 
   const isEdit = variant === 'edit';
   const statusOptions = currentStatus ? STATUS_OPTIONS_BY_CURRENT[currentStatus] : [];
@@ -90,30 +97,19 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
     <>
       {errorMessage && <StaticAlert variant="error" message={errorMessage} className="mb-4" />}
 
-      {/* Row 1: Title + Movement Type (2-col) */}
-      <FormRow>
-        <FormTextInput
-          name="title"
-          label="Video Title"
-          placeholder="e.g. Seated Hamstring Stretch"
-          register={register}
-          errors={errors}
-          isRequired
-          registerOptions={{
-            required: 'Video Title is required',
-            maxLength: { value: 255, message: 'Maximum length is 255 characters' },
-          }}
-        />
-
-        <FormSelect
-          name="movementType"
-          label="Movement Type"
-          options={MOVEMENT_TYPE_OPTIONS}
-          placeholder="Select type..."
-          control={control}
-          errors={errors}
-        />
-      </FormRow>
+      {/* Row 1: Title (full-width) */}
+      <FormTextInput
+        name="title"
+        label="Video Title"
+        placeholder="e.g. Seated Hamstring Stretch"
+        register={register}
+        errors={errors}
+        isRequired
+        registerOptions={{
+          required: 'Video Title is required',
+          maxLength: { value: 255, message: 'Maximum length is 255 characters' },
+        }}
+      />
 
       {/* Edit variant: Status field */}
       {isEdit && statusOptions.length > 0 && (
@@ -157,24 +153,22 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
         />
       </FormRow>
 
-      {/* Row 4: Body Parts (full-width) */}
-      <FormTagInput
-        name="bodyParts"
-        label="Body Parts"
-        placeholder="e.g. hamstrings"
+      {/* Row 4: Movement + Body Areas (full-width) */}
+      <FormCheckboxGroup
+        name="movementTags"
+        label="Movement"
+        options={toTagOptions(tagCategories, 'movement', carriedTagIds)}
         control={control}
         errors={errors}
-        isRequired
-        rules={{ required: 'Please add at least one body part' }}
+        hint={tagsHint}
       />
-
-      {/* Row 5: Tags (full-width) */}
-      <FormTagInput
-        name="tags"
-        label="Tags"
-        placeholder="e.g. warm-up, post-surgery"
+      <FormCheckboxGroup
+        name="bodyAreaTags"
+        label="Body Areas"
+        options={toTagOptions(tagCategories, 'body-area', carriedTagIds)}
         control={control}
         errors={errors}
+        hint={tagsHint}
       />
 
       {/* Edit variant: Default Exercise Prescription section */}

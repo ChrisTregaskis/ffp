@@ -9,7 +9,6 @@ import {
   index,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 import { videos } from './videos';
 
@@ -89,10 +88,6 @@ export const videoTagsRelations = relations(videoTags, ({ one }) => ({
   tag: one(tags, { fields: [videoTags.tagId], references: [tags.id] }),
 }));
 
-export const insertTagSchema = createInsertSchema(tags);
-export const selectTagSchema = createSelectSchema(tags);
 export type TagCategoryRecord = typeof tagCategories.$inferSelect;
 export type TagRecord = typeof tags.$inferSelect;
 export type NewTag = typeof tags.$inferInsert;
-export type VideoTagRecord = typeof videoTags.$inferSelect;
-export type NewVideoTag = typeof videoTags.$inferInsert;

@@ -33,7 +33,6 @@ describe('Video repository', () => {
       s3Key: `library/repository-lookup-test-${randomUUID()}.mp4`,
       durationSeconds: 30,
       fileSizeBytes: 1024,
-      bodyParts: ['knee'],
       equipment: [],
     });
   });

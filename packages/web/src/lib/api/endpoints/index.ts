@@ -74,6 +74,8 @@ export type {
   UserDetailResponse as AdminUserDetailResponse,
 } from './admin-users';
 
+export { adminTagsApi } from './admin-tags';
+
 export { adminVideosApi } from './admin-videos';
 export type {
   CreateVideoInput,
@@ -111,10 +113,4 @@ export { usersApi } from './users';
 export type { UserProfileResponse } from './users';
 
 export { videosApi } from './videos';
-export type {
-  SignedVideoUrlResponse,
-  VideoDetailResponse,
-  VideoFilterInput,
-  VideoListApiResponse,
-  VideoListResponse,
-} from './videos';
+export type { SignedVideoUrlResponse, VideoDetailResponse } from './videos';

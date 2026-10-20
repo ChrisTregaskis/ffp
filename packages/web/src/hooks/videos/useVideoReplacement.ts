@@ -35,10 +35,7 @@ export interface UseVideoReplacementReturn {
  * Composes useVideoFileSelection for file handling and uploadVideoFile for S3 upload.
  * After upload, updates the video record with the new S3 key, duration, and file size.
  */
-export const useVideoReplacement = (
-  videoId: string,
-  publicId: string
-): UseVideoReplacementReturn => {
+export const useVideoReplacement = (publicId: string): UseVideoReplacementReturn => {
   const fileSelection = useVideoFileSelection();
   const xhrRef = useRef<XMLHttpRequest | null>(null);
 
@@ -90,7 +87,7 @@ export const useVideoReplacement = (
       .then(({ videoS3Key }) => {
         setProgress((prev) => ({ ...prev, phase: 'updating' }));
 
-        return adminVideosApi.updateVideo(videoId, {
+        return adminVideosApi.updateVideo(publicId, {
           s3Key: videoS3Key,
           durationSeconds: detectedDuration,
           fileSizeBytes: file.size,
@@ -122,7 +119,7 @@ export const useVideoReplacement = (
           error: 'Video replacement failed. Please try again.',
         });
       });
-  }, [videoId, publicId, fileSelection, addToast, queryClient]);
+  }, [publicId, fileSelection, addToast, queryClient]);
 
   return {
     fileSelection,

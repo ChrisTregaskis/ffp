@@ -32,7 +32,7 @@ s3://ffp-{stage}-videosbucketbucket-{hash}/
 1. **Navigate** to `/admin/videos/upload` in the admin UI
 2. **Select video**: Drag-and-drop or file picker (MP4, H.264, 1080p, max 500MB)
 3. **Upload to S3**: Browser uploads directly to S3 via presigned PUT URL (`POST /admin/videos/upload-url`)
-4. **Fill metadata**: Title, description, movement type, difficulty, body parts, equipment, tags (duration auto-detected)
+4. **Fill metadata**: Title, description, difficulty, equipment, movement and body-area tags (duration auto-detected)
 5. **Create record**: `POST /admin/videos` creates the video record (status: `draft`)
 6. **Activate**: Change status to `active` via edit page or list quick-action to make available for programmes
 
@@ -52,26 +52,34 @@ draft → active → archived
 
 ### Admin APIs
 
-| Method | Endpoint                   | Purpose                                             |
-| ------ | -------------------------- | --------------------------------------------------- |
-| POST   | `/admin/videos/upload-url` | Get presigned S3 PUT URL for browser upload         |
-| POST   | `/admin/videos`            | Create video record with metadata                   |
-| GET    | `/admin/videos`            | List all videos (paginated, filtered, all statuses) |
-| PUT    | `/admin/videos/{id}`       | Update metadata and status transitions              |
+| Method | Endpoint                   | Purpose                                                                                |
+| ------ | -------------------------- | -------------------------------------------------------------------------------------- |
+| POST   | `/admin/videos/upload-url` | Get presigned S3 PUT URL for browser upload                                            |
+| POST   | `/admin/videos`            | Create video record with metadata and tags                                             |
+| GET    | `/admin/videos`            | List all videos (paginated, filtered, all statuses; `tags` = tag publicIds, any match) |
+| GET    | `/admin/videos/{publicId}` | One video in any status, with its tags and `isEssential`                               |
+| PUT    | `/admin/videos/{publicId}` | Update metadata, tags and status transitions                                           |
+| GET    | `/admin/tag-categories`    | The tag categories in display order, each with every tag                               |
+| POST   | `/admin/tags`              | Create a tag in a category (`{ category, slug, label }`; slug unique within it)        |
+| PUT    | `/admin/tags/{publicId}`   | Change a tag's label or active flag                                                    |
+| DELETE | `/admin/tags/{publicId}`   | Deactivate a tag                                                                       |
+
+No admin response carries the S3 key or file details.
+
+**Tag assignment** travels in the video's create or update body as tag publicIds per category, e.g. `"tags": { "movement": ["…", "…"], "body-area": [] }`. A category sent replaces that category's tags on the video; a category left out is untouched. Newly assigned tags must be active; a deactivated tag the video already carries is kept on re-save.
 
 ### Public APIs
 
-| Method | Endpoint                  | Purpose                                                      |
-| ------ | ------------------------- | ------------------------------------------------------------ |
-| GET    | `/videos`                 | List active videos (filtered by body parts, equipment, etc.) |
-| GET    | `/videos/{id}`            | Get single video (excludes internal fields)                  |
-| GET    | `/videos/{id}/signed-url` | Get signed CloudFront URL for playback (15-min TTL)          |
+| Method | Endpoint                  | Purpose                                                          |
+| ------ | ------------------------- | ---------------------------------------------------------------- |
+| GET    | `/videos/{id}`            | Get a single active video by publicId (excludes internal fields) |
+| GET    | `/videos/{id}/signed-url` | Get signed CloudFront URL for playback (15-min TTL)              |
 
 ### Admin UI Pages
 
 - **Video Library** (`/admin/videos`): Table with search, status/difficulty filters, column visibility, quick-actions (Publish, Archive, Restore)
 - **Video Upload** (`/admin/videos/upload`): Drag-and-drop upload with progress bar, metadata form
-- **Video Edit** (`/admin/videos/{id}`): Inline video preview, metadata editing, status management
+- **Video Edit** (`/admin/videos/{publicId}`): Inline video preview, metadata and tag editing, status management
 
 ## Key Patterns
 
@@ -97,9 +105,11 @@ CloudFront signed URLs (15-minute TTL) for secure video access:
 - Verify video is `active` before generating URL
 - Log video access for audit trail
 
-### Video Filtering
+### Typed Tags
 
-The `videos` table uses PostgreSQL array columns (`body_parts`, `equipment`, `tags`) with GIN indexes for efficient filtering. No RLS — system-managed content accessible to all authenticated users.
+Videos are described by typed tags: seeded categories (goal, body area, movement, audience) holding admin-authored tags, joined to videos through `video_tags`. A video may carry several tags in one category. Tags are deactivated, never deleted. The programme pool query (`tagRepository.findPoolVideos`) draws active videos carrying any of a set of tags in a category, minus videos already picked.
+
+`equipment` stays a GIN-indexed array column, and `difficulty` a column. The older `movement_type`, `body_parts` and `tags` columns are deprecated: nothing reads or writes them, and they remain only until they are dropped. No RLS on any of these tables — system-managed content accessible to all authenticated users.
 
 ### Programme Integration
 
