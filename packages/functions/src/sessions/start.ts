@@ -13,7 +13,7 @@ import {
 
 /**
  * Lambda handler for POST /sessions/start
- * Lazily creates a user session with exercise completions (idempotent).
+ * Starts the member's session and creates its exercise completions (idempotent).
  */
 export const handler = withErrorHandling(
   async (event: APIGatewayProxyEventV2WithJWT): Promise<StartSessionResponse> => {

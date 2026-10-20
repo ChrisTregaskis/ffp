@@ -10,8 +10,8 @@ import {
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { organisations } from './organisations';
+import { userSessionExercises } from './user-session-exercises';
 import { userSessions } from './user-sessions';
-import { sessionExercises } from './session-exercises';
 import { videos } from './videos';
 
 /**
@@ -22,8 +22,8 @@ import { videos } from './videos';
  * Supports the cascading completion engine — when all exercises complete,
  * the parent session automatically completes.
  *
- * video_id is intentionally denormalised — avoids join through session_exercises
- * for "show completions by video" queries.
+ * video_id is intentionally denormalised: it records the video actually done, which
+ * stays true if the member's exercise is later swapped to another video.
  *
  * **RLS enforced** — organisation_id column with row-level security policies.
  */
@@ -39,10 +39,10 @@ export const exerciseCompletions = pgTable(
     userSessionId: uuid('user_session_id')
       .notNull()
       .references(() => userSessions.id, { onDelete: 'cascade' }),
-    /** Template exercise reference — restrict deletion of exercises in use */
-    sessionExerciseId: uuid('session_exercise_id')
+    /** The member's exercise this completes — restrict deletion of exercises in use */
+    userSessionExerciseId: uuid('user_session_exercise_id')
       .notNull()
-      .references(() => sessionExercises.id, { onDelete: 'restrict' }),
+      .references(() => userSessionExercises.id, { onDelete: 'restrict' }),
     /** Denormalised video reference — restrict deletion of videos in use */
     videoId: uuid('video_id')
       .notNull()
@@ -63,7 +63,7 @@ export const exerciseCompletions = pgTable(
   (table) => [
     uniqueIndex('idx_exercise_completions_session_exercise').on(
       table.userSessionId,
-      table.sessionExerciseId
+      table.userSessionExerciseId
     ),
     index('idx_exercise_completions_organisation').on(table.organisationId),
     index('idx_exercise_completions_session').on(table.userSessionId),

@@ -19,6 +19,7 @@ export * from './template-sessions';
 export * from './session-exercises';
 export * from './programme-phases';
 export * from './user-sessions';
+export * from './user-session-exercises';
 export * from './exercise-completions';
 export * from './user-assessments';
 export * from './questions';

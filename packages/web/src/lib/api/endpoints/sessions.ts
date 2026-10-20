@@ -14,7 +14,7 @@ const basePath = '/sessions';
  * Session lifecycle API methods
  */
 export const sessionsApi = {
-  /** Start a session — creates user_session + exercise_completions (idempotent)*/
+  /** Start a session — moves it to in_progress and creates its exercise_completions (idempotent) */
   start: async (input: StartSessionRequest): Promise<StartSessionResponse> => {
     const path = `${basePath}/start`;
     const response = await ffpClient.post(path, input);

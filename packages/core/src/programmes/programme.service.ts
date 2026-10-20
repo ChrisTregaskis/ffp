@@ -6,9 +6,11 @@ import { userAssessments } from '@ffp/database/schema';
 import * as userAssessmentRepo from '../assessments/user-assessment.repository';
 import { getUserIdFromContext, type OrganisationContext } from '../lib/context';
 import { withRLS } from '../lib/database';
-import { ForbiddenError, NotFoundError, ValidationError } from '../lib/errors';
+import { NotFoundError, ValidationError } from '../lib/errors';
 import { calculatePercent } from '../lib/math';
 
+import { findMemberProgrammeStructure } from './member-programme.repository';
+import { materialiseProgrammeSessions } from './programme-materialisation';
 import {
   archiveProgramme,
   countProgress,
@@ -17,9 +19,7 @@ import {
   findProgrammeByUserId,
   findProgrammeWithPhases,
   findTemplateBySlug,
-  findTemplatePhases,
   findTemplateStructure,
-  findUserSessionsForPhases,
   setReplacementProgramme,
 } from './programme.repository';
 
@@ -41,7 +41,8 @@ export interface GenerateProgrammeInput {
 }
 
 export interface GenerateProgrammeOptions {
-  tx?: Transaction;
+  /** Programme and member layer are written together; RLS set by the caller */
+  tx: Transaction;
 }
 
 export interface GenerateProgrammeResult {
@@ -68,7 +69,7 @@ export interface ReplaceProgrammeResult {
 /** Generate a programme for a user based on assessment scoring results. */
 export async function generateProgramme(
   input: GenerateProgrammeInput,
-  options: GenerateProgrammeOptions = {}
+  options: GenerateProgrammeOptions
 ): Promise<GenerateProgrammeResult> {
   const { organisationId, userId, recommendedTemplateSlug, replaceExisting } = input;
   const { tx } = options;
@@ -122,19 +123,21 @@ export async function generateProgramme(
   );
 
   // Eagerly create programme phase rows from the template definition
-  const phases = await findTemplatePhases(template.id, { tx });
+  const templateStructure = await findTemplateStructure(tx, template.id);
 
-  if (phases.length > 0) {
-    const phaseInputs: NewProgrammePhase[] = phases.map((phase) => ({
+  const phaseInputs: NewProgrammePhase[] = [...templateStructure.phases.values()].map(
+    ({ phase }) => ({
       organisationId,
       programmeId: programme.id,
       templatePhaseId: phase.id,
       phaseNumber: phase.phaseNumber,
       name: phase.name,
-    }));
+    })
+  );
 
-    await createProgrammePhases(organisationId, phaseInputs, { tx });
-  }
+  const phases = await createProgrammePhases(organisationId, phaseInputs, { tx });
+
+  await materialiseProgrammeSessions(tx, organisationId, templateStructure, phases);
 
   // Link the archived programme to its replacement (if we archived one above)
   if (existing && replaceExisting) {
@@ -177,13 +180,9 @@ export async function replaceProgramme(
     userId
   );
 
-  if (!assessment) {
+  // RLS scopes to the organisation only; another member's assessment answers as missing
+  if (!assessment || assessment.userId !== userId) {
     throw new NotFoundError('Assessment', input.assessmentId);
-  }
-
-  // Belt-and-braces ownership check (RLS already scopes, but defence-in-depth)
-  if (assessment.userId !== userId) {
-    throw new ForbiddenError('You do not have permission to access this assessment.');
   }
 
   // Only allow replacement from a scored or completed assessment
@@ -282,36 +281,22 @@ export async function getProgrammeDetail(
     )
     .map((p) => p.id);
 
-  // Fetch template structure (no RLS — system-managed)
-  const templateStructure = await findTemplateStructure(programme.programmeTemplateId);
-
-  // Fetch user sessions for accessible phases only (RLS-scoped)
-  const userSessionsByPhase =
-    accessiblePhaseIds.length > 0
-      ? await findUserSessionsForPhases(organisationId, userId, accessiblePhaseIds)
-      : new Map<string, never[]>();
+  const memberStructure = await findMemberProgrammeStructure(organisationId, userId, phases);
 
   // Merge and apply tiered visibility
   const detailPhases = phases.map((phase) => {
     const isAccessible = accessiblePhaseIds.includes(phase.id);
-    const templatePhaseData = templateStructure.phases.get(phase.templatePhaseId);
-    const phaseSessions = userSessionsByPhase.get(phase.id) ?? [];
+    const memberPhase = memberStructure.get(phase.id);
 
-    // Build session index by templateSessionId for quick lookup
-    const userSessionIndex = new Map(phaseSessions.map((us) => [us.session.templateSessionId, us]));
-
-    const sessions = (templatePhaseData?.sessions ?? []).map((ts) => {
-      const exerciseCount = ts.exercises.length;
-      const userSessionData = userSessionIndex.get(ts.session.id);
-
+    const sessions = (memberPhase?.sessions ?? []).map((detail) => {
       const sessionBase = {
-        templateSessionId: ts.session.id,
-        templateSessionPublicId: ts.session.publicId,
-        sessionNumber: ts.session.sessionNumber,
-        name: ts.session.name,
-        description: ts.session.description,
-        estimatedDurationMinutes: ts.session.estimatedDurationMinutes,
-        exerciseCount,
+        templateSessionId: detail.templateSession.id,
+        templateSessionPublicId: detail.templateSession.publicId,
+        sessionNumber: detail.session.sessionNumber,
+        name: detail.templateSession.name,
+        description: detail.templateSession.description,
+        estimatedDurationMinutes: detail.templateSession.estimatedDurationMinutes,
+        exerciseCount: detail.exercises.length,
       };
 
       if (!isAccessible) {
@@ -319,24 +304,18 @@ export async function getProgrammeDetail(
         return { ...sessionBase, userSession: undefined, exercises: undefined };
       }
 
-      // Current/completed phase — full detail
-      // Build completion index by sessionExerciseId
-      const completionIndex = new Map(
-        (userSessionData?.completions ?? []).map((c) => [c.sessionExerciseId, c])
-      );
+      const completionIndex = new Map(detail.completions.map((c) => [c.userSessionExerciseId, c]));
 
       return {
         ...sessionBase,
-        userSession: userSessionData
-          ? {
-              id: userSessionData.session.id,
-              status: userSessionData.session.status,
-              startedAt: userSessionData.session.startedAt,
-              completedAt: userSessionData.session.completedAt,
-              skippedAt: userSessionData.session.skippedAt,
-            }
-          : null,
-        exercises: ts.exercises.map((ex) => {
+        userSession: {
+          id: detail.session.id,
+          status: detail.session.status,
+          startedAt: detail.session.startedAt,
+          completedAt: detail.session.completedAt,
+          skippedAt: detail.session.skippedAt,
+        },
+        exercises: detail.exercises.map((ex) => {
           const completion = completionIndex.get(ex.id);
 
           return {
@@ -370,8 +349,8 @@ export async function getProgrammeDetail(
       id: phase.id,
       publicId: phase.publicId,
       phaseNumber: phase.phaseNumber,
-      name: phase.name ?? templatePhaseData?.phase.name ?? null,
-      description: templatePhaseData?.phase.description ?? null,
+      name: phase.name ?? memberPhase?.templatePhase?.name ?? null,
+      description: memberPhase?.templatePhase?.description ?? null,
       status: phase.status,
       sessions,
     };
@@ -395,9 +374,7 @@ export async function getProgrammeDetail(
 /**
  * Fetch aggregate progress summary for the user's active programme.
  *
- * Totals come from the template layer (always complete).
- * Completed/skipped counts come from the user layer (lazily created).
- * All percentages calculated at query time via SQL COUNT aggregates.
+ * Totals and completed/skipped counts all come from the member layer.
  */
 export async function getProgressSummary(
   context: OrganisationContext
@@ -425,11 +402,8 @@ export async function getProgressSummary(
     organisationId,
     userId,
     programme.id,
-    programme.programmeTemplateId,
     phaseIds,
-    currentPhase
-      ? { phaseId: currentPhase.id, templatePhaseId: currentPhase.templatePhaseId }
-      : undefined
+    currentPhase?.id
   );
 
   const currentPhaseProgressPercent = calculatePercent(
