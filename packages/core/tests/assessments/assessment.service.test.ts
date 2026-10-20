@@ -244,23 +244,14 @@ describe('Assessment Service', () => {
       const context = createUserContext();
       const flowId = randomUUID();
       const databaseUserId = randomUUID();
-      const mockAssessment: UserAssessment = {
-        id: randomUUID(),
+      const mockAssessment = createMockAssessment({
         organisationId: context.organisationId,
         userId: databaseUserId,
         flowId,
         currentStep: 1,
         status: 'not_started',
-        scores: null,
-        programmeId: null,
-        visitedStepIds: [],
-        warningsShown: [],
         startedAt: null,
-        submittedAt: null,
-        completedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      });
 
       // Mock flow steps (simple intro step matching createMockFlow)
       const mockFlowSteps: FlowStepWithConfig[] = [
@@ -298,23 +289,12 @@ describe('Assessment Service', () => {
       const flowId = randomUUID();
       const databaseUserId = randomUUID();
       const questionId = randomUUID();
-      const existingAssessment: UserAssessment = {
-        id: randomUUID(),
+      const existingAssessment = createMockAssessment({
         organisationId: context.organisationId,
         userId: databaseUserId,
         flowId,
         currentStep: 3,
-        status: 'in_progress',
-        scores: null,
-        programmeId: null,
-        visitedStepIds: [],
-        warningsShown: [],
-        startedAt: new Date(),
-        submittedAt: null,
-        completedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      });
 
       // Mock answers from the new table
       const storedAnswers: UserAssessmentAnswer[] = [

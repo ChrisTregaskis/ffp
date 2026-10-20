@@ -36,6 +36,18 @@ const EDIT_ONLY_PROPS: AdminEditPageShellProps<ThingFormValues, Thing> = {
   children: null,
 };
 
+// Compile-time only: the create props come as a set or not at all, so `pnpm typecheck`
+// fails here if the union loosens and a page can half-opt into create mode.
+const asShellProps = (
+  props: AdminEditPageShellProps<ThingFormValues, Thing>
+): AdminEditPageShellProps<ThingFormValues, Thing> => props;
+// @ts-expect-error onCreate without isEditMode and emptyValues is neither mode
+asShellProps({ ...EDIT_ONLY_PROPS, onCreate: noSave });
+// @ts-expect-error isEditMode and onCreate without emptyValues is neither mode
+asShellProps({ ...EDIT_ONLY_PROPS, isEditMode: true, onCreate: noSave });
+// @ts-expect-error isEditMode and emptyValues without onCreate is neither mode
+asShellProps({ ...EDIT_ONLY_PROPS, isEditMode: false, emptyValues: { name: '' } });
+
 const ThingFields: React.FC = () => {
   const { register, errors } = useComposableFormContext<ThingFormValues>();
 

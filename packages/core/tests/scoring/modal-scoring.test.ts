@@ -39,9 +39,10 @@ function scorePattern(
   const answers = pattern.split(',');
   const responses = createResponses(
     Object.fromEntries(
-      [Q1, Q2, Q3]
-        .map((id, index) => [id, answers.at(index)] as const)
-        .filter(([, answer]) => answer !== undefined && answer !== '')
+      [Q1, Q2, Q3].flatMap((id, index) => {
+        const answer = answers.at(index);
+        return answer ? [[id, answer] as const] : [];
+      })
     )
   );
 
