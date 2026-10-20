@@ -9,6 +9,7 @@ import { withRLS } from '../lib/database';
 import { ForbiddenError, NotFoundError, ValidationError } from '../lib/errors';
 import { calculatePercent } from '../lib/math';
 
+import { materialiseProgrammeSessions } from './programme-materialisation';
 import {
   archiveProgramme,
   countProgress,
@@ -17,7 +18,6 @@ import {
   findProgrammeByUserId,
   findProgrammeWithPhases,
   findTemplateBySlug,
-  findTemplatePhases,
   findTemplateStructure,
   findUserSessionsForPhases,
   setReplacementProgramme,
@@ -41,7 +41,8 @@ export interface GenerateProgrammeInput {
 }
 
 export interface GenerateProgrammeOptions {
-  tx?: Transaction;
+  /** Programme and member layer are written together; RLS set by the caller */
+  tx: Transaction;
 }
 
 export interface GenerateProgrammeResult {
@@ -68,7 +69,7 @@ export interface ReplaceProgrammeResult {
 /** Generate a programme for a user based on assessment scoring results. */
 export async function generateProgramme(
   input: GenerateProgrammeInput,
-  options: GenerateProgrammeOptions = {}
+  options: GenerateProgrammeOptions
 ): Promise<GenerateProgrammeResult> {
   const { organisationId, userId, recommendedTemplateSlug, replaceExisting } = input;
   const { tx } = options;
@@ -122,19 +123,21 @@ export async function generateProgramme(
   );
 
   // Eagerly create programme phase rows from the template definition
-  const phases = await findTemplatePhases(template.id, { tx });
+  const templateStructure = await findTemplateStructure(template.id, { tx });
 
-  if (phases.length > 0) {
-    const phaseInputs: NewProgrammePhase[] = phases.map((phase) => ({
+  const phaseInputs: NewProgrammePhase[] = [...templateStructure.phases.values()].map(
+    ({ phase }) => ({
       organisationId,
       programmeId: programme.id,
       templatePhaseId: phase.id,
       phaseNumber: phase.phaseNumber,
       name: phase.name,
-    }));
+    })
+  );
 
-    await createProgrammePhases(organisationId, phaseInputs, { tx });
-  }
+  const phases = await createProgrammePhases(organisationId, phaseInputs, { tx });
+
+  await materialiseProgrammeSessions(tx, organisationId, templateStructure, phases);
 
   // Link the archived programme to its replacement (if we archived one above)
   if (existing && replaceExisting) {
@@ -396,7 +399,7 @@ export async function getProgrammeDetail(
  * Fetch aggregate progress summary for the user's active programme.
  *
  * Totals come from the template layer (always complete).
- * Completed/skipped counts come from the user layer (lazily created).
+ * Completed/skipped counts come from the user layer.
  * All percentages calculated at query time via SQL COUNT aggregates.
  */
 export async function getProgressSummary(

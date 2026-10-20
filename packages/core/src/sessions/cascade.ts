@@ -30,19 +30,10 @@ export async function runCascade(
     return result; // Already completed, nothing to cascade
   }
 
-  // Count template sessions for this phase to know total expected
-  const templateSessionCount = await sessionRepo.countTemplateSessionsByPhase(
-    tx,
-    phase.templatePhaseId
-  );
-
+  // The member's own sessions are the phase's full set, so a later template change cannot strand it
   const sessionCounts = await sessionRepo.countSessionsByPhase(tx, programmePhaseId);
 
-  // Phase is complete when all template sessions have user sessions that are completed/skipped
-  if (
-    sessionCounts.total >= templateSessionCount &&
-    sessionCounts.completedOrSkipped >= templateSessionCount
-  ) {
+  if (sessionCounts.total > 0 && sessionCounts.completedOrSkipped >= sessionCounts.total) {
     await sessionRepo.updatePhaseStatus(tx, programmePhaseId, 'completed');
     result.phaseCompleted = true;
 

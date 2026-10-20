@@ -5,7 +5,7 @@
  * It is idempotent and can be run multiple times safely.
  *
  * **Tables with RLS policies:**
- * - organisations, locations, users, user_assessments, user_assessment_answers, assessment_safety_triggers, programmes, programme_phases, user_sessions, exercise_completions
+ * - organisations, locations, users, user_assessments, user_assessment_answers, assessment_safety_triggers, programmes, programme_phases, user_sessions, user_session_exercises, exercise_completions
  *
  * **Admin bypass policy:**
  * - locations and users tables have an additional permissive policy that grants
@@ -50,17 +50,19 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     SELECT tablename, rowsecurity
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'assessment_safety_triggers', 'programmes', 'programme_phases', 'user_sessions', 'exercise_completions')
+    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'assessment_safety_triggers', 'programmes', 'programme_phases', 'user_sessions', 'user_session_exercises', 'exercise_completions')
     ORDER BY tablename
   `);
 
   const tables = rlsCheck.rows as Array<{ tablename: string; rowsecurity: boolean }>;
 
-  // Check if all tables have RLS enabled (10 tables)
-  const allTablesHaveRLS = tables.length === 10 && tables.every((t) => t.rowsecurity === true);
+  // Check if all tables have RLS enabled (11 tables)
+  const allTablesHaveRLS = tables.length === 11 && tables.every((t) => t.rowsecurity === true);
 
   if (allTablesHaveRLS) {
-    logger.info('RLS already enabled on all tables, re-applying policies to pick up any changes...');
+    logger.info(
+      'RLS already enabled on all tables, re-applying policies to pick up any changes...'
+    );
   } else {
     logger.info('Applying RLS policies...');
   }
@@ -395,6 +397,32 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     `);
 
     // ============================================================================
+    // USER_SESSION_EXERCISES TABLE RLS
+    // ============================================================================
+
+    logger.debug('Enabling RLS on user_session_exercises table...');
+
+    await tx.execute(sql`
+      ALTER TABLE user_session_exercises ENABLE ROW LEVEL SECURITY;
+    `);
+
+    if (!isProduction) {
+      await tx.execute(sql`
+        ALTER TABLE user_session_exercises FORCE ROW LEVEL SECURITY;
+      `);
+    }
+
+    await tx.execute(sql`
+      DROP POLICY IF EXISTS user_session_exercises_organisation_isolation ON user_session_exercises;
+    `);
+
+    await tx.execute(sql`
+      CREATE POLICY user_session_exercises_organisation_isolation ON user_session_exercises
+        FOR ALL
+        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+    `);
+
+    // ============================================================================
     // EXERCISE_COMPLETIONS TABLE RLS
     // ============================================================================
 
@@ -428,13 +456,16 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     SELECT tablename, rowsecurity
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'assessment_safety_triggers', 'programmes', 'programme_phases', 'user_sessions', 'exercise_completions')
+    AND tablename IN ('organisations', 'locations', 'users', 'user_assessments', 'user_assessment_answers', 'assessment_safety_triggers', 'programmes', 'programme_phases', 'user_sessions', 'user_session_exercises', 'exercise_completions')
     ORDER BY tablename
   `);
 
   logger.info('RLS Status:');
   for (const row of verifyCheck.rows as Array<{ tablename: string; rowsecurity: boolean }>) {
     const status = row.rowsecurity ? 'Enabled' : 'Disabled';
-    logger.info(`  ${row.tablename}: ${status}`, { table: row.tablename, enabled: row.rowsecurity });
+    logger.info(`  ${row.tablename}: ${status}`, {
+      table: row.tablename,
+      enabled: row.rowsecurity,
+    });
   }
 };

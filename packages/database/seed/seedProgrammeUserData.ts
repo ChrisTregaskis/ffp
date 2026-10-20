@@ -1,8 +1,15 @@
 import { Pool } from 'pg';
-import { eq } from 'drizzle-orm';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../src/schema/index.js';
-import { programmes, programmePhases, userSessions } from '../src/schema/index.js';
+import {
+  programmes,
+  programmePhases,
+  sessionExercises,
+  templateSessions,
+  userSessionExercises,
+  userSessions,
+} from '../src/schema/index.js';
 import { createLogger } from '../src/lib/logger.js';
 import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.js';
 import { PROGRAMME_TEMPLATE_IDS } from './seedProgrammeTemplates.js';
@@ -269,12 +276,104 @@ const seedUserSessions = async (
 };
 
 /**
+ * Writes the remaining sessions (not_started) and every session's exercises, as programme creation does.
+ * IDEMPOTENT — only writes what is missing.
+ */
+const seedMemberLayer = async (
+  db: NodePgDatabase<typeof schema> & { $client: Pool }
+): Promise<void> => {
+  logger.info('Seeding test user member-layer sessions and exercises...');
+
+  let sessionsCreated = 0;
+
+  for (const phase of DEFAULT_PROGRAMME_PHASES) {
+    const phaseTemplateSessions = await db
+      .select()
+      .from(templateSessions)
+      .where(eq(templateSessions.templatePhaseId, phase.templatePhaseId))
+      .orderBy(asc(templateSessions.sessionNumber));
+
+    for (const templateSession of phaseTemplateSessions) {
+      const existing = await db.query.userSessions.findFirst({
+        where: and(
+          eq(userSessions.programmePhaseId, phase.id!),
+          eq(userSessions.templateSessionId, templateSession.id)
+        ),
+      });
+
+      if (existing) {
+        continue;
+      }
+
+      await db.insert(userSessions).values({
+        organisationId: TEST_ORGANISATION_ID,
+        programmePhaseId: phase.id!,
+        templateSessionId: templateSession.id,
+        sessionNumber: templateSession.sessionNumber,
+        status: 'not_started',
+      });
+      sessionsCreated++;
+    }
+  }
+
+  const programmeSessions = await db
+    .select()
+    .from(userSessions)
+    .where(
+      inArray(
+        userSessions.programmePhaseId,
+        DEFAULT_PROGRAMME_PHASES.map((phase) => phase.id!)
+      )
+    );
+
+  let exercisesCreated = 0;
+
+  for (const session of programmeSessions) {
+    const existing = await db.query.userSessionExercises.findFirst({
+      where: eq(userSessionExercises.userSessionId, session.id),
+    });
+
+    if (existing) {
+      continue;
+    }
+
+    const templateExercises = await db
+      .select()
+      .from(sessionExercises)
+      .where(eq(sessionExercises.templateSessionId, session.templateSessionId));
+
+    if (templateExercises.length === 0) {
+      continue;
+    }
+
+    await db.insert(userSessionExercises).values(
+      templateExercises.map((exercise) => ({
+        organisationId: TEST_ORGANISATION_ID,
+        userSessionId: session.id,
+        sourceSessionExerciseId: exercise.id,
+        videoId: exercise.videoId,
+        orderIndex: exercise.orderIndex,
+        sets: exercise.sets,
+        reps: exercise.reps,
+        durationSeconds: exercise.durationSeconds,
+        restSeconds: exercise.restSeconds,
+        notes: exercise.notes,
+      }))
+    );
+    exercisesCreated += templateExercises.length;
+  }
+
+  logger.info('Member-layer seed complete', { sessionsCreated, exercisesCreated });
+};
+
+/**
  * Seeds programme data for the test programme user.
  *
  * Creates:
  * - 1 active programme (level 1 shell)
  * - 4 programme phases (Phase 1 completed, Phase 2 in progress, Phases 3-4 not started)
- * - 6 user sessions (Phase 1: 3 completed, Phase 2: 2 completed + 1 in progress)
+ * - 12 user sessions (Phase 1: 3 completed, Phase 2: 2 completed + 1 in progress, the rest not started)
+ * - each session's exercises, copied from the template
  *
  * This provides a realistic dashboard state for visual testing.
  * Must run AFTER: seedTestUserDatabase, seedProgrammeTemplates, seedTemplateHierarchy
@@ -287,6 +386,7 @@ export const seedProgrammeUserData = async (
   await seedProgramme(db);
   await seedProgrammePhases(db);
   await seedUserSessions(db);
+  await seedMemberLayer(db);
 
   logger.info('=== Programme user data seed complete ===');
 };

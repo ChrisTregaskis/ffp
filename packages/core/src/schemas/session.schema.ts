@@ -4,11 +4,11 @@ import { SESSION_STATUSES } from '@ffp/database/constants';
 
 export const sessionStatusSchema = z.enum(SESSION_STATUSES);
 
-/** Request body for POST /sessions/start — lazy session creation */
+/** Request body for POST /sessions/start */
 export const startSessionRequestSchema = z.object({
-  /** Programme phase to create the session in */
+  /** Programme phase the session belongs to */
   programmePhaseId: z.guid(),
-  /** Template session to instantiate */
+  /** Template session the member's session was created from */
   templateSessionId: z.guid(),
 });
 

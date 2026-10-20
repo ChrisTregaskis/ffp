@@ -61,11 +61,6 @@ export interface SetReplacementProgrammeOptions {
   tx?: Transaction;
 }
 
-export interface FindTemplatePhasesOptions {
-  /** Optional transaction for atomic operations. If provided, RLS must be set by caller. */
-  tx?: Transaction;
-}
-
 export interface CreateProgrammePhasesOptions {
   /** Optional transaction for atomic operations. If provided, RLS must be set by caller. */
   tx?: Transaction;
@@ -220,26 +215,15 @@ async function findTemplateBySlugInTx(
   return records[0] ?? null;
 }
 
-async function findTemplatePhasesInTx(
-  tx: Transaction,
-  templateId: string
-): Promise<TemplatePhaseRecord[]> {
-  return await tx
-    .select()
-    .from(templatePhases)
-    .where(eq(templatePhases.programmeTemplateId, templateId))
-    .orderBy(templatePhases.phaseNumber);
-}
-
 async function createProgrammePhasesInTx(
   tx: Transaction,
   phases: NewProgrammePhase[]
-): Promise<void> {
+): Promise<ProgrammePhaseRecord[]> {
   if (phases.length === 0) {
-    return;
+    return [];
   }
 
-  await tx.insert(programmePhases).values(phases);
+  return await tx.insert(programmePhases).values(phases).returning();
 }
 
 export async function createProgramme(
@@ -364,33 +348,14 @@ export async function findTemplateBySlug(
   return records[0] ?? null;
 }
 
-/** Retrieves template phases for a programme template, ordered by phase_number. No RLS required. */
-export async function findTemplatePhases(
-  templateId: string,
-  options: FindTemplatePhasesOptions = {}
-): Promise<TemplatePhaseRecord[]> {
-  const { tx } = options;
-
-  if (tx) {
-    return findTemplatePhasesInTx(tx, templateId);
-  }
-
-  // No RLS needed — template_phases is a system-managed lookup table
-  return await db
-    .select()
-    .from(templatePhases)
-    .where(eq(templatePhases.programmeTemplateId, templateId))
-    .orderBy(templatePhases.phaseNumber);
-}
-
 /** Batch inserts programme_phases rows. RLS context must be set when using a transaction. */
 export async function createProgrammePhases(
   organisationId: string,
   phases: NewProgrammePhase[],
   options: CreateProgrammePhasesOptions = {}
-): Promise<void> {
+): Promise<ProgrammePhaseRecord[]> {
   if (phases.length === 0) {
-    return;
+    return [];
   }
 
   const { tx } = options;
@@ -399,7 +364,7 @@ export async function createProgrammePhases(
     return createProgrammePhasesInTx(tx, phases);
   }
 
-  await withRLS(organisationId, undefined, async (newTx) => {
+  return await withRLS(organisationId, undefined, async (newTx) => {
     return createProgrammePhasesInTx(newTx, phases);
   });
 }
@@ -463,13 +428,34 @@ export async function findProgrammeWithPhases(
   });
 }
 
+export interface FindTemplateStructureOptions {
+  /** Optional transaction for atomic operations. If provided, RLS must be set by caller. */
+  tx?: Transaction;
+}
+
 /**
  * Fetch the full template structure: phases → sessions → exercises → videos.
  * No RLS required — system-managed lookup tables.
  */
-export async function findTemplateStructure(templateId: string): Promise<TemplateStructure> {
+export async function findTemplateStructure(
+  templateId: string,
+  options: FindTemplateStructureOptions = {}
+): Promise<TemplateStructure> {
+  const { tx } = options;
+
+  if (tx) {
+    return findTemplateStructureInTx(tx, templateId);
+  }
+
+  return await db.transaction(async (newTx) => findTemplateStructureInTx(newTx, templateId));
+}
+
+async function findTemplateStructureInTx(
+  tx: Transaction,
+  templateId: string
+): Promise<TemplateStructure> {
   // Fetch all template phases
-  const tPhases = await db
+  const tPhases = await tx
     .select()
     .from(templatePhases)
     .where(eq(templatePhases.programmeTemplateId, templateId))
@@ -482,7 +468,7 @@ export async function findTemplateStructure(templateId: string): Promise<Templat
   const phaseIds = tPhases.map((p) => p.id);
 
   // Fetch all sessions for these phases
-  const tSessions = await db
+  const tSessions = await tx
     .select()
     .from(templateSessions)
     .where(inArray(templateSessions.templatePhaseId, phaseIds))
@@ -493,7 +479,7 @@ export async function findTemplateStructure(templateId: string): Promise<Templat
   // Fetch all exercises with video metadata for these sessions
   const exerciseRows =
     sessionIds.length > 0
-      ? await db
+      ? await tx
           .select({
             exercise: sessionExercises,
             video: {

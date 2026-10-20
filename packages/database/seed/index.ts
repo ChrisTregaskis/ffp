@@ -139,6 +139,7 @@ export const seedDatabase = async (
       ALTER TABLE programmes NO FORCE ROW LEVEL SECURITY;
       ALTER TABLE programme_phases NO FORCE ROW LEVEL SECURITY;
       ALTER TABLE user_sessions NO FORCE ROW LEVEL SECURITY;
+      ALTER TABLE user_session_exercises NO FORCE ROW LEVEL SECURITY;
       ALTER TABLE exercise_completions NO FORCE ROW LEVEL SECURITY;
     `);
 
@@ -207,7 +208,7 @@ export const seedDatabase = async (
       await db.$client.query(`
         TRUNCATE assessment_flows, assessment_templates, questions, programme_templates, videos,
                  template_phases, template_sessions, session_exercises,
-                 programmes, programme_phases, user_sessions, exercise_completions CASCADE;
+                 programmes, programme_phases, user_sessions, user_session_exercises, exercise_completions CASCADE;
       `);
       logger.info('Content tables truncated');
     }
@@ -260,6 +261,7 @@ export const seedDatabase = async (
         ALTER TABLE programmes FORCE ROW LEVEL SECURITY;
         ALTER TABLE programme_phases FORCE ROW LEVEL SECURITY;
         ALTER TABLE user_sessions FORCE ROW LEVEL SECURITY;
+        ALTER TABLE user_session_exercises FORCE ROW LEVEL SECURITY;
         ALTER TABLE exercise_completions FORCE ROW LEVEL SECURITY;
       `);
       logger.info('FORCE RLS re-enabled');

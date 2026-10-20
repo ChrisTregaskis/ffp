@@ -10,9 +10,8 @@ export const sessionStatusEnum = pgEnum('session_status', [...SESSION_STATUSES])
 /**
  * User sessions table definition
  *
- * User-layer session instances created lazily when a user starts a session.
- * Each row tracks a user's progress through a specific session within a
- * programme phase, referencing both the user-layer phase and the template session.
+ * User-layer session instances, one per template session, created as not_started with the
+ * programme. Each row tracks a user's progress through a session within a programme phase.
  *
  * **RLS enforced** — organisation_id column with row-level security policies.
  */

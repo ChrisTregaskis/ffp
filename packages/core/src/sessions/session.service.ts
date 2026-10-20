@@ -12,10 +12,8 @@ import type { ExerciseCompletionRecord } from '../exercises/exercise.repository'
 import type { CascadeResult } from '../schemas/session.schema';
 
 /**
- * Start a session (lazy creation).
- *
- * Idempotent — returns existing session if already started.
- * Creates exercise_completion rows from the template session's exercises.
+ * Start a session: move the member's not_started row to in_progress and create its
+ * exercise_completion rows. Idempotent — a started session is resumed.
  * Updates parent phase status to in_progress if this is the first session.
  */
 export async function startSession(
@@ -43,14 +41,18 @@ export async function startSession(
       throw new ForbiddenError('Phase does not belong to your active programme.');
     }
 
-    // Idempotent check — return existing session if already started
+    // Scoped to the phase, so a session from another phase is never found here
     const existing = await sessionRepo.findUserSessionByPhaseAndTemplate(
       tx,
       input.programmePhaseId,
       input.templateSessionId
     );
 
-    if (existing) {
+    if (!existing) {
+      throw new NotFoundError('Session', input.templateSessionId);
+    }
+
+    if (existing.status !== 'not_started') {
       // Clear pausedAt if resuming a paused session
       if (existing.pausedAt) {
         await sessionRepo.clearPausedAt(tx, existing.id);
@@ -65,23 +67,8 @@ export async function startSession(
       };
     }
 
-    // Look up template session to get sessionNumber
-    const templateSession = await sessionRepo.findTemplateSessionById(tx, input.templateSessionId);
-
-    if (!templateSession) {
-      throw new NotFoundError('Template session', input.templateSessionId);
-    }
-
-    // Create the user session
     const now = new Date();
-    const session = await sessionRepo.createUserSession(tx, {
-      organisationId,
-      programmePhaseId: input.programmePhaseId,
-      templateSessionId: input.templateSessionId,
-      sessionNumber: templateSession.sessionNumber,
-      status: 'in_progress',
-      startedAt: now,
-    });
+    const session = await sessionRepo.updateSessionStatus(tx, existing.id, 'in_progress', now);
 
     // Create exercise completions from template exercises
     const templateExercises = await exerciseRepo.findSessionExercisesByTemplateSession(
