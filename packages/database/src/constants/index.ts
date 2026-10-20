@@ -20,6 +20,7 @@ export * from './level-scoring.constants';
 export * from './programme.constants';
 export * from './public-id.constants';
 export * from './session.constants';
+export * from './tag.constants';
 export * from './question.constants';
 export * from './organisation.constants';
 export * from './user.constants';

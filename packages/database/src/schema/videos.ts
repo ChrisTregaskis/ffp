@@ -3,6 +3,7 @@ import {
   uuid,
   varchar,
   text,
+  boolean,
   integer,
   bigint,
   timestamp,
@@ -51,14 +52,16 @@ export const videos = pgTable(
     status: videoStatusEnum('status').notNull().default('draft'),
     /** Exercise difficulty level (nullable — not relevant for informational videos) */
     difficulty: difficultyEnum('difficulty'),
-    /** Type of movement (nullable — not relevant for informational videos) */
+    /** Deprecated: superseded by movement tags (`video_tags`) */
     movementType: movementTypeEnum('movement_type'),
-    /** Target body parts (e.g., ['hamstrings', 'lower_back', 'glutes']) */
-    bodyParts: text('body_parts').array().notNull(),
+    /** Deprecated: superseded by body-area tags (`video_tags`) */
+    bodyParts: text('body_parts').array().notNull().default([]),
     /** Required equipment (e.g., ['resistance_band', 'yoga_mat'] or ['none']) */
     equipment: text('equipment').array().notNull(),
-    /** Flexible tags for filtering (e.g., ['post-surgery', 'knee', 'warm-up']) */
+    /** Deprecated: superseded by typed tags (`video_tags`) */
     tags: text('tags').array().notNull().default([]),
+    /** Curation signal: a core exercise, favoured over the rest of its pool */
+    isEssential: boolean('is_essential').notNull().default(false),
     /** Default number of sets when used as an exercise (e.g., 3) */
     defaultSets: integer('default_sets'),
     /** Default reps — supports ranges (e.g., '8-12', '10') */

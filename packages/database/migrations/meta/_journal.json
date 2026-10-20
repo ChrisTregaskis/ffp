@@ -232,6 +232,13 @@
       "when": 1792485556351,
       "tag": "0032_secret_electro",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1792494811628,
+      "tag": "0033_melted_krista_starr",
+      "breakpoints": true
     }
   ]
 }

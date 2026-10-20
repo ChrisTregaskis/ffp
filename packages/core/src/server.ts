@@ -40,5 +40,6 @@ export * from './programmes';
 export * from './programme-templates';
 export * from './questions';
 export * from './sessions';
+export * from './tags';
 export * from './users';
 export * from './videos';
