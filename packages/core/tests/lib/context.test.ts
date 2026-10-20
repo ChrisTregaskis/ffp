@@ -8,9 +8,12 @@
  * - Multi-tenant isolation via organisationId validation
  * - JWT claim validation (missing/invalid claims)
  * - Actor type guards and display names
+ * - Resolving the member's database ID from the Cognito sub within their organisation
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import type { User } from '@ffp/database/schema';
 
 import {
   extractUserContext,
@@ -19,13 +22,19 @@ import {
   isUserActor,
   isSystemActor,
   getActorDisplayName,
+  getUserIdFromContext,
   type APIGatewayProxyEventV2WithJWT,
   type UserActor,
   type SystemActor,
 } from '../../src/lib/context';
 import { UnauthorisedError, ValidationError } from '../../src/lib/errors';
+import * as userRepository from '../../src/users/user.repository';
 
 import type { APIGatewayEventRequestContextV2 } from 'aws-lambda';
+
+vi.mock('../../src/users/user.repository');
+
+const mockedUserRepository = vi.mocked(userRepository);
 
 /**
  * Helper function to create mock API Gateway events with JWT claims
@@ -819,5 +828,73 @@ describe('getActorDisplayName', () => {
     const displayName = getActorDisplayName(systemActor);
 
     expect(displayName).toBe('System: assessment-processor');
+  });
+});
+
+describe('getUserIdFromContext', () => {
+  const ORGANISATION_ID = 'org-of-the-member';
+  const COGNITO_SUB = 'cognito-sub-of-the-member';
+
+  const memberContext = (): ReturnType<typeof extractUserContext> =>
+    extractUserContext(
+      createMockAPIGatewayEvent({
+        sub: COGNITO_SUB,
+        'custom:tenantId': ORGANISATION_ID,
+        'custom:role': 'programme_user',
+        email: 'member@example.com',
+      })
+    );
+
+  const storedUser: User = {
+    id: 'database-id-of-the-member',
+    publicId: 'usr123456789',
+    organisationId: ORGANISATION_ID,
+    email: 'member@example.com',
+    cognitoSub: COGNITO_SUB,
+    firstName: 'Mo',
+    lastName: 'Member',
+    role: 'programme_user',
+    locationId: null,
+    profileImageUrl: null,
+    phone: null,
+    dateOfBirth: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('looks the member up by Cognito sub within their organisation and returns the database ID', async () => {
+    mockedUserRepository.findUserByCognitoSub.mockResolvedValue(storedUser);
+
+    await expect(getUserIdFromContext(memberContext())).resolves.toBe('database-id-of-the-member');
+    expect(mockedUserRepository.findUserByCognitoSub).toHaveBeenCalledWith(
+      ORGANISATION_ID,
+      COGNITO_SUB
+    );
+  });
+
+  it('refuses a system actor without looking anyone up', async () => {
+    const context = createSystemContext({
+      systemId: 'daily-report-job',
+      organisationId: ORGANISATION_ID,
+    });
+
+    await expect(getUserIdFromContext(context)).rejects.toMatchObject({
+      code: 'UNAUTHORISED',
+      message: 'This operation requires a user context',
+    });
+    expect(mockedUserRepository.findUserByCognitoSub).not.toHaveBeenCalled();
+  });
+
+  it('refuses a member with no database record', async () => {
+    mockedUserRepository.findUserByCognitoSub.mockResolvedValue(null);
+
+    await expect(getUserIdFromContext(memberContext())).rejects.toMatchObject({
+      code: 'UNAUTHORISED',
+      message: 'User not found in database',
+    });
   });
 });
