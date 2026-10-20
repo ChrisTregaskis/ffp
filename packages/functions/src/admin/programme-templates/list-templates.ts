@@ -6,10 +6,8 @@ import {
 } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
-  isUserActor,
+  withSystemAdmin,
   programmeTemplateService,
 } from '@ffp/core/server';
 
@@ -24,30 +22,22 @@ interface ListTemplatesResponse {
  * Lists all programme templates with pagination, search, and filters.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<ListTemplatesResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can list programme templates',
+    async (event: APIGatewayProxyEventV2WithJWT): Promise<ListTemplatesResponse> => {
+      const params = event.queryStringParameters ?? {};
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can list programme templates');
+      const paginationInput = paginationInputSchema.parse(params);
+
+      const query = templateListQuerySchema.parse(params);
+
+      const filters = {
+        search: query.search,
+        difficulty: query.difficulty,
+        isActive: query.isActive,
+      };
+
+      return await programmeTemplateService.listTemplates(paginationInput, filters);
     }
-
-    const params = event.queryStringParameters ?? {};
-
-    const paginationInput = paginationInputSchema.parse({
-      page: params.page,
-      pageSize: params.pageSize,
-      sortBy: params.sortBy,
-      sortDirection: params.sortDirection,
-    });
-
-    const query = templateListQuerySchema.parse(params);
-
-    const filters = {
-      search: query.search,
-      difficulty: query.difficulty,
-      isActive: query.isActive,
-    };
-
-    return await programmeTemplateService.listTemplates(paginationInput, filters);
-  }
+  )
 );

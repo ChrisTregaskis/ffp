@@ -1,9 +1,9 @@
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
-import { PageHeader } from '@web/components/layout/PageHeader';
+import { PageHeader } from '@web/components/molecules';
 import { FadeSlideIn } from '@web/components/motion/FadeSlideIn';
-import { ProgressBar } from '@web/components/ProgressBar/ProgressBar';
-import { Text } from '@web/components/text/Text';
+
+import { ProgressSummary } from './ProgressSummary';
 
 type Programme = ProgrammeDetailResponse['programme'];
 
@@ -31,18 +31,12 @@ export const ProgrammeHeader: React.FC<ProgrammeHeaderProps> = ({
       <div className="mb-8">
         <PageHeader title={name} subtitle={description ?? undefined} />
 
-        <div className="mb-2 flex items-center justify-between">
-          <Text
-            styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}
-            className="uppercase tracking-wide"
-          >
-            Overall Progress
-          </Text>
-          <Text styleProps={{ size: 'sm', weight: 'medium' }}>
-            {String(completedPhases)} of {String(totalPhases)} phases
-          </Text>
-        </div>
-        <ProgressBar percent={progressPercent} trackClassName="bg-white" />
+        <ProgressSummary
+          label="Overall Progress"
+          count={`${String(completedPhases)} of ${String(totalPhases)} phases`}
+          percent={progressPercent}
+          trackClassName="bg-white"
+        />
       </div>
     </FadeSlideIn>
   );

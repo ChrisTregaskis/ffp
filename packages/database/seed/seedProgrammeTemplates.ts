@@ -4,85 +4,55 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../src/schema/index.js';
 import { programmeTemplates } from '../src/schema/index.js';
 import { createLogger } from '../src/lib/logger.js';
+import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.js';
 
 import type { NewProgrammeTemplate } from '../src/schema/programme-templates.js';
 
 const logger = createLogger('seed-programme-templates');
 
 /**
- * Deterministic UUIDs for programme templates
+ * Deterministic UUIDs for programme templates, keyed by slug
  *
- * These are fixed to ensure consistency across seed runs and allow
- * scoring config programmeMappings to reference them reliably by slug.
+ * The flows' scoring configs recommend these by slug (LEVEL_PROGRAMME_SLUGS).
  *
  * UUID Pattern: 66666666-6666-6666-8666-6666666600XX
- * - gentle-mobility-programme: 01
- * - foundation-programme: 02
- * - advanced-strength-programme: 03
- * - general-wellness-programme: 04
  */
 export const PROGRAMME_TEMPLATE_IDS = {
-  'gentle-mobility-programme': '66666666-6666-6666-8666-666666660001',
-  'foundation-programme': '66666666-6666-6666-8666-666666660002',
-  'advanced-strength-programme': '66666666-6666-6666-8666-666666660003',
-  'general-wellness-programme': '66666666-6666-6666-8666-666666660004',
+  [LEVEL_PROGRAMME_SLUGS[1]]: '66666666-6666-6666-8666-666666660001',
+  [LEVEL_PROGRAMME_SLUGS[2]]: '66666666-6666-6666-8666-666666660002',
+  [LEVEL_PROGRAMME_SLUGS[3]]: '66666666-6666-6666-8666-666666660003',
 } as const;
 
 export type ProgrammeTemplateSlug = keyof typeof PROGRAMME_TEMPLATE_IDS;
 
-/**
- * Programme template definitions matching scoring config in seedAssessmentFlows.ts
- *
- * These templates are referenced by slug in the flow's programmeMappings:
- * - priority 1 & 2 (pain >= 35 / >= 20): gentle-mobility-programme
- * - priority 3 (low strength + low balance): foundation-programme
- * - priority 4 (low pain + high strength): advanced-strength-programme
- * - priority 10 (default fallback): general-wellness-programme
- */
+/** One shell per level; each carries the minimum hierarchy to generate a programme */
 const DEFAULT_PROGRAMME_TEMPLATES: NewProgrammeTemplate[] = [
   {
-    id: PROGRAMME_TEMPLATE_IDS['gentle-mobility-programme'],
-    slug: 'gentle-mobility-programme',
-    name: 'Gentle Mobility Programme',
-    description:
-      'Low-impact mobility and flexibility exercises for users with significant pain or red flags. ' +
-      'Focuses on gentle range-of-motion work and pain management techniques.',
+    id: PROGRAMME_TEMPLATE_IDS[LEVEL_PROGRAMME_SLUGS[1]],
+    slug: LEVEL_PROGRAMME_SLUGS[1],
+    name: 'Level 1: Gentle Mobility',
+    description: 'Gentle mobility and stretching, ideal for easing desk tension.',
     isActive: true,
     totalPhases: 4,
     difficulty: 'beginner',
   },
   {
-    id: PROGRAMME_TEMPLATE_IDS['foundation-programme'],
-    slug: 'foundation-programme',
-    name: 'Foundation Programme',
-    description:
-      'Foundational strength and balance exercises for users with low baseline fitness. ' +
-      'Builds core stability and basic movement patterns before progressing.',
+    id: PROGRAMME_TEMPLATE_IDS[LEVEL_PROGRAMME_SLUGS[2]],
+    slug: LEVEL_PROGRAMME_SLUGS[2],
+    name: 'Level 2: Active Wellness',
+    description: 'Baseline movement and functional training at a moderate pace.',
     isActive: true,
-    totalPhases: 6,
-    difficulty: 'beginner',
-  },
-  {
-    id: PROGRAMME_TEMPLATE_IDS['advanced-strength-programme'],
-    slug: 'advanced-strength-programme',
-    name: 'Advanced Strength Programme',
-    description:
-      'Progressive strength training for users with good baseline and low pain. ' +
-      'Includes compound movements and progressive overload principles.',
-    isActive: true,
-    totalPhases: 8,
-    difficulty: 'advanced',
-  },
-  {
-    id: PROGRAMME_TEMPLATE_IDS['general-wellness-programme'],
-    slug: 'general-wellness-programme',
-    name: 'General Wellness Programme',
-    description:
-      'Balanced general fitness programme covering strength, mobility, and balance. ' +
-      'Default recommendation when no specific programme mapping matches.',
-    isActive: true,
-    totalPhases: 6,
+    totalPhases: 1,
     difficulty: 'intermediate',
+  },
+  {
+    id: PROGRAMME_TEMPLATE_IDS[LEVEL_PROGRAMME_SLUGS[3]],
+    slug: LEVEL_PROGRAMME_SLUGS[3],
+    name: 'Level 3: Energised & Dynamic',
+    description: 'Higher-intensity bodyweight work for those who are already active.',
+    isActive: true,
+    totalPhases: 1,
+    difficulty: 'advanced',
   },
 ];
 

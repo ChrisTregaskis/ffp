@@ -14,7 +14,9 @@
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+
+import { assessmentFlows, flowSteps, questions } from '@ffp/database/schema';
 
 import * as templateRepository from '../../src/assessments/template.repository';
 
@@ -92,28 +94,76 @@ describe('Template Repository', () => {
     });
   });
 
-  describe('findAll', () => {
-    it('returns all templates', async () => {
-      await templateRepository.createTemplate(db, validCreateInput);
-      await templateRepository.createTemplate(db, { ...validCreateInput, name: 'Second Template' });
+  describe('findTemplatePage', () => {
+    const firstPage = { page: 1, pageSize: 10, sortDirection: 'asc' as const };
 
-      const result = await templateRepository.findAllTemplates(db);
-
-      expect(result).toHaveLength(2);
-    });
-
-    it('filters to active only when activeOnly is true', async () => {
-      const active = await templateRepository.createTemplate(db, validCreateInput);
+    it('sorts by name by default and filters on status', async () => {
+      await templateRepository.createTemplate(db, { ...validCreateInput, name: 'Beta' });
+      await templateRepository.createTemplate(db, { ...validCreateInput, name: 'Alpha' });
       await templateRepository.createTemplate(db, {
         ...validCreateInput,
-        name: 'Inactive',
+        name: 'Retired',
         isActive: false,
       });
 
-      const result = await templateRepository.findAllTemplates(db, { activeOnly: true });
+      const all = await templateRepository.findTemplatePage(db, firstPage, {});
+      const active = await templateRepository.findTemplatePage(db, firstPage, { isActive: true });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe(active.id);
+      expect(all.map((template) => template.name)).toEqual(['Alpha', 'Beta', 'Retired']);
+      expect(active.map((template) => template.name)).toEqual(['Alpha', 'Beta']);
+      expect(await templateRepository.countTemplates(db, { isActive: false })).toBe(1);
+    });
+
+    it('searches name and description, treating wildcards literally', async () => {
+      await templateRepository.createTemplate(db, { ...validCreateInput, name: '100% effort' });
+      await templateRepository.createTemplate(db, { ...validCreateInput, name: 'Other' });
+
+      const result = await templateRepository.findTemplatePage(db, firstPage, { search: '%' });
+
+      expect(result.map((template) => template.name)).toEqual(['100% effort']);
+    });
+
+    it('counts assigned questions and the flows linking the template without multiplying them', async () => {
+      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const [first, second] = await db
+        .insert(questions)
+        .values(
+          ['page-count-a', 'page-count-b'].map((slug) => ({
+            slug,
+            type: 'text' as const,
+            questionText: slug,
+          }))
+        )
+        .returning();
+
+      await templateRepository.assignQuestions(db, template.id, [first.id, second.id], 1);
+
+      const [flow] = await db
+        .insert(assessmentFlows)
+        .values({ name: 'Page count flow' })
+        .returning();
+
+      await db.insert(flowSteps).values(
+        [1, 2].map((order) => ({
+          flowId: flow.id,
+          order,
+          type: 'questions' as const,
+          templateId: template.id,
+          config: { title: `Step ${String(order)}` },
+        }))
+      );
+
+      try {
+        const [row] = await templateRepository.findTemplatePage(db, firstPage, {});
+
+        expect(row.questionCount).toBe(2);
+        expect(row.flowCount).toBe(1);
+      } finally {
+        await db.execute(sql`DELETE FROM flow_steps WHERE flow_id = ${flow.id}`);
+        await db.execute(sql`DELETE FROM assessment_flows WHERE id = ${flow.id}`);
+        await db.execute(sql`DELETE FROM template_questions WHERE template_id = ${template.id}`);
+        await db.execute(sql`DELETE FROM questions WHERE id IN (${first.id}, ${second.id})`);
+      }
     });
   });
 
@@ -157,6 +207,184 @@ describe('Template Repository', () => {
       ).rejects.toThrow(
         'Assessment template with id 550e8400-e29b-41d4-a716-446655440000 not found'
       );
+    });
+  });
+  /**
+   * The join lifecycle exercised against the real unique indexes —
+   * UNIQUE(template_id, question_id) and UNIQUE(template_id, display_order) —
+   * since those constraints are the whole reason reorder and renumber are
+   * written the way they are.
+   */
+  describe('question assignments', () => {
+    /** Inserts question bank entries with predictable slugs, returned in creation order. */
+    const createQuestions = async (count: number): Promise<{ id: string; slug: string }[]> => {
+      const inserted = await db
+        .insert(questions)
+        .values(
+          Array.from({ length: count }, (_, index) => ({
+            slug: `tq-test-question-${String(index + 1)}`,
+            type: 'single-choice' as const,
+            questionText: `How active are you? (${String(index + 1)})`,
+          }))
+        )
+        .returning({ id: questions.id, slug: questions.slug });
+
+      return inserted;
+    };
+
+    /** Orders must be cleared before the questions they reference (FK is RESTRICT). */
+    afterEach(async () => {
+      await db.execute(sql`DELETE FROM template_questions`);
+      await db.execute(sql`DELETE FROM questions WHERE slug LIKE 'tq-test-%'`);
+    });
+
+    const assignedOrders = async (templateId: string): Promise<number[]> => {
+      const assignments = await templateRepository.findQuestionAssignmentsByTemplateId(
+        db,
+        templateId
+      );
+
+      return assignments.map((assignment) => assignment.displayOrder);
+    };
+
+    it('appends assignments from the supplied starting order', async () => {
+      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const bank = await createQuestions(3);
+
+      await templateRepository.assignQuestions(
+        db,
+        template.id,
+        bank.map((question) => question.id),
+        1
+      );
+
+      expect(await assignedOrders(template.id)).toEqual([1, 2, 3]);
+      expect(await templateRepository.findMaxDisplayOrder(db, template.id)).toBe(3);
+    });
+
+    it('returns 0 from findMaxDisplayOrder when nothing is assigned', async () => {
+      const template = await templateRepository.createTemplate(db, validCreateInput);
+
+      expect(await templateRepository.findMaxDisplayOrder(db, template.id)).toBe(0);
+    });
+
+    it('reverses the order without tripping the unique display order index', async () => {
+      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const bank = await createQuestions(3);
+      const questionIds = bank.map((question) => question.id);
+
+      await templateRepository.assignQuestions(db, template.id, questionIds, 1);
+
+      await templateRepository.reorderTemplateQuestions(
+        db,
+        template.id,
+        [...questionIds].reverse()
+      );
+
+      const assignments = await templateRepository.findQuestionAssignmentsByTemplateId(
+        db,
+        template.id
+      );
+
+      expect(assignments.map((assignment) => assignment.questionId)).toEqual(
+        [...questionIds].reverse()
+      );
+      expect(assignments.map((assignment) => assignment.displayOrder)).toEqual([1, 2, 3]);
+    });
+
+    it('swaps two adjacent assignments, which a direct write would reject', async () => {
+      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const bank = await createQuestions(2);
+      const [first, second] = bank.map((question) => question.id);
+
+      await templateRepository.assignQuestions(db, template.id, [first, second], 1);
+
+      await templateRepository.reorderTemplateQuestions(db, template.id, [second, first]);
+
+      const assignments = await templateRepository.findQuestionAssignmentsByTemplateId(
+        db,
+        template.id
+      );
+
+      expect(assignments.map((assignment) => assignment.questionId)).toEqual([second, first]);
+      expect(assignments.map((assignment) => assignment.displayOrder)).toEqual([1, 2]);
+    });
+
+    it('closes the gap left by unassigning the middle question', async () => {
+      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const bank = await createQuestions(3);
+      const questionIds = bank.map((question) => question.id);
+
+      await templateRepository.assignQuestions(db, template.id, questionIds, 1);
+
+      const unassigned = await templateRepository.unassignQuestion(db, template.id, questionIds[1]);
+      await templateRepository.renumberTemplateQuestions(db, template.id);
+
+      expect(unassigned).toBe(true);
+
+      const assignments = await templateRepository.findQuestionAssignmentsByTemplateId(
+        db,
+        template.id
+      );
+
+      expect(assignments.map((assignment) => assignment.questionId)).toEqual([
+        questionIds[0],
+        questionIds[2],
+      ]);
+      expect(assignments.map((assignment) => assignment.displayOrder)).toEqual([1, 2]);
+    });
+
+    it('closes the gap left by unassigning the first question', async () => {
+      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const bank = await createQuestions(3);
+      const questionIds = bank.map((question) => question.id);
+
+      await templateRepository.assignQuestions(db, template.id, questionIds, 1);
+
+      await templateRepository.unassignQuestion(db, template.id, questionIds[0]);
+      await templateRepository.renumberTemplateQuestions(db, template.id);
+
+      const assignments = await templateRepository.findQuestionAssignmentsByTemplateId(
+        db,
+        template.id
+      );
+
+      expect(assignments.map((assignment) => assignment.questionId)).toEqual([
+        questionIds[1],
+        questionIds[2],
+      ]);
+      expect(assignments.map((assignment) => assignment.displayOrder)).toEqual([1, 2]);
+    });
+
+    it('reports false when unassigning a question that was never assigned', async () => {
+      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const bank = await createQuestions(1);
+
+      expect(await templateRepository.unassignQuestion(db, template.id, bank[0].id)).toBe(false);
+    });
+
+    it('offers the whole active bank when the template has no assignments', async () => {
+      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const bank = await createQuestions(2);
+
+      const assignable = await templateRepository.findAssignableQuestions(db, template.id);
+
+      expect(assignable.map((question) => question.id).sort()).toEqual(
+        bank.map((question) => question.id).sort()
+      );
+    });
+
+    it('excludes already-assigned and inactive questions from the assignable pool', async () => {
+      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const bank = await createQuestions(3);
+      const [assigned, inactive, available] = bank.map((question) => question.id);
+
+      await templateRepository.assignQuestions(db, template.id, [assigned], 1);
+      await db.execute(sql`UPDATE questions SET is_active = false WHERE id = ${inactive}`);
+
+      const assignable = await templateRepository.findAssignableQuestions(db, template.id);
+
+      expect(assignable.map((question) => question.id)).toEqual([available]);
     });
   });
 });

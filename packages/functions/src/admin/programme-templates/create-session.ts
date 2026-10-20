@@ -1,11 +1,9 @@
 import type { SessionResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
+  withSystemAdmin,
   ValidationError,
-  isUserActor,
   templateSessionService,
 } from '@ffp/core/server';
 
@@ -22,22 +20,19 @@ interface CreateSessionResponse {
  * Auto-assigns sessionNumber and updates phase sessionCount.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<CreateSessionResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can create template sessions',
+    async (event: APIGatewayProxyEventV2WithJWT): Promise<CreateSessionResponse> => {
+      const phaseId = event.pathParameters?.id;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can create template sessions');
+      if (!phaseId) {
+        throw new ValidationError('Phase ID is required');
+      }
+
+      const body = parseJsonBody(event.body, { required: false });
+      const session = await templateSessionService.createSession(phaseId, body);
+
+      return { session };
     }
-
-    const phaseId = event.pathParameters?.id;
-
-    if (!phaseId) {
-      throw new ValidationError('Phase ID is required');
-    }
-
-    const body = parseJsonBody(event.body, { required: false });
-    const session = await templateSessionService.createSession(phaseId, body);
-
-    return { session };
-  }
+  )
 );

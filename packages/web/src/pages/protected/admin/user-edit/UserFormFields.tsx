@@ -1,11 +1,14 @@
 import React, { useMemo } from 'react';
 
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
-import { FormActions } from '@web/components/form/standardForm/FormActions';
-import { FormRow } from '@web/components/form/standardForm/FormRow';
-import { FormSelect } from '@web/components/form/standardForm/FormSelect';
-import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
+import { FormRow } from '@web/components/atoms';
+import {
+  FormActions,
+  FormEmailInput,
+  FormSelect,
+  FormTextInput,
+  StaticAlert,
+} from '@web/components/molecules';
+import { useComposableFormContext } from '@web/components/organisms';
 import { useAdminLocationsQuery } from '@web/hooks/locations';
 
 import type { UserFormValues } from './types';
@@ -51,14 +54,13 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
       {errorMessage && <StaticAlert variant="error" message={errorMessage} className="mb-4" />}
 
       {/* Email — disabled in edit mode */}
-      <FormTextInput
+      <FormEmailInput
         name="email"
         label="Email"
-        type="email"
         placeholder="user@example.com"
         register={register}
         errors={errors}
-        isRequired={!isEditMode}
+        requiredMessage={isEditMode ? undefined : 'Please give the user an email address'}
         disabled={isEditMode}
       />
 
@@ -71,6 +73,7 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
           register={register}
           errors={errors}
           isRequired
+          registerOptions={{ required: 'Please give the user a first name' }}
         />
         <FormTextInput
           name="lastName"
@@ -79,6 +82,7 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
           register={register}
           errors={errors}
           isRequired
+          registerOptions={{ required: 'Please give the user a last name' }}
         />
       </FormRow>
 
@@ -100,6 +104,7 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
           control={control}
           errors={errors}
           isRequired
+          rules={{ required: 'Please choose a location' }}
         />
       )}
 

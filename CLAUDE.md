@@ -42,7 +42,7 @@ When integrating with third-party frameworks or npm packages that use American E
 ### Development Workflow
 
 ```bash
-# Install dependencies (required: pnpm >= 9.0.0, Node >= 20.0.0)
+# Install dependencies (required: pnpm >= 9.0.0, Node >= 24.0.0 — `nvm use` reads .nvmrc)
 pnpm install
 
 # Build all packages (respects dependency order via Turborepo)
@@ -153,7 +153,7 @@ ffp/
 │   │   └── dist/
 │   ├── web/                       # React frontend (@ffp/web)
 │   │   ├── src/
-│   │   │   ├── components/        # Atomic design structure (future)
+│   │   │   ├── components/        # Atomic design: atoms/ molecules/ organisms/ templates/ + domain folders
 │   │   │   ├── contexts/          # React contexts (future)
 │   │   │   └── pages/             # Page components (future)
 │   │   └── dist/

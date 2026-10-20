@@ -24,4 +24,5 @@ export * from './user-assessments';
 export * from './questions';
 export * from './template-questions';
 export * from './user-assessment-answers';
+export * from './assessment-safety-triggers';
 export * from './videos';

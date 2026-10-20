@@ -1,10 +1,10 @@
+import { createEntityKeys } from './create-entity-keys';
+
+const base = createEntityKeys('programme-templates');
+
 export const programmeTemplateKeys = {
-  all: ['programme-templates'] as const,
-  lists: () => [...programmeTemplateKeys.all, 'list'] as const,
-  list: (params: Record<string, unknown>) => [...programmeTemplateKeys.lists(), params] as const,
-  details: () => [...programmeTemplateKeys.all, 'detail'] as const,
-  detail: (templateId: string) => [...programmeTemplateKeys.details(), templateId] as const,
-  sessionExercises: () => [...programmeTemplateKeys.all, 'session-exercises'] as const,
+  ...base,
+  sessionExercises: () => [...base.all, 'session-exercises'] as const,
   sessionExerciseList: (sessionId: string) =>
     [...programmeTemplateKeys.sessionExercises(), sessionId] as const,
 };

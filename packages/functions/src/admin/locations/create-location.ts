@@ -1,11 +1,9 @@
 import { type CreateLocationResponse, createLocationRequestSchema } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
+  withSystemAdmin,
   ValidationError,
-  isUserActor,
   createLocationService,
   createRequestContext,
 } from '@ffp/core/server';
@@ -21,24 +19,21 @@ import {
  * ```
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<CreateLocationResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system admins can create locations',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<CreateLocationResponse> => {
+      const organisationId = event.pathParameters?.orgId;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system admins can create locations');
+      if (!organisationId) {
+        throw new ValidationError('Organisation ID is required');
+      }
+
+      const body = JSON.parse(event.body ?? '{}') as unknown;
+      const input = createLocationRequestSchema.parse(body);
+
+      const ctx = createRequestContext(context);
+
+      return await createLocationService(ctx, organisationId, input);
     }
-
-    const organisationId = event.pathParameters?.orgId;
-
-    if (!organisationId) {
-      throw new ValidationError('Organisation ID is required');
-    }
-
-    const body = JSON.parse(event.body ?? '{}') as unknown;
-    const input = createLocationRequestSchema.parse(body);
-
-    const ctx = createRequestContext(context);
-
-    return await createLocationService(ctx, organisationId, input);
-  }
+  )
 );

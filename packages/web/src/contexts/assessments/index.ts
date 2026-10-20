@@ -6,6 +6,8 @@ export type {
   AssessmentContextValue,
   StartAssessmentAction,
   SetAnswerAction,
+  SetFieldErrorsAction,
+  GoToStepAction,
   NextStepAction,
   PrevStepAction,
   MarkSavedAction,

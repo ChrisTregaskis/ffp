@@ -3,17 +3,12 @@ import { useRef } from 'react';
 
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
-import { Card } from '@web/components/Card/Card';
-import { FadeSlideIn } from '@web/components/motion/FadeSlideIn';
-import { ProgressBar } from '@web/components/ProgressBar/ProgressBar';
-import { Text } from '@web/components/text/Text';
-import { Title } from '@web/components/text/Title';
+import type { BadgeProps } from '@web/components/atoms';
+import { Badge, Icons, ProgressBar, Text, Title } from '@web/components/atoms';
+import { Card, PrescriptionBadge } from '@web/components/molecules';
+import { ExpandableSection, FadeSlideIn, TimelineLine } from '@web/components/motion';
 
-import { ExpandableSection } from './ExpandableSection';
-import { SessionCountPill } from './SessionCountPill';
 import { SessionRow } from './SessionRow';
-import { StatusBadge } from './StatusBadge';
-import { TimelineLine } from './TimelineLine';
 import { TimelineNode } from './TimelineNode';
 
 type Phase = ProgrammeDetailResponse['phases'][number];
@@ -30,13 +25,12 @@ export interface PhaseTimelineCardProps {
   nextSession: Session | undefined;
 }
 
-const STATUS_BADGE_MAP: Record<
-  Phase['status'],
-  { label: string; variant: 'completed' | 'current' | 'upcoming' }
-> = {
-  completed: { label: 'Complete', variant: 'completed' },
-  in_progress: { label: 'In Progress', variant: 'current' },
-  not_started: { label: 'Upcoming', variant: 'upcoming' },
+const UP_NEXT_BADGE: BadgeProps = { label: 'Up Next', variant: 'brand', appearance: 'solid' };
+
+const STATUS_BADGE_MAP: Record<Phase['status'], BadgeProps> = {
+  completed: { label: 'Complete', variant: 'success', appearance: 'solid' },
+  in_progress: { label: 'In Progress', variant: 'brand', appearance: 'solid' },
+  not_started: { label: 'Upcoming', variant: 'muted', appearance: 'soft' },
 };
 
 const LINE_COLOUR_MAP: Record<Phase['status'], string> = {
@@ -50,7 +44,7 @@ const LINE_COLOUR_MAP: Record<Phase['status'], string> = {
  *
  * Starts compact and expands when scrolled into view (first phase always expanded).
  * Current/completed phases show progress bar and session list.
- * Upcoming phases show only a session count pill.
+ * Upcoming phases show only a badge with the session count.
  */
 export const PhaseTimelineCard: React.FC<PhaseTimelineCardProps> = ({
   phase,
@@ -75,9 +69,7 @@ export const PhaseTimelineCard: React.FC<PhaseTimelineCardProps> = ({
   const progressPercent = totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0;
 
   const isNextPhase = phase.status === 'not_started' && isAccessible;
-  const { label: statusLabel, variant: statusVariant } = isNextPhase
-    ? { label: 'Up Next', variant: 'current' as const }
-    : STATUS_BADGE_MAP[phase.status];
+  const statusBadge = isNextPhase ? UP_NEXT_BADGE : STATUS_BADGE_MAP[phase.status];
 
   return (
     <div ref={ref} className="flex gap-4">
@@ -110,7 +102,7 @@ export const PhaseTimelineCard: React.FC<PhaseTimelineCardProps> = ({
             <div className="p-5">
               {/* Header — always visible */}
               <div className="mb-1">
-                <StatusBadge label={statusLabel} variant={statusVariant} />
+                <Badge {...statusBadge} shape="md" />
               </div>
               <Title as="h4" className="mb-1">
                 Phase {String(phase.phaseNumber)}
@@ -133,7 +125,11 @@ export const PhaseTimelineCard: React.FC<PhaseTimelineCardProps> = ({
                       {String(completedSessions)} of {String(totalSessions)} sessions
                     </Text>
                   </div>
-                  <ProgressBar percent={progressPercent} className="mb-4" />
+                  <ProgressBar
+                    percent={progressPercent}
+                    aria-label="Phase session progress"
+                    className="mb-4"
+                  />
 
                   {/* Sessions list — 2-col on desktop, stacked on tablet */}
                   <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
@@ -149,10 +145,15 @@ export const PhaseTimelineCard: React.FC<PhaseTimelineCardProps> = ({
                 </div>
               </ExpandableSection>
 
-              {/* Expanded content — upcoming phases: session count pill only */}
+              {/* Expanded content — upcoming phases: the session count only */}
               <ExpandableSection isVisible={isExpanded && !isAccessible} duration={0.3}>
                 <div className="mt-3">
-                  <SessionCountPill count={totalSessions} />
+                  <PrescriptionBadge
+                    label={`${String(totalSessions)} sessions`}
+                    icon={Icons.REPEAT}
+                    variant="blue"
+                    size="sm"
+                  />
                 </div>
               </ExpandableSection>
             </div>

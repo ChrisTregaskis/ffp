@@ -1,9 +1,9 @@
-import { Button } from '@web/components/button/Button';
-import { useComposableFormContext } from '@web/components/form/composableForm/FormContext';
-import { PasswordInput } from '@web/components/form/password/PasswordInput';
-import { PasswordRequirementsList } from '@web/components/form/password/PasswordRequirementsList';
-import { FormTextInput } from '@web/components/form/standardForm/FormTextInput';
-import type { PasswordValidationResult } from '@web/utils/passwordStrength';
+import { Button } from '@web/components/atoms';
+import { FormTextInput } from '@web/components/molecules';
+import { useComposableFormContext } from '@web/components/organisms';
+import type { NewPasswordFieldsState } from '@web/hooks/useNewPasswordFields';
+
+import { NewPasswordFields } from './NewPasswordFields';
 
 /** Form values managed by ComposableForm / react-hook-form */
 export interface ConfirmResetFormValues {
@@ -14,21 +14,15 @@ export interface ForgotPasswordConfirmFormFieldsProps {
   onResendCode: () => Promise<void>;
   isLoading: boolean;
   resendCooldown: number;
-  password: string;
-  onPasswordChange: (value: string) => void;
-  confirmPassword: string;
-  onConfirmPasswordChange: (value: string) => void;
-  passwordValidation: PasswordValidationResult;
-  passwordsMatch: boolean;
-  showConfirmPasswordError: boolean;
+  newPassword: NewPasswordFieldsState;
   onBackToLogin: () => void;
 }
 
 /**
  * Inner form fields for the forgot password confirm step.
  *
- * Accesses ComposableForm context for the verification code field,
- * and uses controlled PasswordInput for password entry with strength feedback.
+ * Accesses ComposableForm context for the verification code field; the new password is
+ * controlled state from `useNewPasswordFields`.
  *
  * Must be rendered within a `<ComposableForm<ConfirmResetFormValues>>`.
  */
@@ -36,13 +30,7 @@ export const ForgotPasswordConfirmFormFields: React.FC<ForgotPasswordConfirmForm
   onResendCode,
   isLoading,
   resendCooldown,
-  password,
-  onPasswordChange,
-  confirmPassword,
-  onConfirmPasswordChange,
-  passwordValidation,
-  passwordsMatch,
-  showConfirmPasswordError,
+  newPassword,
   onBackToLogin,
 }) => {
   const { register, errors } = useComposableFormContext<ConfirmResetFormValues>();
@@ -84,43 +72,11 @@ export const ForgotPasswordConfirmFormFields: React.FC<ForgotPasswordConfirmForm
         </div>
       </div>
 
-      {/* New password input with strength indicator */}
-      <PasswordInput
-        label="New password"
-        placeholder="Create a secure password"
-        value={password}
-        onChange={onPasswordChange}
-        name="password"
-        strength={passwordValidation.strength}
-        showStrength
-        disabled={isLoading}
+      <NewPasswordFields
+        newPassword={newPassword}
+        isLoading={isLoading}
+        submitLabel={isLoading ? 'Resetting password...' : 'Reset password'}
       />
-
-      {/* Password requirements list */}
-      <PasswordRequirementsList requirements={passwordValidation.requirements} />
-
-      {/* Confirm password input */}
-      <PasswordInput
-        label="Confirm password"
-        placeholder="Re-enter your password"
-        value={confirmPassword}
-        onChange={onConfirmPasswordChange}
-        name="confirmPassword"
-        hasError={showConfirmPasswordError}
-        errorMessage="Passwords do not match"
-        disabled={isLoading}
-      />
-
-      {/* Submit button */}
-      <Button
-        type="submit"
-        variant="primary"
-        size="lg"
-        className="w-full"
-        disabled={isLoading || !passwordValidation.allRequirementsMet || !passwordsMatch}
-      >
-        {isLoading ? 'Resetting password...' : 'Reset password'}
-      </Button>
 
       {/* Back to sign in link */}
       <div className="flex justify-center -mt-2">

@@ -12,6 +12,8 @@ export const dimensionalScoreSchema = z.object({
   normalisedScore: z.number(),
   /** Score category (e.g., 'low', 'moderate', 'high') */
   category: z.string().optional(),
+  /** 0 means unassessed; absent on scores stored before it existed */
+  answeredCount: z.number().int().nonnegative().optional(),
 });
 
 /**

@@ -84,11 +84,15 @@ Context flows identically through all layers: **Handler/Worker → Service → R
 
 | Token         | Lifetime   | Purpose                  |
 | ------------- | ---------- | ------------------------ |
-| Access token  | 15 minutes | API authorisation        |
-| ID token      | 15 minutes | User identity claims     |
-| Refresh token | 7 days     | Obtain new access tokens |
+| Access token  | 60 minutes | API authorisation        |
+| ID token      | 60 minutes | User identity claims     |
+| Refresh token | 30 days    | Obtain new access tokens |
 
-**Best practices:** Store tokens in memory (React state), never localStorage (XSS risk). Implement refresh before expiry. Clear on logout.
+Lifetimes are set on the web app client in `sst.config.ts` (`accessTokenValidity`, `idTokenValidity`, `refreshTokenValidity`) and match the deployed dev client (`aws cognito-idp describe-user-pool-client`, read 2026-09-30). Token revocation is enabled on the client, so `signOut()` revokes the refresh token: signing out ends the session for good, not just in that tab.
+
+**Where the tokens live:** Amplify v6 keeps the tokens in `window.localStorage` by default, and FFP does not override that (`packages/web/src/lib/auth.ts`). The keys are `CognitoIdentityServiceProvider.<clientId>.<username>.{idToken,accessToken,refreshToken,clockDrift,signInDetails}` plus one `CognitoIdentityServiceProvider.<clientId>.LastAuthUser` pointer, so an origin holds **one signed-in user at a time**. The trade-off: any script running on the page (an XSS flaw) can read the 30-day refresh token, so preventing XSS (React's escaping, no unsanitised `dangerouslySetInnerHTML`, a Content Security Policy) is what protects the session; revocation on sign-out limits how long a stolen token stays useful. Sources: `@aws-amplify/auth` 6.17.0 `providers/cognito/tokenProvider/tokenProvider.ts` (`defaultStorage`) and `TokenStore.ts`; Amplify docs, "Manage user sessions" (https://docs.amplify.aws/react/build-a-backend/auth/connect-your-frontend/manage-user-sessions/).
+
+**Refresh:** `getCurrentUser()` and `fetchAuthSession()` refresh expired tokens with the refresh token. If the refresh fails with a definitive auth error (`NotAuthorizedException`, `TokenRevokedException`, `UserNotFoundException` and similar), Amplify clears the tokens; for any other failure (network, service, throttling) it keeps them and re-throws (`TokenOrchestrator.handleErrors`). `AuthContext` mirrors that split (`contexts/auth/auth-retry.ts`): only those definitive names, or no stored session, count as signed out. Any other failure is retried once, then shows a "can't reach the sign-in service" retry state instead of redirecting to sign in.
 
 ## Password Policy
 

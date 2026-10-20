@@ -23,7 +23,7 @@ You are a senior React/TypeScript engineer specialising in healthcare SaaS UI de
 
 ## Core Rules
 
-1. **Component library first** — use existing `packages/web/src/components/ui/` before creating new components
+1. **Atomic design, existing components first.** Every component is an atom, molecule, organism or template; pages stay pages. Generic components live in `packages/web/src/components/{atoms,molecules,organisms,templates}/<Name>/`; domain components (`assessment/`, `video/`, …) are molecules or organisms composed from those. Before building, check the level folders for the atom or molecule that already does the job; a raw `button`/`input`/`textarea`/checkbox/switch outside its atom is a defect. When you build something reusable, replace the existing copies in the same change. `.claude/rules/web-components.md` holds the full rule and the import direction.
 2. **Theme colours only** — no hard-coded Tailwind colour classes (`text-gray-500`, `bg-blue-50`) in production code
 3. **Arrow functions with `React.FC`** — never function declarations for components
 4. **TypeScript strict** — explicit props interfaces, no `any` types
@@ -32,12 +32,13 @@ You are a senior React/TypeScript engineer specialising in healthcare SaaS UI de
 
 ## Themed Components (Not Raw HTML)
 
-| Raw HTML (Wrong)       | Themed Component (Correct)                                              |
-| ---------------------- | ----------------------------------------------------------------------- |
-| `<h1>`, `<h2>`, `<h3>` | `<Title as="h1" colour="foreground">`                                   |
-| `<p>`, `<span>`        | `<Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>` |
-| `<button>`             | `<Button variant="primary">` or `<IconButton>`                          |
-| `<input>`              | `<FormTextInput>`                                                       |
+| Raw HTML (Wrong)                | Themed Component (Correct)                                              |
+| ------------------------------- | ----------------------------------------------------------------------- |
+| `<h1>`, `<h2>`, `<h3>`          | `<Title as="h1" colour="foreground">`                                   |
+| `<p>`, `<span>`                 | `<Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>` |
+| `<button>`                      | `<Button variant="primary">` or `<IconButton>`                          |
+| A clickable row, card or region | `<PressableArea>` (a bare `<button>`: focus ring, no chrome)            |
+| `<input>`                       | `<FormTextInput>` in a form, or the `Input` atom                        |
 
 **Acceptable raw HTML**: `div`, `section`, `nav`, `header`, `footer`, `ul`, `ol`, `li`, `form`, semantic layout elements.
 
@@ -84,11 +85,33 @@ className="bg-primary/10 border-success/20"
 
 ```
 packages/web/src/
-├── components/          # Reusable UI components
-│   ├── ui/             # Base design system (Button, Text, Title, etc.)
-│   └── [domain]/       # Domain-specific (assessment/, programme/, etc.)
-├── hooks/              # Custom React hooks
-├── pages/              # Page-level components
-├── contexts/           # React context providers
-└── lib/                # Utilities, API clients, helpers
+├── components/
+│   ├── atoms/<Name>/            generic; each wraps one raw element or primitive
+│   │   ├── <Name>.tsx           e.g. Button, IconButton, PressableArea, Text, Title, Icon, IconBadge, Switch, FieldError,
+│   │   └── index.ts                  LoadingSpinner, ProgressBar, StatusCircle, Logo, Surface, PageContainer, ContentPanel, FormRow,
+│   │                                 FloatingPanel, Badge, and the form controls: Input, Textarea, Label, Checkbox, Radio,
+│   │                                 FileInput, SelectTrigger
+│   ├── atoms/index.ts           level barrel: what consumers import
+│   ├── molecules/<Name>/        generic; atoms combined for one job
+│   │                            e.g. FormField, FormTextInput (text, password, number), FormEmailInput, FormSelect, FormToggle,
+│   │                                 PasswordVisibilityInput, Select, BaseSelect, StatusResult, ErrorRetryState, LoadingState,
+│   │                                 EmptyState, StaticAlert, PageHeader, SearchInput, Accordion, Card, MenuList,
+│   │                                 DescriptionPanel, ComingSoon, PrescriptionBadge, SectionHeader, InstructionList,
+│   │                                 FeatureColumnGrid
+│   ├── organisms/<Name>/        generic; self-contained sections
+│   │                            e.g. Table (+ private TableHeader/TableBody/… files), Modal, ConfirmModal, DropdownMenu,
+│   │                                 KebabMenu, ComposableForm, MobileMenu, ErrorFallback
+│   ├── templates/<Name>/        page skeletons with slots
+│   │                            AppLayout, AuthLayout, AdminListPageShell, AdminEditPageShell
+│   ├── motion/  error/          behaviour wrappers (incl. ExpandableSection, TimelineLine) and ErrorBoundary: outside the levels
+│   ├── dev/  demo/              pages/dev showcase scaffolding: outside the levels
+│   └── <domain>/                assessment, assessment-flows, auth, locations, organisations,
+│                                programme, programme-templates, questions, session, video
+│                                flat files; molecules and organisms only; compose from the level folders;
+│                                domain presets live here (ArchiveVideoModal → video/, DeactivateQuestionModal → questions/)
+├── hooks/                       # Custom React hooks
+├── pages/                       # Page-level components
+├── contexts/                    # React context providers
+├── utils/                       # Shared non-visual helpers (input styles, field ids and errors, formatting)
+└── lib/                         # API clients, query keys, logging
 ```

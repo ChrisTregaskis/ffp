@@ -1,13 +1,11 @@
 import type { AnswerValue, AssessmentQuestion, FlowStepConfig } from '@ffp/core';
 
-import {
-  ASSESSMENT_MOTION,
-  AssessmentNavigation,
-  InstructionList,
-  QuestionRenderer,
-} from '@web/components/assessment';
+import { InstructionList } from '@web/components/molecules';
 import { CardTransition, type CardTransitionDirection } from '@web/components/motion';
 
+import { AssessmentNavigation } from '../../AssessmentNavigation';
+import { ASSESSMENT_MOTION } from '../../motion.constants';
+import { QuestionRenderer } from '../../questions';
 import { StepCard } from '../StepCard';
 
 import type { ReactNode } from 'react';
@@ -25,6 +23,8 @@ export interface VideoQuestionCardProps {
   value: AnswerValue | null;
   /** Callback when the answer changes */
   onAnswer: (questionId: string, value: AnswerValue | null) => void;
+  /** Why the answer cannot stand, shown on the question */
+  error?: string;
   /** Signed CloudFront URL for the video */
   videoUrl?: string;
   /** Navigation direction for question transition animation @default 'forward' */
@@ -48,6 +48,7 @@ export const VideoQuestionCard: React.FC<VideoQuestionCardProps> = ({
   totalQuestions,
   value,
   onAnswer,
+  error,
   videoUrl,
   direction = 'forward',
   footer,
@@ -60,13 +61,14 @@ export const VideoQuestionCard: React.FC<VideoQuestionCardProps> = ({
       totalQuestions={totalQuestions}
       footer={footer ?? <AssessmentNavigation />}
     >
-      <div className="py-5">
-        {config.instructions && config.instructions.length > 0 && (
+      {config.instructions && config.instructions.length > 0 && (
+        <div className="py-5">
+          {/* Surface's gradient carries the section shadow, which an inset inside the card must not */}
           <div className="rounded-2xl bg-linear-to-br from-secondary/40 to-primary/10 p-5">
             <InstructionList items={config.instructions} title="Instructions:" />
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Video question content */}
       <CardTransition
@@ -78,6 +80,7 @@ export const VideoQuestionCard: React.FC<VideoQuestionCardProps> = ({
           question={question}
           value={value}
           onChange={onAnswer}
+          error={error}
           videoUrl={videoUrl}
         />
       </CardTransition>

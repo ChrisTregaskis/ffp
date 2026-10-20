@@ -1,22 +1,26 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { flowStepTypeSchema, type FlowStepType, type UserAssessmentStatus } from '@ffp/core';
+import {
+  flowStepTypeSchema,
+  TEMPLATE_LINKED_STEP_TYPES,
+  type FlowStepType,
+  type UserAssessmentStatus,
+} from '@ffp/core';
 
 import { AssessmentStepRenderer } from '@web/components/assessment/AssessmentStepRenderer/AssessmentStepRenderer';
-import { Button } from '@web/components/button';
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import { Text } from '@web/components/text';
+import { ErrorRetryState, LoadingState } from '@web/components/molecules';
+import { routes, RouteKey } from '@web/config/routes';
 import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import {
   useAssessmentTemplateQuery,
+  useShowRefusedAnswers,
   useStartAssessment,
   useSubmitAssessment,
 } from '@web/hooks/assessments';
 import { useReplaceProgrammeMutation } from '@web/hooks/programmes';
-import { routes, RouteKey } from '@web/pages/routes';
+import { toQuestionFieldErrors } from '@web/utils/assessment-field-errors';
 
 import { REASSESSMENT_START_KEY } from './assessment.constants';
 
@@ -26,9 +30,6 @@ interface AssessmentOrchestratorProps {
   /** Whether this assessment is a reassessment (user already has a programme) */
   isReassessment?: boolean;
 }
-
-/** Step types that require template questions to be fetched. */
-const QUESTION_STEP_TYPES: FlowStepType[] = ['questions', 'video-assessment'];
 
 /** Statuses indicating the assessment has already been submitted (skip re-submission on resume). */
 const ALREADY_SUBMITTED_STATUSES: UserAssessmentStatus[] = ['submitted', 'scored', 'completed'];
@@ -62,6 +63,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
 
   const {
     mutate: startMutate,
+    variables: startVariables,
     isPending: isStartPending,
     isError: isStartError,
   } = useStartAssessment({
@@ -88,16 +90,30 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
     },
   });
 
+  const showRefusedAnswers = useShowRefusedAnswers();
+  const [isRefusalUnshown, setIsRefusalUnshown] = useState(false);
+
   const {
     mutate: submitMutate,
     isPending: isSubmitPending,
-    isError: isSubmitError,
+    error: submitError,
   } = useSubmitAssessment({
     onSuccess: () => {
       hasSubmittedRef.current = true;
       assessmentDispatch({ type: ASSESSMENT_ACTION.NEXT_STEP });
     },
+    onError: (error) => {
+      void showRefusedAnswers(toQuestionFieldErrors(error)).then((isShown) => {
+        setIsRefusalUnshown(!isShown);
+      });
+    },
   });
+
+  // A refusal shown on its questions takes the member back to them rather than to a failure
+  // screen; any other failure, or a refusal naming no question the flow shows, gets the screen
+  const isSubmitFailure =
+    submitError !== null &&
+    (Object.keys(toQuestionFieldErrors(submitError)).length === 0 || isRefusalUnshown);
 
   const { mutate: replaceMutate, isPending: isReplacePending } = useReplaceProgrammeMutation({
     onSuccess: () => {
@@ -126,11 +142,15 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
   const stepType = currentStepSummary
     ? toFlowStepType(currentStepSummary.type, assessmentState.phase)
     : assessmentState.phase;
-  const needsQuestions = QUESTION_STEP_TYPES.includes(stepType);
+  const needsQuestions = TEMPLATE_LINKED_STEP_TYPES.includes(stepType);
   const templateId = currentStepSummary?.templateId ?? null;
 
   // Fetch template questions for question/video-assessment steps
-  const { data: template, error: templateError } = useAssessmentTemplateQuery(templateId ?? '', {
+  const {
+    data: template,
+    error: templateError,
+    refetch: refetchTemplate,
+  } = useAssessmentTemplateQuery(templateId ?? '', {
     enabled: needsQuestions && !!templateId,
   });
 
@@ -142,14 +162,16 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
   // Determine if the current step is the last question/video step in the flow.
   // Used to show "Complete Assessment" CTA instead of "Continue" on the final question.
   const isLastSubmittableStep = useMemo(() => {
-    if (!QUESTION_STEP_TYPES.includes(stepType)) {
+    if (!TEMPLATE_LINKED_STEP_TYPES.includes(stepType)) {
       return false;
     }
 
     const currentOrder = currentStepSummary?.order ?? 0;
 
     return !assessmentState.steps.some(
-      (s) => s.order > currentOrder && QUESTION_STEP_TYPES.includes(toFlowStepType(s.type, 'intro'))
+      (s) =>
+        s.order > currentOrder &&
+        TEMPLATE_LINKED_STEP_TYPES.includes(toFlowStepType(s.type, 'intro'))
     );
   }, [stepType, currentStepSummary?.order, assessmentState.steps]);
 
@@ -161,6 +183,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
       return;
     }
 
+    setIsRefusalUnshown(false);
     submitMutate({
       assessmentId: assessmentState.assessmentId,
       payload: { answers: assessmentState.answers },
@@ -185,86 +208,45 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
 
   // Loading state: starting or resuming assessment
   if (isStartPending) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3">
-        <LoadingSpinner size="lg" variant="center" />
-
-        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-          Loading your assessment...
-        </Text>
-      </div>
-    );
+    return <LoadingState layout="screen" message="Loading your assessment..." />;
   }
 
-  // Error state: start assessment failed
   if (isStartError) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
-        <StaticAlert
-          variant="error"
-          message="Unable to start the assessment. Please try again later."
-        />
-
-        <Button
-          variant="secondary"
-          onClick={() => {
-            startMutate({ flowId });
-          }}
-        >
-          Try Again
-        </Button>
-      </div>
+      <ErrorRetryState
+        layout="screen"
+        title="We couldn't load your assessment just now."
+        // Retry with the same arguments: the fresh-start flag was cleared from sessionStorage on mount
+        onRetry={() => {
+          startMutate(startVariables);
+        }}
+      />
     );
   }
 
-  // Error state: template questions failed to load
-  if (needsQuestions && templateError) {
+  if (needsQuestions && templateError && !template) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
-        <StaticAlert
-          variant="error"
-          message="Unable to load assessment questions. Please try again later."
-        />
-      </div>
+      <ErrorRetryState
+        layout="screen"
+        title="We couldn't load the questions just now."
+        onRetry={() => {
+          void refetchTemplate();
+        }}
+      />
     );
   }
 
-  // Submission loading state: submitting assessment answers
   if (isSubmitPending) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3">
-        <LoadingSpinner size="lg" variant="center" />
-
-        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-          Submitting your assessment...
-        </Text>
-      </div>
-    );
+    return <LoadingState layout="screen" message="Submitting your assessment..." />;
   }
 
-  // Submission error state
-  if (isSubmitError) {
+  if (isSubmitFailure) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
-        <StaticAlert
-          variant="error"
-          message="Unable to submit your assessment. Please try again."
-        />
-
-        <Button
-          variant="secondary"
-          onClick={() => {
-            if (assessmentState.assessmentId) {
-              submitMutate({
-                assessmentId: assessmentState.assessmentId,
-                payload: { answers: assessmentState.answers },
-              });
-            }
-          }}
-        >
-          Try Again
-        </Button>
-      </div>
+      <ErrorRetryState
+        layout="screen"
+        title="We couldn't send your answers just now."
+        onRetry={handleSubmitAssessment}
+      />
     );
   }
 

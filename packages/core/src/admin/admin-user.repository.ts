@@ -120,7 +120,7 @@ export async function listUsers(
     .select(userWithLocationColumns)
     .from(users)
     .leftJoin(locations, eq(users.locationId, locations.id))
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .$dynamic();
 
   return (await applyPagination(
@@ -139,7 +139,7 @@ export async function countUsers(db: DbClient, filters: UserFilterInput): Promis
   const result = await db
     .select({ count: count() })
     .from(users)
-    .where(conditions.length > 0 ? and(...conditions) : undefined);
+    .where(and(...conditions));
 
   return result[0].count;
 }

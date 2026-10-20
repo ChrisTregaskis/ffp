@@ -1,12 +1,9 @@
-import { useCallback } from 'react';
-
-import { Button } from '@web/components/button';
-import { ScaleFade } from '@web/components/motion';
-import { Text } from '@web/components/text/Text';
-import { Title } from '@web/components/text/Title';
-import { useKeyDown } from '@web/hooks/useKeyDown';
+import { Button } from '@web/components/atoms';
+import { Modal } from '@web/components/organisms';
 
 export interface ExitDialogProps {
+  /** Whether the dialog is visible */
+  isOpen: boolean;
   /** Number of exercises completed so far */
   completedCount: number;
   /** Total number of exercises in the session */
@@ -15,7 +12,7 @@ export interface ExitDialogProps {
   onPause: () => void;
   /** Called when "I'm done with this session" is clicked */
   onDone: () => void;
-  /** Called when "Cancel" is clicked */
+  /** Called on Cancel, the close button, Escape or a backdrop click */
   onCancel: () => void;
 }
 
@@ -24,52 +21,33 @@ export interface ExitDialogProps {
  *
  * Offers "Pause — I'll finish later" (session stays in_progress)
  * and "I'm done with this session" (marks session completed).
- * Dismisses on Escape key or backdrop click.
  */
 export const ExitDialog: React.FC<ExitDialogProps> = ({
+  isOpen,
   completedCount,
   totalCount,
   onPause,
   onDone,
   onCancel,
-}) => {
-  useKeyDown('Escape', onCancel);
-
-  const handleBackdropClick = useCallback(
-    (e: React.MouseEvent): void => {
-      if (e.target === e.currentTarget) {
-        onCancel();
-      }
-    },
-    [onCancel]
-  );
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
-      onClick={handleBackdropClick}
-      role="presentation"
-    >
-      <ScaleFade className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
-        <Title as="h3" className="mb-2">
-          Leaving session?
-        </Title>
-        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mb-6">
-          You&apos;ve completed {String(completedCount)} of {String(totalCount)} exercises.
-        </Text>
-
-        <div className="space-y-3">
-          <Button variant="secondary" size="md" fullWidth onClick={onPause}>
-            Pause — I&apos;ll finish later
-          </Button>
-          <Button variant="neutral" size="md" fullWidth onClick={onDone}>
-            I&apos;m done with this session
-          </Button>
-          <Button variant="ghost" size="sm" fullWidth onClick={onCancel}>
-            Cancel
-          </Button>
-        </div>
-      </ScaleFade>
+}) => (
+  <Modal
+    isOpen={isOpen}
+    onClose={onCancel}
+    title="Leaving session?"
+    subtitle={`You've completed ${String(completedCount)} of ${String(totalCount)} exercises.`}
+    size="sm"
+    hideDividers
+  >
+    <div className="space-y-3">
+      <Button variant="secondary" size="md" fullWidth onClick={onPause}>
+        Pause — I&apos;ll finish later
+      </Button>
+      <Button variant="neutral" size="md" fullWidth onClick={onDone}>
+        I&apos;m done with this session
+      </Button>
+      <Button variant="ghost" size="sm" fullWidth onClick={onCancel}>
+        Cancel
+      </Button>
     </div>
-  );
-};
+  </Modal>
+);

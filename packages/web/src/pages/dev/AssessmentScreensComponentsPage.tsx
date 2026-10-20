@@ -6,18 +6,19 @@ import type {
   DimensionalScore,
   FlowStepConfig,
   FlowStepType,
-  UserAssessmentScores,
+  MemberAssessmentScores,
 } from '@ffp/core';
 
 import {
+  AssessmentProgress,
   IntroScreen,
   QuestionCard,
   ResultsScreen,
+  SafetyConsentScreen,
   TransitionCard,
   VideoQuestionCard,
 } from '@web/components/assessment';
-import { AssessmentProgress } from '@web/components/AssessmentProgress';
-import { Button } from '@web/components/button';
+import { Button, Icon, Icons, Text } from '@web/components/atoms';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
@@ -25,8 +26,6 @@ import {
   ComponentSection,
   DeveloperInstructions,
 } from '@web/components/dev';
-import { Icon, Icons } from '@web/components/Icon';
-import { Text } from '@web/components/text';
 
 // ============================================================================
 // Mock flow step configs for demonstrations
@@ -121,13 +120,12 @@ const mockDimensions: DimensionalScore[] = [
   },
 ];
 
-const mockFullScores: UserAssessmentScores = {
+const mockFullScores: MemberAssessmentScores = {
   dimensions: mockDimensions,
-  riskLevel: 'moderate',
   scoredAt: new Date('2026-02-08T10:30:00Z'),
 };
 
-const mockMinimalScores: UserAssessmentScores = {
+const mockMinimalScores: MemberAssessmentScores = {
   dimensions: [
     {
       dimensionId: 'mobility',
@@ -139,7 +137,7 @@ const mockMinimalScores: UserAssessmentScores = {
   scoredAt: new Date('2026-02-08T10:30:00Z'),
 };
 
-const mockHighRiskScores: UserAssessmentScores = {
+const mockHighRiskScores: MemberAssessmentScores = {
   dimensions: [
     {
       dimensionId: 'mobility',
@@ -164,7 +162,6 @@ const mockHighRiskScores: UserAssessmentScores = {
     },
   ],
   overallScore: 22,
-  riskLevel: 'high',
   scoredAt: new Date('2026-02-08T10:30:00Z'),
 };
 
@@ -283,6 +280,17 @@ export const AssessmentScreensComponentsPage = (): JSX.Element => {
       id: 'results',
       label: 'ResultsScreen',
       content: <ResultsScreenDemo onViewProgramme={handleAction('onViewProgramme called')} />,
+    },
+    {
+      id: 'safety-consent',
+      label: 'SafetyConsentScreen',
+      content: (
+        <SafetyConsentScreen
+          advice="Before you start, please speak to a health professional about what you have selected, to make sure these sessions are right for you."
+          onConfirm={handleAction('onConfirm called')}
+          isConfirming={false}
+        />
+      ),
     },
     {
       id: 'step-renderer',
@@ -782,7 +790,7 @@ const StepRendererDemo: React.FC = () => {
             Programme Overview
           </Text>
           <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }} className="mt-2">
-            Programme details will be available when FFP-3 is complete.
+            Your programme details will appear here soon.
           </Text>
         </div>
       ),

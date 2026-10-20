@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 
+import { Logo, Text, Title } from '@web/components/atoms';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
@@ -8,8 +9,6 @@ import {
   DeveloperInstructions,
   ButtonSampleDisplay,
 } from '@web/components/dev';
-import { Logo } from '@web/components/logo';
-import { Text, Title } from '@web/components/text';
 
 interface LogoWrapper {
   children: ReactNode;
@@ -60,7 +59,7 @@ export const LogoComponentsPage = (): JSX.Element => {
               Import the Logo component:
             </Text>
             <code className="block rounded bg-muted p-2 text-xs">
-              {`import { Logo } from '@web/components/logo';`}
+              {`import { Logo } from '@web/components/atoms';`}
             </code>
           </div>
           <div>

@@ -22,11 +22,9 @@ tests/
 ├── vitest.config.ts      # Vitest configuration
 ├── README.md             # This file
 └── monorepo/             # Monorepo-specific tests
-    ├── build-outputs.test.ts      # Build output validation
     ├── code-quality.test.ts       # Code quality checks
     ├── path-aliases.test.ts       # TypeScript path alias tests
-    ├── turborepo-config.test.ts   # Turborepo configuration tests
-    └── workspace-dependencies.test.ts # Workspace dependency tests
+    └── turborepo-config.test.ts   # Turborepo configuration tests
 ```
 
 ## Running Tests
@@ -100,22 +98,14 @@ When adding new tests:
 
 ## Test Categories
 
-### Build Outputs (`build-outputs.test.ts`)
-
-Validates that packages build correctly and produce expected outputs.
-
 ### Code Quality (`code-quality.test.ts`)
 
-Checks that code quality tools are properly configured and working.
+Checks that each package keeps a lint script, which `turbo lint` would otherwise skip silently.
 
 ### Path Aliases (`path-aliases.test.ts`)
 
-Ensures TypeScript path aliases are configured correctly across packages.
+Pins strict mode and the unused-code checks in `tsconfig.base.json`.
 
 ### Turborepo Config (`turborepo-config.test.ts`)
 
-Validates Turborepo pipeline configuration and task dependencies.
-
-### Workspace Dependencies (`workspace-dependencies.test.ts`)
-
-Checks that workspace package dependencies are correctly configured.
+Pins the task dependency order (`build` on `^build`, `test` on `build`, `typecheck` on `^build`).

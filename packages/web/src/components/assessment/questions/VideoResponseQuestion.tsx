@@ -1,12 +1,12 @@
-import { useMemo, useId } from 'react';
+import { useMemo } from 'react';
 
 import type { AssessmentQuestion } from '@ffp/core';
 
-import { RequiredIndicator } from '@web/components/form';
-import { Text } from '@web/components/text';
 import { VideoPlayer } from '@web/components/video';
 
 import { NumericQuestion } from './NumericQuestion';
+import { QuestionHeader } from './QuestionHeader';
+import { useQuestionFieldIds } from './useQuestionFieldIds';
 
 import type { QuestionComponentProps } from './types';
 
@@ -36,10 +36,7 @@ export const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
   error,
   videoUrl,
 }) => {
-  const instanceId = useId();
-  const questionId = `question-${question.id}-${instanceId}`;
-  const descriptionId = question.description ? `${questionId}-description` : undefined;
-  const isRequired = question.validation?.required !== false;
+  const { descriptionId } = useQuestionFieldIds(question);
 
   // Sub-question for the numeric input (unique ID, simplified text)
   const numericQuestion: AssessmentQuestion = useMemo(
@@ -54,24 +51,7 @@ export const VideoResponseQuestion: React.FC<VideoResponseQuestionProps> = ({
 
   return (
     <div className="space-y-5" aria-describedby={descriptionId}>
-      {/* Question text */}
-      <div className="space-y-1">
-        <Text
-          as="p"
-          styleProps={{ size: 'xl', weight: 'medium', colour: 'foreground' }}
-          className="leading-relaxed"
-        >
-          {question.question}
-          {isRequired && <RequiredIndicator />}
-        </Text>
-
-        {/* Description / helper text */}
-        {question.description && (
-          <Text as="p" id={descriptionId} styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-            {question.description}
-          </Text>
-        )}
-      </div>
+      <QuestionHeader question={question} descriptionId={descriptionId} />
 
       {/* Video player */}
       <VideoPlayer

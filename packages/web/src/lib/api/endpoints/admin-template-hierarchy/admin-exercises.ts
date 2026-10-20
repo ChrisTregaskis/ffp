@@ -8,7 +8,7 @@ import type {
 } from '@ffp/core';
 import { exerciseResponseSchema } from '@ffp/core';
 
-import { ffpClient, parseApiResponse } from '../../client';
+import { assertUuidPathParam, ffpClient, parseApiResponse } from '../../client';
 
 const exerciseResponseEnvelope = z.object({ exercise: exerciseResponseSchema });
 const exercisesResponseEnvelope = z.object({ exercises: z.array(exerciseResponseSchema) });
@@ -17,7 +17,11 @@ const exercisesResponseEnvelope = z.object({ exercises: z.array(exerciseResponse
 export const adminExercisesApi = {
   /** Lists exercises for a session with video summaries. */
   list: async (sessionId: string): Promise<ExerciseResponse[]> => {
-    const path = `/admin/sessions/${sessionId}/exercises`;
+    const checkedSessionId = assertUuidPathParam(
+      sessionId,
+      'GET /admin/sessions/{sessionId}/exercises'
+    );
+    const path = `/admin/sessions/${checkedSessionId}/exercises`;
     const response = await ffpClient.get(path);
 
     return parseApiResponse(exercisesResponseEnvelope, response, { method: 'GET', path }).exercises;
@@ -25,7 +29,11 @@ export const adminExercisesApi = {
 
   /** Creates a new exercise within a session. */
   create: async (sessionId: string, data: CreateExerciseRequest): Promise<ExerciseResponse> => {
-    const path = `/admin/sessions/${sessionId}/exercises`;
+    const checkedSessionId = assertUuidPathParam(
+      sessionId,
+      'POST /admin/sessions/{sessionId}/exercises'
+    );
+    const path = `/admin/sessions/${checkedSessionId}/exercises`;
     const response = await ffpClient.post(path, data);
 
     return parseApiResponse(exerciseResponseEnvelope, response, { method: 'POST', path }).exercise;
@@ -33,7 +41,8 @@ export const adminExercisesApi = {
 
   /** Updates an exercise (partial update). */
   update: async (exerciseId: string, data: UpdateExerciseRequest): Promise<ExerciseResponse> => {
-    const path = `/admin/exercises/${exerciseId}`;
+    const checkedExerciseId = assertUuidPathParam(exerciseId, 'PUT /admin/exercises/{exerciseId}');
+    const path = `/admin/exercises/${checkedExerciseId}`;
     const response = await ffpClient.put(path, data);
 
     return parseApiResponse(exerciseResponseEnvelope, response, { method: 'PUT', path }).exercise;
@@ -41,7 +50,11 @@ export const adminExercisesApi = {
 
   /** Deletes an exercise and renumbers siblings. */
   delete: async (exerciseId: string): Promise<void> => {
-    const path = `/admin/exercises/${exerciseId}`;
+    const checkedExerciseId = assertUuidPathParam(
+      exerciseId,
+      'DELETE /admin/exercises/{exerciseId}'
+    );
+    const path = `/admin/exercises/${checkedExerciseId}`;
     await ffpClient.delete(path);
   },
 
@@ -50,7 +63,11 @@ export const adminExercisesApi = {
     sessionId: string,
     data: ReorderExercisesRequest
   ): Promise<ExerciseResponse[]> => {
-    const path = `/admin/sessions/${sessionId}/exercises/reorder`;
+    const checkedSessionId = assertUuidPathParam(
+      sessionId,
+      'PUT /admin/sessions/{sessionId}/exercises/reorder'
+    );
+    const path = `/admin/sessions/${checkedSessionId}/exercises/reorder`;
     const response = await ffpClient.put(path, data);
 
     return parseApiResponse(exercisesResponseEnvelope, response, { method: 'PUT', path }).exercises;

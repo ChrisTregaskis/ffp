@@ -1,15 +1,9 @@
+import { apiFieldErrorsSchema, type ApiErrorBody, type ApiFieldError } from '@ffp/core';
+
 import { API_ERROR_NAME, RETRYABLE_STATUS_CODES } from '@web/constants';
 
-export interface ApiErrorResponse {
-  /** Machine-readable error code */
-  code: string;
-  /** Human-readable error message */
-  message: string;
-  /** Additional error details (field errors, etc.) */
-  details?: unknown;
-  /** Request ID for debugging */
-  requestId?: string;
-}
+/** The body every API error carries. */
+export type ApiErrorResponse = ApiErrorBody;
 
 /**
  * Normalised API error class
@@ -58,6 +52,13 @@ export class ApiError extends Error {
     return this.status === 400 && this.code === 'VALIDATION_ERROR';
   }
 
+  /** A validation error's per-field failures; empty when `details` holds anything else. */
+  get fieldErrors(): ApiFieldError[] {
+    const parsed = apiFieldErrorsSchema.safeParse(this.details);
+
+    return parsed.success ? parsed.data : [];
+  }
+
   /**
    * Create ApiError from fetch Response
    */
@@ -72,7 +73,7 @@ export class ApiError extends Error {
 
     return new ApiError(
       response.status,
-      body?.code ?? `HTTP_${String(response.status)}`,
+      body?.error ?? `HTTP_${String(response.status)}`,
       body?.message ?? (response.statusText || 'An error occurred'),
       body?.details,
       body?.requestId ?? response.headers.get('x-request-id') ?? undefined

@@ -1,34 +1,27 @@
-import { matchPath } from 'react-router-dom';
-
 import type { UserRole } from '@ffp/core';
 
-import type { IconName } from '@web/components/Icon/types';
+import type { IconName } from '@web/components/atoms';
 import { USER_ROLE } from '@web/constants/roles';
-import type { ContextNavItem } from '@web/pages/routes';
-import { routes } from '@web/pages/routes';
-import { RouteKey } from '@web/pages/routes/RouteKey';
 
-export type { ContextNavItem } from '@web/pages/routes';
+import { matchRoute, RouteKey, routes } from './routes';
+
+import type { ContextNavItem } from './routes';
 
 /** Resolve context nav items for the current path, supporting both static and dynamic (function) forms */
 export const getContextNavItems = (pathname: string): ContextNavItem[] | undefined => {
-  for (const route of Object.values(routes)) {
-    if (!route.contextNavItems) {
-      continue;
-    }
+  const matched = matchRoute(pathname);
 
-    const match = matchPath(route.path, pathname);
-
-    if (match) {
-      if (typeof route.contextNavItems === 'function') {
-        return route.contextNavItems(match.params as Record<string, string>);
-      }
-
-      return route.contextNavItems;
-    }
+  if (!matched?.route.contextNavItems) {
+    return undefined;
   }
 
-  return undefined;
+  const { contextNavItems } = matched.route;
+
+  if (typeof contextNavItems === 'function') {
+    return contextNavItems(matched.params as Record<string, string>);
+  }
+
+  return contextNavItems;
 };
 
 // Destructure user roles for easier reference
@@ -59,10 +52,6 @@ export interface NavItem {
 
 /**
  * Get navigation items filtered by user role.
- *
- * Nav item arrays are defined inside this function (rather than at module scope)
- * to avoid a circular dependency: routes/index.ts imports ContextNavItem from here,
- * and this file imports routes — eagerly accessing routes at module init would fail.
  *
  * @param userRole - The current user's role
  * @param onLogout - Logout handler function
@@ -164,6 +153,22 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
       label: 'Assessments',
       icon: 'ClipboardList',
       path: routes[RouteKey.ADMIN_ASSESSMENTS].path,
+      roles: [SYSTEM_ADMIN],
+      section: 'main',
+    },
+    {
+      key: RouteKey.ADMIN_ASSESSMENT_TEMPLATES,
+      label: 'Assessment Templates',
+      icon: 'CheckCircle',
+      path: routes[RouteKey.ADMIN_ASSESSMENT_TEMPLATES].path,
+      roles: [SYSTEM_ADMIN],
+      section: 'main',
+    },
+    {
+      key: RouteKey.ADMIN_QUESTIONS,
+      label: 'Question Bank',
+      icon: 'HelpCircle',
+      path: routes[RouteKey.ADMIN_QUESTIONS].path,
       roles: [SYSTEM_ADMIN],
       section: 'main',
     },

@@ -136,11 +136,11 @@ psql -h localhost -U root_user -d postgres -c "\du"
 #### Running Tests
 
 ```bash
-# All tests (unit + integration - 68 tests)
+# All tests (unit + integration - 42 tests)
 pnpm --filter=@ffp/database test
 
 # Unit tests only (no database required)
-pnpm --filter=@ffp/database test drizzle.test
+pnpm --filter=@ffp/database test client.test
 
 # Integration tests only (requires test database)
 pnpm --filter=@ffp/database test integration.test
@@ -154,30 +154,20 @@ pnpm --filter=@ffp/database test --coverage
 
 #### Test Coverage
 
-- **Unit Tests** (`__tests__/drizzle.test.ts`) - 16 tests
-  - Connection pool configuration
-  - Schema type inference
-  - Migration structure validation
-  - No database connection required
+- **Integration Tests** (`__tests__/integration.test.ts`) - 5 tests
+  - Database constraints (foreign key, unique, cascade)
+  - Transaction rollback
 
-- **Integration Tests** (`__tests__/integration.test.ts`) - 15 tests
-  - CRUD operations with RLS enforcement
-  - Connection pool behaviour
-  - Database constraints (foreign keys, unique)
-  - Transaction handling (commit/rollback)
-  - Multi-tenant data isolation
-
-- **Client Tests** (`src/client.test.ts`) - 21 tests
+- **Client Tests** (`src/client.test.ts`) - 21 tests, no database required
   - Connection pool singleton pattern
   - Environment variable validation
   - SSL configuration
 
 - **RLS Tests** (`src/lib/rls.test.ts`) - 16 tests
   - RLS context utilities
-  - UUID validation
-  - Cross-organisation isolation
+  - Cross-organisation read isolation
 
-**Total: 68 tests**
+**Total: 42 tests**
 
 #### Troubleshooting
 
@@ -301,6 +291,22 @@ pnpm seed:db test
 - Always run on a fresh database (see Fresh Database Setup section)
 - Seeds automatically manage FORCE RLS (disables during seeding, re-enables after)
 - Requires `BOOTSTRAP_DB_USER` with appropriate permissions (superuser or database owner)
+
+### Seeding Video Media
+
+The seeded videos point at `library/77777777-…-7777777700NN.mp4` keys that nothing else uploads, so on a fresh stage they fail to play. After `pnpm seed:db`, put a sample clip at every seeded key:
+
+```bash
+# Bucket and region from .sst/outputs.json (the stage sst dev or sst deploy last ran)
+pnpm seed:video-assets
+
+# A specific stage's videos bucket
+pnpm seed:video-assets -- --bucket <videos-bucket-name>
+```
+
+- Uploads `seed/assets/sample-exercise.mp4` (a five-second silent test pattern, about 165 KB) to each key from `SEED_VIDEO_S3_KEYS` in `seed/seedVideos.ts`
+- **Idempotent**: a key that already holds an object is skipped, so real media is never replaced
+- Writes to S3 with the AWS credentials of the shell that runs it; it is kept apart from `seed:db` so a database-only seed never touches a bucket
 
 ### Seed Architecture
 

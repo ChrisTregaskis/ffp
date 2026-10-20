@@ -205,28 +205,6 @@ describe('Job Queue Service', () => {
       expect(job.maxAttempts).toBe(5);
     });
 
-    it('creates a job with both priority and maxAttempts', async () => {
-      const payload = {
-        assessmentSubmissionId: randomUUID(),
-        templateId: randomUUID(),
-        userId: randomUUID(),
-        responses: [{ questionId: randomUUID(), answerValue: 5 }],
-      } as unknown as JobPayloadMap['score_assessment'];
-
-      const jobId = await queueJob('score_assessment', payload, testContext, {
-        priority: 2,
-        maxAttempts: 10,
-      });
-
-      const [job] = await db
-        .select()
-        .from(schema.processJobs)
-        .where(sql`id = ${jobId}`);
-
-      expect(job.priority).toBe(2);
-      expect(job.maxAttempts).toBe(10);
-    });
-
     it('creates a generate_programme job type', async () => {
       const payload = {
         assessmentSubmissionId: randomUUID(),

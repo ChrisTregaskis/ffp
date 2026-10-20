@@ -1,14 +1,21 @@
 import { useQuery } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { generatePath } from 'react-router-dom';
 
 import type { VideoDetailResponse } from '@ffp/core';
 
-import { Button } from '@web/components/button';
-import { Icon } from '@web/components/Icon';
-import { Icons } from '@web/components/Icon/types';
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import { SearchInput } from '@web/components/search/SearchInput';
-import { Text } from '@web/components/text';
+import {
+  Button,
+  FloatingPanel,
+  Icon,
+  Icons,
+  LoadingSpinner,
+  RequiredIndicator,
+  Surface,
+  Text,
+} from '@web/components/atoms';
+import { SearchInput } from '@web/components/molecules';
+import { RouteKey, routes } from '@web/config/routes';
 import { adminVideosApi } from '@web/lib/api/endpoints';
 import { videosApi } from '@web/lib/api/endpoints/videos';
 import { videoKeys } from '@web/lib/query/keys';
@@ -18,7 +25,7 @@ const DEBOUNCE_MS = 300;
 const SEARCH_PAGE_SIZE = 10;
 
 export interface SelectedVideo {
-  id: string;
+  publicId: string;
   title: string;
 }
 
@@ -88,11 +95,11 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
   const videos = searchResults?.data ?? [];
 
   const handleSelect = useCallback(
-    async (videoId: string) => {
+    async (videoPublicId: string) => {
       setIsLoadingDetail(true);
 
       try {
-        const detail = await videosApi.get(videoId);
+        const detail = await videosApi.get(videoPublicId);
         onSelect(detail);
         setIsOpen(false);
         setSearch('');
@@ -119,7 +126,7 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
   // Show selected video
   if (selectedVideo) {
     return (
-      <div className="flex items-center gap-3 rounded-md border border-border bg-white px-3 py-2">
+      <Surface radius="md" padding="row" className="flex items-center gap-3">
         <Icon name={Icons.VIDEO} styleProps={{ size: 'sm', colour: 'var(--color-primary)' }} />
         <Text styleProps={{ size: 'sm', weight: 'medium' }} className="flex-1 truncate">
           {selectedVideo.title}
@@ -129,7 +136,11 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
           size="sm"
           icon={<Icon name={Icons.NEWTAB} styleProps={{ size: 'xs', colour: 'currentColor' }} />}
           onClick={() => {
-            window.open(`/admin/videos/${selectedVideo.id}`, '_blank', 'noopener,noreferrer');
+            window.open(
+              generatePath(routes[RouteKey.ADMIN_VIDEO_EDIT].path, { id: selectedVideo.publicId }),
+              '_blank',
+              'noopener,noreferrer'
+            );
           }}
           disabled={disabled}
         >
@@ -138,7 +149,7 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
         <Button variant="ghost" size="sm" onClick={handleChange} disabled={disabled}>
           Change
         </Button>
-      </div>
+      </Surface>
     );
   }
 
@@ -148,7 +159,8 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
         styleProps={{ size: 'sm', weight: 'medium', colour: 'foreground' }}
         className="mb-1 block"
       >
-        Video <span className="text-destructive">*</span>
+        Video
+        <RequiredIndicator />
       </Text>
 
       <SearchInput
@@ -161,7 +173,7 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
 
       {/* Dropdown results */}
       {isOpen && debouncedSearch.length >= 2 && (
-        <div className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-border bg-white shadow-lg">
+        <FloatingPanel className="absolute mt-1 w-full">
           {isSearching && (
             <div className="px-3 py-2">
               <LoadingSpinner size="sm" variant="center" />
@@ -181,7 +193,7 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
                 variant="ghost"
                 className="flex w-full items-center gap-3 rounded-none px-3 py-2 text-left hover:bg-muted"
                 onClick={() => {
-                  void handleSelect(video.id);
+                  void handleSelect(video.publicId);
                 }}
                 disabled={isLoadingDetail}
               >
@@ -210,7 +222,7 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
               <LoadingSpinner size="sm" variant="center" />
             </div>
           )}
-        </div>
+        </FloatingPanel>
       )}
     </div>
   );

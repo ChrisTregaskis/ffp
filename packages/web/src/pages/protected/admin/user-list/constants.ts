@@ -1,4 +1,4 @@
-import type { TableFilterConfig } from '@web/components/table';
+import type { TableFilterConfig } from '@web/components/organisms';
 
 const ROLE_FILTER_OPTIONS = [
   { label: 'Programme User', value: 'programme_user' },

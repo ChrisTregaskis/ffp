@@ -1,39 +1,40 @@
-import type { AssessmentTemplate } from '@ffp/core';
+import {
+  assessmentTemplateListFiltersSchema,
+  paginationInputSchema,
+  type AssessmentTemplateListItem,
+  type PaginationMeta,
+} from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
+  withSystemAdmin,
   templateService,
 } from '@ffp/core/server';
 
-/**
- * Response type for list templates endpoint
- */
 interface ListTemplatesResponse {
-  templates: AssessmentTemplate[];
-  count: number;
+  data: AssessmentTemplateListItem[];
+  pagination: PaginationMeta;
 }
 
 /**
  * Lambda handler for GET /admin/assessment-templates
  *
- * Protected endpoint that requires JWT authentication.
- * Returns all assessment templates. Any authenticated user can view templates.
+ * Lists assessment templates with pagination, search (name and description),
+ * sort and a status filter. Query params: page, pageSize, sortBy, sortDirection,
+ * search, isActive. Requires the system_admin role, matching every other verb on
+ * this resource.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<ListTemplatesResponse> => {
-    // Extract user context from JWT (validates authentication)
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can list assessment templates',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<ListTemplatesResponse> => {
+      const params = event.queryStringParameters ?? {};
 
-    // Parse query parameters
-    const activeOnly = event.queryStringParameters?.activeOnly === 'true';
+      const paginationInput = paginationInputSchema.parse(params);
 
-    // Service functions consistently take ctx as first parameter
-    const templates = await templateService.listTemplatesService(context, { activeOnly });
+      const filters = assessmentTemplateListFiltersSchema.parse(params);
 
-    return {
-      templates,
-      count: templates.length,
-    };
-  }
+      return await templateService.listTemplatesService(context, paginationInput, filters);
+    }
+  )
 );

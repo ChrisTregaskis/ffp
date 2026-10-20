@@ -37,15 +37,15 @@ export const userSessions = pgTable(
     /** Session lifecycle status */
     status: sessionStatusEnum('status').notNull().default('not_started'),
     /** When the session was paused (MVP pause tracking — full audit trail deferred to FFP-551) */
-    pausedAt: timestamp('paused_at'),
+    pausedAt: timestamp('paused_at', { withTimezone: true }),
     /** When the user started the session */
-    startedAt: timestamp('started_at'),
+    startedAt: timestamp('started_at', { withTimezone: true }),
     /** When the user completed the session */
-    completedAt: timestamp('completed_at'),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
     /** When the user skipped the session */
-    skippedAt: timestamp('skipped_at'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    skippedAt: timestamp('skipped_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     uniqueIndex('idx_user_sessions_phase_session').on(table.programmePhaseId, table.sessionNumber),

@@ -5,6 +5,9 @@
  * error handling across Lambda functions and services.
  */
 
+/** Extra context for a caller: an object, or a list such as per-field validation failures. */
+export type ErrorDetails = Record<string, unknown> | unknown[];
+
 /**
  * Base error class for all application errors
  *
@@ -22,7 +25,7 @@ export class BaseError extends Error {
     message: string,
     public readonly code: string,
     public readonly statusCode: number,
-    public readonly details?: Record<string, unknown>
+    public readonly details?: ErrorDetails
   ) {
     super(message);
     this.name = this.constructor.name;
@@ -83,7 +86,7 @@ export class NotFoundError extends BaseError {
  * - Required fields are missing or malformed
  */
 export class ValidationError extends BaseError {
-  constructor(message: string, details?: Record<string, unknown>) {
+  constructor(message: string, details?: ErrorDetails) {
     super(message, 'VALIDATION_ERROR', 400, details);
   }
 }

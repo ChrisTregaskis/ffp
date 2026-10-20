@@ -1,5 +1,8 @@
 import type { AnswerValue, AssessmentQuestion, FlowStepConfig } from '@ffp/core';
 
+import type { QuestionCardProps } from '../cards/QuestionCard';
+import type { ComponentType } from 'react';
+
 export interface AssessmentStepRendererProps {
   /** Questions for the current question/video step (provided by parent) */
   questions?: AssessmentQuestion[];
@@ -20,11 +23,17 @@ export interface AssessmentStepRendererProps {
 }
 
 export interface QuestionStepContentProps {
+  /** The card each question renders in */
+  card: ComponentType<QuestionCardProps>;
   config: FlowStepConfig;
   questions: AssessmentQuestion[];
   questionIndex: number;
   onQuestionIndexChange: (index: number | ((prev: number) => number)) => void;
   answers: Record<string, { questionId: string; answerValue: AnswerValue }>;
+  /** The server's message per refused question, keyed by questionId */
+  fieldErrors: Record<string, string>;
+  /** Changes with each refusal, so a refused question is brought into view once per refusal */
+  refusalCount: number;
   currentStep: number;
   onAnswer: (questionId: string, value: AnswerValue | null) => void;
   /** Whether the current step is the last question/video step in the flow */

@@ -13,7 +13,7 @@ import {
   locationListResponseSchema,
 } from '@ffp/core';
 
-import { ffpClient, parseApiResponse } from '../client';
+import { assertUuidPathParam, ffpClient, parseApiResponse, toListParams } from '../client';
 
 const basePath = '/admin/locations';
 
@@ -44,26 +44,10 @@ export const adminLocationsApi = {
     filters: AdminLocationFilterInput,
     signal?: AbortSignal
   ): Promise<PaginatedLocationResponse> => {
-    const params: Record<string, string | undefined> = {
-      page: String(pagination.page),
-      pageSize: String(pagination.pageSize),
-      sortBy: pagination.sortBy,
-      sortDirection: pagination.sortDirection,
-    };
-
-    if (filters.search) {
-      params.search = filters.search;
-    }
-
-    if (filters.status) {
-      params.status = filters.status;
-    }
-
-    if (filters.organisationId) {
-      params.organisationId = filters.organisationId;
-    }
-
-    const response = await ffpClient.get(basePath, { params, signal });
+    const response = await ffpClient.get(basePath, {
+      params: toListParams(pagination, filters),
+      signal,
+    });
 
     return parseApiResponse(paginatedLocationResponseSchema, response, {
       method: 'GET',
@@ -84,7 +68,11 @@ export const adminLocationsApi = {
     organisationId: string,
     data: CreateLocationInput
   ): Promise<z.infer<typeof createLocationResponseSchema>> => {
-    const path = `/admin/organisations/${organisationId}/locations`;
+    const checkedOrganisationId = assertUuidPathParam(
+      organisationId,
+      'POST /admin/organisations/{organisationId}/locations'
+    );
+    const path = `/admin/organisations/${checkedOrganisationId}/locations`;
     const response = await ffpClient.post(path, data);
 
     return parseApiResponse(createLocationResponseSchema, response, { method: 'POST', path });
@@ -92,7 +80,8 @@ export const adminLocationsApi = {
 
   /** Updates location details (name, status, address). */
   update: async (id: string, data: UpdateLocationInput): Promise<LocationDetailResponse> => {
-    const path = `${basePath}/${id}`;
+    const checkedId = assertUuidPathParam(id, 'PUT /admin/locations/{id}');
+    const path = `${basePath}/${checkedId}`;
     const response = await ffpClient.put(path, data);
 
     return parseApiResponse(locationDetailResponseSchema, response, { method: 'PUT', path });

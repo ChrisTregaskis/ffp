@@ -1,4 +1,4 @@
-import { Text } from '@web/components/text/Text';
+import { Text } from '@web/components/atoms';
 import { parseExerciseNotes } from '@web/utils/exercise-instructions';
 
 export interface ExerciseDetailProps {
@@ -11,11 +11,7 @@ export interface ExerciseDetailProps {
  */
 export const ExerciseDetail: React.FC<ExerciseDetailProps> = ({ notes }) => (
   <div className="rounded-lg bg-muted/30 px-4 py-4">
-    <Text
-      as="h4"
-      styleProps={{ size: 'xs', weight: 'semibold', colour: 'muted-foreground' }}
-      className="mb-2 uppercase tracking-wide"
-    >
+    <Text as="h4" variant="eyebrow" className="mb-2">
       Instructions
     </Text>
     <Text as="p" styleProps={{ size: 'sm' }}>

@@ -1,7 +1,7 @@
 import type {
   FlowStepType,
   FlowStepSummary,
-  UserAssessmentScores,
+  MemberAssessmentScores,
   UserAnswer,
   AssessmentWarning,
 } from '@ffp/core';
@@ -28,9 +28,13 @@ export interface AssessmentState {
   /** Whether there are unsaved changes */
   isDirty: boolean;
   /** Calculated scores (null until assessment is scored) */
-  scores: UserAssessmentScores | null;
+  scores: MemberAssessmentScores | null;
   /** Warnings displayed during assessment (from branching rules) */
   warnings: AssessmentWarning[];
+  /** The server's message per question it refused, keyed by questionId; cleared as each is answered */
+  fieldErrors: Record<string, string>;
+  /** Counts refusals, so a refused question is brought into view once per refusal */
+  refusalCount: number;
 }
 
 /**
@@ -77,6 +81,30 @@ export interface ClearAnswerAction {
 }
 
 /**
+ * Set field errors action.
+ *
+ * Dispatched when the server refuses answers. Replaces every field error.
+ */
+export interface SetFieldErrorsAction {
+  type: typeof ASSESSMENT_ACTION.SET_FIELD_ERRORS;
+  payload: {
+    fieldErrors: Record<string, string>;
+  };
+}
+
+/**
+ * Go to step action.
+ *
+ * Dispatched to take the member back to a step holding a refused answer.
+ */
+export interface GoToStepAction {
+  type: typeof ASSESSMENT_ACTION.GO_TO_STEP;
+  payload: {
+    stepId: string;
+  };
+}
+
+/**
  * Navigate to next step action.
  *
  * Dispatched when user clicks Continue/Next.
@@ -117,7 +145,7 @@ export interface MarkSavedAction {
 export interface SetScoresAction {
   type: typeof ASSESSMENT_ACTION.SET_SCORES;
   payload: {
-    scores: UserAssessmentScores;
+    scores: MemberAssessmentScores;
   };
 }
 
@@ -126,6 +154,8 @@ export type AssessmentAction =
   | StartAssessmentAction
   | SetAnswerAction
   | ClearAnswerAction
+  | SetFieldErrorsAction
+  | GoToStepAction
   | NextStepAction
   | PrevStepAction
   | MarkSavedAction

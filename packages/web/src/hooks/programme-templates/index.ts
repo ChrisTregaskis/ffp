@@ -43,3 +43,4 @@ export {
   useUpdateTemplateMutation,
 } from './useTemplateMutations';
 export type { UpdateTemplateVariables } from './useTemplateMutations';
+export { useTemplateActivation } from './useTemplateActivation';

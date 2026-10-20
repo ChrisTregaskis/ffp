@@ -71,3 +71,13 @@ Write findings to `.claude/local/notes/review-comments.md` using the **same find
 - Update the severity-count table and the `Merge` / `Merge with follow-ups` / `Request changes` recommendation to reflect the combined file.
 
 Then summarise in chat with a pointer to the file. **Do not edit the reviewed code** — list the fixes; the implementing session applies them.
+
+## Never recommend a destructive command
+
+**A review surfaces findings. It does not tell anyone to run `git checkout --`, `git reset`, `git clean`, a `DROP`, a `DELETE`, or anything else that destroys work.**
+
+This is not hypothetical. A review pass on T3-6 inferred from a diff that a sub-agent had "secretly" edited a file, called it a process breach, and recommended `git checkout --` on it. The edit was deliberate, verified in the browser, and fixed a live bug — running the command would have silently destroyed it. The implementing session checked the diff before acting, which is the only reason it survived.
+
+**You cannot tell, from a diff, why a change is there.** An unexplained edit is a question for the author, not evidence of a mistake. Write it as a finding — "this change is not covered by the brief; confirm it is intended" — and let the author answer.
+
+If you genuinely believe something should be reverted, say what and why, and leave the decision and the command to the author.

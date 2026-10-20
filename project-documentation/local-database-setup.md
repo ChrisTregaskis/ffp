@@ -5,7 +5,7 @@ This guide walks through setting up a local PostgreSQL database for FFP developm
 ## Prerequisites
 
 - macOS (using Homebrew)
-- Node.js >= 20.0.0
+- Node.js >= 24.0.0 (`nvm use` reads `.nvmrc`)
 - pnpm >= 9.0.0
 
 ## Installation

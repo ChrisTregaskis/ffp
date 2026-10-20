@@ -1,7 +1,7 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
+  withSystemAdmin,
   flowService,
   ValidationError,
   NotFoundError,
@@ -11,28 +11,27 @@ import {
 /**
  * Lambda handler for GET /admin/assessment-flows/:publicId
  *
- * Protected endpoint that requires JWT authentication.
  * Returns a single assessment flow with its steps and read-only scoring
- * configuration. Any authenticated user can view flows.
+ * configuration. Requires the system_admin role, matching every other verb on
+ * this resource.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<AssessmentFlowWithSteps> => {
-    // Extract user context from JWT (validates authentication)
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can view assessment flow details',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<AssessmentFlowWithSteps> => {
+      const publicId = event.pathParameters?.publicId;
 
-    // Extract flow publicId from path parameters
-    const publicId = event.pathParameters?.publicId;
+      if (!publicId) {
+        throw new ValidationError('Flow ID is required in path');
+      }
 
-    if (!publicId) {
-      throw new ValidationError('Flow ID is required in path');
+      const flow = await flowService.getFlowWithStepsService(context, publicId);
+
+      if (!flow) {
+        throw new NotFoundError('Assessment flow', publicId);
+      }
+
+      return flow;
     }
-
-    const flow = await flowService.getFlowWithStepsService(context, publicId);
-
-    if (!flow) {
-      throw new NotFoundError('Assessment flow', publicId);
-    }
-
-    return flow;
-  }
+  )
 );

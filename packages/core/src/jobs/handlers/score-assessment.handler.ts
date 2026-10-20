@@ -9,6 +9,7 @@ import { createSystemContext } from '../../lib/context';
 import { NotFoundError, ValidationError } from '../../lib/errors';
 import { createSystemLogger } from '../../lib/logger';
 import { findByTemplateIds } from '../../questions/question.repository';
+import { findTemplateIdsOfSteps } from '../../schemas/assessment-flow.schema';
 import {
   assessmentResponseSchema,
   type AssessmentResponse,
@@ -67,11 +68,8 @@ export async function processScoreAssessment(
     // Fetch ALL steps for flow (normalised table)
     const steps = await findStepsByFlowId(dbTx, payload.flowId);
 
-    // Get template IDs from question and video-assessment steps
-    const templateIds = steps
-      .filter((step) => step.type === 'questions' || step.type === 'video-assessment')
-      .map((step) => step.templateId)
-      .filter((id): id is string => id !== null);
+    // Only the template-linked steps carry the questions that scoring reads
+    const templateIds = findTemplateIdsOfSteps(steps);
 
     if (templateIds.length === 0) {
       throw new ValidationError(`Flow ${payload.flowId} has no question templates. Cannot score.`);

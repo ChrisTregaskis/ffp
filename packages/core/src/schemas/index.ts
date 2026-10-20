@@ -1,4 +1,6 @@
 // Schema exports
+export * from './public-id.schema';
+export * from './api-error.schema';
 export * from './admin.schema';
 export * from './auth.schema';
 export * from './user.schema';
@@ -7,7 +9,9 @@ export * from './location.schema';
 
 // Assessment schemas
 export * from './assessment-question.schema';
+export * from './question-answer.schema';
 export * from './scoring-config.schema';
+export * from './scoring-dry-run.schema';
 export * from './assessment-template.schema';
 export * from './assessment-flow.schema';
 export * from './user-assessment/user-assessment.schema';

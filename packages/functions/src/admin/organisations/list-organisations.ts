@@ -1,10 +1,8 @@
 import { paginationInputSchema } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
-  isUserActor,
+  withSystemAdmin,
   listOrganisationsService,
 } from '@ffp/core/server';
 
@@ -13,26 +11,20 @@ import {
  *
  * Lists all organisations with pagination and search. Admin role required.
  */
-export const handler = withErrorHandling(async (event: APIGatewayProxyEventV2WithJWT) => {
-  const context = extractUserContext(event);
+export const handler = withErrorHandling(
+  withSystemAdmin(
+    'Only system administrators can list organisations',
+    async (event: APIGatewayProxyEventV2WithJWT, context) => {
+      const params = event.queryStringParameters ?? {};
 
-  if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-    throw new ForbiddenError('Only system administrators can list organisations');
-  }
+      const paginationInput = paginationInputSchema.parse(params);
 
-  const params = event.queryStringParameters ?? {};
+      const rawFilters = {
+        search: params.search ?? undefined,
+        status: params.status ?? undefined,
+      };
 
-  const paginationInput = paginationInputSchema.parse({
-    page: params.page,
-    pageSize: params.pageSize,
-    sortBy: params.sortBy,
-    sortDirection: params.sortDirection,
-  });
-
-  const rawFilters = {
-    search: params.search ?? undefined,
-    status: params.status ?? undefined,
-  };
-
-  return await listOrganisationsService(context, paginationInput, rawFilters);
-});
+      return await listOrganisationsService(context, paginationInput, rawFilters);
+    }
+  )
+);

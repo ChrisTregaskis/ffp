@@ -1,13 +1,13 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Button } from '@web/components/button/Button';
-import { Card } from '@web/components/Card/Card';
-import { StaticAlert } from '@web/components/feedback/StaticAlert';
-import { Form } from '@web/components/form';
-import { routes, RouteKey } from '@web/pages/routes';
+import { Button } from '@web/components/atoms';
+import { ComposableForm } from '@web/components/organisms';
+import { routes, RouteKey } from '@web/config/routes';
+import type { LoginFormData } from '@web/schemas/auth.schema';
 
-import { loginFields, type LoginFormData } from '.';
+import { AuthFormCard } from './AuthFormCard';
+import { LoginFormFields } from './LoginFormFields';
 
 export interface LoginFormProps {
   /** Callback when form is submitted */
@@ -20,11 +20,9 @@ export interface LoginFormProps {
   onClearError?: () => void;
 }
 
-/**
- * Login form organism component.
- *
- * Uses config-driven form pattern with Field[] configuration.
- */
+const EMPTY_VALUES: LoginFormData = { email: '', password: '' };
+
+/** The sign-in form, with a link to reset a forgotten password. */
 export const LoginForm: React.FC<LoginFormProps> = ({
   onSubmit,
   isLoading = false,
@@ -33,7 +31,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  // Handle form submission
   const handleFormSubmit = useCallback(
     async (data: LoginFormData): Promise<void> => {
       if (onClearError) {
@@ -45,40 +42,36 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     [onClearError, onSubmit]
   );
 
-  // Handle forgot password navigation
   const handleForgotPassword = useCallback((): void => {
     void navigate(routes[RouteKey.FORGOT_PASSWORD].path);
   }, [navigate]);
 
   return (
-    <Card title="Welcome back" subtitle="Sign into your physiotherapy account." centerHeader>
-      {/* Error display */}
-      {error && (
-        <StaticAlert variant="error" message={error} onDismiss={onClearError} className="mb-6" />
-      )}
+    <AuthFormCard
+      title="Welcome back"
+      subtitle="Sign in to your account."
+      error={error}
+      onDismissError={onClearError}
+    >
+      <ComposableForm<LoginFormData>
+        onSubmit={handleFormSubmit}
+        defaultValues={EMPTY_VALUES}
+        className="space-y-4"
+      >
+        <LoginFormFields isLoading={isLoading} />
+      </ComposableForm>
 
-      {/* Login form */}
-      <div className="space-y-6">
-        <Form
-          fields={loginFields}
-          onSubmit={handleFormSubmit}
-          submitLabel={isLoading ? 'Signing in...' : 'Sign in'}
-          isSubmitting={isLoading}
-        />
-
-        {/* Forgot password link */}
-        <div className="flex justify-center -mt-2">
-          <Button
-            variant="link"
-            size="sm"
-            onClick={handleForgotPassword}
-            type="button"
-            disabled={isLoading}
-          >
-            Forgot password?
-          </Button>
-        </div>
+      <div className="flex justify-center -mt-2">
+        <Button
+          variant="link"
+          size="sm"
+          onClick={handleForgotPassword}
+          type="button"
+          disabled={isLoading}
+        >
+          Forgot password?
+        </Button>
       </div>
-    </Card>
+    </AuthFormCard>
   );
 };

@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 import { VIDEO_STATUSES, DIFFICULTIES, MOVEMENT_TYPES } from '@ffp/database/constants';
 
+import { publicIdSchema } from '../public-id.schema';
+
 export const videoStatusSchema = z.enum(VIDEO_STATUSES);
 export const difficultySchema = z.enum(DIFFICULTIES);
 export const movementTypeSchema = z.enum(MOVEMENT_TYPES);
@@ -10,8 +12,7 @@ export const movementTypeSchema = z.enum(MOVEMENT_TYPES);
 export const videoSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.guid(),
-  /** Public identifier for URLs (nanoid, 12 chars) */
-  publicId: z.string().length(12),
+  publicId: publicIdSchema,
   /** Display title (e.g., "Seated Hamstring Stretch") */
   title: z.string().min(1).max(255),
   /** Detailed exercise instructions */

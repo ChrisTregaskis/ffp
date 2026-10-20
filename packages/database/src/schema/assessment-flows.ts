@@ -44,8 +44,8 @@ export const assessmentFlows = pgTable(
     scoringConfig: jsonb('scoring_config').$type<ScoringConfig>(),
 
     isActive: boolean('is_active').notNull().default(true),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     publicIdIndex('assessment_flows', table.publicId),

@@ -1,21 +1,22 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import type { AnswerValue, FlowStepConfig, FlowStepType } from '@ffp/core';
 
-import { AssessmentProgress } from '@web/components/AssessmentProgress';
-import { LoadingSpinner } from '@web/components/LoadingSpinner';
-import { Text } from '@web/components/text';
+import { Text } from '@web/components/atoms';
+import { ErrorRetryState, LoadingState } from '@web/components/molecules';
 import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import { useAssessmentFlowQuery } from '@web/hooks/assessments';
 
+import { AssessmentProgress } from '../AssessmentProgress';
+import { QuestionCard } from '../cards/QuestionCard';
 import { TransitionCard } from '../cards/TransitionCard';
+import { VideoQuestionCard } from '../cards/VideoQuestionCard';
 import { IntroScreen } from '../screens/IntroScreen';
 
 import { ProgrammeOverviewPlaceholder } from './ProgrammeOverviewPlaceholder';
 import { QuestionStepContent } from './QuestionStepContent';
 import { ResultsStepContent } from './ResultsStepContent';
-import { VideoStepContent } from './VideoStepContent';
 
 import type { AssessmentStepRendererProps } from './types';
 
@@ -39,12 +40,21 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
   isReplacing = false,
 }) => {
   const { assessmentState, assessmentDispatch } = useAssessment();
-  const { data: flow, isLoading: isFlowLoading } = useAssessmentFlowQuery(assessmentState.flowId);
+  const {
+    data: flow,
+    isPending: isFlowPending,
+    error: flowError,
+    refetch: refetchFlow,
+  } = useAssessmentFlowQuery(assessmentState.flowId);
   const [questionIndex, setQuestionIndex] = useState(0);
+  const [indexedStepId, setIndexedStepId] = useState(assessmentState.currentStepId);
 
-  useEffect(() => {
+  // Reset to the first question during render, not in an effect: a parent's effect runs after
+  // its children's, and would undo a step's jump back to a refused answer
+  if (indexedStepId !== assessmentState.currentStepId) {
+    setIndexedStepId(assessmentState.currentStepId);
     setQuestionIndex(0);
-  }, [assessmentState.currentStepId]);
+  }
 
   const currentStepSummary = useMemo(
     () => assessmentState.steps.find((s) => s.id === assessmentState.currentStepId),
@@ -56,6 +66,7 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
     [flow?.steps, currentStepSummary?.order]
   );
 
+  // The summary's title stands in only when the flow loaded without a step at this order
   const config: FlowStepConfig = useMemo(
     () => flowStep?.config ?? { title: currentStepSummary?.config.title ?? '' },
     [flowStep?.config, currentStepSummary?.config.title]
@@ -85,15 +96,21 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
     [assessmentDispatch]
   );
 
-  if (isFlowLoading || !currentStepSummary) {
+  // A failed refetch keeps the flow it had, so only fail when there is no flow to show
+  if (flowError && !flow) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3">
-        <LoadingSpinner size="lg" variant="center" />
-        <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
-          Loading assessment...
-        </Text>
-      </div>
+      <ErrorRetryState
+        layout="screen"
+        title="We couldn't load your assessment just now."
+        onRetry={() => {
+          void refetchFlow();
+        }}
+      />
     );
+  }
+
+  if (isFlowPending || !currentStepSummary) {
+    return <LoadingState layout="screen" message="Loading assessment..." />;
   }
 
   const renderStepContent = (): JSX.Element => {
@@ -111,11 +128,16 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
       case 'questions':
         return (
           <QuestionStepContent
+            // Keyed by type so moving between a questions and a video step mounts afresh
+            key={stepType}
+            card={QuestionCard}
             config={config}
             questions={questions}
             questionIndex={questionIndex}
             onQuestionIndexChange={setQuestionIndex}
             answers={assessmentState.answers}
+            fieldErrors={assessmentState.fieldErrors}
+            refusalCount={assessmentState.refusalCount}
             currentStep={assessmentState.currentStep}
             onAnswer={handleAnswer}
             isLastSubmittableStep={isLastSubmittableStep}
@@ -125,12 +147,16 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
 
       case 'video-assessment':
         return (
-          <VideoStepContent
+          <QuestionStepContent
+            key={stepType}
+            card={VideoQuestionCard}
             config={config}
             questions={questions}
             questionIndex={questionIndex}
             onQuestionIndexChange={setQuestionIndex}
             answers={assessmentState.answers}
+            fieldErrors={assessmentState.fieldErrors}
+            refusalCount={assessmentState.refusalCount}
             currentStep={assessmentState.currentStep}
             onAnswer={handleAnswer}
             isLastSubmittableStep={isLastSubmittableStep}

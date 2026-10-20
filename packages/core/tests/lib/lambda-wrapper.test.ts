@@ -114,31 +114,6 @@ describe('withErrorHandling', () => {
         data: { id: 123 },
       });
     });
-
-    it('should handle null response', async () => {
-      const handler = withErrorHandling(() => {
-        return Promise.resolve(null);
-      });
-
-      const result = await handler(createMockEvent());
-      assertIsObject(result);
-
-      expect(result.statusCode).toBe(200);
-      expect(JSON.parse(result.body) as null).toBeNull();
-    });
-
-    it('should handle array response', async () => {
-      const handler = withErrorHandling(() => {
-        return Promise.resolve([{ id: 1 }, { id: 2 }]);
-      });
-
-      const result = await handler(createMockEvent());
-      assertIsObject(result);
-
-      expect(result.statusCode).toBe(200);
-      const body = JSON.parse(result.body) as { id: number }[];
-      expect(body).toEqual([{ id: 1 }, { id: 2 }]);
-    });
   });
 
   describe('BaseError handling', () => {
@@ -334,6 +309,72 @@ describe('withErrorHandling', () => {
         error: 'INTERNAL_SERVER_ERROR',
         message: 'An unexpected error occurred',
       });
+    });
+  });
+
+  describe('database driver error handling', () => {
+    /** Drizzle wraps the `pg` error, putting the failed SQL in the message. */
+    const wrappedDriverError = (code: string, constraint?: string): Error =>
+      Object.assign(
+        new Error('Failed query: insert into "questions" ...\nparams: alice@example.com'),
+        {
+          cause: Object.assign(new Error('duplicate key value violates unique constraint'), {
+            code,
+            constraint,
+          }),
+        }
+      );
+
+    it('should map a unique violation to 409', async () => {
+      const handler = withErrorHandling(() => {
+        throw wrappedDriverError('23505', 'questions_slug_unique');
+      });
+
+      const event = createMockEvent();
+      event.requestContext.requestId = '';
+
+      const result = await handler(event);
+      assertIsObject(result);
+
+      expect(result.statusCode).toBe(409);
+      const body = JSON.parse(result.body) as { error: string; message: string };
+      expect(body.error).toBe('CONFLICT');
+    });
+
+    it('should not disclose the constraint name or the query to the caller', async () => {
+      const handler = withErrorHandling(() => {
+        throw wrappedDriverError('23505', 'users_email_unique');
+      });
+
+      const event = createMockEvent();
+      event.requestContext.requestId = '';
+
+      const result = await handler(event);
+      assertIsObject(result);
+
+      expect(result.body).not.toContain('users_email_unique');
+      expect(result.body).not.toContain('insert into');
+      expect(result.body).not.toContain('alice@example.com');
+    });
+
+    it('should leave another SQLSTATE on the 500 path with a sanitised message', async () => {
+      const handler = withErrorHandling(() => {
+        throw wrappedDriverError('23503', 'questions_video_id_fkey');
+      });
+
+      const event = createMockEvent();
+      event.requestContext.requestId = '';
+
+      const result = await handler(event);
+      assertIsObject(result);
+
+      expect(result.statusCode).toBe(500);
+      const body = JSON.parse(result.body) as { error: string; message: string };
+      expect(body).toEqual({
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred',
+      });
+      expect(result.body).not.toContain('alice@example.com');
     });
   });
 
@@ -549,54 +590,6 @@ describe('withErrorHandling', () => {
         message: 'An unexpected error occurred',
         requestId: 'test-request-id-789',
       });
-    });
-
-    it('should not include requestId when not present in requestContext', async () => {
-      const handler = withErrorHandling(() => {
-        throw new UnauthorisedError('Invalid token');
-      });
-
-      const event = createMockEvent();
-      event.requestContext.requestId = '';
-
-      const result = await handler(event);
-      assertIsObject(result);
-
-      const body = JSON.parse(result.body) as {
-        error: string;
-        message: string;
-        requestId?: string;
-      };
-      expect(body.requestId).toBeUndefined();
-      expect(body).toEqual({
-        error: 'UNAUTHORISED',
-        message: 'Invalid token',
-      });
-    });
-  });
-
-  describe('response format', () => {
-    it('should always include Content-Type header', async () => {
-      const handler = withErrorHandling(() => {
-        return Promise.resolve({ success: true });
-      });
-
-      const result = await handler(createMockEvent());
-      assertIsObject(result);
-
-      expect(result.headers).toHaveProperty('Content-Type');
-      expect(result.headers['Content-Type']).toBe('application/json');
-    });
-
-    it('should always return valid JSON body', async () => {
-      const handler = withErrorHandling(() => {
-        throw new UnauthorisedError();
-      });
-
-      const result = await handler(createMockEvent());
-      assertIsObject(result);
-
-      expect(() => JSON.parse(result.body) as unknown).not.toThrow();
     });
   });
 

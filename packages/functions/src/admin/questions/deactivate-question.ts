@@ -1,11 +1,9 @@
 import {
   type APIGatewayProxyEventV2WithJWT,
-  extractUserContext,
   withErrorHandling,
+  withSystemAdmin,
   questionService,
   ValidationError,
-  ForbiddenError,
-  isUserActor,
 } from '@ffp/core/server';
 
 interface DeactivateQuestionResponse {
@@ -17,21 +15,18 @@ interface DeactivateQuestionResponse {
  * No hard-delete: questions may be referenced by scoring config and templates.
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<DeactivateQuestionResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can manage questions',
+    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<DeactivateQuestionResponse> => {
+      const publicId = event.pathParameters?.publicId;
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can manage questions');
+      if (!publicId) {
+        throw new ValidationError('Question ID is required in path');
+      }
+
+      await questionService.deactivateQuestionService(context, publicId);
+
+      return { success: true };
     }
-
-    const publicId = event.pathParameters?.publicId;
-
-    if (!publicId) {
-      throw new ValidationError('Question ID is required in path');
-    }
-
-    await questionService.deactivateQuestionService(context, publicId);
-
-    return { success: true };
-  }
+  )
 );

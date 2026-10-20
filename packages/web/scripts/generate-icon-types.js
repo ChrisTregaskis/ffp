@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const SELECTION_PATH = join(__dirname, '../src/assets/icomoon/selection.json');
-const OUTPUT_PATH = join(__dirname, '../src/components/Icon/types.ts');
+const OUTPUT_PATH = join(__dirname, '../src/components/atoms/Icon/types.ts');
 
 try {
   // Read selection.json

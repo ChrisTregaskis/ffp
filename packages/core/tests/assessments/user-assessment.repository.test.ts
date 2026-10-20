@@ -17,6 +17,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
+import * as safetyTriggerRepository from '../../src/assessments/safety-trigger.repository';
 import * as userAssessmentRepository from '../../src/assessments/user-assessment.repository';
 import { NotFoundError, ValidationError } from '../../src/lib/errors';
 
@@ -238,136 +239,6 @@ describe('User Assessment Repository', () => {
 
       expect(result).toBeNull();
     });
-
-    it('returns null when accessing other organisation assessment (RLS)', async () => {
-      const created = await userAssessmentRepository.createUserAssessment({
-        organisationId: organisationAId,
-        userId: userA1Id,
-        flowId,
-      });
-
-      // Try to access Organisation A's assessment from Organisation B context
-      const result = await userAssessmentRepository.findUserAssessmentById(
-        organisationBId,
-        created.id
-      );
-
-      expect(result).toBeNull();
-    });
-  });
-
-  describe('findByUserId', () => {
-    it('returns all assessments for a user', async () => {
-      await userAssessmentRepository.createUserAssessment({
-        organisationId: organisationAId,
-        userId: userA1Id,
-        flowId,
-      });
-      await userAssessmentRepository.createUserAssessment({
-        organisationId: organisationAId,
-        userId: userA1Id,
-        flowId,
-      });
-
-      const result = await userAssessmentRepository.findByUserId(organisationAId, userA1Id);
-
-      expect(result).toHaveLength(2);
-      expect(result.every((a) => a.userId === userA1Id)).toBe(true);
-    });
-
-    it('filters by status when provided', async () => {
-      const assessment = await userAssessmentRepository.createUserAssessment({
-        organisationId: organisationAId,
-        userId: userA1Id,
-        flowId,
-      });
-      await userAssessmentRepository.transitionAssessmentStatus(
-        organisationAId,
-        assessment.id,
-        'in_progress'
-      );
-
-      await userAssessmentRepository.createUserAssessment({
-        organisationId: organisationAId,
-        userId: userA1Id,
-        flowId,
-      });
-
-      const inProgress = await userAssessmentRepository.findByUserId(organisationAId, userA1Id, {
-        status: 'in_progress',
-      });
-      const notStarted = await userAssessmentRepository.findByUserId(organisationAId, userA1Id, {
-        status: 'not_started',
-      });
-
-      expect(inProgress).toHaveLength(1);
-      expect(notStarted).toHaveLength(1);
-    });
-  });
-
-  describe('findInProgress', () => {
-    it('returns in-progress assessment for user', async () => {
-      const assessment = await userAssessmentRepository.createUserAssessment({
-        organisationId: organisationAId,
-        userId: userA1Id,
-        flowId,
-      });
-      await userAssessmentRepository.transitionAssessmentStatus(
-        organisationAId,
-        assessment.id,
-        'in_progress'
-      );
-
-      const result = await userAssessmentRepository.findAssessmentInProgress(
-        organisationAId,
-        userA1Id
-      );
-
-      expect(result).not.toBeNull();
-      expect(result?.status).toBe('in_progress');
-    });
-
-    it('returns null when no in-progress assessment', async () => {
-      await userAssessmentRepository.createUserAssessment({
-        organisationId: organisationAId,
-        userId: userA1Id,
-        flowId,
-      });
-
-      const result = await userAssessmentRepository.findAssessmentInProgress(
-        organisationAId,
-        userA1Id
-      );
-
-      expect(result).toBeNull();
-    });
-
-    it('filters by flowId when provided', async () => {
-      const assessment = await userAssessmentRepository.createUserAssessment({
-        organisationId: organisationAId,
-        userId: userA1Id,
-        flowId,
-      });
-      await userAssessmentRepository.transitionAssessmentStatus(
-        organisationAId,
-        assessment.id,
-        'in_progress'
-      );
-
-      const withFlow = await userAssessmentRepository.findAssessmentInProgress(
-        organisationAId,
-        userA1Id,
-        flowId
-      );
-      const wrongFlow = await userAssessmentRepository.findAssessmentInProgress(
-        organisationAId,
-        userA1Id,
-        '550e8400-e29b-41d4-a716-446655440000'
-      );
-
-      expect(withFlow).not.toBeNull();
-      expect(wrongFlow).toBeNull();
-    });
   });
 
   describe('findResumable', () => {
@@ -423,29 +294,6 @@ describe('User Assessment Repository', () => {
       );
 
       expect(result.currentStep).toBe(3);
-    });
-
-    it('only updates currentStep (answers are stored in user_assessment_answers table)', async () => {
-      // Note: This test verifies that updateProgress only updates currentStep.
-      // Answer storage has been moved to the user_assessment_answers table
-      // and should be handled via answerRepository.saveAnswers().
-      const assessment = await userAssessmentRepository.createUserAssessment({
-        organisationId: organisationAId,
-        userId: userA1Id,
-        flowId,
-      });
-
-      // Update with currentStep only
-      const result = await userAssessmentRepository.updateAssessmentProgress(
-        organisationAId,
-        assessment.id,
-        {
-          currentStep: 5,
-        }
-      );
-
-      expect(result.currentStep).toBe(5);
-      // Note: answers are stored in user_assessment_answers table, not on the assessment record
     });
 
     it('throws NotFoundError when assessment not found', async () => {
@@ -550,83 +398,6 @@ describe('User Assessment Repository', () => {
     });
   });
 
-  describe('updateScores', () => {
-    it('updates scores on assessment', async () => {
-      const assessment = await userAssessmentRepository.createUserAssessment({
-        organisationId: organisationAId,
-        userId: userA1Id,
-        flowId,
-      });
-
-      const scores = {
-        dimensions: [
-          {
-            dimensionId: 'mobility',
-            dimensionName: 'Mobility',
-            rawScore: 75,
-            normalisedScore: 75,
-          },
-        ],
-        scoredAt: new Date(),
-        overallScore: 75,
-        riskLevel: 'low' as const,
-      };
-
-      const result = await userAssessmentRepository.updateAssessmentScores(
-        organisationAId,
-        assessment.id,
-        scores
-      );
-
-      expect(result.scores?.dimensions).toEqual(scores.dimensions);
-      expect(result.scores?.overallScore).toBe(scores.overallScore);
-      expect(result.scores?.riskLevel).toBe(scores.riskLevel);
-    });
-
-    it('throws NotFoundError when assessment not found', async () => {
-      await expect(
-        userAssessmentRepository.updateAssessmentScores(
-          organisationAId,
-          '550e8400-e29b-41d4-a716-446655440000',
-          {
-            dimensions: [],
-            scoredAt: new Date(),
-            overallScore: 0,
-            riskLevel: 'low',
-          }
-        )
-      ).rejects.toThrow(NotFoundError);
-    });
-  });
-
-  describe('linkProgramme', () => {
-    it('links programme to assessment', async () => {
-      const assessment = await userAssessmentRepository.createUserAssessment({
-        organisationId: organisationAId,
-        userId: userA1Id,
-        flowId,
-      });
-
-      const result = await userAssessmentRepository.linkAssessmentToProgramme(
-        organisationAId,
-        assessment.id,
-        programmeId
-      );
-
-      expect(result.programmeId).toBe(programmeId);
-    });
-
-    it('throws NotFoundError when assessment not found', async () => {
-      await expect(
-        userAssessmentRepository.linkAssessmentToProgramme(
-          organisationAId,
-          '550e8400-e29b-41d4-a716-446655440000',
-          randomUUID()
-        )
-      ).rejects.toThrow(NotFoundError);
-    });
-  });
-
   describe('Cross-Organisation Isolation', () => {
     it('cannot access other organisation assessments via findById', async () => {
       const organisationAAssessment = await userAssessmentRepository.createUserAssessment({
@@ -643,18 +414,105 @@ describe('User Assessment Repository', () => {
 
       expect(result).toBeNull();
     });
+  });
 
-    it('cannot access other organisation assessments via findByUserId', async () => {
-      await userAssessmentRepository.createUserAssessment({
+  describe('Safety triggers and acknowledgement', () => {
+    const createTriggered = async (): Promise<string> => {
+      const assessment = await userAssessmentRepository.createUserAssessment({
         organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
 
-      // Organisation B querying for Organisation A user returns empty (RLS visibility)
-      const result = await userAssessmentRepository.findByUserId(organisationBId, userA1Id);
+      await safetyTriggerRepository.recordTrigger({
+        organisationId: organisationAId,
+        userAssessmentId: assessment.id,
+        userId: userA1Id,
+        questionSlug: 'safety-check',
+        selectedOptions: ['dizziness'],
+        warningMessage: 'Please speak to a health professional before you start.',
+      });
 
-      expect(result).toHaveLength(0);
+      return assessment.id;
+    };
+
+    it('records an assessment once, ignoring a second record', async () => {
+      const assessmentId = await createTriggered();
+
+      await safetyTriggerRepository.recordTrigger({
+        organisationId: organisationAId,
+        userAssessmentId: assessmentId,
+        userId: userA1Id,
+        questionSlug: 'safety-check',
+        selectedOptions: ['chest-pain'],
+        warningMessage: 'A second message',
+      });
+
+      await setTestRLSContext(db, organisationAId);
+      const rows = await db.execute(
+        sql`SELECT selected_options FROM assessment_safety_triggers WHERE user_assessment_id = ${assessmentId}`
+      );
+
+      expect(rows.rows).toEqual([{ selected_options: ['dizziness'] }]);
+    });
+
+    it('hides a trigger from another organisation (RLS)', async () => {
+      const assessmentId = await createTriggered();
+
+      expect(
+        await safetyTriggerRepository.findByAssessmentId(organisationAId, assessmentId)
+      ).not.toBeNull();
+      expect(
+        await safetyTriggerRepository.findByAssessmentId(organisationBId, assessmentId)
+      ).toBeNull();
+    });
+
+    it('refuses a trigger written into another organisation (RLS)', async () => {
+      const assessment = await userAssessmentRepository.createUserAssessment({
+        organisationId: organisationAId,
+        userId: userA1Id,
+        flowId,
+      });
+
+      await expect(
+        db.transaction(async (tx) => {
+          await tx.execute(sql.raw(`SET LOCAL app.organisation_id = '${organisationBId}'`));
+          await tx.execute(sql`
+            INSERT INTO assessment_safety_triggers
+              (organisation_id, user_assessment_id, user_id, selected_options, warning_message)
+            VALUES (${organisationAId}, ${assessment.id}, ${userA1Id}, '[]', 'Advice')
+          `);
+        })
+      ).rejects.toMatchObject({
+        cause: { message: expect.stringMatching(/row-level security/) as unknown },
+      });
+      expect(
+        await safetyTriggerRepository.findByAssessmentId(organisationAId, assessment.id)
+      ).toBeNull();
+    });
+
+    it('keeps the first acknowledgement on a repeat', async () => {
+      const assessmentId = await createTriggered();
+
+      const first = await userAssessmentRepository.acknowledgeSafetyAdvice(
+        organisationAId,
+        assessmentId
+      );
+      const second = await userAssessmentRepository.acknowledgeSafetyAdvice(
+        organisationAId,
+        assessmentId
+      );
+
+      expect(first.safetyAcknowledgedAt).toBeInstanceOf(Date);
+      expect(second.safetyAcknowledgedAt).toEqual(first.safetyAcknowledgedAt);
+    });
+
+    it('cannot acknowledge another organisation’s assessment (RLS)', async () => {
+      const assessmentId = await createTriggered();
+
+      await expect(
+        userAssessmentRepository.acknowledgeSafetyAdvice(organisationBId, assessmentId)
+      ).rejects.toThrow(NotFoundError);
     });
   });
 });

@@ -69,8 +69,8 @@ export const videos = pgTable(
     defaultRestSeconds: integer('default_rest_seconds'),
     /** Default exercise notes (e.g., 'Keep core engaged throughout') */
     defaultNotes: text('default_notes'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     publicIdIndex('videos', table.publicId),

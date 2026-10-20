@@ -5,8 +5,14 @@ import {
   DEFAULT_LOGICAL_OPERATOR,
   LOGICAL_OPERATORS,
 } from '../../../constants';
+import { isAssessed, type DimensionalScore } from '../../../schemas/job.schema';
 
-import type { DimensionalScore } from '../../../schemas/job.schema';
+type ProgrammeMapping = ScoringConfig['programmeMappings'][number];
+
+export interface MatchedMapping {
+  mapping: ProgrammeMapping;
+  index: number;
+}
 
 /**
  * Find matching programme based on scores and mappings
@@ -22,32 +28,27 @@ export function findMatchingProgramme(
   dimensionalScores: DimensionalScore[],
   programmeMappings: ScoringConfig['programmeMappings']
 ): string | null {
-  if (programmeMappings.length === 0) {
-    return null;
-  }
+  return (
+    findMatchingMapping(dimensionalScores, programmeMappings)?.mapping.programmeTemplateId ?? null
+  );
+}
 
-  // Build score lookup map using raw scores so programme mapping
-  // conditions can be written in natural units per dimension
-  // (e.g., "balance < 6" means rawScore < 6 out of maxScore 18)
+/** An unassessed dimension has no score, so any condition on it fails. */
+export function findMatchingMapping(
+  dimensionalScores: DimensionalScore[],
+  programmeMappings: ScoringConfig['programmeMappings']
+): MatchedMapping | null {
   const scoreMap = new Map<string, number>();
 
-  for (const score of dimensionalScores) {
+  for (const score of dimensionalScores.filter(isAssessed)) {
     scoreMap.set(score.dimensionId, score.rawScore);
   }
 
-  // Sort mappings by priority (lower number = higher priority)
-  const sortedMappings = [...programmeMappings].sort(
-    (a, b) => (a.priority ?? 999) - (b.priority ?? 999)
-  );
+  const sorted = programmeMappings
+    .map((mapping, index) => ({ mapping, index }))
+    .sort((a, b) => (a.mapping.priority ?? 999) - (b.mapping.priority ?? 999));
 
-  // Find first matching mapping
-  for (const mapping of sortedMappings) {
-    if (evaluateMappingConditions(mapping, scoreMap)) {
-      return mapping.programmeTemplateId;
-    }
-  }
-
-  return null;
+  return sorted.find(({ mapping }) => evaluateMappingConditions(mapping, scoreMap)) ?? null;
 }
 
 /**
@@ -58,7 +59,7 @@ export function findMatchingProgramme(
  * @returns True if all conditions are met
  */
 function evaluateMappingConditions(
-  mapping: ScoringConfig['programmeMappings'][0],
+  mapping: ProgrammeMapping,
   scoreMap: Map<string, number>
 ): boolean {
   const { conditions, operator = DEFAULT_LOGICAL_OPERATOR } = mapping;

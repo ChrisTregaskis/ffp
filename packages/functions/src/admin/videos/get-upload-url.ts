@@ -1,33 +1,26 @@
 import type { UploadUrlResponse } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
-  createColdStartContext,
-  createLogger,
-  extractUserContext,
   withErrorHandling,
-  ForbiddenError,
-  isUserActor,
+  withSystemAdmin,
   setVideoUploadConfig,
   generateUploadUrls,
 } from '@ffp/core/server';
 
-// Cold start: initialise S3 upload config from environment variables.
-// These are set by SST in sst.config.ts (adminHandlerEnv).
+// Cold start: initialise S3 upload config from environment variables (adminHandlerEnv in
+// sst.config.ts). The admin router imports this module into every admin Lambda, including
+// the CORS preflight one that has no bucket variables, so a missing variable is only
+// reported when an upload is actually requested.
 const videosBucketName = process.env.VIDEOS_BUCKET_NAME;
 const assetsBucketName = process.env.ASSETS_BUCKET_NAME;
 const region = process.env.AWS_REGION ?? 'eu-west-2';
 
-const coldStartContext = createColdStartContext('admin-video-upload-handler');
-const coldStartLogger = createLogger(coldStartContext);
+const missingEnv = [
+  !videosBucketName && 'VIDEOS_BUCKET_NAME',
+  !assetsBucketName && 'ASSETS_BUCKET_NAME',
+].filter(Boolean);
 
-if (!videosBucketName || !assetsBucketName) {
-  const missing = [
-    !videosBucketName && 'VIDEOS_BUCKET_NAME',
-    !assetsBucketName && 'ASSETS_BUCKET_NAME',
-  ].filter(Boolean);
-
-  coldStartLogger.error(`Video upload disabled — missing env vars: ${missing.join(', ')}`);
-} else {
+if (videosBucketName && assetsBucketName) {
   setVideoUploadConfig({
     videosBucketName,
     assetsBucketName,
@@ -51,13 +44,15 @@ if (!videosBucketName || !assetsBucketName) {
  * ```
  */
 export const handler = withErrorHandling(
-  async (event: APIGatewayProxyEventV2WithJWT): Promise<UploadUrlResponse> => {
-    const context = extractUserContext(event);
+  withSystemAdmin(
+    'Only system administrators can upload videos',
+    async (_event: APIGatewayProxyEventV2WithJWT, context): Promise<UploadUrlResponse> => {
+      // A plain Error, so the response stays a generic 500 while the log names the variables
+      if (missingEnv.length > 0) {
+        throw new Error(`Video upload is not configured: missing ${missingEnv.join(', ')}`);
+      }
 
-    if (!isUserActor(context.actor) || context.actor.userRole !== 'system_admin') {
-      throw new ForbiddenError('Only system administrators can upload videos');
+      return await generateUploadUrls(context);
     }
-
-    return await generateUploadUrls(context);
-  }
+  )
 );

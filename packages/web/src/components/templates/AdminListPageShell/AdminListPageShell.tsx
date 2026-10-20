@@ -1,0 +1,179 @@
+import { useMemo } from 'react';
+
+import type { PaginationInput } from '@ffp/core';
+
+import type { IconName } from '@web/components/atoms';
+import { Button, Icon, PageContainer } from '@web/components/atoms';
+import { ListEmptyState, PageHeader } from '@web/components/molecules';
+import type { ListEmptyStateProps } from '@web/components/molecules';
+import { Table, TableControls } from '@web/components/organisms';
+import type { TableFilterConfig, TableFilterValues } from '@web/components/organisms';
+import { useApiTable } from '@web/hooks/useApiTable';
+
+import type { UseQueryResult } from '@tanstack/react-query';
+import type { ColumnDef } from '@tanstack/react-table';
+import type { ReactNode } from 'react';
+
+/** The search, then each configured filter by its key; blank values are left out */
+export type ListFilterValues = Record<string, string | undefined>;
+
+interface ListPage<TItem> {
+  data: TItem[];
+  pagination: { total: number };
+}
+
+/** What an empty list says. Its call to action is the header's create button. */
+export type AdminListEmptyState = Pick<
+  ListEmptyStateProps,
+  'filteredTitle' | 'icon' | 'iconVariant' | 'title' | 'description'
+> & {
+  /**
+   * The default filters narrow the list rather than set a baseline view, so an empty list on
+   * its defaults reads as filtered and offers no create call to action
+   */
+  defaultsNarrow?: boolean;
+};
+
+export interface AdminListPageShellProps<
+  TItem,
+  TRow extends { id: string } & Record<string, unknown>,
+> {
+  title: string;
+  subtitle: string;
+  createLabel: string;
+  /** @default 'Plus' */
+  createIcon?: IconName;
+  onCreate: () => void;
+  tableId: string;
+  defaultSort: { id: string; desc: boolean };
+  defaultFilters?: TableFilterValues;
+  defaultColumnVisibility?: Record<string, boolean>;
+  /** Define at module level; each key is sent to `useList` as a filter */
+  filters: TableFilterConfig[];
+  searchPlaceholder: string;
+  searchWidthClass?: string;
+  /** The resource's list query. Called as a hook, so pass the same function every render. */
+  useList: (
+    pagination: PaginationInput,
+    filters: ListFilterValues
+  ) => Pick<UseQueryResult<ListPage<TItem>>, 'data' | 'isPending' | 'error'>;
+  /** Keep it stable (module level, or memoised) so the rows memo holds */
+  toRow: (item: TItem) => TRow;
+  columns: ColumnDef<TRow>[];
+  /** Define at module level */
+  emptyState: AdminListEmptyState;
+  /** Rendered after the table — modals and the like */
+  children?: ReactNode;
+}
+
+/** Page frame shared by the admin list screens: header, server-driven table and its controls. */
+export const AdminListPageShell = <TItem, TRow extends { id: string } & Record<string, unknown>>({
+  title,
+  subtitle,
+  createLabel,
+  createIcon = 'Plus',
+  onCreate,
+  tableId,
+  defaultSort,
+  defaultFilters,
+  defaultColumnVisibility,
+  filters,
+  searchPlaceholder,
+  searchWidthClass,
+  useList,
+  toRow,
+  columns,
+  emptyState,
+  children,
+}: AdminListPageShellProps<TItem, TRow>): JSX.Element => {
+  const {
+    onStateChange,
+    queryParams,
+    search,
+    onSearchChange,
+    filterValues,
+    onFilterChange,
+    debouncedSearch,
+    debouncedFilters,
+    clearAll,
+    hasActiveControls,
+    hasNonDefaultControls,
+  } = useApiTable({ defaultPageSize: 10, defaultSort, defaultFilters });
+
+  const listFilters = useMemo((): ListFilterValues => {
+    const values: ListFilterValues = { search: debouncedSearch || undefined };
+
+    for (const { key } of filters) {
+      const value = debouncedFilters[key];
+      values[key] = value ? String(value) : undefined;
+    }
+
+    return values;
+  }, [debouncedSearch, debouncedFilters, filters]);
+
+  // Pending, not loading: a retry paused while the tab is hidden has no data and no error yet,
+  // and would otherwise read as an empty list
+  const { data, isPending, error } = useList(queryParams, listFilters);
+
+  const rows = useMemo(() => (data ? data.data.map(toRow) : []), [data, toRow]);
+
+  return (
+    <PageContainer>
+      <PageHeader
+        title={title}
+        subtitle={subtitle}
+        actions={
+          <Button
+            variant="primary"
+            icon={<Icon name={createIcon} styleProps={{ size: 'sm', colour: 'currentColor' }} />}
+            onClick={onCreate}
+          >
+            {createLabel}
+          </Button>
+        }
+      />
+
+      <Table<TRow>
+        tableId={tableId}
+        data={rows}
+        columns={columns}
+        totalRows={data?.pagination.total ?? 0}
+        isLoading={isPending}
+        error={error?.message}
+        onStateChange={onStateChange}
+        defaultSort={defaultSort}
+        defaultColumnVisibility={defaultColumnVisibility}
+        getRowId={(row) => row.id}
+        emptyState={
+          <ListEmptyState
+            hasFilters={emptyState.defaultsNarrow ? hasActiveControls : hasNonDefaultControls}
+            filteredTitle={emptyState.filteredTitle}
+            icon={emptyState.icon}
+            iconVariant={emptyState.iconVariant}
+            title={emptyState.title}
+            description={emptyState.description}
+            actionLabel={createLabel}
+            actionIcon={createIcon}
+            onAction={onCreate}
+          />
+        }
+        renderControls={(cols) => (
+          <TableControls
+            search={search}
+            onSearchChange={onSearchChange}
+            searchPlaceholder={searchPlaceholder}
+            searchWidthClass={searchWidthClass}
+            filters={filters}
+            filterValues={filterValues}
+            onFilterChange={onFilterChange}
+            columns={cols}
+            onClearAll={clearAll}
+            hasActiveControls={hasActiveControls}
+          />
+        )}
+      />
+
+      {children}
+    </PageContainer>
+  );
+};

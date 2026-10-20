@@ -9,11 +9,15 @@ import type { PgSelect } from 'drizzle-orm/pg-core';
  * Usage:
  *   const query = db.select().from(videos).where(...).$dynamic();
  *   const results = await applyPagination(query, input, sortableColumns);
+ *
+ * `tieBreaker` (a unique column) orders rows the sort column leaves tied, so
+ * a page boundary cannot fall differently between requests.
  */
 export const applyPagination = <T extends PgSelect>(
   query: T,
   input: PaginationInput,
-  sortableColumns: Partial<Record<string, Column>>
+  sortableColumns: Partial<Record<string, Column>>,
+  tieBreaker?: Column
 ): T => {
   const offset = (input.page - 1) * input.pageSize;
 
@@ -22,7 +26,9 @@ export const applyPagination = <T extends PgSelect>(
   const column = input.sortBy ? sortableColumns[input.sortBy] : undefined;
 
   if (column) {
-    result = result.orderBy(input.sortDirection === 'desc' ? desc(column) : asc(column));
+    const primary = input.sortDirection === 'desc' ? desc(column) : asc(column);
+
+    result = tieBreaker ? result.orderBy(primary, asc(tieBreaker)) : result.orderBy(primary);
   }
 
   return result;

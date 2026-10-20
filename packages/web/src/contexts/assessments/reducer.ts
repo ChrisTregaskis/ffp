@@ -10,7 +10,9 @@ import type { AssessmentState, AssessmentAction } from './types';
  *   START_ASSESSMENT → SET_ANSWER → MARK_SAVED → NEXT_STEP / PREV_STEP → SET_SCORES
  *
  * - START_ASSESSMENT: Hydrates state from server (start or resume)
- * - SET_ANSWER: Records a user answer, marks state dirty
+ * - SET_ANSWER: Records a user answer, marks state dirty, clears its field error
+ * - SET_FIELD_ERRORS: Holds the server's message per refused answer
+ * - GO_TO_STEP: Jumps to a step (back to a refused answer)
  * - MARK_SAVED: Clears dirty flag after successful API save
  * - NEXT_STEP: Advances forward (supports server-driven branching via nextStepId)
  * - PREV_STEP: Navigates backward (linear only)
@@ -18,6 +20,25 @@ import type { AssessmentState, AssessmentAction } from './types';
  *
  * All state updates are immutable.
  */
+const withoutKey = (record: Record<string, string>, key: string): Record<string, string> => {
+  if (!(key in record)) {
+    return record;
+  }
+
+  const { [key]: _, ...rest } = record;
+
+  return rest;
+};
+
+/** The state positioned on a step, or null when the flow has no such step. */
+const goToStep = (state: AssessmentState, stepId: string): AssessmentState | null => {
+  const stepInfo = findStepById(state.steps, stepId);
+
+  return stepInfo
+    ? { ...state, currentStep: stepInfo.order, currentStepId: stepId, phase: stepInfo.type }
+    : null;
+};
+
 export const assessmentReducer = (
   state: AssessmentState,
   action: AssessmentAction
@@ -39,6 +60,8 @@ export const assessmentReducer = (
         isDirty: false,
         scores: null,
         warnings: [],
+        fieldErrors: {},
+        refusalCount: 0,
       };
     }
 
@@ -49,6 +72,7 @@ export const assessmentReducer = (
         ...state,
         answers: { ...state.answers, [questionId]: answer },
         isDirty: true,
+        fieldErrors: withoutKey(state.fieldErrors, questionId),
       };
     }
 
@@ -60,22 +84,30 @@ export const assessmentReducer = (
         ...state,
         answers: remainingAnswers,
         isDirty: true,
+        fieldErrors: withoutKey(state.fieldErrors, questionId),
       };
+    }
+
+    case ASSESSMENT_ACTION.SET_FIELD_ERRORS: {
+      return {
+        ...state,
+        fieldErrors: action.payload.fieldErrors,
+        refusalCount: state.refusalCount + 1,
+      };
+    }
+
+    case ASSESSMENT_ACTION.GO_TO_STEP: {
+      return goToStep(state, action.payload.stepId) ?? state;
     }
 
     case ASSESSMENT_ACTION.NEXT_STEP: {
       // If nextStepId provided (from branching), navigate to that step
-      if (action.payload?.nextStepId) {
-        const stepInfo = findStepById(state.steps, action.payload.nextStepId);
+      const branchedTo = action.payload?.nextStepId
+        ? goToStep(state, action.payload.nextStepId)
+        : null;
 
-        if (stepInfo) {
-          return {
-            ...state,
-            currentStep: stepInfo.order,
-            currentStepId: action.payload.nextStepId,
-            phase: stepInfo.type,
-          };
-        }
+      if (branchedTo) {
+        return branchedTo;
       }
 
       // Default: linear navigation, respect totalSteps boundary

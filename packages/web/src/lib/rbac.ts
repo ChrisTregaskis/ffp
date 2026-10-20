@@ -1,8 +1,8 @@
 import type { UserRole } from '@ffp/core';
 
+import { RouteKey } from '@web/config/routes';
 import { USER_ROLE } from '@web/constants/roles';
 import { createLogger } from '@web/lib/logger';
-import { RouteKey } from '@web/pages/routes/RouteKey';
 
 const logger = createLogger('RBAC');
 

@@ -1,9 +1,13 @@
 import { Pool } from 'pg';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../src/schema/index.js';
-import { assessmentFlows } from '../src/schema/index.js';
+import { assessmentFlows, questions } from '../src/schema/index.js';
 import { createLogger } from '../src/lib/logger.js';
+import {
+  LEVEL_PROGRAMME_SLUGS,
+  LEVEL_SCORING_CONFIG,
+} from '../src/constants/level-scoring.constants.js';
 import { QUESTION_IDS } from './seedQuestions.js';
 
 import type { ScoringConfig } from '../src/types/question.types.js';
@@ -11,198 +15,140 @@ import type { ScoringConfig } from '../src/types/question.types.js';
 const logger = createLogger('seed-assessment-flows');
 
 /**
- * Deterministic UUID for the default assessment flow
+ * Deterministic UUIDs for assessment flows
  *
  * UUID Pattern: 44444444-4444-4444-8444-4444444400XX
- * - Default flow: 01
- *
- * This ensures consistency across seed runs and allows Postman/tests
- * to reference the flow reliably.
  */
 export const FLOW_IDS = {
-  DEFAULT: '44444444-4444-4444-8444-444444440001',
+  WELLNESS: '44444444-4444-4444-8444-444444440001',
+  BRANCHING_DEMO: '44444444-4444-4444-8444-444444440002',
 } as const;
 
 /**
- * Default flow name - used for idempotency check
+ * Deliberately simple: strong on both checks → level 2, otherwise level 1.
+ * Neither check feeds the risk level: the branch can skip the strength check,
+ * and a skipped check scores 0.
  */
-const DEFAULT_FLOW_NAME = 'Standard Physiotherapy Assessment';
-
-/**
- * Combined scoring configuration for all dimensions in the flow.
- *
- * This consolidates scoring from all templates into a single configuration
- * that produces one holistic programme recommendation.
- *
- * Dimensions:
- * - pain: From pre-assessment (pain-level, pain-location) + back pain questions + red flag screening
- * - general: From pre-assessment questions (goal-primary, activity-level, medical-conditions)
- * - strength: From strength assessment (squat-rating, pushup-count, strength-comfort)
- * - balance: From balance assessment (single-leg-duration, tandem-stability, balance-confidence)
- *
- * Note: Red flag screening questions are included in pain dimension but with high scores (10)
- * to ensure any red flag triggers high pain score and gentle programme recommendation.
- */
-const FLOW_SCORING_CONFIG: ScoringConfig = {
+const BRANCHING_DEMO_SCORING_CONFIG: ScoringConfig = {
   dimensions: [
     {
-      name: 'pain',
-      weight: 1,
-      maxScore: 100, // Increased to accommodate back pain and red flag questions
-      questionIds: [
-        // Pre-assessment pain questions
-        QUESTION_IDS['pain-level'],
-        QUESTION_IDS['pain-location'],
-        // Back pain general questions
-        QUESTION_IDS['back-pain-duration'],
-        QUESTION_IDS['back-pain-intensity'],
-        QUESTION_IDS['back-pain-type'],
-        QUESTION_IDS['back-pain-recurrence'],
-        QUESTION_IDS['back-pain-typical-duration'],
-        // Red flag screening questions (high score = triggers gentle programme)
-        QUESTION_IDS['radiating-pain'],
-        QUESTION_IDS['numbness-tingling'],
-        QUESTION_IDS['incontinence'],
-        QUESTION_IDS['saddle-numbness'],
-        QUESTION_IDS['unexplained-weight-loss'],
-        QUESTION_IDS['night-sweats'],
-      ],
-      riskThresholds: { low: 15, moderate: 30 }, // Adjusted for more questions
-    },
-    {
-      name: 'general',
-      weight: 1,
-      maxScore: 6,
-      questionIds: [
-        QUESTION_IDS['goal-primary'],
-        QUESTION_IDS['activity-level'],
-        QUESTION_IDS['medical-conditions'],
-      ],
-    },
-    {
       name: 'strength',
-      weight: 1.5,
-      maxScore: 64,
-      questionIds: [
-        QUESTION_IDS['squat-rating'],
-        QUESTION_IDS['pushup-count'],
-        QUESTION_IDS['strength-comfort'],
-      ],
-      riskThresholds: { low: 20, moderate: 40 },
+      questionIds: [QUESTION_IDS['squat-rating']],
+      maxScore: 4,
+      affectsRiskLevel: false,
     },
     {
       name: 'balance',
-      weight: 1.2,
-      maxScore: 18,
-      questionIds: [
-        QUESTION_IDS['single-leg-duration'],
-        QUESTION_IDS['tandem-stability'],
-        QUESTION_IDS['balance-confidence'],
-      ],
-      riskThresholds: { low: 6, moderate: 12 },
+      questionIds: [QUESTION_IDS['single-leg-duration']],
+      maxScore: 4,
+      affectsRiskLevel: false,
     },
   ],
   programmeMappings: [
-    // Any red flag present - highest priority, recommend gentle programme with medical review
-    // Red flags score 10 each, so pain >= 10 catches any single red flag
     {
       priority: 1,
-      conditions: [{ dimension: 'pain', operator: 'gte', value: 35 }],
-      programmeTemplateId: 'gentle-mobility-programme',
-    },
-    // Moderate-high pain without red flags - gentle programme
-    {
-      priority: 2,
-      conditions: [{ dimension: 'pain', operator: 'gte', value: 20 }],
-      programmeTemplateId: 'gentle-mobility-programme',
-    },
-    // Low strength + low balance - foundation programme
-    {
-      priority: 3,
-      conditions: [
-        { dimension: 'strength', operator: 'lt', value: 20 },
-        { dimension: 'balance', operator: 'lt', value: 6 },
-      ],
       operator: 'and',
-      programmeTemplateId: 'foundation-programme',
-    },
-    // Good overall - advanced programme
-    {
-      priority: 4,
       conditions: [
-        { dimension: 'pain', operator: 'lt', value: 10 },
-        { dimension: 'strength', operator: 'gte', value: 40 },
+        { dimension: 'strength', operator: 'gte', value: 3 },
+        { dimension: 'balance', operator: 'gte', value: 3 },
       ],
-      operator: 'and',
-      programmeTemplateId: 'advanced-strength-programme',
+      programmeTemplateId: LEVEL_PROGRAMME_SLUGS[2],
     },
-    // Default fallback
-    {
-      priority: 10,
-      conditions: [],
-      programmeTemplateId: 'general-wellness-programme',
-    },
+    { priority: 10, conditions: [], programmeTemplateId: LEVEL_PROGRAMME_SLUGS[1] },
   ],
 };
 
+const DEFAULT_FLOWS = [
+  {
+    id: FLOW_IDS.WELLNESS,
+    name: 'Wellness Movement Assessment',
+    description: 'A short check-in on activity, goals and safety that sets your starting level',
+    scoringConfig: LEVEL_SCORING_CONFIG,
+  },
+  {
+    id: FLOW_IDS.BRANCHING_DEMO,
+    name: 'Movement Check Demo',
+    description: 'A reduced flow with a branching rule and video-guided movement checks',
+    scoringConfig: BRANCHING_DEMO_SCORING_CONFIG,
+  },
+];
+
+/** A config naming a missing or mis-dimensioned question would silently drop it from scoring */
+const assertScoringConfigMatchesQuestions = async (
+  db: NodePgDatabase<typeof schema> & { $client: Pool },
+  flowName: string,
+  scoringConfig: ScoringConfig
+): Promise<void> => {
+  const listed = scoringConfig.dimensions.flatMap((dimension) =>
+    dimension.questionIds.map((questionId) => ({ questionId, dimension: dimension.name }))
+  );
+  const stored = await db
+    .select({ id: questions.id, scoreDimension: questions.scoreDimension })
+    .from(questions)
+    .where(
+      inArray(
+        questions.id,
+        listed.map(({ questionId }) => questionId)
+      )
+    );
+  const storedDimensions = new Map(
+    stored.map((question) => [question.id, question.scoreDimension])
+  );
+
+  const problems = listed.flatMap(({ questionId, dimension }) => {
+    if (!storedDimensions.has(questionId)) {
+      return [`${dimension}: question ${questionId} does not exist`];
+    }
+    const actual = storedDimensions.get(questionId);
+    return actual === dimension
+      ? []
+      : [`${dimension}: question ${questionId} carries dimension ${actual ?? 'none'}`];
+  });
+
+  if (problems.length > 0) {
+    throw new Error(`Scoring config for "${flowName}" is invalid:\n${problems.join('\n')}`);
+  }
+};
+
 /**
- * Seeds the default assessment flow for MVP.
- *
- * This seed is IDEMPOTENT - safe to run multiple times.
- * - If the flow does not exist, it will be created.
- * - If the flow already exists, its scoringConfig will be updated
- *   to match the current seed definition (scoring rules evolve over time).
- *
- * Note: assessment_flows table has NO RLS, so no special context needed.
- *
- * @param db - Database client with schema
- * @returns Promise<boolean> - true if flow was created, false if updated
+ * Seeds the assessment flows. IDEMPOTENT: flows are matched by ID, and an
+ * existing one is brought back in line with the seed. Runs after seedQuestions,
+ * because each scoring config is checked against the stored questions.
  */
 export const seedAssessmentFlows = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool }
-): Promise<boolean> => {
+): Promise<number> => {
   logger.info('Seeding assessment flows...');
 
-  // Check if default flow already exists
-  const existingFlow = await db.query.assessmentFlows.findFirst({
-    where: eq(assessmentFlows.name, DEFAULT_FLOW_NAME),
-  });
+  let createdCount = 0;
 
-  if (existingFlow) {
-    // Upsert: update scoringConfig to keep it in sync with seed definition
-    await db
-      .update(assessmentFlows)
-      .set({
-        scoringConfig: FLOW_SCORING_CONFIG,
-        description: 'Comprehensive assessment with pre-questions and physical tests',
-      })
-      .where(eq(assessmentFlows.id, existingFlow.id));
+  for (const flow of DEFAULT_FLOWS) {
+    await assertScoringConfigMatchesQuestions(db, flow.name, flow.scoringConfig);
 
-    logger.info('Assessment flow scoring config updated', {
-      id: existingFlow.id,
-      name: DEFAULT_FLOW_NAME,
+    const existingFlow = await db.query.assessmentFlows.findFirst({
+      where: eq(assessmentFlows.id, flow.id),
     });
-    return false;
+
+    if (existingFlow) {
+      await db
+        .update(assessmentFlows)
+        .set({
+          name: flow.name,
+          description: flow.description,
+          scoringConfig: flow.scoringConfig,
+        })
+        .where(eq(assessmentFlows.id, flow.id));
+
+      logger.info('Assessment flow updated', { id: flow.id, name: flow.name });
+      continue;
+    }
+
+    // Normalised steps are in flow_steps table (see seedFlowSteps.ts)
+    await db.insert(assessmentFlows).values({ ...flow, isActive: true });
+
+    logger.info('Assessment flow created', { id: flow.id, name: flow.name });
+    createdCount++;
   }
 
-  // Insert default flow with deterministic UUID
-  // Normalised steps are in flow_steps table (see seedFlowSteps.ts).
-  const [newFlow] = await db
-    .insert(assessmentFlows)
-    .values({
-      id: FLOW_IDS.DEFAULT,
-      name: DEFAULT_FLOW_NAME,
-      description: 'Comprehensive assessment with pre-questions and physical tests',
-      scoringConfig: FLOW_SCORING_CONFIG,
-      isActive: true,
-    })
-    .returning({ id: assessmentFlows.id });
-
-  logger.info('Assessment flow created', {
-    id: newFlow.id,
-    name: DEFAULT_FLOW_NAME,
-    isActive: true,
-  });
-
-  return true;
+  return createdCount;
 };

@@ -1,14 +1,14 @@
 // Motion constants
 export * from './motion.constants';
 
+// Full-screen backdrop
+export * from './AssessmentBackdrop';
+
 // Navigation
 export * from './AssessmentNavigation';
 
-// Shared UI components
-export * from './FeatureColumnGrid';
-export * from './InstructionList';
-export * from './SectionHeader';
-export * from './SectionPanel';
+// Progress
+export * from './AssessmentProgress';
 
 // Question components
 export * from './questions';

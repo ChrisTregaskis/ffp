@@ -2,6 +2,7 @@ import {
   type APIGatewayProxyEventV2WithJWT,
   extractUserContext,
   withErrorHandling,
+  assertUuidOrNotFound,
   templateService,
   ValidationError,
   NotFoundError,
@@ -24,6 +25,8 @@ export const handler = withErrorHandling(
     if (!templateId) {
       throw new ValidationError('Template ID is required in path');
     }
+
+    assertUuidOrNotFound(templateId, 'Assessment template');
 
     const template = await templateService.getTemplateService(context, templateId);
 

@@ -144,6 +144,10 @@ export const createProcessJobSchema = processJobSchema
 export type AssessmentResponse = z.infer<typeof assessmentResponseSchema>;
 export type ScoreAssessmentPayload = z.infer<typeof scoreAssessmentPayloadSchema>;
 export type DimensionalScore = z.infer<typeof dimensionalScoreSchema>;
+
+/** Scores stored before `answeredCount` existed count as assessed */
+export const isAssessed = (score: Pick<DimensionalScore, 'answeredCount'>): boolean =>
+  score.answeredCount !== 0;
 export type ScoreAssessmentResult = z.infer<typeof scoreAssessmentResultSchema>;
 
 // Generate programme types

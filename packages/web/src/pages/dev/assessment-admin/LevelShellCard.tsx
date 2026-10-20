@@ -1,4 +1,4 @@
-import { Text } from '@web/components/text';
+import { Text } from '@web/components/atoms';
 
 import { LEVEL_SLOTS } from './prototype-assembly';
 import { LEVEL_META, type Level } from './prototype-level-model';

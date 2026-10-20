@@ -1,3 +1,5 @@
+import type { IconBadgeAppearance, IconBadgeSize, IconBadgeVariant } from '@web/components/atoms';
+import { Icon, IconBadge, Icons, Text } from '@web/components/atoms';
 import { DemoTabs, type DemoTab } from '@web/components/demo';
 import {
   ComponentPageWrapper,
@@ -6,9 +8,6 @@ import {
   DeveloperInstructions,
   IconSizeDisplay,
 } from '@web/components/dev';
-import { Icon, IconBadge, Icons } from '@web/components/Icon';
-import type { IconBadgeAppearance, IconBadgeSize, IconBadgeVariant } from '@web/components/Icon';
-import { Text } from '@web/components/text';
 
 /**
  * Icon components showcase page (development only).
@@ -57,7 +56,7 @@ export const IconComponentsPage = (): JSX.Element => {
               Import the Icon component:
             </Text>
             <code className="block rounded bg-muted p-2 text-xs">
-              {`import { Icon, Icons } from '@web/components/Icon';`}
+              {`import { Icon, Icons } from '@web/components/atoms';`}
             </code>
           </div>
           <div>
