@@ -20,36 +20,13 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from
 import * as safetyTriggerRepository from '../../src/assessments/safety-trigger.repository';
 import * as userAssessmentRepository from '../../src/assessments/user-assessment.repository';
 import { NotFoundError, ValidationError } from '../../src/lib/errors';
+import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
 
 /**
  * Generate unique test identifiers per test run to avoid conflicts
  * with other parallel tests using the same database
  */
 const TEST_RUN_ID = randomUUID().substring(0, 8);
-
-/**
- * UUID validation regex (RFC 4122 compliant)
- * Used to validate organisation IDs before setting RLS context
- */
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/**
- * Safely set RLS context for test setup/teardown
- *
- * PostgreSQL's SET command doesn't support parameterised queries ($1, $2),
- * so we use sql.raw() with UUID validation to prevent injection.
- * This mirrors the pattern used in @ffp/core's database.ts setRLSContext.
- */
-async function setTestRLSContext(
-  db: ReturnType<typeof drizzle>,
-  organisationId: string
-): Promise<void> {
-  if (!UUID_REGEX.test(organisationId)) {
-    throw new Error(`Invalid UUID format for organisationId: ${organisationId}`);
-  }
-  // Safe: organisationId is validated as UUID (only hex digits and hyphens)
-  await db.execute(sql.raw(`SET app.organisation_id = '${organisationId}'`));
-}
 
 describe('User Assessment Repository', () => {
   let pool: Pool;
@@ -82,45 +59,37 @@ describe('User Assessment Repository', () => {
     organisationAId = randomUUID();
     organisationBId = randomUUID();
 
-    // Create Organisation A (use TEST_RUN_ID in name for easy cleanup)
-    await setTestRLSContext(db, organisationAId);
-    await db.execute(sql`
-      INSERT INTO organisations (id, public_id, type, name, settings)
-      VALUES (${organisationAId}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, 'business', ${`Test Organisation A [${TEST_RUN_ID}]`}, '{}')
-    `);
-
-    // Create Organisation B
-    await setTestRLSContext(db, organisationBId);
-    await db.execute(sql`
-      INSERT INTO organisations (id, public_id, type, name, settings)
-      VALUES (${organisationBId}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, 'individual', ${`Test Organisation B [${TEST_RUN_ID}]`}, '{}')
-    `);
-
-    // Create Location A (belongs to Organisation A)
-    // Use locationAId (UUID) for unique account_code to avoid conflicts
-    await setTestRLSContext(db, organisationAId);
+    // Organisation A, its location and User A1, under A's own context
     locationAId = randomUUID();
-    const locationAccountCode = locationAId.substring(0, 8);
-    await db.execute(sql`
-      INSERT INTO locations (id, public_id, organisation_id, name, account_code, status)
-      VALUES (${locationAId}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, ${organisationAId}, 'Location A', ${`LOC-${locationAccountCode}`}, 'active')
-    `);
-
-    // Create User A1 (Organisation A)
-    // Use unique UUID-based values to avoid conflicts
     userA1Id = randomUUID();
-    await db.execute(sql`
-      INSERT INTO users (id, public_id, organisation_id, location_id, email, cognito_sub, first_name, last_name, role)
-      VALUES (${userA1Id}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, ${organisationAId}, ${locationAId}, ${`user-${userA1Id.substring(0, 8)}@test.com`}, ${`cognito-${userA1Id.substring(0, 8)}`}, 'Alice', 'Anderson', 'programme_user')
-    `);
+    await asOrganisation(db, organisationAId, async (tx) => {
+      await tx.execute(sql`
+        INSERT INTO organisations (id, public_id, type, name, settings)
+        VALUES (${organisationAId}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, 'business', ${`Test Organisation A [${TEST_RUN_ID}]`}, '{}')
+      `);
+      // Use locationAId (UUID) for unique account_code to avoid conflicts
+      await tx.execute(sql`
+        INSERT INTO locations (id, public_id, organisation_id, name, account_code, status)
+        VALUES (${locationAId}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, ${organisationAId}, 'Location A', ${`LOC-${locationAId.substring(0, 8)}`}, 'active')
+      `);
+      await tx.execute(sql`
+        INSERT INTO users (id, public_id, organisation_id, location_id, email, cognito_sub, first_name, last_name, role)
+        VALUES (${userA1Id}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, ${organisationAId}, ${locationAId}, ${`user-${userA1Id.substring(0, 8)}@test.com`}, ${`cognito-${userA1Id.substring(0, 8)}`}, 'Alice', 'Anderson', 'programme_user')
+      `);
+    });
 
-    // Create User B1 (Organisation B - individual user, no location)
-    await setTestRLSContext(db, organisationBId);
+    // Organisation B and User B1 (individual user, no location), under B's own context
     userB1Id = randomUUID();
-    await db.execute(sql`
-      INSERT INTO users (id, public_id, organisation_id, location_id, email, cognito_sub, first_name, last_name, role)
-      VALUES (${userB1Id}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, ${organisationBId}, NULL, ${`user-${userB1Id.substring(0, 8)}@test.com`}, ${`cognito-${userB1Id.substring(0, 8)}`}, 'Bob', 'Brown', 'programme_user')
-    `);
+    await asOrganisation(db, organisationBId, async (tx) => {
+      await tx.execute(sql`
+        INSERT INTO organisations (id, public_id, type, name, settings)
+        VALUES (${organisationBId}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, 'individual', ${`Test Organisation B [${TEST_RUN_ID}]`}, '{}')
+      `);
+      await tx.execute(sql`
+        INSERT INTO users (id, public_id, organisation_id, location_id, email, cognito_sub, first_name, last_name, role)
+        VALUES (${userB1Id}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, ${organisationBId}, NULL, ${`user-${userB1Id.substring(0, 8)}@test.com`}, ${`cognito-${userB1Id.substring(0, 8)}`}, 'Bob', 'Brown', 'programme_user')
+      `);
+    });
 
     // Create Assessment Flow (shared, no RLS - flows are system-managed)
     flowId = randomUUID();
@@ -141,50 +110,35 @@ describe('User Assessment Repository', () => {
       VALUES (
         ${programmeTemplateId},
         ${randomUUID().replace(/-/g, '').slice(0, 12)},
-        ${`test-template-${TEST_RUN_ID}`},
+        ${`test-template-${programmeTemplateId.slice(0, 8)}`},
         ${`Test Template [${TEST_RUN_ID}]`},
         true
       )
     `);
 
     // Create Programme (belongs to Organisation A, linked to User A1)
-    await setTestRLSContext(db, organisationAId);
     programmeId = randomUUID();
-    await db.execute(sql`
-      INSERT INTO programmes (id, public_id, organisation_id, user_id, programme_template_id, name)
-      VALUES (
-        ${programmeId},
-        ${randomUUID().replace(/-/g, '').slice(0, 12)},
-        ${organisationAId},
-        ${userA1Id},
-        ${programmeTemplateId},
-        ${`Test Programme [${TEST_RUN_ID}]`}
-      )
-    `);
+    await asOrganisation(db, organisationAId, async (tx) => {
+      await tx.execute(sql`
+        INSERT INTO programmes (id, public_id, organisation_id, user_id, programme_template_id, name)
+        VALUES (
+          ${programmeId},
+          ${randomUUID().replace(/-/g, '').slice(0, 12)},
+          ${organisationAId},
+          ${userA1Id},
+          ${programmeTemplateId},
+          ${`Test Programme [${TEST_RUN_ID}]`}
+        )
+      `);
+    });
   });
 
   afterEach(async () => {
-    // Clean up only test data created by this test run
-    // Wrap in try/catch as parallel tests may cause intermittent FK issues
-    try {
-      // Delete in FK-safe order (children first, then parents)
-      // Use parameterised queries to demonstrate secure patterns
-      await db.execute(sql`DELETE FROM user_assessments WHERE flow_id = ${flowId}`);
-      await db.execute(sql`DELETE FROM programmes WHERE id = ${programmeId}`);
-      await db.execute(sql`DELETE FROM programme_templates WHERE id = ${programmeTemplateId}`);
-      await db.execute(sql`DELETE FROM assessment_flows WHERE id = ${flowId}`);
-      await db.execute(
-        sql`DELETE FROM users WHERE organisation_id = ANY(${[organisationAId, organisationBId]})`
-      );
-      await db.execute(
-        sql`DELETE FROM locations WHERE organisation_id = ANY(${[organisationAId, organisationBId]})`
-      );
-      await db.execute(
-        sql`DELETE FROM organisations WHERE id = ANY(${[organisationAId, organisationBId]})`
-      );
-    } catch {
-      // Ignore cleanup errors - unique UUIDs ensure no conflicts between tests
-    }
+    // Each organisation under its own context: its users, location, assessments,
+    // safety triggers and programme cascade. Then the shared rows they referenced.
+    await deleteOrganisations(db, [organisationAId, organisationBId]);
+    await db.execute(sql`DELETE FROM programme_templates WHERE id = ${programmeTemplateId}`);
+    await db.execute(sql`DELETE FROM assessment_flows WHERE id = ${flowId}`);
   });
 
   afterAll(async () => {
@@ -448,23 +402,39 @@ describe('User Assessment Repository', () => {
         warningMessage: 'A second message',
       });
 
-      await setTestRLSContext(db, organisationAId);
-      const rows = await db.execute(
-        sql`SELECT selected_options FROM assessment_safety_triggers WHERE user_assessment_id = ${assessmentId}`
+      const rows = await asOrganisation(db, organisationAId, (tx) =>
+        tx.execute(
+          sql`SELECT selected_options FROM assessment_safety_triggers WHERE user_assessment_id = ${assessmentId}`
+        )
       );
 
       expect(rows.rows).toEqual([{ selected_options: ['dizziness'] }]);
     });
 
-    it('hides a trigger from another organisation (RLS)', async () => {
+    it('finds a trigger only for its own organisation', async () => {
       const assessmentId = await createTriggered();
 
       expect(
         await safetyTriggerRepository.findByAssessmentId(organisationAId, assessmentId)
-      ).not.toBeNull();
+      ).toMatchObject({ userAssessmentId: assessmentId, organisationId: organisationAId });
       expect(
         await safetyTriggerRepository.findByAssessmentId(organisationBId, assessmentId)
       ).toBeNull();
+    });
+
+    it('hides a trigger from another organisation (RLS)', async () => {
+      const assessmentId = await createTriggered();
+
+      // No organisation filter in the query: only the policy decides what is visible
+      const visibleTo = async (organisationId: string): Promise<unknown[]> =>
+        (
+          await asOrganisation(db, organisationId, (tx) =>
+            tx.execute(sql`SELECT user_assessment_id FROM assessment_safety_triggers`)
+          )
+        ).rows;
+
+      expect(await visibleTo(organisationAId)).toEqual([{ user_assessment_id: assessmentId }]);
+      expect(await visibleTo(organisationBId)).toEqual([]);
     });
 
     it('refuses a trigger written into another organisation (RLS)', async () => {
@@ -507,12 +477,31 @@ describe('User Assessment Repository', () => {
       expect(second.safetyAcknowledgedAt).toEqual(first.safetyAcknowledgedAt);
     });
 
-    it('cannot acknowledge another organisation’s assessment (RLS)', async () => {
+    it('reports another organisation’s assessment as not found when acknowledging', async () => {
       const assessmentId = await createTriggered();
 
       await expect(
         userAssessmentRepository.acknowledgeSafetyAdvice(organisationBId, assessmentId)
       ).rejects.toThrow(NotFoundError);
+    });
+
+    it('cannot acknowledge another organisation’s assessment (RLS)', async () => {
+      const assessmentId = await createTriggered();
+
+      // No organisation filter in the update: only the policy stops it
+      const updated = await asOrganisation(db, organisationBId, (tx) =>
+        tx.execute(
+          sql`UPDATE user_assessments SET safety_acknowledged_at = now() WHERE id = ${assessmentId}`
+        )
+      );
+
+      expect(updated.rowCount).toBe(0);
+      const stored = await asOrganisation(db, organisationAId, (tx) =>
+        tx.execute(
+          sql`SELECT safety_acknowledged_at FROM user_assessments WHERE id = ${assessmentId}`
+        )
+      );
+      expect(stored.rows).toEqual([{ safety_acknowledged_at: null }]);
     });
   });
 });

@@ -6,7 +6,7 @@ import { resolve } from 'path';
 config({ path: resolve(__dirname, '../../.env') });
 
 // A worktree can point its DB tests at its own test database. The suites
-// truncate and delete rows, so anything but ffp_test or ffp_test_* is refused.
+// write and delete rows, so anything but ffp_test or ffp_test_* is refused.
 const testDbName = process.env.FFP_TEST_DB_NAME ?? 'ffp_test';
 
 if (!/^ffp_test(_\w+)?$/.test(testDbName)) {

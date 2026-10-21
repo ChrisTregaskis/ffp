@@ -9,6 +9,10 @@
  * breaks any query comparing an application-written column against `NOW()` —
  * stale-job detection being the live example.
  *
+ * The difference only shows while the session's time zone is not UTC, so the
+ * connection is pinned to Pacific/Auckland (never UTC) rather than inheriting the
+ * server's zone, which is UTC in CI and in London for half the year.
+ *
  * Prerequisites:
  * - ffp_test database must exist
  * - Migrations must be run: DB_NAME=ffp_test pnpm --filter=@ffp/database db:migrate
@@ -32,6 +36,7 @@ describe('Timestamp consistency', () => {
       database: process.env.DB_NAME,
       user: process.env.DB_USER ?? 'test_user',
       password: process.env.DB_PASSWORD ?? 'test_password',
+      options: '-c TimeZone=Pacific/Auckland',
     });
     db = drizzle(pool);
   });
@@ -54,6 +59,10 @@ describe('Timestamp consistency', () => {
   });
 
   it('round-trips an application-written timestamp without drifting from now()', async () => {
+    // The pin is what makes this meaningful, so prove it took effect
+    const zone = await db.execute(sql`select current_setting('TimeZone') as zone`);
+    expect(zone.rows).toEqual([{ zone: 'Pacific/Auckland' }]);
+
     // Written the way the application writes one: a JS Date assigned to a typed
     // Drizzle column, alongside defaults that come from Postgres `now()`. The
     // two writers only agree once the column carries a time zone — a raw SQL
@@ -79,8 +88,9 @@ describe('Timestamp consistency', () => {
 
       const { drift_seconds, stale_against_five_minutes } = result.rows[0];
 
-      // On a naive column these landed an hour apart under British Summer Time,
-      // which made a just-written row look five minutes stale the moment it existed.
+      // On a naive column these land the zone's UTC offset apart (an hour under
+      // British Summer Time, 12 or 13 here), which made a just-written row look
+      // five minutes stale the moment it existed.
       expect(Math.abs(Number(drift_seconds))).toBeLessThan(60);
       expect(stale_against_five_minutes).toBe(false);
     } finally {
