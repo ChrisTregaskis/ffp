@@ -25,7 +25,7 @@ Loads when editing any `*.repository.ts`. This is the non-negotiable tenant-isol
 
 ## System-managed (RLS-excluded) tables
 
-Some catalogue tables are cross-organisation by design — do **not** add an organisation filter or RLS context for them. Current set (verify against the `@ffp/database` schema, which is the source of truth): `process_jobs`, `assessment_templates`, `assessment_flows`, `questions`, `template_questions`, `programme_templates`, `template_phases`, `template_sessions`, `session_exercises`, `videos`, `tag_categories`, `tags`, `video_tags`. User-layer tables (users, organisations, locations, user_sessions, exercise_completions, programme_phases, …) are RLS-enforced.
+Some catalogue tables are cross-organisation by design — do **not** add an organisation filter or RLS context for them. Current set (verify against the `@ffp/database` schema, which is the source of truth): `process_jobs`, `assessment_templates`, `assessment_flows`, `questions`, `template_questions`, `programme_templates`, `template_phases`, `template_sessions`, `session_exercises`, `template_session_slots`, `template_slot_tags`, `videos`, `tag_categories`, `tags`, `video_tags`. User-layer tables (users, organisations, locations, user_sessions, exercise_completions, programme_phases, …) are RLS-enforced.
 
 ## Don't
 

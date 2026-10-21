@@ -1,5 +1,6 @@
-import { getDb } from '@ffp/database';
+import { getDb, type DbClient } from '@ffp/database';
 
+import * as flowRepository from '../assessments/flow.repository';
 import { ConflictError, NotFoundError } from '../lib/errors';
 import { buildPaginationMeta } from '../schemas/pagination.schema';
 import {
@@ -20,6 +21,24 @@ import type {
 
 /** Filter fields extracted from the full query (pagination fields handled separately) */
 type TemplateFilters = Omit<TemplateListQuery, keyof PaginationInput>;
+
+/**
+ * Generation resolves a flow's recommendation by slug and refuses an inactive template, so a
+ * template any flow recommends keeps its slug and stays active.
+ */
+async function assertNoFlowRecommends(
+  db: DbClient,
+  slug: string,
+  refusal: "its slug can't change" | "it can't be deactivated"
+): Promise<void> {
+  const flowCount = await flowRepository.countFlowsRecommendingTemplate(db, slug);
+
+  if (flowCount > 0) {
+    const flows = flowCount === 1 ? '1 assessment flow' : `${String(flowCount)} assessment flows`;
+
+    throw new ConflictError(`This programme is recommended by ${flows}, so ${refusal}`);
+  }
+}
 
 /** Returns a paginated list of programme templates with optional filters. */
 export async function listTemplates(
@@ -88,13 +107,18 @@ export async function updateTemplate(
     throw new NotFoundError('Programme template');
   }
 
-  // Check slug uniqueness only if slug is being changed
   if (validated.slug && validated.slug !== existing.slug) {
+    await assertNoFlowRecommends(db, existing.slug, "its slug can't change");
+
     const slugHolder = await templateRepository.findTemplateBySlug(db, validated.slug);
 
     if (slugHolder) {
       throw new ConflictError(`A programme template with slug '${validated.slug}' already exists`);
     }
+  }
+
+  if (validated.isActive === false && existing.isActive) {
+    await assertNoFlowRecommends(db, existing.slug, "it can't be deactivated");
   }
 
   const updated = await templateRepository.updateTemplate(db, templateId, validated);
@@ -118,6 +142,10 @@ export async function deactivateTemplate(templateId: string): Promise<TemplateDe
 
   if (!existing) {
     throw new NotFoundError('Programme template');
+  }
+
+  if (existing.isActive) {
+    await assertNoFlowRecommends(db, existing.slug, "it can't be deactivated");
   }
 
   const updated = await templateRepository.deactivateTemplate(db, templateId);

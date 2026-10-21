@@ -58,7 +58,7 @@ const BRANCHING_DEMO_SCORING_CONFIG: ScoringConfig = {
   ],
 };
 
-const DEFAULT_FLOWS = [
+export const DEFAULT_FLOWS = [
   {
     id: FLOW_IDS.WELLNESS,
     name: 'Wellness Movement Assessment',

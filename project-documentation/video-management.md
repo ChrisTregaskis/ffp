@@ -121,6 +121,7 @@ Videos are described by typed tags: seeded categories (goal, body area, movement
 Videos are exercise demonstrations — the video catalogue effectively is the exercise library. Programme structure:
 
 - `programme_templates` → `template_phases` → `template_sessions` → `session_exercises` (links to `videos`)
+- `template_sessions` → `template_session_slots` → `template_slot_tags` (links to `tags`): each slot names a tag category and optionally tags in it, and a required or optional tier. Its pool is what `findPoolVideos` returns for those tags, or for the whole category when it names none (`templateSlotService.toSlotPoolQuery`)
 - Exercise prescription (sets, reps, duration, rest) will be added to `videos` as default fields (FFP-441)
 - Prescription pre-populates from video defaults when adding to a session, overridable per-session
 

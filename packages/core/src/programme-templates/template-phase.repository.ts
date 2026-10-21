@@ -51,6 +51,7 @@ export async function insertPhase(
       phaseNumber: nextPhaseNumber,
       name: input.name ?? null,
       description: input.description ?? null,
+      sessionCount: 0,
     })
     .returning();
 

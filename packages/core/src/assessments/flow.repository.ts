@@ -1,6 +1,6 @@
-import { eq, and, asc, count, ilike, or, type Column, type SQL } from 'drizzle-orm';
+import { eq, and, asc, count, ilike, or, sql, type Column, type SQL } from 'drizzle-orm';
 
-import type { DbClient } from '@ffp/database';
+import type { DbClient, DbQueryClient } from '@ffp/database';
 import {
   assessmentFlows,
   flowSteps,
@@ -385,4 +385,23 @@ export async function deactivateFlow(dbClient: DbClient, flowId: string): Promis
       updatedAt: new Date(),
     })
     .where(eq(assessmentFlows.id, flowId));
+}
+
+/**
+ * How many flows recommend a programme template, inactive flows included since they can be
+ * reactivated. Scoring config is jsonb naming templates by slug, so the match is a jsonpath
+ * evaluated in the database.
+ */
+export async function countFlowsRecommendingTemplate(
+  dbClient: DbQueryClient,
+  templateSlug: string
+): Promise<number> {
+  const [result] = await dbClient
+    .select({ count: count() })
+    .from(assessmentFlows)
+    .where(
+      sql`jsonb_path_exists(${assessmentFlows.scoringConfig}, '$.programmeMappings[*].programmeTemplateId ? (@ == $slug)', jsonb_build_object('slug', ${templateSlug}::text))`
+    );
+
+  return result.count;
 }

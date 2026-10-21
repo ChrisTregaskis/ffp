@@ -41,13 +41,13 @@ export async function findTagsOfVideo(db: DbQueryClient, videoId: string): Promi
 
 /**
  * Check an assignment against the vocabulary: every tag exists, sits in the category it was sent
- * under, and is active unless the video already carries it (so a deactivated tag survives a
- * re-save without being newly assignable).
+ * under, and is active unless the video (or template slot) already carries it, so a deactivated
+ * tag survives a re-save without being newly assignable.
  */
 export async function resolveTagAssignment(
   db: DbQueryClient,
   assignment: VideoTagAssignment,
-  currentTags?: VideoTags
+  currentTags?: Partial<VideoTags>
 ): Promise<ResolvedTagAssignment[]> {
   const sent = Object.entries(assignment) as [TagCategorySlug, string[]][];
   const publicIds = [...new Set(sent.flatMap(([, ids]) => ids))];

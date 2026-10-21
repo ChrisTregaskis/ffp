@@ -26,7 +26,7 @@ export const PROGRAMME_TEMPLATE_IDS = {
 export type ProgrammeTemplateSlug = keyof typeof PROGRAMME_TEMPLATE_IDS;
 
 /** One shell per level; each carries the minimum hierarchy to generate a programme */
-const DEFAULT_PROGRAMME_TEMPLATES: NewProgrammeTemplate[] = [
+export const DEFAULT_PROGRAMME_TEMPLATES: NewProgrammeTemplate[] = [
   {
     id: PROGRAMME_TEMPLATE_IDS[LEVEL_PROGRAMME_SLUGS[1]],
     slug: LEVEL_PROGRAMME_SLUGS[1],
