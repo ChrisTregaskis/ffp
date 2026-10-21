@@ -95,7 +95,7 @@ where: eq(users.id, userId);
 
 ```typescript
 // CORRECT
-const input = createUserSchema.parse(JSON.parse(event.body));
+const input = adminCreateUserInputSchema.parse(JSON.parse(event.body));
 const result = await userService.createUser(context, input);
 
 // WRONG — trusts raw input

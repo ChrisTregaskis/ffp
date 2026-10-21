@@ -49,7 +49,6 @@ export default defineConfig({
     alias: {
       '@core/lib': resolve(__dirname, 'src/lib'),
       '@core/types': resolve(__dirname, 'src/types'),
-      '@core/utils': resolve(__dirname, 'src/utils'),
       '@core/services': resolve(__dirname, 'src/services'),
       '@core/repositories': resolve(__dirname, 'src/repositories'),
     },
