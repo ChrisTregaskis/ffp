@@ -18,7 +18,8 @@
  *   RLS will be added when user-facing job queries are implemented (see process-jobs.ts).
  * - assessment_templates, assessment_flows, questions, template_questions:
  *   System-managed content, no organisation isolation.
- * - programme_templates, template_phases, template_sessions, session_exercises, videos:
+ * - programme_templates, template_phases, template_sessions, session_exercises, videos,
+ *   tag_categories, tags, video_tags:
  *   System-managed content, shared across all organisations.
  *
  * @module migrations/apply-rls

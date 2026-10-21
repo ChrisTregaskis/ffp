@@ -17,7 +17,7 @@ import { TABLE_FILTERS } from './constants';
 
 const DEFAULT_SORT = { id: 'createdAt', desc: true };
 
-const DEFAULT_COLUMN_VISIBILITY = { movementType: false, updatedAt: false, tags: false };
+const DEFAULT_COLUMN_VISIBILITY = { movement: false, updatedAt: false };
 
 /** The video list takes enum-typed filters, so the raw values pass through its schema first. */
 const useVideoList = (
@@ -29,7 +29,11 @@ const useVideoList = (
   return useAdminVideosQuery(pagination, parsed.success ? parsed.data : {});
 };
 
-const toVideoRow = (video: AdminVideoListResponse): VideoRow => video as VideoRow;
+const toVideoRow = (video: AdminVideoListResponse): VideoRow => ({
+  ...video,
+  movement: video.tags.movement.map((tag) => tag.label),
+  bodyAreas: video.tags['body-area'].map((tag) => tag.label),
+});
 
 const EMPTY_STATE: AdminListEmptyState = {
   filteredTitle: 'No matching videos',
@@ -60,7 +64,7 @@ export const VideoLibraryPage: React.FC = () => {
   const handlePublish = useCallback(
     (row: VideoRow): void => {
       updateMutation.mutate(
-        { id: row.id, publicId: row.publicId, data: { status: 'active' } },
+        { publicId: row.publicId, data: { status: 'active' } },
         {
           onSuccess: () => {
             addToast(`"${row.title}" published successfully`, { variant: 'success' });
@@ -78,7 +82,7 @@ export const VideoLibraryPage: React.FC = () => {
   const handleRestore = useCallback(
     (row: VideoRow): void => {
       updateMutation.mutate(
-        { id: row.id, publicId: row.publicId, data: { status: 'active' } },
+        { publicId: row.publicId, data: { status: 'active' } },
         {
           onSuccess: () => {
             addToast(`"${row.title}" restored to active`, { variant: 'success' });
@@ -99,7 +103,7 @@ export const VideoLibraryPage: React.FC = () => {
     }
 
     updateMutation.mutate(
-      { id: archiveTarget.id, publicId: archiveTarget.publicId, data: { status: 'archived' } },
+      { publicId: archiveTarget.publicId, data: { status: 'archived' } },
       {
         onSuccess: () => {
           addToast(`"${archiveTarget.title}" archived`, { variant: 'success' });

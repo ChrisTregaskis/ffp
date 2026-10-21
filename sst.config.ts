@@ -518,19 +518,10 @@ export default $config({
         CLOUDFRONT_SIGNING_KEY: cloudFrontSigningKey.value,
       },
     };
-    api.route('OPTIONS /videos', {
-      handler: `${repositoryFunctionsPath}/videos/index.handler`,
-      ...videoHandlerEnv,
-    });
     api.route('OPTIONS /videos/{proxy+}', {
       handler: `${repositoryFunctionsPath}/videos/index.handler`,
       ...videoHandlerEnv,
     });
-    api.route(
-      'ANY /videos',
-      { handler: `${repositoryFunctionsPath}/videos/index.handler`, ...videoHandlerEnv },
-      args
-    );
     api.route(
       'ANY /videos/{proxy+}',
       { handler: `${repositoryFunctionsPath}/videos/index.handler`, ...videoHandlerEnv },

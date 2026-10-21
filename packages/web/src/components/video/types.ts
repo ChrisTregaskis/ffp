@@ -4,11 +4,12 @@ import type { CreateVideoInput } from '@ffp/core';
 export interface VideoMetadataFormValues {
   title: string;
   description: string;
-  movementType: NonNullable<CreateVideoInput['movementType']> | '';
   difficulty: NonNullable<CreateVideoInput['difficulty']> | '';
-  bodyParts: string[];
+  /** Movement tag publicIds */
+  movementTags: string[];
+  /** Body-area tag publicIds */
+  bodyAreaTags: string[];
   equipment: string[];
-  tags: string[];
   /** Edit variant only — video catalogue status */
   status: string;
   /** Edit variant only — default exercise prescription fields (string form values) */

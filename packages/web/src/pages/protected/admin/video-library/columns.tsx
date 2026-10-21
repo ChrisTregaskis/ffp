@@ -8,8 +8,14 @@ import { VideoTitleCell } from './VideoTitleCell';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-/** Row type for the admin video list — extends Record<string, unknown> for TanStack Table */
-export type VideoRow = AdminVideoListResponse & Record<string, unknown>;
+/**
+ * Row type for the admin video list — the movement and body-area tag labels pulled out for their
+ * columns; extends Record<string, unknown> for TanStack Table
+ */
+export type VideoRow = AdminVideoListResponse & {
+  movement: string[];
+  bodyAreas: string[];
+} & Record<string, unknown>;
 
 const columns = createColumns<VideoRow>();
 
@@ -31,10 +37,9 @@ export const buildVideoColumns = (
   },
   columns.status('status', { label: 'Status', sortable: true, statusMap: VIDEO_STATUS_MAP }),
   columns.text('difficulty', { label: 'Difficulty', sortable: true }),
-  columns.text('movementType', { label: 'Movement Type' }),
+  columns.tags('movement', { label: 'Movement', maxVisible: 2 }),
   columns.duration('durationSeconds', { label: 'Duration', sortable: true }),
-  columns.tags('bodyParts', { label: 'Body Parts', maxVisible: 2 }),
-  columns.tags('tags', { label: 'Tags', maxVisible: 2 }),
+  columns.tags('bodyAreas', { label: 'Body Areas', maxVisible: 2 }),
   columns.date('createdAt', { label: 'Created', sortable: true }),
   columns.date('updatedAt', { label: 'Updated', sortable: true }),
   columns.actions({ actions }),

@@ -1,4 +1,4 @@
-import { getDb } from '@ffp/database';
+import { getDb, type DbQueryClient } from '@ffp/database';
 import type { VideoRecord } from '@ffp/database/schema';
 
 import { NotFoundError, ValidationError } from '../lib/errors';
@@ -7,42 +7,29 @@ import { buildPaginationMeta } from '../schemas/pagination.schema';
 import {
   createVideoSchema,
   updateVideoSchema,
-  videoFilterSchema,
-  videoListResponseSchema,
   videoDetailResponseSchema,
+  adminVideoDetailSchema,
   adminVideoFilterSchema,
   adminVideoListResponseSchema,
 } from '../schemas/video/video.schema';
+import * as videoTagService from '../tags/video-tag.service';
 
 import * as videoRepository from './video.repository';
 
 import type { OrganisationContext } from '../lib/context';
 import type { PaginationInput, PaginationMeta } from '../schemas/pagination.schema';
 import type {
-  VideoListResponse,
   VideoDetailResponse,
+  AdminVideoDetail,
   AdminVideoListResponse,
 } from '../schemas/video/video.schema';
-
-interface GetVideoOptions {
-  /** When true, returns the video regardless of status. Defaults to false (active only). */
-  includeInactive?: boolean;
-}
-
-/** Raw filter input before Zod validation — accepts unvalidated string values */
-interface VideoFilterRawInput {
-  bodyParts?: string[];
-  equipment?: string[];
-  difficulty?: string;
-  movementType?: string;
-  tags?: string[];
-}
 
 /** Raw admin filter input before Zod validation */
 interface AdminVideoFilterRawInput {
   search?: string;
   status?: string;
   difficulty?: string;
+  tags?: string[];
 }
 
 /** Valid status transitions: current status → allowed next statuses */
@@ -52,14 +39,47 @@ const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
   archived: ['draft', 'active'],
 };
 
+async function toAdminVideoDetail(
+  db: DbQueryClient,
+  record: VideoRecord
+): Promise<AdminVideoDetail> {
+  const tags = await videoTagService.findTagsOfVideo(db, record.id);
+
+  return adminVideoDetailSchema.parse({ ...record, tags });
+}
+
+/** The records with their tags, parsed into a list response shape */
+async function withTags<T>(
+  db: DbQueryClient,
+  records: VideoRecord[],
+  parse: (video: Omit<VideoRecord, 'tags'> & { tags: unknown }) => T
+): Promise<T[]> {
+  const tagsByVideo = await videoTagService.findTagsByVideoId(
+    db,
+    records.map((record) => record.id)
+  );
+
+  return records.map((record) => parse({ ...record, tags: tagsByVideo.get(record.id) }));
+}
+
 /**
- * Create a new video record with validated input.
+ * Create a new video record with validated input, and its tags.
  * Status defaults to 'draft' via schema default.
  */
-export async function createVideo(ctx: OrganisationContext, input: unknown): Promise<VideoRecord> {
-  const validated = createVideoSchema.parse(input);
+export async function createVideo(
+  ctx: OrganisationContext,
+  input: unknown
+): Promise<AdminVideoDetail> {
+  const { tags, ...validated } = createVideoSchema.parse(input);
   const db = getDb();
-  const record = await videoRepository.insertVideo(db, validated);
+  const assignment = tags ? await videoTagService.resolveTagAssignment(db, tags) : [];
+
+  const record = await db.transaction(async (tx) => {
+    const inserted = await videoRepository.insertVideo(tx, validated);
+    await videoTagService.writeTagAssignment(tx, inserted.id, assignment);
+
+    return inserted;
+  });
 
   const logger = createLogger(ctx);
   logger.info('Video record created', {
@@ -69,51 +89,39 @@ export async function createVideo(ctx: OrganisationContext, input: unknown): Pro
     status: record.status,
   });
 
-  return record;
+  return await toAdminVideoDetail(db, record);
 }
 
-export async function listVideos(_ctx: OrganisationContext): Promise<VideoListResponse[]> {
-  const db = getDb();
-  const records = await videoRepository.findAllActive(db);
-
-  return records.map((record) => videoListResponseSchema.parse(record));
-}
-
+/** An active video, for members; draft and archived videos read as missing. */
 export async function getVideo(
   _ctx: OrganisationContext,
-  publicId: string,
-  options: GetVideoOptions = {}
+  publicId: string
 ): Promise<VideoDetailResponse> {
   const db = getDb();
   const record = await videoRepository.findVideoByPublicId(db, publicId);
 
-  if (!record) {
+  if (record?.status !== 'active') {
     throw new NotFoundError('Video');
   }
 
-  if (!options.includeInactive && record.status !== 'active') {
-    throw new NotFoundError('Video');
-  }
+  const tags = await videoTagService.findTagsOfVideo(db, record.id);
 
-  return videoDetailResponseSchema.parse(record);
+  return videoDetailResponseSchema.parse({ ...record, tags });
 }
 
-export async function listVideosByFilter(
+/** A video in any status, for the catalogue admin. */
+export async function getAdminVideo(
   _ctx: OrganisationContext,
-  filters: VideoFilterRawInput
-): Promise<VideoListResponse[]> {
-  const parseResult = videoFilterSchema.safeParse(filters);
+  publicId: string
+): Promise<AdminVideoDetail> {
+  const db = getDb();
+  const record = await videoRepository.findVideoByPublicId(db, publicId);
 
-  if (!parseResult.success) {
-    throw new ValidationError('Invalid video filter parameters', {
-      errors: parseResult.error.issues,
-    });
+  if (!record) {
+    throw new NotFoundError('Video', publicId);
   }
 
-  const db = getDb();
-  const records = await videoRepository.findByFilters(db, parseResult.data);
-
-  return records.map((record) => videoListResponseSchema.parse(record));
+  return await toAdminVideoDetail(db, record);
 }
 
 export async function listAdminVideos(
@@ -136,23 +144,24 @@ export async function listAdminVideos(
   const total = await videoRepository.countAllVideos(db, filters);
 
   return {
-    data: records.map((record) => adminVideoListResponseSchema.parse(record)),
+    data: await withTags(db, records, (video) => adminVideoListResponseSchema.parse(video)),
     pagination: buildPaginationMeta(paginationInput, total),
   };
 }
 
+/** Update a video's metadata, status and tags, resolved by public identifier. */
 export async function updateVideo(
   ctx: OrganisationContext,
-  videoId: string,
+  publicId: string,
   input: unknown
-): Promise<VideoDetailResponse> {
-  const validated = updateVideoSchema.parse(input);
+): Promise<AdminVideoDetail> {
+  const { tags, ...validated } = updateVideoSchema.parse(input);
 
   const db = getDb();
-  const existing = await videoRepository.findVideoById(db, videoId);
+  const existing = await videoRepository.findVideoByPublicId(db, publicId);
 
   if (!existing) {
-    throw new NotFoundError('Video');
+    throw new NotFoundError('Video', publicId);
   }
 
   if (validated.status && validated.status !== existing.status) {
@@ -165,10 +174,23 @@ export async function updateVideo(
     }
   }
 
-  const updated = await videoRepository.updateVideo(db, videoId, validated);
+  const assignment = tags
+    ? await videoTagService.resolveTagAssignment(
+        db,
+        tags,
+        await videoTagService.findTagsOfVideo(db, existing.id)
+      )
+    : [];
+
+  const updated = await db.transaction(async (tx) => {
+    const record = await videoRepository.updateVideo(tx, existing.id, validated);
+    await videoTagService.writeTagAssignment(tx, existing.id, assignment);
+
+    return record;
+  });
 
   if (!updated) {
-    throw new NotFoundError('Video');
+    throw new NotFoundError('Video', publicId);
   }
 
   const logger = createLogger(ctx);
@@ -179,5 +201,5 @@ export async function updateVideo(
     previousStatus: existing.status,
   });
 
-  return videoDetailResponseSchema.parse(updated);
+  return await toAdminVideoDetail(db, updated);
 }

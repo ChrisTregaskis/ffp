@@ -10,7 +10,7 @@ import { VideoReplacer } from '@web/components/video/VideoReplacer';
 import { RouteKey, routes } from '@web/config/routes';
 import { useConfirmBeforeSave } from '@web/hooks/useConfirmBeforeSave';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
-import { useUpdateVideoMutation, useVideoQuery } from '@web/hooks/videos';
+import { useAdminVideoQuery, useUpdateVideoMutation } from '@web/hooks/videos';
 
 import { toUpdateVideoInput, toVideoFormValues } from './video-form-values';
 
@@ -21,7 +21,7 @@ export const VideoEditPage: React.FC = () => {
   const navigate = useNavigate();
   const { submitError, clearSubmitError, saveCallbacks } = useSaveFeedback();
 
-  const { data: video, isLoading, error } = useVideoQuery(id, { includeInactive: true });
+  const { data: video, isLoading, error } = useAdminVideoQuery(id);
   const updateMutation = useUpdateVideoMutation();
 
   const handleNavigateBack = useCallback(() => {
@@ -38,7 +38,7 @@ export const VideoEditPage: React.FC = () => {
       clearSubmitError();
 
       await updateMutation.mutateAsync(
-        { id: video.id, publicId: video.publicId, data },
+        { publicId: video.publicId, data },
         saveCallbacks('Video updated successfully', handleNavigateBack)
       );
     },
@@ -90,7 +90,7 @@ export const VideoEditPage: React.FC = () => {
               variant="white"
               className="mb-4"
             />
-            <VideoReplacer videoId={video.id} publicId={id} className="mb-6" />
+            <VideoReplacer publicId={id} className="mb-6" />
           </>
         )
       }
@@ -106,6 +106,9 @@ export const VideoEditPage: React.FC = () => {
         <VideoMetadataFormFields
           variant="edit"
           currentStatus={video.status}
+          carriedTagIds={Object.values(video.tags).flatMap((tags) =>
+            tags.map((tag) => tag.publicId)
+          )}
           onCancel={handleNavigateBack}
           isSubmitting={updateMutation.isPending}
           errorMessage={submitError}

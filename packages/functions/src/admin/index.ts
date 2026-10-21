@@ -47,6 +47,10 @@ import { handler as deactivateQuestionHandler } from './questions/deactivate-que
 import { handler as getQuestionHandler } from './questions/get-question';
 import { handler as listQuestionsHandler } from './questions/list-questions';
 import { handler as updateQuestionHandler } from './questions/update-question';
+import { handler as createTagHandler } from './tags/create-tag';
+import { handler as deactivateTagHandler } from './tags/deactivate-tag';
+import { handler as listTagCategoriesHandler } from './tags/list-tag-categories';
+import { handler as updateTagHandler } from './tags/update-tag';
 import { handler as assignQuestionsHandler } from './templates/assign-questions';
 import { handler as createTemplateHandler } from './templates/create-template';
 import { handler as deactivateTemplateHandler } from './templates/deactivate-template';
@@ -62,6 +66,7 @@ import { handler as getUserHandler } from './users/get-user';
 import { handler as listUsersHandler } from './users/list-users';
 import { handler as updateUserHandler } from './users/update-user';
 import { handler as createVideoHandler } from './videos/create';
+import { handler as getVideoHandler } from './videos/get';
 import { handler as getUploadUrlHandler } from './videos/get-upload-url';
 import { handler as listVideosHandler } from './videos/list';
 import { handler as updateVideoHandler } from './videos/update';
@@ -90,6 +95,7 @@ const routes: RouteRegistry = {
     '/programme-templates/{id}/phases': createPhaseHandler,
     '/phases/{id}/sessions': createSessionHandler,
     '/sessions/{id}/exercises': createExerciseHandler,
+    '/tags': createTagHandler,
     '/users': createUserHandler,
     '/videos': createVideoHandler,
     '/videos/upload-url': getUploadUrlHandler,
@@ -111,7 +117,9 @@ const routes: RouteRegistry = {
     '/sessions/{id}/exercises': listExercisesHandler,
     '/users': listUsersHandler,
     '/users/{id}': getUserHandler,
+    '/tag-categories': listTagCategoriesHandler,
     '/videos': listVideosHandler,
+    '/videos/{publicId}': getVideoHandler,
   },
   PUT: {
     '/organisations/{id}': updateOrganisationHandler,
@@ -134,7 +142,8 @@ const routes: RouteRegistry = {
     '/exercises/{id}': updateExerciseHandler,
     '/sessions/{id}': updateSessionHandler,
     '/sessions/{id}/exercises/reorder': reorderExercisesHandler,
-    '/videos/{id}': updateVideoHandler,
+    '/tags/{publicId}': updateTagHandler,
+    '/videos/{publicId}': updateVideoHandler,
   },
   DELETE: {
     '/assessment-flows/{publicId}': deactivateFlowHandler,
@@ -143,6 +152,7 @@ const routes: RouteRegistry = {
     '/assessment-templates/{templatePublicId}/questions/{questionPublicId}':
       unassignQuestionHandler,
     '/questions/{publicId}': deactivateQuestionHandler,
+    '/tags/{publicId}': deactivateTagHandler,
     '/exercises/{id}': deleteExerciseHandler,
     '/phases/{id}': deletePhaseHandler,
     '/sessions/{id}': deleteSessionHandler,

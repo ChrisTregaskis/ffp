@@ -25,8 +25,8 @@ export interface VideoMetadataFormProps {
 /**
  * Video metadata form for the upload page.
  *
- * Collects title, description, movement type, difficulty, body parts, equipment,
- * and tags. Returns a VideoMetadataValues object on submit — the parent
+ * Collects title, description, movement and body-area tags, difficulty and equipment.
+ * Returns a VideoMetadataValues object on submit — the parent
  * hook handles assembling the full CreateVideoInput with upload-derived fields
  * (duration, file size, S3 key, etc.).
  */
@@ -42,12 +42,10 @@ export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
     (values: VideoMetadataFormValues) => {
       const metadata: VideoMetadataValues = {
         title: values.title,
-        bodyParts: values.bodyParts,
         equipment: values.equipment,
         description: values.description || undefined,
-        movementType: values.movementType || undefined,
         difficulty: values.difficulty || undefined,
-        tags: values.tags,
+        tags: { movement: values.movementTags, 'body-area': values.bodyAreaTags },
       };
 
       onSubmit(metadata);
@@ -62,11 +60,10 @@ export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
       defaultValues={{
         title: '',
         description: '',
-        movementType: '',
         difficulty: '',
-        bodyParts: [],
+        movementTags: [],
+        bodyAreaTags: [],
         equipment: [],
-        tags: [],
         status: '',
         defaultSets: '',
         defaultReps: '',

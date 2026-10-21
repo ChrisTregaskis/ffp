@@ -6,9 +6,6 @@ import { useVideoReplacement } from '@web/hooks/videos';
 import { formatFileSize } from '@web/utils/format';
 
 export interface VideoReplacerProps {
-  /** UUID — used for the update API call */
-  videoId: string;
-  /** Public ID — used for cache invalidation (matches query keys) */
   publicId: string;
   className?: string;
 }
@@ -19,11 +16,9 @@ export interface VideoReplacerProps {
  * Idle: secondary button floated right below the video player.
  * Active: full-width panel with file info, progress, and confirmation modal.
  */
-export const VideoReplacer: React.FC<VideoReplacerProps> = ({ videoId, publicId, className }) => {
-  const { fileSelection, progress, handleConfirmReplace, handleClear } = useVideoReplacement(
-    videoId,
-    publicId
-  );
+export const VideoReplacer: React.FC<VideoReplacerProps> = ({ publicId, className }) => {
+  const { fileSelection, progress, handleConfirmReplace, handleClear } =
+    useVideoReplacement(publicId);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const handleRequestReplace = useCallback(() => {

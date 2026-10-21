@@ -23,6 +23,9 @@ export * from './programme-structure.schema';
 // Session schemas
 export * from './session.schema';
 
+// Tag schemas
+export * from './tag.schema';
+
 // Video schemas
 export * from './video/video.schema';
 

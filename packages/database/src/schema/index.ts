@@ -27,3 +27,4 @@ export * from './template-questions';
 export * from './user-assessment-answers';
 export * from './assessment-safety-triggers';
 export * from './videos';
+export * from './tags';

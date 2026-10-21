@@ -207,9 +207,9 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
                         {video.difficulty}
                       </Text>
                     )}
-                    {video.movementType && (
+                    {video.tags.movement.length > 0 && (
                       <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
-                        {video.movementType}
+                        {video.tags.movement.map((tag) => tag.label).join(', ')}
                       </Text>
                     )}
                   </div>

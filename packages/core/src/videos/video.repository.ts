@@ -1,27 +1,24 @@
-import { and, eq, or, arrayOverlaps, ilike, count, type SQL, type Column } from 'drizzle-orm';
+import {
+  and,
+  eq,
+  or,
+  exists,
+  ilike,
+  inArray,
+  count,
+  sql,
+  type SQL,
+  type Column,
+} from 'drizzle-orm';
 import { z } from 'zod';
 
-import type { DbClient } from '@ffp/database';
-import type { Difficulty, MovementType } from '@ffp/database/constants';
-import { videos, type VideoRecord, type NewVideo } from '@ffp/database/schema';
+import type { DbClient, DbQueryClient } from '@ffp/database';
+import { tags, videos, videoTags, type VideoRecord, type NewVideo } from '@ffp/database/schema';
 
 import { applyPagination } from '../lib/pagination';
 
 import type { PaginationInput } from '../schemas/pagination.schema';
 import type { AdminVideoFilterInput, UpdateVideoInput } from '../schemas/video/video.schema';
-
-export interface VideoFilters {
-  /** Filter by target body parts — matches videos that overlap with any of the provided values */
-  bodyParts?: string[];
-  /** Filter by required equipment — matches videos that overlap with any of the provided values */
-  equipment?: string[];
-  /** Filter by exercise difficulty level */
-  difficulty?: Difficulty;
-  /** Filter by movement type category */
-  movementType?: MovementType;
-  /** Filter by tags — matches videos that overlap with any of the provided values */
-  tags?: string[];
-}
 
 /** Columns available for sorting on the admin video list */
 const ADMIN_SORTABLE_COLUMNS: Partial<Record<string, Column>> = {
@@ -34,7 +31,7 @@ const ADMIN_SORTABLE_COLUMNS: Partial<Record<string, Column>> = {
 };
 
 /** Build WHERE conditions for admin video list filters. */
-const buildAdminFilterConditions = (filters: AdminVideoFilterInput): SQL[] => {
+const buildAdminFilterConditions = (db: DbClient, filters: AdminVideoFilterInput): SQL[] => {
   const conditions: SQL[] = [];
 
   if (filters.search) {
@@ -54,10 +51,22 @@ const buildAdminFilterConditions = (filters: AdminVideoFilterInput): SQL[] => {
     conditions.push(eq(videos.difficulty, filters.difficulty));
   }
 
+  if (filters.tags && filters.tags.length > 0) {
+    conditions.push(
+      exists(
+        db
+          .select({ one: sql`1` })
+          .from(videoTags)
+          .innerJoin(tags, eq(tags.id, videoTags.tagId))
+          .where(and(eq(videoTags.videoId, videos.id), inArray(tags.publicId, filters.tags)))
+      )
+    );
+  }
+
   return conditions;
 };
 
-export async function insertVideo(db: DbClient, input: NewVideo): Promise<VideoRecord> {
+export async function insertVideo(db: DbQueryClient, input: NewVideo): Promise<VideoRecord> {
   const records = await db.insert(videos).values(input).returning();
 
   return records[0];
@@ -95,44 +104,6 @@ export async function findVideoByIdOrPublicId(
   return records[0] ?? null;
 }
 
-export async function findAllActive(db: DbClient): Promise<VideoRecord[]> {
-  return await db.select().from(videos).where(eq(videos.status, 'active')).orderBy(videos.title);
-}
-
-/**
- * Returns active videos matching the provided filter criteria.
- * Array filters (bodyParts, equipment, tags) use GIN-indexed arrayOverlaps for performance.
- */
-export async function findByFilters(db: DbClient, filters: VideoFilters): Promise<VideoRecord[]> {
-  const conditions: SQL[] = [eq(videos.status, 'active')];
-
-  if (filters.bodyParts && filters.bodyParts.length > 0) {
-    conditions.push(arrayOverlaps(videos.bodyParts, filters.bodyParts));
-  }
-
-  if (filters.equipment && filters.equipment.length > 0) {
-    conditions.push(arrayOverlaps(videos.equipment, filters.equipment));
-  }
-
-  if (filters.difficulty) {
-    conditions.push(eq(videos.difficulty, filters.difficulty));
-  }
-
-  if (filters.movementType) {
-    conditions.push(eq(videos.movementType, filters.movementType));
-  }
-
-  if (filters.tags && filters.tags.length > 0) {
-    conditions.push(arrayOverlaps(videos.tags, filters.tags));
-  }
-
-  return await db
-    .select()
-    .from(videos)
-    .where(and(...conditions))
-    .orderBy(videos.title);
-}
-
 /**
  * Returns all videos (any status) with pagination and optional filters.
  * For admin use — no status restriction applied by default.
@@ -142,7 +113,7 @@ export async function findAllVideos(
   paginationInput: PaginationInput,
   filters: AdminVideoFilterInput
 ): Promise<VideoRecord[]> {
-  const conditions = buildAdminFilterConditions(filters);
+  const conditions = buildAdminFilterConditions(db, filters);
 
   const query = db
     .select()
@@ -157,7 +128,7 @@ export async function countAllVideos(
   db: DbClient,
   filters: AdminVideoFilterInput
 ): Promise<number> {
-  const conditions = buildAdminFilterConditions(filters);
+  const conditions = buildAdminFilterConditions(db, filters);
 
   const result = await db
     .select({ count: count() })
@@ -168,9 +139,9 @@ export async function countAllVideos(
 }
 
 export async function updateVideo(
-  db: DbClient,
+  db: DbQueryClient,
   videoId: string,
-  data: UpdateVideoInput
+  data: Omit<UpdateVideoInput, 'tags'>
 ): Promise<VideoRecord | null> {
   const records = await db
     .update(videos)

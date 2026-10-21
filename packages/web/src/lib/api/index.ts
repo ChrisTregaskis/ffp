@@ -12,6 +12,7 @@ export type {
 
 // Endpoint exports
 export {
+  adminTagsApi,
   adminVideosApi,
   assessmentsApi,
   exercisesApi,
@@ -37,9 +38,6 @@ export type {
   SubmitAssessmentResponse,
   SignedVideoUrlResponse,
   VideoDetailResponse,
-  VideoFilterInput,
-  VideoListApiResponse,
-  VideoListResponse,
   SessionStatusResponse,
   StartSessionRequest,
   StartSessionResponse,
