@@ -7,6 +7,14 @@ import { defineConfig } from 'vitest/config';
  *
  * Tests shared business logic and utilities
  */
+// A worktree can point its DB tests at its own test database. The suites
+// truncate and delete rows, so anything but ffp_test or ffp_test_* is refused.
+const testDbName = process.env.FFP_TEST_DB_NAME ?? 'ffp_test';
+
+if (!/^ffp_test(_\w+)?$/.test(testDbName)) {
+  throw new Error(`FFP_TEST_DB_NAME must be ffp_test or ffp_test_*, got "${testDbName}"`);
+}
+
 export default defineConfig({
   test: {
     globals: true,
@@ -30,7 +38,7 @@ export default defineConfig({
     // 2. Ensure test_user has permissions on new tables (via DEFAULT PRIVILEGES or GRANT)
     // 3. test_user is distinct from app_user (.env) - both need table access
     env: {
-      DB_NAME: 'ffp_test',
+      DB_NAME: testDbName,
       DB_HOST: 'localhost',
       DB_PORT: '5432',
       DB_USER: 'test_user',

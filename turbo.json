@@ -34,6 +34,7 @@
     },
     "test": {
       "dependsOn": ["build"],
+      "env": ["FFP_TEST_DB_NAME"],
       "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
       "outputs": ["coverage/**"],
       "cache": true,
@@ -41,6 +42,7 @@
     },
     "test:coverage": {
       "dependsOn": ["build"],
+      "env": ["FFP_TEST_DB_NAME"],
       "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
       "outputs": ["coverage/**"],
       "cache": true,
