@@ -1,6 +1,7 @@
-import { defineConfig } from 'vitest/config';
-import { config } from 'dotenv';
 import { resolve } from 'path';
+
+import { config } from 'dotenv';
+import { defineConfig } from 'vitest/config';
 
 // Load environment variables from monorepo root
 config({ path: resolve(__dirname, '../../.env') });

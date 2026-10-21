@@ -40,8 +40,6 @@ describe('User Assessment Repository', () => {
   let userA1Id: string;
   let userB1Id: string;
   let flowId: string;
-  let programmeTemplateId: string;
-  let programmeId: string;
 
   beforeAll(() => {
     pool = new Pool({
@@ -103,42 +101,12 @@ describe('User Assessment Repository', () => {
         true
       )
     `);
-
-    // Create Programme Template (shared, no RLS - templates are system-managed)
-    programmeTemplateId = randomUUID();
-    await db.execute(sql`
-      INSERT INTO programme_templates (id, public_id, slug, name, is_active)
-      VALUES (
-        ${programmeTemplateId},
-        ${randomUUID().replace(/-/g, '').slice(0, 12)},
-        ${`test-template-${programmeTemplateId.slice(0, 8)}`},
-        ${`Test Template [${TEST_RUN_ID}]`},
-        true
-      )
-    `);
-
-    // Create Programme (belongs to Organisation A, linked to User A1)
-    programmeId = randomUUID();
-    await asOrganisation(db, organisationAId, async (tx) => {
-      await tx.execute(sql`
-        INSERT INTO programmes (id, public_id, organisation_id, user_id, programme_template_id, name)
-        VALUES (
-          ${programmeId},
-          ${randomUUID().replace(/-/g, '').slice(0, 12)},
-          ${organisationAId},
-          ${userA1Id},
-          ${programmeTemplateId},
-          ${`Test Programme [${TEST_RUN_ID}]`}
-        )
-      `);
-    });
   });
 
   afterEach(async () => {
-    // Each organisation under its own context: its users, location, assessments,
-    // safety triggers and programme cascade. Then the shared rows they referenced.
+    // Each organisation under its own context: its users, location, assessments and
+    // safety triggers cascade. Then the shared flow they referenced.
     await deleteOrganisations(db, [organisationAId, organisationBId]);
-    await db.execute(sql`DELETE FROM programme_templates WHERE id = ${programmeTemplateId}`);
     await db.execute(sql`DELETE FROM assessment_flows WHERE id = ${flowId}`);
   });
 

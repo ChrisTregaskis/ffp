@@ -15,12 +15,15 @@
  * @module __tests__/integration.test
  */
 
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
-import { getDb, closeDb } from '../src/client';
-import { users, organisations, locations } from '../src/schema';
-import { withRLS } from '../src/lib/rls';
-import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
+
+import { eq } from 'drizzle-orm';
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
+
+import { getDb, closeDb } from '../src/client';
+import { withRLS } from '../src/lib/rls';
+import { users, organisations, locations } from '../src/schema';
+
 import { deleteOrganisations } from './helpers/rls-context';
 
 // Unique per run, so the global unique indexes on email and account code
@@ -39,7 +42,7 @@ describe('Drizzle Integration Tests', () => {
     return organisationId;
   };
 
-  beforeAll(async () => {
+  beforeAll(() => {
     // Setup test database connection
     // IMPORTANT: test_user does NOT have BYPASSRLS, so RLS policies are enforced
     process.env.DB_HOST = 'localhost';

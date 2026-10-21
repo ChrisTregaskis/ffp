@@ -19,22 +19,26 @@
  * @module lib/rls.test
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
+import { randomUUID } from 'crypto';
+
+import { eq, inArray, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Client, Pool, type PoolConfig } from 'pg';
-import { eq, inArray, sql } from 'drizzle-orm';
-import { randomUUID } from 'crypto';
-import { setRLSContext, withAdminContext, withRLS } from './rls';
-import { assessmentFlows, locations, organisations, userAssessments, users } from '../schema';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
+
 import { asOrganisation, deleteOrganisations } from '../../__tests__/helpers/rls-context';
+import { assessmentFlows, locations, organisations, userAssessments, users } from '../schema';
+
+import { setRLSContext, withAdminContext, withRLS } from './rls';
+
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 const connectionConfig = (): PoolConfig => ({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
+  host: process.env.DB_HOST ?? 'localhost',
+  port: parseInt(process.env.DB_PORT ?? '5432'),
   database: process.env.DB_NAME,
-  user: process.env.DB_USER || 'test_user',
-  password: process.env.DB_PASSWORD || 'test_password',
+  user: process.env.DB_USER ?? 'test_user',
+  password: process.env.DB_PASSWORD ?? 'test_password',
 });
 
 /**
@@ -43,7 +47,7 @@ const connectionConfig = (): PoolConfig => ({
  * as '' rather than NULL, and the policies' `::uuid` cast then fails with 22P02.
  */
 const onFreshConnection = async <T>(
-  callback: (db: NodePgDatabase<any>) => Promise<T>
+  callback: (db: NodePgDatabase<Record<string, unknown>>) => Promise<T>
 ): Promise<T> => {
   const client = new Client(connectionConfig());
   await client.connect();
@@ -57,7 +61,7 @@ const onFreshConnection = async <T>(
 
 /** A pool of exactly one connection, so consecutive queries share a session. */
 const onSingleConnectionPool = async <T>(
-  callback: (db: NodePgDatabase<any>) => Promise<T>
+  callback: (db: NodePgDatabase<Record<string, unknown>>) => Promise<T>
 ): Promise<T> => {
   const singlePool = new Pool({ ...connectionConfig(), max: 1 });
 
@@ -74,7 +78,9 @@ interface RlsSettings {
   admin: string | null;
 }
 
-const currentSettings = async (db: NodePgDatabase<any>): Promise<RlsSettings> => {
+const currentSettings = async <TSchema extends Record<string, unknown>>(
+  db: NodePgDatabase<TSchema>
+): Promise<RlsSettings> => {
   const result = await db.execute(sql`
     SELECT current_setting('app.organisation_id', true) AS organisation_setting,
            current_setting('app.user_id', true) AS user_setting,
@@ -90,7 +96,7 @@ const currentSettings = async (db: NodePgDatabase<any>): Promise<RlsSettings> =>
 };
 
 describe('RLS Utility Functions', () => {
-  let db: NodePgDatabase<any>;
+  let db: NodePgDatabase<Record<string, unknown>>;
   let pool: Pool;
 
   // Test data IDs
@@ -658,11 +664,11 @@ describe('RLS Utility Functions', () => {
         WHERE n.nspname = 'public' AND c.relkind = 'r'
         ORDER BY c.relname
       `);
-      const tables = catalogue.rows as Array<{
+      const tables = catalogue.rows as {
         table_name: string;
         enabled: boolean;
         forced: boolean;
-      }>;
+      }[];
 
       expect(tables.map((table) => table.table_name)).toContain('users');
       expect(
