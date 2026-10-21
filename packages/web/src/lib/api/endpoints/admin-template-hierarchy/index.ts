@@ -21,3 +21,12 @@ export type {
   SessionResponse,
   UpdateSessionRequest,
 } from './admin-sessions';
+
+export { adminSlotsApi } from './admin-slots';
+export type {
+  CreateSlotRequest,
+  ReorderSlotsRequest,
+  SessionSlotsResponse,
+  SlotResponse,
+  UpdateSlotRequest,
+} from './admin-slots';

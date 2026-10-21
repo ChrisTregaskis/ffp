@@ -8,8 +8,8 @@ import { KebabMenu, DeleteConfirmModal } from '@web/components/organisms';
 import type { DropdownMenuItem } from '@web/components/organisms';
 import { reorderableItemActions } from '@web/utils/reorderable-item-actions';
 
-import { ExerciseList } from './ExerciseList';
 import { sessionToFormValues, toUpdateSessionRequest } from './session-form-values';
+import { SessionCardContent } from './SessionCardContent';
 import { SessionForm } from './SessionForm';
 
 import type { SessionFormValues } from './SessionForm';
@@ -154,7 +154,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
             />
           </InlineFormPanel>
         ) : (
-          <ExerciseList
+          <SessionCardContent
             sessionId={session.id}
             templateId={templateId}
             exerciseCount={exerciseCount}
@@ -170,7 +170,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
         onConfirm={handleConfirmDelete}
         isLoading={isMutating}
         title="Delete Session"
-        message="This will permanently delete this session and all exercises within it. A session that members' programmes include can't be deleted. This action cannot be undone."
+        message="This will permanently delete this session with its slots and exercises. A session that members' programmes include can't be deleted. This action cannot be undone."
       />
     </>
   );

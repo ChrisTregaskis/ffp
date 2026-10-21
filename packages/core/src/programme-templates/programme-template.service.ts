@@ -19,6 +19,9 @@ import type {
   TemplateListQuery,
 } from '../schemas/programme/programme.schema';
 
+// Shown to authors as written, so it says what to do
+const TAKEN_SLUG_MESSAGE = 'A template with this slug already exists. Please use a different slug.';
+
 /** Filter fields extracted from the full query (pagination fields handled separately) */
 type TemplateFilters = Omit<TemplateListQuery, keyof PaginationInput>;
 
@@ -81,7 +84,7 @@ export async function createTemplate(input: unknown): Promise<TemplateDetailResp
   const existing = await templateRepository.findTemplateBySlug(db, validated.slug);
 
   if (existing) {
-    throw new ConflictError(`A programme template with slug '${validated.slug}' already exists`);
+    throw new ConflictError(TAKEN_SLUG_MESSAGE);
   }
 
   const record = await templateRepository.insertTemplate(db, validated);
@@ -113,7 +116,7 @@ export async function updateTemplate(
     const slugHolder = await templateRepository.findTemplateBySlug(db, validated.slug);
 
     if (slugHolder) {
-      throw new ConflictError(`A programme template with slug '${validated.slug}' already exists`);
+      throw new ConflictError(TAKEN_SLUG_MESSAGE);
     }
   }
 

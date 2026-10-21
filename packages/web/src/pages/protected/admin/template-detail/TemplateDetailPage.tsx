@@ -5,7 +5,6 @@ import { Badge, Surface, Text } from '@web/components/atoms';
 import {
   DeactivateTemplateModal,
   TemplateMetadataFormFields,
-  toTemplateSaveError,
 } from '@web/components/programme-templates';
 import type { TemplateMetadataFormValues } from '@web/components/programme-templates';
 import { AdminEditPageShell } from '@web/components/templates';
@@ -58,8 +57,7 @@ export const TemplateDetailPage: React.FC = () => {
             void navigate(
               generatePath(routes[RouteKey.ADMIN_TEMPLATE_DETAIL].path, { id: created.publicId })
             );
-          },
-          { mapError: toTemplateSaveError }
+          }
         )
       );
     },
@@ -85,9 +83,7 @@ export const TemplateDetailPage: React.FC = () => {
 
       await updateMutation.mutateAsync(
         { id: template.id, publicId: template.publicId, data: payload },
-        saveCallbacks('Template updated successfully', handleNavigateBack, {
-          mapError: toTemplateSaveError,
-        })
+        saveCallbacks('Template updated successfully', handleNavigateBack)
       );
     },
     [template, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]

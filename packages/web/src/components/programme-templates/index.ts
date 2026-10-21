@@ -16,6 +16,5 @@ export type { SessionFormValues } from './SessionForm';
 export { toCreateSessionRequest } from './session-form-values';
 export { VideoSelector } from './VideoSelector';
 export type { SelectedVideo } from './VideoSelector';
-export { toTemplateSaveError } from './template-save-error';
 export { TemplateMetadataFormFields } from './TemplateMetadataFormFields';
 export type { TemplateMetadataFormValues } from './types';
