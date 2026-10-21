@@ -1,3 +1,4 @@
+import { relations } from 'drizzle-orm';
 import {
   pgTable,
   uuid,
@@ -10,12 +11,13 @@ import {
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { relations } from 'drizzle-orm';
-import { organisations } from './organisations';
-import { users } from './users';
-import { programmeTemplates } from './programme-templates';
+
 import { PROGRAMME_STATUSES } from '../constants/programme.constants';
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
+import { organisations } from './organisations';
+import { programmeTemplates } from './programme-templates';
+import { users } from './users';
 
 export const programmeStatusEnum = pgEnum('programme_status', [...PROGRAMME_STATUSES]);
 

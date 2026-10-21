@@ -1,8 +1,11 @@
 import { readFileSync } from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
+
 import { HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+
 import { createLogger } from '../src/lib/logger.js';
+
 import { SEED_VIDEO_S3_KEYS } from './seedVideos.js';
 
 const logger = createLogger('seed-video-assets');

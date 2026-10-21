@@ -1,9 +1,11 @@
+import { relations } from 'drizzle-orm';
 import { pgTable, uuid, jsonb, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { relations } from 'drizzle-orm';
+
 import { organisations } from './organisations';
-import { userAssessments } from './user-assessments';
 import { questions } from './questions';
+import { userAssessments } from './user-assessments';
+
 import type { AnswerValue } from '../types';
 
 /**

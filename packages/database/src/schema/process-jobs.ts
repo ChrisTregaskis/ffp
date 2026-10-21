@@ -1,8 +1,10 @@
+import { relations } from 'drizzle-orm';
 import { pgTable, uuid, text, integer, jsonb, timestamp, index, pgEnum } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { relations } from 'drizzle-orm';
-import { organisations } from './organisations';
+
 import { JOB_STATUSES, JOB_TYPES } from '../constants/job.constants';
+
+import { organisations } from './organisations';
 
 export const jobStatusEnum = pgEnum('job_status', [...JOB_STATUSES]);
 export const jobTypeEnum = pgEnum('job_type', [...JOB_TYPES]);

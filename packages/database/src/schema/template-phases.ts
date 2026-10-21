@@ -9,8 +9,10 @@ import {
   index,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { programmeTemplates } from './programme-templates';
+
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
+import { programmeTemplates } from './programme-templates';
 
 /**
  * Template phases table definition

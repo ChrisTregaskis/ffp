@@ -54,6 +54,7 @@ const prefixColors: Record<TerminalPrefix, keyof typeof colors> = {
  */
 export const terminalPrefix = (prefix: TerminalPrefix): string => {
   const color = prefixColors[prefix];
+
   return `${colors[color]}[${prefix}]${colors.reset}`;
 };
 

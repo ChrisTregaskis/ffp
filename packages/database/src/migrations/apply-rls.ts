@@ -25,8 +25,10 @@
  */
 
 import { sql } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+
 import { createLogger } from '../lib/logger';
+
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 const logger = createLogger('apply-rls');
 
@@ -42,7 +44,9 @@ const logger = createLogger('apply-rls');
  * @param db - Drizzle database instance
  * @returns Promise<void>
  */
-export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
+export const applyRLS = async <TSchema extends Record<string, unknown>>(
+  db: NodePgDatabase<TSchema>
+): Promise<void> => {
   logger.info('Checking RLS status...');
 
   // Check if RLS is already applied to all tables
@@ -54,10 +58,10 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     ORDER BY tablename
   `);
 
-  const tables = rlsCheck.rows as Array<{ tablename: string; rowsecurity: boolean }>;
+  const tables = rlsCheck.rows as { tablename: string; rowsecurity: boolean }[];
 
   // Check if all tables have RLS enabled (10 tables)
-  const allTablesHaveRLS = tables.length === 10 && tables.every((t) => t.rowsecurity === true);
+  const allTablesHaveRLS = tables.length === 10 && tables.every((t) => t.rowsecurity);
 
   if (allTablesHaveRLS) {
     logger.info('RLS already enabled on all tables, re-applying policies to pick up any changes...');
@@ -79,7 +83,8 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
 
     // Force RLS in development/test environments (for testing with superuser)
     // In production, app_user will have RLS enforced naturally (non-superuser)
-    const environment = process.env.ENVIRONMENT || 'development';
+    // Not ??, so an empty value also falls back.
+    const environment = process.env.ENVIRONMENT ? process.env.ENVIRONMENT : 'development';
     const isProduction = environment === 'production' || environment === 'prod';
 
     if (!isProduction) {
@@ -433,7 +438,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
   `);
 
   logger.info('RLS Status:');
-  for (const row of verifyCheck.rows as Array<{ tablename: string; rowsecurity: boolean }>) {
+  for (const row of verifyCheck.rows as { tablename: string; rowsecurity: boolean }[]) {
     const status = row.rowsecurity ? 'Enabled' : 'Disabled';
     logger.info(`  ${row.tablename}: ${status}`, { table: row.tablename, enabled: row.rowsecurity });
   }

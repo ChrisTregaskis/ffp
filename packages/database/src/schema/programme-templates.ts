@@ -9,8 +9,10 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { difficultyEnum } from './videos';
+
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
+import { difficultyEnum } from './videos';
 
 /**
  * System-managed lookup table for programme templates. Referenced by:

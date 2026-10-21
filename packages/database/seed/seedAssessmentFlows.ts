@@ -1,15 +1,17 @@
-import { Pool } from 'pg';
 import { eq, inArray } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../src/schema/index.js';
-import { assessmentFlows, questions } from '../src/schema/index.js';
-import { createLogger } from '../src/lib/logger.js';
+import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { type Pool } from 'pg';
+
 import {
   LEVEL_PROGRAMME_SLUGS,
   LEVEL_SCORING_CONFIG,
 } from '../src/constants/level-scoring.constants.js';
+import { createLogger } from '../src/lib/logger.js';
+import { assessmentFlows, questions } from '../src/schema/index.js';
+
 import { QUESTION_IDS } from './seedQuestions.js';
 
+import type * as schema from '../src/schema/index.js';
 import type { ScoringConfig } from '../src/types/question.types.js';
 
 const logger = createLogger('seed-assessment-flows');
@@ -99,7 +101,9 @@ const assertScoringConfigMatchesQuestions = async (
     if (!storedDimensions.has(questionId)) {
       return [`${dimension}: question ${questionId} does not exist`];
     }
+
     const actual = storedDimensions.get(questionId);
+
     return actual === dimension
       ? []
       : [`${dimension}: question ${questionId} carries dimension ${actual ?? 'none'}`];

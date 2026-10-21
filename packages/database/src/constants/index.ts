@@ -13,6 +13,7 @@
  */
 
 export * from './branching.constants';
+export * from './cognito.constants';
 export * from './location.constants';
 export * from './flow.constants';
 export * from './job.constants';

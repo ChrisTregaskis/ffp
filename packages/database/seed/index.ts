@@ -17,25 +17,29 @@
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+
+import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../src/schema/index.js';
+
 import { createLogger } from '../src/lib/logger.js';
+import * as schema from '../src/schema/index.js';
+
+import { seedAssessmentFlows } from './seedAssessmentFlows.js';
+import { seedAssessmentTemplates } from './seedAssessmentTemplates.js';
+import { seedFlowSteps } from './seedFlowSteps.js';
 import { seedPlatformOrganisation } from './seedPlatformTenant.js';
+import { seedProgrammeTemplates } from './seedProgrammeTemplates.js';
+import { seedProgrammeUserData } from './seedProgrammeUserData.js';
+import { seedQuestions } from './seedQuestions.js';
 import { seedSuperAdminCognito } from './seedSuperAdminCognito.js';
 import { seedSuperAdminDatabase } from './seedSuperAdminDatabase.js';
-import { seedTestOrganisation } from './seedTestTenant.js';
+import { seedTemplateHierarchy } from './seedTemplateHierarchy.js';
 import { seedTestLocation } from './seedTestCustomer.js';
+import { seedTestOrganisation } from './seedTestTenant.js';
 import { seedTestUserCognito } from './seedTestUserCognito.js';
 import { seedTestUserDatabase } from './seedTestUserDatabase.js';
-import { seedProgrammeTemplates } from './seedProgrammeTemplates.js';
-import { seedQuestions } from './seedQuestions.js';
-import { seedAssessmentTemplates } from './seedAssessmentTemplates.js';
-import { seedAssessmentFlows } from './seedAssessmentFlows.js';
-import { seedFlowSteps } from './seedFlowSteps.js';
 import { seedVideos } from './seedVideos.js';
-import { seedTemplateHierarchy } from './seedTemplateHierarchy.js';
-import { seedProgrammeUserData } from './seedProgrammeUserData.js';
+
 import type { SeedConfig } from './types.js';
 
 const logger = createLogger('seed');
@@ -56,6 +60,7 @@ const loadSeedConfig = (environment: string): SeedConfig => {
 
   try {
     const configFile = readFileSync(configPath, 'utf-8');
+
     return JSON.parse(configFile) as SeedConfig;
   } catch (error) {
     if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
@@ -64,6 +69,7 @@ const loadSeedConfig = (environment: string): SeedConfig => {
           `Create this file based on config/db-seed.example.json`
       );
     }
+
     throw error;
   }
 };
@@ -95,7 +101,8 @@ const validateEnvironment = (): void => {
 const createDatabaseConnection = (): NodePgDatabase<typeof schema> & { $client: Pool } => {
   const pool = new Pool({
     host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '5432'),
+    // Not ??, so an empty value also falls back.
+    port: parseInt(process.env.DB_PORT ? process.env.DB_PORT : '5432'),
     database: process.env.DB_NAME,
     user: process.env.BOOTSTRAP_DB_USER,
     password: process.env.BOOTSTRAP_DB_PASSWORD,
@@ -113,7 +120,7 @@ const createDatabaseConnection = (): NodePgDatabase<typeof schema> & { $client: 
  *
  */
 export const seedDatabase = async (
-  environment: string = 'dev',
+  environment = 'dev',
   options?: { fresh?: boolean }
 ): Promise<void> => {
   logger.info(`Database Seed - ${environment.toUpperCase()}${options?.fresh ? ' (FRESH)' : ''}`);
