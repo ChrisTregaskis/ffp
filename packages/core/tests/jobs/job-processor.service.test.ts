@@ -27,6 +27,7 @@ import {
 } from '../../src/jobs/job-processor.service';
 import { NotFoundError } from '../../src/lib/errors';
 import { drizzleDriverError, expectNothingLeakable } from '../lib/database-error.fixture';
+import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
 
 // We need to mock getDb but keep other exports
 const { mockGetDb } = vi.hoisted(() => ({
@@ -40,31 +41,6 @@ vi.mock('@ffp/database', async () => {
     getDb: mockGetDb,
   };
 });
-
-/**
- * Sets the RLS context for testing purposes.
- *
- * IMPORTANT: This helper uses sql.raw() with validated UUID input.
- * This is necessary because:
- * 1. PostgreSQL's set_config() with parameterised queries can have connection
- *    pool issues where the setting doesn't persist across statements
- * 2. SET commands don't support traditional parameterised queries
- *
- * The UUID validation ensures this is safe from SQL injection.
- * DO NOT copy this pattern to production code - use proper RLS context
- * management with transactions instead.
- */
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-async function setTestRLSContext(
-  db: ReturnType<typeof drizzle>,
-  organisationId: string
-): Promise<void> {
-  if (!UUID_REGEX.test(organisationId)) {
-    throw new Error(`Invalid UUID format for RLS context: ${organisationId}`);
-  }
-  await db.execute(sql.raw(`SET app.organisation_id = '${organisationId}'`));
-}
 
 describe('Job Processor Service', () => {
   let pool: Pool;
@@ -96,24 +72,18 @@ describe('Job Processor Service', () => {
     // Create unique test organisation for each test
     testOrganisationId = randomUUID();
 
-    await setTestRLSContext(db, testOrganisationId);
-    await db.insert(schema.organisations).values({
-      id: testOrganisationId,
-      name: `Test Organisation ${testOrganisationId.slice(0, 8)}`,
-      type: 'business',
+    await asOrganisation(db, testOrganisationId, async (tx) => {
+      await tx.insert(schema.organisations).values({
+        id: testOrganisationId,
+        name: `Test Organisation ${testOrganisationId.slice(0, 8)}`,
+        type: 'business',
+      });
     });
-
-    // Ensure no leftover jobs exist for this organisation (defensive cleanup)
-    await db.execute(sql`DELETE FROM process_jobs WHERE organisation_id = ${testOrganisationId}`);
   });
 
   afterEach(async () => {
-    // Clean up test data
-    if (testOrganisationId) {
-      await db.execute(sql`DELETE FROM process_jobs WHERE organisation_id = ${testOrganisationId}`);
-      await setTestRLSContext(db, testOrganisationId);
-      await db.execute(sql`DELETE FROM organisations WHERE id = ${testOrganisationId}`);
-    }
+    // The organisation's jobs go with it (ON DELETE CASCADE)
+    await deleteOrganisations(db, [testOrganisationId]);
   });
 
   afterAll(async () => {
