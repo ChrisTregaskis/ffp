@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import type { LocationDetailResponse } from '@ffp/core';
 
-import { toLocationFormValues, toUpdateLocationInput } from './location-form-values';
+import {
+  deactivatesLocation,
+  toLocationFormValues,
+  toUpdateLocationInput,
+} from './location-form-values';
 
 const stored = (overrides: Partial<LocationDetailResponse> = {}): LocationDetailResponse => ({
   id: '77777777-7777-7777-8777-777777770001',
@@ -68,5 +72,23 @@ describe('toUpdateLocationInput', () => {
 
     expect('address' in payload).toBe(true);
     expect(payload.address).toBeUndefined();
+  });
+});
+
+describe('deactivatesLocation', () => {
+  it('holds an edit that takes the location out of use', () => {
+    const location = stored();
+
+    expect(
+      deactivatesLocation({ ...toLocationFormValues(location), status: 'inactive' }, location)
+    ).toBe(true);
+  });
+
+  it('lets an edit through that leaves an inactive location inactive', () => {
+    const location = stored({ status: 'inactive' });
+
+    expect(
+      deactivatesLocation({ ...toLocationFormValues(location), locationName: 'Renamed' }, location)
+    ).toBe(false);
   });
 });

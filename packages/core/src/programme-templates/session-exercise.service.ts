@@ -1,5 +1,6 @@
 import { getDb } from '@ffp/database';
 
+import { assertDistinctIds } from '../lib/distinct-ids';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import {
   createExerciseRequestSchema,
@@ -158,6 +159,8 @@ export async function reorderExercises(
     if (!session) {
       throw new NotFoundError('Template session', sessionId);
     }
+
+    assertDistinctIds(validated.orderedIds, 'Exercise');
 
     // Validate all IDs belong to this session
     const existingExercises = await exerciseRepository.findExercisesBySessionId(tx, sessionId);

@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import type { TemplateDetailResponse } from '@ffp/core';
 
-import { toTemplateFormValues, toUpdateTemplateInput } from './template-form-values';
+import {
+  deactivatesTemplate,
+  EMPTY_TEMPLATE_VALUES,
+  toCreateTemplateInput,
+  toTemplateFormValues,
+  toUpdateTemplateInput,
+} from './template-form-values';
 
 const stored = (overrides: Partial<TemplateDetailResponse> = {}): TemplateDetailResponse => ({
   id: '55555555-5555-5555-8555-555555550001',
@@ -52,5 +58,37 @@ describe('toUpdateTemplateInput', () => {
     const noDescription = stored({ description: null });
 
     expect(toUpdateTemplateInput(toTemplateFormValues(noDescription), noDescription)).toEqual({});
+  });
+});
+
+describe('toCreateTemplateInput', () => {
+  it('trims the text fields and leaves a blank description out', () => {
+    expect(
+      toCreateTemplateInput({
+        ...EMPTY_TEMPLATE_VALUES,
+        name: '  Gentle Mobility ',
+        slug: ' gentle-mobility ',
+        description: '   ',
+        difficulty: 'beginner',
+      })
+    ).toEqual({ name: 'Gentle Mobility', slug: 'gentle-mobility', difficulty: 'beginner' });
+  });
+});
+
+describe('deactivatesTemplate', () => {
+  it('holds an edit that takes an active template out of use', () => {
+    const template = stored();
+
+    expect(
+      deactivatesTemplate({ ...toTemplateFormValues(template), isActive: 'false' }, template)
+    ).toBe(true);
+  });
+
+  it('lets an edit through that leaves an inactive template inactive', () => {
+    const template = stored({ isActive: false });
+
+    expect(
+      deactivatesTemplate({ ...toTemplateFormValues(template), name: 'Renamed' }, template)
+    ).toBe(false);
   });
 });

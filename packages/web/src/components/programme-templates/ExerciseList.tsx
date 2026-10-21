@@ -13,10 +13,13 @@ import {
   useUpdateExerciseMutation,
 } from '@web/hooks/programme-templates';
 import { useToast } from '@web/hooks/useToast';
-import { fieldToNumber } from '@web/utils/form-number';
 import { swapAdjacentItem } from '@web/utils/reorder';
 
-import { exerciseToFormValues } from './exercise-utils';
+import {
+  exerciseToFormValues,
+  toCreateExerciseRequest,
+  toUpdateExerciseRequest,
+} from './exercise-utils';
 import { ExerciseForm } from './ExerciseForm';
 import { ExerciseRow } from './ExerciseRow';
 
@@ -64,17 +67,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
   const handleCreate = useCallback(
     (values: ExerciseFormValues) => {
       createExercise.mutate(
-        {
-          sessionId,
-          data: {
-            videoId: values.videoId,
-            sets: fieldToNumber(values.sets),
-            reps: values.reps || undefined,
-            durationSeconds: fieldToNumber(values.durationSeconds),
-            restSeconds: fieldToNumber(values.restSeconds),
-            notes: values.notes || undefined,
-          },
-        },
+        { sessionId, data: toCreateExerciseRequest(values) },
         {
           onSuccess: () => {
             addToast('Exercise added', { variant: 'success' });
@@ -88,19 +81,17 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
   );
 
   const handleUpdate = useCallback(
-    (exerciseId: string, values: ExerciseFormValues) => {
+    (exercise: ExerciseResponse, values: ExerciseFormValues) => {
+      const payload = toUpdateExerciseRequest(values, exercise);
+
+      if (Object.keys(payload).length === 0) {
+        setEditingId(null);
+
+        return;
+      }
+
       updateExercise.mutate(
-        {
-          exerciseId,
-          data: {
-            videoId: values.videoId,
-            sets: fieldToNumber(values.sets),
-            reps: values.reps || undefined,
-            durationSeconds: fieldToNumber(values.durationSeconds),
-            restSeconds: fieldToNumber(values.restSeconds),
-            notes: values.notes || undefined,
-          },
-        },
+        { exerciseId: exercise.id, data: payload },
         {
           onSuccess: () => {
             addToast('Exercise updated', { variant: 'success' });
@@ -177,12 +168,13 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
                     title: exercise.video.title,
                   }}
                   onSubmit={(values) => {
-                    handleUpdate(exercise.id, values);
+                    handleUpdate(exercise, values);
                   }}
                   onCancel={() => {
                     setEditingId(null);
                   }}
                   isSubmitting={updateExercise.isPending}
+                  isEditMode
                 />
               </InlineFormPanel>
             ) : (

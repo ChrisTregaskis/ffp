@@ -1,6 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { generatePath, useNavigate, useParams } from 'react-router-dom';
 
+import type { UpdateSessionRequest } from '@ffp/core';
+
 import { Button, Icon, ContentPanel, PageContainer } from '@web/components/atoms';
 import {
   DescriptionPanel,
@@ -9,9 +11,12 @@ import {
   InlineFormPanel,
   PageHeader,
 } from '@web/components/molecules';
-import { SessionCard } from '@web/components/programme-templates';
-import { SessionForm } from '@web/components/programme-templates/SessionForm';
-import type { SessionFormValues } from '@web/components/programme-templates/SessionForm';
+import {
+  SessionCard,
+  SessionForm,
+  toCreateSessionRequest,
+} from '@web/components/programme-templates';
+import type { SessionFormValues } from '@web/components/programme-templates';
 import { RouteKey, routes } from '@web/config/routes';
 import {
   useCreateSessionMutation,
@@ -21,7 +26,6 @@ import {
   useUpdateSessionMutation,
 } from '@web/hooks/programme-templates';
 import { useToast } from '@web/hooks/useToast';
-import { fieldToNumber } from '@web/utils/form-number';
 import { swapAdjacentItem } from '@web/utils/reorder';
 
 export const PhaseDetailPage: React.FC = () => {
@@ -73,14 +77,7 @@ export const PhaseDetailPage: React.FC = () => {
       }
 
       createSession.mutate(
-        {
-          phaseId: phase.id,
-          data: {
-            name: values.name || null,
-            description: values.description || null,
-            estimatedDurationMinutes: fieldToNumber(values.estimatedDurationMinutes) ?? null,
-          },
-        },
+        { phaseId: phase.id, data: toCreateSessionRequest(values) },
         {
           onSuccess: () => {
             addToast('Session created', { variant: 'success' });
@@ -94,15 +91,8 @@ export const PhaseDetailPage: React.FC = () => {
   );
 
   const handleUpdateSession = useCallback(
-    (
-      sessionId: string,
-      data: {
-        name?: string | null;
-        description?: string | null;
-        estimatedDurationMinutes?: number | null;
-      }
-    ) => {
-      updateSession.mutate(
+    async (sessionId: string, data: UpdateSessionRequest): Promise<void> => {
+      await updateSession.mutateAsync(
         { sessionId, data },
         {
           onSuccess: () => addToast('Session updated', { variant: 'success' }),

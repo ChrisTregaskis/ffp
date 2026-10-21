@@ -1,1 +1,0 @@
-export { TemplateCreatePage } from './TemplateCreatePage';
