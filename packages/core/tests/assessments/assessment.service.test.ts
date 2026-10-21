@@ -21,6 +21,7 @@ import type { AssessmentFlow, FlowStepWithConfig } from '../../src/assessments/f
 import type { AssessmentSafetyTrigger } from '../../src/assessments/safety-trigger.repository';
 import type { UserAssessment } from '../../src/assessments/user-assessment.repository';
 import type { OrganisationContext, UserActor } from '../../src/lib/context';
+import type { Transaction } from '../../src/lib/database';
 import type {
   QuestionWithConfig,
   TemplateQuestionWithConfig,
@@ -82,6 +83,16 @@ const createUserContext = (): OrganisationContext => ({
   requestId: randomUUID(),
   timestamp: new Date(),
 });
+
+/** Stands in for the transaction `withRLS` opens; the marker stops any other object matching it */
+const mockTx = { marker: 'transaction opened by withRLS' } as unknown as Transaction;
+
+/** Runs the service's callback in `mockTx`, as `withRLS` would in a real transaction */
+const runWithRLSInMockTx = (): void => {
+  mockedDatabaseModule.withRLS.mockImplementation(
+    async (_organisationId, _userId, callback) => await callback(mockTx)
+  );
+};
 
 const inTemplate = (
   questions: QuestionWithConfig[],
@@ -244,23 +255,14 @@ describe('Assessment Service', () => {
       const context = createUserContext();
       const flowId = randomUUID();
       const databaseUserId = randomUUID();
-      const mockAssessment: UserAssessment = {
-        id: randomUUID(),
+      const mockAssessment = createMockAssessment({
         organisationId: context.organisationId,
         userId: databaseUserId,
         flowId,
         currentStep: 1,
         status: 'not_started',
-        scores: null,
-        programmeId: null,
-        visitedStepIds: [],
-        warningsShown: [],
         startedAt: null,
-        submittedAt: null,
-        completedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      });
 
       // Mock flow steps (simple intro step matching createMockFlow)
       const mockFlowSteps: FlowStepWithConfig[] = [
@@ -290,7 +292,22 @@ describe('Assessment Service', () => {
 
       expect(result.isResumed).toBe(false);
       expect(result.steps).toHaveLength(1);
-      expect(mockedUserAssessmentRepo.createUserAssessment).toHaveBeenCalled();
+      // The fixture's database user ID differs from the Cognito sub; only the database ID may reach a query
+      expect(mockedUserAssessmentRepo.findResumableAssessment).toHaveBeenCalledWith(
+        context.organisationId,
+        databaseUserId,
+        flowId
+      );
+      expect(mockedUserAssessmentRepo.findSubmittedAssessment).toHaveBeenCalledWith(
+        context.organisationId,
+        databaseUserId,
+        flowId
+      );
+      expect(mockedUserAssessmentRepo.createUserAssessment).toHaveBeenCalledWith({
+        organisationId: context.organisationId,
+        userId: databaseUserId,
+        flowId,
+      });
     });
 
     it('returns existing assessment with isResumed=true', async () => {
@@ -298,23 +315,12 @@ describe('Assessment Service', () => {
       const flowId = randomUUID();
       const databaseUserId = randomUUID();
       const questionId = randomUUID();
-      const existingAssessment: UserAssessment = {
-        id: randomUUID(),
+      const existingAssessment = createMockAssessment({
         organisationId: context.organisationId,
         userId: databaseUserId,
         flowId,
         currentStep: 3,
-        status: 'in_progress',
-        scores: null,
-        programmeId: null,
-        visitedStepIds: [],
-        warningsShown: [],
-        startedAt: new Date(),
-        submittedAt: null,
-        completedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      });
 
       // Mock answers from the new table
       const storedAnswers: UserAssessmentAnswer[] = [
@@ -379,12 +385,7 @@ describe('Assessment Service', () => {
 
   describe('submitAssessment', () => {
     beforeEach(() => {
-      mockedDatabaseModule.withRLS.mockImplementation(
-        async (_organisationId, _userId, callback) => {
-          const mockTx = {} as Parameters<typeof callback>[0];
-          return await callback(mockTx);
-        }
-      );
+      runWithRLSInMockTx();
     });
 
     it('successfully submits assessment with merged answers and enqueues scoring job', async () => {
@@ -455,19 +456,25 @@ describe('Assessment Service', () => {
       expect(result.jobId).toBe(jobId);
       expect(result.message).toBe('Assessment submitted successfully. Scoring in progress.');
 
+      expect(mockedDatabaseModule.withRLS).toHaveBeenCalledWith(
+        context.organisationId,
+        databaseUserId,
+        expect.any(Function)
+      );
+
       // Verify answers saved via answerRepository
       expect(mockedAnswerRepo.saveAnswers).toHaveBeenCalledWith(
         context.organisationId,
         assessmentId,
         expect.arrayContaining([expect.objectContaining({ questionId: questionId2 })]),
-        expect.objectContaining({ tx: expect.anything() as unknown })
+        { tx: mockTx }
       );
 
       expect(mockedUserAssessmentRepo.transitionAssessmentStatus).toHaveBeenCalledWith(
         context.organisationId,
         assessmentId,
         'submitted',
-        expect.objectContaining({ tx: expect.anything() as unknown })
+        { tx: mockTx }
       );
 
       expect(mockedJobQueueService.queueJob).toHaveBeenCalledWith(
@@ -482,7 +489,7 @@ describe('Assessment Service', () => {
           ]) as unknown[],
         },
         context,
-        expect.objectContaining({ priority: 2, tx: expect.anything() as unknown })
+        { priority: 2, tx: mockTx }
       );
     });
 
@@ -736,9 +743,7 @@ describe('Assessment Service', () => {
         inTemplate([capped, optional], templateId)
       );
       mockedAnswerRepo.findByAssessmentId.mockResolvedValue([]);
-      mockedDatabaseModule.withRLS.mockImplementation(async (_org, _user, callback) => {
-        return await callback({} as Parameters<typeof callback>[0]);
-      });
+      runWithRLSInMockTx();
 
       return { context, userId, assessmentId, assessment, capped, optional };
     };
@@ -777,7 +782,7 @@ describe('Assessment Service', () => {
 
     describe('saveProgress', () => {
       it('saves answers that keep their rules', async () => {
-        const { context, assessmentId, capped } = setUp();
+        const { context, userId, assessmentId, capped } = setUp();
 
         mockedUserAssessmentRepo.updateAssessmentProgress.mockResolvedValue(createMockAssessment());
 
@@ -791,7 +796,12 @@ describe('Assessment Service', () => {
           context.organisationId,
           assessmentId,
           [{ questionId: capped.id, answerValue: ['a', 'b'] }],
-          expect.objectContaining({ tx: expect.anything() as unknown })
+          { tx: mockTx }
+        );
+        expect(mockedDatabaseModule.withRLS).toHaveBeenCalledWith(
+          context.organisationId,
+          userId,
+          expect.any(Function)
         );
         // A deactivated question still shown to members keeps its rules
         expect(mockedQuestionRepo.findByTemplateIds.mock.calls[0]?.[2]).toEqual({
@@ -840,7 +850,7 @@ describe('Assessment Service', () => {
           context.organisationId,
           assessmentId,
           [capped.id],
-          expect.objectContaining({ tx: expect.anything() as unknown })
+          { tx: mockTx }
         );
       });
 
@@ -961,7 +971,7 @@ describe('Assessment Service', () => {
       });
 
       it('ignores a stored answer to an unassigned question that the client echoes back', async () => {
-        const { context, assessmentId, capped } = setUp();
+        const { context, userId, assessmentId, assessment, capped } = setUp();
         const unassignedId = randomUUID();
 
         mockedAnswerRepo.findByAssessmentId.mockResolvedValue([
@@ -976,7 +986,21 @@ describe('Assessment Service', () => {
           context
         );
 
-        expect(mockedJobQueueService.queueJob).toHaveBeenCalled();
+        expect(mockedJobQueueService.queueJob).toHaveBeenCalledWith(
+          'score_assessment',
+          {
+            userAssessmentId: assessmentId,
+            flowId: assessment.flowId,
+            userId,
+            // Scoring reads every stored answer; validation is what leaves the echo alone
+            responses: [
+              { questionId: capped.id, answerValue: ['a'] },
+              { questionId: unassignedId, answerValue: 'kept' },
+            ],
+          },
+          context,
+          { priority: 2, tx: mockTx }
+        );
         expect(mockedAnswerRepo.saveAnswers).not.toHaveBeenCalled();
       });
 
@@ -1017,13 +1041,13 @@ describe('Assessment Service', () => {
           context.organisationId,
           assessmentId,
           [optional.id],
-          expect.objectContaining({ tx: expect.anything() as unknown })
+          { tx: mockTx }
         );
         expect(mockedJobQueueService.queueJob).toHaveBeenCalledWith(
           'score_assessment',
           expect.objectContaining({ responses: [{ questionId: capped.id, answerValue: ['a'] }] }),
           context,
-          expect.anything()
+          { priority: 2, tx: mockTx }
         );
       });
 
@@ -1190,9 +1214,7 @@ describe('Assessment Service', () => {
       mockedQuestionRepo.findSlugsByIds.mockResolvedValue(new Map([[questionId, SAFETY_SLUG]]));
       mockedAnswerRepo.findByAssessmentId.mockResolvedValue([]);
       mockedJobQueueService.queueJob.mockResolvedValue(randomUUID());
-      mockedDatabaseModule.withRLS.mockImplementation(async (_org, _user, callback) => {
-        return await callback({} as Parameters<typeof callback>[0]);
-      });
+      runWithRLSInMockTx();
 
       return { context, userId, assessment, questionId };
     };
@@ -1236,7 +1258,7 @@ describe('Assessment Service', () => {
             selectedOptions: ['dizziness', 'night-pain'],
             warningMessage: ADVICE,
           },
-          { tx: expect.anything() as unknown }
+          { tx: mockTx }
         );
       });
 
@@ -1414,9 +1436,7 @@ describe('Assessment Service', () => {
       mockedUserAssessmentRepo.updateAssessmentProgress.mockResolvedValue(assessment);
       mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createPositionFlow(flowId));
       mockedAnswerRepo.findByAssessmentId.mockResolvedValue([]);
-      mockedDatabaseModule.withRLS.mockImplementation(async (_org, _user, callback) => {
-        return await callback({} as Parameters<typeof callback>[0]);
-      });
+      runWithRLSInMockTx();
 
       return { context, assessmentId: assessment.id };
     };
@@ -1483,19 +1503,35 @@ describe('Assessment Service', () => {
         ['on the last question step, not results, after a save on that step', 5, 4],
       ])('resumes %s', async (_case, stored, expected) => {
         const context = createUserContext();
+        const userId = randomUUID();
         const flowId = randomUUID();
+        const assessment = createMockAssessment({
+          organisationId: context.organisationId,
+          userId,
+          flowId,
+          currentStep: stored,
+        });
 
-        mockedContextModule.getUserIdFromContext.mockResolvedValue(randomUUID());
+        mockedContextModule.getUserIdFromContext.mockResolvedValue(userId);
         mockedFlowRepo.findActiveById.mockResolvedValue(createMockFlow(flowId));
         mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createPositionFlow(flowId));
-        mockedUserAssessmentRepo.findResumableAssessment.mockResolvedValue(
-          createMockAssessment({ flowId, currentStep: stored })
-        );
+        mockedUserAssessmentRepo.findResumableAssessment.mockResolvedValue(assessment);
         mockedAnswerRepo.findByAssessmentId.mockResolvedValue([]);
 
         const result = await assessmentService.startAssessment(flowId, context);
 
         expect(result.currentStep).toBe(expected);
+        // The repository only returns the member's own assessment, so the lookups must carry them
+        expect(mockedUserAssessmentRepo.findResumableAssessment).toHaveBeenCalledWith(
+          context.organisationId,
+          userId,
+          flowId
+        );
+        expect(mockedAnswerRepo.findByAssessmentId).toHaveBeenCalledWith(
+          context.organisationId,
+          assessment.id,
+          { userId }
+        );
       });
     });
   });

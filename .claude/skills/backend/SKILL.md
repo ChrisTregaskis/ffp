@@ -157,3 +157,4 @@ throw new Error(`User ${userId} in organisation ${organisationId} not found`);
 - **Zod** as single source of truth for input/output types
 - **Parameterised queries only** — never string concatenation for SQL
 - **No emojis** — in code, comments, or error messages
+- **Tests** — follow `.claude/rules/testing.md`: literals for external contracts (Cognito claim names, SQLSTATEs), assert the arguments a dependency received (RLS context, `tx`, Pool config), and a denying case for every access rule

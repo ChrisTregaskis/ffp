@@ -4,13 +4,15 @@ import type { VideoDetailResponse } from '@ffp/core';
 
 import { toUpdateVideoInput, toVideoFormValues } from './video-form-values';
 
+import type { VideoEditFormValues } from './types';
+
 const stored = (overrides: Partial<VideoDetailResponse> = {}): VideoDetailResponse => ({
   id: '33333333-3333-3333-8333-333333330001',
   publicId: 'aaaaaaaaaaaa',
   title: 'Wall squat',
   description: 'Back flat against the wall.',
   durationSeconds: 60,
-  status: 'published',
+  status: 'active',
   difficulty: 'beginner',
   movementType: 'strength',
   bodyParts: ['quads', 'glutes'],
@@ -51,7 +53,7 @@ describe('toUpdateVideoInput', () => {
 
   it('clears blanked fields with null', () => {
     const video = stored();
-    const values = {
+    const values: VideoEditFormValues = {
       ...toVideoFormValues(video),
       description: '',
       difficulty: '',

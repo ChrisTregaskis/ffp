@@ -166,7 +166,9 @@ describe('questionService.updateQuestionService — merged-shape validation', ()
       validation: { maxSelections: 2 },
     });
 
-    expect(mockedQuestionRepo.updateQuestion).toHaveBeenCalled();
+    expect(mockedQuestionRepo.updateQuestion).toHaveBeenCalledWith(expect.anything(), stored.id, {
+      validation: { maxSelections: 2 },
+    });
   });
 
   it('accepts a switch to a choice type that relies on the stored options', async () => {
@@ -184,7 +186,10 @@ describe('questionService.updateQuestionService — merged-shape validation', ()
       type: 'multi-choice',
     });
 
-    expect(mockedQuestionRepo.updateQuestion).toHaveBeenCalled();
+    expect(mockedQuestionRepo.updateQuestion).toHaveBeenCalledWith(expect.anything(), stored.id, {
+      type: 'multi-choice',
+      videoId: null,
+    });
   });
 
   it('rejects clearing the video of a question that stays video-response', async () => {
@@ -314,7 +319,10 @@ describe('questionService.updateQuestionService — type-change clean-up', () =>
       questionText: 'Wall squat hold',
     });
 
-    expect(mockedQuestionRepo.updateQuestion).toHaveBeenCalled();
+    // The stored range survives because the write leaves validation alone
+    expect(mockedQuestionRepo.updateQuestion).toHaveBeenCalledWith(expect.anything(), stored.id, {
+      questionText: 'Wall squat hold',
+    });
   });
 
   it('clears the scoring range when moving to a type that takes none', async () => {
@@ -503,7 +511,9 @@ describe('questionService — linked video checks', () => {
   });
 
   it('does not re-check a stored link the update resends unchanged', async () => {
-    stubStoredQuestion(createStoredQuestion({ type: 'video-response', videoId: VIDEO_ID }));
+    const stored = createStoredQuestion({ type: 'video-response', videoId: VIDEO_ID });
+
+    stubStoredQuestion(stored);
     mockedVideoRepo.findVideoById.mockResolvedValue(null);
 
     await questionService.updateQuestionService(createContext(), QUESTION_PUBLIC_ID, {
@@ -511,7 +521,10 @@ describe('questionService — linked video checks', () => {
       videoId: VIDEO_ID,
     });
 
-    expect(mockedQuestionRepo.updateQuestion).toHaveBeenCalled();
+    expect(mockedQuestionRepo.updateQuestion).toHaveBeenCalledWith(expect.anything(), stored.id, {
+      questionText: 'Reworded',
+      videoId: VIDEO_ID,
+    });
   });
 });
 
