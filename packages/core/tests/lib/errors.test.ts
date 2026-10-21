@@ -18,7 +18,10 @@ import {
   ValidationError,
   ConflictError,
   InternalServerError,
+  JobProcessorError,
 } from '../../src/lib/errors';
+
+import { drizzleDriverError, expectNothingLeakable } from './database-error.fixture';
 
 describe('BaseError', () => {
   it('should create error with all properties', () => {
@@ -166,5 +169,20 @@ describe('InternalServerError', () => {
     expect(error.message).toBe('Database connection failed');
     expect(error.code).toBe('INTERNAL_SERVER_ERROR');
     expect(error.statusCode).toBe(500);
+  });
+});
+
+describe('JobProcessorError', () => {
+  it('keeps a database cause on the instance but out of details, which a response returns', () => {
+    const cause = drizzleDriverError({
+      code: '23503',
+      constraint: 'users_location_id_locations_id_fk',
+    });
+    const error = new JobProcessorError('Failed to poll and claim jobs', cause);
+
+    expect(error.cause).toBe(cause);
+    expect(error.statusCode).toBe(500);
+    expect(error.details).toBeUndefined();
+    expectNothingLeakable(JSON.stringify({ message: error.message, details: error.details }));
   });
 });
