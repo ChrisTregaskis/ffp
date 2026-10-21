@@ -10,10 +10,13 @@ import {
 } from '@web/components/molecules';
 import { useComposableFormContext, ACTIVE_STATUS_FILTER } from '@web/components/organisms';
 import { DIFFICULTY_OPTIONS } from '@web/constants';
+import { useAutoSlug } from '@web/hooks/useAutoSlug';
 
 import type { TemplateMetadataFormValues } from './types';
 
 export interface TemplateMetadataFormFieldsProps {
+  /** Creating fills the slug from the name and leaves status out; a new template starts active */
+  isEditMode: boolean;
   /** Called when cancel is clicked */
   onCancel: () => void;
   /** Whether the submit action is in progress */
@@ -22,13 +25,16 @@ export interface TemplateMetadataFormFieldsProps {
   errorMessage?: string | null;
 }
 
-/** Form fields for editing programme template metadata */
+/** Form fields for creating or editing programme template metadata */
 export const TemplateMetadataFormFields: React.FC<TemplateMetadataFormFieldsProps> = ({
+  isEditMode,
   onCancel,
   isSubmitting = false,
   errorMessage,
 }) => {
   const { register, control, errors } = useComposableFormContext<TemplateMetadataFormValues>();
+
+  useAutoSlug<TemplateMetadataFormValues>('name', 'slug', { enabled: !isEditMode });
 
   return (
     <>
@@ -56,7 +62,7 @@ export const TemplateMetadataFormFields: React.FC<TemplateMetadataFormFieldsProp
         />
       </FormRow>
 
-      {/* Row 2: Difficulty + Status (2-col) */}
+      {/* Row 2: Difficulty + Status (2-col; status in edit mode only) */}
       <FormRow>
         <FormSelect
           name="difficulty"
@@ -68,13 +74,17 @@ export const TemplateMetadataFormFields: React.FC<TemplateMetadataFormFieldsProp
           isRequired
           rules={{ required: 'Please choose a difficulty' }}
         />
-        <FormSelect
-          name="isActive"
-          label="Status"
-          options={ACTIVE_STATUS_FILTER.options}
-          control={control}
-          errors={errors}
-        />
+        {isEditMode ? (
+          <FormSelect
+            name="isActive"
+            label="Status"
+            options={ACTIVE_STATUS_FILTER.options}
+            control={control}
+            errors={errors}
+          />
+        ) : (
+          <div />
+        )}
       </FormRow>
 
       {/* Row 3: Description (full-width) */}
@@ -87,7 +97,11 @@ export const TemplateMetadataFormFields: React.FC<TemplateMetadataFormFieldsProp
         rows={3}
       />
 
-      <FormActions onCancel={onCancel} isSubmitting={isSubmitting} />
+      <FormActions
+        onCancel={onCancel}
+        isSubmitting={isSubmitting}
+        submitLabel={isEditMode ? 'Save Changes' : 'Create Template'}
+      />
     </>
   );
 };

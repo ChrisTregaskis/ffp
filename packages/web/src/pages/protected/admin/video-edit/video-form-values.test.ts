@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { AdminVideoDetail } from '@ffp/core';
 
-import { toUpdateVideoInput, toVideoFormValues } from './video-form-values';
+import { archivesVideo, toUpdateVideoInput, toVideoFormValues } from './video-form-values';
 
 const strength = { publicId: 'mvstrength01', slug: 'strength', label: 'Strength' };
 const cardio = { publicId: 'mvcardio0001', slug: 'cardio', label: 'Cardio' };
@@ -112,5 +112,19 @@ describe('toUpdateVideoInput', () => {
     expect(
       toUpdateVideoInput({ ...toVideoFormValues(video), defaultDurationSeconds: '30' }, video)
     ).toEqual({ defaultDurationSeconds: 30 });
+  });
+});
+
+describe('archivesVideo', () => {
+  it('holds an edit that archives the video', () => {
+    const video = stored();
+
+    expect(archivesVideo({ ...toVideoFormValues(video), status: 'archived' }, video)).toBe(true);
+  });
+
+  it('lets an edit through that leaves an archived video archived', () => {
+    const video = stored({ status: 'archived' });
+
+    expect(archivesVideo({ ...toVideoFormValues(video), title: 'Renamed' }, video)).toBe(false);
   });
 });

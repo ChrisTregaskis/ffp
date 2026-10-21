@@ -104,3 +104,7 @@ export const toUpdateVideoInput = (
 
   return payload;
 };
+
+/** An edit that archives the video, which the page confirms before saving */
+export const archivesVideo = (values: VideoEditFormValues, video: AdminVideoDetail): boolean =>
+  toUpdateVideoInput(values, video).status === 'archived';

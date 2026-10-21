@@ -74,3 +74,9 @@ export const toUpdateLocationInput = (
 
   return payload;
 };
+
+/** An edit that takes the location out of use, which the page confirms before saving */
+export const deactivatesLocation = (
+  values: LocationFormValues,
+  location: LocationDetailResponse
+): boolean => toUpdateLocationInput(values, location).status === 'inactive';

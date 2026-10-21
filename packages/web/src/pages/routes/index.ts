@@ -31,7 +31,6 @@ import { OrganisationEditPage } from '@web/pages/protected/admin/organisation-ed
 import { OrganisationListPage } from '@web/pages/protected/admin/organisation-list';
 import { QuestionEditPage } from '@web/pages/protected/admin/question-edit';
 import { QuestionListPage } from '@web/pages/protected/admin/question-list';
-import { TemplateCreatePage } from '@web/pages/protected/admin/template-create';
 import {
   PhaseDetailPage,
   PhasesPage,
@@ -118,7 +117,7 @@ const PAGE_COMPONENTS: Record<RouteKey, FC> = {
   [RouteKey.ADMIN_QUESTION_CREATE]: QuestionEditPage,
   [RouteKey.ADMIN_QUESTION_EDIT]: QuestionEditPage,
   [RouteKey.ADMIN_TEMPLATES]: TemplateListPage,
-  [RouteKey.ADMIN_TEMPLATE_CREATE]: TemplateCreatePage,
+  [RouteKey.ADMIN_TEMPLATE_CREATE]: TemplateDetailPage,
   [RouteKey.ADMIN_TEMPLATE_DETAIL]: TemplateDetailPage,
   [RouteKey.ADMIN_TEMPLATE_PHASES]: PhasesPage,
   [RouteKey.ADMIN_TEMPLATE_PHASE_DETAIL]: PhaseDetailPage,
