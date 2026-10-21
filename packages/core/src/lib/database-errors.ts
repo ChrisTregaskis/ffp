@@ -3,6 +3,9 @@ import { BaseError, ConflictError } from './errors.js';
 /** PostgreSQL SQLSTATE for a unique-constraint violation. */
 const UNIQUE_VIOLATION = '23505';
 
+/** PostgreSQL SQLSTATE for a foreign-key violation. */
+const FOREIGN_KEY_VIOLATION = '23503';
+
 /** SQLSTATE is five alphanumerics — enough to tell a driver error from `ECONNRESET`. */
 const SQLSTATE_PATTERN = /^[0-9A-Z]{5}$/;
 
@@ -39,6 +42,15 @@ export function findDriverError(error: unknown): DriverError | null {
   }
 
   return null;
+}
+
+/**
+ * Whether a write was refused because another row still references what it
+ * removes. Not mapped globally: only a caller that knows what holds the row can
+ * say why it is in use.
+ */
+export function isForeignKeyViolation(error: unknown): boolean {
+  return findDriverError(error)?.code === FOREIGN_KEY_VIOLATION;
 }
 
 /**

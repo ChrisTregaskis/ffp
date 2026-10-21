@@ -127,6 +127,7 @@ export const templatePhaseWithSessionsSchema = templatePhaseSchema
           id: true,
           sessionNumber: true,
           name: true,
+          description: true,
           estimatedDurationMinutes: true,
         })
         .extend({

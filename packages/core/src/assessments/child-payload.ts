@@ -1,21 +1,10 @@
+import { assertDistinctIds } from '../lib/distinct-ids';
 import { ValidationError } from '../lib/errors';
 
 /** A child addressable by public identifier and stored against its UUID. */
 interface AddressableChild {
   id: string;
   publicId: string;
-}
-
-/**
- * A duplicate identifier fails silently otherwise: it moves one child twice and
- * strands another.
- *
- * @param noun - Capitalised singular for the message, e.g. `Question`, `Step`
- */
-export function assertDistinctPublicIds(publicIds: string[], noun: string): void {
-  if (new Set(publicIds).size !== publicIds.length) {
-    throw new ValidationError(`${noun} IDs must be unique`);
-  }
 }
 
 /**
@@ -33,7 +22,7 @@ export function resolveOrderedChildIds(
   children: readonly AddressableChild[],
   { noun, strangerMessage }: { noun: string; strangerMessage: string }
 ): string[] {
-  assertDistinctPublicIds(orderedPublicIds, noun);
+  assertDistinctIds(orderedPublicIds, noun);
 
   if (orderedPublicIds.length !== children.length) {
     throw new ValidationError(

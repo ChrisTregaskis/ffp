@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 
-import { describeDriverError, translateDatabaseError } from '../../src/lib/database-errors';
+import {
+  describeDriverError,
+  isForeignKeyViolation,
+  translateDatabaseError,
+} from '../../src/lib/database-errors';
 import { ConflictError, NotFoundError } from '../../src/lib/errors';
 
 /** Stands in for a `pg` DatabaseError, which carries SQLSTATE on `code`. */
@@ -50,6 +54,17 @@ describe('translateDatabaseError', () => {
     });
 
     expect(translateDatabaseError(connectionReset)).toBeInstanceOf(ConflictError);
+  });
+});
+
+describe('isForeignKeyViolation', () => {
+  it('recognises a foreign-key violation Drizzle has wrapped', () => {
+    expect(isForeignKeyViolation(wrapped(driverError('23503')))).toBe(true);
+  });
+
+  it('is false for another SQLSTATE or an ordinary error', () => {
+    expect(isForeignKeyViolation(wrapped(driverError('23505')))).toBe(false);
+    expect(isForeignKeyViolation(new Error('something else'))).toBe(false);
   });
 });
 

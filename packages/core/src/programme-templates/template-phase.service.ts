@@ -1,6 +1,8 @@
 import { getDb } from '@ffp/database';
 import type { TemplatePhaseRecord } from '@ffp/database/schema';
 
+import { isForeignKeyViolation } from '../lib/database-errors';
+import { assertDistinctIds } from '../lib/distinct-ids';
 import { ConflictError, NotFoundError, ValidationError } from '../lib/errors';
 import {
   createPhaseRequestSchema,
@@ -79,7 +81,10 @@ export async function updatePhase(phaseId: string, input: unknown): Promise<Phas
 /**
  * Deletes a phase and updates template totalPhases.
  * Re-numbers remaining phases to maintain contiguous sequence.
- * DB cascade handles child sessions and exercises.
+ * DB cascade handles child sessions and exercises; a phase or session that members'
+ * programmes hold is refused by its restrict foreign key. Counting those rows here
+ * would see none, since the member tables are RLS-enforced and this catalogue path
+ * sets no organisation.
  */
 export async function deletePhase(phaseId: string): Promise<void> {
   const db = getDb();
@@ -98,19 +103,18 @@ export async function deletePhase(phaseId: string): Promise<void> {
       throw new NotFoundError('Programme template', phase.programmeTemplateId);
     }
 
-    // Guard: prevent deletion if any user programmes reference this phase
-    const activeProgrammeCount = await phaseRepository.countProgrammePhasesByTemplatePhaseId(
-      tx,
-      phaseId
-    );
+    try {
+      await phaseRepository.deletePhase(tx, phaseId);
+    } catch (error) {
+      if (isForeignKeyViolation(error)) {
+        throw new ConflictError(
+          "This phase is part of members' programmes, so it can't be deleted"
+        );
+      }
 
-    if (activeProgrammeCount > 0) {
-      throw new ConflictError(
-        `Cannot delete phase: ${String(activeProgrammeCount)} programme(s) currently reference it`
-      );
+      throw error;
     }
 
-    await phaseRepository.deletePhase(tx, phaseId);
     await phaseRepository.renumberPhases(tx, phase.programmeTemplateId);
     await templateRepository.updateTemplate(tx, phase.programmeTemplateId, {
       totalPhases: Math.max(template.totalPhases - 1, 0),
@@ -126,30 +130,31 @@ export async function reorderPhases(templateId: string, input: unknown): Promise
   const validated = reorderPhasesRequestSchema.parse(input);
   const db = getDb();
 
-  const template = await templateRepository.findTemplateById(db, templateId);
-
-  if (!template) {
-    throw new NotFoundError('Programme template', templateId);
-  }
-
-  // Validate all IDs belong to this template
-  const existingPhases = await phaseRepository.findPhasesByTemplateId(db, templateId);
-  const existingIds = new Set(existingPhases.map((p) => p.id));
-
-  const invalidIds = validated.orderedIds.filter((id) => !existingIds.has(id));
-
-  if (invalidIds.length > 0) {
-    throw new ValidationError('One or more phase IDs do not belong to this template');
-  }
-
-  if (validated.orderedIds.length !== existingPhases.length) {
-    throw new ValidationError(
-      `Expected ${String(existingPhases.length)} phase IDs but received ${String(validated.orderedIds.length)}`
-    );
-  }
-
-  // Reorder in a transaction
   const reordered = await db.transaction(async (tx) => {
+    const template = await templateRepository.findTemplateById(tx, templateId);
+
+    if (!template) {
+      throw new NotFoundError('Programme template', templateId);
+    }
+
+    assertDistinctIds(validated.orderedIds, 'Phase');
+
+    // Validate all IDs belong to this template
+    const existingPhases = await phaseRepository.findPhasesByTemplateId(tx, templateId);
+    const existingIds = new Set(existingPhases.map((p) => p.id));
+
+    const invalidIds = validated.orderedIds.filter((id) => !existingIds.has(id));
+
+    if (invalidIds.length > 0) {
+      throw new ValidationError('One or more phase IDs do not belong to this template');
+    }
+
+    if (validated.orderedIds.length !== existingPhases.length) {
+      throw new ValidationError(
+        `Expected ${String(existingPhases.length)} phase IDs but received ${String(validated.orderedIds.length)}`
+      );
+    }
+
     return await phaseRepository.reorderPhases(tx, templateId, validated.orderedIds);
   });
 
