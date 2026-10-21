@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type * as ffpDatabase from '@ffp/database';
 import type { VideoRecord } from '@ffp/database/schema';
 
-import { NotFoundError } from '../../src/lib/errors';
+import { ConflictError, NotFoundError } from '../../src/lib/errors';
 import * as questionRepository from '../../src/questions/question.repository';
 import * as questionService from '../../src/questions/question.service';
 import * as videoRepository from '../../src/videos/video.repository';
@@ -488,6 +488,37 @@ describe('questionService.updateQuestionService — clearing validation', () => 
       message: 'This update would leave the question in an invalid state',
       details: { errors: [expect.objectContaining({ path: ['videoId'] })] },
     });
+  });
+});
+
+describe('questionService.createQuestionService — slug uniqueness', () => {
+  it('refuses a slug already in the bank with a 409 naming it, before any write', async () => {
+    mockedQuestionRepo.findQuestionBySlug.mockResolvedValueOnce(
+      createStoredQuestion({ slug: 'movement-confidence' })
+    );
+
+    const error = await questionService
+      .createQuestionService(createContext(), {
+        slug: 'movement-confidence',
+        type: 'text',
+        questionText: 'How confident do you feel moving?',
+      })
+      .then(
+        () => expect.fail('Expected a ConflictError'),
+        (caught: unknown) => caught
+      );
+
+    expect(error).toBeInstanceOf(ConflictError);
+    expect(error).toMatchObject({
+      statusCode: 409,
+      message: 'A question with this slug already exists',
+      details: { slug: 'movement-confidence' },
+    });
+    expect(mockedQuestionRepo.findQuestionBySlug).toHaveBeenCalledWith(
+      expect.anything(),
+      'movement-confidence'
+    );
+    expect(mockedQuestionRepo.createQuestion).not.toHaveBeenCalled();
   });
 });
 
