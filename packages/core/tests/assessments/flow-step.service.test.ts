@@ -8,7 +8,7 @@ import * as flowStepRepository from '../../src/assessments/flow-step.repository'
 import * as flowStepService from '../../src/assessments/flow-step.service';
 import * as flowRepository from '../../src/assessments/flow.repository';
 import * as templateRepository from '../../src/assessments/template.repository';
-import { ConflictError, NotFoundError, ValidationError } from '../../src/lib/errors';
+import { ConflictError, NotFoundError } from '../../src/lib/errors';
 
 import type { AssessmentFlow, FlowStepWithConfig } from '../../src/assessments/flow.repository';
 import type { OrganisationContext, UserActor } from '../../src/lib/context';
@@ -162,7 +162,11 @@ describe('flowStepService.reorderStepsService', () => {
       flowStepService.reorderStepsService(createContext(), FLOW_PUBLIC_ID, {
         orderedStepPublicIds: [stepA.publicId, 'strangerXYZ1'],
       })
-    ).rejects.toBeInstanceOf(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'One or more step IDs do not belong to this flow',
+      details: { publicId: 'strangerXYZ1' },
+    });
 
     expect(mockedFlowStepRepo.reorderSteps).not.toHaveBeenCalled();
   });
@@ -179,7 +183,11 @@ describe('flowStepService.reorderStepsService', () => {
       flowStepService.reorderStepsService(createContext(), FLOW_PUBLIC_ID, {
         orderedStepPublicIds: [stepA.publicId],
       })
-    ).rejects.toBeInstanceOf(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'Expected 2 step IDs but received 1',
+      details: undefined,
+    });
 
     expect(mockedFlowStepRepo.reorderSteps).not.toHaveBeenCalled();
   });
@@ -196,7 +204,11 @@ describe('flowStepService.reorderStepsService', () => {
       flowStepService.reorderStepsService(createContext(), FLOW_PUBLIC_ID, {
         orderedStepPublicIds: [stepA.publicId, stepA.publicId],
       })
-    ).rejects.toBeInstanceOf(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'Step IDs must be unique',
+      details: undefined,
+    });
 
     expect(mockedFlowStepRepo.reorderSteps).not.toHaveBeenCalled();
   });
@@ -244,6 +256,7 @@ describe('flowStepService.createStepService', () => {
 
   it('rejects a linked template that is inactive', async () => {
     const flow = createFlow();
+    const templateId = randomUUID();
 
     mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
     mockedTemplateRepo.findTemplateById.mockResolvedValue({ isActive: false } as never);
@@ -251,10 +264,14 @@ describe('flowStepService.createStepService', () => {
     await expect(
       flowStepService.createStepService(createContext(), FLOW_PUBLIC_ID, {
         type: 'questions',
-        templateId: randomUUID(),
+        templateId,
         config: { title: 'Questions' },
       })
-    ).rejects.toBeInstanceOf(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'Linked assessment template not found or inactive',
+      details: { templateId },
+    });
 
     expect(mockedFlowStepRepo.createStep).not.toHaveBeenCalled();
   });
@@ -272,7 +289,11 @@ describe('flowStepService.createStepService', () => {
         type: 'questions',
         config: { title: 'Questions' },
       })
-    ).rejects.toBeInstanceOf(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'A step of this type must link an assessment template',
+      details: { type: 'questions' },
+    });
 
     expect(mockedFlowStepRepo.createStep).not.toHaveBeenCalled();
   });
@@ -298,7 +319,11 @@ describe('flowStepService.createStepService', () => {
         type: 'intro',
         config: {},
       })
-    ).rejects.toBeInstanceOf(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'Invalid flow step input',
+      details: { errors: [expect.objectContaining({ path: ['config', 'title'] })] },
+    });
   });
 });
 
@@ -350,7 +375,11 @@ describe('flowStepService.updateStepService', () => {
       flowStepService.updateStepService(createContext(), FLOW_PUBLIC_ID, step.publicId, {
         templateId: null,
       })
-    ).rejects.toBeInstanceOf(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'A step of this type must link an assessment template',
+      details: { type: 'questions' },
+    });
 
     expect(mockedFlowStepRepo.updateStep).not.toHaveBeenCalled();
   });
@@ -362,7 +391,11 @@ describe('flowStepService.updateStepService', () => {
       flowStepService.updateStepService(createContext(), FLOW_PUBLIC_ID, step.publicId, {
         type: 'questions',
       })
-    ).rejects.toBeInstanceOf(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'A step of this type must link an assessment template',
+      details: { type: 'questions' },
+    });
 
     expect(mockedFlowStepRepo.updateStep).not.toHaveBeenCalled();
   });
