@@ -100,6 +100,7 @@ export const useVideoUpload = (
             status: 'draft',
             description: metadata.description,
             difficulty: metadata.difficulty,
+            isEssential: metadata.isEssential,
             tags: metadata.tags,
           };
 

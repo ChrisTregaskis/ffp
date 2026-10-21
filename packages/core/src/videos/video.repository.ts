@@ -1,15 +1,4 @@
-import {
-  and,
-  eq,
-  or,
-  exists,
-  ilike,
-  inArray,
-  count,
-  sql,
-  type SQL,
-  type Column,
-} from 'drizzle-orm';
+import { and, eq, or, ilike, count, sql, type SQL, type Column } from 'drizzle-orm';
 import { z } from 'zod';
 
 import type { DbClient, DbQueryClient } from '@ffp/database';
@@ -30,8 +19,34 @@ const ADMIN_SORTABLE_COLUMNS: Partial<Record<string, Column>> = {
   updatedAt: videos.updatedAt,
 };
 
+/**
+ * A video matches when, for every category a selected tag belongs to, it carries at least one of
+ * the selected tags in that category: AND across categories, OR within one. A selected publicId
+ * that names no tag has no category the video can satisfy, so it matches nothing.
+ */
+const matchesTagsInEveryCategory = (tagPublicIds: string[]): SQL => {
+  const selected = sql.join(
+    tagPublicIds.map((publicId) => sql`${publicId}`),
+    sql`, `
+  );
+
+  return sql`NOT EXISTS (
+    SELECT 1
+    FROM unnest(ARRAY[${selected}]::text[]) AS selected (public_id)
+    LEFT JOIN ${tags} AS selected_tag ON selected_tag.public_id = selected.public_id
+    WHERE NOT EXISTS (
+      SELECT 1
+      FROM ${videoTags} AS carried
+      JOIN ${tags} AS carried_tag ON carried_tag.id = carried.tag_id
+      WHERE carried.video_id = ${videos.id}
+        AND carried_tag.category_id = selected_tag.category_id
+        AND carried_tag.public_id IN (${selected})
+    )
+  )`;
+};
+
 /** Build WHERE conditions for admin video list filters. */
-const buildAdminFilterConditions = (db: DbClient, filters: AdminVideoFilterInput): SQL[] => {
+const buildAdminFilterConditions = (filters: AdminVideoFilterInput): SQL[] => {
   const conditions: SQL[] = [];
 
   if (filters.search) {
@@ -52,15 +67,7 @@ const buildAdminFilterConditions = (db: DbClient, filters: AdminVideoFilterInput
   }
 
   if (filters.tags && filters.tags.length > 0) {
-    conditions.push(
-      exists(
-        db
-          .select({ one: sql`1` })
-          .from(videoTags)
-          .innerJoin(tags, eq(tags.id, videoTags.tagId))
-          .where(and(eq(videoTags.videoId, videos.id), inArray(tags.publicId, filters.tags)))
-      )
-    );
+    conditions.push(matchesTagsInEveryCategory(filters.tags));
   }
 
   return conditions;
@@ -113,7 +120,7 @@ export async function findAllVideos(
   paginationInput: PaginationInput,
   filters: AdminVideoFilterInput
 ): Promise<VideoRecord[]> {
-  const conditions = buildAdminFilterConditions(db, filters);
+  const conditions = buildAdminFilterConditions(filters);
 
   const query = db
     .select()
@@ -128,7 +135,7 @@ export async function countAllVideos(
   db: DbClient,
   filters: AdminVideoFilterInput
 ): Promise<number> {
-  const conditions = buildAdminFilterConditions(db, filters);
+  const conditions = buildAdminFilterConditions(filters);
 
   const result = await db
     .select({ count: count() })

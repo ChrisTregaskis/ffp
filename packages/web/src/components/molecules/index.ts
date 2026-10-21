@@ -40,6 +40,7 @@ export { InstructionList, type InstructionListProps } from './InstructionList';
 export { ListEmptyState, type ListEmptyStateProps } from './ListEmptyState';
 export { LoadingState, type LoadingStateProps, type LoadingStateLayout } from './LoadingState';
 export { MenuList, type MenuListProps, type MenuListItem } from './MenuList';
+export { NavGroupHeading, type NavGroupHeadingProps } from './NavGroupHeading';
 export { NavItem, type NavItemProps } from './NavItem';
 export { PageHeader, type PageHeaderProps } from './PageHeader';
 export { PageState, type PageStateProps } from './PageState';

@@ -11,18 +11,10 @@ export interface NavEntry {
 
 type Navigate = (view: PrototypeView) => void;
 
-export const PROTOTYPE_HOME_VIEW: PrototypeView = { name: 'video-library' };
+export const PROTOTYPE_HOME_VIEW: PrototypeView = { name: 'member-programmes' };
 
 /** Top-level menu items (shown when not inside a sub-section). */
 export const getMainNav = (view: PrototypeView, navigate: Navigate): NavEntry[] => [
-  {
-    label: 'Video library',
-    icon: Icons.VIDEO,
-    active: view.name === 'video-library',
-    onClick: () => {
-      navigate({ name: 'video-library' });
-    },
-  },
   {
     label: 'Member programmes',
     icon: Icons.USERS,

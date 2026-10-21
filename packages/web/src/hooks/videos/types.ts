@@ -6,5 +6,6 @@ export interface VideoMetadataValues {
   description?: string;
   difficulty?: CreateVideoInput['difficulty'];
   equipment: string[];
+  isEssential: boolean;
   tags: VideoTagAssignment;
 }

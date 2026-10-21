@@ -13,7 +13,7 @@ import { parseArrayParam } from '../../lib/query-params';
  *
  * Lists all videos (draft, active, archived) with pagination, search, and filters.
  * Query params: page, pageSize, sortBy, sortDirection, search, status, difficulty,
- * tags (comma-separated tag publicIds; any match).
+ * tags (comma-separated tag publicIds; AND across categories, OR within one).
  * Admin role required.
  */
 export const handler = withErrorHandling(

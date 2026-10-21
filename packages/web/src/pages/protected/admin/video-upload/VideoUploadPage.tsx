@@ -61,7 +61,7 @@ export const VideoUploadPage: React.FC = () => {
               actions={
                 <>
                   <Button variant="secondary" onClick={handleCloseUpload}>
-                    Back to Video Library
+                    Back to Exercises
                   </Button>
                   {createdVideoId && (
                     <Button

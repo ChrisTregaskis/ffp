@@ -6,7 +6,6 @@ import { Text, Title, FormRow } from '@web/components/atoms';
 import type { SelectOption } from '@web/components/molecules';
 import {
   FormActions,
-  FormCheckboxGroup,
   FormSelect,
   StaticAlert,
   FormTagInput,
@@ -15,9 +14,8 @@ import {
 } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
 import { DIFFICULTY_OPTIONS } from '@web/constants';
-import { useTagCategoriesQuery } from '@web/hooks/tags';
 
-import { toTagOptions } from './tag-options';
+import { VideoTagFields } from './VideoTagFields';
 
 import type { VideoMetadataFormValues } from './types';
 
@@ -87,8 +85,6 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
   carriedTagIds = [],
 }) => {
   const { register, control, errors } = useComposableFormContext<VideoMetadataFormValues>();
-  const { data: tagCategories, isError: tagsFailed } = useTagCategoriesQuery();
-  const tagsHint = tagsFailed ? 'Tags could not be loaded. Reload to try again.' : undefined;
 
   const isEdit = variant === 'edit';
   const statusOptions = currentStatus ? STATUS_OPTIONS_BY_CURRENT[currentStatus] : [];
@@ -153,23 +149,7 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
         />
       </FormRow>
 
-      {/* Row 4: Movement + Body Areas (full-width) */}
-      <FormCheckboxGroup
-        name="movementTags"
-        label="Movement"
-        options={toTagOptions(tagCategories, 'movement', carriedTagIds)}
-        control={control}
-        errors={errors}
-        hint={tagsHint}
-      />
-      <FormCheckboxGroup
-        name="bodyAreaTags"
-        label="Body Areas"
-        options={toTagOptions(tagCategories, 'body-area', carriedTagIds)}
-        control={control}
-        errors={errors}
-        hint={tagsHint}
-      />
+      <VideoTagFields carriedTagIds={carriedTagIds} />
 
       {/* Edit variant: Default Exercise Prescription section */}
       {isEdit && (

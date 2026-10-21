@@ -56,7 +56,7 @@ draft → active → archived
 | ------ | -------------------------- | -------------------------------------------------------------------------------------- |
 | POST   | `/admin/videos/upload-url` | Get presigned S3 PUT URL for browser upload                                            |
 | POST   | `/admin/videos`            | Create video record with metadata and tags                                             |
-| GET    | `/admin/videos`            | List all videos (paginated, filtered, all statuses; `tags` = tag publicIds, any match) |
+| GET    | `/admin/videos`            | List all videos (paginated, filtered, all statuses; `tags` = tag publicIds, see below) |
 | GET    | `/admin/videos/{publicId}` | One video in any status, with its tags and `isEssential`                               |
 | PUT    | `/admin/videos/{publicId}` | Update metadata, tags and status transitions                                           |
 | GET    | `/admin/tag-categories`    | The tag categories in display order, each with every tag                               |
@@ -67,6 +67,8 @@ draft → active → archived
 No admin response carries the S3 key or file details.
 
 **Replacing the file.** The edit page uploads a new file, then sends its `s3Key` (with the new duration and size) on the `PUT`. The key must have the shape the upload URL issues (`library/{uuid}.mp4`), so a mistyped or placeholder key is refused before anything is touched. Once that update commits, the service deletes the superseded object from the videos bucket; a failed update deletes nothing. A failed delete does not fail the replace: it is logged at error level (`video_file_delete_failed`) with the orphaned key, and a successful one at info level (`video_file_replaced`), so every replace can be traced from the logs. The admin Lambda holds `s3:DeleteObject` on the videos bucket only.
+
+**Tag filter.** `?tags=` takes comma-separated tag publicIds and matches AND across categories, OR within one: a video matches when, for each category a selected tag belongs to, it carries at least one of the selected tags in that category. So Goal: Posture with Movement: Strength narrows the list, while two goal tags widen it. A publicId that names no tag matches nothing. The list response carries each video's tags by category and its `isEssential` flag, which create and update both accept.
 
 **Tag assignment** travels in the video's create or update body as tag publicIds per category, e.g. `"tags": { "movement": ["…", "…"], "body-area": [] }`. A category sent replaces that category's tags on the video; a category left out is untouched. Newly assigned tags must be active; a deactivated tag the video already carries is kept on re-save.
 
@@ -79,7 +81,8 @@ No admin response carries the S3 key or file details.
 
 ### Admin UI Pages
 
-- **Video Library** (`/admin/videos`): Table with search, status/difficulty filters, column visibility, quick-actions (Publish, Archive, Restore)
+- **Exercises** (`/admin/videos`, under the Programmes nav group): Table with search, status and difficulty filters, one filter per tag category, Goal / Essential columns (Movement and Audience hidden by default), column visibility, quick-actions (Publish, Archive, Restore). The upload and edit forms set Goal, Body area, Movement and Audience tags and the Essential flag; an inactive tag is offered only where the video already carries it.
+- **Exercise Tags** (`/admin/exercise-tags`): each category with its tags, active and inactive; add a tag (slug filled from the label, fixed once saved), rename, deactivate and reactivate. Tags are never deleted.
 - **Video Upload** (`/admin/videos/upload`): Drag-and-drop upload with progress bar, metadata form
 - **Video Edit** (`/admin/videos/{publicId}`): Inline video preview, metadata and tag editing, status management
 

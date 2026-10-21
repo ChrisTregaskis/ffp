@@ -184,7 +184,7 @@ describe('Video service with typed tags', () => {
     });
   });
 
-  it('filters the admin list to videos carrying any of the tags', async () => {
+  it('filters the admin list to videos carrying any of the tags in one category', async () => {
     await run(async (tx) => {
       const audienceId = await findCategoryId(tx, 'audience');
       const gentle = await insertTestTag(tx, audienceId);
@@ -208,6 +208,30 @@ describe('Video service with typed tags', () => {
       for (const field of STORAGE_FIELDS) {
         expect(data[0]).not.toHaveProperty(field);
       }
+    });
+  });
+
+  it('writes the essential flag on create and update, and lists it', async () => {
+    await run(async () => {
+      const created = await createVideo(ctx, {
+        title: 'Essential round trip',
+        s3Key: 'library/essential-round-trip.mp4',
+        durationSeconds: 30,
+        fileSizeBytes: 1024,
+        equipment: [],
+        isEssential: true,
+      });
+
+      expect((await getAdminVideo(ctx, created.publicId)).isEssential).toBe(true);
+      const listed = await listAdminVideos(
+        ctx,
+        { page: 1, pageSize: 50, sortBy: 'title', sortDirection: 'asc' },
+        { search: 'Essential round trip' }
+      );
+      expect(listed.data.map((video) => video.isEssential)).toEqual([true]);
+
+      await updateVideo(ctx, created.publicId, { isEssential: false });
+      expect((await getAdminVideo(ctx, created.publicId)).isEssential).toBe(false);
     });
   });
 });

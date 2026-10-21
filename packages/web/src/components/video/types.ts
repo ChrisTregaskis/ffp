@@ -1,14 +1,14 @@
-import type { CreateVideoInput } from '@ffp/core';
+import type { CreateVideoInput, TagCategorySlug } from '@ffp/core';
 
 /** Internal form values for the video metadata form (all variants) */
 export interface VideoMetadataFormValues {
   title: string;
   description: string;
   difficulty: NonNullable<CreateVideoInput['difficulty']> | '';
-  /** Movement tag publicIds */
-  movementTags: string[];
-  /** Body-area tag publicIds */
-  bodyAreaTags: string[];
+  /** Tag publicIds per category */
+  tags: Record<TagCategorySlug, string[]>;
+  /** A core exercise, favoured over the rest of its pool */
+  isEssential: boolean;
   equipment: string[];
   /** Edit variant only — video catalogue status */
   status: string;
