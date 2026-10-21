@@ -1501,6 +1501,7 @@ describe('Assessment Service', () => {
       it.each([
         ['on the step it was saved at', 3, 3],
         ['on the last question step, not results, after a save on that step', 5, 4],
+        ['on the last question step after a save at a step outside the flow', 99, 4],
       ])('resumes %s', async (_case, stored, expected) => {
         const context = createUserContext();
         const userId = randomUUID();
@@ -1533,6 +1534,156 @@ describe('Assessment Service', () => {
           { userId }
         );
       });
+    });
+  });
+
+  describe('saveProgress writes', () => {
+    const WARNING_MESSAGE = 'Take the next step gently.';
+
+    // intro → questions → results; the question step can carry a rule that always warns
+    const createWritesFlow = (flowId: string, warns: boolean): FlowStepWithConfig[] => {
+      const step = (
+        order: number,
+        type: FlowStepWithConfig['type'],
+        templateId: string | null
+      ): FlowStepWithConfig => ({
+        id: randomUUID(),
+        publicId: `writestep00${String(order)}`,
+        flowId,
+        templateId,
+        order,
+        type,
+        config: { title: `Step ${String(order)}` },
+        nextStepRules: null,
+        defaultNextStepId: null,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      const steps = [
+        step(1, 'intro', null),
+        step(2, 'questions', randomUUID()),
+        step(3, 'results', null),
+      ];
+
+      if (warns) {
+        steps[1].nextStepRules = [
+          {
+            priority: 1,
+            conditions: [],
+            action: {
+              type: 'show_warning',
+              warningMessage: WARNING_MESSAGE,
+              warningType: 'caution',
+              continueAfterWarning: true,
+            },
+          },
+        ];
+      }
+
+      return steps;
+    };
+
+    const setUp = (
+      overrides: Partial<UserAssessment> = {},
+      { warns = false }: { warns?: boolean } = {}
+    ): { context: OrganisationContext; assessmentId: string; steps: FlowStepWithConfig[] } => {
+      const context = createUserContext();
+      const userId = randomUUID();
+      const flowId = randomUUID();
+      const assessment = createMockAssessment({
+        organisationId: context.organisationId,
+        userId,
+        flowId,
+        ...overrides,
+      });
+      const steps = createWritesFlow(flowId, warns);
+
+      mockedContextModule.getUserIdFromContext.mockResolvedValue(userId);
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
+      mockedUserAssessmentRepo.updateAssessmentProgress.mockResolvedValue(assessment);
+      mockedFlowRepo.findStepsByFlowId.mockResolvedValue(steps);
+      mockedAnswerRepo.findByAssessmentId.mockResolvedValue([]);
+      runWithRLSInMockTx();
+
+      return { context, assessmentId: assessment.id, steps };
+    };
+
+    it('appends the warnings branching raises to the assessment, inside the save transaction', async () => {
+      const { context, assessmentId, steps } = setUp({}, { warns: true });
+
+      const response = await assessmentService.saveProgress(
+        assessmentId,
+        { answers: {}, currentStep: 2 },
+        context
+      );
+
+      const raised = {
+        message: WARNING_MESSAGE,
+        type: 'caution',
+        shownAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/) as unknown,
+        stepId: steps[1].id,
+      };
+      expect(mockedUserAssessmentRepo.appendAssessmentWarnings.mock.calls).toEqual([
+        [context.organisationId, assessmentId, [raised], { tx: mockTx }],
+      ]);
+      // The member is shown exactly what was recorded
+      expect(response.warnings).toEqual(
+        mockedUserAssessmentRepo.appendAssessmentWarnings.mock.calls[0][2]
+      );
+    });
+
+    it('appends nothing when branching raises no warning', async () => {
+      const { context, assessmentId, steps } = setUp();
+
+      const response = await assessmentService.saveProgress(
+        assessmentId,
+        { answers: {}, currentStep: 2 },
+        context
+      );
+
+      // Branching ran (it picked the next step), and raised nothing to record
+      expect(response.nextStepId).toBe(steps[2].id);
+      expect(response.warnings).toEqual([]);
+      expect(mockedUserAssessmentRepo.appendAssessmentWarnings).not.toHaveBeenCalled();
+    });
+
+    it('moves a not-started assessment to in progress, inside the save transaction', async () => {
+      const { context, assessmentId } = setUp({ status: 'not_started' });
+
+      await assessmentService.saveProgress(assessmentId, { answers: {}, currentStep: 1 }, context);
+
+      expect(mockedUserAssessmentRepo.transitionAssessmentStatus.mock.calls).toEqual([
+        [context.organisationId, assessmentId, 'in_progress', { tx: mockTx }],
+      ]);
+    });
+
+    it('does not move an assessment already in progress again', async () => {
+      const { context, assessmentId } = setUp({ status: 'in_progress' });
+
+      await assessmentService.saveProgress(assessmentId, { answers: {}, currentStep: 1 }, context);
+
+      expect(mockedUserAssessmentRepo.updateAssessmentProgress).toHaveBeenCalledTimes(1);
+      expect(mockedUserAssessmentRepo.transitionAssessmentStatus).not.toHaveBeenCalled();
+    });
+
+    // Suspected defect, characterised: any positive step is stored as sent, and only the
+    // resume clamp bounds it (see "resumes on the last question step after a save at a step
+    // outside the flow")
+    it('stores a step that matches no step in the flow as sent, without branching', async () => {
+      const { context, assessmentId } = setUp({}, { warns: true });
+
+      const response = await assessmentService.saveProgress(
+        assessmentId,
+        { answers: {}, currentStep: 99, advance: true },
+        context
+      );
+
+      expect(mockedUserAssessmentRepo.updateAssessmentProgress.mock.calls).toEqual([
+        [context.organisationId, assessmentId, { currentStep: 99 }, { tx: mockTx }],
+      ]);
+      expect(response).toMatchObject({ nextStepId: null, warnings: [], shouldTerminate: false });
+      expect(mockedUserAssessmentRepo.appendAssessmentWarnings).not.toHaveBeenCalled();
     });
   });
 });

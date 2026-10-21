@@ -444,6 +444,22 @@ describe('flowStepService.updateStepService', () => {
     expect(mockedTemplateRepo.findTemplateById).not.toHaveBeenCalled();
   });
 
+  it('refuses a step that belongs to another flow with a 404, before any write', async () => {
+    const step = arrangeStoredStep({ flowId: randomUUID() });
+
+    await expect(
+      flowStepService.updateStepService(createContext(), FLOW_PUBLIC_ID, step.publicId, {
+        config: { title: 'Renamed step' },
+      })
+    ).rejects.toMatchObject({
+      name: 'NotFoundError',
+      statusCode: 404,
+      message: `Flow step with id ${step.publicId} not found`,
+    });
+
+    expect(mockedFlowStepRepo.updateStep).not.toHaveBeenCalled();
+  });
+
   it('keeps an explicitly sent template link even when the type takes none', async () => {
     const step = arrangeStoredStep();
     const templateId = randomUUID();
@@ -456,5 +472,73 @@ describe('flowStepService.updateStepService', () => {
     });
 
     expect(capturedUpdate()).toMatchObject({ type: 'intro', templateId });
+  });
+});
+
+describe('flowStepService.deleteStepService', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    stepOrder = 0;
+  });
+
+  const arrange = (stepOverrides: Partial<FlowStepWithConfig> = {}): FlowStepWithConfig => {
+    const flow = createFlow();
+    const step = createStep(flow.id, stepOverrides);
+
+    mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
+    mockedFlowStepRepo.findStepByPublicId.mockResolvedValue(step);
+
+    return step;
+  };
+
+  it('soft-deletes the step by the UUID its public identifier resolves to', async () => {
+    const step = arrange();
+
+    await flowStepService.deleteStepService(createContext(), FLOW_PUBLIC_ID, step.publicId);
+
+    expect(mockedFlowRepo.findByPublicId).toHaveBeenCalledWith(expect.anything(), FLOW_PUBLIC_ID);
+    expect(mockedFlowStepRepo.deactivateStep.mock.calls).toEqual([[expect.anything(), step.id]]);
+  });
+
+  it('refuses a step that belongs to another flow with a 404, before any write', async () => {
+    const step = arrange({ flowId: randomUUID() });
+
+    await expect(
+      flowStepService.deleteStepService(createContext(), FLOW_PUBLIC_ID, step.publicId)
+    ).rejects.toMatchObject({
+      name: 'NotFoundError',
+      statusCode: 404,
+      message: `Flow step with id ${step.publicId} not found`,
+    });
+
+    expect(mockedFlowStepRepo.deactivateStep).not.toHaveBeenCalled();
+  });
+
+  it('refuses an unknown step with a 404', async () => {
+    arrange();
+    mockedFlowStepRepo.findStepByPublicId.mockResolvedValue(null);
+
+    await expect(
+      flowStepService.deleteStepService(createContext(), FLOW_PUBLIC_ID, 'stepzzzzzzzz')
+    ).rejects.toMatchObject({
+      name: 'NotFoundError',
+      message: 'Flow step with id stepzzzzzzzz not found',
+    });
+
+    expect(mockedFlowStepRepo.deactivateStep).not.toHaveBeenCalled();
+  });
+
+  it('refuses an unknown flow with a 404, before looking up the step', async () => {
+    mockedFlowRepo.findByPublicId.mockResolvedValue(null);
+
+    await expect(
+      flowStepService.deleteStepService(createContext(), 'flowzzzzzzzz', 'step00000001')
+    ).rejects.toMatchObject({
+      name: 'NotFoundError',
+      message: 'Assessment flow with id flowzzzzzzzz not found',
+    });
+
+    expect(mockedFlowStepRepo.findStepByPublicId).not.toHaveBeenCalled();
+    expect(mockedFlowStepRepo.deactivateStep).not.toHaveBeenCalled();
   });
 });

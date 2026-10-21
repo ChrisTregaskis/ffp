@@ -16,7 +16,7 @@ import { randomUUID } from 'crypto';
 import { inArray, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
 import {
   assessmentFlows,
@@ -27,6 +27,7 @@ import {
 } from '@ffp/database/schema';
 
 import * as templateRepository from '../../src/assessments/template.repository';
+import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
 
 import type { CreateAssessmentTemplateInput } from '../../src/schemas/assessment-template.schema';
 
@@ -459,6 +460,89 @@ describe('Template Repository', () => {
       expect(assignable.map((question) => question.id).filter((id) => bankIds.has(id))).toEqual([
         available,
       ]);
+    });
+
+    describe('createDuplicateTemplate', () => {
+      // created_by references users, so the copying admin is a real user in a test organisation
+      let organisationId: string;
+      let adminUserId: string;
+
+      beforeEach(async () => {
+        organisationId = randomUUID();
+        adminUserId = randomUUID();
+
+        await asOrganisation(db, organisationId, async (tx) => {
+          await tx.execute(sql`
+            INSERT INTO organisations (id, public_id, type, name, settings)
+            VALUES (${organisationId}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, 'individual', ${`Template Organisation [${RUN_ID}]`}, '{}')
+          `);
+          await tx.execute(sql`
+            INSERT INTO users (id, public_id, organisation_id, location_id, email, cognito_sub, first_name, last_name, role)
+            VALUES (${adminUserId}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, ${organisationId}, NULL, ${`template-${adminUserId.slice(0, 8)}@test.com`}, ${`cognito-${adminUserId.slice(0, 8)}`}, 'Tess', 'Template', 'system_admin')
+          `);
+        });
+      });
+
+      afterEach(async () => {
+        await deleteOrganisations(db, [organisationId]);
+      });
+
+      it('creates an inactive version 1 copy holding every question assignment in order, leaving the source untouched', async () => {
+        const source = await createTemplate({
+          ...validCreateInput,
+          description: 'The template being copied',
+        });
+        await templateRepository.updateTemplate(db, source.id, { name: `Source ${RUN_ID}` });
+        const bank = await createQuestions(3);
+        await templateRepository.assignQuestions(
+          db,
+          source.id,
+          bank.map((question) => question.id),
+          1
+        );
+        await db.execute(sql`
+          UPDATE template_questions SET config_overrides = ${JSON.stringify({ questionText: 'Reworded' })}::jsonb
+          WHERE template_id = ${source.id} AND question_id = ${bank[1].id}
+        `);
+        const sourceBefore = await templateRepository.findTemplateById(db, source.id);
+        const assignments = await templateRepository.findQuestionAssignmentsByTemplateId(
+          db,
+          source.id
+        );
+
+        const copyId = await templateRepository.createDuplicateTemplate(
+          db,
+          adminUserId,
+          `Copy ${RUN_ID}`,
+          source,
+          assignments
+        );
+        createdTemplateIds.push(copyId);
+
+        expect(await templateRepository.findTemplateById(db, copyId)).toMatchObject({
+          name: `Copy ${RUN_ID}`,
+          description: 'The template being copied',
+          version: 1,
+          isActive: false,
+          createdBy: adminUserId,
+        });
+        expect(assignments).toEqual([
+          { questionId: bank[0].id, displayOrder: 1, configOverrides: null },
+          {
+            questionId: bank[1].id,
+            displayOrder: 2,
+            configOverrides: { questionText: 'Reworded' },
+          },
+          { questionId: bank[2].id, displayOrder: 3, configOverrides: null },
+        ]);
+        expect(await templateRepository.findQuestionAssignmentsByTemplateId(db, copyId)).toEqual(
+          assignments
+        );
+        expect(await templateRepository.findTemplateById(db, source.id)).toEqual(sourceBefore);
+        expect(await templateRepository.findQuestionAssignmentsByTemplateId(db, source.id)).toEqual(
+          assignments
+        );
+      });
     });
   });
 });
