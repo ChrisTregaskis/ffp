@@ -3,30 +3,10 @@ import {
   type APIGatewayProxyEventV2WithJWT,
   withErrorHandling,
   withSystemAdmin,
-  setVideoUploadConfig,
   generateUploadUrls,
 } from '@ffp/core/server';
 
-// Cold start: initialise S3 upload config from environment variables (adminHandlerEnv in
-// sst.config.ts). The admin router imports this module into every admin Lambda, including
-// the CORS preflight one that has no bucket variables, so a missing variable is only
-// reported when an upload is actually requested.
-const videosBucketName = process.env.VIDEOS_BUCKET_NAME;
-const assetsBucketName = process.env.ASSETS_BUCKET_NAME;
-const region = process.env.AWS_REGION ?? 'eu-west-2';
-
-const missingEnv = [
-  !videosBucketName && 'VIDEOS_BUCKET_NAME',
-  !assetsBucketName && 'ASSETS_BUCKET_NAME',
-].filter(Boolean);
-
-if (videosBucketName && assetsBucketName) {
-  setVideoUploadConfig({
-    videosBucketName,
-    assetsBucketName,
-    region,
-  });
-}
+import { missingVideoStorageEnv } from './video-storage-config';
 
 /**
  * Lambda handler for POST /admin/videos/upload-url
@@ -48,8 +28,10 @@ export const handler = withErrorHandling(
     'Only system administrators can upload videos',
     async (_event: APIGatewayProxyEventV2WithJWT, context): Promise<UploadUrlResponse> => {
       // A plain Error, so the response stays a generic 500 while the log names the variables
-      if (missingEnv.length > 0) {
-        throw new Error(`Video upload is not configured: missing ${missingEnv.join(', ')}`);
+      if (missingVideoStorageEnv.length > 0) {
+        throw new Error(
+          `Video upload is not configured: missing ${missingVideoStorageEnv.join(', ')}`
+        );
       }
 
       return await generateUploadUrls(context);

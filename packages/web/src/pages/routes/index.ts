@@ -25,6 +25,7 @@ import { AssessmentFlowScoringPage } from '@web/pages/protected/admin/assessment
 import { AssessmentFlowStepsPage } from '@web/pages/protected/admin/assessment-flow-steps';
 import { AssessmentTemplateEditPage } from '@web/pages/protected/admin/assessment-template-edit';
 import { AssessmentTemplateListPage } from '@web/pages/protected/admin/assessment-template-list';
+import { ExerciseTagsPage } from '@web/pages/protected/admin/exercise-tags';
 import { LocationEditPage } from '@web/pages/protected/admin/location-edit';
 import { LocationListPage } from '@web/pages/protected/admin/location-list';
 import { OrganisationEditPage } from '@web/pages/protected/admin/organisation-edit';
@@ -122,6 +123,7 @@ const PAGE_COMPONENTS: Record<RouteKey, FC> = {
   [RouteKey.ADMIN_TEMPLATE_PHASES]: PhasesPage,
   [RouteKey.ADMIN_TEMPLATE_PHASE_DETAIL]: PhaseDetailPage,
   [RouteKey.ADMIN_VIDEOS]: VideoLibraryPage,
+  [RouteKey.ADMIN_EXERCISE_TAGS]: ExerciseTagsPage,
   [RouteKey.ADMIN_VIDEO_UPLOAD]: VideoUploadPage,
   [RouteKey.ADMIN_VIDEO_EDIT]: VideoEditPage,
   [RouteKey.COMPONENTS]: ComponentsPage,

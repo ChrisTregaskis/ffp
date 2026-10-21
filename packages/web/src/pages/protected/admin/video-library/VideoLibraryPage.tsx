@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { adminVideoFilterSchema } from '@ffp/core';
 import type { AdminVideoListResponse, PaginationInput } from '@ffp/core';
 
 import type { RowAction } from '@web/components/organisms';
@@ -9,38 +8,40 @@ import { AdminListPageShell } from '@web/components/templates';
 import type { AdminListEmptyState, ListFilterValues } from '@web/components/templates';
 import { ArchiveVideoModal } from '@web/components/video';
 import { RouteKey, routes } from '@web/config/routes';
+import { useTagCategoriesQuery } from '@web/hooks/tags';
 import { useToast } from '@web/hooks/useToast';
 import { useAdminVideosQuery, useUpdateVideoMutation } from '@web/hooks/videos';
 
 import { buildVideoColumns, type VideoRow } from './columns';
 import { TABLE_FILTERS } from './constants';
+import { toTagFilters, toVideoListFilters } from './video-list-filters';
 
 const DEFAULT_SORT = { id: 'createdAt', desc: true };
 
-const DEFAULT_COLUMN_VISIBILITY = { movement: false, updatedAt: false };
+const DEFAULT_COLUMN_VISIBILITY = { movement: false, audience: false, updatedAt: false };
 
-/** The video list takes enum-typed filters, so the raw values pass through its schema first. */
 const useVideoList = (
   pagination: PaginationInput,
   filters: ListFilterValues
-): ReturnType<typeof useAdminVideosQuery> => {
-  const parsed = adminVideoFilterSchema.safeParse(filters);
+): ReturnType<typeof useAdminVideosQuery> =>
+  useAdminVideosQuery(pagination, toVideoListFilters(filters));
 
-  return useAdminVideosQuery(pagination, parsed.success ? parsed.data : {});
-};
+const toLabels = (tags: { label: string }[]): string[] => tags.map((tag) => tag.label);
 
 const toVideoRow = (video: AdminVideoListResponse): VideoRow => ({
   ...video,
-  movement: video.tags.movement.map((tag) => tag.label),
-  bodyAreas: video.tags['body-area'].map((tag) => tag.label),
+  goal: toLabels(video.tags.goal),
+  movement: toLabels(video.tags.movement),
+  bodyAreas: toLabels(video.tags['body-area']),
+  audience: toLabels(video.tags.audience),
 });
 
 const EMPTY_STATE: AdminListEmptyState = {
-  filteredTitle: 'No matching videos',
+  filteredTitle: 'No matching exercises',
   icon: 'Video',
   iconVariant: 'primary',
-  title: 'No videos yet',
-  description: 'Upload your first exercise video to start building the video library.',
+  title: 'No exercises yet',
+  description: 'Upload your first exercise video to start building the exercise library.',
 };
 
 export const VideoLibraryPage: React.FC = () => {
@@ -48,6 +49,11 @@ export const VideoLibraryPage: React.FC = () => {
   const { addToast } = useToast();
   const updateMutation = useUpdateVideoMutation();
   const [archiveTarget, setArchiveTarget] = useState<VideoRow | null>(null);
+  const { data: tagCategories } = useTagCategoriesQuery();
+  const filters = useMemo(
+    () => [...TABLE_FILTERS, ...toTagFilters(tagCategories)],
+    [tagCategories]
+  );
 
   const handleUploadClick = useCallback((): void => {
     void navigate(routes[RouteKey.ADMIN_VIDEO_UPLOAD].path);
@@ -150,15 +156,15 @@ export const VideoLibraryPage: React.FC = () => {
 
   return (
     <AdminListPageShell
-      title="Video Library"
-      subtitle="Manage exercise videos — upload, edit metadata, and control availability"
+      title="Exercises"
+      subtitle="Curate the exercise videos programmes draw on: upload, tag and control availability"
       createLabel="Upload Video"
       createIcon="Upload"
       onCreate={handleUploadClick}
       tableId="admin-videos"
       defaultSort={DEFAULT_SORT}
       defaultColumnVisibility={DEFAULT_COLUMN_VISIBILITY}
-      filters={TABLE_FILTERS}
+      filters={filters}
       searchPlaceholder="Search by title..."
       useList={useVideoList}
       toRow={toVideoRow}

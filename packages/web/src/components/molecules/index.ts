@@ -20,6 +20,8 @@ export {
   type FeatureColumnGridProps,
   type FeatureItem,
 } from './FeatureColumnGrid';
+export { FileDropzone, type FileDropzoneProps, type FileDropzoneSize } from './FileDropzone';
+export { FileSummary, type FileSummaryProps } from './FileSummary';
 export { FormActions, type FormActionsProps } from './FormActions';
 export {
   FormCheckboxGroup,
@@ -38,6 +40,7 @@ export { InstructionList, type InstructionListProps } from './InstructionList';
 export { ListEmptyState, type ListEmptyStateProps } from './ListEmptyState';
 export { LoadingState, type LoadingStateProps, type LoadingStateLayout } from './LoadingState';
 export { MenuList, type MenuListProps, type MenuListItem } from './MenuList';
+export { NavGroupHeading, type NavGroupHeadingProps } from './NavGroupHeading';
 export { NavItem, type NavItemProps } from './NavItem';
 export { PageHeader, type PageHeaderProps } from './PageHeader';
 export { PageState, type PageStateProps } from './PageState';
@@ -74,3 +77,4 @@ export {
   type ToastVariant,
   type ToastPosition,
 } from './ToastAlert';
+export { UploadProgress, type UploadProgressProps } from './UploadProgress';

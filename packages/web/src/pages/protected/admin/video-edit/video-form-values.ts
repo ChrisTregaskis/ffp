@@ -1,5 +1,7 @@
+import { tagCategorySlugSchema } from '@ffp/core';
 import type { AdminVideoDetail, TagSummary, UpdateVideoInput, VideoStatus } from '@ffp/core';
 
+import { toTagSelection } from '@web/components/video';
 import { fieldToNumber, numberToField } from '@web/utils/form-number';
 
 import type { VideoEditFormValues } from './types';
@@ -11,8 +13,8 @@ export const toVideoFormValues = (video: AdminVideoDetail): VideoEditFormValues 
   description: video.description ?? '',
   difficulty: video.difficulty ?? '',
   status: video.status,
-  movementTags: toPublicIds(video.tags.movement),
-  bodyAreaTags: toPublicIds(video.tags['body-area']),
+  tags: toTagSelection(video.tags),
+  isEssential: video.isEssential,
   equipment: video.equipment,
   defaultSets: numberToField(video.defaultSets),
   defaultReps: video.defaultReps ?? '',
@@ -63,13 +65,15 @@ export const toUpdateVideoInput = (
     payload.equipment = values.equipment;
   }
 
-  // Only the categories the form edits are sent, so the video's other tags are left alone
-  if (!sameMembers(values.movementTags, toPublicIds(video.tags.movement))) {
-    payload.tags = { ...payload.tags, movement: values.movementTags };
+  if (values.isEssential !== video.isEssential) {
+    payload.isEssential = values.isEssential;
   }
 
-  if (!sameMembers(values.bodyAreaTags, toPublicIds(video.tags['body-area']))) {
-    payload.tags = { ...payload.tags, 'body-area': values.bodyAreaTags };
+  // Only the categories that changed are sent, so the video's other tags are left alone
+  for (const category of tagCategorySlugSchema.options) {
+    if (!sameMembers(values.tags[category], toPublicIds(video.tags[category]))) {
+      payload.tags = { ...payload.tags, [category]: values.tags[category] };
+    }
   }
 
   const newSets = toNumberOrNull(values.defaultSets);

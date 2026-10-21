@@ -4,8 +4,9 @@ import { Link } from 'react-router-dom';
 
 import type { IconName } from '@web/components/atoms';
 import { IconButton, Logo, Text } from '@web/components/atoms';
-import { NavItem } from '@web/components/molecules';
+import { NavGroupHeading, NavItem } from '@web/components/molecules';
 import { Backdrop, ClickScale, SlideDrawer, SlideVertical } from '@web/components/motion';
+import { groupNavItems } from '@web/utils/nav-groups';
 
 export interface MobileMenuNavItem {
   key: string;
@@ -13,6 +14,8 @@ export interface MobileMenuNavItem {
   icon: IconName;
   path: string;
   section: 'main' | 'footer';
+  /** The heading the item sits under in the main section */
+  group?: string;
   onClick?: () => void;
 }
 
@@ -142,15 +145,25 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ navItems, className = ''
             {/* Main Navigation */}
             <nav className="flex-1 w-full justify-center overflow-y-auto">
               <div className="flex-col w-full space-y-1 justify-center">
-                {mainNavItems.map((item) => (
-                  <div key={item.key} onClick={closeMenu}>
-                    <NavItem
-                      label={item.label}
-                      icon={item.icon}
-                      path={item.path}
-                      isCollapsed={false}
-                      onClick={item.onClick}
-                    />
+                {groupNavItems(mainNavItems).map(({ heading, items }) => (
+                  <div
+                    key={items[0].key}
+                    role={heading ? 'group' : undefined}
+                    aria-label={heading}
+                    className="space-y-1"
+                  >
+                    {heading && <NavGroupHeading label={heading} />}
+                    {items.map((item) => (
+                      <div key={item.key} onClick={closeMenu}>
+                        <NavItem
+                          label={item.label}
+                          icon={item.icon}
+                          path={item.path}
+                          isCollapsed={false}
+                          onClick={item.onClick}
+                        />
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>

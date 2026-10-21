@@ -9,6 +9,7 @@ const cardio = { publicId: 'mvcardio0001', slug: 'cardio', label: 'Cardio' };
 const glutes = { publicId: 'baglutes0001', slug: 'glutes', label: 'Glutes' };
 const quadriceps = { publicId: 'baquads00001', slug: 'quadriceps', label: 'Quadriceps' };
 const seated = { publicId: 'auseated0001', slug: 'seated', label: 'Seated' };
+const posture = { publicId: 'goposture001', slug: 'posture', label: 'Posture' };
 
 const stored = (overrides: Partial<AdminVideoDetail> = {}): AdminVideoDetail => ({
   id: '33333333-3333-3333-8333-333333330001',
@@ -61,9 +62,10 @@ describe('toUpdateVideoInput', () => {
 
   it('treats the same tags in another order as unchanged', () => {
     const video = stored();
+    const formValues = toVideoFormValues(video);
     const values = {
-      ...toVideoFormValues(video),
-      bodyAreaTags: [quadriceps.publicId, glutes.publicId],
+      ...formValues,
+      tags: { ...formValues.tags, 'body-area': [quadriceps.publicId, glutes.publicId] },
     };
 
     expect(toUpdateVideoInput(values, video)).toEqual({});
@@ -71,14 +73,29 @@ describe('toUpdateVideoInput', () => {
 
   it('sends two movement tags and no body areas, leaving the other categories alone', () => {
     const video = stored();
+    const formValues = toVideoFormValues(video);
     const values = {
-      ...toVideoFormValues(video),
-      movementTags: [strength.publicId, cardio.publicId],
-      bodyAreaTags: [],
+      ...formValues,
+      tags: { ...formValues.tags, movement: [strength.publicId, cardio.publicId], 'body-area': [] },
     };
 
     expect(toUpdateVideoInput(values, video)).toEqual({
       tags: { movement: [strength.publicId, cardio.publicId], 'body-area': [] },
+    });
+  });
+
+  it('sends goal and audience tags and the essential flag, and nothing it did not change', () => {
+    const video = stored();
+    const formValues = toVideoFormValues(video);
+    const values = {
+      ...formValues,
+      isEssential: true,
+      tags: { ...formValues.tags, goal: [posture.publicId], audience: [] },
+    };
+
+    expect(toUpdateVideoInput(values, video)).toEqual({
+      isEssential: true,
+      tags: { goal: [posture.publicId], audience: [] },
     });
   });
 

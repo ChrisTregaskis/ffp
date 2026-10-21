@@ -451,7 +451,12 @@ export const routes: RoutesConfig = {
   },
   [RouteKey.ADMIN_VIDEOS]: {
     path: `${adminBasePath}/videos`,
-    title: 'Video Library',
+    title: 'Exercises',
+    allowedRoles: [SYSTEM_ADMIN],
+  },
+  [RouteKey.ADMIN_EXERCISE_TAGS]: {
+    path: `${adminBasePath}/exercise-tags`,
+    title: 'Exercise Tags',
     allowedRoles: [SYSTEM_ADMIN],
   },
   [RouteKey.ADMIN_VIDEO_UPLOAD]: {
@@ -460,7 +465,7 @@ export const routes: RoutesConfig = {
     allowedRoles: [SYSTEM_ADMIN],
     excludeFromMainNavbar: true,
     contextNavItems: [
-      { label: 'Back to Video Library', icon: 'ArrowLeft', path: `${adminBasePath}/videos` },
+      { label: 'Back to Exercises', icon: 'ArrowLeft', path: `${adminBasePath}/videos` },
     ],
   },
   [RouteKey.ADMIN_VIDEO_EDIT]: {
@@ -469,7 +474,7 @@ export const routes: RoutesConfig = {
     allowedRoles: [SYSTEM_ADMIN],
     excludeFromMainNavbar: true,
     contextNavItems: [
-      { label: 'Back to Video Library', icon: 'ArrowLeft', path: `${adminBasePath}/videos` },
+      { label: 'Back to Exercises', icon: 'ArrowLeft', path: `${adminBasePath}/videos` },
     ],
   },
 

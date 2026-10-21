@@ -6,7 +6,7 @@ import { QUESTION_SLUG_PATTERN } from './assessment-question.schema';
 import { publicIdSchema } from './public-id.schema';
 
 /** `tags.slug` and `tags.label` are varchar(100). */
-const TAG_TEXT_MAX_LENGTH = 100;
+export const TAG_TEXT_MAX_LENGTH = 100;
 
 export const tagCategorySlugSchema = z.enum(TAG_CATEGORY_SLUGS);
 
@@ -86,3 +86,5 @@ export type AdminTagCategoryListResponse = z.infer<typeof adminTagCategoryListRe
 export type AdminTagResponse = z.infer<typeof adminTagResponseSchema>;
 export type VideoTags = z.infer<typeof videoTagsSchema>;
 export type VideoTagAssignment = z.infer<typeof videoTagAssignmentSchema>;
+export type CreateTagInput = z.infer<typeof createTagSchema>;
+export type UpdateTagInput = z.infer<typeof updateTagSchema>;

@@ -54,7 +54,7 @@ export const VideoEditPage: React.FC = () => {
     <AdminEditPageShell
       title="Edit Video"
       resourceLabel="video"
-      listLabel="Video Library"
+      listLabel="Exercises"
       isLoading={isLoading}
       loadError={error}
       onBack={handleNavigateBack}

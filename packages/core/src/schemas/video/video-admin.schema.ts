@@ -11,7 +11,7 @@ export const adminVideoFilterSchema = z.object({
   search: z.string().optional(),
   status: videoStatusSchema.optional(),
   difficulty: difficultySchema.optional(),
-  /** Tag publicIds; a video carrying any of them matches */
+  /** Tag publicIds; a video matches when it carries one of them in each category they span */
   tags: z.array(publicIdSchema).optional(),
 });
 
@@ -28,6 +28,7 @@ export const uploadUrlResponseSchema = z.object({
 /** Response schema for admin video list — includes description and timestamps for admin context */
 export const adminVideoListResponseSchema = videoListResponseSchema.extend({
   description: z.string().nullable(),
+  isEssential: z.boolean(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
