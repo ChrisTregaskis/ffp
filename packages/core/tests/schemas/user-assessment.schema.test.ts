@@ -9,6 +9,8 @@ import {
   getAllowedTransitions,
   startAssessmentRequestSchema,
   startAssessmentResponseSchema,
+  saveProgressRequestSchema,
+  submitAssessmentRequestSchema,
 } from '../../src/schemas/user-assessment/user-assessment.schema';
 
 // Test fixtures
@@ -143,6 +145,29 @@ describe('userAssessmentAnswersSchema', () => {
     };
     const result = userAssessmentAnswersSchema.safeParse(answers);
     expect(result.success).toBe(false);
+  });
+
+  // The services read each answer's questionId, not its key, so this check is what stops
+  // an answer filed under one question's key being stored against another question
+  it.each([
+    [
+      'save',
+      (answers: unknown) => saveProgressRequestSchema.safeParse({ answers, currentStep: 1 }),
+    ],
+    ['submit', (answers: unknown) => submitAssessmentRequestSchema.safeParse({ answers })],
+  ])('refuses a %s body whose answer is keyed by another question', (_body, parse) => {
+    const result = parse({
+      [validUuid]: { questionId: validUuid2, answerValue: 4 },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toEqual([
+      expect.objectContaining({
+        code: 'custom',
+        message: 'An answer must be keyed by its own questionId',
+        path: ['answers', validUuid, 'questionId'],
+      }),
+    ]);
   });
 
   it('should reject answers with invalid value structure', () => {

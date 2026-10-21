@@ -20,6 +20,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from
 import * as safetyTriggerRepository from '../../src/assessments/safety-trigger.repository';
 import * as userAssessmentRepository from '../../src/assessments/user-assessment.repository';
 import { NotFoundError, ValidationError } from '../../src/lib/errors';
+import { warningSchema } from '../../src/schemas/warning.schema';
 import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
 
 /**
@@ -502,6 +503,177 @@ describe('User Assessment Repository', () => {
         )
       );
       expect(stored.rows).toEqual([{ safety_acknowledged_at: null }]);
+    });
+  });
+
+  describe('Writes', () => {
+    /** A second member of organisation A, so a write can be judged against a neighbour's row. */
+    const addSecondMemberOfA = async (): Promise<string> => {
+      const userA2Id = randomUUID();
+
+      await asOrganisation(db, organisationAId, async (tx) => {
+        await tx.execute(sql`
+          INSERT INTO users (id, public_id, organisation_id, location_id, email, cognito_sub, first_name, last_name, role)
+          VALUES (${userA2Id}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, ${organisationAId}, ${locationAId}, ${`user-${userA2Id.substring(0, 8)}@test.com`}, ${`cognito-${userA2Id.substring(0, 8)}`}, 'Amira', 'Ahmed', 'programme_user')
+        `);
+      });
+
+      return userA2Id;
+    };
+
+    const startInProgress = async (userId: string): Promise<string> => {
+      const assessment = await userAssessmentRepository.createUserAssessment({
+        organisationId: organisationAId,
+        userId,
+        flowId,
+      });
+      await userAssessmentRepository.transitionAssessmentStatus(
+        organisationAId,
+        assessment.id,
+        'in_progress'
+      );
+
+      return assessment.id;
+    };
+
+    /** Reads organisation A's row back under A's own context. */
+    const storedInA = async (
+      assessmentId: string
+    ): Promise<{ status: string; current_step: number; warnings_shown: unknown }> => {
+      const result = await asOrganisation(db, organisationAId, (tx) =>
+        tx.execute<{ status: string; current_step: number; warnings_shown: unknown }>(
+          sql`SELECT status, current_step, warnings_shown FROM user_assessments WHERE id = ${assessmentId}`
+        )
+      );
+
+      expect(result.rows).toHaveLength(1);
+
+      return result.rows[0];
+    };
+
+    it('appends warnings to those already recorded, in order', async () => {
+      const assessmentId = await startInProgress(userA1Id);
+      const first = warningSchema.parse({
+        message: 'First warning',
+        type: 'caution',
+        shownAt: '2026-10-21T09:00:00.000Z',
+      });
+      const second = warningSchema.parse({
+        message: 'Second warning',
+        type: 'seek_medical',
+        shownAt: '2026-10-21T09:05:00.000Z',
+        triggeredBy: 'safety-check',
+      });
+
+      await userAssessmentRepository.appendAssessmentWarnings(organisationAId, assessmentId, [
+        first,
+      ]);
+      await userAssessmentRepository.appendAssessmentWarnings(organisationAId, assessmentId, [
+        second,
+      ]);
+
+      expect((await storedInA(assessmentId)).warnings_shown).toEqual([first, second]);
+    });
+
+    it('abandons only the reassessing member’s in-progress assessment, not a neighbour’s in the same organisation', async () => {
+      const userA2Id = await addSecondMemberOfA();
+      const ownId = await startInProgress(userA1Id);
+      const neighbourId = await startInProgress(userA2Id);
+
+      // RLS isolates organisations only: the userId filter is all that separates A1 from A2
+      const abandoned = await userAssessmentRepository.abandonInProgressAssessments(
+        organisationAId,
+        userA1Id,
+        flowId
+      );
+
+      expect(abandoned).toBe(1);
+      expect((await storedInA(ownId)).status).toBe('abandoned');
+      expect((await storedInA(neighbourId)).status).toBe('in_progress');
+    });
+
+    // Characterises an inconsistency: VALID_STATUS_TRANSITIONS allows not_started only to
+    // in_progress, yet a reassessment abandons a not-started assessment directly
+    it('abandons a not-started assessment, a move the status transition refuses', async () => {
+      const notStarted = await userAssessmentRepository.createUserAssessment({
+        organisationId: organisationAId,
+        userId: userA1Id,
+        flowId,
+      });
+      const other = await userAssessmentRepository.createUserAssessment({
+        organisationId: organisationAId,
+        userId: userA1Id,
+        flowId,
+      });
+
+      await expect(
+        userAssessmentRepository.transitionAssessmentStatus(organisationAId, other.id, 'abandoned')
+      ).rejects.toMatchObject({
+        name: 'ValidationError',
+        message: expect.stringMatching(
+          /^Invalid status transition: not_started → abandoned\./
+        ) as unknown,
+      });
+
+      const abandoned = await userAssessmentRepository.abandonInProgressAssessments(
+        organisationAId,
+        userA1Id,
+        flowId
+      );
+
+      expect(abandoned).toBe(2);
+      expect((await storedInA(notStarted.id)).status).toBe('abandoned');
+    });
+
+    describe('in a transaction scoped to another organisation', () => {
+      // The InTx bodies filter on the assessment id alone, so only RLS stops these writes.
+      // Typed as the repository's own client, so its transaction can be passed in as `tx`
+      const asOrganisationB = <T>(
+        callback: Parameters<typeof asOrganisation<Record<string, never>, T>>[2]
+      ): Promise<T> => asOrganisation(drizzle({ client: pool }), organisationBId, callback);
+
+      it('reports organisation A’s assessment as not found to a progress update, and leaves it unchanged', async () => {
+        const assessmentId = await startInProgress(userA1Id);
+
+        await expect(
+          asOrganisationB((tx) =>
+            userAssessmentRepository.updateAssessmentProgress(
+              organisationBId,
+              assessmentId,
+              { currentStep: 7 },
+              { tx }
+            )
+          )
+        ).rejects.toMatchObject({
+          name: 'NotFoundError',
+          message: `User assessment with id ${assessmentId} not found`,
+        });
+
+        expect(await storedInA(assessmentId)).toMatchObject({
+          status: 'in_progress',
+          current_step: 1,
+        });
+      });
+
+      it('reports organisation A’s assessment as not found to a status transition, and leaves it unchanged', async () => {
+        const assessmentId = await startInProgress(userA1Id);
+
+        await expect(
+          asOrganisationB((tx) =>
+            userAssessmentRepository.transitionAssessmentStatus(
+              organisationBId,
+              assessmentId,
+              'submitted',
+              { tx }
+            )
+          )
+        ).rejects.toMatchObject({
+          name: 'NotFoundError',
+          message: `User assessment with id ${assessmentId} not found`,
+        });
+
+        expect((await storedInA(assessmentId)).status).toBe('in_progress');
+      });
     });
   });
 });
