@@ -3,8 +3,10 @@ import {
   AdminCreateUserCommand,
   type AdminCreateUserCommandOutput,
 } from '@aws-sdk/client-cognito-identity-provider';
+
 import { COGNITO_CUSTOM_ATTRIBUTES } from '../../core/src/lib/constants.js';
 import { createLogger } from '../src/lib/logger.js';
+
 import type { SuperAdminCognitoSeed, PlatformOrganisationSeed } from './types.js';
 
 const logger = createLogger('seed-super-admin-cognito');
@@ -87,6 +89,7 @@ export const seedSuperAdminCognito = async (
       // Return empty response - user already exists
       return {} as AdminCreateUserCommandOutput;
     }
+
     throw error;
   }
 };

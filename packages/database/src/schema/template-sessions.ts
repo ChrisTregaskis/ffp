@@ -9,8 +9,10 @@ import {
   index,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { templatePhases } from './template-phases';
+
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
+import { templatePhases } from './template-phases';
 
 /**
  * Template sessions table definition

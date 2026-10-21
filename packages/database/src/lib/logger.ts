@@ -78,6 +78,7 @@ const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
 const serialiseContextData = (data: unknown, depth = 0, seen = new WeakSet()): unknown => {
   // Protection: Maximum depth limit (prevent stack overflow)
   const MAX_DEPTH = 10;
+
   if (depth > MAX_DEPTH) {
     return '[Max Depth Exceeded]';
   }
@@ -87,6 +88,7 @@ const serialiseContextData = (data: unknown, depth = 0, seen = new WeakSet()): u
     if (seen.has(data)) {
       return '[Circular Reference]';
     }
+
     seen.add(data);
   }
 
@@ -108,6 +110,7 @@ const serialiseContextData = (data: unknown, depth = 0, seen = new WeakSet()): u
     for (const [key, value] of Object.entries(data)) {
       serialised[key] = serialiseContextData(value, depth + 1, seen);
     }
+
     return serialised;
   }
 
@@ -195,25 +198,37 @@ export const createLogger = (moduleName: string, minLogLevel?: LogLevel): Databa
 
   return {
     debug: (message: string, context?: LogContext): void => {
-      if (!shouldLog(LogLevel.DEBUG, resolvedMinLevel)) return;
+      if (!shouldLog(LogLevel.DEBUG, resolvedMinLevel)) {
+        return;
+      }
+
       // eslint-disable-next-line no-console
       console.debug(formatLog(LogLevel.DEBUG, moduleName, message, context));
     },
 
     info: (message: string, context?: LogContext): void => {
-      if (!shouldLog(LogLevel.INFO, resolvedMinLevel)) return;
+      if (!shouldLog(LogLevel.INFO, resolvedMinLevel)) {
+        return;
+      }
+
       // eslint-disable-next-line no-console
       console.info(formatLog(LogLevel.INFO, moduleName, message, context));
     },
 
     warn: (message: string, context?: LogContext): void => {
-      if (!shouldLog(LogLevel.WARN, resolvedMinLevel)) return;
+      if (!shouldLog(LogLevel.WARN, resolvedMinLevel)) {
+        return;
+      }
+
       // eslint-disable-next-line no-console
       console.warn(formatLog(LogLevel.WARN, moduleName, message, context));
     },
 
     error: (message: string, context?: LogContext): void => {
-      if (!shouldLog(LogLevel.ERROR, resolvedMinLevel)) return;
+      if (!shouldLog(LogLevel.ERROR, resolvedMinLevel)) {
+        return;
+      }
+
       // eslint-disable-next-line no-console
       console.error(formatLog(LogLevel.ERROR, moduleName, message, context));
     },

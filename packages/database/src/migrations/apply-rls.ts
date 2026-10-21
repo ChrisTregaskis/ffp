@@ -25,8 +25,10 @@
  */
 
 import { sql } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+
 import { createLogger } from '../lib/logger';
+
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 const logger = createLogger('apply-rls');
 
@@ -54,10 +56,10 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     ORDER BY tablename
   `);
 
-  const tables = rlsCheck.rows as Array<{ tablename: string; rowsecurity: boolean }>;
+  const tables = rlsCheck.rows as { tablename: string; rowsecurity: boolean }[];
 
   // Check if all tables have RLS enabled (10 tables)
-  const allTablesHaveRLS = tables.length === 10 && tables.every((t) => t.rowsecurity === true);
+  const allTablesHaveRLS = tables.length === 10 && tables.every((t) => t.rowsecurity);
 
   if (allTablesHaveRLS) {
     logger.info('RLS already enabled on all tables, re-applying policies to pick up any changes...');
@@ -433,7 +435,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
   `);
 
   logger.info('RLS Status:');
-  for (const row of verifyCheck.rows as Array<{ tablename: string; rowsecurity: boolean }>) {
+  for (const row of verifyCheck.rows as { tablename: string; rowsecurity: boolean }[]) {
     const status = row.rowsecurity ? 'Enabled' : 'Disabled';
     logger.info(`  ${row.tablename}: ${status}`, { table: row.tablename, enabled: row.rowsecurity });
   }

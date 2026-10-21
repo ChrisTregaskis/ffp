@@ -1,16 +1,18 @@
-import { Pool } from 'pg';
 import { eq } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../src/schema/index.js';
-import { templatePhases, templateSessions, sessionExercises } from '../src/schema/index.js';
-import { createLogger } from '../src/lib/logger.js';
+import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { type Pool } from 'pg';
+
 import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.js';
+import { createLogger } from '../src/lib/logger.js';
+import { templatePhases, templateSessions, sessionExercises } from '../src/schema/index.js';
+
 import { PROGRAMME_TEMPLATE_IDS } from './seedProgrammeTemplates.js';
 import { VIDEO_IDS } from './seedVideos.js';
 
+import type * as schema from '../src/schema/index.js';
+import type { NewSessionExercise } from '../src/schema/session-exercises.js';
 import type { NewTemplatePhase } from '../src/schema/template-phases.js';
 import type { NewTemplateSession } from '../src/schema/template-sessions.js';
-import type { NewSessionExercise } from '../src/schema/session-exercises.js';
 
 const logger = createLogger('seed-template-hierarchy');
 

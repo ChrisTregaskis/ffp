@@ -8,6 +8,7 @@
  */
 
 import { sql } from 'drizzle-orm';
+
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 /**
@@ -139,6 +140,7 @@ export const withRLS = async <T>(
 
   // Validate UUID formats early (defence in depth)
   validateUUID(organisationId, 'organisationId');
+
   if (userId) {
     validateUUID(userId, 'userId');
   }
@@ -200,6 +202,7 @@ export const withAdminContext = async <TDb extends NodePgDatabase<any>, T>(
 ): Promise<T> => {
   return await db.transaction(async (tx) => {
     await setAdminContext(tx);
+
     return await callback(tx as unknown as TDb);
   });
 };

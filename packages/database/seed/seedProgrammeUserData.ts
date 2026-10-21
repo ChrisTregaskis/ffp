@@ -1,15 +1,17 @@
-import { Pool } from 'pg';
 import { eq } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../src/schema/index.js';
-import { programmes, programmePhases, userSessions } from '../src/schema/index.js';
-import { createLogger } from '../src/lib/logger.js';
+import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { type Pool } from 'pg';
+
 import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.js';
+import { createLogger } from '../src/lib/logger.js';
+import { programmes, programmePhases, userSessions } from '../src/schema/index.js';
+
 import { PROGRAMME_TEMPLATE_IDS } from './seedProgrammeTemplates.js';
 import { TEMPLATE_PHASE_IDS, TEMPLATE_SESSION_IDS } from './seedTemplateHierarchy.js';
 
-import type { NewProgramme } from '../src/schema/programmes.js';
+import type * as schema from '../src/schema/index.js';
 import type { NewProgrammePhase } from '../src/schema/programme-phases.js';
+import type { NewProgramme } from '../src/schema/programmes.js';
 import type { NewUserSession } from '../src/schema/user-sessions.js';
 
 const logger = createLogger('seed-programme-user-data');

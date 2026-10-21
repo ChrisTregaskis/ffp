@@ -14,8 +14,9 @@
 
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import * as schema from './schema';
+
 import { createLogger } from './lib/logger';
+import * as schema from './schema';
 
 const logger = createLogger('db-client');
 
@@ -45,6 +46,7 @@ export const getDb = () => {
 
     // Validate DB_PORT is a valid number
     const port = parseInt(process.env.DB_PORT || '5432', 10);
+
     if (isNaN(port) || port < 1 || port > 65535) {
       throw new Error(
         `Invalid DB_PORT: ${process.env.DB_PORT}. Must be a number between 1 and 65535.`
@@ -126,6 +128,7 @@ export const withDb = async <T>(
   callback: (db: ReturnType<typeof drizzle>) => Promise<T>
 ): Promise<T> => {
   const client = getDb();
+
   return callback(client);
 };
 

@@ -1,9 +1,10 @@
+import { relations } from 'drizzle-orm';
 import { pgTable, uuid, text, jsonb, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { relations } from 'drizzle-orm';
+
 import { organisations } from './organisations';
-import { users } from './users';
 import { userAssessments } from './user-assessments';
+import { users } from './users';
 
 /**
  * Assessment safety triggers table definition

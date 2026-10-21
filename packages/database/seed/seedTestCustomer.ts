@@ -1,10 +1,12 @@
-import { Pool } from 'pg';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
-import * as schema from '../src/schema/index.js';
-import { locations } from '../src/schema/index.js';
+import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { type Pool } from 'pg';
+
 import { createLogger } from '../src/lib/logger.js';
+import { locations } from '../src/schema/index.js';
+
 import type { TestLocationSeed } from './types.js';
+import type * as schema from '../src/schema/index.js';
 
 const logger = createLogger('seed-test-location');
 

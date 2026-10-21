@@ -26,8 +26,10 @@
  */
 
 import { sql } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+
 import { createLogger } from '../lib/logger';
+
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 const logger = createLogger('permissions');
 
@@ -44,6 +46,7 @@ const getApplicationUsers = (): string[] => {
 
   // Application runtime user from environment
   const dbUser = process.env.DB_USER;
+
   if (dbUser) {
     users.add(dbUser);
   }

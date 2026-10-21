@@ -23,15 +23,17 @@
  * Usage: pnpm db:migrate
  */
 
-import { config } from 'dotenv';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+
+import { config } from 'dotenv';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
-import { applyRLS } from '../src/migrations/apply-rls';
-import { applyPermissions } from '../src/migrations/apply-permissions';
+
 import { createLogger } from '../src/lib/logger';
+import { applyPermissions } from '../src/migrations/apply-permissions';
+import { applyRLS } from '../src/migrations/apply-rls';
 
 const logger = createLogger('migrate');
 
@@ -47,9 +49,11 @@ config({ path: resolve(__dirname, '../../../.env') });
  */
 const getRequiredEnv = (key: string): string => {
   const value = process.env[key];
+
   if (!value) {
     throw new Error(`Missing required environment variable: ${key}`);
   }
+
   return value;
 };
 

@@ -1,11 +1,12 @@
-import { Pool } from 'pg';
 import { eq } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../src/schema/index.js';
-import { programmeTemplates } from '../src/schema/index.js';
-import { createLogger } from '../src/lib/logger.js';
-import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.js';
+import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { type Pool } from 'pg';
 
+import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.js';
+import { createLogger } from '../src/lib/logger.js';
+import { programmeTemplates } from '../src/schema/index.js';
+
+import type * as schema from '../src/schema/index.js';
 import type { NewProgrammeTemplate } from '../src/schema/programme-templates.js';
 
 const logger = createLogger('seed-programme-templates');

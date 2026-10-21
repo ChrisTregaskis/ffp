@@ -1,6 +1,8 @@
 import { pgTable, uuid, integer, timestamp, uniqueIndex, index, pgEnum } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+
 import { SESSION_STATUSES } from '../constants/session.constants';
+
 import { organisations } from './organisations';
 import { programmePhases } from './programme-phases';
 import { templateSessions } from './template-sessions';
