@@ -14,9 +14,11 @@ import {
 } from '../schemas/video/video.schema';
 import * as videoTagService from '../tags/video-tag.service';
 
+import { deleteVideoObject } from './video-upload.service';
 import * as videoRepository from './video.repository';
 
 import type { OrganisationContext } from '../lib/context';
+import type { TenantLogger } from '../lib/logger';
 import type { PaginationInput, PaginationMeta } from '../schemas/pagination.schema';
 import type {
   VideoDetailResponse,
@@ -201,5 +203,39 @@ export async function updateVideo(
     previousStatus: existing.status,
   });
 
+  if (updated.s3Key !== existing.s3Key) {
+    await deleteReplacedFile(logger, updated.id, existing.s3Key, updated.s3Key);
+  }
+
   return await toAdminVideoDetail(db, updated);
+}
+
+/**
+ * Remove the file a replacement superseded. Runs only once the new key has committed, so a
+ * failed replace never loses the live file; a failed delete leaves an orphan to trace from the
+ * log rather than failing a replace that has already landed.
+ */
+async function deleteReplacedFile(
+  logger: TenantLogger,
+  videoId: string,
+  replacedS3Key: string,
+  s3Key: string
+): Promise<void> {
+  try {
+    await deleteVideoObject(replacedS3Key);
+    logger.info('Replaced video file deleted', {
+      action: 'video_file_replaced',
+      videoId,
+      replacedS3Key,
+      s3Key,
+    });
+  } catch (error) {
+    logger.error('Replaced video file could not be deleted', {
+      action: 'video_file_delete_failed',
+      videoId,
+      replacedS3Key,
+      s3Key,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
 }

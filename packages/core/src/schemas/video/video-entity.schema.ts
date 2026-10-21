@@ -71,6 +71,14 @@ export const createVideoSchema = videoSchema
     defaultNotes: videoSchema.shape.defaultNotes.optional(),
   });
 
+/**
+ * A replacement's key must be one the upload URL issues (`library/{uuid}.mp4`), because saving
+ * it deletes the current file: a mistyped or placeholder key would leave the record with none.
+ */
+const uploadedVideoKeySchema = z
+  .string()
+  .regex(/^library\/[0-9a-f-]{36}\.mp4$/, 'Video key must come from an upload');
+
 /** Schema for updating video metadata and media properties (all partial) */
 export const updateVideoSchema = videoSchema
   .pick({
@@ -90,7 +98,7 @@ export const updateVideoSchema = videoSchema
     defaultNotes: true,
   })
   .partial()
-  .extend({ tags: videoTagAssignmentSchema.optional() });
+  .extend({ s3Key: uploadedVideoKeySchema.optional(), tags: videoTagAssignmentSchema.optional() });
 
 export type VideoStatus = z.infer<typeof videoStatusSchema>;
 export type Difficulty = z.infer<typeof difficultySchema>;

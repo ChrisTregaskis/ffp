@@ -66,6 +66,8 @@ draft → active → archived
 
 No admin response carries the S3 key or file details.
 
+**Replacing the file.** The edit page uploads a new file, then sends its `s3Key` (with the new duration and size) on the `PUT`. The key must have the shape the upload URL issues (`library/{uuid}.mp4`), so a mistyped or placeholder key is refused before anything is touched. Once that update commits, the service deletes the superseded object from the videos bucket; a failed update deletes nothing. A failed delete does not fail the replace: it is logged at error level (`video_file_delete_failed`) with the orphaned key, and a successful one at info level (`video_file_replaced`), so every replace can be traced from the logs. The admin Lambda holds `s3:DeleteObject` on the videos bucket only.
+
 **Tag assignment** travels in the video's create or update body as tag publicIds per category, e.g. `"tags": { "movement": ["…", "…"], "body-area": [] }`. A category sent replaces that category's tags on the video; a category left out is untouched. Newly assigned tags must be active; a deactivated tag the video already carries is kept on re-save.
 
 ### Public APIs
@@ -140,6 +142,11 @@ Videos are exercise demonstrations — the video catalogue effectively is the ex
 - Check CORS is configured on VideosBucket (PUT allowed)
 - Verify admin Lambda has `s3:PutObject` permission
 - Check presigned URL hasn't expired
+
+**Replaced file still in the bucket:**
+
+- Search the admin logs for `video_file_delete_failed`; the entry names the orphaned key
+- Verify admin Lambda has `s3:DeleteObject` on the videos bucket
 
 ---
 

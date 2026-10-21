@@ -455,6 +455,11 @@ export default $config({
               $interpolate`arn:aws:s3:::${assetsBucket.name}/*`,
             ],
           },
+          // Replacing a video deletes the file it supersedes; assets are never deleted
+          {
+            actions: ['s3:DeleteObject'],
+            resources: [$interpolate`arn:aws:s3:::${videosBucket.name}/*`],
+          },
           {
             actions: cognitoPermissionActions,
             resources: [userPool.arn],

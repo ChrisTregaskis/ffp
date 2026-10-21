@@ -20,6 +20,8 @@ export {
   type FeatureColumnGridProps,
   type FeatureItem,
 } from './FeatureColumnGrid';
+export { FileDropzone, type FileDropzoneProps, type FileDropzoneSize } from './FileDropzone';
+export { FileSummary, type FileSummaryProps } from './FileSummary';
 export { FormActions, type FormActionsProps } from './FormActions';
 export {
   FormCheckboxGroup,
@@ -74,3 +76,4 @@ export {
   type ToastVariant,
   type ToastPosition,
 } from './ToastAlert';
+export { UploadProgress, type UploadProgressProps } from './UploadProgress';

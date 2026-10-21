@@ -9,6 +9,9 @@ import {
 
 import { parseJsonBody } from '../../lib/request-body';
 
+// Configures S3 so a replacement can delete the file it supersedes
+import './video-storage-config';
+
 /**
  * Lambda handler for PUT /admin/videos/{publicId}
  *

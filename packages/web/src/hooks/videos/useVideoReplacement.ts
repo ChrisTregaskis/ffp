@@ -103,6 +103,7 @@ export const useVideoReplacement = (publicId: string): UseVideoReplacementReturn
 
         void queryClient.invalidateQueries({ queryKey: videoKeys.signedUrl(publicId) });
         void queryClient.invalidateQueries({ queryKey: videoKeys.detail(publicId) });
+        void queryClient.invalidateQueries({ queryKey: videoKeys.adminLists() });
       })
       .catch((error: unknown) => {
         const message = error instanceof Error ? error.message : 'Video replacement failed.';

@@ -1,19 +1,16 @@
 import React from 'react';
 import { generatePath, useNavigate } from 'react-router-dom';
 
+import { Button, ContentPanel, PageContainer, Surface } from '@web/components/atoms';
 import {
-  Button,
-  FileInput,
-  Icon,
-  ProgressBar,
-  Text,
-  ContentPanel,
-  PageContainer,
-  PressableArea,
-  Surface,
-} from '@web/components/atoms';
-import { LoadingState, StaticAlert, StatusResult, PageHeader } from '@web/components/molecules';
-import { VideoMetadataForm } from '@web/components/video';
+  FileSummary,
+  LoadingState,
+  StaticAlert,
+  StatusResult,
+  PageHeader,
+  UploadProgress,
+} from '@web/components/molecules';
+import { VideoFileDropzone, VideoMetadataForm } from '@web/components/video';
 import { RouteKey, routes } from '@web/config/routes';
 import { useVideoUpload } from '@web/hooks/videos';
 import { formatFileSize } from '@web/utils/format';
@@ -35,10 +32,6 @@ export const VideoUploadPage: React.FC = () => {
   const {
     fileSelection,
     progress,
-    isDragOver,
-    handleDragOver,
-    handleDragLeave,
-    handleDrop,
     handleSubmit,
     handleClose: handleCloseUpload,
     hasValidFile,
@@ -94,26 +87,14 @@ export const VideoUploadPage: React.FC = () => {
         {(phase === 'uploading' || phase === 'creating') && (
           <Surface padding="lg">
             {phase === 'uploading' && (
-              <>
-                <div className="mb-4 flex items-center justify-between">
-                  <Text styleProps={{ weight: 'medium' }}>
-                    {uploadProgress === 0 ? 'Preparing upload...' : 'Uploading...'}
-                  </Text>
-                  <Text styleProps={{ colour: 'muted-foreground', size: 'sm' }}>
-                    {String(uploadProgress)}%
-                  </Text>
-                </div>
-                <ProgressBar percent={uploadProgress} aria-label="Upload progress" />
-                {selectedFile && (
-                  <Text
-                    as="p"
-                    styleProps={{ colour: 'muted-foreground', size: 'sm' }}
-                    className="mt-3"
-                  >
-                    {selectedFile.name} ({formatFileSize(selectedFile.size)})
-                  </Text>
-                )}
-              </>
+              <UploadProgress
+                percent={uploadProgress}
+                caption={
+                  selectedFile
+                    ? `${selectedFile.name} (${formatFileSize(selectedFile.size)})`
+                    : undefined
+                }
+              />
             )}
 
             {phase === 'creating' && (
@@ -130,66 +111,27 @@ export const VideoUploadPage: React.FC = () => {
             {/* Submit error alert */}
             {submitError && <StaticAlert variant="error" message={submitError} className="mb-4" />}
 
-            {/* Drop zone — shown when no valid file is selected */}
             {!hasValidFile && (
-              <PressableArea
-                onDragOver={handleDragOver}
-                onDragEnter={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={fileSelection.openFilePicker}
+              <VideoFileDropzone
+                onFileSelect={fileSelection.selectFile}
                 aria-label="Select video file to upload"
-                className={`flex w-full flex-col items-center rounded-lg border-2 border-dashed p-10 transition-colors ${
-                  isDragOver
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border bg-card hover:border-primary/50 hover:bg-muted/30'
-                }`}
-              >
-                <span className="mb-3">
-                  <Icon
-                    name="Upload"
-                    styleProps={{
-                      size: 'xl',
-                      colour: isDragOver ? 'var(--color-primary)' : 'var(--color-muted-foreground)',
-                    }}
-                  />
-                </span>
-                <Text styleProps={{ weight: 'medium', size: 'lg' }} className="mb-1">
-                  {isDragOver ? 'Drop your video here' : 'Drag and drop your video here'}
-                </Text>
-                <Text styleProps={{ colour: 'muted-foreground', size: 'sm' }}>
-                  or click to browse files
-                </Text>
-                <Text styleProps={{ colour: 'muted-foreground', size: 'xs' }} className="mt-2">
-                  MP4 format, up to 500 MB
-                </Text>
-              </PressableArea>
+              />
             )}
 
-            {/* File info card — shown when a valid file is selected */}
             {hasValidFile && selectedFile && (
-              <Surface padding="md" className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Icon name="Video" styleProps={{ size: 'md', colour: 'var(--color-primary)' }} />
-                  <div>
-                    <Text styleProps={{ weight: 'medium' }}>{selectedFile.name}</Text>
-                    <Text as="p" styleProps={{ colour: 'muted-foreground', size: 'sm' }}>
-                      {formatFileSize(selectedFile.size)} &middot; {selectedFile.type}
-                    </Text>
-                  </div>
-                </div>
-                <Button variant="neutral" size="sm" onClick={fileSelection.clearFile}>
-                  Remove
-                </Button>
+              <Surface padding="md">
+                <FileSummary
+                  file={selectedFile}
+                  icon="Video"
+                  detail={selectedFile.type}
+                  action={
+                    <Button variant="neutral" size="sm" onClick={fileSelection.clearFile}>
+                      Remove
+                    </Button>
+                  }
+                />
               </Surface>
             )}
-
-            <FileInput
-              forwardedRef={fileSelection.fileInputRef}
-              accept="video/mp4"
-              onChange={fileSelection.handleFileInputChange}
-              aria-hidden="true"
-            />
 
             {/* File validation error */}
             {fileValidationError && (
