@@ -15,15 +15,29 @@
  * @module __tests__/integration.test
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { getDb, closeDb } from '../src/client';
 import { users, organisations, locations } from '../src/schema';
 import { withRLS } from '../src/lib/rls';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
+import { deleteOrganisations } from './helpers/rls-context';
+
+// Unique per run, so the global unique indexes on email and account code
+// cannot collide with rows another suite holds.
+const RUN_ID = randomUUID().slice(0, 8);
 
 describe('Drizzle Integration Tests', () => {
   let db: ReturnType<typeof getDb>;
+  let createdOrganisationIds: string[] = [];
+
+  /** A fresh organisation id, deleted (with everything under it) after the test. */
+  const newOrganisationId = (): string => {
+    const organisationId = randomUUID();
+    createdOrganisationIds.push(organisationId);
+
+    return organisationId;
+  };
 
   beforeAll(async () => {
     // Setup test database connection
@@ -35,15 +49,6 @@ describe('Drizzle Integration Tests', () => {
     process.env.DB_SSL = 'false';
 
     db = getDb();
-
-    // Clean slate: Truncate all tables before running test suite
-    // This ensures no leftover data from manual testing or seed scripts interferes
-    await db.execute(sql`TRUNCATE TABLE user_assessments CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE users CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE locations CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE assessment_flows CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE process_jobs CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE organisations CASCADE`);
   });
 
   afterAll(async () => {
@@ -51,21 +56,14 @@ describe('Drizzle Integration Tests', () => {
     await closeDb();
   });
 
-  beforeEach(async () => {
-    // Clean tables before each test
-    // Note: RLS will prevent deletion without context, so we use raw SQL
-    // Order respects FK constraints (CASCADE handles dependencies)
-    await db.execute(sql`TRUNCATE TABLE user_assessments CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE users CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE locations CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE assessment_flows CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE process_jobs CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE organisations CASCADE`);
+  afterEach(async () => {
+    await deleteOrganisations(db, createdOrganisationIds);
+    createdOrganisationIds = [];
   });
 
   describe('Database Constraints', () => {
     it('should enforce foreign key constraints', async () => {
-      const invalidOrgId = randomUUID();
+      const invalidOrgId = randomUUID(); // never inserted
       const userId = randomUUID();
 
       // Try to create user without valid organisation (should fail)
@@ -75,8 +73,8 @@ describe('Drizzle Integration Tests', () => {
           await tx.insert(users).values({
             id: userId,
             organisationId: invalidOrgId, // Non-existent organisation
-            email: 'test@example.com',
-            cognitoSub: 'cognito-123',
+            email: `fk-${RUN_ID}@test.com`,
+            cognitoSub: `cognito-fk-${RUN_ID}`,
             firstName: 'John',
             lastName: 'Doe',
             role: 'programme_user',
@@ -86,7 +84,8 @@ describe('Drizzle Integration Tests', () => {
     });
 
     it('should enforce unique email constraint', async () => {
-      const orgId = randomUUID();
+      const orgId = newOrganisationId();
+      const email = `duplicate-${RUN_ID}@test.com`;
 
       // Create organisation and first user
       await withRLS(db, orgId, undefined, async (tx) => {
@@ -99,8 +98,8 @@ describe('Drizzle Integration Tests', () => {
         await tx.insert(users).values({
           id: randomUUID(),
           organisationId: orgId,
-          email: 'duplicate@test.com',
-          cognitoSub: 'cognito-1',
+          email,
+          cognitoSub: `cognito-1-${RUN_ID}`,
           firstName: 'User',
           lastName: 'One',
           role: 'programme_user',
@@ -113,8 +112,8 @@ describe('Drizzle Integration Tests', () => {
           await tx.insert(users).values({
             id: randomUUID(),
             organisationId: orgId,
-            email: 'duplicate@test.com', // Duplicate
-            cognitoSub: 'cognito-2',
+            email, // Duplicate
+            cognitoSub: `cognito-2-${RUN_ID}`,
             firstName: 'User',
             lastName: 'Two',
             role: 'programme_user',
@@ -124,7 +123,8 @@ describe('Drizzle Integration Tests', () => {
     });
 
     it('should enforce unique account code constraint', async () => {
-      const orgId = randomUUID();
+      const orgId = newOrganisationId();
+      const accountCode = `DUP-${RUN_ID}`;
 
       // Create organisation and first location
       await withRLS(db, orgId, undefined, async (tx) => {
@@ -137,7 +137,7 @@ describe('Drizzle Integration Tests', () => {
         await tx.insert(locations).values({
           organisationId: orgId,
           name: 'Location One',
-          accountCode: 'DUPLICATE',
+          accountCode,
           status: 'active',
         });
       });
@@ -148,7 +148,7 @@ describe('Drizzle Integration Tests', () => {
           await tx.insert(locations).values({
             organisationId: orgId,
             name: 'Location Two',
-            accountCode: 'DUPLICATE', // Duplicate
+            accountCode, // Duplicate
             status: 'active',
           });
         });
@@ -156,7 +156,7 @@ describe('Drizzle Integration Tests', () => {
     });
 
     it('should cascade delete when organisation is deleted', async () => {
-      const orgId = randomUUID();
+      const orgId = newOrganisationId();
       const userId = randomUUID();
 
       // Create organisation and user
@@ -170,8 +170,8 @@ describe('Drizzle Integration Tests', () => {
         await tx.insert(users).values({
           id: userId,
           organisationId: orgId,
-          email: 'cascade@test.com',
-          cognitoSub: 'cognito-cascade',
+          email: `cascade-${RUN_ID}@test.com`,
+          cognitoSub: `cognito-cascade-${RUN_ID}`,
           firstName: 'Cascade',
           lastName: 'Test',
           role: 'programme_user',
@@ -196,7 +196,7 @@ describe('Drizzle Integration Tests', () => {
 
   describe('Transactions', () => {
     it('should rollback transaction on error', async () => {
-      const orgId = randomUUID();
+      const orgId = newOrganisationId();
 
       await expect(async () => {
         await withRLS(db, orgId, undefined, async (tx) => {
@@ -211,8 +211,8 @@ describe('Drizzle Integration Tests', () => {
           await tx.insert(users).values({
             id: randomUUID(),
             organisationId: randomUUID(), // Invalid FK - different organisation
-            email: 'rollback@test.com',
-            cognitoSub: 'cognito-fail',
+            email: `rollback-${RUN_ID}@test.com`,
+            cognitoSub: `cognito-fail-${RUN_ID}`,
             firstName: 'Fail',
             lastName: 'User',
             role: 'programme_user',

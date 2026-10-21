@@ -71,7 +71,7 @@ describe('Job Processor Service', () => {
   let db: ReturnType<typeof drizzle>;
   let testOrganisationId: string;
 
-  beforeAll(async () => {
+  beforeAll(() => {
     pool = new Pool({
       host: process.env.DB_HOST ?? 'localhost',
       port: parseInt(process.env.DB_PORT ?? '5432'),
@@ -83,13 +83,16 @@ describe('Job Processor Service', () => {
 
     // Configure mock to return our test db
     mockGetDb.mockReturnValue(db);
-
-    // Clean up any leftover queued jobs from previous test runs
-    // This ensures a clean state for the first test
-    await db.execute(sql`DELETE FROM process_jobs WHERE status = 'queued'`);
   });
 
   beforeEach(async () => {
+    // The poll claims across every organisation, so another run's queued jobs would
+    // take the limit and be flipped to processing; refuse to start rather than do that
+    const queued = await db.execute(
+      sql`SELECT count(*)::int AS queued_elsewhere FROM process_jobs WHERE status = 'queued'`
+    );
+    expect(queued.rows, 'queued jobs this suite did not create').toEqual([{ queued_elsewhere: 0 }]);
+
     // Create unique test organisation for each test
     testOrganisationId = randomUUID();
 
@@ -116,6 +119,13 @@ describe('Job Processor Service', () => {
   afterAll(async () => {
     await pool.end();
   });
+
+  /**
+   * The poll claims across every organisation (process_jobs has no RLS), so each
+   * test judges only the jobs it queued under its own organisation.
+   */
+  const ownJobs = (jobs: schema.ProcessJobRecord[]): schema.ProcessJobRecord[] =>
+    jobs.filter((job) => job.organisationId === testOrganisationId);
 
   /**
    * Helper to create a test job directly in the database
@@ -149,14 +159,12 @@ describe('Job Processor Service', () => {
 
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
 
-      // Find our job in the results (other tests may have created jobs concurrently)
-      const claimedJob = result.claimedJobs.find((j) => j.id === job.id);
-      expect(claimedJob).toBeDefined();
-      if (claimedJob) {
-        expect(claimedJob.status).toBe('processing');
-        expect(claimedJob.startedAt).toBeInstanceOf(Date);
-        expect(claimedJob.attempts).toBe(1);
-      }
+      const claimed = ownJobs(result.claimedJobs);
+      expect(claimed.map((claimedJob) => claimedJob.id)).toEqual([job.id]);
+      const [claimedJob] = claimed;
+      expect(claimedJob.status).toBe('processing');
+      expect(claimedJob.startedAt).toBeInstanceOf(Date);
+      expect(claimedJob.attempts).toBe(1);
     });
 
     it('respects maxConcurrentByType limit for specific job type', async () => {
@@ -171,13 +179,14 @@ describe('Job Processor Service', () => {
       });
 
       // Should only claim 3 score_assessment jobs (limited by maxConcurrentByType)
-      const scoreAssessmentJobs = result.claimedJobs.filter((j) => j.type === 'score_assessment');
-      expect(scoreAssessmentJobs).toHaveLength(3);
-
-      // Verify all claimed jobs are now processing
-      for (const job of result.claimedJobs) {
-        expect(job.status).toBe('processing');
-      }
+      const scoreAssessmentJobs = ownJobs(result.claimedJobs).filter(
+        (j) => j.type === 'score_assessment'
+      );
+      expect(scoreAssessmentJobs.map((job) => job.status)).toEqual([
+        'processing',
+        'processing',
+        'processing',
+      ]);
     });
 
     it('uses defaultMaxConcurrent for types not in maxConcurrentByType', async () => {
@@ -192,7 +201,7 @@ describe('Job Processor Service', () => {
       });
 
       // Should use defaultMaxConcurrent (2) for generate_programme
-      const generateProgrammeJobs = result.claimedJobs.filter(
+      const generateProgrammeJobs = ownJobs(result.claimedJobs).filter(
         (j) => j.type === 'generate_programme'
       );
       expect(generateProgrammeJobs).toHaveLength(2);
@@ -204,13 +213,13 @@ describe('Job Processor Service', () => {
       await createTestJob({ type: 'generate_programme' });
 
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
+      const claimed = ownJobs(result.claimedJobs);
 
-      expect(result.count).toBe(3);
+      expect(result.count).toBe(result.claimedJobs.length);
+      expect(claimed).toHaveLength(3);
 
-      const scoreAssessmentJobs = result.claimedJobs.filter((j) => j.type === 'score_assessment');
-      const generateProgrammeJobs = result.claimedJobs.filter(
-        (j) => j.type === 'generate_programme'
-      );
+      const scoreAssessmentJobs = claimed.filter((j) => j.type === 'score_assessment');
+      const generateProgrammeJobs = claimed.filter((j) => j.type === 'generate_programme');
 
       expect(scoreAssessmentJobs).toHaveLength(2);
       expect(generateProgrammeJobs).toHaveLength(1);
@@ -228,7 +237,7 @@ describe('Job Processor Service', () => {
       });
 
       // Filter to just our score_assessment jobs and check order
-      const scoreJobs = result.claimedJobs.filter((j) => j.type === 'score_assessment');
+      const scoreJobs = ownJobs(result.claimedJobs).filter((j) => j.type === 'score_assessment');
       expect(scoreJobs).toHaveLength(4);
       expect(scoreJobs[0].priority).toBe(1);
       expect(scoreJobs[1].priority).toBe(2);
@@ -240,13 +249,14 @@ describe('Job Processor Service', () => {
       await createTestJob({ status: 'processing' });
       await createTestJob({ status: 'completed' });
       await createTestJob({ status: 'failed' });
-      await createTestJob({ status: 'queued' }); // Only this one should be claimed
+      const queued = await createTestJob({ status: 'queued' }); // Only this one should be claimed
 
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
 
       // Should only have claimed the queued job
-      expect(result.count).toBe(1);
-      expect(result.claimedJobs[0].status).toBe('processing');
+      const claimed = ownJobs(result.claimedJobs);
+      expect(claimed.map((job) => job.id)).toEqual([queued.id]);
+      expect(claimed[0].status).toBe('processing');
     });
 
     it('respects retryAfter - does not claim jobs scheduled for the future', async () => {
@@ -256,14 +266,15 @@ describe('Job Processor Service', () => {
 
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
 
-      // Verify the claimable job was claimed
-      const claimedJob = result.claimedJobs.find((j) => j.id === claimableJob.id);
-      expect(claimedJob).toBeDefined();
-      expect(claimedJob?.status).toBe('processing');
-
-      // Verify the future job was NOT claimed
-      const notClaimedJob = result.claimedJobs.find((j) => j.id === futureJob.id);
-      expect(notClaimedJob).toBeUndefined();
+      // Only the claimable job was claimed; the future one is left queued
+      const claimed = ownJobs(result.claimedJobs);
+      expect(claimed.map((job) => job.id)).toEqual([claimableJob.id]);
+      expect(claimed[0].status).toBe('processing');
+      const [futureJobNow] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${futureJob.id}`);
+      expect(futureJobNow.status).toBe('queued');
     });
 
     it('claims jobs where retryAfter is in the past', async () => {
@@ -272,10 +283,9 @@ describe('Job Processor Service', () => {
 
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
 
-      // Find our specific job (other tests may create jobs concurrently)
-      const claimedJob = result.claimedJobs.find((j) => j.id === job.id);
-      expect(claimedJob).toBeDefined();
-      expect(claimedJob?.status).toBe('processing');
+      const claimed = ownJobs(result.claimedJobs);
+      expect(claimed.map((claimedJob) => claimedJob.id)).toEqual([job.id]);
+      expect(claimed[0].status).toBe('processing');
     });
 
     it('increments attempts counter on claim', async () => {
@@ -289,9 +299,10 @@ describe('Job Processor Service', () => {
         .where(sql`id = ${job.id}`);
 
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
+      const claimed = ownJobs(result.claimedJobs);
 
-      expect(result.count).toBe(1);
-      expect(result.claimedJobs[0].attempts).toBe(2);
+      expect(claimed).toHaveLength(1);
+      expect(claimed[0].attempts).toBe(2);
     });
 
     it('sets startedAt timestamp when claiming', async () => {
@@ -301,16 +312,12 @@ describe('Job Processor Service', () => {
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
       const afterClaim = new Date();
 
-      // Find our job (other tests may have created jobs concurrently)
-      const claimedJob = result.claimedJobs.find((j) => j.id === job.id);
-      expect(claimedJob).toBeDefined();
-      if (claimedJob) {
-        expect(claimedJob.startedAt).toBeInstanceOf(Date);
-        if (claimedJob.startedAt) {
-          expect(claimedJob.startedAt.getTime()).toBeGreaterThanOrEqual(beforeClaim.getTime());
-          expect(claimedJob.startedAt.getTime()).toBeLessThanOrEqual(afterClaim.getTime());
-        }
-      }
+      const claimed = ownJobs(result.claimedJobs);
+      expect(claimed.map((claimedJob) => claimedJob.id)).toEqual([job.id]);
+      const [claimedJob] = claimed;
+      expect(claimedJob.startedAt).toBeInstanceOf(Date);
+      expect(claimedJob.startedAt?.getTime()).toBeGreaterThanOrEqual(beforeClaim.getTime());
+      expect(claimedJob.startedAt?.getTime()).toBeLessThanOrEqual(afterClaim.getTime());
     });
 
     it('claimed jobs are not returned in subsequent polls', async () => {
@@ -318,11 +325,11 @@ describe('Job Processor Service', () => {
 
       // First poll claims the job
       const result1 = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
-      expect(result1.count).toBe(1);
+      expect(ownJobs(result1.claimedJobs)).toHaveLength(1);
 
       // Second poll finds nothing (job is now processing)
       const result2 = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
-      expect(result2.count).toBe(0);
+      expect(ownJobs(result2.claimedJobs)).toHaveLength(0);
     });
 
     it('uses default maxConcurrent of 5 when no config provided', async () => {
@@ -332,7 +339,8 @@ describe('Job Processor Service', () => {
       const result = await pollAndClaimJobs();
 
       // Should claim 5 (default maxConcurrent)
-      expect(result.count).toBe(5);
+      expect(result.count).toBe(result.claimedJobs.length);
+      expect(ownJobs(result.claimedJobs)).toHaveLength(5);
     });
   });
 
@@ -340,7 +348,6 @@ describe('Job Processor Service', () => {
     it('prevents double-processing when two pollers run concurrently', async () => {
       // Create 5 jobs
       const jobs = await Promise.all(Array.from({ length: 5 }, () => createTestJob()));
-      const jobIds = new Set(jobs.map((j) => j.id));
 
       // Run two pollers concurrently, each trying to claim 5 jobs
       const [result1, result2] = await Promise.all([
@@ -348,9 +355,8 @@ describe('Job Processor Service', () => {
         pollAndClaimJobs({ maxConcurrentByType: { score_assessment: 5 } }),
       ]);
 
-      // Filter to only our test jobs (other tests may create jobs concurrently)
-      const ourResult1Jobs = result1.claimedJobs.filter((j) => jobIds.has(j.id));
-      const ourResult2Jobs = result2.claimedJobs.filter((j) => jobIds.has(j.id));
+      const ourResult1Jobs = ownJobs(result1.claimedJobs);
+      const ourResult2Jobs = ownJobs(result2.claimedJobs);
 
       // All 5 of our jobs should be claimed across both pollers
       const totalOurJobsClaimed = ourResult1Jobs.length + ourResult2Jobs.length;

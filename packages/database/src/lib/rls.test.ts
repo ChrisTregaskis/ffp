@@ -24,6 +24,7 @@ import { randomUUID } from 'crypto';
 import { setRLSContext, withRLS } from './rls';
 import { users, organisations, locations } from '../schema';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { deleteOrganisations } from '../../__tests__/helpers/rls-context';
 
 describe('RLS Utility Functions', () => {
   let db: NodePgDatabase<any>;
@@ -38,7 +39,7 @@ describe('RLS Utility Functions', () => {
   let userA2Id: string;
   let userB1Id: string;
 
-  beforeAll(async () => {
+  beforeAll(() => {
     // Setup test database connection
     // IMPORTANT: test_user does NOT have BYPASSRLS, so RLS policies are enforced
     pool = new Pool({
@@ -49,16 +50,6 @@ describe('RLS Utility Functions', () => {
       password: process.env.DB_PASSWORD || 'test_password',
     });
     db = drizzle(pool);
-
-    // Clean slate: Truncate all tables before running tests
-    // This ensures no leftover data from manual testing or seed scripts interferes
-    // Order respects FK constraints (CASCADE handles dependencies)
-    await db.execute(sql`TRUNCATE TABLE user_assessments CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE users CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE locations CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE assessment_flows CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE process_jobs CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE organisations CASCADE`);
   });
 
   beforeEach(async () => {
@@ -170,15 +161,8 @@ describe('RLS Utility Functions', () => {
   });
 
   afterEach(async () => {
-    // Clean up test data after each test
-    // This matches the integration test pattern and ensures test isolation
-    // Order respects FK constraints (CASCADE handles dependencies)
-    await db.execute(sql`TRUNCATE TABLE user_assessments CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE users CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE locations CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE assessment_flows CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE process_jobs CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE organisations CASCADE`);
+    // Only this test's two organisations; their locations and users cascade.
+    await deleteOrganisations(db, [orgAId, orgBId]);
   });
 
   afterAll(async () => {
