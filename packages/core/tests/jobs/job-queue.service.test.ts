@@ -1,9 +1,6 @@
 /**
  * Job Queue Service Integration Tests
  *
- * NOTE: This file was original named job-queue.service.test.ts however
- * due to file curruption, is recreated with this name.
- *
  * Tests job queuing operations against a real PostgreSQL database (ffp_test).
  * These tests verify that the service correctly creates jobs with proper
  * organisation isolation and default values.
@@ -25,7 +22,8 @@ import * as schema from '@ffp/database/schema';
 import { queueJob } from '../../src/jobs/job-queue.service';
 import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
 
-import type { JobPayloadMap } from '../../src/jobs/job-queue.service';
+import { jobPayload } from './job-payload.fixture';
+
 import type { OrganisationContext, UserActor } from '../../src/lib/context';
 
 // We need to mock getDb but keep other exports
@@ -65,7 +63,6 @@ describe('Job Queue Service', () => {
 
   beforeEach(async () => {
     // Create unique test organisation for each test to avoid conflicts with parallel tests
-    // We don't truncate tables to avoid deadlocks with other test files
     testOrganisationId = randomUUID();
     createdOrganisationIds = [testOrganisationId];
 
@@ -106,12 +103,7 @@ describe('Job Queue Service', () => {
 
   describe('queueJob', () => {
     it('creates a job with default priority and maxAttempts', async () => {
-      const payload = {
-        assessmentSubmissionId: randomUUID(),
-        templateId: randomUUID(),
-        userId: randomUUID(),
-        responses: [{ questionId: randomUUID(), answerValue: 5 }],
-      } as unknown as JobPayloadMap['score_assessment'];
+      const payload = jobPayload('score_assessment');
 
       const jobId = await queueJob<'score_assessment'>('score_assessment', payload, testContext);
 
@@ -141,12 +133,7 @@ describe('Job Queue Service', () => {
     });
 
     it('creates a job with custom priority', async () => {
-      const payload = {
-        assessmentSubmissionId: randomUUID(),
-        templateId: randomUUID(),
-        userId: randomUUID(),
-        responses: [{ questionId: randomUUID(), answerValue: 5 }],
-      } as unknown as JobPayloadMap['score_assessment'];
+      const payload = jobPayload('score_assessment');
 
       const jobId = await queueJob('score_assessment', payload, testContext, {
         priority: 1,
@@ -161,12 +148,7 @@ describe('Job Queue Service', () => {
     });
 
     it('creates a job with custom maxAttempts', async () => {
-      const payload = {
-        assessmentSubmissionId: randomUUID(),
-        templateId: randomUUID(),
-        userId: randomUUID(),
-        responses: [{ questionId: randomUUID(), answerValue: 5 }],
-      } as unknown as JobPayloadMap['score_assessment'];
+      const payload = jobPayload('score_assessment');
 
       const jobId = await queueJob('score_assessment', payload, testContext, {
         maxAttempts: 5,
@@ -222,12 +204,7 @@ describe('Job Queue Service', () => {
         organisationId: secondOrganisationId,
       };
 
-      const payload = {
-        assessmentSubmissionId: randomUUID(),
-        templateId: randomUUID(),
-        userId: randomUUID(),
-        responses: [{ questionId: randomUUID(), answerValue: 5 }],
-      } as unknown as JobPayloadMap['score_assessment'];
+      const payload = jobPayload('score_assessment');
 
       // Queue jobs for different organisations
       const job1Id = await queueJob('score_assessment', payload, testContext);

@@ -12,7 +12,7 @@
 
 import { randomUUID } from 'crypto';
 
-import { sql } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
@@ -28,6 +28,8 @@ import {
 import { NotFoundError } from '../../src/lib/errors';
 import { drizzleDriverError, expectNothingLeakable } from '../lib/database-error.fixture';
 import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
+
+import { jobPayload } from './job-payload.fixture';
 
 // We need to mock getDb but keep other exports
 const { mockGetDb } = vi.hoisted(() => ({
@@ -103,19 +105,17 @@ describe('Job Processor Service', () => {
   async function createTestJob(
     overrides: Partial<schema.NewProcessJob> = {}
   ): Promise<schema.ProcessJobRecord> {
+    const type = overrides.type ?? 'score_assessment';
+    const payload = jobPayload(type);
+
     const [job] = await db
       .insert(schema.processJobs)
       .values({
         organisationId: testOrganisationId,
-        type: 'score_assessment',
+        type,
         status: 'queued',
         priority: 4,
-        payload: {
-          assessmentSubmissionId: randomUUID(),
-          templateId: randomUUID(),
-          userId: randomUUID(),
-          responses: [{ questionId: randomUUID(), answerValue: 5 }],
-        },
+        payload,
         ...overrides,
       })
       .returning();
@@ -195,24 +195,24 @@ describe('Job Processor Service', () => {
       expect(generateProgrammeJobs).toHaveLength(1);
     });
 
-    it('orders jobs by priority (lower number = higher priority)', async () => {
-      // Create jobs with different priorities in random order
-      await createTestJob({ priority: 4 }); // Low
-      await createTestJob({ priority: 1 }); // Urgent
-      await createTestJob({ priority: 3 }); // Medium
-      await createTestJob({ priority: 2 }); // High
+    it('claims the highest-priority jobs first when more are queued than the limit', async () => {
+      // Lower number = higher priority; created out of order, so creation time can't explain the result
+      const low = await createTestJob({ priority: 4 });
+      const urgent = await createTestJob({ priority: 1 });
+      const medium = await createTestJob({ priority: 3 });
+      const high = await createTestJob({ priority: 2 });
 
       const result = await pollAndClaimJobs({
-        maxConcurrentByType: { score_assessment: 4 },
+        maxConcurrentByType: { score_assessment: 2 },
       });
 
-      // Filter to just our score_assessment jobs and check order
-      const scoreJobs = ownJobs(result.claimedJobs).filter((j) => j.type === 'score_assessment');
-      expect(scoreJobs).toHaveLength(4);
-      expect(scoreJobs[0].priority).toBe(1);
-      expect(scoreJobs[1].priority).toBe(2);
-      expect(scoreJobs[2].priority).toBe(3);
-      expect(scoreJobs[3].priority).toBe(4);
+      expect(ownJobs(result.claimedJobs).map((job) => job.id)).toEqual([urgent.id, high.id]);
+
+      const leftBehind = await db
+        .select()
+        .from(schema.processJobs)
+        .where(inArray(schema.processJobs.id, [low.id, medium.id]));
+      expect(leftBehind.map((job) => job.status)).toEqual(['queued', 'queued']);
     });
 
     it('does not claim jobs that are not queued', async () => {
@@ -315,7 +315,52 @@ describe('Job Processor Service', () => {
   });
 
   describe('concurrent polling (FOR UPDATE SKIP LOCKED)', () => {
-    it('prevents double-processing when two pollers run concurrently', async () => {
+    it('skips a job another worker holds locked, without waiting for it', async () => {
+      const locked = await createTestJob({ priority: 1 });
+      const free = await createTestJob({ priority: 4 });
+
+      // Another worker's open transaction holds the highest-priority job
+      const otherWorker = await pool.connect();
+      let poll: Promise<Awaited<ReturnType<typeof pollAndClaimJobs>>> | undefined;
+
+      try {
+        await otherWorker.query('BEGIN');
+        await otherWorker.query('SELECT id FROM process_jobs WHERE id = $1 FOR UPDATE', [
+          locked.id,
+        ]);
+
+        poll = pollAndClaimJobs({ maxConcurrentByType: { score_assessment: 5 } });
+        const outcome = await Promise.race([
+          poll,
+          new Promise<'blocked'>((resolve) => {
+            setTimeout(() => {
+              resolve('blocked');
+            }, 2000);
+          }),
+        ]);
+
+        expect(outcome).not.toBe('blocked');
+        expect(
+          outcome === 'blocked' ? [] : ownJobs(outcome.claimedJobs).map((job) => job.id)
+        ).toEqual([free.id]);
+      } finally {
+        try {
+          await otherWorker.query('ROLLBACK');
+        } finally {
+          otherWorker.release();
+        }
+        // A poll that did block finishes once the lock is gone; let it settle before clean-up
+        await poll?.catch(() => undefined);
+      }
+
+      const [lockedNow] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(eq(schema.processJobs.id, locked.id));
+      expect(lockedNow.status).toBe('queued');
+    });
+
+    it('never claims a job twice when two pollers run concurrently', async () => {
       // Create 5 jobs
       const jobs = await Promise.all(Array.from({ length: 5 }, () => createTestJob()));
 
