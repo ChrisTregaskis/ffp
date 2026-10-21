@@ -11,8 +11,9 @@
 import { ZodError } from 'zod';
 
 import { extractUserContext, type APIGatewayProxyEventV2WithJWT } from './context.js';
-import { describeDriverError, translateDatabaseError } from './database-errors.js';
+import { translateDatabaseError } from './database-errors.js';
 import { BaseError, ForbiddenError, InternalServerError } from './errors.js';
+import { describeErrorForLog } from './log-safe-error.js';
 import { createLogger, type TenantLogger } from './logger.js';
 
 import type { ApiErrorBody, ApiFieldError } from '../schemas/api-error.schema.js';
@@ -105,9 +106,9 @@ export const withErrorHandling = <TResult>(
       const error = translateDatabaseError(rawError);
 
       // Diagnostics come from the raw error; the response comes from the
-      // translated one. A driver error's own message carries the failed SQL and
-      // its bound parameters, so it is summarised rather than logged.
-      const driverDetail = describeDriverError(rawError);
+      // translated one. A database error's message and stack carry the failed
+      // SQL and its bound parameters, so it is summarised rather than logged.
+      const { stack, ...diagnostics } = describeErrorForLog(rawError);
 
       // Extract requestId for tracing (optional for tests)
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -124,19 +125,9 @@ export const withErrorHandling = <TResult>(
         });
       } else if (logger) {
         logger.error('Request failed', {
-          // For ZodError, use the structured issues array instead of the
-          // stringified message; for a driver error, `database` below carries
-          // the detail and the message would carry the query parameters.
-          error:
-            error instanceof ZodError
-              ? error.issues
-              : driverDetail
-                ? 'Database driver error'
-                : error instanceof Error
-                  ? error.message
-                  : 'Unknown error',
-          stack: error instanceof Error && !(error instanceof ZodError) ? error.stack : undefined,
-          ...(driverDetail && { database: driverDetail }),
+          ...diagnostics,
+          // For ZodError, use the structured issues array instead of the stringified message
+          ...(error instanceof ZodError ? { error: error.issues } : { stack }),
           errorType:
             error instanceof ZodError
               ? 'VALIDATION_ERROR'
@@ -149,19 +140,9 @@ export const withErrorHandling = <TResult>(
       } else {
         // Fallback to console.error for unauthenticated requests
         console.error('Lambda error:', {
-          // For ZodError, use the structured issues array instead of the
-          // stringified message; for a driver error, `database` below carries
-          // the detail and the message would carry the query parameters.
-          error:
-            error instanceof ZodError
-              ? error.issues
-              : driverDetail
-                ? 'Database driver error'
-                : error instanceof Error
-                  ? error.message
-                  : 'Unknown error',
-          stack: error instanceof Error && !(error instanceof ZodError) ? error.stack : undefined,
-          ...(driverDetail && { database: driverDetail }),
+          ...diagnostics,
+          // For ZodError, use the structured issues array instead of the stringified message
+          ...(error instanceof ZodError ? { error: error.issues } : { stack }),
           requestId,
           // Sanitise event data to avoid logging sensitive information
           event: sanitiseEventForLogging(event),

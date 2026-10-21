@@ -26,6 +26,7 @@ import {
   failJob,
 } from '../../src/jobs/job-processor.service';
 import { NotFoundError } from '../../src/lib/errors';
+import { drizzleDriverError, expectNothingLeakable } from '../lib/database-error.fixture';
 
 // We need to mock getDb but keep other exports
 const { mockGetDb } = vi.hoisted(() => ({
@@ -74,7 +75,7 @@ describe('Job Processor Service', () => {
     pool = new Pool({
       host: process.env.DB_HOST ?? 'localhost',
       port: parseInt(process.env.DB_PORT ?? '5432'),
-      database: 'ffp_test',
+      database: process.env.DB_NAME,
       user: process.env.DB_USER ?? 'test_user',
       password: process.env.DB_PASSWORD ?? 'test_password',
     });
@@ -527,6 +528,27 @@ describe('Job Processor Service', () => {
         expect(result.retryAfter.getTime()).toBeGreaterThanOrEqual(expectedMinTime);
         expect(result.retryAfter.getTime()).toBeLessThanOrEqual(expectedMaxTime);
       }
+    });
+
+    it('stores a database failure without its query, parameters or detail', async () => {
+      const job = await createTestJob({ status: 'processing' });
+
+      await failJob(
+        job,
+        drizzleDriverError({
+          code: '23503',
+          constraint: 'users_location_id_locations_id_fk',
+          table: 'users',
+        })
+      );
+
+      const [updatedJob] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      expect(updatedJob.message).toBe('Database driver error');
+      expectNothingLeakable(String(updatedJob.message));
     });
 
     it('throws NotFoundError when job is not in processing status', async () => {

@@ -30,7 +30,6 @@ describe('Drizzle Integration Tests', () => {
     // IMPORTANT: test_user does NOT have BYPASSRLS, so RLS policies are enforced
     process.env.DB_HOST = 'localhost';
     process.env.DB_PORT = '5432';
-    process.env.DB_NAME = 'ffp_test';
     process.env.DB_USER = 'test_user';
     process.env.DB_PASSWORD = 'test_password';
     process.env.DB_SSL = 'false';

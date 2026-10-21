@@ -1,10 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React, { useRef, useState } from 'react';
+import React from 'react';
 import { createMemoryRouter, Link, RouterProvider } from 'react-router-dom';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { FormTextInput } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
+import { useConfirmBeforeSave } from '@web/hooks/useConfirmBeforeSave';
 
 import { AdminEditPageShell } from './AdminEditPageShell';
 
@@ -187,42 +188,11 @@ describe('AdminEditPageShell create mode', () => {
   });
 });
 
-interface PendingConfirm {
-  resolve: () => void;
-  reject: (reason: Error) => void;
-}
-
-// Stands in for a page whose save asks first: onUpdate returns a promise the modal settles
-const ConfirmingThingPage: React.FC<{ save: () => Promise<void> }> = ({ save }) => {
-  const pendingRef = useRef<PendingConfirm | null>(null);
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-
-  const handleUpdate = async (): Promise<void> => {
-    await new Promise<void>((resolve, reject) => {
-      pendingRef.current = { resolve, reject };
-      setIsConfirmOpen(true);
-    });
-  };
-
-  const takePending = (): PendingConfirm | null => {
-    const pending = pendingRef.current;
-    pendingRef.current = null;
-    setIsConfirmOpen(false);
-
-    return pending;
-  };
-
-  const handleConfirm = (): void => {
-    const pending = takePending();
-
-    if (pending) {
-      save().then(pending.resolve, pending.reject);
-    }
-  };
-
-  const handleCancel = (): void => {
-    takePending()?.reject(new Error('Cancelled'));
-  };
+// A page whose save asks first, through the same hook the edit pages use
+const ConfirmingThingPage: React.FC<{ save: (values: ThingFormValues) => Promise<void> }> = ({
+  save,
+}) => {
+  const { isConfirmOpen, requestConfirm, confirm, cancel } = useConfirmBeforeSave(save);
 
   return (
     <AdminEditPageShell<ThingFormValues, Thing>
@@ -233,15 +203,15 @@ const ConfirmingThingPage: React.FC<{ save: () => Promise<void> }> = ({ save }) 
       onBack={vi.fn()}
       record={THING}
       toFormValues={toFormValues}
-      onUpdate={handleUpdate}
+      onUpdate={requestConfirm}
       beforeForm={<Link to="/things">Things</Link>}
       footer={
         isConfirmOpen && (
           <div>
-            <button type="button" onClick={handleConfirm}>
+            <button type="button" onClick={confirm}>
               Confirm
             </button>
-            <button type="button" onClick={handleCancel}>
+            <button type="button" onClick={cancel}>
               Cancel
             </button>
           </div>
@@ -254,7 +224,7 @@ const ConfirmingThingPage: React.FC<{ save: () => Promise<void> }> = ({ save }) 
 };
 
 const renderConfirming = (
-  save: () => Promise<void> = () => Promise.resolve()
+  save: (values: ThingFormValues) => Promise<void> = () => Promise.resolve()
 ): ReturnType<typeof createMemoryRouter> => {
   const router = createMemoryRouter(
     [
@@ -282,7 +252,8 @@ const leaveViaLink = (): void => {
 
 describe('AdminEditPageShell save that asks first', () => {
   it('marks the form saved once the confirmed save resolves', async () => {
-    const router = renderConfirming();
+    const save = vi.fn((): Promise<void> => Promise.resolve());
+    const router = renderConfirming(save);
 
     await editAndSubmit();
     fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
@@ -290,17 +261,19 @@ describe('AdminEditPageShell save that asks first', () => {
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: 'Confirm' })).toBeNull();
     });
+    expect(save).toHaveBeenCalledWith({ name: 'Harbour Studio North' });
 
     leaveViaLink();
 
+    // A guarded dirty form would hold the navigation on /edit behind the prompt
     await waitFor(() => {
       expect(router.state.location.pathname).toBe('/things');
     });
-    expect(screen.queryByText('Unsaved Changes')).toBeNull();
   });
 
   it('leaves the form dirty and guarded when the confirm is cancelled', async () => {
-    const router = renderConfirming();
+    const save = vi.fn((): Promise<void> => Promise.resolve());
+    const router = renderConfirming(save);
 
     await editAndSubmit();
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
@@ -310,5 +283,6 @@ describe('AdminEditPageShell save that asks first', () => {
     expect(await screen.findByText('Unsaved Changes')).toBeTruthy();
     expect(router.state.location.pathname).toBe('/edit');
     expect(screen.getByLabelText<HTMLInputElement>('Name').value).toBe('Harbour Studio North');
+    expect(save).not.toHaveBeenCalled();
   });
 });

@@ -4,6 +4,7 @@ import { users } from '@ffp/database/schema';
 import { CognitoService } from '../lib/cognito';
 import { isUserActor } from '../lib/context';
 import { ForbiddenError, ValidationError } from '../lib/errors';
+import { describeErrorForLog } from '../lib/log-safe-error';
 import { createLogger } from '../lib/logger';
 import { type RequestContext } from '../lib/request-context';
 import { type InviteUserInput } from '../schemas/user.schema';
@@ -137,7 +138,7 @@ export async function inviteUserService(
       // CRITICAL: Rollback Cognito user if database insert fails
       logger.error('Database insert failed, rolling back Cognito user', {
         newUserId,
-        error: dbError instanceof Error ? dbError.message : 'Unknown error',
+        ...describeErrorForLog(dbError),
       });
 
       await CognitoService.deleteUser(newUserId);
@@ -145,9 +146,7 @@ export async function inviteUserService(
       throw dbError;
     }
   } catch (error) {
-    logger.error('Invite user failed', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    logger.error('Invite user failed', describeErrorForLog(error));
 
     throw error;
   }

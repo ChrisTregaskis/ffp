@@ -43,6 +43,22 @@ describe('toUpdateVideoInput', () => {
     });
   });
 
+  it('sends a status moved from active to archived', () => {
+    const video = stored({ status: 'active' });
+
+    expect(toUpdateVideoInput({ ...toVideoFormValues(video), status: 'archived' }, video)).toEqual({
+      status: 'archived',
+    });
+  });
+
+  it('sends a draft being published', () => {
+    const video = stored({ status: 'draft' });
+
+    expect(toUpdateVideoInput({ ...toVideoFormValues(video), status: 'active' }, video)).toEqual({
+      status: 'active',
+    });
+  });
+
   it('sends a list whose contents or order changed', () => {
     const video = stored();
 

@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type * as ffpDatabase from '@ffp/database';
 import type { VideoRecord } from '@ffp/database/schema';
 
-import { NotFoundError, ValidationError } from '../../src/lib/errors';
+import { NotFoundError } from '../../src/lib/errors';
 import * as questionRepository from '../../src/questions/question.repository';
 import * as questionService from '../../src/questions/question.service';
 import * as videoRepository from '../../src/videos/video.repository';
@@ -146,7 +146,11 @@ describe('questionService.updateQuestionService — merged-shape validation', ()
       questionService.updateQuestionService(createContext(), QUESTION_PUBLIC_ID, {
         validation: { maxSelections: 3 },
       })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'This update would leave the question in an invalid state',
+      details: { errors: [expect.objectContaining({ path: ['validation', 'maxSelections'] })] },
+    });
 
     expect(mockedQuestionRepo.updateQuestion).not.toHaveBeenCalled();
   });
@@ -199,7 +203,11 @@ describe('questionService.updateQuestionService — merged-shape validation', ()
 
     await expect(
       questionService.updateQuestionService(createContext(), QUESTION_PUBLIC_ID, { videoId: null })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'This update would leave the question in an invalid state',
+      details: { errors: [expect.objectContaining({ path: ['videoId'] })] },
+    });
   });
 });
 
@@ -267,7 +275,11 @@ describe('questionService.updateQuestionService — type-change clean-up', () =>
         type: 'numeric',
         validation: { required: true, maxSelections: 3 },
       })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'This update would leave the question in an invalid state',
+      details: { errors: [expect.objectContaining({ path: ['validation', 'maxSelections'] })] },
+    });
 
     expect(mockedQuestionRepo.updateQuestion).not.toHaveBeenCalled();
   });
@@ -286,7 +298,11 @@ describe('questionService.updateQuestionService — type-change clean-up', () =>
         ],
         validation: { required: true, min: 10, max: 1 },
       })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'This update would leave the question in an invalid state',
+      details: { errors: [expect.objectContaining({ path: ['validation', 'min'] })] },
+    });
 
     expect(mockedQuestionRepo.updateQuestion).not.toHaveBeenCalled();
   });
@@ -444,7 +460,11 @@ describe('questionService.updateQuestionService — clearing validation', () => 
         options: [{ value: 'yes', label: 'Yes' }],
         validation: null,
       })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'This update would leave the question in an invalid state',
+      details: { errors: [expect.objectContaining({ path: ['options'] })] },
+    });
 
     expect(mockedQuestionRepo.updateQuestion).not.toHaveBeenCalled();
   });
@@ -463,7 +483,11 @@ describe('questionService.updateQuestionService — clearing validation', () => 
         validation: null,
         videoId: null,
       })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'This update would leave the question in an invalid state',
+      details: { errors: [expect.objectContaining({ path: ['videoId'] })] },
+    });
   });
 });
 
@@ -481,8 +505,13 @@ describe('questionService — linked video checks', () => {
 
     await expect(
       questionService.createQuestionService(createContext(), createPayload)
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'Linked video not found or not active',
+      details: { videoId: VIDEO_ID },
+    });
 
+    expect(mockedVideoRepo.findVideoById).toHaveBeenCalledWith(expect.anything(), VIDEO_ID);
     expect(mockedQuestionRepo.createQuestion).not.toHaveBeenCalled();
   });
 
@@ -492,7 +521,13 @@ describe('questionService — linked video checks', () => {
 
     await expect(
       questionService.createQuestionService(createContext(), createPayload)
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'Linked video not found or not active',
+      details: { videoId: VIDEO_ID },
+    });
+
+    expect(mockedVideoRepo.findVideoById).toHaveBeenCalledWith(expect.anything(), VIDEO_ID);
   });
 
   it('rejects an update that links a missing video', async () => {
@@ -505,7 +540,11 @@ describe('questionService — linked video checks', () => {
       questionService.updateQuestionService(createContext(), QUESTION_PUBLIC_ID, {
         videoId: otherVideoId,
       })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'Linked video not found or not active',
+      details: { videoId: otherVideoId },
+    });
 
     expect(mockedQuestionRepo.updateQuestion).not.toHaveBeenCalled();
   });

@@ -41,6 +41,7 @@ describe('SessionPage', () => {
 
     renderPage();
 
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeTruthy();
     expect(screen.queryByText('Session not found.')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
   });
