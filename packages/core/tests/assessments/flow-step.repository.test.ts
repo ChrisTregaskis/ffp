@@ -1,8 +1,6 @@
 import { randomUUID } from 'crypto';
 
 import { eq } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
 import { assessmentFlows, assessmentTemplates, flowSteps } from '@ffp/database/schema';
@@ -12,8 +10,10 @@ import * as flowStepRepository from '../../src/assessments/flow-step.repository'
 import * as flowStepService from '../../src/assessments/flow-step.service';
 import * as flowRepository from '../../src/assessments/flow.repository';
 import { updateFlowStepSchema } from '../../src/schemas/assessment-flow.schema';
+import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import type { OrganisationContext, UserActor } from '../../src/lib/context';
+import type { Pool } from 'pg';
 
 // Flows, steps and templates are shared catalogue tables: names carry a per-run marker, and
 // clean-up deletes only this test's flow (its steps cascade) and template
@@ -21,20 +21,13 @@ const RUN_ID = randomUUID().slice(0, 8);
 
 describe('Flow Step Repository', () => {
   let pool: Pool;
-  let db: ReturnType<typeof drizzle>;
+  let db: TestDb;
   let flowId: string;
   let flowPublicId: string;
   let templateId: string;
 
   beforeAll(() => {
-    pool = new Pool({
-      host: process.env.DB_HOST ?? 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '5432'),
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER ?? 'test_user',
-      password: process.env.DB_PASSWORD ?? 'test_password',
-    });
-    db = drizzle(pool);
+    ({ pool, db } = connectTestDb());
   });
 
   beforeEach(async () => {

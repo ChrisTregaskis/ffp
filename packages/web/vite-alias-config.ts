@@ -36,7 +36,6 @@ export const createCoreAliasConfig = (corePackageRoot: string): Record<string, s
     // Core package internal aliases with explicit namespace
     '@core/lib': path.resolve(corePackageRoot, 'src/lib'),
     '@core/types': path.resolve(corePackageRoot, 'src/types'),
-    '@core/utils': path.resolve(corePackageRoot, 'src/utils'),
     '@core/services': path.resolve(corePackageRoot, 'src/services'),
     '@core/repositories': path.resolve(corePackageRoot, 'src/repositories'),
   };

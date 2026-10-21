@@ -1,8 +1,6 @@
 import { randomUUID } from 'crypto';
 
 import { asc, eq, inArray, sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
 import { assessmentFlows, questions, userAssessmentAnswers } from '@ffp/database/schema';
@@ -10,6 +8,9 @@ import { assessmentFlows, questions, userAssessmentAnswers } from '@ffp/database
 import * as answerRepository from '../../src/assessments/answer.repository';
 import * as userAssessmentRepository from '../../src/assessments/user-assessment.repository';
 import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
+import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
+
+import type { Pool } from 'pg';
 
 // Questions and flows are shared catalogue tables: every slug and name carries a per-run
 // marker, and clean-up deletes only the ids recorded here
@@ -19,7 +20,7 @@ const publicId = (): string => randomUUID().replace(/-/g, '').slice(0, 12);
 
 describe('Answer Repository', () => {
   let pool: Pool;
-  let db: ReturnType<typeof drizzle>;
+  let db: TestDb;
 
   let organisationAId: string;
   let organisationBId: string;
@@ -28,14 +29,7 @@ describe('Answer Repository', () => {
   let questionIds: string[];
 
   beforeAll(() => {
-    pool = new Pool({
-      host: process.env.DB_HOST ?? 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '5432'),
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER ?? 'test_user',
-      password: process.env.DB_PASSWORD ?? 'test_password',
-    });
-    db = drizzle(pool);
+    ({ pool, db } = connectTestDb());
   });
 
   beforeEach(async () => {

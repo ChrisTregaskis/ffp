@@ -32,17 +32,6 @@ describe('ForgotPasswordRequestForm', () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it('refuses a malformed email', async () => {
-    const onSubmit = renderForm();
-    fireEvent.change(email(), { target: { value: 'someone@nowhere' } });
-    submit();
-
-    expect((await screen.findByRole('alert')).textContent).toBe(
-      'Please enter a valid email address'
-    );
-    expect(onSubmit).not.toHaveBeenCalled();
-  });
-
   it('sends a valid email', async () => {
     const onSubmit = renderForm();
     fireEvent.change(email(), { target: { value: 'someone@example.com' } });

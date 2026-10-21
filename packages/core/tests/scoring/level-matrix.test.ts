@@ -58,8 +58,17 @@ describe('Level rule', () => {
     expect(result.recommendedProgrammeId).toBe(LEVEL_PROGRAMME_SLUGS[level]);
   });
 
-  it('covers every answer pattern against every age bracket', () => {
-    expect(MATRIX).toHaveLength(70);
+  // Stated as literals, so a bracket dropped from the options cannot shrink the matrix unnoticed
+  it('scores every age bracket the question offers', () => {
+    expect(AGE_BRACKET_OPTIONS.map(({ value }) => value)).toEqual([
+      'under-20',
+      '20-29',
+      '30-39',
+      '40-45',
+      '46-55',
+      '56-65',
+      '65-plus',
+    ]);
   });
 
   it('maps every activity and age pair to exactly one level', () => {

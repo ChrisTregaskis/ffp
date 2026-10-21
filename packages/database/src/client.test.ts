@@ -5,15 +5,17 @@
  */
 
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
-import type { PoolConfig } from 'pg';
+
 import { getDb, closeDb, withDb } from './client';
+
+import type { PoolConfig } from 'pg';
 
 // The Pool is mocked so the tests read the config it receives and never open a connection.
 // The logger reads LOG_LEVEL when the client module loads, so it is pinned before the import.
 const { Pool } = vi.hoisted(() => {
   process.env.LOG_LEVEL = 'DEBUG';
   return {
-    Pool: vi.fn((_config: PoolConfig) => ({ on: vi.fn(), end: vi.fn(async () => undefined) })),
+    Pool: vi.fn((_config: PoolConfig) => ({ on: vi.fn(), end: vi.fn(() => Promise.resolve()) })),
   };
 });
 
@@ -201,26 +203,22 @@ describe('Database Client', () => {
 
   describe('withDb Helper', () => {
     it('should execute callback with database instance', async () => {
-      const result = await withDb(async (db) => {
+      const result = await withDb((db) => {
         expect(db).toHaveProperty('select');
-        return 'success';
+        return Promise.resolve('success');
       });
 
       expect(result).toBe('success');
     });
 
     it('should propagate errors from callback', async () => {
-      await expect(
-        withDb(async () => {
-          throw new Error('Test error');
-        })
-      ).rejects.toThrow('Test error');
+      await expect(withDb(() => Promise.reject(new Error('Test error')))).rejects.toThrow(
+        'Test error'
+      );
     });
 
     it('should return callback result', async () => {
-      const result = await withDb(async () => {
-        return { data: 'test' };
-      });
+      const result = await withDb(() => Promise.resolve({ data: 'test' }));
 
       expect(result).toEqual({ data: 'test' });
     });
@@ -229,14 +227,14 @@ describe('Database Client', () => {
   describe('Logging', () => {
     it('should log pool creation', async () => {
       await closeDb();
-      const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
 
       getDb();
 
       // Logger formats output with colours and prefixes, so check for message content
       expect(consoleInfoSpy).toHaveBeenCalled();
       const logCall = consoleInfoSpy.mock.calls.find((call) =>
-        call[0]?.includes('Creating database connection pool')
+        String(call[0]).includes('Creating database connection pool')
       );
       expect(logCall).toBeDefined();
       // Check that context is included in the formatted output
@@ -248,14 +246,14 @@ describe('Database Client', () => {
 
     it('should log pool closure', async () => {
       getDb(); // Create pool first
-      const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
 
       await closeDb();
 
       // Logger formats output with colours and prefixes
       expect(consoleInfoSpy).toHaveBeenCalled();
       const logCall = consoleInfoSpy.mock.calls.find((call) =>
-        call[0]?.includes('Closing database connection pool')
+        String(call[0]).includes('Closing database connection pool')
       );
       expect(logCall).toBeDefined();
 
@@ -265,7 +263,7 @@ describe('Database Client', () => {
     it('should not log credentials', async () => {
       await closeDb();
       const consoleSpies = (['debug', 'info', 'log', 'warn', 'error'] as const).map((method) =>
-        vi.spyOn(console, method).mockImplementation(() => {})
+        vi.spyOn(console, method).mockImplementation(() => undefined)
       );
 
       let logged: string;
@@ -273,11 +271,13 @@ describe('Database Client', () => {
         getDb();
         await closeDb();
         logged = consoleSpies
-          .flatMap((spy) => spy.mock.calls.flat())
+          .flatMap((spy): unknown[] => spy.mock.calls.flat())
           .map((arg) => (typeof arg === 'string' ? arg : JSON.stringify(arg)))
           .join('\n');
       } finally {
-        consoleSpies.forEach((spy) => spy.mockRestore());
+        consoleSpies.forEach((spy) => {
+          spy.mockRestore();
+        });
       }
 
       // The sentinels reached the Pool and the creation line was captured, so absence means something

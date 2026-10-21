@@ -123,7 +123,7 @@ export const createUser = async (
 // CORRECT: CORRECT CODE
 export const createUser = async (context: RequestContext, input: unknown): Promise<User> => {
   // Validate input with Zod schema
-  const validatedInput = createUserSchema.parse(input);
+  const validatedInput = adminCreateUserInputSchema.parse(input);
 
   return await userRepository.create(context, validatedInput);
 };
@@ -185,7 +185,7 @@ export const handler = async (event: APIGatewayProxyEvent) => {
 
 // Move business logic to service
 export const createUser = async (context: RequestContext, input: unknown): Promise<User> => {
-  const validatedInput = createUserSchema.parse(input);
+  const validatedInput = inviteUserSchema.parse(input);
 
   // Business logic in service - CORRECT!
   if (validatedInput.role === 'ADMIN' && context.role !== 'SUPER_ADMIN') {
@@ -336,7 +336,7 @@ export const normaliseUserData = (data: unknown) => { ... };
 // WRONG: CURRENT CODE (COULD BE BETTER)
 export const createUser = async (
   context: RequestContext,
-  input: CreateUserInput
+  input: AdminCreateUserInput
 ): Promise<User> => { ... };
 ```
 
@@ -355,7 +355,7 @@ export const createUser = async (
  */
 export const createUser = async (
   context: RequestContext,
-  input: CreateUserInput
+  input: AdminCreateUserInput
 ): Promise<User> => { ... };
 ```
 

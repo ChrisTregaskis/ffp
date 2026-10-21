@@ -260,160 +260,50 @@ describe('extractUserContext', () => {
   });
 
   describe('Missing JWT authoriser', () => {
-    it('should throw UnauthorisedError when JWT authoriser is missing in request context', () => {
-      const event = createIncompleteAPIGatewayEvent();
-
-      expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
-      expect(() => extractUserContext(event)).toThrow('No JWT claims found in request');
-    });
-
-    it('should throw UnauthorisedError when authoriser is null', () => {
-      const event = createIncompleteAPIGatewayEvent({
-        authorizer: null,
-      } as Partial<APIGatewayEventRequestContextV2>);
-
-      expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
-      expect(() => extractUserContext(event)).toThrow('No JWT claims found in request');
-    });
-
-    it('should throw UnauthorisedError when jwt property is missing', () => {
-      const event = createIncompleteAPIGatewayEvent({
-        authorizer: {},
-      } as Partial<APIGatewayEventRequestContextV2>);
-
-      expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
-      expect(() => extractUserContext(event)).toThrow('No JWT claims found in request');
-    });
-
-    it('should throw UnauthorisedError when claims property is missing', () => {
-      const event = createIncompleteAPIGatewayEvent({
-        authorizer: {
-          jwt: {},
-        },
-      } as Partial<APIGatewayEventRequestContextV2>);
+    it.each([
+      ['the authoriser is missing', undefined],
+      ['the authoriser is null', { authorizer: null }],
+      ['the jwt property is missing', { authorizer: {} }],
+      ['the claims property is missing', { authorizer: { jwt: {} } }],
+    ])('throws UnauthorisedError when %s', (_case, overrides) => {
+      const event = createIncompleteAPIGatewayEvent(
+        overrides as Partial<APIGatewayEventRequestContextV2> | undefined
+      );
 
       expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
       expect(() => extractUserContext(event)).toThrow('No JWT claims found in request');
     });
   });
 
-  describe('Missing required claims', () => {
-    it('should throw UnauthorisedError when sub claim is missing', () => {
-      const event = createMockAPIGatewayEvent({
-        'custom:tenantId': 'tenant-456',
-        'custom:role': 'customer_owner',
-        email: 'test@example.com',
-      });
+  describe('Missing or invalid claims', () => {
+    const MISSING = Symbol('missing');
+    const validClaims: Record<string, unknown> = {
+      sub: 'user-123',
+      'custom:tenantId': 'tenant-456',
+      'custom:role': 'customer_owner',
+      email: 'test@example.com',
+    };
+
+    it.each([
+      ['sub', 'missing', MISSING, 'Missing or invalid sub claim'],
+      ['custom:tenantId', 'missing', MISSING, 'Missing or invalid organisationId claim'],
+      ['custom:role', 'missing', MISSING, 'Missing or invalid role claim'],
+      ['email', 'missing', MISSING, 'Missing or invalid email claim'],
+      ['sub', 'a number', 123, 'Missing or invalid sub claim'],
+      ['custom:tenantId', 'a number', 456, 'Missing or invalid organisationId claim'],
+      ['custom:role', 'a boolean', true, 'Missing or invalid role claim'],
+      ['email', 'an array', ['test@example.com'], 'Missing or invalid email claim'],
+      ['sub', 'an empty string', '', 'Missing or invalid sub claim'],
+      ['custom:tenantId', 'an empty string', '', 'Missing or invalid organisationId claim'],
+    ])('throws UnauthorisedError when %s is %s', (claim, _case, value, expectedMessage) => {
+      const claims =
+        value === MISSING
+          ? Object.fromEntries(Object.entries(validClaims).filter(([name]) => name !== claim))
+          : { ...validClaims, [claim]: value };
+      const event = createMockAPIGatewayEvent(claims);
 
       expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
-      expect(() => extractUserContext(event)).toThrow('Missing or invalid sub claim');
-    });
-
-    it('should throw UnauthorisedError when organisationId claim is missing', () => {
-      const event = createMockAPIGatewayEvent({
-        sub: 'user-123',
-        'custom:role': 'customer_owner',
-        email: 'test@example.com',
-      });
-
-      expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
-      expect(() => extractUserContext(event)).toThrow('Missing or invalid organisationId claim');
-    });
-
-    it('should throw UnauthorisedError when role claim is missing', () => {
-      const event = createMockAPIGatewayEvent({
-        sub: 'user-123',
-        'custom:tenantId': 'tenant-456',
-        email: 'test@example.com',
-      });
-
-      expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
-      expect(() => extractUserContext(event)).toThrow('Missing or invalid role claim');
-    });
-
-    it('should throw UnauthorisedError when email claim is missing', () => {
-      const event = createMockAPIGatewayEvent({
-        sub: 'user-123',
-        'custom:tenantId': 'tenant-456',
-        'custom:role': 'customer_owner',
-      });
-
-      expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
-      expect(() => extractUserContext(event)).toThrow('Missing or invalid email claim');
-    });
-  });
-
-  describe('Invalid claim types', () => {
-    it('should throw UnauthorisedError when sub is not a string', () => {
-      const event = createMockAPIGatewayEvent({
-        sub: 123, // number instead of string
-        'custom:tenantId': 'tenant-456',
-        'custom:role': 'customer_owner',
-        email: 'test@example.com',
-      });
-
-      expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
-      expect(() => extractUserContext(event)).toThrow('Missing or invalid sub claim');
-    });
-
-    it('should throw UnauthorisedError when organisationId is not a string', () => {
-      const event = createMockAPIGatewayEvent({
-        sub: 'user-123',
-        'custom:tenantId': 456, // number instead of string
-        'custom:role': 'customer_owner',
-        email: 'test@example.com',
-      });
-
-      expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
-      expect(() => extractUserContext(event)).toThrow('Missing or invalid organisationId claim');
-    });
-
-    it('should throw UnauthorisedError when role is not a string', () => {
-      const event = createMockAPIGatewayEvent({
-        sub: 'user-123',
-        'custom:tenantId': 'tenant-456',
-        'custom:role': true, // boolean instead of string
-        email: 'test@example.com',
-      });
-
-      expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
-      expect(() => extractUserContext(event)).toThrow('Missing or invalid role claim');
-    });
-
-    it('should throw UnauthorisedError when email is not a string', () => {
-      const event = createMockAPIGatewayEvent({
-        sub: 'user-123',
-        'custom:tenantId': 'tenant-456',
-        'custom:role': 'customer_owner',
-        email: ['test@example.com'], // array instead of string
-      });
-
-      expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
-      expect(() => extractUserContext(event)).toThrow('Missing or invalid email claim');
-    });
-
-    it('should throw UnauthorisedError when sub is empty string', () => {
-      const event = createMockAPIGatewayEvent({
-        sub: '',
-        'custom:tenantId': 'tenant-456',
-        'custom:role': 'customer_owner',
-        email: 'test@example.com',
-      });
-
-      expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
-      expect(() => extractUserContext(event)).toThrow('Missing or invalid sub claim');
-    });
-
-    it('should throw UnauthorisedError when organisationId is empty string', () => {
-      const event = createMockAPIGatewayEvent({
-        sub: 'user-123',
-        'custom:tenantId': '',
-        'custom:role': 'customer_owner',
-        email: 'test@example.com',
-      });
-
-      expect(() => extractUserContext(event)).toThrow(UnauthorisedError);
-      expect(() => extractUserContext(event)).toThrow('Missing or invalid organisationId claim');
+      expect(() => extractUserContext(event)).toThrow(expectedMessage);
     });
   });
 });
@@ -510,69 +400,30 @@ describe('createSystemContext', () => {
   });
 
   describe('Invalid parameters', () => {
-    it('should throw ValidationError when systemId is missing', () => {
+    it.each([
+      ['systemId is missing', { systemId: undefined, organisationId: 'tenant-123' }, 'systemId'],
+      ['systemId is an empty string', { systemId: '', organisationId: 'tenant-123' }, 'systemId'],
+      ['systemId is not a string', { systemId: 123, organisationId: 'tenant-123' }, 'systemId'],
+      [
+        'organisationId is missing',
+        { systemId: 'assessment-processor', organisationId: undefined },
+        'organisationId',
+      ],
+      [
+        'organisationId is an empty string',
+        { systemId: 'assessment-processor', organisationId: '' },
+        'organisationId',
+      ],
+      [
+        'organisationId is not a string',
+        { systemId: 'assessment-processor', organisationId: 456 },
+        'organisationId',
+      ],
+    ])('throws ValidationError when %s', (_case, params, field) => {
       expectSystemContextToThrow(
-        {
-          systemId: undefined,
-          organisationId: 'tenant-123',
-        },
+        params,
         ValidationError,
-        'systemId is required and must be a non-empty string'
-      );
-    });
-
-    it('should throw ValidationError when systemId is empty string', () => {
-      expectSystemContextToThrow(
-        {
-          systemId: '',
-          organisationId: 'tenant-123',
-        },
-        ValidationError,
-        'systemId is required and must be a non-empty string'
-      );
-    });
-
-    it('should throw ValidationError when systemId is not a string', () => {
-      expectSystemContextToThrow(
-        {
-          systemId: 123,
-          organisationId: 'tenant-123',
-        },
-        ValidationError,
-        'systemId is required and must be a non-empty string'
-      );
-    });
-
-    it('should throw ValidationError when organisationId is missing', () => {
-      expectSystemContextToThrow(
-        {
-          systemId: 'assessment-processor',
-          organisationId: undefined,
-        },
-        ValidationError,
-        'organisationId is required and must be a non-empty string'
-      );
-    });
-
-    it('should throw ValidationError when organisationId is empty string', () => {
-      expectSystemContextToThrow(
-        {
-          systemId: 'assessment-processor',
-          organisationId: '',
-        },
-        ValidationError,
-        'organisationId is required and must be a non-empty string'
-      );
-    });
-
-    it('should throw ValidationError when organisationId is not a string', () => {
-      expectSystemContextToThrow(
-        {
-          systemId: 'assessment-processor',
-          organisationId: 456,
-        },
-        ValidationError,
-        'organisationId is required and must be a non-empty string'
+        `${field} is required and must be a non-empty string`
       );
     });
   });
@@ -652,108 +503,53 @@ describe('extractJobContext', () => {
   });
 
   describe('Invalid job messages', () => {
-    it('should throw ValidationError when jobId is missing', () => {
+    it.each([
+      [
+        'jobId is missing',
+        { jobType: 'assessment-processor', organisationId: 'tenant-456' },
+        'jobId',
+      ],
+      [
+        'jobId is an empty string',
+        { jobId: '', jobType: 'assessment-processor', organisationId: 'tenant-456' },
+        'jobId',
+      ],
+      [
+        'jobId is not a string',
+        { jobId: 123, jobType: 'assessment-processor', organisationId: 'tenant-456' },
+        'jobId',
+      ],
+      ['jobType is missing', { jobId: 'job-123', organisationId: 'tenant-456' }, 'jobType'],
+      [
+        'jobType is an empty string',
+        { jobId: 'job-123', jobType: '', organisationId: 'tenant-456' },
+        'jobType',
+      ],
+      [
+        'jobType is not a string',
+        { jobId: 'job-123', jobType: true, organisationId: 'tenant-456' },
+        'jobType',
+      ],
+      [
+        'organisationId is missing',
+        { jobId: 'job-123', jobType: 'assessment-processor' },
+        'organisationId',
+      ],
+      [
+        'organisationId is an empty string',
+        { jobId: 'job-123', jobType: 'assessment-processor', organisationId: '' },
+        'organisationId',
+      ],
+      [
+        'organisationId is not a string',
+        { jobId: 'job-123', jobType: 'assessment-processor', organisationId: null },
+        'organisationId',
+      ],
+    ])('throws ValidationError when %s', (_case, jobMessage, field) => {
       expectJobContextToThrow(
-        {
-          jobType: 'assessment-processor',
-          organisationId: 'tenant-456',
-        },
+        jobMessage,
         ValidationError,
-        'Job message missing required field: jobId'
-      );
-    });
-
-    it('should throw ValidationError when jobId is empty string', () => {
-      expectJobContextToThrow(
-        {
-          jobId: '',
-          jobType: 'assessment-processor',
-          organisationId: 'tenant-456',
-        },
-        ValidationError,
-        'Job message missing required field: jobId'
-      );
-    });
-
-    it('should throw ValidationError when jobId is not a string', () => {
-      expectJobContextToThrow(
-        {
-          jobId: 123,
-          jobType: 'assessment-processor',
-          organisationId: 'tenant-456',
-        },
-        ValidationError,
-        'Job message missing required field: jobId'
-      );
-    });
-
-    it('should throw ValidationError when jobType is missing', () => {
-      expectJobContextToThrow(
-        {
-          jobId: 'job-123',
-          organisationId: 'tenant-456',
-        },
-        ValidationError,
-        'Job message missing required field: jobType'
-      );
-    });
-
-    it('should throw ValidationError when jobType is empty string', () => {
-      expectJobContextToThrow(
-        {
-          jobId: 'job-123',
-          jobType: '',
-          organisationId: 'tenant-456',
-        },
-        ValidationError,
-        'Job message missing required field: jobType'
-      );
-    });
-
-    it('should throw ValidationError when jobType is not a string', () => {
-      expectJobContextToThrow(
-        {
-          jobId: 'job-123',
-          jobType: true,
-          organisationId: 'tenant-456',
-        },
-        ValidationError,
-        'Job message missing required field: jobType'
-      );
-    });
-
-    it('should throw ValidationError when organisationId is missing', () => {
-      expectJobContextToThrow(
-        {
-          jobId: 'job-123',
-          jobType: 'assessment-processor',
-        },
-        ValidationError,
-        'Job message missing required field: organisationId'
-      );
-    });
-
-    it('should throw ValidationError when organisationId is empty string', () => {
-      expectJobContextToThrow(
-        {
-          jobId: 'job-123',
-          jobType: 'assessment-processor',
-          organisationId: '',
-        },
-        ValidationError,
-        'Job message missing required field: organisationId'
-      );
-    });
-
-    it('should throw ValidationError when organisationId is not a string', () => {
-      expectJobContextToThrow(
-        {
-          jobId: 'job-123',
-          jobType: 'assessment-processor',
-          organisationId: null,
-        },
-        ValidationError,
-        'Job message missing required field: organisationId'
+        `Job message missing required field: ${field}`
       );
     });
   });

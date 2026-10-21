@@ -1,7 +1,5 @@
 import { randomUUID } from 'crypto';
 
-import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 
 import { withRLS } from '@ffp/database';
@@ -11,23 +9,19 @@ import { withErrorHandling } from '../../src/lib/lambda-wrapper';
 
 import { createMockEvent } from './api-gateway-event.fixture';
 import { expectNothingLeakable } from './database-error.fixture';
+import { connectTestDb, type TestDb } from './test-db.fixture';
+
+import type { Pool } from 'pg';
 
 // Runs against the real test database so the error is exactly what Drizzle and
 // `pg` raise, not a hand-built stand-in. The insert is refused, so no row is
 // created and there is nothing to clean up.
 describe('logging a real database error', () => {
   let pool: Pool;
-  let db: NodePgDatabase<typeof schema>;
+  let db: TestDb<typeof schema>;
 
   beforeAll(() => {
-    pool = new Pool({
-      host: process.env.DB_HOST ?? 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '5432'),
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER ?? 'test_user',
-      password: process.env.DB_PASSWORD ?? 'test_password',
-    });
-    db = drizzle(pool, { schema });
+    ({ pool, db } = connectTestDb({ schema }));
   });
 
   afterEach(() => {

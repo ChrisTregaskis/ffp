@@ -15,12 +15,15 @@
  * @module __tests__/integration.test
  */
 
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
-import { getDb, closeDb } from '../src/client';
-import { users, organisations, locations } from '../src/schema';
-import { withRLS } from '../src/lib/rls';
-import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
+
+import { eq } from 'drizzle-orm';
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
+
+import { getDb, closeDb } from '../src/client';
+import { withRLS } from '../src/lib/rls';
+import { users, organisations, locations } from '../src/schema';
+
 import { deleteOrganisations } from './helpers/rls-context';
 
 // Unique per run, so the global unique indexes on email and account code
@@ -39,7 +42,7 @@ describe('Drizzle Integration Tests', () => {
     return organisationId;
   };
 
-  beforeAll(async () => {
+  beforeAll(() => {
     // Setup test database connection
     // IMPORTANT: test_user does NOT have BYPASSRLS, so RLS policies are enforced
     process.env.DB_HOST = 'localhost';
@@ -66,9 +69,8 @@ describe('Drizzle Integration Tests', () => {
       const invalidOrgId = randomUUID(); // never inserted
       const userId = randomUUID();
 
-      // Try to create user without valid organisation (should fail)
+      // Under the missing organisation's own context the policy admits the row, so the FK refuses it
       await expect(async () => {
-        // Note: We still need to set RLS context, but the FK will fail
         await withRLS(db, invalidOrgId, undefined, async (tx) => {
           await tx.insert(users).values({
             id: userId,
@@ -80,7 +82,9 @@ describe('Drizzle Integration Tests', () => {
             role: 'programme_user',
           });
         });
-      }).rejects.toThrow();
+      }).rejects.toMatchObject({
+        cause: { code: '23503', constraint: 'users_organisation_id_organisations_id_fk' },
+      });
     });
 
     it('should enforce unique email constraint', async () => {
@@ -119,7 +123,7 @@ describe('Drizzle Integration Tests', () => {
             role: 'programme_user',
           });
         });
-      }).rejects.toThrow();
+      }).rejects.toMatchObject({ cause: { code: '23505', constraint: 'users_email_unique' } });
     });
 
     it('should enforce unique account code constraint', async () => {
@@ -152,7 +156,9 @@ describe('Drizzle Integration Tests', () => {
             status: 'active',
           });
         });
-      }).rejects.toThrow();
+      }).rejects.toMatchObject({
+        cause: { code: '23505', constraint: 'locations_account_code_unique' },
+      });
     });
 
     it('should cascade delete when organisation is deleted', async () => {
@@ -207,10 +213,10 @@ describe('Drizzle Integration Tests', () => {
             name: 'Rollback Test',
           });
 
-          // Force an error (invalid FK - different organisation)
+          // Force an error: a user in another organisation, which the insert policy refuses
           await tx.insert(users).values({
             id: randomUUID(),
-            organisationId: randomUUID(), // Invalid FK - different organisation
+            organisationId: randomUUID(), // Not the context's organisation
             email: `rollback-${RUN_ID}@test.com`,
             cognitoSub: `cognito-fail-${RUN_ID}`,
             firstName: 'Fail',
@@ -218,7 +224,12 @@ describe('Drizzle Integration Tests', () => {
             role: 'programme_user',
           });
         });
-      }).rejects.toThrow();
+      }).rejects.toMatchObject({
+        cause: {
+          code: '42501',
+          message: 'new row violates row-level security policy for table "users"',
+        },
+      });
 
       // Verify organisation was NOT created (transaction rolled back)
       // Set RLS context to the rolled-back org's ID so the UUID cast succeeds;

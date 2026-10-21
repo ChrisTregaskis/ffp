@@ -56,7 +56,7 @@ export type User = z.infer<typeof userSchema>;
 
 ```typescript
 // [✓] Import types and schemas from @ffp/core
-import { User, UserRole, createUserSchema } from '@ffp/core';
+import { User, UserRole, adminCreateUserInputSchema } from '@ffp/core';
 
 // [✓] Use constants for comparisons
 import { USER_ROLES } from '@ffp/core';
@@ -230,7 +230,7 @@ export const handler = withErrorHandling(async (event) => {
 ```typescript
 // packages/core/users/user.service.ts
 export const createUserService = async (data: unknown, context: RequestContext) => {
-  const validated = createUserSchema.parse(data);
+  const validated = adminCreateUserInputSchema.parse(data);
 
   const existing = await userRepository.findByEmail(validated.email, context);
   if (existing) throw new ConflictError('Email already exists');

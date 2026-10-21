@@ -14,8 +14,6 @@
 import { randomUUID } from 'crypto';
 
 import { inArray, sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
 import {
@@ -28,8 +26,10 @@ import {
 
 import * as templateRepository from '../../src/assessments/template.repository';
 import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
+import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import type { CreateAssessmentTemplateInput } from '../../src/schemas/assessment-template.schema';
+import type { Pool } from 'pg';
 
 // Templates and questions are shared, unscoped tables, so every name and slug this
 // suite writes carries a per-run marker: listings are searched by it, and clean-up
@@ -38,7 +38,7 @@ const RUN_ID = randomUUID().slice(0, 8);
 
 describe('Template Repository', () => {
   let pool: Pool;
-  let db: ReturnType<typeof drizzle>;
+  let db: TestDb;
   let createdTemplateIds: string[] = [];
 
   const validCreateInput: CreateAssessmentTemplateInput = {
@@ -52,14 +52,7 @@ describe('Template Repository', () => {
   };
 
   beforeAll(() => {
-    pool = new Pool({
-      host: process.env.DB_HOST ?? 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '5432'),
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER ?? 'test_user',
-      password: process.env.DB_PASSWORD ?? 'test_password',
-    });
-    db = drizzle(pool);
+    ({ pool, db } = connectTestDb());
   });
 
   /** Creates through the repository and records the id for clean-up. */

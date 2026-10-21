@@ -1,16 +1,17 @@
 import { randomUUID } from 'crypto';
 
 import { inArray } from 'drizzle-orm';
-import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
 
 import * as schema from '@ffp/database/schema';
 
 import { detectAndMarkStaleJobs } from '../../src/jobs/stale-job.service';
 import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
+import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import { jobPayload } from './job-payload.fixture';
+
+import type { Pool } from 'pg';
 
 const { mockGetDb } = vi.hoisted(() => ({
   mockGetDb: vi.fn(),
@@ -30,18 +31,11 @@ const secondsAgo = (seconds: number): Date => new Date(Date.now() - seconds * 10
 
 describe('detectAndMarkStaleJobs', () => {
   let pool: Pool;
-  let db: NodePgDatabase<typeof schema>;
+  let db: TestDb<typeof schema>;
   let testOrganisationId: string;
 
   beforeAll(() => {
-    pool = new Pool({
-      host: process.env.DB_HOST ?? 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '5432'),
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER ?? 'test_user',
-      password: process.env.DB_PASSWORD ?? 'test_password',
-    });
-    db = drizzle(pool, { schema });
+    ({ pool, db } = connectTestDb({ schema }));
     mockGetDb.mockReturnValue(db);
   });
 

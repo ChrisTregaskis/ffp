@@ -1,8 +1,6 @@
 import { randomUUID } from 'crypto';
 
 import { inArray } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 
 import type { ScoringConfig } from '@ffp/database';
@@ -18,6 +16,9 @@ import {
   createQuestionSchema,
   updateQuestionSchema,
 } from '../../src/schemas/assessment-question.schema';
+import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
+
+import type { Pool } from 'pg';
 
 // Questions, templates and flows are shared catalogue tables: every slug and name carries a
 // per-run marker, listings are searched by it, and clean-up deletes only the ids recorded here
@@ -25,20 +26,13 @@ const RUN_ID = randomUUID().slice(0, 8);
 
 describe('Question Repository', () => {
   let pool: Pool;
-  let db: ReturnType<typeof drizzle>;
+  let db: TestDb;
   let createdQuestionIds: string[] = [];
   let createdTemplateIds: string[] = [];
   let createdFlowIds: string[] = [];
 
   beforeAll(() => {
-    pool = new Pool({
-      host: process.env.DB_HOST ?? 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '5432'),
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER ?? 'test_user',
-      password: process.env.DB_PASSWORD ?? 'test_password',
-    });
-    db = drizzle(pool);
+    ({ pool, db } = connectTestDb());
   });
 
   afterEach(async () => {

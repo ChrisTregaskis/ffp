@@ -8,6 +8,5 @@ export * from './schemas';
 
 // Utilities and constants
 export * from './lib';
-export * from './utils';
 
 // Note: Admin domain is server-only and exported from @ffp/core/server

@@ -151,6 +151,9 @@ importers:
         specifier: ^4.1.12
         version: 4.1.12
     devDependencies:
+      '@ffp/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       '@types/node':
         specifier: ^22.10.5
         version: 22.18.11
@@ -163,6 +166,9 @@ importers:
       drizzle-kit:
         specifier: ^0.31.5
         version: 0.31.5
+      eslint:
+        specifier: ^8.57.1
+        version: 8.57.1
       tsx:
         specifier: ^4.20.6
         version: 4.20.6
