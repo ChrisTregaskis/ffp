@@ -1,6 +1,7 @@
+import { QueryClient, QueryClientProvider, useMutation } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React, { useEffect, useState } from 'react';
-import { createMemoryRouter, Link, RouterProvider } from 'react-router-dom';
+import { createMemoryRouter, Link, RouterProvider, useNavigate } from 'react-router-dom';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { FormTextInput } from '@web/components/molecules';
@@ -202,6 +203,49 @@ const renderGuarded = (
   };
 };
 
+interface MutationRecordPageProps {
+  save: (values: RecordFormValues) => Promise<void>;
+}
+
+// Saves as the edit pages do: a real mutation whose per-call onSuccess navigates away
+const MutationRecordPage: React.FC<MutationRecordPageProps> = ({ save }) => {
+  const navigate = useNavigate();
+  const mutation = useMutation({ mutationFn: save });
+
+  const handleSubmit = (values: RecordFormValues): Promise<void> =>
+    mutation.mutateAsync(values, {
+      onSuccess: () => {
+        void navigate('/preview');
+      },
+    });
+
+  return (
+    <ComposableForm<RecordFormValues> onSubmit={handleSubmit} values={STALE} guardUnsavedChanges>
+      <RecordFields />
+    </ComposableForm>
+  );
+};
+
+const renderWithMutation = (
+  save: (values: RecordFormValues) => Promise<void>
+): ReturnType<typeof createMemoryRouter> => {
+  const router = createMemoryRouter(
+    [
+      { path: '/edit', element: <MutationRecordPage save={save} /> },
+      { path: '/preview', element: <p>Preview page</p> },
+    ],
+    { initialEntries: ['/edit'] }
+  );
+
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  );
+
+  return router;
+};
+
 // Records whether text reaches the DOM at any point, however briefly; a modal opened
 // for one render stays mounted through its exit animation
 const watchForText = (text: string): { seen: () => boolean; stop: () => void } => {
@@ -341,6 +385,45 @@ describe('ComposableForm unsaved changes guard', () => {
       Promise.resolve().then(() => {
         void router.navigate('/preview');
       });
+
+    const prompt = watchForText('Unsaved Changes');
+    fireEvent.change(input('Name'), { target: { value: 'Harbour Studio North' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/preview');
+    });
+    prompt.stop();
+    expect(prompt.seen()).toBe(false);
+  });
+
+  it('lets a real mutation navigate from its onSuccess without asking', async () => {
+    const save = vi.fn((): Promise<void> => Promise.resolve());
+    const router = renderWithMutation(save);
+
+    const prompt = watchForText('Unsaved Changes');
+    fireEvent.change(input('Name'), { target: { value: 'Harbour Studio North' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/preview');
+    });
+    prompt.stop();
+    expect(prompt.seen()).toBe(false);
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  // A page that finds nothing to send goes straight back, inside its submit handler
+  it('lets a submit handler that navigates during its own call leave without asking', async () => {
+    const exit = { now: (): void => undefined };
+    const onSubmit = vi.fn(() => {
+      exit.now();
+    });
+    const { router } = renderGuarded(onSubmit);
+
+    exit.now = () => {
+      void router.navigate('/preview');
+    };
 
     const prompt = watchForText('Unsaved Changes');
     fireEvent.change(input('Name'), { target: { value: 'Harbour Studio North' } });
