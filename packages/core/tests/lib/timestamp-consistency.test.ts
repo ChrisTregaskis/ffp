@@ -19,26 +19,20 @@
  */
 
 import { eq, sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
 import { assessmentTemplates } from '@ffp/database/schema';
 
+import { connectTestDb, type TestDb } from './test-db.fixture';
+
+import type { Pool } from 'pg';
+
 describe('Timestamp consistency', () => {
   let pool: Pool;
-  let db: ReturnType<typeof drizzle>;
+  let db: TestDb;
 
   beforeAll(() => {
-    pool = new Pool({
-      host: process.env.DB_HOST ?? 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '5432'),
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER ?? 'test_user',
-      password: process.env.DB_PASSWORD ?? 'test_password',
-      options: '-c TimeZone=Pacific/Auckland',
-    });
-    db = drizzle(pool);
+    ({ pool, db } = connectTestDb({ poolOptions: { options: '-c TimeZone=Pacific/Auckland' } }));
   });
 
   afterAll(async () => {

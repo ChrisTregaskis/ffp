@@ -1,8 +1,6 @@
 import { randomUUID } from 'crypto';
 
 import { eq, inArray, sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
 
 import type { ScoringConfig } from '@ffp/database';
@@ -21,6 +19,9 @@ import * as userAssessmentRepository from '../../src/assessments/user-assessment
 import { processScoreAssessment } from '../../src/jobs/handlers/score-assessment.handler';
 import * as jobQueueService from '../../src/jobs/job-queue.service';
 import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
+import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
+
+import type { Pool } from 'pg';
 
 type JobQueueModule = typeof jobQueueService;
 
@@ -39,7 +40,7 @@ const publicId = (): string => randomUUID().replace(/-/g, '').slice(0, 12);
 
 describe('processScoreAssessment', () => {
   let pool: Pool;
-  let db: ReturnType<typeof drizzle>;
+  let db: TestDb;
 
   let organisationId: string;
   let userId: string;
@@ -49,14 +50,7 @@ describe('processScoreAssessment', () => {
   let recommendedSlug: string;
 
   beforeAll(() => {
-    pool = new Pool({
-      host: process.env.DB_HOST ?? 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '5432'),
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER ?? 'test_user',
-      password: process.env.DB_PASSWORD ?? 'test_password',
-    });
-    db = drizzle(pool);
+    ({ pool, db } = connectTestDb());
   });
 
   beforeEach(async () => {

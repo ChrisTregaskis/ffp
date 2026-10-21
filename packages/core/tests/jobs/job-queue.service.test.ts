@@ -13,18 +13,18 @@
 import { randomUUID } from 'crypto';
 
 import { sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
 
 import * as schema from '@ffp/database/schema';
 
 import { queueJob } from '../../src/jobs/job-queue.service';
 import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
+import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import { jobPayload } from './job-payload.fixture';
 
 import type { OrganisationContext, UserActor } from '../../src/lib/context';
+import type { Pool } from 'pg';
 
 // We need to mock getDb but keep other exports
 // Using hoisted mock with partial implementation
@@ -42,20 +42,13 @@ vi.mock('@ffp/database', async () => {
 
 describe('Job Queue Service', () => {
   let pool: Pool;
-  let db: ReturnType<typeof drizzle>;
+  let db: TestDb<typeof schema>;
   let testOrganisationId: string;
   let createdOrganisationIds: string[] = [];
   let testContext: OrganisationContext;
 
   beforeAll(() => {
-    pool = new Pool({
-      host: process.env.DB_HOST ?? 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '5432'),
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER ?? 'test_user',
-      password: process.env.DB_PASSWORD ?? 'test_password',
-    });
-    db = drizzle(pool, { schema });
+    ({ pool, db } = connectTestDb({ schema }));
 
     // Configure mock to return our test db
     mockGetDb.mockReturnValue(db);

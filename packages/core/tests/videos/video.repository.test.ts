@@ -1,29 +1,23 @@
 import { randomUUID } from 'crypto';
 
 import { eq } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { videos, type VideoRecord } from '@ffp/database/schema';
 
 import * as videoRepository from '../../src/videos/video.repository';
+import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
+
+import type { Pool } from 'pg';
 
 // Videos are catalogue content (no RLS); each test removes the row it created
 describe('Video repository', () => {
   let pool: Pool;
-  let db: ReturnType<typeof drizzle>;
+  let db: TestDb;
   let video: VideoRecord;
 
   beforeAll(() => {
-    pool = new Pool({
-      host: process.env.DB_HOST ?? 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '5432'),
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER ?? 'test_user',
-      password: process.env.DB_PASSWORD ?? 'test_password',
-    });
-    db = drizzle(pool);
+    ({ pool, db } = connectTestDb());
   });
 
   beforeEach(async () => {

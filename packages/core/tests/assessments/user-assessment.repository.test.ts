@@ -13,8 +13,6 @@
 import { randomUUID } from 'crypto';
 
 import { sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
 import * as safetyTriggerRepository from '../../src/assessments/safety-trigger.repository';
@@ -22,6 +20,9 @@ import * as userAssessmentRepository from '../../src/assessments/user-assessment
 import { NotFoundError, ValidationError } from '../../src/lib/errors';
 import { warningSchema } from '../../src/schemas/warning.schema';
 import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
+import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
+
+import type { Pool } from 'pg';
 
 /**
  * Generate unique test identifiers per test run to avoid conflicts
@@ -31,7 +32,7 @@ const TEST_RUN_ID = randomUUID().substring(0, 8);
 
 describe('User Assessment Repository', () => {
   let pool: Pool;
-  let db: ReturnType<typeof drizzle>;
+  let db: TestDb;
 
   // Test data IDs
   let organisationAId: string;
@@ -42,14 +43,7 @@ describe('User Assessment Repository', () => {
   let flowId: string;
 
   beforeAll(() => {
-    pool = new Pool({
-      host: process.env.DB_HOST ?? 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '5432'),
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER ?? 'test_user',
-      password: process.env.DB_PASSWORD ?? 'test_password',
-    });
-    db = drizzle(pool);
+    ({ pool, db } = connectTestDb());
   });
 
   beforeEach(async () => {
@@ -594,11 +588,10 @@ describe('User Assessment Repository', () => {
     });
 
     describe('in a transaction scoped to another organisation', () => {
-      // The InTx bodies filter on the assessment id alone, so only RLS stops these writes.
-      // Typed as the repository's own client, so its transaction can be passed in as `tx`
+      // The InTx bodies filter on the assessment id alone, so only RLS stops these writes
       const asOrganisationB = <T>(
         callback: Parameters<typeof asOrganisation<Record<string, never>, T>>[2]
-      ): Promise<T> => asOrganisation(drizzle({ client: pool }), organisationBId, callback);
+      ): Promise<T> => asOrganisation(db, organisationBId, callback);
 
       it('reports organisation A’s assessment as not found to a progress update, and leaves it unchanged', async () => {
         const assessmentId = await startInProgress(userA1Id);

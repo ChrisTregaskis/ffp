@@ -60,31 +60,18 @@ describe('Modal scoring', () => {
     });
   });
 
-  describe('where a summed tally would collide', () => {
-    it('A,A,C is mostly A (sums to 5, as A,B,B does)', () => {
-      expect(scorePattern('A,A,C').rawScore).toBe(1);
-      expect(scorePattern('A,B,B').rawScore).toBe(2);
-    });
-
+  // The ten patterns above, in other answer orders
+  describe('whatever order the answers arrive in', () => {
     it('C,C,A is mostly C (sums to 7, as B,B,C does)', () => {
       expect(scorePattern('C,C,A').rawScore).toBe(3);
     });
 
-    it('B,B,C is mostly B (sums to 7, as C,C,A does)', () => {
-      expect(scorePattern('B,B,C').rawScore).toBe(2);
-    });
-
-    it('A,C,C is mostly C, whatever order the answers arrive in', () => {
-      expect(scorePattern('A,C,C').rawScore).toBe(3);
+    it('C,A,C is mostly C', () => {
       expect(scorePattern('C,A,C').rawScore).toBe(3);
     });
   });
 
   describe('no single most frequent score resolves to the middle of the scale', () => {
-    it('one of each resolves to 2 on a 1-3 scale', () => {
-      expect(scorePattern('A,B,C').rawScore).toBe(2);
-    });
-
     it('a two-way tie between the extremes resolves to the middle', () => {
       expect(scorePattern('A,C,').rawScore).toBe(2);
     });
