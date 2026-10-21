@@ -202,7 +202,6 @@ export const createLogger = (moduleName: string, minLogLevel?: LogLevel): Databa
         return;
       }
 
-      // eslint-disable-next-line no-console
       console.debug(formatLog(LogLevel.DEBUG, moduleName, message, context));
     },
 
@@ -211,7 +210,6 @@ export const createLogger = (moduleName: string, minLogLevel?: LogLevel): Databa
         return;
       }
 
-      // eslint-disable-next-line no-console
       console.info(formatLog(LogLevel.INFO, moduleName, message, context));
     },
 
@@ -220,7 +218,6 @@ export const createLogger = (moduleName: string, minLogLevel?: LogLevel): Databa
         return;
       }
 
-      // eslint-disable-next-line no-console
       console.warn(formatLog(LogLevel.WARN, moduleName, message, context));
     },
 
@@ -229,7 +226,6 @@ export const createLogger = (moduleName: string, minLogLevel?: LogLevel): Databa
         return;
       }
 
-      // eslint-disable-next-line no-console
       console.error(formatLog(LogLevel.ERROR, moduleName, message, context));
     },
   };

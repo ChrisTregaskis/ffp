@@ -6,6 +6,7 @@ import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.
 import { createLogger } from '../src/lib/logger.js';
 import { templatePhases, templateSessions, sessionExercises } from '../src/schema/index.js';
 
+import { requireSeedId } from './requireSeedId.js';
 import { PROGRAMME_TEMPLATE_IDS } from './seedProgrammeTemplates.js';
 import { VIDEO_IDS } from './seedVideos.js';
 
@@ -828,11 +829,11 @@ const seedPhases = async (
 
   for (const phase of DEFAULT_TEMPLATE_PHASES) {
     const existing = await db.query.templatePhases.findFirst({
-      where: eq(templatePhases.id, phase.id!),
+      where: eq(templatePhases.id, requireSeedId(phase, `template phase "${String(phase.name)}"`)),
     });
 
     if (existing) {
-      logger.warn(`Template phase already exists: "${phase.name}"`);
+      logger.warn(`Template phase already exists: "${String(phase.name)}"`);
       continue;
     }
 
@@ -873,11 +874,14 @@ const seedSessions = async (
 
   for (const session of DEFAULT_TEMPLATE_SESSIONS) {
     const existing = await db.query.templateSessions.findFirst({
-      where: eq(templateSessions.id, session.id!),
+      where: eq(
+        templateSessions.id,
+        requireSeedId(session, `template session "${String(session.name)}"`)
+      ),
     });
 
     if (existing) {
-      logger.warn(`Template session already exists: "${session.name}"`);
+      logger.warn(`Template session already exists: "${String(session.name)}"`);
       continue;
     }
 
@@ -918,12 +922,17 @@ const seedExercises = async (
   let createdCount = 0;
 
   for (const exercise of DEFAULT_SESSION_EXERCISES) {
+    const exerciseId = requireSeedId(
+      exercise,
+      `exercise ${String(exercise.orderIndex)} of template session ${exercise.templateSessionId}`
+    );
+
     const existing = await db.query.sessionExercises.findFirst({
-      where: eq(sessionExercises.id, exercise.id!),
+      where: eq(sessionExercises.id, exerciseId),
     });
 
     if (existing) {
-      logger.warn(`Session exercise already exists: id=${exercise.id}`);
+      logger.warn(`Session exercise already exists: id=${exerciseId}`);
       continue;
     }
 

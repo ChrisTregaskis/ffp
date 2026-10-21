@@ -5,6 +5,8 @@ import { type Pool } from 'pg';
 import { createLogger } from '../src/lib/logger.js';
 import { videos } from '../src/schema/index.js';
 
+import { requireSeedId } from './requireSeedId.js';
+
 import type * as schema from '../src/schema/index.js';
 import type { NewVideo } from '../src/schema/videos.js';
 
@@ -250,7 +252,7 @@ export const seedVideos = async (
   for (const video of DEFAULT_VIDEOS) {
     // Check if video already exists (idempotency check by ID)
     const existingVideo = await db.query.videos.findFirst({
-      where: eq(videos.id, video.id!),
+      where: eq(videos.id, requireSeedId(video, `video "${video.title}"`)),
     });
 
     if (existingVideo) {

@@ -34,7 +34,7 @@ let db: ReturnType<typeof drizzle> | null = null;
  * @returns Drizzle database instance with schema
  * @throws {Error} If required environment variables are missing or invalid
  */
-export const getDb = () => {
+export const getDb = (): ReturnType<typeof drizzle> => {
   if (!db) {
     // Validate required environment variables
     const requiredEnvVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
@@ -45,11 +45,12 @@ export const getDb = () => {
     }
 
     // Validate DB_PORT is a valid number
-    const port = parseInt(process.env.DB_PORT || '5432', 10);
+    // Not ??, so an empty value also falls back.
+    const port = parseInt(process.env.DB_PORT ? process.env.DB_PORT : '5432', 10);
 
     if (isNaN(port) || port < 1 || port > 65535) {
       throw new Error(
-        `Invalid DB_PORT: ${process.env.DB_PORT}. Must be a number between 1 and 65535.`
+        `Invalid DB_PORT: ${String(process.env.DB_PORT)}. Must be a number between 1 and 65535.`
       );
     }
 
@@ -147,7 +148,7 @@ export const withDb = async <T>(
  * });
  * ```
  */
-export const closeDb = async () => {
+export const closeDb = async (): Promise<void> => {
   if (pool) {
     logger.info('Closing database connection pool');
     await pool.end();

@@ -44,7 +44,9 @@ const logger = createLogger('apply-rls');
  * @param db - Drizzle database instance
  * @returns Promise<void>
  */
-export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
+export const applyRLS = async <TSchema extends Record<string, unknown>>(
+  db: NodePgDatabase<TSchema>
+): Promise<void> => {
   logger.info('Checking RLS status...');
 
   // Check if RLS is already applied to all tables
@@ -81,7 +83,8 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
 
     // Force RLS in development/test environments (for testing with superuser)
     // In production, app_user will have RLS enforced naturally (non-superuser)
-    const environment = process.env.ENVIRONMENT || 'development';
+    // Not ??, so an empty value also falls back.
+    const environment = process.env.ENVIRONMENT ? process.env.ENVIRONMENT : 'development';
     const isProduction = environment === 'production' || environment === 'prod';
 
     if (!isProduction) {

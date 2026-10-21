@@ -101,7 +101,8 @@ const validateEnvironment = (): void => {
 const createDatabaseConnection = (): NodePgDatabase<typeof schema> & { $client: Pool } => {
   const pool = new Pool({
     host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '5432'),
+    // Not ??, so an empty value also falls back.
+    port: parseInt(process.env.DB_PORT ? process.env.DB_PORT : '5432'),
     database: process.env.DB_NAME,
     user: process.env.BOOTSTRAP_DB_USER,
     password: process.env.BOOTSTRAP_DB_PASSWORD,

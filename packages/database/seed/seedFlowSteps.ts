@@ -5,6 +5,7 @@ import { type Pool } from 'pg';
 import { createLogger } from '../src/lib/logger.js';
 import { flowSteps } from '../src/schema/index.js';
 
+import { requireSeedId } from './requireSeedId.js';
 import { FLOW_IDS } from './seedAssessmentFlows.js';
 import { TEMPLATE_IDS } from './seedAssessmentTemplates.js';
 
@@ -258,7 +259,7 @@ export const seedFlowSteps = async (
   for (const step of DEFAULT_FLOW_STEPS) {
     // Check if step already exists (idempotency check by ID)
     const existingStep = await db.query.flowSteps.findFirst({
-      where: eq(flowSteps.id, step.id!),
+      where: eq(flowSteps.id, requireSeedId(step, `flow step "${step.config.title}"`)),
     });
 
     if (existingStep) {

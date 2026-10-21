@@ -69,8 +69,8 @@ const getApplicationUsers = (): string[] => {
  * @param migrationUser - The user running migrations (e.g., root_user)
  * @returns Promise<void>
  */
-export const applyPermissions = async (
-  db: NodePgDatabase<any>,
+export const applyPermissions = async <TSchema extends Record<string, unknown>>(
+  db: NodePgDatabase<TSchema>,
   migrationUser: string
 ): Promise<void> => {
   const applicationUsers = getApplicationUsers();

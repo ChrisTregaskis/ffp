@@ -60,16 +60,19 @@ const getRequiredEnv = (key: string): string => {
 /**
  * Main migration runner
  */
-const runMigrations = async () => {
+const runMigrations = async (): Promise<void> => {
   logger.info('Starting database migrations...');
 
   // Determine which user is running migrations
-  const migrationUser = process.env.DB_MIGRATE_USER || getRequiredEnv('DB_USER');
+  // Not ??, so an empty value also falls back.
+  const migrationUser = process.env.DB_MIGRATE_USER
+    ? process.env.DB_MIGRATE_USER
+    : getRequiredEnv('DB_USER');
 
   // Create connection pool
   const pool = new Pool({
     host: getRequiredEnv('DB_HOST'),
-    port: parseInt(process.env.DB_PORT || '5432'),
+    port: parseInt(process.env.DB_PORT ? process.env.DB_PORT : '5432'),
     database: getRequiredEnv('DB_NAME'),
     user: migrationUser,
     password: getRequiredEnv('DB_PASSWORD'),
@@ -102,7 +105,7 @@ const runMigrations = async () => {
 };
 
 // Run migrations
-runMigrations().catch((error) => {
+runMigrations().catch((error: unknown) => {
   logger.error('Fatal error during migration', {
     error: error instanceof Error ? error.message : error,
   });

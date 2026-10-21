@@ -4,7 +4,7 @@ import {
   type AdminCreateUserCommandOutput,
 } from '@aws-sdk/client-cognito-identity-provider';
 
-import { COGNITO_CUSTOM_ATTRIBUTES } from '../../core/src/lib/constants.js';
+import { COGNITO_CUSTOM_ATTRIBUTES } from '../src/constants/cognito.constants.js';
 import { createLogger } from '../src/lib/logger.js';
 
 import type { SuperAdminCognitoSeed, PlatformOrganisationSeed } from './types.js';
@@ -39,8 +39,6 @@ const validateEnvironment = (): void => {
 /**
  * Seeds the super admin user in AWS Cognito with exact data from configuration.
  * This is NOT idempotent - it will fail if the user already exists.
- *
- * Note: This imports from @ffp/core which is a dev-time dependency for seeding only.
  *
  * @param cognitoData - Super admin Cognito seed data from config
  * @param organisationData - Platform organisation data (schema-derived, for custom attributes)

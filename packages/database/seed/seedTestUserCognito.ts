@@ -4,7 +4,7 @@ import {
   type AdminCreateUserCommandOutput,
 } from '@aws-sdk/client-cognito-identity-provider';
 
-import { COGNITO_CUSTOM_ATTRIBUTES } from '../../core/src/lib/constants.js';
+import { COGNITO_CUSTOM_ATTRIBUTES } from '../src/constants/cognito.constants.js';
 import { createLogger } from '../src/lib/logger.js';
 
 import type { TestUserCognitoSeed, TestUserSeed, TestLocationOrganisationSeed } from './types.js';

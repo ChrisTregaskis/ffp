@@ -65,8 +65,8 @@ const escapeLiteral = (value: string): string => {
  *
  * @throws {Error} If organisationId is not provided or invalid
  */
-export const setRLSContext = async (
-  db: NodePgDatabase<any>,
+export const setRLSContext = async <TSchema extends Record<string, unknown>>(
+  db: NodePgDatabase<TSchema>,
   organisationId: string,
   userId?: string
 ): Promise<void> => {
@@ -128,11 +128,11 @@ export const setRLSContext = async (
  *
  * @throws {Error} If organisationId is not provided or callback fails
  */
-export const withRLS = async <T>(
-  db: NodePgDatabase<any>,
+export const withRLS = async <T, TSchema extends Record<string, unknown>>(
+  db: NodePgDatabase<TSchema>,
   organisationId: string,
   userId: string | undefined,
-  callback: (tx: NodePgDatabase<any>) => Promise<T>
+  callback: (tx: NodePgDatabase<TSchema>) => Promise<T>
 ): Promise<T> => {
   if (!organisationId) {
     throw new Error('organisationId is required for RLS context');
@@ -174,7 +174,9 @@ export const withRLS = async <T>(
  * });
  * ```
  */
-export const setAdminContext = async (tx: NodePgDatabase<any>): Promise<void> => {
+export const setAdminContext = async <TSchema extends Record<string, unknown>>(
+  tx: NodePgDatabase<TSchema>
+): Promise<void> => {
   await tx.execute(sql.raw(`SET LOCAL app.is_admin = 'true'`));
 };
 
@@ -196,7 +198,7 @@ export const setAdminContext = async (tx: NodePgDatabase<any>): Promise<void> =>
  * });
  * ```
  */
-export const withAdminContext = async <TDb extends NodePgDatabase<any>, T>(
+export const withAdminContext = async <TDb extends NodePgDatabase<Record<string, unknown>>, T>(
   db: TDb,
   callback: (tx: TDb) => Promise<T>
 ): Promise<T> => {

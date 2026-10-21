@@ -9,6 +9,7 @@ import {
 import { createLogger } from '../src/lib/logger.js';
 import { questions } from '../src/schema/index.js';
 
+import { requireSeedId } from './requireSeedId.js';
 import { VIDEO_IDS } from './seedVideos.js';
 
 import type * as schema from '../src/schema/index.js';
@@ -352,7 +353,7 @@ export const seedQuestions = async (
   for (const question of DEFAULT_QUESTIONS) {
     // Check if question already exists (idempotency check by ID)
     const existingQuestion = await db.query.questions.findFirst({
-      where: eq(questions.id, question.id!),
+      where: eq(questions.id, requireSeedId(question, `question "${question.slug}"`)),
     });
 
     if (existingQuestion) {
