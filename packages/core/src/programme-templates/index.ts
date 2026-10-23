@@ -7,7 +7,6 @@ import * as templatePhaseRepository from './template-phase.repository';
 import * as templatePhaseService from './template-phase.service';
 import * as templateSessionRepository from './template-session.repository';
 import * as templateSessionService from './template-session.service';
-import * as templateSlotRepository from './template-slot.repository';
 import * as templateSlotService from './template-slot.service';
 
 export {
@@ -19,6 +18,5 @@ export {
   templatePhaseService,
   templateSessionRepository,
   templateSessionService,
-  templateSlotRepository,
   templateSlotService,
 };

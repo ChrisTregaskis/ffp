@@ -64,11 +64,3 @@ export const adminSlotsApi = {
     return parseApiResponse(sessionSlotsResponseSchema, response, { method: 'PUT', path });
   },
 };
-
-export type {
-  CreateSlotRequest,
-  ReorderSlotsRequest,
-  SessionSlotsResponse,
-  SlotResponse,
-  UpdateSlotRequest,
-};

@@ -9,7 +9,6 @@ import {
   index,
   primaryKey,
 } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 import { tagCategories, tags } from './tags';
 import { templateSessions } from './template-sessions';
@@ -67,21 +66,4 @@ export const templateSlotTags = pgTable(
   ]
 );
 
-export const templateSessionSlotsRelations = relations(templateSessionSlots, ({ one, many }) => ({
-  category: one(tagCategories, {
-    fields: [templateSessionSlots.tagCategoryId],
-    references: [tagCategories.id],
-  }),
-  slotTags: many(templateSlotTags),
-}));
-
-export const templateSlotTagsRelations = relations(templateSlotTags, ({ one }) => ({
-  slot: one(templateSessionSlots, {
-    fields: [templateSlotTags.slotId],
-    references: [templateSessionSlots.id],
-  }),
-  tag: one(tags, { fields: [templateSlotTags.tagId], references: [tags.id] }),
-}));
-
 export type TemplateSessionSlotRecord = typeof templateSessionSlots.$inferSelect;
-export type NewTemplateSessionSlot = typeof templateSessionSlots.$inferInsert;

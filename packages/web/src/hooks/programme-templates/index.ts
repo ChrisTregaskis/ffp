@@ -43,12 +43,6 @@ export {
   useReorderSlotsMutation,
   useUpdateSlotMutation,
 } from './useSlotMutations';
-export type {
-  CreateSlotVariables,
-  DeleteSlotVariables,
-  ReorderSlotsVariables,
-  UpdateSlotVariables,
-} from './useSlotMutations';
 export { useTemplateDetailQuery } from './useTemplateDetailQuery';
 export {
   useCreateTemplateMutation,
