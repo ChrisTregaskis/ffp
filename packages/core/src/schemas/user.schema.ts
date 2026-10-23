@@ -24,21 +24,6 @@ export const userSchema = z.object({
   updatedAt: z.coerce.date(),
 });
 
-export const createUserSchema = userSchema
-  .pick({
-    email: true,
-    cognitoSub: true,
-    firstName: true,
-    lastName: true,
-    role: true,
-  })
-  .extend({
-    locationId: userSchema.shape.locationId.optional(),
-    profileImageUrl: userSchema.shape.profileImageUrl.optional(),
-    phone: userSchema.shape.phone.optional(),
-    dateOfBirth: userSchema.shape.dateOfBirth.optional(),
-  });
-
 /**
  * Schema for JWT claims from Cognito ID token
  * Used to validate and type JWT payload on authentication
@@ -54,15 +39,6 @@ export const jwtUserClaimsSchema = z.object({
 });
 
 export const invitableRoleSchema = z.enum(INVITABLE_ROLES);
-
-/**
- * Determines if a programme user can be invited based on locationId presence.
- * Individual users (locationId = null) cannot be invited.
- * Location users (locationId present) can be invited.
- */
-export const canInviteProgrammeUser = (locationId: string | null): boolean => {
-  return locationId !== null;
-};
 
 /** The schema validates that organisationId and locationId are provided together or both omitted. */
 export const inviteUserSchema = z
@@ -166,7 +142,6 @@ export const userProfileResponseSchema = z.object({
 
 export type UserRole = z.infer<typeof userRoleSchema>;
 export type User = z.infer<typeof userSchema>;
-export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type JwtUserClaims = z.infer<typeof jwtUserClaimsSchema>;
 export type InviteUserInput = z.infer<typeof inviteUserSchema>;
 export type AdminCreateUserInput = z.infer<typeof adminCreateUserInputSchema>;

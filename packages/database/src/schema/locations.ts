@@ -1,10 +1,11 @@
-import { pgTable, uuid, varchar, timestamp, jsonb, pgEnum, index } from 'drizzle-orm/pg-core';
-
-import { publicIdColumn, publicIdIndex } from '../lib/public-id';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { relations } from 'drizzle-orm';
-import { organisations } from './organisations';
+import { pgTable, uuid, varchar, timestamp, jsonb, pgEnum, index } from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+
 import { LOCATION_STATUSES } from '../constants/location.constants';
+import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
+import { organisations } from './organisations';
 
 export const locationStatusEnum = pgEnum('location_status', [...LOCATION_STATUSES]);
 

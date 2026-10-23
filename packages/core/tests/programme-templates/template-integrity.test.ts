@@ -12,14 +12,8 @@ import {
   createSession,
   deleteSession,
 } from '../../src/programme-templates/template-session.service';
-import {
-  createTestDb,
-  createTestPool,
-  inRolledBackTransaction,
-  shortId,
-  type TestDb,
-  type TestTx,
-} from '../tags/tag-fixture';
+import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
+import { inRolledBackTransaction, shortId, type TestTx } from '../tags/tag-fixture';
 
 import { insertTemplateWithSession, readTemplate, type TemplateFixture } from './template-fixture';
 
@@ -56,8 +50,7 @@ describe('Programme template integrity', () => {
     tx.insert(assessmentFlows).values({ name: `Guard test ${shortId()}`, scoringConfig, isActive });
 
   beforeAll(() => {
-    pool = createTestPool();
-    db = createTestDb(pool);
+    ({ pool, db } = connectTestDb());
   });
 
   afterAll(async () => {

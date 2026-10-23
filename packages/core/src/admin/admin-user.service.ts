@@ -2,6 +2,7 @@ import { getDb, withAdminContext } from '@ffp/database';
 
 import { CognitoService } from '../lib/cognito';
 import { ConflictError, InternalServerError, NotFoundError, ValidationError } from '../lib/errors';
+import { describeErrorForLog } from '../lib/log-safe-error';
 import { createLogger } from '../lib/logger';
 import { buildPaginationMeta } from '../schemas/pagination.schema';
 import {
@@ -206,7 +207,7 @@ export async function createUserService(
     logger.error('DB insert failed, rolling back Cognito user', {
       action: 'cognito_user_rollback',
       cognitoSub,
-      error: dbError instanceof Error ? dbError.message : 'Unknown error',
+      ...describeErrorForLog(dbError),
     });
 
     try {

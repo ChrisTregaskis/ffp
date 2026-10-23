@@ -21,7 +21,7 @@ export default defineConfig({
     env: {
       VITE_API_URL: 'http://localhost/test-api',
     },
-    include: ['src/**/*.{test,spec}.{ts,tsx}', 'tests/**/*.{test,spec}.{ts,tsx}'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['**/node_modules/**', '**/dist/**', '**/*.integration.test.ts'],
     coverage: {
       provider: 'v8',
@@ -29,7 +29,6 @@ export default defineConfig({
       include: ['src/**/*.{ts,tsx}'],
       exclude: [
         'node_modules/',
-        'tests/',
         '**/*.d.ts',
         '**/*.config.*',
         '**/dist/**',

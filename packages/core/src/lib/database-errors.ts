@@ -72,15 +72,14 @@ export function translateDatabaseError(error: unknown): unknown {
   }
 
   // The constraint name is an internal schema detail and this path is global, so
-  // it goes to the log (see `describeDriverError`) and not to the caller.
+  // it goes to the log (see `describeErrorForLog`) and not to the caller.
   return new ConflictError('This change conflicts with a record that already exists');
 }
 
 /**
- * Structured, loggable summary of a driver error. The driver's own `message`
- * carries the failed SQL and its bound parameters — member emails, free-text
- * answers — so it must never be logged. Returns null for anything else, and the
- * caller should still avoid `message` in that case.
+ * The SQLSTATE, constraint and table of a driver error, or null for anything
+ * else. A log site describes a caught error with `describeErrorForLog`, which
+ * builds on this; never log a database error's `message` or `stack` directly.
  */
 export function describeDriverError(
   error: unknown

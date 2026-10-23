@@ -130,13 +130,15 @@ export class InternalServerError extends BaseError {
  * - Database transaction errors during job processing
  * - Job execution failures
  *
- * Wraps the underlying cause for debugging.
+ * Wraps the underlying cause for debugging. Its message is not copied into
+ * `details`, which a response returns: a database cause's message is the failed
+ * SQL and its bound parameters.
  */
 export class JobProcessorError extends BaseError {
   constructor(
     message: string,
     public readonly cause?: Error
   ) {
-    super(message, 'JOB_PROCESSOR_ERROR', 500, cause ? { cause: cause.message } : undefined);
+    super(message, 'JOB_PROCESSOR_ERROR', 500);
   }
 }

@@ -13,15 +13,13 @@ import { NotFoundError, ValidationError } from '../../src/lib/errors';
 import { deleteSession } from '../../src/programme-templates/template-session.service';
 import * as slotService from '../../src/programme-templates/template-slot.service';
 import * as tagRepository from '../../src/tags/tag.repository';
+import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 import {
   assignTags,
-  createTestDb,
-  createTestPool,
   findCategoryId,
   inRolledBackTransaction,
   insertTestTag,
   insertTestVideo,
-  type TestDb,
   type TestTx,
 } from '../tags/tag-fixture';
 
@@ -70,8 +68,7 @@ describe('Template slot service', () => {
     });
 
   beforeAll(() => {
-    pool = createTestPool();
-    db = createTestDb(pool);
+    ({ pool, db } = connectTestDb());
   });
 
   afterAll(async () => {

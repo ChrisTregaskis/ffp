@@ -116,7 +116,7 @@ export async function findVideoByIdOrPublicId(
  * For admin use — no status restriction applied by default.
  */
 export async function findAllVideos(
-  db: DbClient,
+  db: DbQueryClient,
   paginationInput: PaginationInput,
   filters: AdminVideoFilterInput
 ): Promise<VideoRecord[]> {
@@ -132,7 +132,7 @@ export async function findAllVideos(
 }
 
 export async function countAllVideos(
-  db: DbClient,
+  db: DbQueryClient,
   filters: AdminVideoFilterInput
 ): Promise<number> {
   const conditions = buildAdminFilterConditions(filters);

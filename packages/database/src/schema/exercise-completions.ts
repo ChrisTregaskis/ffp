@@ -9,6 +9,7 @@ import {
   index,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+
 import { organisations } from './organisations';
 import { userSessionExercises } from './user-session-exercises';
 import { userSessions } from './user-sessions';

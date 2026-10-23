@@ -194,6 +194,39 @@ describe('Condition Evaluator', () => {
       expect(result).toBe(true);
     });
 
+    it('should not match when score equals threshold (gt)', () => {
+      const conditions: BranchCondition[] = [
+        { type: 'dimension_score', dimension: 'mobility', operator: 'gt', value: 5 },
+      ];
+      const context = createContext({}, { mobility: 5 });
+
+      const result = evaluateConditions(conditions, context);
+
+      expect(result).toBe(false);
+    });
+
+    it('should not match when score is just below threshold (gte)', () => {
+      const conditions: BranchCondition[] = [
+        { type: 'dimension_score', dimension: 'balance', operator: 'gte', value: 10 },
+      ];
+      const context = createContext({}, { balance: 9 });
+
+      const result = evaluateConditions(conditions, context);
+
+      expect(result).toBe(false);
+    });
+
+    it('should not match when score is just above threshold (lte)', () => {
+      const conditions: BranchCondition[] = [
+        { type: 'dimension_score', dimension: 'strength', operator: 'lte', value: 20 },
+      ];
+      const context = createContext({}, { strength: 21 });
+
+      const result = evaluateConditions(conditions, context);
+
+      expect(result).toBe(false);
+    });
+
     it('should match when score equals threshold (gte)', () => {
       const conditions: BranchCondition[] = [
         { type: 'dimension_score', dimension: 'balance', operator: 'gte', value: 10 },

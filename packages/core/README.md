@@ -32,9 +32,6 @@ import { UserSchema, AssessmentSchema } from '@ffp/core';
 // Import services
 import { UserService, AssessmentService } from '@ffp/core';
 
-// Import utilities
-import { validateEmail, formatDate } from '@ffp/core/utils';
-
 // Import custom errors
 import { AppError, ValidationError } from '@ffp/core/errors';
 ```
@@ -85,9 +82,6 @@ export * from './schemas';
 
 // Services
 export * from './services';
-
-// Utilities
-export * from './utils';
 
 // Errors
 export * from './errors';

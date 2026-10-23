@@ -1,7 +1,8 @@
-import { Pool } from 'pg';
 import { and, asc, eq, inArray } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../src/schema/index.js';
+import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { type Pool } from 'pg';
+
+import { createLogger } from '../src/lib/logger.js';
 import {
   sessionExercises,
   tagCategories,
@@ -10,8 +11,10 @@ import {
   templateSlotTags,
   videoTags,
 } from '../src/schema/index.js';
-import { createLogger } from '../src/lib/logger.js';
+
 import { TEMPLATE_SESSION_IDS } from './seedTemplateHierarchy.js';
+
+import type * as schema from '../src/schema/index.js';
 
 const logger = createLogger('seed-template-slots');
 
@@ -30,10 +33,11 @@ export const seedTemplateSlots = async (
 ): Promise<number> => {
   logger.info('Seeding template session slots...');
 
-  const [movement] = await db
+  const movementRows = await db
     .select({ id: tagCategories.id })
     .from(tagCategories)
     .where(eq(tagCategories.slug, 'movement'));
+  const movement = movementRows.at(0);
 
   if (!movement) {
     throw new Error('The movement tag category is missing; run the migrations first');
@@ -52,6 +56,7 @@ export const seedTemplateSlots = async (
 
       if (existing.length > 0) {
         logger.warn(`Template session already has slots: id=${sessionId}`);
+
         return 0;
       }
 

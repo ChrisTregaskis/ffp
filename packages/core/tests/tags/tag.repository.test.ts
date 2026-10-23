@@ -2,16 +2,14 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { findDriverError } from '../../src/lib/database-errors';
 import * as tagRepository from '../../src/tags/tag.repository';
+import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import {
   assignTags,
-  createTestDb,
-  createTestPool,
   findCategoryId,
   inRolledBackTransaction,
   insertTestTag,
   insertTestVideo,
-  type TestDb,
 } from './tag-fixture';
 
 import type { Pool } from 'pg';
@@ -21,8 +19,7 @@ describe('Tag repository', () => {
   let db: TestDb;
 
   beforeAll(() => {
-    pool = createTestPool();
-    db = createTestDb(pool);
+    ({ pool, db } = connectTestDb());
   });
 
   afterAll(async () => {

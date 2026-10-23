@@ -36,6 +36,18 @@ const EDIT_ONLY_PROPS: AdminEditPageShellProps<ThingFormValues, Thing> = {
   children: null,
 };
 
+// Compile-time only: the create props come as a set or not at all, so `pnpm typecheck`
+// fails here if the union loosens and a page can half-opt into create mode.
+const asShellProps = (
+  props: AdminEditPageShellProps<ThingFormValues, Thing>
+): AdminEditPageShellProps<ThingFormValues, Thing> => props;
+// @ts-expect-error onCreate without isEditMode and emptyValues is neither mode
+asShellProps({ ...EDIT_ONLY_PROPS, onCreate: noSave });
+// @ts-expect-error isEditMode and onCreate without emptyValues is neither mode
+asShellProps({ ...EDIT_ONLY_PROPS, isEditMode: true, onCreate: noSave });
+// @ts-expect-error isEditMode and emptyValues without onCreate is neither mode
+asShellProps({ ...EDIT_ONLY_PROPS, isEditMode: false, emptyValues: { name: '' } });
+
 const ThingFields: React.FC = () => {
   const { register, errors } = useComposableFormContext<ThingFormValues>();
 
@@ -265,7 +277,8 @@ describe('AdminEditPageShell confirm before save', () => {
   });
 
   it('marks the form saved once the confirmed save resolves', async () => {
-    const router = renderConfirming();
+    const onUpdate = vi.fn(noSave);
+    const router = renderConfirming(onUpdate);
 
     editAndSubmit('Harbour Studio (closed)');
     fireEvent.click(await screen.findByRole('button', { name: 'Confirm' }));
@@ -273,13 +286,14 @@ describe('AdminEditPageShell confirm before save', () => {
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: 'Confirm' })).toBeNull();
     });
+    expect(onUpdate).toHaveBeenCalledWith({ name: 'Harbour Studio (closed)' });
 
     leaveViaLink();
 
+    // A guarded dirty form would hold the navigation on /edit behind the prompt
     await waitFor(() => {
       expect(router.state.location.pathname).toBe('/things');
     });
-    expect(screen.queryByText('Unsaved Changes')).toBeNull();
   });
 
   it('saves nothing and keeps the form dirty and guarded when the confirm is cancelled', async () => {

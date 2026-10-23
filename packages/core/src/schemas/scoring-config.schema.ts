@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import type { ScoringConfig as StoredScoringConfig } from '@ffp/database';
 import { SCORING_MODES } from '@ffp/database/constants';
 
 import { scoreDimensionSchema } from './assessment-question.schema';
@@ -78,22 +77,6 @@ export const programmeMappingSchema = z.object({
   priority: z.number().int().optional(),
 });
 
-/**
- * Defines how assessment responses are scored across dimensions and
- * how scores map to programme recommendations.
- *
- * `@ffp/database` holds the stored `ScoringConfig` interface the scoring code
- * reads, and cannot import this schema. `satisfies` keeps a parsed config
- * assignable to that interface; it cannot see a field the interface gains, so
- * add new fields to both.
- */
-export const scoringConfigSchema = z.object({
-  /** Array of dimension configurations for multi-dimensional scoring */
-  dimensions: z.array(dimensionConfigSchema),
-  /** Array of programme mappings for automatic recommendations */
-  programmeMappings: z.array(programmeMappingSchema),
-}) satisfies z.ZodType<StoredScoringConfig>;
-
 export type RiskLevel = z.infer<typeof riskLevelSchema>;
 export type ScoringMode = z.infer<typeof scoringModeSchema>;
 export type RiskThresholds = z.infer<typeof riskThresholdsSchema>;
@@ -102,4 +85,3 @@ export type ComparisonOperator = z.infer<typeof comparisonOperatorSchema>;
 export type ProgrammeMappingCondition = z.infer<typeof programmeMappingConditionSchema>;
 export type LogicalOperator = z.infer<typeof logicalOperatorSchema>;
 export type ProgrammeMapping = z.infer<typeof programmeMappingSchema>;
-export type ScoringConfig = z.infer<typeof scoringConfigSchema>;
