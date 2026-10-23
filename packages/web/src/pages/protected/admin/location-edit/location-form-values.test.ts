@@ -60,7 +60,7 @@ describe('toUpdateLocationInput', () => {
     });
   });
 
-  it('sends an undefined address when every line is cleared', () => {
+  it('sends a null address when every line is cleared, so the stored address is removed', () => {
     const location = stored();
     const values = {
       ...toLocationFormValues(location),
@@ -68,10 +68,29 @@ describe('toUpdateLocationInput', () => {
       city: '',
       postcode: '',
     };
-    const payload = toUpdateLocationInput(values, location);
 
-    expect('address' in payload).toBe(true);
-    expect(payload.address).toBeUndefined();
+    // An undefined address would be dropped from the request body and leave the stored one
+    expect(toUpdateLocationInput(values, location)).toStrictEqual({ address: null });
+  });
+
+  it('keeps the remaining line when all but one are cleared', () => {
+    const location = stored();
+    const values = {
+      ...toLocationFormValues(location),
+      addressLine1: '',
+      postcode: '',
+    };
+
+    expect(toUpdateLocationInput(values, location)).toEqual({
+      address: {
+        line1: undefined,
+        line2: undefined,
+        city: 'Bristol',
+        county: undefined,
+        postcode: undefined,
+        country: undefined,
+      },
+    });
   });
 });
 

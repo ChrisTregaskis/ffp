@@ -6,13 +6,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { MOVEMENT_TYPES } from '@ffp/database/constants';
 
+import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
+
 import {
-  createTestDb,
-  createTestPool,
   inRolledBackTransaction,
   insertTestVideo,
   readVideoTagKeys,
-  type TestDb,
   type TestTx,
 } from './tag-fixture';
 
@@ -86,8 +85,7 @@ describe('Typed tag backfill', () => {
   let db: TestDb;
 
   beforeAll(() => {
-    pool = createTestPool();
-    db = createTestDb(pool);
+    ({ pool, db } = connectTestDb());
   });
 
   afterAll(async () => {

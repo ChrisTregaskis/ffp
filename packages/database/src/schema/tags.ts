@@ -1,3 +1,4 @@
+import { relations } from 'drizzle-orm';
 import {
   pgTable,
   uuid,
@@ -8,8 +9,9 @@ import {
   uniqueIndex,
   index,
 } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
 import { videos } from './videos';
 
 /** The axes videos are tagged by. Seeded, not admin-authored; system catalogue, no RLS. */

@@ -8,6 +8,7 @@ import {
   updateAssessmentFlowSchema,
   assessmentFlowListItemSchema,
   assessmentFlowListFiltersSchema,
+  assessmentFlowWithStepsSchema,
   createFlowStepSchema,
   updateFlowStepSchema,
   reorderFlowStepsSchema,
@@ -486,5 +487,60 @@ describe('assessmentFlowListFiltersSchema', () => {
   it('rejects an isActive value outside true/false', () => {
     expect(assessmentFlowListFiltersSchema.safeParse({ isActive: '' }).success).toBe(false);
     expect(assessmentFlowListFiltersSchema.safeParse({ isActive: 'yes' }).success).toBe(false);
+  });
+});
+
+describe('assessmentFlowWithStepsSchema', () => {
+  const flow = {
+    id: '44444444-4444-4444-8444-444444440001',
+    publicId: 'c6413330f48e',
+    name: 'Standard assessment',
+    description: null,
+    isActive: true,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    steps: [],
+  };
+
+  it('accepts a step with a null templateId and a bare config', () => {
+    const result = assessmentFlowWithStepsSchema.safeParse({
+      ...flow,
+      steps: [
+        {
+          publicId: '192dfcbb7b15',
+          order: 1,
+          type: 'intro',
+          templateId: null,
+          config: { title: 'Welcome' },
+          branchingRuleCount: 0,
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  // The endpoint returns the whole row, branching columns included
+  it('ignores the stored branching columns rather than rejecting them', () => {
+    const result = assessmentFlowWithStepsSchema.safeParse({
+      ...flow,
+      steps: [
+        {
+          publicId: '383e85f6d4b3',
+          order: 4,
+          type: 'questions',
+          templateId: '11111111-1111-1111-8111-111111111105',
+          config: { title: 'Health screening', description: 'A few questions' },
+          branchingRuleCount: 6,
+          nextStepRules: [{ priority: 1 }],
+          defaultNextStepId: null,
+          isActive: true,
+          flowId: '44444444-4444-4444-8444-444444440001',
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.steps[0]).not.toHaveProperty('nextStepRules');
   });
 });

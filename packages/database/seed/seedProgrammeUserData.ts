@@ -1,7 +1,9 @@
-import { Pool } from 'pg';
 import { and, asc, eq, inArray } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../src/schema/index.js';
+import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { type Pool } from 'pg';
+
+import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.js';
+import { createLogger } from '../src/lib/logger.js';
 import {
   programmes,
   programmePhases,
@@ -10,13 +12,14 @@ import {
   userSessionExercises,
   userSessions,
 } from '../src/schema/index.js';
-import { createLogger } from '../src/lib/logger.js';
-import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.js';
+
+import { requireSeedId } from './requireSeedId.js';
 import { PROGRAMME_TEMPLATE_IDS } from './seedProgrammeTemplates.js';
 import { TEMPLATE_PHASE_IDS, TEMPLATE_SESSION_IDS } from './seedTemplateHierarchy.js';
 
-import type { NewProgramme } from '../src/schema/programmes.js';
+import type * as schema from '../src/schema/index.js';
 import type { NewProgrammePhase } from '../src/schema/programme-phases.js';
+import type { NewProgramme } from '../src/schema/programmes.js';
 import type { NewUserSession } from '../src/schema/user-sessions.js';
 
 const logger = createLogger('seed-programme-user-data');
@@ -197,7 +200,7 @@ const seedProgramme = async (
   logger.info('Seeding test user programme...');
 
   const existing = await db.query.programmes.findFirst({
-    where: eq(programmes.id, DEFAULT_PROGRAMME.id!),
+    where: eq(programmes.id, requireSeedId(DEFAULT_PROGRAMME, 'test user programme')),
   });
 
   if (existing) {
@@ -226,7 +229,10 @@ const seedProgrammePhases = async (
 
   for (const phase of DEFAULT_PROGRAMME_PHASES) {
     const existing = await db.query.programmePhases.findFirst({
-      where: eq(programmePhases.id, phase.id!),
+      where: eq(
+        programmePhases.id,
+        requireSeedId(phase, `programme phase ${String(phase.phaseNumber)}`)
+      ),
     });
 
     if (existing) {
@@ -257,7 +263,10 @@ const seedUserSessions = async (
 
   for (const session of DEFAULT_USER_SESSIONS) {
     const existing = await db.query.userSessions.findFirst({
-      where: eq(userSessions.id, session.id!),
+      where: eq(
+        userSessions.id,
+        requireSeedId(session, `user session ${String(session.sessionNumber)}`)
+      ),
     });
 
     if (existing) {
@@ -287,6 +296,7 @@ const seedMemberLayer = async (
   let sessionsCreated = 0;
 
   for (const phase of DEFAULT_PROGRAMME_PHASES) {
+    const phaseId = requireSeedId(phase, `programme phase ${String(phase.phaseNumber)}`);
     const phaseTemplateSessions = await db
       .select()
       .from(templateSessions)
@@ -296,7 +306,7 @@ const seedMemberLayer = async (
     for (const templateSession of phaseTemplateSessions) {
       const existing = await db.query.userSessions.findFirst({
         where: and(
-          eq(userSessions.programmePhaseId, phase.id!),
+          eq(userSessions.programmePhaseId, phaseId),
           eq(userSessions.templateSessionId, templateSession.id)
         ),
       });
@@ -307,7 +317,7 @@ const seedMemberLayer = async (
 
       await db.insert(userSessions).values({
         organisationId: TEST_ORGANISATION_ID,
-        programmePhaseId: phase.id!,
+        programmePhaseId: phaseId,
         templateSessionId: templateSession.id,
         sessionNumber: templateSession.sessionNumber,
         status: 'not_started',
@@ -322,7 +332,9 @@ const seedMemberLayer = async (
     .where(
       inArray(
         userSessions.programmePhaseId,
-        DEFAULT_PROGRAMME_PHASES.map((phase) => phase.id!)
+        DEFAULT_PROGRAMME_PHASES.map((phase) =>
+          requireSeedId(phase, `programme phase ${String(phase.phaseNumber)}`)
+        )
       )
     );
 

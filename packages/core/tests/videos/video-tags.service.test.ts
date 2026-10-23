@@ -11,16 +11,14 @@ import {
   listAdminVideos,
   updateVideo,
 } from '../../src/videos/video.service';
+import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 import {
   assignTags,
-  createTestDb,
-  createTestPool,
   findCategoryId,
   inRolledBackTransaction,
   insertTestTag,
   insertTestVideo,
   readVideoTagKeys,
-  type TestDb,
   type TestTx,
 } from '../tags/tag-fixture';
 
@@ -49,8 +47,7 @@ describe('Video service with typed tags', () => {
     });
 
   beforeAll(() => {
-    pool = createTestPool();
-    db = createTestDb(pool);
+    ({ pool, db } = connectTestDb());
   });
 
   beforeEach(() => {

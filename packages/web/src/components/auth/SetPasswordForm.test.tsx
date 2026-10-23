@@ -75,12 +75,14 @@ describe('SetPasswordForm', () => {
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain('Incorrect username or password.');
 
+    // Submitting already clears the page's error; count only what the dismiss does
+    onClearError.mockClear();
     fireEvent.click(screen.getByRole('button', { name: /dismiss/i }));
 
     await waitFor(() => {
       expect(screen.queryByRole('alert')).toBeNull();
     });
-    expect(onClearError).toHaveBeenCalled();
+    expect(onClearError).toHaveBeenCalledTimes(1);
   });
 
   describe('new password step', () => {
@@ -93,6 +95,13 @@ describe('SetPasswordForm', () => {
         />
       );
     };
+
+    it('offers no Go back when the temporary password step is skipped', () => {
+      renderStep();
+
+      expect(newPassword()).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Go back' })).toBeNull();
+    });
 
     it('keeps the submit disabled and sends nothing while the entries differ', async () => {
       renderStep();
@@ -107,7 +116,10 @@ describe('SetPasswordForm', () => {
       fireEvent.submit(form ?? document.body);
 
       await waitFor(() => {
-        expect(screen.getAllByRole('alert')).toHaveLength(2);
+        expect(screen.getAllByRole('alert').map((alert) => alert.textContent)).toEqual([
+          'Passwords do not match',
+          'Passwords do not match',
+        ]);
       });
       expect(confirmSignIn).not.toHaveBeenCalled();
     });
@@ -133,7 +145,6 @@ describe('SetPasswordForm', () => {
         expect(onSuccess).toHaveBeenCalledTimes(1);
       });
       expect(confirmSignIn).toHaveBeenCalledWith({ challengeResponse: STRONG });
-      expect(screen.queryByRole('button', { name: 'Go back' })).toBeNull();
     });
   });
 });

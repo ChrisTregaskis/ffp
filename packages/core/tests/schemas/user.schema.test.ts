@@ -177,6 +177,18 @@ describe('inviteUserSchema', () => {
       }
     });
 
+    it('refuses system_admin, which is never invitable', () => {
+      const result = inviteUserSchema.safeParse({
+        email: 'admin@business.com',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        role: 'system_admin',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.issues[0].path).toEqual(['role']);
+    });
+
     it('rejects invalid UUID format for organisation ID', () => {
       const result = inviteUserSchema.safeParse({
         email: 'user@business.com',

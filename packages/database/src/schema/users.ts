@@ -1,11 +1,12 @@
-import { pgTable, uuid, varchar, timestamp, date, text, pgEnum, index } from 'drizzle-orm/pg-core';
-
-import { publicIdColumn, publicIdIndex } from '../lib/public-id';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { relations } from 'drizzle-orm';
-import { organisations } from './organisations';
-import { locations } from './locations';
+import { pgTable, uuid, varchar, timestamp, date, text, pgEnum, index } from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+
 import { USER_ROLES } from '../constants/user.constants';
+import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
+import { locations } from './locations';
+import { organisations } from './organisations';
 
 export const userRoleEnum = pgEnum('user_role', [...USER_ROLES]);
 

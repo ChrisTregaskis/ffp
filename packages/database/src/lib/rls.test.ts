@@ -5,196 +5,275 @@
  * multi-tenant data isolation works correctly at the database level.
  *
  * These tests use a real PostgreSQL database connection to verify:
- * - RLS context setting works correctly
- * - Cross-organisation isolation prevents data leaks
- * - All three tables (organisations, locations, users) enforce RLS
- * - Queries fail/return empty without RLS context
+ * - RLS context setting works correctly, and only for its own transaction
+ * - Cross-organisation isolation prevents reads in either direction and writes into another organisation
+ * - The admin bypass reads across organisations, and only when switched on
+ * - Every organisation-scoped table has RLS enabled and forced
  *
  * IMPORTANT: Tests connect as `test_user` which does NOT have BYPASSRLS,
  * so RLS policies are enforced automatically.
  *
+ * Seeding and clean-up go through their own `SET LOCAL` helpers, never through
+ * the functions under test, so breaking one of those cannot also break the fixtures.
+ *
  * @module lib/rls.test
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
-import { eq, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
-import { setRLSContext, withRLS } from './rls';
-import { users, organisations, locations } from '../schema';
+
+import { eq, inArray, sql } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Client, Pool, type PoolConfig } from 'pg';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
+
+import { asOrganisation, deleteOrganisations } from '../../__tests__/helpers/rls-context';
+import { assessmentFlows, locations, organisations, userAssessments, users } from '../schema';
+
+import { setRLSContext, withAdminContext, withRLS } from './rls';
+
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
+const connectionConfig = (): PoolConfig => ({
+  host: process.env.DB_HOST ?? 'localhost',
+  port: parseInt(process.env.DB_PORT ?? '5432'),
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER ?? 'test_user',
+  password: process.env.DB_PASSWORD ?? 'test_password',
+});
+
+/**
+ * Runs the callback on a brand-new connection that has never carried an RLS setting.
+ * Once a connection has run `SET LOCAL app.organisation_id`, the setting reads back
+ * as '' rather than NULL, and the policies' `::uuid` cast then fails with 22P02.
+ */
+const onFreshConnection = async <T>(
+  callback: (db: NodePgDatabase<Record<string, unknown>>) => Promise<T>
+): Promise<T> => {
+  const client = new Client(connectionConfig());
+  await client.connect();
+
+  try {
+    return await callback(drizzle(client));
+  } finally {
+    await client.end();
+  }
+};
+
+/** A pool of exactly one connection, so consecutive queries share a session. */
+const onSingleConnectionPool = async <T>(
+  callback: (db: NodePgDatabase<Record<string, unknown>>) => Promise<T>
+): Promise<T> => {
+  const singlePool = new Pool({ ...connectionConfig(), max: 1 });
+
+  try {
+    return await callback(drizzle(singlePool));
+  } finally {
+    await singlePool.end();
+  }
+};
+
+interface RlsSettings {
+  organisation: string | null;
+  user: string | null;
+  admin: string | null;
+}
+
+const currentSettings = async <TSchema extends Record<string, unknown>>(
+  db: NodePgDatabase<TSchema>
+): Promise<RlsSettings> => {
+  const result = await db.execute(sql`
+    SELECT current_setting('app.organisation_id', true) AS organisation_setting,
+           current_setting('app.user_id', true) AS user_setting,
+           current_setting('app.is_admin', true) AS admin_setting
+  `);
+  const row = result.rows[0] as Record<string, string | null>;
+
+  return {
+    organisation: row.organisation_setting,
+    user: row.user_setting,
+    admin: row.admin_setting,
+  };
+};
+
 describe('RLS Utility Functions', () => {
-  let db: NodePgDatabase<any>;
+  let db: NodePgDatabase<Record<string, unknown>>;
   let pool: Pool;
 
   // Test data IDs
   let orgAId: string;
   let orgBId: string;
+  let platformOrgId: string;
   let locationAId: string;
   let locationBId: string;
   let userA1Id: string;
   let userA2Id: string;
   let userB1Id: string;
+  let flowId: string;
+  let assessmentBId: string;
+  let testId: string;
 
-  beforeAll(async () => {
-    // Setup test database connection
+  beforeAll(() => {
     // IMPORTANT: test_user does NOT have BYPASSRLS, so RLS policies are enforced
-    pool = new Pool({
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      database: 'ffp_test',
-      user: process.env.DB_USER || 'test_user',
-      password: process.env.DB_PASSWORD || 'test_password',
-    });
+    pool = new Pool(connectionConfig());
     db = drizzle(pool);
-
-    // Clean slate: Truncate all tables before running tests
-    // This ensures no leftover data from manual testing or seed scripts interferes
-    // Order respects FK constraints (CASCADE handles dependencies)
-    await db.execute(sql`TRUNCATE TABLE user_assessments CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE users CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE locations CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE assessment_flows CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE process_jobs CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE organisations CASCADE`);
   });
 
   beforeEach(async () => {
-    // Create test data for two organisations before EACH test
-    // This ensures data exists even if other test suites clean the database
-    // Note: We need to set RLS context with the organisation ID we're creating
-    // First, create organisation records with generated UUIDs
+    // Unique per test, so the global unique indexes on email, Cognito sub and account
+    // code cannot collide with rows another suite (or a failed clean-up) left behind
+    testId = randomUUID().slice(0, 8);
+
+    // Two tenant organisations and a platform organisation, created fresh for each test
     orgAId = randomUUID();
     orgBId = randomUUID();
+    platformOrgId = randomUUID();
+    userA1Id = randomUUID();
+    userA2Id = randomUUID();
+    userB1Id = randomUUID();
 
-    // Set context for Organisation A and create it
-    await db.execute(sql.raw(`SET app.organisation_id = '${orgAId}'`));
-    await db
-      .insert(organisations)
-      .values({
+    await asOrganisation(db, orgAId, async (tx) => {
+      await tx.insert(organisations).values({
         id: orgAId,
         type: 'business',
         name: 'Test Organisation A',
         settings: {},
-      })
-      .returning();
+      });
 
-    // Set context for Organisation B and create it
-    await db.execute(sql.raw(`SET app.organisation_id = '${orgBId}'`));
-    await db
-      .insert(organisations)
-      .values({
+      const [locationA] = await tx
+        .insert(locations)
+        .values({
+          organisationId: orgAId,
+          name: 'Location A',
+          accountCode: `LOC-A-${testId}`,
+          status: 'active',
+        })
+        .returning();
+      locationAId = locationA.id;
+
+      await tx.insert(users).values([
+        {
+          id: userA1Id,
+          organisationId: orgAId,
+          locationId: locationAId,
+          email: `user-a1-${testId}@test.com`,
+          cognitoSub: `cognito-sub-a1-${testId}`,
+          firstName: 'Alice',
+          lastName: 'Anderson',
+          role: 'programme_user',
+        },
+        {
+          id: userA2Id,
+          organisationId: orgAId,
+          locationId: locationAId,
+          email: `user-a2-${testId}@test.com`,
+          cognitoSub: `cognito-sub-a2-${testId}`,
+          firstName: 'Adam',
+          lastName: 'Anderson',
+          role: 'customer_admin',
+        },
+      ]);
+    });
+
+    // Assessment flows are shared, so no organisation context is needed
+    const [flow] = await db
+      .insert(assessmentFlows)
+      .values({ name: `RLS write-denial flow ${testId}` })
+      .returning();
+    flowId = flow.id;
+
+    await asOrganisation(db, orgBId, async (tx) => {
+      await tx.insert(organisations).values({
         id: orgBId,
         type: 'individual',
         name: 'Test Organisation B',
         settings: {},
-      })
-      .returning();
+      });
 
-    // Location A (belongs to Organisation A)
-    await db.execute(sql.raw(`SET app.organisation_id = '${orgAId}'`));
-    const [locationA] = await db
-      .insert(locations)
-      .values({
-        organisationId: orgAId,
-        name: 'Location A',
-        accountCode: 'LOC-A-TEST',
-        status: 'active',
-      })
-      .returning();
-    locationAId = locationA.id;
+      const [locationB] = await tx
+        .insert(locations)
+        .values({
+          organisationId: orgBId,
+          name: 'Location B',
+          accountCode: `LOC-B-${testId}`,
+          status: 'active',
+        })
+        .returning();
+      locationBId = locationB.id;
 
-    // Location B (belongs to Organisation B - even though individual type)
-    await db.execute(sql.raw(`SET app.organisation_id = '${orgBId}'`));
-    const [locationB] = await db
-      .insert(locations)
-      .values({
-        organisationId: orgBId,
-        name: 'Location B',
-        accountCode: 'LOC-B-TEST',
-        status: 'active',
-      })
-      .returning();
-    locationBId = locationB.id;
-
-    // Users for Organisation A
-    await db.execute(sql.raw(`SET app.organisation_id = '${orgAId}'`));
-    userA1Id = randomUUID();
-    await db
-      .insert(users)
-      .values({
-        id: userA1Id,
-        organisationId: orgAId,
-        locationId: locationAId,
-        email: 'user-a1@test.com',
-        cognitoSub: 'cognito-sub-a1',
-        firstName: 'Alice',
-        lastName: 'Anderson',
-        role: 'programme_user',
-      })
-      .returning();
-
-    userA2Id = randomUUID();
-    await db
-      .insert(users)
-      .values({
-        id: userA2Id,
-        organisationId: orgAId,
-        locationId: locationAId,
-        email: 'user-a2@test.com',
-        cognitoSub: 'cognito-sub-a2',
-        firstName: 'Adam',
-        lastName: 'Anderson',
-        role: 'customer_admin',
-      })
-      .returning();
-
-    // User for Organisation B
-    await db.execute(sql.raw(`SET app.organisation_id = '${orgBId}'`));
-    userB1Id = randomUUID();
-    await db
-      .insert(users)
-      .values({
+      await tx.insert(users).values({
         id: userB1Id,
         organisationId: orgBId,
         locationId: null, // Individual user (no location)
-        email: 'user-b1@test.com',
-        cognitoSub: 'cognito-sub-b1',
+        email: `user-b1-${testId}@test.com`,
+        cognitoSub: `cognito-sub-b1-${testId}`,
         firstName: 'Bob',
         lastName: 'Brown',
         role: 'programme_user',
-      })
-      .returning();
+      });
+
+      const [assessmentB] = await tx
+        .insert(userAssessments)
+        .values({ organisationId: orgBId, userId: userB1Id, flowId })
+        .returning();
+      assessmentBId = assessmentB.id;
+    });
+
+    await asOrganisation(db, platformOrgId, async (tx) => {
+      await tx.insert(organisations).values({
+        id: platformOrgId,
+        type: 'platform',
+        name: 'Test Platform Organisation',
+        settings: {},
+      });
+    });
   });
 
   afterEach(async () => {
-    // Clean up test data after each test
-    // This matches the integration test pattern and ensures test isolation
-    // Order respects FK constraints (CASCADE handles dependencies)
-    await db.execute(sql`TRUNCATE TABLE user_assessments CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE users CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE locations CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE assessment_flows CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE process_jobs CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE organisations CASCADE`);
+    // Only this test's organisations; their locations, users and assessments cascade.
+    await deleteOrganisations(db, [orgAId, orgBId, platformOrgId]);
+    await db.delete(assessmentFlows).where(eq(assessmentFlows.id, flowId));
   });
 
   afterAll(async () => {
-    // Close connection pool
     await pool.end();
   });
+
+  /** What organisation B holds, read back under B's own context. */
+  const organisationBRows = async (): Promise<{
+    organisation: string[];
+    location: string[];
+    user: string[];
+    assessment: string[];
+  }> =>
+    await asOrganisation(db, orgBId, async (tx) => ({
+      organisation: (await tx.select().from(organisations).where(eq(organisations.id, orgBId))).map(
+        (row) => row.name
+      ),
+      location: (await tx.select().from(locations).where(eq(locations.id, locationBId))).map(
+        (row) => row.name
+      ),
+      user: (await tx.select().from(users).where(eq(users.id, userB1Id))).map(
+        (row) => row.firstName
+      ),
+      assessment: (
+        await tx.select().from(userAssessments).where(eq(userAssessments.id, assessmentBId))
+      ).map((row) => row.status),
+    }));
+
+  const untouchedOrganisationB = {
+    organisation: ['Test Organisation B'],
+    location: ['Location B'],
+    user: ['Bob'],
+    assessment: ['not_started'],
+  };
 
   describe('setRLSContext', () => {
     it('should set RLS context with organisation ID only', async () => {
       await db.transaction(async (tx) => {
         await setRLSContext(tx, orgAId);
 
-        // Verify context is set by querying and checking we only get organisation A data
         const result = await tx.select().from(users);
-        expect(result.length).toBe(2); // Only organisation A users
-        expect(result.every((u) => u.organisationId === orgAId)).toBe(true);
+        expect(result.map((u) => u.id).sort()).toEqual([userA1Id, userA2Id].sort());
       });
     });
 
@@ -202,10 +281,12 @@ describe('RLS Utility Functions', () => {
       await db.transaction(async (tx) => {
         await setRLSContext(tx, orgAId, userA1Id);
 
-        // Verify context is set by querying
+        expect(await currentSettings(tx)).toMatchObject({
+          organisation: orgAId,
+          user: userA1Id,
+        });
         const result = await tx.select().from(users);
-        expect(result.length).toBe(2); // Both organisation A users visible
-        expect(result.every((u) => u.organisationId === orgAId)).toBe(true);
+        expect(result.map((u) => u.id).sort()).toEqual([userA1Id, userA2Id].sort());
       });
     });
 
@@ -218,14 +299,72 @@ describe('RLS Utility Functions', () => {
     });
   });
 
+  describe('UUID guard', () => {
+    const injection = "x'; DROP TABLE users; --";
+
+    it('refuses a non-UUID organisation id before any SQL runs', async () => {
+      await db.transaction(async (tx) => {
+        const execute = vi.spyOn(tx, 'execute');
+
+        await expect(setRLSContext(tx, injection)).rejects.toThrow(
+          'organisationId must be a valid UUID format'
+        );
+        expect(execute).not.toHaveBeenCalled();
+      });
+    });
+
+    it('refuses a non-UUID user id before setting it', async () => {
+      await db.transaction(async (tx) => {
+        const execute = vi.spyOn(tx, 'execute');
+
+        await expect(setRLSContext(tx, orgAId, injection)).rejects.toThrow(
+          'userId must be a valid UUID format'
+        );
+        // Only the organisation SET ran; the user id never reached SQL
+        expect(execute).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('withRLS refuses a non-UUID organisation id before opening a transaction', async () => {
+      const transaction = vi.spyOn(db, 'transaction');
+      const callback = vi.fn();
+
+      try {
+        await expect(withRLS(db, injection, undefined, callback)).rejects.toThrow(
+          'organisationId must be a valid UUID format'
+        );
+        await expect(withRLS(db, orgAId, injection, callback)).rejects.toThrow(
+          'userId must be a valid UUID format'
+        );
+        expect(transaction).not.toHaveBeenCalled();
+        expect(callback).not.toHaveBeenCalled();
+      } finally {
+        transaction.mockRestore();
+      }
+    });
+  });
+
+  describe('Context scoping', () => {
+    it('clears the organisation and user context when the withRLS transaction ends', async () => {
+      await onSingleConnectionPool(async (singleDb) => {
+        const inside = await withRLS(singleDb, orgAId, userA1Id, async (tx) => currentSettings(tx));
+        expect(inside).toMatchObject({ organisation: orgAId, user: userA1Id });
+
+        // The same pooled connection, outside any transaction
+        const after = await currentSettings(singleDb);
+        expect(after.organisation ?? '').toBe('');
+        expect(after.user ?? '').toBe('');
+      });
+    });
+  });
+
   describe('withRLS', () => {
     it('should execute callback with user context', async () => {
       const result = await withRLS(db, orgBId, userB1Id, async (tx) => {
         return await tx.select().from(users);
       });
 
-      expect(result.length).toBe(1); // Only organisation B user
-      expect(result[0].organisationId).toBe(orgBId);
+      expect(result.map((u) => u.id)).toEqual([userB1Id]);
     });
 
     it('should throw error if organisationId is not provided', async () => {
@@ -238,14 +377,19 @@ describe('RLS Utility Functions', () => {
   });
 
   describe('Cross-Organisation Isolation - Organisations Table', () => {
-    it('should only return current organisation when RLS context is set', async () => {
+    it('should return the current organisation and the platform organisation, never another tenant', async () => {
       const result = await withRLS(db, orgAId, undefined, async (tx) => {
         return await tx.select().from(organisations);
       });
 
-      expect(result.length).toBe(1);
-      expect(result[0].id).toBe(orgAId);
-      expect(result[0].name).toBe('Test Organisation A');
+      const ids = result.map((org) => org.id);
+      expect(ids).toContain(orgAId);
+      expect(ids).toContain(platformOrgId);
+      expect(ids).not.toContain(orgBId);
+      // Any other row visible must be a platform organisation (the read policy's exception)
+      expect(result.filter((org) => org.id !== orgAId).map((org) => org.type)).toEqual(
+        result.filter((org) => org.id !== orgAId).map(() => 'platform')
+      );
     });
 
     it('should not return other organisation data', async () => {
@@ -253,7 +397,7 @@ describe('RLS Utility Functions', () => {
         return await tx.select().from(organisations).where(eq(organisations.id, orgBId));
       });
 
-      expect(result.length).toBe(0); // Organisation B should not be visible
+      expect(result).toEqual([]); // Organisation B should not be visible
     });
   });
 
@@ -263,9 +407,7 @@ describe('RLS Utility Functions', () => {
         return await tx.select().from(locations);
       });
 
-      expect(result.length).toBe(1);
-      expect(result[0].id).toBe(locationAId);
-      expect(result[0].organisationId).toBe(orgAId);
+      expect(result.map((location) => location.id)).toEqual([locationAId]);
     });
 
     it('should not return locations from other organisations', async () => {
@@ -273,7 +415,7 @@ describe('RLS Utility Functions', () => {
         return await tx.select().from(locations).where(eq(locations.id, locationBId));
       });
 
-      expect(result.length).toBe(0); // Location B should not be visible
+      expect(result).toEqual([]); // Location B should not be visible
     });
 
     it('should return correct locations for organisation B', async () => {
@@ -281,9 +423,7 @@ describe('RLS Utility Functions', () => {
         return await tx.select().from(locations);
       });
 
-      expect(result.length).toBe(1);
-      expect(result[0].id).toBe(locationBId);
-      expect(result[0].organisationId).toBe(orgBId);
+      expect(result.map((location) => location.id)).toEqual([locationBId]);
     });
   });
 
@@ -293,8 +433,7 @@ describe('RLS Utility Functions', () => {
         return await tx.select().from(users);
       });
 
-      expect(result.length).toBe(2); // Two users in organisation A
-      expect(result.every((u) => u.organisationId === orgAId)).toBe(true);
+      expect(result.map((u) => u.id).sort()).toEqual([userA1Id, userA2Id].sort());
     });
 
     it('should not return users from other organisations', async () => {
@@ -302,7 +441,7 @@ describe('RLS Utility Functions', () => {
         return await tx.select().from(users).where(eq(users.id, userB1Id));
       });
 
-      expect(result.length).toBe(0); // User B1 should not be visible
+      expect(result).toEqual([]); // User B1 should not be visible
     });
 
     it('should return correct users for organisation B', async () => {
@@ -310,96 +449,248 @@ describe('RLS Utility Functions', () => {
         return await tx.select().from(users);
       });
 
-      expect(result.length).toBe(1); // One user in organisation B
-      expect(result[0].id).toBe(userB1Id);
-      expect(result[0].organisationId).toBe(orgBId);
+      expect(result.map((u) => u.id)).toEqual([userB1Id]);
     });
+  });
+
+  describe('Cross-Organisation Write Denial', () => {
+    it('refuses to insert an organisation other than the current one', async () => {
+      await expect(
+        withRLS(db, orgAId, undefined, async (tx) => {
+          await tx
+            .insert(organisations)
+            .values({ id: randomUUID(), type: 'business', name: 'Smuggled Organisation' });
+        })
+      ).rejects.toMatchObject({ cause: { code: '42501' } });
+    });
+
+    it('refuses to insert a location into another organisation', async () => {
+      await expect(
+        withRLS(db, orgAId, undefined, async (tx) => {
+          await tx.insert(locations).values({
+            organisationId: orgBId,
+            name: 'Smuggled Location',
+            accountCode: `LOC-X-${testId}`,
+            status: 'active',
+          });
+        })
+      ).rejects.toMatchObject({ cause: { code: '42501' } });
+    });
+
+    it('refuses to insert a user into another organisation', async () => {
+      await expect(
+        withRLS(db, orgAId, undefined, async (tx) => {
+          await tx.insert(users).values({
+            organisationId: orgBId,
+            email: `smuggled-${testId}@test.com`,
+            cognitoSub: `cognito-sub-smuggled-${testId}`,
+            firstName: 'Mallory',
+            lastName: 'Smuggled',
+            role: 'programme_user',
+          });
+        })
+      ).rejects.toMatchObject({ cause: { code: '42501' } });
+    });
+
+    it('refuses to insert an assessment into another organisation', async () => {
+      await expect(
+        withRLS(db, orgAId, undefined, async (tx) => {
+          await tx
+            .insert(userAssessments)
+            .values({ organisationId: orgBId, userId: userB1Id, flowId });
+        })
+      ).rejects.toMatchObject({ cause: { code: '42501' } });
+    });
+
+    it("updates none of another organisation's rows", async () => {
+      const updated = await withRLS(db, orgAId, undefined, async (tx) => ({
+        organisation: await tx
+          .update(organisations)
+          .set({ name: 'Renamed by A' })
+          .where(eq(organisations.id, orgBId))
+          .returning({ id: organisations.id }),
+        location: await tx
+          .update(locations)
+          .set({ name: 'Renamed by A' })
+          .where(eq(locations.id, locationBId))
+          .returning({ id: locations.id }),
+        user: await tx
+          .update(users)
+          .set({ firstName: 'Renamed by A' })
+          .where(eq(users.id, userB1Id))
+          .returning({ id: users.id }),
+        assessment: await tx
+          .update(userAssessments)
+          .set({ status: 'abandoned' })
+          .where(eq(userAssessments.id, assessmentBId))
+          .returning({ id: userAssessments.id }),
+      }));
+
+      expect(updated).toEqual({ organisation: [], location: [], user: [], assessment: [] });
+      expect(await organisationBRows()).toEqual(untouchedOrganisationB);
+    });
+
+    it("deletes none of another organisation's rows", async () => {
+      const deleted = await withRLS(db, orgAId, undefined, async (tx) => ({
+        assessment: await tx
+          .delete(userAssessments)
+          .where(eq(userAssessments.id, assessmentBId))
+          .returning({ id: userAssessments.id }),
+        user: await tx.delete(users).where(eq(users.id, userB1Id)).returning({ id: users.id }),
+        location: await tx
+          .delete(locations)
+          .where(eq(locations.id, locationBId))
+          .returning({ id: locations.id }),
+        organisation: await tx
+          .delete(organisations)
+          .where(eq(organisations.id, orgBId))
+          .returning({ id: organisations.id }),
+      }));
+
+      expect(deleted).toEqual({ organisation: [], location: [], user: [], assessment: [] });
+      expect(await organisationBRows()).toEqual(untouchedOrganisationB);
+    });
+  });
+
+  describe('Admin bypass', () => {
+    it('reads organisations, locations and users across organisations', async () => {
+      const seen = await onFreshConnection(async (freshDb) =>
+        withAdminContext(freshDb, async (tx) => ({
+          organisations: (
+            await tx
+              .select()
+              .from(organisations)
+              .where(inArray(organisations.id, [orgAId, orgBId]))
+          ).map((row) => row.id),
+          locations: (
+            await tx
+              .select()
+              .from(locations)
+              .where(inArray(locations.id, [locationAId, locationBId]))
+          ).map((row) => row.id),
+          users: (
+            await tx
+              .select()
+              .from(users)
+              .where(inArray(users.id, [userA1Id, userB1Id]))
+          ).map((row) => row.id),
+        }))
+      );
+
+      expect(seen.organisations.sort()).toEqual([orgAId, orgBId].sort());
+      expect(seen.locations.sort()).toEqual([locationAId, locationBId].sort());
+      expect(seen.users.sort()).toEqual([userA1Id, userB1Id].sort());
+    });
+
+    it('does not read across organisations when the admin flag is unset', async () => {
+      const seen = await onFreshConnection(async (freshDb) =>
+        withRLS(freshDb, orgAId, undefined, async (tx) => ({
+          admin: (await currentSettings(tx)).admin,
+          users: (
+            await tx
+              .select()
+              .from(users)
+              .where(inArray(users.id, [userA1Id, userB1Id]))
+          ).map((row) => row.id),
+        }))
+      );
+
+      expect(seen.admin ?? '').toBe('');
+      expect(seen.users).toEqual([userA1Id]);
+    });
+
+    it('does not carry the admin flag past its transaction', async () => {
+      await onSingleConnectionPool(async (singleDb) => {
+        await withAdminContext(singleDb, async (tx) => tx.select().from(organisations).limit(1));
+
+        // The same pooled connection, outside any transaction
+        expect((await currentSettings(singleDb)).admin ?? '').toBe('');
+
+        const visible = await withRLS(singleDb, orgAId, undefined, async (tx) =>
+          tx
+            .select()
+            .from(users)
+            .where(inArray(users.id, [userA1Id, userB1Id]))
+        );
+        expect(visible.map((row) => row.id)).toEqual([userA1Id]);
+      });
+    });
+
+    // Known defect: once a connection has carried an organisation context, the setting
+    // reads back as '' and every policy's ::uuid cast fails (22P02), admin flag or not.
+    // Expected to fail until the policies tolerate an empty setting; then make it a plain it.
+    it.fails(
+      'reads across organisations on a connection that has carried an organisation context',
+      async () => {
+        await onSingleConnectionPool(async (singleDb) => {
+          await withRLS(singleDb, orgAId, undefined, async (tx) =>
+            tx.select().from(users).limit(1)
+          );
+
+          const seen = await withAdminContext(singleDb, async (tx) =>
+            tx
+              .select()
+              .from(users)
+              .where(inArray(users.id, [userA1Id, userB1Id]))
+          );
+          expect(seen.map((row) => row.id).sort()).toEqual([userA1Id, userB1Id].sort());
+        });
+      }
+    );
   });
 
   describe('Queries Without RLS Context', () => {
     it('should return empty results when querying without RLS context', async () => {
-      // test_user does NOT have BYPASSRLS, so RLS policies are enforced
-      // Set app.organisation_id to a valid UUID that doesn't exist in the data
-      // Note: We use a zeros UUID which is valid but won't match any organisation
-      const nonExistentOrgId = '00000000-0000-0000-8000-000000000000';
-      await db.execute(sql.raw(`SET app.organisation_id = '${nonExistentOrgId}'`));
+      // A connection that has never set app.organisation_id: the setting is NULL,
+      // so no organisation-scoped row matches
+      const result = await onFreshConnection(async (freshDb) => ({
+        users: await freshDb.select().from(users),
+        locations: await freshDb.select().from(locations),
+      }));
 
-      // Without a matching organisation_id, queries should return empty results
-      const result = await db.select().from(users);
-      expect(result.length).toBe(0); // No results for non-existent organisation
+      expect(result).toEqual({ users: [], locations: [] });
     });
 
-    it('should verify RLS is enabled on all tables', async () => {
-      const rlsCheck = await db.execute(sql`
-        SELECT tablename, rowsecurity
-        FROM pg_tables
-        WHERE schemaname = 'public'
-          AND tablename IN ('organisations', 'locations', 'users')
+    it('enables and forces RLS on every table with an organisation_id, except process_jobs', async () => {
+      const catalogue = await db.execute(sql`
+        SELECT c.relname AS table_name,
+               c.relrowsecurity AS enabled,
+               c.relforcerowsecurity AS forced
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        JOIN pg_attribute a ON a.attrelid = c.oid
+          AND a.attname = 'organisation_id'
+          AND NOT a.attisdropped
+        WHERE n.nspname = 'public' AND c.relkind = 'r'
+        ORDER BY c.relname
       `);
+      const tables = catalogue.rows as {
+        table_name: string;
+        enabled: boolean;
+        forced: boolean;
+      }[];
 
-      // Verify RLS is enabled (rowsecurity = true)
-      const tables = rlsCheck.rows;
-      expect(tables.length).toBe(3);
-      tables.forEach((table: any) => {
-        expect(table.rowsecurity).toBe(true);
+      expect(tables.map((table) => table.table_name)).toContain('users');
+      expect(
+        tables.filter((table) => !(table.enabled && table.forced)).map((t) => t.table_name)
+      ).toEqual(['process_jobs']);
+      // RLS-free by design: the job processor claims across organisations
+      expect(tables.find((table) => table.table_name === 'process_jobs')).toEqual({
+        table_name: 'process_jobs',
+        enabled: false,
+        forced: false,
       });
     });
 
-    it('should verify RLS policies exist on all tables', async () => {
-      const policiesCheck = await db.execute(sql`
-        SELECT tablename, policyname
-        FROM pg_policies
-        WHERE schemaname = 'public'
-        ORDER BY tablename
+    it('enables and forces RLS on the organisations table itself', async () => {
+      const catalogue = await db.execute(sql`
+        SELECT c.relrowsecurity AS enabled, c.relforcerowsecurity AS forced
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public' AND c.relname = 'organisations'
       `);
 
-      const policies = policiesCheck.rows;
-
-      // Check organisation policies exist
-      expect(
-        policies.some(
-          (p: any) =>
-            p.tablename === 'organisations' && p.policyname === 'organisation_read_isolation'
-        )
-      ).toBe(true);
-
-      // Check location_isolation policy exists
-      expect(
-        policies.some(
-          (p: any) => p.tablename === 'locations' && p.policyname === 'location_isolation'
-        )
-      ).toBe(true);
-
-      // Check user_isolation policy exists
-      expect(
-        policies.some((p: any) => p.tablename === 'users' && p.policyname === 'user_isolation')
-      ).toBe(true);
-
-      // Check user_assessment_organisation_isolation policy exists
-      expect(
-        policies.some(
-          (p: any) =>
-            p.tablename === 'user_assessments' &&
-            p.policyname === 'user_assessment_organisation_isolation'
-        )
-      ).toBe(true);
-
-      // Check user_assessment_answers_organisation_isolation policy exists
-      expect(
-        policies.some(
-          (p: any) =>
-            p.tablename === 'user_assessment_answers' &&
-            p.policyname === 'user_assessment_answers_organisation_isolation'
-        )
-      ).toBe(true);
-
-      // Check programme_organisation_isolation policy exists
-      expect(
-        policies.some(
-          (p: any) =>
-            p.tablename === 'programmes' && p.policyname === 'programme_organisation_isolation'
-        )
-      ).toBe(true);
+      expect(catalogue.rows).toEqual([{ enabled: true, forced: true }]);
     });
   });
 });

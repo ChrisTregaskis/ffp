@@ -6,33 +6,13 @@ import {
   createAssessmentTemplateSchema,
   updateAssessmentTemplateSchema,
 } from '../../src/schemas/assessment-template.schema';
-import {
-  scoringConfigSchema,
-  dimensionConfigSchema,
-} from '../../src/schemas/scoring-config.schema';
+import { dimensionConfigSchema } from '../../src/schemas/scoring-config.schema';
 
 import type { AssessmentQuestion } from '../../src/schemas/assessment-question.schema';
 
 // Test fixtures with deterministic UUIDs
 const QUESTION_UUID_1 = '11111111-1111-1111-8111-111111111001';
-const QUESTION_UUID_2 = '11111111-1111-1111-8111-111111111002';
 const VALID_PUBLIC_ID = 'abcdefgh1234';
-
-const validScoringConfig = {
-  dimensions: [
-    {
-      name: 'activity' as const,
-      questionIds: [QUESTION_UUID_1],
-      maxScore: 10,
-    },
-  ],
-  programmeMappings: [
-    {
-      conditions: [{ dimension: 'activity' as const, operator: 'gte' as const, value: 5 }],
-      programmeTemplateId: 'prog-1',
-    },
-  ],
-};
 
 const validTemplate = {
   id: '550e8400-e29b-41d4-a716-446655440000',
@@ -46,28 +26,7 @@ const validTemplate = {
   updatedAt: new Date(),
 };
 
-describe('scoringConfigSchema', () => {
-  it('accepts valid scoring config', () => {
-    const result = scoringConfigSchema.safeParse(validScoringConfig);
-    expect(result.success).toBe(true);
-  });
-
-  it('accepts scoring config with risk thresholds', () => {
-    const result = scoringConfigSchema.safeParse({
-      dimensions: [
-        {
-          name: 'strength',
-          questionIds: [QUESTION_UUID_1, QUESTION_UUID_2],
-          maxScore: 20,
-          weight: 1.5,
-          riskThresholds: { low: 15, moderate: 10 },
-        },
-      ],
-      programmeMappings: [],
-    });
-    expect(result.success).toBe(true);
-  });
-
+describe('dimensionConfigSchema', () => {
   it('applies default weight of 1', () => {
     const result = dimensionConfigSchema.safeParse({
       name: 'balance',
@@ -112,17 +71,6 @@ describe('scoringConfigSchema', () => {
       scoringMode: 'median',
     });
     expect(result.success).toBe(false);
-  });
-
-  it('leaves a missing mapping priority unset, so it is evaluated last', () => {
-    const result = scoringConfigSchema.safeParse({
-      dimensions: [],
-      programmeMappings: [{ conditions: [], programmeTemplateId: 'fallback' }],
-    });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.programmeMappings[0].priority).toBeUndefined();
-    }
   });
 });
 

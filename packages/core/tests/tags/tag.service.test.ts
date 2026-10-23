@@ -5,15 +5,13 @@ import type * as ffpDatabase from '@ffp/database';
 import { createSystemContext } from '../../src/lib/context';
 import { ConflictError, NotFoundError, ValidationError } from '../../src/lib/errors';
 import * as tagService from '../../src/tags/tag.service';
+import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import {
-  createTestDb,
-  createTestPool,
   findCategoryId,
   inRolledBackTransaction,
   insertTestTag,
   shortId,
-  type TestDb,
   type TestTx,
 } from './tag-fixture';
 
@@ -40,8 +38,7 @@ describe('Tag service', () => {
     });
 
   beforeAll(() => {
-    pool = createTestPool();
-    db = createTestDb(pool);
+    ({ pool, db } = connectTestDb());
   });
 
   afterAll(async () => {

@@ -1,15 +1,18 @@
-import { fireEvent, render, screen, type RenderResult } from '@testing-library/react';
+import { act, fireEvent, render, screen, type RenderResult } from '@testing-library/react';
+import { useContext, type Dispatch, type ReactElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AnswerValue, AssessmentQuestion } from '@ffp/core';
 
+import { AssessmentContext } from '@web/contexts/assessments/AssessmentContext';
+import { AssessmentProvider } from '@web/contexts/assessments/AssessmentProvider';
+import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { createInitialState } from '@web/contexts/assessments/helpers';
+import type { AssessmentAction } from '@web/contexts/assessments/types';
 
 import { QuestionCard } from '../cards/QuestionCard';
 
 import { QuestionStepContent } from './QuestionStepContent';
-
-import type { ReactElement } from 'react';
 
 const navigation = vi.hoisted(() => ({
   assessmentId: null as string | null,
@@ -62,7 +65,6 @@ const goal: AssessmentQuestion = {
 interface StepOptions {
   answers?: Record<string, AnswerValue>;
   fieldErrors?: Record<string, string>;
-  refusalCount?: number;
   questionIndex?: number;
   onQuestionIndexChange?: (index: number | ((prev: number) => number)) => void;
   isLastSubmittableStep?: boolean;
@@ -74,7 +76,6 @@ const questions = [focus, goal];
 const step = ({
   answers = {},
   fieldErrors = {},
-  refusalCount = 0,
   questionIndex = 0,
   onQuestionIndexChange = vi.fn(),
   isLastSubmittableStep = false,
@@ -93,7 +94,7 @@ const step = ({
       ])
     )}
     fieldErrors={fieldErrors}
-    refusalCount={refusalCount}
+    refusalCount={0}
     currentStep={2}
     onAnswer={vi.fn()}
     isLastSubmittableStep={isLastSubmittableStep}
@@ -149,31 +150,102 @@ describe('QuestionStepContent', () => {
     expect(onQuestionIndexChange).toHaveBeenCalledWith(0);
   });
 
-  it('does not move the member on when they fix the first of two refused questions', () => {
-    const onQuestionIndexChange = vi.fn();
-    const refused = {
-      [focus.id]: 'Please answer this question.',
-      [goal.id]: 'Please answer this question.',
+  describe('refusals from the real assessment state', () => {
+    // The step reads fieldErrors and refusalCount from the provider's reducer, as the
+    // renderer does, so a refusal is a dispatched action rather than a hand-set count.
+    const renderUnderProvider = (
+      onQuestionIndexChange: (index: number | ((prev: number) => number)) => void
+    ): Dispatch<AssessmentAction> => {
+      let dispatch: Dispatch<AssessmentAction> | undefined;
+
+      const StepFromState: React.FC = () => {
+        const context = useContext(AssessmentContext);
+
+        if (!context) {
+          throw new Error('Rendered outside AssessmentProvider');
+        }
+
+        dispatch = context.assessmentDispatch;
+
+        return (
+          <QuestionStepContent
+            card={QuestionCard}
+            config={{ title: 'Your goals' }}
+            questions={questions}
+            questionIndex={1}
+            onQuestionIndexChange={onQuestionIndexChange}
+            answers={context.assessmentState.answers}
+            fieldErrors={context.assessmentState.fieldErrors}
+            refusalCount={context.assessmentState.refusalCount}
+            currentStep={2}
+            onAnswer={vi.fn()}
+          />
+        );
+      };
+
+      render(
+        <AssessmentProvider flowId="flow-1">
+          <StepFromState />
+        </AssessmentProvider>
+      );
+
+      if (!dispatch) {
+        throw new Error('The provider never rendered the step');
+      }
+
+      return dispatch;
     };
-    const { rerender } = renderStep({
-      fieldErrors: refused,
-      refusalCount: 1,
-      onQuestionIndexChange,
+
+    const refuse = (
+      dispatch: Dispatch<AssessmentAction>,
+      fieldErrors: Record<string, string>
+    ): void => {
+      act(() => {
+        dispatch({ type: ASSESSMENT_ACTION.SET_FIELD_ERRORS, payload: { fieldErrors } });
+      });
+    };
+
+    it('brings the refused question into view again when the same answers are refused twice', () => {
+      const onQuestionIndexChange = vi.fn();
+      const dispatch = renderUnderProvider(onQuestionIndexChange);
+      const refused = { [focus.id]: 'Choose up to 2 options.' };
+
+      refuse(dispatch, refused);
+
+      expect(onQuestionIndexChange).toHaveBeenCalledTimes(1);
+      expect(onQuestionIndexChange).toHaveBeenLastCalledWith(0);
+      onQuestionIndexChange.mockClear();
+
+      refuse(dispatch, refused);
+
+      expect(onQuestionIndexChange).toHaveBeenCalledTimes(1);
+      expect(onQuestionIndexChange).toHaveBeenLastCalledWith(0);
     });
 
-    expect(onQuestionIndexChange).toHaveBeenLastCalledWith(0);
-    onQuestionIndexChange.mockClear();
+    it('does not move the member on when they fix the first of two refused questions', () => {
+      const onQuestionIndexChange = vi.fn();
+      const dispatch = renderUnderProvider(onQuestionIndexChange);
 
-    rerender(
-      step({
-        answers: { [focus.id]: ['neck'] },
-        fieldErrors: { [goal.id]: 'Please answer this question.' },
-        refusalCount: 1,
-        onQuestionIndexChange,
-      })
-    );
+      refuse(dispatch, {
+        [focus.id]: 'Please answer this question.',
+        [goal.id]: 'Please answer this question.',
+      });
 
-    expect(onQuestionIndexChange).not.toHaveBeenCalled();
+      expect(onQuestionIndexChange).toHaveBeenLastCalledWith(0);
+      onQuestionIndexChange.mockClear();
+
+      act(() => {
+        dispatch({
+          type: ASSESSMENT_ACTION.SET_ANSWER,
+          payload: {
+            questionId: focus.id,
+            answer: { questionId: focus.id, answerValue: ['neck'] },
+          },
+        });
+      });
+
+      expect(onQuestionIndexChange).not.toHaveBeenCalled();
+    });
   });
 
   describe('saving the position', () => {

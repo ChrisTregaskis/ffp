@@ -26,8 +26,10 @@
  */
 
 import { sql } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+
 import { createLogger } from '../lib/logger';
+
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 const logger = createLogger('permissions');
 
@@ -44,6 +46,7 @@ const getApplicationUsers = (): string[] => {
 
   // Application runtime user from environment
   const dbUser = process.env.DB_USER;
+
   if (dbUser) {
     users.add(dbUser);
   }
@@ -66,8 +69,8 @@ const getApplicationUsers = (): string[] => {
  * @param migrationUser - The user running migrations (e.g., root_user)
  * @returns Promise<void>
  */
-export const applyPermissions = async (
-  db: NodePgDatabase<any>,
+export const applyPermissions = async <TSchema extends Record<string, unknown>>(
+  db: NodePgDatabase<TSchema>,
   migrationUser: string
 ): Promise<void> => {
   const applicationUsers = getApplicationUsers();

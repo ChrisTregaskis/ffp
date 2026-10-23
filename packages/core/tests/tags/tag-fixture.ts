@@ -1,8 +1,6 @@
 import { randomUUID } from 'crypto';
 
 import { asc, eq, TransactionRollbackError } from 'drizzle-orm';
-import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
 
 import type { TagCategorySlug } from '@ffp/database/constants';
 import {
@@ -15,19 +13,9 @@ import {
   type VideoRecord,
 } from '@ffp/database/schema';
 
-export type TestDb = NodePgDatabase;
+import type { TestDb } from '../lib/test-db.fixture';
+
 export type TestTx = Parameters<Parameters<TestDb['transaction']>[0]>[0];
-
-export const createTestPool = (): Pool =>
-  new Pool({
-    host: process.env.DB_HOST ?? 'localhost',
-    port: parseInt(process.env.DB_PORT ?? '5432'),
-    database: 'ffp_test',
-    user: process.env.DB_USER ?? 'test_user',
-    password: process.env.DB_PASSWORD ?? 'test_password',
-  });
-
-export const createTestDb = (pool: Pool): TestDb => drizzle(pool);
 
 /** Runs the work and rolls it back, so nothing a test writes outlives it. */
 export async function inRolledBackTransaction(

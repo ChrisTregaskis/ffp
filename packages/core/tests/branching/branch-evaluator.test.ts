@@ -175,9 +175,15 @@ describe('Branch Evaluator', () => {
 
       const result = evaluateNextStep(currentStep, context);
 
-      expect(result.warnings).toHaveLength(1);
-      expect(result.warnings[0].message).toBe('Please consult a doctor');
-      expect(result.warnings[0].type).toBe('seek_medical');
+      expect(result.warnings).toEqual([
+        {
+          message: 'Please consult a doctor',
+          type: 'seek_medical',
+          shownAt: expect.any(String) as unknown,
+          stepId: currentStep.id,
+          triggeredBy: 'radiating-pain',
+        },
+      ]);
       expect(result.nextStepId).toBe('55555555-5555-5555-8555-555555550002');
       expect(result.shouldTerminate).toBe(false);
     });
@@ -201,7 +207,9 @@ describe('Branch Evaluator', () => {
       const result = evaluateNextStep(currentStep, context);
 
       expect(result.shouldTerminate).toBe(true);
-      expect(result.warnings).toHaveLength(1);
+      expect(result.warnings).toEqual([
+        expect.objectContaining({ stepId: currentStep.id, triggeredBy: 'incontinence' }),
+      ]);
       expect(result.nextStepId).toBeNull();
     });
 
@@ -241,9 +249,18 @@ describe('Branch Evaluator', () => {
 
       const result = evaluateNextStep(currentStep, context);
 
-      expect(result.warnings).toHaveLength(2);
-      expect(result.warnings[0].message).toBe('Warning 1');
-      expect(result.warnings[1].message).toBe('Warning 2');
+      expect(result.warnings).toEqual([
+        expect.objectContaining({
+          message: 'Warning 1',
+          stepId: currentStep.id,
+          triggeredBy: 'radiating-pain',
+        }),
+        expect.objectContaining({
+          message: 'Warning 2',
+          stepId: currentStep.id,
+          triggeredBy: 'numbness',
+        }),
+      ]);
       expect(result.shouldTerminate).toBe(false);
     });
   });
