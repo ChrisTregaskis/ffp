@@ -1,4 +1,4 @@
-import { and, asc, eq, exists, inArray, notInArray, sql, type SQL } from 'drizzle-orm';
+import { and, asc, count, eq, exists, inArray, notInArray, sql, type SQL } from 'drizzle-orm';
 
 import type { DbQueryClient } from '@ffp/database';
 import type { TagCategorySlug } from '@ffp/database/constants';
@@ -51,15 +51,8 @@ export interface PoolVideoQuery {
   excludeVideoIds?: string[];
 }
 
-/**
- * Active videos with at least one active tag in the category (or in `tagIds`), minus
- * `excludeVideoIds`. An empty `tagIds` matches nothing. EXISTS rather than a join, so a video
- * with several matching tags is returned once.
- */
-export async function findPoolVideos(
-  db: DbQueryClient,
-  query: PoolVideoQuery
-): Promise<VideoRecord[]> {
+/** The pool rule: active videos with at least one active tag in the category (or in `tagIds`) */
+function poolConditions(db: DbQueryClient, query: PoolVideoQuery): SQL[] {
   const tagConditions: SQL[] = [
     eq(videoTags.videoId, videos.id),
     eq(tags.categoryId, query.categoryId),
@@ -85,11 +78,33 @@ export async function findPoolVideos(
     conditions.push(notInArray(videos.id, query.excludeVideoIds));
   }
 
+  return conditions;
+}
+
+/**
+ * Active videos with at least one active tag in the category (or in `tagIds`), minus
+ * `excludeVideoIds`. An empty `tagIds` matches nothing. EXISTS rather than a join, so a video
+ * with several matching tags is returned once.
+ */
+export async function findPoolVideos(
+  db: DbQueryClient,
+  query: PoolVideoQuery
+): Promise<VideoRecord[]> {
   return await db
     .select()
     .from(videos)
-    .where(and(...conditions))
+    .where(and(...poolConditions(db, query)))
     .orderBy(videos.title);
+}
+
+/** How many videos `findPoolVideos` would return for the same query */
+export async function countPoolVideos(db: DbQueryClient, query: PoolVideoQuery): Promise<number> {
+  const [result] = await db
+    .select({ count: count() })
+    .from(videos)
+    .where(and(...poolConditions(db, query)));
+
+  return result.count;
 }
 
 export async function findCategories(db: DbQueryClient): Promise<TagCategoryRecord[]> {

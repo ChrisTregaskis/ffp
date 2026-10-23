@@ -55,6 +55,11 @@ export const TemplateMetadataFormFields: React.FC<TemplateMetadataFormFieldsProp
           name="slug"
           label="Slug"
           placeholder="e.g. gentle-mobility-programme"
+          hint={
+            isEditMode
+              ? "Assessments recommend programmes by slug, so a slug they use can't be changed."
+              : undefined
+          }
           register={register}
           errors={errors}
           isRequired

@@ -11,4 +11,3 @@ export {
   type VideoMetadataFormFieldsProps,
 } from './VideoMetadataFormFields';
 export type { VideoMetadataFormValues } from './types';
-export { toTagOption, toTagSelection } from './tag-options';

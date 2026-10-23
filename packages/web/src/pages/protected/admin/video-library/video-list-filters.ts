@@ -2,8 +2,8 @@ import { adminVideoFilterSchema } from '@ffp/core';
 import type { AdminTagCategory, AdminVideoFilterInput } from '@ffp/core';
 
 import type { TableFilterConfig } from '@web/components/organisms';
+import { toTagOption } from '@web/components/tags';
 import type { ListFilterValues } from '@web/components/templates';
-import { toTagOption } from '@web/components/video';
 
 const TAG_FILTER_PREFIX = 'tag-';
 

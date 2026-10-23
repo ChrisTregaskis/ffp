@@ -3,15 +3,19 @@ import type { AdminTag, AdminTagCategory, TagCategorySlug, VideoTags } from '@ff
 
 import type { CheckboxGroupOption } from '@web/components/molecules';
 
+/** A tag's label, marked when it is no longer in use */
+export const toTagLabel = (tag: { label: string; isActive: boolean }): string =>
+  tag.isActive ? tag.label : `${tag.label} (inactive)`;
+
 /** A tag as a choice, marked when it is no longer in use */
 export const toTagOption = (tag: AdminTag): CheckboxGroupOption => ({
   value: tag.publicId,
-  label: tag.isActive ? tag.label : `${tag.label} (inactive)`,
+  label: toTagLabel(tag),
 });
 
 /**
- * A category's active tags as options, plus any inactive tag the video was loaded with, so it can
- * be unticked and ticked again before saving.
+ * A category's active tags as options, plus any inactive tag the record (a video or a slot) was
+ * loaded with, so it can be unticked and ticked again before saving.
  */
 export const toTagOptions = (
   categories: AdminTagCategory[] | undefined,

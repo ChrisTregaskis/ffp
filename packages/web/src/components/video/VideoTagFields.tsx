@@ -3,9 +3,8 @@ import React from 'react';
 import { Text, Title } from '@web/components/atoms';
 import { FormCheckboxGroup, FormToggle } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
+import { toTagOptions } from '@web/components/tags';
 import { useTagCategoriesQuery } from '@web/hooks/tags';
-
-import { toTagOptions } from './tag-options';
 
 import type { VideoMetadataFormValues } from './types';
 

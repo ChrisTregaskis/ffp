@@ -42,7 +42,12 @@ export type {
 } from './admin-organisations';
 
 export { adminProgrammeTemplatesApi } from './admin-programme-templates';
-export { adminExercisesApi, adminPhasesApi, adminSessionsApi } from './admin-template-hierarchy';
+export {
+  adminExercisesApi,
+  adminPhasesApi,
+  adminSessionsApi,
+  adminSlotsApi,
+} from './admin-template-hierarchy';
 export type {
   CreateExerciseRequest,
   CreatePhaseRequest,
