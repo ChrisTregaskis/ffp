@@ -1,7 +1,7 @@
 import { tagCategorySlugSchema } from '@ffp/core';
 import type { AdminVideoDetail, TagSummary, UpdateVideoInput, VideoStatus } from '@ffp/core';
 
-import { toTagSelection } from '@web/components/video';
+import { toTagSelection } from '@web/components/tags';
 import { fieldToNumber, numberToField } from '@web/utils/form-number';
 
 import type { VideoEditFormValues } from './types';

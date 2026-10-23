@@ -35,6 +35,7 @@ import { seedAssessmentFlows } from './seedAssessmentFlows.js';
 import { seedFlowSteps } from './seedFlowSteps.js';
 import { seedVideos } from './seedVideos.js';
 import { seedTemplateHierarchy } from './seedTemplateHierarchy.js';
+import { seedTemplateSlots } from './seedTemplateSlots.js';
 import { seedProgrammeUserData } from './seedProgrammeUserData.js';
 import type { SeedConfig } from './types.js';
 
@@ -240,6 +241,10 @@ export const seedDatabase = async (
     // Must run AFTER programme templates (FK) and videos (FK)
     await seedTemplateHierarchy(db);
 
+    // Seed 16b: Template session slots from the seeded exercises (no RLS, idempotent)
+    // Must run AFTER template hierarchy and videos (reads exercises and their tags)
+    await seedTemplateSlots(db);
+
     // Seed 17: Programme user data — active programme, phases, sessions (RLS tables, idempotent)
     // Must run AFTER template hierarchy (FK) and test programme user (FK)
     await seedProgrammeUserData(db);
@@ -289,6 +294,7 @@ export {
   TEMPLATE_SESSION_IDS,
   SESSION_EXERCISE_IDS,
 } from './seedTemplateHierarchy.js';
+export { seedTemplateSlots } from './seedTemplateSlots.js';
 export {
   seedProgrammeUserData,
   PROGRAMME_IDS,

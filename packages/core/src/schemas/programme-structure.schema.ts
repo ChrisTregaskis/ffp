@@ -15,8 +15,8 @@ export const templatePhaseSchema = z.object({
   name: z.string().max(255).nullable(),
   /** Optional phase description */
   description: z.string().nullable(),
-  /** Number of sessions in this phase (1–7) */
-  sessionCount: z.number().int().positive(),
+  /** Number of sessions in this phase; 0 once its last session is deleted */
+  sessionCount: z.number().int().nonnegative(),
   /** Timestamp when record was created */
   createdAt: z.coerce.date(),
   /** Timestamp when record was last modified */

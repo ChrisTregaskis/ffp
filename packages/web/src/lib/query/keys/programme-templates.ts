@@ -7,4 +7,7 @@ export const programmeTemplateKeys = {
   sessionExercises: () => [...base.all, 'session-exercises'] as const,
   sessionExerciseList: (sessionId: string) =>
     [...programmeTemplateKeys.sessionExercises(), sessionId] as const,
+  sessionSlots: () => [...base.all, 'session-slots'] as const,
+  sessionSlotList: (sessionId: string) =>
+    [...programmeTemplateKeys.sessionSlots(), sessionId] as const,
 };

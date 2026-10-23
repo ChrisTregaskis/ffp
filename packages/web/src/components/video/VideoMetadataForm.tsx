@@ -1,9 +1,9 @@
 import React, { useCallback } from 'react';
 
 import { ComposableForm } from '@web/components/organisms';
+import { toTagSelection } from '@web/components/tags';
 import type { VideoMetadataValues } from '@web/hooks/videos/types';
 
-import { toTagSelection } from './tag-options';
 import { VideoMetadataFormFields } from './VideoMetadataFormFields';
 
 import type { VideoMetadataFormValues } from './types';

@@ -21,3 +21,5 @@ export type {
   SessionResponse,
   UpdateSessionRequest,
 } from './admin-sessions';
+
+export { adminSlotsApi } from './admin-slots';
