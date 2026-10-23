@@ -11,6 +11,7 @@ import {
   userSessions,
 } from '../src/schema/index.js';
 import { createLogger } from '../src/lib/logger.js';
+import { fromTemplateExercise } from '../src/lib/member-session-exercise.js';
 import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.js';
 import { PROGRAMME_TEMPLATE_IDS } from './seedProgrammeTemplates.js';
 import { TEMPLATE_PHASE_IDS, TEMPLATE_SESSION_IDS } from './seedTemplateHierarchy.js';
@@ -350,14 +351,7 @@ const seedMemberLayer = async (
       templateExercises.map((exercise) => ({
         organisationId: TEST_ORGANISATION_ID,
         userSessionId: session.id,
-        sourceSessionExerciseId: exercise.id,
-        videoId: exercise.videoId,
-        orderIndex: exercise.orderIndex,
-        sets: exercise.sets,
-        reps: exercise.reps,
-        durationSeconds: exercise.durationSeconds,
-        restSeconds: exercise.restSeconds,
-        notes: exercise.notes,
+        ...fromTemplateExercise(exercise),
       }))
     );
     exercisesCreated += templateExercises.length;

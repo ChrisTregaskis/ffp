@@ -18,6 +18,7 @@ import {
   ValidationError,
   ConflictError,
   InternalServerError,
+  ProgrammeAssemblyError,
 } from '../../src/lib/errors';
 
 describe('BaseError', () => {
@@ -166,5 +167,17 @@ describe('InternalServerError', () => {
     expect(error.message).toBe('Database connection failed');
     expect(error.code).toBe('INTERNAL_SERVER_ERROR');
     expect(error.statusCode).toBe(500);
+  });
+});
+
+describe('ProgrammeAssemblyError', () => {
+  it('answers 422 with a member-facing message and no details', () => {
+    const error = new ProgrammeAssemblyError();
+
+    expect(error).toBeInstanceOf(BaseError);
+    expect(error.statusCode).toBe(422);
+    expect(error.code).toBe('PROGRAMME_ASSEMBLY_FAILED');
+    expect(error.message).toBe("We couldn't put your programme together just now.");
+    expect(error.details).toBeUndefined();
   });
 });

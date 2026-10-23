@@ -106,6 +106,18 @@ export class ConflictError extends BaseError {
 }
 
 /**
+ * 422 Unprocessable - A programme template that cannot be assembled
+ *
+ * Used when a required slot has nothing left to draw. The request is sound; the template's
+ * content cannot satisfy it, so retrying will not help. The message is written for the member.
+ */
+export class ProgrammeAssemblyError extends BaseError {
+  constructor() {
+    super("We couldn't put your programme together just now.", 'PROGRAMME_ASSEMBLY_FAILED', 422);
+  }
+}
+
+/**
  * 500 Internal Server Error - Unexpected errors
  *
  * Used when:

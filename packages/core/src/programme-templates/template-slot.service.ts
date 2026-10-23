@@ -28,6 +28,37 @@ export function toSlotPoolQuery(categoryId: string, tagIds: string[]): PoolVideo
   return tagIds.length > 0 ? { categoryId, tagIds } : { categoryId };
 }
 
+/** A slot with the ids of the tags it names, ready to become a pool query */
+export interface SlotToDraw extends SlotWithCategory {
+  tagIds: string[];
+}
+
+/**
+ * The slots of each listed session, in order, keyed by session id. Sessions without slots are
+ * absent. Takes the caller's client so generation reads slots in its own transaction.
+ */
+export async function findSlotsToDraw(
+  db: DbQueryClient,
+  sessionIds: string[]
+): Promise<Map<string, SlotToDraw[]>> {
+  const slots = await slotRepository.findSlotsBySessionIds(db, sessionIds);
+  const slotTags = await slotRepository.findSlotTags(
+    db,
+    slots.map((slot) => slot.id)
+  );
+  const bySession = new Map<string, SlotToDraw[]>();
+
+  for (const slot of slots) {
+    const tagIds = slotTags.filter((tag) => tag.slotId === slot.id).map((tag) => tag.id);
+    const sessionSlots = bySession.get(slot.templateSessionId) ?? [];
+
+    sessionSlots.push({ ...slot, tagIds });
+    bySession.set(slot.templateSessionId, sessionSlots);
+  }
+
+  return bySession;
+}
+
 async function toSlotResponses(
   db: DbQueryClient,
   slots: SlotWithCategory[]

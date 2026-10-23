@@ -10,6 +10,7 @@ import { NotFoundError, ValidationError } from '../lib/errors';
 import { calculatePercent } from '../lib/math';
 
 import { findMemberProgrammeStructure } from './member-programme.repository';
+import { chooseSessionExercises } from './programme-assembly';
 import { materialiseProgrammeSessions } from './programme-materialisation';
 import {
   archiveProgramme,
@@ -137,7 +138,21 @@ export async function generateProgramme(
 
   const phases = await createProgrammePhases(organisationId, phaseInputs, { tx });
 
-  await materialiseProgrammeSessions(tx, organisationId, templateStructure, phases);
+  const exercisesBySession = await chooseSessionExercises(tx, {
+    organisationId,
+    programmeId: programme.id,
+    templateSlug: template.slug,
+    templateStructure,
+    emphasis: new Map(),
+  });
+
+  await materialiseProgrammeSessions(
+    tx,
+    organisationId,
+    templateStructure,
+    phases,
+    exercisesBySession
+  );
 
   // Link the archived programme to its replacement (if we archived one above)
   if (existing && replaceExisting) {

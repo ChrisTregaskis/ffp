@@ -1,3 +1,5 @@
+import type { MemberSessionExerciseFields } from '@ffp/database';
+
 import { createUserSessions } from '../sessions/session.repository';
 import { createUserSessionExercises } from '../sessions/user-session-exercise.repository';
 
@@ -7,14 +9,15 @@ import type { NewUserSession } from '../sessions/session.repository';
 import type { NewUserSessionExercise } from '../sessions/user-session-exercise.repository';
 
 /**
- * Copy the template's sessions (as not_started) and exercises into a new programme's member layer.
- * Runs in the transaction that created the phases, from the same template read.
+ * Write the template's sessions (as not_started) and each session's chosen exercises into a new
+ * programme's member layer. Runs in the transaction that created the phases.
  */
 export async function materialiseProgrammeSessions(
   tx: Transaction,
   organisationId: string,
   templateStructure: TemplateStructure,
-  phases: ProgrammePhaseRecord[]
+  phases: ProgrammePhaseRecord[],
+  exercisesBySession: Map<string, MemberSessionExerciseFields[]>
 ): Promise<void> {
   const sessionInputs: NewUserSession[] = phases.flatMap((phase) =>
     (templateStructure.phases.get(phase.templatePhaseId)?.sessions ?? []).map(({ session }) => ({
@@ -28,24 +31,11 @@ export async function materialiseProgrammeSessions(
 
   const sessions = await createUserSessions(tx, sessionInputs);
 
-  const templateExercisesBySession = new Map(
-    [...templateStructure.phases.values()].flatMap(({ sessions: templateSessions }) =>
-      templateSessions.map(({ session, exercises }) => [session.id, exercises] as const)
-    )
-  );
-
   const exerciseInputs: NewUserSessionExercise[] = sessions.flatMap((session) =>
-    (templateExercisesBySession.get(session.templateSessionId) ?? []).map((exercise) => ({
+    (exercisesBySession.get(session.templateSessionId) ?? []).map((exercise) => ({
       organisationId,
       userSessionId: session.id,
-      sourceSessionExerciseId: exercise.id,
-      videoId: exercise.videoId,
-      orderIndex: exercise.orderIndex,
-      sets: exercise.sets,
-      reps: exercise.reps,
-      durationSeconds: exercise.durationSeconds,
-      restSeconds: exercise.restSeconds,
-      notes: exercise.notes,
+      ...exercise,
     }))
   );
 

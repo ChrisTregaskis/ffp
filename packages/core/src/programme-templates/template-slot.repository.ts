@@ -54,6 +54,25 @@ export async function findSlotsBySessionId(
   return rows.map(toSlotWithCategory);
 }
 
+/** Returns the slots of every listed session, ordered by session then orderIndex. */
+export async function findSlotsBySessionIds(
+  db: DbQueryClient,
+  sessionIds: string[]
+): Promise<SlotWithCategory[]> {
+  if (sessionIds.length === 0) {
+    return [];
+  }
+
+  const rows = await db
+    .select(slotWithCategoryColumns)
+    .from(templateSessionSlots)
+    .innerJoin(tagCategories, eq(tagCategories.id, templateSessionSlots.tagCategoryId))
+    .where(inArray(templateSessionSlots.templateSessionId, sessionIds))
+    .orderBy(asc(templateSessionSlots.templateSessionId), asc(templateSessionSlots.orderIndex));
+
+  return rows.map(toSlotWithCategory);
+}
+
 /** Returns a single slot by public ID, or null if not found. */
 export async function findSlotByPublicId(
   db: DbQueryClient,
