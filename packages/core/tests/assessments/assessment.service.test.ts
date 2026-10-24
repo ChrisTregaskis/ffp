@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import type * as ffpDatabase from '@ffp/database';
+import { selectUserAssessmentAnswerSchema } from '@ffp/database/schema';
 
 import * as answerRepository from '../../src/assessments/answer.repository';
 import * as assessmentService from '../../src/assessments/assessment.service';
@@ -31,6 +32,11 @@ type ContextModule = typeof contextModule;
 type DatabaseModule = typeof databaseModule;
 type FFPDatabaseModule = typeof ffpDatabase;
 type AnswerValue = ffpDatabase.AnswerValue;
+
+// The service's system logger reads LOG_LEVEL once, when the module loads
+vi.hoisted(() => {
+  vi.stubEnv('LOG_LEVEL', 'DEBUG');
+});
 
 vi.mock('../../src/assessments/flow.repository');
 vi.mock('../../src/assessments/user-assessment.repository');
@@ -1685,5 +1691,59 @@ describe('Assessment Service', () => {
       expect(response).toMatchObject({ nextStepId: null, warnings: [], shouldTerminate: false });
       expect(mockedUserAssessmentRepo.appendAssessmentWarnings).not.toHaveBeenCalled();
     });
+  });
+
+  describe('a stored answer in an unexpected format', () => {
+    const memberText = 'sentinel: knee gave way on the stairs';
+
+    // Legacy rows hold any JSON: each is built through the column's select schema, then
+    // narrowed to the repository's row type, which leaves those shapes out
+    it.each([
+      ['an array holding a non-string', [memberText, 3], { type: 'array', length: 2 }],
+      ['an unrecognised object', { note: memberText }, { type: 'object', keys: ['note'] }],
+      ['a null', null, { type: 'null' }],
+    ])(
+      'refuses %s and logs its question and shape, never its value',
+      async (_label, answerValue, answerShape) => {
+        const context = createUserContext();
+        const flowId = randomUUID();
+        const databaseUserId = randomUUID();
+        const questionId = randomUUID();
+        const assessment = createMockAssessment({
+          organisationId: context.organisationId,
+          userId: databaseUserId,
+          flowId,
+        });
+        const stored = selectUserAssessmentAnswerSchema.parse({
+          id: randomUUID(),
+          organisationId: context.organisationId,
+          userAssessmentId: assessment.id,
+          questionId,
+          answerValue,
+          answeredAt: new Date(),
+        });
+        const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+        mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
+        mockedFlowRepo.findActiveById.mockResolvedValue(createMockFlow(flowId));
+        mockedFlowRepo.findStepsByFlowId.mockResolvedValue([]);
+        mockedUserAssessmentRepo.findResumableAssessment.mockResolvedValue(assessment);
+        mockedAnswerRepo.findByAssessmentId.mockResolvedValue([stored as UserAssessmentAnswer]);
+
+        try {
+          await expect(assessmentService.startAssessment(flowId, context)).rejects.toThrow(
+            ValidationError
+          );
+
+          const warnings = consoleLog.mock.calls
+            .map((call) => JSON.parse(call[0] as string) as { level: string; context?: unknown })
+            .filter((entry) => entry.level === 'WARN');
+          expect(warnings.map((entry) => entry.context)).toEqual([{ questionId, answerShape }]);
+          expect(JSON.stringify(consoleLog.mock.calls)).not.toContain('sentinel');
+        } finally {
+          consoleLog.mockRestore();
+        }
+      }
+    );
   });
 });
