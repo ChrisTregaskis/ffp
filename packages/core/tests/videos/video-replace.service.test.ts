@@ -7,12 +7,11 @@ import { TAG_CATEGORY_SLUGS } from '@ffp/database/constants';
 import type { VideoRecord } from '@ffp/database/schema';
 
 import { createSystemContext } from '../../src/lib/context';
+import { videoTagsSchema } from '../../src/schemas/tag.schema';
 import * as videoTagService from '../../src/tags/video-tag.service';
 import * as videoStorage from '../../src/videos/video-upload.service';
 import * as videoRepository from '../../src/videos/video.repository';
 import { updateVideo } from '../../src/videos/video.service';
-
-import type { VideoTags } from '../../src/schemas/tag.schema';
 
 vi.mock('../../src/videos/video.repository');
 vi.mock('../../src/tags/video-tag.service');
@@ -88,7 +87,7 @@ describe('Replacing a video file', () => {
       Promise.resolve(buildVideo({ ...existing, ...input } as Partial<VideoRecord>))
     );
     vi.mocked(videoTagService.findTagsOfVideo).mockResolvedValue(
-      Object.fromEntries(TAG_CATEGORY_SLUGS.map((slug) => [slug, []])) as VideoTags
+      videoTagsSchema.parse(Object.fromEntries(TAG_CATEGORY_SLUGS.map((slug) => [slug, []])))
     );
     mockedStorage.deleteVideoObject.mockResolvedValue();
   });

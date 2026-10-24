@@ -4,6 +4,8 @@ import type { AdminVideoDetail } from '@ffp/core';
 
 import { archivesVideo, toUpdateVideoInput, toVideoFormValues } from './video-form-values';
 
+import type { VideoEditFormValues } from './types';
+
 const strength = { publicId: 'mvstrength01', slug: 'strength', label: 'Strength' };
 const cardio = { publicId: 'mvcardio0001', slug: 'cardio', label: 'Cardio' };
 const glutes = { publicId: 'baglutes0001', slug: 'glutes', label: 'Glutes' };
@@ -49,6 +51,22 @@ describe('toUpdateVideoInput', () => {
 
     expect(toUpdateVideoInput({ ...toVideoFormValues(video), title: 'Wall sit' }, video)).toEqual({
       title: 'Wall sit',
+    });
+  });
+
+  it('sends a status moved from active to archived', () => {
+    const video = stored({ status: 'active' });
+
+    expect(toUpdateVideoInput({ ...toVideoFormValues(video), status: 'archived' }, video)).toEqual({
+      status: 'archived',
+    });
+  });
+
+  it('sends a draft being published', () => {
+    const video = stored({ status: 'draft' });
+
+    expect(toUpdateVideoInput({ ...toVideoFormValues(video), status: 'active' }, video)).toEqual({
+      status: 'active',
     });
   });
 
@@ -101,7 +119,7 @@ describe('toUpdateVideoInput', () => {
 
   it('clears blanked fields with null', () => {
     const video = stored();
-    const values = {
+    const values: VideoEditFormValues = {
       ...toVideoFormValues(video),
       description: '',
       difficulty: '',

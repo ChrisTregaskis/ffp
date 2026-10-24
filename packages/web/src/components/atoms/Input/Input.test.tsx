@@ -15,8 +15,8 @@ const Harness: React.FC<{
   onReady: (form: UseFormReturn<Values>) => void;
   onSubmit: (values: Values) => void;
 }> = ({ onReady, onSubmit }) => {
-  const form = useForm<Values>({ defaultValues: { name: 'Ada' }, mode: 'onBlur' });
-  const { ref, ...field } = form.register('name', { required: 'Required' });
+  const form = useForm<Values>({ defaultValues: { name: 'Ada' } });
+  const { ref, ...field } = form.register('name');
   onReady(form);
 
   return (
@@ -57,43 +57,26 @@ const renderInput = (): {
 const input = (): HTMLInputElement => screen.getByRole('textbox', { name: 'Name' });
 
 describe('Input', () => {
-  it("shows the field's registered value", () => {
-    renderInput();
-
+  it('carries the registered value, change, blur and ref', async () => {
+    const { form, onSubmit } = renderInput();
     expect(input().value).toBe('Ada');
-  });
 
-  it('sends a change through register to the submitted values', async () => {
-    const { onSubmit } = renderInput();
-
+    // Submitted before any blur, which would also carry the value and hide a lost change
     fireEvent.change(input(), { target: { value: 'Grace' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledTimes(1);
     });
     expect(onSubmit.mock.calls[0]?.[0]).toEqual({ name: 'Grace' });
-  });
 
-  it('reports a blur through register', async () => {
-    const { form } = renderInput();
-
-    fireEvent.change(input(), { target: { value: '' } });
     fireEvent.blur(input());
-
     await waitFor(() => {
-      expect(form().formState.errors.name?.message).toBe('Required');
+      expect(form().getFieldState('name').isTouched).toBe(true);
     });
-    expect(form().getFieldState('name').isTouched).toBe(true);
-  });
-
-  it('gives register the element, so the form can focus it', () => {
-    const { form } = renderInput();
 
     act(() => {
       form().setFocus('name');
     });
-
     expect(document.activeElement).toBe(input());
   });
 

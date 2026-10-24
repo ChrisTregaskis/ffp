@@ -1,5 +1,6 @@
-import { config } from 'dotenv';
 import { resolve } from 'path';
+
+import { config } from 'dotenv';
 import { defineConfig } from 'drizzle-kit';
 
 // Load .env from monorepo root (two levels up from this file)
@@ -12,9 +13,11 @@ config({ path: resolve(__dirname, '../../.env') });
  */
 const getRequiredEnv = (key: string): string => {
   const value = process.env[key];
+
   if (!value) {
     throw new Error(`Missing required environment variable: ${key}`);
   }
+
   return value;
 };
 
@@ -24,7 +27,7 @@ export default defineConfig({
   dialect: 'postgresql',
   dbCredentials: {
     host: getRequiredEnv('DB_HOST'),
-    port: parseInt(process.env.DB_PORT || '5432'),
+    port: parseInt(process.env.DB_PORT ?? '5432'),
     user: getRequiredEnv('DB_USER'),
     password: getRequiredEnv('DB_PASSWORD'),
     database: getRequiredEnv('DB_NAME'),

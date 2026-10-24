@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { ScoringConfig as StoredScoringConfig } from '@ffp/database';
+import type { EmphasisRule as StoredEmphasisRule } from '@ffp/database';
 import { SCORING_MODES, TAG_CATEGORY_SLUGS } from '@ffp/database/constants';
 
 import { scoreDimensionSchema } from './assessment-question.schema';
@@ -97,25 +97,13 @@ export const emphasisRuleSchema = z.object({
   tags: z.array(emphasisTagSchema).min(1),
 });
 
-export const emphasisRulesSchema = z.array(emphasisRuleSchema);
-
 /**
- * Defines how assessment responses are scored across dimensions and
- * how scores map to programme recommendations.
- *
- * `@ffp/database` holds the stored `ScoringConfig` interface the scoring code
- * reads, and cannot import this schema. `satisfies` keeps a parsed config
- * assignable to that interface; it cannot see a field the interface gains, so
- * add new fields to both.
+ * `@ffp/database` holds the stored `EmphasisRule` interface and cannot import this schema;
+ * `satisfies` keeps a parsed rule assignable to it, so a field added to one goes in both.
  */
-export const scoringConfigSchema = z.object({
-  /** Array of dimension configurations for multi-dimensional scoring */
-  dimensions: z.array(dimensionConfigSchema),
-  /** Array of programme mappings for automatic recommendations */
-  programmeMappings: z.array(programmeMappingSchema),
-  /** Answers that weight the exercises drawn into the recommended programme */
-  emphasis: emphasisRulesSchema.optional(),
-}) satisfies z.ZodType<StoredScoringConfig>;
+export const emphasisRulesSchema = z.array(emphasisRuleSchema) satisfies z.ZodType<
+  StoredEmphasisRule[]
+>;
 
 export type RiskLevel = z.infer<typeof riskLevelSchema>;
 export type ScoringMode = z.infer<typeof scoringModeSchema>;
@@ -125,5 +113,4 @@ export type ComparisonOperator = z.infer<typeof comparisonOperatorSchema>;
 export type ProgrammeMappingCondition = z.infer<typeof programmeMappingConditionSchema>;
 export type LogicalOperator = z.infer<typeof logicalOperatorSchema>;
 export type ProgrammeMapping = z.infer<typeof programmeMappingSchema>;
-export type ScoringConfig = z.infer<typeof scoringConfigSchema>;
 export type EmphasisRule = z.infer<typeof emphasisRuleSchema>;

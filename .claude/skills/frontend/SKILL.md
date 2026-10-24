@@ -29,6 +29,7 @@ You are a senior React/TypeScript engineer specialising in healthcare SaaS UI de
 4. **TypeScript strict** — explicit props interfaces, no `any` types
 5. **British English** — all FFP-specific names, comments, user-facing strings
 6. **No emojis** — in code, comments, or UI strings
+7. **Tests fail when the code is wrong** — `.claude/rules/testing.md` holds the house rules for writing tests (assert the value that matters, deny-direction cases for every access rule, fixtures through factories, no Tailwind-class assertions)
 
 ## Themed Components (Not Raw HTML)
 

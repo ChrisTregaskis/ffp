@@ -1,9 +1,19 @@
-import { pgTable, uuid, text, jsonb, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { relations } from 'drizzle-orm';
+import {
+  pgTable,
+  uuid,
+  text,
+  jsonb,
+  timestamp,
+  uniqueIndex,
+  index,
+  foreignKey,
+} from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+
 import { organisations } from './organisations';
-import { users } from './users';
 import { userAssessments } from './user-assessments';
+import { users } from './users';
 
 /**
  * Assessment safety triggers table definition
@@ -28,12 +38,8 @@ export const assessmentSafetyTriggers = pgTable(
     organisationId: uuid('organisation_id')
       .notNull()
       .references(() => organisations.id, { onDelete: 'cascade' }),
-    userAssessmentId: uuid('user_assessment_id')
-      .notNull()
-      .references(() => userAssessments.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
+    userAssessmentId: uuid('user_assessment_id').notNull(),
+    userId: uuid('user_id').notNull(),
     /** Slug of the question whose answer fired the warning (null when no answer did, e.g. a score) */
     questionSlug: text('question_slug'),
     /** The options the member selected that the warning names (empty when no answer fired it) */
@@ -47,6 +53,16 @@ export const assessmentSafetyTriggers = pgTable(
   (table) => [
     uniqueIndex('idx_assessment_safety_triggers_assessment').on(table.userAssessmentId),
     index('idx_assessment_safety_triggers_organisation').on(table.organisationId),
+    foreignKey({
+      name: 'assessment_safety_triggers_user_assessment_id_organisation_fk',
+      columns: [table.userAssessmentId, table.organisationId],
+      foreignColumns: [userAssessments.id, userAssessments.organisationId],
+    }).onDelete('cascade'),
+    foreignKey({
+      name: 'assessment_safety_triggers_user_id_organisation_fk',
+      columns: [table.userId, table.organisationId],
+      foreignColumns: [users.id, users.organisationId],
+    }).onDelete('cascade'),
   ]
 );
 

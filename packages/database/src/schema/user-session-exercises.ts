@@ -7,8 +7,11 @@ import {
   timestamp,
   uniqueIndex,
   index,
+  unique,
+  foreignKey,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+
 import { organisations } from './organisations';
 import { sessionExercises } from './session-exercises';
 import { userSessions } from './user-sessions';
@@ -31,9 +34,7 @@ export const userSessionExercises = pgTable(
       .notNull()
       .references(() => organisations.id, { onDelete: 'cascade' }),
     /** Parent user session — cascade delete when session is removed */
-    userSessionId: uuid('user_session_id')
-      .notNull()
-      .references(() => userSessions.id, { onDelete: 'cascade' }),
+    userSessionId: uuid('user_session_id').notNull(),
     /** Template exercise copied from — set null on delete so a copy never blocks template authoring */
     sourceSessionExerciseId: uuid('source_session_exercise_id').references(
       () => sessionExercises.id,
@@ -66,6 +67,12 @@ export const userSessionExercises = pgTable(
     index('idx_user_session_exercises_organisation').on(table.organisationId),
     index('idx_user_session_exercises_session').on(table.userSessionId),
     index('idx_user_session_exercises_video').on(table.videoId),
+    unique('user_session_exercises_id_organisation_id_unique').on(table.id, table.organisationId),
+    foreignKey({
+      name: 'user_session_exercises_user_session_id_organisation_fk',
+      columns: [table.userSessionId, table.organisationId],
+      foreignColumns: [userSessions.id, userSessions.organisationId],
+    }).onDelete('cascade'),
   ]
 );
 

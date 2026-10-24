@@ -4,13 +4,11 @@ This package contains monorepo-wide integration tests for the FFP project.
 
 ## Overview
 
-The `@ffp/tests` package is a dedicated workspace package for testing the overall monorepo structure and configuration. It validates that:
+The `@ffp/tests` package is a dedicated workspace package for testing the overall monorepo structure and configuration. It pins the few invariants that would otherwise fail silently:
 
-- Turborepo configuration is correct
-- TypeScript path aliases work across packages
-- Build outputs are generated correctly
-- Code quality standards are maintained
-- Workspace dependencies are properly configured
+- Every package keeps a lint script, so `turbo lint` cannot skip it
+- The base TypeScript config keeps strict mode and the unused-code checks on
+- The Turborepo task order builds dependencies before anything runs against them
 
 ## Structure
 
@@ -22,9 +20,7 @@ tests/
 ├── vitest.config.ts      # Vitest configuration
 ├── README.md             # This file
 └── monorepo/             # Monorepo-specific tests
-    ├── code-quality.test.ts       # Code quality checks
-    ├── path-aliases.test.ts       # TypeScript path alias tests
-    └── turborepo-config.test.ts   # Turborepo configuration tests
+    └── invariants.test.ts   # Lint scripts, strict tsconfig, Turborepo task order
 ```
 
 ## Running Tests
@@ -96,16 +92,8 @@ When adding new tests:
 4. Import packages using the configured path aliases
 5. Follow the existing pattern of grouping related tests in describe blocks
 
-## Test Categories
+## What `invariants.test.ts` pins
 
-### Code Quality (`code-quality.test.ts`)
-
-Checks that each package keeps a lint script, which `turbo lint` would otherwise skip silently.
-
-### Path Aliases (`path-aliases.test.ts`)
-
-Pins strict mode and the unused-code checks in `tsconfig.base.json`.
-
-### Turborepo Config (`turborepo-config.test.ts`)
-
-Pins the task dependency order (`build` on `^build`, `test` on `build`, `typecheck` on `^build`).
+- **Lint scripts:** core, web, functions and database each keep an `eslint` lint script, which `turbo lint` would otherwise skip silently.
+- **Strict TypeScript:** strict mode and the unused-code checks in `tsconfig.base.json`.
+- **Turborepo task order:** `build` on `^build`, `test` on `build`, `typecheck` on `^build`.

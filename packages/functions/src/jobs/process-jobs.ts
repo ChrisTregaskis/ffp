@@ -15,6 +15,7 @@ import {
   processScoreAssessment,
   createLogger,
   createSystemLogger,
+  describeErrorForLog,
   ValidationError,
   processGenerateProgramme,
   type JobProcessorConfig,
@@ -121,7 +122,7 @@ export const handler = async (event: ScheduledEvent, context: Context): Promise<
         completed++;
       } catch (error) {
         const err = error instanceof Error ? error : new Error('Unknown error');
-        logger.error('Job failed', { error: err.message });
+        logger.error('Job failed', describeErrorForLog(error));
 
         // Handle failure with retry logic
         const failResult = await failJob(job, err);
@@ -142,10 +143,10 @@ export const handler = async (event: ScheduledEvent, context: Context): Promise<
       failed,
     });
   } catch (error) {
-    sysLogger.error('Job processor failed', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    throw error;
+    const description = describeErrorForLog(error);
+    sysLogger.error('Job processor failed', description);
+    // The runtime logs a thrown error's enumerable fields, query and params included
+    throw new Error(description.error);
   }
 };
 

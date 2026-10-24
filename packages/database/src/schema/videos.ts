@@ -11,6 +11,7 @@ import {
   pgEnum,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+
 import { VIDEO_STATUSES, DIFFICULTIES, MOVEMENT_TYPES } from '../constants/video.constants';
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 

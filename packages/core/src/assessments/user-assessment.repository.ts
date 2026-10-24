@@ -2,7 +2,6 @@ import { eq, and, or, desc, sql } from 'drizzle-orm';
 
 import type { UserAssessmentStatus } from '@ffp/database';
 import { userAssessments, type UserAssessmentRecord } from '@ffp/database/schema';
-import type { UserAssessmentScores } from '@ffp/database/types';
 
 import { withRLS, type Transaction } from '../lib/database';
 import { NotFoundError, ValidationError } from '../lib/errors';
@@ -82,56 +81,6 @@ export async function findUserAssessmentById(
   }
 
   return await withRLS(organisationId, options.userId, doQuery);
-}
-
-export async function findByUserId(
-  organisationId: string,
-  userId: string,
-  options?: { status?: UserAssessmentStatus }
-): Promise<UserAssessment[]> {
-  return await withRLS(organisationId, userId, async (tx) => {
-    const conditions = [eq(userAssessments.userId, userId)];
-
-    if (options?.status) {
-      conditions.push(eq(userAssessments.status, options.status));
-    }
-
-    const records = await tx
-      .select()
-      .from(userAssessments)
-      .where(and(...conditions));
-
-    return records;
-  });
-}
-
-export async function findAssessmentInProgress(
-  organisationId: string,
-  userId: string,
-  flowId?: string
-): Promise<UserAssessment | null> {
-  return await withRLS(organisationId, userId, async (tx) => {
-    const conditions = [
-      eq(userAssessments.userId, userId),
-      eq(userAssessments.status, 'in_progress'),
-    ];
-
-    if (flowId) {
-      conditions.push(eq(userAssessments.flowId, flowId));
-    }
-
-    const records = await tx
-      .select()
-      .from(userAssessments)
-      .where(and(...conditions))
-      .limit(1);
-
-    if (records.length === 0) {
-      return null;
-    }
-
-    return records[0];
-  });
 }
 
 /** Returns an existing assessment that can be resumed (not_started or in_progress). */
@@ -354,74 +303,6 @@ export async function transitionAssessmentStatus(
   // Otherwise, create new transaction with RLS
   return await withRLS(organisationId, userId, async (newTx) => {
     return transitionAssessmentStatusInTx(newTx, assessmentId, toStatus);
-  });
-}
-
-/**
- * Called after scoring job completes.
- * Typically followed by transitionStatus to 'scored'.
- */
-export async function updateAssessmentScores(
-  organisationId: string,
-  assessmentId: string,
-  scores: UserAssessmentScores,
-  userId?: string
-): Promise<UserAssessment> {
-  return await withRLS(organisationId, userId, async (tx) => {
-    const existing = await tx
-      .select()
-      .from(userAssessments)
-      .where(eq(userAssessments.id, assessmentId))
-      .limit(1);
-
-    if (existing.length === 0) {
-      throw new NotFoundError('User assessment', assessmentId);
-    }
-
-    const [record] = await tx
-      .update(userAssessments)
-      .set({
-        scores,
-        updatedAt: new Date(),
-      })
-      .where(eq(userAssessments.id, assessmentId))
-      .returning();
-
-    return record;
-  });
-}
-
-/**
- * Called after programme generation job completes.
- * Typically followed by transitionStatus to 'completed'.
- */
-export async function linkAssessmentToProgramme(
-  organisationId: string,
-  assessmentId: string,
-  programmeId: string,
-  userId?: string
-): Promise<UserAssessment> {
-  return await withRLS(organisationId, userId, async (tx) => {
-    const existing = await tx
-      .select()
-      .from(userAssessments)
-      .where(eq(userAssessments.id, assessmentId))
-      .limit(1);
-
-    if (existing.length === 0) {
-      throw new NotFoundError('User assessment', assessmentId);
-    }
-
-    const [record] = await tx
-      .update(userAssessments)
-      .set({
-        programmeId,
-        updatedAt: new Date(),
-      })
-      .where(eq(userAssessments.id, assessmentId))
-      .returning();
-
-    return record;
   });
 }
 

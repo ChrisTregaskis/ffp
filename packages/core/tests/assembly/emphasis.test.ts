@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { assembleSession, resolveEmphasisWeights } from '../../src/programmes/assembly';
-import { scoringConfigSchema } from '../../src/schemas/scoring-config.schema';
+import { emphasisRulesSchema } from '../../src/schemas/scoring-config.schema';
 
 import { NO_EMPHASIS, candidate, seeds, slot } from './assembly-fixtures';
 
@@ -143,18 +143,10 @@ describe('emphasis in the draw', () => {
   });
 });
 
-describe('the emphasis config schema', () => {
-  const config = (emphasis: unknown): unknown => ({
-    dimensions: [],
-    programmeMappings: [],
-    emphasis,
-  });
-
+describe('the emphasis rules schema', () => {
   it('accepts well-formed rules, and no rules at all', () => {
-    expect(scoringConfigSchema.safeParse(config(RULES)).success).toBe(true);
-    expect(scoringConfigSchema.safeParse({ dimensions: [], programmeMappings: [] }).success).toBe(
-      true
-    );
+    expect(emphasisRulesSchema.safeParse(RULES).success).toBe(true);
+    expect(emphasisRulesSchema.safeParse([]).success).toBe(true);
   });
 
   it.each([
@@ -164,22 +156,20 @@ describe('the emphasis config schema', () => {
     ['an empty slug', { category: 'movement', slug: '', weight: 1 }],
   ])('refuses a tag with %s', (_, tag) => {
     expect(
-      scoringConfigSchema.safeParse(
-        config([{ questionId: ACTIVITY, answerValue: 'low', tags: [tag] }])
-      ).success
+      emphasisRulesSchema.safeParse([{ questionId: ACTIVITY, answerValue: 'low', tags: [tag] }])
+        .success
     ).toBe(false);
   });
 
   it('refuses a rule naming a question by anything but its id, or naming no tags', () => {
     expect(
-      scoringConfigSchema.safeParse(
-        config([{ questionId: 'weekly-activity', answerValue: 'low', tags: RULES[0].tags }])
-      ).success
+      emphasisRulesSchema.safeParse([
+        { questionId: 'weekly-activity', answerValue: 'low', tags: RULES[0].tags },
+      ]).success
     ).toBe(false);
     expect(
-      scoringConfigSchema.safeParse(
-        config([{ questionId: ACTIVITY, answerValue: 'low', tags: [] }])
-      ).success
+      emphasisRulesSchema.safeParse([{ questionId: ACTIVITY, answerValue: 'low', tags: [] }])
+        .success
     ).toBe(false);
   });
 });

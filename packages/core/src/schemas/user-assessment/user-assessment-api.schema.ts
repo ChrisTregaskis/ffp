@@ -8,13 +8,6 @@ import {
   assessmentWarningSchema,
 } from './user-assessment-entity.schema';
 
-export const submitAssessmentSchema = z.object({
-  /** Assessment ID being submitted */
-  assessmentId: z.guid(),
-  /** Final answers (complete set) */
-  answers: userAssessmentAnswersSchema,
-});
-
 export const startAssessmentRequestSchema = z.object({
   /** Assessment flow ID to start (must be valid UUID) */
   flowId: z.guid({ message: 'flowId must be a valid GUID' }),
@@ -156,7 +149,6 @@ export const userAssessmentStatusResponseSchema = z.object({
 });
 
 export type ProgrammeReadiness = z.infer<typeof programmeReadinessSchema>;
-export type SubmitAssessmentInput = z.infer<typeof submitAssessmentSchema>;
 export type StartAssessmentRequest = z.infer<typeof startAssessmentRequestSchema>;
 export type FlowStepSummary = z.infer<typeof flowStepSummarySchema>;
 export type SafetyGate = z.infer<typeof safetyGateSchema>;

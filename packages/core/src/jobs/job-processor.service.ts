@@ -3,6 +3,7 @@ import { eq, and, lte, isNull, or, sql, asc, inArray } from 'drizzle-orm';
 import { getDb, processJobs, JOB_TYPES, type ProcessJobRecord, type JobType } from '@ffp/database';
 
 import { BaseError, JobProcessorError, NotFoundError } from '../lib/errors';
+import { describeErrorForLog } from '../lib/log-safe-error';
 import { sortBy } from '../lib/sort.utils';
 
 /**
@@ -146,7 +147,8 @@ export async function failJob(job: ProcessJobRecord, error: Error): Promise<Fail
       .update(processJobs)
       .set({
         status: shouldRetry ? 'queued' : 'failed',
-        message: error.message,
+        // Persisted on the job row, so it must not carry SQL or bound parameters
+        message: describeErrorForLog(error).error,
         retryAfter,
         completedAt: shouldRetry ? null : new Date(),
       })

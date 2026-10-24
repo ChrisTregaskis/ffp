@@ -7,8 +7,10 @@ import {
   jsonb,
   uniqueIndex,
   index,
+  foreignKey,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+
 import { organisations } from './organisations';
 import { userSessionExercises } from './user-session-exercises';
 import { userSessions } from './user-sessions';
@@ -36,13 +38,9 @@ export const exerciseCompletions = pgTable(
       .notNull()
       .references(() => organisations.id, { onDelete: 'cascade' }),
     /** Parent user session — cascade delete when session is removed */
-    userSessionId: uuid('user_session_id')
-      .notNull()
-      .references(() => userSessions.id, { onDelete: 'cascade' }),
+    userSessionId: uuid('user_session_id').notNull(),
     /** The member's exercise this completes — restrict deletion of exercises in use */
-    userSessionExerciseId: uuid('user_session_exercise_id')
-      .notNull()
-      .references(() => userSessionExercises.id, { onDelete: 'restrict' }),
+    userSessionExerciseId: uuid('user_session_exercise_id').notNull(),
     /** Denormalised video reference — restrict deletion of videos in use */
     videoId: uuid('video_id')
       .notNull()
@@ -68,6 +66,16 @@ export const exerciseCompletions = pgTable(
     index('idx_exercise_completions_organisation').on(table.organisationId),
     index('idx_exercise_completions_session').on(table.userSessionId),
     index('idx_exercise_completions_video').on(table.videoId),
+    foreignKey({
+      name: 'exercise_completions_user_session_id_organisation_fk',
+      columns: [table.userSessionId, table.organisationId],
+      foreignColumns: [userSessions.id, userSessions.organisationId],
+    }).onDelete('cascade'),
+    foreignKey({
+      name: 'exercise_completions_user_session_exercise_id_organisation_fk',
+      columns: [table.userSessionExerciseId, table.organisationId],
+      foreignColumns: [userSessionExercises.id, userSessionExercises.organisationId],
+    }).onDelete('restrict'),
   ]
 );
 

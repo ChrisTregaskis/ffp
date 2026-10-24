@@ -9,7 +9,9 @@ import {
   index,
   primaryKey,
 } from 'drizzle-orm/pg-core';
+
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
 import { tagCategories, tags } from './tags';
 import { templateSessions } from './template-sessions';
 

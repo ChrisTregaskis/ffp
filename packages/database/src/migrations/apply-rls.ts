@@ -26,8 +26,10 @@
  */
 
 import { sql } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+
 import { createLogger } from '../lib/logger';
+
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 const logger = createLogger('apply-rls');
 
@@ -43,7 +45,9 @@ const logger = createLogger('apply-rls');
  * @param db - Drizzle database instance
  * @returns Promise<void>
  */
-export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
+export const applyRLS = async <TSchema extends Record<string, unknown>>(
+  db: NodePgDatabase<TSchema>
+): Promise<void> => {
   logger.info('Checking RLS status...');
 
   // Check if RLS is already applied to all tables
@@ -55,10 +59,10 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     ORDER BY tablename
   `);
 
-  const tables = rlsCheck.rows as Array<{ tablename: string; rowsecurity: boolean }>;
+  const tables = rlsCheck.rows as { tablename: string; rowsecurity: boolean }[];
 
   // Check if all tables have RLS enabled (11 tables)
-  const allTablesHaveRLS = tables.length === 11 && tables.every((t) => t.rowsecurity === true);
+  const allTablesHaveRLS = tables.length === 11 && tables.every((t) => t.rowsecurity);
 
   if (allTablesHaveRLS) {
     logger.info(
@@ -82,7 +86,8 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
 
     // Force RLS in development/test environments (for testing with superuser)
     // In production, app_user will have RLS enforced naturally (non-superuser)
-    const environment = process.env.ENVIRONMENT || 'development';
+    // Not ??, so an empty value also falls back.
+    const environment = process.env.ENVIRONMENT ? process.env.ENVIRONMENT : 'development';
     const isProduction = environment === 'production' || environment === 'prod';
 
     if (!isProduction) {
@@ -126,7 +131,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
       CREATE POLICY organisation_read_isolation ON organisations
         FOR SELECT
         USING (
-          id = current_setting('app.organisation_id', true)::uuid
+          id = NULLIF(current_setting('app.organisation_id', true), '')::uuid
           OR type = 'platform'
         );
     `);
@@ -135,7 +140,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     await tx.execute(sql`
       CREATE POLICY organisation_write_isolation ON organisations
         FOR ALL
-        USING (id = current_setting('app.organisation_id', true)::uuid);
+        USING (id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // Admin bypass: system_admin queries set app.is_admin = 'true' for cross-organisation access
@@ -181,7 +186,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     await tx.execute(sql`
       CREATE POLICY location_isolation ON locations
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // Admin bypass: system_admin queries set app.is_admin = 'true' for cross-organisation access
@@ -219,7 +224,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     await tx.execute(sql`
       CREATE POLICY user_isolation ON users
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // Admin bypass: system_admin queries set app.is_admin = 'true' for cross-organisation access
@@ -256,7 +261,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     await tx.execute(sql`
       CREATE POLICY user_assessment_organisation_isolation ON user_assessments
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // ============================================================================
@@ -286,7 +291,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     await tx.execute(sql`
       CREATE POLICY user_assessment_answers_organisation_isolation ON user_assessment_answers
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // ============================================================================
@@ -312,7 +317,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     await tx.execute(sql`
       CREATE POLICY assessment_safety_triggers_organisation_isolation ON assessment_safety_triggers
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // ============================================================================
@@ -338,7 +343,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     await tx.execute(sql`
       CREATE POLICY programme_organisation_isolation ON programmes
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // ============================================================================
@@ -368,7 +373,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     await tx.execute(sql`
       CREATE POLICY programme_phases_organisation_isolation ON programme_phases
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // ============================================================================
@@ -394,7 +399,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     await tx.execute(sql`
       CREATE POLICY user_sessions_organisation_isolation ON user_sessions
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // ============================================================================
@@ -420,7 +425,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     await tx.execute(sql`
       CREATE POLICY user_session_exercises_organisation_isolation ON user_session_exercises
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // ============================================================================
@@ -446,7 +451,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
     await tx.execute(sql`
       CREATE POLICY exercise_completions_organisation_isolation ON exercise_completions
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
   });
 
@@ -462,7 +467,7 @@ export const applyRLS = async (db: NodePgDatabase<any>): Promise<void> => {
   `);
 
   logger.info('RLS Status:');
-  for (const row of verifyCheck.rows as Array<{ tablename: string; rowsecurity: boolean }>) {
+  for (const row of verifyCheck.rows as { tablename: string; rowsecurity: boolean }[]) {
     const status = row.rowsecurity ? 'Enabled' : 'Disabled';
     logger.info(`  ${row.tablename}: ${status}`, {
       table: row.tablename,
