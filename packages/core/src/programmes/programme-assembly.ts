@@ -42,8 +42,40 @@ function createPoolReader(db: DbQueryClient): (query: PoolVideoQuery) => Promise
   };
 }
 
+/**
+ * Reads each video's tags as `category:slug` once per generation. Only emphasis looks at them,
+ * so with none there is nothing to read.
+ */
+function createTagKeyReader(
+  db: DbQueryClient,
+  emphasis: EmphasisWeights
+): (videoIds: string[]) => Promise<Map<string, string[]>> {
+  const tagKeysByVideo = new Map<string, string[]>();
+
+  return async (videoIds) => {
+    const unread = videoIds.filter((videoId) => !tagKeysByVideo.has(videoId));
+
+    if (emphasis.size > 0 && unread.length > 0) {
+      for (const videoId of unread) {
+        tagKeysByVideo.set(videoId, []);
+      }
+
+      for (const row of await tagRepository.findVideoTags(db, unread)) {
+        tagKeysByVideo.get(row.videoId)?.push(`${row.category}:${row.slug}`);
+      }
+    }
+
+    return tagKeysByVideo;
+  };
+}
+
+interface SessionReaders {
+  readPool: (query: PoolVideoQuery) => Promise<VideoRecord[]>;
+  readTagKeys: (videoIds: string[]) => Promise<Map<string, string[]>>;
+}
+
 async function drawSession(
-  readPool: (query: PoolVideoQuery) => Promise<VideoRecord[]>,
+  { readPool, readTagKeys }: SessionReaders,
   { session }: TemplateSessionWithExercises,
   slots: SlotToDraw[],
   input: ChooseSessionExercisesInput
@@ -54,6 +86,7 @@ async function drawSession(
     )
   );
   const videosById = new Map(pools.flat().map((video) => [video.id, video]));
+  const tagKeysByVideo = await readTagKeys([...videosById.keys()]);
 
   const result = assembleSession({
     slots: slots.map((slot, index) => ({
@@ -63,7 +96,7 @@ async function drawSession(
       candidates: pools[index].map((video) => ({
         videoId: video.id,
         isEssential: video.isEssential,
-        tagKeys: [],
+        tagKeys: tagKeysByVideo.get(video.id) ?? [],
       })),
     })),
     emphasis: input.emphasis,
@@ -115,7 +148,10 @@ export async function chooseSessionExercises(
     db,
     templateSessions.map(({ session }) => session.id)
   );
-  const readPool = createPoolReader(db);
+  const readers: SessionReaders = {
+    readPool: createPoolReader(db),
+    readTagKeys: createTagKeyReader(db, input.emphasis),
+  };
   const exercisesBySession = new Map<string, MemberSessionExerciseFields[]>();
 
   for (const templateSession of templateSessions) {
@@ -124,7 +160,7 @@ export async function chooseSessionExercises(
     exercisesBySession.set(
       templateSession.session.id,
       slots
-        ? await drawSession(readPool, templateSession, slots, input)
+        ? await drawSession(readers, templateSession, slots, input)
         : templateSession.exercises.map(fromTemplateExercise)
     );
   }

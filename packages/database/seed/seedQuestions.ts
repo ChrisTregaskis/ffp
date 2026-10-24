@@ -322,7 +322,7 @@ const balanceCheckQuestions: NewQuestion[] = [
 /**
  * All default questions to seed
  */
-const DEFAULT_QUESTIONS: NewQuestion[] = [
+export const DEFAULT_QUESTIONS: NewQuestion[] = [
   ...aboutYouQuestions,
   ...goalsAndSafetyQuestions,
   ...gettingStartedQuestions,

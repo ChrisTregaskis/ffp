@@ -1,6 +1,6 @@
 import { eq, inArray, asc, and, count, ilike, or, sql, type Column, type SQL } from 'drizzle-orm';
 
-import type { DbClient, QuestionWithConfig } from '@ffp/database';
+import type { DbClient, DbQueryClient, QuestionWithConfig } from '@ffp/database';
 import {
   assessmentFlows,
   questions,
@@ -99,7 +99,7 @@ export type TemplateQuestionWithConfig = QuestionWithConfig & { templateId: stri
  * @returns Questions with template-specific config, ordered by templateId then displayOrder
  */
 export async function findByTemplateIds(
-  db: DbClient,
+  db: DbQueryClient,
   templateIds: string[],
   options: { includeInactive?: boolean } = {}
 ): Promise<TemplateQuestionWithConfig[]> {

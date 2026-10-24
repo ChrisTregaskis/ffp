@@ -1129,6 +1129,78 @@ describe('Assessment Service', () => {
     });
   });
 
+  describe('getAssessmentResults programme readiness', () => {
+    const userId = randomUUID();
+
+    const assessmentWith = (
+      status: UserAssessment['status'],
+      programmeId: string | null
+    ): UserAssessment => ({
+      id: randomUUID(),
+      organisationId: randomUUID(),
+      userId,
+      flowId: randomUUID(),
+      currentStep: 4,
+      status,
+      scores: { dimensions: [], scoredAt: new Date() },
+      programmeId,
+      visitedStepIds: [],
+      warningsShown: [],
+      startedAt: new Date(),
+      submittedAt: new Date(),
+      completedAt: null,
+      safetyAcknowledgedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const readinessOf = async (
+      assessment: UserAssessment,
+      context = createUserContext()
+    ): Promise<string> => {
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
+
+      const result = await assessmentService.getAssessmentResults(assessment.id, context);
+
+      return result.programmeReadiness;
+    };
+
+    beforeEach(() => {
+      mockedContextModule.getUserIdFromContext.mockResolvedValue(userId);
+      mockedProgrammeRepo.findProgrammeById.mockResolvedValue(null);
+    });
+
+    it('is ready once the assessment links a programme', async () => {
+      mockedJobQueueService.hasProgrammeGenerationFailed.mockResolvedValue(true);
+
+      expect(await readinessOf(assessmentWith('completed', randomUUID()))).toBe('ready');
+    });
+
+    it('has failed when generation for a scored assessment failed', async () => {
+      mockedJobQueueService.hasProgrammeGenerationFailed.mockResolvedValue(true);
+
+      const assessment = assessmentWith('scored', null);
+      const context = createUserContext();
+
+      expect(await readinessOf(assessment, context)).toBe('failed');
+      expect(mockedJobQueueService.hasProgrammeGenerationFailed).toHaveBeenCalledWith(
+        context.organisationId,
+        assessment.id
+      );
+    });
+
+    it('is pending while generation for a scored assessment has not failed', async () => {
+      mockedJobQueueService.hasProgrammeGenerationFailed.mockResolvedValue(false);
+
+      expect(await readinessOf(assessmentWith('scored', null))).toBe('pending');
+    });
+
+    it('is pending, without reading jobs, while scoring is still running', async () => {
+      expect(await readinessOf(assessmentWith('submitted', null))).toBe('pending');
+      expect(mockedJobQueueService.hasProgrammeGenerationFailed).not.toHaveBeenCalled();
+    });
+  });
+
   describe('safety gate', () => {
     const SAFETY_SLUG = 'safety-check';
     const ADVICE = 'Please speak to a health professional before you start.';

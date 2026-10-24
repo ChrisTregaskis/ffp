@@ -1,6 +1,6 @@
 import { getDb, type AnswerValue, type DbClient } from '@ffp/database';
 
-import { queueJob } from '../jobs/job-queue.service';
+import { hasProgrammeGenerationFailed, queueJob } from '../jobs/job-queue.service';
 import { getUserIdFromContext } from '../lib/context';
 import { withRLS, type Transaction } from '../lib/database';
 import { InternalServerError, NotFoundError, ValidationError } from '../lib/errors';
@@ -33,6 +33,7 @@ import type { UserAssessment } from './user-assessment.repository';
 import type { OrganisationContext } from '../lib/context';
 import type {
   AssessmentResultsResponse,
+  ProgrammeReadiness,
   FlowStepSummary,
   SafetyGate,
   StartAssessmentResponse,
@@ -125,7 +126,9 @@ async function findOwnAssessment(
   const assessment = await userAssessmentRepository.findUserAssessmentById(
     organisationId,
     assessmentId,
-    userId
+    {
+      userId,
+    }
   );
 
   if (!assessment || assessment.userId !== userId) {
@@ -668,6 +671,25 @@ export async function submitAssessment(
   });
 }
 
+/** Generation is queued once scoring finishes, so only a scored assessment can have failed it */
+async function findProgrammeReadiness(
+  organisationId: string,
+  assessment: UserAssessment
+): Promise<ProgrammeReadiness> {
+  if (assessment.programmeId) {
+    return 'ready';
+  }
+
+  if (
+    assessment.status === 'scored' &&
+    (await hasProgrammeGenerationFailed(organisationId, assessment.id))
+  ) {
+    return 'failed';
+  }
+
+  return 'pending';
+}
+
 /**
  * Get assessment results (scores and programme)
  *
@@ -709,11 +731,11 @@ export async function getAssessmentResults(
     programmeName = programme?.name ?? null;
   }
 
-  // Return the assessment results
   return {
     status: assessment.status,
     scores: assessment.scores,
     programmeId: assessment.programmeId,
+    programmeReadiness: await findProgrammeReadiness(organisationId, assessment),
     programmeName,
     safetyGate: await loadSafetyGate(organisationId, assessment, userId),
   };

@@ -10,7 +10,7 @@ import {
 } from '../src/constants/level-scoring.constants.js';
 import { QUESTION_IDS } from './seedQuestions.js';
 
-import type { ScoringConfig } from '../src/types/question.types.js';
+import type { EmphasisRule, EmphasisTag, ScoringConfig } from '../src/types/question.types.js';
 
 const logger = createLogger('seed-assessment-flows');
 
@@ -58,12 +58,56 @@ const BRANCHING_DEMO_SCORING_CONFIG: ScoringConfig = {
   ],
 };
 
+const lean = (
+  questionId: string,
+  answerValue: string,
+  tags: Record<string, number>,
+  category: EmphasisTag['category']
+): EmphasisRule => ({
+  questionId,
+  answerValue,
+  tags: Object.entries(tags).map(([slug, weight]) => ({ category, slug, weight })),
+});
+
+/**
+ * How the Wellness answers lean a programme's draw. A less active member's stretch and mobility
+ * outweigh strength whatever the goal, even a strength video carrying the goal's own tag, so the
+ * low-activity lean exceeds the most a goal adds to one video. The goal adds its goal tag and a
+ * lighter movement lean; focus areas lean to their body areas; "full body" leans nowhere. A lean
+ * only chooses between movements where a slot's pool mixes them: a slot narrowed to one movement
+ * keeps it. The goal tags are named before they are authored and count once they exist.
+ */
+const WELLNESS_EMPHASIS: EmphasisRule[] = [
+  lean(QUESTION_IDS['weekly-activity'], 'low', { stretch: 4, mobility: 4 }, 'movement'),
+  lean(QUESTION_IDS['weekly-activity'], 'moderate', { mobility: 1, balance: 1 }, 'movement'),
+  lean(QUESTION_IDS['weekly-activity'], 'active', { strength: 2, cardio: 1 }, 'movement'),
+  lean(QUESTION_IDS['session-goal'], 'relieve-tension', { 'relieve-tension': 2 }, 'goal'),
+  lean(QUESTION_IDS['session-goal'], 'relieve-tension', { stretch: 1 }, 'movement'),
+  lean(QUESTION_IDS['session-goal'], 'build-strength', { 'build-strength': 2 }, 'goal'),
+  lean(QUESTION_IDS['session-goal'], 'build-strength', { strength: 1 }, 'movement'),
+  lean(QUESTION_IDS['session-goal'], 'boost-energy', { 'boost-energy': 2 }, 'goal'),
+  lean(QUESTION_IDS['session-goal'], 'boost-energy', { cardio: 1 }, 'movement'),
+  lean(
+    QUESTION_IDS['focus-areas'],
+    'neck-shoulders',
+    { shoulders: 2, 'upper-back': 1, spine: 1 },
+    'body-area'
+  ),
+  lean(QUESTION_IDS['focus-areas'], 'lower-back-core', { 'lower-back': 2, core: 2 }, 'body-area'),
+  lean(
+    QUESTION_IDS['focus-areas'],
+    'hips-lower-body',
+    { 'hip-flexors': 2, glutes: 1, quadriceps: 1, hamstrings: 1 },
+    'body-area'
+  ),
+];
+
 export const DEFAULT_FLOWS = [
   {
     id: FLOW_IDS.WELLNESS,
     name: 'Wellness Movement Assessment',
     description: 'A short check-in on activity, goals and safety that sets your starting level',
-    scoringConfig: LEVEL_SCORING_CONFIG,
+    scoringConfig: { ...LEVEL_SCORING_CONFIG, emphasis: WELLNESS_EMPHASIS },
   },
   {
     id: FLOW_IDS.BRANCHING_DEMO,

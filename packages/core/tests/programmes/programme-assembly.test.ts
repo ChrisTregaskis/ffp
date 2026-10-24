@@ -4,15 +4,19 @@ import { and, asc, eq, inArray } from 'drizzle-orm';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  assessmentFlows,
   processJobs,
   programmePhases,
   programmes,
+  questions,
   tagCategories,
   tags,
   templatePhases,
   templateSessionSlots,
   templateSessions,
   templateSlotTags,
+  userAssessmentAnswers,
+  userAssessments,
   userSessionExercises,
   userSessions,
   videos,
@@ -23,6 +27,7 @@ import {
 
 import { processGenerateProgramme } from '../../src/jobs/handlers/generate-programme.handler';
 import { failJob } from '../../src/jobs/job-processor.service';
+import { hasProgrammeGenerationFailed } from '../../src/jobs/job-queue.service';
 import { closePool, withRLS } from '../../src/lib/database';
 import { ProgrammeAssemblyError } from '../../src/lib/errors';
 import { generateProgramme } from '../../src/programmes/programme.service';
@@ -45,6 +50,10 @@ interface SlotData {
   poolTagId: string;
   emptyTagId: string;
   pool: VideoRecord[];
+  /** Created by a test that needs more than the shared data; removed with it */
+  extraTagIds: string[];
+  flowId?: string;
+  questionId?: string;
 }
 
 /** A tag with four active videos, the first with every default set, and an empty tag. */
@@ -102,7 +111,13 @@ async function addSlotData(fixture: Fixture): Promise<SlotData> {
         )
       );
 
-    return { slottedSessionId: session.id, poolTagId: poolTag.id, emptyTagId: emptyTag.id, pool };
+    return {
+      slottedSessionId: session.id,
+      poolTagId: poolTag.id,
+      emptyTagId: emptyTag.id,
+      pool,
+      extraTagIds: [],
+    };
   });
 }
 
@@ -135,7 +150,17 @@ async function removeSlotData(fixture: Fixture, data: SlotData): Promise<void> {
         data.pool.map((video) => video.id)
       )
     );
-    await tx.delete(tags).where(inArray(tags.id, [data.poolTagId, data.emptyTagId]));
+    await tx
+      .delete(tags)
+      .where(inArray(tags.id, [data.poolTagId, data.emptyTagId, ...data.extraTagIds]));
+
+    if (data.flowId) {
+      await tx.delete(assessmentFlows).where(eq(assessmentFlows.id, data.flowId));
+    }
+
+    if (data.questionId) {
+      await tx.delete(questions).where(eq(questions.id, data.questionId));
+    }
   });
 }
 
@@ -332,6 +357,100 @@ describe('Programme assembly', () => {
     const result = await failJob(job, error as Error);
 
     expect(result).toMatchObject({ willRetry: false, newStatus: 'failed' });
+    expect(
+      await hasProgrammeGenerationFailed(fixture.organisationId, payload.assessmentSubmissionId)
+    ).toBe(true);
+    expect(await hasProgrammeGenerationFailed(fixture.organisationId, randomUUID())).toBe(false);
+  });
+
+  it('weights the draw by the answers of the assessment the job generates from', async () => {
+    const emphasisedSlug = `assembly-emphasis-${shortId()}`;
+    const [emphasised] = data.pool.slice(2);
+    const flowId = randomUUID();
+    const questionId = randomUUID();
+    const assessmentId = randomUUID();
+
+    const sessionIds = await withRLS(fixture.organisationId, undefined, async (tx) => {
+      const [movement] = await tx
+        .select({ id: tagCategories.id })
+        .from(tagCategories)
+        .where(eq(tagCategories.slug, 'movement'));
+      const [tag] = await tx
+        .insert(tags)
+        .values({ categoryId: movement.id, slug: emphasisedSlug, label: emphasisedSlug })
+        .returning();
+
+      data.extraTagIds.push(tag.id);
+      await tx.insert(videoTags).values({ videoId: emphasised.id, tagId: tag.id });
+      await tx.insert(questions).values({
+        id: questionId,
+        slug: `assembly-${shortId()}`,
+        type: 'single-choice',
+        questionText: 'How active are you?',
+      });
+      await tx.insert(assessmentFlows).values({
+        id: flowId,
+        name: `Assembly flow ${shortId()}`,
+        scoringConfig: {
+          dimensions: [],
+          programmeMappings: [],
+          emphasis: [
+            {
+              questionId,
+              answerValue: 'low',
+              tags: [{ category: 'movement', slug: emphasisedSlug, weight: 1_000_000 }],
+            },
+          ],
+        },
+      });
+      await tx.insert(userAssessments).values({
+        id: assessmentId,
+        organisationId: fixture.organisationId,
+        userId: fixture.userId,
+        flowId,
+        status: 'scored',
+      });
+      await tx.insert(userAssessmentAnswers).values({
+        organisationId: fixture.organisationId,
+        userAssessmentId: assessmentId,
+        questionId,
+        answerValue: 'low',
+      });
+
+      const sessions = await tx
+        .select({ id: templateSessions.id })
+        .from(templateSessions)
+        .innerJoin(templatePhases, eq(templatePhases.id, templateSessions.templatePhaseId))
+        .where(eq(templatePhases.programmeTemplateId, fixture.templateId));
+
+      return sessions.map((session) => session.id);
+    });
+
+    data.flowId = flowId;
+    data.questionId = questionId;
+
+    // Three sessions: unweighted, all three draw the emphasised video one time in 64
+    for (const sessionId of sessionIds) {
+      await addSlot(fixture, sessionId, 0, data.poolTagId);
+    }
+
+    const { programmeId } = await processGenerateProgramme(
+      {
+        assessmentSubmissionId: assessmentId,
+        userId: fixture.userId,
+        scores: [],
+        recommendedTemplateSlug: fixture.templateSlug,
+      },
+      fixture.organisationId
+    );
+
+    await withRLS(fixture.organisationId, fixture.userId, async (tx) => {
+      for (const sessionId of sessionIds) {
+        const drawn = await readSessionExercises(tx, programmeId, sessionId);
+
+        expect(drawn.map((row) => row.videoId)).toEqual([emphasised.id]);
+      }
+    });
   });
 
   it('skips an optional slot with an empty pool', async () => {

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import type { ScoringConfig as StoredScoringConfig } from '@ffp/database';
-import { SCORING_MODES } from '@ffp/database/constants';
+import { SCORING_MODES, TAG_CATEGORY_SLUGS } from '@ffp/database/constants';
 
 import { scoreDimensionSchema } from './assessment-question.schema';
 
@@ -78,6 +78,27 @@ export const programmeMappingSchema = z.object({
   priority: z.number().int().optional(),
 });
 
+/** A tag an answer leans towards, by category and slug so a mapping can name one not yet authored */
+export const emphasisTagSchema = z.object({
+  category: z.enum(TAG_CATEGORY_SLUGS),
+  slug: z.string().min(1),
+  /** Added to the weight of every candidate carrying the tag */
+  weight: z.number().positive(),
+});
+
+/**
+ * An answer that leans a programme's draw: when the member's answer to the question is (or, for a
+ * multi-choice question, includes) the value, candidates carrying the tags weigh more. Only
+ * single- and multi-choice questions can match, since the value is an option's string.
+ */
+export const emphasisRuleSchema = z.object({
+  questionId: z.guid(),
+  answerValue: z.string().min(1),
+  tags: z.array(emphasisTagSchema).min(1),
+});
+
+export const emphasisRulesSchema = z.array(emphasisRuleSchema);
+
 /**
  * Defines how assessment responses are scored across dimensions and
  * how scores map to programme recommendations.
@@ -92,6 +113,8 @@ export const scoringConfigSchema = z.object({
   dimensions: z.array(dimensionConfigSchema),
   /** Array of programme mappings for automatic recommendations */
   programmeMappings: z.array(programmeMappingSchema),
+  /** Answers that weight the exercises drawn into the recommended programme */
+  emphasis: emphasisRulesSchema.optional(),
 }) satisfies z.ZodType<StoredScoringConfig>;
 
 export type RiskLevel = z.infer<typeof riskLevelSchema>;
@@ -103,3 +126,4 @@ export type ProgrammeMappingCondition = z.infer<typeof programmeMappingCondition
 export type LogicalOperator = z.infer<typeof logicalOperatorSchema>;
 export type ProgrammeMapping = z.infer<typeof programmeMappingSchema>;
 export type ScoringConfig = z.infer<typeof scoringConfigSchema>;
+export type EmphasisRule = z.infer<typeof emphasisRuleSchema>;
