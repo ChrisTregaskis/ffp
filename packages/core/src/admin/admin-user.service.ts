@@ -2,6 +2,7 @@ import { getDb, withAdminContext } from '@ffp/database';
 
 import { CognitoService } from '../lib/cognito';
 import { ConflictError, InternalServerError, NotFoundError, ValidationError } from '../lib/errors';
+import { describeErrorForLog } from '../lib/log-safe-error';
 import { createLogger } from '../lib/logger';
 import { buildPaginationMeta } from '../schemas/pagination.schema';
 import {
@@ -46,11 +47,15 @@ export async function listUsersService(
   });
 
   const logger = createLogger(ctx);
+  // The search text can be a member's name or email, so only whether one was given
   logger.info('Users listed', {
     action: 'users_listed',
     total,
     page: paginationInput.page,
-    filters,
+    filters: {
+      locationId: filters.locationId,
+      hasSearch: filters.search !== undefined && filters.search !== '',
+    },
   });
 
   return {
@@ -128,7 +133,6 @@ export async function createUserService(
   // Step 3: Create Cognito user
   logger.info('Creating Cognito user', {
     action: 'cognito_user_creating',
-    email: validated.email,
     locationId: validated.locationId,
     organisationId,
   });
@@ -176,9 +180,11 @@ export async function createUserService(
     cognitoSub,
   });
 
-  // Step 4: Create DB record (with rollback on failure)
+  // Step 4: Create DB record, rolling the Cognito user back only if the insert fails
+  let user: Awaited<ReturnType<typeof createUserInRepo>>;
+
   try {
-    const user = await withAdminContext(db, async (tx) => {
+    user = await withAdminContext(db, async (tx) => {
       return await createUserInRepo(tx, {
         organisationId,
         email: validated.email,
@@ -191,22 +197,12 @@ export async function createUserService(
         dateOfBirth: validated.dateOfBirth,
       });
     });
-
-    logger.info('Programme user created', {
-      action: 'user_created',
-      userId: user.id,
-      email: validated.email,
-      locationId: validated.locationId,
-      organisationId,
-    });
-
-    return userDetailResponseSchema.parse(user);
   } catch (dbError) {
     // Rollback: delete Cognito user if DB insert fails
     logger.error('DB insert failed, rolling back Cognito user', {
       action: 'cognito_user_rollback',
       cognitoSub,
-      error: dbError instanceof Error ? dbError.message : 'Unknown error',
+      ...describeErrorForLog(dbError),
     });
 
     try {
@@ -216,16 +212,26 @@ export async function createUserService(
         cognitoSub,
       });
     } catch (rollbackError) {
+      // An operator finds the orphaned login by this sub (its Cognito username)
       logger.error('Cognito rollback failed — orphaned Cognito user', {
         action: 'cognito_user_rollback_failed',
         cognitoSub,
-        email: validated.email,
         rollbackError: rollbackError instanceof Error ? rollbackError.message : 'Unknown error',
       });
     }
 
     throw dbError;
   }
+
+  logger.info('Programme user created', {
+    action: 'user_created',
+    userId: user.id,
+    cognitoSub,
+    locationId: validated.locationId,
+    organisationId,
+  });
+
+  return userDetailResponseSchema.parse(user);
 }
 
 /**

@@ -1,3 +1,4 @@
+import { relations } from 'drizzle-orm';
 import {
   pgTable,
   uuid,
@@ -9,11 +10,11 @@ import {
   index,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { relations } from 'drizzle-orm';
 
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
-import { users } from './users';
+
 import { templateQuestions } from './template-questions';
+import { users } from './users';
 
 /**
  * Assessment templates table definition

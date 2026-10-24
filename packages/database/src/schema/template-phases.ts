@@ -9,8 +9,10 @@ import {
   index,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { programmeTemplates } from './programme-templates';
+
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
+import { programmeTemplates } from './programme-templates';
 
 /**
  * Template phases table definition
@@ -37,8 +39,8 @@ export const templatePhases = pgTable(
     name: varchar('name', { length: 255 }),
     /** Optional phase description */
     description: text('description'),
-    /** Number of sessions in this phase (1–7) */
-    sessionCount: integer('session_count').notNull().default(3),
+    /** Number of sessions in this phase; kept in step by session create and delete */
+    sessionCount: integer('session_count').notNull().default(0),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },

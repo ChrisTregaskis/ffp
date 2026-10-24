@@ -13,7 +13,7 @@ type StartSessionMutationOptions = Omit<
 >;
 
 /**
- * Start a session — creates user_session + exercise_completions.
+ * Start a session — moves it to in_progress and creates its exercise_completions.
  *
  * Idempotent: safe to call multiple times for the same session.
  * Invalidates programme detail cache so session status updates.

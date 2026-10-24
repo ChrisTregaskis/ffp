@@ -211,6 +211,48 @@
       "when": 1792170592469,
       "tag": "0029_misty_moon_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1792483550299,
+      "tag": "0030_amazing_roxanne_simpson",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792485550589,
+      "tag": "0031_opposite_proteus",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1792485556351,
+      "tag": "0032_secret_electro",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1792494811628,
+      "tag": "0033_melted_krista_starr",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1792592054493,
+      "tag": "0034_happy_boomer",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1792774239277,
+      "tag": "0035_shiny_slipstream",
+      "breakpoints": true
     }
   ]
 }

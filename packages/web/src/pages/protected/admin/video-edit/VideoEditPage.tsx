@@ -1,18 +1,15 @@
 import React, { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import type { UpdateVideoInput } from '@ffp/core';
-
 import { AdminEditPageShell } from '@web/components/templates';
 import { ArchiveVideoModal, VideoMetadataFormFields } from '@web/components/video';
 import { VideoPlayer } from '@web/components/video/VideoPlayer';
 import { VideoReplacer } from '@web/components/video/VideoReplacer';
 import { RouteKey, routes } from '@web/config/routes';
-import { useConfirmBeforeSave } from '@web/hooks/useConfirmBeforeSave';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
-import { useUpdateVideoMutation, useVideoQuery } from '@web/hooks/videos';
+import { useAdminVideoQuery, useUpdateVideoMutation } from '@web/hooks/videos';
 
-import { toUpdateVideoInput, toVideoFormValues } from './video-form-values';
+import { archivesVideo, toUpdateVideoInput, toVideoFormValues } from './video-form-values';
 
 import type { VideoEditFormValues } from './types';
 
@@ -21,37 +18,21 @@ export const VideoEditPage: React.FC = () => {
   const navigate = useNavigate();
   const { submitError, clearSubmitError, saveCallbacks } = useSaveFeedback();
 
-  const { data: video, isLoading, error } = useVideoQuery(id, { includeInactive: true });
+  const { data: video, isLoading, error } = useAdminVideoQuery(id);
   const updateMutation = useUpdateVideoMutation();
 
   const handleNavigateBack = useCallback(() => {
     void navigate(routes[RouteKey.ADMIN_VIDEOS].path);
   }, [navigate]);
 
-  /** Execute the update mutation */
-  const executeUpdate = useCallback(
-    async (data: UpdateVideoInput): Promise<void> => {
+  /** Handle form submission; an archive waits for the shell's confirm */
+  const handleUpdate = useCallback(
+    async (values: VideoEditFormValues): Promise<void> => {
       if (!video) {
         return;
       }
 
-      clearSubmitError();
-
-      await updateMutation.mutateAsync(
-        { id: video.id, publicId: video.publicId, data },
-        saveCallbacks('Video updated successfully', handleNavigateBack)
-      );
-    },
-    [video, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
-  );
-
-  const archiveConfirm = useConfirmBeforeSave(executeUpdate);
-  const { requestConfirm: requestArchiveConfirm } = archiveConfirm;
-
-  /** Handle form submission — an archive waits for confirmation */
-  const handleUpdate = useCallback(
-    async (values: VideoEditFormValues): Promise<void> => {
-      const payload = video ? toUpdateVideoInput(values, video) : {};
+      const payload = toUpdateVideoInput(values, video);
 
       if (Object.keys(payload).length === 0) {
         handleNavigateBack();
@@ -59,22 +40,21 @@ export const VideoEditPage: React.FC = () => {
         return;
       }
 
-      if (payload.status === 'archived') {
-        await requestArchiveConfirm(payload);
+      clearSubmitError();
 
-        return;
-      }
-
-      await executeUpdate(payload);
+      await updateMutation.mutateAsync(
+        { publicId: video.publicId, data: payload },
+        saveCallbacks('Video updated successfully', handleNavigateBack)
+      );
     },
-    [video, executeUpdate, requestArchiveConfirm, handleNavigateBack]
+    [video, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
   );
 
   return (
     <AdminEditPageShell
       title="Edit Video"
       resourceLabel="video"
-      listLabel="Video Library"
+      listLabel="Exercises"
       isLoading={isLoading}
       loadError={error}
       onBack={handleNavigateBack}
@@ -90,22 +70,22 @@ export const VideoEditPage: React.FC = () => {
               variant="white"
               className="mb-4"
             />
-            <VideoReplacer videoId={video.id} publicId={id} className="mb-6" />
+            <VideoReplacer publicId={id} className="mb-6" />
           </>
         )
       }
-      footer={
-        <ArchiveVideoModal
-          isOpen={archiveConfirm.isConfirmOpen}
-          onClose={archiveConfirm.cancel}
-          onConfirm={archiveConfirm.confirm}
-        />
-      }
+      confirmBeforeSave={{
+        when: archivesVideo,
+        renderModal: (modalProps) => <ArchiveVideoModal {...modalProps} />,
+      }}
     >
       {video && (
         <VideoMetadataFormFields
           variant="edit"
           currentStatus={video.status}
+          carriedTagIds={Object.values(video.tags).flatMap((tags) =>
+            tags.map((tag) => tag.publicId)
+          )}
           onCancel={handleNavigateBack}
           isSubmitting={updateMutation.isPending}
           errorMessage={submitError}

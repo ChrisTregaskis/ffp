@@ -1,11 +1,14 @@
-import { Pool } from 'pg';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
-import * as schema from '../src/schema/index.js';
-import { organisations } from '../src/schema/index.js';
+import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { type Pool } from 'pg';
+
 import { createLogger } from '../src/lib/logger.js';
+import { organisations } from '../src/schema/index.js';
+
 import { FLOW_IDS } from './seedAssessmentFlows.js';
+
 import type { PlatformOrganisationSeed } from './types.js';
+import type * as schema from '../src/schema/index.js';
 
 const logger = createLogger('seed-platform');
 

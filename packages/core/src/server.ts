@@ -28,6 +28,7 @@ export * from './lib/cognito';
 export * from './lib/context';
 export * from './lib/request-context';
 export * from './lib/logger';
+export * from './lib/log-safe-error';
 export * from './lib/random';
 
 // Server-only domain exports
@@ -40,5 +41,6 @@ export * from './programmes';
 export * from './programme-templates';
 export * from './questions';
 export * from './sessions';
+export * from './tags';
 export * from './users';
 export * from './videos';

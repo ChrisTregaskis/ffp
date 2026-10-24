@@ -5,7 +5,6 @@ import {
   userSessions,
   programmePhases,
   programmes,
-  templateSessions,
   type UserSessionRecord,
   type NewUserSession,
   type ProgrammePhaseRecord,
@@ -14,20 +13,18 @@ import {
 import { type Transaction } from '../lib/database';
 import { NotFoundError } from '../lib/errors';
 
-export type { UserSessionRecord, ProgrammePhaseRecord };
+export type { UserSessionRecord, NewUserSession, ProgrammePhaseRecord };
 
-/** Creates a user session row within an existing RLS transaction. */
-export async function createUserSession(
+/** Batch creates user session rows within an existing RLS transaction. */
+export async function createUserSessions(
   tx: Transaction,
-  input: NewUserSession
-): Promise<UserSessionRecord> {
-  const records = await tx.insert(userSessions).values(input).returning();
-
-  if (records.length === 0) {
-    throw new NotFoundError('Failed to create user session');
+  inputs: NewUserSession[]
+): Promise<UserSessionRecord[]> {
+  if (inputs.length === 0) {
+    return [];
   }
 
-  return records[0];
+  return await tx.insert(userSessions).values(inputs).returning();
 }
 
 /** Finds a user session by ID within an existing RLS transaction. */
@@ -44,10 +41,7 @@ export async function findUserSessionById(
   return records[0] ?? null;
 }
 
-/**
- * Finds an existing user session by phase and template session.
- * Used for idempotent session start — returns existing session if already created.
- */
+/** Finds the member's session in a phase by the template session it was created from. */
 export async function findUserSessionByPhaseAndTemplate(
   tx: Transaction,
   programmePhaseId: string,
@@ -179,27 +173,6 @@ export async function countSessionsByPhase(
   };
 }
 
-/**
- * Fetches the template session to get session_number for lazy creation.
- * No RLS required — template_sessions is a system-managed table.
- */
-export async function findTemplateSessionById(
-  tx: Transaction,
-  templateSessionId: string
-): Promise<{ id: string; sessionNumber: number; templatePhaseId: string } | null> {
-  const records = await tx
-    .select({
-      id: templateSessions.id,
-      sessionNumber: templateSessions.sessionNumber,
-      templatePhaseId: templateSessions.templatePhaseId,
-    })
-    .from(templateSessions)
-    .where(eq(templateSessions.id, templateSessionId))
-    .limit(1);
-
-  return records[0] ?? null;
-}
-
 /** Counts total phases and completed phases for a programme. */
 export async function countPhasesByProgramme(
   tx: Transaction,
@@ -221,22 +194,6 @@ export async function countPhasesByProgramme(
     total: totalResult.value,
     completed: completedResult.value,
   };
-}
-
-/**
- * Counts total template sessions for a phase.
- * Used to determine if all sessions have been started/completed.
- */
-export async function countTemplateSessionsByPhase(
-  tx: Transaction,
-  templatePhaseId: string
-): Promise<number> {
-  const [result] = await tx
-    .select({ value: count() })
-    .from(templateSessions)
-    .where(eq(templateSessions.templatePhaseId, templatePhaseId));
-
-  return result.value;
 }
 
 /** Sets programme startedAt. */

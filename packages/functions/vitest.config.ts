@@ -22,6 +22,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      // Before '@ffp/core', which would otherwise swallow the subpath
+      '@ffp/core/server': resolve(__dirname, '../core/dist/server.js'),
       '@ffp/core': resolve(__dirname, '../core/dist/index.js'),
       '@functions/auth': resolve(__dirname, 'src/auth'),
       '@functions/assessments': resolve(__dirname, 'src/assessments'),

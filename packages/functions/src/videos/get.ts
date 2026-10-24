@@ -18,8 +18,6 @@ export const handler = withErrorHandling(
       throw new ValidationError('Video ID is required in path');
     }
 
-    const includeInactive = event.queryStringParameters?.include_inactive === 'true';
-
-    return await getVideo(context, videoId, { includeInactive });
+    return await getVideo(context, videoId);
   }
 );

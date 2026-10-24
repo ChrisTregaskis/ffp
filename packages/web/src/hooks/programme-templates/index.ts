@@ -36,6 +36,13 @@ export type {
   UpdateSessionVariables,
 } from './useSessionMutations';
 export { useSessionExercisesQuery } from './useSessionExercisesQuery';
+export { useSessionSlotsQuery } from './useSessionSlotsQuery';
+export {
+  useCreateSlotMutation,
+  useDeleteSlotMutation,
+  useReorderSlotsMutation,
+  useUpdateSlotMutation,
+} from './useSlotMutations';
 export { useTemplateDetailQuery } from './useTemplateDetailQuery';
 export {
   useCreateTemplateMutation,

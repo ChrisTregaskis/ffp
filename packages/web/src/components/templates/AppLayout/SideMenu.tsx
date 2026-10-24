@@ -2,13 +2,14 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { Button, Icon, Icons, Logo, PressableArea, Text } from '@web/components/atoms';
-import { NavItem } from '@web/components/molecules';
+import { NavGroupHeading, NavItem } from '@web/components/molecules';
 import { SlideWidth, ClickScale } from '@web/components/motion';
 import { getContextNavItems, getNavigationItems } from '@web/config/navigation';
 import type { NavItem as NavItemType } from '@web/config/navigation';
 import { RouteKey, routes } from '@web/config/routes';
 import { useAuth } from '@web/hooks/useAuth';
 import { useSidebar } from '@web/hooks/useSidebar';
+import { groupNavItems } from '@web/utils/nav-groups';
 
 const SIDEBAR_EXPANDED_WIDTH = 230;
 const SIDEBAR_COLLAPSED_WIDTH = 80; // 20 * 4 = 80px (w-20)
@@ -72,15 +73,20 @@ export const SideMenu: React.FC<SideMenuProps> = ({ handleLogout }) => {
                   isCollapsed={isCollapsed}
                 />
               ))
-            : mainNavItems.map((item) => (
-                <NavItem
-                  key={item.key}
-                  label={item.label}
-                  icon={item.icon}
-                  path={item.path}
-                  isCollapsed={isCollapsed}
-                  onClick={item.onClick}
-                />
+            : groupNavItems(mainNavItems).map(({ heading, items }) => (
+                <div key={items[0].key} role={heading ? 'group' : undefined} aria-label={heading}>
+                  {heading && <NavGroupHeading label={heading} isCollapsed={isCollapsed} />}
+                  {items.map((item) => (
+                    <NavItem
+                      key={item.key}
+                      label={item.label}
+                      icon={item.icon}
+                      path={item.path}
+                      isCollapsed={isCollapsed}
+                      onClick={item.onClick}
+                    />
+                  ))}
+                </div>
               ))}
         </div>
       </nav>

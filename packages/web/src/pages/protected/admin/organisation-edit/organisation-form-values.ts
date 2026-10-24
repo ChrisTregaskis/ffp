@@ -31,3 +31,9 @@ export const toUpdateOrganisationInput = (
 
   return payload;
 };
+
+/** An edit that takes the organisation out of use, which the page confirms before saving */
+export const deactivatesOrganisation = (
+  values: OrganisationFormValues,
+  organisation: OrganisationDetailResponse
+): boolean => toUpdateOrganisationInput(values, organisation).status === 'inactive';

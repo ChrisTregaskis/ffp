@@ -1,6 +1,18 @@
-import { pgTable, uuid, integer, timestamp, uniqueIndex, index, pgEnum } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  integer,
+  timestamp,
+  uniqueIndex,
+  index,
+  pgEnum,
+  unique,
+  foreignKey,
+} from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+
 import { SESSION_STATUSES } from '../constants/session.constants';
+
 import { organisations } from './organisations';
 import { programmePhases } from './programme-phases';
 import { templateSessions } from './template-sessions';
@@ -10,9 +22,8 @@ export const sessionStatusEnum = pgEnum('session_status', [...SESSION_STATUSES])
 /**
  * User sessions table definition
  *
- * User-layer session instances created lazily when a user starts a session.
- * Each row tracks a user's progress through a specific session within a
- * programme phase, referencing both the user-layer phase and the template session.
+ * User-layer session instances, one per template session, created as not_started with the
+ * programme. Each row tracks a user's progress through a session within a programme phase.
  *
  * **RLS enforced** — organisation_id column with row-level security policies.
  */
@@ -25,9 +36,7 @@ export const userSessions = pgTable(
       .notNull()
       .references(() => organisations.id, { onDelete: 'cascade' }),
     /** Parent programme phase (user-layer) */
-    programmePhaseId: uuid('programme_phase_id')
-      .notNull()
-      .references(() => programmePhases.id, { onDelete: 'restrict' }),
+    programmePhaseId: uuid('programme_phase_id').notNull(),
     /** Source template session — restrict deletion of templates with active sessions */
     templateSessionId: uuid('template_session_id')
       .notNull()
@@ -51,6 +60,12 @@ export const userSessions = pgTable(
     uniqueIndex('idx_user_sessions_phase_session').on(table.programmePhaseId, table.sessionNumber),
     index('idx_user_sessions_organisation').on(table.organisationId),
     index('idx_user_sessions_programme_phase').on(table.programmePhaseId),
+    unique('user_sessions_id_organisation_id_unique').on(table.id, table.organisationId),
+    foreignKey({
+      name: 'user_sessions_programme_phase_id_organisation_fk',
+      columns: [table.programmePhaseId, table.organisationId],
+      foreignColumns: [programmePhases.id, programmePhases.organisationId],
+    }).onDelete('restrict'),
   ]
 );
 

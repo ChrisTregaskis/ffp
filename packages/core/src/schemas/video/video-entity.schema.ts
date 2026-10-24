@@ -1,14 +1,14 @@
 import { z } from 'zod';
 
-import { VIDEO_STATUSES, DIFFICULTIES, MOVEMENT_TYPES } from '@ffp/database/constants';
+import { VIDEO_STATUSES, DIFFICULTIES } from '@ffp/database/constants';
 
 import { publicIdSchema } from '../public-id.schema';
+import { videoTagAssignmentSchema } from '../tag.schema';
 
 export const videoStatusSchema = z.enum(VIDEO_STATUSES);
 export const difficultySchema = z.enum(DIFFICULTIES);
-export const movementTypeSchema = z.enum(MOVEMENT_TYPES);
 
-/** Full video record — maps to the videos database table */
+/** A video record, without the columns typed tags replace */
 export const videoSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.guid(),
@@ -29,14 +29,10 @@ export const videoSchema = z.object({
   status: videoStatusSchema,
   /** Exercise difficulty level (nullable — not relevant for informational videos) */
   difficulty: difficultySchema.nullable(),
-  /** Type of movement (nullable — not relevant for informational videos) */
-  movementType: movementTypeSchema.nullable(),
-  /** Target body parts (e.g., ['hamstrings', 'lower_back', 'glutes']) */
-  bodyParts: z.array(z.string().min(1)),
   /** Required equipment (e.g., ['resistance_band', 'yoga_mat'] or ['none']) */
   equipment: z.array(z.string().min(1)),
-  /** Flexible tags for filtering (e.g., ['post-surgery', 'knee', 'warm-up']) */
-  tags: z.array(z.string().min(1)),
+  /** Curation signal: a core exercise, favoured over the rest of its pool */
+  isEssential: z.boolean(),
   /** Default number of sets when used as an exercise (e.g., 3) */
   defaultSets: z.number().int().positive().nullable(),
   /** Default reps — supports ranges (e.g., '8-12', '10') */
@@ -60,7 +56,6 @@ export const createVideoSchema = videoSchema
     s3Key: true,
     durationSeconds: true,
     fileSizeBytes: true,
-    bodyParts: true,
     equipment: true,
   })
   .extend({
@@ -68,14 +63,22 @@ export const createVideoSchema = videoSchema
     mimeType: videoSchema.shape.mimeType.optional().default('video/mp4'),
     status: videoSchema.shape.status.optional().default('draft'),
     difficulty: videoSchema.shape.difficulty.optional(),
-    movementType: videoSchema.shape.movementType.optional(),
-    tags: videoSchema.shape.tags.optional().default([]),
+    isEssential: videoSchema.shape.isEssential.optional(),
+    tags: videoTagAssignmentSchema.optional(),
     defaultSets: videoSchema.shape.defaultSets.optional(),
     defaultReps: videoSchema.shape.defaultReps.optional(),
     defaultDurationSeconds: videoSchema.shape.defaultDurationSeconds.optional(),
     defaultRestSeconds: videoSchema.shape.defaultRestSeconds.optional(),
     defaultNotes: videoSchema.shape.defaultNotes.optional(),
   });
+
+/**
+ * A replacement's key must be one the upload URL issues (`library/{uuid}.mp4`), because saving
+ * it deletes the current file: a mistyped or placeholder key would leave the record with none.
+ */
+const uploadedVideoKeySchema = z
+  .string()
+  .regex(/^library\/[0-9a-f-]{36}\.mp4$/, 'Video key must come from an upload');
 
 /** Schema for updating video metadata and media properties (all partial) */
 export const updateVideoSchema = videoSchema
@@ -88,21 +91,19 @@ export const updateVideoSchema = videoSchema
     mimeType: true,
     status: true,
     difficulty: true,
-    movementType: true,
-    bodyParts: true,
     equipment: true,
-    tags: true,
+    isEssential: true,
     defaultSets: true,
     defaultReps: true,
     defaultDurationSeconds: true,
     defaultRestSeconds: true,
     defaultNotes: true,
   })
-  .partial();
+  .partial()
+  .extend({ s3Key: uploadedVideoKeySchema.optional(), tags: videoTagAssignmentSchema.optional() });
 
 export type VideoStatus = z.infer<typeof videoStatusSchema>;
 export type Difficulty = z.infer<typeof difficultySchema>;
-export type MovementType = z.infer<typeof movementTypeSchema>;
 export type Video = z.infer<typeof videoSchema>;
 export type CreateVideoInput = z.infer<typeof createVideoSchema>;
 export type UpdateVideoInput = z.infer<typeof updateVideoSchema>;

@@ -1,12 +1,15 @@
-import { Pool } from 'pg';
 import { eq } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../src/schema/index.js';
-import { assessmentTemplates, templateQuestions } from '../src/schema/index.js';
+import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { type Pool } from 'pg';
+
 import { createLogger } from '../src/lib/logger.js';
+import { assessmentTemplates, templateQuestions } from '../src/schema/index.js';
+
+import { requireSeedId } from './requireSeedId.js';
 import { QUESTION_IDS } from './seedQuestions.js'; // Used for template-question mappings
 
 import type { NewAssessmentTemplate } from '../src/schema/assessment-templates.js';
+import type * as schema from '../src/schema/index.js';
 import type { NewTemplateQuestion } from '../src/schema/template-questions.js';
 
 const logger = createLogger('seed-assessment-templates');
@@ -30,7 +33,7 @@ export const TEMPLATE_IDS = {
  */
 interface TemplateQuestionMapping {
   templateId: string;
-  questionIds: Array<keyof typeof QUESTION_IDS>;
+  questionIds: (keyof typeof QUESTION_IDS)[];
 }
 
 const templateQuestionMappings: TemplateQuestionMapping[] = [
@@ -115,7 +118,7 @@ const DEFAULT_TEMPLATES: NewAssessmentTemplate[] = [
 const seedTemplateQuestions = async (
   db: NodePgDatabase<typeof schema> & { $client: Pool },
   templateId: string,
-  questionSlugs: Array<keyof typeof QUESTION_IDS>
+  questionSlugs: (keyof typeof QUESTION_IDS)[]
 ): Promise<number> => {
   let createdCount = 0;
 
@@ -166,13 +169,15 @@ export const seedAssessmentTemplates = async (
   let joinRecordsCreatedCount = 0;
 
   for (const template of DEFAULT_TEMPLATES) {
+    const templateId = requireSeedId(template, `assessment template "${template.name}"`);
+
     // Check if template already exists (idempotency check by ID)
     const existingTemplate = await db.query.assessmentTemplates.findFirst({
-      where: eq(assessmentTemplates.id, template.id!),
+      where: eq(assessmentTemplates.id, templateId),
     });
 
     // Get question count from template-question mappings
-    const mapping = templateQuestionMappings.find((m) => m.templateId === template.id);
+    const mapping = templateQuestionMappings.find((m) => m.templateId === templateId);
     const questionCount = mapping?.questionIds.length ?? 0;
 
     if (existingTemplate) {
@@ -195,9 +200,10 @@ export const seedAssessmentTemplates = async (
 
     // Seed template_questions join records (always attempt, idempotent)
     if (mapping) {
-      const joinCount = await seedTemplateQuestions(db, template.id!, mapping.questionIds);
+      const joinCount = await seedTemplateQuestions(db, templateId, mapping.questionIds);
+
       if (joinCount > 0) {
-        logger.debug('Template-question joins created', { templateId: template.id, joinCount });
+        logger.debug('Template-question joins created', { templateId, joinCount });
         joinRecordsCreatedCount += joinCount;
       }
     }

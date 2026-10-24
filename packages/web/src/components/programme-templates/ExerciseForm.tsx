@@ -21,6 +21,8 @@ export interface ExerciseFormProps {
   isSubmitting?: boolean;
   /** Submit button label @default "Save" */
   submitLabel?: string;
+  /** Editing requires sets and reps; creating leaves them to the video's defaults */
+  isEditMode?: boolean;
 }
 
 /** Inline form for creating or editing an exercise with video selection and prescription fields. */
@@ -31,6 +33,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
   onCancel,
   isSubmitting = false,
   submitLabel = 'Save',
+  isEditMode = false,
 }) => {
   const handleFormSubmit = useCallback(
     (values: ExerciseFormValues) => {
@@ -53,6 +56,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
       className="space-y-3"
     >
       <ExerciseFormFields
+        isEditMode={isEditMode}
         initialSelectedVideo={initialSelectedVideo}
         onCancel={onCancel}
         isSubmitting={isSubmitting}

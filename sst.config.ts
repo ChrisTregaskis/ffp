@@ -455,6 +455,11 @@ export default $config({
               $interpolate`arn:aws:s3:::${assetsBucket.name}/*`,
             ],
           },
+          // Replacing a video deletes the file it supersedes; assets are never deleted
+          {
+            actions: ['s3:DeleteObject'],
+            resources: [$interpolate`arn:aws:s3:::${videosBucket.name}/*`],
+          },
           {
             actions: cognitoPermissionActions,
             resources: [userPool.arn],
@@ -518,19 +523,10 @@ export default $config({
         CLOUDFRONT_SIGNING_KEY: cloudFrontSigningKey.value,
       },
     };
-    api.route('OPTIONS /videos', {
-      handler: `${repositoryFunctionsPath}/videos/index.handler`,
-      ...videoHandlerEnv,
-    });
     api.route('OPTIONS /videos/{proxy+}', {
       handler: `${repositoryFunctionsPath}/videos/index.handler`,
       ...videoHandlerEnv,
     });
-    api.route(
-      'ANY /videos',
-      { handler: `${repositoryFunctionsPath}/videos/index.handler`, ...videoHandlerEnv },
-      args
-    );
     api.route(
       'ANY /videos/{proxy+}',
       { handler: `${repositoryFunctionsPath}/videos/index.handler`, ...videoHandlerEnv },

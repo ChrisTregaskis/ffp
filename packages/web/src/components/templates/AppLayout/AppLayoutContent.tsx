@@ -72,6 +72,7 @@ export const AppLayoutContent: React.FC<PropsWithChildren> = ({ children }) => {
         icon: item.icon,
         path: item.path,
         section: item.section,
+        group: item.group,
         onClick: item.onClick,
       }));
 

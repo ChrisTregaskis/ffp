@@ -1,6 +1,6 @@
 import { getDb, type AnswerValue, type DbClient } from '@ffp/database';
 
-import { queueJob } from '../jobs/job-queue.service';
+import { hasProgrammeGenerationFailed, queueJob } from '../jobs/job-queue.service';
 import { getUserIdFromContext } from '../lib/context';
 import { withRLS, type Transaction } from '../lib/database';
 import { InternalServerError, NotFoundError, ValidationError } from '../lib/errors';
@@ -33,6 +33,7 @@ import type { UserAssessment } from './user-assessment.repository';
 import type { OrganisationContext } from '../lib/context';
 import type {
   AssessmentResultsResponse,
+  ProgrammeReadiness,
   FlowStepSummary,
   SafetyGate,
   StartAssessmentResponse,
@@ -55,7 +56,7 @@ function convertAnswersToResponseFormat(answers: UserAssessmentAnswer[]): UserAs
 
   for (const answer of answers) {
     // Extract the value from the JSONB structure using the shared helper
-    const answerValue = extractAnswerValue(answer.answerValue);
+    const answerValue = extractAnswerValue(answer.questionId, answer.answerValue);
 
     result[answer.questionId] = {
       questionId: answer.questionId,
@@ -108,7 +109,10 @@ async function writeAnswerChanges(
 
 function toStoredValuesById(answers: UserAssessmentAnswer[]): Map<string, AnswerValue> {
   return new Map(
-    answers.map((answer) => [answer.questionId, extractAnswerValue(answer.answerValue)])
+    answers.map((answer) => [
+      answer.questionId,
+      extractAnswerValue(answer.questionId, answer.answerValue),
+    ])
   );
 }
 
@@ -125,7 +129,9 @@ async function findOwnAssessment(
   const assessment = await userAssessmentRepository.findUserAssessmentById(
     organisationId,
     assessmentId,
-    userId
+    {
+      userId,
+    }
   );
 
   if (!assessment || assessment.userId !== userId) {
@@ -196,13 +202,26 @@ function convertStepsToSummaryFormat(steps: FlowStepWithConfig[]): FlowStepSumma
   }));
 }
 
+/** An answer value's shape, for logs: never the value, which may be what the member typed. */
+function describeAnswerShape(answerValue: unknown): Record<string, unknown> {
+  if (Array.isArray(answerValue)) {
+    return { type: 'array', length: answerValue.length };
+  }
+
+  if (typeof answerValue === 'object' && answerValue !== null) {
+    return { type: 'object', keys: Object.keys(answerValue) };
+  }
+
+  return { type: answerValue === null ? 'null' : typeof answerValue };
+}
+
 /**
  * Extract the answer value from database JSONB
  *
  * Values are stored directly as string, number, boolean, or string[] (for multi-select).
  * Also handles legacy wrapped formats for backwards compatibility.
  */
-function extractAnswerValue(answerValue: unknown): AnswerValue {
+function extractAnswerValue(questionId: string, answerValue: unknown): AnswerValue {
   // Handle direct primitive values (current format)
   if (
     typeof answerValue === 'string' ||
@@ -218,7 +237,10 @@ function extractAnswerValue(answerValue: unknown): AnswerValue {
       return answerValue;
     }
 
-    systemLogger.warn('Array contains non-string values', { answerValue });
+    systemLogger.warn('Array contains non-string values', {
+      questionId,
+      answerShape: describeAnswerShape(answerValue),
+    });
 
     throw new ValidationError('Invalid answer value format: array contains non-string values');
   }
@@ -239,12 +261,18 @@ function extractAnswerValue(answerValue: unknown): AnswerValue {
       return obj.text;
     }
 
-    systemLogger.warn('Unexpected answer value structure', { answerValue, keys: Object.keys(obj) });
+    systemLogger.warn('Unexpected answer value structure', {
+      questionId,
+      answerShape: describeAnswerShape(answerValue),
+    });
 
     throw new ValidationError('Invalid answer value format: unrecognised object structure');
   }
 
-  systemLogger.warn('Unexpected answer value type', { answerValue, type: typeof answerValue });
+  systemLogger.warn('Unexpected answer value type', {
+    questionId,
+    answerShape: describeAnswerShape(answerValue),
+  });
 
   throw new ValidationError(
     'Invalid answer value format: expected string, number, boolean, or string[]'
@@ -496,7 +524,7 @@ export async function saveProgress(
       assessmentId,
       allAnswers.map((answer) => ({
         questionId: answer.questionId,
-        answerValue: extractAnswerValue(answer.answerValue),
+        answerValue: extractAnswerValue(answer.questionId, answer.answerValue),
       }))
     );
 
@@ -668,6 +696,25 @@ export async function submitAssessment(
   });
 }
 
+/** Generation is queued once scoring finishes, so only a scored assessment can have failed it */
+async function findProgrammeReadiness(
+  organisationId: string,
+  assessment: UserAssessment
+): Promise<ProgrammeReadiness> {
+  if (assessment.programmeId) {
+    return 'ready';
+  }
+
+  if (
+    assessment.status === 'scored' &&
+    (await hasProgrammeGenerationFailed(organisationId, assessment.id))
+  ) {
+    return 'failed';
+  }
+
+  return 'pending';
+}
+
 /**
  * Get assessment results (scores and programme)
  *
@@ -709,11 +756,11 @@ export async function getAssessmentResults(
     programmeName = programme?.name ?? null;
   }
 
-  // Return the assessment results
   return {
     status: assessment.status,
     scores: assessment.scores,
     programmeId: assessment.programmeId,
+    programmeReadiness: await findProgrammeReadiness(organisationId, assessment),
     programmeName,
     safetyGate: await loadSafetyGate(organisationId, assessment, userId),
   };

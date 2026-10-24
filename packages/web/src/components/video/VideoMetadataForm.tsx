@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 
 import { ComposableForm } from '@web/components/organisms';
+import { toTagSelection } from '@web/components/tags';
 import type { VideoMetadataValues } from '@web/hooks/videos/types';
 
 import { VideoMetadataFormFields } from './VideoMetadataFormFields';
@@ -25,8 +26,8 @@ export interface VideoMetadataFormProps {
 /**
  * Video metadata form for the upload page.
  *
- * Collects title, description, movement type, difficulty, body parts, equipment,
- * and tags. Returns a VideoMetadataValues object on submit — the parent
+ * Collects title, description, difficulty, equipment, the essential flag and tags.
+ * Returns a VideoMetadataValues object on submit — the parent
  * hook handles assembling the full CreateVideoInput with upload-derived fields
  * (duration, file size, S3 key, etc.).
  */
@@ -42,11 +43,10 @@ export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
     (values: VideoMetadataFormValues) => {
       const metadata: VideoMetadataValues = {
         title: values.title,
-        bodyParts: values.bodyParts,
         equipment: values.equipment,
         description: values.description || undefined,
-        movementType: values.movementType || undefined,
         difficulty: values.difficulty || undefined,
+        isEssential: values.isEssential,
         tags: values.tags,
       };
 
@@ -62,11 +62,10 @@ export const VideoMetadataForm: React.FC<VideoMetadataFormProps> = ({
       defaultValues={{
         title: '',
         description: '',
-        movementType: '',
         difficulty: '',
-        bodyParts: [],
+        tags: toTagSelection(),
+        isEssential: false,
         equipment: [],
-        tags: [],
         status: '',
         defaultSets: '',
         defaultReps: '',

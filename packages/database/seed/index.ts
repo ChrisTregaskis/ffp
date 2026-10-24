@@ -17,25 +17,30 @@
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+
+import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../src/schema/index.js';
+
 import { createLogger } from '../src/lib/logger.js';
+import * as schema from '../src/schema/index.js';
+
+import { seedAssessmentFlows } from './seedAssessmentFlows.js';
+import { seedAssessmentTemplates } from './seedAssessmentTemplates.js';
+import { seedFlowSteps } from './seedFlowSteps.js';
 import { seedPlatformOrganisation } from './seedPlatformTenant.js';
+import { seedProgrammeTemplates } from './seedProgrammeTemplates.js';
+import { seedProgrammeUserData } from './seedProgrammeUserData.js';
+import { seedQuestions } from './seedQuestions.js';
 import { seedSuperAdminCognito } from './seedSuperAdminCognito.js';
 import { seedSuperAdminDatabase } from './seedSuperAdminDatabase.js';
-import { seedTestOrganisation } from './seedTestTenant.js';
+import { seedTemplateHierarchy } from './seedTemplateHierarchy.js';
+import { seedTemplateSlots } from './seedTemplateSlots.js';
 import { seedTestLocation } from './seedTestCustomer.js';
+import { seedTestOrganisation } from './seedTestTenant.js';
 import { seedTestUserCognito } from './seedTestUserCognito.js';
 import { seedTestUserDatabase } from './seedTestUserDatabase.js';
-import { seedProgrammeTemplates } from './seedProgrammeTemplates.js';
-import { seedQuestions } from './seedQuestions.js';
-import { seedAssessmentTemplates } from './seedAssessmentTemplates.js';
-import { seedAssessmentFlows } from './seedAssessmentFlows.js';
-import { seedFlowSteps } from './seedFlowSteps.js';
 import { seedVideos } from './seedVideos.js';
-import { seedTemplateHierarchy } from './seedTemplateHierarchy.js';
-import { seedProgrammeUserData } from './seedProgrammeUserData.js';
+
 import type { SeedConfig } from './types.js';
 
 const logger = createLogger('seed');
@@ -56,6 +61,7 @@ const loadSeedConfig = (environment: string): SeedConfig => {
 
   try {
     const configFile = readFileSync(configPath, 'utf-8');
+
     return JSON.parse(configFile) as SeedConfig;
   } catch (error) {
     if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
@@ -64,6 +70,7 @@ const loadSeedConfig = (environment: string): SeedConfig => {
           `Create this file based on config/db-seed.example.json`
       );
     }
+
     throw error;
   }
 };
@@ -95,7 +102,8 @@ const validateEnvironment = (): void => {
 const createDatabaseConnection = (): NodePgDatabase<typeof schema> & { $client: Pool } => {
   const pool = new Pool({
     host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '5432'),
+    // Not ??, so an empty value also falls back.
+    port: parseInt(process.env.DB_PORT ? process.env.DB_PORT : '5432'),
     database: process.env.DB_NAME,
     user: process.env.BOOTSTRAP_DB_USER,
     password: process.env.BOOTSTRAP_DB_PASSWORD,
@@ -113,7 +121,7 @@ const createDatabaseConnection = (): NodePgDatabase<typeof schema> & { $client: 
  *
  */
 export const seedDatabase = async (
-  environment: string = 'dev',
+  environment = 'dev',
   options?: { fresh?: boolean }
 ): Promise<void> => {
   logger.info(`Database Seed - ${environment.toUpperCase()}${options?.fresh ? ' (FRESH)' : ''}`);
@@ -139,6 +147,7 @@ export const seedDatabase = async (
       ALTER TABLE programmes NO FORCE ROW LEVEL SECURITY;
       ALTER TABLE programme_phases NO FORCE ROW LEVEL SECURITY;
       ALTER TABLE user_sessions NO FORCE ROW LEVEL SECURITY;
+      ALTER TABLE user_session_exercises NO FORCE ROW LEVEL SECURITY;
       ALTER TABLE exercise_completions NO FORCE ROW LEVEL SECURITY;
     `);
 
@@ -207,7 +216,7 @@ export const seedDatabase = async (
       await db.$client.query(`
         TRUNCATE assessment_flows, assessment_templates, questions, programme_templates, videos,
                  template_phases, template_sessions, session_exercises,
-                 programmes, programme_phases, user_sessions, exercise_completions CASCADE;
+                 programmes, programme_phases, user_sessions, user_session_exercises, exercise_completions CASCADE;
       `);
       logger.info('Content tables truncated');
     }
@@ -239,6 +248,10 @@ export const seedDatabase = async (
     // Must run AFTER programme templates (FK) and videos (FK)
     await seedTemplateHierarchy(db);
 
+    // Seed 16b: Template session slots from the seeded exercises (no RLS, idempotent)
+    // Must run AFTER template hierarchy and videos (reads exercises and their tags)
+    await seedTemplateSlots(db);
+
     // Seed 17: Programme user data — active programme, phases, sessions (RLS tables, idempotent)
     // Must run AFTER template hierarchy (FK) and test programme user (FK)
     await seedProgrammeUserData(db);
@@ -260,6 +273,7 @@ export const seedDatabase = async (
         ALTER TABLE programmes FORCE ROW LEVEL SECURITY;
         ALTER TABLE programme_phases FORCE ROW LEVEL SECURITY;
         ALTER TABLE user_sessions FORCE ROW LEVEL SECURITY;
+        ALTER TABLE user_session_exercises FORCE ROW LEVEL SECURITY;
         ALTER TABLE exercise_completions FORCE ROW LEVEL SECURITY;
       `);
       logger.info('FORCE RLS re-enabled');
@@ -287,6 +301,7 @@ export {
   TEMPLATE_SESSION_IDS,
   SESSION_EXERCISE_IDS,
 } from './seedTemplateHierarchy.js';
+export { seedTemplateSlots } from './seedTemplateSlots.js';
 export {
   seedProgrammeUserData,
   PROGRAMME_IDS,

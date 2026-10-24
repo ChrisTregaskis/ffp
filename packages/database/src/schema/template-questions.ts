@@ -1,8 +1,10 @@
+import { relations } from 'drizzle-orm';
 import { pgTable, uuid, integer, jsonb, uniqueIndex, index } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { relations } from 'drizzle-orm';
+
 import { assessmentTemplates } from './assessment-templates';
 import { questions } from './questions';
+
 import type { ConfigOverrides } from '../types';
 
 /**

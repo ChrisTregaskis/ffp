@@ -1,11 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AssessmentResultsResponse, SafetyGate } from '@web/lib/api/endpoints/assessments';
 
 import { ResultsStepContent } from './ResultsStepContent';
+
+import type { ResultsStepContentProps } from './types';
 
 const mocks = vi.hoisted(() => ({ getResults: vi.fn(), acknowledgeSafetyAdvice: vi.fn() }));
 
@@ -22,23 +24,31 @@ const ACKNOWLEDGED_GATE: SafetyGate = {
   acknowledgedAt: '2026-10-16T09:00:00.000Z',
 };
 
-const scoredResults = (safetyGate: SafetyGate): AssessmentResultsResponse => ({
-  status: 'completed',
+const scoredResults = (
+  safetyGate: SafetyGate,
+  programmeReadiness: AssessmentResultsResponse['programmeReadiness'] = 'ready'
+): AssessmentResultsResponse => ({
+  status: programmeReadiness === 'ready' ? 'completed' : 'scored',
   scores: {
     dimensions: [],
     scoredAt: new Date(),
   } as unknown as AssessmentResultsResponse['scores'],
-  programmeId: 'programme-1',
+  programmeId: programmeReadiness === 'ready' ? 'programme-1' : null,
+  programmeReadiness,
   programmeName: 'Level 1: Gentle Mobility',
   safetyGate,
 });
 
-const renderResults = (): void => {
+const renderResults = (props: Partial<ResultsStepContentProps> = {}): void => {
   render(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      <ResultsStepContent config={{ title: 'Your results' }} assessmentId="assessment-1" />
+      <ResultsStepContent
+        config={{ title: 'Your results' }}
+        assessmentId="assessment-1"
+        {...props}
+      />
     </QueryClientProvider>
   );
 };
@@ -46,10 +56,17 @@ const renderResults = (): void => {
 const CONSENT = 'I have spoken to a health professional';
 const CONTINUE = 'See my results';
 const RESULTS_HEADING = 'Assessment Complete!';
+const VIEW_PROGRAMME = 'View My Programme';
+const REPLACE_PROGRAMME = 'Replace My Programme';
+const KEEP_PROGRAMME = 'Keep Current Programme';
 
 describe('ResultsStepContent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('shows an error with a retry, instead of loading forever, when the results fail', async () => {
@@ -110,5 +127,46 @@ describe('ResultsStepContent', () => {
 
     expect(await screen.findByText(RESULTS_HEADING)).toBeTruthy();
     expect(screen.queryByText(CONSENT)).toBeNull();
+  });
+
+  it('offers the programme once it is ready, without a reload, after the scores arrive', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    mocks.getResults
+      .mockResolvedValueOnce(scoredResults(NO_GATE, 'pending'))
+      .mockResolvedValue(scoredResults(NO_GATE, 'ready'));
+
+    renderResults();
+
+    const viewProgramme = await screen.findByRole('button', { name: VIEW_PROGRAMME });
+
+    expect(viewProgramme).toHaveProperty('disabled', true);
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    expect(viewProgramme).toHaveProperty('disabled', false);
+  });
+
+  it('shows a calm notice instead of the programme button when it could not be put together', async () => {
+    mocks.getResults.mockResolvedValue(scoredResults(NO_GATE, 'failed'));
+
+    renderResults();
+
+    expect(await screen.findByText('Your programme is not quite ready')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: VIEW_PROGRAMME })).toBeNull();
+  });
+
+  it('keeps the current programme to hand, with a calm notice, when replacing it fails', async () => {
+    mocks.getResults.mockResolvedValue(scoredResults(NO_GATE));
+
+    renderResults({ isReassessment: true, hasReplaceFailed: true });
+
+    expect(
+      await screen.findByText(
+        "We couldn't update your programme just now. Your current programme is still here for you."
+      )
+    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: REPLACE_PROGRAMME })).toHaveProperty(
+      'disabled',
+      true
+    );
+    expect(screen.getByRole('button', { name: KEEP_PROGRAMME })).toHaveProperty('disabled', false);
   });
 });

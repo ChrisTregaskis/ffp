@@ -11,23 +11,38 @@
  * - Migrations must be run: DB_NAME=ffp_test pnpm --filter=@ffp/database db:migrate
  */
 
-import { sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import { randomUUID } from 'crypto';
+
+import { inArray, sql } from 'drizzle-orm';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
-import { assessmentFlows, flowSteps, questions } from '@ffp/database/schema';
+import {
+  assessmentFlows,
+  assessmentTemplates,
+  flowSteps,
+  questions,
+  templateQuestions,
+} from '@ffp/database/schema';
 
 import * as templateRepository from '../../src/assessments/template.repository';
+import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
+import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import type { CreateAssessmentTemplateInput } from '../../src/schemas/assessment-template.schema';
+import type { Pool } from 'pg';
+
+// Templates and questions are shared, unscoped tables, so every name and slug this
+// suite writes carries a per-run marker: listings are searched by it, and clean-up
+// deletes only the ids recorded here.
+const RUN_ID = randomUUID().slice(0, 8);
 
 describe('Template Repository', () => {
   let pool: Pool;
-  let db: ReturnType<typeof drizzle>;
+  let db: TestDb;
+  let createdTemplateIds: string[] = [];
 
   const validCreateInput: CreateAssessmentTemplateInput = {
-    name: 'Test Assessment Template',
+    name: `Test Assessment Template ${RUN_ID}`,
     description: 'A template for testing',
     version: 1,
     // Note: questions are now stored in the questions table and linked via template_questions
@@ -37,22 +52,31 @@ describe('Template Repository', () => {
   };
 
   beforeAll(() => {
-    pool = new Pool({
-      host: process.env.DB_HOST ?? 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '5432'),
-      database: 'ffp_test',
-      user: process.env.DB_USER ?? 'test_user',
-      password: process.env.DB_PASSWORD ?? 'test_password',
-    });
-    db = drizzle(pool);
+    ({ pool, db } = connectTestDb());
   });
 
-  beforeEach(async () => {
-    // Clean up tables before each test
-    // Delete in FK dependency order: flow_steps → template_questions → assessment_templates
-    await db.execute(sql`DELETE FROM flow_steps`);
-    await db.execute(sql`DELETE FROM template_questions`);
-    await db.execute(sql`DELETE FROM assessment_templates`);
+  /** Creates through the repository and records the id for clean-up. */
+  const createTemplate = async (
+    input: CreateAssessmentTemplateInput
+  ): ReturnType<typeof templateRepository.createTemplate> => {
+    const template = await templateRepository.createTemplate(db, input);
+    createdTemplateIds.push(template.id);
+
+    return template;
+  };
+
+  afterEach(async () => {
+    // FK dependency order: flow_steps → template_questions → assessment_templates
+    if (createdTemplateIds.length > 0) {
+      await db.delete(flowSteps).where(inArray(flowSteps.templateId, createdTemplateIds));
+      await db
+        .delete(templateQuestions)
+        .where(inArray(templateQuestions.templateId, createdTemplateIds));
+      await db
+        .delete(assessmentTemplates)
+        .where(inArray(assessmentTemplates.id, createdTemplateIds));
+    }
+    createdTemplateIds = [];
   });
 
   afterAll(async () => {
@@ -61,7 +85,7 @@ describe('Template Repository', () => {
 
   describe('create', () => {
     it('creates a template and returns it with generated fields', async () => {
-      const result = await templateRepository.createTemplate(db, validCreateInput);
+      const result = await createTemplate(validCreateInput);
 
       expect(result.id).toBeDefined();
       expect(result.name).toBe(validCreateInput.name);
@@ -75,7 +99,7 @@ describe('Template Repository', () => {
 
   describe('findById', () => {
     it('returns template when found', async () => {
-      const created = await templateRepository.createTemplate(db, validCreateInput);
+      const created = await createTemplate(validCreateInput);
 
       const result = await templateRepository.findTemplateById(db, created.id);
 
@@ -98,37 +122,58 @@ describe('Template Repository', () => {
     const firstPage = { page: 1, pageSize: 10, sortDirection: 'asc' as const };
 
     it('sorts by name by default and filters on status', async () => {
-      await templateRepository.createTemplate(db, { ...validCreateInput, name: 'Beta' });
-      await templateRepository.createTemplate(db, { ...validCreateInput, name: 'Alpha' });
-      await templateRepository.createTemplate(db, {
+      await createTemplate({ ...validCreateInput, name: `Beta ${RUN_ID}` });
+      await createTemplate({ ...validCreateInput, name: `Alpha ${RUN_ID}` });
+      await createTemplate({
         ...validCreateInput,
-        name: 'Retired',
+        name: `Retired ${RUN_ID}`,
         isActive: false,
       });
 
-      const all = await templateRepository.findTemplatePage(db, firstPage, {});
-      const active = await templateRepository.findTemplatePage(db, firstPage, { isActive: true });
+      const all = await templateRepository.findTemplatePage(db, firstPage, { search: RUN_ID });
+      const active = await templateRepository.findTemplatePage(db, firstPage, {
+        search: RUN_ID,
+        isActive: true,
+      });
 
-      expect(all.map((template) => template.name)).toEqual(['Alpha', 'Beta', 'Retired']);
-      expect(active.map((template) => template.name)).toEqual(['Alpha', 'Beta']);
-      expect(await templateRepository.countTemplates(db, { isActive: false })).toBe(1);
+      expect(all.map((template) => template.name)).toEqual([
+        `Alpha ${RUN_ID}`,
+        `Beta ${RUN_ID}`,
+        `Retired ${RUN_ID}`,
+      ]);
+      expect(active.map((template) => template.name)).toEqual([
+        `Alpha ${RUN_ID}`,
+        `Beta ${RUN_ID}`,
+      ]);
+      expect(await templateRepository.countTemplates(db, { search: RUN_ID, isActive: false })).toBe(
+        1
+      );
     });
 
     it('searches name and description, treating wildcards literally', async () => {
-      await templateRepository.createTemplate(db, { ...validCreateInput, name: '100% effort' });
-      await templateRepository.createTemplate(db, { ...validCreateInput, name: 'Other' });
+      const literal = await createTemplate({ ...validCreateInput, name: `100% effort ${RUN_ID}` });
+      const other = await createTemplate({ ...validCreateInput, name: `Other ${RUN_ID}` });
 
-      const result = await templateRepository.findTemplatePage(db, firstPage, { search: '%' });
+      // A wide page, so other templates containing '%' cannot push ours off it
+      const result = await templateRepository.findTemplatePage(
+        db,
+        { ...firstPage, pageSize: 100 },
+        { search: '%' }
+      );
+      const ownIds = new Set([literal.id, other.id]);
 
-      expect(result.map((template) => template.name)).toEqual(['100% effort']);
+      // Other suites' templates may match a literal '%' too; only ours are judged.
+      expect(
+        result.filter((template) => ownIds.has(template.id)).map((template) => template.name)
+      ).toEqual([`100% effort ${RUN_ID}`]);
     });
 
     it('counts assigned questions and the flows linking the template without multiplying them', async () => {
-      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const template = await createTemplate(validCreateInput);
       const [first, second] = await db
         .insert(questions)
         .values(
-          ['page-count-a', 'page-count-b'].map((slug) => ({
+          [`page-count-a-${RUN_ID}`, `page-count-b-${RUN_ID}`].map((slug) => ({
             slug,
             type: 'text' as const,
             questionText: slug,
@@ -154,8 +199,10 @@ describe('Template Repository', () => {
       );
 
       try {
-        const [row] = await templateRepository.findTemplatePage(db, firstPage, {});
+        const rows = await templateRepository.findTemplatePage(db, firstPage, { search: RUN_ID });
 
+        expect(rows.map((row) => row.id)).toEqual([template.id]);
+        const [row] = rows;
         expect(row.questionCount).toBe(2);
         expect(row.flowCount).toBe(1);
       } finally {
@@ -169,7 +216,7 @@ describe('Template Repository', () => {
 
   describe('update', () => {
     it('updates template and increments version', async () => {
-      const created = await templateRepository.createTemplate(db, validCreateInput);
+      const created = await createTemplate(validCreateInput);
 
       const result = await templateRepository.updateTemplate(db, created.id, {
         name: 'Updated Name',
@@ -193,7 +240,7 @@ describe('Template Repository', () => {
 
   describe('deactivate', () => {
     it('sets isActive to false', async () => {
-      const created = await templateRepository.createTemplate(db, validCreateInput);
+      const created = await createTemplate(validCreateInput);
 
       await templateRepository.deactivateTemplate(db, created.id);
 
@@ -216,26 +263,39 @@ describe('Template Repository', () => {
    * written the way they are.
    */
   describe('question assignments', () => {
+    let createdQuestionIds: string[] = [];
+
     /** Inserts question bank entries with predictable slugs, returned in creation order. */
     const createQuestions = async (count: number): Promise<{ id: string; slug: string }[]> => {
       const inserted = await db
         .insert(questions)
         .values(
           Array.from({ length: count }, (_, index) => ({
-            slug: `tq-test-question-${String(index + 1)}`,
+            slug: `tq-test-question-${RUN_ID}-${String(index + 1)}`,
             type: 'single-choice' as const,
             questionText: `How active are you? (${String(index + 1)})`,
           }))
         )
         .returning({ id: questions.id, slug: questions.slug });
+      createdQuestionIds.push(...inserted.map((question) => question.id));
 
       return inserted;
     };
 
-    /** Orders must be cleared before the questions they reference (FK is RESTRICT). */
+    /**
+     * Orders must be cleared before the questions they reference (FK is RESTRICT).
+     * Runs before the outer hook, so these templates' orders go first.
+     */
     afterEach(async () => {
-      await db.execute(sql`DELETE FROM template_questions`);
-      await db.execute(sql`DELETE FROM questions WHERE slug LIKE 'tq-test-%'`);
+      if (createdTemplateIds.length > 0) {
+        await db
+          .delete(templateQuestions)
+          .where(inArray(templateQuestions.templateId, createdTemplateIds));
+      }
+      if (createdQuestionIds.length > 0) {
+        await db.delete(questions).where(inArray(questions.id, createdQuestionIds));
+      }
+      createdQuestionIds = [];
     });
 
     const assignedOrders = async (templateId: string): Promise<number[]> => {
@@ -248,7 +308,7 @@ describe('Template Repository', () => {
     };
 
     it('appends assignments from the supplied starting order', async () => {
-      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const template = await createTemplate(validCreateInput);
       const bank = await createQuestions(3);
 
       await templateRepository.assignQuestions(
@@ -263,13 +323,13 @@ describe('Template Repository', () => {
     });
 
     it('returns 0 from findMaxDisplayOrder when nothing is assigned', async () => {
-      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const template = await createTemplate(validCreateInput);
 
       expect(await templateRepository.findMaxDisplayOrder(db, template.id)).toBe(0);
     });
 
     it('reverses the order without tripping the unique display order index', async () => {
-      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const template = await createTemplate(validCreateInput);
       const bank = await createQuestions(3);
       const questionIds = bank.map((question) => question.id);
 
@@ -293,7 +353,7 @@ describe('Template Repository', () => {
     });
 
     it('swaps two adjacent assignments, which a direct write would reject', async () => {
-      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const template = await createTemplate(validCreateInput);
       const bank = await createQuestions(2);
       const [first, second] = bank.map((question) => question.id);
 
@@ -311,7 +371,7 @@ describe('Template Repository', () => {
     });
 
     it('closes the gap left by unassigning the middle question', async () => {
-      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const template = await createTemplate(validCreateInput);
       const bank = await createQuestions(3);
       const questionIds = bank.map((question) => question.id);
 
@@ -335,7 +395,7 @@ describe('Template Repository', () => {
     });
 
     it('closes the gap left by unassigning the first question', async () => {
-      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const template = await createTemplate(validCreateInput);
       const bank = await createQuestions(3);
       const questionIds = bank.map((question) => question.id);
 
@@ -357,25 +417,30 @@ describe('Template Repository', () => {
     });
 
     it('reports false when unassigning a question that was never assigned', async () => {
-      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const template = await createTemplate(validCreateInput);
       const bank = await createQuestions(1);
 
       expect(await templateRepository.unassignQuestion(db, template.id, bank[0].id)).toBe(false);
     });
 
     it('offers the whole active bank when the template has no assignments', async () => {
-      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const template = await createTemplate(validCreateInput);
       const bank = await createQuestions(2);
 
       const assignable = await templateRepository.findAssignableQuestions(db, template.id);
+      const bankIds = new Set(bank.map((question) => question.id));
 
-      expect(assignable.map((question) => question.id).sort()).toEqual(
-        bank.map((question) => question.id).sort()
-      );
+      // The bank is shared; questions other suites hold are not judged here.
+      expect(
+        assignable
+          .map((question) => question.id)
+          .filter((id) => bankIds.has(id))
+          .sort()
+      ).toEqual([...bankIds].sort());
     });
 
     it('excludes already-assigned and inactive questions from the assignable pool', async () => {
-      const template = await templateRepository.createTemplate(db, validCreateInput);
+      const template = await createTemplate(validCreateInput);
       const bank = await createQuestions(3);
       const [assigned, inactive, available] = bank.map((question) => question.id);
 
@@ -383,8 +448,94 @@ describe('Template Repository', () => {
       await db.execute(sql`UPDATE questions SET is_active = false WHERE id = ${inactive}`);
 
       const assignable = await templateRepository.findAssignableQuestions(db, template.id);
+      const bankIds = new Set(bank.map((question) => question.id));
 
-      expect(assignable.map((question) => question.id)).toEqual([available]);
+      expect(assignable.map((question) => question.id).filter((id) => bankIds.has(id))).toEqual([
+        available,
+      ]);
+    });
+
+    describe('createDuplicateTemplate', () => {
+      // created_by references users, so the copying admin is a real user in a test organisation
+      let organisationId: string;
+      let adminUserId: string;
+
+      beforeEach(async () => {
+        organisationId = randomUUID();
+        adminUserId = randomUUID();
+
+        await asOrganisation(db, organisationId, async (tx) => {
+          await tx.execute(sql`
+            INSERT INTO organisations (id, public_id, type, name, settings)
+            VALUES (${organisationId}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, 'individual', ${`Template Organisation [${RUN_ID}]`}, '{}')
+          `);
+          await tx.execute(sql`
+            INSERT INTO users (id, public_id, organisation_id, location_id, email, cognito_sub, first_name, last_name, role)
+            VALUES (${adminUserId}, ${randomUUID().replace(/-/g, '').slice(0, 12)}, ${organisationId}, NULL, ${`template-${adminUserId.slice(0, 8)}@test.com`}, ${`cognito-${adminUserId.slice(0, 8)}`}, 'Tess', 'Template', 'system_admin')
+          `);
+        });
+      });
+
+      afterEach(async () => {
+        await deleteOrganisations(db, [organisationId]);
+      });
+
+      it('creates an inactive version 1 copy holding every question assignment in order, leaving the source untouched', async () => {
+        const source = await createTemplate({
+          ...validCreateInput,
+          description: 'The template being copied',
+        });
+        await templateRepository.updateTemplate(db, source.id, { name: `Source ${RUN_ID}` });
+        const bank = await createQuestions(3);
+        await templateRepository.assignQuestions(
+          db,
+          source.id,
+          bank.map((question) => question.id),
+          1
+        );
+        await db.execute(sql`
+          UPDATE template_questions SET config_overrides = ${JSON.stringify({ questionText: 'Reworded' })}::jsonb
+          WHERE template_id = ${source.id} AND question_id = ${bank[1].id}
+        `);
+        const sourceBefore = await templateRepository.findTemplateById(db, source.id);
+        const assignments = await templateRepository.findQuestionAssignmentsByTemplateId(
+          db,
+          source.id
+        );
+
+        const copyId = await templateRepository.createDuplicateTemplate(
+          db,
+          adminUserId,
+          `Copy ${RUN_ID}`,
+          source,
+          assignments
+        );
+        createdTemplateIds.push(copyId);
+
+        expect(await templateRepository.findTemplateById(db, copyId)).toMatchObject({
+          name: `Copy ${RUN_ID}`,
+          description: 'The template being copied',
+          version: 1,
+          isActive: false,
+          createdBy: adminUserId,
+        });
+        expect(assignments).toEqual([
+          { questionId: bank[0].id, displayOrder: 1, configOverrides: null },
+          {
+            questionId: bank[1].id,
+            displayOrder: 2,
+            configOverrides: { questionText: 'Reworded' },
+          },
+          { questionId: bank[2].id, displayOrder: 3, configOverrides: null },
+        ]);
+        expect(await templateRepository.findQuestionAssignmentsByTemplateId(db, copyId)).toEqual(
+          assignments
+        );
+        expect(await templateRepository.findTemplateById(db, source.id)).toEqual(sourceBefore);
+        expect(await templateRepository.findQuestionAssignmentsByTemplateId(db, source.id)).toEqual(
+          assignments
+        );
+      });
     });
   });
 });

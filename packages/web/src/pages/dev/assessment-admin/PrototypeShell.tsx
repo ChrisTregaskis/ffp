@@ -10,7 +10,6 @@ import { iconVar } from './prototype-labels';
 import { getContextNav, getMainNav, PROTOTYPE_HOME_VIEW } from './prototype-nav';
 import { PrototypeNavItem } from './PrototypeNavItem';
 import { usePrototypeStore } from './PrototypeStore';
-import { VideoLibraryView } from './VideoLibraryView';
 
 import type { PrototypeView } from './prototype-types';
 
@@ -18,8 +17,6 @@ const renderView = (view: PrototypeView): JSX.Element => {
   switch (view.name) {
     case 'programme-models':
       return <ProgrammeModelsView />;
-    case 'video-library':
-      return <VideoLibraryView />;
     case 'member-programmes':
       return <MemberProgrammesView />;
     case 'member-programme':

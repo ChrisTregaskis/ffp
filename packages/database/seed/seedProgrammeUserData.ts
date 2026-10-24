@@ -1,15 +1,26 @@
-import { Pool } from 'pg';
-import { eq } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../src/schema/index.js';
-import { programmes, programmePhases, userSessions } from '../src/schema/index.js';
-import { createLogger } from '../src/lib/logger.js';
+import { and, asc, eq, inArray } from 'drizzle-orm';
+import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { type Pool } from 'pg';
+
 import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.js';
+import { createLogger } from '../src/lib/logger.js';
+import { fromTemplateExercise } from '../src/lib/member-session-exercise.js';
+import {
+  programmes,
+  programmePhases,
+  sessionExercises,
+  templateSessions,
+  userSessionExercises,
+  userSessions,
+} from '../src/schema/index.js';
+
+import { requireSeedId } from './requireSeedId.js';
 import { PROGRAMME_TEMPLATE_IDS } from './seedProgrammeTemplates.js';
 import { TEMPLATE_PHASE_IDS, TEMPLATE_SESSION_IDS } from './seedTemplateHierarchy.js';
 
-import type { NewProgramme } from '../src/schema/programmes.js';
+import type * as schema from '../src/schema/index.js';
 import type { NewProgrammePhase } from '../src/schema/programme-phases.js';
+import type { NewProgramme } from '../src/schema/programmes.js';
 import type { NewUserSession } from '../src/schema/user-sessions.js';
 
 const logger = createLogger('seed-programme-user-data');
@@ -190,7 +201,7 @@ const seedProgramme = async (
   logger.info('Seeding test user programme...');
 
   const existing = await db.query.programmes.findFirst({
-    where: eq(programmes.id, DEFAULT_PROGRAMME.id!),
+    where: eq(programmes.id, requireSeedId(DEFAULT_PROGRAMME, 'test user programme')),
   });
 
   if (existing) {
@@ -219,7 +230,10 @@ const seedProgrammePhases = async (
 
   for (const phase of DEFAULT_PROGRAMME_PHASES) {
     const existing = await db.query.programmePhases.findFirst({
-      where: eq(programmePhases.id, phase.id!),
+      where: eq(
+        programmePhases.id,
+        requireSeedId(phase, `programme phase ${String(phase.phaseNumber)}`)
+      ),
     });
 
     if (existing) {
@@ -250,7 +264,10 @@ const seedUserSessions = async (
 
   for (const session of DEFAULT_USER_SESSIONS) {
     const existing = await db.query.userSessions.findFirst({
-      where: eq(userSessions.id, session.id!),
+      where: eq(
+        userSessions.id,
+        requireSeedId(session, `user session ${String(session.sessionNumber)}`)
+      ),
     });
 
     if (existing) {
@@ -269,12 +286,100 @@ const seedUserSessions = async (
 };
 
 /**
+ * Writes the remaining sessions (not_started) and every session's exercises, as programme creation does.
+ * IDEMPOTENT — only writes what is missing.
+ */
+const seedMemberLayer = async (
+  db: NodePgDatabase<typeof schema> & { $client: Pool }
+): Promise<void> => {
+  logger.info('Seeding test user member-layer sessions and exercises...');
+
+  let sessionsCreated = 0;
+
+  for (const phase of DEFAULT_PROGRAMME_PHASES) {
+    const phaseId = requireSeedId(phase, `programme phase ${String(phase.phaseNumber)}`);
+    const phaseTemplateSessions = await db
+      .select()
+      .from(templateSessions)
+      .where(eq(templateSessions.templatePhaseId, phase.templatePhaseId))
+      .orderBy(asc(templateSessions.sessionNumber));
+
+    for (const templateSession of phaseTemplateSessions) {
+      const existing = await db.query.userSessions.findFirst({
+        where: and(
+          eq(userSessions.programmePhaseId, phaseId),
+          eq(userSessions.templateSessionId, templateSession.id)
+        ),
+      });
+
+      if (existing) {
+        continue;
+      }
+
+      await db.insert(userSessions).values({
+        organisationId: TEST_ORGANISATION_ID,
+        programmePhaseId: phaseId,
+        templateSessionId: templateSession.id,
+        sessionNumber: templateSession.sessionNumber,
+        status: 'not_started',
+      });
+      sessionsCreated++;
+    }
+  }
+
+  const programmeSessions = await db
+    .select()
+    .from(userSessions)
+    .where(
+      inArray(
+        userSessions.programmePhaseId,
+        DEFAULT_PROGRAMME_PHASES.map((phase) =>
+          requireSeedId(phase, `programme phase ${String(phase.phaseNumber)}`)
+        )
+      )
+    );
+
+  let exercisesCreated = 0;
+
+  for (const session of programmeSessions) {
+    const existing = await db.query.userSessionExercises.findFirst({
+      where: eq(userSessionExercises.userSessionId, session.id),
+    });
+
+    if (existing) {
+      continue;
+    }
+
+    const templateExercises = await db
+      .select()
+      .from(sessionExercises)
+      .where(eq(sessionExercises.templateSessionId, session.templateSessionId));
+
+    if (templateExercises.length === 0) {
+      continue;
+    }
+
+    await db.insert(userSessionExercises).values(
+      templateExercises.map((exercise) => ({
+        organisationId: TEST_ORGANISATION_ID,
+        userSessionId: session.id,
+        ...fromTemplateExercise(exercise),
+      }))
+    );
+    exercisesCreated += templateExercises.length;
+  }
+
+  logger.info('Member-layer seed complete', { sessionsCreated, exercisesCreated });
+};
+
+/**
  * Seeds programme data for the test programme user.
  *
  * Creates:
  * - 1 active programme (level 1 shell)
  * - 4 programme phases (Phase 1 completed, Phase 2 in progress, Phases 3-4 not started)
- * - 6 user sessions (Phase 1: 3 completed, Phase 2: 2 completed + 1 in progress)
+ * - 12 user sessions (Phase 1: 3 completed, Phase 2: 2 completed + 1 in progress, the rest not started)
+ * - each session's exercises, copied from the template
  *
  * This provides a realistic dashboard state for visual testing.
  * Must run AFTER: seedTestUserDatabase, seedProgrammeTemplates, seedTemplateHierarchy
@@ -287,6 +392,7 @@ export const seedProgrammeUserData = async (
   await seedProgramme(db);
   await seedProgrammePhases(db);
   await seedUserSessions(db);
+  await seedMemberLayer(db);
 
   logger.info('=== Programme user data seed complete ===');
 };

@@ -1,10 +1,11 @@
-import { pgTable, uuid, varchar, timestamp, jsonb, pgEnum } from 'drizzle-orm/pg-core';
-
-import { publicIdColumn, publicIdIndex } from '../lib/public-id';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { relations } from 'drizzle-orm';
-import { users } from './users';
+import { pgTable, uuid, varchar, timestamp, jsonb, pgEnum } from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+
 import { ORGANISATION_TYPES, ORGANISATION_STATUSES } from '../constants/organisation.constants';
+import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
+import { users } from './users';
 
 export const organisationTypeEnum = pgEnum('organisation_type', [...ORGANISATION_TYPES]);
 export const organisationStatusEnum = pgEnum('organisation_status', [...ORGANISATION_STATUSES]);

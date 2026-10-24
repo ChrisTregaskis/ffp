@@ -6,11 +6,14 @@ import {
   listAdminVideos,
 } from '@ffp/core/server';
 
+import { parseArrayParam } from '../../lib/query-params';
+
 /**
  * Lambda handler for GET /admin/videos
  *
  * Lists all videos (draft, active, archived) with pagination, search, and filters.
- * Query params: page, pageSize, sortBy, sortDirection, search, status, difficulty.
+ * Query params: page, pageSize, sortBy, sortDirection, search, status, difficulty,
+ * tags (comma-separated tag publicIds; AND across categories, OR within one).
  * Admin role required.
  */
 export const handler = withErrorHandling(
@@ -25,6 +28,7 @@ export const handler = withErrorHandling(
         search: params.search ?? undefined,
         status: params.status ?? undefined,
         difficulty: params.difficulty ?? undefined,
+        tags: parseArrayParam(params.tags),
       };
 
       return await listAdminVideos(context, paginationInput, rawFilters);

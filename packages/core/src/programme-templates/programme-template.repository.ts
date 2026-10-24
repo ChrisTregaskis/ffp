@@ -231,6 +231,7 @@ export async function findTemplateHierarchy(
         id: session.id,
         sessionNumber: session.sessionNumber,
         name: session.name,
+        description: session.description,
         estimatedDurationMinutes: session.estimatedDurationMinutes,
         exercises: (exercisesBySession.get(session.id) ?? []).map((exercise) => ({
           id: exercise.id,

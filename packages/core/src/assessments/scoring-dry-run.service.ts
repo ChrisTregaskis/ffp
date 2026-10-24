@@ -2,6 +2,7 @@ import { getDb, type QuestionWithConfig, type ScoringConfig } from '@ffp/databas
 import { levelForProgrammeSlug } from '@ffp/database/constants';
 
 import { type OrganisationContext } from '../lib/context';
+import { assertDistinctIds } from '../lib/distinct-ids';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import { findTemplateNamesBySlugs } from '../programme-templates/programme-template.repository';
 import { findByTemplateIds } from '../questions/question.repository';
@@ -20,7 +21,6 @@ import {
   type ScoringDryRunResult,
 } from '../schemas/scoring-dry-run.schema';
 
-import { assertDistinctPublicIds } from './child-payload';
 import * as flowRepository from './flow.repository';
 import { calculateScores } from './scoring';
 import { formatDimensionName } from './scoring/helpers';
@@ -138,7 +138,7 @@ function toResponses(
   answers: ScoringDryRunRequest['answers'],
   questionsByPublicId: ReadonlyMap<string, QuestionWithConfig>
 ): AssessmentResponse[] {
-  assertDistinctPublicIds(
+  assertDistinctIds(
     answers.map((answer) => answer.questionPublicId),
     'Answered question'
   );

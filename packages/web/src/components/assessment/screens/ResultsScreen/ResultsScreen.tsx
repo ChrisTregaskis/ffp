@@ -1,4 +1,4 @@
-import type { FlowStepConfig, MemberAssessmentScores } from '@ffp/core';
+import type { FlowStepConfig, MemberAssessmentScores, ProgrammeReadiness } from '@ffp/core';
 
 import { FadeSlideIn } from '@web/components/motion';
 
@@ -19,8 +19,8 @@ export interface ResultsScreenProps {
   scores: MemberAssessmentScores | null;
   /** Whether scoring is still in progress */
   isLoading: boolean;
-  /** Generated programme ID (null while programme is being created) */
-  programmeId: string | null;
+  /** Whether the programme is ready, still being put together, or could not be */
+  programmeReadiness: ProgrammeReadiness;
   /** Programme name to display in the recommended programme section */
   programmeName?: string | null;
   /** Programme description text */
@@ -35,6 +35,8 @@ export interface ResultsScreenProps {
   onReplaceProgramme?: () => void;
   /** Whether the replace programme mutation is in progress */
   isReplacing?: boolean;
+  /** Whether replacing the programme failed */
+  hasReplaceFailed?: boolean;
 }
 
 /**
@@ -48,7 +50,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   config,
   scores,
   isLoading,
-  programmeId,
+  programmeReadiness,
   onViewProgramme,
   onKeepProgramme,
   onReplaceProgramme,
@@ -56,6 +58,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   programmeDescription = 'Personalised based on your assessment results and goals',
   isReassessment = false,
   isReplacing = false,
+  hasReplaceFailed = false,
 }) => {
   if (scores === null && isLoading) {
     return <ResultsLoadingState />;
@@ -93,8 +96,9 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
         <ResultsActions
           isReassessment={isReassessment}
           hasScores={scores !== null}
-          programmeId={programmeId}
+          programmeReadiness={programmeReadiness}
           isReplacing={isReplacing}
+          hasReplaceFailed={hasReplaceFailed}
           onViewProgramme={onViewProgramme}
           onKeepProgramme={onKeepProgramme}
           onReplaceProgramme={onReplaceProgramme}

@@ -4,7 +4,7 @@ export { VideoPlaceholder, type VideoPlaceholderProps } from './VideoPlaceholder
 export type { VideoOverlayProps } from './VideoOverlay';
 export type { VideoPlayerProps } from './VideoPlayer';
 export { ArchiveVideoModal, type ArchiveVideoModalProps } from './ArchiveVideoModal';
-export { MOVEMENT_TYPE_OPTIONS } from './constants';
+export { VideoFileDropzone, type VideoFileDropzoneProps } from './VideoFileDropzone';
 export { VideoMetadataForm, type VideoMetadataFormProps } from './VideoMetadataForm';
 export {
   VideoMetadataFormFields,

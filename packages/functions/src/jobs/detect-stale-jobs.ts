@@ -1,4 +1,4 @@
-import { detectAndMarkStaleJobs, createSystemLogger } from '@ffp/core/server';
+import { detectAndMarkStaleJobs, createSystemLogger, describeErrorForLog } from '@ffp/core/server';
 import { JOB_TYPES, type JobType } from '@ffp/database';
 
 import type { Context, ScheduledEvent } from 'aws-lambda';
@@ -42,10 +42,10 @@ export const handler = async (event: ScheduledEvent, context: Context): Promise<
       thresholdByType,
     });
   } catch (error) {
-    logger.error('Stale job detection failed', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    throw error;
+    const description = describeErrorForLog(error);
+    logger.error('Stale job detection failed', description);
+    // The runtime logs a thrown error's enumerable fields, query and params included
+    throw new Error(description.error);
   }
 };
 

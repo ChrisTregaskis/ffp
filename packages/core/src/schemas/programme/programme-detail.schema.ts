@@ -24,6 +24,7 @@ const detailCompletionSchema = z.object({
 
 /** Full exercise detail (only for current/completed phases) */
 const detailExerciseSchema = z.object({
+  /** The member's own exercise row (user_session_exercises), not the template's */
   sessionExerciseId: z.guid(),
   orderIndex: z.number().int().nonnegative(),
   sets: z.number().int().positive(),

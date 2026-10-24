@@ -12,7 +12,6 @@
     "paths": {
       "@core/lib/*": ["./lib/*"],
       "@core/schemas/*": ["./schemas/*"],
-      "@core/utils/*": ["./utils/*"],
       "@core/services/*": ["./services/*"],
       "@core/repositories/*": ["./repositories/*"]
     }

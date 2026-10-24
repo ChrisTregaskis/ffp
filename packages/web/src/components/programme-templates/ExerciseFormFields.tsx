@@ -11,13 +11,20 @@ import { VideoSelector } from './VideoSelector';
 import type { ExerciseFormValues } from './exercise-utils';
 import type { SelectedVideo } from './VideoSelector';
 
+// The form trims on submit, so a value of only spaces would read as blank. Sets and reps
+// cannot be stored empty, so editing refuses a blank rather than keeping the old value unseen.
+const requiredOnEdit = (message: string): { validate: (value: string) => true | string } => ({
+  validate: (value) => value.trim() !== '' || message,
+});
+
 /** Fields for the exercise inline form */
 export const ExerciseFormFields: React.FC<{
+  isEditMode: boolean;
   initialSelectedVideo: SelectedVideo | null;
   onCancel: () => void;
   isSubmitting: boolean;
   submitLabel: string;
-}> = ({ initialSelectedVideo, onCancel, isSubmitting, submitLabel }) => {
+}> = ({ isEditMode, initialSelectedVideo, onCancel, isSubmitting, submitLabel }) => {
   const { register, errors, setValue, getValues, watch } =
     useComposableFormContext<ExerciseFormValues>();
   const [selectedVideo, setSelectedVideo] = useState<SelectedVideo | null>(initialSelectedVideo);
@@ -80,6 +87,8 @@ export const ExerciseFormFields: React.FC<{
               register={register}
               errors={errors}
               inputProps={{ min: 1 }}
+              isRequired={isEditMode}
+              registerOptions={isEditMode ? requiredOnEdit('Please give the sets') : undefined}
             />
             <FormTextInput<ExerciseFormValues>
               name="reps"
@@ -87,6 +96,8 @@ export const ExerciseFormFields: React.FC<{
               placeholder="e.g. 8-12"
               register={register}
               errors={errors}
+              isRequired={isEditMode}
+              registerOptions={isEditMode ? requiredOnEdit('Please give the reps') : undefined}
             />
           </FormRow>
 

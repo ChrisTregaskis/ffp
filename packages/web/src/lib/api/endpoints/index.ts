@@ -42,7 +42,12 @@ export type {
 } from './admin-organisations';
 
 export { adminProgrammeTemplatesApi } from './admin-programme-templates';
-export { adminExercisesApi, adminPhasesApi, adminSessionsApi } from './admin-template-hierarchy';
+export {
+  adminExercisesApi,
+  adminPhasesApi,
+  adminSessionsApi,
+  adminSlotsApi,
+} from './admin-template-hierarchy';
 export type {
   CreateExerciseRequest,
   CreatePhaseRequest,
@@ -73,6 +78,8 @@ export type {
   PaginatedUserResponse,
   UserDetailResponse as AdminUserDetailResponse,
 } from './admin-users';
+
+export { adminTagsApi } from './admin-tags';
 
 export { adminVideosApi } from './admin-videos';
 export type {
@@ -111,10 +118,4 @@ export { usersApi } from './users';
 export type { UserProfileResponse } from './users';
 
 export { videosApi } from './videos';
-export type {
-  SignedVideoUrlResponse,
-  VideoDetailResponse,
-  VideoFilterInput,
-  VideoListApiResponse,
-  VideoListResponse,
-} from './videos';
+export type { SignedVideoUrlResponse, VideoDetailResponse } from './videos';

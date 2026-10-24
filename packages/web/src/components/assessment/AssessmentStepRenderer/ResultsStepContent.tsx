@@ -23,6 +23,7 @@ export const ResultsStepContent: React.FC<ResultsStepContentProps> = ({
   onReplaceProgramme,
   isReassessment = false,
   isReplacing = false,
+  hasReplaceFailed = false,
 }) => {
   const { assessmentDispatch } = useAssessment();
   const {
@@ -96,13 +97,14 @@ export const ResultsStepContent: React.FC<ResultsStepContentProps> = ({
       config={config}
       scores={results?.scores ?? null}
       isLoading={isLoading || !results?.scores}
-      programmeId={results?.programmeId ?? null}
+      programmeReadiness={results?.programmeReadiness ?? 'pending'}
       programmeName={results?.programmeName}
       onViewProgramme={handleViewProgramme}
       isReassessment={isReassessment}
       onKeepProgramme={handleKeepProgramme}
       onReplaceProgramme={handleReplaceProgramme}
       isReplacing={isReplacing}
+      hasReplaceFailed={hasReplaceFailed}
     />
   );
 };

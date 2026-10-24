@@ -3,6 +3,9 @@ import { BaseError, ConflictError } from './errors.js';
 /** PostgreSQL SQLSTATE for a unique-constraint violation. */
 const UNIQUE_VIOLATION = '23505';
 
+/** PostgreSQL SQLSTATE for a foreign-key violation. */
+const FOREIGN_KEY_VIOLATION = '23503';
+
 /** SQLSTATE is five alphanumerics — enough to tell a driver error from `ECONNRESET`. */
 const SQLSTATE_PATTERN = /^[0-9A-Z]{5}$/;
 
@@ -42,6 +45,15 @@ export function findDriverError(error: unknown): DriverError | null {
 }
 
 /**
+ * Whether a write was refused because another row still references what it
+ * removes. Not mapped globally: only a caller that knows what holds the row can
+ * say why it is in use.
+ */
+export function isForeignKeyViolation(error: unknown): boolean {
+  return findDriverError(error)?.code === FOREIGN_KEY_VIOLATION;
+}
+
+/**
  * Map a driver error onto an application error, leaving anything else as it was.
  *
  * Services guard uniqueness with a read before the write, so the ordinary path
@@ -60,15 +72,14 @@ export function translateDatabaseError(error: unknown): unknown {
   }
 
   // The constraint name is an internal schema detail and this path is global, so
-  // it goes to the log (see `describeDriverError`) and not to the caller.
+  // it goes to the log (see `describeErrorForLog`) and not to the caller.
   return new ConflictError('This change conflicts with a record that already exists');
 }
 
 /**
- * Structured, loggable summary of a driver error. The driver's own `message`
- * carries the failed SQL and its bound parameters — member emails, free-text
- * answers — so it must never be logged. Returns null for anything else, and the
- * caller should still avoid `message` in that case.
+ * The SQLSTATE, constraint and table of a driver error, or null for anything
+ * else. A log site describes a caught error with `describeErrorForLog`, which
+ * builds on this; never log a database error's `message` or `stack` directly.
  */
 export function describeDriverError(
   error: unknown

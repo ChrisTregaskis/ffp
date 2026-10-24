@@ -1,7 +1,9 @@
 import { getDb } from '@ffp/database';
 import type { TemplateSessionRecord } from '@ffp/database/schema';
 
-import { NotFoundError, ValidationError } from '../lib/errors';
+import { isForeignKeyViolation } from '../lib/database-errors';
+import { assertDistinctIds } from '../lib/distinct-ids';
+import { ConflictError, NotFoundError, ValidationError } from '../lib/errors';
 import {
   createSessionRequestSchema,
   updateSessionRequestSchema,
@@ -77,7 +79,8 @@ export async function updateSession(sessionId: string, input: unknown): Promise<
 /**
  * Deletes a session and updates phase sessionCount.
  * Re-numbers remaining sessions to maintain contiguous sequence.
- * DB cascade handles child exercises.
+ * DB cascade handles child exercises; a session that members' programmes hold is
+ * refused by its restrict foreign key.
  */
 export async function deleteSession(sessionId: string): Promise<void> {
   const db = getDb();
@@ -96,7 +99,18 @@ export async function deleteSession(sessionId: string): Promise<void> {
       throw new NotFoundError('Template phase', session.templatePhaseId);
     }
 
-    await sessionRepository.deleteSession(tx, sessionId);
+    try {
+      await sessionRepository.deleteSession(tx, sessionId);
+    } catch (error) {
+      if (isForeignKeyViolation(error)) {
+        throw new ConflictError(
+          "This session is part of members' programmes, so it can't be deleted"
+        );
+      }
+
+      throw error;
+    }
+
     await sessionRepository.renumberSessions(tx, session.templatePhaseId);
     await phaseRepository.updateSessionCount(
       tx,
@@ -114,30 +128,31 @@ export async function reorderSessions(phaseId: string, input: unknown): Promise<
   const validated = reorderSessionsRequestSchema.parse(input);
   const db = getDb();
 
-  const phase = await phaseRepository.findPhaseById(db, phaseId);
-
-  if (!phase) {
-    throw new NotFoundError('Template phase', phaseId);
-  }
-
-  // Validate all IDs belong to this phase
-  const existingSessions = await sessionRepository.findSessionsByPhaseId(db, phaseId);
-  const existingIds = new Set(existingSessions.map((s) => s.id));
-
-  const invalidIds = validated.orderedIds.filter((id) => !existingIds.has(id));
-
-  if (invalidIds.length > 0) {
-    throw new ValidationError('One or more session IDs do not belong to this phase');
-  }
-
-  if (validated.orderedIds.length !== existingSessions.length) {
-    throw new ValidationError(
-      `Expected ${String(existingSessions.length)} session IDs but received ${String(validated.orderedIds.length)}`
-    );
-  }
-
-  // Reorder in a transaction
   const reordered = await db.transaction(async (tx) => {
+    const phase = await phaseRepository.findPhaseById(tx, phaseId);
+
+    if (!phase) {
+      throw new NotFoundError('Template phase', phaseId);
+    }
+
+    assertDistinctIds(validated.orderedIds, 'Session');
+
+    // Validate all IDs belong to this phase
+    const existingSessions = await sessionRepository.findSessionsByPhaseId(tx, phaseId);
+    const existingIds = new Set(existingSessions.map((s) => s.id));
+
+    const invalidIds = validated.orderedIds.filter((id) => !existingIds.has(id));
+
+    if (invalidIds.length > 0) {
+      throw new ValidationError('One or more session IDs do not belong to this phase');
+    }
+
+    if (validated.orderedIds.length !== existingSessions.length) {
+      throw new ValidationError(
+        `Expected ${String(existingSessions.length)} session IDs but received ${String(validated.orderedIds.length)}`
+      );
+    }
+
     return await sessionRepository.reorderSessions(tx, phaseId, validated.orderedIds);
   });
 

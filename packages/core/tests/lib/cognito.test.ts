@@ -19,7 +19,6 @@ import {
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { CognitoService } from '../../src/lib/cognito';
-import { COGNITO_CUSTOM_ATTRIBUTES } from '../../src/lib/constants';
 import { UnauthorisedError } from '../../src/lib/errors';
 
 // Mock the AWS SDK
@@ -84,9 +83,9 @@ describe('CognitoService', () => {
           { Name: 'email_verified', Value: 'true' },
           { Name: 'given_name', Value: 'John' },
           { Name: 'family_name', Value: 'Smith' },
-          { Name: COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID, Value: 'tenant-123' },
-          { Name: COGNITO_CUSTOM_ATTRIBUTES.LOCATION_ID, Value: 'customer-456' },
-          { Name: COGNITO_CUSTOM_ATTRIBUTES.ROLE, Value: 'programme_user' },
+          { Name: 'custom:tenantId', Value: 'tenant-123' },
+          { Name: 'custom:customerId', Value: 'customer-456' },
+          { Name: 'custom:role', Value: 'programme_user' },
         ],
         DesiredDeliveryMediums: ['EMAIL'],
       });
@@ -129,13 +128,20 @@ describe('CognitoService', () => {
 
       await CognitoService.createUser(params);
 
-      expect(AdminCreateUserCommand).toHaveBeenCalledWith(
-        expect.objectContaining({
-          UserAttributes: expect.arrayContaining([
-            { Name: COGNITO_CUSTOM_ATTRIBUTES.LOCATION_ID, Value: 'customer-456' },
-          ]),
-        })
-      );
+      expect(AdminCreateUserCommand).toHaveBeenCalledWith({
+        UserPoolId: 'test-pool-id',
+        Username: 'user@example.com',
+        UserAttributes: [
+          { Name: 'email', Value: 'user@example.com' },
+          { Name: 'email_verified', Value: 'true' },
+          { Name: 'given_name', Value: 'Jane' },
+          { Name: 'family_name', Value: 'Doe' },
+          { Name: 'custom:tenantId', Value: 'tenant-123' },
+          { Name: 'custom:role', Value: 'customer_owner' },
+          { Name: 'custom:customerId', Value: 'customer-456' },
+        ],
+        DesiredDeliveryMediums: ['EMAIL'],
+      });
     });
 
     it('should create user without locationId when null (system admin)', async () => {
@@ -154,12 +160,19 @@ describe('CognitoService', () => {
 
       await CognitoService.createUser(params);
 
-      const commandCall = vi.mocked(AdminCreateUserCommand).mock.calls[0][0];
-      const hasCustomerId = commandCall.UserAttributes?.some(
-        (attr) => attr.Name === COGNITO_CUSTOM_ATTRIBUTES.LOCATION_ID
-      );
-
-      expect(hasCustomerId).toBe(false);
+      expect(AdminCreateUserCommand).toHaveBeenCalledWith({
+        UserPoolId: 'test-pool-id',
+        Username: 'admin@example.com',
+        UserAttributes: [
+          { Name: 'email', Value: 'admin@example.com' },
+          { Name: 'email_verified', Value: 'true' },
+          { Name: 'given_name', Value: 'Admin' },
+          { Name: 'family_name', Value: 'User' },
+          { Name: 'custom:tenantId', Value: 'platform' },
+          { Name: 'custom:role', Value: 'system_admin' },
+        ],
+        DesiredDeliveryMediums: ['EMAIL'],
+      });
     });
 
     it('should include temporary password when provided', async () => {
@@ -184,6 +197,22 @@ describe('CognitoService', () => {
           TemporaryPassword: 'TempPass123!',
         })
       );
+    });
+
+    it('should throw error if COGNITO_USER_POOL_ID is not set', async () => {
+      delete process.env.COGNITO_USER_POOL_ID;
+
+      await expect(
+        CognitoService.createUser({
+          email: 'user@example.com',
+          firstName: 'Test',
+          lastName: 'User',
+          organisationId: 'tenant-123',
+          locationId: 'customer-456',
+          role: 'programme_user',
+        })
+      ).rejects.toThrow('Missing required environment variables: COGNITO_USER_POOL_ID');
+      expect(mockSend).not.toHaveBeenCalled();
     });
 
     it('should not include temporary password when not provided', async () => {
@@ -347,6 +376,15 @@ describe('CognitoService', () => {
       await expect(CognitoService.refreshToken('refresh-token')).rejects.toThrow(
         'Service unavailable'
       );
+    });
+
+    it('should throw error if COGNITO_CLIENT_ID is not set', async () => {
+      delete process.env.COGNITO_CLIENT_ID;
+
+      await expect(CognitoService.refreshToken('refresh-token')).rejects.toThrow(
+        'Missing required environment variables: COGNITO_CLIENT_ID'
+      );
+      expect(mockSend).not.toHaveBeenCalled();
     });
   });
 });

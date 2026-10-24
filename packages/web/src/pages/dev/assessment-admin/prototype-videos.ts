@@ -35,13 +35,6 @@ export interface PrototypeVideo {
   essential: boolean;
 }
 
-export const VIDEO_MOVEMENT_LABELS: Record<VideoMovementType, string> = {
-  stretch: 'Stretch',
-  strength: 'Strength',
-  mobility: 'Mobility',
-  balance: 'Balance',
-};
-
 export const VIDEO_LIBRARY: PrototypeVideo[] = [
   {
     id: 'vid-neck-release',

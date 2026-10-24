@@ -2,16 +2,14 @@ import { and, count, eq } from 'drizzle-orm';
 
 import {
   exerciseCompletions,
-  sessionExercises,
   type ExerciseCompletionRecord,
   type NewExerciseCompletion,
-  type SessionExerciseRecord,
 } from '@ffp/database/schema';
 
 import { type Transaction } from '../lib/database';
 import { NotFoundError } from '../lib/errors';
 
-export type { ExerciseCompletionRecord, SessionExerciseRecord };
+export type { ExerciseCompletionRecord };
 
 /** Batch creates exercise completion rows for a newly started session. */
 export async function createExerciseCompletions(
@@ -97,19 +95,4 @@ export async function countCompletionsBySessionId(
     total: totalResult.value,
     completed: completedResult.value,
   };
-}
-
-/**
- * Fetches session exercises for a template session (ordered by orderIndex).
- * No RLS required — session_exercises is a system-managed table.
- */
-export async function findSessionExercisesByTemplateSession(
-  tx: Transaction,
-  templateSessionId: string
-): Promise<SessionExerciseRecord[]> {
-  return await tx
-    .select()
-    .from(sessionExercises)
-    .where(eq(sessionExercises.templateSessionId, templateSessionId))
-    .orderBy(sessionExercises.orderIndex);
 }

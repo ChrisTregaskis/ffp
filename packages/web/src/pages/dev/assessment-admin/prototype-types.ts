@@ -53,7 +53,6 @@ export interface PrototypeQuestion {
 /** In-app navigation target (internal mini-router — keeps the prototype to one route) */
 export type PrototypeView =
   | { name: 'programme-models' }
-  | { name: 'video-library' }
   | { name: 'member-programmes' }
   | { name: 'member-programme'; memberId: string }
   | { name: 'member-programme-phase'; memberId: string; phaseId: string };

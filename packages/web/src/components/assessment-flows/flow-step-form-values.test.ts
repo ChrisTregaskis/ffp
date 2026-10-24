@@ -53,10 +53,10 @@ describe('stepToFormValues', () => {
   });
 
   // Guards the truthiness trap that renders any falsy number as an empty field
-  it('keeps a numeric estimate as its string form', () => {
-    const result = stepToFormValues(step({ config: { title: 'A step', estimatedMinutes: 25 } }));
+  it('keeps a zero estimate as "0" rather than an empty field', () => {
+    const result = stepToFormValues(step({ config: { title: 'A step', estimatedMinutes: 0 } }));
 
-    expect(result.estimatedMinutes).toBe('25');
+    expect(result.estimatedMinutes).toBe('0');
   });
 });
 
