@@ -1,5 +1,14 @@
 import { relations } from 'drizzle-orm';
-import { pgTable, uuid, varchar, timestamp, jsonb, pgEnum, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  timestamp,
+  jsonb,
+  pgEnum,
+  index,
+  unique,
+} from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { LOCATION_STATUSES } from '../constants/location.constants';
@@ -40,6 +49,7 @@ export const locations = pgTable(
     index('idx_locations_organisation_id').on(table.organisationId),
     index('idx_locations_account_code').on(table.accountCode),
     index('idx_locations_status').on(table.status),
+    unique('locations_id_organisation_id_unique').on(table.id, table.organisationId),
   ]
 );
 

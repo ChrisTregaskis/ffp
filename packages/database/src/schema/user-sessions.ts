@@ -1,4 +1,14 @@
-import { pgTable, uuid, integer, timestamp, uniqueIndex, index, pgEnum } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  integer,
+  timestamp,
+  uniqueIndex,
+  index,
+  pgEnum,
+  unique,
+  foreignKey,
+} from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { SESSION_STATUSES } from '../constants/session.constants';
@@ -26,9 +36,7 @@ export const userSessions = pgTable(
       .notNull()
       .references(() => organisations.id, { onDelete: 'cascade' }),
     /** Parent programme phase (user-layer) */
-    programmePhaseId: uuid('programme_phase_id')
-      .notNull()
-      .references(() => programmePhases.id, { onDelete: 'restrict' }),
+    programmePhaseId: uuid('programme_phase_id').notNull(),
     /** Source template session — restrict deletion of templates with active sessions */
     templateSessionId: uuid('template_session_id')
       .notNull()
@@ -52,6 +60,12 @@ export const userSessions = pgTable(
     uniqueIndex('idx_user_sessions_phase_session').on(table.programmePhaseId, table.sessionNumber),
     index('idx_user_sessions_organisation').on(table.organisationId),
     index('idx_user_sessions_programme_phase').on(table.programmePhaseId),
+    unique('user_sessions_id_organisation_id_unique').on(table.id, table.organisationId),
+    foreignKey({
+      name: 'user_sessions_programme_phase_id_organisation_fk',
+      columns: [table.programmePhaseId, table.organisationId],
+      foreignColumns: [programmePhases.id, programmePhases.organisationId],
+    }).onDelete('restrict'),
   ]
 );
 
