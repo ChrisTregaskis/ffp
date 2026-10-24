@@ -75,8 +75,9 @@ describe('Answer Repository', () => {
 
   afterEach(async () => {
     // The organisations take their assessments and answers with them (ON DELETE CASCADE);
-    // the questions (RESTRICT from answers) and the flow go after
-    await deleteOrganisations(db, [organisationAId, organisationBId]);
+    // the questions (RESTRICT from answers) and the flow go after. B goes first, so a row a
+    // failing case let B attach to A's assessment cannot hold A's delete back.
+    await deleteOrganisations(db, [organisationBId, organisationAId]);
     await db.delete(questions).where(inArray(questions.id, questionIds));
     await db.delete(assessmentFlows).where(inArray(assessmentFlows.id, [flowId]));
   });
@@ -223,12 +224,8 @@ describe('Answer Repository', () => {
       ]);
     });
 
-    // Suspected defect: the row is stored with B's organisation id against A's assessment.
-    // The policy checks only the row's own organisation_id, and the foreign key is checked
-    // without RLS, so nothing ties an answer's organisation to its assessment's. Fails today
-    // (the insert succeeds); either fix turns this red (a policy check refuses with 42501, a
-    // composite foreign key with 23503), prompting the flip to `it`
-    it.fails('cannot add an answer to organisation A’s assessment', async () => {
+    // The foreign key is checked without RLS, so only the key's organisation_id refuses this
+    it('cannot add an answer to organisation A’s assessment', async () => {
       const assessmentId = await createAssessment();
 
       await expect(
@@ -236,28 +233,11 @@ describe('Answer Repository', () => {
           { questionId: questionIds[1], answerValue: 'added by another organisation' },
         ])
       ).rejects.toMatchObject({
-        cause: { code: expect.stringMatching(/^(42501|23503)$/) as unknown },
+        cause: {
+          code: '23503',
+          constraint: 'user_assessment_answers_user_assessment_id_organisation_fk',
+        },
       });
-    });
-
-    it('adds an answer to organisation A’s assessment that A cannot see, which then blocks A from answering that question', async () => {
-      const assessmentId = await createAssessment();
-      const [questionId] = questionIds;
-
-      const [added] = await answerRepository.saveAnswers(organisationBId, assessmentId, [
-        { questionId, answerValue: 'added by another organisation' },
-      ]);
-
-      expect(added).toMatchObject({
-        organisationId: organisationBId,
-        userAssessmentId: assessmentId,
-      });
-      expect(await storedAnswers(assessmentId)).toEqual([]);
-      await expect(
-        answerRepository.saveAnswers(organisationAId, assessmentId, [
-          { questionId, answerValue: 'mine' },
-        ])
-      ).rejects.toMatchObject({ cause: { code: '42501' } });
     });
   });
 });

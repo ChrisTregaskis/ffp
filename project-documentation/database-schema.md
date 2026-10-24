@@ -232,7 +232,7 @@ import type { User } from '@ffp/core';
 -- Standard organisation isolation policy
 CREATE POLICY organisation_isolation_users ON users
   FOR ALL
-  USING (organisation_id = current_setting('app.organisation_id', true)::UUID);
+  USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::UUID);
 ```
 
 ### System Admin Multi-Tenant Access
@@ -244,7 +244,7 @@ System administrators (`role='system_admin'`) can access all organisations:
 CREATE POLICY organisation_isolation_users ON users
   FOR ALL
   USING (
-    organisation_id = current_setting('app.organisation_id', true)::UUID
+    organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::UUID
     OR
     EXISTS (
       SELECT 1 FROM users u
