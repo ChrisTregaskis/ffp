@@ -597,7 +597,7 @@ const ResultsScreenDemo: React.FC<{ onViewProgramme: () => void }> = ({ onViewPr
           config={mockResultsConfig}
           scores={mockFullScores}
           isLoading={false}
-          programmeId="00000000-0000-0000-8000-000000000099"
+          programmeReadiness="ready"
           programmeName="Progressive Rehabilitation"
           programmeDescription="Personalised based on your assessment results and goals"
           onViewProgramme={onViewProgramme}
@@ -612,7 +612,21 @@ const ResultsScreenDemo: React.FC<{ onViewProgramme: () => void }> = ({ onViewPr
           config={mockResultsConfig}
           scores={null}
           isLoading
-          programmeId={null}
+          programmeReadiness="pending"
+          onViewProgramme={onViewProgramme}
+        />
+      ),
+    },
+    {
+      id: 'not-ready',
+      label: 'Programme Not Ready',
+      content: (
+        <ResultsScreen
+          config={mockResultsConfig}
+          scores={mockFullScores}
+          isLoading={false}
+          programmeReadiness="failed"
+          programmeName="Progressive Rehabilitation"
           onViewProgramme={onViewProgramme}
         />
       ),
@@ -625,7 +639,7 @@ const ResultsScreenDemo: React.FC<{ onViewProgramme: () => void }> = ({ onViewPr
           config={mockResultsMinimalConfig}
           scores={mockMinimalScores}
           isLoading={false}
-          programmeId="00000000-0000-0000-8000-000000000099"
+          programmeReadiness="ready"
           onViewProgramme={onViewProgramme}
         />
       ),
@@ -638,7 +652,7 @@ const ResultsScreenDemo: React.FC<{ onViewProgramme: () => void }> = ({ onViewPr
           config={mockResultsConfig}
           scores={mockHighRiskScores}
           isLoading={false}
-          programmeId={null}
+          programmeReadiness="pending"
           programmeName="Gentle Recovery"
           programmeDescription="Carefully tailored with additional precautions for your safety"
           onViewProgramme={onViewProgramme}
@@ -652,7 +666,8 @@ const ResultsScreenDemo: React.FC<{ onViewProgramme: () => void }> = ({ onViewPr
       <Text as="p" styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
         Standalone results screen showing assessment scores, recommended programme, and programme
         CTA. The loading state displays while scoring is in progress. The &quot;View My
-        Programme&quot; button is disabled when no programmeId is available.
+        Programme&quot; button is disabled until the programme is ready, and gives way to a notice
+        when it could not be put together.
       </Text>
       <DemoTabs tabs={variantTabs} />
     </div>
@@ -774,7 +789,7 @@ const StepRendererDemo: React.FC = () => {
           config={mockResultsConfig}
           scores={mockFullScores}
           isLoading={false}
-          programmeId="00000000-0000-0000-8000-000000000099"
+          programmeReadiness="ready"
           programmeName="Progressive Rehabilitation"
           onViewProgramme={handleAction('onViewProgramme')}
         />

@@ -14,5 +14,5 @@ module.exports = {
     ],
     tsconfigRootDir: __dirname,
   },
-  ignorePatterns: ['dist', 'node_modules', '/migrations', '*.tsbuildinfo'],
+  ignorePatterns: ['dist', 'node_modules', '/migrations', 'sst-env.d.ts', '*.tsbuildinfo'],
 };

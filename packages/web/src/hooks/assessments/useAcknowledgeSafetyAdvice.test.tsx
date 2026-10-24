@@ -24,6 +24,7 @@ const results = (safetyGate: SafetyGate): AssessmentResultsResponse => ({
   scores: null,
   programmeId: null,
   programmeName: null,
+  programmeReadiness: 'pending',
   safetyGate,
 });
 

@@ -2,7 +2,7 @@ import { eq, and, lte, isNull, or, sql, asc, inArray } from 'drizzle-orm';
 
 import { getDb, processJobs, JOB_TYPES, type ProcessJobRecord, type JobType } from '@ffp/database';
 
-import { JobProcessorError, NotFoundError } from '../lib/errors';
+import { BaseError, JobProcessorError, NotFoundError } from '../lib/errors';
 import { describeErrorForLog } from '../lib/log-safe-error';
 import { sortBy } from '../lib/sort.utils';
 
@@ -23,6 +23,15 @@ import { sortBy } from '../lib/sort.utils';
  */
 export function calculateBackoffMs(attempts: number): number {
   return Math.pow(2, attempts) * 1000;
+}
+
+/**
+ * Whether a failed job is worth another attempt. An application error in the 4xx range is
+ * deterministic (missing template, unfillable slot) and would fail the same way again, except a
+ * conflict, which a concurrent write can cause and a retry can clear.
+ */
+export function isRetryableError(error: Error): boolean {
+  return !(error instanceof BaseError) || error.statusCode >= 500 || error.statusCode === 409;
 }
 
 /**
@@ -110,7 +119,7 @@ export interface FailJobResult {
 }
 
 /**
- * Handle a job failure with exponential backoff retry logic.
+ * Handle a job failure: retry with exponential backoff, unless the error is not retryable.
  *
  * @example
  * ```typescript
@@ -127,7 +136,7 @@ export async function failJob(job: ProcessJobRecord, error: Error): Promise<Fail
   try {
     const db = getDb();
 
-    const shouldRetry = job.attempts < job.maxAttempts;
+    const shouldRetry = isRetryableError(error) && job.attempts < job.maxAttempts;
     const backoffMs = calculateBackoffMs(job.attempts);
     const retryAfter = shouldRetry ? new Date(Date.now() + backoffMs) : null;
 

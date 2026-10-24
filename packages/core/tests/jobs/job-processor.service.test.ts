@@ -23,7 +23,7 @@ import {
   completeJob,
   failJob,
 } from '../../src/jobs/job-processor.service';
-import { NotFoundError } from '../../src/lib/errors';
+import { NotFoundError, ProgrammeAssemblyError } from '../../src/lib/errors';
 import { drizzleDriverError, expectNothingLeakable } from '../lib/database-error.fixture';
 import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
 import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
@@ -515,6 +515,33 @@ describe('Job Processor Service', () => {
 
       expect(updatedJob.status).toBe('failed');
       expect(updatedJob.message).toBe('Final failure');
+      expect(updatedJob.retryAfter).toBeNull();
+      expect(updatedJob.completedAt).toBeInstanceOf(Date);
+    });
+
+    it('fails at once, with attempts to spare, when the error is not retryable', async () => {
+      const job = await createTestJob({ status: 'processing', maxAttempts: 3 });
+      await db
+        .update(schema.processJobs)
+        .set({ attempts: 1 })
+        .where(sql`id = ${job.id}`);
+
+      const [jobWithAttempt] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      const result = await failJob(jobWithAttempt, new ProgrammeAssemblyError());
+
+      expect(result.willRetry).toBe(false);
+      expect(result.newStatus).toBe('failed');
+
+      const [updatedJob] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      expect(updatedJob.status).toBe('failed');
       expect(updatedJob.retryAfter).toBeNull();
       expect(updatedJob.completedAt).toBeInstanceOf(Date);
     });

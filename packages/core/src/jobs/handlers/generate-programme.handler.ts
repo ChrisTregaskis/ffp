@@ -41,6 +41,7 @@ export async function processGenerateProgramme(
         organisationId,
         userId: payload.userId,
         recommendedTemplateSlug: payload.recommendedTemplateSlug ?? null,
+        assessmentId: payload.assessmentSubmissionId,
       },
       { tx }
     );

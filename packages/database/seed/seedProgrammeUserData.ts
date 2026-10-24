@@ -4,6 +4,7 @@ import { type Pool } from 'pg';
 
 import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.js';
 import { createLogger } from '../src/lib/logger.js';
+import { fromTemplateExercise } from '../src/lib/member-session-exercise.js';
 import {
   programmes,
   programmePhases,
@@ -362,14 +363,7 @@ const seedMemberLayer = async (
       templateExercises.map((exercise) => ({
         organisationId: TEST_ORGANISATION_ID,
         userSessionId: session.id,
-        sourceSessionExerciseId: exercise.id,
-        videoId: exercise.videoId,
-        orderIndex: exercise.orderIndex,
-        sets: exercise.sets,
-        reps: exercise.reps,
-        durationSeconds: exercise.durationSeconds,
-        restSeconds: exercise.restSeconds,
-        notes: exercise.notes,
+        ...fromTemplateExercise(exercise),
       }))
     );
     exercisesCreated += templateExercises.length;

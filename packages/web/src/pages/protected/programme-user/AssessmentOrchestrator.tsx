@@ -115,7 +115,11 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
     submitError !== null &&
     (Object.keys(toQuestionFieldErrors(submitError)).length === 0 || isRefusalUnshown);
 
-  const { mutate: replaceMutate, isPending: isReplacePending } = useReplaceProgrammeMutation({
+  const {
+    mutate: replaceMutate,
+    isPending: isReplacePending,
+    isError: isReplaceError,
+  } = useReplaceProgrammeMutation({
     onSuccess: () => {
       void navigate(routes[RouteKey.PROGRAMME_OVERVIEW].path);
     },
@@ -260,6 +264,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
       onKeepProgramme={handleKeepProgramme}
       onReplaceProgramme={handleReplaceProgramme}
       isReplacing={isReplacePending}
+      hasReplaceFailed={isReplaceError}
     />
   );
 };

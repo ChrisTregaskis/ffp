@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { ScoreDimension, ScoringMode } from '../constants/question.constants';
+import type { TagCategorySlug } from '../constants/tag.constants';
 
 /**
  * Question option for choice-based questions (single-choice, multi-choice)
@@ -147,6 +148,25 @@ export interface ProgrammeMapping {
   priority?: number;
 }
 
+/** A tag an answer leans the draw towards, named by category and slug */
+export interface EmphasisTag {
+  category: TagCategorySlug;
+  slug: string;
+  /** Added to the weight of every candidate carrying the tag */
+  weight: number;
+}
+
+/**
+ * An answer that leans a programme's draw: when the member's answer to the question is (or, for a
+ * multi-choice question, includes) the value, candidates carrying the tags weigh more. Only
+ * single- and multi-choice questions can match, since the value is an option's string.
+ */
+export interface EmphasisRule {
+  questionId: string;
+  answerValue: string;
+  tags: EmphasisTag[];
+}
+
 /**
  * Scoring configuration for an assessment template
  *
@@ -158,4 +178,6 @@ export interface ScoringConfig {
   dimensions: DimensionConfig[];
   /** Mappings from scores to programme recommendations */
   programmeMappings: ProgrammeMapping[];
+  /** Answers that weight the exercises drawn into the recommended programme */
+  emphasis?: EmphasisRule[];
 }

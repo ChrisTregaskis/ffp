@@ -29,6 +29,13 @@ export interface TransitionAssessmentStatusOptions {
   tx?: Transaction;
 }
 
+export interface FindUserAssessmentOptions {
+  /** Optional user ID for fine-grained RLS */
+  userId?: string;
+  /** A caller's transaction, which already carries its RLS context */
+  tx?: Transaction;
+}
+
 export interface AppendWarningsOptions {
   /** Optional transaction for atomic operations */
   tx?: Transaction;
@@ -57,21 +64,23 @@ export async function createUserAssessment(
 export async function findUserAssessmentById(
   organisationId: string,
   assessmentId: string,
-  userId?: string
+  options: FindUserAssessmentOptions = {}
 ): Promise<UserAssessment | null> {
-  return await withRLS(organisationId, userId, async (tx) => {
+  const doQuery = async (tx: Transaction): Promise<UserAssessment | null> => {
     const records = await tx
       .select()
       .from(userAssessments)
       .where(eq(userAssessments.id, assessmentId))
       .limit(1);
 
-    if (records.length === 0) {
-      return null;
-    }
+    return records[0] ?? null;
+  };
 
-    return records[0];
-  });
+  if (options.tx) {
+    return await doQuery(options.tx);
+  }
+
+  return await withRLS(organisationId, options.userId, doQuery);
 }
 
 /** Returns an existing assessment that can be resumed (not_started or in_progress). */

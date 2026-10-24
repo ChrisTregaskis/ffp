@@ -122,6 +122,8 @@ export const memberAssessmentScoresSchema = userAssessmentScoresSchema.omit({
   recommendedTemplateSlug: true,
 });
 
+export const programmeReadinessSchema = z.enum(['pending', 'ready', 'failed']);
+
 export const assessmentResultsResponseSchema = z.object({
   /** Current assessment status (submitted, scored, completed, etc.) */
   status: userAssessmentStatusSchema,
@@ -129,6 +131,8 @@ export const assessmentResultsResponseSchema = z.object({
   scores: memberAssessmentScoresSchema.nullable(),
   /** Recommended programme ID (null until programme assigned) */
   programmeId: z.guid().nullable(),
+  /** Whether the programme is ready, still being put together, or could not be put together */
+  programmeReadiness: programmeReadinessSchema,
   /** Display name of the recommended programme (from the scoring recommendation, falling back to the linked programme; null when neither is known) */
   programmeName: z.string().nullable(),
   /** The consent gate on the result (held while required and not yet acknowledged) */
@@ -144,6 +148,7 @@ export const userAssessmentStatusResponseSchema = z.object({
   assessmentFlowId: z.guid().nullable(),
 });
 
+export type ProgrammeReadiness = z.infer<typeof programmeReadinessSchema>;
 export type StartAssessmentRequest = z.infer<typeof startAssessmentRequestSchema>;
 export type FlowStepSummary = z.infer<typeof flowStepSummarySchema>;
 export type SafetyGate = z.infer<typeof safetyGateSchema>;

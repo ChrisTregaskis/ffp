@@ -10,6 +10,8 @@ import { NotFoundError, ValidationError } from '../lib/errors';
 import { calculatePercent } from '../lib/math';
 
 import { findMemberProgrammeStructure } from './member-programme.repository';
+import { chooseSessionExercises } from './programme-assembly';
+import { findEmphasisWeights } from './programme-emphasis';
 import { materialiseProgrammeSessions } from './programme-materialisation';
 import {
   archiveProgramme,
@@ -38,6 +40,8 @@ export interface GenerateProgrammeInput {
   recommendedTemplateSlug: string | null;
   /** If true, archive any existing active programme and create a new one */
   replaceExisting?: boolean;
+  /** The assessment whose answers weight the draw; without one, nothing is emphasised */
+  assessmentId?: string;
 }
 
 export interface GenerateProgrammeOptions {
@@ -71,7 +75,7 @@ export async function generateProgramme(
   input: GenerateProgrammeInput,
   options: GenerateProgrammeOptions
 ): Promise<GenerateProgrammeResult> {
-  const { organisationId, userId, recommendedTemplateSlug, replaceExisting } = input;
+  const { organisationId, userId, recommendedTemplateSlug, replaceExisting, assessmentId } = input;
   const { tx } = options;
 
   // Check for existing active programme
@@ -137,7 +141,23 @@ export async function generateProgramme(
 
   const phases = await createProgrammePhases(organisationId, phaseInputs, { tx });
 
-  await materialiseProgrammeSessions(tx, organisationId, templateStructure, phases);
+  const exercisesBySession = await chooseSessionExercises(tx, {
+    organisationId,
+    programmeId: programme.id,
+    templateSlug: template.slug,
+    templateStructure,
+    emphasis: assessmentId
+      ? await findEmphasisWeights(tx, organisationId, assessmentId)
+      : new Map<string, number>(),
+  });
+
+  await materialiseProgrammeSessions(
+    tx,
+    organisationId,
+    templateStructure,
+    phases,
+    exercisesBySession
+  );
 
   // Link the archived programme to its replacement (if we archived one above)
   if (existing && replaceExisting) {
@@ -177,7 +197,9 @@ export async function replaceProgramme(
   const assessment = await userAssessmentRepo.findUserAssessmentById(
     organisationId,
     input.assessmentId,
-    userId
+    {
+      userId,
+    }
   );
 
   // RLS scopes to the organisation only; another member's assessment answers as missing
@@ -212,6 +234,7 @@ export async function replaceProgramme(
         userId,
         recommendedTemplateSlug: recommendedSlug,
         replaceExisting: true,
+        assessmentId: input.assessmentId,
       },
       { tx }
     );

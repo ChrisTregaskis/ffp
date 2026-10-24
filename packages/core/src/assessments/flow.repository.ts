@@ -51,7 +51,7 @@ export async function findById(flowId: string): Promise<AssessmentFlow | null> {
  * @param flowId - The assessment flow UUID
  */
 export async function findFlowById(
-  dbClient: DbClient,
+  dbClient: DbQueryClient,
   flowId: string
 ): Promise<AssessmentFlow | null> {
   const records = await dbClient
@@ -203,7 +203,7 @@ export async function findDefaultForOrganisation(
  * @returns Array of flow steps, ordered by tier then by id
  */
 export async function findStepsByFlowId(
-  dbClient: DbClient,
+  dbClient: DbQueryClient,
   flowId: string
 ): Promise<FlowStepWithConfig[]> {
   const records = await dbClient

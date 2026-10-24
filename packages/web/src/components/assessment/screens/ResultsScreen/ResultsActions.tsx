@@ -1,12 +1,19 @@
+import type { ProgrammeReadiness } from '@ffp/core';
+
 import { Button, Text } from '@web/components/atoms';
+import { StaticAlert } from '@web/components/molecules';
 import { ClickScale } from '@web/components/motion';
+
+import { ProgrammeNotReadyNotice } from './ProgrammeNotReadyNotice';
 
 export interface ResultsActionsProps {
   isReassessment: boolean;
   /** Whether scores have arrived; replacing needs them */
   hasScores: boolean;
-  programmeId: string | null;
+  programmeReadiness: ProgrammeReadiness;
   isReplacing: boolean;
+  /** Replacing failed; the member keeps their current programme */
+  hasReplaceFailed: boolean;
   onViewProgramme: () => void;
   onKeepProgramme?: () => void;
   onReplaceProgramme?: () => void;
@@ -15,8 +22,9 @@ export interface ResultsActionsProps {
 export const ResultsActions: React.FC<ResultsActionsProps> = ({
   isReassessment,
   hasScores,
-  programmeId,
+  programmeReadiness,
   isReplacing,
+  hasReplaceFailed,
   onViewProgramme,
   onKeepProgramme,
   onReplaceProgramme,
@@ -24,13 +32,20 @@ export const ResultsActions: React.FC<ResultsActionsProps> = ({
   if (isReassessment) {
     return (
       <div className="flex flex-col items-center gap-3 pt-4">
+        {hasReplaceFailed && (
+          <StaticAlert
+            variant="info"
+            appearance="soft"
+            message="We couldn't update your programme just now. Your current programme is still here for you."
+          />
+        )}
         <div className="flex gap-3">
           <ClickScale>
             <Button
               variant="secondary"
               size="lg"
               onClick={onReplaceProgramme}
-              disabled={!hasScores || isReplacing}
+              disabled={!hasScores || isReplacing || hasReplaceFailed}
             >
               {isReplacing ? 'Replacing...' : 'Replace My Programme'}
             </Button>
@@ -48,6 +63,10 @@ export const ResultsActions: React.FC<ResultsActionsProps> = ({
     );
   }
 
+  if (programmeReadiness === 'failed') {
+    return <ProgrammeNotReadyNotice />;
+  }
+
   return (
     <div className="flex flex-col items-center gap-3 pt-4">
       <ClickScale>
@@ -55,7 +74,7 @@ export const ResultsActions: React.FC<ResultsActionsProps> = ({
           variant="primary"
           size="lg"
           onClick={onViewProgramme}
-          disabled={programmeId === null}
+          disabled={programmeReadiness !== 'ready'}
         >
           View My Programme
         </Button>

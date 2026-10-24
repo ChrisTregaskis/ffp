@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 
-import { getDb, withRLS, type DbClient } from '@ffp/database';
+import { getDb, withRLS } from '@ffp/database';
 import { userAssessments, userAssessmentAnswers } from '@ffp/database/schema';
 
 import { findFlowById, findStepsByFlowId } from '../../assessments/flow.repository';
@@ -47,12 +47,8 @@ export async function processScoreAssessment(
   // 2. The job payload contains userAssessmentId which is organisation-scoped
   // 3. User-level RLS would require passing userId through the job queue unnecessarily
   return await withRLS(db, organisationId, undefined, async (tx) => {
-    // Type assertion: tx is compatible with DbClient for query operations
-    // The $client property is only used for connection management, not queries
-    const dbTx = tx as unknown as DbClient;
-
     // Fetch flow with scoringConfig
-    const flow = await findFlowById(dbTx, payload.flowId);
+    const flow = await findFlowById(tx, payload.flowId);
 
     if (!flow) {
       throw new NotFoundError('Assessment flow', payload.flowId);
@@ -66,7 +62,7 @@ export async function processScoreAssessment(
     }
 
     // Fetch ALL steps for flow (normalised table)
-    const steps = await findStepsByFlowId(dbTx, payload.flowId);
+    const steps = await findStepsByFlowId(tx, payload.flowId);
 
     // Only the template-linked steps carry the questions that scoring reads
     const templateIds = findTemplateIdsOfSteps(steps);
@@ -76,7 +72,7 @@ export async function processScoreAssessment(
     }
 
     // Fetch questions from ALL templates in the flow
-    const questions = await findByTemplateIds(dbTx, templateIds);
+    const questions = await findByTemplateIds(tx, templateIds);
 
     if (questions.length === 0) {
       throw new ValidationError(

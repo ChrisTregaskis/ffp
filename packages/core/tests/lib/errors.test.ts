@@ -19,6 +19,7 @@ import {
   ConflictError,
   InternalServerError,
   JobProcessorError,
+  ProgrammeAssemblyError,
 } from '../../src/lib/errors';
 
 import { drizzleDriverError, expectNothingLeakable } from './database-error.fixture';
@@ -198,5 +199,17 @@ describe('JobProcessorError', () => {
     expect(error.statusCode).toBe(500);
     expect(error.details).toBeUndefined();
     expectNothingLeakable(JSON.stringify({ message: error.message, details: error.details }));
+  });
+});
+
+describe('ProgrammeAssemblyError', () => {
+  it('answers 422 with a member-facing message and no details', () => {
+    const error = new ProgrammeAssemblyError();
+
+    expect(error).toBeInstanceOf(BaseError);
+    expect(error.statusCode).toBe(422);
+    expect(error.code).toBe('PROGRAMME_ASSEMBLY_FAILED');
+    expect(error.message).toBe("We couldn't put your programme together just now.");
+    expect(error.details).toBeUndefined();
   });
 });
