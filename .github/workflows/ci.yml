@@ -15,6 +15,7 @@ on:
       - assessment
       - programme-authoring
       - test-suite-health
+      - bug-clean-up
 
 jobs:
   quality-checks:

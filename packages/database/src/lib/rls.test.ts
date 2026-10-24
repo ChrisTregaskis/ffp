@@ -44,7 +44,7 @@ const connectionConfig = (): PoolConfig => ({
 /**
  * Runs the callback on a brand-new connection that has never carried an RLS setting.
  * Once a connection has run `SET LOCAL app.organisation_id`, the setting reads back
- * as '' rather than NULL, and the policies' `::uuid` cast then fails with 22P02.
+ * as '' rather than NULL, so these cases do not depend on how the policies treat ''.
  */
 const onFreshConnection = async <T>(
   callback: (db: NodePgDatabase<Record<string, unknown>>) => Promise<T>
@@ -616,27 +616,20 @@ describe('RLS Utility Functions', () => {
       });
     });
 
-    // Known defect: once a connection has carried an organisation context, the setting
-    // reads back as '' and every policy's ::uuid cast fails (22P02), admin flag or not.
-    // Expected to fail until the policies tolerate an empty setting; then make it a plain it.
-    it.fails(
-      'reads across organisations on a connection that has carried an organisation context',
-      async () => {
-        await onSingleConnectionPool(async (singleDb) => {
-          await withRLS(singleDb, orgAId, undefined, async (tx) =>
-            tx.select().from(users).limit(1)
-          );
+    // The setting reads back as '' once the connection has carried an organisation context
+    it('reads across organisations on a connection that has carried an organisation context', async () => {
+      await onSingleConnectionPool(async (singleDb) => {
+        await withRLS(singleDb, orgAId, undefined, async (tx) => tx.select().from(users).limit(1));
 
-          const seen = await withAdminContext(singleDb, async (tx) =>
-            tx
-              .select()
-              .from(users)
-              .where(inArray(users.id, [userA1Id, userB1Id]))
-          );
-          expect(seen.map((row) => row.id).sort()).toEqual([userA1Id, userB1Id].sort());
-        });
-      }
-    );
+        const seen = await withAdminContext(singleDb, async (tx) =>
+          tx
+            .select()
+            .from(users)
+            .where(inArray(users.id, [userA1Id, userB1Id]))
+        );
+        expect(seen.map((row) => row.id).sort()).toEqual([userA1Id, userB1Id].sort());
+      });
+    });
   });
 
   describe('Queries Without RLS Context', () => {
@@ -649,6 +642,21 @@ describe('RLS Utility Functions', () => {
       }));
 
       expect(result).toEqual({ users: [], locations: [] });
+    });
+
+    it('returns empty results, not an error, on a connection that has carried an organisation context', async () => {
+      const result = await onSingleConnectionPool(async (singleDb) => {
+        await withRLS(singleDb, orgAId, undefined, async (tx) => tx.select().from(users).limit(1));
+
+        // The same pooled connection, outside any transaction: the setting is now ''
+        return {
+          setting: (await currentSettings(singleDb)).organisation,
+          users: await singleDb.select().from(users),
+          locations: await singleDb.select().from(locations),
+        };
+      });
+
+      expect(result).toEqual({ setting: '', users: [], locations: [] });
     });
 
     it('enables and forces RLS on every table with an organisation_id, except process_jobs', async () => {
@@ -680,6 +688,31 @@ describe('RLS Utility Functions', () => {
         enabled: false,
         forced: false,
       });
+    });
+
+    it('reads the organisation setting through NULLIF in every policy that uses it', async () => {
+      const catalogue = await db.execute(sql`
+        SELECT policyname AS name,
+               concat_ws(' ', qual, with_check) AS expression
+        FROM pg_policies
+        WHERE schemaname = 'public'
+          AND concat_ws(' ', qual, with_check) LIKE '%app.organisation_id%'
+        ORDER BY policyname
+      `);
+      const policies = catalogue.rows as { name: string; expression: string }[];
+      const casts = (expression: string, pattern: RegExp): number =>
+        expression.match(pattern)?.length ?? 0;
+
+      expect(policies.map((policy) => policy.name)).toContain('user_isolation');
+      expect(
+        policies
+          .filter(
+            (policy) =>
+              casts(policy.expression, /current_setting\('app\.organisation_id'/g) !==
+              casts(policy.expression, /NULLIF\(current_setting\('app\.organisation_id'/g)
+          )
+          .map((policy) => policy.name)
+      ).toEqual([]);
     });
 
     it('enables and forces RLS on the organisations table itself', async () => {

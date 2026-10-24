@@ -75,8 +75,10 @@ export const users = pgTable('users', {
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY organisation_isolation ON users
-  USING (organisation_id = current_setting('app.organisation_id')::uuid);
+  USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
 ```
+
+A pooled connection that has carried `SET LOCAL app.organisation_id` reads the setting back as `''`, so the `NULLIF` is required: a bare `::uuid` cast fails with 22P02.
 
 ### Repository Data Access
 

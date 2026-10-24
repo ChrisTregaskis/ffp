@@ -190,8 +190,8 @@ describe('Drizzle Integration Tests', () => {
       });
 
       // Verify user was also deleted via cascade
-      // Set RLS context to the deleted org's ID so the UUID cast succeeds;
-      // since the data was cascade-deleted, we expect no rows returned.
+      // Read under the deleted org's own context, where the user would be visible
+      // if the cascade had left it behind.
       const userCheckResult = await withRLS(db, orgId, undefined, async (tx) => {
         return await tx.select().from(users).where(eq(users.id, userId));
       });
@@ -232,8 +232,8 @@ describe('Drizzle Integration Tests', () => {
       });
 
       // Verify organisation was NOT created (transaction rolled back)
-      // Set RLS context to the rolled-back org's ID so the UUID cast succeeds;
-      // since the transaction was rolled back, we expect no rows returned.
+      // Read under the rolled-back org's own context, where the organisation would
+      // be visible if the insert had committed.
       const orgCheckResult = await withRLS(db, orgId, undefined, async (tx) => {
         return await tx.select().from(organisations).where(eq(organisations.id, orgId));
       });

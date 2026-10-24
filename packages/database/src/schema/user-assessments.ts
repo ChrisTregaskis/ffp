@@ -1,5 +1,15 @@
 import { relations } from 'drizzle-orm';
-import { pgTable, uuid, integer, jsonb, timestamp, index, pgEnum } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  integer,
+  jsonb,
+  timestamp,
+  index,
+  pgEnum,
+  unique,
+  foreignKey,
+} from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { USER_ASSESSMENT_STATUSES } from '../constants/user-assessment.constants';
@@ -37,9 +47,7 @@ export const userAssessments = pgTable(
     organisationId: uuid('organisation_id')
       .notNull()
       .references(() => organisations.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id').notNull(),
     flowId: uuid('flow_id')
       .notNull()
       .references(() => assessmentFlows.id, { onDelete: 'restrict' }),
@@ -60,9 +68,7 @@ export const userAssessments = pgTable(
      */
     warningsShown: jsonb('warnings_shown').$type<AssessmentWarning[]>().default([]),
     /** Reference to generated programme (nullable until programme generation completes) */
-    programmeId: uuid('programme_id').references(() => programmes.id, {
-      onDelete: 'set null',
-    }),
+    programmeId: uuid('programme_id'),
     /** When user started the assessment (null until status = in_progress) */
     startedAt: timestamp('started_at', { withTimezone: true }),
     /** When user submitted the assessment (null until status = submitted) */
@@ -81,6 +87,19 @@ export const userAssessments = pgTable(
     index('idx_user_assessments_organisation_user').on(table.organisationId, table.userId),
     index('idx_user_assessments_status').on(table.status),
     index('idx_user_assessments_flow').on(table.flowId),
+    unique('user_assessments_id_organisation_id_unique').on(table.id, table.organisationId),
+    foreignKey({
+      name: 'user_assessments_user_id_organisation_fk',
+      columns: [table.userId, table.organisationId],
+      foreignColumns: [users.id, users.organisationId],
+    }).onDelete('cascade'),
+    // The migration narrows this to SET NULL (programme_id): drizzle can't name the column,
+    // and nulling organisation_id as well would break its NOT NULL
+    foreignKey({
+      name: 'user_assessments_programme_id_organisation_fk',
+      columns: [table.programmeId, table.organisationId],
+      foreignColumns: [programmes.id, programmes.organisationId],
+    }).onDelete('set null'),
   ]
 );
 
