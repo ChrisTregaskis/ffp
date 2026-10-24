@@ -131,7 +131,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
       CREATE POLICY organisation_read_isolation ON organisations
         FOR SELECT
         USING (
-          id = current_setting('app.organisation_id', true)::uuid
+          id = NULLIF(current_setting('app.organisation_id', true), '')::uuid
           OR type = 'platform'
         );
     `);
@@ -140,7 +140,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
     await tx.execute(sql`
       CREATE POLICY organisation_write_isolation ON organisations
         FOR ALL
-        USING (id = current_setting('app.organisation_id', true)::uuid);
+        USING (id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // Admin bypass: system_admin queries set app.is_admin = 'true' for cross-organisation access
@@ -186,7 +186,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
     await tx.execute(sql`
       CREATE POLICY location_isolation ON locations
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // Admin bypass: system_admin queries set app.is_admin = 'true' for cross-organisation access
@@ -224,7 +224,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
     await tx.execute(sql`
       CREATE POLICY user_isolation ON users
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // Admin bypass: system_admin queries set app.is_admin = 'true' for cross-organisation access
@@ -261,7 +261,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
     await tx.execute(sql`
       CREATE POLICY user_assessment_organisation_isolation ON user_assessments
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // ============================================================================
@@ -291,7 +291,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
     await tx.execute(sql`
       CREATE POLICY user_assessment_answers_organisation_isolation ON user_assessment_answers
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // ============================================================================
@@ -317,7 +317,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
     await tx.execute(sql`
       CREATE POLICY assessment_safety_triggers_organisation_isolation ON assessment_safety_triggers
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // ============================================================================
@@ -343,7 +343,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
     await tx.execute(sql`
       CREATE POLICY programme_organisation_isolation ON programmes
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // ============================================================================
@@ -373,7 +373,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
     await tx.execute(sql`
       CREATE POLICY programme_phases_organisation_isolation ON programme_phases
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // ============================================================================
@@ -399,7 +399,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
     await tx.execute(sql`
       CREATE POLICY user_sessions_organisation_isolation ON user_sessions
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // ============================================================================
@@ -425,7 +425,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
     await tx.execute(sql`
       CREATE POLICY user_session_exercises_organisation_isolation ON user_session_exercises
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
 
     // ============================================================================
@@ -451,7 +451,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
     await tx.execute(sql`
       CREATE POLICY exercise_completions_organisation_isolation ON exercise_completions
         FOR ALL
-        USING (organisation_id = current_setting('app.organisation_id', true)::uuid);
+        USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
     `);
   });
 
