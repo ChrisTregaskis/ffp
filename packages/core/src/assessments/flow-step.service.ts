@@ -16,6 +16,7 @@ import { flowHasBranching, toAdminFlowStep, type AdminFlowStep } from './flow-st
 import * as flowStepRepository from './flow-step.repository';
 import * as flowRepository from './flow.repository';
 import { findTemplateById } from './template.repository';
+import * as userAssessmentRepository from './user-assessment.repository';
 
 import type { AssessmentFlow, FlowStepWithConfig } from './flow.repository';
 
@@ -160,19 +161,38 @@ export async function updateStepService(
   return toAdminFlowStep(updated);
 }
 
-/** Whether a step leads to `targetId`, by its default next step or a `goto_step` rule. */
-function leadsTo(step: FlowStepWithConfig, targetId: string): boolean {
-  return (
-    step.defaultNextStepId === targetId ||
-    (step.nextStepRules ?? []).some(
-      (rule) => rule.action.type === 'goto_step' && rule.action.targetStepId === targetId
-    )
+/** Whether a step branches to `targetId` through a `goto_step` rule. */
+function branchesTo(step: FlowStepWithConfig, targetId: string): boolean {
+  return (step.nextStepRules ?? []).some(
+    (rule) => rule.action.type === 'goto_step' && rule.action.targetStepId === targetId
   );
 }
 
 /**
- * Soft-delete a step. Order gaps are left as-is (no renumber). Refused while another active
- * step leads to it, so branching never hands a member a removed step.
+ * Where a step leads when none of its rules apply, among `steps`: its default next step if
+ * that is one of them, else the first at the next order (as branching resolves it), else none.
+ */
+function nextStepOf(step: FlowStepWithConfig, steps: FlowStepWithConfig[]): string | null {
+  if (steps.some((other) => other.id === step.defaultNextStepId)) {
+    return step.defaultNextStepId;
+  }
+
+  const nextTier = steps
+    .filter((other) => other.order === step.order + 1)
+    .sort((a, b) => a.id.localeCompare(b.id));
+
+  return nextTier[0]?.id ?? null;
+}
+
+/**
+ * Soft-delete a step, in one transaction:
+ * - refused while another active step branches to it by a `goto_step` rule, which can't be
+ *   rerouted without changing what the rule means;
+ * - each step that leads to it by default is pointed where the removed step led (cleared where
+ *   that is nowhere, or where it would lead the step to itself);
+ * - the steps after it move down one order, so the flow's orders keep no gap, and so do the
+ *   stored positions of open assessments after it, so members stay on their step. Not when
+ *   another step shares its order, as that tier still exists.
  */
 export async function deleteStepService(
   _ctx: OrganisationContext,
@@ -188,26 +208,55 @@ export async function deleteStepService(
     throw new NotFoundError('Flow step', stepPublicId);
   }
 
-  // Already removed: nothing to do, whatever still links to it
-  if (!step.isActive) {
-    return;
-  }
+  await db.transaction(async (tx) => {
+    const activeSteps = await flowStepRepository.lockActiveSteps(tx, flow.id);
+    const removed = activeSteps.find((candidate) => candidate.id === step.id);
 
-  const activeSteps = await flowRepository.findStepsByFlowId(db, flow.id);
-  const linkingSteps = activeSteps
-    .filter((other) => other.id !== step.id && leadsTo(other, step.id))
-    .map((other) => ({ order: other.order, title: other.config.title }));
+    // Already removed: nothing to do, whatever still links to it
+    if (!removed) {
+      return;
+    }
 
-  if (linkingSteps.length > 0) {
-    const named = linkingSteps.map(({ order, title }) => `step ${String(order)} "${title}"`);
+    const others = activeSteps.filter((other) => other.id !== removed.id);
+    const branching = others.filter((other) => branchesTo(other, removed.id));
 
-    throw new ConflictError(
-      `This step can't be removed because other steps lead to it: ${named.join(', ')}.`,
-      { linkingSteps }
-    );
-  }
+    if (branching.length > 0) {
+      const linkingSteps = branching.map((other) => ({
+        order: other.order,
+        title: other.config.title,
+      }));
+      const named = linkingSteps.map(({ order, title }) => `step ${String(order)} "${title}"`);
 
-  await flowStepRepository.deactivateStep(db, step.id);
+      throw new ConflictError(
+        `This step can't be removed because other steps branch to it: ${named.join(', ')}. ` +
+          `Branching can't be changed in the admin yet.`,
+        { linkingSteps }
+      );
+    }
+
+    const rerouteTo = nextStepOf(removed, others);
+
+    for (const linking of others.filter((other) => other.defaultNextStepId === removed.id)) {
+      await flowStepRepository.setDefaultNextStep(
+        tx,
+        linking.id,
+        rerouteTo === linking.id ? null : rerouteTo
+      );
+    }
+
+    await flowStepRepository.deactivateStep(tx, removed.id);
+
+    const closesGap = !others.some((other) => other.order === removed.order);
+    const moved = closesGap
+      ? await flowStepRepository.closeOrderGap(tx, flow.id, removed.order)
+      : 0;
+
+    // Members stored on the removed step need no move: the step that followed now holds it.
+    // Nothing moved after the last step, so no member position needs to either
+    if (moved > 0) {
+      await userAssessmentRepository.shiftOpenAssessmentsBack(tx, flow.id, removed.order);
+    }
+  });
 }
 
 /**
