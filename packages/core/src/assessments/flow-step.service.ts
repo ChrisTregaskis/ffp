@@ -17,7 +17,7 @@ import * as flowStepRepository from './flow-step.repository';
 import * as flowRepository from './flow.repository';
 import { findTemplateById } from './template.repository';
 
-import type { AssessmentFlow } from './flow.repository';
+import type { AssessmentFlow, FlowStepWithConfig } from './flow.repository';
 
 export type { AdminFlowStep };
 
@@ -160,7 +160,20 @@ export async function updateStepService(
   return toAdminFlowStep(updated);
 }
 
-/** Soft-delete a step. Order gaps are left as-is (no renumber). */
+/** Whether a step leads to `targetId`, by its default next step or a `goto_step` rule. */
+function leadsTo(step: FlowStepWithConfig, targetId: string): boolean {
+  return (
+    step.defaultNextStepId === targetId ||
+    (step.nextStepRules ?? []).some(
+      (rule) => rule.action.type === 'goto_step' && rule.action.targetStepId === targetId
+    )
+  );
+}
+
+/**
+ * Soft-delete a step. Order gaps are left as-is (no renumber). Refused while another active
+ * step leads to it, so branching never hands a member a removed step.
+ */
 export async function deleteStepService(
   _ctx: OrganisationContext,
   flowPublicId: string,
@@ -173,6 +186,25 @@ export async function deleteStepService(
 
   if (!step || step.flowId !== flow.id) {
     throw new NotFoundError('Flow step', stepPublicId);
+  }
+
+  // Already removed: nothing to do, whatever still links to it
+  if (!step.isActive) {
+    return;
+  }
+
+  const activeSteps = await flowRepository.findStepsByFlowId(db, flow.id);
+  const linkingSteps = activeSteps
+    .filter((other) => other.id !== step.id && leadsTo(other, step.id))
+    .map((other) => ({ order: other.order, title: other.config.title }));
+
+  if (linkingSteps.length > 0) {
+    const named = linkingSteps.map(({ order, title }) => `step ${String(order)} "${title}"`);
+
+    throw new ConflictError(
+      `This step can't be removed because other steps lead to it: ${named.join(', ')}.`,
+      { linkingSteps }
+    );
   }
 
   await flowStepRepository.deactivateStep(db, step.id);

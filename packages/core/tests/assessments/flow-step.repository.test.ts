@@ -5,10 +5,8 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from
 
 import { assessmentFlows, assessmentTemplates, flowSteps } from '@ffp/database/schema';
 
-import { createEvaluationContext, evaluateNextStep } from '../../src/assessments/branching';
 import * as flowStepRepository from '../../src/assessments/flow-step.repository';
 import * as flowStepService from '../../src/assessments/flow-step.service';
-import * as flowRepository from '../../src/assessments/flow.repository';
 import { updateFlowStepSchema } from '../../src/schemas/assessment-flow.schema';
 import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
@@ -135,40 +133,98 @@ describe('Flow Step Repository', () => {
       timestamp: new Date(),
     };
 
-    // Suspected defect, characterised: the delete checks no references, so the deleted
-    // step's id is still what branching returns, by default and by rule
-    it('leaves the links to it in place, so branching still returns the deleted step', async () => {
-      const deleted = await insertStep({ order: 2, type: 'transition', config: { title: 'Gone' } });
-      const linksByDefault = await insertStep({
+    const deleteStep = (step: { publicId: string }): Promise<void> =>
+      flowStepService.deleteStepService(context, flowPublicId, step.publicId);
+
+    it('refuses with a 409 while another step leads to it by default, naming that step', async () => {
+      const target = await insertStep({ order: 2, type: 'transition', config: { title: 'Pause' } });
+      await insertStep({
         order: 1,
         type: 'intro',
         config: { title: 'Welcome' },
-        defaultNextStepId: deleted.id,
+        defaultNextStepId: target.id,
       });
-      const linksByRule = await insertStep({
+
+      await expect(deleteStep(target)).rejects.toMatchObject({
+        name: 'ConflictError',
+        statusCode: 409,
+        message: 'This step can\'t be removed because other steps lead to it: step 1 "Welcome".',
+        details: { linkingSteps: [{ order: 1, title: 'Welcome' }] },
+      });
+      expect((await storedStep(target.id)).isActive).toBe(true);
+    });
+
+    it('refuses with a 409 while another step leads to it by a goto_step rule, naming that step', async () => {
+      const target = await insertStep({ order: 2, type: 'transition', config: { title: 'Pause' } });
+      await insertStep({
         order: 3,
         type: 'transition',
         config: { title: 'Loop back' },
         nextStepRules: [
-          { priority: 1, conditions: [], action: { type: 'goto_step', targetStepId: deleted.id } },
+          { priority: 1, conditions: [], action: { type: 'goto_step', targetStepId: target.id } },
         ],
       });
 
-      await flowStepService.deleteStepService(context, flowPublicId, deleted.publicId);
+      await expect(deleteStep(target)).rejects.toMatchObject({
+        name: 'ConflictError',
+        statusCode: 409,
+        message: 'This step can\'t be removed because other steps lead to it: step 3 "Loop back".',
+        details: { linkingSteps: [{ order: 3, title: 'Loop back' }] },
+      });
+      expect((await storedStep(target.id)).isActive).toBe(true);
+    });
 
-      const activeSteps = await flowRepository.findStepsByFlowId(db, flowId);
-      expect(activeSteps.map((step) => step.id)).toEqual([linksByDefault.id, linksByRule.id]);
-      expect((await storedStep(deleted.id)).isActive).toBe(false);
+    it('removes it once the step that led to it leads elsewhere', async () => {
+      const target = await insertStep({ order: 2, type: 'transition', config: { title: 'Pause' } });
+      const elsewhere = await insertStep({ order: 3, type: 'results', config: { title: 'Done' } });
+      const linking = await insertStep({
+        order: 1,
+        type: 'intro',
+        config: { title: 'Welcome' },
+        defaultNextStepId: target.id,
+      });
 
-      const [byDefault, byRule] = activeSteps;
-      expect(byDefault.defaultNextStepId).toBe(deleted.id);
-      expect(
-        evaluateNextStep(byDefault, createEvaluationContext(byDefault.id, activeSteps, []))
-          .nextStepId
-      ).toBe(deleted.id);
-      expect(
-        evaluateNextStep(byRule, createEvaluationContext(byRule.id, activeSteps, [])).nextStepId
-      ).toBe(deleted.id);
+      await db
+        .update(flowSteps)
+        .set({ defaultNextStepId: elsewhere.id })
+        .where(eq(flowSteps.id, linking.id));
+      await deleteStep(target);
+
+      expect((await storedStep(target.id)).isActive).toBe(false);
+    });
+
+    it('removes a step whose only links are to itself', async () => {
+      const id = randomUUID();
+      const target = await insertStep({
+        id,
+        order: 1,
+        type: 'transition',
+        config: { title: 'Repeat' },
+        defaultNextStepId: id,
+        nextStepRules: [
+          { priority: 1, conditions: [], action: { type: 'goto_step', targetStepId: id } },
+        ],
+      });
+
+      await deleteStep(target);
+
+      expect((await storedStep(target.id)).isActive).toBe(false);
+    });
+
+    it('removes a step that only a removed step led to', async () => {
+      const target = await insertStep({ order: 2, type: 'transition', config: { title: 'Pause' } });
+      const removed = await insertStep({
+        order: 1,
+        type: 'intro',
+        config: { title: 'Welcome' },
+        defaultNextStepId: target.id,
+        isActive: false,
+      });
+
+      await deleteStep(target);
+
+      expect((await storedStep(target.id)).isActive).toBe(false);
+      expect((await storedStep(removed.id)).defaultNextStepId).toBe(target.id);
     });
   });
 });

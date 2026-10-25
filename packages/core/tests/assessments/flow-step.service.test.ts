@@ -487,6 +487,7 @@ describe('flowStepService.deleteStepService', () => {
 
     mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
     mockedFlowStepRepo.findStepByPublicId.mockResolvedValue(step);
+    mockedFlowRepo.findStepsByFlowId.mockResolvedValue([step]);
 
     return step;
   };
@@ -498,6 +499,51 @@ describe('flowStepService.deleteStepService', () => {
 
     expect(mockedFlowRepo.findByPublicId).toHaveBeenCalledWith(expect.anything(), FLOW_PUBLIC_ID);
     expect(mockedFlowStepRepo.deactivateStep.mock.calls).toEqual([[expect.anything(), step.id]]);
+  });
+
+  it('names every step that leads to it, and writes nothing', async () => {
+    const step = arrange();
+    const byRule = createStep(step.flowId, {
+      order: 4,
+      config: { title: 'Check in' },
+      nextStepRules: [
+        { priority: 1, conditions: [], action: { type: 'goto_step', targetStepId: step.id } },
+      ],
+    });
+    const byDefault = createStep(step.flowId, {
+      order: 2,
+      config: { title: 'Warm up' },
+      defaultNextStepId: step.id,
+    });
+    mockedFlowRepo.findStepsByFlowId.mockResolvedValue([step, byDefault, byRule]);
+
+    await expect(
+      flowStepService.deleteStepService(createContext(), FLOW_PUBLIC_ID, step.publicId)
+    ).rejects.toMatchObject({
+      name: 'ConflictError',
+      statusCode: 409,
+      message:
+        'This step can\'t be removed because other steps lead to it: step 2 "Warm up", step 4 "Check in".',
+      details: {
+        linkingSteps: [
+          { order: 2, title: 'Warm up' },
+          { order: 4, title: 'Check in' },
+        ],
+      },
+    });
+
+    expect(mockedFlowStepRepo.deactivateStep).not.toHaveBeenCalled();
+  });
+
+  it('leaves an already-removed step alone, even while another step still leads to it', async () => {
+    const step = arrange({ isActive: false });
+    mockedFlowRepo.findStepsByFlowId.mockResolvedValue([
+      createStep(step.flowId, { defaultNextStepId: step.id }),
+    ]);
+
+    await flowStepService.deleteStepService(createContext(), FLOW_PUBLIC_ID, step.publicId);
+
+    expect(mockedFlowStepRepo.deactivateStep).not.toHaveBeenCalled();
   });
 
   it('refuses a step that belongs to another flow with a 404, before any write', async () => {
