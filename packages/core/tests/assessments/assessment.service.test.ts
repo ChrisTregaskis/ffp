@@ -794,7 +794,7 @@ describe('Assessment Service', () => {
 
         await assessmentService.saveProgress(
           assessmentId,
-          { answers: answer(capped.id, ['a', 'b']), currentStep: 99 },
+          { answers: answer(capped.id, ['a', 'b']), currentStep: 2 },
           context
         );
 
@@ -847,7 +847,7 @@ describe('Assessment Service', () => {
 
         await assessmentService.saveProgress(
           assessmentId,
-          { answers: answer(capped.id, value), currentStep: 99 },
+          { answers: answer(capped.id, value), currentStep: 2 },
           context
         );
 
@@ -912,7 +912,7 @@ describe('Assessment Service', () => {
           assessmentId,
           {
             answers: { ...answer(capped.id, ['a', 'b', 'c']), ...answer(unassignedId, 'kept') },
-            currentStep: 99,
+            currentStep: 2,
           },
           context
         );
@@ -1507,7 +1507,11 @@ describe('Assessment Service', () => {
       it.each([
         ['on the step it was saved at', 3, 3],
         ['on the last question step, not results, after a save on that step', 5, 4],
-        ['on the last question step after a save at a step outside the flow', 99, 4],
+        [
+          'on the last question step from a stored step outside the flow, as an older save may have left',
+          99,
+          4,
+        ],
       ])('resumes %s', async (_case, stored, expected) => {
         const context = createUserContext();
         const userId = randomUUID();
@@ -1673,22 +1677,37 @@ describe('Assessment Service', () => {
       expect(mockedUserAssessmentRepo.transitionAssessmentStatus).not.toHaveBeenCalled();
     });
 
-    // Suspected defect, characterised: any positive step is stored as sent, and only the
-    // resume clamp bounds it (see "resumes on the last question step after a save at a step
-    // outside the flow")
-    it('stores a step that matches no step in the flow as sent, without branching', async () => {
-      const { context, assessmentId } = setUp({}, { warns: true });
+    it('refuses a step that matches no step of the flow, and writes nothing', async () => {
+      const { context, assessmentId, steps } = setUp({ status: 'not_started' }, { warns: true });
+      const question = createMockQuestion(randomUUID(), 'numeric', false);
 
-      const response = await assessmentService.saveProgress(
-        assessmentId,
-        { answers: {}, currentStep: 99, advance: true },
-        context
+      mockedQuestionRepo.findByTemplateIds.mockResolvedValue(
+        inTemplate([question], steps[1].templateId ?? '')
       );
 
-      expect(mockedUserAssessmentRepo.updateAssessmentProgress.mock.calls).toEqual([
-        [context.organisationId, assessmentId, { currentStep: 99 }, { tx: mockTx }],
-      ]);
-      expect(response).toMatchObject({ nextStepId: null, warnings: [], shouldTerminate: false });
+      await expect(
+        assessmentService.saveProgress(
+          assessmentId,
+          {
+            answers: { [question.id]: { questionId: question.id, answerValue: 5 } },
+            currentStep: 99,
+            advance: true,
+          },
+          context
+        )
+      ).rejects.toMatchObject({
+        name: 'ValidationError',
+        statusCode: 400,
+        message: 'This step is not part of the assessment.',
+        details: { currentStep: 99 },
+      });
+
+      // No transaction is opened, so no answer, status, position or warning can be written
+      expect(mockedDatabaseModule.withRLS).not.toHaveBeenCalled();
+      expect(mockedAnswerRepo.saveAnswers).not.toHaveBeenCalled();
+      expect(mockedAnswerRepo.deleteByQuestionIds).not.toHaveBeenCalled();
+      expect(mockedUserAssessmentRepo.transitionAssessmentStatus).not.toHaveBeenCalled();
+      expect(mockedUserAssessmentRepo.updateAssessmentProgress).not.toHaveBeenCalled();
       expect(mockedUserAssessmentRepo.appendAssessmentWarnings).not.toHaveBeenCalled();
     });
   });

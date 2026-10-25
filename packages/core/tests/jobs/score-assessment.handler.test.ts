@@ -287,8 +287,43 @@ describe('processScoreAssessment', () => {
     expect(await queuedJobs()).toEqual([]);
   });
 
+  /** Runs the handler with its log lines captured; returns the warnings it logged. */
+  const scoreCapturingWarnings = async (
+    assessmentId: string
+  ): Promise<{ result: unknown; warnings: unknown[]; logged: string }> => {
+    vi.stubEnv('LOG_LEVEL', undefined);
+    const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    try {
+      const result = await processScoreAssessment(
+        { userAssessmentId: assessmentId, flowId, userId },
+        organisationId
+      );
+      const entries = consoleLog.mock.calls.map(
+        ([line]) => JSON.parse(line as string) as { level: string; message: string }
+      );
+
+      return {
+        result,
+        warnings: entries.filter((entry) => entry.level === 'WARN'),
+        logged: JSON.stringify(consoleLog.mock.calls),
+      };
+    } finally {
+      consoleLog.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  };
+
+  const skippedWarning = (assessmentId: string, status: string): unknown => ({
+    level: 'WARN',
+    message: 'Scoring skipped: the assessment is not awaiting scoring',
+    service: 'score-assessment-handler',
+    timestamp: expect.any(String) as unknown,
+    context: { assessmentId, status },
+  });
+
   describe('an assessment that has already completed', () => {
-    const createCompletedAssessment = async (): Promise<string> => {
+    it('is left completed, and no programme job is queued', async () => {
       const assessmentId = await createSubmittedAssessment();
 
       await userAssessmentRepository.transitionAssessmentStatus(
@@ -302,34 +337,64 @@ describe('processScoreAssessment', () => {
         'completed'
       );
 
-      return assessmentId;
-    };
+      const { result, warnings, logged } = await scoreCapturingWarnings(assessmentId);
 
-    // Suspected defect: the scores are written with status 'scored' and no check of the
-    // current status, so a repeated or late scoring job undoes a completed assessment.
-    // Fails today; a fix turns this red, prompting the flip to `it`
-    it.fails('is left completed, and no programme job is queued', async () => {
-      const assessmentId = await createCompletedAssessment();
-
-      await processScoreAssessment(
-        { userAssessmentId: assessmentId, flowId, userId },
-        organisationId
-      ).catch(() => undefined);
-
-      expect((await storedAssessment(assessmentId)).status).toBe('completed');
+      // Returned normally, so the job processor marks the job done rather than retrying it
+      expect(result).toMatchObject({ scores: [strength], overallScore: 70 });
+      expect(await storedAssessment(assessmentId)).toMatchObject({
+        status: 'completed',
+        scores: null,
+      });
       expect(await queuedJobs()).toEqual([]);
+      expect(warnings).toEqual([skippedWarning(assessmentId, 'completed')]);
+      // Answers stay out of the logs
+      expect(logged).not.toContain('often');
     });
+  });
 
-    it('is moved back to scored and queued for another programme', async () => {
-      const assessmentId = await createCompletedAssessment();
+  describe('an assessment already scored, by a repeated job', () => {
+    it('is left as it was, and no second programme job is queued', async () => {
+      const assessmentId = await createSubmittedAssessment();
 
       await processScoreAssessment(
         { userAssessmentId: assessmentId, flowId, userId },
         organisationId
       );
+      const scoredOnce = await storedAssessment(assessmentId);
 
-      expect((await storedAssessment(assessmentId)).status).toBe('scored');
+      const { warnings } = await scoreCapturingWarnings(assessmentId);
+
+      expect(await storedAssessment(assessmentId)).toEqual(scoredOnce);
       expect((await queuedJobs()).map((job) => job.type)).toEqual(['generate_programme']);
+      expect(warnings).toEqual([skippedWarning(assessmentId, 'scored')]);
+    });
+  });
+
+  describe('an assessment still in progress', () => {
+    it('is left unscored, and no programme job is queued', async () => {
+      const assessment = await userAssessmentRepository.createUserAssessment({
+        organisationId,
+        userId,
+        flowId,
+      });
+      await answerRepository.saveAnswers(organisationId, assessment.id, [
+        { questionId: questionIds[0], answerValue: 'often' },
+        { questionId: questionIds[1], answerValue: 'easy' },
+      ]);
+      await userAssessmentRepository.transitionAssessmentStatus(
+        organisationId,
+        assessment.id,
+        'in_progress'
+      );
+
+      const { warnings } = await scoreCapturingWarnings(assessment.id);
+
+      expect(await storedAssessment(assessment.id)).toMatchObject({
+        status: 'in_progress',
+        scores: null,
+      });
+      expect(await queuedJobs()).toEqual([]);
+      expect(warnings).toEqual([skippedWarning(assessment.id, 'in_progress')]);
     });
   });
 });

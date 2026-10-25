@@ -1,6 +1,6 @@
-import { eq, and, max } from 'drizzle-orm';
+import { eq, and, asc, gt, max, sql } from 'drizzle-orm';
 
-import type { DbClient } from '@ffp/database';
+import type { DbClient, DbQueryClient } from '@ffp/database';
 import { flowSteps, type FlowStepRecord } from '@ffp/database/schema';
 
 import { findStepsByFlowId } from './flow.repository';
@@ -82,14 +82,62 @@ export async function updateStep(
 }
 
 /**
- * Soft-delete a step (`isActive = false`) — kept because
- * `user_assessments.visitedStepIds` references step IDs with no FK. No renumber.
+ * A flow's active steps, locked until the transaction ends, so a concurrent delete of a step
+ * in the same flow waits and then sees this one's reroutes and renumbering.
  */
-export async function deactivateStep(dbClient: DbClient, stepId: string): Promise<void> {
+export async function lockActiveSteps(
+  dbClient: DbQueryClient,
+  flowId: string
+): Promise<FlowStepRecord[]> {
+  return await dbClient
+    .select()
+    .from(flowSteps)
+    .where(and(eq(flowSteps.flowId, flowId), eq(flowSteps.isActive, true)))
+    .orderBy(asc(flowSteps.order), asc(flowSteps.id))
+    .for('update');
+}
+
+/** Point a step's default next step somewhere else, or clear it with null. */
+export async function setDefaultNextStep(
+  dbClient: DbQueryClient,
+  stepId: string,
+  defaultNextStepId: string | null
+): Promise<void> {
+  await dbClient
+    .update(flowSteps)
+    .set({ defaultNextStepId, updatedAt: new Date() })
+    .where(eq(flowSteps.id, stepId));
+}
+
+/**
+ * Soft-delete a step (`isActive = false`) — kept because
+ * `user_assessments.visitedStepIds` references step IDs with no FK.
+ */
+export async function deactivateStep(dbClient: DbQueryClient, stepId: string): Promise<void> {
   await dbClient
     .update(flowSteps)
     .set({ isActive: false, updatedAt: new Date() })
     .where(eq(flowSteps.id, stepId));
+}
+
+/**
+ * Move every active step after `order` down by one, closing the gap a removed step left.
+ * Returns how many steps moved.
+ */
+export async function closeOrderGap(
+  dbClient: DbQueryClient,
+  flowId: string,
+  order: number
+): Promise<number> {
+  const moved = await dbClient
+    .update(flowSteps)
+    .set({ order: sql`${flowSteps.order} - 1`, updatedAt: new Date() })
+    .where(
+      and(eq(flowSteps.flowId, flowId), eq(flowSteps.isActive, true), gt(flowSteps.order, order))
+    )
+    .returning({ id: flowSteps.id });
+
+  return moved.length;
 }
 
 /**
