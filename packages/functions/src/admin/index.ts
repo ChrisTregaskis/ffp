@@ -68,6 +68,7 @@ import { handler as unassignQuestionHandler } from './templates/unassign-questio
 import { handler as updateTemplateHandler } from './templates/update-template';
 import { handler as createUserHandler } from './users/create-user';
 import { handler as getUserHandler } from './users/get-user';
+import { handler as getUserProgrammeHandler } from './users/get-user-programme';
 import { handler as listUsersHandler } from './users/list-users';
 import { handler as updateUserHandler } from './users/update-user';
 import { handler as createVideoHandler } from './videos/create';
@@ -124,6 +125,7 @@ const routes: RouteRegistry = {
     '/sessions/{id}/slots': listSlotsHandler,
     '/users': listUsersHandler,
     '/users/{id}': getUserHandler,
+    '/users/{id}/programme': getUserProgrammeHandler,
     '/tag-categories': listTagCategoriesHandler,
     '/videos': listVideosHandler,
     '/videos/{publicId}': getVideoHandler,

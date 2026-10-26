@@ -237,22 +237,21 @@ CREATE POLICY organisation_isolation_users ON users
 
 ### System Admin Multi-Tenant Access
 
-System administrators (`role='system_admin'`) can access all organisations:
+System administrator queries run under `withAdminContext` (`@ffp/database`), which sets `app.is_admin = 'true'` for the transaction. Separate permissive policies key on that flag:
+
+| Table                                 | Admin bypass                                         |
+| ------------------------------------- | ---------------------------------------------------- |
+| `organisations`, `locations`, `users` | `FOR ALL`                                            |
+| `programmes`                          | `FOR SELECT` only; writes stay organisation-isolated |
+| Every other organisation-scoped table | None                                                 |
 
 ```sql
--- Policy with system_admin bypass
-CREATE POLICY organisation_isolation_users ON users
-  FOR ALL
-  USING (
-    organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::UUID
-    OR
-    EXISTS (
-      SELECT 1 FROM users u
-      WHERE u.id = current_setting('app.user_id', true)::UUID
-      AND u.role = 'system_admin'
-    )
-  );
+CREATE POLICY programme_admin_read_bypass ON programmes
+  FOR SELECT
+  USING (current_setting('app.is_admin', true) = 'true');
 ```
+
+To read deeper into one member's data (phases, sessions, exercises, completions), resolve the user under admin context, then read under **that user's own organisation** with `withRLS`, taking the organisation from the user's row and never from the request. Policies live in `packages/database/src/migrations/apply-rls.ts` and are re-applied by every `pnpm db:migrate`.
 
 ### Using RLS in Code
 

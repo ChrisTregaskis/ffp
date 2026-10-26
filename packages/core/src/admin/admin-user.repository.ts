@@ -1,9 +1,32 @@
-import { and, eq, or, ilike, inArray, count, type Column, type SQL } from 'drizzle-orm';
+import {
+  and,
+  desc,
+  eq,
+  or,
+  ilike,
+  inArray,
+  ne,
+  count,
+  sql,
+  type Column,
+  type SQL,
+} from 'drizzle-orm';
 
 import type { DbClient } from '@ffp/database';
-import { USER_ROLES, type UserRole } from '@ffp/database/constants';
-import { users, locations, type NewUser } from '@ffp/database/schema';
+import type { ProgrammeStatus, UserRole } from '@ffp/database/constants';
+import {
+  users,
+  locations,
+  programmes,
+  processJobs,
+  programmeTemplates,
+  type NewUser,
+} from '@ffp/database/schema';
 
+import {
+  GENERATE_USER_KEY,
+  latestProgrammeGenerationFailed,
+} from '../jobs/programme-generation-failure';
 import { formatDateOnly } from '../lib/date';
 import { InternalServerError } from '../lib/errors';
 import { applyPagination, escapeLikePattern } from '../lib/pagination';
@@ -12,9 +35,10 @@ import type { PaginationInput } from '../schemas/pagination.schema';
 import type { UserFilterInput, AdminUpdateUserInput } from '../schemas/user.schema';
 
 /** Columns available for sorting on the admin user list */
-const USER_SORTABLE_COLUMNS: Partial<Record<string, Column>> = {
+const USER_SORTABLE_COLUMNS: Partial<Record<string, Column | Column[]>> = {
   firstName: users.firstName,
   lastName: users.lastName,
+  fullName: [users.lastName, users.firstName],
   email: users.email,
   createdAt: users.createdAt,
 };
@@ -90,44 +114,76 @@ function buildUserFilterConditions(filters: UserFilterInput): (SQL | undefined)[
   }
 
   if (filters.role) {
-    const roles = filters.role
-      .split(',')
-      .map((r) => r.trim())
-      .filter((r): r is UserRole => (USER_ROLES as readonly string[]).includes(r));
-
-    if (roles.length === 1) {
-      conditions.push(eq(users.role, roles[0]));
-    } else if (roles.length > 1) {
-      conditions.push(inArray(users.role, roles));
-    }
+    conditions.push(inArray(users.role, filters.role));
   }
 
   return conditions;
 }
 
+/** A user list row: the user, their location name and their current programme */
+export interface UserListRow extends UserWithLocationName {
+  programmeName: string | null;
+  programmeSlug: string | null;
+  programmeStatus: ProgrammeStatus | null;
+  generationFailed: boolean;
+}
+
 /**
- * List users with pagination, search, and location filter.
- * Joins locations table for locationName.
+ * List users with pagination, search, and location filter, each with their location name and
+ * current programme. Programme columns need the admin read bypass on `programmes`; without it
+ * the join silently comes back empty.
  */
 export async function listUsers(
   db: DbClient,
   paginationInput: PaginationInput,
   filters: UserFilterInput
-): Promise<UserWithLocationName[]> {
+): Promise<UserListRow[]> {
   const conditions = buildUserFilterConditions(filters);
 
+  // The current programme is the latest one not archived
+  const currentProgramme = db
+    .select({
+      status: programmes.status,
+      programmeTemplateId: programmes.programmeTemplateId,
+    })
+    .from(programmes)
+    .where(
+      and(
+        eq(programmes.userId, users.id),
+        eq(programmes.organisationId, users.organisationId),
+        ne(programmes.status, 'archived')
+      )
+    )
+    .orderBy(desc(programmes.createdAt))
+    .limit(1)
+    .as('current_programme');
+
+  const generationFailed = latestProgrammeGenerationFailed(
+    sql`${processJobs.organisationId} = ${users.organisationId}
+      and ${processJobs.payload}->>${GENERATE_USER_KEY} = ${users.id}::text`
+  );
+
   const query = db
-    .select(userWithLocationColumns)
+    .select({
+      ...userWithLocationColumns,
+      programmeName: programmeTemplates.name,
+      programmeSlug: programmeTemplates.slug,
+      programmeStatus: currentProgramme.status,
+      generationFailed: generationFailed.as('generation_failed'),
+    })
     .from(users)
     .leftJoin(locations, eq(users.locationId, locations.id))
+    .leftJoinLateral(currentProgramme, sql`true`)
+    .leftJoin(programmeTemplates, eq(programmeTemplates.id, currentProgramme.programmeTemplateId))
     .where(and(...conditions))
     .$dynamic();
 
   return (await applyPagination(
     query,
     paginationInput,
-    USER_SORTABLE_COLUMNS
-  )) as UserWithLocationName[];
+    USER_SORTABLE_COLUMNS,
+    users.id
+  )) as UserListRow[];
 }
 
 /**

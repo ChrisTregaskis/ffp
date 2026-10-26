@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { INVITABLE_ROLES, USER_ROLES } from '@ffp/database/constants';
 
 import { paginationInputSchema, createPaginatedResponseSchema } from './pagination.schema';
+import { programmeStatusSchema } from './programme/programme-lifecycle.schema';
 import { publicIdSchema } from './public-id.schema';
 
 export const userRoleSchema = z.enum(USER_ROLES);
@@ -91,6 +92,12 @@ export const adminUpdateUserInputSchema = z.object({
   dateOfBirth: z.coerce.date().nullable().optional(),
 });
 
+/** One role, or several comma-separated (`customer_owner,customer_admin`) */
+const userRoleListSchema = z
+  .string()
+  .transform((value) => value.split(',').map((role) => role.trim()))
+  .pipe(z.array(userRoleSchema).min(1));
+
 /** Query parameters for GET /admin/users */
 export const userListQuerySchema = paginationInputSchema.extend({
   /** Free-text search across name and email */
@@ -98,14 +105,14 @@ export const userListQuerySchema = paginationInputSchema.extend({
   /** Filter by location ID */
   locationId: z.string().optional(),
   /** Filter by user role */
-  role: userRoleSchema.optional(),
+  role: userRoleListSchema.optional(),
 });
 
 /** Filter parameters extracted from query (excludes pagination) */
 export const userFilterSchema = z.object({
   search: z.string().optional(),
   locationId: z.string().optional(),
-  role: userRoleSchema.optional(),
+  role: userRoleListSchema.optional(),
 });
 
 /** Response schema for user list items — includes locationName from join */
@@ -122,6 +129,12 @@ export const userListResponseSchema = userSchema
   })
   .extend({
     locationName: z.string().nullable(),
+    /** The member's current (latest not archived) programme; null without one */
+    programmeName: z.string().nullable(),
+    programmeLevel: z.number().int().nullable(),
+    programmeStatus: programmeStatusSchema.exclude(['archived']).nullable(),
+    /** The latest programme generation for the member failed for good */
+    generationFailed: z.boolean(),
   });
 
 /** Response schema for user detail — full record with locationName */

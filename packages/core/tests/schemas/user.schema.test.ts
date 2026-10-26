@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { inviteUserSchema, userSchema } from '../../src/schemas/user.schema';
+import { inviteUserSchema, userFilterSchema, userSchema } from '../../src/schemas/user.schema';
 
 describe('inviteUserSchema', () => {
   describe('location owner invites (no organisation/location)', () => {
@@ -252,5 +252,25 @@ describe('userSchema', () => {
         expect(result.data.dateOfBirth).toBeNull();
       }
     });
+  });
+});
+
+describe('userFilterSchema role', () => {
+  it('accepts the comma-separated role list the Customer Staff filter sends', () => {
+    expect(userFilterSchema.parse({ role: 'customer_owner,customer_admin' }).role).toEqual([
+      'customer_owner',
+      'customer_admin',
+    ]);
+  });
+
+  it('accepts a single role as a one-item list', () => {
+    expect(userFilterSchema.parse({ role: 'programme_user' }).role).toEqual(['programme_user']);
+  });
+
+  it('refuses a list holding an unknown role rather than dropping it', () => {
+    const result = userFilterSchema.safeParse({ role: 'customer_admin,owner' });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]).toMatchObject({ path: ['role', 1], code: 'invalid_value' });
   });
 });

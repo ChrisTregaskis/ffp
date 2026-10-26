@@ -11,7 +11,7 @@ import * as adminRepository from '../../src/admin/admin.repository';
 import { CognitoService } from '../../src/lib/cognito';
 import { paginationInputSchema } from '../../src/schemas/pagination.schema';
 
-import type { UserWithLocationName } from '../../src/admin/admin-user.repository';
+import type { UserListRow, UserWithLocationName } from '../../src/admin/admin-user.repository';
 import type { LocationWithOrganisationName } from '../../src/admin/admin.repository';
 import type { OrganisationContext } from '../../src/lib/context';
 
@@ -205,5 +205,81 @@ describe('admin user service', () => {
       filters: { locationId: location.id, hasSearch: true },
     });
     expect(JSON.stringify(consoleLog.mock.calls)).not.toContain('sentinel');
+  });
+
+  describe('listing users with their programme', () => {
+    const listRow = (overrides: Partial<UserListRow>): UserListRow => ({
+      ...storedUser(),
+      programmeName: null,
+      programmeSlug: null,
+      programmeStatus: null,
+      generationFailed: false,
+      ...overrides,
+    });
+
+    it('reads the level from the programme slug and leaves it empty for other templates', async () => {
+      mockedUserRepository.listUsers.mockResolvedValue([
+        listRow({
+          programmeName: 'Active Wellness',
+          programmeSlug: 'level-2-active-wellness',
+          programmeStatus: 'active',
+        }),
+        listRow({
+          programmeName: 'Custom',
+          programmeSlug: 'custom-plan',
+          programmeStatus: 'active',
+        }),
+        listRow({ generationFailed: true }),
+      ]);
+      mockedUserRepository.countUsers.mockResolvedValue(3);
+
+      const { data } = await listUsersService(
+        context(),
+        paginationInputSchema.parse({ page: 1 }),
+        {}
+      );
+
+      expect(
+        data.map(({ programmeName, programmeLevel, programmeStatus, generationFailed }) => ({
+          programmeName,
+          programmeLevel,
+          programmeStatus,
+          generationFailed,
+        }))
+      ).toEqual([
+        {
+          programmeName: 'Active Wellness',
+          programmeLevel: 2,
+          programmeStatus: 'active',
+          generationFailed: false,
+        },
+        {
+          programmeName: 'Custom',
+          programmeLevel: null,
+          programmeStatus: 'active',
+          generationFailed: false,
+        },
+        {
+          programmeName: null,
+          programmeLevel: null,
+          programmeStatus: null,
+          generationFailed: true,
+        },
+      ]);
+      expect(data[0]).not.toHaveProperty('programmeSlug');
+    });
+
+    it('passes the Customer Staff role list to the repository', async () => {
+      mockedUserRepository.listUsers.mockResolvedValue([]);
+      mockedUserRepository.countUsers.mockResolvedValue(0);
+
+      await listUsersService(context(), paginationInputSchema.parse({ page: 1 }), {
+        role: 'customer_owner,customer_admin',
+      });
+
+      expect(mockedUserRepository.listUsers.mock.calls[0][2]).toEqual({
+        role: ['customer_owner', 'customer_admin'],
+      });
+    });
   });
 });
