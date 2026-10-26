@@ -13,13 +13,17 @@ import {
   templateQuestions,
   userAssessments,
 } from '@ffp/database/schema';
+import {
+  asOrganisation,
+  connectTestDb,
+  deleteOrganisations,
+  type TestDb,
+} from '@ffp/database/testing';
 
 import * as answerRepository from '../../src/assessments/answer.repository';
 import * as userAssessmentRepository from '../../src/assessments/user-assessment.repository';
 import { processScoreAssessment } from '../../src/jobs/handlers/score-assessment.handler';
 import * as jobQueueService from '../../src/jobs/job-queue.service';
-import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import type { Pool } from 'pg';
 

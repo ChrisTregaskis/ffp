@@ -16,6 +16,12 @@ import { eq, inArray, sql } from 'drizzle-orm';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
 
 import * as schema from '@ffp/database/schema';
+import {
+  asOrganisation,
+  connectTestDb,
+  deleteOrganisations,
+  type TestDb,
+} from '@ffp/database/testing';
 
 import {
   pollAndClaimJobs,
@@ -25,8 +31,6 @@ import {
 } from '../../src/jobs/job-processor.service';
 import { NotFoundError } from '../../src/lib/errors';
 import { drizzleDriverError, expectNothingLeakable } from '../lib/database-error.fixture';
-import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import { jobPayload } from './job-payload.fixture';
 

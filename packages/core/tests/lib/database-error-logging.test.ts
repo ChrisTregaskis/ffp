@@ -5,6 +5,7 @@ import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest
 
 import { withRLS } from '@ffp/database';
 import * as schema from '@ffp/database/schema';
+import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
 import { findDriverError, translateDatabaseError } from '../../src/lib/database-errors';
 import { ConflictError } from '../../src/lib/errors';
@@ -12,7 +13,6 @@ import { withErrorHandling } from '../../src/lib/lambda-wrapper';
 
 import { createMockEvent } from './api-gateway-event.fixture';
 import { expectNothingLeakable } from './database-error.fixture';
-import { connectTestDb, type TestDb } from './test-db.fixture';
 
 import type { Pool } from 'pg';
 

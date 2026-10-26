@@ -1,6 +1,5 @@
 import { withAdminContext } from '@ffp/database';
-
-import type { TestDb } from '../lib/test-db.fixture';
+import type { TestDb } from '@ffp/database/testing';
 
 class Rollback extends Error {}
 

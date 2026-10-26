@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import type * as ffpDatabase from '@ffp/database';
 import { assessmentFlows, programmeTemplates, templatePhases } from '@ffp/database/schema';
+import { connectTestDb, type TestDb } from '@ffp/database/testing';
 import type { ScoringConfig } from '@ffp/database/types';
 
 import { ConflictError } from '../../src/lib/errors';
@@ -12,7 +13,6 @@ import {
   createSession,
   deleteSession,
 } from '../../src/programme-templates/template-session.service';
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 import { inRolledBackTransaction, shortId, type TestTx } from '../tags/tag-fixture';
 
 import { insertTemplateWithSession, readTemplate, type TemplateFixture } from './template-fixture';

@@ -3,10 +3,10 @@ import { randomUUID } from 'crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { programmeTemplates } from '@ffp/database/schema';
+import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
 import * as templateRepository from '../../src/programme-templates/programme-template.repository';
 import { descendingIds, idsAcrossPages, minutesApart } from '../lib/paging.fixture';
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 import { inRolledBackTransaction, type TestTx } from '../tags/tag-fixture';
 
 import type { Pool } from 'pg';

@@ -23,10 +23,14 @@ import {
   questions,
   templateQuestions,
 } from '@ffp/database/schema';
+import {
+  asOrganisation,
+  connectTestDb,
+  deleteOrganisations,
+  type TestDb,
+} from '@ffp/database/testing';
 
 import * as templateRepository from '../../src/assessments/template.repository';
-import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import type { CreateAssessmentTemplateInput } from '../../src/schemas/assessment-template.schema';
 import type { Pool } from 'pg';

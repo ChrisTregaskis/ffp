@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type * as ffpDatabase from '@ffp/database';
+import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
 import { createSystemContext } from '../../src/lib/context';
 import { NotFoundError, ValidationError } from '../../src/lib/errors';
@@ -11,7 +12,6 @@ import {
   listAdminVideos,
   updateVideo,
 } from '../../src/videos/video.service';
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 import {
   assignTags,
   findCategoryId,

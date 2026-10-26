@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { connectTestDb, type TestDb } from '@ffp/database/testing';
+
 import * as videoRepository from '../../src/videos/video.repository';
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 import {
   assignTags,
   findCategoryId,

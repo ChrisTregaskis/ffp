@@ -12,8 +12,7 @@ import {
   type TagRecord,
   type VideoRecord,
 } from '@ffp/database/schema';
-
-import type { TestDb } from '../lib/test-db.fixture';
+import type { TestDb } from '@ffp/database/testing';
 
 export type TestTx = Parameters<Parameters<TestDb['transaction']>[0]>[0];
 

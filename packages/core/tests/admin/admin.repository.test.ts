@@ -3,10 +3,10 @@ import { randomUUID } from 'crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { locations, organisations } from '@ffp/database/schema';
+import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
 import * as adminRepository from '../../src/admin/admin.repository';
 import { descendingIds, idsAcrossPages, minutesApart } from '../lib/paging.fixture';
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import { inRolledBackAdminTransaction } from './admin-context.fixture';
 

@@ -22,8 +22,7 @@ import { eq, sql } from 'drizzle-orm';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
 import { assessmentTemplates } from '@ffp/database/schema';
-
-import { connectTestDb, type TestDb } from './test-db.fixture';
+import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
 import type { Pool } from 'pg';
 
