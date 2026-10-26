@@ -1,10 +1,13 @@
 import { randomUUID } from 'crypto';
 
+import { TransactionRollbackError } from 'drizzle-orm';
 import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 
 import { withRLS } from '@ffp/database';
 import * as schema from '@ffp/database/schema';
 
+import { findDriverError, translateDatabaseError } from '../../src/lib/database-errors';
+import { ConflictError } from '../../src/lib/errors';
 import { withErrorHandling } from '../../src/lib/lambda-wrapper';
 
 import { createMockEvent } from './api-gateway-event.fixture';
@@ -80,5 +83,39 @@ describe('logging a real database error', () => {
     expectNothingLeakable(logged);
     expect(logged).not.toContain(memberEmail);
     expect(logged).not.toContain(missingOrganisationId);
+  });
+
+  it('reads a unique violation as a driver error and translates it to a conflict', async () => {
+    const slug = `driver-error-${randomUUID()}`;
+    let duplicate: unknown;
+
+    // The duplicate is refused inside a savepoint, and the whole transaction is rolled back
+    await db
+      .transaction(async (tx) => {
+        await tx.insert(schema.programmeTemplates).values({ slug, name: 'Driver error template' });
+        duplicate = await tx
+          .transaction((savepoint) =>
+            savepoint
+              .insert(schema.programmeTemplates)
+              .values({ slug, name: 'Driver error template' })
+          )
+          .then(
+            () => null,
+            (error: unknown) => error
+          );
+        tx.rollback();
+      })
+      .catch((error: unknown) => {
+        if (!(error instanceof TransactionRollbackError)) {
+          throw error;
+        }
+      });
+
+    expect(findDriverError(duplicate)).toMatchObject({
+      code: '23505',
+      severity: 'ERROR',
+      constraint: 'idx_programme_templates_slug',
+    });
+    expect(translateDatabaseError(duplicate)).toBeInstanceOf(ConflictError);
   });
 });
