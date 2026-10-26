@@ -30,8 +30,12 @@ export const SYSTEM_PLACEHOLDER_ORGANISATION_ID = '00000000-0000-0000-8000-00000
 export const EMAIL_PATTERN = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
 /**
- * Password requirement patterns matching Cognito default policy.
+ * The password rules, matching the user pool's policy in `sst.config.ts`. The server's
+ * `passwordValidation` and the web's requirement checklist are both built from these.
  */
+
+/** Minimum length */
+export const PASSWORD_MIN_LENGTH = 8;
 
 /** At least one uppercase letter (A-Z) */
 export const PASSWORD_UPPERCASE_PATTERN = /[A-Z]/;
@@ -42,25 +46,12 @@ export const PASSWORD_LOWERCASE_PATTERN = /[a-z]/;
 /** At least one number (0-9) */
 export const PASSWORD_NUMBER_PATTERN = /[0-9]/;
 
-/** At least one special character (non-alphanumeric) */
-export const PASSWORD_SPECIAL_CHAR_PATTERN = /[^A-Za-z0-9]/;
-
 /**
- * Combined password validation pattern.
- *
- * Requires:
- * - At least 8 characters
- * - At least one lowercase letter
- * - At least one uppercase letter
- * - At least one number
- * - At least one special character
+ * At least one of the characters Cognito counts as special, or a space with other characters
+ * either side. Other symbols (such as £) and accented letters don't count, so Cognito would
+ * refuse a password whose only special character is one of them.
  */
-export const PASSWORD_FULL_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
-
-/**
- * Password minimum length requirement
- */
-export const PASSWORD_MIN_LENGTH = 8;
+export const PASSWORD_SPECIAL_CHAR_PATTERN = /[\^$*.[\]{}()?"!@#%&/\\,><':;|_~`=+-]|\S +\S/;
 
 /**
  * Helper function to convert Zod enum values to uppercase constant object

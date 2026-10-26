@@ -1,12 +1,20 @@
 import { z } from 'zod';
 
+import {
+  PASSWORD_LOWERCASE_PATTERN,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_NUMBER_PATTERN,
+  PASSWORD_SPECIAL_CHAR_PATTERN,
+  PASSWORD_UPPERCASE_PATTERN,
+} from '../lib/constants';
+
 export const passwordValidation = z
   .string()
-  .min(8, 'Password must be at least 8 characters')
-  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-  .regex(/[0-9]/, 'Password must contain at least one digit')
-  .regex(/[^a-zA-Z0-9]/, 'Password must contain at least one special character');
+  .min(PASSWORD_MIN_LENGTH, `Password must be at least ${String(PASSWORD_MIN_LENGTH)} characters`)
+  .regex(PASSWORD_LOWERCASE_PATTERN, 'Password must contain at least one lowercase letter')
+  .regex(PASSWORD_UPPERCASE_PATTERN, 'Password must contain at least one uppercase letter')
+  .regex(PASSWORD_NUMBER_PATTERN, 'Password must contain at least one digit')
+  .regex(PASSWORD_SPECIAL_CHAR_PATTERN, 'Password must contain at least one special character');
 
 export const loginSchema = z.object({
   email: z.email(),
