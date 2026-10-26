@@ -6,7 +6,12 @@ import { users, locations, type NewUser } from '@ffp/database/schema';
 
 import { formatDateOnly } from '../lib/date';
 import { InternalServerError } from '../lib/errors';
-import { applyPagination, escapeLikePattern } from '../lib/pagination';
+import {
+  applyPagination,
+  escapeLikePattern,
+  NEWEST_FIRST,
+  withDefaultSort,
+} from '../lib/pagination';
 
 import type { PaginationInput } from '../schemas/pagination.schema';
 import type { UserFilterInput, AdminUpdateUserInput } from '../schemas/user.schema';
@@ -125,8 +130,9 @@ export async function listUsers(
 
   return (await applyPagination(
     query,
-    paginationInput,
-    USER_SORTABLE_COLUMNS
+    withDefaultSort(paginationInput, USER_SORTABLE_COLUMNS, NEWEST_FIRST),
+    USER_SORTABLE_COLUMNS,
+    users.id
   )) as UserWithLocationName[];
 }
 
