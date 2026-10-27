@@ -8,12 +8,12 @@ import {
   templateSessionSlots,
   templateSlotTags,
 } from '@ffp/database/schema';
+import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
 import { NotFoundError, ValidationError } from '../../src/lib/errors';
 import { deleteSession } from '../../src/programme-templates/template-session.service';
 import * as slotService from '../../src/programme-templates/template-slot.service';
 import * as tagRepository from '../../src/tags/tag.repository';
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 import {
   assignTags,
   findCategoryId,

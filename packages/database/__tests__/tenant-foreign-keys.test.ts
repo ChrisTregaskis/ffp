@@ -1,8 +1,6 @@
 import { randomUUID } from 'crypto';
 
 import { eq, inArray, sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
 import {
@@ -18,17 +16,17 @@ import {
   userSessions,
   users,
 } from '../src/schema';
-
-import { asOrganisation, deleteOrganisations } from './helpers/rls-context';
+import { asOrganisation, connectTestDb, deleteOrganisations, type TestDb } from '../src/testing';
 
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import type { Pool } from 'pg';
 
 // Every link from one organisation-scoped row to another carries organisation_id, so a
 // row can only point at a parent in its own organisation. The foreign key is checked
 // without RLS, so the policies alone cannot refuse a parent from another organisation.
 describe('Tenant foreign keys', () => {
   let pool: Pool;
-  let db: NodePgDatabase<Record<string, unknown>>;
+  let db: TestDb;
 
   let runId: string;
   let organisationAId: string;
@@ -44,14 +42,7 @@ describe('Tenant foreign keys', () => {
   let templateSessionId: string;
 
   beforeAll(() => {
-    pool = new Pool({
-      host: process.env.DB_HOST ?? 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '5432'),
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER ?? 'test_user',
-      password: process.env.DB_PASSWORD ?? 'test_password',
-    });
-    db = drizzle(pool);
+    ({ pool, db } = connectTestDb());
   });
 
   beforeEach(async () => {

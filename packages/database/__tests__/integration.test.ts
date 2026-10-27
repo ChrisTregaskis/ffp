@@ -23,8 +23,7 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { getDb, closeDb } from '../src/client';
 import { withRLS } from '../src/lib/rls';
 import { users, organisations, locations } from '../src/schema';
-
-import { deleteOrganisations } from './helpers/rls-context';
+import { deleteOrganisations } from '../src/testing';
 
 // Unique per run, so the global unique indexes on email and account code
 // cannot collide with rows another suite holds.

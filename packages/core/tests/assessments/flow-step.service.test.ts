@@ -8,6 +8,7 @@ import * as flowStepRepository from '../../src/assessments/flow-step.repository'
 import * as flowStepService from '../../src/assessments/flow-step.service';
 import * as flowRepository from '../../src/assessments/flow.repository';
 import * as templateRepository from '../../src/assessments/template.repository';
+import * as userAssessmentRepository from '../../src/assessments/user-assessment.repository';
 import { ConflictError, NotFoundError } from '../../src/lib/errors';
 
 import type { AssessmentFlow, FlowStepWithConfig } from '../../src/assessments/flow.repository';
@@ -19,18 +20,29 @@ type FFPDatabaseModule = typeof ffpDatabase;
 vi.mock('../../src/assessments/flow.repository');
 vi.mock('../../src/assessments/flow-step.repository');
 vi.mock('../../src/assessments/template.repository');
+vi.mock('../../src/assessments/user-assessment.repository');
+/** Stands in for the transaction a delete opens; the marker stops any other object matching it */
+const mockTx = { marker: 'transaction opened by the delete' };
+
 vi.mock('@ffp/database', async (importOriginal) => {
   const actual = await importOriginal<FFPDatabaseModule>();
 
   return {
     ...actual,
-    getDb: vi.fn(() => ({}) as ReturnType<FFPDatabaseModule['getDb']>),
+    getDb: vi.fn(
+      () =>
+        ({
+          transaction: async (callback: (tx: typeof mockTx) => Promise<unknown>) =>
+            await callback(mockTx),
+        }) as unknown as ReturnType<FFPDatabaseModule['getDb']>
+    ),
   };
 });
 
 const mockedFlowRepo = vi.mocked(flowRepository);
 const mockedFlowStepRepo = vi.mocked(flowStepRepository);
 const mockedTemplateRepo = vi.mocked(templateRepository);
+const mockedUserAssessmentRepo = vi.mocked(userAssessmentRepository);
 
 const FLOW_PUBLIC_ID = 'flowABCDE123';
 
@@ -487,17 +499,114 @@ describe('flowStepService.deleteStepService', () => {
 
     mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
     mockedFlowStepRepo.findStepByPublicId.mockResolvedValue(step);
+    mockedFlowStepRepo.lockActiveSteps.mockResolvedValue(step.isActive ? [step] : []);
+    mockedFlowStepRepo.closeOrderGap.mockResolvedValue(1);
 
     return step;
   };
 
-  it('soft-deletes the step by the UUID its public identifier resolves to', async () => {
+  it('soft-deletes the step by the UUID its public identifier resolves to, inside one transaction', async () => {
     const step = arrange();
 
     await flowStepService.deleteStepService(createContext(), FLOW_PUBLIC_ID, step.publicId);
 
     expect(mockedFlowRepo.findByPublicId).toHaveBeenCalledWith(expect.anything(), FLOW_PUBLIC_ID);
-    expect(mockedFlowStepRepo.deactivateStep.mock.calls).toEqual([[expect.anything(), step.id]]);
+    expect(mockedFlowStepRepo.lockActiveSteps.mock.calls).toEqual([[mockTx, step.flowId]]);
+    expect(mockedFlowStepRepo.deactivateStep.mock.calls).toEqual([[mockTx, step.id]]);
+    expect(mockedFlowStepRepo.closeOrderGap.mock.calls).toEqual([
+      [mockTx, step.flowId, step.order],
+    ]);
+    expect(mockedUserAssessmentRepo.shiftOpenAssessmentsBack.mock.calls).toEqual([
+      [mockTx, step.flowId, step.order],
+    ]);
+  });
+
+  it('moves no member position when no step followed the removed one', async () => {
+    const step = arrange();
+    mockedFlowStepRepo.closeOrderGap.mockResolvedValue(0);
+
+    await flowStepService.deleteStepService(createContext(), FLOW_PUBLIC_ID, step.publicId);
+
+    expect(mockedFlowStepRepo.deactivateStep.mock.calls).toEqual([[mockTx, step.id]]);
+    expect(mockedUserAssessmentRepo.shiftOpenAssessmentsBack).not.toHaveBeenCalled();
+  });
+
+  it('reroutes each step that led to it by default, on the transaction', async () => {
+    const next = createStep(randomUUID(), { order: 9 });
+    const step = arrange({ defaultNextStepId: next.id });
+    const first = createStep(step.flowId, { order: 1, defaultNextStepId: step.id });
+    const later = createStep(step.flowId, { order: 7, defaultNextStepId: step.id });
+    mockedFlowStepRepo.lockActiveSteps.mockResolvedValue([
+      first,
+      step,
+      later,
+      { ...next, flowId: step.flowId },
+    ]);
+
+    await flowStepService.deleteStepService(createContext(), FLOW_PUBLIC_ID, step.publicId);
+
+    expect(mockedFlowStepRepo.setDefaultNextStep.mock.calls).toEqual([
+      [mockTx, first.id, next.id],
+      [mockTx, later.id, next.id],
+    ]);
+  });
+
+  it('names every step that branches to it, and writes nothing', async () => {
+    const step = arrange();
+    const goto = (targetStepId: string): FlowStepWithConfig['nextStepRules'] => [
+      { priority: 1, conditions: [], action: { type: 'goto_step', targetStepId } },
+    ];
+    const byDefault = createStep(step.flowId, {
+      order: 2,
+      config: { title: 'Warm up' },
+      defaultNextStepId: step.id,
+    });
+    const byRule = createStep(step.flowId, {
+      order: 3,
+      config: { title: 'Check in' },
+      nextStepRules: goto(step.id),
+    });
+    const byBoth = createStep(step.flowId, {
+      order: 4,
+      config: { title: 'Cool down' },
+      defaultNextStepId: step.id,
+      nextStepRules: goto(step.id),
+    });
+    mockedFlowStepRepo.lockActiveSteps.mockResolvedValue([step, byDefault, byRule, byBoth]);
+
+    await expect(
+      flowStepService.deleteStepService(createContext(), FLOW_PUBLIC_ID, step.publicId)
+    ).rejects.toMatchObject({
+      name: 'ConflictError',
+      statusCode: 409,
+      message:
+        'This step can\'t be removed because other steps branch to it: step 3 "Check in", step 4 "Cool down". Branching can\'t be changed in the admin yet.',
+      details: {
+        linkingSteps: [
+          { order: 3, title: 'Check in' },
+          { order: 4, title: 'Cool down' },
+        ],
+      },
+    });
+
+    expect(mockedFlowStepRepo.setDefaultNextStep).not.toHaveBeenCalled();
+    expect(mockedFlowStepRepo.deactivateStep).not.toHaveBeenCalled();
+    expect(mockedFlowStepRepo.closeOrderGap).not.toHaveBeenCalled();
+    expect(mockedUserAssessmentRepo.shiftOpenAssessmentsBack).not.toHaveBeenCalled();
+  });
+
+  it('leaves an already-removed step alone, even while another step still leads to it', async () => {
+    const step = arrange({ isActive: false });
+    mockedFlowStepRepo.lockActiveSteps.mockResolvedValue([
+      createStep(step.flowId, { defaultNextStepId: step.id }),
+    ]);
+
+    await flowStepService.deleteStepService(createContext(), FLOW_PUBLIC_ID, step.publicId);
+
+    expect(mockedFlowStepRepo.setDefaultNextStep).not.toHaveBeenCalled();
+    expect(mockedFlowStepRepo.deactivateStep).not.toHaveBeenCalled();
+    expect(mockedFlowStepRepo.closeOrderGap).not.toHaveBeenCalled();
+    expect(mockedUserAssessmentRepo.shiftOpenAssessmentsBack).not.toHaveBeenCalled();
   });
 
   it('refuses a step that belongs to another flow with a 404, before any write', async () => {

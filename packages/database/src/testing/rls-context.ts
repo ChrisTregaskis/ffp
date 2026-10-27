@@ -1,6 +1,6 @@
 import { eq, sql, type ExtractTablesWithRelations } from 'drizzle-orm';
 
-import { organisations } from '@ffp/database/schema';
+import { organisations } from '../schema';
 
 import type { NodePgDatabase, NodePgTransaction } from 'drizzle-orm/node-postgres';
 
@@ -12,9 +12,9 @@ type Transaction<TSchema extends Record<string, unknown>> = NodePgTransaction<
 >;
 
 /**
- * Runs the callback in a transaction scoped to one organisation with `SET LOCAL`, so
- * the setting ends with the transaction instead of staying on the pooled connection.
- * Kept apart from the production `withRLS`, so a broken helper under test cannot
+ * Runs the callback in a transaction scoped to one organisation with `SET LOCAL`, so the
+ * setting ends with the transaction instead of staying on the pooled connection. Kept apart
+ * from the production `setRLSContext` and `withRLS`, so a broken helper under test cannot
  * also break the fixtures that judge it.
  */
 export const asOrganisation = async <TSchema extends Record<string, unknown>, T>(
@@ -34,9 +34,9 @@ export const asOrganisation = async <TSchema extends Record<string, unknown>, T>
 };
 
 /**
- * Deletes the organisations a test created, each under its own context (which the
- * write policy allows). Everything they own goes with them through the foreign
- * keys' ON DELETE CASCADE.
+ * Deletes the organisations a test created, each under its own context (which the write
+ * policy allows). Everything they own goes with them through the foreign keys' ON DELETE
+ * CASCADE.
  */
 export const deleteOrganisations = async <TSchema extends Record<string, unknown>>(
   db: NodePgDatabase<TSchema>,
