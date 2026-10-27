@@ -75,7 +75,7 @@ export const Badge: React.FC<BadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center font-medium ${style.classes} ${paddingX} ${SHAPE_CLASSES[shape]} ${VARIANT_CLASSES[variant][appearance]}`}
+      className={`inline-flex items-center whitespace-nowrap font-medium ${style.classes} ${paddingX} ${SHAPE_CLASSES[shape]} ${VARIANT_CLASSES[variant][appearance]}`}
       {...rest}
     >
       {icon && <Icon name={icon} styleProps={{ size: style.icon }} />}

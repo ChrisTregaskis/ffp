@@ -130,7 +130,8 @@ export const Table = <TData extends Record<string, unknown>>({
         </div>
       )}
 
-      <Surface border="muted" className="overflow-hidden">
+      {/* Scrolls rather than clips, so a wide table keeps its actions column reachable */}
+      <Surface border="muted" className="overflow-x-auto">
         <table className="w-full border-collapse">
           <TableHeader headerGroups={table.getHeaderGroups()} />
           <TableBody
