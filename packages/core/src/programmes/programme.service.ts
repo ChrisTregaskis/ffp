@@ -282,8 +282,18 @@ export async function getProgrammeDetail(
   context: OrganisationContext
 ): Promise<ProgrammeDetailResponse> {
   const userId = await getUserIdFromContext(context);
-  const { organisationId } = context;
 
+  return getProgrammeDetailForUser(context.organisationId, userId);
+}
+
+/**
+ * The programme detail for one member, read under the given organisation's RLS context.
+ * Callers pass an organisation they have established, never one from the request.
+ */
+export async function getProgrammeDetailForUser(
+  organisationId: string,
+  userId: string
+): Promise<ProgrammeDetailResponse> {
   // Fetch programme + phases (RLS-scoped)
   const result = await findProgrammeWithPhases(organisationId, userId);
 

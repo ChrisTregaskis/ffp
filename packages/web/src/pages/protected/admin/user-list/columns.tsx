@@ -1,18 +1,35 @@
 import type { UserListResponse } from '@ffp/core';
 
+import { Badge } from '@web/components/atoms';
 import { createColumns } from '@web/components/organisms';
-import type { RowAction } from '@web/components/organisms';
+import type { RowAction, StatusConfig } from '@web/components/organisms';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-/** Row type for the user list — adds computed fullName for display */
-export type UserRow = UserListResponse & { fullName: string } & Record<string, unknown>;
+const GENERATION_FAILED = 'generation_failed';
+
+type ProgrammeState = NonNullable<UserListResponse['programmeStatus']> | typeof GENERATION_FAILED;
+
+/** Row type for the user list — adds computed fullName and programme state for display */
+export type UserRow = UserListResponse & {
+  fullName: string;
+  programmeState: ProgrammeState | null;
+} & Record<string, unknown>;
 
 /** Maps API response to row type with computed fields */
 export const toUserRow = (user: UserListResponse): UserRow => ({
   ...user,
   fullName: `${user.firstName} ${user.lastName}`,
+  // A failed generation needs attention even when the member keeps an earlier programme
+  programmeState: user.generationFailed ? GENERATION_FAILED : user.programmeStatus,
 });
+
+const PROGRAMME_STATE_MAP: Record<ProgrammeState, StatusConfig> = {
+  active: { label: 'Active', colour: 'success' },
+  paused: { label: 'Paused', colour: 'warning' },
+  completed: { label: 'Completed', colour: 'info' },
+  [GENERATION_FAILED]: { label: 'Generation failed', colour: 'destructive' },
+};
 
 const columns = createColumns<UserRow>();
 
@@ -37,6 +54,17 @@ export const buildUserColumns = (
     label: 'Role',
     cell: (value) => ROLE_LABELS[value as string] ?? String(value),
   }),
+  columns.text('programmeName', { label: 'Programme' }),
+  columns.text('programmeLevel', {
+    label: 'Level',
+    cell: (_value, row) =>
+      row.programmeLevel === null ? (
+        '-'
+      ) : (
+        <Badge label={`Level ${String(row.programmeLevel)}`} variant="primary" />
+      ),
+  }),
+  columns.status('programmeState', { label: 'Programme status', statusMap: PROGRAMME_STATE_MAP }),
   columns.date('createdAt', { label: 'Created', sortable: true }),
   columns.actions({ actions }),
 ];

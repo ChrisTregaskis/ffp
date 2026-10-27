@@ -7,11 +7,14 @@
  * **Tables with RLS policies:**
  * - organisations, locations, users, user_assessments, user_assessment_answers, assessment_safety_triggers, programmes, programme_phases, user_sessions, user_session_exercises, exercise_completions
  *
- * **Admin bypass policy:**
- * - locations and users tables have an additional permissive policy that grants
+ * **Admin bypass policies:**
+ * - organisations, locations and users have an additional permissive policy that grants
  *   full access when `app.is_admin = 'true'` is set. This allows system_admin
  *   queries to operate cross-organisation without disabling RLS.
- *   Use `setAdminContext(tx)` from `@ffp/database` to activate.
+ * - programmes has a read-only one, so the admin users list can show each member's
+ *   programme. Writes to programmes stay organisation-isolated, and the deeper member
+ *   tables have none: one member's programme is read under that member's organisation.
+ * - Use `setAdminContext(tx)` from `@ffp/database` to activate.
  *
  * **Tables intentionally without RLS (for MVP):**
  * - process_jobs: Job processor runs with BYPASSRLS to claim jobs across organisations.
@@ -344,6 +347,17 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
       CREATE POLICY programme_organisation_isolation ON programmes
         FOR ALL
         USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::uuid);
+    `);
+
+    await tx.execute(sql`
+      DROP POLICY IF EXISTS programme_admin_read_bypass ON programmes;
+    `);
+
+    // Read-only: a FOR SELECT policy grants no write, so writes still need the organisation
+    await tx.execute(sql`
+      CREATE POLICY programme_admin_read_bypass ON programmes
+        FOR SELECT
+        USING (current_setting('app.is_admin', true) = 'true');
     `);
 
     // ============================================================================
