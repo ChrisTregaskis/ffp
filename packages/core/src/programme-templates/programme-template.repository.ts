@@ -8,7 +8,7 @@ import {
 } from '@ffp/database/schema';
 import { templatePhases, templateSessions, sessionExercises } from '@ffp/database/schema';
 
-import { applyPagination } from '../lib/pagination';
+import { applyPagination, NEWEST_FIRST, withDefaultSort } from '../lib/pagination';
 
 import type { PaginationInput } from '../schemas/pagination.schema';
 import type {
@@ -72,7 +72,12 @@ export async function findAllTemplates(
     .where(and(...conditions))
     .$dynamic();
 
-  return await applyPagination(query, paginationInput, SORTABLE_COLUMNS);
+  return await applyPagination(
+    query,
+    withDefaultSort(paginationInput, SORTABLE_COLUMNS, NEWEST_FIRST),
+    SORTABLE_COLUMNS,
+    programmeTemplates.id
+  );
 }
 
 /** Returns total count of templates matching the given filters. */

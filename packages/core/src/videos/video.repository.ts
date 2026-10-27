@@ -4,7 +4,7 @@ import { z } from 'zod';
 import type { DbClient, DbQueryClient } from '@ffp/database';
 import { tags, videos, videoTags, type VideoRecord, type NewVideo } from '@ffp/database/schema';
 
-import { applyPagination } from '../lib/pagination';
+import { applyPagination, NEWEST_FIRST, withDefaultSort } from '../lib/pagination';
 
 import type { PaginationInput } from '../schemas/pagination.schema';
 import type { AdminVideoFilterInput, UpdateVideoInput } from '../schemas/video/video.schema';
@@ -128,7 +128,12 @@ export async function findAllVideos(
     .where(and(...conditions))
     .$dynamic();
 
-  return await applyPagination(query, paginationInput, ADMIN_SORTABLE_COLUMNS);
+  return await applyPagination(
+    query,
+    withDefaultSort(paginationInput, ADMIN_SORTABLE_COLUMNS, NEWEST_FIRST),
+    ADMIN_SORTABLE_COLUMNS,
+    videos.id
+  );
 }
 
 export async function countAllVideos(

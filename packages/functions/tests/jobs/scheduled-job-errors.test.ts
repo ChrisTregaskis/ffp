@@ -27,7 +27,8 @@ const { handler: detectStaleJobs } = await import('../../src/jobs/detect-stale-j
 const EVENT = { time: '2026-10-21T09:00:00Z', source: 'aws.events' } as ScheduledEvent;
 const CONTEXT = { awsRequestId: 'request-1' } as Context;
 
-// The shape Drizzle throws: the SQL and parameters on the error, the driver's detail on its cause
+// The shape Drizzle throws: the SQL and parameters on the error, and on its cause the `pg`
+// error's SQLSTATE, the severity the driver always sets, and the detail
 const failedQuery = (): Error =>
   Object.assign(
     new Error('Failed query: update "process_jobs" set "status" = $1\nparams: sentinel-param'),
@@ -35,6 +36,7 @@ const failedQuery = (): Error =>
       query: 'update "process_jobs" set "status" = $1',
       params: ['sentinel-param'],
       cause: Object.assign(new Error('insert or update violates foreign key constraint'), {
+        severity: 'ERROR',
         code: '23503',
         detail: 'Key (organisation_id)=(sentinel-detail) is not present',
       }),

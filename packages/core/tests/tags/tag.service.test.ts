@@ -1,11 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import type * as ffpDatabase from '@ffp/database';
+import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
 import { createSystemContext } from '../../src/lib/context';
 import { ConflictError, NotFoundError, ValidationError } from '../../src/lib/errors';
 import * as tagService from '../../src/tags/tag.service';
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import {
   findCategoryId,
