@@ -6,7 +6,7 @@ const UNIQUE_VIOLATION = '23505';
 /** PostgreSQL SQLSTATE for a foreign-key violation. */
 const FOREIGN_KEY_VIOLATION = '23503';
 
-/** SQLSTATE is five alphanumerics — enough to tell a driver error from `ECONNRESET`. */
+/** SQLSTATE is five alphanumerics, a shape Node errno codes such as `EPIPE` share. */
 const SQLSTATE_PATTERN = /^[0-9A-Z]{5}$/;
 
 /** Drizzle wraps a driver error once; the cap stops a self-referential `cause` looping. */
@@ -15,23 +15,33 @@ const MAX_CAUSE_DEPTH = 5;
 /** The fields of a `pg` `DatabaseError` this translation reads. */
 export interface DriverError {
   code: string;
+  severity: string;
   constraint?: string;
   table?: string;
 }
+
+/**
+ * A `pg` error: a SQLSTATE plus the severity `pg` copies from every Postgres error
+ * response. A Node errno error carries no severity. Read by shape rather than
+ * `instanceof DatabaseError`, which a second copy of `pg` in a bundle would defeat.
+ */
+const isDriverError = (candidate: unknown): candidate is DriverError => {
+  if (typeof candidate !== 'object' || candidate === null) {
+    return false;
+  }
+
+  const { code, severity } = candidate as { code?: unknown; severity?: unknown };
+
+  return typeof code === 'string' && SQLSTATE_PATTERN.test(code) && typeof severity === 'string';
+};
 
 /** Unwrap to the driver error underneath, or null if this is not one. */
 export function findDriverError(error: unknown): DriverError | null {
   let candidate: unknown = error;
 
   for (let depth = 0; depth <= MAX_CAUSE_DEPTH; depth += 1) {
-    if (
-      typeof candidate === 'object' &&
-      candidate !== null &&
-      'code' in candidate &&
-      typeof (candidate as { code: unknown }).code === 'string' &&
-      SQLSTATE_PATTERN.test((candidate as { code: string }).code)
-    ) {
-      return candidate as DriverError;
+    if (isDriverError(candidate)) {
+      return candidate;
     }
 
     if (!(candidate instanceof Error)) {

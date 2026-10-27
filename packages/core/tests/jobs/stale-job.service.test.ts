@@ -4,10 +4,14 @@ import { inArray } from 'drizzle-orm';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
 
 import * as schema from '@ffp/database/schema';
+import {
+  asOrganisation,
+  connectTestDb,
+  deleteOrganisations,
+  type TestDb,
+} from '@ffp/database/testing';
 
 import { detectAndMarkStaleJobs } from '../../src/jobs/stale-job.service';
-import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import { jobPayload } from './job-payload.fixture';
 

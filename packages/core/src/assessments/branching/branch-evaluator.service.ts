@@ -1,8 +1,35 @@
 import type { AnswerValue, FlowStepRecord, NextStepRule } from '@ffp/database';
 
+import { createSystemLogger } from '../../lib/logger';
+
 import { evaluateConditions, type BranchEvaluationContext } from './condition-evaluator';
 
 import type { Warning, BranchEvaluationResult } from '../../schemas/warning.schema';
+
+const logger = createSystemLogger('branch-evaluator');
+
+/**
+ * Whether a link's target is an active step of the flow. A link to a removed or unknown step is
+ * treated as absent, and logged, so the member is never sent to a step they can't be shown.
+ */
+function isActiveTarget(
+  currentStep: FlowStepRecord,
+  targetStepId: string | undefined,
+  link: 'default' | 'goto_step',
+  allSteps: BranchEvaluationContext['allSteps']
+): targetStepId is string {
+  if (allSteps.some((s) => s.id === targetStepId && s.isActive)) {
+    return true;
+  }
+
+  logger.warn('Branching target is not an active step of the flow; falling back', {
+    stepId: currentStep.id,
+    targetStepId,
+    link,
+  });
+
+  return false;
+}
 
 /**
  * Evaluate next step based on branching rules
@@ -57,15 +84,19 @@ function processRuleAction(
   rule: NextStepRule,
   warnings: Warning[],
   currentStep: FlowStepRecord,
-  _context: BranchEvaluationContext
+  context: BranchEvaluationContext
 ): BranchEvaluationResult | null {
   const { action } = rule;
 
   switch (action.type) {
     case 'goto_step':
-      // Immediate navigation to target step
+      // Immediate navigation to target step; a target outside the flow skips the rule
+      if (!isActiveTarget(currentStep, action.targetStepId, 'goto_step', context.allSteps)) {
+        return null;
+      }
+
       return {
-        nextStepId: action.targetStepId ?? null,
+        nextStepId: action.targetStepId,
         warnings,
         shouldTerminate: false,
       };
@@ -117,8 +148,11 @@ function resolveDefaultNextStep(
   currentStep: FlowStepRecord,
   allSteps: BranchEvaluationContext['allSteps']
 ): string | null {
-  // Use explicit default if set
-  if (currentStep.defaultNextStepId) {
+  // Use explicit default if set and still an active step of the flow
+  if (
+    currentStep.defaultNextStepId &&
+    isActiveTarget(currentStep, currentStep.defaultNextStepId, 'default', allSteps)
+  ) {
     return currentStep.defaultNextStepId;
   }
 

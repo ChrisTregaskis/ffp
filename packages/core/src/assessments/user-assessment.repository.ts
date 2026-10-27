@@ -1,7 +1,12 @@
-import { eq, and, or, desc, sql } from 'drizzle-orm';
+import { eq, and, or, desc, gt, inArray, sql } from 'drizzle-orm';
 
-import type { UserAssessmentStatus } from '@ffp/database';
-import { userAssessments, type UserAssessmentRecord } from '@ffp/database/schema';
+import {
+  setAdminContext,
+  setRLSContext,
+  type DbClient,
+  type UserAssessmentStatus,
+} from '@ffp/database';
+import { organisations, userAssessments, type UserAssessmentRecord } from '@ffp/database/schema';
 
 import { withRLS, type Transaction } from '../lib/database';
 import { NotFoundError, ValidationError } from '../lib/errors';
@@ -386,4 +391,46 @@ export async function acknowledgeSafetyAdvice(
 
     return records[0];
   });
+}
+
+/** A transaction opened on the shared client (`getDb().transaction`). */
+type DbTransaction = Parameters<Parameters<DbClient['transaction']>[0]>[0];
+
+/**
+ * Move every open assessment on a flow stored after `order` back one step, in every
+ * organisation, once the steps after a removed step have moved down one order, so each member
+ * stays on the step they were on. Runs in the caller's transaction.
+ *
+ * `user_assessments` has no admin bypass, so organisations are listed through the one
+ * `organisations` has, then each organisation's rows are updated under its own RLS context.
+ * The organisation filter repeats the policy, so the write stays inside one organisation even
+ * where RLS isn't forced. One statement per organisation: fine at today's scale, but an
+ * admin-only route through a single statement would need a policy or function by migration.
+ * The caller must hold no organisation context, as it is cleared afterwards.
+ */
+export async function shiftOpenAssessmentsBack(
+  tx: DbTransaction,
+  flowId: string,
+  order: number
+): Promise<void> {
+  await setAdminContext(tx);
+  const organisationRows = await tx.select({ id: organisations.id }).from(organisations);
+  await tx.execute(sql`SELECT set_config('app.is_admin', 'false', true)`);
+
+  for (const { id: organisationId } of organisationRows) {
+    await setRLSContext(tx, organisationId);
+    await tx
+      .update(userAssessments)
+      .set({ currentStep: sql`${userAssessments.currentStep} - 1`, updatedAt: new Date() })
+      .where(
+        and(
+          eq(userAssessments.organisationId, organisationId),
+          eq(userAssessments.flowId, flowId),
+          inArray(userAssessments.status, ['not_started', 'in_progress']),
+          gt(userAssessments.currentStep, order)
+        )
+      );
+  }
+
+  await tx.execute(sql`SELECT set_config('app.organisation_id', '', true)`);
 }

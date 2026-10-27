@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { getDb, withRLS } from '@ffp/database';
 import { userAssessments, userAssessmentAnswers } from '@ffp/database/schema';
@@ -34,6 +34,8 @@ export interface ScoreAssessmentJobPayload {
  * Fetches the assessment flow (with scoringConfig), all questions from templates
  * in the flow via flow_steps, and persisted answers from the database.
  * Calculates dimensional scores and updates the user_assessment record.
+ * An assessment that is no longer `submitted` is left as it is and no programme is queued; the
+ * calculated result is still returned, so the processor completes the job rather than retrying it.
  */
 export async function processScoreAssessment(
   payload: ScoreAssessmentJobPayload,
@@ -125,18 +127,41 @@ export async function processScoreAssessment(
       scoredAt: new Date(result.scoredAt),
     };
 
-    // Update assessment with scores and transition status
-    await tx
+    const logger = createSystemLogger('score-assessment-handler');
+
+    // Only a submitted assessment is scored. The status guard sits in the WHERE, so a late or
+    // repeated job can't move a scored or completed assessment back, even when two jobs race.
+    const updated = await tx
       .update(userAssessments)
       .set({
         scores,
         status: 'scored',
         updatedAt: new Date(),
       })
-      .where(eq(userAssessments.id, payload.userAssessmentId));
+      .where(
+        and(
+          eq(userAssessments.id, payload.userAssessmentId),
+          eq(userAssessments.status, 'submitted')
+        )
+      )
+      .returning({ id: userAssessments.id });
+
+    if (updated.length === 0) {
+      const found = await tx
+        .select({ status: userAssessments.status })
+        .from(userAssessments)
+        .where(eq(userAssessments.id, payload.userAssessmentId));
+
+      // Not thrown: a retry could never succeed, so the job completes as a no-op
+      logger.warn('Scoring skipped: the assessment is not awaiting scoring', {
+        assessmentId: payload.userAssessmentId,
+        status: found.at(0)?.status ?? null,
+      });
+
+      return result;
+    }
 
     // Chain: queue generate_programme job (atomic with scoring)
-    const logger = createSystemLogger('score-assessment-handler');
     const systemContext = createSystemContext({
       systemId: 'score-assessment-handler',
       organisationId,

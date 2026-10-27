@@ -23,10 +23,9 @@ import { randomUUID } from 'crypto';
 
 import { eq, inArray, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { Client, Pool, type PoolConfig } from 'pg';
+import { Client, type Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
 
-import { asOrganisation, deleteOrganisations } from '../../__tests__/helpers/rls-context';
 import {
   assessmentFlows,
   locations,
@@ -38,18 +37,16 @@ import {
   userAssessments,
   users,
 } from '../schema';
+import {
+  asOrganisation,
+  connectTestDb,
+  deleteOrganisations,
+  testDbConnectionConfig,
+} from '../testing';
 
 import { setRLSContext, withAdminContext, withRLS } from './rls';
 
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-
-const connectionConfig = (): PoolConfig => ({
-  host: process.env.DB_HOST ?? 'localhost',
-  port: parseInt(process.env.DB_PORT ?? '5432'),
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER ?? 'test_user',
-  password: process.env.DB_PASSWORD ?? 'test_password',
-});
 
 /**
  * Runs the callback on a brand-new connection that has never carried an RLS setting.
@@ -59,7 +56,7 @@ const connectionConfig = (): PoolConfig => ({
 const onFreshConnection = async <T>(
   callback: (db: NodePgDatabase<Record<string, unknown>>) => Promise<T>
 ): Promise<T> => {
-  const client = new Client(connectionConfig());
+  const client = new Client(testDbConnectionConfig());
   await client.connect();
 
   try {
@@ -73,10 +70,10 @@ const onFreshConnection = async <T>(
 const onSingleConnectionPool = async <T>(
   callback: (db: NodePgDatabase<Record<string, unknown>>) => Promise<T>
 ): Promise<T> => {
-  const singlePool = new Pool({ ...connectionConfig(), max: 1 });
+  const { pool: singlePool, db } = connectTestDb({ poolOptions: { max: 1 } });
 
   try {
-    return await callback(drizzle(singlePool));
+    return await callback(db);
   } finally {
     await singlePool.end();
   }
@@ -124,8 +121,7 @@ describe('RLS Utility Functions', () => {
 
   beforeAll(() => {
     // IMPORTANT: test_user does NOT have BYPASSRLS, so RLS policies are enforced
-    pool = new Pool(connectionConfig());
-    db = drizzle(pool);
+    ({ pool, db } = connectTestDb());
   });
 
   beforeEach(async () => {

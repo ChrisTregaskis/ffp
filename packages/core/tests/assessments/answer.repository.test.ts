@@ -4,11 +4,15 @@ import { asc, eq, inArray, sql } from 'drizzle-orm';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
 import { assessmentFlows, questions, userAssessmentAnswers } from '@ffp/database/schema';
+import {
+  asOrganisation,
+  connectTestDb,
+  deleteOrganisations,
+  type TestDb,
+} from '@ffp/database/testing';
 
 import * as answerRepository from '../../src/assessments/answer.repository';
 import * as userAssessmentRepository from '../../src/assessments/user-assessment.repository';
-import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import type { Pool } from 'pg';
 

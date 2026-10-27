@@ -5,8 +5,7 @@ import { sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { MOVEMENT_TYPES } from '@ffp/database/constants';
-
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
+import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
 import {
   inRolledBackTransaction,

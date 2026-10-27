@@ -15,12 +15,17 @@ import { randomUUID } from 'crypto';
 import { sql } from 'drizzle-orm';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
+import {
+  asOrganisation,
+  connectTestDb,
+  deleteOrganisations,
+  type TestDb,
+} from '@ffp/database/testing';
+
 import * as safetyTriggerRepository from '../../src/assessments/safety-trigger.repository';
 import * as userAssessmentRepository from '../../src/assessments/user-assessment.repository';
 import { NotFoundError, ValidationError } from '../../src/lib/errors';
 import { warningSchema } from '../../src/schemas/warning.schema';
-import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import type { Pool } from 'pg';
 

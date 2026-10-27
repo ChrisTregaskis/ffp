@@ -416,6 +416,7 @@ export async function startAssessment(
  *
  * @throws NotFoundError if assessment doesn't exist or belongs to another member
  * @throws ValidationError if assessment is submitted/completed
+ * @throws ValidationError if `currentStep` matches no active step of the flow
  * @throws ValidationError if an answer is not part of the flow or breaks its question's
  *   rules; `details` names each failing question (see `assertNoAnswerErrors`)
  *
@@ -447,6 +448,15 @@ export async function saveProgress(
   }
 
   const flowSteps = await flowRepository.findStepsByFlowId(db, assessment.flowId);
+  // Checked before any write: a refused save stores no answer, position or warning
+  const currentStepRecord = flowSteps.find((s) => s.order === data.currentStep);
+
+  if (!currentStepRecord) {
+    throw new ValidationError('This step is not part of the assessment.', {
+      currentStep: data.currentStep,
+    });
+  }
+
   const sentAnswers = convertAnswersToSaveFormat(data.answers);
   let changedAnswers = new Map<string, AnswerValue>();
 
@@ -489,28 +499,6 @@ export async function saveProgress(
       { currentStep: data.currentStep },
       { tx }
     );
-
-    // Find the current step record by order
-    const currentStepRecord = flowSteps.find((s) => s.order === data.currentStep);
-
-    if (!currentStepRecord) {
-      // Step not found - return success without branching evaluation
-      // This can happen if order doesn't match any step (edge case)
-      systemLogger.warn('Current step not found in flow steps', {
-        assessmentId,
-        currentStep: data.currentStep,
-        flowId: assessment.flowId,
-      });
-
-      return {
-        success: true as const,
-        updatedAt: updatedAssessment.updatedAt.toISOString(),
-        nextStepId: null,
-        warnings: [],
-        shouldTerminate: false,
-        terminationReason: null,
-      };
-    }
 
     // Fetch all answers for the assessment (including ones just saved)
     // Pass tx to read within the same transaction (sees uncommitted writes)

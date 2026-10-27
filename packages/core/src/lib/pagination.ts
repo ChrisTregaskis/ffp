@@ -38,6 +38,23 @@ export const applyPagination = <T extends PgSelect>(
   return result;
 };
 
+/** The default for admin lists whose page opens newest first. */
+export const NEWEST_FIRST = { sortBy: 'createdAt', sortDirection: 'desc' } as const;
+
+/**
+ * The caller's sort when it names a sortable column, otherwise the list's default. The
+ * default replaces the direction too: a direction sent without a column has nothing to order.
+ * `Object.hasOwn`, so an inherited key such as `constructor` is not taken for a column.
+ */
+export const withDefaultSort = (
+  input: PaginationInput,
+  sortableColumns: Partial<Record<string, Column | Column[]>>,
+  defaultSort: Required<Pick<PaginationInput, 'sortBy' | 'sortDirection'>>
+): PaginationInput =>
+  input.sortBy && Object.hasOwn(sortableColumns, input.sortBy)
+    ? input
+    : { ...input, ...defaultSort };
+
 /**
  * Escapes SQL LIKE wildcard characters (% and _) in user input.
  * Use when building ILIKE patterns from search strings.

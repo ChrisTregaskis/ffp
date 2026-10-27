@@ -62,24 +62,21 @@ packages/core/src/
 
 packages/database/
 ├── __tests__/
-│   ├── helpers.ts                 # withTestDb, withRLS, createTestOrganisation, createTestUser
 │   └── integration.test.ts        # Database integration tests
 └── src/
     ├── lib/rls.test.ts            # RLS-specific tests
+    ├── testing/                   # Shared test helpers, published as @ffp/database/testing
     └── client.test.ts             # Client connection tests
 ```
 
 ## Test Helpers
 
-Located in `packages/database/__tests__/helpers.ts`:
+Shared by the `core` and `database` test suites, from `@ffp/database/testing` (`packages/database/src/testing/`). Test code only: lint refuses the import in production code.
 
-- `withTestDb(fn)` — runs test in transaction with automatic rollback
-- `withRLS(db, organisationId, fn)` — sets RLS context for test block
-- `createTestOrganisation(db, type)` — creates test organisation
-- `createTestUser(db, organisationId, email)` — creates test user
-- `createTestLocation(db, organisationId)` — creates test location
-
-All integration tests run in transactions — no database pollution.
+- `connectTestDb({ schema?, poolOptions? })` — a pool and drizzle client on the test database the package's `vitest.config.ts` points at; the caller ends the pool
+- `testDbConnectionConfig()` — the same connection settings, for a bare `pg` `Client`
+- `asOrganisation(db, organisationId, fn)` — runs `fn` in a transaction scoped to one organisation with `SET LOCAL`, independent of the production `setRLSContext`/`withRLS` it is used to judge
+- `deleteOrganisations(db, organisationIds)` — deletes the organisations a test created, each under its own context; their rows go with them by cascade
 
 ## Sprint Planning Requirements
 
