@@ -9,14 +9,18 @@ import {
   flowSteps,
   userAssessments,
 } from '@ffp/database/schema';
+import {
+  asOrganisation,
+  connectTestDb,
+  deleteOrganisations,
+  type TestDb,
+} from '@ffp/database/testing';
 
 import * as assessmentService from '../../src/assessments/assessment.service';
 import * as flowStepRepository from '../../src/assessments/flow-step.repository';
 import * as flowStepService from '../../src/assessments/flow-step.service';
 import * as userAssessmentRepository from '../../src/assessments/user-assessment.repository';
 import { updateFlowStepSchema } from '../../src/schemas/assessment-flow.schema';
-import { asOrganisation, deleteOrganisations } from '../lib/rls-context.fixture';
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import type { OrganisationContext, UserActor } from '../../src/lib/context';
 import type { Pool } from 'pg';

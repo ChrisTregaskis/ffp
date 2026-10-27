@@ -7,7 +7,12 @@ import type {
   Location as LocationRecord,
 } from '@ffp/database/schema';
 
-import { applyPagination, escapeLikePattern } from '../lib/pagination';
+import {
+  applyPagination,
+  escapeLikePattern,
+  NEWEST_FIRST,
+  withDefaultSort,
+} from '../lib/pagination';
 import { generateRandomAlphanumeric } from '../lib/random';
 
 import type { LocationFilterInput, UpdateLocationInput } from '../schemas/location.schema';
@@ -156,7 +161,12 @@ export async function listOrganisations(
     .where(and(...conditions))
     .$dynamic();
 
-  return await applyPagination(query, paginationInput, ORGANISATION_SORTABLE_COLUMNS);
+  return await applyPagination(
+    query,
+    withDefaultSort(paginationInput, ORGANISATION_SORTABLE_COLUMNS, NEWEST_FIRST),
+    ORGANISATION_SORTABLE_COLUMNS,
+    organisations.id
+  );
 }
 
 /**
@@ -281,7 +291,12 @@ export async function listLocations(
     .where(and(...conditions))
     .$dynamic();
 
-  return await applyPagination(query, paginationInput, LOCATION_SORTABLE_COLUMNS);
+  return await applyPagination(
+    query,
+    withDefaultSort(paginationInput, LOCATION_SORTABLE_COLUMNS, NEWEST_FIRST),
+    LOCATION_SORTABLE_COLUMNS,
+    locations.id
+  );
 }
 
 /**

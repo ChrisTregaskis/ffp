@@ -4,9 +4,11 @@ import { eq } from 'drizzle-orm';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { videos, type VideoRecord } from '@ffp/database/schema';
+import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
 import * as videoRepository from '../../src/videos/video.repository';
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
+import { descendingIds, idsAcrossPages, minutesApart } from '../lib/paging.fixture';
+import { inRolledBackTransaction, insertTestVideo } from '../tags/tag-fixture';
 
 import type { Pool } from 'pg';
 
@@ -57,6 +59,49 @@ describe('Video repository', () => {
         videoRepository.findVideoByIdOrPublicId(db, '00000000-0000-4000-8000-000000000000')
       ).resolves.toBeNull();
       await expect(videoRepository.findVideoByIdOrPublicId(db, 'unknownVideo')).resolves.toBeNull();
+    });
+  });
+
+  // Rolled back, and every title carries this run's marker, which each listing searches by
+  describe('findAllVideos', () => {
+    const marker = randomUUID().slice(0, 8);
+
+    it('orders rows tied on the sort column by id, so the pages neither repeat nor skip one', async () => {
+      await inRolledBackTransaction(db, async (tx) => {
+        const ids = descendingIds(6);
+
+        for (const id of ids) {
+          await insertTestVideo(tx, { id, title: `Tied video ${marker}` });
+        }
+
+        const listed = await idsAcrossPages(3, (page) =>
+          videoRepository.findAllVideos(
+            tx,
+            { page, pageSize: 2, sortBy: 'title', sortDirection: 'asc' },
+            { search: marker }
+          )
+        );
+
+        expect(listed).toEqual([...ids].sort());
+      });
+    });
+
+    it('lists the newest first when the request names no sort', async () => {
+      await inRolledBackTransaction(db, async (tx) => {
+        const ids: string[] = [];
+
+        for (const createdAt of minutesApart(3)) {
+          ids.push((await insertTestVideo(tx, { title: `Dated video ${marker}`, createdAt })).id);
+        }
+
+        const listed = await videoRepository.findAllVideos(
+          tx,
+          { page: 1, pageSize: 10, sortDirection: 'asc' },
+          { search: marker }
+        );
+
+        expect(listed.map((listedVideo) => listedVideo.id)).toEqual([...ids].reverse());
+      });
     });
   });
 });

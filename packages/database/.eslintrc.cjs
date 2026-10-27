@@ -15,4 +15,19 @@ module.exports = {
     tsconfigRootDir: __dirname,
   },
   ignorePatterns: ['dist', 'node_modules', '/migrations', '*.tsbuildinfo'],
+  overrides: [
+    {
+      // The test helpers ship as `@ffp/database/testing`; no production module may use them
+      files: ['src/**/*.ts'],
+      excludedFiles: ['src/testing/**', 'src/**/*.test.ts'],
+      rules: {
+        'no-restricted-imports': [
+          'error',
+          {
+            patterns: [{ group: ['**/testing', '**/testing/*'], message: 'Test-only helpers.' }],
+          },
+        ],
+      },
+    },
+  ],
 };

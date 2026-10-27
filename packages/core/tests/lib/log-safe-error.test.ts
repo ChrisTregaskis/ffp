@@ -35,7 +35,12 @@ describe('describeErrorForLog', () => {
 
   it('describes a bare driver error the same way, without its detail', () => {
     const driverError = new DatabaseError('null value in column "email"', 0, 'error');
-    Object.assign(driverError, { code: '23502', table: 'users', detail: LEAKABLE.detail });
+    Object.assign(driverError, {
+      severity: 'ERROR',
+      code: '23502',
+      table: 'users',
+      detail: LEAKABLE.detail,
+    });
 
     const description = describeErrorForLog(driverError);
 
@@ -54,6 +59,17 @@ describe('describeErrorForLog', () => {
       error: 'Database query failed',
       errorClass: 'DrizzleQueryError',
       cause: { errorClass: 'Error', code: 'ECONNRESET' },
+    });
+    expectNothingLeakable(JSON.stringify(description));
+  });
+
+  it('describes a failed query whose socket broke by the cause class and code, not as a driver error', () => {
+    const description = describeErrorForLog(drizzleConnectionError('EPIPE'));
+
+    expect(description).toEqual({
+      error: 'Database query failed',
+      errorClass: 'DrizzleQueryError',
+      cause: { errorClass: 'Error', code: 'EPIPE' },
     });
     expectNothingLeakable(JSON.stringify(description));
   });
@@ -86,6 +102,20 @@ describe('describeErrorForLog', () => {
 
     expect(describeErrorForLog(error)).toEqual({
       error: 'Cognito refused the request',
+      errorClass: 'Error',
+      stack: error.stack,
+    });
+  });
+
+  it('keeps the message and stack of a Node errno error whose code is shaped like a SQLSTATE', () => {
+    const error = Object.assign(new Error('write EPIPE'), {
+      code: 'EPIPE',
+      errno: -32,
+      syscall: 'write',
+    });
+
+    expect(describeErrorForLog(error)).toEqual({
+      error: 'write EPIPE',
       errorClass: 'Error',
       stack: error.stack,
     });

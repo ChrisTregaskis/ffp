@@ -10,13 +10,13 @@ import {
   questions,
   templateQuestions,
 } from '@ffp/database/schema';
+import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
 import * as questionRepository from '../../src/questions/question.repository';
 import {
   createQuestionSchema,
   updateQuestionSchema,
 } from '../../src/schemas/assessment-question.schema';
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import type { Pool } from 'pg';
 

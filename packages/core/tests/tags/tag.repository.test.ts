@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { connectTestDb, type TestDb } from '@ffp/database/testing';
+
 import { findDriverError } from '../../src/lib/database-errors';
 import * as tagRepository from '../../src/tags/tag.repository';
-import { connectTestDb, type TestDb } from '../lib/test-db.fixture';
 
 import {
   assignTags,

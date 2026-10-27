@@ -1,3 +1,6 @@
+import { closeSync } from 'fs';
+
+import { DatabaseError } from 'pg';
 import { describe, it, expect } from 'vitest';
 
 import {
@@ -7,12 +10,24 @@ import {
 } from '../../src/lib/database-errors';
 import { ConflictError, NotFoundError } from '../../src/lib/errors';
 
-/** Stands in for a `pg` DatabaseError, which carries SQLSTATE on `code`. */
+/** A `pg` DatabaseError as the driver fills it: SQLSTATE on `code`, and always a `severity`. */
 const driverError = (code: string, constraint?: string): Error =>
-  Object.assign(new Error('duplicate key value violates unique constraint'), {
+  Object.assign(new DatabaseError('duplicate key value violates unique constraint', 0, 'error'), {
+    severity: 'ERROR',
     code,
     constraint,
   });
+
+/** The error Node raises for a bad file descriptor, whose errno code `EBADF` is five capitals. */
+const nodeErrnoError = (): Error => {
+  try {
+    closeSync(2 ** 30);
+  } catch (error) {
+    return error as Error;
+  }
+
+  throw new Error('Expected closing an unopened descriptor to fail');
+};
 
 /** Drizzle wraps the driver error, putting the failed SQL in the message. */
 const wrapped = (cause: Error): Error =>
@@ -55,6 +70,15 @@ describe('translateDatabaseError', () => {
 
     expect(translateDatabaseError(connectionReset)).toBeInstanceOf(ConflictError);
   });
+
+  it('looks past a Node errno code shaped like a SQLSTATE to the driver error it wraps', () => {
+    const brokenPipe = Object.assign(new Error('write EPIPE'), {
+      code: 'EPIPE',
+      cause: driverError('23505', 'questions_slug_unique'),
+    });
+
+    expect(translateDatabaseError(brokenPipe)).toBeInstanceOf(ConflictError);
+  });
 });
 
 describe('isForeignKeyViolation', () => {
@@ -79,6 +103,14 @@ describe('describeDriverError', () => {
 
   it('returns null for anything that is not a driver error', () => {
     expect(describeDriverError(new Error('something else'))).toBeNull();
+  });
+
+  it('returns null for a Node errno error whose code is five capitals, as a SQLSTATE is', () => {
+    const errnoError = nodeErrnoError();
+
+    expect(errnoError).toMatchObject({ code: 'EBADF' });
+    expect(describeDriverError(errnoError)).toBeNull();
+    expect(describeDriverError(wrapped(errnoError))).toBeNull();
   });
 
   it('leaves another SQLSTATE alone', () => {

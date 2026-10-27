@@ -75,6 +75,10 @@ module.exports = {
             message:
               'Direct @ffp/database imports bundle Node.js code (pg) into the browser. Use @ffp/database/constants for browser-safe constants.',
           },
+          {
+            name: '@ffp/database/testing',
+            message: 'Test-only database helpers (pg); never part of the web package.',
+          },
         ],
         patterns: [
           {

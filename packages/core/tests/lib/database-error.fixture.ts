@@ -20,7 +20,7 @@ export const drizzleDriverError = (fields: {
     0,
     'error'
   );
-  Object.assign(cause, fields, { detail: LEAKABLE.detail });
+  Object.assign(cause, { severity: 'ERROR' }, fields, { detail: LEAKABLE.detail });
 
   return new DrizzleQueryError(LEAKABLE.query, [LEAKABLE.param, 'sentinel-location-0c1d'], cause);
 };
