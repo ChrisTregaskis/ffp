@@ -162,14 +162,6 @@ describe('Job Queue Service', () => {
       const payload = {
         assessmentSubmissionId: randomUUID(),
         userId: randomUUID(),
-        scores: [
-          {
-            dimensionId: 'mobility',
-            dimensionName: 'Mobility',
-            rawScore: 75,
-            normalisedScore: 75,
-          },
-        ],
       };
 
       const jobId = await queueJob('generate_programme', payload, testContext);

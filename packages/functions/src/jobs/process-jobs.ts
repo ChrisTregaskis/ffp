@@ -115,7 +115,7 @@ export const handler = async (event: ScheduledEvent, context: Context): Promise<
         // Route to appropriate handler based on job type
         const result = await processJobByType(job);
 
-        // Mark job as completed with result
+        // Mark job as completed; only the result's ids are stored
         await completeJob(job.id, result);
 
         logger.info('Job completed successfully');
@@ -157,7 +157,7 @@ export const handler = async (event: ScheduledEvent, context: Context): Promise<
  * TypeScript narrows the return type based on the job.type discriminant.
  *
  * @param job - The job record to process
- * @returns Promise resolving to typed result object to store in job.result
+ * @returns Promise resolving to the typed result, checked against its schema
  */
 export async function processJobByType<T extends JobType>(
   job: ProcessJobRecord & { type: T }

@@ -37,7 +37,7 @@ export const processJobs = pgTable(
     priority: integer('priority').notNull().default(4),
     /** Job-specific payload data (structure depends on job type) */
     payload: jsonb('payload').notNull(),
-    /** Job result (populated on successful completion) */
+    /** Set on successful completion, to the ids the job produced only (no scores or other member data) */
     result: jsonb('result'),
     /** Number of execution attempts (incremented on each retry) */
     attempts: integer('attempts').notNull().default(0),

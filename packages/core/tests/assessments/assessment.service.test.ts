@@ -251,6 +251,7 @@ const createMockQuestion = (
 describe('Assessment Service', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    mockedQuestionRepo.findByTemplateIds.mockResolvedValue([]);
     mockedQuestionRepo.findSlugsByIds.mockResolvedValue(new Map());
     mockedSafetyTriggerRepo.findByAssessmentId.mockResolvedValue(null);
   });
@@ -1837,6 +1838,90 @@ describe('Assessment Service', () => {
       expect(mockedUserAssessmentRepo.transitionAssessmentStatus).not.toHaveBeenCalled();
       expect(mockedUserAssessmentRepo.updateAssessmentProgress).not.toHaveBeenCalled();
       expect(mockedUserAssessmentRepo.appendAssessmentWarnings).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('saveProgress branching', () => {
+    // intro → questions → results, where a "yes" to `routed` sends the member back to the intro
+    const setUp = (
+      routedIsCounted: boolean
+    ): {
+      context: OrganisationContext;
+      assessmentId: string;
+      steps: FlowStepWithConfig[];
+    } => {
+      const context = createUserContext();
+      const userId = randomUUID();
+      const flowId = randomUUID();
+      const templateId = randomUUID();
+      const counted = createMockQuestion(randomUUID(), 'single-choice', false);
+      const routed = createMockQuestion(randomUUID(), 'single-choice', false);
+      const steps = createMockFlowSteps(flowId, templateId);
+      const assessment = createMockAssessment({
+        organisationId: context.organisationId,
+        userId,
+        flowId,
+        currentStep: 2,
+      });
+      const stored = [
+        [counted.id, 'no'],
+        [routed.id, 'yes'],
+      ].map(([questionId, answerValue]) =>
+        selectUserAssessmentAnswerSchema.parse({
+          id: randomUUID(),
+          organisationId: context.organisationId,
+          userAssessmentId: assessment.id,
+          questionId,
+          answerValue,
+          answeredAt: new Date(),
+        })
+      );
+
+      steps[1].nextStepRules = [
+        {
+          priority: 1,
+          conditions: [{ type: 'answer_value', questionSlug: routed.slug, answerValue: 'yes' }],
+          action: { type: 'goto_step', targetStepId: steps[0].id },
+        },
+      ];
+
+      mockedContextModule.getUserIdFromContext.mockResolvedValue(userId);
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
+      mockedUserAssessmentRepo.updateAssessmentProgress.mockResolvedValue(assessment);
+      mockedFlowRepo.findStepsByFlowId.mockResolvedValue(steps);
+      // Like the real read, which leaves out a deactivated question
+      mockedQuestionRepo.findByTemplateIds.mockResolvedValue(
+        inTemplate(routedIsCounted ? [counted, routed] : [counted], templateId)
+      );
+      mockedQuestionRepo.findSlugsByIds.mockResolvedValue(
+        new Map([
+          [counted.id, counted.slug],
+          [routed.id, routed.slug],
+        ])
+      );
+      mockedAnswerRepo.findByAssessmentId.mockResolvedValue(stored as UserAssessmentAnswer[]);
+      runWithRLSInMockTx();
+
+      return { context, assessmentId: assessment.id, steps };
+    };
+
+    const nextStepIdFrom = async ({
+      context,
+      assessmentId,
+    }: ReturnType<typeof setUp>): Promise<string | null> =>
+      (await assessmentService.saveProgress(assessmentId, { answers: {}, currentStep: 2 }, context))
+        .nextStepId;
+
+    it('routes on a stored answer to a question the flow counts', async () => {
+      const setUpResult = setUp(true);
+
+      expect(await nextStepIdFrom(setUpResult)).toBe(setUpResult.steps[0].id);
+    });
+
+    it('ignores a stored answer to a question since deactivated', async () => {
+      const setUpResult = setUp(false);
+
+      expect(await nextStepIdFrom(setUpResult)).toBe(setUpResult.steps[2].id);
     });
   });
 

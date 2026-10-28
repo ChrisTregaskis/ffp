@@ -1,4 +1,4 @@
-import type { AnswerValue, DbClient } from '@ffp/database';
+import type { AnswerValue, DbQueryClient } from '@ffp/database';
 
 import { ValidationError } from '../lib/errors';
 import { findByTemplateIds } from '../questions/question.repository';
@@ -35,7 +35,7 @@ const UNKNOWN_QUESTION_MESSAGE = 'This question is not part of your assessment.'
  * first step that shows it.
  */
 export async function loadFlowQuestions(
-  db: DbClient,
+  db: DbQueryClient,
   flowSteps: FlowStepWithConfig[]
 ): Promise<Map<string, FlowQuestion>> {
   const templateIds = [...new Set(findTemplateIdsOfSteps(flowSteps))];

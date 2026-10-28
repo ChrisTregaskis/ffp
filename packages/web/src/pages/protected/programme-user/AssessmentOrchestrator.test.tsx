@@ -87,6 +87,32 @@ describe('AssessmentOrchestrator', () => {
     expect(startMutate).toHaveBeenCalledWith(variables);
   });
 
+  it('shows the server’s own words when it refuses the start, and still offers to try again', () => {
+    const refusal = new ApiError(409, 'CONFLICT', 'This assessment has no steps to show yet');
+    mocks.useStartAssessment.mockReturnValue(
+      mutation(startMutate, { isError: true, error: refusal })
+    );
+
+    renderOrchestrator();
+
+    expect(screen.getByText('This assessment has no steps to show yet')).toBeTruthy();
+    expect(screen.queryByText("We couldn't load your assessment just now.")).toBeNull();
+    // Steps an admin adds later let a retry through, and home would lead straight back here
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
+  });
+
+  it('keeps its own words when the start fails on the server', () => {
+    const failure = new ApiError(500, 'INTERNAL_SERVER_ERROR', 'An unexpected error occurred');
+    mocks.useStartAssessment.mockReturnValue(
+      mutation(startMutate, { isError: true, error: failure })
+    );
+
+    renderOrchestrator();
+
+    expect(screen.getByText("We couldn't load your assessment just now.")).toBeTruthy();
+    expect(screen.queryByText('An unexpected error occurred')).toBeNull();
+  });
+
   it('offers to fetch the questions again when they fail to load', async () => {
     mocks.useAssessmentTemplateQuery.mockReturnValue({
       data: undefined,

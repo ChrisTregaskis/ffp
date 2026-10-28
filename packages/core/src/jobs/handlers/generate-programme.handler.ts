@@ -7,15 +7,13 @@ import { withRLS } from '../../lib/database';
 import { createSystemLogger } from '../../lib/logger';
 import { generateProgramme } from '../../programmes/programme.service';
 
-import type { DimensionalScore, GenerateProgrammeResult } from '../../schemas/job.schema';
+import type { GenerateProgrammeResult } from '../../schemas/job.schema';
 
 export interface GenerateProgrammeJobPayload {
   /** The scored user assessment ID */
   assessmentSubmissionId: string;
   /** User who completed the assessment */
   userId: string;
-  /** Dimensional scores from scoring */
-  scores: DimensionalScore[];
   /** Programme template slug from scoring result */
   recommendedTemplateSlug?: string;
 }
