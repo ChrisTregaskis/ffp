@@ -21,8 +21,8 @@ vi.mock('../../src/assessments/flow.repository');
 vi.mock('../../src/assessments/flow-step.repository');
 vi.mock('../../src/assessments/template.repository');
 vi.mock('../../src/assessments/user-assessment.repository');
-/** Stands in for the transaction a delete opens; the marker stops any other object matching it */
-const mockTx = { marker: 'transaction opened by the delete' };
+/** Stands in for the transaction a step write opens; the marker stops any other object matching it */
+const mockTx = { marker: 'transaction opened by the step write' };
 
 vi.mock('@ffp/database', async (importOriginal) => {
   const actual = await importOriginal<FFPDatabaseModule>();
@@ -101,13 +101,13 @@ describe('flowStepService.reorderStepsService', () => {
     stepOrder = 0;
   });
 
-  it('reorders a linear flow and enriches each step with branchingRuleCount', async () => {
+  it('reorders a linear flow under the step lock, in one transaction, and enriches each step with branchingRuleCount', async () => {
     const flow = createFlow();
     const stepA = createStep(flow.id, { order: 1 });
     const stepB = createStep(flow.id, { order: 2 });
 
     mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
-    mockedFlowRepo.findStepsByFlowId.mockResolvedValue([stepA, stepB]);
+    mockedFlowStepRepo.lockActiveSteps.mockResolvedValue([stepA, stepB]);
     mockedFlowStepRepo.reorderSteps.mockResolvedValue([
       { ...stepB, order: 1 },
       { ...stepA, order: 2 },
@@ -119,9 +119,9 @@ describe('flowStepService.reorderStepsService', () => {
 
     expect(result.map((step) => step.publicId)).toEqual([stepB.publicId, stepA.publicId]);
     expect(result.every((step) => step.branchingRuleCount === 0)).toBe(true);
-    expect(mockedFlowStepRepo.reorderSteps).toHaveBeenCalledWith(expect.anything(), flow.id, [
-      stepB.id,
-      stepA.id,
+    expect(mockedFlowStepRepo.lockActiveSteps.mock.calls).toEqual([[mockTx, flow.id]]);
+    expect(mockedFlowStepRepo.reorderSteps.mock.calls).toEqual([
+      [mockTx, flow.id, [stepB.id, stepA.id]],
     ]);
   });
 
@@ -134,7 +134,7 @@ describe('flowStepService.reorderStepsService', () => {
     const plainStep = createStep(flow.id, { order: 2 });
 
     mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
-    mockedFlowRepo.findStepsByFlowId.mockResolvedValue([branchingStep, plainStep]);
+    mockedFlowStepRepo.lockActiveSteps.mockResolvedValue([branchingStep, plainStep]);
 
     await expect(
       flowStepService.reorderStepsService(createContext(), FLOW_PUBLIC_ID, {
@@ -151,7 +151,7 @@ describe('flowStepService.reorderStepsService', () => {
     const stepB = createStep(flow.id, { order: 1 });
 
     mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
-    mockedFlowRepo.findStepsByFlowId.mockResolvedValue([stepA, stepB]);
+    mockedFlowStepRepo.lockActiveSteps.mockResolvedValue([stepA, stepB]);
 
     await expect(
       flowStepService.reorderStepsService(createContext(), FLOW_PUBLIC_ID, {
@@ -168,7 +168,7 @@ describe('flowStepService.reorderStepsService', () => {
     const stepB = createStep(flow.id, { order: 2 });
 
     mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
-    mockedFlowRepo.findStepsByFlowId.mockResolvedValue([stepA, stepB]);
+    mockedFlowStepRepo.lockActiveSteps.mockResolvedValue([stepA, stepB]);
 
     await expect(
       flowStepService.reorderStepsService(createContext(), FLOW_PUBLIC_ID, {
@@ -189,7 +189,7 @@ describe('flowStepService.reorderStepsService', () => {
     const stepB = createStep(flow.id, { order: 2 });
 
     mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
-    mockedFlowRepo.findStepsByFlowId.mockResolvedValue([stepA, stepB]);
+    mockedFlowStepRepo.lockActiveSteps.mockResolvedValue([stepA, stepB]);
 
     await expect(
       flowStepService.reorderStepsService(createContext(), FLOW_PUBLIC_ID, {
@@ -210,7 +210,7 @@ describe('flowStepService.reorderStepsService', () => {
     const stepB = createStep(flow.id, { order: 2 });
 
     mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
-    mockedFlowRepo.findStepsByFlowId.mockResolvedValue([stepA, stepB]);
+    mockedFlowStepRepo.lockActiveSteps.mockResolvedValue([stepA, stepB]);
 
     await expect(
       flowStepService.reorderStepsService(createContext(), FLOW_PUBLIC_ID, {
@@ -242,13 +242,14 @@ describe('flowStepService.createStepService', () => {
     stepOrder = 0;
   });
 
-  it('appends a step at max active order + 1', async () => {
+  it('appends a step after the locked active steps, in one transaction', async () => {
     const flow = createFlow();
+    const locked = [createStep(flow.id), createStep(flow.id), createStep(flow.id)];
     const created = createStep(flow.id, { order: 4, type: 'questions' });
 
     mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
     mockedTemplateRepo.findTemplateById.mockResolvedValue({ isActive: true } as never);
-    mockedFlowStepRepo.findMaxOrderForFlow.mockResolvedValue(3);
+    mockedFlowStepRepo.lockActiveSteps.mockResolvedValue(locked);
     mockedFlowStepRepo.createStep.mockResolvedValue(created);
 
     const result = await flowStepService.createStepService(createContext(), FLOW_PUBLIC_ID, {
@@ -258,11 +259,32 @@ describe('flowStepService.createStepService', () => {
     });
 
     expect(result.branchingRuleCount).toBe(0);
+    expect(mockedFlowStepRepo.lockActiveSteps.mock.calls).toEqual([[mockTx, flow.id]]);
     expect(mockedFlowStepRepo.createStep).toHaveBeenCalledWith(
-      expect.anything(),
+      mockTx,
       flow.id,
       4,
       expect.objectContaining({ type: 'questions' })
+    );
+  });
+
+  it('appends the first step of a flow with no active step at order 1', async () => {
+    const flow = createFlow();
+
+    mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
+    mockedFlowStepRepo.lockActiveSteps.mockResolvedValue([]);
+    mockedFlowStepRepo.createStep.mockResolvedValue(createStep(flow.id, { type: 'intro' }));
+
+    await flowStepService.createStepService(createContext(), FLOW_PUBLIC_ID, {
+      type: 'intro',
+      config: { title: 'Welcome' },
+    });
+
+    expect(mockedFlowStepRepo.createStep).toHaveBeenCalledWith(
+      mockTx,
+      flow.id,
+      1,
+      expect.objectContaining({ type: 'intro' })
     );
   });
 
@@ -293,7 +315,7 @@ describe('flowStepService.createStepService', () => {
     const flow = createFlow();
 
     mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
-    mockedFlowStepRepo.findMaxOrderForFlow.mockResolvedValue(0);
+    mockedFlowStepRepo.lockActiveSteps.mockResolvedValue([]);
     mockedFlowStepRepo.createStep.mockResolvedValue(createStep(flow.id, { type: 'questions' }));
 
     await expect(
@@ -314,7 +336,7 @@ describe('flowStepService.createStepService', () => {
     const flow = createFlow();
 
     mockedFlowRepo.findByPublicId.mockResolvedValue(flow);
-    mockedFlowStepRepo.findMaxOrderForFlow.mockResolvedValue(0);
+    mockedFlowStepRepo.lockActiveSteps.mockResolvedValue([]);
     mockedFlowStepRepo.createStep.mockResolvedValue(createStep(flow.id, { type: 'intro' }));
 
     await flowStepService.createStepService(createContext(), FLOW_PUBLIC_ID, {

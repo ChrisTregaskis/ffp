@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import { asc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, sql, TransactionRollbackError } from 'drizzle-orm';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
 
 import {
@@ -32,11 +32,15 @@ const RUN_ID = randomUUID().slice(0, 8);
 type FlowStepRepositoryModule = typeof flowStepRepository;
 type UserAssessmentRepositoryModule = typeof userAssessmentRepository;
 
-// Pass-through, so a test can make the delete fail after its last write
+// Pass-through, so a test can make a delete or reorder fail part-way
 vi.mock('../../src/assessments/flow-step.repository', async (importOriginal) => {
   const actual = await importOriginal<FlowStepRepositoryModule>();
 
-  return { ...actual, closeOrderGap: vi.fn(actual.closeOrderGap) };
+  return {
+    ...actual,
+    closeOrderGap: vi.fn(actual.closeOrderGap),
+    reorderSteps: vi.fn(actual.reorderSteps),
+  };
 });
 vi.mock('../../src/assessments/user-assessment.repository', async (importOriginal) => {
   const actual = await importOriginal<UserAssessmentRepositoryModule>();
@@ -58,6 +62,7 @@ describe('Flow Step Repository', () => {
   beforeEach(async () => {
     // Reset, so a once-implementation left by a failed test cannot leak into the next
     vi.mocked(flowStepRepository.closeOrderGap).mockReset();
+    vi.mocked(flowStepRepository.reorderSteps).mockReset();
     vi.mocked(userAssessmentRepository.shiftOpenAssessmentsBack).mockReset();
     const [template] = await db
       .insert(assessmentTemplates)
@@ -146,6 +151,208 @@ describe('Flow Step Repository', () => {
         templateId: null,
         config: { title: 'Welcome' },
       });
+    });
+  });
+
+  describe('step writes under the flow lock', () => {
+    const adminContext: OrganisationContext = {
+      actor: {
+        type: 'user',
+        userId: randomUUID(),
+        userRole: 'system_admin',
+        email: 'admin@example.com',
+      } as UserActor,
+      organisationId: randomUUID(),
+      locationId: randomUUID(),
+      requestId: randomUUID(),
+      timestamp: new Date(),
+    };
+
+    type HolderTx = Parameters<Parameters<TestDb['transaction']>[0]>[0];
+
+    /** A linear flow of three steps, A → B → C at orders 1, 2, 3 */
+    const insertLinearSteps = async (): Promise<(typeof flowSteps.$inferSelect)[]> => [
+      await insertStep({ order: 1, type: 'intro', config: { title: 'A' } }),
+      await insertStep({ order: 2, type: 'transition', config: { title: 'B' } }),
+      await insertStep({ order: 3, type: 'results', config: { title: 'C' } }),
+    ];
+
+    const activeOrders = async (): Promise<{ title: string; order: number }[]> =>
+      (
+        await db
+          .select({ config: flowSteps.config, order: flowSteps.order })
+          .from(flowSteps)
+          .where(and(eq(flowSteps.flowId, flowId), eq(flowSteps.isActive, true)))
+          .orderBy(asc(flowSteps.order), asc(flowSteps.id))
+      ).map(({ config, order }) => ({ title: config.title, order }));
+
+    /**
+     * Takes the flow's step lock on its own connection, as a delete does, runs `work` under it
+     * and holds it until released: committed, or rolled back by default.
+     */
+    const holdStepLock = async (
+      work: (tx: HolderTx) => Promise<void> = () => Promise.resolve()
+    ): Promise<{ release: (commit?: boolean) => Promise<void> }> => {
+      let finish: (commit: boolean) => void = () => undefined;
+      const finished = new Promise<boolean>((resolve) => {
+        finish = resolve;
+      });
+      let markLocked: () => void = () => undefined;
+      const locked = new Promise<void>((resolve) => {
+        markLocked = resolve;
+      });
+
+      const transaction = db
+        .transaction(async (tx) => {
+          await flowStepRepository.lockActiveSteps(tx, flowId);
+          await work(tx);
+          markLocked();
+
+          if (!(await finished)) {
+            tx.rollback();
+          }
+        })
+        .catch((error: unknown) => {
+          if (!(error instanceof TransactionRollbackError)) {
+            throw error;
+          }
+        });
+
+      await Promise.race([locked, transaction]);
+
+      return {
+        release: async (commit = false) => {
+          finish(commit);
+          await transaction;
+        },
+      };
+    };
+
+    // Far longer than an unblocked step write takes, so a write that is still pending is waiting
+    const WAIT_MS = 300;
+
+    const isStillPendingAfterWait = async (write: Promise<unknown>): Promise<boolean> =>
+      await Promise.race([
+        write.then(
+          () => false,
+          () => false
+        ),
+        new Promise<boolean>((resolve) => {
+          setTimeout(() => {
+            resolve(true);
+          }, WAIT_MS);
+        }),
+      ]);
+
+    it('leaves every order as it was when a reorder fails part-way', async () => {
+      const [a, b, c] = await insertLinearSteps();
+      const { reorderSteps: realReorderSteps } = await vi.importActual<FlowStepRepositoryModule>(
+        '../../src/assessments/flow-step.repository'
+      );
+      // The real reorder, over a client whose second write fails, as a dropped connection would
+      vi.mocked(flowStepRepository.reorderSteps).mockImplementationOnce(async (client, ...args) => {
+        let writes = 0;
+        const failingOnSecondWrite = new Proxy(client, {
+          get(target, property, receiver): unknown {
+            const value: unknown = Reflect.get(target, property, receiver);
+
+            if (property !== 'update' || typeof value !== 'function') {
+              return value;
+            }
+
+            return (...updateArgs: unknown[]): unknown => {
+              writes += 1;
+
+              if (writes === 2) {
+                throw new Error('Failed after moving the first step');
+              }
+
+              return (value as (...callArgs: unknown[]) => unknown).apply(target, updateArgs);
+            };
+          },
+        });
+
+        return await realReorderSteps(failingOnSecondWrite, ...args);
+      });
+
+      await expect(
+        flowStepService.reorderStepsService(adminContext, flowPublicId, {
+          orderedStepPublicIds: [c.publicId, b.publicId, a.publicId],
+        })
+      ).rejects.toThrow('Failed after moving the first step');
+
+      expect(await activeOrders()).toEqual([
+        { title: 'A', order: 1 },
+        { title: 'B', order: 2 },
+        { title: 'C', order: 3 },
+      ]);
+    });
+
+    it('makes a create wait for a delete holding the lock, then append after the steps it left', async () => {
+      const [, , c] = await insertLinearSteps();
+      const deleting = await holdStepLock(async (tx) => {
+        await flowStepRepository.deactivateStep(tx, c.id);
+      });
+
+      const creating = flowStepService.createStepService(adminContext, flowPublicId, {
+        type: 'transition',
+        config: { title: 'New' },
+      });
+      const waited = await isStillPendingAfterWait(creating);
+      await deleting.release(true);
+      await creating;
+
+      expect(waited).toBe(true);
+      expect(await activeOrders()).toEqual([
+        { title: 'A', order: 1 },
+        { title: 'B', order: 2 },
+        { title: 'New', order: 3 },
+      ]);
+    });
+
+    it('appends after a step another create committed while it waited, not beside it', async () => {
+      await insertLinearSteps();
+      const otherCreate = await holdStepLock(async (tx) => {
+        await flowStepRepository.createStep(tx, flowId, 4, {
+          type: 'transition',
+          config: { title: 'Other' },
+        });
+      });
+
+      const creating = flowStepService.createStepService(adminContext, flowPublicId, {
+        type: 'transition',
+        config: { title: 'New' },
+      });
+      const waited = await isStillPendingAfterWait(creating);
+      await otherCreate.release(true);
+      await creating;
+
+      expect(waited).toBe(true);
+      expect((await activeOrders()).map(({ order }) => order)).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('refuses a reorder sent against the steps a delete changed while it waited, leaving no gap', async () => {
+      const [a, b, c] = await insertLinearSteps();
+      const deleting = await holdStepLock(async (tx) => {
+        await flowStepRepository.deactivateStep(tx, b.id);
+        await flowStepRepository.closeOrderGap(tx, flowId, b.order);
+      });
+
+      const reordering = flowStepService.reorderStepsService(adminContext, flowPublicId, {
+        orderedStepPublicIds: [c.publicId, b.publicId, a.publicId],
+      });
+      const waited = await isStillPendingAfterWait(reordering);
+      await deleting.release(true);
+
+      await expect(reordering).rejects.toMatchObject({
+        name: 'ValidationError',
+        message: 'Expected 2 step IDs but received 3',
+      });
+      expect(waited).toBe(true);
+      expect(await activeOrders()).toEqual([
+        { title: 'A', order: 1 },
+        { title: 'C', order: 2 },
+      ]);
     });
   });
 
