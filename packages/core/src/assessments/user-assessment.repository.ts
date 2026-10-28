@@ -1,4 +1,4 @@
-import { eq, and, or, desc, gt, inArray, sql } from 'drizzle-orm';
+import { eq, and, or, asc, desc, gt, inArray, sql } from 'drizzle-orm';
 
 import {
   ABANDONABLE_STATUSES,
@@ -91,6 +91,33 @@ export async function findUserAssessmentById(
       .select()
       .from(userAssessments)
       .where(eq(userAssessments.id, assessmentId))
+      .limit(1);
+
+    return records[0] ?? null;
+  };
+
+  if (options.tx) {
+    return await doQuery(options.tx);
+  }
+
+  return await withRLS(organisationId, options.userId, doQuery);
+}
+
+/**
+ * The first assessment linked to a programme, whose answers shaped it. A retake links a later
+ * assessment to the same, unchanged programme.
+ */
+export async function findFirstAssessmentForProgramme(
+  organisationId: string,
+  programmeId: string,
+  options: FindUserAssessmentOptions = {}
+): Promise<UserAssessment | null> {
+  const doQuery = async (tx: Transaction): Promise<UserAssessment | null> => {
+    const records = await tx
+      .select()
+      .from(userAssessments)
+      .where(eq(userAssessments.programmeId, programmeId))
+      .orderBy(asc(userAssessments.createdAt), asc(userAssessments.id))
       .limit(1);
 
     return records[0] ?? null;

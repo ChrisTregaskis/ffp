@@ -5,7 +5,7 @@ import { CognitoService } from '../lib/cognito';
 import { ConflictError, InternalServerError, NotFoundError, ValidationError } from '../lib/errors';
 import { describeErrorForLog } from '../lib/log-safe-error';
 import { createLogger } from '../lib/logger';
-import { getProgrammeDetailForUser } from '../programmes/programme.service';
+import { getFullProgrammeDetailForUser } from '../programmes/programme.service';
 import { buildPaginationMeta } from '../schemas/pagination.schema';
 import {
   adminCreateUserInputSchema,
@@ -27,7 +27,7 @@ import { getLocationById as getLocationByIdInRepo } from './admin.repository';
 
 import type { OrganisationContext } from '../lib/context';
 import type { PaginationInput, PaginationMeta } from '../schemas/pagination.schema';
-import type { ProgrammeDetailResponse } from '../schemas/programme/programme.schema';
+import type { AdminProgrammeDetailResponse } from '../schemas/programme/programme.schema';
 import type { UserListResponse, UserDetailResponse } from '../schemas/user.schema';
 
 /**
@@ -100,7 +100,7 @@ export async function getUserService(
 }
 
 /**
- * A member's current programme, as the member sees it. The user is found under admin context,
+ * A member's current programme with every phase in full. The user is found under admin context,
  * then the programme is read under the user's own organisation (taken from their row, never
  * the request), so no member table below `programmes` needs an admin bypass.
  * Throws NotFoundError when the user or their programme does not exist.
@@ -108,7 +108,7 @@ export async function getUserService(
 export async function getUserProgrammeService(
   ctx: OrganisationContext,
   publicId: string
-): Promise<ProgrammeDetailResponse> {
+): Promise<AdminProgrammeDetailResponse> {
   const user = await withAdminContext(getDb(), async (tx) => {
     return await getUserByPublicIdInRepo(tx, publicId);
   });
@@ -117,7 +117,7 @@ export async function getUserProgrammeService(
     throw new NotFoundError('User', publicId);
   }
 
-  const detail = await getProgrammeDetailForUser(user.organisationId, user.id);
+  const detail = await getFullProgrammeDetailForUser(user.organisationId, user.id);
 
   const logger = createLogger(ctx);
   logger.info('User programme retrieved', {

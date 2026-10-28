@@ -29,7 +29,7 @@ export async function findByQuestionId(db: DbClient, id: string): Promise<Questi
 }
 
 /** Returns questions in no guaranteed order. Missing IDs are silently ignored. */
-export async function findByQuestionIds(db: DbClient, ids: string[]): Promise<Question[]> {
+export async function findByQuestionIds(db: DbQueryClient, ids: string[]): Promise<Question[]> {
   if (ids.length === 0) {
     return [];
   }

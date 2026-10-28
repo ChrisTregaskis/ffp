@@ -3,6 +3,7 @@ import type { UserListResponse } from '@ffp/core';
 import { Badge } from '@web/components/atoms';
 import { createColumns } from '@web/components/organisms';
 import type { RowAction, StatusConfig } from '@web/components/organisms';
+import { PROGRAMME_STATUS_BADGES } from '@web/components/programme';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -24,10 +25,17 @@ export const toUserRow = (user: UserListResponse): UserRow => ({
   programmeState: user.generationFailed ? GENERATION_FAILED : user.programmeStatus,
 });
 
+const fromProgrammeBadge = (
+  status: NonNullable<UserListResponse['programmeStatus']>
+): StatusConfig => ({
+  label: PROGRAMME_STATUS_BADGES[status].label,
+  colour: PROGRAMME_STATUS_BADGES[status].variant ?? 'muted',
+});
+
 const PROGRAMME_STATE_MAP: Record<ProgrammeState, StatusConfig> = {
-  active: { label: 'Active', colour: 'success' },
-  paused: { label: 'Paused', colour: 'warning' },
-  completed: { label: 'Completed', colour: 'info' },
+  active: fromProgrammeBadge('active'),
+  paused: fromProgrammeBadge('paused'),
+  completed: fromProgrammeBadge('completed'),
   [GENERATION_FAILED]: { label: 'Generation failed', colour: 'destructive' },
 };
 

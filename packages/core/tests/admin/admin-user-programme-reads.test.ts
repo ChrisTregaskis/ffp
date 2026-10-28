@@ -3,11 +3,21 @@ import { randomUUID } from 'crypto';
 import { eq, inArray } from 'drizzle-orm';
 import { describe, it, expect, beforeEach, afterEach, afterAll } from 'vitest';
 
-import { processJobs, programmes, users } from '@ffp/database/schema';
+import type { AnswerValue, EmphasisRule } from '@ffp/database';
+import {
+  assessmentFlows,
+  processJobs,
+  programmeTemplates,
+  programmes,
+  questions,
+  userAssessmentAnswers,
+  userAssessments,
+  users,
+} from '@ffp/database/schema';
 
 import { getUserProgrammeService, listUsersService } from '../../src/admin/admin-user.service';
 import { closePool, db, withRLS } from '../../src/lib/database';
-import { getProgrammeDetail } from '../../src/programmes/programme.service';
+import { getProgrammeDetail, getProgressSummary } from '../../src/programmes/programme.service';
 import { paginationInputSchema } from '../../src/schemas/pagination.schema';
 import {
   createFixture,
@@ -211,8 +221,11 @@ describe('Admin reads of members’ programmes', () => {
         });
 
         const [mara] = await listLocation(memberLocationId, { sortBy: 'fullName' });
+        const asAdmin = await getUserProgrammeService(adminContext(), memberPublicId);
 
+        // The list and the programme read pick the same programme
         expect(mara.programmeStatus).toBe(higherStatus);
+        expect(asAdmin.programme.status).toBe(higherStatus);
       }
     );
 
@@ -280,10 +293,209 @@ describe('Admin reads of members’ programmes', () => {
   });
 
   describe('one member’s programme', () => {
-    it('reads the programme under the member’s own organisation, as the member sees it', async () => {
+    let flowIds: string[];
+    let questionIds: string[];
+
+    beforeEach(() => {
+      flowIds = [];
+      questionIds = [];
+    });
+
+    afterEach(async () => {
+      // Assessments (and their answers) go first: answers restrict the questions they answer
+      await withRLS(member.organisationId, undefined, (tx) =>
+        tx.delete(userAssessments).where(eq(userAssessments.organisationId, member.organisationId))
+      );
+      if (flowIds.length > 0) {
+        await db.delete(assessmentFlows).where(inArray(assessmentFlows.id, flowIds));
+      }
+      if (questionIds.length > 0) {
+        await db.delete(questions).where(inArray(questions.id, questionIds));
+      }
+    });
+
+    const addQuestion = async (
+      type: 'single-choice' | 'multi-choice',
+      values: string[]
+    ): Promise<string> => {
+      const [question] = await db
+        .insert(questions)
+        .values({
+          slug: `key-area-${shortId()}`,
+          type,
+          questionText: `Question ${type}`,
+          options: values.map((value) => ({ value, label: `Label ${value}` })),
+        })
+        .returning({ id: questions.id });
+      questionIds.push(question.id);
+
+      return question.id;
+    };
+
+    const addFlow = async (emphasis: EmphasisRule[]): Promise<string> => {
+      const [flow] = await db
+        .insert(assessmentFlows)
+        .values({
+          name: `Key areas flow ${shortId()}`,
+          scoringConfig: { dimensions: [], programmeMappings: [], emphasis },
+        })
+        .returning({ id: assessmentFlows.id });
+      flowIds.push(flow.id);
+
+      return flow.id;
+    };
+
+    const rule = (questionId: string, answerValue: string): EmphasisRule => ({
+      questionId,
+      answerValue,
+      tags: [{ category: 'movement', slug: 'stretch', weight: 1 }],
+    });
+
+    /** An assessment linked to the member's programme, with the given answers */
+    const linkAssessment = async (
+      flowId: string,
+      answers: [string, AnswerValue][],
+      createdAt: Date
+    ): Promise<void> => {
+      await withRLS(member.organisationId, undefined, async (tx) => {
+        const [programme] = await tx
+          .select({ id: programmes.id })
+          .from(programmes)
+          .where(eq(programmes.userId, member.userId));
+        const [assessment] = await tx
+          .insert(userAssessments)
+          .values({
+            organisationId: member.organisationId,
+            userId: member.userId,
+            flowId,
+            status: 'completed',
+            programmeId: programme.id,
+            createdAt,
+          })
+          .returning({ id: userAssessments.id });
+
+        await tx.insert(userAssessmentAnswers).values(
+          answers.map(([questionId, answerValue]) => ({
+            organisationId: member.organisationId,
+            userAssessmentId: assessment.id,
+            questionId,
+            answerValue,
+          }))
+        );
+      });
+    };
+
+    it('reads the programme under the member’s own organisation, with every phase in full', async () => {
+      const asAdmin = await getUserProgrammeService(adminContext(), memberPublicId);
+      const asMember = await getProgrammeDetail(memberContext(member));
+
+      // The member sees the upcoming phase as session summaries; the admin sees its exercises
+      expect(asMember.phases[1].sessions.map((session) => session.exercises)).toEqual([undefined]);
+      expect(
+        asAdmin.phases[1].sessions.map((session) => ({
+          status: session.userSession?.status,
+          exercises: session.exercises?.map((exercise) => exercise.notes),
+        }))
+      ).toEqual([{ status: 'not_started', exercises: ['Note 2.0.0', 'Note 2.0.1'] }]);
+      expect(asAdmin.programme).toEqual(asMember.programme);
+      expect(asAdmin.phases[0]).toEqual(asMember.phases[0]);
+      // The fixture template is not a level shell, and no assessment is linked
+      expect(asAdmin).toMatchObject({ level: null, keyAreas: [] });
+    });
+
+    it('takes the level from the programme’s template slug', async () => {
+      const levelTwoSlug = 'level-2-active-wellness';
+      // The slug is unique: point the programme at a seeded level template if one exists,
+      // otherwise give the fixture template that slug
+      const seeded = await db
+        .select({ id: programmeTemplates.id })
+        .from(programmeTemplates)
+        .where(eq(programmeTemplates.slug, levelTwoSlug));
+
+      if (seeded.length > 0) {
+        await withRLS(member.organisationId, undefined, (tx) =>
+          tx
+            .update(programmes)
+            .set({ programmeTemplateId: seeded[0].id })
+            .where(eq(programmes.userId, member.userId))
+        );
+      } else {
+        await db
+          .update(programmeTemplates)
+          .set({ slug: levelTwoSlug })
+          .where(eq(programmeTemplates.id, member.templateId));
+      }
+
       const asAdmin = await getUserProgrammeService(adminContext(), memberPublicId);
 
-      expect(asAdmin).toEqual(await getProgrammeDetail(memberContext(member)));
+      expect(asAdmin.level).toBe(2);
+    });
+
+    it('opens and lists a paused programme, for the admin and the member alike', async () => {
+      await withRLS(member.organisationId, undefined, (tx) =>
+        tx.update(programmes).set({ status: 'paused' }).where(eq(programmes.userId, member.userId))
+      );
+
+      const [mara] = await listLocation(memberLocationId, { sortBy: 'fullName' });
+      const asAdmin = await getUserProgrammeService(adminContext(), memberPublicId);
+      const asMember = await getProgrammeDetail(memberContext(member));
+      const progress = await getProgressSummary(memberContext(member));
+
+      expect(mara.programmeStatus).toBe('paused');
+      expect(asAdmin.programme.status).toBe('paused');
+      expect(asMember.programme.status).toBe('paused');
+      expect(progress.programmeId).toBe(asMember.programme.id);
+    });
+
+    it('shows the answers the flow’s emphasis rules name, from the first linked assessment', async () => {
+      const goal = await addQuestion('single-choice', ['calm', 'strong']);
+      const focus = await addQuestion('multi-choice', ['neck', 'back', 'hips']);
+      const unnamed = await addQuestion('single-choice', ['yes', 'no']);
+      const flowId = await addFlow([rule(focus, 'neck'), rule(goal, 'calm'), rule(focus, 'hips')]);
+
+      await linkAssessment(
+        flowId,
+        [
+          [goal, 'strong'],
+          [focus, ['hips', 'neck']],
+          [unnamed, 'yes'],
+        ],
+        new Date('2026-01-01')
+      );
+      // A retake links a later assessment to the same programme; it did not shape it
+      await linkAssessment(flowId, [[goal, 'calm']], new Date('2026-02-01'));
+
+      const { keyAreas } = await getUserProgrammeService(adminContext(), memberPublicId);
+
+      expect(keyAreas).toEqual([
+        {
+          questionId: focus,
+          question: 'Question multi-choice',
+          answers: ['Label neck', 'Label hips'],
+        },
+        { questionId: goal, question: 'Question single-choice', answers: ['Label strong'] },
+      ]);
+    });
+
+    it('follows whichever questions the flow’s emphasis rules name', async () => {
+      const goal = await addQuestion('single-choice', ['calm', 'strong']);
+      const other = await addQuestion('single-choice', ['yes', 'no']);
+      const flowId = await addFlow([rule(other, 'yes')]);
+
+      await linkAssessment(
+        flowId,
+        [
+          [goal, 'calm'],
+          [other, 'no'],
+        ],
+        new Date('2026-01-01')
+      );
+
+      const { keyAreas } = await getUserProgrammeService(adminContext(), memberPublicId);
+
+      expect(keyAreas.map((area) => [area.questionId, area.answers])).toEqual([
+        [other, ['Label no']],
+      ]);
     });
 
     it('answers 404 for an unknown user', async () => {

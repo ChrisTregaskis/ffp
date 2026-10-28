@@ -28,6 +28,10 @@ import { AssessmentTemplateListPage } from '@web/pages/protected/admin/assessmen
 import { ExerciseTagsPage } from '@web/pages/protected/admin/exercise-tags';
 import { LocationEditPage } from '@web/pages/protected/admin/location-edit';
 import { LocationListPage } from '@web/pages/protected/admin/location-list';
+import {
+  MemberProgrammePage,
+  MemberProgrammePhasePage,
+} from '@web/pages/protected/admin/member-programme';
 import { OrganisationEditPage } from '@web/pages/protected/admin/organisation-edit';
 import { OrganisationListPage } from '@web/pages/protected/admin/organisation-list';
 import { QuestionEditPage } from '@web/pages/protected/admin/question-edit';
@@ -105,6 +109,8 @@ const PAGE_COMPONENTS: Record<RouteKey, FC> = {
   [RouteKey.ADMIN_USERS]: UserListPage,
   [RouteKey.ADMIN_USER_CREATE]: UserEditPage,
   [RouteKey.ADMIN_USER_EDIT]: UserEditPage,
+  [RouteKey.ADMIN_USER_PROGRAMME]: MemberProgrammePage,
+  [RouteKey.ADMIN_USER_PROGRAMME_PHASE]: MemberProgrammePhasePage,
   [RouteKey.ADMIN_ASSESSMENTS]: AssessmentFlowListPage,
   [RouteKey.ADMIN_ASSESSMENT_FLOW_CREATE]: AssessmentFlowEditPage,
   [RouteKey.ADMIN_ASSESSMENT_FLOW_EDIT]: AssessmentFlowEditPage,

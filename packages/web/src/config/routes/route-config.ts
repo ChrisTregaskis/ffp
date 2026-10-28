@@ -248,6 +248,28 @@ export const routes: RoutesConfig = {
       { label: 'Back to Users', icon: 'ArrowLeft', path: `${adminBasePath}/users` },
     ],
   },
+  [RouteKey.ADMIN_USER_PROGRAMME]: {
+    path: `${adminBasePath}/users/:id/programme`,
+    title: 'Member Programme',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      { label: 'Back to Users', icon: 'ArrowLeft', path: `${adminBasePath}/users` },
+    ],
+  },
+  [RouteKey.ADMIN_USER_PROGRAMME_PHASE]: {
+    path: `${adminBasePath}/users/:id/programme/phases/:phaseId`,
+    title: 'Programme Phase',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: (params) => [
+      {
+        label: 'Back to Programme',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/users/${params.id}/programme`,
+      },
+    ],
+  },
   [RouteKey.ADMIN_ASSESSMENTS]: {
     path: `${adminBasePath}/assessments`,
     title: 'Assessments',

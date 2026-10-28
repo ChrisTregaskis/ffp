@@ -32,6 +32,7 @@ describe('entity query keys', () => {
 
   it('preserves the resource-specific keys that sit alongside the shared shape', () => {
     expect(userKeys.me()).toEqual(['users', 'me']);
+    expect(userKeys.programme('abc123')).toEqual(['users', 'detail', 'abc123', 'programme']);
     expect(programmeTemplateKeys.sessionExercises()).toEqual([
       'programme-templates',
       'session-exercises',

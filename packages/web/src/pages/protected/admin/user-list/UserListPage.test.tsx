@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { userListResponseSchema, type UserListResponse } from '@ffp/core';
@@ -42,10 +42,26 @@ const renderPage = (users: UserListResponse[]): void => {
   } as ReturnType<typeof useAdminUsersQuery>);
 
   render(
-    <MemoryRouter>
-      <UserListPage />
+    <MemoryRouter initialEntries={['/admin/users']}>
+      <Routes>
+        <Route path="/admin/users" element={<UserListPage />} />
+        <Route path="/admin/users/:id/programme" element={<p>Programme page</p>} />
+      </Routes>
     </MemoryRouter>
   );
+};
+
+/** The action labels in the named member's row menu */
+const openRowActions = async (firstName: string): Promise<string[]> => {
+  const row = screen.getByText(`${firstName} Member`).closest('tr');
+
+  if (!row) {
+    throw new Error(`No row for ${firstName}`);
+  }
+
+  await userEvent.click(within(row).getByRole('button', { name: 'Actions' }));
+
+  return screen.getAllByRole('menuitem').map((item) => item.textContent);
 };
 
 /** The text of each cell in the named member's row */
@@ -125,5 +141,19 @@ describe('UserListPage', () => {
         role: 'customer_owner,customer_admin',
       });
     });
+  });
+  it('offers Open Programme only on a row with a programme, and opens it', async () => {
+    renderPage([
+      user('Mara', { programmeName: 'Gentle Mobility', programmeStatus: 'paused' }),
+      user('Omar', { generationFailed: true }),
+    ]);
+
+    expect(await openRowActions('Omar')).toEqual(['Edit']);
+    await userEvent.keyboard('{Escape}');
+
+    expect(await openRowActions('Mara')).toEqual(['Edit', 'Open Programme']);
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Open Programme' }));
+
+    expect(screen.getByText('Programme page').textContent).toBe('Programme page');
   });
 });
