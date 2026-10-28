@@ -27,7 +27,7 @@ Business owners invite staff/clients via `POST /auth/invite-user` (requires `cus
 
 ### Login & Password Change
 
-Both are **public endpoints** (no JWT required).
+Login is a **public endpoint** (no JWT required).
 
 **Login** (`POST /auth/login`):
 
@@ -35,14 +35,9 @@ Both are **public endpoints** (no JWT required).
 - Temporary password → returns `NEW_PASSWORD_REQUIRED` challenge with session token
 - Permanent password → returns JWT tokens (access, id, refresh)
 
-**Complete New Password** (`POST /auth/complete-new-password`):
+**Setting a password** (first sign-in with a temporary password, or a forgotten one) happens in the web app through Amplify (`confirmSignIn`, `confirmResetPassword`), straight against Cognito; there is no server endpoint for it. The web's requirement checklist (`packages/web/src/utils/passwordStrength.ts`, built from the rules in `packages/core/src/lib/constants.ts`) is the only check ahead of Cognito.
 
-- Takes session token + new password
-- Calls Cognito `RespondToAuthChallengeCommand`
-- Returns JWT tokens immediately (no second login needed)
-- Session tokens expire after ~3 minutes
-
-**Implementation:** `packages/functions/src/auth/login.ts`, `packages/core/src/auth/login.service.ts`, `packages/functions/src/auth/complete-new-password.ts`, `packages/core/src/auth/complete-new-password.service.ts`
+**Implementation:** `packages/functions/src/auth/login.ts`, `packages/core/src/auth/login.service.ts`
 
 ## JWT Structure
 
@@ -66,7 +61,7 @@ The system supports both user-triggered and system-triggered requests, unified t
 
 | Source            | Extraction                    | Actor Type                            |
 | ----------------- | ----------------------------- | ------------------------------------- |
-| API Gateway (JWT) | `extractUserContext(event)`   | `UserActor` (userId, role, email)     |
+| API Gateway (JWT) | `extractUserContext(event)`   | `UserActor` (userId, role)            |
 | Job queue (SQS)   | `extractJobContext(message)`  | `SystemActor` (systemId, triggeredBy) |
 | Scheduled tasks   | `createSystemContext(config)` | `SystemActor` (systemId)              |
 

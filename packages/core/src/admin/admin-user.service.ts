@@ -201,14 +201,14 @@ export async function createUserService(
     if (cognitoError instanceof Error && cognitoError.name === 'AccessDeniedException') {
       logger.error('Cognito permission denied — check Lambda IAM policy', {
         action: 'cognito_access_denied',
-        error: cognitoError.message,
+        ...describeErrorForLog(cognitoError),
       });
       throw new InternalServerError('Unable to create user — service configuration error');
     }
 
     logger.error('Unexpected Cognito error during user creation', {
       action: 'cognito_unexpected_error',
-      error: cognitoError instanceof Error ? cognitoError.message : String(cognitoError),
+      ...describeErrorForLog(cognitoError),
     });
     throw new InternalServerError('Unable to create user — an unexpected error occurred');
   }
@@ -254,7 +254,7 @@ export async function createUserService(
       logger.error('Cognito rollback failed — orphaned Cognito user', {
         action: 'cognito_user_rollback_failed',
         cognitoSub,
-        rollbackError: rollbackError instanceof Error ? rollbackError.message : 'Unknown error',
+        rollbackError: describeErrorForLog(rollbackError),
       });
     }
 

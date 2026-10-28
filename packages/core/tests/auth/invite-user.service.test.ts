@@ -32,7 +32,6 @@ const systemAdmin = (): OrganisationContext => ({
     type: 'user',
     userId: randomUUID(),
     userRole: 'system_admin',
-    email: 'admin@example.com',
   },
   organisationId: randomUUID(),
   locationId: null,

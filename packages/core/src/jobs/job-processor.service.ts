@@ -6,6 +6,8 @@ import { BaseError, JobProcessorError, NotFoundError } from '../lib/errors';
 import { describeErrorForLog } from '../lib/log-safe-error';
 import { sortBy } from '../lib/sort.utils';
 
+import { finishedJobPayload } from './finished-job-payload';
+
 /**
  * Calculate exponential backoff delay in milliseconds.
  *
@@ -47,7 +49,8 @@ export interface CompleteJobResult {
 /**
  * Mark a job as successfully completed with its result.
  *
- * Sets status to 'completed', stores the result, and records completion time.
+ * Sets status to 'completed', stores the result, records completion time and cuts the payload
+ * down to its ids.
  *
  * @typeParam TResult - The shape of the job result (inferred or explicit)
  * @returns CompleteJobResult indicating success
@@ -81,6 +84,7 @@ export async function completeJob<TResult extends Record<string, unknown>>(
       .set({
         status: 'completed',
         result,
+        payload: finishedJobPayload(),
         completedAt: new Date(),
       })
       .where(and(eq(processJobs.id, jobId), eq(processJobs.status, 'processing')))
@@ -151,6 +155,8 @@ export async function failJob(job: ProcessJobRecord, error: Error): Promise<Fail
         message: describeErrorForLog(error).error,
         retryAfter,
         completedAt: shouldRetry ? null : new Date(),
+        // A retry needs the payload; a final failure keeps only its ids
+        ...(shouldRetry ? {} : { payload: finishedJobPayload() }),
       })
       .where(and(eq(processJobs.id, job.id), eq(processJobs.status, 'processing')))
       .returning();

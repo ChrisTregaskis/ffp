@@ -393,7 +393,7 @@ export default $config({
 
     // Auth domain routes (mix of public and protected routes)
     // Note: Authentication is handled per-endpoint in the router
-    // - Public: /auth/login, /auth/complete-new-password
+    // - Public: /auth/login, /auth/refresh-token
     // - Protected: /auth/invite-user (requires JWT)
     api.route('ANY /auth/{proxy+}', {
       handler: `${repositoryFunctionsPath}/auth/index.handler`,

@@ -145,7 +145,7 @@ export async function listUsers(
 ): Promise<UserListRow[]> {
   const conditions = buildUserFilterConditions(filters);
 
-  // The current programme is the latest one not archived
+  // The current programme is the latest one not archived; the id breaks a tie on creation time
   const currentProgramme = db
     .select({
       status: programmes.status,
@@ -159,7 +159,7 @@ export async function listUsers(
         ne(programmes.status, 'archived')
       )
     )
-    .orderBy(desc(programmes.createdAt))
+    .orderBy(desc(programmes.createdAt), desc(programmes.id))
     .limit(1)
     .as('current_programme');
 

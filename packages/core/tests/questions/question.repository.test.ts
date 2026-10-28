@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import { inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 
 import type { ScoringConfig } from '@ffp/database';
@@ -12,12 +12,14 @@ import {
 } from '@ffp/database/schema';
 import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
+import { loadFlowQuestions } from '../../src/assessments/answer-validation';
 import * as questionRepository from '../../src/questions/question.repository';
 import {
   createQuestionSchema,
   updateQuestionSchema,
 } from '../../src/schemas/assessment-question.schema';
 
+import type { FlowStepWithConfig } from '../../src/assessments/flow.repository';
 import type { Pool } from 'pg';
 
 // Questions, templates and flows are shared catalogue tables: every slug and name carries a
@@ -167,6 +169,43 @@ describe('Question Repository', () => {
         templateCount: 0,
         scoringFlowCount: 0,
       });
+    });
+  });
+
+  describe('a deactivated question still assigned to a template', () => {
+    it('is left out of the questions validation and scoring read, like an unassigned one', async () => {
+      const active = await createQuestion();
+      const retired = await createQuestion();
+      await db.update(questions).set({ isActive: false }).where(eq(questions.id, retired.id));
+      const [template] = await db
+        .insert(assessmentTemplates)
+        .values({ name: `Retired question template [${RUN_ID}]` })
+        .returning({ id: assessmentTemplates.id });
+      createdTemplateIds.push(template.id);
+      await db.insert(templateQuestions).values([
+        { templateId: template.id, questionId: active.id, displayOrder: 1 },
+        { templateId: template.id, questionId: retired.id, displayOrder: 2 },
+      ]);
+      const step: FlowStepWithConfig = {
+        id: randomUUID(),
+        publicId: 'flowstep0001',
+        flowId: randomUUID(),
+        templateId: template.id,
+        order: 1,
+        type: 'questions',
+        config: { title: 'Questions' },
+        nextStepRules: null,
+        defaultNextStepId: null,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const validated = await loadFlowQuestions(db, [step]);
+      const scored = await questionRepository.findByTemplateIds(db, [template.id]);
+
+      expect([...validated.keys()]).toEqual([active.id]);
+      expect(scored.map((question) => question.id)).toEqual([active.id]);
     });
   });
 

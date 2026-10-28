@@ -4,8 +4,8 @@
  * State machine lifecycle:
  * ```
  * not_started → in_progress → submitted → scored → completed
- *                    ↓
- *               abandoned
+ *      ↓             ↓
+ *  abandoned     abandoned
  * ```
  */
 export const USER_ASSESSMENT_STATUSES = [
@@ -28,7 +28,8 @@ export type UserAssessmentStatus = (typeof USER_ASSESSMENT_STATUSES)[number];
 // Valid state transitions for the assessment state machine
 export const VALID_STATUS_TRANSITIONS: Record<UserAssessmentStatus, UserAssessmentStatus[]> = {
   // not_started → in_progress (user starts assessment)
-  not_started: ['in_progress'],
+  // not_started → abandoned (a reassessment replaces one never begun)
+  not_started: ['in_progress', 'abandoned'],
   // in_progress → submitted (user submits answers)
   // in_progress → abandoned (user abandons or times out)
   in_progress: ['submitted', 'abandoned'],
@@ -39,3 +40,8 @@ export const VALID_STATUS_TRANSITIONS: Record<UserAssessmentStatus, UserAssessme
   completed: [],
   abandoned: [],
 };
+
+/** Every status the machine lets become `abandoned`, which the reassessment's bulk abandon filters on */
+export const ABANDONABLE_STATUSES = USER_ASSESSMENT_STATUSES.filter((status) =>
+  VALID_STATUS_TRANSITIONS[status].includes('abandoned')
+);

@@ -172,7 +172,8 @@ export async function duplicateTemplateService(
 
 /**
  * Get an assessment template by UUID with questions — the member's read, keyed
- * by the UUID their flow step carries (`flow_steps.template_id`).
+ * by the UUID their flow step carries (`flow_steps.template_id`). Only active questions are
+ * shown: a deactivated one still assigned is left out, as validation and scoring leave it out.
  * @param _ctx - Organisation context (unused for system content, but maintains consistent API)
  */
 export async function getTemplateService(
@@ -180,6 +181,12 @@ export async function getTemplateService(
   templateId: string
 ): Promise<AssessmentTemplateWithQuestions | null> {
   const db = getDb();
+  const template = await templateRepository.findTemplateWithQuestions(db, templateId);
 
-  return await templateRepository.findTemplateWithQuestions(db, templateId);
+  return (
+    template && {
+      ...template,
+      templateQuestions: template.templateQuestions.filter((question) => question.isActive),
+    }
+  );
 }

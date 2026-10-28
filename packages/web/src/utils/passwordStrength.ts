@@ -1,5 +1,7 @@
 import {
+  PASSWORD_EDGE_WHITESPACE_PATTERN,
   PASSWORD_LOWERCASE_PATTERN,
+  PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
   PASSWORD_NUMBER_PATTERN,
   PASSWORD_SPECIAL_CHAR_PATTERN,
@@ -69,6 +71,18 @@ const PASSWORD_REQUIREMENTS: Omit<PasswordRequirement, 'isMet'>[] = [
     id: 'specialChar',
     description: 'At least one special character (!@#$%^&*)',
     validator: (password: string) => PASSWORD_SPECIAL_CHAR_PATTERN.test(password),
+  },
+  // Met only once something is typed, like the rules above
+  {
+    id: 'maxLength',
+    description: `No more than ${PASSWORD_MAX_LENGTH.toString()} characters`,
+    validator: (password: string) => password.length > 0 && password.length <= PASSWORD_MAX_LENGTH,
+  },
+  {
+    id: 'noEdgeSpace',
+    description: 'No space at the start or end',
+    validator: (password: string) =>
+      password.length > 0 && !PASSWORD_EDGE_WHITESPACE_PATTERN.test(password),
   },
 ];
 

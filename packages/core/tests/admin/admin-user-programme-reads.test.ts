@@ -27,7 +27,6 @@ const adminContext = (): OrganisationContext => ({
     type: 'user',
     userId: randomUUID(),
     userRole: 'system_admin',
-    email: 'admin@test.com',
   },
   organisationId: randomUUID(),
   locationId: null,
@@ -184,6 +183,38 @@ describe('Admin reads of members’ programmes', () => {
       const thenCompleted = await listLocation(memberLocationId, { sortBy: 'fullName' });
       expect(thenCompleted.map((row) => row.generationFailed)).toEqual([false, false]);
     });
+
+    // Two programmes created in the same instant, the lower id inserted first
+    it.each([
+      ['paused', 'active'],
+      ['active', 'paused'],
+    ] as const)(
+      'breaks a tie on creation time by id: the lower id (%s) loses to the higher (%s)',
+      async (lowerStatus, higherStatus) => {
+        const createdAt = new Date('2030-01-01T09:00:00.000Z');
+        const [lowerId, higherId] = [randomUUID(), randomUUID()].sort();
+        await withRLS(member.organisationId, undefined, async (tx) => {
+          for (const [id, status] of [
+            [lowerId, lowerStatus],
+            [higherId, higherStatus],
+          ] as const) {
+            await tx.insert(programmes).values({
+              id,
+              organisationId: member.organisationId,
+              userId: member.userId,
+              programmeTemplateId: member.templateId,
+              name: 'Tied programme',
+              status,
+              createdAt,
+            });
+          }
+        });
+
+        const [mara] = await listLocation(memberLocationId, { sortBy: 'fullName' });
+
+        expect(mara.programmeStatus).toBe(higherStatus);
+      }
+    );
 
     it('sorts by name as surname, then first name', async () => {
       await addUsers(member, memberLocationId, [

@@ -20,7 +20,7 @@ import {
   useSubmitAssessment,
 } from '@web/hooks/assessments';
 import { useReplaceProgrammeMutation } from '@web/hooks/programmes';
-import { toQuestionFieldErrors } from '@web/utils/assessment-field-errors';
+import { toQuestionFieldErrors, toRefusalMessage } from '@web/utils/assessment-field-errors';
 
 import { REASSESSMENT_START_KEY } from './assessment.constants';
 
@@ -97,6 +97,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
     mutate: submitMutate,
     isPending: isSubmitPending,
     error: submitError,
+    reset: resetSubmit,
   } = useSubmitAssessment({
     onSuccess: () => {
       hasSubmittedRef.current = true;
@@ -245,7 +246,20 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
   }
 
   if (isSubmitFailure) {
-    return (
+    const refusal = toRefusalMessage(submitError);
+
+    // Sending the same answers again would only be refused again, so a worded refusal leads back
+    return refusal ? (
+      <ErrorRetryState
+        layout="screen"
+        title={refusal}
+        onRetry={() => {
+          setIsRefusalUnshown(false);
+          resetSubmit();
+        }}
+        retryLabel="Back to the questions"
+      />
+    ) : (
       <ErrorRetryState
         layout="screen"
         title="We couldn't send your answers just now."

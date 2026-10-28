@@ -37,7 +37,6 @@ const createContext = (): OrganisationContext => ({
     type: 'user',
     userId: randomUUID(),
     userRole: 'system_admin',
-    email: 'admin@example.com',
   } as UserActor,
   organisationId: randomUUID(),
   locationId: randomUUID(),

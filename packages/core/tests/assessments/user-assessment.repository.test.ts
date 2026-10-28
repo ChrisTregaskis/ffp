@@ -590,28 +590,45 @@ describe('User Assessment Repository', () => {
       expect((await storedInA(neighbourId)).status).toBe('in_progress');
     });
 
-    // Characterises an inconsistency: VALID_STATUS_TRANSITIONS allows not_started only to
-    // in_progress, yet a reassessment abandons a not-started assessment directly
-    it('abandons a not-started assessment, a move the status transition refuses', async () => {
+    it('lets a not-started assessment be abandoned on its own', async () => {
       const notStarted = await userAssessmentRepository.createUserAssessment({
         organisationId: organisationAId,
         userId: userA1Id,
         flowId,
       });
-      const other = await userAssessmentRepository.createUserAssessment({
-        organisationId: organisationAId,
-        userId: userA1Id,
-        flowId,
-      });
 
-      await expect(
-        userAssessmentRepository.transitionAssessmentStatus(organisationAId, other.id, 'abandoned')
-      ).rejects.toMatchObject({
-        name: 'ValidationError',
-        message: expect.stringMatching(
-          /^Invalid status transition: not_started → abandoned\./
-        ) as unknown,
-      });
+      await userAssessmentRepository.transitionAssessmentStatus(
+        organisationAId,
+        notStarted.id,
+        'abandoned'
+      );
+
+      expect((await storedInA(notStarted.id)).status).toBe('abandoned');
+    });
+
+    it('abandons the member’s not-started and in-progress assessments, and none further on', async () => {
+      const statuses = [
+        'not_started',
+        'in_progress',
+        'submitted',
+        'scored',
+        'completed',
+        'abandoned',
+      ] as const;
+      const ids = await Promise.all(
+        statuses.map(async (status) => {
+          const { id } = await userAssessmentRepository.createUserAssessment({
+            organisationId: organisationAId,
+            userId: userA1Id,
+            flowId,
+          });
+          await asOrganisation(db, organisationAId, (tx) =>
+            tx.execute(sql`UPDATE user_assessments SET status = ${status} WHERE id = ${id}`)
+          );
+
+          return id;
+        })
+      );
 
       const abandoned = await userAssessmentRepository.abandonInProgressAssessments(
         organisationAId,
@@ -620,7 +637,14 @@ describe('User Assessment Repository', () => {
       );
 
       expect(abandoned).toBe(2);
-      expect((await storedInA(notStarted.id)).status).toBe('abandoned');
+      expect(await Promise.all(ids.map(async (id) => (await storedInA(id)).status))).toEqual([
+        'abandoned',
+        'abandoned',
+        'submitted',
+        'scored',
+        'completed',
+        'abandoned',
+      ]);
     });
 
     describe('in a transaction scoped to another organisation', () => {

@@ -12,6 +12,8 @@ import {
   ValidationError,
 } from '@ffp/core/server';
 
+import { parseJsonBody } from '../lib/request-body';
+
 /**
  * Lambda handler for PUT /exercises/{completionId}/complete
  * Toggles exercise completion and returns cascade results.
@@ -26,7 +28,7 @@ export const handler = withErrorHandling(
       throw new ValidationError(params.error.message);
     }
 
-    const body = JSON.parse(event.body ?? '{}') as unknown;
+    const body = parseJsonBody(event.body);
     const input = toggleExerciseCompletionSchema.safeParse(body);
 
     if (!input.success) {

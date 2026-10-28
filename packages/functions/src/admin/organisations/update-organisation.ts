@@ -6,6 +6,8 @@ import {
   updateOrganisationService,
 } from '@ffp/core/server';
 
+import { parseJsonBody } from '../../lib/request-body';
+
 /**
  * Lambda handler for PUT /admin/organisations/{id}
  *
@@ -21,7 +23,7 @@ export const handler = withErrorHandling(
         throw new ValidationError('Organisation ID is required');
       }
 
-      const body = JSON.parse(event.body ?? '{}') as unknown;
+      const body = parseJsonBody(event.body);
 
       return await updateOrganisationService(context, organisationId, body);
     }

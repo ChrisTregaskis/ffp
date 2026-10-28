@@ -12,7 +12,18 @@ export interface LogSafeError extends LogContext {
   stack?: string;
   database?: { sqlState: string; constraint?: string; table?: string };
   cause?: { errorClass: string; code?: string };
+  aws?: { name: string; httpStatusCode?: number; type?: string };
 }
+
+interface AwsServiceError extends Error {
+  $metadata: { httpStatusCode?: number };
+  __type?: unknown;
+}
+
+/** An error an AWS SDK client raised for a service response, such as one from Cognito */
+const isAwsServiceError = (error: Error): error is AwsServiceError =>
+  typeof (error as { $metadata?: unknown }).$metadata === 'object' &&
+  (error as { $metadata?: unknown }).$metadata !== null;
 
 const describeCause = (cause: unknown): LogSafeError['cause'] => {
   if (!(cause instanceof Error)) {
@@ -34,8 +45,9 @@ const describeCause = (cause: unknown): LogSafeError['cause'] => {
  * bound parameters (member emails, free-text answers), and the driver's `detail`
  * repeats the offending values. A database error is therefore described by
  * SQLSTATE, constraint and table, or by the cause's class and code when the
- * driver gave no SQLSTATE. A syntax error's message is withheld; anything else keeps
- * its message and stack.
+ * driver gave no SQLSTATE. A syntax error's message is withheld. An AWS service error
+ * (Cognito's, say) is described by its name and status alone: its message can quote the
+ * username or email it was given. Anything else keeps its message and stack.
  */
 export function describeErrorForLog(error: unknown): LogSafeError {
   const errorClass = error instanceof Error ? error.constructor.name : typeof error;
@@ -60,6 +72,20 @@ export function describeErrorForLog(error: unknown): LogSafeError {
     const withheld = 'Syntax error (message withheld: it quotes the input)';
 
     return { error: withheld, errorClass, stack: error.stack?.replace(error.message, withheld) };
+  }
+
+  if (isAwsServiceError(error)) {
+    const { httpStatusCode } = error.$metadata;
+
+    return {
+      error: `AWS service error: ${error.name}`,
+      errorClass,
+      aws: {
+        name: error.name,
+        ...(httpStatusCode !== undefined && { httpStatusCode }),
+        ...(typeof error.__type === 'string' && { type: error.__type }),
+      },
+    };
   }
 
   return { error: error.message, errorClass, stack: error.stack };
