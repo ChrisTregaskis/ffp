@@ -7,6 +7,8 @@ import {
   createRequestContext,
 } from '@ffp/core/server';
 
+import { parseJsonBody } from '../../lib/request-body';
+
 /**
  * Lambda handler for POST /admin/organisations
  *
@@ -21,7 +23,7 @@ export const handler = withErrorHandling(
   withSystemAdmin(
     'Only system admins can create organisations',
     async (event: APIGatewayProxyEventV2WithJWT, context): Promise<CreateOrganisationResponse> => {
-      const body = JSON.parse(event.body ?? '{}') as unknown;
+      const body = parseJsonBody(event.body);
       const input = createOrganisationRequestSchema.parse(body);
 
       const ctx = createRequestContext(context);

@@ -11,6 +11,8 @@ import {
   ValidationError,
 } from '@ffp/core/server';
 
+import { parseJsonBody } from '../lib/request-body';
+
 /**
  * Lambda handler for PUT /programmes/active/replace
  *
@@ -21,7 +23,7 @@ export const handler = withErrorHandling(
   async (event: APIGatewayProxyEventV2WithJWT): Promise<ReplaceProgrammeResponse> => {
     const context = extractUserContext(event);
 
-    const body = JSON.parse(event.body ?? '{}') as unknown;
+    const body = parseJsonBody(event.body);
     const input = replaceProgrammeRequestSchema.safeParse(body);
 
     if (!input.success) {

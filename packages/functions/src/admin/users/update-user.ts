@@ -6,6 +6,8 @@ import {
   updateUserService,
 } from '@ffp/core/server';
 
+import { parseJsonBody } from '../../lib/request-body';
+
 /**
  * Lambda handler for PUT /admin/users/{id}
  *
@@ -21,7 +23,7 @@ export const handler = withErrorHandling(
         throw new ValidationError('User ID is required');
       }
 
-      const body = JSON.parse(event.body ?? '{}') as unknown;
+      const body = parseJsonBody(event.body);
 
       return await updateUserService(context, userId, body);
     }
