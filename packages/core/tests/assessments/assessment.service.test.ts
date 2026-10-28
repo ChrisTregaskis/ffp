@@ -1931,12 +1931,22 @@ describe('Assessment Service', () => {
     // Legacy rows hold any JSON: each is built through the column's select schema, then
     // narrowed to the repository's row type, which leaves those shapes out
     it.each([
-      ['an array holding a non-string', [memberText, 3], { type: 'array', length: 2 }],
-      ['an unrecognised object', { note: memberText }, { type: 'object', keys: ['note'] }],
-      ['a null', null, { type: 'null' }],
+      [
+        'an array holding a non-string',
+        [memberText, 3],
+        'array contains non-string values',
+        { type: 'array', length: 2 },
+      ],
+      [
+        'an unrecognised object',
+        { note: memberText },
+        'unrecognised object structure',
+        { type: 'object', keys: ['note'] },
+      ],
+      ['a null', null, 'expected string, number, boolean, or string[]', { type: 'null' }],
     ])(
-      'refuses %s and logs its question and shape, never its value',
-      async (_label, answerValue, answerShape) => {
+      'refuses %s on start in words meant for the member, and logs why with its question and shape, never its value',
+      async (_label, answerValue, reason, answerShape) => {
         const context = createUserContext();
         const flowId = randomUUID();
         const databaseUserId = randomUUID();
@@ -1965,19 +1975,90 @@ describe('Assessment Service', () => {
         mockedAnswerRepo.findByAssessmentId.mockResolvedValue([stored as UserAssessmentAnswer]);
 
         try {
-          await expect(assessmentService.startAssessment(flowId, context)).rejects.toThrow(
-            ValidationError
-          );
+          const refusal: unknown = await assessmentService
+            .startAssessment(flowId, context)
+            .catch((error: unknown) => error);
+
+          // No field named, so the start screen shows it as the member's refusal
+          expect(refusal).toBeInstanceOf(ValidationError);
+          expect(refusal).toMatchObject({
+            message:
+              "We couldn't load one of your earlier answers. Please contact the team that invited you.",
+            statusCode: 400,
+            details: undefined,
+          });
 
           const warnings = consoleLog.mock.calls
-            .map((call) => JSON.parse(call[0] as string) as { level: string; context?: unknown })
+            .map(
+              (call) =>
+                JSON.parse(call[0] as string) as {
+                  level: string;
+                  message: string;
+                  context?: unknown;
+                }
+            )
             .filter((entry) => entry.level === 'WARN');
-          expect(warnings.map((entry) => entry.context)).toEqual([{ questionId, answerShape }]);
+          expect(warnings.map(({ message, context }) => ({ message, context }))).toEqual([
+            {
+              message: 'A stored answer could not be read',
+              context: { questionId, reason, answerShape },
+            },
+          ]);
           expect(JSON.stringify(consoleLog.mock.calls)).not.toContain('sentinel');
         } finally {
           consoleLog.mockRestore();
         }
       }
     );
+
+    it('refuses a save in the same words when a stored answer cannot be read', async () => {
+      const context = createUserContext();
+      const flowId = randomUUID();
+      const databaseUserId = randomUUID();
+      const assessment = createMockAssessment({
+        organisationId: context.organisationId,
+        userId: databaseUserId,
+        flowId,
+      });
+      const stored = selectUserAssessmentAnswerSchema.parse({
+        id: randomUUID(),
+        organisationId: context.organisationId,
+        userAssessmentId: assessment.id,
+        questionId: randomUUID(),
+        answerValue: { note: memberText },
+        answeredAt: new Date(),
+      });
+      const sentQuestionId = randomUUID();
+      const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+      mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
+      mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createMockFlowSteps(flowId, randomUUID()));
+      mockedAnswerRepo.findByAssessmentId.mockResolvedValue([stored as UserAssessmentAnswer]);
+
+      try {
+        const refusal: unknown = await assessmentService
+          .saveProgress(
+            assessment.id,
+            {
+              answers: { [sentQuestionId]: { questionId: sentQuestionId, answerValue: 'yes' } },
+              currentStep: 2,
+            },
+            context
+          )
+          .catch((error: unknown) => error);
+
+        expect(refusal).toBeInstanceOf(ValidationError);
+        expect(refusal).toMatchObject({
+          message:
+            "We couldn't load one of your earlier answers. Please contact the team that invited you.",
+          statusCode: 400,
+          details: undefined,
+        });
+        expect(mockedAnswerRepo.saveAnswers).not.toHaveBeenCalled();
+      } finally {
+        consoleLog.mockRestore();
+      }
+    });
   });
 });
