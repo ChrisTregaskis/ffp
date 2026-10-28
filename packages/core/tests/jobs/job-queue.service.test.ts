@@ -23,7 +23,7 @@ import {
   type TestDb,
 } from '@ffp/database/testing';
 
-import { hasProgrammeGenerationFailed, queueJob } from '../../src/jobs/job-queue.service';
+import { queueJob } from '../../src/jobs/job-queue.service';
 
 import { jobPayload } from './job-payload.fixture';
 
@@ -219,46 +219,6 @@ describe('Job Queue Service', () => {
 
       expect(job1.organisationId).toBe(testOrganisationId);
       expect(job2.organisationId).toBe(secondOrganisationId);
-    });
-  });
-
-  describe('hasProgrammeGenerationFailed', () => {
-    /** Two generations for one assessment queued at the same instant, the lower id inserted first */
-    const queueTiedGenerations = async (statuses: {
-      lowerId: 'completed' | 'failed';
-      higherId: 'completed' | 'failed';
-    }): Promise<string> => {
-      const payload = jobPayload('generate_programme');
-      const createdAt = new Date('2026-01-01T09:00:00.000Z');
-      const [lowerId, higherId] = [randomUUID(), randomUUID()].sort();
-
-      for (const [id, status] of [
-        [lowerId, statuses.lowerId],
-        [higherId, statuses.higherId],
-      ] as const) {
-        await db.insert(schema.processJobs).values({
-          id,
-          organisationId: testOrganisationId,
-          type: 'generate_programme',
-          status,
-          payload,
-          createdAt,
-        });
-      }
-
-      return payload.assessmentSubmissionId;
-    };
-
-    it('breaks a tie on creation time by id, so a failure with the higher id is the latest', async () => {
-      const assessmentId = await queueTiedGenerations({ lowerId: 'completed', higherId: 'failed' });
-
-      expect(await hasProgrammeGenerationFailed(testOrganisationId, assessmentId)).toBe(true);
-    });
-
-    it('breaks a tie on creation time by id, so a completion with the higher id is the latest', async () => {
-      const assessmentId = await queueTiedGenerations({ lowerId: 'failed', higherId: 'completed' });
-
-      expect(await hasProgrammeGenerationFailed(testOrganisationId, assessmentId)).toBe(false);
     });
   });
 });

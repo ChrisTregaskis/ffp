@@ -1,9 +1,11 @@
 import { getDb, withAdminContext } from '@ffp/database';
+import { levelForProgrammeSlug } from '@ffp/database/constants';
 
 import { CognitoService } from '../lib/cognito';
 import { ConflictError, InternalServerError, NotFoundError, ValidationError } from '../lib/errors';
 import { describeErrorForLog } from '../lib/log-safe-error';
 import { createLogger } from '../lib/logger';
+import { getProgrammeDetailForUser } from '../programmes/programme.service';
 import { buildPaginationMeta } from '../schemas/pagination.schema';
 import {
   adminCreateUserInputSchema,
@@ -25,6 +27,7 @@ import { getLocationById as getLocationByIdInRepo } from './admin.repository';
 
 import type { OrganisationContext } from '../lib/context';
 import type { PaginationInput, PaginationMeta } from '../schemas/pagination.schema';
+import type { ProgrammeDetailResponse } from '../schemas/programme/programme.schema';
 import type { UserListResponse, UserDetailResponse } from '../schemas/user.schema';
 
 /**
@@ -34,7 +37,7 @@ import type { UserListResponse, UserDetailResponse } from '../schemas/user.schem
 export async function listUsersService(
   ctx: OrganisationContext,
   paginationInput: PaginationInput,
-  rawFilters: { search?: string; locationId?: string }
+  rawFilters: { search?: string; locationId?: string; role?: string }
 ): Promise<{ data: UserListResponse[]; pagination: PaginationMeta }> {
   const filters = userFilterSchema.parse(rawFilters);
   const db = getDb();
@@ -59,7 +62,12 @@ export async function listUsersService(
   });
 
   return {
-    data: records.map((record) => userListResponseSchema.parse(record)),
+    data: records.map(({ programmeSlug, ...record }) =>
+      userListResponseSchema.parse({
+        ...record,
+        programmeLevel: programmeSlug ? levelForProgrammeSlug(programmeSlug) : null,
+      })
+    ),
     pagination: buildPaginationMeta(paginationInput, total),
   };
 }
@@ -89,6 +97,36 @@ export async function getUserService(
   });
 
   return userDetailResponseSchema.parse(user);
+}
+
+/**
+ * A member's current programme, as the member sees it. The user is found under admin context,
+ * then the programme is read under the user's own organisation (taken from their row, never
+ * the request), so no member table below `programmes` needs an admin bypass.
+ * Throws NotFoundError when the user or their programme does not exist.
+ */
+export async function getUserProgrammeService(
+  ctx: OrganisationContext,
+  publicId: string
+): Promise<ProgrammeDetailResponse> {
+  const user = await withAdminContext(getDb(), async (tx) => {
+    return await getUserByPublicIdInRepo(tx, publicId);
+  });
+
+  if (!user) {
+    throw new NotFoundError('User', publicId);
+  }
+
+  const detail = await getProgrammeDetailForUser(user.organisationId, user.id);
+
+  const logger = createLogger(ctx);
+  logger.info('User programme retrieved', {
+    action: 'user_programme_retrieved',
+    publicId,
+    organisationId: user.organisationId,
+  });
+
+  return detail;
 }
 
 /**

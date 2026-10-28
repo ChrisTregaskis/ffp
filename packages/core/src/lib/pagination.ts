@@ -4,13 +4,13 @@ import type { PaginationInput } from '../schemas/pagination.schema';
 import type { PgSelect } from 'drizzle-orm/pg-core';
 
 /**
- * The column a sort key names, or undefined. `Object.hasOwn`, so an inherited key such as
- * `constructor` is not taken for a column.
+ * The column (or columns) a sort key names, or undefined. `Object.hasOwn`, so an inherited key
+ * such as `constructor` is not taken for a column.
  */
 export const sortColumnFor = (
   sortBy: string | undefined,
-  sortableColumns: Partial<Record<string, Column>>
-): Column | undefined =>
+  sortableColumns: Partial<Record<string, Column | Column[]>>
+): Column | Column[] | undefined =>
   sortBy !== undefined && Object.hasOwn(sortableColumns, sortBy)
     ? sortableColumns[sortBy]
     : undefined;
@@ -22,25 +22,29 @@ export const sortColumnFor = (
  *   const query = db.select().from(videos).where(...).$dynamic();
  *   const results = await applyPagination(query, input, sortableColumns);
  *
- * `tieBreaker` (a unique column) orders rows the sort column leaves tied, so
+ * A sort key may name several columns (a name sorted by surname, then first
+ * name). `tieBreaker` (a unique column) orders rows the sort leaves tied, so
  * a page boundary cannot fall differently between requests.
  */
 export const applyPagination = <T extends PgSelect>(
   query: T,
   input: PaginationInput,
-  sortableColumns: Partial<Record<string, Column>>,
+  sortableColumns: Partial<Record<string, Column | Column[]>>,
   tieBreaker?: Column
 ): T => {
   const offset = (input.page - 1) * input.pageSize;
 
   let result = query.limit(input.pageSize).offset(offset);
 
-  const column = sortColumnFor(input.sortBy, sortableColumns);
+  const sortKey = sortColumnFor(input.sortBy, sortableColumns);
 
-  if (column) {
-    const primary = input.sortDirection === 'desc' ? desc(column) : asc(column);
+  if (sortKey) {
+    const direction = input.sortDirection === 'desc' ? desc : asc;
+    const ordering = [sortKey].flat().map((column) => direction(column));
 
-    result = tieBreaker ? result.orderBy(primary, asc(tieBreaker)) : result.orderBy(primary);
+    result = tieBreaker
+      ? result.orderBy(...ordering, asc(tieBreaker))
+      : result.orderBy(...ordering);
   }
 
   return result;
@@ -55,7 +59,7 @@ export const NEWEST_FIRST = { sortBy: 'createdAt', sortDirection: 'desc' } as co
  */
 export const withDefaultSort = (
   input: PaginationInput,
-  sortableColumns: Partial<Record<string, Column>>,
+  sortableColumns: Partial<Record<string, Column | Column[]>>,
   defaultSort: Required<Pick<PaginationInput, 'sortBy' | 'sortDirection'>>
 ): PaginationInput =>
   sortColumnFor(input.sortBy, sortableColumns) ? input : { ...input, ...defaultSort };

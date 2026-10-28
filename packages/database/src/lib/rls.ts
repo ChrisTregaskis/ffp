@@ -157,8 +157,9 @@ export const withRLS = async <T, TSchema extends Record<string, unknown>>(
 /**
  * Set admin context to bypass organisation-scoped RLS policies
  *
- * Sets `app.is_admin = 'true'` which activates the `admin_bypass` permissive
- * policies on locations and users tables. This allows system_admin queries
+ * Sets `app.is_admin = 'true'` which activates the admin bypass permissive
+ * policies: full access to organisations, locations and users, and read-only
+ * access to programmes. This allows system_admin queries
  * to operate cross-organisation without disabling RLS entirely.
  *
  * Must be called within a transaction. The setting is automatically cleared
@@ -185,7 +186,8 @@ export const setAdminContext = async <TSchema extends Record<string, unknown>>(
  *
  * Convenience wrapper that sets `app.is_admin = 'true'` and executes
  * the callback. All queries within the callback will bypass organisation
- * isolation on tables with admin_bypass policies (locations, users).
+ * isolation on tables with admin bypass policies (organisations, locations,
+ * users; programmes for reads only).
  *
  * @param db - Drizzle database instance
  * @param callback - Function to execute within admin context

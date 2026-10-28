@@ -26,7 +26,17 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Client, type Pool } from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
 
-import { assessmentFlows, locations, organisations, userAssessments, users } from '../schema';
+import {
+  assessmentFlows,
+  locations,
+  organisations,
+  programmePhases,
+  programmeTemplates,
+  programmes,
+  templatePhases,
+  userAssessments,
+  users,
+} from '../schema';
 import {
   asOrganisation,
   connectTestDb,
@@ -625,6 +635,158 @@ describe('RLS Utility Functions', () => {
         );
         expect(seen.map((row) => row.id).sort()).toEqual([userA1Id, userB1Id].sort());
       });
+    });
+  });
+
+  describe('Programme admin read bypass', () => {
+    let templateId: string;
+    let templatePhaseId: string;
+    let programmeAId: string;
+    let programmeBId: string;
+    let phaseBId: string;
+
+    const insertProgramme = async (
+      organisationId: string,
+      userId: string
+    ): Promise<{ programmeId: string; phaseId: string }> =>
+      await asOrganisation(db, organisationId, async (tx) => {
+        const [programme] = await tx
+          .insert(programmes)
+          .values({ organisationId, userId, programmeTemplateId: templateId, name: 'Programme' })
+          .returning();
+        const [phase] = await tx
+          .insert(programmePhases)
+          .values({
+            organisationId,
+            programmeId: programme.id,
+            templatePhaseId,
+            phaseNumber: 1,
+          })
+          .returning();
+
+        return { programmeId: programme.id, phaseId: phase.id };
+      });
+
+    beforeEach(async () => {
+      // Programme templates are system-managed, so no organisation context is needed
+      const [template] = await db
+        .insert(programmeTemplates)
+        .values({ slug: `rls-admin-read-${testId}`, name: `RLS admin read ${testId}` })
+        .returning();
+      templateId = template.id;
+      const [templatePhase] = await db
+        .insert(templatePhases)
+        .values({ programmeTemplateId: templateId, phaseNumber: 1, name: 'Phase 1' })
+        .returning();
+      templatePhaseId = templatePhase.id;
+
+      programmeAId = (await insertProgramme(orgAId, userA1Id)).programmeId;
+      ({ programmeId: programmeBId, phaseId: phaseBId } = await insertProgramme(orgBId, userB1Id));
+    });
+
+    afterEach(async () => {
+      // The programmes restrict their template, so they go (with their organisations) first
+      await deleteOrganisations(db, [orgAId, orgBId]);
+      await db.delete(programmeTemplates).where(eq(programmeTemplates.id, templateId));
+    });
+
+    const programmeBRow = async (): Promise<{ name: string; userId: string }[]> =>
+      await asOrganisation(db, orgBId, async (tx) =>
+        tx
+          .select({ name: programmes.name, userId: programmes.userId })
+          .from(programmes)
+          .where(eq(programmes.id, programmeBId))
+      );
+
+    it('reads programmes across organisations under admin context', async () => {
+      const seen = await onFreshConnection(async (freshDb) =>
+        withAdminContext(freshDb, async (tx) =>
+          tx
+            .select({ id: programmes.id })
+            .from(programmes)
+            .where(inArray(programmes.id, [programmeAId, programmeBId]))
+        )
+      );
+
+      expect(seen.map((row) => row.id).sort()).toEqual([programmeAId, programmeBId].sort());
+    });
+
+    it('does not read another organisation’s programmes without the admin flag', async () => {
+      const seen = await onFreshConnection(async (freshDb) =>
+        withRLS(freshDb, orgAId, undefined, async (tx) =>
+          tx
+            .select({ id: programmes.id })
+            .from(programmes)
+            .where(inArray(programmes.id, [programmeAId, programmeBId]))
+        )
+      );
+
+      expect(seen.map((row) => row.id)).toEqual([programmeAId]);
+    });
+
+    it('refuses an update or delete of another organisation’s programme under admin context', async () => {
+      const changed = await onFreshConnection(async (freshDb) =>
+        withAdminContext(freshDb, async (tx) => ({
+          updated: await tx
+            .update(programmes)
+            .set({ name: 'Changed by an admin' })
+            .where(eq(programmes.id, programmeBId))
+            .returning({ id: programmes.id }),
+          deleted: await tx
+            .delete(programmes)
+            .where(eq(programmes.id, programmeBId))
+            .returning({ id: programmes.id }),
+        }))
+      );
+
+      expect(changed).toEqual({ updated: [], deleted: [] });
+      expect(await programmeBRow()).toEqual([{ name: 'Programme', userId: userB1Id }]);
+    });
+
+    it('refuses an insert into another organisation’s programmes under admin context', async () => {
+      const insert = onFreshConnection(async (freshDb) =>
+        withAdminContext(freshDb, async (tx) =>
+          tx.insert(programmes).values({
+            organisationId: orgBId,
+            userId: userB1Id,
+            programmeTemplateId: templateId,
+            name: 'Inserted by an admin',
+          })
+        )
+      );
+
+      await expect(insert).rejects.toMatchObject({ cause: { code: '42501' } });
+      expect(await programmeBRow()).toEqual([{ name: 'Programme', userId: userB1Id }]);
+    });
+
+    it('does not read another organisation’s programme phases under admin context', async () => {
+      const seen = await onFreshConnection(async (freshDb) =>
+        withAdminContext(freshDb, async (tx) =>
+          tx
+            .select({ id: programmePhases.id })
+            .from(programmePhases)
+            .where(eq(programmePhases.id, phaseBId))
+        )
+      );
+
+      expect(seen).toEqual([]);
+    });
+
+    it('gives the admin flag full access to organisations, locations and users, and only reads to programmes', async () => {
+      const catalogue = await db.execute(sql`
+        SELECT tablename AS table_name, cmd
+        FROM pg_policies
+        WHERE schemaname = 'public'
+          AND concat_ws(' ', qual, with_check) LIKE '%app.is_admin%'
+        ORDER BY tablename
+      `);
+
+      expect(catalogue.rows).toEqual([
+        { table_name: 'locations', cmd: 'ALL' },
+        { table_name: 'organisations', cmd: 'ALL' },
+        { table_name: 'programmes', cmd: 'SELECT' },
+        { table_name: 'users', cmd: 'ALL' },
+      ]);
     });
   });
 

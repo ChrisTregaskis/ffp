@@ -1,6 +1,11 @@
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 
 import { getDb, processJobs, type JobType } from '@ffp/database';
+
+import {
+  GENERATE_ASSESSMENT_KEY,
+  latestProgrammeGenerationFailed,
+} from './programme-generation-failure';
 
 import type { OrganisationContext } from '../lib/context';
 import type { Transaction } from '../lib/database';
@@ -80,29 +85,19 @@ export async function queueJob<T extends JobType>(
   return job.id;
 }
 
-const GENERATE_ASSESSMENT_KEY = 'assessmentSubmissionId' satisfies keyof GenerateProgrammePayload;
-
 /**
  * Whether the latest programme generation queued for the assessment failed for good. Jobs are
- * system-managed, so the read is scoped to the organisation by hand. Jobs queued in the same
- * instant are told apart by id, so repeated reads agree on which is the latest.
+ * system-managed, so the read is scoped to the organisation by hand.
  */
 export async function hasProgrammeGenerationFailed(
   organisationId: string,
   assessmentId: string
 ): Promise<boolean> {
-  const latest = await getDb()
-    .select({ status: processJobs.status })
-    .from(processJobs)
-    .where(
-      and(
-        eq(processJobs.organisationId, organisationId),
-        eq(processJobs.type, 'generate_programme'),
-        sql`${processJobs.payload}->>${GENERATE_ASSESSMENT_KEY} = ${assessmentId}`
-      )
-    )
-    .orderBy(desc(processJobs.createdAt), desc(processJobs.id))
-    .limit(1);
+  const failed = latestProgrammeGenerationFailed(
+    sql`${processJobs.organisationId} = ${organisationId}
+      and ${processJobs.payload}->>${GENERATE_ASSESSMENT_KEY} = ${assessmentId}`
+  );
+  const result = await getDb().execute<{ failed: boolean }>(sql`select ${failed} as failed`);
 
-  return latest.length > 0 && latest[0].status === 'failed';
+  return result.rows[0].failed;
 }
