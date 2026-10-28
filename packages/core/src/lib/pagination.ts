@@ -4,6 +4,18 @@ import type { PaginationInput } from '../schemas/pagination.schema';
 import type { PgSelect } from 'drizzle-orm/pg-core';
 
 /**
+ * The column a sort key names, or undefined. `Object.hasOwn`, so an inherited key such as
+ * `constructor` is not taken for a column.
+ */
+export const sortColumnFor = (
+  sortBy: string | undefined,
+  sortableColumns: Partial<Record<string, Column>>
+): Column | undefined =>
+  sortBy !== undefined && Object.hasOwn(sortableColumns, sortBy)
+    ? sortableColumns[sortBy]
+    : undefined;
+
+/**
  * Applies pagination (offset/limit) and sorting to a Drizzle query.
  *
  * Usage:
@@ -23,7 +35,7 @@ export const applyPagination = <T extends PgSelect>(
 
   let result = query.limit(input.pageSize).offset(offset);
 
-  const column = input.sortBy ? sortableColumns[input.sortBy] : undefined;
+  const column = sortColumnFor(input.sortBy, sortableColumns);
 
   if (column) {
     const primary = input.sortDirection === 'desc' ? desc(column) : asc(column);
@@ -40,20 +52,18 @@ export const NEWEST_FIRST = { sortBy: 'createdAt', sortDirection: 'desc' } as co
 /**
  * The caller's sort when it names a sortable column, otherwise the list's default. The
  * default replaces the direction too: a direction sent without a column has nothing to order.
- * `Object.hasOwn`, so an inherited key such as `constructor` is not taken for a column.
  */
 export const withDefaultSort = (
   input: PaginationInput,
   sortableColumns: Partial<Record<string, Column>>,
   defaultSort: Required<Pick<PaginationInput, 'sortBy' | 'sortDirection'>>
 ): PaginationInput =>
-  input.sortBy && Object.hasOwn(sortableColumns, input.sortBy)
-    ? input
-    : { ...input, ...defaultSort };
+  sortColumnFor(input.sortBy, sortableColumns) ? input : { ...input, ...defaultSort };
 
 /**
- * Escapes SQL LIKE wildcard characters (% and _) in user input.
- * Use when building ILIKE patterns from search strings.
+ * Escapes the LIKE wildcards (`%`, `_`) and the escape character itself (`\`) in user input,
+ * so each matches literally. Drizzle's `ilike` emits no ESCAPE clause, so Postgres applies its
+ * default escape character, the backslash this escapes with.
  *
  * @example
  * ```typescript
@@ -61,6 +71,4 @@ export const withDefaultSort = (
  * conditions.push(ilike(table.name, pattern));
  * ```
  */
-export const escapeLikePattern = (input: string): string => {
-  return input.replace(/%/g, '\\%').replace(/_/g, '\\_');
-};
+export const escapeLikePattern = (input: string): string => input.replace(/[\\%_]/g, '\\$&');

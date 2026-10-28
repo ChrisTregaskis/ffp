@@ -103,5 +103,29 @@ describe('Video repository', () => {
         expect(listed.map((listedVideo) => listedVideo.id)).toEqual([...ids].reverse());
       });
     });
+
+    describe('a search holding a LIKE wildcard or escape character matches it literally', () => {
+      it.each([
+        { search: '50%', literal: '50% stretch', lookalike: '500 stretch' },
+        { search: 'warm_up', literal: 'warm_up drill', lookalike: 'warm-up drill' },
+        { search: 'back\\slash', literal: 'back\\slash drill', lookalike: 'backslash drill' },
+      ])('$search', async ({ search, literal, lookalike }) => {
+        await inRolledBackTransaction(db, async (tx) => {
+          const match = await insertTestVideo(tx, { title: `${literal} ${marker}` });
+          const nonMatch = await insertTestVideo(tx, { title: `${lookalike} ${marker}` });
+
+          const listed = await videoRepository.findAllVideos(
+            tx,
+            { page: 1, pageSize: 100, sortDirection: 'asc' },
+            { search }
+          );
+
+          const ours = listed
+            .map((listedVideo) => listedVideo.id)
+            .filter((id) => [match.id, nonMatch.id].includes(id));
+          expect(ours).toEqual([match.id]);
+        });
+      });
+    });
   });
 });

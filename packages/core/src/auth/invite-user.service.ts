@@ -1,6 +1,7 @@
-import { setRLSContext } from '@ffp/database';
+import { setRLSContext, withAdminContext } from '@ffp/database';
 import { users } from '@ffp/database/schema';
 
+import { getLocationById } from '../admin/admin.repository';
 import { CognitoService } from '../lib/cognito';
 import { isUserActor } from '../lib/context';
 import { ForbiddenError, ValidationError } from '../lib/errors';
@@ -19,6 +20,25 @@ export interface InviteUserResponse {
 }
 
 /**
+ * Refuse an organisation and location that don't belong together before any login is created:
+ * the user's composite key would refuse the insert anyway, but only after the Cognito invite.
+ */
+async function assertLocationInOrganisation(
+  ctx: RequestContext,
+  organisationId: string,
+  locationId: string
+): Promise<void> {
+  const location = await withAdminContext(ctx.db, async (tx) => getLocationById(tx, locationId));
+
+  if (location?.organisationId !== organisationId) {
+    throw new ValidationError('The location does not belong to the organisation', {
+      organisationId,
+      locationId,
+    });
+  }
+}
+
+/**
  * Invite a new user to the platform
  *
  * Creates both Cognito user (with temporary password) and database record.
@@ -28,7 +48,8 @@ export interface InviteUserResponse {
  * @param input - User invitation data
  * @returns Invitation response with user details
  * @throws {ForbiddenError} If user lacks required role
- * @throws {ValidationError} If system admin doesn't provide organisation/location IDs
+ * @throws {ValidationError} If system admin doesn't provide organisation/location IDs, or names a
+ *   location outside the organisation
  */
 export async function inviteUserService(
   ctx: RequestContext,
@@ -74,6 +95,8 @@ export async function inviteUserService(
 
     targetOrganisationId = input.organisationId;
     targetLocationId = input.locationId;
+
+    await assertLocationInOrganisation(ctx, targetOrganisationId, targetLocationId);
 
     logger.info('System admin inviting user to organisation', {
       targetOrganisationId,

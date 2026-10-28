@@ -154,6 +154,27 @@ describe('Template Repository', () => {
       );
     });
 
+    it('falls back to name order for a key the columns only inherit, such as constructor', async () => {
+      // The name order runs against the id order, so the id tie-break alone can't pass this
+      const [earlier, later] = [randomUUID(), randomUUID()].sort().reverse();
+
+      for (const [id, name] of [
+        [later, `Beta ${RUN_ID}`],
+        [earlier, `Alpha ${RUN_ID}`],
+      ]) {
+        await db.insert(assessmentTemplates).values({ id, name });
+        createdTemplateIds.push(id);
+      }
+
+      const listed = await templateRepository.findTemplatePage(
+        db,
+        { ...firstPage, sortBy: 'constructor' },
+        { search: RUN_ID }
+      );
+
+      expect(listed.map((template) => template.id)).toEqual([earlier, later]);
+    });
+
     it('searches name and description, treating wildcards literally', async () => {
       const literal = await createTemplate({ ...validCreateInput, name: `100% effort ${RUN_ID}` });
       const other = await createTemplate({ ...validCreateInput, name: `Other ${RUN_ID}` });

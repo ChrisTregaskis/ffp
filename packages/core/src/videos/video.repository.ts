@@ -4,7 +4,12 @@ import { z } from 'zod';
 import type { DbClient, DbQueryClient } from '@ffp/database';
 import { tags, videos, videoTags, type VideoRecord, type NewVideo } from '@ffp/database/schema';
 
-import { applyPagination, NEWEST_FIRST, withDefaultSort } from '../lib/pagination';
+import {
+  applyPagination,
+  escapeLikePattern,
+  NEWEST_FIRST,
+  withDefaultSort,
+} from '../lib/pagination';
 
 import type { PaginationInput } from '../schemas/pagination.schema';
 import type { AdminVideoFilterInput, UpdateVideoInput } from '../schemas/video/video.schema';
@@ -50,7 +55,7 @@ const buildAdminFilterConditions = (filters: AdminVideoFilterInput): SQL[] => {
   const conditions: SQL[] = [];
 
   if (filters.search) {
-    const pattern = `%${filters.search}%`;
+    const pattern = `%${escapeLikePattern(filters.search)}%`;
     const searchCondition = or(ilike(videos.title, pattern), ilike(videos.description, pattern));
 
     if (searchCondition) {

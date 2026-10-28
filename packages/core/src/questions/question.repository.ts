@@ -9,7 +9,7 @@ import {
 } from '@ffp/database/schema';
 
 import { NotFoundError } from '../lib/errors';
-import { applyPagination, escapeLikePattern } from '../lib/pagination';
+import { applyPagination, escapeLikePattern, sortColumnFor } from '../lib/pagination';
 
 import type {
   CreateQuestionInput,
@@ -206,10 +206,9 @@ export async function findQuestionPage(
     .where(and(...conditions))
     .$dynamic();
 
-  const sortBy =
-    paginationInput.sortBy && QUESTION_SORTABLE_COLUMNS[paginationInput.sortBy]
-      ? paginationInput.sortBy
-      : 'questionText';
+  const sortBy = sortColumnFor(paginationInput.sortBy, QUESTION_SORTABLE_COLUMNS)
+    ? paginationInput.sortBy
+    : 'questionText';
 
   return await applyPagination(
     query,

@@ -205,5 +205,28 @@ describe('Question Repository', () => {
 
       expect(pages.flat().map((question) => question.id)).toEqual([...ids].sort());
     });
+
+    it('falls back to question text order for a key the columns only inherit, such as constructor', async () => {
+      // The text order runs against the id order, so the id tie-break alone can't pass this
+      const [earlier, later] = [randomUUID(), randomUUID()].sort().reverse();
+
+      for (const [id, questionText] of [
+        [later, `Zebra crossing [${RUN_ID}]`],
+        [earlier, `Apple picking [${RUN_ID}]`],
+      ]) {
+        await db
+          .insert(questions)
+          .values({ id, slug: `question-repo-${id}`, type: 'text', questionText });
+        createdQuestionIds.push(id);
+      }
+
+      const listed = await questionRepository.findQuestionPage(
+        db,
+        { page: 1, pageSize: 10, sortBy: 'constructor', sortDirection: 'asc' },
+        { search: RUN_ID }
+      );
+
+      expect(listed.map((question) => question.id)).toEqual([earlier, later]);
+    });
   });
 });

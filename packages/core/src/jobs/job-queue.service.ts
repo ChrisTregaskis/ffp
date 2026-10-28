@@ -84,7 +84,8 @@ const GENERATE_ASSESSMENT_KEY = 'assessmentSubmissionId' satisfies keyof Generat
 
 /**
  * Whether the latest programme generation queued for the assessment failed for good. Jobs are
- * system-managed, so the read is scoped to the organisation by hand.
+ * system-managed, so the read is scoped to the organisation by hand. Jobs queued in the same
+ * instant are told apart by id, so repeated reads agree on which is the latest.
  */
 export async function hasProgrammeGenerationFailed(
   organisationId: string,
@@ -100,7 +101,7 @@ export async function hasProgrammeGenerationFailed(
         sql`${processJobs.payload}->>${GENERATE_ASSESSMENT_KEY} = ${assessmentId}`
       )
     )
-    .orderBy(desc(processJobs.createdAt))
+    .orderBy(desc(processJobs.createdAt), desc(processJobs.id))
     .limit(1);
 
   return latest.length > 0 && latest[0].status === 'failed';
