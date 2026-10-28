@@ -66,10 +66,15 @@ import { handler as listTemplatesHandler } from './templates/list-templates';
 import { handler as reorderTemplateQuestionsHandler } from './templates/reorder-questions';
 import { handler as unassignQuestionHandler } from './templates/unassign-question';
 import { handler as updateTemplateHandler } from './templates/update-template';
+import { handler as addProgrammeExerciseHandler } from './users/add-programme-exercise';
 import { handler as createUserHandler } from './users/create-user';
 import { handler as getUserHandler } from './users/get-user';
 import { handler as getUserProgrammeHandler } from './users/get-user-programme';
 import { handler as listUsersHandler } from './users/list-users';
+import { handler as removeProgrammeExerciseHandler } from './users/remove-programme-exercise';
+import { handler as reorderProgrammeExercisesHandler } from './users/reorder-programme-exercises';
+import { handler as reorderProgrammeSessionsHandler } from './users/reorder-programme-sessions';
+import { handler as updateProgrammeExerciseHandler } from './users/update-programme-exercise';
 import { handler as updateUserHandler } from './users/update-user';
 import { handler as createVideoHandler } from './videos/create';
 import { handler as getVideoHandler } from './videos/get';
@@ -104,6 +109,7 @@ const routes: RouteRegistry = {
     '/sessions/{id}/slots': createSlotHandler,
     '/tags': createTagHandler,
     '/users': createUserHandler,
+    '/users/{id}/programme/sessions/{sessionId}/exercises': addProgrammeExerciseHandler,
     '/videos': createVideoHandler,
     '/videos/upload-url': getUploadUrlHandler,
   },
@@ -143,6 +149,10 @@ const routes: RouteRegistry = {
     '/assessment-templates/{templatePublicId}/questions/reorder': reorderTemplateQuestionsHandler,
     '/questions/{publicId}': updateQuestionHandler,
     '/users/{id}': updateUserHandler,
+    '/users/{id}/programme/exercises/{exerciseId}': updateProgrammeExerciseHandler,
+    '/users/{id}/programme/sessions/{sessionId}/exercises/reorder':
+      reorderProgrammeExercisesHandler,
+    '/users/{id}/programme/phases/{phaseId}/sessions/reorder': reorderProgrammeSessionsHandler,
     '/programme-templates/{id}': updateProgrammeTemplateHandler,
     '/programme-templates/{id}/deactivate': deactivateProgrammeTemplateHandler,
     '/programme-templates/{id}/phases/reorder': reorderPhasesHandler,
@@ -165,6 +175,7 @@ const routes: RouteRegistry = {
     '/questions/{publicId}': deactivateQuestionHandler,
     '/tags/{publicId}': deactivateTagHandler,
     '/exercises/{id}': deleteExerciseHandler,
+    '/users/{id}/programme/exercises/{exerciseId}': removeProgrammeExerciseHandler,
     '/phases/{id}': deletePhaseHandler,
     '/sessions/{id}': deleteSessionHandler,
     '/slots/{publicId}': deleteSlotHandler,

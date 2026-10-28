@@ -65,6 +65,24 @@ async function withTags<T>(
 }
 
 /**
+ * A video an exercise may use, template or member: it must exist and be active. Either failure is
+ * the caller's to correct, so both are a 400.
+ */
+export async function findExerciseVideo(db: DbQueryClient, videoId: string): Promise<VideoRecord> {
+  const video = await videoRepository.findVideoById(db, videoId);
+
+  if (!video) {
+    throw new ValidationError('Video not found');
+  }
+
+  if (video.status !== 'active') {
+    throw new ValidationError('Video is not active');
+  }
+
+  return video;
+}
+
+/**
  * Create a new video record with validated input, and its tags.
  * Status defaults to 'draft' via schema default.
  */
