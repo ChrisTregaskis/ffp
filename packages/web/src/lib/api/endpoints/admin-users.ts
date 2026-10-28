@@ -1,10 +1,15 @@
 import type {
   AdminCreateUserInput,
+  AdminProgrammeDetailResponse,
   AdminUpdateUserInput,
   PaginationInput,
   UserDetailResponse,
 } from '@ffp/core';
-import { paginatedUserResponseSchema, userDetailResponseSchema } from '@ffp/core';
+import {
+  adminProgrammeDetailResponseSchema,
+  paginatedUserResponseSchema,
+  userDetailResponseSchema,
+} from '@ffp/core';
 
 import { assertUuidPathParam, ffpClient, parseApiResponse, toListParams } from '../client';
 
@@ -49,6 +54,20 @@ export const adminUsersApi = {
     return parseApiResponse(userDetailResponseSchema, response, { method: 'GET', path });
   },
 
+  /** Retrieves a member's current programme, every phase in full, by user publicId. */
+  getProgramme: async (
+    publicId: string,
+    signal?: AbortSignal
+  ): Promise<AdminProgrammeDetailResponse> => {
+    const path = `${basePath}/${publicId}/programme`;
+    const response = await ffpClient.get(path, { signal });
+
+    return parseApiResponse(adminProgrammeDetailResponseSchema, response, {
+      method: 'GET',
+      path,
+    });
+  },
+
   /** Creates a programme user (Cognito + DB). */
   create: async (data: AdminCreateUserInput): Promise<UserDetailResponse> => {
     const path = basePath;
@@ -68,4 +87,9 @@ export const adminUsersApi = {
 };
 
 // Re-export types for consumers
-export type { AdminCreateUserInput, AdminUpdateUserInput, UserDetailResponse };
+export type {
+  AdminCreateUserInput,
+  AdminProgrammeDetailResponse,
+  AdminUpdateUserInput,
+  UserDetailResponse,
+};

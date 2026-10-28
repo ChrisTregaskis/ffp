@@ -20,8 +20,8 @@ export const ProgrammeModelsView: React.FC = () => {
     <div>
       <DemonstrationBanner>
         This illustrates how a member&rsquo;s set is assembled from the level shells and tagged
-        library. Curate exercises and tags in the Video library; tune an individual&rsquo;s set in
-        Member programmes.
+        library. Curate exercises and tags in the Video library; see an individual&rsquo;s programme
+        from the Users list.
       </DemonstrationBanner>
 
       <ViewHeader

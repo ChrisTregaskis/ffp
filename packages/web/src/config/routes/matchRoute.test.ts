@@ -55,6 +55,8 @@ describe('matchRoute', () => {
     ['/admin/organisations/abc123', RouteKey.ADMIN_ORGANISATION_EDIT],
     ['/admin/locations/abc123', RouteKey.ADMIN_LOCATION_EDIT],
     ['/admin/users/abc123', RouteKey.ADMIN_USER_EDIT],
+    ['/admin/users/abc123/programme', RouteKey.ADMIN_USER_PROGRAMME],
+    ['/admin/users/abc123/programme/phases/def456', RouteKey.ADMIN_USER_PROGRAMME_PHASE],
     ['/admin/assessments/abc123', RouteKey.ADMIN_ASSESSMENT_FLOW_EDIT],
     ['/admin/assessments/abc123/steps', RouteKey.ADMIN_ASSESSMENT_FLOW_STEPS],
     ['/admin/assessments/abc123/preview', RouteKey.ADMIN_ASSESSMENT_FLOW_PREVIEW],

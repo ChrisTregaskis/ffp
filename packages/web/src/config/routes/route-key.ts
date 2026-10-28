@@ -76,6 +76,10 @@ export enum RouteKey {
   ADMIN_USER_CREATE = 'admin-user-create',
   /** Admin user edit page */
   ADMIN_USER_EDIT = 'admin-user-edit',
+  /** Admin view of a member's programme (overview and phases) */
+  ADMIN_USER_PROGRAMME = 'admin-user-programme',
+  /** Admin view of one phase of a member's programme (its sessions) */
+  ADMIN_USER_PROGRAMME_PHASE = 'admin-user-programme-phase',
   /** Admin exercise library (the video catalogue) */
   ADMIN_VIDEOS = 'admin-videos',
   /** Admin exercise tag vocabulary page */
