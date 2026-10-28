@@ -5,6 +5,8 @@ import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
   assessmentFlows,
+  assessmentTemplates,
+  flowSteps,
   processJobs,
   programmePhases,
   programmes,
@@ -12,6 +14,7 @@ import {
   tagCategories,
   tags,
   templatePhases,
+  templateQuestions,
   templateSessionSlots,
   templateSessions,
   templateSlotTags,
@@ -53,6 +56,7 @@ interface SlotData {
   /** Created by a test that needs more than the shared data; removed with it */
   extraTagIds: string[];
   flowId?: string;
+  assessmentTemplateId?: string;
   questionId?: string;
 }
 
@@ -156,6 +160,12 @@ async function removeSlotData(fixture: Fixture, data: SlotData): Promise<void> {
 
     if (data.flowId) {
       await tx.delete(assessmentFlows).where(eq(assessmentFlows.id, data.flowId));
+    }
+
+    if (data.assessmentTemplateId) {
+      await tx
+        .delete(assessmentTemplates)
+        .where(eq(assessmentTemplates.id, data.assessmentTemplateId));
     }
 
     if (data.questionId) {
@@ -366,6 +376,7 @@ describe('Programme assembly', () => {
     const emphasisedSlug = `assembly-emphasis-${shortId()}`;
     const [emphasised] = data.pool.slice(2);
     const flowId = randomUUID();
+    const assessmentTemplateId = randomUUID();
     const questionId = randomUUID();
     const assessmentId = randomUUID();
 
@@ -387,6 +398,12 @@ describe('Programme assembly', () => {
         type: 'single-choice',
         questionText: 'How active are you?',
       });
+      await tx
+        .insert(assessmentTemplates)
+        .values({ id: assessmentTemplateId, name: `Assembly template ${shortId()}` });
+      await tx
+        .insert(templateQuestions)
+        .values({ templateId: assessmentTemplateId, questionId, displayOrder: 1 });
       await tx.insert(assessmentFlows).values({
         id: flowId,
         name: `Assembly flow ${shortId()}`,
@@ -401,6 +418,14 @@ describe('Programme assembly', () => {
             },
           ],
         },
+      });
+      // Emphasis counts only answers to questions the flow's steps show
+      await tx.insert(flowSteps).values({
+        flowId,
+        order: 1,
+        type: 'questions',
+        templateId: assessmentTemplateId,
+        config: { title: 'Questions' },
       });
       await tx.insert(userAssessments).values({
         id: assessmentId,
@@ -426,6 +451,7 @@ describe('Programme assembly', () => {
     });
 
     data.flowId = flowId;
+    data.assessmentTemplateId = assessmentTemplateId;
     data.questionId = questionId;
 
     // Three sessions: unweighted, all three draw the emphasised video one time in 64

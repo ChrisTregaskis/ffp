@@ -1,5 +1,6 @@
+import { loadFlowQuestions } from '../assessments/answer-validation';
 import * as answerRepository from '../assessments/answer.repository';
-import { findFlowById } from '../assessments/flow.repository';
+import { findFlowById, findStepsByFlowId } from '../assessments/flow.repository';
 import { findUserAssessmentById } from '../assessments/user-assessment.repository';
 import { createSystemLogger } from '../lib/logger';
 import { emphasisRulesSchema } from '../schemas/scoring-config.schema';
@@ -15,8 +16,9 @@ const NO_EMPHASIS: EmphasisWeights = new Map();
 
 /**
  * The emphasis weights an assessment's answers give its programme, from the rules in its flow's
- * scoring config. A malformed config, or a tag the rules name that isn't authored and active, is
- * ignored with a WARN rather than failing generation.
+ * scoring config. Only answers to the flow's questions count, as in scoring: one kept for a
+ * question since deactivated or unassigned is ignored. A malformed config, or a tag the rules
+ * name that isn't authored and active, is ignored with a WARN rather than failing generation.
  */
 export async function findEmphasisWeights(
   tx: Transaction,
@@ -42,13 +44,18 @@ export async function findEmphasisWeights(
     return NO_EMPHASIS;
   }
 
+  const flowQuestions = await loadFlowQuestions(tx, await findStepsByFlowId(tx, assessment.flowId));
   const [answers, tags] = await Promise.all([
     answerRepository.findByAssessmentId(organisationId, assessmentId, { tx }),
     tagRepository.findAllTags(tx),
   ]);
   const { weights, ignoredTags } = resolveEmphasisWeights(
     rules.data,
-    new Map(answers.map((answer) => [answer.questionId, answer.answerValue])),
+    new Map(
+      answers
+        .filter((answer) => flowQuestions.has(answer.questionId))
+        .map((answer) => [answer.questionId, answer.answerValue])
+    ),
     new Set(tags.filter((tag) => tag.isActive).map((tag) => `${tag.category}:${tag.slug}`))
   );
 

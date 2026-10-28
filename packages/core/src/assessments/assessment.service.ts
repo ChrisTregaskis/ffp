@@ -452,6 +452,7 @@ export async function saveProgress(
   }
 
   const sentAnswers = convertAnswersToSaveFormat(data.answers);
+  const flowQuestions = await loadFlowQuestions(db, flowSteps);
   let changedAnswers = new Map<string, AnswerValue>();
 
   if (sentAnswers.length > 0) {
@@ -464,8 +465,6 @@ export async function saveProgress(
     );
 
     if (changedAnswers.size > 0) {
-      const flowQuestions = await loadFlowQuestions(db, flowSteps);
-
       assertNoAnswerErrors(findSaveErrors(changedAnswers, flowQuestions));
     }
   }
@@ -501,13 +500,17 @@ export async function saveProgress(
       tx,
     });
 
+    // Only answers to the flow's questions route the member, as only they are scored: one
+    // kept for a question since deactivated or unassigned is ignored
     const answersForBranching = await toBranchingAnswers(
       db,
       assessmentId,
-      allAnswers.map((answer) => ({
-        questionId: answer.questionId,
-        answerValue: extractAnswerValue(answer.questionId, answer.answerValue),
-      }))
+      allAnswers
+        .filter((answer) => flowQuestions.has(answer.questionId))
+        .map((answer) => ({
+          questionId: answer.questionId,
+          answerValue: extractAnswerValue(answer.questionId, answer.answerValue),
+        }))
     );
 
     // Create evaluation context and evaluate branching rules
@@ -625,8 +628,10 @@ export async function submitAssessment(
 
   assertNoAnswerErrors(findSubmitErrors(storedValues, submittedValues, flowQuestions));
 
-  // The safety rules see every answer, stale ones included, the submitted ones overriding
-  // those stored. Scoring reads the stored answers itself and counts only the flow's questions.
+  // The safety rules see every answer, the submitted ones overriding those stored. Unlike
+  // scoring, save-time branching and programme emphasis, which count only the flow's questions,
+  // they also see one kept for a question since deactivated or unassigned: for a health check,
+  // a red flag the member gave is not dropped because its question was later retired.
   const allAnswers = [...new Map([...storedValues, ...submittedValues])]
     .filter(([, answerValue]) => isAnswerProvided(answerValue))
     .map(([questionId, answerValue]) => ({ questionId, answerValue }));
