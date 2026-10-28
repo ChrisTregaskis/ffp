@@ -6,7 +6,7 @@ import { BaseError, JobProcessorError, NotFoundError } from '../lib/errors';
 import { describeErrorForLog } from '../lib/log-safe-error';
 import { sortBy } from '../lib/sort.utils';
 
-import { finishedJobPayload } from './finished-job-payload';
+import { finishedJobPayload, finishedJobResult } from './finished-job-payload';
 
 /**
  * Calculate exponential backoff delay in milliseconds.
@@ -47,28 +47,18 @@ export interface CompleteJobResult {
 }
 
 /**
- * Mark a job as successfully completed with its result.
+ * Mark a job as successfully completed.
  *
- * Sets status to 'completed', stores the result, records completion time and cuts the payload
- * down to its ids.
+ * Sets status to 'completed', records completion time and cuts the payload and the handler's
+ * result down to their ids, so no member data stays on the job.
  *
  * @typeParam TResult - The shape of the job result (inferred or explicit)
  * @returns CompleteJobResult indicating success
  *
  * @example
  * ```typescript
- * // Type inferred from argument
- * await completeJob(job.id, {
- *   scores: { strength: 75, balance: 82 },
- *   recommendations: ['core_stability', 'balance_training'],
- * });
- *
- * // Explicit type for stricter checking
- * interface ScoreResult {
- *   scores: Record<string, number>;
- *   recommendations: string[];
- * }
- * await completeJob<ScoreResult>(job.id, result);
+ * // Stores { programmeId }; the programme's name and exercises are dropped
+ * await completeJob(job.id, generateProgrammeResult);
  * ```
  */
 export async function completeJob<TResult extends Record<string, unknown>>(
@@ -83,7 +73,7 @@ export async function completeJob<TResult extends Record<string, unknown>>(
       .update(processJobs)
       .set({
         status: 'completed',
-        result,
+        result: finishedJobResult(result),
         payload: finishedJobPayload(),
         completedAt: new Date(),
       })

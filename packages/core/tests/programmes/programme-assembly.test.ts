@@ -329,7 +329,6 @@ describe('Programme assembly', () => {
     const payload = {
       assessmentSubmissionId: randomUUID(),
       userId: fixture.userId,
-      scores: [],
       recommendedTemplateSlug: fixture.templateSlug,
     };
     const job = await withRLS(fixture.organisationId, undefined, async (tx) => {
@@ -438,7 +437,6 @@ describe('Programme assembly', () => {
       {
         assessmentSubmissionId: assessmentId,
         userId: fixture.userId,
-        scores: [],
         recommendedTemplateSlug: fixture.templateSlug,
       },
       fixture.organisationId

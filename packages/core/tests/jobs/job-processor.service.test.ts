@@ -31,6 +31,10 @@ import {
   failJob,
 } from '../../src/jobs/job-processor.service';
 import { NotFoundError, ProgrammeAssemblyError } from '../../src/lib/errors';
+import {
+  generateProgrammeResultSchema,
+  scoreAssessmentResultSchema,
+} from '../../src/schemas/job.schema';
 import { drizzleDriverError, expectNothingLeakable } from '../lib/database-error.fixture';
 
 import { jobPayload } from './job-payload.fixture';
@@ -419,11 +423,10 @@ describe('Job Processor Service', () => {
   });
 
   describe('completeJob', () => {
-    it('sets status to completed with result', async () => {
+    it('sets status to completed', async () => {
       const job = await createTestJob({ status: 'processing' });
-      const result = { scores: { strength: 75, balance: 82 } };
 
-      const completeResult = await completeJob(job.id, result);
+      const completeResult = await completeJob(job.id, { programmeId: randomUUID() });
 
       expect(completeResult.jobId).toBe(job.id);
       expect(completeResult.success).toBe(true);
@@ -435,7 +438,6 @@ describe('Job Processor Service', () => {
         .where(sql`id = ${job.id}`);
 
       expect(updatedJob.status).toBe('completed');
-      expect(updatedJob.result).toEqual(result);
       expect(updatedJob.completedAt).toBeInstanceOf(Date);
     });
 
@@ -646,6 +648,30 @@ describe('Job Processor Service', () => {
       expect((await readJob(job.id)).payload).toEqual({ assessmentSubmissionId, userId });
     });
 
+    it('drops the scores an older generation job carried once it completes', async () => {
+      const payload = jobPayload('generate_programme');
+      const { assessmentSubmissionId, userId } = payload;
+      const job = await createTestJob({
+        type: 'generate_programme',
+        status: 'processing',
+        payload: {
+          ...payload,
+          scores: [
+            {
+              dimensionId: 'mobility',
+              dimensionName: 'Mobility',
+              rawScore: 75,
+              normalisedScore: 75,
+            },
+          ],
+        },
+      });
+
+      await completeJob(job.id, { programmeId: randomUUID() });
+
+      expect((await readJob(job.id)).payload).toEqual({ assessmentSubmissionId, userId });
+    });
+
     it('drops the answers an older scoring job carried once it completes', async () => {
       const payload = jobPayload('score_assessment');
       const { userAssessmentId, flowId, userId } = payload;
@@ -702,6 +728,48 @@ describe('Job Processor Service', () => {
       expect(ownJobs(claimedJobs)).toEqual([
         expect.objectContaining({ id: job.id, status: 'processing', payload }),
       ]);
+    });
+  });
+
+  describe('result of a finished job', () => {
+    const storedResult = async (id: string): Promise<unknown> => {
+      const [job] = await db
+        .select({ result: schema.processJobs.result })
+        .from(schema.processJobs)
+        .where(eq(schema.processJobs.id, id));
+
+      return job.result;
+    };
+
+    it("keeps only the programme's id once a generation job completes", async () => {
+      const job = await createTestJob({ type: 'generate_programme', status: 'processing' });
+      const result = generateProgrammeResultSchema.parse({
+        programmeId: randomUUID(),
+        programmeName: 'Gentle Mobility',
+        durationWeeks: 8,
+        exercises: [{ exerciseId: randomUUID(), name: 'Cat cow' }],
+        sessionsPerWeek: 3,
+        generatedAt: new Date().toISOString(),
+      });
+
+      await completeJob(job.id, result);
+
+      expect(await storedResult(job.id)).toEqual({ programmeId: result.programmeId });
+    });
+
+    it("keeps none of the member's scores once a scoring job completes", async () => {
+      const job = await createTestJob({ status: 'processing' });
+      const result = scoreAssessmentResultSchema.parse({
+        scores: [
+          { dimensionId: 'mobility', dimensionName: 'Mobility', rawScore: 75, normalisedScore: 75 },
+        ],
+        overallScore: 75,
+        scoredAt: new Date().toISOString(),
+      });
+
+      await completeJob(job.id, result);
+
+      expect(await storedResult(job.id)).toEqual({});
     });
   });
 

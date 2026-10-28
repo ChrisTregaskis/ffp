@@ -172,7 +172,6 @@ export async function processScoreAssessment(
       {
         assessmentSubmissionId: payload.userAssessmentId,
         userId: payload.userId,
-        scores: result.scores,
         recommendedTemplateSlug: scoringResult.recommendedProgrammeId ?? undefined,
       },
       systemContext,

@@ -228,7 +228,7 @@ describe('processScoreAssessment', () => {
     });
   });
 
-  it('queues one high-priority generate_programme job carrying the scores and the recommended template', async () => {
+  it("queues one high-priority generate_programme job carrying the recommended template, not the member's scores", async () => {
     const assessmentId = await createSubmittedAssessment();
 
     await processScoreAssessment(
@@ -242,12 +242,11 @@ describe('processScoreAssessment', () => {
       type: 'generate_programme',
       status: 'queued',
       priority: 2,
-      payload: {
-        assessmentSubmissionId: assessmentId,
-        userId,
-        scores: [strength],
-        recommendedTemplateSlug: recommendedSlug,
-      },
+    });
+    expect(jobs[0].payload).toEqual({
+      assessmentSubmissionId: assessmentId,
+      userId,
+      recommendedTemplateSlug: recommendedSlug,
     });
   });
 

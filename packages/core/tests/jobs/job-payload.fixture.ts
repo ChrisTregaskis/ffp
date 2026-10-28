@@ -18,9 +18,7 @@ const builders: { [K in keyof JobPayloadMap]: () => JobPayloadMap[K] } = {
     generateProgrammePayloadSchema.parse({
       assessmentSubmissionId: randomUUID(),
       userId: randomUUID(),
-      scores: [
-        { dimensionId: 'mobility', dimensionName: 'Mobility', rawScore: 75, normalisedScore: 75 },
-      ],
+      recommendedTemplateSlug: 'gentle-mobility',
     }),
 };
 
