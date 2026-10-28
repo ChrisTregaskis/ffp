@@ -25,12 +25,13 @@ export const toQuestionFieldErrors = (error: unknown): Record<string, string> =>
 };
 
 /**
- * The server's own message for a refused save that names no field (a step the flow
- * no longer has, say), which is worded for the member. Null for a refusal naming fields, which
- * shows on their questions, and for any other failure (a 5xx, the network), which gets the
- * caller's generic text.
+ * The server's own message for a refusal that names no field, which is worded for the member: a
+ * 400 (a step the flow no longer has, say) or a 409 (a flow with no steps yet). Null for a
+ * refusal naming fields, which shows on their questions, and for any other failure (a 5xx, the
+ * network), which gets the caller's generic text.
  */
 export const toRefusalMessage = (error: unknown): string | null =>
-  ApiError.isApiError(error) && error.isValidationError && error.fieldErrors.length === 0
+  ApiError.isApiError(error) &&
+  (error.status === 409 || (error.isValidationError && error.fieldErrors.length === 0))
     ? error.message
     : null;

@@ -13,6 +13,12 @@ describe('toRefusalMessage', () => {
     expect(toRefusalMessage(refusal)).toBe(STEP_REFUSAL);
   });
 
+  it("gives a conflict's own message", () => {
+    const conflict = new ApiError(409, 'CONFLICT', 'This assessment has no steps to show yet');
+
+    expect(toRefusalMessage(conflict)).toBe('This assessment has no steps to show yet');
+  });
+
   it('gives nothing for a refusal naming fields, which shows on its questions', () => {
     const refusal = new ApiError(400, 'VALIDATION_ERROR', 'Some answers need your attention', [
       { path: 'answers.q1', message: 'Choose up to 2 options.', code: 'too_many_selections' },

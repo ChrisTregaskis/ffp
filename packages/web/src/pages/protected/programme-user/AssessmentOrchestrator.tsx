@@ -66,6 +66,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
     variables: startVariables,
     isPending: isStartPending,
     isError: isStartError,
+    error: startError,
   } = useStartAssessment({
     onSuccess: (data) => {
       const currentStepSummary = data.steps.find((s) => s.order === data.currentStep);
@@ -220,7 +221,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
     return (
       <ErrorRetryState
         layout="screen"
-        title="We couldn't load your assessment just now."
+        title={toRefusalMessage(startError) ?? "We couldn't load your assessment just now."}
         // Retry with the same arguments: the fresh-start flag was cleared from sessionStorage on mount
         onRetry={() => {
           startMutate(startVariables);
