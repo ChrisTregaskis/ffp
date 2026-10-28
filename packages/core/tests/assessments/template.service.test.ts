@@ -285,3 +285,35 @@ describe('templateService create, list, deactivate and duplicate', () => {
     });
   });
 });
+
+describe('templateService member read', () => {
+  const question = (isActive: boolean): ffpDatabase.QuestionWithConfig => ({
+    id: randomUUID(),
+    publicId: 'question0001',
+    slug: `question-${String(isActive)}`,
+    type: 'numeric',
+    questionText: 'How many?',
+    description: null,
+    options: null,
+    validation: { required: true },
+    videoId: null,
+    scoreDimension: null,
+    isActive,
+    displayOrder: 1,
+    configOverrides: null,
+  });
+
+  it('shows a member only the template’s active questions, as validation and scoring read', async () => {
+    const template = createTemplate();
+    const active = question(true);
+
+    mockedTemplateRepo.findTemplateWithQuestions.mockResolvedValue({
+      ...template,
+      templateQuestions: [question(false), active],
+    });
+
+    const result = await templateService.getTemplateService(createContext(), template.id);
+
+    expect(result?.templateQuestions).toEqual([active]);
+  });
+});

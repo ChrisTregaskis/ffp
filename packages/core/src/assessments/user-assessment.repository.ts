@@ -1,6 +1,7 @@
 import { eq, and, or, desc, gt, inArray, sql } from 'drizzle-orm';
 
 import {
+  ABANDONABLE_STATUSES,
   setAdminContext,
   setRLSContext,
   type DbClient,
@@ -179,7 +180,7 @@ export async function abandonInProgressAssessments(
         and(
           eq(userAssessments.userId, userId),
           eq(userAssessments.flowId, flowId),
-          or(eq(userAssessments.status, 'not_started'), eq(userAssessments.status, 'in_progress'))
+          inArray(userAssessments.status, ABANDONABLE_STATUSES)
         )
       )
       .returning({ id: userAssessments.id });

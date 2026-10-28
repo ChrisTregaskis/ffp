@@ -6,7 +6,6 @@ import {
   questionValidationSchema,
   scoreDimensionSchema,
   type AssessmentQuestion,
-  type QuestionValidation,
 } from './assessment-question.schema';
 import { booleanQueryParamSchema, createPaginatedResponseSchema } from './pagination.schema';
 import { publicIdSchema } from './public-id.schema';
@@ -121,12 +120,6 @@ export const templateQuestionResponseSchema = z.object({
     .nullable(),
 });
 
-const withInactiveOptional = (
-  validation: QuestionValidation | null,
-  isActive: boolean
-): QuestionValidation | undefined =>
-  isActive ? (validation ?? undefined) : { ...validation, required: false };
-
 /**
  * Assessment template with questions — extends the base template
  * with a transformed templateQuestions array.
@@ -137,21 +130,23 @@ const withInactiveOptional = (
  * - Backend-only fields stripped (slug, isActive, displayOrder, configOverrides)
  */
 export const assessmentTemplateWithQuestionsSchema = assessmentTemplateSchema.extend({
+  // A deactivated question still assigned is left out, as the server leaves it out
   templateQuestions: z.array(templateQuestionResponseSchema).transform((questions) =>
-    questions.map(
-      (q): AssessmentQuestion => ({
-        id: q.id,
-        publicId: q.publicId,
-        type: q.type,
-        question: q.configOverrides?.questionText ?? q.questionText,
-        description: q.configOverrides?.description ?? q.description ?? undefined,
-        options: q.options ?? undefined,
-        // A deactivated question still assigned is shown but never required, as the server holds it
-        validation: withInactiveOptional(resolveEffectiveValidation(q), q.isActive),
-        videoId: q.videoId ?? undefined,
-        scoreDimension: q.scoreDimension ?? undefined,
-      })
-    )
+    questions
+      .filter((q) => q.isActive)
+      .map(
+        (q): AssessmentQuestion => ({
+          id: q.id,
+          publicId: q.publicId,
+          type: q.type,
+          question: q.configOverrides?.questionText ?? q.questionText,
+          description: q.configOverrides?.description ?? q.description ?? undefined,
+          options: q.options ?? undefined,
+          validation: resolveEffectiveValidation(q) ?? undefined,
+          videoId: q.videoId ?? undefined,
+          scoreDimension: q.scoreDimension ?? undefined,
+        })
+      )
   ),
 });
 
