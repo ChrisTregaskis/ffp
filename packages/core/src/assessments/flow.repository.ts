@@ -12,7 +12,7 @@ import {
 import { db, withRLS } from '../lib/database';
 import { InternalServerError, NotFoundError } from '../lib/errors';
 import { createSystemLogger } from '../lib/logger';
-import { applyPagination, escapeLikePattern } from '../lib/pagination';
+import { applyPagination, escapeLikePattern, sortColumnFor } from '../lib/pagination';
 
 import type {
   AssessmentFlowListFilters,
@@ -200,19 +200,22 @@ export async function findDefaultForOrganisation(
  *
  * @param dbClient - Database client (transaction or connection)
  * @param flowId - The assessment flow UUID
+ * @param options.forUpdate - Lock the rows until the caller's transaction ends
  * @returns Array of flow steps, ordered by tier then by id
  */
 export async function findStepsByFlowId(
   dbClient: DbQueryClient,
-  flowId: string
+  flowId: string,
+  options: { forUpdate?: boolean } = {}
 ): Promise<FlowStepWithConfig[]> {
-  const records = await dbClient
+  const query = dbClient
     .select()
     .from(flowSteps)
     .where(and(eq(flowSteps.flowId, flowId), eq(flowSteps.isActive, true)))
-    .orderBy(asc(flowSteps.order), asc(flowSteps.id));
+    .orderBy(asc(flowSteps.order), asc(flowSteps.id))
+    .$dynamic();
 
-  return records;
+  return await (options.forUpdate ? query.for('update') : query);
 }
 
 /**
@@ -299,10 +302,9 @@ export async function findFlowPage(
     .groupBy(assessmentFlows.id)
     .$dynamic();
 
-  const sortBy =
-    paginationInput.sortBy && FLOW_SORTABLE_COLUMNS[paginationInput.sortBy]
-      ? paginationInput.sortBy
-      : 'name';
+  const sortBy = sortColumnFor(paginationInput.sortBy, FLOW_SORTABLE_COLUMNS)
+    ? paginationInput.sortBy
+    : 'name';
 
   return await applyPagination(
     query,

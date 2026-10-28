@@ -296,13 +296,12 @@ export function isSystemActor(actor: Actor): actor is SystemActor {
 }
 
 /**
- * Get a human-readable display name for an actor
- *
- * Used for logging and audit trails to identify who performed an operation.
+ * Identify an actor for log lines and audit trails. A user is named by Cognito sub
+ * (`users.cognito_sub`) and role, never by email, so a log line carries no personal data.
  */
 export function getActorDisplayName(actor: Actor): string {
   if (isUserActor(actor)) {
-    return `${actor.email} (${actor.userRole})`;
+    return `${actor.userId} (${actor.userRole})`;
   }
 
   return `System: ${actor.systemId}`;

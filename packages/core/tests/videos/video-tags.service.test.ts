@@ -12,14 +12,13 @@ import {
   listAdminVideos,
   updateVideo,
 } from '../../src/videos/video.service';
+import { inRolledBackTransaction, type TestTx } from '../lib/rolled-back-transaction.fixture';
 import {
   assignTags,
   findCategoryId,
-  inRolledBackTransaction,
   insertTestTag,
   insertTestVideo,
   readVideoTagKeys,
-  type TestTx,
 } from '../tags/tag-fixture';
 
 import type { Pool } from 'pg';

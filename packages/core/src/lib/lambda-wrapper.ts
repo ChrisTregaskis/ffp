@@ -13,34 +13,11 @@ import { ZodError } from 'zod';
 import { extractUserContext, type APIGatewayProxyEventV2WithJWT } from './context.js';
 import { translateDatabaseError } from './database-errors.js';
 import { BaseError, ForbiddenError, InternalServerError } from './errors.js';
-import { describeErrorForLog } from './log-safe-error.js';
-import { createLogger, type TenantLogger } from './logger.js';
+import { describeErrorForLog, describeShapeForLog } from './log-safe-error.js';
+import { createLogger, type LogContext, type TenantLogger } from './logger.js';
 
 import type { ApiErrorBody, ApiFieldError } from '../schemas/api-error.schema.js';
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
-
-/**
- * Sensitive field names to redact from request bodies
- *
- * These fields contain security-sensitive data that should never
- * appear in logs or error messages.
- */
-const SENSITIVE_BODY_FIELDS = [
-  'password',
-  'refreshToken',
-  'accessToken',
-  'idToken',
-  'secret',
-  'apiKey',
-] as const;
-
-/**
- * Sensitive header names to redact from requests
- *
- * These headers contain authentication/authorisation data that
- * should never appear in logs.
- */
-const SENSITIVE_HEADERS = ['authorization', 'Authorization'] as const;
 
 /**
  * Wraps a Lambda handler with error handling and structured logging middleware
@@ -134,8 +111,7 @@ export const withErrorHandling = <TResult>(
               : error instanceof BaseError
                 ? error.code
                 : 'UNKNOWN_ERROR',
-          // Sanitise event data to avoid logging sensitive information
-          sanitisedEvent: sanitiseEventForLogging(event),
+          request: describeRequestForLog(event),
         });
       } else {
         // Fallback to console.error for unauthenticated requests
@@ -144,8 +120,7 @@ export const withErrorHandling = <TResult>(
           // For ZodError, use the structured issues array instead of the stringified message
           ...(error instanceof ZodError ? { error: error.issues } : { stack }),
           requestId,
-          // Sanitise event data to avoid logging sensitive information
-          event: sanitiseEventForLogging(event),
+          request: describeRequestForLog(event),
         });
       }
 
@@ -214,52 +189,28 @@ export const withErrorHandling = <TResult>(
   };
 };
 
-/**
- * Sanitises event data for logging
- *
- * Removes sensitive information like:
- * - Authorization headers
- * - Password fields
- * - Tokens
- *
- * @param event - The Lambda event object
- * @returns Sanitised event object safe for logging
- */
-const sanitiseEventForLogging = (
-  event: APIGatewayProxyEventV2WithJWT
-): APIGatewayProxyEventV2WithJWT => {
-  const redacted = '[REDACTED]';
-  const sanitised = { ...event };
-
-  // Remove sensitive headers
-  const headers = { ...sanitised.headers };
-  for (const headerName of SENSITIVE_HEADERS) {
-    if (headerName in headers) {
-      headers[headerName] = redacted;
-    }
-  }
-  sanitised.headers = headers;
-
-  // Remove sensitive fields from body
-  if (sanitised.body && typeof sanitised.body === 'string') {
-    try {
-      const body = JSON.parse(sanitised.body) as unknown;
-
-      if (body && typeof body === 'object') {
-        const bodyObj = body as Record<string, unknown>;
-
-        for (const fieldName of SENSITIVE_BODY_FIELDS) {
-          if (fieldName in bodyObj) {
-            bodyObj[fieldName] = redacted;
-          }
-        }
-
-        sanitised.body = JSON.stringify(bodyObj);
-      }
-    } catch {
-      // If body is not valid JSON, leave it as-is
-    }
+const describeBodyForLog = (body: string | undefined): Record<string, unknown> => {
+  if (!body) {
+    return { type: 'none' };
   }
 
-  return sanitised;
+  try {
+    return describeShapeForLog(JSON.parse(body));
+  } catch {
+    return { type: 'unparseable', length: body.length };
+  }
 };
+
+/**
+ * What a failure log may say about the request: its method, its path and the keys of its
+ * query and body, never their values, which carry members' emails, names, phone numbers,
+ * dates of birth and answers. The path holds only ids (UUIDs and public ids), which an
+ * operator needs to find the resource. Headers and the request context are left out: they
+ * carry the bearer token and the JWT claims, email included.
+ */
+const describeRequestForLog = (event: APIGatewayProxyEventV2WithJWT): LogContext => ({
+  method: event.requestContext.http.method,
+  path: event.rawPath,
+  queryKeys: Object.keys(event.queryStringParameters ?? {}),
+  body: describeBodyForLog(event.body),
+});

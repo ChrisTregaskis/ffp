@@ -8,7 +8,12 @@ import {
 } from '@ffp/database/schema';
 import { templatePhases, templateSessions, sessionExercises } from '@ffp/database/schema';
 
-import { applyPagination, NEWEST_FIRST, withDefaultSort } from '../lib/pagination';
+import {
+  applyPagination,
+  escapeLikePattern,
+  NEWEST_FIRST,
+  withDefaultSort,
+} from '../lib/pagination';
 
 import type { PaginationInput } from '../schemas/pagination.schema';
 import type {
@@ -36,7 +41,7 @@ const buildFilterConditions = (filters: Omit<TemplateListQuery, keyof Pagination
   const conditions: SQL[] = [];
 
   if (filters.search) {
-    const pattern = `%${filters.search}%`;
+    const pattern = `%${escapeLikePattern(filters.search)}%`;
     const searchCondition = or(
       ilike(programmeTemplates.name, pattern),
       ilike(programmeTemplates.slug, pattern)

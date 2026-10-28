@@ -34,7 +34,8 @@ const describeCause = (cause: unknown): LogSafeError['cause'] => {
  * bound parameters (member emails, free-text answers), and the driver's `detail`
  * repeats the offending values. A database error is therefore described by
  * SQLSTATE, constraint and table, or by the cause's class and code when the
- * driver gave no SQLSTATE; anything else keeps its message and stack.
+ * driver gave no SQLSTATE. A syntax error's message is withheld; anything else keeps
+ * its message and stack.
  */
 export function describeErrorForLog(error: unknown): LogSafeError {
   const errorClass = error instanceof Error ? error.constructor.name : typeof error;
@@ -54,5 +55,25 @@ export function describeErrorForLog(error: unknown): LogSafeError {
     return { error: 'Database query failed', errorClass, ...(cause && { cause }) };
   }
 
+  // A JSON.parse failure quotes the text it failed on, which is the request body
+  if (error instanceof SyntaxError) {
+    const withheld = 'Syntax error (message withheld: it quotes the input)';
+
+    return { error: withheld, errorClass, stack: error.stack?.replace(error.message, withheld) };
+  }
+
   return { error: error.message, errorClass, stack: error.stack };
+}
+
+/** A value's shape for a log line (its type, and an object's keys or an array's length), never the value. */
+export function describeShapeForLog(value: unknown): Record<string, unknown> {
+  if (Array.isArray(value)) {
+    return { type: 'array', length: value.length };
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    return { type: 'object', keys: Object.keys(value) };
+  }
+
+  return { type: value === null ? 'null' : typeof value };
 }

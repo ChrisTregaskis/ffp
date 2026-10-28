@@ -15,6 +15,7 @@ import { randomUUID } from 'crypto';
 import { sql } from 'drizzle-orm';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
+import { flowSteps } from '@ffp/database/schema';
 import {
   asOrganisation,
   connectTestDb,
@@ -132,6 +133,36 @@ describe('User Assessment Repository', () => {
       expect(result.startedAt).toBeNull();
       expect(result.createdAt).toBeInstanceOf(Date);
       expect(result.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it("starts at the flow's first active step when no active step holds order 1", async () => {
+      await db.insert(flowSteps).values([
+        { flowId, order: 1, type: 'intro', config: { title: 'Removed' }, isActive: false },
+        { flowId, order: 3, type: 'results', config: { title: 'Results' } },
+        { flowId, order: 2, type: 'transition', config: { title: 'First active' } },
+      ]);
+
+      const result = await userAssessmentRepository.createUserAssessment({
+        organisationId: organisationAId,
+        userId: userA1Id,
+        flowId,
+      });
+
+      expect(result.currentStep).toBe(2);
+    });
+
+    it('starts at step 1 when the flow has no active step, as there is none to start on', async () => {
+      await db
+        .insert(flowSteps)
+        .values({ flowId, order: 2, type: 'intro', config: { title: 'Removed' }, isActive: false });
+
+      const result = await userAssessmentRepository.createUserAssessment({
+        organisationId: organisationAId,
+        userId: userA1Id,
+        flowId,
+      });
+
+      expect(result.currentStep).toBe(1);
     });
   });
 

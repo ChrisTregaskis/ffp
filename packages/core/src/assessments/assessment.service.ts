@@ -4,6 +4,7 @@ import { hasProgrammeGenerationFailed, queueJob } from '../jobs/job-queue.servic
 import { getUserIdFromContext } from '../lib/context';
 import { withRLS, type Transaction } from '../lib/database';
 import { InternalServerError, NotFoundError, ValidationError } from '../lib/errors';
+import { describeShapeForLog } from '../lib/log-safe-error';
 import { createSystemLogger } from '../lib/logger';
 import { programmeRepository } from '../programmes';
 import { findSlugsByIds } from '../questions/question.repository';
@@ -202,19 +203,6 @@ function convertStepsToSummaryFormat(steps: FlowStepWithConfig[]): FlowStepSumma
   }));
 }
 
-/** An answer value's shape, for logs: never the value, which may be what the member typed. */
-function describeAnswerShape(answerValue: unknown): Record<string, unknown> {
-  if (Array.isArray(answerValue)) {
-    return { type: 'array', length: answerValue.length };
-  }
-
-  if (typeof answerValue === 'object' && answerValue !== null) {
-    return { type: 'object', keys: Object.keys(answerValue) };
-  }
-
-  return { type: answerValue === null ? 'null' : typeof answerValue };
-}
-
 /**
  * Extract the answer value from database JSONB
  *
@@ -239,7 +227,7 @@ function extractAnswerValue(questionId: string, answerValue: unknown): AnswerVal
 
     systemLogger.warn('Array contains non-string values', {
       questionId,
-      answerShape: describeAnswerShape(answerValue),
+      answerShape: describeShapeForLog(answerValue),
     });
 
     throw new ValidationError('Invalid answer value format: array contains non-string values');
@@ -263,7 +251,7 @@ function extractAnswerValue(questionId: string, answerValue: unknown): AnswerVal
 
     systemLogger.warn('Unexpected answer value structure', {
       questionId,
-      answerShape: describeAnswerShape(answerValue),
+      answerShape: describeShapeForLog(answerValue),
     });
 
     throw new ValidationError('Invalid answer value format: unrecognised object structure');
@@ -271,7 +259,7 @@ function extractAnswerValue(questionId: string, answerValue: unknown): AnswerVal
 
   systemLogger.warn('Unexpected answer value type', {
     questionId,
-    answerShape: describeAnswerShape(answerValue),
+    answerShape: describeShapeForLog(answerValue),
   });
 
   throw new ValidationError(

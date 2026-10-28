@@ -4,14 +4,9 @@ import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
 import { findDriverError } from '../../src/lib/database-errors';
 import * as tagRepository from '../../src/tags/tag.repository';
+import { inRolledBackTransaction } from '../lib/rolled-back-transaction.fixture';
 
-import {
-  assignTags,
-  findCategoryId,
-  inRolledBackTransaction,
-  insertTestTag,
-  insertTestVideo,
-} from './tag-fixture';
+import { assignTags, findCategoryId, insertTestTag, insertTestVideo } from './tag-fixture';
 
 import type { Pool } from 'pg';
 

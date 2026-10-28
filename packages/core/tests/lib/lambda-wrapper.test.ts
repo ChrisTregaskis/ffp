@@ -6,7 +6,7 @@
  * - BaseError instances are converted to proper HTTP responses
  * - ZodError instances are converted to validation errors (400)
  * - Unexpected errors are converted to 500 responses
- * - Sensitive data is sanitised in logs
+ * - Failure logs describe the request by its shape, never its values
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -31,7 +31,7 @@ interface ErrorLogData {
   error: string;
   stack?: string;
   requestId?: string;
-  event: unknown;
+  request: unknown;
 }
 
 // Helper to assert result is an object (not string) with required body
@@ -418,126 +418,72 @@ describe('withErrorHandling', () => {
       );
     });
 
-    it('should sanitise authorization headers in logs', async () => {
+    const loggedRequest = (): unknown => (consoleErrorSpy.mock.calls[0][1] as ErrorLogData).request;
+
+    it('logs the method, the path and the body and query keys, but none of their values', async () => {
       const handler = withErrorHandling(() => {
         throw new Error('Test');
       });
-
       const event = createMockEvent({
-        headers: {
-          authorization: 'Bearer secret-token',
-          'Content-Type': 'application/json',
-        },
-      });
-
-      await handler(event);
-
-      const loggedData = consoleErrorSpy.mock.calls[0][1] as ErrorLogData;
-      const loggedEvent = loggedData.event as {
-        headers: Record<string, string>;
-      };
-      expect(loggedEvent.headers.authorization).toBe('[REDACTED]');
-      expect(loggedEvent.headers['Content-Type']).toBe('application/json');
-    });
-
-    it('should sanitise password fields in request body', async () => {
-      const handler = withErrorHandling(() => {
-        throw new Error('Test');
-      });
-
-      const event = createMockEvent({
+        rawPath: '/auth/login',
+        rawQueryString: 'email=sentinel.query%40example.com',
+        queryStringParameters: { email: 'sentinel.query@example.com' },
         body: JSON.stringify({
-          email: 'user@example.com',
-          password: 'secret-password',
+          email: 'sentinel.member@example.com',
+          password: 'sentinel-password',
         }),
       });
+      event.requestContext.http.method = 'POST';
 
       await handler(event);
 
-      const loggedData = consoleErrorSpy.mock.calls[0][1] as ErrorLogData;
-      const loggedEvent = loggedData.event as { body: string };
-      const loggedBody = JSON.parse(loggedEvent.body) as {
-        email: string;
-        password: string;
-      };
-      expect(loggedBody.password).toBe('[REDACTED]');
-      expect(loggedBody.email).toBe('user@example.com');
+      expect(loggedRequest()).toEqual({
+        method: 'POST',
+        path: '/auth/login',
+        queryKeys: ['email'],
+        body: { type: 'object', keys: ['email', 'password'] },
+      });
+      expect(JSON.stringify(consoleErrorSpy.mock.calls)).not.toContain('sentinel');
     });
 
-    it('should sanitise refresh tokens in request body', async () => {
+    it('logs no header, so a bearer token never reaches the log', async () => {
       const handler = withErrorHandling(() => {
         throw new Error('Test');
       });
 
-      const event = createMockEvent({
-        body: JSON.stringify({
-          refreshToken: 'secret-refresh-token',
-        }),
-      });
+      await handler(
+        createMockEvent({
+          headers: { authorization: 'Bearer sentinel-token', cookie: 'session=sentinel-cookie' },
+        })
+      );
 
-      await handler(event);
-
-      const loggedData = consoleErrorSpy.mock.calls[0][1] as ErrorLogData;
-      const loggedEvent = loggedData.event as { body: string };
-      const loggedBody = JSON.parse(loggedEvent.body) as {
-        refreshToken: string;
-      };
-      expect(loggedBody.refreshToken).toBe('[REDACTED]');
+      expect(JSON.stringify(consoleErrorSpy.mock.calls)).not.toContain('sentinel');
     });
 
-    it('should handle malformed JSON body gracefully', async () => {
+    it('logs a body that is not JSON by its length, not its text', async () => {
       const handler = withErrorHandling(() => {
         throw new Error('Test');
       });
 
-      const event = createMockEvent({
-        body: 'invalid json{',
+      await handler(createMockEvent({ body: 'sentinel{' }));
+
+      expect(loggedRequest()).toEqual({
+        method: 'GET',
+        path: '/',
+        queryKeys: [],
+        body: { type: 'unparseable', length: 9 },
       });
-
-      await handler(event);
-
-      const loggedData = consoleErrorSpy.mock.calls[0][1] as ErrorLogData;
-      const loggedEvent = loggedData.event as { body: string };
-      expect(loggedEvent.body).toBe('invalid json{');
+      expect(JSON.stringify(consoleErrorSpy.mock.calls)).not.toContain('sentinel');
     });
-    it('should sanitise additional sensitive fields (accessToken, idToken, secret, apiKey)', async () => {
-      const handler = withErrorHandling(() => {
-        throw new Error('Test');
-      });
 
-      const event = createMockEvent({
-        body: JSON.stringify({
-          email: 'user@example.com',
-          accessToken: 'secret-access-token',
-          idToken: 'secret-id-token',
-          secret: 'my-secret-key',
-          apiKey: 'my-api-key',
-          publicData: 'visible-data',
-        }),
-      });
+    it("withholds a JSON syntax error's message, which quotes the body it failed on", async () => {
+      const body = '{"email": "sentinel.member@example.com", "password": sentinel}';
+      const handler = withErrorHandling(() => Promise.resolve(JSON.parse(body) as unknown));
 
-      await handler(event);
+      await handler(createMockEvent({ body }));
 
-      const loggedData = consoleErrorSpy.mock.calls[0][1] as ErrorLogData;
-      const loggedEvent = loggedData.event as { body: string };
-      const loggedBody = JSON.parse(loggedEvent.body) as {
-        email: string;
-        accessToken: string;
-        idToken: string;
-        secret: string;
-        apiKey: string;
-        publicData: string;
-      };
-
-      // All sensitive fields should be redacted
-      expect(loggedBody.accessToken).toBe('[REDACTED]');
-      expect(loggedBody.idToken).toBe('[REDACTED]');
-      expect(loggedBody.secret).toBe('[REDACTED]');
-      expect(loggedBody.apiKey).toBe('[REDACTED]');
-
-      // Non-sensitive fields should remain
-      expect(loggedBody.email).toBe('user@example.com');
-      expect(loggedBody.publicData).toBe('visible-data');
+      expect(consoleErrorSpy.mock.calls[0][1]).toMatchObject({ errorClass: 'SyntaxError' });
+      expect(JSON.stringify(consoleErrorSpy.mock.calls)).not.toContain('sentinel');
     });
   });
 
@@ -728,46 +674,56 @@ describe('withErrorHandling', () => {
       expect(errorLog.context?.errorType).toBe('VALIDATION_ERROR');
     });
 
-    const loggedEntries = (): { message: string; context?: Record<string, unknown> }[] =>
+    const loggedEntries = (): {
+      message: string;
+      requestId: string;
+      context?: Record<string, unknown>;
+    }[] =>
       consoleLogSpy.mock.calls.map(
         (call) =>
-          JSON.parse(call[0] as string) as { message: string; context?: Record<string, unknown> }
+          JSON.parse(call[0] as string) as {
+            message: string;
+            requestId: string;
+            context?: Record<string, unknown>;
+          }
       );
 
     const failureContext = (): Record<string, unknown> | undefined =>
       loggedEntries().find((entry) => entry.message === 'Request failed')?.context;
 
-    it('should redact the token and password from the event logged for a failed authenticated request', async () => {
+    it("logs no email, name or answer from a failed request's body or query, only their keys", async () => {
       const handler = withErrorHandling(() => {
-        throw new Error('Unexpected failure');
+        throw new ValidationError('Some answers need your attention');
+      });
+      const questionId = '6f1c2a90-4b7e-4c55-9d1a-3e2f8b7c6d5e';
+
+      await handler({
+        ...createAuthenticatedEvent({ path: '/admin/users', httpMethod: 'POST' }),
+        rawQueryString: 'search=Sentinelname',
+        queryStringParameters: { search: 'Sentinelname' },
+        headers: { authorization: 'Bearer sentinel-bearer-token' },
+        body: JSON.stringify({
+          email: 'sentinel.member@example.com',
+          firstName: 'Sentinelname',
+          answers: { [questionId]: { questionId, answerValue: 'sentinel free-text answer' } },
+        }),
       });
 
-      const event: APIGatewayProxyEventV2WithJWT = {
-        ...createAuthenticatedEvent({ path: '/auth/change-password', httpMethod: 'POST' }),
-        headers: {
-          authorization: 'Bearer sentinel-bearer-token',
-          'content-type': 'application/json',
+      const failure = loggedEntries().find((entry) => entry.message === 'Request failed');
+      expect(failure).toMatchObject({
+        requestId: 'test-request-id',
+        context: {
+          error: 'Some answers need your attention',
+          errorType: 'VALIDATION_ERROR',
+          request: {
+            method: 'POST',
+            path: '/admin/users',
+            queryKeys: ['search'],
+            body: { type: 'object', keys: ['email', 'firstName', 'answers'] },
+          },
         },
-        body: JSON.stringify({ email: 'test@example.com', password: 'sentinel-password' }),
-      };
-
-      await handler(event);
-
-      const loggedEvent = failureContext()?.sanitisedEvent as {
-        headers: Record<string, string>;
-        body: string;
-      };
-      expect(loggedEvent.headers).toEqual({
-        authorization: '[REDACTED]',
-        'content-type': 'application/json',
       });
-      expect(JSON.parse(loggedEvent.body)).toEqual({
-        email: 'test@example.com',
-        password: '[REDACTED]',
-      });
-      const logged = JSON.stringify(consoleLogSpy.mock.calls);
-      expect(logged).not.toContain('sentinel-bearer-token');
-      expect(logged).not.toContain('sentinel-password');
+      expect(JSON.stringify(consoleLogSpy.mock.calls).toLowerCase()).not.toContain('sentinel');
     });
 
     it('should log a unique violation on an authenticated request without the query or its parameters', async () => {
@@ -820,9 +776,9 @@ describe('withErrorHandling', () => {
       expectNothingLeakable(JSON.stringify(consoleLogSpy.mock.calls));
     });
 
-    it('should include actor information in structured logs', async () => {
+    it('names the actor by Cognito sub and role, and logs no email on any line', async () => {
       const handler = withErrorHandling(() => {
-        return Promise.resolve({ success: true });
+        throw new Error('Unexpected failure');
       });
 
       const event = createAuthenticatedEvent();
@@ -833,8 +789,9 @@ describe('withErrorHandling', () => {
         organisationId: string;
       };
 
-      expect(startLog.actor).toBe('test@example.com (customer_owner)');
+      expect(startLog.actor).toBe('user-123 (customer_owner)');
       expect(startLog.organisationId).toBe('org-456');
+      expect(JSON.stringify(consoleLogSpy.mock.calls)).not.toContain('test@example.com');
     });
 
     it('should fall back to console.error for unauthenticated requests', async () => {
