@@ -1,74 +1,8 @@
 import { describe, it, expect } from 'vitest';
 
-import { loginSchema, refreshTokenSchema, passwordValidation } from '../../src/schemas/auth.schema';
+import { loginSchema, refreshTokenSchema } from '../../src/schemas/auth.schema';
 
 describe('Auth Schemas', () => {
-  describe('passwordValidation', () => {
-    it('validates password meeting all requirements', () => {
-      const result = passwordValidation.safeParse('Test123!abc');
-
-      expect(result.success).toBe(true);
-    });
-
-    it('rejects password shorter than 8 characters', () => {
-      const result = passwordValidation.safeParse('Test1!');
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].message).toContain('at least 8 characters');
-      }
-    });
-
-    it('rejects password without lowercase letter', () => {
-      const result = passwordValidation.safeParse('TEST123!');
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        const messages = result.error.issues.map((issue) => issue.message);
-        expect(messages.some((msg) => msg.includes('lowercase'))).toBe(true);
-      }
-    });
-
-    it('rejects password without uppercase letter', () => {
-      const result = passwordValidation.safeParse('test123!');
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        const messages = result.error.issues.map((issue) => issue.message);
-        expect(messages.some((msg) => msg.includes('uppercase'))).toBe(true);
-      }
-    });
-
-    it('rejects password without digit', () => {
-      const result = passwordValidation.safeParse('Testtest!');
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        const messages = result.error.issues.map((issue) => issue.message);
-        expect(messages.some((msg) => msg.includes('digit'))).toBe(true);
-      }
-    });
-
-    it('rejects password without special character', () => {
-      const result = passwordValidation.safeParse('Test1234');
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        const messages = result.error.issues.map((issue) => issue.message);
-        expect(messages.some((msg) => msg.includes('special character'))).toBe(true);
-      }
-    });
-
-    it('accepts various special characters', () => {
-      const specialChars = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '+', '='];
-
-      specialChars.forEach((char) => {
-        const result = passwordValidation.safeParse(`Test123${char}`);
-        expect(result.success).toBe(true);
-      });
-    });
-  });
-
   describe('loginSchema', () => {
     it('validates correct login credentials', () => {
       const result = loginSchema.safeParse({

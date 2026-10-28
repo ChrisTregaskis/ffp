@@ -1,3 +1,4 @@
+import { InvalidParameterException } from '@aws-sdk/client-cognito-identity-provider';
 import { DrizzleQueryError } from 'drizzle-orm';
 import { DatabaseError } from 'pg';
 import { describe, it, expect } from 'vitest';
@@ -138,6 +139,19 @@ describe('describeErrorForLog', () => {
     });
     expect(description.stack).toMatch(/\n\s+at /);
     expect(JSON.stringify(description)).not.toContain('sentinel');
+  });
+
+  it('describes a Cognito error by its name and status, never its message, which can quote the email', () => {
+    const error = new InvalidParameterException({
+      message: "1 validation error detected: Value 'sentinel.member@example.com' at 'username'",
+      $metadata: { httpStatusCode: 400 },
+    });
+
+    expect(describeErrorForLog(error)).toEqual({
+      error: 'AWS service error: InvalidParameterException',
+      errorClass: 'InvalidParameterException',
+      aws: { name: 'InvalidParameterException', httpStatusCode: 400 },
+    });
   });
 
   it('logs a thrown non-error as unknown, without its value', () => {

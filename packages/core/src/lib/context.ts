@@ -83,7 +83,6 @@ export interface UserActor {
   type: 'user';
   userId: string;
   userRole: string;
-  email: string;
 }
 
 /**
@@ -162,6 +161,7 @@ export function extractUserContext(event: APIGatewayProxyEventV2WithJWT): Organi
     throw new UnauthorisedError('Missing or invalid role claim');
   }
 
+  // Required of a well-formed ID token, but never carried on the context, so no log can pick it up
   if (!email || typeof email !== 'string') {
     throw new UnauthorisedError('Missing or invalid email claim');
   }
@@ -175,7 +175,6 @@ export function extractUserContext(event: APIGatewayProxyEventV2WithJWT): Organi
       type: 'user',
       userId: sub,
       userRole: role,
-      email,
     },
     organisationId,
     locationId: claims[COGNITO_CUSTOM_ATTRIBUTES.LOCATION_ID] ?? null,
