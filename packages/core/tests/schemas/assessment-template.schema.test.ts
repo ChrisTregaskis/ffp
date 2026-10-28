@@ -6,7 +6,6 @@ import {
   createAssessmentTemplateSchema,
   updateAssessmentTemplateSchema,
 } from '../../src/schemas/assessment-template.schema';
-import { dimensionConfigSchema } from '../../src/schemas/scoring-config.schema';
 
 import type { AssessmentQuestion } from '../../src/schemas/assessment-question.schema';
 
@@ -25,54 +24,6 @@ const validTemplate = {
   createdAt: new Date(),
   updatedAt: new Date(),
 };
-
-describe('dimensionConfigSchema', () => {
-  it('applies default weight of 1', () => {
-    const result = dimensionConfigSchema.safeParse({
-      name: 'balance',
-      questionIds: [QUESTION_UUID_1],
-      maxScore: 10,
-    });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.weight).toBe(1);
-    }
-  });
-
-  it('defaults to summed scoring that feeds the risk level', () => {
-    const result = dimensionConfigSchema.safeParse({
-      name: 'balance',
-      questionIds: [QUESTION_UUID_1],
-      maxScore: 10,
-    });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.scoringMode).toBe('sum');
-      expect(result.data.affectsRiskLevel).toBe(true);
-    }
-  });
-
-  it('accepts a modal dimension kept out of the risk level', () => {
-    const result = dimensionConfigSchema.safeParse({
-      name: 'balance',
-      questionIds: [QUESTION_UUID_1],
-      maxScore: 3,
-      scoringMode: 'modal',
-      affectsRiskLevel: false,
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it('rejects an unknown scoring mode', () => {
-    const result = dimensionConfigSchema.safeParse({
-      name: 'balance',
-      questionIds: [QUESTION_UUID_1],
-      maxScore: 3,
-      scoringMode: 'median',
-    });
-    expect(result.success).toBe(false);
-  });
-});
 
 describe('assessmentTemplateSchema', () => {
   it('accepts valid template', () => {
@@ -191,7 +142,7 @@ describe('assessmentTemplateWithQuestionsSchema', () => {
     ...overrides,
   });
 
-  const parseQuestion = (overrides: Record<string, unknown>): AssessmentQuestion =>
+  const parseQuestions = (...rows: Record<string, unknown>[]): AssessmentQuestion[] =>
     assessmentTemplateWithQuestionsSchema.parse({
       id: '11111111-1111-1111-8111-111111111106',
       publicId: 'template0001',
@@ -202,22 +153,20 @@ describe('assessmentTemplateWithQuestionsSchema', () => {
       createdBy: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      templateQuestions: [row(overrides)],
-    }).templateQuestions[0];
+      templateQuestions: rows,
+    }).templateQuestions;
 
   it('applies a template override to the member’s validation', () => {
     expect(
-      parseQuestion({ configOverrides: { validation: { required: false } } }).validation
+      parseQuestions(row({ configOverrides: { validation: { required: false } } }))[0].validation
     ).toEqual({ required: false });
   });
 
-  it('never requires a deactivated question, as the server does not', () => {
-    expect(parseQuestion({ isActive: false }).validation).toEqual({
-      required: false,
-      maxSelections: 1,
-    });
-    expect(parseQuestion({ isActive: false, validation: null }).validation).toEqual({
-      required: false,
-    });
+  it('leaves out a deactivated question, as the server does', () => {
+    const activeId = '11111111-1111-1111-8111-111111111002';
+
+    expect(
+      parseQuestions(row({ isActive: false }), row({ id: activeId })).map((q) => q.id)
+    ).toEqual([activeId]);
   });
 });

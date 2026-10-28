@@ -1,13 +1,14 @@
 /**
  * Job Processor Service Integration Tests
  *
- * Tests job polling and claiming operations against a real PostgreSQL database (ffp_test).
- * These tests verify that the processor correctly claims jobs atomically using
- * FOR UPDATE SKIP LOCKED, preventing double-processing across concurrent workers.
+ * Tests job polling and claiming operations against the real PostgreSQL test database that
+ * `connectTestDb` opens: `FFP_TEST_DB_NAME` (ffp_test unless set). These tests verify that the
+ * processor correctly claims jobs atomically using FOR UPDATE SKIP LOCKED, preventing
+ * double-processing across concurrent workers.
  *
  * Prerequisites:
- * - ffp_test database must exist
- * - Migrations must be run: DB_NAME=ffp_test pnpm --filter=@ffp/database db:migrate
+ * - The test database must exist
+ * - Migrations must be run against it: DB_NAME=<test database> pnpm --filter=@ffp/database db:migrate
  */
 
 import { randomUUID } from 'crypto';
@@ -615,6 +616,92 @@ describe('Job Processor Service', () => {
         .where(sql`id = ${job.id}`);
 
       expect(unchangedJob.status).toBe('queued');
+    });
+  });
+
+  describe('payload of a finished job', () => {
+    const readJob = async (id: string): Promise<schema.ProcessJobRecord> => {
+      const [job] = await db.select().from(schema.processJobs).where(eq(schema.processJobs.id, id));
+
+      return job;
+    };
+
+    const failOnce = async (job: schema.ProcessJobRecord): Promise<schema.ProcessJobRecord> => {
+      await failJob(job, new Error('API timeout'));
+
+      return readJob(job.id);
+    };
+
+    it('keeps only the ids once a job completes', async () => {
+      const payload = jobPayload('generate_programme');
+      const { assessmentSubmissionId, userId } = payload;
+      const job = await createTestJob({
+        type: 'generate_programme',
+        status: 'processing',
+        payload,
+      });
+
+      await completeJob(job.id, { programmeId: randomUUID() });
+
+      expect((await readJob(job.id)).payload).toEqual({ assessmentSubmissionId, userId });
+    });
+
+    it('drops the answers an older scoring job carried once it completes', async () => {
+      const payload = jobPayload('score_assessment');
+      const { userAssessmentId, flowId, userId } = payload;
+      const job = await createTestJob({
+        status: 'processing',
+        payload: {
+          ...payload,
+          responses: [{ questionId: randomUUID(), answerValue: 'a free-text answer' }],
+        },
+      });
+
+      await completeJob(job.id, { scoredAt: new Date().toISOString() });
+
+      expect((await readJob(job.id)).payload).toEqual({ userAssessmentId, flowId, userId });
+    });
+
+    it('keeps only the ids once a job fails for good', async () => {
+      const payload = jobPayload('generate_programme');
+      const job = await createTestJob({
+        type: 'generate_programme',
+        status: 'processing',
+        attempts: 1,
+        maxAttempts: 1,
+        payload,
+      });
+      const failed = await failOnce(job);
+
+      expect(failed.status).toBe('failed');
+      expect(failed.payload).toEqual({
+        assessmentSubmissionId: payload.assessmentSubmissionId,
+        userId: payload.userId,
+      });
+    });
+
+    it('keeps the whole payload for a retry, which claims it again', async () => {
+      const payload = jobPayload('generate_programme');
+      const job = await createTestJob({
+        type: 'generate_programme',
+        status: 'processing',
+        attempts: 1,
+        payload,
+      });
+      const retried = await failOnce(job);
+
+      expect(retried.status).toBe('queued');
+      expect(retried.payload).toEqual(payload);
+
+      await db
+        .update(schema.processJobs)
+        .set({ retryAfter: null })
+        .where(eq(schema.processJobs.id, job.id));
+      const { claimedJobs } = await pollAndClaimJobs();
+
+      expect(ownJobs(claimedJobs)).toEqual([
+        expect.objectContaining({ id: job.id, status: 'processing', payload }),
+      ]);
     });
   });
 

@@ -82,7 +82,6 @@ const createUserContext = (): OrganisationContext => ({
     type: 'user',
     userId: randomUUID(),
     userRole: 'programme_user',
-    email: 'test@example.com',
   } as UserActor,
   organisationId: randomUUID(),
   locationId: randomUUID(),
@@ -316,6 +315,28 @@ describe('Assessment Service', () => {
       });
     });
 
+    it.each([
+      ['a new or resumed', {}],
+      ['a reassessment', { isReassessment: true }],
+    ])('refuses %s start on a flow with no active steps', async (_case, options) => {
+      const context = createUserContext();
+      const flowId = randomUUID();
+
+      mockedContextModule.getUserIdFromContext.mockResolvedValue(randomUUID());
+      mockedFlowRepo.findActiveById.mockResolvedValue(createMockFlow(flowId));
+      mockedFlowRepo.findStepsByFlowId.mockResolvedValue([]);
+
+      await expect(
+        assessmentService.startAssessment(flowId, context, options)
+      ).rejects.toMatchObject({
+        statusCode: 409,
+        message: 'This assessment has no steps to show yet',
+      });
+      expect(mockedUserAssessmentRepo.abandonInProgressAssessments).not.toHaveBeenCalled();
+      expect(mockedUserAssessmentRepo.findResumableAssessment).not.toHaveBeenCalled();
+      expect(mockedUserAssessmentRepo.createUserAssessment).not.toHaveBeenCalled();
+    });
+
     it('returns existing assessment with isResumed=true', async () => {
       const context = createUserContext();
       const flowId = randomUUID();
@@ -325,7 +346,7 @@ describe('Assessment Service', () => {
         organisationId: context.organisationId,
         userId: databaseUserId,
         flowId,
-        currentStep: 3,
+        currentStep: 1,
       });
 
       // Mock answers from the new table
@@ -367,7 +388,7 @@ describe('Assessment Service', () => {
       const result = await assessmentService.startAssessment(flowId, context);
 
       expect(result.isResumed).toBe(true);
-      expect(result.currentStep).toBe(3);
+      expect(result.currentStep).toBe(1);
       expect(result.steps).toHaveLength(1);
       expect(result.answers[questionId]).toBeDefined();
       expect(result.answers[questionId].answerValue).toBe(4);
@@ -394,7 +415,7 @@ describe('Assessment Service', () => {
       runWithRLSInMockTx();
     });
 
-    it('successfully submits assessment with merged answers and enqueues scoring job', async () => {
+    it('submits merged answers and queues a scoring job that carries ids, not answers', async () => {
       const context = createUserContext();
       const databaseUserId = randomUUID();
       const assessmentId = randomUUID();
@@ -489,10 +510,6 @@ describe('Assessment Service', () => {
           userAssessmentId: assessmentId,
           flowId,
           userId: databaseUserId,
-          responses: expect.arrayContaining([
-            expect.objectContaining({ questionId: questionId1, answerValue: 3 }),
-            expect.objectContaining({ questionId: questionId2, answerValue: 5 }),
-          ]) as unknown[],
         },
         context,
         { priority: 2, tx: mockTx }
@@ -809,10 +826,6 @@ describe('Assessment Service', () => {
           userId,
           expect.any(Function)
         );
-        // A deactivated question still shown to members keeps its rules
-        expect(mockedQuestionRepo.findByTemplateIds.mock.calls[0]?.[2]).toEqual({
-          includeInactive: true,
-        });
       });
 
       it.each([
@@ -976,6 +989,29 @@ describe('Assessment Service', () => {
         expect(mockedJobQueueService.queueJob).not.toHaveBeenCalled();
       });
 
+      it.each([
+        ['with nothing answered', false],
+        ['answering only a question the flow no longer shows', true],
+      ])('refuses a submit %s, before any write', async (_case, hasStaleAnswer) => {
+        const { context, assessmentId } = setUp();
+
+        mockedAnswerRepo.findByAssessmentId.mockResolvedValue(
+          hasStaleAnswer ? [storedAnswer(context, assessmentId, randomUUID(), 'kept')] : []
+        );
+
+        await expect(
+          assessmentService.submitAssessment(assessmentId, { answers: {} }, context)
+        ).rejects.toMatchObject({
+          name: 'ValidationError',
+          statusCode: 400,
+          message: 'Please answer the questions before you submit your assessment.',
+          details: undefined,
+        });
+        expect(mockedDatabaseModule.withRLS).not.toHaveBeenCalled();
+        expect(mockedUserAssessmentRepo.transitionAssessmentStatus).not.toHaveBeenCalled();
+        expect(mockedJobQueueService.queueJob).not.toHaveBeenCalled();
+      });
+
       it('ignores a stored answer to an unassigned question that the client echoes back', async () => {
         const { context, userId, assessmentId, assessment, capped } = setUp();
         const unassignedId = randomUUID();
@@ -998,11 +1034,6 @@ describe('Assessment Service', () => {
             userAssessmentId: assessmentId,
             flowId: assessment.flowId,
             userId,
-            // Scoring reads every stored answer; validation is what leaves the echo alone
-            responses: [
-              { questionId: capped.id, answerValue: ['a'] },
-              { questionId: unassignedId, answerValue: 'kept' },
-            ],
           },
           context,
           { priority: 2, tx: mockTx }
@@ -1028,7 +1059,7 @@ describe('Assessment Service', () => {
         ]);
       });
 
-      it('clears an emptied optional answer and leaves it out of scoring', async () => {
+      it('clears an emptied optional answer, so scoring never reads it', async () => {
         const { context, assessmentId, capped, optional } = setUp();
 
         mockedAnswerRepo.findByAssessmentId.mockResolvedValue([
@@ -1048,12 +1079,6 @@ describe('Assessment Service', () => {
           assessmentId,
           [optional.id],
           { tx: mockTx }
-        );
-        expect(mockedJobQueueService.queueJob).toHaveBeenCalledWith(
-          'score_assessment',
-          expect.objectContaining({ responses: [{ questionId: capped.id, answerValue: ['a'] }] }),
-          context,
-          { priority: 2, tx: mockTx }
         );
       });
 
@@ -1616,6 +1641,37 @@ describe('Assessment Service', () => {
           { userId }
         );
       });
+
+      // An older delete left a gap: no active step holds the stored order
+      it.each([
+        ['on the next step when the stored one was removed', [1, 2, 4, 5], 3, 4],
+        ['on the last question step left when the stored one was removed', [1, 2, 3, 5], 4, 3],
+        ['back on the last step when none follows the stored one', [1, 5], 7, 5],
+      ])('resumes %s', async (_case, activeOrders, stored, expected) => {
+        const context = createUserContext();
+        const userId = randomUUID();
+        const flowId = randomUUID();
+
+        mockedContextModule.getUserIdFromContext.mockResolvedValue(userId);
+        mockedFlowRepo.findActiveById.mockResolvedValue(createMockFlow(flowId));
+        mockedFlowRepo.findStepsByFlowId.mockResolvedValue(
+          createPositionFlow(flowId).filter((step) => activeOrders.includes(step.order))
+        );
+        mockedUserAssessmentRepo.findResumableAssessment.mockResolvedValue(
+          createMockAssessment({
+            organisationId: context.organisationId,
+            userId,
+            flowId,
+            currentStep: stored,
+          })
+        );
+        mockedAnswerRepo.findByAssessmentId.mockResolvedValue([]);
+
+        const result = await assessmentService.startAssessment(flowId, context);
+
+        expect(result.currentStep).toBe(expected);
+        expect(result.steps.map((step) => step.order)).toContain(expected);
+      });
     });
   });
 
@@ -1817,7 +1873,9 @@ describe('Assessment Service', () => {
 
         mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
         mockedFlowRepo.findActiveById.mockResolvedValue(createMockFlow(flowId));
-        mockedFlowRepo.findStepsByFlowId.mockResolvedValue([]);
+        mockedFlowRepo.findStepsByFlowId.mockResolvedValue(
+          createMockFlowSteps(flowId, randomUUID())
+        );
         mockedUserAssessmentRepo.findResumableAssessment.mockResolvedValue(assessment);
         mockedAnswerRepo.findByAssessmentId.mockResolvedValue([stored as UserAssessmentAnswer]);
 

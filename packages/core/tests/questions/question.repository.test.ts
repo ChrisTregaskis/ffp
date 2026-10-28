@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import { inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 
 import type { ScoringConfig } from '@ffp/database';
@@ -12,12 +12,14 @@ import {
 } from '@ffp/database/schema';
 import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
+import { loadFlowQuestions } from '../../src/assessments/answer-validation';
 import * as questionRepository from '../../src/questions/question.repository';
 import {
   createQuestionSchema,
   updateQuestionSchema,
 } from '../../src/schemas/assessment-question.schema';
 
+import type { FlowStepWithConfig } from '../../src/assessments/flow.repository';
 import type { Pool } from 'pg';
 
 // Questions, templates and flows are shared catalogue tables: every slug and name carries a
@@ -170,6 +172,43 @@ describe('Question Repository', () => {
     });
   });
 
+  describe('a deactivated question still assigned to a template', () => {
+    it('is left out of the questions validation and scoring read, like an unassigned one', async () => {
+      const active = await createQuestion();
+      const retired = await createQuestion();
+      await db.update(questions).set({ isActive: false }).where(eq(questions.id, retired.id));
+      const [template] = await db
+        .insert(assessmentTemplates)
+        .values({ name: `Retired question template [${RUN_ID}]` })
+        .returning({ id: assessmentTemplates.id });
+      createdTemplateIds.push(template.id);
+      await db.insert(templateQuestions).values([
+        { templateId: template.id, questionId: active.id, displayOrder: 1 },
+        { templateId: template.id, questionId: retired.id, displayOrder: 2 },
+      ]);
+      const step: FlowStepWithConfig = {
+        id: randomUUID(),
+        publicId: 'flowstep0001',
+        flowId: randomUUID(),
+        templateId: template.id,
+        order: 1,
+        type: 'questions',
+        config: { title: 'Questions' },
+        nextStepRules: null,
+        defaultNextStepId: null,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const validated = await loadFlowQuestions(db, [step]);
+      const scored = await questionRepository.findByTemplateIds(db, [template.id]);
+
+      expect([...validated.keys()]).toEqual([active.id]);
+      expect(scored.map((question) => question.id)).toEqual([active.id]);
+    });
+  });
+
   describe('findQuestionPage', () => {
     it('orders rows tied on the sort column by id, so the pages neither repeat nor skip one', async () => {
       // Six questions with the same text, so only the id tie-break orders them. Without it,
@@ -204,6 +243,29 @@ describe('Question Repository', () => {
       }
 
       expect(pages.flat().map((question) => question.id)).toEqual([...ids].sort());
+    });
+
+    it('falls back to question text order for a key the columns only inherit, such as constructor', async () => {
+      // The text order runs against the id order, so the id tie-break alone can't pass this
+      const [earlier, later] = [randomUUID(), randomUUID()].sort().reverse();
+
+      for (const [id, questionText] of [
+        [later, `Zebra crossing [${RUN_ID}]`],
+        [earlier, `Apple picking [${RUN_ID}]`],
+      ]) {
+        await db
+          .insert(questions)
+          .values({ id, slug: `question-repo-${id}`, type: 'text', questionText });
+        createdQuestionIds.push(id);
+      }
+
+      const listed = await questionRepository.findQuestionPage(
+        db,
+        { page: 1, pageSize: 10, sortBy: 'constructor', sortDirection: 'asc' },
+        { search: RUN_ID }
+      );
+
+      expect(listed.map((question) => question.id)).toEqual([earlier, later]);
     });
   });
 });

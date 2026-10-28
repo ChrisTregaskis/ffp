@@ -77,7 +77,6 @@ describe('Job Queue Service', () => {
       type: 'user',
       userId: randomUUID(),
       userRole: 'customer_owner',
-      email: 'test@example.com',
     };
 
     testContext = {

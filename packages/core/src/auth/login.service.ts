@@ -60,7 +60,7 @@ export async function loginService(input: LoginInput): Promise<LoginResult> {
       session: result.Session,
       email: input.email,
       message:
-        'Temporary password must be changed. Please call /auth/complete-new-password with session, email, and new password.',
+        'Temporary password must be changed. Set a new password by signing in to the web app.',
     };
   }
 

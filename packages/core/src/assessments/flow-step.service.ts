@@ -53,7 +53,10 @@ async function assertTemplateActive(
   }
 }
 
-/** Create a new step, appended to the end of the flow's active sequence. */
+/**
+ * Create a new step, appended after the flow's active steps under the flow's step lock, so a
+ * create racing a delete, a reorder or another create can't reuse an order or leave a gap.
+ */
 export async function createStepService(
   _ctx: OrganisationContext,
   flowPublicId: string,
@@ -73,8 +76,12 @@ export async function createStepService(
 
   await assertTemplateActive(db, parseResult.data.templateId);
 
-  const maxOrder = await flowStepRepository.findMaxOrderForFlow(db, flow.id);
-  const step = await flowStepRepository.createStep(db, flow.id, maxOrder + 1, parseResult.data);
+  const step = await db.transaction(async (tx) => {
+    const activeSteps = await flowStepRepository.lockActiveSteps(tx, flow.id);
+    const maxOrder = Math.max(0, ...activeSteps.map((active) => active.order));
+
+    return await flowStepRepository.createStep(tx, flow.id, maxOrder + 1, parseResult.data);
+  });
 
   return toAdminFlowStep(step);
 }
@@ -260,8 +267,9 @@ export async function deleteStepService(
 }
 
 /**
- * Reorder a flow's active steps. Refuses on branching flows and requires the
- * supplied public identifiers to be exactly the flow's active steps.
+ * Reorder a flow's active steps, in one transaction under the flow's step lock. Refuses on
+ * branching flows and requires the supplied public identifiers to be exactly the flow's active
+ * steps, as the lock leaves them.
  */
 export async function reorderStepsService(
   _ctx: OrganisationContext,
@@ -277,27 +285,29 @@ export async function reorderStepsService(
   const db = getDb();
   const flow = await resolveFlow(db, flowPublicId);
 
-  const activeSteps = await flowRepository.findStepsByFlowId(db, flow.id);
+  const reordered = await db.transaction(async (tx) => {
+    const activeSteps = await flowStepRepository.lockActiveSteps(tx, flow.id);
 
-  if (flowHasBranching(activeSteps)) {
-    throw new ConflictError(
-      'This flow contains branching and cannot be reordered. Reordering is only available for linear flows.'
-    );
-  }
-
-  // Distinctness matters here beyond the usual: `flow_steps.order` is
-  // non-unique, so a duplicate id would reassign one step twice and silently
-  // leave another unmoved.
-  const orderedStepIds = resolveOrderedChildIds(
-    parseResult.data.orderedStepPublicIds,
-    activeSteps,
-    {
-      noun: 'Step',
-      strangerMessage: 'One or more step IDs do not belong to this flow',
+    if (flowHasBranching(activeSteps)) {
+      throw new ConflictError(
+        'This flow contains branching and cannot be reordered. Reordering is only available for linear flows.'
+      );
     }
-  );
 
-  const reordered = await flowStepRepository.reorderSteps(db, flow.id, orderedStepIds);
+    // Distinctness matters here beyond the usual: `flow_steps.order` is
+    // non-unique, so a duplicate id would reassign one step twice and silently
+    // leave another unmoved.
+    const orderedStepIds = resolveOrderedChildIds(
+      parseResult.data.orderedStepPublicIds,
+      activeSteps,
+      {
+        noun: 'Step',
+        strangerMessage: 'One or more step IDs do not belong to this flow',
+      }
+    );
+
+    return await flowStepRepository.reorderSteps(tx, flow.id, orderedStepIds);
+  });
 
   return reordered.map(toAdminFlowStep);
 }

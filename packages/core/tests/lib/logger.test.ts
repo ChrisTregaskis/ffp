@@ -103,7 +103,6 @@ describe('Logger', () => {
         type: 'user',
         userId: 'user-123',
         userRole: 'customer_owner',
-        email: 'test@example.com',
       },
       organisationId: 'tenant-456',
       locationId: 'customer-789',
@@ -123,7 +122,7 @@ describe('Logger', () => {
         message: 'Test message',
         requestId: 'request-abc',
         organisationId: 'tenant-456',
-        actor: 'test@example.com (customer_owner)',
+        actor: 'user-123 (customer_owner)',
       });
       expect(logEntry.timestamp).toBeDefined();
       expect(logEntry.duration).toBeGreaterThanOrEqual(0);
@@ -225,7 +224,6 @@ describe('Logger', () => {
         type: 'user',
         userId: 'user-123',
         userRole: 'super_admin',
-        email: 'admin@example.com',
       },
       organisationId: 'tenant-456',
       locationId: null,
@@ -261,7 +259,6 @@ describe('Logger', () => {
           type: 'user',
           userId: 'user-123',
           userRole: 'customer_owner',
-          email: 'test@example.com',
         },
         organisationId: 'tenant-456',
         locationId: 'customer-789',
@@ -288,7 +285,6 @@ describe('Logger', () => {
         type: 'user',
         userId: 'user-123',
         userRole: 'customer_owner',
-        email: 'test@example.com',
       },
       organisationId: 'tenant-456',
       locationId: 'customer-789',
@@ -324,7 +320,6 @@ describe('Logger', () => {
         type: 'user',
         userId: 'user-123',
         userRole: 'customer_owner',
-        email: 'test@example.com',
       },
       organisationId: 'tenant-456',
       locationId: 'customer-789',

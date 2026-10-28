@@ -1,12 +1,18 @@
 import { eq, and, or, asc, desc, gt, inArray, sql } from 'drizzle-orm';
 
 import {
+  ABANDONABLE_STATUSES,
   setAdminContext,
   setRLSContext,
   type DbClient,
   type UserAssessmentStatus,
 } from '@ffp/database';
-import { organisations, userAssessments, type UserAssessmentRecord } from '@ffp/database/schema';
+import {
+  flowSteps,
+  organisations,
+  userAssessments,
+  type UserAssessmentRecord,
+} from '@ffp/database/schema';
 
 import { withRLS, type Transaction } from '../lib/database';
 import { NotFoundError, ValidationError } from '../lib/errors';
@@ -46,18 +52,27 @@ export interface AppendWarningsOptions {
   tx?: Transaction;
 }
 
-/** Creates an assessment instance in 'not_started' status. */
+/**
+ * Creates an assessment instance in 'not_started' status, at the flow's first active step: an
+ * earlier delete can have left no active step at order 1. A flow with no active step starts
+ * at 1, as there is no step to start on.
+ */
 export async function createUserAssessment(
   input: CreateUserAssessmentInput
 ): Promise<UserAssessment> {
   return await withRLS(input.organisationId, input.userId, async (tx) => {
+    const firstActiveStep = tx
+      .select({ order: sql<number>`coalesce(min(${flowSteps.order}), 1)` })
+      .from(flowSteps)
+      .where(and(eq(flowSteps.flowId, input.flowId), eq(flowSteps.isActive, true)));
+
     const [record] = await tx
       .insert(userAssessments)
       .values({
         organisationId: input.organisationId,
         userId: input.userId,
         flowId: input.flowId,
-        currentStep: 1,
+        currentStep: sql`(${firstActiveStep})`,
         status: 'not_started',
       })
       .returning();
@@ -192,7 +207,7 @@ export async function abandonInProgressAssessments(
         and(
           eq(userAssessments.userId, userId),
           eq(userAssessments.flowId, flowId),
-          or(eq(userAssessments.status, 'not_started'), eq(userAssessments.status, 'in_progress'))
+          inArray(userAssessments.status, ABANDONABLE_STATUSES)
         )
       )
       .returning({ id: userAssessments.id });

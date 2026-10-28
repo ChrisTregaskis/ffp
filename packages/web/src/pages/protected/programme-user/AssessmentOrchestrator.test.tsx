@@ -153,4 +153,41 @@ describe('AssessmentOrchestrator', () => {
 
     expect(await screen.findByText("We couldn't send your answers just now.")).toBeTruthy();
   });
+
+  it('shows the server’s own words for a refusal naming no question', () => {
+    const refusal = new ApiError(
+      400,
+      'VALIDATION_ERROR',
+      'Please answer the questions before you submit your assessment.'
+    );
+    mocks.useSubmitAssessment.mockReturnValue(
+      mutation(submitMutate, { isError: true, error: refusal })
+    );
+
+    renderOrchestrator();
+
+    expect(
+      screen.getByText('Please answer the questions before you submit your assessment.')
+    ).toBeTruthy();
+    expect(screen.queryByText("We couldn't send your answers just now.")).toBeNull();
+  });
+
+  it('leads back to the questions from a worded refusal rather than sending the answers again', async () => {
+    const refusal = new ApiError(
+      400,
+      'VALIDATION_ERROR',
+      'Please answer the questions before you submit your assessment.'
+    );
+    const reset = vi.fn();
+    mocks.useSubmitAssessment.mockReturnValue({
+      ...mutation(submitMutate, { isError: true, error: refusal }),
+      reset,
+    });
+
+    renderOrchestrator();
+    await userEvent.click(screen.getByRole('button', { name: 'Back to the questions' }));
+
+    expect(reset).toHaveBeenCalledTimes(1);
+    expect(submitMutate).not.toHaveBeenCalled();
+  });
 });

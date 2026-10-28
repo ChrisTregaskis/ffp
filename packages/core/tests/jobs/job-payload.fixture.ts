@@ -13,7 +13,6 @@ const builders: { [K in keyof JobPayloadMap]: () => JobPayloadMap[K] } = {
       userAssessmentId: randomUUID(),
       flowId: randomUUID(),
       userId: randomUUID(),
-      responses: [{ questionId: randomUUID(), answerValue: 5 }],
     }),
   generate_programme: () =>
     generateProgrammePayloadSchema.parse({

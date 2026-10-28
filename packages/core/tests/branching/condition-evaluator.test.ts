@@ -3,15 +3,14 @@
  *
  * Tests the evaluation logic for branch conditions including:
  * - answer_value conditions (string matching)
- * - dimension_score conditions (numeric comparisons)
- * - aggregate conditions (reserved for future)
+ * - conditions of any other type, which never match
  *
  * @module tests/branching/condition-evaluator.test
  */
 
 import { describe, it, expect } from 'vitest';
 
-import type { BranchCondition, ScoreDimension } from '@ffp/database';
+import type { BranchCondition } from '@ffp/database';
 
 import { evaluateConditions, type BranchEvaluationContext } from '../../src/assessments/branching';
 
@@ -20,16 +19,12 @@ describe('Condition Evaluator', () => {
    * Helper to create a minimal evaluation context
    */
   function createContext(
-    answers: Record<string, string | string[] | number>,
-    dimensionScores?: Partial<Record<ScoreDimension, number>>
+    answers: Record<string, string | string[] | number>
   ): BranchEvaluationContext {
     return {
       currentStepId: '55555555-5555-5555-8555-555555550001',
       allSteps: [],
       answers: new Map(Object.entries(answers)),
-      dimensionScores: dimensionScores
-        ? new Map(Object.entries(dimensionScores) as [ScoreDimension, number][])
-        : undefined,
     };
   }
 
@@ -149,151 +144,6 @@ describe('Condition Evaluator', () => {
     });
   });
 
-  describe('evaluateConditions - dimension_score type', () => {
-    it('should match when score is less than threshold (lt)', () => {
-      const conditions: BranchCondition[] = [
-        { type: 'dimension_score', dimension: 'strength', operator: 'lt', value: 20 },
-      ];
-      const context = createContext({}, { strength: 15 });
-
-      const result = evaluateConditions(conditions, context);
-
-      expect(result).toBe(true);
-    });
-
-    it('should not match when score equals threshold (lt)', () => {
-      const conditions: BranchCondition[] = [
-        { type: 'dimension_score', dimension: 'strength', operator: 'lt', value: 20 },
-      ];
-      const context = createContext({}, { strength: 20 });
-
-      const result = evaluateConditions(conditions, context);
-
-      expect(result).toBe(false);
-    });
-
-    it('should match when score equals threshold (lte)', () => {
-      const conditions: BranchCondition[] = [
-        { type: 'dimension_score', dimension: 'strength', operator: 'lte', value: 20 },
-      ];
-      const context = createContext({}, { strength: 20 });
-
-      const result = evaluateConditions(conditions, context);
-
-      expect(result).toBe(true);
-    });
-
-    it('should match when score exceeds threshold (gt)', () => {
-      const conditions: BranchCondition[] = [
-        { type: 'dimension_score', dimension: 'mobility', operator: 'gt', value: 5 },
-      ];
-      const context = createContext({}, { mobility: 8 });
-
-      const result = evaluateConditions(conditions, context);
-
-      expect(result).toBe(true);
-    });
-
-    it('should not match when score equals threshold (gt)', () => {
-      const conditions: BranchCondition[] = [
-        { type: 'dimension_score', dimension: 'mobility', operator: 'gt', value: 5 },
-      ];
-      const context = createContext({}, { mobility: 5 });
-
-      const result = evaluateConditions(conditions, context);
-
-      expect(result).toBe(false);
-    });
-
-    it('should not match when score is just below threshold (gte)', () => {
-      const conditions: BranchCondition[] = [
-        { type: 'dimension_score', dimension: 'balance', operator: 'gte', value: 10 },
-      ];
-      const context = createContext({}, { balance: 9 });
-
-      const result = evaluateConditions(conditions, context);
-
-      expect(result).toBe(false);
-    });
-
-    it('should not match when score is just above threshold (lte)', () => {
-      const conditions: BranchCondition[] = [
-        { type: 'dimension_score', dimension: 'strength', operator: 'lte', value: 20 },
-      ];
-      const context = createContext({}, { strength: 21 });
-
-      const result = evaluateConditions(conditions, context);
-
-      expect(result).toBe(false);
-    });
-
-    it('should match when score equals threshold (gte)', () => {
-      const conditions: BranchCondition[] = [
-        { type: 'dimension_score', dimension: 'balance', operator: 'gte', value: 10 },
-      ];
-      const context = createContext({}, { balance: 10 });
-
-      const result = evaluateConditions(conditions, context);
-
-      expect(result).toBe(true);
-    });
-
-    it('should match exact score (eq)', () => {
-      const conditions: BranchCondition[] = [
-        { type: 'dimension_score', dimension: 'activity', operator: 'eq', value: 5 },
-      ];
-      const context = createContext({}, { activity: 5 });
-
-      const result = evaluateConditions(conditions, context);
-
-      expect(result).toBe(true);
-    });
-
-    it('should not match when dimension scores not provided', () => {
-      const conditions: BranchCondition[] = [
-        { type: 'dimension_score', dimension: 'strength', operator: 'lt', value: 20 },
-      ];
-      const context = createContext({});
-
-      const result = evaluateConditions(conditions, context);
-
-      expect(result).toBe(false);
-    });
-
-    it('should not match when specific dimension not scored', () => {
-      const conditions: BranchCondition[] = [
-        { type: 'dimension_score', dimension: 'strength', operator: 'lt', value: 20 },
-      ];
-      const context = createContext({}, { mobility: 5 }); // No strength score
-
-      const result = evaluateConditions(conditions, context);
-
-      expect(result).toBe(false);
-    });
-
-    it('should not match when required fields missing', () => {
-      const conditions: BranchCondition[] = [
-        { type: 'dimension_score' }, // Missing dimension, operator, value
-      ];
-      const context = createContext({}, { strength: 15 });
-
-      const result = evaluateConditions(conditions, context);
-
-      expect(result).toBe(false);
-    });
-  });
-
-  describe('evaluateConditions - aggregate type', () => {
-    it('should return false (not implemented)', () => {
-      const conditions: BranchCondition[] = [{ type: 'aggregate', operator: 'gt', value: 50 }];
-      const context = createContext({}, { strength: 30, balance: 25 });
-
-      const result = evaluateConditions(conditions, context);
-
-      expect(result).toBe(false);
-    });
-  });
-
   describe('evaluateConditions - Unknown condition type', () => {
     it('should return false for unknown condition type', () => {
       const conditions = [{ type: 'unknown_type' as BranchCondition['type'] }];
@@ -303,15 +153,30 @@ describe('Condition Evaluator', () => {
 
       expect(result).toBe(false);
     });
+
+    it('refuses the removed score-based types and never matches one a stored rule carries', () => {
+      const stored: BranchCondition[] = [
+        // @ts-expect-error dimension_score is no longer a condition type
+        { type: 'dimension_score', questionSlug: 'radiating-pain', answerValue: 'yes' },
+        // @ts-expect-error aggregate is no longer a condition type
+        { type: 'aggregate', questionSlug: 'radiating-pain', answerValue: 'yes' },
+      ];
+      const context = createContext({ 'radiating-pain': 'yes' });
+
+      expect(stored.map((condition) => evaluateConditions([condition], context))).toEqual([
+        false,
+        false,
+      ]);
+    });
   });
 
   describe('evaluateConditions - Multiple conditions (AND logic)', () => {
     it('should match when all conditions pass', () => {
       const conditions: BranchCondition[] = [
         { type: 'answer_value', questionSlug: 'radiating-pain', answerValue: 'yes' },
-        { type: 'dimension_score', dimension: 'mobility', operator: 'gt', value: 5 },
+        { type: 'answer_value', questionSlug: 'pain-level', answerValue: ['7', '8'] },
       ];
-      const context = createContext({ 'radiating-pain': 'yes' }, { mobility: 8 });
+      const context = createContext({ 'radiating-pain': 'yes', 'pain-level': 8 });
 
       const result = evaluateConditions(conditions, context);
 
@@ -321,9 +186,9 @@ describe('Condition Evaluator', () => {
     it('should not match when any condition fails', () => {
       const conditions: BranchCondition[] = [
         { type: 'answer_value', questionSlug: 'radiating-pain', answerValue: 'yes' },
-        { type: 'dimension_score', dimension: 'mobility', operator: 'gt', value: 5 },
+        { type: 'answer_value', questionSlug: 'pain-level', answerValue: ['7', '8'] },
       ];
-      const context = createContext({ 'radiating-pain': 'no' }, { mobility: 8 });
+      const context = createContext({ 'radiating-pain': 'no', 'pain-level': 8 });
 
       const result = evaluateConditions(conditions, context);
 
@@ -333,9 +198,9 @@ describe('Condition Evaluator', () => {
     it('should not match when second condition fails', () => {
       const conditions: BranchCondition[] = [
         { type: 'answer_value', questionSlug: 'radiating-pain', answerValue: 'yes' },
-        { type: 'dimension_score', dimension: 'mobility', operator: 'gt', value: 5 },
+        { type: 'answer_value', questionSlug: 'pain-level', answerValue: ['7', '8'] },
       ];
-      const context = createContext({ 'radiating-pain': 'yes' }, { mobility: 3 });
+      const context = createContext({ 'radiating-pain': 'yes', 'pain-level': 3 });
 
       const result = evaluateConditions(conditions, context);
 

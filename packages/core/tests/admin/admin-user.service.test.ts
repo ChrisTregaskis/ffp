@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 
+import { CognitoIdentityProviderServiceException } from '@aws-sdk/client-cognito-identity-provider';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ZodError } from 'zod';
 
@@ -41,7 +42,6 @@ const context = (): OrganisationContext => ({
     type: 'user',
     userId: randomUUID(),
     userRole: 'system_admin',
-    email: 'admin@example.com',
   },
   organisationId: randomUUID(),
   locationId: null,
@@ -155,7 +155,61 @@ describe('admin user service', () => {
       expect(loggedContext('Cognito rollback failed — orphaned Cognito user')).toEqual({
         action: 'cognito_user_rollback_failed',
         cognitoSub,
-        rollbackError: 'Cognito unavailable',
+        rollbackError: {
+          error: 'Cognito unavailable',
+          errorClass: 'Error',
+          stack: expect.stringContaining('Cognito unavailable') as unknown,
+        },
+      });
+      expect(JSON.stringify(consoleLog.mock.calls)).not.toContain('sentinel');
+    });
+
+    it.each([
+      [
+        'an unexpected Cognito error',
+        'InvalidParameterException',
+        'Unexpected Cognito error during user creation',
+      ],
+      [
+        'a Cognito permission refusal',
+        'AccessDeniedException',
+        'Cognito permission denied — check Lambda IAM policy',
+      ],
+    ])('logs %s by its name, never its message quoting the email', async (_case, name, message) => {
+      mockedCognito.inviteUser.mockRejectedValue(
+        new CognitoIdentityProviderServiceException({
+          name,
+          $fault: 'client',
+          message: `Value '${MEMBER_EMAIL}' at 'username' failed`,
+          $metadata: { httpStatusCode: 400 },
+        })
+      );
+
+      await expect(createUserService(context(), input)).rejects.toMatchObject({ statusCode: 500 });
+
+      expect(loggedContext(message)).toMatchObject({
+        error: `AWS service error: ${name}`,
+        aws: { name, httpStatusCode: 400 },
+      });
+      expect(JSON.stringify(consoleLog.mock.calls)).not.toContain('sentinel');
+    });
+
+    it('logs a failed Cognito rollback by the error’s name, never its message', async () => {
+      mockedUserRepository.createUser.mockRejectedValue(new Error('insert failed'));
+      mockedCognito.deleteUser.mockRejectedValue(
+        new CognitoIdentityProviderServiceException({
+          name: 'UserNotFoundException',
+          $fault: 'client',
+          message: `User ${MEMBER_EMAIL} does not exist`,
+          $metadata: { httpStatusCode: 400 },
+        })
+      );
+
+      await expect(createUserService(context(), input)).rejects.toThrow('insert failed');
+
+      expect(loggedContext('Cognito rollback failed — orphaned Cognito user')).toMatchObject({
+        cognitoSub,
+        rollbackError: { aws: { name: 'UserNotFoundException', httpStatusCode: 400 } },
       });
       expect(JSON.stringify(consoleLog.mock.calls)).not.toContain('sentinel');
     });

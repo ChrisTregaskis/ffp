@@ -3,7 +3,8 @@ import { getDb, type AnswerValue, type DbClient } from '@ffp/database';
 import { hasProgrammeGenerationFailed, queueJob } from '../jobs/job-queue.service';
 import { getUserIdFromContext } from '../lib/context';
 import { withRLS, type Transaction } from '../lib/database';
-import { InternalServerError, NotFoundError, ValidationError } from '../lib/errors';
+import { ConflictError, InternalServerError, NotFoundError, ValidationError } from '../lib/errors';
+import { describeShapeForLog } from '../lib/log-safe-error';
 import { createSystemLogger } from '../lib/logger';
 import { programmeRepository } from '../programmes';
 import { findSlugsByIds } from '../questions/question.repository';
@@ -202,19 +203,6 @@ function convertStepsToSummaryFormat(steps: FlowStepWithConfig[]): FlowStepSumma
   }));
 }
 
-/** An answer value's shape, for logs: never the value, which may be what the member typed. */
-function describeAnswerShape(answerValue: unknown): Record<string, unknown> {
-  if (Array.isArray(answerValue)) {
-    return { type: 'array', length: answerValue.length };
-  }
-
-  if (typeof answerValue === 'object' && answerValue !== null) {
-    return { type: 'object', keys: Object.keys(answerValue) };
-  }
-
-  return { type: answerValue === null ? 'null' : typeof answerValue };
-}
-
 /**
  * Extract the answer value from database JSONB
  *
@@ -239,7 +227,7 @@ function extractAnswerValue(questionId: string, answerValue: unknown): AnswerVal
 
     systemLogger.warn('Array contains non-string values', {
       questionId,
-      answerShape: describeAnswerShape(answerValue),
+      answerShape: describeShapeForLog(answerValue),
     });
 
     throw new ValidationError('Invalid answer value format: array contains non-string values');
@@ -263,7 +251,7 @@ function extractAnswerValue(questionId: string, answerValue: unknown): AnswerVal
 
     systemLogger.warn('Unexpected answer value structure', {
       questionId,
-      answerShape: describeAnswerShape(answerValue),
+      answerShape: describeShapeForLog(answerValue),
     });
 
     throw new ValidationError('Invalid answer value format: unrecognised object structure');
@@ -271,7 +259,7 @@ function extractAnswerValue(questionId: string, answerValue: unknown): AnswerVal
 
   systemLogger.warn('Unexpected answer value type', {
     questionId,
-    answerShape: describeAnswerShape(answerValue),
+    answerShape: describeShapeForLog(answerValue),
   });
 
   throw new ValidationError(
@@ -315,6 +303,12 @@ export async function startAssessment(
   // Fetch flow steps from normalised table
   const db = getDb();
   const flowSteps = await flowRepository.findStepsByFlowId(db, flowId);
+
+  // With no step to show, the member would wait on a screen that never loads
+  if (flowSteps.length === 0) {
+    throw new ConflictError('This assessment has no steps to show yet');
+  }
+
   const steps = convertStepsToSummaryFormat(flowSteps);
 
   if (options.isReassessment) {
@@ -577,6 +571,7 @@ export async function saveProgress(
  * @throws ValidationError if assessment is already submitted
  * @throws ValidationError if an answer breaks its rules, a submitted answer is not part of
  *   the flow, or a required question is unanswered; `details` names each failing question
+ * @throws ValidationError, naming no question, if none of the flow's questions is answered
  *
  * @example
  * ```typescript
@@ -630,14 +625,20 @@ export async function submitAssessment(
 
   assertNoAnswerErrors(findSubmitErrors(storedValues, submittedValues, flowQuestions));
 
-  // The scoring job reads every answer, the submitted ones overriding those stored
-  const responses = [...new Map([...storedValues, ...submittedValues])]
+  // The safety rules see every answer, stale ones included, the submitted ones overriding
+  // those stored. Scoring reads the stored answers itself and counts only the flow's questions.
+  const allAnswers = [...new Map([...storedValues, ...submittedValues])]
     .filter(([, answerValue]) => isAnswerProvided(answerValue))
     .map(([questionId, answerValue]) => ({ questionId, answerValue }));
 
+  // With nothing to score, the scoring job fails and the member's results never arrive
+  if (!allAnswers.some(({ questionId }) => flowQuestions.has(questionId))) {
+    throw new ValidationError('Please answer the questions before you submit your assessment.');
+  }
+
   const safetyTrigger = findSafetyTrigger(
     flowSteps,
-    await toBranchingAnswers(db, assessmentId, responses)
+    await toBranchingAnswers(db, assessmentId, allAnswers)
   );
 
   // Execute all writes in a single transaction for atomicity
@@ -670,7 +671,6 @@ export async function submitAssessment(
         userAssessmentId: assessmentId,
         flowId: assessment.flowId,
         userId,
-        responses,
       },
       context,
       { priority: 2, tx } // High priority for user-triggered submission

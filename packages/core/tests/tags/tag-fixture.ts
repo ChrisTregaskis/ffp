@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import { asc, eq, TransactionRollbackError } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 
 import type { TagCategorySlug } from '@ffp/database/constants';
 import {
@@ -12,29 +12,8 @@ import {
   type TagRecord,
   type VideoRecord,
 } from '@ffp/database/schema';
-import type { TestDb } from '@ffp/database/testing';
 
-export type TestTx = Parameters<Parameters<TestDb['transaction']>[0]>[0];
-
-/** Runs the work and rolls it back, so nothing a test writes outlives it. */
-export async function inRolledBackTransaction(
-  db: TestDb,
-  work: (tx: TestTx) => Promise<void>
-): Promise<void> {
-  try {
-    await db.transaction(async (tx) => {
-      await work(tx);
-      tx.rollback();
-    });
-  } catch (error) {
-    // Only the deliberate rollback is swallowed; a failing assertion surfaces as itself
-    if (error instanceof TransactionRollbackError) {
-      return;
-    }
-
-    throw error;
-  }
-}
+import type { TestTx } from '../lib/rolled-back-transaction.fixture';
 
 export const shortId = (): string => randomUUID().replace(/-/g, '').slice(0, 12);
 

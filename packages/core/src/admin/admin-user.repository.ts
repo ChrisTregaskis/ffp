@@ -134,6 +134,7 @@ export async function listUsers(
 ): Promise<UserListRow[]> {
   const conditions = buildUserFilterConditions(filters);
 
+  // The id breaks a tie on creation time, as in the programme read
   const currentProgramme = db
     .select({
       status: programmes.status,
@@ -147,7 +148,7 @@ export async function listUsers(
         isCurrentProgramme
       )
     )
-    .orderBy(desc(programmes.createdAt))
+    .orderBy(desc(programmes.createdAt), desc(programmes.id))
     .limit(1)
     .as('current_programme');
 

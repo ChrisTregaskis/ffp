@@ -30,12 +30,22 @@ export const SYSTEM_PLACEHOLDER_ORGANISATION_ID = '00000000-0000-0000-8000-00000
 export const EMAIL_PATTERN = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
 /**
- * The password rules, matching the user pool's policy in `sst.config.ts`. The server's
- * `passwordValidation` and the web's requirement checklist are both built from these.
+ * The password rules, matching the user pool's policy in `sst.config.ts`. A password is only ever
+ * set in the web app, straight against Cognito, so the web's requirement checklist, built from
+ * these, is the only check ahead of it. Login never applies them.
  */
 
 /** Minimum length */
 export const PASSWORD_MIN_LENGTH = 8;
+
+/** Maximum length: the longest password Cognito accepts */
+export const PASSWORD_MAX_LENGTH = 256;
+
+/**
+ * Whitespace at the start or end, which the rules refuse: Cognito doesn't count it as special,
+ * and a password manager or a retype can drop it, locking the member out
+ */
+export const PASSWORD_EDGE_WHITESPACE_PATTERN = /^\s|\s$/;
 
 /** At least one uppercase letter (A-Z) */
 export const PASSWORD_UPPERCASE_PATTERN = /[A-Z]/;

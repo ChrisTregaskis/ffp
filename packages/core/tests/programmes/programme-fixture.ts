@@ -159,7 +159,6 @@ export const memberContext = (fixture: Fixture): OrganisationContext => ({
     type: 'user',
     userId: fixture.cognitoSub,
     userRole: 'programme_user',
-    email: 'member@test.com',
   } as UserActor,
   organisationId: fixture.organisationId,
   locationId: null,

@@ -114,6 +114,29 @@ describe('detectAndMarkStaleJobs', () => {
     });
   });
 
+  it('keeps only the ids of a job it fails, and the whole payload of one still running', async () => {
+    const payload = jobPayload('generate_programme');
+    const stale = await createJob({
+      type: 'generate_programme',
+      startedAt: secondsAgo(THRESHOLD_SECONDS + 60),
+      payload,
+    });
+    const running = await createJob({
+      type: 'generate_programme',
+      startedAt: secondsAgo(THRESHOLD_SECONDS - 60),
+      payload,
+    });
+
+    await detectAndMarkStaleJobs({ defaultThresholdSeconds: THRESHOLD_SECONDS });
+
+    const jobs = await readOwnJobs([stale.id, running.id]);
+    expect(jobs.get(stale.id)?.payload).toEqual({
+      assessmentSubmissionId: payload.assessmentSubmissionId,
+      userId: payload.userId,
+    });
+    expect(jobs.get(running.id)?.payload).toEqual(payload);
+  });
+
   it('leaves queued, completed and failed jobs alone, however old', async () => {
     const longAgo = secondsAgo(THRESHOLD_SECONDS * 3);
     // A retry waiting out its back-off keeps the startedAt of the attempt that failed

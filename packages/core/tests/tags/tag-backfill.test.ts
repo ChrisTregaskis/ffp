@@ -7,12 +7,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MOVEMENT_TYPES } from '@ffp/database/constants';
 import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
-import {
-  inRolledBackTransaction,
-  insertTestVideo,
-  readVideoTagKeys,
-  type TestTx,
-} from './tag-fixture';
+import { inRolledBackTransaction, type TestTx } from '../lib/rolled-back-transaction.fixture';
+
+import { insertTestVideo, readVideoTagKeys } from './tag-fixture';
 
 import type { Pool } from 'pg';
 

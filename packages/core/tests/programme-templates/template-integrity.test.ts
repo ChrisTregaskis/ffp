@@ -13,7 +13,8 @@ import {
   createSession,
   deleteSession,
 } from '../../src/programme-templates/template-session.service';
-import { inRolledBackTransaction, shortId, type TestTx } from '../tags/tag-fixture';
+import { inRolledBackTransaction, type TestTx } from '../lib/rolled-back-transaction.fixture';
+import { shortId } from '../tags/tag-fixture';
 
 import { insertTemplateWithSession, readTemplate, type TemplateFixture } from './template-fixture';
 

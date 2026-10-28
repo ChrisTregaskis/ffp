@@ -66,7 +66,7 @@ describe('loadFlowQuestions', () => {
     vi.resetAllMocks();
   });
 
-  it('loads the templates of template-linked steps, in step order, inactive questions included', async () => {
+  it('loads the templates of template-linked steps, in step order', async () => {
     const first = randomUUID();
     const second = randomUUID();
 
@@ -79,25 +79,20 @@ describe('loadFlowQuestions', () => {
       step('questions', first, 4),
     ]);
 
-    expect(mockedQuestionRepo.findByTemplateIds).toHaveBeenCalledWith(db, [first, second], {
-      includeInactive: true,
-    });
+    expect(mockedQuestionRepo.findByTemplateIds).toHaveBeenCalledWith(db, [first, second]);
   });
 
-  it('applies a template override and never requires a deactivated question', async () => {
+  it('applies a template override', async () => {
     const templateId = randomUUID();
     const overridden = randomUUID();
-    const retired = randomUUID();
 
     mockedQuestionRepo.findByTemplateIds.mockResolvedValue([
       question(overridden, templateId, { configOverrides: { validation: { max: 3 } } }),
-      question(retired, templateId, { isActive: false }),
     ]);
 
     const flowQuestions = await loadFlowQuestions(db, [step('questions', templateId, 1)]);
 
     expect(flowQuestions.get(overridden)?.rules.validation).toEqual({ max: 3 });
-    expect(flowQuestions.get(retired)?.rules.validation).toEqual({ required: false, max: 10 });
   });
 
   it('keeps the first step’s rules for a question two templates share, and lists both', async () => {

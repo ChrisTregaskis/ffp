@@ -174,7 +174,6 @@ describe('extractUserContext', () => {
       if (isUserActor(context.actor)) {
         expect(context.actor.userId).toBe('user-123');
         expect(context.actor.userRole).toBe('customer_owner');
-        expect(context.actor.email).toBe('test@example.com');
       }
       expect(context.organisationId).toBe('tenant-456');
       expect(context.locationId).toBeNull();
@@ -197,12 +196,33 @@ describe('extractUserContext', () => {
       if (isUserActor(context.actor)) {
         expect(context.actor.userId).toBe('user-123');
         expect(context.actor.userRole).toBe('customer_owner');
-        expect(context.actor.email).toBe('test@example.com');
       }
       expect(context.organisationId).toBe('tenant-456');
       expect(context.locationId).toBe('customer-789');
       expect(context.requestId).toBe('test-request-123');
       expect(context.timestamp).toBeInstanceOf(Date);
+    });
+
+    it('requires the email claim but carries it nowhere on the context, so no log can pick it up', () => {
+      const claims = {
+        sub: 'user-123',
+        'custom:tenantId': 'tenant-456',
+        'custom:role': 'customer_owner',
+      };
+
+      expect(
+        JSON.stringify(
+          extractUserContext(
+            createMockAPIGatewayEvent({
+              ...claims,
+              email: 'sentinel.member@example.com',
+            })
+          )
+        )
+      ).not.toContain('sentinel');
+      expect(() => extractUserContext(createMockAPIGatewayEvent(claims))).toThrow(
+        'Missing or invalid email claim'
+      );
     });
 
     it('should extract context from valid JWT without locationId (null for super admins)', () => {
@@ -562,7 +582,6 @@ describe('Type guards', () => {
         type: 'user',
         userId: 'user-123',
         userRole: 'customer_owner',
-        email: 'test@example.com',
       };
 
       expect(isUserActor(userActor)).toBe(true);
@@ -593,7 +612,6 @@ describe('Type guards', () => {
         type: 'user',
         userId: 'user-123',
         userRole: 'customer_owner',
-        email: 'test@example.com',
       };
 
       expect(isSystemActor(userActor)).toBe(false);
@@ -602,17 +620,16 @@ describe('Type guards', () => {
 });
 
 describe('getActorDisplayName', () => {
-  it('should return formatted display name for user actor', () => {
+  it('names a user actor by Cognito sub and role, never by email', () => {
     const userActor: UserActor = {
       type: 'user',
       userId: 'user-123',
       userRole: 'customer_owner',
-      email: 'john@example.com',
     };
 
     const displayName = getActorDisplayName(userActor);
 
-    expect(displayName).toBe('john@example.com (customer_owner)');
+    expect(displayName).toBe('user-123 (customer_owner)');
   });
 
   it('should return formatted display name for system actor', () => {

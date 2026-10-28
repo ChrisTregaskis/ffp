@@ -17,8 +17,8 @@ export const assessmentResponseSchema = z.object({
 });
 
 /**
- * Contains all data needed to calculate dimensional scores from
- * a completed assessment submission.
+ * Identifies the assessment to score. The handler reads the stored answers, so no member
+ * answer is copied into the job.
  */
 export const scoreAssessmentPayloadSchema = z.object({
   /** The user_assessments record ID being scored */
@@ -27,8 +27,6 @@ export const scoreAssessmentPayloadSchema = z.object({
   flowId: z.guid(),
   /** User who completed the assessment */
   userId: z.guid(),
-  /** Array of question responses to score */
-  responses: z.array(assessmentResponseSchema).min(1),
 });
 
 export { dimensionalScoreSchema };

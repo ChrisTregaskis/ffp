@@ -7,7 +7,7 @@ import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
 import * as templateRepository from '../../src/programme-templates/programme-template.repository';
 import { descendingIds, idsAcrossPages, minutesApart } from '../lib/paging.fixture';
-import { inRolledBackTransaction, type TestTx } from '../tags/tag-fixture';
+import { inRolledBackTransaction, type TestTx } from '../lib/rolled-back-transaction.fixture';
 
 import type { Pool } from 'pg';
 
@@ -74,6 +74,30 @@ describe('Programme template repository', () => {
         );
 
         expect(listed.map((template) => template.id)).toEqual([...ids].reverse());
+      });
+    });
+
+    describe('a search holding a LIKE wildcard or escape character matches it literally', () => {
+      it.each([
+        { search: '50%', literal: '50% strength', lookalike: '500 strength' },
+        { search: 'warm_up', literal: 'warm_up block', lookalike: 'warm-up block' },
+        { search: 'back\\slash', literal: 'back\\slash block', lookalike: 'backslash block' },
+      ])('$search', async ({ search, literal, lookalike }) => {
+        await inRolledBackTransaction(db, async (tx) => {
+          const match = await insertTemplate(tx, { name: `${literal} ${RUN_ID}` });
+          const nonMatch = await insertTemplate(tx, { name: `${lookalike} ${RUN_ID}` });
+
+          const listed = await templateRepository.findAllTemplates(
+            tx,
+            { page: 1, pageSize: 100, sortDirection: 'asc' },
+            { search }
+          );
+
+          const ours = listed
+            .map((template) => template.id)
+            .filter((id) => [match, nonMatch].includes(id));
+          expect(ours).toEqual([match]);
+        });
       });
     });
   });

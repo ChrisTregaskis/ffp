@@ -252,7 +252,7 @@ describe('userAssessmentScoresSchema', () => {
 // Stated independently of VALID_STATUS_TRANSITIONS, so a change to it has to be made here too.
 // Keyed by the status type, so a new status will not compile until it has a row.
 const ALLOWED: Record<UserAssessmentStatus, readonly UserAssessmentStatus[]> = {
-  not_started: ['in_progress'],
+  not_started: ['in_progress', 'abandoned'],
   in_progress: ['submitted', 'abandoned'],
   submitted: ['scored'],
   scored: ['completed'],

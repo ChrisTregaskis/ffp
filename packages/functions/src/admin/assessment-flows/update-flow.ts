@@ -8,6 +8,8 @@ import {
   type UpdateFlowInput,
 } from '@ffp/core/server';
 
+import { parseJsonBody } from '../../lib/request-body';
+
 interface UpdateFlowResponse {
   flow: AssessmentFlow;
 }
@@ -29,18 +31,7 @@ export const handler = withErrorHandling(
         throw new ValidationError('Flow ID is required in path');
       }
 
-      // Parse request body
-      if (!event.body) {
-        throw new ValidationError('Request body is required');
-      }
-
-      let input: UpdateFlowInput;
-
-      try {
-        input = JSON.parse(event.body) as UpdateFlowInput;
-      } catch {
-        throw new ValidationError('Invalid JSON in request body');
-      }
+      const input = parseJsonBody(event.body) as UpdateFlowInput;
 
       // Update flow via service (handles Zod validation)
       const flow = await flowService.updateFlowService(context, publicId, input);

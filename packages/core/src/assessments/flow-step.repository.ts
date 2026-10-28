@@ -1,7 +1,7 @@
-import { eq, and, asc, gt, max, sql } from 'drizzle-orm';
+import { eq, and, gt, sql } from 'drizzle-orm';
 
 import type { DbClient, DbQueryClient } from '@ffp/database';
-import { flowSteps, type FlowStepRecord } from '@ffp/database/schema';
+import { assessmentFlows, flowSteps, type FlowStepRecord } from '@ffp/database/schema';
 
 import { findStepsByFlowId } from './flow.repository';
 
@@ -26,19 +26,9 @@ export async function findStepByPublicId(
   return records[0] ?? null;
 }
 
-/** Highest `order` among a flow's active steps, or 0 when none (new steps append at max + 1). */
-export async function findMaxOrderForFlow(dbClient: DbClient, flowId: string): Promise<number> {
-  const [result] = await dbClient
-    .select({ maxOrder: max(flowSteps.order) })
-    .from(flowSteps)
-    .where(and(eq(flowSteps.flowId, flowId), eq(flowSteps.isActive, true)));
-
-  return result.maxOrder ?? 0;
-}
-
 /** Insert a step at the given order. Branching fields are left null (never authored here). */
 export async function createStep(
-  dbClient: DbClient,
+  dbClient: DbQueryClient,
   flowId: string,
   order: number,
   input: CreateFlowStepInput
@@ -82,19 +72,24 @@ export async function updateStep(
 }
 
 /**
- * A flow's active steps, locked until the transaction ends, so a concurrent delete of a step
- * in the same flow waits and then sees this one's reroutes and renumbering.
+ * Take the flow's step lock until the transaction ends, and return its active steps, locked
+ * too. Every write that adds, removes or reorders a step takes it first, so they take turns.
+ * The flow's row is locked before the steps are read, so a writer that waited reads them only
+ * once the one before it has committed: a lock on the step rows alone would leave it the rows
+ * it first found, without a step the other added, and would lock nothing on a flow with none.
+ * `NO KEY UPDATE`, so a member starting an assessment on the flow doesn't wait for it.
  */
 export async function lockActiveSteps(
   dbClient: DbQueryClient,
   flowId: string
 ): Promise<FlowStepRecord[]> {
-  return await dbClient
-    .select()
-    .from(flowSteps)
-    .where(and(eq(flowSteps.flowId, flowId), eq(flowSteps.isActive, true)))
-    .orderBy(asc(flowSteps.order), asc(flowSteps.id))
-    .for('update');
+  await dbClient
+    .select({ id: assessmentFlows.id })
+    .from(assessmentFlows)
+    .where(eq(assessmentFlows.id, flowId))
+    .for('no key update');
+
+  return await findStepsByFlowId(dbClient, flowId, { forUpdate: true });
 }
 
 /** Point a step's default next step somewhere else, or clear it with null. */
@@ -143,12 +138,11 @@ export async function closeOrderGap(
 /**
  * Reassign `order` to each step's position in `orderedStepIds` (1-based) and
  * return the flow's active steps in their new order. `order` is not unique, so a
- * straight reassignment is safe (no negative-temp dance). Intentionally not
- * transactional: a partial write self-heals on the next reorder, and `tx` is not
- * assignable to this module's `DbClient` signatures.
+ * straight reassignment is safe (no negative-temp dance). Run it in the transaction
+ * that holds the flow's step lock, so a write that fails part-way rolls back.
  */
 export async function reorderSteps(
-  dbClient: DbClient,
+  dbClient: DbQueryClient,
   flowId: string,
   orderedStepIds: string[]
 ): Promise<FlowStepRecord[]> {

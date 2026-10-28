@@ -83,7 +83,6 @@ export interface UserActor {
   type: 'user';
   userId: string;
   userRole: string;
-  email: string;
 }
 
 /**
@@ -162,6 +161,7 @@ export function extractUserContext(event: APIGatewayProxyEventV2WithJWT): Organi
     throw new UnauthorisedError('Missing or invalid role claim');
   }
 
+  // Required of a well-formed ID token, but never carried on the context, so no log can pick it up
   if (!email || typeof email !== 'string') {
     throw new UnauthorisedError('Missing or invalid email claim');
   }
@@ -175,7 +175,6 @@ export function extractUserContext(event: APIGatewayProxyEventV2WithJWT): Organi
       type: 'user',
       userId: sub,
       userRole: role,
-      email,
     },
     organisationId,
     locationId: claims[COGNITO_CUSTOM_ATTRIBUTES.LOCATION_ID] ?? null,
@@ -296,13 +295,12 @@ export function isSystemActor(actor: Actor): actor is SystemActor {
 }
 
 /**
- * Get a human-readable display name for an actor
- *
- * Used for logging and audit trails to identify who performed an operation.
+ * Identify an actor for log lines and audit trails. A user is named by Cognito sub
+ * (`users.cognito_sub`) and role, never by email, so a log line carries no personal data.
  */
 export function getActorDisplayName(actor: Actor): string {
   if (isUserActor(actor)) {
-    return `${actor.email} (${actor.userRole})`;
+    return `${actor.userId} (${actor.userRole})`;
   }
 
   return `System: ${actor.systemId}`;

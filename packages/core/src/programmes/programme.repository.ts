@@ -377,7 +377,8 @@ export async function findProgrammeWithPhases(
           isCurrentProgramme
         )
       )
-      .orderBy(desc(programmes.createdAt))
+      // The id breaks a tie on creation time, as in the Users list
+      .orderBy(desc(programmes.createdAt), desc(programmes.id))
       .limit(1);
 
     if (programmeRows.length === 0) {

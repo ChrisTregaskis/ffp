@@ -8,7 +8,8 @@ import {
   type TemplateSessionRecord,
 } from '@ffp/database/schema';
 
-import { shortId, type TestTx } from '../tags/tag-fixture';
+import { type TestTx } from '../lib/rolled-back-transaction.fixture';
+import { shortId } from '../tags/tag-fixture';
 
 export interface TemplateFixture {
   template: ProgrammeTemplateRecord;

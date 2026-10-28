@@ -29,10 +29,10 @@ const UNKNOWN_QUESTION_MESSAGE = 'This question is not part of your assessment.'
 
 /**
  * Every question the flow's steps show, keyed by ID and in step order, under its
- * effective validation. A deactivated question still assigned to a template is
- * shown to members, so its answers are accepted and checked, but it is never
- * required. A question assigned to two of the flow's templates keeps the rules
- * of the first step that shows it.
+ * effective validation. Active questions only: a deactivated one still assigned to a
+ * template is not shown or scored, so like an unassigned one it is neither required nor
+ * accepted. A question assigned to two of the flow's templates keeps the rules of the
+ * first step that shows it.
  */
 export async function loadFlowQuestions(
   db: DbClient,
@@ -40,7 +40,7 @@ export async function loadFlowQuestions(
 ): Promise<Map<string, FlowQuestion>> {
   const templateIds = [...new Set(findTemplateIdsOfSteps(flowSteps))];
 
-  const questions = await findByTemplateIds(db, templateIds, { includeInactive: true });
+  const questions = await findByTemplateIds(db, templateIds);
   const flowQuestions = new Map<string, FlowQuestion>();
 
   for (const templateId of templateIds) {
@@ -52,15 +52,13 @@ export async function loadFlowQuestions(
         continue;
       }
 
-      const validation = resolveEffectiveValidation(question);
-
       flowQuestions.set(question.id, {
         templateIds: [templateId],
         rules: {
           // `questions.type` is the question-type enum; the shared row type widens it
           type: question.type as QuestionType,
           options: question.options,
-          validation: question.isActive ? validation : { ...validation, required: false },
+          validation: resolveEffectiveValidation(question),
         },
       });
     }
