@@ -123,7 +123,7 @@ describe('Logger', () => {
         message: 'Test message',
         requestId: 'request-abc',
         organisationId: 'tenant-456',
-        actor: 'test@example.com (customer_owner)',
+        actor: 'user-123 (customer_owner)',
       });
       expect(logEntry.timestamp).toBeDefined();
       expect(logEntry.duration).toBeGreaterThanOrEqual(0);

@@ -121,6 +121,25 @@ describe('describeErrorForLog', () => {
     });
   });
 
+  it("withholds a syntax error's message, which quotes the text it failed to parse, but keeps its stack frames", () => {
+    let error: unknown;
+
+    try {
+      JSON.parse('{"password": sentinel}');
+    } catch (caught) {
+      error = caught;
+    }
+
+    const description = describeErrorForLog(error);
+
+    expect(description).toMatchObject({
+      error: 'Syntax error (message withheld: it quotes the input)',
+      errorClass: 'SyntaxError',
+    });
+    expect(description.stack).toMatch(/\n\s+at /);
+    expect(JSON.stringify(description)).not.toContain('sentinel');
+  });
+
   it('logs a thrown non-error as unknown, without its value', () => {
     expect(describeErrorForLog(LEAKABLE.param)).toEqual({
       error: 'Unknown error',
