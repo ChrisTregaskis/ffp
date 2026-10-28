@@ -24,6 +24,8 @@ import {
 import { db, withRLS, type Transaction } from '../lib/database';
 import { type CreateProgrammeInput } from '../schemas/programme/programme.schema';
 
+import { isCurrentProgramme } from './current-programme';
+
 export type Programme = ProgrammeRecord;
 
 export interface CreateProgrammeOptions {
@@ -69,7 +71,7 @@ export interface CreateProgrammePhasesOptions {
 export interface ProgrammeWithPhases {
   programme: ProgrammeRecord;
   phases: ProgrammePhaseRecord[];
-  template: { name: string; difficulty: string | null } | null;
+  template: { name: string; slug: string; difficulty: string | null } | null;
 }
 
 /** Slim video fields needed for exercise detail display. */
@@ -357,15 +359,14 @@ export async function createProgrammePhases(
 }
 
 /**
- * Fetch the user's active programme with programme_phases and template summary.
- * RLS-scoped — returns null if no active programme exists.
+ * Fetch the user's current programme with programme_phases and template summary.
+ * RLS-scoped — returns null if the user has no current programme.
  */
 export async function findProgrammeWithPhases(
   organisationId: string,
   userId: string
 ): Promise<ProgrammeWithPhases | null> {
   return await withRLS(organisationId, userId, async (tx) => {
-    // Fetch active or completed programme (most recent first)
     const programmeRows = await tx
       .select()
       .from(programmes)
@@ -373,7 +374,7 @@ export async function findProgrammeWithPhases(
         and(
           eq(programmes.organisationId, organisationId),
           eq(programmes.userId, userId),
-          inArray(programmes.status, ['active', 'completed'])
+          isCurrentProgramme
         )
       )
       .orderBy(desc(programmes.createdAt))
@@ -401,6 +402,7 @@ export async function findProgrammeWithPhases(
     const templateRows = await tx
       .select({
         name: programmeTemplates.name,
+        slug: programmeTemplates.slug,
         difficulty: programmeTemplates.difficulty,
       })
       .from(programmeTemplates)

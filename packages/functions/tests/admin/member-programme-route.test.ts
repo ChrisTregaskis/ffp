@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProgrammeDetailResponse } from '@ffp/core';
+import type { AdminProgrammeDetailResponse } from '@ffp/core';
 import type * as CoreServer from '@ffp/core/server';
 
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
@@ -83,7 +83,7 @@ describe('admin member programme route', () => {
   );
 
   it('passes the user publicId to the service and returns the programme to a system admin', async () => {
-    const detail: ProgrammeDetailResponse = {
+    const detail: AdminProgrammeDetailResponse = {
       programme: {
         id: '7b0c2a52-4b7e-4c4e-9a43-2f6a1d9b3c11',
         name: 'Level 1: Gentle Mobility',
@@ -95,6 +95,14 @@ describe('admin member programme route', () => {
       },
       currentPhaseNumber: null,
       phases: [],
+      level: 1,
+      keyAreas: [
+        {
+          questionId: '5d1f0c7e-8a2b-4c3d-9e4f-1a2b3c4d5e6f',
+          question: 'Which areas would you like to focus on?',
+          answers: ['Neck & Shoulders'],
+        },
+      ],
     };
     core.getUserProgrammeService.mockResolvedValue(detail);
 

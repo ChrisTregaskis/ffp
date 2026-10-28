@@ -1,6 +1,6 @@
 import { eq, and } from 'drizzle-orm';
 
-import { DIFFICULTIES } from '@ffp/database/constants';
+import { DIFFICULTIES, levelForProgrammeSlug } from '@ffp/database/constants';
 import { userAssessments } from '@ffp/database/schema';
 
 import * as userAssessmentRepo from '../assessments/user-assessment.repository';
@@ -12,6 +12,7 @@ import { calculatePercent } from '../lib/math';
 import { findMemberProgrammeStructure } from './member-programme.repository';
 import { chooseSessionExercises } from './programme-assembly';
 import { findEmphasisWeights } from './programme-emphasis';
+import { findProgrammeKeyAreas } from './programme-key-areas';
 import { materialiseProgrammeSessions } from './programme-materialisation';
 import {
   archiveProgramme,
@@ -28,6 +29,7 @@ import {
 import type { Programme, NewProgrammePhase } from './programme.repository';
 import type { Transaction } from '../lib/database';
 import type {
+  AdminProgrammeDetailResponse,
   ProgrammeDetailResponse,
   ProgressSummaryResponse,
 } from '../schemas/programme/programme.schema';
@@ -272,7 +274,7 @@ function buildTemplateSummary(template: { name: string; difficulty: string | nul
 }
 
 /**
- * Fetch the active programme with full hierarchy and tiered visibility.
+ * Fetch the current programme with full hierarchy and tiered visibility.
  *
  * - Current/completed phases: full exercise detail + user session data
  * - Future phases: session summaries only (name, exercise count)
@@ -294,6 +296,41 @@ export async function getProgrammeDetailForUser(
   organisationId: string,
   userId: string
 ): Promise<ProgrammeDetailResponse> {
+  const { detail } = await readProgrammeDetail(organisationId, userId, { allPhasesInFull: false });
+
+  return detail;
+}
+
+/**
+ * A member's programme for an admin: every phase in full, the level and the answers that shaped
+ * it. Read under the given organisation's RLS context, as `getProgrammeDetailForUser` is.
+ */
+export async function getFullProgrammeDetailForUser(
+  organisationId: string,
+  userId: string
+): Promise<AdminProgrammeDetailResponse> {
+  const { detail, templateSlug } = await readProgrammeDetail(organisationId, userId, {
+    allPhasesInFull: true,
+  });
+  const keyAreas = await findProgrammeKeyAreas(organisationId, userId, detail.programme.id);
+
+  return {
+    ...detail,
+    level: templateSlug ? levelForProgrammeSlug(templateSlug) : null,
+    keyAreas,
+  };
+}
+
+interface ReadProgrammeDetailOptions {
+  /** The member's own read shows upcoming phases as session summaries only */
+  allPhasesInFull: boolean;
+}
+
+async function readProgrammeDetail(
+  organisationId: string,
+  userId: string,
+  { allPhasesInFull }: ReadProgrammeDetailOptions
+): Promise<{ detail: ProgrammeDetailResponse; templateSlug: string | null }> {
   // Fetch programme + phases (RLS-scoped)
   const result = await findProgrammeWithPhases(organisationId, userId);
 
@@ -318,7 +355,7 @@ export async function getProgrammeDetailForUser(
 
   // Merge and apply tiered visibility
   const detailPhases = phases.map((phase) => {
-    const isAccessible = accessiblePhaseIds.includes(phase.id);
+    const isAccessible = allPhasesInFull || accessiblePhaseIds.includes(phase.id);
     const memberPhase = memberStructure.get(phase.id);
 
     const sessions = (memberPhase?.sessions ?? []).map((detail) => {
@@ -390,17 +427,20 @@ export async function getProgrammeDetailForUser(
   });
 
   return {
-    programme: {
-      id: programme.id,
-      name: programme.name,
-      description: programme.description,
-      status: programme.status,
-      startedAt: programme.startedAt,
-      totalPhases: programme.totalPhases,
-      template: buildTemplateSummary(template),
+    detail: {
+      programme: {
+        id: programme.id,
+        name: programme.name,
+        description: programme.description,
+        status: programme.status,
+        startedAt: programme.startedAt,
+        totalPhases: programme.totalPhases,
+        template: buildTemplateSummary(template),
+      },
+      currentPhaseNumber,
+      phases: detailPhases,
     },
-    currentPhaseNumber,
-    phases: detailPhases,
+    templateSlug: template?.slug ?? null,
   };
 }
 

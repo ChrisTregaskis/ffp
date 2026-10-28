@@ -1,4 +1,4 @@
-import { type ProgrammeDetailResponse, programmeDetailResponseSchema } from '@ffp/core';
+import { type AdminProgrammeDetailResponse, adminProgrammeDetailResponseSchema } from '@ffp/core';
 import {
   type APIGatewayProxyEventV2WithJWT,
   withErrorHandling,
@@ -10,12 +10,16 @@ import {
 /**
  * Lambda handler for GET /admin/users/{id}/programme
  *
- * Returns a member's current programme in the shape the member sees it. Admin role required.
+ * Returns a member's current programme with every phase in full, its level and the answers that
+ * shaped it. Admin role required.
  */
 export const handler = withErrorHandling(
   withSystemAdmin(
     'Only system administrators can view member programmes',
-    async (event: APIGatewayProxyEventV2WithJWT, context): Promise<ProgrammeDetailResponse> => {
+    async (
+      event: APIGatewayProxyEventV2WithJWT,
+      context
+    ): Promise<AdminProgrammeDetailResponse> => {
       const publicId = event.pathParameters?.id;
 
       if (!publicId) {
@@ -24,7 +28,7 @@ export const handler = withErrorHandling(
 
       const detail = await getUserProgrammeService(context, publicId);
 
-      return programmeDetailResponseSchema.parse(detail);
+      return adminProgrammeDetailResponseSchema.parse(detail);
     }
   )
 );

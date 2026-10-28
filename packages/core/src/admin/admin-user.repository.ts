@@ -1,16 +1,4 @@
-import {
-  and,
-  desc,
-  eq,
-  or,
-  ilike,
-  inArray,
-  ne,
-  count,
-  sql,
-  type Column,
-  type SQL,
-} from 'drizzle-orm';
+import { and, desc, eq, or, ilike, inArray, count, sql, type Column, type SQL } from 'drizzle-orm';
 
 import type { DbClient } from '@ffp/database';
 import type { ProgrammeStatus, UserRole } from '@ffp/database/constants';
@@ -35,6 +23,7 @@ import {
   NEWEST_FIRST,
   withDefaultSort,
 } from '../lib/pagination';
+import { isCurrentProgramme } from '../programmes/current-programme';
 
 import type { PaginationInput } from '../schemas/pagination.schema';
 import type { UserFilterInput, AdminUpdateUserInput } from '../schemas/user.schema';
@@ -145,7 +134,6 @@ export async function listUsers(
 ): Promise<UserListRow[]> {
   const conditions = buildUserFilterConditions(filters);
 
-  // The current programme is the latest one not archived
   const currentProgramme = db
     .select({
       status: programmes.status,
@@ -156,7 +144,7 @@ export async function listUsers(
       and(
         eq(programmes.userId, users.id),
         eq(programmes.organisationId, users.organisationId),
-        ne(programmes.status, 'archived')
+        isCurrentProgramme
       )
     )
     .orderBy(desc(programmes.createdAt))
