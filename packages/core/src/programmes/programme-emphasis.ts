@@ -1,5 +1,5 @@
-import { loadFlowQuestions } from '../assessments/answer-validation';
 import * as answerRepository from '../assessments/answer.repository';
+import { findActiveFlowQuestions } from '../assessments/flow-question.repository';
 import { findFlowById, findStepsByFlowId } from '../assessments/flow.repository';
 import { findUserAssessmentById } from '../assessments/user-assessment.repository';
 import { createSystemLogger } from '../lib/logger';
@@ -44,7 +44,11 @@ export async function findEmphasisWeights(
     return NO_EMPHASIS;
   }
 
-  const flowQuestions = await loadFlowQuestions(tx, await findStepsByFlowId(tx, assessment.flowId));
+  const flowQuestions = await findActiveFlowQuestions(
+    tx,
+    await findStepsByFlowId(tx, assessment.flowId)
+  );
+  const flowQuestionIds = new Set(flowQuestions.map((question) => question.id));
   const [answers, tags] = await Promise.all([
     answerRepository.findByAssessmentId(organisationId, assessmentId, { tx }),
     tagRepository.findAllTags(tx),
@@ -53,7 +57,7 @@ export async function findEmphasisWeights(
     rules.data,
     new Map(
       answers
-        .filter((answer) => flowQuestions.has(answer.questionId))
+        .filter((answer) => flowQuestionIds.has(answer.questionId))
         .map((answer) => [answer.questionId, answer.answerValue])
     ),
     new Set(tags.filter((tag) => tag.isActive).map((tag) => `${tag.category}:${tag.slug}`))

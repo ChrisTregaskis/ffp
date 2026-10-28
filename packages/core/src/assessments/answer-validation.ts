@@ -1,7 +1,6 @@
 import type { AnswerValue, DbQueryClient } from '@ffp/database';
 
 import { ValidationError } from '../lib/errors';
-import { findByTemplateIds } from '../questions/question.repository';
 import { findTemplateIdsOfSteps } from '../schemas/assessment-flow.schema';
 import {
   answerErrorPath,
@@ -11,6 +10,8 @@ import {
   validateAnswer,
   type AnswerRuleQuestion,
 } from '../schemas/question-answer.schema';
+
+import { findActiveFlowQuestions } from './flow-question.repository';
 
 import type { FlowStepWithConfig } from './flow.repository';
 import type { ApiFieldError } from '../schemas/api-error.schema';
@@ -38,9 +39,10 @@ export async function loadFlowQuestions(
   db: DbQueryClient,
   flowSteps: FlowStepWithConfig[]
 ): Promise<Map<string, FlowQuestion>> {
+  // In step order, so a question on two of the flow's templates keeps the first step's rules
   const templateIds = [...new Set(findTemplateIdsOfSteps(flowSteps))];
 
-  const questions = await findByTemplateIds(db, templateIds);
+  const questions = await findActiveFlowQuestions(db, flowSteps);
   const flowQuestions = new Map<string, FlowQuestion>();
 
   for (const templateId of templateIds) {
