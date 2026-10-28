@@ -7,7 +7,7 @@ import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
 import * as templateRepository from '../../src/programme-templates/programme-template.repository';
 import { descendingIds, idsAcrossPages, minutesApart } from '../lib/paging.fixture';
-import { inRolledBackTransaction, type TestTx } from '../tags/tag-fixture';
+import { inRolledBackTransaction, type TestTx } from '../lib/rolled-back-transaction.fixture';
 
 import type { Pool } from 'pg';
 

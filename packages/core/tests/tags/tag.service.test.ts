@@ -6,14 +6,9 @@ import { connectTestDb, type TestDb } from '@ffp/database/testing';
 import { createSystemContext } from '../../src/lib/context';
 import { ConflictError, NotFoundError, ValidationError } from '../../src/lib/errors';
 import * as tagService from '../../src/tags/tag.service';
+import { inRolledBackTransaction, type TestTx } from '../lib/rolled-back-transaction.fixture';
 
-import {
-  findCategoryId,
-  inRolledBackTransaction,
-  insertTestTag,
-  shortId,
-  type TestTx,
-} from './tag-fixture';
+import { findCategoryId, insertTestTag, shortId } from './tag-fixture';
 
 import type { Pool } from 'pg';
 

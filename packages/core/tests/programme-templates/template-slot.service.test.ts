@@ -14,14 +14,8 @@ import { NotFoundError, ValidationError } from '../../src/lib/errors';
 import { deleteSession } from '../../src/programme-templates/template-session.service';
 import * as slotService from '../../src/programme-templates/template-slot.service';
 import * as tagRepository from '../../src/tags/tag.repository';
-import {
-  assignTags,
-  findCategoryId,
-  inRolledBackTransaction,
-  insertTestTag,
-  insertTestVideo,
-  type TestTx,
-} from '../tags/tag-fixture';
+import { inRolledBackTransaction, type TestTx } from '../lib/rolled-back-transaction.fixture';
+import { assignTags, findCategoryId, insertTestTag, insertTestVideo } from '../tags/tag-fixture';
 
 import { insertTemplateWithSession, type TemplateFixture } from './template-fixture';
 

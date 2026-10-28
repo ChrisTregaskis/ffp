@@ -1,13 +1,14 @@
 /**
  * Job Processor Service Integration Tests
  *
- * Tests job polling and claiming operations against a real PostgreSQL database (ffp_test).
- * These tests verify that the processor correctly claims jobs atomically using
- * FOR UPDATE SKIP LOCKED, preventing double-processing across concurrent workers.
+ * Tests job polling and claiming operations against the real PostgreSQL test database that
+ * `connectTestDb` opens: `FFP_TEST_DB_NAME` (ffp_test unless set). These tests verify that the
+ * processor correctly claims jobs atomically using FOR UPDATE SKIP LOCKED, preventing
+ * double-processing across concurrent workers.
  *
  * Prerequisites:
- * - ffp_test database must exist
- * - Migrations must be run: DB_NAME=ffp_test pnpm --filter=@ffp/database db:migrate
+ * - The test database must exist
+ * - Migrations must be run against it: DB_NAME=<test database> pnpm --filter=@ffp/database db:migrate
  */
 
 import { randomUUID } from 'crypto';

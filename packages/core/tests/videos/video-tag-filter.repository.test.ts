@@ -3,14 +3,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
 import * as videoRepository from '../../src/videos/video.repository';
-import {
-  assignTags,
-  findCategoryId,
-  inRolledBackTransaction,
-  insertTestTag,
-  insertTestVideo,
-  type TestTx,
-} from '../tags/tag-fixture';
+import { inRolledBackTransaction, type TestTx } from '../lib/rolled-back-transaction.fixture';
+import { assignTags, findCategoryId, insertTestTag, insertTestVideo } from '../tags/tag-fixture';
 
 import type { Pool } from 'pg';
 

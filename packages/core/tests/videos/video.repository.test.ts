@@ -8,7 +8,8 @@ import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
 import * as videoRepository from '../../src/videos/video.repository';
 import { descendingIds, idsAcrossPages, minutesApart } from '../lib/paging.fixture';
-import { inRolledBackTransaction, insertTestVideo } from '../tags/tag-fixture';
+import { inRolledBackTransaction } from '../lib/rolled-back-transaction.fixture';
+import { insertTestVideo } from '../tags/tag-fixture';
 
 import type { Pool } from 'pg';
 
