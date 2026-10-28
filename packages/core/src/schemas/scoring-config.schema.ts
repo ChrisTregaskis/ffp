@@ -19,36 +19,6 @@ export const logicalOperatorSchema = z.enum(['and', 'or']);
 
 export const scoringModeSchema = z.enum(SCORING_MODES);
 
-export const riskThresholdsSchema = z.object({
-  /** Score threshold for low risk (score >= this value = low risk) */
-  low: z.number(),
-  /** Score threshold for moderate risk (score >= this value = moderate risk) */
-  moderate: z.number(),
-});
-
-/**
- * Dimension configuration schema - defines scoring for a single dimension
- *
- * Each dimension aggregates scores from specific questions and applies
- * optional weighting and risk thresholds.
- */
-export const dimensionConfigSchema = z.object({
-  /** The scoring dimension name */
-  name: scoreDimensionSchema,
-  /** Array of question UUIDs that contribute to this dimension */
-  questionIds: z.array(z.guid()),
-  /** Maximum possible score for this dimension */
-  maxScore: z.number().positive(),
-  /** Weight multiplier for this dimension (default: 1) */
-  weight: z.number().positive().default(1),
-  /** Optional risk thresholds for this dimension */
-  riskThresholds: riskThresholdsSchema.optional(),
-  /** How the questions' scores combine: summed, or the most frequent (default: 'sum') */
-  scoringMode: scoringModeSchema.default('sum'),
-  /** Whether this dimension feeds the overall risk level (default: true) */
-  affectsRiskLevel: z.boolean().default(true),
-});
-
 /**
  * Defines a condition that compares a dimension score against a threshold
  * to determine programme eligibility.
@@ -60,22 +30,6 @@ export const programmeMappingConditionSchema = z.object({
   operator: comparisonOperatorSchema,
   /** Threshold value to compare against */
   value: z.number(),
-});
-
-/**
- * Defines rules for automatically recommending programmes based on
- * assessment scores. Multiple conditions can be combined with logical operators.
- * Mappings are evaluated lowest priority first; the first match wins.
- */
-export const programmeMappingSchema = z.object({
-  /** Array of conditions that must be satisfied */
-  conditions: z.array(programmeMappingConditionSchema),
-  /** Logical operator to combine conditions (default: 'and') */
-  operator: logicalOperatorSchema.default('and'),
-  /** ID of the programme template to recommend when conditions match */
-  programmeTemplateId: z.string().min(1),
-  /** Evaluation order: lower is checked first, and a missing value is checked last */
-  priority: z.number().int().optional(),
 });
 
 /** A tag an answer leans towards, by category and slug so a mapping can name one not yet authored */
@@ -107,10 +61,7 @@ export const emphasisRulesSchema = z.array(emphasisRuleSchema) satisfies z.ZodTy
 
 export type RiskLevel = z.infer<typeof riskLevelSchema>;
 export type ScoringMode = z.infer<typeof scoringModeSchema>;
-export type RiskThresholds = z.infer<typeof riskThresholdsSchema>;
-export type DimensionConfig = z.infer<typeof dimensionConfigSchema>;
 export type ComparisonOperator = z.infer<typeof comparisonOperatorSchema>;
 export type ProgrammeMappingCondition = z.infer<typeof programmeMappingConditionSchema>;
 export type LogicalOperator = z.infer<typeof logicalOperatorSchema>;
-export type ProgrammeMapping = z.infer<typeof programmeMappingSchema>;
 export type EmphasisRule = z.infer<typeof emphasisRuleSchema>;

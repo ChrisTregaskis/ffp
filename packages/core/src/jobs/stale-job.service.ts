@@ -4,6 +4,8 @@ import { getDb, processJobs, JOB_TYPES, type JobType } from '@ffp/database';
 
 import { createSystemLogger } from '../lib/logger';
 
+import { finishedJobPayload } from './finished-job-payload';
+
 const logger = createSystemLogger('stale-job-detector');
 
 /** Default threshold in seconds before a processing job is considered stale */
@@ -38,7 +40,7 @@ export interface DetectStaleJobsResult {
  *
  * Iterates over all job types, applying the configured threshold for each.
  * Jobs stuck in 'processing' status where `started_at` exceeds the threshold
- * are updated to 'failed' with a descriptive message.
+ * are updated to 'failed' with a descriptive message, keeping only their payload's ids.
  */
 export async function detectAndMarkStaleJobs(
   config: StaleJobConfig = {}
@@ -58,6 +60,7 @@ export async function detectAndMarkStaleJobs(
       .set({
         status: 'failed',
         message: sql<string>`'Job timed out - started at ' || ${processJobs.startedAt}::text || ', exceeded ' || ${thresholdSeconds}::text || 's threshold'`,
+        payload: finishedJobPayload(),
         completedAt: new Date(),
       })
       .where(

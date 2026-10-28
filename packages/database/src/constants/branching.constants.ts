@@ -1,14 +1,9 @@
-import type { ScoreDimension } from './question.constants';
-import type { ComparisonOperator } from '../types/question.types';
-
 /**
  * Branch condition types
  *
- * - dimension_score: Based on calculated dimension score (e.g., "if strength < 4")
  * - answer_value: Based on specific answer to a question (e.g., "if pain-location = 'shoulder'")
- * - aggregate: Based on aggregate calculations (e.g., "if total score > 50")
  */
-export const BRANCH_CONDITION_TYPES = ['dimension_score', 'answer_value', 'aggregate'] as const;
+export const BRANCH_CONDITION_TYPES = ['answer_value'] as const;
 
 export type BranchConditionType = (typeof BRANCH_CONDITION_TYPES)[number];
 
@@ -44,15 +39,6 @@ export type WarningType = (typeof WARNING_TYPES)[number];
 export interface BranchCondition {
   /** Type of condition to evaluate */
   type: BranchConditionType;
-
-  /** For dimension_score: Which dimension to check */
-  dimension?: ScoreDimension;
-
-  /** Comparison operator for numeric comparisons */
-  operator?: ComparisonOperator;
-
-  /** Value to compare against (for dimension_score, aggregate) */
-  value?: number;
 
   /** For answer_value: Question slug to check */
   questionSlug?: string;

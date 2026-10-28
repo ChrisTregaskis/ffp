@@ -1,17 +1,10 @@
-import type {
-  AnswerValue,
-  BranchCondition,
-  ComparisonOperator,
-  FlowStepRecord,
-  ScoreDimension,
-} from '@ffp/database';
+import type { AnswerValue, BranchCondition, FlowStepRecord } from '@ffp/database';
 
 /**
  * Context for evaluating branch conditions
  *
  * Contains all data needed to evaluate conditions:
  * - answers: Map of question slug to answer value
- * - dimensionScores: Map of dimension name to calculated score (optional)
  */
 export interface BranchEvaluationContext {
   /** Current step ID being evaluated */
@@ -22,9 +15,6 @@ export interface BranchEvaluationContext {
 
   /** Map of question slug to answer value */
   answers: Map<string, AnswerValue>;
-
-  /** Map of dimension name to calculated score (optional, for post-scoring branching) */
-  dimensionScores?: Map<ScoreDimension, number>;
 }
 
 /**
@@ -52,20 +42,10 @@ export function evaluateConditions(
  * @returns true if condition matches, false otherwise
  */
 function evaluateCondition(condition: BranchCondition, context: BranchEvaluationContext): boolean {
-  switch (condition.type) {
-    case 'answer_value':
-      return evaluateAnswerCondition(condition, context.answers);
+  // Stored rules are unchecked JSON, so one may carry a type since removed; it never matches
+  const type: string = condition.type;
 
-    case 'dimension_score':
-      return evaluateDimensionCondition(condition, context.dimensionScores);
-
-    case 'aggregate':
-      return evaluateAggregateCondition(condition, context);
-
-    default:
-      // Unknown condition type - fail safe (don't match)
-      return false;
-  }
+  return type === 'answer_value' && evaluateAnswerCondition(condition, context.answers);
 }
 
 /**
@@ -110,72 +90,4 @@ function evaluateAnswerCondition(
 
   // Both are single values
   return String(actualAnswer) === String(answerValue);
-}
-
-/**
- * Evaluate a dimension_score condition
- *
- * Compares a dimension score against a threshold using the specified operator.
- * Only works if dimensionScores are provided in context (post-scoring).
- *
- * @param condition - The condition with dimension, operator, and value
- * @param dimensionScores - Map of dimension name to score
- */
-function evaluateDimensionCondition(
-  condition: BranchCondition,
-  dimensionScores?: Map<ScoreDimension, number>
-): boolean {
-  const { dimension, operator, value } = condition;
-
-  if (!dimension || !operator || value === undefined || !dimensionScores) {
-    return false;
-  }
-
-  const score = dimensionScores.get(dimension);
-
-  if (score === undefined) {
-    return false;
-  }
-
-  return compareValues(score, operator, value);
-}
-
-/**
- * Evaluate an aggregate condition
- *
- * Reserved for future use - aggregate calculations across dimensions.
- * Currently not implemented (returns false).
- *
- * @param condition - The condition configuration
- * @param context - Full evaluation context
- */
-function evaluateAggregateCondition(
-  _condition: BranchCondition,
-  _context: BranchEvaluationContext
-): boolean {
-  // TODO: Implement aggregate conditions in future
-  // Examples: total score > X, average score < Y, etc.
-  return false;
-}
-
-/**
- * Compare two values using the specified operator
- *
- * @param actual - The actual value
- * @param operator - Comparison operator (lt, lte, gt, gte, eq)
- * @param expected - The expected/threshold value
- */
-function compareValues(actual: number, operator: ComparisonOperator, expected: number): boolean {
-  switch (operator) {
-    case 'lt':
-      return actual < expected;
-    case 'lte':
-      return actual <= expected;
-    case 'gt':
-      return actual > expected;
-    case 'gte':
-      return actual >= expected;
-    case 'eq':
-      return actual === expected;
-  }
 }

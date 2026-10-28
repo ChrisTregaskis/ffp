@@ -394,7 +394,7 @@ describe('Assessment Service', () => {
       runWithRLSInMockTx();
     });
 
-    it('successfully submits assessment with merged answers and enqueues scoring job', async () => {
+    it('submits merged answers and queues a scoring job that carries ids, not answers', async () => {
       const context = createUserContext();
       const databaseUserId = randomUUID();
       const assessmentId = randomUUID();
@@ -489,10 +489,6 @@ describe('Assessment Service', () => {
           userAssessmentId: assessmentId,
           flowId,
           userId: databaseUserId,
-          responses: expect.arrayContaining([
-            expect.objectContaining({ questionId: questionId1, answerValue: 3 }),
-            expect.objectContaining({ questionId: questionId2, answerValue: 5 }),
-          ]) as unknown[],
         },
         context,
         { priority: 2, tx: mockTx }
@@ -998,11 +994,6 @@ describe('Assessment Service', () => {
             userAssessmentId: assessmentId,
             flowId: assessment.flowId,
             userId,
-            // Scoring reads every stored answer; validation is what leaves the echo alone
-            responses: [
-              { questionId: capped.id, answerValue: ['a'] },
-              { questionId: unassignedId, answerValue: 'kept' },
-            ],
           },
           context,
           { priority: 2, tx: mockTx }
@@ -1028,7 +1019,7 @@ describe('Assessment Service', () => {
         ]);
       });
 
-      it('clears an emptied optional answer and leaves it out of scoring', async () => {
+      it('clears an emptied optional answer, so scoring never reads it', async () => {
         const { context, assessmentId, capped, optional } = setUp();
 
         mockedAnswerRepo.findByAssessmentId.mockResolvedValue([
@@ -1048,12 +1039,6 @@ describe('Assessment Service', () => {
           assessmentId,
           [optional.id],
           { tx: mockTx }
-        );
-        expect(mockedJobQueueService.queueJob).toHaveBeenCalledWith(
-          'score_assessment',
-          expect.objectContaining({ responses: [{ questionId: capped.id, answerValue: ['a'] }] }),
-          context,
-          { priority: 2, tx: mockTx }
         );
       });
 

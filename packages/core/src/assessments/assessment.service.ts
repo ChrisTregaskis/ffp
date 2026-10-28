@@ -618,14 +618,15 @@ export async function submitAssessment(
 
   assertNoAnswerErrors(findSubmitErrors(storedValues, submittedValues, flowQuestions));
 
-  // The scoring job reads every answer, the submitted ones overriding those stored
-  const responses = [...new Map([...storedValues, ...submittedValues])]
+  // The safety rules see every answer, stale ones included, the submitted ones overriding
+  // those stored. Scoring reads the stored answers itself and counts only the flow's questions.
+  const allAnswers = [...new Map([...storedValues, ...submittedValues])]
     .filter(([, answerValue]) => isAnswerProvided(answerValue))
     .map(([questionId, answerValue]) => ({ questionId, answerValue }));
 
   const safetyTrigger = findSafetyTrigger(
     flowSteps,
-    await toBranchingAnswers(db, assessmentId, responses)
+    await toBranchingAnswers(db, assessmentId, allAnswers)
   );
 
   // Execute all writes in a single transaction for atomicity
@@ -658,7 +659,6 @@ export async function submitAssessment(
         userAssessmentId: assessmentId,
         flowId: assessment.flowId,
         userId,
-        responses,
       },
       context,
       { priority: 2, tx } // High priority for user-triggered submission
