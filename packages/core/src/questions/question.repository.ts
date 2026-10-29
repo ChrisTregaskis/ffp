@@ -95,6 +95,7 @@ export type TemplateQuestionWithConfig = QuestionWithConfig & { templateId: stri
 /**
  * Find all questions for multiple templates, ordered by display order within each template.
  * Active questions only: a deactivated question still assigned is neither validated nor scored.
+ * To read the questions a flow asks, use `findActiveFlowQuestions`, which owns that rule.
  * @returns Questions with template-specific config, ordered by templateId then displayOrder
  */
 export async function findByTemplateIds(

@@ -203,6 +203,28 @@ function convertStepsToSummaryFormat(steps: FlowStepWithConfig[]): FlowStepSumma
   }));
 }
 
+const UNREADABLE_STORED_ANSWER_MESSAGE =
+  "We couldn't load one of your earlier answers. Please contact the team that invited you.";
+
+/**
+ * Refuse a stored answer in a shape the service cannot read. Only stored answers come here, and
+ * the refusal reaches the member on start, save and submit, so it is worded for them; the
+ * reason goes to the log with the value's shape, never the value.
+ */
+function unreadableStoredAnswer(
+  questionId: string,
+  answerValue: unknown,
+  reason: string
+): ValidationError {
+  systemLogger.warn('A stored answer could not be read', {
+    questionId,
+    reason,
+    answerShape: describeShapeForLog(answerValue),
+  });
+
+  return new ValidationError(UNREADABLE_STORED_ANSWER_MESSAGE);
+}
+
 /**
  * Extract the answer value from database JSONB
  *
@@ -225,12 +247,7 @@ function extractAnswerValue(questionId: string, answerValue: unknown): AnswerVal
       return answerValue;
     }
 
-    systemLogger.warn('Array contains non-string values', {
-      questionId,
-      answerShape: describeShapeForLog(answerValue),
-    });
-
-    throw new ValidationError('Invalid answer value format: array contains non-string values');
+    throw unreadableStoredAnswer(questionId, answerValue, 'array contains non-string values');
   }
 
   // Handle legacy wrapped formats: { value: ... }, { selected: ... }, { text: ... }
@@ -249,21 +266,13 @@ function extractAnswerValue(questionId: string, answerValue: unknown): AnswerVal
       return obj.text;
     }
 
-    systemLogger.warn('Unexpected answer value structure', {
-      questionId,
-      answerShape: describeShapeForLog(answerValue),
-    });
-
-    throw new ValidationError('Invalid answer value format: unrecognised object structure');
+    throw unreadableStoredAnswer(questionId, answerValue, 'unrecognised object structure');
   }
 
-  systemLogger.warn('Unexpected answer value type', {
+  throw unreadableStoredAnswer(
     questionId,
-    answerShape: describeShapeForLog(answerValue),
-  });
-
-  throw new ValidationError(
-    'Invalid answer value format: expected string, number, boolean, or string[]'
+    answerValue,
+    'expected string, number, boolean, or string[]'
   );
 }
 

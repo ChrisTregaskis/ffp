@@ -3,12 +3,12 @@ import { and, eq } from 'drizzle-orm';
 import { getDb, withRLS } from '@ffp/database';
 import { userAssessments, userAssessmentAnswers } from '@ffp/database/schema';
 
+import { findActiveFlowQuestions } from '../../assessments/flow-question.repository';
 import { findFlowById, findStepsByFlowId } from '../../assessments/flow.repository';
 import { calculateScores, toJobResult } from '../../assessments/scoring';
 import { createSystemContext } from '../../lib/context';
 import { NotFoundError, ValidationError } from '../../lib/errors';
 import { createSystemLogger } from '../../lib/logger';
-import { findByTemplateIds } from '../../questions/question.repository';
 import { findTemplateIdsOfSteps } from '../../schemas/assessment-flow.schema';
 import {
   assessmentResponseSchema,
@@ -67,14 +67,11 @@ export async function processScoreAssessment(
     const steps = await findStepsByFlowId(tx, payload.flowId);
 
     // Only the template-linked steps carry the questions that scoring reads
-    const templateIds = findTemplateIdsOfSteps(steps);
-
-    if (templateIds.length === 0) {
+    if (findTemplateIdsOfSteps(steps).length === 0) {
       throw new ValidationError(`Flow ${payload.flowId} has no question templates. Cannot score.`);
     }
 
-    // Fetch questions from ALL templates in the flow
-    const questions = await findByTemplateIds(tx, templateIds);
+    const questions = await findActiveFlowQuestions(tx, steps);
 
     if (questions.length === 0) {
       throw new ValidationError(

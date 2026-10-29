@@ -5,8 +5,6 @@ import { type OrganisationContext } from '../lib/context';
 import { assertDistinctIds } from '../lib/distinct-ids';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import { findTemplateNamesBySlugs } from '../programme-templates/programme-template.repository';
-import { findByTemplateIds } from '../questions/question.repository';
-import { findTemplateIdsOfSteps } from '../schemas/assessment-flow.schema';
 import {
   answerErrorPath,
   isAnswerProvided,
@@ -21,6 +19,7 @@ import {
   type ScoringDryRunResult,
 } from '../schemas/scoring-dry-run.schema';
 
+import { findActiveFlowQuestions } from './flow-question.repository';
 import * as flowRepository from './flow.repository';
 import { calculateScores } from './scoring';
 import { formatDimensionName } from './scoring/helpers';
@@ -60,7 +59,7 @@ export async function dryRunFlowScoringService(
   }
 
   const steps = await flowRepository.findStepsByFlowId(db, flow.id);
-  const questions = await findByTemplateIds(db, findTemplateIdsOfSteps(steps));
+  const questions = await findActiveFlowQuestions(db, steps);
   const questionsByPublicId = new Map(questions.map((question) => [question.publicId, question]));
 
   const responses = toResponses(parseResult.data.answers, questionsByPublicId);
