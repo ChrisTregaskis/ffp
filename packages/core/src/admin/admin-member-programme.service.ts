@@ -1,5 +1,4 @@
 import { fromDrawnVideo, getDb, withAdminContext } from '@ffp/database';
-import type { SessionStatus } from '@ffp/database/constants';
 
 import { withRLS, type Transaction } from '../lib/database';
 import { assertDistinctIds } from '../lib/distinct-ids';
@@ -7,6 +6,7 @@ import { ConflictError, NotFoundError, ValidationError } from '../lib/errors';
 import { createLogger } from '../lib/logger';
 import { findCurrentProgrammeInTx } from '../programmes/programme.repository';
 import {
+  LOCKED_SESSION_REASONS,
   createExerciseRequestSchema,
   memberExerciseResponseSchema,
   memberSessionOrderResponseSchema,
@@ -33,12 +33,6 @@ interface Member {
   id: string;
   organisationId: string;
 }
-
-const LOCKED_SESSION_REASONS: Record<Exclude<SessionStatus, 'not_started'>, string> = {
-  in_progress: 'This session is under way, so it can no longer be changed.',
-  completed: 'This session is completed, so it can no longer be changed.',
-  skipped: 'This session was skipped, so it can no longer be changed.',
-};
 
 /**
  * Runs an edit inside one transaction under the member's own organisation, with their current

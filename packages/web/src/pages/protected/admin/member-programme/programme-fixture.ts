@@ -1,6 +1,6 @@
 import { adminProgrammeDetailResponseSchema, type AdminProgrammeDetailResponse } from '@ffp/core';
 
-const exercise = (orderIndex: number, title: string, notes: string | null): unknown => ({
+export const exercise = (orderIndex: number, title: string, notes: string | null): unknown => ({
   sessionExerciseId: crypto.randomUUID(),
   orderIndex,
   sets: 3,
@@ -8,13 +8,19 @@ const exercise = (orderIndex: number, title: string, notes: string | null): unkn
   durationSeconds: null,
   restSeconds: 45,
   notes,
-  video: { id: crypto.randomUUID(), title, durationSeconds: 60, difficulty: null },
+  video: {
+    id: crypto.randomUUID(),
+    publicId: 'vid000000001',
+    title,
+    durationSeconds: 60,
+    difficulty: null,
+  },
   completion: null,
 });
 
-const session = (
+export const session = (
   sessionNumber: number,
-  status: 'not_started' | 'in_progress' | 'completed',
+  status: 'not_started' | 'in_progress' | 'completed' | 'skipped',
   exercises: unknown[]
 ): unknown => ({
   templateSessionId: crypto.randomUUID(),
@@ -34,9 +40,20 @@ const session = (
   exercises,
 });
 
-/** A member's programme as the admin read returns it: one phase in progress, one upcoming. */
+const PHASE_TWO_SESSIONS = (): unknown[] => [
+  session(1, 'not_started', [
+    exercise(0, 'Bodyweight Squat', '**Aim for full depth**'),
+    exercise(1, 'Wall Press', null),
+  ]),
+];
+
+/**
+ * A member's programme as the admin read returns it: one phase in progress, one upcoming. Pass
+ * the upcoming phase's sessions to build a different one.
+ */
 export const memberProgramme = (
-  overrides: Partial<AdminProgrammeDetailResponse> = {}
+  overrides: Partial<AdminProgrammeDetailResponse> = {},
+  phaseTwoSessions: unknown[] = PHASE_TWO_SESSIONS()
 ): AdminProgrammeDetailResponse =>
   adminProgrammeDetailResponseSchema.parse({
     programme: {
@@ -69,12 +86,7 @@ export const memberProgramme = (
         name: 'Building Up',
         description: 'Adds a little more load.',
         status: 'not_started',
-        sessions: [
-          session(1, 'not_started', [
-            exercise(0, 'Bodyweight Squat', '**Aim for full depth**'),
-            exercise(1, 'Wall Press', null),
-          ]),
-        ],
+        sessions: phaseTwoSessions,
       },
     ],
     level: 1,

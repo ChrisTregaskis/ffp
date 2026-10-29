@@ -9,6 +9,7 @@ import { programmeStatusSchema } from './programme-lifecycle.schema';
 /** Video metadata embedded in exercise detail */
 const detailVideoSchema = z.object({
   id: z.guid(),
+  publicId: publicIdSchema,
   title: z.string(),
   durationSeconds: z.number().int().positive(),
   difficulty: z.string().nullable(),

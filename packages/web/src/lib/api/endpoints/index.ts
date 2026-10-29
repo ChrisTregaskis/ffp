@@ -70,6 +70,7 @@ export type {
   UpdateProgrammeTemplateInput,
 } from './admin-programme-templates';
 
+export { adminMemberProgrammeApi } from './admin-member-programme';
 export { adminUsersApi } from './admin-users';
 export type {
   AdminCreateUserInput,

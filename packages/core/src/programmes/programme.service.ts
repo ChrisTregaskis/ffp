@@ -398,6 +398,7 @@ async function readProgrammeDetail(
             notes: ex.notes,
             video: {
               id: ex.video.id,
+              publicId: ex.video.publicId,
               title: ex.video.title,
               durationSeconds: ex.video.durationSeconds,
               difficulty: ex.video.difficulty,

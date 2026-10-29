@@ -8,6 +8,8 @@ export { ProgrammeLoadError } from './ProgrammeLoadError';
 export { ProgressSummary } from './ProgressSummary';
 export { ProgrammeExerciseRow } from './ProgrammeExerciseRow';
 export { ProgrammeKeyAreas } from './ProgrammeKeyAreas';
+export { MemberSessionEditor } from './MemberSessionEditor';
+export type { MemberSessionEditorProps } from './MemberSessionEditor';
 export { ProgrammeSessionCard } from './ProgrammeSessionCard';
 export {
   PHASE_STATUS_BADGES,

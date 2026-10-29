@@ -6,7 +6,7 @@ import type { VideoDetailResponse } from '@ffp/core';
 import { FieldError } from '@web/components/atoms';
 import { StaticAlert } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
-import { VideoSelector } from '@web/components/programme-templates/VideoSelector';
+import { VideoSelector } from '@web/components/video';
 
 import type { QuestionFormValues } from '../types';
 

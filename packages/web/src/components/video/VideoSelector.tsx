@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { generatePath } from 'react-router-dom';
 
 import type { VideoDetailResponse } from '@ffp/core';
 
 import {
   Button,
+  FieldError,
   FloatingPanel,
   Icon,
   Icons,
@@ -14,8 +15,9 @@ import {
   Surface,
   Text,
 } from '@web/components/atoms';
-import { SearchInput } from '@web/components/molecules';
+import { ErrorRetryState, SearchInput } from '@web/components/molecules';
 import { RouteKey, routes } from '@web/config/routes';
+import { useClickOutside } from '@web/hooks/useClickOutside';
 import { adminVideosApi } from '@web/lib/api/endpoints';
 import { videosApi } from '@web/lib/api/endpoints/videos';
 import { videoKeys } from '@web/lib/query/keys';
@@ -38,19 +40,23 @@ export interface VideoSelectorProps {
   selectedVideo?: SelectedVideo | null;
   /** Whether the selector is disabled */
   disabled?: boolean;
+  /** Videos left out of the results, by id: those a session already holds, say */
+  excludeVideoIds?: readonly string[];
 }
 
-/** Search and select a video from the catalogue for exercise creation. */
+/** Search the active catalogue and pick a video, for an exercise or a question. */
 export const VideoSelector: React.FC<VideoSelectorProps> = ({
   onSelect,
   onClear,
   selectedVideo = null,
   disabled = false,
+  excludeVideoIds,
 }) => {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+  const [pickFailed, setPickFailed] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Debounce search input
@@ -64,23 +70,21 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
     };
   }, [search]);
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent): void => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+  useClickOutside(
+    containerRef,
+    () => {
+      setIsOpen(false);
+    },
+    isOpen
+  );
 
   // Search query — only runs when dropdown is open and there is a search term
-  const { data: searchResults, isLoading: isSearching } = useQuery({
+  const {
+    data: searchResults,
+    isPending: isSearching,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: videoKeys.adminList({ search: debouncedSearch, status: 'active', page: 1 }),
     queryFn: ({ signal }) =>
       adminVideosApi.list(
@@ -92,11 +96,16 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
     enabled: isOpen && debouncedSearch.length >= 2,
   });
 
-  const videos = searchResults?.data ?? [];
+  const videos = useMemo(() => {
+    const excluded = new Set(excludeVideoIds);
+
+    return (searchResults?.data ?? []).filter((video) => !excluded.has(video.id));
+  }, [searchResults, excludeVideoIds]);
 
   const handleSelect = useCallback(
     async (videoPublicId: string) => {
       setIsLoadingDetail(true);
+      setPickFailed(false);
 
       try {
         const detail = await videosApi.get(videoPublicId);
@@ -104,6 +113,8 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
         setIsOpen(false);
         setSearch('');
         setDebouncedSearch('');
+      } catch {
+        setPickFailed(true);
       } finally {
         setIsLoadingDetail(false);
       }
@@ -174,19 +185,30 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
       {/* Dropdown results */}
       {isOpen && debouncedSearch.length >= 2 && (
         <FloatingPanel className="absolute mt-1 w-full">
+          {/* Pending, not loading: a search paused offline would otherwise read as no results */}
           {isSearching && (
             <div className="px-3 py-2">
               <LoadingSpinner size="sm" variant="center" />
             </div>
           )}
 
-          {!isSearching && videos.length === 0 && (
+          {isError && (
+            <div className="px-3 py-2">
+              <ErrorRetryState
+                title="We couldn't search the videos just now."
+                onRetry={() => void refetch()}
+              />
+            </div>
+          )}
+
+          {!isSearching && !isError && videos.length === 0 && (
             <div className="px-3 py-2">
               <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>No videos found</Text>
             </div>
           )}
 
           {!isSearching &&
+            !isError &&
             videos.map((video) => (
               <Button
                 key={video.id}
@@ -216,6 +238,12 @@ export const VideoSelector: React.FC<VideoSelectorProps> = ({
                 </div>
               </Button>
             ))}
+
+          {pickFailed && (
+            <div className="border-t border-border px-3 py-2">
+              <FieldError message="We couldn't open that video just now. Please pick it again." />
+            </div>
+          )}
 
           {isLoadingDetail && (
             <div className="border-t border-border px-3 py-2">

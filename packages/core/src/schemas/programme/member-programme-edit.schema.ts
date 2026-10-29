@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { SESSION_STATUSES } from '@ffp/database/constants';
+import { SESSION_STATUSES, type SessionStatus } from '@ffp/database/constants';
 
 import { sessionExerciseSchema } from '../programme-structure.schema';
 
@@ -30,3 +30,13 @@ export const memberSessionOrderResponseSchema = z.object({
 
 export type MemberExerciseResponse = z.infer<typeof memberExerciseResponseSchema>;
 export type MemberSessionOrderResponse = z.infer<typeof memberSessionOrderResponseSchema>;
+
+/**
+ * Why a session the member has begun cannot change: a start copies its exercises. The server
+ * refuses an edit with these, and the admin editor shows them on the locked session.
+ */
+export const LOCKED_SESSION_REASONS: Record<Exclude<SessionStatus, 'not_started'>, string> = {
+  in_progress: 'This session is under way, so it can no longer be changed.',
+  completed: 'This session is completed, so it can no longer be changed.',
+  skipped: 'This session was skipped, so it can no longer be changed.',
+};

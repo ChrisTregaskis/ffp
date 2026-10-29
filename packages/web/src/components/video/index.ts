@@ -11,3 +11,4 @@ export {
   type VideoMetadataFormFieldsProps,
 } from './VideoMetadataFormFields';
 export type { VideoMetadataFormValues } from './types';
+export { VideoSelector, type SelectedVideo, type VideoSelectorProps } from './VideoSelector';

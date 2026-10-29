@@ -17,6 +17,13 @@ export interface ProgrammeSessionCardProps {
   actions?: ReactNode;
   /** Controls for each exercise, shown at the end of its row */
   renderExerciseActions?: (exercise: ProgrammeExercise) => ReactNode;
+  /** Shown below the exercises: a form, a note about the session */
+  footer?: ReactNode;
+  /** Controls the card's open state; left out, the card opens and closes itself */
+  expanded?: boolean;
+  onToggle?: () => void;
+  /** Holds the card open, while a form in its footer is in use */
+  toggleDisabled?: boolean;
 }
 
 /** A collapsible card for one session of a member's programme, listing its exercises. */
@@ -24,6 +31,10 @@ export const ProgrammeSessionCard: React.FC<ProgrammeSessionCardProps> = ({
   session,
   actions,
   renderExerciseActions,
+  footer,
+  expanded,
+  onToggle,
+  toggleDisabled,
 }) => {
   const displayName = session.name ?? `Session ${String(session.sessionNumber)}`;
   const status = session.userSession?.status;
@@ -47,7 +58,13 @@ export const ProgrammeSessionCard: React.FC<ProgrammeSessionCardProps> = ({
   );
 
   return (
-    <Accordion trigger={trigger} actions={actions}>
+    <Accordion
+      trigger={trigger}
+      actions={actions}
+      expanded={expanded}
+      onToggle={onToggle}
+      toggleDisabled={toggleDisabled}
+    >
       {exercises.length === 0 ? (
         <Text styleProps={{ size: 'sm', colour: 'muted-foreground' }}>
           No exercises in this session.
@@ -63,6 +80,7 @@ export const ProgrammeSessionCard: React.FC<ProgrammeSessionCardProps> = ({
           ))}
         </div>
       )}
+      {footer && <div className="mt-3 space-y-3">{footer}</div>}
     </Accordion>
   );
 };
