@@ -73,10 +73,3 @@ export const adminExercisesApi = {
     return parseApiResponse(exercisesResponseEnvelope, response, { method: 'PUT', path }).exercises;
   },
 };
-
-export type {
-  CreateExerciseRequest,
-  ExerciseResponse,
-  ReorderExercisesRequest,
-  UpdateExerciseRequest,
-};

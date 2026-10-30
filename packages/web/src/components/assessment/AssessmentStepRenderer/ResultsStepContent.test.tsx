@@ -144,6 +144,52 @@ describe('ResultsStepContent', () => {
     expect(viewProgramme).toHaveProperty('disabled', false);
   });
 
+  it('offers a retry in place of the programme button when checking on the programme fails', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    mocks.getResults
+      .mockResolvedValueOnce(scoredResults(NO_GATE, 'pending'))
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValue(scoredResults(NO_GATE, 'ready'));
+
+    renderResults();
+
+    expect(await screen.findByRole('button', { name: VIEW_PROGRAMME })).toBeTruthy();
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+
+    expect(await screen.findByText("We couldn't check on your programme just now.")).toBeTruthy();
+    expect(screen.queryByRole('button', { name: VIEW_PROGRAMME })).toBeNull();
+    // The scores already shown stay in place
+    expect(screen.getByText(RESULTS_HEADING)).toBeTruthy();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(await screen.findByRole('button', { name: VIEW_PROGRAMME })).toHaveProperty(
+      'disabled',
+      false
+    );
+  });
+
+  it('polls again after a retry that finds the programme still being put together', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    mocks.getResults
+      .mockResolvedValueOnce(scoredResults(NO_GATE, 'pending'))
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValueOnce(scoredResults(NO_GATE, 'pending'))
+      .mockResolvedValue(scoredResults(NO_GATE, 'ready'));
+
+    renderResults();
+
+    await screen.findByRole('button', { name: VIEW_PROGRAMME });
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    await userEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+
+    const viewProgramme = await screen.findByRole('button', { name: VIEW_PROGRAMME });
+
+    expect(viewProgramme).toHaveProperty('disabled', true);
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    expect(viewProgramme).toHaveProperty('disabled', false);
+  });
+
   it('shows a calm notice instead of the programme button when it could not be put together', async () => {
     mocks.getResults.mockResolvedValue(scoredResults(NO_GATE, 'failed'));
 

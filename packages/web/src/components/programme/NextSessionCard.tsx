@@ -60,7 +60,9 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
   return (
     <Card>
       <div className="flex flex-col lg:flex-row lg:items-stretch lg:gap-6">
-        <div className="relative min-h-[200px] overflow-hidden rounded-lg bg-muted lg:w-2/5">
+        {/* The preview is pinned to the frame, so the frame sets its own height: 16:9 (never
+            under 200 px) until the row's height takes over at lg */}
+        <div className="relative aspect-video min-h-[200px] overflow-hidden rounded-lg bg-muted lg:aspect-auto lg:w-2/5">
           {firstVideoId ? (
             <VideoPlayer
               videoId={firstVideoId}
@@ -70,10 +72,10 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
               decorative
               cover
               variant="muted"
-              className="!aspect-auto h-full !rounded-none"
+              className="absolute inset-0 !aspect-auto !rounded-none"
             />
           ) : (
-            <div className="flex h-full items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center">
               <Icon name={Icons.PLAY} styleProps={{ size: 'xl', colour: 'var(--color-primary)' }} />
             </div>
           )}
@@ -129,8 +131,14 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
             </div>
           </div>
 
-          <div className="mt-8 flex justify-end gap-3">
-            <Button variant="neutral" size="md" onClick={handleViewProgramme}>
+          {/* Stacked at phone width, where side by side the labels wrap inside the buttons */}
+          <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <Button
+              variant="neutral"
+              size="md"
+              onClick={handleViewProgramme}
+              className="w-full sm:w-auto"
+            >
               View Programme
             </Button>
             <Button
@@ -138,6 +146,7 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
               size="md"
               icon={<Icon name={Icons.PLAY} styleProps={{ size: 'sm', colour: '#ffffff' }} />}
               onClick={handleStart}
+              className="w-full sm:w-auto"
             >
               {isResumable ? 'Continue Session' : 'Start Session'}
             </Button>

@@ -7,16 +7,11 @@ import { FormActions, FormTextarea, FormTextInput } from '@web/components/molecu
 import { useComposableFormContext } from '@web/components/organisms';
 import { VideoSelector } from '@web/components/video';
 import type { SelectedVideo } from '@web/components/video';
+import { requiredText } from '@web/utils/form-rules';
 
 import { PRESCRIPTION_FIELDS, prescriptionFromVideo } from './exercise-utils';
 
 import type { ExerciseFormValues, PrescriptionOnVideoChange } from './exercise-utils';
-
-// The form trims on submit, so a value of only spaces would read as blank. Sets and reps
-// cannot be stored empty, so editing refuses a blank rather than keeping the old value unseen.
-const requiredOnEdit = (message: string): { validate: (value: string) => true | string } => ({
-  validate: (value) => value.trim() !== '' || message,
-});
 
 /** Fields for the exercise inline form */
 export const ExerciseFormFields: React.FC<{
@@ -73,6 +68,8 @@ export const ExerciseFormFields: React.FC<{
 
       {videoId && (
         <>
+          {/* Sets and reps cannot be stored empty, so editing refuses a blank rather than keeping
+              the old value unseen */}
           <FormRow>
             <FormTextInput<ExerciseFormValues>
               name="sets"
@@ -83,7 +80,9 @@ export const ExerciseFormFields: React.FC<{
               errors={errors}
               inputProps={{ min: 1 }}
               isRequired={isEditMode}
-              registerOptions={isEditMode ? requiredOnEdit('Please give the sets') : undefined}
+              registerOptions={
+                isEditMode ? { validate: requiredText('Please give the sets') } : undefined
+              }
             />
             <FormTextInput<ExerciseFormValues>
               name="reps"
@@ -92,7 +91,9 @@ export const ExerciseFormFields: React.FC<{
               register={register}
               errors={errors}
               isRequired={isEditMode}
-              registerOptions={isEditMode ? requiredOnEdit('Please give the reps') : undefined}
+              registerOptions={
+                isEditMode ? { validate: requiredText('Please give the reps') } : undefined
+              }
             />
           </FormRow>
 

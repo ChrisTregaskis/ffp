@@ -19,6 +19,7 @@ import {
   SCORE_DIMENSION_OPTIONS,
 } from '@web/constants';
 import { useAutoSlug } from '@web/hooks/useAutoSlug';
+import { requiredText } from '@web/utils/form-rules';
 
 import { QuestionTypeChangeWarning } from './QuestionTypeChangeWarning';
 import { QuestionTypeFields } from './QuestionTypeFields';
@@ -63,7 +64,7 @@ export const QuestionFormFields: React.FC<QuestionFormFieldsProps> = ({
         register={register}
         errors={errors}
         isRequired
-        registerOptions={{ required: 'Please write the question' }}
+        registerOptions={{ validate: requiredText('Please write the question') }}
       />
 
       <FormTextInput<QuestionFormValues>
@@ -80,7 +81,7 @@ export const QuestionFormFields: React.FC<QuestionFormFieldsProps> = ({
             : undefined
         }
         registerOptions={{
-          required: 'Please give the question a slug',
+          validate: requiredText('Please give the question a slug'),
           maxLength: {
             value: QUESTION_SLUG_MAX_LENGTH,
             message: `Keep the slug to ${String(QUESTION_SLUG_MAX_LENGTH)} characters`,

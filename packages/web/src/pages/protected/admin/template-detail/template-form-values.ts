@@ -30,16 +30,18 @@ export const toUpdateTemplateInput = (
   template: TemplateDetailResponse
 ): UpdateProgrammeTemplateInput => {
   const payload: UpdateProgrammeTemplateInput = {};
+  const name = values.name.trim();
+  const slug = values.slug.trim();
 
-  if (values.name !== template.name) {
-    payload.name = values.name;
+  if (name !== template.name) {
+    payload.name = name;
   }
 
-  if (values.slug !== template.slug) {
-    payload.slug = values.slug;
+  if (slug !== template.slug) {
+    payload.slug = slug;
   }
 
-  const descValue = values.description || null;
+  const descValue = values.description.trim() || null;
 
   if (descValue !== (template.description ?? null)) {
     payload.description = descValue;

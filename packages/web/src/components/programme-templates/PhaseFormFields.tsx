@@ -2,6 +2,7 @@ import React from 'react';
 
 import { FormActions, FormTextarea, FormTextInput } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
+import { requiredText } from '@web/utils/form-rules';
 
 import type { PhaseFormValues } from './PhaseForm';
 
@@ -22,10 +23,7 @@ export const PhaseFormFields: React.FC<{
         register={register}
         errors={errors}
         isRequired
-        registerOptions={{
-          // The form trims on submit, so a name of only spaces would save empty
-          validate: (value) => value.trim() !== '' || 'Please give the phase a name',
-        }}
+        registerOptions={{ validate: requiredText('Please give the phase a name') }}
       />
 
       <FormTextarea<PhaseFormValues>

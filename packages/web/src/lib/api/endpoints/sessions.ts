@@ -29,15 +29,4 @@ export const sessionsApi = {
 
     return parseApiResponse(sessionStatusResponseSchema, response, { method: 'PUT', path });
   },
-
-  /** Skip a session*/
-  skip: async (sessionId: string): Promise<SessionStatusResponse> => {
-    const path = `${basePath}/${sessionId}/skip`;
-    const response = await ffpClient.put(path);
-
-    return parseApiResponse(sessionStatusResponseSchema, response, { method: 'PUT', path });
-  },
 };
-
-// Re-export types for consumers
-export type { StartSessionRequest, StartSessionResponse, SessionStatusResponse };

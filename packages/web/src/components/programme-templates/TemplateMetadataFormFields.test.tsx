@@ -81,4 +81,15 @@ describe('TemplateMetadataFormFields edit mode', () => {
     expect(screen.getByText('Status')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Save Changes' })).toBeTruthy();
   });
+
+  // The submit trims, so a name of only spaces would save blank
+  it('refuses a name of only spaces', async () => {
+    const onSubmit = renderFields(true, STORED_TEMPLATE);
+
+    fireEvent.change(nameInput(), { target: { value: '   ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    expect((await screen.findByRole('alert')).textContent).toBe('Please give the template a name');
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
 });

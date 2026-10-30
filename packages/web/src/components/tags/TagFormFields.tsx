@@ -5,6 +5,7 @@ import { TAG_TEXT_MAX_LENGTH, QUESTION_SLUG_PATTERN } from '@ffp/core';
 import { FormActions, FormTextInput } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
 import { useAutoSlug } from '@web/hooks/useAutoSlug';
+import { requiredText } from '@web/utils/form-rules';
 
 import type { TagFormValues } from './tag-form-values';
 import type { FieldErrors } from 'react-hook-form';
@@ -57,7 +58,7 @@ export const TagFormFields: React.FC<TagFormFieldsProps> = ({
         errors={errors}
         isRequired
         registerOptions={{
-          validate: (value) => value.trim() !== '' || 'Please give the tag a label',
+          validate: requiredText('Please give the tag a label'),
           maxLength: MAX_LENGTH_RULE,
         }}
       />
@@ -81,7 +82,7 @@ export const TagFormFields: React.FC<TagFormFieldsProps> = ({
           isRequired
           hint="Filled in from the label. It can't be changed once the tag is saved."
           registerOptions={{
-            required: 'Please give the tag a slug',
+            validate: requiredText('Please give the tag a slug'),
             maxLength: MAX_LENGTH_RULE,
             pattern: {
               value: QUESTION_SLUG_PATTERN,

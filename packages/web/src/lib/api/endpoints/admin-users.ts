@@ -85,11 +85,3 @@ export const adminUsersApi = {
     return parseApiResponse(userDetailResponseSchema, response, { method: 'PUT', path });
   },
 };
-
-// Re-export types for consumers
-export type {
-  AdminCreateUserInput,
-  AdminProgrammeDetailResponse,
-  AdminUpdateUserInput,
-  UserDetailResponse,
-};
