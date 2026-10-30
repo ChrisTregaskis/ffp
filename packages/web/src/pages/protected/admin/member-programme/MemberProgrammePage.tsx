@@ -69,9 +69,9 @@ export const MemberProgrammePage: React.FC = () => {
         cell: (_value, row) => <Badge {...PHASE_STATUS_BADGES[row.status]} />,
       }),
       columns.text('sessionCount', {
-        label: 'Sessions completed',
+        label: 'Sessions done',
         align: 'center',
-        cell: (_value, row) => `${String(row.sessionsCompleted)} / ${String(row.sessionCount)}`,
+        cell: (_value, row) => `${String(row.sessionsDone)} / ${String(row.sessionCount)}`,
       }),
       columns.actions({ actions: rowActions }),
     ],

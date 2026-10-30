@@ -36,7 +36,7 @@ interface TemplateQuestionMapping {
   questionIds: (keyof typeof QUESTION_IDS)[];
 }
 
-const templateQuestionMappings: TemplateQuestionMapping[] = [
+export const TEMPLATE_QUESTION_MAPPINGS: TemplateQuestionMapping[] = [
   {
     templateId: TEMPLATE_IDS.ABOUT_YOU,
     questionIds: [
@@ -177,7 +177,7 @@ export const seedAssessmentTemplates = async (
     });
 
     // Get question count from template-question mappings
-    const mapping = templateQuestionMappings.find((m) => m.templateId === templateId);
+    const mapping = TEMPLATE_QUESTION_MAPPINGS.find((m) => m.templateId === templateId);
     const questionCount = mapping?.questionIds.length ?? 0;
 
     if (existingTemplate) {

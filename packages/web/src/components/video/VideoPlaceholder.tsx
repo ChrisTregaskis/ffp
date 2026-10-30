@@ -12,6 +12,11 @@ export type VideoPlaceholderProps =
       reason: 'error';
       /** Fetches the video URL again */
       onRetry: () => void;
+    }
+  | {
+      reason: 'error';
+      /** No Retry, for a decorative frame under someone else's hit area */
+      inert: true;
     };
 
 /** What the video frame shows in place of a playable video. */
@@ -37,7 +42,7 @@ export const VideoPlaceholder: React.FC<VideoPlaceholderProps> = (props) => {
           ? 'The video could not be loaded. This may be due to an expired link or a temporary issue.'
           : 'This exercise does not have a video attached yet.'}
       </Text>
-      {props.reason === 'error' && (
+      {props.reason === 'error' && 'onRetry' in props && (
         <Button variant="secondary" size="sm" onClick={props.onRetry} className="mt-1">
           Retry
         </Button>

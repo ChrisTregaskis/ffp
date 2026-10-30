@@ -6,6 +6,7 @@ import type { IconName } from '@web/components/atoms';
 import { IconButton, Logo, Text } from '@web/components/atoms';
 import { NavGroupHeading, NavItem } from '@web/components/molecules';
 import { Backdrop, ClickScale, SlideDrawer, SlideVertical } from '@web/components/motion';
+import { RouteKey, routes } from '@web/config/routes';
 import { groupNavItems } from '@web/utils/nav-groups';
 
 export interface MobileMenuNavItem {
@@ -91,7 +92,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ navItems, className = ''
         `}
       >
         {/* Logo on the left */}
-        <Link to="/" className="flex items-center gap-2">
+        <Link to={routes[RouteKey.HOME].path} className="flex items-center gap-2">
           <Logo variant="white" size="xs" />
           <Text styleProps={{ size: 'sm', weight: 'semibold', colour: 'white' }}>
             Fit For Purpose

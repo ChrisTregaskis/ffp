@@ -46,11 +46,11 @@ export const ProgrammeSessionCard: React.FC<ProgrammeSessionCardProps> = ({
         {displayName}
       </Text>
       {status && <Badge {...SESSION_STATUS_BADGES[status]} size="xs" />}
-      {session.estimatedDurationMinutes && (
+      {session.estimatedDurationMinutes ? (
         <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
           {session.estimatedDurationMinutes} min
         </Text>
-      )}
+      ) : null}
       <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
         {session.exerciseCount} {session.exerciseCount === 1 ? 'exercise' : 'exercises'}
       </Text>
