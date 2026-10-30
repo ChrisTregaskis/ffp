@@ -1,4 +1,9 @@
-import type { CreateExerciseRequest, ExerciseResponse, UpdateExerciseRequest } from '@ffp/core';
+import type {
+  CreateExerciseRequest,
+  ExerciseResponse,
+  UpdateExerciseRequest,
+  VideoDetailResponse,
+} from '@ffp/core';
 
 import { fieldToNumber, numberToField } from '@web/utils/form-number';
 
@@ -20,8 +25,69 @@ export const EMPTY_EXERCISE_VALUES: ExerciseFormValues = {
   notes: '',
 };
 
-/** Builds initial form values from an ExerciseResponse for editing. */
-export const exerciseToFormValues = (exercise: ExerciseResponse): ExerciseFormValues => ({
+/** The stored exercise a form edits: a template exercise, or a member's own copy of one */
+export type StoredExercise = Pick<
+  ExerciseResponse,
+  'videoId' | 'sets' | 'reps' | 'durationSeconds' | 'restSeconds' | 'notes'
+>;
+
+/** Prescription fields a chosen video's defaults can set */
+export const PRESCRIPTION_FIELDS = [
+  'sets',
+  'reps',
+  'durationSeconds',
+  'restSeconds',
+  'notes',
+] as const;
+
+export type PrescriptionField = (typeof PRESCRIPTION_FIELDS)[number];
+
+const REQUIRED_FIELDS: readonly PrescriptionField[] = ['sets', 'reps'];
+
+/**
+ * `fill-empty` sets only the fields still blank, so a prescription typed first survives the
+ * choice of video. `overwrite` replaces the prescription with the new video's, for a swap.
+ */
+export type PrescriptionOnVideoChange = 'fill-empty' | 'overwrite';
+
+/**
+ * The prescription fields after choosing a video. On overwrite, a video with no default clears an
+ * optional field but keeps sets and reps, which an exercise cannot store blank.
+ */
+export const prescriptionFromVideo = (
+  video: Pick<
+    VideoDetailResponse,
+    'defaultSets' | 'defaultReps' | 'defaultDurationSeconds' | 'defaultRestSeconds' | 'defaultNotes'
+  >,
+  current: ExerciseFormValues,
+  mode: PrescriptionOnVideoChange
+): Pick<ExerciseFormValues, PrescriptionField> => {
+  const defaults: Record<PrescriptionField, string> = {
+    sets: numberToField(video.defaultSets),
+    reps: video.defaultReps ?? '',
+    durationSeconds: numberToField(video.defaultDurationSeconds),
+    restSeconds: numberToField(video.defaultRestSeconds),
+    notes: video.defaultNotes ?? '',
+  };
+  const choose = (field: PrescriptionField): string => {
+    if (mode === 'fill-empty') {
+      return current[field] || defaults[field];
+    }
+
+    return defaults[field] || (REQUIRED_FIELDS.includes(field) ? current[field] : '');
+  };
+
+  return {
+    sets: choose('sets'),
+    reps: choose('reps'),
+    durationSeconds: choose('durationSeconds'),
+    restSeconds: choose('restSeconds'),
+    notes: choose('notes'),
+  };
+};
+
+/** Builds initial form values from a stored exercise for editing. */
+export const exerciseToFormValues = (exercise: StoredExercise): ExerciseFormValues => ({
   videoId: exercise.videoId,
   sets: String(exercise.sets),
   reps: exercise.reps,
@@ -47,7 +113,7 @@ export const toCreateExerciseRequest = (values: ExerciseFormValues): CreateExerc
  */
 export const toUpdateExerciseRequest = (
   values: ExerciseFormValues,
-  exercise: ExerciseResponse
+  exercise: StoredExercise
 ): UpdateExerciseRequest => {
   const payload: UpdateExerciseRequest = {};
 

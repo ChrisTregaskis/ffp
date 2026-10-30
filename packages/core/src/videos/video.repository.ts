@@ -84,7 +84,10 @@ export async function insertVideo(db: DbQueryClient, input: NewVideo): Promise<V
   return records[0];
 }
 
-export async function findVideoById(db: DbClient, videoId: string): Promise<VideoRecord | null> {
+export async function findVideoById(
+  db: DbQueryClient,
+  videoId: string
+): Promise<VideoRecord | null> {
   const records = await db.select().from(videos).where(eq(videos.id, videoId)).limit(1);
 
   return records[0] ?? null;

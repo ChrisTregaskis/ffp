@@ -5,11 +5,18 @@ import type * as CoreServer from '@ffp/core/server';
 
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 
-const core = vi.hoisted(() => ({ getUserProgrammeService: vi.fn() }));
+const core = vi.hoisted(() => ({
+  getUserProgrammeService: vi.fn(),
+  addMemberExerciseService: vi.fn(),
+  updateMemberExerciseService: vi.fn(),
+  removeMemberExerciseService: vi.fn(),
+  reorderMemberExercisesService: vi.fn(),
+  reorderMemberSessionsService: vi.fn(),
+}));
 
 vi.mock('@ffp/core/server', async (importOriginal) => ({
   ...(await importOriginal<typeof CoreServer>()),
-  getUserProgrammeService: core.getUserProgrammeService,
+  ...core,
 }));
 
 const { handler } = await import('../../src/admin/index');
@@ -17,7 +24,8 @@ const { handler } = await import('../../src/admin/index');
 const createEvent = (
   method: string,
   path: string,
-  role: string
+  role: string,
+  body = '{}'
 ): CoreServer.APIGatewayProxyEventV2WithJWT =>
   ({
     version: '2.0',
@@ -26,7 +34,7 @@ const createEvent = (
     rawQueryString: '',
     headers: {},
     pathParameters: { proxy: path.slice(1) },
-    body: method === 'GET' || method === 'DELETE' ? undefined : '{}',
+    body: method === 'GET' || method === 'DELETE' ? undefined : body,
     requestContext: {
       accountId: '123456789012',
       apiId: 'test-api',
@@ -63,6 +71,7 @@ describe('admin member programme route', () => {
   let consoleLogSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
+    vi.clearAllMocks();
     consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
   });
 
@@ -114,4 +123,67 @@ describe('admin member programme route', () => {
     expect(core.getUserProgrammeService.mock.calls[0][1]).toBe('abcdefghijkl');
     expect(JSON.parse(result.body ?? '')).toEqual(detail);
   });
+
+  const SESSION_ID = '0f1514a0-8274-4dcf-a6fe-09bead163e83';
+  const EXERCISE_ID = '6c0b7a1e-2f3d-4e5f-8a9b-0c1d2e3f4a5b';
+  const PHASE_ID = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d';
+  const BODY = { orderedIds: [EXERCISE_ID] };
+
+  const writes = [
+    {
+      method: 'POST',
+      path: `/users/abcdefghijkl/programme/sessions/${SESSION_ID}/exercises`,
+      service: core.addMemberExerciseService,
+      target: SESSION_ID,
+    },
+    {
+      method: 'PUT',
+      path: `/users/abcdefghijkl/programme/exercises/${EXERCISE_ID}`,
+      service: core.updateMemberExerciseService,
+      target: EXERCISE_ID,
+    },
+    {
+      method: 'DELETE',
+      path: `/users/abcdefghijkl/programme/exercises/${EXERCISE_ID}`,
+      service: core.removeMemberExerciseService,
+      target: EXERCISE_ID,
+    },
+    {
+      method: 'PUT',
+      path: `/users/abcdefghijkl/programme/sessions/${SESSION_ID}/exercises/reorder`,
+      service: core.reorderMemberExercisesService,
+      target: SESSION_ID,
+    },
+    {
+      method: 'PUT',
+      path: `/users/abcdefghijkl/programme/phases/${PHASE_ID}/sessions/reorder`,
+      service: core.reorderMemberSessionsService,
+      target: PHASE_ID,
+    },
+  ];
+
+  it.each(writes)('$method $path refuses a customer admin', async ({ method, path, service }) => {
+    const result = (await handler(
+      createEvent(method, path, 'customer_admin', JSON.stringify(BODY))
+    )) as APIGatewayProxyStructuredResultV2;
+
+    expect(result.statusCode).toBe(403);
+    expect(service).not.toHaveBeenCalled();
+  });
+
+  it.each(writes)(
+    '$method $path passes the user publicId, target and body to its service',
+    async ({ method, path, service, target }) => {
+      service.mockResolvedValue(method === 'DELETE' ? undefined : []);
+
+      const result = (await handler(
+        createEvent(method, path, 'system_admin', JSON.stringify(BODY))
+      )) as APIGatewayProxyStructuredResultV2;
+
+      expect(result.statusCode).toBe(200);
+      expect(service.mock.calls[0].slice(1)).toEqual(
+        method === 'DELETE' ? ['abcdefghijkl', target] : ['abcdefghijkl', target, BODY]
+      );
+    }
+  );
 });

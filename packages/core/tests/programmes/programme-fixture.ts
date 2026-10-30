@@ -166,13 +166,16 @@ export const memberContext = (fixture: Fixture): OrganisationContext => ({
   timestamp: new Date(),
 });
 
-/** Generate the fixture member's programme from the fixture template, as the scoring job does. */
-export const generateFor = (fixture: Fixture): Promise<string> =>
-  withRLS(fixture.organisationId, fixture.userId, async (tx) => {
+/**
+ * Generate a fixture member's programme from the fixture template, as the scoring job does.
+ * Defaults to the fixture member; pass `otherUserId` for the second member.
+ */
+export const generateFor = (fixture: Fixture, userId: string = fixture.userId): Promise<string> =>
+  withRLS(fixture.organisationId, userId, async (tx) => {
     const result = await generateProgramme(
       {
         organisationId: fixture.organisationId,
-        userId: fixture.userId,
+        userId,
         recommendedTemplateSlug: fixture.templateSlug,
       },
       { tx }

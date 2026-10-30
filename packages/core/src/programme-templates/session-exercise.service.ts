@@ -8,7 +8,7 @@ import {
   reorderExercisesRequestSchema,
   exerciseResponseSchema,
 } from '../schemas/programme/programme.schema';
-import * as videoRepository from '../videos/video.repository';
+import { findExerciseVideo } from '../videos/video.service';
 
 import * as exerciseRepository from './session-exercise.repository';
 import * as sessionRepository from './template-session.repository';
@@ -51,16 +51,7 @@ export async function createExercise(sessionId: string, input: unknown): Promise
     throw new NotFoundError('Template session', sessionId);
   }
 
-  // Validate video exists and is active (outside transaction — video repo uses DbClient)
-  const video = await videoRepository.findVideoById(db, validated.videoId);
-
-  if (!video) {
-    throw new ValidationError('Video not found');
-  }
-
-  if (video.status !== 'active') {
-    throw new ValidationError('Video is not active');
-  }
+  const video = await findExerciseVideo(db, validated.videoId);
 
   // Pre-populate prescription from video defaults where not explicitly provided
   const prescription = {
@@ -94,17 +85,8 @@ export async function updateExercise(
   const validated = updateExerciseRequestSchema.parse(input);
   const db = getDb();
 
-  // Validate video if changing reference
   if (validated.videoId) {
-    const video = await videoRepository.findVideoById(db, validated.videoId);
-
-    if (!video) {
-      throw new ValidationError('Video not found');
-    }
-
-    if (video.status !== 'active') {
-      throw new ValidationError('Video is not active');
-    }
+    await findExerciseVideo(db, validated.videoId);
   }
 
   const updated = await exerciseRepository.updateExercise(db, exerciseId, validated);

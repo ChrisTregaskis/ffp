@@ -105,6 +105,7 @@ export async function findMemberProgrammeStructure(
               exercise: userSessionExercises,
               video: {
                 id: videos.id,
+                publicId: videos.publicId,
                 title: videos.title,
                 durationSeconds: videos.durationSeconds,
                 difficulty: videos.difficulty,

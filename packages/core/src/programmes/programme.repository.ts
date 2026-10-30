@@ -77,7 +77,7 @@ export interface ProgrammeWithPhases {
 /** Slim video fields needed for exercise detail display. */
 export type ExerciseVideoSummary = Pick<
   VideoRecord,
-  'id' | 'title' | 'durationSeconds' | 'difficulty'
+  'id' | 'publicId' | 'title' | 'durationSeconds' | 'difficulty'
 >;
 
 /** Exercise record with embedded video metadata. */
@@ -358,6 +358,29 @@ export async function createProgrammePhases(
   });
 }
 
+/** The user's current programme, within an existing RLS transaction, or null if they have none. */
+export async function findCurrentProgrammeInTx(
+  tx: Transaction,
+  organisationId: string,
+  userId: string
+): Promise<Programme | null> {
+  const records = await tx
+    .select()
+    .from(programmes)
+    .where(
+      and(
+        eq(programmes.organisationId, organisationId),
+        eq(programmes.userId, userId),
+        isCurrentProgramme
+      )
+    )
+    // The id breaks a tie on creation time, as in the Users list
+    .orderBy(desc(programmes.createdAt), desc(programmes.id))
+    .limit(1);
+
+  return records[0] ?? null;
+}
+
 /**
  * Fetch the user's current programme with programme_phases and template summary.
  * RLS-scoped — returns null if the user has no current programme.
@@ -367,25 +390,11 @@ export async function findProgrammeWithPhases(
   userId: string
 ): Promise<ProgrammeWithPhases | null> {
   return await withRLS(organisationId, userId, async (tx) => {
-    const programmeRows = await tx
-      .select()
-      .from(programmes)
-      .where(
-        and(
-          eq(programmes.organisationId, organisationId),
-          eq(programmes.userId, userId),
-          isCurrentProgramme
-        )
-      )
-      // The id breaks a tie on creation time, as in the Users list
-      .orderBy(desc(programmes.createdAt), desc(programmes.id))
-      .limit(1);
+    const programme = await findCurrentProgrammeInTx(tx, organisationId, userId);
 
-    if (programmeRows.length === 0) {
+    if (!programme) {
       return null;
     }
-
-    const programme = programmeRows[0];
 
     // Fetch programme phases (user-layer, RLS-scoped)
     const phases = await tx
@@ -456,6 +465,7 @@ export async function findTemplateStructure(
             exercise: sessionExercises,
             video: {
               id: videos.id,
+              publicId: videos.publicId,
               title: videos.title,
               durationSeconds: videos.durationSeconds,
               difficulty: videos.difficulty,

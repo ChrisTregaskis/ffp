@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import type { ExerciseResponse } from '@ffp/core';
 
 import {
+  EMPTY_EXERCISE_VALUES,
   exerciseToFormValues,
+  prescriptionFromVideo,
   toCreateExerciseRequest,
   toUpdateExerciseRequest,
 } from './exercise-utils';
@@ -77,6 +79,53 @@ describe('toCreateExerciseRequest', () => {
       durationSeconds: undefined,
       restSeconds: undefined,
       notes: undefined,
+    });
+  });
+});
+
+describe('prescriptionFromVideo', () => {
+  const typed = {
+    ...EMPTY_EXERCISE_VALUES,
+    sets: '5',
+    reps: '6',
+    durationSeconds: '',
+    restSeconds: '90',
+    notes: 'Slowly',
+  };
+  const video = {
+    defaultSets: 2,
+    defaultReps: '12',
+    defaultDurationSeconds: 30,
+    defaultRestSeconds: null,
+    defaultNotes: null,
+  };
+
+  it('fills only the blank fields, so a prescription typed first survives', () => {
+    expect(prescriptionFromVideo(video, typed, 'fill-empty')).toEqual({
+      sets: '5',
+      reps: '6',
+      durationSeconds: '30',
+      restSeconds: '90',
+      notes: 'Slowly',
+    });
+  });
+
+  it('replaces the prescription on a swap, clearing what the new video has no default for', () => {
+    expect(prescriptionFromVideo(video, typed, 'overwrite')).toEqual({
+      sets: '2',
+      reps: '12',
+      durationSeconds: '30',
+      restSeconds: '',
+      notes: '',
+    });
+  });
+
+  it('keeps sets and reps on a swap to a video without them, as neither can be blank', () => {
+    const bare = { ...video, defaultSets: null, defaultReps: null };
+
+    expect(prescriptionFromVideo(bare, typed, 'overwrite')).toMatchObject({
+      sets: '5',
+      reps: '6',
     });
   });
 });

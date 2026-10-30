@@ -1,4 +1,4 @@
-import { and, count, eq, inArray } from 'drizzle-orm';
+import { and, asc, count, eq, inArray } from 'drizzle-orm';
 
 import type { PhaseStatus, SessionStatus } from '@ffp/database/constants';
 import {
@@ -119,6 +119,70 @@ export async function clearPausedAt(tx: Transaction, sessionId: string): Promise
     .update(userSessions)
     .set({ pausedAt: null, updatedAt: new Date() })
     .where(eq(userSessions.id, sessionId));
+}
+
+/**
+ * A member's session, only if it belongs to the given programme, locked until the transaction
+ * ends. An edit holds the lock while it checks the status, so a session start either waits for
+ * the edit (and copies the edited exercises) or wins and the edit sees it started.
+ */
+export async function lockUserSessionInProgramme(
+  tx: Transaction,
+  programmeId: string,
+  sessionId: string
+): Promise<UserSessionRecord | null> {
+  const records = await tx
+    .select({ session: userSessions })
+    .from(userSessions)
+    .innerJoin(programmePhases, eq(programmePhases.id, userSessions.programmePhaseId))
+    .where(and(eq(userSessions.id, sessionId), eq(programmePhases.programmeId, programmeId)))
+    .limit(1)
+    .for('update', { of: userSessions });
+
+  return records[0]?.session ?? null;
+}
+
+/** A phase's sessions in order, locked until the transaction ends, as a single session is above. */
+export async function lockUserSessionsInPhase(
+  tx: Transaction,
+  programmePhaseId: string
+): Promise<UserSessionRecord[]> {
+  return await tx
+    .select()
+    .from(userSessions)
+    .where(eq(userSessions.programmePhaseId, programmePhaseId))
+    .orderBy(asc(userSessions.sessionNumber))
+    .for('update');
+}
+
+/**
+ * Renumbers a phase's sessions to match orderedIds (1-based). The unique index on
+ * (phase, session number) is not deferrable, so every row moves to a negative number first.
+ */
+export async function reorderUserSessions(
+  tx: Transaction,
+  programmePhaseId: string,
+  orderedIds: string[]
+): Promise<UserSessionRecord[]> {
+  for (let i = 0; i < orderedIds.length; i++) {
+    await tx
+      .update(userSessions)
+      .set({ sessionNumber: -(i + 1), updatedAt: new Date() })
+      .where(eq(userSessions.id, orderedIds[i]));
+  }
+
+  for (let i = 0; i < orderedIds.length; i++) {
+    await tx
+      .update(userSessions)
+      .set({ sessionNumber: i + 1, updatedAt: new Date() })
+      .where(eq(userSessions.id, orderedIds[i]));
+  }
+
+  return await tx
+    .select()
+    .from(userSessions)
+    .where(eq(userSessions.programmePhaseId, programmePhaseId))
+    .orderBy(asc(userSessions.sessionNumber));
 }
 
 /** Finds the programme phase by ID within an existing RLS transaction. */
