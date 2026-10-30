@@ -15,7 +15,7 @@ You are an **implementation session**: implement **one story on one branch**, th
 3. **Read `.claude/local/notes/review-context.md`** to see what's already on this branch:
    - First story on the branch → you'll **replace** this file with a fresh reviewer brief on completion.
    - Continuation → build on the existing content.
-4. **Rename the session** to the kickoff's session name (e.g. `T1-2 Assessment Flow Builder`) via `/rename`.
+4. **Session name:** a `/copy-launch` line boots the session with the kickoff's name already set. Do not ask Chris to rename it.
 5. **Confirm the branch.** Create it off the stated base if it doesn't exist (`git checkout -b <branch> <base>` is allowed). Never commit/push.
 6. **Load the relevant skill(s)** the kickoff names: `/database`, `/backend`, `/frontend`, `/infrastructure`.
 
