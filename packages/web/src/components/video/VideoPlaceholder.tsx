@@ -15,13 +15,22 @@ export type VideoPlaceholderProps =
     }
   | {
       reason: 'error';
-      /** No Retry, for a decorative frame under someone else's hit area */
+      /** Icon only, no text or Retry, for a decorative frame under someone else's hit area */
       inert: true;
     };
 
 /** What the video frame shows in place of a playable video. */
 export const VideoPlaceholder: React.FC<VideoPlaceholderProps> = (props) => {
   const isError = props.reason === 'error';
+
+  // A decorative frame sits under another control's label, so it shows the icon alone
+  if ('inert' in props) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <IconBadge name={Icons.ALERTTRIANGLE} size="lg" variant="warning" appearance="solid" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-3">

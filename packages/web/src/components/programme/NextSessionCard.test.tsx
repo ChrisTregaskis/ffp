@@ -40,12 +40,18 @@ const renderCard = (phase: Phase): void => {
 };
 
 describe('NextSessionCard', () => {
-  it('starts the session from a failed preview, which offers no Retry', async () => {
+  it('starts the session from a failed preview, which shows its icon alone', async () => {
     renderCard(memberPhase(['not_started']));
 
-    // The failed frame stays out of the accessibility tree; the card's controls name the action
-    expect(screen.getByText('Unable to Load Video').closest('[aria-hidden="true"]')).not.toBeNull();
+    // The failed frame keeps its text and Retry out, and stays out of the accessibility tree
+    expect(screen.queryByText('Loading video...')).toBeNull();
+    expect(screen.queryByText('Unable to Load Video')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Retry', hidden: true })).toBeNull();
+    expect(
+      screen
+        .getByRole('button', { name: 'Start session' })
+        .previousElementSibling?.getAttribute('aria-hidden')
+    ).toBe('true');
 
     await userEvent.click(screen.getByRole('button', { name: 'Start session' }));
 
