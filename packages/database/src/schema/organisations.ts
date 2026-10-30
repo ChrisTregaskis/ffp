@@ -1,6 +1,5 @@
 import { relations } from 'drizzle-orm';
 import { pgTable, uuid, varchar, timestamp, jsonb, pgEnum } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { ORGANISATION_TYPES, ORGANISATION_STATUSES } from '../constants/organisation.constants';
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
@@ -33,7 +32,5 @@ export const organisationsRelations = relations(organisations, ({ many }) => ({
   users: many(users),
 }));
 
-export const insertOrganisationSchema = createInsertSchema(organisations);
-export const selectOrganisationSchema = createSelectSchema(organisations);
 export type Organisation = typeof organisations.$inferSelect;
 export type NewOrganisation = typeof organisations.$inferInsert;

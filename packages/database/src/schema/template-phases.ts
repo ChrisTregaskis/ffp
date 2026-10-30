@@ -8,7 +8,6 @@ import {
   uniqueIndex,
   index,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 
@@ -54,7 +53,5 @@ export const templatePhases = pgTable(
   ]
 );
 
-export const insertTemplatePhaseSchema = createInsertSchema(templatePhases);
-export const selectTemplatePhaseSchema = createSelectSchema(templatePhases);
 export type TemplatePhaseRecord = typeof templatePhases.$inferSelect;
 export type NewTemplatePhase = typeof templatePhases.$inferInsert;

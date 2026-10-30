@@ -7,6 +7,7 @@ import { assessmentFlows } from '@ffp/database/schema';
 import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
 import * as flowRepository from '../../src/assessments/flow.repository';
+import { descendingIds, idsAcrossPages } from '../lib/paging.fixture';
 
 import type { Pool } from 'pg';
 
@@ -54,6 +55,47 @@ describe('Flow repository', () => {
       );
 
       expect(listed.map((flow) => flow.id)).toEqual([earlier, later]);
+    });
+
+    it('lists alphabetically when the request names no sort, whatever direction it sends', async () => {
+      // Inserted against the alphabetical order, which also runs against the id order, so neither
+      // insertion order nor the id tie-break alone can pass this
+      const [higherId, lowerId] = descendingIds(2);
+
+      for (const [id, name] of [
+        [lowerId, `Beta flow ${RUN_ID}`],
+        [higherId, `Alpha flow ${RUN_ID}`],
+      ]) {
+        await db.insert(assessmentFlows).values({ id, name });
+        createdFlowIds.push(id);
+      }
+
+      const listed = await flowRepository.findFlowPage(
+        db,
+        { page: 1, pageSize: 10, sortDirection: 'desc' },
+        { search: RUN_ID }
+      );
+
+      expect(listed.map((flow) => flow.id)).toEqual([higherId, lowerId]);
+    });
+
+    it('orders flows tied on the default sort by id, so the pages neither repeat nor skip one', async () => {
+      const ids = descendingIds(6);
+
+      for (const id of ids) {
+        await db.insert(assessmentFlows).values({ id, name: `Tied flow ${RUN_ID}` });
+        createdFlowIds.push(id);
+      }
+
+      const listed = await idsAcrossPages(3, (page) =>
+        flowRepository.findFlowPage(
+          db,
+          { page, pageSize: 2, sortDirection: 'asc' },
+          { search: RUN_ID }
+        )
+      );
+
+      expect(listed).toEqual([...ids].sort());
     });
   });
 });

@@ -1,4 +1,3 @@
-import { relations } from 'drizzle-orm';
 import {
   pgTable,
   uuid,
@@ -75,20 +74,6 @@ export const videoTags = pgTable(
     index('idx_video_tags_tag_video').on(table.tagId, table.videoId),
   ]
 );
-
-export const tagCategoriesRelations = relations(tagCategories, ({ many }) => ({
-  tags: many(tags),
-}));
-
-export const tagsRelations = relations(tags, ({ one, many }) => ({
-  category: one(tagCategories, { fields: [tags.categoryId], references: [tagCategories.id] }),
-  videoTags: many(videoTags),
-}));
-
-export const videoTagsRelations = relations(videoTags, ({ one }) => ({
-  video: one(videos, { fields: [videoTags.videoId], references: [videos.id] }),
-  tag: one(tags, { fields: [videoTags.tagId], references: [tags.id] }),
-}));
 
 export type TagCategoryRecord = typeof tagCategories.$inferSelect;
 export type TagRecord = typeof tags.$inferSelect;

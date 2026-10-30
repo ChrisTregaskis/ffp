@@ -9,7 +9,6 @@ import {
   index,
   pgEnum,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { FLOW_STEP_TYPES } from '../constants/flow.constants';
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
@@ -115,7 +114,5 @@ export const flowStepsRelations = relations(flowSteps, ({ one }) => ({
   }),
 }));
 
-export const insertFlowStepSchema = createInsertSchema(flowSteps);
-export const selectFlowStepSchema = createSelectSchema(flowSteps);
 export type FlowStepRecord = typeof flowSteps.$inferSelect;
 export type NewFlowStep = typeof flowSteps.$inferInsert;

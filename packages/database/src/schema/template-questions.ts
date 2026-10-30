@@ -1,6 +1,5 @@
 import { relations } from 'drizzle-orm';
 import { pgTable, uuid, integer, jsonb, uniqueIndex, index } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { assessmentTemplates } from './assessment-templates';
 import { questions } from './questions';
@@ -54,7 +53,5 @@ export const templateQuestionsRelations = relations(templateQuestions, ({ one })
   }),
 }));
 
-export const insertTemplateQuestionSchema = createInsertSchema(templateQuestions);
-export const selectTemplateQuestionSchema = createSelectSchema(templateQuestions);
 export type TemplateQuestionRecord = typeof templateQuestions.$inferSelect;
 export type NewTemplateQuestion = typeof templateQuestions.$inferInsert;

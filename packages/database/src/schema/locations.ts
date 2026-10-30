@@ -9,7 +9,6 @@ import {
   index,
   unique,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { LOCATION_STATUSES } from '../constants/location.constants';
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
@@ -60,7 +59,5 @@ export const locationsRelations = relations(locations, ({ one }) => ({
   }),
 }));
 
-export const insertLocationSchema = createInsertSchema(locations);
-export const selectLocationSchema = createSelectSchema(locations);
 export type Location = typeof locations.$inferSelect;
 export type NewLocation = typeof locations.$inferInsert;

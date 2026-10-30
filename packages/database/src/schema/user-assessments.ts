@@ -10,7 +10,6 @@ import {
   unique,
   foreignKey,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { USER_ASSESSMENT_STATUSES } from '../constants/user-assessment.constants';
 
@@ -123,7 +122,5 @@ export const userAssessmentsRelations = relations(userAssessments, ({ one, many 
   answers: many(userAssessmentAnswers),
 }));
 
-export const insertUserAssessmentSchema = createInsertSchema(userAssessments);
-export const selectUserAssessmentSchema = createSelectSchema(userAssessments);
 export type UserAssessmentRecord = typeof userAssessments.$inferSelect;
 export type NewUserAssessment = typeof userAssessments.$inferInsert;

@@ -8,7 +8,6 @@ import {
   uniqueIndex,
   index,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { templateSessions } from './template-sessions';
 import { videos } from './videos';
@@ -59,7 +58,5 @@ export const sessionExercises = pgTable(
   ]
 );
 
-export const insertSessionExerciseSchema = createInsertSchema(sessionExercises);
-export const selectSessionExerciseSchema = createSelectSchema(sessionExercises);
 export type SessionExerciseRecord = typeof sessionExercises.$inferSelect;
 export type NewSessionExercise = typeof sessionExercises.$inferInsert;

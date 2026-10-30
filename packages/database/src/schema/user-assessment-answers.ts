@@ -8,7 +8,6 @@ import {
   index,
   foreignKey,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { organisations } from './organisations';
 import { questions } from './questions';
@@ -86,7 +85,5 @@ export const userAssessmentAnswersRelations = relations(userAssessmentAnswers, (
   }),
 }));
 
-export const insertUserAssessmentAnswerSchema = createInsertSchema(userAssessmentAnswers);
-export const selectUserAssessmentAnswerSchema = createSelectSchema(userAssessmentAnswers);
 export type UserAssessmentAnswerRecord = typeof userAssessmentAnswers.$inferSelect;
 export type NewUserAssessmentAnswer = typeof userAssessmentAnswers.$inferInsert;

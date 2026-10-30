@@ -1,21 +1,23 @@
 import type { AnswerValue } from '@ffp/database';
 
 import { findByAssessmentId } from '../assessments/answer.repository';
-import { findFlowById } from '../assessments/flow.repository';
+import { findActiveFlowQuestions } from '../assessments/flow-question.repository';
+import { findFlowById, findStepsByFlowId } from '../assessments/flow.repository';
 import { findFirstAssessmentForProgramme } from '../assessments/user-assessment.repository';
 import { withRLS } from '../lib/database';
 import { createSystemLogger } from '../lib/logger';
-import { findByQuestionIds, type Question } from '../questions/question.repository';
 import { emphasisRulesSchema, type EmphasisRule } from '../schemas/scoring-config.schema';
 
+import type { Question } from '../questions/question.repository';
 import type { ProgrammeKeyArea } from '../schemas/programme/programme.schema';
 
 const logger = createSystemLogger('programme-key-areas');
 
 /**
  * The answers that shaped a programme: each question its flow's emphasis rules name, with the
- * member's chosen answers from the assessment that produced it. Empty when no assessment is linked
- * or the flow's emphasis config is missing or malformed.
+ * member's chosen answers from the assessment that produced it. Only the flow's questions count,
+ * as in programme emphasis: a question since deactivated or unassigned shows no key area. Empty
+ * when no assessment is linked or the flow's emphasis config is missing or malformed.
  */
 export async function findProgrammeKeyAreas(
   organisationId: string,
@@ -44,14 +46,15 @@ export async function findProgrammeKeyAreas(
       return [];
     }
 
-    const [questions, answers] = await Promise.all([
-      findByQuestionIds(tx, [...new Set(rules.data.map((rule) => rule.questionId))]),
-      findByAssessmentId(organisationId, assessment.id, { tx }),
-    ]);
+    const flowQuestions = await findActiveFlowQuestions(
+      tx,
+      await findStepsByFlowId(tx, assessment.flowId)
+    );
+    const answers = await findByAssessmentId(organisationId, assessment.id, { tx });
 
     return resolveKeyAreas(
       rules.data,
-      questions,
+      flowQuestions,
       new Map(answers.map((answer) => [answer.questionId, answer.answerValue]))
     );
   });
@@ -63,7 +66,7 @@ export async function findProgrammeKeyAreas(
  */
 export function resolveKeyAreas(
   rules: EmphasisRule[],
-  questions: Question[],
+  questions: Pick<Question, 'id' | 'questionText' | 'options'>[],
   answers: Map<string, AnswerValue>
 ): ProgrammeKeyArea[] {
   const questionsById = new Map(questions.map((question) => [question.id, question]));

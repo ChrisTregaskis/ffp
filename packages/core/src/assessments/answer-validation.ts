@@ -11,7 +11,7 @@ import {
   type AnswerRuleQuestion,
 } from '../schemas/question-answer.schema';
 
-import { findActiveFlowQuestions } from './flow-question.repository';
+import { findActiveFlowQuestions, firstShownQuestions } from './flow-question.repository';
 
 import type { FlowStepWithConfig } from './flow.repository';
 import type { ApiFieldError } from '../schemas/api-error.schema';
@@ -39,34 +39,26 @@ export async function loadFlowQuestions(
   db: DbQueryClient,
   flowSteps: FlowStepWithConfig[]
 ): Promise<Map<string, FlowQuestion>> {
-  // In step order, so a question on two of the flow's templates keeps the first step's rules
   const templateIds = [...new Set(findTemplateIdsOfSteps(flowSteps))];
-
   const questions = await findActiveFlowQuestions(db, flowSteps);
-  const flowQuestions = new Map<string, FlowQuestion>();
+  const assigned = new Set(questions.map((row) => `${row.id}:${row.templateId}`));
 
-  for (const templateId of templateIds) {
-    for (const question of questions.filter((q) => q.templateId === templateId)) {
-      const existing = flowQuestions.get(question.id);
-
-      if (existing) {
-        existing.templateIds.push(templateId);
-        continue;
-      }
-
-      flowQuestions.set(question.id, {
-        templateIds: [templateId],
+  return new Map(
+    firstShownQuestions(flowSteps, questions).map((question): [string, FlowQuestion] => [
+      question.id,
+      {
+        templateIds: templateIds.filter((templateId) =>
+          assigned.has(`${question.id}:${templateId}`)
+        ),
         rules: {
           // `questions.type` is the question-type enum; the shared row type widens it
           type: question.type as QuestionType,
           options: question.options,
           validation: resolveEffectiveValidation(question),
         },
-      });
-    }
-  }
-
-  return flowQuestions;
+      },
+    ])
+  );
 }
 
 function toFieldError(questionId: string, code: string, message: string): ApiFieldError {

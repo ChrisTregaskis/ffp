@@ -10,14 +10,12 @@ import {
   index,
   pgEnum,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
-import { VIDEO_STATUSES, DIFFICULTIES, MOVEMENT_TYPES } from '../constants/video.constants';
+import { VIDEO_STATUSES, DIFFICULTIES } from '../constants/video.constants';
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 
 export const videoStatusEnum = pgEnum('video_status', [...VIDEO_STATUSES]);
 export const difficultyEnum = pgEnum('difficulty', [...DIFFICULTIES]);
-export const movementTypeEnum = pgEnum('movement_type', [...MOVEMENT_TYPES]);
 
 /**
  * Videos table definition
@@ -28,9 +26,7 @@ export const movementTypeEnum = pgEnum('movement_type', [...MOVEMENT_TYPES]);
  *
  * **Indexes optimised for common queries:**
  * - status: Filter catalogue by video status
- * - body_parts: GIN index for array containment queries
  * - equipment: GIN index for array containment queries
- * - tags: GIN index for flexible tagging queries
  */
 export const videos = pgTable(
   'videos',
@@ -53,14 +49,8 @@ export const videos = pgTable(
     status: videoStatusEnum('status').notNull().default('draft'),
     /** Exercise difficulty level (nullable — not relevant for informational videos) */
     difficulty: difficultyEnum('difficulty'),
-    /** Deprecated: superseded by movement tags (`video_tags`) */
-    movementType: movementTypeEnum('movement_type'),
-    /** Deprecated: superseded by body-area tags (`video_tags`) */
-    bodyParts: text('body_parts').array().notNull().default([]),
     /** Required equipment (e.g., ['resistance_band', 'yoga_mat'] or ['none']) */
     equipment: text('equipment').array().notNull(),
-    /** Deprecated: superseded by typed tags (`video_tags`) */
-    tags: text('tags').array().notNull().default([]),
     /** Curation signal: a core exercise, favoured over the rest of its pool */
     isEssential: boolean('is_essential').notNull().default(false),
     /** Default number of sets when used as an exercise (e.g., 3) */
@@ -79,13 +69,9 @@ export const videos = pgTable(
   (table) => [
     publicIdIndex('videos', table.publicId),
     index('idx_videos_status').on(table.status),
-    index('idx_videos_body_parts').using('gin', table.bodyParts),
     index('idx_videos_equipment').using('gin', table.equipment),
-    index('idx_videos_tags').using('gin', table.tags),
   ]
 );
 
-export const insertVideoSchema = createInsertSchema(videos);
-export const selectVideoSchema = createSelectSchema(videos);
 export type VideoRecord = typeof videos.$inferSelect;
 export type NewVideo = typeof videos.$inferInsert;

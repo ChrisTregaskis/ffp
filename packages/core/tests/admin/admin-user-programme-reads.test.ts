@@ -6,10 +6,13 @@ import { describe, it, expect, beforeEach, afterEach, afterAll } from 'vitest';
 import type { AnswerValue, EmphasisRule } from '@ffp/database';
 import {
   assessmentFlows,
+  assessmentTemplates,
+  flowSteps,
   processJobs,
   programmeTemplates,
   programmes,
   questions,
+  templateQuestions,
   userAssessmentAnswers,
   userAssessments,
   users,
@@ -294,10 +297,12 @@ describe('Admin reads of members’ programmes', () => {
 
   describe('one member’s programme', () => {
     let flowIds: string[];
+    let templateIds: string[];
     let questionIds: string[];
 
     beforeEach(() => {
       flowIds = [];
+      templateIds = [];
       questionIds = [];
     });
 
@@ -306,8 +311,12 @@ describe('Admin reads of members’ programmes', () => {
       await withRLS(member.organisationId, undefined, (tx) =>
         tx.delete(userAssessments).where(eq(userAssessments.organisationId, member.organisationId))
       );
+      // Flows (and their steps) before the templates the steps restrict
       if (flowIds.length > 0) {
         await db.delete(assessmentFlows).where(inArray(assessmentFlows.id, flowIds));
+      }
+      if (templateIds.length > 0) {
+        await db.delete(assessmentTemplates).where(inArray(assessmentTemplates.id, templateIds));
       }
       if (questionIds.length > 0) {
         await db.delete(questions).where(inArray(questions.id, questionIds));
@@ -332,7 +341,21 @@ describe('Admin reads of members’ programmes', () => {
       return question.id;
     };
 
-    const addFlow = async (emphasis: EmphasisRule[]): Promise<string> => {
+    /** A flow with the given emphasis rules, asking `asked` on its one questions step */
+    const addFlow = async (emphasis: EmphasisRule[], asked: string[]): Promise<string> => {
+      const [template] = await db
+        .insert(assessmentTemplates)
+        .values({ name: `Key areas template ${shortId()}` })
+        .returning({ id: assessmentTemplates.id });
+      templateIds.push(template.id);
+      await db.insert(templateQuestions).values(
+        asked.map((questionId, index) => ({
+          templateId: template.id,
+          questionId,
+          displayOrder: index + 1,
+        }))
+      );
+
       const [flow] = await db
         .insert(assessmentFlows)
         .values({
@@ -341,6 +364,13 @@ describe('Admin reads of members’ programmes', () => {
         })
         .returning({ id: assessmentFlows.id });
       flowIds.push(flow.id);
+      await db.insert(flowSteps).values({
+        flowId: flow.id,
+        order: 1,
+        type: 'questions',
+        templateId: template.id,
+        config: { title: 'Questions' },
+      });
 
       return flow.id;
     };
@@ -451,7 +481,10 @@ describe('Admin reads of members’ programmes', () => {
       const goal = await addQuestion('single-choice', ['calm', 'strong']);
       const focus = await addQuestion('multi-choice', ['neck', 'back', 'hips']);
       const unnamed = await addQuestion('single-choice', ['yes', 'no']);
-      const flowId = await addFlow([rule(focus, 'neck'), rule(goal, 'calm'), rule(focus, 'hips')]);
+      const flowId = await addFlow(
+        [rule(focus, 'neck'), rule(goal, 'calm'), rule(focus, 'hips')],
+        [goal, focus, unnamed]
+      );
 
       await linkAssessment(
         flowId,
@@ -480,7 +513,7 @@ describe('Admin reads of members’ programmes', () => {
     it('follows whichever questions the flow’s emphasis rules name', async () => {
       const goal = await addQuestion('single-choice', ['calm', 'strong']);
       const other = await addQuestion('single-choice', ['yes', 'no']);
-      const flowId = await addFlow([rule(other, 'yes')]);
+      const flowId = await addFlow([rule(other, 'yes')], [goal, other]);
 
       await linkAssessment(
         flowId,
@@ -496,6 +529,46 @@ describe('Admin reads of members’ programmes', () => {
       expect(keyAreas.map((area) => [area.questionId, area.answers])).toEqual([
         [other, ['Label no']],
       ]);
+    });
+
+    it('shows no key area for a question since retired', async () => {
+      const goal = await addQuestion('single-choice', ['calm', 'strong']);
+      const focus = await addQuestion('multi-choice', ['neck', 'back']);
+      const flowId = await addFlow([rule(goal, 'calm'), rule(focus, 'neck')], [goal, focus]);
+
+      await linkAssessment(
+        flowId,
+        [
+          [goal, 'calm'],
+          [focus, ['neck']],
+        ],
+        new Date('2026-01-01')
+      );
+      await db.update(questions).set({ isActive: false }).where(eq(questions.id, focus));
+
+      const { keyAreas } = await getUserProgrammeService(adminContext(), memberPublicId);
+
+      expect(keyAreas.map((area) => area.questionId)).toEqual([goal]);
+    });
+
+    it('shows no key area for a question no longer on the flow’s templates', async () => {
+      const goal = await addQuestion('single-choice', ['calm', 'strong']);
+      const focus = await addQuestion('multi-choice', ['neck', 'back']);
+      // The rules still name the question, but no step's template asks it any more
+      const flowId = await addFlow([rule(goal, 'calm'), rule(focus, 'neck')], [goal]);
+
+      await linkAssessment(
+        flowId,
+        [
+          [goal, 'calm'],
+          [focus, ['neck']],
+        ],
+        new Date('2026-01-01')
+      );
+
+      const { keyAreas } = await getUserProgrammeService(adminContext(), memberPublicId);
+
+      expect(keyAreas.map((area) => area.questionId)).toEqual([goal]);
     });
 
     it('answers 404 for an unknown user', async () => {
