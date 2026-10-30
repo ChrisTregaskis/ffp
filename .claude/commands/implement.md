@@ -15,7 +15,7 @@ You are an **implementation session**: inherit a kickoff, implement it on one br
 3. **Read the story file** the kickoff names, plus `.claude/local/plans/project-state.md`. The story file and the kickoff are the source of truth — **flag any conflict between them before writing code**, do not silently pick one.
    - **A kickoff's premises are the principal's best understanding, not fact.** Where one narrows your scope — "X is already consistent, so migrating it is out of scope" — and it is cheap to check, check it. **If the evidence contradicts the kickoff, the evidence wins: stop and say so** rather than building on it or quietly widening scope. T3-7 was scoped as two small bugs on a premise that turned out to be wrong in every particular; it was four shipped screens that could not save at all, and it was caught only because that session probed the live API before writing code.
 4. **Read `.claude/local/notes/review-context.md`** to see what is already on this branch. First story on the branch → you will replace it. Continuation → build on it.
-5. **Rename the session** to the kickoff's session name via `/rename`.
+5. **Session name:** a `/copy-launch` line boots the session with the kickoff's name already set. Do not ask Chris to rename it.
 6. **Confirm the branch.** Create it off the stated base if it does not exist (`git checkout -b <branch> <base>` is fine). Never commit, push, merge or rebase.
 7. **Load the skills the kickoff names** — `backend`, `database`, `frontend`, `infrastructure`, `prototype`.
 
