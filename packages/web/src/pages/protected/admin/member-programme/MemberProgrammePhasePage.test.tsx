@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AdminProgrammeDetailResponse } from '@ffp/core';
 
+import { exercise, session } from '@web/components/programme/programme-test-fixture';
 import { videoDetail, videoSearchPage } from '@web/components/video/video-test-fixture';
 import { ToastProvider } from '@web/contexts/toast/ToastContext';
 import { useUserProgrammeQuery } from '@web/hooks/users';
@@ -16,7 +17,7 @@ import type * as Endpoints from '@web/lib/api/endpoints';
 import { videosApi } from '@web/lib/api/endpoints/videos';
 
 import { MemberProgrammePhasePage } from './MemberProgrammePhasePage';
-import { exercise, memberProgramme, session } from './programme-fixture';
+import { memberProgramme } from './programme-fixture';
 
 // The read is stubbed; the edits run through the real mutation hooks to a mocked API
 vi.mock('@web/hooks/users', async (importOriginal) => ({

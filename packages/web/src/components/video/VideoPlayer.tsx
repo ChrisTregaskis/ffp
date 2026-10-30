@@ -22,14 +22,17 @@ export interface VideoPlayerProps {
   loop?: boolean;
   /** Mute audio (required for autoplay in most browsers) */
   muted?: boolean;
-  /** Hide native controls and play/replay overlay */
-  hideControls?: boolean;
   /** Fill the container (crop to fit) instead of letterboxing  */
   cover?: boolean;
   /** Accessible label for the video element */
   ariaLabel?: string;
   /** Background variant for the player container */
   variant?: 'muted' | 'white';
+  /**
+   * A preview under someone else's hit area: no controls, no Retry, and every state kept out of
+   * the accessibility tree, so the surrounding control is the only target
+   */
+  decorative?: boolean;
 }
 
 /**
@@ -49,10 +52,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   autoPlay = false,
   loop = false,
   muted = false,
-  hideControls = false,
   cover = false,
   ariaLabel,
   variant = 'muted',
+  decorative = false,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasPlaybackError, setHasPlaybackError] = useState(false);
@@ -74,7 +77,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   // Pending, not loading: a paused retry would otherwise read as "Video Unavailable"
   const showLoading = isFetchEnabled && isPending;
   const showError = isFetchError || hasPlaybackError;
-  const showOverlay = videoSrc && !showLoading && !showError && (!isPlaying || hasEnded);
+  const showControls = !decorative;
+  const showOverlay =
+    showControls && videoSrc && !showLoading && !showError && (!isPlaying || hasEnded);
 
   const handleRetry = useCallback(() => {
     setHasPlaybackError(false);
@@ -130,7 +135,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
 
     if (showError) {
-      return <VideoPlaceholder reason="error" onRetry={handleRetry} />;
+      return decorative ? (
+        <VideoPlaceholder reason="error" inert />
+      ) : (
+        <VideoPlaceholder reason="error" onRetry={handleRetry} />
+      );
     }
 
     if (videoSrc) {
@@ -140,7 +149,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             key={videoSrc}
             ref={videoRef}
             src={videoSrc}
-            controls={!hideControls}
+            controls={showControls}
             controlsList="nodownload"
             preload="metadata"
             autoPlay={autoPlay}
@@ -158,9 +167,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             Your browser does not support the video element.
           </video>
 
-          {!hideControls && showOverlay && (
-            <VideoOverlay hasEnded={hasEnded} onClick={handleOverlayClick} />
-          )}
+          {showOverlay && <VideoOverlay hasEnded={hasEnded} onClick={handleOverlayClick} />}
         </div>
       );
     }
@@ -170,6 +177,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   return (
     <div
+      aria-hidden={decorative || undefined}
       className={`aspect-video overflow-hidden rounded-2xl ${variant === 'white' ? 'bg-white' : 'bg-muted'} ${className ?? ''}`.trim()}
     >
       {renderContent()}

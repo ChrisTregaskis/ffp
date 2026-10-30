@@ -236,7 +236,10 @@ const BRANCHING_DEMO_FLOW_STEPS: NewFlowStep[] = [
   },
 ];
 
-const DEFAULT_FLOW_STEPS: NewFlowStep[] = [...WELLNESS_FLOW_STEPS, ...BRANCHING_DEMO_FLOW_STEPS];
+export const DEFAULT_FLOW_STEPS: NewFlowStep[] = [
+  ...WELLNESS_FLOW_STEPS,
+  ...BRANCHING_DEMO_FLOW_STEPS,
+];
 
 /**
  * Seeds flow steps for the seeded assessment flows.

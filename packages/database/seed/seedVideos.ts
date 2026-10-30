@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { type Pool } from 'pg';
 
@@ -65,6 +65,10 @@ const DEFAULT_VIDEOS: SeedVideo[] = [
     status: 'active',
     difficulty: 'beginner',
     equipment: ['chair'],
+    defaultSets: 2,
+    defaultReps: '30s hold',
+    defaultRestSeconds: 15,
+    defaultNotes: 'Keep your back tall and ease into the stretch.',
     videoTags: {
       movement: ['stretch'],
       'body-area': ['hamstrings', 'lower-back'],
@@ -101,6 +105,10 @@ const DEFAULT_VIDEOS: SeedVideo[] = [
     status: 'active',
     difficulty: 'intermediate',
     equipment: ['resistance_band'],
+    defaultSets: 3,
+    defaultReps: '10-12',
+    defaultRestSeconds: 60,
+    defaultNotes: 'Squeeze the shoulder blades together at the end of each pull.',
     videoTags: {
       goal: ['posture'],
       movement: ['strength'],
@@ -137,6 +145,9 @@ const DEFAULT_VIDEOS: SeedVideo[] = [
     status: 'active',
     difficulty: 'beginner',
     equipment: ['none'],
+    defaultSets: 3,
+    defaultReps: '30s each leg',
+    defaultRestSeconds: 20,
     videoTags: { movement: ['balance'], 'body-area': ['ankles', 'calves', 'core'] },
   },
   {
@@ -209,6 +220,10 @@ const DEFAULT_VIDEOS: SeedVideo[] = [
     status: 'active',
     difficulty: 'advanced',
     equipment: ['yoga_mat'],
+    defaultSets: 3,
+    defaultReps: '12',
+    defaultRestSeconds: 30,
+    defaultNotes: 'Pause for two seconds at the top.',
     videoTags: { movement: ['strength'], 'body-area': ['glutes', 'hamstrings', 'core'] },
   },
   {
@@ -268,11 +283,54 @@ const seedVideoTags = async (db: NodePgDatabase<typeof schema>): Promise<number>
   return inserted.length;
 };
 
+const hasDefaults = (video: SeedVideo): boolean =>
+  [
+    video.defaultSets,
+    video.defaultReps,
+    video.defaultDurationSeconds,
+    video.defaultRestSeconds,
+    video.defaultNotes,
+  ].some((value) => value != null);
+
+/**
+ * Gives an existing seed video its prescription defaults when it has none at all, so the
+ * defaults reach a database seeded before they existed without overwriting an admin's edits.
+ */
+const backfillVideoDefaults = async (
+  db: NodePgDatabase<typeof schema>,
+  video: SeedVideo
+): Promise<boolean> => {
+  const updated = await db
+    .update(videos)
+    .set({
+      defaultSets: video.defaultSets,
+      defaultReps: video.defaultReps,
+      defaultDurationSeconds: video.defaultDurationSeconds,
+      defaultRestSeconds: video.defaultRestSeconds,
+      defaultNotes: video.defaultNotes,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(videos.id, requireSeedId(video, `video "${video.title}"`)),
+        isNull(videos.defaultSets),
+        isNull(videos.defaultReps),
+        isNull(videos.defaultDurationSeconds),
+        isNull(videos.defaultRestSeconds),
+        isNull(videos.defaultNotes)
+      )
+    )
+    .returning({ id: videos.id });
+
+  return updated.length > 0;
+};
+
 /**
  * Seeds exercise videos for the video catalogue.
  *
  * This seed is IDEMPOTENT — safe to run multiple times.
- * Videos are checked by ID before inserting (existing videos are skipped).
+ * Videos are checked by ID before inserting (existing videos are skipped, apart from
+ * prescription defaults on a video that has none).
  *
  * Note: videos table has NO RLS (system-managed catalogue),
  * so no special context needed.
@@ -286,6 +344,7 @@ export const seedVideos = async (
   logger.info('Seeding videos...');
 
   let createdCount = 0;
+  let defaultsBackfilled = 0;
 
   for (const video of DEFAULT_VIDEOS) {
     // Check if video already exists (idempotency check by ID)
@@ -295,6 +354,11 @@ export const seedVideos = async (
 
     if (existingVideo) {
       logger.warn(`Video already exists: "${video.title}"`);
+
+      if (hasDefaults(video) && (await backfillVideoDefaults(db, video))) {
+        defaultsBackfilled++;
+      }
+
       continue;
     }
 
@@ -319,6 +383,7 @@ export const seedVideos = async (
   logger.info('Videos seed complete', {
     created: createdCount,
     alreadyExisted: DEFAULT_VIDEOS.length - createdCount,
+    defaultsBackfilled,
     tagsAssigned,
   });
 

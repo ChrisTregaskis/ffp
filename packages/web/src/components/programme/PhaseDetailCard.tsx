@@ -3,6 +3,7 @@ import type { ProgrammeDetailResponse } from '@ffp/core';
 import type { StatusCircleStatus } from '@web/components/atoms';
 import { Badge, StatusCircle, Text, Title } from '@web/components/atoms';
 import { Card } from '@web/components/molecules';
+import { countDoneSessions, findNextSession, isSessionDone } from '@web/utils/programme';
 
 import { ProgressSummary } from './ProgressSummary';
 
@@ -21,28 +22,18 @@ const getSessionDotStatus = (
   session: Session,
   currentSessionNumber: number | null
 ): StatusCircleStatus => {
-  const userStatus = session.userSession?.status;
-
-  if (userStatus === 'completed' || userStatus === 'skipped') {
+  if (isSessionDone(session)) {
     return 'completed';
   }
 
-  if (userStatus === 'in_progress' || session.sessionNumber === currentSessionNumber) {
+  if (
+    session.userSession?.status === 'in_progress' ||
+    session.sessionNumber === currentSessionNumber
+  ) {
     return 'current';
   }
 
   return 'upcoming';
-};
-
-/** Find the first uncompleted session number in the phase */
-const findCurrentSessionNumber = (sessions: Session[]): number | null => {
-  const firstUncompleted = sessions.find((s) => {
-    const status = s.userSession?.status;
-
-    return !status || status === 'not_started' || status === 'in_progress';
-  });
-
-  return firstUncompleted?.sessionNumber ?? null;
 };
 
 /**
@@ -52,12 +43,8 @@ const findCurrentSessionNumber = (sessions: Session[]): number | null => {
  * and session dots (green checkmark = complete, dark-blue = current, grey = upcoming).
  */
 export const PhaseDetailCard: React.FC<PhaseDetailCardProps> = ({ phase, progressPercent }) => {
-  const currentSessionNumber = findCurrentSessionNumber(phase.sessions);
-  const completedSessions = phase.sessions.filter((s) => {
-    const status = s.userSession?.status;
-
-    return status === 'completed' || status === 'skipped';
-  }).length;
+  const currentSessionNumber = findNextSession(phase)?.sessionNumber ?? null;
+  const doneSessions = countDoneSessions(phase.sessions);
 
   return (
     <Card>
@@ -76,7 +63,7 @@ export const PhaseDetailCard: React.FC<PhaseDetailCardProps> = ({ phase, progres
 
         <ProgressSummary
           label="Phase Progress"
-          count={`${String(completedSessions)} of ${String(phase.sessions.length)} sessions`}
+          count={`${String(doneSessions)} of ${String(phase.sessions.length)} sessions`}
           percent={progressPercent}
           className="mb-4 mt-4"
         />

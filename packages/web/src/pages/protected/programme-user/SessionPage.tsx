@@ -14,6 +14,7 @@ import {
   toSessionExercise,
 } from '@web/components/session';
 import type { SessionExercise } from '@web/components/session';
+import { RouteKey, routes } from '@web/config/routes';
 import { useToggleExerciseMutation } from '@web/hooks/exercises';
 import { useProgrammeDetailQuery } from '@web/hooks/programmes';
 import { useCompleteSessionMutation, useStartSessionMutation } from '@web/hooks/sessions';
@@ -241,14 +242,14 @@ export const SessionPage: React.FC = () => {
   }, []);
 
   const handlePause = useCallback((): void => {
-    void navigate('/');
+    void navigate(routes[RouteKey.HOME].path);
   }, [navigate]);
 
   const handleDone = useCallback((): void => {
     if (userSessionId) {
       completeSession.mutate(userSessionId, {
         onSuccess: () => {
-          void navigate('/');
+          void navigate(routes[RouteKey.HOME].path);
         },
         onError: () => {
           addToast('Failed to complete session. Please try again.', { variant: 'error' });
@@ -256,12 +257,12 @@ export const SessionPage: React.FC = () => {
         },
       });
     } else {
-      void navigate('/');
+      void navigate(routes[RouteKey.HOME].path);
     }
   }, [userSessionId, completeSession, navigate, addToast]);
 
   const handleBackToProgramme = useCallback((): void => {
-    void navigate('/');
+    void navigate(routes[RouteKey.HOME].path);
   }, [navigate]);
 
   const handleRetry = useCallback((): void => {

@@ -29,6 +29,7 @@ import { seedAssessmentTemplates } from './seedAssessmentTemplates.js';
 import { seedFlowSteps } from './seedFlowSteps.js';
 import { seedPlatformOrganisation } from './seedPlatformTenant.js';
 import { seedProgrammeTemplates } from './seedProgrammeTemplates.js';
+import { seedProgrammeUserAssessment } from './seedProgrammeUserAssessment.js';
 import { seedProgrammeUserData } from './seedProgrammeUserData.js';
 import { seedQuestions } from './seedQuestions.js';
 import { seedSuperAdminCognito } from './seedSuperAdminCognito.js';
@@ -149,6 +150,8 @@ export const seedDatabase = async (
       ALTER TABLE user_sessions NO FORCE ROW LEVEL SECURITY;
       ALTER TABLE user_session_exercises NO FORCE ROW LEVEL SECURITY;
       ALTER TABLE exercise_completions NO FORCE ROW LEVEL SECURITY;
+      ALTER TABLE user_assessments NO FORCE ROW LEVEL SECURITY;
+      ALTER TABLE user_assessment_answers NO FORCE ROW LEVEL SECURITY;
     `);
 
     // Seed 1: Platform organisation
@@ -256,6 +259,10 @@ export const seedDatabase = async (
     // Must run AFTER template hierarchy (FK) and test programme user (FK)
     await seedProgrammeUserData(db);
 
+    // Seed 18: The assessment linked to the test user's programme, with its answers (RLS tables, idempotent)
+    // Must run AFTER programme user data (FK) and the flows, steps and questions it answers
+    await seedProgrammeUserAssessment(db);
+
     logger.info('Database seeding complete!');
   } catch (error) {
     logger.error('Database seeding failed', {
@@ -275,6 +282,8 @@ export const seedDatabase = async (
         ALTER TABLE user_sessions FORCE ROW LEVEL SECURITY;
         ALTER TABLE user_session_exercises FORCE ROW LEVEL SECURITY;
         ALTER TABLE exercise_completions FORCE ROW LEVEL SECURITY;
+        ALTER TABLE user_assessments FORCE ROW LEVEL SECURITY;
+        ALTER TABLE user_assessment_answers FORCE ROW LEVEL SECURITY;
       `);
       logger.info('FORCE RLS re-enabled');
     } catch (rlsError) {
@@ -308,3 +317,4 @@ export {
   PROGRAMME_PHASE_IDS,
   USER_SESSION_IDS,
 } from './seedProgrammeUserData.js';
+export { seedProgrammeUserAssessment, USER_ASSESSMENT_IDS } from './seedProgrammeUserAssessment.js';

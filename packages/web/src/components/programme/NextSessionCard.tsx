@@ -1,18 +1,11 @@
-import { useNavigate } from 'react-router-dom';
+import { generatePath, useNavigate } from 'react-router-dom';
 
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
-import {
-  Button,
-  Icon,
-  Icons,
-  PressableArea,
-  ProgressBar,
-  Text,
-  Title,
-} from '@web/components/atoms';
+import { Button, Icon, Icons, ProgressBar, Text, Title } from '@web/components/atoms';
 import { Card, PrescriptionBadge } from '@web/components/molecules';
-import { VideoPlayer } from '@web/components/video';
+import { VideoOverlay, VideoPlayer } from '@web/components/video';
+import { RouteKey, routes } from '@web/config/routes';
 
 type Phase = ProgrammeDetailResponse['phases'][number];
 type Session = Phase['sessions'][number];
@@ -52,18 +45,21 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
     isResumable && totalExercises > 0 ? (completedExercises / totalExercises) * 100 : 0;
 
   const handleStart = (): void => {
-    void navigate(`/programme/session/${phase.publicId}/${session.templateSessionPublicId}`);
+    void navigate(
+      generatePath(routes[RouteKey.SESSION_WORKOUT].path, {
+        phaseId: phase.publicId,
+        templateSessionId: session.templateSessionPublicId,
+      })
+    );
   };
 
   const handleViewProgramme = (): void => {
-    void navigate('/programme-overview');
+    void navigate(routes[RouteKey.PROGRAMME_OVERVIEW].path);
   };
 
   return (
     <Card>
       <div className="flex flex-col lg:flex-row lg:items-stretch lg:gap-6">
-        {/* Looping preview of the first exercise; clicking it starts the session. The hit area lies
-            over the player, not around it: the player's error state has a retry button, and buttons can't nest. */}
         <div className="relative min-h-[200px] overflow-hidden rounded-lg bg-muted lg:w-2/5">
           {firstVideoId ? (
             <VideoPlayer
@@ -71,7 +67,7 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
               autoPlay
               loop
               muted
-              hideControls
+              decorative
               cover
               variant="muted"
               className="!aspect-auto h-full !rounded-none"
@@ -81,21 +77,15 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
               <Icon name={Icons.PLAY} styleProps={{ size: 'xl', colour: 'var(--color-primary)' }} />
             </div>
           )}
-          <PressableArea
+          <VideoOverlay
             onClick={handleStart}
-            aria-label={isResumable ? 'Continue session' : 'Start session'}
-            className="absolute inset-0 flex flex-col items-center justify-center bg-transparent opacity-0 transition-all hover:bg-black/40 hover:opacity-100 focus-visible:bg-black/40 focus-visible:opacity-100 focus-visible:ring-inset"
-          >
-            <Icon name={Icons.PLAY} styleProps={{ size: 'xl', colour: '#ffffff' }} />
-            <Text styleProps={{ size: 'sm', weight: 'medium' }} className="mt-2 text-white">
-              {isResumable ? 'Continue session' : 'Start session'}
-            </Text>
-          </PressableArea>
+            label={isResumable ? 'Continue session' : 'Start session'}
+          />
         </div>
 
         {/* Content */}
         <div className="mt-4 flex flex-1 flex-col justify-between lg:mt-0">
-          <>
+          <div>
             <Text as="p" variant="eyebrow" className="mb-1">
               {isResumable ? 'Continue where you left off' : 'Your next session'}
             </Text>
@@ -128,16 +118,16 @@ export const NextSessionCard: React.FC<NextSessionCardProps> = ({
                 variant="blue"
                 size="sm"
               />
-              {session.estimatedDurationMinutes && (
+              {session.estimatedDurationMinutes ? (
                 <PrescriptionBadge
                   label={`${String(session.estimatedDurationMinutes)} min`}
                   icon={Icons.CLOCK}
                   variant="blue"
                   size="sm"
                 />
-              )}
+              ) : null}
             </div>
-          </>
+          </div>
 
           <div className="mt-8 flex justify-end gap-3">
             <Button variant="neutral" size="md" onClick={handleViewProgramme}>

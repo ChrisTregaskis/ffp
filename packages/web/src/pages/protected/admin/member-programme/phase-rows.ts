@@ -1,5 +1,7 @@
 import type { AdminProgrammeDetailResponse } from '@ffp/core';
 
+import { countDoneSessions } from '@web/utils/programme';
+
 type Phase = AdminProgrammeDetailResponse['phases'][number];
 
 /** Row shape for a member's phases table */
@@ -9,7 +11,7 @@ export type MemberPhaseRow = {
   phaseNumber: number;
   name: string;
   status: Phase['status'];
-  sessionsCompleted: number;
+  sessionsDone: number;
   sessionCount: number;
 } & Record<string, unknown>;
 
@@ -19,7 +21,6 @@ export const toMemberPhaseRow = (phase: Phase): MemberPhaseRow => ({
   phaseNumber: phase.phaseNumber,
   name: phase.name ?? `Phase ${String(phase.phaseNumber)}`,
   status: phase.status,
-  sessionsCompleted: phase.sessions.filter((session) => session.userSession?.status === 'completed')
-    .length,
+  sessionsDone: countDoneSessions(phase.sessions),
   sessionCount: phase.sessions.length,
 });

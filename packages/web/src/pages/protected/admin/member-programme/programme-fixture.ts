@@ -1,44 +1,6 @@
 import { adminProgrammeDetailResponseSchema, type AdminProgrammeDetailResponse } from '@ffp/core';
 
-export const exercise = (orderIndex: number, title: string, notes: string | null): unknown => ({
-  sessionExerciseId: crypto.randomUUID(),
-  orderIndex,
-  sets: 3,
-  reps: '8-12',
-  durationSeconds: null,
-  restSeconds: 45,
-  notes,
-  video: {
-    id: crypto.randomUUID(),
-    publicId: 'vid000000001',
-    title,
-    durationSeconds: 60,
-    difficulty: null,
-  },
-  completion: null,
-});
-
-export const session = (
-  sessionNumber: number,
-  status: 'not_started' | 'in_progress' | 'completed' | 'skipped',
-  exercises: unknown[]
-): unknown => ({
-  templateSessionId: crypto.randomUUID(),
-  templateSessionPublicId: `session${String(sessionNumber)}xxxxx`.slice(0, 12),
-  sessionNumber,
-  name: `Session ${String(sessionNumber)}`,
-  description: null,
-  estimatedDurationMinutes: 20,
-  exerciseCount: exercises.length,
-  userSession: {
-    id: crypto.randomUUID(),
-    status,
-    startedAt: null,
-    completedAt: null,
-    skippedAt: null,
-  },
-  exercises,
-});
+import { exercise, session } from '@web/components/programme/programme-test-fixture';
 
 const PHASE_TWO_SESSIONS = (): unknown[] => [
   session(1, 'not_started', [

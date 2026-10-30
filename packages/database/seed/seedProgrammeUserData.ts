@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { type Pool } from 'pg';
 
@@ -15,6 +15,7 @@ import {
 } from '../src/schema/index.js';
 
 import { requireSeedId } from './requireSeedId.js';
+import { seedExerciseCompletions } from './seedExerciseCompletions.js';
 import { PROGRAMME_TEMPLATE_IDS } from './seedProgrammeTemplates.js';
 import { TEMPLATE_PHASE_IDS, TEMPLATE_SESSION_IDS } from './seedTemplateHierarchy.js';
 
@@ -28,8 +29,8 @@ const logger = createLogger('seed-programme-user-data');
 /**
  * Test programme user and organisation IDs (from seed config)
  */
-const TEST_USER_ID = '06c20204-90d1-70aa-3d3d-69843d65645a';
-const TEST_ORGANISATION_ID = 'd82c67e9-b000-45cb-9105-c53ac48aec36';
+export const TEST_USER_ID = '06c20204-90d1-70aa-3d3d-69843d65645a';
+export const TEST_ORGANISATION_ID = 'd82c67e9-b000-45cb-9105-c53ac48aec36';
 
 /**
  * Deterministic UUIDs for programme user data
@@ -65,6 +66,9 @@ const TS = TEMPLATE_SESSION_IDS;
 const PP = PROGRAMME_PHASE_IDS;
 const US = USER_SESSION_IDS;
 
+/** When the test user started their first session, which is when a programme starts */
+const PROGRAMME_STARTED_AT = new Date('2026-03-25T09:00:00Z');
+
 /**
  * Active programme for the test programme user.
  * Uses the level 1 shell, the only one with a full hierarchy.
@@ -80,6 +84,7 @@ const DEFAULT_PROGRAMME: NewProgramme = {
   status: 'active',
   totalPhases: 4,
   sessionsPerPhase: 3,
+  startedAt: PROGRAMME_STARTED_AT,
 };
 
 /**
@@ -134,7 +139,7 @@ const DEFAULT_USER_SESSIONS: NewUserSession[] = [
     templateSessionId: TS['gentle-mobility-s1-1'],
     sessionNumber: 1,
     status: 'completed',
-    startedAt: new Date('2026-03-25T09:00:00Z'),
+    startedAt: PROGRAMME_STARTED_AT,
     completedAt: new Date('2026-03-25T09:20:00Z'),
   },
   {
@@ -206,6 +211,17 @@ const seedProgramme = async (
 
   if (existing) {
     logger.warn('Test user programme already exists, skipping');
+
+    // A programme seeded before it carried a start date gets one; a real start is kept
+    if (existing.startedAt === null) {
+      await db
+        .update(programmes)
+        .set({ startedAt: PROGRAMME_STARTED_AT })
+        .where(and(eq(programmes.id, existing.id), isNull(programmes.startedAt)));
+      logger.info('Test user programme start date set', {
+        startedAt: PROGRAMME_STARTED_AT.toISOString(),
+      });
+    }
 
     return;
   }
@@ -380,6 +396,7 @@ const seedMemberLayer = async (
  * - 4 programme phases (Phase 1 completed, Phase 2 in progress, Phases 3-4 not started)
  * - 12 user sessions (Phase 1: 3 completed, Phase 2: 2 completed + 1 in progress, the rest not started)
  * - each session's exercises, copied from the template
+ * - exercise completions for the started sessions (all done when completed, some in progress)
  *
  * This provides a realistic dashboard state for visual testing.
  * Must run AFTER: seedTestUserDatabase, seedProgrammeTemplates, seedTemplateHierarchy
@@ -393,6 +410,12 @@ export const seedProgrammeUserData = async (
   await seedProgrammePhases(db);
   await seedUserSessions(db);
   await seedMemberLayer(db);
+  await seedExerciseCompletions(
+    db,
+    DEFAULT_PROGRAMME_PHASES.map((phase) =>
+      requireSeedId(phase, `programme phase ${String(phase.phaseNumber)}`)
+    )
+  );
 
   logger.info('=== Programme user data seed complete ===');
 };

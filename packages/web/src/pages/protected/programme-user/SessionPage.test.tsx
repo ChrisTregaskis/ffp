@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { memberProgrammeDetail } from '@web/components/programme/programme-test-fixture';
 import { ApiError } from '@web/lib/api/client';
 
 import { SessionPage } from './SessionPage';
@@ -21,9 +22,10 @@ vi.mock('@web/hooks/useToast', () => ({ useToast: () => ({ addToast: vi.fn() }) 
 
 const renderPage = (): void => {
   render(
-    <MemoryRouter initialEntries={['/programme/session/phase1/session1']}>
+    <MemoryRouter initialEntries={['/programme/session/phaseonexxxx/session1xxxx']}>
       <Routes>
         <Route path="/programme/session/:phaseId/:templateSessionId" element={<SessionPage />} />
+        <Route path="/" element={<p>Home page</p>} />
       </Routes>
     </MemoryRouter>
   );
@@ -71,5 +73,20 @@ describe('SessionPage', () => {
     expect(screen.queryByText('Session not found.')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('goes home from Back before the session starts', async () => {
+    useProgrammeDetailQuery.mockReturnValue({
+      data: memberProgrammeDetail(['not_started']),
+      isPending: false,
+      error: null,
+      refetch,
+    });
+
+    renderPage();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+    expect(screen.getByText('Home page').textContent).toBe('Home page');
   });
 });
