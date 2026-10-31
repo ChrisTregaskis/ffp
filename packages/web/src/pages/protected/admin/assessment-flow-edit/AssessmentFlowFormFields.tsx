@@ -2,6 +2,7 @@ import React from 'react';
 
 import { StaticAlert, FormActions, FormTextarea, FormTextInput } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
+import { requiredText } from '@web/utils/form-rules';
 
 import type { AssessmentFlowFormValues } from './types';
 
@@ -36,7 +37,7 @@ export const AssessmentFlowFormFields: React.FC<AssessmentFlowFormFieldsProps> =
         register={register}
         errors={errors}
         isRequired
-        registerOptions={{ required: 'Please give the flow a name' }}
+        registerOptions={{ validate: requiredText('Please give the flow a name') }}
       />
 
       <FormTextarea

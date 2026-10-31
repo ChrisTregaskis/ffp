@@ -3,6 +3,7 @@ import React from 'react';
 import { IconButton } from '@web/components/atoms';
 import { FormTextInput } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
+import { requiredText } from '@web/utils/form-rules';
 import { REORDERABLE_ACTION_LABELS } from '@web/utils/reorderable-item-actions';
 
 import type { QuestionFormValues, QuestionOptionFormValues } from '../types';
@@ -50,7 +51,7 @@ export const QuestionOptionRow: React.FC<QuestionOptionRowProps> = ({
           register={register}
           errors={errors}
           isRequired
-          registerOptions={{ required: 'Give the option a label' }}
+          registerOptions={{ validate: requiredText('Give the option a label') }}
         />
         <FormTextInput<QuestionFormValues>
           name={optionPath(index, 'value')}
@@ -61,10 +62,12 @@ export const QuestionOptionRow: React.FC<QuestionOptionRowProps> = ({
           isRequired
           readOnly={isStored}
           registerOptions={{
-            required: 'Give the option a value',
-            validate: (value, formValues) =>
-              formValues.options.filter((option) => option.value.trim() === String(value).trim())
-                .length <= 1 || 'Each option needs its own value',
+            validate: {
+              filled: requiredText('Give the option a value'),
+              distinct: (value, formValues) =>
+                formValues.options.filter((option) => option.value.trim() === String(value).trim())
+                  .length <= 1 || 'Each option needs its own value',
+            },
           }}
         />
         <FormTextInput<QuestionFormValues>

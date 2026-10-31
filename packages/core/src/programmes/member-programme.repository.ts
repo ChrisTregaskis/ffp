@@ -16,10 +16,10 @@ import {
 
 import { withRLS } from '../lib/database';
 
-import type { ExerciseVideoSummary } from './programme.repository';
+import type { ProgrammeExerciseVideo } from './programme.repository';
 
 /** A member's exercise with embedded video metadata. */
-export type MemberExerciseWithVideo = UserSessionExerciseRecord & { video: ExerciseVideoSummary };
+export type MemberExerciseWithVideo = UserSessionExerciseRecord & { video: ProgrammeExerciseVideo };
 
 /** A member's session with its exercises, completions and the template session's display fields. */
 export interface MemberSessionDetail {

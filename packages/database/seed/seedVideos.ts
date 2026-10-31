@@ -38,15 +38,11 @@ export const VIDEO_IDS = {
   'draft-shoulder-press': '77777777-7777-7777-8777-777777770010',
 } as const;
 
-export type VideoSlug = keyof typeof VIDEO_IDS;
-
 /**
  * Seed video definitions — realistic exercise video catalogue entries
  *
  * Covers a variety of:
  * - Difficulties: beginner, intermediate, advanced
- * - Movement types: stretch, strength, mobility, balance
- * - Body parts: various muscle groups and areas
  * - Equipment: none, resistance_band, yoga_mat, chair
  * - Statuses: mostly active, one draft for testing
  */

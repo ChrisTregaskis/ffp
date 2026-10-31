@@ -32,6 +32,3 @@ export const videosApi = {
     return parseApiResponse(signedVideoUrlResponseSchema, response, { method: 'GET', path });
   },
 };
-
-// Re-export types for consumers
-export type { SignedVideoUrlResponse, VideoDetailResponse };

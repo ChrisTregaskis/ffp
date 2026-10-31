@@ -9,7 +9,6 @@ import {
   userAssessmentStatusResponseSchema,
   type AssessmentFlow,
   type AssessmentResultsResponse,
-  type AssessmentTemplate,
   type AssessmentTemplateWithQuestions,
   type SafetyGate,
   type SaveProgressRequest,
@@ -154,10 +153,7 @@ export const assessmentsApi = {
 
 // Re-export types for consumers
 export type {
-  AssessmentFlow,
   AssessmentResultsResponse,
-  AssessmentTemplate,
-  AssessmentTemplateWithQuestions,
   SafetyGate,
   SaveProgressRequest,
   SaveProgressResponse,

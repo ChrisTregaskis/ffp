@@ -1,9 +1,7 @@
 import {
-  activeProgrammeResponseSchema,
   programmeDetailResponseSchema,
   progressSummaryResponseSchema,
   replaceProgrammeResponseSchema,
-  type ActiveProgrammeResponse,
   type ProgrammeDetailResponse,
   type ProgressSummaryResponse,
   type ReplaceProgrammeResponse,
@@ -20,16 +18,6 @@ const basePath = '/programmes';
  * to ensure type safety at runtime, not just compile time.
  */
 export const programmesApi = {
-  /**
-   * Get the current user's active programme
-   */
-  getActive: async (signal?: AbortSignal): Promise<ActiveProgrammeResponse> => {
-    const path = `${basePath}/active`;
-    const response = await ffpClient.get(path, { signal });
-
-    return parseApiResponse(activeProgrammeResponseSchema, response, { method: 'GET', path });
-  },
-
   /**
    * Get the full programme detail with tiered visibility (phases, sessions, exercises)
    */
@@ -60,12 +48,4 @@ export const programmesApi = {
 
     return parseApiResponse(replaceProgrammeResponseSchema, response, { method: 'PUT', path });
   },
-};
-
-// Re-export types for consumers
-export type {
-  ActiveProgrammeResponse,
-  ProgrammeDetailResponse,
-  ProgressSummaryResponse,
-  ReplaceProgrammeResponse,
 };

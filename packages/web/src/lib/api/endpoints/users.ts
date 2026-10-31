@@ -18,6 +18,3 @@ export const usersApi = {
     return parseApiResponse(userProfileResponseSchema, response, { method: 'GET', path });
   },
 };
-
-// Re-export types for consumers
-export type { UserProfileResponse };

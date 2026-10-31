@@ -11,7 +11,6 @@ import {
   unique,
   foreignKey,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { PROGRAMME_STATUSES } from '../constants/programme.constants';
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
@@ -110,7 +109,5 @@ export const programmesRelations = relations(programmes, ({ one }) => ({
   }),
 }));
 
-export const insertProgrammeSchema = createInsertSchema(programmes);
-export const selectProgrammeSchema = createSelectSchema(programmes);
 export type ProgrammeRecord = typeof programmes.$inferSelect;
 export type NewProgramme = typeof programmes.$inferInsert;

@@ -54,7 +54,7 @@ async function toAdminVideoDetail(
 async function withTags<T>(
   db: DbQueryClient,
   records: VideoRecord[],
-  parse: (video: Omit<VideoRecord, 'tags'> & { tags: unknown }) => T
+  parse: (video: VideoRecord & { tags: unknown }) => T
 ): Promise<T[]> {
   const tagsByVideo = await videoTagService.findTagsByVideoId(
     db,

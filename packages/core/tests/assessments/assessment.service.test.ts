@@ -3,7 +3,6 @@ import { randomUUID } from 'crypto';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import type * as ffpDatabase from '@ffp/database';
-import { selectUserAssessmentAnswerSchema } from '@ffp/database/schema';
 
 import * as answerRepository from '../../src/assessments/answer.repository';
 import * as assessmentService from '../../src/assessments/assessment.service';
@@ -246,6 +245,20 @@ const createMockQuestion = (
   scoreDimension: null,
   isActive: true,
   configOverrides: null,
+});
+
+const storedAnswer = (
+  context: OrganisationContext,
+  assessmentId: string,
+  questionId: string,
+  answerValue: AnswerValue
+): UserAssessmentAnswer => ({
+  id: randomUUID(),
+  organisationId: context.organisationId,
+  userAssessmentId: assessmentId,
+  questionId,
+  answerValue,
+  answeredAt: new Date(),
 });
 
 describe('Assessment Service', () => {
@@ -777,20 +790,6 @@ describe('Assessment Service', () => {
       answerValue: AnswerValue
     ): Record<string, { questionId: string; answerValue: AnswerValue }> => ({
       [questionId]: { questionId, answerValue },
-    });
-
-    const storedAnswer = (
-      context: OrganisationContext,
-      assessmentId: string,
-      questionId: string,
-      answerValue: AnswerValue
-    ): UserAssessmentAnswer => ({
-      id: randomUUID(),
-      organisationId: context.organisationId,
-      userAssessmentId: assessmentId,
-      questionId,
-      answerValue,
-      answeredAt: new Date(),
     });
 
     const rejectionDetails = async (promise: Promise<unknown>): Promise<unknown> => {
@@ -1867,14 +1866,7 @@ describe('Assessment Service', () => {
         [counted.id, 'no'],
         [routed.id, 'yes'],
       ].map(([questionId, answerValue]) =>
-        selectUserAssessmentAnswerSchema.parse({
-          id: randomUUID(),
-          organisationId: context.organisationId,
-          userAssessmentId: assessment.id,
-          questionId,
-          answerValue,
-          answeredAt: new Date(),
-        })
+        storedAnswer(context, assessment.id, questionId, answerValue)
       );
 
       steps[1].nextStepRules = [
@@ -1899,7 +1891,7 @@ describe('Assessment Service', () => {
           [routed.id, routed.slug],
         ])
       );
-      mockedAnswerRepo.findByAssessmentId.mockResolvedValue(stored as UserAssessmentAnswer[]);
+      mockedAnswerRepo.findByAssessmentId.mockResolvedValue(stored);
       runWithRLSInMockTx();
 
       return { context, assessmentId: assessment.id, steps };
@@ -1956,14 +1948,8 @@ describe('Assessment Service', () => {
           userId: databaseUserId,
           flowId,
         });
-        const stored = selectUserAssessmentAnswerSchema.parse({
-          id: randomUUID(),
-          organisationId: context.organisationId,
-          userAssessmentId: assessment.id,
-          questionId,
-          answerValue,
-          answeredAt: new Date(),
-        });
+        // The stored JSONB can hold any shape; these cases model a malformed row
+        const stored = storedAnswer(context, assessment.id, questionId, answerValue as AnswerValue);
         const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
         mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
@@ -1972,7 +1958,7 @@ describe('Assessment Service', () => {
           createMockFlowSteps(flowId, randomUUID())
         );
         mockedUserAssessmentRepo.findResumableAssessment.mockResolvedValue(assessment);
-        mockedAnswerRepo.findByAssessmentId.mockResolvedValue([stored as UserAssessmentAnswer]);
+        mockedAnswerRepo.findByAssessmentId.mockResolvedValue([stored]);
 
         try {
           const refusal: unknown = await assessmentService
@@ -2020,21 +2006,17 @@ describe('Assessment Service', () => {
         userId: databaseUserId,
         flowId,
       });
-      const stored = selectUserAssessmentAnswerSchema.parse({
-        id: randomUUID(),
-        organisationId: context.organisationId,
-        userAssessmentId: assessment.id,
-        questionId: randomUUID(),
-        answerValue: { note: memberText },
-        answeredAt: new Date(),
-      });
+      // The stored JSONB can hold any shape; this models a malformed row
+      const stored = storedAnswer(context, assessment.id, randomUUID(), {
+        note: memberText,
+      } as unknown as AnswerValue);
       const sentQuestionId = randomUUID();
       const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
       mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
       mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createMockFlowSteps(flowId, randomUUID()));
-      mockedAnswerRepo.findByAssessmentId.mockResolvedValue([stored as UserAssessmentAnswer]);
+      mockedAnswerRepo.findByAssessmentId.mockResolvedValue([stored]);
 
       try {
         const refusal: unknown = await assessmentService

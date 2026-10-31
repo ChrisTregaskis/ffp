@@ -376,7 +376,6 @@ psql -h localhost -U root_user -d postgres -c "\du"
 - **`drizzle-orm`** - Type-safe ORM for TypeScript
 - **`drizzle-kit`** - CLI for migrations and introspection
 - **`pg`** - PostgreSQL client for Node.js
-- **`drizzle-zod`** - Generate Zod schemas from Drizzle tables
 
 ## Security Notes
 

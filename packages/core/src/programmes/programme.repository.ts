@@ -75,18 +75,18 @@ export interface ProgrammeWithPhases {
 }
 
 /** Slim video fields needed for exercise detail display. */
-export type ExerciseVideoSummary = Pick<
+export type ProgrammeExerciseVideo = Pick<
   VideoRecord,
   'id' | 'publicId' | 'title' | 'durationSeconds' | 'difficulty'
 >;
 
 /** Exercise record with embedded video metadata. */
-export type ExerciseWithVideo = SessionExerciseRecord & { video: ExerciseVideoSummary };
+export type ProgrammeExerciseWithVideo = SessionExerciseRecord & { video: ProgrammeExerciseVideo };
 
 /** Full template session with exercises and video metadata. */
 export interface TemplateSessionWithExercises {
   session: TemplateSessionRecord;
-  exercises: ExerciseWithVideo[];
+  exercises: ProgrammeExerciseWithVideo[];
 }
 
 /** Template phase with its sessions, used within TemplateStructure. */
@@ -478,7 +478,7 @@ export async function findTemplateStructure(
       : [];
 
   // Group exercises by session
-  const exercisesBySession = new Map<string, ExerciseWithVideo[]>();
+  const exercisesBySession = new Map<string, ProgrammeExerciseWithVideo[]>();
   for (const row of exerciseRows) {
     const sessionId = row.exercise.templateSessionId;
     const list = exercisesBySession.get(sessionId) ?? [];

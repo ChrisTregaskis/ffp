@@ -9,7 +9,6 @@ import {
   index,
   foreignKey,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { organisations } from './organisations';
 import { userAssessments } from './user-assessments';
@@ -81,7 +80,5 @@ export const assessmentSafetyTriggersRelations = relations(assessmentSafetyTrigg
   }),
 }));
 
-export const insertAssessmentSafetyTriggerSchema = createInsertSchema(assessmentSafetyTriggers);
-export const selectAssessmentSafetyTriggerSchema = createSelectSchema(assessmentSafetyTriggers);
 export type AssessmentSafetyTriggerRecord = typeof assessmentSafetyTriggers.$inferSelect;
 export type NewAssessmentSafetyTrigger = typeof assessmentSafetyTriggers.$inferInsert;

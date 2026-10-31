@@ -11,6 +11,7 @@ import {
 import { useComposableFormContext, ACTIVE_STATUS_FILTER } from '@web/components/organisms';
 import { DIFFICULTY_OPTIONS } from '@web/constants';
 import { useAutoSlug } from '@web/hooks/useAutoSlug';
+import { requiredText } from '@web/utils/form-rules';
 
 import type { TemplateMetadataFormValues } from './types';
 
@@ -49,7 +50,7 @@ export const TemplateMetadataFormFields: React.FC<TemplateMetadataFormFieldsProp
           register={register}
           errors={errors}
           isRequired
-          registerOptions={{ required: 'Please give the template a name' }}
+          registerOptions={{ validate: requiredText('Please give the template a name') }}
         />
         <FormTextInput
           name="slug"
@@ -63,7 +64,7 @@ export const TemplateMetadataFormFields: React.FC<TemplateMetadataFormFieldsProp
           register={register}
           errors={errors}
           isRequired
-          registerOptions={{ required: 'Please give the template a slug' }}
+          registerOptions={{ validate: requiredText('Please give the template a slug') }}
         />
       </FormRow>
 

@@ -9,7 +9,7 @@ import {
 } from '@ffp/database/schema';
 
 import { NotFoundError } from '../lib/errors';
-import { applyPagination, escapeLikePattern, sortColumnFor } from '../lib/pagination';
+import { applyPagination, escapeLikePattern, withDefaultSort } from '../lib/pagination';
 
 import type {
   CreateQuestionInput,
@@ -26,15 +26,6 @@ export async function findByQuestionId(db: DbClient, id: string): Promise<Questi
   const records = await db.select().from(questions).where(eq(questions.id, id)).limit(1);
 
   return records[0] ?? null;
-}
-
-/** Returns questions in no guaranteed order. Missing IDs are silently ignored. */
-export async function findByQuestionIds(db: DbQueryClient, ids: string[]): Promise<Question[]> {
-  if (ids.length === 0) {
-    return [];
-  }
-
-  return await db.select().from(questions).where(inArray(questions.id, ids));
 }
 
 export async function findQuestionBySlug(db: DbClient, slug: string): Promise<Question | null> {
@@ -200,13 +191,12 @@ export async function findQuestionPage(
     .where(and(...conditions))
     .$dynamic();
 
-  const sortBy = sortColumnFor(paginationInput.sortBy, QUESTION_SORTABLE_COLUMNS)
-    ? paginationInput.sortBy
-    : 'questionText';
-
   return await applyPagination(
     query,
-    { ...paginationInput, sortBy },
+    withDefaultSort(paginationInput, QUESTION_SORTABLE_COLUMNS, {
+      sortBy: 'questionText',
+      sortDirection: 'asc',
+    }),
     QUESTION_SORTABLE_COLUMNS,
     questions.id
   );

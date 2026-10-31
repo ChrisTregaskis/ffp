@@ -52,5 +52,3 @@ export const adminSessionsApi = {
     return parseApiResponse(sessionsResponseEnvelope, response, { method: 'PUT', path }).sessions;
   },
 };
-
-export type { CreateSessionRequest, ReorderSessionsRequest, SessionResponse, UpdateSessionRequest };

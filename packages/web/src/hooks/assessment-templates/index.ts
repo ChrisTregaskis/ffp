@@ -3,10 +3,8 @@ export { useAssessmentTemplateActivation } from './useAssessmentTemplateActivati
 export { useAssessmentTemplateDetailQuery } from './useAssessmentTemplateDetailQuery';
 export {
   useCreateAssessmentTemplateMutation,
-  useDeactivateAssessmentTemplateMutation,
   useUpdateAssessmentTemplateMutation,
 } from './useAssessmentTemplateMutations';
-export type { UpdateAssessmentTemplateVariables } from './useAssessmentTemplateMutations';
 export { useAssessmentTemplatesQuery } from './useAssessmentTemplatesQuery';
 export { useAssignableQuestionsQuery } from './useAssignableQuestionsQuery';
 export {

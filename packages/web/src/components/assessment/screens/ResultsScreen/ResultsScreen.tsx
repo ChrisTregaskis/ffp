@@ -37,6 +37,10 @@ export interface ResultsScreenProps {
   isReplacing?: boolean;
   /** Whether replacing the programme failed */
   hasReplaceFailed?: boolean;
+  /** Whether checking on the programme failed while it was still being put together */
+  hasReadinessCheckFailed?: boolean;
+  /** Checks on the programme again after a failed check */
+  onRetryReadinessCheck?: () => void;
 }
 
 /**
@@ -59,6 +63,8 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   isReassessment = false,
   isReplacing = false,
   hasReplaceFailed = false,
+  hasReadinessCheckFailed = false,
+  onRetryReadinessCheck,
 }) => {
   if (scores === null && isLoading) {
     return <ResultsLoadingState />;
@@ -99,6 +105,8 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
           programmeReadiness={programmeReadiness}
           isReplacing={isReplacing}
           hasReplaceFailed={hasReplaceFailed}
+          hasReadinessCheckFailed={hasReadinessCheckFailed}
+          onRetryReadinessCheck={onRetryReadinessCheck}
           onViewProgramme={onViewProgramme}
           onKeepProgramme={onKeepProgramme}
           onReplaceProgramme={onReplaceProgramme}

@@ -9,7 +9,6 @@ import {
   timestamp,
   index,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 
@@ -53,7 +52,5 @@ export const assessmentTemplatesRelations = relations(assessmentTemplates, ({ on
   templateQuestions: many(templateQuestions),
 }));
 
-export const insertAssessmentTemplateSchema = createInsertSchema(assessmentTemplates);
-export const selectAssessmentTemplateSchema = createSelectSchema(assessmentTemplates);
 export type AssessmentTemplateRecord = typeof assessmentTemplates.$inferSelect;
 export type NewAssessmentTemplate = typeof assessmentTemplates.$inferInsert;

@@ -3,6 +3,7 @@ import React from 'react';
 import { FormRow } from '@web/components/atoms';
 import { FormActions, FormTextarea, FormTextInput } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
+import { requiredText } from '@web/utils/form-rules';
 
 import type { SessionFormValues } from './SessionForm';
 
@@ -24,10 +25,7 @@ export const SessionFormFields: React.FC<{
           register={register}
           errors={errors}
           isRequired
-          registerOptions={{
-            // The form trims on submit, so a name of only spaces would save empty
-            validate: (value) => value.trim() !== '' || 'Please give the session a name',
-          }}
+          registerOptions={{ validate: requiredText('Please give the session a name') }}
         />
 
         <FormTextInput<SessionFormValues>

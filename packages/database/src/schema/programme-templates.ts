@@ -8,7 +8,6 @@ import {
   timestamp,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 
@@ -45,7 +44,5 @@ export const programmeTemplates = pgTable(
   ]
 );
 
-export const insertProgrammeTemplateSchema = createInsertSchema(programmeTemplates);
-export const selectProgrammeTemplateSchema = createSelectSchema(programmeTemplates);
 export type ProgrammeTemplateRecord = typeof programmeTemplates.$inferSelect;
 export type NewProgrammeTemplate = typeof programmeTemplates.$inferInsert;

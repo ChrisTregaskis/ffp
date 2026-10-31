@@ -105,6 +105,10 @@ export const ResultsStepContent: React.FC<ResultsStepContentProps> = ({
       onReplaceProgramme={handleReplaceProgramme}
       isReplacing={isReplacing}
       hasReplaceFailed={hasReplaceFailed}
+      // TanStack keeps the last scores on error, so a failed poll would otherwise leave
+      // readiness stuck at pending with View disabled and nothing said
+      hasReadinessCheckFailed={Boolean(error)}
+      onRetryReadinessCheck={handleRetry}
     />
   );
 };

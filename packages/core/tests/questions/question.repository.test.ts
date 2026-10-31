@@ -18,6 +18,7 @@ import {
   createQuestionSchema,
   updateQuestionSchema,
 } from '../../src/schemas/assessment-question.schema';
+import { descendingIds } from '../lib/paging.fixture';
 
 import type { FlowStepWithConfig } from '../../src/assessments/flow.repository';
 import type { Pool } from 'pg';
@@ -266,6 +267,30 @@ describe('Question Repository', () => {
       );
 
       expect(listed.map((question) => question.id)).toEqual([earlier, later]);
+    });
+
+    it('lists by question text when the request names no sort, whatever direction it sends', async () => {
+      // Inserted against the alphabetical order, which also runs against the id order, so neither
+      // insertion order nor the id tie-break alone can pass this
+      const [higherId, lowerId] = descendingIds(2);
+
+      for (const [id, questionText] of [
+        [lowerId, `Zebra crossing [${RUN_ID}]`],
+        [higherId, `Apple picking [${RUN_ID}]`],
+      ]) {
+        await db
+          .insert(questions)
+          .values({ id, slug: `question-repo-${id}`, type: 'text', questionText });
+        createdQuestionIds.push(id);
+      }
+
+      const listed = await questionRepository.findQuestionPage(
+        db,
+        { page: 1, pageSize: 10, sortDirection: 'desc' },
+        { search: RUN_ID }
+      );
+
+      expect(listed.map((question) => question.id)).toEqual([higherId, lowerId]);
     });
   });
 });

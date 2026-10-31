@@ -11,7 +11,6 @@ import {
   unique,
   foreignKey,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { USER_ROLES } from '../constants/user.constants';
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
@@ -71,7 +70,5 @@ export const usersRelations = relations(users, ({ one }) => ({
   }),
 }));
 
-export const insertUserSchema = createInsertSchema(users);
-export const selectUserSchema = createSelectSchema(users);
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;

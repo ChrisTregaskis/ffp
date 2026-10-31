@@ -28,6 +28,3 @@ export const exercisesApi = {
     });
   },
 };
-
-// Re-export types for consumers
-export type { ToggleExerciseCompletionResponse };

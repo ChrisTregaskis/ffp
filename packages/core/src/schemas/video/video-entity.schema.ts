@@ -8,7 +8,7 @@ import { videoTagAssignmentSchema } from '../tag.schema';
 export const videoStatusSchema = z.enum(VIDEO_STATUSES);
 export const difficultySchema = z.enum(DIFFICULTIES);
 
-/** A video record, without the columns typed tags replace */
+/** A video record */
 export const videoSchema = z.object({
   /** Unique identifier (UUID) */
   id: z.guid(),

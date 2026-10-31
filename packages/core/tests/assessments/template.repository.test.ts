@@ -31,6 +31,7 @@ import {
 } from '@ffp/database/testing';
 
 import * as templateRepository from '../../src/assessments/template.repository';
+import { descendingIds, idsAcrossPages } from '../lib/paging.fixture';
 
 import type { CreateAssessmentTemplateInput } from '../../src/schemas/assessment-template.schema';
 import type { Pool } from 'pg';
@@ -173,6 +174,47 @@ describe('Template Repository', () => {
       );
 
       expect(listed.map((template) => template.id)).toEqual([earlier, later]);
+    });
+
+    it('lists alphabetically when the request names no sort, whatever direction it sends', async () => {
+      // Inserted against the alphabetical order, which also runs against the id order, so neither
+      // insertion order nor the id tie-break alone can pass this
+      const [higherId, lowerId] = descendingIds(2);
+
+      for (const [id, name] of [
+        [lowerId, `Beta ${RUN_ID}`],
+        [higherId, `Alpha ${RUN_ID}`],
+      ]) {
+        await db.insert(assessmentTemplates).values({ id, name });
+        createdTemplateIds.push(id);
+      }
+
+      const listed = await templateRepository.findTemplatePage(
+        db,
+        { ...firstPage, sortDirection: 'desc' },
+        { search: RUN_ID }
+      );
+
+      expect(listed.map((template) => template.id)).toEqual([higherId, lowerId]);
+    });
+
+    it('orders templates tied on the default sort by id, so the pages neither repeat nor skip one', async () => {
+      const ids = descendingIds(6);
+
+      for (const id of ids) {
+        await db.insert(assessmentTemplates).values({ id, name: `Tied template ${RUN_ID}` });
+        createdTemplateIds.push(id);
+      }
+
+      const listed = await idsAcrossPages(3, (page) =>
+        templateRepository.findTemplatePage(
+          db,
+          { ...firstPage, page, pageSize: 2 },
+          { search: RUN_ID }
+        )
+      );
+
+      expect(listed).toEqual([...ids].sort());
     });
 
     it('searches name and description, treating wildcards literally', async () => {

@@ -8,7 +8,6 @@ import {
   jsonb,
   index,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 
@@ -53,7 +52,5 @@ export const assessmentFlows = pgTable(
   ]
 );
 
-export const insertAssessmentFlowSchema = createInsertSchema(assessmentFlows);
-export const selectAssessmentFlowSchema = createSelectSchema(assessmentFlows);
 export type AssessmentFlowRecord = typeof assessmentFlows.$inferSelect;
 export type NewAssessmentFlow = typeof assessmentFlows.$inferInsert;

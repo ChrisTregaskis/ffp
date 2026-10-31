@@ -5,35 +5,17 @@ export {
   useReorderExercisesMutation,
   useUpdateExerciseMutation,
 } from './useExerciseMutations';
-export type {
-  CreateExerciseVariables,
-  DeleteExerciseVariables,
-  ReorderExercisesVariables,
-  UpdateExerciseVariables,
-} from './useExerciseMutations';
 export {
   useCreatePhaseMutation,
   useDeletePhaseMutation,
   useReorderPhasesMutation,
   useUpdatePhaseMutation,
 } from './usePhaseMutations';
-export type {
-  CreatePhaseVariables,
-  DeletePhaseVariables,
-  ReorderPhasesVariables,
-  UpdatePhaseVariables,
-} from './usePhaseMutations';
 export {
   useCreateSessionMutation,
   useDeleteSessionMutation,
   useReorderSessionsMutation,
   useUpdateSessionMutation,
-} from './useSessionMutations';
-export type {
-  CreateSessionVariables,
-  DeleteSessionVariables,
-  ReorderSessionsVariables,
-  UpdateSessionVariables,
 } from './useSessionMutations';
 export { useSessionExercisesQuery } from './useSessionExercisesQuery';
 export { useSessionSlotsQuery } from './useSessionSlotsQuery';
@@ -44,10 +26,5 @@ export {
   useUpdateSlotMutation,
 } from './useSlotMutations';
 export { useTemplateDetailQuery } from './useTemplateDetailQuery';
-export {
-  useCreateTemplateMutation,
-  useDeactivateTemplateMutation,
-  useUpdateTemplateMutation,
-} from './useTemplateMutations';
-export type { UpdateTemplateVariables } from './useTemplateMutations';
+export { useCreateTemplateMutation, useUpdateTemplateMutation } from './useTemplateMutations';
 export { useTemplateActivation } from './useTemplateActivation';

@@ -40,21 +40,22 @@ export const ProgrammeSessionCard: React.FC<ProgrammeSessionCardProps> = ({
   const status = session.userSession?.status;
   const exercises = session.exercises ?? [];
 
+  // Wraps at phone width, so the metadata moves under the name rather than squeezing it
   const trigger = (
-    <>
-      <Text styleProps={{ size: 'sm', weight: 'medium' }} className="truncate">
+    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+      <Text styleProps={{ size: 'sm', weight: 'medium' }} className="max-w-full truncate">
         {displayName}
       </Text>
       {status && <Badge {...SESSION_STATUS_BADGES[status]} size="xs" />}
       {session.estimatedDurationMinutes ? (
-        <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
+        <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }} className="whitespace-nowrap">
           {session.estimatedDurationMinutes} min
         </Text>
       ) : null}
-      <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
+      <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }} className="whitespace-nowrap">
         {session.exerciseCount} {session.exerciseCount === 1 ? 'exercise' : 'exercises'}
       </Text>
-    </>
+    </div>
   );
 
   return (

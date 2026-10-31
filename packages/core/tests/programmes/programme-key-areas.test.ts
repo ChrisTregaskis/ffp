@@ -3,7 +3,6 @@ import { randomUUID } from 'crypto';
 import { describe, it, expect } from 'vitest';
 
 import type { AnswerValue, EmphasisRule } from '@ffp/database';
-import { selectQuestionSchema } from '@ffp/database/schema';
 
 import { resolveKeyAreas } from '../../src/programmes/programme-key-areas';
 
@@ -12,22 +11,11 @@ import type { Question } from '../../src/questions/question.repository';
 const question = (
   questionText: string,
   options: { value: string; label: string }[] | null
-): Question =>
-  selectQuestionSchema.parse({
-    id: randomUUID(),
-    publicId: 'abcdefghijkl',
-    slug: `slug-${randomUUID()}`,
-    type: options ? 'single-choice' : 'scale',
-    questionText,
-    description: null,
-    options,
-    validation: null,
-    videoId: null,
-    scoreDimension: null,
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
+): Pick<Question, 'id' | 'questionText' | 'options'> => ({
+  id: randomUUID(),
+  questionText,
+  options,
+});
 
 const rule = (questionId: string, answerValue: string): EmphasisRule => ({
   questionId,

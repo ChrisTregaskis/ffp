@@ -40,6 +40,21 @@ describe('toUpdateTemplateInput', () => {
     ).toEqual({ name: 'Gentle Start' });
   });
 
+  it('trims the text fields, so padding alone is no change', () => {
+    const template = stored();
+    const padded = {
+      ...toTemplateFormValues(template),
+      name: '  Gentle Mobility ',
+      slug: ' gentle-mobility ',
+      description: ' An easy start. ',
+    };
+
+    expect(toUpdateTemplateInput(padded, template)).toEqual({});
+    expect(toUpdateTemplateInput({ ...padded, name: '  Gentle Start  ' }, template)).toEqual({
+      name: 'Gentle Start',
+    });
+  });
+
   it('reads the active select as a boolean', () => {
     const template = stored();
 

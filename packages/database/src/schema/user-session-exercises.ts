@@ -10,7 +10,6 @@ import {
   unique,
   foreignKey,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { organisations } from './organisations';
 import { sessionExercises } from './session-exercises';
@@ -76,7 +75,5 @@ export const userSessionExercises = pgTable(
   ]
 );
 
-export const insertUserSessionExerciseSchema = createInsertSchema(userSessionExercises);
-export const selectUserSessionExerciseSchema = createSelectSchema(userSessionExercises);
 export type UserSessionExerciseRecord = typeof userSessionExercises.$inferSelect;
 export type NewUserSessionExercise = typeof userSessionExercises.$inferInsert;

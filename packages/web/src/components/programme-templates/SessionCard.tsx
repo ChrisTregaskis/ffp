@@ -98,20 +98,21 @@ export const SessionCard: React.FC<SessionCardProps> = ({
     setShowDeleteConfirm(false);
   }, [session.id, onDelete]);
 
+  // Wraps at phone width, as the member programme's session card does
   const trigger = (
-    <>
-      <Text styleProps={{ size: 'sm', weight: 'medium' }} className="truncate">
+    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+      <Text styleProps={{ size: 'sm', weight: 'medium' }} className="max-w-full truncate">
         {displayName}
       </Text>
-      {session.estimatedDurationMinutes && (
-        <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
+      {session.estimatedDurationMinutes ? (
+        <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }} className="whitespace-nowrap">
           {session.estimatedDurationMinutes} min
         </Text>
-      )}
-      <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
+      ) : null}
+      <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }} className="whitespace-nowrap">
         {exerciseCount} {exerciseCount === 1 ? 'exercise' : 'exercises'}
       </Text>
-    </>
+    </div>
   );
 
   const menuItems: DropdownMenuItem[] = useMemo(

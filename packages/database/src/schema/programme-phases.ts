@@ -10,7 +10,6 @@ import {
   unique,
   foreignKey,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { PHASE_STATUSES } from '../constants/programme.constants';
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
@@ -68,7 +67,5 @@ export const programmePhases = pgTable(
   ]
 );
 
-export const insertProgrammePhaseSchema = createInsertSchema(programmePhases);
-export const selectProgrammePhaseSchema = createSelectSchema(programmePhases);
 export type ProgrammePhaseRecord = typeof programmePhases.$inferSelect;
 export type NewProgrammePhase = typeof programmePhases.$inferInsert;

@@ -114,7 +114,7 @@ CloudFront signed URLs (15-minute TTL) for secure video access:
 
 Videos are described by typed tags: seeded categories (goal, body area, movement, audience) holding admin-authored tags, joined to videos through `video_tags`. A video may carry several tags in one category. Tags are deactivated, never deleted. The programme pool query (`tagRepository.findPoolVideos`) draws active videos carrying any of a set of tags in a category, minus videos already picked.
 
-`equipment` stays a GIN-indexed array column, and `difficulty` a column. The older `movement_type`, `body_parts` and `tags` columns are deprecated: nothing reads or writes them, and they remain only until they are dropped. No RLS on any of these tables — system-managed content accessible to all authenticated users.
+`equipment` stays a GIN-indexed array column, and `difficulty` a column. Typed tags replaced the older `movement_type`, `body_parts` and `tags` columns, which have been dropped. No RLS on any of these tables — system-managed content accessible to all authenticated users.
 
 ### Programme Integration
 

@@ -87,6 +87,3 @@ export const adminLocationsApi = {
     return parseApiResponse(locationDetailResponseSchema, response, { method: 'PUT', path });
   },
 };
-
-// Re-export types for consumers
-export type { CreateLocationInput, UpdateLocationInput, LocationDetailResponse };

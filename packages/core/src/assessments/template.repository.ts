@@ -26,7 +26,7 @@ import {
 } from '@ffp/database/schema';
 
 import { NotFoundError } from '../lib/errors';
-import { applyPagination, escapeLikePattern, sortColumnFor } from '../lib/pagination';
+import { applyPagination, escapeLikePattern, withDefaultSort } from '../lib/pagination';
 import { findByTemplateId as findQuestionsByTemplateId } from '../questions/question.repository';
 
 import type { Question, QuestionWithConfig } from '../questions/question.repository';
@@ -171,13 +171,12 @@ export async function findTemplatePage(
     .where(and(...conditions))
     .$dynamic();
 
-  const sortBy = sortColumnFor(paginationInput.sortBy, TEMPLATE_SORTABLE_COLUMNS)
-    ? paginationInput.sortBy
-    : 'name';
-
   return await applyPagination(
     query,
-    { ...paginationInput, sortBy },
+    withDefaultSort(paginationInput, TEMPLATE_SORTABLE_COLUMNS, {
+      sortBy: 'name',
+      sortDirection: 'asc',
+    }),
     TEMPLATE_SORTABLE_COLUMNS,
     assessmentTemplates.id
   );

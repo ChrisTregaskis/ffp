@@ -75,6 +75,3 @@ export const adminVideosApi = {
     return parseApiResponse(adminVideoResponseSchema, response, { method: 'PUT', path }).video;
   },
 };
-
-// Re-export types for consumers
-export type { CreateVideoInput, UpdateVideoInput, UploadUrlResponse };

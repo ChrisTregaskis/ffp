@@ -1,7 +1,7 @@
 import type { ProgrammeReadiness } from '@ffp/core';
 
 import { Button, Text } from '@web/components/atoms';
-import { StaticAlert } from '@web/components/molecules';
+import { ErrorRetryState, StaticAlert } from '@web/components/molecules';
 import { ClickScale } from '@web/components/motion';
 
 import { ProgrammeNotReadyNotice } from './ProgrammeNotReadyNotice';
@@ -14,6 +14,9 @@ export interface ResultsActionsProps {
   isReplacing: boolean;
   /** Replacing failed; the member keeps their current programme */
   hasReplaceFailed: boolean;
+  /** Checking whether the programme is ready failed, so readiness can't move on by itself */
+  hasReadinessCheckFailed?: boolean;
+  onRetryReadinessCheck?: () => void;
   onViewProgramme: () => void;
   onKeepProgramme?: () => void;
   onReplaceProgramme?: () => void;
@@ -25,6 +28,8 @@ export const ResultsActions: React.FC<ResultsActionsProps> = ({
   programmeReadiness,
   isReplacing,
   hasReplaceFailed,
+  hasReadinessCheckFailed = false,
+  onRetryReadinessCheck,
   onViewProgramme,
   onKeepProgramme,
   onReplaceProgramme,
@@ -65,6 +70,15 @@ export const ResultsActions: React.FC<ResultsActionsProps> = ({
 
   if (programmeReadiness === 'failed') {
     return <ProgrammeNotReadyNotice />;
+  }
+
+  if (programmeReadiness === 'pending' && hasReadinessCheckFailed && onRetryReadinessCheck) {
+    return (
+      <ErrorRetryState
+        title="We couldn't check on your programme just now."
+        onRetry={onRetryReadinessCheck}
+      />
+    );
   }
 
   return (

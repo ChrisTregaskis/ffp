@@ -1,6 +1,5 @@
 import { relations } from 'drizzle-orm';
 import { pgTable, uuid, text, integer, jsonb, timestamp, index, pgEnum } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { JOB_STATUSES, JOB_TYPES } from '../constants/job.constants';
 
@@ -71,10 +70,6 @@ export const processJobsRelations = relations(processJobs, ({ one }) => ({
     references: [organisations.id],
   }),
 }));
-
-export const insertProcessJobSchema = createInsertSchema(processJobs);
-
-export const selectProcessJobSchema = createSelectSchema(processJobs);
 
 export type ProcessJobRecord = typeof processJobs.$inferSelect;
 

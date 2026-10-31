@@ -13,6 +13,3 @@ export type VideoStatus = (typeof VIDEO_STATUSES)[number];
 export const DIFFICULTIES = ['beginner', 'intermediate', 'advanced'] as const;
 
 export type Difficulty = (typeof DIFFICULTIES)[number];
-
-// Movement type categories for exercises; backs the deprecated `movement_type` column only
-export const MOVEMENT_TYPES = ['stretch', 'strength', 'mobility', 'balance'] as const;

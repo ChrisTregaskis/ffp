@@ -21,27 +21,4 @@ export {
   usersApi,
   videosApi,
 } from './endpoints';
-export type {
-  ActiveProgrammeResponse,
-  ProgrammeDetailResponse,
-  ProgressSummaryResponse,
-  AssessmentFlow,
-  AssessmentResultsResponse,
-  AssessmentTemplate,
-  CreateVideoInput,
-  PaginatedAdminVideoResponse,
-  UpdateVideoInput,
-  SaveProgressRequest,
-  SaveProgressResponse,
-  StartAssessmentResponse,
-  SubmitAssessmentRequest,
-  SubmitAssessmentResponse,
-  SignedVideoUrlResponse,
-  VideoDetailResponse,
-  SessionStatusResponse,
-  StartSessionRequest,
-  StartSessionResponse,
-  ToggleExerciseCompletionResponse,
-  UserProfileResponse,
-  UploadUrlResponse,
-} from './endpoints';
+export type { PaginatedAdminVideoResponse } from './endpoints';

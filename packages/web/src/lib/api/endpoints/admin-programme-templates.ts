@@ -102,6 +102,3 @@ export const adminProgrammeTemplatesApi = {
     return parsed.template;
   },
 };
-
-// Re-export types for consumers
-export type { CreateProgrammeTemplateInput, UpdateProgrammeTemplateInput, TemplateDetailResponse };

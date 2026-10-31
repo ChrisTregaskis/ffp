@@ -12,7 +12,7 @@ import {
 import { db, withRLS } from '../lib/database';
 import { InternalServerError, NotFoundError } from '../lib/errors';
 import { createSystemLogger } from '../lib/logger';
-import { applyPagination, escapeLikePattern, sortColumnFor } from '../lib/pagination';
+import { applyPagination, escapeLikePattern, withDefaultSort } from '../lib/pagination';
 
 import type {
   AssessmentFlowListFilters,
@@ -302,13 +302,12 @@ export async function findFlowPage(
     .groupBy(assessmentFlows.id)
     .$dynamic();
 
-  const sortBy = sortColumnFor(paginationInput.sortBy, FLOW_SORTABLE_COLUMNS)
-    ? paginationInput.sortBy
-    : 'name';
-
   return await applyPagination(
     query,
-    { ...paginationInput, sortBy },
+    withDefaultSort(paginationInput, FLOW_SORTABLE_COLUMNS, {
+      sortBy: 'name',
+      sortDirection: 'asc',
+    }),
     FLOW_SORTABLE_COLUMNS,
     assessmentFlows.id
   );
