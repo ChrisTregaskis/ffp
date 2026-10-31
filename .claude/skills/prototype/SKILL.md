@@ -1,7 +1,7 @@
 ---
 name: prototype
 description: Build a throwaway, dev-only, mock-data UX prototype in the FFP web package to de-risk a real build — exploring flows and layouts fast WITHOUT a database, API, or @ffp/core. Use when the user wants to prototype an admin/authoring/UX surface before production code. Prototypes are disposable but still reuse real components, theme colours, and patterns so the UX maps cleanly to the eventual build.
-argument-hint: 'surface to prototype, e.g. assessment-admin authoring'
+argument-hint: 'surface to prototype, e.g. a new admin authoring flow'
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash(pnpm dev:web), Bash(pnpm lint*), Bash(pnpm format*), Bash(pnpm typecheck*), Bash(turbo *), Bash(npx tsc*), Bash(npx eslint*)
 ---
 
@@ -64,7 +64,7 @@ A self-contained directory under `pages/dev/<name>/`, one component per file:
 ```
 pages/dev/<name>/
 ├── <Name>PrototypePage.tsx     # entry component the route renders
-├── PrototypeShell.tsx          # nav/chrome (mirror the real SideMenu/layout)
+├── <Name>Shell.tsx            # nav/chrome (mirror the real SideMenu/layout)
 ├── PrototypeStore.tsx          # React context: mock data + mutators (in-memory)
 ├── prototype-types.ts          # local types mirroring real domain shapes
 ├── prototype-data.ts           # mock seed data (faithful to real shapes)
@@ -143,7 +143,7 @@ Repository` with RLS; query-key factories), reuse first, and where the new work 
 ## What "good" looks like
 
 - Reads like it belongs in the app — same components, spacing, colours, nav idiom.
-- Self-contained: deleting the `pages/dev/<name>/` dir + the 3 route edits removes it cleanly.
+- Self-contained: deleting the `pages/dev/<name>/` dir + the 4 routing edits removes it cleanly.
 - Faithful: anything it simulates matches the real logic; mock data is internally consistent.
 - Honest: a visible "prototype / mock data" banner; gates green; no dead code dressed up as real.
 - Teaches the real build: the hand-off names the decisions, gaps, and reuse opportunities.
