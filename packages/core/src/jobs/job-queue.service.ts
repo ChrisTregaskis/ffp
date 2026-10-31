@@ -1,4 +1,11 @@
+import { sql } from 'drizzle-orm';
+
 import { getDb, processJobs, type JobType } from '@ffp/database';
+
+import {
+  GENERATE_ASSESSMENT_KEY,
+  latestProgrammeGenerationFailed,
+} from './programme-generation-failure';
 
 import type { OrganisationContext } from '../lib/context';
 import type { Transaction } from '../lib/database';
@@ -76,4 +83,21 @@ export async function queueJob<T extends JobType>(
     .returning({ id: processJobs.id });
 
   return job.id;
+}
+
+/**
+ * Whether the latest programme generation queued for the assessment failed for good. Jobs are
+ * system-managed, so the read is scoped to the organisation by hand.
+ */
+export async function hasProgrammeGenerationFailed(
+  organisationId: string,
+  assessmentId: string
+): Promise<boolean> {
+  const failed = latestProgrammeGenerationFailed(
+    sql`${processJobs.organisationId} = ${organisationId}
+      and ${processJobs.payload}->>${GENERATE_ASSESSMENT_KEY} = ${assessmentId}`
+  );
+  const result = await getDb().execute<{ failed: boolean }>(sql`select ${failed} as failed`);
+
+  return result.rows[0].failed;
 }

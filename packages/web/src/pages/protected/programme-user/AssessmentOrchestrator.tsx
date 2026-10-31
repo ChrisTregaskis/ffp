@@ -20,7 +20,7 @@ import {
   useSubmitAssessment,
 } from '@web/hooks/assessments';
 import { useReplaceProgrammeMutation } from '@web/hooks/programmes';
-import { toQuestionFieldErrors } from '@web/utils/assessment-field-errors';
+import { toQuestionFieldErrors, toRefusalMessage } from '@web/utils/assessment-field-errors';
 
 import { REASSESSMENT_START_KEY } from './assessment.constants';
 
@@ -66,6 +66,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
     variables: startVariables,
     isPending: isStartPending,
     isError: isStartError,
+    error: startError,
   } = useStartAssessment({
     onSuccess: (data) => {
       const currentStepSummary = data.steps.find((s) => s.order === data.currentStep);
@@ -97,6 +98,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
     mutate: submitMutate,
     isPending: isSubmitPending,
     error: submitError,
+    reset: resetSubmit,
   } = useSubmitAssessment({
     onSuccess: () => {
       hasSubmittedRef.current = true;
@@ -115,7 +117,11 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
     submitError !== null &&
     (Object.keys(toQuestionFieldErrors(submitError)).length === 0 || isRefusalUnshown);
 
-  const { mutate: replaceMutate, isPending: isReplacePending } = useReplaceProgrammeMutation({
+  const {
+    mutate: replaceMutate,
+    isPending: isReplacePending,
+    isError: isReplaceError,
+  } = useReplaceProgrammeMutation({
     onSuccess: () => {
       void navigate(routes[RouteKey.PROGRAMME_OVERVIEW].path);
     },
@@ -215,7 +221,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
     return (
       <ErrorRetryState
         layout="screen"
-        title="We couldn't load your assessment just now."
+        title={toRefusalMessage(startError) ?? "We couldn't load your assessment just now."}
         // Retry with the same arguments: the fresh-start flag was cleared from sessionStorage on mount
         onRetry={() => {
           startMutate(startVariables);
@@ -241,7 +247,20 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
   }
 
   if (isSubmitFailure) {
-    return (
+    const refusal = toRefusalMessage(submitError);
+
+    // Sending the same answers again would only be refused again, so a worded refusal leads back
+    return refusal ? (
+      <ErrorRetryState
+        layout="screen"
+        title={refusal}
+        onRetry={() => {
+          setIsRefusalUnshown(false);
+          resetSubmit();
+        }}
+        retryLabel="Back to the questions"
+      />
+    ) : (
       <ErrorRetryState
         layout="screen"
         title="We couldn't send your answers just now."
@@ -260,6 +279,7 @@ export const AssessmentOrchestrator: React.FC<AssessmentOrchestratorProps> = ({
       onKeepProgramme={handleKeepProgramme}
       onReplaceProgramme={handleReplaceProgramme}
       isReplacing={isReplacePending}
+      hasReplaceFailed={isReplaceError}
     />
   );
 };

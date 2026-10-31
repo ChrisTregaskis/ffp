@@ -1,0 +1,121 @@
+import { randomUUID } from 'crypto';
+
+import { TransactionRollbackError } from 'drizzle-orm';
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
+
+import { withRLS } from '@ffp/database';
+import * as schema from '@ffp/database/schema';
+import { connectTestDb, type TestDb } from '@ffp/database/testing';
+
+import { findDriverError, translateDatabaseError } from '../../src/lib/database-errors';
+import { ConflictError } from '../../src/lib/errors';
+import { withErrorHandling } from '../../src/lib/lambda-wrapper';
+
+import { createMockEvent } from './api-gateway-event.fixture';
+import { expectNothingLeakable } from './database-error.fixture';
+
+import type { Pool } from 'pg';
+
+// Runs against the real test database so the error is exactly what Drizzle and
+// `pg` raise, not a hand-built stand-in. The insert is refused, so no row is
+// created and there is nothing to clean up.
+describe('logging a real database error', () => {
+  let pool: Pool;
+  let db: TestDb<typeof schema>;
+
+  beforeAll(() => {
+    ({ pool, db } = connectTestDb({ schema }));
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  afterAll(async () => {
+    await pool.end();
+  });
+
+  it('logs a foreign-key violation by SQLSTATE and constraint, with no SQL, parameters or detail', async () => {
+    const missingOrganisationId = randomUUID();
+    const memberEmail = 'sentinel-member-7f3a@example.com';
+
+    const caught = await withRLS(db, missingOrganisationId, undefined, (tx) =>
+      tx.insert(schema.processJobs).values({
+        organisationId: missingOrganisationId,
+        type: 'score_assessment',
+        payload: { memberEmail },
+      })
+    ).then(
+      () => {
+        throw new Error('Expected the insert to be refused');
+      },
+      (error: unknown) => error
+    );
+
+    // The raw error does carry everything the log must not.
+    expect(caught).toMatchObject({
+      message: expect.stringContaining('insert into "process_jobs"') as unknown,
+      cause: {
+        code: '23503',
+        detail: expect.stringContaining(missingOrganisationId) as unknown,
+      },
+    });
+    expect(String((caught as Error).stack)).toContain(memberEmail);
+
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    await withErrorHandling(() => {
+      throw caught;
+    })(createMockEvent());
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Lambda error:',
+      expect.objectContaining({
+        error: 'Database driver error',
+        database: {
+          sqlState: '23503',
+          constraint: 'process_jobs_organisation_id_organisations_id_fk',
+          table: 'process_jobs',
+        },
+      })
+    );
+    const logged = JSON.stringify(consoleErrorSpy.mock.calls);
+    expectNothingLeakable(logged);
+    expect(logged).not.toContain(memberEmail);
+    expect(logged).not.toContain(missingOrganisationId);
+  });
+
+  it('reads a unique violation as a driver error and translates it to a conflict', async () => {
+    const slug = `driver-error-${randomUUID()}`;
+    let duplicate: unknown;
+
+    // The duplicate is refused inside a savepoint, and the whole transaction is rolled back
+    await db
+      .transaction(async (tx) => {
+        await tx.insert(schema.programmeTemplates).values({ slug, name: 'Driver error template' });
+        duplicate = await tx
+          .transaction((savepoint) =>
+            savepoint
+              .insert(schema.programmeTemplates)
+              .values({ slug, name: 'Driver error template' })
+          )
+          .then(
+            () => null,
+            (error: unknown) => error
+          );
+        tx.rollback();
+      })
+      .catch((error: unknown) => {
+        if (!(error instanceof TransactionRollbackError)) {
+          throw error;
+        }
+      });
+
+    expect(findDriverError(duplicate)).toMatchObject({
+      code: '23505',
+      severity: 'ERROR',
+      constraint: 'idx_programme_templates_slug',
+    });
+    expect(translateDatabaseError(duplicate)).toBeInstanceOf(ConflictError);
+  });
+});

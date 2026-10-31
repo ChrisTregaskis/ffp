@@ -15,7 +15,10 @@ interface DeleteStepResponse {
  *
  * Protected endpoint that requires JWT authentication AND system_admin role.
  * Soft-deletes a step (isActive = false). Records are kept so historic
- * assessments that reference the step ID stay intact; order gaps are harmless.
+ * assessments that reference the step ID stay intact. Steps that led to it by
+ * default are rerouted past it, the steps after it close up the order gap and
+ * members' stored positions after it move back with them; a step another step
+ * branches to is refused with 409.
  */
 export const handler = withErrorHandling(
   withSystemAdmin(

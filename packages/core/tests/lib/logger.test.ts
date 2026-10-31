@@ -9,7 +9,7 @@
  * - Log levels (DEBUG, INFO, WARN, ERROR)
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createLogger, LogLevel } from '../../src/lib/logger';
 
@@ -87,8 +87,14 @@ describe('Logger', () => {
   let consoleLogSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
+    // Cases that log below WARN would otherwise depend on the shell's LOG_LEVEL
+    vi.stubEnv('LOG_LEVEL', undefined);
     consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   describe('UserActor logging', () => {
@@ -97,7 +103,6 @@ describe('Logger', () => {
         type: 'user',
         userId: 'user-123',
         userRole: 'customer_owner',
-        email: 'test@example.com',
       },
       organisationId: 'tenant-456',
       locationId: 'customer-789',
@@ -117,7 +122,7 @@ describe('Logger', () => {
         message: 'Test message',
         requestId: 'request-abc',
         organisationId: 'tenant-456',
-        actor: 'test@example.com (customer_owner)',
+        actor: 'user-123 (customer_owner)',
       });
       expect(logEntry.timestamp).toBeDefined();
       expect(logEntry.duration).toBeGreaterThanOrEqual(0);
@@ -219,7 +224,6 @@ describe('Logger', () => {
         type: 'user',
         userId: 'user-123',
         userRole: 'super_admin',
-        email: 'admin@example.com',
       },
       organisationId: 'tenant-456',
       locationId: null,
@@ -243,32 +247,35 @@ describe('Logger', () => {
   });
 
   describe('Performance timing', () => {
-    it('should track duration from context timestamp', async () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('should track duration from context timestamp', () => {
+      vi.useFakeTimers({ now: new Date('2026-10-21T09:00:00.000Z') });
+
       const mockContext: OrganisationContext = {
         actor: {
           type: 'user',
           userId: 'user-123',
           userRole: 'customer_owner',
-          email: 'test@example.com',
         },
         organisationId: 'tenant-456',
         locationId: 'customer-789',
         requestId: 'request-jkl',
-        timestamp: new Date(Date.now() - 100), // 100ms ago
+        timestamp: new Date('2026-10-21T08:59:59.900Z'),
       };
 
       const logger = createLogger(mockContext);
 
-      // Wait a bit to ensure measurable duration
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      vi.advanceTimersByTime(50);
 
       logger.info('Test message');
 
       expect(consoleLogSpy).toHaveBeenCalledOnce();
 
       const logEntry = parseLogEntry(consoleLogSpy.mock.calls[0][0] as string);
-      expect(logEntry.duration).toBeGreaterThanOrEqual(50);
-      expect(logEntry.duration).toBeLessThan(500); // Reasonable upper bound (allows for CI/system load variability)
+      expect(logEntry.duration).toBe(150);
     });
   });
 
@@ -278,7 +285,6 @@ describe('Logger', () => {
         type: 'user',
         userId: 'user-123',
         userRole: 'customer_owner',
-        email: 'test@example.com',
       },
       organisationId: 'tenant-456',
       locationId: 'customer-789',
@@ -314,7 +320,6 @@ describe('Logger', () => {
         type: 'user',
         userId: 'user-123',
         userRole: 'customer_owner',
-        email: 'test@example.com',
       },
       organisationId: 'tenant-456',
       locationId: 'customer-789',
@@ -376,7 +381,7 @@ describe('Logger', () => {
       expect(logEntry.level).toBe('ERROR');
     });
 
-    it('should default to DEBUG when no minLogLevel specified', () => {
+    it('should default to DEBUG when neither minLogLevel nor LOG_LEVEL is set', () => {
       const logger = createLogger(mockContext);
 
       logger.debug('Debug message');
@@ -387,48 +392,29 @@ describe('Logger', () => {
     });
 
     it('should respect LOG_LEVEL environment variable', () => {
-      const originalLogLevel = process.env.LOG_LEVEL;
-      process.env.LOG_LEVEL = 'WARN';
+      vi.stubEnv('LOG_LEVEL', 'WARN');
 
-      try {
-        const logger = createLogger(mockContext);
+      const logger = createLogger(mockContext);
 
-        logger.debug('Debug message');
-        logger.info('Info message');
-        logger.warn('Warn message');
+      logger.debug('Debug message');
+      logger.info('Info message');
+      logger.warn('Warn message');
 
-        expect(consoleLogSpy).toHaveBeenCalledOnce();
-        const logEntry = parseLogEntry(consoleLogSpy.mock.calls[0][0] as string);
-        expect(logEntry.level).toBe('WARN');
-      } finally {
-        // Restore original value
-        if (originalLogLevel === undefined) {
-          delete process.env.LOG_LEVEL;
-        } else {
-          process.env.LOG_LEVEL = originalLogLevel;
-        }
-      }
+      expect(consoleLogSpy).toHaveBeenCalledOnce();
+      const logEntry = parseLogEntry(consoleLogSpy.mock.calls[0][0] as string);
+      expect(logEntry.level).toBe('WARN');
     });
 
     it('should allow constructor parameter to override LOG_LEVEL env var', () => {
-      const originalLogLevel = process.env.LOG_LEVEL;
-      process.env.LOG_LEVEL = 'ERROR';
+      vi.stubEnv('LOG_LEVEL', 'ERROR');
 
-      try {
-        const logger = createLogger(mockContext, LogLevel.DEBUG);
+      const logger = createLogger(mockContext, LogLevel.DEBUG);
 
-        logger.debug('Debug message');
+      logger.debug('Debug message');
 
-        expect(consoleLogSpy).toHaveBeenCalledOnce();
-        const logEntry = parseLogEntry(consoleLogSpy.mock.calls[0][0] as string);
-        expect(logEntry.level).toBe('DEBUG');
-      } finally {
-        if (originalLogLevel === undefined) {
-          delete process.env.LOG_LEVEL;
-        } else {
-          process.env.LOG_LEVEL = originalLogLevel;
-        }
-      }
+      expect(consoleLogSpy).toHaveBeenCalledOnce();
+      const logEntry = parseLogEntry(consoleLogSpy.mock.calls[0][0] as string);
+      expect(logEntry.level).toBe('DEBUG');
     });
   });
 });

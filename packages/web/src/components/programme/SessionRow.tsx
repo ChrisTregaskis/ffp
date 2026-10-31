@@ -1,8 +1,12 @@
-import { useNavigate } from 'react-router-dom';
+import { generatePath, useNavigate } from 'react-router-dom';
 
 import type { ProgrammeDetailResponse } from '@ffp/core';
 
-import { Button, Icon, Icons, StatusCircle, Text } from '@web/components/atoms';
+import { Badge, Button, Icon, Icons, StatusCircle, Text } from '@web/components/atoms';
+import { RouteKey, routes } from '@web/config/routes';
+import { isSessionDone } from '@web/utils/programme';
+
+import { SESSION_STATUS_BADGES } from './programme-status-badges';
 
 type Phase = ProgrammeDetailResponse['phases'][number];
 type Session = Phase['sessions'][number];
@@ -25,18 +29,23 @@ export interface SessionRowProps {
  */
 export const SessionRow: React.FC<SessionRowProps> = ({ session, phasePublicId, isNext }) => {
   const navigate = useNavigate();
+  const isDone = isSessionDone(session);
   const status = session.userSession?.status;
-  const isCompleted = status === 'completed';
   const isInProgress = status === 'in_progress';
 
   const handleStart = (): void => {
-    void navigate(`/programme/session/${phasePublicId}/${session.templateSessionPublicId}`);
+    void navigate(
+      generatePath(routes[RouteKey.SESSION_WORKOUT].path, {
+        phaseId: phasePublicId,
+        templateSessionId: session.templateSessionPublicId,
+      })
+    );
   };
 
   return (
     <div
       className={`rounded-lg px-4 py-3 ${
-        isNext ? 'bg-ffp-dark-blue/5' : isCompleted ? 'bg-muted/30' : ''
+        isNext ? 'bg-ffp-dark-blue/5' : isDone ? 'bg-muted/30' : ''
       }`}
     >
       <div className="flex items-center gap-3">
@@ -44,7 +53,7 @@ export const SessionRow: React.FC<SessionRowProps> = ({ session, phasePublicId, 
         <span className="flex h-6 w-6 shrink-0 items-center justify-center">
           <StatusCircle
             number={session.sessionNumber}
-            status={isCompleted ? 'completed' : isNext ? 'current' : 'upcoming'}
+            status={isDone ? 'completed' : isNext ? 'current' : 'upcoming'}
             size="xs"
             appearance="outlined"
             currentMarker="dot"
@@ -57,7 +66,7 @@ export const SessionRow: React.FC<SessionRowProps> = ({ session, phasePublicId, 
             styleProps={{
               size: 'sm',
               weight: isNext ? 'medium' : 'normal',
-              colour: isCompleted ? 'muted-foreground' : 'foreground',
+              colour: isDone ? 'muted-foreground' : 'foreground',
             }}
           >
             {session.name ?? `Session ${String(session.sessionNumber)}`}
@@ -69,6 +78,12 @@ export const SessionRow: React.FC<SessionRowProps> = ({ session, phasePublicId, 
               : ''}
           </Text>
         </div>
+
+        {status === 'skipped' && (
+          <span className="ml-auto">
+            <Badge {...SESSION_STATUS_BADGES.skipped} size="xs" />
+          </span>
+        )}
       </div>
 
       {isNext && (

@@ -8,9 +8,10 @@ import {
   timestamp,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { difficultyEnum } from './videos';
+
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
+import { difficultyEnum } from './videos';
 
 /**
  * System-managed lookup table for programme templates. Referenced by:
@@ -43,7 +44,5 @@ export const programmeTemplates = pgTable(
   ]
 );
 
-export const insertProgrammeTemplateSchema = createInsertSchema(programmeTemplates);
-export const selectProgrammeTemplateSchema = createSelectSchema(programmeTemplates);
 export type ProgrammeTemplateRecord = typeof programmeTemplates.$inferSelect;
 export type NewProgrammeTemplate = typeof programmeTemplates.$inferInsert;

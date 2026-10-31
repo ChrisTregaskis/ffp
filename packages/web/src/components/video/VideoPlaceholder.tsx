@@ -12,11 +12,25 @@ export type VideoPlaceholderProps =
       reason: 'error';
       /** Fetches the video URL again */
       onRetry: () => void;
+    }
+  | {
+      reason: 'error';
+      /** Icon only, no text or Retry, for a decorative frame under someone else's hit area */
+      inert: true;
     };
 
 /** What the video frame shows in place of a playable video. */
 export const VideoPlaceholder: React.FC<VideoPlaceholderProps> = (props) => {
   const isError = props.reason === 'error';
+
+  // A decorative frame sits under another control's label, so it shows the icon alone
+  if ('inert' in props) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <IconBadge name={Icons.ALERTTRIANGLE} size="lg" variant="warning" appearance="solid" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-3">
@@ -37,7 +51,7 @@ export const VideoPlaceholder: React.FC<VideoPlaceholderProps> = (props) => {
           ? 'The video could not be loaded. This may be due to an expired link or a temporary issue.'
           : 'This exercise does not have a video attached yet.'}
       </Text>
-      {props.reason === 'error' && (
+      {props.reason === 'error' && 'onRetry' in props && (
         <Button variant="secondary" size="sm" onClick={props.onRetry} className="mt-1">
           Retry
         </Button>

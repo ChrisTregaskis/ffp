@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 import type { DimensionConfig } from '@ffp/database';
 
-import { calculateRiskLevel } from '../../src/assessments/scoring/helpers';
+import { calculateRiskLevel, getCategoryFromScore } from '../../src/assessments/scoring/helpers';
 import { ValidationError } from '../../src/lib/errors';
 
 import type { DimensionalScore } from '../../src/schemas/job.schema';
@@ -61,5 +61,50 @@ describe('Risk level eligibility', () => {
 
   it('still refuses a config with no dimensions at all', () => {
     expect(() => calculateRiskLevel([], [])).toThrow(ValidationError);
+  });
+});
+
+describe('Risk level thresholds', () => {
+  const gradeLowest = (lowestScore: number): string | undefined =>
+    calculateRiskLevel(
+      [createScore('strength', 95), createScore('balance', lowestScore)],
+      [createConfig('strength'), createConfig('balance')]
+    );
+
+  it('grades a lowest score of exactly 70 as low', () => {
+    expect(gradeLowest(70)).toBe('low');
+  });
+
+  it('grades a lowest score of 69 as moderate', () => {
+    expect(gradeLowest(69)).toBe('moderate');
+  });
+
+  it('grades a lowest score of exactly 40 as moderate', () => {
+    expect(gradeLowest(40)).toBe('moderate');
+  });
+
+  it('grades a lowest score of 39 as high', () => {
+    expect(gradeLowest(39)).toBe('high');
+  });
+});
+
+describe('getCategoryFromScore', () => {
+  it('puts a score of exactly 70 in low and 69 in moderate', () => {
+    expect(getCategoryFromScore(70)).toBe('low');
+    expect(getCategoryFromScore(69)).toBe('moderate');
+  });
+
+  it('puts a score of exactly 40 in moderate and 39 in high', () => {
+    expect(getCategoryFromScore(40)).toBe('moderate');
+    expect(getCategoryFromScore(39)).toBe('high');
+  });
+
+  it('applies custom thresholds at their boundaries', () => {
+    const thresholds = { low: 80, moderate: 50 };
+
+    expect(getCategoryFromScore(80, thresholds)).toBe('low');
+    expect(getCategoryFromScore(79, thresholds)).toBe('moderate');
+    expect(getCategoryFromScore(50, thresholds)).toBe('moderate');
+    expect(getCategoryFromScore(49, thresholds)).toBe('high');
   });
 });

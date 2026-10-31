@@ -1,14 +1,17 @@
-import { Pool } from 'pg';
 import { eq } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../src/schema/index.js';
-import { flowSteps } from '../src/schema/index.js';
+import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { type Pool } from 'pg';
+
 import { createLogger } from '../src/lib/logger.js';
+import { flowSteps } from '../src/schema/index.js';
+
+import { requireSeedId } from './requireSeedId.js';
 import { FLOW_IDS } from './seedAssessmentFlows.js';
 import { TEMPLATE_IDS } from './seedAssessmentTemplates.js';
 
-import type { NewFlowStep } from '../src/schema/flow-steps.js';
 import type { NextStepRule } from '../src/constants/branching.constants.js';
+import type { NewFlowStep } from '../src/schema/flow-steps.js';
+import type * as schema from '../src/schema/index.js';
 
 const logger = createLogger('seed-flow-steps');
 
@@ -233,7 +236,10 @@ const BRANCHING_DEMO_FLOW_STEPS: NewFlowStep[] = [
   },
 ];
 
-const DEFAULT_FLOW_STEPS: NewFlowStep[] = [...WELLNESS_FLOW_STEPS, ...BRANCHING_DEMO_FLOW_STEPS];
+export const DEFAULT_FLOW_STEPS: NewFlowStep[] = [
+  ...WELLNESS_FLOW_STEPS,
+  ...BRANCHING_DEMO_FLOW_STEPS,
+];
 
 /**
  * Seeds flow steps for the seeded assessment flows.
@@ -256,7 +262,7 @@ export const seedFlowSteps = async (
   for (const step of DEFAULT_FLOW_STEPS) {
     // Check if step already exists (idempotency check by ID)
     const existingStep = await db.query.flowSteps.findFirst({
-      where: eq(flowSteps.id, step.id!),
+      where: eq(flowSteps.id, requireSeedId(step, `flow step "${step.config.title}"`)),
     });
 
     if (existingStep) {

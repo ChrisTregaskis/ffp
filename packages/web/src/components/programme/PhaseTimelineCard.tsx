@@ -7,7 +7,9 @@ import type { BadgeProps } from '@web/components/atoms';
 import { Badge, Icons, ProgressBar, Text, Title } from '@web/components/atoms';
 import { Card, PrescriptionBadge } from '@web/components/molecules';
 import { ExpandableSection, FadeSlideIn, TimelineLine } from '@web/components/motion';
+import { countDoneSessions } from '@web/utils/programme';
 
+import { PHASE_STATUS_BADGES } from './programme-status-badges';
 import { SessionRow } from './SessionRow';
 import { TimelineNode } from './TimelineNode';
 
@@ -26,12 +28,6 @@ export interface PhaseTimelineCardProps {
 }
 
 const UP_NEXT_BADGE: BadgeProps = { label: 'Up Next', variant: 'brand', appearance: 'solid' };
-
-const STATUS_BADGE_MAP: Record<Phase['status'], BadgeProps> = {
-  completed: { label: 'Complete', variant: 'success', appearance: 'solid' },
-  in_progress: { label: 'In Progress', variant: 'brand', appearance: 'solid' },
-  not_started: { label: 'Upcoming', variant: 'muted', appearance: 'soft' },
-};
 
 const LINE_COLOUR_MAP: Record<Phase['status'], string> = {
   completed: 'bg-ffp-green',
@@ -62,14 +58,12 @@ export const PhaseTimelineCard: React.FC<PhaseTimelineCardProps> = ({
     phase.status === 'in_progress' ||
     phase.sessions.some((s) => s.exercises !== undefined);
 
-  const completedSessions = phase.sessions.filter(
-    (s) => s.userSession?.status === 'completed'
-  ).length;
+  const doneSessions = countDoneSessions(phase.sessions);
   const totalSessions = phase.sessions.length;
-  const progressPercent = totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0;
+  const progressPercent = totalSessions > 0 ? (doneSessions / totalSessions) * 100 : 0;
 
   const isNextPhase = phase.status === 'not_started' && isAccessible;
-  const statusBadge = isNextPhase ? UP_NEXT_BADGE : STATUS_BADGE_MAP[phase.status];
+  const statusBadge = isNextPhase ? UP_NEXT_BADGE : PHASE_STATUS_BADGES[phase.status];
 
   return (
     <div ref={ref} className="flex gap-4">
@@ -122,7 +116,7 @@ export const PhaseTimelineCard: React.FC<PhaseTimelineCardProps> = ({
                 <div className="mt-3">
                   <div className="mb-2 flex items-center justify-between">
                     <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
-                      {String(completedSessions)} of {String(totalSessions)} sessions
+                      {String(doneSessions)} of {String(totalSessions)} sessions
                     </Text>
                   </div>
                   <ProgressBar

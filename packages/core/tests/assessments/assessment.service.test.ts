@@ -21,6 +21,7 @@ import type { AssessmentFlow, FlowStepWithConfig } from '../../src/assessments/f
 import type { AssessmentSafetyTrigger } from '../../src/assessments/safety-trigger.repository';
 import type { UserAssessment } from '../../src/assessments/user-assessment.repository';
 import type { OrganisationContext, UserActor } from '../../src/lib/context';
+import type { Transaction } from '../../src/lib/database';
 import type {
   QuestionWithConfig,
   TemplateQuestionWithConfig,
@@ -30,6 +31,11 @@ type ContextModule = typeof contextModule;
 type DatabaseModule = typeof databaseModule;
 type FFPDatabaseModule = typeof ffpDatabase;
 type AnswerValue = ffpDatabase.AnswerValue;
+
+// The service's system logger reads LOG_LEVEL once, when the module loads
+vi.hoisted(() => {
+  vi.stubEnv('LOG_LEVEL', 'DEBUG');
+});
 
 vi.mock('../../src/assessments/flow.repository');
 vi.mock('../../src/assessments/user-assessment.repository');
@@ -75,13 +81,22 @@ const createUserContext = (): OrganisationContext => ({
     type: 'user',
     userId: randomUUID(),
     userRole: 'programme_user',
-    email: 'test@example.com',
   } as UserActor,
   organisationId: randomUUID(),
   locationId: randomUUID(),
   requestId: randomUUID(),
   timestamp: new Date(),
 });
+
+/** Stands in for the transaction `withRLS` opens; the marker stops any other object matching it */
+const mockTx = { marker: 'transaction opened by withRLS' } as unknown as Transaction;
+
+/** Runs the service's callback in `mockTx`, as `withRLS` would in a real transaction */
+const runWithRLSInMockTx = (): void => {
+  mockedDatabaseModule.withRLS.mockImplementation(
+    async (_organisationId, _userId, callback) => await callback(mockTx)
+  );
+};
 
 const inTemplate = (
   questions: QuestionWithConfig[],
@@ -232,9 +247,24 @@ const createMockQuestion = (
   configOverrides: null,
 });
 
+const storedAnswer = (
+  context: OrganisationContext,
+  assessmentId: string,
+  questionId: string,
+  answerValue: AnswerValue
+): UserAssessmentAnswer => ({
+  id: randomUUID(),
+  organisationId: context.organisationId,
+  userAssessmentId: assessmentId,
+  questionId,
+  answerValue,
+  answeredAt: new Date(),
+});
+
 describe('Assessment Service', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    mockedQuestionRepo.findByTemplateIds.mockResolvedValue([]);
     mockedQuestionRepo.findSlugsByIds.mockResolvedValue(new Map());
     mockedSafetyTriggerRepo.findByAssessmentId.mockResolvedValue(null);
   });
@@ -244,23 +274,14 @@ describe('Assessment Service', () => {
       const context = createUserContext();
       const flowId = randomUUID();
       const databaseUserId = randomUUID();
-      const mockAssessment: UserAssessment = {
-        id: randomUUID(),
+      const mockAssessment = createMockAssessment({
         organisationId: context.organisationId,
         userId: databaseUserId,
         flowId,
         currentStep: 1,
         status: 'not_started',
-        scores: null,
-        programmeId: null,
-        visitedStepIds: [],
-        warningsShown: [],
         startedAt: null,
-        submittedAt: null,
-        completedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      });
 
       // Mock flow steps (simple intro step matching createMockFlow)
       const mockFlowSteps: FlowStepWithConfig[] = [
@@ -290,7 +311,44 @@ describe('Assessment Service', () => {
 
       expect(result.isResumed).toBe(false);
       expect(result.steps).toHaveLength(1);
-      expect(mockedUserAssessmentRepo.createUserAssessment).toHaveBeenCalled();
+      // The fixture's database user ID differs from the Cognito sub; only the database ID may reach a query
+      expect(mockedUserAssessmentRepo.findResumableAssessment).toHaveBeenCalledWith(
+        context.organisationId,
+        databaseUserId,
+        flowId
+      );
+      expect(mockedUserAssessmentRepo.findSubmittedAssessment).toHaveBeenCalledWith(
+        context.organisationId,
+        databaseUserId,
+        flowId
+      );
+      expect(mockedUserAssessmentRepo.createUserAssessment).toHaveBeenCalledWith({
+        organisationId: context.organisationId,
+        userId: databaseUserId,
+        flowId,
+      });
+    });
+
+    it.each([
+      ['a new or resumed', {}],
+      ['a reassessment', { isReassessment: true }],
+    ])('refuses %s start on a flow with no active steps', async (_case, options) => {
+      const context = createUserContext();
+      const flowId = randomUUID();
+
+      mockedContextModule.getUserIdFromContext.mockResolvedValue(randomUUID());
+      mockedFlowRepo.findActiveById.mockResolvedValue(createMockFlow(flowId));
+      mockedFlowRepo.findStepsByFlowId.mockResolvedValue([]);
+
+      await expect(
+        assessmentService.startAssessment(flowId, context, options)
+      ).rejects.toMatchObject({
+        statusCode: 409,
+        message: 'This assessment has no steps to show yet',
+      });
+      expect(mockedUserAssessmentRepo.abandonInProgressAssessments).not.toHaveBeenCalled();
+      expect(mockedUserAssessmentRepo.findResumableAssessment).not.toHaveBeenCalled();
+      expect(mockedUserAssessmentRepo.createUserAssessment).not.toHaveBeenCalled();
     });
 
     it('returns existing assessment with isResumed=true', async () => {
@@ -298,23 +356,12 @@ describe('Assessment Service', () => {
       const flowId = randomUUID();
       const databaseUserId = randomUUID();
       const questionId = randomUUID();
-      const existingAssessment: UserAssessment = {
-        id: randomUUID(),
+      const existingAssessment = createMockAssessment({
         organisationId: context.organisationId,
         userId: databaseUserId,
         flowId,
-        currentStep: 3,
-        status: 'in_progress',
-        scores: null,
-        programmeId: null,
-        visitedStepIds: [],
-        warningsShown: [],
-        startedAt: new Date(),
-        submittedAt: null,
-        completedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+        currentStep: 1,
+      });
 
       // Mock answers from the new table
       const storedAnswers: UserAssessmentAnswer[] = [
@@ -355,7 +402,7 @@ describe('Assessment Service', () => {
       const result = await assessmentService.startAssessment(flowId, context);
 
       expect(result.isResumed).toBe(true);
-      expect(result.currentStep).toBe(3);
+      expect(result.currentStep).toBe(1);
       expect(result.steps).toHaveLength(1);
       expect(result.answers[questionId]).toBeDefined();
       expect(result.answers[questionId].answerValue).toBe(4);
@@ -379,15 +426,10 @@ describe('Assessment Service', () => {
 
   describe('submitAssessment', () => {
     beforeEach(() => {
-      mockedDatabaseModule.withRLS.mockImplementation(
-        async (_organisationId, _userId, callback) => {
-          const mockTx = {} as Parameters<typeof callback>[0];
-          return await callback(mockTx);
-        }
-      );
+      runWithRLSInMockTx();
     });
 
-    it('successfully submits assessment with merged answers and enqueues scoring job', async () => {
+    it('submits merged answers and queues a scoring job that carries ids, not answers', async () => {
       const context = createUserContext();
       const databaseUserId = randomUUID();
       const assessmentId = randomUUID();
@@ -455,19 +497,25 @@ describe('Assessment Service', () => {
       expect(result.jobId).toBe(jobId);
       expect(result.message).toBe('Assessment submitted successfully. Scoring in progress.');
 
+      expect(mockedDatabaseModule.withRLS).toHaveBeenCalledWith(
+        context.organisationId,
+        databaseUserId,
+        expect.any(Function)
+      );
+
       // Verify answers saved via answerRepository
       expect(mockedAnswerRepo.saveAnswers).toHaveBeenCalledWith(
         context.organisationId,
         assessmentId,
         expect.arrayContaining([expect.objectContaining({ questionId: questionId2 })]),
-        expect.objectContaining({ tx: expect.anything() as unknown })
+        { tx: mockTx }
       );
 
       expect(mockedUserAssessmentRepo.transitionAssessmentStatus).toHaveBeenCalledWith(
         context.organisationId,
         assessmentId,
         'submitted',
-        expect.objectContaining({ tx: expect.anything() as unknown })
+        { tx: mockTx }
       );
 
       expect(mockedJobQueueService.queueJob).toHaveBeenCalledWith(
@@ -476,13 +524,9 @@ describe('Assessment Service', () => {
           userAssessmentId: assessmentId,
           flowId,
           userId: databaseUserId,
-          responses: expect.arrayContaining([
-            expect.objectContaining({ questionId: questionId1, answerValue: 3 }),
-            expect.objectContaining({ questionId: questionId2, answerValue: 5 }),
-          ]) as unknown[],
         },
         context,
-        expect.objectContaining({ priority: 2, tx: expect.anything() as unknown })
+        { priority: 2, tx: mockTx }
       );
     });
 
@@ -736,9 +780,7 @@ describe('Assessment Service', () => {
         inTemplate([capped, optional], templateId)
       );
       mockedAnswerRepo.findByAssessmentId.mockResolvedValue([]);
-      mockedDatabaseModule.withRLS.mockImplementation(async (_org, _user, callback) => {
-        return await callback({} as Parameters<typeof callback>[0]);
-      });
+      runWithRLSInMockTx();
 
       return { context, userId, assessmentId, assessment, capped, optional };
     };
@@ -748,20 +790,6 @@ describe('Assessment Service', () => {
       answerValue: AnswerValue
     ): Record<string, { questionId: string; answerValue: AnswerValue }> => ({
       [questionId]: { questionId, answerValue },
-    });
-
-    const storedAnswer = (
-      context: OrganisationContext,
-      assessmentId: string,
-      questionId: string,
-      answerValue: AnswerValue
-    ): UserAssessmentAnswer => ({
-      id: randomUUID(),
-      organisationId: context.organisationId,
-      userAssessmentId: assessmentId,
-      questionId,
-      answerValue,
-      answeredAt: new Date(),
     });
 
     const rejectionDetails = async (promise: Promise<unknown>): Promise<unknown> => {
@@ -777,13 +805,13 @@ describe('Assessment Service', () => {
 
     describe('saveProgress', () => {
       it('saves answers that keep their rules', async () => {
-        const { context, assessmentId, capped } = setUp();
+        const { context, userId, assessmentId, capped } = setUp();
 
         mockedUserAssessmentRepo.updateAssessmentProgress.mockResolvedValue(createMockAssessment());
 
         await assessmentService.saveProgress(
           assessmentId,
-          { answers: answer(capped.id, ['a', 'b']), currentStep: 99 },
+          { answers: answer(capped.id, ['a', 'b']), currentStep: 2 },
           context
         );
 
@@ -791,12 +819,13 @@ describe('Assessment Service', () => {
           context.organisationId,
           assessmentId,
           [{ questionId: capped.id, answerValue: ['a', 'b'] }],
-          expect.objectContaining({ tx: expect.anything() as unknown })
+          { tx: mockTx }
         );
-        // A deactivated question still shown to members keeps its rules
-        expect(mockedQuestionRepo.findByTemplateIds.mock.calls[0]?.[2]).toEqual({
-          includeInactive: true,
-        });
+        expect(mockedDatabaseModule.withRLS).toHaveBeenCalledWith(
+          context.organisationId,
+          userId,
+          expect.any(Function)
+        );
       });
 
       it.each([
@@ -831,7 +860,7 @@ describe('Assessment Service', () => {
 
         await assessmentService.saveProgress(
           assessmentId,
-          { answers: answer(capped.id, value), currentStep: 99 },
+          { answers: answer(capped.id, value), currentStep: 2 },
           context
         );
 
@@ -840,7 +869,7 @@ describe('Assessment Service', () => {
           context.organisationId,
           assessmentId,
           [capped.id],
-          expect.objectContaining({ tx: expect.anything() as unknown })
+          { tx: mockTx }
         );
       });
 
@@ -896,7 +925,7 @@ describe('Assessment Service', () => {
           assessmentId,
           {
             answers: { ...answer(capped.id, ['a', 'b', 'c']), ...answer(unassignedId, 'kept') },
-            currentStep: 99,
+            currentStep: 2,
           },
           context
         );
@@ -960,8 +989,31 @@ describe('Assessment Service', () => {
         expect(mockedJobQueueService.queueJob).not.toHaveBeenCalled();
       });
 
+      it.each([
+        ['with nothing answered', false],
+        ['answering only a question the flow no longer shows', true],
+      ])('refuses a submit %s, before any write', async (_case, hasStaleAnswer) => {
+        const { context, assessmentId } = setUp();
+
+        mockedAnswerRepo.findByAssessmentId.mockResolvedValue(
+          hasStaleAnswer ? [storedAnswer(context, assessmentId, randomUUID(), 'kept')] : []
+        );
+
+        await expect(
+          assessmentService.submitAssessment(assessmentId, { answers: {} }, context)
+        ).rejects.toMatchObject({
+          name: 'ValidationError',
+          statusCode: 400,
+          message: 'Please answer the questions before you submit your assessment.',
+          details: undefined,
+        });
+        expect(mockedDatabaseModule.withRLS).not.toHaveBeenCalled();
+        expect(mockedUserAssessmentRepo.transitionAssessmentStatus).not.toHaveBeenCalled();
+        expect(mockedJobQueueService.queueJob).not.toHaveBeenCalled();
+      });
+
       it('ignores a stored answer to an unassigned question that the client echoes back', async () => {
-        const { context, assessmentId, capped } = setUp();
+        const { context, userId, assessmentId, assessment, capped } = setUp();
         const unassignedId = randomUUID();
 
         mockedAnswerRepo.findByAssessmentId.mockResolvedValue([
@@ -976,7 +1028,16 @@ describe('Assessment Service', () => {
           context
         );
 
-        expect(mockedJobQueueService.queueJob).toHaveBeenCalled();
+        expect(mockedJobQueueService.queueJob).toHaveBeenCalledWith(
+          'score_assessment',
+          {
+            userAssessmentId: assessmentId,
+            flowId: assessment.flowId,
+            userId,
+          },
+          context,
+          { priority: 2, tx: mockTx }
+        );
         expect(mockedAnswerRepo.saveAnswers).not.toHaveBeenCalled();
       });
 
@@ -998,7 +1059,7 @@ describe('Assessment Service', () => {
         ]);
       });
 
-      it('clears an emptied optional answer and leaves it out of scoring', async () => {
+      it('clears an emptied optional answer, so scoring never reads it', async () => {
         const { context, assessmentId, capped, optional } = setUp();
 
         mockedAnswerRepo.findByAssessmentId.mockResolvedValue([
@@ -1017,13 +1078,7 @@ describe('Assessment Service', () => {
           context.organisationId,
           assessmentId,
           [optional.id],
-          expect.objectContaining({ tx: expect.anything() as unknown })
-        );
-        expect(mockedJobQueueService.queueJob).toHaveBeenCalledWith(
-          'score_assessment',
-          expect.objectContaining({ responses: [{ questionId: capped.id, answerValue: ['a'] }] }),
-          context,
-          expect.anything()
+          { tx: mockTx }
         );
       });
 
@@ -1129,6 +1184,78 @@ describe('Assessment Service', () => {
     });
   });
 
+  describe('getAssessmentResults programme readiness', () => {
+    const userId = randomUUID();
+
+    const assessmentWith = (
+      status: UserAssessment['status'],
+      programmeId: string | null
+    ): UserAssessment => ({
+      id: randomUUID(),
+      organisationId: randomUUID(),
+      userId,
+      flowId: randomUUID(),
+      currentStep: 4,
+      status,
+      scores: { dimensions: [], scoredAt: new Date() },
+      programmeId,
+      visitedStepIds: [],
+      warningsShown: [],
+      startedAt: new Date(),
+      submittedAt: new Date(),
+      completedAt: null,
+      safetyAcknowledgedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const readinessOf = async (
+      assessment: UserAssessment,
+      context = createUserContext()
+    ): Promise<string> => {
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
+
+      const result = await assessmentService.getAssessmentResults(assessment.id, context);
+
+      return result.programmeReadiness;
+    };
+
+    beforeEach(() => {
+      mockedContextModule.getUserIdFromContext.mockResolvedValue(userId);
+      mockedProgrammeRepo.findProgrammeById.mockResolvedValue(null);
+    });
+
+    it('is ready once the assessment links a programme', async () => {
+      mockedJobQueueService.hasProgrammeGenerationFailed.mockResolvedValue(true);
+
+      expect(await readinessOf(assessmentWith('completed', randomUUID()))).toBe('ready');
+    });
+
+    it('has failed when generation for a scored assessment failed', async () => {
+      mockedJobQueueService.hasProgrammeGenerationFailed.mockResolvedValue(true);
+
+      const assessment = assessmentWith('scored', null);
+      const context = createUserContext();
+
+      expect(await readinessOf(assessment, context)).toBe('failed');
+      expect(mockedJobQueueService.hasProgrammeGenerationFailed).toHaveBeenCalledWith(
+        context.organisationId,
+        assessment.id
+      );
+    });
+
+    it('is pending while generation for a scored assessment has not failed', async () => {
+      mockedJobQueueService.hasProgrammeGenerationFailed.mockResolvedValue(false);
+
+      expect(await readinessOf(assessmentWith('scored', null))).toBe('pending');
+    });
+
+    it('is pending, without reading jobs, while scoring is still running', async () => {
+      expect(await readinessOf(assessmentWith('submitted', null))).toBe('pending');
+      expect(mockedJobQueueService.hasProgrammeGenerationFailed).not.toHaveBeenCalled();
+    });
+  });
+
   describe('safety gate', () => {
     const SAFETY_SLUG = 'safety-check';
     const ADVICE = 'Please speak to a health professional before you start.';
@@ -1190,9 +1317,7 @@ describe('Assessment Service', () => {
       mockedQuestionRepo.findSlugsByIds.mockResolvedValue(new Map([[questionId, SAFETY_SLUG]]));
       mockedAnswerRepo.findByAssessmentId.mockResolvedValue([]);
       mockedJobQueueService.queueJob.mockResolvedValue(randomUUID());
-      mockedDatabaseModule.withRLS.mockImplementation(async (_org, _user, callback) => {
-        return await callback({} as Parameters<typeof callback>[0]);
-      });
+      runWithRLSInMockTx();
 
       return { context, userId, assessment, questionId };
     };
@@ -1236,7 +1361,7 @@ describe('Assessment Service', () => {
             selectedOptions: ['dizziness', 'night-pain'],
             warningMessage: ADVICE,
           },
-          { tx: expect.anything() as unknown }
+          { tx: mockTx }
         );
       });
 
@@ -1414,9 +1539,7 @@ describe('Assessment Service', () => {
       mockedUserAssessmentRepo.updateAssessmentProgress.mockResolvedValue(assessment);
       mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createPositionFlow(flowId));
       mockedAnswerRepo.findByAssessmentId.mockResolvedValue([]);
-      mockedDatabaseModule.withRLS.mockImplementation(async (_org, _user, callback) => {
-        return await callback({} as Parameters<typeof callback>[0]);
-      });
+      runWithRLSInMockTx();
 
       return { context, assessmentId: assessment.id };
     };
@@ -1481,22 +1604,443 @@ describe('Assessment Service', () => {
       it.each([
         ['on the step it was saved at', 3, 3],
         ['on the last question step, not results, after a save on that step', 5, 4],
+        [
+          'on the last question step from a stored step outside the flow, as an older save may have left',
+          99,
+          4,
+        ],
       ])('resumes %s', async (_case, stored, expected) => {
         const context = createUserContext();
+        const userId = randomUUID();
         const flowId = randomUUID();
+        const assessment = createMockAssessment({
+          organisationId: context.organisationId,
+          userId,
+          flowId,
+          currentStep: stored,
+        });
 
-        mockedContextModule.getUserIdFromContext.mockResolvedValue(randomUUID());
+        mockedContextModule.getUserIdFromContext.mockResolvedValue(userId);
         mockedFlowRepo.findActiveById.mockResolvedValue(createMockFlow(flowId));
         mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createPositionFlow(flowId));
+        mockedUserAssessmentRepo.findResumableAssessment.mockResolvedValue(assessment);
+        mockedAnswerRepo.findByAssessmentId.mockResolvedValue([]);
+
+        const result = await assessmentService.startAssessment(flowId, context);
+
+        expect(result.currentStep).toBe(expected);
+        // The repository only returns the member's own assessment, so the lookups must carry them
+        expect(mockedUserAssessmentRepo.findResumableAssessment).toHaveBeenCalledWith(
+          context.organisationId,
+          userId,
+          flowId
+        );
+        expect(mockedAnswerRepo.findByAssessmentId).toHaveBeenCalledWith(
+          context.organisationId,
+          assessment.id,
+          { userId }
+        );
+      });
+
+      // An older delete left a gap: no active step holds the stored order
+      it.each([
+        ['on the next step when the stored one was removed', [1, 2, 4, 5], 3, 4],
+        ['on the last question step left when the stored one was removed', [1, 2, 3, 5], 4, 3],
+        ['back on the last step when none follows the stored one', [1, 5], 7, 5],
+      ])('resumes %s', async (_case, activeOrders, stored, expected) => {
+        const context = createUserContext();
+        const userId = randomUUID();
+        const flowId = randomUUID();
+
+        mockedContextModule.getUserIdFromContext.mockResolvedValue(userId);
+        mockedFlowRepo.findActiveById.mockResolvedValue(createMockFlow(flowId));
+        mockedFlowRepo.findStepsByFlowId.mockResolvedValue(
+          createPositionFlow(flowId).filter((step) => activeOrders.includes(step.order))
+        );
         mockedUserAssessmentRepo.findResumableAssessment.mockResolvedValue(
-          createMockAssessment({ flowId, currentStep: stored })
+          createMockAssessment({
+            organisationId: context.organisationId,
+            userId,
+            flowId,
+            currentStep: stored,
+          })
         );
         mockedAnswerRepo.findByAssessmentId.mockResolvedValue([]);
 
         const result = await assessmentService.startAssessment(flowId, context);
 
         expect(result.currentStep).toBe(expected);
+        expect(result.steps.map((step) => step.order)).toContain(expected);
       });
+    });
+  });
+
+  describe('saveProgress writes', () => {
+    const WARNING_MESSAGE = 'Take the next step gently.';
+
+    // intro → questions → results; the question step can carry a rule that always warns
+    const createWritesFlow = (flowId: string, warns: boolean): FlowStepWithConfig[] => {
+      const step = (
+        order: number,
+        type: FlowStepWithConfig['type'],
+        templateId: string | null
+      ): FlowStepWithConfig => ({
+        id: randomUUID(),
+        publicId: `writestep00${String(order)}`,
+        flowId,
+        templateId,
+        order,
+        type,
+        config: { title: `Step ${String(order)}` },
+        nextStepRules: null,
+        defaultNextStepId: null,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      const steps = [
+        step(1, 'intro', null),
+        step(2, 'questions', randomUUID()),
+        step(3, 'results', null),
+      ];
+
+      if (warns) {
+        steps[1].nextStepRules = [
+          {
+            priority: 1,
+            conditions: [],
+            action: {
+              type: 'show_warning',
+              warningMessage: WARNING_MESSAGE,
+              warningType: 'caution',
+              continueAfterWarning: true,
+            },
+          },
+        ];
+      }
+
+      return steps;
+    };
+
+    const setUp = (
+      overrides: Partial<UserAssessment> = {},
+      { warns = false }: { warns?: boolean } = {}
+    ): { context: OrganisationContext; assessmentId: string; steps: FlowStepWithConfig[] } => {
+      const context = createUserContext();
+      const userId = randomUUID();
+      const flowId = randomUUID();
+      const assessment = createMockAssessment({
+        organisationId: context.organisationId,
+        userId,
+        flowId,
+        ...overrides,
+      });
+      const steps = createWritesFlow(flowId, warns);
+
+      mockedContextModule.getUserIdFromContext.mockResolvedValue(userId);
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
+      mockedUserAssessmentRepo.updateAssessmentProgress.mockResolvedValue(assessment);
+      mockedFlowRepo.findStepsByFlowId.mockResolvedValue(steps);
+      mockedAnswerRepo.findByAssessmentId.mockResolvedValue([]);
+      runWithRLSInMockTx();
+
+      return { context, assessmentId: assessment.id, steps };
+    };
+
+    it('appends the warnings branching raises to the assessment, inside the save transaction', async () => {
+      const { context, assessmentId, steps } = setUp({}, { warns: true });
+
+      const response = await assessmentService.saveProgress(
+        assessmentId,
+        { answers: {}, currentStep: 2 },
+        context
+      );
+
+      const raised = {
+        message: WARNING_MESSAGE,
+        type: 'caution',
+        shownAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/) as unknown,
+        stepId: steps[1].id,
+      };
+      expect(mockedUserAssessmentRepo.appendAssessmentWarnings.mock.calls).toEqual([
+        [context.organisationId, assessmentId, [raised], { tx: mockTx }],
+      ]);
+      // The member is shown exactly what was recorded
+      expect(response.warnings).toEqual(
+        mockedUserAssessmentRepo.appendAssessmentWarnings.mock.calls[0][2]
+      );
+    });
+
+    it('appends nothing when branching raises no warning', async () => {
+      const { context, assessmentId, steps } = setUp();
+
+      const response = await assessmentService.saveProgress(
+        assessmentId,
+        { answers: {}, currentStep: 2 },
+        context
+      );
+
+      // Branching ran (it picked the next step), and raised nothing to record
+      expect(response.nextStepId).toBe(steps[2].id);
+      expect(response.warnings).toEqual([]);
+      expect(mockedUserAssessmentRepo.appendAssessmentWarnings).not.toHaveBeenCalled();
+    });
+
+    it('moves a not-started assessment to in progress, inside the save transaction', async () => {
+      const { context, assessmentId } = setUp({ status: 'not_started' });
+
+      await assessmentService.saveProgress(assessmentId, { answers: {}, currentStep: 1 }, context);
+
+      expect(mockedUserAssessmentRepo.transitionAssessmentStatus.mock.calls).toEqual([
+        [context.organisationId, assessmentId, 'in_progress', { tx: mockTx }],
+      ]);
+    });
+
+    it('does not move an assessment already in progress again', async () => {
+      const { context, assessmentId } = setUp({ status: 'in_progress' });
+
+      await assessmentService.saveProgress(assessmentId, { answers: {}, currentStep: 1 }, context);
+
+      expect(mockedUserAssessmentRepo.updateAssessmentProgress).toHaveBeenCalledTimes(1);
+      expect(mockedUserAssessmentRepo.transitionAssessmentStatus).not.toHaveBeenCalled();
+    });
+
+    it('refuses a step that matches no step of the flow, and writes nothing', async () => {
+      const { context, assessmentId, steps } = setUp({ status: 'not_started' }, { warns: true });
+      const question = createMockQuestion(randomUUID(), 'numeric', false);
+
+      mockedQuestionRepo.findByTemplateIds.mockResolvedValue(
+        inTemplate([question], steps[1].templateId ?? '')
+      );
+
+      await expect(
+        assessmentService.saveProgress(
+          assessmentId,
+          {
+            answers: { [question.id]: { questionId: question.id, answerValue: 5 } },
+            currentStep: 99,
+            advance: true,
+          },
+          context
+        )
+      ).rejects.toMatchObject({
+        name: 'ValidationError',
+        statusCode: 400,
+        message: 'This step is not part of the assessment.',
+        details: { currentStep: 99 },
+      });
+
+      // No transaction is opened, so no answer, status, position or warning can be written
+      expect(mockedDatabaseModule.withRLS).not.toHaveBeenCalled();
+      expect(mockedAnswerRepo.saveAnswers).not.toHaveBeenCalled();
+      expect(mockedAnswerRepo.deleteByQuestionIds).not.toHaveBeenCalled();
+      expect(mockedUserAssessmentRepo.transitionAssessmentStatus).not.toHaveBeenCalled();
+      expect(mockedUserAssessmentRepo.updateAssessmentProgress).not.toHaveBeenCalled();
+      expect(mockedUserAssessmentRepo.appendAssessmentWarnings).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('saveProgress branching', () => {
+    // intro → questions → results, where a "yes" to `routed` sends the member back to the intro
+    const setUp = (
+      routedIsCounted: boolean
+    ): {
+      context: OrganisationContext;
+      assessmentId: string;
+      steps: FlowStepWithConfig[];
+    } => {
+      const context = createUserContext();
+      const userId = randomUUID();
+      const flowId = randomUUID();
+      const templateId = randomUUID();
+      const counted = createMockQuestion(randomUUID(), 'single-choice', false);
+      const routed = createMockQuestion(randomUUID(), 'single-choice', false);
+      const steps = createMockFlowSteps(flowId, templateId);
+      const assessment = createMockAssessment({
+        organisationId: context.organisationId,
+        userId,
+        flowId,
+        currentStep: 2,
+      });
+      const stored = [
+        [counted.id, 'no'],
+        [routed.id, 'yes'],
+      ].map(([questionId, answerValue]) =>
+        storedAnswer(context, assessment.id, questionId, answerValue)
+      );
+
+      steps[1].nextStepRules = [
+        {
+          priority: 1,
+          conditions: [{ type: 'answer_value', questionSlug: routed.slug, answerValue: 'yes' }],
+          action: { type: 'goto_step', targetStepId: steps[0].id },
+        },
+      ];
+
+      mockedContextModule.getUserIdFromContext.mockResolvedValue(userId);
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
+      mockedUserAssessmentRepo.updateAssessmentProgress.mockResolvedValue(assessment);
+      mockedFlowRepo.findStepsByFlowId.mockResolvedValue(steps);
+      // Like the real read, which leaves out a deactivated question
+      mockedQuestionRepo.findByTemplateIds.mockResolvedValue(
+        inTemplate(routedIsCounted ? [counted, routed] : [counted], templateId)
+      );
+      mockedQuestionRepo.findSlugsByIds.mockResolvedValue(
+        new Map([
+          [counted.id, counted.slug],
+          [routed.id, routed.slug],
+        ])
+      );
+      mockedAnswerRepo.findByAssessmentId.mockResolvedValue(stored);
+      runWithRLSInMockTx();
+
+      return { context, assessmentId: assessment.id, steps };
+    };
+
+    const nextStepIdFrom = async ({
+      context,
+      assessmentId,
+    }: ReturnType<typeof setUp>): Promise<string | null> =>
+      (await assessmentService.saveProgress(assessmentId, { answers: {}, currentStep: 2 }, context))
+        .nextStepId;
+
+    it('routes on a stored answer to a question the flow counts', async () => {
+      const setUpResult = setUp(true);
+
+      expect(await nextStepIdFrom(setUpResult)).toBe(setUpResult.steps[0].id);
+    });
+
+    it('ignores a stored answer to a question since deactivated', async () => {
+      const setUpResult = setUp(false);
+
+      expect(await nextStepIdFrom(setUpResult)).toBe(setUpResult.steps[2].id);
+    });
+  });
+
+  describe('a stored answer in an unexpected format', () => {
+    const memberText = 'sentinel: knee gave way on the stairs';
+
+    // Legacy rows hold any JSON: each is built through the column's select schema, then
+    // narrowed to the repository's row type, which leaves those shapes out
+    it.each([
+      [
+        'an array holding a non-string',
+        [memberText, 3],
+        'array contains non-string values',
+        { type: 'array', length: 2 },
+      ],
+      [
+        'an unrecognised object',
+        { note: memberText },
+        'unrecognised object structure',
+        { type: 'object', keys: ['note'] },
+      ],
+      ['a null', null, 'expected string, number, boolean, or string[]', { type: 'null' }],
+    ])(
+      'refuses %s on start in words meant for the member, and logs why with its question and shape, never its value',
+      async (_label, answerValue, reason, answerShape) => {
+        const context = createUserContext();
+        const flowId = randomUUID();
+        const databaseUserId = randomUUID();
+        const questionId = randomUUID();
+        const assessment = createMockAssessment({
+          organisationId: context.organisationId,
+          userId: databaseUserId,
+          flowId,
+        });
+        // The stored JSONB can hold any shape; these cases model a malformed row
+        const stored = storedAnswer(context, assessment.id, questionId, answerValue as AnswerValue);
+        const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+        mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
+        mockedFlowRepo.findActiveById.mockResolvedValue(createMockFlow(flowId));
+        mockedFlowRepo.findStepsByFlowId.mockResolvedValue(
+          createMockFlowSteps(flowId, randomUUID())
+        );
+        mockedUserAssessmentRepo.findResumableAssessment.mockResolvedValue(assessment);
+        mockedAnswerRepo.findByAssessmentId.mockResolvedValue([stored]);
+
+        try {
+          const refusal: unknown = await assessmentService
+            .startAssessment(flowId, context)
+            .catch((error: unknown) => error);
+
+          // No field named, so the start screen shows it as the member's refusal
+          expect(refusal).toBeInstanceOf(ValidationError);
+          expect(refusal).toMatchObject({
+            message:
+              "We couldn't load one of your earlier answers. Please contact the team that invited you.",
+            statusCode: 400,
+            details: undefined,
+          });
+
+          const warnings = consoleLog.mock.calls
+            .map(
+              (call) =>
+                JSON.parse(call[0] as string) as {
+                  level: string;
+                  message: string;
+                  context?: unknown;
+                }
+            )
+            .filter((entry) => entry.level === 'WARN');
+          expect(warnings.map(({ message, context }) => ({ message, context }))).toEqual([
+            {
+              message: 'A stored answer could not be read',
+              context: { questionId, reason, answerShape },
+            },
+          ]);
+          expect(JSON.stringify(consoleLog.mock.calls)).not.toContain('sentinel');
+        } finally {
+          consoleLog.mockRestore();
+        }
+      }
+    );
+
+    it('refuses a save in the same words when a stored answer cannot be read', async () => {
+      const context = createUserContext();
+      const flowId = randomUUID();
+      const databaseUserId = randomUUID();
+      const assessment = createMockAssessment({
+        organisationId: context.organisationId,
+        userId: databaseUserId,
+        flowId,
+      });
+      // The stored JSONB can hold any shape; this models a malformed row
+      const stored = storedAnswer(context, assessment.id, randomUUID(), {
+        note: memberText,
+      } as unknown as AnswerValue);
+      const sentQuestionId = randomUUID();
+      const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+      mockedContextModule.getUserIdFromContext.mockResolvedValue(databaseUserId);
+      mockedUserAssessmentRepo.findUserAssessmentById.mockResolvedValue(assessment);
+      mockedFlowRepo.findStepsByFlowId.mockResolvedValue(createMockFlowSteps(flowId, randomUUID()));
+      mockedAnswerRepo.findByAssessmentId.mockResolvedValue([stored]);
+
+      try {
+        const refusal: unknown = await assessmentService
+          .saveProgress(
+            assessment.id,
+            {
+              answers: { [sentQuestionId]: { questionId: sentQuestionId, answerValue: 'yes' } },
+              currentStep: 2,
+            },
+            context
+          )
+          .catch((error: unknown) => error);
+
+        expect(refusal).toBeInstanceOf(ValidationError);
+        expect(refusal).toMatchObject({
+          message:
+            "We couldn't load one of your earlier answers. Please contact the team that invited you.",
+          statusCode: 400,
+          details: undefined,
+        });
+        expect(mockedAnswerRepo.saveAnswers).not.toHaveBeenCalled();
+      } finally {
+        consoleLog.mockRestore();
+      }
     });
   });
 });

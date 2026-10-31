@@ -7,8 +7,13 @@ import { Button, Icon, Text, PageContainer } from '@web/components/atoms';
 import { PageState, InlineFormPanel, PageHeader } from '@web/components/molecules';
 import { DeleteConfirmModal, Table, createColumns } from '@web/components/organisms';
 import type { RowAction } from '@web/components/organisms';
-import { PhaseForm } from '@web/components/programme-templates/PhaseForm';
-import type { PhaseFormValues } from '@web/components/programme-templates/PhaseForm';
+import {
+  PhaseForm,
+  phaseToFormValues,
+  toCreatePhaseRequest,
+  toUpdatePhaseRequest,
+} from '@web/components/programme-templates';
+import type { PhaseFormValues } from '@web/components/programme-templates';
 import { RouteKey, routes } from '@web/config/routes';
 import {
   useCreatePhaseMutation,
@@ -61,9 +66,11 @@ export const PhasesPage: React.FC = () => {
     reorderPhases.isPending;
 
   const [isAddingPhase, setIsAddingPhase] = useState(false);
+  const [editingPhaseId, setEditingPhaseId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PhaseRow | null>(null);
 
   const phases = useMemo(() => template?.phases ?? [], [template?.phases]);
+  const editingPhase = phases.find((phase) => phase.id === editingPhaseId);
 
   const phaseRows = useMemo(() => phases.map(toPhaseRow), [phases]);
 
@@ -142,10 +149,7 @@ export const PhasesPage: React.FC = () => {
       }
 
       createPhase.mutate(
-        {
-          templateId: template.id,
-          data: { name: values.name || null, description: values.description || null },
-        },
+        { templateId: template.id, data: toCreatePhaseRequest(values) },
         {
           onSuccess: () => {
             addToast('Phase created', { variant: 'success' });
@@ -158,13 +162,56 @@ export const PhasesPage: React.FC = () => {
     [template, createPhase, addToast]
   );
 
+  const handleStartAdd = useCallback(() => {
+    setEditingPhaseId(null);
+    setIsAddingPhase(true);
+  }, []);
+
+  const handleStartEdit = useCallback((row: PhaseRow) => {
+    setIsAddingPhase(false);
+    setEditingPhaseId(row.id);
+  }, []);
+
+  const handleUpdatePhase = useCallback(
+    (values: PhaseFormValues) => {
+      if (!editingPhase) {
+        return;
+      }
+
+      const payload = toUpdatePhaseRequest(values, editingPhase);
+
+      if (Object.keys(payload).length === 0) {
+        setEditingPhaseId(null);
+
+        return;
+      }
+
+      updatePhase.mutate(
+        { phaseId: editingPhase.id, data: payload },
+        {
+          onSuccess: () => {
+            addToast('Phase updated', { variant: 'success' });
+            setEditingPhaseId(null);
+          },
+          onError: (err) => addToast(err.message, { variant: 'error' }),
+        }
+      );
+    },
+    [editingPhase, updatePhase, addToast]
+  );
+
   // Not the shared builder: RowAction's handlers and predicates take the row, which the
   // DropdownMenuItem shape cannot express. Only the labels are shared.
   const rowActions = useCallback(
     (): RowAction<PhaseRow>[] => [
       {
-        label: REORDERABLE_ACTION_LABELS.edit,
+        label: 'View Sessions',
         onClick: handleViewPhase,
+      },
+      {
+        label: REORDERABLE_ACTION_LABELS.edit,
+        onClick: handleStartEdit,
+        disabled: () => isMutating,
       },
       {
         label: REORDERABLE_ACTION_LABELS.moveUp,
@@ -188,7 +235,7 @@ export const PhasesPage: React.FC = () => {
         variant: 'danger',
       },
     ],
-    [handleViewPhase, handleReorder, isMutating, phaseRows.length]
+    [handleViewPhase, handleStartEdit, handleReorder, isMutating, phaseRows.length]
   );
 
   const phaseColumns = useMemo(
@@ -210,9 +257,7 @@ export const PhasesPage: React.FC = () => {
           <Button
             variant="primary"
             icon={<Icon name="Plus" styleProps={{ size: 'sm', colour: 'currentColor' }} />}
-            onClick={() => {
-              setIsAddingPhase(true);
-            }}
+            onClick={handleStartAdd}
             disabled={isMutating}
           >
             Add Phase
@@ -245,6 +290,21 @@ export const PhasesPage: React.FC = () => {
             </InlineFormPanel>
           )}
 
+          {editingPhase && (
+            <InlineFormPanel title="Edit Phase">
+              <PhaseForm
+                // A fresh form per phase, so switching rows re-seeds it
+                key={editingPhase.id}
+                initialValues={phaseToFormValues(editingPhase)}
+                onSubmit={handleUpdatePhase}
+                onCancel={() => {
+                  setEditingPhaseId(null);
+                }}
+                isSubmitting={updatePhase.isPending}
+              />
+            </InlineFormPanel>
+          )}
+
           <Table<PhaseRow>
             tableId="template-phases"
             data={phaseRows}
@@ -260,13 +320,7 @@ export const PhasesPage: React.FC = () => {
                 <Text as="p" styleProps={{ colour: 'muted-foreground' }} className="mb-3">
                   No phases yet. Add the first phase to start building the programme.
                 </Text>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    setIsAddingPhase(true);
-                  }}
-                >
+                <Button variant="secondary" size="sm" onClick={handleStartAdd}>
                   + Add Phase
                 </Button>
               </div>
@@ -283,7 +337,7 @@ export const PhasesPage: React.FC = () => {
         onConfirm={handleConfirmDelete}
         isLoading={deletePhase.isPending}
         title="Delete Phase"
-        message="This will permanently delete this phase and all sessions and exercises within it. This action cannot be undone."
+        message="This will permanently delete this phase and all sessions and exercises within it. A phase that members' programmes include can't be deleted. This action cannot be undone."
       />
     </PageContainer>
   );

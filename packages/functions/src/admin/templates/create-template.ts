@@ -3,10 +3,11 @@ import {
   withErrorHandling,
   withSystemAdmin,
   templateService,
-  ValidationError,
   type AssessmentTemplate,
   type CreateTemplateInput,
 } from '@ffp/core/server';
+
+import { parseJsonBody } from '../../lib/request-body';
 
 interface CreateTemplateResponse {
   template: AssessmentTemplate;
@@ -22,18 +23,7 @@ export const handler = withErrorHandling(
   withSystemAdmin(
     'Only system administrators can manage templates',
     async (event: APIGatewayProxyEventV2WithJWT, context): Promise<CreateTemplateResponse> => {
-      // Parse request body
-      if (!event.body) {
-        throw new ValidationError('Request body is required');
-      }
-
-      let input: CreateTemplateInput;
-
-      try {
-        input = JSON.parse(event.body) as CreateTemplateInput;
-      } catch {
-        throw new ValidationError('Invalid JSON in request body');
-      }
+      const input = parseJsonBody(event.body) as CreateTemplateInput;
 
       // Create template via service (handles Zod validation and sets createdBy)
       const template = await templateService.createTemplateService(context, input);

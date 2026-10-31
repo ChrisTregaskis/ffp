@@ -1,3 +1,4 @@
+import { relations } from 'drizzle-orm';
 import {
   pgTable,
   uuid,
@@ -8,16 +9,15 @@ import {
   index,
   pgEnum,
 } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 import { FLOW_STEP_TYPES } from '../constants/flow.constants';
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
 import { assessmentFlows } from './assessment-flows';
 import { assessmentTemplates } from './assessment-templates';
 
-import type { FlowStepConfig } from '../constants/flow.constants';
 import type { NextStepRule } from '../constants/branching.constants';
+import type { FlowStepConfig } from '../constants/flow.constants';
 
 export const flowStepTypeEnum = pgEnum('flow_step_type', [...FLOW_STEP_TYPES]);
 
@@ -114,7 +114,5 @@ export const flowStepsRelations = relations(flowSteps, ({ one }) => ({
   }),
 }));
 
-export const insertFlowStepSchema = createInsertSchema(flowSteps);
-export const selectFlowStepSchema = createSelectSchema(flowSteps);
 export type FlowStepRecord = typeof flowSteps.$inferSelect;
 export type NewFlowStep = typeof flowSteps.$inferInsert;

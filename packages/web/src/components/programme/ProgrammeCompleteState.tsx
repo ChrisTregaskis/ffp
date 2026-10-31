@@ -5,6 +5,7 @@ import type { ProgressSummaryResponse } from '@ffp/core';
 
 import { Button, Icons } from '@web/components/atoms';
 import { Card, FeatureColumnGrid, StatusResult, type FeatureItem } from '@web/components/molecules';
+import { RouteKey, routes } from '@web/config/routes';
 
 export type ProgrammeCompleteStateProps = Pick<
   ProgressSummaryResponse,
@@ -58,7 +59,7 @@ export const ProgrammeCompleteState: React.FC<ProgrammeCompleteStateProps> = ({
               variant="neutral"
               size="md"
               onClick={() => {
-                void navigate('/programme-overview');
+                void navigate(routes[RouteKey.PROGRAMME_OVERVIEW].path);
               }}
             >
               View Programme
@@ -67,7 +68,7 @@ export const ProgrammeCompleteState: React.FC<ProgrammeCompleteStateProps> = ({
               variant="primary"
               size="md"
               onClick={() => {
-                void navigate('/assessment-overview');
+                void navigate(routes[RouteKey.ASSESSMENT_OVERVIEW].path);
               }}
             >
               Start New Assessment

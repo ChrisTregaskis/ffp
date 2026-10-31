@@ -1,8 +1,11 @@
 import { getDb, withAdminContext } from '@ffp/database';
+import { levelForProgrammeSlug } from '@ffp/database/constants';
 
 import { CognitoService } from '../lib/cognito';
 import { ConflictError, InternalServerError, NotFoundError, ValidationError } from '../lib/errors';
+import { describeErrorForLog } from '../lib/log-safe-error';
 import { createLogger } from '../lib/logger';
+import { getFullProgrammeDetailForUser } from '../programmes/programme.service';
 import { buildPaginationMeta } from '../schemas/pagination.schema';
 import {
   adminCreateUserInputSchema,
@@ -24,6 +27,7 @@ import { getLocationById as getLocationByIdInRepo } from './admin.repository';
 
 import type { OrganisationContext } from '../lib/context';
 import type { PaginationInput, PaginationMeta } from '../schemas/pagination.schema';
+import type { AdminProgrammeDetailResponse } from '../schemas/programme/programme.schema';
 import type { UserListResponse, UserDetailResponse } from '../schemas/user.schema';
 
 /**
@@ -33,7 +37,7 @@ import type { UserListResponse, UserDetailResponse } from '../schemas/user.schem
 export async function listUsersService(
   ctx: OrganisationContext,
   paginationInput: PaginationInput,
-  rawFilters: { search?: string; locationId?: string }
+  rawFilters: { search?: string; locationId?: string; role?: string }
 ): Promise<{ data: UserListResponse[]; pagination: PaginationMeta }> {
   const filters = userFilterSchema.parse(rawFilters);
   const db = getDb();
@@ -46,15 +50,24 @@ export async function listUsersService(
   });
 
   const logger = createLogger(ctx);
+  // The search text can be a member's name or email, so only whether one was given
   logger.info('Users listed', {
     action: 'users_listed',
     total,
     page: paginationInput.page,
-    filters,
+    filters: {
+      locationId: filters.locationId,
+      hasSearch: filters.search !== undefined && filters.search !== '',
+    },
   });
 
   return {
-    data: records.map((record) => userListResponseSchema.parse(record)),
+    data: records.map(({ programmeSlug, ...record }) =>
+      userListResponseSchema.parse({
+        ...record,
+        programmeLevel: programmeSlug ? levelForProgrammeSlug(programmeSlug) : null,
+      })
+    ),
     pagination: buildPaginationMeta(paginationInput, total),
   };
 }
@@ -84,6 +97,36 @@ export async function getUserService(
   });
 
   return userDetailResponseSchema.parse(user);
+}
+
+/**
+ * A member's current programme with every phase in full. The user is found under admin context,
+ * then the programme is read under the user's own organisation (taken from their row, never
+ * the request), so no member table below `programmes` needs an admin bypass.
+ * Throws NotFoundError when the user or their programme does not exist.
+ */
+export async function getUserProgrammeService(
+  ctx: OrganisationContext,
+  publicId: string
+): Promise<AdminProgrammeDetailResponse> {
+  const user = await withAdminContext(getDb(), async (tx) => {
+    return await getUserByPublicIdInRepo(tx, publicId);
+  });
+
+  if (!user) {
+    throw new NotFoundError('User', publicId);
+  }
+
+  const detail = await getFullProgrammeDetailForUser(user.organisationId, user.id);
+
+  const logger = createLogger(ctx);
+  logger.info('User programme retrieved', {
+    action: 'user_programme_retrieved',
+    publicId,
+    organisationId: user.organisationId,
+  });
+
+  return detail;
 }
 
 /**
@@ -128,7 +171,6 @@ export async function createUserService(
   // Step 3: Create Cognito user
   logger.info('Creating Cognito user', {
     action: 'cognito_user_creating',
-    email: validated.email,
     locationId: validated.locationId,
     organisationId,
   });
@@ -159,14 +201,14 @@ export async function createUserService(
     if (cognitoError instanceof Error && cognitoError.name === 'AccessDeniedException') {
       logger.error('Cognito permission denied — check Lambda IAM policy', {
         action: 'cognito_access_denied',
-        error: cognitoError.message,
+        ...describeErrorForLog(cognitoError),
       });
       throw new InternalServerError('Unable to create user — service configuration error');
     }
 
     logger.error('Unexpected Cognito error during user creation', {
       action: 'cognito_unexpected_error',
-      error: cognitoError instanceof Error ? cognitoError.message : String(cognitoError),
+      ...describeErrorForLog(cognitoError),
     });
     throw new InternalServerError('Unable to create user — an unexpected error occurred');
   }
@@ -176,9 +218,11 @@ export async function createUserService(
     cognitoSub,
   });
 
-  // Step 4: Create DB record (with rollback on failure)
+  // Step 4: Create DB record, rolling the Cognito user back only if the insert fails
+  let user: Awaited<ReturnType<typeof createUserInRepo>>;
+
   try {
-    const user = await withAdminContext(db, async (tx) => {
+    user = await withAdminContext(db, async (tx) => {
       return await createUserInRepo(tx, {
         organisationId,
         email: validated.email,
@@ -191,22 +235,12 @@ export async function createUserService(
         dateOfBirth: validated.dateOfBirth,
       });
     });
-
-    logger.info('Programme user created', {
-      action: 'user_created',
-      userId: user.id,
-      email: validated.email,
-      locationId: validated.locationId,
-      organisationId,
-    });
-
-    return userDetailResponseSchema.parse(user);
   } catch (dbError) {
     // Rollback: delete Cognito user if DB insert fails
     logger.error('DB insert failed, rolling back Cognito user', {
       action: 'cognito_user_rollback',
       cognitoSub,
-      error: dbError instanceof Error ? dbError.message : 'Unknown error',
+      ...describeErrorForLog(dbError),
     });
 
     try {
@@ -216,16 +250,26 @@ export async function createUserService(
         cognitoSub,
       });
     } catch (rollbackError) {
+      // An operator finds the orphaned login by this sub (its Cognito username)
       logger.error('Cognito rollback failed — orphaned Cognito user', {
         action: 'cognito_user_rollback_failed',
         cognitoSub,
-        email: validated.email,
-        rollbackError: rollbackError instanceof Error ? rollbackError.message : 'Unknown error',
+        rollbackError: describeErrorForLog(rollbackError),
       });
     }
 
     throw dbError;
   }
+
+  logger.info('Programme user created', {
+    action: 'user_created',
+    userId: user.id,
+    cognitoSub,
+    locationId: validated.locationId,
+    organisationId,
+  });
+
+  return userDetailResponseSchema.parse(user);
 }
 
 /**

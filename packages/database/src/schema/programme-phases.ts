@@ -7,10 +7,13 @@ import {
   uniqueIndex,
   index,
   pgEnum,
+  unique,
+  foreignKey,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+
 import { PHASE_STATUSES } from '../constants/programme.constants';
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
 import { organisations } from './organisations';
 import { programmes } from './programmes';
 import { templatePhases } from './template-phases';
@@ -36,9 +39,7 @@ export const programmePhases = pgTable(
       .notNull()
       .references(() => organisations.id, { onDelete: 'cascade' }),
     /** Parent programme */
-    programmeId: uuid('programme_id')
-      .notNull()
-      .references(() => programmes.id, { onDelete: 'cascade' }),
+    programmeId: uuid('programme_id').notNull(),
     /** Source template phase — restrict deletion of templates with active programmes */
     templatePhaseId: uuid('template_phase_id')
       .notNull()
@@ -57,10 +58,14 @@ export const programmePhases = pgTable(
     uniqueIndex('idx_programme_phases_programme_phase').on(table.programmeId, table.phaseNumber),
     index('idx_programme_phases_organisation').on(table.organisationId),
     index('idx_programme_phases_programme').on(table.programmeId),
+    unique('programme_phases_id_organisation_id_unique').on(table.id, table.organisationId),
+    foreignKey({
+      name: 'programme_phases_programme_id_organisation_fk',
+      columns: [table.programmeId, table.organisationId],
+      foreignColumns: [programmes.id, programmes.organisationId],
+    }).onDelete('cascade'),
   ]
 );
 
-export const insertProgrammePhaseSchema = createInsertSchema(programmePhases);
-export const selectProgrammePhaseSchema = createSelectSchema(programmePhases);
 export type ProgrammePhaseRecord = typeof programmePhases.$inferSelect;
 export type NewProgrammePhase = typeof programmePhases.$inferInsert;

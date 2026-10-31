@@ -3,7 +3,8 @@ import { nanoid } from 'nanoid';
 
 import { PUBLIC_ID_LENGTH } from '../constants/public-id.constants';
 
-import type { IndexColumn } from 'drizzle-orm/pg-core';
+import type { HasDefault, HasRuntimeDefault, NotNull } from 'drizzle-orm';
+import type { IndexBuilder, IndexColumn, PgVarcharBuilderInitial } from 'drizzle-orm/pg-core';
 
 /**
  * Generate a new public ID.
@@ -31,7 +32,11 @@ export const generatePublicId = (): string => nanoid(PUBLIC_ID_LENGTH);
  * ]);
  * ```
  */
-export const publicIdColumn = () =>
+export const publicIdColumn = (): HasRuntimeDefault<
+  HasDefault<
+    NotNull<PgVarcharBuilderInitial<'public_id', [string, ...string[]], typeof PUBLIC_ID_LENGTH>>
+  >
+> =>
   varchar('public_id', { length: PUBLIC_ID_LENGTH })
     .notNull()
     .$defaultFn(() => generatePublicId());
@@ -41,5 +46,5 @@ export const publicIdColumn = () =>
  *
  * Follows the project convention: `idx_{tableName}_public_id`.
  */
-export const publicIdIndex = (tableName: string, column: IndexColumn) =>
+export const publicIdIndex = (tableName: string, column: IndexColumn): IndexBuilder =>
   uniqueIndex(`idx_${tableName}_public_id`).on(column);

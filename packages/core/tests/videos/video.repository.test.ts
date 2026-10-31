@@ -1,29 +1,26 @@
 import { randomUUID } from 'crypto';
 
 import { eq } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { videos, type VideoRecord } from '@ffp/database/schema';
+import { connectTestDb, type TestDb } from '@ffp/database/testing';
 
 import * as videoRepository from '../../src/videos/video.repository';
+import { descendingIds, idsAcrossPages, minutesApart } from '../lib/paging.fixture';
+import { inRolledBackTransaction } from '../lib/rolled-back-transaction.fixture';
+import { insertTestVideo } from '../tags/tag-fixture';
+
+import type { Pool } from 'pg';
 
 // Videos are catalogue content (no RLS); each test removes the row it created
 describe('Video repository', () => {
   let pool: Pool;
-  let db: ReturnType<typeof drizzle>;
+  let db: TestDb;
   let video: VideoRecord;
 
   beforeAll(() => {
-    pool = new Pool({
-      host: process.env.DB_HOST ?? 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '5432'),
-      database: 'ffp_test',
-      user: process.env.DB_USER ?? 'test_user',
-      password: process.env.DB_PASSWORD ?? 'test_password',
-    });
-    db = drizzle(pool);
+    ({ pool, db } = connectTestDb());
   });
 
   beforeEach(async () => {
@@ -33,7 +30,6 @@ describe('Video repository', () => {
       s3Key: `library/repository-lookup-test-${randomUUID()}.mp4`,
       durationSeconds: 30,
       fileSizeBytes: 1024,
-      bodyParts: ['knee'],
       equipment: [],
     });
   });
@@ -64,6 +60,73 @@ describe('Video repository', () => {
         videoRepository.findVideoByIdOrPublicId(db, '00000000-0000-4000-8000-000000000000')
       ).resolves.toBeNull();
       await expect(videoRepository.findVideoByIdOrPublicId(db, 'unknownVideo')).resolves.toBeNull();
+    });
+  });
+
+  // Rolled back, and every title carries this run's marker, which each listing searches by
+  describe('findAllVideos', () => {
+    const marker = randomUUID().slice(0, 8);
+
+    it('orders rows tied on the sort column by id, so the pages neither repeat nor skip one', async () => {
+      await inRolledBackTransaction(db, async (tx) => {
+        const ids = descendingIds(6);
+
+        for (const id of ids) {
+          await insertTestVideo(tx, { id, title: `Tied video ${marker}` });
+        }
+
+        const listed = await idsAcrossPages(3, (page) =>
+          videoRepository.findAllVideos(
+            tx,
+            { page, pageSize: 2, sortBy: 'title', sortDirection: 'asc' },
+            { search: marker }
+          )
+        );
+
+        expect(listed).toEqual([...ids].sort());
+      });
+    });
+
+    it('lists the newest first when the request names no sort', async () => {
+      await inRolledBackTransaction(db, async (tx) => {
+        const ids: string[] = [];
+
+        for (const createdAt of minutesApart(3)) {
+          ids.push((await insertTestVideo(tx, { title: `Dated video ${marker}`, createdAt })).id);
+        }
+
+        const listed = await videoRepository.findAllVideos(
+          tx,
+          { page: 1, pageSize: 10, sortDirection: 'asc' },
+          { search: marker }
+        );
+
+        expect(listed.map((listedVideo) => listedVideo.id)).toEqual([...ids].reverse());
+      });
+    });
+
+    describe('a search holding a LIKE wildcard or escape character matches it literally', () => {
+      it.each([
+        { search: '50%', literal: '50% stretch', lookalike: '500 stretch' },
+        { search: 'warm_up', literal: 'warm_up drill', lookalike: 'warm-up drill' },
+        { search: 'back\\slash', literal: 'back\\slash drill', lookalike: 'backslash drill' },
+      ])('$search', async ({ search, literal, lookalike }) => {
+        await inRolledBackTransaction(db, async (tx) => {
+          const match = await insertTestVideo(tx, { title: `${literal} ${marker}` });
+          const nonMatch = await insertTestVideo(tx, { title: `${lookalike} ${marker}` });
+
+          const listed = await videoRepository.findAllVideos(
+            tx,
+            { page: 1, pageSize: 100, sortDirection: 'asc' },
+            { search }
+          );
+
+          const ours = listed
+            .map((listedVideo) => listedVideo.id)
+            .filter((id) => [match.id, nonMatch.id].includes(id));
+          expect(ours).toEqual([match.id]);
+        });
+      });
     });
   });
 });

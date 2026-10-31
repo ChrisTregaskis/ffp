@@ -3,19 +3,19 @@ import {
   uuid,
   varchar,
   text,
+  boolean,
   integer,
   bigint,
   timestamp,
   index,
   pgEnum,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { VIDEO_STATUSES, DIFFICULTIES, MOVEMENT_TYPES } from '../constants/video.constants';
+
+import { VIDEO_STATUSES, DIFFICULTIES } from '../constants/video.constants';
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
 
 export const videoStatusEnum = pgEnum('video_status', [...VIDEO_STATUSES]);
 export const difficultyEnum = pgEnum('difficulty', [...DIFFICULTIES]);
-export const movementTypeEnum = pgEnum('movement_type', [...MOVEMENT_TYPES]);
 
 /**
  * Videos table definition
@@ -26,9 +26,7 @@ export const movementTypeEnum = pgEnum('movement_type', [...MOVEMENT_TYPES]);
  *
  * **Indexes optimised for common queries:**
  * - status: Filter catalogue by video status
- * - body_parts: GIN index for array containment queries
  * - equipment: GIN index for array containment queries
- * - tags: GIN index for flexible tagging queries
  */
 export const videos = pgTable(
   'videos',
@@ -51,14 +49,10 @@ export const videos = pgTable(
     status: videoStatusEnum('status').notNull().default('draft'),
     /** Exercise difficulty level (nullable — not relevant for informational videos) */
     difficulty: difficultyEnum('difficulty'),
-    /** Type of movement (nullable — not relevant for informational videos) */
-    movementType: movementTypeEnum('movement_type'),
-    /** Target body parts (e.g., ['hamstrings', 'lower_back', 'glutes']) */
-    bodyParts: text('body_parts').array().notNull(),
     /** Required equipment (e.g., ['resistance_band', 'yoga_mat'] or ['none']) */
     equipment: text('equipment').array().notNull(),
-    /** Flexible tags for filtering (e.g., ['post-surgery', 'knee', 'warm-up']) */
-    tags: text('tags').array().notNull().default([]),
+    /** Curation signal: a core exercise, favoured over the rest of its pool */
+    isEssential: boolean('is_essential').notNull().default(false),
     /** Default number of sets when used as an exercise (e.g., 3) */
     defaultSets: integer('default_sets'),
     /** Default reps — supports ranges (e.g., '8-12', '10') */
@@ -75,13 +69,9 @@ export const videos = pgTable(
   (table) => [
     publicIdIndex('videos', table.publicId),
     index('idx_videos_status').on(table.status),
-    index('idx_videos_body_parts').using('gin', table.bodyParts),
     index('idx_videos_equipment').using('gin', table.equipment),
-    index('idx_videos_tags').using('gin', table.tags),
   ]
 );
 
-export const insertVideoSchema = createInsertSchema(videos);
-export const selectVideoSchema = createSelectSchema(videos);
 export type VideoRecord = typeof videos.$inferSelect;
 export type NewVideo = typeof videos.$inferInsert;

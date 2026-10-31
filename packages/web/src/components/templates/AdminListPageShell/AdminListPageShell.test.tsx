@@ -1,5 +1,4 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ACTIVE_STATUS_FILTER } from '@web/components/organisms';
@@ -28,7 +27,7 @@ const toRow = (item: Row): Row => item;
 
 const EMPTY_STATE: AdminListEmptyState = {
   filteredTitle: 'No matching things',
-  icon: 'Box',
+  icon: 'ClipboardList',
   iconVariant: 'primary',
   title: 'No things yet',
   description: 'Create your first thing.',

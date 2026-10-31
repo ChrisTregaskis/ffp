@@ -8,6 +8,8 @@ import {
   createRequestContext,
 } from '@ffp/core/server';
 
+import { parseJsonBody } from '../lib/request-body';
+
 /**
  * Lambda handler for POST /auth/invite-user
  *
@@ -25,7 +27,7 @@ export const handler = withErrorHandling(
     const context = extractUserContext(event);
 
     // Parse and validate request body
-    const body = JSON.parse(event.body ?? '{}') as unknown;
+    const body = parseJsonBody(event.body);
     const input = inviteUserSchema.parse(body);
 
     // Create unified request context (db + organisation context)

@@ -1,12 +1,12 @@
 import React, { useCallback } from 'react';
 
 import { ComposableForm } from '@web/components/organisms';
+import type { SelectedVideo } from '@web/components/video';
 
 import { EMPTY_EXERCISE_VALUES } from './exercise-utils';
 import { ExerciseFormFields } from './ExerciseFormFields';
 
-import type { ExerciseFormValues } from './exercise-utils';
-import type { SelectedVideo } from './VideoSelector';
+import type { ExerciseFormValues, PrescriptionOnVideoChange } from './exercise-utils';
 
 export interface ExerciseFormProps {
   /** Initial values for editing — empty for creating */
@@ -21,6 +21,12 @@ export interface ExerciseFormProps {
   isSubmitting?: boolean;
   /** Submit button label @default "Save" */
   submitLabel?: string;
+  /** Editing requires sets and reps; creating leaves them to the video's defaults */
+  isEditMode?: boolean;
+  /** How choosing a video sets the prescription @default 'fill-empty' */
+  prescriptionOnVideoChange?: PrescriptionOnVideoChange;
+  /** Videos the picker leaves out, by id */
+  excludeVideoIds?: readonly string[];
 }
 
 /** Inline form for creating or editing an exercise with video selection and prescription fields. */
@@ -31,6 +37,9 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
   onCancel,
   isSubmitting = false,
   submitLabel = 'Save',
+  isEditMode = false,
+  prescriptionOnVideoChange = 'fill-empty',
+  excludeVideoIds,
 }) => {
   const handleFormSubmit = useCallback(
     (values: ExerciseFormValues) => {
@@ -53,6 +62,9 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
       className="space-y-3"
     >
       <ExerciseFormFields
+        isEditMode={isEditMode}
+        prescriptionOnVideoChange={prescriptionOnVideoChange}
+        excludeVideoIds={excludeVideoIds}
         initialSelectedVideo={initialSelectedVideo}
         onCancel={onCancel}
         isSubmitting={isSubmitting}

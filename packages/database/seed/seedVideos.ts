@@ -1,11 +1,20 @@
-import { Pool } from 'pg';
-import { eq } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../src/schema/index.js';
-import { videos } from '../src/schema/index.js';
-import { createLogger } from '../src/lib/logger.js';
+import { and, eq, isNull } from 'drizzle-orm';
+import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { type Pool } from 'pg';
 
+import { createLogger } from '../src/lib/logger.js';
+import { tagCategories, tags, videos, videoTags } from '../src/schema/index.js';
+
+import { requireSeedId } from './requireSeedId.js';
+
+import type { TagCategorySlug } from '../src/constants/tag.constants.js';
+import type * as schema from '../src/schema/index.js';
 import type { NewVideo } from '../src/schema/videos.js';
+
+/** A seed video and the typed tags it carries, as tag slugs per category */
+interface SeedVideo extends NewVideo {
+  videoTags: Partial<Record<TagCategorySlug, string[]>>;
+}
 
 const logger = createLogger('seed-videos');
 
@@ -29,19 +38,15 @@ export const VIDEO_IDS = {
   'draft-shoulder-press': '77777777-7777-7777-8777-777777770010',
 } as const;
 
-export type VideoSlug = keyof typeof VIDEO_IDS;
-
 /**
  * Seed video definitions — realistic exercise video catalogue entries
  *
  * Covers a variety of:
  * - Difficulties: beginner, intermediate, advanced
- * - Movement types: stretch, strength, mobility, balance
- * - Body parts: various muscle groups and areas
  * - Equipment: none, resistance_band, yoga_mat, chair
  * - Statuses: mostly active, one draft for testing
  */
-const DEFAULT_VIDEOS: NewVideo[] = [
+const DEFAULT_VIDEOS: SeedVideo[] = [
   {
     id: VIDEO_IDS['seated-hamstring-stretch'],
     title: 'Seated Hamstring Stretch',
@@ -55,10 +60,16 @@ const DEFAULT_VIDEOS: NewVideo[] = [
     mimeType: 'video/mp4',
     status: 'active',
     difficulty: 'beginner',
-    movementType: 'stretch',
-    bodyParts: ['hamstrings', 'lower_back'],
     equipment: ['chair'],
-    tags: ['post-surgery', 'gentle', 'seated'],
+    defaultSets: 2,
+    defaultReps: '30s hold',
+    defaultRestSeconds: 15,
+    defaultNotes: 'Keep your back tall and ease into the stretch.',
+    videoTags: {
+      movement: ['stretch'],
+      'body-area': ['hamstrings', 'lower-back'],
+      audience: ['gentle', 'seated'],
+    },
   },
   {
     id: VIDEO_IDS['standing-quad-stretch'],
@@ -73,10 +84,8 @@ const DEFAULT_VIDEOS: NewVideo[] = [
     mimeType: 'video/mp4',
     status: 'active',
     difficulty: 'beginner',
-    movementType: 'stretch',
-    bodyParts: ['quadriceps', 'hip_flexors'],
     equipment: ['none'],
-    tags: ['standing', 'warm-up'],
+    videoTags: { movement: ['stretch'], 'body-area': ['quadriceps', 'hip-flexors'] },
   },
   {
     id: VIDEO_IDS['resistance-band-row'],
@@ -91,10 +100,16 @@ const DEFAULT_VIDEOS: NewVideo[] = [
     mimeType: 'video/mp4',
     status: 'active',
     difficulty: 'intermediate',
-    movementType: 'strength',
-    bodyParts: ['upper_back', 'shoulders', 'biceps'],
     equipment: ['resistance_band'],
-    tags: ['posture', 'upper-body'],
+    defaultSets: 3,
+    defaultReps: '10-12',
+    defaultRestSeconds: 60,
+    defaultNotes: 'Squeeze the shoulder blades together at the end of each pull.',
+    videoTags: {
+      goal: ['posture'],
+      movement: ['strength'],
+      'body-area': ['upper-back', 'shoulders', 'biceps'],
+    },
   },
   {
     id: VIDEO_IDS['bodyweight-squat'],
@@ -109,10 +124,8 @@ const DEFAULT_VIDEOS: NewVideo[] = [
     mimeType: 'video/mp4',
     status: 'active',
     difficulty: 'intermediate',
-    movementType: 'strength',
-    bodyParts: ['quadriceps', 'glutes', 'hamstrings'],
     equipment: ['none'],
-    tags: ['compound', 'lower-body', 'functional'],
+    videoTags: { movement: ['strength'], 'body-area': ['quadriceps', 'glutes', 'hamstrings'] },
   },
   {
     id: VIDEO_IDS['single-leg-balance'],
@@ -127,10 +140,11 @@ const DEFAULT_VIDEOS: NewVideo[] = [
     mimeType: 'video/mp4',
     status: 'active',
     difficulty: 'beginner',
-    movementType: 'balance',
-    bodyParts: ['ankles', 'calves', 'core'],
     equipment: ['none'],
-    tags: ['balance', 'proprioception', 'fall-prevention'],
+    defaultSets: 3,
+    defaultReps: '30s each leg',
+    defaultRestSeconds: 20,
+    videoTags: { movement: ['balance'], 'body-area': ['ankles', 'calves', 'core'] },
   },
   {
     id: VIDEO_IDS['cat-cow-stretch'],
@@ -145,10 +159,12 @@ const DEFAULT_VIDEOS: NewVideo[] = [
     mimeType: 'video/mp4',
     status: 'active',
     difficulty: 'beginner',
-    movementType: 'mobility',
-    bodyParts: ['spine', 'core', 'lower_back'],
     equipment: ['yoga_mat'],
-    tags: ['spinal', 'warm-up', 'gentle'],
+    videoTags: {
+      movement: ['mobility'],
+      'body-area': ['spine', 'core', 'lower-back'],
+      audience: ['gentle'],
+    },
   },
   {
     id: VIDEO_IDS['wall-push-up'],
@@ -163,10 +179,12 @@ const DEFAULT_VIDEOS: NewVideo[] = [
     mimeType: 'video/mp4',
     status: 'active',
     difficulty: 'beginner',
-    movementType: 'strength',
-    bodyParts: ['chest', 'shoulders', 'triceps'],
     equipment: ['none'],
-    tags: ['upper-body', 'modified', 'beginner-friendly'],
+    videoTags: {
+      movement: ['strength'],
+      'body-area': ['chest', 'shoulders', 'triceps'],
+      audience: ['beginner-friendly'],
+    },
   },
   {
     id: VIDEO_IDS['ankle-mobility-circles'],
@@ -181,10 +199,8 @@ const DEFAULT_VIDEOS: NewVideo[] = [
     mimeType: 'video/mp4',
     status: 'active',
     difficulty: 'beginner',
-    movementType: 'mobility',
-    bodyParts: ['ankles', 'calves'],
     equipment: ['chair'],
-    tags: ['rehabilitation', 'ankle', 'mobility'],
+    videoTags: { movement: ['mobility'], 'body-area': ['ankles', 'calves'] },
   },
   {
     id: VIDEO_IDS['glute-bridge'],
@@ -199,10 +215,12 @@ const DEFAULT_VIDEOS: NewVideo[] = [
     mimeType: 'video/mp4',
     status: 'active',
     difficulty: 'advanced',
-    movementType: 'strength',
-    bodyParts: ['glutes', 'hamstrings', 'core'],
     equipment: ['yoga_mat'],
-    tags: ['glutes', 'posterior-chain', 'progressive'],
+    defaultSets: 3,
+    defaultReps: '12',
+    defaultRestSeconds: 30,
+    defaultNotes: 'Pause for two seconds at the top.',
+    videoTags: { movement: ['strength'], 'body-area': ['glutes', 'hamstrings', 'core'] },
   },
   {
     id: VIDEO_IDS['draft-shoulder-press'],
@@ -217,10 +235,8 @@ const DEFAULT_VIDEOS: NewVideo[] = [
     mimeType: 'video/mp4',
     status: 'draft',
     difficulty: 'intermediate',
-    movementType: 'strength',
-    bodyParts: ['shoulders', 'triceps'],
     equipment: ['resistance_band'],
-    tags: ['upper-body', 'overhead'],
+    videoTags: { movement: ['strength'], 'body-area': ['shoulders', 'triceps'] },
   },
 ];
 
@@ -228,10 +244,89 @@ const DEFAULT_VIDEOS: NewVideo[] = [
 export const SEED_VIDEO_S3_KEYS: string[] = DEFAULT_VIDEOS.map((video) => video.s3Key);
 
 /**
+ * Tags every seed video, new or existing, skipping assignments already made. The tags
+ * themselves are created by the migration.
+ */
+const seedVideoTags = async (db: NodePgDatabase<typeof schema>): Promise<number> => {
+  const tagRows = await db
+    .select({ id: tags.id, categorySlug: tagCategories.slug, tagSlug: tags.slug })
+    .from(tags)
+    .innerJoin(tagCategories, eq(tagCategories.id, tags.categoryId));
+  const tagIds = new Map(tagRows.map((row) => [`${row.categorySlug}/${row.tagSlug}`, row.id]));
+
+  const assignments = DEFAULT_VIDEOS.flatMap((video) =>
+    Object.entries(video.videoTags).flatMap(([categorySlug, tagSlugs]) =>
+      tagSlugs.map((tagSlug) => {
+        const tagId = tagIds.get(`${categorySlug}/${tagSlug}`);
+
+        if (!tagId) {
+          throw new Error(
+            `Seed tag not found: ${categorySlug}/${tagSlug} — has the database been migrated?`
+          );
+        }
+
+        return { videoId: requireSeedId(video, `video "${video.title}"`), tagId };
+      })
+    )
+  );
+
+  const inserted = await db
+    .insert(videoTags)
+    .values(assignments)
+    .onConflictDoNothing()
+    .returning({ id: videoTags.id });
+
+  return inserted.length;
+};
+
+const hasDefaults = (video: SeedVideo): boolean =>
+  [
+    video.defaultSets,
+    video.defaultReps,
+    video.defaultDurationSeconds,
+    video.defaultRestSeconds,
+    video.defaultNotes,
+  ].some((value) => value != null);
+
+/**
+ * Gives an existing seed video its prescription defaults when it has none at all, so the
+ * defaults reach a database seeded before they existed without overwriting an admin's edits.
+ */
+const backfillVideoDefaults = async (
+  db: NodePgDatabase<typeof schema>,
+  video: SeedVideo
+): Promise<boolean> => {
+  const updated = await db
+    .update(videos)
+    .set({
+      defaultSets: video.defaultSets,
+      defaultReps: video.defaultReps,
+      defaultDurationSeconds: video.defaultDurationSeconds,
+      defaultRestSeconds: video.defaultRestSeconds,
+      defaultNotes: video.defaultNotes,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(videos.id, requireSeedId(video, `video "${video.title}"`)),
+        isNull(videos.defaultSets),
+        isNull(videos.defaultReps),
+        isNull(videos.defaultDurationSeconds),
+        isNull(videos.defaultRestSeconds),
+        isNull(videos.defaultNotes)
+      )
+    )
+    .returning({ id: videos.id });
+
+  return updated.length > 0;
+};
+
+/**
  * Seeds exercise videos for the video catalogue.
  *
  * This seed is IDEMPOTENT — safe to run multiple times.
- * Videos are checked by ID before inserting (existing videos are skipped).
+ * Videos are checked by ID before inserting (existing videos are skipped, apart from
+ * prescription defaults on a video that has none).
  *
  * Note: videos table has NO RLS (system-managed catalogue),
  * so no special context needed.
@@ -245,20 +340,26 @@ export const seedVideos = async (
   logger.info('Seeding videos...');
 
   let createdCount = 0;
+  let defaultsBackfilled = 0;
 
   for (const video of DEFAULT_VIDEOS) {
     // Check if video already exists (idempotency check by ID)
     const existingVideo = await db.query.videos.findFirst({
-      where: eq(videos.id, video.id!),
+      where: eq(videos.id, requireSeedId(video, `video "${video.title}"`)),
     });
 
     if (existingVideo) {
       logger.warn(`Video already exists: "${video.title}"`);
+
+      if (hasDefaults(video) && (await backfillVideoDefaults(db, video))) {
+        defaultsBackfilled++;
+      }
+
       continue;
     }
 
-    // Insert new video
-    const [newVideo] = await db.insert(videos).values(video).returning({
+    const { videoTags: _videoTags, ...record } = video;
+    const [newVideo] = await db.insert(videos).values(record).returning({
       id: videos.id,
       title: videos.title,
       status: videos.status,
@@ -273,9 +374,13 @@ export const seedVideos = async (
     createdCount++;
   }
 
+  const tagsAssigned = await seedVideoTags(db);
+
   logger.info('Videos seed complete', {
     created: createdCount,
     alreadyExisted: DEFAULT_VIDEOS.length - createdCount,
+    defaultsBackfilled,
+    tagsAssigned,
   });
 
   return createdCount;

@@ -6,7 +6,7 @@ import type * as ffpDatabase from '@ffp/database';
 
 import * as templateQuestionService from '../../src/assessments/template-question.service';
 import * as templateRepository from '../../src/assessments/template.repository';
-import { ConflictError, NotFoundError, ValidationError } from '../../src/lib/errors';
+import { ConflictError, NotFoundError } from '../../src/lib/errors';
 import * as questionRepository from '../../src/questions/question.repository';
 
 import type { AssessmentTemplate } from '../../src/assessments/template.repository';
@@ -43,7 +43,6 @@ const createContext = (): OrganisationContext => ({
     type: 'user',
     userId: randomUUID(),
     userRole: 'system_admin',
-    email: 'admin@example.com',
   } as UserActor,
   organisationId: randomUUID(),
   locationId: randomUUID(),
@@ -183,7 +182,11 @@ describe('templateQuestionService.assignQuestionsService', () => {
       templateQuestionService.assignQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
         questionPublicIds: [inactive.publicId],
       })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'Only active questions can be assigned to a template',
+      details: { questionPublicId: inactive.publicId },
+    });
 
     expect(mockedTemplateRepo.assignQuestions).not.toHaveBeenCalled();
   });
@@ -199,7 +202,11 @@ describe('templateQuestionService.assignQuestionsService', () => {
       templateQuestionService.assignQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
         questionPublicIds: [question.publicId, question.publicId],
       })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'Question IDs must be unique',
+      details: undefined,
+    });
   });
 
   it('assigns onto a deactivated template, so it can be fixed up before reactivation', async () => {
@@ -274,7 +281,11 @@ describe('templateQuestionService.reorderQuestionsService', () => {
       templateQuestionService.reorderQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
         orderedQuestionPublicIds: [first.publicId],
       })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'Expected 2 question IDs but received 1',
+      details: undefined,
+    });
 
     expect(mockedTemplateRepo.reorderTemplateQuestions).not.toHaveBeenCalled();
   });
@@ -291,7 +302,11 @@ describe('templateQuestionService.reorderQuestionsService', () => {
       templateQuestionService.reorderQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
         orderedQuestionPublicIds: [stranger.publicId],
       })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'One or more questions are not assigned to this template',
+      details: { publicId: stranger.publicId },
+    });
 
     expect(mockedTemplateRepo.reorderTemplateQuestions).not.toHaveBeenCalled();
   });
@@ -311,7 +326,11 @@ describe('templateQuestionService.reorderQuestionsService', () => {
       templateQuestionService.reorderQuestionsService(createContext(), TEMPLATE_PUBLIC_ID, {
         orderedQuestionPublicIds: [first.publicId, first.publicId],
       })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'Question IDs must be unique',
+      details: undefined,
+    });
 
     expect(mockedTemplateRepo.reorderTemplateQuestions).not.toHaveBeenCalled();
   });

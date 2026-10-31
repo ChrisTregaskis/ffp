@@ -1,6 +1,18 @@
-import type { TemplateDetailResponse, UpdateProgrammeTemplateInput } from '@ffp/core';
+import type {
+  CreateProgrammeTemplateInput,
+  TemplateDetailResponse,
+  UpdateProgrammeTemplateInput,
+} from '@ffp/core';
 
 import type { TemplateMetadataFormValues } from '@web/components/programme-templates';
+
+export const EMPTY_TEMPLATE_VALUES: TemplateMetadataFormValues = {
+  name: '',
+  slug: '',
+  description: '',
+  difficulty: '',
+  isActive: 'true',
+};
 
 export const toTemplateFormValues = (
   template: TemplateDetailResponse
@@ -18,16 +30,18 @@ export const toUpdateTemplateInput = (
   template: TemplateDetailResponse
 ): UpdateProgrammeTemplateInput => {
   const payload: UpdateProgrammeTemplateInput = {};
+  const name = values.name.trim();
+  const slug = values.slug.trim();
 
-  if (values.name !== template.name) {
-    payload.name = values.name;
+  if (name !== template.name) {
+    payload.name = name;
   }
 
-  if (values.slug !== template.slug) {
-    payload.slug = values.slug;
+  if (slug !== template.slug) {
+    payload.slug = slug;
   }
 
-  const descValue = values.description || null;
+  const descValue = values.description.trim() || null;
 
   if (descValue !== (template.description ?? null)) {
     payload.description = descValue;
@@ -45,3 +59,18 @@ export const toUpdateTemplateInput = (
 
   return payload;
 };
+
+export const toCreateTemplateInput = (
+  values: TemplateMetadataFormValues
+): CreateProgrammeTemplateInput => ({
+  name: values.name.trim(),
+  slug: values.slug.trim(),
+  difficulty: values.difficulty as CreateProgrammeTemplateInput['difficulty'],
+  description: values.description.trim() || undefined,
+});
+
+/** An edit that takes the template out of use, which the page confirms before saving */
+export const deactivatesTemplate = (
+  values: TemplateMetadataFormValues,
+  template: TemplateDetailResponse
+): boolean => toUpdateTemplateInput(values, template).isActive === false;

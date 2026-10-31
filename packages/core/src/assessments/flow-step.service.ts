@@ -16,8 +16,9 @@ import { flowHasBranching, toAdminFlowStep, type AdminFlowStep } from './flow-st
 import * as flowStepRepository from './flow-step.repository';
 import * as flowRepository from './flow.repository';
 import { findTemplateById } from './template.repository';
+import * as userAssessmentRepository from './user-assessment.repository';
 
-import type { AssessmentFlow } from './flow.repository';
+import type { AssessmentFlow, FlowStepWithConfig } from './flow.repository';
 
 export type { AdminFlowStep };
 
@@ -52,7 +53,10 @@ async function assertTemplateActive(
   }
 }
 
-/** Create a new step, appended to the end of the flow's active sequence. */
+/**
+ * Create a new step, appended after the flow's active steps under the flow's step lock, so a
+ * create racing a delete, a reorder or another create can't reuse an order or leave a gap.
+ */
 export async function createStepService(
   _ctx: OrganisationContext,
   flowPublicId: string,
@@ -72,8 +76,12 @@ export async function createStepService(
 
   await assertTemplateActive(db, parseResult.data.templateId);
 
-  const maxOrder = await flowStepRepository.findMaxOrderForFlow(db, flow.id);
-  const step = await flowStepRepository.createStep(db, flow.id, maxOrder + 1, parseResult.data);
+  const step = await db.transaction(async (tx) => {
+    const activeSteps = await flowStepRepository.lockActiveSteps(tx, flow.id);
+    const maxOrder = Math.max(0, ...activeSteps.map((active) => active.order));
+
+    return await flowStepRepository.createStep(tx, flow.id, maxOrder + 1, parseResult.data);
+  });
 
   return toAdminFlowStep(step);
 }
@@ -160,7 +168,39 @@ export async function updateStepService(
   return toAdminFlowStep(updated);
 }
 
-/** Soft-delete a step. Order gaps are left as-is (no renumber). */
+/** Whether a step branches to `targetId` through a `goto_step` rule. */
+function branchesTo(step: FlowStepWithConfig, targetId: string): boolean {
+  return (step.nextStepRules ?? []).some(
+    (rule) => rule.action.type === 'goto_step' && rule.action.targetStepId === targetId
+  );
+}
+
+/**
+ * Where a step leads when none of its rules apply, among `steps`: its default next step if
+ * that is one of them, else the first at the next order (as branching resolves it), else none.
+ */
+function nextStepOf(step: FlowStepWithConfig, steps: FlowStepWithConfig[]): string | null {
+  if (steps.some((other) => other.id === step.defaultNextStepId)) {
+    return step.defaultNextStepId;
+  }
+
+  const nextTier = steps
+    .filter((other) => other.order === step.order + 1)
+    .sort((a, b) => a.id.localeCompare(b.id));
+
+  return nextTier[0]?.id ?? null;
+}
+
+/**
+ * Soft-delete a step, in one transaction:
+ * - refused while another active step branches to it by a `goto_step` rule, which can't be
+ *   rerouted without changing what the rule means;
+ * - each step that leads to it by default is pointed where the removed step led (cleared where
+ *   that is nowhere, or where it would lead the step to itself);
+ * - the steps after it move down one order, so the flow's orders keep no gap, and so do the
+ *   stored positions of open assessments after it, so members stay on their step. Not when
+ *   another step shares its order, as that tier still exists.
+ */
 export async function deleteStepService(
   _ctx: OrganisationContext,
   flowPublicId: string,
@@ -175,12 +215,61 @@ export async function deleteStepService(
     throw new NotFoundError('Flow step', stepPublicId);
   }
 
-  await flowStepRepository.deactivateStep(db, step.id);
+  await db.transaction(async (tx) => {
+    const activeSteps = await flowStepRepository.lockActiveSteps(tx, flow.id);
+    const removed = activeSteps.find((candidate) => candidate.id === step.id);
+
+    // Already removed: nothing to do, whatever still links to it
+    if (!removed) {
+      return;
+    }
+
+    const others = activeSteps.filter((other) => other.id !== removed.id);
+    const branching = others.filter((other) => branchesTo(other, removed.id));
+
+    if (branching.length > 0) {
+      const linkingSteps = branching.map((other) => ({
+        order: other.order,
+        title: other.config.title,
+      }));
+      const named = linkingSteps.map(({ order, title }) => `step ${String(order)} "${title}"`);
+
+      throw new ConflictError(
+        `This step can't be removed because other steps branch to it: ${named.join(', ')}. ` +
+          `Branching can't be changed in the admin yet.`,
+        { linkingSteps }
+      );
+    }
+
+    const rerouteTo = nextStepOf(removed, others);
+
+    for (const linking of others.filter((other) => other.defaultNextStepId === removed.id)) {
+      await flowStepRepository.setDefaultNextStep(
+        tx,
+        linking.id,
+        rerouteTo === linking.id ? null : rerouteTo
+      );
+    }
+
+    await flowStepRepository.deactivateStep(tx, removed.id);
+
+    const closesGap = !others.some((other) => other.order === removed.order);
+    const moved = closesGap
+      ? await flowStepRepository.closeOrderGap(tx, flow.id, removed.order)
+      : 0;
+
+    // Members stored on the removed step need no move: the step that followed now holds it.
+    // Nothing moved after the last step, so no member position needs to either
+    if (moved > 0) {
+      await userAssessmentRepository.shiftOpenAssessmentsBack(tx, flow.id, removed.order);
+    }
+  });
 }
 
 /**
- * Reorder a flow's active steps. Refuses on branching flows and requires the
- * supplied public identifiers to be exactly the flow's active steps.
+ * Reorder a flow's active steps, in one transaction under the flow's step lock. Refuses on
+ * branching flows and requires the supplied public identifiers to be exactly the flow's active
+ * steps, as the lock leaves them.
  */
 export async function reorderStepsService(
   _ctx: OrganisationContext,
@@ -196,27 +285,29 @@ export async function reorderStepsService(
   const db = getDb();
   const flow = await resolveFlow(db, flowPublicId);
 
-  const activeSteps = await flowRepository.findStepsByFlowId(db, flow.id);
+  const reordered = await db.transaction(async (tx) => {
+    const activeSteps = await flowStepRepository.lockActiveSteps(tx, flow.id);
 
-  if (flowHasBranching(activeSteps)) {
-    throw new ConflictError(
-      'This flow contains branching and cannot be reordered. Reordering is only available for linear flows.'
-    );
-  }
-
-  // Distinctness matters here beyond the usual: `flow_steps.order` is
-  // non-unique, so a duplicate id would reassign one step twice and silently
-  // leave another unmoved.
-  const orderedStepIds = resolveOrderedChildIds(
-    parseResult.data.orderedStepPublicIds,
-    activeSteps,
-    {
-      noun: 'Step',
-      strangerMessage: 'One or more step IDs do not belong to this flow',
+    if (flowHasBranching(activeSteps)) {
+      throw new ConflictError(
+        'This flow contains branching and cannot be reordered. Reordering is only available for linear flows.'
+      );
     }
-  );
 
-  const reordered = await flowStepRepository.reorderSteps(db, flow.id, orderedStepIds);
+    // Distinctness matters here beyond the usual: `flow_steps.order` is
+    // non-unique, so a duplicate id would reassign one step twice and silently
+    // leave another unmoved.
+    const orderedStepIds = resolveOrderedChildIds(
+      parseResult.data.orderedStepPublicIds,
+      activeSteps,
+      {
+        noun: 'Step',
+        strangerMessage: 'One or more step IDs do not belong to this flow',
+      }
+    );
+
+    return await flowStepRepository.reorderSteps(tx, flow.id, orderedStepIds);
+  });
 
   return reordered.map(toAdminFlowStep);
 }

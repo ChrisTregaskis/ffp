@@ -1,6 +1,6 @@
-import { eq, and, asc, count, ilike, or, type Column, type SQL } from 'drizzle-orm';
+import { eq, and, asc, count, ilike, or, sql, type Column, type SQL } from 'drizzle-orm';
 
-import type { DbClient } from '@ffp/database';
+import type { DbClient, DbQueryClient } from '@ffp/database';
 import {
   assessmentFlows,
   flowSteps,
@@ -12,7 +12,7 @@ import {
 import { db, withRLS } from '../lib/database';
 import { InternalServerError, NotFoundError } from '../lib/errors';
 import { createSystemLogger } from '../lib/logger';
-import { applyPagination, escapeLikePattern } from '../lib/pagination';
+import { applyPagination, escapeLikePattern, withDefaultSort } from '../lib/pagination';
 
 import type {
   AssessmentFlowListFilters,
@@ -51,7 +51,7 @@ export async function findById(flowId: string): Promise<AssessmentFlow | null> {
  * @param flowId - The assessment flow UUID
  */
 export async function findFlowById(
-  dbClient: DbClient,
+  dbClient: DbQueryClient,
   flowId: string
 ): Promise<AssessmentFlow | null> {
   const records = await dbClient
@@ -200,19 +200,22 @@ export async function findDefaultForOrganisation(
  *
  * @param dbClient - Database client (transaction or connection)
  * @param flowId - The assessment flow UUID
+ * @param options.forUpdate - Lock the rows until the caller's transaction ends
  * @returns Array of flow steps, ordered by tier then by id
  */
 export async function findStepsByFlowId(
-  dbClient: DbClient,
-  flowId: string
+  dbClient: DbQueryClient,
+  flowId: string,
+  options: { forUpdate?: boolean } = {}
 ): Promise<FlowStepWithConfig[]> {
-  const records = await dbClient
+  const query = dbClient
     .select()
     .from(flowSteps)
     .where(and(eq(flowSteps.flowId, flowId), eq(flowSteps.isActive, true)))
-    .orderBy(asc(flowSteps.order), asc(flowSteps.id));
+    .orderBy(asc(flowSteps.order), asc(flowSteps.id))
+    .$dynamic();
 
-  return records;
+  return await (options.forUpdate ? query.for('update') : query);
 }
 
 /**
@@ -299,14 +302,12 @@ export async function findFlowPage(
     .groupBy(assessmentFlows.id)
     .$dynamic();
 
-  const sortBy =
-    paginationInput.sortBy && FLOW_SORTABLE_COLUMNS[paginationInput.sortBy]
-      ? paginationInput.sortBy
-      : 'name';
-
   return await applyPagination(
     query,
-    { ...paginationInput, sortBy },
+    withDefaultSort(paginationInput, FLOW_SORTABLE_COLUMNS, {
+      sortBy: 'name',
+      sortDirection: 'asc',
+    }),
     FLOW_SORTABLE_COLUMNS,
     assessmentFlows.id
   );
@@ -385,4 +386,23 @@ export async function deactivateFlow(dbClient: DbClient, flowId: string): Promis
       updatedAt: new Date(),
     })
     .where(eq(assessmentFlows.id, flowId));
+}
+
+/**
+ * How many flows recommend a programme template, inactive flows included since they can be
+ * reactivated. Scoring config is jsonb naming templates by slug, so the match is a jsonpath
+ * evaluated in the database.
+ */
+export async function countFlowsRecommendingTemplate(
+  dbClient: DbQueryClient,
+  templateSlug: string
+): Promise<number> {
+  const [result] = await dbClient
+    .select({ count: count() })
+    .from(assessmentFlows)
+    .where(
+      sql`jsonb_path_exists(${assessmentFlows.scoringConfig}, '$.programmeMappings[*].programmeTemplateId ? (@ == $slug)', jsonb_build_object('slug', ${templateSlug}::text))`
+    );
+
+  return result.count;
 }

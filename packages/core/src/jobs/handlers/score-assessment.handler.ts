@@ -1,14 +1,14 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
-import { getDb, withRLS, type DbClient } from '@ffp/database';
+import { getDb, withRLS } from '@ffp/database';
 import { userAssessments, userAssessmentAnswers } from '@ffp/database/schema';
 
+import { findActiveFlowQuestions } from '../../assessments/flow-question.repository';
 import { findFlowById, findStepsByFlowId } from '../../assessments/flow.repository';
 import { calculateScores, toJobResult } from '../../assessments/scoring';
 import { createSystemContext } from '../../lib/context';
 import { NotFoundError, ValidationError } from '../../lib/errors';
 import { createSystemLogger } from '../../lib/logger';
-import { findByTemplateIds } from '../../questions/question.repository';
 import { findTemplateIdsOfSteps } from '../../schemas/assessment-flow.schema';
 import {
   assessmentResponseSchema,
@@ -34,6 +34,8 @@ export interface ScoreAssessmentJobPayload {
  * Fetches the assessment flow (with scoringConfig), all questions from templates
  * in the flow via flow_steps, and persisted answers from the database.
  * Calculates dimensional scores and updates the user_assessment record.
+ * An assessment that is no longer `submitted` is left as it is and no programme is queued; the
+ * calculated result is still returned, so the processor completes the job rather than retrying it.
  */
 export async function processScoreAssessment(
   payload: ScoreAssessmentJobPayload,
@@ -47,12 +49,8 @@ export async function processScoreAssessment(
   // 2. The job payload contains userAssessmentId which is organisation-scoped
   // 3. User-level RLS would require passing userId through the job queue unnecessarily
   return await withRLS(db, organisationId, undefined, async (tx) => {
-    // Type assertion: tx is compatible with DbClient for query operations
-    // The $client property is only used for connection management, not queries
-    const dbTx = tx as unknown as DbClient;
-
     // Fetch flow with scoringConfig
-    const flow = await findFlowById(dbTx, payload.flowId);
+    const flow = await findFlowById(tx, payload.flowId);
 
     if (!flow) {
       throw new NotFoundError('Assessment flow', payload.flowId);
@@ -66,17 +64,14 @@ export async function processScoreAssessment(
     }
 
     // Fetch ALL steps for flow (normalised table)
-    const steps = await findStepsByFlowId(dbTx, payload.flowId);
+    const steps = await findStepsByFlowId(tx, payload.flowId);
 
     // Only the template-linked steps carry the questions that scoring reads
-    const templateIds = findTemplateIdsOfSteps(steps);
-
-    if (templateIds.length === 0) {
+    if (findTemplateIdsOfSteps(steps).length === 0) {
       throw new ValidationError(`Flow ${payload.flowId} has no question templates. Cannot score.`);
     }
 
-    // Fetch questions from ALL templates in the flow
-    const questions = await findByTemplateIds(dbTx, templateIds);
+    const questions = await findActiveFlowQuestions(tx, steps);
 
     if (questions.length === 0) {
       throw new ValidationError(
@@ -129,18 +124,41 @@ export async function processScoreAssessment(
       scoredAt: new Date(result.scoredAt),
     };
 
-    // Update assessment with scores and transition status
-    await tx
+    const logger = createSystemLogger('score-assessment-handler');
+
+    // Only a submitted assessment is scored. The status guard sits in the WHERE, so a late or
+    // repeated job can't move a scored or completed assessment back, even when two jobs race.
+    const updated = await tx
       .update(userAssessments)
       .set({
         scores,
         status: 'scored',
         updatedAt: new Date(),
       })
-      .where(eq(userAssessments.id, payload.userAssessmentId));
+      .where(
+        and(
+          eq(userAssessments.id, payload.userAssessmentId),
+          eq(userAssessments.status, 'submitted')
+        )
+      )
+      .returning({ id: userAssessments.id });
+
+    if (updated.length === 0) {
+      const found = await tx
+        .select({ status: userAssessments.status })
+        .from(userAssessments)
+        .where(eq(userAssessments.id, payload.userAssessmentId));
+
+      // Not thrown: a retry could never succeed, so the job completes as a no-op
+      logger.warn('Scoring skipped: the assessment is not awaiting scoring', {
+        assessmentId: payload.userAssessmentId,
+        status: found.at(0)?.status ?? null,
+      });
+
+      return result;
+    }
 
     // Chain: queue generate_programme job (atomic with scoring)
-    const logger = createSystemLogger('score-assessment-handler');
     const systemContext = createSystemContext({
       systemId: 'score-assessment-handler',
       organisationId,
@@ -151,7 +169,6 @@ export async function processScoreAssessment(
       {
         assessmentSubmissionId: payload.userAssessmentId,
         userId: payload.userId,
-        scores: result.scores,
         recommendedTemplateSlug: scoringResult.recommendedProgrammeId ?? undefined,
       },
       systemContext,

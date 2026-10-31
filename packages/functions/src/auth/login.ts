@@ -6,6 +6,8 @@ import {
   loginService,
 } from '@ffp/core/server';
 
+import { parseJsonBody } from '../lib/request-body';
+
 /**
  * Lambda handler for POST /auth/login
  *
@@ -21,7 +23,7 @@ import {
 export const handler = withErrorHandling(
   async (event: APIGatewayProxyEventV2WithJWT): Promise<LoginResult> => {
     // Parse and validate request body
-    const body = JSON.parse(event.body ?? '{}') as unknown;
+    const body = parseJsonBody(event.body);
     const input = loginSchema.parse(body);
 
     // Authenticate user via service

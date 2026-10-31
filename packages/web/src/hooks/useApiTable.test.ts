@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, type RenderHookResult } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { useApiTable } from './useApiTable';
@@ -76,8 +76,74 @@ describe('useApiTable control flags', () => {
       { initialProps: { defaults: { isActive: 'true' } } }
     );
 
-    rerender({ defaults: { isActive: 'true' } });
+    // A later render passing different defaults must not move the baseline
+    rerender({ defaults: { isActive: 'false' } });
 
+    expect(result.current.filterValues).toEqual({ isActive: 'true' });
     expect(result.current.hasNonDefaultControls).toBe(false);
+
+    act(() => {
+      result.current.onFilterChange('isActive', 'false');
+    });
+
+    expect(result.current.hasNonDefaultControls).toBe(true);
+  });
+});
+
+describe('useApiTable pagination', () => {
+  const renderOnPageThree = (): RenderHookResult<ReturnType<typeof useApiTable>, unknown> => {
+    const rendered = renderHook(() => useApiTable({ defaultSort: { id: 'name', desc: false } }));
+
+    act(() => {
+      rendered.result.current.onStateChange({ ...rendered.result.current.tableState, page: 3 });
+    });
+
+    return rendered;
+  };
+
+  it('moves to another page while the sort stays the same', () => {
+    const { result } = renderOnPageThree();
+
+    expect(result.current.tableState).toMatchObject({ page: 3, sortBy: 'name' });
+  });
+
+  it('returns to page 1 when the sort column changes', () => {
+    const { result } = renderOnPageThree();
+
+    act(() => {
+      result.current.onStateChange({ ...result.current.tableState, sortBy: 'createdAt' });
+    });
+
+    expect(result.current.tableState).toMatchObject({ page: 1, sortBy: 'createdAt' });
+  });
+
+  it('returns to page 1 when the sort direction changes', () => {
+    const { result } = renderOnPageThree();
+
+    act(() => {
+      result.current.onStateChange({ ...result.current.tableState, sortDirection: 'desc' });
+    });
+
+    expect(result.current.tableState).toMatchObject({ page: 1, sortDirection: 'desc' });
+  });
+
+  it('returns to page 1 when the search changes', () => {
+    const { result } = renderOnPageThree();
+
+    act(() => {
+      result.current.onSearchChange('knee');
+    });
+
+    expect(result.current.tableState.page).toBe(1);
+  });
+
+  it('returns to page 1 when a filter changes', () => {
+    const { result } = renderOnPageThree();
+
+    act(() => {
+      result.current.onFilterChange('difficulty', 'beginner');
+    });
+
+    expect(result.current.tableState.page).toBe(1);
   });
 });

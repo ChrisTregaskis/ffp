@@ -106,6 +106,18 @@ export class ConflictError extends BaseError {
 }
 
 /**
+ * 422 Unprocessable - A programme template that cannot be assembled
+ *
+ * Used when a required slot has nothing left to draw. The request is sound; the template's
+ * content cannot satisfy it, so retrying will not help. The message is written for the member.
+ */
+export class ProgrammeAssemblyError extends BaseError {
+  constructor() {
+    super("We couldn't put your programme together just now.", 'PROGRAMME_ASSEMBLY_FAILED', 422);
+  }
+}
+
+/**
  * 500 Internal Server Error - Unexpected errors
  *
  * Used when:
@@ -130,13 +142,15 @@ export class InternalServerError extends BaseError {
  * - Database transaction errors during job processing
  * - Job execution failures
  *
- * Wraps the underlying cause for debugging.
+ * Wraps the underlying cause for debugging. Its message is not copied into
+ * `details`, which a response returns: a database cause's message is the failed
+ * SQL and its bound parameters.
  */
 export class JobProcessorError extends BaseError {
   constructor(
     message: string,
     public readonly cause?: Error
   ) {
-    super(message, 'JOB_PROCESSOR_ERROR', 500, cause ? { cause: cause.message } : undefined);
+    super(message, 'JOB_PROCESSOR_ERROR', 500);
   }
 }

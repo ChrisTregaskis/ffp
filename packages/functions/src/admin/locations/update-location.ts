@@ -6,6 +6,8 @@ import {
   updateLocationService,
 } from '@ffp/core/server';
 
+import { parseJsonBody } from '../../lib/request-body';
+
 /**
  * Lambda handler for PUT /admin/locations/{id}
  *
@@ -21,7 +23,7 @@ export const handler = withErrorHandling(
         throw new ValidationError('Location ID is required');
       }
 
-      const body = JSON.parse(event.body ?? '{}') as unknown;
+      const body = parseJsonBody(event.body);
 
       return await updateLocationService(context, locationId, body);
     }

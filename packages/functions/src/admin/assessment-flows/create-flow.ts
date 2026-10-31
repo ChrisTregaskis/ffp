@@ -3,10 +3,11 @@ import {
   withErrorHandling,
   withSystemAdmin,
   flowService,
-  ValidationError,
   type AssessmentFlow,
   type CreateFlowInput,
 } from '@ffp/core/server';
+
+import { parseJsonBody } from '../../lib/request-body';
 
 interface CreateFlowResponse {
   flow: AssessmentFlow;
@@ -22,18 +23,7 @@ export const handler = withErrorHandling(
   withSystemAdmin(
     'Only system administrators can manage assessment flows',
     async (event: APIGatewayProxyEventV2WithJWT, context): Promise<CreateFlowResponse> => {
-      // Parse request body
-      if (!event.body) {
-        throw new ValidationError('Request body is required');
-      }
-
-      let input: CreateFlowInput;
-
-      try {
-        input = JSON.parse(event.body) as CreateFlowInput;
-      } catch {
-        throw new ValidationError('Invalid JSON in request body');
-      }
+      const input = parseJsonBody(event.body) as CreateFlowInput;
 
       // Create flow via service (handles Zod validation)
       const flow = await flowService.createFlowService(context, input);

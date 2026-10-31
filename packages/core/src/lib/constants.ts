@@ -2,6 +2,9 @@ import { locationStatusSchema } from '../schemas/location.schema';
 import { organisationTypeSchema } from '../schemas/organisation.schema';
 import { userRoleSchema } from '../schemas/user.schema';
 
+// Defined in @ffp/database so its seeds can use it without importing core.
+export { COGNITO_CUSTOM_ATTRIBUTES } from '@ffp/database/constants';
+
 export const APP_NAME = 'FFP - Fitness & Physiotherapy Platform';
 export const APP_VERSION = '0.0.1';
 
@@ -27,8 +30,22 @@ export const SYSTEM_PLACEHOLDER_ORGANISATION_ID = '00000000-0000-0000-8000-00000
 export const EMAIL_PATTERN = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
 /**
- * Password requirement patterns matching Cognito default policy.
+ * The password rules, matching the user pool's policy in `sst.config.ts`. A password is only ever
+ * set in the web app, straight against Cognito, so the web's requirement checklist, built from
+ * these, is the only check ahead of it. Login never applies them.
  */
+
+/** Minimum length */
+export const PASSWORD_MIN_LENGTH = 8;
+
+/** Maximum length: the longest password Cognito accepts */
+export const PASSWORD_MAX_LENGTH = 256;
+
+/**
+ * Whitespace at the start or end, which the rules refuse: Cognito doesn't count it as special,
+ * and a password manager or a retype can drop it, locking the member out
+ */
+export const PASSWORD_EDGE_WHITESPACE_PATTERN = /^\s|\s$/;
 
 /** At least one uppercase letter (A-Z) */
 export const PASSWORD_UPPERCASE_PATTERN = /[A-Z]/;
@@ -39,40 +56,12 @@ export const PASSWORD_LOWERCASE_PATTERN = /[a-z]/;
 /** At least one number (0-9) */
 export const PASSWORD_NUMBER_PATTERN = /[0-9]/;
 
-/** At least one special character (non-alphanumeric) */
-export const PASSWORD_SPECIAL_CHAR_PATTERN = /[^A-Za-z0-9]/;
-
 /**
- * Combined password validation pattern.
- *
- * Requires:
- * - At least 8 characters
- * - At least one lowercase letter
- * - At least one uppercase letter
- * - At least one number
- * - At least one special character
+ * At least one of the characters Cognito counts as special, or a space with other characters
+ * either side. Other symbols (such as £) and accented letters don't count, so Cognito would
+ * refuse a password whose only special character is one of them.
  */
-export const PASSWORD_FULL_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
-
-/**
- * Password minimum length requirement
- */
-export const PASSWORD_MIN_LENGTH = 8;
-
-/**
- * Cognito custom attribute mappings
- *
- * Cognito attributes are immutable once created — they cannot be renamed or deleted.
- * The actual attribute names remain custom:tenantId and custom:customerId, but code
- * uses ORGANISATION_ID and LOCATION_ID aliases for clarity.
- */
-export const COGNITO_CUSTOM_ATTRIBUTES = {
-  /** Maps to custom:tenantId in Cognito (immutable attribute name) */
-  ORGANISATION_ID: 'custom:tenantId',
-  /** Maps to custom:customerId in Cognito (immutable attribute name) */
-  LOCATION_ID: 'custom:customerId',
-  ROLE: 'custom:role',
-} as const;
+export const PASSWORD_SPECIAL_CHAR_PATTERN = /[\^$*.[\]{}()?"!@#%&/\\,><':;|_~`=+-]|\S +\S/;
 
 /**
  * Helper function to convert Zod enum values to uppercase constant object

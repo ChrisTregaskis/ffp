@@ -80,6 +80,3 @@ export const adminOrganisationsApi = {
     return parseApiResponse(organisationDetailResponseSchema, response, { method: 'PUT', path });
   },
 };
-
-// Re-export types for consumers
-export type { CreateOrganisationInput, UpdateOrganisationInput, OrganisationDetailResponse };

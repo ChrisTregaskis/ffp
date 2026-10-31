@@ -15,7 +15,7 @@ import {
 import { useComposableFormContext } from '@web/components/organisms';
 import { DIFFICULTY_OPTIONS } from '@web/constants';
 
-import { MOVEMENT_TYPE_OPTIONS } from './constants';
+import { VideoTagFields } from './VideoTagFields';
 
 import type { VideoMetadataFormValues } from './types';
 
@@ -68,6 +68,8 @@ export interface VideoMetadataFormFieldsProps {
   cancelDisabled?: boolean;
   /** Current video status — determines available status transitions (edit variant only) */
   currentStatus?: VideoStatus;
+  /** Tag publicIds the video was loaded with, so an inactive one stays listed (edit variant only) */
+  carriedTagIds?: string[];
 }
 
 /** Shared metadata fields for video upload and edit forms */
@@ -80,6 +82,7 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
   submitDisabled = false,
   cancelDisabled = false,
   currentStatus,
+  carriedTagIds = [],
 }) => {
   const { register, control, errors } = useComposableFormContext<VideoMetadataFormValues>();
 
@@ -90,30 +93,19 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
     <>
       {errorMessage && <StaticAlert variant="error" message={errorMessage} className="mb-4" />}
 
-      {/* Row 1: Title + Movement Type (2-col) */}
-      <FormRow>
-        <FormTextInput
-          name="title"
-          label="Video Title"
-          placeholder="e.g. Seated Hamstring Stretch"
-          register={register}
-          errors={errors}
-          isRequired
-          registerOptions={{
-            required: 'Video Title is required',
-            maxLength: { value: 255, message: 'Maximum length is 255 characters' },
-          }}
-        />
-
-        <FormSelect
-          name="movementType"
-          label="Movement Type"
-          options={MOVEMENT_TYPE_OPTIONS}
-          placeholder="Select type..."
-          control={control}
-          errors={errors}
-        />
-      </FormRow>
+      {/* Row 1: Title (full-width) */}
+      <FormTextInput
+        name="title"
+        label="Video Title"
+        placeholder="e.g. Seated Hamstring Stretch"
+        register={register}
+        errors={errors}
+        isRequired
+        registerOptions={{
+          required: 'Video Title is required',
+          maxLength: { value: 255, message: 'Maximum length is 255 characters' },
+        }}
+      />
 
       {/* Edit variant: Status field */}
       {isEdit && statusOptions.length > 0 && (
@@ -157,25 +149,7 @@ export const VideoMetadataFormFields: React.FC<VideoMetadataFormFieldsProps> = (
         />
       </FormRow>
 
-      {/* Row 4: Body Parts (full-width) */}
-      <FormTagInput
-        name="bodyParts"
-        label="Body Parts"
-        placeholder="e.g. hamstrings"
-        control={control}
-        errors={errors}
-        isRequired
-        rules={{ required: 'Please add at least one body part' }}
-      />
-
-      {/* Row 5: Tags (full-width) */}
-      <FormTagInput
-        name="tags"
-        label="Tags"
-        placeholder="e.g. warm-up, post-surgery"
-        control={control}
-        errors={errors}
-      />
+      <VideoTagFields carriedTagIds={carriedTagIds} />
 
       {/* Edit variant: Default Exercise Prescription section */}
       {isEdit && (

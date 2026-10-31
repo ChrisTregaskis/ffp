@@ -367,11 +367,9 @@ FFP supports conditional navigation based on template outcomes. A template's col
 
 ### Condition Types
 
-| Condition Type    | Description                         | Example                  |
-| ----------------- | ----------------------------------- | ------------------------ |
-| `answer_value`    | Check specific answer to a question | `radiating-pain = 'yes'` |
-| `dimension_score` | Check calculated dimension score    | `strength < 4`           |
-| `aggregate`       | Check aggregate conditions (future) | `any_red_flag = true`    |
+| Condition Type | Description                         | Example                  |
+| -------------- | ----------------------------------- | ------------------------ |
+| `answer_value` | Check specific answer to a question | `radiating-pain = 'yes'` |
 
 ### Example: Red Flag Screening Rules
 

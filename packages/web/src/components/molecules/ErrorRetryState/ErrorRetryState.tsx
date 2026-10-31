@@ -15,6 +15,8 @@ export interface ErrorRetryStateProps {
   title: string;
   /** Runs the failed request again */
   onRetry: () => void;
+  /** @default 'Try again' */
+  retryLabel?: string;
   /** @default 'area' */
   layout?: ErrorRetryStateLayout;
 }
@@ -23,6 +25,7 @@ export interface ErrorRetryStateProps {
 export const ErrorRetryState: React.FC<ErrorRetryStateProps> = ({
   title,
   onRetry,
+  retryLabel = 'Try again',
   layout = 'area',
 }) => (
   <div className={LAYOUT_CLASSES[layout]}>
@@ -32,7 +35,7 @@ export const ErrorRetryState: React.FC<ErrorRetryStateProps> = ({
       title={title}
       actions={
         <Button variant="primary" onClick={onRetry}>
-          Try again
+          {retryLabel}
         </Button>
       }
     />

@@ -33,6 +33,19 @@ describe('assessmentReducer field errors', () => {
     expect(state.fieldErrors).toEqual({ [GOAL]: 'Choose one of the options shown.' });
   });
 
+  it('counts every refusal, including one that repeats the last', () => {
+    const refusal = {
+      type: ASSESSMENT_ACTION.SET_FIELD_ERRORS,
+      payload: { fieldErrors: { [GOAL]: 'Please answer this question.' } },
+    } as const;
+
+    const once = assessmentReducer(createInitialState('flow-1'), refusal);
+    const twice = assessmentReducer(once, refusal);
+
+    expect(once.refusalCount).toBe(1);
+    expect(twice.refusalCount).toBe(2);
+  });
+
   it('clears only the answered question’s error', () => {
     const answered = assessmentReducer(withErrors(), {
       type: ASSESSMENT_ACTION.SET_ANSWER,

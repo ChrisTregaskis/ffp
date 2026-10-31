@@ -1,23 +1,28 @@
 /**
  * Job Processor Service Integration Tests
  *
- * Tests job polling and claiming operations against a real PostgreSQL database (ffp_test).
- * These tests verify that the processor correctly claims jobs atomically using
- * FOR UPDATE SKIP LOCKED, preventing double-processing across concurrent workers.
+ * Tests job polling and claiming operations against the real PostgreSQL test database that
+ * `connectTestDb` opens: `FFP_TEST_DB_NAME` (ffp_test unless set). These tests verify that the
+ * processor correctly claims jobs atomically using FOR UPDATE SKIP LOCKED, preventing
+ * double-processing across concurrent workers.
  *
  * Prerequisites:
- * - ffp_test database must exist
- * - Migrations must be run: DB_NAME=ffp_test pnpm --filter=@ffp/database db:migrate
+ * - The test database must exist
+ * - Migrations must be run against it: DB_NAME=<test database> pnpm --filter=@ffp/database db:migrate
  */
 
 import { randomUUID } from 'crypto';
 
-import { sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
 
 import * as schema from '@ffp/database/schema';
+import {
+  asOrganisation,
+  connectTestDb,
+  deleteOrganisations,
+  type TestDb,
+} from '@ffp/database/testing';
 
 import {
   pollAndClaimJobs,
@@ -25,7 +30,16 @@ import {
   completeJob,
   failJob,
 } from '../../src/jobs/job-processor.service';
-import { NotFoundError } from '../../src/lib/errors';
+import { NotFoundError, ProgrammeAssemblyError } from '../../src/lib/errors';
+import {
+  generateProgrammeResultSchema,
+  scoreAssessmentResultSchema,
+} from '../../src/schemas/job.schema';
+import { drizzleDriverError, expectNothingLeakable } from '../lib/database-error.fixture';
+
+import { jobPayload } from './job-payload.fixture';
+
+import type { Pool } from 'pg';
 
 // We need to mock getDb but keep other exports
 const { mockGetDb } = vi.hoisted(() => ({
@@ -40,76 +54,41 @@ vi.mock('@ffp/database', async () => {
   };
 });
 
-/**
- * Sets the RLS context for testing purposes.
- *
- * IMPORTANT: This helper uses sql.raw() with validated UUID input.
- * This is necessary because:
- * 1. PostgreSQL's set_config() with parameterised queries can have connection
- *    pool issues where the setting doesn't persist across statements
- * 2. SET commands don't support traditional parameterised queries
- *
- * The UUID validation ensures this is safe from SQL injection.
- * DO NOT copy this pattern to production code - use proper RLS context
- * management with transactions instead.
- */
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-async function setTestRLSContext(
-  db: ReturnType<typeof drizzle>,
-  organisationId: string
-): Promise<void> {
-  if (!UUID_REGEX.test(organisationId)) {
-    throw new Error(`Invalid UUID format for RLS context: ${organisationId}`);
-  }
-  await db.execute(sql.raw(`SET app.organisation_id = '${organisationId}'`));
-}
-
 describe('Job Processor Service', () => {
   let pool: Pool;
-  let db: ReturnType<typeof drizzle>;
+  let db: TestDb<typeof schema>;
   let testOrganisationId: string;
 
-  beforeAll(async () => {
-    pool = new Pool({
-      host: process.env.DB_HOST ?? 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '5432'),
-      database: 'ffp_test',
-      user: process.env.DB_USER ?? 'test_user',
-      password: process.env.DB_PASSWORD ?? 'test_password',
-    });
-    db = drizzle(pool, { schema });
+  beforeAll(() => {
+    ({ pool, db } = connectTestDb({ schema }));
 
     // Configure mock to return our test db
     mockGetDb.mockReturnValue(db);
-
-    // Clean up any leftover queued jobs from previous test runs
-    // This ensures a clean state for the first test
-    await db.execute(sql`DELETE FROM process_jobs WHERE status = 'queued'`);
   });
 
   beforeEach(async () => {
+    // The poll claims across every organisation, so another run's queued jobs would
+    // take the limit and be flipped to processing; refuse to start rather than do that
+    const queued = await db.execute(
+      sql`SELECT count(*)::int AS queued_elsewhere FROM process_jobs WHERE status = 'queued'`
+    );
+    expect(queued.rows, 'queued jobs this suite did not create').toEqual([{ queued_elsewhere: 0 }]);
+
     // Create unique test organisation for each test
     testOrganisationId = randomUUID();
 
-    await setTestRLSContext(db, testOrganisationId);
-    await db.insert(schema.organisations).values({
-      id: testOrganisationId,
-      name: `Test Organisation ${testOrganisationId.slice(0, 8)}`,
-      type: 'business',
+    await asOrganisation(db, testOrganisationId, async (tx) => {
+      await tx.insert(schema.organisations).values({
+        id: testOrganisationId,
+        name: `Test Organisation ${testOrganisationId.slice(0, 8)}`,
+        type: 'business',
+      });
     });
-
-    // Ensure no leftover jobs exist for this organisation (defensive cleanup)
-    await db.execute(sql`DELETE FROM process_jobs WHERE organisation_id = ${testOrganisationId}`);
   });
 
   afterEach(async () => {
-    // Clean up test data
-    if (testOrganisationId) {
-      await db.execute(sql`DELETE FROM process_jobs WHERE organisation_id = ${testOrganisationId}`);
-      await setTestRLSContext(db, testOrganisationId);
-      await db.execute(sql`DELETE FROM organisations WHERE id = ${testOrganisationId}`);
-    }
+    // The organisation's jobs go with it (ON DELETE CASCADE)
+    await deleteOrganisations(db, [testOrganisationId]);
   });
 
   afterAll(async () => {
@@ -117,24 +96,29 @@ describe('Job Processor Service', () => {
   });
 
   /**
+   * The poll claims across every organisation (process_jobs has no RLS), so each
+   * test judges only the jobs it queued under its own organisation.
+   */
+  const ownJobs = (jobs: schema.ProcessJobRecord[]): schema.ProcessJobRecord[] =>
+    jobs.filter((job) => job.organisationId === testOrganisationId);
+
+  /**
    * Helper to create a test job directly in the database
    */
   async function createTestJob(
     overrides: Partial<schema.NewProcessJob> = {}
   ): Promise<schema.ProcessJobRecord> {
+    const type = overrides.type ?? 'score_assessment';
+    const payload = jobPayload(type);
+
     const [job] = await db
       .insert(schema.processJobs)
       .values({
         organisationId: testOrganisationId,
-        type: 'score_assessment',
+        type,
         status: 'queued',
         priority: 4,
-        payload: {
-          assessmentSubmissionId: randomUUID(),
-          templateId: randomUUID(),
-          userId: randomUUID(),
-          responses: [{ questionId: randomUUID(), answerValue: 5 }],
-        },
+        payload,
         ...overrides,
       })
       .returning();
@@ -148,14 +132,12 @@ describe('Job Processor Service', () => {
 
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
 
-      // Find our job in the results (other tests may have created jobs concurrently)
-      const claimedJob = result.claimedJobs.find((j) => j.id === job.id);
-      expect(claimedJob).toBeDefined();
-      if (claimedJob) {
-        expect(claimedJob.status).toBe('processing');
-        expect(claimedJob.startedAt).toBeInstanceOf(Date);
-        expect(claimedJob.attempts).toBe(1);
-      }
+      const claimed = ownJobs(result.claimedJobs);
+      expect(claimed.map((claimedJob) => claimedJob.id)).toEqual([job.id]);
+      const [claimedJob] = claimed;
+      expect(claimedJob.status).toBe('processing');
+      expect(claimedJob.startedAt).toBeInstanceOf(Date);
+      expect(claimedJob.attempts).toBe(1);
     });
 
     it('respects maxConcurrentByType limit for specific job type', async () => {
@@ -170,13 +152,14 @@ describe('Job Processor Service', () => {
       });
 
       // Should only claim 3 score_assessment jobs (limited by maxConcurrentByType)
-      const scoreAssessmentJobs = result.claimedJobs.filter((j) => j.type === 'score_assessment');
-      expect(scoreAssessmentJobs).toHaveLength(3);
-
-      // Verify all claimed jobs are now processing
-      for (const job of result.claimedJobs) {
-        expect(job.status).toBe('processing');
-      }
+      const scoreAssessmentJobs = ownJobs(result.claimedJobs).filter(
+        (j) => j.type === 'score_assessment'
+      );
+      expect(scoreAssessmentJobs.map((job) => job.status)).toEqual([
+        'processing',
+        'processing',
+        'processing',
+      ]);
     });
 
     it('uses defaultMaxConcurrent for types not in maxConcurrentByType', async () => {
@@ -191,7 +174,7 @@ describe('Job Processor Service', () => {
       });
 
       // Should use defaultMaxConcurrent (2) for generate_programme
-      const generateProgrammeJobs = result.claimedJobs.filter(
+      const generateProgrammeJobs = ownJobs(result.claimedJobs).filter(
         (j) => j.type === 'generate_programme'
       );
       expect(generateProgrammeJobs).toHaveLength(2);
@@ -203,49 +186,50 @@ describe('Job Processor Service', () => {
       await createTestJob({ type: 'generate_programme' });
 
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
+      const claimed = ownJobs(result.claimedJobs);
 
-      expect(result.count).toBe(3);
+      expect(result.count).toBe(result.claimedJobs.length);
+      expect(claimed).toHaveLength(3);
 
-      const scoreAssessmentJobs = result.claimedJobs.filter((j) => j.type === 'score_assessment');
-      const generateProgrammeJobs = result.claimedJobs.filter(
-        (j) => j.type === 'generate_programme'
-      );
+      const scoreAssessmentJobs = claimed.filter((j) => j.type === 'score_assessment');
+      const generateProgrammeJobs = claimed.filter((j) => j.type === 'generate_programme');
 
       expect(scoreAssessmentJobs).toHaveLength(2);
       expect(generateProgrammeJobs).toHaveLength(1);
     });
 
-    it('orders jobs by priority (lower number = higher priority)', async () => {
-      // Create jobs with different priorities in random order
-      await createTestJob({ priority: 4 }); // Low
-      await createTestJob({ priority: 1 }); // Urgent
-      await createTestJob({ priority: 3 }); // Medium
-      await createTestJob({ priority: 2 }); // High
+    it('claims the highest-priority jobs first when more are queued than the limit', async () => {
+      // Lower number = higher priority; created out of order, so creation time can't explain the result
+      const low = await createTestJob({ priority: 4 });
+      const urgent = await createTestJob({ priority: 1 });
+      const medium = await createTestJob({ priority: 3 });
+      const high = await createTestJob({ priority: 2 });
 
       const result = await pollAndClaimJobs({
-        maxConcurrentByType: { score_assessment: 4 },
+        maxConcurrentByType: { score_assessment: 2 },
       });
 
-      // Filter to just our score_assessment jobs and check order
-      const scoreJobs = result.claimedJobs.filter((j) => j.type === 'score_assessment');
-      expect(scoreJobs).toHaveLength(4);
-      expect(scoreJobs[0].priority).toBe(1);
-      expect(scoreJobs[1].priority).toBe(2);
-      expect(scoreJobs[2].priority).toBe(3);
-      expect(scoreJobs[3].priority).toBe(4);
+      expect(ownJobs(result.claimedJobs).map((job) => job.id)).toEqual([urgent.id, high.id]);
+
+      const leftBehind = await db
+        .select()
+        .from(schema.processJobs)
+        .where(inArray(schema.processJobs.id, [low.id, medium.id]));
+      expect(leftBehind.map((job) => job.status)).toEqual(['queued', 'queued']);
     });
 
     it('does not claim jobs that are not queued', async () => {
       await createTestJob({ status: 'processing' });
       await createTestJob({ status: 'completed' });
       await createTestJob({ status: 'failed' });
-      await createTestJob({ status: 'queued' }); // Only this one should be claimed
+      const queued = await createTestJob({ status: 'queued' }); // Only this one should be claimed
 
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
 
       // Should only have claimed the queued job
-      expect(result.count).toBe(1);
-      expect(result.claimedJobs[0].status).toBe('processing');
+      const claimed = ownJobs(result.claimedJobs);
+      expect(claimed.map((job) => job.id)).toEqual([queued.id]);
+      expect(claimed[0].status).toBe('processing');
     });
 
     it('respects retryAfter - does not claim jobs scheduled for the future', async () => {
@@ -255,14 +239,15 @@ describe('Job Processor Service', () => {
 
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
 
-      // Verify the claimable job was claimed
-      const claimedJob = result.claimedJobs.find((j) => j.id === claimableJob.id);
-      expect(claimedJob).toBeDefined();
-      expect(claimedJob?.status).toBe('processing');
-
-      // Verify the future job was NOT claimed
-      const notClaimedJob = result.claimedJobs.find((j) => j.id === futureJob.id);
-      expect(notClaimedJob).toBeUndefined();
+      // Only the claimable job was claimed; the future one is left queued
+      const claimed = ownJobs(result.claimedJobs);
+      expect(claimed.map((job) => job.id)).toEqual([claimableJob.id]);
+      expect(claimed[0].status).toBe('processing');
+      const [futureJobNow] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${futureJob.id}`);
+      expect(futureJobNow.status).toBe('queued');
     });
 
     it('claims jobs where retryAfter is in the past', async () => {
@@ -271,10 +256,9 @@ describe('Job Processor Service', () => {
 
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
 
-      // Find our specific job (other tests may create jobs concurrently)
-      const claimedJob = result.claimedJobs.find((j) => j.id === job.id);
-      expect(claimedJob).toBeDefined();
-      expect(claimedJob?.status).toBe('processing');
+      const claimed = ownJobs(result.claimedJobs);
+      expect(claimed.map((claimedJob) => claimedJob.id)).toEqual([job.id]);
+      expect(claimed[0].status).toBe('processing');
     });
 
     it('increments attempts counter on claim', async () => {
@@ -288,9 +272,10 @@ describe('Job Processor Service', () => {
         .where(sql`id = ${job.id}`);
 
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
+      const claimed = ownJobs(result.claimedJobs);
 
-      expect(result.count).toBe(1);
-      expect(result.claimedJobs[0].attempts).toBe(2);
+      expect(claimed).toHaveLength(1);
+      expect(claimed[0].attempts).toBe(2);
     });
 
     it('sets startedAt timestamp when claiming', async () => {
@@ -300,16 +285,12 @@ describe('Job Processor Service', () => {
       const result = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
       const afterClaim = new Date();
 
-      // Find our job (other tests may have created jobs concurrently)
-      const claimedJob = result.claimedJobs.find((j) => j.id === job.id);
-      expect(claimedJob).toBeDefined();
-      if (claimedJob) {
-        expect(claimedJob.startedAt).toBeInstanceOf(Date);
-        if (claimedJob.startedAt) {
-          expect(claimedJob.startedAt.getTime()).toBeGreaterThanOrEqual(beforeClaim.getTime());
-          expect(claimedJob.startedAt.getTime()).toBeLessThanOrEqual(afterClaim.getTime());
-        }
-      }
+      const claimed = ownJobs(result.claimedJobs);
+      expect(claimed.map((claimedJob) => claimedJob.id)).toEqual([job.id]);
+      const [claimedJob] = claimed;
+      expect(claimedJob.startedAt).toBeInstanceOf(Date);
+      expect(claimedJob.startedAt?.getTime()).toBeGreaterThanOrEqual(beforeClaim.getTime());
+      expect(claimedJob.startedAt?.getTime()).toBeLessThanOrEqual(afterClaim.getTime());
     });
 
     it('claimed jobs are not returned in subsequent polls', async () => {
@@ -317,11 +298,11 @@ describe('Job Processor Service', () => {
 
       // First poll claims the job
       const result1 = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
-      expect(result1.count).toBe(1);
+      expect(ownJobs(result1.claimedJobs)).toHaveLength(1);
 
       // Second poll finds nothing (job is now processing)
       const result2 = await pollAndClaimJobs({ defaultMaxConcurrent: 5 });
-      expect(result2.count).toBe(0);
+      expect(ownJobs(result2.claimedJobs)).toHaveLength(0);
     });
 
     it('uses default maxConcurrent of 5 when no config provided', async () => {
@@ -331,15 +312,60 @@ describe('Job Processor Service', () => {
       const result = await pollAndClaimJobs();
 
       // Should claim 5 (default maxConcurrent)
-      expect(result.count).toBe(5);
+      expect(result.count).toBe(result.claimedJobs.length);
+      expect(ownJobs(result.claimedJobs)).toHaveLength(5);
     });
   });
 
   describe('concurrent polling (FOR UPDATE SKIP LOCKED)', () => {
-    it('prevents double-processing when two pollers run concurrently', async () => {
+    it('skips a job another worker holds locked, without waiting for it', async () => {
+      const locked = await createTestJob({ priority: 1 });
+      const free = await createTestJob({ priority: 4 });
+
+      // Another worker's open transaction holds the highest-priority job
+      const otherWorker = await pool.connect();
+      let poll: Promise<Awaited<ReturnType<typeof pollAndClaimJobs>>> | undefined;
+
+      try {
+        await otherWorker.query('BEGIN');
+        await otherWorker.query('SELECT id FROM process_jobs WHERE id = $1 FOR UPDATE', [
+          locked.id,
+        ]);
+
+        poll = pollAndClaimJobs({ maxConcurrentByType: { score_assessment: 5 } });
+        const outcome = await Promise.race([
+          poll,
+          new Promise<'blocked'>((resolve) => {
+            setTimeout(() => {
+              resolve('blocked');
+            }, 2000);
+          }),
+        ]);
+
+        expect(outcome).not.toBe('blocked');
+        expect(
+          outcome === 'blocked' ? [] : ownJobs(outcome.claimedJobs).map((job) => job.id)
+        ).toEqual([free.id]);
+      } finally {
+        try {
+          await otherWorker.query('ROLLBACK');
+        } finally {
+          otherWorker.release();
+        }
+        // A poll that did block finishes once the lock is gone; let it settle before clean-up
+        await poll?.catch(() => undefined);
+      }
+
+      const [lockedNow] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(eq(schema.processJobs.id, locked.id));
+      expect(lockedNow.status).toBe('queued');
+    });
+
+    it('never claims a job twice when two pollers run concurrently', async () => {
       // Create 5 jobs
       const jobs = await Promise.all(Array.from({ length: 5 }, () => createTestJob()));
-      const jobIds = new Set(jobs.map((j) => j.id));
 
       // Run two pollers concurrently, each trying to claim 5 jobs
       const [result1, result2] = await Promise.all([
@@ -347,9 +373,8 @@ describe('Job Processor Service', () => {
         pollAndClaimJobs({ maxConcurrentByType: { score_assessment: 5 } }),
       ]);
 
-      // Filter to only our test jobs (other tests may create jobs concurrently)
-      const ourResult1Jobs = result1.claimedJobs.filter((j) => jobIds.has(j.id));
-      const ourResult2Jobs = result2.claimedJobs.filter((j) => jobIds.has(j.id));
+      const ourResult1Jobs = ownJobs(result1.claimedJobs);
+      const ourResult2Jobs = ownJobs(result2.claimedJobs);
 
       // All 5 of our jobs should be claimed across both pollers
       const totalOurJobsClaimed = ourResult1Jobs.length + ourResult2Jobs.length;
@@ -398,11 +423,10 @@ describe('Job Processor Service', () => {
   });
 
   describe('completeJob', () => {
-    it('sets status to completed with result', async () => {
+    it('sets status to completed', async () => {
       const job = await createTestJob({ status: 'processing' });
-      const result = { scores: { strength: 75, balance: 82 } };
 
-      const completeResult = await completeJob(job.id, result);
+      const completeResult = await completeJob(job.id, { programmeId: randomUUID() });
 
       expect(completeResult.jobId).toBe(job.id);
       expect(completeResult.success).toBe(true);
@@ -414,7 +438,6 @@ describe('Job Processor Service', () => {
         .where(sql`id = ${job.id}`);
 
       expect(updatedJob.status).toBe('completed');
-      expect(updatedJob.result).toEqual(result);
       expect(updatedJob.completedAt).toBeInstanceOf(Date);
     });
 
@@ -503,6 +526,33 @@ describe('Job Processor Service', () => {
       expect(updatedJob.completedAt).toBeInstanceOf(Date);
     });
 
+    it('fails at once, with attempts to spare, when the error is not retryable', async () => {
+      const job = await createTestJob({ status: 'processing', maxAttempts: 3 });
+      await db
+        .update(schema.processJobs)
+        .set({ attempts: 1 })
+        .where(sql`id = ${job.id}`);
+
+      const [jobWithAttempt] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      const result = await failJob(jobWithAttempt, new ProgrammeAssemblyError());
+
+      expect(result.willRetry).toBe(false);
+      expect(result.newStatus).toBe('failed');
+
+      const [updatedJob] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      expect(updatedJob.status).toBe('failed');
+      expect(updatedJob.retryAfter).toBeNull();
+      expect(updatedJob.completedAt).toBeInstanceOf(Date);
+    });
+
     it('calculates correct exponential backoff for retryAfter', async () => {
       const beforeFail = Date.now();
       const job = await createTestJob({ status: 'processing' });
@@ -529,6 +579,27 @@ describe('Job Processor Service', () => {
       }
     });
 
+    it('stores a database failure without its query, parameters or detail', async () => {
+      const job = await createTestJob({ status: 'processing' });
+
+      await failJob(
+        job,
+        drizzleDriverError({
+          code: '23503',
+          constraint: 'users_location_id_locations_id_fk',
+          table: 'users',
+        })
+      );
+
+      const [updatedJob] = await db
+        .select()
+        .from(schema.processJobs)
+        .where(sql`id = ${job.id}`);
+
+      expect(updatedJob.message).toBe('Database driver error');
+      expectNothingLeakable(String(updatedJob.message));
+    });
+
     it('throws NotFoundError when job is not in processing status', async () => {
       // Create a job that is queued (not processing)
       const job = await createTestJob({ status: 'queued' });
@@ -547,6 +618,158 @@ describe('Job Processor Service', () => {
         .where(sql`id = ${job.id}`);
 
       expect(unchangedJob.status).toBe('queued');
+    });
+  });
+
+  describe('payload of a finished job', () => {
+    const readJob = async (id: string): Promise<schema.ProcessJobRecord> => {
+      const [job] = await db.select().from(schema.processJobs).where(eq(schema.processJobs.id, id));
+
+      return job;
+    };
+
+    const failOnce = async (job: schema.ProcessJobRecord): Promise<schema.ProcessJobRecord> => {
+      await failJob(job, new Error('API timeout'));
+
+      return readJob(job.id);
+    };
+
+    it('keeps only the ids once a job completes', async () => {
+      const payload = jobPayload('generate_programme');
+      const { assessmentSubmissionId, userId } = payload;
+      const job = await createTestJob({
+        type: 'generate_programme',
+        status: 'processing',
+        payload,
+      });
+
+      await completeJob(job.id, { programmeId: randomUUID() });
+
+      expect((await readJob(job.id)).payload).toEqual({ assessmentSubmissionId, userId });
+    });
+
+    it('drops the scores an older generation job carried once it completes', async () => {
+      const payload = jobPayload('generate_programme');
+      const { assessmentSubmissionId, userId } = payload;
+      const job = await createTestJob({
+        type: 'generate_programme',
+        status: 'processing',
+        payload: {
+          ...payload,
+          scores: [
+            {
+              dimensionId: 'mobility',
+              dimensionName: 'Mobility',
+              rawScore: 75,
+              normalisedScore: 75,
+            },
+          ],
+        },
+      });
+
+      await completeJob(job.id, { programmeId: randomUUID() });
+
+      expect((await readJob(job.id)).payload).toEqual({ assessmentSubmissionId, userId });
+    });
+
+    it('drops the answers an older scoring job carried once it completes', async () => {
+      const payload = jobPayload('score_assessment');
+      const { userAssessmentId, flowId, userId } = payload;
+      const job = await createTestJob({
+        status: 'processing',
+        payload: {
+          ...payload,
+          responses: [{ questionId: randomUUID(), answerValue: 'a free-text answer' }],
+        },
+      });
+
+      await completeJob(job.id, { scoredAt: new Date().toISOString() });
+
+      expect((await readJob(job.id)).payload).toEqual({ userAssessmentId, flowId, userId });
+    });
+
+    it('keeps only the ids once a job fails for good', async () => {
+      const payload = jobPayload('generate_programme');
+      const job = await createTestJob({
+        type: 'generate_programme',
+        status: 'processing',
+        attempts: 1,
+        maxAttempts: 1,
+        payload,
+      });
+      const failed = await failOnce(job);
+
+      expect(failed.status).toBe('failed');
+      expect(failed.payload).toEqual({
+        assessmentSubmissionId: payload.assessmentSubmissionId,
+        userId: payload.userId,
+      });
+    });
+
+    it('keeps the whole payload for a retry, which claims it again', async () => {
+      const payload = jobPayload('generate_programme');
+      const job = await createTestJob({
+        type: 'generate_programme',
+        status: 'processing',
+        attempts: 1,
+        payload,
+      });
+      const retried = await failOnce(job);
+
+      expect(retried.status).toBe('queued');
+      expect(retried.payload).toEqual(payload);
+
+      await db
+        .update(schema.processJobs)
+        .set({ retryAfter: null })
+        .where(eq(schema.processJobs.id, job.id));
+      const { claimedJobs } = await pollAndClaimJobs();
+
+      expect(ownJobs(claimedJobs)).toEqual([
+        expect.objectContaining({ id: job.id, status: 'processing', payload }),
+      ]);
+    });
+  });
+
+  describe('result of a finished job', () => {
+    const storedResult = async (id: string): Promise<unknown> => {
+      const [job] = await db
+        .select({ result: schema.processJobs.result })
+        .from(schema.processJobs)
+        .where(eq(schema.processJobs.id, id));
+
+      return job.result;
+    };
+
+    it("keeps only the programme's id once a generation job completes", async () => {
+      const job = await createTestJob({ type: 'generate_programme', status: 'processing' });
+      const result = generateProgrammeResultSchema.parse({
+        programmeId: randomUUID(),
+        programmeName: 'Gentle Mobility',
+        durationWeeks: 8,
+        exercises: [{ exerciseId: randomUUID(), name: 'Cat cow' }],
+        sessionsPerWeek: 3,
+        generatedAt: new Date().toISOString(),
+      });
+
+      await completeJob(job.id, result);
+
+      expect(await storedResult(job.id)).toEqual({ programmeId: result.programmeId });
+    });
+
+    it("keeps none of the member's scores once a scoring job completes", async () => {
+      const job = await createTestJob({ status: 'processing' });
+      const result = scoreAssessmentResultSchema.parse({
+        scores: [
+          { dimensionId: 'mobility', dimensionName: 'Mobility', rawScore: 75, normalisedScore: 75 },
+        ],
+        overallScore: 75,
+        scoredAt: new Date().toISOString(),
+      });
+
+      await completeJob(job.id, result);
+
+      expect(await storedResult(job.id)).toEqual({});
     });
   });
 

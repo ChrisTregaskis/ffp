@@ -1,4 +1,4 @@
-/** Form values for editing programme template metadata */
+/** Form values for creating or editing programme template metadata */
 export interface TemplateMetadataFormValues {
   /** Display name */
   name: string;

@@ -1,18 +1,21 @@
-import type { UpdateVideoInput, VideoDetailResponse, VideoStatus } from '@ffp/core';
+import { tagCategorySlugSchema } from '@ffp/core';
+import type { AdminVideoDetail, TagSummary, UpdateVideoInput, VideoStatus } from '@ffp/core';
 
+import { toTagSelection } from '@web/components/tags';
 import { fieldToNumber, numberToField } from '@web/utils/form-number';
 
 import type { VideoEditFormValues } from './types';
 
-export const toVideoFormValues = (video: VideoDetailResponse): VideoEditFormValues => ({
+const toPublicIds = (tags: TagSummary[]): string[] => tags.map((tag) => tag.publicId);
+
+export const toVideoFormValues = (video: AdminVideoDetail): VideoEditFormValues => ({
   title: video.title,
   description: video.description ?? '',
-  movementType: video.movementType ?? '',
   difficulty: video.difficulty ?? '',
   status: video.status,
-  bodyParts: video.bodyParts,
+  tags: toTagSelection(video.tags),
+  isEssential: video.isEssential,
   equipment: video.equipment,
-  tags: video.tags,
   defaultSets: numberToField(video.defaultSets),
   defaultReps: video.defaultReps ?? '',
   defaultDurationSeconds: numberToField(video.defaultDurationSeconds),
@@ -23,6 +26,10 @@ export const toVideoFormValues = (video: VideoDetailResponse): VideoEditFormValu
 const arraysEqual = (a: string[], b: string[]): boolean =>
   a.length === b.length && a.every((v, i) => v === b[i]);
 
+// Tags are a set: ticking in a different order is no change
+const sameMembers = (a: string[], b: string[]): boolean =>
+  a.length === b.length && a.every((value) => b.includes(value));
+
 // A blank prescription field clears the stored value, which takes null rather than undefined
 const toNumberOrNull = (value: string): number | null => fieldToNumber(value) ?? null;
 const toStringOrNull = (value: string): string | null => value || null;
@@ -30,7 +37,7 @@ const toStringOrNull = (value: string): string | null => value || null;
 /** Only the fields that differ from the stored video; an empty object means nothing changed. */
 export const toUpdateVideoInput = (
   values: VideoEditFormValues,
-  video: VideoDetailResponse
+  video: AdminVideoDetail
 ): UpdateVideoInput => {
   const payload: UpdateVideoInput = {};
 
@@ -44,12 +51,6 @@ export const toUpdateVideoInput = (
     payload.description = descValue;
   }
 
-  const movementValue = values.movementType || null;
-
-  if (movementValue !== (video.movementType ?? null)) {
-    payload.movementType = movementValue as UpdateVideoInput['movementType'];
-  }
-
   const diffValue = values.difficulty || null;
 
   if (diffValue !== (video.difficulty ?? null)) {
@@ -60,16 +61,19 @@ export const toUpdateVideoInput = (
     payload.status = values.status as VideoStatus;
   }
 
-  if (!arraysEqual(values.bodyParts, video.bodyParts)) {
-    payload.bodyParts = values.bodyParts;
-  }
-
   if (!arraysEqual(values.equipment, video.equipment)) {
     payload.equipment = values.equipment;
   }
 
-  if (!arraysEqual(values.tags, video.tags)) {
-    payload.tags = values.tags;
+  if (values.isEssential !== video.isEssential) {
+    payload.isEssential = values.isEssential;
+  }
+
+  // Only the categories that changed are sent, so the video's other tags are left alone
+  for (const category of tagCategorySlugSchema.options) {
+    if (!sameMembers(values.tags[category], toPublicIds(video.tags[category]))) {
+      payload.tags = { ...payload.tags, [category]: values.tags[category] };
+    }
   }
 
   const newSets = toNumberOrNull(values.defaultSets);
@@ -104,3 +108,7 @@ export const toUpdateVideoInput = (
 
   return payload;
 };
+
+/** An edit that archives the video, which the page confirms before saving */
+export const archivesVideo = (values: VideoEditFormValues, video: AdminVideoDetail): boolean =>
+  toUpdateVideoInput(values, video).status === 'archived';

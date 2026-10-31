@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import type { ScoringConfig as StoredScoringConfig } from '@ffp/database';
-import { SCORING_MODES } from '@ffp/database/constants';
+import type { EmphasisRule as StoredEmphasisRule } from '@ffp/database';
+import { SCORING_MODES, TAG_CATEGORY_SLUGS } from '@ffp/database/constants';
 
 import { scoreDimensionSchema } from './assessment-question.schema';
 
@@ -19,36 +19,6 @@ export const logicalOperatorSchema = z.enum(['and', 'or']);
 
 export const scoringModeSchema = z.enum(SCORING_MODES);
 
-export const riskThresholdsSchema = z.object({
-  /** Score threshold for low risk (score >= this value = low risk) */
-  low: z.number(),
-  /** Score threshold for moderate risk (score >= this value = moderate risk) */
-  moderate: z.number(),
-});
-
-/**
- * Dimension configuration schema - defines scoring for a single dimension
- *
- * Each dimension aggregates scores from specific questions and applies
- * optional weighting and risk thresholds.
- */
-export const dimensionConfigSchema = z.object({
-  /** The scoring dimension name */
-  name: scoreDimensionSchema,
-  /** Array of question UUIDs that contribute to this dimension */
-  questionIds: z.array(z.guid()),
-  /** Maximum possible score for this dimension */
-  maxScore: z.number().positive(),
-  /** Weight multiplier for this dimension (default: 1) */
-  weight: z.number().positive().default(1),
-  /** Optional risk thresholds for this dimension */
-  riskThresholds: riskThresholdsSchema.optional(),
-  /** How the questions' scores combine: summed, or the most frequent (default: 'sum') */
-  scoringMode: scoringModeSchema.default('sum'),
-  /** Whether this dimension feeds the overall risk level (default: true) */
-  affectsRiskLevel: z.boolean().default(true),
-});
-
 /**
  * Defines a condition that compares a dimension score against a threshold
  * to determine programme eligibility.
@@ -62,44 +32,36 @@ export const programmeMappingConditionSchema = z.object({
   value: z.number(),
 });
 
-/**
- * Defines rules for automatically recommending programmes based on
- * assessment scores. Multiple conditions can be combined with logical operators.
- * Mappings are evaluated lowest priority first; the first match wins.
- */
-export const programmeMappingSchema = z.object({
-  /** Array of conditions that must be satisfied */
-  conditions: z.array(programmeMappingConditionSchema),
-  /** Logical operator to combine conditions (default: 'and') */
-  operator: logicalOperatorSchema.default('and'),
-  /** ID of the programme template to recommend when conditions match */
-  programmeTemplateId: z.string().min(1),
-  /** Evaluation order: lower is checked first, and a missing value is checked last */
-  priority: z.number().int().optional(),
+/** A tag an answer leans towards, by category and slug so a mapping can name one not yet authored */
+export const emphasisTagSchema = z.object({
+  category: z.enum(TAG_CATEGORY_SLUGS),
+  slug: z.string().min(1),
+  /** Added to the weight of every candidate carrying the tag */
+  weight: z.number().positive(),
 });
 
 /**
- * Defines how assessment responses are scored across dimensions and
- * how scores map to programme recommendations.
- *
- * `@ffp/database` holds the stored `ScoringConfig` interface the scoring code
- * reads, and cannot import this schema. `satisfies` keeps a parsed config
- * assignable to that interface; it cannot see a field the interface gains, so
- * add new fields to both.
+ * An answer that leans a programme's draw: when the member's answer to the question is (or, for a
+ * multi-choice question, includes) the value, candidates carrying the tags weigh more. Only
+ * single- and multi-choice questions can match, since the value is an option's string.
  */
-export const scoringConfigSchema = z.object({
-  /** Array of dimension configurations for multi-dimensional scoring */
-  dimensions: z.array(dimensionConfigSchema),
-  /** Array of programme mappings for automatic recommendations */
-  programmeMappings: z.array(programmeMappingSchema),
-}) satisfies z.ZodType<StoredScoringConfig>;
+export const emphasisRuleSchema = z.object({
+  questionId: z.guid(),
+  answerValue: z.string().min(1),
+  tags: z.array(emphasisTagSchema).min(1),
+});
+
+/**
+ * `@ffp/database` holds the stored `EmphasisRule` interface and cannot import this schema;
+ * `satisfies` keeps a parsed rule assignable to it, so a field added to one goes in both.
+ */
+export const emphasisRulesSchema = z.array(emphasisRuleSchema) satisfies z.ZodType<
+  StoredEmphasisRule[]
+>;
 
 export type RiskLevel = z.infer<typeof riskLevelSchema>;
 export type ScoringMode = z.infer<typeof scoringModeSchema>;
-export type RiskThresholds = z.infer<typeof riskThresholdsSchema>;
-export type DimensionConfig = z.infer<typeof dimensionConfigSchema>;
 export type ComparisonOperator = z.infer<typeof comparisonOperatorSchema>;
 export type ProgrammeMappingCondition = z.infer<typeof programmeMappingConditionSchema>;
 export type LogicalOperator = z.infer<typeof logicalOperatorSchema>;
-export type ProgrammeMapping = z.infer<typeof programmeMappingSchema>;
-export type ScoringConfig = z.infer<typeof scoringConfigSchema>;
+export type EmphasisRule = z.infer<typeof emphasisRuleSchema>;

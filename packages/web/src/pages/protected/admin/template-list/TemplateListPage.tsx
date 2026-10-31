@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { generatePath, useNavigate } from 'react-router-dom';
 
 import type { RowAction } from '@web/components/organisms';
 import { DeactivateTemplateModal } from '@web/components/programme-templates';
@@ -32,12 +32,14 @@ export const TemplateListPage: React.FC = () => {
   const activation = useTemplateActivation<TemplateRow>();
 
   const handleCreateClick = useCallback((): void => {
-    void navigate(`${routes[RouteKey.ADMIN_TEMPLATES].path}/create`);
+    void navigate(routes[RouteKey.ADMIN_TEMPLATE_CREATE].path);
   }, [navigate]);
 
   const handleViewClick = useCallback(
     (row: TemplateRow): void => {
-      void navigate(`${routes[RouteKey.ADMIN_TEMPLATES].path}/${row.publicId}`);
+      void navigate(
+        generatePath(routes[RouteKey.ADMIN_TEMPLATE_DETAIL].path, { id: row.publicId })
+      );
     },
     [navigate]
   );

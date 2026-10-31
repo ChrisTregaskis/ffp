@@ -38,6 +38,7 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
   onKeepProgramme,
   onReplaceProgramme,
   isReplacing = false,
+  hasReplaceFailed = false,
 }) => {
   const { assessmentState, assessmentDispatch } = useAssessment();
   const {
@@ -174,6 +175,7 @@ export const AssessmentStepRenderer: React.FC<AssessmentStepRendererProps> = ({
             onKeepProgramme={onKeepProgramme}
             onReplaceProgramme={onReplaceProgramme}
             isReplacing={isReplacing}
+            hasReplaceFailed={hasReplaceFailed}
           />
         );
 

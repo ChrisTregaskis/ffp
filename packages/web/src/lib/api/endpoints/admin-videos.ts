@@ -1,28 +1,22 @@
-import { z } from 'zod';
-
 import type {
+  AdminVideoDetail,
   AdminVideoFilterInput,
   CreateVideoInput,
   PaginationInput,
   UpdateVideoInput,
   UploadUrlResponse,
-  VideoDetailResponse,
 } from '@ffp/core';
 import {
+  adminVideoResponseSchema,
   paginatedAdminVideoResponseSchema,
   uploadUrlResponseSchema,
-  videoDetailResponseSchema,
-  videoSchema,
 } from '@ffp/core';
 
-import { assertUuidPathParam, ffpClient, parseApiResponse, toListParams } from '../client';
+import { ffpClient, parseApiResponse, toListParams } from '../client';
+
+import type { z } from 'zod';
 
 const basePath = '/admin/videos';
-
-/** Response schema for the create video endpoint */
-const createVideoResponseSchema = z.object({
-  video: videoSchema,
-});
 
 /** Paginated admin video list response type */
 export type PaginatedAdminVideoResponse = z.infer<typeof paginatedAdminVideoResponseSchema>;
@@ -57,28 +51,27 @@ export const adminVideosApi = {
     });
   },
 
+  /** One video in any status, with its tags. */
+  get: async (publicId: string, signal?: AbortSignal): Promise<AdminVideoDetail> => {
+    const path = `${basePath}/${publicId}`;
+    const response = await ffpClient.get(path, { signal });
+
+    return parseApiResponse(adminVideoResponseSchema, response, { method: 'GET', path }).video;
+  },
+
   /** Creates a video record with metadata after successful S3 upload. */
-  createVideo: async (input: CreateVideoInput): Promise<{ video: z.infer<typeof videoSchema> }> => {
+  createVideo: async (input: CreateVideoInput): Promise<AdminVideoDetail> => {
     const path = basePath;
     const response = await ffpClient.post(path, input);
 
-    return parseApiResponse(createVideoResponseSchema, response, { method: 'POST', path });
+    return parseApiResponse(adminVideoResponseSchema, response, { method: 'POST', path }).video;
   },
 
-  /** Updates video metadata (partial update including status transitions). */
-  updateVideo: async (id: string, data: UpdateVideoInput): Promise<VideoDetailResponse> => {
-    const checkedId = assertUuidPathParam(id, 'PUT /admin/videos/{id}');
-    const path = `${basePath}/${checkedId}`;
+  /** Updates video metadata and tags (partial update including status transitions). */
+  updateVideo: async (publicId: string, data: UpdateVideoInput): Promise<AdminVideoDetail> => {
+    const path = `${basePath}/${publicId}`;
     const response = await ffpClient.put(path, data);
 
-    const parsed = parseApiResponse(z.object({ video: videoDetailResponseSchema }), response, {
-      method: 'PUT',
-      path,
-    });
-
-    return parsed.video;
+    return parseApiResponse(adminVideoResponseSchema, response, { method: 'PUT', path }).video;
   },
 };
-
-// Re-export types for consumers
-export type { CreateVideoInput, UpdateVideoInput, UploadUrlResponse };

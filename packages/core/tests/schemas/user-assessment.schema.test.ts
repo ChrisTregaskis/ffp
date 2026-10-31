@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
+import type { UserAssessmentStatus } from '@ffp/database';
+
 import {
   userAnswerSchema,
   userAssessmentAnswersSchema,
@@ -9,6 +11,8 @@ import {
   getAllowedTransitions,
   startAssessmentRequestSchema,
   startAssessmentResponseSchema,
+  saveProgressRequestSchema,
+  submitAssessmentRequestSchema,
 } from '../../src/schemas/user-assessment/user-assessment.schema';
 
 // Test fixtures
@@ -145,6 +149,29 @@ describe('userAssessmentAnswersSchema', () => {
     expect(result.success).toBe(false);
   });
 
+  // The services read each answer's questionId, not its key, so this check is what stops
+  // an answer filed under one question's key being stored against another question
+  it.each([
+    [
+      'save',
+      (answers: unknown) => saveProgressRequestSchema.safeParse({ answers, currentStep: 1 }),
+    ],
+    ['submit', (answers: unknown) => submitAssessmentRequestSchema.safeParse({ answers })],
+  ])('refuses a %s body whose answer is keyed by another question', (_body, parse) => {
+    const result = parse({
+      [validUuid]: { questionId: validUuid2, answerValue: 4 },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toEqual([
+      expect.objectContaining({
+        code: 'custom',
+        message: 'An answer must be keyed by its own questionId',
+        path: ['answers', validUuid, 'questionId'],
+      }),
+    ]);
+  });
+
   it('should reject answers with invalid value structure', () => {
     const answers = {
       [validUuid]: {
@@ -219,151 +246,53 @@ describe('userAssessmentScoresSchema', () => {
 });
 
 // ============================================================================
-// statusTransitionSchema tests
+// Status machine
 // ============================================================================
 
-describe('statusTransitionSchema', () => {
-  describe('valid transitions', () => {
-    it('should allow not_started → in_progress', () => {
-      const result = statusTransitionSchema.safeParse({
-        fromStatus: 'not_started',
-        toStatus: 'in_progress',
-      });
-      expect(result.success).toBe(true);
-    });
+// Stated independently of VALID_STATUS_TRANSITIONS, so a change to it has to be made here too.
+// Keyed by the status type, so a new status will not compile until it has a row.
+const ALLOWED: Record<UserAssessmentStatus, readonly UserAssessmentStatus[]> = {
+  not_started: ['in_progress', 'abandoned'],
+  in_progress: ['submitted', 'abandoned'],
+  submitted: ['scored'],
+  scored: ['completed'],
+  completed: [],
+  abandoned: [],
+};
+const STATUSES = Object.keys(ALLOWED) as UserAssessmentStatus[];
 
-    it('should allow in_progress → submitted', () => {
-      const result = statusTransitionSchema.safeParse({
-        fromStatus: 'in_progress',
-        toStatus: 'submitted',
-      });
-      expect(result.success).toBe(true);
-    });
+describe('status machine', () => {
+  const pairs = STATUSES.flatMap((from) =>
+    STATUSES.map((to) => [from, to, ALLOWED[from].includes(to)] as const)
+  );
 
-    it('should allow in_progress → abandoned', () => {
-      const result = statusTransitionSchema.safeParse({
-        fromStatus: 'in_progress',
-        toStatus: 'abandoned',
-      });
-      expect(result.success).toBe(true);
-    });
-
-    it('should allow submitted → scored', () => {
-      const result = statusTransitionSchema.safeParse({
-        fromStatus: 'submitted',
-        toStatus: 'scored',
-      });
-      expect(result.success).toBe(true);
-    });
-
-    it('should allow scored → completed', () => {
-      const result = statusTransitionSchema.safeParse({
-        fromStatus: 'scored',
-        toStatus: 'completed',
-      });
-      expect(result.success).toBe(true);
-    });
+  it.each(pairs)('isValidStatusTransition(%s → %s) is %s', (from, to, allowed) => {
+    expect(isValidStatusTransition(from, to)).toBe(allowed);
   });
 
-  describe('invalid transitions', () => {
-    it('should reject not_started → submitted (skip in_progress)', () => {
-      const result = statusTransitionSchema.safeParse({
-        fromStatus: 'not_started',
-        toStatus: 'submitted',
-      });
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Invalid status transition');
-      }
+  it.each(STATUSES)('getAllowedTransitions(%s) is exactly the allowed set', (from) => {
+    expect([...getAllowedTransitions(from)].sort()).toEqual([...ALLOWED[from]].sort());
+  });
+
+  it('statusTransitionSchema accepts an allowed transition', () => {
+    const result = statusTransitionSchema.safeParse({
+      fromStatus: 'in_progress',
+      toStatus: 'submitted',
     });
 
-    it('should reject in_progress → completed (skip intermediate)', () => {
-      const result = statusTransitionSchema.safeParse({
-        fromStatus: 'in_progress',
-        toStatus: 'completed',
-      });
-      expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
+  });
+
+  it('statusTransitionSchema refuses a skipped step, naming the transition', () => {
+    const result = statusTransitionSchema.safeParse({
+      fromStatus: 'not_started',
+      toStatus: 'submitted',
     });
 
-    it('should reject completed → in_progress (backwards)', () => {
-      const result = statusTransitionSchema.safeParse({
-        fromStatus: 'completed',
-        toStatus: 'in_progress',
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it('should reject abandoned → in_progress (terminal state)', () => {
-      const result = statusTransitionSchema.safeParse({
-        fromStatus: 'abandoned',
-        toStatus: 'in_progress',
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it('should reject submitted → abandoned (not allowed)', () => {
-      const result = statusTransitionSchema.safeParse({
-        fromStatus: 'submitted',
-        toStatus: 'abandoned',
-      });
-      expect(result.success).toBe(false);
-    });
-  });
-});
-
-// ============================================================================
-// isValidStatusTransition tests
-// ============================================================================
-
-describe('isValidStatusTransition', () => {
-  it('should return true for valid transition', () => {
-    expect(isValidStatusTransition('not_started', 'in_progress')).toBe(true);
-    expect(isValidStatusTransition('in_progress', 'submitted')).toBe(true);
-    expect(isValidStatusTransition('in_progress', 'abandoned')).toBe(true);
-    expect(isValidStatusTransition('submitted', 'scored')).toBe(true);
-    expect(isValidStatusTransition('scored', 'completed')).toBe(true);
-  });
-
-  it('should return false for invalid transition', () => {
-    expect(isValidStatusTransition('not_started', 'submitted')).toBe(false);
-    expect(isValidStatusTransition('completed', 'in_progress')).toBe(false);
-    expect(isValidStatusTransition('abandoned', 'completed')).toBe(false);
-  });
-});
-
-// ============================================================================
-// getAllowedTransitions tests
-// ============================================================================
-
-describe('getAllowedTransitions', () => {
-  it('should return correct transitions for not_started', () => {
-    const transitions = getAllowedTransitions('not_started');
-    expect(transitions).toEqual(['in_progress']);
-  });
-
-  it('should return correct transitions for in_progress', () => {
-    const transitions = getAllowedTransitions('in_progress');
-    expect(transitions).toEqual(['submitted', 'abandoned']);
-  });
-
-  it('should return correct transitions for submitted', () => {
-    const transitions = getAllowedTransitions('submitted');
-    expect(transitions).toEqual(['scored']);
-  });
-
-  it('should return correct transitions for scored', () => {
-    const transitions = getAllowedTransitions('scored');
-    expect(transitions).toEqual(['completed']);
-  });
-
-  it('should return empty array for completed (terminal)', () => {
-    const transitions = getAllowedTransitions('completed');
-    expect(transitions).toEqual([]);
-  });
-
-  it('should return empty array for abandoned (terminal)', () => {
-    const transitions = getAllowedTransitions('abandoned');
-    expect(transitions).toEqual([]);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].message).toContain(
+      'Invalid status transition: not_started → submitted'
+    );
   });
 });
 

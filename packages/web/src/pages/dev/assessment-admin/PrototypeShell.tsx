@@ -2,44 +2,16 @@ import { useState } from 'react';
 
 import { Icon, Icons, Logo, Text } from '@web/components/atoms';
 
-import { MemberProgrammeDetailView } from './MemberProgrammeDetailView';
-import { MemberProgrammePhaseView } from './MemberProgrammePhaseView';
-import { MemberProgrammesView } from './MemberProgrammesView';
 import { ProgrammeModelsView } from './ProgrammeModelsView';
 import { iconVar } from './prototype-labels';
-import { getContextNav, getMainNav, PROTOTYPE_HOME_VIEW } from './prototype-nav';
 import { PrototypeNavItem } from './PrototypeNavItem';
-import { usePrototypeStore } from './PrototypeStore';
-import { VideoLibraryView } from './VideoLibraryView';
-
-import type { PrototypeView } from './prototype-types';
-
-const renderView = (view: PrototypeView): JSX.Element => {
-  switch (view.name) {
-    case 'programme-models':
-      return <ProgrammeModelsView />;
-    case 'video-library':
-      return <VideoLibraryView />;
-    case 'member-programmes':
-      return <MemberProgrammesView />;
-    case 'member-programme':
-      return <MemberProgrammeDetailView memberId={view.memberId} />;
-    case 'member-programme-phase':
-      return <MemberProgrammePhaseView memberId={view.memberId} phaseId={view.phaseId} />;
-  }
-};
 
 /**
  * Chrome for the prototype: a navy side menu (mirroring the real `SideMenu`)
- * whose nav swaps to context links when inside a sub-section, plus the
- * active-view content area.
+ * plus the active-view content area.
  */
 export const PrototypeShell: React.FC = () => {
-  const { view, navigate } = usePrototypeStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
-
-  const contextNav = getContextNav(view, navigate);
-  const navItems = contextNav ?? getMainNav(view, navigate);
 
   return (
     <div className="flex min-h-screen bg-muted">
@@ -50,12 +22,7 @@ export const PrototypeShell: React.FC = () => {
         }`}
       >
         {/* Brand header */}
-        <button
-          type="button"
-          onClick={() => {
-            navigate(PROTOTYPE_HOME_VIEW);
-          }}
-          aria-label="Assessment authoring home"
+        <div
           className={`flex items-center gap-3 border-b border-white/20 py-5 text-white ${
             isCollapsed ? 'justify-center' : 'px-4'
           }`}
@@ -66,21 +33,19 @@ export const PrototypeShell: React.FC = () => {
               Assessment admin
             </Text>
           )}
-        </button>
+        </div>
 
-        {/* Nav (main or context) */}
+        {/* Nav */}
         <nav className="w-full flex-1 overflow-y-auto">
           <div className="flex w-full flex-col">
-            {navItems.map((item) => (
-              <PrototypeNavItem
-                key={item.label}
-                label={item.label}
-                icon={item.icon}
-                active={item.active}
-                isCollapsed={isCollapsed}
-                onClick={item.onClick}
-              />
-            ))}
+            <PrototypeNavItem
+              label="Programme models"
+              icon={Icons.CLIPBOARDLIST}
+              active
+              isCollapsed={isCollapsed}
+              // eslint-disable-next-line @typescript-eslint/no-empty-function -- the only view
+              onClick={() => {}}
+            />
           </div>
         </nav>
 
@@ -127,7 +92,9 @@ export const PrototypeShell: React.FC = () => {
           </a>
         </div>
 
-        <div className="px-6 py-8">{renderView(view)}</div>
+        <div className="px-6 py-8">
+          <ProgrammeModelsView />
+        </div>
       </main>
     </div>
   );

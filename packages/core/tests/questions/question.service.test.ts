@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type * as ffpDatabase from '@ffp/database';
 import type { VideoRecord } from '@ffp/database/schema';
 
-import { NotFoundError, ValidationError } from '../../src/lib/errors';
+import { ConflictError, NotFoundError } from '../../src/lib/errors';
 import * as questionRepository from '../../src/questions/question.repository';
 import * as questionService from '../../src/questions/question.service';
 import * as videoRepository from '../../src/videos/video.repository';
@@ -37,7 +37,6 @@ const createContext = (): OrganisationContext => ({
     type: 'user',
     userId: randomUUID(),
     userRole: 'system_admin',
-    email: 'admin@example.com',
   } as UserActor,
   organisationId: randomUUID(),
   locationId: randomUUID(),
@@ -146,7 +145,11 @@ describe('questionService.updateQuestionService — merged-shape validation', ()
       questionService.updateQuestionService(createContext(), QUESTION_PUBLIC_ID, {
         validation: { maxSelections: 3 },
       })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'This update would leave the question in an invalid state',
+      details: { errors: [expect.objectContaining({ path: ['validation', 'maxSelections'] })] },
+    });
 
     expect(mockedQuestionRepo.updateQuestion).not.toHaveBeenCalled();
   });
@@ -166,7 +169,9 @@ describe('questionService.updateQuestionService — merged-shape validation', ()
       validation: { maxSelections: 2 },
     });
 
-    expect(mockedQuestionRepo.updateQuestion).toHaveBeenCalled();
+    expect(mockedQuestionRepo.updateQuestion).toHaveBeenCalledWith(expect.anything(), stored.id, {
+      validation: { maxSelections: 2 },
+    });
   });
 
   it('accepts a switch to a choice type that relies on the stored options', async () => {
@@ -184,7 +189,10 @@ describe('questionService.updateQuestionService — merged-shape validation', ()
       type: 'multi-choice',
     });
 
-    expect(mockedQuestionRepo.updateQuestion).toHaveBeenCalled();
+    expect(mockedQuestionRepo.updateQuestion).toHaveBeenCalledWith(expect.anything(), stored.id, {
+      type: 'multi-choice',
+      videoId: null,
+    });
   });
 
   it('rejects clearing the video of a question that stays video-response', async () => {
@@ -194,7 +202,11 @@ describe('questionService.updateQuestionService — merged-shape validation', ()
 
     await expect(
       questionService.updateQuestionService(createContext(), QUESTION_PUBLIC_ID, { videoId: null })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'This update would leave the question in an invalid state',
+      details: { errors: [expect.objectContaining({ path: ['videoId'] })] },
+    });
   });
 });
 
@@ -262,7 +274,11 @@ describe('questionService.updateQuestionService — type-change clean-up', () =>
         type: 'numeric',
         validation: { required: true, maxSelections: 3 },
       })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'This update would leave the question in an invalid state',
+      details: { errors: [expect.objectContaining({ path: ['validation', 'maxSelections'] })] },
+    });
 
     expect(mockedQuestionRepo.updateQuestion).not.toHaveBeenCalled();
   });
@@ -281,7 +297,11 @@ describe('questionService.updateQuestionService — type-change clean-up', () =>
         ],
         validation: { required: true, min: 10, max: 1 },
       })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'This update would leave the question in an invalid state',
+      details: { errors: [expect.objectContaining({ path: ['validation', 'min'] })] },
+    });
 
     expect(mockedQuestionRepo.updateQuestion).not.toHaveBeenCalled();
   });
@@ -314,7 +334,10 @@ describe('questionService.updateQuestionService — type-change clean-up', () =>
       questionText: 'Wall squat hold',
     });
 
-    expect(mockedQuestionRepo.updateQuestion).toHaveBeenCalled();
+    // The stored range survives because the write leaves validation alone
+    expect(mockedQuestionRepo.updateQuestion).toHaveBeenCalledWith(expect.anything(), stored.id, {
+      questionText: 'Wall squat hold',
+    });
   });
 
   it('clears the scoring range when moving to a type that takes none', async () => {
@@ -436,7 +459,11 @@ describe('questionService.updateQuestionService — clearing validation', () => 
         options: [{ value: 'yes', label: 'Yes' }],
         validation: null,
       })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'This update would leave the question in an invalid state',
+      details: { errors: [expect.objectContaining({ path: ['options'] })] },
+    });
 
     expect(mockedQuestionRepo.updateQuestion).not.toHaveBeenCalled();
   });
@@ -455,7 +482,42 @@ describe('questionService.updateQuestionService — clearing validation', () => 
         validation: null,
         videoId: null,
       })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'This update would leave the question in an invalid state',
+      details: { errors: [expect.objectContaining({ path: ['videoId'] })] },
+    });
+  });
+});
+
+describe('questionService.createQuestionService — slug uniqueness', () => {
+  it('refuses a slug already in the bank with a 409 naming it, before any write', async () => {
+    mockedQuestionRepo.findQuestionBySlug.mockResolvedValueOnce(
+      createStoredQuestion({ slug: 'movement-confidence' })
+    );
+
+    const error = await questionService
+      .createQuestionService(createContext(), {
+        slug: 'movement-confidence',
+        type: 'text',
+        questionText: 'How confident do you feel moving?',
+      })
+      .then(
+        () => expect.fail('Expected a ConflictError'),
+        (caught: unknown) => caught
+      );
+
+    expect(error).toBeInstanceOf(ConflictError);
+    expect(error).toMatchObject({
+      statusCode: 409,
+      message: 'A question with this slug already exists',
+      details: { slug: 'movement-confidence' },
+    });
+    expect(mockedQuestionRepo.findQuestionBySlug).toHaveBeenCalledWith(
+      expect.anything(),
+      'movement-confidence'
+    );
+    expect(mockedQuestionRepo.createQuestion).not.toHaveBeenCalled();
   });
 });
 
@@ -473,8 +535,13 @@ describe('questionService — linked video checks', () => {
 
     await expect(
       questionService.createQuestionService(createContext(), createPayload)
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'Linked video not found or not active',
+      details: { videoId: VIDEO_ID },
+    });
 
+    expect(mockedVideoRepo.findVideoById).toHaveBeenCalledWith(expect.anything(), VIDEO_ID);
     expect(mockedQuestionRepo.createQuestion).not.toHaveBeenCalled();
   });
 
@@ -484,7 +551,13 @@ describe('questionService — linked video checks', () => {
 
     await expect(
       questionService.createQuestionService(createContext(), createPayload)
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'Linked video not found or not active',
+      details: { videoId: VIDEO_ID },
+    });
+
+    expect(mockedVideoRepo.findVideoById).toHaveBeenCalledWith(expect.anything(), VIDEO_ID);
   });
 
   it('rejects an update that links a missing video', async () => {
@@ -497,13 +570,19 @@ describe('questionService — linked video checks', () => {
       questionService.updateQuestionService(createContext(), QUESTION_PUBLIC_ID, {
         videoId: otherVideoId,
       })
-    ).rejects.toThrow(ValidationError);
+    ).rejects.toMatchObject({
+      name: 'ValidationError',
+      message: 'Linked video not found or not active',
+      details: { videoId: otherVideoId },
+    });
 
     expect(mockedQuestionRepo.updateQuestion).not.toHaveBeenCalled();
   });
 
   it('does not re-check a stored link the update resends unchanged', async () => {
-    stubStoredQuestion(createStoredQuestion({ type: 'video-response', videoId: VIDEO_ID }));
+    const stored = createStoredQuestion({ type: 'video-response', videoId: VIDEO_ID });
+
+    stubStoredQuestion(stored);
     mockedVideoRepo.findVideoById.mockResolvedValue(null);
 
     await questionService.updateQuestionService(createContext(), QUESTION_PUBLIC_ID, {
@@ -511,7 +590,10 @@ describe('questionService — linked video checks', () => {
       videoId: VIDEO_ID,
     });
 
-    expect(mockedQuestionRepo.updateQuestion).toHaveBeenCalled();
+    expect(mockedQuestionRepo.updateQuestion).toHaveBeenCalledWith(expect.anything(), stored.id, {
+      questionText: 'Reworded',
+      videoId: VIDEO_ID,
+    });
   });
 });
 

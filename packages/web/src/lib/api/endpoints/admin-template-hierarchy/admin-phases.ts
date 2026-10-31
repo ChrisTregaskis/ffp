@@ -57,5 +57,3 @@ export const adminPhasesApi = {
     return parseApiResponse(phasesResponseEnvelope, response, { method: 'PUT', path }).phases;
   },
 };
-
-export type { CreatePhaseRequest, PhaseResponse, ReorderPhasesRequest, UpdatePhaseRequest };

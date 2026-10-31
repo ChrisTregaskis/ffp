@@ -27,26 +27,35 @@ import { handler as updateOrganisationHandler } from './organisations/update-org
 import { handler as createExerciseHandler } from './programme-templates/create-exercise';
 import { handler as createPhaseHandler } from './programme-templates/create-phase';
 import { handler as createSessionHandler } from './programme-templates/create-session';
+import { handler as createSlotHandler } from './programme-templates/create-slot';
 import { handler as createProgrammeTemplateHandler } from './programme-templates/create-template';
 import { handler as deactivateProgrammeTemplateHandler } from './programme-templates/deactivate-template';
 import { handler as deleteExerciseHandler } from './programme-templates/delete-exercise';
 import { handler as deletePhaseHandler } from './programme-templates/delete-phase';
 import { handler as deleteSessionHandler } from './programme-templates/delete-session';
+import { handler as deleteSlotHandler } from './programme-templates/delete-slot';
 import { handler as getProgrammeTemplateHandler } from './programme-templates/get-template';
 import { handler as listExercisesHandler } from './programme-templates/list-exercises';
+import { handler as listSlotsHandler } from './programme-templates/list-slots';
 import { handler as listProgrammeTemplatesHandler } from './programme-templates/list-templates';
 import { handler as reorderExercisesHandler } from './programme-templates/reorder-exercises';
 import { handler as reorderPhasesHandler } from './programme-templates/reorder-phases';
 import { handler as reorderSessionsHandler } from './programme-templates/reorder-sessions';
+import { handler as reorderSlotsHandler } from './programme-templates/reorder-slots';
 import { handler as updateExerciseHandler } from './programme-templates/update-exercise';
 import { handler as updatePhaseHandler } from './programme-templates/update-phase';
 import { handler as updateSessionHandler } from './programme-templates/update-session';
+import { handler as updateSlotHandler } from './programme-templates/update-slot';
 import { handler as updateProgrammeTemplateHandler } from './programme-templates/update-template';
 import { handler as createQuestionHandler } from './questions/create-question';
 import { handler as deactivateQuestionHandler } from './questions/deactivate-question';
 import { handler as getQuestionHandler } from './questions/get-question';
 import { handler as listQuestionsHandler } from './questions/list-questions';
 import { handler as updateQuestionHandler } from './questions/update-question';
+import { handler as createTagHandler } from './tags/create-tag';
+import { handler as deactivateTagHandler } from './tags/deactivate-tag';
+import { handler as listTagCategoriesHandler } from './tags/list-tag-categories';
+import { handler as updateTagHandler } from './tags/update-tag';
 import { handler as assignQuestionsHandler } from './templates/assign-questions';
 import { handler as createTemplateHandler } from './templates/create-template';
 import { handler as deactivateTemplateHandler } from './templates/deactivate-template';
@@ -57,11 +66,18 @@ import { handler as listTemplatesHandler } from './templates/list-templates';
 import { handler as reorderTemplateQuestionsHandler } from './templates/reorder-questions';
 import { handler as unassignQuestionHandler } from './templates/unassign-question';
 import { handler as updateTemplateHandler } from './templates/update-template';
+import { handler as addProgrammeExerciseHandler } from './users/add-programme-exercise';
 import { handler as createUserHandler } from './users/create-user';
 import { handler as getUserHandler } from './users/get-user';
+import { handler as getUserProgrammeHandler } from './users/get-user-programme';
 import { handler as listUsersHandler } from './users/list-users';
+import { handler as removeProgrammeExerciseHandler } from './users/remove-programme-exercise';
+import { handler as reorderProgrammeExercisesHandler } from './users/reorder-programme-exercises';
+import { handler as reorderProgrammeSessionsHandler } from './users/reorder-programme-sessions';
+import { handler as updateProgrammeExerciseHandler } from './users/update-programme-exercise';
 import { handler as updateUserHandler } from './users/update-user';
 import { handler as createVideoHandler } from './videos/create';
+import { handler as getVideoHandler } from './videos/get';
 import { handler as getUploadUrlHandler } from './videos/get-upload-url';
 import { handler as listVideosHandler } from './videos/list';
 import { handler as updateVideoHandler } from './videos/update';
@@ -90,7 +106,10 @@ const routes: RouteRegistry = {
     '/programme-templates/{id}/phases': createPhaseHandler,
     '/phases/{id}/sessions': createSessionHandler,
     '/sessions/{id}/exercises': createExerciseHandler,
+    '/sessions/{id}/slots': createSlotHandler,
+    '/tags': createTagHandler,
     '/users': createUserHandler,
+    '/users/{id}/programme/sessions/{sessionId}/exercises': addProgrammeExerciseHandler,
     '/videos': createVideoHandler,
     '/videos/upload-url': getUploadUrlHandler,
   },
@@ -109,9 +128,13 @@ const routes: RouteRegistry = {
     '/programme-templates': listProgrammeTemplatesHandler,
     '/programme-templates/{id}': getProgrammeTemplateHandler,
     '/sessions/{id}/exercises': listExercisesHandler,
+    '/sessions/{id}/slots': listSlotsHandler,
     '/users': listUsersHandler,
     '/users/{id}': getUserHandler,
+    '/users/{id}/programme': getUserProgrammeHandler,
+    '/tag-categories': listTagCategoriesHandler,
     '/videos': listVideosHandler,
+    '/videos/{publicId}': getVideoHandler,
   },
   PUT: {
     '/organisations/{id}': updateOrganisationHandler,
@@ -126,6 +149,10 @@ const routes: RouteRegistry = {
     '/assessment-templates/{templatePublicId}/questions/reorder': reorderTemplateQuestionsHandler,
     '/questions/{publicId}': updateQuestionHandler,
     '/users/{id}': updateUserHandler,
+    '/users/{id}/programme/exercises/{exerciseId}': updateProgrammeExerciseHandler,
+    '/users/{id}/programme/sessions/{sessionId}/exercises/reorder':
+      reorderProgrammeExercisesHandler,
+    '/users/{id}/programme/phases/{phaseId}/sessions/reorder': reorderProgrammeSessionsHandler,
     '/programme-templates/{id}': updateProgrammeTemplateHandler,
     '/programme-templates/{id}/deactivate': deactivateProgrammeTemplateHandler,
     '/programme-templates/{id}/phases/reorder': reorderPhasesHandler,
@@ -134,7 +161,10 @@ const routes: RouteRegistry = {
     '/exercises/{id}': updateExerciseHandler,
     '/sessions/{id}': updateSessionHandler,
     '/sessions/{id}/exercises/reorder': reorderExercisesHandler,
-    '/videos/{id}': updateVideoHandler,
+    '/sessions/{id}/slots/reorder': reorderSlotsHandler,
+    '/slots/{publicId}': updateSlotHandler,
+    '/tags/{publicId}': updateTagHandler,
+    '/videos/{publicId}': updateVideoHandler,
   },
   DELETE: {
     '/assessment-flows/{publicId}': deactivateFlowHandler,
@@ -143,9 +173,12 @@ const routes: RouteRegistry = {
     '/assessment-templates/{templatePublicId}/questions/{questionPublicId}':
       unassignQuestionHandler,
     '/questions/{publicId}': deactivateQuestionHandler,
+    '/tags/{publicId}': deactivateTagHandler,
     '/exercises/{id}': deleteExerciseHandler,
+    '/users/{id}/programme/exercises/{exerciseId}': removeProgrammeExerciseHandler,
     '/phases/{id}': deletePhaseHandler,
     '/sessions/{id}': deleteSessionHandler,
+    '/slots/{publicId}': deleteSlotHandler,
   },
 };
 

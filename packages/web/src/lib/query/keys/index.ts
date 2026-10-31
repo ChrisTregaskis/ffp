@@ -6,6 +6,6 @@ export { organisationKeys } from './organisations';
 export { programmeKeys } from './programmes';
 export { programmeTemplateKeys } from './programme-templates';
 export { questionKeys } from './questions';
-export { sessionKeys } from './sessions';
+export { tagKeys } from './tags';
 export { userKeys } from './users';
 export { videoKeys } from './videos';
