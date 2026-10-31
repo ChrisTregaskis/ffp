@@ -1,7 +1,6 @@
 import { RouteKey, routes } from '@web/config/routes';
 import type { RouteConfig } from '@web/config/routes';
 import { ComingSoonPage } from '@web/pages/ComingSoonPage';
-import { AssessmentAdminPrototypePage } from '@web/pages/dev/assessment-admin/AssessmentAdminPrototypePage';
 import { AssessmentProgressComponentsPage } from '@web/pages/dev/AssessmentProgressComponentsPage';
 import { AssessmentQuestionsComponentsPage } from '@web/pages/dev/AssessmentQuestionsComponentsPage';
 import { AssessmentScreensComponentsPage } from '@web/pages/dev/AssessmentScreensComponentsPage';
@@ -148,7 +147,6 @@ const PAGE_COMPONENTS: Record<RouteKey, FC> = {
   [RouteKey.COMPONENTS_ASSESSMENT_SCREENS]: AssessmentScreensComponentsPage,
   [RouteKey.COMPONENTS_TOAST_ALERT]: ToastAlertComponentsPage,
   [RouteKey.COMPONENTS_TABLE]: TableComponentsPage,
-  [RouteKey.COMPONENTS_ASSESSMENT_ADMIN]: AssessmentAdminPrototypePage,
 };
 
 /** Every route bound to its page, for the router. */

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The web package contains dev-only UX prototypes and component showcases under the `/components/*` routes (for example the assessment authoring prototype at `/components/assessment-admin`). These pages use mock data and local state only: no API, database, authentication, or `@ffp/core` calls. The normal production build strips them, so they need a separate build and host to be shared with stakeholders for remote review.
+The web package contains dev-only UX prototypes and component showcases under the `/components/*` routes (for example the component gallery at `/components`, which links to each showcase page such as `/components/button`). These pages use mock data and local state only: no API, database, authentication, or `@ffp/core` calls. The normal production build strips them, so they need a separate build and host to be shared with stakeholders for remote review.
 
 This document describes the **showcase build** and the **Cloudflare Pages** deployment that hosts it behind an access gate. It is the operational reference for refreshing the hosted prototypes over time.
 
@@ -12,7 +12,7 @@ This document describes the **showcase build** and the **Cloudflare Pages** depl
 - **Underlying Pages hostname:** `ffp-prototypes.pages.dev` (the custom domain is a CNAME to this)
 - **Access:** gated by Cloudflare Access (Zero Trust) — only email addresses on the allow-list can reach it, via a one-time PIN sent to their inbox. No account or password.
 
-Send reviewers the `/components` path, not the bare root: the root resolves to the app's authenticated home page, which redirects to a login the showcase build cannot complete (auth is stubbed out). `/components` is the public menu that lists every prototype.
+Send reviewers the `/components` path, not the bare root: the root resolves to the app's authenticated home page, which redirects to a login the showcase build cannot complete (auth is stubbed out). `/components` is the public menu that lists every showcase page and prototype.
 
 ## Showcase build
 
@@ -58,8 +58,7 @@ The allow-list is intentionally not recorded here, to keep reviewer email addres
 
 ## Notes and limitations
 
-- Throwaway by design: the prototypes are disposable UX explorations, not production code. They reuse real themed components and patterns so the UX maps cleanly to the eventual build.
+- Throwaway by design: any prototypes hosted here are disposable UX explorations, not production code. They reuse real themed components and patterns so the UX maps cleanly to the eventual build.
 - The bundle carries no real infrastructure configuration. Confirm this after any change with:
   `grep -rEo "https://[a-z0-9.-]+" packages/web/dist/assets | grep -Ev "showcase.invalid"` — expect only library and placeholder hosts.
 - The raw `ffp-prototypes.pages.dev` URL is not covered by the Access policy (only the custom domain is). Share the `prototypes.tregaskis.uk` link.
-  </content>
