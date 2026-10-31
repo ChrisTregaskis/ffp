@@ -613,11 +613,4 @@ export const routes: RoutesConfig = {
     excludeFromMainNavbar: true,
     devOnly: true,
   },
-  [RouteKey.COMPONENTS_ASSESSMENT_ADMIN]: {
-    path: `${componentsBasePath}/assessment-admin`,
-    public: true,
-    title: 'Assessment Admin UX Prototype',
-    excludeFromMainNavbar: true,
-    devOnly: true,
-  },
 };

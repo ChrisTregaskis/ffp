@@ -130,6 +130,4 @@ export enum RouteKey {
   COMPONENTS_TOAST_ALERT = 'components-toast-alert',
   /** Table components showcase */
   COMPONENTS_TABLE = 'components-table',
-  /** Assessment admin authoring UX prototype */
-  COMPONENTS_ASSESSMENT_ADMIN = 'components-assessment-admin',
 }
