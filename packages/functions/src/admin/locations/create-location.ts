@@ -8,6 +8,8 @@ import {
   createRequestContext,
 } from '@ffp/core/server';
 
+import { parseJsonBody } from '../../lib/request-body';
+
 /**
  * Lambda handler for POST /admin/organisations/{orgId}/locations
  *
@@ -28,7 +30,7 @@ export const handler = withErrorHandling(
         throw new ValidationError('Organisation ID is required');
       }
 
-      const body = JSON.parse(event.body ?? '{}') as unknown;
+      const body = parseJsonBody(event.body);
       const input = createLocationRequestSchema.parse(body);
 
       const ctx = createRequestContext(context);

@@ -20,6 +20,8 @@ export interface AssessmentStepRendererProps {
   onReplaceProgramme?: () => void;
   /** Whether the replace programme mutation is in progress */
   isReplacing?: boolean;
+  /** Whether replacing the programme failed */
+  hasReplaceFailed?: boolean;
 }
 
 export interface QuestionStepContentProps {
@@ -54,4 +56,6 @@ export interface ResultsStepContentProps {
   onReplaceProgramme?: () => void;
   /** Whether the replace programme mutation is in progress */
   isReplacing?: boolean;
+  /** Whether replacing the programme failed */
+  hasReplaceFailed?: boolean;
 }

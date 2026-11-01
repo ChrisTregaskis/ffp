@@ -2,6 +2,7 @@ import { Button, Icon, Icons, Title } from '@web/components/atoms';
 import { PrescriptionBadge } from '@web/components/molecules';
 import { FadeSlide } from '@web/components/motion';
 import { VideoPlayer } from '@web/components/video';
+import { prescriptionParts } from '@web/utils/prescription';
 
 import { ExerciseDetail } from './ExerciseDetail';
 
@@ -36,7 +37,8 @@ export const ActiveExercisePanel: React.FC<ActiveExercisePanelProps> = ({
   onSkip,
   onRestToggle,
 }) => {
-  const hasRest = exercise.restSeconds !== null && exercise.restSeconds > 0;
+  const prescription = prescriptionParts(exercise);
+  const hasRest = prescription.rest !== null;
 
   return (
     <FadeSlide key={exercise.completionId} className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
@@ -50,24 +52,12 @@ export const ActiveExercisePanel: React.FC<ActiveExercisePanelProps> = ({
 
       {/* Prescription badges */}
       <div className="mb-6 flex flex-wrap gap-2">
-        <PrescriptionBadge
-          label={`${String(exercise.sets)} sets x ${exercise.reps}`}
-          icon={Icons.REPEAT}
-          variant="blue"
-        />
-        {hasRest && (
-          <PrescriptionBadge
-            label={`${String(exercise.restSeconds)}s rest`}
-            icon={Icons.CLOCK}
-            variant="purple"
-          />
+        <PrescriptionBadge label={prescription.setsAndReps} icon={Icons.REPEAT} variant="blue" />
+        {prescription.rest && (
+          <PrescriptionBadge label={prescription.rest} icon={Icons.CLOCK} variant="purple" />
         )}
-        {exercise.durationSeconds && (
-          <PrescriptionBadge
-            label={`${String(exercise.durationSeconds)}s`}
-            icon={Icons.CLOCK}
-            variant="green"
-          />
+        {prescription.duration && (
+          <PrescriptionBadge label={prescription.duration} icon={Icons.CLOCK} variant="green" />
         )}
       </div>
 

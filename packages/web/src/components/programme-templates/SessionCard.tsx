@@ -1,15 +1,15 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
-import type { TemplatePhaseWithSessions } from '@ffp/core';
+import type { TemplatePhaseWithSessions, UpdateSessionRequest } from '@ffp/core';
 
 import { Text } from '@web/components/atoms';
-import { Accordion } from '@web/components/molecules';
+import { Accordion, InlineFormPanel } from '@web/components/molecules';
 import { KebabMenu, DeleteConfirmModal } from '@web/components/organisms';
 import type { DropdownMenuItem } from '@web/components/organisms';
-import { fieldToNumber } from '@web/utils/form-number';
 import { reorderableItemActions } from '@web/utils/reorderable-item-actions';
 
-import { ExerciseList } from './ExerciseList';
+import { sessionToFormValues, toUpdateSessionRequest } from './session-form-values';
+import { SessionCardContent } from './SessionCardContent';
 import { SessionForm } from './SessionForm';
 
 import type { SessionFormValues } from './SessionForm';
@@ -26,15 +26,8 @@ export interface SessionCardProps {
   isFirst: boolean;
   /** Whether this is the last session in the phase (disables move down) */
   isLast: boolean;
-  /** Called when session is updated */
-  onUpdate: (
-    sessionId: string,
-    data: {
-      name?: string | null;
-      description?: string | null;
-      estimatedDurationMinutes?: number | null;
-    }
-  ) => void;
+  /** Saves the session; the form stays open, edits and all, if the promise rejects */
+  onUpdate: (sessionId: string, data: UpdateSessionRequest) => Promise<void>;
   /** Called when session is deleted */
   onDelete: (sessionId: string) => void;
   /** Called when session should move up */
@@ -81,14 +74,23 @@ export const SessionCard: React.FC<SessionCardProps> = ({
 
   const handleSubmitEdit = useCallback(
     (values: SessionFormValues) => {
-      onUpdate(session.id, {
-        name: values.name || null,
-        description: values.description || null,
-        estimatedDurationMinutes: fieldToNumber(values.estimatedDurationMinutes) ?? null,
-      });
-      setIsEditing(false);
+      const payload = toUpdateSessionRequest(values, session);
+
+      if (Object.keys(payload).length === 0) {
+        setIsEditing(false);
+
+        return;
+      }
+
+      void onUpdate(session.id, payload).then(
+        () => {
+          setIsEditing(false);
+        },
+        // The page reports the failure; the form keeps the edits for another try
+        () => undefined
+      );
     },
-    [session.id, onUpdate]
+    [session, onUpdate]
   );
 
   const handleConfirmDelete = useCallback(() => {
@@ -96,20 +98,21 @@ export const SessionCard: React.FC<SessionCardProps> = ({
     setShowDeleteConfirm(false);
   }, [session.id, onDelete]);
 
+  // Wraps at phone width, as the member programme's session card does
   const trigger = (
-    <>
-      <Text styleProps={{ size: 'sm', weight: 'medium' }} className="truncate">
+    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+      <Text styleProps={{ size: 'sm', weight: 'medium' }} className="max-w-full truncate">
         {displayName}
       </Text>
-      {session.estimatedDurationMinutes && (
-        <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
+      {session.estimatedDurationMinutes ? (
+        <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }} className="whitespace-nowrap">
           {session.estimatedDurationMinutes} min
         </Text>
-      )}
-      <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
+      ) : null}
+      <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }} className="whitespace-nowrap">
         {exerciseCount} {exerciseCount === 1 ? 'exercise' : 'exercises'}
       </Text>
-    </>
+    </div>
   );
 
   const menuItems: DropdownMenuItem[] = useMemo(
@@ -143,20 +146,16 @@ export const SessionCard: React.FC<SessionCardProps> = ({
         toggleDisabled={isEditing}
       >
         {isEditing ? (
-          <SessionForm
-            initialValues={{
-              name: session.name ?? '',
-              description: '', // Description not included in nested template detail response
-              estimatedDurationMinutes: session.estimatedDurationMinutes
-                ? String(session.estimatedDurationMinutes)
-                : '',
-            }}
-            onSubmit={handleSubmitEdit}
-            onCancel={handleCancelEdit}
-            isSubmitting={isMutating}
-          />
+          <InlineFormPanel title="Edit Session">
+            <SessionForm
+              initialValues={sessionToFormValues(session)}
+              onSubmit={handleSubmitEdit}
+              onCancel={handleCancelEdit}
+              isSubmitting={isMutating}
+            />
+          </InlineFormPanel>
         ) : (
-          <ExerciseList
+          <SessionCardContent
             sessionId={session.id}
             templateId={templateId}
             exerciseCount={exerciseCount}
@@ -172,7 +171,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
         onConfirm={handleConfirmDelete}
         isLoading={isMutating}
         title="Delete Session"
-        message="This will permanently delete this session and all exercises within it. This action cannot be undone."
+        message="This will permanently delete this session with its slots and exercises. A session that members' programmes include can't be deleted. This action cannot be undone."
       />
     </>
   );

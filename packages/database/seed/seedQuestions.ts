@@ -1,16 +1,18 @@
-import { Pool } from 'pg';
 import { eq } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../src/schema/index.js';
-import { questions } from '../src/schema/index.js';
-import { createLogger } from '../src/lib/logger.js';
+import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { type Pool } from 'pg';
+
 import {
   AGE_BRACKET_OPTIONS,
   LEVEL_QUESTION_IDS,
 } from '../src/constants/level-scoring.constants.js';
+import { createLogger } from '../src/lib/logger.js';
+import { questions } from '../src/schema/index.js';
 
+import { requireSeedId } from './requireSeedId.js';
 import { VIDEO_IDS } from './seedVideos.js';
 
+import type * as schema from '../src/schema/index.js';
 import type { NewQuestion } from '../src/schema/questions.js';
 
 const logger = createLogger('seed-questions');
@@ -322,7 +324,7 @@ const balanceCheckQuestions: NewQuestion[] = [
 /**
  * All default questions to seed
  */
-const DEFAULT_QUESTIONS: NewQuestion[] = [
+export const DEFAULT_QUESTIONS: NewQuestion[] = [
   ...aboutYouQuestions,
   ...goalsAndSafetyQuestions,
   ...gettingStartedQuestions,
@@ -351,7 +353,7 @@ export const seedQuestions = async (
   for (const question of DEFAULT_QUESTIONS) {
     // Check if question already exists (idempotency check by ID)
     const existingQuestion = await db.query.questions.findFirst({
-      where: eq(questions.id, question.id!),
+      where: eq(questions.id, requireSeedId(question, `question "${question.slug}"`)),
     });
 
     if (existingQuestion) {

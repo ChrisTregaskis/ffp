@@ -1,6 +1,7 @@
 import { getDb, type DbClient } from '@ffp/database';
 
 import { type OrganisationContext } from '../lib/context';
+import { assertDistinctIds } from '../lib/distinct-ids';
 import { ConflictError, NotFoundError, ValidationError } from '../lib/errors';
 import * as questionRepository from '../questions/question.repository';
 import {
@@ -8,7 +9,7 @@ import {
   reorderTemplateQuestionsSchema,
 } from '../schemas/assessment-template.schema';
 
-import { assertDistinctPublicIds, resolveOrderedChildIds } from './child-payload';
+import { resolveOrderedChildIds } from './child-payload';
 import * as templateRepository from './template.repository';
 import { resolveTemplate } from './template.service';
 
@@ -63,7 +64,7 @@ export async function assignQuestionsService(
 
   const { questionPublicIds } = parseResult.data;
 
-  assertDistinctPublicIds(questionPublicIds, 'Question');
+  assertDistinctIds(questionPublicIds, 'Question');
 
   const db = getDb();
   const template = await resolveTemplate(db, templatePublicId);

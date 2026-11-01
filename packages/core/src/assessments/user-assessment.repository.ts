@@ -1,8 +1,18 @@
-import { eq, and, or, desc, sql } from 'drizzle-orm';
+import { eq, and, or, asc, desc, gt, inArray, sql } from 'drizzle-orm';
 
-import type { UserAssessmentStatus } from '@ffp/database';
-import { userAssessments, type UserAssessmentRecord } from '@ffp/database/schema';
-import type { UserAssessmentScores } from '@ffp/database/types';
+import {
+  ABANDONABLE_STATUSES,
+  setAdminContext,
+  setRLSContext,
+  type DbClient,
+  type UserAssessmentStatus,
+} from '@ffp/database';
+import {
+  flowSteps,
+  organisations,
+  userAssessments,
+  type UserAssessmentRecord,
+} from '@ffp/database/schema';
 
 import { withRLS, type Transaction } from '../lib/database';
 import { NotFoundError, ValidationError } from '../lib/errors';
@@ -30,23 +40,39 @@ export interface TransitionAssessmentStatusOptions {
   tx?: Transaction;
 }
 
+export interface FindUserAssessmentOptions {
+  /** Optional user ID for fine-grained RLS */
+  userId?: string;
+  /** A caller's transaction, which already carries its RLS context */
+  tx?: Transaction;
+}
+
 export interface AppendWarningsOptions {
   /** Optional transaction for atomic operations */
   tx?: Transaction;
 }
 
-/** Creates an assessment instance in 'not_started' status. */
+/**
+ * Creates an assessment instance in 'not_started' status, at the flow's first active step: an
+ * earlier delete can have left no active step at order 1. A flow with no active step starts
+ * at 1, as there is no step to start on.
+ */
 export async function createUserAssessment(
   input: CreateUserAssessmentInput
 ): Promise<UserAssessment> {
   return await withRLS(input.organisationId, input.userId, async (tx) => {
+    const firstActiveStep = tx
+      .select({ order: sql<number>`coalesce(min(${flowSteps.order}), 1)` })
+      .from(flowSteps)
+      .where(and(eq(flowSteps.flowId, input.flowId), eq(flowSteps.isActive, true)));
+
     const [record] = await tx
       .insert(userAssessments)
       .values({
         organisationId: input.organisationId,
         userId: input.userId,
         flowId: input.flowId,
-        currentStep: 1,
+        currentStep: sql`(${firstActiveStep})`,
         status: 'not_started',
       })
       .returning();
@@ -58,71 +84,50 @@ export async function createUserAssessment(
 export async function findUserAssessmentById(
   organisationId: string,
   assessmentId: string,
-  userId?: string
+  options: FindUserAssessmentOptions = {}
 ): Promise<UserAssessment | null> {
-  return await withRLS(organisationId, userId, async (tx) => {
+  const doQuery = async (tx: Transaction): Promise<UserAssessment | null> => {
     const records = await tx
       .select()
       .from(userAssessments)
       .where(eq(userAssessments.id, assessmentId))
       .limit(1);
 
-    if (records.length === 0) {
-      return null;
-    }
+    return records[0] ?? null;
+  };
 
-    return records[0];
-  });
+  if (options.tx) {
+    return await doQuery(options.tx);
+  }
+
+  return await withRLS(organisationId, options.userId, doQuery);
 }
 
-export async function findByUserId(
+/**
+ * The first assessment linked to a programme, whose answers shaped it. A retake links a later
+ * assessment to the same, unchanged programme.
+ */
+export async function findFirstAssessmentForProgramme(
   organisationId: string,
-  userId: string,
-  options?: { status?: UserAssessmentStatus }
-): Promise<UserAssessment[]> {
-  return await withRLS(organisationId, userId, async (tx) => {
-    const conditions = [eq(userAssessments.userId, userId)];
-
-    if (options?.status) {
-      conditions.push(eq(userAssessments.status, options.status));
-    }
-
-    const records = await tx
-      .select()
-      .from(userAssessments)
-      .where(and(...conditions));
-
-    return records;
-  });
-}
-
-export async function findAssessmentInProgress(
-  organisationId: string,
-  userId: string,
-  flowId?: string
+  programmeId: string,
+  options: FindUserAssessmentOptions = {}
 ): Promise<UserAssessment | null> {
-  return await withRLS(organisationId, userId, async (tx) => {
-    const conditions = [
-      eq(userAssessments.userId, userId),
-      eq(userAssessments.status, 'in_progress'),
-    ];
-
-    if (flowId) {
-      conditions.push(eq(userAssessments.flowId, flowId));
-    }
-
+  const doQuery = async (tx: Transaction): Promise<UserAssessment | null> => {
     const records = await tx
       .select()
       .from(userAssessments)
-      .where(and(...conditions))
+      .where(eq(userAssessments.programmeId, programmeId))
+      .orderBy(asc(userAssessments.createdAt), asc(userAssessments.id))
       .limit(1);
 
-    if (records.length === 0) {
-      return null;
-    }
+    return records[0] ?? null;
+  };
 
-    return records[0];
-  });
+  if (options.tx) {
+    return await doQuery(options.tx);
+  }
+
+  return await withRLS(organisationId, options.userId, doQuery);
 }
 
 /** Returns an existing assessment that can be resumed (not_started or in_progress). */
@@ -202,7 +207,7 @@ export async function abandonInProgressAssessments(
         and(
           eq(userAssessments.userId, userId),
           eq(userAssessments.flowId, flowId),
-          or(eq(userAssessments.status, 'not_started'), eq(userAssessments.status, 'in_progress'))
+          inArray(userAssessments.status, ABANDONABLE_STATUSES)
         )
       )
       .returning({ id: userAssessments.id });
@@ -348,74 +353,6 @@ export async function transitionAssessmentStatus(
   });
 }
 
-/**
- * Called after scoring job completes.
- * Typically followed by transitionStatus to 'scored'.
- */
-export async function updateAssessmentScores(
-  organisationId: string,
-  assessmentId: string,
-  scores: UserAssessmentScores,
-  userId?: string
-): Promise<UserAssessment> {
-  return await withRLS(organisationId, userId, async (tx) => {
-    const existing = await tx
-      .select()
-      .from(userAssessments)
-      .where(eq(userAssessments.id, assessmentId))
-      .limit(1);
-
-    if (existing.length === 0) {
-      throw new NotFoundError('User assessment', assessmentId);
-    }
-
-    const [record] = await tx
-      .update(userAssessments)
-      .set({
-        scores,
-        updatedAt: new Date(),
-      })
-      .where(eq(userAssessments.id, assessmentId))
-      .returning();
-
-    return record;
-  });
-}
-
-/**
- * Called after programme generation job completes.
- * Typically followed by transitionStatus to 'completed'.
- */
-export async function linkAssessmentToProgramme(
-  organisationId: string,
-  assessmentId: string,
-  programmeId: string,
-  userId?: string
-): Promise<UserAssessment> {
-  return await withRLS(organisationId, userId, async (tx) => {
-    const existing = await tx
-      .select()
-      .from(userAssessments)
-      .where(eq(userAssessments.id, assessmentId))
-      .limit(1);
-
-    if (existing.length === 0) {
-      throw new NotFoundError('User assessment', assessmentId);
-    }
-
-    const [record] = await tx
-      .update(userAssessments)
-      .set({
-        programmeId,
-        updatedAt: new Date(),
-      })
-      .where(eq(userAssessments.id, assessmentId))
-      .returning();
-
-    return record;
-  });
-}
-
 /** Append warnings to an assessment's warnings_shown array */
 export async function appendAssessmentWarnings(
   organisationId: string,
@@ -496,4 +433,46 @@ export async function acknowledgeSafetyAdvice(
 
     return records[0];
   });
+}
+
+/** A transaction opened on the shared client (`getDb().transaction`). */
+type DbTransaction = Parameters<Parameters<DbClient['transaction']>[0]>[0];
+
+/**
+ * Move every open assessment on a flow stored after `order` back one step, in every
+ * organisation, once the steps after a removed step have moved down one order, so each member
+ * stays on the step they were on. Runs in the caller's transaction.
+ *
+ * `user_assessments` has no admin bypass, so organisations are listed through the one
+ * `organisations` has, then each organisation's rows are updated under its own RLS context.
+ * The organisation filter repeats the policy, so the write stays inside one organisation even
+ * where RLS isn't forced. One statement per organisation: fine at today's scale, but an
+ * admin-only route through a single statement would need a policy or function by migration.
+ * The caller must hold no organisation context, as it is cleared afterwards.
+ */
+export async function shiftOpenAssessmentsBack(
+  tx: DbTransaction,
+  flowId: string,
+  order: number
+): Promise<void> {
+  await setAdminContext(tx);
+  const organisationRows = await tx.select({ id: organisations.id }).from(organisations);
+  await tx.execute(sql`SELECT set_config('app.is_admin', 'false', true)`);
+
+  for (const { id: organisationId } of organisationRows) {
+    await setRLSContext(tx, organisationId);
+    await tx
+      .update(userAssessments)
+      .set({ currentStep: sql`${userAssessments.currentStep} - 1`, updatedAt: new Date() })
+      .where(
+        and(
+          eq(userAssessments.organisationId, organisationId),
+          eq(userAssessments.flowId, flowId),
+          inArray(userAssessments.status, ['not_started', 'in_progress']),
+          gt(userAssessments.currentStep, order)
+        )
+      );
+  }
+
+  await tx.execute(sql`SELECT set_config('app.organisation_id', '', true)`);
 }

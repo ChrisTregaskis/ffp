@@ -8,6 +8,8 @@ import {
   ValidationError,
 } from '@ffp/core/server';
 
+import { parseJsonBody } from '../lib/request-body';
+
 /**
  * Lambda handler for PUT /assessments/:id/progress
  *
@@ -29,7 +31,7 @@ export const handler = withErrorHandling(
     assertUuidOrNotFound(assessmentId, 'Assessment');
 
     // Parse and validate request body
-    const body = JSON.parse(event.body ?? '{}') as unknown;
+    const body = parseJsonBody(event.body);
     const input = saveProgressRequestSchema.parse(body);
 
     // Save progress via service

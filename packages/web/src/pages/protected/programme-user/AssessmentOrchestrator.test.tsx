@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -87,6 +87,32 @@ describe('AssessmentOrchestrator', () => {
     expect(startMutate).toHaveBeenCalledWith(variables);
   });
 
+  it('shows the server’s own words when it refuses the start, and still offers to try again', () => {
+    const refusal = new ApiError(409, 'CONFLICT', 'This assessment has no steps to show yet');
+    mocks.useStartAssessment.mockReturnValue(
+      mutation(startMutate, { isError: true, error: refusal })
+    );
+
+    renderOrchestrator();
+
+    expect(screen.getByText('This assessment has no steps to show yet')).toBeTruthy();
+    expect(screen.queryByText("We couldn't load your assessment just now.")).toBeNull();
+    // Steps an admin adds later let a retry through, and home would lead straight back here
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
+  });
+
+  it('keeps its own words when the start fails on the server', () => {
+    const failure = new ApiError(500, 'INTERNAL_SERVER_ERROR', 'An unexpected error occurred');
+    mocks.useStartAssessment.mockReturnValue(
+      mutation(startMutate, { isError: true, error: failure })
+    );
+
+    renderOrchestrator();
+
+    expect(screen.getByText("We couldn't load your assessment just now.")).toBeTruthy();
+    expect(screen.queryByText('An unexpected error occurred')).toBeNull();
+  });
+
   it('offers to fetch the questions again when they fail to load', async () => {
     mocks.useAssessmentTemplateQuery.mockReturnValue({
       data: undefined,
@@ -114,7 +140,7 @@ describe('AssessmentOrchestrator', () => {
     });
   });
 
-  it('takes the member back to a refused answer instead of the failure screen', () => {
+  it('takes the member back to a refused answer instead of the failure screen', async () => {
     const questionId = '3ad90ada-14f9-4883-a502-56dc6cf73ab1';
     const refusal = new ApiError(400, 'VALIDATION_ERROR', 'Some answers need your attention', [
       { path: `answers.${questionId}`, code: 'required', message: 'Please answer this question.' },
@@ -129,6 +155,10 @@ describe('AssessmentOrchestrator', () => {
 
     expect(mocks.showRefusedAnswers).toHaveBeenCalledWith({
       [questionId]: 'Please answer this question.',
+    });
+    // Judge the screen only once the refusal has been shown and its outcome has landed
+    await act(async () => {
+      await mocks.showRefusedAnswers.mock.results.at(-1)?.value;
     });
     expect(screen.queryByText("We couldn't send your answers just now.")).toBeNull();
     expect(screen.getByText('Step')).toBeTruthy();
@@ -148,5 +178,42 @@ describe('AssessmentOrchestrator', () => {
     renderOrchestrator();
 
     expect(await screen.findByText("We couldn't send your answers just now.")).toBeTruthy();
+  });
+
+  it('shows the server’s own words for a refusal naming no question', () => {
+    const refusal = new ApiError(
+      400,
+      'VALIDATION_ERROR',
+      'Please answer the questions before you submit your assessment.'
+    );
+    mocks.useSubmitAssessment.mockReturnValue(
+      mutation(submitMutate, { isError: true, error: refusal })
+    );
+
+    renderOrchestrator();
+
+    expect(
+      screen.getByText('Please answer the questions before you submit your assessment.')
+    ).toBeTruthy();
+    expect(screen.queryByText("We couldn't send your answers just now.")).toBeNull();
+  });
+
+  it('leads back to the questions from a worded refusal rather than sending the answers again', async () => {
+    const refusal = new ApiError(
+      400,
+      'VALIDATION_ERROR',
+      'Please answer the questions before you submit your assessment.'
+    );
+    const reset = vi.fn();
+    mocks.useSubmitAssessment.mockReturnValue({
+      ...mutation(submitMutate, { isError: true, error: refusal }),
+      reset,
+    });
+
+    renderOrchestrator();
+    await userEvent.click(screen.getByRole('button', { name: 'Back to the questions' }));
+
+    expect(reset).toHaveBeenCalledTimes(1);
+    expect(submitMutate).not.toHaveBeenCalled();
   });
 });

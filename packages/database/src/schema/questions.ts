@@ -9,9 +9,10 @@ import {
   index,
   pgEnum,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+
 import { QUESTION_TYPES, SCORE_DIMENSIONS } from '../constants/question.constants';
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
 import type { QuestionOption, QuestionValidation } from '../types';
 
 export const questionTypeEnum = pgEnum('question_type', [...QUESTION_TYPES]);
@@ -63,7 +64,5 @@ export const questions = pgTable(
   ]
 );
 
-export const insertQuestionSchema = createInsertSchema(questions);
-export const selectQuestionSchema = createSelectSchema(questions);
 export type QuestionRecord = typeof questions.$inferSelect;
 export type NewQuestion = typeof questions.$inferInsert;

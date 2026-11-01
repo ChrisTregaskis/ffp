@@ -6,7 +6,7 @@
  * - BaseError instances are converted to proper HTTP responses
  * - ZodError instances are converted to validation errors (400)
  * - Unexpected errors are converted to 500 responses
- * - Sensitive data is sanitised in logs
+ * - Failure logs describe the request by its shape, never its values
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -16,6 +16,14 @@ import { type APIGatewayProxyEventV2WithJWT } from '../../src/lib/context';
 import { UnauthorisedError, ValidationError, NotFoundError } from '../../src/lib/errors';
 import { withErrorHandling } from '../../src/lib/lambda-wrapper';
 
+import { createMockEvent } from './api-gateway-event.fixture';
+import {
+  LEAKABLE,
+  drizzleConnectionError,
+  drizzleDriverError,
+  expectNothingLeakable,
+} from './database-error.fixture';
+
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 
 // Type for the error log structure
@@ -23,7 +31,7 @@ interface ErrorLogData {
   error: string;
   stack?: string;
   requestId?: string;
-  event: unknown;
+  request: unknown;
 }
 
 // Helper to assert result is an object (not string) with required body
@@ -42,42 +50,6 @@ function assertIsObject(
   if (!('body' in result) || typeof result.body !== 'string') {
     throw new Error('Expected result to have string body');
   }
-}
-
-// Helper to create a minimal valid API Gateway V2 event for testing
-// Note: Returns a base v2 event without JWT authorizer (for unauthenticated tests)
-function createMockEvent(
-  overrides?: Partial<APIGatewayProxyEventV2WithJWT>
-): APIGatewayProxyEventV2WithJWT {
-  const defaultEvent = {
-    version: '2.0',
-    routeKey: 'ANY /{proxy+}',
-    rawPath: '/',
-    rawQueryString: '',
-    headers: {},
-    requestContext: {
-      accountId: '123456789012',
-      apiId: 'test-api',
-      domainName: 'test.execute-api.eu-west-2.amazonaws.com',
-      domainPrefix: 'test',
-      requestId: 'test-request-id',
-      routeKey: 'ANY /{proxy+}',
-      stage: '$default',
-      time: new Date().toISOString(),
-      timeEpoch: Date.now(),
-      http: {
-        method: 'GET',
-        path: '/',
-        protocol: 'HTTP/1.1',
-        sourceIp: '127.0.0.1',
-        userAgent: 'test-agent',
-      },
-    },
-    isBase64Encoded: false,
-  };
-
-  // Cast to allow tests without JWT (will throw UnauthorizedError when context extraction fails)
-  return { ...defaultEvent, ...overrides } as APIGatewayProxyEventV2WithJWT;
 }
 
 describe('withErrorHandling', () => {
@@ -313,21 +285,9 @@ describe('withErrorHandling', () => {
   });
 
   describe('database driver error handling', () => {
-    /** Drizzle wraps the `pg` error, putting the failed SQL in the message. */
-    const wrappedDriverError = (code: string, constraint?: string): Error =>
-      Object.assign(
-        new Error('Failed query: insert into "questions" ...\nparams: alice@example.com'),
-        {
-          cause: Object.assign(new Error('duplicate key value violates unique constraint'), {
-            code,
-            constraint,
-          }),
-        }
-      );
-
     it('should map a unique violation to 409', async () => {
       const handler = withErrorHandling(() => {
-        throw wrappedDriverError('23505', 'questions_slug_unique');
+        throw drizzleDriverError({ code: '23505', constraint: 'questions_slug_unique' });
       });
 
       const event = createMockEvent();
@@ -343,7 +303,7 @@ describe('withErrorHandling', () => {
 
     it('should not disclose the constraint name or the query to the caller', async () => {
       const handler = withErrorHandling(() => {
-        throw wrappedDriverError('23505', 'users_email_unique');
+        throw drizzleDriverError({ code: '23505', constraint: 'users_email_unique' });
       });
 
       const event = createMockEvent();
@@ -354,12 +314,74 @@ describe('withErrorHandling', () => {
 
       expect(result.body).not.toContain('users_email_unique');
       expect(result.body).not.toContain('insert into');
-      expect(result.body).not.toContain('alice@example.com');
+      expect(result.body).not.toContain(LEAKABLE.param);
+    });
+
+    it('should log a unique violation by SQLSTATE and constraint, not the query or its parameters', async () => {
+      const handler = withErrorHandling(() => {
+        throw drizzleDriverError({ code: '23505', constraint: 'users_email_unique' });
+      });
+
+      const event = createMockEvent();
+      event.requestContext.requestId = '';
+
+      await handler(event);
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Lambda error:',
+        expect.objectContaining({
+          error: 'Database driver error',
+          database: { sqlState: '23505', constraint: 'users_email_unique' },
+        })
+      );
+      const logged = JSON.stringify(consoleErrorSpy.mock.calls);
+      expect(logged).not.toContain('insert into');
+      expect(logged).not.toContain(LEAKABLE.param);
+    });
+
+    it('should log a foreign-key violation without its query, parameters, detail or stack', async () => {
+      const handler = withErrorHandling(() => {
+        throw drizzleDriverError({ code: '23503', constraint: 'questions_video_id_fkey' });
+      });
+
+      await handler(createMockEvent());
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Lambda error:',
+        expect.objectContaining({
+          error: 'Database driver error',
+          errorClass: 'DrizzleQueryError',
+          database: { sqlState: '23503', constraint: 'questions_video_id_fkey' },
+          stack: undefined,
+        })
+      );
+      expectNothingLeakable(JSON.stringify(consoleErrorSpy.mock.calls));
+    });
+
+    it('should log a query whose connection reset by the cause, without the query or its parameters', async () => {
+      const handler = withErrorHandling(() => {
+        throw drizzleConnectionError('ECONNRESET');
+      });
+
+      const result = await handler(createMockEvent());
+      assertIsObject(result);
+
+      expect(result.statusCode).toBe(500);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Lambda error:',
+        expect.objectContaining({
+          error: 'Database query failed',
+          errorClass: 'DrizzleQueryError',
+          cause: { errorClass: 'Error', code: 'ECONNRESET' },
+          stack: undefined,
+        })
+      );
+      expectNothingLeakable(JSON.stringify(consoleErrorSpy.mock.calls));
     });
 
     it('should leave another SQLSTATE on the 500 path with a sanitised message', async () => {
       const handler = withErrorHandling(() => {
-        throw wrappedDriverError('23503', 'questions_video_id_fkey');
+        throw drizzleDriverError({ code: '23503', constraint: 'questions_video_id_fkey' });
       });
 
       const event = createMockEvent();
@@ -374,7 +396,7 @@ describe('withErrorHandling', () => {
         error: 'INTERNAL_SERVER_ERROR',
         message: 'An unexpected error occurred',
       });
-      expect(result.body).not.toContain('alice@example.com');
+      expect(result.body).not.toContain(LEAKABLE.param);
     });
   });
 
@@ -396,126 +418,72 @@ describe('withErrorHandling', () => {
       );
     });
 
-    it('should sanitise authorization headers in logs', async () => {
+    const loggedRequest = (): unknown => (consoleErrorSpy.mock.calls[0][1] as ErrorLogData).request;
+
+    it('logs the method, the path and the body and query keys, but none of their values', async () => {
       const handler = withErrorHandling(() => {
         throw new Error('Test');
       });
-
       const event = createMockEvent({
-        headers: {
-          authorization: 'Bearer secret-token',
-          'Content-Type': 'application/json',
-        },
-      });
-
-      await handler(event);
-
-      const loggedData = consoleErrorSpy.mock.calls[0][1] as ErrorLogData;
-      const loggedEvent = loggedData.event as {
-        headers: Record<string, string>;
-      };
-      expect(loggedEvent.headers.authorization).toBe('[REDACTED]');
-      expect(loggedEvent.headers['Content-Type']).toBe('application/json');
-    });
-
-    it('should sanitise password fields in request body', async () => {
-      const handler = withErrorHandling(() => {
-        throw new Error('Test');
-      });
-
-      const event = createMockEvent({
+        rawPath: '/auth/login',
+        rawQueryString: 'email=sentinel.query%40example.com',
+        queryStringParameters: { email: 'sentinel.query@example.com' },
         body: JSON.stringify({
-          email: 'user@example.com',
-          password: 'secret-password',
+          email: 'sentinel.member@example.com',
+          password: 'sentinel-password',
         }),
       });
+      event.requestContext.http.method = 'POST';
 
       await handler(event);
 
-      const loggedData = consoleErrorSpy.mock.calls[0][1] as ErrorLogData;
-      const loggedEvent = loggedData.event as { body: string };
-      const loggedBody = JSON.parse(loggedEvent.body) as {
-        email: string;
-        password: string;
-      };
-      expect(loggedBody.password).toBe('[REDACTED]');
-      expect(loggedBody.email).toBe('user@example.com');
+      expect(loggedRequest()).toEqual({
+        method: 'POST',
+        path: '/auth/login',
+        queryKeys: ['email'],
+        body: { type: 'object', keys: ['email', 'password'] },
+      });
+      expect(JSON.stringify(consoleErrorSpy.mock.calls)).not.toContain('sentinel');
     });
 
-    it('should sanitise refresh tokens in request body', async () => {
+    it('logs no header, so a bearer token never reaches the log', async () => {
       const handler = withErrorHandling(() => {
         throw new Error('Test');
       });
 
-      const event = createMockEvent({
-        body: JSON.stringify({
-          refreshToken: 'secret-refresh-token',
-        }),
-      });
+      await handler(
+        createMockEvent({
+          headers: { authorization: 'Bearer sentinel-token', cookie: 'session=sentinel-cookie' },
+        })
+      );
 
-      await handler(event);
-
-      const loggedData = consoleErrorSpy.mock.calls[0][1] as ErrorLogData;
-      const loggedEvent = loggedData.event as { body: string };
-      const loggedBody = JSON.parse(loggedEvent.body) as {
-        refreshToken: string;
-      };
-      expect(loggedBody.refreshToken).toBe('[REDACTED]');
+      expect(JSON.stringify(consoleErrorSpy.mock.calls)).not.toContain('sentinel');
     });
 
-    it('should handle malformed JSON body gracefully', async () => {
+    it('logs a body that is not JSON by its length, not its text', async () => {
       const handler = withErrorHandling(() => {
         throw new Error('Test');
       });
 
-      const event = createMockEvent({
-        body: 'invalid json{',
+      await handler(createMockEvent({ body: 'sentinel{' }));
+
+      expect(loggedRequest()).toEqual({
+        method: 'GET',
+        path: '/',
+        queryKeys: [],
+        body: { type: 'unparseable', length: 9 },
       });
-
-      await handler(event);
-
-      const loggedData = consoleErrorSpy.mock.calls[0][1] as ErrorLogData;
-      const loggedEvent = loggedData.event as { body: string };
-      expect(loggedEvent.body).toBe('invalid json{');
+      expect(JSON.stringify(consoleErrorSpy.mock.calls)).not.toContain('sentinel');
     });
-    it('should sanitise additional sensitive fields (accessToken, idToken, secret, apiKey)', async () => {
-      const handler = withErrorHandling(() => {
-        throw new Error('Test');
-      });
 
-      const event = createMockEvent({
-        body: JSON.stringify({
-          email: 'user@example.com',
-          accessToken: 'secret-access-token',
-          idToken: 'secret-id-token',
-          secret: 'my-secret-key',
-          apiKey: 'my-api-key',
-          publicData: 'visible-data',
-        }),
-      });
+    it("withholds a JSON syntax error's message, which quotes the body it failed on", async () => {
+      const body = '{"email": "sentinel.member@example.com", "password": sentinel}';
+      const handler = withErrorHandling(() => Promise.resolve(JSON.parse(body) as unknown));
 
-      await handler(event);
+      await handler(createMockEvent({ body }));
 
-      const loggedData = consoleErrorSpy.mock.calls[0][1] as ErrorLogData;
-      const loggedEvent = loggedData.event as { body: string };
-      const loggedBody = JSON.parse(loggedEvent.body) as {
-        email: string;
-        accessToken: string;
-        idToken: string;
-        secret: string;
-        apiKey: string;
-        publicData: string;
-      };
-
-      // All sensitive fields should be redacted
-      expect(loggedBody.accessToken).toBe('[REDACTED]');
-      expect(loggedBody.idToken).toBe('[REDACTED]');
-      expect(loggedBody.secret).toBe('[REDACTED]');
-      expect(loggedBody.apiKey).toBe('[REDACTED]');
-
-      // Non-sensitive fields should remain
-      expect(loggedBody.email).toBe('user@example.com');
-      expect(loggedBody.publicData).toBe('visible-data');
+      expect(consoleErrorSpy.mock.calls[0][1]).toMatchObject({ errorClass: 'SyntaxError' });
+      expect(JSON.stringify(consoleErrorSpy.mock.calls)).not.toContain('sentinel');
     });
   });
 
@@ -706,9 +674,111 @@ describe('withErrorHandling', () => {
       expect(errorLog.context?.errorType).toBe('VALIDATION_ERROR');
     });
 
-    it('should include actor information in structured logs', async () => {
+    const loggedEntries = (): {
+      message: string;
+      requestId: string;
+      context?: Record<string, unknown>;
+    }[] =>
+      consoleLogSpy.mock.calls.map(
+        (call) =>
+          JSON.parse(call[0] as string) as {
+            message: string;
+            requestId: string;
+            context?: Record<string, unknown>;
+          }
+      );
+
+    const failureContext = (): Record<string, unknown> | undefined =>
+      loggedEntries().find((entry) => entry.message === 'Request failed')?.context;
+
+    it("logs no email, name or answer from a failed request's body or query, only their keys", async () => {
       const handler = withErrorHandling(() => {
-        return Promise.resolve({ success: true });
+        throw new ValidationError('Some answers need your attention');
+      });
+      const questionId = '6f1c2a90-4b7e-4c55-9d1a-3e2f8b7c6d5e';
+
+      await handler({
+        ...createAuthenticatedEvent({ path: '/admin/users', httpMethod: 'POST' }),
+        rawQueryString: 'search=Sentinelname',
+        queryStringParameters: { search: 'Sentinelname' },
+        headers: { authorization: 'Bearer sentinel-bearer-token' },
+        body: JSON.stringify({
+          email: 'sentinel.member@example.com',
+          firstName: 'Sentinelname',
+          answers: { [questionId]: { questionId, answerValue: 'sentinel free-text answer' } },
+        }),
+      });
+
+      const failure = loggedEntries().find((entry) => entry.message === 'Request failed');
+      expect(failure).toMatchObject({
+        requestId: 'test-request-id',
+        context: {
+          error: 'Some answers need your attention',
+          errorType: 'VALIDATION_ERROR',
+          request: {
+            method: 'POST',
+            path: '/admin/users',
+            queryKeys: ['search'],
+            body: { type: 'object', keys: ['email', 'firstName', 'answers'] },
+          },
+        },
+      });
+      expect(JSON.stringify(consoleLogSpy.mock.calls).toLowerCase()).not.toContain('sentinel');
+    });
+
+    it('should log a unique violation on an authenticated request without the query or its parameters', async () => {
+      const handler = withErrorHandling(() => {
+        throw drizzleDriverError({ code: '23505', constraint: 'users_email_unique' });
+      });
+
+      await handler(createAuthenticatedEvent());
+
+      expect(failureContext()).toMatchObject({
+        error: 'Database driver error',
+        database: { sqlState: '23505', constraint: 'users_email_unique' },
+      });
+      const logged = JSON.stringify(consoleLogSpy.mock.calls);
+      expect(logged).not.toContain('insert into');
+      expect(logged).not.toContain(LEAKABLE.param);
+    });
+
+    it('should log a foreign-key violation on an authenticated request without its query, parameters, detail or stack', async () => {
+      const handler = withErrorHandling(() => {
+        throw drizzleDriverError({ code: '23503', constraint: 'questions_video_id_fkey' });
+      });
+
+      await handler(createAuthenticatedEvent());
+
+      const context = failureContext();
+      expect(context).toMatchObject({
+        error: 'Database driver error',
+        errorClass: 'DrizzleQueryError',
+        database: { sqlState: '23503', constraint: 'questions_video_id_fkey' },
+      });
+      expect(context).not.toHaveProperty('stack');
+      expectNothingLeakable(JSON.stringify(consoleLogSpy.mock.calls));
+    });
+
+    it('should log a query whose connection dropped on an authenticated request without the query or its parameters', async () => {
+      const handler = withErrorHandling(() => {
+        throw drizzleConnectionError();
+      });
+
+      await handler(createAuthenticatedEvent());
+
+      const context = failureContext();
+      expect(context).toMatchObject({
+        error: 'Database query failed',
+        errorClass: 'DrizzleQueryError',
+        cause: { errorClass: 'Error' },
+      });
+      expect(context).not.toHaveProperty('stack');
+      expectNothingLeakable(JSON.stringify(consoleLogSpy.mock.calls));
+    });
+
+    it('names the actor by Cognito sub and role, and logs no email on any line', async () => {
+      const handler = withErrorHandling(() => {
+        throw new Error('Unexpected failure');
       });
 
       const event = createAuthenticatedEvent();
@@ -719,8 +789,9 @@ describe('withErrorHandling', () => {
         organisationId: string;
       };
 
-      expect(startLog.actor).toBe('test@example.com (customer_owner)');
+      expect(startLog.actor).toBe('user-123 (customer_owner)');
       expect(startLog.organisationId).toBe('org-456');
+      expect(JSON.stringify(consoleLogSpy.mock.calls)).not.toContain('test@example.com');
     });
 
     it('should fall back to console.error for unauthenticated requests', async () => {

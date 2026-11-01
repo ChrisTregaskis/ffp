@@ -28,7 +28,7 @@ export const toLocationFormValues = (location: LocationDetailResponse): Location
   status: location.status,
 });
 
-/** The address from the form, or undefined when every field is blank. */
+/** The address from the form, or null when every field is blank so the stored one is cleared. */
 const toAddress = (values: LocationFormValues): UpdateLocationInput['address'] => {
   const address = {
     line1: values.addressLine1 || undefined,
@@ -41,7 +41,7 @@ const toAddress = (values: LocationFormValues): UpdateLocationInput['address'] =
 
   const hasValues = Object.values(address).some((v) => v !== undefined);
 
-  return hasValues ? address : undefined;
+  return hasValues ? address : null;
 };
 
 /** Only the fields that differ from the stored location; an empty object means nothing changed. */
@@ -74,3 +74,9 @@ export const toUpdateLocationInput = (
 
   return payload;
 };
+
+/** An edit that takes the location out of use, which the page confirms before saving */
+export const deactivatesLocation = (
+  values: LocationFormValues,
+  location: LocationDetailResponse
+): boolean => toUpdateLocationInput(values, location).status === 'inactive';

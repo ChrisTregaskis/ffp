@@ -1,9 +1,10 @@
 import { getDb, type AnswerValue, type DbClient } from '@ffp/database';
 
-import { queueJob } from '../jobs/job-queue.service';
+import { hasProgrammeGenerationFailed, queueJob } from '../jobs/job-queue.service';
 import { getUserIdFromContext } from '../lib/context';
 import { withRLS, type Transaction } from '../lib/database';
-import { InternalServerError, NotFoundError, ValidationError } from '../lib/errors';
+import { ConflictError, InternalServerError, NotFoundError, ValidationError } from '../lib/errors';
+import { describeShapeForLog } from '../lib/log-safe-error';
 import { createSystemLogger } from '../lib/logger';
 import { programmeRepository } from '../programmes';
 import { findSlugsByIds } from '../questions/question.repository';
@@ -33,6 +34,7 @@ import type { UserAssessment } from './user-assessment.repository';
 import type { OrganisationContext } from '../lib/context';
 import type {
   AssessmentResultsResponse,
+  ProgrammeReadiness,
   FlowStepSummary,
   SafetyGate,
   StartAssessmentResponse,
@@ -55,7 +57,7 @@ function convertAnswersToResponseFormat(answers: UserAssessmentAnswer[]): UserAs
 
   for (const answer of answers) {
     // Extract the value from the JSONB structure using the shared helper
-    const answerValue = extractAnswerValue(answer.answerValue);
+    const answerValue = extractAnswerValue(answer.questionId, answer.answerValue);
 
     result[answer.questionId] = {
       questionId: answer.questionId,
@@ -108,7 +110,10 @@ async function writeAnswerChanges(
 
 function toStoredValuesById(answers: UserAssessmentAnswer[]): Map<string, AnswerValue> {
   return new Map(
-    answers.map((answer) => [answer.questionId, extractAnswerValue(answer.answerValue)])
+    answers.map((answer) => [
+      answer.questionId,
+      extractAnswerValue(answer.questionId, answer.answerValue),
+    ])
   );
 }
 
@@ -125,7 +130,9 @@ async function findOwnAssessment(
   const assessment = await userAssessmentRepository.findUserAssessmentById(
     organisationId,
     assessmentId,
-    userId
+    {
+      userId,
+    }
   );
 
   if (!assessment || assessment.userId !== userId) {
@@ -196,13 +203,35 @@ function convertStepsToSummaryFormat(steps: FlowStepWithConfig[]): FlowStepSumma
   }));
 }
 
+const UNREADABLE_STORED_ANSWER_MESSAGE =
+  "We couldn't load one of your earlier answers. Please contact the team that invited you.";
+
+/**
+ * Refuse a stored answer in a shape the service cannot read. Only stored answers come here, and
+ * the refusal reaches the member on start, save and submit, so it is worded for them; the
+ * reason goes to the log with the value's shape, never the value.
+ */
+function unreadableStoredAnswer(
+  questionId: string,
+  answerValue: unknown,
+  reason: string
+): ValidationError {
+  systemLogger.warn('A stored answer could not be read', {
+    questionId,
+    reason,
+    answerShape: describeShapeForLog(answerValue),
+  });
+
+  return new ValidationError(UNREADABLE_STORED_ANSWER_MESSAGE);
+}
+
 /**
  * Extract the answer value from database JSONB
  *
  * Values are stored directly as string, number, boolean, or string[] (for multi-select).
  * Also handles legacy wrapped formats for backwards compatibility.
  */
-function extractAnswerValue(answerValue: unknown): AnswerValue {
+function extractAnswerValue(questionId: string, answerValue: unknown): AnswerValue {
   // Handle direct primitive values (current format)
   if (
     typeof answerValue === 'string' ||
@@ -218,9 +247,7 @@ function extractAnswerValue(answerValue: unknown): AnswerValue {
       return answerValue;
     }
 
-    systemLogger.warn('Array contains non-string values', { answerValue });
-
-    throw new ValidationError('Invalid answer value format: array contains non-string values');
+    throw unreadableStoredAnswer(questionId, answerValue, 'array contains non-string values');
   }
 
   // Handle legacy wrapped formats: { value: ... }, { selected: ... }, { text: ... }
@@ -239,15 +266,13 @@ function extractAnswerValue(answerValue: unknown): AnswerValue {
       return obj.text;
     }
 
-    systemLogger.warn('Unexpected answer value structure', { answerValue, keys: Object.keys(obj) });
-
-    throw new ValidationError('Invalid answer value format: unrecognised object structure');
+    throw unreadableStoredAnswer(questionId, answerValue, 'unrecognised object structure');
   }
 
-  systemLogger.warn('Unexpected answer value type', { answerValue, type: typeof answerValue });
-
-  throw new ValidationError(
-    'Invalid answer value format: expected string, number, boolean, or string[]'
+  throw unreadableStoredAnswer(
+    questionId,
+    answerValue,
+    'expected string, number, boolean, or string[]'
   );
 }
 
@@ -287,6 +312,12 @@ export async function startAssessment(
   // Fetch flow steps from normalised table
   const db = getDb();
   const flowSteps = await flowRepository.findStepsByFlowId(db, flowId);
+
+  // With no step to show, the member would wait on a screen that never loads
+  if (flowSteps.length === 0) {
+    throw new ConflictError('This assessment has no steps to show yet');
+  }
+
   const steps = convertStepsToSummaryFormat(flowSteps);
 
   if (options.isReassessment) {
@@ -388,6 +419,7 @@ export async function startAssessment(
  *
  * @throws NotFoundError if assessment doesn't exist or belongs to another member
  * @throws ValidationError if assessment is submitted/completed
+ * @throws ValidationError if `currentStep` matches no active step of the flow
  * @throws ValidationError if an answer is not part of the flow or breaks its question's
  *   rules; `details` names each failing question (see `assertNoAnswerErrors`)
  *
@@ -419,7 +451,17 @@ export async function saveProgress(
   }
 
   const flowSteps = await flowRepository.findStepsByFlowId(db, assessment.flowId);
+  // Checked before any write: a refused save stores no answer, position or warning
+  const currentStepRecord = flowSteps.find((s) => s.order === data.currentStep);
+
+  if (!currentStepRecord) {
+    throw new ValidationError('This step is not part of the assessment.', {
+      currentStep: data.currentStep,
+    });
+  }
+
   const sentAnswers = convertAnswersToSaveFormat(data.answers);
+  const flowQuestions = await loadFlowQuestions(db, flowSteps);
   let changedAnswers = new Map<string, AnswerValue>();
 
   if (sentAnswers.length > 0) {
@@ -432,8 +474,6 @@ export async function saveProgress(
     );
 
     if (changedAnswers.size > 0) {
-      const flowQuestions = await loadFlowQuestions(db, flowSteps);
-
       assertNoAnswerErrors(findSaveErrors(changedAnswers, flowQuestions));
     }
   }
@@ -462,28 +502,6 @@ export async function saveProgress(
       { tx }
     );
 
-    // Find the current step record by order
-    const currentStepRecord = flowSteps.find((s) => s.order === data.currentStep);
-
-    if (!currentStepRecord) {
-      // Step not found - return success without branching evaluation
-      // This can happen if order doesn't match any step (edge case)
-      systemLogger.warn('Current step not found in flow steps', {
-        assessmentId,
-        currentStep: data.currentStep,
-        flowId: assessment.flowId,
-      });
-
-      return {
-        success: true as const,
-        updatedAt: updatedAssessment.updatedAt.toISOString(),
-        nextStepId: null,
-        warnings: [],
-        shouldTerminate: false,
-        terminationReason: null,
-      };
-    }
-
     // Fetch all answers for the assessment (including ones just saved)
     // Pass tx to read within the same transaction (sees uncommitted writes)
     const allAnswers = await answerRepository.findByAssessmentId(organisationId, assessmentId, {
@@ -491,13 +509,17 @@ export async function saveProgress(
       tx,
     });
 
+    // Only answers to the flow's questions route the member, as only they are scored: one
+    // kept for a question since deactivated or unassigned is ignored
     const answersForBranching = await toBranchingAnswers(
       db,
       assessmentId,
-      allAnswers.map((answer) => ({
-        questionId: answer.questionId,
-        answerValue: extractAnswerValue(answer.answerValue),
-      }))
+      allAnswers
+        .filter((answer) => flowQuestions.has(answer.questionId))
+        .map((answer) => ({
+          questionId: answer.questionId,
+          answerValue: extractAnswerValue(answer.questionId, answer.answerValue),
+        }))
     );
 
     // Create evaluation context and evaluate branching rules
@@ -561,6 +583,7 @@ export async function saveProgress(
  * @throws ValidationError if assessment is already submitted
  * @throws ValidationError if an answer breaks its rules, a submitted answer is not part of
  *   the flow, or a required question is unanswered; `details` names each failing question
+ * @throws ValidationError, naming no question, if none of the flow's questions is answered
  *
  * @example
  * ```typescript
@@ -614,14 +637,22 @@ export async function submitAssessment(
 
   assertNoAnswerErrors(findSubmitErrors(storedValues, submittedValues, flowQuestions));
 
-  // The scoring job reads every answer, the submitted ones overriding those stored
-  const responses = [...new Map([...storedValues, ...submittedValues])]
+  // The safety rules see every answer, the submitted ones overriding those stored. Unlike
+  // scoring, save-time branching and programme emphasis, which count only the flow's questions,
+  // they also see one kept for a question since deactivated or unassigned: for a health check,
+  // a red flag the member gave is not dropped because its question was later retired.
+  const allAnswers = [...new Map([...storedValues, ...submittedValues])]
     .filter(([, answerValue]) => isAnswerProvided(answerValue))
     .map(([questionId, answerValue]) => ({ questionId, answerValue }));
 
+  // With nothing to score, the scoring job fails and the member's results never arrive
+  if (!allAnswers.some(({ questionId }) => flowQuestions.has(questionId))) {
+    throw new ValidationError('Please answer the questions before you submit your assessment.');
+  }
+
   const safetyTrigger = findSafetyTrigger(
     flowSteps,
-    await toBranchingAnswers(db, assessmentId, responses)
+    await toBranchingAnswers(db, assessmentId, allAnswers)
   );
 
   // Execute all writes in a single transaction for atomicity
@@ -654,7 +685,6 @@ export async function submitAssessment(
         userAssessmentId: assessmentId,
         flowId: assessment.flowId,
         userId,
-        responses,
       },
       context,
       { priority: 2, tx } // High priority for user-triggered submission
@@ -666,6 +696,25 @@ export async function submitAssessment(
       message: 'Assessment submitted successfully. Scoring in progress.',
     };
   });
+}
+
+/** Generation is queued once scoring finishes, so only a scored assessment can have failed it */
+async function findProgrammeReadiness(
+  organisationId: string,
+  assessment: UserAssessment
+): Promise<ProgrammeReadiness> {
+  if (assessment.programmeId) {
+    return 'ready';
+  }
+
+  if (
+    assessment.status === 'scored' &&
+    (await hasProgrammeGenerationFailed(organisationId, assessment.id))
+  ) {
+    return 'failed';
+  }
+
+  return 'pending';
 }
 
 /**
@@ -709,11 +758,11 @@ export async function getAssessmentResults(
     programmeName = programme?.name ?? null;
   }
 
-  // Return the assessment results
   return {
     status: assessment.status,
     scores: assessment.scores,
     programmeId: assessment.programmeId,
+    programmeReadiness: await findProgrammeReadiness(organisationId, assessment),
     programmeName,
     safetyGate: await loadSafetyGate(organisationId, assessment, userId),
   };

@@ -5,19 +5,32 @@ import type { VideoDetailResponse } from '@ffp/core';
 import { Text, FormRow } from '@web/components/atoms';
 import { FormActions, FormTextarea, FormTextInput } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
+import { VideoSelector } from '@web/components/video';
+import type { SelectedVideo } from '@web/components/video';
+import { requiredText } from '@web/utils/form-rules';
 
-import { VideoSelector } from './VideoSelector';
+import { PRESCRIPTION_FIELDS, prescriptionFromVideo } from './exercise-utils';
 
-import type { ExerciseFormValues } from './exercise-utils';
-import type { SelectedVideo } from './VideoSelector';
+import type { ExerciseFormValues, PrescriptionOnVideoChange } from './exercise-utils';
 
 /** Fields for the exercise inline form */
 export const ExerciseFormFields: React.FC<{
+  isEditMode: boolean;
+  prescriptionOnVideoChange: PrescriptionOnVideoChange;
+  excludeVideoIds?: readonly string[];
   initialSelectedVideo: SelectedVideo | null;
   onCancel: () => void;
   isSubmitting: boolean;
   submitLabel: string;
-}> = ({ initialSelectedVideo, onCancel, isSubmitting, submitLabel }) => {
+}> = ({
+  isEditMode,
+  prescriptionOnVideoChange,
+  excludeVideoIds,
+  initialSelectedVideo,
+  onCancel,
+  isSubmitting,
+  submitLabel,
+}) => {
   const { register, errors, setValue, getValues, watch } =
     useComposableFormContext<ExerciseFormValues>();
   const [selectedVideo, setSelectedVideo] = useState<SelectedVideo | null>(initialSelectedVideo);
@@ -29,30 +42,13 @@ export const ExerciseFormFields: React.FC<{
       setSelectedVideo({ publicId: video.publicId, title: video.title });
       setValue('videoId', video.id);
 
-      // Pre-populate prescription from video defaults (only if fields are empty)
-      const current = getValues();
+      const prescription = prescriptionFromVideo(video, getValues(), prescriptionOnVideoChange);
 
-      if (!current.sets && video.defaultSets != null) {
-        setValue('sets', String(video.defaultSets));
-      }
-
-      if (!current.reps && video.defaultReps) {
-        setValue('reps', video.defaultReps);
-      }
-
-      if (!current.durationSeconds && video.defaultDurationSeconds != null) {
-        setValue('durationSeconds', String(video.defaultDurationSeconds));
-      }
-
-      if (!current.restSeconds && video.defaultRestSeconds != null) {
-        setValue('restSeconds', String(video.defaultRestSeconds));
-      }
-
-      if (!current.notes && video.defaultNotes) {
-        setValue('notes', video.defaultNotes);
+      for (const field of PRESCRIPTION_FIELDS) {
+        setValue(field, prescription[field]);
       }
     },
-    [setValue, getValues]
+    [setValue, getValues, prescriptionOnVideoChange]
   );
 
   const handleVideoClear = useCallback(() => {
@@ -67,10 +63,13 @@ export const ExerciseFormFields: React.FC<{
         onClear={handleVideoClear}
         selectedVideo={selectedVideo}
         disabled={isSubmitting}
+        excludeVideoIds={excludeVideoIds}
       />
 
       {videoId && (
         <>
+          {/* Sets and reps cannot be stored empty, so editing refuses a blank rather than keeping
+              the old value unseen */}
           <FormRow>
             <FormTextInput<ExerciseFormValues>
               name="sets"
@@ -80,6 +79,10 @@ export const ExerciseFormFields: React.FC<{
               register={register}
               errors={errors}
               inputProps={{ min: 1 }}
+              isRequired={isEditMode}
+              registerOptions={
+                isEditMode ? { validate: requiredText('Please give the sets') } : undefined
+              }
             />
             <FormTextInput<ExerciseFormValues>
               name="reps"
@@ -87,6 +90,10 @@ export const ExerciseFormFields: React.FC<{
               placeholder="e.g. 8-12"
               register={register}
               errors={errors}
+              isRequired={isEditMode}
+              registerOptions={
+                isEditMode ? { validate: requiredText('Please give the reps') } : undefined
+              }
             />
           </FormRow>
 

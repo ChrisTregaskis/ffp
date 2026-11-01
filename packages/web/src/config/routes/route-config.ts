@@ -248,6 +248,28 @@ export const routes: RoutesConfig = {
       { label: 'Back to Users', icon: 'ArrowLeft', path: `${adminBasePath}/users` },
     ],
   },
+  [RouteKey.ADMIN_USER_PROGRAMME]: {
+    path: `${adminBasePath}/users/:id/programme`,
+    title: 'Member Programme',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: [
+      { label: 'Back to Users', icon: 'ArrowLeft', path: `${adminBasePath}/users` },
+    ],
+  },
+  [RouteKey.ADMIN_USER_PROGRAMME_PHASE]: {
+    path: `${adminBasePath}/users/:id/programme/phases/:phaseId`,
+    title: 'Programme Phase',
+    allowedRoles: [SYSTEM_ADMIN],
+    excludeFromMainNavbar: true,
+    contextNavItems: (params) => [
+      {
+        label: 'Back to Programme',
+        icon: 'ArrowLeft',
+        path: `${adminBasePath}/users/${params.id}/programme`,
+      },
+    ],
+  },
   [RouteKey.ADMIN_ASSESSMENTS]: {
     path: `${adminBasePath}/assessments`,
     title: 'Assessments',
@@ -451,7 +473,12 @@ export const routes: RoutesConfig = {
   },
   [RouteKey.ADMIN_VIDEOS]: {
     path: `${adminBasePath}/videos`,
-    title: 'Video Library',
+    title: 'Exercises',
+    allowedRoles: [SYSTEM_ADMIN],
+  },
+  [RouteKey.ADMIN_EXERCISE_TAGS]: {
+    path: `${adminBasePath}/exercise-tags`,
+    title: 'Exercise Tags',
     allowedRoles: [SYSTEM_ADMIN],
   },
   [RouteKey.ADMIN_VIDEO_UPLOAD]: {
@@ -460,7 +487,7 @@ export const routes: RoutesConfig = {
     allowedRoles: [SYSTEM_ADMIN],
     excludeFromMainNavbar: true,
     contextNavItems: [
-      { label: 'Back to Video Library', icon: 'ArrowLeft', path: `${adminBasePath}/videos` },
+      { label: 'Back to Exercises', icon: 'ArrowLeft', path: `${adminBasePath}/videos` },
     ],
   },
   [RouteKey.ADMIN_VIDEO_EDIT]: {
@@ -469,7 +496,7 @@ export const routes: RoutesConfig = {
     allowedRoles: [SYSTEM_ADMIN],
     excludeFromMainNavbar: true,
     contextNavItems: [
-      { label: 'Back to Video Library', icon: 'ArrowLeft', path: `${adminBasePath}/videos` },
+      { label: 'Back to Exercises', icon: 'ArrowLeft', path: `${adminBasePath}/videos` },
     ],
   },
 
@@ -583,13 +610,6 @@ export const routes: RoutesConfig = {
     path: `${componentsBasePath}/table`,
     public: true,
     title: 'Table Components',
-    excludeFromMainNavbar: true,
-    devOnly: true,
-  },
-  [RouteKey.COMPONENTS_ASSESSMENT_ADMIN]: {
-    path: `${componentsBasePath}/assessment-admin`,
-    public: true,
-    title: 'Assessment Admin UX Prototype',
     excludeFromMainNavbar: true,
     devOnly: true,
   },

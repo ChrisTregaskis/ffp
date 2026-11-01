@@ -76,8 +76,14 @@ export enum RouteKey {
   ADMIN_USER_CREATE = 'admin-user-create',
   /** Admin user edit page */
   ADMIN_USER_EDIT = 'admin-user-edit',
-  /** Admin video library management page */
+  /** Admin view of a member's programme (overview and phases) */
+  ADMIN_USER_PROGRAMME = 'admin-user-programme',
+  /** Admin view of one phase of a member's programme (its sessions) */
+  ADMIN_USER_PROGRAMME_PHASE = 'admin-user-programme-phase',
+  /** Admin exercise library (the video catalogue) */
   ADMIN_VIDEOS = 'admin-videos',
+  /** Admin exercise tag vocabulary page */
+  ADMIN_EXERCISE_TAGS = 'admin-exercise-tags',
   /** Admin programme template create page */
   ADMIN_TEMPLATE_CREATE = 'admin-template-create',
   /** Admin programme template detail page */
@@ -124,6 +130,4 @@ export enum RouteKey {
   COMPONENTS_TOAST_ALERT = 'components-toast-alert',
   /** Table components showcase */
   COMPONENTS_TABLE = 'components-table',
-  /** Assessment admin authoring UX prototype */
-  COMPONENTS_ASSESSMENT_ADMIN = 'components-assessment-admin',
 }

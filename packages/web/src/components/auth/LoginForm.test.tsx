@@ -36,17 +36,8 @@ describe('LoginForm', () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it('refuses a malformed email', async () => {
-    const onSubmit = renderForm();
-    fireEvent.change(email(), { target: { value: 'not-an-email' } });
-    fireEvent.change(password(), { target: { value: 'secret' } });
-    submit();
-
-    expect(await alerts()).toEqual(['Please enter a valid email address']);
-    expect(onSubmit).not.toHaveBeenCalled();
-  });
-
-  it('trims the email before checking and sending it', async () => {
+  // The padding proves the email goes through the email field's own rules (FormEmailInput)
+  it('sends the email, trimmed by its email field, and the password', async () => {
     const onSubmit = renderForm();
     fireEvent.change(email(), { target: { value: ' member@example.com ' } });
     fireEvent.change(password(), { target: { value: 'secret' } });

@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 import { InternalServerError } from '../lib/errors';
@@ -42,10 +42,10 @@ export function setVideoUploadConfig(config: VideoUploadConfig): void {
   s3Client = new S3Client({ region: config.region });
 }
 
-function getUploadConfig(): { config: VideoUploadConfig; client: S3Client } {
+function getStorageConfig(): { config: VideoUploadConfig; client: S3Client } {
   if (!cachedConfig || !s3Client) {
     throw new InternalServerError(
-      'Video upload configuration not initialised. Call setVideoUploadConfig() at Lambda cold start.'
+      'Video storage configuration not initialised. Call setVideoUploadConfig() at Lambda cold start.'
     );
   }
 
@@ -65,7 +65,7 @@ function getUploadConfig(): { config: VideoUploadConfig; client: S3Client } {
  */
 export async function generateUploadUrls(context: OrganisationContext): Promise<UploadUrlResponse> {
   const logger = createLogger(context);
-  const { config, client } = getUploadConfig();
+  const { config, client } = getStorageConfig();
 
   const videoId = randomUUID();
   const videoS3Key = `library/${videoId}.mp4`;
@@ -91,4 +91,11 @@ export async function generateUploadUrls(context: OrganisationContext): Promise<
     videoS3Key,
     expiresIn: UPLOAD_URL_TTL_SECONDS,
   };
+}
+
+/** Delete an object from the videos bucket, such as the file a replacement has superseded. */
+export async function deleteVideoObject(s3Key: string): Promise<void> {
+  const { config, client } = getStorageConfig();
+
+  await client.send(new DeleteObjectCommand({ Bucket: config.videosBucketName, Key: s3Key }));
 }

@@ -1,14 +1,14 @@
 import React, { useCallback, useState } from 'react';
 
-import { Button, FileInput, ProgressBar, Surface, Text } from '@web/components/atoms';
+import { Button, Surface, Text } from '@web/components/atoms';
+import { FileSummary, UploadProgress } from '@web/components/molecules';
 import { ConfirmModal } from '@web/components/organisms';
 import { useVideoReplacement } from '@web/hooks/videos';
-import { formatFileSize } from '@web/utils/format';
+import { formatDuration } from '@web/utils/format';
+
+import { VideoFileDropzone } from './VideoFileDropzone';
 
 export interface VideoReplacerProps {
-  /** UUID — used for the update API call */
-  videoId: string;
-  /** Public ID — used for cache invalidation (matches query keys) */
   publicId: string;
   className?: string;
 }
@@ -16,14 +16,12 @@ export interface VideoReplacerProps {
 /**
  * Video file replacement UI for the edit page.
  *
- * Idle: secondary button floated right below the video player.
- * Active: full-width panel with file info, progress, and confirmation modal.
+ * Idle: a compact drop zone below the video player.
+ * Active: a panel with file info, progress, and a confirmation modal.
  */
-export const VideoReplacer: React.FC<VideoReplacerProps> = ({ videoId, publicId, className }) => {
-  const { fileSelection, progress, handleConfirmReplace, handleClear } = useVideoReplacement(
-    videoId,
-    publicId
-  );
+export const VideoReplacer: React.FC<VideoReplacerProps> = ({ publicId, className }) => {
+  const { fileSelection, progress, handleConfirmReplace, handleClear } =
+    useVideoReplacement(publicId);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const handleRequestReplace = useCallback(() => {
@@ -39,72 +37,38 @@ export const VideoReplacer: React.FC<VideoReplacerProps> = ({ videoId, publicId,
     handleConfirmReplace();
   }, [handleConfirmReplace]);
 
-  const isIdle = progress.phase === 'idle' && !fileSelection.file;
+  const { file, validationError, detectedDuration, isReady } = fileSelection;
+  const isIdle = progress.phase === 'idle' && !file;
 
   return (
     <div className={className}>
-      <FileInput
-        forwardedRef={fileSelection.fileInputRef}
-        accept="video/mp4"
-        onChange={fileSelection.handleFileInputChange}
-        aria-label="Select replacement video file"
-      />
-
       {isIdle && (
-        <div className="flex justify-end">
-          <Button variant="secondary" size="sm" onClick={fileSelection.openFilePicker}>
-            Replace video
-          </Button>
-        </div>
+        <VideoFileDropzone
+          size="compact"
+          title="Drag a replacement video here"
+          onFileSelect={fileSelection.selectFile}
+          aria-label="Select replacement video file"
+        />
       )}
 
       {!isIdle && (
         <Surface padding="md">
-          {/* File info */}
-          {fileSelection.file && (
-            <div className="min-w-0">
-              <Text
-                as="p"
-                styleProps={{ size: 'sm', weight: 'medium', colour: 'foreground' }}
-                className="truncate"
-              >
-                {fileSelection.file.name}
-              </Text>
-              <Text as="p" styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
-                {formatFileSize(fileSelection.file.size)}
-                {fileSelection.detectedDuration != null && (
-                  <span>
-                    {' · '}
-                    {Math.floor(fileSelection.detectedDuration / 60)}:
-                    {String(fileSelection.detectedDuration % 60).padStart(2, '0')}
-                  </span>
-                )}
-              </Text>
-            </div>
+          {file && (
+            <FileSummary
+              file={file}
+              icon="Video"
+              detail={detectedDuration != null ? formatDuration(detectedDuration) : undefined}
+            />
           )}
 
-          {fileSelection.validationError && (
+          {validationError && (
             <Text as="p" styleProps={{ size: 'sm', colour: 'destructive' }} className="mt-2">
-              {fileSelection.validationError}
+              {validationError}
             </Text>
           )}
 
           {progress.phase === 'uploading' && (
-            <div className="mt-3">
-              <div className="flex items-center justify-between">
-                <Text as="span" styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
-                  Uploading...
-                </Text>
-                <Text as="span" styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
-                  {progress.uploadProgress}%
-                </Text>
-              </div>
-              <ProgressBar
-                percent={progress.uploadProgress}
-                aria-label="Upload progress"
-                className="mt-1"
-              />
-            </div>
+            <UploadProgress percent={progress.uploadProgress} className="mt-3" />
           )}
 
           {progress.phase === 'updating' && (
@@ -124,18 +88,19 @@ export const VideoReplacer: React.FC<VideoReplacerProps> = ({ videoId, publicId,
             </div>
           )}
 
-          {/* Actions — cancel and replace at the bottom */}
-          {progress.phase === 'idle' && fileSelection.file && !fileSelection.validationError && (
+          {progress.phase === 'idle' && file && (
             <div className="mt-3 flex items-center gap-3">
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleRequestReplace}
-                disabled={!fileSelection.isReady}
-                loading={!fileSelection.isReady}
-              >
-                {fileSelection.isReady ? 'Replace video' : 'Detecting duration...'}
-              </Button>
+              {!validationError && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleRequestReplace}
+                  disabled={!isReady}
+                  loading={!isReady}
+                >
+                  {isReady ? 'Replace video' : 'Detecting duration...'}
+                </Button>
+              )}
               <Button variant="ghost" size="sm" onClick={handleClear}>
                 Cancel
               </Button>
@@ -150,7 +115,7 @@ export const VideoReplacer: React.FC<VideoReplacerProps> = ({ videoId, publicId,
         onConfirm={handleConfirm}
         title="Replace Video"
         subtitle="This will replace the existing video file."
-        message="The current video file will be replaced with the new upload. This cannot be undone. The original file will no longer be available."
+        message="The new upload replaces the current video file. Once it is saved, the current file is deleted, and this cannot be undone."
         confirmLabel="Confirm replacement"
       />
     </div>

@@ -2,8 +2,11 @@ import { eq, and, lte, isNull, or, sql, asc, inArray } from 'drizzle-orm';
 
 import { getDb, processJobs, JOB_TYPES, type ProcessJobRecord, type JobType } from '@ffp/database';
 
-import { JobProcessorError, NotFoundError } from '../lib/errors';
+import { BaseError, JobProcessorError, NotFoundError } from '../lib/errors';
+import { describeErrorForLog } from '../lib/log-safe-error';
 import { sortBy } from '../lib/sort.utils';
+
+import { finishedJobPayload, finishedJobResult } from './finished-job-payload';
 
 /**
  * Calculate exponential backoff delay in milliseconds.
@@ -25,6 +28,15 @@ export function calculateBackoffMs(attempts: number): number {
 }
 
 /**
+ * Whether a failed job is worth another attempt. An application error in the 4xx range is
+ * deterministic (missing template, unfillable slot) and would fail the same way again, except a
+ * conflict, which a concurrent write can cause and a retry can clear.
+ */
+export function isRetryableError(error: Error): boolean {
+  return !(error instanceof BaseError) || error.statusCode >= 500 || error.statusCode === 409;
+}
+
+/**
  * Result of a job completion operation
  */
 export interface CompleteJobResult {
@@ -35,27 +47,18 @@ export interface CompleteJobResult {
 }
 
 /**
- * Mark a job as successfully completed with its result.
+ * Mark a job as successfully completed.
  *
- * Sets status to 'completed', stores the result, and records completion time.
+ * Sets status to 'completed', records completion time and cuts the payload and the handler's
+ * result down to their ids, so no member data stays on the job.
  *
  * @typeParam TResult - The shape of the job result (inferred or explicit)
  * @returns CompleteJobResult indicating success
  *
  * @example
  * ```typescript
- * // Type inferred from argument
- * await completeJob(job.id, {
- *   scores: { strength: 75, balance: 82 },
- *   recommendations: ['core_stability', 'balance_training'],
- * });
- *
- * // Explicit type for stricter checking
- * interface ScoreResult {
- *   scores: Record<string, number>;
- *   recommendations: string[];
- * }
- * await completeJob<ScoreResult>(job.id, result);
+ * // Stores { programmeId }; the programme's name and exercises are dropped
+ * await completeJob(job.id, generateProgrammeResult);
  * ```
  */
 export async function completeJob<TResult extends Record<string, unknown>>(
@@ -70,7 +73,8 @@ export async function completeJob<TResult extends Record<string, unknown>>(
       .update(processJobs)
       .set({
         status: 'completed',
-        result,
+        result: finishedJobResult(result),
+        payload: finishedJobPayload(),
         completedAt: new Date(),
       })
       .where(and(eq(processJobs.id, jobId), eq(processJobs.status, 'processing')))
@@ -109,7 +113,7 @@ export interface FailJobResult {
 }
 
 /**
- * Handle a job failure with exponential backoff retry logic.
+ * Handle a job failure: retry with exponential backoff, unless the error is not retryable.
  *
  * @example
  * ```typescript
@@ -126,7 +130,7 @@ export async function failJob(job: ProcessJobRecord, error: Error): Promise<Fail
   try {
     const db = getDb();
 
-    const shouldRetry = job.attempts < job.maxAttempts;
+    const shouldRetry = isRetryableError(error) && job.attempts < job.maxAttempts;
     const backoffMs = calculateBackoffMs(job.attempts);
     const retryAfter = shouldRetry ? new Date(Date.now() + backoffMs) : null;
 
@@ -137,9 +141,12 @@ export async function failJob(job: ProcessJobRecord, error: Error): Promise<Fail
       .update(processJobs)
       .set({
         status: shouldRetry ? 'queued' : 'failed',
-        message: error.message,
+        // Persisted on the job row, so it must not carry SQL or bound parameters
+        message: describeErrorForLog(error).error,
         retryAfter,
         completedAt: shouldRetry ? null : new Date(),
+        // A retry needs the payload; a final failure keeps only its ids
+        ...(shouldRetry ? {} : { payload: finishedJobPayload() }),
       })
       .where(and(eq(processJobs.id, job.id), eq(processJobs.status, 'processing')))
       .returning();

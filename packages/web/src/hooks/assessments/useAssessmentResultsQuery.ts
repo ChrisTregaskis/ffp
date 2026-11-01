@@ -13,11 +13,9 @@ const POLLING_INTERVAL_MS = secondsToMs(2);
 /**
  * Fetch assessment results with polling
  *
- * Polls the results endpoint every 2 seconds while the assessment
- * is still being scored. Automatically stops polling once:
- * - Status is 'scored' or 'completed'
- * - Scores exist in the response
- * - Persistent errors occur
+ * Polls the results endpoint every 2 seconds until the programme is ready or could not be put
+ * together, or on a persistent error. Scores arrive first; the programme follows in a separate
+ * job, so stopping at scores would leave the programme unseen until a reload.
  */
 export const useAssessmentResultsQuery = (
   assessmentId: string,
@@ -31,8 +29,7 @@ export const useAssessmentResultsQuery = (
     refetchInterval: (query) => {
       const data = query.state.data;
 
-      // Stop polling if scoring is complete
-      if (data?.status === 'scored' || data?.status === 'completed' || data?.scores) {
+      if (data && data.programmeReadiness !== 'pending') {
         return false;
       }
 

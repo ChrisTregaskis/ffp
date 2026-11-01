@@ -393,7 +393,7 @@ export default $config({
 
     // Auth domain routes (mix of public and protected routes)
     // Note: Authentication is handled per-endpoint in the router
-    // - Public: /auth/login, /auth/complete-new-password
+    // - Public: /auth/login, /auth/refresh-token
     // - Protected: /auth/invite-user (requires JWT)
     api.route('ANY /auth/{proxy+}', {
       handler: `${repositoryFunctionsPath}/auth/index.handler`,
@@ -454,6 +454,11 @@ export default $config({
               $interpolate`arn:aws:s3:::${videosBucket.name}/*`,
               $interpolate`arn:aws:s3:::${assetsBucket.name}/*`,
             ],
+          },
+          // Replacing a video deletes the file it supersedes; assets are never deleted
+          {
+            actions: ['s3:DeleteObject'],
+            resources: [$interpolate`arn:aws:s3:::${videosBucket.name}/*`],
           },
           {
             actions: cognitoPermissionActions,
@@ -518,19 +523,10 @@ export default $config({
         CLOUDFRONT_SIGNING_KEY: cloudFrontSigningKey.value,
       },
     };
-    api.route('OPTIONS /videos', {
-      handler: `${repositoryFunctionsPath}/videos/index.handler`,
-      ...videoHandlerEnv,
-    });
     api.route('OPTIONS /videos/{proxy+}', {
       handler: `${repositoryFunctionsPath}/videos/index.handler`,
       ...videoHandlerEnv,
     });
-    api.route(
-      'ANY /videos',
-      { handler: `${repositoryFunctionsPath}/videos/index.handler`, ...videoHandlerEnv },
-      args
-    );
     api.route(
       'ANY /videos/{proxy+}',
       { handler: `${repositoryFunctionsPath}/videos/index.handler`, ...videoHandlerEnv },

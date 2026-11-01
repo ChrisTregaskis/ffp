@@ -1,0 +1,163 @@
+import { InvalidParameterException } from '@aws-sdk/client-cognito-identity-provider';
+import { DrizzleQueryError } from 'drizzle-orm';
+import { DatabaseError } from 'pg';
+import { describe, it, expect } from 'vitest';
+
+import { describeErrorForLog } from '../../src/lib/log-safe-error';
+
+import {
+  LEAKABLE,
+  drizzleConnectionError,
+  drizzleDriverError,
+  expectNothingLeakable,
+} from './database-error.fixture';
+
+describe('describeErrorForLog', () => {
+  it('describes a driver error under Drizzle by SQLSTATE, constraint and table only', () => {
+    const description = describeErrorForLog(
+      drizzleDriverError({
+        code: '23503',
+        constraint: 'users_location_id_locations_id_fk',
+        table: 'users',
+      })
+    );
+
+    expect(description).toEqual({
+      error: 'Database driver error',
+      errorClass: 'DrizzleQueryError',
+      database: {
+        sqlState: '23503',
+        constraint: 'users_location_id_locations_id_fk',
+        table: 'users',
+      },
+    });
+    expectNothingLeakable(JSON.stringify(description));
+  });
+
+  it('describes a bare driver error the same way, without its detail', () => {
+    const driverError = new DatabaseError('null value in column "email"', 0, 'error');
+    Object.assign(driverError, {
+      severity: 'ERROR',
+      code: '23502',
+      table: 'users',
+      detail: LEAKABLE.detail,
+    });
+
+    const description = describeErrorForLog(driverError);
+
+    expect(description).toEqual({
+      error: 'Database driver error',
+      errorClass: 'DatabaseError',
+      database: { sqlState: '23502', table: 'users' },
+    });
+    expectNothingLeakable(JSON.stringify(description));
+  });
+
+  it('describes a failed query whose connection reset by the cause class and code', () => {
+    const description = describeErrorForLog(drizzleConnectionError('ECONNRESET'));
+
+    expect(description).toEqual({
+      error: 'Database query failed',
+      errorClass: 'DrizzleQueryError',
+      cause: { errorClass: 'Error', code: 'ECONNRESET' },
+    });
+    expectNothingLeakable(JSON.stringify(description));
+  });
+
+  it('describes a failed query whose socket broke by the cause class and code, not as a driver error', () => {
+    const description = describeErrorForLog(drizzleConnectionError('EPIPE'));
+
+    expect(description).toEqual({
+      error: 'Database query failed',
+      errorClass: 'DrizzleQueryError',
+      cause: { errorClass: 'Error', code: 'EPIPE' },
+    });
+    expectNothingLeakable(JSON.stringify(description));
+  });
+
+  it('describes a failed query whose connection terminated without a code', () => {
+    const description = describeErrorForLog(drizzleConnectionError());
+
+    expect(description).toEqual({
+      error: 'Database query failed',
+      errorClass: 'DrizzleQueryError',
+      cause: { errorClass: 'Error' },
+    });
+    expectNothingLeakable(JSON.stringify(description));
+  });
+
+  it('describes a failed query with no cause without its query or parameters', () => {
+    const description = describeErrorForLog(
+      new DrizzleQueryError(LEAKABLE.query, [LEAKABLE.param])
+    );
+
+    expect(description).toEqual({
+      error: 'Database query failed',
+      errorClass: 'DrizzleQueryError',
+    });
+    expectNothingLeakable(JSON.stringify(description));
+  });
+
+  it('keeps the message and stack of any other error', () => {
+    const error = new Error('Cognito refused the request');
+
+    expect(describeErrorForLog(error)).toEqual({
+      error: 'Cognito refused the request',
+      errorClass: 'Error',
+      stack: error.stack,
+    });
+  });
+
+  it('keeps the message and stack of a Node errno error whose code is shaped like a SQLSTATE', () => {
+    const error = Object.assign(new Error('write EPIPE'), {
+      code: 'EPIPE',
+      errno: -32,
+      syscall: 'write',
+    });
+
+    expect(describeErrorForLog(error)).toEqual({
+      error: 'write EPIPE',
+      errorClass: 'Error',
+      stack: error.stack,
+    });
+  });
+
+  it("withholds a syntax error's message, which quotes the text it failed to parse, but keeps its stack frames", () => {
+    let error: unknown;
+
+    try {
+      JSON.parse('{"password": sentinel}');
+    } catch (caught) {
+      error = caught;
+    }
+
+    const description = describeErrorForLog(error);
+
+    expect(description).toMatchObject({
+      error: 'Syntax error (message withheld: it quotes the input)',
+      errorClass: 'SyntaxError',
+    });
+    expect(description.stack).toMatch(/\n\s+at /);
+    expect(JSON.stringify(description)).not.toContain('sentinel');
+  });
+
+  it('describes a Cognito error by its name and status, never its message, which can quote the email', () => {
+    const error = new InvalidParameterException({
+      message: "1 validation error detected: Value 'sentinel.member@example.com' at 'username'",
+      $metadata: { httpStatusCode: 400 },
+    });
+
+    expect(describeErrorForLog(error)).toEqual({
+      error: 'AWS service error: InvalidParameterException',
+      errorClass: 'InvalidParameterException',
+      aws: { name: 'InvalidParameterException', httpStatusCode: 400 },
+    });
+  });
+
+  it('logs a thrown non-error as unknown, without its value', () => {
+    expect(describeErrorForLog(LEAKABLE.param)).toEqual({
+      error: 'Unknown error',
+      errorClass: 'string',
+    });
+  });
+});

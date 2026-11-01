@@ -1,0 +1,13 @@
+{
+  // Typechecks the seeds and scripts, which run through tsx and are never built.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "declaration": false,
+    "declarationMap": false,
+    "incremental": false,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["seed/**/*", "scripts/**/*"]
+}

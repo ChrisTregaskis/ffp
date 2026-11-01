@@ -8,6 +8,7 @@ import {
   sessionExercises,
   programmePhases,
   userSessions,
+  userSessionExercises,
   exerciseCompletions,
   videos,
   type ProgrammeRecord,
@@ -15,8 +16,6 @@ import {
   type TemplatePhaseRecord,
   type NewProgrammePhase,
   type ProgrammePhaseRecord,
-  type UserSessionRecord,
-  type ExerciseCompletionRecord,
   type TemplateSessionRecord,
   type SessionExerciseRecord,
   type VideoRecord,
@@ -24,6 +23,8 @@ import {
 
 import { db, withRLS, type Transaction } from '../lib/database';
 import { type CreateProgrammeInput } from '../schemas/programme/programme.schema';
+
+import { isCurrentProgramme } from './current-programme';
 
 export type Programme = ProgrammeRecord;
 
@@ -61,11 +62,6 @@ export interface SetReplacementProgrammeOptions {
   tx?: Transaction;
 }
 
-export interface FindTemplatePhasesOptions {
-  /** Optional transaction for atomic operations. If provided, RLS must be set by caller. */
-  tx?: Transaction;
-}
-
 export interface CreateProgrammePhasesOptions {
   /** Optional transaction for atomic operations. If provided, RLS must be set by caller. */
   tx?: Transaction;
@@ -75,22 +71,22 @@ export interface CreateProgrammePhasesOptions {
 export interface ProgrammeWithPhases {
   programme: ProgrammeRecord;
   phases: ProgrammePhaseRecord[];
-  template: { name: string; difficulty: string | null } | null;
+  template: { name: string; slug: string; difficulty: string | null } | null;
 }
 
 /** Slim video fields needed for exercise detail display. */
-export type ExerciseVideoSummary = Pick<
+export type ProgrammeExerciseVideo = Pick<
   VideoRecord,
-  'id' | 'title' | 'durationSeconds' | 'difficulty'
+  'id' | 'publicId' | 'title' | 'durationSeconds' | 'difficulty'
 >;
 
 /** Exercise record with embedded video metadata. */
-export type ExerciseWithVideo = SessionExerciseRecord & { video: ExerciseVideoSummary };
+export type ProgrammeExerciseWithVideo = SessionExerciseRecord & { video: ProgrammeExerciseVideo };
 
 /** Full template session with exercises and video metadata. */
 export interface TemplateSessionWithExercises {
   session: TemplateSessionRecord;
-  exercises: ExerciseWithVideo[];
+  exercises: ProgrammeExerciseWithVideo[];
 }
 
 /** Template phase with its sessions, used within TemplateStructure. */
@@ -104,24 +100,12 @@ export interface TemplateStructure {
   phases: Map<string, TemplatePhaseWithSessions>;
 }
 
-/** User session with its exercise completions. */
-export interface UserSessionWithCompletions {
-  session: UserSessionRecord;
-  completions: ExerciseCompletionRecord[];
-}
-
 /** Aggregate progress counts for a programme. */
 export interface ProgressCounts {
   phases: { total: number; completed: number };
   sessions: { total: number; completed: number; skipped: number };
   exercises: { total: number; completed: number };
   currentPhase: { totalSessions: number; completedOrSkippedSessions: number };
-}
-
-/** Optional current-phase context for per-phase progress within the same transaction. */
-export interface CurrentPhaseInput {
-  phaseId: string;
-  templatePhaseId: string;
 }
 
 async function createProgrammeInTx(
@@ -220,26 +204,15 @@ async function findTemplateBySlugInTx(
   return records[0] ?? null;
 }
 
-async function findTemplatePhasesInTx(
-  tx: Transaction,
-  templateId: string
-): Promise<TemplatePhaseRecord[]> {
-  return await tx
-    .select()
-    .from(templatePhases)
-    .where(eq(templatePhases.programmeTemplateId, templateId))
-    .orderBy(templatePhases.phaseNumber);
-}
-
 async function createProgrammePhasesInTx(
   tx: Transaction,
   phases: NewProgrammePhase[]
-): Promise<void> {
+): Promise<ProgrammePhaseRecord[]> {
   if (phases.length === 0) {
-    return;
+    return [];
   }
 
-  await tx.insert(programmePhases).values(phases);
+  return await tx.insert(programmePhases).values(phases).returning();
 }
 
 export async function createProgramme(
@@ -364,33 +337,14 @@ export async function findTemplateBySlug(
   return records[0] ?? null;
 }
 
-/** Retrieves template phases for a programme template, ordered by phase_number. No RLS required. */
-export async function findTemplatePhases(
-  templateId: string,
-  options: FindTemplatePhasesOptions = {}
-): Promise<TemplatePhaseRecord[]> {
-  const { tx } = options;
-
-  if (tx) {
-    return findTemplatePhasesInTx(tx, templateId);
-  }
-
-  // No RLS needed — template_phases is a system-managed lookup table
-  return await db
-    .select()
-    .from(templatePhases)
-    .where(eq(templatePhases.programmeTemplateId, templateId))
-    .orderBy(templatePhases.phaseNumber);
-}
-
 /** Batch inserts programme_phases rows. RLS context must be set when using a transaction. */
 export async function createProgrammePhases(
   organisationId: string,
   phases: NewProgrammePhase[],
   options: CreateProgrammePhasesOptions = {}
-): Promise<void> {
+): Promise<ProgrammePhaseRecord[]> {
   if (phases.length === 0) {
-    return;
+    return [];
   }
 
   const { tx } = options;
@@ -399,39 +353,48 @@ export async function createProgrammePhases(
     return createProgrammePhasesInTx(tx, phases);
   }
 
-  await withRLS(organisationId, undefined, async (newTx) => {
+  return await withRLS(organisationId, undefined, async (newTx) => {
     return createProgrammePhasesInTx(newTx, phases);
   });
 }
 
+/** The user's current programme, within an existing RLS transaction, or null if they have none. */
+export async function findCurrentProgrammeInTx(
+  tx: Transaction,
+  organisationId: string,
+  userId: string
+): Promise<Programme | null> {
+  const records = await tx
+    .select()
+    .from(programmes)
+    .where(
+      and(
+        eq(programmes.organisationId, organisationId),
+        eq(programmes.userId, userId),
+        isCurrentProgramme
+      )
+    )
+    // The id breaks a tie on creation time, as in the Users list
+    .orderBy(desc(programmes.createdAt), desc(programmes.id))
+    .limit(1);
+
+  return records[0] ?? null;
+}
+
 /**
- * Fetch the user's active programme with programme_phases and template summary.
- * RLS-scoped — returns null if no active programme exists.
+ * Fetch the user's current programme with programme_phases and template summary.
+ * RLS-scoped — returns null if the user has no current programme.
  */
 export async function findProgrammeWithPhases(
   organisationId: string,
   userId: string
 ): Promise<ProgrammeWithPhases | null> {
   return await withRLS(organisationId, userId, async (tx) => {
-    // Fetch active or completed programme (most recent first)
-    const programmeRows = await tx
-      .select()
-      .from(programmes)
-      .where(
-        and(
-          eq(programmes.organisationId, organisationId),
-          eq(programmes.userId, userId),
-          inArray(programmes.status, ['active', 'completed'])
-        )
-      )
-      .orderBy(desc(programmes.createdAt))
-      .limit(1);
+    const programme = await findCurrentProgrammeInTx(tx, organisationId, userId);
 
-    if (programmeRows.length === 0) {
+    if (!programme) {
       return null;
     }
-
-    const programme = programmeRows[0];
 
     // Fetch programme phases (user-layer, RLS-scoped)
     const phases = await tx
@@ -449,6 +412,7 @@ export async function findProgrammeWithPhases(
     const templateRows = await tx
       .select({
         name: programmeTemplates.name,
+        slug: programmeTemplates.slug,
         difficulty: programmeTemplates.difficulty,
       })
       .from(programmeTemplates)
@@ -467,9 +431,12 @@ export async function findProgrammeWithPhases(
  * Fetch the full template structure: phases → sessions → exercises → videos.
  * No RLS required — system-managed lookup tables.
  */
-export async function findTemplateStructure(templateId: string): Promise<TemplateStructure> {
+export async function findTemplateStructure(
+  tx: Transaction,
+  templateId: string
+): Promise<TemplateStructure> {
   // Fetch all template phases
-  const tPhases = await db
+  const tPhases = await tx
     .select()
     .from(templatePhases)
     .where(eq(templatePhases.programmeTemplateId, templateId))
@@ -482,7 +449,7 @@ export async function findTemplateStructure(templateId: string): Promise<Templat
   const phaseIds = tPhases.map((p) => p.id);
 
   // Fetch all sessions for these phases
-  const tSessions = await db
+  const tSessions = await tx
     .select()
     .from(templateSessions)
     .where(inArray(templateSessions.templatePhaseId, phaseIds))
@@ -493,11 +460,12 @@ export async function findTemplateStructure(templateId: string): Promise<Templat
   // Fetch all exercises with video metadata for these sessions
   const exerciseRows =
     sessionIds.length > 0
-      ? await db
+      ? await tx
           .select({
             exercise: sessionExercises,
             video: {
               id: videos.id,
+              publicId: videos.publicId,
               title: videos.title,
               durationSeconds: videos.durationSeconds,
               difficulty: videos.difficulty,
@@ -510,7 +478,7 @@ export async function findTemplateStructure(templateId: string): Promise<Templat
       : [];
 
   // Group exercises by session
-  const exercisesBySession = new Map<string, ExerciseWithVideo[]>();
+  const exercisesBySession = new Map<string, ProgrammeExerciseWithVideo[]>();
   for (const row of exerciseRows) {
     const sessionId = row.exercise.templateSessionId;
     const list = exercisesBySession.get(sessionId) ?? [];
@@ -545,94 +513,15 @@ export async function findTemplateStructure(templateId: string): Promise<Templat
 }
 
 /**
- * Fetch user_sessions and exercise_completions for the given programme phase IDs.
- * RLS-scoped — only returns data for the authenticated user's organisation.
- */
-export async function findUserSessionsForPhases(
-  organisationId: string,
-  userId: string,
-  phaseIds: string[]
-): Promise<Map<string, UserSessionWithCompletions[]>> {
-  if (phaseIds.length === 0) {
-    return new Map();
-  }
-
-  return await withRLS(organisationId, userId, async (tx) => {
-    // Fetch user sessions for the given phases
-    const sessions = await tx
-      .select()
-      .from(userSessions)
-      .where(
-        and(
-          eq(userSessions.organisationId, organisationId),
-          inArray(userSessions.programmePhaseId, phaseIds)
-        )
-      )
-      .orderBy(asc(userSessions.programmePhaseId), asc(userSessions.sessionNumber));
-
-    if (sessions.length === 0) {
-      return new Map<string, UserSessionWithCompletions[]>();
-    }
-
-    const sessionIds = sessions.map((s) => s.id);
-
-    // Fetch exercise completions for these sessions
-    const completions = await tx
-      .select()
-      .from(exerciseCompletions)
-      .where(
-        and(
-          eq(exerciseCompletions.organisationId, organisationId),
-          inArray(exerciseCompletions.userSessionId, sessionIds)
-        )
-      );
-
-    // Group completions by session
-    const completionsBySession = new Map<string, ExerciseCompletionRecord[]>();
-
-    for (const completion of completions) {
-      const sessionId = completion.userSessionId;
-      const list = completionsBySession.get(sessionId) ?? [];
-      list.push(completion);
-      completionsBySession.set(sessionId, list);
-    }
-
-    // Group sessions with completions by phase
-    const result = new Map<string, UserSessionWithCompletions[]>();
-
-    for (const session of sessions) {
-      const phaseId = session.programmePhaseId;
-      const list = result.get(phaseId) ?? [];
-      list.push({
-        session,
-        completions: completionsBySession.get(session.id) ?? [],
-      });
-      result.set(phaseId, list);
-    }
-
-    return result;
-  });
-}
-
-/**
- * Count aggregate progress for a programme.
- *
- * - Phase totals/completed from programme_phases (user-layer, RLS)
- * - Session totals from template layer (template_sessions per phase)
- * - Session completed/skipped from user layer (user_sessions, RLS)
- * - Exercise totals from template layer (session_exercises per session)
- * - Exercise completed from user layer (exercise_completions, RLS)
- * - Current phase session progress (template total + user completed/skipped)
- *
- * All queries run within a single RLS transaction for consistency.
+ * Count a programme's progress from the member's own sessions and exercises,
+ * in a single RLS transaction.
  */
 export async function countProgress(
   organisationId: string,
   userId: string,
   programmeId: string,
-  templateId: string,
   phaseIds: string[],
-  currentPhase?: CurrentPhaseInput
+  currentPhaseId?: string
 ): Promise<ProgressCounts> {
   return await withRLS(organisationId, userId, async (tx) => {
     // Phase counts (user-layer, RLS-scoped)
@@ -648,118 +537,53 @@ export async function countProgress(
         and(eq(programmePhases.programmeId, programmeId), eq(programmePhases.status, 'completed'))
       );
 
-    // Template phase IDs for this template (system-managed, no RLS)
-    const tPhaseIds = (
-      await tx
-        .select({ id: templatePhases.id })
-        .from(templatePhases)
-        .where(eq(templatePhases.programmeTemplateId, templateId))
-    ).map((p) => p.id);
-
-    // Template session IDs (fetched once, used for session count + exercise count)
-    const templateSessionIds =
-      tPhaseIds.length > 0
+    const sessions =
+      phaseIds.length > 0
         ? await tx
-            .select({ id: templateSessions.id, templatePhaseId: templateSessions.templatePhaseId })
-            .from(templateSessions)
-            .where(inArray(templateSessions.templatePhaseId, tPhaseIds))
+            .select({
+              id: userSessions.id,
+              programmePhaseId: userSessions.programmePhaseId,
+              status: userSessions.status,
+            })
+            .from(userSessions)
+            .where(
+              and(
+                eq(userSessions.organisationId, organisationId),
+                inArray(userSessions.programmePhaseId, phaseIds)
+              )
+            )
         : [];
 
-    const totalSessions = templateSessionIds.length;
-
-    // Session completed/skipped from user layer (RLS-scoped)
-    const [completedSessionsResult] =
-      phaseIds.length > 0
-        ? await tx
-            .select({ value: count() })
-            .from(userSessions)
-            .where(
-              and(
-                eq(userSessions.organisationId, organisationId),
-                inArray(userSessions.programmePhaseId, phaseIds),
-                eq(userSessions.status, 'completed')
-              )
-            )
-        : [{ value: 0 }];
-
-    const [skippedSessionsResult] =
-      phaseIds.length > 0
-        ? await tx
-            .select({ value: count() })
-            .from(userSessions)
-            .where(
-              and(
-                eq(userSessions.organisationId, organisationId),
-                inArray(userSessions.programmePhaseId, phaseIds),
-                eq(userSessions.status, 'skipped')
-              )
-            )
-        : [{ value: 0 }];
-
-    // Exercise totals from template layer (session_exercises per template session)
-    const tSessionIds = templateSessionIds.map((s) => s.id);
+    const sessionIds = sessions.map((s) => s.id);
 
     const [totalExercisesResult] =
-      tSessionIds.length > 0
+      sessionIds.length > 0
         ? await tx
             .select({ value: count() })
-            .from(sessionExercises)
-            .where(inArray(sessionExercises.templateSessionId, tSessionIds))
+            .from(userSessionExercises)
+            .where(
+              and(
+                eq(userSessionExercises.organisationId, organisationId),
+                inArray(userSessionExercises.userSessionId, sessionIds)
+              )
+            )
         : [{ value: 0 }];
 
-    // Exercise completed from user layer (RLS-scoped)
-    const userSessionIds =
-      phaseIds.length > 0
-        ? (
-            await tx
-              .select({ id: userSessions.id })
-              .from(userSessions)
-              .where(
-                and(
-                  eq(userSessions.organisationId, organisationId),
-                  inArray(userSessions.programmePhaseId, phaseIds)
-                )
-              )
-          ).map((s) => s.id)
-        : [];
-
     const [completedExercisesResult] =
-      userSessionIds.length > 0
+      sessionIds.length > 0
         ? await tx
             .select({ value: count() })
             .from(exerciseCompletions)
             .where(
               and(
                 eq(exerciseCompletions.organisationId, organisationId),
-                inArray(exerciseCompletions.userSessionId, userSessionIds),
+                inArray(exerciseCompletions.userSessionId, sessionIds),
                 eq(exerciseCompletions.completed, true)
               )
             )
         : [{ value: 0 }];
 
-    // Current phase progress (within same transaction)
-    const currentPhaseCounts = { totalSessions: 0, completedOrSkippedSessions: 0 };
-
-    if (currentPhase) {
-      // Total sessions from template layer for this phase (derive from already-fetched data)
-      currentPhaseCounts.totalSessions = templateSessionIds.filter(
-        (s) => s.templatePhaseId === currentPhase.templatePhaseId
-      ).length;
-
-      // Completed+skipped user sessions for the current phase only
-      const [currentPhaseCompletedResult] = await tx
-        .select({ value: count() })
-        .from(userSessions)
-        .where(
-          and(
-            eq(userSessions.organisationId, organisationId),
-            eq(userSessions.programmePhaseId, currentPhase.phaseId),
-            inArray(userSessions.status, ['completed', 'skipped'])
-          )
-        );
-
-      currentPhaseCounts.completedOrSkippedSessions = currentPhaseCompletedResult.value;
-    }
+    const currentPhaseSessions = sessions.filter((s) => s.programmePhaseId === currentPhaseId);
 
     return {
       phases: {
@@ -767,15 +591,20 @@ export async function countProgress(
         completed: completedPhasesResult.value,
       },
       sessions: {
-        total: totalSessions,
-        completed: completedSessionsResult.value,
-        skipped: skippedSessionsResult.value,
+        total: sessions.length,
+        completed: sessions.filter((s) => s.status === 'completed').length,
+        skipped: sessions.filter((s) => s.status === 'skipped').length,
       },
       exercises: {
         total: totalExercisesResult.value,
         completed: completedExercisesResult.value,
       },
-      currentPhase: currentPhaseCounts,
+      currentPhase: {
+        totalSessions: currentPhaseSessions.length,
+        completedOrSkippedSessions: currentPhaseSessions.filter(
+          (s) => s.status === 'completed' || s.status === 'skipped'
+        ).length,
+      },
     };
   });
 }

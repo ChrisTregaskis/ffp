@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { INVITABLE_ROLES, USER_ROLES } from '@ffp/database/constants';
 
 import { paginationInputSchema, createPaginatedResponseSchema } from './pagination.schema';
+import { programmeStatusSchema } from './programme/programme-lifecycle.schema';
 import { publicIdSchema } from './public-id.schema';
 
 export const userRoleSchema = z.enum(USER_ROLES);
@@ -24,21 +25,6 @@ export const userSchema = z.object({
   updatedAt: z.coerce.date(),
 });
 
-export const createUserSchema = userSchema
-  .pick({
-    email: true,
-    cognitoSub: true,
-    firstName: true,
-    lastName: true,
-    role: true,
-  })
-  .extend({
-    locationId: userSchema.shape.locationId.optional(),
-    profileImageUrl: userSchema.shape.profileImageUrl.optional(),
-    phone: userSchema.shape.phone.optional(),
-    dateOfBirth: userSchema.shape.dateOfBirth.optional(),
-  });
-
 /**
  * Schema for JWT claims from Cognito ID token
  * Used to validate and type JWT payload on authentication
@@ -54,15 +40,6 @@ export const jwtUserClaimsSchema = z.object({
 });
 
 export const invitableRoleSchema = z.enum(INVITABLE_ROLES);
-
-/**
- * Determines if a programme user can be invited based on locationId presence.
- * Individual users (locationId = null) cannot be invited.
- * Location users (locationId present) can be invited.
- */
-export const canInviteProgrammeUser = (locationId: string | null): boolean => {
-  return locationId !== null;
-};
 
 /** The schema validates that organisationId and locationId are provided together or both omitted. */
 export const inviteUserSchema = z
@@ -115,6 +92,12 @@ export const adminUpdateUserInputSchema = z.object({
   dateOfBirth: z.coerce.date().nullable().optional(),
 });
 
+/** One role, or several comma-separated (`customer_owner,customer_admin`) */
+const userRoleListSchema = z
+  .string()
+  .transform((value) => value.split(',').map((role) => role.trim()))
+  .pipe(z.array(userRoleSchema).min(1));
+
 /** Query parameters for GET /admin/users */
 export const userListQuerySchema = paginationInputSchema.extend({
   /** Free-text search across name and email */
@@ -122,14 +105,14 @@ export const userListQuerySchema = paginationInputSchema.extend({
   /** Filter by location ID */
   locationId: z.string().optional(),
   /** Filter by user role */
-  role: userRoleSchema.optional(),
+  role: userRoleListSchema.optional(),
 });
 
 /** Filter parameters extracted from query (excludes pagination) */
 export const userFilterSchema = z.object({
   search: z.string().optional(),
   locationId: z.string().optional(),
-  role: userRoleSchema.optional(),
+  role: userRoleListSchema.optional(),
 });
 
 /** Response schema for user list items — includes locationName from join */
@@ -146,6 +129,12 @@ export const userListResponseSchema = userSchema
   })
   .extend({
     locationName: z.string().nullable(),
+    /** The member's current (latest not archived) programme; null without one */
+    programmeName: z.string().nullable(),
+    programmeLevel: z.number().int().nullable(),
+    programmeStatus: programmeStatusSchema.exclude(['archived']).nullable(),
+    /** The latest programme generation for the member failed for good */
+    generationFailed: z.boolean(),
   });
 
 /** Response schema for user detail — full record with locationName */
@@ -166,7 +155,6 @@ export const userProfileResponseSchema = z.object({
 
 export type UserRole = z.infer<typeof userRoleSchema>;
 export type User = z.infer<typeof userSchema>;
-export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type JwtUserClaims = z.infer<typeof jwtUserClaimsSchema>;
 export type InviteUserInput = z.infer<typeof inviteUserSchema>;
 export type AdminCreateUserInput = z.infer<typeof adminCreateUserInputSchema>;

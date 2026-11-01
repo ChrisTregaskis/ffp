@@ -9,6 +9,7 @@ import { programmeStatusSchema } from './programme-lifecycle.schema';
 /** Video metadata embedded in exercise detail */
 const detailVideoSchema = z.object({
   id: z.guid(),
+  publicId: publicIdSchema,
   title: z.string(),
   durationSeconds: z.number().int().positive(),
   difficulty: z.string().nullable(),
@@ -24,6 +25,7 @@ const detailCompletionSchema = z.object({
 
 /** Full exercise detail (only for current/completed phases) */
 const detailExerciseSchema = z.object({
+  /** The member's own exercise row (user_session_exercises), not the template's */
   sessionExerciseId: z.guid(),
   orderIndex: z.number().int().nonnegative(),
   sets: z.number().int().positive(),

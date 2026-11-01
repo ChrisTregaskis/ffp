@@ -106,7 +106,7 @@ export const extractUserContext = (event: APIGatewayProxyEvent): RequestContext 
 // CORRECT: Zod validation before processing
 export const createUser = async (context: RequestContext, input: unknown): Promise<User> => {
   // Validate input with Zod
-  const validatedInput = createUserSchema.parse(input);
+  const validatedInput = adminCreateUserInputSchema.parse(input);
 
   // Proceed with validated data
   return await userRepository.create(context, validatedInput);

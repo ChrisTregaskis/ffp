@@ -4,6 +4,8 @@ import { ContentPanel, PageContainer } from '@web/components/atoms';
 import { PageState, PageHeader } from '@web/components/molecules';
 import { ComposableForm } from '@web/components/organisms';
 
+import { useConfirmBeforeSave } from './useConfirmBeforeSave';
+
 import type { ReactNode } from 'react';
 import type { FieldValues } from 'react-hook-form';
 
@@ -24,17 +26,28 @@ interface AdminEditPageShellBaseProps<TFormValues extends FieldValues, TRecord> 
   record: TRecord | undefined;
   /** Define it at module level so the values memo holds */
   toFormValues: (record: TRecord) => TFormValues;
-  /**
-   * Returns the save's promise (`mutateAsync`) so the form knows when it lands. A save behind
-   * a confirm returns one the modal settles exactly once, through `useConfirmBeforeSave`.
-   */
+  /** Returns the save's promise (`mutateAsync`) so the form knows when it lands */
   onUpdate: (values: TFormValues) => Promise<void>;
+  /** Holds an edit behind a modal until the user confirms it */
+  confirmBeforeSave?: ConfirmBeforeSaveOption<TFormValues, TRecord>;
   /** Content above the form, outside it; shown only once the form is */
   beforeForm?: ReactNode;
   /** The form's field components */
   children: ReactNode;
   /** Rendered after the panel — modals and the like */
   footer?: ReactNode;
+}
+
+export interface ConfirmBeforeSaveModalProps {
+  isOpen: boolean;
+  onConfirm: () => void;
+  onClose: () => void;
+}
+
+export interface ConfirmBeforeSaveOption<TFormValues extends FieldValues, TRecord> {
+  /** Whether this edit waits for the modal; judge it on the payload the save would send */
+  when: (values: TFormValues, record: TRecord) => boolean;
+  renderModal: (props: ConfirmBeforeSaveModalProps) => ReactNode;
 }
 
 interface CreateOrEditProps<TFormValues extends FieldValues> {
@@ -83,6 +96,7 @@ export const AdminEditPageShell = <TFormValues extends FieldValues, TRecord>({
   toFormValues,
   onCreate,
   onUpdate,
+  confirmBeforeSave,
   beforeForm,
   children,
   footer,
@@ -95,10 +109,23 @@ export const AdminEditPageShell = <TFormValues extends FieldValues, TRecord>({
     [isEditMode, record, toFormValues, emptyValues]
   );
 
+  const confirm = useConfirmBeforeSave(onUpdate);
+  const { requestConfirm } = confirm;
+  const needsConfirm = confirmBeforeSave?.when;
+
   const handleSubmit = useCallback(
-    (formValues: TFormValues): Promise<void> =>
-      !isEditMode && onCreate ? onCreate(formValues) : onUpdate(formValues),
-    [isEditMode, onUpdate, onCreate]
+    (formValues: TFormValues): Promise<void> => {
+      if (!isEditMode && onCreate) {
+        return onCreate(formValues);
+      }
+
+      // The modal settles the promise, so a cancel leaves the form's edits in place. A confirm
+      // re-runs onUpdate, so the diff is taken against the record as it is at confirm time.
+      return record && needsConfirm?.(formValues, record)
+        ? requestConfirm(formValues)
+        : onUpdate(formValues);
+    },
+    [isEditMode, onCreate, onUpdate, record, needsConfirm, requestConfirm]
   );
 
   return (
@@ -129,6 +156,11 @@ export const AdminEditPageShell = <TFormValues extends FieldValues, TRecord>({
         )}
       </ContentPanel>
 
+      {confirmBeforeSave?.renderModal({
+        isOpen: confirm.isConfirmOpen,
+        onConfirm: confirm.confirm,
+        onClose: confirm.cancel,
+      })}
       {footer}
     </PageContainer>
   );

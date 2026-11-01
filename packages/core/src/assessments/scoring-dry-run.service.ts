@@ -2,10 +2,9 @@ import { getDb, type QuestionWithConfig, type ScoringConfig } from '@ffp/databas
 import { levelForProgrammeSlug } from '@ffp/database/constants';
 
 import { type OrganisationContext } from '../lib/context';
+import { assertDistinctIds } from '../lib/distinct-ids';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import { findTemplateNamesBySlugs } from '../programme-templates/programme-template.repository';
-import { findByTemplateIds } from '../questions/question.repository';
-import { findTemplateIdsOfSteps } from '../schemas/assessment-flow.schema';
 import {
   answerErrorPath,
   isAnswerProvided,
@@ -20,7 +19,7 @@ import {
   type ScoringDryRunResult,
 } from '../schemas/scoring-dry-run.schema';
 
-import { assertDistinctPublicIds } from './child-payload';
+import { findActiveFlowQuestions, firstShownQuestions } from './flow-question.repository';
 import * as flowRepository from './flow.repository';
 import { calculateScores } from './scoring';
 import { formatDimensionName } from './scoring/helpers';
@@ -60,8 +59,9 @@ export async function dryRunFlowScoringService(
   }
 
   const steps = await flowRepository.findStepsByFlowId(db, flow.id);
-  const questions = await findByTemplateIds(db, findTemplateIdsOfSteps(steps));
-  const questionsByPublicId = new Map(questions.map((question) => [question.publicId, question]));
+  const questions = await findActiveFlowQuestions(db, steps);
+  const shown = firstShownQuestions(steps, questions);
+  const questionsByPublicId = new Map(shown.map((question) => [question.publicId, question]));
 
   const responses = toResponses(parseResult.data.answers, questionsByPublicId);
   const result = calculateScores(responses, questions, config);
@@ -69,7 +69,7 @@ export async function dryRunFlowScoringService(
 
   return {
     scorable: true,
-    dimensions: toDimensions(config, questions),
+    dimensions: toDimensions(config, shown),
     mappings: config.programmeMappings.map(
       (mapping, index): ScoringDryRunMapping => ({
         index,
@@ -138,7 +138,7 @@ function toResponses(
   answers: ScoringDryRunRequest['answers'],
   questionsByPublicId: ReadonlyMap<string, QuestionWithConfig>
 ): AssessmentResponse[] {
-  assertDistinctPublicIds(
+  assertDistinctIds(
     answers.map((answer) => answer.questionPublicId),
     'Answered question'
   );

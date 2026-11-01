@@ -1,10 +1,19 @@
-import { pgTable, uuid, varchar, timestamp, jsonb, pgEnum, index } from 'drizzle-orm/pg-core';
-
-import { publicIdColumn, publicIdIndex } from '../lib/public-id';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { relations } from 'drizzle-orm';
-import { organisations } from './organisations';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  timestamp,
+  jsonb,
+  pgEnum,
+  index,
+  unique,
+} from 'drizzle-orm/pg-core';
+
 import { LOCATION_STATUSES } from '../constants/location.constants';
+import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
+import { organisations } from './organisations';
 
 export const locationStatusEnum = pgEnum('location_status', [...LOCATION_STATUSES]);
 
@@ -39,6 +48,7 @@ export const locations = pgTable(
     index('idx_locations_organisation_id').on(table.organisationId),
     index('idx_locations_account_code').on(table.accountCode),
     index('idx_locations_status').on(table.status),
+    unique('locations_id_organisation_id_unique').on(table.id, table.organisationId),
   ]
 );
 
@@ -49,7 +59,5 @@ export const locationsRelations = relations(locations, ({ one }) => ({
   }),
 }));
 
-export const insertLocationSchema = createInsertSchema(locations);
-export const selectLocationSchema = createSelectSchema(locations);
 export type Location = typeof locations.$inferSelect;
 export type NewLocation = typeof locations.$inferInsert;

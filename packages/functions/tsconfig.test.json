@@ -1,41 +1,16 @@
 {
-  "extends": "../../tsconfig.base.json",
+  // Typechecks the tests against the app config, so paths and lib can't drift from it.
+  // Read by `pnpm typecheck` and by ESLint.
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "composite": true,
-    "target": "ES2020",
-    "lib": ["ES2020"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "emitDeclarationOnly": true,
-    "types": ["vitest/globals"],
-
-    // Test-specific path aliases
-    "baseUrl": "./src",
-    "paths": {
-      "@functions/auth/*": ["./auth/*"],
-      "@functions/assessments/*": ["./assessments/*"],
-      "@functions/business/*": ["./business/*"],
-      "@functions/programmes/*": ["./programmes/*"],
-      "@functions/videos/*": ["./videos/*"],
-      "@functions/utils/*": ["./utils/*"],
-      "@functions/types/*": ["./types/*"],
-      "@functions/lib/*": ["./lib/*"],
-      "@functions/services/*": ["./services/*"]
-    }
+    "rootDir": ".",
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "incremental": false,
+    "noEmit": true,
+    "types": ["vitest/globals"]
   },
-  "include": [
-    "tests/**/*",
-    "src/**/*.test.ts",
-    "src/**/*.test.tsx",
-    "src/**/*.spec.ts",
-    "src/**/*.spec.tsx",
-    "src/**/*"
-  ],
-  "exclude": ["node_modules", "dist"],
-  "references": [
-    {
-      "path": "../core"
-    }
-  ]
+  "include": ["src/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

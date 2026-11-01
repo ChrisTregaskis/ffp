@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { generatePath, useNavigate } from 'react-router-dom';
 
 import type { RowAction } from '@web/components/organisms';
 import { AdminListPageShell } from '@web/components/templates';
@@ -40,14 +40,26 @@ export const UserListPage: React.FC = () => {
     [navigate]
   );
 
+  const handleOpenProgrammeClick = useCallback(
+    (row: UserRow): void => {
+      void navigate(generatePath(routes[RouteKey.ADMIN_USER_PROGRAMME].path, { id: row.publicId }));
+    },
+    [navigate]
+  );
+
   const rowActions = useCallback(
     (_row: UserRow): RowAction<UserRow>[] => [
       {
         label: 'Edit',
         onClick: handleEditClick,
       },
+      {
+        label: 'Open Programme',
+        onClick: handleOpenProgrammeClick,
+        hidden: (row) => row.programmeStatus === null,
+      },
     ],
-    [handleEditClick]
+    [handleEditClick, handleOpenProgrammeClick]
   );
 
   const userColumns = useMemo(() => buildUserColumns(rowActions), [rowActions]);

@@ -6,7 +6,9 @@ import { ASSESSMENT_ACTION } from '@web/contexts/assessments/constants';
 import { useAssessment } from '@web/contexts/assessments/useAssessment';
 import { useSaveProgress } from '@web/hooks/assessments/useSaveProgress';
 import { useShowRefusedAnswers } from '@web/hooks/assessments/useShowRefusedAnswers';
-import { toQuestionFieldErrors } from '@web/utils/assessment-field-errors';
+import { toQuestionFieldErrors, toRefusalMessage } from '@web/utils/assessment-field-errors';
+
+const SAVE_FAILURE_MESSAGE = "We couldn't save your answers just now. Please try again.";
 
 export interface AssessmentNavigationProps {
   /** Whether to show the Back button (hide on first step) */
@@ -37,7 +39,8 @@ export interface AssessmentNavigationProps {
  * When answers are dirty, saves progress before navigating.
  * Supports branching via nextStepId from save response.
  * A refused save keeps the member on the step: answers the server named carry its message
- * on their question, and any other failure shows above the buttons.
+ * on their question, a refusal naming no question shows the server's message above the
+ * buttons, and any other failure shows a generic one there.
  */
 export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
   showBack = true,
@@ -55,7 +58,7 @@ export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
 
   const { assessmentId, answers, currentStep, isDirty } = assessmentState;
   // Set by a step-level save whose failure could not be shown on a question; background saves stay quiet
-  const [hasSaveFailed, setHasSaveFailed] = useState(false);
+  const [saveFailureMessage, setSaveFailureMessage] = useState<string | null>(null);
   const isSaving = saveProgress.isPending;
 
   const handleSaveAndNavigate = useCallback(
@@ -74,12 +77,12 @@ export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
           // A refusal is shown on its questions; one that cannot be, and any other failure, here
           const isShown = await showRefusedAnswers(toQuestionFieldErrors(error));
 
-          setHasSaveFailed(!isShown);
+          setSaveFailureMessage(isShown ? null : (toRefusalMessage(error) ?? SAVE_FAILURE_MESSAGE));
 
           return;
         }
 
-        setHasSaveFailed(false);
+        setSaveFailureMessage(null);
 
         if (isDirty) {
           assessmentDispatch({ type: ASSESSMENT_ACTION.MARK_SAVED });
@@ -162,12 +165,7 @@ export const AssessmentNavigation: React.FC<AssessmentNavigationProps> = ({
 
   return (
     <div className="space-y-4">
-      {hasSaveFailed && (
-        <StaticAlert
-          variant="error"
-          message="We couldn't save your answers just now. Please try again."
-        />
-      )}
+      {saveFailureMessage && <StaticAlert variant="error" message={saveFailureMessage} />}
       <nav
         className={`flex items-center justify-between ${className}`.trim()}
         aria-label="Assessment navigation"

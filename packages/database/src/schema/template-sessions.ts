@@ -8,9 +8,10 @@ import {
   uniqueIndex,
   index,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { templatePhases } from './template-phases';
+
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
+import { templatePhases } from './template-phases';
 
 /**
  * Template sessions table definition
@@ -50,7 +51,5 @@ export const templateSessions = pgTable(
   ]
 );
 
-export const insertTemplateSessionSchema = createInsertSchema(templateSessions);
-export const selectTemplateSessionSchema = createSelectSchema(templateSessions);
 export type TemplateSessionRecord = typeof templateSessions.$inferSelect;
 export type NewTemplateSession = typeof templateSessions.$inferInsert;

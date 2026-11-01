@@ -5,7 +5,7 @@ export type PrescriptionBadgeVariant = 'blue' | 'purple' | 'green';
 export type PrescriptionBadgeSize = 'sm' | 'md';
 
 export interface PrescriptionBadgeProps {
-  /** Badge label (e.g., "3 sets x 12", "30s rest") */
+  /** Badge label (e.g., "3 sets × 12", "Rest 30s") */
   label: string;
   icon: IconName;
   /** @default 'blue' */

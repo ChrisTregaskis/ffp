@@ -7,6 +7,8 @@ import {
   type AssessmentTemplateWithQuestions,
 } from '@ffp/core/server';
 
+import { parseJsonBody } from '../../lib/request-body';
+
 interface DuplicateTemplateRequest {
   name: string;
 }
@@ -31,18 +33,7 @@ export const handler = withErrorHandling(
         throw new ValidationError('Template ID is required in path');
       }
 
-      // Parse request body
-      if (!event.body) {
-        throw new ValidationError('Request body is required');
-      }
-
-      let input: DuplicateTemplateRequest;
-
-      try {
-        input = JSON.parse(event.body) as DuplicateTemplateRequest;
-      } catch {
-        throw new ValidationError('Invalid JSON in request body');
-      }
+      const input = parseJsonBody(event.body) as DuplicateTemplateRequest;
 
       // Validate name is provided
       if (!input.name || typeof input.name !== 'string' || input.name.trim().length === 0) {

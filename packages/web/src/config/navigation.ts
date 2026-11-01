@@ -30,6 +30,14 @@ const CUSTOMER_OWNER = USER_ROLE.CUSTOMER_OWNER;
 const CUSTOMER_ADMIN = USER_ROLE.CUSTOMER_ADMIN;
 const SYSTEM_ADMIN = USER_ROLE.SYSTEM_ADMIN;
 
+/** Headings the main navigation groups its items under */
+export const NAV_GROUP = {
+  ASSESSMENTS: 'Assessments',
+  PROGRAMMES: 'Programmes',
+} as const;
+
+export type NavGroup = (typeof NAV_GROUP)[keyof typeof NAV_GROUP];
+
 /**
  * Navigation item configuration
  */
@@ -46,6 +54,8 @@ export interface NavItem {
   roles: UserRole[];
   /** Section of the navigation (main content or footer) */
   section: 'main' | 'footer';
+  /** The heading the item sits under in the main section; ungrouped items have none */
+  group?: NavGroup;
   /** Optional click handler (for actions like logout) */
   onClick?: () => void;
 }
@@ -155,6 +165,7 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
       path: routes[RouteKey.ADMIN_ASSESSMENTS].path,
       roles: [SYSTEM_ADMIN],
       section: 'main',
+      group: NAV_GROUP.ASSESSMENTS,
     },
     {
       key: RouteKey.ADMIN_ASSESSMENT_TEMPLATES,
@@ -163,6 +174,7 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
       path: routes[RouteKey.ADMIN_ASSESSMENT_TEMPLATES].path,
       roles: [SYSTEM_ADMIN],
       section: 'main',
+      group: NAV_GROUP.ASSESSMENTS,
     },
     {
       key: RouteKey.ADMIN_QUESTIONS,
@@ -171,6 +183,7 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
       path: routes[RouteKey.ADMIN_QUESTIONS].path,
       roles: [SYSTEM_ADMIN],
       section: 'main',
+      group: NAV_GROUP.ASSESSMENTS,
     },
     {
       key: RouteKey.ADMIN_TEMPLATES,
@@ -179,14 +192,25 @@ export const getNavigationItems = (userRole: UserRole, onLogout: () => void): Na
       path: routes[RouteKey.ADMIN_TEMPLATES].path,
       roles: [SYSTEM_ADMIN],
       section: 'main',
+      group: NAV_GROUP.PROGRAMMES,
     },
     {
       key: RouteKey.ADMIN_VIDEOS,
-      label: 'Video Library',
+      label: 'Exercises',
       icon: 'Video',
       path: routes[RouteKey.ADMIN_VIDEOS].path,
       roles: [SYSTEM_ADMIN],
       section: 'main',
+      group: NAV_GROUP.PROGRAMMES,
+    },
+    {
+      key: RouteKey.ADMIN_EXERCISE_TAGS,
+      label: 'Exercise Tags',
+      icon: 'Target',
+      path: routes[RouteKey.ADMIN_EXERCISE_TAGS].path,
+      roles: [SYSTEM_ADMIN],
+      section: 'main',
+      group: NAV_GROUP.PROGRAMMES,
     },
   ];
 

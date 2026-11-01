@@ -15,6 +15,7 @@ import {
   processScoreAssessment,
   createLogger,
   createSystemLogger,
+  describeErrorForLog,
   ValidationError,
   processGenerateProgramme,
   type JobProcessorConfig,
@@ -114,14 +115,14 @@ export const handler = async (event: ScheduledEvent, context: Context): Promise<
         // Route to appropriate handler based on job type
         const result = await processJobByType(job);
 
-        // Mark job as completed with result
+        // Mark job as completed; only the result's ids are stored
         await completeJob(job.id, result);
 
         logger.info('Job completed successfully');
         completed++;
       } catch (error) {
         const err = error instanceof Error ? error : new Error('Unknown error');
-        logger.error('Job failed', { error: err.message });
+        logger.error('Job failed', describeErrorForLog(error));
 
         // Handle failure with retry logic
         const failResult = await failJob(job, err);
@@ -142,10 +143,10 @@ export const handler = async (event: ScheduledEvent, context: Context): Promise<
       failed,
     });
   } catch (error) {
-    sysLogger.error('Job processor failed', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    throw error;
+    const description = describeErrorForLog(error);
+    sysLogger.error('Job processor failed', description);
+    // The runtime logs a thrown error's enumerable fields, query and params included
+    throw new Error(description.error);
   }
 };
 
@@ -156,7 +157,7 @@ export const handler = async (event: ScheduledEvent, context: Context): Promise<
  * TypeScript narrows the return type based on the job.type discriminant.
  *
  * @param job - The job record to process
- * @returns Promise resolving to typed result object to store in job.result
+ * @returns Promise resolving to the typed result, checked against its schema
  */
 export async function processJobByType<T extends JobType>(
   job: ProcessJobRecord & { type: T }

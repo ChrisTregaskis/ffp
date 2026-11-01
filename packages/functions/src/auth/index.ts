@@ -6,7 +6,6 @@ import {
 
 import { validateAndMatchRoute, type RouteRegistry } from '../lib/router';
 
-import { handler as completeNewPasswordHandler } from './complete-new-password';
 import { handler as loginHandler } from './login';
 import { handler as refreshTokenHandler } from './refresh-token';
 
@@ -32,7 +31,6 @@ const routes: RouteRegistry = {
   },
   POST: {
     '/login': loginHandler, // Public endpoint
-    '/complete-new-password': completeNewPasswordHandler, // Public endpoint
     '/refresh-token': refreshTokenHandler, // Public endpoint
     // Future auth routes:
     // '/logout': logoutHandler,

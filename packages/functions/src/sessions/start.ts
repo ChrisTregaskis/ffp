@@ -11,15 +11,17 @@ import {
   ValidationError,
 } from '@ffp/core/server';
 
+import { parseJsonBody } from '../lib/request-body';
+
 /**
  * Lambda handler for POST /sessions/start
- * Lazily creates a user session with exercise completions (idempotent).
+ * Starts the member's session and creates its exercise completions (idempotent).
  */
 export const handler = withErrorHandling(
   async (event: APIGatewayProxyEventV2WithJWT): Promise<StartSessionResponse> => {
     const context = extractUserContext(event);
 
-    const body = JSON.parse(event.body ?? '{}') as unknown;
+    const body = parseJsonBody(event.body);
     const input = startSessionRequestSchema.safeParse(body);
 
     if (!input.success) {

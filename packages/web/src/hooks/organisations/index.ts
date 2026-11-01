@@ -4,5 +4,4 @@ export {
   useCreateOrganisationMutation,
   useUpdateOrganisationMutation,
 } from './useOrganisationMutations';
-export type { UpdateOrganisationVariables } from './useOrganisationMutations';
 export { useOrganisationActivation } from './useOrganisationActivation';

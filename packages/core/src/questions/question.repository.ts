@@ -1,6 +1,6 @@
 import { eq, inArray, asc, and, count, ilike, or, sql, type Column, type SQL } from 'drizzle-orm';
 
-import type { DbClient, QuestionWithConfig } from '@ffp/database';
+import type { DbClient, DbQueryClient, QuestionWithConfig } from '@ffp/database';
 import {
   assessmentFlows,
   questions,
@@ -9,7 +9,7 @@ import {
 } from '@ffp/database/schema';
 
 import { NotFoundError } from '../lib/errors';
-import { applyPagination, escapeLikePattern } from '../lib/pagination';
+import { applyPagination, escapeLikePattern, withDefaultSort } from '../lib/pagination';
 
 import type {
   CreateQuestionInput,
@@ -26,15 +26,6 @@ export async function findByQuestionId(db: DbClient, id: string): Promise<Questi
   const records = await db.select().from(questions).where(eq(questions.id, id)).limit(1);
 
   return records[0] ?? null;
-}
-
-/** Returns questions in no guaranteed order. Missing IDs are silently ignored. */
-export async function findByQuestionIds(db: DbClient, ids: string[]): Promise<Question[]> {
-  if (ids.length === 0) {
-    return [];
-  }
-
-  return await db.select().from(questions).where(inArray(questions.id, ids));
 }
 
 export async function findQuestionBySlug(db: DbClient, slug: string): Promise<Question | null> {
@@ -94,14 +85,13 @@ export type TemplateQuestionWithConfig = QuestionWithConfig & { templateId: stri
 
 /**
  * Find all questions for multiple templates, ordered by display order within each template.
- * Active questions only, unless `includeInactive` is set: a member still sees a
- * deactivated question that remains assigned, so their answers to it need its rules.
+ * Active questions only: a deactivated question still assigned is neither validated nor scored.
+ * To read the questions a flow asks, use `findActiveFlowQuestions`, which owns that rule.
  * @returns Questions with template-specific config, ordered by templateId then displayOrder
  */
 export async function findByTemplateIds(
-  db: DbClient,
-  templateIds: string[],
-  options: { includeInactive?: boolean } = {}
+  db: DbQueryClient,
+  templateIds: string[]
 ): Promise<TemplateQuestionWithConfig[]> {
   if (templateIds.length === 0) {
     return [];
@@ -126,12 +116,7 @@ export async function findByTemplateIds(
     })
     .from(templateQuestions)
     .innerJoin(questions, eq(templateQuestions.questionId, questions.id))
-    .where(
-      and(
-        inArray(templateQuestions.templateId, templateIds),
-        options.includeInactive ? undefined : eq(questions.isActive, true)
-      )
-    )
+    .where(and(inArray(templateQuestions.templateId, templateIds), eq(questions.isActive, true)))
     .orderBy(asc(templateQuestions.templateId), asc(templateQuestions.displayOrder));
 
   return records.map((record) => ({
@@ -206,14 +191,12 @@ export async function findQuestionPage(
     .where(and(...conditions))
     .$dynamic();
 
-  const sortBy =
-    paginationInput.sortBy && QUESTION_SORTABLE_COLUMNS[paginationInput.sortBy]
-      ? paginationInput.sortBy
-      : 'questionText';
-
   return await applyPagination(
     query,
-    { ...paginationInput, sortBy },
+    withDefaultSort(paginationInput, QUESTION_SORTABLE_COLUMNS, {
+      sortBy: 'questionText',
+      sortDirection: 'asc',
+    }),
     QUESTION_SORTABLE_COLUMNS,
     questions.id
   );

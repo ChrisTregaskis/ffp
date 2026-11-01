@@ -1,11 +1,10 @@
-import { and, count, eq, inArray } from 'drizzle-orm';
+import { and, asc, count, eq, inArray } from 'drizzle-orm';
 
 import type { PhaseStatus, SessionStatus } from '@ffp/database/constants';
 import {
   userSessions,
   programmePhases,
   programmes,
-  templateSessions,
   type UserSessionRecord,
   type NewUserSession,
   type ProgrammePhaseRecord,
@@ -14,20 +13,18 @@ import {
 import { type Transaction } from '../lib/database';
 import { NotFoundError } from '../lib/errors';
 
-export type { UserSessionRecord, ProgrammePhaseRecord };
+export type { UserSessionRecord, NewUserSession, ProgrammePhaseRecord };
 
-/** Creates a user session row within an existing RLS transaction. */
-export async function createUserSession(
+/** Batch creates user session rows within an existing RLS transaction. */
+export async function createUserSessions(
   tx: Transaction,
-  input: NewUserSession
-): Promise<UserSessionRecord> {
-  const records = await tx.insert(userSessions).values(input).returning();
-
-  if (records.length === 0) {
-    throw new NotFoundError('Failed to create user session');
+  inputs: NewUserSession[]
+): Promise<UserSessionRecord[]> {
+  if (inputs.length === 0) {
+    return [];
   }
 
-  return records[0];
+  return await tx.insert(userSessions).values(inputs).returning();
 }
 
 /** Finds a user session by ID within an existing RLS transaction. */
@@ -44,10 +41,7 @@ export async function findUserSessionById(
   return records[0] ?? null;
 }
 
-/**
- * Finds an existing user session by phase and template session.
- * Used for idempotent session start — returns existing session if already created.
- */
+/** Finds the member's session in a phase by the template session it was created from. */
 export async function findUserSessionByPhaseAndTemplate(
   tx: Transaction,
   programmePhaseId: string,
@@ -127,6 +121,70 @@ export async function clearPausedAt(tx: Transaction, sessionId: string): Promise
     .where(eq(userSessions.id, sessionId));
 }
 
+/**
+ * A member's session, only if it belongs to the given programme, locked until the transaction
+ * ends. An edit holds the lock while it checks the status, so a session start either waits for
+ * the edit (and copies the edited exercises) or wins and the edit sees it started.
+ */
+export async function lockUserSessionInProgramme(
+  tx: Transaction,
+  programmeId: string,
+  sessionId: string
+): Promise<UserSessionRecord | null> {
+  const records = await tx
+    .select({ session: userSessions })
+    .from(userSessions)
+    .innerJoin(programmePhases, eq(programmePhases.id, userSessions.programmePhaseId))
+    .where(and(eq(userSessions.id, sessionId), eq(programmePhases.programmeId, programmeId)))
+    .limit(1)
+    .for('update', { of: userSessions });
+
+  return records[0]?.session ?? null;
+}
+
+/** A phase's sessions in order, locked until the transaction ends, as a single session is above. */
+export async function lockUserSessionsInPhase(
+  tx: Transaction,
+  programmePhaseId: string
+): Promise<UserSessionRecord[]> {
+  return await tx
+    .select()
+    .from(userSessions)
+    .where(eq(userSessions.programmePhaseId, programmePhaseId))
+    .orderBy(asc(userSessions.sessionNumber))
+    .for('update');
+}
+
+/**
+ * Renumbers a phase's sessions to match orderedIds (1-based). The unique index on
+ * (phase, session number) is not deferrable, so every row moves to a negative number first.
+ */
+export async function reorderUserSessions(
+  tx: Transaction,
+  programmePhaseId: string,
+  orderedIds: string[]
+): Promise<UserSessionRecord[]> {
+  for (let i = 0; i < orderedIds.length; i++) {
+    await tx
+      .update(userSessions)
+      .set({ sessionNumber: -(i + 1), updatedAt: new Date() })
+      .where(eq(userSessions.id, orderedIds[i]));
+  }
+
+  for (let i = 0; i < orderedIds.length; i++) {
+    await tx
+      .update(userSessions)
+      .set({ sessionNumber: i + 1, updatedAt: new Date() })
+      .where(eq(userSessions.id, orderedIds[i]));
+  }
+
+  return await tx
+    .select()
+    .from(userSessions)
+    .where(eq(userSessions.programmePhaseId, programmePhaseId))
+    .orderBy(asc(userSessions.sessionNumber));
+}
+
 /** Finds the programme phase by ID within an existing RLS transaction. */
 export async function findProgrammePhaseById(
   tx: Transaction,
@@ -179,27 +237,6 @@ export async function countSessionsByPhase(
   };
 }
 
-/**
- * Fetches the template session to get session_number for lazy creation.
- * No RLS required — template_sessions is a system-managed table.
- */
-export async function findTemplateSessionById(
-  tx: Transaction,
-  templateSessionId: string
-): Promise<{ id: string; sessionNumber: number; templatePhaseId: string } | null> {
-  const records = await tx
-    .select({
-      id: templateSessions.id,
-      sessionNumber: templateSessions.sessionNumber,
-      templatePhaseId: templateSessions.templatePhaseId,
-    })
-    .from(templateSessions)
-    .where(eq(templateSessions.id, templateSessionId))
-    .limit(1);
-
-  return records[0] ?? null;
-}
-
 /** Counts total phases and completed phases for a programme. */
 export async function countPhasesByProgramme(
   tx: Transaction,
@@ -221,22 +258,6 @@ export async function countPhasesByProgramme(
     total: totalResult.value,
     completed: completedResult.value,
   };
-}
-
-/**
- * Counts total template sessions for a phase.
- * Used to determine if all sessions have been started/completed.
- */
-export async function countTemplateSessionsByPhase(
-  tx: Transaction,
-  templatePhaseId: string
-): Promise<number> {
-  const [result] = await tx
-    .select({ value: count() })
-    .from(templateSessions)
-    .where(eq(templateSessions.templatePhaseId, templatePhaseId));
-
-  return result.value;
 }
 
 /** Sets programme startedAt. */

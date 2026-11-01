@@ -1,7 +1,6 @@
-import type { AnswerValue, DbClient } from '@ffp/database';
+import type { AnswerValue, DbQueryClient } from '@ffp/database';
 
 import { ValidationError } from '../lib/errors';
-import { findByTemplateIds } from '../questions/question.repository';
 import { findTemplateIdsOfSteps } from '../schemas/assessment-flow.schema';
 import {
   answerErrorPath,
@@ -11,6 +10,8 @@ import {
   validateAnswer,
   type AnswerRuleQuestion,
 } from '../schemas/question-answer.schema';
+
+import { findActiveFlowQuestions, firstShownQuestions } from './flow-question.repository';
 
 import type { FlowStepWithConfig } from './flow.repository';
 import type { ApiFieldError } from '../schemas/api-error.schema';
@@ -29,44 +30,35 @@ const UNKNOWN_QUESTION_MESSAGE = 'This question is not part of your assessment.'
 
 /**
  * Every question the flow's steps show, keyed by ID and in step order, under its
- * effective validation. A deactivated question still assigned to a template is
- * shown to members, so its answers are accepted and checked, but it is never
- * required. A question assigned to two of the flow's templates keeps the rules
- * of the first step that shows it.
+ * effective validation. Active questions only: a deactivated one still assigned to a
+ * template is not shown or scored, so like an unassigned one it is neither required nor
+ * accepted. A question assigned to two of the flow's templates keeps the rules of the
+ * first step that shows it.
  */
 export async function loadFlowQuestions(
-  db: DbClient,
+  db: DbQueryClient,
   flowSteps: FlowStepWithConfig[]
 ): Promise<Map<string, FlowQuestion>> {
   const templateIds = [...new Set(findTemplateIdsOfSteps(flowSteps))];
+  const questions = await findActiveFlowQuestions(db, flowSteps);
+  const assigned = new Set(questions.map((row) => `${row.id}:${row.templateId}`));
 
-  const questions = await findByTemplateIds(db, templateIds, { includeInactive: true });
-  const flowQuestions = new Map<string, FlowQuestion>();
-
-  for (const templateId of templateIds) {
-    for (const question of questions.filter((q) => q.templateId === templateId)) {
-      const existing = flowQuestions.get(question.id);
-
-      if (existing) {
-        existing.templateIds.push(templateId);
-        continue;
-      }
-
-      const validation = resolveEffectiveValidation(question);
-
-      flowQuestions.set(question.id, {
-        templateIds: [templateId],
+  return new Map(
+    firstShownQuestions(flowSteps, questions).map((question): [string, FlowQuestion] => [
+      question.id,
+      {
+        templateIds: templateIds.filter((templateId) =>
+          assigned.has(`${question.id}:${templateId}`)
+        ),
         rules: {
           // `questions.type` is the question-type enum; the shared row type widens it
           type: question.type as QuestionType,
           options: question.options,
-          validation: question.isActive ? validation : { ...validation, required: false },
+          validation: resolveEffectiveValidation(question),
         },
-      });
-    }
-  }
-
-  return flowQuestions;
+      },
+    ])
+  );
 }
 
 function toFieldError(questionId: string, code: string, message: string): ApiFieldError {

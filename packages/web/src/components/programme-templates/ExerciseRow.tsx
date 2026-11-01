@@ -5,6 +5,7 @@ import type { ExerciseResponse } from '@ffp/core';
 import { Surface, Text } from '@web/components/atoms';
 import { KebabMenu } from '@web/components/organisms';
 import type { DropdownMenuItem } from '@web/components/organisms';
+import { formatPrescription } from '@web/utils/prescription';
 import { reorderableItemActions } from '@web/utils/reorderable-item-actions';
 
 export interface ExerciseRowProps {
@@ -25,23 +26,6 @@ export interface ExerciseRowProps {
   /** Whether a mutation is in progress */
   isMutating?: boolean;
 }
-
-/** Formats prescription summary (e.g. "3 sets x 8-12 reps") */
-const formatPrescription = (sets: number, reps: string): string => {
-  return `${String(sets)} ${sets === 1 ? 'set' : 'sets'} x ${reps}`;
-};
-
-/** Formats seconds as a readable duration string */
-const formatSeconds = (seconds: number): string => {
-  if (seconds >= 60) {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-
-    return secs > 0 ? `${String(mins)}m ${String(secs)}s` : `${String(mins)}m`;
-  }
-
-  return `${String(seconds)}s`;
-};
 
 /** Row displaying an exercise within a session — video title, prescription, and actions. */
 export const ExerciseRow: React.FC<ExerciseRowProps> = ({
@@ -90,21 +74,9 @@ export const ExerciseRow: React.FC<ExerciseRowProps> = ({
         <Text styleProps={{ size: 'sm', weight: 'medium' }} className="truncate">
           {exercise.video.title}
         </Text>
-        <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-          <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
-            {formatPrescription(exercise.sets, exercise.reps)}
-          </Text>
-          {exercise.durationSeconds && (
-            <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
-              {formatSeconds(exercise.durationSeconds)}
-            </Text>
-          )}
-          {exercise.restSeconds != null && exercise.restSeconds > 0 && (
-            <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
-              Rest: {formatSeconds(exercise.restSeconds)}
-            </Text>
-          )}
-        </div>
+        <Text styleProps={{ size: 'xs', colour: 'muted-foreground' }}>
+          {formatPrescription(exercise)}
+        </Text>
       </div>
 
       {/* Actions */}

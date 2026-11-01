@@ -16,60 +16,48 @@ export interface VideoFileSelection {
   selectFile: (file: File) => void;
   /** Clear the selected file and reset state */
   clearFile: () => void;
-  /** Ref for a hidden file input element */
-  fileInputRef: React.RefObject<HTMLInputElement>;
-  /** onChange handler for a hidden file input */
-  handleFileInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  /** Click the hidden file input to open the file picker */
-  openFilePicker: () => void;
 }
 
 /**
  * Composable hook for video file selection, validation, and duration detection.
  *
  * Shared by both the upload page (useVideoUpload) and the replacement flow (useVideoReplacement).
- * Handles: file validation (MP4, ≤500 MB), automatic duration detection, and file input management.
+ * Handles: file validation (MP4, ≤500 MB) and automatic duration detection.
  */
 export const useVideoFileSelection = (): VideoFileSelection => {
   const [file, setFile] = useState<File | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [detectedDuration, setDetectedDuration] = useState<number | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const selectedFileRef = useRef<File | null>(null);
 
   const selectFile = useCallback((selectedFile: File) => {
     const error = validateVideoFile(selectedFile);
+    selectedFileRef.current = selectedFile;
     setFile(selectedFile);
     setValidationError(error);
     setDetectedDuration(null);
 
     if (!error) {
       void detectVideoDuration(selectedFile).then((duration) => {
-        setDetectedDuration(duration);
+        // A slower probe of an earlier choice must not land on the file chosen since
+        if (selectedFileRef.current !== selectedFile) {
+          return;
+        }
+
+        if (duration === null) {
+          setValidationError("We couldn't read this video's length. Please try a different file.");
+        } else {
+          setDetectedDuration(duration);
+        }
       });
     }
   }, []);
 
   const clearFile = useCallback(() => {
+    selectedFileRef.current = null;
     setFile(null);
     setValidationError(null);
     setDetectedDuration(null);
-  }, []);
-
-  const handleFileInputChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const selected = event.target.files?.[0];
-
-      if (selected) {
-        selectFile(selected);
-      }
-
-      event.target.value = '';
-    },
-    [selectFile]
-  );
-
-  const openFilePicker = useCallback(() => {
-    fileInputRef.current?.click();
   }, []);
 
   const isReady = file !== null && validationError === null && detectedDuration !== null;
@@ -81,8 +69,5 @@ export const useVideoFileSelection = (): VideoFileSelection => {
     isReady,
     selectFile,
     clearFile,
-    fileInputRef,
-    handleFileInputChange,
-    openFilePicker,
   };
 };

@@ -20,6 +20,10 @@ export * from './lib/rls';
 // Re-export public ID utilities
 export { generatePublicId, publicIdColumn, publicIdIndex } from './lib/public-id';
 
+// Re-export the template → member exercise mapping
+export { fromDrawnVideo, fromTemplateExercise } from './lib/member-session-exercise';
+export type { MemberSessionExerciseFields } from './lib/member-session-exercise';
+
 // Re-export logger utilities
 export { createLogger, DatabaseLogLevel } from './lib/logger';
 export type { LogContext, DatabaseLogger } from './lib/logger';

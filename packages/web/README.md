@@ -29,9 +29,6 @@ import { UserSchema, AssessmentSchema } from '@ffp/core';
 
 // Import services
 import { UserService } from '@ffp/core';
-
-// Import utilities
-import { validateEmail } from '@ffp/core/utils';
 ```
 
 ### Within This Package
@@ -110,9 +107,10 @@ function MyComponent() {
 
 ### Testing
 
-Authentication uses **Zod schemas** for validation (defined in `src/schemas/auth.schema.ts`). Tests verify:
+Authentication forms validate through their fields' react-hook-form rules (form value types in `src/schemas/auth.schema.ts`). Tests verify:
 
-- Login credentials validation (email format, password presence)
+- Email format, once, on `FormEmailInput`; each form keeps one wiring case
+- Password presence on the login form
 - Password complexity requirements (Cognito policy: 8+ chars, uppercase, lowercase, number, special character)
 - Password confirmation matching
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolation, accessed through Drizzle ORM for type-safe database operations. All organisation-scoped tables enforce RLS policies to prevent cross-organisation data access.
+FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolation, accessed through Drizzle ORM for type-safe database operations. Every member- and organisation-data table enforces RLS to prevent cross-organisation data access; `process_jobs` is the one organisation-scoped table without it (see Table Classification).
 
 ---
 
@@ -45,11 +45,11 @@ FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolatio
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                       DATABASE SCHEMA (ERD)                             │
+│                           DATABASE SCHEMA (ERD)                         │
 ├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  MULTI-TENANT HIERARCHY (Organisation/Location)                         │
-│  ══════════════════════                                                 │
+│  A ──▶ B : B holds A's id                                               │
+│  MULTI-TENANT HIERARCHY (RLS enforced)                                  │
+│  ═════════════════════════════════════                                  │
 │                                                                         │
 │  ┌───────────────┐   ┌─────────────┐     ┌─────────────┐                │
 │  │ organisations │──▶│  locations  │────▶│    users    │                │
@@ -57,76 +57,47 @@ FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolatio
 │  │ id            │   │ org_id      │     │ org_id      │                │
 │  │ name          │   │ id          │     │ location_id │                │
 │  │ type          │   │ name        │     │ email       │                │
-│  │ subdomain     │   │ status      │     │ role        │                │
-│  │ status        │   │ owner_id    │     │ cognito_sub │                │
-│  └───────────────┘   └─────────────┘     └─────────────┘                │
-│        │                                        │                       │
-│        │                                        │                       │
-│        ▼                                        ▼                       │
+│  │ settings      │   │ status      │     │ role        │                │
+│  │ status        │   │ account_code│     │ cognito_sub │                │
+│  └───────────────┘   └─────────────┘     └──────┬──────┘                │
+│                                                 │                       │
+│                                                 ▼                       │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
-│  │                    USER DATA (RLS Enforced)                      │   │
+│  │                   MEMBER DATA (RLS enforced)                     │   │
 │  ├──────────────────────────────────────────────────────────────────┤   │
 │  │                                                                  │   │
-│  │  ┌───────────────────┐    ┌─────────────────────────┐            │   │
-│  │  │  user_assessments │───▶│ user_assessment_answers │            │   │
-│  │  │───────────────────│    │─────────────────────────│            │   │
-│  │  │ organisation_id   │    │ organisation_id         │            │   │
-│  │  │ user_id           │    │ user_assessment_id      │            │   │
-│  │  │ flow_id           │    │ question_id             │            │   │
-│  │  │ current_step_id   │    │ answer_value            │            │   │
-│  │  │ visited_step_ids  │    └─────────────────────────┘            │   │
-│  │  │ warnings_shown    │ ◀── Audit trail for clinical warnings    │   │
-│  │  │ status            │                                           │   │
-│  │  │ scores            │                                           │   │
-│  │  └───────────────────┘                                           │   │
-│  │           │                                                      │   │
-│  │           ▼                                                      │   │
-│  │  ┌───────────────────┐    ┌───────────────────┐                  │   │
-│  │  │    programs       │    │  process_jobs     │                  │   │
-│  │  │───────────────────│    │───────────────────│                  │   │
-│  │  │ organisation_id   │    │ organisation_id   │                  │   │
-│  │  │ user_id           │    │ type              │                  │   │
-│  │  │ assessment_id     │    │ status            │                  │   │
-│  │  │ duration_weeks    │    │ payload           │                  │   │
-│  │  └───────────────────┘    └───────────────────┘                  │   │
+│  │  programmes ──▶ programme_phases ──▶ user_sessions               │   │
+│  │      │                                    │                      │   │
+│  │      ▼                                    ▼                      │   │
+│  │  user_assessments                  user_session_exercises        │   │
+│  │      │          │                         │                      │   │
+│  │      ▼          ▼                         ▼                      │   │
+│  │  user_assessment_answers           exercise_completions          │   │
+│  │                 assessment_safety_triggers                       │   │
 │  │                                                                  │   │
+│  │  Every table here carries organisation_id; users own             │   │
+│  │  programmes and user_assessments                                 │   │
 │  └──────────────────────────────────────────────────────────────────┘   │
 │                                                                         │
-│  SYSTEM CONTENT (No RLS - shared across tenants)                        │
-│  ═══════════════════════════════════════════════                        │
+│  SYSTEM CONTENT (no RLS: shared across organisations)                   │
+│  ════════════════════════════════════════════════════                   │
 │                                                                         │
-│  ┌─────────────────┐    ┌─────────────────────┐    ┌─────────────────┐  │
-│  │ assessment_     │    │ template_questions  │    │   questions     │  │
-│  │ templates       │───▶│ (join table)        │◀───│                 │  │
-│  │─────────────────│    │─────────────────────│    │─────────────────│  │
-│  │ id              │    │ template_id         │    │ id              │  │
-│  │ name            │    │ question_id         │    │ slug            │  │
-│  │ is_active       │    │ display_order       │    │ type            │  │
-│  └────────┬────────┘    └─────────────────────┘    │ question_text   │  │
-│           │                                        │ options         │  │
-│           │                                        └─────────────────┘  │
-│           │                                                             │
-│  ┌────────┴────────┐    ┌─────────────────┐                             │
-│  │ assessment_     │    │    videos       │                             │
-│  │ flows           │    │─────────────────│                             │
-│  │─────────────────│    │ id              │                             │
-│  │ id              │    │ title           │                             │
-│  │ name            │    │ s3_key          │                             │
-│  │ scoring_config  │◀── │ duration        │ (MOVED from templates)      │
-│  └────────┬────────┘    └─────────────────┘                             │
-│           │                                                             │
-│           ▼                                                             │
-│  ┌─────────────────┐                                                    │
-│  │ flow_steps      │ ◀── NEW: Normalised step table                     │
-│  │─────────────────│                                                    │
-│  │ id              │                                                    │
-│  │ flow_id     FK  │                                                    │
-│  │ template_id FK  │                                                    │
-│  │ order           │                                                    │
-│  │ type            │                                                    │
-│  │ config (JSONB)  │                                                    │
-│  │ next_step_rules │ ◀── Branching conditions                           │
-│  └─────────────────┘                                                    │
+│  Assessment catalogue                                                   │
+│    assessment_flows ──▶ flow_steps ◀── assessment_templates             │
+│    assessment_templates ──▶ template_questions ◀── questions            │
+│    (scoring config is flow-level JSONB on assessment_flows)             │
+│                                                                         │
+│  Programme templates                                                    │
+│    programme_templates ──▶ template_phases ──▶ template_sessions        │
+│    template_sessions ──▶ session_exercises ◀── videos                   │
+│    template_sessions ──▶ template_session_slots ──▶ template_slot_tags  │
+│                                                                         │
+│  Video catalogue                                                        │
+│    videos ──▶ video_tags ◀── tags ◀── tag_categories                    │
+│                                                                         │
+│  Jobs                                                                   │
+│    process_jobs: carries organisation_id, but the job processor claims  │
+│    jobs across organisations, so it has no RLS yet                      │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -137,31 +108,46 @@ FFP uses PostgreSQL with Row-Level Security (RLS) for multi-tenant data isolatio
 
 ### RLS-Protected Tables (Organisation Data)
 
-These tables contain user/location data and **require RLS policies**:
+RLS is enabled on these 11 tables, and forced too outside production (`FORCE` is skipped when `ENVIRONMENT` is `production` or `prod`), so even the table owner is filtered. Policies key on `app.organisation_id`; the admin bypass policies are below.
 
-| Table                        | RLS Policy              | Description                                                |
-| ---------------------------- | ----------------------- | ---------------------------------------------------------- |
-| `users`                      | `organisation_id` match | User accounts                                              |
-| `locations`                  | `organisation_id` match | Location entities                                          |
-| `user_assessments`           | `organisation_id` match | Assessment instances                                       |
-| `user_assessment_answers`    | `organisation_id` match | Individual answers                                         |
-| `assessment_safety_triggers` | `organisation_id` match | One row per submitted assessment that raised safety advice |
-| `programs`                   | `organisation_id` match | Generated programmes                                       |
-| `process_jobs`               | `organisation_id` match | Async job queue                                            |
+| Table                        | Policies                                                                                                                                                | Description                                                |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `organisations`              | `organisation_read_isolation` (SELECT: own organisation, or the platform organisation), `organisation_write_isolation` (own organisation), admin bypass | Organisation registry                                      |
+| `locations`                  | `location_isolation`, admin bypass                                                                                                                      | Location entities                                          |
+| `users`                      | `user_isolation`, admin bypass                                                                                                                          | User accounts                                              |
+| `user_assessments`           | `user_assessment_organisation_isolation`                                                                                                                | Assessment instances                                       |
+| `user_assessment_answers`    | `user_assessment_answers_organisation_isolation`                                                                                                        | Individual answers                                         |
+| `assessment_safety_triggers` | `assessment_safety_triggers_organisation_isolation`                                                                                                     | One row per submitted assessment that raised safety advice |
+| `programmes`                 | `programme_organisation_isolation`, `programme_admin_read_bypass` (SELECT)                                                                              | Generated programmes                                       |
+| `programme_phases`           | `programme_phases_organisation_isolation`                                                                                                               | A programme's phases                                       |
+| `user_sessions`              | `user_sessions_organisation_isolation`                                                                                                                  | A member's sessions within a phase                         |
+| `user_session_exercises`     | `user_session_exercises_organisation_isolation`                                                                                                         | The exercises of a member's session                        |
+| `exercise_completions`       | `exercise_completions_organisation_isolation`                                                                                                           | Exercise completions within a started session              |
 
-### System Content Tables (No RLS)
+16 policies in all. Every policy other than the admin bypasses compares `organisation_id` (or the organisation's own `id`) with `NULLIF(current_setting('app.organisation_id', true), '')::uuid`.
 
-These tables contain shared content accessible to all authenticated users:
+### Tables Without RLS
 
-| Table                  | Description                                       |
-| ---------------------- | ------------------------------------------------- |
-| `organisations`        | Organisation registry (platform-managed)          |
-| `assessment_templates` | Assessment question configuration                 |
-| `assessment_flows`     | Assessment journey with flow-level scoring config |
-| `flow_steps`           | Normalised step definitions with branching rules  |
-| `questions`            | Reusable question bank                            |
-| `template_questions`   | Template ↔ Question links                        |
-| `videos`               | Video content library                             |
+These hold shared, system-managed content (or, for `process_jobs`, a queue the job processor reads across organisations). The admin routes over the catalogue tables are gated on `system_admin` in the handler, not by RLS.
+
+| Table                    | Description                                                                                    |
+| ------------------------ | ---------------------------------------------------------------------------------------------- |
+| `assessment_flows`       | Assessment journey with flow-level scoring config                                              |
+| `flow_steps`             | Normalised step definitions with branching rules                                               |
+| `assessment_templates`   | A set of questions a step shows                                                                |
+| `template_questions`     | Template ↔ question links, with per-template overrides                                        |
+| `questions`              | Reusable question bank                                                                         |
+| `programme_templates`    | Programme blueprints                                                                           |
+| `template_phases`        | A programme template's phases                                                                  |
+| `template_sessions`      | A template phase's sessions                                                                    |
+| `session_exercises`      | A template session's fixed exercises                                                           |
+| `template_session_slots` | A template session's slots, filled from a tag pool when a programme is generated               |
+| `template_slot_tags`     | The tags a slot draws from                                                                     |
+| `videos`                 | Video content library                                                                          |
+| `tag_categories`         | The seeded axes videos are tagged by                                                           |
+| `tags`                   | Admin-authored tags within a category                                                          |
+| `video_tags`             | Video ↔ tag links                                                                             |
+| `process_jobs`           | Async job queue. Carries `organisation_id`, but the processor claims jobs across organisations |
 
 ---
 
@@ -230,29 +216,28 @@ import type { User } from '@ffp/core';
 
 ```sql
 -- Standard organisation isolation policy
-CREATE POLICY organisation_isolation_users ON users
+CREATE POLICY user_isolation ON users
   FOR ALL
-  USING (organisation_id = current_setting('app.organisation_id', true)::UUID);
+  USING (organisation_id = NULLIF(current_setting('app.organisation_id', true), '')::UUID);
 ```
 
 ### System Admin Multi-Tenant Access
 
-System administrators (`role='system_admin'`) can access all organisations:
+System administrator queries run under `withAdminContext` (`@ffp/database`), which sets `app.is_admin = 'true'` for the transaction. Separate permissive policies key on that flag:
+
+| Table                                 | Admin bypass                                         |
+| ------------------------------------- | ---------------------------------------------------- |
+| `organisations`, `locations`, `users` | `FOR ALL`                                            |
+| `programmes`                          | `FOR SELECT` only; writes stay organisation-isolated |
+| Every other organisation-scoped table | None                                                 |
 
 ```sql
--- Policy with system_admin bypass
-CREATE POLICY organisation_isolation_users ON users
-  FOR ALL
-  USING (
-    organisation_id = current_setting('app.organisation_id', true)::UUID
-    OR
-    EXISTS (
-      SELECT 1 FROM users u
-      WHERE u.id = current_setting('app.user_id', true)::UUID
-      AND u.role = 'system_admin'
-    )
-  );
+CREATE POLICY programme_admin_read_bypass ON programmes
+  FOR SELECT
+  USING (current_setting('app.is_admin', true) = 'true');
 ```
+
+To read deeper into one member's data (phases, sessions, exercises, completions), resolve the user under admin context, then read under **that user's own organisation** with `withRLS`, taking the organisation from the user's row and never from the request. Policies live in `packages/database/src/migrations/apply-rls.ts` and are re-applied by every `pnpm db:migrate`.
 
 ### Using RLS in Code
 

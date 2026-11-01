@@ -1,3 +1,4 @@
+import { relations } from 'drizzle-orm';
 import {
   pgTable,
   uuid,
@@ -7,15 +8,16 @@ import {
   timestamp,
   index,
   pgEnum,
-  type AnyPgColumn,
+  unique,
+  foreignKey,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { relations } from 'drizzle-orm';
-import { organisations } from './organisations';
-import { users } from './users';
-import { programmeTemplates } from './programme-templates';
+
 import { PROGRAMME_STATUSES } from '../constants/programme.constants';
 import { publicIdColumn, publicIdIndex } from '../lib/public-id';
+
+import { organisations } from './organisations';
+import { programmeTemplates } from './programme-templates';
+import { users } from './users';
 
 export const programmeStatusEnum = pgEnum('programme_status', [...PROGRAMME_STATUSES]);
 
@@ -38,9 +40,7 @@ export const programmes = pgTable(
     organisationId: uuid('organisation_id')
       .notNull()
       .references(() => organisations.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id').notNull(),
     /** Reference to the programme template used for generation */
     programmeTemplateId: uuid('programme_template_id')
       .notNull()
@@ -60,10 +60,7 @@ export const programmes = pgTable(
     /** Why archived: reassessment, manual, expired */
     archivedReason: varchar('archived_reason', { length: 50 }),
     /** Successor programme (self-referential linked list of programme history) */
-    replacedByProgrammeId: uuid('replaced_by_programme_id').references(
-      (): AnyPgColumn => programmes.id,
-      { onDelete: 'set null' }
-    ),
+    replacedByProgrammeId: uuid('replaced_by_programme_id'),
     /** Snapshot of template's total phases at assignment time */
     totalPhases: integer('total_phases'),
     /** Snapshot of template's sessions per phase at assignment time */
@@ -76,6 +73,19 @@ export const programmes = pgTable(
     index('idx_programmes_organisation_user').on(table.organisationId, table.userId),
     index('idx_programmes_status').on(table.status),
     index('idx_programmes_template').on(table.programmeTemplateId),
+    unique('programmes_id_organisation_id_unique').on(table.id, table.organisationId),
+    foreignKey({
+      name: 'programmes_user_id_organisation_fk',
+      columns: [table.userId, table.organisationId],
+      foreignColumns: [users.id, users.organisationId],
+    }).onDelete('cascade'),
+    // The migration narrows this to SET NULL (replaced_by_programme_id): drizzle can't name
+    // the column, and nulling organisation_id as well would break its NOT NULL
+    foreignKey({
+      name: 'programmes_replaced_by_programme_id_organisation_fk',
+      columns: [table.replacedByProgrammeId, table.organisationId],
+      foreignColumns: [table.id, table.organisationId],
+    }).onDelete('set null'),
   ]
 );
 
@@ -99,7 +109,5 @@ export const programmesRelations = relations(programmes, ({ one }) => ({
   }),
 }));
 
-export const insertProgrammeSchema = createInsertSchema(programmes);
-export const selectProgrammeSchema = createSelectSchema(programmes);
 export type ProgrammeRecord = typeof programmes.$inferSelect;
 export type NewProgramme = typeof programmes.$inferInsert;

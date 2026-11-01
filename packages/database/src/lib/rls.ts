@@ -8,6 +8,7 @@
  */
 
 import { sql } from 'drizzle-orm';
+
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 /**
@@ -64,8 +65,8 @@ const escapeLiteral = (value: string): string => {
  *
  * @throws {Error} If organisationId is not provided or invalid
  */
-export const setRLSContext = async (
-  db: NodePgDatabase<any>,
+export const setRLSContext = async <TSchema extends Record<string, unknown>>(
+  db: NodePgDatabase<TSchema>,
   organisationId: string,
   userId?: string
 ): Promise<void> => {
@@ -127,11 +128,11 @@ export const setRLSContext = async (
  *
  * @throws {Error} If organisationId is not provided or callback fails
  */
-export const withRLS = async <T>(
-  db: NodePgDatabase<any>,
+export const withRLS = async <T, TSchema extends Record<string, unknown>>(
+  db: NodePgDatabase<TSchema>,
   organisationId: string,
   userId: string | undefined,
-  callback: (tx: NodePgDatabase<any>) => Promise<T>
+  callback: (tx: NodePgDatabase<TSchema>) => Promise<T>
 ): Promise<T> => {
   if (!organisationId) {
     throw new Error('organisationId is required for RLS context');
@@ -139,6 +140,7 @@ export const withRLS = async <T>(
 
   // Validate UUID formats early (defence in depth)
   validateUUID(organisationId, 'organisationId');
+
   if (userId) {
     validateUUID(userId, 'userId');
   }
@@ -155,8 +157,9 @@ export const withRLS = async <T>(
 /**
  * Set admin context to bypass organisation-scoped RLS policies
  *
- * Sets `app.is_admin = 'true'` which activates the `admin_bypass` permissive
- * policies on locations and users tables. This allows system_admin queries
+ * Sets `app.is_admin = 'true'` which activates the admin bypass permissive
+ * policies: full access to organisations, locations and users, and read-only
+ * access to programmes. This allows system_admin queries
  * to operate cross-organisation without disabling RLS entirely.
  *
  * Must be called within a transaction. The setting is automatically cleared
@@ -172,7 +175,9 @@ export const withRLS = async <T>(
  * });
  * ```
  */
-export const setAdminContext = async (tx: NodePgDatabase<any>): Promise<void> => {
+export const setAdminContext = async <TSchema extends Record<string, unknown>>(
+  tx: NodePgDatabase<TSchema>
+): Promise<void> => {
   await tx.execute(sql.raw(`SET LOCAL app.is_admin = 'true'`));
 };
 
@@ -181,7 +186,8 @@ export const setAdminContext = async (tx: NodePgDatabase<any>): Promise<void> =>
  *
  * Convenience wrapper that sets `app.is_admin = 'true'` and executes
  * the callback. All queries within the callback will bypass organisation
- * isolation on tables with admin_bypass policies (locations, users).
+ * isolation on tables with admin bypass policies (organisations, locations,
+ * users; programmes for reads only).
  *
  * @param db - Drizzle database instance
  * @param callback - Function to execute within admin context
@@ -194,12 +200,13 @@ export const setAdminContext = async (tx: NodePgDatabase<any>): Promise<void> =>
  * });
  * ```
  */
-export const withAdminContext = async <TDb extends NodePgDatabase<any>, T>(
+export const withAdminContext = async <TDb extends NodePgDatabase<Record<string, unknown>>, T>(
   db: TDb,
   callback: (tx: TDb) => Promise<T>
 ): Promise<T> => {
   return await db.transaction(async (tx) => {
     await setAdminContext(tx);
+
     return await callback(tx as unknown as TDb);
   });
 };

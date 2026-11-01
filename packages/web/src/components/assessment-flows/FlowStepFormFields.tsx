@@ -2,6 +2,7 @@ import React from 'react';
 
 import { FormActions, FormSelect, FormTextarea, FormTextInput } from '@web/components/molecules';
 import { useComposableFormContext } from '@web/components/organisms';
+import { requiredText } from '@web/utils/form-rules';
 
 import { STEP_TYPE_DESCRIPTIONS, STEP_TYPE_OPTIONS } from './flow-step-labels';
 import { FlowStepConfigFields } from './FlowStepConfigFields';
@@ -42,7 +43,7 @@ export const FlowStepFormFields: React.FC<FlowStepFormFieldsProps> = ({
         register={register}
         errors={errors}
         isRequired
-        registerOptions={{ required: 'Please give the step a title' }}
+        registerOptions={{ validate: requiredText('Please give the step a title') }}
       />
 
       <FormTextarea<FlowStepFormValues>

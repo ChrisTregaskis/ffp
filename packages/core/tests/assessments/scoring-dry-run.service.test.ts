@@ -48,7 +48,6 @@ const createContext = (): OrganisationContext => ({
     type: 'user',
     userId: randomUUID(),
     userRole: 'system_admin',
-    email: 'admin@example.com',
   } as UserActor,
   organisationId: randomUUID(),
   locationId: randomUUID(),
@@ -209,6 +208,60 @@ describe('dryRunFlowScoringService', () => {
         answers: [answer(ACTIVITY[0], 'D')],
       })
     ).rejects.toThrow(ValidationError);
+  });
+
+  it('holds a question on several templates to the first step’s overrides, as member validation does', async () => {
+    // Rows come back in template id order (a, b, c); the steps run b, a, c. A first-row read
+    // takes a's overrides and a last-row read c's: only step order takes b's
+    const [a, b, c] = [randomUUID(), randomUUID(), randomUUID()].sort();
+    const shared = createQuestion(randomUUID(), 'multi-choice', [
+      { value: 'neck', label: 'Neck', score: 1 },
+      { value: 'back', label: 'Back', score: 1 },
+    ]);
+    const onTemplate = (
+      templateId: string,
+      questionText: string,
+      maxSelections: number
+    ): TemplateQuestionWithConfig => ({
+      ...shared,
+      templateId,
+      configOverrides: { questionText, validation: { maxSelections } },
+    });
+
+    mockedFlowRepo.findByPublicId.mockResolvedValue(
+      createFlow({
+        dimensions: [{ name: 'mobility', questionIds: [shared.id], maxScore: 2 }],
+        programmeMappings: [],
+      })
+    );
+    mockedFlowRepo.findStepsByFlowId.mockResolvedValue([
+      { type: 'questions', templateId: b },
+      { type: 'questions', templateId: a },
+      { type: 'questions', templateId: c },
+    ] as Awaited<ReturnType<typeof flowRepository.findStepsByFlowId>>);
+    mockedQuestionRepo.findByTemplateIds.mockResolvedValue([
+      onTemplate(a, 'Asked second', 2),
+      onTemplate(b, 'Asked first', 1),
+      onTemplate(c, 'Asked third', 2),
+    ]);
+
+    await expect(
+      dryRunFlowScoringService(createContext(), FLOW_PUBLIC_ID, {
+        answers: [{ questionPublicId: shared.publicId, answerValue: ['neck', 'back'] }],
+      })
+    ).rejects.toThrow('An answer does not suit its question');
+
+    const result = await dryRunFlowScoringService(createContext(), FLOW_PUBLIC_ID, {
+      answers: [{ questionPublicId: shared.publicId, answerValue: ['neck'] }],
+    });
+
+    if (!result.scorable) {
+      throw new Error('expected a scorable result');
+    }
+
+    expect(result.dimensions[0].questions.map((question) => question.questionText)).toEqual([
+      'Asked first',
+    ]);
   });
 
   it('refuses the same question answered twice', async () => {

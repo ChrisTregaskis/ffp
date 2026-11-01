@@ -1,9 +1,18 @@
-import { pgTable, uuid, jsonb, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { relations } from 'drizzle-orm';
+import {
+  pgTable,
+  uuid,
+  jsonb,
+  timestamp,
+  uniqueIndex,
+  index,
+  foreignKey,
+} from 'drizzle-orm/pg-core';
+
 import { organisations } from './organisations';
-import { userAssessments } from './user-assessments';
 import { questions } from './questions';
+import { userAssessments } from './user-assessments';
+
 import type { AnswerValue } from '../types';
 
 /**
@@ -33,9 +42,7 @@ export const userAssessmentAnswers = pgTable(
       .notNull()
       .references(() => organisations.id, { onDelete: 'cascade' }),
     /** Reference to the user assessment this answer belongs to */
-    userAssessmentId: uuid('user_assessment_id')
-      .notNull()
-      .references(() => userAssessments.id, { onDelete: 'cascade' }),
+    userAssessmentId: uuid('user_assessment_id').notNull(),
     /** Reference to the question being answered */
     questionId: uuid('question_id')
       .notNull()
@@ -55,6 +62,11 @@ export const userAssessmentAnswers = pgTable(
     index('idx_user_assessment_answers_organisation').on(table.organisationId),
     // Efficient lookup of all answers for an assessment
     index('idx_user_assessment_answers_assessment').on(table.userAssessmentId),
+    foreignKey({
+      name: 'user_assessment_answers_user_assessment_id_organisation_fk',
+      columns: [table.userAssessmentId, table.organisationId],
+      foreignColumns: [userAssessments.id, userAssessments.organisationId],
+    }).onDelete('cascade'),
   ]
 );
 
@@ -73,7 +85,5 @@ export const userAssessmentAnswersRelations = relations(userAssessmentAnswers, (
   }),
 }));
 
-export const insertUserAssessmentAnswerSchema = createInsertSchema(userAssessmentAnswers);
-export const selectUserAssessmentAnswerSchema = createSelectSchema(userAssessmentAnswers);
 export type UserAssessmentAnswerRecord = typeof userAssessmentAnswers.$inferSelect;
 export type NewUserAssessmentAnswer = typeof userAssessmentAnswers.$inferInsert;

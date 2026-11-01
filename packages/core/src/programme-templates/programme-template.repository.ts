@@ -8,7 +8,12 @@ import {
 } from '@ffp/database/schema';
 import { templatePhases, templateSessions, sessionExercises } from '@ffp/database/schema';
 
-import { applyPagination } from '../lib/pagination';
+import {
+  applyPagination,
+  escapeLikePattern,
+  NEWEST_FIRST,
+  withDefaultSort,
+} from '../lib/pagination';
 
 import type { PaginationInput } from '../schemas/pagination.schema';
 import type {
@@ -36,7 +41,7 @@ const buildFilterConditions = (filters: Omit<TemplateListQuery, keyof Pagination
   const conditions: SQL[] = [];
 
   if (filters.search) {
-    const pattern = `%${filters.search}%`;
+    const pattern = `%${escapeLikePattern(filters.search)}%`;
     const searchCondition = or(
       ilike(programmeTemplates.name, pattern),
       ilike(programmeTemplates.slug, pattern)
@@ -72,7 +77,12 @@ export async function findAllTemplates(
     .where(and(...conditions))
     .$dynamic();
 
-  return await applyPagination(query, paginationInput, SORTABLE_COLUMNS);
+  return await applyPagination(
+    query,
+    withDefaultSort(paginationInput, SORTABLE_COLUMNS, NEWEST_FIRST),
+    SORTABLE_COLUMNS,
+    programmeTemplates.id
+  );
 }
 
 /** Returns total count of templates matching the given filters. */
@@ -231,6 +241,7 @@ export async function findTemplateHierarchy(
         id: session.id,
         sessionNumber: session.sessionNumber,
         name: session.name,
+        description: session.description,
         estimatedDurationMinutes: session.estimatedDurationMinutes,
         exercises: (exercisesBySession.get(session.id) ?? []).map((exercise) => ({
           id: exercise.id,

@@ -41,6 +41,7 @@ describe('AssessmentPage', () => {
 
     renderPage();
 
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeTruthy();
     expect(screen.queryByText('Assessment started')).toBeNull();
   });
 

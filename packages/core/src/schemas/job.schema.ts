@@ -17,8 +17,8 @@ export const assessmentResponseSchema = z.object({
 });
 
 /**
- * Contains all data needed to calculate dimensional scores from
- * a completed assessment submission.
+ * Identifies the assessment to score. The handler reads the stored answers, so no member
+ * answer is copied into the job.
  */
 export const scoreAssessmentPayloadSchema = z.object({
   /** The user_assessments record ID being scored */
@@ -27,8 +27,6 @@ export const scoreAssessmentPayloadSchema = z.object({
   flowId: z.guid(),
   /** User who completed the assessment */
   userId: z.guid(),
-  /** Array of question responses to score */
-  responses: z.array(assessmentResponseSchema).min(1),
 });
 
 export { dimensionalScoreSchema };
@@ -44,16 +42,14 @@ export const scoreAssessmentResultSchema = z.object({
 });
 
 /**
- * Contains scored assessment data needed to generate a personalised
- * workout programme from the video catalogue.
+ * Identifies the scored assessment to generate a programme from, and the template scoring
+ * recommended. The member's scores stay on the assessment rather than being copied into the job.
  */
 export const generateProgrammePayloadSchema = z.object({
   /** The scored assessment submission ID */
   assessmentSubmissionId: z.guid(),
   /** User for whom the programme is being generated */
   userId: z.guid(),
-  /** Dimensional scores from the assessment */
-  scores: z.array(dimensionalScoreSchema).min(1),
   /** Programme template slug from scoring (e.g., 'gentle-mobility-programme') */
   recommendedTemplateSlug: z.string().min(1).optional(),
   /** Optional: Specific focus areas requested by user */
@@ -111,7 +107,7 @@ export const processJobSchema = z.object({
   priority: z.number().int().min(1).max(4),
   /** Job-specific payload data */
   payload: z.record(z.string(), z.unknown()),
-  /** Job result (populated on completion) */
+  /** Set on completion, to the ids the job produced only */
   result: z.record(z.string(), z.unknown()).nullable(),
   /** Number of execution attempts */
   attempts: z.number().int().nonnegative(),

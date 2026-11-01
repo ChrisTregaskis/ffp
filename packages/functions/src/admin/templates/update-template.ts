@@ -8,6 +8,8 @@ import {
   type AssessmentTemplate,
 } from '@ffp/core/server';
 
+import { parseJsonBody } from '../../lib/request-body';
+
 interface UpdateTemplateResponse {
   template: AssessmentTemplate;
 }
@@ -30,18 +32,7 @@ export const handler = withErrorHandling(
         throw new ValidationError('Template ID is required in path');
       }
 
-      // Parse request body
-      if (!event.body) {
-        throw new ValidationError('Request body is required');
-      }
-
-      let input: UpdateAssessmentTemplateInput;
-
-      try {
-        input = JSON.parse(event.body) as UpdateAssessmentTemplateInput;
-      } catch {
-        throw new ValidationError('Invalid JSON in request body');
-      }
+      const input = parseJsonBody(event.body) as UpdateAssessmentTemplateInput;
 
       // Update template via service (handles Zod validation, version auto-increments)
       const template = await templateService.updateTemplateService(

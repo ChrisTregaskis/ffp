@@ -1,59 +1,70 @@
 import React, { useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-
-import type { UpdateProgrammeTemplateInput } from '@ffp/core';
+import { generatePath, useNavigate, useParams } from 'react-router-dom';
 
 import { Badge, Surface, Text } from '@web/components/atoms';
 import {
   DeactivateTemplateModal,
   TemplateMetadataFormFields,
-  toTemplateSaveError,
 } from '@web/components/programme-templates';
 import type { TemplateMetadataFormValues } from '@web/components/programme-templates';
 import { AdminEditPageShell } from '@web/components/templates';
 import { RouteKey, routes } from '@web/config/routes';
-import { useTemplateDetailQuery, useUpdateTemplateMutation } from '@web/hooks/programme-templates';
-import { useConfirmBeforeSave } from '@web/hooks/useConfirmBeforeSave';
+import {
+  useCreateTemplateMutation,
+  useTemplateDetailQuery,
+  useUpdateTemplateMutation,
+} from '@web/hooks/programme-templates';
 import { useSaveFeedback } from '@web/hooks/useSaveFeedback';
 import { formatDate } from '@web/utils/format';
 
-import { toTemplateFormValues, toUpdateTemplateInput } from './template-form-values';
+import {
+  deactivatesTemplate,
+  EMPTY_TEMPLATE_VALUES,
+  toCreateTemplateInput,
+  toTemplateFormValues,
+  toUpdateTemplateInput,
+} from './template-form-values';
 
 export const TemplateDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { submitError, clearSubmitError, saveCallbacks } = useSaveFeedback();
 
-  const { data: template, isLoading, error } = useTemplateDetailQuery(id ?? '');
+  const isEditMode = !!id;
+
+  const {
+    data: template,
+    isLoading,
+    error,
+  } = useTemplateDetailQuery(id ?? '', { enabled: isEditMode });
+  const createMutation = useCreateTemplateMutation();
   const updateMutation = useUpdateTemplateMutation();
 
   const handleNavigateBack = useCallback(() => {
     void navigate(routes[RouteKey.ADMIN_TEMPLATES].path);
   }, [navigate]);
 
-  /** Execute the update mutation */
-  const executeUpdate = useCallback(
-    async (data: UpdateProgrammeTemplateInput): Promise<void> => {
-      if (!template) {
-        return;
-      }
-
+  /** Handle create submission; lands on the new template */
+  const handleCreate = useCallback(
+    async (values: TemplateMetadataFormValues): Promise<void> => {
       clearSubmitError();
 
-      await updateMutation.mutateAsync(
-        { id: template.id, publicId: template.publicId, data },
-        saveCallbacks('Template updated successfully', handleNavigateBack, {
-          mapError: toTemplateSaveError,
-        })
+      await createMutation.mutateAsync(
+        toCreateTemplateInput(values),
+        saveCallbacks(
+          (created) => `"${created.name}" created successfully`,
+          (created) => {
+            void navigate(
+              generatePath(routes[RouteKey.ADMIN_TEMPLATE_DETAIL].path, { id: created.publicId })
+            );
+          }
+        )
       );
     },
-    [template, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
+    [clearSubmitError, createMutation, saveCallbacks, navigate]
   );
 
-  const deactivateConfirm = useConfirmBeforeSave(executeUpdate);
-  const { requestConfirm: requestDeactivateConfirm } = deactivateConfirm;
-
-  /** Handle form submission — taking the template out of use waits for confirmation */
+  /** Handle edit submission; taking the template out of use waits for the shell's confirm */
   const handleUpdate = useCallback(
     async (values: TemplateMetadataFormValues): Promise<void> => {
       if (!template) {
@@ -68,36 +79,38 @@ export const TemplateDetailPage: React.FC = () => {
         return;
       }
 
-      if (payload.isActive === false) {
-        await requestDeactivateConfirm(payload);
+      clearSubmitError();
 
-        return;
-      }
-
-      await executeUpdate(payload);
+      await updateMutation.mutateAsync(
+        { id: template.id, publicId: template.publicId, data: payload },
+        saveCallbacks('Template updated successfully', handleNavigateBack)
+      );
     },
-    [template, executeUpdate, requestDeactivateConfirm, handleNavigateBack]
+    [template, clearSubmitError, updateMutation, saveCallbacks, handleNavigateBack]
   );
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
     <AdminEditPageShell
-      title={template?.name ?? 'Template Detail'}
+      title={isEditMode ? (template?.name ?? 'Template Detail') : 'Create Programme Template'}
       resourceLabel="template"
       listLabel="Programme Templates"
+      isEditMode={isEditMode}
       isLoading={isLoading}
       loadError={error}
       onBack={handleNavigateBack}
       record={template}
+      emptyValues={EMPTY_TEMPLATE_VALUES}
       toFormValues={toTemplateFormValues}
+      onCreate={handleCreate}
       onUpdate={handleUpdate}
-      footer={
-        <DeactivateTemplateModal
-          isOpen={deactivateConfirm.isConfirmOpen}
-          onClose={deactivateConfirm.cancel}
-          onConfirm={deactivateConfirm.confirm}
-          templateName={template?.name ?? ''}
-        />
-      }
+      confirmBeforeSave={{
+        when: deactivatesTemplate,
+        renderModal: (modalProps) => (
+          <DeactivateTemplateModal {...modalProps} templateName={template?.name ?? ''} />
+        ),
+      }}
       beforeForm={
         template && (
           <Surface padding="bar" className="mb-6 flex items-center justify-between">
@@ -127,8 +140,9 @@ export const TemplateDetailPage: React.FC = () => {
       }
     >
       <TemplateMetadataFormFields
+        isEditMode={isEditMode}
         onCancel={handleNavigateBack}
-        isSubmitting={updateMutation.isPending}
+        isSubmitting={isPending}
         errorMessage={submitError}
       />
     </AdminEditPageShell>

@@ -56,10 +56,6 @@ export async function createOrganisationService(
 ): Promise<CreateOrganisationResponse> {
   const logger = createLogger(ctx.organisationContext);
 
-  logger.info('Starting organisation creation', {
-    organisationName: input.organisationName,
-  });
-
   const db = getDb();
   const result = await withAdminContext(db, async (tx) => {
     return await createOrganisationInRepo(tx, input.organisationName);
@@ -98,7 +94,7 @@ export async function listOrganisationsService(
     action: 'organisations_listed',
     total,
     page: paginationInput.page,
-    filters: rawFilters,
+    filters: { status: rawFilters.status, hasSearch: Boolean(rawFilters.search) },
   });
 
   return {
@@ -187,10 +183,7 @@ export async function createLocationService(
     throw new NotFoundError('Organisation', organisationId);
   }
 
-  logger.info('Starting location creation', {
-    organisationId,
-    locationName: input.locationName,
-  });
+  logger.info('Starting location creation', { organisationId });
 
   const result = await withAdminContext(db, async (tx) => {
     return await createLocationInRepo(tx, organisationId, input.locationName);
@@ -234,7 +227,11 @@ export async function listLocationsService(
     action: 'locations_listed',
     total,
     page: paginationInput.page,
-    filters,
+    filters: {
+      status: filters.status,
+      organisationId: filters.organisationId,
+      hasSearch: Boolean(filters.search),
+    },
   });
 
   return {

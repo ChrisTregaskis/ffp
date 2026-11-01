@@ -1,1 +1,6 @@
-export { AdminEditPageShell, type AdminEditPageShellProps } from './AdminEditPageShell';
+export {
+  AdminEditPageShell,
+  type AdminEditPageShellProps,
+  type ConfirmBeforeSaveOption,
+  type ConfirmBeforeSaveModalProps,
+} from './AdminEditPageShell';
