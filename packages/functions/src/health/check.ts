@@ -15,7 +15,7 @@ export const handler = (_event: APIGatewayProxyEventV2): Promise<APIGatewayProxy
       message: 'FFP API - Health Check OK',
       timestamp: new Date().toISOString(),
       version: '1.0.0',
-      stage: process.env.SST_STAGE ?? 'unknown',
+      environment: process.env.ENVIRONMENT ?? 'unknown',
     };
 
     return Promise.resolve({

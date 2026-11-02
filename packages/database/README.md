@@ -55,7 +55,7 @@ export const handler = async (event: APIGatewayEvent) => {
 - Connection pool is created once per Lambda container
 - Reused across multiple invocations (warm starts)
 - Automatically cleaned up when container shuts down
-- Maximum 10 connections per container prevents PostgreSQL exhaustion
+- One pool per container, shared by `getDb()` and core's `withRLS`; at most 2 connections
 
 **Configuration:**
 
@@ -66,21 +66,19 @@ The connection pool uses the following environment variables:
 - `DB_NAME` - Database name
 - `DB_USER` - Database user
 - `DB_PASSWORD` - Database password
-- `DB_SSL` - Enable SSL/TLS (set to 'true' for production RDS)
-- `NODE_ENV` - Environment (affects SSL certificate validation)
+- `DB_TLS_MODE` - `local` turns TLS off for local Postgres; unset or `verify` verifies against the pinned RDS CA (`certs/rds-ca-bundle.pem`)
 
 **Connection Limits:**
 
-Each Lambda container creates up to 10 connections. Plan capacity to avoid exceeding RDS `max_connections`:
+Each Lambda container opens up to 2 connections. Plan capacity to avoid exceeding RDS `max_connections`:
 
 - RDS `max_connections` depends on instance size (e.g., db.t4g.micro = 81 connections)
-- Calculate safe limit: `reserved_concurrency * 10 <= max_connections - 10 (buffer)`
-- Example: 5 concurrent Lambdas = 50 connections max (safe for db.t4g.micro)
+- Calculate safe limit: `concurrent containers * 2 <= max_connections - 10 (buffer)`
 
 **Security:**
 
-- **Production**: SSL enabled with certificate verification (`DB_SSL=true`, `NODE_ENV=production`)
-- **Development**: SSL optional, allows self-signed certificates for local PostgreSQL
+- **TLS fails closed**: every connection (the pool, migrations, seed, bootstrap, verify, drizzle-kit) uses `dbTlsConfig()`, which verifies against the pinned RDS CA unless the connection is marked `DB_TLS_MODE=local`. There is no mode that encrypts without verifying.
+- **Deployed functions** get `DB_TLS_MODE` from their stage's runtime profile (`src/lib/runtime-profile.ts`) and the CA bundle copied to the package root by `sst.config.ts`
 - **Credentials**: Environment variables in Phase 1, migrating to AWS Secrets Manager in Phase 2
 
 ### Running Migrations

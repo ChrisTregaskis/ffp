@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { asc, eq } from 'drizzle-orm';
 import { describe, it, expect, beforeEach, afterEach, afterAll } from 'vitest';
 
+import { closeDb } from '@ffp/database';
 import {
   assessmentFlows,
   programmes,
@@ -14,7 +15,7 @@ import {
 } from '@ffp/database/schema';
 
 import { toggleExerciseCompletion } from '../../src/exercises/exercise.service';
-import { closePool, withRLS } from '../../src/lib/database';
+import { withRLS } from '../../src/lib/database';
 import { NotFoundError } from '../../src/lib/errors';
 import {
   getProgrammeDetail,
@@ -52,7 +53,7 @@ describe('Member programme reads', () => {
   });
 
   afterAll(async () => {
-    await closePool();
+    await closeDb();
   });
 
   /** Generate, then start the first session so the current phase carries completions. */

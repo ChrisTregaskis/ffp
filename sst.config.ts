@@ -5,7 +5,8 @@
  *
  * This configuration defines the infrastructure for the FFP platform.
  * Region: eu-west-2 (London) - UK-based audience
- * Stages: dev, staging (prod to be added later)
+ * Stages: production, a throwaway prerelease stage, and personal development stages
+ * (runtime profile per stage: packages/database/src/lib/runtime-profile.ts)
  *
  * VPC Strategy (Phase 1):
  * - Using AWS default VPC to avoid NAT Gateway costs (~£30-35/month)
@@ -26,9 +27,26 @@ export default $config({
     };
   },
   async run() {
-    // Global Lambda runtime — Node.js 24.x Active LTS (supported until April 2028)
+    const { runtimeProfileForStage } = await import('./packages/database/src/lib/runtime-profile');
+    const { RDS_CA_BUNDLE_FILE } = await import('./packages/database/src/lib/tls');
+
+    // The one place a stage's runtime environment is decided; functions read it, never the stage
+    const runtimeProfile = runtimeProfileForStage($app.stage, $dev);
+
+    // Every function (routes and crons included) gets the runtime, the profile and the RDS CA.
+    // The profile is spread last so no function can override it.
     $transform(sst.aws.Function, (args) => {
+      // Node.js 24.x Active LTS (supported until April 2028)
       args.runtime = 'nodejs24.x' as typeof args.runtime;
+      args.environment = $output(args.environment ?? {}).apply((environment) => ({
+        ...environment,
+        ...runtimeProfile,
+      }));
+      // Lambda unpacks the package at /var/task, where the TLS helper looks for the bundle
+      args.copyFiles = $output(args.copyFiles ?? []).apply((copyFiles) => [
+        ...copyFiles,
+        { from: `packages/database/${RDS_CA_BUNDLE_FILE}`, to: RDS_CA_BUNDLE_FILE },
+      ]);
     });
     const requiredDbEnvVars = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'] as const;
     const missingVars = requiredDbEnvVars.filter((varName) => !process.env[varName]);
@@ -47,7 +65,6 @@ export default $config({
       DB_NAME: process.env.DB_NAME!,
       DB_USER: process.env.DB_USER!,
       DB_PASSWORD: process.env.DB_PASSWORD!,
-      DB_SSL: process.env.DB_SSL || 'false',
     };
 
     // Cognito User Pool with custom attributes for multi-tenant authentication
@@ -536,8 +553,8 @@ export default $config({
     // =========================================================================
     // JOB PROCESSING INFRASTRUCTURE
     // Lambda function exists in all stages for manual invocation.
-    // Cron schedule only deployed in staging/production to avoid unnecessary
-    // costs in development environments.
+    // Cron schedule only on deployed stages, to avoid recurring costs in
+    // personal development stages.
     // =========================================================================
 
     // Conservative timeout for batch job processing. Actual processing should
@@ -570,8 +587,8 @@ export default $config({
       ...staleJobDetectorEnv,
     });
 
-    // Cron schedules only in staging/production — no recurring costs in dev
-    if ($app.stage === 'staging' || $app.stage === 'production') {
+    // Cron schedules on every deployed stage; personal stages trigger the processor by hand
+    if (runtimeProfile.ENVIRONMENT !== 'development') {
       new sst.aws.Cron('JobProcessorCron', {
         schedule: 'rate(1 minute)',
         job: {

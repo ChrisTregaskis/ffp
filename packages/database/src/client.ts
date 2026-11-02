@@ -1,9 +1,8 @@
 /**
  * Database Client Configuration
  *
- * Implements singleton connection pool optimised for AWS Lambda.
- * The pool is created once and reused across Lambda invocations
- * to minimise connection overhead.
+ * The one connection pool per container, created on first use and reused across
+ * invocations. Core's `withRLS` and every service share it.
  *
  * TODO: Phase 2 - Migrate to AWS Secrets Manager for credential management
  * Currently using environment variables for simplicity in Phase 1.
@@ -16,9 +15,14 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
 import { createLogger } from './lib/logger';
+import { dbTlsConfig } from './lib/tls';
 import * as schema from './schema';
 
 const logger = createLogger('db-client');
+
+// A function serves one request at a time: two connections cover a transaction plus one read
+// beside it without crowding a small database instance.
+const POOL_MAX = 2;
 
 // Global connection pool for Lambda reuse
 let pool: Pool | null = null;
@@ -54,18 +58,15 @@ export const getDb = (): ReturnType<typeof drizzle> => {
       );
     }
 
-    // Determine SSL configuration based on environment
-    const sslEnabled = process.env.DB_SSL === 'true';
-    const isProduction = process.env.NODE_ENV === 'production';
+    const ssl = dbTlsConfig();
 
     // Log pool creation (useful for CloudWatch debugging)
     logger.info('Creating database connection pool', {
       host: process.env.DB_HOST,
       port,
       database: process.env.DB_NAME,
-      max: 10,
-      ssl: sslEnabled,
-      sslRejectUnauthorized: isProduction,
+      max: POOL_MAX,
+      tls: ssl ? 'verify' : 'local',
       // Don't log credentials!
     });
 
@@ -75,20 +76,12 @@ export const getDb = (): ReturnType<typeof drizzle> => {
       database: process.env.DB_NAME,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
-
-      // Connection pool settings (Lambda optimised)
-      max: 10, // Maximum 10 connections per Lambda container
-      idleTimeoutMillis: 30000, // Close idle connections after 30s
-      connectionTimeoutMillis: 30000, // Timeout new connections after 30s
-
-      // SSL/TLS configuration
-      // SECURITY: In production, always verify certificates to prevent MITM attacks
-      // In development, allow self-signed certificates for local PostgreSQL
-      ssl: sslEnabled
-        ? {
-            rejectUnauthorized: isProduction,
-          }
-        : false,
+      max: POOL_MAX,
+      idleTimeoutMillis: 30000,
+      // Also bounds the wait for a free client. Under the 20 s function timeout, so an
+      // unreachable database or exhausted pool fails as an error rather than a timeout.
+      connectionTimeoutMillis: 5000,
+      ssl,
     });
 
     // Handle pool errors to prevent unhandled rejections

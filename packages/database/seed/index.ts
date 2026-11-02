@@ -22,6 +22,7 @@ import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
 import { createLogger } from '../src/lib/logger.js';
+import { dbTlsConfig } from '../src/lib/tls.js';
 import * as schema from '../src/schema/index.js';
 
 import { seedAssessmentFlows } from './seedAssessmentFlows.js';
@@ -108,7 +109,7 @@ const createDatabaseConnection = (): NodePgDatabase<typeof schema> & { $client: 
     database: process.env.DB_NAME,
     user: process.env.BOOTSTRAP_DB_USER,
     password: process.env.BOOTSTRAP_DB_PASSWORD,
-    ssl: process.env.ENVIRONMENT === 'development' ? false : { rejectUnauthorized: true },
+    ssl: dbTlsConfig(),
   });
 
   return drizzle({ client: pool, schema });

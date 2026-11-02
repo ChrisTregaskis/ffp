@@ -1,6 +1,6 @@
 import { eq, and, asc, count, ilike, or, sql, type Column, type SQL } from 'drizzle-orm';
 
-import type { DbClient, DbQueryClient } from '@ffp/database';
+import { getDb, type DbClient, type DbQueryClient } from '@ffp/database';
 import {
   assessmentFlows,
   flowSteps,
@@ -9,7 +9,7 @@ import {
   type FlowStepRecord,
 } from '@ffp/database/schema';
 
-import { db, withRLS } from '../lib/database';
+import { withRLS } from '../lib/database';
 import { InternalServerError, NotFoundError } from '../lib/errors';
 import { createSystemLogger } from '../lib/logger';
 import { applyPagination, escapeLikePattern, withDefaultSort } from '../lib/pagination';
@@ -28,7 +28,7 @@ export type AssessmentFlow = AssessmentFlowRecord;
 export type FlowStepWithConfig = FlowStepRecord;
 
 export async function findById(flowId: string): Promise<AssessmentFlow | null> {
-  const records = await db
+  const records = await getDb()
     .select()
     .from(assessmentFlows)
     .where(eq(assessmentFlows.id, flowId))
@@ -74,7 +74,7 @@ export async function findFlowById(
  * Returns null if flow doesn't exist OR if it exists but is inactive.
  */
 export async function findActiveById(flowId: string): Promise<AssessmentFlow | null> {
-  const records = await db
+  const records = await getDb()
     .select()
     .from(assessmentFlows)
     .where(and(eq(assessmentFlows.id, flowId), eq(assessmentFlows.isActive, true)))
@@ -171,7 +171,7 @@ export async function findDefaultForOrganisation(
   }
 
   // Fallback — find any single active flow
-  const fallbackRecords = await db
+  const fallbackRecords = await getDb()
     .select()
     .from(assessmentFlows)
     .where(eq(assessmentFlows.isActive, true))

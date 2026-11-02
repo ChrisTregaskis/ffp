@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { eq } from 'drizzle-orm';
 import { describe, it, expect, beforeEach, afterEach, afterAll } from 'vitest';
 
+import { closeDb } from '@ffp/database';
 import {
   exerciseCompletions,
   programmes,
@@ -19,7 +20,7 @@ import {
   reorderMemberSessionsService,
   updateMemberExerciseService,
 } from '../../src/admin/admin-member-programme.service';
-import { closePool, withRLS } from '../../src/lib/database';
+import { withRLS } from '../../src/lib/database';
 import { NotFoundError } from '../../src/lib/errors';
 import { findCurrentProgrammeInTx } from '../../src/programmes/programme.repository';
 import { getFullProgrammeDetailForUser } from '../../src/programmes/programme.service';
@@ -162,7 +163,7 @@ describe('Admin edits of a member’s programme', () => {
   });
 
   afterAll(async () => {
-    await closePool();
+    await closeDb();
   });
 
   describe('writes', () => {

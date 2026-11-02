@@ -256,13 +256,17 @@ const assessments = await withRLS(organisationId, userId, async (tx) => {
 
 ### Lambda-Optimised Pool
 
+One pool per container, owned by `@ffp/database` (`packages/database/src/client.ts`) and shared by `getDb()` and core's `withRLS`:
+
 ```typescript
-const pool = new Pool({
+pool = new Pool({
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  max: 10, // Connection pool size (Lambda-optimised)
+  max: 2,
+  connectionTimeoutMillis: 5000,
+  ssl: dbTlsConfig(), // verifies against the pinned RDS CA unless DB_TLS_MODE=local
 });
 ```
 

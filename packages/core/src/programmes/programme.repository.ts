@@ -1,5 +1,6 @@
 import { eq, and, inArray, asc, desc, count } from 'drizzle-orm';
 
+import { getDb } from '@ffp/database';
 import {
   programmes,
   programmeTemplates,
@@ -21,7 +22,7 @@ import {
   type VideoRecord,
 } from '@ffp/database/schema';
 
-import { db, withRLS, type Transaction } from '../lib/database';
+import { withRLS, type Transaction } from '../lib/database';
 import { type CreateProgrammeInput } from '../schemas/programme/programme.schema';
 
 import { isCurrentProgramme } from './current-programme';
@@ -328,7 +329,7 @@ export async function findTemplateBySlug(
   }
 
   // No RLS needed — programme_templates is a system-managed lookup table
-  const records = await db
+  const records = await getDb()
     .select()
     .from(programmeTemplates)
     .where(eq(programmeTemplates.slug, slug))

@@ -1,6 +1,7 @@
 import { asc, eq, inArray } from 'drizzle-orm';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { closeDb } from '@ffp/database';
 import {
   sessionExercises,
   templatePhases,
@@ -10,7 +11,7 @@ import {
   type TemplateSessionRecord,
 } from '@ffp/database/schema';
 
-import { closePool, withRLS } from '../../src/lib/database';
+import { withRLS } from '../../src/lib/database';
 import { ConflictError, ValidationError } from '../../src/lib/errors';
 import { reorderExercises } from '../../src/programme-templates/session-exercise.service';
 import { deletePhase, reorderPhases } from '../../src/programme-templates/template-phase.service';
@@ -70,7 +71,7 @@ describe('Template hierarchy writes', () => {
   });
 
   afterAll(async () => {
-    await closePool();
+    await closeDb();
   });
 
   describe('reorder with a duplicate id', () => {

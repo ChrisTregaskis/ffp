@@ -1,6 +1,8 @@
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool, type PoolConfig } from 'pg';
 
+import { dbTlsConfig } from '../lib/tls';
+
 export type TestDb<TSchema extends Record<string, unknown> = Record<string, never>> =
   NodePgDatabase<TSchema> & { $client: Pool };
 
@@ -11,6 +13,7 @@ export const testDbConnectionConfig = (): PoolConfig => ({
   database: process.env.DB_NAME,
   user: process.env.DB_USER ?? 'test_user',
   password: process.env.DB_PASSWORD ?? 'test_password',
+  ssl: dbTlsConfig(),
 });
 
 /**

@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { closeDb } from '@ffp/database';
 import {
   assessmentFlows,
   assessmentTemplates,
@@ -31,7 +32,7 @@ import {
 import { processGenerateProgramme } from '../../src/jobs/handlers/generate-programme.handler';
 import { failJob } from '../../src/jobs/job-processor.service';
 import { hasProgrammeGenerationFailed } from '../../src/jobs/job-queue.service';
-import { closePool, withRLS } from '../../src/lib/database';
+import { withRLS } from '../../src/lib/database';
 import { ProgrammeAssemblyError } from '../../src/lib/errors';
 import { generateProgramme } from '../../src/programmes/programme.service';
 
@@ -233,7 +234,7 @@ describe('Programme assembly', () => {
   });
 
   afterAll(async () => {
-    await closePool();
+    await closeDb();
   });
 
   it('draws a slotted session from its pool, prescribed by the video defaults', async () => {

@@ -48,7 +48,7 @@ describe('Drizzle Integration Tests', () => {
     process.env.DB_PORT = '5432';
     process.env.DB_USER = 'test_user';
     process.env.DB_PASSWORD = 'test_password';
-    process.env.DB_SSL = 'false';
+    process.env.DB_TLS_MODE = 'local';
 
     db = getDb();
   });

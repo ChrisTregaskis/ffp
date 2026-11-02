@@ -14,7 +14,7 @@
  * - Admin domain (server-only operations)
  * - Auth domain (authentication and authorization)
  *
- * Import using: import { db, withRLS, ValidationError, withErrorHandling, cognito, extractUserContext, createRequestContext, createLogger, generateRandomAlphanumeric, createLocationService } from '@ffp/core/server';
+ * Import using: import { withRLS, ValidationError, withErrorHandling, cognito, extractUserContext, createRequestContext, createLogger, generateRandomAlphanumeric, createLocationService } from '@ffp/core/server';
  */
 
 export * from './lib/constants';

@@ -31,6 +31,8 @@ export default defineConfig({
       DB_PORT: '5432',
       DB_USER: 'test_user',
       DB_PASSWORD: 'test_password',
+      // The test database is local Postgres without TLS
+      DB_TLS_MODE: 'local',
     },
     coverage: {
       provider: 'v8',
