@@ -3,6 +3,8 @@ import { resolve } from 'path';
 import { config } from 'dotenv';
 import { defineConfig } from 'drizzle-kit';
 
+import { dbTlsConfig } from './src/lib/tls';
+
 // Load .env from monorepo root (two levels up from this file)
 config({ path: resolve(__dirname, '../../.env') });
 
@@ -31,8 +33,7 @@ export default defineConfig({
     user: getRequiredEnv('DB_USER'),
     password: getRequiredEnv('DB_PASSWORD'),
     database: getRequiredEnv('DB_NAME'),
-    // SSL: disabled for development (local PostgreSQL), enabled for staging/production (RDS)
-    ssl: process.env.ENVIRONMENT === 'development' ? false : { rejectUnauthorized: true },
+    ssl: dbTlsConfig(),
   },
   // Print all statements for transparency
   verbose: true,

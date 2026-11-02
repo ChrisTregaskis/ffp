@@ -4,18 +4,13 @@ on:
   push:
     branches:
       - main
-      - develop
       - "feature/**"
       - "fix/**"
       - "FFP-*"
   pull_request:
     branches:
       - main
-      - develop
-      - assessment
-      - programme-authoring
-      - test-suite-health
-      - bug-clean-up
+      - deployment-readiness
 
 jobs:
   quality-checks:
@@ -88,7 +83,7 @@ jobs:
 
           # Run migrations (schema + RLS policies + permissions)
           cd packages/database
-          DB_HOST=localhost DB_PORT=5432 DB_NAME=ffp_test DB_MIGRATE_USER=root_user DB_PASSWORD=root_password DB_USER=test_user ENVIRONMENT=development pnpm db:migrate
+          DB_HOST=localhost DB_PORT=5432 DB_NAME=ffp_test DB_MIGRATE_USER=root_user DB_PASSWORD=root_password DB_USER=test_user DB_TLS_MODE=local ENVIRONMENT=development pnpm db:migrate
 
       - name: Test
         run: pnpm test

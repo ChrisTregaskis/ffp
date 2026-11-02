@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { eq, inArray } from 'drizzle-orm';
 import { describe, it, expect, beforeEach, afterEach, afterAll } from 'vitest';
 
-import type { AnswerValue, EmphasisRule } from '@ffp/database';
+import { closeDb, getDb, type AnswerValue, type EmphasisRule } from '@ffp/database';
 import {
   assessmentFlows,
   assessmentTemplates,
@@ -19,7 +19,7 @@ import {
 } from '@ffp/database/schema';
 
 import { getUserProgrammeService, listUsersService } from '../../src/admin/admin-user.service';
-import { closePool, db, withRLS } from '../../src/lib/database';
+import { withRLS } from '../../src/lib/database';
 import { getProgrammeDetail, getProgressSummary } from '../../src/programmes/programme.service';
 import { paginationInputSchema } from '../../src/schemas/pagination.schema';
 import {
@@ -103,7 +103,7 @@ describe('Admin reads of members’ programmes', () => {
     status: 'failed' | 'completed',
     createdAt: Date
   ): Promise<void> => {
-    const [job] = await db
+    const [job] = await getDb()
       .insert(processJobs)
       .values({
         organisationId,
@@ -137,14 +137,14 @@ describe('Admin reads of members’ programmes', () => {
 
   afterEach(async () => {
     if (jobIds.length > 0) {
-      await db.delete(processJobs).where(inArray(processJobs.id, jobIds));
+      await getDb().delete(processJobs).where(inArray(processJobs.id, jobIds));
     }
     await removeFixture(member);
     await removeFixture(other);
   });
 
   afterAll(async () => {
-    await closePool();
+    await closeDb();
   });
 
   describe('the users list', () => {
@@ -313,13 +313,15 @@ describe('Admin reads of members’ programmes', () => {
       );
       // Flows (and their steps) before the templates the steps restrict
       if (flowIds.length > 0) {
-        await db.delete(assessmentFlows).where(inArray(assessmentFlows.id, flowIds));
+        await getDb().delete(assessmentFlows).where(inArray(assessmentFlows.id, flowIds));
       }
       if (templateIds.length > 0) {
-        await db.delete(assessmentTemplates).where(inArray(assessmentTemplates.id, templateIds));
+        await getDb()
+          .delete(assessmentTemplates)
+          .where(inArray(assessmentTemplates.id, templateIds));
       }
       if (questionIds.length > 0) {
-        await db.delete(questions).where(inArray(questions.id, questionIds));
+        await getDb().delete(questions).where(inArray(questions.id, questionIds));
       }
     });
 
@@ -327,7 +329,7 @@ describe('Admin reads of members’ programmes', () => {
       type: 'single-choice' | 'multi-choice',
       values: string[]
     ): Promise<string> => {
-      const [question] = await db
+      const [question] = await getDb()
         .insert(questions)
         .values({
           slug: `key-area-${shortId()}`,
@@ -343,20 +345,22 @@ describe('Admin reads of members’ programmes', () => {
 
     /** A flow with the given emphasis rules, asking `asked` on its one questions step */
     const addFlow = async (emphasis: EmphasisRule[], asked: string[]): Promise<string> => {
-      const [template] = await db
+      const [template] = await getDb()
         .insert(assessmentTemplates)
         .values({ name: `Key areas template ${shortId()}` })
         .returning({ id: assessmentTemplates.id });
       templateIds.push(template.id);
-      await db.insert(templateQuestions).values(
-        asked.map((questionId, index) => ({
-          templateId: template.id,
-          questionId,
-          displayOrder: index + 1,
-        }))
-      );
+      await getDb()
+        .insert(templateQuestions)
+        .values(
+          asked.map((questionId, index) => ({
+            templateId: template.id,
+            questionId,
+            displayOrder: index + 1,
+          }))
+        );
 
-      const [flow] = await db
+      const [flow] = await getDb()
         .insert(assessmentFlows)
         .values({
           name: `Key areas flow ${shortId()}`,
@@ -364,13 +368,15 @@ describe('Admin reads of members’ programmes', () => {
         })
         .returning({ id: assessmentFlows.id });
       flowIds.push(flow.id);
-      await db.insert(flowSteps).values({
-        flowId: flow.id,
-        order: 1,
-        type: 'questions',
-        templateId: template.id,
-        config: { title: 'Questions' },
-      });
+      await getDb()
+        .insert(flowSteps)
+        .values({
+          flowId: flow.id,
+          order: 1,
+          type: 'questions',
+          templateId: template.id,
+          config: { title: 'Questions' },
+        });
 
       return flow.id;
     };
@@ -437,7 +443,7 @@ describe('Admin reads of members’ programmes', () => {
       const levelTwoSlug = 'level-2-active-wellness';
       // The slug is unique: point the programme at a seeded level template if one exists,
       // otherwise give the fixture template that slug
-      const seeded = await db
+      const seeded = await getDb()
         .select({ id: programmeTemplates.id })
         .from(programmeTemplates)
         .where(eq(programmeTemplates.slug, levelTwoSlug));
@@ -450,7 +456,7 @@ describe('Admin reads of members’ programmes', () => {
             .where(eq(programmes.userId, member.userId))
         );
       } else {
-        await db
+        await getDb()
           .update(programmeTemplates)
           .set({ slug: levelTwoSlug })
           .where(eq(programmeTemplates.id, member.templateId));
@@ -544,7 +550,7 @@ describe('Admin reads of members’ programmes', () => {
         ],
         new Date('2026-01-01')
       );
-      await db.update(questions).set({ isActive: false }).where(eq(questions.id, focus));
+      await getDb().update(questions).set({ isActive: false }).where(eq(questions.id, focus));
 
       const { keyAreas } = await getUserProgrammeService(adminContext(), memberPublicId);
 

@@ -9,13 +9,13 @@
  * - Tests database connection
  *
  * Usage:
- *   pnpm db:verify                    # Verify current environment
- *   ENVIRONMENT=staging pnpm db:verify # Verify staging
+ *   pnpm db:verify   # Verify the database in .env (DB_TLS_MODE=local for local Postgres)
  */
 
 import { Pool } from 'pg';
 import * as dotenv from 'dotenv';
 import { terminalPrefix, TerminalPrefix } from '../packages/database/src/lib/terminal-logger';
+import { dbTlsConfig } from '../packages/database/src/lib/tls';
 
 // Load environment variables
 dotenv.config();
@@ -52,7 +52,7 @@ const main = async () => {
     database: dbName,
     user: getRequiredEnv('DB_USER'),
     password: getRequiredEnv('DB_PASSWORD'),
-    ssl: environment === 'development' ? false : { rejectUnauthorized: true },
+    ssl: dbTlsConfig(),
   });
 
   try {

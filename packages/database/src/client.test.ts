@@ -4,6 +4,9 @@
  * Tests for database client singleton behaviour and connection pooling.
  */
 
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 
 import { getDb, closeDb, withDb } from './client';
@@ -20,6 +23,8 @@ const { Pool } = vi.hoisted(() => {
 });
 
 vi.mock('pg', () => ({ Pool }));
+
+const RDS_CA_BUNDLE = readFileSync(resolve(__dirname, '../certs/rds-ca-bundle.pem'), 'utf-8');
 
 const DB_USER_SENTINEL = 'sentinel-db-user-5e1c';
 const DB_PASSWORD_SENTINEL = 'sentinel-db-password-9a7f';
@@ -46,8 +51,7 @@ describe('Database Client', () => {
       DB_NAME: 'ffp_dev',
       DB_USER: DB_USER_SENTINEL,
       DB_PASSWORD: DB_PASSWORD_SENTINEL,
-      DB_SSL: 'false',
-      NODE_ENV: 'development',
+      DB_TLS_MODE: 'local',
     };
   });
 
@@ -159,45 +163,28 @@ describe('Database Client', () => {
     });
   });
 
-  describe('SSL Configuration', () => {
-    it('verifies the server certificate when DB_SSL=true in production', async () => {
-      await closeDb();
-      process.env.DB_SSL = 'true';
-      process.env.NODE_ENV = 'production';
-
+  describe('Pool configuration', () => {
+    it('holds at most two connections per container', () => {
       getDb();
 
-      expect(lastPoolConfig().ssl).toEqual({ rejectUnauthorized: true });
+      expect(lastPoolConfig().max).toBe(2);
+      expect(lastPoolConfig().connectionTimeoutMillis).toBe(5000);
     });
 
-    it('accepts a self-signed certificate when DB_SSL=true outside production', async () => {
-      await closeDb();
-      process.env.DB_SSL = 'true';
-      process.env.NODE_ENV = 'development';
-
-      getDb();
-
-      expect(lastPoolConfig().ssl).toEqual({ rejectUnauthorized: false });
-    });
-
-    it('should disable SSL when DB_SSL=false', async () => {
-      await closeDb();
-      process.env.DB_SSL = 'false';
-      process.env.NODE_ENV = 'production';
+    it('connects without TLS only when the connection is marked local', () => {
+      process.env.DB_TLS_MODE = 'local';
 
       getDb();
 
       expect(lastPoolConfig().ssl).toBe(false);
     });
 
-    it('should disable SSL when DB_SSL is not set', async () => {
-      await closeDb();
-      delete process.env.DB_SSL;
-      process.env.NODE_ENV = 'production';
+    it('verifies against the pinned RDS CA when the connection is not marked local', () => {
+      delete process.env.DB_TLS_MODE;
 
       getDb();
 
-      expect(lastPoolConfig().ssl).toBe(false);
+      expect(lastPoolConfig().ssl).toEqual({ rejectUnauthorized: true, ca: RDS_CA_BUNDLE });
     });
   });
 

@@ -66,7 +66,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorB
           </div>
 
           {/* Error Details (for development) */}
-          {import.meta.env.ENVIRONMENT === 'DEVELOPMENT' && (
+          {import.meta.env.DEV && (
             <div className="mt-4 rounded-md bg-destructive/10 p-4 text-left">
               <div className="flex">
                 <div className="ml-3">

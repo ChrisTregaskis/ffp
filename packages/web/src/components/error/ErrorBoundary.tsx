@@ -79,7 +79,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     // Only call onError callback in production (avoid duplicate reports in development)
     // In development, React re-throws errors even after catching them
-    if (import.meta.env.ENVIRONMENT !== 'DEVELOPMENT' && this.props.onError) {
+    if (!import.meta.env.DEV && this.props.onError) {
       this.props.onError(error, errorInfo);
     }
   }

@@ -32,6 +32,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
 
 import { createLogger } from '../src/lib/logger';
+import { dbTlsConfig } from '../src/lib/tls';
 import { applyPermissions } from '../src/migrations/apply-permissions';
 import { applyRLS } from '../src/migrations/apply-rls';
 
@@ -76,8 +77,7 @@ const runMigrations = async (): Promise<void> => {
     database: getRequiredEnv('DB_NAME'),
     user: migrationUser,
     password: getRequiredEnv('DB_PASSWORD'),
-    // SSL configuration based on environment
-    ssl: process.env.ENVIRONMENT === 'development' ? false : { rejectUnauthorized: true },
+    ssl: dbTlsConfig(),
   });
 
   const db = drizzle(pool);

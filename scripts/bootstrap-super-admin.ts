@@ -39,6 +39,7 @@ import { organisations, users } from '../packages/database/src/schema/index.js';
 import { CognitoService } from '../packages/core/src/lib/cognito.js';
 import { ConflictError } from '../packages/core/src/lib/errors.js';
 import { terminalPrefix, TerminalPrefix } from '../packages/database/src/lib/terminal-logger.js';
+import { dbTlsConfig } from '../packages/database/src/lib/tls.js';
 import { config } from 'dotenv';
 
 config(); // Load environment variables
@@ -232,7 +233,7 @@ const main = async () => {
     database: process.env.DB_NAME,
     user: process.env.BOOTSTRAP_DB_USER, // Superuser with BYPASSRLS privilege
     password: process.env.BOOTSTRAP_DB_PASSWORD,
-    ssl: process.env.ENVIRONMENT === 'development' ? false : { rejectUnauthorized: true },
+    ssl: dbTlsConfig(),
   });
 
   const db = drizzle({ client: pool, schema });

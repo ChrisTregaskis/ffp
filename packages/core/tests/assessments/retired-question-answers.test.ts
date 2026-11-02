@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
+import { closeDb } from '@ffp/database';
 import {
   assessmentFlows,
   assessmentSafetyTriggers,
@@ -23,7 +24,7 @@ import {
 } from '@ffp/database/testing';
 
 import * as assessmentService from '../../src/assessments/assessment.service';
-import { closePool, withRLS } from '../../src/lib/database';
+import { withRLS } from '../../src/lib/database';
 import { findEmphasisWeights } from '../../src/programmes/programme-emphasis';
 
 import type { OrganisationContext, UserActor } from '../../src/lib/context';
@@ -73,7 +74,7 @@ describe('Answers to a question the flow no longer counts', () => {
 
   afterAll(async () => {
     await pool.end();
-    await closePool();
+    await closeDb();
   });
 
   /**

@@ -4,6 +4,7 @@ import { resolve } from 'path';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { describe, it, expect, beforeEach, afterEach, afterAll } from 'vitest';
 
+import { closeDb } from '@ffp/database';
 import {
   exerciseCompletions,
   programmePhases,
@@ -19,7 +20,7 @@ import {
   type UserSessionRecord,
 } from '@ffp/database/schema';
 
-import { closePool, withRLS } from '../../src/lib/database';
+import { withRLS } from '../../src/lib/database';
 import { NotFoundError } from '../../src/lib/errors';
 import { startSession } from '../../src/sessions/session.service';
 
@@ -169,7 +170,7 @@ describe('Programme materialisation', () => {
   });
 
   afterAll(async () => {
-    await closePool();
+    await closeDb();
   });
 
   const generate = (): Promise<string> => generateFor(fixture);

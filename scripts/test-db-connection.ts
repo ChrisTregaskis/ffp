@@ -12,6 +12,7 @@ import {
   TerminalPrefix,
   colorText,
 } from '../packages/database/src/lib/terminal-logger';
+import { dbTlsConfig } from '../packages/database/src/lib/tls';
 
 // Load environment variables
 config();
@@ -22,6 +23,7 @@ const pool = new Pool({
   database: process.env.DB_NAME || 'ffp_dev',
   user: process.env.DB_USER || 'root_user',
   password: process.env.DB_PASSWORD,
+  ssl: dbTlsConfig(),
 });
 
 const testConnection = async () => {

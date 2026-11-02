@@ -5,10 +5,10 @@ import {
   withErrorHandling,
   assertUuidOrNotFound,
   flowRepository,
-  db,
   ValidationError,
   NotFoundError,
 } from '@ffp/core/server';
+import { getDb } from '@ffp/database';
 
 /**
  * Lambda handler for GET /assessments/flows/:id
@@ -34,7 +34,7 @@ export const handler = withErrorHandling(
       throw new NotFoundError('Assessment flow', flowId);
     }
 
-    const steps = await flowRepository.findStepsByFlowId(db, flowId);
+    const steps = await flowRepository.findStepsByFlowId(getDb(), flowId);
 
     return {
       id: flow.id,
