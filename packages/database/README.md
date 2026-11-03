@@ -89,7 +89,8 @@ From the project root:
 # Generate migration from schema changes
 pnpm db:generate
 
-# Apply ALL migrations (schema + RLS + roles) - RECOMMENDED
+# Apply ALL migrations (schema + RLS + grants) - RECOMMENDED
+# Connects as DB_MIGRATE_USER with DB_MIGRATE_PASSWORD
 pnpm db:migrate
 
 # Apply schema migrations only (advanced)
@@ -120,9 +121,9 @@ psql -h localhost -U [superuser] -d postgres -c "CREATE DATABASE ffp_test;"
 psql -h localhost -U [superuser] -d postgres -c "GRANT CREATE ON DATABASE ffp_test TO root_user;"
 psql -h localhost -U [superuser] -d ffp_test -c "GRANT ALL ON SCHEMA public TO root_user;"
 
-# Run migrations on test database
+# Run migrations on test database; DB_TEST_USER gives the suites' role the same grants
 cd packages/database
-DB_NAME=ffp_test pnpm db:migrate
+DB_NAME=ffp_test DB_TEST_USER=test_user pnpm db:migrate
 ```
 
 **Note**: Replace `[superuser]` with your PostgreSQL superuser. Find your superuser with:
@@ -180,7 +181,7 @@ pnpm --filter=@ffp/database test --coverage
 
 **Tests fail with RLS policy errors**
 
-- Ensure migrations ran successfully: `DB_NAME=ffp_test pnpm db:migrate`
+- Ensure migrations ran successfully: `DB_NAME=ffp_test DB_TEST_USER=test_user pnpm db:migrate` (from `packages/database`)
 - Check RLS status in test database:
   ```bash
   psql -h localhost -U root_user -d ffp_test -c "SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';"

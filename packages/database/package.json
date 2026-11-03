@@ -37,6 +37,7 @@
     "test:ui": "vitest --ui",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
+    "db:roles": "tsx scripts/create-roles.ts",
     "db:migrate:schema": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",

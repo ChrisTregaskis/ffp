@@ -6,7 +6,7 @@
  *
  * Setup:
  * 1. Create test database: psql -h localhost -d postgres -c "CREATE DATABASE ffp_test;"
- * 2. Run migrations: DB_NAME=ffp_test pnpm db:migrate
+ * 2. Run migrations (from packages/database): DB_NAME=ffp_test DB_TEST_USER=test_user pnpm db:migrate
  * 3. Run tests: pnpm test
  *
  * IMPORTANT: Tests connect as `test_user` which does NOT have BYPASSRLS,

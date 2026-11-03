@@ -19,7 +19,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:15
+        image: postgres:16
         env:
           POSTGRES_USER: root_user
           POSTGRES_PASSWORD: root_password
@@ -75,15 +75,31 @@ jobs:
           PGUSER: root_user
           PGPASSWORD: root_password
           PGDATABASE: ffp_test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: ffp_test
+          DB_TLS_MODE: local
+          DB_MIGRATE_USER: migrator
+          DB_MIGRATE_PASSWORD: migrator_password
+          DB_USER: app_user
+          ENVIRONMENT: development
         run: |
-          # Create test_user (no BYPASSRLS so RLS policies are enforced)
+          # The test role exists only where tests run (no BYPASSRLS, so RLS policies apply)
           psql -c "CREATE USER test_user WITH PASSWORD 'test_password';"
           psql -c "GRANT CONNECT ON DATABASE ffp_test TO test_user;"
           psql -c "GRANT USAGE ON SCHEMA public TO test_user;"
 
-          # Run migrations (schema + RLS policies + permissions)
+          # Stand-in for the RDS master user: not a superuser, owns the database
+          psql -c "CREATE ROLE ci_master WITH LOGIN CREATEROLE CREATEDB PASSWORD 'ci_master_password';"
+          psql -c "ALTER DATABASE ffp_test OWNER TO ci_master;"
+
           cd packages/database
-          DB_HOST=localhost DB_PORT=5432 DB_NAME=ffp_test DB_MIGRATE_USER=root_user DB_PASSWORD=root_password DB_USER=test_user DB_TLS_MODE=local ENVIRONMENT=development pnpm db:migrate
+
+          # The migrator and runtime roles come from the same script a deployed environment runs
+          DB_MASTER_USER=ci_master DB_MASTER_PASSWORD=ci_master_password DB_PASSWORD=app_password pnpm db:roles
+
+          # Schema + RLS policies + grants, as the migrator; the test role opts in to the grants
+          DB_TEST_USER=test_user pnpm db:migrate
 
       - name: Test
         run: pnpm test

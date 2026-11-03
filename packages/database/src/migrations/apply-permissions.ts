@@ -1,133 +1,104 @@
-/**
- * Apply Database Permissions Module
- *
- * This module sets up DEFAULT PRIVILEGES so that when the migration user (root_user)
- * creates new tables, application users automatically receive the necessary
- * permissions (SELECT, INSERT, UPDATE, DELETE, TRUNCATE).
- *
- * This is critical for:
- * - Application runtime (DB_USER): Used by Lambda functions
- * - Integration tests (test_user): Used by Vitest (dev/test environments only)
- *
- * **Environment Variables:**
- * - DB_MIGRATE_USER: The user running migrations (e.g., root_user)
- *   - This user owns all database objects
- *   - DEFAULT PRIVILEGES are set FOR this user
- * - DB_USER: Application runtime user (e.g., app_user, ffp_prod_user)
- *   - Permissions always granted to this user
- *
- * **Optional Users:**
- * - test_user: Integration test user (hardcoded in vitest configs)
- *   - Only exists in dev/test environments, skipped if not present
- *
- * This module is idempotent - safe to run multiple times.
- *
- * @module migrations/apply-permissions
- */
-
 import { sql } from 'drizzle-orm';
 
 import { createLogger } from '../lib/logger';
+import { isDeployedEnvironment } from '../lib/runtime-profile';
 
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 const logger = createLogger('permissions');
 
 /**
- * Get users that need table access permissions
- *
- * - DB_USER (from env): Application runtime user (Lambda functions)
- * - test_user: Integration tests (Vitest) - only in dev/test environments
- *
- * @returns Array of unique usernames to grant permissions to
+ * The roles given table access: the runtime role (`DB_USER`) always, and the test role
+ * (`DB_TEST_USER`) only where tests run and only when asked for. Resolved before migrating,
+ * so a misconfigured run fails before it changes anything.
  */
-const getApplicationUsers = (): string[] => {
-  const users = new Set<string>();
+export const resolveGrantees = (
+  migrationUser: string,
+  env: NodeJS.ProcessEnv = process.env
+): string[] => {
+  const runtimeUser = env.DB_USER;
 
-  // Application runtime user from environment
-  const dbUser = process.env.DB_USER;
-
-  if (dbUser) {
-    users.add(dbUser);
+  if (!runtimeUser) {
+    throw new Error('DB_USER (the runtime role) is required to apply permissions');
   }
 
-  // Test user for integration tests (only exists in dev/test environments)
-  // This is hardcoded because vitest.config.ts uses 'test_user' explicitly
-  users.add('test_user');
+  // RLS never binds a table's owner on a deployed profile, and revoking from the owner would
+  // strip its own privileges
+  if (runtimeUser === migrationUser) {
+    throw new Error(`The runtime role must not be the migration role ("${migrationUser}")`);
+  }
 
-  return Array.from(users);
+  const testUser = env.DB_TEST_USER;
+
+  if (!testUser) {
+    return [runtimeUser];
+  }
+
+  if (isDeployedEnvironment(env.ENVIRONMENT)) {
+    throw new Error(`DB_TEST_USER is not allowed when ENVIRONMENT is "${String(env.ENVIRONMENT)}"`);
+  }
+
+  return [...new Set([runtimeUser, testUser])];
 };
 
 /**
- * Apply database permissions for application and test users
+ * Grants each application role row access (no TRUNCATE, no DDL) on every existing table and
+ * sequence, and sets the migration role's default privileges so tables it creates later carry
+ * the same grants. TRUNCATE is revoked explicitly, so a database granted it before loses it.
+ * Runs in one transaction: a missing role, a role that inherits the owner, or a failed grant
+ * fails the migration and changes nothing.
  *
- * This function:
- * 1. Sets DEFAULT PRIVILEGES for the migration user so new tables automatically grant access
- * 2. Grants permissions on all existing tables in the public schema
- *
- * @param db - Drizzle database instance
- * @param migrationUser - The user running migrations (e.g., root_user)
- * @returns Promise<void>
+ * @param db - Drizzle database instance, connected as the migration role
+ * @param migrationUser - The role that owns the schema objects
+ * @param grantees - From `resolveGrantees`
  */
 export const applyPermissions = async <TSchema extends Record<string, unknown>>(
   db: NodePgDatabase<TSchema>,
-  migrationUser: string
+  migrationUser: string,
+  grantees: string[]
 ): Promise<void> => {
-  const applicationUsers = getApplicationUsers();
+  const owner = sql.identifier(migrationUser);
 
-  logger.info('Applying database permissions...', {
-    migrationUser,
-    applicationUsers,
-  });
+  logger.info('Applying database permissions...', { migrationUser, grantees });
 
-  for (const user of applicationUsers) {
-    try {
-      // Check if user exists
-      const userExists = await db.execute(sql`
-        SELECT 1 FROM pg_roles WHERE rolname = ${user}
+  await db.transaction(async (tx) => {
+    for (const grantee of grantees) {
+      // A member of the owner counts as the owner, which RLS does not bind unless forced
+      const { rows } = await tx.execute<{ inherits_owner: boolean }>(sql`
+        SELECT pg_has_role(rolname, ${migrationUser}, 'USAGE') AS inherits_owner
+        FROM pg_roles WHERE rolname = ${grantee}
       `);
 
-      if (userExists.rows.length === 0) {
-        logger.warn(`User '${user}' does not exist (may be intentional in some environments)`, {
-          user,
-          skipped: true,
-        });
-        continue;
+      if (rows.length === 0) {
+        throw new Error(`Role "${grantee}" does not exist; create it before migrating`);
       }
 
-      // Set DEFAULT PRIVILEGES for new tables created by migration user
-      // This ensures future tables automatically grant permissions
-      // TRUNCATE is needed for test cleanup (CASCADE operations)
-      await db.execute(sql`
-        ALTER DEFAULT PRIVILEGES FOR ROLE ${sql.raw(migrationUser)} IN SCHEMA public
-        GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON TABLES TO ${sql.raw(user)}
-      `);
+      if (rows[0].inherits_owner) {
+        throw new Error(`Role "${grantee}" inherits the migration role "${migrationUser}"`);
+      }
 
-      // Grant permissions on all existing tables in public schema
-      // This ensures current tables have the correct permissions
-      // TRUNCATE is needed for test cleanup (CASCADE operations)
-      await db.execute(sql`
-        GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public TO ${sql.raw(user)}
-      `);
+      const role = sql.identifier(grantee);
 
-      // Grant usage on all sequences (needed for INSERT with auto-increment)
-      await db.execute(sql`
-        GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO ${sql.raw(user)}
+      await tx.execute(sql`
+        GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ${role}
       `);
+      await tx.execute(sql`REVOKE TRUNCATE ON ALL TABLES IN SCHEMA public FROM ${role}`);
+      await tx.execute(sql`GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO ${role}`);
 
-      // Set DEFAULT PRIVILEGES for sequences too
-      await db.execute(sql`
-        ALTER DEFAULT PRIVILEGES FOR ROLE ${sql.raw(migrationUser)} IN SCHEMA public
-        GRANT USAGE, SELECT ON SEQUENCES TO ${sql.raw(user)}
+      await tx.execute(sql`
+        ALTER DEFAULT PRIVILEGES FOR ROLE ${owner} IN SCHEMA public
+        GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${role}
       `);
-
-      logger.info(`Permissions granted to '${user}'`, { user, success: true });
-    } catch (error) {
-      // Log but don't fail - user might not exist in all environments
-      const message = error instanceof Error ? error.message : String(error);
-      logger.warn(`Could not grant permissions to '${user}'`, { user, error: message });
+      await tx.execute(sql`
+        ALTER DEFAULT PRIVILEGES FOR ROLE ${owner} IN SCHEMA public
+        REVOKE TRUNCATE ON TABLES FROM ${role}
+      `);
+      await tx.execute(sql`
+        ALTER DEFAULT PRIVILEGES FOR ROLE ${owner} IN SCHEMA public
+        GRANT USAGE, SELECT ON SEQUENCES TO ${role}
+      `);
     }
-  }
+  });
 
-  logger.info('Database permissions applied');
+  logger.info('Database permissions applied', { grantees });
 };

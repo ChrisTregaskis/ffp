@@ -24,6 +24,18 @@ const DEVELOPMENT: RuntimeProfile = {
   DB_TLS_MODE: 'local',
 };
 
+const DEPLOYED_ENVIRONMENTS: readonly string[] = [
+  PRODUCTION.ENVIRONMENT,
+  PRODUCTION_LIKE.ENVIRONMENT,
+];
+
+/**
+ * Whether an `ENVIRONMENT` value names a deployed profile. Unset or anything else is local
+ * development or test.
+ */
+export const isDeployedEnvironment = (environment: string | undefined): boolean =>
+  environment !== undefined && DEPLOYED_ENVIRONMENTS.includes(environment);
+
 /**
  * The runtime environment every function in a stage receives. Decided here, once, so no
  * function infers its environment from the stage name or from a variable left unset. A
