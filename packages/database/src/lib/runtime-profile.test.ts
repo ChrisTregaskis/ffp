@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { runtimeProfileForStage } from './runtime-profile';
+import { isDeployedEnvironment, runtimeProfileForStage } from './runtime-profile';
 
 const PRODUCTION_LIKE = {
   ENVIRONMENT: 'production-like',
@@ -42,5 +42,28 @@ describe('runtimeProfileForStage', () => {
   it('keeps production and prerelease production-grade even under sst dev', () => {
     expect(runtimeProfileForStage('production', true).DB_TLS_MODE).toBe('verify');
     expect(runtimeProfileForStage('prerelease', true)).toEqual(PRODUCTION_LIKE);
+  });
+});
+
+describe('isDeployedEnvironment', () => {
+  it.each(['production', 'production-like'])('treats %s as deployed', (environment) => {
+    expect(isDeployedEnvironment(environment)).toBe(true);
+  });
+
+  it.each([undefined, '', 'development', 'test', 'prod', 'Production'])(
+    'treats %s as not deployed',
+    (environment) => {
+      expect(isDeployedEnvironment(environment)).toBe(false);
+    }
+  );
+
+  it("covers every deployed stage's profile", () => {
+    expect(isDeployedEnvironment(runtimeProfileForStage('production', false).ENVIRONMENT)).toBe(
+      true
+    );
+    expect(isDeployedEnvironment(runtimeProfileForStage('prerelease', false).ENVIRONMENT)).toBe(
+      true
+    );
+    expect(isDeployedEnvironment(runtimeProfileForStage('local', true).ENVIRONMENT)).toBe(false);
   });
 });

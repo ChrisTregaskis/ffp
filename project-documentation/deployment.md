@@ -34,7 +34,7 @@ pnpm db:migrate     # Applies migrations with tracking
 pnpm db:studio      # Visual database browser (read-only verification)
 ```
 
-Migrations require `DB_MIGRATE_USER` (elevated privileges) due to RLS restrictions on the application user.
+Migrations run as `DB_MIGRATE_USER` with `DB_MIGRATE_PASSWORD` (the schema owner), never as the application user. A new environment's roles come from `pnpm --filter @ffp/database db:roles`, run as the RDS master user (see `local-database-setup.md` § Production Database).
 
 ### Secrets Management
 

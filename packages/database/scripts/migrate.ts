@@ -1,28 +1,12 @@
 /**
- * Database Migration Runner
+ * Applies the Drizzle schema migrations, then RLS policies, then the application roles'
+ * grants (`pnpm db:migrate`). The roles must already exist: on a new server, create them
+ * first with `create-roles.ts`.
  *
- * This script runs all database migrations including:
- * 1. Drizzle-generated schema migrations
- * 2. RLS policy application
- * 3. Future: Database roles and permissions
- *
- * Environment Variables:
- * - DB_MIGRATE_USER: (Optional) Elevated user for migrations (e.g., root_user)
- * - DB_USER: Fallback if DB_MIGRATE_USER not set
- *
- * IMPORTANT: Database User Roles
- * - root_user (DB_MIGRATE_USER): Runs migrations, creates tables, owns objects.
- *   Has DEFAULT PRIVILEGES configured to grant access to app_user and test_user.
- * - app_user (DB_USER): Application runtime user. Gets permissions via DEFAULT PRIVILEGES.
- * - test_user: Vitest integration tests user (see @ffp/core vitest.config.ts).
- *   Gets permissions via DEFAULT PRIVILEGES. Distinct from app_user.
- *
- * When adding new tables, ensure DEFAULT PRIVILEGES are set so both app_user
- * and test_user automatically receive SELECT, INSERT, UPDATE, DELETE permissions.
- *
- * Usage: pnpm db:migrate
+ * Connects as DB_MIGRATE_USER / DB_MIGRATE_PASSWORD, the role that owns the schema objects.
+ * DB_USER is the runtime role that receives row access; DB_TEST_USER optionally names a
+ * test role to receive the same, and is refused on a deployed ENVIRONMENT.
  */
-
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -31,10 +15,12 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
 
+import { requiredEnv } from '../src/lib/env';
 import { createLogger } from '../src/lib/logger';
 import { dbTlsConfig } from '../src/lib/tls';
-import { applyPermissions } from '../src/migrations/apply-permissions';
+import { applyPermissions, resolveGrantees } from '../src/migrations/apply-permissions';
 import { applyRLS } from '../src/migrations/apply-rls';
+import { migrationCredentials } from '../src/migrations/migration-credentials';
 
 const logger = createLogger('migrate');
 
@@ -46,37 +32,20 @@ const __dirname = dirname(__filename);
 config({ path: resolve(__dirname, '../../../.env') });
 
 /**
- * Get required environment variable or throw error
- */
-const getRequiredEnv = (key: string): string => {
-  const value = process.env[key];
-
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${key}`);
-  }
-
-  return value;
-};
-
-/**
  * Main migration runner
  */
 const runMigrations = async (): Promise<void> => {
   logger.info('Starting database migrations...');
 
-  // Determine which user is running migrations
-  // Not ??, so an empty value also falls back.
-  const migrationUser = process.env.DB_MIGRATE_USER
-    ? process.env.DB_MIGRATE_USER
-    : getRequiredEnv('DB_USER');
+  const { user: migrationUser, password } = migrationCredentials();
+  const grantees = resolveGrantees(migrationUser);
 
-  // Create connection pool
   const pool = new Pool({
-    host: getRequiredEnv('DB_HOST'),
+    host: requiredEnv('DB_HOST'),
     port: parseInt(process.env.DB_PORT ? process.env.DB_PORT : '5432'),
-    database: getRequiredEnv('DB_NAME'),
+    database: requiredEnv('DB_NAME'),
     user: migrationUser,
-    password: getRequiredEnv('DB_PASSWORD'),
+    password,
     ssl: dbTlsConfig(),
   });
 
@@ -91,8 +60,8 @@ const runMigrations = async (): Promise<void> => {
     // Step 2: Apply RLS policies
     await applyRLS(db);
 
-    // Step 3: Apply database permissions (DEFAULT PRIVILEGES for app_user and test_user)
-    await applyPermissions(db, migrationUser);
+    // Step 3: Grant the application roles row access, now and for future tables
+    await applyPermissions(db, migrationUser, grantees);
 
     logger.info('All migrations completed successfully!');
   } catch (error) {

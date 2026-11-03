@@ -17,7 +17,8 @@
  * - Use `setAdminContext(tx)` from `@ffp/database` to activate.
  *
  * **Tables intentionally without RLS (for MVP):**
- * - process_jobs: Job processor runs with BYPASSRLS to claim jobs across organisations.
+ * - process_jobs: No policy yet, so the job processor claims across organisations without
+ *   bypassing RLS.
  *   RLS will be added when user-facing job queries are implemented (see process-jobs.ts).
  * - assessment_templates, assessment_flows, questions, template_questions:
  *   System-managed content, no organisation isolation.
@@ -31,6 +32,7 @@
 import { sql } from 'drizzle-orm';
 
 import { createLogger } from '../lib/logger';
+import { isDeployedEnvironment } from '../lib/runtime-profile';
 
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
@@ -42,14 +44,16 @@ const logger = createLogger('apply-rls');
  * This function is idempotent - it checks if RLS is already applied before making changes.
  * It will:
  * 1. Enable RLS on organisations, locations, and users tables
- * 2. Force RLS in non-production environments (for testing)
+ * 2. Force RLS except on deployed profiles, and unforce it there
  * 3. Create isolation policies using app.organisation_id context variable
  *
  * @param db - Drizzle database instance
+ * @param env - Read for `ENVIRONMENT`
  * @returns Promise<void>
  */
 export const applyRLS = async <TSchema extends Record<string, unknown>>(
-  db: NodePgDatabase<TSchema>
+  db: NodePgDatabase<TSchema>,
+  env: NodeJS.ProcessEnv = process.env
 ): Promise<void> => {
   logger.info('Checking RLS status...');
 
@@ -75,6 +79,16 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
     logger.info('Applying RLS policies...');
   }
 
+  // Deployed profiles leave the owner (the migrator) exempt from RLS; the runtime role is
+  // never the owner, so policies still bind every app query. Elsewhere FORCE makes the owner
+  // obey RLS too. Set both ways so a database converges on the profile it was last migrated
+  // under.
+  const { ENVIRONMENT: environment } = env;
+  const forceMode = isDeployedEnvironment(environment) ? 'NO FORCE' : 'FORCE';
+  const forceRls = sql.raw(forceMode);
+
+  logger.info('RLS force mode', { environment, forceMode });
+
   // Apply RLS to all tables in a transaction
   await db.transaction(async (tx) => {
     // ============================================================================
@@ -87,18 +101,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
       ALTER TABLE organisations ENABLE ROW LEVEL SECURITY;
     `);
 
-    // Force RLS in development/test environments (for testing with superuser)
-    // In production, app_user will have RLS enforced naturally (non-superuser)
-    // Not ??, so an empty value also falls back.
-    const environment = process.env.ENVIRONMENT ? process.env.ENVIRONMENT : 'development';
-    const isProduction = environment === 'production' || environment === 'prod';
-
-    if (!isProduction) {
-      logger.debug('Forcing RLS for environment', { environment });
-      await tx.execute(sql`
-        ALTER TABLE organisations FORCE ROW LEVEL SECURITY;
-      `);
-    }
+    await tx.execute(sql`ALTER TABLE organisations ${forceRls} ROW LEVEL SECURITY`);
 
     // Drop existing policies (for idempotency)
     await tx.execute(sql`
@@ -163,11 +166,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
       ALTER TABLE locations ENABLE ROW LEVEL SECURITY;
     `);
 
-    if (!isProduction) {
-      await tx.execute(sql`
-        ALTER TABLE locations FORCE ROW LEVEL SECURITY;
-      `);
-    }
+    await tx.execute(sql`ALTER TABLE locations ${forceRls} ROW LEVEL SECURITY`);
 
     await tx.execute(sql`
       DROP POLICY IF EXISTS customer_isolation ON locations;
@@ -209,11 +208,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
       ALTER TABLE users ENABLE ROW LEVEL SECURITY;
     `);
 
-    if (!isProduction) {
-      await tx.execute(sql`
-        ALTER TABLE users FORCE ROW LEVEL SECURITY;
-      `);
-    }
+    await tx.execute(sql`ALTER TABLE users ${forceRls} ROW LEVEL SECURITY`);
 
     await tx.execute(sql`
       DROP POLICY IF EXISTS user_isolation ON users;
@@ -247,11 +242,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
       ALTER TABLE user_assessments ENABLE ROW LEVEL SECURITY;
     `);
 
-    if (!isProduction) {
-      await tx.execute(sql`
-        ALTER TABLE user_assessments FORCE ROW LEVEL SECURITY;
-      `);
-    }
+    await tx.execute(sql`ALTER TABLE user_assessments ${forceRls} ROW LEVEL SECURITY`);
 
     await tx.execute(sql`
       DROP POLICY IF EXISTS user_assessment_tenant_isolation ON user_assessments;
@@ -277,11 +268,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
       ALTER TABLE user_assessment_answers ENABLE ROW LEVEL SECURITY;
     `);
 
-    if (!isProduction) {
-      await tx.execute(sql`
-        ALTER TABLE user_assessment_answers FORCE ROW LEVEL SECURITY;
-      `);
-    }
+    await tx.execute(sql`ALTER TABLE user_assessment_answers ${forceRls} ROW LEVEL SECURITY`);
 
     await tx.execute(sql`
       DROP POLICY IF EXISTS user_assessment_answers_tenant_isolation ON user_assessment_answers;
@@ -307,11 +294,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
       ALTER TABLE assessment_safety_triggers ENABLE ROW LEVEL SECURITY;
     `);
 
-    if (!isProduction) {
-      await tx.execute(sql`
-        ALTER TABLE assessment_safety_triggers FORCE ROW LEVEL SECURITY;
-      `);
-    }
+    await tx.execute(sql`ALTER TABLE assessment_safety_triggers ${forceRls} ROW LEVEL SECURITY`);
 
     await tx.execute(sql`
       DROP POLICY IF EXISTS assessment_safety_triggers_organisation_isolation ON assessment_safety_triggers;
@@ -333,11 +316,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
       ALTER TABLE programmes ENABLE ROW LEVEL SECURITY;
     `);
 
-    if (!isProduction) {
-      await tx.execute(sql`
-        ALTER TABLE programmes FORCE ROW LEVEL SECURITY;
-      `);
-    }
+    await tx.execute(sql`ALTER TABLE programmes ${forceRls} ROW LEVEL SECURITY`);
 
     await tx.execute(sql`
       DROP POLICY IF EXISTS programme_organisation_isolation ON programmes;
@@ -370,11 +349,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
       ALTER TABLE programme_phases ENABLE ROW LEVEL SECURITY;
     `);
 
-    if (!isProduction) {
-      await tx.execute(sql`
-        ALTER TABLE programme_phases FORCE ROW LEVEL SECURITY;
-      `);
-    }
+    await tx.execute(sql`ALTER TABLE programme_phases ${forceRls} ROW LEVEL SECURITY`);
 
     await tx.execute(sql`
       DROP POLICY IF EXISTS programme_phases_tenant_isolation ON programme_phases;
@@ -400,11 +375,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
       ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;
     `);
 
-    if (!isProduction) {
-      await tx.execute(sql`
-        ALTER TABLE user_sessions FORCE ROW LEVEL SECURITY;
-      `);
-    }
+    await tx.execute(sql`ALTER TABLE user_sessions ${forceRls} ROW LEVEL SECURITY`);
 
     await tx.execute(sql`
       DROP POLICY IF EXISTS user_sessions_organisation_isolation ON user_sessions;
@@ -426,11 +397,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
       ALTER TABLE user_session_exercises ENABLE ROW LEVEL SECURITY;
     `);
 
-    if (!isProduction) {
-      await tx.execute(sql`
-        ALTER TABLE user_session_exercises FORCE ROW LEVEL SECURITY;
-      `);
-    }
+    await tx.execute(sql`ALTER TABLE user_session_exercises ${forceRls} ROW LEVEL SECURITY`);
 
     await tx.execute(sql`
       DROP POLICY IF EXISTS user_session_exercises_organisation_isolation ON user_session_exercises;
@@ -452,11 +419,7 @@ export const applyRLS = async <TSchema extends Record<string, unknown>>(
       ALTER TABLE exercise_completions ENABLE ROW LEVEL SECURITY;
     `);
 
-    if (!isProduction) {
-      await tx.execute(sql`
-        ALTER TABLE exercise_completions FORCE ROW LEVEL SECURITY;
-      `);
-    }
+    await tx.execute(sql`ALTER TABLE exercise_completions ${forceRls} ROW LEVEL SECURITY`);
 
     await tx.execute(sql`
       DROP POLICY IF EXISTS exercise_completions_organisation_isolation ON exercise_completions;

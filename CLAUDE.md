@@ -442,8 +442,9 @@ pnpm db:check
 ### Environment Variables
 
 - `DB_NAME`: Target database (e.g., `ffp_dev`, `ffp_test`)
-- `DB_MIGRATE_USER`: Elevated user for running migrations (e.g., `root_user`)
+- `DB_MIGRATE_USER` / `DB_MIGRATE_PASSWORD`: Schema-owning role that runs migrations (e.g., `root_user`), with its own password
 - `DB_USER`: Application runtime user (e.g., `app_user`)
+- `DB_TEST_USER`: Set to `test_user` only when migrating `ffp_test`, so the test role gets the same grants
 
 **Note**: Migrations require `DB_MIGRATE_USER` due to RLS restrictions on the application user.
 

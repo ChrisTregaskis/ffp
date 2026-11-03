@@ -13,7 +13,7 @@ export const jobTypeEnum = pgEnum('job_type', [...JOB_TYPES]);
  *
  * **Organisation Isolation Strategy:**
  * - `organisation_id` column enables RLS for user-facing queries (e.g., "view my jobs")
- * - Job processor runs with BYPASSRLS to claim jobs across all organisations
+ * - No RLS policy yet, so the job processor claims across all organisations without bypassing RLS
  * - Each job handler sets organisation context for organisation-scoped operations within the job
  * - RLS policies to be added when user-facing job queries are implemented
  *

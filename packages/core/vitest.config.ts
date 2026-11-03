@@ -33,10 +33,8 @@ export default defineConfig({
     // Use ffp_test database for integration tests
     // IMPORTANT: test_user does NOT have BYPASSRLS, so RLS policies are enforced
     //
-    // NOTE: This overrides .env values. When adding new database tables:
-    // 1. Run migrations using DB_MIGRATE_USER (root_user) - not DB_USER (app_user)
-    // 2. Ensure test_user has permissions on new tables (via DEFAULT PRIVILEGES or GRANT)
-    // 3. test_user is distinct from app_user (.env) - both need table access
+    // This overrides .env values. test_user is distinct from the runtime role and gets its
+    // table grants only when ffp_test is migrated with DB_TEST_USER=test_user.
     env: {
       DB_NAME: testDbName,
       DB_HOST: 'localhost',

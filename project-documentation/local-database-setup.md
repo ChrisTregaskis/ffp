@@ -58,19 +58,11 @@ GRANT ALL ON SCHEMA public TO root_user;
 # ============================================================================
 CREATE USER app_user WITH PASSWORD 'your_app_password_here';
 
-# Grant connection and usage
+# Grant connection and usage. Table and sequence grants (SELECT, INSERT, UPDATE, DELETE;
+# no TRUNCATE, no DDL) come from `pnpm db:migrate`, which also sets them as root_user's
+# default privileges for future tables.
 GRANT CONNECT ON DATABASE ffp_dev TO app_user;
 GRANT USAGE ON SCHEMA public TO app_user;
-
-# Grant table operations (SELECT, INSERT, UPDATE, DELETE only - no DDL)
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_user;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_user;
-
-# Ensure future tables also get permissions (run as owner)
-ALTER DEFAULT PRIVILEGES FOR ROLE root_user IN SCHEMA public
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app_user;
-ALTER DEFAULT PRIVILEGES FOR ROLE root_user IN SCHEMA public
-GRANT USAGE, SELECT ON SEQUENCES TO app_user;
 
 # Exit PostgreSQL
 \q
@@ -120,6 +112,18 @@ DB_PORT=5432
 DB_NAME=ffp_dev
 DB_USER=app_user
 DB_PASSWORD=your_app_password_here
+
+# Migrations connect as the schema owner, with its own password (never DB_PASSWORD)
+DB_MIGRATE_USER=root_user
+DB_MIGRATE_PASSWORD=your_secure_password_here
+```
+
+The test database (`ffp_test`) is migrated the same way, plus `DB_TEST_USER=test_user` so the role the vitest suites connect as receives the same grants. Run it from the package so the variables reach the script:
+
+```bash
+cd packages/database
+pnpm db:migrate                                         # ffp_dev
+DB_NAME=ffp_test DB_TEST_USER=test_user pnpm db:migrate # ffp_test
 ```
 
 **⚠️ Important:**
@@ -299,76 +303,14 @@ pnpm db:test
 
 ## Production Database
 
-**Note:** This local setup is for development only. Production will use AWS RDS PostgreSQL (deployed in FFP-102).
+Deployed environments run on AWS RDS PostgreSQL. Their roles are not created by hand: `packages/database/scripts/create-roles.ts` (`pnpm --filter @ffp/database db:roles`) is the definition. Run it once per environment as the RDS master user, before the first migration:
 
-### Migration User vs Application User
+- **Migrator** (`DB_MIGRATE_USER` / `DB_MIGRATE_PASSWORD`): owns the schema objects and runs `pnpm db:migrate`. Not a superuser, no BYPASSRLS.
+- **Runtime** (`DB_USER` / `DB_PASSWORD`): what the functions connect as. CONNECT and schema USAGE only; its row access comes from the migration's grants.
 
-In production (and recommended for local dev), use separate database users:
+It connects as `DB_MASTER_USER` / `DB_MASTER_PASSWORD` over verified TLS, sends passwords as SCRAM verifiers rather than plain text, is safe to re-run (re-running rotates both passwords), and fails if either role turns out to be a superuser or to hold BYPASSRLS, CREATEDB or CREATEROLE. It never creates `test_user`, and the migration refuses `DB_TEST_USER` on a deployed environment.
 
-**Migration User** (elevated permissions):
-
-- **Local**: Database owner or user with CREATE permissions
-- **RDS**: RDS master user (e.g., `ffp_admin`)
-- **Purpose**: Running migrations, creating schemas, applying RLS policies
-- **Used by**: CI/CD pipelines, `pnpm db:migrate`
-
-**Application User** (restricted permissions):
-
-- **Local/RDS**: `app_user` with SELECT, INSERT, UPDATE, DELETE only
-- **Purpose**: Lambda functions, API queries, day-to-day operations
-- **Used by**: Application code at runtime
-
-Migration from local to RDS is straightforward:
-
-1. Update `.env` with RDS master user credentials (for migrations)
-2. Run `pnpm db:migrate` against RDS
-3. Migrations automatically create `app_user` with restricted permissions
-4. Configure Lambda to use `app_user` credentials from Secrets Manager
-5. All data schemas and RLS policies transfer seamlessly
-
-### AWS Secrets Manager Configuration
-
-Store credentials separately for each user type:
-
-```
-# Migration user (used by CI/CD)
-ffp/{stage}/db/admin
-{
-  "username": "ffp_admin",
-  "password": "...",
-  "host": "ffp-{stage}.xxxxx.eu-west-2.rds.amazonaws.com",
-  "port": 5432,
-  "dbname": "ffp_{stage}"
-}
-
-# Application user (used by Lambda)
-ffp/{stage}/db/app
-{
-  "username": "app_user",
-  "password": "...",
-  "host": "ffp-{stage}.xxxxx.eu-west-2.rds.amazonaws.com",
-  "port": 5432,
-  "dbname": "ffp_{stage}"
-}
-```
-
-**SST Configuration** (`sst.config.ts`):
-
-```typescript
-// Lambda functions use app_user (RLS enforced)
-const dbSecret = new sst.Secret('DatabaseSecret', {
-  value: `arn:aws:secretsmanager:eu-west-2:xxx:secret:ffp/${stage}/db/app`,
-});
-
-// Migrations use admin user (separate CI/CD process)
-// Never expose admin credentials to Lambda functions
-```
-
-**Why this matters:**
-
-- `app_user` cannot bypass RLS, ensuring tenant isolation at the database level
-- Even if application code has a bug, RLS prevents cross-tenant data access
-- Admin credentials are only used during deployments, reducing attack surface
+On a deployed profile (`ENVIRONMENT` of `production` or `production-like`) the migration leaves RLS enabled but not forced, so the owning migrator is exempt and the runtime role, which never owns a table, is bound by every policy. Elsewhere RLS is forced, so the owner is bound too, unless it holds BYPASSRLS (as the local `root_user` does; CI's migrator does not).
 
 ## Resources
 
