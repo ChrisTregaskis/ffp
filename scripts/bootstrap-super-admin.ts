@@ -1,268 +1,82 @@
 /**
- * Bootstrap Super Admin Script
+ * Creates the first system admin, in the platform organisation the reference seed creates.
  *
- * Creates the initial super admin user for the FFP platform.
- * This script should only be run once during initial platform setup per environment.
+ *   SUPER_ADMIN_EMAIL=name@example.com pnpm bootstrap:super-admin
+ *   SUPER_ADMIN_EMAIL=name@example.com pnpm bootstrap:super-admin -- --link-existing
  *
- * What it does:
- * 1. Creates a platform organisation (type='platform') in the database
- * 2. Creates a super admin user in AWS Cognito
- * 3. Links the Cognito user to the platform organisation in the database
+ * Order on a new environment: db:roles, db:migrate, seed:reference, then this. Cognito
+ * generates the temporary password and emails it to the admin; nothing secret is printed.
+ * `--link-existing` links a Cognito user that already exists (a database rebuilt while the user
+ * pool survived), provided it is a system admin of the platform organisation.
  *
- * Usage:
- *   pnpm bootstrap:super-admin
- *
- * Environment Variables Required:
- *   - SUPER_ADMIN_EMAIL: Email address for the super admin
- *   - DB_HOST, DB_PORT, DB_NAME: Database connection details
- *   - BOOTSTRAP_DB_USER: Database user with BYPASSRLS privilege (superuser/master user)
- *   - BOOTSTRAP_DB_PASSWORD: Password for bootstrap user
- *   - COGNITO_USER_POOL_ID: AWS Cognito User Pool ID
- *   - COGNITO_CLIENT_ID: AWS Cognito Client ID
- *   - AWS_REGION: AWS region (defaults to eu-west-2)
- *
- * Bootstrap User Requirements:
- *   - Local dev: Use your macOS username (PostgreSQL superuser)
- *   - Staging/Prod: Use RDS master user (created when RDS instance was provisioned)
- *
- * Security Note:
- *   !This script bypasses RLS to create the initial organisation (chicken-and-egg problem)
- *   !Intended usage is to only run this once per environment during initial setup
- *   - Regular application code will use DB_USER (without BYPASSRLS)
+ * Needs SUPER_ADMIN_EMAIL (optionally SUPER_ADMIN_FIRST_NAME / SUPER_ADMIN_LAST_NAME),
+ * COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID, COGNITO_REGION (default eu-west-2), and the database
+ * settings migrations use: DB_HOST, DB_PORT, DB_NAME, DB_MIGRATE_USER, DB_MIGRATE_PASSWORD,
+ * DB_TLS_MODE.
  */
 
-import { Pool } from 'pg';
-import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { eq } from 'drizzle-orm';
-import * as schema from '../packages/database/src/schema/index.js';
-import { organisations, users } from '../packages/database/src/schema/index.js';
+// First, so the Cognito client reads COGNITO_REGION from .env when its module loads
+import 'dotenv/config';
+
 import { CognitoService } from '../packages/core/src/lib/cognito.js';
-import { ConflictError } from '../packages/core/src/lib/errors.js';
-import { terminalPrefix, TerminalPrefix } from '../packages/database/src/lib/terminal-logger.js';
-import { dbTlsConfig } from '../packages/database/src/lib/tls.js';
-import { config } from 'dotenv';
+import { bootstrapSuperAdmin } from '../packages/database/seed/bootstrapSuperAdmin.js';
+import { connectAsMigrator } from '../packages/database/seed/connection.js';
+import { requiredEnv } from '../packages/database/src/lib/env.js';
 
-config(); // Load environment variables
+// The .env example leaves the names empty, and an empty value falls back too
+const envOr = (key: string, fallback: string): string => {
+  const value = process.env[key];
 
-/**
- * Configuration
- */
-const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
-const PLATFORM_ORGANISATION_NAME = 'FFP Platform';
-const TEMPORARY_PASSWORD = 'TempPass123!'; // User must change on first login
-
-/**
- * Validates required environment variables
- */
-const validateEnvironment = () => {
-  const required = [
-    'SUPER_ADMIN_EMAIL',
-    'DB_HOST',
-    'DB_NAME',
-    'COGNITO_USER_POOL_ID',
-    'COGNITO_CLIENT_ID',
-  ];
-
-  const missing = required.filter((varName) => !process.env[varName]);
-
-  if (missing.length > 0) {
-    console.error(
-      `${terminalPrefix(TerminalPrefix.ERROR)} Missing required environment variables: ${missing.join(', ')}`
-    );
-    console.error('\nUsage:');
-    console.error('  SUPER_ADMIN_EMAIL=name@ffp.com tsx scripts/bootstrap-super-admin.ts\n');
-    process.exit(1);
-  }
-
-  // Check for bootstrap DB user (must have BYPASSRLS privilege)
-  if (!process.env.BOOTSTRAP_DB_USER) {
-    console.error(`${terminalPrefix(TerminalPrefix.ERROR)} BOOTSTRAP_DB_USER not set`);
-    console.error('\nBootstrap requires a database user with BYPASSRLS privilege.');
-    console.error('Set BOOTSTRAP_DB_USER and BOOTSTRAP_DB_PASSWORD in .env\n');
-    console.error('Local dev: Use your superuser (e.g., your macOS username)');
-    console.error('Staging/Prod: Use RDS master user\n');
-    process.exit(1);
-  }
+  return value ? value : fallback;
 };
 
-/**
- * Creates the platform organisation in the database
- */
-const createPlatformOrganisation = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool }
-) => {
-  console.log(`${terminalPrefix(TerminalPrefix.INFO)} Creating platform organisation...`);
-
-  // Bypass RLS for bootstrap operation (chicken-and-egg: can't set organisation context without an organisation)
-  console.log(`${terminalPrefix(TerminalPrefix.WARNING)} RLS BYPASSED: Bootstrap operation only`);
-  await db.$client.query('SET LOCAL row_security = off');
-  await db.$client.query(
-    `COMMENT ON TRANSACTION IS 'BOOTSTRAP: RLS bypassed for initial platform setup - script: bootstrap-super-admin.ts'`
-  );
-
-  // Check if platform organisation already exists
-  const existingOrganisation = await db.query.organisations.findFirst({
-    where: eq(organisations.type, 'platform'),
-  });
-
-  if (existingOrganisation) {
-    console.log(`${terminalPrefix(TerminalPrefix.WARNING)} Platform tenant already exists`);
-    return existingOrganisation;
-  }
-
-  // Create new platform organisation
-  const [organisation] = await db
-    .insert(organisations)
-    .values({
-      type: 'platform',
-      name: PLATFORM_ORGANISATION_NAME,
-      settings: {},
-    })
-    .returning();
-
-  console.log(
-    `${terminalPrefix(TerminalPrefix.SUCCESS)} Platform tenant created: ${organisation.id}`
-  );
-  return organisation;
-};
-
-/**
- * Creates the super admin user in Cognito
- */
-const createCognitoUser = async (organisationId: string) => {
-  console.log(`${terminalPrefix(TerminalPrefix.INFO)} Creating Cognito user...`);
+const main = async (): Promise<void> => {
+  const email = requiredEnv('SUPER_ADMIN_EMAIL');
+  const db = connectAsMigrator();
 
   try {
-    const response = await CognitoService.createUser({
-      email: SUPER_ADMIN_EMAIL!,
-      firstName: 'Super',
-      lastName: 'Admin',
-      organisationId: organisationId,
-      locationId: null, // Super admin has no location
-      role: 'system_admin',
-      temporaryPassword: TEMPORARY_PASSWORD,
-    });
+    const { linked } = await bootstrapSuperAdmin(
+      db,
+      {
+        createUser: async (user) => {
+          const response = await CognitoService.createUser({
+            ...user,
+            locationId: null,
+            role: 'system_admin',
+          });
+          const sub = response.User?.Attributes?.find((attr) => attr.Name === 'sub')?.Value;
 
-    const cognitoSub = response.User?.Attributes?.find((attr) => attr.Name === 'sub')?.Value;
+          if (!sub) {
+            await CognitoService.deleteUser(user.email);
+            throw new Error('Cognito returned no sub for the new user; the user has been deleted');
+          }
 
-    if (!cognitoSub) {
-      throw new Error('Failed to retrieve Cognito sub from user creation response');
-    }
-
-    console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} Cognito user created`);
-    console.log(`  Email: ${SUPER_ADMIN_EMAIL}`);
-    console.log(`  Cognito Sub: ${cognitoSub}`);
-    console.log(`  Temporary Password: ${TEMPORARY_PASSWORD}`);
-    console.log(
-      `  ${terminalPrefix(TerminalPrefix.WARNING)} Password shown in logs - change immediately on first login!`
+          return sub;
+        },
+        getUserAttributes: (username) => CognitoService.getUserAttributes(username),
+        deleteUser: (username) => CognitoService.deleteUser(username),
+      },
+      {
+        email,
+        firstName: envOr('SUPER_ADMIN_FIRST_NAME', 'System'),
+        lastName: envOr('SUPER_ADMIN_LAST_NAME', 'Admin'),
+      },
+      { linkExisting: process.argv.includes('--link-existing') }
     );
 
-    return cognitoSub;
-  } catch (error) {
-    if (error instanceof Error && error.name === 'UsernameExistsException') {
-      throw new ConflictError(
-        `Super admin user with email ${SUPER_ADMIN_EMAIL} already exists in Cognito`,
-        {
-          email: SUPER_ADMIN_EMAIL,
-          suggestion: 'Delete the existing user or use a different email address',
-        }
-      );
-    }
-    throw error;
-  }
-};
-
-/**
- * Creates the user record in the database
- */
-const createDatabaseUser = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool },
-  organisationId: string,
-  cognitoSub: string
-) => {
-  console.log(`${terminalPrefix(TerminalPrefix.INFO)} Creating database user record...`);
-
-  // Bypass RLS for bootstrap operation
-  console.log(`${terminalPrefix(TerminalPrefix.WARNING)} RLS BYPASSED: Bootstrap operation only`);
-  await db.$client.query('SET LOCAL row_security = off');
-  await db.$client.query(
-    `COMMENT ON TRANSACTION IS 'BOOTSTRAP: RLS bypassed for initial user creation - script: bootstrap-super-admin.ts'`
-  );
-
-  // Check if user already exists
-  const existingUser = await db.query.users.findFirst({
-    where: eq(users.email, SUPER_ADMIN_EMAIL!),
-  });
-
-  if (existingUser) {
-    console.log(`${terminalPrefix(TerminalPrefix.WARNING)} User record already exists in database`);
-    return existingUser;
-  }
-
-  // Create new user record (database generates UUID via defaultRandom())
-  const [user] = await db
-    .insert(users)
-    .values({
-      organisationId: organisationId,
-      email: SUPER_ADMIN_EMAIL!,
-      cognitoSub: cognitoSub,
-      firstName: 'Super',
-      lastName: 'Admin',
-      role: 'system_admin',
-      locationId: null, // Super admin has no location
-    })
-    .returning();
-
-  console.log(`${terminalPrefix(TerminalPrefix.SUCCESS)} Database user record created: ${user.id}`);
-  return user;
-};
-
-/**
- * Main execution
- */
-const main = async () => {
-  console.log(`${terminalPrefix(TerminalPrefix.INFO)} Bootstrap Super Admin Script\n`);
-
-  // Validate environment
-  validateEnvironment();
-
-  // Setup database connection with bootstrap user (must have BYPASSRLS)
-  const pool = new Pool({
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '5432'),
-    database: process.env.DB_NAME,
-    user: process.env.BOOTSTRAP_DB_USER, // Superuser with BYPASSRLS privilege
-    password: process.env.BOOTSTRAP_DB_PASSWORD,
-    ssl: dbTlsConfig(),
-  });
-
-  const db = drizzle({ client: pool, schema });
-
-  try {
-    // Step 1: Create platform organisation
-    const organisation = await createPlatformOrganisation(db);
-
-    // Step 2: Create Cognito user
-    const cognitoSub = await createCognitoUser(organisation.id);
-
-    // Step 3: Create database user record (UUID generated by database)
-    await createDatabaseUser(db, organisation.id, cognitoSub);
-
-    // Success!
-    console.log(`\n${terminalPrefix(TerminalPrefix.SUCCESS)} Super admin bootstrap complete!\n`);
-    console.log('Login Details:');
-    console.log(`  Email: ${SUPER_ADMIN_EMAIL}`);
-    console.log(`  Temporary Password: ${TEMPORARY_PASSWORD}`);
     console.log(
-      `\n${terminalPrefix(TerminalPrefix.WARNING)} SECURITY: Password visible in terminal output - change immediately!`
+      linked
+        ? `Super admin linked to the existing Cognito user ${email}; its password is unchanged.`
+        : `Super admin created. Cognito has emailed ${email} a temporary password.`
     );
-    console.log('NOTE: You will be required to change your password on first login.\n');
-  } catch (error) {
-    console.error(`\n${terminalPrefix(TerminalPrefix.ERROR)} Bootstrap failed:`, error);
-    process.exit(1);
   } finally {
-    await pool.end();
+    await db.$client.end();
   }
 };
 
-main();
+main().catch((error: unknown) => {
+  const cause = error instanceof Error && error.cause instanceof Error ? error.cause.message : '';
+
+  console.error('Bootstrap failed:', error instanceof Error ? error.message : error, cause);
+  process.exit(1);
+});

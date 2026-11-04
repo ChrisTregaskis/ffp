@@ -4,11 +4,8 @@ import { createLogger } from '../src/lib/logger.js';
 import { withRLS } from '../src/lib/rls.js';
 
 import { seedBranchingDemoFlow } from './seedBranchingDemoFlow.js';
-import { PLATFORM_ORGANISATION } from './seedPlatformTenant.js';
 import { seedProgrammeUserAssessment } from './seedProgrammeUserAssessment.js';
 import { seedProgrammeUserData, TEST_ORGANISATION_ID } from './seedProgrammeUserData.js';
-import { seedSuperAdminCognito } from './seedSuperAdminCognito.js';
-import { seedSuperAdminDatabase } from './seedSuperAdminDatabase.js';
 import { seedTemplateExercises } from './seedTemplateExercises.js';
 import { seedTemplateSlots } from './seedTemplateSlots.js';
 import { seedTestLocation } from './seedTestCustomer.js';
@@ -25,25 +22,15 @@ const logger = createLogger('seed-demo');
 /**
  * Seeds the local demo on top of the reference data: the demo organisation, its location and
  * users (in Cognito too), the sample videos, the level shells' exercises and slots, the
- * branching demo flow, and a member's programme and assessment. Each tenant write runs under
- * its organisation's RLS context. Local only: the caller guards it.
+ * branching demo flow, and a member's programme and assessment. The system admin comes from the
+ * bootstrap, not the demo. Each tenant write runs under its organisation's RLS context. Local
+ * only: the caller guards it.
  */
 export const seedDemo = async (
   db: NodePgDatabase<typeof schema>,
   config: SeedConfig
 ): Promise<void> => {
   logger.info('Seeding demo data...');
-
-  if (config.superAdminUser.organisationId !== PLATFORM_ORGANISATION.id) {
-    throw new Error(
-      `superAdminUser.organisationId must be the platform organisation (${PLATFORM_ORGANISATION.id})`
-    );
-  }
-
-  await seedSuperAdminCognito(config.superAdminCognito, PLATFORM_ORGANISATION.id);
-  await withRLS(db, PLATFORM_ORGANISATION.id, undefined, (tx) =>
-    seedSuperAdminDatabase(tx, config.superAdminUser)
-  );
 
   const organisation = config.testLocationOrganisation;
 

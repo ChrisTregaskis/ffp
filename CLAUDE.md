@@ -425,7 +425,7 @@ cd packages/database && pnpm db:generate
 # Apply migrations (modifies database)
 pnpm db:migrate
 
-# View database state (read-only, safe)
+# Browse the database (connects as the schema owner and can write; local only)
 pnpm db:studio
 
 # Check migration status

@@ -31,10 +31,10 @@ sst dev                          # [✗] Defaults to username, conflicts across 
 # Schema change → generate → review → migrate
 pnpm db:generate    # Creates .sql migration file
 pnpm db:migrate     # Applies migrations with tracking
-pnpm db:studio      # Visual database browser (read-only verification)
+pnpm db:studio      # Visual database browser; connects as the schema owner and can write, so keep it local
 ```
 
-Migrations run as `DB_MIGRATE_USER` with `DB_MIGRATE_PASSWORD` (the schema owner), never as the application user. A new environment's roles come from `pnpm --filter @ffp/database db:roles`, run as the RDS master user (see `local-database-setup.md` § Production Database).
+Migrations run as `DB_MIGRATE_USER` with `DB_MIGRATE_PASSWORD` (the schema owner), never as the application user. A new environment's roles come from `pnpm db:roles`, run as the RDS master user (see `local-database-setup.md` § Production Database).
 
 ### Secrets Management
 
@@ -178,8 +178,13 @@ When using `sst dev` (personal stage), CORS defaults to `http://localhost:5173`.
 
 ### First Deploy to a New Environment
 
-1. Run `bash scripts/setup-cloudfront-signing-key.sh <stage>` (one-time signing key setup)
+1. Run `bash scripts/setup-cloudfront-signing-key.sh <stage>` (one-time signing key setup; before the first deploy, which reads the secrets)
 2. Verify secrets stored: `sst secret list --stage <stage>`
+3. Deploy: `sst deploy --stage <stage>`
+4. Create the database roles as the RDS master user: `pnpm db:roles`
+5. Migrate as the migrator, with `ENVIRONMENT` set to the stage's profile: `pnpm db:migrate`
+6. Seed the reference catalogue and platform organisation as the migrator: `pnpm seed:reference`
+7. Create the first system admin: `SUPER_ADMIN_EMAIL=… pnpm bootstrap:super-admin` (Cognito emails the temporary password)
 
 ### Every Deploy
 

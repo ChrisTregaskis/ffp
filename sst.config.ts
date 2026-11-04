@@ -58,20 +58,16 @@ export default $config({
       );
     }
 
-    // Type-safe access to validated environment variables
-    const dbEnv = {
-      DB_HOST: process.env.DB_HOST!,
-      DB_PORT: process.env.DB_PORT!,
-      DB_NAME: process.env.DB_NAME!,
-      DB_USER: process.env.DB_USER!,
-      DB_PASSWORD: process.env.DB_PASSWORD!,
-    };
+    // Every key was checked above
+    const dbEnv = Object.fromEntries(
+      requiredDbEnvVars.map((key) => [key, process.env[key] ?? ''])
+    ) as Record<(typeof requiredDbEnvVars)[number], string>;
 
     // Cognito User Pool with custom attributes for multi-tenant authentication
     const userPool = new sst.aws.CognitoUserPool('UserPool', {
       usernames: ['email'], // Users sign in with email address
       transform: {
-        userPool: (args: any) => {
+        userPool: (args) => {
           // Password policy configuration
           args.passwordPolicy = {
             minimumLength: 8,
@@ -137,7 +133,7 @@ export default $config({
     // User Pool Client for web application
     const userPoolClient = userPool.addClient('Web', {
       transform: {
-        client: (args: any) => {
+        client: (args) => {
           // OAuth configuration
           args.allowedOauthFlows = ['code'];
           args.allowedOauthScopes = ['email', 'openid', 'profile'];
@@ -212,7 +208,7 @@ export default $config({
         },
       ],
       transform: {
-        bucket: (args: any) => {
+        bucket: (args) => {
           // Enable AES256 encryption at rest
           args.serverSideEncryptionConfiguration = {
             rules: [
@@ -234,7 +230,7 @@ export default $config({
         allowOrigins: allowedOrigins,
       },
       transform: {
-        bucket: (args: any) => {
+        bucket: (args) => {
           // Enable AES256 encryption at rest
           args.serverSideEncryptionConfiguration = {
             rules: [
@@ -310,7 +306,7 @@ export default $config({
         },
       },
       transform: {
-        distribution: (args: any) => {
+        distribution: (args) => {
           // Use only North America and Europe for cost optimisation
           args.priceClass = 'PriceClass_100';
 
@@ -350,7 +346,7 @@ export default $config({
         allowCredentials: true,
       },
       transform: {
-        api: (args: any) => {
+        api: (args) => {
           // Global throttle settings apply to all routes
           // 1000 requests/minute (~16 req/sec) is appropriate during development and staging
           // Health check endpoint is public but these limits prevent abuse

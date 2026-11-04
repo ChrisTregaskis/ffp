@@ -96,7 +96,7 @@ pnpm db:migrate
 # Apply schema migrations only (advanced)
 pnpm db:migrate:schema
 
-# Open Drizzle Studio (visual database browser)
+# Open Drizzle Studio (connects as the schema owner and can write; local only)
 pnpm db:studio
 
 # Check migration status
@@ -260,7 +260,7 @@ Two seeds, both run by `scripts/seed-database.ts` and connected as the schema ow
 
 ### Demo configuration
 
-The demo's organisation and users come from `seed/config/db-seed.local.<environment>.json` (gitignored; `dev` by default). Copy `db-seed.example.json` to start one. The demo's Cognito users need `COGNITO_USER_POOL_ID`.
+The demo's organisation and users come from `seed/config/db-seed.local.<environment>.json` (gitignored; `dev` by default). Copy `db-seed.example.json` to start one. The demo's Cognito users need `COGNITO_USER_POOL_ID`. The system admin is not part of either seed: create it with `SUPER_ADMIN_EMAIL=… pnpm bootstrap:super-admin` (after the reference seed, which creates the platform organisation it belongs to). Cognito emails it a temporary password.
 
 ```bash
 pnpm seed:reference          # reference data only
@@ -325,6 +325,8 @@ psql -h localhost -U root_user -d postgres -c "\du"
    ```bash
    pnpm seed:db
    ```
+
+   Then, on a database with no system admin yet: `SUPER_ADMIN_EMAIL=… pnpm bootstrap:super-admin`.
 
 4. Run RLS tests:
 

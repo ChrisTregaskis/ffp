@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+
 import { seedVideoAssets } from '../packages/database/seed/seedVideoAssets.js';
 
 interface SstOutputs {
@@ -38,7 +39,7 @@ seedVideoAssets({ bucket, region })
     console.log(`Video assets: ${String(uploaded)} uploaded to ${bucket}`);
     process.exit(0);
   })
-  .catch((error) => {
+  .catch((error: unknown) => {
     console.error('Seeding video assets failed:', error);
     process.exit(1);
   });

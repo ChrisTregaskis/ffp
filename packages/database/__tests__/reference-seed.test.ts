@@ -18,7 +18,7 @@ import {
   templateSessions,
 } from '../src/schema';
 import * as schema from '../src/schema';
-import { asOrganisation, testDbConnectionConfig } from '../src/testing';
+import { asOrganisation, inRolledBackTransaction, testDbConnectionConfig } from '../src/testing';
 
 type Db = NodePgDatabase<typeof schema>;
 
@@ -32,32 +32,6 @@ const REFERENCE_TABLES = [
   'template_phases',
   'template_sessions',
 ];
-
-class Rollback extends Error {}
-
-/**
- * Runs the callback in a transaction that is always rolled back, so the shared test database
- * keeps none of the catalogue the seed writes.
- */
-const inRolledBackTransaction = async (
-  db: Db,
-  callback: (tx: Db) => Promise<void>
-): Promise<void> => {
-  try {
-    await db.transaction(async (tx) => {
-      await callback(tx);
-      throw new Rollback();
-    });
-  } catch (error) {
-    if (!(error instanceof Rollback)) {
-      throw error;
-    }
-
-    return;
-  }
-
-  throw new Error('The transaction committed');
-};
 
 /** Each reference row's physical location, which any UPDATE changes */
 const rowVersions = async (db: Db): Promise<string[]> => {

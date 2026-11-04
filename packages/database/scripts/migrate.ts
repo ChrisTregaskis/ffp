@@ -15,12 +15,10 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
 
-import { requiredEnv } from '../src/lib/env';
 import { createLogger } from '../src/lib/logger';
-import { dbTlsConfig } from '../src/lib/tls';
 import { applyPermissions, resolveGrantees } from '../src/migrations/apply-permissions';
 import { applyRLS } from '../src/migrations/apply-rls';
-import { migrationCredentials } from '../src/migrations/migration-credentials';
+import { migratorConnection } from '../src/migrations/migration-credentials';
 
 const logger = createLogger('migrate');
 
@@ -37,17 +35,11 @@ config({ path: resolve(__dirname, '../../../.env') });
 const runMigrations = async (): Promise<void> => {
   logger.info('Starting database migrations...');
 
-  const { user: migrationUser, password } = migrationCredentials();
+  const connection = migratorConnection();
+  const migrationUser = connection.user;
   const grantees = resolveGrantees(migrationUser);
 
-  const pool = new Pool({
-    host: requiredEnv('DB_HOST'),
-    port: parseInt(process.env.DB_PORT ? process.env.DB_PORT : '5432'),
-    database: requiredEnv('DB_NAME'),
-    user: migrationUser,
-    password,
-    ssl: dbTlsConfig(),
-  });
+  const pool = new Pool(connection);
 
   const db = drizzle(pool);
 

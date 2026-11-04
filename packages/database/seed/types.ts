@@ -21,26 +21,10 @@ export type TestLocationOrganisationSeed = DateFieldsToString<Organisation>;
 export type TestLocationSeed = DateFieldsToString<Location>;
 
 /**
- * Super admin user seed data (from JSON config)
- * Same as User type but with string timestamps for JSON compatibility
- */
-export type SuperAdminUserSeed = DateFieldsToString<User>;
-
-/**
  * Test user seed data (from JSON config)
  * Same as User type but with string timestamps for JSON compatibility
  */
 export type TestUserSeed = DateFieldsToString<User>;
-
-/**
- * Super admin Cognito seed data
- * (Cognito is not a database entity, so we define this separately)
- */
-export interface SuperAdminCognitoSeed {
-  email: string;
-  cognitoSub: string;
-  temporaryPassword: string;
-}
 
 /**
  * Test user Cognito seed data
@@ -56,8 +40,6 @@ export interface TestUserCognitoSeed {
  * The demo seed's configuration. The platform organisation is reference data, defined in code.
  */
 export interface SeedConfig {
-  superAdminUser: SuperAdminUserSeed;
-  superAdminCognito: SuperAdminCognitoSeed;
   testLocationOrganisation: TestLocationOrganisationSeed;
   testLocation: TestLocationSeed;
   testLocationAdminUser: TestUserSeed;

@@ -42,10 +42,12 @@ To publish a fresh version of the prototypes:
 
 ```bash
 pnpm --filter=@ffp/web build:showcase
-wrangler pages deploy packages/web/dist --project-name ffp-prototypes
+wrangler pages deploy packages/web/dist --project-name ffp-prototypes --branch main
 ```
 
-Each deploy publishes a new version to the same URL. The custom domain and Access gate stay as configured; only the content updates.
+`--branch main` is what makes this a production deploy from any branch. Without it, Wrangler takes the branch from the git workspace ("If you are in a Git workspace, Wrangler will automatically pull the branch information for you", [Cloudflare Pages: Direct Upload](https://developers.cloudflare.com/pages/get-started/direct-upload/)), and a deploy from any branch other than the project's production branch (`main`) becomes a preview at `<branch>.ffp-prototypes.pages.dev`, leaving `prototypes.tregaskis.uk` unchanged.
+
+Each production deploy publishes a new version to the same URL. The custom domain and Access gate stay as configured; only the content updates.
 
 ## Access management
 

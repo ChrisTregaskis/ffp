@@ -10,13 +10,13 @@
  * deployed ENVIRONMENT); the demo's Cognito users need COGNITO_USER_POOL_ID.
  */
 
-import { config } from 'dotenv';
+// First, so the demo's Cognito client reads COGNITO_REGION from .env when its module loads
+import 'dotenv/config';
+
 import { seedDatabase } from '../packages/database/seed/index.js';
 
-config();
-
 const args = process.argv.slice(2);
-const environment = args.find((arg) => !arg.startsWith('--')) || 'dev';
+const environment = args.find((arg) => !arg.startsWith('--')) ?? 'dev';
 
 seedDatabase({
   demo: !args.includes('--reference'),
@@ -26,7 +26,7 @@ seedDatabase({
   .then(() => {
     process.exit(0);
   })
-  .catch((error) => {
+  .catch((error: unknown) => {
     console.error('Seed failed:', error);
     process.exit(1);
   });

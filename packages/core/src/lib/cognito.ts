@@ -15,6 +15,7 @@ import {
   CognitoIdentityProviderClient,
   AdminCreateUserCommand,
   AdminDeleteUserCommand,
+  AdminGetUserCommand,
   InitiateAuthCommand,
   type AdminCreateUserCommandOutput,
   type InitiateAuthCommandOutput,
@@ -61,7 +62,7 @@ export interface InviteUserParams {
 }
 
 /**
- * Parameters for creating a user with temporary password
+ * Parameters for creating a user. Cognito generates the temporary password and emails it.
  */
 export interface CreateUserParams {
   email: string;
@@ -70,7 +71,6 @@ export interface CreateUserParams {
   organisationId: string;
   locationId: string | null;
   role: string;
-  temporaryPassword?: string;
 }
 
 /**
@@ -120,10 +120,8 @@ export class CognitoService {
   }
 
   /**
-   * Create a new user with optional temporary password
-   *
-   * Similar to inviteUser() but allows specifying a temporary password
-   * instead of having Cognito generate one.
+   * Create a new user, as inviteUser() does, but without a location when the role has none.
+   * Cognito generates the temporary password and emails it.
    */
   static async createUser(params: CreateUserParams): Promise<AdminCreateUserCommandOutput> {
     validateEnvironment();
@@ -151,9 +149,6 @@ export class CognitoService {
       Username: params.email,
       UserAttributes: userAttributes,
       DesiredDeliveryMediums: ['EMAIL'],
-      ...(params.temporaryPassword && {
-        TemporaryPassword: params.temporaryPassword,
-      }),
     });
 
     return await cognito.send(command);
@@ -178,6 +173,34 @@ export class CognitoService {
         Username: username,
       })
     );
+  }
+
+  /**
+   * A user's attributes by name (`sub`, `custom:tenantId`, …), or null when the pool has no
+   * such user.
+   */
+  static async getUserAttributes(username: string): Promise<Record<string, string> | null> {
+    validateEnvironment();
+    const userPoolId = process.env.COGNITO_USER_POOL_ID; // Guaranteed by validateEnvironment()
+
+    try {
+      const response = await cognito.send(
+        new AdminGetUserCommand({ UserPoolId: userPoolId, Username: username })
+      );
+
+      return Object.fromEntries(
+        (response.UserAttributes ?? []).map((attribute) => [
+          attribute.Name ?? '',
+          attribute.Value ?? '',
+        ])
+      );
+    } catch (error) {
+      if (error instanceof Error && error.name === 'UserNotFoundException') {
+        return null;
+      }
+
+      throw error;
+    }
   }
 
   /**
