@@ -1,11 +1,7 @@
 import { eq, inArray } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { type Pool } from 'pg';
 
-import {
-  LEVEL_PROGRAMME_SLUGS,
-  LEVEL_SCORING_CONFIG,
-} from '../src/constants/level-scoring.constants.js';
+import { LEVEL_SCORING_CONFIG } from '../src/constants/level-scoring.constants.js';
 import { createLogger } from '../src/lib/logger.js';
 import { assessmentFlows, questions } from '../src/schema/index.js';
 
@@ -19,46 +15,18 @@ const logger = createLogger('seed-assessment-flows');
 /**
  * Deterministic UUIDs for assessment flows
  *
- * UUID Pattern: 44444444-4444-4444-8444-4444444400XX
+ * UUID Pattern: 44444444-4444-4444-8444-4444444400XX (the branching demo is 0002)
  */
 export const FLOW_IDS = {
   WELLNESS: '44444444-4444-4444-8444-444444440001',
-  BRANCHING_DEMO: '44444444-4444-4444-8444-444444440002',
 } as const;
 
-/**
- * Deliberately simple: strong on both checks → level 2, otherwise level 1.
- * Neither check feeds the risk level: the branch can skip the strength check,
- * and a skipped check scores 0.
- */
-const BRANCHING_DEMO_SCORING_CONFIG: ScoringConfig = {
-  dimensions: [
-    {
-      name: 'strength',
-      questionIds: [QUESTION_IDS['squat-rating']],
-      maxScore: 4,
-      affectsRiskLevel: false,
-    },
-    {
-      name: 'balance',
-      questionIds: [QUESTION_IDS['single-leg-duration']],
-      maxScore: 4,
-      affectsRiskLevel: false,
-    },
-  ],
-  programmeMappings: [
-    {
-      priority: 1,
-      operator: 'and',
-      conditions: [
-        { dimension: 'strength', operator: 'gte', value: 3 },
-        { dimension: 'balance', operator: 'gte', value: 3 },
-      ],
-      programmeTemplateId: LEVEL_PROGRAMME_SLUGS[2],
-    },
-    { priority: 10, conditions: [], programmeTemplateId: LEVEL_PROGRAMME_SLUGS[1] },
-  ],
-};
+export interface SeedFlow {
+  id: string;
+  name: string;
+  description: string;
+  scoringConfig: ScoringConfig;
+}
 
 const lean = (
   questionId: string,
@@ -104,24 +72,19 @@ const WELLNESS_EMPHASIS: EmphasisRule[] = [
   ),
 ];
 
-export const DEFAULT_FLOWS = [
+/** The wellness flow every environment carries */
+export const DEFAULT_FLOWS: SeedFlow[] = [
   {
     id: FLOW_IDS.WELLNESS,
     name: 'Wellness Movement Assessment',
     description: 'A short check-in on activity, goals and safety that sets your starting level',
     scoringConfig: { ...LEVEL_SCORING_CONFIG, emphasis: WELLNESS_EMPHASIS },
   },
-  {
-    id: FLOW_IDS.BRANCHING_DEMO,
-    name: 'Movement Check Demo',
-    description: 'A reduced flow with a branching rule and video-guided movement checks',
-    scoringConfig: BRANCHING_DEMO_SCORING_CONFIG,
-  },
 ];
 
 /** A config naming a missing or mis-dimensioned question would silently drop it from scoring */
 const assertScoringConfigMatchesQuestions = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool },
+  db: NodePgDatabase<typeof schema>,
   flowName: string,
   scoringConfig: ScoringConfig
 ): Promise<void> => {
@@ -159,44 +122,36 @@ const assertScoringConfigMatchesQuestions = async (
 };
 
 /**
- * Seeds the assessment flows. IDEMPOTENT: flows are matched by ID, and an
- * existing one is brought back in line with the seed. Runs after seedQuestions,
- * because each scoring config is checked against the stored questions.
+ * Seeds the given assessment flows. IDEMPOTENT: an existing flow, matched by ID, is left as it
+ * is, since an admin may have edited its name, description or scoring. A new flow's scoring
+ * config is checked against the stored questions first, so this runs after seedQuestions.
+ *
+ * @returns The IDs of the flows created
  */
 export const seedAssessmentFlows = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool }
-): Promise<number> => {
+  db: NodePgDatabase<typeof schema>,
+  flows: SeedFlow[]
+): Promise<string[]> => {
   logger.info('Seeding assessment flows...');
 
-  let createdCount = 0;
+  const created: string[] = [];
 
-  for (const flow of DEFAULT_FLOWS) {
-    await assertScoringConfigMatchesQuestions(db, flow.name, flow.scoringConfig);
-
+  for (const flow of flows) {
     const existingFlow = await db.query.assessmentFlows.findFirst({
       where: eq(assessmentFlows.id, flow.id),
     });
 
     if (existingFlow) {
-      await db
-        .update(assessmentFlows)
-        .set({
-          name: flow.name,
-          description: flow.description,
-          scoringConfig: flow.scoringConfig,
-        })
-        .where(eq(assessmentFlows.id, flow.id));
-
-      logger.info('Assessment flow updated', { id: flow.id, name: flow.name });
+      logger.warn(`Assessment flow already exists: "${flow.name}"`, { id: flow.id });
       continue;
     }
 
-    // Normalised steps are in flow_steps table (see seedFlowSteps.ts)
+    await assertScoringConfigMatchesQuestions(db, flow.name, flow.scoringConfig);
     await db.insert(assessmentFlows).values({ ...flow, isActive: true });
 
     logger.info('Assessment flow created', { id: flow.id, name: flow.name });
-    createdCount++;
+    created.push(flow.id);
   }
 
-  return createdCount;
+  return created;
 };

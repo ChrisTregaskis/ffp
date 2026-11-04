@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { type Pool } from 'pg';
 
 import {
   AGE_BRACKET_OPTIONS,
@@ -10,7 +9,6 @@ import { createLogger } from '../src/lib/logger.js';
 import { questions } from '../src/schema/index.js';
 
 import { requireSeedId } from './requireSeedId.js';
-import { VIDEO_IDS } from './seedVideos.js';
 
 import type * as schema from '../src/schema/index.js';
 import type { NewQuestion } from '../src/schema/questions.js';
@@ -23,11 +21,8 @@ const logger = createLogger('seed-questions');
  * These are fixed to ensure consistency across seed runs and allow
  * template_questions and scoring configs to reference them reliably.
  *
- * UUID Pattern: 22222222-2222-2222-8222-2222222200XX
- * - Branching demo, getting started: 01xx
- * - Branching demo, strength check: 02xx
- * - Branching demo, balance check: 03xx
- * - Wellness assessment: 07xx (the level questions come from LEVEL_QUESTION_IDS)
+ * UUID Pattern: 22222222-2222-2222-8222-2222222207XX (the level questions come from
+ * LEVEL_QUESTION_IDS). The branching demo's questions use 01xx–03xx.
  */
 export const QUESTION_IDS = {
   // Wellness assessment
@@ -39,14 +34,6 @@ export const QUESTION_IDS = {
   'session-goal': '22222222-2222-2222-8222-222222220706',
   'focus-areas': '22222222-2222-2222-8222-222222220707',
   'safety-check': '22222222-2222-2222-8222-222222220708',
-
-  // Branching demo
-  'activity-level': '22222222-2222-2222-8222-222222220104',
-  'check-focus': '22222222-2222-2222-8222-222222220107',
-  'squat-assessment': '22222222-2222-2222-8222-222222220201',
-  'squat-rating': '22222222-2222-2222-8222-222222220202',
-  'single-leg-stand': '22222222-2222-2222-8222-222222220301',
-  'single-leg-duration': '22222222-2222-2222-8222-222222220302',
 } as const;
 
 export type QuestionSlug = keyof typeof QUESTION_IDS;
@@ -228,130 +215,22 @@ const goalsAndSafetyQuestions: NewQuestion[] = [
   },
 ];
 
-/** Branching demo: "Getting started" */
-const gettingStartedQuestions: NewQuestion[] = [
-  {
-    id: QUESTION_IDS['activity-level'],
-    slug: 'activity-level',
-    type: 'single-choice',
-    questionText: 'How would you describe your current activity level?',
-    options: [
-      { value: 'sedentary', label: 'Sedentary (little to no exercise)' },
-      { value: 'light', label: 'Lightly active (light exercise 1-3 days/week)' },
-      { value: 'moderate', label: 'Moderately active (moderate exercise 3-5 days/week)' },
-      { value: 'very-active', label: 'Very active (hard exercise 6-7 days/week)' },
-    ],
-    validation: { required: true },
-    scoreDimension: null,
-    isActive: true,
-  },
-  {
-    id: QUESTION_IDS['check-focus'],
-    slug: 'check-focus',
-    type: 'single-choice',
-    questionText: 'Which movement check would you like to start with?',
-    description: 'Choosing balance skips the strength check.',
-    options: [
-      { value: 'strength', label: 'Strength, then balance' },
-      { value: 'balance', label: 'Balance only' },
-    ],
-    validation: { required: true },
-    scoreDimension: null,
-    isActive: true,
-  },
-];
-
-/** Branching demo: "Strength check" */
-const strengthCheckQuestions: NewQuestion[] = [
-  {
-    id: QUESTION_IDS['squat-assessment'],
-    slug: 'squat-assessment',
-    type: 'video-response',
-    questionText: 'Wall Squat Hold',
-    description: 'Hold a wall squat position for as long as comfortable',
-    videoId: VIDEO_IDS['bodyweight-squat'],
-    validation: { required: true, min: 0, max: 300 },
-    scoreDimension: 'strength',
-    isActive: true,
-  },
-  {
-    id: QUESTION_IDS['squat-rating'],
-    slug: 'squat-rating',
-    type: 'single-choice',
-    questionText: 'How did you find the wall squat?',
-    options: [
-      { value: 'very-difficult', label: 'Very difficult - could not complete', score: 1 },
-      { value: 'difficult', label: 'Difficult - held for less than 15 seconds', score: 2 },
-      { value: 'moderate', label: 'Moderate - held for 15-30 seconds', score: 3 },
-      { value: 'easy', label: 'Easy - held for over 30 seconds', score: 4 },
-    ],
-    validation: { required: true },
-    scoreDimension: 'strength',
-    isActive: true,
-  },
-];
-
-/** Branching demo: "Balance check" */
-const balanceCheckQuestions: NewQuestion[] = [
-  {
-    id: QUESTION_IDS['single-leg-stand'],
-    slug: 'single-leg-stand',
-    type: 'video-response',
-    questionText: 'Single Leg Stand',
-    description: 'Stand on one leg for as long as you can safely manage',
-    videoId: VIDEO_IDS['single-leg-balance'],
-    validation: { required: true, min: 0, max: 300 },
-    scoreDimension: 'balance',
-    isActive: true,
-  },
-  {
-    id: QUESTION_IDS['single-leg-duration'],
-    slug: 'single-leg-duration',
-    type: 'single-choice',
-    questionText: 'How long could you hold the single leg stand?',
-    options: [
-      { value: 'less-5', label: 'Less than 5 seconds', score: 1 },
-      { value: '5-15', label: '5-15 seconds', score: 2 },
-      { value: '15-30', label: '15-30 seconds', score: 3 },
-      { value: 'over-30', label: 'Over 30 seconds', score: 4 },
-    ],
-    validation: { required: true },
-    scoreDimension: 'balance',
-    isActive: true,
-  },
-];
+/** The wellness questions every environment carries */
+export const DEFAULT_QUESTIONS: NewQuestion[] = [...aboutYouQuestions, ...goalsAndSafetyQuestions];
 
 /**
- * All default questions to seed
- */
-export const DEFAULT_QUESTIONS: NewQuestion[] = [
-  ...aboutYouQuestions,
-  ...goalsAndSafetyQuestions,
-  ...gettingStartedQuestions,
-  ...strengthCheckQuestions,
-  ...balanceCheckQuestions,
-];
-
-/**
- * Seeds questions for MVP.
- *
- * This seed is IDEMPOTENT - safe to run multiple times.
- * Questions are upserted by ID (existing questions are skipped).
- *
- * Note: questions table has NO RLS, so no special context needed.
- *
- * @param db - Database client with schema
- * @returns Promise<number> - Number of questions created (0 if all existed)
+ * Seeds the given questions. IDEMPOTENT: a question that already exists, matched by ID, is left
+ * as it is. The questions table has no RLS.
  */
 export const seedQuestions = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool }
+  db: NodePgDatabase<typeof schema>,
+  records: NewQuestion[]
 ): Promise<number> => {
   logger.info('Seeding questions...');
 
   let createdCount = 0;
 
-  for (const question of DEFAULT_QUESTIONS) {
-    // Check if question already exists (idempotency check by ID)
+  for (const question of records) {
     const existingQuestion = await db.query.questions.findFirst({
       where: eq(questions.id, requireSeedId(question, `question "${question.slug}"`)),
     });
@@ -361,7 +240,6 @@ export const seedQuestions = async (
       continue;
     }
 
-    // Insert new question
     const [newQuestion] = await db.insert(questions).values(question).returning({
       id: questions.id,
       slug: questions.slug,
@@ -379,7 +257,7 @@ export const seedQuestions = async (
 
   logger.info('Questions seed complete', {
     created: createdCount,
-    alreadyExisted: DEFAULT_QUESTIONS.length - createdCount,
+    alreadyExisted: records.length - createdCount,
   });
 
   return createdCount;

@@ -1,15 +1,7 @@
 {
-  "platformOrganisation": {
-    "id": "00000000-0000-0000-8000-000000000000",
-    "type": "platform",
-    "name": "FFP Platform",
-    "settings": {},
-    "createdAt": "2025-01-01T00:00:00.000000",
-    "updatedAt": "2025-01-01T00:00:00.000000"
-  },
   "superAdminUser": {
     "id": "00000000-0000-0000-8000-000000000001",
-    "organisationId": "00000000-0000-0000-8000-000000000000",
+    "organisationId": "5f36a97c-0dfa-4a26-8e6f-a62ee29ba017",
     "email": "admin@example.com",
     "cognitoSub": "00000000-0000-0000-8000-000000000002",
     "firstName": "System",

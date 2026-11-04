@@ -1,6 +1,5 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { type Pool } from 'pg';
 
 import { createLogger } from '../src/lib/logger.js';
 import { tagCategories, tags, videos, videoTags } from '../src/schema/index.js';
@@ -334,9 +333,7 @@ const backfillVideoDefaults = async (
  * @param db - Database client with schema
  * @returns Promise<number> - Number of videos created (0 if all existed)
  */
-export const seedVideos = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool }
-): Promise<number> => {
+export const seedVideos = async (db: NodePgDatabase<typeof schema>): Promise<number> => {
   logger.info('Seeding videos...');
 
   let createdCount = 0;

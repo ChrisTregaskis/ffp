@@ -1,6 +1,5 @@
 import { sql } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { type Pool } from 'pg';
 
 import { createLogger } from '../src/lib/logger.js';
 import { users } from '../src/schema/index.js';
@@ -15,14 +14,10 @@ const logger = createLogger('seed-super-admin-db');
  * Idempotent: uses upsert to update existing records or insert new ones.
  */
 export const seedSuperAdminDatabase = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool },
+  db: NodePgDatabase<typeof schema>,
   data: SuperAdminUserSeed
 ): Promise<void> => {
   logger.info('Seeding super admin in database...');
-
-  // Bypass RLS for seed operation (audit trail via logs)
-  logger.warn('RLS BYPASSED for seed operation');
-  await db.execute(sql`SET LOCAL row_security = off`);
 
   // Upsert super admin user - insert or update if exists
   await db

@@ -9,12 +9,6 @@ type DateFieldsToString<T> = {
 };
 
 /**
- * Platform organisation seed data (from JSON config)
- * Same as Organisation type but with string timestamps for JSON compatibility
- */
-export type PlatformOrganisationSeed = DateFieldsToString<Organisation>;
-
-/**
  * Test location organisation seed data (from JSON config)
  * Same as Organisation type but with string timestamps for JSON compatibility
  */
@@ -59,10 +53,9 @@ export interface TestUserCognitoSeed {
 }
 
 /**
- * Complete seed data configuration
+ * The demo seed's configuration. The platform organisation is reference data, defined in code.
  */
 export interface SeedConfig {
-  platformOrganisation: PlatformOrganisationSeed;
   superAdminUser: SuperAdminUserSeed;
   superAdminCognito: SuperAdminCognitoSeed;
   testLocationOrganisation: TestLocationOrganisationSeed;

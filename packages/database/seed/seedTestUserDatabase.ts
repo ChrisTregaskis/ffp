@@ -1,6 +1,5 @@
 import { sql } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { type Pool } from 'pg';
 
 import { createLogger } from '../src/lib/logger.js';
 import { users } from '../src/schema/index.js';
@@ -15,14 +14,10 @@ const logger = createLogger('seed-test-user-db');
  * Idempotent: uses upsert to update existing records or insert new ones.
  */
 export const seedTestUserDatabase = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool },
+  db: NodePgDatabase<typeof schema>,
   data: TestUserSeed
 ): Promise<void> => {
   logger.info(`Seeding test user in database (${data.role})...`);
-
-  // Bypass RLS for seed operation (audit trail via logs)
-  logger.warn('RLS BYPASSED for seed operation');
-  await db.execute(sql`SET LOCAL row_security = off`);
 
   // Upsert test user - insert or update if exists
   await db

@@ -11,12 +11,12 @@ Operational scripts for environment setup, database management, and deployment v
 
 ## Database
 
-| Script                  | Command                  | Purpose                                                                                                                   |
-| ----------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| `seed-database.ts`      | `pnpm seed:db`           | Seeds environment with initial data. Supports `--fresh` flag to truncate first                                            |
-| `seed-video-assets.ts`  | `pnpm seed:video-assets` | Puts a sample clip at every seeded video's S3 key (bucket from `.sst/outputs.json`, or `--bucket`). Skips keys that exist |
-| `test-db-connection.ts` | `pnpm db:test`           | Quick connectivity check — useful for debugging connection issues                                                         |
-| `verify-migration.ts`   | `pnpm db:verify`         | Verifies tables, enums, indexes, foreign keys, and RLS policies exist after migration                                     |
+| Script                  | Command                                | Purpose                                                                                                                             |
+| ----------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `seed-database.ts`      | `pnpm seed:reference` / `pnpm seed:db` | Reference catalogue and platform organisation (any environment); `seed:db` adds the local demo. `--fresh` empties first, local only |
+| `seed-video-assets.ts`  | `pnpm seed:video-assets`               | Puts a sample clip at every seeded video's S3 key (bucket from `.sst/outputs.json`, or `--bucket`). Skips keys that exist           |
+| `test-db-connection.ts` | `pnpm db:test`                         | Quick connectivity check — useful for debugging connection issues                                                                   |
+| `verify-migration.ts`   | `pnpm db:verify`                       | Verifies tables, enums, indexes, foreign keys, and RLS policies exist after migration                                               |
 
 ## Deployment Verification
 

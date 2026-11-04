@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { type Pool } from 'pg';
 
 import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.js';
 import { createLogger } from '../src/lib/logger.js';
@@ -60,31 +59,23 @@ export const DEFAULT_PROGRAMME_TEMPLATES: NewProgrammeTemplate[] = [
 ];
 
 /**
- * Seeds programme templates for MVP.
+ * Seeds the given programme templates. IDEMPOTENT: an existing template, matched by ID, is left
+ * as it is. The programme_templates table has no RLS.
  *
- * This seed is IDEMPOTENT - safe to run multiple times.
- * Templates are checked by ID before inserting (existing templates are skipped).
- *
- * Note: programme_templates table has NO RLS (system-managed lookup table),
- * so no special context needed.
- *
- * @param db - Database client with schema
- * @returns Promise<number> - Number of templates created (0 if all existed)
+ * @returns The IDs of the templates created
  */
 export const seedProgrammeTemplates = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool }
-): Promise<number> => {
+  db: NodePgDatabase<typeof schema>,
+  templates: NewProgrammeTemplate[]
+): Promise<string[]> => {
   logger.info('Seeding programme templates...');
 
-  let createdCount = 0;
+  const created: string[] = [];
 
-  for (const template of DEFAULT_PROGRAMME_TEMPLATES) {
-    // Check if template already exists (idempotency check by ID)
+  for (const template of templates) {
+    const templateId = requireSeedId(template, `programme template "${template.slug}"`);
     const existingTemplate = await db.query.programmeTemplates.findFirst({
-      where: eq(
-        programmeTemplates.id,
-        requireSeedId(template, `programme template "${template.slug}"`)
-      ),
+      where: eq(programmeTemplates.id, templateId),
     });
 
     if (existingTemplate) {
@@ -92,26 +83,16 @@ export const seedProgrammeTemplates = async (
       continue;
     }
 
-    // Insert new template
-    const [newTemplate] = await db.insert(programmeTemplates).values(template).returning({
-      id: programmeTemplates.id,
-      slug: programmeTemplates.slug,
-      name: programmeTemplates.name,
-    });
+    await db.insert(programmeTemplates).values(template);
 
-    logger.info('Programme template created', {
-      slug: newTemplate.slug,
-      id: newTemplate.id,
-      name: newTemplate.name,
-    });
-
-    createdCount++;
+    logger.info('Programme template created', { slug: template.slug, id: templateId });
+    created.push(templateId);
   }
 
   logger.info('Programme templates seed complete', {
-    created: createdCount,
-    alreadyExisted: DEFAULT_PROGRAMME_TEMPLATES.length - createdCount,
+    created: created.length,
+    alreadyExisted: templates.length - created.length,
   });
 
-  return createdCount;
+  return created;
 };

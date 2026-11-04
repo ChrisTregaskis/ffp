@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { DEFAULT_FLOWS } from '../seed/seedAssessmentFlows';
+import { DEMO_FLOW } from '../seed/seedBranchingDemoFlow';
 import { DEFAULT_PROGRAMME_TEMPLATES } from '../seed/seedProgrammeTemplates';
 import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants';
 
@@ -17,7 +18,7 @@ describe('Seeded programme recommendations', () => {
     }
   );
 
-  it.each(DEFAULT_FLOWS.map((flow) => [flow.name, flow] as const))(
+  it.each([...DEFAULT_FLOWS, DEMO_FLOW].map((flow) => [flow.name, flow] as const))(
     '%s recommends only active seeded templates',
     (_name, flow) => {
       const recommended = flow.scoringConfig.programmeMappings.map(

@@ -7,7 +7,7 @@ import {
 import { COGNITO_CUSTOM_ATTRIBUTES } from '../src/constants/cognito.constants.js';
 import { createLogger } from '../src/lib/logger.js';
 
-import type { SuperAdminCognitoSeed, PlatformOrganisationSeed } from './types.js';
+import type { SuperAdminCognitoSeed } from './types.js';
 
 const logger = createLogger('seed-super-admin-cognito');
 
@@ -41,12 +41,12 @@ const validateEnvironment = (): void => {
  * This is NOT idempotent - it will fail if the user already exists.
  *
  * @param cognitoData - Super admin Cognito seed data from config
- * @param organisationData - Platform organisation data (schema-derived, for custom attributes)
+ * @param organisationId - The platform organisation, the user's Cognito tenant
  * @throws {Error} If Cognito operation fails
  */
 export const seedSuperAdminCognito = async (
   cognitoData: SuperAdminCognitoSeed,
-  organisationData: PlatformOrganisationSeed
+  organisationId: string
 ): Promise<AdminCreateUserCommandOutput> => {
   logger.info('Seeding super admin in Cognito...');
 
@@ -64,7 +64,7 @@ export const seedSuperAdminCognito = async (
           { Name: 'email_verified', Value: 'true' },
           { Name: 'given_name', Value: 'System' },
           { Name: 'family_name', Value: 'Admin' },
-          { Name: COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID, Value: organisationData.id },
+          { Name: COGNITO_CUSTOM_ATTRIBUTES.ORGANISATION_ID, Value: organisationId },
           { Name: COGNITO_CUSTOM_ATTRIBUTES.ROLE, Value: 'system_admin' },
         ],
         TemporaryPassword: cognitoData.temporaryPassword,

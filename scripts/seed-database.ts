@@ -1,38 +1,28 @@
 /**
- * Database Seed Script
+ * Seeds the database (packages/database/seed).
  *
- * Thin wrapper script that calls the database seed package.
- * Allows running seed operations from the command line with environment selection.
+ *   pnpm seed:reference      the reference catalogue and platform organisation; safe anywhere
+ *   pnpm seed:db             reference, then the local demo (db-seed.local.dev.json)
+ *   pnpm seed:db -- --fresh  empties the catalogue and member data first
  *
- * Usage:
- *   pnpm seed:db              # Seeds dev environment (default)
- *   pnpm seed:db staging      # Seeds staging environment (future)
- *   pnpm seed:db test         # Seeds test environment (future)
- *   pnpm seed:db -- --fresh   # Truncates content tables before seeding (for UUID changes)
- *
- * Configuration:
- *   Seed data is loaded from packages/database/seed/config/db-seed.local.{env}.json
- *   Create your local config based on db-seed.example.json
- *
- * Environment Variables Required:
- *   - DB_HOST, DB_NAME: Database connection
- *   - BOOTSTRAP_DB_USER, BOOTSTRAP_DB_PASSWORD: Superuser with BYPASSRLS
- *   - COGNITO_USER_POOL_ID: AWS Cognito User Pool
+ * Connects as DB_MIGRATE_USER / DB_MIGRATE_PASSWORD to DB_HOST / DB_PORT / DB_NAME, over TLS
+ * unless DB_TLS_MODE=local. The demo and --fresh need a local database (DB_TLS_MODE=local, not a
+ * deployed ENVIRONMENT); the demo's Cognito users need COGNITO_USER_POOL_ID.
  */
 
 import { config } from 'dotenv';
 import { seedDatabase } from '../packages/database/seed/index.js';
 
-// Load environment variables
 config();
 
-// Parse command line args
 const args = process.argv.slice(2);
-const fresh = args.includes('--fresh');
 const environment = args.find((arg) => !arg.startsWith('--')) || 'dev';
 
-// Run seed
-seedDatabase(environment, { fresh })
+seedDatabase({
+  demo: !args.includes('--reference'),
+  fresh: args.includes('--fresh'),
+  environment,
+})
   .then(() => {
     process.exit(0);
   })

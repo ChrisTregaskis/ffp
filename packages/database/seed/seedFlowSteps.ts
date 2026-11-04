@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { type Pool } from 'pg';
 
 import { createLogger } from '../src/lib/logger.js';
 import { flowSteps } from '../src/schema/index.js';
@@ -18,9 +17,7 @@ const logger = createLogger('seed-flow-steps');
 /**
  * Deterministic UUIDs for flow steps
  *
- * UUID Pattern: 55555555-5555-5555-8555-5555555500XX
- * - Branching demo: 00xx
- * - Wellness assessment: 01xx
+ * UUID Pattern: 55555555-5555-5555-8555-5555555501XX (the branching demo's steps are 00xx).
  * These are fixed to ensure consistency across seed runs and allow
  * tests/Postman to reference steps reliably.
  */
@@ -30,13 +27,6 @@ export const STEP_IDS = {
   WELLNESS_GOALS_AND_SAFETY: '55555555-5555-5555-8555-555555550103',
   WELLNESS_RESULTS: '55555555-5555-5555-8555-555555550104',
   WELLNESS_PROGRAMME_OVERVIEW: '55555555-5555-5555-8555-555555550105',
-
-  DEMO_INTRO: '55555555-5555-5555-8555-555555550001',
-  DEMO_GETTING_STARTED: '55555555-5555-5555-8555-555555550002',
-  DEMO_STRENGTH_CHECK: '55555555-5555-5555-8555-555555550004',
-  DEMO_BALANCE_CHECK: '55555555-5555-5555-8555-555555550005',
-  DEMO_RESULTS: '55555555-5555-5555-8555-555555550006',
-  DEMO_PROGRAMME_OVERVIEW: '55555555-5555-5555-8555-555555550007',
 } as const;
 
 /** Any of the first three safety answers asks the member to seek advice before starting */
@@ -60,16 +50,8 @@ const SAFETY_CHECK_RULES: NextStepRule[] = [
   },
 ];
 
-/** Choosing the balance check skips the strength check */
-const CHECK_FOCUS_RULES: NextStepRule[] = [
-  {
-    priority: 1,
-    conditions: [{ type: 'answer_value', questionSlug: 'check-focus', answerValue: 'balance' }],
-    action: { type: 'goto_step', targetStepId: STEP_IDS.DEMO_BALANCE_CHECK },
-  },
-];
-
-const WELLNESS_FLOW_STEPS: NewFlowStep[] = [
+/** The wellness flow's steps, which every environment carries */
+export const DEFAULT_FLOW_STEPS: NewFlowStep[] = [
   {
     id: STEP_IDS.WELLNESS_INTRO,
     flowId: FLOW_IDS.WELLNESS,
@@ -143,124 +125,20 @@ const WELLNESS_FLOW_STEPS: NewFlowStep[] = [
   },
 ];
 
-const BRANCHING_DEMO_FLOW_STEPS: NewFlowStep[] = [
-  {
-    id: STEP_IDS.DEMO_INTRO,
-    flowId: FLOW_IDS.BRANCHING_DEMO,
-    templateId: null,
-    order: 1,
-    type: 'intro',
-    config: {
-      title: 'Movement Check',
-      description: 'A short, video-guided check of your strength and balance.',
-      estimatedMinutes: 10,
-    },
-    nextStepRules: null,
-    defaultNextStepId: STEP_IDS.DEMO_GETTING_STARTED,
-    isActive: true,
-  },
-  {
-    id: STEP_IDS.DEMO_GETTING_STARTED,
-    flowId: FLOW_IDS.BRANCHING_DEMO,
-    templateId: TEMPLATE_IDS.GETTING_STARTED,
-    order: 2,
-    type: 'questions',
-    config: {
-      title: 'Getting Started',
-      description: 'Tell us how active you are and where you would like to start.',
-    },
-    nextStepRules: CHECK_FOCUS_RULES,
-    defaultNextStepId: STEP_IDS.DEMO_STRENGTH_CHECK,
-    isActive: true,
-  },
-  {
-    id: STEP_IDS.DEMO_STRENGTH_CHECK,
-    flowId: FLOW_IDS.BRANCHING_DEMO,
-    templateId: TEMPLATE_IDS.STRENGTH_CHECK,
-    order: 3,
-    type: 'video-assessment',
-    config: {
-      title: 'Strength Check',
-      description: 'Follow the video, then tell us how it went.',
-      instructions: [
-        'Watch the video demonstration carefully',
-        'Only move within a comfortable range',
-        'Stop if anything feels uncomfortable',
-      ],
-    },
-    nextStepRules: null,
-    defaultNextStepId: STEP_IDS.DEMO_BALANCE_CHECK,
-    isActive: true,
-  },
-  {
-    id: STEP_IDS.DEMO_BALANCE_CHECK,
-    flowId: FLOW_IDS.BRANCHING_DEMO,
-    templateId: TEMPLATE_IDS.BALANCE_CHECK,
-    order: 4,
-    type: 'video-assessment',
-    config: {
-      title: 'Balance Check',
-      description: 'Use a chair or wall for support if you need it.',
-    },
-    nextStepRules: null,
-    defaultNextStepId: STEP_IDS.DEMO_RESULTS,
-    isActive: true,
-  },
-  {
-    id: STEP_IDS.DEMO_RESULTS,
-    flowId: FLOW_IDS.BRANCHING_DEMO,
-    templateId: null,
-    order: 5,
-    type: 'results',
-    config: {
-      title: 'All Done!',
-      description: 'Thanks for completing your movement check. Here are your results:',
-    },
-    nextStepRules: null,
-    defaultNextStepId: STEP_IDS.DEMO_PROGRAMME_OVERVIEW,
-    isActive: true,
-  },
-  {
-    id: STEP_IDS.DEMO_PROGRAMME_OVERVIEW,
-    flowId: FLOW_IDS.BRANCHING_DEMO,
-    templateId: null,
-    order: 6,
-    type: 'programme-overview',
-    config: {
-      title: 'Your Programme',
-      description: 'Your sessions, matched to your results.',
-    },
-    nextStepRules: null,
-    defaultNextStepId: null,
-    isActive: true,
-  },
-];
-
-export const DEFAULT_FLOW_STEPS: NewFlowStep[] = [
-  ...WELLNESS_FLOW_STEPS,
-  ...BRANCHING_DEMO_FLOW_STEPS,
-];
-
 /**
- * Seeds flow steps for the seeded assessment flows.
- *
- * This seed is IDEMPOTENT - safe to run multiple times.
- * Steps are upserted by ID (existing steps are skipped).
- *
- * Note: flow_steps table has NO RLS, so no special context needed.
- *
- * @param db - Database client with schema
- * @returns Promise<number> - Number of steps created (0 if all existed)
+ * Seeds the given flow steps. IDEMPOTENT: an existing step, matched by ID, is left as it is.
+ * The orchestrator passes only the steps of flows it has just created, so a step an admin
+ * removed from an existing flow stays removed. The flow_steps table has no RLS.
  */
 export const seedFlowSteps = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool }
+  db: NodePgDatabase<typeof schema>,
+  steps: NewFlowStep[]
 ): Promise<number> => {
   logger.info('Seeding flow steps...');
 
   let createdCount = 0;
 
-  for (const step of DEFAULT_FLOW_STEPS) {
-    // Check if step already exists (idempotency check by ID)
+  for (const step of steps) {
     const existingStep = await db.query.flowSteps.findFirst({
       where: eq(flowSteps.id, requireSeedId(step, `flow step "${step.config.title}"`)),
     });
@@ -270,7 +148,6 @@ export const seedFlowSteps = async (
       continue;
     }
 
-    // Insert new step
     await db.insert(flowSteps).values(step);
 
     logger.info('Step created', {
@@ -283,10 +160,7 @@ export const seedFlowSteps = async (
     createdCount++;
   }
 
-  logger.info('Flow steps seed complete', {
-    stepsCreated: createdCount,
-    totalSteps: DEFAULT_FLOW_STEPS.length,
-  });
+  logger.info('Flow steps seed complete', { stepsCreated: createdCount, totalSteps: steps.length });
 
   return createdCount;
 };

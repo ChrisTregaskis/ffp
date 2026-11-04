@@ -247,49 +247,30 @@ await db.transaction(async (tx) => {
 
 ## Database Seeding
 
-The database package includes a flexible seeding system for development environments.
+Two seeds, both run by `scripts/seed-database.ts` and connected as the schema owner (`DB_MIGRATE_USER` / `DB_MIGRATE_PASSWORD`), as migrations are.
 
-### Seed Configuration
+| Seed      | Command               | Holds                                                                                                                                                                                                                                   | Where             |
+| --------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| Reference | `pnpm seed:reference` | The wellness questions, assessment templates, flow and steps (with the safety-check warning), the level programme templates with their phases and sessions but no exercises, and the platform organisation. Ids and content are in code | Every environment |
+| Demo      | `pnpm seed:db`        | Runs the reference seed, then adds the demo organisation, location and users (in Cognito too), the sample videos, the level shells' exercises and slots, the branching demo flow, and a member's programme and assessment               | Local only        |
 
-Seed data is defined in JSON configuration files located in `seed/config/`:
+**The reference seed is safe to re-run anywhere.** It inserts what is missing and never overwrites: an existing flow keeps its name, description and scoring, and the platform organisation keeps its settings, only gaining a default it lacks. A template's question links, a flow's steps and a template's phases and sessions are only seeded with their parent, so what an admin removed stays removed. It runs in one transaction and never changes FORCE RLS.
 
-- **`db-seed.example.json`** - Template showing the structure (committed to repo)
-- **`db-seed.local.dev.json`** - Your local development data (gitignored)
-- **`db-seed.local.test.json`** - Test data (gitignored, future)
+**The demo seed and `--fresh` refuse anything but a local database:** a deployed `ENVIRONMENT` (`production`, `production-like`) is refused, and so is any connection not marked `DB_TLS_MODE=local`, which covers a laptop `.env` pointed at a deployed database.
 
-### Setting Up Seed Data
+### Demo configuration
 
-**First time setup:**
-
-1. Copy the example config:
-
-   ```bash
-   cp packages/database/seed/config/db-seed.example.json \
-      packages/database/seed/config/db-seed.local.dev.json
-   ```
-
-2. Edit `db-seed.local.dev.json` with your actual values:
-   - Platform organisation ID, name, timestamps
-   - Super admin user ID, email, Cognito sub, timestamps
-   - Temporary password for Cognito
-
-### Running Seeds
+The demo's organisation and users come from `seed/config/db-seed.local.<environment>.json` (gitignored; `dev` by default). Copy `db-seed.example.json` to start one. The demo's Cognito users need `COGNITO_USER_POOL_ID`.
 
 ```bash
-# Seed development database (uses db-seed.local.dev.json)
-pnpm seed:db
-
-# Seed specific environment (future)
-pnpm seed:db staging
-pnpm seed:db test
+pnpm seed:reference          # reference data only
+pnpm seed:db                 # reference, then the demo from db-seed.local.dev.json
+pnpm seed:db -- --fresh      # empty the catalogue and member data first (identity data is kept)
 ```
 
-**Important:**
+Changing a seeded row needs `--fresh` locally, because inserts skip existing ids.
 
-- Seeds are **NOT idempotent** - they will fail if data already exists
-- Always run on a fresh database (see Fresh Database Setup section)
-- Seeds automatically manage FORCE RLS (disables during seeding, re-enables after)
-- Requires `BOOTSTRAP_DB_USER` with appropriate permissions (superuser or database owner)
+The platform organisation's id is fixed in `seed/seedPlatformTenant.ts`, and the seed refuses a database that already holds a platform organisation with another id (an old local database seeded from an earlier example config). Recreate that database with the Fresh Database Setup steps below; `--fresh` keeps organisations. A `platformOrganisation` key left in a local config is ignored and can be removed.
 
 ### Seeding Video Media
 
@@ -309,17 +290,7 @@ pnpm seed:video-assets -- --bucket <videos-bucket-name>
 
 ### Seed Architecture
 
-Individual seed functions are organised in separate files:
-
-- **`seed/seedPlatformOrganisation.ts`** - Seeds platform organisation
-- **`seed/index.ts`** - Orchestrates all seed operations
-
-**Adding new seed data:**
-
-1. Define type in `seed/types.ts`
-2. Add data to `db-seed.example.json` and your local config
-3. Create seed function file (e.g., `seedSampleBusinesses.ts`)
-4. Import and call from `seed/index.ts`
+One `seed*.ts` per concern, called from `seed/reference.ts` or `seed/demo.ts`; `seed/index.ts` connects (`seed/connection.ts`), applies the guard (`seed/guard.ts`) and runs them. Tenant tables are written under their organisation's RLS context (`withRLS`), which holds whether or not the table forces RLS on its owner.
 
 ## Fresh Database Setup (Development)
 
@@ -349,13 +320,11 @@ psql -h localhost -U root_user -d postgres -c "\du"
    pnpm db:migrate
    ```
 
-3. Seed database (automatically handles FORCE RLS):
+3. Seed the reference data and the demo:
 
    ```bash
    pnpm seed:db
    ```
-
-   **Note**: Seeds automatically disable FORCE RLS during seeding and re-enable it afterwards for security.
 
 4. Run RLS tests:
 

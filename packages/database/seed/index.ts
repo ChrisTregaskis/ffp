@@ -1,70 +1,26 @@
-/**
- * Database Seed Orchestrator
- *
- * Coordinates all database seeding operations from configuration.
- * Reads seed data from db-seed.local.{environment}.json and executes seed functions.
- *
- * Usage:
- *   import { seedDatabase } from '@ffp/database/seed';
- *   await seedDatabase('dev');
- *   await seedDatabase('dev', { fresh: true }); // Truncates content tables first
- *
- * Environment-specific config files:
- *   - db-seed.local.dev.json (development)
- *   - db-seed.local.test.json (test - future)
- */
-
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
-
 import { createLogger } from '../src/lib/logger.js';
-import { dbTlsConfig } from '../src/lib/tls.js';
-import * as schema from '../src/schema/index.js';
 
-import { seedAssessmentFlows } from './seedAssessmentFlows.js';
-import { seedAssessmentTemplates } from './seedAssessmentTemplates.js';
-import { seedFlowSteps } from './seedFlowSteps.js';
-import { seedPlatformOrganisation } from './seedPlatformTenant.js';
-import { seedProgrammeTemplates } from './seedProgrammeTemplates.js';
-import { seedProgrammeUserAssessment } from './seedProgrammeUserAssessment.js';
-import { seedProgrammeUserData } from './seedProgrammeUserData.js';
-import { seedQuestions } from './seedQuestions.js';
-import { seedSuperAdminCognito } from './seedSuperAdminCognito.js';
-import { seedSuperAdminDatabase } from './seedSuperAdminDatabase.js';
-import { seedTemplateHierarchy } from './seedTemplateHierarchy.js';
-import { seedTemplateSlots } from './seedTemplateSlots.js';
-import { seedTestLocation } from './seedTestCustomer.js';
-import { seedTestOrganisation } from './seedTestTenant.js';
-import { seedTestUserCognito } from './seedTestUserCognito.js';
-import { seedTestUserDatabase } from './seedTestUserDatabase.js';
-import { seedVideos } from './seedVideos.js';
+import { connectAsMigrator } from './connection.js';
+import { seedDemo } from './demo.js';
+import { assertLocalDatabase } from './guard.js';
+import { seedReference } from './reference.js';
 
 import type { SeedConfig } from './types.js';
 
 const logger = createLogger('seed');
 
-// Get current file directory for resolving config paths
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-/**
- * Load seed configuration from environment-specific JSON file
- *
- * @param environment - Environment name (dev, staging, test)
- * @returns Parsed seed configuration
- * @throws {Error} If config file not found or invalid JSON
- */
+/** The demo seed's tenants and users, from the gitignored db-seed.local.{environment}.json */
 const loadSeedConfig = (environment: string): SeedConfig => {
   const configPath = resolve(__dirname, `config/db-seed.local.${environment}.json`);
 
   try {
-    const configFile = readFileSync(configPath, 'utf-8');
-
-    return JSON.parse(configFile) as SeedConfig;
+    return JSON.parse(readFileSync(configPath, 'utf-8')) as SeedConfig;
   } catch (error) {
     if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
       throw new Error(
@@ -77,245 +33,52 @@ const loadSeedConfig = (environment: string): SeedConfig => {
   }
 };
 
+export interface SeedOptions {
+  /** Adds the local demo on top of the reference data */
+  demo: boolean;
+  /** Empties the catalogue and member data first; identity data is kept */
+  fresh: boolean;
+  /** Names the demo config file */
+  environment: string;
+}
+
 /**
- * Validates required environment variables for database seeding
- * @throws {Error} If required environment variables are missing
+ * Seeds the reference data and, when asked, the local demo. Connects as the schema owner. The
+ * demo and `--fresh` are refused unless the database is local.
  */
-const validateEnvironment = (): void => {
-  const required = ['DB_HOST', 'DB_NAME', 'BOOTSTRAP_DB_USER', 'COGNITO_USER_POOL_ID'];
-
-  const missing = required.filter((varName) => !process.env[varName]);
-
-  if (missing.length > 0) {
-    logger.error('Missing required environment variables', { missing });
-    logger.error(
-      'Required for database seeding: DB_HOST, DB_NAME, BOOTSTRAP_DB_USER, BOOTSTRAP_DB_PASSWORD, COGNITO_USER_POOL_ID'
-    );
-    throw new Error('Missing required environment variables');
+export const seedDatabase = async ({ demo, fresh, environment }: SeedOptions): Promise<void> => {
+  if (demo) {
+    assertLocalDatabase('The demo seed');
   }
-};
 
-/**
- * Creates database connection pool with bootstrap user credentials
- * Bootstrap user must have BYPASSRLS privilege for seeding
- *
- * @returns Database client with schema
- */
-const createDatabaseConnection = (): NodePgDatabase<typeof schema> & { $client: Pool } => {
-  const pool = new Pool({
-    host: process.env.DB_HOST,
-    // Not ??, so an empty value also falls back.
-    port: parseInt(process.env.DB_PORT ? process.env.DB_PORT : '5432'),
-    database: process.env.DB_NAME,
-    user: process.env.BOOTSTRAP_DB_USER,
-    password: process.env.BOOTSTRAP_DB_PASSWORD,
-    ssl: dbTlsConfig(),
-  });
+  if (fresh) {
+    assertLocalDatabase('--fresh');
+  }
 
-  return drizzle({ client: pool, schema });
-};
-
-/**
- * Seed database with data from configuration
- *
- * @param environment - Environment name (dev, staging, test)
- * @throws {Error} If seeding fails
- *
- */
-export const seedDatabase = async (
-  environment = 'dev',
-  options?: { fresh?: boolean }
-): Promise<void> => {
-  logger.info(`Database Seed - ${environment.toUpperCase()}${options?.fresh ? ' (FRESH)' : ''}`);
-
-  // Validate environment variables
-  validateEnvironment();
-
-  // Load seed configuration
-  const config = loadSeedConfig(environment);
-  logger.info(`Loaded seed config: db-seed.local.${environment}.json`);
-
-  // Create database connection
-  const db = createDatabaseConnection();
+  const config = demo ? loadSeedConfig(environment) : undefined;
+  const db = connectAsMigrator();
 
   try {
-    // Temporarily disable FORCE RLS to allow seeding
-    // FORCE RLS applies even to superusers, so we need to disable it during seeding
-    logger.info('Disabling FORCE RLS for seeding...');
-    await db.$client.query(`
-      ALTER TABLE organisations NO FORCE ROW LEVEL SECURITY;
-      ALTER TABLE locations NO FORCE ROW LEVEL SECURITY;
-      ALTER TABLE users NO FORCE ROW LEVEL SECURITY;
-      ALTER TABLE programmes NO FORCE ROW LEVEL SECURITY;
-      ALTER TABLE programme_phases NO FORCE ROW LEVEL SECURITY;
-      ALTER TABLE user_sessions NO FORCE ROW LEVEL SECURITY;
-      ALTER TABLE user_session_exercises NO FORCE ROW LEVEL SECURITY;
-      ALTER TABLE exercise_completions NO FORCE ROW LEVEL SECURITY;
-      ALTER TABLE user_assessments NO FORCE ROW LEVEL SECURITY;
-      ALTER TABLE user_assessment_answers NO FORCE ROW LEVEL SECURITY;
-    `);
-
-    // Seed 1: Platform organisation
-    await db.transaction(async (tx) => {
-      const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
-      txWithClient.$client = db.$client;
-      await seedPlatformOrganisation(txWithClient, config.platformOrganisation);
-    });
-
-    // Seed 2: Super admin user (Cognito)
-    await seedSuperAdminCognito(config.superAdminCognito, config.platformOrganisation);
-
-    // Seed 3: Super admin user (Database)
-    await db.transaction(async (tx) => {
-      const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
-      txWithClient.$client = db.$client;
-      await seedSuperAdminDatabase(txWithClient, config.superAdminUser);
-    });
-
-    // Seed 4: Test location organisation
-    await db.transaction(async (tx) => {
-      const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
-      txWithClient.$client = db.$client;
-      await seedTestOrganisation(txWithClient, config.testLocationOrganisation);
-    });
-
-    // Seed 5: Test location
-    await db.transaction(async (tx) => {
-      const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
-      txWithClient.$client = db.$client;
-      await seedTestLocation(txWithClient, config.testLocation);
-    });
-
-    // Seed 6: Test location admin user (Cognito)
-    await seedTestUserCognito(
-      config.testLocationAdminCognito,
-      config.testLocationAdminUser,
-      config.testLocationOrganisation
-    );
-
-    // Seed 7: Test location admin user (Database)
-    await db.transaction(async (tx) => {
-      const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
-      txWithClient.$client = db.$client;
-      await seedTestUserDatabase(txWithClient, config.testLocationAdminUser);
-    });
-
-    // Seed 8: Test programme user (Cognito)
-    await seedTestUserCognito(
-      config.testLocationProgrammeUserCognito,
-      config.testLocationProgrammeUser,
-      config.testLocationOrganisation
-    );
-
-    // Seed 9: Test programme user (Database)
-    await db.transaction(async (tx) => {
-      const txWithClient = tx as unknown as NodePgDatabase<typeof schema> & { $client: Pool };
-      txWithClient.$client = db.$client;
-      await seedTestUserDatabase(txWithClient, config.testLocationProgrammeUser);
-    });
-
-    // Fresh mode: truncate content tables before re-seeding (preserves identity data)
-    if (options?.fresh) {
+    if (fresh) {
       logger.info('Fresh mode: truncating seed content tables (preserving identity data)...');
       await db.$client.query(`
         TRUNCATE assessment_flows, assessment_templates, questions, programme_templates, videos,
                  template_phases, template_sessions, session_exercises,
                  programmes, programme_phases, user_sessions, user_session_exercises, exercise_completions CASCADE;
       `);
-      logger.info('Content tables truncated');
     }
 
-    // Seed 10: Programme templates (no RLS, system-managed lookup table, idempotent)
-    // No organisation dependency - these are global templates referenced by scoring config
-    await seedProgrammeTemplates(db);
+    await seedReference(db);
 
-    // Seed 11: Questions (no RLS, idempotent)
-    // Must run BEFORE assessment templates as templates reference question UUIDs
-    await seedQuestions(db);
+    if (config) {
+      await seedDemo(db, config);
+    }
 
-    // Seed 12: Assessment templates (no RLS, idempotent)
-    // Must run BEFORE assessment flows as flows reference template IDs
-    await seedAssessmentTemplates(db);
-
-    // Seed 13: Assessment flows (no RLS, idempotent)
-    await seedAssessmentFlows(db);
-
-    // Seed 14: Flow steps (normalised from JSONB, no RLS, idempotent)
-    // Must run AFTER assessment flows as steps reference flow IDs
-    await seedFlowSteps(db);
-
-    // Seed 15: Videos (no RLS, system-managed catalogue, idempotent)
-    // No dependency on other seeds — standalone catalogue entries
-    await seedVideos(db);
-
-    // Seed 16: Template hierarchy — phases, sessions, exercises (no RLS, idempotent)
-    // Must run AFTER programme templates (FK) and videos (FK)
-    await seedTemplateHierarchy(db);
-
-    // Seed 16b: Template session slots from the seeded exercises (no RLS, idempotent)
-    // Must run AFTER template hierarchy and videos (reads exercises and their tags)
-    await seedTemplateSlots(db);
-
-    // Seed 17: Programme user data — active programme, phases, sessions (RLS tables, idempotent)
-    // Must run AFTER template hierarchy (FK) and test programme user (FK)
-    await seedProgrammeUserData(db);
-
-    // Seed 18: The assessment linked to the test user's programme, with its answers (RLS tables, idempotent)
-    // Must run AFTER programme user data (FK) and the flows, steps and questions it answers
-    await seedProgrammeUserAssessment(db);
-
-    logger.info('Database seeding complete!');
-  } catch (error) {
-    logger.error('Database seeding failed', {
-      error: error instanceof Error ? error.message : error,
-    });
-    throw error;
+    logger.info('Database seeding complete');
   } finally {
-    // Re-enable FORCE RLS for security
-    logger.info('Re-enabling FORCE RLS...');
-    try {
-      await db.$client.query(`
-        ALTER TABLE organisations FORCE ROW LEVEL SECURITY;
-        ALTER TABLE locations FORCE ROW LEVEL SECURITY;
-        ALTER TABLE users FORCE ROW LEVEL SECURITY;
-        ALTER TABLE programmes FORCE ROW LEVEL SECURITY;
-        ALTER TABLE programme_phases FORCE ROW LEVEL SECURITY;
-        ALTER TABLE user_sessions FORCE ROW LEVEL SECURITY;
-        ALTER TABLE user_session_exercises FORCE ROW LEVEL SECURITY;
-        ALTER TABLE exercise_completions FORCE ROW LEVEL SECURITY;
-        ALTER TABLE user_assessments FORCE ROW LEVEL SECURITY;
-        ALTER TABLE user_assessment_answers FORCE ROW LEVEL SECURITY;
-      `);
-      logger.info('FORCE RLS re-enabled');
-    } catch (rlsError) {
-      logger.error('Failed to re-enable FORCE RLS', {
-        error: rlsError instanceof Error ? rlsError.message : rlsError,
-      });
-      logger.warn('You must manually re-enable FORCE RLS!');
-    }
-
     await db.$client.end();
   }
 };
 
-// Re-export individual seed functions for standalone use
-export { seedProgrammeTemplates, PROGRAMME_TEMPLATE_IDS } from './seedProgrammeTemplates.js';
-export { seedQuestions, QUESTION_IDS } from './seedQuestions.js';
-export { seedAssessmentTemplates, TEMPLATE_IDS } from './seedAssessmentTemplates.js';
-export { seedAssessmentFlows, FLOW_IDS } from './seedAssessmentFlows.js';
-export { seedFlowSteps, STEP_IDS } from './seedFlowSteps.js';
-export { seedVideos, VIDEO_IDS } from './seedVideos.js';
-export {
-  seedTemplateHierarchy,
-  TEMPLATE_PHASE_IDS,
-  TEMPLATE_SESSION_IDS,
-  SESSION_EXERCISE_IDS,
-} from './seedTemplateHierarchy.js';
-export { seedTemplateSlots } from './seedTemplateSlots.js';
-export {
-  seedProgrammeUserData,
-  PROGRAMME_IDS,
-  PROGRAMME_PHASE_IDS,
-  USER_SESSION_IDS,
-} from './seedProgrammeUserData.js';
-export { seedProgrammeUserAssessment, USER_ASSESSMENT_IDS } from './seedProgrammeUserAssessment.js';
+export { seedReference } from './reference.js';
+export { seedDemo } from './demo.js';
