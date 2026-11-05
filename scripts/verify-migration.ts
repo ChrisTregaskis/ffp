@@ -12,33 +12,38 @@
  *   pnpm db:verify   # Verify the database in .env (DB_TLS_MODE=local for local Postgres)
  */
 
-import { Pool } from 'pg';
+import { resolve } from 'path';
+
 import * as dotenv from 'dotenv';
+import { Pool } from 'pg';
+
 import { terminalPrefix, TerminalPrefix } from '../packages/database/src/lib/terminal-logger';
 import { dbTlsConfig } from '../packages/database/src/lib/tls';
 
-// Load environment variables
-dotenv.config();
+// The root .env, whichever directory this runs from (`pnpm db:verify` runs it from the package)
+dotenv.config({ path: resolve(__dirname, '../.env') });
 
 const getRequiredEnv = (key: string): string => {
   const value = process.env[key];
+
   if (!value) {
     console.error(
       `${terminalPrefix(TerminalPrefix.ERROR)} Missing required environment variable: ${key}`
     );
     process.exit(1);
   }
+
   return value;
 };
 
 // Expected schema structure
-const EXPECTED_TABLES = ['tenants', 'customers', 'users'];
-const EXPECTED_ENUMS = ['tenant_type', 'customer_status', 'user_role'];
+const EXPECTED_TABLES = ['organisations', 'locations', 'users'];
+const EXPECTED_ENUMS = ['organisation_type', 'location_status', 'user_role'];
 
-const main = async () => {
+const main = async (): Promise<void> => {
   console.log(`${terminalPrefix(TerminalPrefix.INFO)} Starting migration verification...\n`);
 
-  const environment = process.env.ENVIRONMENT || 'development';
+  const environment = process.env.ENVIRONMENT ?? 'development';
   const dbHost = getRequiredEnv('DB_HOST');
   const dbName = getRequiredEnv('DB_NAME');
 
@@ -48,7 +53,7 @@ const main = async () => {
 
   const pool = new Pool({
     host: dbHost,
-    port: parseInt(process.env.DB_PORT || '5432'),
+    port: parseInt(process.env.DB_PORT ? process.env.DB_PORT : '5432'),
     database: dbName,
     user: getRequiredEnv('DB_USER'),
     password: getRequiredEnv('DB_PASSWORD'),
@@ -63,7 +68,7 @@ const main = async () => {
 
     // Check tables
     console.log('[2] Verifying tables...');
-    const tablesResult = await pool.query(`
+    const tablesResult = await pool.query<{ table_name: string }>(`
       SELECT table_name
       FROM information_schema.tables
       WHERE table_schema = 'public'
@@ -86,7 +91,7 @@ const main = async () => {
 
     // Check enums
     console.log('[3] Verifying enums...');
-    const enumsResult = await pool.query(`
+    const enumsResult = await pool.query<{ typname: string }>(`
       SELECT typname
       FROM pg_type
       WHERE typtype = 'e'
@@ -108,7 +113,7 @@ const main = async () => {
 
     // Check indexes
     console.log('[4] Verifying indexes...');
-    const indexesResult = await pool.query(`
+    const indexesResult = await pool.query<{ tablename: string; indexname: string }>(`
       SELECT
         schemaname,
         tablename,
@@ -119,17 +124,18 @@ const main = async () => {
     `);
 
     if (indexesResult.rows.length > 0) {
-      const indexesByTable: Record<string, string[]> = {};
+      const indexesByTable = new Map<string, string[]>();
+
       for (const row of indexesResult.rows) {
-        if (!indexesByTable[row.tablename]) {
-          indexesByTable[row.tablename] = [];
-        }
-        indexesByTable[row.tablename].push(row.indexname);
+        indexesByTable.set(row.tablename, [
+          ...(indexesByTable.get(row.tablename) ?? []),
+          row.indexname,
+        ]);
       }
 
-      for (const [table, indexes] of Object.entries(indexesByTable)) {
+      for (const [table, indexes] of indexesByTable) {
         console.log(
-          `   ${terminalPrefix(TerminalPrefix.SUCCESS)} ${table}: ${indexes.length} index(es)`
+          `   ${terminalPrefix(TerminalPrefix.SUCCESS)} ${table}: ${String(indexes.length)} index(es)`
         );
       }
     } else {
@@ -137,11 +143,17 @@ const main = async () => {
         `   ${terminalPrefix(TerminalPrefix.WARNING)} No indexes found (this may be expected for initial schema)`
       );
     }
+
     console.log('');
 
     // Check foreign keys
     console.log('[5] Verifying foreign keys...');
-    const fkResult = await pool.query(`
+    const fkResult = await pool.query<{
+      table_name: string;
+      column_name: string;
+      foreign_table_name: string;
+      foreign_column_name: string;
+    }>(`
       SELECT
         tc.table_name,
         tc.constraint_name,
@@ -167,11 +179,12 @@ const main = async () => {
     } else {
       console.log(`   ${terminalPrefix(TerminalPrefix.WARNING)} No foreign keys found`);
     }
+
     console.log('');
 
     // Check RLS policies (future)
     console.log('[6] Verifying RLS policies...');
-    const rlsResult = await pool.query(`
+    const rlsResult = await pool.query<{ tablename: string; policyname: string; cmd: string }>(`
       SELECT
         schemaname,
         tablename,
@@ -194,6 +207,7 @@ const main = async () => {
         `   ${terminalPrefix(TerminalPrefix.WARNING)} No RLS policies found (not yet implemented)`
       );
     }
+
     console.log('');
 
     console.log(
@@ -207,4 +221,4 @@ const main = async () => {
   }
 };
 
-main();
+void main();

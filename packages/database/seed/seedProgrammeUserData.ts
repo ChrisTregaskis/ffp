@@ -1,6 +1,5 @@
 import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { type Pool } from 'pg';
 
 import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.js';
 import { createLogger } from '../src/lib/logger.js';
@@ -200,9 +199,7 @@ const DEFAULT_USER_SESSIONS: NewUserSession[] = [
  * Seeds the active programme for the test programme user.
  * IDEMPOTENT — checks by ID before inserting.
  */
-const seedProgramme = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool }
-): Promise<void> => {
+const seedProgramme = async (db: NodePgDatabase<typeof schema>): Promise<void> => {
   logger.info('Seeding test user programme...');
 
   const existing = await db.query.programmes.findFirst({
@@ -237,9 +234,7 @@ const seedProgramme = async (
  * Seeds programme phases for the test user's active programme.
  * IDEMPOTENT — checks by ID before inserting.
  */
-const seedProgrammePhases = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool }
-): Promise<void> => {
+const seedProgrammePhases = async (db: NodePgDatabase<typeof schema>): Promise<void> => {
   logger.info('Seeding test user programme phases...');
 
   let createdCount = 0;
@@ -271,9 +266,7 @@ const seedProgrammePhases = async (
  * Seeds user sessions for the test user's active programme.
  * IDEMPOTENT — checks by ID before inserting.
  */
-const seedUserSessions = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool }
-): Promise<void> => {
+const seedUserSessions = async (db: NodePgDatabase<typeof schema>): Promise<void> => {
   logger.info('Seeding test user sessions...');
 
   let createdCount = 0;
@@ -305,9 +298,7 @@ const seedUserSessions = async (
  * Writes the remaining sessions (not_started) and every session's exercises, as programme creation does.
  * IDEMPOTENT — only writes what is missing.
  */
-const seedMemberLayer = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool }
-): Promise<void> => {
+const seedMemberLayer = async (db: NodePgDatabase<typeof schema>): Promise<void> => {
   logger.info('Seeding test user member-layer sessions and exercises...');
 
   let sessionsCreated = 0;
@@ -401,9 +392,7 @@ const seedMemberLayer = async (
  * This provides a realistic dashboard state for visual testing.
  * Must run AFTER: seedTestUserDatabase, seedProgrammeTemplates, seedTemplateHierarchy
  */
-export const seedProgrammeUserData = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool }
-): Promise<void> => {
+export const seedProgrammeUserData = async (db: NodePgDatabase<typeof schema>): Promise<void> => {
   logger.info('=== Seeding programme user data ===');
 
   await seedProgramme(db);

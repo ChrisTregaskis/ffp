@@ -1,3 +1,6 @@
+import { requiredEnv } from '../lib/env';
+import { dbTlsConfig, type DbTlsConfig } from '../lib/tls';
+
 export interface MigrationCredentials {
   user: string;
   password: string;
@@ -23,3 +26,22 @@ export const migrationCredentials = (
 
   return { user, password };
 };
+
+export interface MigratorConnection extends MigrationCredentials {
+  host: string;
+  port: number;
+  database: string;
+  ssl: DbTlsConfig;
+}
+
+/**
+ * Everything that connects as the schema owner (migrations, drizzle-kit, the seed and the
+ * super-admin bootstrap) connects with these settings.
+ */
+export const migratorConnection = (env: NodeJS.ProcessEnv = process.env): MigratorConnection => ({
+  host: requiredEnv('DB_HOST', env),
+  port: parseInt(env.DB_PORT ? env.DB_PORT : '5432'),
+  database: requiredEnv('DB_NAME', env),
+  ...migrationCredentials(env),
+  ssl: dbTlsConfig(env),
+});

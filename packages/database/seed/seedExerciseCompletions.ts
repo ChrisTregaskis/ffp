@@ -1,6 +1,5 @@
 import { asc, inArray } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { type Pool } from 'pg';
 
 import { createLogger } from '../src/lib/logger.js';
 import { exerciseCompletions, userSessionExercises, userSessions } from '../src/schema/index.js';
@@ -57,7 +56,7 @@ export const buildExerciseCompletions = (
  * IDEMPOTENT — a session exercise that already has a completion keeps it.
  */
 export const seedExerciseCompletions = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool },
+  db: NodePgDatabase<typeof schema>,
   programmePhaseIds: string[]
 ): Promise<void> => {
   logger.info('Seeding exercise completions...');

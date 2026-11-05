@@ -3,38 +3,17 @@ import { resolve } from 'path';
 import { config } from 'dotenv';
 import { defineConfig } from 'drizzle-kit';
 
-import { dbTlsConfig } from './src/lib/tls';
+import { migratorConnection } from './src/migrations/migration-credentials';
 
 // Load .env from monorepo root (two levels up from this file)
 config({ path: resolve(__dirname, '../../.env') });
 
-/**
- * Helper function to get required environment variable
- * @param {string} key - The environment variable key
- * @returns {string} The environment variable value
- */
-const getRequiredEnv = (key: string): string => {
-  const value = process.env[key];
-
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${key}`);
-  }
-
-  return value;
-};
-
+// drizzle-kit migrates and inspects the schema, so it connects as the role that owns it
 export default defineConfig({
   schema: './src/schema/**/*.ts',
   out: './migrations',
   dialect: 'postgresql',
-  dbCredentials: {
-    host: getRequiredEnv('DB_HOST'),
-    port: parseInt(process.env.DB_PORT ?? '5432'),
-    user: getRequiredEnv('DB_USER'),
-    password: getRequiredEnv('DB_PASSWORD'),
-    database: getRequiredEnv('DB_NAME'),
-    ssl: dbTlsConfig(),
-  },
+  dbCredentials: migratorConnection(),
   // Print all statements for transparency
   verbose: true,
   // Always ask for confirmation before applying migrations

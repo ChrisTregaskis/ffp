@@ -9,7 +9,7 @@ import {
   PROGRAMME_USER_ASSESSMENT_ANSWERS,
 } from '../seed/seedProgrammeUserAssessment';
 import { PROGRAMME_IDS } from '../seed/seedProgrammeUserData';
-import { DEFAULT_QUESTIONS, QUESTION_IDS } from '../seed/seedQuestions';
+import { DEFAULT_QUESTIONS } from '../seed/seedQuestions';
 
 const STARTED_AT = new Date('2026-04-05T09:00:00Z');
 const exercises = [0, 1, 2, 3].map((orderIndex) => ({
@@ -74,7 +74,7 @@ describe('Seeded programme assessment', () => {
   ).map((step) => step.templateId);
   const activeFlowQuestionIds = new Set<string>(
     TEMPLATE_QUESTION_MAPPINGS.filter(({ templateId }) => wellnessTemplateIds.includes(templateId))
-      .flatMap(({ questionIds }) => questionIds.map((slug) => QUESTION_IDS[slug]))
+      .flatMap(({ questionIds }) => questionIds)
       .filter((id) => DEFAULT_QUESTIONS.find((question) => question.id === id)?.isActive)
   );
   const emphasisQuestionIds = new Set(

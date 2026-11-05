@@ -14,6 +14,7 @@
 import {
   CognitoIdentityProviderClient,
   AdminCreateUserCommand,
+  AdminGetUserCommand,
   InitiateAuthCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -30,6 +31,7 @@ vi.mock('@aws-sdk/client-cognito-identity-provider', () => {
       send: mockSend,
     })),
     AdminCreateUserCommand: vi.fn((params) => ({ params })),
+    AdminGetUserCommand: vi.fn((params) => ({ params })),
     InitiateAuthCommand: vi.fn((params) => ({ params })),
   };
 });
@@ -175,30 +177,6 @@ describe('CognitoService', () => {
       });
     });
 
-    it('should include temporary password when provided', async () => {
-      mockSend.mockResolvedValueOnce({
-        User: { Username: 'user@example.com' },
-      });
-
-      const params = {
-        email: 'user@example.com',
-        firstName: 'Test',
-        lastName: 'User',
-        organisationId: 'tenant-123',
-        locationId: 'customer-456',
-        role: 'programme_user',
-        temporaryPassword: 'TempPass123!',
-      };
-
-      await CognitoService.createUser(params);
-
-      expect(AdminCreateUserCommand).toHaveBeenCalledWith(
-        expect.objectContaining({
-          TemporaryPassword: 'TempPass123!',
-        })
-      );
-    });
-
     it('should throw error if COGNITO_USER_POOL_ID is not set', async () => {
       delete process.env.COGNITO_USER_POOL_ID;
 
@@ -215,7 +193,7 @@ describe('CognitoService', () => {
       expect(mockSend).not.toHaveBeenCalled();
     });
 
-    it('should not include temporary password when not provided', async () => {
+    it('leaves the temporary password to Cognito, which emails it', async () => {
       mockSend.mockResolvedValueOnce({
         User: { Username: 'user@example.com' },
       });
@@ -233,6 +211,47 @@ describe('CognitoService', () => {
 
       const commandCall = vi.mocked(AdminCreateUserCommand).mock.calls[0][0];
       expect(commandCall.TemporaryPassword).toBeUndefined();
+      expect(commandCall.DesiredDeliveryMediums).toEqual(['EMAIL']);
+    });
+  });
+
+  describe('getUserAttributes', () => {
+    it("returns the user's attributes by name", async () => {
+      mockSend.mockResolvedValueOnce({
+        UserAttributes: [
+          { Name: 'sub', Value: 'sub-123' },
+          { Name: 'custom:tenantId', Value: 'org-1' },
+          { Name: 'custom:role', Value: 'system_admin' },
+        ],
+      });
+
+      await expect(CognitoService.getUserAttributes('admin@example.com')).resolves.toEqual({
+        sub: 'sub-123',
+        'custom:tenantId': 'org-1',
+        'custom:role': 'system_admin',
+      });
+      expect(AdminGetUserCommand).toHaveBeenCalledWith({
+        UserPoolId: 'test-pool-id',
+        Username: 'admin@example.com',
+      });
+    });
+
+    it('returns null when the pool has no such user', async () => {
+      const notFound = new Error('User does not exist.');
+      notFound.name = 'UserNotFoundException';
+      mockSend.mockRejectedValueOnce(notFound);
+
+      await expect(CognitoService.getUserAttributes('nobody@example.com')).resolves.toBeNull();
+    });
+
+    it('rethrows any other failure', async () => {
+      const throttled = new Error('Rate exceeded');
+      throttled.name = 'TooManyRequestsException';
+      mockSend.mockRejectedValueOnce(throttled);
+
+      await expect(CognitoService.getUserAttributes('admin@example.com')).rejects.toThrow(
+        'Rate exceeded'
+      );
     });
   });
 

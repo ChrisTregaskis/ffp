@@ -1,6 +1,5 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { type Pool } from 'pg';
 
 import { createLogger } from '../src/lib/logger.js';
 import {
@@ -28,9 +27,7 @@ const logger = createLogger('seed-template-slots');
  * Must run AFTER seedTemplateHierarchy and seedVideos (reads exercises and video tags).
  * Note: template_session_slots has NO RLS (system-managed lookup table).
  */
-export const seedTemplateSlots = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool }
-): Promise<number> => {
+export const seedTemplateSlots = async (db: NodePgDatabase<typeof schema>): Promise<number> => {
   logger.info('Seeding template session slots...');
 
   const movementRows = await db

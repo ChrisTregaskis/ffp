@@ -1,32 +1,4 @@
 {
-  "platformOrganisation": {
-    "id": "00000000-0000-0000-8000-000000000000",
-    "type": "platform",
-    "name": "FFP Platform",
-    "settings": {},
-    "createdAt": "2025-01-01T00:00:00.000000",
-    "updatedAt": "2025-01-01T00:00:00.000000"
-  },
-  "superAdminUser": {
-    "id": "00000000-0000-0000-8000-000000000001",
-    "organisationId": "00000000-0000-0000-8000-000000000000",
-    "email": "admin@example.com",
-    "cognitoSub": "00000000-0000-0000-8000-000000000002",
-    "firstName": "System",
-    "lastName": "Admin",
-    "role": "system_admin",
-    "locationId": null,
-    "profileImageUrl": null,
-    "phone": null,
-    "dateOfBirth": null,
-    "createdAt": "2025-01-01T00:00:00.000000",
-    "updatedAt": "2025-01-01T00:00:00.000000"
-  },
-  "superAdminCognito": {
-    "email": "admin@example.com",
-    "cognitoSub": "00000000-0000-0000-8000-000000000002",
-    "temporaryPassword": "TempPass123!"
-  },
   "testLocationOrganisation": {
     "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "type": "business",

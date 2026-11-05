@@ -13,9 +13,9 @@ const logger = createLogger('seed-test-user-cognito');
 
 /**
  * Cognito region
- * Defaults to eu-west-2 (London) for GDPR compliance if AWS_REGION not set
+ * Defaults to eu-west-2 (London) for GDPR compliance if COGNITO_REGION not set
  */
-const COGNITO_REGION = process.env.AWS_REGION ?? 'eu-west-2';
+const COGNITO_REGION = process.env.COGNITO_REGION ?? 'eu-west-2';
 
 /**
  * Cognito client instance

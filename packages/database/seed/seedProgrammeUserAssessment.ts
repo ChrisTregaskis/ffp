@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { type Pool } from 'pg';
 
 import { createLogger } from '../src/lib/logger.js';
 import { userAssessmentAnswers, userAssessments } from '../src/schema/index.js';
@@ -83,7 +82,7 @@ export const PROGRAMME_USER_ASSESSMENT_ANSWERS: NewUserAssessmentAnswer[] = ANSW
  * Must run AFTER: seedProgrammeUserData, seedAssessmentFlows, seedFlowSteps, seedQuestions
  */
 export const seedProgrammeUserAssessment = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool }
+  db: NodePgDatabase<typeof schema>
 ): Promise<void> => {
   logger.info('Seeding test user assessment...');
 

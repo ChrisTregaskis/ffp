@@ -5,8 +5,9 @@
  * using the credentials from the .env file.
  */
 
-import { Pool } from 'pg';
 import { config } from 'dotenv';
+import { Pool } from 'pg';
+
 import {
   terminalPrefix,
   TerminalPrefix,
@@ -17,23 +18,35 @@ import { dbTlsConfig } from '../packages/database/src/lib/tls';
 // Load environment variables
 config();
 
+// An empty value falls back too
+const envOr = (key: string, fallback: string): string => {
+  const value = process.env[key];
+
+  return value ? value : fallback;
+};
+
+const settings = {
+  host: envOr('DB_HOST', 'localhost'),
+  port: envOr('DB_PORT', '5432'),
+  database: envOr('DB_NAME', 'ffp_dev'),
+  user: envOr('DB_USER', 'root_user'),
+};
+
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'ffp_dev',
-  user: process.env.DB_USER || 'root_user',
+  ...settings,
+  port: parseInt(settings.port),
   password: process.env.DB_PASSWORD,
   ssl: dbTlsConfig(),
 });
 
-const testConnection = async () => {
+const testConnection = async (): Promise<void> => {
   try {
     console.log(`${terminalPrefix(TerminalPrefix.INFO)} Testing database connection...\n`);
     console.log('Configuration:');
-    console.log(`  Host: ${process.env.DB_HOST || 'localhost'}`);
-    console.log(`  Port: ${process.env.DB_PORT || '5432'}`);
-    console.log(`  Database: ${process.env.DB_NAME || 'ffp_dev'}`);
-    console.log(`  User: ${process.env.DB_USER || 'root_user'}\n`);
+    console.log(`  Host: ${settings.host}`);
+    console.log(`  Port: ${settings.port}`);
+    console.log(`  Database: ${settings.database}`);
+    console.log(`  User: ${settings.user}\n`);
 
     // Test connection
     const client = await pool.connect();
@@ -42,13 +55,13 @@ const testConnection = async () => {
     );
 
     // Test query
-    const result = await client.query('SELECT version()');
+    const result = await client.query<{ version: string }>('SELECT version()');
     console.log('PostgreSQL Version:');
     console.log(`  ${result.rows[0].version}\n`);
 
     // Check if database exists
     const dbCheck = await client.query('SELECT datname FROM pg_database WHERE datname = $1', [
-      process.env.DB_NAME || 'ffp_dev',
+      settings.database,
     ]);
 
     if (dbCheck.rows.length > 0) {
@@ -66,6 +79,7 @@ const testConnection = async () => {
     process.exit(0);
   } catch (error) {
     console.error(`${terminalPrefix(TerminalPrefix.ERROR)} Connection test failed:\n`);
+
     if (error instanceof Error) {
       console.error(`  Error: ${error.message}\n`);
 
@@ -90,4 +104,4 @@ const testConnection = async () => {
   }
 };
 
-testConnection();
+void testConnection();

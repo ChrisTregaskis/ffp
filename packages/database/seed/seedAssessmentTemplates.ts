@@ -1,12 +1,11 @@
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { type Pool } from 'pg';
 
 import { createLogger } from '../src/lib/logger.js';
 import { assessmentTemplates, templateQuestions } from '../src/schema/index.js';
 
 import { requireSeedId } from './requireSeedId.js';
-import { QUESTION_IDS } from './seedQuestions.js'; // Used for template-question mappings
+import { QUESTION_IDS } from './seedQuestions.js';
 
 import type { NewAssessmentTemplate } from '../src/schema/assessment-templates.js';
 import type * as schema from '../src/schema/index.js';
@@ -22,54 +21,40 @@ const logger = createLogger('seed-assessment-templates');
 export const TEMPLATE_IDS = {
   ABOUT_YOU: '11111111-1111-1111-8111-111111111106',
   GOALS_AND_SAFETY: '11111111-1111-1111-8111-111111111107',
-  GETTING_STARTED: '11111111-1111-1111-8111-111111111101',
-  STRENGTH_CHECK: '11111111-1111-1111-8111-111111111102',
-  BALANCE_CHECK: '11111111-1111-1111-8111-111111111103',
 } as const;
 
-/**
- * Template question mappings
- * Maps each template to its questions with display order
- */
-interface TemplateQuestionMapping {
+/** A template's questions, by question ID, in display order */
+export interface TemplateQuestionMapping {
   templateId: string;
-  questionIds: (keyof typeof QUESTION_IDS)[];
+  questionIds: string[];
 }
 
 export const TEMPLATE_QUESTION_MAPPINGS: TemplateQuestionMapping[] = [
   {
     templateId: TEMPLATE_IDS.ABOUT_YOU,
     questionIds: [
-      'gender',
-      'age-bracket',
-      'weekly-activity',
-      'exercise-tolerance',
-      'joint-comfort',
+      QUESTION_IDS.gender,
+      QUESTION_IDS['age-bracket'],
+      QUESTION_IDS['weekly-activity'],
+      QUESTION_IDS['exercise-tolerance'],
+      QUESTION_IDS['joint-comfort'],
     ],
   },
   {
     templateId: TEMPLATE_IDS.GOALS_AND_SAFETY,
-    questionIds: ['session-goal', 'focus-areas', 'safety-check'],
-  },
-  {
-    templateId: TEMPLATE_IDS.GETTING_STARTED,
-    questionIds: ['activity-level', 'check-focus'],
-  },
-  {
-    templateId: TEMPLATE_IDS.STRENGTH_CHECK,
-    questionIds: ['squat-assessment', 'squat-rating'],
-  },
-  {
-    templateId: TEMPLATE_IDS.BALANCE_CHECK,
-    questionIds: ['single-leg-stand', 'single-leg-duration'],
+    questionIds: [
+      QUESTION_IDS['session-goal'],
+      QUESTION_IDS['focus-areas'],
+      QUESTION_IDS['safety-check'],
+    ],
   },
 ];
 
 /**
- * All default templates to seed. Questions live in the `questions` table
+ * The wellness templates every environment carries. Questions live in the `questions` table
  * (seedQuestions.ts) and scoring lives on the flow (seedAssessmentFlows.ts).
  */
-const DEFAULT_TEMPLATES: NewAssessmentTemplate[] = [
+export const DEFAULT_TEMPLATES: NewAssessmentTemplate[] = [
   {
     id: TEMPLATE_IDS.ABOUT_YOU,
     name: 'about-you-v1',
@@ -84,135 +69,61 @@ const DEFAULT_TEMPLATES: NewAssessmentTemplate[] = [
     version: 1,
     isActive: true,
   },
-  {
-    id: TEMPLATE_IDS.GETTING_STARTED,
-    name: 'getting-started-v1',
-    description: 'Activity level and which movement check to start with',
-    version: 1,
-    isActive: true,
-  },
-  {
-    id: TEMPLATE_IDS.STRENGTH_CHECK,
-    name: 'strength-check-v1',
-    description: 'Video-guided strength check',
-    version: 1,
-    isActive: true,
-  },
-  {
-    id: TEMPLATE_IDS.BALANCE_CHECK,
-    name: 'balance-check-v1',
-    description: 'Video-guided balance check',
-    version: 1,
-    isActive: true,
-  },
 ];
 
 /**
- * Seeds template_questions join records for a template
+ * Seeds the given assessment templates. IDEMPOTENT: an existing template, matched by ID, is left
+ * as it is, question links included, since an admin may have removed one. A new template gets
+ * its links. Neither table has RLS.
  *
- * @param db - Database client
- * @param templateId - Template UUID
- * @param questionSlugs - Ordered array of question slugs
- * @returns Number of join records created
- */
-const seedTemplateQuestions = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool },
-  templateId: string,
-  questionSlugs: (keyof typeof QUESTION_IDS)[]
-): Promise<number> => {
-  let createdCount = 0;
-
-  for (let i = 0; i < questionSlugs.length; i++) {
-    const slug = questionSlugs[i];
-    const questionId = QUESTION_IDS[slug];
-    const displayOrder = i + 1; // 1-based display order
-
-    // Check if join record already exists
-    const existing = await db.query.templateQuestions.findFirst({
-      where: (tq, { and, eq }) => and(eq(tq.templateId, templateId), eq(tq.questionId, questionId)),
-    });
-
-    if (existing) {
-      continue; // Already exists, skip
-    }
-
-    const joinRecord: NewTemplateQuestion = {
-      templateId,
-      questionId,
-      displayOrder,
-    };
-
-    await db.insert(templateQuestions).values(joinRecord);
-    createdCount++;
-  }
-
-  return createdCount;
-};
-
-/**
- * Seeds assessment templates for MVP.
- *
- * This seed is IDEMPOTENT - safe to run multiple times.
- * Templates are upserted by ID (existing templates are skipped).
- *
- * Note: assessment_templates table has NO RLS, so no special context needed.
- *
- * @param db - Database client with schema
- * @returns Promise<number> - Number of templates created (0 if all existed)
+ * @returns The IDs of the templates created
  */
 export const seedAssessmentTemplates = async (
-  db: NodePgDatabase<typeof schema> & { $client: Pool }
-): Promise<number> => {
+  db: NodePgDatabase<typeof schema>,
+  templates: NewAssessmentTemplate[],
+  mappings: TemplateQuestionMapping[]
+): Promise<string[]> => {
   logger.info('Seeding assessment templates...');
 
-  let templatesCreatedCount = 0;
-  let joinRecordsCreatedCount = 0;
+  const created: string[] = [];
 
-  for (const template of DEFAULT_TEMPLATES) {
+  for (const template of templates) {
     const templateId = requireSeedId(template, `assessment template "${template.name}"`);
 
-    // Check if template already exists (idempotency check by ID)
     const existingTemplate = await db.query.assessmentTemplates.findFirst({
       where: eq(assessmentTemplates.id, templateId),
     });
 
-    // Get question count from template-question mappings
-    const mapping = TEMPLATE_QUESTION_MAPPINGS.find((m) => m.templateId === templateId);
-    const questionCount = mapping?.questionIds.length ?? 0;
-
     if (existingTemplate) {
       logger.warn(`Template already exists: "${template.name}"`, { id: existingTemplate.id });
-    } else {
-      // Insert new template
-      const [newTemplate] = await db.insert(assessmentTemplates).values(template).returning({
-        id: assessmentTemplates.id,
-        name: assessmentTemplates.name,
-      });
-
-      logger.info('Template created', {
-        name: newTemplate.name,
-        id: newTemplate.id,
-        questionCount,
-      });
-
-      templatesCreatedCount++;
+      continue;
     }
 
-    // Seed template_questions join records (always attempt, idempotent)
-    if (mapping) {
-      const joinCount = await seedTemplateQuestions(db, templateId, mapping.questionIds);
+    await db.insert(assessmentTemplates).values(template);
 
-      if (joinCount > 0) {
-        logger.debug('Template-question joins created', { templateId, joinCount });
-        joinRecordsCreatedCount += joinCount;
-      }
+    const questionIds = mappings.find((m) => m.templateId === templateId)?.questionIds ?? [];
+    const links: NewTemplateQuestion[] = questionIds.map((questionId, index) => ({
+      templateId,
+      questionId,
+      displayOrder: index + 1,
+    }));
+
+    if (links.length > 0) {
+      await db.insert(templateQuestions).values(links);
     }
+
+    logger.info('Template created', {
+      name: template.name,
+      id: templateId,
+      questions: links.length,
+    });
+    created.push(templateId);
   }
 
   logger.info('Assessment templates seed complete', {
-    templatesCreated: templatesCreatedCount,
-    joinsCreated: joinRecordsCreatedCount,
+    created: created.length,
+    alreadyExisted: templates.length - created.length,
   });
 
-  return templatesCreatedCount;
+  return created;
 };
