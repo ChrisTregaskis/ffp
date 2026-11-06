@@ -3,10 +3,10 @@ import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { bootstrapSuperAdmin } from '../seed/bootstrapSuperAdmin';
-import { PLATFORM_ORGANISATION } from '../seed/seedPlatformTenant';
 import { organisations, users } from '../src/schema';
 import * as schema from '../src/schema';
+import { bootstrapSuperAdmin } from '../src/seed/bootstrapSuperAdmin';
+import { PLATFORM_ORGANISATION } from '../src/seed/seedPlatformTenant';
 import { asOrganisation, inRolledBackTransaction, testDbConnectionConfig } from '../src/testing';
 
 type Db = NodePgDatabase<typeof schema>;

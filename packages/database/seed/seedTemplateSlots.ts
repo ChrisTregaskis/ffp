@@ -10,8 +10,7 @@ import {
   templateSlotTags,
   videoTags,
 } from '../src/schema/index.js';
-
-import { TEMPLATE_SESSION_IDS } from './seedTemplateHierarchy.js';
+import { TEMPLATE_SESSION_IDS } from '../src/seed/seedTemplateHierarchy.js';
 
 import type * as schema from '../src/schema/index.js';
 

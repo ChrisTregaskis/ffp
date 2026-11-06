@@ -1,15 +1,15 @@
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 
-import { createLogger } from '../src/lib/logger.js';
-import { assessmentTemplates, templateQuestions } from '../src/schema/index.js';
+import { createLogger } from '../lib/logger.js';
+import { assessmentTemplates, templateQuestions } from '../schema/index.js';
 
 import { requireSeedId } from './requireSeedId.js';
 import { QUESTION_IDS } from './seedQuestions.js';
 
-import type { NewAssessmentTemplate } from '../src/schema/assessment-templates.js';
-import type * as schema from '../src/schema/index.js';
-import type { NewTemplateQuestion } from '../src/schema/template-questions.js';
+import type { NewAssessmentTemplate } from '../schema/assessment-templates.js';
+import type * as schema from '../schema/index.js';
+import type { NewTemplateQuestion } from '../schema/template-questions.js';
 
 const logger = createLogger('seed-assessment-templates');
 

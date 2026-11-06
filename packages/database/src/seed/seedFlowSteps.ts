@@ -1,16 +1,16 @@
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 
-import { createLogger } from '../src/lib/logger.js';
-import { flowSteps } from '../src/schema/index.js';
+import { createLogger } from '../lib/logger.js';
+import { flowSteps } from '../schema/index.js';
 
 import { requireSeedId } from './requireSeedId.js';
 import { FLOW_IDS } from './seedAssessmentFlows.js';
 import { TEMPLATE_IDS } from './seedAssessmentTemplates.js';
 
-import type { NextStepRule } from '../src/constants/branching.constants.js';
-import type { NewFlowStep } from '../src/schema/flow-steps.js';
-import type * as schema from '../src/schema/index.js';
+import type { NextStepRule } from '../constants/branching.constants.js';
+import type { NewFlowStep } from '../schema/flow-steps.js';
+import type * as schema from '../schema/index.js';
 
 const logger = createLogger('seed-flow-steps');
 

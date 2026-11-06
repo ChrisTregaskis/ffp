@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_FLOWS, FLOW_IDS } from '../seed/seedAssessmentFlows';
-import { DEFAULT_QUESTIONS, QUESTION_IDS } from '../seed/seedQuestions';
+import { DEFAULT_FLOWS, FLOW_IDS } from '../src/seed/seedAssessmentFlows';
+import { DEFAULT_QUESTIONS, QUESTION_IDS } from '../src/seed/seedQuestions';
 
 const rules =
   DEFAULT_FLOWS.find((flow) => flow.id === FLOW_IDS.WELLNESS)?.scoringConfig.emphasis ?? [];

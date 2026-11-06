@@ -3,11 +3,11 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 import { createLogger } from '../src/lib/logger.js';
+import { connectAsMigrator } from '../src/migrations/connection.js';
+import { seedReference } from '../src/seed/reference.js';
 
-import { connectAsMigrator } from './connection.js';
 import { seedDemo } from './demo.js';
 import { assertLocalDatabase } from './guard.js';
-import { seedReference } from './reference.js';
 
 import type { SeedConfig } from './types.js';
 
@@ -80,5 +80,5 @@ export const seedDatabase = async ({ demo, fresh, environment }: SeedOptions): P
   }
 };
 
-export { seedReference } from './reference.js';
+export { seedReference } from '../src/seed/reference.js';
 export { seedDemo } from './demo.js';

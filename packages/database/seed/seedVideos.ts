@@ -3,8 +3,7 @@ import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import { createLogger } from '../src/lib/logger.js';
 import { tagCategories, tags, videos, videoTags } from '../src/schema/index.js';
-
-import { requireSeedId } from './requireSeedId.js';
+import { requireSeedId } from '../src/seed/requireSeedId.js';
 
 import type { TagCategorySlug } from '../src/constants/tag.constants.js';
 import type * as schema from '../src/schema/index.js';

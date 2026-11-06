@@ -1,14 +1,14 @@
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 
-import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.js';
-import { createLogger } from '../src/lib/logger.js';
-import { programmeTemplates } from '../src/schema/index.js';
+import { LEVEL_PROGRAMME_SLUGS } from '../constants/level-scoring.constants.js';
+import { createLogger } from '../lib/logger.js';
+import { programmeTemplates } from '../schema/index.js';
 
 import { requireSeedId } from './requireSeedId.js';
 
-import type * as schema from '../src/schema/index.js';
-import type { NewProgrammeTemplate } from '../src/schema/programme-templates.js';
+import type * as schema from '../schema/index.js';
+import type { NewProgrammeTemplate } from '../schema/programme-templates.js';
 
 const logger = createLogger('seed-programme-templates');
 

@@ -2,14 +2,14 @@ import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants.js';
 import { createLogger } from '../src/lib/logger.js';
-
-import { seedAssessmentFlows, type SeedFlow } from './seedAssessmentFlows.js';
+import { seedAssessmentFlows, type SeedFlow } from '../src/seed/seedAssessmentFlows.js';
 import {
   seedAssessmentTemplates,
   type TemplateQuestionMapping,
-} from './seedAssessmentTemplates.js';
-import { seedFlowSteps } from './seedFlowSteps.js';
-import { seedQuestions } from './seedQuestions.js';
+} from '../src/seed/seedAssessmentTemplates.js';
+import { seedFlowSteps } from '../src/seed/seedFlowSteps.js';
+import { seedQuestions } from '../src/seed/seedQuestions.js';
+
 import { VIDEO_IDS } from './seedVideos.js';
 
 import type { NextStepRule } from '../src/constants/branching.constants.js';

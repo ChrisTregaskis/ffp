@@ -1,13 +1,13 @@
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 
-import { createLogger } from '../src/lib/logger.js';
-import { withRLS } from '../src/lib/rls.js';
-import { organisations } from '../src/schema/index.js';
+import { createLogger } from '../lib/logger.js';
+import { withRLS } from '../lib/rls.js';
+import { organisations } from '../schema/index.js';
 
 import { FLOW_IDS } from './seedAssessmentFlows.js';
 
-import type * as schema from '../src/schema/index.js';
+import type * as schema from '../schema/index.js';
 
 const logger = createLogger('seed-platform');
 

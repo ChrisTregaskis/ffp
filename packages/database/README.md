@@ -270,7 +270,7 @@ pnpm seed:db -- --fresh      # empty the catalogue and member data first (identi
 
 Changing a seeded row needs `--fresh` locally, because inserts skip existing ids.
 
-The platform organisation's id is fixed in `seed/seedPlatformTenant.ts`, and the seed refuses a database that already holds a platform organisation with another id (an old local database seeded from an earlier example config). Recreate that database with the Fresh Database Setup steps below; `--fresh` keeps organisations. A `platformOrganisation` key left in a local config is ignored and can be removed.
+The platform organisation's id is fixed in `src/seed/seedPlatformTenant.ts`, and the seed refuses a database that already holds a platform organisation with another id (an old local database seeded from an earlier example config). Recreate that database with the Fresh Database Setup steps below; `--fresh` keeps organisations. A `platformOrganisation` key left in a local config is ignored and can be removed.
 
 ### Seeding Video Media
 
@@ -290,7 +290,7 @@ pnpm seed:video-assets -- --bucket <videos-bucket-name>
 
 ### Seed Architecture
 
-One `seed*.ts` per concern, called from `seed/reference.ts` or `seed/demo.ts`; `seed/index.ts` connects (`seed/connection.ts`), applies the guard (`seed/guard.ts`) and runs them. Tenant tables are written under their organisation's RLS context (`withRLS`), which holds whether or not the table forces RLS on its owner.
+One `seed*.ts` per concern. The reference data lives in `src/seed/` (`src/seed/reference.ts`), so deployed functions can run it; the demo stays in `seed/` (`seed/demo.ts`). `seed/index.ts` connects (`src/migrations/connection.ts`), applies the guard (`seed/guard.ts`) and runs them. Tenant tables are written under their organisation's RLS context (`withRLS`), which holds whether or not the table forces RLS on its owner.
 
 ## Fresh Database Setup (Development)
 

@@ -3,12 +3,6 @@ import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { seedReference } from '../seed/reference';
-import { FLOW_IDS } from '../seed/seedAssessmentFlows';
-import { TEMPLATE_IDS } from '../seed/seedAssessmentTemplates';
-import { PLATFORM_ORGANISATION } from '../seed/seedPlatformTenant';
-import { QUESTION_IDS } from '../seed/seedQuestions';
-import { TEMPLATE_PHASE_IDS, TEMPLATE_SESSION_IDS } from '../seed/seedTemplateHierarchy';
 import {
   assessmentFlows,
   organisations,
@@ -18,6 +12,12 @@ import {
   templateSessions,
 } from '../src/schema';
 import * as schema from '../src/schema';
+import { seedReference } from '../src/seed/reference';
+import { FLOW_IDS } from '../src/seed/seedAssessmentFlows';
+import { TEMPLATE_IDS } from '../src/seed/seedAssessmentTemplates';
+import { PLATFORM_ORGANISATION } from '../src/seed/seedPlatformTenant';
+import { QUESTION_IDS } from '../src/seed/seedQuestions';
+import { TEMPLATE_PHASE_IDS, TEMPLATE_SESSION_IDS } from '../src/seed/seedTemplateHierarchy';
 import { asOrganisation, inRolledBackTransaction, testDbConnectionConfig } from '../src/testing';
 
 type Db = NodePgDatabase<typeof schema>;

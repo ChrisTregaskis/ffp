@@ -1,17 +1,14 @@
 import { eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 
-import {
-  AGE_BRACKET_OPTIONS,
-  LEVEL_QUESTION_IDS,
-} from '../src/constants/level-scoring.constants.js';
-import { createLogger } from '../src/lib/logger.js';
-import { questions } from '../src/schema/index.js';
+import { AGE_BRACKET_OPTIONS, LEVEL_QUESTION_IDS } from '../constants/level-scoring.constants.js';
+import { createLogger } from '../lib/logger.js';
+import { questions } from '../schema/index.js';
 
 import { requireSeedId } from './requireSeedId.js';
 
-import type * as schema from '../src/schema/index.js';
-import type { NewQuestion } from '../src/schema/questions.js';
+import type * as schema from '../schema/index.js';
+import type { NewQuestion } from '../schema/questions.js';
 
 const logger = createLogger('seed-questions');
 

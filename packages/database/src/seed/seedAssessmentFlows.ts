@@ -1,14 +1,14 @@
 import { eq, inArray } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 
-import { LEVEL_SCORING_CONFIG } from '../src/constants/level-scoring.constants.js';
-import { createLogger } from '../src/lib/logger.js';
-import { assessmentFlows, questions } from '../src/schema/index.js';
+import { LEVEL_SCORING_CONFIG } from '../constants/level-scoring.constants.js';
+import { createLogger } from '../lib/logger.js';
+import { assessmentFlows, questions } from '../schema/index.js';
 
 import { QUESTION_IDS } from './seedQuestions.js';
 
-import type * as schema from '../src/schema/index.js';
-import type { EmphasisRule, EmphasisTag, ScoringConfig } from '../src/types/question.types.js';
+import type * as schema from '../schema/index.js';
+import type { EmphasisRule, EmphasisTag, ScoringConfig } from '../types/question.types.js';
 
 const logger = createLogger('seed-assessment-flows');
 

@@ -3,9 +3,9 @@ import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import { createLogger } from '../src/lib/logger.js';
 import { sessionExercises, templateSessions } from '../src/schema/index.js';
+import { requireSeedId } from '../src/seed/requireSeedId.js';
+import { TEMPLATE_SESSION_IDS } from '../src/seed/seedTemplateHierarchy.js';
 
-import { requireSeedId } from './requireSeedId.js';
-import { TEMPLATE_SESSION_IDS } from './seedTemplateHierarchy.js';
 import { VIDEO_IDS } from './seedVideos.js';
 
 import type * as schema from '../src/schema/index.js';

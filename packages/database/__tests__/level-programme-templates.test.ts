@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_FLOWS } from '../seed/seedAssessmentFlows';
 import { DEMO_FLOW } from '../seed/seedBranchingDemoFlow';
-import { DEFAULT_PROGRAMME_TEMPLATES } from '../seed/seedProgrammeTemplates';
 import { LEVEL_PROGRAMME_SLUGS } from '../src/constants/level-scoring.constants';
+import { DEFAULT_FLOWS } from '../src/seed/seedAssessmentFlows';
+import { DEFAULT_PROGRAMME_TEMPLATES } from '../src/seed/seedProgrammeTemplates';
 
 // Generation looks a recommendation up by slug and refuses an inactive template
 const activeSeededSlugs = DEFAULT_PROGRAMME_TEMPLATES.filter(

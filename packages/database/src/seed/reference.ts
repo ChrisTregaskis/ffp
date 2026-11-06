@@ -1,6 +1,6 @@
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 
-import { createLogger } from '../src/lib/logger.js';
+import { createLogger } from '../lib/logger.js';
 
 import { DEFAULT_FLOWS, seedAssessmentFlows } from './seedAssessmentFlows.js';
 import {
@@ -14,7 +14,7 @@ import { DEFAULT_PROGRAMME_TEMPLATES, seedProgrammeTemplates } from './seedProgr
 import { DEFAULT_QUESTIONS, seedQuestions } from './seedQuestions.js';
 import { seedTemplateHierarchy } from './seedTemplateHierarchy.js';
 
-import type * as schema from '../src/schema/index.js';
+import type * as schema from '../schema/index.js';
 
 const logger = createLogger('seed-reference');
 

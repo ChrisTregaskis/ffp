@@ -1,14 +1,14 @@
 import { and, eq } from 'drizzle-orm';
 import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 
-import { COGNITO_CUSTOM_ATTRIBUTES } from '../src/constants/cognito.constants.js';
-import { createLogger } from '../src/lib/logger.js';
-import { withAdminContext, withRLS } from '../src/lib/rls.js';
-import { organisations, users } from '../src/schema/index.js';
+import { COGNITO_CUSTOM_ATTRIBUTES } from '../constants/cognito.constants.js';
+import { createLogger } from '../lib/logger.js';
+import { withAdminContext, withRLS } from '../lib/rls.js';
+import { organisations, users } from '../schema/index.js';
 
 import { PLATFORM_ORGANISATION } from './seedPlatformTenant.js';
 
-import type * as schema from '../src/schema/index.js';
+import type * as schema from '../schema/index.js';
 
 const logger = createLogger('bootstrap-super-admin');
 

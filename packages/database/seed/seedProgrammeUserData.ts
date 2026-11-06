@@ -12,11 +12,11 @@ import {
   userSessionExercises,
   userSessions,
 } from '../src/schema/index.js';
+import { requireSeedId } from '../src/seed/requireSeedId.js';
+import { PROGRAMME_TEMPLATE_IDS } from '../src/seed/seedProgrammeTemplates.js';
+import { TEMPLATE_PHASE_IDS, TEMPLATE_SESSION_IDS } from '../src/seed/seedTemplateHierarchy.js';
 
-import { requireSeedId } from './requireSeedId.js';
 import { seedExerciseCompletions } from './seedExerciseCompletions.js';
-import { PROGRAMME_TEMPLATE_IDS } from './seedProgrammeTemplates.js';
-import { TEMPLATE_PHASE_IDS, TEMPLATE_SESSION_IDS } from './seedTemplateHierarchy.js';
 
 import type * as schema from '../src/schema/index.js';
 import type { NewProgrammePhase } from '../src/schema/programme-phases.js';

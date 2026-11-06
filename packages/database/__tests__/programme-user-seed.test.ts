@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_FLOWS, FLOW_IDS } from '../seed/seedAssessmentFlows';
-import { TEMPLATE_QUESTION_MAPPINGS } from '../seed/seedAssessmentTemplates';
 import { buildExerciseCompletions } from '../seed/seedExerciseCompletions';
-import { DEFAULT_FLOW_STEPS } from '../seed/seedFlowSteps';
 import {
   PROGRAMME_USER_ASSESSMENT,
   PROGRAMME_USER_ASSESSMENT_ANSWERS,
 } from '../seed/seedProgrammeUserAssessment';
 import { PROGRAMME_IDS } from '../seed/seedProgrammeUserData';
-import { DEFAULT_QUESTIONS } from '../seed/seedQuestions';
+import { DEFAULT_FLOWS, FLOW_IDS } from '../src/seed/seedAssessmentFlows';
+import { TEMPLATE_QUESTION_MAPPINGS } from '../src/seed/seedAssessmentTemplates';
+import { DEFAULT_FLOW_STEPS } from '../src/seed/seedFlowSteps';
+import { DEFAULT_QUESTIONS } from '../src/seed/seedQuestions';
 
 const STARTED_AT = new Date('2026-04-05T09:00:00Z');
 const exercises = [0, 1, 2, 3].map((orderIndex) => ({

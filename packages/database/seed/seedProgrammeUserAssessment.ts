@@ -3,12 +3,12 @@ import { type NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import { createLogger } from '../src/lib/logger.js';
 import { userAssessmentAnswers, userAssessments } from '../src/schema/index.js';
+import { requireSeedId } from '../src/seed/requireSeedId.js';
+import { FLOW_IDS } from '../src/seed/seedAssessmentFlows.js';
+import { STEP_IDS } from '../src/seed/seedFlowSteps.js';
+import { QUESTION_IDS, type QuestionSlug } from '../src/seed/seedQuestions.js';
 
-import { requireSeedId } from './requireSeedId.js';
-import { FLOW_IDS } from './seedAssessmentFlows.js';
-import { STEP_IDS } from './seedFlowSteps.js';
 import { PROGRAMME_IDS, TEST_ORGANISATION_ID, TEST_USER_ID } from './seedProgrammeUserData.js';
-import { QUESTION_IDS, type QuestionSlug } from './seedQuestions.js';
 
 import type * as schema from '../src/schema/index.js';
 import type { NewUserAssessmentAnswer } from '../src/schema/user-assessment-answers.js';

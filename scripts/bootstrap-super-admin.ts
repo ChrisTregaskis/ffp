@@ -19,9 +19,9 @@
 import 'dotenv/config';
 
 import { CognitoService } from '../packages/core/src/lib/cognito.js';
-import { bootstrapSuperAdmin } from '../packages/database/seed/bootstrapSuperAdmin.js';
-import { connectAsMigrator } from '../packages/database/seed/connection.js';
 import { requiredEnv } from '../packages/database/src/lib/env.js';
+import { connectAsMigrator } from '../packages/database/src/migrations/connection.js';
+import { bootstrapSuperAdmin } from '../packages/database/src/seed/bootstrapSuperAdmin.js';
 
 // The .env example leaves the names empty, and an empty value falls back too
 const envOr = (key: string, fallback: string): string => {
