@@ -36,8 +36,9 @@ export default $config({
     // Every function (routes and crons included) gets the runtime, the profile and the RDS CA.
     // The profile is spread last so no function can override it.
     $transform(sst.aws.Function, (args) => {
-      // Node.js 24.x Active LTS (supported until April 2028)
-      args.runtime = 'nodejs24.x' as typeof args.runtime;
+      // Node.js 24.x Active LTS (supported until April 2028); the dependencies are pure JS
+      args.runtime = 'nodejs24.x';
+      args.architecture = 'arm64';
       args.environment = $output(args.environment ?? {}).apply((environment) => ({
         ...environment,
         ...runtimeProfile,
@@ -207,20 +208,6 @@ export default $config({
           paths: ['*'],
         },
       ],
-      transform: {
-        bucket: (args) => {
-          // Enable AES256 encryption at rest
-          args.serverSideEncryptionConfiguration = {
-            rules: [
-              {
-                applyServerSideEncryptionByDefault: {
-                  sseAlgorithm: 'AES256',
-                },
-              },
-            ],
-          };
-        },
-      },
     });
 
     const assetsBucket = new sst.aws.Bucket('AssetsBucket', {
@@ -229,21 +216,23 @@ export default $config({
         allowMethods: ['GET', 'HEAD', 'PUT'],
         allowOrigins: allowedOrigins,
       },
-      transform: {
-        bucket: (args) => {
-          // Enable AES256 encryption at rest
-          args.serverSideEncryptionConfiguration = {
-            rules: [
-              {
-                applyServerSideEncryptionByDefault: {
-                  sseAlgorithm: 'AES256',
-                },
-              },
-            ],
-          };
-        },
-      },
     });
+
+    // AES256 encryption at rest, declared explicitly rather than left to the S3 default
+    for (const [name, bucket] of [
+      ['VideosBucket', videosBucket],
+      ['AssetsBucket', assetsBucket],
+    ] as const) {
+      new aws.s3.BucketServerSideEncryptionConfiguration(`${name}Encryption`, {
+        bucket: bucket.name,
+        rules: [
+          {
+            applyServerSideEncryptionByDefault: { sseAlgorithm: 'AES256' },
+            blockedEncryptionTypes: ['SSE-C'],
+          },
+        ],
+      });
+    }
 
     // =========================================================================
     // CLOUDFRONT SIGNED URL INFRASTRUCTURE
@@ -279,14 +268,17 @@ export default $config({
       items: [cfPublicKey.id],
     });
 
-    // CloudFront CDN for video delivery (OAC + signed URLs)
-    // OAC and trustedKeyGroups are applied in transform.distribution to guarantee
-    // they reach the raw Pulumi distribution (SST Cdn may not pass them through)
+    // CloudFront CDN for video delivery: OAC to the bucket, signed URLs from the trusted key group.
+    // Cdn passes origins and the default behaviour straight to the distribution.
     const videoCdn = new sst.aws.Cdn('VideoCdn', {
       origins: [
         {
           domainName: videosBucket.domain,
           originId: 'S3-Videos',
+          originAccessControlId: videoOac.id,
+          s3OriginConfig: {
+            originAccessIdentity: '', // Required by Pulumi provider to identify S3 origin; empty because OAC replaces legacy OAI
+          },
         },
       ],
       defaultCacheBehavior: {
@@ -304,27 +296,12 @@ export default $config({
             forward: 'none',
           },
         },
+        trustedKeyGroups: [cfKeyGroup.id],
       },
       transform: {
         distribution: (args) => {
           // Use only North America and Europe for cost optimisation
           args.priceClass = 'PriceClass_100';
-
-          // Override origins with OAC at the raw Pulumi level — SST Cdn may not
-          // pass originAccessControlId through its abstraction layer
-          args.origins = [
-            {
-              domainName: videosBucket.domain,
-              originId: 'S3-Videos',
-              originAccessControlId: videoOac.id,
-              s3OriginConfig: {
-                originAccessIdentity: '', // Required by Pulumi provider to identify S3 origin; empty because OAC replaces legacy OAI
-              },
-            },
-          ];
-
-          // Enforce signed URLs via trusted key groups
-          args.defaultCacheBehavior.trustedKeyGroups = [cfKeyGroup.id];
         },
       },
     });
@@ -345,18 +322,8 @@ export default $config({
         allowHeaders: ['*'],
         allowCredentials: true,
       },
-      transform: {
-        api: (args) => {
-          // Global throttle settings apply to all routes
-          // 1000 requests/minute (~16 req/sec) is appropriate during development and staging
-          // Health check endpoint is public but these limits prevent abuse
-          // Per-route throttling can be added later if specific endpoints need different limits
-          args.throttleSettings = {
-            rateLimit: 1000, // Requests per minute
-            burstLimit: 2000, // Maximum burst capacity
-          };
-        },
-      },
+      // HTTP APIs throttle on the stage (`transform.stage` → `defaultRouteSettings`), not the API.
+      // None is set, so the account-level default applies.
     });
 
     // Add Cognito JWT authorizer
@@ -563,7 +530,7 @@ export default $config({
     };
 
     // Job processor Lambda — available in all stages for manual triggering
-    new sst.aws.Function('JobProcessor', {
+    const jobProcessor = new sst.aws.Function('JobProcessor', {
       handler: `${repositoryFunctionsPath}/jobs/process-jobs.handler`,
       timeout: JOB_PROCESSOR_TIMEOUT,
       ...jobProcessorEnv,
@@ -577,30 +544,22 @@ export default $config({
       },
     };
 
-    new sst.aws.Function('StaleJobDetector', {
+    const staleJobDetector = new sst.aws.Function('StaleJobDetector', {
       handler: `${repositoryFunctionsPath}/jobs/detect-stale-jobs.handler`,
       timeout: '1 minute',
       ...staleJobDetectorEnv,
     });
 
-    // Cron schedules on every deployed stage; personal stages trigger the processor by hand
+    // Schedules on every deployed stage invoke the same functions; personal stages trigger by hand
     if (runtimeProfile.ENVIRONMENT !== 'development') {
-      new sst.aws.Cron('JobProcessorCron', {
+      new sst.aws.CronV2('JobProcessorCron', {
         schedule: 'rate(1 minute)',
-        job: {
-          handler: `${repositoryFunctionsPath}/jobs/process-jobs.handler`,
-          timeout: JOB_PROCESSOR_TIMEOUT,
-          ...jobProcessorEnv,
-        },
+        function: jobProcessor,
       });
 
-      new sst.aws.Cron('StaleJobDetectorCron', {
+      new sst.aws.CronV2('StaleJobDetectorCron', {
         schedule: 'rate(5 minutes)',
-        job: {
-          handler: `${repositoryFunctionsPath}/jobs/detect-stale-jobs.handler`,
-          timeout: '1 minute',
-          ...staleJobDetectorEnv,
-        },
+        function: staleJobDetector,
       });
     }
 

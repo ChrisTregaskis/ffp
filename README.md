@@ -92,7 +92,7 @@ pnpm test
 - **Database**: PostgreSQL (RDS) with Row-Level Security (RLS)
 - **ORM**: Drizzle
 - **Auth**: AWS Cognito
-- **Infrastructure**: SST v3 Ion (Serverless Stack)
+- **Infrastructure**: SST v4 (Serverless Stack)
 - **Testing**: Vitest, Playwright, MSW
 - **Code Quality**: ESLint (strict), Prettier, Husky
 
@@ -150,7 +150,7 @@ ffp/
 │   ├── eslint-config/           # Shared ESLint config (@ffp/eslint-config)
 │   └── prettier-config/         # Shared Prettier config (@ffp/prettier-config)
 │
-├── stacks/                      # SST v3 Ion infrastructure stacks (FFP-28 onwards)
+├── stacks/                      # SST infrastructure stacks (FFP-28 onwards)
 ├── tests/                       # Root-level integration tests
 │   ├── monorepo/                # Monorepo configuration tests
 │   └── ...
@@ -159,7 +159,7 @@ ffp/
 ├── .husky/                      # Git hooks
 ├── .vscode/                     # VS Code settings
 │
-├── sst.config.ts                # SST v3 Ion configuration
+├── sst.config.ts                # SST v4 configuration
 ├── turbo.json                   # Turborepo pipeline configuration
 ├── tsconfig.base.json           # Base TypeScript config
 ├── pnpm-workspace.yaml          # pnpm workspace definition

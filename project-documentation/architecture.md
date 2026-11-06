@@ -9,7 +9,7 @@ FFP uses a serverless-first AWS architecture optimised for multi-tenant SaaS. MV
 - Multi-tenant isolation via PostgreSQL Row-Level Security (RLS)
 - Type-safe database access with Drizzle ORM
 - Domain-organised backend with clear layer separation
-- Infrastructure-as-Code with SST v3 Ion (Pulumi-based)
+- Infrastructure-as-Code with SST v4 (Pulumi-based)
 
 ---
 

@@ -17,4 +17,4 @@ stacks/
 
 ## Current Status
 
-SST v3 Ion infrastructure is configured in `sst.config.ts` at the project root. This directory contains supporting stack utilities.
+SST v4 infrastructure is configured in `sst.config.ts` at the project root. This directory contains supporting stack utilities.
